@@ -28,7 +28,6 @@
       <div class="collapse navbar-collapse mr-3" id="navbar-collapse">
         <form name="search" id="search" method="post" action="/" class="my-auto d-inline w-100">
           <div class="input-group">
-            <!-- <input type="text" name="search" id="search-field" class="form-control border-right-0 shadow-none" placeholder="Search" aria-label="Search" aria-describedby="search-help"> -->
             <div id="search-field" class="input form-control border-right-0"></div>
             <div class="input-group-append">
               <span class="input-group-text border-left-0 search-help" id="search-help">
@@ -179,7 +178,8 @@
         console.log(tag)
         taggle.add(tag)
         document.forms[0].submit()
-      }
+      };
+
       // Script to clamp text
       $('.clampThis').each(function(index, element) {
         $clamp(element, { clamp: 2});
