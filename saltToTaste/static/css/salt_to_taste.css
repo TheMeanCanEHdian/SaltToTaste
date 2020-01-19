@@ -233,7 +233,7 @@ body {
 }
 
 .image-upload-container {
-  height: 200px;
+  min-height: 200px;
 }
 
 .btn.add-image-btn {
@@ -248,7 +248,6 @@ body {
 }
 
 .image-container {
-  height: 200px;
   border-color: #ced4da !important;
   background-size: cover;
   background-position: center;

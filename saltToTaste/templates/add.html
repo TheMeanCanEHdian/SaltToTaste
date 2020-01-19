@@ -98,19 +98,23 @@
             </div>
           </div>
         </div>
-        <div class="col order-1 order-md-2 pb-3 pb-md-0">
-          <div class="d-flex position-relative justify-content-center align-items-center image-upload-container {% if form.image.errors %}is-invalid{% endif %}">
-            <label class="btn add-image-btn"> Choose image...
-              <input type="file" class="custom-file-input d-none" id="form-recipe-image" name="image">
-            </label>
-            <div class="position-absolute w-100 border rounded image-container {% if form.image.errors %}invalid-image{% endif %}" id="selected-image">
+        <div class="col order-1 order-md-2 pb-3">
+          <div class="d-flex flex-column w-100 h-100 align-self-stretch align-items-stretch justify-content-center image-upload-container">
+            <div class="position-relative flex-grow-1 {% if form.image.errors %}is-invalid{% endif %}">
+              <div class="position-absolute d-flex w-100 h-100 align-items-center justify-content-center">
+                <label class="btn add-image-btn"> Choose image...
+                  <input type="file" class="custom-file-input d-none" id="form-recipe-image" name="image">
+                </label>
+              </div>
+              <div class="position-absolute w-100 h-100 border rounded image-container {% if form.image.errors %}invalid-image{% endif %}" id="selected-image"></div>
+            </div>
+            <div class="invalid-feedback">
+              {% if form.image.errors %}
+              {{ form.image.errors[0] }}
+              {% endif %}
             </div>
           </div>
-          <div class="invalid-feedback">
-            {% if form.image.errors %}
-            {{ form.image.errors[0] }}
-            {% endif %}
-          </div>
+
         </div>
       </div>
       <div class="form-group">
