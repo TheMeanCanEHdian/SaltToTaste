@@ -210,17 +210,17 @@
 
         var lastNote = $(".note-field").last().attr("name");
         if (lastNote) {
-          lastNote = lastNote.replace("notes-", "")
+          lastNote = parseInt(lastNote.replace("notes-", ""));
           var noteCount = lastNote + 1;
         }
         var lastIngredient = $(".ingredient-field").last().attr("name");
         if (lastIngredient) {
-          lastIngredient = lastIngredient.replace("notes-", "")
+          lastIngredient = parseInt(lastIngredient.replace("ingredients-", ""));
           var ingredientCount = lastIngredient + 1;
         }
         var lastDirection = $(".direction-field").last().attr("name");
         if (lastDirection) {
-          lastDirection = lastDirection.replace("notes-", "")
+          lastDirection = parseInt(lastDirection.replace("directions-", ""));
           var directionCount = lastDirection + 1;
         }
 
@@ -235,7 +235,7 @@
         $(".add-ingredient").click(function(){
           var clone = $('#ingredient-template').clone();
           clone.removeAttr("id")
-          clone.find('.form-control').attr("name", "ingredients-" + noteCount).addClass("ingredient-field");
+          clone.find('.form-control').attr("name", "ingredients-" + ingredientCount).addClass("ingredient-field");
           $(".add-ingredient").before(clone);
           ingredientCount++;
         });
@@ -243,7 +243,7 @@
         $(".add-direction").click(function(){
           var clone = $('#direction-template').clone();
           clone.removeAttr("id")
-          clone.find('.form-control').attr("name", "directions-" + noteCount).addClass("direction-field");
+          clone.find('.form-control').attr("name", "directions-" + directionCount).addClass("direction-field");
           $(".add-direction").before(clone);
           directionCount++;
         });
