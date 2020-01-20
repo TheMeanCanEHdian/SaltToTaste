@@ -92,7 +92,7 @@
               </div>
             </div>
             <div class="form-group col-12">
-              <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" id="form-recipe-description" rows="3" name="description" placeholder="Description" {% if form.description.data %}value="{{ form.description.data }}"{% endif %}></textarea>
+              <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" id="form-recipe-description" rows="5" name="description" placeholder="Description" {% if form.description.data %}value="{{ form.description.data }}"{% endif %}>{% if form.description.data %}{{ form.description.data }}{% endif %}</textarea>
               <div class="invalid-feedback">
                 {% if form.description.errors %}
                 {{ form.description.errors[0] }}
@@ -121,18 +121,42 @@
       </div>
       <div class="form-group">
         <label class="form-section-title">Notes</label>
+        {% for note in form.notes.data %}
+        <div class="input-group mb-3">
+          <input type="text" class="form-control note-field" name="notes-{{ loop.index - 1 }}" placeholder="Enter a note" value="{{ note }}">
+          <div class="input-group-append">
+            <button class="btn btn-danger remove" type="button"><svg class="svg-inline--fa fa-minus fa-w-14" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="minus" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg=""><path fill="currentColor" d="M416 208H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"></path></svg><!-- <i class="fas fa-minus"></i> --></button>
+          </div>
+        </div>
+        {% endfor %}
         <div>
           <button class="btn btn-outline-success add-note" type="button">Add note</button>
         </div>
       </div>
       <div class="form-group">
         <label class="form-section-title">Ingredients</label>
+        {% for ingredient in form.ingredients.data %}
+        <div class="input-group mb-3">
+          <input type="text" class="form-control ingredient-field" name="ingredients-{{ loop.index - 1 }}" placeholder="Enter an ingredient" value="{{ ingredient }}">
+          <div class="input-group-append">
+            <button class="btn btn-danger remove" type="button"><svg class="svg-inline--fa fa-minus fa-w-14" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="minus" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg=""><path fill="currentColor" d="M416 208H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"></path></svg><!-- <i class="fas fa-minus"></i> --></button>
+          </div>
+        </div>
+        {% endfor %}
         <div>
           <button class="btn btn-outline-success add-ingredient" type="button">Add ingredient</button>
         </div>
       </div>
       <div class="form-group">
         <label class="form-section-title">Directions</label>
+        {% for direction in form.directions.data %}
+        <div class="input-group mb-3">
+          <textarea class="form-control direction-field" rows="3" name="directions-{{ loop.index - 1 }}" placeholder="Enter a direction">{{ direction }}</textarea>
+          <div class="input-group-append">
+            <button class="btn btn-danger remove" type="button"><svg class="svg-inline--fa fa-minus fa-w-14" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="minus" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg=""><path fill="currentColor" d="M416 208H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"></path></svg><!-- <i class="fas fa-minus"></i> --></button>
+          </div>
+        </div>
+        {% endfor %}
         <div>
           <button class="btn btn-outline-success add-direction" type="button">Add direction</button>
         </div>
@@ -168,7 +192,7 @@
 
     <div class="d-none">
       <div class="input-group mb-3" id="direction-template">
-        <input type="text" class="form-control" name="directions" placeholder="Enter a direction">
+        <textarea class="form-control" rows="3" name="directions" placeholder="Enter a direction"></textarea>
         <div class="input-group-append">
           <button class="btn btn-danger remove" type="button"><i class="fas fa-minus"></i></button>
         </div>
