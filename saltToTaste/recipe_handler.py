@@ -119,26 +119,26 @@ def add_recipe_file(recipe_data):
     f.write(f'servings: {recipe_data["servings"] or ""}\n')
     f.write(f'calories: {recipe_data["calories"] or ""}\n\n')
     if recipe_data['description']:
-        f.write(f'description: \n{recipe_data["description"].replace(":", ";")}\n')
+        f.write(f'description:\n{recipe_data["description"].replace(":", ";")}\n')
     else:
-        f.write(f'description: \n\n')
+        f.write(f'description:\n\n')
     if recipe_data['ingredients']:
-        f.write('\ningredients: \n')
+        f.write('\ningredients:\n')
         for ingredient in recipe_data['ingredients']:
             f.write(f'- {ingredient}\n')
     else:
-        f.write('\ningredients: \n\n')
+        f.write('\ningredients:\n\n')
     if recipe_data['directions']:
-        f.write('\ndirections: \n')
+        f.write('\ndirections:\n')
         for direction in recipe_data["directions"]:
             f.write(f'- {direction}\n')
     else:
-        f.write('\ndirections: \n\n')
+        f.write('\ndirections:\n\n')
     if recipe_data['notes']:
-        f.write('\nnotes: \n')
+        f.write('\nnotes:\n')
         for note in recipe_data['notes']:
             f.write(f'- {note}\n')
     else:
-        f.write('\nnotes: \n')
+        f.write('\nnotes:\n')
     f.close()
     print (f' + Saved {formatted_title}.txt to disk')
