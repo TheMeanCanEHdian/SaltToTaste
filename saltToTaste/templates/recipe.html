@@ -82,7 +82,7 @@
       </div>
       {% endif %}
     </div>
-    <div class="col order-1 order-md-2 rounded recipe-details-image" style="background-image: url('{{ url_for('main.image_path', filename=recipe.image_path) }}')">
+    <div class="col order-1 order-md-2 rounded recipe-details-image" {% if recipe.image_path %}style="background-image: url('{{ url_for('main.image_path', filename=recipe.image_path) }}')"{% endif %}>
 
     </div>
   </div>
