@@ -115,46 +115,50 @@ def delete_recipe_by_filename(filename):
     recipe = Recipe.query.filter(Recipe.filename == filename).first()
     delete_recipe(recipe.id)
 
-def update_recipe(recipe_data): # this only gets used if the title has not been changed which means the filename doesnt change
-    print (f' + Updating {recipe_data["title"]}')
-    recipe_query = Recipe.query.filter(Recipe.filename == recipe_data['filename']).first()
+def update_recipe(old_data, updated_data):
+    print (f' + Updating {old_data["title"]}')
+    recipe_query = Recipe.query.filter(Recipe.filename == old_data['filename']).first()
 
-    recipe_query.layout = recipe_data['layout']
-    recipe_query.source = recipe_data['source'] or None
-    recipe_query.prep = recipe_data['prep'] or None
-    recipe_query.cook = recipe_data['cook'] or None
-    recipe_query.ready = recipe_data['ready'] or None
-    recipe_query.servings = recipe_data['servings'] or None
-    recipe_query.calories = recipe_data['calories'] or None
-    recipe_query.description = recipe_data['description'] or None
-    recipe_query.file_last_modified = recipe_data['last_modified']
+    recipe_query.layout = updated_data['layout']
+    recipe_query.title = updated_data['title']
+    recipe_query.title_formatted = updated_data['formatted_title']
+    recipe_query.filename = updated_data['filename']
+    recipe_query.image_path = updated_data['image']
+    recipe_query.source = updated_data['source'] or None
+    recipe_query.prep = updated_data['prep'] or None
+    recipe_query.cook = updated_data['cook'] or None
+    recipe_query.ready = updated_data['ready'] or None
+    recipe_query.servings = updated_data['servings'] or None
+    recipe_query.calories = updated_data['calories'] or None
+    recipe_query.description = updated_data['description'] or None
+    recipe_query.file_last_modified = updated_data['last_modified']
     recipe_query.tags.clear()
     recipe_query.ingredients.clear()
     recipe_query.directions.clear()
     recipe_query.notes.clear()
 
-    for t in recipe_data['tags']:
+    for t in updated_data['tags']:
         if not Tag.query.filter(Tag.name == t).first():
             tag = Tag(name=t)
             db.session.add(tag)
         tag = Tag.query.filter(Tag.name == t).first()
         recipe_query.tags.append(tag)
 
-    for i in recipe_data['ingredients']:
+    for i in updated_data['ingredients']:
         if not Ingredient.query.filter(Ingredient.name == i).first():
             ingredient = Ingredient(name=i)
             db.session.add(ingredient)
         ingredient = Ingredient.query.filter(Ingredient.name == i).first()
         recipe_query.ingredients.append(ingredient)
 
-    for d in recipe_data['directions']:
+    for d in updated_data['directions']:
         if not Direction.query.filter(Direction.name == d).first():
             direction = Direction(name=d)
             db.session.add(direction)
         direction = Direction.query.filter(Direction.name == d).first()
         recipe_query.directions.append(direction)
 
-    for n in recipe_data['notes']:
+    for n in updated_data['notes']:
         if not Note.query.filter(Note.name == n).first():
             note = Note(name=n)
             db.session.add(note)
@@ -168,7 +172,8 @@ def update_recipes(recipe_list):
     for recipe in recipe_list:
         recipe_query = Recipe.query.filter(Recipe.filename == recipe['filename']).first()
         if recipe_query.file_last_modified != recipe['last_modified']:
-            update_recipe(recipe)
+            # This will work for now since its has the same name on lookup
+            update_recipe(recipe, recipe)
 
 def add_all_recipes(recipe_list):
     print (' * Initial insert of recipes')
