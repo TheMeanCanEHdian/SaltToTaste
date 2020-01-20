@@ -26,6 +26,12 @@ def get_recipe_by_title_f(title_formatted):
     except:
         return False
 
+def check_for_duplicate_title(id, title):
+    result = Recipe.query.filter(Recipe.title == title, Recipe.id != id).first()
+    if result:
+        return True
+    return False
+
 def add_recipe(recipe_data):
     if not Recipe.query.filter(Recipe.filename == recipe_data['filename']).first():
         print (f' + Inserting {recipe_data["filename"]} into database')
@@ -121,7 +127,7 @@ def update_recipe(recipe_data): # this only gets used if the title has not been 
     recipe_query.servings = recipe_data['servings'] or None
     recipe_query.calories = recipe_data['calories'] or None
     recipe_query.description = recipe_data['description'] or None
-    recipe_query.last_modified = recipe_data['last_modified']
+    recipe_query.file_last_modified = recipe_data['last_modified']
     recipe_query.tags.clear()
     recipe_query.ingredients.clear()
     recipe_query.directions.clear()
