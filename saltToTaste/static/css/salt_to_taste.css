@@ -232,6 +232,13 @@ body {
   /* letter-spacing: 0.1em; */
 }
 
+.form-section-title {
+  font-size: 19px;
+  font-weight: 500;
+  color: #960000;
+  letter-spacing: 0.05em;
+}
+
 .image-upload-container {
   min-height: 200px;
 }
@@ -255,6 +262,10 @@ body {
 
 .invalid-image {
   border-color: red !important;
+}
+
+.add-note, .add-ingredient, .add-direction {
+  min-width: 140px;
 }
 
 /* Bootstrap overrides */

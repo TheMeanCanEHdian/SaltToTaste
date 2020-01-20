@@ -6,7 +6,7 @@
 
 {% block body_container %}
   <div class="container mt-1">
-    <h1 class="form-title">Add Recipe</h1>
+    <h1 class="form-title mt-md-4 mb-md-2">Add Recipe</h1>
     <form class="needs-validation" method="post" enctype=multipart/form-data action="/add" novalidate>
       {{ form.csrf_token }}
       <div class="form-row d-none">
@@ -17,12 +17,14 @@
           </select>
         </div>
       </div>
+      <div class="form-row">
+        <label class="form-section-title pl-1">Details</label>
+      </div>
       <div class="form-row row-cols-1 row-cols-md-2">
         <div class="col order-2 order-md-1">
           <div class="form-row">
             <div class="form-group col-12">
-              <!-- <label for="form-recipe-name">Name</label> -->
-              <input type="text" class="form-control {% if form.title.errors %}is-invalid{% endif %}" id="form-recipe-name" name="title" placeholder="Name" {% if form.title.data %}value="{{ form.title.data }}"{% endif %}>
+              <input type="text" class="form-control form-control-lg {% if form.title.errors %}is-invalid{% endif %}" id="form-recipe-name" name="title" placeholder="Name" {% if form.title.data %}value="{{ form.title.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.title.errors %}
                 {{ form.title.errors[0] }}
@@ -30,7 +32,6 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <!-- <label for="form-recipe-source">Source</label> -->
               <input type="text" class="form-control {% if form.source.errors %}is-invalid{% endif %}" id="form-recipe-source" name="source" placeholder="Source" {% if form.source.data %}value="{{ form.source.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.source.errors %}
@@ -39,8 +40,7 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <!-- <label for="form-recipe-tags">Tags</label> -->
-              <input type="text" class="form-control {% if form.tags.errors %}is-invalid{% endif %}" id="form-recipe-tags" name="tags" placeholder="Tags" {% if form.tags.data %}value="{{ form.tags.data }}"{% endif %}>
+              <input type="text" class="form-control {% if form.tags.errors %}is-invalid{% endif %}" id="form-recipe-tags" name="tags" placeholder="Tags (vegetarian, main)" {% if form.tags.data %}value="{{ form.tags.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.tags.errors %}
                 {{ form.tags.errors[0] }}
@@ -50,8 +50,7 @@
           </div>
           <div class="form-row">
             <div class="form-group col-12 col-md">
-              <!-- <label for="form-recipe-prep">Prep Time</label> -->
-              <input type="text" class="form-control {% if form.prep.errors %}is-invalid{% endif %}" id="form-recipe-prep" name="prep" placeholder="Prep Time {% if form.prep.data %}value="{{ form.prep.data }}"{% endif %}">
+              <input type="text" class="form-control {% if form.prep.errors %}is-invalid{% endif %}" id="form-recipe-prep" name="prep" placeholder="Prep Time (min)" {% if form.prep.data %}value="{{ form.prep.data }}"{% endif %}">
               <div class="invalid-feedback">
                 {% if form.prep.errors %}
                 {{ form.prep.errors[0] }}
@@ -59,8 +58,7 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <!-- <label for="form-recipe-cook">Cook Time</label> -->
-              <input type="text" class="form-control {% if form.cook.errors %}is-invalid{% endif %}" id="form-recipe-cook" name="cook" placeholder="Cook Time" {% if form.cook.data %}value="{{ form.cook.data }}"{% endif %}>
+              <input type="text" class="form-control {% if form.cook.errors %}is-invalid{% endif %}" id="form-recipe-cook" name="cook" placeholder="Cook Time (min)" {% if form.cook.data %}value="{{ form.cook.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.cook.errors %}
                 {{ form.cook.errors[0] }}
@@ -68,8 +66,7 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <!-- <label for="form-recipe-ready">Ready In</label> -->
-              <input type="text" class="form-control {% if form.ready.errors %}is-invalid{% endif %}" id="form-recipe-ready" name="ready" placeholder="Ready In" {% if form.ready.data %}value="{{ form.ready.data }}"{% endif %}>
+              <input type="text" class="form-control {% if form.ready.errors %}is-invalid{% endif %}" id="form-recipe-ready" name="ready" placeholder="Ready In (min)" {% if form.ready.data %}value="{{ form.ready.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.ready.errors %}
                 {{ form.ready.errors[0] }}
@@ -79,7 +76,6 @@
           </div>
           <div class="form-row">
             <div class="form-group col-12 col-md">
-              <!-- <label for="form-recipe-servings">Servings</label> -->
               <input type="text" class="form-control {% if form.servings.errors %}is-invalid{% endif %}" id="form-recipe-servings" name="servings" placeholder="Servings" {% if form.servings.data %}value="{{ form.servings.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.servings.errors %}
@@ -88,11 +84,18 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <!-- <label for="form-recipe-calories">Calories</label> -->
               <input type="text" class="form-control {% if form.calories.errors %}is-invalid{% endif %}" id="form-recipe-calories" name="calories" placeholder="Calories" {% if form.calories.data %}value="{{ form.calories.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.calories.errors %}
                 {{ form.calories.errors[0] }}
+                {% endif %}
+              </div>
+            </div>
+            <div class="form-group col-12">
+              <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" id="form-recipe-description" rows="3" name="description" placeholder="Description" {% if form.description.data %}value="{{ form.description.data }}"{% endif %}></textarea>
+              <div class="invalid-feedback">
+                {% if form.description.errors %}
+                {{ form.description.errors[0] }}
                 {% endif %}
               </div>
             </div>
@@ -114,42 +117,32 @@
               {% endif %}
             </div>
           </div>
-
         </div>
       </div>
       <div class="form-group">
-        <!-- <label for="form-recipe-description">Description</label> -->
-        <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" id="form-recipe-description" rows="3" name="description" placeholder="Description" {% if form.description.data %}value="{{ form.description.data }}"{% endif %}></textarea>
-        <div class="invalid-feedback">
-          {% if form.description.errors %}
-          {{ form.description.errors[0] }}
-          {% endif %}
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Notes</label>
+        <label class="form-section-title">Notes</label>
         <div>
-          <button class="btn btn-success add-note" type="button">Add note</button>
+          <button class="btn btn-outline-success add-note" type="button">Add note</button>
         </div>
       </div>
       <div class="form-group">
-        <label>Ingredients</label>
+        <label class="form-section-title">Ingredients</label>
         <div>
-          <button class="btn btn-success add-ingredient" type="button">Add ingredient</button>
+          <button class="btn btn-outline-success add-ingredient" type="button">Add ingredient</button>
         </div>
       </div>
       <div class="form-group">
-        <label>Directions</label>
+        <label class="form-section-title">Directions</label>
         <div>
-          <button class="btn btn-success add-direction" type="button">Add direction</button>
+          <button class="btn btn-outline-success add-direction" type="button">Add direction</button>
         </div>
       </div>
       <div class="form-row mb-3">
-        <div class="col-12 col-md-8">
-          <input type="submit" name="save" value="Save Recipe" class="btn btn-primary btn-block">
+        <div class="col-12 col-md-4 mt-2 mt-md-0 order-2 order-md-1">
+          <input type="submit" name="save_and_add" value="Save and add another" class="btn btn-success btn-block">
         </div>
-        <div class="col-12 col-md-4 mt-2 mt-md-0">
-          <input type="submit" name="save_and_add" value="Save and add another" class="btn btn-primary btn-block">
+        <div class="col-12 col-md-8 order-1 order-md-2">
+          <input type="submit" name="save" value="Save" class="btn btn-success btn-block">
         </div>
       </div>
     </form>
@@ -157,7 +150,7 @@
     <!-- Form fields that get added on click -->
     <div class="d-none">
       <div class="input-group mb-3" id="note-template">
-        <input type="text" class="form-control" name="notes" placeholder="Note">
+        <input type="text" class="form-control" name="notes" placeholder="Enter a note">
         <div class="input-group-append">
           <button class="btn btn-danger remove" type="button"><i class="fas fa-minus"></i></button>
         </div>
@@ -166,7 +159,7 @@
 
     <div class="d-none">
       <div class="input-group mb-3" id="ingredient-template">
-        <input type="text" class="form-control" name="ingredients" placeholder="Ingredient">
+        <input type="text" class="form-control" name="ingredients" placeholder="Enter an ingredient">
         <div class="input-group-append">
           <button class="btn btn-danger remove" type="button"><i class="fas fa-minus"></i></button>
         </div>
@@ -175,7 +168,7 @@
 
     <div class="d-none">
       <div class="input-group mb-3" id="direction-template">
-        <input type="text" class="form-control" name="directions" placeholder="Direction">
+        <input type="text" class="form-control" name="directions" placeholder="Enter a direction">
         <div class="input-group-append">
           <button class="btn btn-danger remove" type="button"><i class="fas fa-minus"></i></button>
         </div>
