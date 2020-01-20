@@ -86,9 +86,9 @@ def add():
             'filename' : f'{title_formatted}.txt'
         }
 
-        # add_recipe_file(recipe)
-        # recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
-        # add_recipe(recipe)
+        add_recipe_file(recipe)
+        recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
+        add_recipe(recipe)
 
         if form.save.data:
             return redirect(url_for('main.recipe', recipe_link=title_formatted))
