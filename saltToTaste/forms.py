@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField
-from wtforms import StringField, IntegerField, FieldList, SubmitField, ValidationError
+from wtforms import StringField, TextAreaField, IntegerField, FieldList, SubmitField, ValidationError
 from wtforms.validators import InputRequired, Length, Optional
 from saltToTaste.database_handler import get_recipe_by_title, get_recipe_by_title_f
 
@@ -31,9 +31,9 @@ class RecipeForm(FlaskForm):
     calories = IntegerField(validators=[Optional()])
     image = FileField(validators=[Optional(), allowedFileExtensions])
     image_credit = StringField()
-    description = StringField()
+    description = TextAreaField()
     notes = FieldList(StringField())
     ingredients = FieldList(StringField())
-    directions = FieldList(StringField())
+    directions = FieldList(TextAreaField())
     save = SubmitField()
     save_and_add = SubmitField()
