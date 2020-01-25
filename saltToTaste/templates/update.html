@@ -6,7 +6,7 @@
 
 {% block body_container %}
   <div class="container mt-1">
-    <h1 class="form-title mt-md-4 mb-md-2">Update Recipe</h1>
+    <h1 class="page-title mt-md-4 mb-md-2">Update Recipe</h1>
     <form class="needs-validation" method="post" enctype=multipart/form-data action="/update/{{ id }}" novalidate>
       {{ form.csrf_token }}
       <div class="form-row d-none">
