@@ -180,7 +180,7 @@
         document.forms[0].submit()
       };
 
-      // Script to clamp text
+      // Script to clamp text (cut off recipe titles in cards)
       $('.clampThis').each(function(index, element) {
         $clamp(element, { clamp: 2});
       });
@@ -189,19 +189,21 @@
       $(document).ready(function () {
         bsCustomFileInput.init()
       })
+
       // Preview selected image
       document.getElementById('form-recipe-image').addEventListener('change', readURL, true);
-        function readURL(){
-            var file = document.getElementById("form-recipe-image").files[0];
-            var reader = new FileReader();
-            reader.onloadend = function(){
-                document.getElementById('selected-image').style.backgroundImage = "url(" + reader.result + ")";
-            }
-            if(file){
-                reader.readAsDataURL(file);
-            }else{
-            }
-        }
+      function readURL(){
+          var file = document.getElementById("form-recipe-image").files[0];
+          var reader = new FileReader();
+          reader.onloadend = function(){
+              document.getElementById('selected-image').style.backgroundImage = "url(" + reader.result + ")";
+          }
+          if(file){
+              reader.readAsDataURL(file);
+          }else{
+          }
+      }
+
       // Add or remove notes/ingredients/directions
       $(document).ready(function() {
         var noteCount = 0;
@@ -247,7 +249,6 @@
           $(".add-direction").before(clone);
           directionCount++;
         });
-
 
         $("body").on("click",".remove",function(){
           $(this).parents(".input-group").remove();

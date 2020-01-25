@@ -142,6 +142,16 @@ body {
   background-color: #c9c87f;
 }
 
+.recipe-card-tag.spicy, .recipe-details-tag.spicy {
+  border-color: #690000;
+  background-color: #ff3131;
+  color: #690000;
+}
+
+.recipe-card-tag.spicy:hover, .recipe-details-tag.spicy:hover {
+  background-color: #ca2727;
+}
+
 .recipe-card-tag.blue-apron, .recipe-details-tag.blue-apron {
   border-color: #0f346c;
   background-color: #9facf5;
@@ -167,11 +177,12 @@ body {
   font-weight: 500;
 }
 
-.recipe-details-download {
+.recipe-details-action {
   color: #c9c9c9;
 }
 
-.recipe-details-download:hover {
+.recipe-details-action:hover {
+  text-decoration: none;
   color: #8c4242;
 }
 

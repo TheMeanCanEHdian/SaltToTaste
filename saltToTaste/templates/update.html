@@ -28,7 +28,7 @@
         <div class="col order-2 order-md-1">
           <div class="form-row">
             <div class="form-group col-12">
-              <input type="text" class="form-control form-control-lg {% if form.title.errors %}is-invalid{% endif %}" id="form-recipe-name" name="title" placeholder="Name" {% if form.title.data %}value="{{ form.title.data }}"{% endif %}>
+              <input type="text" class="form-control form-control-lg {% if form.title.errors %}is-invalid{% endif %}" id="form-recipe-title" name="title" placeholder="Title" {% if form.title.data %}value="{{ form.title.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.title.errors %}
                 {{ form.title.errors[0] }}
@@ -113,7 +113,7 @@
                   <input type="file" class="custom-file-input d-none" id="form-recipe-image" name="image">
                 </label>
               </div>
-              <div class="position-absolute w-100 h-100 border rounded image-container {% if form.image.errors %}invalid-image{% endif %}" id="selected-image" {% if image_path %}style="background-image: url('{{ url_for('main.image_path', filename=image_path) }}')"{% endif %}></div>
+              <div class="position-absolute w-100 h-100 border rounded image-container {% if form.image.errors %}invalid-image{% endif %}" id="selected-image" {% if image %}style="background-image: url('{{ url_for('main.image', filename=image) }}')"{% endif %}></div>
             </div>
             <div class="invalid-feedback">
               {% if form.image.errors %}

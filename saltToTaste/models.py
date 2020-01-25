@@ -22,23 +22,23 @@ recipe_note = db.Table('recipe_note_assoc',
 )
 
 class Recipe(db.Model):
-    __searchable__ = ['title', 'description', 'calories']
+    __searchable__ = ['title', 'description']
     __analyzer__ = StemmingAnalyzer()
     id = db.Column(db.Integer, primary_key=True)
     layout = db.Column(db.String(15))
     title = db.Column(db.String(100), unique=True, nullable=False)
     title_formatted = db.Column(db.String(100))
     filename = db.Column(db.String(100))
-    image_path = db.Column(db.String(104))
-    image_credit = db.Column(db.String(150))
+    image = db.Column(db.String(104))
+    imagecredit = db.Column(db.String(150))
     source = db.Column(db.String(150))
     description = db.Column(db.String(750))
-    prep = db.Column(db.String(10))
-    cook = db.Column(db.String(10))
-    ready = db.Column(db.String(10))
-    servings = db.Column(db.String(5))
-    calories = db.Column(db.String(20))
-    file_last_modified = db.Column(db.DateTime)
+    prep = db.Column(db.Integer)
+    cook = db.Column(db.Integer)
+    ready = db.Column(db.Integer)
+    servings = db.Column(db.Integer)
+    calories = db.Column(db.Integer)
+    file_hash = db.Column(db.String())
 
     tags = db.relationship(
         'Tag',
@@ -88,8 +88,8 @@ class Recipe(db.Model):
             'title' : self.title,
             'title_formatted' : self.title_formatted,
             'filename' : self.filename,
-            'image_path' : self.image_path,
-            'image_credit' : self.image_credit,
+            'image' : self.image,
+            'imagecredit' : self.imagecredit,
             'source' : self.source,
             'description' : self.description,
             'prep' : self.prep,
@@ -97,7 +97,7 @@ class Recipe(db.Model):
             'ready' : self.ready,
             'servings' : self.servings,
             'calories' : self.calories,
-            'file_last_modified' : self.file_last_modified,
+            'file_hash' : self.file_hash,
             'tags' : tags,
             'directions' : directions,
             'ingredients' : ingredients,

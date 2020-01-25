@@ -1,13 +1,14 @@
 import os
 import argparse
-from flask import Blueprint, jsonify, request, abort
 from datetime import datetime
 from functools import wraps
+from collections import OrderedDict
+from flask import current_app, Blueprint, jsonify, request, abort
+from werkzeug.utils import secure_filename
 from . import api_key
 from saltToTaste.models import Recipe
-from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe
-from saltToTaste.search_handler import search_parser
-from saltToTaste.recipe_handler import delete_recipe_file, delete_recipe_image, add_recipe_file, download_image
+from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe, search_parser, check_for_duplicate_title_f
+from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file
 from saltToTaste.parser_handler import argparser_results
 
 argument = argparser_results()
@@ -42,22 +43,31 @@ def get_recipe_json(recipe_id):
 @api.route('/search', methods=['GET'])
 @require_apikey
 def search_parser_json():
-    search_data = request.args.get('data')
+    search_data = request.args.get('data').split(',')
+    search_data = [x.strip(' ') for x in search_data]
     return jsonify({'recipe' : search_parser(search_data)})
 
 @api.route('/add', methods=['POST'])
 @require_apikey
 def add_recipe_json():
     data = request.get_json()
-    title = data.get('title')
-    title_formatted = title.replace(" ", "_").lower()
+    downloadImage = request.args.get('downloadImage')
 
-    recipe = {
-        'layout' : data.get('layout') or 'recipe',
+    if not data.get('layout'):
+        return jsonify({'error' : 'layout missing'})
+
+    if not data.get('title'):
+        return jsonify({'error' : 'title missing'})
+
+    title_formatted = data.get('title').replace(" ", "-").lower()
+    filename = f'{title_formatted}.yaml'
+
+    recipe = OrderedDict({
+        'layout' : data.get('layout'),
         'title' : data.get('title'),
-        'formatted_title' : title_formatted,
+        'title_formatted' : title_formatted,
         'image' : data.get('image'),
-        'imagecredit' : data.get('image_credit'), # this is the link to image to download
+        'imagecredit' : data.get('imagecredit'),
         'tags' : data.get('tags'),
         'source' : data.get('source'),
         'prep' : data.get('prep'),
@@ -69,99 +79,109 @@ def add_recipe_json():
         'ingredients' : data.get('ingredients'),
         'directions' : data.get('directions'),
         'notes' : data.get('notes'),
-        'filename' : f'{title_formatted}.txt'
-    }
+        'filename' : filename
+    })
 
-    if not recipe['title']:
-        return jsonify({'error' : 'title missing'})
+    if downloadImage:
+        if downloadImage != "true":
+            return jsonify({'error' : 'downloadImage set but has invalid value'})
+        if not recipe['imagecredit']:
+            return jsonify({'error' : 'downloadImage set but imagecredit is empty'})
+        image = download_image(recipe['imagecredit'], current_app.config['RECIPE_IMAGES'], recipe['title_formatted'])
+        if not image:
+            return jsonify({'error' : 'image download failed', 'message' : 'check imagecredit value'})
+        recipe['image'] = image
 
-    if recipe['imagecredit']:
-        download_image(recipe['imagecredit'], title_formatted)
-        recipe['image'] = f"{title_formatted}.jpg"
-    add_recipe_file(recipe)
-    recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
+    create_recipe_file(current_app.config['RECIPE_FILES'], recipe)
+    file = os.path.join(current_app.config['RECIPE_FILES'], recipe['filename'])
+    recipe['file_hash'] = hash_file(file)
     add_recipe(recipe)
+
     return jsonify({'success' : 'Recipe added'})
 
 @api.route('/update/<int:recipe_id>', methods=['PUT'])
 @require_apikey
 def update_recipes_json(recipe_id):
     data = request.get_json()
-    recipe_query = Recipe.query.filter(Recipe.id == recipe_id).first()
+    downloadImage = request.args.get('downloadImage')
+
+    recipe_query = get_recipe(recipe_id)
 
     if not recipe_query:
-        return jsonify({'error' : 'recipe not found'})
+        return jsonify({'error' : 'recipe ID not found'})
 
-    title = data.get('title') or recipe_query.title
-    title_formatted = title.replace(" ", "_").lower()
+    if not data.get('layout'):
+        return jsonify({'error' : 'layout missing'})
 
-    recipe = {
-        'layout' : data.get('layout') or recipe_query.layout,
-        'title' : title,
-        'formatted_title' : title_formatted,
-        'image' : f'{title_formatted}.jpg',
-        'imagecredit' : data.get('image_credit') or recipe_query.image_credit, # this is the link to image to download
-        'tags' : [],
-        'source' : data.get('source') or recipe_query.source,
-        'prep' : data.get('prep') or recipe_query.prep,
-        'cook' : data.get('cook') or recipe_query.cook,
-        'ready' : data.get('ready') or recipe_query.ready,
-        'servings' : data.get('servings') or recipe_query.servings,
-        'calories' : data.get('calories') or recipe_query.calories,
-        'description' : data.get('description') or recipe_query.description,
-        'ingredients' : [],
-        'directions' : [],
-        'notes' : [],
-        'filename' : f'{title_formatted}.txt'
-    }
+    if not data.get('title'):
+        return jsonify({'error' : 'title missing'})
 
-    if data.get('tags'):
-        recipe['tags'] = data.get('tags')
-    else:
-        for tag in recipe_query.tags:
-            recipe['tags'].append(tag.name)
-    if data.get('ingredients'):
-        recipe['ingredients'] = data.get('ingredients')
-    else:
-        for ingredient in recipe_query.ingredients:
-            recipe['ingredients'].append(ingredient.name)
-    if data.get('directions'):
-        recipe['directions'] = data.get('directions')
-    else:
-        for direction in recipe_query.directions:
-            recipe['directions'].append(direction.name)
-    if data.get('notes'):
-        recipe['notes'] = data.get('notes')
-    else:
-        for note in recipe_query.notes:
-            recipe['notes'].append(note.name)
+    title_formatted = data.get('title').replace(" ", "-").lower()
+    filename = f'{title_formatted}.yaml'
 
-    if recipe_query.title != recipe['title']:
-        print (f' * Recipe title was changed so the recipe is being replaced.')
-        delete_recipe_file(recipe.filename)
-        delete_recipe_image(recipe.image_path)
-        delete_recipe(recipe_query.id)
-        download_image(recipe['imagecredit'], title_formatted)
-        add_recipe_file(recipe)
-        recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
-        add_recipe(recipe)
+    if check_for_duplicate_title_f(recipe_id, title_formatted):
+        return jsonify({'error' : 'recipe name must be unique'})
 
-        return jsonify({'success' : 'recipe updated', 'note' : 'recipe ID was changed'})
+    recipe = OrderedDict({
+        'layout' : data.get('layout'),
+        'title' : data.get('title'),
+        'title_formatted' : title_formatted,
+        'image' : data.get('image'),
+        'imagecredit' : data.get('imagecredit'),
+        'tags' : data.get('tags'),
+        'source' : data.get('source'),
+        'prep' : data.get('prep'),
+        'cook' : data.get('cook'),
+        'ready' : data.get('ready'),
+        'servings' : data.get('servings'),
+        'calories' : data.get('calories'),
+        'description' : data.get('description'),
+        'ingredients' : data.get('ingredients'),
+        'directions' : data.get('directions'),
+        'notes' : data.get('notes'),
+        'filename' : filename
+    })
 
-    add_recipe_file(recipe)
-    recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
-    update_recipe(recipe)
+    if downloadImage:
+        if downloadImage != "true":
+            return jsonify({'error' : 'downloadImage set but has invalid value'})
+        if not recipe['imagecredit']:
+            return jsonify({'error' : 'downloadImage set but imagecredit is empty'})
+        image = download_image(recipe['imagecredit'], current_app.config['RECIPE_IMAGES'], recipe['title_formatted'])
+        if not image:
+            return jsonify({'error' : 'image download failed', 'message' : 'check imagecredit value'})
+        recipe['image'] = image
+
+    if recipe['title'] != recipe_query['title']:
+        if recipe['title_formatted'] != recipe_query['title_formatted']:
+            # Rename image
+            ext = recipe['image'].rsplit('.', 1)[1].lower()
+            updated_filename = f'{title_formatted}.{ext}'
+            secure_file = secure_filename(updated_filename)
+            rename_file(os.path.join(current_app.config['RECIPE_IMAGES'], recipe_query['image']), os.path.join(current_app.config['RECIPE_IMAGES'], secure_file))
+            recipe['image'] = secure_file
+
+        # Rename file
+        rename_file(os.path.join(current_app.config['RECIPE_FILES'], recipe_query['filename']), os.path.join(current_app.config['RECIPE_FILES'], recipe['filename']))
+
+    create_recipe_file(current_app.config['RECIPE_FILES'], recipe)
+    file = os.path.join(current_app.config['RECIPE_FILES'], recipe['filename'])
+    recipe['file_hash'] = hash_file(file)
+    update_recipe(recipe_query['filename'], recipe_query['title'], recipe)
 
     return jsonify({'success' : 'recipe updated'})
 
 @api.route('/delete/<int:recipe_id>', methods=['DELETE'])
 @require_apikey
 def delete_recipe_json(recipe_id):
-    recipe = Recipe.query.filter(Recipe.id == recipe_id).first()
-    file = os.path.exists(f'{DATA_DIR}/_recipes/{recipe.filename}')
-    if recipe and file:
-        delete_recipe_file(recipe.filename)
-        delete_recipe_image(recipe.image_path)
+    recipe_query = get_recipe(recipe_id)
+
+    if recipe_query:
+        delete_file(current_app.config['RECIPE_FILES'], recipe_query['filename'])
+        if 'image' in recipe_query:
+            delete_file(current_app.config['RECIPE_IMAGES'], recipe_query['image'])
         delete_recipe(recipe_id)
-        return jsonify({'success' : 'Recipe deleted'})
-    return jsonify({'error' : 'ID not found'})
+
+        return jsonify({'success' : 'recipe deleted'})
+
+    return jsonify({'error' : 'recipe ID not found'})
