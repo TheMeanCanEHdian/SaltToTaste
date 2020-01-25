@@ -1,3 +1,4 @@
+from collections import defaultdict
 from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Tag, Ingredient, Direction, Note
 
@@ -5,8 +6,8 @@ def get_recipes():
     recipes = Recipe.query.all()
     return [recipe.api_model() for recipe in recipes]
 
-def get_recipe(recipe_id):
-    recipe = Recipe.query.get(recipe_id)
+def get_recipe(id):
+    recipe = Recipe.query.get(id)
     try:
         return recipe.api_model()
     except:
@@ -26,20 +27,26 @@ def get_recipe_by_title_f(title_formatted):
     except:
         return False
 
-def check_for_duplicate_title(id, title):
-    result = Recipe.query.filter(Recipe.title == title, Recipe.id != id).first()
+def check_for_duplicate_title_f(id, title_formatted):
+    result = Recipe.query.filter(Recipe.title_formatted == title_formatted, Recipe.id != id).first()
     if result:
         return True
     return False
 
 def add_recipe(recipe_data):
-    if not Recipe.query.filter(Recipe.filename == recipe_data['filename']).first():
-        print (f' + Inserting {recipe_data["filename"]} into database')
-        recipe = Recipe(layout=recipe_data['layout'], title=recipe_data['title'], title_formatted=recipe_data['title'].lower().replace(' ', '_'))
+    query = Recipe.query.filter(Recipe.title_formatted == recipe_data['title_formatted']).first()
+    if not query:
+        print (f" + Inserting {recipe_data['title']} into database.")
+        recipe = Recipe(
+            layout=recipe_data['layout'],
+            title=recipe_data['title'],
+            title_formatted=recipe_data['title_formatted'],
+            filename = recipe_data['filename']
+        )
         if recipe_data['image']:
-            recipe.image_path = recipe_data['image']
+            recipe.image = recipe_data['image']
         if recipe_data['imagecredit']:
-            recipe.image_credit = recipe_data['imagecredit']
+            recipe.imagecredit = recipe_data['imagecredit']
         if recipe_data['source']:
             recipe.source = recipe_data['source']
         if recipe_data['description']:
@@ -54,51 +61,61 @@ def add_recipe(recipe_data):
             recipe.servings = recipe_data['servings']
         if recipe_data['calories']:
             recipe.calories = recipe_data['calories']
-        if recipe_data['last_modified']:
-            recipe.file_last_modified = recipe_data['last_modified']
-        if recipe_data['filename']:
-            recipe.filename = recipe_data['filename']
+        if recipe_data['file_hash']:
+            recipe.file_hash = recipe_data['file_hash']
+
         db.session.add(recipe)
 
         if recipe_data['tags']:
+            tags = Tag.query.filter(Tag.name.in_(recipe_data['tags']))
+
             for t in recipe_data['tags']:
-                if not Tag.query.filter(Tag.name == t).first():
+                tag = next(iter([item for item in tags if item.name == t]), None)
+                if not tag:
                     tag = Tag(name=t)
                     db.session.add(tag)
                 # Create Recipe-Tag mapping (creates entry in recipe_tag_assoc)
-                tag = Tag.query.filter(Tag.name == t).first()
                 recipe.tags.append(tag)
 
-            if recipe_data['ingredients']:
-                for i in recipe_data['ingredients']:
-                    if not Ingredient.query.filter(Ingredient.name == i).first():
-                        ingredient = Ingredient(name=i)
-                        db.session.add(ingredient)
-                    ingredient = Ingredient.query.filter(Ingredient.name == i).first()
-                    recipe.ingredients.append(ingredient)
+        if recipe_data['ingredients']:
+            ingredients = Ingredient.query.filter(Ingredient.name.in_(recipe_data['ingredients']))
 
-            if recipe_data['directions']:
-                for d in recipe_data['directions']:
-                    if not Direction.query.filter(Direction.name == d).first():
-                        direction = Direction(name=d)
-                        db.session.add(direction)
-                    direction = Direction.query.filter(Direction.name == d).first()
-                    recipe.directions.append(direction)
+            for i in recipe_data['ingredients']:
+                ingredient = next(iter([item for item in ingredients if item.name == i]), None)
+                if not ingredient:
+                    ingredient = Ingredient(name=i)
+                    db.session.add(ingredient)
+                recipe.ingredients.append(ingredient)
 
-            if recipe_data['notes']:
-                for n in recipe_data['notes']:
-                    if not Note.query.filter(Note.name == n).first():
-                        note = Note(name=n)
-                        db.session.add(note)
-                    note = Note.query.filter(Note.name == n).first()
-                    recipe.notes.append(note)
+        if recipe_data['directions']:
+            directions = Direction.query.filter(Direction.name.in_(recipe_data['directions']))
+
+            for d in recipe_data['directions']:
+                direction = next(iter([item for item in directions if item.name == d]), None)
+                if not direction:
+                    direction = Direction(name=d)
+                    db.session.add(direction)
+                recipe.directions.append(direction)
+
+        if recipe_data['notes']:
+            notes = Note.query.filter(Note.name.in_(recipe_data['notes']))
+
+            for n in recipe_data['notes']:
+                note = next(iter([item for item in notes if item.name == n]), None)
+                if not note:
+                    note = Note(name=n)
+                    db.session.add(note)
+                recipe.notes.append(note)
 
         db.session.commit()
+        return True
+
+    return False
 
 def delete_recipe(id):
-    recipe = Recipe.query.filter(Recipe.id == id).first()
+    recipe = Recipe.query.get(id)
     if recipe:
-        print (f' - Removing {recipe.title} from database')
+        print (f' - Removing {recipe.title} from database.')
 
         recipe.tags.clear()
         recipe.ingredients.clear()
@@ -115,65 +132,85 @@ def delete_recipe_by_filename(filename):
     recipe = Recipe.query.filter(Recipe.filename == filename).first()
     delete_recipe(recipe.id)
 
-def update_recipe(old_data, updated_data):
-    print (f' + Updating {old_data["title"]}')
-    recipe_query = Recipe.query.filter(Recipe.filename == old_data['filename']).first()
+def update_recipe(filename, title, updated_data):
+    # Filename and title should be for the ORIGINAL data. If either is being updated this information should be from before the update.
+    recipe = Recipe.query.filter(Recipe.filename == filename).first()
 
-    recipe_query.layout = updated_data['layout']
-    recipe_query.title = updated_data['title']
-    recipe_query.title_formatted = updated_data['formatted_title']
-    recipe_query.filename = updated_data['filename']
-    recipe_query.image_path = updated_data['image']
-    recipe_query.source = updated_data['source'] or None
-    recipe_query.prep = updated_data['prep'] or None
-    recipe_query.cook = updated_data['cook'] or None
-    recipe_query.ready = updated_data['ready'] or None
-    recipe_query.servings = updated_data['servings'] or None
-    recipe_query.calories = updated_data['calories'] or None
-    recipe_query.description = updated_data['description'] or None
-    recipe_query.file_last_modified = updated_data['last_modified']
-    recipe_query.tags.clear()
-    recipe_query.ingredients.clear()
-    recipe_query.directions.clear()
-    recipe_query.notes.clear()
+    if recipe:
+        print (f' + Updating {title} in database.')
 
-    for t in updated_data['tags']:
-        if not Tag.query.filter(Tag.name == t).first():
-            tag = Tag(name=t)
-            db.session.add(tag)
-        tag = Tag.query.filter(Tag.name == t).first()
-        recipe_query.tags.append(tag)
+        recipe.layout = updated_data['layout']
+        recipe.title = updated_data['title']
+        recipe.title_formatted = updated_data['title_formatted']
+        recipe.filename = updated_data['filename']
+        recipe.image = updated_data['image'] or None
+        recipe.imagecredit = updated_data['imagecredit'] or None
+        recipe.source = updated_data['source'] or None
+        recipe.prep = updated_data['prep'] or None
+        recipe.cook = updated_data['cook'] or None
+        recipe.ready = updated_data['ready'] or None
+        recipe.servings = updated_data['servings'] or None
+        recipe.calories = updated_data['calories'] or None
+        recipe.description = updated_data['description'] or None
+        recipe.file_hash = updated_data['file_hash']
+        recipe.tags.clear()
+        recipe.ingredients.clear()
+        recipe.directions.clear()
+        recipe.notes.clear()
 
-    for i in updated_data['ingredients']:
-        if not Ingredient.query.filter(Ingredient.name == i).first():
-            ingredient = Ingredient(name=i)
-            db.session.add(ingredient)
-        ingredient = Ingredient.query.filter(Ingredient.name == i).first()
-        recipe_query.ingredients.append(ingredient)
 
-    for d in updated_data['directions']:
-        if not Direction.query.filter(Direction.name == d).first():
-            direction = Direction(name=d)
-            db.session.add(direction)
-        direction = Direction.query.filter(Direction.name == d).first()
-        recipe_query.directions.append(direction)
+        if updated_data['tags']:
+            tags = Tag.query.filter(Tag.name.in_(updated_data['tags']))
 
-    for n in updated_data['notes']:
-        if not Note.query.filter(Note.name == n).first():
-            note = Note(name=n)
-            db.session.add(note)
-        note = Note.query.filter(Note.name == n).first()
-        recipe_query.notes.append(note)
+            for t in updated_data['tags']:
+                tag = next(iter([item for item in tags if item.name == t]), None)
+                if not tag:
+                    tag = Tag(name=t)
+                    db.session.add(tag)
+                # Create Recipe-Tag mapping (creates entry in recipe_tag_assoc)
+                recipe.tags.append(tag)
 
-    db.session.commit()
+        if updated_data['ingredients']:
+            ingredients = Ingredient.query.filter(Ingredient.name.in_(updated_data['ingredients']))
+
+            for i in updated_data['ingredients']:
+                ingredient = next(iter([item for item in ingredients if item.name == i]), None)
+                if not ingredient:
+                    ingredient = Ingredient(name=i)
+                    db.session.add(ingredient)
+                recipe.ingredients.append(ingredient)
+
+        if updated_data['directions']:
+            directions = Direction.query.filter(Direction.name.in_(updated_data['directions']))
+
+            for d in updated_data['directions']:
+                direction = next(iter([item for item in directions if item.name == d]), None)
+                if not direction:
+                    direction = Direction(name=d)
+                    db.session.add(direction)
+                recipe.directions.append(direction)
+
+        if updated_data['notes']:
+            notes = Note.query.filter(Note.name.in_(updated_data['notes']))
+
+            for n in updated_data['notes']:
+                note = next(iter([item for item in notes if item.name == n]), None)
+                if not note:
+                    note = Note(name=n)
+                    db.session.add(note)
+                recipe.notes.append(note)
+
+        db.session.commit()
+        return True
+
+    return False
 
 def update_recipes(recipe_list):
     print (' * Checking for altered recipes')
     for recipe in recipe_list:
-        recipe_query = Recipe.query.filter(Recipe.filename == recipe['filename']).first()
-        if recipe_query.file_last_modified != recipe['last_modified']:
-            # This will work for now since its has the same name on lookup
-            update_recipe(recipe, recipe)
+        query = Recipe.query.filter(Recipe.filename == recipe['filename']).first()
+        if query and query.file_hash != recipe['file_hash']:
+            update_recipe(recipe['filename'], query.title, recipe)
 
 def add_all_recipes(recipe_list):
     print (' * Initial insert of recipes')
@@ -182,15 +219,15 @@ def add_all_recipes(recipe_list):
 
 def add_new_recipes(recipe_list):
     print (' * Checking for new recipes')
-    db_recipes = [x.filename for x in Recipe.query.all()]
+    db_recipes = [recipe.filename for recipe in Recipe.query.all()]
     for recipe in recipe_list:
         if recipe['filename'] not in db_recipes:
             add_recipe(recipe)
 
 def remove_missing_recipes(recipe_list):
     print (' * Checking for missing recipes to remove')
-    db_recipes = [x.filename for x in Recipe.query.all()]
-    recipe_files = [x['filename'] for x in recipe_list]
+    db_recipes = [recipe.filename for recipe in Recipe.query.all()]
+    recipe_files = [recipe['filename'] for recipe in recipe_list]
     for filename in db_recipes:
         if filename not in recipe_files:
             delete_recipe_by_filename(filename)
@@ -219,3 +256,114 @@ def db_cleanup():
             if not n.recipe:
                 Note.query.filter(Note.id == n.id).delete()
     db.session.commit()
+
+def search_parser(search_data):
+    # Format search data to allow for AND/OR keywords for Whoosh indexing
+    formatted_data = []
+    for item in search_data:
+        formatted_data.append(item.lower().replace(' or ', ' OR ' ).replace(' and ', ' AND '))
+    search_dict = defaultdict(list)
+    # Organize search terms
+    for item in formatted_data:
+        if 'title:' in item:
+            search_dict['title'].append(item.replace('title:', ''))
+        elif 'tag:' in item:
+            search_dict['tag'].append(item.replace('tag:', ''))
+        elif 'ingredient:' in item:
+            search_dict['ingredient'].append(item.replace('ingredient:', ''))
+        elif 'direction:' in item:
+            search_dict['direction'].append(item.replace('direction:', ''))
+        elif 'calories' in item:
+            search_dict['calories'].append(item.replace('calories:', ''))
+        elif 'note' in item:
+            search_dict['note'].append(item.replace('note:', ''))
+        else:
+            search_dict['general'].append(item)
+    # Process search results
+    search_results = defaultdict(list)
+    if search_dict['general']:
+        for item in search_dict['general']:
+            query = Recipe.query.search(item).all()
+            for recipe in query:
+                if recipe not in search_results['general']:
+                    search_results['general'].append(recipe)
+    if search_dict['title']:
+        for item in search_dict['title']:
+            query = Recipe.query.search(item, fields=('title',)).all()
+            for recipe in query:
+                if recipe not in search_results['title']:
+                    search_results['title'].append(recipe)
+    if search_dict['tag']:
+        for item in search_dict['tag']:
+          query = Tag.query.search(item).all()
+          for result in query:
+              for recipe in result.recipe:
+                  if recipe not in search_results['tag']:
+                      search_results['tag'].append(recipe)
+    if search_dict['ingredient']:
+        for item in search_dict['ingredient']:
+            query = Ingredient.query.search(item).all()
+            for result in query:
+                for recipe in result.recipe:
+                    if recipe not in search_results['ingredient']:
+                        search_results['ingredient'].append(recipe)
+    if search_dict['direction']:
+        for item in search_dict['direction']:
+            query = Direction.query.search(item).all()
+            for result in query:
+                for recipe in result.recipe:
+                    if recipe not in search_results['direction']:
+                        search_results['direction'].append(recipe)
+    if search_dict['calories']:
+        intersection_list = []
+        for item in search_dict['calories']:
+            result_group = []
+            if '<=' in item:
+                query = Recipe.query.filter(Recipe.calories <= item.strip('<=')).order_by(Recipe.calories).all()
+            elif '<' in item:
+                query = Recipe.query.filter(Recipe.calories < item.strip('<')).order_by(Recipe.calories).all()
+            elif '>=' in item:
+                query = Recipe.query.filter(Recipe.calories >= item.strip('>=')).order_by(Recipe.calories).all()
+            elif '>' in item:
+                query = Recipe.query.filter(Recipe.calories > item.strip('>')).order_by(Recipe.calories).all()
+            else:
+                query = Recipe.query.filter(Recipe.calories == item).order_by(Recipe.calories).all()
+            for result in query:
+                result_group.append(result)
+            # Only keep results that show up in every calorie query
+            if len(intersection_list) < 1:
+                for item in result_group:
+                    intersection_list.append(item)
+            else:
+                set_result = set(intersection_list) & set(result_group)
+                intersection_list.clear()
+                for result in set_result:
+                    intersection_list.append(result)
+
+            search_results['calories'] = intersection_list
+
+        search_results['calories'].sort(key=lambda x: x.calories)
+    if search_dict['note']:
+        for item in search_dict['note']:
+            query = Note.query.search(item).all()
+            for result in query:
+                for recipe in result.recipe:
+                    if recipe not in search_results['note']:
+                        search_results['note'].append(recipe)
+    # Combine results
+    # Create an initial combined_list dict using the first search term results list unless calories is a key (so that results are sorted by calories primarily)
+    if search_dict['calories']:
+        initial_key = 'calories'
+        combined_list = search_results[initial_key]
+    else:
+        for key in search_dict.keys():
+            if search_dict[key]:
+                initial_key = key
+                combined_list = search_results[initial_key]
+                break
+    #Process results and only keep items that appear in every list
+    for key in search_results:
+        if key != initial_key:
+            if search_results[key]:
+                combined_list = [x for x in combined_list if x in search_results[key]]
+    return [recipe.api_model() for recipe in combined_list]

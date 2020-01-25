@@ -1,18 +1,14 @@
 import os
 from datetime import datetime
+from collections import OrderedDict
 from flask import current_app, Blueprint, render_template, request, send_file, safe_join, abort, session, url_for, redirect, flash, send_from_directory
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note
 from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm
-from saltToTaste.search_handler import search_parser
-from saltToTaste.recipe_handler import add_recipe_file, delete_recipe_file
-from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe
-from saltToTaste.parser_handler import argparser_results
-
-argument = argparser_results()
-DATA_DIR = os.path.abspath(argument['DATA_DIR'])
+from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file
+from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser
 
 main = Blueprint('main', __name__)
 
@@ -28,9 +24,9 @@ def index():
 
     return render_template("index.html", recipes=recipes)
 
-@main.route("/recipe/<string:recipe_link>")
-def recipe(recipe_link):
-    recipe = get_recipe_by_title_f(recipe_link)
+@main.route("/recipe/<string:title_formatted>")
+def recipe(title_formatted):
+    recipe = get_recipe_by_title_f(title_formatted)
 
     return render_template("recipe.html", recipe=recipe)
 
@@ -45,7 +41,7 @@ def download_recipe(filename):
         abort(404)
 
 @main.route("/image/<path:filename>", methods=['GET'])
-def image_path(filename):
+def image(filename):
     return send_from_directory(current_app.config["RECIPE_IMAGES"], filename)
 
 @main.route("/add", methods=['GET', 'POST'])
@@ -53,50 +49,49 @@ def add():
     form = AddRecipeForm()
 
     if form.validate_on_submit():
-        title_formatted = form.title.data.replace(" ", "_").lower()
-        image = form.image.data
-
-        if image:
-            image_extension = image.filename.rsplit('.', 1)[1].lower()
-            image.filename = f'{title_formatted}.{image_extension}'
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(current_app.config['RECIPE_IMAGES'], filename))
-        else:
-            filename = None
-
+        title_formatted = form.title.data.replace(" ", "-").lower()
+        image_data = form.image.data
+        filename = f"{title_formatted}.yaml"
         tags = form.tags.data.split(',')
-        # Remove empty strings from tags that are a result of no tags in form
+
         while("" in tags) :
             tags.remove("")
 
-        print (tags)
+        if image_data:
+            ext = image_data.filename.rsplit('.', 1)[1].lower()
+            image_data.filename = f'{title_formatted}.{ext}'
+            image = secure_filename(image_data.filename)
+            save_image(current_app.config['RECIPE_IMAGES'], image, image_data)
+        else:
+            image = None
 
-        recipe = {
+        recipe = OrderedDict({
             'layout' : form.layout.data or 'recipe',
             'title' : form.title.data,
-            'formatted_title' : title_formatted,
-            'image' : filename,
-            'imagecredit' : form.image_credit.data, # this is the link to image to download
+            'title_formatted' : title_formatted,
+            'image' : image,
+            'imagecredit' : form.imagecredit.data or None,
             'tags' : [tag.strip(' ') for tag in tags],
-            'source' : form.source.data,
-            'prep' : form.prep.data,
-            'cook' : form.cook.data,
-            'ready' : form.ready.data,
-            'servings' : form.servings.data,
-            'calories' : form.calories.data,
-            'description' : form.description.data,
-            'ingredients' : form.ingredients.data,
-            'directions' : form.directions.data,
-            'notes' : form.notes.data,
-            'filename' : f'{title_formatted}.txt'
-        }
+            'source' : form.source.data or None,
+            'prep' : form.prep.data or None,
+            'cook' : form.cook.data or None,
+            'ready' : form.ready.data or None,
+            'servings' : form.servings.data or None,
+            'calories' : form.calories.data or None,
+            'description' : form.calories.data or None,
+            'ingredients' : [x for x in form.ingredients.data if x != ''],
+            'directions' : [x for x in form.directions.data if x != ''],
+            'notes' : [x for x in form.notes.data if x != ''],
+            'filename' : filename
+        })
 
-        add_recipe_file(recipe)
-        recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
+        create_recipe_file(current_app.config['RECIPE_FILES'], recipe)
+        file = os.path.join(current_app.config['RECIPE_FILES'], filename)
+        recipe['file_hash'] = hash_file(file)
         add_recipe(recipe)
 
         if form.save.data:
-            return redirect(url_for('main.recipe', recipe_link=title_formatted))
+            return redirect(url_for('main.recipe', title_formatted=title_formatted))
         if form.save_and_add.data:
             flash(f'Recipe {form.title.data} saved.', 'success')
             return redirect(url_for("main.add"))
@@ -105,77 +100,79 @@ def add():
 
 @main.route("/update/<int:recipe_id>", methods=['GET', 'POST'])
 def update(recipe_id):
-    # Class to convert recipe dict to string
+    # Class to convert recipe dict to obj
     class Struct:
         def __init__(self, **entries):
             self.__dict__.update(entries)
 
-    recipe_dict = get_recipe(recipe_id)
+    recipe_query = get_recipe(recipe_id)
 
-    if not recipe_dict:
+    if not recipe_query:
         abort(404)
 
-    recipe_dict['tags'] = ", ".join(recipe_dict['tags'])
-
-    recipe_obj = Struct(**recipe_dict)
-
+    recipe_query['tags'] = ", ".join(recipe_query['tags'])
+    recipe_obj = Struct(**recipe_query)
     form = UpdateRecipeForm(obj=recipe_obj)
 
     if form.validate_on_submit():
-        title_formatted = form.title.data.replace(" ", "_").lower()
-        image = form.image.data
+        title_formatted = form.title.data.replace(" ", "-").lower()
+        filename = f"{title_formatted}.yaml"
+        image_data = form.image.data
+        tags = form.tags.data.split(',')
 
-        if image:
-            image_extension = image.filename.rsplit('.', 1)[1].lower()
-            image.filename = f'{title_formatted}.{image_extension}'
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(current_app.config['RECIPE_IMAGES'], filename))
+        while("" in tags) :
+            tags.remove("")
+
+        if hasattr(image_data, 'filename'):
+            ext_new = image_data.filename.rsplit('.', 1)[1].lower()
+            ext_old = recipe_query['image'].rsplit('.', 1)[1].lower
+
+            if ext_new != ext_old:
+                delete_file(current_app.config['RECIPE_IMAGES'], recipe_query['image'])
+
+            image_data.filename = f'{title_formatted}.{ext_new}'
+            image = secure_filename(image_data.filename)
+            save_image(current_app.config['RECIPE_IMAGES'], image, image_data)
         else:
-            filename = recipe_dict['image_path']
+            image = recipe_query['image']
 
-        if form.tags.data:
-            tags = form.tags.data.split(',')
-        else:
-            tags = []
-
-        recipe = {
-            'layout' : form.layout.data or 'recipe',
+        recipe = OrderedDict({
+            'layout' : form.layout.data or recipe_query['layout'],
             'title' : form.title.data,
-            'formatted_title' : title_formatted,
-            'image' : filename,
-            'imagecredit' : form.image_credit.data, # this is the link to image to download
+            'title_formatted' : title_formatted,
+            'image' : image,
+            'imagecredit' : form.imagecredit.data or None,
             'tags' : [tag.strip(' ') for tag in tags],
-            'source' : form.source.data,
-            'prep' : form.prep.data,
-            'cook' : form.cook.data,
-            'ready' : form.ready.data,
-            'servings' : form.servings.data,
-            'calories' : form.calories.data,
-            'description' : form.description.data,
-            'ingredients' : form.ingredients.data,
-            'directions' : form.directions.data,
-            'notes' : form.notes.data,
-            'filename' : f'{title_formatted}.txt'
-        }
+            'source' : form.source.data or None,
+            'prep' : form.prep.data or None,
+            'cook' : form.cook.data or None,
+            'ready' : form.ready.data or None,
+            'servings' : form.servings.data or None,
+            'calories' : form.calories.data or None,
+            'description' : form.description.data or None,
+            'ingredients' : [x for x in form.ingredients.data if x != ''],
+            'directions' : [x for x in form.directions.data if x != ''],
+            'notes' : [x for x in form.notes.data if x != ''],
+            'filename' : filename
+        })
 
-        if form.title.data != recipe_dict['title']:
-            if title_formatted != recipe_dict['title_formatted']:
-                extension = filename.rsplit('.', 1)[1].lower()
-                new_filename = f'{title_formatted}.{extension}'
-                secure_name = secure_filename(new_filename)
-                os.rename(os.path.join(current_app.config['RECIPE_IMAGES'], filename), os.path.join(current_app.config['RECIPE_IMAGES'], secure_name))
-                recipe['image'] = secure_name
+        if recipe['title'] != recipe_query['title']:
+            if recipe['title_formatted'] != recipe_query['title_formatted']:
+                # Rename image
+                ext = image.rsplit('.', 1)[1].lower()
+                updated_filename = f'{title_formatted}.{ext}'
+                secure_file = secure_filename(updated_filename)
+                rename_file(os.path.join(current_app.config['RECIPE_IMAGES'], image), os.path.join(current_app.config['RECIPE_IMAGES'], secure_file))
+                recipe['image'] = secure_file
 
             # Rename file
-            os.rename(os.path.join(current_app.config['RECIPE_FILES'], recipe_dict['filename']), os.path.join(current_app.config['RECIPE_FILES'], recipe['filename']))
-            add_recipe_file(recipe)
-            recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
-            update_recipe(recipe_dict, recipe)
+            rename_file(os.path.join(current_app.config['RECIPE_FILES'], recipe_query['filename']), os.path.join(current_app.config['RECIPE_FILES'], recipe['filename']))
 
-        add_recipe_file(recipe)
-        recipe['last_modified'] = datetime.fromtimestamp(os.stat(f'{DATA_DIR}/_recipes/{recipe["filename"]}').st_mtime)
-        update_recipe(recipe_dict, recipe)
+        create_recipe_file(current_app.config['RECIPE_FILES'], recipe)
+        file = os.path.join(current_app.config['RECIPE_FILES'], recipe['filename'])
+        recipe['file_hash'] = hash_file(file)
+        update_recipe(recipe_query['filename'], recipe_query['title'], recipe)
 
-        return redirect(url_for('main.recipe', recipe_link=title_formatted))
+        return redirect(url_for('main.recipe', title_formatted=recipe['title_formatted']))
 
-    return render_template("update.html", form=form, id=recipe_dict['id'], image_path=recipe_dict['image_path'])
+    return render_template("update.html", form=form, id=recipe_query['id'], image=recipe_query['image'])

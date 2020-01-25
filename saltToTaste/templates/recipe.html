@@ -10,8 +10,13 @@
     <div class="col pr-0 pr-md-2 order-2 order-md-1">
       <div class="recipe-details-title">
         {{ recipe.title }}
-        <a class="recipe-details-download" href="{{ url_for('main.download_recipe', filename=recipe.filename) }}" title="Download recipe">
-          <i class="fas fa-file-download fa-xs"></i>
+      </div>
+      <div>
+        <a class="ml-1 recipe-details-action recipe-details-download" href="{{ url_for('main.download_recipe', filename=recipe.filename) }}" title="Download recipe">
+          <i class="fas fa-file-download fa-lg"></i>
+        </a>
+        <a class="ml-1 recipe-details-action recipe-details-edit" href="{{ url_for('main.update', recipe_id=recipe.id) }}" title="Edit recipe">
+          <i class="fas fa-edit fa-lg"></i>
         </a>
       </div>
       {% if recipe.tags %}
@@ -20,25 +25,27 @@
           <a onclick="tagSearch('tag:{{ tag }}')" href="/">
             <span class="px-1 rounded recipe-details-tag {{ tag | replace (' ', '-') }}">
               {% if tag == 'vegetarian' %}
-                <i class="fas fa-leaf"></i> {{ tag.title() }}
+              <i class="fas fa-leaf"></i> {{ tag.title() }}
               {% elif tag == 'quick meal' %}
-                <i class="fas fa-stopwatch"></i> {{ tag.title() }}
+              <i class="fas fa-stopwatch"></i> {{ tag.title() }}
+              {% elif tag == 'spicy' %}
+              <i class="fas fa-pepper-hot"></i> {{ tag.title() }}
               {% else %}
-                {{ tag.title() }}
+              {{ tag.title() }}
               {% endif %}
             </span>
           </a>
         {% endfor %}
       </div>
       {% endif %}
-      {% if recipe.ready or recipe.servings or recipe.calories %}
+      {% if recipe.prep or recipe.cook or recipe.ready or recipe.servings or recipe.calories %}
       <div class="row py-2 text-center no-gutters border-top recipe-details-section-info">
-        {% if recipe.ready %}
+        {% if recipe.prep or recipe.cook or recipe.ready %}
         <div class="col info-item">
           <i class="fas fa-clock fa-2x info-item-icon"></i>
-          <div class='py-1 info-item-heading'>Time</div>
+          <div class='py-1 info-item-heading'>{% if recipe.ready or (recipe.prep and recipe.cook) %}Ready In{% elif recipe.prep %}Prep Time{% elif recipe.cook %}Cook Time{% endif %}</div>
           <div class="info-item-value">
-            {{ recipe.ready }}
+            {% if recipe.ready %}{{ recipe.ready }}{% elif recipe.prep and recipe.cook %}{{ recipe.prep + recipe.cook }}{% elif recipe.prep %}{{ recipe.prep }}{% elif recipe.cook %}{{ recipe.cook }}{% endif %} min
           </div>
         </div>
         {% endif %}
@@ -82,7 +89,7 @@
       </div>
       {% endif %}
     </div>
-    <div class="col order-1 order-md-2 rounded recipe-details-image" {% if recipe.image_path %}style="background-image: url('{{ url_for('main.image_path', filename=recipe.image_path) }}')"{% endif %}>
+    <div class="col order-1 order-md-2 rounded recipe-details-image" {% if recipe.image %}style="background-image: url('{{ url_for('main.image', filename=recipe.image) }}')"{% endif %}>
 
     </div>
   </div>

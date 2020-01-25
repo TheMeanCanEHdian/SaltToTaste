@@ -5,9 +5,8 @@ from saltToTaste.extensions import db, login_manager
 from saltToTaste.views.main import main
 from saltToTaste.views.api import api
 from saltToTaste.models import Recipe, Ingredient, Note, User, Tag, Direction
-from saltToTaste.recipe_handler import recipe_importer
 from saltToTaste.database_handler import add_all_recipes, update_recipes, add_new_recipes, remove_missing_recipes, db_cleanup
-from saltToTaste.file_handler import create_flask_secret, create_api_key
+from saltToTaste.file_handler import create_flask_secret, create_api_key, recipe_importer
 from saltToTaste.parser_handler import argparser_results
 
 def create_app(config_file='settings.py'):

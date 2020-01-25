@@ -24,7 +24,7 @@
         <div class="col order-2 order-md-1">
           <div class="form-row">
             <div class="form-group col-12">
-              <input type="text" class="form-control form-control-lg {% if form.title.errors %}is-invalid{% endif %}" id="form-recipe-name" name="title" placeholder="Name" {% if form.title.data %}value="{{ form.title.data }}"{% endif %}>
+              <input type="text" class="form-control form-control-lg {% if form.title.errors %}is-invalid{% endif %}" id="form-recipe-title" name="title" placeholder="Title" {% if form.title.data %}value="{{ form.title.data }}"{% endif %}>
               <div class="invalid-feedback">
                 {% if form.title.errors %}
                 {{ form.title.errors[0] }}

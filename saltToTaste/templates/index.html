@@ -9,10 +9,10 @@
   <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-4 no-gutters">
     {% for recipe in recipes %}
     <div class="col">
-      <div class="bg-light mb-1 mr-1 rounded recipe-card" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0), rgba(0,0,0,1)), url('{% if recipe.image_path %}{{ url_for('main.image_path', filename=recipe.image_path) }}{% endif %}');">
+      <div class="bg-light mb-1 mr-1 rounded recipe-card" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0), rgba(0,0,0,1)), url('{% if recipe.image %}{{ url_for('main.image', filename=recipe.image) }}{% endif %}');">
         <div class="d-flex flex-column justify-content-end h-100 rounded recipe-card-content">
           <div class="pt-1 px-1 recipe-card-title">
-            <a href="{{ url_for('main.recipe', recipe_link=recipe.title_formatted) }}" class="stretched-link text-decoration-none">
+            <a href="{{ url_for('main.recipe', title_formatted=recipe.title_formatted) }}" class="stretched-link text-decoration-none">
               <p class="m-0 p-0 text-decoration-none text-white clampThis">{{ recipe.title }}</p>
             </a>
           </div>
@@ -24,8 +24,10 @@
                 <i class="fas fa-leaf"></i> {{ tag.title() }}
                 {% elif tag == 'quick meal' %}
                 <i class="fas fa-stopwatch"></i> {{ tag.title() }}
+                {% elif tag == 'spicy' %}
+                <i class="fas fa-pepper-hot"></i> {{ tag.title() }}
                 {% else %}
-                  {{ tag.title() }}
+                {{ tag.title() }}
                 {% endif %}
               </span>
             </a>
