@@ -48,7 +48,7 @@
               {% if not current_user.is_authenticated %}
               <a class="dropdown-item" href="#" data-toggle="modal" data-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Login</a>
               {% endif %}
-              <a class="dropdown-item" href="#"><i class="fas fa-cogs"></i> Settings</a>
+              <a class="dropdown-item {% block active_settings %}{% endblock %}" href="#"><i class="fas fa-cogs"></i> Settings</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="#" data-toggle="modal" data-target="#donateModal"><i class="fas fa-heart"></i> Donate</a>
               {% if current_user.is_authenticated %}
