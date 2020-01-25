@@ -44,6 +44,10 @@ def download_recipe(filename):
 def image(filename):
     return send_from_directory(current_app.config["RECIPE_IMAGES"], filename)
 
+@main.route("/settings", methods=['GET'])
+def settings():
+    return render_template("settings.html")
+
 @main.route("/add", methods=['GET', 'POST'])
 def add():
     form = AddRecipeForm()
