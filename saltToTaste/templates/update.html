@@ -36,7 +36,12 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <input type="text" class="form-control {% if form.source.errors %}is-invalid{% endif %}" id="form-recipe-source" name="source" placeholder="Source" {% if form.source.data %}value="{{ form.source.data }}"{% endif %}>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Source</span>
+                </div>
+                <input type="text" class="form-control {% if form.source.errors %}is-invalid{% endif %}" id="form-recipe-source" name="source" placeholder="https://example.com" {% if form.source.data %}value="{{ form.source.data }}"{% endif %}>
+              </div>
               <div class="invalid-feedback">
                 {% if form.source.errors %}
                 {{ form.source.errors[0] }}
@@ -44,7 +49,12 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <input type="text" class="form-control {% if form.tags.errors %}is-invalid{% endif %}" id="form-recipe-tags" name="tags" placeholder="Tags (vegetarian, main)" {% if form.tags.data %}value="{{ form.tags.data }}"{% endif %}>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Tags</span>
+                </div>
+                <input type="text" class="form-control {% if form.tags.errors %}is-invalid{% endif %}" id="form-recipe-tags" name="tags" placeholder="vegetarian, main" {% if form.tags.data %}value="{{ form.tags.data }}"{% endif %}>
+              </div>
               <div class="invalid-feedback">
                 {% if form.tags.errors %}
                 {{ form.tags.errors[0] }}
@@ -54,7 +64,15 @@
           </div>
           <div class="form-row">
             <div class="form-group col-12 col-md">
-              <input type="text" class="form-control {% if form.prep.errors %}is-invalid{% endif %}" id="form-recipe-prep" name="prep" placeholder="Prep Time (min)" {% if form.prep.data %}value="{{ form.prep.data }}"{% endif %}">
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Prep</span>
+                </div>
+                <input type="text" class="form-control {% if form.prep.errors %}is-invalid{% endif %}" id="form-recipe-prep" name="prep" {% if form.prep.data %}value="{{ form.prep.data }}"{% endif %}">
+                <div class="input-group-append">
+                  <span class="input-group-text">m</span>
+                </div>
+              </div>
               <div class="invalid-feedback">
                 {% if form.prep.errors %}
                 {{ form.prep.errors[0] }}
@@ -62,7 +80,15 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <input type="text" class="form-control {% if form.cook.errors %}is-invalid{% endif %}" id="form-recipe-cook" name="cook" placeholder="Cook Time (min)" {% if form.cook.data %}value="{{ form.cook.data }}"{% endif %}>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Cook</span>
+                </div>
+                <input type="text" class="form-control {% if form.cook.errors %}is-invalid{% endif %}" id="form-recipe-cook" name="cook" {% if form.cook.data %}value="{{ form.cook.data }}"{% endif %}>
+                <div class="input-group-append">
+                  <span class="input-group-text">m</span>
+                </div>
+              </div>
               <div class="invalid-feedback">
                 {% if form.cook.errors %}
                 {{ form.cook.errors[0] }}
@@ -70,7 +96,15 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <input type="text" class="form-control {% if form.ready.errors %}is-invalid{% endif %}" id="form-recipe-ready" name="ready" placeholder="Ready In (min)" {% if form.ready.data %}value="{{ form.ready.data }}"{% endif %}>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Ready</span>
+                </div>
+                <input type="text" class="form-control {% if form.ready.errors %}is-invalid{% endif %}" id="form-recipe-ready" name="ready" {% if form.ready.data %}value="{{ form.ready.data }}"{% endif %}>
+                <div class="input-group-append">
+                  <span class="input-group-text">m</span>
+                </div>
+              </div>
               <div class="invalid-feedback">
                 {% if form.ready.errors %}
                 {{ form.ready.errors[0] }}
@@ -80,7 +114,12 @@
           </div>
           <div class="form-row">
             <div class="form-group col-12 col-md">
-              <input type="text" class="form-control {% if form.servings.errors %}is-invalid{% endif %}" id="form-recipe-servings" name="servings" placeholder="Servings" {% if form.servings.data %}value="{{ form.servings.data }}"{% endif %}>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Servings</span>
+                </div>
+                <input type="text" class="form-control {% if form.servings.errors %}is-invalid{% endif %}" id="form-recipe-servings" name="servings" {% if form.servings.data %}value="{{ form.servings.data }}"{% endif %}>
+              </div>
               <div class="invalid-feedback">
                 {% if form.servings.errors %}
                 {{ form.servings.errors[0] }}
@@ -88,7 +127,12 @@
               </div>
             </div>
             <div class="form-group col-12 col-md">
-              <input type="text" class="form-control {% if form.calories.errors %}is-invalid{% endif %}" id="form-recipe-calories" name="calories" placeholder="Calories" {% if form.calories.data %}value="{{ form.calories.data }}"{% endif %}>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Calories</span>
+                </div>
+                <input type="text" class="form-control {% if form.calories.errors %}is-invalid{% endif %}" id="form-recipe-calories" name="calories" {% if form.calories.data %}value="{{ form.calories.data }}"{% endif %}>
+              </div>
               <div class="invalid-feedback">
                 {% if form.calories.errors %}
                 {{ form.calories.errors[0] }}
