@@ -9,10 +9,6 @@ from . import api_key
 from saltToTaste.models import Recipe
 from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe, search_parser, check_for_duplicate_title_f
 from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file
-from saltToTaste.parser_handler import argparser_results
-
-argument = argparser_results()
-DATA_DIR = os.path.abspath(argument['DATA_DIR'])
 
 api = Blueprint('api', __name__)
 

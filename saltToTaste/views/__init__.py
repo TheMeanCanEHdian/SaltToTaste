@@ -1,6 +1,5 @@
 import os
-from saltToTaste.parser_handler import argparser_results
-from saltToTaste.file_handler import create_api_key
+from saltToTaste.parser_handler import argparser_results, configparser_results
 
 argument = argparser_results()
 DATA_DIR = os.path.abspath(argument['DATA_DIR'])
@@ -27,10 +26,4 @@ for folder in subfolders:
     if not os.access(f'{DATA_DIR}/{folder}', os.W_OK):
         raise SystemExit(f'Cannot write to the data directory: {DATA_DIR}/{folder}. Exiting...')
 
-# Create API key if it doesn't exist
-try:
-    api_key = open(f'{DATA_DIR}/saltToTaste.key', 'r', encoding='utf-16').readline()
-except:
-    if not os.path.isfile(f'{DATA_DIR}/saltToTaste.key'):
-        create_api_key(DATA_DIR)
-        api_key = open(f'{DATA_DIR}/saltToTaste.key', 'r', encoding='utf-16').readline()
+api_key = configparser_results(f'{DATA_DIR}/config.ini')['general']['api_key']

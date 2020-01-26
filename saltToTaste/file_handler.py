@@ -3,6 +3,7 @@ import copy
 import yaml
 import requests
 import hashlib
+import configparser
 from collections import defaultdict, OrderedDict
 from datetime import datetime
 from saltToTaste.parser_handler import argparser_results
@@ -10,21 +11,23 @@ from saltToTaste.parser_handler import argparser_results
 argument = argparser_results()
 DATA_DIR = os.path.abspath(argument['DATA_DIR'])
 
-def create_flask_secret(directory):
-    file = os.path.join(directory, "saltToTaste.secret")
+def create_default_config(file):
+    config_data = {
+        'flask' : {
+            'secret_key' : os.urandom(24).hex()
+        },
+        'general' : {
+            'api_enabled' : False,
+            'api_key' : os.urandom(24).hex()
+        }
+    }
 
-    with open(file, 'w+', encoding='utf-16') as f:
-        print (f' * Creating Flask secret')
-        secret = os.urandom(24).hex()
-        f.write({secret})
+    config = configparser.ConfigParser()
+    config.read_dict(config_data)
 
-def create_api_key(directory):
-    file = os.path.join(directory, "saltToTaste.key")
-
-    with open(file, 'w+', encoding='utf-16') as f:
-        print (f' * Creating API key')
-        api_key = os.urandom(24).hex()
-        f.write({api_key})
+    with open(file, 'w') as configfile:
+        config.write(configfile)
+        print (' + Creating config file')
 
 def hash_file(filename):
     # Make a hash object

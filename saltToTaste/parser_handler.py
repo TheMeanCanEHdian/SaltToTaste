@@ -1,4 +1,6 @@
+import os
 import argparse
+import configparser
 
 def create_argparser():
     parser = argparse.ArgumentParser(description='A Flask based recipe platform')
@@ -18,3 +20,13 @@ def argparser_results():
         results['DATA_DIR'] = "config"
 
     return results
+
+def configparser_results(file):
+    config = configparser.ConfigParser()
+
+    config.read(file)
+
+    if not config.has_section('flask'):
+        return False
+
+    return config

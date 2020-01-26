@@ -6,8 +6,8 @@ from saltToTaste.views.main import main
 from saltToTaste.views.api import api
 from saltToTaste.models import Recipe, Ingredient, Note, User, Tag, Direction
 from saltToTaste.database_handler import add_all_recipes, update_recipes, add_new_recipes, remove_missing_recipes, db_cleanup
-from saltToTaste.file_handler import create_flask_secret, create_api_key, recipe_importer
-from saltToTaste.parser_handler import argparser_results
+from saltToTaste.file_handler import recipe_importer, create_default_config
+from saltToTaste.parser_handler import argparser_results, configparser_results
 
 def create_app(config_file='settings.py'):
     argument = argparser_results()
@@ -16,16 +16,20 @@ def create_app(config_file='settings.py'):
     app = Flask(__name__)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
     app.config['SQLALCHEMY_ECHO'] = False
+    app.config['DATA_DIR'] = DATA_DIR
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATA_DIR}/database.db'
     app.config['RECIPE_FILES'] = f'{DATA_DIR}/_recipes/'
     app.config['RECIPE_IMAGES'] = f'{DATA_DIR}/_images/'
+    app.config['CONFIG_INI'] = f'{DATA_DIR}/config.ini'
     app.config['WHOOSH_INDEX_PATH'] = f'{DATA_DIR}/whooshIndex'
     app.config['WHOOSH_ANALYZER'] = 'StemmingAnalyzer'
 
-    # Create Flask secret
-    if not os.path.isfile(f'{DATA_DIR}/saltToTaste.secret'):
-        create_flask_secret(DATA_DIR)
-    app.secret_key = open(f'{DATA_DIR}/saltToTaste.secret', 'r', encoding='utf-16').readline()
+    if not os.path.isfile(app.config['CONFIG_INI']):
+        create_default_config(app.config['CONFIG_INI'])
+
+    config = configparser_results(app.config['CONFIG_INI'])
+
+    app.config['SECRET_KEY'] = config['flask']['secret_key']
 
     # Register blueprints
     app.register_blueprint(main)
