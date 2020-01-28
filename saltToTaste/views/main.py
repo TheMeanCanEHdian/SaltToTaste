@@ -6,9 +6,10 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note
-from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm
-from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file
+from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm, SettingsForm
+from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file, update_configfile
 from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser
+from saltToTaste.parser_handler import configparser_results
 
 main = Blueprint('main', __name__)
 
@@ -44,9 +45,23 @@ def download_recipe(filename):
 def image(filename):
     return send_from_directory(current_app.config["RECIPE_IMAGES"], filename)
 
-@main.route("/settings", methods=['GET'])
+@main.route("/settings", methods=['GET', 'POST'])
 def settings():
-    return render_template("settings.html")
+    config = configparser_results(current_app.config['CONFIG_INI'])
+
+    form = SettingsForm()
+
+    if request.method == 'GET':
+        form.api_enabled.data = config['general']['api_enabled']
+        form.api_key.data = config['general']['api_key']
+
+    if form.validate_on_submit():
+        update_configfile(current_app.config['CONFIG_INI'], form.data, 'general')
+        flash('Settings saved.', 'success')
+
+        return redirect(url_for('main.settings'))
+
+    return render_template("settings.html", form=form)
 
 @main.route("/add", methods=['GET', 'POST'])
 def add():
