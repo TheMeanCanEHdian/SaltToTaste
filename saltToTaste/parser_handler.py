@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import configparser
 
@@ -27,6 +28,7 @@ def configparser_results(file):
     config.read(file)
 
     if not config.has_section('flask'):
-        return False
+        print ('Error: Issue reading config.ini')
+        sys.exit()
 
     return config
