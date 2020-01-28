@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block title_container %}
+<title>Salt To Taste</title>
+{% endblock %}
+
+{% block active_settings %}
+  active
+{% endblock %}
+
+{% block body_container %}
+<div class="container mt-1">
+  <h1 class="page-title mt-md-4 mb-md-2">Settings</h1>
+  <div class="row mt-4">
+    <div class="col-12 col-md-3">
+      <div class="list-group" id="list-tab" role="tablist">
+        <a class="list-group-item list-group-item-action active" id="list-home-list" data-toggle="list" href="#list-general" role="tab" aria-controls="general">General</a>
+        <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" href="#list-access" role="tab" aria-controls="access">Access</a>
+      </div>
+    </div>
+    <div class="col-12 col-md-9 mt-3 mt-md-0">
+      <form class="needs-validation" action="/settings" method="post" novalidate>
+        {{ form.csrf_token }}
+        <div class="tab-content" id="nav-tabContent">
+          <div class="tab-pane show active" id="list-general" role="tabpanel" aria-labelledby="list-general-list">
+            <h5 class="mb-3">API</h5>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="api_enabled" id="api_enabled" {% if form.api_enabled.data == 'True' %}checked{% endif %}>
+              <label class="form-check-label" for="api_enabled">
+                Enable API
+              </label>
+            </div>
+            <div class="form-group">
+              <label for="api_key">API Key</label>
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <div class="input-group">
+                    <input type="text" class="form-control {% if form.api_key.errors%}is-invalid{% endif %}" name="api_key" id="api_key" placeholder="API key" {% if form.api_key.data %}value="{{ form.api_key.data }}"{% endif %} readonly>
+                    <div class="input-group-append">
+                      <button class="btn btn-secondary rounded-right btn-form" type="button" title="Generate API key" onclick="generateAPIKey()">
+                        <i class="fas fa-sync-alt"></i>
+                      </button>
+                    </div>
+                    <div class="invalid-feedback">
+                      {% if form.api_key.errors %}
+                      {{ form.api_key.errors[0] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="submit" name="save" value="Save" class="btn btn-success">
+          </div>
+          <div class="tab-pane" id="list-access" role="tabpanel" aria-labelledby="list-access-list">
+            <h5 class="mb-3">Access Settings</h5>
+            <input type="submit" name="save" value="Save" class="btn btn-success">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
