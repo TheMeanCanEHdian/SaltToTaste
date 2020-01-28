@@ -5,7 +5,6 @@ from functools import wraps
 from collections import OrderedDict
 from flask import current_app, Blueprint, jsonify, request, abort
 from werkzeug.utils import secure_filename
-# from . import api_key
 from saltToTaste.models import Recipe
 from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe, search_parser, check_for_duplicate_title_f
 from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file
