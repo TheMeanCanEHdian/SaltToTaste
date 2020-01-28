@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField
-from wtforms import StringField, TextAreaField, IntegerField, FieldList, SubmitField, ValidationError
+from wtforms import StringField, TextAreaField, IntegerField, BooleanField, FieldList, SubmitField, ValidationError
 from wtforms.validators import InputRequired, Length, Optional
 from saltToTaste.database_handler import get_recipe_by_title, get_recipe_by_title_f, check_for_duplicate_title_f
 
@@ -57,3 +57,7 @@ class UpdateRecipeForm(FlaskForm):
     ingredients = FieldList(StringField())
     directions = FieldList(TextAreaField())
     update = SubmitField()
+
+class SettingsForm(FlaskForm):
+    api_enabled = BooleanField()
+    api_key = StringField(validators=[Length(min=1)])
