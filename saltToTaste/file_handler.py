@@ -6,19 +6,19 @@ import hashlib
 import configparser
 from collections import defaultdict, OrderedDict
 from datetime import datetime
-from saltToTaste.parser_handler import argparser_results
+from saltToTaste.parser_handler import argparser_results, configparser_results
 
 argument = argparser_results()
 DATA_DIR = os.path.abspath(argument['DATA_DIR'])
 
-def create_default_config(file):
+def create_default_configfile(file):
     config_data = {
         'flask' : {
-            'secret_key' : os.urandom(24).hex()
+            'secret_key' : os.urandom(16).hex() # actually makes a string 32 characters long
         },
         'general' : {
             'api_enabled' : False,
-            'api_key' : os.urandom(24).hex()
+            'api_key' : os.urandom(16).hex()
         }
     }
 
@@ -28,6 +28,18 @@ def create_default_config(file):
     with open(file, 'w') as configfile:
         config.write(configfile)
         print (' + Creating config file')
+
+def update_configfile(file, dict, section):
+    config = configparser_results(file)
+
+    if config:
+        for k,v in dict.items():
+            if config.has_option(section, k):
+                config.set(section, k, str(v))
+
+        with open(file, 'w') as configfile:
+            config.write(configfile)
+            print (' * Updating config file')
 
 def hash_file(filename):
     # Make a hash object
