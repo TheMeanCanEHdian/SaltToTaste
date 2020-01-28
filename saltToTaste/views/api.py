@@ -5,10 +5,11 @@ from functools import wraps
 from collections import OrderedDict
 from flask import current_app, Blueprint, jsonify, request, abort
 from werkzeug.utils import secure_filename
-from . import api_key
+# from . import api_key
 from saltToTaste.models import Recipe
 from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe, search_parser, check_for_duplicate_title_f
 from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file
+from saltToTaste.parser_handler import configparser_results
 
 api = Blueprint('api', __name__)
 
@@ -16,7 +17,9 @@ api = Blueprint('api', __name__)
 def require_apikey(view_function):
     @wraps(view_function)
     def decorated_function(*args, **kwargs):
-        if request.headers.get('X-Salt-to-Taste-API-Key') and request.headers.get('X-Salt-to-Taste-API-Key') == api_key:
+        api_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'api_enabled')
+        api_key = configparser_results(current_app.config['CONFIG_INI']).get('general', 'api_key')
+        if api_enabled and request.headers.get('X-Salt-to-Taste-API-Key') and request.headers.get('X-Salt-to-Taste-API-Key') == api_key:
             return view_function(*args, **kwargs)
         else:
             abort(401)

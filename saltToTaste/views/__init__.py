@@ -25,5 +25,3 @@ for folder in subfolders:
     # Make sure the subfolder is writeable
     if not os.access(f'{DATA_DIR}/{folder}', os.W_OK):
         raise SystemExit(f'Cannot write to the data directory: {DATA_DIR}/{folder}. Exiting...')
-
-api_key = configparser_results(f'{DATA_DIR}/config.ini')['general']['api_key']
