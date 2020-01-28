@@ -78,6 +78,10 @@ body {
   overflow: auto;
 }
 
+.container-login {
+  padding: 0 !important;
+}
+
 .recipe-card {
   height: 230px;
   background-size: cover;
