@@ -17,6 +17,8 @@ def create_default_configfile(file):
             'secret_key' : os.urandom(16).hex() # actually makes a string 32 characters long
         },
         'general' : {
+            'authentication_enabled' : False,
+            'userless_recipes' : False,
             'api_enabled' : False,
             'api_key' : os.urandom(16).hex()
         }
@@ -40,6 +42,9 @@ def update_configfile(file, dict, section):
         with open(file, 'w') as configfile:
             config.write(configfile)
             print (' * Updating config file')
+
+def verify_configfile():
+    pass
 
 def hash_file(filename):
     # Make a hash object
