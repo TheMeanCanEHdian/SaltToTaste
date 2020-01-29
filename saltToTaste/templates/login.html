@@ -17,35 +17,47 @@
   <title>Login | Salt to Taste</title>
 </head>
   <body class="content">
-    <div class="">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show mx-3 my-2" role="alert">
-        {{ message }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      {% endfor %}
-      {% endif %}
-      {% endwith %}
-      <div class="container container-login">
-        <div class="row align-items-center justify-content-center no-gutters">
-          <div class="col-12 col-md-6 pt-md-5">
-            <div class="login-header">
-              <img class="p-3 w-100 login-image" src="{{ url_for('static', filename='logo/logo.png') }}">
+    <div class="container container-login">
+      <div class="row align-items-center justify-content-center no-gutters">
+        <div class="col-12 col-md-6 pt-md-5">
+          <div class="login-header">
+            <img class="p-3 w-100 login-image" src="{{ url_for('static', filename='logo/logo.png') }}">
+          </div>
+          <div class="border border-top-0 ">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class='px-2 pt-2'>
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show mb-0" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
             </div>
-            <div class="px-5 pt-3 pb-5 border border-top-0 login-body">
+            {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <div class="px-5 pt-3 pb-5 login-body">
               <h2 class="text-center login-title">Log in</h2>
               <div class="login-form">
-                  <form action="/login" method="post">
+                  <form class="needs-validation" action="" method="post" novalidate>
                     {{ form.csrf_token }}
                     <div class="form-group">
-                      <input type="text" class="form-control" name="username" placeholder="Username">
+                      <input type="text" class="form-control {% if form.username.errors %}is-invalid{% endif %}" name="username" placeholder="Username">
+                      <div class="invalid-feedback">
+                        {% if form.username.errors %}
+                        {{ form.username.errors[0] }}
+                        {% endif %}
+                      </div>
                     </div>
                     <div class="form-group">
-                      <input type="password" class="form-control" name="password" placeholder="Password">
+                      <input type="password" class="form-control {% if form.password.errors %}is-invalid{% endif %}" name="password" placeholder="Password">
+                      <div class="invalid-feedback">
+                        {% if form.password.errors %}
+                        {{ form.password.errors[0] }}
+                        {% endif %}
+                      </div>
                     </div>
                     <div class="form-group">
                       <button type="submit" class="btn btn-primary btn-block">Log in</button>
@@ -57,6 +69,6 @@
           </div>
         </div>
       </div>
-
+    </div>
   </body>
 </html>
