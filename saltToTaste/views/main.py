@@ -1,33 +1,56 @@
 import os
 from datetime import datetime
 from collections import OrderedDict
+from urllib.parse import urlparse, urljoin
 from flask import current_app, Blueprint, render_template, request, send_file, safe_join, abort, session, url_for, redirect, flash, send_from_directory
 from flask_login import login_user, logout_user, current_user
 from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash
 from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note, User
 from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm, SettingsForm, LoginForm
 from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file, update_configfile
-from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser, get_user, get_user_by_id, delete_user_by_id
+from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser, get_user_by_id, delete_user_by_id
 from saltToTaste.parser_handler import configparser_results
-from saltToTaste.decorators import require_login
+from saltToTaste.decorators import require_login, require_login_recipes
 
 main = Blueprint('main', __name__)
+
+# Make sure redirect URL is on the server
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 @main.route("/login", methods=['GET', 'POST'])
 def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        user = get_user(form.username.data, form.password.data)
+        user = User.query.filter(User.username == form.username.data).first()
+        if user and check_password_hash(user.password_hash, form.password.data):
+            login_user(user, remember=form.remember.data)
+
+            next_page = request.args.get('next')
+            if next_page and is_safe_url(next_page):
+                return redirect(next_page)
+            else:
+                return redirect(url_for('main.index'))
+
+        else:
+            flash("Login failed. Please check username and password.", 'danger')
 
     return render_template("login.html", form=form)
 
 @main.route("/logout", methods=['GET'])
+@require_login
 def logout():
-    pass
+    logout_user()
+    return redirect(url_for('main.index'))
 
 @main.route("/settings", methods=['GET', 'POST'])
+@require_login
 def settings():
     config = configparser_results(current_app.config['CONFIG_INI'])
 
@@ -41,7 +64,6 @@ def settings():
             form.username.data = user_query.username
             form.password.data = '**********'
         form.userless_recipes.data = config['general']['userless_recipes']
-        form.userless_download.data = config['general']['userless_download']
         form.api_enabled.data = config['general']['api_enabled']
         form.api_key.data = config['general']['api_key']
 
@@ -70,6 +92,7 @@ def settings():
     return render_template("settings.html", form=form)
 
 @main.route("/", methods=['GET', 'POST'])
+@require_login_recipes
 def index():
     recipes = sorted(get_recipes(), key = lambda i: i['title'])
 
@@ -82,6 +105,7 @@ def index():
     return render_template("index.html", recipes=recipes)
 
 @main.route("/recipe/<string:title_formatted>")
+@require_login_recipes
 def recipe(title_formatted):
     recipe = get_recipe_by_title_f(title_formatted)
 
@@ -156,6 +180,7 @@ def add():
     return render_template("add.html", form=form)
 
 @main.route("/update/<int:recipe_id>", methods=['GET', 'POST'])
+@require_login
 def update(recipe_id):
     # Class to convert recipe dict to obj
     class Struct:

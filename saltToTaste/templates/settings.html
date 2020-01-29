@@ -1,11 +1,7 @@
 {% extends "layout.html" %}
 
 {% block title_container %}
-<title>Salt To Taste</title>
-{% endblock %}
-
-{% block active_settings %}
-  active
+<title>Settings | Salt To Taste</title>
 {% endblock %}
 
 {% block body_container %}
@@ -15,7 +11,7 @@
     <div class="col-12 col-md-3">
       <div class="list-group" id="list-tab" role="tablist">
         <a class="list-group-item list-group-item-action active" id="list-home-list" data-toggle="list" href="#list-general" role="tab" aria-controls="general">General</a>
-        <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" href="#list-access" role="tab" aria-controls="access">Access</a>
+        <!-- <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" href="#list-access" role="tab" aria-controls="access">Access</a> -->
       </div>
     </div>
     <div class="col-12 col-md-9 mt-3 mt-md-0">
@@ -23,14 +19,53 @@
         {{ form.csrf_token }}
         <div class="tab-content" id="nav-tabContent">
           <div class="tab-pane show active" id="list-general" role="tabpanel" aria-labelledby="list-general-list">
-            <h5 class="mb-3">API</h5>
+            <h5 class="mb-3">Authentication</h5>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="authentication_enabled" id="authentication_enabled" {% if form.authentication_enabled.data == 'True' %}checked{% endif %}>
+              <label class="form-check-label" for="authentication_enabled">
+                Enable authentication
+              </label>
+            </div>
+            <div class="form-group mb-2">
+              <label for="username">Username</label>
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <input class="form-control {% if form.username.errors %}is-invalid{% endif %}" type="text" name="username" id="username" {% if form.username.data %}value="{{ form.username.data }}"{% endif %}>
+                  <div class="invalid-feedback">
+                    {% if form.username.errors %}
+                    {{ form.username.errors[0] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group mb-2">
+              <label for="password">Password</label>
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <input class="form-control {% if form.password.errors %}is-invalid{% endif %}" type="password" name="password" id="password" {% if form.password.data %}value="{{ form.password.data }}"{% endif %}>
+                  <div class="invalid-feedback">
+                    {% if form.password.errors %}
+                    {{ form.password.errors[0] }}
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="userless_recipes" id="userless_recipes" {% if form.userless_recipes.data == 'True' %}checked{% endif %}>
+              <label class="form-check-label" for="userless_recipes">
+                Allow access to recipes without logging in
+              </label>
+            </div>
+            <h5 class="mt-5 mb-3">API</h5>
             <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" name="api_enabled" id="api_enabled" {% if form.api_enabled.data == 'True' %}checked{% endif %}>
               <label class="form-check-label" for="api_enabled">
                 Enable API
               </label>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-2">
               <label for="api_key">API Key</label>
               <div class="row">
                 <div class="col-12 col-md-6">
