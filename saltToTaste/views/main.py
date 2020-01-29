@@ -16,6 +16,12 @@ from saltToTaste.decorators import require_login, require_login_recipes
 
 main = Blueprint('main', __name__)
 
+@main.context_processor
+def detect_user():
+    return dict(
+        user_exists = get_user_by_id(1)
+    )
+
 # Make sure redirect URL is on the server
 def is_safe_url(target):
     ref_url = urlparse(request.host_url)
