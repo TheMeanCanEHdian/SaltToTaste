@@ -13,6 +13,16 @@ def require_login(view_function):
             return view_function(*args, **kwargs)
     return decorated_function
 
+def require_login_recipes(view_function):
+    @wraps(view_function)
+    def decorated_function(*args, **kwargs):
+        userless_recipes  = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'userless_recipes')
+        if not userless_recipes and not current_user.is_authenticated:
+            return current_app.login_manager.unauthorized()
+        else:
+            return view_function(*args, **kwargs)
+    return decorated_function
+
 def require_apikey(view_function):
     @wraps(view_function)
     def decorated_function(*args, **kwargs):
