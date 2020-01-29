@@ -2,16 +2,72 @@ import os
 from datetime import datetime
 from collections import OrderedDict
 from flask import current_app, Blueprint, render_template, request, send_file, safe_join, abort, session, url_for, redirect, flash, send_from_directory
-from flask_login import login_user, logout_user, current_user, login_required
+from flask_login import login_user, logout_user, current_user
 from werkzeug.utils import secure_filename
 from saltToTaste.extensions import db
-from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note
-from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm, SettingsForm
+from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note, User
+from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm, SettingsForm, LoginForm
 from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file, update_configfile
-from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser
+from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser, get_user, get_user_by_id, delete_user_by_id
 from saltToTaste.parser_handler import configparser_results
+from saltToTaste.decorators import require_login
 
 main = Blueprint('main', __name__)
+
+@main.route("/login", methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        user = get_user(form.username.data, form.password.data)
+
+    return render_template("login.html", form=form)
+
+@main.route("/logout", methods=['GET'])
+def logout():
+    pass
+
+@main.route("/settings", methods=['GET', 'POST'])
+def settings():
+    config = configparser_results(current_app.config['CONFIG_INI'])
+
+    user_query = get_user_by_id(1)
+
+    form = SettingsForm()
+
+    if request.method == 'GET':
+        form.authentication_enabled.data = config['general']['authentication_enabled']
+        if user_query:
+            form.username.data = user_query.username
+            form.password.data = '**********'
+        form.userless_recipes.data = config['general']['userless_recipes']
+        form.userless_download.data = config['general']['userless_download']
+        form.api_enabled.data = config['general']['api_enabled']
+        form.api_key.data = config['general']['api_key']
+
+    if form.validate_on_submit():
+        if user_query and form.username.data != '' and form.password.data != ('**********' or ''):
+            print ('user_query was true, form had username, password was not placeholder. UPDATING USER.')
+            user_query.username = form.username.data
+            user_query.password = form.password.data
+            db.session.commit()
+
+        elif not user_query and form.username.data != '' and form.password.data !='':
+            print ('user_query was false, form had username, form had password. ADDING USER')
+            user = User(username=form.username.data, password=form.password.data, role='admin')
+            db.session.add(user)
+            db.session.commit()
+
+        elif user_query and form.username.data == '' and form.password.data == '':
+            print ('username and password removed. DELETING USER')
+            delete_user_by_id(user_query.id)
+
+        update_configfile(current_app.config['CONFIG_INI'], form.data, 'general')
+        flash('Settings saved.', 'success')
+
+        return redirect(url_for('main.settings'))
+
+    return render_template("settings.html", form=form)
 
 @main.route("/", methods=['GET', 'POST'])
 def index():
@@ -32,7 +88,6 @@ def recipe(title_formatted):
     return render_template("recipe.html", recipe=recipe)
 
 @main.route("/download/<path:filename>")
-# @login_required
 def download_recipe(filename):
     filename = filename.lower()
     safe_path = safe_join(current_app.config["RECIPE_FILES"], filename)
@@ -45,25 +100,8 @@ def download_recipe(filename):
 def image(filename):
     return send_from_directory(current_app.config["RECIPE_IMAGES"], filename)
 
-@main.route("/settings", methods=['GET', 'POST'])
-def settings():
-    config = configparser_results(current_app.config['CONFIG_INI'])
-
-    form = SettingsForm()
-
-    if request.method == 'GET':
-        form.api_enabled.data = config['general']['api_enabled']
-        form.api_key.data = config['general']['api_key']
-
-    if form.validate_on_submit():
-        update_configfile(current_app.config['CONFIG_INI'], form.data, 'general')
-        flash('Settings saved.', 'success')
-
-        return redirect(url_for('main.settings'))
-
-    return render_template("settings.html", form=form)
-
 @main.route("/add", methods=['GET', 'POST'])
+@require_login
 def add():
     form = AddRecipeForm()
 
