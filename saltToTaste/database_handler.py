@@ -1,6 +1,18 @@
 from collections import defaultdict
 from saltToTaste.extensions import db
-from saltToTaste.models import Recipe, Tag, Ingredient, Direction, Note
+from saltToTaste.models import Recipe, Tag, Ingredient, Direction, Note, User
+
+def get_users():
+    users = User.query.all()
+    return users
+
+def get_user_by_id(id):
+    user = User.query.get(id)
+    return user
+
+def delete_user_by_id(id):
+    User.query.filter(User.id == id).delete()
+    db.session.commit()
 
 def get_recipes():
     recipes = Recipe.query.all()
