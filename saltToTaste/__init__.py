@@ -17,13 +17,13 @@ def create_app(config_file='settings.py'):
     app = Flask(__name__)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
     app.config['SQLALCHEMY_ECHO'] = False
-    app.config['DATA_DIR'] = DATA_DIR
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATA_DIR}/database.db'
+    app.config['WHOOSH_INDEX_PATH'] = f'{DATA_DIR}/whooshIndex'
+    app.config['WHOOSH_ANALYZER'] = 'StemmingAnalyzer'
+    app.config['DATA_DIR'] = DATA_DIR
     app.config['RECIPE_FILES'] = f'{DATA_DIR}/_recipes/'
     app.config['RECIPE_IMAGES'] = f'{DATA_DIR}/_images/'
     app.config['CONFIG_INI'] = f'{DATA_DIR}/config.ini'
-    app.config['WHOOSH_INDEX_PATH'] = f'{DATA_DIR}/whooshIndex'
-    app.config['WHOOSH_ANALYZER'] = 'StemmingAnalyzer'
 
     if not os.path.isfile(app.config['CONFIG_INI']):
         create_default_configfile(app.config['CONFIG_INI'])
@@ -54,9 +54,12 @@ def create_app(config_file='settings.py'):
 
     # Initalize the login manager plugin
     login_manager.init_app(app)
+    login_manager.login_view = 'main.login'
+    login_manager.login_message_category = 'info'
+
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return User.query.get(user_id)
 
     # Import phyiscal recipe files
     recipe_list = recipe_importer(app.config['RECIPE_FILES'])
