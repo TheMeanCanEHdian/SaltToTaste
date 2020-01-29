@@ -20,6 +20,15 @@ def allowedFileExtensions(form, field):
     if image_extension not in allowed_extensions:
         raise ValidationError(f"Image file must be .jpg, .jpeg, or .png.")
 
+def username_no_password(form, field):
+    if form.username.data != '' and form.password.data == '':
+        raise ValidationError(f"Cannot be empty when Username has value.")
+
+def password_no_username(form, field):
+    if form.username.data == '' and form.password.data != '':
+        raise ValidationError(f"Cannot be empty when Password has value.")
+
+
 class AddRecipeForm(FlaskForm):
     layout = StringField()
     title = StringField(validators=[InputRequired('A recipe name is required.'), uniqueFormattedRecipeName])
@@ -59,5 +68,14 @@ class UpdateRecipeForm(FlaskForm):
     update = SubmitField()
 
 class SettingsForm(FlaskForm):
+    authentication_enabled = BooleanField()
+    username = StringField(validators=[password_no_username])
+    password = StringField(validators=[username_no_password])
+    userless_recipes = BooleanField()
     api_enabled = BooleanField()
-    api_key = StringField(validators=[Length(min=1)])
+    api_key = StringField(validators=[Length(min=32)])
+
+class LoginForm(FlaskForm):
+    username = StringField(validators=[InputRequired()])
+    password = StringField(validators=[InputRequired()])
+    remember = BooleanField()
