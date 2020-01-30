@@ -19,7 +19,8 @@ main = Blueprint('main', __name__)
 @main.context_processor
 def detect_user():
     return dict(
-        user_exists = get_user_by_id(1)
+        user_exists = get_user_by_id(1),
+        authentication_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'authentication_enabled')
     )
 
 # Make sure redirect URL is on the server
@@ -64,14 +65,14 @@ def settings():
 
     form = SettingsForm()
 
-    if request.method == 'GET':
-        form.authentication_enabled.data = config['general']['authentication_enabled']
-        if user_query:
-            form.username.data = user_query.username
-            form.password.data = '**********'
-        form.userless_recipes.data = config['general']['userless_recipes']
-        form.api_enabled.data = config['general']['api_enabled']
-        form.api_key.data = config['general']['api_key']
+    # if request.method == 'GET':
+    #     form.authentication_enabled.data = config['general']['authentication_enabled']
+    #     if user_query:
+    #         form.username.data = user_query.username
+    #         form.password.data = '**********'
+    #     form.userless_recipes.data = config['general']['userless_recipes']
+    #     form.api_enabled.data = config['general']['api_enabled']
+    #     form.api_key.data = config['general']['api_key']
 
     if form.validate_on_submit():
         if user_query and form.username.data != '' and form.password.data != ('**********' or ''):
@@ -94,6 +95,14 @@ def settings():
         flash('Settings saved.', 'success')
 
         return redirect(url_for('main.settings'))
+
+    form.authentication_enabled.data = config['general']['authentication_enabled']
+    if user_query:
+        form.username.data = user_query.username
+        form.password.data = '**********'
+    form.userless_recipes.data = config['general']['userless_recipes']
+    form.api_enabled.data = config['general']['api_enabled']
+    form.api_key.data = config['general']['api_key']
 
     return render_template("settings.html", form=form)
 

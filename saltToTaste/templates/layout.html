@@ -50,16 +50,18 @@
               <i class="fas fa-sliders-h"></i><span class="caret"></span>
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-              {% if not current_user.is_authenticated %}
+              {% if user_exists and not current_user.is_authenticated %}
               <!-- <a class="dropdown-item" href="#" data-toggle="modal" data-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Login</a> -->
               <a class="dropdown-item" href="/login"><i class="fas fa-sign-in-alt"></i> Login</a>
               {% endif %}
-              {% if not user_exists or current_user.is_authenticated %}
+              {% if (not user_exists or not authentication_enabled) or current_user.is_authenticated %}
               <a class="dropdown-item {% if request.path == '/add' %}active{% endif %}" href="/add"><i class="fas fa-plus-circle"></i> Add recipe</a>
               <a class="dropdown-item {% if request.path == '/settings' %}active{% endif %}" href="/settings"><i class="fas fa-cogs"></i> Settings</a>
               {% endif %}
+              {% if not user_exists or current_user.is_authenticated %}
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="#" data-toggle="modal" data-target="#donateModal"><i class="fas fa-heart"></i> Donate</a>
+              {% endif %}
               {% if current_user.is_authenticated %}
               <a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
               {% endif %}
