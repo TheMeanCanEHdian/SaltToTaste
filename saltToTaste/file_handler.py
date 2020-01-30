@@ -3,9 +3,11 @@ import copy
 import yaml
 import requests
 import hashlib
+import shutil
 import configparser
 from collections import defaultdict, OrderedDict
 from datetime import datetime
+from zipfile import ZipFile
 from saltToTaste.parser_handler import argparser_results, configparser_results
 
 argument = argparser_results()
@@ -135,3 +137,23 @@ def download_image(url, directory, title_formatted):
 def save_image(directory, filename, image_data):
     image_data.save(os.path.join(directory, filename))
     print (f' + Saved {filename} to disk.')
+
+def backup_files():
+    date = datetime.today().timestamp()
+
+    print (' + Creating backup')
+
+    shutil.copyfile(f'{DATA_DIR}/config.ini', f'{DATA_DIR}/backups/config.backup-{date}.ini')
+    shutil.copyfile(f'{DATA_DIR}/database.db', f'{DATA_DIR}/backups/database.backup-{date}.db')
+
+    with ZipFile(f'{DATA_DIR}/backups/recipes.backup-{date}.zip', 'w') as recipeZip:
+        recipe_dir = f'{DATA_DIR}/_recipes'
+        for filename in os.listdir(recipe_dir):
+            path = os.path.join(recipe_dir, filename)
+            recipeZip.write(path, os.path.basename(path))
+
+    with ZipFile(f'{DATA_DIR}/backups/images.backup-{date}.zip', 'w') as imageZip:
+        image_dir = f'{DATA_DIR}/_images'
+        for filename in os.listdir(image_dir):
+            path = os.path.join(image_dir, filename)
+            imageZip.write(path, os.path.basename(path))
