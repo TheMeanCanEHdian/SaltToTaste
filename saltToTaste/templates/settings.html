@@ -26,46 +26,48 @@
                 Enable authentication
               </label>
             </div>
-            <div class="form-group mb-2">
-              <label for="username">Username</label>
-              <div class="row">
-                <div class="col-12 col-md-6">
-                  <input class="form-control {% if form.username.errors %}is-invalid{% endif %}" type="text" name="username" id="username" {% if form.username.data %}value="{{ form.username.data }}"{% endif %}>
-                  <div class="invalid-feedback">
-                    {% if form.username.errors %}
-                    {{ form.username.errors[0] }}
-                    {% endif %}
+            <div {% if not authentication_enabled %}style="display: none;"{% endif %} id="authentication_details">
+              <div class="form-group mb-2">
+                <label for="username">Username</label>
+                <div class="row">
+                  <div class="col-12 col-md-6">
+                    <input class="form-control {% if form.username.errors %}is-invalid{% endif %}" type="text" name="username" id="username" {% if form.username.data %}value="{{ form.username.data }}"{% endif %}>
+                    <div class="invalid-feedback">
+                      {% if form.username.errors %}
+                      {{ form.username.errors[0] }}
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="form-group mb-2">
-              <label for="password">Password</label>
-              <div class="row">
-                <div class="col-12 col-md-6">
-                  <input class="form-control {% if form.password.errors %}is-invalid{% endif %}" type="password" name="password" id="password" {% if form.password.data %}value="{{ form.password.data }}"{% endif %}>
-                  <div class="invalid-feedback">
-                    {% if form.password.errors %}
-                    {{ form.password.errors[0] }}
-                    {% endif %}
+              <div class="form-group mb-2">
+                <label for="password">Password</label>
+                <div class="row">
+                  <div class="col-12 col-md-6">
+                    <input class="form-control {% if form.password.errors %}is-invalid{% endif %}" type="password" name="password" id="password" {% if form.password.data %}value="{{ form.password.data }}"{% endif %}>
+                    <div class="invalid-feedback">
+                      {% if form.password.errors %}
+                      {{ form.password.errors[0] }}
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
               </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="userless_recipes" id="userless_recipes" {% if form.userless_recipes.data == 'True' %}checked{% endif %}>
+                <label class="form-check-label" for="userless_recipes">
+                  Allow access to recipes without logging in
+                </label>
+              </div>
             </div>
-            <div class="form-check mb-2">
-              <input class="form-check-input" type="checkbox" name="userless_recipes" id="userless_recipes" {% if form.userless_recipes.data == 'True' %}checked{% endif %}>
-              <label class="form-check-label" for="userless_recipes">
-                Allow access to recipes without logging in
-              </label>
-            </div>
-            <h5 class="mt-5 mb-3">API</h5>
+            <h5 class="mt-4 mb-3">API</h5>
             <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" name="api_enabled" id="api_enabled" {% if form.api_enabled.data == 'True' %}checked{% endif %}>
               <label class="form-check-label" for="api_enabled">
                 Enable API
               </label>
             </div>
-            <div class="form-group mb-2">
+            <div class="form-group mb-2" {% if not api_enabled %}style="display: none;"{% endif %} id="api_details">
               <label for="api_key">API Key</label>
               <div class="row">
                 <div class="col-12 col-md-6">

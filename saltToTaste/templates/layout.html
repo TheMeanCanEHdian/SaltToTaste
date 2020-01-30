@@ -216,6 +216,28 @@
       }
     </script>
     <script>
+    // Show/hide settings submenus if enabled/disabled
+      $(function () {
+        $("#authentication_enabled").click(function () {
+          if ($(this).is(":checked")) {
+            $("#authentication_details").slideDown();
+          } else {
+            $("#authentication_details").slideUp();
+          }
+        });
+      });
+
+      $(function () {
+        $("#api_enabled").click(function () {
+          if ($(this).is(":checked")) {
+            $("#api_details").slideDown();
+          } else {
+            $("#api_details").slideUp();
+          }
+        });
+      });
+    </script>
+    <script>
       // Add or remove notes/ingredients/directions
       $(document).ready(function() {
         var noteCount = 0;
