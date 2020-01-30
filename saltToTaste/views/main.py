@@ -20,7 +20,8 @@ main = Blueprint('main', __name__)
 def detect_user():
     return dict(
         user_exists = get_user_by_id(1),
-        authentication_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'authentication_enabled')
+        authentication_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'authentication_enabled'),
+        api_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'api_enabled')
     )
 
 # Make sure redirect URL is on the server
