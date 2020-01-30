@@ -28,6 +28,10 @@ def password_no_username(form, field):
     if form.username.data == '' and form.password.data != '':
         raise ValidationError(f"Cannot be empty when Password has value.")
 
+def auth_enabled(form, field):
+    if form.authentication_enabled.data and not field.data:
+        raise ValidationError(f"Cannot be empty when Authentication is enabled.")
+
 
 class AddRecipeForm(FlaskForm):
     layout = StringField()
@@ -69,8 +73,8 @@ class UpdateRecipeForm(FlaskForm):
 
 class SettingsForm(FlaskForm):
     authentication_enabled = BooleanField()
-    username = StringField(validators=[password_no_username])
-    password = StringField(validators=[username_no_password])
+    username = StringField(validators=[password_no_username, auth_enabled])
+    password = StringField(validators=[username_no_password, auth_enabled])
     userless_recipes = BooleanField()
     api_enabled = BooleanField()
     api_key = StringField(validators=[Length(min=32)])
