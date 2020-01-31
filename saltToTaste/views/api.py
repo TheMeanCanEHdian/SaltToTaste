@@ -6,7 +6,7 @@ from flask import current_app, Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
 from saltToTaste.models import Recipe
 from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe, search_parser, check_for_duplicate_title_f
-from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file
+from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file, backup_recipe_file, backup_image_file, backup_database_file
 from saltToTaste.parser_handler import configparser_results
 from saltToTaste.decorators import require_apikey
 
@@ -90,6 +90,7 @@ def add_recipe_json():
 def update_recipes_json(recipe_id):
     data = request.get_json()
     downloadImage = request.args.get('downloadImage')
+    config = configparser_results(current_app.config['CONFIG_INI'])
 
     recipe_query = get_recipe(recipe_id)
 
@@ -133,6 +134,9 @@ def update_recipes_json(recipe_id):
             return jsonify({'error' : 'downloadImage set but has invalid value'})
         if not recipe['imagecredit']:
             return jsonify({'error' : 'downloadImage set but imagecredit is empty'})
+
+        if config.getboolean('general', 'backups_enabled'):
+            backup_image_file(recipe_query['image'])
         image = download_image(recipe['imagecredit'], current_app.config['RECIPE_IMAGES'], recipe['title_formatted'])
         if not image:
             return jsonify({'error' : 'image download failed', 'message' : 'check imagecredit value'})
@@ -150,6 +154,9 @@ def update_recipes_json(recipe_id):
         # Rename file
         rename_file(os.path.join(current_app.config['RECIPE_FILES'], recipe_query['filename']), os.path.join(current_app.config['RECIPE_FILES'], recipe['filename']))
 
+    if config.getboolean('general', 'backups_enabled'):
+        backup_recipe_file(recipe_query['filename'])
+
     create_recipe_file(current_app.config['RECIPE_FILES'], recipe)
     file = os.path.join(current_app.config['RECIPE_FILES'], recipe['filename'])
     recipe['file_hash'] = hash_file(file)
@@ -163,11 +170,23 @@ def delete_recipe_json(recipe_id):
     recipe_query = get_recipe(recipe_id)
 
     if recipe_query:
+        if config.getboolean('general', 'backups_enabled'):
+            backup_recipe_file(recipe_query['filename'])
+            backup_database_file()
+
         delete_file(current_app.config['RECIPE_FILES'], recipe_query['filename'])
         if 'image' in recipe_query:
+            if config.getboolean('general', 'backups_enabled'):
+                backup_image_file(recipe_query['image'])
+
             delete_file(current_app.config['RECIPE_IMAGES'], recipe_query['image'])
         delete_recipe(recipe_id)
 
         return jsonify({'success' : 'recipe deleted'})
 
     return jsonify({'error' : 'recipe ID not found'})
+
+@api.route('/settings', methods=['PUT'])
+@require_apikey
+def update_settings_json():
+    pass

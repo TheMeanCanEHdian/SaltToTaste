@@ -9,7 +9,7 @@ from werkzeug.security import check_password_hash
 from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note, User
 from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm, SettingsForm, LoginForm
-from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file, update_configfile
+from saltToTaste.file_handler import create_recipe_file,save_image, delete_file, rename_file, hash_file, update_configfile, backup_recipe_file, backup_image_file, backup_database_file
 from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser, get_user_by_id, delete_user_by_id
 from saltToTaste.parser_handler import configparser_results
 from saltToTaste.decorators import require_login, require_login_recipes
@@ -17,18 +17,18 @@ from saltToTaste.decorators import require_login, require_login_recipes
 main = Blueprint('main', __name__)
 
 @main.context_processor
-def detect_user():
+def read_config():
     return dict(
         user_exists = get_user_by_id(1),
         authentication_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'authentication_enabled'),
-        api_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'api_enabled')
+        api_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'api_enabled'),
+        backups_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'backups_enabled')
     )
 
 # Make sure redirect URL is on the server
 def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
-
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 @main.route("/login", methods=['GET', 'POST'])
@@ -66,15 +66,6 @@ def settings():
 
     form = SettingsForm()
 
-    # if request.method == 'GET':
-    #     form.authentication_enabled.data = config['general']['authentication_enabled']
-    #     if user_query:
-    #         form.username.data = user_query.username
-    #         form.password.data = '**********'
-    #     form.userless_recipes.data = config['general']['userless_recipes']
-    #     form.api_enabled.data = config['general']['api_enabled']
-    #     form.api_key.data = config['general']['api_key']
-
     if form.validate_on_submit():
         if user_query and form.username.data != '' and form.password.data != ('**********' or ''):
             print ('user_query was true, form had username, password was not placeholder. UPDATING USER.')
@@ -92,7 +83,7 @@ def settings():
             print ('username and password removed. DELETING USER')
             delete_user_by_id(user_query.id)
 
-        update_configfile(current_app.config['CONFIG_INI'], form.data, 'general')
+        update_configfile(form.data, 'general')
         flash('Settings saved.', 'success')
 
         return redirect(url_for('main.settings'))
@@ -104,6 +95,8 @@ def settings():
     form.userless_recipes.data = config['general']['userless_recipes']
     form.api_enabled.data = config['general']['api_enabled']
     form.api_key.data = config['general']['api_key']
+    form.backups_enabled.data = config['general']['backups_enabled']
+    form.backup_count.data = config['general']['backup_count']
 
     return render_template("settings.html", form=form)
 
@@ -203,6 +196,7 @@ def update(recipe_id):
         def __init__(self, **entries):
             self.__dict__.update(entries)
 
+    config = configparser_results(current_app.config['CONFIG_INI'])
     recipe_query = get_recipe(recipe_id)
 
     if not recipe_query:
@@ -222,6 +216,9 @@ def update(recipe_id):
             tags.remove("")
 
         if hasattr(image_data, 'filename'):
+            if config.getboolean('general', 'backups_enabled'):
+                backup_image_file(recipe_query['image'])
+
             ext_new = image_data.filename.rsplit('.', 1)[1].lower()
             ext_old = recipe_query['image'].rsplit('.', 1)[1].lower
 
@@ -265,6 +262,10 @@ def update(recipe_id):
 
             # Rename file
             rename_file(os.path.join(current_app.config['RECIPE_FILES'], recipe_query['filename']), os.path.join(current_app.config['RECIPE_FILES'], recipe['filename']))
+
+        if config.getboolean('general', 'backups_enabled'):
+            backup_recipe_file(recipe_query['filename'])
+            backup_database_file()
 
         create_recipe_file(current_app.config['RECIPE_FILES'], recipe)
         file = os.path.join(current_app.config['RECIPE_FILES'], recipe['filename'])
