@@ -9,9 +9,9 @@ from werkzeug.security import check_password_hash
 from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note, User
 from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm, SettingsForm, LoginForm
-from saltToTaste.file_handler import create_recipe_file,save_image, delete_file, rename_file, hash_file, update_configfile, backup_recipe_file, backup_image_file, backup_database_file
+from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file, backup_recipe_file, backup_image_file, backup_database_file
 from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser, get_user_by_id, delete_user_by_id
-from saltToTaste.parser_handler import configparser_results
+from saltToTaste.configparser_handler import configparser_results, update_configfile
 from saltToTaste.decorators import require_login, require_login_recipes
 
 main = Blueprint('main', __name__)

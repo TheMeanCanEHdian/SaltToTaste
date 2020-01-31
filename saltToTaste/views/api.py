@@ -6,8 +6,8 @@ from flask import current_app, Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
 from saltToTaste.models import Recipe
 from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe, search_parser, check_for_duplicate_title_f
-from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file, backup_recipe_file, backup_image_file, backup_database_file, update_configfile
-from saltToTaste.parser_handler import configparser_results
+from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file, backup_recipe_file, backup_image_file, backup_database_file
+from saltToTaste.configparser_handler import configparser_results, update_configfile
 from saltToTaste.decorators import require_apikey
 
 api = Blueprint('api', __name__)

@@ -1,5 +1,5 @@
 import os
-from saltToTaste.parser_handler import argparser_results, configparser_results
+from saltToTaste.argparser_handler import argparser_results
 
 argument = argparser_results()
 DATA_DIR = os.path.abspath(argument['DATA_DIR'])

@@ -7,8 +7,9 @@ from saltToTaste.views.main import main
 from saltToTaste.views.api import api
 from saltToTaste.models import Recipe, Ingredient, Note, User, Tag, Direction
 from saltToTaste.database_handler import add_all_recipes, update_recipes, add_new_recipes, remove_missing_recipes, db_cleanup
-from saltToTaste.file_handler import recipe_importer, create_default_configfile, verify_configfile
-from saltToTaste.parser_handler import argparser_results, configparser_results
+from saltToTaste.file_handler import recipe_importer
+from saltToTaste.argparser_handler import argparser_results
+from saltToTaste.configparser_handler import configparser_results, create_default_configfile, verify_configfile
 
 def create_app(config_file='settings.py'):
     argument = argparser_results()

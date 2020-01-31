@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import current_app, request, abort
 from flask_login import current_user
-from saltToTaste.parser_handler import configparser_results
+from saltToTaste.configparser_handler import configparser_results
 from saltToTaste.database_handler import get_user_by_id
 
 def require_login(view_function):

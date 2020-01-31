@@ -21,14 +21,3 @@ def argparser_results():
         results['DATA_DIR'] = "config"
 
     return results
-
-def configparser_results(file):
-    config = configparser.ConfigParser()
-
-    config.read(file)
-
-    if not config.has_section('flask'):
-        print ('Error: Issue reading config.ini')
-        sys.exit()
-
-    return config
