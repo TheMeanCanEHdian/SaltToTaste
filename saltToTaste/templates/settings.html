@@ -87,7 +87,32 @@
                 </div>
               </div>
             </div>
-            <input type="submit" name="save" value="Save" class="btn btn-success">
+            <h5 class="mt-4 mb-3">Backups</h5>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="backups_enabled" id="backups_enabled" {% if form.backups_enabled.data == 'True' %}checked{% endif %}>
+              <label class="form-check-label" for="backups_enabled">
+                Enable backups
+              </label>
+            </div>
+            <div class="form-group mb-2" {% if not backups_enabled %}style="display: none;"{% endif %} id="backups_details">
+              <label for="backup_count">Number of backups to keep</label>
+              <div class="row">
+                <div class="col-12 col-md-4">
+                  <div class="input-group">
+                    <input type="text" class="form-control {% if form.backup_count.errors%}is-invalid{% endif %}" name="backup_count" id="backup_count" {% if form.backup_count.data %}value="{{ form.backup_count.data }}"{% endif %}>
+                    <div class="input-group-append">
+                      <span class="input-group-text rounded-right">backups</span>
+                    </div>
+                    <div class="invalid-feedback">
+                      {% if form.backup_count.errors %}
+                      {{ form.backup_count.errors[0] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="submit" name="save" value="Save" class="btn btn-success mt-4">
           </div>
           <div class="tab-pane" id="list-access" role="tabpanel" aria-labelledby="list-access-list">
             <h5 class="mb-3">Access Settings</h5>

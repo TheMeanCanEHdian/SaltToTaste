@@ -236,6 +236,16 @@
           }
         });
       });
+
+      $(function () {
+        $("#backups_enabled").click(function () {
+          if ($(this).is(":checked")) {
+            $("#backups_details").slideDown();
+          } else {
+            $("#backups_details").slideUp();
+          }
+        });
+      });
     </script>
     <script>
       // Add or remove notes/ingredients/directions
