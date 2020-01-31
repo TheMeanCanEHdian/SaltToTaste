@@ -6,7 +6,7 @@ from flask import current_app, Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
 from saltToTaste.models import Recipe
 from saltToTaste.database_handler import get_recipes, get_recipe, delete_recipe, add_recipe, update_recipe, search_parser, check_for_duplicate_title_f
-from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file, backup_recipe_file, backup_image_file, backup_database_file
+from saltToTaste.file_handler import delete_file, create_recipe_file, download_image, rename_file, hash_file, backup_recipe_file, backup_image_file, backup_database_file, update_configfile
 from saltToTaste.parser_handler import configparser_results
 from saltToTaste.decorators import require_apikey
 
@@ -186,7 +186,19 @@ def delete_recipe_json(recipe_id):
 
     return jsonify({'error' : 'recipe ID not found'})
 
-@api.route('/settings', methods=['PUT'])
+@api.route('/settings', methods=['GET', 'PUT'])
 @require_apikey
-def update_settings_json():
-    pass
+def settings_json():
+    if request.method == 'GET':
+        config = configparser_results(current_app.config['CONFIG_INI'])
+
+        return jsonify({'settings' : config._sections})
+
+    if request.method == 'PUT':
+        config = request.get_json()
+        update_file = update_configfile(config)
+
+        if update_file:
+            return jsonify({'success' : 'settings updated'})
+
+        return jsonify({'error' : 'settings were unable to be updated'})
