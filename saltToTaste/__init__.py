@@ -1,4 +1,5 @@
 import os
+import sys
 from flask import Flask, Blueprint
 import flask_whooshalchemy as wa
 from saltToTaste.extensions import db, login_manager
@@ -6,8 +7,9 @@ from saltToTaste.views.main import main
 from saltToTaste.views.api import api
 from saltToTaste.models import Recipe, Ingredient, Note, User, Tag, Direction
 from saltToTaste.database_handler import add_all_recipes, update_recipes, add_new_recipes, remove_missing_recipes, db_cleanup
-from saltToTaste.file_handler import create_flask_secret, create_api_key, recipe_importer
-from saltToTaste.parser_handler import argparser_results
+from saltToTaste.file_handler import recipe_importer
+from saltToTaste.argparser_handler import argparser_results
+from saltToTaste.configparser_handler import configparser_results, create_default_configfile, verify_configfile
 
 def create_app(config_file='settings.py'):
     argument = argparser_results()
@@ -17,15 +19,24 @@ def create_app(config_file='settings.py'):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
     app.config['SQLALCHEMY_ECHO'] = False
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATA_DIR}/database.db'
-    app.config['RECIPE_FILES'] = f'{DATA_DIR}/_recipes/'
-    app.config['RECIPE_IMAGES'] = f'{DATA_DIR}/_images/'
     app.config['WHOOSH_INDEX_PATH'] = f'{DATA_DIR}/whooshIndex'
     app.config['WHOOSH_ANALYZER'] = 'StemmingAnalyzer'
+    app.config['DATA_DIR'] = DATA_DIR
+    app.config['RECIPE_FILES'] = f'{DATA_DIR}/_recipes/'
+    app.config['RECIPE_IMAGES'] = f'{DATA_DIR}/_images/'
+    app.config['CONFIG_INI'] = f'{DATA_DIR}/config.ini'
 
-    # Create Flask secret
-    if not os.path.isfile(f'{DATA_DIR}/saltToTaste.secret'):
-        create_flask_secret(DATA_DIR)
-    app.secret_key = open(f'{DATA_DIR}/saltToTaste.secret', 'r', encoding='utf-16').readline()
+    if not os.path.isfile(app.config['CONFIG_INI']):
+        create_default_configfile()
+
+    verify_configfile()
+    config = configparser_results(app.config['CONFIG_INI'])
+
+    try:
+        app.config['SECRET_KEY'] = config.get('flask', 'secret_key')
+    except TypeError:
+        print ('Error: Could not find Flask secret_key in config.ini.')
+        sys.exit()
 
     # Register blueprints
     app.register_blueprint(main)
@@ -45,9 +56,12 @@ def create_app(config_file='settings.py'):
 
     # Initalize the login manager plugin
     login_manager.init_app(app)
+    login_manager.login_view = 'main.login'
+    login_manager.login_message_category = 'info'
+
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return User.query.get(user_id)
 
     # Import phyiscal recipe files
     recipe_list = recipe_importer(app.config['RECIPE_FILES'])

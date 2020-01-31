@@ -3,28 +3,17 @@ import copy
 import yaml
 import requests
 import hashlib
+import shutil
+import configparser
 from collections import defaultdict, OrderedDict
 from datetime import datetime
-from saltToTaste.parser_handler import argparser_results
+from zipfile import ZipFile
+from flask import current_app
+from saltToTaste.argparser_handler import argparser_results
+from saltToTaste.configparser_handler import configparser_results
 
 argument = argparser_results()
 DATA_DIR = os.path.abspath(argument['DATA_DIR'])
-
-def create_flask_secret(directory):
-    file = os.path.join(directory, "saltToTaste.secret")
-
-    with open(file, 'w+', encoding='utf-16') as f:
-        print (f' * Creating Flask secret')
-        secret = os.urandom(24).hex()
-        f.write({secret})
-
-def create_api_key(directory):
-    file = os.path.join(directory, "saltToTaste.key")
-
-    with open(file, 'w+', encoding='utf-16') as f:
-        print (f' * Creating API key')
-        api_key = os.urandom(24).hex()
-        f.write({api_key})
 
 def hash_file(filename):
     # Make a hash object
@@ -49,7 +38,7 @@ def recipe_importer(directory):
 
     for filename in os.listdir(directory):
         file = os.path.join(directory, filename)
-        ext = os.path.splitext(os.path.join(directory, filename))[-1].lower()
+        ext = os.path.splitext(file)[-1].lower()
 
         if ext == ".yaml":
             with open(file, 'r',  encoding='utf-8') as stream:
@@ -115,3 +104,61 @@ def download_image(url, directory, title_formatted):
 def save_image(directory, filename, image_data):
     image_data.save(os.path.join(directory, filename))
     print (f' + Saved {filename} to disk.')
+
+def backup_recipe_file(filename):
+    date = datetime.today().timestamp()
+    config = configparser_results(current_app.config['CONFIG_INI'])
+    root_ext = os.path.splitext(filename)
+    backup_dir = f"{DATA_DIR}/backups/"
+    backup_filename = f"{root_ext[0].lower()}.backup-{date}{root_ext[1].lower()}"
+    files = [name for name in os.listdir(backup_dir) if os.path.isfile(os.path.join(backup_dir, name)) if root_ext[0] in name if root_ext[1] in name]
+
+    # Delete oldest backup if the backup_count has been met
+    if config.getboolean('general', 'backups_enabled') and config['general']['backup_count']:
+        if files and config.getint('general', 'backup_count') <= len(files):
+            os.remove(os.path.join(backup_dir, files[0]))
+
+        print (f' + Backing up {filename}')
+        shutil.copyfile(f"{current_app.config['RECIPE_FILES']}{filename}", f'{backup_dir}{backup_filename}')
+
+def backup_image_file(filename):
+    date = datetime.today().timestamp()
+    config = configparser_results(current_app.config['CONFIG_INI'])
+    root_ext = os.path.splitext(filename)
+    backup_dir = f"{DATA_DIR}/backups/"
+    backup_filename = f"{root_ext[0].lower()}.backup-{date}{root_ext[1].lower()}"
+    files = [name for name in os.listdir(backup_dir) if os.path.isfile(os.path.join(backup_dir, name)) if root_ext[0] in name if root_ext[1] in name]
+
+    # Delete oldest backup if the backup_count has been met
+    if config.getboolean('general', 'backups_enabled') and config['general']['backup_count']:
+        if files and config.getint('general', 'backup_count') <= len(files):
+            os.remove(os.path.join(backup_dir, files[0]))
+
+        print (f' + Backing up {filename}')
+        shutil.copyfile(f"{current_app.config['RECIPE_IMAGES']}{filename}", f'{backup_dir}{backup_filename}')
+
+def backup_database_file():
+    date = datetime.today().timestamp()
+    config = configparser_results(current_app.config['CONFIG_INI'])
+    backup_dir = f"{DATA_DIR}/backups/"
+    files = [name for name in os.listdir(backup_dir) if os.path.isfile(os.path.join(backup_dir, name)) if 'database' in name if '.db' in name]
+
+    if config.getboolean('general', 'backups_enabled') and config['general']['backup_count']:
+        if files and config.getint('general', 'backup_count') <= len(files):
+            os.remove(os.path.join(backup_dir, files[0]))
+
+        print (' + Backing up database.db')
+        shutil.copyfile(f'{DATA_DIR}/database.db', f'{backup_dir}database.backup-{date}.db')
+
+def backup_config_file():
+    date = datetime.today().timestamp()
+    config = configparser_results(current_app.config['CONFIG_INI'])
+    backup_dir = f"{DATA_DIR}/backups/"
+    files = [name for name in os.listdir(backup_dir) if os.path.isfile(os.path.join(backup_dir, name)) if 'config' in name if '.ini' in name]
+
+    if config.getboolean('general', 'backups_enabled') and config['general']['backup_count']:
+        if files and config.getint('general', 'backup_count') <= len(files):
+            os.remove(os.path.join(backup_dir, files[0]))
+
+        print (' + Backing up config.ini')
+        shutil.copyfile(f'{DATA_DIR}/config.ini', f'{backup_dir}config.backup-{date}.ini')

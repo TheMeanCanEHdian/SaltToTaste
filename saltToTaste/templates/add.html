@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 
 {% block title_container %}
-<title>Salt To Taste</title>
+<title>Add | Salt To Taste</title>
 {% endblock %}
 
 {% block body_container %}
   <div class="container mt-1">
-    <h1 class="form-title mt-md-4 mb-md-2">Add Recipe</h1>
+    <h1 class="page-title mt-md-4 mb-md-2">Add Recipe</h1>
     <form class="needs-validation" method="post" enctype=multipart/form-data action="/add" novalidate>
       {{ form.csrf_token }}
       <div class="form-row d-none">

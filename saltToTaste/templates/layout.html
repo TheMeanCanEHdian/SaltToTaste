@@ -25,7 +25,7 @@
       <button class="navbar-toggler mr-2 custom-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse mr-3" id="navbar-collapse">
+      <div class="collapse navbar-collapse mx-1" id="navbar-collapse">
         <form name="search" id="search" method="post" action="/" class="my-auto d-inline w-100 mr-2">
           <div class="input-group">
             <div id="search-field" class="input form-control border-right-0"></div>
@@ -38,21 +38,32 @@
         </form>
         <ui class="navbar-nav">
           <!-- <li class="nav-item py-1 px-2">
-            <a class="nav-link text-white" href="#">Home</a>
-          </li> -->
+            <a class="nav-link text-white" href="#">Recipes</a>
+          </li>
+          {% if current_user.is_authenticated %}
+          <li class="nav-item py-1 px-2">
+            <a class="nav-link text-white" href="/add">Add Recipe</a>
+          </li>
+          {% endif %} -->
           <li class="nav-item py-1 px-2 dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               <i class="fas fa-sliders-h"></i><span class="caret"></span>
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-              {% if not current_user.is_authenticated %}
-              <a class="dropdown-item" href="#" data-toggle="modal" data-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Login</a>
+              {% if user_exists and not current_user.is_authenticated %}
+              <!-- <a class="dropdown-item" href="#" data-toggle="modal" data-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Login</a> -->
+              <a class="dropdown-item" href="/login"><i class="fas fa-sign-in-alt"></i> Login</a>
               {% endif %}
-              <a class="dropdown-item" href="#"><i class="fas fa-cogs"></i> Settings</a>
+              {% if (not user_exists or not authentication_enabled) or current_user.is_authenticated %}
+              <a class="dropdown-item {% if request.path == '/add' %}active{% endif %}" href="/add"><i class="fas fa-plus-circle"></i> Add recipe</a>
+              <a class="dropdown-item {% if request.path == '/settings' %}active{% endif %}" href="/settings"><i class="fas fa-cogs"></i> Settings</a>
+              {% endif %}
+              {% if not user_exists or current_user.is_authenticated %}
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="#" data-toggle="modal" data-target="#donateModal"><i class="fas fa-heart"></i> Donate</a>
+              {% endif %}
               {% if current_user.is_authenticated %}
-              <a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
+              <a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
               {% endif %}
             </div>
           </li>
@@ -63,7 +74,7 @@
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      <div class="alert alert-{{ category }} alert-dismissible fade show mx-3 my-2" role="alert">
         {{ message }}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
           <span aria-hidden="true">&times;</span>
@@ -153,16 +164,16 @@
               <h2 class="text-center login-title">Log in</h2>
               <div class="login-form">
                   <form action="/login" method="post">
-                      <div class="form-group">
-                        <input type="text" class="form-control" name="username" placeholder="Username" required="required">
-                      </div>
-                      <div class="form-group">
-                        <input type="password" class="form-control" name="password" placeholder="Password" required="required">
-                      </div>
-                      <div class="form-group">
-                        <button type="submit" class="btn btn-primary btn-block">Log in</button>
-                      </div>
-                      <label class="pull-left checkbox-inline"><input type="checkbox" name="remember"> Remember me</label>
+                    <div class="form-group">
+                      <input type="text" class="form-control" name="username" placeholder="Username" required="required">
+                    </div>
+                    <div class="form-group">
+                      <input type="password" class="form-control" name="password" placeholder="Password" required="required">
+                    </div>
+                    <div class="form-group">
+                      <button type="submit" class="btn btn-primary btn-block">Log in</button>
+                    </div>
+                    <label class="pull-left checkbox-inline"><input type="checkbox" name="remember"> Remember me</label>
                   </form>
               </div>
             </div>
@@ -203,7 +214,40 @@
           }else{
           }
       }
+    </script>
+    <script>
+    // Show/hide settings submenus if enabled/disabled
+      $(function () {
+        $("#authentication_enabled").click(function () {
+          if ($(this).is(":checked")) {
+            $("#authentication_details").slideDown();
+          } else {
+            $("#authentication_details").slideUp();
+          }
+        });
+      });
 
+      $(function () {
+        $("#api_enabled").click(function () {
+          if ($(this).is(":checked")) {
+            $("#api_details").slideDown();
+          } else {
+            $("#api_details").slideUp();
+          }
+        });
+      });
+
+      $(function () {
+        $("#backups_enabled").click(function () {
+          if ($(this).is(":checked")) {
+            $("#backups_details").slideDown();
+          } else {
+            $("#backups_details").slideUp();
+          }
+        });
+      });
+    </script>
+    <script>
       // Add or remove notes/ingredients/directions
       $(document).ready(function() {
         var noteCount = 0;
@@ -253,8 +297,27 @@
         $("body").on("click",".remove",function(){
           $(this).parents(".input-group").remove();
         });
-
       });
+    </script>
+    <script>
+      // Generates an API key and assigns it to the correct form element
+      function generateAPIKey() {
+        var value = randHex(32);
+        document.getElementById('api_key').value = value;
+      }
+
+      //  random hex string generator
+      var randHex = function(len) {
+      var maxlen = 8,
+          min = Math.pow(16,Math.min(len,maxlen)-1)
+          max = Math.pow(16,Math.min(len,maxlen)) - 1,
+          n   = Math.floor( Math.random() * (max-min+1) ) + min,
+          r   = n.toString(16);
+      while ( r.length < len ) {
+         r = r + randHex( len - maxlen );
+      }
+      return r;
+      };
     </script>
   </body>
 </html>
