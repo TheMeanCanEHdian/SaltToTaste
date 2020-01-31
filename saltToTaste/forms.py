@@ -18,19 +18,23 @@ def allowedFileExtensions(form, field):
     allowed_extensions = ['jpg', 'jpeg', 'png']
     image_extension = field.data.filename.rsplit('.', 1)[1].lower()
     if image_extension not in allowed_extensions:
-        raise ValidationError(f"Image file must be .jpg, .jpeg, or .png.")
+        raise ValidationError("Image file must be .jpg, .jpeg, or .png.")
 
 def username_no_password(form, field):
     if form.username.data != '' and form.password.data == '':
-        raise ValidationError(f"Cannot be empty when Username has value.")
+        raise ValidationError("Cannot be empty when Username has value.")
 
 def password_no_username(form, field):
     if form.username.data == '' and form.password.data != '':
-        raise ValidationError(f"Cannot be empty when Password has value.")
+        raise ValidationError("Cannot be empty when Password has value.")
 
 def auth_enabled(form, field):
     if form.authentication_enabled.data and not field.data:
-        raise ValidationError(f"Cannot be empty when Authentication is enabled.")
+        raise ValidationError("Cannot be empty when Authentication is enabled.")
+
+def min_backups(form, field):
+    if not field.data or field.data == 0:
+        raise ValidationError("Must be 1 or more.")
 
 
 class AddRecipeForm(FlaskForm):
@@ -78,6 +82,8 @@ class SettingsForm(FlaskForm):
     userless_recipes = BooleanField()
     api_enabled = BooleanField()
     api_key = StringField(validators=[Length(min=32)])
+    backups_enabled = BooleanField()
+    backup_count = IntegerField(validators=[min_backups])
 
 class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired()])
