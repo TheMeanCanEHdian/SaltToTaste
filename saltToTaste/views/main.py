@@ -83,7 +83,7 @@ def settings():
             print ('username and password removed. DELETING USER')
             delete_user_by_id(user_query.id)
 
-        update_configfile(form.data, 'general')
+        update_configfile({'general': form.data})
         flash('Settings saved.', 'success')
 
         return redirect(url_for('main.settings'))

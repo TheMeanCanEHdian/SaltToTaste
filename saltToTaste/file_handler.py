@@ -36,23 +36,23 @@ def create_default_configfile():
         config.write(configfile)
         print (' + Creating config file')
 
-def update_configfile(dict, section):
+def update_configfile(dict):
     config = configparser_results(current_app.config['CONFIG_INI'])
 
     if config:
-        for k,v in dict.items():
-            if config.has_option(section, k):
-                config.set(section, k, str(v))
+        for section in dict:
+            if config.has_section(section):
+                for k,v in dict[section].items():
+                    if config.has_option(section, k):
+                        config.set(section, k, str(v))
 
         with open(current_app.config['CONFIG_INI'], 'w') as configfile:
             config.write(configfile)
             print (' * Updating config file')
 
 def verify_configfile():
-    # take in current config file
     file = f'{DATA_DIR}/config.ini'
     config = configparser_results(file)
-
 
     default_config = {
         'flask' : {
@@ -77,7 +77,6 @@ def verify_configfile():
 
     with open(file, 'w') as configfile:
         config.write(configfile)
-
 
 def hash_file(filename):
     # Make a hash object
