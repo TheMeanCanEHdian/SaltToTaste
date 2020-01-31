@@ -7,7 +7,7 @@ from saltToTaste.views.main import main
 from saltToTaste.views.api import api
 from saltToTaste.models import Recipe, Ingredient, Note, User, Tag, Direction
 from saltToTaste.database_handler import add_all_recipes, update_recipes, add_new_recipes, remove_missing_recipes, db_cleanup
-from saltToTaste.file_handler import recipe_importer, create_default_configfile
+from saltToTaste.file_handler import recipe_importer, create_default_configfile, verify_configfile
 from saltToTaste.parser_handler import argparser_results, configparser_results
 
 def create_app(config_file='settings.py'):
@@ -26,8 +26,9 @@ def create_app(config_file='settings.py'):
     app.config['CONFIG_INI'] = f'{DATA_DIR}/config.ini'
 
     if not os.path.isfile(app.config['CONFIG_INI']):
-        create_default_configfile(app.config['CONFIG_INI'])
+        create_default_configfile()
 
+    verify_configfile()
     config = configparser_results(app.config['CONFIG_INI'])
 
     try:
