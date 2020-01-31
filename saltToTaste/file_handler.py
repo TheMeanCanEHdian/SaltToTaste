@@ -50,6 +50,8 @@ def update_configfile(dict):
             config.write(configfile)
             print (' * Updating config file')
 
+            return True
+
 def verify_configfile():
     file = f'{DATA_DIR}/config.ini'
     config = configparser_results(file)
