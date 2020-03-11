@@ -2,6 +2,7 @@ import os
 import sys
 from flask import Flask, Blueprint
 import flask_whooshalchemy as wa
+from string import capwords
 from saltToTaste.extensions import db, login_manager
 from saltToTaste.views.main import main
 from saltToTaste.views.api import api
@@ -25,6 +26,7 @@ def create_app(config_file='settings.py'):
     app.config['RECIPE_FILES'] = f'{DATA_DIR}/_recipes/'
     app.config['RECIPE_IMAGES'] = f'{DATA_DIR}/_images/'
     app.config['CONFIG_INI'] = f'{DATA_DIR}/config.ini'
+    app.jinja_env.filters['capwords'] = capwords
 
     if not os.path.isfile(app.config['CONFIG_INI']):
         create_default_configfile()

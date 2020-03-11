@@ -27,13 +27,13 @@
           <a onclick="tagSearch('tag:{{ tag }}')" href="/">
             <span class="px-1 rounded recipe-details-tag {{ tag | replace (' ', '-') }}">
               {% if tag == 'vegetarian' %}
-              <i class="fas fa-leaf"></i> {{ tag.title() }}
+              <i class="fas fa-leaf"></i> {{ tag|capwords }}
               {% elif tag == 'quick meal' %}
-              <i class="fas fa-stopwatch"></i> {{ tag.title() }}
+              <i class="fas fa-stopwatch"></i> {{ tag|capwords }}
               {% elif tag == 'spicy' %}
-              <i class="fas fa-pepper-hot"></i> {{ tag.title() }}
+              <i class="fas fa-pepper-hot"></i> {{ tag|capwords }}
               {% else %}
-              {{ tag.title() }}
+              {{ tag|capwords }}
               {% endif %}
             </span>
           </a>
