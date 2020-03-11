@@ -40,37 +40,44 @@
         {% endfor %}
       </div>
       {% endif %}
-      {% if recipe.prep or recipe.cook or recipe.ready or recipe.servings or recipe.calories %}
       <div class="row py-2 text-center no-gutters border-top recipe-details-section-info">
-        {% if recipe.prep or recipe.cook or recipe.ready %}
         <div class="col info-item">
           <i class="fas fa-clock fa-2x info-item-icon"></i>
+          {% if recipe.prep or recipe.cook or recipe.ready %}
           <div class='py-1 info-item-heading'>{% if recipe.ready or (recipe.prep and recipe.cook) %}Ready In{% elif recipe.prep %}Prep Time{% elif recipe.cook %}Cook Time{% endif %}</div>
           <div class="info-item-value">
             {% if recipe.ready %}{{ recipe.ready }}{% elif recipe.prep and recipe.cook %}{{ recipe.prep + recipe.cook }}{% elif recipe.prep %}{{ recipe.prep }}{% elif recipe.cook %}{{ recipe.cook }}{% endif %} min
           </div>
+          {% else %}
+          <div class='py-1 info-item-heading'>Ready In</div>
+          <div class="info-item-value">
+            -
+          </div>
+          {% endif %}
         </div>
-        {% endif %}
-        {% if recipe.servings %}
         <div class="col info-item">
           <i class="fas fa-utensils fa-2x info-item-icon"></i>
           <div class='py-1 info-item-heading'>Servings</div>
           <div class="info-item-value">
+            {% if recipe.servings %}
             {{ recipe.servings }}
+            {% else %}
+            -
+            {% endif %}
           </div>
         </div>
-        {% endif %}
-        {% if recipe.calories %}
         <div class="col info-item">
           <i class="fas fa-fire fa-2x info-item-icon"></i>
           <div class='py-1 info-item-heading'>Nutrition</div>
           <div class="info-item-value">
+            {% if recipe.calories %}
             {{ recipe.calories }} calories
+            {% else %}
+            -
+            {% endif %}
           </div>
         </div>
-        {% endif %}
       </div>
-      {% endif %}
       {% if recipe.description %}
       <div class="py-2 border-top recipe-details-description">
         {{ recipe.description }}
@@ -92,7 +99,6 @@
       {% endif %}
     </div>
     <div class="col order-1 order-md-2 rounded recipe-details-image" {% if recipe.image %}style="background-image: url('{{ url_for('main.image', filename=recipe.image) }}')"{% endif %}>
-
     </div>
   </div>
   {% if recipe.ingredients %}
