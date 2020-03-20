@@ -275,3 +275,28 @@ def update(recipe_id):
         return redirect(url_for('main.recipe', title_formatted=recipe['title_formatted']))
 
     return render_template("update.html", form=form, id=recipe_query['id'], image=recipe_query['image'])
+
+@main.route("/delete/<int:recipe_id>", methods=['GET'])
+@require_login
+def delete(recipe_id):
+    recipe_query = get_recipe(recipe_id)
+    config = configparser_results(current_app.config['CONFIG_INI'])
+
+    if recipe_query:
+        if config.getboolean('general', 'backups_enabled'):
+            backup_recipe_file(recipe_query['filename'])
+            backup_database_file()
+
+        delete_file(current_app.config['RECIPE_FILES'], recipe_query['filename'])
+        if 'image' in recipe_query and recipe_query['image'] != None:
+            if config.getboolean('general', 'backups_enabled'):
+                backup_image_file(recipe_query['image'])
+
+            delete_file(current_app.config['RECIPE_IMAGES'], recipe_query['image'])
+        delete_recipe(recipe_id)
+
+        flash(f"Recipe \"{recipe_query['title']}\" deleted.", 'success')
+        return redirect(url_for('main.index'))
+
+    flash("Recipe not deleted, ID not found.", 'danger')
+    return redirect(url_for('main.index'))
