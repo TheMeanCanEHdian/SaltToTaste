@@ -19,6 +19,9 @@
         <a class="ml-1 recipe-details-action recipe-details-edit" href="{{ url_for('main.update', recipe_id=recipe.id) }}" title="Edit recipe">
           <i class="fas fa-edit fa-lg"></i>
         </a>
+        <a class="ml-1 recipe-details-action recipe-details-delete" href="#" data-toggle="modal" data-target="#deleteModal" title="Delete recipe">
+          <i class="fas fa-trash-alt fa-lg"></i>
+        </a>
         {% endif %}
       </div>
       {% if recipe.tags %}
