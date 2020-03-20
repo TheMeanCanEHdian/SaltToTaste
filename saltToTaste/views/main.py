@@ -168,7 +168,7 @@ def add():
             'ready' : form.ready.data or None,
             'servings' : form.servings.data or None,
             'calories' : form.calories.data or None,
-            'description' : form.calories.data or None,
+            'description' : form.description.data or None,
             'ingredients' : [x for x in form.ingredients.data if x != ''],
             'directions' : [x for x in form.directions.data if x != ''],
             'notes' : [x for x in form.notes.data if x != ''],
