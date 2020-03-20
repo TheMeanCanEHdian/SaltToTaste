@@ -10,7 +10,7 @@ def uniqueFormattedRecipeNameByID(form, field):
         raise ValidationError("The recipe name must be unique.")
 
 def uniqueFormattedRecipeName(form, field):
-    title_formatted = field.data.replace(" ", "_").lower()
+    title_formatted = field.data.replace(" ", "-").lower()
     if get_recipe_by_title_f(title_formatted):
             raise ValidationError("The recipe name must be unique.")
 
