@@ -168,6 +168,7 @@ def update_recipes_json(recipe_id):
 @require_apikey
 def delete_recipe_json(recipe_id):
     recipe_query = get_recipe(recipe_id)
+    config = configparser_results(current_app.config['CONFIG_INI'])
 
     if recipe_query:
         if config.getboolean('general', 'backups_enabled'):
@@ -175,7 +176,7 @@ def delete_recipe_json(recipe_id):
             backup_database_file()
 
         delete_file(current_app.config['RECIPE_FILES'], recipe_query['filename'])
-        if 'image' in recipe_query:
+        if 'image' in recipe_query and recipe_query['image'] != None:
             if config.getboolean('general', 'backups_enabled'):
                 backup_image_file(recipe_query['image'])
 
