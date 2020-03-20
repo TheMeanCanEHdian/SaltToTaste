@@ -118,7 +118,10 @@ def index():
 def recipe(title_formatted):
     recipe = get_recipe_by_title_f(title_formatted)
 
-    return render_template("recipe.html", recipe=recipe)
+    if recipe:
+        return render_template("recipe.html", recipe=recipe)
+
+    abort(404)
 
 @main.route("/download/<path:filename>")
 def download_recipe(filename):
