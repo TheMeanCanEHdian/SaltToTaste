@@ -84,6 +84,7 @@ def settings():
             delete_user_by_id(user_query.id)
 
         update_configfile({'general': form.data})
+        update_configfile({'third_party': form.data})
         flash('Settings saved.', 'success')
 
         return redirect(url_for('main.settings'))
@@ -97,6 +98,8 @@ def settings():
     form.api_key.data = config['general']['api_key']
     form.backups_enabled.data = config['general']['backups_enabled']
     form.backup_count.data = config['general']['backup_count']
+    form.edamam_id.data = config['third_party']['edamam_id']
+    form.edamam_key.data = config['third_party']['edamam_key']
 
     return render_template("settings.html", form=form)
 

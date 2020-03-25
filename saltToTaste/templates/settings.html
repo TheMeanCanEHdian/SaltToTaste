@@ -10,8 +10,8 @@
   <div class="row mt-4">
     <div class="col-12 col-md-3">
       <div class="list-group" id="list-tab" role="tablist">
-        <a class="list-group-item list-group-item-action active" id="list-home-list" data-toggle="list" href="#list-general" role="tab" aria-controls="general">General</a>
-        <!-- <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" href="#list-access" role="tab" aria-controls="access">Access</a> -->
+        <a class="list-group-item list-group-item-action active" id="list-general-list" data-toggle="list" href="#list-general" role="tab" aria-controls="general">General</a>
+        <a class="list-group-item list-group-item-action" id="list-third_party-list" data-toggle="list" href="#list-third_party" role="tab" aria-controls="access">Third Party Connections</a>
       </div>
     </div>
     <div class="col-12 col-md-9 mt-3 mt-md-0">
@@ -114,8 +114,37 @@
             </div>
             <input type="submit" name="save" value="Save" class="btn btn-success mt-4">
           </div>
-          <div class="tab-pane" id="list-access" role="tabpanel" aria-labelledby="list-access-list">
-            <h5 class="mb-3">Access Settings</h5>
+          <div class="tab-pane" id="list-third_party" role="tabpanel" aria-labelledby="list-third_party-list">
+            <h4 class="mt-4 mb-3">Nutrition Data</h4>
+            <h5 class="mt-4 mb-3">Edamam</h5>
+            <div class="form-group mb-2" id="edamam_details">
+              <label for="edamam_id">Application ID</label>
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <div class="input-group">
+                    <input type="text" class="form-control {% if form.edamam_id.errors%}is-invalid{% endif %}" name="edamam_id" id="edamam_id" {% if form.edamam_id.data %}value="{{ form.edamam_id.data }}"{% endif %}>
+                    <div class="invalid-feedback">
+                      {% if form.edamam_id.errors %}
+                      {{ form.edamam_id.errors[0] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <label for="edamam_key">Application Key</label>
+              <div class="row">
+                <div class="col-12 col-md-6">
+                  <div class="input-group">
+                    <input type="text" class="form-control {% if form.edamam_key.errors%}is-invalid{% endif %}" name="edamam_key" id="edamam_key" {% if form.edamam_key.data %}value="{{ form.edamam_key.data }}"{% endif %}>
+                    <div class="invalid-feedback">
+                      {% if form.edamam_key.errors %}
+                      {{ form.edamam_key.errors[0] }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <input type="submit" name="save" value="Save" class="btn btn-success">
           </div>
         </div>

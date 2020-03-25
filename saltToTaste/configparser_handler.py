@@ -30,6 +30,10 @@ def create_default_configfile():
             'api_key' : os.urandom(16).hex(),
             'backups_enabled' : True,
             'backup_count' : 5
+        },
+        'third_party' : {
+            'edamam_id' : '',
+            'edamam_key' : ''
         }
     }
 
@@ -71,6 +75,10 @@ def verify_configfile():
             'api_key' : os.urandom(16).hex(),
             'backups_enabled' : True,
             'backup_count' : 5
+        },
+        'third_party' : {
+            'edamam_id' : '',
+            'edamam_key' : ''
         }
     }
 
