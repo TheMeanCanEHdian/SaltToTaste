@@ -286,6 +286,11 @@ body {
   line-height: 2;
 }
 
+.recipe-details-description-time {
+  font-size: 15px;
+  color: #960000;
+}
+
 .recipe-details-image {
   min-height: 150px;
 }

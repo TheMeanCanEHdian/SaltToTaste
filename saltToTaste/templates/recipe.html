@@ -83,7 +83,12 @@
       </div>
       {% if recipe.description %}
       <div class="py-2 border-top recipe-details-description">
-        {{ recipe.description }}
+        <div class="font-italic recipe-details-description-time">
+          {% if recipe.ready %}Ready in: {{ recipe.ready }} min{% endif %}
+        </div>
+        <div>
+          {{ recipe.description }}
+        </div>
       </div>
       {% endif %}
       {% if recipe.notes %}
