@@ -3,11 +3,11 @@ import os
 from saltToTaste.argparser_handler import argparser_results
 from saltToTaste.configparser_handler import configparser_results
 
-argument = argparser_results()
-DATA_DIR = os.path.abspath(argument['DATA_DIR'])
-config = configparser_results(f'{DATA_DIR}/config.ini')
-
 def fetch_recipe_nutrition(title, servings, ingredient_list):
+    argument = argparser_results()
+    DATA_DIR = os.path.abspath(argument['DATA_DIR'])
+    config = configparser_results(f'{DATA_DIR}/config.ini')
+
     app_id = config.get('third_party', 'edamam_id')
     app_key = config.get('third_party', 'edamam_key')
 
@@ -110,6 +110,10 @@ def fetch_recipe_nutrition(title, servings, ingredient_list):
     return nutrition_dict
 
 def fetch_ingredient_nutrition(ingredient):
+    argument = argparser_results()
+    DATA_DIR = os.path.abspath(argument['DATA_DIR'])
+    config = configparser_results(f'{DATA_DIR}/config.ini')
+    
     app_id = config.get('third_party', 'edamam_id')
     app_key = config.get('third_party', 'edamam_key')
 
