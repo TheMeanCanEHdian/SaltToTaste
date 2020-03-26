@@ -101,6 +101,7 @@ def add_recipe(recipe_data):
             nutrition_data = fetch_recipe_nutrition(recipe.title, recipe.servings, recipe_data['ingredients'])
 
             if nutrition_data:
+                nutrition.weight = nutrition_data.get('weight')
                 nutrition.calcium = nutrition_data['nutrients'].get('calcium')
                 nutrition.carbs = nutrition_data['nutrients'].get('carbs')
                 nutrition.cholesterol = nutrition_data['nutrients'].get('cholesterol')

@@ -33,6 +33,7 @@ def fetch_recipe_nutrition(title, servings, ingredient_list):
     r_json = r.json()
 
     nutrition_dict = {
+        'weight' : r_json.get('totalWeight'),
         'nutrients' : {
             'calcium': r_json['totalNutrients'].get('CA'),
             'carbs':r_json['totalNutrients'].get('CHOCDF'),
@@ -101,7 +102,7 @@ def fetch_recipe_nutrition(title, servings, ingredient_list):
 
     # Only keep the quantity value for each item
     keys = nutrition_dict['nutrients'].keys()
-    for section in nutrition_dict:
+    for section in ['nutrients', 'daily']:
         for key in keys:
             if nutrition_dict[section][key]:
                 nutrition_dict[section][key] = nutrition_dict[section][key]['quantity']

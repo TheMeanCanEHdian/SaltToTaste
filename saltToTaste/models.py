@@ -111,6 +111,7 @@ class Recipe(db.Model):
 class Nutrition(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     recipe_id = db.Column(db.Integer, unique=True, nullable=False)
+    weight = db.Column(db.Integer)
     calcium = db.Column(db.Integer)
     calcium_daily = db.Column(db.Integer)
     carbs = db.Column(db.Integer)
@@ -174,6 +175,7 @@ class Nutrition(db.Model):
 
     def api_model(self):
         model = {
+            'weight' : self.weight,
             'nutrients' : {
                 'calcium': self.calcium,
                 'carbs':self.carbs,
