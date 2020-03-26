@@ -124,73 +124,73 @@
         <table class="table table-sm table-borderless mb-n1">
           <tbody>
             <tr class="border-bottom">
-              <td class="font-weight-bold nutrition_title">Nutrition Facts</td>
+              <td class="font-weight-bold nutrition-title">Nutrition Facts</td>
             </tr>
-            <tr class="nutrition_divider_bottom_xl">
-              <td><div class="nutrition_servings">{{ recipe.servings }} servings per container</div>{% if nutrition.weight %}<span class="font-weight-bold">Serving size</span><span class="float-right font-weight-bold">{{ (nutrition.weight/recipe.servings)|round|int }}g</span>{% endif %}</td>
+            <tr class="nutrition-divider-bottom-xl">
+              <td><div class="nutrition-servings">{{ recipe.servings }} servings per container</div>{% if nutrition.weight %}<span class="font-weight-bold">Serving size</span><span class="float-right font-weight-bold">{{ (nutrition.weight/recipe.servings)|round|int }}g</span>{% endif %}</td>
             </tr>
             <tr>
-              <td class="font-weight-bold"><div class="nutrition_amount">Amount per serving</div><span class="nutrition_calories">Calories</span><span class="float-right nutrition_calories">{% if nutrition.nutrients.energy %}{{ (nutrition.nutrients.energy/recipe.servings)|round|int }}{% else %}-{% endif %}</span></td>
+              <td class="font-weight-bold"><div class="nutrition-amount">Amount per serving</div><span class="nutrition-calories">Calories</span><span class="float-right nutrition-calories">{% if nutrition.nutrients.energy %}{{ (nutrition.nutrients.energy/recipe.servings)|round|int }}{% else %}-{% endif %}</span></td>
             </tr>
-            <tr class="nutrition_divider_top_l">
-              <td><span class="float-right font-weight-bold nutrition_daily_value_title">% Daily Value</span></td>
+            <tr class="nutrition-divider-top-l">
+              <td><span class="float-right font-weight-bold nutrition-daily-value-title">% Daily Value</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="font-weight-bold mr-2">Total Fat</span><span>{% if nutrition.nutrients.fat %}{{ (nutrition.nutrients.fat/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.fat %}{{ (nutrition.daily.fat/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
           </tbody>
-          <tbody class="nutrition_details" style="display: none;">
-            <tr class="nutrition_divider_top">
+          <tbody class="nutrition-details" style="display: none;">
+            <tr class="nutrition-divider-top">
               <td><span class="ml-3 mr-2">Saturated Fat</span><span>{% if nutrition.nutrients.saturated %}{{ (nutrition.nutrients.saturated/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.saturated %}{{ (nutrition.daily.saturated/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="ml-3 font-italic">Trans</span><span class="mr-2"> Fat</span><span>{% if nutrition.nutrients.trans %}{{ (nutrition.nutrients.trans/recipe.servings)|round|int }}{% else %}0{% endif %}g</span></td>
             </tr>
           </tbody>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="font-weight-bold mr-2">Cholesterol</span><span>{% if nutrition.nutrients.cholesterol %}{{ (nutrition.nutrients.cholesterol/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.cholesterol %}{{ (nutrition.daily.cholesterol/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="font-weight-bold mr-2">Sodium</span><span>{% if nutrition.nutrients.sodium %}{{ (nutrition.nutrients.sodium/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.sodium %}{{ (nutrition.daily.sodium/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="font-weight-bold mr-2">Total Carbohydrate</span><span>{% if nutrition.nutrients.carbs %}{{ (nutrition.nutrients.carbs/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.carbs %}{{ (nutrition.daily.carbs/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-          <tbody class="nutrition_details" style="display: none;">
-            <tr class="nutrition_divider_top">
+          <tbody class="nutrition-details" style="display: none;">
+            <tr class="nutrition-divider-top">
               <td><span class="ml-3 mr-2">Dietary Fiber</span><span>{% if nutrition.nutrients.fiber %}{{ (nutrition.nutrients.fiber/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.fiber %}{{ (nutrition.daily.fiber/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="ml-3 mr-2">Total Sugars</span><span>{% if nutrition.nutrients.sugars %}{{ (nutrition.nutrients.sugars/recipe.servings)|round|int }}{% else %}0{% endif %}g</span></td>
             </tr>
             <tr>
               <td>
-                <div class="nutrition_divider_top nutrition_added_sugars">
+                <div class="nutrition-divider-top nutrition-added-sugars">
                   <span>Includes {% if nutrition.nutrients.sugars_added %}{{ (nutrition.nutrients.sugars_added/recipe.servings)|round|int }}{% else %}0{% endif %}g Added Sugars</span><span class="float-right font-weight-bold">{% if nutrition.daily.sugars_added %}{{ (nutrition.daily.sugars_added/recipe.servings)|round|int }}{% else %}0{% endif %}%</span>
                 </div>
               </td>
             </tr>
           </tbody>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="font-weight-bold mr-2">Protein</span><span>{% if nutrition.nutrients.protein %}{{ (nutrition.nutrients.protein/recipe.servings)|round|int }}{% else %}0{% endif %}g</span></td>
             </tr>
-          <tbody class="nutrition_details" style="display: none;">
-            <tr class="nutrition_divider_top_xl">
+          <tbody class="nutrition-details" style="display: none;">
+            <tr class="nutrition-divider-top-xl">
               <td><span class="mr-2">Vitamin D</span><span>{% if nutrition.nutrients.vitamin_d %}{{ ((nutrition.nutrients.vitamin_d/recipe.servings)/40)|round|int }}{% else %}0{% endif %}mcg</span><span class="float-right">{% if nutrition.daily.vitamin_d %}{{ ((nutrition.daily.vitamin_d/recipe.servings)/40)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="mr-2">Calcium</span><span>{% if nutrition.nutrients.calcium %}{{ (nutrition.nutrients.calcium/recipe.servings)|round|int }}{% else %}0{% endif %}mg</span><span class="float-right">{% if nutrition.daily.calcium %}{{ (nutrition.daily.calcium/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="mr-2">Iron</span><span>{% if nutrition.nutrients.iron %}{{ (nutrition.nutrients.iron/recipe.servings)|round|int }}{% else %}0{% endif %}mg</span><span class="float-right">{% if nutrition.daily.iron %}{{ (nutrition.daily.iron/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
-            <tr class="nutrition_divider_top">
+            <tr class="nutrition-divider-top">
               <td><span class="mr-2">Potassium</span><span>{% if nutrition.nutrients.potassium %}{{ (nutrition.nutrients.potassium/recipe.servings)|round|int }}{% else %}0{% endif %}mg</span><span class="float-right">{% if nutrition.daily.potassium %}{{ (nutrition.daily.potassium/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <span id="nutrition_toggle"><a href="#" id="nutrition_toggle_text">Expand nutritional information</a></span>
+      <span id="nutrition-toggle"><a href="#" id="nutrition-toggle_text">Expand nutritional information</a></span>
       <img class="float-right" src="{{ url_for('static', filename='logo/edamam.png') }}" height="30" alt="powered by Edamam">
     </div>
   </div>

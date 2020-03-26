@@ -222,53 +222,53 @@ body {
   border: 1px solid black;
 }
 
-.nutrition_divider_top {
+.nutrition-divider-top {
   border-top: 1px solid black;
 }
 
-.nutrition_divider_top_l {
+.nutrition-divider-top-l {
   border-top: 5px solid black;
 }
 
-.nutrition_divider_top_xl {
+.nutrition-divider-top-xl {
   border-top: 10px solid black;
 }
 
-.nutrition_divider_bottom_l {
+.nutrition-divider-bottom-l {
   border-bottom: 5px solid black;
 }
 
-.nutrition_divider_bottom_xl {
+.nutrition-divider-bottom-xl {
   border-bottom: 10px solid black;
 }
 
-.nutrition_title {
+.nutrition-title {
   font-family: "Franklin Gothic";
   text-align: center;
   font-size: 50px;
 }
 
-.nutrition_servings {
+.nutrition-servings {
   height: 1.2em;
 }
 
-.nutrition_amount {
+.nutrition-amount {
   height: 1em;
 }
 
-.nutrition_calories {
+.nutrition-calories {
   font-size: 30px;
 }
 
-.nutrition_daily_value_title {
+.nutrition-daily-value-title {
   font-size: 13px;
 }
 
-.nutrition_added_sugars {
+.nutrition-added-sugars {
   margin-left: 2.2rem;
 }
 
-#nutrition_toggle a {
+#nutrition-toggle a {
   text-decoration: none;
   color: #960000;
 }
@@ -293,6 +293,7 @@ body {
 .directions-item-title {
   font-size: 18px;
   letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 .login-header {
