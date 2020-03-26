@@ -108,20 +108,9 @@ class Recipe(db.Model):
     def __repr__(self):
         return f'<Recipe: {self.title}>'
 
-class Tag(db.Model):
-    __searchable__ = ['name']
-    __analyzer__ = StemmingAnalyzer()
+class Nutrition(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(30), nullable=False)
-
-    def __repr__(self):
-        return f'<Tag: {self.name}>'
-
-class Ingredient(db.Model):
-    __searchable__ = ['name']
-    __analyzer__ = StemmingAnalyzer()
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(250), nullable=False)
+    recipe_id = db.Column(db.Integer, unique=True, nullable=False)
     calcium = db.Column(db.Integer)
     calcium_daily = db.Column(db.Integer)
     carbs = db.Column(db.Integer)
@@ -182,6 +171,21 @@ class Ingredient(db.Model):
     vitamin_e_daily = db.Column(db.Integer)
     vitamin_k = db.Column(db.Integer)
     vitamin_k_daily = db.Column(db.Integer)
+
+class Tag(db.Model):
+    __searchable__ = ['name']
+    __analyzer__ = StemmingAnalyzer()
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30), nullable=False)
+
+    def __repr__(self):
+        return f'<Tag: {self.name}>'
+
+class Ingredient(db.Model):
+    __searchable__ = ['name']
+    __analyzer__ = StemmingAnalyzer()
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(250), nullable=False)
 
 
 class Direction(db.Model):
