@@ -40,6 +40,13 @@ def get_recipe_by_title_f(title_formatted):
     except:
         return False
 
+def get_recipe_nutrition(recipe_id):
+    nutrition = Nutrition.query.filter(Nutrition.recipe_id == recipe_id).first()
+    try:
+        return nutrition.api_model()
+    except:
+        False
+
 def check_for_duplicate_title_f(id, title_formatted):
     result = Recipe.query.filter(Recipe.title_formatted == title_formatted, Recipe.id != id).first()
     if result:
