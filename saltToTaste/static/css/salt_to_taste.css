@@ -230,6 +230,10 @@ body {
   border-top: 5px solid black;
 }
 
+.nutrition_divider_top_xl {
+  border-top: 10px solid black;
+}
+
 .nutrition_divider_bottom_l {
   border-bottom: 5px solid black;
 }
