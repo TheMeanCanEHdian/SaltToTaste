@@ -172,6 +172,75 @@ class Nutrition(db.Model):
     vitamin_k = db.Column(db.Integer)
     vitamin_k_daily = db.Column(db.Integer)
 
+    def api_model(self):
+        model = {
+            'nutrients' : {
+                'calcium': self.calcium,
+                'carbs':self.carbs,
+                'cholesterol':self.cholesterol,
+                'energy':self.energy,
+                'fat':self.fat,
+                'fiber':self.fiber,
+                'folate_equivalent':self.folate_equivalent,
+                'folate_food':self.folate_food,
+                'iron':self.iron,
+                'magnesium':self.magnesium,
+                'monounsaturated':self.monounsaturated,
+                'niacin_b3':self.niacin_b3,
+                'phosphorus':self.phosphorus,
+                'polyunsaturated':self.polyunsaturated,
+                'potassium':self.potassium,
+                'protein':self.protein,
+                'riboflavin_b2':self.riboflavin_b2,
+                'saturated':self.saturated,
+                'sodium':self.sodium,
+                'sugars':self.sugars,
+                'sugars_added':self.sugars_added,
+                'thiamin_b1':self.thiamin_b1,
+                'trans':self.trans,
+                'vitamin_a':self.vitamin_a,
+                'vitamin_b12':self.vitamin_b12,
+                'vitamin_b6':self.vitamin_b6,
+                'vitamin_c':self.vitamin_c,
+                'vitamin_d':self.vitamin_d,
+                'vitamin_e':self.vitamin_e,
+                'vitamin_k':self.vitamin_k
+            },
+            'daily' : {
+                'calcium': self.calcium_daily,
+                'carbs':self.carbs_daily,
+                'cholesterol':self.cholesterol_daily,
+                'energy':self.energy_daily,
+                'fat':self.fat_daily,
+                'fiber':self.fiber_daily,
+                'folate_equivalent':self.folate_equivalent_daily,
+                'folate_food':self.folate_food_daily,
+                'iron':self.iron_daily,
+                'magnesium':self.magnesium_daily,
+                'monounsaturated':self.monounsaturated_daily,
+                'niacin_b3':self.niacin_b3_daily,
+                'phosphorus':self.phosphorus_daily,
+                'polyunsaturated':self.polyunsaturated_daily,
+                'potassium':self.potassium_daily,
+                'protein':self.protein_daily,
+                'riboflavin_b2':self.riboflavin_b2_daily,
+                'saturated':self.saturated_daily,
+                'sodium':self.sodium_daily,
+                'sugars':self.sugars_daily,
+                'sugars_added':self.sugars_added_daily,
+                'thiamin_b1':self.thiamin_b1_daily,
+                'trans':self.trans_daily,
+                'vitamin_a':self.vitamin_a_daily,
+                'vitamin_b12':self.vitamin_b12_daily,
+                'vitamin_b6':self.vitamin_b6_daily,
+                'vitamin_c':self.vitamin_c_daily,
+                'vitamin_d':self.vitamin_d_daily,
+                'vitamin_e':self.vitamin_e_daily,
+                'vitamin_k':self.vitamin_k_daily
+            }
+        }
+        return model
+
 class Tag(db.Model):
     __searchable__ = ['name']
     __analyzer__ = StemmingAnalyzer()
