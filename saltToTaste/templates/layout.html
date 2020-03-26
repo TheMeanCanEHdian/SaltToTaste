@@ -231,6 +231,11 @@
       }
     </script>
     <script>
+      $( "#nutrition_toggle" ).click(function() {
+        $( "#nutrition_details" ).slideToggle();
+      });
+    </script>
+    <script>
     // Show/hide settings submenus if enabled/disabled
       $(function () {
         $("#authentication_enabled").click(function () {

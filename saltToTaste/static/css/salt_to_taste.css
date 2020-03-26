@@ -217,8 +217,61 @@ body {
   color: #960000;
 }
 
+.nutrition {
+  font-family: Helvetica;
+  border: 1px solid black;
+}
+
+.nutrition_divider_top {
+  border-top: 1px solid black;
+}
+
+.nutrition_divider_top_l {
+  border-top: 5px solid black;
+}
+
+.nutrition_divider_bottom_l {
+  border-bottom: 5px solid black;
+}
+
+.nutrition_divider_bottom_xl {
+  border-bottom: 10px solid black;
+}
+
+.nutrition_title {
+  font-family: "Franklin Gothic";
+  text-align: center;
+  font-size: 50px;
+}
+
+.nutrition_servings {
+  height: 1.2em;
+}
+
+.nutrition_amount {
+  height: 1em;
+}
+
+.nutrition_calories {
+  font-size: 30px;
+}
+
+.nutrition_daily_value_title {
+  font-size: 13px;
+}
+
+.nutrition_added_sugars {
+  margin-left: 2.2rem;
+}
+
+#nutrition_toggle a {
+  text-decoration: none;
+  color: #960000;
+}
+
 .notes-list, .ingredients-list {
   margin-bottom: 0;
+  padding-left: 1em;
 }
 
 .notes-list-item, .ingredients-list-item {
