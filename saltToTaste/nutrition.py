@@ -27,7 +27,7 @@ def fetch_recipe_nutrition(title, servings, ingredient_list):
     r = requests.post('https://api.edamam.com/api/nutrition-details', params=params, headers=headers, json=ingredient_dict)
 
     if r.status_code != 200:
-        print(f"Error processing {title}")
+        print(f" * ERROR: Could not fetch nutrition data. | Code:({r.status_code} Message:{r.json()['error']})")
         return False
 
     r_json = r.json()
@@ -113,7 +113,7 @@ def fetch_ingredient_nutrition(ingredient):
     argument = argparser_results()
     DATA_DIR = os.path.abspath(argument['DATA_DIR'])
     config = configparser_results(f'{DATA_DIR}/config.ini')
-    
+
     app_id = config.get('third_party', 'edamam_id')
     app_key = config.get('third_party', 'edamam_key')
 
@@ -122,6 +122,11 @@ def fetch_ingredient_nutrition(ingredient):
 
     params = {'app_id': app_id, 'app_key': app_key, 'ingr': ingredient}
     r = requests.get('https://api.edamam.com/api/nutrition-data', params=params)
+
+    if r.status_code != 200:
+        print(f" * ERROR: Could not fetch nutrition data. | Code:({r.status_code} Message:{r.json()['error']})")
+        return False
+
     r_json = r.json()
 
     nutrition_dict = {
