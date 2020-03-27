@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Nutrition, Tag, Ingredient, Direction, Note, User
 from saltToTaste.nutrition import fetch_recipe_nutrition
@@ -236,6 +237,7 @@ def update_nutrition(recipe_id, recipe_title, ingredient_list, recipe_servings=1
     nutrition_data = fetch_recipe_nutrition(recipe_title, recipe_servings, ingredient_list)
 
     if nutrition_data:
+        nutrition.last_updated = datetime.now()
         nutrition.weight = nutrition_data.get('weight')
         nutrition.calcium = nutrition_data['nutrients'].get('calcium')
         nutrition.carbs = nutrition_data['nutrients'].get('carbs')
