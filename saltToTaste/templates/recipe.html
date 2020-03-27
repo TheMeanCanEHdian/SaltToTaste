@@ -6,7 +6,7 @@
 
 {% block body_container %}
 <div class="container mt-1">
-  <div class="row pb-2 row-cols-1 row-cols-md-2 no-gutters">
+  <div class="row pb-2 row-cols-1 row-cols-md-2 no-gutters border-bottom">
     <div class="col pr-0 pr-md-2 order-2 order-md-1">
       <div class="recipe-details-title">
         {{ recipe.title }}
@@ -111,7 +111,7 @@
   </div>
   <div class="row row-cols-1 row-cols-md-2 no-gutters">
     {% if recipe.ingredients %}
-    <div class="col-12 col-md-6 no-gutters order-2 order-md-1 py-2 border-top recipe-details-section-ingredients">
+    <div class="col-12 col-md-6 no-gutters order-2 order-md-1 py-2 recipe-details-section-ingredients">
       <div class="details-section-title">
         Ingredients
       </div>
