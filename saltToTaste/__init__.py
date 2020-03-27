@@ -65,6 +65,8 @@ def create_app(config_file='settings.py'):
     def load_user(user_id):
         return User.query.get(user_id)
 
+    db_cleanup()
+
     # Import phyiscal recipe files
     recipe_list = recipe_importer(app.config['RECIPE_FILES'])
 
