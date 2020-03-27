@@ -123,6 +123,8 @@ def recipe(title_formatted):
     nutrition = get_recipe_nutrition(recipe['id'])
 
     if recipe:
+        if not recipe['servings'] or recipe['servings'] <= 0:
+            recipe['servings'] = 1
         return render_template("recipe.html", recipe=recipe, nutrition=nutrition)
 
     abort(404)
