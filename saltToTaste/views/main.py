@@ -125,6 +125,9 @@ def recipe(title_formatted):
     if recipe:
         if not recipe['servings'] or recipe['servings'] <= 0:
             recipe['servings'] = 1
+        # Set nutrition structure to stop Jinja template from breaking if there is no entry in nutrition table
+        if nutrition == None:
+            nutrition = {'nutrients':{}, 'daily':{}}
         return render_template("recipe.html", recipe=recipe, nutrition=nutrition)
 
     abort(404)
