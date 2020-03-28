@@ -138,7 +138,6 @@ def delete_recipe(id):
         Nutrition.query.filter(Nutrition.recipe_id == id).delete()
         Recipe.query.filter(Recipe.id == id).delete()
         db.session.commit()
-        db_cleanup()
         return True
 
     return False
