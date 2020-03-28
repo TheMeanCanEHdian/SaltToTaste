@@ -231,6 +231,21 @@
       }
     </script>
     <script>
+      // Reverse tag colors on hover
+      $(".recipe-tag").mouseenter(function(){
+        var color = $(this).css("color");
+        var b_color = $(this).css("background-color");
+        $(this).css("color", b_color);
+        $(this).css("background-color", color);
+      });
+      $(".recipe-tag").mouseleave(function(){
+        var color = $(this).css("color");
+        var b_color = $(this).css("background-color");
+        $(this).css("color", b_color);
+        $(this).css("background-color", color);
+      });
+    </script>
+    <script>
       $( "#nutrition-toggle" ).click(function() {
         var x = document.getElementById("nutrition-toggle_text");
         if (x.innerHTML == "Expand nutrition") {
