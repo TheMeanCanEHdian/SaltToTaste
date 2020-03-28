@@ -126,60 +126,6 @@ body {
   margin-left: 3px;
 }
 
-.recipe-card-tag:hover, .recipe-details-tag:hover {
-  background-color: #b87474;
-}
-
-.recipe-card-tag.vegetarian, .recipe-details-tag.vegetarian {
-  border-color: #007d1b;
-  background-color: #9dfab3;
-  color: #007d1b;
-}
-
-.recipe-card-tag.vegetarian:hover, .recipe-details-tag.vegetarian:hover {
-  background-color: #7cc48d;
-}
-
-.recipe-card-tag.quick-meal, .recipe-details-tag.quick-meal {
-  border-color: #676900;
-  background-color: #faf89d;
-  color: #676900;
-}
-
-.recipe-card-tag.quick-meal:hover, .recipe-details-tag.quick-meal:hover {
-  background-color: #c9c87f;
-}
-
-.recipe-card-tag.spicy, .recipe-details-tag.spicy {
-  border-color: #690000;
-  background-color: #ff3131;
-  color: #690000;
-}
-
-.recipe-card-tag.spicy:hover, .recipe-details-tag.spicy:hover {
-  background-color: #ca2727;
-}
-
-.recipe-card-tag.blue-apron, .recipe-details-tag.blue-apron {
-  border-color: #0f346c;
-  background-color: #9facf5;
-  color: #0f346c;
-}
-
-.recipe-card-tag.blue-apron:hover, .recipe-details-tag.blue-apron:hover {
-  background-color: #7a85bf;
-}
-
-.recipe-card-tag.hello-fresh, .recipe-details-tag.hello-fresh {
-  border-color: #2e3d0a;
-  background-color: #91c11e;
-  color: #2e3d0a;
-}
-
-.recipe-card-tag.hello-fresh:hover, .recipe-details-tag.hello-fresh:hover {
-  background-color: #6a8c16;
-}
-
 .recipe-details-title {
   font-size: 30px;
   font-weight: 500;

@@ -18,11 +18,23 @@ main = Blueprint('main', __name__)
 
 @main.context_processor
 def read_config():
+    config = configparser_results(current_app.config['CONFIG_INI'])
+
+    tag_dict = {}
+    for tag in config['tags']:
+        values = config['tags'][tag].split(',')
+        tag_dict[tag] = {
+            'icon' : values[0].strip(' '),
+            'color' : values[1].strip(' '),
+            'b_color' : values[2].strip(' ')
+        }
+
     return dict(
         user_exists = get_user_by_id(1),
-        authentication_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'authentication_enabled'),
-        api_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'api_enabled'),
-        backups_enabled = configparser_results(current_app.config['CONFIG_INI']).getboolean('general', 'backups_enabled')
+        authentication_enabled = config.getboolean('general', 'authentication_enabled'),
+        api_enabled = config.getboolean('general', 'api_enabled'),
+        backups_enabled = config.getboolean('general', 'backups_enabled'),
+        custom_tags = tag_dict
     )
 
 # Make sure redirect URL is on the server
