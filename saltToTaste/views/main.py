@@ -24,7 +24,7 @@ def read_config():
     for tag in config['tags']:
         values = config['tags'][tag].split(',')
         tag_dict[tag] = {
-            'icon' : values[0].strip(' '),
+            'icon' : values[0].strip(' ') if values[0].strip(' ') != 'none' else False,
             'color' : values[1].strip(' '),
             'b_color' : values[2].strip(' ')
         }

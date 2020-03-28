@@ -30,7 +30,7 @@
         {% if tag in custom_tags %}
           <a onclick="tagSearch('tag:{{ tag }}')" href="/">
             <span class="px-1 rounded recipe-tag recipe-details-tag" style="border-color: {{ custom_tags[tag]['color'] }};color: {{ custom_tags[tag]['color'] }};background-color: {{ custom_tags[tag]['b_color'] }};">
-              {% if custom_tags[tag]['icon'] != "none" %}<i class="fas {{custom_tags[tag]['icon'] }}"></i>{% endif %} {{ tag|capwords }}
+              {% if custom_tags[tag]['icon'] %}<i class="fas {{custom_tags[tag]['icon'] }}"></i>{% endif %} {{ tag|capwords }}
             </span>
           </a>
         {% else %}
