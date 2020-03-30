@@ -81,7 +81,6 @@
           </div>
         </div>
       </div>
-      {% if recipe.description %}
       <div class="py-2 border-top recipe-details-description">
         <div class="d-flex flex-row text-center no-gutters">
           <div class="mr-auto font-italic recipe-details-description-item">
@@ -94,11 +93,12 @@
             <span>Ready in: {% if recipe.ready %}{{ recipe.ready }} min{% elif recipe.prep and recipe.cook %}{{ recipe.prep + recipe.cook }} min{% else %} -{% endif %}</span>
           </div>
         </div>
+        {% if recipe.description %}
         <div>
           {{ recipe.description }}
         </div>
+        {% endif %}
       </div>
-      {% endif %}
       {% if recipe.notes %}
       <div class="row no-gutters pt-2 border-top recipe-details-section-notes">
         <div class="col-12 details-section-title">
