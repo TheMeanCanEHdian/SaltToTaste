@@ -34,7 +34,8 @@ def create_default_configfile():
         'third_party' : {
             'edamam_id' : '',
             'edamam_key' : ''
-        }
+        },
+        'tags' : {}
     }
 
     config = configparser.ConfigParser()
@@ -83,7 +84,8 @@ def verify_configfile():
         'third_party' : {
             'edamam_id' : '',
             'edamam_key' : ''
-        }
+        },
+        'tags' : {}
     }
 
     for section in default_config:
