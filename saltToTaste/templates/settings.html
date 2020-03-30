@@ -11,6 +11,7 @@
     <div class="col-12 col-md-3">
       <div class="list-group" id="list-tab" role="tablist">
         <a class="list-group-item list-group-item-action active" id="list-general-list" data-toggle="list" href="#list-general" role="tab" aria-controls="general">General</a>
+        <a class="list-group-item list-group-item-action" id="list-tags-list" data-toggle="list" href="#list-tags" role="tab" aria-controls="general">Tags</a>
         <a class="list-group-item list-group-item-action" id="list-third_party-list" data-toggle="list" href="#list-third_party" role="tab" aria-controls="access">Third Party Connections</a>
       </div>
     </div>
@@ -114,8 +115,39 @@
             </div>
             <input type="submit" name="save" value="Save" class="btn btn-success mt-4">
           </div>
+          <div class="tab-pane" id="list-tags" role="tabpanel" aria-labelledby="list-tags-list">
+            <h5>Customize Tags</h5>
+            <table class="table table-borderless table-responsive text-center">
+              <thead>
+                <tr>
+                  <th>Preview</th>
+                  <th>Icon</th>
+                  <th>Name</th>
+                  <th>Color</th>
+                  <th>Background</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tag-tbody">
+                {% for tag in custom_tags %}
+                <tr id="tag-row-{{ loop.index - 1 }}" class="tag-tr">
+                  <td class="pt-3 tag-preview"><a href="#"><span class="px-1 rounded recipe-tag" style="border-color: {{ custom_tags[tag]['color'] }};color: {{ custom_tags[tag]['color'] }};background-color: {{ custom_tags[tag]['b_color'] }};"><span class="tag-preview-icon"><i class="{{ custom_tags[tag]['icon'] }}"></i></span><span class="capitalize tag-preview-name"> {{ tag }}</span></span></a></td>
+                  <td class="text-input-td"><input class="form-control text-center tag-icon-input" type="text" name="tag_icon-{{ loop.index - 1 }}" value="{% if custom_tags[tag]['icon'] %}{{ custom_tags[tag]['icon'] }}{% endif %}"></td>
+                  <td class="text-input-td"><input class="form-control text-center tag-name-input" type="text" name="tag_name-{{ loop.index - 1 }}" value="{{ tag }}"></td>
+                  <td class="color-input-td"><input class="form-control p-0 border-0 tag-color-input" type="color" name="tag_color-{{ loop.index - 1 }}" value="{{ custom_tags[tag]['color'] }}"></td>
+                  <td class="color-input-td"><input class="form-control p-0 border-0 tag-bcolor-input" type="color" name="tag_bcolor-{{ loop.index - 1 }}" value="{{ custom_tags[tag]['b_color'] }}"></td>
+                  <td><button class="btn btn-danger btn-sm mt-1 remove-tag" type="button"><i class="fas fa-minus"></i></button></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <td><button class="btn btn-outline-success mt-3 add-tag" type="button">Add tag</button></td>
+              </tfoot>
+            </table>
+            <input type="submit" name="save" value="Save" class="btn btn-success mt-4">
+          </div>
           <div class="tab-pane" id="list-third_party" role="tabpanel" aria-labelledby="list-third_party-list">
-            <h4 class="mt-4 mb-3">Nutrition Data</h4>
+            <h4 class="mb-3">Nutrition Data</h4>
             <h5 class="mt-4 mb-3">Edamam</h5>
             <div class="form-group mb-2" id="edamam_details">
               <label for="edamam_id">Application ID</label>
@@ -151,6 +183,18 @@
       </form>
     </div>
   </div>
-
+  <!-- Tag row that gets added on click -->
+  <div class="d-none">
+    <table>
+      <tr id="tag-row">
+        <td class="pt-3 tag-preview"><a href="#"><span class="px-1 rounded recipe-tag"><span class="tag-preview-icon"></span><span class="capitalize tag-preview-name"></span></span></a></td>
+        <td class="text-input-td"><input class="form-control text-center tag-icon-input" type="text" value=""></td>
+        <td class="text-input-td"><input class="form-control text-center tag-name-input" type="text" value=""></td>
+        <td class="color-input-td"><input class="form-control p-0 border-0 tag-color-input" type="color" value=""></td>
+        <td class="color-input-td"><input class="form-control p-0 border-0 tag-bcolor-input" type="color" value=""></td>
+        <td><button class="btn btn-danger btn-sm mt-1 remove-tag" type="button"><i class="fas fa-minus"></i></button></td>
+      </tr>
+    </table>
+  </div>
 </div>
 {% endblock %}
