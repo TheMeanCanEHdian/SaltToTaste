@@ -256,17 +256,18 @@
         name = $(this).val();
         $(this).parents("tr").find(".tag-preview-name").html(" " + name);
       });
-      // Change tag color
+      // Change tag preview color
       $(".tag-color-input").change(function(){
         color = $(this).val();
         $(this).parents("tr").find(".recipe-tag").css("color", color).css("border-color", color);
       });
-      // Change tag background color
+      // Change tag preview background color
       $(".tag-bcolor-input").change(function(){
         b_color = $(this).val();
         $(this).parents("tr").find(".recipe-tag").css("background-color", b_color);
       });
 
+      // Add tag rows
       $(document).ready(function(){
         var tagCount = 0;
         var lastTag = $(".tag-tr").last().attr("id");
