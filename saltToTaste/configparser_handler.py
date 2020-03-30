@@ -34,7 +34,8 @@ def create_default_configfile():
         'third_party' : {
             'edamam_id' : '',
             'edamam_key' : ''
-        }
+        },
+        'tags' : {}
     }
 
     config = configparser.ConfigParser()
@@ -50,9 +51,13 @@ def update_configfile(dict):
     if config:
         for section in dict:
             if config.has_section(section):
+                # Remove any options that are in the config but not in the settings dict
+                for option in config.options(section):
+                    if option not in dict[section].keys():
+                        config.remove_option(section, option)
+                # Add/update config with items from settings dict
                 for k,v in dict[section].items():
-                    if config.has_option(section, k):
-                        config.set(section, k, str(v))
+                    config.set(section, k, str(v))
 
         with open(f'{DATA_DIR}/config.ini', 'w') as configfile:
             config.write(configfile)
@@ -79,7 +84,8 @@ def verify_configfile():
         'third_party' : {
             'edamam_id' : '',
             'edamam_key' : ''
-        }
+        },
+        'tags' : {}
     }
 
     for section in default_config:
@@ -91,3 +97,48 @@ def verify_configfile():
 
     with open(file, 'w') as configfile:
         config.write(configfile)
+
+def parse_settings(config, settings_dict):
+    parsed_dict = {}
+
+    del settings_dict['tag_bcolor']
+    del settings_dict['tag_color']
+    del settings_dict['tag_name']
+    del settings_dict['tag_icon']
+
+    for section in config:
+        if section not in ('DEFAULT', 'flask'):
+            parsed_dict[section] = {}
+        for key in settings_dict:
+            if config.has_option(section, key):
+                parsed_dict[section][key] = settings_dict[key]
+
+    return parsed_dict
+
+def decode_tags(config):
+    tag_dict = {}
+    for tag in config['tags']:
+        values = config['tags'][tag].split(',')
+        tag_dict[tag] = {
+            'icon' : values[0].strip(' ') if values[0].strip(' ') != 'none' else False,
+            'color' : values[1].strip(' '),
+            'b_color' : values[2].strip(' ')
+        }
+
+    return tag_dict
+
+def encode_tags(config, name_list, icon_list, color_list, bcolor_list):
+    tag_dict = {}
+    encoded_tags = {}
+
+    for idx, val in enumerate(name_list):
+        tag_dict[val] = {
+            'icon' : icon_list[idx].strip(' ') if icon_list[idx].strip(' ') != '' else 'none',
+            'color' : color_list[idx].strip(' '),
+            'b_color' : bcolor_list[idx].strip(' ')
+        }
+
+    for tag in tag_dict:
+        encoded_tags[tag] = f"{tag_dict[tag]['icon']},{tag_dict[tag]['color']},{tag_dict[tag]['b_color']}"
+
+    return encoded_tags

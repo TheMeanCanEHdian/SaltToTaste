@@ -18,19 +18,19 @@
           </div>
           <div class="ml-1 mb-1 recipe-card-tags">
             {% for tag in recipe.tags %}
-            <a onclick="tagSearch('tag:{{ tag }}')" href="#">
-              <span class="px-1 rounded recipe-card-tag {{ tag | replace (' ', '-') }}">
-                {% if tag == 'vegetarian' %}
-                <i class="fas fa-leaf"></i> {{ tag|capwords }}
-                {% elif tag == 'quick meal' %}
-                <i class="fas fa-stopwatch"></i> {{ tag|capwords }}
-                {% elif tag == 'spicy' %}
-                <i class="fas fa-pepper-hot"></i> {{ tag|capwords }}
-                {% else %}
-                {{ tag|capwords }}
-                {% endif %}
-              </span>
-            </a>
+            {% if tag in custom_tags %}
+              <a onclick="tagSearch('tag:{{ tag }}')" href="/">
+                <span class="px-1 rounded recipe-tag recipe-card-tag" style="border-color: {{ custom_tags[tag]['color'] }};color: {{ custom_tags[tag]['color'] }};background-color: {{ custom_tags[tag]['b_color'] }};">
+                  {% if custom_tags[tag]['icon'] %}<i class="{{custom_tags[tag]['icon'] }}"></i>{% endif %} {{ tag|capwords }}
+                </span>
+              </a>
+            {% else %}
+              <a onclick="tagSearch('tag:{{ tag }}')" href="/">
+                <span class="px-1 rounded recipe-tag recipe-card-tag">
+                  {{ tag|capwords }}
+                </span>
+              </a>
+            {% endif %}
             {% endfor %}
             &nbsp;
           </div>

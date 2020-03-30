@@ -84,6 +84,10 @@ class SettingsForm(FlaskForm):
     api_key = StringField(validators=[Length(min=32)])
     backups_enabled = BooleanField()
     backup_count = IntegerField(validators=[min_backups])
+    tag_name = FieldList(StringField())
+    tag_icon = FieldList(StringField())
+    tag_color = FieldList(StringField())
+    tag_bcolor = FieldList(StringField())
     edamam_id = StringField()
     edamam_key = StringField()
 

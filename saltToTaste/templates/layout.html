@@ -231,6 +231,70 @@
       }
     </script>
     <script>
+      // Reverse tag colors on hover
+      $(".recipe-tag").mouseenter(function(){
+        var color = $(this).css("color");
+        var b_color = $(this).css("background-color");
+        $(this).css("color", b_color);
+        $(this).css("background-color", color);
+      });
+      $(".recipe-tag").mouseleave(function(){
+        var color = $(this).css("color");
+        var b_color = $(this).css("background-color");
+        $(this).css("color", b_color);
+        $(this).css("background-color", color);
+      });
+    </script>
+    <script>
+      // Change tag preview icon
+      $(".tag-icon-input").keyup(function(){
+        icon = $(this).val();
+        $(this).parents("tr").find(".tag-preview-icon").html("<i class='" + icon + "'></i>")
+      });
+      // Change tag preview name
+      $(".tag-name-input").keyup(function(){
+        name = $(this).val();
+        $(this).parents("tr").find(".tag-preview-name").html(" " + name);
+      });
+      // Change tag preview color
+      $(".tag-color-input").change(function(){
+        color = $(this).val();
+        $(this).parents("tr").find(".recipe-tag").css("color", color).css("border-color", color);
+      });
+      // Change tag preview background color
+      $(".tag-bcolor-input").change(function(){
+        b_color = $(this).val();
+        $(this).parents("tr").find(".recipe-tag").css("background-color", b_color);
+      });
+
+      // Add tag rows
+      $(document).ready(function(){
+        var tagCount = 0;
+        var lastTag = $(".tag-tr").last().attr("id");
+
+        if (lastTag) {
+          lastTag = parseInt(lastTag.replace("tag-row-", ""));
+          var tagCount = lastTag + 1;
+        }
+        // Add new tag rows on click
+        $(".add-tag").click(function(){
+          var clone = $('#tag-row').clone(true, true);
+          clone.find('.tag-preview-icon').html("<i class='fas fa-plus'></i>");
+          clone.find('.tag-preview-name').html(" new tag");
+          clone.find('.tag-icon-input').attr("name", "tag_icon-" + tagCount).attr("value", "fas fa-plus");
+          clone.find('.tag-name-input').attr("name", "tag_name-" + tagCount).attr("value", "new tag");
+          clone.find(".tag-color-input").attr("name", "tag_color-" + tagCount).attr("value", "#960000");
+          clone.find(".tag-bcolor-input").attr("name", "tag_bcolor-" + tagCount).attr("value", "#fa9d9d");
+          $("#tag-tbody").append(clone);
+          tagCount++;
+        });
+        // Remove tag row on click
+        $(".remove-tag").click(function(){
+          $(this).parents("tr").remove();
+        });
+      });
+    </script>
+    <script>
       $( "#nutrition-toggle" ).click(function() {
         var x = document.getElementById("nutrition-toggle_text");
         if (x.innerHTML == "Expand nutrition") {
@@ -298,7 +362,7 @@
 
         $(".add-note").click(function(){
           var clone = $('#note-template').clone();
-          clone.removeAttr("id")
+          clone.removeAttr("id");
           clone.find('.form-control').attr("name", "notes-" + noteCount).addClass("note-field");
           $(".add-note").before(clone);
           noteCount++;
@@ -306,7 +370,7 @@
 
         $(".add-ingredient").click(function(){
           var clone = $('#ingredient-template').clone();
-          clone.removeAttr("id")
+          clone.removeAttr("id");
           clone.find('.form-control').attr("name", "ingredients-" + ingredientCount).addClass("ingredient-field");
           $(".add-ingredient").before(clone);
           ingredientCount++;
@@ -314,7 +378,7 @@
 
         $(".add-direction").click(function(){
           var clone = $('#direction-template').clone();
-          clone.removeAttr("id")
+          clone.removeAttr("id");
           clone.find('.form-control').attr("name", "directions-" + directionCount).addClass("direction-field");
           $(".add-direction").before(clone);
           directionCount++;
