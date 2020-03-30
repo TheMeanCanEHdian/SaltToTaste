@@ -108,6 +108,143 @@ class Recipe(db.Model):
     def __repr__(self):
         return f'<Recipe: {self.title}>'
 
+class Nutrition(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recipe_id = db.Column(db.Integer, unique=True, nullable=False)
+    last_updated = db.Column(db.DateTime)
+    weight = db.Column(db.Integer)
+    calcium = db.Column(db.Integer)
+    calcium_daily = db.Column(db.Integer)
+    carbs = db.Column(db.Integer)
+    carbs_daily = db.Column(db.Integer)
+    cholesterol = db.Column(db.Integer)
+    cholesterol_daily = db.Column(db.Integer)
+    energy = db.Column(db.Integer)
+    energy_daily = db.Column(db.Integer)
+    fat = db.Column(db.Integer)
+    fat_daily = db.Column(db.Integer)
+    fiber = db.Column(db.Integer)
+    fiber_daily = db.Column(db.Integer)
+    folate_equivalent = db.Column(db.Integer)
+    folate_equivalent_daily = db.Column(db.Integer)
+    folate_food = db.Column(db.Integer)
+    folate_food_daily = db.Column(db.Integer)
+    iron = db.Column(db.Integer)
+    iron_daily = db.Column(db.Integer)
+    magnesium = db.Column(db.Integer)
+    magnesium_daily = db.Column(db.Integer)
+    monounsaturated = db.Column(db.Integer)
+    monounsaturated_daily = db.Column(db.Integer)
+    niacin_b3 = db.Column(db.Integer)
+    niacin_b3_daily = db.Column(db.Integer)
+    phosphorus = db.Column(db.Integer)
+    phosphorus_daily = db.Column(db.Integer)
+    polyunsaturated = db.Column(db.Integer)
+    polyunsaturated_daily = db.Column(db.Integer)
+    potassium = db.Column(db.Integer)
+    potassium_daily = db.Column(db.Integer)
+    protein = db.Column(db.Integer)
+    protein_daily = db.Column(db.Integer)
+    riboflavin_b2 = db.Column(db.Integer)
+    riboflavin_b2_daily = db.Column(db.Integer)
+    saturated = db.Column(db.Integer)
+    saturated_daily = db.Column(db.Integer)
+    sodium = db.Column(db.Integer)
+    sodium_daily = db.Column(db.Integer)
+    sugars = db.Column(db.Integer)
+    sugars_daily = db.Column(db.Integer)
+    sugars_added = db.Column(db.Integer)
+    sugars_added_daily = db.Column(db.Integer)
+    thiamin_b1 = db.Column(db.Integer)
+    thiamin_b1_daily = db.Column(db.Integer)
+    trans = db.Column(db.Integer)
+    trans_daily = db.Column(db.Integer)
+    vitamin_a = db.Column(db.Integer)
+    vitamin_a_daily = db.Column(db.Integer)
+    vitamin_b12 = db.Column(db.Integer)
+    vitamin_b12_daily = db.Column(db.Integer)
+    vitamin_b6 = db.Column(db.Integer)
+    vitamin_b6_daily = db.Column(db.Integer)
+    vitamin_c = db.Column(db.Integer)
+    vitamin_c_daily = db.Column(db.Integer)
+    vitamin_d = db.Column(db.Integer)
+    vitamin_d_daily = db.Column(db.Integer)
+    vitamin_e = db.Column(db.Integer)
+    vitamin_e_daily = db.Column(db.Integer)
+    vitamin_k = db.Column(db.Integer)
+    vitamin_k_daily = db.Column(db.Integer)
+
+    def api_model(self):
+        model = {
+            'last_updated' : self.last_updated,
+            'weight' : self.weight,
+            'nutrients' : {
+                'calcium': self.calcium,
+                'carbs':self.carbs,
+                'cholesterol':self.cholesterol,
+                'energy':self.energy,
+                'fat':self.fat,
+                'fiber':self.fiber,
+                'folate_equivalent':self.folate_equivalent,
+                'folate_food':self.folate_food,
+                'iron':self.iron,
+                'magnesium':self.magnesium,
+                'monounsaturated':self.monounsaturated,
+                'niacin_b3':self.niacin_b3,
+                'phosphorus':self.phosphorus,
+                'polyunsaturated':self.polyunsaturated,
+                'potassium':self.potassium,
+                'protein':self.protein,
+                'riboflavin_b2':self.riboflavin_b2,
+                'saturated':self.saturated,
+                'sodium':self.sodium,
+                'sugars':self.sugars,
+                'sugars_added':self.sugars_added,
+                'thiamin_b1':self.thiamin_b1,
+                'trans':self.trans,
+                'vitamin_a':self.vitamin_a,
+                'vitamin_b12':self.vitamin_b12,
+                'vitamin_b6':self.vitamin_b6,
+                'vitamin_c':self.vitamin_c,
+                'vitamin_d':self.vitamin_d,
+                'vitamin_e':self.vitamin_e,
+                'vitamin_k':self.vitamin_k
+            },
+            'daily' : {
+                'calcium': self.calcium_daily,
+                'carbs':self.carbs_daily,
+                'cholesterol':self.cholesterol_daily,
+                'energy':self.energy_daily,
+                'fat':self.fat_daily,
+                'fiber':self.fiber_daily,
+                'folate_equivalent':self.folate_equivalent_daily,
+                'folate_food':self.folate_food_daily,
+                'iron':self.iron_daily,
+                'magnesium':self.magnesium_daily,
+                'monounsaturated':self.monounsaturated_daily,
+                'niacin_b3':self.niacin_b3_daily,
+                'phosphorus':self.phosphorus_daily,
+                'polyunsaturated':self.polyunsaturated_daily,
+                'potassium':self.potassium_daily,
+                'protein':self.protein_daily,
+                'riboflavin_b2':self.riboflavin_b2_daily,
+                'saturated':self.saturated_daily,
+                'sodium':self.sodium_daily,
+                'sugars':self.sugars_daily,
+                'sugars_added':self.sugars_added_daily,
+                'thiamin_b1':self.thiamin_b1_daily,
+                'trans':self.trans_daily,
+                'vitamin_a':self.vitamin_a_daily,
+                'vitamin_b12':self.vitamin_b12_daily,
+                'vitamin_b6':self.vitamin_b6_daily,
+                'vitamin_c':self.vitamin_c_daily,
+                'vitamin_d':self.vitamin_d_daily,
+                'vitamin_e':self.vitamin_e_daily,
+                'vitamin_k':self.vitamin_k_daily
+            }
+        }
+        return model
+
 class Tag(db.Model):
     __searchable__ = ['name']
     __analyzer__ = StemmingAnalyzer()
@@ -122,6 +259,7 @@ class Ingredient(db.Model):
     __analyzer__ = StemmingAnalyzer()
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
+
 
 class Direction(db.Model):
     __searchable__ = ['name']

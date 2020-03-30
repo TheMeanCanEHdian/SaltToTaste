@@ -10,7 +10,7 @@ from saltToTaste.extensions import db
 from saltToTaste.models import Recipe, Tag, Direction, Ingredient, Note, User
 from saltToTaste.forms import AddRecipeForm, UpdateRecipeForm, SettingsForm, LoginForm
 from saltToTaste.file_handler import create_recipe_file, save_image, delete_file, rename_file, hash_file, backup_recipe_file, backup_image_file, backup_database_file
-from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, add_recipe, update_recipe, delete_recipe, search_parser, get_user_by_id, delete_user_by_id
+from saltToTaste.database_handler import get_recipes, get_recipe, get_recipe_by_title_f, get_recipe_nutrition, add_recipe, update_recipe, delete_recipe, search_parser, get_user_by_id, delete_user_by_id
 from saltToTaste.configparser_handler import configparser_results, update_configfile
 from saltToTaste.decorators import require_login, require_login_recipes
 
@@ -84,6 +84,7 @@ def settings():
             delete_user_by_id(user_query.id)
 
         update_configfile({'general': form.data})
+        update_configfile({'third_party': form.data})
         flash('Settings saved.', 'success')
 
         return redirect(url_for('main.settings'))
@@ -97,6 +98,8 @@ def settings():
     form.api_key.data = config['general']['api_key']
     form.backups_enabled.data = config['general']['backups_enabled']
     form.backup_count.data = config['general']['backup_count']
+    form.edamam_id.data = config['third_party']['edamam_id']
+    form.edamam_key.data = config['third_party']['edamam_key']
 
     return render_template("settings.html", form=form)
 
@@ -117,9 +120,15 @@ def index():
 @require_login_recipes
 def recipe(title_formatted):
     recipe = get_recipe_by_title_f(title_formatted)
+    nutrition = get_recipe_nutrition(recipe['id'])
 
     if recipe:
-        return render_template("recipe.html", recipe=recipe)
+        if not recipe['servings'] or recipe['servings'] <= 0:
+            recipe['servings'] = 1
+        # Set nutrition structure to stop Jinja template from breaking if there is no entry in nutrition table
+        if nutrition == None:
+            nutrition = {'nutrients':{}, 'daily':{}}
+        return render_template("recipe.html", recipe=recipe, nutrition=nutrition)
 
     abort(404)
 

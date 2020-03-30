@@ -6,23 +6,23 @@
 
 {% block body_container %}
 <div class="container mt-1">
-  <div class="row pb-2 row-cols-1 row-cols-md-2 no-gutters">
+  <div class="row pb-2 row-cols-1 row-cols-md-2 no-gutters border-bottom">
     <div class="col pr-0 pr-md-2 order-2 order-md-1">
       <div class="recipe-details-title">
         {{ recipe.title }}
-      </div>
-      <div>
-        <a class="ml-1 recipe-details-action recipe-details-download" href="{{ url_for('main.download_recipe', filename=recipe.filename) }}" title="Download recipe">
-          <i class="fas fa-file-download fa-lg"></i>
-        </a>
-        {% if current_user.is_authenticated %}
-        <a class="ml-1 recipe-details-action recipe-details-edit" href="{{ url_for('main.update', recipe_id=recipe.id) }}" title="Edit recipe">
-          <i class="fas fa-edit fa-lg"></i>
-        </a>
-        <a class="ml-1 recipe-details-action recipe-details-delete" href="#" data-toggle="modal" data-target="#deleteModal" title="Delete recipe">
-          <i class="fas fa-trash-alt fa-lg"></i>
-        </a>
-        {% endif %}
+        <span>
+          <a class="ml-1 recipe-details-action recipe-details-download" href="{{ url_for('main.download_recipe', filename=recipe.filename) }}" title="Download recipe">
+            <i class="fas fa-file-download fa-xs"></i>
+          </a>
+          {% if current_user.is_authenticated %}
+          <a class="ml-1 recipe-details-action recipe-details-edit" href="{{ url_for('main.update', recipe_id=recipe.id) }}" title="Edit recipe">
+            <i class="fas fa-edit fa-xs"></i>
+          </a>
+          <a class="ml-1 recipe-details-action recipe-details-delete" href="#" data-toggle="modal" data-target="#deleteModal" title="Delete recipe">
+            <i class="fas fa-trash-alt fa-xs"></i>
+          </a>
+          {% endif %}
+        </span>
       </div>
       {% if recipe.tags %}
       <div class="py-2 recipe-details-tags">
@@ -43,7 +43,7 @@
         {% endfor %}
       </div>
       {% endif %}
-      <div class="row py-2 text-center no-gutters border-top recipe-details-section-info">
+      <div class="row py-2 text-center no-gutters border-top recipe-details-section-info d-none">
         <div class="col info-item">
           <i class="fas fa-clock fa-2x info-item-icon"></i>
           {% if recipe.prep or recipe.cook or recipe.ready %}
@@ -83,7 +83,20 @@
       </div>
       {% if recipe.description %}
       <div class="py-2 border-top recipe-details-description">
-        {{ recipe.description }}
+        <div class="d-flex flex-row text-center no-gutters">
+          <div class="mr-auto font-italic recipe-details-description-item">
+            <span>Prep time: {% if recipe.prep %}{{ recipe.prep }} min{% else %} -{% endif %}</span>
+          </div>
+          <div class="mr-auto font-italic recipe-details-description-item">
+            <span>Cook time: {% if recipe.cook %}{{ recipe.cook }} min{% else %} -{% endif %}</span>
+          </div>
+          <div class="mr-auto font-italic recipe-details-description-item">
+            <span>Ready in: {% if recipe.ready %}{{ recipe.ready }} min{% elif recipe.prep and recipe.cook %}{{ recipe.prep + recipe.cook }} min{% else %} -{% endif %}</span>
+          </div>
+        </div>
+        <div>
+          {{ recipe.description }}
+        </div>
       </div>
       {% endif %}
       {% if recipe.notes %}
@@ -104,20 +117,94 @@
     <div class="col order-1 order-md-2 rounded recipe-details-image" {% if recipe.image %}style="background-image: url('{{ url_for('main.image', filename=recipe.image) }}')"{% endif %}>
     </div>
   </div>
-  {% if recipe.ingredients %}
-  <div class="row no-gutters py-2 border-top recipe-details-section-ingredients">
-    <div class="col-12 details-section-title">
-      Ingredients
+  <div class="row row-cols-1 row-cols-md-2 no-gutters">
+    {% if recipe.ingredients %}
+    <div class="col-12 col-md-6 col-lg-8 no-gutters order-2 order-md-1 py-2 recipe-details-section-ingredients">
+      <div class="details-section-title">
+        Ingredients
+      </div>
+      <ul class="row row-cols-1 row-cols-lg-2 pt-2 mr-2 ingredients-list">
+        {% for ingredient in recipe.ingredients %}
+          {% if ingredient != '' %}
+          <li class="col py-1 ingredients-list-item">{{ ingredient }}</li>
+          {% endif %}
+        {% endfor %}
+      </ul>
     </div>
-    <ul class="col-12 row row-cols-1 row-cols-md-2 row-cols-lg-3 pt-2 ingredients-list">
-      {% for ingredient in recipe.ingredients %}
-        {% if ingredient != '' %}
-        <li class="col py-1 ingredients-list-item">{{ ingredient }}</li>
-        {% endif %}
-      {% endfor %}
-    </ul>
+    {% endif %}
+    <div class="col-12 col-md-6 col-lg-4 order-1 order-md-2 py-2">
+      <div class="px-2 pb-2 nutrition">
+        <table class="table table-sm table-borderless mb-n1">
+          <tbody>
+            <tr class="border-bottom">
+              <td class="font-weight-bold nutrition-title">Nutrition Facts</td>
+            </tr>
+            <tr class="nutrition-divider-bottom-xl">
+              <td><div class="nutrition-servings">{{ recipe.servings }} servings per recipe</div><span class="font-weight-bold">Serving size</span><span class="float-right font-weight-bold">{% if nutrition.weight %}{{ (nutrition.weight/recipe.servings)|round|int }}g{% else %}unknown{% endif %}</span></td>
+            </tr>
+            <tr>
+              <td class="font-weight-bold"><div class="nutrition-amount">Amount per serving</div><span class="nutrition-calories">Calories</span><span class="float-right nutrition-calories">{% if nutrition.nutrients.energy %}{{ (nutrition.nutrients.energy/recipe.servings)|round|int }}{% elif recipe.calories %}{{ recipe.calories }}{% else %}-{% endif %}</span></td>
+            </tr>
+          </tbody>
+          <tbody class="nutrition-details" style="display: none;">
+            <tr class="nutrition-divider-top-l">
+              <td><span class="float-right font-weight-bold nutrition-daily-value-title">% Daily Value</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="font-weight-bold mr-2">Total Fat</span><span>{% if nutrition.nutrients.fat %}{{ (nutrition.nutrients.fat/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.fat %}{{ (nutrition.daily.fat/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="ml-3 mr-2">Saturated Fat</span><span>{% if nutrition.nutrients.saturated %}{{ (nutrition.nutrients.saturated/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.saturated %}{{ (nutrition.daily.saturated/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="ml-3 font-italic">Trans</span><span class="mr-2"> Fat</span><span>{% if nutrition.nutrients.trans %}{{ (nutrition.nutrients.trans/recipe.servings)|round|int }}{% else %}0{% endif %}g</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="font-weight-bold mr-2">Cholesterol</span><span>{% if nutrition.nutrients.cholesterol %}{{ (nutrition.nutrients.cholesterol/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.cholesterol %}{{ (nutrition.daily.cholesterol/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="font-weight-bold mr-2">Sodium</span><span>{% if nutrition.nutrients.sodium %}{{ (nutrition.nutrients.sodium/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.sodium %}{{ (nutrition.daily.sodium/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="font-weight-bold mr-2">Total Carbohydrate</span><span>{% if nutrition.nutrients.carbs %}{{ (nutrition.nutrients.carbs/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.carbs %}{{ (nutrition.daily.carbs/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="ml-3 mr-2">Dietary Fiber</span><span>{% if nutrition.nutrients.fiber %}{{ (nutrition.nutrients.fiber/recipe.servings)|round|int }}{% else %}0{% endif %}g</span><span class="float-right font-weight-bold">{% if nutrition.daily.fiber %}{{ (nutrition.daily.fiber/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="ml-3 mr-2">Total Sugars</span><span>{% if nutrition.nutrients.sugars %}{{ (nutrition.nutrients.sugars/recipe.servings)|round|int }}{% else %}0{% endif %}g</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="nutrition-divider-top nutrition-added-sugars">
+                  <span>Includes {% if nutrition.nutrients.sugars_added %}{{ (nutrition.nutrients.sugars_added/recipe.servings)|round|int }}{% else %}0{% endif %}g Added Sugars</span><span class="float-right font-weight-bold">{% if nutrition.daily.sugars_added %}{{ (nutrition.daily.sugars_added/recipe.servings)|round|int }}{% else %}0{% endif %}%</span>
+                </div>
+              </td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="font-weight-bold mr-2">Protein</span><span>{% if nutrition.nutrients.protein %}{{ (nutrition.nutrients.protein/recipe.servings)|round|int }}{% else %}0{% endif %}g</span></td>
+            </tr>
+            <tr class="nutrition-divider-top-xl">
+              <td><span class="mr-2">Vitamin D</span><span>{% if nutrition.nutrients.vitamin_d %}{{ ((nutrition.nutrients.vitamin_d/recipe.servings)/40)|round|int }}{% else %}0{% endif %}mcg</span><span class="float-right">{% if nutrition.daily.vitamin_d %}{{ ((nutrition.daily.vitamin_d/recipe.servings)/40)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="mr-2">Calcium</span><span>{% if nutrition.nutrients.calcium %}{{ (nutrition.nutrients.calcium/recipe.servings)|round|int }}{% else %}0{% endif %}mg</span><span class="float-right">{% if nutrition.daily.calcium %}{{ (nutrition.daily.calcium/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="mr-2">Iron</span><span>{% if nutrition.nutrients.iron %}{{ (nutrition.nutrients.iron/recipe.servings)|round|int }}{% else %}0{% endif %}mg</span><span class="float-right">{% if nutrition.daily.iron %}{{ (nutrition.daily.iron/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+            <tr class="nutrition-divider-top">
+              <td><span class="mr-2">Potassium</span><span>{% if nutrition.nutrients.potassium %}{{ (nutrition.nutrients.potassium/recipe.servings)|round|int }}{% else %}0{% endif %}mg</span><span class="float-right">{% if nutrition.daily.potassium %}{{ (nutrition.daily.potassium/recipe.servings)|round|int }}{% else %}0{% endif %}%</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% if nutrition.nutrients.fat or nutrition.nutrients.saturated or nutrition.nutrients.trans or nutrition.nutrients.cholesterol or nutrition.nutrients.sodium or nutrition.nutrients.carbs or nutrition.nutrients.fiber or nutrition.nutrients.sugars or nutrition.nutrients.sugards_added or nutrition.nutrients.protein or nutrition.nutrients.vitamin_d or nutrition.nutrients.calcium or nutrition.nutrients.iron or nutrition.nutrients.potassium %}
+      <img class="float-right" src="{{ url_for('static', filename='logo/edamam.png') }}" height="30" alt="powered by Edamam">
+      <span id="nutrition-toggle"><a href="#" id="nutrition-toggle_text">Expand nutrition</a></span>
+      {% endif %}
+    </div>
   </div>
-  {% endif %}
   {% if recipe.directions %}
   <div class="row no-gutters py-2 border-top recipe-details-section-directions">
     <div class="col-12 details-section-title">

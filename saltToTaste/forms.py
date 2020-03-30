@@ -84,6 +84,8 @@ class SettingsForm(FlaskForm):
     api_key = StringField(validators=[Length(min=32)])
     backups_enabled = BooleanField()
     backup_count = IntegerField(validators=[min_backups])
+    edamam_id = StringField()
+    edamam_key = StringField()
 
 class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired()])

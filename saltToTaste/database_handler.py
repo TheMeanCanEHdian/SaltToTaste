@@ -1,6 +1,8 @@
 from collections import defaultdict
+from datetime import datetime
 from saltToTaste.extensions import db
-from saltToTaste.models import Recipe, Tag, Ingredient, Direction, Note, User
+from saltToTaste.models import Recipe, Nutrition, Tag, Ingredient, Direction, Note, User
+from saltToTaste.nutrition import fetch_recipe_nutrition
 
 def get_users():
     users = User.query.all()
@@ -39,6 +41,13 @@ def get_recipe_by_title_f(title_formatted):
     except:
         return False
 
+def get_recipe_nutrition(recipe_id):
+    nutrition = Nutrition.query.filter(Nutrition.recipe_id == recipe_id).first()
+    try:
+        return nutrition.api_model()
+    except:
+        False
+
 def check_for_duplicate_title_f(id, title_formatted):
     result = Recipe.query.filter(Recipe.title_formatted == title_formatted, Recipe.id != id).first()
     if result:
@@ -55,26 +64,16 @@ def add_recipe(recipe_data):
             title_formatted=recipe_data['title_formatted'],
             filename = recipe_data['filename']
         )
-        if recipe_data['image']:
-            recipe.image = recipe_data['image']
-        if recipe_data['imagecredit']:
-            recipe.imagecredit = recipe_data['imagecredit']
-        if recipe_data['source']:
-            recipe.source = recipe_data['source']
-        if recipe_data['description']:
-            recipe.description = recipe_data['description']
-        if recipe_data['prep']:
-            recipe.prep = recipe_data['prep']
-        if recipe_data['cook']:
-            recipe.cook = recipe_data['cook']
-        if recipe_data['ready']:
-            recipe.ready = recipe_data['ready']
-        if recipe_data['servings']:
-            recipe.servings = recipe_data['servings']
-        if recipe_data['calories']:
-            recipe.calories = recipe_data['calories']
-        if recipe_data['file_hash']:
-            recipe.file_hash = recipe_data['file_hash']
+        recipe.image = recipe_data.get('image')
+        recipe.imagecredit = recipe_data.get('imagecredit')
+        recipe.source = recipe_data.get('source')
+        recipe.description = recipe_data.get('description')
+        recipe.prep = recipe_data.get('prep')
+        recipe.cook = recipe_data.get('cook')
+        recipe.ready = recipe_data.get('ready')
+        recipe.servings = recipe_data.get('servings')
+        recipe.calories = recipe_data.get('calories')
+        recipe.file_hash = recipe_data.get('file_hash')
 
         db.session.add(recipe)
 
@@ -98,6 +97,8 @@ def add_recipe(recipe_data):
                     ingredient = Ingredient(name=i)
                     db.session.add(ingredient)
                 recipe.ingredients.append(ingredient)
+
+            update_nutrition(recipe.id, recipe.title, recipe_data['ingredients'], recipe.servings)
 
         if recipe_data['directions']:
             directions = Direction.query.filter(Direction.name.in_(recipe_data['directions']))
@@ -134,6 +135,7 @@ def delete_recipe(id):
         recipe.directions.clear()
         recipe.notes.clear()
 
+        Nutrition.query.filter(Nutrition.recipe_id == id).delete()
         Recipe.query.filter(Recipe.id == id).delete()
         db.session.commit()
         return True
@@ -149,8 +151,10 @@ def update_recipe(filename, title, updated_data):
     recipe = Recipe.query.filter(Recipe.filename == filename).first()
 
     if recipe:
-        print (f' + Updating {title} in database.')
+        # Load in exisitng ingredients to determine if they have changed and a new check of nutrition is needed
+        previous_ingredients = [r.name for r in recipe.ingredients]
 
+        print (f' + Updating {title} in database.')
         recipe.layout = updated_data['layout']
         recipe.title = updated_data['title']
         recipe.title_formatted = updated_data['title_formatted']
@@ -192,6 +196,12 @@ def update_recipe(filename, title, updated_data):
                     db.session.add(ingredient)
                 recipe.ingredients.append(ingredient)
 
+            # Determine if ingredient lists are different and update nutrition information if true
+            new_ingredients = [r.name for r in recipe.ingredients]
+            if (list(set(previous_ingredients)-set(new_ingredients))) or (list(set(new_ingredients)-set(previous_ingredients))):
+                update_nutrition(recipe.id, recipe.title, new_ingredients, recipe.servings)
+
+
         if updated_data['directions']:
             directions = Direction.query.filter(Direction.name.in_(updated_data['directions']))
 
@@ -216,6 +226,82 @@ def update_recipe(filename, title, updated_data):
         return True
 
     return False
+
+def update_nutrition(recipe_id, recipe_title, ingredient_list, recipe_servings=1):
+    nutrition = Nutrition.query.filter(Nutrition.recipe_id == recipe_id).first()
+
+    if not nutrition:
+        nutrition = Nutrition(recipe_id=recipe_id)
+
+    nutrition_data = fetch_recipe_nutrition(recipe_title, recipe_servings, ingredient_list)
+
+    if nutrition_data:
+        nutrition.last_updated = datetime.now()
+        nutrition.weight = nutrition_data.get('weight')
+        nutrition.calcium = nutrition_data['nutrients'].get('calcium')
+        nutrition.carbs = nutrition_data['nutrients'].get('carbs')
+        nutrition.cholesterol = nutrition_data['nutrients'].get('cholesterol')
+        nutrition.energy = nutrition_data['nutrients'].get('energy')
+        nutrition.fat = nutrition_data['nutrients'].get('fat')
+        nutrition.fiber = nutrition_data['nutrients'].get('fiber')
+        nutrition.folate_equivalent = nutrition_data['nutrients'].get('folate_equivalent')
+        nutrition.folate_food = nutrition_data['nutrients'].get('folate_food')
+        nutrition.iron = nutrition_data['nutrients'].get('iron')
+        nutrition.magnesium = nutrition_data['nutrients'].get('magnesium')
+        nutrition.monounsaturated = nutrition_data['nutrients'].get('monounsaturated')
+        nutrition.niacin_b3 = nutrition_data['nutrients'].get('niacin_b3')
+        nutrition.phosphorus = nutrition_data['nutrients'].get('phosphorus')
+        nutrition.polyunsaturated = nutrition_data['nutrients'].get('polyunsaturated')
+        nutrition.potassium = nutrition_data['nutrients'].get('potassium')
+        nutrition.protein = nutrition_data['nutrients'].get('protein')
+        nutrition.riboflavin_b2 = nutrition_data['nutrients'].get('riboflavin_b2')
+        nutrition.saturated = nutrition_data['nutrients'].get('saturated')
+        nutrition.sodium = nutrition_data['nutrients'].get('sodium')
+        nutrition.sugars = nutrition_data['nutrients'].get('sugars')
+        nutrition.sugars_added = nutrition_data['nutrients'].get('sugars_added')
+        nutrition.thiamin_b1 = nutrition_data['nutrients'].get('thiamin_b1')
+        nutrition.trans = nutrition_data['nutrients'].get('trans')
+        nutrition.vitamin_a = nutrition_data['nutrients'].get('vitamin_a')
+        nutrition.vitamin_b12 = nutrition_data['nutrients'].get('vitamin_b12')
+        nutrition.vitamin_b6 = nutrition_data['nutrients'].get('vitamin_b6')
+        nutrition.vitamin_c = nutrition_data['nutrients'].get('vitamin_c')
+        nutrition.vitamin_d = nutrition_data['nutrients'].get('vitamin_d')
+        nutrition.vitamin_e = nutrition_data['nutrients'].get('vitamin_e')
+        nutrition.vitamin_k = nutrition_data['nutrients'].get('vitamin_k')
+
+        nutrition.calcium_daily = nutrition_data['daily'].get('calcium')
+        nutrition.carbs_daily = nutrition_data['daily'].get('carbs')
+        nutrition.cholesterol_daily = nutrition_data['daily'].get('cholesterol')
+        nutrition.energy_daily = nutrition_data['daily'].get('energy')
+        nutrition.fat_daily = nutrition_data['daily'].get('fat')
+        nutrition.fiber_daily = nutrition_data['daily'].get('fiber')
+        nutrition.folate_equivalent_daily = nutrition_data['daily'].get('folate_equivalent')
+        nutrition.folate_food_daily = nutrition_data['daily'].get('folate_food')
+        nutrition.iron_daily = nutrition_data['daily'].get('iron')
+        nutrition.magnesium_daily = nutrition_data['daily'].get('magnesium')
+        nutrition.monounsaturated_daily = nutrition_data['daily'].get('monounsaturated')
+        nutrition.niacin_b3_daily = nutrition_data['daily'].get('niacin_b3')
+        nutrition.phosphorus_daily = nutrition_data['daily'].get('phosphorus')
+        nutrition.polyunsaturated_daily = nutrition_data['daily'].get('polyunsaturated')
+        nutrition.potassium_daily = nutrition_data['daily'].get('potassium')
+        nutrition.protein_daily = nutrition_data['daily'].get('protein')
+        nutrition.riboflavin_b2_daily = nutrition_data['daily'].get('riboflavin_b2')
+        nutrition.saturated_daily = nutrition_data['daily'].get('saturated')
+        nutrition.sodium_daily = nutrition_data['daily'].get('sodium')
+        nutrition.sugars_daily = nutrition_data['daily'].get('sugars')
+        nutrition.sugars_added_daily = nutrition_data['daily'].get('sugars_added')
+        nutrition.thiamin_b1_daily = nutrition_data['daily'].get('thiamin_b1')
+        nutrition.trans_daily = nutrition_data['daily'].get('trans')
+        nutrition.vitamin_a_daily = nutrition_data['daily'].get('vitamin_a')
+        nutrition.vitamin_b12_daily = nutrition_data['daily'].get('vitamin_b12')
+        nutrition.vitamin_b6_daily = nutrition_data['daily'].get('vitamin_b6')
+        nutrition.vitamin_c_daily = nutrition_data['daily'].get('vitamin_c')
+        nutrition.vitamin_d_daily = nutrition_data['daily'].get('vitamin_d')
+        nutrition.vitamin_e_daily = nutrition_data['daily'].get('vitamin_e')
+        nutrition.vitamin_k_daily = nutrition_data['daily'].get('vitamin_k')
+
+        db.session.add(nutrition)
+        print (f' * Nutritional information added')
 
 def update_recipes(recipe_list):
     print (' * Checking for altered recipes')

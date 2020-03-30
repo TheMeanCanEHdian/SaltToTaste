@@ -75,6 +75,7 @@ def create_app(config_file='settings.py'):
         add_new_recipes(recipe_list)
         remove_missing_recipes(recipe_list)
         update_recipes(recipe_list)
-        db_cleanup()
+
+    db_cleanup()
 
     return app

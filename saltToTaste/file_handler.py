@@ -119,7 +119,11 @@ def backup_recipe_file(filename):
             os.remove(os.path.join(backup_dir, files[0]))
 
         print (f' + Backing up {filename}')
-        shutil.copyfile(f"{current_app.config['RECIPE_FILES']}{filename}", f'{backup_dir}{backup_filename}')
+        try:
+            shutil.copyfile(f"{current_app.config['RECIPE_FILES']}{filename}", f'{backup_dir}{backup_filename}')
+        except Exception as e:
+            print (f' * ERROR: Failed to backup {filename}')
+            print (f' * {e}')
 
 def backup_image_file(filename):
     date = datetime.today().timestamp()
@@ -135,7 +139,11 @@ def backup_image_file(filename):
             os.remove(os.path.join(backup_dir, files[0]))
 
         print (f' + Backing up {filename}')
-        shutil.copyfile(f"{current_app.config['RECIPE_IMAGES']}{filename}", f'{backup_dir}{backup_filename}')
+        try:
+            shutil.copyfile(f"{current_app.config['RECIPE_IMAGES']}{filename}", f'{backup_dir}{backup_filename}')
+        except Exception as e:
+            print (f' * ERROR: Failed to backup {filename}')
+            print (f' * {e}')
 
 def backup_database_file():
     date = datetime.today().timestamp()
@@ -148,7 +156,11 @@ def backup_database_file():
             os.remove(os.path.join(backup_dir, files[0]))
 
         print (' + Backing up database.db')
-        shutil.copyfile(f'{DATA_DIR}/database.db', f'{backup_dir}database.backup-{date}.db')
+        try:
+            shutil.copyfile(f'{DATA_DIR}/database.db', f'{backup_dir}database.backup-{date}.db')
+        except Exception as e:
+            print (f' * ERROR: Failed to backup database')
+            print (f' * {e}')
 
 def backup_config_file():
     date = datetime.today().timestamp()

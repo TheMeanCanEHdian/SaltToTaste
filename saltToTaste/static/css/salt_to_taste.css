@@ -217,8 +217,65 @@ body {
   color: #960000;
 }
 
+.nutrition {
+  font-family: Helvetica;
+  border: 1px solid black;
+}
+
+.nutrition-divider-top {
+  border-top: 1px solid black;
+}
+
+.nutrition-divider-top-l {
+  border-top: 5px solid black;
+}
+
+.nutrition-divider-top-xl {
+  border-top: 10px solid black;
+}
+
+.nutrition-divider-bottom-l {
+  border-bottom: 5px solid black;
+}
+
+.nutrition-divider-bottom-xl {
+  border-bottom: 10px solid black;
+}
+
+.nutrition-title {
+  font-family: "Franklin Gothic";
+  text-align: center;
+  font-size: 40px;
+}
+
+.nutrition-servings {
+  height: 1.2em;
+}
+
+.nutrition-amount {
+  height: 1em;
+}
+
+.nutrition-calories {
+  font-size: 30px;
+}
+
+.nutrition-daily-value-title {
+  font-size: 13px;
+}
+
+.nutrition-added-sugars {
+  margin-left: 2.2rem;
+}
+
+#nutrition-toggle a {
+  text-decoration: none;
+  color: #960000;
+}
+
 .notes-list, .ingredients-list {
   margin-bottom: 0;
+  padding-left: 1em;
 }
 
 .notes-list-item, .ingredients-list-item {
@@ -229,6 +286,11 @@ body {
   line-height: 2;
 }
 
+.recipe-details-description-item {
+  font-size: 15px;
+  color: #960000;
+}
+
 .recipe-details-image {
   min-height: 150px;
 }
@@ -236,6 +298,7 @@ body {
 .directions-item-title {
   font-size: 18px;
   letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 .login-header {
