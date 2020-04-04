@@ -14,7 +14,7 @@
           <a class="ml-1 recipe-details-action recipe-details-download" href="{{ url_for('main.download_recipe', filename=recipe.filename) }}" title="Download recipe">
             <i class="fas fa-file-download fa-xs"></i>
           </a>
-          {% if current_user.is_authenticated %}
+          {% if current_user.is_authenticated or not authentication_enabled %}
           <a class="ml-1 recipe-details-action recipe-details-edit" href="{{ url_for('main.update', recipe_id=recipe.id) }}" title="Edit recipe">
             <i class="fas fa-edit fa-xs"></i>
           </a>
