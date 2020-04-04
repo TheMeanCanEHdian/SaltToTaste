@@ -49,7 +49,7 @@
                 <div class="input-group-prepend">
                   <span class="input-group-text">Tags</span>
                 </div>
-                <input type="text" class="form-control {% if form.tags.errors %}is-invalid{% endif %}" id="form-recipe-tags" name="tags" placeholder="vegetarian, main" {% if form.tags.data %}value="{{ form.tags.data }}"{% endif %}>
+                <input type="text" class="form-control lowercase {% if form.tags.errors %}is-invalid{% endif %}" id="form-recipe-tags" name="tags" placeholder="vegetarian, main" {% if form.tags.data %}value="{{ form.tags.data }}"{% endif %} onkeyup="return forceLower(this);">
               </div>
               <div class="invalid-feedback">
                 {% if form.tags.errors %}

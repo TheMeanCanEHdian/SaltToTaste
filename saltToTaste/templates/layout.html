@@ -198,6 +198,12 @@
     </div>
     <!-- End of Modals -->
     <script>
+      // Return input in lowercase
+      function forceLower(strInput){
+        strInput.value = strInput.value.toLowerCase();
+      }
+    </script>
+    <script>
       // Script to make tags
       var taggle = new Taggle('search-field');
       function tagSearch(tag) {

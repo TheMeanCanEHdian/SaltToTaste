@@ -51,6 +51,7 @@ def recipe_importer(directory):
                     print (f'Skipping import of {filename}. No title specified.')
                     break
 
+                recipe_data['tags'] = [tag.lower() for tag in recipe_data['tags']]
                 recipe_data['title_formatted'] = recipe_data['title'].replace(" ", "-").lower()
                 recipe_data['filename'] = filename
                 recipe_data['file_hash'] = (hash_file(file))

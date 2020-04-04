@@ -133,7 +133,7 @@
                 <tr id="tag-row-{{ loop.index - 1 }}" class="tag-tr">
                   <td class="pt-3 tag-preview"><a href="#"><span class="px-1 rounded recipe-tag" style="border-color: {{ custom_tags[tag]['color'] }};color: {{ custom_tags[tag]['color'] }};background-color: {{ custom_tags[tag]['b_color'] }};"><span class="tag-preview-icon"><i class="{{ custom_tags[tag]['icon'] }}"></i></span><span class="capitalize tag-preview-name"> {{ tag }}</span></span></a></td>
                   <td class="text-input-td"><input class="form-control text-center tag-icon-input" type="text" name="tag_icon-{{ loop.index - 1 }}" value="{% if custom_tags[tag]['icon'] %}{{ custom_tags[tag]['icon'] }}{% endif %}"></td>
-                  <td class="text-input-td"><input class="form-control text-center tag-name-input" type="text" name="tag_name-{{ loop.index - 1 }}" value="{{ tag }}"></td>
+                  <td class="text-input-td"><input class="form-control text-center tag-name-input lowercase" type="text" name="tag_name-{{ loop.index - 1 }}" value="{{ tag }}" onkeyup="return forceLower(this);"></td>
                   <td class="color-input-td"><input class="form-control p-0 border-0 tag-color-input" type="color" name="tag_color-{{ loop.index - 1 }}" value="{{ custom_tags[tag]['color'] }}"></td>
                   <td class="color-input-td"><input class="form-control p-0 border-0 tag-bcolor-input" type="color" name="tag_bcolor-{{ loop.index - 1 }}" value="{{ custom_tags[tag]['b_color'] }}"></td>
                   <td><button class="btn btn-danger btn-sm mt-1 remove-tag" type="button"><i class="fas fa-minus"></i></button></td>

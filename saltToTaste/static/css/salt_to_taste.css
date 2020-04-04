@@ -318,6 +318,10 @@ body {
   text-transform: capitalize;
 }
 
+.lowercase {
+  text-transform: lowercase;
+}
+
 /* Bootstrap overrides */
 .btn-primary {
   background-color: #960000 !important;
