@@ -29,21 +29,42 @@ class _NavBarState extends State<NavBar> {
                   height: 40,
                   child: Image.asset('assets/logo/logo-banner-40.png'),
                 ),
-                InkWell(
-                  onHover: (value) {
-                    setState(() {
-                      _isHovering['login'] = value;
-                    });
-                  },
-                  onTap: () {},
-                  child: Text(
-                    'Login',
-                    style: TextStyle(
-                      color: _isHovering['login']!
-                          ? Colors.lightGreen
-                          : Colors.white,
+                Row(
+                  children: [
+                    InkWell(
+                      onHover: (value) {
+                        setState(() {
+                          _isHovering['login'] = value;
+                        });
+                      },
+                      onTap: () {},
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: _isHovering['login']!
+                              ? Colors.lightGreen
+                              : Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
+                    PopupMenuButton(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: Colors.white,
+                      ),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          child: Text('Item 1'),
+                        ),
+                        const PopupMenuItem(
+                          child: Text('Item 2'),
+                        ),
+                        const PopupMenuItem(
+                          child: Text('Item 3'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
