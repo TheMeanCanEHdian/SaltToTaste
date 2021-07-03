@@ -1,16 +1,7 @@
 import 'package:flutter/material.dart';
 
-class NavBar extends StatefulWidget {
-  NavBar({Key? key}) : super(key: key);
-
-  @override
-  _NavBarState createState() => _NavBarState();
-}
-
-class _NavBarState extends State<NavBar> {
-  final Map<String, bool> _isHovering = {
-    'login': false,
-  };
+class NavBar extends StatelessWidget {
+  const NavBar({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +24,6 @@ class _NavBarState extends State<NavBar> {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onHover: (value) {
-                      setState(() {
-                        _isHovering['login'] = value;
-                      });
-                    },
                     onTap: () {},
                     child: Container(
                       height: 56,
