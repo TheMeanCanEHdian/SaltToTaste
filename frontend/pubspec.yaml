@@ -1,0 +1,29 @@
+name: salt_to_taste
+description: A new Flutter project.
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  dartz: ^0.10.0-nullsafety.2
+  equatable: ^2.0.3
+  flutter_bloc: ^7.0.1
+  get_it: ^7.1.3
+  http: ^0.13.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^1.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo/
