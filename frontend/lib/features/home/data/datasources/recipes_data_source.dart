@@ -18,7 +18,7 @@ class RecipesDataSourceImpl implements RecipesDataSource {
     final recipesJson = await recipes();
 
     final List<Recipe> recipeList = [];
-    recipesJson['recipes'].forEach((recipe) {
+    recipesJson['data'].forEach((recipe) {
       recipeList.add(RecipeModel.fromJson(recipe));
     });
 
