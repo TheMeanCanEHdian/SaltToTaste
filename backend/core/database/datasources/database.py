@@ -51,9 +51,14 @@ class Database:
         notes = Note.query.filter(Note.name.in_(note_name_list))
         return notes
 
-    def get_recipe_by_sanitized_title(self, sanitized_title):
+    @marshal_with(recipe_resource_fields)
+    def get_recipe_by_title_sanitized(self, title_sanitized):
         recipe = Recipe.query.filter(
-            Recipe.title_sanitized == sanitized_title).first()
+            Recipe.title_sanitized == title_sanitized).first()
+
+        if not recipe:
+            raise ValueError('No recipe found with that sanitized title.')
+        
         return recipe
 
     def get_recipe_image(self, title_sanitized):

@@ -25,14 +25,31 @@ database_handler = Database()
 recipe_files_handler = RecipeFiles()
 recipe_database_handler = RecipeDB()
 
-# database_handler.insert_recipes_files_into_db(recipe_files_handler.load())
 recipe_database_handler.add_recipe_files_to_db(recipe_files_handler.load())
+
+
+class Recipe(Resource):
+    def get(self, title_sanitized):
+        try:
+            return {
+                'result':
+                'success',
+                'data':
+                database_handler.get_recipe_by_title_sanitized(title_sanitized)
+            }, 200
+        except ValueError as error:
+            return {
+                'result': 'error',
+                'message': str(error),
+            }, 404
 
 
 class Recipes(Resource):
     def get(self):
-        recipes = {'recipes': database_handler.get_recipes()}
-        return recipes
+        return {
+            'result': 'success',
+            'data': database_handler.get_recipes(),
+        }, 200
 
 
 class Image(Resource):
@@ -46,15 +63,8 @@ class Image(Resource):
         )
 
 
-class RecipeImage(Resource):
-    #TODO: Need to allow images to be resized
-    def get(self):
-        image_name = 'assets/recipes/images/barramundi-&-sesame-soy-pan-sauce-with-miso-mashed-potatoes-&-bok-choy.jpg'
-        return send_file(image_name)
-
-
-api.add_resource(RecipeImage, '/api/recipe-image')
 api.add_resource(Recipes, '/api/recipes')
+api.add_resource(Recipe, '/api/recipe/<string:title_sanitized>')
 api.add_resource(Image, '/api/image/<string:title_sanitized>')
 
 if __name__ == "__main__":

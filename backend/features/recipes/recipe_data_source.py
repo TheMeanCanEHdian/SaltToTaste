@@ -120,14 +120,14 @@ class RecipeDB:
 
     #* Take a recipe_dict, create a Recipe model, and call fucntion to add to database
     def add_recipe_to_db(self, recipe_dict):
-        sanitized_title = string_helper.sanitize_title(recipe_dict['title'])
+        title_sanitized = string_helper.sanitize_title(recipe_dict['title'])
 
-        query = database.get_recipe_by_sanitized_title(sanitized_title)
+        query = database.get_recipe_by_title_sanitized(title_sanitized)
         if not query:
             new_recipe = Recipe(
                 layout=recipe_dict['layout'],
                 title=recipe_dict['title'],
-                title_sanitized=sanitized_title,
+                title_sanitized=title_sanitized,
             )
             new_recipe.image = recipe_dict.get('image')
             new_recipe.image_credit = recipe_dict.get('image_credit')
