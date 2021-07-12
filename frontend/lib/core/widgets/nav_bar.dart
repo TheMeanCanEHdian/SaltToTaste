@@ -84,7 +84,9 @@ class _NavBarLogo extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            Navigator.pushNamed(context, '/');
+          },
           hoverColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
