@@ -1,5 +1,6 @@
 .vscode
 /backend/assets/recipes/
+/backend/core/database/database.db
 
 # Miscellaneous
 *.class
