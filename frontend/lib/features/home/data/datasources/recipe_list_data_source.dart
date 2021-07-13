@@ -2,19 +2,19 @@ import '../../../../core/api/salt_to_taste_api.dart' as api;
 import '../../domain/entities/recipe.dart';
 import '../models/recipe_model.dart';
 
-abstract class RecipesDataSource {
-  Future<List<Recipe>> getRecipes();
+abstract class RecipeListDataSource {
+  Future<List<Recipe>> getRecipeList();
 }
 
-class RecipesDataSourceImpl implements RecipesDataSource {
-  final api.Recipes recipes;
+class RecipeListDataSourceImpl implements RecipeListDataSource {
+  final api.RecipeList recipes;
 
-  RecipesDataSourceImpl({
+  RecipeListDataSourceImpl({
     required this.recipes,
   });
 
   @override
-  Future<List<Recipe>> getRecipes() async {
+  Future<List<Recipe>> getRecipeList() async {
     final recipesJson = await recipes();
 
     final List<Recipe> recipeList = [];

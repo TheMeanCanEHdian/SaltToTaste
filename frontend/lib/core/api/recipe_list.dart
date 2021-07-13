@@ -1,10 +1,10 @@
 import 'call_salt_to_taste.dart';
 
-abstract class Recipes {
+abstract class RecipeList {
   Future call();
 }
 
-class RecipesImpl implements Recipes {
+class RecipesImpl implements RecipeList {
   final CallSaltToTaste callSaltToTaste;
 
   RecipesImpl({
@@ -14,7 +14,7 @@ class RecipesImpl implements Recipes {
   @override
   Future call() async {
     final responseJson = await callSaltToTaste(
-      endpoint: 'recipes',
+      endpoint: 'recipe_list',
     );
 
     return responseJson;

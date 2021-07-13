@@ -1,11 +1,11 @@
 import 'package:get_it/get_it.dart';
-import 'package:salt_to_taste/features/home/presentation/bloc/home_bloc.dart';
 
 import 'core/api/salt_to_taste_api.dart' as salt_to_taste_api;
-import 'features/home/data/datasources/recipes_data_source.dart';
+import 'features/home/data/datasources/recipe_list_data_source.dart';
 import 'features/home/data/repositories/recipes_repository_impl.dart';
-import 'features/home/domain/repositories/recipes_repository.dart';
-import 'features/home/domain/usecases/get_recipes.dart';
+import 'features/home/domain/repositories/recipe_list_repository.dart';
+import 'features/home/domain/usecases/get_recipe_list.dart';
+import 'features/home/presentation/bloc/home_bloc.dart';
 
 // Service locator alias
 final sl = GetIt.instance;
@@ -27,15 +27,15 @@ Future<void> init() async {
   );
 
   // Repository
-  sl.registerLazySingleton<RecipesRepository>(
-    () => RecipesRepositoryImpl(
+  sl.registerLazySingleton<RecipeListRepository>(
+    () => RecipeListRepositoryImpl(
       dataSource: sl(),
     ),
   );
 
   // Data sources
-  sl.registerLazySingleton<RecipesDataSource>(
-    () => RecipesDataSourceImpl(
+  sl.registerLazySingleton<RecipeListDataSource>(
+    () => RecipeListDataSourceImpl(
       recipes: sl(),
     ),
   );
@@ -44,7 +44,7 @@ Future<void> init() async {
   sl.registerLazySingleton<salt_to_taste_api.CallSaltToTaste>(
     () => salt_to_taste_api.CallSaltToTasteImpl(),
   );
-  sl.registerLazySingleton<salt_to_taste_api.Recipes>(
+  sl.registerLazySingleton<salt_to_taste_api.RecipeList>(
     () => salt_to_taste_api.RecipesImpl(
       callSaltToTaste: sl(),
     ),

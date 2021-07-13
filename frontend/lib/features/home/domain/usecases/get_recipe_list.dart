@@ -2,14 +2,14 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failure.dart';
 import '../entities/recipe.dart';
-import '../repositories/recipes_repository.dart';
+import '../repositories/recipe_list_repository.dart';
 
 class GetRecipes {
-  final RecipesRepository repository;
+  final RecipeListRepository repository;
 
   GetRecipes({required this.repository});
 
   Future<Either<Failure, List<Recipe>>> call() async {
-    return await repository.getRecipes();
+    return await repository.getRecipeList();
   }
 }
