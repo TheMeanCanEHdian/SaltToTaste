@@ -13,14 +13,8 @@ string_helper = StringHelper()
 
 
 class Database:
-    def add_ingredient(self, parsed_ingredient):
-        ingredient = Ingredient(
-            name=parsed_ingredient.name,
-            quantity=parsed_ingredient.quantity,
-            unit=parsed_ingredient.unit,
-            comment=parsed_ingredient.comment,
-            original_string=parsed_ingredient.original_string,
-        )
+    def add_ingredient(self, ingredient_name):
+        ingredient = Ingredient(name=ingredient_name)
         db.session.add(ingredient)
         return ingredient
 
@@ -45,7 +39,7 @@ class Database:
 
     def get_ingredients(self, ingredient_name_list):
         ingredients = Ingredient.query.filter(
-            Ingredient.original_string.in_(ingredient_name_list))
+            Ingredient.name.in_(ingredient_name_list))
         return ingredients
 
     def get_instructions(self, instruction_name_list):

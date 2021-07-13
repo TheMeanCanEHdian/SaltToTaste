@@ -1,10 +1,10 @@
 import hashlib
 from os import listdir
 from os.path import isfile, join
+
 import yaml
 
 from core.database.datasources.database import Database
-from core.helpers.ingredient_parser import parse_ingredient
 from core.helpers.string_helper import StringHelper
 from core.database.models.recipe_model import Recipe
 
@@ -76,14 +76,11 @@ class RecipeDB:
         for recipe_ingredient in recipe_ingredients:
             ingredient = next(
                 (db_ingredient for db_ingredient in db_ingredients
-                 if db_ingredient.original_string == recipe_ingredient),
+                 if db_ingredient.name == recipe_ingredient),
                 None,
             )
             if not ingredient:
-                parsed_ingredient = parse_ingredient(recipe_ingredient)
-                print(parsed_ingredient)
-
-                ingredient = database.add_ingredient(parsed_ingredient)
+                ingredient = database.add_ingredient(recipe_ingredient)
 
             recipe_item.ingredients.append(ingredient)
 
