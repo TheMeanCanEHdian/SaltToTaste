@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../../core/extensions/string_extension.dart';
 import '../../domain/entities/recipe.dart';
 
 class RecipeCard extends StatefulWidget {
@@ -91,17 +93,32 @@ class _RecipeCardState extends State<RecipeCard> {
                       bottom: 8,
                     ),
                     child: Row(
-                      children: const [
-                        Padding(
-                          padding: EdgeInsets.only(right: 4),
-                          child: Chip(
-                            label: Text('chip'),
-                          ),
-                        ),
-                        Chip(
-                          label: Text('chip'),
-                        ),
-                      ],
+                      children: widget.recipe.tags
+                          .map(
+                            (tag) => Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(13),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {},
+                                    child: Chip(
+                                      avatar: const FaIcon(
+                                        FontAwesomeIcons.accessibleIcon,
+                                        size: 18,
+                                      ),
+                                      labelPadding: const EdgeInsets.only(
+                                        right: 4,
+                                      ),
+                                      label: Text(tag.name.capitalizeEach),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ),
                 ],
