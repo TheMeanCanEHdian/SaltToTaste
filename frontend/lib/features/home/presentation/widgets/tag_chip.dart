@@ -26,30 +26,29 @@ class _TagChipState extends State<TagChip> {
 
     return Padding(
       padding: const EdgeInsets.only(right: 4),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(13),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onHover: (value) {
-              setState(() {
-                isHover = value;
-              });
-            },
-            onTap: () {},
-            child: Chip(
-              backgroundColor:
-                  isHover ? ColorHelper.darken(chipColor!, .2) : chipColor,
-              avatar: const FaIcon(
-                FontAwesomeIcons.accessibleIcon,
-                size: 18,
-              ),
-              labelPadding: const EdgeInsets.only(
-                right: 4,
-              ),
-              label: Text(widget.tag.name.capitalizeEach),
-            ),
+      child: MouseRegion(
+        onEnter: (event) {
+          setState(() {
+            isHover = true;
+          });
+        },
+        onExit: (event) {
+          setState(() {
+            isHover = false;
+          });
+        },
+        child: ActionChip(
+          onPressed: () {},
+          backgroundColor:
+              isHover ? ColorHelper.darken(chipColor!, .2) : chipColor,
+          avatar: const FaIcon(
+            FontAwesomeIcons.accessibleIcon,
+            size: 18,
           ),
+          labelPadding: const EdgeInsets.only(
+            right: 4,
+          ),
+          label: Text(widget.tag.name.capitalizeEach),
         ),
       ),
     );
