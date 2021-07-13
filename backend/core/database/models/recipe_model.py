@@ -1,10 +1,10 @@
 from flask_restful import fields
 from sqlalchemy.orm import backref
 
-from .ingredient_model import Ingredient
-from .instruction_model import Instruction
-from .note_model import Note
-from .tag_model import Tag
+from .ingredient_model import Ingredient, ingredient_resource_fields
+from .instruction_model import Instruction, instruction_resource_fields
+from .note_model import Note, note_resource_fields
+from .tag_model import Tag, tag_resource_fields
 from extensions import db
 
 recipe_resource_fields = {
@@ -23,6 +23,17 @@ recipe_resource_fields = {
     'servings': fields.String,
     'calories': fields.String,
     'file_hash': fields.String,
+    'ingredients': fields.List(fields.Nested(ingredient_resource_fields)),
+    'instructions': fields.List(fields.Nested(instruction_resource_fields)),
+    'notes': fields.List(fields.Nested(note_resource_fields)),
+    'tags': fields.List(fields.Nested(tag_resource_fields)),
+}
+
+recipe_list_resource_fields = {
+    'id': fields.Integer,
+    'title': fields.String,
+    'title_sanitized': fields.String,
+    'tags': fields.List(fields.Nested(tag_resource_fields)),
 }
 
 # Set up association tables for Recipe

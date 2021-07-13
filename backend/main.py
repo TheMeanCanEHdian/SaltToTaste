@@ -44,6 +44,14 @@ class Recipe(Resource):
             }, 404
 
 
+class RecipeList(Resource):
+    def get(self):
+        return {
+            'result': 'success',
+            'data': database_handler.get_recipe_list(),
+        }, 200
+
+
 class Recipes(Resource):
     def get(self):
         return {
@@ -63,6 +71,7 @@ class Image(Resource):
         )
 
 
+api.add_resource(RecipeList, '/api/recipe_list')
 api.add_resource(Recipes, '/api/recipes')
 api.add_resource(Recipe, '/api/recipe/<string:title_sanitized>')
 api.add_resource(Image, '/api/image/<string:title_sanitized>')

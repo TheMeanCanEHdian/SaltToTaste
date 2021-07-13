@@ -1,11 +1,11 @@
 from flask_restful import marshal_with
-from sqlalchemy.orm import lazyload
+from sqlalchemy.orm import lazyload, load_only
 
 from ...helpers.string_helper import StringHelper
 from ..models.ingredient_model import Ingredient
 from ..models.instruction_model import Instruction
 from ..models.note_model import Note
-from ..models.recipe_model import Recipe, recipe_resource_fields
+from ..models.recipe_model import Recipe, recipe_resource_fields, recipe_list_resource_fields
 from ..models.tag_model import Tag
 from extensions import db
 
@@ -51,6 +51,11 @@ class Database:
         notes = Note.query.filter(Note.name.in_(note_name_list))
         return notes
 
+    @marshal_with(recipe_list_resource_fields)
+    def get_recipe_list(self):
+        recipe_list = Recipe.query.all()
+        return recipe_list
+
     @marshal_with(recipe_resource_fields)
     def get_recipe_by_title_sanitized(self, title_sanitized):
         recipe = Recipe.query.filter(
@@ -58,7 +63,7 @@ class Database:
 
         if not recipe:
             raise ValueError('No recipe found with that sanitized title.')
-        
+
         return recipe
 
     def get_recipe_image(self, title_sanitized):

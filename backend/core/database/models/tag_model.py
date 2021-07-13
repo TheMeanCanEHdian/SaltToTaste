@@ -2,7 +2,7 @@ from flask_restful import fields
 
 from extensions import db
 
-tag_resouce_fields = {
+tag_resource_fields = {
     'id': fields.Integer,
     'name': fields.String,
 }
