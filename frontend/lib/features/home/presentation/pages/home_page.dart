@@ -45,6 +45,7 @@ class _HomePageContentState extends State<HomePageContent> {
           return Stack(
             children: [
               GridView.count(
+                cacheExtent: 7000,
                 padding: const EdgeInsets.only(
                   top: 64,
                   left: 4,
