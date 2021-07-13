@@ -43,7 +43,7 @@ class _RecipeCardState extends State<RecipeCard> {
               // Ink.image allows for the ink effect on an image rather than fron InkWell
               Ink.image(
                 image: NetworkImage(
-                  'http://127.0.0.1:5000/api/image/${widget.recipe.titleSanitized}',
+                  'http://127.0.0.1:5000/api/image/${widget.recipe.titleSanitized}?width=500&height=300',
                 ),
                 fit: BoxFit.cover,
               ),
