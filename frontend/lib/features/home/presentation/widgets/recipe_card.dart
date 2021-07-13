@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../../../../core/extensions/string_extension.dart';
 import '../../domain/entities/recipe.dart';
+import 'tag_chip.dart';
 
 class RecipeCard extends StatefulWidget {
   final Recipe recipe;
@@ -95,28 +94,7 @@ class _RecipeCardState extends State<RecipeCard> {
                     child: Row(
                       children: widget.recipe.tags
                           .map(
-                            (tag) => Padding(
-                              padding: const EdgeInsets.only(right: 4),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(13),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {},
-                                    child: Chip(
-                                      avatar: const FaIcon(
-                                        FontAwesomeIcons.accessibleIcon,
-                                        size: 18,
-                                      ),
-                                      labelPadding: const EdgeInsets.only(
-                                        right: 4,
-                                      ),
-                                      label: Text(tag.name.capitalizeEach),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            (tag) => TagChip(tag: tag),
                           )
                           .toList(),
                     ),
