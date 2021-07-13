@@ -1,11 +1,10 @@
 import hashlib
 from os import listdir
 from os.path import isfile, join
-from parse_ingredients import parse_ingredient
-
 import yaml
 
 from core.database.datasources.database import Database
+from core.helpers.ingredient_parser import parse_ingredient
 from core.helpers.string_helper import StringHelper
 from core.database.models.recipe_model import Recipe
 
@@ -126,7 +125,7 @@ class RecipeDB:
     #* Take a recipe_dict, create a Recipe model, and call fucntion to add to database
     def add_recipe_to_db(self, recipe_dict):
         title_sanitized = string_helper.sanitize_title(recipe_dict['title'])
-        
+
         try:
             database.get_recipe_by_title_sanitized(title_sanitized)
         except ValueError:
