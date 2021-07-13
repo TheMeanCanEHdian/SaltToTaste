@@ -161,10 +161,20 @@ def parse_ingredient(raw_ingredient: str) -> Ingredient:
     # We do this here, pretty early, because there might be numbers in there
     # we don't want to take in account for quantities.
     comma_splitted = ingredient.split(',')
+
+    # Some words that are part of the ingredient may be normally followed
+    # with a comment. Check a list of these words when looking for comments.
+    words_to_skip = ['boneless', 'skinless']
+
     if len(comma_splitted) > 1:
-        comment = comment + ' ' + ', '.join(comma_splitted[1:])
-        comment = comment.strip(' ')
-        ingredient = comma_splitted[0]
+        if any(x in comma_splitted[0] for x in words_to_skip):
+            comment = comment + ' ' + ', '.join(comma_splitted[2:])
+            comment = comment.strip(' ')
+            ingredient = f'{comma_splitted[0]}, {comma_splitted[1].strip(" ")}'
+        else:
+            comment = comment + ' ' + ', '.join(comma_splitted[1:])
+            comment = comment.strip(' ')
+            ingredient = comma_splitted[0]
 
     rest = ingredient
 
