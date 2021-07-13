@@ -4,10 +4,10 @@ abstract class RecipeList {
   Future call();
 }
 
-class RecipesImpl implements RecipeList {
+class RecipeListImpl implements RecipeList {
   final CallSaltToTaste callSaltToTaste;
 
-  RecipesImpl({
+  RecipeListImpl({
     required this.callSaltToTaste,
   });
 

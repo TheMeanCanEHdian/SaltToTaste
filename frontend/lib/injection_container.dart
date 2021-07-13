@@ -45,7 +45,7 @@ Future<void> init() async {
     () => salt_to_taste_api.CallSaltToTasteImpl(),
   );
   sl.registerLazySingleton<salt_to_taste_api.RecipeList>(
-    () => salt_to_taste_api.RecipesImpl(
+    () => salt_to_taste_api.RecipeListImpl(
       callSaltToTaste: sl(),
     ),
   );
