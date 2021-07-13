@@ -1,6 +1,8 @@
 import hashlib
 from os import listdir
 from os.path import isfile, join
+from parse_ingredients import parse_ingredient
+
 import yaml
 
 from core.database.datasources.database import Database
@@ -75,11 +77,14 @@ class RecipeDB:
         for recipe_ingredient in recipe_ingredients:
             ingredient = next(
                 (db_ingredient for db_ingredient in db_ingredients
-                 if db_ingredient.name == recipe_ingredient),
+                 if db_ingredient.original_string == recipe_ingredient),
                 None,
             )
             if not ingredient:
-                ingredient = database.add_ingredient(recipe_ingredient)
+                parsed_ingredient = parse_ingredient(recipe_ingredient)
+                print(parsed_ingredient)
+
+                ingredient = database.add_ingredient(parsed_ingredient)
 
             recipe_item.ingredients.append(ingredient)
 
@@ -121,9 +126,10 @@ class RecipeDB:
     #* Take a recipe_dict, create a Recipe model, and call fucntion to add to database
     def add_recipe_to_db(self, recipe_dict):
         title_sanitized = string_helper.sanitize_title(recipe_dict['title'])
-
-        query = database.get_recipe_by_title_sanitized(title_sanitized)
-        if not query:
+        
+        try:
+            database.get_recipe_by_title_sanitized(title_sanitized)
+        except ValueError:
             new_recipe = Recipe(
                 layout=recipe_dict['layout'],
                 title=recipe_dict['title'],
