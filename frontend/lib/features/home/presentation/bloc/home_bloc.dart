@@ -10,9 +10,9 @@ part 'home_event.dart';
 part 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
-  final GetRecipes getRecipes;
+  final GetRecipeList getRecipeList;
 
-  HomeBloc({required this.getRecipes}) : super(HomeInitial());
+  HomeBloc({required this.getRecipeList}) : super(HomeInitial());
 
   @override
   Stream<HomeState> mapEventToState(
@@ -21,7 +21,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     if (event is HomeFetchRecipes) {
       yield HomeInProgress();
 
-      final failureOrRecipes = await getRecipes();
+      final failureOrRecipes = await getRecipeList();
 
       yield* failureOrRecipes.fold(
         (failure) async* {

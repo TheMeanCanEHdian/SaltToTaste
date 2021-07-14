@@ -15,13 +15,13 @@ Future<void> init() async {
   // Bloc
   sl.registerLazySingleton(
     () => HomeBloc(
-      getRecipes: sl(),
+      getRecipeList: sl(),
     ),
   );
 
   // Use case
   sl.registerLazySingleton(
-    () => GetRecipes(
+    () => GetRecipeList(
       repository: sl(),
     ),
   );
