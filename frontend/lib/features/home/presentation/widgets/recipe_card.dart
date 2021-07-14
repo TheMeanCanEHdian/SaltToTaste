@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/recipe.dart';
+import '../../../recipe/domain/entities/recipe.dart';
 import 'tag_chip.dart';
 
 class RecipeCard extends StatefulWidget {

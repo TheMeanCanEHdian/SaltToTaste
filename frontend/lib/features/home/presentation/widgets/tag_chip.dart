@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../core/extensions/string_extension.dart';
 import '../../../../core/helpers/color_helper.dart';
-import '../../domain/entities/tag.dart';
+import '../../../recipe/domain/entities/tag.dart';
 
 class TagChip extends StatefulWidget {
   final Tag tag;

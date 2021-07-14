@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
-import '../../domain/entities/recipe.dart';
-import '../../domain/usecases/get_recipe_list.dart';
+import '../../../recipe/domain/entities/recipe.dart';
+import '../../../recipe/domain/usecases/get_recipe_list.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
