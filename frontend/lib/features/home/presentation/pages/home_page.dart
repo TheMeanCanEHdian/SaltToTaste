@@ -31,40 +31,42 @@ class HomePageContent extends StatefulWidget {
 class _HomePageContentState extends State<HomePageContent> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<HomeBloc, HomeState>(
-      builder: (context, state) {
-        if (state is HomeInProgress) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-        if (state is HomeFailure) {
-          return const Text('Failure');
-        }
-        if (state is HomeSuccess) {
-          return Stack(
-            children: [
-              GridView.count(
-                cacheExtent: 7000,
-                padding: const EdgeInsets.only(
-                  top: 64,
-                  left: 4,
-                  right: 4,
+    return Scaffold(
+      body: BlocBuilder<HomeBloc, HomeState>(
+        builder: (context, state) {
+          if (state is HomeInProgress) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          if (state is HomeFailure) {
+            return const Text('Failure');
+          }
+          if (state is HomeSuccess) {
+            return Stack(
+              children: [
+                GridView.count(
+                  cacheExtent: 7000,
+                  padding: const EdgeInsets.only(
+                    top: 64,
+                    left: 4,
+                    right: 4,
+                  ),
+                  crossAxisCount: 4,
+                  childAspectRatio: 3 / 2,
+                  children: state.recipes
+                      .map(
+                        (recipe) => RecipeCard(recipe: recipe),
+                      )
+                      .toList(),
                 ),
-                crossAxisCount: 4,
-                childAspectRatio: 3 / 2,
-                children: state.recipes
-                    .map(
-                      (recipe) => RecipeCard(recipe: recipe),
-                    )
-                    .toList(),
-              ),
-              const NavBar(),
-            ],
-          );
-        }
-        return const Text('Unknown bloc state');
-      },
-    ));
+                const NavBar(),
+              ],
+            );
+          }
+          return const Text('Unknown bloc state');
+        },
+      ),
+    );
   }
 }
