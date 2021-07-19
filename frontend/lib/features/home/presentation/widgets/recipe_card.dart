@@ -27,6 +27,9 @@ class _RecipeCardState extends State<RecipeCard> {
         borderRadius: BorderRadius.circular(4),
         // Using InkWell for built in onHover
         child: InkWell(
+          customBorder: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(4.0)),
+          ),
           onHover: (value) {
             setState(() {
               isHover = value;
@@ -41,11 +44,16 @@ class _RecipeCardState extends State<RecipeCard> {
           child: Stack(
             children: [
               // Ink.image allows for the ink effect on an image rather than fron InkWell
-              Ink.image(
-                image: NetworkImage(
-                  'http://127.0.0.1:5000/api/image/${widget.recipe.titleSanitized}?width=500&height=300',
+              Ink(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  image: DecorationImage(
+                    image: NetworkImage(
+                      'http://127.0.0.1:5000/api/image/${widget.recipe.titleSanitized}?width=500&height=300',
+                    ),
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                fit: BoxFit.cover,
               ),
               const Positioned.fill(
                 child: DecoratedBox(
