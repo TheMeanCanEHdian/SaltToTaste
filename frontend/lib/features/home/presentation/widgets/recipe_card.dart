@@ -98,12 +98,16 @@ class _RecipeCardState extends State<RecipeCard> {
                       left: 8,
                       bottom: 8,
                     ),
-                    child: Row(
-                      children: widget.recipe.tags
-                          .map(
-                            (tag) => TagChip(tag: tag),
-                          )
-                          .toList(),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: widget.recipe.tags
+                            .map(
+                              (tag) => TagChip(tag: tag),
+                            )
+                            .toList(),
+                      ),
                     ),
                   ),
                 ],
