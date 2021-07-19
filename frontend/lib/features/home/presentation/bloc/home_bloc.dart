@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../recipe/domain/entities/recipe.dart';
@@ -8,6 +9,8 @@ import '../../../recipe/domain/usecases/get_recipe_list.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
+
+List<Recipe> recipesCache = [];
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final GetRecipeList getRecipeList;
@@ -19,7 +22,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     HomeEvent event,
   ) async* {
     if (event is HomeFetchRecipes) {
-      yield HomeInProgress();
+      yield HomeInProgress(
+        recipes: recipesCache.isNotEmpty ? recipesCache : [],
+      );
 
       final failureOrRecipes = await getRecipeList();
 
@@ -28,7 +33,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           yield HomeFailure();
         },
         (recipes) async* {
-          yield HomeSuccess(recipes: recipes);
+          Function listEquality = const ListEquality().equals;
+
+          // If new list of recipes is different from cached list replace cache
+          if (!listEquality(recipes, recipesCache)) {
+            recipesCache = [...recipes];
+          }
+
+          yield HomeSuccess(recipes: recipesCache);
         },
       );
     }

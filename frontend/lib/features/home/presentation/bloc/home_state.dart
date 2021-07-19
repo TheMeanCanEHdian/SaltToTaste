@@ -10,8 +10,14 @@ class HomeInitial extends HomeState {
 }
 
 class HomeInProgress extends HomeState {
+  final List<Recipe> recipes;
+
+  HomeInProgress({
+    required this.recipes,
+  });
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [recipes];
 }
 
 class HomeSuccess extends HomeState {
