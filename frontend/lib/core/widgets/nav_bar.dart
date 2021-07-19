@@ -1,61 +1,72 @@
 import 'package:flutter/material.dart';
 
 class NavBar extends StatelessWidget {
-  const NavBar({Key? key}) : super(key: key);
+  final bool loading;
+
+  const NavBar({
+    Key? key,
+    this.loading = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: const Color.fromRGBO(145, 0, 6, 1),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const _NavBarLogo(),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {},
-                  child: Container(
-                    height: 56,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: const Center(
-                      child: Text(
-                        'Login',
-                        style: TextStyle(
-                          color: Colors.white,
+              const _NavBarLogo(),
+              Row(
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {},
+                      child: Container(
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: const Center(
+                          child: Text(
+                            'Login',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(
-                height: 56,
-                child: Material(
-                  color: Colors.transparent,
-                  child: PopupMenuButton(
-                    icon: const Icon(
-                      Icons.more_vert,
-                      color: Colors.white,
+                  SizedBox(
+                    height: 56,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: PopupMenuButton(
+                        icon: const Icon(
+                          Icons.more_vert,
+                          color: Colors.white,
+                        ),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            child: Text('Item 1'),
+                          ),
+                          const PopupMenuItem(
+                            child: Text('Item 2'),
+                          ),
+                          const PopupMenuItem(
+                            child: Text('Item 3'),
+                          ),
+                        ],
+                      ),
                     ),
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        child: Text('Item 1'),
-                      ),
-                      const PopupMenuItem(
-                        child: Text('Item 2'),
-                      ),
-                      const PopupMenuItem(
-                        child: Text('Item 3'),
-                      ),
-                    ],
                   ),
-                ),
+                ],
               ),
             ],
           ),
+          if (loading) const LinearProgressIndicator(),
         ],
       ),
     );
