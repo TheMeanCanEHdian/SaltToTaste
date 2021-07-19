@@ -43,7 +43,6 @@ class _RecipeCardState extends State<RecipeCard> {
           },
           child: Stack(
             children: [
-              // Ink.image allows for the ink effect on an image rather than fron InkWell
               Ink(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.all(Radius.circular(4)),
