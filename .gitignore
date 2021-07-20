@@ -1,4 +1,5 @@
 .vscode
+/backend/assets/config.ini
 /backend/assets/recipes/
 /backend/core/database/database.db
 
