@@ -1,9 +1,13 @@
 import configparser
+import os
 
 #TODO: Get directory from argument parser
 DATA_DIR = 'assets'
 
 DEFAULT_CONFIG = {
+    'flask': {
+        'secret_key': os.urandom(16).hex(),
+    },
     'third_party': {
         'edamam_id': '',
         'edamam_key': '',
@@ -20,7 +24,7 @@ class SettingsDataSource:
             config.write(config_file)
 
     def get_config(self):
-        config.read_file(f'{DATA_DIR}/config.ini')
+        config.read(f'{DATA_DIR}/config.ini')
         return config
 
     def get_config_dict(self):
