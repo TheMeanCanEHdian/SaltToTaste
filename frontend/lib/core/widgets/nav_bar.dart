@@ -24,13 +24,18 @@ class NavBar extends StatelessWidget {
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/settings',
+                        );
+                      },
                       child: Container(
                         height: 56,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: const Center(
                           child: Text(
-                            'Login',
+                            'Settings',
                             style: TextStyle(
                               color: Colors.white,
                             ),

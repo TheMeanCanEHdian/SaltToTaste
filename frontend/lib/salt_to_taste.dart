@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/recipe/presentation/pages/recipe_page.dart';
+import 'features/settings/presentation/pages/settings_page.dart';
 
 class SaltToTaste extends StatefulWidget {
   SaltToTaste({Key? key}) : super(key: key);
@@ -44,6 +45,10 @@ class Flurorouter {
     ),
   );
 
+  static final Handler _settingsPageHandler = Handler(
+    handlerFunc: (context, parameters) => const SettingsPage(),
+  );
+
   static void setupRouter() {
     const transitionType = TransitionType.none;
 
@@ -55,6 +60,11 @@ class Flurorouter {
     router.define(
       '/recipe/:titleSanitized',
       handler: _recipePageHandler,
+      transitionType: transitionType,
+    );
+    router.define(
+      '/settings',
+      handler: _settingsPageHandler,
       transitionType: transitionType,
     );
   }

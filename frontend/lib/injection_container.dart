@@ -11,6 +11,13 @@ import 'features/recipe/domain/repositories/recipe_repository.dart';
 import 'features/recipe/domain/usecases/get_recipe.dart';
 import 'features/recipe/domain/usecases/get_recipe_list.dart';
 import 'features/recipe/presentation/bloc/recipe_bloc.dart';
+import 'features/settings/data/datasources/settings_data_source.dart';
+import 'features/settings/data/repositories/settings_repository_impl.dart';
+import 'features/settings/domain/repositories/settings_repository.dart';
+import 'features/settings/domain/usecases/get_settings.dart';
+import 'features/settings/domain/usecases/update_setting.dart';
+import 'features/settings/presentation/bloc/settings_bloc.dart';
+import 'features/settings/presentation/bloc/settings_update_bloc.dart';
 
 // Service locator alias
 final sl = GetIt.instance;
@@ -71,6 +78,47 @@ Future<void> init() async {
     ),
   );
 
+  //! Settings
+  // Bloc
+  sl.registerLazySingleton(
+    () => SettingsBloc(
+      getSettings: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => SettingsUpdateBloc(
+      updateSetting: sl(),
+    ),
+  );
+
+  // Use case
+  sl.registerLazySingleton(
+    () => GetSettings(
+      repository: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton(
+    () => UpdateSetting(
+      repository: sl(),
+    ),
+  );
+
+  // Repository
+  sl.registerLazySingleton<SettingsRepository>(
+    () => SettingsRepositoryImpl(
+      dataSource: sl(),
+    ),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<SettingsDataSource>(
+    () => SettingsDataSourceImpl(
+      settings: sl(),
+    ),
+  );
+
   //! API
   sl.registerLazySingleton<salt_to_taste_api.CallSaltToTaste>(
     () => salt_to_taste_api.CallSaltToTasteImpl(),
@@ -82,6 +130,11 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<salt_to_taste_api.RecipeList>(
     () => salt_to_taste_api.RecipeListImpl(
+      callSaltToTaste: sl(),
+    ),
+  );
+  sl.registerLazySingleton<salt_to_taste_api.Settings>(
+    () => salt_to_taste_api.SettingsImpl(
       callSaltToTaste: sl(),
     ),
   );
