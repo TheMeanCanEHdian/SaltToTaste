@@ -41,6 +41,9 @@ class SettingsDataSource:
 
         return config_dict
 
+    def get_setting(self, section, setting):
+        return config.get(section, setting)
+
     def update_setting(self, section, setting, value):
         try:
             if config.get(section, setting, fallback=None) is not None:
