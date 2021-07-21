@@ -1,5 +1,6 @@
 import configparser
 import os
+import sys
 
 #TODO: Get directory from argument parser
 DATA_DIR = 'assets'
@@ -14,7 +15,18 @@ DEFAULT_CONFIG = {
     }
 }
 
+# Load in config file
 config = configparser.ConfigParser()
+try:
+    config.read(f'{DATA_DIR}/config.ini')
+except configparser.Error:
+    try:
+        config.read_dict(DEFAULT_CONFIG)
+        with open(f'{DATA_DIR}/config.ini', 'w') as config_file:
+            config.write(config_file)
+    except configparser.Error:
+        print('Failed to load config file')
+        sys.exit()
 
 
 class SettingsDataSource:
@@ -22,10 +34,6 @@ class SettingsDataSource:
         config.read_dict(DEFAULT_CONFIG)
         with open(f'{DATA_DIR}/config.ini', 'w') as config_file:
             config.write(config_file)
-
-    def get_config(self):
-        config.read(f'{DATA_DIR}/config.ini')
-        return config
 
     def get_config_dict(self):
         config_dict = {}
@@ -57,13 +65,4 @@ class SettingsDataSource:
             return False
 
     #TODO: Needs to check that no settings are missing
-    def verify_config_file(self):
-        try:
-            self.get_config()
-            return True
-        except configparser.Error:
-            try:
-                self.create_default_config_file()
-                return True
-            except configparser.Error:
-                return False
+    # def verify_config_file(self):

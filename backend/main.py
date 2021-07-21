@@ -29,9 +29,11 @@ recipe_database_handler = RecipeDB()
 image_data_source = ImageDataSource()
 settings_data_source = SettingsDataSource()
 
-if not settings_data_source.verify_config_file():
-    print('Failed to load config file')
-    sys.exit()
+# Set Flask secret key from config.ini
+app.config['SECRET_KEY'] = settings_data_source.get_setting(
+    'flask',
+    'secret_key',
+)
 
 recipe_dict_list = recipe_files_handler.load()
 recipe_database_handler.add_recipe_files_to_db(recipe_dict_list)
