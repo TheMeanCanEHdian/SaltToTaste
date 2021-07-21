@@ -30,53 +30,55 @@ class RecipePageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<RecipeBloc, RecipeState>(
-      builder: (context, state) {
-        if (state is RecipeInProgress) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-        if (state is RecipeFailure) {
-          return const Text('Failure');
-        }
-        if (state is RecipeSuccess) {
-          return Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: 64,
-                  left: 4,
-                  right: 4,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 500,
-                          child: Text(
-                            state.recipe.title,
-                            style: TextStyle(
-                              fontSize: 30,
+    return Scaffold(
+      body: BlocBuilder<RecipeBloc, RecipeState>(
+        builder: (context, state) {
+          if (state is RecipeInProgress) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          if (state is RecipeFailure) {
+            return const Text('Failure');
+          }
+          if (state is RecipeSuccess) {
+            return Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(
+                    top: 64,
+                    left: 4,
+                    right: 4,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 500,
+                            child: Text(
+                              state.recipe.title,
+                              style: TextStyle(
+                                fontSize: 30,
+                              ),
                             ),
                           ),
-                        ),
-                        Placeholder(),
-                      ],
-                    ),
-                  ],
+                          Placeholder(),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const NavBar(),
-            ],
-          );
-        }
-        return const Text('Unknown bloc state');
-      },
-    ));
+                const NavBar(),
+              ],
+            );
+          }
+          return const Text('Unknown bloc state');
+        },
+      ),
+    );
   }
 }

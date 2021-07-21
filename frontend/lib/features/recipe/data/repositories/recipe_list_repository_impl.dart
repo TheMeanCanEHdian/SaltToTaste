@@ -18,7 +18,6 @@ class RecipeListRepositoryImpl implements RecipeListRepository {
       final recipes = await dataSource.getRecipeList();
       return Right(recipes);
     } catch (exception) {
-      print(exception);
       //TODO: Customize failures
       return Left(UnknownFailure());
     }
