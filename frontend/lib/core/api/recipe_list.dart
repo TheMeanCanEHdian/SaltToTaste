@@ -14,6 +14,7 @@ class RecipeListImpl implements RecipeList {
   @override
   Future call() async {
     final responseJson = await callSaltToTaste(
+      requestMethod: RequestMethod.get,
       endpoint: 'recipe_list',
     );
 

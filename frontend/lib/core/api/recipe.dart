@@ -18,6 +18,7 @@ class RecipeImpl implements Recipe {
     required String titleSanitized,
   }) async {
     final responseJson = await callSaltToTaste(
+      requestMethod: RequestMethod.get,
       endpoint: 'recipe/$titleSanitized',
     );
 
