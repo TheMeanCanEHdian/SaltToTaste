@@ -1,11 +1,12 @@
 from flask import Flask, send_file, send_from_directory
 from flask_cors import CORS
 from flask_restful import Api, Resource, reqparse, abort, fields, marshal_with, reqparse
-import sys
+# import threading
 
 from core.database.datasources.database import Database
 from core.database.models.recipe_model import Recipe
 from features.image.image_data_source import ImageDataSource
+# from features.nutrition.nutrition_data_source import NutritionDataSource
 from features.recipes.recipe_data_source import RecipeFiles, RecipeDB
 from features.settings.settings_data_source import SettingsDataSource
 from extensions import db
@@ -27,6 +28,7 @@ database_handler = Database()
 recipe_files_handler = RecipeFiles()
 recipe_database_handler = RecipeDB()
 image_data_source = ImageDataSource()
+# nutrition_data_source = NutritionDataSource()
 settings_data_source = SettingsDataSource()
 
 # Set Flask secret key from config.ini
@@ -37,6 +39,9 @@ app.config['SECRET_KEY'] = settings_data_source.get_setting(
 
 recipe_dict_list = recipe_files_handler.load()
 recipe_database_handler.add_recipe_files_to_db(recipe_dict_list)
+# nutrition_thread = threading.Thread(target=nutrition_data_source.nutrition_queue_action(), name='Get Nutrition')
+# nutrition_thread.start()
+
 
 image_req_args = reqparse.RequestParser()
 image_req_args.add_argument(

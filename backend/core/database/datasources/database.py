@@ -1,5 +1,4 @@
 from flask_restful import marshal_with
-from sqlalchemy.orm import lazyload, load_only
 
 from ...helpers.string_helper import StringHelper
 from ..models.ingredient_model import Ingredient
@@ -27,6 +26,10 @@ class Database:
         note = Note(name=note_name)
         db.session.add(note)
         return note
+
+    def add_nutrition(self, nutrition_model):
+        db.session.add(nutrition_model)
+        db.session.commit
 
     def add_recipe(self, recipe):
         db.session.add(recipe)

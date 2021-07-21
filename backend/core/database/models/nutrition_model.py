@@ -5,8 +5,12 @@ from extensions import db
 nutrition_resource_fields = {
     'id': fields.Integer,
     'recipe_id': fields.Integer,
+    'parse_failed': fields.Boolean,
     'last_updated': fields.DateTime,
     'weight': fields.Integer,
+    'diet_labels': fields.String,
+    'health_labels': fields.String,
+    'cautions': fields.String,
     'calcium': fields.Integer,
     'calcium_daily': fields.Integer,
     'carbs': fields.Integer,
@@ -73,8 +77,12 @@ nutrition_resource_fields = {
 class Nutrition(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     recipe_id = db.Column(db.Integer, unique=True, nullable=False)
+    parse_failed = db.Column(db.Boolean, nullable=False)
     last_updated = db.Column(db.DateTime)
     weight = db.Column(db.Integer)
+    diet_labels = db.Column(db.String(50))
+    health_labels = db.Column(db.String(50))
+    cautions = db.Column(db.String(50))
     calcium = db.Column(db.Integer)
     calcium_daily = db.Column(db.Integer)
     carbs = db.Column(db.Integer)

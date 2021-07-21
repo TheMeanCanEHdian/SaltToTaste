@@ -7,9 +7,11 @@ import yaml
 from core.database.datasources.database import Database
 from core.helpers.string_helper import StringHelper
 from core.database.models.recipe_model import Recipe
+# from features.nutrition.nutrition_data_source import NutritionDB
 
 string_helper = StringHelper()
 database = Database()
+# nutrition_db = NutritionDB()
 RECIPE_DIRECTORY = 'assets/recipes/'
 
 
@@ -149,7 +151,12 @@ class RecipeDB:
                 self.__add_ingredients_to_recipe_item(
                     new_recipe, recipe_dict['ingredients'])
                 #TODO: Update nutrition table
-                # update_nutrition(recipe.id, recipe.title, recipe['ingredients'], recipe.servings)
+                # nutrition_db.update_nutrition(
+                #     new_recipe.id,
+                #     new_recipe.title,
+                #     recipe_dict['ingredients'],
+                #     new_recipe.servings,
+                # )
 
             #TODO: Update to instructions not directions
             if recipe_dict['directions']:
