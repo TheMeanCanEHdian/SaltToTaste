@@ -1,0 +1,9 @@
+name: salttotaste_workspace
+description: SaltToTaste monorepo workspace (Dart Frog server, Flutter app, shared package)
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+workspace:
+  - packages/salt_shared

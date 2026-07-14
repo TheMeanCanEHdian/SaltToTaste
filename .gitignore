@@ -1,3 +1,13 @@
 
 config/
 Pipfile
+
+# Dart / Flutter
+.dart_tool/
+build/
+*.iml
+.idea/
+.vscode/
+
+# App data dir (dev)
+.data/
