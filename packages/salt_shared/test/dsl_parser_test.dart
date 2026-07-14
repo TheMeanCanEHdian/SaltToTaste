@@ -1,16 +1,11 @@
 import 'dart:io';
 
-// Imported directly (not via the salt_shared.dart barrel) so this suite can
-// run even while sibling modules re-exported by the barrel are in flux.
 import 'package:salt_shared/src/search/dsl_parser.dart';
 import 'package:test/test.dart';
 
-/// The real extraction corpus the query terms below are derived from
-/// (titles, tags, ingredients, and direction phrases all occur in these
-/// recipe YAMLs).
-const corpusPath = '/Users/drivard/Documents/Claude Projects/'
-    'Recipe Extraction/The Complete America_s Test Kitchen TV Show '
-    'Cookbook 2001–2023/recipes';
+// Shared corpus access: the query terms in this suite are derived from real
+// corpus recipes (titles, tags, ingredients, direction phrases).
+import 'corpus.dart';
 
 void main() {
   group('empty input', () {
@@ -444,11 +439,10 @@ void main() {
   });
 
   group('corpus grounding (real data)', () {
-    final dir = Directory(corpusPath);
+    final dir = Directory(corpusDir);
     final available = dir.existsSync();
 
-    String read(String name) =>
-        File('$corpusPath/$name').readAsStringSync().toLowerCase();
+    String read(String name) => corpusFile(name).readAsStringSync().toLowerCase();
 
     test(
       'query terms used above occur in real corpus recipes',

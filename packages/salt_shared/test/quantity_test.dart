@@ -1,30 +1,11 @@
-import 'dart:io';
-
 import 'package:salt_shared/src/util/quantity.dart';
 import 'package:test/test.dart';
 
-/// The real recipe corpus (1,198 extracted YAML documents).
-const String _corpusDir = '/Users/drivard/Documents/Claude Projects/'
-    'Recipe Extraction/The Complete America_s Test Kitchen TV Show '
-    'Cookbook 2001–2023/recipes';
+import 'corpus.dart';
 
 /// Every distinct `quantity:` value in the corpus, unquoted, nulls skipped.
-Set<String> _distinctCorpusQuantities() {
-  final lineRe = RegExp(r'^\s*quantity: (.+)$', multiLine: true);
-  final values = <String>{};
-  for (final entity in Directory(_corpusDir).listSync()) {
-    if (entity is! File || !entity.path.endsWith('.yaml')) continue;
-    for (final match in lineRe.allMatches(entity.readAsStringSync())) {
-      var value = match.group(1)!.trim();
-      if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
-        value = value.substring(1, value.length - 1);
-      }
-      if (value.isEmpty || value == 'null') continue;
-      values.add(value);
-    }
-  }
-  return values;
-}
+Set<String> _distinctCorpusQuantities() =>
+    distinctCorpusValues(RegExp(r'^\s*quantity: (.+)$', multiLine: true));
 
 void main() {
   group('parseQuantity', () {
@@ -228,7 +209,7 @@ void main() {
     test('parses every non-range corpus quantity value', () {
       final values = _distinctCorpusQuantities();
       expect(values.length, greaterThan(50),
-          reason: 'corpus not found at $_corpusDir');
+          reason: 'corpus not found at $corpusDir');
 
       final range = RegExp('[–-]');
       final failures = <String>[];

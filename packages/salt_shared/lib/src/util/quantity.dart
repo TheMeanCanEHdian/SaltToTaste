@@ -20,9 +20,16 @@ const Map<String, double> _vulgarFractions = {
   '⅒': 1 / 10,
 };
 
+/// Every unicode vulgar-fraction character [parseQuantity] understands,
+/// as a single string suitable for regex character classes. Derived from
+/// [_vulgarFractions] so the two can never drift apart.
+final String vulgarFractionChars = _vulgarFractions.keys.join();
+
 final RegExp _wholeNumber = RegExp(r'^\d+$');
 final RegExp _asciiFraction = RegExp(r'^(?:(\d+)\s+)?(\d+)\s*/\s*(\d+)$');
 final RegExp _decimal = RegExp(r'^(?:\d+(?:\.\d+)?|\.\d+)$');
+final RegExp _trailingZeros = RegExp(r'0+$');
+final RegExp _trailingDot = RegExp(r'\.$');
 
 /// Parses a corpus quantity string to its numeric value.
 ///
@@ -98,8 +105,8 @@ String formatQuantity(double value) {
   }
 
   var text = value.toStringAsFixed(3);
-  text = text.replaceFirst(RegExp(r'0+$'), '');
-  text = text.replaceFirst(RegExp(r'\.$'), '');
+  text = text.replaceFirst(_trailingZeros, '');
+  text = text.replaceFirst(_trailingDot, '');
   return text;
 }
 

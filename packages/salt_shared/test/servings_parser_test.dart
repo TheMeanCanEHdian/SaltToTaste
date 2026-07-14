@@ -1,32 +1,15 @@
-import 'dart:io';
-
 import 'package:salt_shared/src/model/recipe.dart' show Serves;
 import 'package:salt_shared/src/util/servings_parser.dart';
 import 'package:test/test.dart';
 
-/// The real recipe corpus (1,198 extracted YAML documents).
-const String _corpusDir = '/Users/drivard/Documents/Claude Projects/'
-    'Recipe Extraction/The Complete America_s Test Kitchen TV Show '
-    'Cookbook 2001–2023/recipes';
+import 'corpus.dart';
 
 /// Every distinct top-level `servings:` value in the corpus, unquoted,
 /// nulls skipped (exactly one corpus recipe has `servings: null`).
-Set<String> _distinctCorpusServings() {
-  final lineRe = RegExp(r'^servings: (.+)$', multiLine: true);
-  final values = <String>{};
-  for (final entity in Directory(_corpusDir).listSync()) {
-    if (entity is! File || !entity.path.endsWith('.yaml')) continue;
-    final match = lineRe.firstMatch(entity.readAsStringSync());
-    if (match == null) continue;
-    var value = match.group(1)!.trim();
-    if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
-      value = value.substring(1, value.length - 1);
-    }
-    if (value.isEmpty || value == 'null') continue;
-    values.add(value);
-  }
-  return values;
-}
+Set<String> _distinctCorpusServings() => distinctCorpusValues(
+      RegExp(r'^servings: (.+)$', multiLine: true),
+      firstMatchOnly: true,
+    );
 
 /// Asserts [text] parses to `Serves(min, max)`.
 void expectServes(String text, int min, int max) {
@@ -194,6 +177,28 @@ void main() {
           1);
     });
 
+    // Regression tests from the P0 code review. These forms come from
+    // hand-edited files and editor input, so they are not in the corpus
+    // vocabulary; the corpus coverage test below remains the real-data gate.
+    test('SERVES hyphen/en-dash ranges parse like TO ranges', () {
+      expectServes('SERVES 4-6', 4, 6);
+      expectServes('SERVES 4–6', 4, 6);
+      expectServes('SERVES 4 - 6', 4, 6);
+    });
+
+    test('DOZEN multiplies before rounding', () {
+      expectServes('MAKES 1½ DOZEN COOKIES', 18, 18);
+      expectServes('MAKES 2 DOZEN COOKIES', 24, 24);
+      expectServes('MAKES ½ DOZEN MUFFINS', 6, 6);
+    });
+
+    test('n SERVINGS with a preceding non-count word', () {
+      expectServes('ABOUT 12 SERVINGS', 12, 12);
+      expectServes('YIELDS 12 SERVINGS', 12, 12);
+      expectServes('4 TO 6 SERVINGS', 4, 6);
+      expectServes('MAKES ABOUT TWELVE 1-CUP SERVINGS', 12, 12);
+    });
+
     test('returns null when no count can be extracted', () {
       expect(parseServings(null), isNull);
       expect(parseServings(''), isNull);
@@ -207,7 +212,7 @@ void main() {
     test('parses >= 99% of all distinct corpus servings values', () {
       final values = _distinctCorpusServings();
       expect(values.length, greaterThan(100),
-          reason: 'corpus not found at $_corpusDir');
+          reason: 'corpus not found at $corpusDir');
 
       final failures = <String>[];
       for (final value in values) {

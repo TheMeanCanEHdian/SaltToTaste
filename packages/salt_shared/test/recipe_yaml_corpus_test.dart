@@ -2,95 +2,64 @@
 /// servings for the entire real extraction corpus (1,198 recipes).
 library;
 
-import 'dart:io';
-
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
-const String _corpusDir =
-    '/Users/drivard/Documents/Claude Projects/Recipe Extraction/'
-    'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023/recipes';
+import 'corpus.dart';
 
-const int _expectedCorpusSize = 1198;
-
-/// The corpus files, sorted by path for deterministic output.
-List<File> _corpusFiles() {
-  final dir = Directory(_corpusDir);
-  expect(
-    dir.existsSync(),
-    isTrue,
-    reason: 'corpus directory not found: $_corpusDir',
-  );
-  final files = dir
-      .listSync()
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.yaml'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
-  return files;
-}
-
-String _name(File file) => file.uri.pathSegments.last;
-
-RecipeDecodeResult _decodeFile(File file) =>
-    RecipeYamlCodec.decode(file.readAsStringSync());
-
-File _corpusFile(String name) => File('$_corpusDir/$name');
+RecipeDecodeResult _decode(String name) =>
+    RecipeYamlCodec.decode(corpusFile(name).readAsStringSync());
 
 void main() {
+  // Decoded once and shared by every test in this suite (and any other suite
+  // in the same process) — the corpus is 1,198 files, so repeat passes are
+  // the dominant cost of this gate.
+  late CorpusDecode corpus;
+
+  setUpAll(() {
+    corpus = decodeCorpus();
+  });
+
   group('corpus', () {
     test('all files decode without errors', () {
-      final files = _corpusFiles();
-      expect(files.length, _expectedCorpusSize);
+      final total = corpus.results.length + corpus.failures.length;
+      expect(total, expectedCorpusSize);
 
-      final failures = <String>[];
       final warningCounts = <String, int>{};
-      for (final file in files) {
-        try {
-          final result = _decodeFile(file);
-          for (final warning in result.warnings) {
-            final type = warning.split(':').first.trim();
-            warningCounts[type] = (warningCounts[type] ?? 0) + 1;
-          }
-        } catch (error) {
-          failures.add('${_name(file)}: $error');
+      for (final result in corpus.results.values) {
+        for (final warning in result.warnings) {
+          final type = warning.split(':').first.trim();
+          warningCounts[type] = (warningCounts[type] ?? 0) + 1;
         }
       }
 
-      print('decoded ${files.length - failures.length}/${files.length} files');
+      print('decoded ${corpus.results.length}/$total files');
       print('aggregate warning counts by type: '
           '${warningCounts.isEmpty ? '(none)' : warningCounts}');
-      if (failures.isNotEmpty) {
-        print('DECODE FAILURES (${failures.length}):');
-        failures.forEach(print);
+      if (corpus.failures.isNotEmpty) {
+        print('DECODE FAILURES (${corpus.failures.length}):');
+        corpus.failures.forEach((name, error) => print('$name: $error'));
       }
-      expect(failures, isEmpty);
+      expect(corpus.failures, isEmpty);
     });
 
     test('round-trip parse -> emit -> parse is model-equal', () {
-      final files = _corpusFiles();
       final mismatches = <String>[];
-      for (final file in files) {
-        final Recipe original;
-        try {
-          original = _decodeFile(file).recipe;
-        } catch (_) {
-          // Decode failures are reported (with details) by the decode test.
-          continue;
-        }
+      corpus.results.forEach((name, result) {
+        final original = result.recipe;
         try {
           final reparsed =
               RecipeYamlCodec.decode(RecipeYamlCodec.encode(original)).recipe;
           if (reparsed != original) {
             mismatches.add(
-              '${_name(file)}: differing top-level fields: '
+              '$name: differing top-level fields: '
               '${_differingFields(original, reparsed)}',
             );
           }
         } catch (error) {
-          mismatches.add('${_name(file)}: re-decode threw: $error');
+          mismatches.add('$name: re-decode threw: $error');
         }
-      }
+      });
 
       if (mismatches.isNotEmpty) {
         print('ROUND-TRIP MISMATCHES (${mismatches.length}):');
@@ -100,39 +69,32 @@ void main() {
     });
 
     test('servings coverage', () {
-      final files = _corpusFiles();
-      var total = 0;
       var parsed = 0;
       var nullServings = 0;
       final unparseable = <String>[];
-      for (final file in files) {
-        final recipe = _decodeFile(file).recipe;
-        total++;
+      corpus.results.forEach((name, result) {
+        final recipe = result.recipe;
         if (recipe.servings == null) {
           nullServings++;
         } else if (recipe.serves != null) {
           parsed++;
         } else {
-          unparseable.add('${_name(file)}: ${recipe.servings}');
+          unparseable.add('$name: ${recipe.servings}');
         }
-      }
+      });
 
-      print('servings coverage: total=$total parsed=$parsed '
-          'null=$nullServings unparseable=${unparseable.length}');
+      print('servings coverage: total=${corpus.results.length} '
+          'parsed=$parsed null=$nullServings '
+          'unparseable=${unparseable.length}');
       if (unparseable.isNotEmpty) {
         print('UNPARSEABLE SERVINGS (${unparseable.length}):');
         unparseable.forEach(print);
       }
       expect(
-        unparseable.length,
-        lessThanOrEqualTo(5),
-        reason: 'the servings parser was built from the corpus vocabulary — '
-            'more than 5 unparseable values means a regression',
-      );
-      expect(
         unparseable,
         isEmpty,
-        reason: 'expected full corpus coverage (see printed list)',
+        reason: 'the servings parser was built from the corpus vocabulary — '
+            'any unparseable value is a regression (see printed list)',
       );
     });
   });
@@ -141,9 +103,7 @@ void main() {
     late Recipe recipe;
 
     setUpAll(() {
-      recipe = _decodeFile(
-        _corpusFile('0857-rich-chocolate-bundt-cake.yaml'),
-      ).recipe;
+      recipe = _decode('0857-rich-chocolate-bundt-cake.yaml').recipe;
     });
 
     test('v1 upgrade stamps schema_version 2 and derives serves', () {
@@ -185,8 +145,7 @@ void main() {
     late Recipe recipe;
 
     setUpAll(() {
-      recipe = _decodeFile(_corpusFile('0038-foolproof-vinaigrette.yaml'))
-          .recipe;
+      recipe = _decode('0038-foolproof-vinaigrette.yaml').recipe;
     });
 
     test('prose-only subsection has null (omitted) sub-recipe fields', () {
@@ -214,7 +173,7 @@ void main() {
     late Recipe recipe;
 
     setUpAll(() {
-      recipe = _decodeFile(_corpusFile('0020-sweet-potato-soup.yaml')).recipe;
+      recipe = _decode('0020-sweet-potato-soup.yaml').recipe;
     });
 
     test('subsections are full sub-recipes with non-null ingredients', () {
@@ -251,6 +210,94 @@ void main() {
       expect(reparsed, recipe);
       expect(reparsed.subsections.first.ingredients, isNotNull);
       expect(reparsed.subsections.first.steps, isEmpty);
+    });
+  });
+
+  group('P0 review regressions', () {
+    late String bundtText;
+
+    setUpAll(() {
+      bundtText =
+          corpusFile('0857-rich-chocolate-bundt-cake.yaml').readAsStringSync();
+    });
+
+    test('schema_version spellings 1, \'1\', and 1.0 all upgrade to v2', () {
+      for (final spelling in ['1', "'1'", '1.0']) {
+        final result =
+            RecipeYamlCodec.decode('schema_version: $spelling\n$bundtText');
+        expect(result.recipe.schemaVersion, 2,
+            reason: 'schema_version: $spelling must upgrade');
+        expect(result.recipe.serves, const Serves(min: 12, max: 12),
+            reason: 'serves must be derived for schema_version: $spelling');
+      }
+    });
+
+    test('schema_version above 2 warns in any spelling', () {
+      for (final spelling in ['3', "'3'", '3.0']) {
+        final result =
+            RecipeYamlCodec.decode('schema_version: $spelling\n$bundtText');
+        expect(result.warnings,
+            anyElement(contains('unsupported schema_version: 3')),
+            reason: 'schema_version: $spelling must warn');
+      }
+    });
+
+    test('unrecognizable schema_version warns and is treated as v1', () {
+      final result =
+          RecipeYamlCodec.decode('schema_version: banana\n$bundtText');
+      expect(result.warnings,
+          anyElement(contains('unrecognizable schema_version: banana')));
+      expect(result.recipe.schemaVersion, 2);
+      expect(result.recipe.serves, isNotNull);
+    });
+
+    test('hand-edited unquoted scalars decode as strings (mapper coercion)',
+        () {
+      // A hand-edit can drop the quotes YAML needs to keep these strings;
+      // the codec relies on dart_mappable's String decoder accepting any
+      // scalar via toString(). This test pins that behavior.
+      final edited = bundtText
+          .replaceFirst("isbn: '9781954210110'", 'isbn: 9781954210110')
+          .replaceFirst("extracted_at: '2026-06-30'", 'extracted_at: 20260630')
+          .replaceFirst("quantity: '12'", 'quantity: 12');
+      expect(edited, isNot(bundtText), reason: 'replacements must apply');
+      final recipe = RecipeYamlCodec.decode(edited).recipe;
+      expect(recipe.source.isbn, '9781954210110');
+      expect(recipe.extraction!.extractedAt, '20260630');
+      expect(recipe.ingredients.first.items.first.amounts.single.quantity,
+          '12');
+    });
+
+    test('every toMap field survives encode (no silent field drops)', () {
+      // encode() derives its document from toMap(), so a newly added model
+      // field cannot be silently dropped. Exercise all v2 extras at once.
+      final base = _decode('0857-rich-chocolate-bundt-cake.yaml').recipe;
+      final full = base.copyWith(
+        times: const RecipeTimes(prep: 20, cook: 50, total: 190),
+        images: const RecipeImages(
+          hero: 'images/0857-rich-chocolate-bundt-cake-hero.jpg',
+          gallery: ['images/extra-1.jpg'],
+          credit: 'https://example.com/photo',
+        ),
+        source: base.source.copyWith(url: 'https://example.com/recipe'),
+        notes: 'Shared note.',
+      );
+      final reparsed = RecipeYamlCodec.decode(RecipeYamlCodec.encode(full));
+      expect(reparsed.recipe, full);
+      expect(reparsed.warnings, isEmpty);
+
+      final encodedKeys =
+          RecipeYamlCodec.decode(RecipeYamlCodec.encode(full)).recipe.toMap();
+      for (final key in full.toMap().keys) {
+        expect(encodedKeys.containsKey(key), isTrue,
+            reason: 'field $key lost in encode round-trip');
+      }
+    });
+
+    test('emitted extracted_at stays quoted (PyYAML would read a date)', () {
+      final recipe = _decode('0857-rich-chocolate-bundt-cake.yaml').recipe;
+      final emitted = RecipeYamlCodec.encode(recipe);
+      expect(emitted, contains("extracted_at: '2026-06-30'"));
     });
   });
 }

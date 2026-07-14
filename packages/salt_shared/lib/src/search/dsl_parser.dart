@@ -98,42 +98,44 @@ final class CaloriesNode extends SearchNode {
   String toString() => 'Calories(${op.symbol} $value)';
 }
 
-/// A conjunction: every child must match.
-final class AndNode extends SearchNode {
-  const AndNode(this.children);
+/// A boolean combinator over 2+ children; equality is value-based and
+/// distinguishes [AndNode] from [OrNode] via the runtime type.
+sealed class JunctionNode extends SearchNode {
+  const JunctionNode(this.children);
 
-  /// The conjoined nodes, in query order (always 2+ from the parser).
+  /// The combined nodes, in query order (always 2+ from the parser).
   final List<SearchNode> children;
+
+  String get _label;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AndNode && _nodeListEquals(other.children, children);
+      other is JunctionNode &&
+          other.runtimeType == runtimeType &&
+          _nodeListEquals(other.children, children);
 
   @override
-  int get hashCode => Object.hash(AndNode, Object.hashAll(children));
+  int get hashCode => Object.hash(runtimeType, Object.hashAll(children));
 
   @override
-  String toString() => 'And(${children.join(', ')})';
+  String toString() => '$_label(${children.join(', ')})';
+}
+
+/// A conjunction: every child must match.
+final class AndNode extends JunctionNode {
+  const AndNode(super.children);
+
+  @override
+  String get _label => 'And';
 }
 
 /// A disjunction: at least one child must match.
-final class OrNode extends SearchNode {
-  const OrNode(this.children);
-
-  /// The alternative nodes, in query order (always 2+ from the parser).
-  final List<SearchNode> children;
+final class OrNode extends JunctionNode {
+  const OrNode(super.children);
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is OrNode && _nodeListEquals(other.children, children);
-
-  @override
-  int get hashCode => Object.hash(OrNode, Object.hashAll(children));
-
-  @override
-  String toString() => 'Or(${children.join(', ')})';
+  String get _label => 'Or';
 }
 
 bool _nodeListEquals(List<SearchNode> a, List<SearchNode> b) {

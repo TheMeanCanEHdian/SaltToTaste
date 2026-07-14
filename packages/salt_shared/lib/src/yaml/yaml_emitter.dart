@@ -33,6 +33,20 @@ final RegExp _numberLike = RegExp(
 /// Matches hex/octal/binary integer spellings (`0x1A`, `0o17`, `0b101`).
 final RegExp _radixIntLike = RegExp(r'^[-+]?0[xob][0-9a-fA-F_]+$');
 
+/// Matches strings PyYAML's YAML 1.1 resolver reads as a timestamp
+/// (`2026-06-30`, `2001-12-14 21:59:43.10 -5`, `2001-12-14t21:59:43Z`).
+/// package:yaml (1.2) keeps these as strings, but the corpus tooling reads
+/// our output with PyYAML, so they must be quoted.
+final RegExp _timestampLike = RegExp(
+  r'^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}([Tt ].*)?$',
+);
+
+/// Matches strings PyYAML's YAML 1.1 resolver reads as a sexagesimal
+/// (base-60) int or float (`1:30` → 90, `1:30:00.5`).
+final RegExp _sexagesimalLike = RegExp(
+  r'^[-+]?[0-9][0-9_]*(:[0-9]+)+(\.[0-9_]*)?$',
+);
+
 /// Renders [node] as a complete YAML document ending in a newline.
 ///
 /// Supported node types are `Map` (keys are stringified), `List`, `String`,
@@ -127,6 +141,10 @@ String _key(Object? key) {
 /// whose continuation lines are indented by [indent] spaces.
 String _scalar(Object? value, int indent) {
   if (value == null) return 'null';
+  if (value is double && !value.isFinite) {
+    if (value.isNaN) return '.nan';
+    return value.isNegative ? '-.inf' : '.inf';
+  }
   if (value is bool || value is int || value is double) {
     return value.toString();
   }
@@ -194,13 +212,23 @@ bool _isPlainSafe(String text) {
   if (text.contains(': ') || text.contains(' #')) return false;
   if (_reservedWords.contains(text)) return false;
   if (_numberLike.hasMatch(text) || _radixIntLike.hasMatch(text)) return false;
+  if (_timestampLike.hasMatch(text)) return false;
+  if (_sexagesimalLike.hasMatch(text)) return false;
   return true;
 }
 
-/// Whether [text] contains C0 control characters (other than newline) or DEL.
+/// Whether [text] contains control characters that must force double-quoted
+/// style: C0 (other than newline), DEL, C1 (including U+0085 NEL, which
+/// YAML 1.1 parsers treat as a line break), or the Unicode line/paragraph
+/// separators U+2028/U+2029.
 bool _hasControlChars(String text) {
   for (final unit in text.codeUnits) {
-    if ((unit < 0x20 && unit != 0x0A) || unit == 0x7F) return true;
+    if ((unit < 0x20 && unit != 0x0A) ||
+        (unit >= 0x7F && unit <= 0x9F) ||
+        unit == 0x2028 ||
+        unit == 0x2029) {
+      return true;
+    }
   }
   return false;
 }
@@ -221,9 +249,12 @@ String _doubleQuoted(String text) {
       case 0x09:
         buffer.write(r'\t');
       default:
-        if (rune < 0x20 || rune == 0x7F) {
+        if (rune < 0x20 || (rune >= 0x7F && rune <= 0x9F)) {
           final hex = rune.toRadixString(16).padLeft(2, '0').toUpperCase();
           buffer.write('\\x$hex');
+        } else if (rune == 0x2028 || rune == 0x2029) {
+          final hex = rune.toRadixString(16).padLeft(4, '0').toUpperCase();
+          buffer.write('\\u$hex');
         } else {
           buffer.writeCharCode(rune);
         }

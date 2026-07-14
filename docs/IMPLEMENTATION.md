@@ -1,12 +1,12 @@
 # Implementation Tracker
 
-Living status of the [approved rewrite plan](https://github.com/) (local copy:
+Living status of the approved rewrite plan (local file:
 `/Users/drivard/.claude/plans/background-a-long-warm-robin.md`). Statuses:
 `pending` / `in-progress` / `done` / `changed(reason)`.
 
 Last updated: 2026-07-14
 
-## P0 — Workspace + salt_shared — **in-progress** (code review remaining)
+## P0 — Workspace + salt_shared — **done**
 
 | Item | Status | Notes |
 |---|---|---|
@@ -19,12 +19,46 @@ Last updated: 2026-07-14
 | Recipe YAML codec (decode/normalize/v1→v2 upgrade, canonical encode) | done | quantity/isbn/extracted_at string-coercion; subsection key omission preserved |
 | Corpus golden test: 1,198 files decode + round-trip model-equal | done | verified: 1198/1198 decode, 1198/1198 round-trip, 0 unparseable servings; 89/89 tests, analyze clean |
 | CLAUDE.md + this tracker | done | |
-| Phase code review (high effort) | in-progress | |
+| Phase code review (high effort, adversarial verify) | done | see review record below |
 
 Known limitations (documented by module authors): quantity parser rejects
 range strings (`1–2`) by design; DSL has no parentheses grouping; smart quotes
 not treated as phrase delimiters; `MAKES ... CUPS` yields use the leading
 number (serving basis is editable later).
+
+### P0 code review record (2026-07-14)
+
+8 finder angles → 27 deduped candidates → adversarial panel (3 refuters per
+finding, ≥2 kills) → 23 survivors, 5 killed. All survivors fixed and covered
+by regression tests (suite grew 89 → 107 tests), except three deferred items:
+
+**Fixed (correctness):** emitter now quotes PyYAML date/sexagesimal forms
+(`'2026-06-30'`, `'1:30'`); C1 controls + U+2028/9 escaped double-quoted;
+non-finite doubles emit `.inf`/`.nan`; codec reads `schema_version` tolerantly
+(`'1'`/`1.0`/unrecognizable→warn+v1); `SERVES 4-6`/`4–6` ranges; DOZEN
+multiplies before rounding (`1½ DOZEN` = 18); `ABOUT/YIELDS n SERVINGS` and
+`n TO m SERVINGS` parse via token scan.
+
+**Fixed (design/cleanup):** encode now derived from generated `toMap()` +
+canonical transform — model fields can never be silently dropped (tripwire
+test added); redundant scalar coercion removed (dart_mappable String-coercion
+behavior pinned by regression test); fraction char class shared between
+quantity and servings parsers; corpus path/scanners consolidated into
+`test/corpus.dart` with a decode-once cache; And/Or nodes share a sealed
+junction base; contradictory coverage assertions resolved; `formatQuantity`
+regexes hoisted; emitter public-API branches now tested.
+
+**Killed by panel (spot-checkable):** subsection key-order fidelity (encode is
+canonical-v2 by contract, source files never rewritten); versioned migration
+chain (no v3 on roadmap; YAGNI); structured warning objects (two producers,
+job-log contract only); generalized numeric filter node (calories-only is the
+documented old-DSL parity); serves/times optionality asymmetry (deliberate
+per-plan shapes).
+
+**Deferred to user/P4:** search semantics changes vs old app — scope binds one
+term (old: whole block) and adjacent same-scope terms AND (old: OR) — product
+decisions pending; `calories:` queries must default to calories-ascending
+ordering in the P4 compiler (old-app contract not expressible in the AST).
 
 ## P1 — Server core + import — **pending**
 Logging/request-id/error-envelope middleware first; sqlite3 DAL + migration 001
@@ -39,6 +73,9 @@ Setup flow, sessions (cookie+bearer), CSRF, rate limiting + lockout, roles
 
 ## P4 — Search + tags — **pending**
 FTS5 + DSL→FTS compiler, search UI, tag styles (Lucide) + editor.
+Requirement from P0 review: `calories:` queries default to calories-ascending
+result ordering (old-app contract). Pending user decision: scope-binding and
+same-scope AND/OR semantics vs old app.
 
 ## P5 — Editing + export + reconciliation + backups — **pending**
 CRUD, atomic auto-export, library reconciliation scan (file wins clean edit /
