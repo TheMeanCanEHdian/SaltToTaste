@@ -60,9 +60,24 @@ term (old: whole block) and adjacent same-scope terms AND (old: OR) — product
 decisions pending; `calories:` queries must default to calories-ascending
 ordering in the P4 compiler (old-app contract not expressible in the AST).
 
-## P1 — Server core + import — **pending**
-Logging/request-id/error-envelope middleware first; sqlite3 DAL + migration 001
-(FTS5); import service + CLI; recipes list/detail/yaml endpoints; image serving.
+## P1 — Server core + import — **in-progress** (code review remaining)
+
+| Item | Status | Notes |
+|---|---|---|
+| Dart Frog scaffold (apps/server, workspace member) | done | |
+| Logging + request-id + error-envelope middleware (first) | done | order: requestId → requestLogger → errorHandler → providers (deviation from plan's "errorHandler outermost": dart_frog's one-directional context means the envelope couldn't carry the request id otherwise; rationale in routes/_middleware.dart) |
+| ServerConfig from env (DATA_DIR, LOG_LEVEL, TRUST_PROXY) | done | trustProxy stored, consumed in P3 (cookies) |
+| SQLite DAL + migration 001 incl. FTS5 | done | migrations as Dart constants (not .sql files — asset-loading in compiled exe); prepared statements only |
+| Import service + `dart run salt_server:import` CLI | done | canonical-v2 export written to library/, sha256 content hash, idempotent |
+| Recipes list/detail/yaml endpoints + image serving | done | handler-refactor pattern (testable cores in lib/src/handlers); traversal guards |
+| DTOs (RecipeCard, Paged, ApiError) in salt_shared | done | |
+| End-to-end gate | done | verified by hand: 1198/1198 imported in 5.5s, 0 warnings; re-import 1198 skipped; list total=1198; detail by id+slug; yaml attachment; image 200 image/jpeg; 3 traversal probes rejected; error envelopes carry request_id |
+| Phase code review (high effort, adversarial verify) | in-progress | |
+
+Known quirks: `dart_frog dev` crashes without a TTY (its hot-reload key
+listener sets stdin echo mode) — use `dart_frog build` + `dart
+build/bin/server.dart`, or run dev from a real terminal. `.data/` is
+git-ignored dev state.
 
 ## P2 — Flutter read-only app — **pending**
 Mockups (grid/card/detail, desktop+mobile) → approval → theme/router/grid/detail.

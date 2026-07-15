@@ -6,4 +6,5 @@ environment:
   sdk: ^3.12.0
 
 workspace:
+  - apps/server
   - packages/salt_shared

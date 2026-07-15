@@ -1,6 +1,7 @@
 /// Shared recipe models, YAML codec, and parsers for SaltToTaste.
 library;
 
+export 'src/api/dto.dart';
 export 'src/model/recipe.dart';
 export 'src/search/dsl_parser.dart';
 export 'src/util/quantity.dart';

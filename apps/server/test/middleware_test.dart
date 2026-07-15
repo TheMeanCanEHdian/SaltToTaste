@@ -1,0 +1,294 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:dart_frog/dart_frog.dart' hide requestLogger;
+import 'package:logging/logging.dart';
+import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/middleware/error_handler.dart';
+import 'package:salt_server/src/middleware/request_context.dart';
+import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:test/test.dart';
+
+import '../routes/healthz.dart' as healthz_route;
+import '../routes/index.dart' as index_route;
+
+final _hexId = RegExp(r'^[0-9a-f]{16}$');
+
+void main() {
+  late Directory tempDir;
+  late ServerConfig config;
+  late HttpServer server;
+  late Uri baseUri;
+  final records = <LogRecord>[];
+
+  // Stand-in for the generated dart_frog route table, using the real route
+  // handlers plus routes that fail in every way the middleware must handle.
+  FutureOr<Response> dispatch(RequestContext context) {
+    switch (context.request.uri.path) {
+      case '/':
+        return index_route.onRequest(context);
+      case '/healthz':
+        return healthz_route.onRequest(context);
+      case '/throws-not-found':
+        throw const NotFoundException('Recipe does not exist.');
+      case '/throws-validation':
+        throw const ValidationException('Field "title" is required.');
+      case '/throws-state-error':
+        throw StateError('sensitive internal detail');
+      case '/empty-404':
+        return Response(statusCode: HttpStatus.notFound);
+      case '/json-404':
+        return Response.json(
+          statusCode: HttpStatus.notFound,
+          body: {'custom': true},
+        );
+      default:
+        // Mimic dart_frog's router fallback for unmatched routes.
+        return Response(
+          statusCode: HttpStatus.notFound,
+          body: 'Route not found',
+        );
+    }
+  }
+
+  setUpAll(() async {
+    tempDir = Directory.systemTemp.createTempSync('salt_middleware_test_');
+    config = ServerConfig.fromEnvironment(
+      environment: {'DATA_DIR': tempDir.path, 'LOG_LEVEL': 'INFO'},
+    );
+    configureLogging(config);
+    Logger.root.onRecord.listen(records.add);
+
+    // Same wiring as routes/_middleware.dart (last `.use` is outermost).
+    final pipeline = dispatch
+        .use(provider<ServerConfig>((_) => config))
+        .use(errorHandler())
+        .use(requestLogger())
+        .use(requestIdProvider());
+    server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
+    baseUri = Uri.parse('http://127.0.0.1:${server.port}');
+  });
+
+  tearDownAll(() async {
+    await server.close(force: true);
+    tempDir.deleteSync(recursive: true);
+  });
+
+  Future<(HttpClientResponse, String)> send(
+    String method,
+    String path,
+  ) async {
+    final client = HttpClient();
+    try {
+      final request = await client.openUrl(method, baseUri.resolve(path));
+      final response = await request.close();
+      final body = await utf8.decoder.bind(response).join();
+      return (response, body);
+    } finally {
+      client.close();
+    }
+  }
+
+  Map<String, dynamic> errorOf(String body) {
+    final decoded = jsonDecode(body) as Map<String, dynamic>;
+    return decoded['error'] as Map<String, dynamic>;
+  }
+
+  group('request id', () {
+    test('every response carries a 16-hex X-Request-Id header', () async {
+      final (response, _) = await send('GET', '/healthz');
+      final id = response.headers.value(requestIdHeader);
+      expect(id, isNotNull);
+      expect(id, matches(_hexId));
+    });
+
+    test('ids differ between requests', () async {
+      final (first, _) = await send('GET', '/healthz');
+      final (second, _) = await send('GET', '/healthz');
+      expect(
+        first.headers.value(requestIdHeader),
+        isNot(second.headers.value(requestIdHeader)),
+      );
+    });
+  });
+
+  group('error envelope', () {
+    test('AppException becomes its envelope with matching request_id',
+        () async {
+      final (response, body) = await send('GET', '/throws-not-found');
+      expect(response.statusCode, HttpStatus.notFound);
+      final error = errorOf(body);
+      expect(error['code'], 'not_found');
+      expect(error['message'], 'Recipe does not exist.');
+      expect(error['request_id'], response.headers.value(requestIdHeader));
+    });
+
+    test('ValidationException maps to 422/validation', () async {
+      final (response, body) = await send('GET', '/throws-validation');
+      expect(response.statusCode, HttpStatus.unprocessableEntity);
+      expect(errorOf(body)['code'], 'validation');
+    });
+
+    test('unknown exceptions become an opaque 500 envelope', () async {
+      records.clear();
+      final (response, body) = await send('GET', '/throws-state-error');
+      expect(response.statusCode, HttpStatus.internalServerError);
+      final error = errorOf(body);
+      expect(error['code'], 'internal');
+      expect(error['message'], 'Internal server error.');
+      expect(error['request_id'], response.headers.value(requestIdHeader));
+      // No leaked details or stack frames in the body.
+      expect(body, isNot(contains('StateError')));
+      expect(body, isNot(contains('sensitive')));
+      expect(body, isNot(contains('#0')));
+      // ...but the log got the full story.
+      final severe =
+          records.where((r) => r.level == Level.SEVERE).toList();
+      expect(severe, hasLength(1));
+      expect(severe.single.loggerName, 'http');
+      expect(severe.single.error, isA<StateError>());
+      expect(severe.single.stackTrace, isNotNull);
+    });
+
+    test("router's bare 'Route not found' 404 is rewrapped", () async {
+      final (response, body) = await send('GET', '/no-such-route');
+      expect(response.statusCode, HttpStatus.notFound);
+      final error = errorOf(body);
+      expect(error['code'], 'not_found');
+      expect(error['request_id'], matches(_hexId));
+    });
+
+    test('empty-body 404 is rewrapped', () async {
+      final (response, body) = await send('GET', '/empty-404');
+      expect(response.statusCode, HttpStatus.notFound);
+      expect(errorOf(body)['code'], 'not_found');
+    });
+
+    test('a deliberate JSON 404 passes through untouched', () async {
+      final (response, body) = await send('GET', '/json-404');
+      expect(response.statusCode, HttpStatus.notFound);
+      expect(jsonDecode(body), {'custom': true});
+    });
+  });
+
+  group('request logger', () {
+    test('logs method, path, status, duration, and rid at INFO', () async {
+      records.clear();
+      await send('GET', '/healthz');
+      final http = records
+          .where((r) => r.loggerName == 'http' && r.level == Level.INFO)
+          .toList();
+      expect(http, hasLength(1));
+      expect(
+        http.single.message,
+        matches(RegExp(r'^GET /healthz -> 200 \(\d+ms\) rid=[0-9a-f]{16}$')),
+      );
+    });
+
+    test('failed requests are logged with their envelope status', () async {
+      records.clear();
+      await send('GET', '/throws-validation');
+      final messages = records
+          .where((r) => r.loggerName == 'http' && r.level == Level.INFO)
+          .map((r) => r.message);
+      expect(
+        messages,
+        contains(matches(RegExp('^GET /throws-validation -> 422 '))),
+      );
+    });
+  });
+
+  group('routes', () {
+    test('GET /healthz returns ok', () async {
+      final (response, body) = await send('GET', '/healthz');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(jsonDecode(body), {'status': 'ok'});
+    });
+
+    test('POST /healthz returns a 405 envelope', () async {
+      final (response, body) = await send('POST', '/healthz');
+      expect(response.statusCode, HttpStatus.methodNotAllowed);
+      final error = errorOf(body);
+      expect(error['code'], 'method_not_allowed');
+      expect(error['request_id'], matches(_hexId));
+    });
+
+    test('GET / identifies the service', () async {
+      final (response, body) = await send('GET', '/');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(jsonDecode(body), {'name': 'salt_server'});
+    });
+  });
+
+  group('ServerConfig', () {
+    test('creates the data dir and library subdir, exposes paths', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final dataDir = '${dir.path}/nested/data';
+      final cfg = ServerConfig.fromEnvironment(
+        environment: {'DATA_DIR': dataDir},
+      );
+      expect(cfg.dataDir, dataDir);
+      expect(cfg.dbPath, '$dataDir/salt.db');
+      expect(cfg.libraryDir, '$dataDir/library');
+      expect(Directory(cfg.libraryDir).existsSync(), isTrue);
+    });
+
+    test('resolves a relative DATA_DIR against the working directory', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_rel_');
+      final previous = Directory.current;
+      Directory.current = dir;
+      addTearDown(() {
+        Directory.current = previous;
+        dir.deleteSync(recursive: true);
+      });
+      final cfg = ServerConfig.fromEnvironment(
+        environment: {'DATA_DIR': 'rel-data'},
+      );
+      expect(cfg.dataDir, '${Directory.current.path}/rel-data');
+      expect(Directory(cfg.libraryDir).existsSync(), isTrue);
+    });
+
+    test('parses LOG_LEVEL values case-insensitively', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_lvl_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      Level levelFor(String? raw) {
+        return ServerConfig.fromEnvironment(
+          environment: {
+            'DATA_DIR': dir.path,
+            if (raw != null) 'LOG_LEVEL': raw,
+          },
+        ).logLevel;
+      }
+
+      expect(levelFor(null), Level.INFO);
+      expect(levelFor('INFO'), Level.INFO);
+      expect(levelFor('debug'), Level.FINE);
+      expect(levelFor('WARN'), Level.WARNING);
+      expect(levelFor('Warning'), Level.WARNING);
+      expect(levelFor('ERROR'), Level.SEVERE);
+      expect(() => levelFor('VERBOSE'), throwsFormatException);
+    });
+
+    test('TRUST_PROXY is true only for "true"', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_proxy_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      bool trustFor(String? raw) {
+        return ServerConfig.fromEnvironment(
+          environment: {
+            'DATA_DIR': dir.path,
+            if (raw != null) 'TRUST_PROXY': raw,
+          },
+        ).trustProxy;
+      }
+
+      expect(trustFor(null), isFalse);
+      expect(trustFor('true'), isTrue);
+      expect(trustFor('TRUE'), isTrue);
+      expect(trustFor('1'), isFalse);
+      expect(trustFor('false'), isFalse);
+    });
+  });
+}
