@@ -74,7 +74,7 @@ cd apps/server && dart_frog dev               # needs a real TTY (hot-reload key
                                               # headless: dart_frog build && DATA_DIR=.data dart build/bin/server.dart
 
 # App against the server — prefer SAME-ORIGIN (auth cookies flow; matches prod):
-cd apps/app && flutter build web --release && rm -rf ../server/public && cp -r build/web ../server/public
+cd apps/app && flutter build web --release --no-web-resources-cdn && rm -rf ../server/public && cp -r build/web ../server/public
 # then run the server and open http://localhost:8080/
 # (cross-origin dev via --dart-define=SALT_API_BASE + DEV_ALLOW_CORS=true works for
 #  the API but Flutter-web image fetches won't send cookies -> photo placeholders)

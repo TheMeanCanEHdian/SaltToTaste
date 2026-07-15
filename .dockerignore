@@ -1,0 +1,13 @@
+# Keep the build context small; stages copy only what they compile.
+.git
+.claude
+.dart_tool
+**/.dart_tool
+**/build
+apps/server/.data
+apps/server/public
+saltToTaste
+docs
+*.md
+.DS_Store
+**/.DS_Store

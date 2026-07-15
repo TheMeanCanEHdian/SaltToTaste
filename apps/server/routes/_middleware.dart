@@ -10,14 +10,21 @@ import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:salt_server/src/middleware/web_app.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 
 /// Top-level middleware chain.
 ///
 /// `.use` wraps, so the LAST `.use` is the OUTERMOST middleware. Order
-/// (outermost first): requestIdProvider -> requestLogger -> devCors ->
-/// errorHandler -> ServerConfig provider -> SaltDatabase provider ->
-/// AuthRuntime provider -> authProvider -> routes.
+/// (outermost first): requestIdProvider -> requestLogger ->
+/// securityHeaders -> spaFallback -> devCors -> errorHandler ->
+/// ServerConfig provider -> SaltDatabase provider -> AuthRuntime
+/// provider -> authProvider -> routes.
+///
+/// spaFallback sits outside errorHandler (it rewrites the enveloped 404
+/// for deep links) and inside securityHeaders (the fallback HTML must
+/// carry the CSP); requestLogger outside both records what was actually
+/// served.
 ///
 /// requestIdProvider sits outside errorHandler so error envelopes carry a
 /// matching `request_id` and every response — including error envelopes —
@@ -79,6 +86,8 @@ Handler middleware(Handler handler) {
       .use(provider<ServerConfig>((_) => serverConfig))
       .use(errorHandler())
       .use(_devCors())
+      .use(spaFallback())
+      .use(securityHeaders())
       .use(requestLogger())
       .use(requestIdProvider());
 }

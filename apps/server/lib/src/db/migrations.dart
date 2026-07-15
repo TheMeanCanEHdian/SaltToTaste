@@ -242,4 +242,12 @@ CREATE TABLE nutrition_jobs (
 )
 ''',
   ],
+
+  // 006 — import jobs go live (P7). The table itself shipped in 001;
+  // the API adds format detection and finer summary counters.
+  [
+    'ALTER TABLE import_jobs ADD COLUMN legacy INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE import_jobs ADD COLUMN imported INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE import_jobs ADD COLUMN updated INTEGER NOT NULL DEFAULT 0',
+  ],
 ];

@@ -350,6 +350,60 @@ restart is marked `failed` at the next boot.
 
 `{id, status, total, done, failed, log, started_at, finished_at}`.
 
+### `GET /api/v1/import/candidates` (admin)
+
+The allowlisted import directory (env `IMPORT_DIR`, default
+`DATA_DIR/import`) and the source folders detected inside it (the
+directory itself plus direct children):
+
+```json
+{
+  "import_dir": "/data/import",
+  "items": [
+    {"path": "The Complete America_s Test Kitchen …", "kind": "v1",
+     "file_count": 1198}
+  ]
+}
+```
+
+`kind`: `v1` (Recipe Extraction root with `recipes/*.yaml`) or `legacy`
+(old SaltToTaste v0 data dir with `_recipes/`).
+
+### `POST /api/v1/import` (admin, full scope)
+
+`{path}` — a folder relative to the import directory (or absolute), which
+must canonicalize inside it (symlink escapes rejected). Format is
+auto-detected. Starts a background job (own DB connection in an isolate;
+imports are idempotent — unchanged files skip, changed files update with
+an automatic backup). → `202 {"job_id"}`; `409 conflict` while an import
+is already running.
+
+### `GET /api/v1/import/jobs/{id}` (admin)
+
+`{id, status: running|done|failed, source_path, legacy, total, done,
+imported, updated, skipped, failed, log, started_at, finished_at}` —
+`log` carries per-file warnings; a job interrupted by a restart is marked
+`failed` at the next boot.
+
+## Serving & deployment behavior
+
+- **SPA fallback**: a `GET` for a non-API path with no file extension
+  that matches nothing returns `public/index.html`, so deep links
+  (`/r/<slug>`) survive refresh/bookmarks. API paths (`/api/…`,
+  `/healthz`, `/images/…`) always stay JSON.
+- **Security headers**: every response carries
+  `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`;
+  HTML additionally gets a same-origin `Content-Security-Policy` and
+  `X-Frame-Options: DENY`.
+- **Env config**: `PORT`, `DATA_DIR`, `LOG_LEVEL`, `TRUST_PROXY`,
+  `SECURE_COOKIES`, `IMPORT_DIR`, `TZ` (container tzdata), plus the
+  dev-only `DEV_ALLOW_CORS`.
+- **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
+  requests (bounded), then closes SQLite cleanly — the WAL checkpoints
+  and the next boot needs no recovery.
+- `/data` must be a **local filesystem** (SQLite WAL is unsafe on
+  NFS/SMB); the app assumes domain-root serving (sub-paths deferred).
+
 ## CLI
 
 `dart run salt_server:import <source-root> [--data-dir=PATH] [--legacy]` —

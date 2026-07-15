@@ -782,6 +782,92 @@ class SaltDatabase {
     ).execute([done, failed, status, logJson, status ?? '', _utcNowIso(), id]);
   }
 
+  /// Creates an import-job row; returns its id.
+  int createImportJob({required String sourcePath, required bool legacy}) {
+    _prepared(
+      'INSERT INTO import_jobs (status, source_path, legacy, started_at) '
+      "VALUES ('running', ?, ?, ?)",
+    ).execute([sourcePath, if (legacy) 1 else 0, _utcNowIso()]);
+    return _db.lastInsertRowId;
+  }
+
+  /// Updates import-job progress (called from the import isolate).
+  void updateImportJobProgress(int id, {required int done, int? total}) {
+    _prepared(
+      'UPDATE import_jobs SET done = ?, total = COALESCE(?, total) '
+      'WHERE id = ?',
+    ).execute([done, total, id]);
+  }
+
+  /// Records an import job's terminal state and summary counters.
+  void finishImportJob(
+    int id, {
+    required String status,
+    required int total,
+    required int done,
+    required int imported,
+    required int updated,
+    required int skipped,
+    required int failed,
+    required String logJson,
+  }) {
+    _prepared(
+      'UPDATE import_jobs SET status = ?, total = ?, done = ?, '
+      'imported = ?, updated = ?, skipped = ?, failed = ?, log = ?, '
+      'finished_at = ? WHERE id = ?',
+    ).execute([
+      status,
+      total,
+      done,
+      imported,
+      updated,
+      skipped,
+      failed,
+      logJson,
+      _utcNowIso(),
+      id,
+    ]);
+  }
+
+  /// One import-job row as JSON-ready values, or null.
+  Map<String, Object?>? importJob(int id) {
+    final rows = _prepared(
+      'SELECT id, status, source_path, legacy, total, done, imported, '
+      'updated, skipped, failed, log, started_at, finished_at '
+      'FROM import_jobs WHERE id = ?',
+    ).select([id]);
+    if (rows.isEmpty) {
+      return null;
+    }
+    final row = rows.first;
+    return {
+      'id': row['id'],
+      'status': row['status'],
+      'source_path': row['source_path'],
+      'legacy': row['legacy'] == 1,
+      'total': row['total'],
+      'done': row['done'],
+      'imported': row['imported'],
+      'updated': row['updated'],
+      'skipped': row['skipped'],
+      'failed': row['failed'],
+      'log': jsonDecode(row['log'] as String),
+      'started_at': row['started_at'],
+      'finished_at': row['finished_at'],
+    };
+  }
+
+  /// Marks import jobs still `running` as failed — boot reconciliation,
+  /// same contract as [failOrphanedNutritionJobs].
+  int failOrphanedImportJobs() {
+    _prepared(
+      "UPDATE import_jobs SET status = 'failed', finished_at = ?, "
+      r"log = json_insert(log, '$[#]', "
+      "'interrupted by a server restart') WHERE status = 'running'",
+    ).execute([_utcNowIso()]);
+    return _db.updatedRows;
+  }
+
   /// Marks jobs still `running` as failed — called once at boot, where a
   /// `running` row can only be an orphan from a crashed/restarted process
   /// (the job loop lives in server memory). Returns how many were closed.

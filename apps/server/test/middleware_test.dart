@@ -10,6 +10,7 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:salt_server/src/middleware/web_app.dart';
 import 'package:test/test.dart';
 
 import '../routes/healthz.dart' as healthz_route;
@@ -33,15 +34,15 @@ void main() {
         return index_route.onRequest(context);
       case '/healthz':
         return healthz_route.onRequest(context);
-      case '/throws-not-found':
+      case '/api/throws-not-found':
         throw const NotFoundException('Recipe does not exist.');
-      case '/throws-validation':
+      case '/api/throws-validation':
         throw const ValidationException('Field "title" is required.');
-      case '/throws-state-error':
+      case '/api/throws-state-error':
         throw StateError('sensitive internal detail');
-      case '/empty-404':
+      case '/api/empty-404':
         return Response(statusCode: HttpStatus.notFound);
-      case '/json-404':
+      case '/api/json-404':
         return Response.json(
           statusCode: HttpStatus.notFound,
           body: {'custom': true},
@@ -65,11 +66,20 @@ void main() {
 
     // Same wiring as routes/_middleware.dart (last `.use` is outermost).
     // healthz reads SaltDatabase (for setup_required), so provide one.
+    // The SPA fallback serves a REAL web-build shell written to the temp
+    // dir (public/ is gitignored, so the checkout's copy can't be relied
+    // on).
     database = SaltDatabase.open('${tempDir.path}/salt.db');
+    File('${tempDir.path}/index.html').writeAsStringSync(
+      '<!DOCTYPE html><html><head><title>SaltToTaste</title>\n'
+      '</head><body></body></html>',
+    );
     final pipeline = dispatch
         .use(provider<SaltDatabase>((_) => database))
         .use(provider<ServerConfig>((_) => config))
         .use(errorHandler())
+        .use(spaFallback(indexPath: '${tempDir.path}/index.html'))
+        .use(securityHeaders())
         .use(requestLogger())
         .use(requestIdProvider());
     server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
@@ -123,7 +133,7 @@ void main() {
   group('error envelope', () {
     test('AppException becomes its envelope with matching request_id',
         () async {
-      final (response, body) = await send('GET', '/throws-not-found');
+      final (response, body) = await send('GET', '/api/throws-not-found');
       expect(response.statusCode, HttpStatus.notFound);
       final error = errorOf(body);
       expect(error['code'], 'not_found');
@@ -132,14 +142,14 @@ void main() {
     });
 
     test('ValidationException maps to 422/validation', () async {
-      final (response, body) = await send('GET', '/throws-validation');
+      final (response, body) = await send('GET', '/api/throws-validation');
       expect(response.statusCode, HttpStatus.unprocessableEntity);
       expect(errorOf(body)['code'], 'validation');
     });
 
     test('unknown exceptions become an opaque 500 envelope', () async {
       records.clear();
-      final (response, body) = await send('GET', '/throws-state-error');
+      final (response, body) = await send('GET', '/api/throws-state-error');
       expect(response.statusCode, HttpStatus.internalServerError);
       final error = errorOf(body);
       expect(error['code'], 'internal');
@@ -159,7 +169,7 @@ void main() {
     });
 
     test("router's bare 'Route not found' 404 is rewrapped", () async {
-      final (response, body) = await send('GET', '/no-such-route');
+      final (response, body) = await send('GET', '/api/no-such-route');
       expect(response.statusCode, HttpStatus.notFound);
       final error = errorOf(body);
       expect(error['code'], 'not_found');
@@ -167,7 +177,7 @@ void main() {
     });
 
     test('empty-body 404 is rewrapped', () async {
-      final (response, body) = await send('GET', '/empty-404');
+      final (response, body) = await send('GET', '/api/empty-404');
       expect(response.statusCode, HttpStatus.notFound);
       expect(errorOf(body)['code'], 'not_found');
     });
@@ -176,7 +186,7 @@ void main() {
       // Feature code throws NotFoundException rather than returning a 404
       // Response, so a 404 reaching the error handler is the router fallback
       // and is rewrapped regardless of its body (no framework-body sniffing).
-      final (response, body) = await send('GET', '/json-404');
+      final (response, body) = await send('GET', '/api/json-404');
       expect(response.statusCode, HttpStatus.notFound);
       expect(errorOf(body)['code'], 'not_found');
     });
@@ -198,13 +208,13 @@ void main() {
 
     test('failed requests are logged with their envelope status', () async {
       records.clear();
-      await send('GET', '/throws-validation');
+      await send('GET', '/api/throws-validation');
       final messages = records
           .where((r) => r.loggerName == 'http' && r.level == Level.INFO)
           .map((r) => r.message);
       expect(
         messages,
-        contains(matches(RegExp('^GET /throws-validation -> 422 '))),
+        contains(matches(RegExp('^GET /api/throws-validation -> 422 '))),
       );
     });
   });
@@ -234,6 +244,60 @@ void main() {
       } else {
         expect(jsonDecode(body), {'name': 'salt_server'});
       }
+    });
+  });
+
+  group('web app serving (P7)', () {
+    test('a deep link falls back to index.html with the CSP', () async {
+      final (response, body) = await send('GET', '/r/rich-chocolate-bundt-cake');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.headers.contentType?.mimeType, 'text/html');
+      expect(body, contains('SaltToTaste'));
+      expect(response.headers.value('cache-control'), 'no-cache');
+      expect(
+        response.headers.value('content-security-policy'),
+        contains("default-src 'self'"),
+      );
+      expect(response.headers.value('x-frame-options'), 'DENY');
+    });
+
+    test('a deep link with a query string still boots the app', () async {
+      final (response, body) = await send('GET', '/search?q=chocolate');
+      expect(response.statusCode, HttpStatus.ok);
+      expect(response.headers.contentType?.mimeType, 'text/html');
+      expect(body, contains('SaltToTaste'));
+    });
+
+    test('a recipe slug containing a dot still boots the app', () async {
+      // Hand-edited YAML may give a recipe a dotted slug (e.g.
+      // "st.-louis-gooey-butter-cake"); /r/ paths are exempt from the
+      // "dotted segment is a missing asset" rule.
+      final (response, _) = await send('GET', '/r/st.-louis-gooey-butter-cake');
+      expect(response.statusCode, HttpStatus.ok);
+    });
+
+    test('API and asset misses keep their 404', () async {
+      for (final path in [
+        '/api/v1/does-not-exist',
+        '/missing-chunk.dart.js',
+        '/images/nope/x.jpg',
+      ]) {
+        final (response, _) = await send('GET', path);
+        expect(response.statusCode, HttpStatus.notFound, reason: path);
+      }
+    });
+
+    test('non-GET misses are not rewritten', () async {
+      final (response, _) = await send('POST', '/r/some-recipe');
+      expect(response.statusCode, HttpStatus.notFound);
+    });
+
+    test('every response carries nosniff and a referrer policy', () async {
+      final (response, _) = await send('GET', '/healthz');
+      expect(response.headers.value('x-content-type-options'), 'nosniff');
+      expect(response.headers.value('referrer-policy'), 'same-origin');
+      expect(response.headers.value('content-security-policy'), isNull,
+          reason: 'CSP is for HTML, not JSON');
     });
   });
 

@@ -14,7 +14,8 @@ class ServerConfig {
     required this.trustProxy,
     this.devAllowCors = false,
     this.secureCookies = false,
-  });
+    String? importDir,
+  }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
   /// [Platform.environment]).
@@ -35,6 +36,9 @@ class ServerConfig {
   ///   same-origin and must leave this off.
   /// * `SECURE_COOKIES` — `true` to always mark session cookies `Secure`
   ///   (for deployments reached exclusively over HTTPS).
+  /// * `IMPORT_DIR` — allowlist root for bulk imports (default
+  ///   `DATA_DIR/import`). Only source folders inside it can be imported
+  ///   through the API; mount a corpus there in Docker.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -47,14 +51,19 @@ class ServerConfig {
       dataDir = dataDir.substring(0, dataDir.length - 1);
     }
 
+    final rawImportDir = env['IMPORT_DIR']?.trim();
     final config = ServerConfig(
       dataDir: dataDir,
       logLevel: _parseLogLevel(env['LOG_LEVEL']),
       trustProxy: env['TRUST_PROXY']?.trim().toLowerCase() == 'true',
       devAllowCors: env['DEV_ALLOW_CORS']?.trim().toLowerCase() == 'true',
       secureCookies: env['SECURE_COOKIES']?.trim().toLowerCase() == 'true',
+      importDir: (rawImportDir == null || rawImportDir.isEmpty)
+          ? null
+          : Directory(rawImportDir).absolute.path,
     );
     Directory(config.libraryDir).createSync(recursive: true);
+    Directory(config.importDir).createSync(recursive: true);
     return config;
   }
 
@@ -81,6 +90,10 @@ class ServerConfig {
 
   /// Directory holding the exported canonical YAML recipe library.
   String get libraryDir => '$dataDir/library';
+
+  /// Allowlist root for bulk imports: only source folders that
+  /// canonicalize inside this directory may be imported via the API.
+  final String importDir;
 
   static Level _parseLogLevel(String? raw) {
     final value = raw?.trim().toUpperCase();

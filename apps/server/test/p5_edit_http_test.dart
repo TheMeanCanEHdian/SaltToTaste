@@ -19,6 +19,9 @@ import 'package:test/test.dart';
 import '../routes/api/v1/auth/login.dart' as login_route;
 import '../routes/api/v1/backups/[name].dart' as backup_route;
 import '../routes/api/v1/backups/index.dart' as backups_route;
+import '../routes/api/v1/import/candidates.dart' as candidates_route;
+import '../routes/api/v1/import/index.dart' as import_route;
+import '../routes/api/v1/import/jobs/[id].dart' as import_job_route;
 import '../routes/api/v1/library/index.dart' as library_route;
 import '../routes/api/v1/library/rescan.dart' as rescan_route;
 import '../routes/api/v1/nutrition/bulk.dart' as bulk_route;
@@ -75,6 +78,10 @@ void main() {
         return backups_route.onRequest(context);
       case '/api/v1/nutrition/bulk':
         return bulk_route.onRequest(context);
+      case '/api/v1/import':
+        return import_route.onRequest(context);
+      case '/api/v1/import/candidates':
+        return candidates_route.onRequest(context);
       case '/api/v1/settings/fdc_key':
         return fdc_key_route.onRequest(context);
       default:
@@ -112,6 +119,11 @@ void main() {
           if (match != null) {
             return handler(context, match.group(1)!);
           }
+        }
+        final importJob =
+            RegExp(r'^/api/v1/import/jobs/([^/]+)$').firstMatch(path);
+        if (importJob != null) {
+          return import_job_route.onRequest(context, importJob.group(1)!);
         }
         final matchOverride = RegExp(
           r'^/api/v1/recipes/([^/]+)/nutrition/matches/([^/]+)$',
@@ -264,6 +276,7 @@ void main() {
       ),
       ('PUT', '/api/v1/settings/fdc_key', {'api_key': 'x'}),
       ('POST', '/api/v1/nutrition/bulk', null),
+      ('POST', '/api/v1/import', {'path': 'x'}),
     ];
 
     test('members are denied every server-data mutation', () async {
@@ -302,7 +315,11 @@ void main() {
     });
 
     test('admin-only reads are denied to members', () async {
-      for (final path in ['/api/v1/library', '/api/v1/backups']) {
+      for (final path in [
+        '/api/v1/library',
+        '/api/v1/backups',
+        '/api/v1/import/candidates',
+      ]) {
         final (response, _) =
             await send('GET', path, headers: auth(memberSession));
         expect(response.statusCode, HttpStatus.forbidden, reason: path);
@@ -848,6 +865,127 @@ void main() {
       expect(label['status'], 'complete',
           reason: 'the unresolvable garnish line is gone');
       expect(label['total_count'], 12);
+    });
+  });
+
+  group('import over HTTP (success paths, real corpus)', () {
+    setUpAll(() {
+      // Drop two real corpus files into a v1 source root inside the
+      // allowlisted import directory.
+      final recipes = Directory('${config.importDir}/atk-two/recipes')
+        ..createSync(recursive: true);
+      for (final name in [
+        '0857-rich-chocolate-bundt-cake.yaml',
+        '0747-100-percent-whole-wheat-pancakes.yaml',
+      ]) {
+        File('$corpusRecipesDir/$name').copySync('${recipes.path}/$name');
+      }
+    });
+
+    test('candidates lists the detected v1 root for an admin', () async {
+      final (response, body) = await send(
+        'GET',
+        '/api/v1/import/candidates',
+        headers: auth(adminSession),
+      );
+      expect(response.statusCode, HttpStatus.ok, reason: body);
+      final data = jsonOf(body);
+      expect(data['import_dir'], config.importDir);
+      final items = (data['items']! as List).cast<Map<String, dynamic>>();
+      final atk = items.firstWhere((item) => item['path'] == 'atk-two');
+      expect(atk['kind'], 'v1');
+      expect(atk['file_count'], 2);
+    });
+
+    test('a non-string path is a 422, not a crash', () async {
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/import',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'path': 42},
+      );
+      expect(response.statusCode, HttpStatus.unprocessableEntity);
+      expect(errorOf(body)['code'], 'validation');
+    });
+
+    test('a path outside the import dir is a 422', () async {
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/import',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'path': '../../etc'},
+      );
+      expect(response.statusCode, HttpStatus.unprocessableEntity);
+      expect(errorOf(body)['code'], 'validation');
+    });
+
+    test('POST starts a job; it runs to done and jobs/<id> reports it',
+        () async {
+      final (started, startedBody) = await send(
+        'POST',
+        '/api/v1/import',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'path': 'atk-two'},
+      );
+      expect(started.statusCode, 202, reason: startedBody);
+      final jobId = (jsonOf(startedBody)['job_id']! as num).toInt();
+
+      var job = <String, dynamic>{};
+      final deadline = DateTime.now().add(const Duration(seconds: 30));
+      while (DateTime.now().isBefore(deadline)) {
+        final (poll, pollBody) = await send(
+          'GET',
+          '/api/v1/import/jobs/$jobId',
+          headers: auth(adminSession),
+        );
+        expect(poll.statusCode, HttpStatus.ok, reason: pollBody);
+        job = jsonOf(pollBody);
+        if (job['status'] != 'running') {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      expect(job['status'], 'done', reason: 'still running after 30s: $job');
+      expect(job['total'], 2);
+      expect(job['imported'], 2);
+      expect(job['legacy'], false);
+      expect(job['log'], isA<List<dynamic>>());
+    });
+
+    test('a second import while one runs is a 409', () async {
+      // Fire two back-to-back; the second must lose the single-flight race
+      // (the first is still in its isolate).
+      final first = send(
+        'POST',
+        '/api/v1/import',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'path': 'atk-two'},
+      );
+      final second = send(
+        'POST',
+        '/api/v1/import',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'path': 'atk-two'},
+      );
+      final results = await Future.wait([first, second]);
+      final codes = results.map((r) => r.$1.statusCode).toList();
+      expect(codes, containsAll([202, HttpStatus.conflict]),
+          reason: 'one starts (202), one is rejected (409): $codes');
+      final conflictBody =
+          results.firstWhere((r) => r.$1.statusCode == HttpStatus.conflict).$2;
+      expect(errorOf(conflictBody)['code'], 'conflict');
+    });
+
+    test('jobs/<id> for an unknown or non-numeric id is a 404', () async {
+      for (final id in ['999999', 'abc']) {
+        final (response, body) = await send(
+          'GET',
+          '/api/v1/import/jobs/$id',
+          headers: auth(adminSession),
+        );
+        expect(response.statusCode, HttpStatus.notFound, reason: 'id=$id');
+        expect(errorOf(body)['code'], 'not_found');
+      }
     });
   });
 }

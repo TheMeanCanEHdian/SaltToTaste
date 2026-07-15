@@ -111,13 +111,12 @@ NutritionProvider get bulkNutritionProvider =>
 ServerConfig initServer() {
   final config = serverConfig;
   _authRuntime ??= _initAuthRuntime();
-  // A nutrition job can only run inside this process; a `running` row at
-  // boot is an orphan from a restart and would poll as running forever.
-  final orphaned = saltDatabase.failOrphanedNutritionJobs();
+  // Jobs only run inside this process; `running` rows at boot are
+  // orphans from a restart and would poll as running forever.
+  final orphaned = saltDatabase.failOrphanedNutritionJobs() +
+      saltDatabase.failOrphanedImportJobs();
   if (orphaned > 0) {
-    _log.warning(
-      'Marked $orphaned interrupted nutrition job(s) as failed',
-    );
+    _log.warning('Marked $orphaned interrupted job(s) as failed');
   }
   try {
     scanLibrary(db: saltDatabase, config: config);
@@ -128,6 +127,16 @@ ServerConfig initServer() {
   }
   _scheduleDailyBackups(config);
   return config;
+}
+
+/// Releases process-wide resources for a clean exit: stops the backup
+/// timer and closes the database (the final connection close checkpoints
+/// and removes the WAL, so the next boot starts clean).
+void disposeServer() {
+  _backupTimer?.cancel();
+  _backupTimer = null;
+  _database?.dispose();
+  _database = null;
 }
 
 /// Runs a `scheduled` backup daily, plus one at boot when the newest backup

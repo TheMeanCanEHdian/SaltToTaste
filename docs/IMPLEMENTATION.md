@@ -605,15 +605,94 @@ endpoint — P7 candidate along with bulk Pause), no sheet footer
 buttons (totals recompute on every action, Close is the header X).
 
 
-## P7 — Settings + import UI + Docker — **pending**
-Settings tabs, import wizard, multi-stage Dockerfile (Flutter web → dart_frog
-AOT compiled in-image → slim runtime + libsqlite3, `VOLUME /data`, non-root
-user, HEALTHCHECK, multi-arch amd64+arm64), security headers. Server must ship:
-SPA deep-link fallback (non-API GET → index.html), env-var config (PORT,
-DATA_DIR, LOG_LEVEL, TRUST_PROXY, TZ), X-Forwarded-Proto trust for Secure
-cookies behind reverse proxy, SIGTERM graceful shutdown (drain + clean SQLite
-close). Document: /data must be local fs (no NFS/SMB); domain-root serving
-assumed (sub-path deferred).
+## P7 — Settings + import UI + Docker — **in progress** (2026-07-15)
+
+Server half (built, 254 tests green):
+- SPA deep-link fallback middleware: non-API extension-less GET 404s serve
+  `public/index.html` (API/`/healthz`/`/images` and asset misses keep
+  their JSON 404); sits outside the error handler, inside the logger.
+- Security headers on every response (`nosniff`,
+  `Referrer-Policy: same-origin`) + CSP/`X-Frame-Options: DENY` on HTML.
+- SIGTERM/SIGINT graceful shutdown: drain (8s bound, then force), stop
+  the backup timer, close SQLite (WAL checkpoints away — clean next
+  boot). `isSecureRequest` (X-Forwarded-Proto behind TRUST_PROXY) already
+  existed from P3.
+- Import jobs API: `IMPORT_DIR` allowlist root (default
+  `DATA_DIR/import`, auto-created), `GET /api/v1/import/candidates`
+  (v1/legacy detection, depth ≤ 1), `POST /api/v1/import {path}` with
+  canonical containment (traversal/symlink escapes 422; folder names
+  with spaces — the real corpus — allowed), job runs in `Isolate.run`
+  with its own DB connection + throttled per-file progress,
+  `GET /api/v1/import/jobs/{id}`, orphaned `running` jobs failed at
+  boot. Migration 006 extends the 001 `import_jobs` table (legacy /
+  imported / updated columns). Permission matrix extended.
+- Tests: real corpus files as the v1 root and the legacy app's shipped
+  sample as the v0 root inside a temp import dir — candidates,
+  containment negatives (incl. symlink escape), end-to-end job to done,
+  idempotent re-run, legacy auto-detect + v2 mapping, failed-job
+  visibility, boot reconciliation; SPA fallback + header tests in the
+  middleware suite.
+- `docker/Dockerfile`: 3 stages (cirruslabs Flutter 3.44.0 web build →
+  dart 3.12.2 dart_frog AOT via workspace resolve minus apps/app →
+  bookworm-slim with libsqlite3-0/ca-certificates/tzdata, non-root
+  `salt`, VOLUME /data, compiled `/app/healthcheck` probe — no curl in
+  the image); `.dockerignore`. Three real-world fixes found by the
+  container walkthrough: bookworm ships only `libsqlite3.so.0`
+  (unversioned symlink added, arch-agnostic); dart_frog wires its
+  static handler only when `public/` exists at BUILD time (`mkdir -p
+  public` in the server stage); the Flutter engine defaults to Google
+  CDNs for CanvasKit/Roboto, which the same-origin CSP rightly blocks —
+  web builds now use `--no-web-resources-cdn` (fully offline app,
+  matching the hard-local-copy goal; CLAUDE.md dev command updated).
+
+Container walkthrough (real image, corpus mounted `:ro`): first-boot
+setup code → admin created → `import/candidates` detects the 1,198-file
+ATK root → `POST /import` runs to `done` (1,198 imported, 0 warnings) →
+idempotent re-run → traversal `../etc` rejected → deep-link
+`/r/rich-chocolate-bundt-cake` refresh boots the app under the CSP →
+`docker stop` drains and logs "Shutdown complete" → volume holds only
+`salt.db` (no `-wal`/`-shm`) → restart persists 1,198. Image 243 MB.
+
+P7 server review (3-angle: correctness/concurrency, security,
+robustness/ops; 2026-07-15): 262 tests green. Fixes applied:
+- **Drain was a no-op** — `HttpServer.close(force:false)` completes when
+  the listen socket closes, NOT when active requests finish, so `exit(0)`
+  killed in-flight handlers (a committed save the client never learns
+  about). Now polls `connectionsInfo().active` to a 5s bound before
+  force-close.
+- **Existence oracle** — `resolveImportPath` accepted absolute paths and
+  resolved them on disk before the containment check, so distinct error
+  strings for `/etc/passwd` vs `/etc/nonexistent` leaked host-path
+  existence. Added a purely lexical `_lexicallyInside` gate BEFORE any
+  filesystem access.
+- **Dotted recipe slugs** — the SPA fallback's "dotted last segment = a
+  missing asset" rule broke deep links to hand-edited slugs like
+  `st.-louis-…`; `/r/` paths are now exempt.
+- **Unreadable dirs bricked candidates** — a root-owned 700 child in a
+  `:ro` mount threw `PathAccessException` → 500 for the whole listing;
+  per-child and top-level `listSync` are now try/skip.
+- **`.yml` count mismatch** — candidates counted `.yml` files the v1
+  importer ignores (silent 0-import); v1 counts `.yaml` only now.
+- **SPA read race** — the fallback (outside the error handler) read
+  `index.html` unguarded; a mid-redeploy `rm`/`cp` window threw an
+  unenveloped 500. Wrapped in try/catch → falls through to the 404.
+- **Ops**: job log capped at 500 warnings (+ "N more" note) so the
+  polling UI can't re-download an MB-scale array; Dockerfile restructured
+  (pubspecs+lockfile before sources for cache; `--enforce-lockfile`;
+  `dart_frog_cli` pinned to 1.2.14; `HEALTHCHECK --start-period=120s
+  --retries=5` for big first-boot scans); `.dockerignore` adds
+  `.claude`/`.DS_Store`.
+- Tests added: HTTP-level import success paths (candidates shape, 202 +
+  job poll to done, 409 single-flight race, 422 non-string/outside path,
+  404 unknown/non-numeric job id) and SPA fallback with a query string +
+  dotted slug.
+
+Import wizard mockup published for approval:
+`docs/mockups/p7-import.html` — candidate source-root cards (kind chips:
+Recipe Extraction teal / Legacy v0 amber), running row pins with live
+progress + warnings count, terminal states reuse the Nutrition tab's
+job-log treatment, explainer shows the server's real import path, empty
+state + 375px variants. UI implementation awaits approval.
 
 ## P8 — Parity audit + cutover — **pending**
 Checklist vs old app, delete Python tree, promote Dockerfile, README, Forui
