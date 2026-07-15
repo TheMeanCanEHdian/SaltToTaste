@@ -2,6 +2,7 @@ import 'package:yaml/yaml.dart';
 
 import '../model/recipe.dart';
 import '../util/servings_parser.dart';
+import '../util/yaml_plain.dart';
 import 'yaml_emitter.dart';
 
 /// The outcome of decoding a recipe YAML document: the [recipe] plus any
@@ -81,7 +82,7 @@ class RecipeYamlCodec {
   /// decode is still attempted; an unrecognizable `schema_version` produces a
   /// warning and is treated as v1.
   static RecipeDecodeResult decode(String yamlText) {
-    final Object? root = _toPlain(loadYaml(yamlText));
+    final Object? root = yamlToPlain(loadYaml(yamlText));
     if (root is! Map<String, Object?>) {
       throw const FormatException('Recipe YAML root must be a mapping.');
     }
@@ -111,21 +112,6 @@ class RecipeYamlCodec {
       emitYamlDocument(_canonicalize(recipe.toMap()));
 
   // --- decode helpers -------------------------------------------------------
-
-  /// Deep-converts `YamlMap`/`YamlList` nodes into plain
-  /// `Map<String, Object?>`/`List<Object?>` (map keys are stringified).
-  static Object? _toPlain(Object? node) {
-    if (node is Map) {
-      return <String, Object?>{
-        for (final MapEntry<Object?, Object?> entry in node.entries)
-          entry.key.toString(): _toPlain(entry.value),
-      };
-    }
-    if (node is List) {
-      return <Object?>[for (final Object? item in node) _toPlain(item)];
-    }
-    return node;
-  }
 
   /// Converts the v1 `quantity: null` convention on unitless lines
   /// (`Pinch salt`, `Dash of hot sauce`) to the empty string — the v2 model

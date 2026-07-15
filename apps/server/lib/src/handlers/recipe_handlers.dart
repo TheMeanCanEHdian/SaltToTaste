@@ -1,5 +1,6 @@
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/services/image_paths.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 /// Default `limit` for the recipe list endpoint.
@@ -46,20 +47,25 @@ int _parsePositiveInt(
   return value;
 }
 
-/// One page of recipe cards as the JSON body of `GET /api/v1/recipes`:
-/// `{"items": [...], "total": n, "page": p, "limit": l}`.
+/// One page of recipe cards as the JSON body of `GET /api/v1/recipes`,
+/// serialized from the shared [Paged] DTO so the wire shape has a single
+/// definition the Flutter client also decodes: `{"items": [...], "total": n,
+/// "page": p, "limit": l}`.
 Map<String, Object?> listRecipes(
   SaltDatabase db, {
   required int page,
   required int limit,
 }) {
   final result = db.listCards(page: page, limit: limit);
-  return {
-    'items': [for (final card in result.items) card.toMap()],
-    'total': result.total,
-    'page': page,
-    'limit': limit,
-  };
+  // Register the element mapper so the generic Paged<RecipeCard> encoder can
+  // resolve RecipeCard at runtime (idempotent).
+  RecipeCardMapper.ensureInitialized();
+  return Paged<RecipeCard>(
+    items: result.items,
+    total: result.total,
+    page: page,
+    limit: limit,
+  ).toMap();
 }
 
 /// The JSON body of `GET /api/v1/recipes/<key>`: the full recipe document
@@ -72,8 +78,7 @@ Map<String, Object?> recipeDetail(SaltDatabase db, String key) {
   return {
     'recipe': found.recipe.toMap(),
     'source_slug': found.sourceSlug,
-    'hero_image_url':
-        _heroImageUrl(found.recipe.images.hero, found.sourceSlug),
+    'hero_image_url': imageUrl(found.sourceSlug, found.recipe.images.hero),
   };
 }
 
@@ -98,17 +103,4 @@ Map<String, Object?> recipeDetail(SaltDatabase db, String key) {
     throw NotFoundException('recipe not found: $key');
   }
   return found;
-}
-
-/// Rewrites the doc-relative hero path (`images/<file>`) to its serving URL
-/// `/images/<source_slug>/<basename>`; null in, null out.
-String? _heroImageUrl(String? heroImage, String sourceSlug) {
-  if (heroImage == null || heroImage.isEmpty) {
-    return null;
-  }
-  const prefix = 'images/';
-  final basename = heroImage.startsWith(prefix)
-      ? heroImage.substring(prefix.length)
-      : heroImage.split('/').last;
-  return '/images/$sourceSlug/$basename';
 }

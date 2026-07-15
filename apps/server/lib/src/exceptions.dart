@@ -1,3 +1,5 @@
+import 'package:salt_shared/salt_shared.dart';
+
 /// Base type for domain errors that map to a specific HTTP status code and
 /// stable machine-readable error code.
 ///
@@ -11,7 +13,7 @@ abstract base class AppException implements Exception {
   /// HTTP status code of the resulting response.
   final int statusCode;
 
-  /// Stable machine-readable error code (catalog lives in docs/API.md).
+  /// Stable machine-readable error code (see [ApiErrorCodes] / docs/API.md).
   final String code;
 
   /// Human-readable, actionable message for API clients. Never a stack
@@ -26,7 +28,7 @@ abstract base class AppException implements Exception {
 final class NotFoundException extends AppException {
   /// Creates a not-found exception with the client-facing [message].
   const NotFoundException(String message)
-      : super(404, 'not_found', message);
+      : super(404, ApiErrorCodes.notFound, message);
 }
 
 /// The request was well-formed but semantically invalid (HTTP 422, code
@@ -34,5 +36,21 @@ final class NotFoundException extends AppException {
 final class ValidationException extends AppException {
   /// Creates a validation exception with the client-facing [message].
   const ValidationException(String message)
-      : super(422, 'validation', message);
+      : super(422, ApiErrorCodes.validation, message);
+}
+
+/// The route exists but the HTTP method is not supported (HTTP 405, code
+/// `method_not_allowed`). [allow] is the value for the `Allow` response
+/// header the error handler attaches.
+final class MethodNotAllowedException extends AppException {
+  /// Creates a method-not-allowed exception advertising the [allow] methods.
+  const MethodNotAllowedException(this.allow)
+      : super(
+          405,
+          ApiErrorCodes.methodNotAllowed,
+          'Method not allowed.',
+        );
+
+  /// Comma-separated list of allowed methods (e.g. `GET`).
+  final String allow;
 }

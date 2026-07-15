@@ -16,19 +16,36 @@ const Map<String, String> _contentTypeByExtension = {
   '.webp': 'image/webp',
 };
 
+/// Largest image the server will read into memory and serve. Recipe images
+/// are photos of a few hundred KB; a much larger file signals corruption or
+/// abuse, so it is treated as not servable rather than buffered whole.
+const int _maxImageBytes = 25 * 1024 * 1024;
+
 /// An image resolved inside the library dir, ready to serve.
 class ResolvedImage {
-  /// Bundles the file [bytes] with their [contentType].
-  const ResolvedImage({required this.bytes, required this.contentType});
+  /// Bundles the on-disk [file] with its [contentType] and [lastModified]
+  /// timestamp (truncated to whole seconds for HTTP date comparison).
+  const ResolvedImage({
+    required this.file,
+    required this.contentType,
+    required this.lastModified,
+  });
 
-  /// Raw file contents.
-  final Uint8List bytes;
+  /// The canonical file inside the library dir.
+  final File file;
 
   /// MIME type derived from the file extension (e.g. `image/jpeg`).
   final String contentType;
+
+  /// Last-modified time, whole seconds, for `Last-Modified`/`If-Modified-Since`.
+  final DateTime lastModified;
+
+  /// Reads and returns the file bytes.
+  Uint8List readBytes() => file.readAsBytesSync();
 }
 
-/// Resolves and reads `<libraryDir>/<source>/images/<file>`.
+/// Resolves `<libraryDir>/<source>/images/<file>` to servable metadata
+/// (without reading the bytes).
 ///
 /// SECURITY-CRITICAL path containment:
 ///
@@ -37,8 +54,8 @@ class ResolvedImage {
 /// * The file extension must be a known image type — otherwise
 ///   [NotFoundException] (no probing of arbitrary files).
 /// * The path is canonicalized (symlinks resolved) and must remain inside
-///   the canonicalized [libraryDir]; escapes and missing files are both
-///   [NotFoundException].
+///   the canonicalized [libraryDir]; escapes, missing files, and files
+///   larger than [_maxImageBytes] are all [NotFoundException].
 ResolvedImage resolveLibraryImage({
   required String libraryDir,
   required String source,
@@ -68,9 +85,19 @@ ResolvedImage resolveLibraryImage({
     throw NotFoundException('image not found: $source/$file');
   }
 
+  final resolved = File(canonicalPath);
+  final stat = resolved.statSync();
+  if (stat.size > _maxImageBytes) {
+    throw NotFoundException('image not found: $source/$file');
+  }
+  // Whole-second resolution: HTTP dates have no sub-second precision.
+  final lastModified = DateTime.fromMillisecondsSinceEpoch(
+    (stat.modified.millisecondsSinceEpoch ~/ 1000) * 1000,
+  );
   return ResolvedImage(
-    bytes: File(canonicalPath).readAsBytesSync(),
+    file: resolved,
     contentType: contentType,
+    lastModified: lastModified,
   );
 }
 

@@ -60,7 +60,7 @@ term (old: whole block) and adjacent same-scope terms AND (old: OR) — product
 decisions pending; `calories:` queries must default to calories-ascending
 ordering in the P4 compiler (old-app contract not expressible in the AST).
 
-## P1 — Server core + import — **in-progress** (code review remaining)
+## P1 — Server core + import — **done**
 
 | Item | Status | Notes |
 |---|---|---|
@@ -72,12 +72,62 @@ ordering in the P4 compiler (old-app contract not expressible in the AST).
 | Recipes list/detail/yaml endpoints + image serving | done | handler-refactor pattern (testable cores in lib/src/handlers); traversal guards |
 | DTOs (RecipeCard, Paged, ApiError) in salt_shared | done | |
 | End-to-end gate | done | verified by hand: 1198/1198 imported in 5.5s, 0 warnings; re-import 1198 skipped; list total=1198; detail by id+slug; yaml attachment; image 200 image/jpeg; 3 traversal probes rejected; error envelopes carry request_id |
-| Phase code review (high effort, adversarial verify) | in-progress | |
+| Phase code review (high effort, adversarial verify) | done | see review record below |
 
 Known quirks: `dart_frog dev` crashes without a TTY (its hot-reload key
 listener sets stdin echo mode) — use `dart_frog build` + `dart
 build/bin/server.dart`, or run dev from a real terminal. `.data/` is
-git-ignored dev state.
+git-ignored dev state. Editing migration 001 is allowed only because P1 has
+not shipped; once released, append a new migration instead (delete `.data`
+to rebuild a dev DB after a 001 change).
+
+### P1 code review record (2026-07-14)
+
+8 finder angles → 25 deduped candidates → adversarial panel (3 refuters per
+finding, ≥2 kills) → 21 survivors fixed, 4 killed. Full suite green
+(salt_shared 107 + server 46) and re-verified end-to-end.
+
+**Security fixed:** arbitrary file write via unvalidated `recipe.id`
+(now `isSafeRecipeId`, rejected at import — verified a `../../` id is blocked
+and writes nothing); `Content-Disposition` header injection (same id
+validation); symlink-following on import image copy (source path now resolved
++ contained); unbounded reads (8 MB YAML cap on import, 25 MB image cap on
+serve).
+
+**Correctness fixed:** import side effects now run before the success count
+and a hash-unchanged recipe still re-materializes a missing export/image
+(verified: deleting a library file + image and re-importing restores both);
+slug-collision suffix now written into the stored doc so card and detail
+agree; config + logging initialize eagerly at startup so a bad `LOG_LEVEL`
+fails fast (verified: server prints a fatal message and refuses to serve)
+instead of silent 500s; image URL/served-name unified in one
+`image_paths` module (flattens subdirs, URL-safe names, no basename
+collisions); 404 rewrap keyed on status code, not dart_frog's fallback body.
+
+**Efficiency fixed:** FTS rows keyed by rowid (was a full virtual-table scan
+per upsert — the O(N²)); cached prepared statements; `synchronous=NORMAL`;
+single IN-clause tags query for the card list (was N+1); image
+`Last-Modified` + `304` revalidation (verified).
+
+**Altitude/cleanup fixed:** `background`/`prep_notes` added to the FTS table
+in migration 001 (FTS5 can't add columns later — verified body-prose words
+like "bloomed" are now searchable, closing a P4 general-search parity gap);
+list endpoint returns the shared `Paged<RecipeCard>` DTO; error codes
+centralized in `ApiErrorCodes` (salt_shared); `MethodNotAllowedException` +
+`requireGet` collapse five route guards and add the RFC `Allow` header
+(verified); `yamlToPlain` promoted to a shared util; tests consolidated on
+`test/support/corpus.dart` with `SALT_CORPUS_DIR` override.
+
+**Killed by panel:** nosniff-missing (Dart's HttpServer sets it globally);
+upsert-reads-outside-transaction race (correctly a P5 concern when the second
+connection lands); slugify drift (no client consumer exists yet);
+package:path duplication (not worth the dependency).
+
+**Recorded deviation:** the plan's `recipes` table lists scalar
+`background`/`prep_notes`/`notes` columns; migration 001 omits them
+deliberately — nothing sorts or filters on them, the full values live in the
+`doc` JSON, and search uses the FTS columns. Add scalar columns only if a
+future query needs them.
 
 ## P2 — Flutter read-only app — **pending**
 Mockups (grid/card/detail, desktop+mobile) → approval → theme/router/grid/detail.

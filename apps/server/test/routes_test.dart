@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/image_handlers.dart';
@@ -9,20 +7,14 @@ import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
-const _corpusRoot =
-    '/Users/drivard/Documents/Claude Projects/Recipe Extraction';
-const _corpusBook =
-    'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023';
+import 'support/corpus.dart';
 
 const _sourceSlug = 'atk-tv-2023';
 const _heroJpg = '0857-rich-chocolate-bundt-cake-hero.jpg';
 
-Recipe _load(String fileName) => RecipeYamlCodec.decode(
-      File('$_corpusRoot/$_corpusBook/recipes/$fileName').readAsStringSync(),
-    ).recipe;
+Recipe _load(String fileName) => loadCorpusRecipe(fileName);
 
-String _hashOf(Recipe recipe) =>
-    sha256.convert(utf8.encode(jsonEncode(recipe.toMap()))).toString();
+String _hashOf(Recipe recipe) => contentHashOf(recipe);
 
 void main() {
   late Recipe bundtCake; // Rich Chocolate Bundt Cake
@@ -42,8 +34,7 @@ void main() {
     libraryDir = '${tempDir.path}/library';
     imagesDir = '$libraryDir/$_sourceSlug/images';
     Directory(imagesDir).createSync(recursive: true);
-    File('$_corpusRoot/$_corpusBook/images/$_heroJpg')
-        .copySync('$imagesDir/$_heroJpg');
+    File('$corpusImagesDir/$_heroJpg').copySync('$imagesDir/$_heroJpg');
 
     db = SaltDatabase.open('${tempDir.path}/salt.db')
       ..upsertSource(
@@ -179,7 +170,7 @@ void main() {
       );
       expect(image.contentType, 'image/jpeg');
       expect(
-        image.bytes,
+        image.readBytes(),
         File('$imagesDir/$_heroJpg').readAsBytesSync(),
       );
     });

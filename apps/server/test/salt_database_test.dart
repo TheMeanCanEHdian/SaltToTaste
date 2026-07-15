@@ -1,26 +1,17 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
-const _corpusRoot =
-    '/Users/drivard/Documents/Claude Projects/Recipe Extraction';
-const _corpusBook =
-    'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023';
-const _corpusRecipesDir = '$_corpusRoot/$_corpusBook/recipes';
+import 'support/corpus.dart';
 
 const _sourceSlug = 'atk-tv-2023';
 
-Recipe _load(String fileName) => RecipeYamlCodec.decode(
-      File('$_corpusRecipesDir/$fileName').readAsStringSync(),
-    ).recipe;
+Recipe _load(String fileName) => loadCorpusRecipe(fileName);
 
-String _hashOf(Recipe recipe) =>
-    sha256.convert(utf8.encode(jsonEncode(recipe.toMap()))).toString();
+String _hashOf(Recipe recipe) => contentHashOf(recipe);
 
 void main() {
   late Recipe bundtCake; // Rich Chocolate Bundt Cake
@@ -135,7 +126,7 @@ void main() {
     expect(db.recipeByIdOrSlug('no-such-recipe'), isNull);
   });
 
-  test('slug collision stores a -2 suffix without mutating the doc', () {
+  test('slug collision suffixes the slug in the row and the stored doc', () {
     insertAllThree();
 
     final duplicate = bundtCake.copyWith(id: 'test-dup');
@@ -150,12 +141,13 @@ void main() {
     // The original id keeps the unsuffixed slug.
     expect(db.recipeByIdOrSlug(bundtCake.slug)!.recipe.id, bundtCake.id);
 
-    // The duplicate row owns the suffixed slug, but its stored document
-    // keeps the original slug.
+    // The duplicate row owns the suffixed slug, and its stored document
+    // carries the same resolved slug so the detail response and the card
+    // agree (the doc slug resolves back to this recipe, not the original).
     final suffixed = db.recipeByIdOrSlug('${bundtCake.slug}-2');
     expect(suffixed, isNotNull);
     expect(suffixed!.recipe.id, 'test-dup');
-    expect(suffixed.recipe.slug, bundtCake.slug);
+    expect(suffixed.recipe.slug, '${bundtCake.slug}-2');
   });
 
   test('FTS row exists and matches a stemmed title word', () {

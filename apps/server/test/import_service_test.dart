@@ -9,11 +9,7 @@ import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart' as raw_sqlite;
 import 'package:test/test.dart';
 
-const _corpusParent =
-    '/Users/drivard/Documents/Claude Projects/Recipe Extraction';
-const _corpusBook =
-    'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023';
-const _corpusRoot = '$_corpusParent/$_corpusBook';
+import 'support/corpus.dart';
 
 /// slugify("The Complete America's Test Kitchen TV Show Cookbook 2001–2023").
 const _slug = 'the-complete-americas-test-kitchen-tv-show-cookbook-2001-2023';
@@ -52,16 +48,16 @@ void main() {
 
     setUp(() {
       sourceRoot = Directory.systemTemp.createTempSync('salt_import_src');
-      File('$_corpusRoot/source.yaml')
+      File('$corpusRoot/source.yaml')
           .copySync('${sourceRoot.path}/source.yaml');
       Directory('${sourceRoot.path}/recipes').createSync();
       Directory('${sourceRoot.path}/images').createSync();
       for (final name in _recipeFiles) {
-        File('$_corpusRoot/recipes/$name')
+        File('$corpusRecipesDir/$name')
             .copySync('${sourceRoot.path}/recipes/$name');
       }
       for (final name in _imageFiles) {
-        File('$_corpusRoot/images/$name')
+        File('$corpusImagesDir/$name')
             .copySync('${sourceRoot.path}/images/$name');
       }
 
@@ -105,7 +101,7 @@ void main() {
       // recipe for every imported file.
       for (final name in _recipeFiles) {
         final original = RecipeYamlCodec.decode(
-          File('$_corpusRoot/recipes/$name').readAsStringSync(),
+          File('$corpusRecipesDir/$name').readAsStringSync(),
         ).recipe;
         final exported = File(
           '${config.libraryDir}/$_slug/recipes/${original.id}.yaml',
@@ -128,14 +124,14 @@ void main() {
         expect(copied.existsSync(), isTrue, reason: 'missing image $name');
         expect(
           copied.lengthSync(),
-          File('$_corpusRoot/images/$name').lengthSync(),
+          File('$corpusImagesDir/$name').lengthSync(),
         );
       }
 
       // source.yaml was copied verbatim and the source row stored.
       expect(
         File('${config.libraryDir}/$_slug/source.yaml').readAsStringSync(),
-        File('$_corpusRoot/source.yaml').readAsStringSync(),
+        File('$corpusRoot/source.yaml').readAsStringSync(),
       );
       final rawDb = raw_sqlite.sqlite3.open(config.dbPath);
       try {

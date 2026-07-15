@@ -39,7 +39,11 @@ whenever a decision deviates from the plan).
 
 ## Conventions
 
-- **Testing uses real data only** — the ATK corpus, never fabricated fixtures.
+- **Testing uses real data only** — the ATK corpus, never fabricated
+  fixtures. Exception: negative-path inputs that cannot come from the corpus
+  (deliberately malformed YAML, a crafted malicious id) may be synthesized;
+  everything valid must be real corpus data. Corpus location is overridable
+  in tests via the `SALT_CORPUS_DIR` env var.
 - **Mockup-first UI** — present HTML/SVG mockups for approval before
   implementing any significant screen in Flutter.
 - **Ask the user** when choosing between packages.
@@ -60,4 +64,12 @@ whenever a decision deviates from the plan).
 dart pub get                                  # workspace root — resolves all packages
 cd packages/salt_shared && dart run build_runner build   # regen *.mapper.dart after model changes
 cd packages/salt_shared && dart test          # includes the 1,198-file corpus golden test
+
+# Server (apps/server)
+cd apps/server && dart test
+cd apps/server && dart run salt_server:import "<source-root>" --data-dir=.data
+cd apps/server && dart_frog dev               # needs a real TTY (hot-reload key listener);
+                                              # headless: dart_frog build && DATA_DIR=.data dart build/bin/server.dart
 ```
+
+API reference: docs/API.md — update it in the same commit as any endpoint change.

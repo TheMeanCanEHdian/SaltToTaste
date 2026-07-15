@@ -93,6 +93,8 @@ CREATE VIRTUAL TABLE recipe_fts USING fts5(
   ingredients,
   directions,
   notes,
+  background,
+  prep_notes,
   tokenize='porter unicode61 remove_diacritics 2'
 )
 ''',

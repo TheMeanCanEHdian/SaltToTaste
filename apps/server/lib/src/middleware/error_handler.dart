@@ -8,17 +8,17 @@ import 'package:salt_shared/salt_shared.dart';
 
 final Logger _log = Logger('http');
 
-/// The body dart_frog's router returns for unmatched routes.
-const String _routerNotFoundBody = 'Route not found';
-
 /// Middleware that converts exceptions into the uniform error envelope
 /// `{"error": {"code", "message", "request_id"}}`.
 ///
-/// * [AppException] becomes a response with its status code and error code.
+/// * [AppException] becomes a response with its status code and error code
+///   (a [MethodNotAllowedException] also gets an `Allow` header).
 /// * Anything else is logged at SEVERE (with stack trace) and becomes an
 ///   opaque 500 `internal` envelope — clients never see stack traces.
-/// * A bare 404 from dart_frog's router (empty or `Route not found` body)
-///   is rewrapped into a `not_found` envelope.
+/// * A 404 response from the inner handler is the router's unmatched-route
+///   fallback (feature code throws [NotFoundException] instead of returning a
+///   404), so it is rewrapped into a `not_found` envelope. This is keyed on
+///   the status code, not the framework's fallback body text.
 Middleware errorHandler() {
   return (handler) {
     return (context) async {
@@ -26,20 +26,24 @@ Middleware errorHandler() {
       try {
         final response = await handler(context);
         if (response.statusCode == HttpStatus.notFound) {
-          final body = await response.body();
-          if (body.isEmpty || body == _routerNotFoundBody) {
-            return errorResponse(
-              statusCode: HttpStatus.notFound,
-              code: 'not_found',
-              message: 'Not found.',
-              requestId: requestId,
-            );
-          }
-          // The body stream was consumed above; rebuild the response so it
-          // can still be served downstream.
-          return response.copyWith(body: body);
+          // P7 note: the SPA fallback (serve index.html for page paths) will
+          // branch here on the request path before this rewrap.
+          return errorResponse(
+            statusCode: HttpStatus.notFound,
+            code: ApiErrorCodes.notFound,
+            message: 'Not found.',
+            requestId: requestId,
+          );
         }
         return response;
+      } on MethodNotAllowedException catch (exception) {
+        return errorResponse(
+          statusCode: exception.statusCode,
+          code: exception.code,
+          message: exception.message,
+          requestId: requestId,
+          headers: {HttpHeaders.allowHeader: exception.allow},
+        );
       } on AppException catch (exception) {
         return errorResponse(
           statusCode: exception.statusCode,
@@ -56,7 +60,7 @@ Middleware errorHandler() {
         );
         return errorResponse(
           statusCode: HttpStatus.internalServerError,
-          code: 'internal',
+          code: ApiErrorCodes.internal,
           message: 'Internal server error.',
           requestId: requestId,
         );
@@ -65,16 +69,19 @@ Middleware errorHandler() {
   };
 }
 
-/// Builds an error-envelope JSON response from the shared [ApiError] DTO.
+/// Builds an error-envelope JSON response from the shared [ApiError] DTO,
+/// optionally with extra [headers].
 Response errorResponse({
   required int statusCode,
   required String code,
   required String message,
   String? requestId,
+  Map<String, String> headers = const {},
 }) {
   final error = ApiError(code: code, message: message, requestId: requestId);
   return Response.json(
     statusCode: statusCode,
     body: {'error': error.toMap()},
+    headers: headers,
   );
 }

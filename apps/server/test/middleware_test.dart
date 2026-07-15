@@ -166,10 +166,13 @@ void main() {
       expect(errorOf(body)['code'], 'not_found');
     });
 
-    test('a deliberate JSON 404 passes through untouched', () async {
+    test('any 404 response is rewrapped into the not_found envelope', () async {
+      // Feature code throws NotFoundException rather than returning a 404
+      // Response, so a 404 reaching the error handler is the router fallback
+      // and is rewrapped regardless of its body (no framework-body sniffing).
       final (response, body) = await send('GET', '/json-404');
       expect(response.statusCode, HttpStatus.notFound);
-      expect(jsonDecode(body), {'custom': true});
+      expect(errorOf(body)['code'], 'not_found');
     });
   });
 
