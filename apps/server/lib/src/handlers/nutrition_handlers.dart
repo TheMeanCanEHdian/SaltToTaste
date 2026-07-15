@@ -15,6 +15,17 @@ Map<String, Object?> nutritionBody(SaltDatabase db, Recipe recipe) {
     return {'status': 'none'};
   }
   final stale = row.ingredientsHash != ingredientsHashOf(recipe);
+  // Unreviewed low-confidence matches: the UI's badge only turns green
+  // once every line is matched AND none of these remain (a human
+  // confirm/override clears one).
+  final lineCount = nutritionLines(recipe).length;
+  final lowConfidence = db
+      .ingredientMatchesFor(recipe.id)
+      .where((match) =>
+          match.position < lineCount &&
+          match.status == 'auto' &&
+          match.confidence < 0.5)
+      .length;
   return {
     'status': stale ? 'stale' : row.status,
     'serving_basis': row.servingBasis,
@@ -23,6 +34,7 @@ Map<String, Object?> nutritionBody(SaltDatabase db, Recipe recipe) {
     'total_grams': row.totalGrams,
     'matched_count': row.matchedCount,
     'total_count': row.totalCount,
+    'low_confidence': lowConfidence,
     'computed_at': row.computedAt,
   };
 }

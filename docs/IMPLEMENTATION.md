@@ -450,7 +450,7 @@ triaged inline, 3 cross-angle duplicates. **All confirmed findings fixed**,
   fluid-ounce lines the Python extractor itself had misparsed — the Dart
   parser now reads them correctly). 121 salt_shared tests green.
 
-## P6 — Nutrition (USDA FDC) — **server half done** (2026-07-15; label UI pending mockup approval)
+## P6 — Nutrition (USDA FDC) — **done** (2026-07-15)
 
 Nutrition mockup published for approval (2026-07-15):
 `docs/mockups/p6-nutrition.html` (artifact
@@ -542,6 +542,68 @@ fixed (244 tests green):
   success-path HTTP tests (compute → label → basis → review → stale
   lifecycle) over recorded real FDC data; TokenBucket wait-cap unit
   tests.
+
+Flutter UI (mockup approved 2026-07-15; browser-verified same day on the
+dev instance against the real computed Bundt data):
+- `NutritionRepository` + `NutritionCubit` (keyed by slug next to the
+  detail cubit; compute uses a 5-min receive timeout).
+- `NutritionPanel`: classic black-on-white FDA label (deliberately
+  theme-independent — the regulation label IS the design), match
+  transparency badge (green complete / amber review), empty states
+  (admin Compute button vs member notice), stale banner with Recompute.
+  Wide: right rail under the hero. Narrow: after the content with the
+  badge ABOVE the label (approved mobile layout).
+- Review sheet dialog: per-line provenance (matched food, data-type
+  chip, grams + source: weight ✓ direct / household portion / density
+  est. / piece est. / set by hand), confidence pills, admin actions
+  Confirm / Change… (ranked candidate picker) / Set grams… (hidden for
+  rows with no matched food — the server 422s those) / Skip / Include
+  again, and the per-serving basis stepper (live rescale verified:
+  12→13 recomputed 466→430 kcal instantly).
+- Settings → Nutrition (replaces the "soon" placeholder): write-only FDC
+  key (masked pill + Replace flow, never re-read), bulk "Compute all
+  missing" with 2s job polling, progress bar, failure log toggle, and
+  the serving-basis explainer.
+- Recipe tiles: dark card badge "466 kcal" beside the servings badge
+  once computed — text-only searches carry it too (server LEFT JOIN
+  fix).
+
+P6 UI review (3-angle: correctness / mockup fidelity / robustness,
+2026-07-15): 30 findings, all triaged; 20 fixed, the rest recorded below.
+Fixed highlights:
+- `copyWith(matches: null)` was a no-op (null means "keep"), so a
+  recompute could never invalidate the cached review-sheet rows —
+  actions could target lines the server had re-matched. Now an explicit
+  `clearMatches` flag.
+- An override whose follow-up label refresh failed threw away the
+  server-persisted match list; now the fresh rows are emitted before the
+  label GET, and its failure says "Saved, but refreshing failed".
+- One transient poll failure permanently killed bulk-job progress
+  tracking (and the job id with it); polling now rides out blips and the
+  active job id survives settings-tab switches (module-level, re-attach
+  on mount). The 409 "already running" message actually reaches the
+  user now (`conflict` added to the apiGuard passthrough codes).
+- Review sheet: a failed load showed an infinite spinner — now an error
+  with Retry; per-open `TextEditingController` leak fixed; phones get
+  the spec'd full-height bottom sheet; header gained the summary line
+  ("13 lines · 12 matched · 1 skipped · computed …"); Foundation
+  data-type chips highlight green.
+- Label: Recompute hidden from members; badge is the mockup's bordered
+  pill (alert triangle, chevron, full-width on mobile); the green state
+  now also requires zero unreviewed low-confidence matches (new
+  `low_confidence` field in the nutrition GET); FDA details ("Includes
+  Xg Added Sugars", italic *Trans* only, bold Amount-per-serving, black
+  rules); empty state matches the mockup copy without double-heading
+  the narrow layout.
+- `compute()` now carries a CancelToken cancelled on cubit close (was
+  holding a browser connection up to 5 min after navigating away).
+Deliberate deviations (recorded, not bugs): the review sheet keeps the
+stacked row anatomy at all widths (the mockup's desktop 5-column grid
+presents the same data; revisit if it grates), grams edit stays a
+dialog, no free-text FDC search in the re-pick list (needs a new
+endpoint — P7 candidate along with bulk Pause), no sheet footer
+buttons (totals recompute on every action, Close is the header X).
+
 
 ## P7 — Settings + import UI + Docker — **pending**
 Settings tabs, import wizard, multi-stage Dockerfile (Flutter web → dart_frog

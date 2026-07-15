@@ -6,11 +6,12 @@ import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/settings/account_tab.dart';
 import 'package:salt_app/features/settings/library_tab.dart';
+import 'package:salt_app/features/settings/nutrition_tab.dart';
 import 'package:salt_app/features/settings/tags_tab.dart';
 import 'package:salt_app/features/settings/tokens_tab.dart';
 import 'package:salt_app/features/settings/users_tab.dart';
 
-enum SettingsTab { account, users, tokens, tags, library }
+enum SettingsTab { account, users, tokens, tags, library, nutrition }
 
 /// Settings shell (approved P3 design): left sidebar on wide screens,
 /// horizontal chips on narrow. Members see Account and API tokens; admins
@@ -25,7 +26,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   SettingsTab _tab = SettingsTab.account;
 
-  static const _futureServerTabs = ['Import', 'Nutrition'];
+  static const _futureServerTabs = ['Import'];
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +38,7 @@ class _SettingsPageState extends State<SettingsPage> {
       SettingsTab.tokens => const TokensTab(),
       SettingsTab.tags => const TagsTab(),
       SettingsTab.library => const LibraryTab(),
+      SettingsTab.nutrition => const NutritionTab(),
     };
 
     return Scaffold(
@@ -101,6 +103,7 @@ class _SettingsPageState extends State<SettingsPage> {
         if (isAdmin) ...[
           (SettingsTab.tags, 'Tags'),
           (SettingsTab.library, 'Library'),
+          (SettingsTab.nutrition, 'Nutrition'),
         ],
       ];
 

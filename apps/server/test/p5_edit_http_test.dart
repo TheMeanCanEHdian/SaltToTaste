@@ -712,6 +712,8 @@ void main() {
       final calories = (label['calories_per_serving']! as num).toDouble();
       expect(calories, greaterThan(350));
       expect(calories, lessThan(650));
+      expect(label['low_confidence'], isA<int>(),
+          reason: 'the badge needs the unreviewed low-confidence count');
 
       // Members read the label and the match transparency.
       final (memberRead, memberBody) = await send(

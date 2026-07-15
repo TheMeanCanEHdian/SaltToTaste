@@ -4,6 +4,7 @@ import 'package:salt_shared/salt_shared.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
@@ -11,6 +12,8 @@ import 'package:salt_app/core/widgets/photo_fallback.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/core/widgets/tag_chip.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
+import 'package:salt_app/features/nutrition/nutrition_label.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_cubit.dart';
 
 /// The recipe detail page (approved P2 design: two-column header on wide
@@ -22,13 +25,22 @@ class RecipeDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
+    return MultiBlocProvider(
       // Keyed by slug: navigating from one recipe straight to another reuses
       // this element, and an unkeyed provider would keep showing the old
       // recipe under the new URL.
       key: ValueKey(slug),
-      create: (context) =>
-          RecipeDetailCubit(context.read<RecipeRepository>())..load(slug),
+      providers: [
+        BlocProvider(
+          create: (context) =>
+              RecipeDetailCubit(context.read<RecipeRepository>())..load(slug),
+        ),
+        BlocProvider(
+          create: (context) =>
+              NutritionCubit(context.read<NutritionRepository>(), slug)
+                ..load(),
+        ),
+      ],
       child: Scaffold(
         appBar: const SaltNavBar(showBack: true),
         body: BlocConsumer<RecipeDetailCubit, RecipeDetailState>(
@@ -68,6 +80,9 @@ class _DetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final recipe = detail.recipe;
+    final wide =
+        MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
+    final isAdmin = context.watch<AuthCubit>().user?.isAdmin ?? false;
     return SingleChildScrollView(
       child: Center(
         child: ConstrainedBox(
@@ -99,6 +114,15 @@ class _DetailBody extends StatelessWidget {
                   const _SectionTitle('Notes'),
                   const SizedBox(height: 8),
                   Text(recipe.notes!, style: _prose),
+                ],
+                // Narrow: the label follows the content, full width, with
+                // the match badge ABOVE the numbers (approved P6 mobile
+                // layout). Wide screens carry it in the header's right rail.
+                if (!wide) ...[
+                  const SizedBox(height: 28),
+                  const _SectionTitle('Nutrition'),
+                  const SizedBox(height: 10),
+                  NutritionPanel(isAdmin: isAdmin, badgeFirst: true),
                 ],
               ],
             ),
@@ -136,6 +160,7 @@ class _Header extends StatelessWidget {
     // A bounded aspect ratio gives the network image a definite height —
     // Image.network reports no intrinsic size, so an IntrinsicHeight row
     // would leave it collapsed.
+    final isAdmin = context.watch<AuthCubit>().user?.isAdmin ?? false;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -143,7 +168,16 @@ class _Header extends StatelessWidget {
         const SizedBox(width: 28),
         Expanded(
           flex: 9,
-          child: AspectRatio(aspectRatio: 4 / 3, child: hero),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AspectRatio(aspectRatio: 4 / 3, child: hero),
+              const SizedBox(height: 16),
+              // The right rail (approved P6 design): the FDA label lives
+              // under the hero, match badge below it.
+              NutritionPanel(isAdmin: isAdmin),
+            ],
+          ),
         ),
       ],
     );

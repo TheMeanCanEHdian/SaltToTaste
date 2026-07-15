@@ -61,6 +61,8 @@ Future<T> apiGuard<T>(
           error['message'] as String,
         'forbidden' when error['message'] is String =>
           error['message'] as String,
+        'conflict' when error['message'] is String =>
+          error['message'] as String,
         _ => 'Something went wrong on the server. Please try again.',
       };
       throw RepositoryException(

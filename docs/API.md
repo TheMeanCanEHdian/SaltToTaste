@@ -294,9 +294,13 @@ first compute, else:
   "total_grams": 1730.5,
   "matched_count": 12,
   "total_count": 13,
+  "low_confidence": 0,
   "computed_at": "…"
 }
 ```
+
+`low_confidence` counts auto-matched lines below 0.5 confidence that no
+one has reviewed yet (confirm/override/skip clears one).
 
 `stale` means the ingredients changed since the compute. The ~30-nutrient
 key set and FDA Daily Values match the legacy app's panel.

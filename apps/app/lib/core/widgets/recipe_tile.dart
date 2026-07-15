@@ -10,6 +10,31 @@ import 'package:salt_app/core/widgets/tag_chip.dart';
 /// bottom gradient scrim, a servings badge top-left (approved P2 design),
 /// and — for favorites — a heart badge top-right (tappable when
 /// [onToggleFavorite] is provided; approved P5 design).
+class _CardBadge extends StatelessWidget {
+  const _CardBadge(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: SaltColors.cardBadge,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 class RecipeTile extends StatelessWidget {
   const RecipeTile({
     super.key,
@@ -50,25 +75,21 @@ class RecipeTile extends StatelessWidget {
               ),
             ),
           ),
-          if (card.servingsText != null)
+          if (card.servingsText != null || card.caloriesPerServing != null)
             Positioned(
               top: 10,
               left: 11,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: SaltColors.cardBadge,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text(
-                  card.servingsText!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              right: 44, // stay clear of the favorite heart
+              child: Wrap(
+                spacing: 5,
+                runSpacing: 4,
+                children: [
+                  if (card.servingsText != null)
+                    _CardBadge(card.servingsText!),
+                  // Per-serving calories once nutrition is computed (P6).
+                  if (card.caloriesPerServing != null)
+                    _CardBadge('${card.caloriesPerServing!.round()} kcal'),
+                ],
               ),
             ),
           Positioned(
