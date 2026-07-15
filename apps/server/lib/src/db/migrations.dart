@@ -99,4 +99,47 @@ CREATE VIRTUAL TABLE recipe_fts USING fts5(
 )
 ''',
   ],
+  // 002 — P3 auth: users, sessions, API tokens. Token/session secrets are
+  // stored only as SHA-256 hashes; timestamps written by the DAL are UTC
+  // ISO-8601 TEXT.
+  [
+    '''
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK(role IN ('admin','member')),
+  must_change_password INTEGER NOT NULL DEFAULT 0,
+  disabled INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_active_at TEXT
+)
+''',
+    '''
+CREATE TABLE sessions (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at TEXT NOT NULL,
+  last_seen_at TEXT,
+  remember INTEGER NOT NULL DEFAULT 0,
+  user_agent TEXT
+)
+''',
+    'CREATE INDEX idx_sessions_user_id ON sessions(user_id)',
+    '''
+CREATE TABLE api_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  prefix TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  scope TEXT NOT NULL CHECK(scope IN ('read','full')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_used_at TEXT,
+  revoked_at TEXT
+)
+''',
+    'CREATE INDEX idx_api_tokens_user_id ON api_tokens(user_id)',
+  ],
 ];

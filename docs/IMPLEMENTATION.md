@@ -175,7 +175,22 @@ Approved design (2026-07-15), reference `docs/mockups/p2-read-only.html`:
 - Ingredients two-column, numbered step cards, download-YAML + favorite
   actions. Real look is Forui components themed to this palette.
 
-## P3 — Auth — **in-progress**
+## P3 — Auth — **in-progress** (server done + verified; Flutter half next)
+
+Server (2026-07-15): migration 002 (users/sessions/api_tokens, hashes only at
+rest); Argon2id (OWASP m=19456,t=2,p=1; PHC format; RFC 9106 vector pinned;
+timing-equal dummy verify); auth middleware (cookie+bearer, role∩scope,
+CSRF, forced-password-change); rate-limited login (5 fails → 1→15 min);
+first-boot setup code on stdout; endpoints auth/{setup,login,logout,me,
+change_password}, users CRUD + reset_password, sessions, tokens; all prior
+endpoints now require auth (images Cache-Control now `private`). 130 server
+tests green. End-to-end verified by hand on a fresh instance: setup-code
+flow, cookie+bearer, CSRF 403, member forbidden from /users, temp-password
+login → password_change_required → change → access, PAT read scope, lockout
+429 (even with the correct password). docs/API.md updated. Workflow note:
+both endpoint agents stalled at their final step; agent C's work was complete
+on disk, agent D's half (users/sessions/tokens routes + tests + API.md) was
+written by hand afterward.
 Setup flow, sessions (cookie+bearer), CSRF, rate limiting + lockout, roles
 (admin full / member read+personal), PATs scoped read|full, users CRUD, login UI.
 

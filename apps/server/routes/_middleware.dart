@@ -5,37 +5,35 @@ import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:salt_server/src/bootstrap.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
 
-/// Process-wide database singleton: opened lazily on the first
-/// `context.read<SaltDatabase>()`, never per request.
-SaltDatabase? _database;
-
-SaltDatabase _saltDatabase(RequestContext context) {
-  return _database ??= SaltDatabase.open(context.read<ServerConfig>().dbPath);
-}
-
 /// Top-level middleware chain.
 ///
 /// `.use` wraps, so the LAST `.use` is the OUTERMOST middleware. Order
-/// (outermost first): requestIdProvider -> requestLogger -> errorHandler ->
-/// ServerConfig provider -> routes.
+/// (outermost first): requestIdProvider -> requestLogger -> devCors ->
+/// errorHandler -> ServerConfig provider -> SaltDatabase provider ->
+/// AuthRuntime provider -> authProvider -> routes.
 ///
 /// requestIdProvider sits outside errorHandler so error envelopes carry a
 /// matching `request_id` and every response — including error envelopes —
 /// gets the `X-Request-Id` header. requestLogger sits outside errorHandler
 /// so failed requests are still logged with their envelope status.
-/// errorHandler wraps everything below it (config + DB providers, routes),
-/// so any exception thrown there becomes a clean envelope.
+/// errorHandler wraps everything below it (providers, auth, routes), so any
+/// exception thrown there becomes a clean envelope. authProvider is
+/// innermost (first `.use`, closest to the handler) because it reads the
+/// [SaltDatabase] provider above it; the process-wide singletons themselves
+/// live in `bootstrap.dart` and are created at startup by `initServer`.
 /// Adds permissive CORS headers (and answers preflight `OPTIONS`) when
 /// `DEV_ALLOW_CORS=true` (development only — see [ServerConfig.devAllowCors]).
 ///
 /// Production serves the web build same-origin and leaves this off.
 const Map<String, String> _corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers':
       'Authorization, Content-Type, X-Requested-With',
   'Access-Control-Max-Age': '86400',
@@ -66,9 +64,11 @@ Middleware _devCors() {
 
 Handler middleware(Handler handler) {
   return handler
-      // Innermost so it can read ServerConfig; dart_frog providers are lazy,
-      // so the connection only opens when a route actually reads the DB.
-      .use(provider<SaltDatabase>(_saltDatabase))
+      // Innermost: lazily resolves AuthUser? from the session cookie or
+      // bearer token; needs the SaltDatabase provider wired outside it.
+      .use(authProvider())
+      .use(provider<AuthRuntime>((_) => authRuntime))
+      .use(provider<SaltDatabase>((_) => saltDatabase))
       .use(provider<ServerConfig>((_) => serverConfig))
       .use(errorHandler())
       .use(_devCors())

@@ -1,6 +1,13 @@
+import 'dart:io';
+
+import 'package:salt_server/src/auth/setup_code.dart';
 import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/handlers/auth_handlers.dart';
 
 ServerConfig? _config;
+SaltDatabase? _database;
+AuthRuntime? _authRuntime;
 
 /// The process-wide server config, created (and logging configured) on first
 /// access.
@@ -17,5 +24,39 @@ ServerConfig _init() {
   return config;
 }
 
-/// Eagerly initializes configuration and logging. Call once at startup.
-ServerConfig initServer() => serverConfig;
+/// The process-wide database, opened once at [serverConfig]'s `dbPath`
+/// (eagerly by [initServer]; lazily on first request otherwise).
+SaltDatabase get saltDatabase =>
+    _database ??= SaltDatabase.open(serverConfig.dbPath);
+
+/// The process-wide auth collaborators (password hasher, login rate
+/// limiter, first-boot setup code).
+///
+/// Created on first access: when the database holds zero users, a one-time
+/// setup code is generated and printed to stdout so the operator can create
+/// the admin account via `POST /api/v1/auth/setup`.
+AuthRuntime get authRuntime => _authRuntime ??= _initAuthRuntime();
+
+AuthRuntime _initAuthRuntime() {
+  final runtime = AuthRuntime();
+  if (saltDatabase.userCount() == 0) {
+    final code = generateSetupCode();
+    runtime.setupCode = code;
+    // The one deliberate secret-on-stdout line in the server: the code
+    // exists to be read from the console/container logs by the operator.
+    stdout.writeln(
+      'SaltToTaste setup code: $code '
+      '— open the app to create the admin account.',
+    );
+  }
+  return runtime;
+}
+
+/// Eagerly initializes configuration, logging, the database, and the auth
+/// runtime (printing the first-boot setup code when no users exist yet).
+/// Call once at startup.
+ServerConfig initServer() {
+  final config = serverConfig;
+  _authRuntime ??= _initAuthRuntime();
+  return config;
+}

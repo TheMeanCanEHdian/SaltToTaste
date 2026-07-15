@@ -3,9 +3,60 @@
 Base path: `/api/v1`. All responses are JSON unless noted. Updated in the
 same commit as any endpoint change (see CLAUDE.md).
 
-**Status:** P1 — read-only surface, no authentication yet (auth, roles, and
-personal access tokens land in P3; this document will gain a Roles & scopes
-section then).
+**Status:** P3 — every endpoint except `GET /healthz` requires
+authentication.
+
+## Authentication, roles & scopes
+
+Two interchangeable credentials, checked by the same middleware:
+
+- **Session token** — from `POST /auth/login` (or `/auth/setup`). Delivered
+  both as an `stt_session` cookie (`HttpOnly; SameSite=Lax; Path=/`, plus
+  `Secure` behind a TLS proxy with `TRUST_PROXY=true`) and in the response
+  body for non-browser clients (`Authorization: Bearer <token>`). Expiry:
+  7 days, or 90 days sliding when `remember` was set.
+- **Personal access token (PAT)** — `stt_pat_…`, minted per user in
+  Settings, long-lived until revoked, sent as `Authorization: Bearer`.
+  Intended credential for native apps and scripts.
+
+Roles: **admin** (full access) and **member** (read + personal features).
+PATs carry a scope — `read` (browse + personal data) or `full` (everything
+the owner's role allows). Effective permission = role ∩ scope.
+
+CSRF: cookie-authenticated **mutating** requests must send
+`X-Requested-With: SaltToTaste` (bearer requests are exempt).
+
+Login rate limiting: per IP+username; 5 consecutive failures lock the pair
+for 1 minute, doubling per further failure up to 15 minutes (`429 locked`).
+
+Accounts created by an admin (and password resets) issue a one-time
+temporary password with `must_change_password`: until the user calls
+`/auth/change_password`, every other endpoint returns
+`403 password_change_required`.
+
+### Auth endpoints
+
+| Endpoint | Notes |
+|---|---|
+| `POST /api/v1/auth/setup` | `{setup_code, username, password}` — first boot only (zero users); code from server stdout; creates the admin |
+| `POST /api/v1/auth/login` | `{username, password, remember?}` → `{token, user}` + cookie; failures are uniform `422 validation` |
+| `POST /api/v1/auth/logout` | ends the current session (cookie/session bearer only) |
+| `GET /api/v1/auth/me` | `{user: {id, username, role, must_change_password, scope, via}}` |
+| `POST /api/v1/auth/change_password` | `{current_password?, new_password}` — current required unless a change was forced; other sessions are signed out |
+
+### Account management
+
+| Endpoint | Role | Notes |
+|---|---|---|
+| `GET /api/v1/users` | admin | all accounts |
+| `POST /api/v1/users` | admin | `{username, role}` → `{user, temp_password}` (shown once); duplicate → `409 conflict` |
+| `PATCH /api/v1/users/{id}` | admin | `{role? \| disabled?}`; never your own account |
+| `POST /api/v1/users/{id}/reset_password` | admin | new `temp_password` (once), forces change, signs out everywhere |
+| `GET /api/v1/sessions` | any | own sessions; `current` flags this one |
+| `DELETE /api/v1/sessions/{id}` | any | sign out one session (own only) |
+| `GET /api/v1/tokens` | any | own PATs (prefix only) |
+| `POST /api/v1/tokens` | any | `{name, scope}` → `{token, item}` — full value only in this response |
+| `DELETE /api/v1/tokens/{id}` | any | revoke (own only) |
 
 ## Conventions
 
@@ -25,6 +76,12 @@ section then).
   | `validation` | 422 | A parameter or body value is invalid; message names it |
   | `not_found` | 404 | Resource (or route) does not exist |
   | `method_not_allowed` | 405 | Route exists; HTTP method not supported |
+  | `unauthorized` | 401 | Missing/expired/revoked credential — sign in |
+  | `forbidden` | 403 | Authenticated but not permitted (role or scope) |
+  | `csrf` | 403 | Cookie-authed mutation missing `X-Requested-With: SaltToTaste` |
+  | `password_change_required` | 403 | Must change password before anything else |
+  | `conflict` | 409 | Conflicts with existing state (e.g. duplicate username) |
+  | `locked` | 429 | Login lockout; message says when to retry |
   | `internal` | 500 | Unhandled server error (details only in server logs) |
 
 - Timestamps are UTC ISO-8601 strings. Keys are `snake_case`.

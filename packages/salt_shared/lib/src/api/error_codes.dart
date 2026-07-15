@@ -16,4 +16,26 @@ abstract final class ApiErrorCodes {
   /// An unhandled server error; details appear only in the server logs
   /// (HTTP 500).
   static const String internal = 'internal';
+
+  /// No valid credential accompanied the request — sign in (HTTP 401).
+  static const String unauthorized = 'unauthorized';
+
+  /// The authenticated user lacks permission for this action (HTTP 403).
+  static const String forbidden = 'forbidden';
+
+  /// A mutating session request is missing the anti-CSRF
+  /// `X-Requested-With` header (HTTP 403).
+  static const String csrf = 'csrf';
+
+  /// The account must change its password before using this endpoint
+  /// (HTTP 403).
+  static const String passwordChangeRequired = 'password_change_required';
+
+  /// Too many failed sign-in attempts; retry after the delay given in the
+  /// message (HTTP 429).
+  static const String locked = 'locked';
+
+  /// The request conflicts with existing state, e.g. a duplicate username
+  /// (HTTP 409).
+  static const String conflict = 'conflict';
 }

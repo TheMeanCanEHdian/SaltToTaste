@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   crypto: ^3.0.6
+  cryptography: ^2.7.0
   dart_frog: ^1.1.0
   logging: ^1.3.0
   salt_shared:

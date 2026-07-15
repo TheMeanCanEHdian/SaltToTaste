@@ -54,3 +54,71 @@ final class MethodNotAllowedException extends AppException {
   /// Comma-separated list of allowed methods (e.g. `GET`).
   final String allow;
 }
+
+/// No valid credential accompanied the request (HTTP 401, code
+/// `unauthorized`). Covers missing, malformed, expired, and revoked
+/// credentials alike so the response never reveals which one it was.
+final class UnauthorizedException extends AppException {
+  /// Creates an unauthorized exception with the uniform sign-in message.
+  const UnauthorizedException()
+      : super(401, ApiErrorCodes.unauthorized, 'Sign in to continue.');
+}
+
+/// The authenticated user lacks permission for this action (HTTP 403, code
+/// `forbidden`).
+final class ForbiddenException extends AppException {
+  /// Creates a forbidden exception with the client-facing [message].
+  const ForbiddenException([
+    String message = 'You do not have permission to perform this action.',
+  ]) : super(403, ApiErrorCodes.forbidden, message);
+}
+
+/// A mutating session request is missing the anti-CSRF `X-Requested-With`
+/// header (HTTP 403, code `csrf`).
+final class CsrfException extends AppException {
+  /// Creates a CSRF exception naming the required header.
+  const CsrfException()
+      : super(
+          403,
+          ApiErrorCodes.csrf,
+          'This request requires the header '
+          '"X-Requested-With: SaltToTaste".',
+        );
+}
+
+/// The account must change its password before using this endpoint
+/// (HTTP 403, code `password_change_required`).
+final class PasswordChangeRequiredException extends AppException {
+  /// Creates a password-change-required exception.
+  const PasswordChangeRequiredException()
+      : super(
+          403,
+          ApiErrorCodes.passwordChangeRequired,
+          'You must change your password before continuing.',
+        );
+}
+
+/// The request conflicts with existing state, e.g. a duplicate username
+/// (HTTP 409, code `conflict`).
+final class ConflictException extends AppException {
+  /// Creates a conflict exception with the client-facing [message].
+  const ConflictException(String message)
+      : super(409, ApiErrorCodes.conflict, message);
+}
+
+/// Too many failed sign-in attempts for this account from this address
+/// (HTTP 429, code `locked`).
+final class LockedException extends AppException {
+  /// Creates a locked exception advertising the remaining lockout in
+  /// [retryAfterSeconds].
+  LockedException(this.retryAfterSeconds)
+      : super(
+          429,
+          ApiErrorCodes.locked,
+          'Too many failed attempts. '
+          'Try again in $retryAfterSeconds seconds.',
+        );
+
+  /// Whole seconds (rounded up) until another attempt is allowed.
+  final int retryAfterSeconds;
+}
