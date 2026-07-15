@@ -98,7 +98,8 @@ Liveness probe (outside `/api/v1`, no auth ever). → `200 {"status": "ok"}`
 
 ### `GET /api/v1/recipes`
 
-Paged recipe cards, ordered by title (case-insensitive).
+Paged recipe cards — ordered by title, or by relevance (bm25) when `q` runs
+a search.
 
 Query parameters:
 
@@ -106,6 +107,17 @@ Query parameters:
 |---|---|---|
 | `page` | 1 | integer ≥ 1 |
 | `limit` | 24 | integer 1..100 |
+| `q` | — | search-DSL query (below); parse errors → `422 validation` |
+
+**Search DSL:** words next to each other all must match (`and` implied);
+`or` broadens; `"quoted phrases"` match exactly; scopes `title:`, `tag:`,
+`ingredient:`, `direction:`, `note:` bind the single word or quoted phrase
+after them; unscoped terms search everything (including the "why this
+works" background prose). `calories:<400` (also `<=`, `>`, `>=`, `=`)
+filters by calories per serving, forces calorie-ascending order, and may
+only be combined with `and` — it matches nothing until nutrition (P6)
+computes values. User terms are compiled into FTS5 as quoted literals;
+MATCH syntax cannot be injected.
 
 → `200`:
 
@@ -154,6 +166,16 @@ traversal; extension whitelist `.jpg` `.jpeg` `.png` `.webp`).
 
 → `200` with correct `Content-Type` and `Cache-Control: public, max-age=86400`;
 `404 not_found` for anything else.
+
+### `GET /api/v1/tags`
+
+Every tag with its recipe count and optional chip style:
+`{"items": [{"name", "count", "icon", "color", "bg_color"}]}`.
+
+### `PUT /api/v1/tags/{name}/style` (admin)
+
+`{icon?, color?, bg_color?}` — sets the tag's chip style (Lucide icon name,
+`#RRGGBB` colors); null clears a field.
 
 ## CLI
 

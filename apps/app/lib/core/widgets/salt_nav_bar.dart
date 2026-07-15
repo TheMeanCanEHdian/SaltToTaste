@@ -5,13 +5,16 @@ import 'package:go_router/go_router.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 
-/// The maroon top navigation bar: optional back control, logo, search
-/// placeholder, menu.
+/// The maroon top navigation bar: optional back control, logo, live search
+/// field, avatar menu.
 class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
-  const SaltNavBar({super.key, this.showBack = false});
+  const SaltNavBar({super.key, this.showBack = false, this.initialQuery});
 
   /// Whether to show a leading back control (used on drill-down pages).
   final bool showBack;
+
+  /// Pre-fills the search field (the search page passes its query).
+  final String? initialQuery;
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -58,29 +61,78 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 18),
                 if (!compact)
-                  Expanded(
-                    child: Container(
-                      height: 38,
-                      constraints: const BoxConstraints(maxWidth: 620),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
-                        'Search recipes, ingredients, tags… (coming soon)',
-                        style: TextStyle(color: SaltColors.muted, fontSize: 14),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  )
+                  Expanded(child: _SearchField(initialQuery: initialQuery))
                 else
                   const Spacer(),
                 const SizedBox(width: 12),
                 const _AvatarMenu(),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The nav search field: submits the query (search DSL supported) to the
+/// results page.
+class _SearchField extends StatefulWidget {
+  const _SearchField({this.initialQuery});
+
+  final String? initialQuery;
+
+  @override
+  State<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<_SearchField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialQuery);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit(String value) {
+    final query = value.trim();
+    if (query.isEmpty) {
+      return;
+    }
+    context.go('/search?q=${Uri.encodeQueryComponent(query)}');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      constraints: const BoxConstraints(maxWidth: 620),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: TextField(
+        controller: _controller,
+        textInputAction: TextInputAction.search,
+        onSubmitted: _submit,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Search recipes — try title:cake or tag:dessert',
+          hintStyle:
+              const TextStyle(color: SaltColors.muted, fontSize: 14),
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          prefixIcon:
+              const Icon(Icons.search, size: 19, color: SaltColors.muted),
+          suffixIcon: IconButton(
+            tooltip: 'Search',
+            icon: const Icon(Icons.arrow_forward,
+                size: 18, color: SaltColors.rose),
+            onPressed: () => _submit(_controller.text),
           ),
         ),
       ),

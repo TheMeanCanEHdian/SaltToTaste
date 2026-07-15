@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salt_shared/salt_shared.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -166,7 +167,15 @@ class _HeaderInfo extends StatelessWidget {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: [for (final tag in recipe.tags) TagChip(tag)],
+            children: [
+              for (final tag in recipe.tags)
+                TagChip(
+                  tag,
+                  onTap: () => context.push(
+                    '/search?q=${Uri.encodeQueryComponent('tag:"$tag"')}',
+                  ),
+                ),
+            ],
           ),
         ],
         const SizedBox(height: 16),

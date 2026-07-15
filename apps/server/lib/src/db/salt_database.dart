@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:salt_server/src/db/migrations.dart';
+import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_server/src/services/image_paths.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -301,10 +302,16 @@ class SaltDatabase {
       'ORDER BY title COLLATE NOCASE LIMIT ? OFFSET ?',
       [limit, offset],
     );
+    return (items: _cardsFromRows(rows), total: total);
+  }
+
+  /// Builds cards (with tags batched in one query) from a result set that
+  /// carries the standard card columns.
+  List<RecipeCard> _cardsFromRows(ResultSet rows) {
     final tagsByRecipe = _tagsFor([
       for (final row in rows) row['id'] as String,
     ]);
-    final items = <RecipeCard>[
+    return [
       for (final row in rows)
         RecipeCard(
           id: row['id'] as String,
@@ -320,7 +327,6 @@ class SaltDatabase {
           totalMinutes: row['total_min'] as int?,
         ),
     ];
-    return (items: items, total: total);
   }
 
   /// Tags (sorted) for every recipe id in [recipeIds], fetched in one query.
@@ -341,6 +347,80 @@ class SaltDatabase {
       (result[row['rid'] as String] ??= <String>[]).add(row['name'] as String);
     }
     return result;
+  }
+
+  /// One page of search results for a parsed and [compiled] query, ordered
+  /// by relevance (bm25) — or by calories when the query filters on them.
+  ///
+  /// Calories filters need the nutrition tables (P6); until they exist any
+  /// calories-constrained query truthfully matches nothing.
+  ({List<RecipeCard> items, int total}) searchCards(
+    CompiledSearch compiled, {
+    required int page,
+    required int limit,
+  }) {
+    if (compiled.calories.isNotEmpty) {
+      // No recipe_nutrition table yet — a calories filter matches nothing.
+      return (items: const [], total: 0);
+    }
+    final match = compiled.ftsMatch;
+    if (match == null) {
+      return listCards(page: page, limit: limit);
+    }
+    var offset = (page - 1) * limit;
+    if (offset < 0) {
+      offset = 0;
+    }
+    final total = _prepared(
+      'SELECT COUNT(*) AS n FROM recipe_fts WHERE recipe_fts MATCH ?',
+    ).select([match]).first['n'] as int;
+    final rows = _prepared(
+      'SELECT r.id, r.slug, r.source_slug, r.title, r.category, '
+      'r.servings_text, r.total_min, r.hero_image '
+      'FROM recipe_fts f JOIN recipes r ON r.rowid = f.rowid '
+      'WHERE recipe_fts MATCH ? '
+      'ORDER BY bm25(recipe_fts) LIMIT ? OFFSET ?',
+    ).select([match, limit, offset]);
+    return (items: _cardsFromRows(rows), total: total);
+  }
+
+  /// Every tag with its recipe count and (optional) chip style, ordered by
+  /// name.
+  List<TagInfoRow> listTags() {
+    final rows = _db.select(
+      'SELECT t.name AS name, COUNT(rt.recipe_id) AS n, '
+      's.icon AS icon, s.color AS color, s.bg_color AS bg_color '
+      'FROM tags t '
+      'LEFT JOIN recipe_tags rt ON rt.tag_id = t.id '
+      'LEFT JOIN tag_styles s ON s.tag_name = t.name '
+      'GROUP BY t.id ORDER BY t.name',
+    );
+    return [
+      for (final row in rows)
+        TagInfoRow(
+          name: row['name'] as String,
+          count: row['n'] as int,
+          icon: row['icon'] as String?,
+          color: row['color'] as String?,
+          bgColor: row['bg_color'] as String?,
+        ),
+    ];
+  }
+
+  /// Creates or updates the chip style for [tagName].
+  void upsertTagStyle(
+    String tagName, {
+    String? icon,
+    String? color,
+    String? bgColor,
+  }) {
+    _prepared(
+      'INSERT INTO tag_styles (tag_name, icon, color, bg_color) '
+      'VALUES (?, ?, ?, ?) '
+      'ON CONFLICT(tag_name) DO UPDATE SET '
+      'icon = excluded.icon, color = excluded.color, '
+      'bg_color = excluded.bg_color',
+    ).execute([tagName, icon, color, bgColor]);
   }
 
   /// The recipe whose id or slug equals [key], reconstructed from its stored
@@ -752,4 +832,31 @@ class ApiTokenRow {
 
   /// Revocation instant (UTC ISO-8601), or null while active.
   final String? revokedAt;
+}
+
+/// One tag with its usage count and optional chip style.
+class TagInfoRow {
+  /// Creates a tag row as returned by [SaltDatabase.listTags].
+  const TagInfoRow({
+    required this.name,
+    required this.count,
+    this.icon,
+    this.color,
+    this.bgColor,
+  });
+
+  /// Lowercase tag name.
+  final String name;
+
+  /// Number of recipes carrying the tag.
+  final int count;
+
+  /// Lucide icon name, when styled.
+  final String? icon;
+
+  /// Foreground `#RRGGBB`, when styled.
+  final String? color;
+
+  /// Background `#RRGGBB`, when styled.
+  final String? bgColor;
 }

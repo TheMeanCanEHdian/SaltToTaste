@@ -12,6 +12,7 @@ import 'package:salt_app/features/auth/login_page.dart';
 import 'package:salt_app/features/auth/setup_page.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_page.dart';
 import 'package:salt_app/features/recipes/list/home_page.dart';
+import 'package:salt_app/features/search/search_page.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
 
 /// Splash while auth resolves; shows the failure + retry when bootstrap
@@ -132,6 +133,11 @@ GoRouter buildRouter(AuthCubit authCubit) {
         path: '/r/:slug',
         builder: (context, state) =>
             RecipeDetailPage(slug: state.pathParameters['slug']!),
+      ),
+      GoRoute(
+        path: '/search',
+        builder: (context, state) =>
+            SearchPage(query: state.uri.queryParameters['q'] ?? ''),
       ),
       GoRoute(
         path: '/settings',

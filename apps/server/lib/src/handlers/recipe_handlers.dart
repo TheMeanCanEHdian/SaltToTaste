@@ -1,5 +1,6 @@
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_server/src/services/image_paths.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -55,8 +56,9 @@ Map<String, Object?> listRecipes(
   SaltDatabase db, {
   required int page,
   required int limit,
+  String? query,
 }) {
-  final result = db.listCards(page: page, limit: limit);
+  final result = _resolve(db, query, page: page, limit: limit);
   // Register the element mapper so the generic Paged<RecipeCard> encoder can
   // resolve RecipeCard at runtime (idempotent).
   RecipeCardMapper.ensureInitialized();
@@ -66,6 +68,30 @@ Map<String, Object?> listRecipes(
     page: page,
     limit: limit,
   ).toMap();
+}
+
+/// Runs the search DSL when [query] is present (parse errors are 422s with
+/// the parser's messages), otherwise the plain title-ordered listing.
+({List<RecipeCard> items, int total}) _resolve(
+  SaltDatabase db,
+  String? query, {
+  required int page,
+  required int limit,
+}) {
+  if (query == null || query.trim().isEmpty) {
+    return db.listCards(page: page, limit: limit);
+  }
+  final parsed = parseSearchQuery(query);
+  if (parsed.errors.isNotEmpty) {
+    throw ValidationException(
+      'Invalid search: ${parsed.errors.join(' ')}',
+    );
+  }
+  final root = parsed.root;
+  if (root == null) {
+    return db.listCards(page: page, limit: limit);
+  }
+  return db.searchCards(compileSearch(root), page: page, limit: limit);
 }
 
 /// The JSON body of `GET /api/v1/recipes/<key>`: the full recipe document

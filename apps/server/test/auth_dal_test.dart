@@ -34,10 +34,13 @@ void main() {
   int createDenis({String role = 'admin'}) =>
       db.createUser(username: 'denis', passwordHash: _hashA, role: role);
 
-  test('migration 002 applies: user_version == 2 and auth tables exist', () {
+  test('migration 002 applies: auth tables exist', () {
     final raw = sqlite3.open(dbPath);
     addTearDown(raw.dispose);
-    expect(raw.select('PRAGMA user_version').first.columnAt(0), 2);
+    expect(
+      raw.select('PRAGMA user_version').first.columnAt(0) as int,
+      greaterThanOrEqualTo(2),
+    );
     final tables = raw
         .select(
           "SELECT name FROM sqlite_master WHERE type IN ('table', 'index') "

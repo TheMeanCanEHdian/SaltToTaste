@@ -66,15 +66,18 @@ class RecipeRepository {
 
   final Dio _dio;
 
-  /// One page of recipe cards plus the total count.
+  /// One page of recipe cards plus the total count; [query] runs the
+  /// search DSL server-side.
   Future<({List<RecipeCard> items, int total})> listRecipes({
     required int page,
     int limit = 48,
+    String? query,
   }) {
     return _request('recipes', () async {
       final data = await _getMap('/api/v1/recipes', query: {
         'page': '$page',
         'limit': '$limit',
+        if (query != null && query.trim().isNotEmpty) 'q': query,
       });
       final items = [
         for (final item in data['items']! as List<dynamic>)

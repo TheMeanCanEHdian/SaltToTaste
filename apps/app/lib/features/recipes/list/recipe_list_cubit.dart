@@ -56,20 +56,29 @@ final class RecipeListLoaded extends RecipeListState {
       );
 }
 
-/// Loads and pages the recipe grid.
+/// Loads and pages the recipe grid — the whole library, or search results
+/// when constructed with a [query].
 class RecipeListCubit extends Cubit<RecipeListState> {
-  RecipeListCubit(this._repository) : super(const RecipeListLoading());
+  RecipeListCubit(this._repository, {this.query})
+      : super(const RecipeListLoading());
 
   static const int pageSize = 48;
 
   final RecipeRepository _repository;
+
+  /// Search-DSL query, or null for the plain library listing.
+  final String? query;
   int _nextPage = 1;
 
   Future<void> load() async {
     emit(const RecipeListLoading());
     _nextPage = 1;
     try {
-      final page = await _repository.listRecipes(page: 1, limit: pageSize);
+      final page = await _repository.listRecipes(
+        page: 1,
+        limit: pageSize,
+        query: query,
+      );
       _nextPage = 2;
       emit(RecipeListLoaded(
         items: page.items,
@@ -95,6 +104,7 @@ class RecipeListCubit extends Cubit<RecipeListState> {
       final page = await _repository.listRecipes(
         page: _nextPage,
         limit: pageSize,
+        query: query,
       );
       _nextPage += 1;
       final items = [...current.items, ...page.items];

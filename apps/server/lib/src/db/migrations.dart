@@ -142,4 +142,16 @@ CREATE TABLE api_tokens (
 ''',
     'CREATE INDEX idx_api_tokens_user_id ON api_tokens(user_id)',
   ],
+  // 003 — P4 search & tags: per-tag chip styling (Lucide icon + colors),
+  // editable by admins in Settings.
+  [
+    '''
+CREATE TABLE tag_styles (
+  tag_name TEXT PRIMARY KEY,
+  icon TEXT,
+  color TEXT,
+  bg_color TEXT
+)
+''',
+  ],
 ];

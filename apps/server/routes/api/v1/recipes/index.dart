@@ -15,6 +15,7 @@ Response onRequest(RequestContext context) {
       context.read<SaltDatabase>(),
       page: params.page,
       limit: params.limit,
+      query: context.request.uri.queryParameters['q'],
     ),
   );
 }
