@@ -143,6 +143,21 @@ AuthUser requireWrite(RequestContext context) {
   return user;
 }
 
+/// Throws [ForbiddenException] unless the credential's scope is `full`.
+///
+/// Every mutating endpoint must call this after its role guard: a
+/// `read`-scoped PAT may browse (and, later, write personal data like
+/// favorites) but may never mutate accounts, sessions, tokens, or recipes —
+/// the documented invariant is effective permission = role ∩ scope.
+/// Session logins are always `full`, so this only constrains PATs.
+void requireFullScope(AuthUser user) {
+  if (user.scope != 'full') {
+    throw const ForbiddenException(
+      'This action requires a full-scope token.',
+    );
+  }
+}
+
 /// Enforces the anti-CSRF header on mutating session requests.
 ///
 /// When [user] authenticated via session and the method is POST, PUT,
@@ -168,24 +183,21 @@ void requireCsrf(RequestContext context, AuthUser user) {
   }
 }
 
-/// Throws [MethodNotAllowedException] unless the request is a POST
-/// (mirrors `requireGet` in `http/method_guard.dart`).
-void requirePost(RequestContext context) {
-  if (context.request.method != HttpMethod.post) {
-    throw const MethodNotAllowedException('POST');
-  }
-}
-
-/// The client IP used for rate-limiting keys: the first `X-Forwarded-For`
-/// value when [ServerConfig.trustProxy] is set, otherwise the socket peer
-/// address (`unknown` when unavailable, e.g. in bare unit tests).
+/// The client IP used for rate-limiting keys.
+///
+/// Under [ServerConfig.trustProxy], the RIGHTMOST `X-Forwarded-For` value is
+/// used — that is the hop appended by our own reverse proxy. The leftmost
+/// values are client-supplied and trivially spoofable; keying rate limits on
+/// them would give an attacker a fresh bucket per request. Without a trusted
+/// proxy, the socket peer address is used (`unknown` when unavailable, e.g.
+/// in bare unit tests).
 String clientIp(RequestContext context) {
   if (context.read<ServerConfig>().trustProxy) {
     final forwarded = context.request.headers['x-forwarded-for'];
     if (forwarded != null) {
-      final first = forwarded.split(',').first.trim();
-      if (first.isNotEmpty) {
-        return first;
+      final last = forwarded.split(',').last.trim();
+      if (last.isNotEmpty) {
+        return last;
       }
     }
   }
@@ -199,11 +211,17 @@ String clientIp(RequestContext context) {
   }
 }
 
-/// Whether the session cookie should carry `Secure`: only when the request
-/// arrived over HTTPS at a trusted reverse proxy
-/// ([ServerConfig.trustProxy] plus `X-Forwarded-Proto: https`).
+/// Whether the session cookie should carry `Secure`: when
+/// [ServerConfig.secureCookies] forces it (direct-TLS or always-HTTPS
+/// deployments), or when the request arrived over HTTPS at a trusted
+/// reverse proxy ([ServerConfig.trustProxy] plus `X-Forwarded-Proto:
+/// https`).
 bool isSecureRequest(RequestContext context) {
-  if (!context.read<ServerConfig>().trustProxy) {
+  final config = context.read<ServerConfig>();
+  if (config.secureCookies) {
+    return true;
+  }
+  if (!config.trustProxy) {
     return false;
   }
   final proto = context.request.headers['x-forwarded-proto'];

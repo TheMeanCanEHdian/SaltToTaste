@@ -19,6 +19,15 @@ final class AuthSetupRequired extends AuthState {
   const AuthSetupRequired();
 }
 
+/// Bootstrap couldn't reach the server — show a retry screen rather than a
+/// login form whose submissions would also fail (and which would hide the
+/// setup screen from an actually-unclaimed instance).
+final class AuthBootstrapFailed extends AuthState {
+  const AuthBootstrapFailed(this.message);
+
+  final String message;
+}
+
 final class AuthSignedOut extends AuthState {
   const AuthSignedOut({this.notice});
 
@@ -64,7 +73,13 @@ class AuthCubit extends Cubit<AuthState> {
       final user = await _repository.me();
       _emitForUser(user);
     } on RepositoryException catch (exception) {
-      emit(AuthSignedOut(notice: exception.message));
+      emit(AuthBootstrapFailed(exception.message));
+    } catch (_) {
+      emit(
+        const AuthBootstrapFailed(
+          'Something went wrong starting the app. Please retry.',
+        ),
+      );
     }
   }
 

@@ -39,6 +39,17 @@ AuthRuntime get authRuntime => _authRuntime ??= _initAuthRuntime();
 
 AuthRuntime _initAuthRuntime() {
   final runtime = AuthRuntime();
+  if (serverConfig.devAllowCors) {
+    // Reflected-origin CORS with credentials defeats the CSRF protection
+    // entirely; this must never be enabled outside local development.
+    stderr.writeln(
+      'WARNING: DEV_ALLOW_CORS is enabled. Cross-origin requests with '
+      'credentials are allowed and CSRF protection is OFF. '
+      'Never run production with this flag.',
+    );
+  }
+  // Housekeeping: drop sessions that expired while the server was down.
+  saltDatabase.deleteExpiredSessions();
   if (saltDatabase.userCount() == 0) {
     final code = generateSetupCode();
     runtime.setupCode = code;

@@ -19,6 +19,12 @@ import '../routes/api/v1/auth/logout.dart' as logout_route;
 import '../routes/api/v1/auth/me.dart' as me_route;
 import '../routes/api/v1/auth/setup.dart' as setup_route;
 import '../routes/api/v1/recipes/index.dart' as recipes_route;
+import '../routes/api/v1/sessions/[id].dart' as session_route;
+import '../routes/api/v1/tokens/[id].dart' as token_route;
+import '../routes/api/v1/tokens/index.dart' as tokens_route;
+import '../routes/api/v1/users/[id]/index.dart' as user_route;
+import '../routes/api/v1/users/[id]/reset_password.dart' as reset_route;
+import '../routes/api/v1/users/index.dart' as users_route;
 
 // Synthesized credentials: auth inputs cannot come from the recipe corpus.
 const _setupCode = 'ABCD-EFGH';
@@ -56,7 +62,32 @@ void main() {
         return change_password_route.onRequest(context);
       case '/api/v1/recipes':
         return recipes_route.onRequest(context);
+      case '/api/v1/tokens':
+        return tokens_route.onRequest(context);
+      case '/api/v1/users':
+        return users_route.onRequest(context);
       default:
+        final path = context.request.uri.path;
+        final tokenMatch =
+            RegExp(r'^/api/v1/tokens/([^/]+)$').firstMatch(path);
+        if (tokenMatch != null) {
+          return token_route.onRequest(context, tokenMatch.group(1)!);
+        }
+        final sessionMatch =
+            RegExp(r'^/api/v1/sessions/([^/]+)$').firstMatch(path);
+        if (sessionMatch != null) {
+          return session_route.onRequest(context, sessionMatch.group(1)!);
+        }
+        final resetMatch = RegExp(r'^/api/v1/users/([^/]+)/reset_password$')
+            .firstMatch(path);
+        if (resetMatch != null) {
+          return reset_route.onRequest(context, resetMatch.group(1)!);
+        }
+        final userMatch =
+            RegExp(r'^/api/v1/users/([^/]+)$').firstMatch(path);
+        if (userMatch != null) {
+          return user_route.onRequest(context, userMatch.group(1)!);
+        }
         return Response(
           statusCode: HttpStatus.notFound,
           body: 'Route not found',
@@ -534,6 +565,43 @@ void main() {
       );
       expect(change.statusCode, HttpStatus.forbidden);
       expect(errorOf(changeBody)['code'], 'forbidden');
+    });
+
+    test('a read-scoped PAT is denied every mutation (scope enforcement)',
+        () async {
+      // A leaked read PAT must not self-escalate by minting a full token,
+      // and (even on an admin account) must not perform admin mutations:
+      // effective permission = role ∩ scope.
+      final attempts = <(String, String, Map<String, Object?>?)>[
+        ('POST', '/api/v1/tokens', {'name': 'escalate', 'scope': 'full'}),
+        ('POST', '/api/v1/users', {'username': 'mallory', 'role': 'admin'}),
+        ('POST', '/api/v1/users/$adminId/reset_password', null),
+        ('PATCH', '/api/v1/users/999', {'disabled': true}),
+        ('DELETE', '/api/v1/tokens/999', null),
+        ('DELETE', '/api/v1/sessions/doesnotmatter', null),
+      ];
+      for (final (method, path, body) in attempts) {
+        final (response, responseBody) = await send(
+          method,
+          path,
+          headers: {'Authorization': 'Bearer $patToken'},
+          jsonBody: body,
+        );
+        expect(
+          response.statusCode,
+          HttpStatus.forbidden,
+          reason: '$method $path must be forbidden for a read PAT',
+        );
+        expect(errorOf(responseBody)['code'], 'forbidden');
+      }
+
+      // Reads still work with the same token.
+      final (recipes, _) = await send(
+        'GET',
+        '/api/v1/recipes',
+        headers: {'Authorization': 'Bearer $patToken'},
+      );
+      expect(recipes.statusCode, HttpStatus.ok);
     });
 
     test('a revoked PAT -> 401', () async {

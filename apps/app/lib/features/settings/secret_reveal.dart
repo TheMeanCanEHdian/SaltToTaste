@@ -18,6 +18,15 @@ class _SecretRevealState extends State<SecretReveal> {
   bool _copied = false;
 
   @override
+  void didUpdateWidget(SecretReveal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A new secret in the same slot must not claim it was already copied.
+    if (oldWidget.value != widget.value) {
+      _copied = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,

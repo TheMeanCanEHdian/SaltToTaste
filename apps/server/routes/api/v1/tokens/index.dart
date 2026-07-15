@@ -18,6 +18,7 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   requireCsrf(context, actor);
+  requireFullScope(actor);
   final body = await readJsonBody(context.request.json);
   return Response.json(
     body: createTokenHandler(

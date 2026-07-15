@@ -12,6 +12,7 @@ Response onRequest(RequestContext context, String id) {
   requireMethods(context, {HttpMethod.delete});
   final actor = requireUser(context);
   requireCsrf(context, actor);
+  requireFullScope(actor);
   final tokenId = int.tryParse(id);
   if (tokenId == null) {
     throw const ValidationException('Token id must be an integer.');

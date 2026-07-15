@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:salt_server/src/auth/password_hasher.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/http/timestamps.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -29,8 +30,8 @@ Map<String, Object?> _userJson(UserRow user) => {
       'role': user.role,
       'disabled': user.disabled,
       'must_change_password': user.mustChangePassword,
-      'created_at': user.createdAt,
-      'last_active_at': user.lastActiveAt,
+      'created_at': isoUtc(user.createdAt),
+      'last_active_at': isoUtc(user.lastActiveAt),
     };
 
 /// `GET /api/v1/users` (admin) — every account.
@@ -118,6 +119,13 @@ Future<Map<String, Object?>> resetPasswordHandler(
   AuthUser actor,
   int userId,
 ) async {
+  if (userId == actor.id) {
+    // Resetting yourself would delete your current session mid-request and
+    // force a change you could have made directly — use change password.
+    throw const ValidationException(
+      'Use "Change password" for your own account.',
+    );
+  }
   final user = db.userById(userId);
   if (user == null) {
     throw NotFoundException('user not found: $userId');

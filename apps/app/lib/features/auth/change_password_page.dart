@@ -29,6 +29,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   }
 
   Future<void> _submit() async {
+    if (_busy) {
+      return;
+    }
     if (_password.text != _confirm.text) {
       setState(() => _error = "Passwords don't match.");
       return;

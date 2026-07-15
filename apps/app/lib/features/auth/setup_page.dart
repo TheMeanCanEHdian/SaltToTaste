@@ -33,6 +33,9 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   Future<void> _submit() async {
+    if (_busy) {
+      return;
+    }
     if (_password.text != _confirm.text) {
       setState(() => _error = "Passwords don't match.");
       return;

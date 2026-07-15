@@ -62,9 +62,14 @@ class _UsersTabState extends State<UsersTab> {
     });
     try {
       await action();
+      if (!mounted) {
+        return;
+      }
       await _load();
     } on RepositoryException catch (exception) {
-      setState(() => _error = exception.message);
+      if (mounted) {
+        setState(() => _error = exception.message);
+      }
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -77,6 +82,9 @@ class _UsersTabState extends State<UsersTab> {
         final result = await context
             .read<AuthRepository>()
             .createUser(username: username, role: _role);
+        if (!mounted) {
+          return;
+        }
         _username.clear();
         setState(
           () => _revealed = (result.user.username, result.tempPassword),
@@ -86,6 +94,9 @@ class _UsersTabState extends State<UsersTab> {
   Future<void> _reset(UserAccount user) => _run(() async {
         final password =
             await context.read<AuthRepository>().resetPassword(user.id);
+        if (!mounted) {
+          return;
+        }
         setState(() => _revealed = (user.username, password));
       });
 
@@ -100,7 +111,9 @@ class _UsersTabState extends State<UsersTab> {
           description: 'Members can browse and favorite recipes. Admins can '
               'edit recipes and manage the server.',
         ),
-        if (_users == null && _error == null)
+        if (_users == null && _error != null)
+          ErrorView(message: _error!, onRetry: _load)
+        else if (_users == null)
           const LoadingView()
         else
           for (final user in _users ?? const <UserAccount>[])

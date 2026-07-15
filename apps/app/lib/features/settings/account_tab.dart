@@ -74,6 +74,9 @@ class _AccountTabState extends State<AccountTab> {
             currentPassword: _current.text,
             newPassword: _password.text,
           );
+      if (!mounted) {
+        return;
+      }
       _current.clear();
       _password.clear();
       _confirm.clear();
@@ -83,10 +86,12 @@ class _AccountTabState extends State<AccountTab> {
       });
       await _loadSessions();
     } on RepositoryException catch (exception) {
-      setState(() {
-        _message = exception.message;
-        _messageIsError = true;
-      });
+      if (mounted) {
+        setState(() {
+          _message = exception.message;
+          _messageIsError = true;
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -95,10 +100,15 @@ class _AccountTabState extends State<AccountTab> {
   }
 
   Future<void> _signOutSession(SessionInfo session) async {
+    final auth = context.read<AuthCubit>();
     try {
       await context.read<AuthRepository>().deleteSession(session.id);
-      if (session.current && mounted) {
-        await context.read<AuthCubit>().signOut();
+      if (session.current) {
+        // The server already deleted the session; sign out locally too.
+        await auth.signOut();
+        return;
+      }
+      if (!mounted) {
         return;
       }
       await _loadSessions();

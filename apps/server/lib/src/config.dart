@@ -13,6 +13,7 @@ class ServerConfig {
     required this.logLevel,
     required this.trustProxy,
     this.devAllowCors = false,
+    this.secureCookies = false,
   });
 
   /// Builds a config from [environment] (defaults to
@@ -28,10 +29,12 @@ class ServerConfig {
   ///   other value.
   /// * `TRUST_PROXY` — `true` to trust reverse-proxy headers; anything else
   ///   (or unset) means `false`.
-  /// * `DEV_ALLOW_CORS` — `true` to add `Access-Control-Allow-Origin: *` to
-  ///   every response. Development only: the Flutter dev server runs on a
-  ///   different port than the API. Production serves the web build
+  /// * `DEV_ALLOW_CORS` — `true` to add permissive CORS headers to every
+  ///   response. DEVELOPMENT ONLY — this defeats CSRF protection (a loud
+  ///   warning is logged at boot). Production serves the web build
   ///   same-origin and must leave this off.
+  /// * `SECURE_COOKIES` — `true` to always mark session cookies `Secure`
+  ///   (for deployments reached exclusively over HTTPS).
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -49,6 +52,7 @@ class ServerConfig {
       logLevel: _parseLogLevel(env['LOG_LEVEL']),
       trustProxy: env['TRUST_PROXY']?.trim().toLowerCase() == 'true',
       devAllowCors: env['DEV_ALLOW_CORS']?.trim().toLowerCase() == 'true',
+      secureCookies: env['SECURE_COOKIES']?.trim().toLowerCase() == 'true',
     );
     Directory(config.libraryDir).createSync(recursive: true);
     return config;
@@ -67,6 +71,10 @@ class ServerConfig {
   /// Development only (Flutter dev server on a different port); production
   /// serves the web build same-origin.
   final bool devAllowCors;
+
+  /// Forces the `Secure` attribute on session cookies regardless of proxy
+  /// headers — for deployments that are always reached over HTTPS.
+  final bool secureCookies;
 
   /// Path of the SQLite database file inside [dataDir].
   String get dbPath => '$dataDir/salt.db';

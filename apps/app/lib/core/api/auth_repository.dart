@@ -129,10 +129,13 @@ class AuthRepository {
   /// The signed-in user, or null when the session is absent/expired.
   Future<AuthUserInfo?> me() async {
     try {
-      final data = await _call(() => _dio.get<dynamic>('/api/v1/auth/me'));
-      return AuthUserInfo.fromJson(
-        (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
-      );
+      return await _guard(() async {
+        final data =
+            await _call(() => _dio.get<dynamic>('/api/v1/auth/me'));
+        return AuthUserInfo.fromJson(
+          (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
+        );
+      });
     } on RepositoryException catch (exception) {
       if (exception.code == 'unauthorized') {
         return null;
@@ -145,34 +148,38 @@ class AuthRepository {
     required String setupCode,
     required String username,
     required String password,
-  }) async {
-    final data = await _call(
-      () => _dio.post<dynamic>('/api/v1/auth/setup', data: {
-        'setup_code': setupCode,
-        'username': username,
-        'password': password,
-      }),
-    );
-    return AuthUserInfo.fromJson(
-      (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
-    );
+  }) {
+    return _guard(() async {
+      final data = await _call(
+        () => _dio.post<dynamic>('/api/v1/auth/setup', data: {
+          'setup_code': setupCode,
+          'username': username,
+          'password': password,
+        }),
+      );
+      return AuthUserInfo.fromJson(
+        (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
+      );
+    });
   }
 
   Future<AuthUserInfo> login({
     required String username,
     required String password,
     required bool remember,
-  }) async {
-    final data = await _call(
-      () => _dio.post<dynamic>('/api/v1/auth/login', data: {
-        'username': username,
-        'password': password,
-        'remember': remember,
-      }),
-    );
-    return AuthUserInfo.fromJson(
-      (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
-    );
+  }) {
+    return _guard(() async {
+      final data = await _call(
+        () => _dio.post<dynamic>('/api/v1/auth/login', data: {
+          'username': username,
+          'password': password,
+          'remember': remember,
+        }),
+      );
+      return AuthUserInfo.fromJson(
+        (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
+      );
+    });
   }
 
   Future<void> logout() =>
@@ -191,75 +198,82 @@ class AuthRepository {
 
   // --- admin: users ---------------------------------------------------------
 
-  Future<List<UserAccount>> listUsers() async {
-    final data = await _call(() => _dio.get<dynamic>('/api/v1/users'));
-    return _items(data, UserAccount.fromJson);
-  }
+  Future<List<UserAccount>> listUsers() => _guard(() async {
+        final data = await _call(() => _dio.get<dynamic>('/api/v1/users'));
+        return _items(data, UserAccount.fromJson);
+      });
 
   /// Creates an account; returns the account and its one-time temp password.
   Future<({UserAccount user, String tempPassword})> createUser({
     required String username,
     required String role,
-  }) async {
-    final data = await _call(
-      () => _dio.post<dynamic>('/api/v1/users', data: {
-        'username': username,
-        'role': role,
-      }),
-    ) as Map<String, dynamic>;
-    return (
-      user: UserAccount.fromJson(data['user'] as Map<String, dynamic>),
-      tempPassword: data['temp_password'] as String,
-    );
+  }) {
+    return _guard(() async {
+      final data = await _call(
+        () => _dio.post<dynamic>('/api/v1/users', data: {
+          'username': username,
+          'role': role,
+        }),
+      ) as Map<String, dynamic>;
+      return (
+        user: UserAccount.fromJson(data['user'] as Map<String, dynamic>),
+        tempPassword: data['temp_password'] as String,
+      );
+    });
   }
 
-  Future<UserAccount> patchUser(int id, {String? role, bool? disabled}) async {
-    final data = await _call(
-      () => _dio.patch<dynamic>('/api/v1/users/$id', data: {
-        if (role != null) 'role': role,
-        if (disabled != null) 'disabled': disabled,
-      }),
-    ) as Map<String, dynamic>;
-    return UserAccount.fromJson(data['user'] as Map<String, dynamic>);
+  Future<UserAccount> patchUser(int id, {String? role, bool? disabled}) {
+    return _guard(() async {
+      final data = await _call(
+        () => _dio.patch<dynamic>('/api/v1/users/$id', data: {
+          if (role != null) 'role': role,
+          if (disabled != null) 'disabled': disabled,
+        }),
+      ) as Map<String, dynamic>;
+      return UserAccount.fromJson(data['user'] as Map<String, dynamic>);
+    });
   }
 
-  Future<String> resetPassword(int id) async {
-    final data = await _call(
-      () => _dio.post<dynamic>('/api/v1/users/$id/reset_password'),
-    ) as Map<String, dynamic>;
-    return data['temp_password'] as String;
-  }
+  Future<String> resetPassword(int id) => _guard(() async {
+        final data = await _call(
+          () => _dio.post<dynamic>('/api/v1/users/$id/reset_password'),
+        ) as Map<String, dynamic>;
+        return data['temp_password'] as String;
+      });
 
   // --- own sessions & tokens -------------------------------------------------
 
-  Future<List<SessionInfo>> listSessions() async {
-    final data = await _call(() => _dio.get<dynamic>('/api/v1/sessions'));
-    return _items(data, SessionInfo.fromJson);
-  }
+  Future<List<SessionInfo>> listSessions() => _guard(() async {
+        final data =
+            await _call(() => _dio.get<dynamic>('/api/v1/sessions'));
+        return _items(data, SessionInfo.fromJson);
+      });
 
   Future<void> deleteSession(String id) =>
       _call(() => _dio.delete<dynamic>('/api/v1/sessions/$id'));
 
-  Future<List<TokenInfo>> listTokens() async {
-    final data = await _call(() => _dio.get<dynamic>('/api/v1/tokens'));
-    return _items(data, TokenInfo.fromJson);
-  }
+  Future<List<TokenInfo>> listTokens() => _guard(() async {
+        final data = await _call(() => _dio.get<dynamic>('/api/v1/tokens'));
+        return _items(data, TokenInfo.fromJson);
+      });
 
   /// Mints a PAT; the returned token value is shown exactly once.
   Future<({String token, TokenInfo item})> createToken({
     required String name,
     required String scope,
-  }) async {
-    final data = await _call(
-      () => _dio.post<dynamic>('/api/v1/tokens', data: {
-        'name': name,
-        'scope': scope,
-      }),
-    ) as Map<String, dynamic>;
-    return (
-      token: data['token'] as String,
-      item: TokenInfo.fromJson(data['item'] as Map<String, dynamic>),
-    );
+  }) {
+    return _guard(() async {
+      final data = await _call(
+        () => _dio.post<dynamic>('/api/v1/tokens', data: {
+          'name': name,
+          'scope': scope,
+        }),
+      ) as Map<String, dynamic>;
+      return (
+        token: data['token'] as String,
+        item: TokenInfo.fromJson(data['item'] as Map<String, dynamic>),
+      );
+    });
   }
 
   Future<void> revokeToken(int id) =>
@@ -293,10 +307,33 @@ class AuthRepository {
           requestId: error['request_id'] as String?,
         );
       }
+      if (exception.response?.statusCode == 401) {
+        // A 401 without an envelope (an auth proxy, a stripped body) still
+        // means the credential is gone.
+        throw const RepositoryException(
+          'Sign in to continue.',
+          code: 'unauthorized',
+        );
+      }
       throw const RepositoryException(
         "Couldn't reach the SaltToTaste server. Check that it's running, "
         'then retry.',
       );
+    } catch (_) {
+      throw const RepositoryException(
+        'The server returned an unexpected response. Please try again.',
+      );
+    }
+  }
+
+  /// Wraps request + response parsing so a malformed 200 body (unexpected
+  /// shape, wrong types) surfaces as a [RepositoryException] instead of an
+  /// uncaught TypeError that would strand the UI on a spinner.
+  Future<T> _guard<T>(Future<T> Function() body) async {
+    try {
+      return await body();
+    } on RepositoryException {
+      rethrow;
     } catch (_) {
       throw const RepositoryException(
         'The server returned an unexpected response. Please try again.',

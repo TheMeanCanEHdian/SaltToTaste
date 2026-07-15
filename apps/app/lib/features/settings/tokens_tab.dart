@@ -64,11 +64,16 @@ class _TokensTabState extends State<TokensTab> {
             name: _name.text.trim(),
             scope: _scope,
           );
+      if (!mounted) {
+        return;
+      }
       _name.clear();
       setState(() => _revealedToken = result.token);
       await _load();
     } on RepositoryException catch (exception) {
-      setState(() => _error = exception.message);
+      if (mounted) {
+        setState(() => _error = exception.message);
+      }
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -79,6 +84,9 @@ class _TokensTabState extends State<TokensTab> {
   Future<void> _revoke(TokenInfo token) async {
     try {
       await context.read<AuthRepository>().revokeToken(token.id);
+      if (!mounted) {
+        return;
+      }
       await _load();
     } on RepositoryException catch (exception) {
       if (mounted) {
@@ -97,7 +105,9 @@ class _TokensTabState extends State<TokensTab> {
           description: 'Tokens act as you — the credential for native apps '
               'and scripts. Revoke any you no longer use.',
         ),
-        if (_tokens == null && _error == null)
+        if (_tokens == null && _error != null)
+          ErrorView(message: _error!, onRetry: _load)
+        else if (_tokens == null)
           const LoadingView()
         else ...[
           for (final token in _tokens ?? const <TokenInfo>[])

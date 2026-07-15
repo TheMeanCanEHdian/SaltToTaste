@@ -29,15 +29,26 @@ class AuthRuntime {
   AuthRuntime({
     PasswordHasher? hasher,
     LoginRateLimiter? rateLimiter,
+    LoginRateLimiter? ipRateLimiter,
     this.setupCode,
   })  : hasher = hasher ?? PasswordHasher(),
-        rateLimiter = rateLimiter ?? LoginRateLimiter();
+        rateLimiter = rateLimiter ?? LoginRateLimiter(),
+        ipRateLimiter = ipRateLimiter ??
+            LoginRateLimiter(failureThreshold: ipFailureThreshold);
+
+  /// Aggregate failures from one address at which the whole IP locks —
+  /// catches password spraying across many usernames, which per-account
+  /// keys can't see.
+  static const int ipFailureThreshold = 25;
 
   /// Argon2id password hasher.
   final PasswordHasher hasher;
 
-  /// Per `ip|username` login throttle.
+  /// Per `ip|username` login throttle (vertical brute force).
   final LoginRateLimiter rateLimiter;
+
+  /// Per-IP aggregate throttle (horizontal password spraying).
+  final LoginRateLimiter ipRateLimiter;
 
   /// First-boot setup code, or null once used (or when users already
   /// exist).
@@ -78,12 +89,18 @@ Future<SessionGrant> setupAdmin(
   _validNewPassword(password, field: 'password');
 
   final passwordHash = await runtime.hasher.hash(password);
+  // Re-check after the ~100ms hash await: two concurrent setup requests
+  // could both pass the guards above while suspended, and "first boot
+  // creates exactly one admin" must hold. No awaits below this check.
+  if (db.userCount() != 0 || runtime.setupCode == null) {
+    throw const ForbiddenException('Setup has already been completed.');
+  }
+  runtime.setupCode = null;
   final userId = db.createUser(
     username: username,
     passwordHash: passwordHash,
     role: 'admin',
   );
-  runtime.setupCode = null;
   final token = _openSession(
     db,
     userId: userId,
@@ -121,23 +138,34 @@ Future<SessionGrant> login(
 
   final key = '$clientIp|${username.toLowerCase()}';
   final gate = runtime.rateLimiter.check(key);
-  if (!gate.allowed) {
-    throw LockedException(_ceilSeconds(gate.retryAfter));
+  final ipGate = runtime.ipRateLimiter.check(clientIp);
+  if (!gate.allowed || !ipGate.allowed) {
+    final retryAfter = gate.retryAfter > ipGate.retryAfter
+        ? gate.retryAfter
+        : ipGate.retryAfter;
+    throw LockedException(_ceilSeconds(retryAfter));
+  }
+
+  void countFailure() {
+    runtime.rateLimiter.recordFailure(key);
+    runtime.ipRateLimiter.recordFailure(clientIp);
   }
 
   final user = db.userByUsername(username);
   if (user == null) {
     await runtime.hasher.dummyVerify(password);
-    runtime.rateLimiter.recordFailure(key);
+    countFailure();
     throw const ValidationException(_invalidCredentials);
   }
   final verified = await runtime.hasher.verify(password, user.passwordHash);
   if (!verified || user.disabled) {
-    runtime.rateLimiter.recordFailure(key);
+    countFailure();
     throw const ValidationException(_invalidCredentials);
   }
 
   runtime.rateLimiter.recordSuccess(key);
+  // Success does NOT clear the aggregate IP bucket: a sprayer who finds one
+  // valid credential must not regain a fresh horizontal budget.
   final token = _openSession(
     db,
     userId: user.id,
@@ -279,13 +307,17 @@ bool? _optionalBoolField(Map<String, Object?> body, String name) {
 }
 
 String _validUsername(String username) {
-  if (!_usernamePattern.hasMatch(username)) {
+  // Same normalization as admin-created accounts (user_handlers):
+  // trimmed and lowercased before validation and storage, so the setup
+  // admin's username follows the same rules as everyone else's.
+  final normalized = username.trim().toLowerCase();
+  if (!_usernamePattern.hasMatch(normalized)) {
     throw const ValidationException(
       'Username must be 3-32 characters: letters, digits, '
       'underscore, dot, or dash.',
     );
   }
-  return username;
+  return normalized;
 }
 
 void _validNewPassword(String password, {required String field}) {

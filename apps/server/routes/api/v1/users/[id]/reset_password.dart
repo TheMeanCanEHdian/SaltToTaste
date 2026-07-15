@@ -13,6 +13,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
   requireMethods(context, {HttpMethod.post});
   final actor = requireAdmin(context);
   requireCsrf(context, actor);
+  requireFullScope(actor);
 
   final userId = int.tryParse(id);
   if (userId == null) {

@@ -1,6 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/http/method_guard.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
 /// `POST /api/v1/auth/setup` `{setup_code, username, password}` -> creates
@@ -11,7 +12,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 /// 403 envelope once any user exists; 422 on a wrong code or invalid
 /// username/password.
 Future<Response> onRequest(RequestContext context) async {
-  requirePost(context);
+  requireMethods(context, {HttpMethod.post});
   final body = await readJsonBody(context.request.json);
   final result = await setupAdmin(
     context.read<SaltDatabase>(),

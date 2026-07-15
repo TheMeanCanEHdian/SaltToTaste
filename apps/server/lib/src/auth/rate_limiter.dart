@@ -10,12 +10,21 @@
 /// Pure and single-isolate; state is lost on restart, which is acceptable
 /// for login throttling.
 class LoginRateLimiter {
-  /// Creates a limiter. [now] is injectable for tests and defaults to the
-  /// wall clock.
-  LoginRateLimiter({DateTime Function()? now}) : _now = now ?? DateTime.now;
+  /// Creates a limiter locking after [failureThreshold] consecutive
+  /// failures. [now] is injectable for tests and defaults to the wall
+  /// clock.
+  LoginRateLimiter({
+    this.failureThreshold = defaultFailureThreshold,
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now;
 
-  /// Consecutive failures at which lockout begins.
-  static const int failureThreshold = 5;
+  /// Default consecutive failures at which lockout begins (per-account
+  /// keys). An aggregate per-IP limiter uses a higher threshold to catch
+  /// password spraying across many usernames.
+  static const int defaultFailureThreshold = 5;
+
+  /// Consecutive failures at which lockout begins for this instance.
+  final int failureThreshold;
 
   /// Lockout applied at the [failureThreshold]th failure.
   static const Duration baseLockout = Duration(minutes: 1);

@@ -31,6 +31,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submit() async {
+    if (_busy) {
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;

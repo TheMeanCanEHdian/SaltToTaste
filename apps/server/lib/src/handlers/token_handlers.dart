@@ -1,23 +1,29 @@
 import 'package:salt_server/src/auth/tokens.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/http/timestamps.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
 /// `GET /api/v1/sessions` — the actor's sessions, newest first. The id is
 /// the stored token hash (already one-way; safe as an opaque identifier).
-Map<String, Object?> listSessionsHandler(SaltDatabase db, AuthUser actor) => {
-      'items': [
-        for (final session in db.sessionsForUser(actor.id))
-          {
-            'id': session.tokenHash,
-            'created_at': session.createdAt,
-            'last_seen_at': session.lastSeenAt,
-            'user_agent': session.userAgent,
-            'remember': session.remember,
-            'current': session.tokenHash == actor.sessionHash,
-          },
-      ],
-    };
+Map<String, Object?> listSessionsHandler(SaltDatabase db, AuthUser actor) {
+  // Prune before listing so the security-sensitive "active sessions" view
+  // never shows expired ghosts.
+  db.deleteExpiredSessions();
+  return {
+    'items': [
+      for (final session in db.sessionsForUser(actor.id))
+        {
+          'id': session.tokenHash,
+          'created_at': isoUtc(session.createdAt),
+          'last_seen_at': isoUtc(session.lastSeenAt),
+          'user_agent': session.userAgent,
+          'remember': session.remember,
+          'current': session.tokenHash == actor.sessionHash,
+        },
+    ],
+  };
+}
 
 /// `DELETE /api/v1/sessions/<id>` — signs that session out. Only the
 /// actor's own sessions; deleting the current one acts as logout.
@@ -36,8 +42,8 @@ Map<String, Object?> _tokenJson(ApiTokenRow token) => {
       'name': token.name,
       'prefix': token.prefix,
       'scope': token.scope,
-      'created_at': token.createdAt,
-      'last_used_at': token.lastUsedAt,
+      'created_at': isoUtc(token.createdAt),
+      'last_used_at': isoUtc(token.lastUsedAt),
       'revoked': token.revokedAt != null,
     };
 

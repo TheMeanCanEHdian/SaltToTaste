@@ -12,6 +12,7 @@ Response onRequest(RequestContext context, String id) {
   requireMethods(context, {HttpMethod.delete});
   final actor = requireUser(context);
   requireCsrf(context, actor);
+  requireFullScope(actor);
   deleteSessionHandler(context.read<SaltDatabase>(), actor, id);
   return Response(statusCode: HttpStatus.noContent);
 }

@@ -21,7 +21,10 @@ Two interchangeable credentials, checked by the same middleware:
 
 Roles: **admin** (full access) and **member** (read + personal features).
 PATs carry a scope — `read` (browse + personal data) or `full` (everything
-the owner's role allows). Effective permission = role ∩ scope.
+the owner's role allows). Effective permission = role ∩ scope: every
+mutating endpoint (accounts, sessions, tokens — and recipe writes when they
+arrive) requires `full` scope and returns `403 forbidden` to a `read` PAT.
+Session logins always act as `full`.
 
 CSRF: cookie-authenticated **mutating** requests must send
 `X-Requested-With: SaltToTaste` (bearer requests are exempt).
@@ -51,7 +54,7 @@ temporary password with `must_change_password`: until the user calls
 | `GET /api/v1/users` | admin | all accounts |
 | `POST /api/v1/users` | admin | `{username, role}` → `{user, temp_password}` (shown once); duplicate → `409 conflict` |
 | `PATCH /api/v1/users/{id}` | admin | `{role? \| disabled?}`; never your own account |
-| `POST /api/v1/users/{id}/reset_password` | admin | new `temp_password` (once), forces change, signs out everywhere |
+| `POST /api/v1/users/{id}/reset_password` | admin | new `temp_password` (once), forces change, signs out everywhere; not your own account (use change password). A forced change also blocks the user's PATs until they sign in and set a password |
 | `GET /api/v1/sessions` | any | own sessions; `current` flags this one |
 | `DELETE /api/v1/sessions/{id}` | any | sign out one session (own only) |
 | `GET /api/v1/tokens` | any | own PATs (prefix only) |
@@ -84,7 +87,8 @@ temporary password with `must_change_password`: until the user calls
   | `locked` | 429 | Login lockout; message says when to retry |
   | `internal` | 500 | Unhandled server error (details only in server logs) |
 
-- Timestamps are UTC ISO-8601 strings. Keys are `snake_case`.
+- Timestamps are UTC ISO-8601 strings with a `Z` suffix. Keys are
+  `snake_case`.
 
 ## Endpoints
 
