@@ -360,8 +360,11 @@ class SaltDatabase {
       'SELECT COUNT(*) AS n FROM recipes$favoriteFilter',
     ).select(filterParams).first['n'] as int;
     final rows = _prepared(
-      'SELECT id, slug, source_slug, title, category, servings_text, '
-      'total_min, hero_image FROM recipes$favoriteFilter '
+      'SELECT recipes.id, slug, source_slug, title, category, '
+      'servings_text, total_min, hero_image, n.calories_per_serving '
+      'AS calories FROM recipes '
+      'LEFT JOIN recipe_nutrition n ON n.recipe_id = recipes.id'
+      '$favoriteFilter '
       'ORDER BY title COLLATE NOCASE LIMIT ? OFFSET ?',
     ).select([...filterParams, limit, offset]);
     return (items: _cardsFromRows(rows, viewerId: viewerId), total: total);
@@ -388,6 +391,7 @@ class SaltDatabase {
           tags: tagsByRecipe[row['id'] as String] ?? const [],
           servingsText: row['servings_text'] as String?,
           totalMinutes: row['total_min'] as int?,
+          caloriesPerServing: (row['calories'] as num?)?.toDouble(),
           favorite: favorites.contains(row['id'] as String),
         ),
     ];
@@ -439,12 +443,8 @@ class SaltDatabase {
     int? viewerId,
     bool favoritesOnly = false,
   }) {
-    if (compiled.calories.isNotEmpty) {
-      // No recipe_nutrition table yet — a calories filter matches nothing.
-      return (items: const [], total: 0);
-    }
     final match = compiled.ftsMatch;
-    if (match == null) {
+    if (match == null && compiled.calories.isEmpty) {
       return listCards(
         page: page,
         limit: limit,
@@ -459,25 +459,55 @@ class SaltDatabase {
     if (offset < 0) {
       offset = 0;
     }
-    final favoriteFilter = favoritesOnly
-        ? ' AND EXISTS (SELECT 1 FROM user_favorites uf '
-            'WHERE uf.user_id = ? AND uf.recipe_id = r.id)'
-        : '';
-    final filterParams = favoritesOnly ? [viewerId] : const <Object?>[];
-    final total = _prepared(
-      'SELECT COUNT(*) AS n '
-      'FROM recipe_fts f JOIN recipes r ON r.rowid = f.rowid '
-      'WHERE recipe_fts MATCH ?$favoriteFilter',
-    ).select([match, ...filterParams]).first['n'] as int;
+
+    // Assemble FROM/WHERE/ORDER from the three optional constraints: the
+    // FTS match, the calories filter (via recipe_nutrition — recipes
+    // without computed nutrition truthfully never match), and favorites.
+    // Calorie queries order lowest-first (the old app's contract);
+    // otherwise relevance. All values are bound parameters; the only
+    // interpolations are operator symbols from the CaloriesOp enum.
+    final params = <Object?>[];
+    var from = 'FROM recipes r';
+    final conditions = <String>[];
+    if (match != null) {
+      from = 'FROM recipe_fts f JOIN recipes r ON r.rowid = f.rowid';
+      conditions.add('recipe_fts MATCH ?');
+      params.add(match);
+    }
+    // Always joined (LEFT) so text-only results still carry the calorie
+    // badge; the calories filter tightens it to an inner-join semantics
+    // via the IS NOT NULL condition.
+    from += ' LEFT JOIN recipe_nutrition n ON n.recipe_id = r.id';
+    if (compiled.calories.isNotEmpty) {
+      conditions.add('n.calories_per_serving IS NOT NULL');
+      for (final node in compiled.calories) {
+        conditions.add('n.calories_per_serving ${node.op.symbol} ?');
+        params.add(node.value);
+      }
+    }
+    if (favoritesOnly) {
+      conditions.add(
+        'EXISTS (SELECT 1 FROM user_favorites uf '
+        'WHERE uf.user_id = ? AND uf.recipe_id = r.id)',
+      );
+      params.add(viewerId);
+    }
+    final where = 'WHERE ${conditions.join(' AND ')}';
+    // Title tiebreakers: equal bm25 scores (and equal calorie values) are
+    // common, and OFFSET pagination needs a stable total order.
+    final order = compiled.orderByCalories
+        ? 'ORDER BY n.calories_per_serving, r.title COLLATE NOCASE'
+        : 'ORDER BY bm25(recipe_fts), r.title COLLATE NOCASE';
+
+    final total = _prepared('SELECT COUNT(*) AS n $from $where')
+        .select(params)
+        .first['n'] as int;
     final rows = _prepared(
       'SELECT r.id, r.slug, r.source_slug, r.title, r.category, '
-      'r.servings_text, r.total_min, r.hero_image '
-      'FROM recipe_fts f JOIN recipes r ON r.rowid = f.rowid '
-      'WHERE recipe_fts MATCH ?$favoriteFilter '
-      // Title tiebreaker: equal bm25 scores are common (single-token tag
-      // queries) and OFFSET pagination needs a stable total order.
-      'ORDER BY bm25(recipe_fts), r.title COLLATE NOCASE LIMIT ? OFFSET ?',
-    ).select([match, ...filterParams, limit, offset]);
+      'r.servings_text, r.total_min, r.hero_image, '
+      'n.calories_per_serving '
+      'AS calories $from $where $order LIMIT ? OFFSET ?',
+    ).select([...params, limit, offset]);
     return (items: _cardsFromRows(rows, viewerId: viewerId), total: total);
   }
 
@@ -582,6 +612,208 @@ class SaltDatabase {
       'INSERT INTO settings (key, value) VALUES (?, ?) '
       'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
     ).execute([key, value]);
+  }
+
+  // --------------------------------------------------------------------
+  // Nutrition (migration 005): FDC caches, per-line matches, computed
+  // per-serving totals, bulk-job bookkeeping.
+  // --------------------------------------------------------------------
+
+  /// Cached FDC search response JSON for a normalized query, or null.
+  String? fdcSearchCacheGet(String query) {
+    final rows = _prepared(
+      'SELECT response FROM fdc_search_cache WHERE query = ?',
+    ).select([query]);
+    return rows.isEmpty ? null : rows.first['response'] as String;
+  }
+
+  /// Stores a search response in the cache.
+  void fdcSearchCachePut(String query, String responseJson) {
+    _prepared(
+      'INSERT INTO fdc_search_cache (query, response) VALUES (?, ?) '
+      'ON CONFLICT(query) DO UPDATE SET response = excluded.response, '
+      "fetched_at = datetime('now')",
+    ).execute([query, responseJson]);
+  }
+
+  /// Cached FDC food-detail JSON, or null.
+  String? fdcFoodCacheGet(int fdcId) {
+    final rows = _prepared(
+      'SELECT response FROM fdc_food_cache WHERE fdc_id = ?',
+    ).select([fdcId]);
+    return rows.isEmpty ? null : rows.first['response'] as String;
+  }
+
+  /// Stores a food detail in the cache.
+  void fdcFoodCachePut(int fdcId, String responseJson) {
+    _prepared(
+      'INSERT INTO fdc_food_cache (fdc_id, response) VALUES (?, ?) '
+      'ON CONFLICT(fdc_id) DO UPDATE SET response = excluded.response, '
+      "fetched_at = datetime('now')",
+    ).execute([fdcId, responseJson]);
+  }
+
+  /// All ingredient matches for a recipe, in position order.
+  List<IngredientMatchRow> ingredientMatchesFor(String recipeId) {
+    final rows = _prepared(
+      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
+      'confidence, grams, gram_source, status, updated_at '
+      'FROM ingredient_matches WHERE recipe_id = ? ORDER BY position',
+    ).select([recipeId]);
+    return [for (final row in rows) IngredientMatchRow.fromRow(row)];
+  }
+
+  /// Creates or replaces one match row.
+  void upsertIngredientMatch(IngredientMatchRow row) {
+    _prepared(
+      'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
+      'description, data_type, confidence, grams, gram_source, status, '
+      'updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
+      'fdc_id = excluded.fdc_id, description = excluded.description, '
+      'data_type = excluded.data_type, confidence = excluded.confidence, '
+      'grams = excluded.grams, gram_source = excluded.gram_source, '
+      'status = excluded.status, updated_at = excluded.updated_at',
+    ).execute([
+      row.recipeId,
+      row.position,
+      row.raw,
+      row.fdcId,
+      row.description,
+      row.dataType,
+      row.confidence,
+      row.grams,
+      row.gramSource,
+      row.status,
+      _utcNowIso(),
+    ]);
+  }
+
+  /// Drops match rows at or beyond [fromPosition] (an edit shortened the
+  /// ingredient list).
+  void deleteIngredientMatchesFrom(String recipeId, int fromPosition) {
+    _prepared(
+      'DELETE FROM ingredient_matches WHERE recipe_id = ? AND position >= ?',
+    ).execute([recipeId, fromPosition]);
+  }
+
+  /// The computed nutrition row for a recipe, or null.
+  RecipeNutritionRow? nutritionFor(String recipeId) {
+    final rows = _prepared(
+      'SELECT recipe_id, serving_basis, calories_per_serving, nutrients, '
+      'total_grams, matched_count, total_count, status, ingredients_hash, '
+      'computed_at FROM recipe_nutrition WHERE recipe_id = ?',
+    ).select([recipeId]);
+    return rows.isEmpty ? null : RecipeNutritionRow.fromRow(rows.first);
+  }
+
+  /// Creates or replaces the computed nutrition for a recipe.
+  void upsertRecipeNutrition({
+    required String recipeId,
+    required int servingBasis,
+    required double? caloriesPerServing,
+    required String nutrientsJson,
+    required double totalGrams,
+    required int matchedCount,
+    required int totalCount,
+    required String status,
+    required String ingredientsHash,
+  }) {
+    _prepared(
+      'INSERT INTO recipe_nutrition (recipe_id, serving_basis, '
+      'calories_per_serving, nutrients, total_grams, matched_count, '
+      'total_count, status, ingredients_hash, computed_at) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'ON CONFLICT(recipe_id) DO UPDATE SET '
+      'serving_basis = excluded.serving_basis, '
+      'calories_per_serving = excluded.calories_per_serving, '
+      'nutrients = excluded.nutrients, '
+      'total_grams = excluded.total_grams, '
+      'matched_count = excluded.matched_count, '
+      'total_count = excluded.total_count, status = excluded.status, '
+      'ingredients_hash = excluded.ingredients_hash, '
+      'computed_at = excluded.computed_at',
+    ).execute([
+      recipeId,
+      servingBasis,
+      caloriesPerServing,
+      nutrientsJson,
+      totalGrams,
+      matchedCount,
+      totalCount,
+      status,
+      ingredientsHash,
+      _utcNowIso(),
+    ]);
+  }
+
+  /// Recipe ids that have no computed nutrition yet (bulk-job work list).
+  List<String> recipeIdsWithoutNutrition() {
+    final rows = _db.select(
+      'SELECT r.id FROM recipes r '
+      'LEFT JOIN recipe_nutrition n ON n.recipe_id = r.id '
+      'WHERE n.recipe_id IS NULL ORDER BY r.id',
+    );
+    return [for (final row in rows) row['id'] as String];
+  }
+
+  /// Creates a nutrition bulk-job row; returns its id.
+  int createNutritionJob(int total) {
+    _prepared(
+      'INSERT INTO nutrition_jobs (status, total, started_at) '
+      "VALUES ('running', ?, ?)",
+    ).execute([total, _utcNowIso()]);
+    return _db.lastInsertRowId;
+  }
+
+  /// Updates bulk-job progress.
+  void updateNutritionJob(
+    int id, {
+    required int done,
+    required int failed,
+    String? status,
+    String? logJson,
+  }) {
+    _prepared(
+      'UPDATE nutrition_jobs SET done = ?, failed = ?, '
+      'status = COALESCE(?, status), log = COALESCE(?, log), '
+      "finished_at = CASE WHEN ? IN ('done','failed') THEN ? "
+      'ELSE finished_at END WHERE id = ?',
+    ).execute([done, failed, status, logJson, status ?? '', _utcNowIso(), id]);
+  }
+
+  /// Marks jobs still `running` as failed — called once at boot, where a
+  /// `running` row can only be an orphan from a crashed/restarted process
+  /// (the job loop lives in server memory). Returns how many were closed.
+  int failOrphanedNutritionJobs() {
+    _prepared(
+      "UPDATE nutrition_jobs SET status = 'failed', finished_at = ?, "
+      r"log = json_insert(log, '$[#]', "
+      "'interrupted by a server restart') WHERE status = 'running'",
+    ).execute([_utcNowIso()]);
+    return _db.updatedRows;
+  }
+
+  /// One bulk-job row as JSON-ready values, or null.
+  Map<String, Object?>? nutritionJob(int id) {
+    final rows = _prepared(
+      'SELECT id, status, total, done, failed, log, started_at, finished_at '
+      'FROM nutrition_jobs WHERE id = ?',
+    ).select([id]);
+    if (rows.isEmpty) {
+      return null;
+    }
+    final row = rows.first;
+    return {
+      'id': row['id'],
+      'status': row['status'],
+      'total': row['total'],
+      'done': row['done'],
+      'failed': row['failed'],
+      'log': jsonDecode(row['log'] as String),
+      'started_at': row['started_at'],
+      'finished_at': row['finished_at'],
+    };
   }
 
   // --------------------------------------------------------------------
@@ -1035,6 +1267,163 @@ class ApiTokenRow {
 }
 
 /// One tag with its usage count and optional chip style.
+/// One row of `ingredient_matches`.
+class IngredientMatchRow {
+  /// Builds a row from its parts.
+  const IngredientMatchRow({
+    required this.recipeId,
+    required this.position,
+    required this.raw,
+    required this.fdcId,
+    required this.description,
+    required this.dataType,
+    required this.confidence,
+    required this.grams,
+    required this.gramSource,
+    required this.status,
+    this.updatedAt,
+  });
+
+  /// Decodes a database row.
+  factory IngredientMatchRow.fromRow(Row row) => IngredientMatchRow(
+        recipeId: row['recipe_id'] as String,
+        position: row['position'] as int,
+        raw: row['raw'] as String,
+        fdcId: row['fdc_id'] as int?,
+        description: row['description'] as String?,
+        dataType: row['data_type'] as String?,
+        confidence: (row['confidence'] as num).toDouble(),
+        grams: (row['grams'] as num?)?.toDouble(),
+        gramSource: row['gram_source'] as String?,
+        status: row['status'] as String,
+        updatedAt: row['updated_at'] as String?,
+      );
+
+  /// Recipe the line belongs to.
+  final String recipeId;
+
+  /// Zero-based line position across all ingredient groups.
+  final int position;
+
+  /// The line's raw text when the match was made (staleness display).
+  final String raw;
+
+  /// Matched FDC food id, or null (water-like / unmatched).
+  final int? fdcId;
+
+  /// Matched food description.
+  final String? description;
+
+  /// Matched food data type (`Foundation` / `SR Legacy`).
+  final String? dataType;
+
+  /// Match confidence 0–1.
+  final double confidence;
+
+  /// Resolved grams for the whole line, or null.
+  final double? grams;
+
+  /// How grams were determined (a `GramSource` name), or null.
+  final String? gramSource;
+
+  /// `auto` | `confirmed` | `overridden` | `skipped` | `unmatched`.
+  final String status;
+
+  /// Last write time (UTC ISO-8601).
+  final String? updatedAt;
+
+  /// Copy with changed fields (explicit clears for the nullables).
+  IngredientMatchRow copyWith({
+    int? fdcId,
+    bool clearFdcId = false,
+    String? description,
+    String? dataType,
+    double? confidence,
+    double? grams,
+    bool clearGrams = false,
+    String? gramSource,
+    bool clearGramSource = false,
+    String? status,
+  }) =>
+      IngredientMatchRow(
+        recipeId: recipeId,
+        position: position,
+        raw: raw,
+        fdcId: clearFdcId ? null : (fdcId ?? this.fdcId),
+        description: description ?? this.description,
+        dataType: dataType ?? this.dataType,
+        confidence: confidence ?? this.confidence,
+        grams: clearGrams ? null : (grams ?? this.grams),
+        gramSource:
+            clearGramSource ? null : (gramSource ?? this.gramSource),
+        status: status ?? this.status,
+      );
+}
+
+/// One row of `recipe_nutrition`.
+class RecipeNutritionRow {
+  /// Builds a row from its parts.
+  const RecipeNutritionRow({
+    required this.recipeId,
+    required this.servingBasis,
+    required this.caloriesPerServing,
+    required this.nutrientsJson,
+    required this.totalGrams,
+    required this.matchedCount,
+    required this.totalCount,
+    required this.status,
+    required this.ingredientsHash,
+    required this.computedAt,
+  });
+
+  /// Decodes a database row.
+  factory RecipeNutritionRow.fromRow(Row row) => RecipeNutritionRow(
+        recipeId: row['recipe_id'] as String,
+        servingBasis: row['serving_basis'] as int?,
+        caloriesPerServing:
+            (row['calories_per_serving'] as num?)?.toDouble(),
+        nutrientsJson: row['nutrients'] as String,
+        totalGrams: (row['total_grams'] as num?)?.toDouble(),
+        matchedCount: row['matched_count'] as int,
+        totalCount: row['total_count'] as int,
+        status: row['status'] as String,
+        ingredientsHash: row['ingredients_hash'] as String,
+        computedAt: row['computed_at'] as String?,
+      );
+
+  /// Recipe the totals belong to.
+  final String recipeId;
+
+  /// Per-serving divisor used for the stored values.
+  final int? servingBasis;
+
+  /// Denormalized kcal per serving (search filter/ordering).
+  final double? caloriesPerServing;
+
+  /// JSON: nutrient key → {label, amount, unit, dv_percent?}.
+  final String nutrientsJson;
+
+  /// Total contributing grams across the whole recipe.
+  final double? totalGrams;
+
+  /// Lines contributing nutrients (incl. zero-value water).
+  final int matchedCount;
+
+  /// Total ingredient lines at compute time.
+  final int totalCount;
+
+  /// `complete` | `partial` (staleness is derived at read time by
+  /// comparing [ingredientsHash] to the current recipe).
+  final String status;
+
+  /// Hash of the ingredient lines the totals were computed from.
+  final String ingredientsHash;
+
+  /// Compute time (UTC ISO-8601).
+  final String? computedAt;
+}
+
+/// One tag with its recipe count and chip style.
 class TagInfoRow {
   /// Creates a tag row as returned by [SaltDatabase.listTags].
   const TagInfoRow({

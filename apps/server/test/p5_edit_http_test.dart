@@ -11,6 +11,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/services/recipe_edit_service.dart'
     show editableRecipeKeys;
 import 'package:test/test.dart';
@@ -20,13 +21,24 @@ import '../routes/api/v1/backups/[name].dart' as backup_route;
 import '../routes/api/v1/backups/index.dart' as backups_route;
 import '../routes/api/v1/library/index.dart' as library_route;
 import '../routes/api/v1/library/rescan.dart' as rescan_route;
+import '../routes/api/v1/nutrition/bulk.dart' as bulk_route;
 import '../routes/api/v1/recipes/[id]/favorite.dart' as favorite_route;
 import '../routes/api/v1/recipes/[id]/images/from_url.dart' as from_url_route;
 import '../routes/api/v1/recipes/[id]/images/index.dart' as images_route;
 import '../routes/api/v1/recipes/[id]/index.dart' as recipe_route;
 import '../routes/api/v1/recipes/[id]/note.dart' as note_route;
+import '../routes/api/v1/recipes/[id]/nutrition/compute.dart'
+    as compute_route;
+import '../routes/api/v1/recipes/[id]/nutrition/index.dart'
+    as nutrition_route;
+import '../routes/api/v1/recipes/[id]/nutrition/matches/[pos].dart'
+    as match_route;
+import '../routes/api/v1/recipes/[id]/nutrition/matches/index.dart'
+    as matches_route;
 import '../routes/api/v1/recipes/index.dart' as recipes_route;
+import '../routes/api/v1/settings/fdc_key.dart' as fdc_key_route;
 import 'support/corpus.dart';
+import 'support/fdc_fixtures.dart';
 
 // Synthesized credentials: auth inputs cannot come from the recipe corpus.
 const _adminPassword = 'admin-password-123';
@@ -61,6 +73,10 @@ void main() {
         return rescan_route.onRequest(context);
       case '/api/v1/backups':
         return backups_route.onRequest(context);
+      case '/api/v1/nutrition/bulk':
+        return bulk_route.onRequest(context);
+      case '/api/v1/settings/fdc_key':
+        return fdc_key_route.onRequest(context);
       default:
         for (final (pattern, handler)
             in <(RegExp, FutureOr<Response> Function(RequestContext, String))>[
@@ -77,6 +93,18 @@ void main() {
             RegExp(r'^/api/v1/recipes/([^/]+)/images/from_url$'),
             from_url_route.onRequest
           ),
+          (
+            RegExp(r'^/api/v1/recipes/([^/]+)/nutrition/compute$'),
+            compute_route.onRequest
+          ),
+          (
+            RegExp(r'^/api/v1/recipes/([^/]+)/nutrition/matches$'),
+            matches_route.onRequest
+          ),
+          (
+            RegExp(r'^/api/v1/recipes/([^/]+)/nutrition$'),
+            nutrition_route.onRequest
+          ),
           (RegExp(r'^/api/v1/backups/([^/]+)$'), backup_route.onRequest),
           (RegExp(r'^/api/v1/recipes/([^/]+)$'), recipe_route.onRequest),
         ]) {
@@ -84,6 +112,16 @@ void main() {
           if (match != null) {
             return handler(context, match.group(1)!);
           }
+        }
+        final matchOverride = RegExp(
+          r'^/api/v1/recipes/([^/]+)/nutrition/matches/([^/]+)$',
+        ).firstMatch(path);
+        if (matchOverride != null) {
+          return match_route.onRequest(
+            context,
+            matchOverride.group(1)!,
+            matchOverride.group(2)!,
+          );
         }
         return Response(statusCode: HttpStatus.notFound, body: 'no route');
     }
@@ -129,8 +167,10 @@ void main() {
     db = SaltDatabase.open(config.dbPath);
     runtime = AuthRuntime();
 
+    final fixtureProvider = FixtureProvider();
     final pipeline = dispatch
         .use(authProvider())
+        .use(provider<NutritionProvider>((_) => fixtureProvider))
         .use(provider<AuthRuntime>((_) => runtime))
         .use(provider<SaltDatabase>((_) => db))
         .use(provider<ServerConfig>((_) => config))
@@ -215,6 +255,15 @@ void main() {
         '/api/v1/backups/salt-backup-20260101T000000-manual.tar.gz',
         null,
       ),
+      ('POST', '/api/v1/recipes/anything/nutrition/compute', null),
+      ('PUT', '/api/v1/recipes/anything/nutrition', {'serving_basis': 6}),
+      (
+        'PUT',
+        '/api/v1/recipes/anything/nutrition/matches/0',
+        {'skipped': true},
+      ),
+      ('PUT', '/api/v1/settings/fdc_key', {'api_key': 'x'}),
+      ('POST', '/api/v1/nutrition/bulk', null),
     ];
 
     test('members are denied every server-data mutation', () async {
@@ -619,6 +668,184 @@ void main() {
       expect(allow, contains('GET'));
       expect(allow, contains('PUT'));
       expect(allow, contains('DELETE'));
+    });
+  });
+
+  group('nutrition over HTTP (success paths, recorded real FDC data)', () {
+    late String slug;
+
+    setUpAll(() async {
+      // The CRUD group deleted its Bundt; create a fresh one.
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: submission,
+      );
+      expect(response.statusCode, HttpStatus.created, reason: body);
+      slug = (jsonOf(body)['recipe']! as Map<String, dynamic>)['slug']!
+          as String;
+    });
+
+    test('compute -> label -> serving basis -> review flow', () async {
+      // Serving basis before any compute is a 422, not a silent write.
+      final (early, earlyBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/nutrition',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'serving_basis': 6},
+      );
+      expect(early.statusCode, HttpStatus.unprocessableEntity);
+      expect(errorOf(earlyBody)['code'], 'validation');
+
+      // Admin computes; the Bundt is honestly partial (garnish line).
+      final (computed, computedBody) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/nutrition/compute',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(computed.statusCode, HttpStatus.ok, reason: computedBody);
+      final label = jsonOf(computedBody);
+      expect(label['status'], 'partial');
+      expect(label['total_count'], 13);
+      expect(label['matched_count'], 12);
+      final calories = (label['calories_per_serving']! as num).toDouble();
+      expect(calories, greaterThan(350));
+      expect(calories, lessThan(650));
+
+      // Members read the label and the match transparency.
+      final (memberRead, memberBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug/nutrition',
+        headers: auth(memberSession),
+      );
+      expect(memberRead.statusCode, HttpStatus.ok);
+      expect(jsonOf(memberBody)['status'], 'partial');
+
+      final (matchesRead, matchesReadBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug/nutrition/matches',
+        headers: auth(memberSession),
+      );
+      expect(matchesRead.statusCode, HttpStatus.ok);
+      final items = (jsonOf(matchesReadBody)['items']! as List)
+          .cast<Map<String, dynamic>>();
+      expect(items, hasLength(13));
+      final flour = items.firstWhere(
+        (item) => (item['raw']! as String).contains('all-purpose flour'),
+      );
+      expect(flour['candidates']! as List, isNotEmpty,
+          reason: 'cache-only candidates come from the compute-time cache');
+
+      // Serving basis rescales instantly.
+      final (rebased, rebasedBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/nutrition',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'serving_basis': 6},
+      );
+      expect(rebased.statusCode, HttpStatus.ok);
+      final rebasedCalories =
+          (jsonOf(rebasedBody)['calories_per_serving']! as num).toDouble();
+      expect(rebasedCalories, closeTo(calories * 2, 1));
+
+      // Grams without a matched food (the locally-matched water line has
+      // no FDC food to scale): a 422, not a silent no-op.
+      final water = items.firstWhere(
+        (item) => (item['raw']! as String).contains('boiling water'),
+      );
+      expect((water['match']! as Map<String, dynamic>)['fdc_id'], isNull);
+      final (gramsOnly, gramsOnlyBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/nutrition/matches/${water['position']}',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'grams': 10},
+      );
+      expect(gramsOnly.statusCode, HttpStatus.unprocessableEntity);
+      expect(errorOf(gramsOnlyBody)['code'], 'validation');
+
+      // The garnish line matched a food but has no resolvable amount;
+      // skipping it completes the label.
+      final garnish = items.firstWhere(
+        (item) => (item['raw']! as String).contains('Confectioners'),
+      );
+      final position = garnish['position'];
+      final (skip, skipBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/nutrition/matches/$position',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'skipped': true},
+      );
+      expect(skip.statusCode, HttpStatus.ok, reason: skipBody);
+      final skippedRow = (jsonOf(skipBody)['items']! as List)
+          .cast<Map<String, dynamic>>()[position! as int];
+      expect(
+        (skippedRow['match']! as Map<String, dynamic>)['status'],
+        'skipped',
+      );
+      final (finalRead, finalBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug/nutrition',
+        headers: auth(memberSession),
+      );
+      expect(finalRead.statusCode, HttpStatus.ok);
+      expect(jsonOf(finalBody)['status'], 'complete');
+    });
+
+    test('an ingredient edit flips the label to stale', () async {
+      // Drop the garnish line via the normal PUT (merge semantics).
+      final (before, beforeBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession),
+      );
+      expect(before.statusCode, HttpStatus.ok, reason: beforeBody);
+      final recipe = jsonOf(beforeBody)['recipe']! as Map<String, dynamic>;
+      final groups = (recipe['ingredients']! as List)
+          .cast<Map<String, dynamic>>();
+      final lastGroup = groups.last;
+      final lastItems =
+          (lastGroup['items']! as List).cast<Map<String, dynamic>>();
+      lastGroup['items'] = lastItems.sublist(0, lastItems.length - 1);
+      final (edited, editedBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'ingredients': groups},
+        },
+      );
+      expect(edited.statusCode, HttpStatus.ok, reason: editedBody);
+
+      final (read, readBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug/nutrition',
+        headers: auth(memberSession),
+      );
+      expect(read.statusCode, HttpStatus.ok);
+      expect(jsonOf(readBody)['status'], 'stale');
+
+      // The review HIGH: a serving-basis change must NOT clear staleness.
+      final (rebased, rebasedBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/nutrition',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'serving_basis': 12},
+      );
+      expect(rebased.statusCode, HttpStatus.ok, reason: rebasedBody);
+      expect(jsonOf(rebasedBody)['status'], 'stale');
+
+      // Recomputing clears it.
+      final (recomputed, recomputedBody) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/nutrition/compute',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(recomputed.statusCode, HttpStatus.ok, reason: recomputedBody);
+      final label = jsonOf(recomputedBody);
+      expect(label['status'], 'complete',
+          reason: 'the unresolvable garnish line is gone');
+      expect(label['total_count'], 12);
     });
   });
 }

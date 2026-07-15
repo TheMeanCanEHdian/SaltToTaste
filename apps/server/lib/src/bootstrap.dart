@@ -6,14 +6,24 @@ import 'package:salt_server/src/auth/setup_code.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/nutrition/fdc_provider.dart';
+import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/services/backup_service.dart';
 import 'package:salt_server/src/services/library_scan.dart';
 
 final Logger _log = Logger('bootstrap');
 
+/// Settings-table key holding the FDC API key. The value is a secret:
+/// write-only through the API (reads return a masked form) and never
+/// logged.
+const String fdcApiKeySetting = 'fdc.api_key';
+
 ServerConfig? _config;
 SaltDatabase? _database;
 AuthRuntime? _authRuntime;
+NutritionProvider? _nutritionProvider;
+NutritionProvider? _bulkNutritionProvider;
+TokenBucket? _fdcBucket;
 Timer? _backupTimer;
 
 /// The process-wide server config, created (and logging configured) on first
@@ -70,6 +80,29 @@ AuthRuntime _initAuthRuntime() {
   return runtime;
 }
 
+TokenBucket get _sharedFdcBucket => _fdcBucket ??= TokenBucket();
+
+/// The interactive FDC client: shares the process-wide token bucket
+/// (900 requests/hr) with [bulkNutritionProvider], reads the API key live
+/// from settings on every request (replacing it takes effect immediately),
+/// and gives up after ~30s of rate-limit waiting so a drained budget turns
+/// into an explained 4xx instead of a stuck request.
+NutritionProvider get nutritionProvider =>
+    _nutritionProvider ??= UsdaFdcProvider(
+      apiKey: () => saltDatabase.getSetting(fdcApiKeySetting),
+      bucket: _sharedFdcBucket,
+      maxRateWait: const Duration(seconds: 30),
+    );
+
+/// The bulk-job FDC client: same bucket and key as [nutritionProvider] but
+/// with no wait cap — a bulk compute is expected to ride out the hourly
+/// budget for as long as it takes.
+NutritionProvider get bulkNutritionProvider =>
+    _bulkNutritionProvider ??= UsdaFdcProvider(
+      apiKey: () => saltDatabase.getSetting(fdcApiKeySetting),
+      bucket: _sharedFdcBucket,
+    );
+
 /// Eagerly initializes configuration, logging, the database, and the auth
 /// runtime (printing the first-boot setup code when no users exist yet),
 /// reconciles the YAML library with the database (hand edits made while the
@@ -78,6 +111,14 @@ AuthRuntime _initAuthRuntime() {
 ServerConfig initServer() {
   final config = serverConfig;
   _authRuntime ??= _initAuthRuntime();
+  // A nutrition job can only run inside this process; a `running` row at
+  // boot is an orphan from a restart and would poll as running forever.
+  final orphaned = saltDatabase.failOrphanedNutritionJobs();
+  if (orphaned > 0) {
+    _log.warning(
+      'Marked $orphaned interrupted nutrition job(s) as failed',
+    );
+  }
   try {
     scanLibrary(db: saltDatabase, config: config);
     // Boot must survive a broken library directory; the scan logs details.

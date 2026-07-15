@@ -176,4 +176,70 @@ CREATE TABLE user_notes (
 )
 ''',
   ],
+  // 005 — P6 nutrition (USDA FoodData Central). FDC responses are cached
+  // (the ingredient vocabulary repeats heavily), per-line matches are
+  // persisted and user-overridable, and computed per-serving totals are
+  // denormalized (calories) for the `calories:` search filter/ordering.
+  [
+    '''
+CREATE TABLE fdc_search_cache (
+  query TEXT PRIMARY KEY,
+  response TEXT NOT NULL,
+  fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+''',
+    '''
+CREATE TABLE fdc_food_cache (
+  fdc_id INTEGER PRIMARY KEY,
+  response TEXT NOT NULL,
+  fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+''',
+    '''
+CREATE TABLE ingredient_matches (
+  recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  raw TEXT NOT NULL,
+  fdc_id INTEGER,
+  description TEXT,
+  data_type TEXT,
+  confidence REAL NOT NULL DEFAULT 0,
+  grams REAL,
+  gram_source TEXT,
+  status TEXT NOT NULL
+    CHECK(status IN ('auto','confirmed','overridden','skipped','unmatched')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (recipe_id, position)
+) WITHOUT ROWID
+''',
+    '''
+CREATE TABLE recipe_nutrition (
+  recipe_id TEXT PRIMARY KEY REFERENCES recipes(id) ON DELETE CASCADE,
+  serving_basis INTEGER,
+  calories_per_serving REAL,
+  nutrients TEXT NOT NULL,
+  total_grams REAL,
+  matched_count INTEGER NOT NULL,
+  total_count INTEGER NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('complete','partial','stale')),
+  ingredients_hash TEXT NOT NULL,
+  computed_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+''',
+    // ignore: no_adjacent_strings_in_list
+    'CREATE INDEX idx_recipe_nutrition_calories ON '
+        'recipe_nutrition(calories_per_serving)',
+    '''
+CREATE TABLE nutrition_jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  status TEXT NOT NULL,
+  total INTEGER NOT NULL DEFAULT 0,
+  done INTEGER NOT NULL DEFAULT 0,
+  failed INTEGER NOT NULL DEFAULT 0,
+  log TEXT NOT NULL DEFAULT '[]',
+  started_at TEXT,
+  finished_at TEXT
+)
+''',
+  ],
 ];

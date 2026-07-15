@@ -3,9 +3,10 @@
 Base path: `/api/v1`. All responses are JSON unless noted. Updated in the
 same commit as any endpoint change (see CLAUDE.md).
 
-**Status:** P5 — every endpoint except `GET /healthz` requires
+**Status:** P6 — every endpoint except `GET /healthz` requires
 authentication. Recipes are editable; the library reconciles with hand
-edits; backups run automatically.
+edits; backups run automatically; nutrition computes from USDA FoodData
+Central.
 
 ## Authentication, roles & scopes
 
@@ -118,9 +119,9 @@ Query parameters:
 `ingredient:`, `direction:`, `note:` bind the single word or quoted phrase
 after them; unscoped terms search everything (including the "why this
 works" background prose). `calories:<400` (also `<=`, `>`, `>=`, `=`)
-filters by calories per serving, forces calorie-ascending order, and may
-only be combined with `and` — it matches nothing until nutrition (P6)
-computes values. User terms are compiled into FTS5 as quoted literals;
+filters by computed calories per serving, forces calorie-ascending order,
+and may only be combined with `and`; recipes without computed nutrition
+never match. User terms are compiled into FTS5 as quoted literals;
 MATCH syntax cannot be injected.
 
 → `200`:
@@ -137,7 +138,7 @@ MATCH syntax cannot be injected.
 `RecipeCard`: `id`, `slug`, `title`, `category`, `hero_image`
 (`/images/<source-slug>/<file>` or null), `tags` (string list),
 `servings_text`, `total_minutes`, `calories_per_serving` (null until
-nutrition lands), `favorite` (the **caller's** favorite flag).
+computed), `favorite` (the **caller's** favorite flag).
 
 ### `POST /api/v1/recipes` (admin, full scope)
 
@@ -271,6 +272,79 @@ Every tag with its recipe count and optional chip style:
 `{icon?, color?, bg_color?}` — sets the tag's chip style (Lucide icon name,
 `#RRGGBB` colors); null clears a field. `404 not_found` when no recipe
 carries the tag.
+
+### `GET | PUT /api/v1/settings/fdc_key` (admin; PUT full scope)
+
+The per-deployment USDA FoodData Central API key (free at
+api.data.gov/signup). **Write-only**: `GET` → `{configured, masked}` (last
+four characters only); `PUT {api_key}` stores/replaces it (empty string
+clears). The key is sent to FDC as a header and never logged.
+
+### `GET /api/v1/recipes/{idOrSlug}/nutrition`
+
+The computed per-serving label. → `200 {"status": "none"}` before the
+first compute, else:
+
+```json
+{
+  "status": "complete | partial | stale",
+  "serving_basis": 12,
+  "calories_per_serving": 466.2,
+  "per_serving": { "<key>": {"label", "amount", "unit", "dv_percent"?} },
+  "total_grams": 1730.5,
+  "matched_count": 12,
+  "total_count": 13,
+  "computed_at": "…"
+}
+```
+
+`stale` means the ingredients changed since the compute. The ~30-nutrient
+key set and FDA Daily Values match the legacy app's panel.
+
+### `PUT /api/v1/recipes/{idOrSlug}/nutrition` (admin, full scope)
+
+`{serving_basis}` (1–1000) — change the per-serving divisor and recompute
+instantly from stored matches (no FDC calls). Defaults to the parsed
+serves minimum. A basis change never clears `stale` — only a full
+`…/nutrition/compute` re-match does. `422` before the first compute.
+
+### `POST /api/v1/recipes/{idOrSlug}/nutrition/compute` (admin, full scope)
+
+Match every ingredient line against FDC and store the totals. Cached and
+rate-limited (~900 requests/hour shared budget; interactive requests give
+up with a `422` after ~30s of waiting when a bulk job has drained the
+budget); user decisions on unchanged lines survive recomputes. Water/ice
+lines are matched locally for free. `422` when no API key is configured.
+
+### `GET /api/v1/recipes/{idOrSlug}/nutrition/matches`
+
+Per-line match transparency: the stored decision (`fdc_id`,
+`description`, `data_type`, `confidence` 0–1, `grams`, `gram_source`:
+`weight` (direct) | `portion` | `density` (estimate) | `piece` (estimate)
+| `override`, `status`: `auto | confirmed | overridden | skipped |
+unmatched`) plus ranked `candidates` for re-picking. Candidates come
+from the compute-time search cache only — reading this never spends the
+FDC request budget. A stored decision whose line text changed since the
+compute is reported as unmatched (`match: null`).
+
+### `PUT /api/v1/recipes/{idOrSlug}/nutrition/matches/{pos}` (admin, full scope)
+
+Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
+amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
+excludes the line. Totals recompute instantly. `422` for `{grams}` on a
+line with no matched food (there is nothing to scale — pick a food
+first).
+
+### `POST /api/v1/nutrition/bulk` (admin, full scope)
+
+Start a background compute over every recipe without stored nutrition.
+→ `202 {"job_id"}`; `409 conflict` while one is running. Failures land in
+the job log — nothing is skipped silently. A job interrupted by a server
+restart is marked `failed` at the next boot.
+
+### `GET /api/v1/nutrition/jobs/{id}` (admin)
+
+`{id, status, total, done, failed, log, started_at, finished_at}`.
 
 ## CLI
 

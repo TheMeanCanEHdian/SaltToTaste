@@ -10,6 +10,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:salt_server/src/nutrition/provider.dart';
 
 /// Top-level middleware chain.
 ///
@@ -73,6 +74,7 @@ Handler middleware(Handler handler) {
       // bearer token; needs the SaltDatabase provider wired outside it.
       .use(authProvider())
       .use(provider<AuthRuntime>((_) => authRuntime))
+      .use(provider<NutritionProvider>((_) => nutritionProvider))
       .use(provider<SaltDatabase>((_) => saltDatabase))
       .use(provider<ServerConfig>((_) => serverConfig))
       .use(errorHandler())
