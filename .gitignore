@@ -11,3 +11,4 @@ build/
 
 # App data dir (dev)
 .data/
+apps/server/public/

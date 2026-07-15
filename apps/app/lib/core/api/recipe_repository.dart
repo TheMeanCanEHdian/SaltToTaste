@@ -24,9 +24,13 @@ Uri absoluteApiUrl(String path) => Uri.base.resolve(apiUrl(path));
 /// trace); [requestId] (when present) lets the user quote a server log
 /// reference in a bug report.
 class RepositoryException implements Exception {
-  const RepositoryException(this.message, {this.requestId});
+  const RepositoryException(this.message, {this.code, this.requestId});
 
   final String message;
+
+  /// The server's stable error code (`validation`, `locked`, ...) when the
+  /// failure carried an envelope; null for transport/shape failures.
+  final String? code;
   final String? requestId;
 
   @override
@@ -142,7 +146,11 @@ class RecipeRepository {
           error['message'] as String,
         _ => 'Something went wrong on the server. Please try again.',
       };
-      return RepositoryException(message, requestId: requestId);
+      return RepositoryException(
+        message,
+        code: code is String ? code : null,
+        requestId: requestId,
+      );
     }
     // No envelope: a transport failure, or a non-API response (proxy/HTML).
     final message = switch (exception.type) {

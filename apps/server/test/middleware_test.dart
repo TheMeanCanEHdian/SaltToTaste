@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
@@ -19,6 +20,7 @@ final _hexId = RegExp(r'^[0-9a-f]{16}$');
 void main() {
   late Directory tempDir;
   late ServerConfig config;
+  late SaltDatabase database;
   late HttpServer server;
   late Uri baseUri;
   final records = <LogRecord>[];
@@ -62,7 +64,10 @@ void main() {
     Logger.root.onRecord.listen(records.add);
 
     // Same wiring as routes/_middleware.dart (last `.use` is outermost).
+    // healthz reads SaltDatabase (for setup_required), so provide one.
+    database = SaltDatabase.open('${tempDir.path}/salt.db');
     final pipeline = dispatch
+        .use(provider<SaltDatabase>((_) => database))
         .use(provider<ServerConfig>((_) => config))
         .use(errorHandler())
         .use(requestLogger())
@@ -72,6 +77,7 @@ void main() {
   });
 
   tearDownAll(() async {
+    database.dispose();
     await server.close(force: true);
     tempDir.deleteSync(recursive: true);
   });
@@ -207,7 +213,7 @@ void main() {
     test('GET /healthz returns ok', () async {
       final (response, body) = await send('GET', '/healthz');
       expect(response.statusCode, HttpStatus.ok);
-      expect(jsonDecode(body), {'status': 'ok'});
+      expect(jsonDecode(body), {'status': 'ok', 'setup_required': true});
     });
 
     test('POST /healthz returns a 405 envelope', () async {
@@ -218,10 +224,16 @@ void main() {
       expect(error['request_id'], matches(_hexId));
     });
 
-    test('GET / identifies the service', () async {
+    test('GET / serves the web app or the service identity', () async {
       final (response, body) = await send('GET', '/');
       expect(response.statusCode, HttpStatus.ok);
-      expect(jsonDecode(body), {'name': 'salt_server'});
+      // With a bundled web build (public/index.html) the shell is served;
+      // API-only checkouts get the identity payload.
+      if (File('public/index.html').existsSync()) {
+        expect(body, contains('<!DOCTYPE html>'));
+      } else {
+        expect(jsonDecode(body), {'name': 'salt_server'});
+      }
     });
   });
 

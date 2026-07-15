@@ -181,7 +181,7 @@ class _HeaderInfo extends StatelessWidget {
           runSpacing: 8,
           children: [
             Tooltip(
-              message: 'Sign in to favorite — coming soon',
+              message: 'Favorites arrive with the editing phase',
               child: OutlinedButton.icon(
                 onPressed: null,
                 icon: const Icon(Icons.favorite_border, size: 18),

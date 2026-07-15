@@ -27,17 +27,22 @@ import 'package:salt_server/src/middleware/request_logger.dart';
 /// innermost (first `.use`, closest to the handler) because it reads the
 /// [SaltDatabase] provider above it; the process-wide singletons themselves
 /// live in `bootstrap.dart` and are created at startup by `initServer`.
-/// Adds permissive CORS headers (and answers preflight `OPTIONS`) when
+/// Adds CORS headers (and answers preflight `OPTIONS`) when
 /// `DEV_ALLOW_CORS=true` (development only — see [ServerConfig.devAllowCors]).
 ///
-/// Production serves the web build same-origin and leaves this off.
-const Map<String, String> _corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers':
-      'Authorization, Content-Type, X-Requested-With',
-  'Access-Control-Max-Age': '86400',
-};
+/// The dev Flutter app authenticates with the session cookie, and browsers
+/// reject credentialed responses carrying a wildcard origin — so the request
+/// origin is echoed and `Allow-Credentials` set instead of `*`. Production
+/// serves the web build same-origin and leaves this off.
+Map<String, String> _corsHeaders(RequestContext context) => {
+      'Access-Control-Allow-Origin': context.request.headers['origin'] ?? '*',
+      'Vary': 'Origin',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers':
+          'Authorization, Content-Type, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+    };
 
 Middleware _devCors() {
   return (handler) {
@@ -51,12 +56,12 @@ Middleware _devCors() {
       if (context.request.method == HttpMethod.options) {
         return Response(
           statusCode: HttpStatus.noContent,
-          headers: _corsHeaders,
+          headers: _corsHeaders(context),
         );
       }
       final response = await handler(context);
       return response.copyWith(
-        headers: {...response.headers, ..._corsHeaders},
+        headers: {...response.headers, ..._corsHeaders(context)},
       );
     };
   };

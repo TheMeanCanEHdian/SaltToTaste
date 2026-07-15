@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/features/auth/auth_cubit.dart';
 
 /// The maroon top navigation bar: optional back control, logo, search
 /// placeholder, menu.
@@ -76,15 +78,84 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                 else
                   const Spacer(),
                 const SizedBox(width: 12),
-                Tooltip(
-                  message: 'Menu — coming soon',
-                  child: IconButton(
-                    onPressed: null,
-                    icon: const Icon(Icons.menu, color: Colors.white70),
-                  ),
-                ),
+                const _AvatarMenu(),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Role-aware avatar menu (approved P3 design): username/role header,
+/// Settings, Sign out. Members and admins currently share the same entries;
+/// admin-only actions (add recipe, import) arrive with their phases.
+class _AvatarMenu extends StatelessWidget {
+  const _AvatarMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthCubit>().user;
+    if (user == null) {
+      return const SizedBox.shrink();
+    }
+    return PopupMenuButton<String>(
+      tooltip: 'Account menu',
+      offset: const Offset(0, 46),
+      onSelected: (value) {
+        switch (value) {
+          case 'settings':
+            context.push('/settings');
+          case 'signout':
+            context.read<AuthCubit>().signOut();
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          enabled: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                user.username,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: SaltColors.ink,
+                ),
+              ),
+              Text(
+                user.role,
+                style:
+                    const TextStyle(fontSize: 12, color: SaltColors.muted),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem<String>(
+          value: 'settings',
+          child: Text('Settings'),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem<String>(
+          value: 'signout',
+          child: Text(
+            'Sign out',
+            style: TextStyle(color: Color(0xFF8A1212)),
+          ),
+        ),
+      ],
+      child: CircleAvatar(
+        radius: 17,
+        backgroundColor: Colors.white,
+        child: Text(
+          user.username.isEmpty ? '?' : user.username[0].toUpperCase(),
+          style: const TextStyle(
+            color: SaltColors.maroon,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
           ),
         ),
       ),

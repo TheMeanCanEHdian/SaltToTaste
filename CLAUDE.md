@@ -70,6 +70,12 @@ cd apps/server && dart test
 cd apps/server && dart run salt_server:import "<source-root>" --data-dir=.data
 cd apps/server && dart_frog dev               # needs a real TTY (hot-reload key listener);
                                               # headless: dart_frog build && DATA_DIR=.data dart build/bin/server.dart
+
+# App against the server — prefer SAME-ORIGIN (auth cookies flow; matches prod):
+cd apps/app && flutter build web --release && rm -rf ../server/public && cp -r build/web ../server/public
+# then run the server and open http://localhost:8080/
+# (cross-origin dev via --dart-define=SALT_API_BASE + DEV_ALLOW_CORS=true works for
+#  the API but Flutter-web image fetches won't send cookies -> photo placeholders)
 ```
 
 API reference: docs/API.md — update it in the same commit as any endpoint change.

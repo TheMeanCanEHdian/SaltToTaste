@@ -175,7 +175,26 @@ Approved design (2026-07-15), reference `docs/mockups/p2-read-only.html`:
 - Ingredients two-column, numbered step cards, download-YAML + favorite
   actions. Real look is Forui components themed to this palette.
 
-## P3 — Auth — **in-progress** (server done + verified; Flutter half next)
+## P3 — Auth — **done** (phase code review pending)
+
+Flutter half (2026-07-15): shared Dio (cookie credentials on web via
+conditional import, X-Requested-With on every request, 401 interceptor →
+signed-out); AuthRepository (me/setup/login/logout/change_password, users,
+sessions, tokens); AuthCubit state machine (unknown/setup-required/signed-out/
+password-change-required/signed-in) driving go_router redirects
+(refreshListenable); screens per approved mockup: login (error + lockout
+banners, remember-me), first-run setup, forced password change, settings
+shell (sidebar/chips; Account + sessions, Users w/ temp-password reveal,
+API tokens w/ one-time reveal), role-aware avatar menu. `/healthz` gained
+`setup_required`; `/` serves `public/index.html` when a web build is bundled
+(production-shaped same-origin serving; `apps/server/public/` gitignored).
+Dev note: cross-origin dev (dart-define SALT_API_BASE) hits a Flutter-web
+limitation — image fetches don't send cookies, so photos 401 → placeholder;
+preferred dev loop is same-origin: `flutter build web` → copy to
+`apps/server/public/` → run the server. Verified in-browser end-to-end on a
+fresh instance: setup screen (auto-detected) → admin created → authenticated
+grid with photos → settings (Account/sessions, Users, tokens tabs render) →
+sign out (notice) → sign in. All 130+ server tests and app tests green.
 
 Server (2026-07-15): migration 002 (users/sessions/api_tokens, hashes only at
 rest); Argon2id (OWASP m=19456,t=2,p=1; PHC format; RFC 9106 vector pinned;
