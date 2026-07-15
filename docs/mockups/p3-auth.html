@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaltToTaste — P3 auth mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --maroon: #960000; --maroon-hover: #7d1420; --rose: #8c4242;
+    --chip: #f6e4e4; --chip-text: #7d1420; --ink: #23201f; --muted: #6d6763;
+    --line: #e7e2de; --bg: #faf7f4; --ok-bg: #e8f3e4; --ok-ink: #2c5a1e;
+    --warn-bg: #fdf1e2; --warn-ink: #8a5a12; --err-bg: #fbe9e9; --err-ink: #8a1212;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; padding-bottom: 80px; }
+  .nav { background: var(--maroon); color: #fff; display: flex; align-items: center; gap: 16px; padding: 0 22px; height: 58px; }
+  .logo { font-weight: 700; font-size: 19px; display: flex; align-items: center; gap: 9px; }
+  .logo .mark { width: 26px; height: 26px; border-radius: 7px; background: #fff; color: var(--maroon); display: grid; place-items: center; font-weight: 800; }
+  .nav .spacer { flex: 1; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: #fff; color: var(--maroon); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--rose); font-weight: 700; margin: 40px 0 14px; }
+  .note { font-size: 13px; color: var(--muted); margin: -8px 0 14px; }
+
+  .center-stage { display: grid; place-items: center; padding: 40px 0 10px; }
+  .auth-card { width: 400px; max-width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 30px 30px 26px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .auth-card .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; color: var(--maroon); font-weight: 700; font-size: 21px; }
+  .auth-card .brand .mark { width: 30px; height: 30px; border-radius: 8px; background: var(--maroon); color: #fff; display: grid; place-items: center; font-weight: 800; }
+  .auth-card .sub { color: var(--muted); font-size: 13.5px; margin-bottom: 20px; }
+  label { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 14px 0 5px; letter-spacing: .02em; }
+  input[type=text], input[type=password], select {
+    width: 100%; height: 40px; border: 1.5px solid var(--line); border-radius: 9px;
+    padding: 0 12px; font: 400 14px 'Open Sans'; background: #fff; color: var(--ink);
+  }
+  input:focus { outline: 2px solid var(--maroon); outline-offset: 0; border-color: var(--maroon); }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+  .remember { font-size: 13px; color: var(--muted); display: flex; gap: 7px; align-items: center; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 9px 16px; font: 600 14px 'Open Sans'; color: var(--ink); cursor: pointer; }
+  .btn.primary { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+  .btn.primary.block { width: 100%; margin-top: 20px; padding: 11px; }
+  .btn.small { padding: 6px 12px; font-size: 12.5px; }
+  .btn.danger-ghost { color: var(--err-ink); border-color: #eccfcf; }
+  .banner { border-radius: 9px; padding: 10px 13px; font-size: 13px; margin-top: 16px; }
+  .banner.err { background: var(--err-bg); color: var(--err-ink); }
+  .banner.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .banner.ok { background: var(--ok-bg); color: var(--ok-ink); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; background: #f4efe9; border-radius: 5px; padding: 1px 6px; }
+
+  .settings { display: grid; grid-template-columns: 230px 1fr; gap: 26px; background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .side { border-right: 1px solid var(--line); padding: 18px 0; background: #fdfbf9; }
+  .side .group { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 14px 20px 6px; }
+  .side a { display: flex; gap: 9px; align-items: center; padding: 9px 20px; font-size: 14px; color: var(--ink); text-decoration: none; }
+  .side a.active { background: var(--chip); color: var(--chip-text); font-weight: 700; border-right: 3px solid var(--maroon); }
+  .pane { padding: 26px 28px 30px; min-height: 420px; }
+  .pane h2 { font-size: 20px; color: var(--maroon); margin-bottom: 4px; }
+  .pane .desc { color: var(--muted); font-size: 13.5px; margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .role, .scope { display: inline-block; border-radius: 6px; padding: 2px 9px; font-size: 11.5px; font-weight: 700; }
+  .role.admin { background: var(--maroon); color: #fff; }
+  .role.member { background: var(--chip); color: var(--chip-text); }
+  .scope.read { background: #ece9f7; color: #4b3d8f; }
+  .scope.full { background: var(--warn-bg); color: var(--warn-ink); }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; }
+  .inline-form { display: flex; gap: 10px; align-items: flex-end; background: #fdfbf9; border: 1px dashed var(--line); padding: 14px; border-radius: 12px; margin-top: 18px; flex-wrap: wrap; }
+  .inline-form > div { flex: 1; min-width: 150px; }
+  .inline-form label { margin-top: 0; }
+  .token-reveal { background: var(--ok-bg); border: 1px solid #cfe6c6; border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+  .token-reveal .tok { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+  .token-reveal code { background: #fff; padding: 8px 12px; font-size: 13px; flex: 1; }
+  .session-current { font-size: 11px; font-weight: 700; color: var(--ok-ink); background: var(--ok-bg); border-radius: 6px; padding: 2px 8px; }
+  .menu-demo { display: flex; gap: 26px; flex-wrap: wrap; }
+  .menu { width: 220px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px 0; box-shadow: 0 3px 12px rgba(0,0,0,.07); }
+  .menu .hdr { padding: 8px 16px 10px; border-bottom: 1px solid var(--line); }
+  .menu .hdr .n { font-weight: 700; font-size: 14px; }
+  .menu .hdr .r { font-size: 12px; color: var(--muted); }
+  .menu a { display: block; padding: 8px 16px; font-size: 13.5px; color: var(--ink); text-decoration: none; }
+  .menu a.danger { color: var(--err-ink); }
+  .menu .sep { border-top: 1px solid var(--line); margin: 6px 0; }
+  .cap { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">1 · Login</div>
+  <p class="note">Shown whenever the API returns 401. Auth is always on in v2 (multi-user). Username, not email — accounts are created by an admin. Error and lockout states shown.</p>
+</div>
+<div class="center-stage">
+  <div class="auth-card">
+    <div class="brand"><span class="mark">S</span> Salt to Taste</div>
+    <div class="sub">Sign in to your household recipe library</div>
+    <label>Username</label>
+    <input type="text" value="denis" />
+    <label>Password</label>
+    <input type="password" value="••••••••••••" />
+    <div class="row">
+      <label class="remember" style="margin:0; font-weight:400;"><input type="checkbox" checked /> Keep me signed in</label>
+      <span class="hint" style="margin:0;">30 days</span>
+    </div>
+    <button class="btn primary block">Sign in</button>
+    <div class="banner err">Invalid username or password.</div>
+    <div class="banner warn">Too many attempts. Try again in 4 minutes.</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow">2 · First-run setup</div>
+  <p class="note">Appears only when no users exist. The one-time setup code is printed to the server logs (<code>docker logs salttotaste</code>) so only the machine owner can claim the instance.</p>
+</div>
+<div class="center-stage">
+  <div class="auth-card">
+    <div class="brand"><span class="mark">S</span> Set up Salt to Taste</div>
+    <div class="sub">Create the administrator account for this server</div>
+    <label>Setup code</label>
+    <input type="text" placeholder="From the server logs, e.g. 7GX4-Q2M9" />
+    <div class="hint">Find it with <code>docker logs salttotaste | grep setup</code></div>
+    <label>Username</label>
+    <input type="text" placeholder="denis" />
+    <label>Password</label>
+    <input type="password" placeholder="At least 12 characters" />
+    <label>Confirm password</label>
+    <input type="password" />
+    <button class="btn primary block">Create admin account</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow">3 · Settings — Users (admin only)</div>
+  <p class="note">Settings is a left-tab shell. Members see only Account and API tokens; admins see everything. On mobile the sidebar becomes horizontal chips.</p>
+
+  <div class="settings">
+    <div class="side">
+      <div class="group">You</div>
+      <a href="#">Account</a>
+      <a href="#" class="active">Users</a>
+      <a href="#">API tokens</a>
+      <div class="group">Server (admin)</div>
+      <a href="#">Tags</a>
+      <a href="#">Import</a>
+      <a href="#">Backups</a>
+      <a href="#">Nutrition</a>
+    </div>
+    <div class="pane">
+      <h2>Users</h2>
+      <div class="desc">Members can browse and favorite recipes. Admins can edit recipes and manage the server.</div>
+      <table>
+        <tr><th>User</th><th>Role</th><th>Created</th><th>Last active</th><th></th></tr>
+        <tr>
+          <td><strong>denis</strong></td>
+          <td><span class="role admin">admin</span></td>
+          <td class="muted">Jul 15, 2026</td>
+          <td class="muted">now</td>
+          <td class="muted">that's you</td>
+        </tr>
+        <tr>
+          <td><strong>sam</strong></td>
+          <td><span class="role member">member</span></td>
+          <td class="muted">Jul 15, 2026</td>
+          <td class="muted">2 days ago</td>
+          <td style="text-align:right; white-space:nowrap;">
+            <button class="btn small">Reset password</button>
+            <button class="btn small">Make admin</button>
+            <button class="btn small danger-ghost">Disable</button>
+          </td>
+        </tr>
+      </table>
+      <div class="inline-form">
+        <div><label>Username</label><input type="text" placeholder="alex" /></div>
+        <div><label>Role</label><select><option>member</option><option>admin</option></select></div>
+        <div><label>Temporary password</label><input type="text" value="autogenerated · shown once" /></div>
+        <button class="btn primary">Add user</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="eyebrow">4 · Settings — API tokens (all users)</div>
+  <p class="note">Personal access tokens are the credential for future native apps and scripts. Scope <em>read</em> = browse + favorites; <em>full</em> = everything your role allows. The token value is shown exactly once.</p>
+
+  <div class="settings">
+    <div class="side">
+      <div class="group">You</div>
+      <a href="#">Account</a>
+      <a href="#">Users</a>
+      <a href="#" class="active">API tokens</a>
+      <div class="group">Server (admin)</div>
+      <a href="#">Tags</a>
+      <a href="#">Import</a>
+      <a href="#">Backups</a>
+      <a href="#">Nutrition</a>
+    </div>
+    <div class="pane">
+      <h2>API tokens</h2>
+      <div class="desc">Tokens act as you. Revoke any you no longer use.</div>
+      <table>
+        <tr><th>Name</th><th>Scope</th><th>Token</th><th>Created</th><th>Last used</th><th></th></tr>
+        <tr>
+          <td><strong>iPad kitchen app</strong></td>
+          <td><span class="scope read">read</span></td>
+          <td class="muted"><code>stt_pat_9f2c…</code></td>
+          <td class="muted">Jul 15</td>
+          <td class="muted">1 hour ago</td>
+          <td style="text-align:right;"><button class="btn small danger-ghost">Revoke</button></td>
+        </tr>
+        <tr>
+          <td><strong>recipe-sync script</strong></td>
+          <td><span class="scope full">full</span></td>
+          <td class="muted"><code>stt_pat_a41b…</code></td>
+          <td class="muted">Jul 15</td>
+          <td class="muted">never</td>
+          <td style="text-align:right;"><button class="btn small danger-ghost">Revoke</button></td>
+        </tr>
+      </table>
+      <div class="inline-form">
+        <div><label>Token name</label><input type="text" placeholder="e.g. iPhone app" /></div>
+        <div><label>Scope</label><select><option>read — browse and favorites</option><option>full — everything my role allows</option></select></div>
+        <button class="btn primary">Create token</button>
+      </div>
+      <div class="token-reveal">
+        <strong style="color:var(--ok-ink); font-size:13.5px;">Token created — copy it now. You won't see it again.</strong>
+        <div class="tok">
+          <code>stt_pat_Vq8sN2LcTfW7xKpD4mJhRbZy3AaGe6Uw</code>
+          <button class="btn small">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="eyebrow">5 · Settings — Account (all users)</div>
+  <div class="settings">
+    <div class="side">
+      <div class="group">You</div>
+      <a href="#" class="active">Account</a>
+      <a href="#">Users</a>
+      <a href="#">API tokens</a>
+      <div class="group">Server (admin)</div>
+      <a href="#">Tags</a>
+      <a href="#">Import</a>
+      <a href="#">Backups</a>
+      <a href="#">Nutrition</a>
+    </div>
+    <div class="pane">
+      <h2>Account</h2>
+      <div class="desc">Signed in as <strong>denis</strong> · <span class="role admin">admin</span></div>
+      <div class="inline-form" style="margin-top:0;">
+        <div><label>Current password</label><input type="password" /></div>
+        <div><label>New password</label><input type="password" /></div>
+        <div><label>Confirm</label><input type="password" /></div>
+        <button class="btn primary">Change password</button>
+      </div>
+      <h2 style="font-size:16px; margin:24px 0 4px;">Active sessions</h2>
+      <table>
+        <tr><th>Device</th><th>Signed in</th><th>Last seen</th><th></th></tr>
+        <tr>
+          <td>Safari · macOS <span class="session-current">this device</span></td>
+          <td class="muted">today</td><td class="muted">now</td><td></td>
+        </tr>
+        <tr>
+          <td>Chrome · Windows</td>
+          <td class="muted">Jul 12</td><td class="muted">3 days ago</td>
+          <td style="text-align:right;"><button class="btn small danger-ghost">Sign out</button></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="eyebrow">6 · Nav menu by role</div>
+  <p class="note">The gear becomes an avatar menu. Members never see edit/admin entries.</p>
+  <div class="menu-demo">
+    <div>
+      <div class="cap">Admin</div>
+      <div class="menu">
+        <div class="hdr"><div class="n">denis</div><div class="r">admin</div></div>
+        <a href="#">Add recipe</a>
+        <a href="#">Import recipes</a>
+        <div class="sep"></div>
+        <a href="#">Settings</a>
+        <div class="sep"></div>
+        <a href="#" class="danger">Sign out</a>
+      </div>
+    </div>
+    <div>
+      <div class="cap">Member</div>
+      <div class="menu">
+        <div class="hdr"><div class="n">sam</div><div class="r">member</div></div>
+        <a href="#">My favorites</a>
+        <div class="sep"></div>
+        <a href="#">Account &amp; tokens</a>
+        <div class="sep"></div>
+        <a href="#" class="danger">Sign out</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
