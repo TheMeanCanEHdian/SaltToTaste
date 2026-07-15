@@ -175,6 +175,16 @@ class SaltDatabase {
     return isUpdate ? UpsertOutcome.updated : UpsertOutcome.inserted;
   }
 
+  /// Whether a recipe row with exactly this [id] exists.
+  bool recipeExists(String id) =>
+      _prepared('SELECT 1 FROM recipes WHERE id = ?').select([id]).isNotEmpty;
+
+  /// Public form of the slug-collision resolution [upsertRecipe] applies, so
+  /// callers that need the final slug *before* encoding the canonical YAML
+  /// (the editor save path) resolve it identically.
+  String availableSlug(String desired, {required String ownerId}) =>
+      _availableSlug(desired, ownerId: ownerId);
+
   /// First slug in `desired`, `desired-2`, `desired-3`, ... not owned by a
   /// recipe other than [ownerId].
   String _availableSlug(String desired, {required String ownerId}) {
@@ -231,6 +241,34 @@ class SaltDatabase {
       final tagId = selectTag.select([name]).first['id'] as int;
       linkTag.execute([recipe.id, tagId]);
     }
+    _pruneOrphanTags();
+  }
+
+  /// Drops tag rows no recipe links to anymore, so the tags list reflects
+  /// reality after edits and deletes. `tag_styles` rows are keyed by name and
+  /// deliberately survive, so a re-added tag gets its old style back.
+  void _pruneOrphanTags() {
+    _prepared(
+      'DELETE FROM tags WHERE id NOT IN '
+      '(SELECT DISTINCT tag_id FROM recipe_tags)',
+    ).execute();
+  }
+
+  /// Deletes the recipe row plus its FTS entry (side tables cascade).
+  /// Returns false when no such recipe exists.
+  bool deleteRecipe(String recipeId) {
+    final rows =
+        _prepared('SELECT rowid FROM recipes WHERE id = ?').select([recipeId]);
+    if (rows.isEmpty) {
+      return false;
+    }
+    final rowid = rows.first['rowid'] as int;
+    _inTransaction(() {
+      _prepared('DELETE FROM recipe_fts WHERE rowid = ?').execute([rowid]);
+      _prepared('DELETE FROM recipes WHERE id = ?').execute([recipeId]);
+      _pruneOrphanTags();
+    });
+    return true;
   }
 
   /// Rebuilds the FTS row for a recipe, keyed by the recipes rowid (the FTS
@@ -264,6 +302,11 @@ class SaltDatabase {
     ]);
   }
 
+  /// Whether a sources row with this [slug] exists.
+  bool sourceExists(String slug) =>
+      _prepared('SELECT 1 FROM sources WHERE slug = ?')
+          .select([slug]).isNotEmpty;
+
   /// Inserts or updates a source row; [meta] is stored as JSON.
   void upsertSource({
     required String slug,
@@ -278,6 +321,14 @@ class SaltDatabase {
     ).execute([slug, name, type, jsonEncode(meta)]);
   }
 
+  /// Writes a compacted point-in-time snapshot of the whole database to
+  /// [path] (`VACUUM INTO`). The target must not exist yet.
+  void vacuumInto(String path) {
+    // VACUUM cannot run inside a transaction and takes the path as a bound
+    // expression, so no string interpolation is needed.
+    _db.execute('VACUUM INTO ?', [path]);
+  }
+
   /// Total number of recipes.
   int recipeCount() =>
       _db.select('SELECT COUNT(*) AS n FROM recipes').first['n'] as int;
@@ -290,27 +341,39 @@ class SaltDatabase {
   ({List<RecipeCard> items, int total}) listCards({
     required int page,
     required int limit,
+    int? viewerId,
+    bool favoritesOnly = false,
   }) {
-    final total = recipeCount();
     var offset = (page - 1) * limit;
     if (offset < 0) {
       offset = 0;
     }
-    final rows = _db.select(
+    if (favoritesOnly && viewerId == null) {
+      return (items: const <RecipeCard>[], total: 0);
+    }
+    final favoriteFilter = favoritesOnly
+        ? ' WHERE EXISTS (SELECT 1 FROM user_favorites f '
+            'WHERE f.user_id = ? AND f.recipe_id = recipes.id)'
+        : '';
+    final filterParams = favoritesOnly ? [viewerId] : const <Object?>[];
+    final total = _prepared(
+      'SELECT COUNT(*) AS n FROM recipes$favoriteFilter',
+    ).select(filterParams).first['n'] as int;
+    final rows = _prepared(
       'SELECT id, slug, source_slug, title, category, servings_text, '
-      'total_min, hero_image FROM recipes '
+      'total_min, hero_image FROM recipes$favoriteFilter '
       'ORDER BY title COLLATE NOCASE LIMIT ? OFFSET ?',
-      [limit, offset],
-    );
-    return (items: _cardsFromRows(rows), total: total);
+    ).select([...filterParams, limit, offset]);
+    return (items: _cardsFromRows(rows, viewerId: viewerId), total: total);
   }
 
   /// Builds cards (with tags batched in one query) from a result set that
   /// carries the standard card columns.
-  List<RecipeCard> _cardsFromRows(ResultSet rows) {
-    final tagsByRecipe = _tagsFor([
-      for (final row in rows) row['id'] as String,
-    ]);
+  List<RecipeCard> _cardsFromRows(ResultSet rows, {int? viewerId}) {
+    final ids = [for (final row in rows) row['id'] as String];
+    final tagsByRecipe = _tagsFor(ids);
+    final favorites =
+        viewerId == null ? const <String>{} : _favoriteIdsAmong(viewerId, ids);
     return [
       for (final row in rows)
         RecipeCard(
@@ -325,8 +388,23 @@ class SaltDatabase {
           tags: tagsByRecipe[row['id'] as String] ?? const [],
           servingsText: row['servings_text'] as String?,
           totalMinutes: row['total_min'] as int?,
+          favorite: favorites.contains(row['id'] as String),
         ),
     ];
+  }
+
+  /// The subset of [recipeIds] the user has favorited, in one query.
+  Set<String> _favoriteIdsAmong(int userId, List<String> recipeIds) {
+    if (recipeIds.isEmpty) {
+      return const {};
+    }
+    final placeholders = List.filled(recipeIds.length, '?').join(', ');
+    final rows = _db.select(
+      'SELECT recipe_id FROM user_favorites '
+      'WHERE user_id = ? AND recipe_id IN ($placeholders)',
+      [userId, ...recipeIds],
+    );
+    return {for (final row in rows) row['recipe_id'] as String};
   }
 
   /// Tags (sorted) for every recipe id in [recipeIds], fetched in one query.
@@ -358,6 +436,8 @@ class SaltDatabase {
     CompiledSearch compiled, {
     required int page,
     required int limit,
+    int? viewerId,
+    bool favoritesOnly = false,
   }) {
     if (compiled.calories.isNotEmpty) {
       // No recipe_nutrition table yet — a calories filter matches nothing.
@@ -365,23 +445,40 @@ class SaltDatabase {
     }
     final match = compiled.ftsMatch;
     if (match == null) {
-      return listCards(page: page, limit: limit);
+      return listCards(
+        page: page,
+        limit: limit,
+        viewerId: viewerId,
+        favoritesOnly: favoritesOnly,
+      );
+    }
+    if (favoritesOnly && viewerId == null) {
+      return (items: const <RecipeCard>[], total: 0);
     }
     var offset = (page - 1) * limit;
     if (offset < 0) {
       offset = 0;
     }
+    final favoriteFilter = favoritesOnly
+        ? ' AND EXISTS (SELECT 1 FROM user_favorites uf '
+            'WHERE uf.user_id = ? AND uf.recipe_id = r.id)'
+        : '';
+    final filterParams = favoritesOnly ? [viewerId] : const <Object?>[];
     final total = _prepared(
-      'SELECT COUNT(*) AS n FROM recipe_fts WHERE recipe_fts MATCH ?',
-    ).select([match]).first['n'] as int;
+      'SELECT COUNT(*) AS n '
+      'FROM recipe_fts f JOIN recipes r ON r.rowid = f.rowid '
+      'WHERE recipe_fts MATCH ?$favoriteFilter',
+    ).select([match, ...filterParams]).first['n'] as int;
     final rows = _prepared(
       'SELECT r.id, r.slug, r.source_slug, r.title, r.category, '
       'r.servings_text, r.total_min, r.hero_image '
       'FROM recipe_fts f JOIN recipes r ON r.rowid = f.rowid '
-      'WHERE recipe_fts MATCH ? '
-      'ORDER BY bm25(recipe_fts) LIMIT ? OFFSET ?',
-    ).select([match, limit, offset]);
-    return (items: _cardsFromRows(rows), total: total);
+      'WHERE recipe_fts MATCH ?$favoriteFilter '
+      // Title tiebreaker: equal bm25 scores are common (single-token tag
+      // queries) and OFFSET pagination needs a stable total order.
+      'ORDER BY bm25(recipe_fts), r.title COLLATE NOCASE LIMIT ? OFFSET ?',
+    ).select([match, ...filterParams, limit, offset]);
+    return (items: _cardsFromRows(rows, viewerId: viewerId), total: total);
   }
 
   /// Every tag with its recipe count and (optional) chip style, ordered by
@@ -406,6 +503,10 @@ class SaltDatabase {
         ),
     ];
   }
+
+  /// Whether a tag with this (lowercased) [name] exists.
+  bool tagExists(String name) =>
+      _prepared('SELECT 1 FROM tags WHERE name = ?').select([name]).isNotEmpty;
 
   /// Creates or updates the chip style for [tagName].
   void upsertTagStyle(
@@ -439,6 +540,105 @@ class SaltDatabase {
       recipe: RecipeMapper.fromMap(doc),
       sourceSlug: row['source_slug'] as String,
     );
+  }
+
+  /// The stored content hash for [recipeId], or null when absent.
+  ///
+  /// The hash is SHA-256 of the canonical YAML the server last exported, so
+  /// comparing it against a library file's text detects external edits.
+  String? contentHashOf(String recipeId) {
+    final rows = _prepared('SELECT content_hash FROM recipes WHERE id = ?')
+        .select([recipeId]);
+    return rows.isEmpty ? null : rows.first['content_hash'] as String;
+  }
+
+  /// id, source slug, and content hash of every recipe — the DB side of the
+  /// library reconciliation scan.
+  List<({String id, String sourceSlug, String contentHash})>
+      listRecipeHashes() {
+    final rows = _db.select(
+      'SELECT id, source_slug, content_hash FROM recipes ORDER BY id',
+    );
+    return [
+      for (final row in rows)
+        (
+          id: row['id'] as String,
+          sourceSlug: row['source_slug'] as String,
+          contentHash: row['content_hash'] as String,
+        ),
+    ];
+  }
+
+  /// The settings-table value for [key], or null when unset.
+  String? getSetting(String key) {
+    final rows =
+        _prepared('SELECT value FROM settings WHERE key = ?').select([key]);
+    return rows.isEmpty ? null : rows.first['value'] as String;
+  }
+
+  /// Creates or replaces the settings-table value for [key].
+  void setSetting(String key, String value) {
+    _prepared(
+      'INSERT INTO settings (key, value) VALUES (?, ?) '
+      'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+    ).execute([key, value]);
+  }
+
+  // --------------------------------------------------------------------
+  // Favorites & personal notes (migration 004) — per-user, DB-only data.
+  // --------------------------------------------------------------------
+
+  /// Whether [userId] has favorited [recipeId].
+  bool isFavorite({required int userId, required String recipeId}) =>
+      _prepared(
+        'SELECT 1 FROM user_favorites WHERE user_id = ? AND recipe_id = ?',
+      ).select([userId, recipeId]).isNotEmpty;
+
+  /// Adds or removes the favorite mark; both directions are idempotent.
+  void setFavorite({
+    required int userId,
+    required String recipeId,
+    required bool favorite,
+  }) {
+    if (favorite) {
+      _prepared(
+        'INSERT OR IGNORE INTO user_favorites (user_id, recipe_id) '
+        'VALUES (?, ?)',
+      ).execute([userId, recipeId]);
+    } else {
+      _prepared(
+        'DELETE FROM user_favorites WHERE user_id = ? AND recipe_id = ?',
+      ).execute([userId, recipeId]);
+    }
+  }
+
+  /// The user's personal note body for [recipeId], or null when none exists.
+  String? noteFor({required int userId, required String recipeId}) {
+    final rows = _prepared(
+      'SELECT body FROM user_notes WHERE user_id = ? AND recipe_id = ?',
+    ).select([userId, recipeId]);
+    return rows.isEmpty ? null : rows.first['body'] as String;
+  }
+
+  /// Creates or replaces the user's personal note for [recipeId].
+  void setNote({
+    required int userId,
+    required String recipeId,
+    required String body,
+  }) {
+    _prepared(
+      'INSERT INTO user_notes (user_id, recipe_id, body, updated_at) '
+      'VALUES (?, ?, ?, ?) '
+      'ON CONFLICT(user_id, recipe_id) DO UPDATE SET '
+      'body = excluded.body, updated_at = excluded.updated_at',
+    ).execute([userId, recipeId, body, _utcNowIso()]);
+  }
+
+  /// Deletes the user's personal note for [recipeId]; idempotent.
+  void deleteNote({required int userId, required String recipeId}) {
+    _prepared(
+      'DELETE FROM user_notes WHERE user_id = ? AND recipe_id = ?',
+    ).execute([userId, recipeId]);
   }
 
   // --------------------------------------------------------------------

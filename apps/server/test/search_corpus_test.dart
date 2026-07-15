@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
@@ -166,6 +167,30 @@ void main() {
     test('a parse error surfaces as validation', () {
       final parsed = parseSearchQuery('title:');
       expect(parsed.errors, isNotEmpty);
+      // The handler path is the actual contract: broken queries must become
+      // 422s, never silent fallbacks to the full listing.
+      expect(
+        () => listRecipes(db, page: 1, limit: 24, query: 'title:'),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            contains('Invalid search'),
+          ),
+        ),
+      );
+    });
+
+    test('an oversized query is rejected before parsing', () {
+      expect(
+        () => listRecipes(
+          db,
+          page: 1,
+          limit: 24,
+          query: 'chicken ' * 100,
+        ),
+        throwsA(isA<ValidationException>()),
+      );
     });
 
     test('hostile MATCH syntax cannot crash the query', () {

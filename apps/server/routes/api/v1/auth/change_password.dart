@@ -14,7 +14,7 @@ Future<Response> onRequest(RequestContext context) async {
   requireMethods(context, {HttpMethod.post});
   final user = requireUserAllowingPasswordChange(context);
   requireCsrf(context, user);
-  final body = await readJsonBody(context.request.json);
+  final body = await readJsonBody(context.request);
   final result = await changePassword(
     context.read<SaltDatabase>(),
     context.read<AuthRuntime>(),

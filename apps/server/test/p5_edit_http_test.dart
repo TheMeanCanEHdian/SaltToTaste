@@ -1,0 +1,624 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:dart_frog/dart_frog.dart' hide requestLogger;
+import 'package:salt_server/src/auth/tokens.dart';
+import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/middleware/auth.dart';
+import 'package:salt_server/src/middleware/error_handler.dart';
+import 'package:salt_server/src/middleware/request_context.dart';
+import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:salt_server/src/services/recipe_edit_service.dart'
+    show editableRecipeKeys;
+import 'package:test/test.dart';
+
+import '../routes/api/v1/auth/login.dart' as login_route;
+import '../routes/api/v1/backups/[name].dart' as backup_route;
+import '../routes/api/v1/backups/index.dart' as backups_route;
+import '../routes/api/v1/library/index.dart' as library_route;
+import '../routes/api/v1/library/rescan.dart' as rescan_route;
+import '../routes/api/v1/recipes/[id]/favorite.dart' as favorite_route;
+import '../routes/api/v1/recipes/[id]/images/from_url.dart' as from_url_route;
+import '../routes/api/v1/recipes/[id]/images/index.dart' as images_route;
+import '../routes/api/v1/recipes/[id]/index.dart' as recipe_route;
+import '../routes/api/v1/recipes/[id]/note.dart' as note_route;
+import '../routes/api/v1/recipes/index.dart' as recipes_route;
+import 'support/corpus.dart';
+
+// Synthesized credentials: auth inputs cannot come from the recipe corpus.
+const _adminPassword = 'admin-password-123';
+const _memberPassword = 'correct-horse-battery';
+const _csrf = {'X-Requested-With': 'SaltToTaste'};
+
+/// P5 endpoint permission matrix + CRUD flow over real HTTP, with the real
+/// Bundt cake corpus recipe as the create/update payload.
+void main() {
+  late Directory tempDir;
+  late ServerConfig config;
+  late SaltDatabase db;
+  late AuthRuntime runtime;
+  late HttpServer server;
+  late Uri baseUri;
+
+  late String adminSession; // bearer form of the admin session token
+  late String memberSession;
+  late String adminReadPat;
+  late Map<String, Object?> submission; // the editor's create payload
+
+  FutureOr<Response> dispatch(RequestContext context) {
+    final path = context.request.uri.path;
+    switch (path) {
+      case '/api/v1/auth/login':
+        return login_route.onRequest(context);
+      case '/api/v1/recipes':
+        return recipes_route.onRequest(context);
+      case '/api/v1/library':
+        return library_route.onRequest(context);
+      case '/api/v1/library/rescan':
+        return rescan_route.onRequest(context);
+      case '/api/v1/backups':
+        return backups_route.onRequest(context);
+      default:
+        for (final (pattern, handler)
+            in <(RegExp, FutureOr<Response> Function(RequestContext, String))>[
+          (
+            RegExp(r'^/api/v1/recipes/([^/]+)/favorite$'),
+            favorite_route.onRequest
+          ),
+          (RegExp(r'^/api/v1/recipes/([^/]+)/note$'), note_route.onRequest),
+          (
+            RegExp(r'^/api/v1/recipes/([^/]+)/images$'),
+            images_route.onRequest
+          ),
+          (
+            RegExp(r'^/api/v1/recipes/([^/]+)/images/from_url$'),
+            from_url_route.onRequest
+          ),
+          (RegExp(r'^/api/v1/backups/([^/]+)$'), backup_route.onRequest),
+          (RegExp(r'^/api/v1/recipes/([^/]+)$'), recipe_route.onRequest),
+        ]) {
+          final match = pattern.firstMatch(path);
+          if (match != null) {
+            return handler(context, match.group(1)!);
+          }
+        }
+        return Response(statusCode: HttpStatus.notFound, body: 'no route');
+    }
+  }
+
+  Future<(HttpClientResponse, String)> send(
+    String method,
+    String path, {
+    Map<String, String> headers = const {},
+    Object? jsonBody,
+    List<int>? rawBody,
+  }) async {
+    final client = HttpClient();
+    try {
+      final request = await client.openUrl(method, baseUri.resolve(path));
+      headers.forEach(request.headers.set);
+      if (jsonBody != null) {
+        request.headers.contentType = ContentType.json;
+        request.write(jsonEncode(jsonBody));
+      } else if (rawBody != null) {
+        request.add(rawBody);
+      }
+      final response = await request.close();
+      final body = await utf8.decoder.bind(response).join();
+      return (response, body);
+    } finally {
+      client.close();
+    }
+  }
+
+  Map<String, dynamic> jsonOf(String body) =>
+      jsonDecode(body) as Map<String, dynamic>;
+
+  Map<String, dynamic> errorOf(String body) =>
+      jsonOf(body)['error'] as Map<String, dynamic>;
+
+  setUpAll(() async {
+    tempDir = Directory.systemTemp.createTempSync('salt_p5_http_test_');
+    config = ServerConfig.fromEnvironment(
+      environment: {'DATA_DIR': tempDir.path, 'LOG_LEVEL': 'ERROR'},
+    );
+    configureLogging(config);
+    db = SaltDatabase.open(config.dbPath);
+    runtime = AuthRuntime();
+
+    final pipeline = dispatch
+        .use(authProvider())
+        .use(provider<AuthRuntime>((_) => runtime))
+        .use(provider<SaltDatabase>((_) => db))
+        .use(provider<ServerConfig>((_) => config))
+        .use(errorHandler())
+        .use(requestLogger())
+        .use(requestIdProvider());
+    server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
+    baseUri = Uri.parse('http://127.0.0.1:${server.port}');
+
+    final adminId = db.createUser(
+      username: 'admin',
+      passwordHash: await runtime.hasher.hash(_adminPassword),
+      role: 'admin',
+    );
+    db.createUser(
+      username: 'sam',
+      passwordHash: await runtime.hasher.hash(_memberPassword),
+      role: 'member',
+    );
+
+    Future<String> login(String username, String password) async {
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/auth/login',
+        jsonBody: {'username': username, 'password': password},
+      );
+      expect(response.statusCode, HttpStatus.ok, reason: body);
+      return jsonOf(body)['token'] as String;
+    }
+
+    adminSession = await login('admin', _adminPassword);
+    memberSession = await login('sam', _memberPassword);
+
+    final pat = generatePat();
+    db.createApiToken(
+      userId: adminId,
+      name: 'read pat',
+      prefix: pat.prefix,
+      tokenHash: hashToken(pat.token),
+      scope: 'read',
+    );
+    adminReadPat = pat.token;
+
+    final doc =
+        loadCorpusRecipe('0857-rich-chocolate-bundt-cake.yaml').toMap();
+    submission = {
+      'recipe': {
+        for (final key in editableRecipeKeys)
+          if (doc.containsKey(key)) key: doc[key],
+      },
+    };
+  });
+
+  tearDownAll(() async {
+    await server.close(force: true);
+    db.dispose();
+    tempDir.deleteSync(recursive: true);
+  });
+
+  Map<String, String> auth(String token, {bool csrf = false}) => {
+        'Authorization': 'Bearer $token',
+        if (csrf) ..._csrf,
+      };
+
+  group('permission matrix', () {
+    // Every server-data mutation must 403 for a member session and for an
+    // admin's read-scoped PAT alike (effective permission = role ∩ scope).
+    final mutations = <(String, String, Object?)>[
+      ('POST', '/api/v1/recipes', {'recipe': {'title': 'X'}}),
+      ('PUT', '/api/v1/recipes/anything', {'recipe': {'title': 'X'}}),
+      ('DELETE', '/api/v1/recipes/anything', null),
+      ('POST', '/api/v1/recipes/anything/images', null),
+      (
+        'POST',
+        '/api/v1/recipes/anything/images/from_url',
+        {'url': 'https://example.com/a.jpg'},
+      ),
+      ('POST', '/api/v1/library/rescan', null),
+      ('POST', '/api/v1/backups', {'include_images': false}),
+      (
+        'DELETE',
+        '/api/v1/backups/salt-backup-20260101T000000-manual.tar.gz',
+        null,
+      ),
+    ];
+
+    test('members are denied every server-data mutation', () async {
+      for (final (method, path, body) in mutations) {
+        final (response, responseBody) = await send(
+          method,
+          path,
+          headers: auth(memberSession, csrf: true),
+          jsonBody: body,
+        );
+        expect(
+          response.statusCode,
+          HttpStatus.forbidden,
+          reason: '$method $path must be forbidden for a member',
+        );
+        expect(errorOf(responseBody)['code'], 'forbidden');
+      }
+    });
+
+    test('an admin read-scoped PAT is denied every server-data mutation',
+        () async {
+      for (final (method, path, body) in mutations) {
+        final (response, responseBody) = await send(
+          method,
+          path,
+          headers: auth(adminReadPat),
+          jsonBody: body,
+        );
+        expect(
+          response.statusCode,
+          HttpStatus.forbidden,
+          reason: '$method $path must be forbidden for a read PAT',
+        );
+        expect(errorOf(responseBody)['code'], 'forbidden');
+      }
+    });
+
+    test('admin-only reads are denied to members', () async {
+      for (final path in ['/api/v1/library', '/api/v1/backups']) {
+        final (response, _) =
+            await send('GET', path, headers: auth(memberSession));
+        expect(response.statusCode, HttpStatus.forbidden, reason: path);
+      }
+    });
+
+    test('a session mutation without the CSRF header -> 403 csrf', () async {
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession),
+        jsonBody: submission,
+      );
+      expect(response.statusCode, HttpStatus.forbidden);
+      expect(errorOf(body)['code'], 'csrf');
+    });
+  });
+
+  group('recipe CRUD over HTTP', () {
+    late String slug;
+    late String id;
+    late String uploadSlug;
+
+    test('POST creates the Bundt cake and exports it', () async {
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: submission,
+      );
+      expect(response.statusCode, HttpStatus.created, reason: body);
+      final recipe = jsonOf(body)['recipe'] as Map<String, dynamic>;
+      slug = recipe['slug'] as String;
+      id = recipe['id'] as String;
+      expect(recipe['title'], 'Rich Chocolate Bundt Cake');
+      expect(jsonOf(body)['favorite'], false);
+      expect(
+        File('${config.libraryDir}/my-recipes/recipes/$id.yaml')
+            .existsSync(),
+        isTrue,
+      );
+    });
+
+    test('members can favorite and annotate it', () async {
+      final (favorite, favoriteBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/favorite',
+        headers: auth(memberSession, csrf: true),
+      );
+      expect(favorite.statusCode, HttpStatus.ok, reason: favoriteBody);
+      expect(jsonOf(favoriteBody)['favorite'], true);
+
+      final (note, noteBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/note',
+        headers: auth(memberSession, csrf: true),
+        jsonBody: {'note': 'Used 70% chocolate — perfect at 45 min.'},
+      );
+      expect(note.statusCode, HttpStatus.ok, reason: noteBody);
+
+      // The member's detail view carries their personal data...
+      final (detail, detailBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug',
+        headers: auth(memberSession),
+      );
+      expect(detail.statusCode, HttpStatus.ok);
+      expect(jsonOf(detailBody)['favorite'], true);
+      expect(jsonOf(detailBody)['note'], contains('70% chocolate'));
+
+      // ...and the admin's view does not see the member's note.
+      final (adminDetail, adminDetailBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession),
+      );
+      expect(jsonOf(adminDetailBody)['favorite'], false);
+      expect(jsonOf(adminDetailBody)['note'], isNull);
+    });
+
+    test('a read-scoped PAT may write personal data (documented exception)',
+        () async {
+      final (favorite, body) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug/favorite',
+        headers: auth(adminReadPat),
+      );
+      expect(favorite.statusCode, HttpStatus.ok, reason: body);
+    });
+
+    test('the favorites filter narrows the listing per user', () async {
+      // A second recipe nobody favorites, so the filter provably filters.
+      final (second, secondBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: submission,
+      );
+      expect(second.statusCode, HttpStatus.created, reason: secondBody);
+
+      final (all, allBody) =
+          await send('GET', '/api/v1/recipes', headers: auth(memberSession));
+      expect(all.statusCode, HttpStatus.ok);
+      expect(jsonOf(allBody)['total'], 2);
+
+      final (mine, mineBody) = await send(
+        'GET',
+        '/api/v1/recipes?favorites=true',
+        headers: auth(memberSession),
+      );
+      expect(mine.statusCode, HttpStatus.ok);
+      expect(jsonOf(mineBody)['total'], 1,
+          reason: 'only the favorited recipe, not both');
+      final items = jsonOf(mineBody)['items'] as List<dynamic>;
+      expect((items.single as Map<String, dynamic>)['slug'], slug);
+      expect((items.single as Map<String, dynamic>)['favorite'], true);
+
+      // Combined with a search (covers the searchCards favoritesOnly SQL).
+      final (searched, searchedBody) = await send(
+        'GET',
+        '/api/v1/recipes?favorites=true&q=chocolate',
+        headers: auth(memberSession),
+      );
+      expect(searched.statusCode, HttpStatus.ok);
+      expect(jsonOf(searchedBody)['total'], 1,
+          reason: 'both recipes match "chocolate"; only one is favorited');
+
+      // The admin favorited the first recipe through their read PAT — their
+      // filter is independent of the member's and also excludes the second.
+      final (adminFavs, adminFavsBody) = await send(
+        'GET',
+        '/api/v1/recipes?favorites=true',
+        headers: auth(adminSession),
+      );
+      expect(adminFavs.statusCode, HttpStatus.ok);
+      expect(jsonOf(adminFavsBody)['total'], 1);
+
+      // Remove the second recipe again to keep later expectations simple.
+      final secondSlug = (jsonOf(secondBody)['recipe']
+          as Map<String, dynamic>)['slug'] as String;
+      final (removed, _) = await send(
+        'DELETE',
+        '/api/v1/recipes/$secondSlug',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(removed.statusCode, HttpStatus.noContent);
+    });
+
+    test('PUT updates through the same endpoint shape', () async {
+      final (response, body) = await send(
+        'PUT',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'category': 'Celebration Cakes'},
+        },
+      );
+      expect(response.statusCode, HttpStatus.ok, reason: body);
+      final recipe = jsonOf(body)['recipe'] as Map<String, dynamic>;
+      expect(recipe['category'], 'Celebration Cakes');
+      expect(recipe['title'], 'Rich Chocolate Bundt Cake',
+          reason: 'merge semantics keep unsubmitted fields');
+    });
+
+    test('rescan and library status report over HTTP', () async {
+      final (rescan, rescanBody) = await send(
+        'POST',
+        '/api/v1/library/rescan',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(rescan.statusCode, HttpStatus.ok, reason: rescanBody);
+      final report =
+          jsonOf(rescanBody)['last_scan'] as Map<String, dynamic>;
+      expect(report['files_seen'], greaterThanOrEqualTo(1));
+
+      final (status, statusBody) =
+          await send('GET', '/api/v1/library', headers: auth(adminSession));
+      expect(status.statusCode, HttpStatus.ok);
+      expect(jsonOf(statusBody)['last_scan'], isNotNull);
+    });
+
+    test('backups: create, list, download, delete', () async {
+      final (create, createBody) = await send(
+        'POST',
+        '/api/v1/backups',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'include_images': false},
+      );
+      expect(create.statusCode, HttpStatus.created, reason: createBody);
+      final backup =
+          jsonOf(createBody)['backup'] as Map<String, dynamic>;
+      final name = backup['name'] as String;
+
+      final (list, listBody) =
+          await send('GET', '/api/v1/backups', headers: auth(adminSession));
+      expect(list.statusCode, HttpStatus.ok);
+      final names = [
+        for (final item in jsonOf(listBody)['items'] as List<dynamic>)
+          (item as Map<String, dynamic>)['name'],
+      ];
+      expect(names, contains(name));
+
+      // The archive is binary; read it as bytes rather than UTF-8 text.
+      final client = HttpClient();
+      try {
+        final request = await client.getUrl(
+          baseUri.resolve('/api/v1/backups/$name'),
+        );
+        auth(adminSession).forEach(request.headers.set);
+        final download = await request.close();
+        expect(download.statusCode, HttpStatus.ok);
+        expect(download.headers.contentType?.mimeType, 'application/gzip');
+        final bytes = await download.fold<int>(
+          0,
+          (total, chunk) => total + chunk.length,
+        );
+        expect(bytes, greaterThan(0));
+      } finally {
+        client.close();
+      }
+
+      final (remove, _) = await send(
+        'DELETE',
+        '/api/v1/backups/$name',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(remove.statusCode, HttpStatus.noContent);
+    });
+
+    test('DELETE removes the recipe after taking a backup', () async {
+      final (response, _) = await send(
+        'DELETE',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(response.statusCode, HttpStatus.noContent);
+
+      final (gone, goneBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession),
+      );
+      expect(gone.statusCode, HttpStatus.notFound);
+      expect(errorOf(goneBody)['code'], 'not_found');
+
+      final (backups, backupsBody) =
+          await send('GET', '/api/v1/backups', headers: auth(adminSession));
+      expect(backups.statusCode, HttpStatus.ok);
+      final names = [
+        for (final item in jsonOf(backupsBody)['items'] as List<dynamic>)
+          (item as Map<String, dynamic>)['name'] as String,
+      ];
+      expect(
+        names.where((name) => name.contains('before-delete')),
+        isNotEmpty,
+        reason: 'deletes are always preceded by a backup',
+      );
+    });
+
+    test('uploading real corpus photo bytes sets the hero image', () async {
+      // Re-create a recipe to attach the photo to.
+      final (create, createBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: submission,
+      );
+      expect(create.statusCode, HttpStatus.created);
+      uploadSlug = (jsonOf(createBody)['recipe']
+          as Map<String, dynamic>)['slug'] as String;
+
+      final photo = File(
+        '$corpusImagesDir/0857-rich-chocolate-bundt-cake-hero.jpg',
+      ).readAsBytesSync();
+      final (upload, uploadBody) = await send(
+        'POST',
+        '/api/v1/recipes/$uploadSlug/images?role=hero',
+        headers: auth(adminSession, csrf: true),
+        rawBody: photo,
+      );
+      expect(upload.statusCode, HttpStatus.created, reason: uploadBody);
+      expect(jsonOf(uploadBody)['hero_image_url'], isNotNull);
+
+      // Garbage bytes are rejected by the magic-byte check.
+      final (bad, badBody) = await send(
+        'POST',
+        '/api/v1/recipes/$uploadSlug/images?role=hero',
+        headers: auth(adminSession, csrf: true),
+        rawBody: utf8.encode('definitely not an image'),
+      );
+      expect(bad.statusCode, HttpStatus.unprocessableEntity, reason: badBody);
+    });
+
+    test('missing recipes 404; bad inputs 422; wrong methods 405', () async {
+      // Personal-data and image endpoints on a recipe that does not exist —
+      // authorized requests, so the 404 (not a 403) must come through.
+      for (final (method, path) in [
+        ('PUT', '/api/v1/recipes/no-such-recipe/favorite'),
+        ('PUT', '/api/v1/recipes/no-such-recipe/note'),
+        ('GET', '/api/v1/recipes/no-such-recipe/note'),
+        ('POST', '/api/v1/recipes/no-such-recipe/images'),
+      ]) {
+        final (response, body) = await send(
+          method,
+          path,
+          headers: auth(adminSession, csrf: true),
+          jsonBody: method == 'PUT' && path.endsWith('/note')
+              ? {'note': 'x'}
+              : null,
+        );
+        expect(
+          response.statusCode,
+          HttpStatus.notFound,
+          reason: '$method $path',
+        );
+        expect(errorOf(body)['code'], 'not_found');
+      }
+
+      // An invalid image role is a 422 and must not leave an orphan file.
+      final imagesDir =
+          Directory('${config.libraryDir}/my-recipes/images');
+      final imagesBefore =
+          imagesDir.existsSync() ? imagesDir.listSync().length : 0;
+      final (badRole, badRoleBody) = await send(
+        'POST',
+        '/api/v1/recipes/$uploadSlug/images?role=banana',
+        headers: auth(adminSession, csrf: true),
+        rawBody: utf8.encode('body is irrelevant'),
+      );
+      expect(badRole.statusCode, HttpStatus.unprocessableEntity);
+      expect(errorOf(badRoleBody)['code'], 'validation');
+      final imagesAfter =
+          imagesDir.existsSync() ? imagesDir.listSync().length : 0;
+      expect(imagesAfter, imagesBefore,
+          reason: 'a rejected role must not write an image file');
+
+      // Note-body validation: non-string and over-length are 422s.
+      final (badNote, _) = await send(
+        'PUT',
+        '/api/v1/recipes/$uploadSlug/note',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'note': 42},
+      );
+      expect(badNote.statusCode, HttpStatus.unprocessableEntity);
+      final (longNote, _) = await send(
+        'PUT',
+        '/api/v1/recipes/$uploadSlug/note',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'note': 'x' * 20001},
+      );
+      expect(longNote.statusCode, HttpStatus.unprocessableEntity);
+
+      // Unsupported methods get the 405 envelope with an Allow header.
+      final (patch, patchBody) = await send(
+        'PATCH',
+        '/api/v1/recipes/$uploadSlug',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'recipe': <String, Object?>{}},
+      );
+      expect(patch.statusCode, HttpStatus.methodNotAllowed);
+      expect(errorOf(patchBody)['code'], 'method_not_allowed');
+      final allow = patch.headers.value('allow') ?? '';
+      expect(allow, contains('GET'));
+      expect(allow, contains('PUT'));
+      expect(allow, contains('DELETE'));
+    });
+  });
+}

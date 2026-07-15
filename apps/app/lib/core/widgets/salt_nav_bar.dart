@@ -8,13 +8,24 @@ import 'package:salt_app/features/auth/auth_cubit.dart';
 /// The maroon top navigation bar: optional back control, logo, live search
 /// field, avatar menu.
 class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
-  const SaltNavBar({super.key, this.showBack = false, this.initialQuery});
+  const SaltNavBar({
+    super.key,
+    this.showBack = false,
+    this.initialQuery,
+    this.onSearchRefresh,
+  });
 
   /// Whether to show a leading back control (used on drill-down pages).
   final bool showBack;
 
   /// Pre-fills the search field (the search page passes its query).
   final String? initialQuery;
+
+  /// Called instead of navigating when the submitted query equals
+  /// [initialQuery] — the results page passes a reload so resubmitting the
+  /// same query refreshes in place (go() to the current location is a
+  /// no-op).
+  final VoidCallback? onSearchRefresh;
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -61,7 +72,12 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 18),
                 if (!compact)
-                  Expanded(child: _SearchField(initialQuery: initialQuery))
+                  Expanded(
+                    child: _SearchField(
+                      initialQuery: initialQuery,
+                      onRefresh: onSearchRefresh,
+                    ),
+                  )
                 else
                   const Spacer(),
                 const SizedBox(width: 12),
@@ -78,9 +94,10 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
 /// The nav search field: submits the query (search DSL supported) to the
 /// results page.
 class _SearchField extends StatefulWidget {
-  const _SearchField({this.initialQuery});
+  const _SearchField({this.initialQuery, this.onRefresh});
 
   final String? initialQuery;
+  final VoidCallback? onRefresh;
 
   @override
   State<_SearchField> createState() => _SearchFieldState();
@@ -99,6 +116,14 @@ class _SearchFieldState extends State<_SearchField> {
   void _submit(String value) {
     final query = value.trim();
     if (query.isEmpty) {
+      return;
+    }
+    // Resubmitting the query already on screen: go() to the same location
+    // is a no-op (the results cubit is keyed by query), so refresh the
+    // results in place instead — e.g. after an import or a load error.
+    final onRefresh = widget.onRefresh;
+    if (onRefresh != null && query == widget.initialQuery?.trim()) {
+      onRefresh();
       return;
     }
     context.go('/search?q=${Uri.encodeQueryComponent(query)}');

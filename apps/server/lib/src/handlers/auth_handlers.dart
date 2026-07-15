@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:dart_frog/dart_frog.dart' show Request;
 import 'package:salt_server/src/auth/password_hasher.dart';
 import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/auth/setup_code.dart';
@@ -267,15 +271,31 @@ String expiredSessionCookie({required bool secure}) =>
     '$sessionCookieName=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0; '
     'Expires=Thu, 01 Jan 1970 00:00:00 GMT${secure ? '; Secure' : ''}';
 
-/// Awaits [readJson] (pass `context.request.json`) and requires the result
-/// to be a JSON object; throws [ValidationException] on malformed JSON or
-/// any other shape.
-Future<Map<String, Object?>> readJsonBody(
-  Future<Object?> Function() readJson,
-) async {
+/// Largest accepted JSON request body. Recipes are the biggest legitimate
+/// payload and the corpus's largest document is well under 100 KB; the cap
+/// exists so an unauthenticated-to-cheap request cannot balloon memory
+/// before per-field length checks ever run.
+const int maxJsonBodyBytes = 2 * 1024 * 1024;
+
+/// Reads [request]'s body as a JSON object with the size cap enforced
+/// *while reading* (a declared or actual body over [maxJsonBodyBytes] is
+/// rejected before it is buffered whole); throws [ValidationException] on
+/// oversize, malformed JSON, or any non-object shape.
+Future<Map<String, Object?>> readJsonBody(Request request) async {
+  final declared = int.tryParse(request.headers['content-length'] ?? '');
+  if (declared != null && declared > maxJsonBodyBytes) {
+    throw const ValidationException('Request body is too large.');
+  }
+  final builder = BytesBuilder(copy: false);
+  await for (final chunk in request.bytes()) {
+    builder.add(chunk);
+    if (builder.length > maxJsonBodyBytes) {
+      throw const ValidationException('Request body is too large.');
+    }
+  }
   Object? decoded;
   try {
-    decoded = await readJson();
+    decoded = jsonDecode(utf8.decode(builder.takeBytes()));
   } on FormatException {
     throw const ValidationException('Request body must be valid JSON.');
   }

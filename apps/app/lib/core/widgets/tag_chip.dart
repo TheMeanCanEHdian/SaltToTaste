@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
 
+/// The search-DSL query selecting recipes carrying [tag], with the tag text
+/// escaped for the parser's quoted-phrase syntax (a tag containing `"` or
+/// `\` must not break the query a chip tap runs).
+String tagQuery(String tag) {
+  final escaped = tag.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+  return 'tag:"$escaped"';
+}
+
 /// A tag chip in the SaltToTaste palette.
 ///
 /// [onCard] renders the higher-contrast variant used on photo tiles.

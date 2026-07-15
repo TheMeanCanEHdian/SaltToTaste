@@ -119,13 +119,18 @@ ImportSummary importSourceRoot({
       for (final warning in decoded.warnings) {
         summary.warnings.add('$fileName: $warning');
       }
-      final recipe = decoded.recipe;
+      var recipe = decoded.recipe;
       // The id becomes a filename and a Content-Disposition value; a `..`,
       // slash, quote, or control character would escape the library dir or
       // break the header, so reject the file rather than trust it.
       if (!isSafeRecipeId(recipe.id)) {
         throw ValidationException('unsafe recipe id: "${recipe.id}"');
       }
+      // Resolve slug collisions BEFORE encoding, so the exported YAML, the
+      // content hash, and the stored document all carry the same slug.
+      recipe = recipe.copyWith(
+        slug: db.availableSlug(recipe.slug, ownerId: recipe.id),
+      );
       final canonical = RecipeYamlCodec.encode(recipe);
       final contentHash = sha256.convert(utf8.encode(canonical)).toString();
       final exportPath = '${libraryRecipesDir.path}/${recipe.id}.yaml';

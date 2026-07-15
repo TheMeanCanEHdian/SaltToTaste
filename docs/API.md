@@ -3,8 +3,9 @@
 Base path: `/api/v1`. All responses are JSON unless noted. Updated in the
 same commit as any endpoint change (see CLAUDE.md).
 
-**Status:** P3 — every endpoint except `GET /healthz` requires
-authentication.
+**Status:** P5 — every endpoint except `GET /healthz` requires
+authentication. Recipes are editable; the library reconciles with hand
+edits; backups run automatically.
 
 ## Authentication, roles & scopes
 
@@ -22,9 +23,11 @@ Two interchangeable credentials, checked by the same middleware:
 Roles: **admin** (full access) and **member** (read + personal features).
 PATs carry a scope — `read` (browse + personal data) or `full` (everything
 the owner's role allows). Effective permission = role ∩ scope: every
-mutating endpoint (accounts, sessions, tokens — and recipe writes when they
-arrive) requires `full` scope and returns `403 forbidden` to a `read` PAT.
-Session logins always act as `full`.
+endpoint that mutates **shared/server state** (accounts, sessions, tokens,
+recipes, tags, library, backups) requires `full` scope and returns
+`403 forbidden` to a `read` PAT. **Personal data is the documented
+exception:** favorites and personal notes are writable with a `read` PAT —
+they affect only the token's owner. Session logins always act as `full`.
 
 CSRF: cookie-authenticated **mutating** requests must send
 `X-Requested-With: SaltToTaste` (bearer requests are exempt).
@@ -107,7 +110,8 @@ Query parameters:
 |---|---|---|
 | `page` | 1 | integer ≥ 1 |
 | `limit` | 24 | integer 1..100 |
-| `q` | — | search-DSL query (below); parse errors → `422 validation` |
+| `q` | — | search-DSL query (below), max 512 chars; parse errors → `422 validation` |
+| `favorites` | — | `true` restricts the listing (and any `q` search) to the caller's favorites |
 
 **Search DSL:** words next to each other all must match (`and` implied);
 `or` broadens; `"quoted phrases"` match exactly; scopes `title:`, `tag:`,
@@ -133,7 +137,21 @@ MATCH syntax cannot be injected.
 `RecipeCard`: `id`, `slug`, `title`, `category`, `hero_image`
 (`/images/<source-slug>/<file>` or null), `tags` (string list),
 `servings_text`, `total_minutes`, `calories_per_serving` (null until
-nutrition lands), `favorite` (false until auth lands).
+nutrition lands), `favorite` (the **caller's** favorite flag).
+
+### `POST /api/v1/recipes` (admin, full scope)
+
+Create a recipe. Body: `{"recipe": { /* schema-v2 fields */ }}` with the
+editable keys `title` (required), `servings`, `category`, `tags`, `times`,
+`background`, `prep_notes`, `ingredients`, `steps`, `subsections`,
+`techniques`, `images`, `notes`, plus `source.name`/`source.url`.
+Server-owned fields are generated: id `manual-<yyyymmdd>-<slug>`, slug from
+the title (uniqued), `schema_version`, `serves` (parsed from `servings`);
+steps are renumbered sequentially; tags are lowercased and de-duplicated.
+The canonical YAML is exported to `library/my-recipes/recipes/<id>.yaml`.
+
+→ `201` with the detail body (below). Invalid shapes/values → `422` with a
+field-naming message.
 
 ### `GET /api/v1/recipes/{idOrSlug}`
 
@@ -146,11 +164,87 @@ or slug (`rich-chocolate-bundt-cake`).
 {
   "recipe": { /* full schema-v2 recipe document, snake_case */ },
   "source_slug": "the-complete-americas-test-kitchen-tv-show-cookbook-2001-2023",
-  "hero_image_url": "/images/<source-slug>/<file>.jpg"
+  "hero_image_url": "/images/<source-slug>/<file>.jpg",
+  "favorite": false,
+  "note": null
 }
 ```
 
-→ `404 not_found` when neither id nor slug matches.
+`favorite`/`note` are the **caller's** personal data (never another
+user's). → `404 not_found` when neither id nor slug matches.
+
+### `PUT /api/v1/recipes/{idOrSlug}` (admin, full scope)
+
+Update. Same body shape as create with **merge semantics**: an editable key
+*present* in the submission replaces the stored value (an explicit `null`
+clears an optional field); an *absent* key is left untouched — so a script
+can safely update a single field. The slug is stable across renames (links
+keep working); id, source identity, and extraction provenance are
+preserved. Saving re-exports the canonical YAML; if the on-disk file had an
+unsynced hand edit, that edit is preserved next to it as
+`<id>.conflict-<timestamp>.yaml` (the save wins). → `200` detail body.
+
+### `DELETE /api/v1/recipes/{idOrSlug}` (admin, full scope)
+
+Takes a backup first, then removes the database row and the library YAML
+(image files and conflict copies are left in place). → `204`.
+
+### `PUT | DELETE /api/v1/recipes/{idOrSlug}/favorite`
+
+Mark/unmark the recipe as one of the **caller's** favorites (idempotent;
+any role, `read` PAT allowed). → `200 {"favorite": bool}`.
+
+### `GET | PUT | DELETE /api/v1/recipes/{idOrSlug}/note`
+
+The caller's private note on the recipe (any role, `read` PAT allowed;
+never stored in YAML). `PUT {"note": "<text ≤ 20000 chars>"}` sets it (an
+empty string deletes). → `200 {"note": string | null}`.
+
+### `POST /api/v1/recipes/{idOrSlug}/images?role=hero|gallery` (admin, full scope)
+
+Upload a photo as the **raw request body**. Content is validated by magic
+bytes (JPEG/PNG/WebP; 25 MB cap enforced while reading) — the server
+generates the stored filename. `role=hero` (default) replaces the hero
+image; `role=gallery` appends. → `201` detail body.
+
+### `POST /api/v1/recipes/{idOrSlug}/images/from_url` (admin, full scope)
+
+`{"url": "https://…", "role": "hero" | "gallery"}` — downloads a photo into
+the library. SSRF-guarded: http/https only, every resolved address must be
+public, redirects are re-validated per hop, response must be a real image
+(content-type **and** magic bytes), size/time capped. → `201` detail body.
+
+### `GET /api/v1/library` (admin)
+
+`{"last_scan": {…} | null}` — the report of the most recent reconciliation
+scan (also runs at every server start). Report fields: `started_at`,
+`elapsed_ms`, `files_seen`, `updated_from_disk`, `added`, `re_exported`,
+`skipped` (`[{file, reason}]`), `conflict_files`.
+
+### `POST /api/v1/library/rescan` (admin, full scope)
+
+Reconcile the YAML library with the database now: a cleanly hand-edited
+file **wins** (imported, then normalized back to canonical form), a
+malformed file is skipped with a reason (the database version stays), a
+missing export is re-materialized, and a hand-dropped new file is imported.
+→ `200 {"last_scan": {…}}`.
+
+### `GET | POST /api/v1/backups` (admin; POST full scope)
+
+`GET` → `{"items": [{"name", "size_bytes", "created_at"}]}`, newest first.
+`POST {"include_images"?: bool}` → `201 {"backup": {…}}` — creates a
+`.tar.gz` holding the YAML library plus a compacted SQLite snapshot
+(`salt.db`). Images (97% of the bytes, untouched by destructive operations)
+are excluded unless `include_images` is true. Backups also run
+automatically before every recipe delete and daily; the newest 14 are kept.
+
+### `GET | DELETE /api/v1/backups/{name}` (admin, full scope)
+
+`GET` streams the archive (`application/gzip`, attachment). `DELETE` →
+`204`. Names must match the strict backup pattern. The download requires
+full scope even though it is a read: the archive contains the database
+snapshot (credential hashes, private notes) — material no other endpoint
+returns.
 
 ### `GET /api/v1/recipes/{idOrSlug}/yaml`
 
@@ -175,12 +269,23 @@ Every tag with its recipe count and optional chip style:
 ### `PUT /api/v1/tags/{name}/style` (admin)
 
 `{icon?, color?, bg_color?}` — sets the tag's chip style (Lucide icon name,
-`#RRGGBB` colors); null clears a field.
+`#RRGGBB` colors); null clears a field. `404 not_found` when no recipe
+carries the tag.
 
 ## CLI
 
-`dart run salt_server:import <source-root> [--data-dir=PATH]` — bulk-imports a
-Recipe Extraction source root (`source.yaml`, `recipes/*.yaml`, `images/`)
-into the database and writes canonical v2 exports to
-`<data-dir>/library/<source-slug>/`. Idempotent: unchanged recipes are
-skipped by content hash. Exit codes: 0 ok, 1 failures occurred, 64 usage.
+`dart run salt_server:import <source-root> [--data-dir=PATH] [--legacy]` —
+bulk-imports a Recipe Extraction source root (`source.yaml`,
+`recipes/*.yaml`, `images/`) into the database and writes canonical v2
+exports to `<data-dir>/library/<source-slug>/`. Idempotent: unchanged
+recipes are skipped by content hash. Exit codes: 0 ok, 1 failures
+occurred, 64 usage.
+
+A **legacy SaltToTaste v0** data directory (the old Flask app's
+`_recipes/` + `_images/` layout) is detected automatically (or forced with
+`--legacy`) and mapped to schema v2: `description` → `background`,
+`prep`/`cook`/`ready` → `times`, flat ingredient strings → structured
+lines via the shared ingredient parser, `image`/`imagecredit` →
+`images.*`, `source` URL → `source.url`. Old Edamam `calories` values are
+dropped with a warning (nutrition is recomputed in P6). Ids are
+`v0-<slug>` under library source `legacy-import/`.

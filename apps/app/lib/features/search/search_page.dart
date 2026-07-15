@@ -22,24 +22,30 @@ class SearchPage extends StatelessWidget {
         context.read<RecipeRepository>(),
         query: query,
       )..load(),
-      child: Scaffold(
-        appBar: SaltNavBar(showBack: true, initialQuery: query),
-        body: Column(
-          children: [
-            Expanded(
-              child: RecipeGrid(
-                eyebrowBuilder: (state) =>
-                    '${state.total} RESULTS · ${query.toUpperCase()}',
+      child: Builder(
+        builder: (context) => Scaffold(
+          appBar: SaltNavBar(
+            showBack: true,
+            initialQuery: query,
+            onSearchRefresh: () => context.read<RecipeListCubit>().load(),
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: RecipeGrid(
+                  eyebrowBuilder: (state) =>
+                      '${state.total} RESULTS · ${query.toUpperCase()}',
+                ),
               ),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton.small(
-          backgroundColor: SaltColors.maroon,
-          foregroundColor: Colors.white,
-          tooltip: 'Search syntax',
-          onPressed: () => showSearchHelp(context),
-          child: const Icon(Icons.question_mark),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.small(
+            backgroundColor: SaltColors.maroon,
+            foregroundColor: Colors.white,
+            tooltip: 'Search syntax',
+            onPressed: () => showSearchHelp(context),
+            child: const Icon(Icons.question_mark),
+          ),
         ),
       ),
     );

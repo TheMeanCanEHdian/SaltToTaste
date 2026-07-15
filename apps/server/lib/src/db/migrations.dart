@@ -154,4 +154,26 @@ CREATE TABLE tag_styles (
 )
 ''',
   ],
+  // 004 — P5 editing: per-user favorites and personal notes. Both are
+  // database-only personal data — never exported to the YAML library.
+  [
+    '''
+CREATE TABLE user_favorites (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, recipe_id)
+)
+''',
+    'CREATE INDEX idx_user_favorites_recipe ON user_favorites(recipe_id)',
+    '''
+CREATE TABLE user_notes (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, recipe_id)
+)
+''',
+  ],
 ];

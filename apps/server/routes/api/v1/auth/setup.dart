@@ -13,7 +13,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 /// username/password.
 Future<Response> onRequest(RequestContext context) async {
   requireMethods(context, {HttpMethod.post});
-  final body = await readJsonBody(context.request.json);
+  final body = await readJsonBody(context.request);
   final result = await setupAdmin(
     context.read<SaltDatabase>(),
     context.read<AuthRuntime>(),

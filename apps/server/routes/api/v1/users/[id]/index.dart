@@ -18,7 +18,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
   if (userId == null) {
     throw const ValidationException('User id must be an integer.');
   }
-  final body = await readJsonBody(context.request.json);
+  final body = await readJsonBody(context.request);
   final role = body['role'];
   final disabled = body['disabled'];
   if (role is! String? || disabled is! bool?) {

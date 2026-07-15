@@ -1,13 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:salt_server/src/auth/setup_code.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/services/backup_service.dart';
+import 'package:salt_server/src/services/library_scan.dart';
+
+final Logger _log = Logger('bootstrap');
 
 ServerConfig? _config;
 SaltDatabase? _database;
 AuthRuntime? _authRuntime;
+Timer? _backupTimer;
 
 /// The process-wide server config, created (and logging configured) on first
 /// access.
@@ -64,10 +71,46 @@ AuthRuntime _initAuthRuntime() {
 }
 
 /// Eagerly initializes configuration, logging, the database, and the auth
-/// runtime (printing the first-boot setup code when no users exist yet).
+/// runtime (printing the first-boot setup code when no users exist yet),
+/// reconciles the YAML library with the database (hand edits made while the
+/// server was down get picked up), and starts the daily backup timer.
 /// Call once at startup.
 ServerConfig initServer() {
   final config = serverConfig;
   _authRuntime ??= _initAuthRuntime();
+  try {
+    scanLibrary(db: saltDatabase, config: config);
+    // Boot must survive a broken library directory; the scan logs details.
+    // ignore: avoid_catches_without_on_clauses
+  } catch (error, stackTrace) {
+    _log.severe('Startup library scan failed', error, stackTrace);
+  }
+  _scheduleDailyBackups(config);
   return config;
+}
+
+/// Runs a `scheduled` backup daily, plus one at boot when the newest backup
+/// is older than a day (covers servers that are not up for 24h straight).
+void _scheduleDailyBackups(ServerConfig config) {
+  if (_backupTimer != null) {
+    return;
+  }
+  void run() {
+    try {
+      createBackup(db: saltDatabase, config: config, trigger: 'scheduled');
+      // A failed backup must not kill the timer or the server; the backup
+      // service logs details.
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error, stackTrace) {
+      _log.severe('Scheduled backup failed', error, stackTrace);
+    }
+  }
+
+  final newest = listBackups(config).firstOrNull;
+  if (newest == null ||
+      DateTime.now().toUtc().difference(newest.createdAt) >
+          const Duration(hours: 24)) {
+    run();
+  }
+  _backupTimer = Timer.periodic(const Duration(hours: 24), (_) => run());
 }

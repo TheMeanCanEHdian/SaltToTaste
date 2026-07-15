@@ -13,7 +13,7 @@ Future<Response> onRequest(RequestContext context, String name) async {
   final actor = requireAdmin(context);
   requireCsrf(context, actor);
   requireFullScope(actor);
-  final body = await readJsonBody(context.request.json);
+  final body = await readJsonBody(context.request);
   final icon = body['icon'];
   final color = body['color'];
   final bgColor = body['bg_color'];

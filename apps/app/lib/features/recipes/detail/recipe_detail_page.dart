@@ -172,7 +172,7 @@ class _HeaderInfo extends StatelessWidget {
                 TagChip(
                   tag,
                   onTap: () => context.push(
-                    '/search?q=${Uri.encodeQueryComponent('tag:"$tag"')}',
+                    '/search?q=${Uri.encodeQueryComponent(tagQuery(tag))}',
                   ),
                 ),
             ],

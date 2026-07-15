@@ -22,6 +22,37 @@ void main() {
       expect(_compile('sweet potato').ftsMatch, '("sweet" AND "potato")');
     });
 
+    test('a scope binds exactly one term (decided semantics)', () {
+      // 2026-07-14 user decision: the word after the scoped term is a
+      // general term, NOT title-scoped. A parser refactor must not regress
+      // this silently.
+      expect(
+        _compile('title:chicken soup').ftsMatch,
+        '(title:"chicken" AND "soup")',
+      );
+    });
+
+    test('separator-only terms are dropped as noise, not ANDed to nothing',
+        () {
+      expect(
+        _compile('chicken , soup').ftsMatch,
+        '("chicken" AND "soup")',
+        reason: 'a stray comma token must not zero out the query',
+      );
+      expect(_compile('mac & cheese').ftsMatch, '("mac" AND "cheese")');
+      // A query that is ONLY noise compiles to no match at all (the
+      // handler then falls back to the plain listing).
+      expect(_compile('&').ftsMatch, isNull);
+    });
+
+    test('control characters in a term are rejected as validation', () {
+      expect(
+        () => _compile('a\u0000b'),
+        throwsA(isA<ValidationException>()),
+        reason: 'NUL reaches FTS5 as an unterminated string -> opaque 500',
+      );
+    });
+
     test('quoted phrases stay single phrases', () {
       expect(_compile('"sweet potato" soup').ftsMatch,
           '("sweet potato" AND "soup")');

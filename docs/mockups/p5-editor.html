@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaltToTaste — P5 recipe editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --maroon: #960000; --maroon-hover: #7d1420; --rose: #8c4242;
+    --chip: #f6e4e4; --chip-text: #7d1420; --ink: #23201f; --muted: #6d6763;
+    --line: #e7e2de; --bg: #faf7f4; --ok-bg: #e8f3e4; --ok-ink: #2c5a1e;
+    --warn-bg: #fdf1e2; --warn-ink: #8a5a12; --err-bg: #fbe9e9; --err-ink: #8a1212;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; padding-bottom: 80px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--rose); font-weight: 700; margin: 42px 0 14px; }
+  .note { font-size: 13px; color: var(--muted); margin: -8px 0 16px; max-width: 880px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; background: #f4efe9; border-radius: 5px; padding: 1px 6px; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 9px 16px; font: 600 14px 'Open Sans', system-ui, sans-serif; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .btn svg { width: 15px; height: 15px; }
+  .btn.primary { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+  .btn.small { padding: 6px 12px; font-size: 12.5px; }
+  .btn.ghost { color: var(--muted); border-color: transparent; background: transparent; }
+  .btn.danger { color: var(--err-ink); border-color: #eccfcf; background: #fff; }
+  label { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 0 0 5px; letter-spacing: .02em; }
+  input[type=text], select, textarea {
+    width: 100%; border: 1.5px solid var(--line); border-radius: 9px;
+    padding: 9px 12px; font: 400 14px/1.5 'Open Sans', system-ui, sans-serif; background: #fff; color: var(--ink);
+  }
+  input[type=text] { height: 38px; padding: 0 12px; }
+  textarea { resize: vertical; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .banner { border-radius: 9px; padding: 10px 13px; font-size: 13px; margin-top: 12px; display: flex; gap: 9px; align-items: flex-start; }
+  .banner svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+  .banner.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .banner.ok { background: var(--ok-bg); color: var(--ok-ink); }
+  .banner.err { background: var(--err-bg); color: var(--err-ink); }
+
+  /* ===== editor frame ===== */
+  .frame { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .nav { background: var(--maroon); color: #fff; display: flex; align-items: center; gap: 14px; padding: 0 18px; height: 58px; }
+  .nav .back { font-size: 18px; }
+  .nav .title { font-weight: 700; font-size: 15.5px; }
+  .nav .dirty { width: 8px; height: 8px; border-radius: 50%; background: #ffd28a; }
+  .nav .spacer { flex: 1; }
+  .nav .btn { border-color: rgba(255,255,255,.45); background: transparent; color: #fff; }
+  .nav .btn.save { background: #fff; color: var(--maroon); border-color: #fff; }
+  .editor-body { max-width: 860px; margin: 0 auto; padding: 26px 26px 90px; display: flex; flex-direction: column; gap: 20px; }
+  .card { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 18px 20px 20px; }
+  .card h3 { font-size: 15px; color: var(--maroon); margin-bottom: 14px; letter-spacing: .02em; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; }
+  .field { min-width: 0; }
+  .parse-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; border-radius: 6px; padding: 2px 8px; background: var(--ok-bg); color: var(--ok-ink); }
+  .parse-badge.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .parse-badge.off { background: #efecea; color: var(--muted); }
+  .parse-badge svg { width: 12px; height: 12px; }
+
+  /* tags input */
+  .tags-input { display: flex; flex-wrap: wrap; gap: 6px; border: 1.5px solid var(--line); border-radius: 9px; padding: 7px 9px; background: #fff; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--chip); color: var(--chip-text); }
+  .chip svg { width: 13px; height: 13px; }
+  .chip .x { opacity: .6; font-weight: 700; cursor: pointer; margin-left: 2px; }
+  .tags-input input { border: none; height: 24px; width: 130px; padding: 0 4px; font-size: 13px; }
+  .tags-input input:focus { outline: none; }
+
+  /* ingredient rows */
+  .ing-row { display: flex; align-items: center; gap: 9px; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  .ing-row:last-of-type { border-bottom: none; }
+  .grip { color: #cfc8c2; cursor: grab; display: grid; place-items: center; }
+  .grip svg { width: 16px; height: 16px; }
+  .ing-row input.raw { flex: 1; }
+  .row-actions { display: flex; gap: 3px; color: var(--muted); }
+  .icon-btn { border: none; background: transparent; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 7px; display: grid; place-items: center; }
+  .icon-btn:hover { background: var(--bg); color: var(--ink); }
+  .icon-btn svg { width: 15px; height: 15px; }
+  .group-row { display: flex; align-items: center; gap: 9px; padding: 14px 6px 6px; }
+  .group-row input { font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; max-width: 320px; }
+  .ing-footer { display: flex; gap: 8px; padding-top: 14px; flex-wrap: wrap; }
+
+  /* structured panel */
+  .struct { margin: 2px 0 10px 31px; border: 1px solid var(--line); border-radius: 12px; background: #fdfbf9; padding: 14px 16px 16px; }
+  .struct table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 4px; }
+  .struct th { text-align: left; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 2px 8px 6px 0; }
+  .struct td { padding: 3px 8px 3px 0; }
+  .struct select, .struct input { height: 34px; font-size: 13px; }
+  .struct .radio { text-align: center; }
+  .struct-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .struct-foot { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .struct-foot .spacer { flex: 1; }
+
+  /* modal */
+  .modal { width: 560px; max-width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.14); padding: 22px 24px; }
+  .modal h3 { font-size: 16px; color: var(--maroon); margin-bottom: 4px; }
+  .modal .desc { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .paste-preview { border: 1px solid var(--line); border-radius: 10px; margin-top: 12px; overflow: hidden; }
+  .paste-preview .p-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .paste-preview .p-row:last-child { border-bottom: none; }
+  .paste-preview .p-row .t { flex: 1; }
+  .modal .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+  /* steps */
+  .step-card { display: flex; gap: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; margin-bottom: 10px; background: #fff; }
+  .step-num { width: 30px; height: 30px; border-radius: 50%; background: var(--maroon); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none; }
+  .step-main { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .step-main input { height: 32px; font-size: 12.5px; max-width: 340px; }
+  .step-side { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+
+  /* images */
+  .img-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .img-hero { width: 200px; height: 130px; border-radius: 10px; background: linear-gradient(135deg, #5a3218 0%, #7a4a24 45%, #3f2210 100%); position: relative; flex: none; }
+  .img-hero .tagline { position: absolute; left: 8px; bottom: 8px; font-size: 10.5px; color: #fff; background: rgba(0,0,0,.45); border-radius: 5px; padding: 2px 7px; }
+  .img-add { width: 96px; height: 130px; border: 1.5px dashed var(--line); border-radius: 10px; display: grid; place-items: center; color: var(--muted); font-size: 12px; text-align: center; }
+  .img-controls { flex: 1; min-width: 240px; }
+  .url-row { display: flex; gap: 8px; margin-top: 8px; }
+  .url-row input { flex: 1; }
+
+  /* danger */
+  .danger-zone { border-color: #eccfcf; }
+  .danger-zone h3 { color: var(--err-ink); }
+  .danger-flex { display: flex; align-items: center; gap: 14px; justify-content: space-between; flex-wrap: wrap; }
+
+  /* save bar */
+  .savebar { border-top: 1px solid var(--line); background: #fdfbf9; padding: 12px 22px; display: flex; align-items: center; gap: 14px; }
+  .savebar .spacer { flex: 1; }
+
+  /* detail fragments (favorites/notes) */
+  .detail-frag { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; max-width: 560px; }
+  .detail-frag .head { display: flex; align-items: flex-start; gap: 12px; }
+  .detail-frag h3.title { font-size: 21px; color: var(--maroon); flex: 1; line-height: 1.25; }
+  .heart-btn { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .heart-btn svg { width: 19px; height: 19px; color: var(--maroon); }
+  .heart-btn.active { background: var(--chip); border-color: var(--maroon); }
+  .heart-btn.active svg { fill: var(--maroon); }
+  .notes-card { border: 1px solid var(--line); border-radius: 12px; background: #fdfbf9; padding: 14px 16px; margin-top: 16px; }
+  .notes-card .nh { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .notes-card .nh strong { font-size: 13.5px; }
+  .notes-card .nh .priv { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: #efecea; border-radius: 5px; padding: 2px 7px; }
+  .tile { width: 250px; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+  .tile .photo { height: 150px; position: relative; background: linear-gradient(135deg, #5a3218 0%, #7a4a24 45%, #3f2210 100%); }
+  .tile .photo .heart { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.92); display: grid; place-items: center; }
+  .tile .photo .heart svg { width: 15px; height: 15px; color: var(--maroon); fill: var(--maroon); }
+  .tile .photo .chips { position: absolute; left: 10px; bottom: 10px; }
+  .tile .body { padding: 12px 14px 14px; }
+  .tile .body .t { font-weight: 700; font-size: 14.5px; }
+  .context { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+
+  /* settings shell */
+  .settings { display: grid; grid-template-columns: 230px 1fr; gap: 26px; background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .side { border-right: 1px solid var(--line); padding: 18px 0; background: #fdfbf9; }
+  .side .group { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 14px 20px 6px; }
+  .side a { display: flex; gap: 9px; align-items: center; padding: 9px 20px; font-size: 14px; color: var(--ink); text-decoration: none; }
+  .side a.active { background: var(--chip); color: var(--chip-text); font-weight: 700; border-right: 3px solid var(--maroon); }
+  .pane { padding: 26px 28px 30px; }
+  .pane h2 { font-size: 20px; color: var(--maroon); margin-bottom: 4px; }
+  .pane .desc { color: var(--muted); font-size: 13.5px; margin-bottom: 16px; }
+  .pane h4 { font-size: 14.5px; margin: 22px 0 10px; }
+  table.list { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.list th { text-align: left; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  table.list td { padding: 10px; border-bottom: 1px solid var(--line); }
+  .scan-line { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; padding: 5px 0; }
+  .scan-line svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+  .scan-line.ok svg { color: var(--ok-ink); }
+  .scan-line.warn svg { color: var(--warn-ink); }
+  .scan-line.err svg { color: var(--err-ink); }
+
+  /* phone */
+  .phone { width: 375px; background: #fff; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+  .phone .nav { height: 52px; padding: 0 14px; }
+  .phone .nav .title { font-size: 14px; }
+  .phone .p-body { padding: 14px 14px 0; display: flex; flex-direction: column; gap: 12px; }
+  .phone .savebar { margin-top: 14px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none"><symbol id="i-apple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z" /> <path d="M10 2c1 .5 2 2 2 5" /></symbol><symbol id="i-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1" /> <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /> <path d="M10 12h4" /></symbol><symbol id="i-banana" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13c3.5-2 8-2 10 2a5.5 5.5 0 0 1 8 5" /> <path d="M5.15 17.89c5.52-1.52 8.65-6.89 7-12C11.55 4 11.5 2 13 2c3.22 0 5 5.5 5 8 0 6.5-4.2 12-10.49 12C5.11 22 2 22 2 20c0-1.5 1.14-1.55 3.15-2.11Z" /></symbol><symbol id="i-beef" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.4 13.7A6.5 6.5 0 1 0 6.28 6.6c-1.1 3.13-.78 3.9-3.18 6.08A3 3 0 0 0 5 18c4 0 8.4-1.8 11.4-4.3" /> <path d="m18.5 6 2.19 4.5a6.48 6.48 0 0 1-2.29 7.2C15.4 20.2 11 22 7 22a3 3 0 0 1-2.68-1.66L2.4 16.5" /> <circle cx="12.5" cy="8.5" r="2.5" /></symbol><symbol id="i-beer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 11h1a3 3 0 0 1 0 6h-1" /> <path d="M9 12v6" /> <path d="M13 12v6" /> <path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 1.5 3 1.5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z" /> <path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8" /></symbol><symbol id="i-cake-slice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="2" /> <path d="M7.2 7.9 3 11v9c0 .6.4 1 1 1h16c.6 0 1-.4 1-1v-9c0-2-3-6-7-8l-3.6 2.6" /> <path d="M16 13H3" /> <path d="M16 17H3" /></symbol><symbol id="i-candy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 7v10.9" /> <path d="M14 6.1V17" /> <path d="M16 7V3a1 1 0 0 1 1.707-.707 2.5 2.5 0 0 0 2.152.717 1 1 0 0 1 1.131 1.131 2.5 2.5 0 0 0 .717 2.152A1 1 0 0 1 21 8h-4" /> <path d="M16.536 7.465a5 5 0 0 0-7.072 0l-2 2a5 5 0 0 0 0 7.07 5 5 0 0 0 7.072 0l2-2a5 5 0 0 0 0-7.07" /> <path d="M8 17v4a1 1 0 0 1-1.707.707 2.5 2.5 0 0 0-2.152-.717 1 1 0 0 1-1.131-1.131 2.5 2.5 0 0 0-.717-2.152A1 1 0 0 1 3 16h4" /></symbol><symbol id="i-carrot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.27 21.7s9.87-3.5 12.73-6.36a4.5 4.5 0 0 0-6.36-6.37C5.77 11.84 2.27 21.7 2.27 21.7zM8.64 14l-2.05-2.04M15.34 15l-2.46-2.46" /> <path d="M22 9s-1.33-2-3.5-2C16.86 7 15 9 15 9s1.33 2 3.5 2S22 9 22 9z" /> <path d="M15 2s-2 1.33-2 3.5S15 9 15 9s2-1.84 2-3.5C17 3.33 15 2 15 2z" /></symbol><symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></symbol><symbol id="i-chef-hat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" /> <path d="M6 17h12" /></symbol><symbol id="i-cherry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17a5 5 0 0 0 10 0c0-2.76-2.5-5-5-3-2.5-2-5 .24-5 3Z" /> <path d="M12 17a5 5 0 0 0 10 0c0-2.76-2.5-5-5-3-2.5-2-5 .24-5 3Z" /> <path d="M7 14c3.22-2.91 4.29-8.75 5-12 1.66 2.38 4.94 9 5 12" /> <path d="M22 9c-4.29 0-7.14-2.33-10-7 5.71 0 10 4.67 10 7Z" /></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></symbol><symbol id="i-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6" /></symbol><symbol id="i-circle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /> <line x1="12" x2="12" y1="8" y2="12" /> <line x1="12" x2="12.01" y1="16" y2="16" /></symbol><symbol id="i-citrus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.66 17.67a1.08 1.08 0 0 1-.04 1.6A12 12 0 0 1 4.73 2.38a1.1 1.1 0 0 1 1.61-.04z" /> <path d="M19.65 15.66A8 8 0 0 1 8.35 4.34" /> <path d="m14 10-5.5 5.5" /> <path d="M14 17.85V10H6.15" /></symbol><symbol id="i-clipboard-paste" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 14h10" /> <path d="M16 4h2a2 2 0 0 1 2 2v1.344" /> <path d="m17 18 4-4-4-4" /> <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113" /> <rect x="8" y="2" width="8" height="4" rx="1" /></symbol><symbol id="i-coffee" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2" /> <path d="M14 2v2" /> <path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" /> <path d="M6 2v2" /></symbol><symbol id="i-cookie" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" /> <path d="M8.5 8.5v.01" /> <path d="M16 15.5v.01" /> <path d="M12 12v.01" /> <path d="M11 17v.01" /> <path d="M7 14v.01" /></symbol><symbol id="i-cooking-pot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20" /> <path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" /> <path d="m4 8 16-4" /> <path d="m8.86 6.78-.45-1.81a2 2 0 0 1 1.45-2.43l1.94-.48a2 2 0 0 1 2.43 1.46l.45 1.8" /></symbol><symbol id="i-croissant" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.6 13.11 5.79-3.21c1.89-1.05 4.79 1.78 3.71 3.71l-3.22 5.81C8.8 23.16.79 15.23 4.6 13.11Z" /> <path d="m10.5 9.5-1-2.29C9.2 6.48 8.8 6 8 6H4.5C2.79 6 2 6.5 2 8.5a7.71 7.71 0 0 0 2 4.83" /> <path d="M8 6c0-1.55.24-4-2-4-2 0-2.5 2.17-2.5 4" /> <path d="m14.5 13.5 2.29 1c.73.3 1.21.7 1.21 1.5v3.5c0 1.71-.5 2.5-2.5 2.5a7.71 7.71 0 0 1-4.83-2" /> <path d="M18 16c1.55 0 4-.24 4 2 0 2-2.17 2.5-4 2.5" /></symbol><symbol id="i-cup-soda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8" /> <path d="M5 8h14" /> <path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0" /> <path d="m12 8 1-6h2" /></symbol><symbol id="i-donut" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 10a2.5 2.5 0 0 1-2.4-3H18a2.95 2.95 0 0 1-2.6-4.4 10 10 0 1 0 6.3 7.1c-.3.2-.8.3-1.2.3" /> <circle cx="12" cy="12" r="3" /></symbol><symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></symbol><symbol id="i-drumstick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.4 15.63a7.875 6 135 1 1 6.23-6.23 4.5 3.43 135 0 0-6.23 6.23" /> <path d="m8.29 12.71-2.6 2.6a2.5 2.5 0 1 0-1.65 4.65A2.5 2.5 0 1 0 8.7 18.3l2.59-2.59" /></symbol><symbol id="i-egg-fried" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11.5" cy="12.5" r="3.5" /> <path d="M3 8c0-3.5 2.5-6 6.5-6 5 0 4.83 3 7.5 5s5 2 5 6c0 4.5-2.5 6.5-7 6.5-2.5 0-2.5 2.5-6 2.5s-7-2-7-5.5c0-3 1.5-3 1.5-5C3.5 10 3 9 3 8Z" /></symbol><symbol id="i-egg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 4 8 4 14a8 8 0 0 0 16 0c0-6-4-12-8-12" /></symbol><symbol id="i-fish" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z" /> <path d="M18 12v.5" /> <path d="M16 17.93a9.77 9.77 0 0 1 0-11.86" /> <path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33" /> <path d="M10.46 7.26C10.2 5.88 9.17 4.24 8 3h5.8a2 2 0 0 1 1.98 1.67l.23 1.4" /> <path d="m16.01 17.93-.23 1.4A2 2 0 0 1 13.8 21H9.5a5.96 5.96 0 0 0 1.49-3.98" /></symbol><symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></symbol><symbol id="i-folder-sync" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v.5" /> <path d="M12 10v4h4" /> <path d="m12 14 1.535-1.605a5 5 0 0 1 8 1.5" /> <path d="M22 22v-4h-4" /> <path d="m22 18-1.535 1.605a5 5 0 0 1-8-1.5" /></symbol><symbol id="i-grape" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 5V2l-5.89 5.89" /> <circle cx="16.6" cy="15.89" r="3" /> <circle cx="8.11" cy="7.4" r="3" /> <circle cx="12.35" cy="11.65" r="3" /> <circle cx="13.91" cy="5.85" r="3" /> <circle cx="18.15" cy="10.09" r="3" /> <circle cx="6.56" cy="13.2" r="3" /> <circle cx="10.8" cy="17.44" r="3" /> <circle cx="5" cy="19" r="3" /></symbol><symbol id="i-grip-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1" /> <circle cx="9" cy="5" r="1" /> <circle cx="9" cy="19" r="1" /> <circle cx="15" cy="12" r="1" /> <circle cx="15" cy="5" r="1" /> <circle cx="15" cy="19" r="1" /></symbol><symbol id="i-ham" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.144 21.144A7.274 10.445 45 1 0 2.856 10.856" /> <path d="M13.144 21.144A7.274 4.365 45 0 0 2.856 10.856a7.274 4.365 45 0 0 10.288 10.288" /> <path d="M16.565 10.435 18.6 8.4a2.501 2.501 0 1 0 1.65-4.65 2.5 2.5 0 1 0-4.66 1.66l-2.024 2.025" /> <path d="m8.5 16.5-1-1" /></symbol><symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></symbol><symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></symbol><symbol id="i-ice-cream-bowl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17c5 0 8-2.69 8-6H4c0 3.31 3 6 8 6m-4 4h8m-4-3v3M5.14 11a3.5 3.5 0 1 1 6.71 0" /> <path d="M12.14 11a3.5 3.5 0 1 1 6.71 0" /> <path d="M15.5 6.5a3.5 3.5 0 1 0-7 0" /></symbol><symbol id="i-ice-cream-cone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 4.08 10.35a1 1 0 0 0 1.84 0L17 11" /> <path d="M17 7A5 5 0 0 0 7 7" /> <path d="M17 7a2 2 0 0 1 0 4H7a2 2 0 0 1 0-4" /></symbol><symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /> <circle cx="9" cy="9" r="2" /> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></symbol><symbol id="i-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /> <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></symbol><symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></symbol><symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol><symbol id="i-martini" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22h8" /> <path d="M12 11v11" /> <path d="m19 3-7 8-7-8Z" /></symbol><symbol id="i-microwave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="15" x="2" y="4" rx="2" /> <rect width="8" height="7" x="6" y="8" rx="1" /> <path d="M18 8v7" /> <path d="M6 19v2" /> <path d="M18 19v2" /></symbol><symbol id="i-milk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8" /> <path d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2" /> <path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></symbol><symbol id="i-pizza" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14-1 1" /> <path d="m13.75 18.25-1.25 1.42" /> <path d="M17.775 5.654a15.68 15.68 0 0 0-12.121 12.12" /> <path d="M18.8 9.3a1 1 0 0 0 2.1 7.7" /> <path d="M21.964 20.732a1 1 0 0 1-1.232 1.232l-18-5a1 1 0 0 1-.695-1.232A19.68 19.68 0 0 1 15.732 2.037a1 1 0 0 1 1.232.695z" /></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol><symbol id="i-popcorn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a2 2 0 0 0 0-4 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0 0 4" /> <path d="M10 22 9 8" /> <path d="m14 22 1-14" /> <path d="M20 8c.5 0 .9.4.8 1l-2.6 12c-.1.5-.7 1-1.2 1H7c-.6 0-1.1-.4-1.2-1L3.2 9c-.1-.6.3-1 .8-1Z" /></symbol><symbol id="i-refresh-cw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></symbol><symbol id="i-salad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21h10" /> <path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /> <path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03 1.1" /> <path d="m13 12 4-4" /> <path d="M10.9 7.25A3.99 3.99 0 0 0 4 10c0 .73.2 1.41.54 2" /></symbol><symbol id="i-sandwich" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2.37 11.223 8.372-6.777a2 2 0 0 1 2.516 0l8.371 6.777" /> <path d="M21 15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-5.25" /> <path d="M3 15a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h9" /> <path d="m6.67 15 6.13 4.6a2 2 0 0 0 2.8-.4l3.15-4.2" /> <rect width="20" height="4" x="2" y="11" rx="1" /></symbol><symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /> <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /> <path d="M7 3v4a1 1 0 0 0 1 1h7" /></symbol><symbol id="i-snowflake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10 20-1.25-2.5L6 18" /> <path d="M10 4 8.75 6.5 6 6" /> <path d="m14 20 1.25-2.5L18 18" /> <path d="m14 4 1.25 2.5L18 6" /> <path d="m17 21-3-6h-4" /> <path d="m17 3-3 6 1.5 3" /> <path d="M2 12h6.5L10 9" /> <path d="m20 10-1.5 2 1.5 2" /> <path d="M22 12h-6.5L14 15" /> <path d="m4 10 1.5 2L4 14" /> <path d="m7 21 3-6-1.5-3" /> <path d="m7 3 3 6h4" /></symbol><symbol id="i-soup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" /> <path d="M7 21h10" /> <path d="M19.5 12 22 6" /> <path d="M16.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.73 1.62" /> <path d="M11.25 3c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02-.06.78.33 1.24.72 1.62" /> <path d="M6.25 3c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02-.05.78.34 1.24.74 1.62" /></symbol><symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></symbol><symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></symbol><symbol id="i-timer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" x2="14" y1="2" y2="2" /> <line x1="12" x2="15" y1="14" y2="11" /> <circle cx="12" cy="14" r="8" /></symbol><symbol id="i-trash-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></symbol><symbol id="i-triangle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></symbol><symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12" /> <path d="m17 8-5-5-5 5" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></symbol><symbol id="i-utensils-crossed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8" /> <path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7" /> <path d="m2.1 21.8 6.4-6.3" /> <path d="m19 5-7 7" /></symbol><symbol id="i-utensils" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /> <path d="M7 2v20" /> <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></symbol><symbol id="i-wheat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8" /> <path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /> <path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /> <path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" /> <path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z" /> <path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /> <path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /> <path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" /></symbol><symbol id="i-wine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22h8" /> <path d="M7 10h10" /> <path d="M12 15v7" /> <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" /></symbol><symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol></svg>
+
+<div class="wrap">
+  <div class="eyebrow">1 · Recipe editor — desktop (admin only)</div>
+  <p class="note">
+    Reached from a recipe's <strong>Edit</strong> button or the avatar menu's <strong>Add recipe</strong> (same page, blank).
+    Content below is the real corpus recipe <code>rich-chocolate-bundt-cake</code>. The core idea for ingredients:
+    <strong>you type the plain-English line; the parser fills the structure</strong> (used later for scaling and nutrition).
+    Saving writes to the database and exports canonical YAML to the library. Members never see this page.
+  </p>
+
+  <div class="frame">
+    <div class="nav">
+      <span class="back">←</span>
+      <span class="title">Editing · Rich Chocolate Bundt Cake</span>
+      <span class="dirty" title="Unsaved changes"></span>
+      <span class="spacer"></span>
+      <button class="btn">Cancel</button>
+      <button class="btn save"><svg><use href="#i-save"/></svg>Save recipe</button>
+    </div>
+    <div class="editor-body">
+
+      <div class="card">
+        <h3>Basics</h3>
+        <div class="field" style="margin-bottom:14px;">
+          <label>Title</label>
+          <input type="text" value="Rich Chocolate Bundt Cake" />
+          <div class="hint">URL slug <code>rich-chocolate-bundt-cake</code> — kept stable on rename so links don't break.</div>
+        </div>
+        <div class="grid3">
+          <div class="field">
+            <label>Servings</label>
+            <input type="text" value="SERVES 12" />
+            <div class="hint"><span class="parse-badge"><svg><use href="#i-check"/></svg>reads as 12</span> — shown verbatim, parsed for scaling.</div>
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <input type="text" value="A Piece of Cake" />
+          </div>
+          <div class="field">
+            <label>Source</label>
+            <input type="text" value="ATK TV Show Cookbook" />
+            <div class="hint">Imported source details (ISBN, pages) are kept as-is underneath.</div>
+          </div>
+        </div>
+        <div class="field" style="margin-top:14px;">
+          <label>Tags</label>
+          <div class="tags-input">
+            <span class="chip" style="background:#fdeef3;color:#a02040;"><svg><use href="#i-cake-slice"/></svg>dessert <span class="x">✕</span></span>
+            <span class="chip">holiday <span class="x">✕</span></span>
+            <input type="text" placeholder="Add tag…" />
+          </div>
+          <div class="hint">New tags are created on save and show up in Settings → Tags for styling.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Story &amp; cook's notes</h3>
+        <div class="field" style="margin-bottom:14px;">
+          <label>Background <span class="muted" style="font-weight:400;">(the "why this works" prose)</span></label>
+          <textarea rows="3">A Bundt cake is the pinnacle of cake-baking simplicity. With its decorative shape, this cake doesn't require frosting or fussy finishing techniques. We wanted a cake that delivered pure chocolate ecstasy with the first bite—a chocolate Bundt cake with a fine crumb, moist texture, and rich chocolate flavor.</textarea>
+        </div>
+        <div class="field">
+          <label>Prep notes <span class="muted" style="font-weight:400;">(before you begin)</span></label>
+          <textarea rows="2">We prefer natural cocoa here because Dutch-processed cocoa will result in a compromised rise. For an accurate measurement of boiling water, bring a kettle of water to a boil, then measure out the desired amount.</textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Ingredients</h3>
+
+        <div class="ing-row">
+          <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+          <input class="raw" type="text" value="12 tablespoons (1½ sticks) unsalted butter, softened, plus 1 tablespoon, melted, for the pan" />
+          <span class="parse-badge"><svg><use href="#i-check"/></svg>parsed</span>
+          <div class="row-actions">
+            <button class="icon-btn" title="Structured fields"><svg><use href="#i-chevron-down"/></svg></button>
+            <button class="icon-btn" title="Remove"><svg><use href="#i-trash-2"/></svg></button>
+          </div>
+        </div>
+
+        <div class="ing-row" style="border-bottom:none;">
+          <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+          <input class="raw" type="text" value="1¾ cups (8¾ ounces) unbleached all-purpose flour" />
+          <span class="parse-badge"><svg><use href="#i-check"/></svg>parsed</span>
+          <div class="row-actions">
+            <button class="icon-btn" title="Collapse"><svg><use href="#i-chevron-up"/></svg></button>
+            <button class="icon-btn" title="Remove"><svg><use href="#i-trash-2"/></svg></button>
+          </div>
+        </div>
+        <div class="struct">
+          <table>
+            <tr><th>Measure</th><th>Quantity</th><th>Unit</th><th style="text-align:center;">≈</th><th style="text-align:center;">Primary</th><th></th></tr>
+            <tr>
+              <td><select><option>volume</option><option>weight</option><option>count</option></select></td>
+              <td><input type="text" value="1 3/4" style="width:90px;" /></td>
+              <td><select><option>cup</option><option>tablespoon</option><option>ounce</option></select></td>
+              <td class="radio"><input type="checkbox" /></td>
+              <td class="radio"><input type="radio" name="prim" checked /></td>
+              <td><button class="icon-btn"><svg><use href="#i-x"/></svg></button></td>
+            </tr>
+            <tr>
+              <td><select><option>weight</option><option>volume</option><option>count</option></select></td>
+              <td><input type="text" value="8 3/4" style="width:90px;" /></td>
+              <td><select><option>ounce</option><option>gram</option><option>pound</option></select></td>
+              <td class="radio"><input type="checkbox" /></td>
+              <td class="radio"><input type="radio" name="prim" /></td>
+              <td><button class="icon-btn"><svg><use href="#i-x"/></svg></button></td>
+            </tr>
+          </table>
+          <button class="btn small ghost"><svg><use href="#i-plus"/></svg>Add amount (e.g. the weight in parentheses)</button>
+          <div class="struct-fields">
+            <div class="field"><label>Item</label><input type="text" value="unbleached all-purpose flour" /></div>
+            <div class="field"><label>Prep</label><input type="text" placeholder="e.g. softened, chopped coarse" /></div>
+          </div>
+          <div class="struct-foot">
+            <button class="btn small"><svg><use href="#i-refresh-cw"/></svg>Re-parse from text</button>
+            <span class="spacer"></span>
+            <span class="muted"><svg style="width:12px;height:12px;vertical-align:-2px;"><use href="#i-lock"/></svg> Hand-edited fields lock — retyping the line above only <em>suggests</em> changes.</span>
+          </div>
+        </div>
+
+        <div class="ing-row">
+          <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+          <input class="raw" type="text" value="1 teaspoon instant espresso powder (optional)" />
+          <span class="parse-badge warn"><svg><use href="#i-triangle-alert"/></svg>check</span>
+          <div class="row-actions">
+            <button class="icon-btn"><svg><use href="#i-chevron-down"/></svg></button>
+            <button class="icon-btn"><svg><use href="#i-trash-2"/></svg></button>
+          </div>
+        </div>
+
+        <div class="ing-row">
+          <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+          <input class="raw" type="text" value="Confectioners’ sugar, for dusting" />
+          <span class="parse-badge off">no amount</span>
+          <div class="row-actions">
+            <button class="icon-btn"><svg><use href="#i-chevron-down"/></svg></button>
+            <button class="icon-btn"><svg><use href="#i-trash-2"/></svg></button>
+          </div>
+        </div>
+
+        <div class="group-row">
+          <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+          <input type="text" value="FOR THE GLAZE" />
+          <span class="muted">group header — renders as a section on the recipe page</span>
+          <button class="icon-btn"><svg><use href="#i-trash-2"/></svg></button>
+        </div>
+
+        <div class="ing-footer">
+          <button class="btn small"><svg><use href="#i-plus"/></svg>Ingredient</button>
+          <button class="btn small"><svg><use href="#i-plus"/></svg>Group header</button>
+          <button class="btn small"><svg><use href="#i-clipboard-paste"/></svg>Paste a list…</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Directions</h3>
+        <div class="step-card">
+          <span class="step-num">1</span>
+          <div class="step-main">
+            <input type="text" placeholder="Optional label — e.g. MAKE THE BATTER" />
+            <textarea rows="3">Stir together the 1 tablespoon melted butter and 1 tablespoon of the cocoa in a small bowl until a paste forms. Using a pastry brush, coat all the interior surfaces of a standard 12-cup Bundt pan. Adjust an oven rack to the lower-middle position and heat the oven to 350 degrees.</textarea>
+          </div>
+          <div class="step-side">
+            <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+            <button class="icon-btn"><svg><use href="#i-trash-2"/></svg></button>
+          </div>
+        </div>
+        <div class="step-card">
+          <span class="step-num">2</span>
+          <div class="step-main">
+            <input type="text" placeholder="Optional label" />
+            <textarea rows="2">Combine the remaining ¾ cup cocoa, the chocolate, and espresso powder (if using) in a medium heatproof bowl. Pour the boiling water over and whisk until smooth…</textarea>
+          </div>
+          <div class="step-side">
+            <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+            <button class="icon-btn"><svg><use href="#i-trash-2"/></svg></button>
+          </div>
+        </div>
+        <div class="ing-footer">
+          <button class="btn small"><svg><use href="#i-plus"/></svg>Step</button>
+          <button class="btn small"><svg><use href="#i-plus"/></svg>Group header</button>
+        </div>
+        <div class="hint" style="margin-top:10px;">Steps renumber automatically when reordered. Variations &amp; technique sidebars live in a collapsed section below (this recipe has none) — omitted keys stay omitted in the YAML.</div>
+      </div>
+
+      <div class="card">
+        <h3>Photos</h3>
+        <div class="img-row">
+          <div class="img-hero"><span class="tagline">hero · 0857-rich-chocolate-bundt-cake-hero.jpg</span></div>
+          <div class="img-add"><span><svg style="width:18px;height:18px;"><use href="#i-plus"/></svg><br />gallery</span></div>
+          <div class="img-controls">
+            <button class="btn small"><svg><use href="#i-upload"/></svg>Upload photo</button>
+            <div class="url-row">
+              <input type="text" placeholder="…or paste an image URL" />
+              <button class="btn small"><svg><use href="#i-link"/></svg>Fetch</button>
+            </div>
+            <div class="hint">JPEG/PNG/WebP up to 25 MB — files are content-checked, renamed server-side. URL fetches are validated the same way.</div>
+            <div class="field" style="margin-top:12px;">
+              <label>Photo credit <span class="muted" style="font-weight:400;">(optional)</span></label>
+              <input type="text" placeholder="e.g. © America's Test Kitchen" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card danger-zone">
+        <h3>Danger zone</h3>
+        <div class="danger-flex">
+          <span class="muted" style="font-size:13px;">Deleting removes the recipe and its library YAML. A backup is taken first, so it's recoverable from Settings → Backups.</span>
+          <button class="btn danger"><svg><use href="#i-trash-2"/></svg>Delete recipe</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="savebar">
+      <span class="parse-badge warn"><svg><use href="#i-circle-alert"/></svg>Unsaved changes</span>
+      <span class="muted">Saving updates the database and rewrites <code>library/rich-chocolate-bundt-cake.yaml</code></span>
+      <span class="spacer"></span>
+      <button class="btn">Cancel</button>
+      <button class="btn primary"><svg><use href="#i-save"/></svg>Save recipe</button>
+    </div>
+  </div>
+
+  <div class="eyebrow">2 · Paste a list — bulk ingredient entry</div>
+  <p class="note">For typing up a recipe from a card or a website: paste the whole ingredient block, each line becomes a row through the same parser, then fix anything flagged.</p>
+  <div class="modal">
+    <h3>Paste ingredients</h3>
+    <div class="desc">One ingredient per line. Lines ending with a colon become group headers.</div>
+    <textarea rows="4">6 ounces bittersweet chocolate, chopped coarse
+¾ cup boiling water
+1 cup sour cream, at room temperature
+For the glaze:</textarea>
+    <div class="paste-preview">
+      <div class="p-row"><span class="parse-badge"><svg><use href="#i-check"/></svg>parsed</span><span class="t">6 ounces bittersweet chocolate, chopped coarse</span><span class="muted">weight · 6 oz</span></div>
+      <div class="p-row"><span class="parse-badge"><svg><use href="#i-check"/></svg>parsed</span><span class="t">¾ cup boiling water</span><span class="muted">volume · ¾ cup</span></div>
+      <div class="p-row"><span class="parse-badge"><svg><use href="#i-check"/></svg>parsed</span><span class="t">1 cup sour cream, at room temperature</span><span class="muted">volume · 1 cup</span></div>
+      <div class="p-row"><span class="parse-badge off">group</span><span class="t"><strong>FOR THE GLAZE</strong></span></div>
+    </div>
+    <div class="actions">
+      <button class="btn">Cancel</button>
+      <button class="btn primary">Add 3 ingredients + 1 group</button>
+    </div>
+  </div>
+
+  <div class="eyebrow">3 · Favorites &amp; personal notes — every user</div>
+  <p class="note">The P5 member-facing features. Favorites and notes are <strong>per-user, database-only</strong> — they never touch the shared YAML. A "My favorites" filter joins the avatar menu.</p>
+  <div class="context">
+    <div class="detail-frag">
+      <div class="head">
+        <h3 class="title">Rich Chocolate Bundt Cake</h3>
+        <button class="heart-btn active" title="Favorited"><svg><use href="#i-heart"/></svg></button>
+      </div>
+      <div class="muted">SERVES 12 · A Piece of Cake</div>
+      <div class="notes-card">
+        <div class="nh">
+          <strong>My notes</strong>
+          <span class="priv">only you</span>
+          <span style="flex:1;"></span>
+          <button class="btn small ghost"><svg><use href="#i-pencil"/></svg>Edit</button>
+        </div>
+        <div style="font-size:13.5px;">Made for Sam's birthday — used 70% chocolate, skipped the espresso powder. 45 min was perfect in our oven.</div>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="photo">
+        <span class="heart"><svg><use href="#i-heart"/></svg></span>
+        <div class="chips"><span class="chip" style="background:#fdeef3;color:#a02040;box-shadow:0 1px 4px rgba(0,0,0,.25);"><svg><use href="#i-cake-slice"/></svg>dessert</span></div>
+      </div>
+      <div class="body">
+        <div class="t">Rich Chocolate Bundt Cake</div>
+        <div class="muted">Grid tiles show the heart on favorites; tapping toggles it.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="eyebrow">4 · Settings → Library (admin) — hand-edits, rescan &amp; backups</div>
+  <p class="note">
+    The exported YAML stays hand-editable. The server reconciles on boot and on demand: a cleanly edited file wins;
+    a file that conflicts with an in-app edit loses to the database but is kept next to it as
+    <code>.conflict-&lt;timestamp&gt;.yaml</code>; a malformed file is skipped with a warning. Backups bundle the YAML
+    library and a database snapshot.
+  </p>
+  <div class="settings">
+    <div class="side">
+      <div class="group">You</div>
+      <a href="#">Account</a>
+      <a href="#">Users</a>
+      <a href="#">API tokens</a>
+      <div class="group">Server (admin)</div>
+      <a href="#">Tags</a>
+      <a href="#">Import</a>
+      <a href="#" class="active">Library</a>
+      <a href="#">Nutrition</a>
+    </div>
+    <div class="pane">
+      <h2>Library</h2>
+      <div class="desc">Your recipes live as YAML files in <code>/data/library</code> — safe to edit by hand or sync elsewhere.</div>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn"><svg><use href="#i-folder-sync"/></svg>Rescan library</button>
+        <span class="muted">Last scan: today 9:14 AM (on server start)</span>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="scan-line ok"><svg><use href="#i-check"/></svg><span><strong>2 files updated from disk</strong> — <code>lemon-bundt-cake.yaml</code>, <code>cider-glazed-apple-bundt-cake.yaml</code> (edited outside the app; file version imported)</span></div>
+        <div class="scan-line warn"><svg><use href="#i-triangle-alert"/></svg><span><strong>1 conflict</strong> — <code>rich-chocolate-bundt-cake.yaml</code> was edited both on disk and in the app. Kept the app version; the disk edit is saved as <code>rich-chocolate-bundt-cake.conflict-2026-07-15T0914.yaml</code>.</span></div>
+        <div class="scan-line err"><svg><use href="#i-circle-alert"/></svg><span><strong>1 file skipped</strong> — <code>marbled-blueberry-bundt-cake.yaml</code> has a YAML error on line 14 (kept the database version untouched).</span></div>
+      </div>
+
+      <h4>Backups</h4>
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px;">
+        <button class="btn"><svg><use href="#i-archive"/></svg>Back up now</button>
+        <span class="muted">Automatic before deletes and imports · keeps the last 14</span>
+      </div>
+      <table class="list">
+        <tr><th>When</th><th>Trigger</th><th>Contents</th><th>Size</th><th></th></tr>
+        <tr><td>Jul 15, 9:14 AM</td><td class="muted">manual</td><td class="muted">1,198 recipes + database</td><td class="muted">48.2 MB</td><td style="text-align:right;"><button class="btn small"><svg><use href="#i-download"/></svg>Download</button></td></tr>
+        <tr><td>Jul 14, 6:02 PM</td><td class="muted">before delete</td><td class="muted">1,199 recipes + database</td><td class="muted">48.3 MB</td><td style="text-align:right;"><button class="btn small"><svg><use href="#i-download"/></svg>Download</button></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="eyebrow">5 · Mobile — editor at 375px</div>
+  <p class="note">Single column; the structured panel opens as a bottom sheet; the save bar is sticky. Same parser, same states.</p>
+  <div class="phone">
+    <div class="nav">
+      <span class="back">←</span>
+      <span class="title">Editing · Rich Chocolate Bund…</span>
+      <span class="dirty"></span>
+    </div>
+    <div class="p-body">
+      <div class="field">
+        <label>Title</label>
+        <input type="text" value="Rich Chocolate Bundt Cake" />
+      </div>
+      <div class="card" style="padding:12px 12px 14px;">
+        <h3 style="margin-bottom:8px;">Ingredients</h3>
+        <div class="ing-row" style="padding:6px 0;">
+          <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+          <input class="raw" type="text" value="¾ cup natural cocoa powder, plus 1…" style="font-size:13px;" />
+          <span class="parse-badge"><svg><use href="#i-check"/></svg></span>
+        </div>
+        <div class="ing-row" style="padding:6px 0; border-bottom:none;">
+          <span class="grip"><svg><use href="#i-grip-vertical"/></svg></span>
+          <input class="raw" type="text" value="6 ounces bittersweet chocolate, cho…" style="font-size:13px;" />
+          <span class="parse-badge"><svg><use href="#i-check"/></svg></span>
+        </div>
+      </div>
+    </div>
+    <div class="savebar">
+      <span class="parse-badge warn"><svg><use href="#i-circle-alert"/></svg>Unsaved</span>
+      <span class="spacer"></span>
+      <button class="btn primary"><svg><use href="#i-save"/></svg>Save</button>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

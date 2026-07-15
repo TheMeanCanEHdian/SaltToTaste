@@ -47,6 +47,13 @@ CompiledSearch compileSearch(SearchNode root) {
   return CompiledSearch(ftsMatch: match, calories: calories);
 }
 
+/// Control characters (including U+0000) never appear in legitimate search
+/// terms but crash FTS5's query parser into an opaque 500.
+final RegExp _controlChars = RegExp(r'[\x00-\x1F\x7F]');
+
+/// Whether the term contains anything the unicode61 tokenizer would index.
+final RegExp _tokenizable = RegExp(r'[\p{L}\p{N}]', unicode: true);
+
 String? _compileNode(
   SearchNode node,
   List<CaloriesNode> calories, {
@@ -54,6 +61,17 @@ String? _compileNode(
 }) {
   switch (node) {
     case TermNode():
+      if (_controlChars.hasMatch(node.text)) {
+        throw const ValidationException(
+          'Search terms cannot contain control characters.',
+        );
+      }
+      // A separators-only token ("mac & cheese" tokenizes an '&' term)
+      // would compile to a zero-token phrase that matches nothing and
+      // ANDs the whole query to empty — drop it as a noise word instead.
+      if (!_tokenizable.hasMatch(node.text)) {
+        return null;
+      }
       return _term(node);
     case CaloriesNode():
       if (underOr) {

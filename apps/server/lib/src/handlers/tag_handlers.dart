@@ -41,6 +41,10 @@ Map<String, Object?> putTagStyleHandler(
       throw ValidationException("'$field' must be #RRGGBB.");
     }
   }
+  if (!db.tagExists(tag)) {
+    // Styles for tags no recipe carries would be invisible garbage rows.
+    throw NotFoundException('tag not found: $tag');
+  }
   db.upsertTagStyle(tag, icon: icon, color: color, bgColor: bgColor);
   return {
     'tag': {

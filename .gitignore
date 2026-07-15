@@ -12,3 +12,6 @@ build/
 # App data dir (dev)
 .data/
 apps/server/public/
+
+# macOS Finder metadata
+.DS_Store

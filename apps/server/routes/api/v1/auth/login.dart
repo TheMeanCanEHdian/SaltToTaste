@@ -12,7 +12,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 /// escalate to 429 `locked` envelopes with the retry delay in the message.
 Future<Response> onRequest(RequestContext context) async {
   requireMethods(context, {HttpMethod.post});
-  final body = await readJsonBody(context.request.json);
+  final body = await readJsonBody(context.request);
   final result = await login(
     context.read<SaltDatabase>(),
     context.read<AuthRuntime>(),

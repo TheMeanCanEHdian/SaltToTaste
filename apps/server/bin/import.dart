@@ -4,17 +4,19 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/services/import_service.dart';
+import 'package:salt_server/src/services/legacy_import.dart';
 
 const _usage = 'Usage: dart run salt_server:import <source-root> '
-    '[--data-dir=PATH]';
+    '[--data-dir=PATH] [--legacy]';
 
 const _maxPrintedWarnings = 20;
 
 void main(List<String> args) {
   final String sourceRoot;
   final String? dataDirOverride;
+  final bool legacyFlag;
   try {
-    (sourceRoot, dataDirOverride) = _parseArgs(args);
+    (sourceRoot, dataDirOverride, legacyFlag) = _parseArgs(args);
   } on FormatException catch (error) {
     stderr
       ..writeln(error.message)
@@ -40,16 +42,31 @@ void main(List<String> args) {
 
   final db = SaltDatabase.open(config.dbPath);
   try {
-    final summary = importSourceRoot(
-      sourceRootPath: sourceRoot,
-      db: db,
-      config: config,
-      onProgress: (done, total) {
-        if (done % 100 == 0) {
-          stdout.writeln('imported $done/$total');
-        }
-      },
-    );
+    // The old Flask app kept recipes in `_recipes/`; detect that layout so
+    // pointing the importer at a legacy data directory just works.
+    final legacy = legacyFlag || looksLikeLegacyRoot(sourceRoot);
+    if (legacy) {
+      stdout.writeln('Importing in legacy v0 mode (_recipes/ layout).');
+    }
+    void progress(int done, int total) {
+      if (done % 100 == 0) {
+        stdout.writeln('imported $done/$total');
+      }
+    }
+
+    final summary = legacy
+        ? importLegacyRoot(
+            sourceRootPath: sourceRoot,
+            db: db,
+            config: config,
+            onProgress: progress,
+          )
+        : importSourceRoot(
+            sourceRootPath: sourceRoot,
+            db: db,
+            config: config,
+            onProgress: progress,
+          );
     stdout.writeln(summary);
     for (final warning in summary.warnings.take(_maxPrintedWarnings)) {
       // Multi-line messages (e.g. YAML parse errors) collapse to one bullet.
@@ -73,14 +90,18 @@ void main(List<String> args) {
 String _singleLine(String text) =>
     text.replaceAll(RegExp(r'\s*\n\s*'), ' ');
 
-/// Parses `<source-root> [--data-dir=PATH]`; throws [FormatException] on
-/// unknown options, a missing source root, or extra positional arguments.
-(String, String?) _parseArgs(List<String> args) {
+/// Parses `<source-root> [--data-dir=PATH] [--legacy]`; throws
+/// [FormatException] on unknown options, a missing source root, or extra
+/// positional arguments.
+(String, String?, bool) _parseArgs(List<String> args) {
   String? sourceRoot;
   String? dataDir;
+  var legacy = false;
   for (var i = 0; i < args.length; i += 1) {
     final arg = args[i];
-    if (arg.startsWith('--data-dir=')) {
+    if (arg == '--legacy') {
+      legacy = true;
+    } else if (arg.startsWith('--data-dir=')) {
       dataDir = arg.substring('--data-dir='.length);
     } else if (arg == '--data-dir') {
       i += 1;
@@ -102,5 +123,5 @@ String _singleLine(String text) =>
   if (dataDir != null && dataDir.isEmpty) {
     throw const FormatException('--data-dir requires a non-empty value.');
   }
-  return (sourceRoot, dataDir);
+  return (sourceRoot, dataDir, legacy);
 }

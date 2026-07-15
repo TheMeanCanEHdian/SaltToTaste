@@ -68,6 +68,7 @@ cd packages/salt_shared && dart test          # includes the 1,198-file corpus g
 # Server (apps/server)
 cd apps/server && dart test
 cd apps/server && dart run salt_server:import "<source-root>" --data-dir=.data
+#   (a legacy v0 root — the old app's _recipes/ layout — is auto-detected; --legacy forces)
 cd apps/server && dart_frog dev               # needs a real TTY (hot-reload key listener);
                                               # headless: dart_frog build && DATA_DIR=.data dart build/bin/server.dart
 

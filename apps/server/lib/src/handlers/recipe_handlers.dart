@@ -52,13 +52,25 @@ int _parsePositiveInt(
 /// serialized from the shared [Paged] DTO so the wire shape has a single
 /// definition the Flutter client also decodes: `{"items": [...], "total": n,
 /// "page": p, "limit": l}`.
+///
+/// [viewerId] fills each card's `favorite` flag; [favoritesOnly] restricts
+/// the listing (and any search) to the viewer's favorites.
 Map<String, Object?> listRecipes(
   SaltDatabase db, {
   required int page,
   required int limit,
   String? query,
+  int? viewerId,
+  bool favoritesOnly = false,
 }) {
-  final result = _resolve(db, query, page: page, limit: limit);
+  final result = _resolve(
+    db,
+    query,
+    page: page,
+    limit: limit,
+    viewerId: viewerId,
+    favoritesOnly: favoritesOnly,
+  );
   // Register the element mapper so the generic Paged<RecipeCard> encoder can
   // resolve RecipeCard at runtime (idempotent).
   RecipeCardMapper.ensureInitialized();
@@ -77,9 +89,23 @@ Map<String, Object?> listRecipes(
   String? query, {
   required int page,
   required int limit,
+  int? viewerId,
+  bool favoritesOnly = false,
 }) {
   if (query == null || query.trim().isEmpty) {
-    return db.listCards(page: page, limit: limit);
+    return db.listCards(
+      page: page,
+      limit: limit,
+      viewerId: viewerId,
+      favoritesOnly: favoritesOnly,
+    );
+  }
+  // Parsing and FTS evaluation are CPU-bound on the single isolate; a sane
+  // cap keeps a thousand-term query from stalling every other request.
+  if (query.length > 512) {
+    throw const ValidationException(
+      'Search queries are limited to 512 characters.',
+    );
   }
   final parsed = parseSearchQuery(query);
   if (parsed.errors.isNotEmpty) {
@@ -89,24 +115,63 @@ Map<String, Object?> listRecipes(
   }
   final root = parsed.root;
   if (root == null) {
-    return db.listCards(page: page, limit: limit);
+    return db.listCards(
+      page: page,
+      limit: limit,
+      viewerId: viewerId,
+      favoritesOnly: favoritesOnly,
+    );
   }
-  return db.searchCards(compileSearch(root), page: page, limit: limit);
+  return db.searchCards(
+    compileSearch(root),
+    page: page,
+    limit: limit,
+    viewerId: viewerId,
+    favoritesOnly: favoritesOnly,
+  );
 }
 
 /// The JSON body of `GET /api/v1/recipes/<key>`: the full recipe document
 /// plus its source slug and serving URL for the hero image (or null).
 ///
 /// [key] matches either the recipe id or its slug; throws
-/// [NotFoundException] when neither matches.
-Map<String, Object?> recipeDetail(SaltDatabase db, String key) {
+/// [NotFoundException] when neither matches. With a [viewerId] the response
+/// also carries the viewer's personal `favorite` flag and `note` body.
+Map<String, Object?> recipeDetail(
+  SaltDatabase db,
+  String key, {
+  int? viewerId,
+}) {
   final found = _recipeOrThrow(db, key);
-  return {
-    'recipe': found.recipe.toMap(),
-    'source_slug': found.sourceSlug,
-    'hero_image_url': imageUrl(found.sourceSlug, found.recipe.images.hero),
-  };
+  return recipeDetailBody(
+    found.recipe,
+    found.sourceSlug,
+    favorite: viewerId == null
+        ? null
+        : db.isFavorite(userId: viewerId, recipeId: found.recipe.id),
+    note: viewerId == null
+        ? null
+        : db.noteFor(userId: viewerId, recipeId: found.recipe.id),
+  );
 }
+
+/// The detail-response shape shared by the read and edit endpoints.
+///
+/// [favorite]/[note] are the viewer's personal data; when [favorite] is null
+/// (no viewer context) both keys are omitted entirely.
+Map<String, Object?> recipeDetailBody(
+  Recipe recipe,
+  String sourceSlug, {
+  bool? favorite,
+  String? note,
+}) =>
+    {
+      'recipe': recipe.toMap(),
+      'source_slug': sourceSlug,
+      'hero_image_url': imageUrl(sourceSlug, recipe.images.hero),
+      if (favorite != null) 'favorite': favorite,
+      if (favorite != null) 'note': note,
+    };
 
 /// The canonical v2 YAML export of the recipe matched by [key] (id or slug),
 /// plus the download file name `<recipe id>.yaml`.

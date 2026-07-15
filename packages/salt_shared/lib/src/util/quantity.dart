@@ -1,29 +1,39 @@
-/// Numeric value of every supported unicode vulgar-fraction code point.
-const Map<String, double> _vulgarFractions = {
-  '¼': 1 / 4,
-  '½': 1 / 2,
-  '¾': 3 / 4,
-  '⅓': 1 / 3,
-  '⅔': 2 / 3,
-  '⅕': 1 / 5,
-  '⅖': 2 / 5,
-  '⅗': 3 / 5,
-  '⅘': 4 / 5,
-  '⅙': 1 / 6,
-  '⅚': 5 / 6,
-  '⅐': 1 / 7,
-  '⅛': 1 / 8,
-  '⅜': 3 / 8,
-  '⅝': 5 / 8,
-  '⅞': 7 / 8,
-  '⅑': 1 / 9,
-  '⅒': 1 / 10,
+/// ASCII spelling of every supported unicode vulgar-fraction code point
+/// (`'½'` → `'1/2'`) — the corpus house style for quantity strings.
+const Map<String, String> vulgarFractionAscii = {
+  '¼': '1/4',
+  '½': '1/2',
+  '¾': '3/4',
+  '⅓': '1/3',
+  '⅔': '2/3',
+  '⅕': '1/5',
+  '⅖': '2/5',
+  '⅗': '3/5',
+  '⅘': '4/5',
+  '⅙': '1/6',
+  '⅚': '5/6',
+  '⅐': '1/7',
+  '⅛': '1/8',
+  '⅜': '3/8',
+  '⅝': '5/8',
+  '⅞': '7/8',
+  '⅑': '1/9',
+  '⅒': '1/10',
 };
+
+/// Numeric value of every supported unicode vulgar-fraction code point.
+/// Derived from [vulgarFractionAscii] so the two can never drift apart.
+final Map<String, double> _vulgarFractions = vulgarFractionAscii.map(
+  (char, ascii) {
+    final parts = ascii.split('/');
+    return MapEntry(char, int.parse(parts[0]) / int.parse(parts[1]));
+  },
+);
 
 /// Every unicode vulgar-fraction character [parseQuantity] understands,
 /// as a single string suitable for regex character classes. Derived from
-/// [_vulgarFractions] so the two can never drift apart.
-final String vulgarFractionChars = _vulgarFractions.keys.join();
+/// [vulgarFractionAscii] so the two can never drift apart.
+final String vulgarFractionChars = vulgarFractionAscii.keys.join();
 
 final RegExp _wholeNumber = RegExp(r'^\d+$');
 final RegExp _asciiFraction = RegExp(r'^(?:(\d+)\s+)?(\d+)\s*/\s*(\d+)$');

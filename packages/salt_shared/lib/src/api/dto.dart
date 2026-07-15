@@ -54,7 +54,7 @@ class RecipeCard with RecipeCardMappable {
   /// Populated once nutrition is computed (P6); null until then.
   final double? caloriesPerServing;
 
-  /// Per-user favorite flag (always false until auth lands in P3).
+  /// Whether the requesting user has favorited this recipe.
   final bool favorite;
 }
 
