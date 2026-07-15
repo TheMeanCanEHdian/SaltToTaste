@@ -5,10 +5,12 @@ import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/settings/account_tab.dart';
+import 'package:salt_app/features/settings/library_tab.dart';
+import 'package:salt_app/features/settings/tags_tab.dart';
 import 'package:salt_app/features/settings/tokens_tab.dart';
 import 'package:salt_app/features/settings/users_tab.dart';
 
-enum SettingsTab { account, users, tokens }
+enum SettingsTab { account, users, tokens, tags, library }
 
 /// Settings shell (approved P3 design): left sidebar on wide screens,
 /// horizontal chips on narrow. Members see Account and API tokens; admins
@@ -23,7 +25,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   SettingsTab _tab = SettingsTab.account;
 
-  static const _futureServerTabs = ['Tags', 'Import', 'Backups', 'Nutrition'];
+  static const _futureServerTabs = ['Import', 'Nutrition'];
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,8 @@ class _SettingsPageState extends State<SettingsPage> {
       SettingsTab.account => const AccountTab(),
       SettingsTab.users => const UsersTab(),
       SettingsTab.tokens => const TokensTab(),
+      SettingsTab.tags => const TagsTab(),
+      SettingsTab.library => const LibraryTab(),
     };
 
     return Scaffold(
@@ -92,6 +96,14 @@ class _SettingsPageState extends State<SettingsPage> {
         (SettingsTab.tokens, 'API tokens'),
       ];
 
+  /// Server-administration tabs (admins only).
+  List<(SettingsTab, String)> _serverTabsFor(bool isAdmin) => [
+        if (isAdmin) ...[
+          (SettingsTab.tags, 'Tags'),
+          (SettingsTab.library, 'Library'),
+        ],
+      ];
+
   Widget _sidebar(bool isAdmin) {
     return Container(
       color: const Color(0xFFFDFBF9),
@@ -108,6 +120,12 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           if (isAdmin) ...[
             const _SideGroupLabel('Server'),
+            for (final (tab, label) in _serverTabsFor(isAdmin))
+              _SideItem(
+                label: label,
+                active: _tab == tab,
+                onTap: () => setState(() => _tab = tab),
+              ),
             for (final label in _futureServerTabs)
               _SideItem(label: label, comingSoon: true),
           ],
@@ -122,7 +140,10 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          for (final (tab, label) in _tabsFor(isAdmin))
+          for (final (tab, label) in [
+            ..._tabsFor(isAdmin),
+            ..._serverTabsFor(isAdmin),
+          ])
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(

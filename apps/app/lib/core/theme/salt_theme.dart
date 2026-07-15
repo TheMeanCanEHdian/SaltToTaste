@@ -14,6 +14,21 @@ abstract final class SaltColors {
   static const Color hairline = Color(0xFFE7E2DE);
   static const Color pageBackground = Color(0xFFFAF7F4);
 
+  /// Slightly warm panel fill for inset cards (notes, editor panels).
+  static const Color panel = Color(0xFFFDFBF9);
+
+  /// Neutral badge fill ("only you", disabled-ish chips).
+  static const Color chipNeutral = Color(0xFFEFECEA);
+
+  // Status colors (parse chips, scan-report lines, banners) — the single
+  // source for the ok/warn/error trio used across the app.
+  static const Color okBg = Color(0xFFE8F3E4);
+  static const Color okInk = Color(0xFF2C5A1E);
+  static const Color warnBg = Color(0xFFFDF1E2);
+  static const Color warnInk = Color(0xFF8A5A12);
+  static const Color errBg = Color(0xFFFBE9E9);
+  static const Color errInk = Color(0xFF8A1212);
+
   /// Body prose and step-card text (softer than [ink]).
   static const Color bodyText = Color(0xFF4A4442);
   static const Color stepText = Color(0xFF3F3A38);

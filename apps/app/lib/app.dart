@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
@@ -5,9 +7,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/dio_client.dart';
+import 'package:salt_app/core/api/library_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
+import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_app/features/tags/tag_styles_cubit.dart';
 import 'package:salt_app/router/app_router.dart';
 
 /// Root widget: one shared HTTP client, repositories, the auth cubit, and
@@ -23,7 +28,11 @@ class _SaltAppState extends State<SaltApp> {
   late final AuthCubit _authCubit;
   late final RecipeRepository _recipeRepository;
   late final AuthRepository _authRepository;
+  late final TagsRepository _tagsRepository;
+  late final LibraryRepository _libraryRepository;
+  late final TagStylesCubit _tagStylesCubit;
   late final GoRouter _router;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
@@ -32,12 +41,25 @@ class _SaltAppState extends State<SaltApp> {
     final dio = createDio(onUnauthorized: () => _authCubit.sessionExpired());
     _recipeRepository = RecipeRepository(dio: dio);
     _authRepository = AuthRepository(dio);
+    _tagsRepository = TagsRepository(dio);
+    _libraryRepository = LibraryRepository(dio);
+    _tagStylesCubit = TagStylesCubit(_tagsRepository);
     _authCubit = AuthCubit(_authRepository)..bootstrap();
+    // Chip styles follow the session: load on sign-in, drop on sign-out.
+    _authSubscription = _authCubit.stream.listen((state) {
+      if (state is AuthSignedIn) {
+        _tagStylesCubit.load();
+      } else if (state is AuthSignedOut) {
+        _tagStylesCubit.clear();
+      }
+    });
     _router = buildRouter(_authCubit);
   }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
+    _tagStylesCubit.close();
     _authCubit.close();
     super.dispose();
   }
@@ -49,9 +71,14 @@ class _SaltAppState extends State<SaltApp> {
       providers: [
         RepositoryProvider.value(value: _recipeRepository),
         RepositoryProvider.value(value: _authRepository),
+        RepositoryProvider.value(value: _tagsRepository),
+        RepositoryProvider.value(value: _libraryRepository),
       ],
-      child: BlocProvider.value(
-        value: _authCubit,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: _authCubit),
+          BlocProvider.value(value: _tagStylesCubit),
+        ],
         child: MaterialApp.router(
           title: 'SaltToTaste',
           debugShowCheckedModeBanner: false,

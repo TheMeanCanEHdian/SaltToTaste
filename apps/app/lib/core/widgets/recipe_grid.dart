@@ -11,9 +11,17 @@ import 'package:salt_app/features/recipes/list/recipe_list_cubit.dart';
 /// [RecipeListCubit] (whole library on the home page, results on the search
 /// page). [eyebrowBuilder] renders the small header above the tiles.
 class RecipeGrid extends StatefulWidget {
-  const RecipeGrid({super.key, required this.eyebrowBuilder});
+  const RecipeGrid({
+    super.key,
+    required this.eyebrowBuilder,
+    this.emptyMessage = 'No recipes match.',
+  });
 
   final String Function(RecipeListLoaded state) eyebrowBuilder;
+
+  /// Shown when the list is empty (the favorites page words it differently
+  /// than a search with no hits).
+  final String emptyMessage;
 
   @override
   State<RecipeGrid> createState() => _RecipeGridState();
@@ -75,13 +83,13 @@ class _RecipeGridState extends State<RecipeGrid> {
                     ),
                   ),
                   if (state.items.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.all(40),
+                        padding: const EdgeInsets.all(40),
                         child: Center(
                           child: Text(
-                            'No recipes match.',
-                            style: TextStyle(
+                            widget.emptyMessage,
+                            style: const TextStyle(
                               fontSize: 15,
                               color: SaltColors.muted,
                             ),
@@ -106,6 +114,9 @@ class _RecipeGridState extends State<RecipeGrid> {
                             return RecipeTile(
                               card: card,
                               onTap: () => context.push('/r/${card.slug}'),
+                              onToggleFavorite: () => context
+                                  .read<RecipeListCubit>()
+                                  .unfavorite(card),
                             );
                           },
                           childCount: state.items.length,

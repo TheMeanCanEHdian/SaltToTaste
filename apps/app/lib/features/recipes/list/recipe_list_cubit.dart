@@ -56,10 +56,11 @@ final class RecipeListLoaded extends RecipeListState {
       );
 }
 
-/// Loads and pages the recipe grid — the whole library, or search results
-/// when constructed with a [query].
+/// Loads and pages the recipe grid — the whole library, search results
+/// when constructed with a [query], or the caller's favorites when
+/// [favoritesOnly] is set.
 class RecipeListCubit extends Cubit<RecipeListState> {
-  RecipeListCubit(this._repository, {this.query})
+  RecipeListCubit(this._repository, {this.query, this.favoritesOnly = false})
       : super(const RecipeListLoading());
 
   static const int pageSize = 48;
@@ -68,6 +69,9 @@ class RecipeListCubit extends Cubit<RecipeListState> {
 
   /// Search-DSL query, or null for the plain library listing.
   final String? query;
+
+  /// Restrict to the signed-in user's favorites.
+  final bool favoritesOnly;
   int _nextPage = 1;
 
   Future<void> load() async {
@@ -78,7 +82,11 @@ class RecipeListCubit extends Cubit<RecipeListState> {
         page: 1,
         limit: pageSize,
         query: query,
+        favoritesOnly: favoritesOnly,
       );
+      if (isClosed) {
+        return;
+      }
       _nextPage = 2;
       emit(RecipeListLoaded(
         items: page.items,
@@ -87,6 +95,9 @@ class RecipeListCubit extends Cubit<RecipeListState> {
         exhausted: page.items.length < pageSize,
       ));
     } on RepositoryException catch (exception) {
+      if (isClosed) {
+        return;
+      }
       emit(RecipeListError(exception.message));
     }
   }
@@ -105,9 +116,23 @@ class RecipeListCubit extends Cubit<RecipeListState> {
         page: _nextPage,
         limit: pageSize,
         query: query,
+        favoritesOnly: favoritesOnly,
       );
+      if (isClosed) {
+        return;
+      }
       _nextPage += 1;
-      final items = [...current.items, ...page.items];
+      // Merge into the LATEST state, not the pre-await snapshot — an
+      // optimistic unfavorite that landed while this page was in flight
+      // must survive. New items are deduped by id for the same reason.
+      final base = state;
+      final existing = base is RecipeListLoaded ? base.items : current.items;
+      final seen = {for (final item in existing) item.id};
+      final items = [
+        ...existing,
+        for (final item in page.items)
+          if (!seen.contains(item.id)) item,
+      ];
       emit(RecipeListLoaded(
         items: items,
         total: page.total,
@@ -116,7 +141,13 @@ class RecipeListCubit extends Cubit<RecipeListState> {
         exhausted: page.items.length < pageSize,
       ));
     } on RepositoryException {
-      emit(current.copyWith(loadingMore: false, loadMoreFailed: true));
+      if (isClosed) {
+        return;
+      }
+      final latest = state;
+      if (latest is RecipeListLoaded) {
+        emit(latest.copyWith(loadingMore: false, loadMoreFailed: true));
+      }
     }
   }
 
@@ -127,6 +158,56 @@ class RecipeListCubit extends Cubit<RecipeListState> {
     if (current is RecipeListLoaded && current.loadMoreFailed) {
       emit(current.copyWith(loadMoreFailed: false));
       loadMore();
+    }
+  }
+
+  /// Removes the caller's favorite mark on [card] (the tile heart's tap),
+  /// optimistically: on a favorites-only grid the card disappears, elsewhere
+  /// its heart badge does. Reverted if the server rejects it.
+  Future<void> unfavorite(RecipeCard card) async {
+    final current = state;
+    if (current is! RecipeListLoaded) {
+      return;
+    }
+    final optimistic = [
+      for (final item in current.items)
+        if (item.id != card.id)
+          item
+        else if (!favoritesOnly)
+          item.copyWith(favorite: false),
+    ];
+    emit(RecipeListLoaded(
+      items: optimistic,
+      total: favoritesOnly ? current.total - 1 : current.total,
+      loadingMore: current.loadingMore,
+      exhausted: current.exhausted,
+      loadMoreFailed: current.loadMoreFailed,
+    ));
+    try {
+      await _repository.setFavorite(card.id, favorite: false);
+    } on RepositoryException {
+      if (isClosed) {
+        return;
+      }
+      // Revert just this card against the LATEST state (a page may have
+      // loaded meanwhile); a favorites-only grid reloads to restore it.
+      if (favoritesOnly) {
+        await load();
+        return;
+      }
+      final latest = state;
+      if (latest is RecipeListLoaded) {
+        emit(RecipeListLoaded(
+          items: [
+            for (final item in latest.items)
+              if (item.id == card.id) item.copyWith(favorite: true) else item,
+          ],
+          total: latest.total,
+          loadingMore: latest.loadingMore,
+          exhausted: latest.exhausted,
+          loadMoreFailed: latest.loadMoreFailed,
+        ));
+      }
     }
   }
 }

@@ -10,6 +10,7 @@ import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/core/widgets/tag_chip.dart';
+import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_cubit.dart';
 
 /// The recipe detail page (approved P2 design: two-column header on wide
@@ -22,11 +23,28 @@ class RecipeDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
+      // Keyed by slug: navigating from one recipe straight to another reuses
+      // this element, and an unkeyed provider would keep showing the old
+      // recipe under the new URL.
+      key: ValueKey(slug),
       create: (context) =>
           RecipeDetailCubit(context.read<RecipeRepository>())..load(slug),
       child: Scaffold(
         appBar: const SaltNavBar(showBack: true),
-        body: BlocBuilder<RecipeDetailCubit, RecipeDetailState>(
+        body: BlocConsumer<RecipeDetailCubit, RecipeDetailState>(
+          // Failed favorite/note writes surface as a SnackBar while the
+          // recipe stays on screen.
+          listenWhen: (previous, next) =>
+              next is RecipeDetailLoaded && next.personalDataError != null,
+          listener: (context, state) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  (state as RecipeDetailLoaded).personalDataError!,
+                ),
+              ),
+            );
+          },
           builder: (context, state) => switch (state) {
             RecipeDetailLoading() => const LoadingView(),
             RecipeDetailError(:final message) => ErrorView(
@@ -60,7 +78,9 @@ class _DetailBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _Header(detail: detail),
-                const SizedBox(height: 26),
+                const SizedBox(height: 20),
+                _MyNotesCard(detail: detail),
+                const SizedBox(height: 22),
                 if (recipe.prepNotes != null) ...[
                   _Headnote(text: recipe.prepNotes!),
                   const SizedBox(height: 22),
@@ -189,13 +209,15 @@ class _HeaderInfo extends StatelessWidget {
           spacing: 10,
           runSpacing: 8,
           children: [
-            Tooltip(
-              message: 'Favorites arrive with the editing phase',
-              child: OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.favorite_border, size: 18),
-                label: const Text('Favorite'),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  context.read<RecipeDetailCubit>().toggleFavorite(),
+              icon: Icon(
+                detail.favorite ? Icons.favorite : Icons.favorite_border,
+                size: 18,
+                color: SaltColors.maroon,
               ),
+              label: Text(detail.favorite ? 'Favorited' : 'Favorite'),
             ),
             FilledButton.icon(
               style: FilledButton.styleFrom(
@@ -205,9 +227,160 @@ class _HeaderInfo extends StatelessWidget {
               icon: const Icon(Icons.download, size: 18),
               label: const Text('Download YAML'),
             ),
+            if (context.watch<AuthCubit>().user?.isAdmin ?? false)
+              OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/r/${detail.recipe.slug}/edit'),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit'),
+              ),
           ],
         ),
       ],
+    );
+  }
+}
+
+/// The viewer's private note (approved P5 design): view mode with an Edit
+/// affordance, or an inline editor. Collapsed to a subtle "Add a note"
+/// action when empty — personal data, never in the shared YAML.
+class _MyNotesCard extends StatefulWidget {
+  const _MyNotesCard({required this.detail});
+
+  final RecipeDetail detail;
+
+  @override
+  State<_MyNotesCard> createState() => _MyNotesCardState();
+}
+
+class _MyNotesCardState extends State<_MyNotesCard> {
+  bool _editing = false;
+  bool _saving = false;
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.detail.note ?? '');
+
+  @override
+  void didUpdateWidget(covariant _MyNotesCard old) {
+    super.didUpdateWidget(old);
+    if (!_editing && widget.detail.note != old.detail.note) {
+      _controller.text = widget.detail.note ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    final saved =
+        await context.read<RecipeDetailCubit>().saveNote(_controller.text);
+    if (mounted) {
+      setState(() {
+        _saving = false;
+        // A failed save keeps the editor open with the text intact — closing
+        // it would make the failure look like success.
+        _editing = !saved;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final note = widget.detail.note;
+    if (note == null && !_editing) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () => setState(() => _editing = true),
+          icon: const Icon(Icons.sticky_note_2_outlined, size: 17),
+          label: const Text('Add a private note'),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        color: SaltColors.panel,
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'My notes',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                decoration: BoxDecoration(
+                  color: SaltColors.chipNeutral,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: const Text(
+                  'ONLY YOU',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    color: SaltColors.muted,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (!_editing)
+                TextButton.icon(
+                  onPressed: () => setState(() => _editing = true),
+                  icon: const Icon(Icons.edit_outlined, size: 15),
+                  label: const Text('Edit'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (_editing) ...[
+            TextField(
+              controller: _controller,
+              minLines: 3,
+              maxLines: 8,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText:
+                    'Anything future-you should know — tweaks, timings, '
+                    'who loved it…',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                FilledButton(
+                  style:
+                      FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
+                  onPressed: _saving ? null : _save,
+                  child: Text(_saving ? 'Saving…' : 'Save note'),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: _saving
+                      ? null
+                      : () => setState(() {
+                            _editing = false;
+                            _controller.text = widget.detail.note ?? '';
+                          }),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ] else
+            Text(note ?? '', style: _prose),
+        ],
+      ),
     );
   }
 }

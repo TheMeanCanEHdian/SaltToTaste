@@ -64,6 +64,7 @@ whenever a decision deviates from the plan).
 dart pub get                                  # workspace root — resolves all packages
 cd packages/salt_shared && dart run build_runner build   # regen *.mapper.dart after model changes
 cd packages/salt_shared && dart test          # includes the 1,198-file corpus golden test
+cd apps/app && python3 tool/gen_lucide_catalog.py  # regen lucide_catalog.g.dart after a lucide_icons_flutter upgrade
 
 # Server (apps/server)
 cd apps/server && dart test

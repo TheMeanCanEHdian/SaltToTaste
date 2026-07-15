@@ -10,7 +10,9 @@ import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/auth/change_password_page.dart';
 import 'package:salt_app/features/auth/login_page.dart';
 import 'package:salt_app/features/auth/setup_page.dart';
+import 'package:salt_app/features/editor/editor_page.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_page.dart';
+import 'package:salt_app/features/recipes/list/favorites_page.dart';
 import 'package:salt_app/features/recipes/list/home_page.dart';
 import 'package:salt_app/features/search/search_page.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
@@ -115,6 +117,12 @@ GoRouter buildRouter(AuthCubit authCubit) {
         pendingLocation = null;
         return destination ?? '/';
       }
+      // Editor routes are admin-only (the server enforces regardless; this
+      // just keeps members off a form that could never save).
+      final editing = path == '/new' || path.endsWith('/edit');
+      if (editing && !(authCubit.user?.isAdmin ?? false)) {
+        return '/';
+      }
       return null;
     },
     routes: [
@@ -129,10 +137,20 @@ GoRouter buildRouter(AuthCubit authCubit) {
         builder: (context, state) => const ChangePasswordPage(),
       ),
       GoRoute(path: '/', builder: (context, state) => const HomePage()),
+      GoRoute(path: '/new', builder: (context, state) => const EditorPage()),
+      GoRoute(
+        path: '/favorites',
+        builder: (context, state) => const FavoritesPage(),
+      ),
       GoRoute(
         path: '/r/:slug',
         builder: (context, state) =>
             RecipeDetailPage(slug: state.pathParameters['slug']!),
+      ),
+      GoRoute(
+        path: '/r/:slug/edit',
+        builder: (context, state) =>
+            EditorPage(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/search',

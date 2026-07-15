@@ -7,12 +7,23 @@ import 'package:salt_app/core/widgets/photo_fallback.dart';
 import 'package:salt_app/core/widgets/tag_chip.dart';
 
 /// A grid tile: full-bleed photo with the title and tag chips overlaid on a
-/// bottom gradient scrim, and a servings badge top-left (approved P2 design).
+/// bottom gradient scrim, a servings badge top-left (approved P2 design),
+/// and — for favorites — a heart badge top-right (tappable when
+/// [onToggleFavorite] is provided; approved P5 design).
 class RecipeTile extends StatelessWidget {
-  const RecipeTile({super.key, required this.card, required this.onTap});
+  const RecipeTile({
+    super.key,
+    required this.card,
+    required this.onTap,
+    this.onToggleFavorite,
+  });
 
   final RecipeCard card;
   final VoidCallback onTap;
+
+  /// Toggles the caller's favorite mark; null hides the affordance for
+  /// non-favorited cards (favorited ones always show the badge).
+  final VoidCallback? onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +113,27 @@ class RecipeTile extends StatelessWidget {
               child: InkWell(onTap: onTap),
             ),
           ),
+          if (card.favorite)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.92),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: onToggleFavorite,
+                  customBorder: const CircleBorder(),
+                  child: const Padding(
+                    padding: EdgeInsets.all(7),
+                    child: Icon(
+                      Icons.favorite,
+                      size: 15,
+                      color: SaltColors.maroon,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

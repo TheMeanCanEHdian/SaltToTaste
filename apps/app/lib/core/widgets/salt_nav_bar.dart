@@ -182,6 +182,10 @@ class _AvatarMenu extends StatelessWidget {
       offset: const Offset(0, 46),
       onSelected: (value) {
         switch (value) {
+          case 'add':
+            context.push('/new');
+          case 'favorites':
+            context.push('/favorites');
           case 'settings':
             context.push('/settings');
           case 'signout':
@@ -209,6 +213,16 @@ class _AvatarMenu extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        const PopupMenuDivider(),
+        if (user.isAdmin)
+          const PopupMenuItem<String>(
+            value: 'add',
+            child: Text('Add recipe'),
+          ),
+        const PopupMenuItem<String>(
+          value: 'favorites',
+          child: Text('My favorites'),
         ),
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
