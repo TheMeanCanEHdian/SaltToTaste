@@ -74,8 +74,10 @@ Setup flow, sessions (cookie+bearer), CSRF, rate limiting + lockout, roles
 ## P4 — Search + tags — **pending**
 FTS5 + DSL→FTS compiler, search UI, tag styles (Lucide) + editor.
 Requirement from P0 review: `calories:` queries default to calories-ascending
-result ordering (old-app contract). Pending user decision: scope-binding and
-same-scope AND/OR semantics vs old app.
+result ordering (old-app contract). Search semantics decided by user
+(2026-07-14): scope binds one term (quoted phrases for multi-word); adjacent
+terms always AND (explicit `or` for unions) — modern convention, deviates
+from old app; document in search help UI.
 
 ## P5 — Editing + export + reconciliation + backups — **pending**
 CRUD, atomic auto-export, library reconciliation scan (file wins clean edit /
@@ -106,6 +108,10 @@ upgrade pass.
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
   already covered by P7 single-container design; noted ARM multi-arch as a
   P7 consideration.
+- 2026-07-14 — Search semantics (user decision): keep modern conventions over
+  old-app parity — scope prefixes bind a single term/phrase, adjacent terms
+  AND everywhere; the P4 search-help UI must document both, since old-app
+  queries return different results.
 - 2026-07-14 — Container hardening specifics added after user question: SPA
   deep-link fallback route, X-Forwarded-Proto trust for Secure cookies,
   non-root user, SIGTERM graceful shutdown, HEALTHCHECK, env-var runtime
