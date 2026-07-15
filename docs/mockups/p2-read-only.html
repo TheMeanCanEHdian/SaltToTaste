@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaltToTaste — P2 mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --maroon: #960000;
+    --maroon-hover: #7d1420;
+    --rose: #8c4242;
+    --chip: #f6e4e4;
+    --chip-text: #7d1420;
+    --ink: #23201f;
+    --muted: #6d6763;
+    --line: #e7e2de;
+    --bg: #faf7f4;
+    --card-radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.55; }
+  .nav { position: sticky; top: 0; z-index: 5; background: var(--maroon); color: #fff; display: flex; align-items: center; gap: 20px; padding: 0 22px; height: 58px; }
+  .logo { font-weight: 700; font-size: 20px; letter-spacing: .3px; display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+  .logo .mark { width: 26px; height: 26px; border-radius: 7px; background: #fff; color: var(--maroon); display: grid; place-items: center; font-size: 16px; font-weight: 800; }
+  .search { flex: 1; max-width: 620px; background: #fff; border-radius: 9px; height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--muted); font-size: 14px; }
+  .search .tag { background: var(--chip); color: var(--chip-text); border-radius: 6px; padding: 3px 9px; font-size: 12.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+  .nav .spacer { flex: 1; }
+  .nav .gear { width: 38px; height: 38px; border-radius: 9px; display: grid; place-items: center; font-size: 19px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 26px 22px 60px; }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--rose); font-weight: 700; margin: 30px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .card { position: relative; height: 232px; border-radius: var(--card-radius); overflow: hidden; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.08); transition: transform .15s ease; }
+  .card:hover { transform: translateY(-2px); }
+  .card .photo { position: absolute; inset: 0; }
+  .card .scrim { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 38%, rgba(0,0,0,.72) 100%); }
+  .card .body { position: absolute; left: 0; right: 0; bottom: 0; padding: 13px 14px; color: #fff; }
+  .card .title { font-size: 16.5px; font-weight: 600; line-height: 1.25; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .card .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .card .chip { background: rgba(255,255,255,.9); color: var(--chip-text); border-radius: 6px; padding: 2px 8px; font-size: 11.5px; font-weight: 600; }
+  .card .serves { position: absolute; top: 11px; left: 12px; background: rgba(0,0,0,.42); color: #fff; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+
+  .detail { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; margin-top: 8px; }
+  .detail .hero-row { display: grid; grid-template-columns: 1.15fr 1fr; }
+  .detail .info { padding: 30px 30px 26px; }
+  .detail .cat { color: var(--rose); font-weight: 700; font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; }
+  .detail h1 { font-size: 30px; font-weight: 700; line-height: 1.12; margin: 8px 0 12px; color: var(--maroon); }
+  .detail .chips { display: flex; gap: 7px; margin-bottom: 16px; }
+  .detail .chip { background: var(--chip); color: var(--chip-text); border-radius: 7px; padding: 4px 11px; font-size: 12.5px; font-weight: 600; }
+  .times { display: flex; gap: 26px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 14px 0; margin: 6px 0 16px; }
+  .times .t { display: flex; flex-direction: column; gap: 2px; }
+  .times .t .k { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .times .t .v { font-size: 18px; font-weight: 600; }
+  .times .t .v i { font-style: normal; color: var(--rose); margin-right: 5px; }
+  .lede { color: #4a4442; font-size: 14.5px; }
+  .detail .hero-img { position: relative; min-height: 340px; }
+  .actions { display: flex; gap: 10px; margin-top: 18px; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 8px 14px; font-size: 13.5px; font-weight: 600; color: var(--ink); display: inline-flex; gap: 7px; align-items: center; cursor: pointer; }
+  .btn.primary { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+  .cols { display: grid; grid-template-columns: 300px 1fr; gap: 34px; padding: 26px 30px 34px; border-top: 1px solid var(--line); }
+  .sec-title { font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--maroon); margin-bottom: 13px; }
+  .ing { list-style: none; }
+  .ing li { padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 14px; display: flex; gap: 9px; }
+  .ing li:before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--rose); margin-top: 7px; flex: none; }
+  .steps { display: grid; gap: 13px; }
+  .step { border: 1px solid var(--line); border-radius: 12px; padding: 15px 16px 15px 52px; position: relative; font-size: 14.2px; color: #3f3a38; }
+  .step .n { position: absolute; left: 15px; top: 14px; width: 26px; height: 26px; border-radius: 50%; background: var(--maroon); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+
+  .frame-label { font: 600 12px 'Open Sans'; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 34px 0 10px; }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+    .detail .hero-row { grid-template-columns: 1fr; }
+    .detail .hero-img { min-height: 220px; order: -1; }
+    .cols { grid-template-columns: 1fr; gap: 22px; padding: 22px; }
+    .detail h1 { font-size: 25px; }
+  }
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="logo"><span class="mark">S</span>SALT&nbsp;<span style="opacity:.85">to</span>&nbsp;TASTE</div>
+  <div class="search"><span class="tag">tag: dessert <span aria-hidden>&times;</span></span><span>Search recipes, ingredients, tags…</span></div>
+  <div class="gear" title="menu">&#9881;</div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow">Home · 1,198 recipes</div>
+  <div class="grid" id="grid"></div>
+
+  <div class="eyebrow" style="margin-top:44px;">Recipe detail</div>
+  <div class="detail">
+    <div class="hero-row">
+      <div class="info">
+        <div class="cat">A Piece of Cake</div>
+        <h1>Rich Chocolate Bundt Cake</h1>
+        <div class="chips"><span class="chip">dessert</span></div>
+        <div class="times">
+          <div class="t"><span class="k">Serves</span><span class="v"><i>&#127869;</i>12</span></div>
+          <div class="t"><span class="k">Prep</span><span class="v"><i>&#9201;</i>20m</span></div>
+          <div class="t"><span class="k">Bake</span><span class="v"><i>&#128293;</i>50m</span></div>
+        </div>
+        <p class="lede">A Bundt cake is the pinnacle of cake-baking simplicity. We intensified the chocolate flavor with both bittersweet chocolate and natural cocoa, blooming them in boiling water; sour cream and brown sugar add moisture.</p>
+        <div class="actions">
+          <button class="btn primary">&#9829; Favorite</button>
+          <button class="btn">&#8681; Download YAML</button>
+        </div>
+      </div>
+      <div class="hero-img" id="hero"></div>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="sec-title">Ingredients</div>
+        <ul class="ing">
+          <li>12 tablespoons (1½ sticks) unsalted butter, softened</li>
+          <li>¾ cup natural cocoa powder, plus 1 tablespoon for the pan</li>
+          <li>6 ounces bittersweet chocolate, chopped coarse</li>
+          <li>1 teaspoon instant espresso powder (optional)</li>
+          <li>¾ cup boiling water</li>
+          <li>1 cup sour cream, at room temperature</li>
+          <li>1¾ cups (8¾ ounces) unbleached all-purpose flour</li>
+          <li>2 cups packed (14 ounces) light brown sugar</li>
+          <li>5 large eggs, at room temperature</li>
+        </ul>
+      </div>
+      <div>
+        <div class="sec-title">Directions</div>
+        <div class="steps">
+          <div class="step"><span class="n">1</span>Stir together the 1 tablespoon melted butter and 1 tablespoon cocoa into a paste; brush all interior surfaces of a 12-cup Bundt pan. Heat the oven to 350 degrees.</div>
+          <div class="step"><span class="n">2</span>Combine the remaining cocoa, chocolate, and espresso powder. Pour the boiling water over and whisk until smooth; cool, then whisk in the sour cream.</div>
+          <div class="step"><span class="n">3</span>Beat the butter, brown sugar, and vanilla until fluffy. Add eggs one at a time, then alternate the flour and chocolate mixtures until just combined.</div>
+          <div class="step"><span class="n">4</span>Transfer to the pan and bake until a toothpick comes out with a few crumbs, 45 to 50 minutes. Cool 10 minutes, invert, and dust with confectioners' sugar.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const cards = [
+    { t: 'Apple Upside-Down Cake', c: 'A Piece of Cake', s: 'Serves 8', tags: ['dessert'], h: [38,22,30] },
+    { t: 'Asparagus, Ham, and Gruyère Frittata', c: 'Come for Brunch', s: 'Serves 6 to 8', tags: [], h: [95,70,35] },
+    { t: 'Baked Ziti', c: "Who Wants Pasta?", s: 'Serves 8 to 10', tags: [], h: [18,45,55] },
+    { t: 'Best Almond Cake', c: 'A Piece of Cake', s: 'Serves 8 to 10', tags: ['dessert'], h: [40,30,22] },
+    { t: 'Beijing-Style Meat Sauce and Noodles', c: "Who Wants Pasta?", s: 'Serves 6', tags: [], h: [22,42,60] },
+    { t: '100 Percent Whole-Wheat Pancakes', c: 'Come for Brunch', s: 'Makes 15', tags: [], h: [35,60,45] },
+    { t: 'Baked Eggs Florentine', c: 'Come for Brunch', s: 'Serves 6', tags: [], h: [90,75,40] },
+    { t: 'Rich Chocolate Bundt Cake', c: 'A Piece of Cake', s: 'Serves 12', tags: ['dessert'], h: [20,18,16] },
+  ];
+  function photo(h) {
+    const [a,b,c] = h;
+    return `linear-gradient(135deg, hsl(${a},45%,42%), hsl(${b},38%,28%) 70%, hsl(${c},40%,20%))`;
+  }
+  document.getElementById('grid').innerHTML = cards.map(r => `
+    <div class="card">
+      <div class="photo" style="background:${photo(r.h)}"></div>
+      <div class="scrim"></div>
+      <div class="serves">${r.s}</div>
+      <div class="body">
+        <div class="title">${r.t}</div>
+        <div class="chips">${r.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('hero').style.background = photo([20,18,16]);
+</script>
+</body>
+</html>

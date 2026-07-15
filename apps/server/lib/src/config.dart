@@ -12,6 +12,7 @@ class ServerConfig {
     required this.dataDir,
     required this.logLevel,
     required this.trustProxy,
+    this.devAllowCors = false,
   });
 
   /// Builds a config from [environment] (defaults to
@@ -27,6 +28,10 @@ class ServerConfig {
   ///   other value.
   /// * `TRUST_PROXY` — `true` to trust reverse-proxy headers; anything else
   ///   (or unset) means `false`.
+  /// * `DEV_ALLOW_CORS` — `true` to add `Access-Control-Allow-Origin: *` to
+  ///   every response. Development only: the Flutter dev server runs on a
+  ///   different port than the API. Production serves the web build
+  ///   same-origin and must leave this off.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -43,6 +48,7 @@ class ServerConfig {
       dataDir: dataDir,
       logLevel: _parseLogLevel(env['LOG_LEVEL']),
       trustProxy: env['TRUST_PROXY']?.trim().toLowerCase() == 'true',
+      devAllowCors: env['DEV_ALLOW_CORS']?.trim().toLowerCase() == 'true',
     );
     Directory(config.libraryDir).createSync(recursive: true);
     return config;
@@ -56,6 +62,11 @@ class ServerConfig {
 
   /// Whether reverse-proxy headers (e.g. `X-Forwarded-For`) are trusted.
   final bool trustProxy;
+
+  /// Whether `Access-Control-Allow-Origin: *` is added to every response.
+  /// Development only (Flutter dev server on a different port); production
+  /// serves the web build same-origin.
+  final bool devAllowCors;
 
   /// Path of the SQLite database file inside [dataDir].
   String get dbPath => '$dataDir/salt.db';

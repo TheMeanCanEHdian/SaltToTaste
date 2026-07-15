@@ -27,6 +27,25 @@ SaltDatabase _saltDatabase(RequestContext context) {
 /// so failed requests are still logged with their envelope status.
 /// errorHandler wraps everything below it (config + DB providers, routes),
 /// so any exception thrown there becomes a clean envelope.
+/// Adds `Access-Control-Allow-Origin: *` to every response when
+/// `DEV_ALLOW_CORS=true` (development only — see [ServerConfig.devAllowCors]).
+Middleware _devCors() {
+  return (handler) {
+    return (context) async {
+      final response = await handler(context);
+      if (!serverConfig.devAllowCors) {
+        return response;
+      }
+      return response.copyWith(
+        headers: {
+          ...response.headers,
+          'Access-Control-Allow-Origin': '*',
+        },
+      );
+    };
+  };
+}
+
 Handler middleware(Handler handler) {
   return handler
       // Innermost so it can read ServerConfig; dart_frog providers are lazy,
@@ -34,6 +53,7 @@ Handler middleware(Handler handler) {
       .use(provider<SaltDatabase>(_saltDatabase))
       .use(provider<ServerConfig>((_) => serverConfig))
       .use(errorHandler())
+      .use(_devCors())
       .use(requestLogger())
       .use(requestIdProvider());
 }

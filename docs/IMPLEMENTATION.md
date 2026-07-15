@@ -129,8 +129,17 @@ deliberately — nothing sorts or filters on them, the full values live in the
 `doc` JSON, and search uses the FTS columns. Add scalar columns only if a
 future query needs them.
 
-## P2 — Flutter read-only app — **pending**
+## P2 — Flutter read-only app — **in-progress**
 Mockups (grid/card/detail, desktop+mobile) → approval → theme/router/grid/detail.
+
+Approved design (2026-07-15), reference `docs/mockups/p2-read-only.html`:
+- **Cards**: full-bleed photo tile with title + tag chips overlaid on a
+  bottom dark gradient; a servings badge top-left. Maroon `#960000` identity.
+- **Detail header**: two-column on wide screens — title/tags/times-strip/
+  description on the left, hero photo on the right; stacks (hero on top) on
+  mobile. (Changed from the mockup's full-width-hero-on-top.)
+- Ingredients two-column, numbered step cards, download-YAML + favorite
+  actions. Real look is Forui components themed to this palette.
 
 ## P3 — Auth — **pending**
 Setup flow, sessions (cookie+bearer), CSRF, rate limiting + lockout, roles
