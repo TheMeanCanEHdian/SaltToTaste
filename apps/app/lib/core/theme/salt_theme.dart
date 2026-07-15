@@ -13,6 +13,28 @@ abstract final class SaltColors {
   static const Color muted = Color(0xFF6D6763);
   static const Color hairline = Color(0xFFE7E2DE);
   static const Color pageBackground = Color(0xFFFAF7F4);
+
+  /// Body prose and step-card text (softer than [ink]).
+  static const Color bodyText = Color(0xFF4A4442);
+  static const Color stepText = Color(0xFF3F3A38);
+
+  /// Overlays on photo tiles: bottom title scrim, the servings badge, and
+  /// the title's drop shadow.
+  static const Color cardScrim = Color(0xB8000000);
+  static const Color cardBadge = Color(0x6B000000);
+  static const Color cardTitleShadow = Color(0x66000000);
+}
+
+/// Shared responsive breakpoints (logical pixels) so the nav bar, grid, and
+/// detail page switch layouts at the same widths.
+abstract final class Breakpoints {
+  /// Below this the nav bar collapses and the grid is a single column.
+  static const double compact = 600;
+  static const double medium = 900;
+  static const double wide = 1200;
+
+  /// At/above this the detail page uses its two-column layouts.
+  static const double detailTwoColumn = 720;
 }
 
 /// Forui theme themed to the maroon identity, driving Forui widgets.

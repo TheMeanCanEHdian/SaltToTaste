@@ -23,6 +23,8 @@ final class RecipeListLoaded extends RecipeListState {
     required this.items,
     required this.total,
     required this.loadingMore,
+    required this.exhausted,
+    this.loadMoreFailed = false,
   });
 
   final List<RecipeCard> items;
@@ -31,7 +33,27 @@ final class RecipeListLoaded extends RecipeListState {
   /// Whether the next page is currently being fetched.
   final bool loadingMore;
 
-  bool get hasMore => items.length < total;
+  /// True once a page returned fewer items than requested — there is no more
+  /// to fetch even if [total] disagrees (a stale count must not loop forever).
+  final bool exhausted;
+
+  /// True when the last [RecipeListCubit.loadMore] failed; the grid shows a
+  /// retry affordance rather than silently stalling.
+  final bool loadMoreFailed;
+
+  bool get hasMore => !exhausted && items.length < total;
+
+  RecipeListLoaded copyWith({
+    bool? loadingMore,
+    bool? loadMoreFailed,
+  }) =>
+      RecipeListLoaded(
+        items: items,
+        total: total,
+        exhausted: exhausted,
+        loadingMore: loadingMore ?? this.loadingMore,
+        loadMoreFailed: loadMoreFailed ?? this.loadMoreFailed,
+      );
 }
 
 /// Loads and pages the recipe grid.
@@ -53,6 +75,7 @@ class RecipeListCubit extends Cubit<RecipeListState> {
         items: page.items,
         total: page.total,
         loadingMore: false,
+        exhausted: page.items.length < pageSize,
       ));
     } on RepositoryException catch (exception) {
       emit(RecipeListError(exception.message));
@@ -63,32 +86,37 @@ class RecipeListCubit extends Cubit<RecipeListState> {
     final current = state;
     if (current is! RecipeListLoaded ||
         current.loadingMore ||
+        current.loadMoreFailed ||
         !current.hasMore) {
       return;
     }
-    emit(RecipeListLoaded(
-      items: current.items,
-      total: current.total,
-      loadingMore: true,
-    ));
+    emit(current.copyWith(loadingMore: true));
     try {
       final page = await _repository.listRecipes(
         page: _nextPage,
         limit: pageSize,
       );
       _nextPage += 1;
+      final items = [...current.items, ...page.items];
       emit(RecipeListLoaded(
-        items: [...current.items, ...page.items],
+        items: items,
         total: page.total,
         loadingMore: false,
+        // Stop when a short (or empty) page arrives, regardless of `total`.
+        exhausted: page.items.length < pageSize,
       ));
     } on RepositoryException {
-      // Keep what we have; the user can scroll again to retry.
-      emit(RecipeListLoaded(
-        items: current.items,
-        total: current.total,
-        loadingMore: false,
-      ));
+      emit(current.copyWith(loadingMore: false, loadMoreFailed: true));
+    }
+  }
+
+  /// Clears a load-more failure so the next scroll (or a retry tap) fetches
+  /// the same page again.
+  void retryLoadMore() {
+    final current = state;
+    if (current is RecipeListLoaded && current.loadMoreFailed) {
+      emit(current.copyWith(loadMoreFailed: false));
+      loadMore();
     }
   }
 }

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
+import 'package:salt_app/core/widgets/photo_fallback.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/core/widgets/tag_chip.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_cubit.dart';
@@ -23,7 +24,7 @@ class RecipeDetailPage extends StatelessWidget {
       create: (context) =>
           RecipeDetailCubit(context.read<RecipeRepository>())..load(slug),
       child: Scaffold(
-        appBar: const SaltNavBar(),
+        appBar: const SaltNavBar(showBack: true),
         body: BlocBuilder<RecipeDetailCubit, RecipeDetailState>(
           builder: (context, state) => switch (state) {
             RecipeDetailLoading() => const LoadingView(),
@@ -97,7 +98,8 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 720;
+    final wide =
+        MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
     final info = _HeaderInfo(detail: detail);
     final hero = _HeroImage(detail: detail);
     if (!wide) {
@@ -190,11 +192,7 @@ class _HeaderInfo extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: SaltColors.maroon,
               ),
-              onPressed: () => launchUrl(
-                Uri.parse(
-                  apiUrl('/api/v1/recipes/${detail.recipe.slug}/yaml'),
-                ),
-              ),
+              onPressed: () => _downloadYaml(context, detail.recipe.slug),
               icon: const Icon(Icons.download, size: 18),
               label: const Text('Download YAML'),
             ),
@@ -216,22 +214,31 @@ class _HeroImage extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: url == null
-          ? Container(
-              color: SaltColors.rose.withValues(alpha: 0.16),
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.restaurant,
-                size: 56,
-                color: SaltColors.rose,
-              ),
-            )
+          ? const PhotoFallback(iconSize: 56)
           : Image.network(
               apiUrl(url),
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: SaltColors.rose.withValues(alpha: 0.16),
-              ),
+              errorBuilder: (_, __, ___) =>
+                  const PhotoFallback(showIcon: false),
             ),
+    );
+  }
+}
+
+/// Opens the recipe's canonical YAML export in a new tab/download; surfaces a
+/// SnackBar if the platform can't launch it.
+Future<void> _downloadYaml(BuildContext context, String slug) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final url = context.read<RecipeRepository>().yamlUrl(slug);
+  var ok = false;
+  try {
+    ok = await launchUrl(url, mode: LaunchMode.platformDefault);
+  } on Exception {
+    ok = false;
+  }
+  if (!ok) {
+    messenger.showSnackBar(
+      const SnackBar(content: Text("Couldn't open the download.")),
     );
   }
 }
@@ -350,7 +357,8 @@ class _IngredientsAndSteps extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 720;
+    final wide =
+        MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
     final ingredients = _IngredientsList(groups: recipe.ingredients);
     final steps = _StepsList(steps: recipe.steps);
     if (!wide) {

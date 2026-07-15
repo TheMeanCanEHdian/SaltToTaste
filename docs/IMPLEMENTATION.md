@@ -129,8 +129,42 @@ deliberately — nothing sorts or filters on them, the full values live in the
 `doc` JSON, and search uses the FTS columns. Add scalar columns only if a
 future query needs them.
 
-## P2 — Flutter read-only app — **in-progress**
+## P2 — Flutter read-only app — **done**
 Mockups (grid/card/detail, desktop+mobile) → approval → theme/router/grid/detail.
+
+### P2 code review record (2026-07-15)
+
+Lighter review (per usage constraints): 3 finder angles (Flutter correctness,
+API-contract fidelity, cleanup/conventions) → ~15 candidates deduped to 12
+distinct → triaged inline (no full refuter panel; findings were robustness/UX
+with clear reasoning). All fixed:
+
+- **Repository robustness**: decode/shape casts and `response.data!` ran
+  outside the error handler, so a malformed 200 body threw uncaught and hung
+  the spinner. Now every failure — Dio transport AND decode/shape — maps to a
+  single `RepositoryException`; error messages are client-owned (no raw server
+  strings), and the "unreachable" copy no longer fires for non-envelope error
+  bodies.
+- **Pagination**: `loadMore` now stops on a short/empty page (a stale `total`
+  can't loop forever) and surfaces a retry footer instead of silently
+  stalling when pinned at the bottom.
+- **Navigation**: tiles use `context.push` (real back stack); the detail nav
+  bar has a back control that pops or falls back to home (fixes mobile
+  system-back exiting the app).
+- **Prod base-URL footgun**: `apiBaseUrl` now defaults to empty (same-origin,
+  production-safe); dev passes `--dart-define=SALT_API_BASE=http://localhost:8080`.
+  Verified in-browser with the define.
+- **YAML download**: awaited, error-handled (SnackBar), absolute URL via
+  `Uri.base.resolve` so it works same-origin in production.
+- **Dev CORS**: now answers preflight `OPTIONS` (204) and advertises
+  methods/headers, so P3's authenticated requests won't be blocked in the
+  split-port dev setup. Verified: `OPTIONS` → 204 with CORS headers.
+- **Cleanup**: shared `PhotoFallback` widget; stray color literals folded into
+  `SaltColors`; shared `Breakpoints` constants; slug URL-encoding in API paths.
+
+Verified in-browser after fixes: grid loads real photos (fallback only for
+hero-less recipes), detail renders with hero + prose + ingredients + steps,
+mobile stacks, back button present. `flutter analyze` clean; tests pass.
 
 Approved design (2026-07-15), reference `docs/mockups/p2-read-only.html`:
 - **Cards**: full-bleed photo tile with title + tag chips overlaid on a

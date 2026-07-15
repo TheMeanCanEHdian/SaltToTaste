@@ -54,9 +54,9 @@ class _RecipeGridState extends State<_RecipeGrid> {
   }
 
   static int _columnsFor(double width) {
-    if (width >= 1200) return 4;
-    if (width >= 900) return 3;
-    if (width >= 600) return 2;
+    if (width >= Breakpoints.wide) return 4;
+    if (width >= Breakpoints.medium) return 3;
+    if (width >= Breakpoints.compact) return 2;
     return 1;
   }
 
@@ -104,29 +104,62 @@ class _RecipeGridState extends State<_RecipeGrid> {
                           final card = state.items[index];
                           return RecipeTile(
                             card: card,
-                            onTap: () => context.go('/r/${card.slug}'),
+                            onTap: () => context.push('/r/${card.slug}'),
                           );
                         },
                         childCount: state.items.length,
                       ),
                     ),
                   ),
-                  if (state.loadingMore)
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: 28),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: SaltColors.maroon,
-                          ),
-                        ),
-                      ),
-                    ),
+                  SliverToBoxAdapter(child: _GridFooter(state: state)),
                 ],
               );
             },
           ),
       },
     );
+  }
+}
+
+/// Below-the-grid footer: a spinner while paging, or a retry row when a page
+/// failed (so a transient error mid-scroll isn't a silent dead end).
+class _GridFooter extends StatelessWidget {
+  const _GridFooter({required this.state});
+
+  final RecipeListLoaded state;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.loadMoreFailed) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 28, top: 4),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Couldn't load more recipes.",
+                style: TextStyle(color: SaltColors.muted),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () =>
+                    context.read<RecipeListCubit>().retryLoadMore(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (state.loadingMore) {
+      return const Padding(
+        padding: EdgeInsets.only(bottom: 28),
+        child: Center(
+          child: CircularProgressIndicator(color: SaltColors.maroon),
+        ),
+      );
+    }
+    return const SizedBox(height: 8);
   }
 }

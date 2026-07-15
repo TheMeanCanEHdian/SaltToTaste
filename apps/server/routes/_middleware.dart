@@ -1,3 +1,5 @@
+import 'dart:io';
+
 // dart_frog ships its own `requestLogger`; ours is the one wired here.
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:salt_server/src/bootstrap.dart';
@@ -27,20 +29,36 @@ SaltDatabase _saltDatabase(RequestContext context) {
 /// so failed requests are still logged with their envelope status.
 /// errorHandler wraps everything below it (config + DB providers, routes),
 /// so any exception thrown there becomes a clean envelope.
-/// Adds `Access-Control-Allow-Origin: *` to every response when
+/// Adds permissive CORS headers (and answers preflight `OPTIONS`) when
 /// `DEV_ALLOW_CORS=true` (development only — see [ServerConfig.devAllowCors]).
+///
+/// Production serves the web build same-origin and leaves this off.
+const Map<String, String> _corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers':
+      'Authorization, Content-Type, X-Requested-With',
+  'Access-Control-Max-Age': '86400',
+};
+
 Middleware _devCors() {
   return (handler) {
     return (context) async {
-      final response = await handler(context);
       if (!serverConfig.devAllowCors) {
-        return response;
+        return handler(context);
       }
+      // Short-circuit the browser's preflight before it reaches a route that
+      // only allows GET (which would 405 the preflight and block the real
+      // request).
+      if (context.request.method == HttpMethod.options) {
+        return Response(
+          statusCode: HttpStatus.noContent,
+          headers: _corsHeaders,
+        );
+      }
+      final response = await handler(context);
       return response.copyWith(
-        headers: {
-          ...response.headers,
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: {...response.headers, ..._corsHeaders},
       );
     };
   };
