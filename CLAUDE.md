@@ -23,18 +23,19 @@ recorded in `docs/PARITY.md`.
   (pinned 0.24.0), bloc/cubit, go_router, dio. No `dart:html`/`package:web`
   outside conditional-import files.
 
-Approved plan: `/Users/drivard/.claude/plans/background-a-long-warm-robin.md`.
-Progress tracker: `docs/IMPLEMENTATION.md` (update at every phase boundary and
-whenever a decision deviates from the plan).
+Approved plan: local (not in the repo). Progress tracker:
+`docs/IMPLEMENTATION.md` (update at every phase boundary and whenever a
+decision deviates from the plan).
 
 ## Data & formats
 
 - Canonical recipe document = **schema v2 YAML**, a strict superset of the
-  Recipe Extraction v1 format. v1 corpus (1,198 real ATK recipes):
-  `/Users/drivard/Documents/Claude Projects/Recipe Extraction/The Complete
-  America_s Test Kitchen TV Show Cookbook 2001–2023/recipes/` (path has
-  spaces — quote it). Missing key ≡ null; subsections omit (not null) their
-  optional keys for prose-only variations; `quantity` is always a string.
+  Recipe Extraction v1 format. v1 corpus (1,198 real ATK recipes) is
+  external and not committed; point tests at it with the `SALT_CORPUS_DIR`
+  env var (the source root containing `recipes/`, `images/`, `source.yaml`;
+  the folder name has spaces — quote it). Corpus-backed tests skip when it
+  is absent. Missing key ≡ null; subsections omit (not null) their optional
+  keys for prose-only variations; `quantity` is always a string.
 - Nutrition data (USDA FoodData Central; per-deployment API key) and per-user
   data (favorites, personal notes) live in the DB only — never in YAML.
 - Exported YAML remains hand-editable: reconciliation scan (hash-based) —

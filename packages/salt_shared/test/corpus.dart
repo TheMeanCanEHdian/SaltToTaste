@@ -10,10 +10,13 @@ import 'dart:io';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
-/// Overridable via the `SALT_CORPUS_DIR` environment variable so the suite
-/// is not pinned to one machine's checkout location.
-final String corpusDir = Platform.environment['SALT_CORPUS_DIR'] ??
-    '/Users/drivard/Documents/Claude Projects/Recipe Extraction/'
+/// The corpus `recipes/` directory — set `SALT_CORPUS_DIR` to point at your
+/// extraction corpus's source root. The default is
+/// `$HOME/recipe-corpus/<cookbook>`; corpus-backed tests skip when absent
+/// (see [skipIfNoCorpus]).
+final String corpusDir = Platform.environment['SALT_CORPUS_DIR'] != null
+    ? '${Platform.environment['SALT_CORPUS_DIR']}/recipes'
+    : '${Platform.environment['HOME'] ?? '.'}/recipe-corpus/'
         'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023/recipes';
 
 const int expectedCorpusSize = 1198;

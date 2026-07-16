@@ -1,8 +1,7 @@
 # Implementation Tracker
 
-Living status of the approved rewrite plan (local file:
-`/Users/drivard/.claude/plans/background-a-long-warm-robin.md`). Statuses:
-`pending` / `in-progress` / `done` / `changed(reason)`.
+Living status of the approved rewrite plan (kept locally, not in the
+repo). Statuses: `pending` / `in-progress` / `done` / `changed(reason)`.
 
 Last updated: 2026-07-14
 

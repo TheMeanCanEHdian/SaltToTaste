@@ -8,13 +8,15 @@ import 'package:salt_shared/salt_shared.dart';
 /// `SALT_CORPUS_DIR` environment variable so the suite is not pinned to one
 /// machine's home directory. Points at the source root (the directory that
 /// contains `recipes/`, `images/`, and `source.yaml`).
-const _defaultCorpusRoot =
-    // ignore: missing_whitespace_between_adjacent_strings
-    '/Users/drivard/Documents/Claude Projects/Recipe Extraction/'
-    'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023';
-
+/// Corpus source root — set `SALT_CORPUS_DIR` to point at your extraction
+/// corpus (the directory containing `recipes/`, `images/`, `source.yaml`).
+/// The default is `$HOME/recipe-corpus/<cookbook>`; corpus-backed tests
+/// skip when it is absent (see [skipIfNoCorpus]).
 String get corpusRoot =>
-    Platform.environment['SALT_CORPUS_DIR'] ?? _defaultCorpusRoot;
+    Platform.environment['SALT_CORPUS_DIR'] ??
+    // ignore: missing_whitespace_between_adjacent_strings
+    '${Platform.environment['HOME'] ?? '.'}/recipe-corpus/'
+        'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023';
 
 /// The `recipes/` directory inside [corpusRoot].
 String get corpusRecipesDir => '$corpusRoot/recipes';

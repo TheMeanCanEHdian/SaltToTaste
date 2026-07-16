@@ -30,7 +30,7 @@ Future<void> main() async {
   }
   final corpusRoot = Platform.environment['SALT_CORPUS_DIR'] ??
       // ignore: missing_whitespace_between_adjacent_strings
-      '/Users/drivard/Documents/Claude Projects/Recipe Extraction/'
+      '${Platform.environment['HOME'] ?? '.'}/recipe-corpus/'
           'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023';
   final provider = UsdaFdcProvider(apiKey: () => key);
   final outDir = Directory('test/fixtures/fdc')..createSync(recursive: true);
