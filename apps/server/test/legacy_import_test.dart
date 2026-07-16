@@ -9,12 +9,12 @@ import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
 /// P5 legacy v0 importer tests against the real sample recipe shipped with
-/// the old Flask app (`saltToTaste/sample/`) — the actual format the
+/// the old Flask app (`test/fixtures/legacy-v0/`) — the actual format the
 /// importer exists to migrate.
 void main() {
-  // `dart test` runs from the package root (apps/server); the legacy sample
-  // ships in the repo's untouched Python tree.
-  const legacyRoot = '../../saltToTaste/sample';
+  // A real legacy v0 (old Flask app) recipe, preserved as a fixture at
+  // cutover when the Python tree was removed.
+  const legacyRoot = 'test/fixtures/legacy-v0';
 
   late Directory tempDir;
   late ServerConfig config;

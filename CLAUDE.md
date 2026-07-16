@@ -1,8 +1,12 @@
 # SaltToTaste v2 (Dart/Flutter rewrite)
 
-Self-hosted recipe app being rewritten on branch `feat/dart-rewrite`. The legacy
-Python/Flask app lives untouched in `saltToTaste/` until final cutover — do not
-modify it. All new code lives in `apps/` and `packages/`.
+Self-hosted recipe app, rewritten from the original Python/Flask app to a
+Dart Frog backend + Flutter web frontend on branch `feat/dart-rewrite`. The
+legacy Python tree was removed at the P8 cutover (recoverable via git
+history; its one v0 recipe is preserved as
+`apps/server/test/fixtures/legacy-v0/` for the legacy-importer tests). All
+code lives in `apps/` and `packages/`. Feature parity with the old app is
+recorded in `docs/PARITY.md`.
 
 ## Architecture
 

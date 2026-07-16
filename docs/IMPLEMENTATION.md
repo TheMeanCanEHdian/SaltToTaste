@@ -632,7 +632,7 @@ Server half (built, 254 tests green):
   idempotent re-run, legacy auto-detect + v2 mapping, failed-job
   visibility, boot reconciliation; SPA fallback + header tests in the
   middleware suite.
-- `docker/Dockerfile`: 3 stages (cirruslabs Flutter 3.44.0 web build →
+- `Dockerfile` (repo root): 3 stages (cirruslabs Flutter 3.44.0 web build →
   dart 3.12.2 dart_frog AOT via workspace resolve minus apps/app →
   bookworm-slim with libsqlite3-0/ca-certificates/tzdata, non-root
   `salt`, VOLUME /data, compiled `/app/healthcheck` probe — no curl in
@@ -715,9 +715,28 @@ Open Sans. This was a latent regression across P4/P6 UI, not new to P7 —
 it only surfaced because the offline build changed CanvasKit's font
 fallback.
 
-## P8 — Parity audit + cutover — **pending**
-Checklist vs old app, delete Python tree, promote Dockerfile, README, Forui
-upgrade pass.
+## P8 — Parity audit + cutover — **done** (2026-07-15)
+
+- **Parity audit** (`docs/PARITY.md`): every user-facing feature of the
+  legacy Flask app inventoried and verified against the v2 codebase by an
+  independent multi-agent pass (parallel verifiers over feature groups +
+  a completeness critic reading the whole old app). Result: full
+  functional parity — all 19 features covered/improved, plus search
+  (fully present, added to the matrix). Only intentional differences (no
+  anonymous/no-auth mode, always-on backups with fixed retention 14,
+  Edamam→FDC, API-key→PATs, Font Awesome→Lucide) and one minor known gap
+  ("Save and add another" bulk-entry button — not carried over).
+- **Cutover**: legacy `saltToTaste/` Python tree removed (git-recoverable;
+  its one v0 recipe preserved as
+  `apps/server/test/fixtures/legacy-v0/`, the two legacy-importer tests
+  repointed there). Legacy `Dockerfile`/`saltToTaste.py`/`requirements.txt`
+  deleted; the P7 `docker/Dockerfile` promoted to the repo root (built
+  with `docker build .`). CLAUDE.md + tracker updated. All suites green
+  after removal (server 262, salt_shared 121, app 2).
+- **README** rewritten for v2 (quickstart, config, import, dev).
+- **Forui upgrade pass**: 0.24.0 is still the latest published release;
+  the exact pin is retained deliberately (pre-1.0, breaking changes can
+  land in minor versions). No upgrade needed.
 
 ## Decision log (deviations & clarifications)
 

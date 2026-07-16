@@ -22,7 +22,7 @@ void main() {
     '0857-rich-chocolate-bundt-cake.yaml',
     '0747-100-percent-whole-wheat-pancakes.yaml',
   ];
-  const legacySample = '../../saltToTaste/sample';
+  const legacySample = 'test/fixtures/legacy-v0';
 
   void copyTree(String from, String to) {
     Directory(to).createSync(recursive: true);
