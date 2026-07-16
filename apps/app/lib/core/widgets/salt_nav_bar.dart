@@ -52,19 +52,26 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 4),
                 ],
-                InkWell(
-                  onTap: () => context.go('/'),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      height: 32,
-                      errorBuilder: (_, __, ___) => const Text(
-                        'SALT to TASTE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 18,
+                Semantics(
+                  button: true,
+                  label: 'Home',
+                  child: InkWell(
+                    onTap: () => context.go('/'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: ExcludeSemantics(
+                        child: Image.asset(
+                          'assets/images/logo_banner.png',
+                          height: 36,
+                          filterQuality: FilterQuality.medium,
+                          errorBuilder: (_, __, ___) => const Text(
+                            'Salt to Taste',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -78,8 +85,13 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                       onRefresh: onSearchRefresh,
                     ),
                   )
-                else
+                else ...[
                   const Spacer(),
+                  _MobileSearchButton(
+                    initialQuery: initialQuery,
+                    onRefresh: onSearchRefresh,
+                  ),
+                ],
                 const SizedBox(width: 12),
                 const _AvatarMenu(),
               ],
@@ -104,8 +116,9 @@ class _SearchField extends StatefulWidget {
 }
 
 class _SearchFieldState extends State<_SearchField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.initialQuery);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialQuery,
+  );
 
   @override
   void dispose() {
@@ -138,26 +151,37 @@ class _SearchFieldState extends State<_SearchField> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(9),
       ),
-      child: TextField(
-        controller: _controller,
-        textInputAction: TextInputAction.search,
-        onSubmitted: _submit,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          hintText: 'Search recipes — try title:cake or tag:dessert',
-          hintStyle:
-              const TextStyle(color: SaltColors.muted, fontSize: 14),
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-          prefixIcon:
-              const Icon(Icons.search, size: 19, color: SaltColors.muted),
-          suffixIcon: IconButton(
-            tooltip: 'Search',
-            icon: const Icon(Icons.arrow_forward,
-                size: 18, color: SaltColors.rose),
-            onPressed: () => _submit(_controller.text),
+      child: Semantics(
+        label: 'Search recipes',
+        child: TextField(
+          controller: _controller,
+          textInputAction: TextInputAction.search,
+          onSubmitted: _submit,
+          textAlignVertical: TextAlignVertical.center,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Search recipes — try title:cake or tag:dessert',
+            hintStyle: const TextStyle(color: SaltColors.muted, fontSize: 14),
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 11,
+            ),
+            prefixIcon: const Icon(
+              Icons.search,
+              size: 19,
+              color: SaltColors.muted,
+            ),
+            suffixIcon: IconButton(
+              tooltip: 'Search',
+              icon: const Icon(
+                Icons.arrow_forward,
+                size: 18,
+                color: SaltColors.rose,
+              ),
+              onPressed: () => _submit(_controller.text),
+            ),
           ),
         ),
       ),
@@ -208,34 +232,24 @@ class _AvatarMenu extends StatelessWidget {
               ),
               Text(
                 user.role,
-                style:
-                    const TextStyle(fontSize: 12, color: SaltColors.muted),
+                style: const TextStyle(fontSize: 12, color: SaltColors.muted),
               ),
             ],
           ),
         ),
         const PopupMenuDivider(),
         if (user.isAdmin)
-          const PopupMenuItem<String>(
-            value: 'add',
-            child: Text('Add recipe'),
-          ),
+          const PopupMenuItem<String>(value: 'add', child: Text('Add recipe')),
         const PopupMenuItem<String>(
           value: 'favorites',
           child: Text('My favorites'),
         ),
         const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          value: 'settings',
-          child: Text('Settings'),
-        ),
+        const PopupMenuItem<String>(value: 'settings', child: Text('Settings')),
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
           value: 'signout',
-          child: Text(
-            'Sign out',
-            style: TextStyle(color: Color(0xFF8A1212)),
-          ),
+          child: Text('Sign out', style: TextStyle(color: Color(0xFF8A1212))),
         ),
       ],
       child: CircleAvatar(
@@ -251,5 +265,71 @@ class _AvatarMenu extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Compact-width search entry point: the inline search field is dropped on
+/// narrow screens, so this icon opens a labelled dialog with the same query
+/// field, keeping search reachable (and accessible) on mobile.
+class _MobileSearchButton extends StatelessWidget {
+  const _MobileSearchButton({this.initialQuery, this.onRefresh});
+
+  final String? initialQuery;
+  final VoidCallback? onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Search',
+      icon: const Icon(Icons.search, color: Colors.white),
+      onPressed: () => _openSearch(context),
+    );
+  }
+
+  Future<void> _openSearch(BuildContext context) async {
+    final controller = TextEditingController(text: initialQuery);
+    final query = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Search recipes'),
+        content: Semantics(
+          label: 'Search recipes',
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            textInputAction: TextInputAction.search,
+            decoration: const InputDecoration(
+              hintText: 'try title:cake or tag:dessert',
+            ),
+            onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (query == null || !context.mounted) {
+      return;
+    }
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+    final refresh = onRefresh;
+    if (refresh != null && trimmed == initialQuery?.trim()) {
+      refresh();
+      return;
+    }
+    context.go('/search?q=${Uri.encodeQueryComponent(trimmed)}');
   }
 }

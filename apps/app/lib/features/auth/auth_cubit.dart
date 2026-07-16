@@ -57,10 +57,10 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
 
   AuthUserInfo? get user => switch (state) {
-        AuthSignedIn(:final user) => user,
-        AuthPasswordChangeRequired(:final user) => user,
-        _ => null,
-      };
+    AuthSignedIn(:final user) => user,
+    AuthPasswordChangeRequired(:final user) => user,
+    _ => null,
+  };
 
   /// Determines the initial state: setup screen, login, or a live session.
   Future<void> bootstrap() async {
@@ -99,6 +99,21 @@ class AuthCubit extends Cubit<AuthState> {
       setupCode: setupCode,
       username: username,
       password: password,
+    );
+    _emitForUser(user);
+  }
+
+  /// Redeems a CLI-issued recovery code: re-enables the admin account, sets
+  /// its password, and signs in — same state transitions as [completeSetup].
+  Future<void> recover({
+    required String recoveryCode,
+    required String username,
+    required String newPassword,
+  }) async {
+    final user = await _repository.recover(
+      code: recoveryCode,
+      username: username,
+      newPassword: newPassword,
     );
     _emitForUser(user);
   }

@@ -9,6 +9,7 @@ import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/auth/change_password_page.dart';
 import 'package:salt_app/features/auth/login_page.dart';
+import 'package:salt_app/features/auth/recover_page.dart';
 import 'package:salt_app/features/auth/setup_page.dart';
 import 'package:salt_app/features/editor/editor_page.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_page.dart';
@@ -57,7 +58,10 @@ class _SplashPage extends StatelessWidget {
     }
     return const Scaffold(
       body: Center(
-        child: CircularProgressIndicator(color: SaltColors.maroon),
+        child: CircularProgressIndicator(
+          color: SaltColors.maroon,
+          semanticsLabel: 'Loading',
+        ),
       ),
     );
   }
@@ -81,19 +85,33 @@ class _AuthRefresh extends ChangeNotifier {
 /// Builds the router; redirects are driven entirely by [authCubit]'s state:
 /// splash while unknown (or bootstrap-failed, with retry), /setup on first
 /// run, /login when signed out, /change-password while a temporary password
-/// is active.
+/// is active. `/recover` is the one exception: it is an escape hatch for when
+/// nobody can sign in, so a signed-out user who asks for it is left there
+/// instead of being bounced to /login.
 ///
 /// The originally requested location survives the auth dance: a cold deep
 /// link (e.g. a shared `/r/<slug>`) is stashed while the state resolves and
 /// restored once signed in.
 GoRouter buildRouter(AuthCubit authCubit) {
-  const authPaths = {'/login', '/setup', '/change-password', '/splash'};
+  const authPaths = {
+    '/login',
+    '/setup',
+    '/recover',
+    '/change-password',
+    '/splash',
+  };
   String? pendingLocation;
   return GoRouter(
     refreshListenable: _AuthRefresh(authCubit.stream),
     initialLocation: '/',
     redirect: (context, state) {
       final path = state.uri.path;
+      // Recovery must stay reachable while signed out — that is its entire
+      // purpose. (Bootstrap-unknown/failed still wins: the code can't be
+      // redeemed against a server we can't reach.)
+      if (path == '/recover' && authCubit.state is AuthSignedOut) {
+        return null;
+      }
       final target = switch (authCubit.state) {
         AuthUnknown() || AuthBootstrapFailed() => '/splash',
         AuthSetupRequired() => '/setup',
@@ -133,6 +151,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/setup', builder: (context, state) => const SetupPage()),
       GoRoute(
+        path: '/recover',
+        builder: (context, state) => const RecoverPage(),
+      ),
+      GoRoute(
         path: '/change-password',
         builder: (context, state) => const ChangePasswordPage(),
       ),
@@ -168,14 +190,16 @@ GoRouter buildRouter(AuthCubit authCubit) {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Page not found',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            Semantics(
+              header: true,
+              child: const Text(
+                'Page not found',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
             ),
             const SizedBox(height: 12),
             FilledButton(
-              style:
-                  FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
+              style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
               onPressed: () => context.go('/'),
               child: const Text('Back to recipes'),
             ),

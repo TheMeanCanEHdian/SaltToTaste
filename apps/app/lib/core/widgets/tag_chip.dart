@@ -58,7 +58,8 @@ class TagChip extends StatelessWidget {
       }
     }
     final ink = colorFromHex(style?.color) ?? SaltColors.chipInk;
-    final fill = colorFromHex(style?.bgColor) ??
+    final fill =
+        colorFromHex(style?.bgColor) ??
         (onCard ? Colors.white.withValues(alpha: 0.92) : SaltColors.chip);
     final icon = style?.icon == null ? null : lucideIconsByName[style!.icon];
 
@@ -92,10 +93,24 @@ class TagChip extends StatelessWidget {
     if (onTap == null) {
       return chip;
     }
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: chip,
+    // Interactive chips (tag search on the detail page) need a real tap
+    // target: the ~22px pill fails WCAG 2.5.8 (24px), so pad the hit area
+    // vertically — a little on desktop, more on touch — without changing the
+    // visible pill. MergeSemantics folds the tag name + role into one node.
+    final targetPad = isCompactWidth(context) ? 9.0 : 4.0;
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        hint: 'Search this tag',
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: targetPad),
+            child: chip,
+          ),
+        ),
+      ),
     );
   }
 }

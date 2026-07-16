@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
@@ -41,10 +42,10 @@ class _LoginPageState extends State<LoginPage> {
     });
     try {
       await context.read<AuthCubit>().login(
-            username: _username.text.trim(),
-            password: _password.text,
-            remember: _remember,
-          );
+        username: _username.text.trim(),
+        password: _password.text,
+        remember: _remember,
+      );
       // Success: the router redirects off this page via the auth state.
     } on RepositoryException catch (exception) {
       setState(() {
@@ -68,13 +69,13 @@ class _LoginPageState extends State<LoginPage> {
       title: 'Salt to Taste',
       subtitle: 'Sign in to your household recipe library',
       children: [
-        if (notice != null && _error == null)
+        // A single banner slot at the top — the login error and the
+        // signed-out notice share the same position (error takes priority).
+        if (_error != null)
+          AuthBanner(message: _error!, warning: _locked)
+        else if (notice != null)
           AuthBanner(message: notice, warning: true),
-        AuthField(
-          label: 'Username',
-          controller: _username,
-          autofocus: true,
-        ),
+        AuthField(label: 'Username', controller: _username, autofocus: true),
         AuthField(
           label: 'Password',
           controller: _password,
@@ -82,35 +83,51 @@ class _LoginPageState extends State<LoginPage> {
           onSubmitted: (_) => _submit(),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Checkbox(
-                  value: _remember,
-                  activeColor: SaltColors.maroon,
-                  onChanged: (value) =>
-                      setState(() => _remember = value ?? false),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Keep me signed in',
-                  style: TextStyle(fontSize: 13, color: SaltColors.muted),
-                ),
-              ),
-              const Text(
-                '90 days',
-                style: TextStyle(fontSize: 12, color: SaltColors.muted),
-              ),
-            ],
+          padding: const EdgeInsets.only(top: 6),
+          // CheckboxListTile makes the whole row a single labelled control
+          // with a full-width (≥48px) tap target — the label toggles the box
+          // and screen readers announce "Keep me signed in, checkbox".
+          child: CheckboxListTile(
+            value: _remember,
+            onChanged: (value) => setState(() => _remember = value ?? false),
+            activeColor: SaltColors.maroon,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            title: const Text(
+              'Keep me signed in',
+              style: TextStyle(fontSize: 13, color: SaltColors.muted),
+            ),
+            secondary: const Text(
+              '90 days',
+              style: TextStyle(fontSize: 12, color: SaltColors.muted),
+            ),
           ),
         ),
         AuthSubmitButton(label: 'Sign in', busy: _busy, onPressed: _submit),
-        if (_error != null) AuthBanner(message: _error!, warning: _locked),
+        // Rare escape hatch (needs shell access to the server), so it stays
+        // deliberately quiet: muted text, no fill, well below the primary
+        // action.
+        Align(
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: SaltColors.muted,
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                textStyle: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              onPressed: () => context.go('/recover'),
+              child: const Text('Locked out?'),
+            ),
+          ),
+        ),
       ],
     );
   }

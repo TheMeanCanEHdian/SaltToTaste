@@ -71,9 +71,9 @@ class _AccountTabState extends State<AccountTab> {
     });
     try {
       await context.read<AuthCubit>().changePassword(
-            currentPassword: _current.text,
-            newPassword: _password.text,
-          );
+        currentPassword: _current.text,
+        newPassword: _password.text,
+      );
       if (!mounted) {
         return;
       }
@@ -152,9 +152,7 @@ class _AccountTabState extends State<AccountTab> {
           child: Padding(
             padding: const EdgeInsets.only(top: 14),
             child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: SaltColors.maroon,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
               onPressed: _busy ? null : _changePassword,
               child: const Text('Change password'),
             ),
@@ -163,9 +161,12 @@ class _AccountTabState extends State<AccountTab> {
         if (_message != null)
           AuthBanner(message: _message!, warning: !_messageIsError),
         const SizedBox(height: 28),
-        const Text(
-          'Active sessions',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        Semantics(
+          header: true,
+          child: const Text(
+            'Active sessions',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
         ),
         const SizedBox(height: 8),
         if (_sessionsError != null)
@@ -177,9 +178,7 @@ class _AccountTabState extends State<AccountTab> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: SaltColors.hairline),
-                ),
+                border: Border(bottom: BorderSide(color: SaltColors.hairline)),
               ),
               child: Row(
                 children: [

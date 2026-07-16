@@ -164,14 +164,13 @@ Map<String, Object?> recipeDetailBody(
   String sourceSlug, {
   bool? favorite,
   String? note,
-}) =>
-    {
-      'recipe': recipe.toMap(),
-      'source_slug': sourceSlug,
-      'hero_image_url': imageUrl(sourceSlug, recipe.images.hero),
-      if (favorite != null) 'favorite': favorite,
-      if (favorite != null) 'note': note,
-    };
+}) => {
+  'recipe': recipe.toMap(),
+  'source_slug': sourceSlug,
+  'hero_image_url': imageUrl(sourceSlug, recipe.images.hero),
+  if (favorite != null) 'favorite': favorite,
+  if (favorite != null) 'note': note,
+};
 
 /// The canonical v2 YAML export of the recipe matched by [key] (id or slug),
 /// plus the download file name `<recipe id>.yaml`.

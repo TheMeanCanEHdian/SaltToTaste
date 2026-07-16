@@ -59,18 +59,22 @@ class _RecipeGridState extends State<RecipeGrid> {
       builder: (context, state) => switch (state) {
         RecipeListLoading() => const LoadingView(),
         RecipeListError(:final message) => ErrorView(
-            message: message,
-            onRetry: () => context.read<RecipeListCubit>().load(),
-          ),
+          message: message,
+          onRetry: () => context.read<RecipeListCubit>().load(),
+        ),
         RecipeListLoaded() => LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = _columnsFor(constraints.maxWidth);
-              return CustomScrollView(
-                controller: _scroll,
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
-                    sliver: SliverToBoxAdapter(
+          builder: (context, constraints) {
+            final columns = _columnsFor(constraints.maxWidth);
+            return CustomScrollView(
+              controller: _scroll,
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+                  sliver: SliverToBoxAdapter(
+                    // liveRegion so the "N recipes / N results" count is
+                    // announced after a search or reload.
+                    child: Semantics(
+                      liveRegion: true,
                       child: Text(
                         widget.eyebrowBuilder(state),
                         style: const TextStyle(
@@ -82,52 +86,46 @@ class _RecipeGridState extends State<RecipeGrid> {
                       ),
                     ),
                   ),
-                  if (state.items.isEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Center(
-                          child: Text(
-                            widget.emptyMessage,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: SaltColors.muted,
-                            ),
+                ),
+                if (state.items.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Center(
+                        child: Text(
+                          widget.emptyMessage,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: SaltColors.muted,
                           ),
                         ),
                       ),
-                    )
-                  else
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: columns,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 4 / 3,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final card = state.items[index];
-                            return RecipeTile(
-                              card: card,
-                              onTap: () => context.push('/r/${card.slug}'),
-                              onToggleFavorite: () => context
-                                  .read<RecipeListCubit>()
-                                  .unfavorite(card),
-                            );
-                          },
-                          childCount: state.items.length,
-                        ),
-                      ),
                     ),
-                  SliverToBoxAdapter(child: _GridFooter(state: state)),
-                ],
-              );
-            },
-          ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 4 / 3,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final card = state.items[index];
+                        return RecipeTile(
+                          card: card,
+                          onTap: () => context.push('/r/${card.slug}'),
+                        );
+                      }, childCount: state.items.length),
+                    ),
+                  ),
+                SliverToBoxAdapter(child: _GridFooter(state: state)),
+              ],
+            );
+          },
+        ),
       },
     );
   }
@@ -168,7 +166,10 @@ class _GridFooter extends StatelessWidget {
       return const Padding(
         padding: EdgeInsets.only(bottom: 28),
         child: Center(
-          child: CircularProgressIndicator(color: SaltColors.maroon),
+          child: CircularProgressIndicator(
+            color: SaltColors.maroon,
+            semanticsLabel: 'Loading more recipes',
+          ),
         ),
       );
     }

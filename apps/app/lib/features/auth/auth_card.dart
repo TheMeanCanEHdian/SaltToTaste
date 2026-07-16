@@ -44,31 +44,42 @@ class AuthCardScaffold extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: SaltColors.maroon,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'S',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
+                      ExcludeSemantics(
+                        child: Image.asset(
+                          'assets/images/logo_circle.png',
+                          width: 40,
+                          height: 40,
+                          filterQuality: FilterQuality.medium,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: SaltColors.maroon,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'S',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          title,
-                          style: const TextStyle(
-                            color: SaltColors.maroon,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 20,
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: SaltColors.maroon,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -122,37 +133,49 @@ class AuthField extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 14, bottom: 5),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
+          // The field itself carries this text as its accessible name
+          // (Semantics below), so exclude the visual label to avoid a
+          // screen reader announcing it twice.
+          child: ExcludeSemantics(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
-        TextField(
-          controller: controller,
-          obscureText: obscure,
-          autofocus: autofocus,
-          onSubmitted: onSubmitted,
-          decoration: InputDecoration(
-            hintText: hint,
-            helperText: helper,
-            isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(9),
-              borderSide: const BorderSide(color: SaltColors.hairline),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(9),
-              borderSide: const BorderSide(color: SaltColors.hairline),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(9),
-              borderSide:
-                  const BorderSide(color: SaltColors.maroon, width: 2),
+        Semantics(
+          label: label,
+          child: TextField(
+            controller: controller,
+            obscureText: obscure,
+            autofocus: autofocus,
+            onSubmitted: onSubmitted,
+            decoration: InputDecoration(
+              hintText: hint,
+              helperText: helper,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(9),
+                borderSide: const BorderSide(color: SaltColors.hairline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(9),
+                borderSide: const BorderSide(color: SaltColors.hairline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(9),
+                borderSide: const BorderSide(
+                  color: SaltColors.maroon,
+                  width: 2,
+                ),
+              ),
             ),
           ),
         ),
@@ -178,11 +201,14 @@ class AuthBanner extends StatelessWidget {
         color: warning ? const Color(0xFFFDF1E2) : const Color(0xFFFBE9E9),
         borderRadius: BorderRadius.circular(9),
       ),
-      child: Text(
-        message,
-        style: TextStyle(
-          fontSize: 13,
-          color: warning ? const Color(0xFF8A5A12) : const Color(0xFF8A1212),
+      child: Semantics(
+        liveRegion: true,
+        child: Text(
+          message,
+          style: TextStyle(
+            fontSize: 13,
+            color: warning ? const Color(0xFF8A5A12) : const Color(0xFF8A1212),
+          ),
         ),
       ),
     );

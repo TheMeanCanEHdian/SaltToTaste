@@ -18,8 +18,11 @@ void main() {
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
-    test('corpus-backed tests (skipped: corpus absent)', () {},
-        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    test(
+      'corpus-backed tests (skipped: corpus absent)',
+      () {},
+      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
+    );
     return;
   }
   late Directory tempDir;
@@ -45,8 +48,7 @@ void main() {
         if (doc.containsKey(key)) key: doc[key],
     });
     recipeId = created.recipe.id;
-    exportFile =
-        File(exportPathFor(config, manualSourceSlug, recipeId));
+    exportFile = File(exportPathFor(config, manualSourceSlug, recipeId));
   });
 
   tearDownAll(() {
@@ -61,12 +63,14 @@ void main() {
     expect(report.added, isEmpty);
     expect(report.reExported, isEmpty);
     expect(report.skipped, isEmpty);
-    expect(lastScanReport(db), isNotNull,
-        reason: 'the report is persisted for the Settings UI');
+    expect(
+      lastScanReport(db),
+      isNotNull,
+      reason: 'the report is persisted for the Settings UI',
+    );
   });
 
-  test('a clean hand edit wins and is normalized back to canonical form',
-      () {
+  test('a clean hand edit wins and is normalized back to canonical form', () {
     final original = exportFile.readAsStringSync();
     expect(original, contains('title: Rich Chocolate Bundt Cake'));
     exportFile.writeAsStringSync(
@@ -88,8 +92,7 @@ void main() {
     expect(RecipeYamlCodec.decode(text).recipe.title, stored.title);
   });
 
-  test('a malformed hand edit is skipped and the database version stays',
-      () {
+  test('a malformed hand edit is skipped and the database version stays', () {
     final good = exportFile.readAsStringSync();
     exportFile.writeAsStringSync('$good\n\t: this is not valid yaml');
 
@@ -100,8 +103,11 @@ void main() {
     expect(report.skipped.single.reason, contains('not importable'));
 
     final stored = db.recipeByIdOrSlug(recipeId)!.recipe;
-    expect(stored.title, 'Rich Chocolate Bundt Cake (Hand Edited)',
-        reason: 'the malformed file must not clobber the database');
+    expect(
+      stored.title,
+      'Rich Chocolate Bundt Cake (Hand Edited)',
+      reason: 'the malformed file must not clobber the database',
+    );
 
     // Put the good text back for the next tests.
     exportFile.writeAsStringSync(good);
@@ -132,8 +138,9 @@ void main() {
   test('a new hand-dropped corpus file is imported (added)', () {
     final lemon = loadCorpusRecipe('0860-lemon-bundt-cake.yaml');
     final canonical = RecipeYamlCodec.encode(lemon);
-    File('${exportFile.parent.path}/${lemon.id}.yaml')
-        .writeAsStringSync(canonical);
+    File(
+      '${exportFile.parent.path}/${lemon.id}.yaml',
+    ).writeAsStringSync(canonical);
 
     final report = scanLibrary(db: db, config: config);
     expect(report.added, [lemon.id]);

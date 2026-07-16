@@ -35,6 +35,7 @@ class RecipeNutrition {
     this.totalCount = 0,
     this.lowConfidence = 0,
     this.computedAt,
+    this.computingJobId,
   });
 
   factory RecipeNutrition.fromJson(Map<String, dynamic> json) {
@@ -64,6 +65,7 @@ class RecipeNutrition {
       totalCount: (json['total_count'] as num?)?.toInt() ?? 0,
       lowConfidence: (json['low_confidence'] as num?)?.toInt() ?? 0,
       computedAt: json['computed_at'] as String?,
+      computingJobId: (json['computing_job_id'] as num?)?.toInt(),
     );
   }
 
@@ -83,6 +85,11 @@ class RecipeNutrition {
   /// Auto matches below 0.5 confidence that nobody has reviewed yet.
   final int lowConfidence;
   final String? computedAt;
+
+  /// A background compute in flight for this recipe (the client polls this
+  /// job and re-attaches to it after navigating away and back). Null when
+  /// nothing is running.
+  final int? computingJobId;
 
   bool get exists => status != 'none';
 
@@ -161,13 +168,12 @@ class MatchCandidate {
     required this.confidence,
   });
 
-  factory MatchCandidate.fromJson(Map<String, dynamic> json) =>
-      MatchCandidate(
-        fdcId: (json['fdc_id']! as num).toInt(),
-        description: json['description'] as String? ?? '',
-        dataType: json['data_type'] as String? ?? '',
-        confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
-      );
+  factory MatchCandidate.fromJson(Map<String, dynamic> json) => MatchCandidate(
+    fdcId: (json['fdc_id']! as num).toInt(),
+    description: json['description'] as String? ?? '',
+    dataType: json['data_type'] as String? ?? '',
+    confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+  );
 
   final int fdcId;
   final String description;
@@ -187,16 +193,16 @@ class NutritionJob {
   });
 
   factory NutritionJob.fromJson(Map<String, dynamic> json) => NutritionJob(
-        id: (json['id']! as num).toInt(),
-        status: json['status'] as String? ?? '',
-        total: (json['total'] as num?)?.toInt() ?? 0,
-        done: (json['done'] as num?)?.toInt() ?? 0,
-        failed: (json['failed'] as num?)?.toInt() ?? 0,
-        log: [
-          if (json['log'] is List)
-            for (final entry in json['log'] as List<dynamic>) '$entry',
-        ],
-      );
+    id: (json['id']! as num).toInt(),
+    status: json['status'] as String? ?? '',
+    total: (json['total'] as num?)?.toInt() ?? 0,
+    done: (json['done'] as num?)?.toInt() ?? 0,
+    failed: (json['failed'] as num?)?.toInt() ?? 0,
+    log: [
+      if (json['log'] is List)
+        for (final entry in json['log'] as List<dynamic>) '$entry',
+    ],
+  );
 
   final int id;
 
@@ -217,24 +223,24 @@ class NutritionRepository {
   /// The computed label for a recipe (`status: none` before any compute).
   Future<RecipeNutrition> nutrition(String idOrSlug) {
     return apiGuard(() async {
-      final response = await _dio
-          .get<dynamic>('/api/v1/recipes/${_seg(idOrSlug)}/nutrition');
+      final response = await _dio.get<dynamic>(
+        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition',
+      );
       return RecipeNutrition.fromJson(_asMap(response.data));
     }, notFoundMessage: 'Recipe not found.');
   }
 
-  /// Matches every line against FDC and computes the label (admin; may
-  /// take ~20s cold — rate-limited requests). Pass [cancelToken] so a
-  /// disposed page can release the browser connection instead of holding
-  /// it for up to five minutes.
-  Future<RecipeNutrition> compute(String idOrSlug, {CancelToken? cancelToken}) {
+  /// Starts a background match+compute for a recipe (admin) and returns the
+  /// job id to poll via [job]. Returns immediately — the label lands via
+  /// [nutrition] once the job finishes. Single-flight per recipe server-side.
+  Future<int> startCompute(String idOrSlug) {
     return apiGuard(() async {
-      final response = await _dio.post<dynamic>(
-        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/compute',
-        options: Options(receiveTimeout: const Duration(minutes: 5)),
-        cancelToken: cancelToken,
+      final data = _asMap(
+        (await _dio.post<dynamic>(
+          '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/compute',
+        )).data,
       );
-      return RecipeNutrition.fromJson(_asMap(response.data));
+      return (data['job_id']! as num).toInt();
     }, notFoundMessage: 'Recipe not found.');
   }
 
@@ -252,8 +258,9 @@ class NutritionRepository {
   /// Per-line match transparency for the review sheet.
   Future<List<IngredientMatch>> matches(String idOrSlug) {
     return apiGuard(() async {
-      final response = await _dio
-          .get<dynamic>('/api/v1/recipes/${_seg(idOrSlug)}/nutrition/matches');
+      final response = await _dio.get<dynamic>(
+        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/matches',
+      );
       final data = _asMap(response.data);
       return [
         if (data['items'] is List)
@@ -295,8 +302,9 @@ class NutritionRepository {
   /// The FDC key state (never the key itself).
   Future<({bool configured, String? masked})> fdcKeyStatus() {
     return apiGuard(() async {
-      final data =
-          _asMap((await _dio.get<dynamic>('/api/v1/settings/fdc_key')).data);
+      final data = _asMap(
+        (await _dio.get<dynamic>('/api/v1/settings/fdc_key')).data,
+      );
       return (
         configured: data['configured'] == true,
         masked: data['masked'] as String?,
@@ -311,8 +319,7 @@ class NutritionRepository {
         (await _dio.put<dynamic>(
           '/api/v1/settings/fdc_key',
           data: {'api_key': key},
-        ))
-            .data,
+        )).data,
       );
       return (
         configured: data['configured'] == true,
@@ -324,8 +331,9 @@ class NutritionRepository {
   /// Starts a bulk compute; returns the job id.
   Future<int> startBulk() {
     return apiGuard(() async {
-      final data =
-          _asMap((await _dio.post<dynamic>('/api/v1/nutrition/bulk')).data);
+      final data = _asMap(
+        (await _dio.post<dynamic>('/api/v1/nutrition/bulk')).data,
+      );
       return (data['job_id']! as num).toInt();
     });
   }

@@ -102,9 +102,9 @@ String _singular(String word) {
 }
 
 Set<String> _tokens(String text) => {
-      for (final word in text.toLowerCase().split(RegExp('[^a-z0-9%]+')))
-        if (word.length > 1) _singular(word),
-    };
+  for (final word in text.toLowerCase().split(RegExp('[^a-z0-9%]+')))
+    if (word.length > 1) _singular(word),
+};
 
 /// Description tokens that mark a MODIFIED form of a food — penalized
 /// unless the query itself asks for them, so "large eggs" prefers
@@ -177,8 +177,7 @@ List<RankedCandidate> rankCandidates(
       _ => 0.0,
     };
     for (final token in descriptionTokens) {
-      if (_modifiedFormTokens.contains(token) &&
-          !queryTokens.contains(token)) {
+      if (_modifiedFormTokens.contains(token) && !queryTokens.contains(token)) {
         score -= 0.06;
       }
     }

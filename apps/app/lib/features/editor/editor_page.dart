@@ -132,94 +132,98 @@ class _EditorScaffold extends StatelessWidget {
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        backgroundColor: SaltColors.maroon,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back',
-          onPressed: () => _confirmLeave(context),
-        ),
-        title: Row(
-          children: [
-            Flexible(
-              child: Text(
-                state.isNew
-                    ? 'New recipe'
-                    : 'Editing · ${state.title.isEmpty ? '…' : state.title}',
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 16.5),
-              ),
-            ),
-            if (state.dirty) ...[
-              const SizedBox(width: 8),
-              const Tooltip(
-                message: 'Unsaved changes',
-                child: CircleAvatar(
-                  radius: 4,
-                  backgroundColor: Color(0xFFFFD28A),
+        appBar: AppBar(
+          backgroundColor: SaltColors.maroon,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Back',
+            onPressed: () => _confirmLeave(context),
+          ),
+          title: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  state.isNew
+                      ? 'New recipe'
+                      : 'Editing · ${state.title.isEmpty ? '…' : state.title}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 16.5),
                 ),
               ),
+              if (state.dirty) ...[
+                const SizedBox(width: 8),
+                const Tooltip(
+                  message: 'Unsaved changes',
+                  child: CircleAvatar(
+                    radius: 4,
+                    backgroundColor: Color(0xFFFFD28A),
+                  ),
+                ),
+              ],
             ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => _confirmLeave(context),
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              child: const Text('Cancel'),
+            ),
+            const SizedBox(width: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: SaltColors.maroon,
+                  // The theme forces filled-button icons white (for the maroon
+                  // buttons); this white-on-white save button must opt back
+                  // out or its icon vanishes.
+                  iconColor: SaltColors.maroon,
+                ),
+                onPressed: state.saving || state.uploadingImage
+                    ? null
+                    : () => context.read<EditorCubit>().save(),
+                icon: const Icon(Icons.save_outlined, size: 17),
+                label: Text(state.saving ? 'Saving…' : 'Save recipe'),
+              ),
+            ),
+            const SizedBox(width: 14),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => _confirmLeave(context),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
-            child: const Text('Cancel'),
-          ),
-          const SizedBox(width: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: SaltColors.maroon,
-              ),
-              onPressed: state.saving || state.uploadingImage
-                  ? null
-                  : () => context.read<EditorCubit>().save(),
-              icon: const Icon(Icons.save_outlined, size: 17),
-              label: Text(state.saving ? 'Saving…' : 'Save recipe'),
-            ),
-          ),
-          const SizedBox(width: 14),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 860),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: const [
-                        _BasicsCard(),
-                        SizedBox(height: 18),
-                        _StoryCard(),
-                        SizedBox(height: 18),
-                        _IngredientsCard(),
-                        SizedBox(height: 18),
-                        _DirectionsCard(),
-                        SizedBox(height: 18),
-                        _PhotosCard(),
-                        SizedBox(height: 18),
-                        _DangerCard(),
-                      ],
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 860),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: const [
+                          _BasicsCard(),
+                          SizedBox(height: 18),
+                          _StoryCard(),
+                          SizedBox(height: 18),
+                          _IngredientsCard(),
+                          SizedBox(height: 18),
+                          _DirectionsCard(),
+                          SizedBox(height: 18),
+                          _PhotosCard(),
+                          SizedBox(height: 18),
+                          _DangerCard(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          const _SaveBar(),
-        ],
-      ),
+            const _SaveBar(),
+          ],
+        ),
       ),
     );
   }
@@ -303,6 +307,7 @@ class _BoundField extends StatefulWidget {
     required this.value,
     required this.onChanged,
     this.hintText,
+    this.semanticLabel,
     this.minLines,
     this.maxLines = 1,
     this.style,
@@ -311,6 +316,11 @@ class _BoundField extends StatefulWidget {
   final String value;
   final ValueChanged<String> onChanged;
   final String? hintText;
+
+  /// Accessible name for the field. The visible `_FieldLabel` above a field
+  /// isn't programmatically linked, so a screen reader would otherwise
+  /// announce only "text field". Falls back to [hintText] when omitted.
+  final String? semanticLabel;
   final int? minLines;
   final int? maxLines;
   final TextStyle? style;
@@ -320,8 +330,9 @@ class _BoundField extends StatefulWidget {
 }
 
 class _BoundFieldState extends State<_BoundField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.value);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
   final FocusNode _focus = FocusNode();
 
   @override
@@ -345,16 +356,16 @@ class _BoundFieldState extends State<_BoundField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      focusNode: _focus,
-      onChanged: widget.onChanged,
-      minLines: widget.minLines,
-      maxLines: widget.maxLines,
-      style: widget.style ?? const TextStyle(fontSize: 14),
-      decoration: InputDecoration(
-        hintText: widget.hintText,
-        isDense: true,
+    return Semantics(
+      label: widget.semanticLabel ?? widget.hintText,
+      child: TextField(
+        controller: _controller,
+        focusNode: _focus,
+        onChanged: widget.onChanged,
+        minLines: widget.minLines,
+        maxLines: widget.maxLines,
+        style: widget.style ?? const TextStyle(fontSize: 14),
+        decoration: InputDecoration(hintText: widget.hintText, isDense: true),
       ),
     );
   }
@@ -389,7 +400,7 @@ class _BasicsCard extends StatelessWidget {
             serves == null
                 ? 'Shown verbatim; add a number for scaling later.'
                 : 'Reads as ${serves.min == serves.max ? '${serves.min}' : '${serves.min}–${serves.max}'} '
-                    'servings — shown verbatim, parsed for scaling.',
+                      'servings — shown verbatim, parsed for scaling.',
             style: const TextStyle(fontSize: 11.5, color: SaltColors.muted),
           ),
         ),
@@ -399,7 +410,11 @@ class _BasicsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _FieldLabel('Category'),
-        _BoundField(value: state.category, onChanged: cubit.setCategory),
+        _BoundField(
+          value: state.category,
+          onChanged: cubit.setCategory,
+          semanticLabel: 'Category',
+        ),
       ],
     );
     final sourceFields = Column(
@@ -429,6 +444,7 @@ class _BasicsCard extends StatelessWidget {
           _BoundField(
             value: state.title,
             onChanged: cubit.setTitle,
+            semanticLabel: 'Title',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           if (!state.isNew)
@@ -437,8 +453,7 @@ class _BasicsCard extends StatelessWidget {
               child: Text(
                 'URL slug "${state.slug}" — kept stable on rename so links '
                 "don't break.",
-                style:
-                    const TextStyle(fontSize: 11.5, color: SaltColors.muted),
+                style: const TextStyle(fontSize: 11.5, color: SaltColors.muted),
               ),
             ),
           const SizedBox(height: 14),
@@ -577,6 +592,7 @@ class _StoryCard extends StatelessWidget {
           _BoundField(
             value: state.background,
             onChanged: cubit.setBackground,
+            semanticLabel: 'Background',
             minLines: 3,
             maxLines: 10,
           ),
@@ -585,6 +601,7 @@ class _StoryCard extends StatelessWidget {
           _BoundField(
             value: state.prepNotes,
             onChanged: cubit.setPrepNotes,
+            semanticLabel: 'Prep notes',
             minLines: 2,
             maxLines: 8,
           ),
@@ -593,6 +610,7 @@ class _StoryCard extends StatelessWidget {
           _BoundField(
             value: state.notes,
             onChanged: cubit.setNotes,
+            semanticLabel: 'Notes',
             minLines: 1,
             maxLines: 8,
           ),
@@ -629,8 +647,10 @@ class _IngredientsCard extends StatelessWidget {
               return KeyedSubtree(
                 key: ValueKey(entry.key),
                 child: switch (entry) {
-                  EditorGroupHeader() =>
-                    _GroupHeaderRow(index: index, header: entry),
+                  EditorGroupHeader() => _GroupHeaderRow(
+                    index: index,
+                    header: entry,
+                  ),
                   EditorLine() => _IngredientRow(index: index, line: entry),
                 },
               );
@@ -679,10 +699,14 @@ class _GroupHeaderRow extends StatelessWidget {
         children: [
           ReorderableDragStartListener(
             index: index,
-            child: const Icon(
-              Icons.drag_indicator,
-              size: 17,
-              color: Color(0xFFCFC8C2),
+            child: const Tooltip(
+              message: 'Drag to reorder',
+              child: Icon(
+                Icons.drag_indicator,
+                size: 17,
+                color: Color(0xFFCFC8C2),
+                semanticLabel: 'Drag to reorder group',
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -690,25 +714,28 @@ class _GroupHeaderRow extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: _BoundField(
-                value: header.name,
-                onChanged: (value) => cubit.renameGroup(header.key, value),
-                hintText: 'GROUP NAME — e.g. FOR THE GLAZE',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
+                constraints: const BoxConstraints(maxWidth: 320),
+                child: _BoundField(
+                  value: header.name,
+                  onChanged: (value) => cubit.renameGroup(header.key, value),
+                  hintText: 'GROUP NAME — e.g. FOR THE GLAZE',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
                 ),
-              ),
               ),
             ),
           ),
           IconButton(
             tooltip: 'Remove group header',
             onPressed: () => cubit.removeEntry(header.key),
-            icon: const Icon(Icons.delete_outline,
-                size: 17, color: SaltColors.muted),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 17,
+              color: SaltColors.muted,
+            ),
           ),
         ],
       ),
@@ -760,10 +787,14 @@ class _IngredientRowState extends State<_IngredientRow> {
             children: [
               ReorderableDragStartListener(
                 index: widget.index,
-                child: const Icon(
-                  Icons.drag_indicator,
-                  size: 17,
-                  color: Color(0xFFCFC8C2),
+                child: const Tooltip(
+                  message: 'Drag to reorder',
+                  child: Icon(
+                    Icons.drag_indicator,
+                    size: 17,
+                    color: Color(0xFFCFC8C2),
+                    semanticLabel: 'Drag to reorder ingredient',
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -788,8 +819,11 @@ class _IngredientRowState extends State<_IngredientRow> {
               IconButton(
                 tooltip: 'Remove',
                 onPressed: () => cubit.removeEntry(line.key),
-                icon: const Icon(Icons.delete_outline,
-                    size: 17, color: SaltColors.muted),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 17,
+                  color: SaltColors.muted,
+                ),
               ),
             ],
           ),
@@ -808,26 +842,31 @@ class _ConfidenceChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, background, foreground, icon) = line.manuallyEdited
-        ? ('manual', SaltColors.chipNeutral, SaltColors.muted, Icons.lock_outline)
+        ? (
+            'manual',
+            SaltColors.chipNeutral,
+            SaltColors.muted,
+            Icons.lock_outline,
+          )
         : switch (line.confidence) {
             ParseConfidence.parsed => (
-                'parsed',
-                SaltColors.okBg,
-                SaltColors.okInk,
-                Icons.check,
-              ),
+              'parsed',
+              SaltColors.okBg,
+              SaltColors.okInk,
+              Icons.check,
+            ),
             ParseConfidence.check => (
-                'check',
-                SaltColors.warnBg,
-                SaltColors.warnInk,
-                Icons.warning_amber_outlined,
-              ),
+              'check',
+              SaltColors.warnBg,
+              SaltColors.warnInk,
+              Icons.warning_amber_outlined,
+            ),
             ParseConfidence.none => (
-                'no amount',
-                SaltColors.chipNeutral,
-                SaltColors.muted,
-                null,
-              ),
+              'no amount',
+              SaltColors.chipNeutral,
+              SaltColors.muted,
+              null,
+            ),
           };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -907,6 +946,7 @@ class _StructuredPanel extends StatelessWidget {
                     const _FieldLabel('Item'),
                     _BoundField(
                       value: line.item ?? '',
+                      semanticLabel: 'Item',
                       onChanged: (value) => cubit.setLineStructured(
                         line.key,
                         item: value.isEmpty ? null : value,
@@ -974,9 +1014,7 @@ class _AmountRow extends StatelessWidget {
   void _replace(BuildContext context, Amount updated) {
     final amounts = [...line.amounts];
     amounts[index] = updated;
-    context
-        .read<EditorCubit>()
-        .setLineStructured(line.key, amounts: amounts);
+    context.read<EditorCubit>().setLineStructured(line.key, amounts: amounts);
   }
 
   @override
@@ -989,13 +1027,17 @@ class _AmountRow extends StatelessWidget {
           DropdownButton<Measure>(
             value: amount.measure,
             isDense: true,
-            style: const TextStyle(fontSize: 13, color: SaltColors.ink),
+            // DropdownButton.style REPLACES the ambient text style, so it must
+            // carry the bundled font or the selected value renders invisible
+            // in the offline (--no-web-resources-cdn) build.
+            style: const TextStyle(
+              fontSize: 13,
+              color: SaltColors.ink,
+              fontFamily: 'OpenSans',
+            ),
             items: [
               for (final measure in Measure.values)
-                DropdownMenuItem(
-                  value: measure,
-                  child: Text(measure.name),
-                ),
+                DropdownMenuItem(value: measure, child: Text(measure.name)),
             ],
             onChanged: (measure) {
               if (measure != null) {
@@ -1162,14 +1204,14 @@ class _StepCard extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 340),
-                  child: _BoundField(
-                    value: step.label,
-                    onChanged: (value) =>
-                        cubit.setStep(step.key, label: value),
-                    hintText: 'Optional label — e.g. MAKE THE BATTER',
-                    style: const TextStyle(fontSize: 12.5),
-                  ),
+                    constraints: const BoxConstraints(maxWidth: 340),
+                    child: _BoundField(
+                      value: step.label,
+                      onChanged: (value) =>
+                          cubit.setStep(step.key, label: value),
+                      hintText: 'Optional label — e.g. MAKE THE BATTER',
+                      style: const TextStyle(fontSize: 12.5),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1188,20 +1230,27 @@ class _StepCard extends StatelessWidget {
             children: [
               ReorderableDragStartListener(
                 index: index,
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(
-                    Icons.drag_indicator,
-                    size: 17,
-                    color: Color(0xFFCFC8C2),
+                child: const Tooltip(
+                  message: 'Drag to reorder',
+                  child: Padding(
+                    padding: EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.drag_indicator,
+                      size: 17,
+                      color: Color(0xFFCFC8C2),
+                      semanticLabel: 'Drag to reorder step',
+                    ),
                   ),
                 ),
               ),
               IconButton(
                 tooltip: 'Remove step',
                 onPressed: () => cubit.removeStep(step.key),
-                icon: const Icon(Icons.delete_outline,
-                    size: 17, color: SaltColors.muted),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 17,
+                  color: SaltColors.muted,
+                ),
               ),
             ],
           ),
@@ -1288,8 +1337,7 @@ class _PhotosCardState extends State<_PhotosCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     OutlinedButton.icon(
-                      onPressed:
-                          state.uploadingImage ? null : _pickAndUpload,
+                      onPressed: state.uploadingImage ? null : _pickAndUpload,
                       icon: const Icon(Icons.upload_outlined, size: 16),
                       label: Text(
                         state.uploadingImage ? 'Working…' : 'Upload photo',
@@ -1313,9 +1361,9 @@ class _PhotosCardState extends State<_PhotosCard> {
                           onPressed: state.uploadingImage
                               ? null
                               : () => cubit.photoFromUrl(
-                                    _urlController.text.trim(),
-                                    role: 'hero',
-                                  ),
+                                  _urlController.text.trim(),
+                                  role: 'hero',
+                                ),
                           child: const Text('Fetch'),
                         ),
                       ],
@@ -1373,8 +1421,7 @@ class _DangerCard extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style:
-                FilledButton.styleFrom(backgroundColor: SaltColors.errInk),
+            style: FilledButton.styleFrom(backgroundColor: SaltColors.errInk),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete recipe'),
           ),
@@ -1410,8 +1457,7 @@ class _DangerCard extends StatelessWidget {
               foregroundColor: SaltColors.errInk,
               side: const BorderSide(color: Color(0xFFECCFCF)),
             ),
-            onPressed:
-                state.saving ? null : () => _confirmDelete(context),
+            onPressed: state.saving ? null : () => _confirmDelete(context),
             icon: const Icon(Icons.delete_outline, size: 17),
             label: const Text('Delete recipe'),
           ),
@@ -1455,18 +1501,22 @@ class _SaveBar extends StatelessWidget {
                   child: Text(
                     state.dirty
                         ? 'Unsaved changes — saving updates the database and '
-                            'rewrites the library YAML.'
+                              'rewrites the library YAML.'
                         : 'All changes saved.',
-                    style:
-                        const TextStyle(fontSize: 12.5, color: SaltColors.muted),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: SaltColors.muted,
+                    ),
                   ),
                 ),
               const SizedBox(width: 12),
               FilledButton.icon(
-                style:
-                    FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-                onPressed:
-                    state.saving || state.uploadingImage ? null : cubit.save,
+                style: FilledButton.styleFrom(
+                  backgroundColor: SaltColors.maroon,
+                ),
+                onPressed: state.saving || state.uploadingImage
+                    ? null
+                    : cubit.save,
                 icon: const Icon(Icons.save_outlined, size: 17),
                 label: Text(state.saving ? 'Saving…' : 'Save recipe'),
               ),

@@ -12,7 +12,9 @@ Object? _plain(Object? node) {
         e.key.toString(): _plain(e.value),
     };
   }
-  if (node is List) return <Object?>[for (final Object? item in node) _plain(item)];
+  if (node is List) {
+    return <Object?>[for (final Object? item in node) _plain(item)];
+  }
   return node;
 }
 
@@ -49,13 +51,40 @@ void main() {
   group('scalar quoting', () {
     test('strings that look like other YAML types stay strings', () {
       for (final tricky in [
-        '12', '9781954210110', '1.5', '-3', '+7', '0x1A', '0o17', '0b101',
-        'null', 'Null', '~', 'true', 'False', 'yes', 'NO', 'on', 'Off',
-        'y', 'N', '.inf', '-.Inf', '.nan',
-        '', ' leading', 'trailing ',
-        '- dash', '? question', ': colon', '#hash-adjacent nope # comment',
-        'Chapter 23: A Piece of Cake', 'ends with colon:',
-        'flow, indicators', '[brackets]', '{braces}',
+        '12',
+        '9781954210110',
+        '1.5',
+        '-3',
+        '+7',
+        '0x1A',
+        '0o17',
+        '0b101',
+        'null',
+        'Null',
+        '~',
+        'true',
+        'False',
+        'yes',
+        'NO',
+        'on',
+        'Off',
+        'y',
+        'N',
+        '.inf',
+        '-.Inf',
+        '.nan',
+        '',
+        ' leading',
+        'trailing ',
+        '- dash',
+        '? question',
+        ': colon',
+        '#hash-adjacent nope # comment',
+        'Chapter 23: A Piece of Cake',
+        'ends with colon:',
+        'flow, indicators',
+        '[brackets]',
+        '{braces}',
       ]) {
         expectRoundTrip(tricky);
       }
@@ -74,8 +103,11 @@ void main() {
       ]) {
         expectRoundTrip(tricky);
         final emitted = emitYamlDocument({'v': tricky});
-        expect(emitted.trim(), "v: '$tricky'",
-            reason: '$tricky must be quoted for PyYAML compatibility');
+        expect(
+          emitted.trim(),
+          "v: '$tricky'",
+          reason: '$tricky must be quoted for PyYAML compatibility',
+        );
       }
     });
 
@@ -96,25 +128,34 @@ void main() {
       ]) {
         expectRoundTrip(text);
         final emitted = emitYamlDocument({'v': text});
-        expect(emitted, contains(escape),
-            reason: 'control char ($escape case) must be escaped, not raw');
-        expect(emitted.runes.contains(control), isFalse,
-            reason: 'raw control character U+'
-                '${control.toRadixString(16)} leaked into output');
+        expect(
+          emitted,
+          contains(escape),
+          reason: 'control char ($escape case) must be escaped, not raw',
+        );
+        expect(
+          emitted.runes.contains(control),
+          isFalse,
+          reason:
+              'raw control character U+'
+              '${control.toRadixString(16)} leaked into output',
+        );
       }
     });
 
-    test('non-finite doubles use YAML spellings and round-trip as doubles',
-        () {
+    test('non-finite doubles use YAML spellings and round-trip as doubles', () {
       expect(emitYamlDocument({'v': double.infinity}).trim(), 'v: .inf');
       expect(
-          emitYamlDocument({'v': double.negativeInfinity}).trim(), 'v: -.inf');
+        emitYamlDocument({'v': double.negativeInfinity}).trim(),
+        'v: -.inf',
+      );
       expect(emitYamlDocument({'v': double.nan}).trim(), 'v: .nan');
 
       final YamlMap inf =
           loadYaml(emitYamlDocument({'v': double.infinity})) as YamlMap;
       expect(inf['v'], double.infinity);
-      final YamlMap nan = loadYaml(emitYamlDocument({'v': double.nan})) as YamlMap;
+      final YamlMap nan =
+          loadYaml(emitYamlDocument({'v': double.nan})) as YamlMap;
       expect((nan['v'] as double).isNaN, isTrue);
     });
   });
@@ -150,8 +191,11 @@ void main() {
         },
       };
       final Object? reparsed = _plain(loadYaml(emitYamlDocument(doc)));
-      expect(_deepEqual(reparsed, doc), isTrue,
-          reason: 'emitted:\n${emitYamlDocument(doc)}\ngot: $reparsed');
+      expect(
+        _deepEqual(reparsed, doc),
+        isTrue,
+        reason: 'emitted:\n${emitYamlDocument(doc)}\ngot: $reparsed',
+      );
     });
 
     test('non-map roots round-trip', () {
@@ -176,8 +220,9 @@ void main() {
         '0020-sweet-potato-soup.yaml',
         '0038-foolproof-vinaigrette.yaml',
       ]) {
-        final Object? original =
-            _plain(loadYaml(corpusFile(name).readAsStringSync()));
+        final Object? original = _plain(
+          loadYaml(corpusFile(name).readAsStringSync()),
+        );
         final Object? reparsed = _plain(loadYaml(emitYamlDocument(original)));
         expect(_deepEqual(reparsed, original), isTrue, reason: name);
       }

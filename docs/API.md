@@ -46,6 +46,7 @@ temporary password with `must_change_password`: until the user calls
 | Endpoint | Notes |
 |---|---|
 | `POST /api/v1/auth/setup` | `{setup_code, username, password}` — first boot only (zero users); code from server stdout; creates the admin |
+| `POST /api/v1/auth/recover` | `{recovery_code, username, new_password}` — no auth; code from `salt_server:recover` on the server host; resets/creates that account as an enabled admin and revokes its sessions + API tokens; rate-limited per IP (`423 locked`) |
 | `POST /api/v1/auth/login` | `{username, password, remember?}` → `{token, user}` + cookie; failures are uniform `422 validation` |
 | `POST /api/v1/auth/logout` | ends the current session (cookie/session bearer only) |
 | `GET /api/v1/auth/me` | `{user: {id, username, role, must_change_password, scope, via}}` |
@@ -308,17 +309,25 @@ key set and FDA Daily Values match the legacy app's panel.
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition` (admin, full scope)
 
 `{serving_basis}` (1–1000) — change the per-serving divisor and recompute
-instantly from stored matches (no FDC calls). Defaults to the parsed
-serves minimum. A basis change never clears `stale` — only a full
+instantly from stored matches (no FDC calls). The default is the first of:
+the stored basis, the parsed `serves` minimum, the parsed **yield** count
+(so `MAKES ABOUT 16 LARGE COOKIES` divides by 16, not by the whole batch),
+then 1. A yield is not a serving count — it never reaches `serves` — but it
+is a better starting divisor than the batch, and this endpoint is how an
+admin overrides it. A basis change never clears `stale` — only a full
 `…/nutrition/compute` re-match does. `422` before the first compute.
 
 ### `POST /api/v1/recipes/{idOrSlug}/nutrition/compute` (admin, full scope)
 
-Match every ingredient line against FDC and store the totals. Cached and
-rate-limited (~900 requests/hour shared budget; interactive requests give
-up with a `422` after ~30s of waiting when a bulk job has drained the
-budget); user decisions on unchanged lines survive recomputes. Water/ice
-lines are matched locally for free. `422` when no API key is configured.
+Starts a background match+compute and returns `202 {job_id}` immediately;
+poll `GET /api/v1/nutrition/jobs/{id}` for progress (`status`: `running |
+done | failed`) and re-fetch `…/nutrition` when it finishes. Single-flight
+per recipe — a second call while one runs re-attaches to the same job — and
+the recipe's `…/nutrition` body carries `computing_job_id` while a compute
+is in flight so a reopened page can re-attach. Cached and rate-limited
+(~900 requests/hour shared budget); user decisions on unchanged lines
+survive recomputes. Water/ice lines are matched locally for free. The job
+fails (with the reason in its log) when no API key is configured.
 
 ### `GET /api/v1/recipes/{idOrSlug}/nutrition/matches`
 
@@ -405,6 +414,37 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   NFS/SMB); the app assumes domain-root serving (sub-paths deferred).
 
 ## CLI
+
+`dart run salt_server:recover [--data-dir=PATH]` — prints a single-use
+account-recovery code (valid 15 minutes) and exits. In the container the
+same tool ships as a compiled binary, needing no arguments (`DATA_DIR` is
+already set):
+
+```sh
+docker exec <container> /app/recover
+```
+
+The code is printed to **that command's** stdout — it is not in the server's
+log, so `docker logs` will never show it. Redeem it at `/recover` in the app
+with a username and a new password: that account is reset to an enabled
+admin, created first if it does not exist, and both its sessions and all of
+its API tokens are revoked (a PAT is its own credential and would otherwise
+outlive the reset). The way back in when every admin is disabled, locked
+out, or gone.
+
+Being able to run this on the server host (or `docker exec` into the
+container) is the whole authorization story — the same trust model as the
+first-boot setup code. `POST /api/v1/auth/recover` therefore takes no
+credentials; it answers `403 forbidden` when no code is pending or the
+pending one expired, `422 validation` for a wrong code or an invalid
+username/password, and `423 locked` once the per-IP rate limit trips.
+Rate-limited like `POST /api/v1/auth/login` (5 consecutive failures, then an
+exponential lockout to 15 minutes) and every failed attempt is logged:
+the endpoint is unauthenticated and grants admin, and checking a code costs
+only a SHA-256, so it would otherwise be the cheapest thing in the API to
+guess at. Only a SHA-256 digest of the code is stored, so the printed line
+is the only place it can be read. Safe to run against a live server (no
+restart needed). Exit codes: 0 ok, 64 usage.
 
 `dart run salt_server:import <source-root> [--data-dir=PATH] [--legacy]` —
 bulk-imports a Recipe Extraction source root (`source.yaml`,

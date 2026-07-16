@@ -17,8 +17,11 @@ void main() {
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
-    test('corpus-backed tests (skipped: corpus absent)', () {},
-        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    test(
+      'corpus-backed tests (skipped: corpus absent)',
+      () {},
+      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
+    );
     return;
   }
   late Directory tempDir;
@@ -36,13 +39,11 @@ void main() {
     tempDir = Directory.systemTemp.createTempSync('salt_search_corpus');
     db = SaltDatabase.open('${tempDir.path}/salt.db')
       ..upsertSource(slug: 'atk', name: 'ATK corpus', type: 'epub');
-    final files = Directory(corpusRecipesDir)
-        .listSync()
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.yaml'));
+    final files = Directory(
+      corpusRecipesDir,
+    ).listSync().whereType<File>().where((file) => file.path.endsWith('.yaml'));
     for (final file in files) {
-      final recipe =
-          RecipeYamlCodec.decode(file.readAsStringSync()).recipe;
+      final recipe = RecipeYamlCodec.decode(file.readAsStringSync()).recipe;
       decodedByName[file.uri.pathSegments.last] = recipe;
       db.upsertRecipe(
         recipe,
@@ -74,9 +75,9 @@ void main() {
   }
 
   String ingredientsText(Recipe recipe) => [
-        for (final group in recipe.ingredients)
-          for (final line in group.items) line.raw,
-      ].join('\n');
+    for (final group in recipe.ingredients)
+      for (final line in group.items) line.raw,
+  ].join('\n');
 
   String directionsText(Recipe recipe) =>
       [for (final step in recipe.steps) step.text].join('\n');
@@ -102,8 +103,9 @@ void main() {
     });
 
     test('tag:dessert alone matches the corpus dessert count', () {
-      final expected =
-          expectedCount((recipe) => recipe.tags.contains('dessert'));
+      final expected = expectedCount(
+        (recipe) => recipe.tags.contains('dessert'),
+      );
       expect(expected, 214, reason: 'known corpus dessert count');
       expect(search('tag:dessert').total, expected);
     });
@@ -121,15 +123,15 @@ void main() {
     test('general multi-word: sweet potato (AND semantics)', () {
       // Both words must appear somewhere in the indexed document.
       String indexed(Recipe recipe) => [
-            recipe.title,
-            recipe.category ?? '',
-            recipe.tags.join(' '),
-            ingredientsText(recipe),
-            directionsText(recipe),
-            recipe.notes ?? '',
-            recipe.background ?? '',
-            recipe.prepNotes ?? '',
-          ].join('\n');
+        recipe.title,
+        recipe.category ?? '',
+        recipe.tags.join(' '),
+        ingredientsText(recipe),
+        directionsText(recipe),
+        recipe.notes ?? '',
+        recipe.background ?? '',
+        recipe.prepNotes ?? '',
+      ].join('\n');
       final expected = expectedCount(
         (recipe) =>
             hasWord(indexed(recipe), 'sweet') &&
@@ -140,8 +142,11 @@ void main() {
       // than the exact-word scan, so FTS returns at least the exact count.
       final total = search('sweet potato').total;
       expect(total, greaterThanOrEqualTo(expected));
-      expect(total, lessThan(expected + 20),
-          reason: 'stemming should only add a handful of variants');
+      expect(
+        total,
+        lessThan(expected + 20),
+        reason: 'stemming should only add a handful of variants',
+      );
     });
 
     test('general search reaches background prose', () {
@@ -227,10 +232,13 @@ void main() {
     });
 
     test('tag style upsert round-trips', () {
-      db.upsertTagStyle('dessert',
-          icon: 'cake', color: '#7d1420', bgColor: '#f6e4e4');
-      final dessert =
-          db.listTags().singleWhere((tag) => tag.name == 'dessert');
+      db.upsertTagStyle(
+        'dessert',
+        icon: 'cake',
+        color: '#7d1420',
+        bgColor: '#f6e4e4',
+      );
+      final dessert = db.listTags().singleWhere((tag) => tag.name == 'dessert');
       expect(dessert.icon, 'cake');
       expect(dessert.color, '#7d1420');
       expect(dessert.bgColor, '#f6e4e4');

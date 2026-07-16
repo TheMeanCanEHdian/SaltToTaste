@@ -10,6 +10,7 @@ import 'package:salt_server/src/nutrition/fdc_provider.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/services/backup_service.dart';
 import 'package:salt_server/src/services/library_scan.dart';
+import 'package:salt_server/src/services/serves_backfill.dart';
 
 final Logger _log = Logger('bootstrap');
 
@@ -106,14 +107,15 @@ NutritionProvider get bulkNutritionProvider =>
 /// Eagerly initializes configuration, logging, the database, and the auth
 /// runtime (printing the first-boot setup code when no users exist yet),
 /// reconciles the YAML library with the database (hand edits made while the
-/// server was down get picked up), and starts the daily backup timer.
-/// Call once at startup.
+/// server was down get picked up), applies the one-shot serves-vs-yield
+/// backfill, and starts the daily backup timer. Call once at startup.
 ServerConfig initServer() {
   final config = serverConfig;
   _authRuntime ??= _initAuthRuntime();
   // Jobs only run inside this process; `running` rows at boot are
   // orphans from a restart and would poll as running forever.
-  final orphaned = saltDatabase.failOrphanedNutritionJobs() +
+  final orphaned =
+      saltDatabase.failOrphanedNutritionJobs() +
       saltDatabase.failOrphanedImportJobs();
   if (orphaned > 0) {
     _log.warning('Marked $orphaned interrupted job(s) as failed');
@@ -124,6 +126,15 @@ ServerConfig initServer() {
     // ignore: avoid_catches_without_on_clauses
   } catch (error, stackTrace) {
     _log.severe('Startup library scan failed', error, stackTrace);
+  }
+  try {
+    // After the scan, so hand edits made while the server was down are
+    // already reconciled and this corrects `serves` on top of them.
+    backfillServes(saltDatabase, config);
+    // A one-shot data fix must never keep the server from booting.
+    // ignore: avoid_catches_without_on_clauses
+  } catch (error, stackTrace) {
+    _log.severe('Serves backfill failed', error, stackTrace);
   }
   _scheduleDailyBackups(config);
   return config;

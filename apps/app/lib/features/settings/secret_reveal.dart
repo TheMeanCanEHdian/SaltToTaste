@@ -78,7 +78,12 @@ class _SecretRevealState extends State<SecretReveal> {
                     setState(() => _copied = true);
                   }
                 },
-                child: Text(_copied ? 'Copied' : 'Copy'),
+                // liveRegion announces the "Copy" → "Copied" flip, so a
+                // screen reader confirms the copy instead of it being silent.
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(_copied ? 'Copied' : 'Copy'),
+                ),
               ),
             ],
           ),

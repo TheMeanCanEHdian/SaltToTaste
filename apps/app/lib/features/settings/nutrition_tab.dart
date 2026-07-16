@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -230,9 +231,11 @@ class _NutritionTabState extends State<NutritionTab> {
       // untouched server-side, so keep its id and progress on screen.
       _pollFailures += 1;
       if (_pollFailures >= 5 && mounted) {
-        setState(() => _bulkError =
-            'Progress updates are failing (${exception.message}) — '
-            'the job keeps running on the server; retrying…');
+        setState(
+          () => _bulkError =
+              'Progress updates are failing (${exception.message}) — '
+              'the job keeps running on the server; retrying…',
+        );
       }
     } finally {
       _pollInFlight = false;
@@ -251,7 +254,10 @@ class _NutritionTabState extends State<NutritionTab> {
               'Central. They live in the database only — never in the '
               'exported YAML.',
         ),
-        const Text('FoodData Central API key', style: _sectionHeading),
+        Semantics(
+          header: true,
+          child: const Text('FoodData Central API key', style: _sectionHeading),
+        ),
         const SizedBox(height: 10),
         if (!_keyLoaded && _keyLoadError != null)
           ErrorView(message: _keyLoadError!, onRetry: _loadKeyStatus)
@@ -262,11 +268,17 @@ class _NutritionTabState extends State<NutritionTab> {
         else
           _keyInput(),
         const SizedBox(height: 28),
-        const Text('Compute all recipes', style: _sectionHeading),
+        Semantics(
+          header: true,
+          child: const Text('Compute all recipes', style: _sectionHeading),
+        ),
         const SizedBox(height: 10),
         _computeSection(),
         const SizedBox(height: 28),
-        const Text('Serving basis', style: _sectionHeading),
+        Semantics(
+          header: true,
+          child: const Text('Serving basis', style: _sectionHeading),
+        ),
         const SizedBox(height: 10),
         _basisPanel(),
       ],
@@ -323,8 +335,12 @@ class _NutritionTabState extends State<NutritionTab> {
                       horizontal: 12,
                       vertical: 6,
                     ),
-                    minimumSize: Size.zero,
-                    textStyle: const TextStyle(fontSize: 12.5),
+                    minimumSize: denseActionMinSize(context),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(
+                      fontSize: 12.5,
+                      fontFamily: 'OpenSans',
+                    ),
                   ),
                   onPressed: () => setState(() {
                     _replacingKey = true;
@@ -416,12 +432,29 @@ class _NutritionTabState extends State<NutritionTab> {
               style: const TextStyle(fontSize: 12.5, color: SaltColors.errInk),
             ),
           ),
-        const Padding(
-          padding: EdgeInsets.only(top: 6),
-          child: Text(
-            'Get a free key at api.data.gov/signup — one key per household '
-            'server.',
-            style: _hintStyle,
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Text('Get a free key at ', style: _hintStyle),
+              InkWell(
+                onTap: () => launchUrl(
+                  Uri.parse('https://api.data.gov/signup/'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: const Text(
+                  'api.data.gov/signup',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'OpenSans',
+                    color: SaltColors.maroon,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              const Text(' — one key per household server.', style: _hintStyle),
+            ],
           ),
         ),
       ],
@@ -543,15 +576,20 @@ class _NutritionTabState extends State<NutritionTab> {
                 ),
               ),
               if (showLog)
-                InkWell(
-                  onTap: () => setState(() => _logExpanded = !_logExpanded),
-                  child: Text(
-                    _logExpanded ? 'hide log' : 'see log',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: ink,
-                      decoration: TextDecoration.underline,
+                MergeSemantics(
+                  child: Semantics(
+                    button: true,
+                    child: InkWell(
+                      onTap: () => setState(() => _logExpanded = !_logExpanded),
+                      child: Text(
+                        _logExpanded ? 'hide log' : 'see log',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: ink,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
                   ),
                 ),

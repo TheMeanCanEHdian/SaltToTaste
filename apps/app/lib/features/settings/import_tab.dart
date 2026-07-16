@@ -181,9 +181,11 @@ class _ImportTabState extends State<ImportTab> {
       _pollFailures += 1;
       if (_pollFailures < 8) {
         if (_pollFailures >= 3 && mounted) {
-          setState(() => _jobError =
-              'Progress updates are failing (${exception.message}) — '
-              'the import keeps running on the server; retrying…');
+          setState(
+            () => _jobError =
+                'Progress updates are failing (${exception.message}) — '
+                'the import keeps running on the server; retrying…',
+          );
         }
         return;
       }
@@ -192,9 +194,11 @@ class _ImportTabState extends State<ImportTab> {
       _activeImportJobId = null;
       _activeImportPath = null;
       if (mounted) {
-        setState(() => _jobError =
-            "Lost track of the import (${exception.message}). It may still "
-            'be running on the server — Refresh to check.');
+        setState(
+          () => _jobError =
+              "Lost track of the import (${exception.message}). It may still "
+              'be running on the server — Refresh to check.',
+        );
       }
     } finally {
       _pollInFlight = false;
@@ -215,7 +219,10 @@ class _ImportTabState extends State<ImportTab> {
         ),
         Row(
           children: [
-            const Text('Source folders', style: _sectionHeading),
+            Semantics(
+              header: true,
+              child: const Text('Source folders', style: _sectionHeading),
+            ),
             const Spacer(),
             TextButton.icon(
               onPressed: _importRunning ? null : _loadCandidates,
@@ -250,7 +257,8 @@ class _ImportTabState extends State<ImportTab> {
     // rescan dropped it mid-run), keep its progress visible with a
     // synthetic pinned row instead of losing it entirely.
     final hasPinnedRow =
-        _startedPath != null && candidates.items.any((c) => c.path == _startedPath);
+        _startedPath != null &&
+        candidates.items.any((c) => c.path == _startedPath);
     final orphanRow = !hasPinnedRow && _startedPath != null && _job != null
         ? ImportCandidate(
             path: _startedPath!,
@@ -276,14 +284,18 @@ class _ImportTabState extends State<ImportTab> {
               anyRunning: _importRunning,
               logExpanded: _logExpanded,
               onImport: () => _startImport(candidate.path),
-              onToggleLog: () =>
-                  setState(() => _logExpanded = !_logExpanded),
+              onToggleLog: () => setState(() => _logExpanded = !_logExpanded),
             ),
             const SizedBox(height: 10),
           ],
           const SizedBox(height: 14),
-          const Text('Where these folders come from',
-              style: _sectionHeading),
+          Semantics(
+            header: true,
+            child: const Text(
+              'Where these folders come from',
+              style: _sectionHeading,
+            ),
+          ),
           const SizedBox(height: 10),
           _Explainer(importDir: candidates.importDir),
         ],
@@ -387,9 +399,7 @@ class _SourceRow extends StatelessWidget {
   }
 
   Widget _details(BuildContext context) {
-    final label = candidate.kind == 'legacy'
-        ? '_recipes/'
-        : 'recipes/*.yaml';
+    final label = candidate.kind == 'legacy' ? '_recipes/' : 'recipes/*.yaml';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -401,7 +411,9 @@ class _SourceRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    fontSize: 13.5, fontWeight: FontWeight.w700),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -413,9 +425,12 @@ class _SourceRow extends StatelessWidget {
           TextSpan(
             style: const TextStyle(fontSize: 12, color: SaltColors.muted),
             children: [
-              TextSpan(text: '${_thousands(candidate.fileCount)} '
-                  '${candidate.fileCount == 1 ? 'recipe file' : 'recipe files'}'
-                  ' · '),
+              TextSpan(
+                text:
+                    '${_thousands(candidate.fileCount)} '
+                    '${candidate.fileCount == 1 ? 'recipe file' : 'recipe files'}'
+                    ' · ',
+              ),
               // The layout marker reads as a path fragment — mono, like the
               // mockup's <code> chip.
               TextSpan(
@@ -429,9 +444,8 @@ class _SourceRow extends StatelessWidget {
     );
   }
 
-  String get _displayName => candidate.path == '.'
-      ? 'Import directory (root)'
-      : candidate.path;
+  String get _displayName =>
+      candidate.path == '.' ? 'Import directory (root)' : candidate.path;
 
   /// The row's trailing control: the Import button when idle, an
   /// "Importing…" indicator while running, or null in the terminal state
@@ -445,7 +459,9 @@ class _SourceRow extends StatelessWidget {
             width: 13,
             height: 13,
             child: CircularProgressIndicator(
-                strokeWidth: 2, color: SaltColors.maroon),
+              strokeWidth: 2,
+              color: SaltColors.maroon,
+            ),
           ),
           SizedBox(width: 6),
           Text(
@@ -467,7 +483,11 @@ class _SourceRow extends StatelessWidget {
         backgroundColor: SaltColors.maroon,
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'OpenSans',
+        ),
       ),
       onPressed: anyRunning ? null : onImport,
       icon: const Icon(Icons.drive_folder_upload_outlined, size: 15),
@@ -513,10 +533,12 @@ class _SourceRow extends StatelessWidget {
     final showLog = job.log.isNotEmpty;
     final String text;
     if (failedJob) {
-      text = 'Import failed after ${_thousands(job.done)} of '
+      text =
+          'Import failed after ${_thousands(job.done)} of '
           '${_thousands(job.total)} files';
     } else {
-      text = '${_thousands(job.total)} files: '
+      text =
+          '${_thousands(job.total)} files: '
           '${_thousands(job.imported)} imported, '
           '${_thousands(job.updated)} updated, '
           '${_thousands(job.skipped)} skipped, '
@@ -539,23 +561,31 @@ class _SourceRow extends StatelessWidget {
               Text(
                 text,
                 style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: ink),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: ink,
+                ),
               ),
               if (showLog)
-                InkWell(
-                  onTap: onToggleLog,
-                  child: Text(
-                    // A failed run's log is errors, not just warnings.
-                    logExpanded
-                        ? (failedJob ? 'hide log' : 'hide warnings')
-                        : (failedJob
-                            ? 'see log'
-                            : 'see warnings (${job.log.length})'),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: ink,
-                      decoration: TextDecoration.underline,
+                MergeSemantics(
+                  child: Semantics(
+                    button: true,
+                    child: InkWell(
+                      onTap: onToggleLog,
+                      child: Text(
+                        // A failed run's log is errors, not just warnings.
+                        logExpanded
+                            ? (failedJob ? 'hide log' : 'hide warnings')
+                            : (failedJob
+                                  ? 'see log'
+                                  : 'see warnings (${job.log.length})'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: ink,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -680,7 +710,10 @@ class _Explainer extends StatelessWidget {
       child: Text.rich(
         TextSpan(
           style: const TextStyle(
-              fontSize: 13, height: 1.5, color: SaltColors.bodyText),
+            fontSize: 13,
+            height: 1.5,
+            color: SaltColors.bodyText,
+          ),
           children: [
             const TextSpan(text: 'The server only reads from its import '),
             const TextSpan(
@@ -693,7 +726,8 @@ class _Explainer extends StatelessWidget {
               style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 12.5),
             ),
             const TextSpan(
-              text: '. Mount your corpus there (in Docker, '
+              text:
+                  '. Mount your corpus there (in Docker, '
                   '-v ~/recipes:/data/import) or copy a folder in, then '
                   'Refresh. Detection looks one level deep; formats are '
                   'auto-detected, and nothing is imported until you press '
@@ -728,9 +762,10 @@ class _EmptyState extends StatelessWidget {
             const Text(
               'No source folders found',
               style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: SaltColors.muted),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: SaltColors.muted,
+              ),
             ),
             const SizedBox(height: 6),
             Text.rich(
@@ -740,8 +775,10 @@ class _EmptyState extends StatelessWidget {
                   const TextSpan(text: 'Mount or copy a recipe folder into '),
                   TextSpan(
                     text: importDir,
-                    style:
-                        const TextStyle(fontFamily: 'RobotoMono', fontSize: 12),
+                    style: const TextStyle(
+                      fontFamily: 'RobotoMono',
+                      fontSize: 12,
+                    ),
                   ),
                   const TextSpan(text: ', then Refresh.'),
                 ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,12 +11,16 @@ import 'package:salt_server/src/nutrition/provider.dart';
 class FixtureProvider implements NutritionProvider {
   /// Loads the recorded fixtures from disk.
   FixtureProvider()
-      : _searches = jsonDecode(
-          File('test/fixtures/fdc/searches.json').readAsStringSync(),
-        ) as Map<String, dynamic>,
-        _foods = jsonDecode(
-          File('test/fixtures/fdc/foods.json').readAsStringSync(),
-        ) as Map<String, dynamic>;
+    : _searches =
+          jsonDecode(
+                File('test/fixtures/fdc/searches.json').readAsStringSync(),
+              )
+              as Map<String, dynamic>,
+      _foods =
+          jsonDecode(
+                File('test/fixtures/fdc/foods.json').readAsStringSync(),
+              )
+              as Map<String, dynamic>;
 
   final Map<String, dynamic> _searches;
   final Map<String, dynamic> _foods;
@@ -23,9 +28,15 @@ class FixtureProvider implements NutritionProvider {
   /// How many searches were served — cache-behavior assertions.
   int searchCalls = 0;
 
+  /// When set, every search blocks until it completes. Recorded fixtures
+  /// answer instantly, so this is the only way to hold a background compute
+  /// mid-flight long enough to assert on what the API reports while it runs.
+  Completer<void>? gate;
+
   @override
   Future<List<FdcCandidate>> search(String query) async {
     searchCalls += 1;
+    await gate?.future;
     final hits = _searches[query];
     if (hits is! List) {
       return const [];
@@ -39,8 +50,6 @@ class FixtureProvider implements NutritionProvider {
   @override
   Future<FdcFood?> food(int fdcId) async {
     final raw = _foods['$fdcId'];
-    return raw == null
-        ? null
-        : FdcFood.fromJson(raw as Map<String, dynamic>);
+    return raw == null ? null : FdcFood.fromJson(raw as Map<String, dynamic>);
   }
 }

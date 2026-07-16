@@ -37,8 +37,11 @@ class ImportCandidate {
   final int fileCount;
 
   /// JSON-ready form.
-  Map<String, Object?> toJson() =>
-      {'path': path, 'kind': kind, 'file_count': fileCount};
+  Map<String, Object?> toJson() => {
+    'path': path,
+    'kind': kind,
+    'file_count': fileCount,
+  };
 }
 
 int _yamlCount(Directory dir, {required bool includeYml}) => dir
@@ -66,8 +69,10 @@ ImportCandidate? _classify(Directory root, String relative) {
       return ImportCandidate(
         path: relative,
         kind: 'legacy',
-        fileCount:
-            _yamlCount(Directory('${root.path}/_recipes'), includeYml: true),
+        fileCount: _yamlCount(
+          Directory('${root.path}/_recipes'),
+          includeYml: true,
+        ),
       );
     }
     // An unreadable child (root-owned 700 dir in a read-only mount) must
@@ -96,8 +101,10 @@ List<ImportCandidate> importCandidates(ServerConfig config) {
     return candidates; // Unreadable import dir: no children to offer.
   }
   for (final child in children) {
-    final name = child.uri.pathSegments
-        .lastWhere((segment) => segment.isNotEmpty, orElse: () => '');
+    final name = child.uri.pathSegments.lastWhere(
+      (segment) => segment.isNotEmpty,
+      orElse: () => '',
+    );
     final candidate = _classify(child, name);
     if (candidate != null) {
       candidates.add(candidate);
@@ -135,8 +142,7 @@ String resolveImportPath(ServerConfig config, String path) {
       'That folder does not exist inside the import directory.',
     );
   }
-  if (canonical != canonicalRoot &&
-      !canonical.startsWith('$canonicalRoot/')) {
+  if (canonical != canonicalRoot && !canonical.startsWith('$canonicalRoot/')) {
     // Containment is the security boundary: no probing outside the
     // allowlist root, whatever the input looks like.
     throw const ValidationException(
@@ -200,8 +206,13 @@ int? startImportJob(
   final jobId = db.createImportJob(sourcePath: path, legacy: legacy);
   _importRunning = true;
   unawaited(
-    _run(db, config, jobId: jobId, path: path, legacy: legacy)
-        .whenComplete(() => _importRunning = false),
+    _run(
+      db,
+      config,
+      jobId: jobId,
+      path: path,
+      legacy: legacy,
+    ).whenComplete(() => _importRunning = false),
   );
   return jobId;
 }

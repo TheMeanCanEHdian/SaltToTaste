@@ -20,8 +20,11 @@ void main() {
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
-    test('corpus-backed tests (skipped: corpus absent)', () {},
-        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    test(
+      'corpus-backed tests (skipped: corpus absent)',
+      () {},
+      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
+    );
     return;
   }
   late Recipe bundtCake; // Rich Chocolate Bundt Cake
@@ -46,7 +49,8 @@ void main() {
     db = SaltDatabase.open('${tempDir.path}/salt.db')
       ..upsertSource(
         slug: _sourceSlug,
-        name: "The Complete America's Test Kitchen TV Show Cookbook "
+        name:
+            "The Complete America's Test Kitchen TV Show Cookbook "
             '2001–2023',
         type: 'epub',
       );

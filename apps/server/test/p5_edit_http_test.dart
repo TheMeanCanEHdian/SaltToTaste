@@ -25,15 +25,14 @@ import '../routes/api/v1/import/jobs/[id].dart' as import_job_route;
 import '../routes/api/v1/library/index.dart' as library_route;
 import '../routes/api/v1/library/rescan.dart' as rescan_route;
 import '../routes/api/v1/nutrition/bulk.dart' as bulk_route;
+import '../routes/api/v1/nutrition/jobs/[id].dart' as nutrition_job_route;
 import '../routes/api/v1/recipes/[id]/favorite.dart' as favorite_route;
 import '../routes/api/v1/recipes/[id]/images/from_url.dart' as from_url_route;
 import '../routes/api/v1/recipes/[id]/images/index.dart' as images_route;
 import '../routes/api/v1/recipes/[id]/index.dart' as recipe_route;
 import '../routes/api/v1/recipes/[id]/note.dart' as note_route;
-import '../routes/api/v1/recipes/[id]/nutrition/compute.dart'
-    as compute_route;
-import '../routes/api/v1/recipes/[id]/nutrition/index.dart'
-    as nutrition_route;
+import '../routes/api/v1/recipes/[id]/nutrition/compute.dart' as compute_route;
+import '../routes/api/v1/recipes/[id]/nutrition/index.dart' as nutrition_route;
 import '../routes/api/v1/recipes/[id]/nutrition/matches/[pos].dart'
     as match_route;
 import '../routes/api/v1/recipes/[id]/nutrition/matches/index.dart'
@@ -62,6 +61,7 @@ void main() {
   late String memberSession;
   late String adminReadPat;
   late Map<String, Object?> submission; // the editor's create payload
+  late FixtureProvider fixtureProvider;
 
   FutureOr<Response> dispatch(RequestContext context) {
     final path = context.request.uri.path;
@@ -87,43 +87,50 @@ void main() {
       default:
         for (final (pattern, handler)
             in <(RegExp, FutureOr<Response> Function(RequestContext, String))>[
-          (
-            RegExp(r'^/api/v1/recipes/([^/]+)/favorite$'),
-            favorite_route.onRequest
-          ),
-          (RegExp(r'^/api/v1/recipes/([^/]+)/note$'), note_route.onRequest),
-          (
-            RegExp(r'^/api/v1/recipes/([^/]+)/images$'),
-            images_route.onRequest
-          ),
-          (
-            RegExp(r'^/api/v1/recipes/([^/]+)/images/from_url$'),
-            from_url_route.onRequest
-          ),
-          (
-            RegExp(r'^/api/v1/recipes/([^/]+)/nutrition/compute$'),
-            compute_route.onRequest
-          ),
-          (
-            RegExp(r'^/api/v1/recipes/([^/]+)/nutrition/matches$'),
-            matches_route.onRequest
-          ),
-          (
-            RegExp(r'^/api/v1/recipes/([^/]+)/nutrition$'),
-            nutrition_route.onRequest
-          ),
-          (RegExp(r'^/api/v1/backups/([^/]+)$'), backup_route.onRequest),
-          (RegExp(r'^/api/v1/recipes/([^/]+)$'), recipe_route.onRequest),
-        ]) {
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/favorite$'),
+                favorite_route.onRequest,
+              ),
+              (RegExp(r'^/api/v1/recipes/([^/]+)/note$'), note_route.onRequest),
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/images$'),
+                images_route.onRequest,
+              ),
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/images/from_url$'),
+                from_url_route.onRequest,
+              ),
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/nutrition/compute$'),
+                compute_route.onRequest,
+              ),
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/nutrition/matches$'),
+                matches_route.onRequest,
+              ),
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/nutrition$'),
+                nutrition_route.onRequest,
+              ),
+              (RegExp(r'^/api/v1/backups/([^/]+)$'), backup_route.onRequest),
+              (RegExp(r'^/api/v1/recipes/([^/]+)$'), recipe_route.onRequest),
+            ]) {
           final match = pattern.firstMatch(path);
           if (match != null) {
             return handler(context, match.group(1)!);
           }
         }
-        final importJob =
-            RegExp(r'^/api/v1/import/jobs/([^/]+)$').firstMatch(path);
+        final importJob = RegExp(
+          r'^/api/v1/import/jobs/([^/]+)$',
+        ).firstMatch(path);
         if (importJob != null) {
           return import_job_route.onRequest(context, importJob.group(1)!);
+        }
+        final nutritionJob = RegExp(
+          r'^/api/v1/nutrition/jobs/([^/]+)$',
+        ).firstMatch(path);
+        if (nutritionJob != null) {
+          return nutrition_job_route.onRequest(context, nutritionJob.group(1)!);
         }
         final matchOverride = RegExp(
           r'^/api/v1/recipes/([^/]+)/nutrition/matches/([^/]+)$',
@@ -170,6 +177,7 @@ void main() {
   Map<String, dynamic> errorOf(String body) =>
       jsonOf(body)['error'] as Map<String, dynamic>;
 
+
   setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('salt_p5_http_test_');
     config = ServerConfig.fromEnvironment(
@@ -179,7 +187,7 @@ void main() {
     db = SaltDatabase.open(config.dbPath);
     runtime = AuthRuntime();
 
-    final fixtureProvider = FixtureProvider();
+    fixtureProvider = FixtureProvider();
     final pipeline = dispatch
         .use(authProvider())
         .use(provider<NutritionProvider>((_) => fixtureProvider))
@@ -248,16 +256,65 @@ void main() {
   });
 
   Map<String, String> auth(String token, {bool csrf = false}) => {
-        'Authorization': 'Bearer $token',
-        if (csrf) ..._csrf,
-      };
+    'Authorization': 'Bearer $token',
+    if (csrf) ..._csrf,
+  };
+
+  /// POSTs a compute and waits for the background job to leave `running`,
+  /// returning its final job row. Compute is a 202 + `{job_id}`: the label
+  /// lands in the DB later, so every assertion about it must come after this.
+  Future<Map<String, dynamic>> computeAndWait(String recipeSlug) async {
+    final (accepted, acceptedBody) = await send(
+      'POST',
+      '/api/v1/recipes/$recipeSlug/nutrition/compute',
+      headers: auth(adminSession, csrf: true),
+    );
+    expect(
+      accepted.statusCode,
+      HttpStatus.accepted,
+      reason: 'compute is asynchronous now: $acceptedBody',
+    );
+    final jobId = jsonOf(acceptedBody)['job_id'];
+    expect(jobId, isA<int>(), reason: acceptedBody);
+
+    // Poll the real endpoint the client polls. The FDC provider is a
+    // recorded fixture here, so this settles in a few ticks; the deadline
+    // only exists so a hang fails loudly instead of hanging the suite.
+    final deadline = DateTime.now().add(const Duration(seconds: 30));
+    while (DateTime.now().isBefore(deadline)) {
+      final (progress, progressBody) = await send(
+        'GET',
+        '/api/v1/nutrition/jobs/$jobId',
+        headers: auth(adminSession),
+      );
+      expect(progress.statusCode, HttpStatus.ok, reason: progressBody);
+      final job = jsonOf(progressBody);
+      if (job['status'] != 'running') {
+        return job;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    fail('nutrition job $jobId never left "running"');
+  }
 
   group('permission matrix', () {
     // Every server-data mutation must 403 for a member session and for an
     // admin's read-scoped PAT alike (effective permission = role ∩ scope).
     final mutations = <(String, String, Object?)>[
-      ('POST', '/api/v1/recipes', {'recipe': {'title': 'X'}}),
-      ('PUT', '/api/v1/recipes/anything', {'recipe': {'title': 'X'}}),
+      (
+        'POST',
+        '/api/v1/recipes',
+        {
+          'recipe': {'title': 'X'},
+        },
+      ),
+      (
+        'PUT',
+        '/api/v1/recipes/anything',
+        {
+          'recipe': {'title': 'X'},
+        },
+      ),
       ('DELETE', '/api/v1/recipes/anything', null),
       ('POST', '/api/v1/recipes/anything/images', null),
       (
@@ -301,23 +358,25 @@ void main() {
       }
     });
 
-    test('an admin read-scoped PAT is denied every server-data mutation',
-        () async {
-      for (final (method, path, body) in mutations) {
-        final (response, responseBody) = await send(
-          method,
-          path,
-          headers: auth(adminReadPat),
-          jsonBody: body,
-        );
-        expect(
-          response.statusCode,
-          HttpStatus.forbidden,
-          reason: '$method $path must be forbidden for a read PAT',
-        );
-        expect(errorOf(responseBody)['code'], 'forbidden');
-      }
-    });
+    test(
+      'an admin read-scoped PAT is denied every server-data mutation',
+      () async {
+        for (final (method, path, body) in mutations) {
+          final (response, responseBody) = await send(
+            method,
+            path,
+            headers: auth(adminReadPat),
+            jsonBody: body,
+          );
+          expect(
+            response.statusCode,
+            HttpStatus.forbidden,
+            reason: '$method $path must be forbidden for a read PAT',
+          );
+          expect(errorOf(responseBody)['code'], 'forbidden');
+        }
+      },
+    );
 
     test('admin-only reads are denied to members', () async {
       for (final path in [
@@ -325,8 +384,11 @@ void main() {
         '/api/v1/backups',
         '/api/v1/import/candidates',
       ]) {
-        final (response, _) =
-            await send('GET', path, headers: auth(memberSession));
+        final (response, _) = await send(
+          'GET',
+          path,
+          headers: auth(memberSession),
+        );
         expect(response.statusCode, HttpStatus.forbidden, reason: path);
       }
     });
@@ -343,8 +405,7 @@ void main() {
     });
   });
 
-  group('recipe CRUD over HTTP',
-      skip: skipIfNoCorpus, () {
+  group('recipe CRUD over HTTP', skip: skipIfNoCorpus, () {
     late String slug;
     late String id;
     late String uploadSlug;
@@ -363,8 +424,7 @@ void main() {
       expect(recipe['title'], 'Rich Chocolate Bundt Cake');
       expect(jsonOf(body)['favorite'], false);
       expect(
-        File('${config.libraryDir}/my-recipes/recipes/$id.yaml')
-            .existsSync(),
+        File('${config.libraryDir}/my-recipes/recipes/$id.yaml').existsSync(),
         isTrue,
       );
     });
@@ -406,15 +466,17 @@ void main() {
       expect(jsonOf(adminDetailBody)['note'], isNull);
     });
 
-    test('a read-scoped PAT may write personal data (documented exception)',
-        () async {
-      final (favorite, body) = await send(
-        'PUT',
-        '/api/v1/recipes/$slug/favorite',
-        headers: auth(adminReadPat),
-      );
-      expect(favorite.statusCode, HttpStatus.ok, reason: body);
-    });
+    test(
+      'a read-scoped PAT may write personal data (documented exception)',
+      () async {
+        final (favorite, body) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/favorite',
+          headers: auth(adminReadPat),
+        );
+        expect(favorite.statusCode, HttpStatus.ok, reason: body);
+      },
+    );
 
     test('the favorites filter narrows the listing per user', () async {
       // A second recipe nobody favorites, so the filter provably filters.
@@ -426,8 +488,11 @@ void main() {
       );
       expect(second.statusCode, HttpStatus.created, reason: secondBody);
 
-      final (all, allBody) =
-          await send('GET', '/api/v1/recipes', headers: auth(memberSession));
+      final (all, allBody) = await send(
+        'GET',
+        '/api/v1/recipes',
+        headers: auth(memberSession),
+      );
       expect(all.statusCode, HttpStatus.ok);
       expect(jsonOf(allBody)['total'], 2);
 
@@ -437,8 +502,11 @@ void main() {
         headers: auth(memberSession),
       );
       expect(mine.statusCode, HttpStatus.ok);
-      expect(jsonOf(mineBody)['total'], 1,
-          reason: 'only the favorited recipe, not both');
+      expect(
+        jsonOf(mineBody)['total'],
+        1,
+        reason: 'only the favorited recipe, not both',
+      );
       final items = jsonOf(mineBody)['items'] as List<dynamic>;
       expect((items.single as Map<String, dynamic>)['slug'], slug);
       expect((items.single as Map<String, dynamic>)['favorite'], true);
@@ -450,8 +518,11 @@ void main() {
         headers: auth(memberSession),
       );
       expect(searched.statusCode, HttpStatus.ok);
-      expect(jsonOf(searchedBody)['total'], 1,
-          reason: 'both recipes match "chocolate"; only one is favorited');
+      expect(
+        jsonOf(searchedBody)['total'],
+        1,
+        reason: 'both recipes match "chocolate"; only one is favorited',
+      );
 
       // The admin favorited the first recipe through their read PAT — their
       // filter is independent of the member's and also excludes the second.
@@ -464,8 +535,9 @@ void main() {
       expect(jsonOf(adminFavsBody)['total'], 1);
 
       // Remove the second recipe again to keep later expectations simple.
-      final secondSlug = (jsonOf(secondBody)['recipe']
-          as Map<String, dynamic>)['slug'] as String;
+      final secondSlug =
+          (jsonOf(secondBody)['recipe'] as Map<String, dynamic>)['slug']
+              as String;
       final (removed, _) = await send(
         'DELETE',
         '/api/v1/recipes/$secondSlug',
@@ -486,8 +558,11 @@ void main() {
       expect(response.statusCode, HttpStatus.ok, reason: body);
       final recipe = jsonOf(body)['recipe'] as Map<String, dynamic>;
       expect(recipe['category'], 'Celebration Cakes');
-      expect(recipe['title'], 'Rich Chocolate Bundt Cake',
-          reason: 'merge semantics keep unsubmitted fields');
+      expect(
+        recipe['title'],
+        'Rich Chocolate Bundt Cake',
+        reason: 'merge semantics keep unsubmitted fields',
+      );
     });
 
     test('rescan and library status report over HTTP', () async {
@@ -497,12 +572,14 @@ void main() {
         headers: auth(adminSession, csrf: true),
       );
       expect(rescan.statusCode, HttpStatus.ok, reason: rescanBody);
-      final report =
-          jsonOf(rescanBody)['last_scan'] as Map<String, dynamic>;
+      final report = jsonOf(rescanBody)['last_scan'] as Map<String, dynamic>;
       expect(report['files_seen'], greaterThanOrEqualTo(1));
 
-      final (status, statusBody) =
-          await send('GET', '/api/v1/library', headers: auth(adminSession));
+      final (status, statusBody) = await send(
+        'GET',
+        '/api/v1/library',
+        headers: auth(adminSession),
+      );
       expect(status.statusCode, HttpStatus.ok);
       expect(jsonOf(statusBody)['last_scan'], isNotNull);
     });
@@ -515,12 +592,14 @@ void main() {
         jsonBody: {'include_images': false},
       );
       expect(create.statusCode, HttpStatus.created, reason: createBody);
-      final backup =
-          jsonOf(createBody)['backup'] as Map<String, dynamic>;
+      final backup = jsonOf(createBody)['backup'] as Map<String, dynamic>;
       final name = backup['name'] as String;
 
-      final (list, listBody) =
-          await send('GET', '/api/v1/backups', headers: auth(adminSession));
+      final (list, listBody) = await send(
+        'GET',
+        '/api/v1/backups',
+        headers: auth(adminSession),
+      );
       expect(list.statusCode, HttpStatus.ok);
       final names = [
         for (final item in jsonOf(listBody)['items'] as List<dynamic>)
@@ -571,8 +650,11 @@ void main() {
       expect(gone.statusCode, HttpStatus.notFound);
       expect(errorOf(goneBody)['code'], 'not_found');
 
-      final (backups, backupsBody) =
-          await send('GET', '/api/v1/backups', headers: auth(adminSession));
+      final (backups, backupsBody) = await send(
+        'GET',
+        '/api/v1/backups',
+        headers: auth(adminSession),
+      );
       expect(backups.statusCode, HttpStatus.ok);
       final names = [
         for (final item in jsonOf(backupsBody)['items'] as List<dynamic>)
@@ -594,8 +676,9 @@ void main() {
         jsonBody: submission,
       );
       expect(create.statusCode, HttpStatus.created);
-      uploadSlug = (jsonOf(createBody)['recipe']
-          as Map<String, dynamic>)['slug'] as String;
+      uploadSlug =
+          (jsonOf(createBody)['recipe'] as Map<String, dynamic>)['slug']
+              as String;
 
       final photo = File(
         '$corpusImagesDir/0857-rich-chocolate-bundt-cake-hero.jpg',
@@ -645,10 +728,10 @@ void main() {
       }
 
       // An invalid image role is a 422 and must not leave an orphan file.
-      final imagesDir =
-          Directory('${config.libraryDir}/my-recipes/images');
-      final imagesBefore =
-          imagesDir.existsSync() ? imagesDir.listSync().length : 0;
+      final imagesDir = Directory('${config.libraryDir}/my-recipes/images');
+      final imagesBefore = imagesDir.existsSync()
+          ? imagesDir.listSync().length
+          : 0;
       final (badRole, badRoleBody) = await send(
         'POST',
         '/api/v1/recipes/$uploadSlug/images?role=banana',
@@ -657,10 +740,14 @@ void main() {
       );
       expect(badRole.statusCode, HttpStatus.unprocessableEntity);
       expect(errorOf(badRoleBody)['code'], 'validation');
-      final imagesAfter =
-          imagesDir.existsSync() ? imagesDir.listSync().length : 0;
-      expect(imagesAfter, imagesBefore,
-          reason: 'a rejected role must not write an image file');
+      final imagesAfter = imagesDir.existsSync()
+          ? imagesDir.listSync().length
+          : 0;
+      expect(
+        imagesAfter,
+        imagesBefore,
+        reason: 'a rejected role must not write an image file',
+      );
 
       // Note-body validation: non-string and over-length are 422s.
       final (badNote, _) = await send(
@@ -694,306 +781,513 @@ void main() {
     });
   });
 
-  group('nutrition over HTTP (success paths, recorded real FDC data)',
-      skip: skipIfNoCorpus, () {
-    late String slug;
+  group(
+    'nutrition over HTTP (success paths, recorded real FDC data)',
+    skip: skipIfNoCorpus,
+    () {
+      late String slug;
 
-    setUpAll(() async {
-      // The CRUD group deleted its Bundt; create a fresh one.
-      final (response, body) = await send(
-        'POST',
-        '/api/v1/recipes',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: submission,
-      );
-      expect(response.statusCode, HttpStatus.created, reason: body);
-      slug = (jsonOf(body)['recipe']! as Map<String, dynamic>)['slug']!
-          as String;
-    });
+      setUpAll(() async {
+        // The CRUD group deleted its Bundt; create a fresh one.
+        final (response, body) = await send(
+          'POST',
+          '/api/v1/recipes',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: submission,
+        );
+        expect(response.statusCode, HttpStatus.created, reason: body);
+        slug =
+            (jsonOf(body)['recipe']! as Map<String, dynamic>)['slug']!
+                as String;
+      });
 
-    test('compute -> label -> serving basis -> review flow', () async {
-      // Serving basis before any compute is a 422, not a silent write.
-      final (early, earlyBody) = await send(
-        'PUT',
-        '/api/v1/recipes/$slug/nutrition',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'serving_basis': 6},
-      );
-      expect(early.statusCode, HttpStatus.unprocessableEntity);
-      expect(errorOf(earlyBody)['code'], 'validation');
+      test('compute -> label -> serving basis -> review flow', () async {
+        // Serving basis before any compute is a 422, not a silent write.
+        final (early, earlyBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'serving_basis': 6},
+        );
+        expect(early.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(earlyBody)['code'], 'validation');
 
-      // Admin computes; the Bundt is honestly partial (garnish line).
-      final (computed, computedBody) = await send(
-        'POST',
-        '/api/v1/recipes/$slug/nutrition/compute',
-        headers: auth(adminSession, csrf: true),
-      );
-      expect(computed.statusCode, HttpStatus.ok, reason: computedBody);
-      final label = jsonOf(computedBody);
-      expect(label['status'], 'partial');
-      expect(label['total_count'], 13);
-      expect(label['matched_count'], 12);
-      final calories = (label['calories_per_serving']! as num).toDouble();
-      expect(calories, greaterThan(350));
-      expect(calories, lessThan(650));
-      expect(label['low_confidence'], isA<int>(),
-          reason: 'the badge needs the unreviewed low-confidence count');
+        // Admin computes; the Bundt is honestly partial (garnish line).
+        final job = await computeAndWait(slug);
+        expect(job['status'], 'done', reason: 'compute job failed: $job');
 
-      // Members read the label and the match transparency.
-      final (memberRead, memberBody) = await send(
-        'GET',
-        '/api/v1/recipes/$slug/nutrition',
-        headers: auth(memberSession),
-      );
-      expect(memberRead.statusCode, HttpStatus.ok);
-      expect(jsonOf(memberBody)['status'], 'partial');
-
-      final (matchesRead, matchesReadBody) = await send(
-        'GET',
-        '/api/v1/recipes/$slug/nutrition/matches',
-        headers: auth(memberSession),
-      );
-      expect(matchesRead.statusCode, HttpStatus.ok);
-      final items = (jsonOf(matchesReadBody)['items']! as List)
-          .cast<Map<String, dynamic>>();
-      expect(items, hasLength(13));
-      final flour = items.firstWhere(
-        (item) => (item['raw']! as String).contains('all-purpose flour'),
-      );
-      expect(flour['candidates']! as List, isNotEmpty,
-          reason: 'cache-only candidates come from the compute-time cache');
-
-      // Serving basis rescales instantly.
-      final (rebased, rebasedBody) = await send(
-        'PUT',
-        '/api/v1/recipes/$slug/nutrition',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'serving_basis': 6},
-      );
-      expect(rebased.statusCode, HttpStatus.ok);
-      final rebasedCalories =
-          (jsonOf(rebasedBody)['calories_per_serving']! as num).toDouble();
-      expect(rebasedCalories, closeTo(calories * 2, 1));
-
-      // Grams without a matched food (the locally-matched water line has
-      // no FDC food to scale): a 422, not a silent no-op.
-      final water = items.firstWhere(
-        (item) => (item['raw']! as String).contains('boiling water'),
-      );
-      expect((water['match']! as Map<String, dynamic>)['fdc_id'], isNull);
-      final (gramsOnly, gramsOnlyBody) = await send(
-        'PUT',
-        '/api/v1/recipes/$slug/nutrition/matches/${water['position']}',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'grams': 10},
-      );
-      expect(gramsOnly.statusCode, HttpStatus.unprocessableEntity);
-      expect(errorOf(gramsOnlyBody)['code'], 'validation');
-
-      // The garnish line matched a food but has no resolvable amount;
-      // skipping it completes the label.
-      final garnish = items.firstWhere(
-        (item) => (item['raw']! as String).contains('Confectioners'),
-      );
-      final position = garnish['position'];
-      final (skip, skipBody) = await send(
-        'PUT',
-        '/api/v1/recipes/$slug/nutrition/matches/$position',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'skipped': true},
-      );
-      expect(skip.statusCode, HttpStatus.ok, reason: skipBody);
-      final skippedRow = (jsonOf(skipBody)['items']! as List)
-          .cast<Map<String, dynamic>>()[position! as int];
-      expect(
-        (skippedRow['match']! as Map<String, dynamic>)['status'],
-        'skipped',
-      );
-      final (finalRead, finalBody) = await send(
-        'GET',
-        '/api/v1/recipes/$slug/nutrition',
-        headers: auth(memberSession),
-      );
-      expect(finalRead.statusCode, HttpStatus.ok);
-      expect(jsonOf(finalBody)['status'], 'complete');
-    });
-
-    test('an ingredient edit flips the label to stale', () async {
-      // Drop the garnish line via the normal PUT (merge semantics).
-      final (before, beforeBody) = await send(
-        'GET',
-        '/api/v1/recipes/$slug',
-        headers: auth(adminSession),
-      );
-      expect(before.statusCode, HttpStatus.ok, reason: beforeBody);
-      final recipe = jsonOf(beforeBody)['recipe']! as Map<String, dynamic>;
-      final groups = (recipe['ingredients']! as List)
-          .cast<Map<String, dynamic>>();
-      final lastGroup = groups.last;
-      final lastItems =
-          (lastGroup['items']! as List).cast<Map<String, dynamic>>();
-      lastGroup['items'] = lastItems.sublist(0, lastItems.length - 1);
-      final (edited, editedBody) = await send(
-        'PUT',
-        '/api/v1/recipes/$slug',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {
-          'recipe': {'ingredients': groups},
-        },
-      );
-      expect(edited.statusCode, HttpStatus.ok, reason: editedBody);
-
-      final (read, readBody) = await send(
-        'GET',
-        '/api/v1/recipes/$slug/nutrition',
-        headers: auth(memberSession),
-      );
-      expect(read.statusCode, HttpStatus.ok);
-      expect(jsonOf(readBody)['status'], 'stale');
-
-      // The review HIGH: a serving-basis change must NOT clear staleness.
-      final (rebased, rebasedBody) = await send(
-        'PUT',
-        '/api/v1/recipes/$slug/nutrition',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'serving_basis': 12},
-      );
-      expect(rebased.statusCode, HttpStatus.ok, reason: rebasedBody);
-      expect(jsonOf(rebasedBody)['status'], 'stale');
-
-      // Recomputing clears it.
-      final (recomputed, recomputedBody) = await send(
-        'POST',
-        '/api/v1/recipes/$slug/nutrition/compute',
-        headers: auth(adminSession, csrf: true),
-      );
-      expect(recomputed.statusCode, HttpStatus.ok, reason: recomputedBody);
-      final label = jsonOf(recomputedBody);
-      expect(label['status'], 'complete',
-          reason: 'the unresolvable garnish line is gone');
-      expect(label['total_count'], 12);
-    });
-  });
-
-  group('import over HTTP (success paths, real corpus)',
-      skip: skipIfNoCorpus, () {
-    setUpAll(() {
-      // Drop two real corpus files into a v1 source root inside the
-      // allowlisted import directory.
-      final recipes = Directory('${config.importDir}/atk-two/recipes')
-        ..createSync(recursive: true);
-      for (final name in [
-        '0857-rich-chocolate-bundt-cake.yaml',
-        '0747-100-percent-whole-wheat-pancakes.yaml',
-      ]) {
-        File('$corpusRecipesDir/$name').copySync('${recipes.path}/$name');
-      }
-    });
-
-    test('candidates lists the detected v1 root for an admin', () async {
-      final (response, body) = await send(
-        'GET',
-        '/api/v1/import/candidates',
-        headers: auth(adminSession),
-      );
-      expect(response.statusCode, HttpStatus.ok, reason: body);
-      final data = jsonOf(body);
-      expect(data['import_dir'], config.importDir);
-      final items = (data['items']! as List).cast<Map<String, dynamic>>();
-      final atk = items.firstWhere((item) => item['path'] == 'atk-two');
-      expect(atk['kind'], 'v1');
-      expect(atk['file_count'], 2);
-    });
-
-    test('a non-string path is a 422, not a crash', () async {
-      final (response, body) = await send(
-        'POST',
-        '/api/v1/import',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'path': 42},
-      );
-      expect(response.statusCode, HttpStatus.unprocessableEntity);
-      expect(errorOf(body)['code'], 'validation');
-    });
-
-    test('a path outside the import dir is a 422', () async {
-      final (response, body) = await send(
-        'POST',
-        '/api/v1/import',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'path': '../../etc'},
-      );
-      expect(response.statusCode, HttpStatus.unprocessableEntity);
-      expect(errorOf(body)['code'], 'validation');
-    });
-
-    test('POST starts a job; it runs to done and jobs/<id> reports it',
-        () async {
-      final (started, startedBody) = await send(
-        'POST',
-        '/api/v1/import',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'path': 'atk-two'},
-      );
-      expect(started.statusCode, 202, reason: startedBody);
-      final jobId = (jsonOf(startedBody)['job_id']! as num).toInt();
-
-      var job = <String, dynamic>{};
-      final deadline = DateTime.now().add(const Duration(seconds: 30));
-      while (DateTime.now().isBefore(deadline)) {
-        final (poll, pollBody) = await send(
+        // The label is fetched, not returned by the compute POST.
+        final (computed, computedBody) = await send(
           'GET',
-          '/api/v1/import/jobs/$jobId',
+          '/api/v1/recipes/$slug/nutrition',
           headers: auth(adminSession),
         );
-        expect(poll.statusCode, HttpStatus.ok, reason: pollBody);
-        job = jsonOf(pollBody);
-        if (job['status'] != 'running') {
-          break;
+        expect(computed.statusCode, HttpStatus.ok, reason: computedBody);
+        final label = jsonOf(computedBody);
+        expect(label['status'], 'partial');
+        expect(label['total_count'], 13);
+        expect(label['matched_count'], 12);
+        expect(
+          label['computing_job_id'],
+          isNull,
+          reason: 'the job is finished; nothing should still be re-attachable',
+        );
+        final calories = (label['calories_per_serving']! as num).toDouble();
+        expect(calories, greaterThan(350));
+        expect(calories, lessThan(650));
+        expect(
+          label['low_confidence'],
+          isA<int>(),
+          reason: 'the badge needs the unreviewed low-confidence count',
+        );
+
+        // Members read the label and the match transparency.
+        final (memberRead, memberBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: auth(memberSession),
+        );
+        expect(memberRead.statusCode, HttpStatus.ok);
+        expect(jsonOf(memberBody)['status'], 'partial');
+
+        final (matchesRead, matchesReadBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition/matches',
+          headers: auth(memberSession),
+        );
+        expect(matchesRead.statusCode, HttpStatus.ok);
+        final items = (jsonOf(matchesReadBody)['items']! as List)
+            .cast<Map<String, dynamic>>();
+        expect(items, hasLength(13));
+        final flour = items.firstWhere(
+          (item) => (item['raw']! as String).contains('all-purpose flour'),
+        );
+        expect(
+          flour['candidates']! as List,
+          isNotEmpty,
+          reason: 'cache-only candidates come from the compute-time cache',
+        );
+
+        // Serving basis rescales instantly.
+        final (rebased, rebasedBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'serving_basis': 6},
+        );
+        expect(rebased.statusCode, HttpStatus.ok);
+        final rebasedCalories =
+            (jsonOf(rebasedBody)['calories_per_serving']! as num).toDouble();
+        expect(rebasedCalories, closeTo(calories * 2, 1));
+
+        // Grams without a matched food (the locally-matched water line has
+        // no FDC food to scale): a 422, not a silent no-op.
+        final water = items.firstWhere(
+          (item) => (item['raw']! as String).contains('boiling water'),
+        );
+        expect((water['match']! as Map<String, dynamic>)['fdc_id'], isNull);
+        final (gramsOnly, gramsOnlyBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition/matches/${water['position']}',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'grams': 10},
+        );
+        expect(gramsOnly.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(gramsOnlyBody)['code'], 'validation');
+
+        // The garnish line matched a food but has no resolvable amount;
+        // skipping it completes the label.
+        final garnish = items.firstWhere(
+          (item) => (item['raw']! as String).contains('Confectioners'),
+        );
+        final position = garnish['position'];
+        final (skip, skipBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition/matches/$position',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'skipped': true},
+        );
+        expect(skip.statusCode, HttpStatus.ok, reason: skipBody);
+        final skippedRow = (jsonOf(skipBody)['items']! as List)
+            .cast<Map<String, dynamic>>()[position! as int];
+        expect(
+          (skippedRow['match']! as Map<String, dynamic>)['status'],
+          'skipped',
+        );
+        final (finalRead, finalBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: auth(memberSession),
+        );
+        expect(finalRead.statusCode, HttpStatus.ok);
+        expect(jsonOf(finalBody)['status'], 'complete');
+      });
+
+      test('a compute in flight: single-flight, and admin-only re-attach',
+          () async {
+        // Hold the compute open so the in-flight state is observable; the
+        // recorded fixtures otherwise finish before the next request lands.
+        final gate = Completer<void>();
+        fixtureProvider.gate = gate;
+        addTearDown(() {
+          fixtureProvider.gate = null;
+          if (!gate.isCompleted) gate.complete();
+        });
+
+        // A fresh recipe whose ingredient text has never been matched, so the
+        // compute must call the provider and block on the gate. Reusing the
+        // Bundt's lines would hit the ingredient-match cache and finish before
+        // the next request landed, leaving nothing in flight to observe.
+        final (created, createdBody) = await send(
+          'POST',
+          '/api/v1/recipes',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {
+            ...submission,
+            'recipe': {
+              ...(submission['recipe']! as Map<String, Object?>),
+              'title': 'Single Flight Bundt',
+              'ingredients': [
+                {
+                  'group': null,
+                  'items': [
+                    {'raw': '2 cups uncached-single-flight-test-flour'},
+                  ],
+                },
+              ],
+            },
+          },
+        );
+        expect(created.statusCode, HttpStatus.created, reason: createdBody);
+        final freshSlug =
+            (jsonOf(createdBody)['recipe']! as Map<String, dynamic>)['slug']!
+                as String;
+        addTearDown(() async {
+          await send(
+            'DELETE',
+            '/api/v1/recipes/$freshSlug',
+            headers: auth(adminSession, csrf: true),
+          );
+        });
+
+        final (first, firstBody) = await send(
+          'POST',
+          '/api/v1/recipes/$freshSlug/nutrition/compute',
+          headers: auth(adminSession, csrf: true),
+        );
+        expect(first.statusCode, HttpStatus.accepted, reason: firstBody);
+        final jobId = jsonOf(firstBody)['job_id'];
+
+        // Single-flight: a second POST while one runs re-attaches to the same
+        // job rather than double-spending the FDC budget.
+        final (second, secondBody) = await send(
+          'POST',
+          '/api/v1/recipes/$freshSlug/nutrition/compute',
+          headers: auth(adminSession, csrf: true),
+        );
+        expect(second.statusCode, HttpStatus.accepted, reason: secondBody);
+        expect(
+          jsonOf(secondBody)['job_id'],
+          jobId,
+          reason: 'a concurrent compute must re-attach, not start a second job',
+        );
+
+        // An admin reopening the page re-attaches via computing_job_id...
+        final (adminRead, adminBody) = await send(
+          'GET',
+          '/api/v1/recipes/$freshSlug/nutrition',
+          headers: auth(adminSession),
+        );
+        expect(jsonOf(adminBody)['computing_job_id'], jobId, reason: adminBody);
+
+        // ...but a member must NOT be handed a job id: polling it is
+        // admin-only, so every poll would 403 and surface as a false
+        // "lost track of the compute" error on their label.
+        final (memberRead, memberBody) = await send(
+          'GET',
+          '/api/v1/recipes/$freshSlug/nutrition',
+          headers: auth(memberSession),
+        );
+        expect(memberRead.statusCode, HttpStatus.ok);
+        expect(
+          jsonOf(memberBody).containsKey('computing_job_id'),
+          isFalse,
+          reason: 'a member cannot poll the job endpoint: $memberBody',
+        );
+
+        // The job endpoint itself stays admin-only.
+        final (memberJob, memberJobBody) = await send(
+          'GET',
+          '/api/v1/nutrition/jobs/$jobId',
+          headers: auth(memberSession),
+        );
+        expect(memberJob.statusCode, HttpStatus.forbidden);
+        expect(errorOf(memberJobBody)['code'], 'forbidden');
+
+        gate.complete();
+        // Let the job drain, then the id is gone: nothing left to re-attach.
+        final deadline = DateTime.now().add(const Duration(seconds: 30));
+        while (DateTime.now().isBefore(deadline)) {
+          final (progress, progressBody) = await send(
+            'GET',
+            '/api/v1/nutrition/jobs/$jobId',
+            headers: auth(adminSession),
+          );
+          expect(progress.statusCode, HttpStatus.ok, reason: progressBody);
+          if (jsonOf(progressBody)['status'] != 'running') break;
+          await Future<void>.delayed(const Duration(milliseconds: 20));
         }
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-      }
-      expect(job['status'], 'done', reason: 'still running after 30s: $job');
-      expect(job['total'], 2);
-      expect(job['imported'], 2);
-      expect(job['legacy'], false);
-      expect(job['log'], isA<List<dynamic>>());
-    });
+        final (afterRead, afterBody) = await send(
+          'GET',
+          '/api/v1/recipes/$freshSlug/nutrition',
+          headers: auth(adminSession),
+        );
+        expect(
+          jsonOf(afterBody).containsKey('computing_job_id'),
+          isFalse,
+          reason: 'the finished job must stop being advertised: $afterBody',
+        );
+      });
 
-    test('a second import while one runs is a 409', () async {
-      // Fire two back-to-back; the second must lose the single-flight race
-      // (the first is still in its isolate).
-      final first = send(
-        'POST',
-        '/api/v1/import',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'path': 'atk-two'},
-      );
-      final second = send(
-        'POST',
-        '/api/v1/import',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'path': 'atk-two'},
-      );
-      final results = await Future.wait([first, second]);
-      final codes = results.map((r) => r.$1.statusCode).toList();
-      expect(codes, containsAll([202, HttpStatus.conflict]),
-          reason: 'one starts (202), one is rejected (409): $codes');
-      final conflictBody =
-          results.firstWhere((r) => r.$1.statusCode == HttpStatus.conflict).$2;
-      expect(errorOf(conflictBody)['code'], 'conflict');
-    });
+      test('a yield-only recipe divides by the yield, not the batch', () async {
+        // Post-split, `MAKES ABOUT 16 LARGE COOKIES` leaves serves null. The
+        // basis must fall back to the yield count, or the label would report
+        // one 16-cookie batch as a single serving.
+        final (created, createdBody) = await send(
+          'POST',
+          '/api/v1/recipes',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {
+            ...submission,
+            'recipe': {
+              ...(submission['recipe']! as Map<String, Object?>),
+              'title': 'Yield Basis Cookies',
+              'servings': 'MAKES ABOUT 16 LARGE COOKIES',
+            },
+          },
+        );
+        expect(created.statusCode, HttpStatus.created, reason: createdBody);
+        final recipe = jsonOf(createdBody)['recipe']! as Map<String, dynamic>;
+        final yieldSlug = recipe['slug']! as String;
+        addTearDown(() async {
+          await send(
+            'DELETE',
+            '/api/v1/recipes/$yieldSlug',
+            headers: auth(adminSession, csrf: true),
+          );
+        });
+        expect(
+          recipe['serves'],
+          isNull,
+          reason: 'a yield is not a serving count: $createdBody',
+        );
 
-    test('jobs/<id> for an unknown or non-numeric id is a 404', () async {
-      for (final id in ['999999', 'abc']) {
+        final job = await computeAndWait(yieldSlug);
+        expect(job['status'], 'done', reason: 'compute job failed: $job');
+        final (read, readBody) = await send(
+          'GET',
+          '/api/v1/recipes/$yieldSlug/nutrition',
+          headers: auth(adminSession),
+        );
+        expect(read.statusCode, HttpStatus.ok, reason: readBody);
+        expect(jsonOf(readBody)['serving_basis'], 16, reason: readBody);
+      });
+
+      test('an ingredient edit flips the label to stale', () async {
+        // Drop the garnish line via the normal PUT (merge semantics).
+        final (before, beforeBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug',
+          headers: auth(adminSession),
+        );
+        expect(before.statusCode, HttpStatus.ok, reason: beforeBody);
+        final recipe = jsonOf(beforeBody)['recipe']! as Map<String, dynamic>;
+        final groups = (recipe['ingredients']! as List)
+            .cast<Map<String, dynamic>>();
+        final lastGroup = groups.last;
+        final lastItems = (lastGroup['items']! as List)
+            .cast<Map<String, dynamic>>();
+        lastGroup['items'] = lastItems.sublist(0, lastItems.length - 1);
+        final (edited, editedBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {
+            'recipe': {'ingredients': groups},
+          },
+        );
+        expect(edited.statusCode, HttpStatus.ok, reason: editedBody);
+
+        final (read, readBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: auth(memberSession),
+        );
+        expect(read.statusCode, HttpStatus.ok);
+        expect(jsonOf(readBody)['status'], 'stale');
+
+        // The review HIGH: a serving-basis change must NOT clear staleness.
+        final (rebased, rebasedBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'serving_basis': 12},
+        );
+        expect(rebased.statusCode, HttpStatus.ok, reason: rebasedBody);
+        expect(jsonOf(rebasedBody)['status'], 'stale');
+
+        // Recomputing clears it.
+        final job = await computeAndWait(slug);
+        expect(job['status'], 'done', reason: 'recompute job failed: $job');
+        final (recomputed, recomputedBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: auth(memberSession),
+        );
+        expect(recomputed.statusCode, HttpStatus.ok, reason: recomputedBody);
+        final label = jsonOf(recomputedBody);
+        expect(
+          label['status'],
+          'complete',
+          reason: 'the unresolvable garnish line is gone',
+        );
+        expect(label['total_count'], 12);
+      });
+    },
+  );
+
+  group(
+    'import over HTTP (success paths, real corpus)',
+    skip: skipIfNoCorpus,
+    () {
+      setUpAll(() {
+        // Drop two real corpus files into a v1 source root inside the
+        // allowlisted import directory.
+        final recipes = Directory('${config.importDir}/atk-two/recipes')
+          ..createSync(recursive: true);
+        for (final name in [
+          '0857-rich-chocolate-bundt-cake.yaml',
+          '0747-100-percent-whole-wheat-pancakes.yaml',
+        ]) {
+          File('$corpusRecipesDir/$name').copySync('${recipes.path}/$name');
+        }
+      });
+
+      test('candidates lists the detected v1 root for an admin', () async {
         final (response, body) = await send(
           'GET',
-          '/api/v1/import/jobs/$id',
+          '/api/v1/import/candidates',
           headers: auth(adminSession),
         );
-        expect(response.statusCode, HttpStatus.notFound, reason: 'id=$id');
-        expect(errorOf(body)['code'], 'not_found');
-      }
-    });
-  });
+        expect(response.statusCode, HttpStatus.ok, reason: body);
+        final data = jsonOf(body);
+        expect(data['import_dir'], config.importDir);
+        final items = (data['items']! as List).cast<Map<String, dynamic>>();
+        final atk = items.firstWhere((item) => item['path'] == 'atk-two');
+        expect(atk['kind'], 'v1');
+        expect(atk['file_count'], 2);
+      });
+
+      test('a non-string path is a 422, not a crash', () async {
+        final (response, body) = await send(
+          'POST',
+          '/api/v1/import',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'path': 42},
+        );
+        expect(response.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(body)['code'], 'validation');
+      });
+
+      test('a path outside the import dir is a 422', () async {
+        final (response, body) = await send(
+          'POST',
+          '/api/v1/import',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'path': '../../etc'},
+        );
+        expect(response.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(body)['code'], 'validation');
+      });
+
+      test(
+        'POST starts a job; it runs to done and jobs/<id> reports it',
+        () async {
+          final (started, startedBody) = await send(
+            'POST',
+            '/api/v1/import',
+            headers: auth(adminSession, csrf: true),
+            jsonBody: {'path': 'atk-two'},
+          );
+          expect(started.statusCode, 202, reason: startedBody);
+          final jobId = (jsonOf(startedBody)['job_id']! as num).toInt();
+
+          var job = <String, dynamic>{};
+          final deadline = DateTime.now().add(const Duration(seconds: 30));
+          while (DateTime.now().isBefore(deadline)) {
+            final (poll, pollBody) = await send(
+              'GET',
+              '/api/v1/import/jobs/$jobId',
+              headers: auth(adminSession),
+            );
+            expect(poll.statusCode, HttpStatus.ok, reason: pollBody);
+            job = jsonOf(pollBody);
+            if (job['status'] != 'running') {
+              break;
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 100));
+          }
+          expect(
+            job['status'],
+            'done',
+            reason: 'still running after 30s: $job',
+          );
+          expect(job['total'], 2);
+          expect(job['imported'], 2);
+          expect(job['legacy'], false);
+          expect(job['log'], isA<List<dynamic>>());
+        },
+      );
+
+      test('a second import while one runs is a 409', () async {
+        // Fire two back-to-back; the second must lose the single-flight race
+        // (the first is still in its isolate).
+        final first = send(
+          'POST',
+          '/api/v1/import',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'path': 'atk-two'},
+        );
+        final second = send(
+          'POST',
+          '/api/v1/import',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'path': 'atk-two'},
+        );
+        final results = await Future.wait([first, second]);
+        final codes = results.map((r) => r.$1.statusCode).toList();
+        expect(
+          codes,
+          containsAll([202, HttpStatus.conflict]),
+          reason: 'one starts (202), one is rejected (409): $codes',
+        );
+        final conflictBody = results
+            .firstWhere((r) => r.$1.statusCode == HttpStatus.conflict)
+            .$2;
+        expect(errorOf(conflictBody)['code'], 'conflict');
+      });
+
+      test('jobs/<id> for an unknown or non-numeric id is a 404', () async {
+        for (final id in ['999999', 'abc']) {
+          final (response, body) = await send(
+            'GET',
+            '/api/v1/import/jobs/$id',
+            headers: auth(adminSession),
+          );
+          expect(response.statusCode, HttpStatus.notFound, reason: 'id=$id');
+          expect(errorOf(body)['code'], 'not_found');
+        }
+      });
+    },
+  );
 }

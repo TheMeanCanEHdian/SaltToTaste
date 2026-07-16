@@ -10,12 +10,13 @@ final Random _secureRandom = Random.secure();
 /// [setupCodeAlphabet] using a CSPRNG (~40 bits of entropy).
 String generateSetupCode() {
   String group() => String.fromCharCodes(
-        List<int>.generate(
-          4,
-          (_) => setupCodeAlphabet
-              .codeUnitAt(_secureRandom.nextInt(setupCodeAlphabet.length)),
-        ),
-      );
+    List<int>.generate(
+      4,
+      (_) => setupCodeAlphabet.codeUnitAt(
+        _secureRandom.nextInt(setupCodeAlphabet.length),
+      ),
+    ),
+  );
   return '${group()}-${group()}';
 }
 
@@ -23,8 +24,8 @@ String generateSetupCode() {
 /// whitespace, using a comparison that does not short-circuit on the first
 /// differing character.
 bool setupCodeMatches(String expected, String provided) {
-  final a = _normalize(expected);
-  final b = _normalize(provided);
+  final a = normalizeSetupCode(expected);
+  final b = normalizeSetupCode(provided);
   if (a.isEmpty || b.isEmpty) return false;
   var diff = a.length ^ b.length;
   for (var i = 0; i < a.length; i++) {
@@ -33,5 +34,10 @@ bool setupCodeMatches(String expected, String provided) {
   return diff == 0;
 }
 
-String _normalize(String code) =>
+/// The comparison form of [code]: upper-cased with dashes and whitespace
+/// removed, so how the operator retypes a code never matters.
+///
+/// Anything that persists a *digest* of a code (see `recovery.dart`) must
+/// digest this form — the same code typed two ways has to hash the same.
+String normalizeSetupCode(String code) =>
     code.toUpperCase().replaceAll(RegExp(r'[-\s]'), '');

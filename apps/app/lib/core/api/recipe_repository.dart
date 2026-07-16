@@ -1,7 +1,14 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:salt_shared/salt_shared.dart';
+
+/// A favorite mark the caller changed: the recipe id or slug they acted on,
+/// and where it landed. Carries whichever identifier the caller used, so a
+/// listener must match on both (a grid holds ids; a detail page routes on
+/// slugs).
+typedef FavoriteChange = ({String idOrSlug, bool favorite});
 
 /// Base URL of the SaltToTaste API.
 ///
@@ -73,12 +80,10 @@ Future<T> apiGuard<T>(
     }
     // No envelope: a transport failure, or a non-API response (proxy/HTML).
     final message = switch (exception.type) {
-      DioExceptionType.connectionError ||
-      DioExceptionType.connectionTimeout =>
-        "Couldn't reach the SaltToTaste server. Check that it's running, "
+      DioExceptionType.connectionError || DioExceptionType.connectionTimeout =>
+        "Couldn't reach the Salt to Taste server. Check that it's running, "
             'then retry.',
-      DioExceptionType.receiveTimeout ||
-      DioExceptionType.sendTimeout =>
+      DioExceptionType.receiveTimeout || DioExceptionType.sendTimeout =>
         'The server took too long to respond. Please try again.',
       _ => 'Something went wrong talking to the server. Please try again.',
     };
@@ -116,29 +121,49 @@ class RecipeDetail {
   /// Copy with changed personal data. Omitting [note] PRESERVES it (so a
   /// favorite toggle can't wipe the note from view); pass [clearNote] to
   /// actually remove it.
-  RecipeDetail copyWith({bool? favorite, String? note, bool clearNote = false}) =>
-      RecipeDetail(
-        recipe: recipe,
-        sourceSlug: sourceSlug,
-        heroImageUrl: heroImageUrl,
-        favorite: favorite ?? this.favorite,
-        note: clearNote ? null : (note ?? this.note),
-      );
+  RecipeDetail copyWith({
+    bool? favorite,
+    String? note,
+    bool clearNote = false,
+  }) => RecipeDetail(
+    recipe: recipe,
+    sourceSlug: sourceSlug,
+    heroImageUrl: heroImageUrl,
+    favorite: favorite ?? this.favorite,
+    note: clearNote ? null : (note ?? this.note),
+  );
 }
 
 /// Read access to the recipe API.
 class RecipeRepository {
   RecipeRepository({Dio? dio})
-      : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: apiBaseUrl,
-                connectTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 20),
-              ),
-            );
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: apiBaseUrl,
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 20),
+            ),
+          );
 
   final Dio _dio;
+
+  final StreamController<FavoriteChange> _favoriteChanges =
+      StreamController<FavoriteChange>.broadcast();
+
+  /// Favourite marks the caller has changed this session, announced as they
+  /// are accepted by the server.
+  ///
+  /// [setFavorite] is the one place a favorite can change, which makes it the
+  /// one place worth listening to: a grid left alive under a pushed detail
+  /// page reconciles itself from this instead of reloading (which would lose
+  /// its scroll position and paging) or going stale (which it did).
+  Stream<FavoriteChange> get favoriteChanges => _favoriteChanges.stream;
+
+  /// Releases [favoriteChanges]. The repository is an app-lifetime singleton,
+  /// so this only matters to tests.
+  Future<void> dispose() => _favoriteChanges.close();
 
   /// One page of recipe cards plus the total count; [query] runs the
   /// search DSL server-side, [favoritesOnly] narrows to the caller's
@@ -150,12 +175,15 @@ class RecipeRepository {
     bool favoritesOnly = false,
   }) {
     return _request('recipes', () async {
-      final data = await _getMap('/api/v1/recipes', query: {
-        'page': '$page',
-        'limit': '$limit',
-        if (query != null && query.trim().isNotEmpty) 'q': query,
-        if (favoritesOnly) 'favorites': 'true',
-      });
+      final data = await _getMap(
+        '/api/v1/recipes',
+        query: {
+          'page': '$page',
+          'limit': '$limit',
+          if (query != null && query.trim().isNotEmpty) 'q': query,
+          if (favoritesOnly) 'favorites': 'true',
+        },
+      );
       final items = [
         for (final item in data['items']! as List<dynamic>)
           RecipeCardMapper.fromMap(item as Map<String, dynamic>),
@@ -175,6 +203,18 @@ class RecipeRepository {
   /// The download URL for a recipe's canonical YAML export.
   Uri yamlUrl(String idOrSlug) =>
       absoluteApiUrl('/api/v1/recipes/${_seg(idOrSlug)}/yaml');
+
+  /// The recipe's canonical YAML export as text — for the admin View-YAML
+  /// modal (the download uses [yamlUrl] directly).
+  Future<String> recipeYamlText(String idOrSlug) {
+    return apiGuard(() async {
+      final response = await _dio.get<dynamic>(
+        '/api/v1/recipes/${_seg(idOrSlug)}/yaml',
+        options: Options(responseType: ResponseType.plain),
+      );
+      return response.data as String? ?? '';
+    }, notFoundMessage: 'Recipe not found.');
+  }
 
   // ------------------------------------------------------------------
   // Editing (admin + full scope on the server side).
@@ -259,6 +299,9 @@ class RecipeRepository {
   // ------------------------------------------------------------------
 
   /// Marks or unmarks the recipe as one of the caller's favorites.
+  ///
+  /// Announces the change on [favoriteChanges] once the server has accepted
+  /// it, so an open grid can reconcile itself.
   Future<void> setFavorite(String idOrSlug, {required bool favorite}) {
     return _request('favorite', () async {
       final path = '/api/v1/recipes/${_seg(idOrSlug)}/favorite';
@@ -267,6 +310,7 @@ class RecipeRepository {
       } else {
         await _dio.delete<dynamic>(path);
       }
+      _favoriteChanges.add((idOrSlug: idOrSlug, favorite: favorite));
     });
   }
 
@@ -283,12 +327,12 @@ class RecipeRepository {
   }
 
   RecipeDetail _detailFrom(Map<String, dynamic> data) => RecipeDetail(
-        recipe: RecipeMapper.fromMap(data['recipe']! as Map<String, dynamic>),
-        sourceSlug: data['source_slug']! as String,
-        heroImageUrl: data['hero_image_url'] as String?,
-        favorite: data['favorite'] == true,
-        note: data['note'] as String?,
-      );
+    recipe: RecipeMapper.fromMap(data['recipe']! as Map<String, dynamic>),
+    sourceSlug: data['source_slug']! as String,
+    heroImageUrl: data['hero_image_url'] as String?,
+    favorite: data['favorite'] == true,
+    note: data['note'] as String?,
+  );
 
   static String _seg(String idOrSlug) => Uri.encodeComponent(idOrSlug);
 
@@ -318,5 +362,4 @@ class RecipeRepository {
     }
     return data;
   }
-
 }

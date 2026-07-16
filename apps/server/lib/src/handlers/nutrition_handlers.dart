@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/grams.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
@@ -9,10 +10,25 @@ import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 /// `GET .../nutrition` body: the label data plus match transparency.
-Map<String, Object?> nutritionBody(SaltDatabase db, Recipe recipe) {
+///
+/// [forAdmin] gates `computing_job_id`. The id is only useful to a client that
+/// can poll `/nutrition/jobs/<id>`, which is admin-only — sending it to a
+/// member would have them poll an endpoint that 403s every time and surface
+/// the failure as a compute error on a page they cannot compute from anyway.
+Map<String, Object?> nutritionBody(
+  SaltDatabase db,
+  Recipe recipe, {
+  required bool forAdmin,
+}) {
+  // A background compute in flight for this recipe (lets a reopened page
+  // re-attach and keep showing progress instead of an enabled Compute button).
+  final computingJobId = forAdmin ? recipeComputeJobId(recipe.id) : null;
   final row = db.nutritionFor(recipe.id);
   if (row == null) {
-    return {'status': 'none'};
+    return {
+      'status': 'none',
+      if (computingJobId != null) 'computing_job_id': computingJobId,
+    };
   }
   final stale = row.ingredientsHash != ingredientsHashOf(recipe);
   // Unreviewed low-confidence matches: the UI's badge only turns green
@@ -21,10 +37,12 @@ Map<String, Object?> nutritionBody(SaltDatabase db, Recipe recipe) {
   final lineCount = nutritionLines(recipe).length;
   final lowConfidence = db
       .ingredientMatchesFor(recipe.id)
-      .where((match) =>
-          match.position < lineCount &&
-          match.status == 'auto' &&
-          match.confidence < 0.5)
+      .where(
+        (match) =>
+            match.position < lineCount &&
+            match.status == 'auto' &&
+            match.confidence < 0.5,
+      )
       .length;
   return {
     'status': stale ? 'stale' : row.status,
@@ -36,6 +54,7 @@ Map<String, Object?> nutritionBody(SaltDatabase db, Recipe recipe) {
     'total_count': row.totalCount,
     'low_confidence': lowConfidence,
     'computed_at': row.computedAt,
+    if (computingJobId != null) 'computing_job_id': computingJobId,
   };
 }
 
@@ -196,6 +215,5 @@ Future<void> applyMatchOverride(
 }
 
 /// Masks a stored API key for display: last four characters only.
-String maskKey(String key) => key.length <= 4
-    ? '****'
-    : '****${key.substring(key.length - 4)}';
+String maskKey(String key) =>
+    key.length <= 4 ? '****' : '****${key.substring(key.length - 4)}';

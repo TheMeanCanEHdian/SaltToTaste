@@ -240,8 +240,10 @@ AuthUser? _authenticate(RequestContext context) {
     }
     return _authenticateSession(db, bearer);
   }
-  final cookieToken =
-      _cookieValue(context.request.headers['cookie'], sessionCookieName);
+  final cookieToken = _cookieValue(
+    context.request.headers['cookie'],
+    sessionCookieName,
+  );
   if (cookieToken != null) {
     return _authenticateSession(db, cookieToken);
   }

@@ -30,8 +30,10 @@ void main() {
   group('slugify', () {
     test('folds punctuation, diacritics, and fractions', () {
       expect(
-        slugify("The Complete America's Test Kitchen "
-            'TV Show Cookbook 2001–2023'),
+        slugify(
+          "The Complete America's Test Kitchen "
+          'TV Show Cookbook 2001–2023',
+        ),
         _slug,
       );
       expect(slugify('Crème Brûlée!'), 'creme-brulee');
@@ -48,17 +50,20 @@ void main() {
 
     setUp(() {
       sourceRoot = Directory.systemTemp.createTempSync('salt_import_src');
-      File('$corpusRoot/source.yaml')
-          .copySync('${sourceRoot.path}/source.yaml');
+      File(
+        '$corpusRoot/source.yaml',
+      ).copySync('${sourceRoot.path}/source.yaml');
       Directory('${sourceRoot.path}/recipes').createSync();
       Directory('${sourceRoot.path}/images').createSync();
       for (final name in _recipeFiles) {
-        File('$corpusRecipesDir/$name')
-            .copySync('${sourceRoot.path}/recipes/$name');
+        File(
+          '$corpusRecipesDir/$name',
+        ).copySync('${sourceRoot.path}/recipes/$name');
       }
       for (final name in _imageFiles) {
-        File('$corpusImagesDir/$name')
-            .copySync('${sourceRoot.path}/images/$name');
+        File(
+          '$corpusImagesDir/$name',
+        ).copySync('${sourceRoot.path}/images/$name');
       }
 
       dataDir = Directory.systemTemp.createTempSync('salt_import_data');
@@ -84,9 +89,11 @@ void main() {
 
     test('imports three corpus recipes into the DB and the library', () {
       final progress = <(int, int)>[];
-      final summary = run(onProgress: (done, total) {
-        progress.add((done, total));
-      });
+      final summary = run(
+        onProgress: (done, total) {
+          progress.add((done, total));
+        },
+      );
 
       expect(summary.total, 3);
       expect(summary.imported, 3);
@@ -106,10 +113,14 @@ void main() {
         final exported = File(
           '${config.libraryDir}/$_slug/recipes/${original.id}.yaml',
         );
-        expect(exported.existsSync(), isTrue,
-            reason: 'missing export for $name');
-        final reDecoded =
-            RecipeYamlCodec.decode(exported.readAsStringSync()).recipe;
+        expect(
+          exported.existsSync(),
+          isTrue,
+          reason: 'missing export for $name',
+        );
+        final reDecoded = RecipeYamlCodec.decode(
+          exported.readAsStringSync(),
+        ).recipe;
         expect(reDecoded, equals(original));
         expect(
           File('${exported.path}.tmp').existsSync(),
@@ -163,8 +174,9 @@ void main() {
     });
 
     test('a broken YAML file fails alone without stopping the run', () {
-      File('${sourceRoot.path}/recipes/broken.yaml')
-          .writeAsStringSync('title: "unterminated\n  - [what');
+      File(
+        '${sourceRoot.path}/recipes/broken.yaml',
+      ).writeAsStringSync('title: "unterminated\n  - [what');
 
       final summary = run();
 
@@ -178,16 +190,18 @@ void main() {
       );
       expect(db.recipeCount(), 3);
       expect(
-        File('${config.libraryDir}/$_slug/recipes/'
-                'atk-tv-2023-0857-rich-chocolate-bundt-cake.yaml')
-            .existsSync(),
+        File(
+          '${config.libraryDir}/$_slug/recipes/'
+          'atk-tv-2023-0857-rich-chocolate-bundt-cake.yaml',
+        ).existsSync(),
         isTrue,
       );
     });
 
     test('a missing referenced image warns without failing the file', () {
-      File('${sourceRoot.path}/images/0857-rich-chocolate-bundt-cake-hero.jpg')
-          .deleteSync();
+      File(
+        '${sourceRoot.path}/images/0857-rich-chocolate-bundt-cake-hero.jpg',
+      ).deleteSync();
 
       final summary = run();
 
@@ -204,17 +218,18 @@ void main() {
 
     test('a missing source.yaml derives the name from the directory', () {
       File('${sourceRoot.path}/source.yaml').deleteSync();
-      final derivedSlug = slugify(sourceRoot.uri.pathSegments
-          .lastWhere((segment) => segment.isNotEmpty));
+      final derivedSlug = slugify(
+        sourceRoot.uri.pathSegments.lastWhere((segment) => segment.isNotEmpty),
+      );
 
       final summary = run();
 
       expect(summary.imported, 3);
       expect(summary.warnings, contains(startsWith('source.yaml:')));
       expect(
-        Directory('${config.libraryDir}/$derivedSlug/recipes')
-            .listSync()
-            .length,
+        Directory(
+          '${config.libraryDir}/$derivedSlug/recipes',
+        ).listSync().length,
         3,
       );
     });

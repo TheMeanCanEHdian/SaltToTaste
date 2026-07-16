@@ -78,27 +78,27 @@ class _UsersTabState extends State<UsersTab> {
   }
 
   Future<void> _create() => _run(() async {
-        final username = _username.text.trim();
-        final result = await context
-            .read<AuthRepository>()
-            .createUser(username: username, role: _role);
-        if (!mounted) {
-          return;
-        }
-        _username.clear();
-        setState(
-          () => _revealed = (result.user.username, result.tempPassword),
-        );
-      });
+    final username = _username.text.trim();
+    final result = await context.read<AuthRepository>().createUser(
+      username: username,
+      role: _role,
+    );
+    if (!mounted) {
+      return;
+    }
+    _username.clear();
+    setState(() => _revealed = (result.user.username, result.tempPassword));
+  });
 
   Future<void> _reset(UserAccount user) => _run(() async {
-        final password =
-            await context.read<AuthRepository>().resetPassword(user.id);
-        if (!mounted) {
-          return;
-        }
-        setState(() => _revealed = (user.username, password));
-      });
+    final password = await context.read<AuthRepository>().resetPassword(
+      user.id,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() => _revealed = (user.username, password));
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +108,8 @@ class _UsersTabState extends State<UsersTab> {
       children: [
         const PaneTitle(
           'Users',
-          description: 'Members can browse and favorite recipes. Admins can '
+          description:
+              'Members can browse and favorite recipes. Admins can '
               'edit recipes and manage the server.',
         ),
         if (_users == null && _error != null)
@@ -120,9 +121,7 @@ class _UsersTabState extends State<UsersTab> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: SaltColors.hairline),
-                ),
+                border: Border(bottom: BorderSide(color: SaltColors.hairline)),
               ),
               child: Row(
                 children: [
@@ -154,11 +153,24 @@ class _UsersTabState extends State<UsersTab> {
                             if (user.mustChangePassword) ...[
                               const SizedBox(width: 6),
                               const Tooltip(
-                                message:
-                                    'Temporary password not yet changed',
+                                message: 'Temporary password not yet changed',
                                 child: Icon(
                                   Icons.hourglass_bottom,
                                   size: 15,
+                                  color: SaltColors.muted,
+                                ),
+                              ),
+                            ],
+                            // Disabled accounts also show a strikethrough, but
+                            // that reads as nothing to a screen reader — this
+                            // text carries the state without relying on style.
+                            if (user.disabled) ...[
+                              const SizedBox(width: 6),
+                              const Text(
+                                'disabled',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
                                   color: SaltColors.muted,
                                 ),
                               ),
@@ -189,15 +201,14 @@ class _UsersTabState extends State<UsersTab> {
                       onTap: _busy
                           ? null
                           : () => _run(
-                                () async => context
-                                    .read<AuthRepository>()
-                                    .patchUser(
-                                      user.id,
-                                      role: user.role == 'admin'
-                                          ? 'member'
-                                          : 'admin',
-                                    ),
-                              ),
+                              () async =>
+                                  context.read<AuthRepository>().patchUser(
+                                    user.id,
+                                    role: user.role == 'admin'
+                                        ? 'member'
+                                        : 'admin',
+                                  ),
+                            ),
                     ),
                     _SmallAction(
                       label: user.disabled ? 'Enable' : 'Disable',
@@ -205,13 +216,10 @@ class _UsersTabState extends State<UsersTab> {
                       onTap: _busy
                           ? null
                           : () => _run(
-                                () async => context
-                                    .read<AuthRepository>()
-                                    .patchUser(
-                                      user.id,
-                                      disabled: !user.disabled,
-                                    ),
-                              ),
+                              () async => context
+                                  .read<AuthRepository>()
+                                  .patchUser(user.id, disabled: !user.disabled),
+                            ),
                     ),
                   ],
                 ],
@@ -241,6 +249,7 @@ class _UsersTabState extends State<UsersTab> {
                       child: DropdownButtonFormField<String>(
                         initialValue: _role,
                         decoration: const InputDecoration(
+                          labelText: 'Role',
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
@@ -274,7 +283,8 @@ class _UsersTabState extends State<UsersTab> {
         ),
         if (_revealed != null)
           SecretReveal(
-            title: 'Temporary password for ${_revealed!.$1} — hand it over '
+            title:
+                'Temporary password for ${_revealed!.$1} — hand it over '
                 "now; they'll set their own at first sign-in.",
             value: _revealed!.$2,
           ),
@@ -323,11 +333,12 @@ class _SmallAction extends StatelessWidget {
       padding: const EdgeInsets.only(left: 6),
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-          foregroundColor:
-              danger ? const Color(0xFF8A1212) : SaltColors.ink,
+          foregroundColor: danger ? const Color(0xFF8A1212) : SaltColors.ink,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          minimumSize: Size.zero,
-          textStyle: const TextStyle(fontSize: 12.5),
+          // Compact on desktop, a 48px touch target on narrow/touch widths.
+          minimumSize: denseActionMinSize(context),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: const TextStyle(fontSize: 12.5, fontFamily: 'OpenSans'),
         ),
         onPressed: onTap,
         child: Text(label),

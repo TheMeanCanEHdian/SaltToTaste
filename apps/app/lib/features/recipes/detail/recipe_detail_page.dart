@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:printing/printing.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -15,6 +15,8 @@ import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 import 'package:salt_app/features/nutrition/nutrition_label.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_cubit.dart';
+import 'package:salt_app/features/recipes/detail/view_yaml_dialog.dart';
+import 'package:salt_app/features/recipes/pdf/recipe_pdf.dart';
 
 /// The recipe detail page (approved P2 design: two-column header on wide
 /// screens — title/meta left, hero right — stacking on mobile).
@@ -37,8 +39,7 @@ class RecipeDetailPage extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) =>
-              NutritionCubit(context.read<NutritionRepository>(), slug)
-                ..load(),
+              NutritionCubit(context.read<NutritionRepository>(), slug)..load(),
         ),
       ],
       child: Scaffold(
@@ -51,19 +52,16 @@ class RecipeDetailPage extends StatelessWidget {
           listener: (context, state) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  (state as RecipeDetailLoaded).personalDataError!,
-                ),
+                content: Text((state as RecipeDetailLoaded).personalDataError!),
               ),
             );
           },
           builder: (context, state) => switch (state) {
             RecipeDetailLoading() => const LoadingView(),
             RecipeDetailError(:final message) => ErrorView(
-                message: message,
-                onRetry: () =>
-                    context.read<RecipeDetailCubit>().load(slug),
-              ),
+              message: message,
+              onRetry: () => context.read<RecipeDetailCubit>().load(slug),
+            ),
             RecipeDetailLoaded(:final detail) => _DetailBody(detail: detail),
           },
         ),
@@ -83,48 +81,51 @@ class _DetailBody extends StatelessWidget {
     final wide =
         MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
     final isAdmin = context.watch<AuthCubit>().user?.isAdmin ?? false;
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _Header(detail: detail),
-                const SizedBox(height: 20),
-                _MyNotesCard(detail: detail),
-                const SizedBox(height: 22),
-                if (recipe.prepNotes != null) ...[
-                  _Headnote(text: recipe.prepNotes!),
+    // Let people select and copy the recipe text (ingredients, steps, notes).
+    return SelectionArea(
+      child: SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Header(detail: detail),
+                  const SizedBox(height: 20),
+                  _MyNotesCard(detail: detail),
                   const SizedBox(height: 22),
+                  if (recipe.prepNotes != null) ...[
+                    _Headnote(text: recipe.prepNotes!),
+                    const SizedBox(height: 22),
+                  ],
+                  _IngredientsAndSteps(recipe: recipe),
+                  for (final subsection in recipe.subsections) ...[
+                    const SizedBox(height: 26),
+                    _SubsectionView(subsection: subsection),
+                  ],
+                  for (final technique in recipe.techniques) ...[
+                    const SizedBox(height: 26),
+                    _TechniqueView(technique: technique),
+                  ],
+                  if (recipe.notes != null) ...[
+                    const SizedBox(height: 26),
+                    const _SectionTitle('Notes'),
+                    const SizedBox(height: 8),
+                    Text(recipe.notes!, style: _prose),
+                  ],
+                  // Narrow: the label follows the content, full width, with
+                  // the match badge ABOVE the numbers (approved P6 mobile
+                  // layout). Wide screens carry it in the header's right rail.
+                  if (!wide) ...[
+                    const SizedBox(height: 28),
+                    const _SectionTitle('Nutrition'),
+                    const SizedBox(height: 10),
+                    NutritionPanel(isAdmin: isAdmin, badgeFirst: true),
+                  ],
                 ],
-                _IngredientsAndSteps(recipe: recipe),
-                for (final subsection in recipe.subsections) ...[
-                  const SizedBox(height: 26),
-                  _SubsectionView(subsection: subsection),
-                ],
-                for (final technique in recipe.techniques) ...[
-                  const SizedBox(height: 26),
-                  _TechniqueView(technique: technique),
-                ],
-                if (recipe.notes != null) ...[
-                  const SizedBox(height: 26),
-                  const _SectionTitle('Notes'),
-                  const SizedBox(height: 8),
-                  Text(recipe.notes!, style: _prose),
-                ],
-                // Narrow: the label follows the content, full width, with
-                // the match badge ABOVE the numbers (approved P6 mobile
-                // layout). Wide screens carry it in the header's right rail.
-                if (!wide) ...[
-                  const SizedBox(height: 28),
-                  const _SectionTitle('Nutrition'),
-                  const SizedBox(height: 10),
-                  NutritionPanel(isAdmin: isAdmin, badgeFirst: true),
-                ],
-              ],
+              ),
             ),
           ),
         ),
@@ -133,8 +134,11 @@ class _DetailBody extends StatelessWidget {
   }
 }
 
-const TextStyle _prose =
-    TextStyle(fontSize: 14.5, height: 1.6, color: Color(0xFF4A4442));
+const TextStyle _prose = TextStyle(
+  fontSize: 14.5,
+  height: 1.6,
+  color: Color(0xFF4A4442),
+);
 
 class _Header extends StatelessWidget {
   const _Header({required this.detail});
@@ -146,13 +150,18 @@ class _Header extends StatelessWidget {
     final wide =
         MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
     final info = _HeaderInfo(detail: detail);
-    final hero = _HeroImage(detail: detail);
+    // No hero image → show nothing (no placeholder) rather than an empty box.
+    final hero = detail.heroImageUrl == null
+        ? null
+        : _HeroImage(detail: detail);
     if (!wide) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AspectRatio(aspectRatio: 16 / 10, child: hero),
-          const SizedBox(height: 18),
+          if (hero != null) ...[
+            AspectRatio(aspectRatio: 16 / 10, child: hero),
+            const SizedBox(height: 18),
+          ],
           info,
         ],
       );
@@ -171,8 +180,10 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AspectRatio(aspectRatio: 4 / 3, child: hero),
-              const SizedBox(height: 16),
+              if (hero != null) ...[
+                AspectRatio(aspectRatio: 4 / 3, child: hero),
+                const SizedBox(height: 16),
+              ],
               // The right rail (approved P6 design): the FDA label lives
               // under the hero, match badge below it.
               NutritionPanel(isAdmin: isAdmin),
@@ -207,13 +218,16 @@ class _HeaderInfo extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 8),
-        Text(
-          recipe.title,
-          style: const TextStyle(
-            fontSize: 29,
-            height: 1.12,
-            fontWeight: FontWeight.w700,
-            color: SaltColors.maroon,
+        Semantics(
+          header: true,
+          child: Text(
+            recipe.title,
+            style: const TextStyle(
+              fontSize: 29,
+              height: 1.12,
+              fontWeight: FontWeight.w700,
+              color: SaltColors.maroon,
+            ),
           ),
         ),
         if (recipe.tags.isNotEmpty) ...[
@@ -253,21 +267,22 @@ class _HeaderInfo extends StatelessWidget {
               ),
               label: Text(detail.favorite ? 'Favorited' : 'Favorite'),
             ),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: SaltColors.maroon,
-              ),
-              onPressed: () => _downloadYaml(context, detail.recipe.slug),
-              icon: const Icon(Icons.download, size: 18),
-              label: const Text('Download YAML'),
-            ),
-            if (context.watch<AuthCubit>().user?.isAdmin ?? false)
+            _DownloadPdfButton(detail: detail),
+            if (context.watch<AuthCubit>().user?.isAdmin ?? false) ...[
               OutlinedButton.icon(
                 onPressed: () =>
-                    context.push('/r/${detail.recipe.slug}/edit'),
+                    showViewYamlDialog(context, recipeId: detail.recipe.id),
+                icon: const Icon(Icons.code, size: 18),
+                label: const Text('View YAML'),
+              ),
+              // Edit goes last: it leaves the page, so it reads as the end of
+              // the row rather than something to pass through.
+              OutlinedButton.icon(
+                onPressed: () => context.push('/r/${detail.recipe.slug}/edit'),
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 label: const Text('Edit'),
               ),
+            ],
           ],
         ),
       ],
@@ -290,8 +305,9 @@ class _MyNotesCard extends StatefulWidget {
 class _MyNotesCardState extends State<_MyNotesCard> {
   bool _editing = false;
   bool _saving = false;
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.detail.note ?? '');
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.detail.note ?? '',
+  );
 
   @override
   void didUpdateWidget(covariant _MyNotesCard old) {
@@ -309,8 +325,9 @@ class _MyNotesCardState extends State<_MyNotesCard> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    final saved =
-        await context.read<RecipeDetailCubit>().saveNote(_controller.text);
+    final saved = await context.read<RecipeDetailCubit>().saveNote(
+      _controller.text,
+    );
     if (mounted) {
       setState(() {
         _saving = false;
@@ -352,8 +369,7 @@ class _MyNotesCardState extends State<_MyNotesCard> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
                 decoration: BoxDecoration(
                   color: SaltColors.chipNeutral,
                   borderRadius: BorderRadius.circular(5),
@@ -379,23 +395,27 @@ class _MyNotesCardState extends State<_MyNotesCard> {
           ),
           const SizedBox(height: 6),
           if (_editing) ...[
-            TextField(
-              controller: _controller,
-              minLines: 3,
-              maxLines: 8,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText:
-                    'Anything future-you should know — tweaks, timings, '
-                    'who loved it…',
+            Semantics(
+              label: 'My notes',
+              child: TextField(
+                controller: _controller,
+                minLines: 3,
+                maxLines: 8,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText:
+                      'Anything future-you should know — tweaks, timings, '
+                      'who loved it…',
+                ),
               ),
             ),
             const SizedBox(height: 10),
             Row(
               children: [
                 FilledButton(
-                  style:
-                      FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: SaltColors.maroon,
+                  ),
                   onPressed: _saving ? null : _save,
                   child: Text(_saving ? 'Saving…' : 'Save note'),
                 ),
@@ -404,9 +424,9 @@ class _MyNotesCardState extends State<_MyNotesCard> {
                   onPressed: _saving
                       ? null
                       : () => setState(() {
-                            _editing = false;
-                            _controller.text = widget.detail.note ?? '';
-                          }),
+                          _editing = false;
+                          _controller.text = widget.detail.note ?? '';
+                        }),
                   child: const Text('Cancel'),
                 ),
               ],
@@ -434,6 +454,8 @@ class _HeroImage extends StatelessWidget {
           : Image.network(
               apiUrl(url),
               fit: BoxFit.cover,
+              // Decorative — the recipe title alongside carries the meaning.
+              excludeFromSemantics: true,
               errorBuilder: (_, __, ___) =>
                   const PhotoFallback(showIcon: false),
             ),
@@ -441,20 +463,67 @@ class _HeroImage extends StatelessWidget {
   }
 }
 
-/// Opens the recipe's canonical YAML export in a new tab/download; surfaces a
-/// SnackBar if the platform can't launch it.
-Future<void> _downloadYaml(BuildContext context, String slug) async {
-  final messenger = ScaffoldMessenger.of(context);
-  final url = context.read<RecipeRepository>().yamlUrl(slug);
-  var ok = false;
-  try {
-    ok = await launchUrl(url, mode: LaunchMode.platformDefault);
-  } on Exception {
-    ok = false;
+/// Downloads the recipe as a formatted PDF (everyone). Laying the document
+/// out means loading the bundled fonts, so this carries its own progress
+/// state rather than appearing to do nothing on the first press.
+class _DownloadPdfButton extends StatefulWidget {
+  const _DownloadPdfButton({required this.detail});
+
+  final RecipeDetail detail;
+
+  @override
+  State<_DownloadPdfButton> createState() => _DownloadPdfButtonState();
+}
+
+class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
+  bool _busy = false;
+
+  Future<void> _download() async {
+    if (_busy) {
+      return;
+    }
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final bytes = await buildRecipePdf(
+        recipe: widget.detail.recipe,
+        // The reader's own note travels with their copy.
+        personalNote: widget.detail.note,
+      );
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: '${widget.detail.recipe.slug}.pdf',
+      );
+      // The PDF layout engine throws on shapes we cannot foresee; a failed
+      // export must explain itself, never take the page down.
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text("Couldn't build the PDF: $error")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
   }
-  if (!ok) {
-    messenger.showSnackBar(
-      const SnackBar(content: Text("Couldn't open the download.")),
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
+      onPressed: _busy ? null : _download,
+      icon: _busy
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.picture_as_pdf_outlined, size: 18),
+      label: Text(_busy ? 'Building PDF…' : 'Download PDF'),
     );
   }
 }
@@ -473,7 +542,7 @@ class _TimesStrip extends StatelessWidget {
           'Serves',
           serves.min == serves.max
               ? '${serves.min}'
-              : '${serves.min}–${serves.max}'
+              : '${serves.min}–${serves.max}',
         )
       else if (recipe.servings != null)
         ('Yield', recipe.servings!),
@@ -539,10 +608,7 @@ class _Headnote extends StatelessWidget {
         color: SaltColors.chip.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Text(
-        text,
-        style: _prose.copyWith(fontStyle: FontStyle.italic),
-      ),
+      child: Text(text, style: _prose.copyWith(fontStyle: FontStyle.italic)),
     );
   }
 }
@@ -554,13 +620,16 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: const TextStyle(
-        fontSize: 14,
-        letterSpacing: 1.4,
-        fontWeight: FontWeight.w700,
-        color: SaltColors.maroon,
+    return Semantics(
+      header: true,
+      child: Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 14,
+          letterSpacing: 1.4,
+          fontWeight: FontWeight.w700,
+          color: SaltColors.maroon,
+        ),
       ),
     );
   }
@@ -623,9 +692,7 @@ class _IngredientsList extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: SaltColors.hairline),
-                ),
+                border: Border(bottom: BorderSide(color: SaltColors.hairline)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

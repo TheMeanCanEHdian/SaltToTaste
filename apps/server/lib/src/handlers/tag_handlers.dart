@@ -6,17 +6,17 @@ final RegExp _iconPattern = RegExp(r'^[a-z0-9-]{1,50}$');
 
 /// `GET /api/v1/tags` — every tag with its recipe count and chip style.
 Map<String, Object?> listTagsHandler(SaltDatabase db) => {
-      'items': [
-        for (final tag in db.listTags())
-          {
-            'name': tag.name,
-            'count': tag.count,
-            'icon': tag.icon,
-            'color': tag.color,
-            'bg_color': tag.bgColor,
-          },
-      ],
-    };
+  'items': [
+    for (final tag in db.listTags())
+      {
+        'name': tag.name,
+        'count': tag.count,
+        'icon': tag.icon,
+        'color': tag.color,
+        'bg_color': tag.bgColor,
+      },
+  ],
+};
 
 /// `PUT /api/v1/tags/<name>/style` (admin) — set the chip style: a Lucide
 /// [icon] name and `#RRGGBB` colors, each optional (null clears it).

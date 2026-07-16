@@ -14,8 +14,9 @@ final Logger _log = Logger('library');
 const String lastScanSettingKey = 'library.last_scan';
 
 /// The exact file-name shape `exportRecipeYaml` gives conflict copies.
-final RegExp _conflictCopyName =
-    RegExp(r'\.conflict-\d{8}T\d{6}(-\d+)?\.yaml$');
+final RegExp _conflictCopyName = RegExp(
+  r'\.conflict-\d{8}T\d{6}(-\d+)?\.yaml$',
+);
 
 /// Outcome of one library reconciliation scan.
 ///
@@ -60,18 +61,17 @@ class ScanReport {
 
   /// JSON shape stored in settings and returned by the library endpoints.
   Map<String, Object?> toJson() => {
-        'started_at': startedAt.toIso8601String(),
-        'elapsed_ms': elapsedMs,
-        'files_seen': filesSeen,
-        'updated_from_disk': updatedFromDisk,
-        'added': added,
-        're_exported': reExported,
-        'skipped': [
-          for (final entry in skipped)
-            {'file': entry.file, 'reason': entry.reason},
-        ],
-        'conflict_files': conflictFiles,
-      };
+    'started_at': startedAt.toIso8601String(),
+    'elapsed_ms': elapsedMs,
+    'files_seen': filesSeen,
+    'updated_from_disk': updatedFromDisk,
+    'added': added,
+    're_exported': reExported,
+    'skipped': [
+      for (final entry in skipped) {'file': entry.file, 'reason': entry.reason},
+    ],
+    'conflict_files': conflictFiles,
+  };
 
   /// One-line log summary.
   @override
@@ -146,12 +146,13 @@ void _scanSourceDir(
     return;
   }
   var sourceRowEnsured = false;
-  final files = recipesDir
-      .listSync()
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.yaml'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final files =
+      recipesDir
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.yaml'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
 
   for (final file in files) {
     final fileName = _basename(file.path);
@@ -179,7 +180,8 @@ void _scanSourceDir(
       report.skipped.add(
         (
           file: '$sourceSlug/recipes/$fileName',
-          reason: 'duplicate id "$id" — already scanned in another '
+          reason:
+              'duplicate id "$id" — already scanned in another '
               'source directory',
         ),
       );

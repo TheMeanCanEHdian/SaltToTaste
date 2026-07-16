@@ -17,8 +17,11 @@ void main() {
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
-    test('corpus-backed tests (skipped: corpus absent)', () {},
-        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    test(
+      'corpus-backed tests (skipped: corpus absent)',
+      () {},
+      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
+    );
     return;
   }
   late Directory tempDir;
@@ -142,17 +145,22 @@ void main() {
     expect(job['total'], 2);
     expect(job['imported'], 2);
     expect(job['legacy'], false);
-    expect(db.recipeByIdOrSlug('rich-chocolate-bundt-cake'), isNotNull,
-        reason: 'the isolate written rows must be visible on this conn');
+    expect(
+      db.recipeByIdOrSlug('rich-chocolate-bundt-cake'),
+      isNotNull,
+      reason: 'the isolate written rows must be visible on this conn',
+    );
     final exported = Directory(config.libraryDir)
         .listSync(recursive: true)
         .whereType<File>()
         .where(
-          (file) =>
-              file.path.endsWith('0857-rich-chocolate-bundt-cake.yaml'),
+          (file) => file.path.endsWith('0857-rich-chocolate-bundt-cake.yaml'),
         );
-    expect(exported, isNotEmpty,
-        reason: 'canonical YAML export must appear in the library');
+    expect(
+      exported,
+      isNotEmpty,
+      reason: 'canonical YAML export must appear in the library',
+    );
 
     // Idempotent: unchanged files skip.
     final second = await awaitJob(startImportJob(db, config, path: path)!);
@@ -169,11 +177,13 @@ void main() {
     expect(job['legacy'], true);
     expect(job['imported'], greaterThan(0));
     // v0 ids derive from the file name with a v0- prefix.
-    final imported = db.listCards(page: 1, limit: 100).items.where(
+    final imported = db
+        .listCards(page: 1, limit: 100)
+        .items
+        .where(
           (card) => card.id.startsWith('v0-'),
         );
-    expect(imported, isNotEmpty,
-        reason: 'legacy recipes land with v0- ids');
+    expect(imported, isNotEmpty, reason: 'legacy recipes land with v0- ids');
     final detail = db.recipeByIdOrSlug(imported.first.id)!;
     expect(detail.recipe.source.type, 'legacy-v0');
   });

@@ -3,7 +3,7 @@
 Living status of the approved rewrite plan (kept locally, not in the
 repo). Statuses: `pending` / `in-progress` / `done` / `changed(reason)`.
 
-Last updated: 2026-07-14
+Last updated: 2026-07-16
 
 ## P0 — Workspace + salt_shared — **done**
 
@@ -771,3 +771,51 @@ fallback.
   per-file warning + extraction warning) rather than seeded into the DB:
   P6 recomputes nutrition from FDC with per-ingredient provenance, and old
   Edamam numbers would be indistinguishable from computed ones.
+- 2026-07-16 — **`parseServings` split in two** (plan had one parser): a
+  yield is not a serving count, but `MAKES ENOUGH FOR ONE 9-INCH PIE` was
+  reading as `serves: 1`. `parseServings` now returns null for a bare yield
+  and `parseYieldCount` reads the count separately; only `parseServings`
+  reaches `Recipe.serves`. 173 of the 1,198 corpus recipes are yield-only,
+  pinned by the corpus `servings coverage` gate.
+- 2026-07-16 — **One-shot `serves` backfill on boot** (not in the plan; no
+  migration hook exists — `PRAGMA user_version` migrations are SQL-only).
+  `serves_backfill.dart` runs from `initServer()`, guarded by a `settings`
+  marker, and skips any row whose hash shows a hand edit. **Ran against the
+  live library on 2026-07-16: 173 of 1,198 recipes corrected**, YAML
+  re-exported. This rewrote real user data, so it is recorded here rather
+  than only in the code.
+- 2026-07-16 — **Per-recipe nutrition compute is a background job**
+  (`202 {job_id}` + poll), replacing the synchronous response: a cold
+  compute takes ~20s, and the client would cancel on navigation while the
+  server kept working — the user saw "couldn't reach server" on a compute
+  that in fact succeeded. Single-flight per recipe. `computing_job_id` is
+  sent only to admins: the poll endpoint is admin-only, so a member handed
+  the id would 403 on every poll and see a false error.
+- 2026-07-16 — **Serving basis falls back to the yield count** before 1
+  (`servingBasis ?? stored ?? serves.min ?? parseYieldCount(...).min ?? 1`):
+  post-split, a yield-only recipe has no `serves`, and dividing by 1 would
+  report a 16-cookie batch as one serving. A yield still never populates
+  `serves`; this is only a starting divisor, and the admin can override it.
+- 2026-07-16 — **Admin lockout recovery** (user request): `salt_server:recover`
+  prints a single-use 15-minute code, redeemed unauthenticated at `/recover`.
+  Local access is the authorization, as with the first-boot setup code. The
+  endpoint is rate-limited per IP and logs every failure (it is
+  unauthenticated, grants admin, and a code check is only a SHA-256), and
+  recovery revokes the account's API tokens as well as its sessions — a PAT
+  would otherwise outlive the reset. The CLI is compiled into the Docker
+  image as `/app/recover`; without that the feature was unusable in the
+  deployment it was documented for.
+- 2026-07-16 — **PDF export replaces the recipe page's YAML download** (user
+  request); YAML moves to an admin-only View YAML dialog. All PDF prose sets
+  `overflow: TextOverflow.span` — the only thing in the `pdf` package that
+  can split across a page break — and the numbered step badge rides inline as
+  a `WidgetSpan` because a `Row` can never span. Fractions the bundled fonts
+  cannot draw (⅕ ⅖ ⅗ ⅘ ⅙ ⅚ ⅐ ⅑ ⅒) are spelled out; an uncovered rune renders
+  as a crossed-out box, and the package only warns behind an `assert`, so a
+  release build would corrupt an amount silently.
+- 2026-07-16 — **Grids reconcile favorites from a repository stream** rather
+  than reloading on return: the tile heart became an indicator (user
+  request), which removed the in-place unfavorite, and a favorites grid left
+  alive under the detail page went stale. `setFavorite` is the only place a
+  favorite changes, so it broadcasts; reloading instead would lose scroll and
+  paging on a 1,198-recipe library.

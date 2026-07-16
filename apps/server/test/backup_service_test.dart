@@ -20,8 +20,11 @@ void main() {
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
-    test('corpus-backed tests (skipped: corpus absent)', () {},
-        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    test(
+      'corpus-backed tests (skipped: corpus absent)',
+      () {},
+      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
+    );
     return;
   }
   late Directory tempDir;
@@ -47,8 +50,9 @@ void main() {
     // A real corpus image in the library, to prove default backups skip it.
     const heroName = '0857-rich-chocolate-bundt-cake-hero.jpg';
     final source = File('$corpusImagesDir/$heroName');
-    Directory('${config.libraryDir}/$manualSourceSlug/images')
-        .createSync(recursive: true);
+    Directory(
+      '${config.libraryDir}/$manualSourceSlug/images',
+    ).createSync(recursive: true);
     source.copySync(
       '${config.libraryDir}/$manualSourceSlug/images/$heroName',
     );
@@ -61,8 +65,9 @@ void main() {
 
   List<String> archiveEntries(String name) {
     final bytes = File('${backupsDir(config)}/$name').readAsBytesSync();
-    final archive =
-        TarDecoder().decodeBytes(const GZipDecoder().decodeBytes(bytes));
+    final archive = TarDecoder().decodeBytes(
+      const GZipDecoder().decodeBytes(bytes),
+    );
     return [for (final file in archive) file.name];
   }
 
@@ -83,10 +88,10 @@ void main() {
     );
 
     // The YAML inside the archive is the canonical export, byte for byte.
-    final bytes =
-        File('${backupsDir(config)}/$name').readAsBytesSync();
-    final archive =
-        TarDecoder().decodeBytes(const GZipDecoder().decodeBytes(bytes));
+    final bytes = File('${backupsDir(config)}/$name').readAsBytesSync();
+    final archive = TarDecoder().decodeBytes(
+      const GZipDecoder().decodeBytes(bytes),
+    );
     final yamlEntry = archive.files.firstWhere(
       (file) => file.name.endsWith('$recipeId.yaml'),
     );
@@ -97,8 +102,7 @@ void main() {
 
     // The snapshot must be a USABLE database, not just a file named
     // salt.db — this is the disaster-recovery artifact.
-    final dbEntry =
-        archive.files.firstWhere((file) => file.name == 'salt.db');
+    final dbEntry = archive.files.firstWhere((file) => file.name == 'salt.db');
     final restoredPath = '${tempDir.path}/restored-salt.db';
     File(restoredPath).writeAsBytesSync(dbEntry.content as List<int>);
     final restored = sqlite3.open(restoredPath);
@@ -108,9 +112,7 @@ void main() {
         1,
       );
       expect(
-        restored
-            .select('SELECT id FROM recipes')
-            .first['id'],
+        restored.select('SELECT id FROM recipes').first['id'],
         recipeId,
       );
     } finally {

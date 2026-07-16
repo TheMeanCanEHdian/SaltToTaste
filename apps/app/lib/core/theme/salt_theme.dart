@@ -56,6 +56,17 @@ abstract final class Breakpoints {
   static const double detailTwoColumn = 720;
 }
 
+/// True at compact/touch layout widths, where interactive controls should
+/// grow toward the 48px minimum touch target. Wider (desktop) layouts keep
+/// the denser, approved look.
+bool isCompactWidth(BuildContext context) =>
+    MediaQuery.sizeOf(context).width < Breakpoints.compact;
+
+/// Minimum size for the dense settings/editor action buttons: a 48px-tall
+/// touch target everywhere (WCAG 2.5.5). Pair with
+/// `MaterialTapTargetSize.shrinkWrap` so only the height is enforced.
+Size denseActionMinSize(BuildContext context) => const Size(0, 48);
+
 /// Forui theme themed to the maroon identity, driving Forui widgets.
 FThemeData buildForuiTheme() {
   final colors = FColors.neutralLight.copyWith(
@@ -75,16 +86,36 @@ FThemeData buildForuiTheme() {
 /// and custom widgets), with Open Sans applied app-wide.
 ThemeData buildMaterialTheme(FThemeData forui) {
   final base = forui.toApproximateMaterialTheme();
+  // Forui's approximate Material theme gives every filled button a dark
+  // maroon (#7D1420) foreground. On the maroon (#960000) fill that is a
+  // 1.15:1 contrast — effectively invisible (the "Sign in" bug). Filled
+  // buttons in this app always sit on a dark fill (maroon or errInk), so
+  // force a white label + icon here; any button that sets its own
+  // foregroundColor still wins via widget-level style merge.
+  const whiteFg = WidgetStatePropertyAll<Color?>(Colors.white);
+  final filledStyle = (base.filledButtonTheme.style ?? const ButtonStyle())
+      .copyWith(foregroundColor: whiteFg, iconColor: whiteFg);
   return base.copyWith(
     scaffoldBackgroundColor: SaltColors.pageBackground,
     textTheme: base.textTheme.apply(
       fontFamily: 'OpenSans',
+      // OpenSans lacks a few vulgar-fraction glyphs (⅓, ⅔). The offline
+      // build (--no-web-resources-cdn) disables CanvasKit's Noto fallback,
+      // so fall back to the bundled Arimo, which covers them — otherwise
+      // those characters render blank in recipe prose.
+      // Arimo covers most of what Open Sans lacks, but not ⅕ ⅖ ⅗ ⅘ ⅙ ⅚ ⅐ ⅑ ⅒
+      // (verified against both cmaps); Inter — already bundled and loaded via
+      // Forui — does. Without this the corpus's two ⅕/⅖ amounts render as a
+      // tofu box, e.g. `1½ cups (10□ ounces) granulated sugar`.
+      fontFamilyFallback: const ['Arimo', 'packages/forui/Inter'],
       bodyColor: SaltColors.ink,
       displayColor: SaltColors.ink,
     ),
     colorScheme: base.colorScheme.copyWith(
       primary: SaltColors.maroon,
       secondary: SaltColors.rose,
+      onPrimary: Colors.white,
     ),
+    filledButtonTheme: FilledButtonThemeData(style: filledStyle),
   );
 }

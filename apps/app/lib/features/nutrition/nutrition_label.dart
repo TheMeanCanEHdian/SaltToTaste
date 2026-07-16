@@ -100,7 +100,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             isAdmin
                 ? 'Match ingredients against USDA FoodData Central to '
-                    'build the label.'
+                      'build the label.'
                 : 'Nutrition has not been computed for this recipe yet.',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13, color: SaltColors.muted),
@@ -166,8 +166,11 @@ class _StaleBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_outlined,
-              size: 16, color: SaltColors.warnInk),
+          const Icon(
+            Icons.warning_amber_outlined,
+            size: 16,
+            color: SaltColors.warnInk,
+          ),
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
@@ -209,7 +212,8 @@ class _MatchBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final complete = !nutrition.needsReview;
-    var label = '${nutrition.matchedCount}/${nutrition.totalCount} '
+    var label =
+        '${nutrition.matchedCount}/${nutrition.totalCount} '
         'ingredients matched';
     if (nutrition.matchedCount >= nutrition.totalCount &&
         nutrition.lowConfidence > 0) {
@@ -218,44 +222,50 @@ class _MatchBadge extends StatelessWidget {
       label = '$label — review';
     }
     final ink = complete ? SaltColors.okInk : SaltColors.warnInk;
-    final pill = InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () => showReviewSheet(context, isAdmin: isAdmin),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-        decoration: BoxDecoration(
-          color: complete ? SaltColors.okBg : SaltColors.warnBg,
-          border: Border.all(
-            color: complete
-                ? const Color(0xFFCFE4C6)
-                : const Color(0xFFF0DDBA),
-          ),
+    final pill = MergeSemantics(
+      child: Semantics(
+        button: true,
+        hint: 'Opens ingredient review',
+        child: InkWell(
           borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
-          children: [
-            Icon(
-              complete
-                  ? Icons.check_circle_outline
-                  : Icons.warning_amber_rounded,
-              size: 14,
-              color: ink,
+          onTap: () => showReviewSheet(context, isAdmin: isAdmin),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+            decoration: BoxDecoration(
+              color: complete ? SaltColors.okBg : SaltColors.warnBg,
+              border: Border.all(
+                color: complete
+                    ? const Color(0xFFCFE4C6)
+                    : const Color(0xFFF0DDBA),
+              ),
+              borderRadius: BorderRadius.circular(18),
             ),
-            const SizedBox(width: 7),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+            child: Row(
+              mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+              children: [
+                Icon(
+                  complete
+                      ? Icons.check_circle_outline
+                      : Icons.warning_amber_rounded,
+                  size: 14,
                   color: ink,
                 ),
-              ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: ink,
+                    ),
+                  ),
+                ),
+                if (fullWidth) const Spacer() else const SizedBox(width: 7),
+                Icon(Icons.chevron_right, size: 14, color: ink),
+              ],
             ),
-            if (fullWidth) const Spacer() else const SizedBox(width: 7),
-            Icon(Icons.chevron_right, size: 14, color: ink),
-          ],
+          ),
         ),
       ),
     );
@@ -301,8 +311,9 @@ class _FdaLabel extends StatelessWidget {
     final calories = _n('energy');
     final basis = nutrition.servingBasis;
     final grams = nutrition.totalGrams;
-    final servingGrams =
-        (grams != null && basis != null && basis > 0) ? grams / basis : null;
+    final servingGrams = (grams != null && basis != null && basis > 0)
+        ? grams / basis
+        : null;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: BoxDecoration(
@@ -314,14 +325,17 @@ class _FdaLabel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Nutrition Facts',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                height: 1.05,
-                fontFamily: 'Arimo',
+            Semantics(
+              header: true,
+              child: const Text(
+                'Nutrition Facts',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  height: 1.05,
+                  fontFamily: 'Arimo',
+                ),
               ),
             ),
             if (basis != null)
@@ -330,56 +344,77 @@ class _FdaLabel extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Serving size',
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700)),
-                  Text('${servingGrams.round()}g',
-                      style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Serving size',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    '${servingGrams.round()}g',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             const _Rule(8),
-            const Text('Amount per serving',
-                style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700)),
+            const Text(
+              'Amount per serving',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Calories',
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 21,
-                        fontWeight: FontWeight.w900)),
+                const Text(
+                  'Calories',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
                 Text(
                   calories == null ? '—' : '${calories.amount.round()}',
                   style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      height: 1),
+                    color: Colors.black,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
                 ),
               ],
             ),
             const _Rule(4),
             const Align(
               alignment: Alignment.centerRight,
-              child: Text('% Daily Value*',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700)),
+              child: Text(
+                '% Daily Value*',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             _row('Total Fat', _n('fat'), bold: true, decimals: 1),
             _row('Saturated Fat', _n('saturated'), indent: 1, decimals: 1),
-            _row('Trans Fat', _n('trans'),
-                indent: 1, decimals: 1, italicName: true),
+            _row(
+              'Trans Fat',
+              _n('trans'),
+              indent: 1,
+              decimals: 1,
+              italicName: true,
+            ),
             _row('Cholesterol', _n('cholesterol'), bold: true),
             _row('Sodium', _n('sodium'), bold: true),
             _row('Total Carbohydrate', _n('carbs'), bold: true, decimals: 1),
@@ -489,15 +524,22 @@ class _FdaLabel extends StatelessWidget {
         border: Border(top: BorderSide(color: Colors.black)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text.rich(name)),
-          const Spacer(),
-          Text(
-            dv,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
+          Expanded(child: Text.rich(name)),
+          const SizedBox(width: 8),
+          // Fixed right-aligned column so every %DV lines up flush under the
+          // "% Daily Value*" heading (the FDA label convention).
+          SizedBox(
+            width: 44,
+            child: Text(
+              dv,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

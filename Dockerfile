@@ -53,7 +53,8 @@ RUN mkdir -p public && \
     dart pub global run dart_frog_cli:dart_frog build && \
     mkdir -p /out && \
     dart compile exe build/bin/server.dart -o /out/server && \
-    dart compile exe bin/healthcheck.dart -o /out/healthcheck
+    dart compile exe bin/healthcheck.dart -o /out/healthcheck && \
+    dart compile exe bin/recover.dart -o /out/recover
 
 # ---- Stage 3: slim runtime -------------------------------------------
 FROM debian:bookworm-slim
@@ -67,7 +68,11 @@ RUN apt-get update && \
     useradd --system --uid 1000 --create-home salt && \
     mkdir -p /data && chown salt:salt /data
 WORKDIR /app
-COPY --from=server /out/server /out/healthcheck /app/
+# `recover` ships alongside the server: locked out of every admin account,
+# `docker exec <container> /app/recover` is the way back in, and it needs no
+# Dart SDK in this image. DATA_DIR is already in the environment, so it needs
+# no arguments.
+COPY --from=server /out/server /out/healthcheck /out/recover /app/
 COPY --from=web /src/apps/app/build/web/ /app/public/
 ENV DATA_DIR=/data PORT=8080
 EXPOSE 8080

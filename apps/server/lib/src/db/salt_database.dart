@@ -166,8 +166,11 @@ class SaltDatabase {
           contentHash,
         ]);
       }
-      final rowid = _prepared('SELECT rowid FROM recipes WHERE id = ?')
-          .select([recipe.id]).first['rowid'] as int;
+      final rowid =
+          _prepared(
+                'SELECT rowid FROM recipes WHERE id = ?',
+              ).select([recipe.id]).first['rowid']
+              as int;
       _rebuildIngredients(recipe);
       _rebuildTags(recipe);
       _rebuildFts(recipe, rowid);
@@ -199,8 +202,9 @@ class SaltDatabase {
   }
 
   void _rebuildIngredients(Recipe recipe) {
-    _prepared('DELETE FROM recipe_ingredients WHERE recipe_id = ?')
-        .execute([recipe.id]);
+    _prepared(
+      'DELETE FROM recipe_ingredients WHERE recipe_id = ?',
+    ).execute([recipe.id]);
     final insert = _prepared(
       'INSERT INTO recipe_ingredients '
       '(recipe_id, position, group_name, raw, item, prep, amounts) '
@@ -257,8 +261,9 @@ class SaltDatabase {
   /// Deletes the recipe row plus its FTS entry (side tables cascade).
   /// Returns false when no such recipe exists.
   bool deleteRecipe(String recipeId) {
-    final rows =
-        _prepared('SELECT rowid FROM recipes WHERE id = ?').select([recipeId]);
+    final rows = _prepared(
+      'SELECT rowid FROM recipes WHERE id = ?',
+    ).select([recipeId]);
     if (rows.isEmpty) {
       return false;
     }
@@ -303,9 +308,9 @@ class SaltDatabase {
   }
 
   /// Whether a sources row with this [slug] exists.
-  bool sourceExists(String slug) =>
-      _prepared('SELECT 1 FROM sources WHERE slug = ?')
-          .select([slug]).isNotEmpty;
+  bool sourceExists(String slug) => _prepared(
+    'SELECT 1 FROM sources WHERE slug = ?',
+  ).select([slug]).isNotEmpty;
 
   /// Inserts or updates a source row; [meta] is stored as JSON.
   void upsertSource({
@@ -353,12 +358,14 @@ class SaltDatabase {
     }
     final favoriteFilter = favoritesOnly
         ? ' WHERE EXISTS (SELECT 1 FROM user_favorites f '
-            'WHERE f.user_id = ? AND f.recipe_id = recipes.id)'
+              'WHERE f.user_id = ? AND f.recipe_id = recipes.id)'
         : '';
     final filterParams = favoritesOnly ? [viewerId] : const <Object?>[];
-    final total = _prepared(
-      'SELECT COUNT(*) AS n FROM recipes$favoriteFilter',
-    ).select(filterParams).first['n'] as int;
+    final total =
+        _prepared(
+              'SELECT COUNT(*) AS n FROM recipes$favoriteFilter',
+            ).select(filterParams).first['n']
+            as int;
     final rows = _prepared(
       'SELECT recipes.id, slug, source_slug, title, category, '
       'servings_text, total_min, hero_image, n.calories_per_serving '
@@ -375,8 +382,9 @@ class SaltDatabase {
   List<RecipeCard> _cardsFromRows(ResultSet rows, {int? viewerId}) {
     final ids = [for (final row in rows) row['id'] as String];
     final tagsByRecipe = _tagsFor(ids);
-    final favorites =
-        viewerId == null ? const <String>{} : _favoriteIdsAmong(viewerId, ids);
+    final favorites = viewerId == null
+        ? const <String>{}
+        : _favoriteIdsAmong(viewerId, ids);
     return [
       for (final row in rows)
         RecipeCard(
@@ -499,9 +507,9 @@ class SaltDatabase {
         ? 'ORDER BY n.calories_per_serving, r.title COLLATE NOCASE'
         : 'ORDER BY bm25(recipe_fts), r.title COLLATE NOCASE';
 
-    final total = _prepared('SELECT COUNT(*) AS n $from $where')
-        .select(params)
-        .first['n'] as int;
+    final total =
+        _prepared('SELECT COUNT(*) AS n $from $where').select(params).first['n']
+            as int;
     final rows = _prepared(
       'SELECT r.id, r.slug, r.source_slug, r.title, r.category, '
       'r.servings_text, r.total_min, r.hero_image, '
@@ -577,15 +585,16 @@ class SaltDatabase {
   /// The hash is SHA-256 of the canonical YAML the server last exported, so
   /// comparing it against a library file's text detects external edits.
   String? contentHashOf(String recipeId) {
-    final rows = _prepared('SELECT content_hash FROM recipes WHERE id = ?')
-        .select([recipeId]);
+    final rows = _prepared(
+      'SELECT content_hash FROM recipes WHERE id = ?',
+    ).select([recipeId]);
     return rows.isEmpty ? null : rows.first['content_hash'] as String;
   }
 
   /// id, source slug, and content hash of every recipe — the DB side of the
   /// library reconciliation scan.
   List<({String id, String sourceSlug, String contentHash})>
-      listRecipeHashes() {
+  listRecipeHashes() {
     final rows = _db.select(
       'SELECT id, source_slug, content_hash FROM recipes ORDER BY id',
     );
@@ -601,8 +610,9 @@ class SaltDatabase {
 
   /// The settings-table value for [key], or null when unset.
   String? getSetting(String key) {
-    final rows =
-        _prepared('SELECT value FROM settings WHERE key = ?').select([key]);
+    final rows = _prepared(
+      'SELECT value FROM settings WHERE key = ?',
+    ).select([key]);
     return rows.isEmpty ? null : rows.first['value'] as String;
   }
 
@@ -612,6 +622,15 @@ class SaltDatabase {
       'INSERT INTO settings (key, value) VALUES (?, ?) '
       'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
     ).execute([key, value]);
+  }
+
+  /// Removes the settings-table row for [key]; a no-op when it is unset.
+  ///
+  /// Unsetting differs from storing an empty value: [getSetting] then reports
+  /// null, which is how single-use secrets (the recovery code) are consumed
+  /// rather than left behind as a spent row.
+  void deleteSetting(String key) {
+    _prepared('DELETE FROM settings WHERE key = ?').execute([key]);
   }
 
   // --------------------------------------------------------------------
@@ -745,6 +764,12 @@ class SaltDatabase {
       ingredientsHash,
       _utcNowIso(),
     ]);
+  }
+
+  /// Every recipe id, ordered — for whole-library maintenance passes.
+  List<String> allRecipeIds() {
+    final rows = _db.select('SELECT id FROM recipes ORDER BY id');
+    return [for (final row in rows) row['id'] as String];
   }
 
   /// Recipe ids that have no computed nutrition yet (bulk-job work list).
@@ -907,10 +932,9 @@ class SaltDatabase {
   // --------------------------------------------------------------------
 
   /// Whether [userId] has favorited [recipeId].
-  bool isFavorite({required int userId, required String recipeId}) =>
-      _prepared(
-        'SELECT 1 FROM user_favorites WHERE user_id = ? AND recipe_id = ?',
-      ).select([userId, recipeId]).isNotEmpty;
+  bool isFavorite({required int userId, required String recipeId}) => _prepared(
+    'SELECT 1 FROM user_favorites WHERE user_id = ? AND recipe_id = ?',
+  ).select([userId, recipeId]).isNotEmpty;
 
   /// Adds or removes the favorite mark; both directions are idempotent.
   void setFavorite({
@@ -969,11 +993,14 @@ class SaltDatabase {
   // this layer and must never be logged.
   // --------------------------------------------------------------------
 
-  static const _userColumns = 'id, username, password_hash, role, '
+  static const _userColumns =
+      'id, username, password_hash, role, '
       'must_change_password, disabled, created_at, last_active_at';
-  static const _sessionColumns = 'token_hash, user_id, created_at, '
+  static const _sessionColumns =
+      'token_hash, user_id, created_at, '
       'expires_at, last_seen_at, remember, user_agent';
-  static const _apiTokenColumns = 'id, user_id, name, prefix, scope, '
+  static const _apiTokenColumns =
+      'id, user_id, name, prefix, scope, '
       'created_at, last_used_at, revoked_at';
 
   /// Current time as UTC ISO-8601 text, the storage format for timestamps
@@ -981,36 +1008,36 @@ class SaltDatabase {
   static String _utcNowIso() => DateTime.now().toUtc().toIso8601String();
 
   static UserRow _userRow(Row row) => UserRow(
-        id: row['id'] as int,
-        username: row['username'] as String,
-        passwordHash: row['password_hash'] as String,
-        role: row['role'] as String,
-        mustChangePassword: (row['must_change_password'] as int) != 0,
-        disabled: (row['disabled'] as int) != 0,
-        createdAt: row['created_at'] as String,
-        lastActiveAt: row['last_active_at'] as String?,
-      );
+    id: row['id'] as int,
+    username: row['username'] as String,
+    passwordHash: row['password_hash'] as String,
+    role: row['role'] as String,
+    mustChangePassword: (row['must_change_password'] as int) != 0,
+    disabled: (row['disabled'] as int) != 0,
+    createdAt: row['created_at'] as String,
+    lastActiveAt: row['last_active_at'] as String?,
+  );
 
   static SessionRow _sessionRow(Row row) => SessionRow(
-        tokenHash: row['token_hash'] as String,
-        userId: row['user_id'] as int,
-        expiresAt: DateTime.parse(row['expires_at'] as String),
-        remember: (row['remember'] as int) != 0,
-        createdAt: row['created_at'] as String,
-        lastSeenAt: row['last_seen_at'] as String?,
-        userAgent: row['user_agent'] as String?,
-      );
+    tokenHash: row['token_hash'] as String,
+    userId: row['user_id'] as int,
+    expiresAt: DateTime.parse(row['expires_at'] as String),
+    remember: (row['remember'] as int) != 0,
+    createdAt: row['created_at'] as String,
+    lastSeenAt: row['last_seen_at'] as String?,
+    userAgent: row['user_agent'] as String?,
+  );
 
   static ApiTokenRow _apiTokenRow(Row row) => ApiTokenRow(
-        id: row['id'] as int,
-        userId: row['user_id'] as int,
-        name: row['name'] as String,
-        prefix: row['prefix'] as String,
-        scope: row['scope'] as String,
-        createdAt: row['created_at'] as String,
-        lastUsedAt: row['last_used_at'] as String?,
-        revokedAt: row['revoked_at'] as String?,
-      );
+    id: row['id'] as int,
+    userId: row['user_id'] as int,
+    name: row['name'] as String,
+    prefix: row['prefix'] as String,
+    scope: row['scope'] as String,
+    createdAt: row['created_at'] as String,
+    lastUsedAt: row['last_used_at'] as String?,
+    revokedAt: row['revoked_at'] as String?,
+  );
 
   /// Total number of users.
   int userCount() =>
@@ -1087,29 +1114,27 @@ class SaltDatabase {
 
   /// Sets the user's role (`admin` or `member`).
   void setUserRole(int userId, String role) {
-    _prepared('UPDATE users SET role = ? WHERE id = ?')
-        .execute([role, userId]);
+    _prepared('UPDATE users SET role = ? WHERE id = ?').execute([role, userId]);
   }
 
   /// Enables or disables a user. Disabling also deletes all of the user's
   /// sessions (in the same transaction) so access ends immediately.
   void setUserDisabled(int userId, {required bool disabled}) {
     if (!disabled) {
-      _prepared('UPDATE users SET disabled = 0 WHERE id = ?')
-          .execute([userId]);
+      _prepared('UPDATE users SET disabled = 0 WHERE id = ?').execute([userId]);
       return;
     }
     _inTransaction(() {
-      _prepared('UPDATE users SET disabled = 1 WHERE id = ?')
-          .execute([userId]);
+      _prepared('UPDATE users SET disabled = 1 WHERE id = ?').execute([userId]);
       _prepared('DELETE FROM sessions WHERE user_id = ?').execute([userId]);
     });
   }
 
   /// Sets the user's `last_active_at` to now.
   void touchUserActivity(int userId) {
-    _prepared('UPDATE users SET last_active_at = ? WHERE id = ?')
-        .execute([_utcNowIso(), userId]);
+    _prepared(
+      'UPDATE users SET last_active_at = ? WHERE id = ?',
+    ).execute([_utcNowIso(), userId]);
   }
 
   /// Inserts a session row. [tokenHash] is the SHA-256 of the opaque session
@@ -1146,8 +1171,9 @@ class SaltDatabase {
   /// [extendTo] when given (sliding "remember me" expiry).
   void touchSession(String tokenHash, {DateTime? extendTo}) {
     if (extendTo == null) {
-      _prepared('UPDATE sessions SET last_seen_at = ? WHERE token_hash = ?')
-          .execute([_utcNowIso(), tokenHash]);
+      _prepared(
+        'UPDATE sessions SET last_seen_at = ? WHERE token_hash = ?',
+      ).execute([_utcNowIso(), tokenHash]);
       return;
     }
     _prepared(
@@ -1162,8 +1188,7 @@ class SaltDatabase {
 
   /// Deletes the session with [tokenHash] (logout); no-op when absent.
   void deleteSession(String tokenHash) {
-    _prepared('DELETE FROM sessions WHERE token_hash = ?')
-        .execute([tokenHash]);
+    _prepared('DELETE FROM sessions WHERE token_hash = ?').execute([tokenHash]);
   }
 
   /// All sessions belonging to [userId], newest first.
@@ -1180,8 +1205,9 @@ class SaltDatabase {
   /// seconds, so a live session is never deleted early; an expired one may
   /// linger for under a second.
   void deleteExpiredSessions() {
-    _prepared('DELETE FROM sessions WHERE datetime(expires_at) < datetime(?)')
-        .execute([_utcNowIso()]);
+    _prepared(
+      'DELETE FROM sessions WHERE datetime(expires_at) < datetime(?)',
+    ).execute([_utcNowIso()]);
   }
 
   /// Inserts an API token row and returns its id. [tokenHash] is the SHA-256
@@ -1211,8 +1237,9 @@ class SaltDatabase {
 
   /// Sets the token's `last_used_at` to now.
   void touchApiToken(int id) {
-    _prepared('UPDATE api_tokens SET last_used_at = ? WHERE id = ?')
-        .execute([_utcNowIso(), id]);
+    _prepared(
+      'UPDATE api_tokens SET last_used_at = ? WHERE id = ?',
+    ).execute([_utcNowIso(), id]);
   }
 
   /// All API tokens belonging to [userId] (revoked included), newest first.
@@ -1234,6 +1261,19 @@ class SaltDatabase {
       'WHERE id = ? AND user_id = ? AND revoked_at IS NULL',
     ).execute([_utcNowIso(), id, userId]);
     return _db.updatedRows > 0;
+  }
+
+  /// Revokes every live API token belonging to [userId]; returns how many.
+  ///
+  /// For account recovery: a PAT is a standalone credential that survives a
+  /// password reset, so leaving them live would hand whoever caused the
+  /// lockout a way straight back in.
+  int revokeAllApiTokens(int userId) {
+    _prepared(
+      'UPDATE api_tokens SET revoked_at = ? '
+      'WHERE user_id = ? AND revoked_at IS NULL',
+    ).execute([_utcNowIso(), userId]);
+    return _db.updatedRows;
   }
 }
 
@@ -1372,18 +1412,18 @@ class IngredientMatchRow {
 
   /// Decodes a database row.
   factory IngredientMatchRow.fromRow(Row row) => IngredientMatchRow(
-        recipeId: row['recipe_id'] as String,
-        position: row['position'] as int,
-        raw: row['raw'] as String,
-        fdcId: row['fdc_id'] as int?,
-        description: row['description'] as String?,
-        dataType: row['data_type'] as String?,
-        confidence: (row['confidence'] as num).toDouble(),
-        grams: (row['grams'] as num?)?.toDouble(),
-        gramSource: row['gram_source'] as String?,
-        status: row['status'] as String,
-        updatedAt: row['updated_at'] as String?,
-      );
+    recipeId: row['recipe_id'] as String,
+    position: row['position'] as int,
+    raw: row['raw'] as String,
+    fdcId: row['fdc_id'] as int?,
+    description: row['description'] as String?,
+    dataType: row['data_type'] as String?,
+    confidence: (row['confidence'] as num).toDouble(),
+    grams: (row['grams'] as num?)?.toDouble(),
+    gramSource: row['gram_source'] as String?,
+    status: row['status'] as String,
+    updatedAt: row['updated_at'] as String?,
+  );
 
   /// Recipe the line belongs to.
   final String recipeId;
@@ -1430,20 +1470,18 @@ class IngredientMatchRow {
     String? gramSource,
     bool clearGramSource = false,
     String? status,
-  }) =>
-      IngredientMatchRow(
-        recipeId: recipeId,
-        position: position,
-        raw: raw,
-        fdcId: clearFdcId ? null : (fdcId ?? this.fdcId),
-        description: description ?? this.description,
-        dataType: dataType ?? this.dataType,
-        confidence: confidence ?? this.confidence,
-        grams: clearGrams ? null : (grams ?? this.grams),
-        gramSource:
-            clearGramSource ? null : (gramSource ?? this.gramSource),
-        status: status ?? this.status,
-      );
+  }) => IngredientMatchRow(
+    recipeId: recipeId,
+    position: position,
+    raw: raw,
+    fdcId: clearFdcId ? null : (fdcId ?? this.fdcId),
+    description: description ?? this.description,
+    dataType: dataType ?? this.dataType,
+    confidence: confidence ?? this.confidence,
+    grams: clearGrams ? null : (grams ?? this.grams),
+    gramSource: clearGramSource ? null : (gramSource ?? this.gramSource),
+    status: status ?? this.status,
+  );
 }
 
 /// One row of `recipe_nutrition`.
@@ -1464,18 +1502,17 @@ class RecipeNutritionRow {
 
   /// Decodes a database row.
   factory RecipeNutritionRow.fromRow(Row row) => RecipeNutritionRow(
-        recipeId: row['recipe_id'] as String,
-        servingBasis: row['serving_basis'] as int?,
-        caloriesPerServing:
-            (row['calories_per_serving'] as num?)?.toDouble(),
-        nutrientsJson: row['nutrients'] as String,
-        totalGrams: (row['total_grams'] as num?)?.toDouble(),
-        matchedCount: row['matched_count'] as int,
-        totalCount: row['total_count'] as int,
-        status: row['status'] as String,
-        ingredientsHash: row['ingredients_hash'] as String,
-        computedAt: row['computed_at'] as String?,
-      );
+    recipeId: row['recipe_id'] as String,
+    servingBasis: row['serving_basis'] as int?,
+    caloriesPerServing: (row['calories_per_serving'] as num?)?.toDouble(),
+    nutrientsJson: row['nutrients'] as String,
+    totalGrams: (row['total_grams'] as num?)?.toDouble(),
+    matchedCount: row['matched_count'] as int,
+    totalCount: row['total_count'] as int,
+    status: row['status'] as String,
+    ingredientsHash: row['ingredients_hash'] as String,
+    computedAt: row['computed_at'] as String?,
+  );
 
   /// Recipe the totals belong to.
   final String recipeId;

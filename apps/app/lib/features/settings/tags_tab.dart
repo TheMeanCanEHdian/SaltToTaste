@@ -199,11 +199,14 @@ class _TagsTabState extends State<TagsTab> {
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 260),
-              child: TextField(
-                controller: _filter,
-                onChanged: _cubit.setFilter,
-                style: const TextStyle(fontSize: 14),
-                decoration: _outlinedFieldDecoration(hint: 'Filter tags…'),
+              child: Semantics(
+                label: 'Filter tags',
+                child: TextField(
+                  controller: _filter,
+                  onChanged: _cubit.setFilter,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: _outlinedFieldDecoration(hint: 'Filter tags…'),
+                ),
               ),
             ),
           ),
@@ -213,6 +216,7 @@ class _TagsTabState extends State<TagsTab> {
             child: DropdownButtonFormField<TagSort>(
               initialValue: state.sort,
               decoration: const InputDecoration(
+                labelText: 'Sort',
                 isDense: true,
                 border: OutlineInputBorder(),
               ),
@@ -276,8 +280,12 @@ class _TagRow extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: SaltColors.maroon,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: Size.zero,
-              textStyle: const TextStyle(fontSize: 12.5),
+              minimumSize: denseActionMinSize(context),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle: const TextStyle(
+                fontSize: 12.5,
+                fontFamily: 'OpenSans',
+              ),
             ),
             onPressed: cubit.closeEditor,
             child: const Text('Editing…'),
@@ -287,8 +295,12 @@ class _TagRow extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: SaltColors.ink,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: Size.zero,
-              textStyle: const TextStyle(fontSize: 12.5),
+              minimumSize: denseActionMinSize(context),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle: const TextStyle(
+                fontSize: 12.5,
+                fontFamily: 'OpenSans',
+              ),
             ),
             onPressed: () => cubit.openEditor(tag),
             child: const Text('Edit'),
@@ -429,12 +441,15 @@ class _StyleEditorState extends State<_StyleEditor> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _FieldLabel('Icon'),
-        TextField(
-          controller: _iconSearch,
-          onChanged: (value) => setState(() => _query = value),
-          style: const TextStyle(fontSize: 13.5),
-          decoration: _outlinedFieldDecoration(
-            hint: 'Search Lucide icons — e.g. cake, fish, leaf…',
+        Semantics(
+          label: 'Search icons',
+          child: TextField(
+            controller: _iconSearch,
+            onChanged: (value) => setState(() => _query = value),
+            style: const TextStyle(fontSize: 13.5),
+            decoration: _outlinedFieldDecoration(
+              hint: 'Search Lucide icons — e.g. cake, fish, leaf…',
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -592,7 +607,11 @@ class _StyleEditorState extends State<_StyleEditor> {
     final clear = TextButton(
       style: TextButton.styleFrom(
         foregroundColor: SaltColors.muted,
-        textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'OpenSans',
+        ),
       ),
       onPressed: state.saving ? null : cubit.clearStyle,
       child: const Text('Clear style — back to default'),
@@ -657,34 +676,39 @@ class _IconCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cell = InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? SaltColors.chip : null,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected ? SaltColors.maroon : Colors.transparent,
-            width: 1.5,
+    final cell = Semantics(
+      button: true,
+      selected: selected,
+      label: name == null ? 'No icon' : null,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? SaltColors.chip : null,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected ? SaltColors.maroon : Colors.transparent,
+              width: 1.5,
+            ),
           ),
-        ),
-        child: name == null
-            ? const Text(
-                'NONE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                  color: SaltColors.muted,
+          child: name == null
+              ? const Text(
+                  'NONE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    color: SaltColors.muted,
+                  ),
+                )
+              : Icon(
+                  lucideIconsByName[name],
+                  size: 19,
+                  color: selected ? SaltColors.chipInk : SaltColors.ink,
                 ),
-              )
-            : Icon(
-                lucideIconsByName[name],
-                size: 19,
-                color: selected ? SaltColors.chipInk : SaltColors.ink,
-              ),
+        ),
       ),
     );
     if (name == null) {
@@ -712,25 +736,40 @@ class _SwatchChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-        decoration: BoxDecoration(
-          color: colorFromHex(preset.bg),
+    // Selected state is a maroon border only; expose it to screen readers,
+    // and pad the ~22px pill up to a real (≥24px, larger on touch) target.
+    final targetPad = isCompactWidth(context) ? 9.0 : 4.0;
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: preset.name,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? SaltColors.maroon : Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          preset.name,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: colorFromHex(preset.ink),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: targetPad),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: colorFromHex(preset.bg),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: selected ? SaltColors.maroon : Colors.transparent,
+                  width: 1.5,
+                ),
+              ),
+              child: ExcludeSemantics(
+                child: Text(
+                  preset.name,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorFromHex(preset.ink),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -784,15 +823,18 @@ class _HexField extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: TextField(
-                  controller: controller,
-                  onChanged: onChanged,
-                  style: const TextStyle(fontSize: 13),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    isCollapsed: true,
-                    border: InputBorder.none,
-                    hintText: '#RRGGBB',
+                child: Semantics(
+                  label: '$label, hex color',
+                  child: TextField(
+                    controller: controller,
+                    onChanged: onChanged,
+                    style: const TextStyle(fontSize: 13),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      isCollapsed: true,
+                      border: InputBorder.none,
+                      hintText: '#RRGGBB',
+                    ),
                   ),
                 ),
               ),

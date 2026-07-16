@@ -10,8 +10,7 @@ import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 /// Wide screens get a centered dialog; phones a full-height bottom sheet.
 Future<void> showReviewSheet(BuildContext context, {required bool isAdmin}) {
   final cubit = context.read<NutritionCubit>()..loadMatches();
-  final wide =
-      MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
+  final wide = MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
   if (!wide) {
     return showModalBottomSheet<void>(
       context: context,
@@ -52,66 +51,76 @@ class _ReviewSheet extends StatelessWidget {
     final body = ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 760, maxHeight: 620),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 12, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 12, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: const Text(
                           'Ingredient matches',
                           style: TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.w700),
-                        ),
-                        if (_summaryLine(state) != null)
-                          Text(
-                            _summaryLine(state)!,
-                            style: const TextStyle(
-                                fontSize: 12, color: SaltColors.muted),
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
                           ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Close',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, size: 19),
-                  ),
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
-              child: Text(
-                'How each ingredient line was matched to USDA FoodData '
-                'Central and converted to grams. Overrides persist and '
-                'totals recompute instantly — no new lookups.',
-                style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
-              ),
-            ),
-            if (state.error != null && matches != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                child: Text(
-                  state.error!,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: SaltColors.errInk,
-                    fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (_summaryLine(state) != null)
+                        Text(
+                          _summaryLine(state)!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: SaltColors.muted,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
+                IconButton(
+                  tooltip: 'Close',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close, size: 19),
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+            child: Text(
+              'How each ingredient line was matched to USDA FoodData '
+              'Central and converted to grams. The pill on the right shows '
+              'the match confidence; lines marked "not matched" don\'t count '
+              'toward the totals. Overrides persist and totals recompute '
+              'instantly — no new lookups.',
+              style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
+            ),
+          ),
+          if (state.error != null && matches != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                state.error!,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: SaltColors.errInk,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            if (isAdmin && state.nutrition != null &&
-                state.nutrition!.servingBasis != null)
-              _BasisRow(state: state),
-            const Divider(height: 1, color: SaltColors.hairline),
-            Expanded(
-              child: matches == null
-                  ? (state.error != null
+            ),
+          if (isAdmin &&
+              state.nutrition != null &&
+              state.nutrition!.servingBasis != null)
+            _BasisRow(state: state),
+          const Divider(height: 1, color: SaltColors.hairline),
+          Expanded(
+            child: matches == null
+                ? (state.error != null
                       // A failed load is not "still loading": say so and
                       // offer a retry instead of a forever-spinner.
                       ? Center(
@@ -139,22 +148,23 @@ class _ReviewSheet extends StatelessWidget {
                         )
                       : const Center(
                           child: CircularProgressIndicator(
-                              color: SaltColors.maroon),
+                            color: SaltColors.maroon,
+                          ),
                         ))
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                      itemCount: matches.length,
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 18, color: SaltColors.hairline),
-                      itemBuilder: (context, index) => _MatchRow(
-                        match: matches[index],
-                        isAdmin: isAdmin,
-                        busy: state.overridingPosition != null,
-                      ),
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                    itemCount: matches.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 18, color: SaltColors.hairline),
+                    itemBuilder: (context, index) => _MatchRow(
+                      match: matches[index],
+                      isAdmin: isAdmin,
+                      busy: state.overridingPosition != null,
                     ),
-            ),
-          ],
-        ),
+                  ),
+          ),
+        ],
+      ),
     );
     if (asBottomSheet) {
       return body;
@@ -175,8 +185,7 @@ class _ReviewSheet extends StatelessWidget {
           '${nutrition.lowConfidence > 0 ? ' (${nutrition.lowConfidence} low-confidence)' : ''}',
     ];
     final skipped =
-        state.matches?.where((match) => match.status == 'skipped').length ??
-            0;
+        state.matches?.where((match) => match.status == 'skipped').length ?? 0;
     if (skipped > 0) {
       parts.add('$skipped skipped');
     }
@@ -232,9 +241,7 @@ class _BasisRow extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              busy
-                  ? 'Recomputing…'
-                  : 'Totals divide by this — no new lookups.',
+              busy ? 'Recomputing…' : 'Totals divide by this — no new lookups.',
               style: const TextStyle(fontSize: 11.5, color: SaltColors.muted),
             ),
           ),
@@ -256,13 +263,13 @@ class _MatchRow extends StatelessWidget {
   final bool busy;
 
   String get _gramSourceLabel => switch (match.gramSource) {
-        'weight' => 'weight ✓ direct',
-        'portion' => 'household portion',
-        'density' => 'density est.',
-        'piece' => 'piece est.',
-        'override' => 'set by hand',
-        _ => 'no grams',
-      };
+    'weight' => 'weight ✓ direct',
+    'portion' => 'household portion',
+    'density' => 'density est.',
+    'piece' => 'piece est.',
+    'override' => 'set by hand',
+    _ => 'no grams',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +287,9 @@ class _MatchRow extends StatelessWidget {
                 child: Text(
                   match.raw,
                   style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w600),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -288,54 +297,87 @@ class _MatchRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 5),
-          Wrap(
-            spacing: 8,
-            runSpacing: 5,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (match.description != null)
-                Text(
-                  match.description!,
-                  style: const TextStyle(fontSize: 12.5),
-                ),
-              if (match.dataType != null && match.dataType!.isNotEmpty)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: match.dataType == 'Foundation'
-                        ? SaltColors.okBg
-                        : SaltColors.chipNeutral,
-                    borderRadius: BorderRadius.circular(5),
+          const SizedBox(height: 2),
+          if (match.status == 'unmatched')
+            // No USDA food — make it explicit that this line contributes
+            // nothing, rather than showing a near-empty row.
+            const Text(
+              'Not counted — no USDA match found',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: SaltColors.errInk,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 5,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                // The matched USDA food, labelled so it reads as the match.
+                if (match.description != null)
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'matched to ',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: SaltColors.muted,
+                          ),
+                        ),
+                        TextSpan(
+                          text: match.description!,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Text(
-                    match.dataType!,
-                    style: TextStyle(
+                if (match.dataType != null && match.dataType!.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: match.dataType == 'Foundation'
+                          ? SaltColors.okBg
+                          : SaltColors.chipNeutral,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      match.dataType!,
+                      style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: match.dataType == 'Foundation'
                             ? SaltColors.okInk
-                            : SaltColors.muted),
+                            : SaltColors.muted,
+                      ),
+                    ),
                   ),
+                Text(
+                  match.grams == null
+                      ? '· $_gramSourceLabel'
+                      : '· ${match.grams!.toStringAsFixed(match.grams! < 10 ? 1 : 0)} g '
+                            '($_gramSourceLabel)',
+                  style: const TextStyle(fontSize: 12, color: SaltColors.muted),
                 ),
-              Text(
-                match.grams == null
-                    ? '· $_gramSourceLabel'
-                    : '· ${match.grams!.toStringAsFixed(match.grams! < 10 ? 1 : 0)} g '
-                        '($_gramSourceLabel)',
-                style:
-                    const TextStyle(fontSize: 12, color: SaltColors.muted),
-              ),
-              if (skipped)
-                const Text(
-                  '· skipped',
-                  style: TextStyle(
+                if (skipped)
+                  const Text(
+                    '· skipped',
+                    style: TextStyle(
                       fontSize: 12,
                       color: SaltColors.muted,
-                      fontStyle: FontStyle.italic),
-                ),
-            ],
-          ),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+              ],
+            ),
           if (isAdmin) ...[
             const SizedBox(height: 7),
             Wrap(
@@ -348,8 +390,7 @@ class _MatchRow extends StatelessWidget {
                     label: 'Confirm',
                     onPressed: busy
                         ? null
-                        : () =>
-                            cubit.override(match.position, confirmed: true),
+                        : () => cubit.override(match.position, confirmed: true),
                   ),
                 if (match.candidates.isNotEmpty)
                   _SmallAction(
@@ -381,8 +422,7 @@ class _MatchRow extends StatelessWidget {
                     label: 'Include again',
                     onPressed: busy
                         ? null
-                        : () =>
-                            cubit.override(match.position, confirmed: true),
+                        : () => cubit.override(match.position, confirmed: true),
                   ),
               ],
             ),
@@ -420,7 +460,9 @@ class _MatchRow extends StatelessWidget {
                     '${candidate.dataType} · '
                     '${(candidate.confidence * 100).round()}%',
                     style: const TextStyle(
-                        fontSize: 11.5, color: SaltColors.muted),
+                      fontSize: 11.5,
+                      color: SaltColors.muted,
+                    ),
                   ),
                 ],
               ),
@@ -452,17 +494,23 @@ class _MatchRow extends StatelessWidget {
     final grams = await showDialog<double>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          'Grams for "${match.raw}"',
-          style: const TextStyle(fontSize: 15),
+        title: Semantics(
+          header: true,
+          child: Text(
+            'Grams for "${match.raw}"',
+            style: const TextStyle(fontSize: 15),
+          ),
         ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            suffixText: 'g',
-            hintText: 'e.g. 250',
+        content: Semantics(
+          label: 'Grams',
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              suffixText: 'g',
+              hintText: 'e.g. 250',
+            ),
           ),
         ),
         actions: [
@@ -492,23 +540,25 @@ class _ConfidencePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The label names the match state plainly — "high/medium/low" alone read
+    // as mystery ratings; these say what they mean (and unmatched lines are
+    // called out so it's clear they don't count toward the totals).
     final (label, background, foreground) = switch (match.status) {
       'skipped' => ('skipped', SaltColors.chipNeutral, SaltColors.muted),
-      'unmatched' => ('no match', SaltColors.errBg, SaltColors.errInk),
+      'unmatched' => ('not matched', SaltColors.errBg, SaltColors.errInk),
       'overridden' ||
-      'confirmed' =>
-        ('reviewed', SaltColors.okBg, SaltColors.okInk),
+      'confirmed' => ('reviewed ✓', SaltColors.okBg, SaltColors.okInk),
       _ when match.confidence >= 0.75 => (
-          'high',
-          SaltColors.okBg,
-          SaltColors.okInk
-        ),
+        'strong match',
+        SaltColors.okBg,
+        SaltColors.okInk,
+      ),
       _ when match.confidence >= 0.5 => (
-          'medium',
-          SaltColors.warnBg,
-          SaltColors.warnInk
-        ),
-      _ => ('low', SaltColors.errBg, SaltColors.errInk),
+        'likely — check',
+        SaltColors.warnBg,
+        SaltColors.warnInk,
+      ),
+      _ => ('weak — check', SaltColors.errBg, SaltColors.errInk),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -545,8 +595,11 @@ class _SmallAction extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        textStyle:
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'OpenSans',
+        ),
       ),
       onPressed: onPressed,
       icon: Icon(icon, size: 14),

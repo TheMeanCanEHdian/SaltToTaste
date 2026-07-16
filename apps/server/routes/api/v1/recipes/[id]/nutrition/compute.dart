@@ -1,18 +1,20 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
-import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
 import 'package:salt_server/src/middleware/auth.dart';
-import 'package:salt_server/src/nutrition/engine.dart';
+import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 
 /// `POST /api/v1/recipes/<id-or-slug>/nutrition/compute` (admin, full
-/// scope) — match every ingredient line against FoodData Central and store
-/// the per-serving totals. User overrides on unchanged lines survive.
+/// scope) — start a background match+compute over every ingredient line and
+/// return `{job_id}` (202). The client polls `/nutrition/jobs/<id>` for
+/// progress; the label lands via `GET .../nutrition` when the job finishes.
+/// User overrides on unchanged lines survive the recompute.
 ///
-/// Synchronous: a typical recipe costs a handful of (cached, rate-limited)
-/// FDC requests. `503`-flavored validation when no API key is configured.
+/// Asynchronous so the request returns immediately instead of holding a
+/// connection open (and erroring) for the seconds a cold compute can take.
+/// Single-flight per recipe: a second call while one runs re-attaches to it.
 Future<Response> onRequest(RequestContext context, String id) async {
   requireMethods(context, {HttpMethod.post});
   final user = requireUser(context);
@@ -23,14 +25,10 @@ Future<Response> onRequest(RequestContext context, String id) async {
   if (found == null) {
     throw NotFoundException('recipe not found: $id');
   }
-  try {
-    await matchAndCompute(
-      db,
-      context.read<NutritionProvider>(),
-      found.recipe,
-    );
-  } on NutritionProviderException catch (exception) {
-    throw ValidationException(exception.message);
-  }
-  return Response.json(body: nutritionBody(db, found.recipe));
+  final jobId = startRecipeComputeJob(
+    db,
+    context.read<NutritionProvider>(),
+    found.recipe,
+  );
+  return Response.json(statusCode: 202, body: {'job_id': jobId});
 }

@@ -12,10 +12,8 @@ Future<void> showPasteDialog(BuildContext context) {
   final cubit = context.read<EditorCubit>();
   return showDialog<void>(
     context: context,
-    builder: (context) => BlocProvider.value(
-      value: cubit,
-      child: const _PasteDialog(),
-    ),
+    builder: (context) =>
+        BlocProvider.value(value: cubit, child: const _PasteDialog()),
   );
 }
 
@@ -50,7 +48,7 @@ class _PasteDialogState extends State<_PasteDialog> {
     final groups = _lines.where((line) => line.endsWith(':')).length;
     final ingredients = _lines.length - groups;
     return AlertDialog(
-      title: const Text('Paste ingredients'),
+      title: Semantics(header: true, child: const Text('Paste ingredients')),
       content: SizedBox(
         width: 560,
         child: Column(
@@ -63,16 +61,20 @@ class _PasteDialogState extends State<_PasteDialog> {
               style: TextStyle(fontSize: 13, color: SaltColors.muted),
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: _controller,
-              onChanged: _changed,
-              minLines: 4,
-              maxLines: 8,
-              autofocus: true,
-              style: const TextStyle(fontSize: 13.5),
-              decoration: const InputDecoration(
-                hintText: '6 ounces bittersweet chocolate, chopped coarse\n'
-                    '¾ cup boiling water\nFor the glaze:',
+            Semantics(
+              label: 'Ingredient list, one per line',
+              child: TextField(
+                controller: _controller,
+                onChanged: _changed,
+                minLines: 4,
+                maxLines: 8,
+                autofocus: true,
+                style: const TextStyle(fontSize: 13.5),
+                decoration: const InputDecoration(
+                  hintText:
+                      '6 ounces bittersweet chocolate, chopped coarse\n'
+                      '¾ cup boiling water\nFor the glaze:',
+                ),
               ),
             ),
             if (_lines.isNotEmpty) ...[
@@ -112,7 +114,7 @@ class _PasteDialogState extends State<_PasteDialog> {
             groups == 0
                 ? 'Add $ingredients ingredient${ingredients == 1 ? '' : 's'}'
                 : 'Add $ingredients ingredient${ingredients == 1 ? '' : 's'} '
-                    '+ $groups group${groups == 1 ? '' : 's'}',
+                      '+ $groups group${groups == 1 ? '' : 's'}',
           ),
         ),
       ],
@@ -136,29 +138,26 @@ class _PreviewRow extends StatelessWidget {
       );
     }
     final parsed = parseIngredientLine(line);
-    final primary = parsed.amounts.where((a) => a.primary).firstOrNull ??
+    final primary =
+        parsed.amounts.where((a) => a.primary).firstOrNull ??
         parsed.amounts.firstOrNull;
     final detail = primary == null
         ? null
         : '${primary.measure.name} · ${primary.quantity}'
-            '${primary.unit == null ? '' : ' ${primary.unit}'}';
+              '${primary.unit == null ? '' : ' ${primary.unit}'}';
     return _row(
       chip: switch (parsed.confidence) {
-        ParseConfidence.parsed => (
-            'parsed',
-            SaltColors.okBg,
-            SaltColors.okInk,
-          ),
+        ParseConfidence.parsed => ('parsed', SaltColors.okBg, SaltColors.okInk),
         ParseConfidence.check => (
-            'check',
-            SaltColors.warnBg,
-            SaltColors.warnInk,
-          ),
+          'check',
+          SaltColors.warnBg,
+          SaltColors.warnInk,
+        ),
         ParseConfidence.none => (
-            'no amount',
-            SaltColors.chipNeutral,
-            SaltColors.muted,
-          ),
+          'no amount',
+          SaltColors.chipNeutral,
+          SaltColors.muted,
+        ),
       },
       text: line,
       bold: false,
@@ -207,8 +206,7 @@ class _PreviewRow extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               detail,
-              style:
-                  const TextStyle(fontSize: 12, color: SaltColors.muted),
+              style: const TextStyle(fontSize: 12, color: SaltColors.muted),
             ),
           ],
         ],

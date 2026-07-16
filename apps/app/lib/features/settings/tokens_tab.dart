@@ -61,9 +61,9 @@ class _TokensTabState extends State<TokensTab> {
     });
     try {
       final result = await context.read<AuthRepository>().createToken(
-            name: _name.text.trim(),
-            scope: _scope,
-          );
+        name: _name.text.trim(),
+        scope: _scope,
+      );
       if (!mounted) {
         return;
       }
@@ -102,7 +102,8 @@ class _TokensTabState extends State<TokensTab> {
       children: [
         const PaneTitle(
           'API tokens',
-          description: 'Tokens act as you — the credential for native apps '
+          description:
+              'Tokens act as you — the credential for native apps '
               'and scripts. Revoke any you no longer use.',
         ),
         if (_tokens == null && _error != null)
@@ -114,9 +115,7 @@ class _TokensTabState extends State<TokensTab> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: SaltColors.hairline),
-                ),
+                border: Border(bottom: BorderSide(color: SaltColors.hairline)),
               ),
               child: Row(
                 children: [
@@ -148,7 +147,7 @@ class _TokensTabState extends State<TokensTab> {
                           token.revoked
                               ? 'Revoked'
                               : 'stt_pat_${token.prefix}…  ·  last used '
-                                  '${token.lastUsedAt ?? 'never'}',
+                                    '${token.lastUsedAt ?? 'never'}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: SaltColors.muted,
@@ -201,6 +200,7 @@ class _TokensTabState extends State<TokensTab> {
                       child: DropdownButtonFormField<String>(
                         initialValue: _scope,
                         decoration: const InputDecoration(
+                          labelText: 'Scope',
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),

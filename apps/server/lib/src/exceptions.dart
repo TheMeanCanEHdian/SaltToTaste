@@ -28,7 +28,7 @@ abstract base class AppException implements Exception {
 final class NotFoundException extends AppException {
   /// Creates a not-found exception with the client-facing [message].
   const NotFoundException(String message)
-      : super(404, ApiErrorCodes.notFound, message);
+    : super(404, ApiErrorCodes.notFound, message);
 }
 
 /// The request was well-formed but semantically invalid (HTTP 422, code
@@ -36,7 +36,7 @@ final class NotFoundException extends AppException {
 final class ValidationException extends AppException {
   /// Creates a validation exception with the client-facing [message].
   const ValidationException(String message)
-      : super(422, ApiErrorCodes.validation, message);
+    : super(422, ApiErrorCodes.validation, message);
 }
 
 /// The route exists but the HTTP method is not supported (HTTP 405, code
@@ -45,11 +45,11 @@ final class ValidationException extends AppException {
 final class MethodNotAllowedException extends AppException {
   /// Creates a method-not-allowed exception advertising the [allow] methods.
   const MethodNotAllowedException(this.allow)
-      : super(
-          405,
-          ApiErrorCodes.methodNotAllowed,
-          'Method not allowed.',
-        );
+    : super(
+        405,
+        ApiErrorCodes.methodNotAllowed,
+        'Method not allowed.',
+      );
 
   /// Comma-separated list of allowed methods (e.g. `GET`).
   final String allow;
@@ -61,7 +61,7 @@ final class MethodNotAllowedException extends AppException {
 final class UnauthorizedException extends AppException {
   /// Creates an unauthorized exception with the uniform sign-in message.
   const UnauthorizedException()
-      : super(401, ApiErrorCodes.unauthorized, 'Sign in to continue.');
+    : super(401, ApiErrorCodes.unauthorized, 'Sign in to continue.');
 }
 
 /// The authenticated user lacks permission for this action (HTTP 403, code
@@ -78,12 +78,12 @@ final class ForbiddenException extends AppException {
 final class CsrfException extends AppException {
   /// Creates a CSRF exception naming the required header.
   const CsrfException()
-      : super(
-          403,
-          ApiErrorCodes.csrf,
-          'This request requires the header '
-          '"X-Requested-With: SaltToTaste".',
-        );
+    : super(
+        403,
+        ApiErrorCodes.csrf,
+        'This request requires the header '
+        '"X-Requested-With: SaltToTaste".',
+      );
 }
 
 /// The account must change its password before using this endpoint
@@ -91,11 +91,11 @@ final class CsrfException extends AppException {
 final class PasswordChangeRequiredException extends AppException {
   /// Creates a password-change-required exception.
   const PasswordChangeRequiredException()
-      : super(
-          403,
-          ApiErrorCodes.passwordChangeRequired,
-          'You must change your password before continuing.',
-        );
+    : super(
+        403,
+        ApiErrorCodes.passwordChangeRequired,
+        'You must change your password before continuing.',
+      );
 }
 
 /// The request conflicts with existing state, e.g. a duplicate username
@@ -103,7 +103,7 @@ final class PasswordChangeRequiredException extends AppException {
 final class ConflictException extends AppException {
   /// Creates a conflict exception with the client-facing [message].
   const ConflictException(String message)
-      : super(409, ApiErrorCodes.conflict, message);
+    : super(409, ApiErrorCodes.conflict, message);
 }
 
 /// Too many failed sign-in attempts for this account from this address
@@ -112,12 +112,12 @@ final class LockedException extends AppException {
   /// Creates a locked exception advertising the remaining lockout in
   /// [retryAfterSeconds].
   LockedException(this.retryAfterSeconds)
-      : super(
-          429,
-          ApiErrorCodes.locked,
-          'Too many failed attempts. '
-          'Try again in $retryAfterSeconds seconds.',
-        );
+    : super(
+        429,
+        ApiErrorCodes.locked,
+        'Too many failed attempts. '
+        'Try again in $retryAfterSeconds seconds.',
+      );
 
   /// Whole seconds (rounded up) until another attempt is allowed.
   final int retryAfterSeconds;

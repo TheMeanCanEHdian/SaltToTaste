@@ -76,8 +76,9 @@ void main() {
     // The flat strings became structured lines via the ingredient parser.
     final lines = recipe.ingredients.single.items;
     expect(lines, hasLength(14));
-    final asparagus =
-        lines.firstWhere((line) => line.raw == '8 ounce Asparagus');
+    final asparagus = lines.firstWhere(
+      (line) => line.raw == '8 ounce Asparagus',
+    );
     expect(asparagus.amounts.single.measure, Measure.weight);
     expect(asparagus.amounts.single.quantity, '8');
     expect(asparagus.amounts.single.unit, 'ounce');
@@ -100,9 +101,9 @@ void main() {
     final reDecoded = RecipeYamlCodec.decode(export.readAsStringSync());
     expect(reDecoded.recipe.toMap(), recipe.toMap());
 
-    final images = Directory('${config.libraryDir}/$legacySourceSlug/images')
-        .listSync()
-        .whereType<File>();
+    final images = Directory(
+      '${config.libraryDir}/$legacySourceSlug/images',
+    ).listSync().whereType<File>();
     expect(images, hasLength(1));
   });
 

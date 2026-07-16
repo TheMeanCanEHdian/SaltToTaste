@@ -24,7 +24,9 @@ Future<Response> onRequest(RequestContext context, String id) async {
     if (found == null) {
       throw NotFoundException('recipe not found: $id');
     }
-    return Response.json(body: nutritionBody(db, found.recipe));
+    return Response.json(
+      body: nutritionBody(db, found.recipe, forAdmin: user.isAdmin),
+    );
   }
 
   // Permission before existence: every mutation in the API 403s a member
@@ -60,5 +62,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
   } on NutritionProviderException catch (exception) {
     throw ValidationException(exception.message);
   }
-  return Response.json(body: nutritionBody(db, found.recipe));
+  return Response.json(
+    body: nutritionBody(db, found.recipe, forAdmin: user.isAdmin),
+  );
 }

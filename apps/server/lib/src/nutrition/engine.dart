@@ -29,9 +29,9 @@ bool _macroComplete(FdcFood food) {
 
 /// The flattened, positioned ingredient lines nutrition works over.
 List<IngredientLine> nutritionLines(Recipe recipe) => [
-      for (final group in recipe.ingredients)
-        for (final line in group.items) line,
-    ];
+  for (final group in recipe.ingredients)
+    for (final line in group.items) line,
+];
 
 /// Hash of everything nutrition depends on — when it changes, stored
 /// results are stale.
@@ -119,8 +119,7 @@ Future<void> matchAndCompute(
     RankedCandidate? fallbackCandidate;
     FdcFood? fallbackFood;
     for (final candidate in ranked.take(3)) {
-      var resolved =
-          await _cachedFood(db, provider, candidate.candidate.fdcId);
+      var resolved = await _cachedFood(db, provider, candidate.candidate.fdcId);
       if (resolved == null &&
           (candidate.candidate.nutrientsPer100g?.isNotEmpty ?? false)) {
         resolved = candidate.candidate.toFood();
@@ -203,7 +202,17 @@ Future<void> recomputeTotals(
       .where((row) => row.position < lines.length)
       .toList();
   final stored = db.nutritionFor(recipe.id);
-  var basis = servingBasis ?? stored?.servingBasis ?? recipe.serves?.min ?? 1;
+  // Servings first; then the recipe's YIELD count as an editable default so
+  // 'MAKES ABOUT 16 LARGE COOKIES' still lands per-cookie rather than
+  // reporting one 16-cookie batch as a serving. A yield is not a serving
+  // count (that is why it never reaches Recipe.serves) — it is only a
+  // better starting basis than the whole batch, and the admin can override.
+  var basis =
+      servingBasis ??
+      stored?.servingBasis ??
+      recipe.serves?.min ??
+      parseYieldCount(recipe.servings)?.min ??
+      1;
   if (basis < 1) {
     basis = 1; // Hand-edited YAML can carry serves 0.
   }
@@ -248,14 +257,16 @@ Future<void> recomputeTotals(
     // A record without any published energy still contributes calories
     // via the standard Atwater 4/9/4 factors — FDC's own computed-energy
     // fields do the same math.
-    final hasEnergy = food.nutrientsPer100g.containsKey('208') ||
+    final hasEnergy =
+        food.nutrientsPer100g.containsKey('208') ||
         food.nutrientsPer100g.containsKey('957') ||
         food.nutrientsPer100g.containsKey('958');
     if (!hasEnergy) {
       final protein = food.nutrientsPer100g['203'] ?? 0;
       final fat = food.nutrientsPer100g['204'] ?? 0;
       final carbs = food.nutrientsPer100g['205'] ?? 0;
-      totals['energy'] = (totals['energy'] ?? 0) +
+      totals['energy'] =
+          (totals['energy'] ?? 0) +
           (4 * protein + 9 * fat + 4 * carbs) * grams / 100;
     }
   }
@@ -375,5 +386,4 @@ Future<FdcFood?> cachedFood(
   SaltDatabase db,
   NutritionProvider provider,
   int fdcId,
-) =>
-    _cachedFood(db, provider, fdcId);
+) => _cachedFood(db, provider, fdcId);

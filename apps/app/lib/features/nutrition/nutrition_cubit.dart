@@ -1,4 +1,5 @@
-import 'package:dio/dio.dart';
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
@@ -46,42 +47,33 @@ final class NutritionState {
     bool clearOverriding = false,
     String? error,
     bool clearError = false,
-  }) =>
-      NutritionState(
-        loading: loading ?? this.loading,
-        nutrition: nutrition ?? this.nutrition,
-        matches: clearMatches ? null : (matches ?? this.matches),
-        computing: computing ?? this.computing,
-        savingBasis: savingBasis ?? this.savingBasis,
-        overridingPosition: clearOverriding
-            ? null
-            : (overridingPosition ?? this.overridingPosition),
-        error: clearError ? null : (error ?? this.error),
-      );
+  }) => NutritionState(
+    loading: loading ?? this.loading,
+    nutrition: nutrition ?? this.nutrition,
+    matches: clearMatches ? null : (matches ?? this.matches),
+    computing: computing ?? this.computing,
+    savingBasis: savingBasis ?? this.savingBasis,
+    overridingPosition: clearOverriding
+        ? null
+        : (overridingPosition ?? this.overridingPosition),
+    error: clearError ? null : (error ?? this.error),
+  );
 }
 
 /// Drives one recipe's label: load, compute, serving basis, and the review
 /// sheet's match overrides.
 class NutritionCubit extends Cubit<NutritionState> {
   NutritionCubit(this._repository, this.idOrSlug)
-      : super(const NutritionState());
+    : super(const NutritionState());
 
   final NutritionRepository _repository;
 
   /// The recipe this cubit serves.
   final String idOrSlug;
 
-  /// Cancels an in-flight compute when the page goes away — otherwise the
-  /// browser connection stays occupied for up to five minutes.
-  CancelToken? _computeToken;
-
-  // The `override(...)` action method shadows dart:core's @override
-  // annotation inside this class body.
-  // ignore: annotate_overrides
-  Future<void> close() {
-    _computeToken?.cancel('page disposed');
-    return super.close();
-  }
+  /// The compute job currently being polled, so load()'s re-attach and a
+  /// fresh compute() don't spin up two poll loops for the same job.
+  int? _watchingJob;
 
   Future<void> load() async {
     emit(state.copyWith(loading: true, clearError: true));
@@ -91,6 +83,13 @@ class NutritionCubit extends Cubit<NutritionState> {
         return;
       }
       emit(state.copyWith(loading: false, nutrition: nutrition));
+      // Re-attach to a compute still running server-side — e.g. one started
+      // before the page was navigated away and reopened. Without this the
+      // page would show an enabled Compute button over a running job.
+      final jobId = nutrition.computingJobId;
+      if (jobId != null) {
+        unawaited(_watchJob(jobId));
+      }
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
@@ -99,34 +98,110 @@ class NutritionCubit extends Cubit<NutritionState> {
     }
   }
 
-  /// Runs the full match+compute (admin) — slow-ish the first time.
+  /// Starts a background match+compute (admin) and polls it to completion.
+  /// The POST returns immediately with a job id, so navigating away just
+  /// stops the poll — the server finishes regardless and the fresh label is
+  /// picked up on the next load (no erroring-while-succeeding).
   Future<void> compute() async {
     if (state.computing) {
       return;
     }
     emit(state.copyWith(computing: true, clearError: true));
-    final token = _computeToken = CancelToken();
+    final int jobId;
     try {
-      final nutrition =
-          await _repository.compute(idOrSlug, cancelToken: token);
-      if (isClosed) {
-        return;
-      }
-      emit(state.copyWith(
-        computing: false,
-        nutrition: nutrition,
-        // The server re-matched every line: the cached sheet rows are
-        // stale and must reload on next open.
-        clearMatches: true,
-      ));
+      jobId = await _repository.startCompute(idOrSlug);
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
       }
       emit(state.copyWith(computing: false, error: exception.message));
+      return;
+    }
+    if (isClosed) {
+      return;
+    }
+    await _watchJob(jobId);
+  }
+
+  /// Polls [jobId] to completion, then reloads the label. Shared by compute()
+  /// and load()'s re-attach; a second call for the same job is a no-op.
+  Future<void> _watchJob(int jobId) async {
+    if (_watchingJob == jobId) {
+      return;
+    }
+    _watchingJob = jobId;
+    emit(state.copyWith(computing: true, clearError: true));
+    var failures = 0;
+    try {
+      while (true) {
+        await Future<void>.delayed(const Duration(milliseconds: 1200));
+        if (isClosed) {
+          return;
+        }
+        final NutritionJob job;
+        try {
+          job = await _repository.job(jobId);
+          failures = 0;
+        } on RepositoryException catch (exception) {
+          // A transient blip: the job runs on the server regardless. Give up
+          // only after several consecutive failures (e.g. session expired).
+          failures += 1;
+          if (failures < 8) {
+            continue;
+          }
+          if (isClosed) {
+            return;
+          }
+          emit(
+            state.copyWith(
+              computing: false,
+              error:
+                  'Lost track of the compute (${exception.message}). '
+                  'Reload to check.',
+            ),
+          );
+          return;
+        }
+        if (isClosed) {
+          return;
+        }
+        if (job.status == 'running') {
+          continue;
+        }
+        if (job.status == 'failed') {
+          emit(
+            state.copyWith(
+              computing: false,
+              error: job.log.isNotEmpty ? job.log.first : 'Compute failed.',
+            ),
+          );
+          return;
+        }
+        // Done: pull the fresh label. Re-matching invalidated the cached
+        // review-sheet rows, so drop them.
+        try {
+          final nutrition = await _repository.nutrition(idOrSlug);
+          if (isClosed) {
+            return;
+          }
+          emit(
+            state.copyWith(
+              computing: false,
+              nutrition: nutrition,
+              clearMatches: true,
+            ),
+          );
+        } on RepositoryException catch (exception) {
+          if (isClosed) {
+            return;
+          }
+          emit(state.copyWith(computing: false, error: exception.message));
+        }
+        return;
+      }
     } finally {
-      if (identical(_computeToken, token)) {
-        _computeToken = null;
+      if (_watchingJob == jobId) {
+        _watchingJob = null;
       }
     }
   }
@@ -219,10 +294,13 @@ class NutritionCubit extends Cubit<NutritionState> {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(
-        error: 'Saved, but refreshing the label failed: '
-            '${exception.message}',
-      ));
+      emit(
+        state.copyWith(
+          error:
+              'Saved, but refreshing the label failed: '
+              '${exception.message}',
+        ),
+      );
     }
   }
 }

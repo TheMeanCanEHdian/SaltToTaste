@@ -170,7 +170,11 @@ class RecipeYamlCodec {
         final serves = parseServings(servingsText);
         if (serves != null) {
           root['serves'] = serves.toMap();
-        } else if (servingsText != null) {
+        } else if (servingsText != null &&
+            parseYieldCount(servingsText) == null) {
+          // A pure yield ('MAKES 2 LOAVES') states no serving count — that
+          // is expected, not a parse failure. Warn only when the string
+          // carries neither servings nor a recognizable yield.
           warnings.add('unparseable servings: $servingsText');
         }
       }
@@ -221,7 +225,8 @@ class RecipeYamlCodec {
       for (final key in _topKeyOrder)
         if (map.containsKey(key)) key: map[key] as Object?,
       for (final entry in map.entries)
-        if (!_topKeyOrder.contains(entry.key)) entry.key: entry.value as Object?,
+        if (!_topKeyOrder.contains(entry.key))
+          entry.key: entry.value as Object?,
     };
   }
 }

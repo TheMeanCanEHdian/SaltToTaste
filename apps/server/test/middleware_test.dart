@@ -131,15 +131,17 @@ void main() {
   });
 
   group('error envelope', () {
-    test('AppException becomes its envelope with matching request_id',
-        () async {
-      final (response, body) = await send('GET', '/api/throws-not-found');
-      expect(response.statusCode, HttpStatus.notFound);
-      final error = errorOf(body);
-      expect(error['code'], 'not_found');
-      expect(error['message'], 'Recipe does not exist.');
-      expect(error['request_id'], response.headers.value(requestIdHeader));
-    });
+    test(
+      'AppException becomes its envelope with matching request_id',
+      () async {
+        final (response, body) = await send('GET', '/api/throws-not-found');
+        expect(response.statusCode, HttpStatus.notFound);
+        final error = errorOf(body);
+        expect(error['code'], 'not_found');
+        expect(error['message'], 'Recipe does not exist.');
+        expect(error['request_id'], response.headers.value(requestIdHeader));
+      },
+    );
 
     test('ValidationException maps to 422/validation', () async {
       final (response, body) = await send('GET', '/api/throws-validation');
@@ -160,8 +162,7 @@ void main() {
       expect(body, isNot(contains('sensitive')));
       expect(body, isNot(contains('#0')));
       // ...but the log got the full story.
-      final severe =
-          records.where((r) => r.level == Level.SEVERE).toList();
+      final severe = records.where((r) => r.level == Level.SEVERE).toList();
       expect(severe, hasLength(1));
       expect(severe.single.loggerName, 'http');
       expect(severe.single.error, isA<StateError>());
@@ -249,7 +250,10 @@ void main() {
 
   group('web app serving (P7)', () {
     test('a deep link falls back to index.html with the CSP', () async {
-      final (response, body) = await send('GET', '/r/rich-chocolate-bundt-cake');
+      final (response, body) = await send(
+        'GET',
+        '/r/rich-chocolate-bundt-cake',
+      );
       expect(response.statusCode, HttpStatus.ok);
       expect(response.headers.contentType?.mimeType, 'text/html');
       expect(body, contains('SaltToTaste'));
@@ -296,8 +300,11 @@ void main() {
       final (response, _) = await send('GET', '/healthz');
       expect(response.headers.value('x-content-type-options'), 'nosniff');
       expect(response.headers.value('referrer-policy'), 'same-origin');
-      expect(response.headers.value('content-security-policy'), isNull,
-          reason: 'CSP is for HTML, not JSON');
+      expect(
+        response.headers.value('content-security-policy'),
+        isNull,
+        reason: 'CSP is for HTML, not JSON',
+      );
     });
   });
 

@@ -108,9 +108,9 @@ class _LibraryTabState extends State<LibraryTab> {
       _backupsError = null;
     });
     try {
-      await context
-          .read<LibraryRepository>()
-          .createBackup(includeImages: _includePhotos);
+      await context.read<LibraryRepository>().createBackup(
+        includeImages: _includePhotos,
+      );
       if (!mounted) {
         return;
       }
@@ -196,7 +196,8 @@ class _LibraryTabState extends State<LibraryTab> {
       children: [
         const PaneTitle(
           'Library',
-          description: "Your recipes live as YAML files in the server's "
+          description:
+              "Your recipes live as YAML files in the server's "
               'library — safe to edit by hand or sync elsewhere.',
         ),
         Wrap(
@@ -221,8 +222,7 @@ class _LibraryTabState extends State<LibraryTab> {
             if (_report != null && _report!.startedAt.isNotEmpty)
               Text(
                 'Last scan: ${_prettyTimestamp(_report!.startedAt)}',
-                style:
-                    const TextStyle(fontSize: 12.5, color: SaltColors.muted),
+                style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
               ),
           ],
         ),
@@ -243,9 +243,12 @@ class _LibraryTabState extends State<LibraryTab> {
             ),
         ],
         const SizedBox(height: 28),
-        const Text(
-          'Backups',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        Semantics(
+          header: true,
+          child: const Text(
+            'Backups',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -269,26 +272,44 @@ class _LibraryTabState extends State<LibraryTab> {
             ),
             Tooltip(
               message: 'Full copy — much larger',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: Checkbox(
-                      value: _includePhotos,
-                      activeColor: SaltColors.maroon,
-                      onChanged: _backupBusy
-                          ? null
-                          : (value) =>
-                              setState(() => _includePhotos = value ?? false),
+              // MergeSemantics + an InkWell over the whole row give the box a
+              // real accessible name ("Include photos") and a full tap target
+              // that the label toggles, not a bare 32px checkbox.
+              child: MergeSemantics(
+                child: InkWell(
+                  onTap: _backupBusy
+                      ? null
+                      : () => setState(() => _includePhotos = !_includePhotos),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          value: _includePhotos,
+                          activeColor: SaltColors.maroon,
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          onChanged: _backupBusy
+                              ? null
+                              : (value) => setState(
+                                  () => _includePhotos = value ?? false,
+                                ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Include photos',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ],
                     ),
                   ),
-                  const Text(
-                    'Include photos',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ],
+                ),
               ),
             ),
             const Text(
@@ -347,7 +368,8 @@ class _LibraryTabState extends State<LibraryTab> {
           ink: _okInk,
           background: _okBg,
           lead: 'Everything in sync',
-          rest: ' — ${report.filesSeen} '
+          rest:
+              ' — ${report.filesSeen} '
               '${report.filesSeen == 1 ? 'file' : 'files'} checked.',
         ),
       ];
@@ -358,7 +380,8 @@ class _LibraryTabState extends State<LibraryTab> {
           icon: Icons.check_circle_outline,
           ink: _okInk,
           background: _okBg,
-          lead: '${_count(report.updatedFromDisk.length, 'file', 'files')} '
+          lead:
+              '${_count(report.updatedFromDisk.length, 'file', 'files')} '
               'updated from disk',
           rest: ' — ${_idList(report.updatedFromDisk)}',
         ),
@@ -367,7 +390,8 @@ class _LibraryTabState extends State<LibraryTab> {
           icon: Icons.check_circle_outline,
           ink: _okInk,
           background: _okBg,
-          lead: '${_count(report.added.length, 'recipe', 'recipes')} '
+          lead:
+              '${_count(report.added.length, 'recipe', 'recipes')} '
               'imported from new files',
           rest: ' — ${_idList(report.added)}',
         ),
@@ -376,7 +400,8 @@ class _LibraryTabState extends State<LibraryTab> {
           icon: Icons.check_circle_outline,
           ink: _okInk,
           background: _okBg,
-          lead: '${_count(report.reExported.length, 'missing export', 'missing exports')} '
+          lead:
+              '${_count(report.reExported.length, 'missing export', 'missing exports')} '
               'rewritten from the database',
           rest: ' — ${_idList(report.reExported)}',
         ),
@@ -598,8 +623,7 @@ class _BackupRow extends StatelessWidget {
             child: Text(
               _humanSize(item.sizeBytes),
               textAlign: TextAlign.right,
-              style:
-                  const TextStyle(fontSize: 13, color: SaltColors.muted),
+              style: const TextStyle(fontSize: 13, color: SaltColors.muted),
             ),
           ),
           _SmallAction(label: 'Download', onTap: busy ? null : onDownload),
@@ -629,8 +653,10 @@ class _SmallAction extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: danger ? _errInk : SaltColors.ink,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          minimumSize: Size.zero,
-          textStyle: const TextStyle(fontSize: 12.5),
+          // Compact on desktop, a 48px touch target on narrow/touch widths.
+          minimumSize: denseActionMinSize(context),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: const TextStyle(fontSize: 12.5, fontFamily: 'OpenSans'),
         ),
         onPressed: onTap,
         child: Text(label),

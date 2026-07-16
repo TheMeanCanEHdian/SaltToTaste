@@ -32,7 +32,8 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = context.watch<AuthCubit>().user?.isAdmin ?? false;
-    final wide = MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
+    final wide =
+        MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
     final content = switch (_tab) {
       SettingsTab.account => const AccountTab(),
       SettingsTab.users => const UsersTab(),
@@ -95,20 +96,20 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   List<(SettingsTab, String)> _tabsFor(bool isAdmin) => [
-        (SettingsTab.account, 'Account'),
-        if (isAdmin) (SettingsTab.users, 'Users'),
-        (SettingsTab.tokens, 'API tokens'),
-      ];
+    (SettingsTab.account, 'Account'),
+    if (isAdmin) (SettingsTab.users, 'Users'),
+    (SettingsTab.tokens, 'API tokens'),
+  ];
 
   /// Server-administration tabs (admins only).
   List<(SettingsTab, String)> _serverTabsFor(bool isAdmin) => [
-        if (isAdmin) ...[
-          (SettingsTab.tags, 'Tags'),
-          (SettingsTab.library, 'Library'),
-          (SettingsTab.nutrition, 'Nutrition'),
-          (SettingsTab.import, 'Import'),
-        ],
-      ];
+    if (isAdmin) ...[
+      (SettingsTab.tags, 'Tags'),
+      (SettingsTab.library, 'Library'),
+      (SettingsTab.nutrition, 'Nutrition'),
+      (SettingsTab.import, 'Import'),
+    ],
+  ];
 
   Widget _sidebar(bool isAdmin) {
     return Container(
@@ -202,40 +203,44 @@ class _SideItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: comingSoon ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
-        decoration: active
-            ? const BoxDecoration(
-                color: SaltColors.chip,
-                border: Border(
-                  right: BorderSide(color: SaltColors.maroon, width: 3),
-                ),
-              )
-            : null,
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: comingSoon
-                      ? SaltColors.muted
-                      : active
-                          ? SaltColors.chipInk
-                          : SaltColors.ink,
+    return Semantics(
+      button: !comingSoon,
+      selected: active,
+      child: InkWell(
+        onTap: comingSoon ? null : onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+          decoration: active
+              ? const BoxDecoration(
+                  color: SaltColors.chip,
+                  border: Border(
+                    right: BorderSide(color: SaltColors.maroon, width: 3),
+                  ),
+                )
+              : null,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                    color: comingSoon
+                        ? SaltColors.muted
+                        : active
+                        ? SaltColors.chipInk
+                        : SaltColors.ink,
+                  ),
                 ),
               ),
-            ),
-            if (comingSoon)
-              const Text(
-                'soon',
-                style: TextStyle(fontSize: 11, color: SaltColors.muted),
-              ),
-          ],
+              if (comingSoon)
+                const Text(
+                  'soon',
+                  style: TextStyle(fontSize: 11, color: SaltColors.muted),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -254,12 +259,15 @@ class PaneTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: SaltColors.maroon,
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: SaltColors.maroon,
+            ),
           ),
         ),
         if (description != null)
@@ -267,8 +275,7 @@ class PaneTitle extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               description!,
-              style:
-                  const TextStyle(fontSize: 13.5, color: SaltColors.muted),
+              style: const TextStyle(fontSize: 13.5, color: SaltColors.muted),
             ),
           ),
         const SizedBox(height: 18),

@@ -75,6 +75,10 @@ cd apps/app && python3 tool/gen_lucide_catalog.py  # regen lucide_catalog.g.dart
 cd apps/server && dart test
 cd apps/server && dart run salt_server:import "<source-root>" --data-dir=.data
 #   (a legacy v0 root — the old app's _recipes/ layout — is auto-detected; --legacy forces)
+cd apps/server && dart run salt_server:recover --data-dir=.data
+#   prints a single-use, 15-min recovery code; redeem at /recover to reset (or
+#   create) an enabled admin. Local access is the authorization, as with the
+#   first-boot setup code. Only its digest is stored.
 cd apps/server && dart_frog dev               # needs a real TTY (hot-reload key listener);
                                               # headless: dart_frog build && DATA_DIR=.data dart build/bin/server.dart
 

@@ -20,8 +20,11 @@ void main() {
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
-    test('corpus-backed tests (skipped: corpus absent)', () {},
-        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    test(
+      'corpus-backed tests (skipped: corpus absent)',
+      () {},
+      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
+    );
     return;
   }
   late Directory tempDir;
@@ -65,8 +68,9 @@ void main() {
       expect(created.serves?.min, 12);
       expect(created.ingredients.single.items, hasLength(13));
 
-      final exportFile =
-          File(exportPathFor(config, manualSourceSlug, created.id));
+      final exportFile = File(
+        exportPathFor(config, manualSourceSlug, created.id),
+      );
       expect(exportFile.existsSync(), isTrue);
 
       // The export re-imports idempotently: decode -> re-encode -> same text.
@@ -121,26 +125,28 @@ void main() {
     });
 
     group('update', () {
-      test('merge semantics: a title-only submission keeps everything else',
-          () {
-        final result = updateRecipe(db, config, created.slug, {
-          'title': '${bundt.title} (Weeknight)',
-        });
-        expect(result.changed, isTrue);
-        expect(result.recipe.title, '${bundt.title} (Weeknight)');
-        expect(result.recipe.slug, created.slug, reason: 'slug is stable');
-        expect(result.recipe.id, created.id);
-        expect(
-          result.recipe.ingredients.single.items.map((i) => i.raw),
-          bundt.ingredients.single.items.map((i) => i.raw),
-        );
-        expect(result.recipe.background, bundt.background);
+      test(
+        'merge semantics: a title-only submission keeps everything else',
+        () {
+          final result = updateRecipe(db, config, created.slug, {
+            'title': '${bundt.title} (Weeknight)',
+          });
+          expect(result.changed, isTrue);
+          expect(result.recipe.title, '${bundt.title} (Weeknight)');
+          expect(result.recipe.slug, created.slug, reason: 'slug is stable');
+          expect(result.recipe.id, created.id);
+          expect(
+            result.recipe.ingredients.single.items.map((i) => i.raw),
+            bundt.ingredients.single.items.map((i) => i.raw),
+          );
+          expect(result.recipe.background, bundt.background);
 
-        final text = File(
-          exportPathFor(config, manualSourceSlug, created.id),
-        ).readAsStringSync();
-        expect(text, contains('(Weeknight)'));
-      });
+          final text = File(
+            exportPathFor(config, manualSourceSlug, created.id),
+          ).readAsStringSync();
+          expect(text, contains('(Weeknight)'));
+        },
+      );
 
       test('an identical submission is a no-op', () {
         final before = db.contentHashOf(created.id);
@@ -152,16 +158,65 @@ void main() {
       });
 
       test('explicit null clears an optional field', () {
-        final result =
-            updateRecipe(db, config, created.id, {'category': null});
+        final result = updateRecipe(db, config, created.id, {'category': null});
         expect(result.recipe.category, isNull);
       });
 
+      // The editor cannot show variants/extras/techniques yet, so it never
+      // submits those keys — and merge semantics must therefore leave them
+      // alone. If the editor ever starts sending them (or someone adds them
+      // to a submission builder), an admin saving a title edit would silently
+      // destroy a recipe's variations. Pinned with a recipe that has them.
+      test('a save leaves variants, extras, and techniques untouched', () {
+        final dough = loadCorpusRecipe(
+          '0972-basic-double-crust-pie-dough.yaml',
+        );
+        expect(dough.subsections, isNotEmpty, reason: 'fixture precondition');
+        expect(dough.techniques, isNotEmpty, reason: 'fixture precondition');
+        final doc = dough.toMap();
+        final full = {
+          for (final key in editableRecipeKeys)
+            if (doc.containsKey(key)) key: doc[key],
+        };
+        final stored = createRecipe(db, config, full).recipe;
+        // These tests share one database: leaving this recipe behind would
+        // keep its `dessert` tag alive and break the orphaned-tag test.
+        // Registered here, not run at the end of the body, so an assertion
+        // failure below cannot cascade into an unrelated test's failure.
+        addTearDown(() => deleteRecipe(db, config, stored.id));
+        expect(stored.subsections, hasLength(dough.subsections.length));
+
+        // Exactly what the editor sends: no subsections/techniques key.
+        final result = updateRecipe(db, config, stored.id, {
+          'title': 'Pie Dough (edited)',
+        });
+
+        expect(result.recipe.title, 'Pie Dough (edited)');
+        expect(
+          result.recipe.subsections.map((s) => s.title),
+          dough.subsections.map((s) => s.title),
+          reason: 'variants and extras must survive an unrelated edit',
+        );
+        expect(
+          result.recipe.subsections.map((s) => s.kind),
+          dough.subsections.map((s) => s.kind),
+        );
+        expect(
+          result.recipe.techniques.map((t) => t.heading),
+          dough.techniques.map((t) => t.heading),
+        );
+        // And they must still be on disk, not just in the row.
+        final text = File(
+          exportPathFor(config, manualSourceSlug, result.recipe.id),
+        ).readAsStringSync();
+        expect(text, contains('Single-Crust Pie Dough for Custard Pies'));
+      });
+
       test('a hand-edited file is preserved as a conflict copy on save', () {
-        final exportFile =
-            File(exportPathFor(config, manualSourceSlug, created.id));
-        final handEdited =
-            '# my hand edit\n${exportFile.readAsStringSync()}';
+        final exportFile = File(
+          exportPathFor(config, manualSourceSlug, created.id),
+        );
+        final handEdited = '# my hand edit\n${exportFile.readAsStringSync()}';
         exportFile.writeAsStringSync(handEdited);
 
         updateRecipe(db, config, created.id, {'category': 'Cakes'});
@@ -171,8 +226,11 @@ void main() {
             .whereType<File>()
             .where((f) => f.path.contains('${created.id}.conflict-'))
             .toList();
-        expect(conflicts, hasLength(1),
-            reason: 'the hand edit must not be silently overwritten');
+        expect(
+          conflicts,
+          hasLength(1),
+          reason: 'the hand edit must not be silently overwritten',
+        );
         expect(conflicts.single.readAsStringSync(), handEdited);
         expect(
           exportFile.readAsStringSync(),
@@ -200,14 +258,16 @@ void main() {
         expect(backedUp, isTrue);
         expect(db.recipeExists(created.id), isFalse);
         expect(
-          File(exportPathFor(config, manualSourceSlug, created.id))
-              .existsSync(),
+          File(
+            exportPathFor(config, manualSourceSlug, created.id),
+          ).existsSync(),
           isFalse,
         );
         // The conflict copy from the earlier test is operator data — kept.
-        final conflicts = Directory(
-          '${config.libraryDir}/$manualSourceSlug/recipes',
-        ).listSync().whereType<File>().where(
+        final conflicts =
+            Directory(
+              '${config.libraryDir}/$manualSourceSlug/recipes',
+            ).listSync().whereType<File>().where(
               (f) => f.path.contains('.conflict-'),
             );
         expect(conflicts, isNotEmpty);

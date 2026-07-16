@@ -64,14 +64,20 @@ final RegExp _makesRe = RegExp(
 );
 
 /// Bare editor input: `4`, `4 TO 6`, `4-6`, `4–6`.
-final RegExp _bareNumberRe = RegExp(
-  '^($_num)(?:\\s*(?:TO|–|-)\\s*($_num))?\$',
-);
+final RegExp _bareNumberRe = RegExp('^($_num)(?:\\s*(?:TO|–|-)\\s*($_num))?\$');
 
-/// Parses a verbatim servings string (e.g. `SERVES 6 TO 8`,
-/// `MAKES 24 COOKIES`) into a numeric [Serves] yield.
+/// Parses how many people a recipe **serves** from its verbatim servings
+/// string (e.g. `SERVES 6 TO 8`).
 ///
-/// Matching is case-insensitive and extracts the primary yield count:
+/// Only an explicit serving statement counts. A bare yield — `MAKES 2
+/// LOAVES`, `MAKES ENOUGH FOR ONE 9-INCH PIE`, `MAKES ABOUT 6 CUPS` — says
+/// nothing about servings and returns null; two loaves is not "serves 2",
+/// and a pie's worth of dough is not "serves 1". Callers that want the
+/// yield's count (e.g. a nutrition serving-basis default) use
+/// [parseYieldCount]; callers with nothing to show fall back to the
+/// verbatim string.
+///
+/// Matching is case-insensitive:
 ///
 /// * A `SERVES`/`SERVING`/`SERVE` clause anywhere in the string wins, so
 ///   `MAKES 18 TAMALES; SERVES 6 TO 8` yields 6–8. Ranges accept `TO`,
@@ -79,26 +85,44 @@ final RegExp _bareNumberRe = RegExp(
 ///   counts: `SERVES 4 AS A MAIN COURSE OR 6 AS AN APPETIZER` yields 4.
 /// * `... TWELVE 1-CUP SERVINGS` / `ABOUT 12 SERVINGS` / `4 TO 6 SERVINGS`
 ///   yield the count (or range) just before the noun.
-/// * Otherwise the leading `MAKES [ABOUT] n ...` count is used, including
-///   ranges (`MAKES 32 TO 40 PIECES`), number words
-///   (`MAKES TWO 12-INCH PIZZAS`), `ENOUGH FOR` (`MAKES ENOUGH FOR ONE
-///   9-INCH PIE`), and `DOZEN` as a ×12 multiplier (`MAKES 2 DOZEN 2-INCH
-///   BROWNIES` yields 24).
-/// * Pure quantities of volume or weight still return the leading number
-///   (`MAKES ABOUT 4 CUPS` yields 4) — the serving basis is editable later.
-///   Fractional counts round to the nearest integer with a floor of 1, so
-///   `MAKES 1½ CUPS` yields 2 and `MAKES ABOUT ¼ CUP` yields 1.
+/// * A bare number is editor input stating servings directly (`4`, `4-6`).
 ///
-/// Returns null when [text] is null, blank, or no count can be extracted.
+/// Returns null when [text] is null, blank, or states no serving count.
 Serves? parseServings(String? text) {
-  if (text == null) return null;
-  final normalized = text.trim().toUpperCase();
-  if (normalized.isEmpty) return null;
+  final normalized = _normalize(text);
+  if (normalized == null) return null;
 
   return _servesClause(normalized) ??
       _servingsNoun(normalized) ??
-      _makesClause(normalized) ??
       _bareNumber(normalized);
+}
+
+/// Parses a `MAKES ...` **yield** count — how many units the recipe makes,
+/// which is NOT how many people it serves (`MAKES 2 LOAVES` → 2 loaves).
+///
+/// This is the editable default for a per-unit nutrition basis, never a
+/// serving count: keep it out of anything that renders "serves N". Use
+/// [parseServings] for servings.
+///
+/// Handles ranges (`MAKES 32 TO 40 PIECES` → 32–40), number words
+/// (`MAKES TWO 12-INCH PIZZAS` → 2), `ENOUGH FOR` (`MAKES ENOUGH FOR ONE
+/// 9-INCH PIE` → 1), and `DOZEN` as a ×12 multiplier (`MAKES 2 DOZEN
+/// 2-INCH BROWNIES` → 24). Pure quantities of volume or weight return the
+/// leading number (`MAKES ABOUT 4 CUPS` → 4). Fractional counts round to
+/// the nearest integer with a floor of 1 (`MAKES 1½ CUPS` → 2).
+///
+/// Returns null when [text] is null, blank, or carries no `MAKES` count.
+Serves? parseYieldCount(String? text) {
+  final normalized = _normalize(text);
+  if (normalized == null) return null;
+  return _makesClause(normalized);
+}
+
+/// Trims and upper-cases [text]; null for null/blank.
+String? _normalize(String? text) {
+  if (text == null) return null;
+  final normalized = text.trim().toUpperCase();
+  return normalized.isEmpty ? null : normalized;
 }
 
 Serves? _servesClause(String text) {
@@ -175,7 +199,11 @@ Serves? _buildServes(String minToken, String? maxToken, {int multiplier = 1}) {
 
 /// Builds a [Serves] from raw numeric values, applying [multiplier] (e.g.
 /// DOZEN ×12) BEFORE rounding so `1½ DOZEN` yields 18, not 24.
-Serves _servesFromValues(double minValue, double? maxValue, {int multiplier = 1}) {
+Serves _servesFromValues(
+  double minValue,
+  double? maxValue, {
+  int multiplier = 1,
+}) {
   final min = _count(minValue * multiplier);
   final max = _count((maxValue ?? minValue) * multiplier);
   return min <= max ? Serves(min: min, max: max) : Serves(min: max, max: min);
