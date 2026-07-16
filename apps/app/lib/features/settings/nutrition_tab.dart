@@ -307,7 +307,7 @@ class _NutritionTabState extends State<NutritionTab> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontFamily: 'monospace',
+                        fontFamily: 'RobotoMono',
                         fontSize: 13,
                         color: SaltColors.muted,
                       ),
@@ -580,7 +580,7 @@ class _NutritionTabState extends State<NutritionTab> {
                               child: Text(
                                 line,
                                 style: const TextStyle(
-                                  fontFamily: 'monospace',
+                                  fontFamily: 'RobotoMono',
                                   fontSize: 12,
                                   color: SaltColors.bodyText,
                                 ),

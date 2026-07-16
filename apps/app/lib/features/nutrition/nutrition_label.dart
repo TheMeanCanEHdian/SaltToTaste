@@ -276,7 +276,6 @@ class _FdaLabel extends StatelessWidget {
     color: Colors.black,
     fontSize: 12.5,
     height: 1.35,
-    fontFamily: 'Helvetica',
   );
 
   NutrientValue? _n(String key) => nutrition.perServing[key];
@@ -319,7 +318,6 @@ class _FdaLabel extends StatelessWidget {
                 fontSize: 26,
                 fontWeight: FontWeight.w900,
                 height: 1.05,
-                fontFamily: 'Helvetica',
               ),
             ),
             if (basis != null)

@@ -64,7 +64,7 @@ class _SecretRevealState extends State<SecretReveal> {
                   child: SelectableText(
                     widget.value,
                     style: const TextStyle(
-                      fontFamily: 'monospace',
+                      fontFamily: 'RobotoMono',
                       fontSize: 13,
                     ),
                   ),

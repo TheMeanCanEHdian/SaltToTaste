@@ -687,12 +687,33 @@ robustness/ops; 2026-07-15): 262 tests green. Fixes applied:
   404 unknown/non-numeric job id) and SPA fallback with a query string +
   dotted slug.
 
-Import wizard mockup published for approval:
-`docs/mockups/p7-import.html` — candidate source-root cards (kind chips:
-Recipe Extraction teal / Legacy v0 amber), running row pins with live
-progress + warnings count, terminal states reuse the Nutrition tab's
-job-log treatment, explainer shows the server's real import path, empty
-state + 375px variants. UI implementation awaits approval.
+Import wizard mockup approved 2026-07-15 (`docs/mockups/p7-import.html`)
+and built as Settings → Import (`import_tab.dart` + `import_repository.dart`,
+replacing the "Import — soon" placeholder):
+- Detected source-folder rows (kind chips: Recipe Extraction teal /
+  Legacy v0 amber), per-row Import button, one import at a time (others
+  disable while a job runs), Refresh, empty state with the server's real
+  import path, and the explainer. Terminal summary + expandable warning
+  log (capped at 60 lines inline, plus a "N more" pointer). Job polling +
+  cross-tab re-attach mirror the Nutrition tab's bulk-compute idiom.
+- Mobile (< 720px): the Import button drops full-width under the name so
+  long folder names aren't squeezed (approved section-4 layout).
+- Browser-verified end to end against a real import dir (ATK corpus
+  files + the legacy app's sample): candidates detected, import → live
+  progress → terminal summary, the warning log renders, idempotent
+  re-run skips, desktop + mobile.
+
+**Font regression fixed (found during the Import walkthrough):**
+`--no-web-resources-cdn` (added for the offline container) leaves
+CanvasKit unable to resolve generic CSS font families, so every
+`fontFamily: 'monospace'` and the FDA label's `'Helvetica'` rendered as
+INVISIBLE text (the import log and mono paths were blank). Bundled
+RobotoMono (Apache-2.0, from the Flutter cache) and repointed all
+`monospace` usages (import_tab, nutrition_tab, secret_reveal,
+search_page) to it; the FDA label drops `'Helvetica'` for the bundled
+Open Sans. This was a latent regression across P4/P6 UI, not new to P7 —
+it only surfaced because the offline build changed CanvasKit's font
+fallback.
 
 ## P8 — Parity audit + cutover — **pending**
 Checklist vs old app, delete Python tree, promote Dockerfile, README, Forui

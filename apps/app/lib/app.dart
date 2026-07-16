@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/dio_client.dart';
+import 'package:salt_app/core/api/import_repository.dart';
 import 'package:salt_app/core/api/library_repository.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -32,6 +33,7 @@ class _SaltAppState extends State<SaltApp> {
   late final TagsRepository _tagsRepository;
   late final LibraryRepository _libraryRepository;
   late final NutritionRepository _nutritionRepository;
+  late final ImportRepository _importRepository;
   late final TagStylesCubit _tagStylesCubit;
   late final GoRouter _router;
   StreamSubscription<AuthState>? _authSubscription;
@@ -46,6 +48,7 @@ class _SaltAppState extends State<SaltApp> {
     _tagsRepository = TagsRepository(dio);
     _libraryRepository = LibraryRepository(dio);
     _nutritionRepository = NutritionRepository(dio);
+    _importRepository = ImportRepository(dio);
     _tagStylesCubit = TagStylesCubit(_tagsRepository);
     _authCubit = AuthCubit(_authRepository)..bootstrap();
     // Chip styles follow the session: load on sign-in, drop on sign-out.
@@ -77,6 +80,7 @@ class _SaltAppState extends State<SaltApp> {
         RepositoryProvider.value(value: _tagsRepository),
         RepositoryProvider.value(value: _libraryRepository),
         RepositoryProvider.value(value: _nutritionRepository),
+        RepositoryProvider.value(value: _importRepository),
       ],
       child: MultiBlocProvider(
         providers: [

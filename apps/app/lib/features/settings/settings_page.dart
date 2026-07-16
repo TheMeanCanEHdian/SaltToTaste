@@ -5,13 +5,14 @@ import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/settings/account_tab.dart';
+import 'package:salt_app/features/settings/import_tab.dart';
 import 'package:salt_app/features/settings/library_tab.dart';
 import 'package:salt_app/features/settings/nutrition_tab.dart';
 import 'package:salt_app/features/settings/tags_tab.dart';
 import 'package:salt_app/features/settings/tokens_tab.dart';
 import 'package:salt_app/features/settings/users_tab.dart';
 
-enum SettingsTab { account, users, tokens, tags, library, nutrition }
+enum SettingsTab { account, users, tokens, tags, library, nutrition, import }
 
 /// Settings shell (approved P3 design): left sidebar on wide screens,
 /// horizontal chips on narrow. Members see Account and API tokens; admins
@@ -26,7 +27,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   SettingsTab _tab = SettingsTab.account;
 
-  static const _futureServerTabs = ['Import'];
+  static const _futureServerTabs = <String>[];
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
       SettingsTab.tags => const TagsTab(),
       SettingsTab.library => const LibraryTab(),
       SettingsTab.nutrition => const NutritionTab(),
+      SettingsTab.import => const ImportTab(),
     };
 
     return Scaffold(
@@ -104,6 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
           (SettingsTab.tags, 'Tags'),
           (SettingsTab.library, 'Library'),
           (SettingsTab.nutrition, 'Nutrition'),
+          (SettingsTab.import, 'Import'),
         ],
       ];
 

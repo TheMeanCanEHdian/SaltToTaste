@@ -29,6 +29,10 @@ abstract final class SaltColors {
   static const Color errBg = Color(0xFFFBE9E9);
   static const Color errInk = Color(0xFF8A1212);
 
+  /// Informational teal (the import tab's "Recipe Extraction" kind chip).
+  static const Color infoBg = Color(0xFFE2EFEC);
+  static const Color infoInk = Color(0xFF1F5C52);
+
   /// Body prose and step-card text (softer than [ink]).
   static const Color bodyText = Color(0xFF4A4442);
   static const Color stepText = Color(0xFF3F3A38);

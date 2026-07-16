@@ -115,7 +115,7 @@ class _HelpRow extends StatelessWidget {
             ),
             child: Text(
               example,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+              style: const TextStyle(fontFamily: 'RobotoMono', fontSize: 12.5),
             ),
           ),
           const SizedBox(width: 10),
