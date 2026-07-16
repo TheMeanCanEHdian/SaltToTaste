@@ -54,7 +54,7 @@ String _amountsKey(List<Amount> amounts) =>
     amounts.map(_amountKey).join(' + ');
 
 void main() {
-  group('parseIngredientLine corpus agreement', () {
+  group('parseIngredientLine corpus agreement', skip: skipIfNoCorpus, () {
     test('agrees with the stored extraction across all corpus lines', () {
       final lines = _allCorpusLines();
       // 13,615 top-level lines + subsection sub-recipe lines.
@@ -158,7 +158,7 @@ void main() {
     });
   });
 
-  group('parseIngredientLine on real corpus lines', () {
+  group('parseIngredientLine on real corpus lines', skip: skipIfNoCorpus, () {
     // All raw lines below are from 0857-rich-chocolate-bundt-cake.yaml.
     test('dual-amount flour line: volume primary + weight equivalent', () {
       final parsed =

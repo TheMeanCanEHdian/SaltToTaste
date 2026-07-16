@@ -169,7 +169,7 @@ void main() {
     });
   });
 
-  group('corpus grounding (real data)', () {
+  group('corpus grounding (real data)', skip: skipIfNoCorpus, () {
     test('real corpus documents survive parse -> emit -> parse', () {
       for (final name in [
         '0857-rich-chocolate-bundt-cake.yaml',

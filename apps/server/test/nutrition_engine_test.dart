@@ -36,7 +36,7 @@ void main() {
     });
   });
 
-  group('resolveGrams on real corpus lines', () {
+  group('resolveGrams on real corpus lines', skip: skipIfNoCorpus, () {
     late Recipe bundt;
 
     setUpAll(() {
@@ -98,7 +98,8 @@ void main() {
     });
   });
 
-  group('end-to-end compute against recorded real FDC data', () {
+  group('end-to-end compute against recorded real FDC data',
+      skip: skipIfNoCorpus, () {
     late Directory tempDir;
     late ServerConfig config;
     late SaltDatabase db;

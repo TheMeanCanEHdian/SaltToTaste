@@ -14,6 +14,13 @@ import 'support/corpus.dart';
 /// (word-boundary matching that mirrors what the porter tokenizer does for
 /// the specific words chosen — each test word is its own stem).
 void main() {
+  // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
+  // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
+  if (!corpusAvailable) {
+    test('corpus-backed tests (skipped: corpus absent)', () {},
+        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    return;
+  }
   late Directory tempDir;
   late SaltDatabase db;
   final decodedByName = <String, Recipe>{};

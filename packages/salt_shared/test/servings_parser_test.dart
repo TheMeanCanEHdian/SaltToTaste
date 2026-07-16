@@ -224,6 +224,6 @@ void main() {
       final rate = (values.length - failures.length) / values.length;
       expect(rate, greaterThanOrEqualTo(0.99),
           reason: '${failures.length}/${values.length} values failed');
-    });
+    }, skip: skipIfNoCorpus);
   });
 }

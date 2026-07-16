@@ -26,6 +26,12 @@ String get corpusImagesDir => '$corpusRoot/images';
 /// `group(..., skip: corpusAvailable ? false : 'corpus not found')`.
 bool get corpusAvailable => Directory(corpusRecipesDir).existsSync();
 
+/// Skip reason for a corpus-backed test/group: `null` (run) when the corpus
+/// is present, else a message so `dart test` SKIPS rather than fails (e.g. in
+/// CI). Use as `group(..., skip: skipIfNoCorpus, () {...})`.
+String? get skipIfNoCorpus =>
+    corpusAvailable ? null : 'ATK corpus not present; set SALT_CORPUS_DIR';
+
 /// Decodes the corpus recipe file [fileName] (e.g.
 /// `0857-rich-chocolate-bundt-cake.yaml`).
 Recipe loadCorpusRecipe(String fileName) => RecipeYamlCodec.decode(

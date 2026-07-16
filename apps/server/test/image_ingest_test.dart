@@ -13,6 +13,13 @@ import 'support/corpus.dart';
 /// the streaming size cap, server-generated names, and the SSRF guards
 /// (private/loopback hosts are rejected before any connection is made).
 void main() {
+  // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
+  // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
+  if (!corpusAvailable) {
+    test('corpus-backed tests (skipped: corpus absent)', () {},
+        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    return;
+  }
   late Directory tempDir;
   late ServerConfig config;
   late Uint8List heroJpeg;

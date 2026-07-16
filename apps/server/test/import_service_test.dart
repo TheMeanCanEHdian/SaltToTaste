@@ -40,7 +40,7 @@ void main() {
     });
   });
 
-  group('importSourceRoot', () {
+  group('importSourceRoot', skip: skipIfNoCorpus, () {
     late Directory sourceRoot;
     late Directory dataDir;
     late ServerConfig config;

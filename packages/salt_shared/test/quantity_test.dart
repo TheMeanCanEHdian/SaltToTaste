@@ -203,7 +203,7 @@ void main() {
     });
   });
 
-  group('corpus coverage', () {
+  group('corpus coverage', skip: skipIfNoCorpus, () {
     // Every distinct quantity value in the real corpus is either a range
     // (which by design does not parse) or parses to a number.
     test('parses every non-range corpus quantity value', () {

@@ -226,8 +226,13 @@ void main() {
     );
     adminReadPat = pat.token;
 
-    final doc =
-        loadCorpusRecipe('0857-rich-chocolate-bundt-cake.yaml').toMap();
+    // The permission matrix + CSRF/404/405 tests only need *a* payload to
+    // assert 403/4xx on; use the real Bundt when the corpus is present, else
+    // a minimal synthetic recipe so those run in CI. The corpus-backed
+    // groups (CRUD/nutrition/import) are skipped without the corpus.
+    final doc = corpusAvailable
+        ? loadCorpusRecipe('0857-rich-chocolate-bundt-cake.yaml').toMap()
+        : <String, Object?>{'title': 'CI Test Recipe'};
     submission = {
       'recipe': {
         for (final key in editableRecipeKeys)
@@ -338,7 +343,8 @@ void main() {
     });
   });
 
-  group('recipe CRUD over HTTP', () {
+  group('recipe CRUD over HTTP',
+      skip: skipIfNoCorpus, () {
     late String slug;
     late String id;
     late String uploadSlug;
@@ -688,7 +694,8 @@ void main() {
     });
   });
 
-  group('nutrition over HTTP (success paths, recorded real FDC data)', () {
+  group('nutrition over HTTP (success paths, recorded real FDC data)',
+      skip: skipIfNoCorpus, () {
     late String slug;
 
     setUpAll(() async {
@@ -868,7 +875,8 @@ void main() {
     });
   });
 
-  group('import over HTTP (success paths, real corpus)', () {
+  group('import over HTTP (success paths, real corpus)',
+      skip: skipIfNoCorpus, () {
     setUpAll(() {
       // Drop two real corpus files into a v1 source root inside the
       // allowlisted import directory.

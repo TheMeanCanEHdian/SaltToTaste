@@ -18,6 +18,14 @@ final String corpusDir = Platform.environment['SALT_CORPUS_DIR'] ??
 
 const int expectedCorpusSize = 1198;
 
+/// Whether the corpus is present (CI runs without it).
+bool get corpusAvailable => Directory(corpusDir).existsSync();
+
+/// Skip reason for a corpus-backed test/group: `null` (run) when the corpus
+/// is present, else a message so `dart test` SKIPS rather than fails.
+String? get skipIfNoCorpus =>
+    corpusAvailable ? null : 'ATK corpus not present; set SALT_CORPUS_DIR';
+
 /// The corpus files, sorted by path for deterministic output.
 List<File> corpusFiles() {
   final dir = Directory(corpusDir);

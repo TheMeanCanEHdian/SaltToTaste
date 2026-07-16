@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Analyze & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.3"
+          channel: stable
+          cache: true
+
+      # One resolve for the whole Dart pub workspace (server + shared + app).
+      - name: Resolve workspace
+        run: flutter pub get
+
+      - name: Analyze salt_shared
+        working-directory: packages/salt_shared
+        run: dart analyze
+
+      - name: Analyze server
+        working-directory: apps/server
+        run: dart analyze
+
+      - name: Analyze app
+        working-directory: apps/app
+        run: flutter analyze
+
+      # The ATK corpus is external/not committed, so corpus-backed tests
+      # skip automatically (see support/corpus.dart -> skipIfNoCorpus). All
+      # corpus-independent logic — parsers, auth, the API permission matrix,
+      # middleware, and the widget tests — runs here.
+      - name: Test salt_shared
+        working-directory: packages/salt_shared
+        run: dart test
+
+      - name: Test server
+        working-directory: apps/server
+        run: dart test
+
+      - name: Test app
+        working-directory: apps/app
+        run: flutter test
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

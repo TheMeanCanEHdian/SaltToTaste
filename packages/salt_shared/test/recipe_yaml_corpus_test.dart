@@ -11,6 +11,12 @@ RecipeDecodeResult _decode(String name) =>
     RecipeYamlCodec.decode(corpusFile(name).readAsStringSync());
 
 void main() {
+  // Corpus-backed: skip (not fail) when the ATK corpus is absent — e.g. CI.
+  if (!corpusAvailable) {
+    test('corpus-backed tests (skipped: corpus absent)', () {},
+        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    return;
+  }
   // Decoded once and shared by every test in this suite (and any other suite
   // in the same process) — the corpus is 1,198 files, so repeat passes are
   // the dominant cost of this gate.
