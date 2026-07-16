@@ -272,10 +272,13 @@ class _FdaLabel extends StatelessWidget {
 
   final RecipeNutrition nutrition;
 
+  // Arimo: metric-compatible Arial/Helvetica for the regulation label
+  // look (bundled so it renders in the offline build).
   static const TextStyle _base = TextStyle(
     color: Colors.black,
     fontSize: 12.5,
     height: 1.35,
+    fontFamily: 'Arimo',
   );
 
   NutrientValue? _n(String key) => nutrition.perServing[key];
@@ -318,6 +321,7 @@ class _FdaLabel extends StatelessWidget {
                 fontSize: 26,
                 fontWeight: FontWeight.w900,
                 height: 1.05,
+                fontFamily: 'Arimo',
               ),
             ),
             if (basis != null)
