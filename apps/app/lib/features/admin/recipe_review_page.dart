@@ -48,7 +48,7 @@ class _Loaded extends StatelessWidget {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
+        constraints: const BoxConstraints(maxWidth: 1100),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           children: [
@@ -98,11 +98,10 @@ class _Loaded extends StatelessWidget {
     return FTile(
       title: Text(item.title),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [for (final issue in item.issues) _IssueBadge(issue)],
+        padding: const EdgeInsets.only(top: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [for (final issue in item.issues) _IssueLine(issue)],
         ),
       ),
       suffix: const Icon(Icons.chevron_right, color: SaltColors.muted),
@@ -205,31 +204,46 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _IssueBadge extends StatelessWidget {
-  const _IssueBadge(this.issue);
+/// One issue on a recipe: a coloured label pill followed by its detail text.
+class _IssueLine extends StatelessWidget {
+  const _IssueLine(this.issue);
 
   final RecipeReviewIssue issue;
 
   @override
   Widget build(BuildContext context) {
     final (bg, ink) = _issueColors(issue.check);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: TextStyle(fontSize: 12, color: ink),
-          children: [
-            TextSpan(
-              text: issue.label,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(20),
             ),
-            TextSpan(text: '  ·  ${issue.detail}'),
-          ],
-        ),
+            child: Text(
+              issue.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: ink,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                issue.detail,
+                style: const TextStyle(fontSize: 13, color: SaltColors.muted),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

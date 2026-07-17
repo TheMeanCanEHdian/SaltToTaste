@@ -213,6 +213,23 @@ class RecipeRepository {
     });
   }
 
+  Future<int>? _reviewCountFuture;
+
+  /// The number of recipes needing review, memoized for the session so the
+  /// nav-bar badge costs one fetch. A failure resets the memo so it can retry.
+  Future<int> reviewCount() {
+    return _reviewCountFuture ??= getRecipeReview(page: 1, limit: 1)
+        .then((report) => report.total)
+        .catchError((Object _) {
+          _reviewCountFuture = null;
+          return 0;
+        });
+  }
+
+  /// Drops the memoized [reviewCount] so the next read refetches (e.g. after a
+  /// recipe edit that could change the tally).
+  void invalidateReviewCount() => _reviewCountFuture = null;
+
   /// The full recipe matched by [idOrSlug].
   Future<RecipeDetail> getRecipe(String idOrSlug) {
     return _request('recipe', () async {

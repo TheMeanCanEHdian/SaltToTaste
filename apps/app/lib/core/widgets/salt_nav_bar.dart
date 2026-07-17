@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/search_help.dart';
@@ -581,6 +582,7 @@ class _AvatarMenu extends StatelessWidget {
               if (user.isAdmin)
                 FItem(
                   title: const Text('Recipe review'),
+                  suffix: const _ReviewCountBadge(),
                   onPress: () => go('/review'),
                 ),
               FItem(
@@ -630,6 +632,41 @@ class _AvatarMenu extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The count of recipes needing review, as a small maroon pill beside the
+/// "Recipe review" menu item. The tally is memoized on the repository, so this
+/// costs one fetch per session; it hides itself while loading or when zero.
+class _ReviewCountBadge extends StatelessWidget {
+  const _ReviewCountBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<int>(
+      future: context.read<RecipeRepository>().reviewCount(),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        if (count <= 0) {
+          return const SizedBox.shrink();
+        }
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+          decoration: BoxDecoration(
+            color: SaltColors.maroon,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '$count',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        );
+      },
     );
   }
 }
