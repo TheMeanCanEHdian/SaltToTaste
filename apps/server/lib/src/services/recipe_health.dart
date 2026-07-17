@@ -58,10 +58,19 @@ class RecipeCheck {
   final String? Function(RecipeHealth health) evaluate;
 }
 
-/// Numbers and vulgar fractions — a `raw` ingredient line that contains one but
-/// parsed no amount is a parse miss (as opposed to a genuinely amountless line
-/// like "salt to taste", which we do not flag).
-final RegExp _quantified = RegExp('[0-9¼½¾⅓⅔⅕⅖⅗⅘⅛⅜⅝⅞]');
+/// A `raw` line that STARTS with a quantity immediately followed by a known
+/// measurement unit — the shape of an ingredient amount. A line matching this
+/// but parsing no [Amount] is a real parse miss ("2 tablespoons juice"). It
+/// deliberately does NOT match amountless prose that merely contains a number —
+/// a dimension ("1-inch dice"), equipment ("2 pie plates"), or "salt to taste".
+final RegExp _looksLikeAmount = RegExp(
+  r'^\s*[0-9¼½¾⅓⅔⅕⅖⅗⅘⅛⅜⅝⅞][0-9¼½¾⅓⅔⅕⅖⅗⅘⅛⅜⅝⅞ ./-]*\s*'
+  '(?:cups?|tablespoons?|tbsps?|teaspoons?|tsps?|ounces?|oz|pounds?|lbs?|'
+  'grams?|g|kg|kilograms?|milliliters?|ml|liters?|l|quarts?|pints?|'
+  'gallons?|sticks?|cloves?|cans?|jars?|packages?|pkgs?|envelopes?|'
+  r'packets?|pinch|dash|sprigs?|slices?|heads?|bunch(?:es)?)\b',
+  caseSensitive: false,
+);
 
 /// The registry, in display order. Each entry is independent and pure.
 const List<RecipeCheck> recipeChecks = [
@@ -104,7 +113,8 @@ String? _unparsedIngredients(RecipeHealth h) {
   final unparsed = <String>[
     for (final group in h.recipe.ingredients)
       for (final line in group.items)
-        if (line.amounts.isEmpty && _quantified.hasMatch(line.raw)) line.raw,
+        if (line.amounts.isEmpty && _looksLikeAmount.hasMatch(line.raw))
+          line.raw,
   ];
   if (unparsed.isEmpty) {
     return null;

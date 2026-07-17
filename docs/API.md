@@ -240,8 +240,9 @@ data, grouped by issue: `{total, categories: [{id, label, count}], items:
 `total` is the whole-library count of recipes with any issue (stable across
 filters); each `categories[i].count` is per-issue. `issue` narrows `items` (and
 their pagination) to one category — an unknown id is a 422. Current checks:
-`no_instructions`, `unparsed_ingredients` (a quantified ingredient line that
-parsed no amount), `incomplete_nutrition` (nutrition `partial`), `no_nutrition`
+`no_instructions`, `unparsed_ingredients` (a line starting with a quantity + a
+measurement unit that parsed no amount — dimensions and equipment are not
+flagged), `incomplete_nutrition` (nutrition `partial`), `no_nutrition`
 (never computed), `extraction_warnings`, `no_servings`. The set is an open
 registry, so categories can be added without an API shape change.
 

@@ -54,32 +54,39 @@ void main() {
       );
     });
 
-    test('unparsed_ingredients fires on a quantified line with no amount', () {
-      // A genuinely amountless line is NOT a defect; a quantified one is.
-      final amountless = bundt.copyWith(
-        ingredients: [
-          const IngredientGroup(
-            items: [IngredientLine(raw: 'Salt and pepper to taste')],
-          ),
-        ],
-      );
-      expect(
-        detailFor('unparsed_ingredients', RecipeHealth(recipe: amountless)),
-        isNull,
+    test('unparsed_ingredients: quantity + unit with no parsed amount', () {
+      RecipeHealth withLine(String raw) => RecipeHealth(
+        recipe: bundt.copyWith(
+          ingredients: [
+            IngredientGroup(items: [IngredientLine(raw: raw)]),
+          ],
+        ),
       );
 
-      final unparsed = bundt.copyWith(
-        ingredients: [
-          const IngredientGroup(
-            items: [IngredientLine(raw: '1 envelope active dry yeast')],
-          ),
-        ],
+      // Genuinely amountless prose is not a defect.
+      expect(
+        detailFor('unparsed_ingredients', withLine('Salt to taste')),
+        isNull,
       );
+      // A number that is NOT an amount — a dimension or equipment — is not a
+      // defect either (the noise the tightened check drops).
+      expect(
+        detailFor('unparsed_ingredients', withLine('1- to 2-inch lengths')),
+        isNull,
+      );
+      expect(
+        detailFor(
+          'unparsed_ingredients',
+          withLine('2 disposable aluminum pie plates'),
+        ),
+        isNull,
+      );
+      // A quantity + measurement unit that parsed nothing IS a defect.
       final detail = detailFor(
         'unparsed_ingredients',
-        RecipeHealth(recipe: unparsed),
+        withLine('2 tablespoons juice'),
       );
-      expect(detail, contains('yeast'));
+      expect(detail, contains('juice'));
     });
 
     test('extraction_warnings surfaces the recorded warnings', () {
