@@ -62,6 +62,15 @@ decision deviates from the plan).
 - Logging: `package:logging`, request-id middleware, uniform error envelope
   `{error: {code, message, requestId}}`.
 - Only binding brand color: maroon `#960000`. Open Sans. Lucide icons.
+- **Button colour system (Forui).** The brand is red, so destructive is
+  distinguished from primary by FILL, not hue. Primary = solid maroon, white
+  text (`FButton` default `.primary`). Destructive = Forui's tinted
+  `.destructive` (the theme's `destructive` is pointed at `errInk` so buttons,
+  error text, and danger borders agree). Neutral (cancel/secondary/outline/
+  ghost) = grey (theme `secondary` = `chipNeutral`, `secondaryForeground` =
+  `ink`) so a plain button and its hover never read as destructive. Never set
+  button colours per-widget — pick the variant and let the theme paint it.
+  Pinned by `apps/app/test/theme_test.dart`.
 
 ## Commands
 
