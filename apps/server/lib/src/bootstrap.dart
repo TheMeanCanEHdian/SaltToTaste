@@ -53,7 +53,10 @@ SaltDatabase get saltDatabase =>
 /// Created on first access: when the database holds zero users, a one-time
 /// setup code is generated and printed to stdout so the operator can create
 /// the admin account via `POST /api/v1/auth/setup`.
-AuthRuntime get authRuntime => _authRuntime ??= _initAuthRuntime();
+AuthRuntime get authRuntime => _authRuntime ??= initAuthRuntime(
+  config: serverConfig,
+  database: saltDatabase,
+);
 
 /// Startup warnings for a configuration that LOOKS set up but is not.
 ///
@@ -116,23 +119,43 @@ List<String> configWarnings(ServerConfig config) {
   return warnings;
 }
 
-AuthRuntime _initAuthRuntime() {
+/// Builds the auth runtime and performs the boot-time side effects that depend
+/// on config and the database: it EMITS the [configWarnings] to [warn], drops
+/// sessions that expired while the server was down, and on an empty user table
+/// generates the first-boot setup code and announces it via
+/// [announceSetupCode].
+///
+/// Takes [config] and [database] explicitly (rather than reading the process
+/// globals) and routes its two side-effect streams through injectable sinks, so
+/// the whole boot path can be driven from a test. That is the point: emitting
+/// the warnings was untested wiring the b9c8330 review flagged — deleting the
+/// `configWarnings(...).forEach(warn)` line used to leave the suite green, so a
+/// config that fails closed silently would ship unannounced.
+AuthRuntime initAuthRuntime({
+  required ServerConfig config,
+  required SaltDatabase database,
+  void Function(String) warn = _stderrLine,
+  void Function(String) announceSetupCode = _stdoutLine,
+}) {
   final runtime = AuthRuntime();
-  configWarnings(serverConfig).forEach(stderr.writeln);
+  configWarnings(config).forEach(warn);
   // Housekeeping: drop sessions that expired while the server was down.
-  saltDatabase.deleteExpiredSessions();
-  if (saltDatabase.userCount() == 0) {
+  database.deleteExpiredSessions();
+  if (database.userCount() == 0) {
     final code = generateSetupCode();
     runtime.setupCode = code;
-    // The one deliberate secret-on-stdout line in the server: the code
-    // exists to be read from the console/container logs by the operator.
-    stdout.writeln(
+    // The one deliberate secret-on-stdout line in the server: the code exists
+    // to be read from the console/container logs by the operator.
+    announceSetupCode(
       'SaltToTaste setup code: $code '
       '— open the app to create the admin account.',
     );
   }
   return runtime;
 }
+
+void _stderrLine(String line) => stderr.writeln(line);
+void _stdoutLine(String line) => stdout.writeln(line);
 
 TokenBucket get _sharedFdcBucket => _fdcBucket ??= TokenBucket();
 
@@ -164,7 +187,7 @@ NutritionProvider get bulkNutritionProvider =>
 /// backfill, and starts the daily backup timer. Call once at startup.
 ServerConfig initServer() {
   final config = serverConfig;
-  _authRuntime ??= _initAuthRuntime();
+  _authRuntime ??= initAuthRuntime(config: config, database: saltDatabase);
   // Jobs only run inside this process; `running` rows at boot are
   // orphans from a restart and would poll as running forever.
   final orphaned =

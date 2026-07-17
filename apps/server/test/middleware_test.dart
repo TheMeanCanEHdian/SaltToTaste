@@ -4,19 +4,29 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:logging/logging.dart';
+import 'package:salt_server/src/app_pipeline.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
-import 'package:salt_server/src/middleware/error_handler.dart';
+import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
-import 'package:salt_server/src/middleware/request_logger.dart';
-import 'package:salt_server/src/middleware/web_app.dart';
+import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:test/test.dart';
 
 import '../routes/healthz.dart' as healthz_route;
 import '../routes/index.dart' as index_route;
 
 final _hexId = RegExp(r'^[0-9a-f]{16}$');
+
+/// The routes exercised here never touch nutrition; this stands in for the
+/// provider so the REAL [buildAppMiddleware] chain can be assembled.
+class _UnusedNutrition implements NutritionProvider {
+  @override
+  Future<List<FdcCandidate>> search(String query) => throw UnimplementedError();
+
+  @override
+  Future<FdcFood?> food(int fdcId) => throw UnimplementedError();
+}
 
 void main() {
   late Directory tempDir;
@@ -64,7 +74,10 @@ void main() {
     configureLogging(config);
     Logger.root.onRecord.listen(records.add);
 
-    // Same wiring as routes/_middleware.dart (last `.use` is outermost).
+    // Drive the REAL production chain, not a parallel copy of it: a reorder in
+    // buildAppMiddleware that stripped the CSP off the app shell or moved
+    // errorHandler inside the providers must break a test here, which a
+    // hand-rolled pipeline that could drift from production never guaranteed.
     // healthz reads SaltDatabase (for setup_required), so provide one.
     // The SPA fallback serves a REAL web-build shell written to the temp
     // dir (public/ is gitignored, so the checkout's copy can't be relied
@@ -74,14 +87,14 @@ void main() {
       '<!DOCTYPE html><html><head><title>SaltToTaste</title>\n'
       '</head><body></body></html>',
     );
-    final pipeline = dispatch
-        .use(provider<SaltDatabase>((_) => database))
-        .use(provider<ServerConfig>((_) => config))
-        .use(errorHandler())
-        .use(spaFallback(indexPath: '${tempDir.path}/index.html'))
-        .use(securityHeaders())
-        .use(requestLogger())
-        .use(requestIdProvider());
+    final pipeline = buildAppMiddleware(
+      dispatch,
+      config: config,
+      database: database,
+      authRuntime: AuthRuntime(),
+      nutritionProvider: _UnusedNutrition(),
+      indexPath: '${tempDir.path}/index.html',
+    );
     server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
     baseUri = Uri.parse('http://127.0.0.1:${server.port}');
   });

@@ -1,93 +1,15 @@
-import 'dart:io';
-
-// dart_frog ships its own `requestLogger`; ours is the one wired here.
-import 'package:dart_frog/dart_frog.dart' hide requestLogger;
+import 'package:dart_frog/dart_frog.dart';
+import 'package:salt_server/src/app_pipeline.dart';
 import 'package:salt_server/src/bootstrap.dart';
-import 'package:salt_server/src/config.dart';
-import 'package:salt_server/src/db/salt_database.dart';
-import 'package:salt_server/src/handlers/auth_handlers.dart';
-import 'package:salt_server/src/middleware/auth.dart';
-import 'package:salt_server/src/middleware/error_handler.dart';
-import 'package:salt_server/src/middleware/request_context.dart';
-import 'package:salt_server/src/middleware/request_logger.dart';
-import 'package:salt_server/src/middleware/web_app.dart';
-import 'package:salt_server/src/nutrition/provider.dart';
 
-/// Top-level middleware chain.
-///
-/// `.use` wraps, so the LAST `.use` is the OUTERMOST middleware. Order
-/// (outermost first): requestIdProvider -> requestLogger ->
-/// securityHeaders -> spaFallback -> devCors -> errorHandler ->
-/// ServerConfig provider -> SaltDatabase provider -> AuthRuntime
-/// provider -> authProvider -> routes.
-///
-/// spaFallback sits outside errorHandler (it rewrites the enveloped 404
-/// for deep links) and inside securityHeaders (the fallback HTML must
-/// carry the CSP); requestLogger outside both records what was actually
-/// served.
-///
-/// requestIdProvider sits outside errorHandler so error envelopes carry a
-/// matching `request_id` and every response — including error envelopes —
-/// gets the `X-Request-Id` header. requestLogger sits outside errorHandler
-/// so failed requests are still logged with their envelope status.
-/// errorHandler wraps everything below it (providers, auth, routes), so any
-/// exception thrown there becomes a clean envelope. authProvider is
-/// innermost (first `.use`, closest to the handler) because it reads the
-/// [SaltDatabase] provider above it; the process-wide singletons themselves
-/// live in `bootstrap.dart` and are created at startup by `initServer`.
-/// Adds CORS headers (and answers preflight `OPTIONS`) when
-/// `DEV_ALLOW_CORS=true` (development only — see [ServerConfig.devAllowCors]).
-///
-/// The dev Flutter app authenticates with the session cookie, and browsers
-/// reject credentialed responses carrying a wildcard origin — so the request
-/// origin is echoed and `Allow-Credentials` set instead of `*`. Production
-/// serves the web build same-origin and leaves this off.
-Map<String, String> _corsHeaders(RequestContext context) => {
-  'Access-Control-Allow-Origin': context.request.headers['origin'] ?? '*',
-  'Vary': 'Origin',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers':
-      'Authorization, Content-Type, X-Requested-With',
-  'Access-Control-Max-Age': '86400',
-};
-
-Middleware _devCors() {
-  return (handler) {
-    return (context) async {
-      if (!serverConfig.devAllowCors) {
-        return handler(context);
-      }
-      // Short-circuit the browser's preflight before it reaches a route that
-      // only allows GET (which would 405 the preflight and block the real
-      // request).
-      if (context.request.method == HttpMethod.options) {
-        return Response(
-          statusCode: HttpStatus.noContent,
-          headers: _corsHeaders(context),
-        );
-      }
-      final response = await handler(context);
-      return response.copyWith(
-        headers: {...response.headers, ..._corsHeaders(context)},
-      );
-    };
-  };
-}
-
-Handler middleware(Handler handler) {
-  return handler
-      // Innermost: lazily resolves AuthUser? from the session cookie or
-      // bearer token; needs the SaltDatabase provider wired outside it.
-      .use(authProvider())
-      .use(provider<AuthRuntime>((_) => authRuntime))
-      .use(provider<NutritionProvider>((_) => nutritionProvider))
-      .use(provider<SaltDatabase>((_) => saltDatabase))
-      .use(provider<ServerConfig>((_) => serverConfig))
-      .use(errorHandler())
-      .use(_devCors())
-      .use(spaFallback())
-      .use(securityHeaders())
-      .use(requestLogger())
-      .use(requestIdProvider());
-}
+/// dart_frog's fixed entry point. Delegates to [buildAppMiddleware] (which
+/// lives in `lib/` so a test can drive the real chain) with the process-wide
+/// singletons created at startup by `initServer`. The chain order and its
+/// security-relevant properties are documented and pinned there.
+Handler middleware(Handler handler) => buildAppMiddleware(
+  handler,
+  config: serverConfig,
+  database: saltDatabase,
+  authRuntime: authRuntime,
+  nutritionProvider: nutritionProvider,
+);

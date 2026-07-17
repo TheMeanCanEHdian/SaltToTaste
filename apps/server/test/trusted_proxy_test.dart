@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:salt_server/src/bootstrap.dart';
 import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/db/salt_database.dart';
 import 'package:test/test.dart';
 
 /// `TRUST_PROXY` alone used to mean "believe X-Forwarded-For from whoever
@@ -292,6 +293,88 @@ void main() {
       ]) {
         expect(isUsableProxyEntry(entry), isFalse, reason: entry);
       }
+    });
+  });
+
+  group('initAuthRuntime wires the boot-time emitters', () {
+    // configWarnings() is tested above, but the DEFECT the b9c8330 review named
+    // is that nothing proved the boot path CALLS it: deleting
+    // `configWarnings(...).forEach(warn)` from initAuthRuntime left the entire
+    // suite green, so a config that fails closed in silence would ship
+    // unannounced. Manual verification on the rebuilt binary protected exactly
+    // one commit. These drive the real boot function with captured sinks.
+    late Directory tempDir;
+    late SaltDatabase database;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('salt_boot_wire_');
+      database = SaltDatabase.open('${tempDir.path}/salt.db');
+    });
+    tearDown(() {
+      database.dispose();
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('a fail-closed proxy config surfaces its warning at boot', () {
+      final warnings = <String>[];
+      initAuthRuntime(
+        config: configFor('true', null),
+        database: database,
+        warn: warnings.add,
+        announceSetupCode: (_) {},
+      );
+      expect(
+        warnings,
+        contains(contains('TRUSTED_PROXIES is empty')),
+        reason:
+            'the boot path must EMIT the warnings, not merely define them — '
+            'deleting the forEach in initAuthRuntime must fail a test',
+      );
+    });
+
+    test('a clean config emits no warning', () {
+      final warnings = <String>[];
+      initAuthRuntime(
+        config: configFor('true', '172.17.0.0/16'),
+        database: database,
+        warn: warnings.add,
+        announceSetupCode: (_) {},
+      );
+      expect(warnings, isEmpty);
+    });
+
+    test('an empty user table announces the first-boot setup code', () {
+      // The other boot-time emitter, just as silent to delete: without it the
+      // operator has no code and cannot create the admin.
+      final announced = <String>[];
+      final runtime = initAuthRuntime(
+        config: configFor(null, null),
+        database: database,
+        warn: (_) {},
+        announceSetupCode: announced.add,
+      );
+      expect(runtime.setupCode, isNotNull);
+      expect(announced, hasLength(1));
+      expect(announced.single, contains(runtime.setupCode));
+    });
+
+    test('an existing user suppresses the setup code', () {
+      // Deleting the `userCount() == 0` guard would re-open first-boot setup on
+      // a live install — a fresh admin mintable by anyone who reaches it.
+      database.createUser(
+        username: 'admin',
+        passwordHash: 'unused-by-this-test',
+        role: 'admin',
+      );
+      final announced = <String>[];
+      final runtime = initAuthRuntime(
+        config: configFor(null, null),
+        database: database,
+        warn: (_) {},
+        announceSetupCode: announced.add,
+      );
+      expect(runtime.setupCode, isNull);
+      expect(announced, isEmpty);
     });
   });
 }

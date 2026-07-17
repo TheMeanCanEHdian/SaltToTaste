@@ -293,10 +293,18 @@ being EMPTY. This also closes the recorded mirror case, `TRUSTED_PROXIES` set
 with `TRUST_PROXY` unset. Verified on the rebuilt binary, which named the two
 bad entries and left the good one alone.
 
-**One LOW remains**: nothing pins the real `middleware()` order (blocked on a
-small refactor — it hard-binds process globals, so a test cannot import it; the
-`configWarnings` extraction is the same shape of fix and a template for it).
-The rate-limit key collision is closed with the XFF peer check.
+**Both call sites are now pinned** (`#44`): the chain build moved to
+`lib/src/app_pipeline.dart` as `buildAppMiddleware(handler, {config, database,
+authRuntime, nutritionProvider})`, and `_initAuthRuntime` became the public
+`initAuthRuntime({config, database, warn, announceSetupCode})` — both take their
+collaborators as parameters instead of reading process globals, so a test drives
+the real code. `middleware_test.dart` now assembles the production chain over a
+socket (a reorder putting `securityHeaders` inside `spaFallback` turns the
+deep-link CSP test red), and `trusted_proxy_test.dart` drives `initAuthRuntime`
+with a captured sink (deleting the `configWarnings(...).forEach(warn)` wiring
+turns the boot-warning test red). Both mutation-checked. `routes/_middleware.dart`
+is now a thin delegator holding only the fixed dart_frog entry point. The
+rate-limit key collision is closed with the XFF peer check.
 
 **Availability — first pass, 2026-07-17 (task #42), PARTIAL.** The workflow run
 was VOID: its finder worktrees were provisioned at `9497e68` (the deleted
@@ -358,8 +366,10 @@ deleted) and `GET /tokens` is unpaginated. Slow (two requests per row) and
 lower-severity than the capped abuse; a retention policy for revoked rows is a
 data decision left for the user rather than invented here.
 
-**One LOW remains from P3**: nothing pins the real `middleware()` order (blocked
-on the same process-globals refactor as the boot-warning call site — `#44`).
+**The P3 `middleware()`-order residual is closed** (`#44`): the chain moved to a
+parameterised `buildAppMiddleware` in `lib/`, the test now drives the real
+production chain over a socket, and the reorder that strips the shell's CSP is
+mutation-checked red. Same refactor made the boot-warning call site testable.
 
 ## P4 — Search + tags — **done** (core in `ffb833a`, 2026-07-15; the tag-style editor shipped against the approved `docs/mockups/p4-tags.html`)
 
