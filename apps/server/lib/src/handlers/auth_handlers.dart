@@ -74,8 +74,13 @@ class AuthRuntime {
 }
 
 /// A newly created session: the raw token (returned to the client exactly
-/// once) and the JSON response body.
-typedef SessionGrant = ({String token, Map<String, Object?> body});
+/// once), the JSON response body, and whether this is a "remember me" session
+/// — which the route needs, because the cookie has to say so too.
+typedef SessionGrant = ({
+  String token,
+  Map<String, Object?> body,
+  bool remember,
+});
 
 /// Core of `POST /api/v1/auth/setup`: creates the first admin account.
 ///
@@ -127,6 +132,7 @@ Future<SessionGrant> setupAdmin(
   );
   return (
     token: token,
+    remember: false,
     body: {
       'token': token,
       'user': {'id': userId, 'username': username, 'role': 'admin'},
@@ -259,6 +265,7 @@ Future<SessionGrant> recoverAdmin(
   );
   return (
     token: token,
+    remember: false,
     body: {
       'token': token,
       'user': {'id': userId, 'username': resolvedUsername, 'role': 'admin'},
@@ -324,6 +331,7 @@ Future<SessionGrant> login(
   );
   return (
     token: token,
+    remember: remember,
     body: {
       'token': token,
       'user': {
@@ -408,8 +416,26 @@ Future<Map<String, Object?>> changePassword(
 
 /// `Set-Cookie` value installing the session [token] (HttpOnly,
 /// SameSite=Lax, plus `Secure` when [secure]).
-String sessionCookie(String token, {required bool secure}) =>
+/// `Set-Cookie` value for a new session.
+///
+/// A "remember me" session gets `Max-Age`, and must: without it the browser
+/// treats this as a session cookie and drops it when the window closes, so the
+/// 90-day sliding session the server faithfully recorded was unreachable — the
+/// feature did nothing on web at all. Without remember there is deliberately
+/// no `Max-Age`: dying with the browser IS the intent.
+///
+/// The server-side session SLIDES (every authenticated request extends it) but
+/// this `Max-Age` is fixed at sign-in, so a continuously-active user is asked
+/// to sign in again 90 days after signing IN rather than 90 days after their
+/// last visit. Closing that gap would mean a `Set-Cookie` on every response,
+/// which is not worth it.
+String sessionCookie(
+  String token, {
+  required bool secure,
+  bool remember = false,
+}) =>
     '$sessionCookieName=$token; Path=/; HttpOnly; SameSite=Lax'
+    '${remember ? '; Max-Age=${rememberSessionLifetime.inSeconds}' : ''}'
     '${secure ? '; Secure' : ''}';
 
 /// `Set-Cookie` value clearing the session cookie (logout).
@@ -428,6 +454,21 @@ const int maxJsonBodyBytes = 2 * 1024 * 1024;
 /// rejected before it is buffered whole); throws [ValidationException] on
 /// oversize, malformed JSON, or any non-object shape.
 Future<Map<String, Object?>> readJsonBody(Request request) async {
+  // The Content-Type is a security check, not politeness, and it is the only
+  // thing guarding the UNAUTHENTICATED endpoints — `requireCsrf` needs a
+  // session to key on, so login and setup cannot use it.
+  //
+  // A cross-site HTML form can only send `application/x-www-form-urlencoded`,
+  // `multipart/form-data` or `text/plain` — and `enctype="text/plain"` can be
+  // shaped into a valid JSON document, so parsing whatever bytes arrived let
+  // an attacker's page POST to /auth/login and sign a victim into the
+  // ATTACKER's account. Demanding `application/json` closes it: a form cannot
+  // produce that header, and a scripted `fetch` that sets it triggers a CORS
+  // preflight this server never approves.
+  final mime = request.headers['content-type']?.split(';').first.trim();
+  if (mime?.toLowerCase() != 'application/json') {
+    throw const ValidationException('Request body must be application/json.');
+  }
   final declared = int.tryParse(request.headers['content-length'] ?? '');
   if (declared != null && declared > maxJsonBodyBytes) {
     throw const ValidationException('Request body is too large.');

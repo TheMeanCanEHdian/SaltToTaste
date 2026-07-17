@@ -15,7 +15,8 @@ Two interchangeable credentials, checked by the same middleware:
 - **Session token** — from `POST /auth/login` (or `/auth/setup`). Delivered
   both as an `stt_session` cookie (`HttpOnly; SameSite=Lax; Path=/`, plus
   `Secure` behind a TLS proxy with `TRUST_PROXY=true` **and** `TRUSTED_PROXIES`
-  naming that proxy) and in the response
+  naming that proxy; `Max-Age` only when `remember` was requested) and in the
+  response
   body for non-browser clients (`Authorization: Bearer <token>`). Expiry:
   7 days, or 90 days sliding when `remember` was set.
 - **Personal access token (PAT)** — `stt_pat_…`, minted per user in
@@ -414,6 +415,13 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`;
   HTML additionally gets a same-origin `Content-Security-Policy` and
   `X-Frame-Options: DENY`.
+- **Request bodies** must be sent as `Content-Type: application/json`; anything
+  else is a `422 validation` envelope. This is a CSRF defence, not pedantry: a
+  cross-site HTML form can only emit the three "simple" content types, and
+  `enctype="text/plain"` can be shaped into a valid JSON document — so the
+  unauthenticated endpoints (`/auth/login`, `/auth/setup`), which have no
+  session for the `X-Requested-With` check to key on, had nothing else standing
+  in front of them.
 - **Env config**: `PORT`, `DATA_DIR`, `LOG_LEVEL`, `TRUST_PROXY`, `TRUSTED_PROXIES`,
   `SECURE_COOKIES`, `IMPORT_DIR`, `TZ` (container tzdata), plus the
   dev-only `DEV_ALLOW_CORS`.

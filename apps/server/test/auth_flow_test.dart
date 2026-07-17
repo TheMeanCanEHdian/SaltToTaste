@@ -624,6 +624,107 @@ void main() {
     });
   });
 
+  group('login cannot be driven by a cross-site form', () {
+    /// A raw POST with a chosen Content-Type — what an attacker's page can
+    /// actually emit. `send` always sets application/json, so it cannot
+    /// express this.
+    Future<HttpClientResponse> postRaw(
+      String path,
+      String contentType,
+      String body,
+    ) async {
+      final client = HttpClient();
+      try {
+        final request = await client.postUrl(baseUri.resolve(path));
+        request.headers.set('content-type', contentType);
+        request.write(body);
+        return await request.close();
+      } finally {
+        client.close();
+      }
+    }
+
+    test('text/plain shaped into valid JSON is refused', () async {
+      // The real attack: <form enctype="text/plain"> can emit a body that
+      // parses as JSON, and a form needs no CORS permission. Login is
+      // unauthenticated, so requireCsrf has no session to key on and cannot
+      // defend it — the Content-Type check is the only thing here.
+      final response = await postRaw(
+        '/api/v1/auth/login',
+        'text/plain',
+        jsonEncode({'username': 'admin', 'password': _adminPassword}),
+      );
+      await response.drain<void>();
+      expect(
+        response.statusCode,
+        HttpStatus.unprocessableEntity,
+        reason: 'a cross-site form must not be able to sign anyone in',
+      );
+    });
+
+    test('a form encoding is refused', () async {
+      final response = await postRaw(
+        '/api/v1/auth/login',
+        'application/x-www-form-urlencoded',
+        'username=admin&password=$_adminPassword',
+      );
+      await response.drain<void>();
+      expect(response.statusCode, HttpStatus.unprocessableEntity);
+    });
+
+    test('application/json still works, charset and all', () async {
+      final response = await postRaw(
+        '/api/v1/auth/login',
+        'application/json; charset=utf-8',
+        jsonEncode({'username': 'admin', 'password': _adminPassword}),
+      );
+      await response.drain<void>();
+      expect(
+        response.statusCode,
+        HttpStatus.ok,
+        reason: 'the real client sends a charset; it must not be rejected',
+      );
+    });
+  });
+
+  group('remember me reaches the browser', () {
+    // The server faithfully recorded a 90-day sliding session and then handed
+    // out a cookie with no Max-Age — which a browser drops when the window
+    // closes. The feature did nothing on web at all.
+    test('remember: true sets Max-Age; plain login does not', () async {
+      final (remembered, _) = await loginAs(
+        'admin',
+        _adminPassword,
+        remember: true,
+      );
+      final rememberedCookie = remembered.headers.value('set-cookie');
+      expect(
+        rememberedCookie,
+        contains('Max-Age=${rememberSessionLifetime.inSeconds}'),
+        reason: 'without Max-Age the 90-day session dies with the browser',
+      );
+
+      final (plain, _) = await loginAs('admin', _adminPassword);
+      expect(
+        plain.headers.value('set-cookie'),
+        isNot(contains('Max-Age')),
+        reason: 'a non-remember session SHOULD die with the browser',
+      );
+    });
+
+    test('the cookie keeps HttpOnly and SameSite alongside Max-Age', () async {
+      final (response, _) = await loginAs(
+        'admin',
+        _adminPassword,
+        remember: true,
+      );
+      final cookie = response.headers.value('set-cookie');
+      expect(cookie, contains('HttpOnly'));
+      expect(cookie, contains('SameSite=Lax'));
+      expect(cookie, contains('Path=/'));
+    });
+  });
+
   group('admin password reset evicts every credential', () {
     // The reported hole: reset dropped SESSIONS but left PATs. A PAT is its
     // own credential, so must_change_password only FROZE it (403) — and the

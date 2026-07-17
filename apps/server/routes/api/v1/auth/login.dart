@@ -26,6 +26,7 @@ Future<Response> onRequest(RequestContext context) async {
       'Set-Cookie': sessionCookie(
         result.token,
         secure: isSecureRequest(context),
+        remember: result.remember,
       ),
     },
   );
