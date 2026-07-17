@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -12,37 +13,51 @@ Future<void> showReviewSheet(BuildContext context, {required bool isAdmin}) {
   final cubit = context.read<NutritionCubit>()..loadMatches();
   final wide = MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
   if (!wide) {
-    return showModalBottomSheet<void>(
+    return showFSheet<void>(
       context: context,
-      isScrollControlled: true,
+      side: FLayout.btt,
       useSafeArea: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      // A near-full-height sheet (~0.92): the default 9/16 cap would leave
+      // the match list cramped. The FractionallySizedBox pins the 0.92; the
+      // sheet frame paints nothing, so the white rounded surface is ours.
+      mainAxisMaxRatio: null,
       builder: (context) => BlocProvider.value(
         value: cubit,
         child: FractionallySizedBox(
           heightFactor: 0.92,
-          child: _ReviewSheet(isAdmin: isAdmin, asBottomSheet: true),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            child: _ReviewSheet(isAdmin: isAdmin, asBottomSheet: true),
+          ),
         ),
       ),
     );
   }
-  return showDialog<void>(
+  return showFDialog<void>(
     context: context,
-    builder: (context) => BlocProvider.value(
+    builder: (context, _, animation) => BlocProvider.value(
       value: cubit,
-      child: _ReviewSheet(isAdmin: isAdmin),
+      child: _ReviewSheet(isAdmin: isAdmin, animation: animation),
     ),
   );
 }
 
 class _ReviewSheet extends StatelessWidget {
-  const _ReviewSheet({required this.isAdmin, this.asBottomSheet = false});
+  const _ReviewSheet({
+    required this.isAdmin,
+    this.asBottomSheet = false,
+    this.animation,
+  });
 
   final bool isAdmin;
   final bool asBottomSheet;
+
+  /// The dialog route's scale/fade animation, threaded into [FDialog] on the
+  /// wide (centered-dialog) path. Null on the bottom-sheet path.
+  final Animation<double>? animation;
 
   @override
   Widget build(BuildContext context) {
@@ -82,10 +97,13 @@ class _ReviewSheet extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Close',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close, size: 19),
+                Tooltip(
+                  message: 'Close',
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: () => Navigator.of(context).pop(),
+                    child: const Icon(Icons.close, size: 19),
+                  ),
                 ),
               ],
             ),
@@ -137,8 +155,10 @@ class _ReviewSheet extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              OutlinedButton(
-                                onPressed: () => context
+                              FButton(
+                                variant: FButtonVariant.outline,
+                                mainAxisSize: MainAxisSize.min,
+                                onPress: () => context
                                     .read<NutritionCubit>()
                                     .loadMatches(force: true),
                                 child: const Text('Retry'),
@@ -169,7 +189,13 @@ class _ReviewSheet extends StatelessWidget {
     if (asBottomSheet) {
       return body;
     }
-    return Dialog(insetPadding: const EdgeInsets.all(24), child: body);
+    return FDialog(
+      animation: animation,
+      // Match the old Dialog's roomy width — the two-column provenance rows
+      // need more than FDialog's 560 default.
+      constraints: const BoxConstraints(minWidth: 280, maxWidth: 760),
+      builder: (context, style) => body,
+    );
   }
 
   /// "13 lines · 12 matched · 1 skipped · computed 2026-07-15", from
@@ -218,25 +244,29 @@ class _BasisRow extends StatelessWidget {
             style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
           ),
           const SizedBox(width: 10),
-          IconButton(
-            tooltip: 'Fewer servings',
-            visualDensity: VisualDensity.compact,
-            onPressed: busy || basis <= 1
-                ? null
-                : () => cubit.setServingBasis(basis - 1),
-            icon: const Icon(Icons.remove, size: 16),
+          Tooltip(
+            message: 'Fewer servings',
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: busy || basis <= 1
+                  ? null
+                  : () => cubit.setServingBasis(basis - 1),
+              child: const Icon(Icons.remove, size: 16),
+            ),
           ),
           Text(
             '$basis',
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
           ),
-          IconButton(
-            tooltip: 'More servings',
-            visualDensity: VisualDensity.compact,
-            onPressed: busy || basis >= 1000
-                ? null
-                : () => cubit.setServingBasis(basis + 1),
-            icon: const Icon(Icons.add, size: 16),
+          Tooltip(
+            message: 'More servings',
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: busy || basis >= 1000
+                  ? null
+                  : () => cubit.setServingBasis(basis + 1),
+              child: const Icon(Icons.add, size: 16),
+            ),
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -436,38 +466,70 @@ class _MatchRow extends StatelessWidget {
     BuildContext context,
     NutritionCubit cubit,
   ) async {
-    final picked = await showDialog<MatchCandidate>(
+    final picked = await showFDialog<MatchCandidate>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(
-          'Match for "${match.raw}"',
-          style: const TextStyle(fontSize: 15),
+      builder: (context, _, animation) => FDialog(
+        animation: animation,
+        // Bound the height so a long candidate list scrolls instead of
+        // overflowing (the old SimpleDialog scrolled its children).
+        constraints: const BoxConstraints(
+          minWidth: 280,
+          maxWidth: 480,
+          maxHeight: 460,
         ),
-        children: [
-          for (final candidate in match.candidates)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(candidate),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      candidate.description,
-                      style: const TextStyle(fontSize: 13.5),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${candidate.dataType} · '
-                    '${(candidate.confidence * 100).round()}%',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: SaltColors.muted,
-                    ),
-                  ),
-                ],
+        builder: (context, style) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Text(
+                'Match for "${match.raw}"',
+                style: style.titleTextStyle,
               ),
             ),
-        ],
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final candidate in match.candidates)
+                      FTappable(
+                        onPress: () => Navigator.of(context).pop(candidate),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  candidate.description,
+                                  style: const TextStyle(fontSize: 13.5),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${candidate.dataType} · '
+                                '${(candidate.confidence * 100).round()}%',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: SaltColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
     if (picked != null) {
@@ -491,40 +553,64 @@ class _MatchRow extends StatelessWidget {
     NutritionCubit cubit,
     TextEditingController controller,
   ) async {
-    final grams = await showDialog<double>(
+    final grams = await showFDialog<double>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Semantics(
-          header: true,
-          child: Text(
-            'Grams for "${match.raw}"',
-            style: const TextStyle(fontSize: 15),
-          ),
-        ),
-        content: Semantics(
-          label: 'Grams',
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              suffixText: 'g',
-              hintText: 'e.g. 250',
+      builder: (context, _, animation) => FDialog(
+        animation: animation,
+        builder: (context, style) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Grams for "${match.raw}"',
+                  style: style.titleTextStyle,
+                ),
+              ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Semantics(
+                label: 'Grams',
+                child: FTextField(
+                  control: FTextFieldControl.managed(controller: controller),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  hint: 'e.g. 250',
+                  suffixBuilder: (_, _, _) => const Text('g'),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: FButton(
+                      variant: FButtonVariant.outline,
+                      onPress: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FButton(
+                      onPress: () => Navigator.of(
+                        context,
+                      ).pop(double.tryParse(controller.text)),
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-            onPressed: () =>
-                Navigator.of(context).pop(double.tryParse(controller.text)),
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
     if (grams != null && grams > 0) {
@@ -591,19 +677,12 @@ class _SmallAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        textStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'OpenSans',
-        ),
-      ),
-      onPressed: onPressed,
-      icon: Icon(icon, size: 14),
-      label: Text(label),
+    return FButton(
+      variant: FButtonVariant.outline,
+      mainAxisSize: MainAxisSize.min,
+      onPress: onPressed,
+      prefix: Icon(icon, size: 14),
+      child: Text(label),
     );
   }
 }

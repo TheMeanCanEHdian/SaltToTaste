@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -107,12 +108,12 @@ class _EmptyState extends StatelessWidget {
           ),
           if (isAdmin) ...[
             const SizedBox(height: 12),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-              onPressed: state.computing
+            FButton(
+              mainAxisSize: MainAxisSize.min,
+              onPress: state.computing
                   ? null
                   : () => context.read<NutritionCubit>().compute(),
-              icon: state.computing
+              prefix: state.computing
                   ? const SizedBox(
                       width: 14,
                       height: 14,
@@ -122,7 +123,7 @@ class _EmptyState extends StatelessWidget {
                       ),
                     )
                   : const Icon(Icons.bolt, size: 17),
-              label: Text(state.computing ? 'Computing…' : 'Compute'),
+              child: Text(state.computing ? 'Computing…' : 'Compute'),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -183,8 +184,10 @@ class _StaleBanner extends StatelessWidget {
             ),
           ),
           if (isAdmin)
-            TextButton(
-              onPressed: state.computing
+            FButton(
+              variant: FButtonVariant.ghost,
+              mainAxisSize: MainAxisSize.min,
+              onPress: state.computing
                   ? null
                   : () => context.read<NutritionCubit>().compute(),
               child: Text(state.computing ? 'Computing…' : 'Recompute'),
