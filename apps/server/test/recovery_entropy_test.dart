@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:salt_server/src/auth/recovery.dart';
 import 'package:salt_server/src/auth/setup_code.dart';
+import 'package:salt_server/src/db/salt_database.dart';
 import 'package:test/test.dart';
 
 /// The recovery code grants admin and is stored as an unsalted SHA-256 — which
@@ -10,11 +12,19 @@ import 'package:test/test.dart';
 /// part, not the hash. These pin the length, because nothing else would notice
 /// it shrinking back.
 void main() {
-  double bitsOf(int chars) =>
-      chars * (log(setupCodeAlphabet.length) / log(2));
+  double bitsOf(int chars) => chars * (log(setupCodeAlphabet.length) / log(2));
 
-  test('a recovery code carries ~59 bits over 12 characters', () {
-    final code = generateSetupCode(groups: recoveryCodeGroups);
+  test('the code ISSUED to an operator carries ~59 bits', () {
+    // Through issueRecoveryCode, not generateSetupCode: the constant and the
+    // issuer are different things, and only the issuer's output is what an
+    // operator actually types. Asserting on the generator alone let the real
+    // code shrink to 8 characters with this file green.
+    final tempDir = Directory.systemTemp.createTempSync('salt_recovery_test');
+    addTearDown(() => tempDir.deleteSync(recursive: true));
+    final db = SaltDatabase.open('${tempDir.path}/salt.db');
+    addTearDown(db.dispose);
+
+    final code = issueRecoveryCode(db);
     final stripped = code.replaceAll('-', '');
     expect(stripped.length, 12);
     expect(code, matches(RegExp(r'^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$')));
@@ -22,6 +32,14 @@ void main() {
       bitsOf(stripped.length),
       greaterThan(55),
       reason: 'measured ${bitsOf(stripped.length).toStringAsFixed(1)} bits',
+    );
+
+    // And it round-trips: a length change that broke redemption would be a
+    // worse bug than the entropy it bought.
+    expect(
+      checkRecoveryCode(db, code),
+      RecoveryCodeStatus.valid,
+      reason: 'the issued code must actually be redeemable',
     );
   });
 

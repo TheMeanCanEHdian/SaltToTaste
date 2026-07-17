@@ -75,7 +75,10 @@ class _RecoverPageState extends State<RecoverPage> {
         AuthField(
           label: 'Recovery code',
           controller: _code,
-          hint: 'e.g. 7GX4-Q2M9',
+          // Three groups: recovery codes are 12 chars (see
+          // recoveryCodeGroups). A 2-group hint tells the operator the code
+          // they are holding is the wrong shape.
+          hint: 'e.g. 7GX4-Q2M9-4KTB',
           // The tool prints to its own stdout, so the code appears in the
           // terminal you run it from — it is NOT in the server's logs, and
           // `docker logs` will never show it.

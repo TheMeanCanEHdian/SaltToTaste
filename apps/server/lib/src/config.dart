@@ -3,6 +3,79 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 
+/// [address] as dotted-quad IPv4 when it is IPv4 or IPv4-MAPPED IPv6, else
+/// null.
+///
+/// The unmapping is the whole point. The shipped binary binds
+/// `InternetAddress.anyIPv6` (dart_frog's generated entrypoint, which the
+/// Dockerfile compiles and runs) and that listener is dual-stack, so an IPv4
+/// peer — i.e. the reverse proxy on the Docker bridge — arrives at the handler
+/// as `::ffff:172.17.0.2`, NOT `172.17.0.2`. Comparing an operator's typed
+/// `172.17.0.0/16` against that string matches nothing, so proxy trust was
+/// dead in the one deployment the README documents, and the session cookie
+/// silently lost `Secure` with it.
+///
+/// `image_ingest.dart` already unmaps this exact form for its SSRF guard; the
+/// same care is needed here.
+String? _asIpv4(String address) {
+  final parsed = InternetAddress.tryParse(address);
+  if (parsed == null) {
+    return null;
+  }
+  if (parsed.type == InternetAddressType.IPv4) {
+    return parsed.address;
+  }
+  final bytes = parsed.rawAddress;
+  if (bytes.length != 16) {
+    return null;
+  }
+  for (var i = 0; i < 10; i++) {
+    if (bytes[i] != 0) {
+      return null;
+    }
+  }
+  if (bytes[10] != 0xff || bytes[11] != 0xff) {
+    return null;
+  }
+  return '${bytes[12]}.${bytes[13]}.${bytes[14]}.${bytes[15]}';
+}
+
+/// Whether [entry] and [address] are the same address, comparing what they
+/// MEAN rather than how they are spelled.
+///
+/// One address has many spellings — `::1` and `0:0:0:0:0:0:0:1`,
+/// `::ffff:1.2.3.4` and `1.2.3.4` — and dart:io hands back its own canonical
+/// form, which is rarely the one an operator types. A raw string compare
+/// therefore fails closed on CORRECT configuration, which is the worst kind of
+/// wrong: it looks configured and does nothing.
+bool _sameAddress(String entry, String address) {
+  final entryV4 = _asIpv4(entry);
+  final addressV4 = _asIpv4(address);
+  if (entryV4 != null || addressV4 != null) {
+    // One side is (or maps to) IPv4: both must, and they must agree.
+    return entryV4 != null && entryV4 == addressV4;
+  }
+  final entryAddress = InternetAddress.tryParse(entry);
+  final peerAddress = InternetAddress.tryParse(address);
+  if (entryAddress == null || peerAddress == null) {
+    // Not an address at all (a typo). Refuse rather than guess: an
+    // unparseable rule must never widen trust.
+    return false;
+  }
+  // Compare the bytes, not the text, so every spelling of one address agrees.
+  final a = entryAddress.rawAddress;
+  final b = peerAddress.rawAddress;
+  if (a.length != b.length) {
+    return false;
+  }
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Whether [address] matches a `TRUSTED_PROXIES` entry: an exact address, or
 /// an IPv4 CIDR block.
 ///
@@ -12,22 +85,25 @@ import 'package:logging/logging.dart';
 /// far more likely, gives up and leaves the header unchecked.
 bool _matchesProxy(String entry, String address) {
   if (!entry.contains('/')) {
-    return entry == address;
+    return _sameAddress(entry, address);
   }
   final parts = entry.split('/');
   if (parts.length != 2) {
     return false;
   }
   final bits = int.tryParse(parts[1]);
-  final network = _ipv4ToInt(parts[0]);
-  final candidate = _ipv4ToInt(address);
+  // Both sides go through the same unmapping, so a `::ffff:` peer is matched
+  // by the plain IPv4 block an operator would actually write.
+  final networkV4 = _asIpv4(parts[0]);
+  final candidateV4 = _asIpv4(address);
+  final network = networkV4 == null ? null : _ipv4ToInt(networkV4);
+  final candidate = candidateV4 == null ? null : _ipv4ToInt(candidateV4);
   if (bits == null ||
       bits < 0 ||
       bits > 32 ||
       network == null ||
       candidate == null) {
-    // Not parseable as IPv4 CIDR (an IPv6 entry, or a typo). Refuse rather
-    // than guess: an unparseable rule must never widen trust.
+    // Not an IPv4 CIDR (an IPv6 entry, or a typo). Refuse rather than guess.
     return false;
   }
   if (bits == 0) {

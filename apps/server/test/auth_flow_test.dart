@@ -662,14 +662,25 @@ void main() {
       );
     });
 
-    test('a form encoding is refused', () async {
+    test('a form encoding is refused BY THE GATE, not by the parser', () async {
+      // A form-encoded body is not valid JSON anyway, so asserting only on
+      // the status made this pass with the Content-Type check deleted — it
+      // proved nothing. The MESSAGE is what distinguishes "refused because it
+      // is not JSON-shaped" from "refused because a form may not do this".
       final response = await postRaw(
         '/api/v1/auth/login',
         'application/x-www-form-urlencoded',
         'username=admin&password=$_adminPassword',
       );
-      await response.drain<void>();
+      final body = await utf8.decoder.bind(response).join();
       expect(response.statusCode, HttpStatus.unprocessableEntity);
+      expect(
+        errorOf(body)['message'],
+        'Request body must be application/json.',
+        reason:
+            'must be turned away by the Content-Type gate; without it '
+            'this still 422s on malformed JSON and tests nothing',
+      );
     });
 
     test('application/json still works, charset and all', () async {

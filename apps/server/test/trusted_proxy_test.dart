@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:salt_server/src/config.dart';
 import 'package:test/test.dart';
 
@@ -15,6 +17,94 @@ void main() {
           if (trusted != null) 'TRUSTED_PROXIES': trusted,
         },
       );
+
+  group('the address an operator types vs the one dart:io reports', () {
+    // The gap that made the whole peer check inert in production, and which
+    // ServerConfig-only tests could never see: the shipped binary binds
+    // `InternetAddress.anyIPv6` (dart_frog's generated entrypoint, which the
+    // Dockerfile compiles and runs), and that listener is DUAL-STACK. So an
+    // IPv4 peer — the reverse proxy on the Docker bridge — arrives as
+    // `::ffff:172.17.0.2`, never `172.17.0.2`. Matching the operator's typed
+    // `172.17.0.0/16` against that string found nothing, so TRUST_PROXY +
+    // TRUSTED_PROXIES did NOTHING while looking configured, and the session
+    // cookie silently lost `Secure` along with it.
+    test('a REAL peer on the production bind is matched', () async {
+      final config = ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': '/tmp/salt-test',
+          'TRUST_PROXY': 'true',
+          'TRUSTED_PROXIES': '127.0.0.0/8',
+        },
+      );
+
+      // Bind the way production does, and ask a real socket what the peer
+      // looks like. Nothing else can produce this string.
+      final server = await HttpServer.bind(InternetAddress.anyIPv6, 0);
+      String? peer;
+      server.listen((request) {
+        peer = request.connectionInfo!.remoteAddress.address;
+        request.response
+          ..statusCode = 200
+          ..close();
+      });
+      final socket = await Socket.connect(
+        InternetAddress('127.0.0.1'),
+        server.port,
+      );
+      socket.write('GET / HTTP/1.1\r\nHost: x\r\n\r\n');
+      await socket.flush();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await socket.close();
+      await server.close(force: true);
+
+      expect(
+        peer,
+        startsWith('::ffff:'),
+        reason:
+            'the dual-stack bind reports IPv4 peers mapped; if this ever '
+            'stops being true the rest of this test is meaningless',
+      );
+      expect(
+        config.isTrustedProxy(peer),
+        isTrue,
+        reason:
+            'the peer the SERVER actually sees ($peer) must match the '
+            'CIDR an operator actually writes — this is the production path',
+      );
+    });
+
+    test('an IPv4-mapped peer matches a plain IPv4 rule, both forms', () {
+      final config = ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': '/tmp/salt-test',
+          'TRUST_PROXY': 'true',
+          'TRUSTED_PROXIES': '172.17.0.0/16, 10.0.0.5',
+        },
+      );
+      expect(config.isTrustedProxy('::ffff:172.17.0.2'), isTrue);
+      expect(config.isTrustedProxy('172.17.0.2'), isTrue);
+      expect(config.isTrustedProxy('::ffff:10.0.0.5'), isTrue);
+      expect(config.isTrustedProxy('10.0.0.5'), isTrue);
+      // Still fails closed for anything outside the rule, mapped or not.
+      expect(config.isTrustedProxy('::ffff:172.18.0.2'), isFalse);
+      expect(config.isTrustedProxy('172.18.0.2'), isFalse);
+    });
+
+    test('one IPv6 address matches however it is spelled', () {
+      final config = ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': '/tmp/salt-test',
+          'TRUST_PROXY': 'true',
+          'TRUSTED_PROXIES': '0:0:0:0:0:0:0:1',
+        },
+      );
+      // The operator wrote the expanded form; dart:io reports the compressed
+      // one. They are the same address and must behave like it.
+      expect(config.isTrustedProxy('::1'), isTrue);
+      expect(config.isTrustedProxy('0:0:0:0:0:0:0:1'), isTrue);
+      expect(config.isTrustedProxy('::2'), isFalse);
+    });
+  });
 
   group('TRUSTED_PROXIES', () {
     test('an exact address is trusted; nothing else is', () {
