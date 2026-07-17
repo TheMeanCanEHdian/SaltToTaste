@@ -35,6 +35,11 @@ abstract final class ApiErrorCodes {
   /// message (HTTP 429).
   static const String locked = 'locked';
 
+  /// Too many requests of a rate-limited kind (e.g. text search); retry after
+  /// the `Retry-After` header (HTTP 429). Distinct from [locked], which is a
+  /// sign-in-failure lockout.
+  static const String rateLimited = 'rate_limited';
+
   /// The request conflicts with existing state, e.g. a duplicate username
   /// (HTTP 409).
   static const String conflict = 'conflict';

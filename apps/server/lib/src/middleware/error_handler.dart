@@ -44,6 +44,16 @@ Middleware errorHandler() {
           requestId: requestId,
           headers: {HttpHeaders.allowHeader: exception.allow},
         );
+      } on TooManyRequestsException catch (exception) {
+        return errorResponse(
+          statusCode: exception.statusCode,
+          code: exception.code,
+          message: exception.message,
+          requestId: requestId,
+          headers: {
+            HttpHeaders.retryAfterHeader: '${exception.retryAfterSeconds}',
+          },
+        );
       } on AppException catch (exception) {
         return errorResponse(
           statusCode: exception.statusCode,

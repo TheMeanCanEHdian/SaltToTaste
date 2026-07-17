@@ -92,6 +92,7 @@ temporary password with `must_change_password`: until the user calls
   | `password_change_required` | 403 | Must change password before anything else |
   | `conflict` | 409 | Conflicts with existing state (e.g. duplicate username) |
   | `locked` | 429 | Login lockout; message says when to retry |
+  | `rate_limited` | 429 | Too many text searches; retry after the `Retry-After` header |
   | `internal` | 500 | Unhandled server error (details only in server logs) |
 
 - Timestamps are UTC ISO-8601 strings with a `Z` suffix. Keys are
@@ -114,8 +115,13 @@ Query parameters:
 |---|---|---|
 | `page` | 1 | integer ≥ 1 |
 | `limit` | 24 | integer 1..100 |
-| `q` | — | search-DSL query (below), max 512 chars; parse errors → `422 validation` |
+| `q` | — | search-DSL query (below), max 512 chars; parse errors → `422 validation`; rate-limited per user (see below) |
 | `favorites` | — | `true` restricts the listing (and any `q` search) to the caller's favorites |
+
+A `q` search is rate-limited per user — `SEARCH_RATE_LIMIT` requests per minute
+(default 60; `0` disables), returning `429 rate_limited` with a `Retry-After`
+header past that. Search runs synchronously on the one serving isolate, so this
+caps any single caller's share of it. Plain listing (no `q`) is not limited.
 
 **Search DSL:** words next to each other all must match (`and` implied);
 `or` broadens; `"quoted phrases"` match exactly; scopes `title:`, `tag:`,
@@ -423,7 +429,8 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   session for the `X-Requested-With` check to key on, had nothing else standing
   in front of them.
 - **Env config**: `PORT`, `DATA_DIR`, `LOG_LEVEL`, `TRUST_PROXY`, `TRUSTED_PROXIES`,
-  `SECURE_COOKIES`, `IMPORT_DIR`, `TZ` (container tzdata), plus the
+  `SECURE_COOKIES`, `IMPORT_DIR`, `SEARCH_RATE_LIMIT` (text searches/min per
+  user, default 60; `0` disables), `TZ` (container tzdata), plus the
   dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
   requests (bounded), then closes SQLite cleanly — the WAL checkpoints

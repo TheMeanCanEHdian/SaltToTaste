@@ -106,6 +106,24 @@ final class ConflictException extends AppException {
     : super(409, ApiErrorCodes.conflict, message);
 }
 
+/// Too many requests of a rate-limited kind — text search, presently (HTTP
+/// 429, code `rate_limited`). Distinct from [LockedException], which is a
+/// sign-in-failure lockout; the error handler advertises [retryAfterSeconds]
+/// as a `Retry-After` header.
+final class TooManyRequestsException extends AppException {
+  /// Creates the exception advertising the remaining wait in
+  /// [retryAfterSeconds].
+  TooManyRequestsException(this.retryAfterSeconds)
+    : super(
+        429,
+        ApiErrorCodes.rateLimited,
+        'Too many requests. Try again in $retryAfterSeconds seconds.',
+      );
+
+  /// Whole seconds (rounded up) until another request is allowed.
+  final int retryAfterSeconds;
+}
+
 /// Too many failed sign-in attempts for this account from this address
 /// (HTTP 429, code `locked`).
 final class LockedException extends AppException {

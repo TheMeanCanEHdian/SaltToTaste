@@ -1,5 +1,6 @@
 // dart_frog ships its own `requestLogger`; ours is the one wired here.
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
+import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
@@ -45,6 +46,7 @@ Handler buildAppMiddleware(
   required SaltDatabase database,
   required AuthRuntime authRuntime,
   required NutritionProvider nutritionProvider,
+  required RequestRateLimiter searchRateLimiter,
   String indexPath = 'public/index.html',
 }) {
   return handler
@@ -52,6 +54,7 @@ Handler buildAppMiddleware(
       // bearer token; needs the SaltDatabase provider wired outside it.
       .use(authProvider())
       .use(provider<AuthRuntime>((_) => authRuntime))
+      .use(provider<RequestRateLimiter>((_) => searchRateLimiter))
       .use(provider<NutritionProvider>((_) => nutritionProvider))
       .use(provider<SaltDatabase>((_) => database))
       .use(provider<ServerConfig>((_) => config))

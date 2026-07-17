@@ -109,3 +109,89 @@ class _KeyState {
   DateTime lastActivity = DateTime.fromMillisecondsSinceEpoch(0);
   DateTime? lockedUntil;
 }
+
+/// In-memory per-key request-RATE limiter (sliding window).
+///
+/// Where [LoginRateLimiter] locks out after repeated FAILURES, this bounds the
+/// RATE of otherwise-successful requests: it allows [maxRequests] within any
+/// [window] per key and refuses the rest. It exists so one identity cannot
+/// monopolise a synchronous, single-isolate resource — the SQLite FTS search
+/// runs on dart_frog's one serving isolate, so a member looping expensive
+/// queries adds latency for everyone (measured after the term cap of `#42`).
+/// This does not remove that architectural limit; it caps any single caller's
+/// share of it.
+///
+/// [maxRequests] of zero or less disables the limiter — every call is allowed
+/// and nothing is recorded — so an operator can turn it off.
+///
+/// Pure and single-isolate; state is lost on restart, which is acceptable for
+/// rate limiting.
+class RequestRateLimiter {
+  /// Creates a limiter allowing [maxRequests] per [window] per key. [now] is
+  /// injectable for tests and defaults to the wall clock.
+  RequestRateLimiter({
+    this.maxRequests = defaultMaxRequests,
+    this.window = const Duration(minutes: 1),
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now;
+
+  /// Default requests allowed per [window] — generous enough that no human
+  /// searching by hand reaches it, tight enough to neutralise a hammering
+  /// loop's isolate share.
+  static const int defaultMaxRequests = 60;
+
+  /// Requests allowed per [window]; zero or less disables limiting.
+  final int maxRequests;
+
+  /// The sliding window over which [maxRequests] is counted.
+  final Duration window;
+
+  /// Entries with no in-window hits are discarded during opportunistic
+  /// pruning, so a flood of distinct keys cannot grow the map without bound.
+  static const int _pruneEvery = 256;
+
+  final DateTime Function() _now;
+  final Map<String, List<DateTime>> _hits = {};
+  int _opsSincePrune = 0;
+
+  /// Whether a request for [key] may proceed, recording it when it may.
+  ///
+  /// When blocked, `retryAfter` is the time until the oldest in-window hit
+  /// ages out (always positive); when allowed it is [Duration.zero].
+  ({bool allowed, Duration retryAfter}) check(String key) {
+    if (maxRequests <= 0) {
+      return (allowed: true, retryAfter: Duration.zero);
+    }
+    final now = _now();
+    _maybePrune(now);
+    final cutoff = now.subtract(window);
+    final hits = _hits.putIfAbsent(key, () => <DateTime>[])
+      // Drop hits at or before the cutoff; keep those strictly within the
+      // window.
+      ..removeWhere((hit) => !hit.isAfter(cutoff));
+    if (hits.length < maxRequests) {
+      hits.add(now);
+      return (allowed: true, retryAfter: Duration.zero);
+    }
+    final retryAfter = hits.first.add(window).difference(now);
+    return (
+      allowed: false,
+      // The oldest hit is within the window, so this is positive; the fallback
+      // only guards a clock that moved backwards.
+      retryAfter: retryAfter > Duration.zero ? retryAfter : window,
+    );
+  }
+
+  void _maybePrune(DateTime now) {
+    _opsSincePrune += 1;
+    if (_opsSincePrune < _pruneEvery) {
+      return;
+    }
+    _opsSincePrune = 0;
+    final cutoff = now.subtract(window);
+    _hits.removeWhere((_, hits) {
+      hits.removeWhere((hit) => !hit.isAfter(cutoff));
+      return hits.isEmpty;
+    });
+  }
+}

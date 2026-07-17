@@ -122,4 +122,63 @@ void main() {
     }
     expect(limiter.check('fresh').allowed, isFalse);
   });
+
+  group('RequestRateLimiter', () {
+    late RequestRateLimiter rl;
+
+    setUp(() {
+      rl = RequestRateLimiter(maxRequests: 3, now: () => clock);
+    });
+
+    test('allows exactly the limit, then refuses', () {
+      for (var i = 0; i < 3; i++) {
+        expect(rl.check('k').allowed, isTrue, reason: 'request ${i + 1}');
+      }
+      final blocked = rl.check('k');
+      expect(blocked.allowed, isFalse);
+      // All three hits landed at t=0, so the window frees at t=0 + 60s.
+      expect(blocked.retryAfter, const Duration(minutes: 1));
+    });
+
+    test('a full window ages every hit out and restores the budget', () {
+      for (var i = 0; i < 3; i++) {
+        rl.check('k'); // all at t=0
+      }
+      expect(rl.check('k').allowed, isFalse);
+      advance(const Duration(minutes: 1));
+      expect(
+        rl.check('k').allowed,
+        isTrue,
+        reason: 'the t=0 hits are now outside the window',
+      );
+    });
+
+    test('a partial window frees only the hits that aged out', () {
+      rl.check('k'); // t=0
+      advance(const Duration(seconds: 30));
+      for (var i = 0; i < 2; i++) {
+        rl.check('k'); // both at t=30 -> budget of 3 is full
+      }
+      expect(rl.check('k').allowed, isFalse);
+
+      advance(const Duration(seconds: 31)); // t=61: only the t=0 hit expired
+      expect(rl.check('k').allowed, isTrue, reason: 'one slot freed');
+      expect(rl.check('k').allowed, isFalse, reason: 'and only one');
+    });
+
+    test('keys have independent budgets', () {
+      for (var i = 0; i < 3; i++) {
+        rl.check('a');
+      }
+      expect(rl.check('a').allowed, isFalse);
+      expect(rl.check('b').allowed, isTrue, reason: 'b has its own budget');
+    });
+
+    test('maxRequests <= 0 disables the limiter entirely', () {
+      final off = RequestRateLimiter(maxRequests: 0, now: () => clock);
+      for (var i = 0; i < 500; i++) {
+        expect(off.check('k').allowed, isTrue);
+      }
+    });
+  });
 }

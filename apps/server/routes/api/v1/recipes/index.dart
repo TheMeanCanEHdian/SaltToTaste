@@ -1,6 +1,8 @@
 import 'package:dart_frog/dart_frog.dart';
+import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
@@ -20,13 +22,27 @@ Future<Response> onRequest(RequestContext context) async {
 
   if (context.request.method == HttpMethod.get) {
     final query = context.request.uri.queryParameters;
+    // Rate-limit only the text-search path: FTS runs synchronously on the one
+    // serving isolate, so a member looping expensive queries adds latency for
+    // everyone. Plain paginated listing (no `q`) is cheap and left unlimited so
+    // ordinary browsing is never throttled.
+    final searchText = query['q'];
+    if (searchText != null && searchText.trim().isNotEmpty) {
+      final limiter = context.read<RequestRateLimiter>();
+      final gate = limiter.check('search:${user.id}');
+      if (!gate.allowed) {
+        throw TooManyRequestsException(
+          (gate.retryAfter.inMilliseconds / 1000).ceil(),
+        );
+      }
+    }
     final params = parseListParams(query);
     return Response.json(
       body: listRecipes(
         db,
         page: params.page,
         limit: params.limit,
-        query: query['q'],
+        query: searchText,
         viewerId: user.id,
         favoritesOnly: query['favorites'] == 'true',
       ),

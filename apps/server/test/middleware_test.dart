@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/app_pipeline.dart';
+import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
@@ -93,6 +94,7 @@ void main() {
       database: database,
       authRuntime: AuthRuntime(),
       nutritionProvider: _UnusedNutrition(),
+      searchRateLimiter: RequestRateLimiter(),
       indexPath: '${tempDir.path}/index.html',
     );
     server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
@@ -388,6 +390,24 @@ void main() {
       expect(trustFor('TRUE'), isTrue);
       expect(trustFor('1'), isFalse);
       expect(trustFor('false'), isFalse);
+    });
+
+    test('SEARCH_RATE_LIMIT parses; an invalid value keeps the default', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_srl_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      int limitFor(String? raw) => ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': dir.path,
+          if (raw != null) 'SEARCH_RATE_LIMIT': raw,
+        },
+      ).searchRateLimit;
+
+      expect(limitFor(null), ServerConfig.defaultSearchRateLimit);
+      expect(limitFor('120'), 120);
+      expect(limitFor('0'), 0, reason: '0 explicitly disables the limit');
+      // A typo must fall back to the default, never silently disable the guard.
+      expect(limitFor('abc'), ServerConfig.defaultSearchRateLimit);
+      expect(limitFor('-5'), ServerConfig.defaultSearchRateLimit);
     });
   });
 }

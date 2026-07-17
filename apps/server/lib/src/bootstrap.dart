@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:logging/logging.dart';
+import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/auth/setup_code.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
@@ -22,6 +23,7 @@ const String fdcApiKeySetting = 'fdc.api_key';
 ServerConfig? _config;
 SaltDatabase? _database;
 AuthRuntime? _authRuntime;
+RequestRateLimiter? _searchRateLimiter;
 NutritionProvider? _nutritionProvider;
 NutritionProvider? _bulkNutritionProvider;
 TokenBucket? _fdcBucket;
@@ -57,6 +59,12 @@ AuthRuntime get authRuntime => _authRuntime ??= initAuthRuntime(
   config: serverConfig,
   database: saltDatabase,
 );
+
+/// The process-wide search rate limiter, sized from [serverConfig] (the
+/// `SEARCH_RATE_LIMIT` env, default 60/min per user; `0` disables it). Bounds
+/// how much of the single serving isolate one caller's text searches can hold.
+RequestRateLimiter get searchRateLimiter => _searchRateLimiter ??=
+    RequestRateLimiter(maxRequests: serverConfig.searchRateLimit);
 
 /// Startup warnings for a configuration that LOOKS set up but is not.
 ///

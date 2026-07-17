@@ -12,4 +12,5 @@ Handler middleware(Handler handler) => buildAppMiddleware(
   database: saltDatabase,
   authRuntime: authRuntime,
   nutritionProvider: nutritionProvider,
+  searchRateLimiter: searchRateLimiter,
 );

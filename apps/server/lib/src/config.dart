@@ -176,6 +176,7 @@ class ServerConfig {
     this.secureCookies = false,
     this.trustedProxies = const [],
     String? importDir,
+    this.searchRateLimit = defaultSearchRateLimit,
   }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
@@ -213,6 +214,11 @@ class ServerConfig {
   /// * `IMPORT_DIR` — allowlist root for bulk imports (default
   ///   `DATA_DIR/import`). Only source folders inside it can be imported
   ///   through the API; mount a corpus there in Docker.
+  /// * `SEARCH_RATE_LIMIT` — text searches (`GET /recipes?q=`) allowed per
+  ///   minute per user (default 60; `0` disables). Search runs synchronously
+  ///   on the one serving isolate, so this caps any single caller's share of
+  ///   it. An invalid value falls back to the default rather than disabling
+  ///   the guard.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -240,6 +246,7 @@ class ServerConfig {
       importDir: (rawImportDir == null || rawImportDir.isEmpty)
           ? null
           : Directory(rawImportDir).absolute.path,
+      searchRateLimit: _parseSearchRateLimit(env['SEARCH_RATE_LIMIT']),
     );
     Directory(config.libraryDir).createSync(recursive: true);
     Directory(config.importDir).createSync(recursive: true);
@@ -282,6 +289,30 @@ class ServerConfig {
   /// Forces the `Secure` attribute on session cookies regardless of proxy
   /// headers — for deployments that are always reached over HTTPS.
   final bool secureCookies;
+
+  /// Default text searches allowed per minute per user (see
+  /// [searchRateLimit]).
+  static const int defaultSearchRateLimit = 60;
+
+  /// Text searches (`GET /recipes?q=`) allowed per minute per user; `0`
+  /// disables the limit. Search is synchronous FTS on the one serving
+  /// isolate, so this bounds any single caller's share of it.
+  final int searchRateLimit;
+
+  /// Parses `SEARCH_RATE_LIMIT`, falling back to [defaultSearchRateLimit] when
+  /// unset or invalid — a typo must not silently disable the guard; only an
+  /// explicit non-negative value (including `0`) is taken as written.
+  static int _parseSearchRateLimit(String? raw) {
+    final trimmed = raw?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return defaultSearchRateLimit;
+    }
+    final parsed = int.tryParse(trimmed);
+    if (parsed == null || parsed < 0) {
+      return defaultSearchRateLimit;
+    }
+    return parsed;
+  }
 
   /// Path of the SQLite database file inside [dataDir].
   String get dbPath => '$dataDir/salt.db';

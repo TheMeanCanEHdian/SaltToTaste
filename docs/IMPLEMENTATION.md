@@ -351,14 +351,22 @@ reached the questions the void run had not:
   regex is anchored, and the parser did not blow the stack on adversarial input.
   Zero new findings.
 
-**Residual (filed):** the cap kills the *quadratic* but not the underlying fact
-that a synchronous sqlite call on a single isolate degrades under sustained
-load — a member sending capped ~30 ms queries on many connections still adds
-latency for everyone (linear now, not quadratic). The complete cure is a search
-rate-limit or moving the DB off the serving isolate — a larger change, not
-invented here. Still genuinely untested: slowloris and SIGTERM-drain completion
-(the critic reasoned about them but could not drive a raw half-open socket in
-the harness).
+**Residual — search rate limit added (`#47`), root cause still open.** The cap
+killed the *quadratic*; a member sending capped ~30 ms queries on many
+connections still added latency for everyone (linear, not quadratic). A per-user
+request-RATE limiter (`RequestRateLimiter` in `rate_limiter.dart` — sliding
+window, distinct from the login lockout limiter) now gates `GET /recipes?q=`:
+`SEARCH_RATE_LIMIT` searches/min per user (default 60; `0` disables), returning
+`429 rate_limited` with a `Retry-After` past that. Keyed on the authenticated
+user id (search is auth-only), so it bounds any single caller's isolate share;
+plain listing (no `q`) is never limited. Wired via a `provider<RequestRateLimiter>`
+through the `#44` `buildAppMiddleware`. Unit- and integration-tested over a real
+socket, both mutation-checked (limiter off-by-one; handler gate removed). This
+caps the single-abuser case but does NOT remove the single-isolate limit — many
+distinct users, or the true cure of moving the DB off the serving isolate,
+remain out of scope. Still genuinely untested: slowloris and SIGTERM-drain
+completion (the critic reasoned about them but could not drive a raw half-open
+socket in the harness).
 
 **One LOW residual on the token fix:** the active cap bounds *usable* tokens,
 but a mint+revoke loop still adds permanent rows (revoked rows are never
