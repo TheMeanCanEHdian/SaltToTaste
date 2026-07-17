@@ -420,6 +420,25 @@ imports which already run in `Isolate.run`, cheap by-id reads) stays synchronous
   worker respawns lazily (`onExit`); a stuck one is bounded by a per-request
   timeout. Real-process smoke: boots "Search running on N background isolate(s)",
   serves, and drains+disposes cleanly on SIGTERM.
+- **The high-effort review found the cure was INERT in production, now fixed
+  (`#48` review, 2 survivors of 7).** The 6-lens evidence-gated panel caught a
+  **HIGH** the smoke test missed: the dart_frog entrypoint builds the handler
+  chain (reading the `searchService` getter → the `InlineSearchService` fallback,
+  since `_searchService` is still null) BEFORE the custom `run()` calls
+  `initSearchService()`, and `buildAppMiddleware` captured that value — so every
+  request ran search *inline on the serving isolate*, the pool spawned-but-unused,
+  while the reassuring log line still fired. The smoke test booted and drained but
+  never issued a `?q=` search, so it proved nothing about the request path. Fix:
+  the `SearchService` provider now takes a *thunk* (`() => searchService`) and
+  resolves it **per request**, so the post-build swap is honoured (reproduced
+  before + after; mutation-checked end-to-end HTTP test in
+  `search_isolate_wiring_test.dart`). The panel also confirmed a **MED** isolate
+  leak — `ensureSpawned` had no in-flight guard, so two concurrent requests after
+  a worker death double-spawned and orphaned a reader (now shares one respawn) —
+  and a completeness-critic **MED**: a wedged (not crashed) worker was never
+  evicted, poisoning the single default worker (a timed-out request now evicts +
+  respawns it). Both resilience paths, previously untested (the review's LOW), are
+  now mutation-checked. 4 findings were killed by the refutation panel.
 - **Why surgical, not the full cure — the reasons, recorded.** The mainstream
   best practice ("don't run a synchronous DB on the serving isolate") is honored
   where it is *measured to matter*, which is the correct scope, not a compromise.

@@ -123,6 +123,18 @@ class IsolateSearchService implements SearchService {
     _disposed = true;
     await Future.wait(_workers.map((w) => w.dispose()));
   }
+
+  /// Total isolates spawned across all workers (visible for tests): a clean
+  /// respawn adds 1; a leaked double-spawn would add 2.
+  int get totalSpawns => _workers.fold(0, (sum, w) => sum + w.spawnCount);
+
+  /// Simulates a crash of every worker (visible for tests) so the next request
+  /// exercises the respawn path.
+  void crashWorkersForTest() {
+    for (final worker in _workers) {
+      worker.evict();
+    }
+  }
 }
 
 /// A single background search isolate and its command channel. Lazily
@@ -135,22 +147,42 @@ class _SearchWorker {
   Isolate? _isolate;
   SendPort? _commands;
   ReceivePort? _exit;
+  Future<void>? _spawning;
 
-  Future<void> ensureSpawned() async {
+  /// How many isolates this slot has spawned over its life (visible for tests:
+  /// a respawn increments it, so a leaked double-spawn would show as +2).
+  int spawnCount = 0;
+
+  Future<void> ensureSpawned() {
     if (_commands != null) {
-      return;
+      return Future<void>.value();
     }
-    final ready = ReceivePort();
-    // onExit fires if the isolate dies (crash or uncaught error); clear the
-    // channel so the next request respawns instead of sending into the void.
-    _exit = ReceivePort()..listen((_) => _markDead());
-    _isolate = await Isolate.spawn(
-      _searchWorkerMain,
-      _WorkerInit(_dbPath, ready.sendPort),
-      onExit: _exit!.sendPort,
-      debugName: 'search-worker-$_index',
-    );
-    _commands = await ready.first as SendPort;
+    // Two concurrent callers after a worker death must SHARE one spawn. Without
+    // this guard both pass the null check and both `Isolate.spawn`; the loser's
+    // isolate — and its read-only WAL connection — is orphaned, untracked by
+    // dispose(), so it outlives shutdown and can block the writer's final
+    // checkpoint (#48 review, MED).
+    return _spawning ??= _spawn();
+  }
+
+  Future<void> _spawn() async {
+    try {
+      final ready = ReceivePort();
+      // onExit fires if the isolate dies (crash or uncaught error); clear the
+      // channel so the next request respawns instead of sending into the void.
+      final exit = ReceivePort()..listen((_) => _markDead());
+      _exit = exit;
+      _isolate = await Isolate.spawn(
+        _searchWorkerMain,
+        _WorkerInit(_dbPath, ready.sendPort),
+        onExit: exit.sendPort,
+        debugName: 'search-worker-$_index',
+      );
+      _commands = await ready.first as SendPort;
+      spawnCount++;
+    } finally {
+      _spawning = null;
+    }
   }
 
   void _markDead() {
@@ -158,6 +190,15 @@ class _SearchWorker {
     _isolate = null;
     _exit?.close();
     _exit = null;
+  }
+
+  /// Kills the current isolate and clears the channel so the next [run]
+  /// respawns. Used on a timeout (a wedged worker never fires onExit) and by
+  /// tests to simulate a crash.
+  void evict() {
+    final isolate = _isolate;
+    _markDead();
+    isolate?.kill(priority: Isolate.immediate);
   }
 
   Future<SearchPage> run(
@@ -189,6 +230,12 @@ class _SearchWorker {
       }
       final result = response as _SearchResult;
       return (items: result.items, total: result.total);
+    } on TimeoutException {
+      // A wedged (not crashed) worker never fires onExit, so it would poison
+      // every request routed to it — and the default pool is ONE worker. Evict
+      // it; the next request respawns a fresh one (#48 review, MED).
+      evict();
+      throw StateError('search timed out');
     } finally {
       reply.close();
     }

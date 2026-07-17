@@ -13,5 +13,8 @@ Handler middleware(Handler handler) => buildAppMiddleware(
   authRuntime: authRuntime,
   nutritionProvider: nutritionProvider,
   searchRateLimiter: searchRateLimiter,
-  searchService: searchService,
+  // A thunk, not a value: this chain is built before initSearchService() runs,
+  // so reading the getter eagerly here would freeze the InlineSearchService
+  // fallback into the provider and never use the isolate pool (#48 review).
+  searchService: () => searchService,
 );

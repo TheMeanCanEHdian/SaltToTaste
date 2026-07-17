@@ -64,7 +64,7 @@ void main() {
       authRuntime: AuthRuntime(),
       nutritionProvider: _UnusedNutrition(),
       searchRateLimiter: RequestRateLimiter(),
-      searchService: InlineSearchService(database),
+      searchService: () => InlineSearchService(database),
       indexPath: '${tempDir.path}/index.html',
     );
     return serve(pipeline, InternetAddress.loopbackIPv4, 0);

@@ -48,7 +48,7 @@ Handler buildAppMiddleware(
   required AuthRuntime authRuntime,
   required NutritionProvider nutritionProvider,
   required RequestRateLimiter searchRateLimiter,
-  required SearchService searchService,
+  required SearchService Function() searchService,
   String indexPath = 'public/index.html',
 }) {
   return handler
@@ -57,7 +57,12 @@ Handler buildAppMiddleware(
       .use(authProvider())
       .use(provider<AuthRuntime>((_) => authRuntime))
       .use(provider<RequestRateLimiter>((_) => searchRateLimiter))
-      .use(provider<SearchService>((_) => searchService))
+      // Resolved PER REQUEST, not captured. The dart_frog entrypoint builds
+      // this chain BEFORE the custom run() calls initSearchService(), so a
+      // value captured here would freeze the InlineSearchService fallback in
+      // and leave the isolate pool spawned-but-unused (#48 review, HIGH). The
+      // thunk reads the live singleton, so the post-build swap is honored.
+      .use(provider<SearchService>((_) => searchService()))
       .use(provider<NutritionProvider>((_) => nutritionProvider))
       .use(provider<SaltDatabase>((_) => database))
       .use(provider<ServerConfig>((_) => config))
