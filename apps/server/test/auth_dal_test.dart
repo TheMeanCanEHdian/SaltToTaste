@@ -136,38 +136,39 @@ void main() {
   group('password update and disable vs sessions', () {
     final future = DateTime.now().toUtc().add(const Duration(days: 7));
 
-    test('updatePasswordHash deletes other sessions, keeps keepSessionHash',
-        () {
-      final id = createDenis();
-      final keep = _fakeTokenHash('session-keep');
-      final drop1 = _fakeTokenHash('session-drop-1');
-      final drop2 = _fakeTokenHash('session-drop-2');
-      for (final hash in [keep, drop1, drop2]) {
-        db.createSession(
-          tokenHash: hash,
-          userId: id,
-          expiresAt: future,
-          remember: false,
+    test(
+      'updatePasswordHash deletes other sessions, keeps keepSessionHash',
+      () {
+        final id = createDenis();
+        final keep = _fakeTokenHash('session-keep');
+        final drop1 = _fakeTokenHash('session-drop-1');
+        final drop2 = _fakeTokenHash('session-drop-2');
+        for (final hash in [keep, drop1, drop2]) {
+          db.createSession(
+            tokenHash: hash,
+            userId: id,
+            expiresAt: future,
+            remember: false,
+          );
+        }
+
+        db.updatePasswordHash(
+          id,
+          _hashB,
+          mustChangePassword: false,
+          keepSessionHash: keep,
         );
-      }
 
-      db.updatePasswordHash(
-        id,
-        _hashB,
-        mustChangePassword: false,
-        keepSessionHash: keep,
-      );
+        expect(db.sessionByHash(keep), isNotNull);
+        expect(db.sessionByHash(drop1), isNull);
+        expect(db.sessionByHash(drop2), isNull);
+        final user = db.userById(id)!;
+        expect(user.passwordHash, _hashB);
+        expect(user.mustChangePassword, isFalse);
+      },
+    );
 
-      expect(db.sessionByHash(keep), isNotNull);
-      expect(db.sessionByHash(drop1), isNull);
-      expect(db.sessionByHash(drop2), isNull);
-      final user = db.userById(id)!;
-      expect(user.passwordHash, _hashB);
-      expect(user.mustChangePassword, isFalse);
-    });
-
-    test('updatePasswordHash without keepSessionHash deletes all sessions',
-        () {
+    test('updatePasswordHash without keepSessionHash deletes all sessions', () {
       final id = createDenis();
       db
         ..createSession(
@@ -395,18 +396,27 @@ void main() {
       );
 
       expect(db.revokeApiToken(id: tokenId, userId: stranger), isFalse);
-      expect(db.apiTokenByHash(hash)!.revokedAt, isNull,
-          reason: 'wrong owner must not revoke');
+      expect(
+        db.apiTokenByHash(hash)!.revokedAt,
+        isNull,
+        reason: 'wrong owner must not revoke',
+      );
 
       expect(db.revokeApiToken(id: tokenId, userId: owner), isTrue);
       final revokedAt = db.apiTokenByHash(hash)!.revokedAt;
       expect(revokedAt, isNotNull);
       expect(DateTime.parse(revokedAt!).isUtc, isTrue);
 
-      expect(db.revokeApiToken(id: tokenId, userId: owner), isFalse,
-          reason: 'already revoked');
-      expect(db.revokeApiToken(id: tokenId + 999, userId: owner), isFalse,
-          reason: 'nonexistent id');
+      expect(
+        db.revokeApiToken(id: tokenId, userId: owner),
+        isFalse,
+        reason: 'already revoked',
+      );
+      expect(
+        db.revokeApiToken(id: tokenId + 999, userId: owner),
+        isFalse,
+        reason: 'nonexistent id',
+      );
     });
   });
 }

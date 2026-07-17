@@ -10,8 +10,9 @@ Response onRequest(RequestContext context, String id) {
   requireGet(context);
   requireAdmin(context);
   final jobId = int.tryParse(id);
-  final job =
-      jobId == null ? null : context.read<SaltDatabase>().nutritionJob(jobId);
+  final job = jobId == null
+      ? null
+      : context.read<SaltDatabase>().nutritionJob(jobId);
   if (job == null) {
     throw NotFoundException('nutrition job not found: $id');
   }

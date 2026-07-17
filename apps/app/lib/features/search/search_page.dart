@@ -18,10 +18,9 @@ class SearchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       key: ValueKey(query),
-      create: (context) => RecipeListCubit(
-        context.read<RecipeRepository>(),
-        query: query,
-      )..load(),
+      create: (context) =>
+          RecipeListCubit(context.read<RecipeRepository>(), query: query)
+            ..load(),
       child: Builder(
         builder: (context) => Scaffold(
           appBar: SaltNavBar(
@@ -70,8 +69,10 @@ void showSearchHelp(BuildContext context) {
             _HelpRow('title:cake', 'scoped to the title (one word)'),
             _HelpRow('title:"bundt cake"', 'scoped phrase'),
             _HelpRow('tag:dessert or title:pie', 'either side'),
-            _HelpRow('ingredient:ginger and direction:"dutch oven"',
-                'combine scopes'),
+            _HelpRow(
+              'ingredient:ginger and direction:"dutch oven"',
+              'combine scopes',
+            ),
             _HelpRow('calories:<400', 'calorie filter (needs nutrition)'),
             SizedBox(height: 10),
             Text(
@@ -122,8 +123,7 @@ class _HelpRow extends StatelessWidget {
           Expanded(
             child: Text(
               meaning,
-              style:
-                  const TextStyle(fontSize: 13, color: SaltColors.muted),
+              style: const TextStyle(fontSize: 13, color: SaltColors.muted),
             ),
           ),
         ],

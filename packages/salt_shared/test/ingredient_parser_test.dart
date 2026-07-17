@@ -27,8 +27,7 @@ List<_CorpusLine> _allCorpusLines() {
     final recipe = entry.value.recipe;
     final groups = [
       ...recipe.ingredients,
-      for (final subsection in recipe.subsections)
-        ...?subsection.ingredients,
+      for (final subsection in recipe.subsections) ...?subsection.ingredients,
     ];
     for (final group in groups) {
       for (final item in group.items) {
@@ -50,8 +49,7 @@ String? _primaryKey(List<Amount> amounts) {
   return null;
 }
 
-String _amountsKey(List<Amount> amounts) =>
-    amounts.map(_amountKey).join(' + ');
+String _amountsKey(List<Amount> amounts) => amounts.map(_amountKey).join(' + ');
 
 void main() {
   group('parseIngredientLine corpus agreement', skip: skipIfNoCorpus, () {
@@ -118,8 +116,11 @@ void main() {
       // The corpus has exactly seven `fluid ounce` lines (all in
       // 1155-champagne-cocktail.yaml), every one stored misparsed; a change
       // here means either the corpus moved or the carve-out leaks.
-      expect(knownCorpusMisparses, 7,
-          reason: 'known corpus fluid-ounce misparses drifted');
+      expect(
+        knownCorpusMisparses,
+        7,
+        reason: 'known corpus fluid-ounce misparses drifted',
+      );
 
       final total = lines.length;
       String pct(int n) => (n / total * 100).toStringAsFixed(2);
@@ -142,27 +143,43 @@ void main() {
       // pinned above). The remaining disagreements are hand edits from the
       // extraction's human review queue (`or` alternatives, leading-verb
       // preps, parenthetical moves), not parser regressions.
-      expect(primaryAgree / total, greaterThanOrEqualTo(0.988),
-          reason: 'primary amount agreement regressed');
-      expect(amountsAgree / total, greaterThanOrEqualTo(0.988),
-          reason: 'full amounts-list agreement regressed');
-      expect(itemAgree / total, greaterThanOrEqualTo(0.981),
-          reason: 'item agreement regressed');
-      expect(prepAgree / total, greaterThanOrEqualTo(0.983),
-          reason: 'prep agreement regressed');
+      expect(
+        primaryAgree / total,
+        greaterThanOrEqualTo(0.988),
+        reason: 'primary amount agreement regressed',
+      );
+      expect(
+        amountsAgree / total,
+        greaterThanOrEqualTo(0.988),
+        reason: 'full amounts-list agreement regressed',
+      );
+      expect(
+        itemAgree / total,
+        greaterThanOrEqualTo(0.981),
+        reason: 'item agreement regressed',
+      );
+      expect(
+        prepAgree / total,
+        greaterThanOrEqualTo(0.983),
+        reason: 'prep agreement regressed',
+      );
 
       // The confidence flag must keep routing the hand-edited shapes to
       // review: measured 98.6% of disagreeing lines flagged (2026-07-15).
-      expect(disagreeingFlagged / disagreeingLines, greaterThanOrEqualTo(0.95),
-          reason: 'disagreeing lines are no longer flagged check/none');
+      expect(
+        disagreeingFlagged / disagreeingLines,
+        greaterThanOrEqualTo(0.95),
+        reason: 'disagreeing lines are no longer flagged check/none',
+      );
     });
   });
 
   group('parseIngredientLine on real corpus lines', skip: skipIfNoCorpus, () {
     // All raw lines below are from 0857-rich-chocolate-bundt-cake.yaml.
     test('dual-amount flour line: volume primary + weight equivalent', () {
-      final parsed =
-          parseIngredientLine('1¾ cups (8¾ ounces) unbleached all-purpose flour');
+      final parsed = parseIngredientLine(
+        '1¾ cups (8¾ ounces) unbleached all-purpose flour',
+      );
       expect(parsed.amounts, hasLength(2));
       final primary = parsed.amounts.first;
       expect(primary.measure, Measure.volume);
@@ -181,24 +198,26 @@ void main() {
       expect(parsed.confidence, ParseConfidence.parsed);
     });
 
-    test('butter line: stick parenthetical stays on item, prep after comma',
-        () {
-      final parsed = parseIngredientLine(
-        '12 tablespoons (1½ sticks) unsalted butter, softened, '
-        'plus 1 tablespoon, melted, for the pan',
-      );
-      expect(parsed.amounts, hasLength(1));
-      final amount = parsed.amounts.single;
-      expect(amount.measure, Measure.volume);
-      expect(amount.quantity, '12');
-      expect(amount.unit, 'tablespoon');
-      expect(amount.primary, isTrue);
-      // `(1½ sticks)` is a size note, not a weight/volume equivalent — it
-      // stays on the item, fractions normalized to ASCII.
-      expect(parsed.item, '(1 1/2 sticks) unsalted butter');
-      expect(parsed.prep, 'softened, plus 1 tablespoon, melted, for the pan');
-      expect(parsed.confidence, ParseConfidence.parsed);
-    });
+    test(
+      'butter line: stick parenthetical stays on item, prep after comma',
+      () {
+        final parsed = parseIngredientLine(
+          '12 tablespoons (1½ sticks) unsalted butter, softened, '
+          'plus 1 tablespoon, melted, for the pan',
+        );
+        expect(parsed.amounts, hasLength(1));
+        final amount = parsed.amounts.single;
+        expect(amount.measure, Measure.volume);
+        expect(amount.quantity, '12');
+        expect(amount.unit, 'tablespoon');
+        expect(amount.primary, isTrue);
+        // `(1½ sticks)` is a size note, not a weight/volume equivalent — it
+        // stays on the item, fractions normalized to ASCII.
+        expect(parsed.item, '(1 1/2 sticks) unsalted butter');
+        expect(parsed.prep, 'softened, plus 1 tablespoon, melted, for the pan');
+        expect(parsed.confidence, ParseConfidence.parsed);
+      },
+    );
 
     test('eggs line: count amount with null unit', () {
       final parsed = parseIngredientLine('5 large eggs, at room temperature');
@@ -213,14 +232,16 @@ void main() {
       expect(parsed.confidence, ParseConfidence.parsed);
     });
 
-    test('amount-less line: empty amounts, trailing "for ..." clause is prep',
-        () {
-      final parsed = parseIngredientLine('Confectioners’ sugar, for dusting');
-      expect(parsed.amounts, isEmpty);
-      expect(parsed.item, 'Confectioners’ sugar');
-      expect(parsed.prep, 'for dusting');
-      expect(parsed.confidence, ParseConfidence.none);
-    });
+    test(
+      'amount-less line: empty amounts, trailing "for ..." clause is prep',
+      () {
+        final parsed = parseIngredientLine('Confectioners’ sugar, for dusting');
+        expect(parsed.amounts, isEmpty);
+        expect(parsed.item, 'Confectioners’ sugar');
+        expect(parsed.prep, 'for dusting');
+        expect(parsed.confidence, ParseConfidence.none);
+      },
+    );
 
     test('unit-only pinch line: count amount with empty-string quantity', () {
       // e.g. 0022-broccoli-cheese-soup.yaml
@@ -252,8 +273,7 @@ void main() {
       expect(parsed.confidence, ParseConfidence.check);
     });
 
-    test('about-marked same-measure parenthetical folds into the primary',
-        () {
+    test('about-marked same-measure parenthetical folds into the primary', () {
       // 0044-mediterranean-chopped-salad.yaml — the parenthetical is a
       // yield restatement, not a conversion; it marks the pint approximate
       // instead of adding a second volume amount.

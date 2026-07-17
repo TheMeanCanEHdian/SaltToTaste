@@ -23,12 +23,13 @@ const Map<String, String> vulgarFractionAscii = {
 
 /// Numeric value of every supported unicode vulgar-fraction code point.
 /// Derived from [vulgarFractionAscii] so the two can never drift apart.
-final Map<String, double> _vulgarFractions = vulgarFractionAscii.map(
-  (char, ascii) {
-    final parts = ascii.split('/');
-    return MapEntry(char, int.parse(parts[0]) / int.parse(parts[1]));
-  },
-);
+final Map<String, double> _vulgarFractions = vulgarFractionAscii.map((
+  char,
+  ascii,
+) {
+  final parts = ascii.split('/');
+  return MapEntry(char, int.parse(parts[0]) / int.parse(parts[1]));
+});
 
 /// Every unicode vulgar-fraction character [parseQuantity] understands,
 /// as a single string suitable for regex character classes. Derived from

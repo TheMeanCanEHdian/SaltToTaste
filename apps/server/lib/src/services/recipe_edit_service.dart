@@ -230,7 +230,8 @@ void _store(
 /// `manual-<yyyymmdd>-<slug>`, suffixed `-2`, `-3`, ... until unused.
 String _availableId(SaltDatabase db, String desiredSlug) {
   final now = DateTime.now().toUtc();
-  final date = '${now.year}'
+  final date =
+      '${now.year}'
       '${now.month.toString().padLeft(2, '0')}'
       '${now.day.toString().padLeft(2, '0')}';
   final base = 'manual-$date-$desiredSlug';
@@ -317,8 +318,8 @@ Recipe _normalized(Recipe recipe) {
 }
 
 List<RecipeStep> _renumbered(List<RecipeStep> steps) => [
-      for (final (i, step) in steps.indexed) step.copyWith(number: i + 1),
-    ];
+  for (final (i, step) in steps.indexed) step.copyWith(number: i + 1),
+];
 
 // ---------------------------------------------------------------------
 // Validation. Caps are generous for real cookbook content but low enough

@@ -5,8 +5,7 @@ import 'dart:io';
 /// runtime needs no curl/wget.
 Future<void> main() async {
   final port = Platform.environment['PORT'] ?? '8080';
-  final client = HttpClient()
-    ..connectionTimeout = const Duration(seconds: 3);
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 3);
   try {
     final request = await client
         .getUrl(Uri.parse('http://127.0.0.1:$port/healthz'))

@@ -11,8 +11,9 @@ Response onRequest(RequestContext context, String id) {
   requireGet(context);
   requireAdmin(context);
   final jobId = int.tryParse(id);
-  final job =
-      jobId == null ? null : context.read<SaltDatabase>().importJob(jobId);
+  final job = jobId == null
+      ? null
+      : context.read<SaltDatabase>().importJob(jobId);
   if (job == null) {
     throw NotFoundException('No import job $id.');
   }

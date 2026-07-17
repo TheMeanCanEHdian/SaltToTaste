@@ -37,11 +37,10 @@ String? get skipIfNoCorpus =>
 /// Decodes the corpus recipe file [fileName] (e.g.
 /// `0857-rich-chocolate-bundt-cake.yaml`).
 Recipe loadCorpusRecipe(String fileName) => RecipeYamlCodec.decode(
-      File('$corpusRecipesDir/$fileName').readAsStringSync(),
-    ).recipe;
+  File('$corpusRecipesDir/$fileName').readAsStringSync(),
+).recipe;
 
 /// The canonical content hash the importer computes for [recipe] (SHA-256 of
 /// the canonical v2 YAML encoding).
-String contentHashOf(Recipe recipe) => sha256
-    .convert(utf8.encode(RecipeYamlCodec.encode(recipe)))
-    .toString();
+String contentHashOf(Recipe recipe) =>
+    sha256.convert(utf8.encode(RecipeYamlCodec.encode(recipe))).toString();

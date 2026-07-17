@@ -271,56 +271,58 @@ void main() {
       );
     });
 
-    test("recovery revokes the account's API tokens, not just sessions",
-        () async {
-      final id = await createAdmin('lockedout', disabled: true);
-      // A PAT outlives a password reset, so whoever caused the lockout would
-      // still hold a working credential unless recovery revokes it too.
-      final live = db.createApiToken(
-        userId: id,
-        name: 'laptop',
-        prefix: 'salt_aaaa',
-        tokenHash: 'hash-live',
-        scope: 'full',
-      );
-      final alsoLive = db.createApiToken(
-        userId: id,
-        name: 'script',
-        prefix: 'salt_bbbb',
-        tokenHash: 'hash-also-live',
-        scope: 'read',
-      );
-      // A bystander's token must survive: recovery targets one account.
-      final otherId = await createAdmin('bystander', role: 'member');
-      final bystander = db.createApiToken(
-        userId: otherId,
-        name: 'theirs',
-        prefix: 'salt_cccc',
-        tokenHash: 'hash-bystander',
-        scope: 'read',
-      );
-
-      await recover(issueRecoveryCode(db), 'lockedout');
-
-      for (final tokenId in [live, alsoLive]) {
-        final row = db
-            .apiTokensForUser(id)
-            .firstWhere((token) => token.id == tokenId);
-        expect(
-          row.revokedAt,
-          isNotNull,
-          reason: 'token ${row.name} still works after recovery',
+    test(
+      "recovery revokes the account's API tokens, not just sessions",
+      () async {
+        final id = await createAdmin('lockedout', disabled: true);
+        // A PAT outlives a password reset, so whoever caused the lockout would
+        // still hold a working credential unless recovery revokes it too.
+        final live = db.createApiToken(
+          userId: id,
+          name: 'laptop',
+          prefix: 'salt_aaaa',
+          tokenHash: 'hash-live',
+          scope: 'full',
         );
-      }
-      final untouched = db
-          .apiTokensForUser(otherId)
-          .firstWhere((token) => token.id == bystander);
-      expect(
-        untouched.revokedAt,
-        isNull,
-        reason: "recovery must not revoke another account's tokens",
-      );
-    });
+        final alsoLive = db.createApiToken(
+          userId: id,
+          name: 'script',
+          prefix: 'salt_bbbb',
+          tokenHash: 'hash-also-live',
+          scope: 'read',
+        );
+        // A bystander's token must survive: recovery targets one account.
+        final otherId = await createAdmin('bystander', role: 'member');
+        final bystander = db.createApiToken(
+          userId: otherId,
+          name: 'theirs',
+          prefix: 'salt_cccc',
+          tokenHash: 'hash-bystander',
+          scope: 'read',
+        );
+
+        await recover(issueRecoveryCode(db), 'lockedout');
+
+        for (final tokenId in [live, alsoLive]) {
+          final row = db
+              .apiTokensForUser(id)
+              .firstWhere((token) => token.id == tokenId);
+          expect(
+            row.revokedAt,
+            isNotNull,
+            reason: 'token ${row.name} still works after recovery',
+          );
+        }
+        final untouched = db
+            .apiTokensForUser(otherId)
+            .firstWhere((token) => token.id == bystander);
+        expect(
+          untouched.revokedAt,
+          isNull,
+          reason: "recovery must not revoke another account's tokens",
+        );
+      },
+    );
 
     test('repeated wrong codes from one IP lock the endpoint', () async {
       await createAdmin('lockedout', disabled: true);
@@ -347,7 +349,6 @@ void main() {
       expect(grant.body['user'], isA<Map<String, Object?>>());
     });
 
-
     test('failed logins must not disable the escape hatch', () async {
       // THE BUG: recoverAdmin gated on the SAME per-IP bucket login records
       // failures into. The condition that makes an operator need /recover —
@@ -371,8 +372,11 @@ void main() {
       }
 
       // A freshly issued, VALID code from that same IP must still work.
-      final grant = await recover(issueRecoveryCode(db), 'lockedout',
-          clientIp: ip);
+      final grant = await recover(
+        issueRecoveryCode(db),
+        'lockedout',
+        clientIp: ip,
+      );
       expect(
         (grant.body['user']! as Map<String, Object?>)['username'],
         'lockedout',

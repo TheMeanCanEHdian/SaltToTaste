@@ -17,8 +17,11 @@ void main() {
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
-    test('corpus-backed tests (skipped: corpus absent)', () {},
-        skip: 'ATK corpus not present; set SALT_CORPUS_DIR');
+    test(
+      'corpus-backed tests (skipped: corpus absent)',
+      () {},
+      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
+    );
     return;
   }
   late Recipe bundtCake; // Rich Chocolate Bundt Cake
@@ -40,7 +43,8 @@ void main() {
     db = SaltDatabase.open(dbPath)
       ..upsertSource(
         slug: _sourceSlug,
-        name: "The Complete America's Test Kitchen TV Show Cookbook "
+        name:
+            "The Complete America's Test Kitchen TV Show Cookbook "
             '2001–2023',
         type: 'epub',
         meta: {'isbn': '9781954210110'},
@@ -162,10 +166,12 @@ void main() {
 
     final raw = sqlite3.open(dbPath);
     try {
-      final count = raw.select(
-        'SELECT count(*) AS n FROM recipe_fts WHERE recipe_fts MATCH ?',
-        ['chocolate'],
-      ).first['n'] as int;
+      final count =
+          raw.select(
+                'SELECT count(*) AS n FROM recipe_fts WHERE recipe_fts MATCH ?',
+                ['chocolate'],
+              ).first['n']
+              as int;
       expect(count, greaterThanOrEqualTo(1));
     } finally {
       raw.dispose();

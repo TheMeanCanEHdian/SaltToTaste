@@ -31,7 +31,8 @@ Future<Response> onRequest(RequestContext context) async {
 
   requireCsrf(context, user);
   requireFullScope(user);
-  final body = context.request.headers['content-length'] == null ||
+  final body =
+      context.request.headers['content-length'] == null ||
           context.request.headers['content-length'] == '0'
       ? const <String, Object?>{}
       : await readJsonBody(context.request);
@@ -46,7 +47,7 @@ Future<Response> onRequest(RequestContext context) async {
 }
 
 Map<String, Object?> _backupJson(BackupInfo backup) => {
-      'name': backup.name,
-      'size_bytes': backup.sizeBytes,
-      'created_at': backup.createdAt.toIso8601String(),
-    };
+  'name': backup.name,
+  'size_bytes': backup.sizeBytes,
+  'created_at': backup.createdAt.toIso8601String(),
+};

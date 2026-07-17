@@ -28,7 +28,8 @@ Future<void> main() async {
     exitCode = 64;
     return;
   }
-  final corpusRoot = Platform.environment['SALT_CORPUS_DIR'] ??
+  final corpusRoot =
+      Platform.environment['SALT_CORPUS_DIR'] ??
       // ignore: missing_whitespace_between_adjacent_strings
       '${Platform.environment['HOME'] ?? '.'}/recipe-corpus/'
           'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023';
@@ -44,7 +45,8 @@ Future<void> main() async {
     for (final group in recipe.ingredients) {
       for (final line in group.items) {
         final query = normalizeItem(line.item ?? line.raw);
-        if (query.isEmpty || isWaterLike(query) ||
+        if (query.isEmpty ||
+            isWaterLike(query) ||
             searches.containsKey(query)) {
           continue;
         }
@@ -71,8 +73,9 @@ Future<void> main() async {
   }
 
   const encoder = JsonEncoder.withIndent('  ');
-  File('${outDir.path}/searches.json')
-      .writeAsStringSync(encoder.convert(searches));
+  File(
+    '${outDir.path}/searches.json',
+  ).writeAsStringSync(encoder.convert(searches));
   File('${outDir.path}/foods.json').writeAsStringSync(encoder.convert(foods));
   stdout.writeln(
     'Recorded ${searches.length} searches and ${foods.length} foods.',

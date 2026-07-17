@@ -64,10 +64,7 @@ class RecipeDetailCubit extends Cubit<RecipeDetailState> {
     final target = !current.detail.favorite;
     emit(RecipeDetailLoaded(current.detail.copyWith(favorite: target)));
     try {
-      await _repository.setFavorite(
-        current.detail.recipe.id,
-        favorite: target,
-      );
+      await _repository.setFavorite(current.detail.recipe.id, favorite: target);
     } on RepositoryException catch (exception) {
       if (!isClosed) {
         emit(
@@ -91,8 +88,10 @@ class RecipeDetailCubit extends Cubit<RecipeDetailState> {
       return false;
     }
     try {
-      final stored =
-          await _repository.setNote(current.detail.recipe.id, note.trim());
+      final stored = await _repository.setNote(
+        current.detail.recipe.id,
+        note.trim(),
+      );
       if (!isClosed) {
         emit(
           RecipeDetailLoaded(

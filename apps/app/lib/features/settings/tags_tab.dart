@@ -221,7 +221,8 @@ class _TagsTabState extends State<TagsTab> {
               },
               control: FSelectControl.lifted(
                 value: state.sort,
-                onChange: (value) => _cubit.setSort(value ?? TagSort.mostRecipes),
+                onChange: (value) =>
+                    _cubit.setSort(value ?? TagSort.mostRecipes),
               ),
               label: const Text('Sort'),
             ),

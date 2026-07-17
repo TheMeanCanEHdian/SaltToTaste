@@ -95,8 +95,8 @@ class LoginRateLimiter {
     final cutoff = _now().subtract(_staleAfter);
     _states.removeWhere((_, state) {
       final lockedUntil = state.lockedUntil;
-      final idleSince = (lockedUntil != null &&
-              lockedUntil.isAfter(state.lastActivity))
+      final idleSince =
+          (lockedUntil != null && lockedUntil.isAfter(state.lastActivity))
           ? lockedUntil
           : state.lastActivity;
       return idleSince.isBefore(cutoff);

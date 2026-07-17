@@ -218,5 +218,4 @@ class RecipeListCubit extends Cubit<RecipeListState> {
       loadMore();
     }
   }
-
 }

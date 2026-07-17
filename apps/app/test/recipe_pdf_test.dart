@@ -58,83 +58,105 @@ void main() {
   //
   // So a step takes the non-spanning Row whenever it PROVABLY fits a page, and
   // the spanning layout only when it genuinely cannot. These pin both halves.
-  group('step layout: the number never leaves its text', skip: skipIfNoCorpus, () {
-    late PdfFont font;
-    // The text column: letter width - margins - the badge column.
-    final columnWidth = PdfPageFormat.letter.width - PdfPageFormat.inch - 24;
-    const fontSize = 10.4; // _stepStyle
+  group(
+    'step layout: the number never leaves its text',
+    skip: skipIfNoCorpus,
+    () {
+      late PdfFont font;
+      // The text column: letter width - margins - the badge column.
+      final columnWidth = PdfPageFormat.letter.width - PdfPageFormat.inch - 24;
+      const fontSize = 10.4; // _stepStyle
 
-    setUpAll(() async {
-      TestWidgetsFlutterBinding.ensureInitialized();
-      final doc = pw.Document();
-      font = pw.Font.ttf(
-        await rootBundle.load('assets/fonts/OpenSans-Regular.ttf'),
-      ).getFont(pw.Context(document: doc.document));
-    });
+      setUpAll(() async {
+        TestWidgetsFlutterBinding.ensureInitialized();
+        final doc = pw.Document();
+        font = pw.Font.ttf(
+          await rootBundle.load('assets/fonts/OpenSans-Regular.ttf'),
+        ).getFont(pw.Context(document: doc.document));
+      });
 
-    int? bound(String text) => stepLineBound(
-      font: font,
-      fontSize: fontSize,
-      text: text,
-      columnWidth: columnWidth,
-    );
+      int? bound(String text) => stepLineBound(
+        font: font,
+        fontSize: fontSize,
+        text: text,
+        columnWidth: columnWidth,
+      );
 
-    test('EVERY real corpus step provably fits a page, so none can split', () {
-      // 43 lines is what a page holds (699.8pt / 15.96pt). If any real step
-      // failed this it would take the spanning branch and could strand its
-      // number — which is exactly the reported bug.
-      var checked = 0;
-      String? worstText;
-      var worst = 0;
-      for (final recipe in loadAllCorpusRecipes()) {
-        for (final step in recipe.steps) {
-          final lines = bound(step.text);
-          expect(
-            lines,
-            isNotNull,
-            reason: 'unprovable for a REAL step: ${step.text}',
-          );
-          expect(
-            lines,
-            lessThanOrEqualTo(43),
-            reason: 'a real step would span and could strand its badge: '
-                '${step.text}',
-          );
-          if (lines! > worst) {
-            worst = lines;
-            worstText = step.text;
+      test('EVERY real corpus step provably fits a page, so none can split', () {
+        // 43 lines is what a page holds (699.8pt / 15.96pt). If any real step
+        // failed this it would take the spanning branch and could strand its
+        // number — which is exactly the reported bug.
+        var checked = 0;
+        String? worstText;
+        var worst = 0;
+        for (final recipe in loadAllCorpusRecipes()) {
+          for (final step in recipe.steps) {
+            final lines = bound(step.text);
+            expect(
+              lines,
+              isNotNull,
+              reason: 'unprovable for a REAL step: ${step.text}',
+            );
+            expect(
+              lines,
+              lessThanOrEqualTo(43),
+              reason:
+                  'a real step would span and could strand its badge: '
+                  '${step.text}',
+            );
+            if (lines! > worst) {
+              worst = lines;
+              worstText = step.text;
+            }
+            checked++;
           }
-          checked++;
         }
-      }
-      expect(checked, greaterThan(5000));
-      // Headroom is the point: if this ever creeps toward 43, real recipes are
-      // about to start spanning.
-      expect(
-        worst,
-        lessThan(35),
-        reason: 'worst real step bounds at $worst lines '
-            '(${worstText?.length} chars)',
-      );
-    });
+        expect(checked, greaterThan(5000));
+        // Headroom is the point: if this ever creeps toward 43, real recipes are
+        // about to start spanning.
+        expect(
+          worst,
+          lessThan(35),
+          reason:
+              'worst real step bounds at $worst lines '
+              '(${worstText?.length} chars)',
+        );
+      });
 
-    test('shapes that cannot fit a page are sent to the spanning layout', () {
-      // Each of these reached the hang band when a char-count gate wrongly
-      // routed it to the Row.
-      expect(bound('a\n' * 44), greaterThan(43), reason: '44 hard breaks');
-      expect(
-        bound(List.generate(44, (i) => 'Step detail line $i, keep going').join('\n')),
-        greaterThan(43),
-        reason: 'a realistic 44-line checklist, only 1,397 chars',
-      );
-      expect(bound(('MMM ' * 700).trim()), greaterThan(43), reason: 'wide glyphs');
-      expect(bound(('stir the pot ' * 769).trim()), greaterThan(43),
-          reason: 'an API-legal 10,000-char step');
-      // A word wider than half the column makes the half-full argument false,
-      // so the bound must refuse to certify it rather than guess.
-      expect(bound('W' * 3000), isNull, reason: 'one unbreakable 3,000-char word');
-    });
-  });
+      test('shapes that cannot fit a page are sent to the spanning layout', () {
+        // Each of these reached the hang band when a char-count gate wrongly
+        // routed it to the Row.
+        expect(bound('a\n' * 44), greaterThan(43), reason: '44 hard breaks');
+        expect(
+          bound(
+            List.generate(
+              44,
+              (i) => 'Step detail line $i, keep going',
+            ).join('\n'),
+          ),
+          greaterThan(43),
+          reason: 'a realistic 44-line checklist, only 1,397 chars',
+        );
+        expect(
+          bound(('MMM ' * 700).trim()),
+          greaterThan(43),
+          reason: 'wide glyphs',
+        );
+        expect(
+          bound(('stir the pot ' * 769).trim()),
+          greaterThan(43),
+          reason: 'an API-legal 10,000-char step',
+        );
+        // A word wider than half the column makes the half-full argument false,
+        // so the bound must refuse to certify it rather than guess.
+        expect(
+          bound('W' * 3000),
+          isNull,
+          reason: 'one unbreakable 3,000-char word',
+        );
+      });
+    },
+  );
 
   group('recipe PDF', skip: skipIfNoCorpus, () {
     // A plain single-section recipe.
@@ -159,7 +181,6 @@ void main() {
       );
     });
 
-
     // ---- the layout invariant --------------------------------------------
     //
     // A widget that cannot span a page break, and is taller than the space
@@ -181,7 +202,8 @@ void main() {
       test('fields the API caps, at and past their caps', () async {
         final cases = <String, Recipe Function(int)>{
           'title (API 250)': (n) => bundt.copyWith(title: 'Cake ' * (n ~/ 5)),
-          'category (API 120)': (n) => bundt.copyWith(category: 'Cake ' * (n ~/ 5)),
+          'category (API 120)': (n) =>
+              bundt.copyWith(category: 'Cake ' * (n ~/ 5)),
           // Uses a YIELD-ONLY recipe, and must. `serves` is a stored field
           // (recipe.dart) that the codec derives at DECODE time, so
           // `bundt.copyWith(servings: ...)` leaves the parsed Serves(12,12) in
@@ -189,10 +211,13 @@ void main() {
           // its `else if (servings != null)` branch. The old case passed a
           // 20,000-char string to a recipe that rendered "SERVES 12" and
           // asserted on a byte-identical PDF: it exercised nothing at all.
-          'yield (API 200)': (n) => broth.copyWith(servings: 'Makes ' * (n ~/ 6)),
+          'yield (API 200)': (n) =>
+              broth.copyWith(servings: 'Makes ' * (n ~/ 6)),
           'ingredient raw (API 1000)': (n) => bundt.copyWith(
             ingredients: [
-              IngredientGroup(items: [IngredientLine(raw: 'wordy ' * (n ~/ 6))]),
+              IngredientGroup(
+                items: [IngredientLine(raw: 'wordy ' * (n ~/ 6))],
+              ),
             ],
           ),
           // Step text carries no spanning of its own since the badge moved
@@ -228,31 +253,36 @@ void main() {
       //
       // One field at a time cannot catch this — each field alone saturates
       // safely. Only the combination does, so this sweeps combinations.
-      test('the header always fits one page, whatever the user typed', () async {
-        for (final tagLength in [60, 69, 100, 200]) {
-          for (final tagCount in [12, 13, 50]) {
-            for (final titleWords in [12, 13, 16, 30]) {
-              final recipe = bundt.copyWith(
-                title: 'Rich Chocolate Cake ' * titleWords,
-                category: 'Weeknight Dinners ' * 12,
-                tags: [
-                  for (var i = 0; i < tagCount; i++)
-                    'tag$i${'x' * (tagLength - 4)}',
-                ],
-              );
-              final bytes = await buildRecipePdf(
-                recipe: recipe,
-              ).timeout(const Duration(seconds: 20));
-              expect(
-                String.fromCharCodes(bytes.take(5)),
-                '%PDF-',
-                reason: '$tagCount tags of $tagLength chars with a '
-                    '$titleWords-word title',
-              );
+      test(
+        'the header always fits one page, whatever the user typed',
+        () async {
+          for (final tagLength in [60, 69, 100, 200]) {
+            for (final tagCount in [12, 13, 50]) {
+              for (final titleWords in [12, 13, 16, 30]) {
+                final recipe = bundt.copyWith(
+                  title: 'Rich Chocolate Cake ' * titleWords,
+                  category: 'Weeknight Dinners ' * 12,
+                  tags: [
+                    for (var i = 0; i < tagCount; i++)
+                      'tag$i${'x' * (tagLength - 4)}',
+                  ],
+                );
+                final bytes = await buildRecipePdf(
+                  recipe: recipe,
+                ).timeout(const Duration(seconds: 20));
+                expect(
+                  String.fromCharCodes(bytes.take(5)),
+                  '%PDF-',
+                  reason:
+                      '$tagCount tags of $tagLength chars with a '
+                      '$titleWords-word title',
+                );
+              }
             }
           }
-        }
-      }, timeout: const Timeout(Duration(minutes: 5)));
+        },
+        timeout: const Timeout(Duration(minutes: 5)),
+      );
 
       // The yield rail's own cap, which the vacuous 'servings' case above
       // left completely unguarded for as long as it existed.
@@ -272,7 +302,8 @@ void main() {
         expect(
           await painted(yield197) - await painted('X'),
           32,
-          reason: 'the 116pt-wide rail wraps early: at maxLines 10 three words '
+          reason:
+              'the 116pt-wide rail wraps early: at maxLines 10 three words '
               'of an API-legal yield vanished, with no ellipsis to show it',
         );
       });
@@ -286,29 +317,33 @@ void main() {
       // truncation the gate was introduced to fix. The newline case is the
       // damning one: 88 chars, and reachable by typing an ordinary multi-line
       // step into the editor's own multiline field.
-      test('a step cannot reach the hang band, whatever its shape', () async {
-        final cases = <String, String>{
-          'wide glyphs under the old 3000-char gate': ('MMM ' * 700).trim(),
-          'just over it': ('MMM ' * 705).trim(),
-          '44 short newline-separated lines (88 chars)': 'a\n' * 44,
-          'a realistic 44-line checklist': List.generate(
-            44,
-            (i) => 'Step detail line $i, keep going',
-          ).join('\n'),
-        };
-        for (final entry in cases.entries) {
-          final bytes = await buildRecipePdf(
-            recipe: bundt.copyWith(
-              steps: [RecipeStep(number: 1, text: entry.value)],
-            ),
-          ).timeout(const Duration(seconds: 20));
-          expect(
-            String.fromCharCodes(bytes.take(5)),
-            '%PDF-',
-            reason: entry.key,
-          );
-        }
-      }, timeout: const Timeout(Duration(minutes: 2)));
+      test(
+        'a step cannot reach the hang band, whatever its shape',
+        () async {
+          final cases = <String, String>{
+            'wide glyphs under the old 3000-char gate': ('MMM ' * 700).trim(),
+            'just over it': ('MMM ' * 705).trim(),
+            '44 short newline-separated lines (88 chars)': 'a\n' * 44,
+            'a realistic 44-line checklist': List.generate(
+              44,
+              (i) => 'Step detail line $i, keep going',
+            ).join('\n'),
+          };
+          for (final entry in cases.entries) {
+            final bytes = await buildRecipePdf(
+              recipe: bundt.copyWith(
+                steps: [RecipeStep(number: 1, text: entry.value)],
+              ),
+            ).timeout(const Duration(seconds: 20));
+            expect(
+              String.fromCharCodes(bytes.take(5)),
+              '%PDF-',
+              reason: entry.key,
+            );
+          }
+        },
+        timeout: const Timeout(Duration(minutes: 2)),
+      );
 
       // The other half of the bargain: the caps that keep the header on one
       // page must never touch data the API itself accepts.
@@ -326,7 +361,8 @@ void main() {
           await painted(bundt.copyWith(title: title)) -
               await painted(bundt.copyWith(title: 'X')),
           24,
-          reason: 'a 250-char title needs 9 lines; at _maxTitleLines: 8 two '
+          reason:
+              'a 250-char title needs 9 lines; at _maxTitleLines: 8 two '
               'words vanished with no ellipsis to show for it',
         );
 
@@ -346,10 +382,18 @@ void main() {
         // the importer and hand-edited library YAML skip it entirely.
         final cases = <String, Recipe Function(int)>{
           'subsection title': (n) => bundt.copyWith(
-            subsections: [Subsection(title: 'Glaze ' * (n ~/ 6), kind: 'variation')],
+            subsections: [
+              Subsection(title: 'Glaze ' * (n ~/ 6), kind: 'variation'),
+            ],
           ),
           'subsection servings': (n) => bundt.copyWith(
-            subsections: [Subsection(title: 'Glaze', kind: 'variation', servings: 'Makes ' * (n ~/ 6))],
+            subsections: [
+              Subsection(
+                title: 'Glaze',
+                kind: 'variation',
+                servings: 'Makes ' * (n ~/ 6),
+              ),
+            ],
           ),
           'subsection group label': (n) => bundt.copyWith(
             subsections: [
@@ -366,7 +410,9 @@ void main() {
             ],
           ),
           'technique heading': (n) => bundt.copyWith(
-            techniques: [Technique(heading: 'How ' * (n ~/ 4), steps: const [])],
+            techniques: [
+              Technique(heading: 'How ' * (n ~/ 4), steps: const []),
+            ],
           ),
           'technique caption': (n) => bundt.copyWith(
             techniques: [
@@ -396,7 +442,9 @@ void main() {
       test('tags up to and past the API cap of 50', () async {
         for (final count in [12, 13, 50, 200]) {
           final tags = [for (var i = 0; i < count; i++) 'tag-$i-${'x' * 52}'];
-          final bytes = await buildRecipePdf(recipe: bundt.copyWith(tags: tags));
+          final bytes = await buildRecipePdf(
+            recipe: bundt.copyWith(tags: tags),
+          );
           expect(
             String.fromCharCodes(bytes.take(5)),
             '%PDF-',
@@ -488,112 +536,125 @@ void main() {
       expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
     });
 
-    test('every corpus recipe lays out, with every glyph drawable', () async {
-      // The whole-corpus gate: 1,198 real recipes must each produce a PDF,
-      // and none may hit a rune the bundled fonts cannot draw.
-      //
-      // A missing glyph does not throw — the pdf package draws a crossed-out
-      // box and warns via `print` inside an `assert`, so it is invisible in
-      // release and silently corrupts an amount (`10⅕` -> `10[x]`). Trapping
-      // that print is the only way to see it, and it asserts the symptom
-      // rather than the fix, so it still holds if the font chain changes.
-      final failures = <String>[];
-      final glyphWarnings = <String>{};
-      await runZoned(
-        () async {
-          for (final recipe in loadAllCorpusRecipes()) {
-            try {
-              await buildRecipePdf(recipe: recipe);
-            } catch (error) {
-              failures.add('${recipe.id}: $error');
-            }
-          }
-        },
-        zoneSpecification: ZoneSpecification(
-          print: (self, parent, zone, line) {
-            if (line.contains('Unable to find a font')) {
-              glyphWarnings.add(line);
-            } else {
-              parent.print(zone, line);
+    test(
+      'every corpus recipe lays out, with every glyph drawable',
+      () async {
+        // The whole-corpus gate: 1,198 real recipes must each produce a PDF,
+        // and none may hit a rune the bundled fonts cannot draw.
+        //
+        // A missing glyph does not throw — the pdf package draws a crossed-out
+        // box and warns via `print` inside an `assert`, so it is invisible in
+        // release and silently corrupts an amount (`10⅕` -> `10[x]`). Trapping
+        // that print is the only way to see it, and it asserts the symptom
+        // rather than the fix, so it still holds if the font chain changes.
+        final failures = <String>[];
+        final glyphWarnings = <String>{};
+        await runZoned(
+          () async {
+            for (final recipe in loadAllCorpusRecipes()) {
+              try {
+                await buildRecipePdf(recipe: recipe);
+              } catch (error) {
+                failures.add('${recipe.id}: $error');
+              }
             }
           },
-        ),
-      );
-      expect(failures, isEmpty, reason: 'recipes that failed to export');
-      expect(
-        glyphWarnings,
-        isEmpty,
-        reason:
-            'runes with no glyph in the bundled fonts; each prints as a '
-            'crossed-out box. Add the fraction to _undrawableFractions or '
-            'bundle a font that covers it',
-      );
-    }, timeout: const Timeout(Duration(minutes: 10)));
-
-    test('the two real recipes with undrawable fractions still export', () async {
-      // 0879 has '1½ cups (10⅕ ounces) granulated sugar' and 0942 has
-      // '½ cup plus 2 tablespoons (4⅖ ounces) sugar' — the only two ⅕/⅖ uses
-      // in the corpus, and the ones that printed as '10[x] ounces'.
-      for (final name in [
-        '0879-easy-caramel-cake.yaml',
-        '0942-homemade-vanilla-ice-cream.yaml',
-      ]) {
-        final recipe = loadCorpusRecipe(name);
-        final raw = recipe.ingredients
-            .expand((group) => group.items)
-            .map((item) => item.raw)
-            .join('\n');
+          zoneSpecification: ZoneSpecification(
+            print: (self, parent, zone, line) {
+              if (line.contains('Unable to find a font')) {
+                glyphWarnings.add(line);
+              } else {
+                parent.print(zone, line);
+              }
+            },
+          ),
+        );
+        expect(failures, isEmpty, reason: 'recipes that failed to export');
         expect(
-          raw,
-          anyOf(contains('⅕'), contains('⅖')),
-          reason: 'fixture drifted: $name no longer carries the fraction',
+          glyphWarnings,
+          isEmpty,
+          reason:
+              'runes with no glyph in the bundled fonts; each prints as a '
+              'crossed-out box. Add the fraction to _undrawableFractions or '
+              'bundle a font that covers it',
         );
-        final bytes = await buildRecipePdf(recipe: recipe);
-        expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
-      }
-    });
+      },
+      timeout: const Timeout(Duration(minutes: 10)),
+    );
 
-    group('personal note (synthesized: a note cannot come from the corpus)', () {
-      // ONE paragraph, no blank lines — a pasted wall of text. This is the
-      // shape that throws when prose cannot span a page break; splitting it
-      // into paragraphs would let the layout break between them and hide the
-      // bug.
-      final wall = 'Chill the dough the full hour. ' * 300;
+    test(
+      'the two real recipes with undrawable fractions still export',
+      () async {
+        // 0879 has '1½ cups (10⅕ ounces) granulated sugar' and 0942 has
+        // '½ cup plus 2 tablespoons (4⅖ ounces) sugar' — the only two ⅕/⅖ uses
+        // in the corpus, and the ones that printed as '10[x] ounces'.
+        for (final name in [
+          '0879-easy-caramel-cake.yaml',
+          '0942-homemade-vanilla-ice-cream.yaml',
+        ]) {
+          final recipe = loadCorpusRecipe(name);
+          final raw = recipe.ingredients
+              .expand((group) => group.items)
+              .map((item) => item.raw)
+              .join('\n');
+          expect(
+            raw,
+            anyOf(contains('⅕'), contains('⅖')),
+            reason: 'fixture drifted: $name no longer carries the fraction',
+          );
+          final bytes = await buildRecipePdf(recipe: recipe);
+          expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+        }
+      },
+    );
 
-      test('a note longer than a page flows instead of throwing', () async {
-        final bytes = await buildRecipePdf(recipe: bundt, personalNote: wall);
-        expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
-      });
+    group(
+      'personal note (synthesized: a note cannot come from the corpus)',
+      () {
+        // ONE paragraph, no blank lines — a pasted wall of text. This is the
+        // shape that throws when prose cannot span a page break; splitting it
+        // into paragraphs would let the layout break between them and hide the
+        // bug.
+        final wall = 'Chill the dough the full hour. ' * 300;
 
-      test('a multi-paragraph note flows instead of throwing', () async {
-        final note = List.generate(
-          30,
-          (i) => 'Paragraph $i. ${'Chill the dough the full hour. ' * 10}',
-        ).join('\n\n');
-        final bytes = await buildRecipePdf(recipe: bundt, personalNote: note);
-        expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
-      });
+        test('a note longer than a page flows instead of throwing', () async {
+          final bytes = await buildRecipePdf(recipe: bundt, personalNote: wall);
+          expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+        });
 
-      test('a blank note renders no panel', () async {
-        // The claim is "no panel", so compare against the no-note build:
-        // identical bytes mean nothing was emitted for the blank note.
-        // (A %PDF- header would pass even if a stray empty panel rendered.)
-        final blank = await buildRecipePdf(recipe: bundt, personalNote: '   ');
-        final none = await buildRecipePdf(recipe: bundt);
-        expect(blank.length, none.length);
-      });
+        test('a multi-paragraph note flows instead of throwing', () async {
+          final note = List.generate(
+            30,
+            (i) => 'Paragraph $i. ${'Chill the dough the full hour. ' * 10}',
+          ).join('\n\n');
+          final bytes = await buildRecipePdf(recipe: bundt, personalNote: note);
+          expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+        });
 
-      test('a note renders a panel (the blank-note test can fail)', () async {
-        // Pins that the comparison above is capable of failing: a real note
-        // must change the output.
-        final withNote = await buildRecipePdf(
-          recipe: bundt,
-          personalNote: 'Chill the dough the full hour.',
-        );
-        final none = await buildRecipePdf(recipe: bundt);
-        expect(withNote.length, isNot(none.length));
-      });
-    });
+        test('a blank note renders no panel', () async {
+          // The claim is "no panel", so compare against the no-note build:
+          // identical bytes mean nothing was emitted for the blank note.
+          // (A %PDF- header would pass even if a stray empty panel rendered.)
+          final blank = await buildRecipePdf(
+            recipe: bundt,
+            personalNote: '   ',
+          );
+          final none = await buildRecipePdf(recipe: bundt);
+          expect(blank.length, none.length);
+        });
+
+        test('a note renders a panel (the blank-note test can fail)', () async {
+          // Pins that the comparison above is capable of failing: a real note
+          // must change the output.
+          final withNote = await buildRecipePdf(
+            recipe: bundt,
+            personalNote: 'Chill the dough the full hour.',
+          );
+          final none = await buildRecipePdf(recipe: bundt);
+          expect(withNote.length, isNot(none.length));
+        });
+      },
+    );
 
     group('long free-text fields (synthesized: editor-authored prose)', () {
       // prepNotes/background/notes/steps are all free-text in the editor, so
@@ -654,7 +715,8 @@ void main() {
               painted(base) -
               footerWords * (pages(bytes) - pages(base)),
           words.length - 1,
-          reason: 'every word of a ${wall.length}-char step must be printed; '
+          reason:
+              'every word of a ${wall.length}-char step must be printed; '
               'maxLines dropped ~44% of it with no ellipsis',
         );
       });
@@ -721,7 +783,8 @@ void main() {
         expect(
           long.words - short.words - footerWords * (long.pages - short.pages),
           words.length - 1,
-          reason: 'every word of the longest real step (${longest.length} '
+          reason:
+              'every word of the longest real step (${longest.length} '
               'chars) must be printed; the cap must not touch real data',
         );
       });

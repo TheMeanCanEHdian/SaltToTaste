@@ -180,7 +180,8 @@ String _multiline(String text, int indent) {
   final trailingNewlines = text.length - end;
   final body = text.substring(0, end);
   final lines = body.split('\n');
-  final blockSafe = trailingNewlines <= 1 &&
+  final blockSafe =
+      trailingNewlines <= 1 &&
       body.isNotEmpty &&
       lines.first.isNotEmpty &&
       !lines.first.startsWith(' ') &&

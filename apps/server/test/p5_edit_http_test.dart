@@ -178,7 +178,6 @@ void main() {
   Map<String, dynamic> errorOf(String body) =>
       jsonOf(body)['error'] as Map<String, dynamic>;
 
-
   setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('salt_p5_http_test_');
     config = ServerConfig.fromEnvironment(
@@ -924,131 +923,139 @@ void main() {
         expect(jsonOf(finalBody)['status'], 'complete');
       });
 
-      test('a compute in flight: single-flight, and admin-only re-attach',
-          () async {
-        // Hold the compute open so the in-flight state is observable; the
-        // recorded fixtures otherwise finish before the next request lands.
-        final gate = Completer<void>();
-        fixtureProvider.gate = gate;
-        addTearDown(() {
-          fixtureProvider.gate = null;
-          if (!gate.isCompleted) gate.complete();
-        });
+      test(
+        'a compute in flight: single-flight, and admin-only re-attach',
+        () async {
+          // Hold the compute open so the in-flight state is observable; the
+          // recorded fixtures otherwise finish before the next request lands.
+          final gate = Completer<void>();
+          fixtureProvider.gate = gate;
+          addTearDown(() {
+            fixtureProvider.gate = null;
+            if (!gate.isCompleted) gate.complete();
+          });
 
-        // A fresh recipe whose ingredient text has never been matched, so the
-        // compute must call the provider and block on the gate. Reusing the
-        // Bundt's lines would hit the ingredient-match cache and finish before
-        // the next request landed, leaving nothing in flight to observe.
-        final (created, createdBody) = await send(
-          'POST',
-          '/api/v1/recipes',
-          headers: auth(adminSession, csrf: true),
-          jsonBody: {
-            ...submission,
-            'recipe': {
-              ...(submission['recipe']! as Map<String, Object?>),
-              'title': 'Single Flight Bundt',
-              'ingredients': [
-                {
-                  'group': null,
-                  'items': [
-                    {'raw': '2 cups uncached-single-flight-test-flour'},
-                  ],
-                },
-              ],
+          // A fresh recipe whose ingredient text has never been matched, so
+          // the compute must call the provider and block on the gate. Reusing
+          // the Bundt's lines would hit the ingredient-match cache and finish
+          // before the next request landed, leaving nothing in flight to
+          // observe.
+          final (created, createdBody) = await send(
+            'POST',
+            '/api/v1/recipes',
+            headers: auth(adminSession, csrf: true),
+            jsonBody: {
+              ...submission,
+              'recipe': {
+                ...(submission['recipe']! as Map<String, Object?>),
+                'title': 'Single Flight Bundt',
+                'ingredients': [
+                  {
+                    'group': null,
+                    'items': [
+                      {'raw': '2 cups uncached-single-flight-test-flour'},
+                    ],
+                  },
+                ],
+              },
             },
-          },
-        );
-        expect(created.statusCode, HttpStatus.created, reason: createdBody);
-        final freshSlug =
-            (jsonOf(createdBody)['recipe']! as Map<String, dynamic>)['slug']!
-                as String;
-        addTearDown(() async {
-          await send(
-            'DELETE',
-            '/api/v1/recipes/$freshSlug',
+          );
+          expect(created.statusCode, HttpStatus.created, reason: createdBody);
+          final freshSlug =
+              (jsonOf(createdBody)['recipe']! as Map<String, dynamic>)['slug']!
+                  as String;
+          addTearDown(() async {
+            await send(
+              'DELETE',
+              '/api/v1/recipes/$freshSlug',
+              headers: auth(adminSession, csrf: true),
+            );
+          });
+
+          final (first, firstBody) = await send(
+            'POST',
+            '/api/v1/recipes/$freshSlug/nutrition/compute',
             headers: auth(adminSession, csrf: true),
           );
-        });
+          expect(first.statusCode, HttpStatus.accepted, reason: firstBody);
+          final jobId = jsonOf(firstBody)['job_id'];
 
-        final (first, firstBody) = await send(
-          'POST',
-          '/api/v1/recipes/$freshSlug/nutrition/compute',
-          headers: auth(adminSession, csrf: true),
-        );
-        expect(first.statusCode, HttpStatus.accepted, reason: firstBody);
-        final jobId = jsonOf(firstBody)['job_id'];
+          // Single-flight: a second POST while one runs re-attaches to the same
+          // job rather than double-spending the FDC budget.
+          final (second, secondBody) = await send(
+            'POST',
+            '/api/v1/recipes/$freshSlug/nutrition/compute',
+            headers: auth(adminSession, csrf: true),
+          );
+          expect(second.statusCode, HttpStatus.accepted, reason: secondBody);
+          expect(
+            jsonOf(secondBody)['job_id'],
+            jobId,
+            reason:
+                'a concurrent compute must re-attach, not start a second job',
+          );
 
-        // Single-flight: a second POST while one runs re-attaches to the same
-        // job rather than double-spending the FDC budget.
-        final (second, secondBody) = await send(
-          'POST',
-          '/api/v1/recipes/$freshSlug/nutrition/compute',
-          headers: auth(adminSession, csrf: true),
-        );
-        expect(second.statusCode, HttpStatus.accepted, reason: secondBody);
-        expect(
-          jsonOf(secondBody)['job_id'],
-          jobId,
-          reason: 'a concurrent compute must re-attach, not start a second job',
-        );
-
-        // An admin reopening the page re-attaches via computing_job_id...
-        final (adminRead, adminBody) = await send(
-          'GET',
-          '/api/v1/recipes/$freshSlug/nutrition',
-          headers: auth(adminSession),
-        );
-        expect(jsonOf(adminBody)['computing_job_id'], jobId, reason: adminBody);
-
-        // ...but a member must NOT be handed a job id: polling it is
-        // admin-only, so every poll would 403 and surface as a false
-        // "lost track of the compute" error on their label.
-        final (memberRead, memberBody) = await send(
-          'GET',
-          '/api/v1/recipes/$freshSlug/nutrition',
-          headers: auth(memberSession),
-        );
-        expect(memberRead.statusCode, HttpStatus.ok);
-        expect(
-          jsonOf(memberBody).containsKey('computing_job_id'),
-          isFalse,
-          reason: 'a member cannot poll the job endpoint: $memberBody',
-        );
-
-        // The job endpoint itself stays admin-only.
-        final (memberJob, memberJobBody) = await send(
-          'GET',
-          '/api/v1/nutrition/jobs/$jobId',
-          headers: auth(memberSession),
-        );
-        expect(memberJob.statusCode, HttpStatus.forbidden);
-        expect(errorOf(memberJobBody)['code'], 'forbidden');
-
-        gate.complete();
-        // Let the job drain, then the id is gone: nothing left to re-attach.
-        final deadline = DateTime.now().add(const Duration(seconds: 30));
-        while (DateTime.now().isBefore(deadline)) {
-          final (progress, progressBody) = await send(
+          // An admin reopening the page re-attaches via computing_job_id...
+          final (adminRead, adminBody) = await send(
             'GET',
-            '/api/v1/nutrition/jobs/$jobId',
+            '/api/v1/recipes/$freshSlug/nutrition',
             headers: auth(adminSession),
           );
-          expect(progress.statusCode, HttpStatus.ok, reason: progressBody);
-          if (jsonOf(progressBody)['status'] != 'running') break;
-          await Future<void>.delayed(const Duration(milliseconds: 20));
-        }
-        final (afterRead, afterBody) = await send(
-          'GET',
-          '/api/v1/recipes/$freshSlug/nutrition',
-          headers: auth(adminSession),
-        );
-        expect(
-          jsonOf(afterBody).containsKey('computing_job_id'),
-          isFalse,
-          reason: 'the finished job must stop being advertised: $afterBody',
-        );
-      });
+          expect(
+            jsonOf(adminBody)['computing_job_id'],
+            jobId,
+            reason: adminBody,
+          );
+
+          // ...but a member must NOT be handed a job id: polling it is
+          // admin-only, so every poll would 403 and surface as a false
+          // "lost track of the compute" error on their label.
+          final (memberRead, memberBody) = await send(
+            'GET',
+            '/api/v1/recipes/$freshSlug/nutrition',
+            headers: auth(memberSession),
+          );
+          expect(memberRead.statusCode, HttpStatus.ok);
+          expect(
+            jsonOf(memberBody).containsKey('computing_job_id'),
+            isFalse,
+            reason: 'a member cannot poll the job endpoint: $memberBody',
+          );
+
+          // The job endpoint itself stays admin-only.
+          final (memberJob, memberJobBody) = await send(
+            'GET',
+            '/api/v1/nutrition/jobs/$jobId',
+            headers: auth(memberSession),
+          );
+          expect(memberJob.statusCode, HttpStatus.forbidden);
+          expect(errorOf(memberJobBody)['code'], 'forbidden');
+
+          gate.complete();
+          // Let the job drain, then the id is gone: nothing left to re-attach.
+          final deadline = DateTime.now().add(const Duration(seconds: 30));
+          while (DateTime.now().isBefore(deadline)) {
+            final (progress, progressBody) = await send(
+              'GET',
+              '/api/v1/nutrition/jobs/$jobId',
+              headers: auth(adminSession),
+            );
+            expect(progress.statusCode, HttpStatus.ok, reason: progressBody);
+            if (jsonOf(progressBody)['status'] != 'running') break;
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+          }
+          final (afterRead, afterBody) = await send(
+            'GET',
+            '/api/v1/recipes/$freshSlug/nutrition',
+            headers: auth(adminSession),
+          );
+          expect(
+            jsonOf(afterBody).containsKey('computing_job_id'),
+            isFalse,
+            reason: 'the finished job must stop being advertised: $afterBody',
+          );
+        },
+      );
 
       test('a yield-only recipe divides by the yield, not the batch', () async {
         // Post-split, `MAKES ABOUT 16 LARGE COOKIES` leaves serves null. The

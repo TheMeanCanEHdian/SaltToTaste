@@ -68,23 +68,23 @@ void main() {
         return users_route.onRequest(context);
       default:
         final path = context.request.uri.path;
-        final tokenMatch =
-            RegExp(r'^/api/v1/tokens/([^/]+)$').firstMatch(path);
+        final tokenMatch = RegExp(r'^/api/v1/tokens/([^/]+)$').firstMatch(path);
         if (tokenMatch != null) {
           return token_route.onRequest(context, tokenMatch.group(1)!);
         }
-        final sessionMatch =
-            RegExp(r'^/api/v1/sessions/([^/]+)$').firstMatch(path);
+        final sessionMatch = RegExp(
+          r'^/api/v1/sessions/([^/]+)$',
+        ).firstMatch(path);
         if (sessionMatch != null) {
           return session_route.onRequest(context, sessionMatch.group(1)!);
         }
-        final resetMatch = RegExp(r'^/api/v1/users/([^/]+)/reset_password$')
-            .firstMatch(path);
+        final resetMatch = RegExp(
+          r'^/api/v1/users/([^/]+)/reset_password$',
+        ).firstMatch(path);
         if (resetMatch != null) {
           return reset_route.onRequest(context, resetMatch.group(1)!);
         }
-        final userMatch =
-            RegExp(r'^/api/v1/users/([^/]+)$').firstMatch(path);
+        final userMatch = RegExp(r'^/api/v1/users/([^/]+)$').firstMatch(path);
         if (userMatch != null) {
           return user_route.onRequest(context, userMatch.group(1)!);
         }
@@ -192,8 +192,7 @@ void main() {
   }
 
   group('first boot', () {
-    test('recipes without a credential -> 401 unauthorized envelope',
-        () async {
+    test('recipes without a credential -> 401 unauthorized envelope', () async {
       final (response, body) = await send('GET', '/api/v1/recipes');
       expect(response.statusCode, HttpStatus.unauthorized);
       final error = errorOf(body);
@@ -344,38 +343,42 @@ void main() {
       expect(error['message'], _uniformLoginError);
     });
 
-    test('disabled user with the correct password -> same uniform 422',
-        () async {
-      createMember('sleepy', disabled: true);
-      final (response, body) = await loginAs('sleepy', _memberPassword);
-      expect(response.statusCode, HttpStatus.unprocessableEntity);
-      final error = errorOf(body);
-      expect(error['code'], 'validation');
-      expect(error['message'], _uniformLoginError);
-    });
+    test(
+      'disabled user with the correct password -> same uniform 422',
+      () async {
+        createMember('sleepy', disabled: true);
+        final (response, body) = await loginAs('sleepy', _memberPassword);
+        expect(response.statusCode, HttpStatus.unprocessableEntity);
+        final error = errorOf(body);
+        expect(error['code'], 'validation');
+        expect(error['message'], _uniformLoginError);
+      },
+    );
 
-    test('five wrong passwords lock the account; the 6th attempt is 429',
-        () async {
-      createMember('lockme');
-      for (var attempt = 1; attempt <= 5; attempt++) {
-        final (response, body) = await loginAs('lockme', 'wrong-password-x');
+    test(
+      'five wrong passwords lock the account; the 6th attempt is 429',
+      () async {
+        createMember('lockme');
+        for (var attempt = 1; attempt <= 5; attempt++) {
+          final (response, body) = await loginAs('lockme', 'wrong-password-x');
+          expect(
+            response.statusCode,
+            HttpStatus.unprocessableEntity,
+            reason: 'attempt $attempt should still be a plain failure',
+          );
+          expect(errorOf(body)['message'], _uniformLoginError);
+        }
+        // Locked now — even the correct password is rejected with 429.
+        final (locked, lockedBody) = await loginAs('lockme', _memberPassword);
+        expect(locked.statusCode, HttpStatus.tooManyRequests);
+        final error = errorOf(lockedBody);
+        expect(error['code'], 'locked');
         expect(
-          response.statusCode,
-          HttpStatus.unprocessableEntity,
-          reason: 'attempt $attempt should still be a plain failure',
+          error['message'],
+          matches(RegExp(r'Try again in \d+ seconds\.')),
         );
-        expect(errorOf(body)['message'], _uniformLoginError);
-      }
-      // Locked now — even the correct password is rejected with 429.
-      final (locked, lockedBody) = await loginAs('lockme', _memberPassword);
-      expect(locked.statusCode, HttpStatus.tooManyRequests);
-      final error = errorOf(lockedBody);
-      expect(error['code'], 'locked');
-      expect(
-        error['message'],
-        matches(RegExp(r'Try again in \d+ seconds\.')),
-      );
-    });
+      },
+    );
   });
 
   group('sessions', () {
@@ -433,8 +436,11 @@ void main() {
 
     test('remember sessions get sliding expiry on each request', () async {
       createMember('sticky');
-      final (response, body) =
-          await loginAs('sticky', _memberPassword, remember: true);
+      final (response, body) = await loginAs(
+        'sticky',
+        _memberPassword,
+        remember: true,
+      );
       expect(response.statusCode, HttpStatus.ok);
       final token = jsonOf(body)['token'] as String;
 
@@ -456,43 +462,45 @@ void main() {
       expect(after.expiresAt.isAfter(before.expiresAt), isTrue);
     });
 
-    test('change_password keeps the current session and kills the other',
-        () async {
-      createMember('rotator');
-      final tokenA = await sessionTokenFor('rotator', _memberPassword);
-      final tokenB = await sessionTokenFor('rotator', _memberPassword);
+    test(
+      'change_password keeps the current session and kills the other',
+      () async {
+        createMember('rotator');
+        final tokenA = await sessionTokenFor('rotator', _memberPassword);
+        final tokenB = await sessionTokenFor('rotator', _memberPassword);
 
-      final (response, body) = await send(
-        'POST',
-        '/api/v1/auth/change_password',
-        headers: {'Cookie': '$sessionCookieName=$tokenA', ..._csrfHeader},
-        jsonBody: {
-          'current_password': _memberPassword,
-          'new_password': 'rotated-password-99',
-        },
-      );
-      expect(response.statusCode, HttpStatus.ok, reason: body);
+        final (response, body) = await send(
+          'POST',
+          '/api/v1/auth/change_password',
+          headers: {'Cookie': '$sessionCookieName=$tokenA', ..._csrfHeader},
+          jsonBody: {
+            'current_password': _memberPassword,
+            'new_password': 'rotated-password-99',
+          },
+        );
+        expect(response.statusCode, HttpStatus.ok, reason: body);
 
-      final (otherSession, _) = await send(
-        'GET',
-        '/api/v1/auth/me',
-        headers: {'Authorization': 'Bearer $tokenB'},
-      );
-      expect(otherSession.statusCode, HttpStatus.unauthorized);
+        final (otherSession, _) = await send(
+          'GET',
+          '/api/v1/auth/me',
+          headers: {'Authorization': 'Bearer $tokenB'},
+        );
+        expect(otherSession.statusCode, HttpStatus.unauthorized);
 
-      final (ownSession, _) = await send(
-        'GET',
-        '/api/v1/auth/me',
-        headers: {'Authorization': 'Bearer $tokenA'},
-      );
-      expect(ownSession.statusCode, HttpStatus.ok);
+        final (ownSession, _) = await send(
+          'GET',
+          '/api/v1/auth/me',
+          headers: {'Authorization': 'Bearer $tokenA'},
+        );
+        expect(ownSession.statusCode, HttpStatus.ok);
 
-      // Old password is dead, new one works.
-      final (oldLogin, oldBody) = await loginAs('rotator', _memberPassword);
-      expect(oldLogin.statusCode, HttpStatus.unprocessableEntity);
-      expect(errorOf(oldBody)['message'], _uniformLoginError);
-      await sessionTokenFor('rotator', 'rotated-password-99');
-    });
+        // Old password is dead, new one works.
+        final (oldLogin, oldBody) = await loginAs('rotator', _memberPassword);
+        expect(oldLogin.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(oldBody)['message'], _uniformLoginError);
+        await sessionTokenFor('rotator', 'rotated-password-99');
+      },
+    );
 
     test('change_password with a wrong current_password -> 422', () async {
       createMember('cautious');
@@ -527,8 +535,7 @@ void main() {
       );
     });
 
-    test('a PAT bearer fetches recipes and reports pat/read via me',
-        () async {
+    test('a PAT bearer fetches recipes and reports pat/read via me', () async {
       final (recipes, _) = await send(
         'GET',
         '/api/v1/recipes',
@@ -567,42 +574,44 @@ void main() {
       expect(errorOf(changeBody)['code'], 'forbidden');
     });
 
-    test('a read-scoped PAT is denied every mutation (scope enforcement)',
-        () async {
-      // A leaked read PAT must not self-escalate by minting a full token,
-      // and (even on an admin account) must not perform admin mutations:
-      // effective permission = role ∩ scope.
-      final attempts = <(String, String, Map<String, Object?>?)>[
-        ('POST', '/api/v1/tokens', {'name': 'escalate', 'scope': 'full'}),
-        ('POST', '/api/v1/users', {'username': 'mallory', 'role': 'admin'}),
-        ('POST', '/api/v1/users/$adminId/reset_password', null),
-        ('PATCH', '/api/v1/users/999', {'disabled': true}),
-        ('DELETE', '/api/v1/tokens/999', null),
-        ('DELETE', '/api/v1/sessions/doesnotmatter', null),
-      ];
-      for (final (method, path, body) in attempts) {
-        final (response, responseBody) = await send(
-          method,
-          path,
-          headers: {'Authorization': 'Bearer $patToken'},
-          jsonBody: body,
-        );
-        expect(
-          response.statusCode,
-          HttpStatus.forbidden,
-          reason: '$method $path must be forbidden for a read PAT',
-        );
-        expect(errorOf(responseBody)['code'], 'forbidden');
-      }
+    test(
+      'a read-scoped PAT is denied every mutation (scope enforcement)',
+      () async {
+        // A leaked read PAT must not self-escalate by minting a full token,
+        // and (even on an admin account) must not perform admin mutations:
+        // effective permission = role ∩ scope.
+        final attempts = <(String, String, Map<String, Object?>?)>[
+          ('POST', '/api/v1/tokens', {'name': 'escalate', 'scope': 'full'}),
+          ('POST', '/api/v1/users', {'username': 'mallory', 'role': 'admin'}),
+          ('POST', '/api/v1/users/$adminId/reset_password', null),
+          ('PATCH', '/api/v1/users/999', {'disabled': true}),
+          ('DELETE', '/api/v1/tokens/999', null),
+          ('DELETE', '/api/v1/sessions/doesnotmatter', null),
+        ];
+        for (final (method, path, body) in attempts) {
+          final (response, responseBody) = await send(
+            method,
+            path,
+            headers: {'Authorization': 'Bearer $patToken'},
+            jsonBody: body,
+          );
+          expect(
+            response.statusCode,
+            HttpStatus.forbidden,
+            reason: '$method $path must be forbidden for a read PAT',
+          );
+          expect(errorOf(responseBody)['code'], 'forbidden');
+        }
 
-      // Reads still work with the same token.
-      final (recipes, _) = await send(
-        'GET',
-        '/api/v1/recipes',
-        headers: {'Authorization': 'Bearer $patToken'},
-      );
-      expect(recipes.statusCode, HttpStatus.ok);
-    });
+        // Reads still work with the same token.
+        final (recipes, _) = await send(
+          'GET',
+          '/api/v1/recipes',
+          headers: {'Authorization': 'Bearer $patToken'},
+        );
+        expect(recipes.statusCode, HttpStatus.ok);
+      },
+    );
 
     test('a revoked PAT -> 401', () async {
       expect(db.revokeApiToken(id: patId, userId: adminId), isTrue);
@@ -618,8 +627,10 @@ void main() {
   group('must_change_password', () {
     test('is blocked from recipes until the password is changed', () async {
       createMember('newbie', mustChangePassword: true);
-      final (loginResponse, loginBody) =
-          await loginAs('newbie', _memberPassword);
+      final (loginResponse, loginBody) = await loginAs(
+        'newbie',
+        _memberPassword,
+      );
       expect(loginResponse.statusCode, HttpStatus.ok);
       final decoded = jsonOf(loginBody);
       final token = decoded['token'] as String;
@@ -628,8 +639,11 @@ void main() {
 
       final auth = {'Authorization': 'Bearer $token'};
 
-      final (blocked, blockedBody) =
-          await send('GET', '/api/v1/recipes', headers: auth);
+      final (blocked, blockedBody) = await send(
+        'GET',
+        '/api/v1/recipes',
+        headers: auth,
+      );
       expect(blocked.statusCode, HttpStatus.forbidden);
       expect(errorOf(blockedBody)['code'], 'password_change_required');
 
@@ -646,12 +660,18 @@ void main() {
       );
       expect(change.statusCode, HttpStatus.ok, reason: changeBody);
 
-      final (unblocked, _) =
-          await send('GET', '/api/v1/recipes', headers: auth);
+      final (unblocked, _) = await send(
+        'GET',
+        '/api/v1/recipes',
+        headers: auth,
+      );
       expect(unblocked.statusCode, HttpStatus.ok);
 
-      final (meAfter, meBody) =
-          await send('GET', '/api/v1/auth/me', headers: auth);
+      final (meAfter, meBody) = await send(
+        'GET',
+        '/api/v1/auth/me',
+        headers: auth,
+      );
       expect(meAfter.statusCode, HttpStatus.ok);
       final meUser = jsonOf(meBody)['user'] as Map<String, dynamic>;
       expect(meUser['must_change_password'], false);

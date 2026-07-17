@@ -64,15 +64,15 @@ ImportSummary importLegacyRoot({
     '${config.libraryDir}/$legacySourceSlug/images',
   )..createSync(recursive: true);
 
-  final files = recipesDir
-      .listSync()
-      .whereType<File>()
-      .where(
-        (file) =>
-            file.path.endsWith('.yaml') || file.path.endsWith('.yml'),
-      )
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final files =
+      recipesDir
+          .listSync()
+          .whereType<File>()
+          .where(
+            (file) => file.path.endsWith('.yaml') || file.path.endsWith('.yml'),
+          )
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
   summary.total = files.length;
 
   var done = 0;
@@ -92,8 +92,7 @@ ImportSummary importLegacyRoot({
         sourceSlug: legacySourceSlug,
         contentHash: contentHashOfText(canonical),
       );
-      final exportPath =
-          exportPathFor(config, legacySourceSlug, recipe.id);
+      final exportPath = exportPathFor(config, legacySourceSlug, recipe.id);
       if (outcome != UpsertOutcome.unchanged ||
           !File(exportPath).existsSync()) {
         File(exportPath).parent.createSync(recursive: true);

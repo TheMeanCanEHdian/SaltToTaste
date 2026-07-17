@@ -290,7 +290,8 @@ final String _frc = vulgarFractionChars;
 
 /// One number in any corpus spelling: `1 3/4` | `3/4` | `1¾`/`1 ¾` |
 /// `12`/`1.5` | `¾`. Mixed forms come first so alternation prefers them.
-final String _numberPart = '(?:\\d+(?:\\.\\d+)?\\s+\\d+\\s*/\\s*\\d+'
+final String _numberPart =
+    '(?:\\d+(?:\\.\\d+)?\\s+\\d+\\s*/\\s*\\d+'
     '|\\d+\\s*/\\s*\\d+'
     '|\\d+(?:\\.\\d+)?\\s?[$_frc]'
     '|\\d+(?:\\.\\d+)?'
@@ -322,16 +323,16 @@ final RegExp _measureStringRe = RegExp(r'^([\d/.\s]*?)\s*([A-Za-z].*)$');
 /// `s`, plus abbreviations — of the units classified as [measure]. Longest
 /// spellings first so `grams` is never half-matched by the `g` abbreviation.
 String _unitAlternation(Measure measure) {
-  final spellings = <String>[
-    for (final def in _unitVocabulary)
-      if (def.measure == measure) ...[
-        '${RegExp.escape(def.canonical)}s?',
-        ...def.aliases.map(RegExp.escape),
-      ],
-  ]..sort(
-      (a, b) =>
-          a.length != b.length ? b.length - a.length : a.compareTo(b),
-    );
+  final spellings =
+      <String>[
+        for (final def in _unitVocabulary)
+          if (def.measure == measure) ...[
+            '${RegExp.escape(def.canonical)}s?',
+            ...def.aliases.map(RegExp.escape),
+          ],
+      ]..sort(
+        (a, b) => a.length != b.length ? b.length - a.length : a.compareTo(b),
+      );
   return '(?:${spellings.join('|')})';
 }
 
@@ -344,19 +345,27 @@ final String _volumeUnitsRe = _unitAlternation(Measure.volume);
 String _parenMeasureRe(String units) =>
     '\\((?:about\\s+)?[0-9$_frc][0-9$_frc/.\\s]*?\\s+$units\\)';
 
-final RegExp _parenWeightRe =
-    RegExp(_parenMeasureRe(_weightUnitsRe), caseSensitive: false);
-final RegExp _parenVolumeRe =
-    RegExp(_parenMeasureRe(_volumeUnitsRe), caseSensitive: false);
+final RegExp _parenWeightRe = RegExp(
+  _parenMeasureRe(_weightUnitsRe),
+  caseSensitive: false,
+);
+final RegExp _parenVolumeRe = RegExp(
+  _parenMeasureRe(_volumeUnitsRe),
+  caseSensitive: false,
+);
 
 /// Characters a leading measure may contain (digits, fractions, `/`, `.`,
 /// `-`, space) when filling the counterpart of a parenthetical equivalent.
 final String _fracCls = '[\\d$_frc/.\\- ]';
 
-final RegExp _leadingVolumeRe =
-    RegExp('^\\s*($_fracCls*\\s*$_volumeUnitsRe)\\b', caseSensitive: false);
-final RegExp _leadingWeightRe =
-    RegExp('^\\s*($_fracCls*\\s*$_weightUnitsRe)\\b', caseSensitive: false);
+final RegExp _leadingVolumeRe = RegExp(
+  '^\\s*($_fracCls*\\s*$_volumeUnitsRe)\\b',
+  caseSensitive: false,
+);
+final RegExp _leadingWeightRe = RegExp(
+  '^\\s*($_fracCls*\\s*$_weightUnitsRe)\\b',
+  caseSensitive: false,
+);
 final RegExp _leadingParenGuardRe = RegExp('^\\s*$_fracCls*\\s*\\(');
 
 // --- helpers ------------------------------------------------------------------
@@ -486,10 +495,7 @@ List<String> _splitClauses(String text) {
   }
   final item = clauses.sublist(0, i + 1).join(', ').trim();
   final prep = clauses.sublist(i + 1).join(', ').trim();
-  return (
-    item: item.isEmpty ? null : item,
-    prep: prep.isEmpty ? null : prep,
-  );
+  return (item: item.isEmpty ? null : item, prep: prep.isEmpty ? null : prep);
 }
 
 /// One measure recovered by [_extractMeasures]: its text and whether it came
@@ -502,7 +508,7 @@ typedef _MeasureText = ({String text, bool fromParen});
 /// line carries a parenthetical equivalent; single-measure lines and
 /// `(8-ounce)` package sizes return no strips and are left untouched.
 ({_MeasureText? weight, _MeasureText? volume, List<String> strip})
-    _extractMeasures(String raw) {
+_extractMeasures(String raw) {
   _MeasureText? weight;
   _MeasureText? volume;
   final strip = <String>[];
@@ -531,13 +537,19 @@ typedef _MeasureText = ({String text, bool fromParen});
   if (volume == null) {
     final p = _leadingVolumeRe.firstMatch(raw);
     if (p != null) {
-      volume = (text: _normalizeFractions(p.group(1)!.trim()), fromParen: false);
+      volume = (
+        text: _normalizeFractions(p.group(1)!.trim()),
+        fromParen: false,
+      );
     }
   }
   if (weight == null && !_leadingParenGuardRe.hasMatch(raw)) {
     final p = _leadingWeightRe.firstMatch(raw);
     if (p != null) {
-      weight = (text: _normalizeFractions(p.group(1)!.trim()), fromParen: false);
+      weight = (
+        text: _normalizeFractions(p.group(1)!.trim()),
+        fromParen: false,
+      );
     }
   }
   return (weight: weight, volume: volume, strip: strip);
@@ -595,8 +607,10 @@ List<Amount> _buildAmounts(
   }
   var primaryApproximate = false;
   final secondary = <Amount>[];
-  for (final (kind, measure)
-      in [(Measure.weight, weight), (Measure.volume, volume)]) {
+  for (final (kind, measure) in [
+    (Measure.weight, weight),
+    (Measure.volume, volume),
+  ]) {
     if (measure == null) continue;
     final equivalent = _parseMeasureString(measure.text);
     if (kind == primaryMeasure &&
@@ -611,12 +625,14 @@ List<Amount> _buildAmounts(
       if (equivalent.approximate) primaryApproximate = true;
       continue;
     }
-    secondary.add(Amount(
-      measure: kind,
-      quantity: equivalent.quantity ?? '',
-      unit: equivalent.unit,
-      approximate: equivalent.approximate,
-    ));
+    secondary.add(
+      Amount(
+        measure: kind,
+        quantity: equivalent.quantity ?? '',
+        unit: equivalent.unit,
+        approximate: equivalent.approximate,
+      ),
+    );
   }
   return [
     if (primaryMeasure != null)

@@ -210,7 +210,8 @@ class _RecipeDocument {
     if (_clean(personalNote) case final note?) ..._personalNote(note),
     ..._ingredientBlock(recipe.ingredients, heading: 'Ingredients'),
     ..._stepBlock(context, recipe.steps, heading: 'Directions'),
-    for (final subsection in recipe.subsections) ..._subsection(context, subsection),
+    for (final subsection in recipe.subsections)
+      ..._subsection(context, subsection),
     for (final technique in recipe.techniques) ..._technique(technique),
     ..._recipeNotes(),
     _sourceLine(),
@@ -632,7 +633,11 @@ class _RecipeDocument {
   /// non-spanning one is skipped by `saveContext` but not by `restoreContext`,
   /// which then null-checks a context that was never saved
   /// (partitions.dart:233).
-  pw.Widget _stepRow(pw.Context context, RecipeStep step, {required bool compact}) {
+  pw.Widget _stepRow(
+    pw.Context context,
+    RecipeStep step, {
+    required bool compact,
+  }) {
     final diameter = compact ? 14.0 : 16.0;
     final text = _drawable(step.text);
     final badge = pw.Container(
@@ -643,7 +648,10 @@ class _RecipeDocument {
         color: compact ? _Ink.rose : _Ink.maroon,
         shape: pw.BoxShape.circle,
       ),
-      child: pw.Text('${step.number}', style: _stepNumberStyle(compact: compact)),
+      child: pw.Text(
+        '${step.number}',
+        style: _stepNumberStyle(compact: compact),
+      ),
     );
     final style = compact ? _compactStepStyle : _stepStyle;
 

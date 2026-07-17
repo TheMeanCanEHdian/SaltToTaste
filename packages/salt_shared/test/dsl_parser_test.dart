@@ -102,10 +102,7 @@ void main() {
     test('scoped quoted phrase, attached and detached', () {
       // "fold in" is real direction text; "Dutch oven" appears in steps of
       // 0002, 0006, and many others.
-      for (final query in [
-        'direction:"fold in"',
-        'direction: "fold in"',
-      ]) {
+      for (final query in ['direction:"fold in"', 'direction: "fold in"']) {
         final result = parseSearchQuery(query);
         expect(result.errors, isEmpty, reason: query);
         expect(
@@ -144,8 +141,11 @@ void main() {
       expected.forEach((name, scope) {
         final result = parseSearchQuery('$name:ginger');
         expect(result.errors, isEmpty, reason: name);
-        expect(result.root, TermNode(scope: scope, text: 'ginger'),
-            reason: name);
+        expect(
+          result.root,
+          TermNode(scope: scope, text: 'ginger'),
+          reason: name,
+        );
       });
     });
 
@@ -276,10 +276,7 @@ void main() {
     test('calories:<400', () {
       final result = parseSearchQuery('calories:<400');
       expect(result.errors, isEmpty);
-      expect(
-        result.root,
-        const CaloriesNode(op: CaloriesOp.lt, value: 400),
-      );
+      expect(result.root, const CaloriesNode(op: CaloriesOp.lt, value: 400));
     });
 
     test('calories: >= 300 and tag:meal', () {
@@ -442,26 +439,38 @@ void main() {
     final dir = Directory(corpusDir);
     final available = dir.existsSync();
 
-    String read(String name) => corpusFile(name).readAsStringSync().toLowerCase();
+    String read(String name) =>
+        corpusFile(name).readAsStringSync().toLowerCase();
 
     test(
       'query terms used above occur in real corpus recipes',
       () {
-        expect(read('0002-classic-chicken-noodle-soup.yaml'),
-            contains('title: classic chicken noodle soup'));
-        expect(read('0015-carrot-ginger-soup.yaml'), contains('ginger'));
-        expect(read('0020-sweet-potato-soup.yaml'),
-            contains('title: sweet potato soup'));
-        expect(read('0857-rich-chocolate-bundt-cake.yaml'),
-            contains('bundt cake'));
-        expect(read('0861-lemon-pound-cake.yaml'), contains('pound cake'));
-        expect(read('0771-new-yorkstyle-crumb-cake.yaml'),
-            contains('- dessert'));
         expect(
-            read('0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml'),
-            contains('fold in'));
-        expect(read('0006-hearty-beef-and-vegetable-stew.yaml'),
-            contains('dutch oven'));
+          read('0002-classic-chicken-noodle-soup.yaml'),
+          contains('title: classic chicken noodle soup'),
+        );
+        expect(read('0015-carrot-ginger-soup.yaml'), contains('ginger'));
+        expect(
+          read('0020-sweet-potato-soup.yaml'),
+          contains('title: sweet potato soup'),
+        );
+        expect(
+          read('0857-rich-chocolate-bundt-cake.yaml'),
+          contains('bundt cake'),
+        );
+        expect(read('0861-lemon-pound-cake.yaml'), contains('pound cake'));
+        expect(
+          read('0771-new-yorkstyle-crumb-cake.yaml'),
+          contains('- dessert'),
+        );
+        expect(
+          read('0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml'),
+          contains('fold in'),
+        );
+        expect(
+          read('0006-hearty-beef-and-vegetable-stew.yaml'),
+          contains('dutch oven'),
+        );
       },
       skip: available ? false : 'recipe corpus not present on this machine',
     );

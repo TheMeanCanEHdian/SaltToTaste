@@ -69,24 +69,19 @@ final class EditorLine extends EditorEntry {
     ParseConfidence? confidence,
     bool? manuallyEdited,
     bool? expanded,
-  }) =>
-      EditorLine(
-        key,
-        raw: raw ?? this.raw,
-        amounts: amounts ?? this.amounts,
-        item: clearItem ? null : (item ?? this.item),
-        prep: clearPrep ? null : (prep ?? this.prep),
-        confidence: confidence ?? this.confidence,
-        manuallyEdited: manuallyEdited ?? this.manuallyEdited,
-        expanded: expanded ?? this.expanded,
-      );
+  }) => EditorLine(
+    key,
+    raw: raw ?? this.raw,
+    amounts: amounts ?? this.amounts,
+    item: clearItem ? null : (item ?? this.item),
+    prep: clearPrep ? null : (prep ?? this.prep),
+    confidence: confidence ?? this.confidence,
+    manuallyEdited: manuallyEdited ?? this.manuallyEdited,
+    expanded: expanded ?? this.expanded,
+  );
 
-  IngredientLine toIngredientLine() => IngredientLine(
-        raw: raw,
-        amounts: amounts,
-        item: item,
-        prep: prep,
-      );
+  IngredientLine toIngredientLine() =>
+      IngredientLine(raw: raw, amounts: amounts, item: item, prep: prep);
 }
 
 /// One direction step in the editor.
@@ -97,11 +92,8 @@ final class EditorStep {
   final String label;
   final String text;
 
-  EditorStep copyWith({String? label, String? text}) => EditorStep(
-        key,
-        label: label ?? this.label,
-        text: text ?? this.text,
-      );
+  EditorStep copyWith({String? label, String? text}) =>
+      EditorStep(key, label: label ?? this.label, text: text ?? this.text);
 }
 
 /// The whole editor state — a working copy of the recipe's editable fields
@@ -202,33 +194,32 @@ final class EditorState {
     bool clearSaveError = false,
     String? savedSlug,
     bool? deleted,
-  }) =>
-      EditorState(
-        loading: loading ?? this.loading,
-        loadError: loadError,
-        recipeId: recipeId ?? this.recipeId,
-        slug: slug ?? this.slug,
-        title: title ?? this.title,
-        servings: servings ?? this.servings,
-        category: category ?? this.category,
-        sourceName: sourceName ?? this.sourceName,
-        sourceUrl: sourceUrl ?? this.sourceUrl,
-        tags: tags ?? this.tags,
-        background: background ?? this.background,
-        prepNotes: prepNotes ?? this.prepNotes,
-        notes: notes ?? this.notes,
-        entries: entries ?? this.entries,
-        steps: steps ?? this.steps,
-        images: images ?? this.images,
-        heroImageUrl: heroImageUrl ?? this.heroImageUrl,
-        credit: credit ?? this.credit,
-        dirty: dirty ?? this.dirty,
-        saving: saving ?? this.saving,
-        uploadingImage: uploadingImage ?? this.uploadingImage,
-        saveError: clearSaveError ? null : (saveError ?? this.saveError),
-        savedSlug: savedSlug ?? this.savedSlug,
-        deleted: deleted ?? this.deleted,
-      );
+  }) => EditorState(
+    loading: loading ?? this.loading,
+    loadError: loadError,
+    recipeId: recipeId ?? this.recipeId,
+    slug: slug ?? this.slug,
+    title: title ?? this.title,
+    servings: servings ?? this.servings,
+    category: category ?? this.category,
+    sourceName: sourceName ?? this.sourceName,
+    sourceUrl: sourceUrl ?? this.sourceUrl,
+    tags: tags ?? this.tags,
+    background: background ?? this.background,
+    prepNotes: prepNotes ?? this.prepNotes,
+    notes: notes ?? this.notes,
+    entries: entries ?? this.entries,
+    steps: steps ?? this.steps,
+    images: images ?? this.images,
+    heroImageUrl: heroImageUrl ?? this.heroImageUrl,
+    credit: credit ?? this.credit,
+    dirty: dirty ?? this.dirty,
+    saving: saving ?? this.saving,
+    uploadingImage: uploadingImage ?? this.uploadingImage,
+    saveError: clearSaveError ? null : (saveError ?? this.saveError),
+    savedSlug: savedSlug ?? this.savedSlug,
+    deleted: deleted ?? this.deleted,
+  );
 }
 
 /// Drives the recipe editor: loads the working copy, applies field edits
@@ -243,10 +234,19 @@ class EditorCubit extends Cubit<EditorState> {
 
   /// Starts a new, empty recipe.
   void startNew() {
-    emit(EditorState(
-      entries: [EditorLine(_key, raw: '', amounts: const [], confidence: ParseConfidence.none)],
-      steps: [EditorStep(_key)],
-    ));
+    emit(
+      EditorState(
+        entries: [
+          EditorLine(
+            _key,
+            raw: '',
+            amounts: const [],
+            confidence: ParseConfidence.none,
+          ),
+        ],
+        steps: [EditorStep(_key)],
+      ),
+    );
   }
 
   /// Whether the parser fully explains this stored line — if not, the
@@ -277,45 +277,47 @@ class EditorCubit extends Cubit<EditorState> {
         return;
       }
       final recipe = detail.recipe;
-      emit(EditorState(
-        recipeId: recipe.id,
-        slug: recipe.slug,
-        title: recipe.title,
-        servings: recipe.servings ?? '',
-        category: recipe.category ?? '',
-        sourceName: recipe.source.name,
-        sourceUrl: recipe.source.url ?? '',
-        tags: recipe.tags,
-        background: recipe.background ?? '',
-        prepNotes: recipe.prepNotes ?? '',
-        notes: recipe.notes ?? '',
-        entries: [
-          for (final group in recipe.ingredients) ...[
-            if (group.group != null) EditorGroupHeader(_key, group.group!),
-            for (final line in group.items)
-              EditorLine(
-                _key,
-                raw: line.raw,
-                amounts: line.amounts,
-                item: line.item,
-                prep: line.prep,
-                confidence: line.amounts.isEmpty
-                    ? ParseConfidence.none
-                    : ParseConfidence.parsed,
-                // Curated structured data (differing from what the parser
-                // would produce) is locked against automatic re-parsing.
-                manuallyEdited: !_parserExplains(line),
-              ),
+      emit(
+        EditorState(
+          recipeId: recipe.id,
+          slug: recipe.slug,
+          title: recipe.title,
+          servings: recipe.servings ?? '',
+          category: recipe.category ?? '',
+          sourceName: recipe.source.name,
+          sourceUrl: recipe.source.url ?? '',
+          tags: recipe.tags,
+          background: recipe.background ?? '',
+          prepNotes: recipe.prepNotes ?? '',
+          notes: recipe.notes ?? '',
+          entries: [
+            for (final group in recipe.ingredients) ...[
+              if (group.group != null) EditorGroupHeader(_key, group.group!),
+              for (final line in group.items)
+                EditorLine(
+                  _key,
+                  raw: line.raw,
+                  amounts: line.amounts,
+                  item: line.item,
+                  prep: line.prep,
+                  confidence: line.amounts.isEmpty
+                      ? ParseConfidence.none
+                      : ParseConfidence.parsed,
+                  // Curated structured data (differing from what the parser
+                  // would produce) is locked against automatic re-parsing.
+                  manuallyEdited: !_parserExplains(line),
+                ),
+            ],
           ],
-        ],
-        steps: [
-          for (final step in recipe.steps)
-            EditorStep(_key, label: step.label ?? '', text: step.text),
-        ],
-        images: recipe.images,
-        heroImageUrl: detail.heroImageUrl,
-        credit: recipe.images.credit ?? '',
-      ));
+          steps: [
+            for (final step in recipe.steps)
+              EditorStep(_key, label: step.label ?? '', text: step.text),
+          ],
+          images: recipe.images,
+          heroImageUrl: detail.heroImageUrl,
+          credit: recipe.images.credit ?? '',
+        ),
+      );
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
@@ -355,28 +357,34 @@ class EditorCubit extends Cubit<EditorState> {
     emit(state.copyWith(tags: [...state.tags, normalized], dirty: true));
   }
 
-  void removeTag(String tag) => emit(state.copyWith(
-        tags: [...state.tags]..remove(tag),
-        dirty: true,
-      ));
+  void removeTag(String tag) =>
+      emit(state.copyWith(tags: [...state.tags]..remove(tag), dirty: true));
 
   // ------------------------------------------------------------------
   // Ingredient entries.
   // ------------------------------------------------------------------
 
-  void addLine() => emit(state.copyWith(
-        entries: [
-          ...state.entries,
-          EditorLine(_key,
-              raw: '', amounts: const [], confidence: ParseConfidence.none),
-        ],
-        dirty: true,
-      ));
+  void addLine() => emit(
+    state.copyWith(
+      entries: [
+        ...state.entries,
+        EditorLine(
+          _key,
+          raw: '',
+          amounts: const [],
+          confidence: ParseConfidence.none,
+        ),
+      ],
+      dirty: true,
+    ),
+  );
 
-  void addGroupHeader() => emit(state.copyWith(
-        entries: [...state.entries, EditorGroupHeader(_key, '')],
-        dirty: true,
-      ));
+  void addGroupHeader() => emit(
+    state.copyWith(
+      entries: [...state.entries, EditorGroupHeader(_key, '')],
+      dirty: true,
+    ),
+  );
 
   /// Appends parsed lines (and `Header:` group rows) from the paste dialog.
   void addPastedLines(List<String> lines) {
@@ -387,10 +395,12 @@ class EditorCubit extends Cubit<EditorState> {
         continue;
       }
       if (line.endsWith(':')) {
-        additions.add(EditorGroupHeader(
-          _key,
-          line.substring(0, line.length - 1).trim().toUpperCase(),
-        ));
+        additions.add(
+          EditorGroupHeader(
+            _key,
+            line.substring(0, line.length - 1).trim().toUpperCase(),
+          ),
+        );
       } else {
         additions.add(EditorLine.parsed(_key, line));
       }
@@ -398,19 +408,20 @@ class EditorCubit extends Cubit<EditorState> {
     if (additions.isEmpty) {
       return;
     }
-    emit(state.copyWith(
-      entries: [...state.entries, ...additions],
-      dirty: true,
-    ));
+    emit(
+      state.copyWith(entries: [...state.entries, ...additions], dirty: true),
+    );
   }
 
-  void removeEntry(int key) => emit(state.copyWith(
-        entries: [
-          for (final entry in state.entries)
-            if (entry.key != key) entry,
-        ],
-        dirty: true,
-      ));
+  void removeEntry(int key) => emit(
+    state.copyWith(
+      entries: [
+        for (final entry in state.entries)
+          if (entry.key != key) entry,
+      ],
+      dirty: true,
+    ),
+  );
 
   /// [newIndex] is already adjusted for the removal (onReorderItem).
   void reorderEntries(int oldIndex, int newIndex) {
@@ -421,43 +432,42 @@ class EditorCubit extends Cubit<EditorState> {
   }
 
   void renameGroup(int key, String name) => _updateEntry(
-        key,
-        (entry) => entry is EditorGroupHeader ? entry.withName(name) : entry,
-      );
+    key,
+    (entry) => entry is EditorGroupHeader ? entry.withName(name) : entry,
+  );
 
   /// The raw text changed. Committed to state IMMEDIATELY (a save or a
   /// leave-check must never miss in-flight typing); the structured-field
   /// parse follows separately via the debounced [applyAutoParse].
   void setLineRaw(int key, String raw) => _updateEntry(
-        key,
-        (entry) => entry is EditorLine ? entry.copyWith(raw: raw) : entry,
-      );
+    key,
+    (entry) => entry is EditorLine ? entry.copyWith(raw: raw) : entry,
+  );
 
   /// Applies the parser to the line's CURRENT raw text — called on the
   /// widget's debounce. Hand-edited (locked) lines are left alone; the
   /// explicit re-parse button is their only path.
   void applyAutoParse(int key) => _updateEntry(key, (entry) {
-        if (entry is! EditorLine || entry.manuallyEdited) {
-          return entry;
-        }
-        final parsed = parseIngredientLine(entry.raw);
-        return entry.copyWith(
-          amounts: parsed.amounts,
-          item: parsed.item,
-          clearItem: parsed.item == null,
-          prep: parsed.prep,
-          clearPrep: parsed.prep == null,
-          confidence: parsed.confidence,
-        );
-      }, markDirty: false);
+    if (entry is! EditorLine || entry.manuallyEdited) {
+      return entry;
+    }
+    final parsed = parseIngredientLine(entry.raw);
+    return entry.copyWith(
+      amounts: parsed.amounts,
+      item: parsed.item,
+      clearItem: parsed.item == null,
+      prep: parsed.prep,
+      clearPrep: parsed.prep == null,
+      confidence: parsed.confidence,
+    );
+  }, markDirty: false);
 
   void toggleLineExpanded(int key) => _updateEntry(
-        key,
-        (entry) => entry is EditorLine
-            ? entry.copyWith(expanded: !entry.expanded)
-            : entry,
-        markDirty: false,
-      );
+    key,
+    (entry) =>
+        entry is EditorLine ? entry.copyWith(expanded: !entry.expanded) : entry,
+    markDirty: false,
+  );
 
   /// Structured-field edits lock the line against automatic re-parsing.
   void setLineStructured(
@@ -467,68 +477,70 @@ class EditorCubit extends Cubit<EditorState> {
     bool clearItem = false,
     String? prep,
     bool clearPrep = false,
-  }) =>
-      _updateEntry(key, (entry) {
-        if (entry is! EditorLine) {
-          return entry;
-        }
-        return entry.copyWith(
-          amounts: amounts,
-          item: item,
-          clearItem: clearItem,
-          prep: prep,
-          clearPrep: clearPrep,
-          manuallyEdited: true,
-        );
-      });
+  }) => _updateEntry(key, (entry) {
+    if (entry is! EditorLine) {
+      return entry;
+    }
+    return entry.copyWith(
+      amounts: amounts,
+      item: item,
+      clearItem: clearItem,
+      prep: prep,
+      clearPrep: clearPrep,
+      manuallyEdited: true,
+    );
+  });
 
   /// The explicit re-parse: applies the parser output and clears the lock.
   void reparseLine(int key) => _updateEntry(key, (entry) {
-        if (entry is! EditorLine) {
-          return entry;
-        }
-        final parsed = parseIngredientLine(entry.raw);
-        return entry.copyWith(
-          amounts: parsed.amounts,
-          item: parsed.item,
-          clearItem: parsed.item == null,
-          prep: parsed.prep,
-          clearPrep: parsed.prep == null,
-          confidence: parsed.confidence,
-          manuallyEdited: false,
-        );
-      });
+    if (entry is! EditorLine) {
+      return entry;
+    }
+    final parsed = parseIngredientLine(entry.raw);
+    return entry.copyWith(
+      amounts: parsed.amounts,
+      item: parsed.item,
+      clearItem: parsed.item == null,
+      prep: parsed.prep,
+      clearPrep: parsed.prep == null,
+      confidence: parsed.confidence,
+      manuallyEdited: false,
+    );
+  });
 
   void _updateEntry(
     int key,
     EditorEntry Function(EditorEntry) transform, {
     bool markDirty = true,
   }) {
-    emit(state.copyWith(
-      entries: [
-        for (final entry in state.entries)
-          if (entry.key == key) transform(entry) else entry,
-      ],
-      dirty: markDirty ? true : null,
-    ));
+    emit(
+      state.copyWith(
+        entries: [
+          for (final entry in state.entries)
+            if (entry.key == key) transform(entry) else entry,
+        ],
+        dirty: markDirty ? true : null,
+      ),
+    );
   }
 
   // ------------------------------------------------------------------
   // Steps.
   // ------------------------------------------------------------------
 
-  void addStep() => emit(state.copyWith(
-        steps: [...state.steps, EditorStep(_key)],
-        dirty: true,
-      ));
+  void addStep() => emit(
+    state.copyWith(steps: [...state.steps, EditorStep(_key)], dirty: true),
+  );
 
-  void removeStep(int key) => emit(state.copyWith(
-        steps: [
-          for (final step in state.steps)
-            if (step.key != key) step,
-        ],
-        dirty: true,
-      ));
+  void removeStep(int key) => emit(
+    state.copyWith(
+      steps: [
+        for (final step in state.steps)
+          if (step.key != key) step,
+      ],
+      dirty: true,
+    ),
+  );
 
   /// [newIndex] is already adjusted for the removal (onReorderItem).
   void reorderSteps(int oldIndex, int newIndex) {
@@ -538,17 +550,18 @@ class EditorCubit extends Cubit<EditorState> {
     emit(state.copyWith(steps: steps, dirty: true));
   }
 
-  void setStep(int key, {String? label, String? text}) =>
-      emit(state.copyWith(
-        steps: [
-          for (final step in state.steps)
-            if (step.key == key)
-              step.copyWith(label: label, text: text)
-            else
-              step,
-        ],
-        dirty: true,
-      ));
+  void setStep(int key, {String? label, String? text}) => emit(
+    state.copyWith(
+      steps: [
+        for (final step in state.steps)
+          if (step.key == key)
+            step.copyWith(label: label, text: text)
+          else
+            step,
+      ],
+      dirty: true,
+    ),
+  );
 
   // ------------------------------------------------------------------
   // Photos (existing recipes only — a new recipe has no id yet).
@@ -569,19 +582,18 @@ class EditorCubit extends Cubit<EditorState> {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(
-        uploadingImage: false,
-        images: detail.recipe.images,
-        heroImageUrl: detail.heroImageUrl,
-      ));
+      emit(
+        state.copyWith(
+          uploadingImage: false,
+          images: detail.recipe.images,
+          heroImageUrl: detail.heroImageUrl,
+        ),
+      );
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(
-        uploadingImage: false,
-        saveError: exception.message,
-      ));
+      emit(state.copyWith(uploadingImage: false, saveError: exception.message));
     }
   }
 
@@ -596,19 +608,18 @@ class EditorCubit extends Cubit<EditorState> {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(
-        uploadingImage: false,
-        images: detail.recipe.images,
-        heroImageUrl: detail.heroImageUrl,
-      ));
+      emit(
+        state.copyWith(
+          uploadingImage: false,
+          images: detail.recipe.images,
+          heroImageUrl: detail.heroImageUrl,
+        ),
+      );
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(
-        uploadingImage: false,
-        saveError: exception.message,
-      ));
+      emit(state.copyWith(uploadingImage: false, saveError: exception.message));
     }
   }
 
@@ -635,13 +646,15 @@ class EditorCubit extends Cubit<EditorState> {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(
-        saving: false,
-        dirty: false,
-        recipeId: detail.recipe.id,
-        slug: detail.recipe.slug,
-        savedSlug: detail.recipe.slug,
-      ));
+      emit(
+        state.copyWith(
+          saving: false,
+          dirty: false,
+          recipeId: detail.recipe.id,
+          slug: detail.recipe.slug,
+          savedSlug: detail.recipe.slug,
+        ),
+      );
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;

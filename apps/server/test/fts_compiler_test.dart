@@ -32,8 +32,7 @@ void main() {
       );
     });
 
-    test('separator-only terms are dropped as noise, not ANDed to nothing',
-        () {
+    test('separator-only terms are dropped as noise, not ANDed to nothing', () {
       expect(
         _compile('chicken , soup').ftsMatch,
         '("chicken" AND "soup")',
@@ -54,10 +53,14 @@ void main() {
     });
 
     test('quoted phrases stay single phrases', () {
-      expect(_compile('"sweet potato" soup').ftsMatch,
-          '("sweet potato" AND "soup")');
-      expect(_compile('title:"bundt cake" or title:pound').ftsMatch,
-          '(title:"bundt cake" OR title:"pound")');
+      expect(
+        _compile('"sweet potato" soup').ftsMatch,
+        '("sweet potato" AND "soup")',
+      );
+      expect(
+        _compile('title:"bundt cake" or title:pound').ftsMatch,
+        '(title:"bundt cake" OR title:"pound")',
+      );
     });
 
     test('or/and precedence carries into the match expression', () {

@@ -98,7 +98,7 @@ String createBackup({
     final prefixLength = '${libraryRoot.parent.path}/'.length;
     final entries = libraryRoot.existsSync()
         ? (libraryRoot.listSync(recursive: true).whereType<File>().toList()
-          ..sort((a, b) => a.path.compareTo(b.path)))
+            ..sort((a, b) => a.path.compareTo(b.path)))
         : const <File>[];
     for (final file in entries) {
       final relative = file.path.substring(prefixLength);
@@ -144,22 +144,23 @@ List<BackupInfo> listBackups(ServerConfig config) {
   if (!dir.existsSync()) {
     return const [];
   }
-  final infos = <BackupInfo>[
-    for (final file in dir.listSync().whereType<File>())
-      if (backupNamePattern.hasMatch(_basename(file.path)))
-        BackupInfo(
-          name: _basename(file.path),
-          sizeBytes: file.lengthSync(),
-          createdAt: file.lastModifiedSync().toUtc(),
-        ),
-  ]
-    // Newest first by actual creation time — lexical name order misranks
-    // the `-N` same-second archives (retention would prune the wrong ones
-    // during a burst of before-delete backups); the name only tiebreaks.
-    ..sort((a, b) {
-      final byTime = b.createdAt.compareTo(a.createdAt);
-      return byTime != 0 ? byTime : b.name.compareTo(a.name);
-    });
+  final infos =
+      <BackupInfo>[
+          for (final file in dir.listSync().whereType<File>())
+            if (backupNamePattern.hasMatch(_basename(file.path)))
+              BackupInfo(
+                name: _basename(file.path),
+                sizeBytes: file.lengthSync(),
+                createdAt: file.lastModifiedSync().toUtc(),
+              ),
+        ]
+        // Newest first by actual creation time — lexical name order misranks
+        // the `-N` same-second archives (retention would prune the wrong ones
+        // during a burst of before-delete backups); the name only tiebreaks.
+        ..sort((a, b) {
+          final byTime = b.createdAt.compareTo(a.createdAt);
+          return byTime != 0 ? byTime : b.name.compareTo(a.name);
+        });
   return infos;
 }
 

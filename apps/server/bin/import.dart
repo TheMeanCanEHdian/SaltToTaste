@@ -6,7 +6,8 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/services/import_service.dart';
 import 'package:salt_server/src/services/legacy_import.dart';
 
-const _usage = 'Usage: dart run salt_server:import <source-root> '
+const _usage =
+    'Usage: dart run salt_server:import <source-root> '
     '[--data-dir=PATH] [--legacy]';
 
 const _maxPrintedWarnings = 20;
@@ -87,8 +88,7 @@ void main(List<String> args) {
   }
 }
 
-String _singleLine(String text) =>
-    text.replaceAll(RegExp(r'\s*\n\s*'), ' ');
+String _singleLine(String text) => text.replaceAll(RegExp(r'\s*\n\s*'), ' ');
 
 /// Parses `<source-root> [--data-dir=PATH] [--legacy]`; throws
 /// [FormatException] on unknown options, a missing source root, or extra

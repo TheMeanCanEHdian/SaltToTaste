@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -100,13 +99,15 @@ void main() {
       expect(
         tagsOf(tester),
         isEmpty,
-        reason: 'blur must not invent a tag the user never committed. '
+        reason:
+            'blur must not invent a tag the user never committed. '
             'Actual: ${tagsOf(tester)}',
       );
       expect(
         fieldText(tester),
         'weeknight',
-        reason: 'and the text stays put, visibly still not a chip, rather '
+        reason:
+            'and the text stays put, visibly still not a chip, rather '
             'than being silently swallowed',
       );
     });
@@ -127,7 +128,8 @@ void main() {
       expect(
         tagsOf(tester),
         isEmpty,
-        reason: 'clicking Save with "des" half-typed must not create "des". '
+        reason:
+            'clicking Save with "des" half-typed must not create "des". '
             'Actual: ${tagsOf(tester)}',
       );
     });
@@ -143,11 +145,9 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      expect(
-        tagsOf(tester),
-        ['dessert'],
-        reason: 'removing the blur commit must not disarm Enter',
-      );
+      expect(tagsOf(tester), [
+        'dessert',
+      ], reason: 'removing the blur commit must not disarm Enter');
     });
 
     testWidgets('pressing the Create row still commits', (tester) async {
@@ -161,11 +161,9 @@ void main() {
       await tester.tap(find.textContaining('Create'));
       await tester.pumpAndSettle();
 
-      expect(
-        tagsOf(tester),
-        ['sheet-pan'],
-        reason: 'the other explicit commit path must still work',
-      );
+      expect(tagsOf(tester), [
+        'sheet-pan',
+      ], reason: 'the other explicit commit path must still work');
     });
   });
 
@@ -204,7 +202,8 @@ void main() {
     expect(
       tagsOf(tester),
       ['dessert'],
-      reason: 'Enter must resolve to the tag already present and no-op, not '
+      reason:
+          'Enter must resolve to the tag already present and no-op, not '
           'create the junk near-duplicate. Actual: ${tagsOf(tester)}',
     );
   });
@@ -244,7 +243,8 @@ void main() {
     expect(
       tagsOf(tester),
       ['des'],
-      reason: 'keyboard users must be able to reach Create. '
+      reason:
+          'keyboard users must be able to reach Create. '
           'Actual: ${tagsOf(tester)}',
     );
   });

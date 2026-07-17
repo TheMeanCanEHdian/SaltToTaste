@@ -72,11 +72,9 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    expect(
-      tagsOf(tester),
-      ['dessert'],
-      reason: 'Enter must take the matching tag, not create "des"',
-    );
+    expect(tagsOf(tester), [
+      'dessert',
+    ], reason: 'Enter must take the matching tag, not create "des"');
   });
 
   testWidgets('Enter creates when nothing matches', (tester) async {
@@ -87,11 +85,9 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    expect(
-      tagsOf(tester),
-      ['sheet-pan'],
-      reason: 'with no match, Enter is the create path',
-    );
+    expect(tagsOf(tester), [
+      'sheet-pan',
+    ], reason: 'with no match, Enter is the create path');
   });
 
   testWidgets('an exact match wins over other substring matches', (
@@ -170,7 +166,11 @@ class _TagsAdapter implements HttpClientAdapter {
   final Duration delay;
 
   @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? _, Future<void>? __) async {
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? _,
+    Future<void>? __,
+  ) async {
     if (delay > Duration.zero) {
       await Future<void>.delayed(delay);
     }

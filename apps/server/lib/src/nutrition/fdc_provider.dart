@@ -19,7 +19,7 @@ class TokenBucket {
   /// Creates a bucket allowing [capacity] acquisitions per [window]
   /// (default one hour).
   TokenBucket({this.capacity = fdcRequestsPerHour, Duration? window})
-      : _window = window ?? const Duration(hours: 1);
+    : _window = window ?? const Duration(hours: 1);
 
   /// Maximum acquisitions per window.
   final int capacity;
@@ -72,9 +72,9 @@ class UsdaFdcProvider implements NutritionProvider {
     TokenBucket? bucket,
     String host = 'api.nal.usda.gov',
     this.maxRateWait,
-  })  : _bucket = bucket ?? TokenBucket(),
-        // ignore: prefer_initializing_formals
-        _host = host;
+  }) : _bucket = bucket ?? TokenBucket(),
+       // ignore: prefer_initializing_formals
+       _host = host;
 
   /// Returns the configured key, or null when unset.
   final String? Function() apiKey;
@@ -176,7 +176,8 @@ class UsdaFdcProvider implements NutritionProvider {
             unit: (unitName == null || unitName == 'undetermined')
                 ? null
                 : unitName,
-            description: entry['portionDescription'] as String? ??
+            description:
+                entry['portionDescription'] as String? ??
                 entry['modifier'] as String?,
           ),
         );
@@ -221,8 +222,7 @@ class UsdaFdcProvider implements NutritionProvider {
         final response = await request.close().timeout(_timeout);
         // The body read needs its own timeout: a stalled stream after
         // headers would otherwise hang the caller forever.
-        final body =
-            await utf8.decoder.bind(response).join().timeout(_timeout);
+        final body = await utf8.decoder.bind(response).join().timeout(_timeout);
         switch (response.statusCode) {
           case 200:
             final decoded = jsonDecode(body);

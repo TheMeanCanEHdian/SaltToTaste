@@ -64,21 +64,21 @@ class ImportJob {
   });
 
   factory ImportJob.fromJson(Map<String, dynamic> json) => ImportJob(
-        id: (json['id']! as num).toInt(),
-        status: json['status'] as String? ?? '',
-        total: (json['total'] as num?)?.toInt() ?? 0,
-        done: (json['done'] as num?)?.toInt() ?? 0,
-        imported: (json['imported'] as num?)?.toInt() ?? 0,
-        updated: (json['updated'] as num?)?.toInt() ?? 0,
-        skipped: (json['skipped'] as num?)?.toInt() ?? 0,
-        failed: (json['failed'] as num?)?.toInt() ?? 0,
-        legacy: json['legacy'] == true,
-        sourcePath: json['source_path'] as String?,
-        log: [
-          if (json['log'] is List)
-            for (final entry in json['log'] as List<dynamic>) '$entry',
-        ],
-      );
+    id: (json['id']! as num).toInt(),
+    status: json['status'] as String? ?? '',
+    total: (json['total'] as num?)?.toInt() ?? 0,
+    done: (json['done'] as num?)?.toInt() ?? 0,
+    imported: (json['imported'] as num?)?.toInt() ?? 0,
+    updated: (json['updated'] as num?)?.toInt() ?? 0,
+    skipped: (json['skipped'] as num?)?.toInt() ?? 0,
+    failed: (json['failed'] as num?)?.toInt() ?? 0,
+    legacy: json['legacy'] == true,
+    sourcePath: json['source_path'] as String?,
+    log: [
+      if (json['log'] is List)
+        for (final entry in json['log'] as List<dynamic>) '$entry',
+    ],
+  );
 
   final int id;
 
@@ -112,8 +112,7 @@ class ImportRepository {
   /// The import directory and the source folders detected inside it.
   Future<ImportCandidates> candidates() {
     return apiGuard(() async {
-      final response =
-          await _dio.get<dynamic>('/api/v1/import/candidates');
+      final response = await _dio.get<dynamic>('/api/v1/import/candidates');
       return ImportCandidates.fromJson(_asMap(response.data));
     });
   }
@@ -123,11 +122,7 @@ class ImportRepository {
   Future<int> start(String path) {
     return apiGuard(() async {
       final data = _asMap(
-        (await _dio.post<dynamic>(
-          '/api/v1/import',
-          data: {'path': path},
-        ))
-            .data,
+        (await _dio.post<dynamic>('/api/v1/import', data: {'path': path})).data,
       );
       return (data['job_id']! as num).toInt();
     });

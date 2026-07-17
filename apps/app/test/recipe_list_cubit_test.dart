@@ -32,10 +32,7 @@ class _FakeAdapter implements HttpClientAdapter {
       final id = RegExp(
         r'/recipes/([^/]+)/favorite',
       ).firstMatch(path)!.group(1)!;
-      favoriteCalls.add((
-        Uri.decodeComponent(id),
-        options.method == 'PUT',
-      ));
+      favoriteCalls.add((Uri.decodeComponent(id), options.method == 'PUT'));
       return ResponseBody.fromString('{}', 200, headers: _jsonHeaders);
     }
     if (path.contains('/api/v1/recipes')) {

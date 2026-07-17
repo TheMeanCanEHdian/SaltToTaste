@@ -19,11 +19,7 @@ class TagStyle {
 /// One row of the tags listing: the tag, how many recipes carry it, and its
 /// chip style.
 class TagInfo {
-  const TagInfo({
-    required this.name,
-    required this.count,
-    required this.style,
-  });
+  const TagInfo({required this.name, required this.count, required this.style});
 
   final String name;
   final int count;

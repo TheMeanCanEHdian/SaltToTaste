@@ -40,8 +40,7 @@ String generateOpaqueToken() {
 
 /// SHA-256 hex digest of [token] — the only form ever persisted or compared
 /// at rest. Never log the input.
-String hashToken(String token) =>
-    sha256.convert(utf8.encode(token)).toString();
+String hashToken(String token) => sha256.convert(utf8.encode(token)).toString();
 
 /// Whether [bearer] is shaped like a personal access token (marker plus a
 /// well-formed 43-character base64url body), as opposed to a session token.

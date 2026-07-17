@@ -62,8 +62,10 @@ class LibraryScanReport {
       skipped.isEmpty &&
       conflictFiles.isEmpty;
 
-  static List<String> _strings(Object? raw) =>
-      [if (raw is List) for (final entry in raw) entry.toString()];
+  static List<String> _strings(Object? raw) => [
+    if (raw is List)
+      for (final entry in raw) entry.toString(),
+  ];
 }
 
 /// One backup archive on the server.
@@ -104,8 +106,7 @@ class LibraryRepository {
           '/api/v1/library/rescan',
           // A large hand-edited library can take a while to reconcile.
           options: Options(receiveTimeout: const Duration(minutes: 5)),
-        ))
-            .data,
+        )).data,
       );
       return LibraryScanReport.fromJson(
         data['last_scan']! as Map<String, dynamic>,
@@ -138,8 +139,7 @@ class LibraryRepository {
           data: {'include_images': includeImages},
           // A full include-photos archive is ~0.5 GB of tar+gzip work.
           options: Options(receiveTimeout: const Duration(minutes: 10)),
-        ))
-            .data,
+        )).data,
       );
       final raw = data['backup']! as Map<String, dynamic>;
       return BackupItem(
@@ -153,8 +153,9 @@ class LibraryRepository {
   /// Deletes the named backup.
   Future<void> deleteBackup(String name) {
     return apiGuard(() async {
-      await _dio
-          .delete<dynamic>('/api/v1/backups/${Uri.encodeComponent(name)}');
+      await _dio.delete<dynamic>(
+        '/api/v1/backups/${Uri.encodeComponent(name)}',
+      );
     });
   }
 

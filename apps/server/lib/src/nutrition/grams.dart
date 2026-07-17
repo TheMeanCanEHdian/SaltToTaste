@@ -168,8 +168,9 @@ double? _quantityValue(String quantity) {
     return direct;
   }
   // Ranges take the midpoint ("4-6", "4 to 6").
-  final range =
-      RegExp(r'^\s*(\S+)\s*(?:-|–|to)\s*(\S+)\s*$').firstMatch(quantity);
+  final range = RegExp(
+    r'^\s*(\S+)\s*(?:-|–|to)\s*(\S+)\s*$',
+  ).firstMatch(quantity);
   if (range != null) {
     final low = parseQuantity(range.group(1)!);
     final high = parseQuantity(range.group(2)!);
@@ -210,8 +211,9 @@ double? _portionGramsPerUnit(FdcFood food, String unit) {
       // `amount` field belongs to the (non-matching) measure unit, so
       // defaulting to 1 here would silently mis-scale the weight.
       final leading = RegExp(r'^([\d][\d./\s]*)').firstMatch(description);
-      final parsed =
-          leading == null ? null : _quantityValue(leading.group(1)!.trim());
+      final parsed = leading == null
+          ? null
+          : _quantityValue(leading.group(1)!.trim());
       if (parsed == null) {
         continue;
       }

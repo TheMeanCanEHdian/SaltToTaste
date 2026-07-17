@@ -51,8 +51,7 @@ class PasswordHasher {
   /// Hashes [password] with a fresh random salt and the current default
   /// parameters, returning a PHC-formatted string.
   Future<String> hash(String password) async {
-    final salt =
-        List<int>.generate(saltLength, (_) => _random.nextInt(256));
+    final salt = List<int>.generate(saltLength, (_) => _random.nextInt(256));
     final algorithm = Argon2id(
       memory: memoryKib,
       iterations: iterations,
@@ -109,8 +108,14 @@ class PasswordHasher {
   // PHC parsing
   // ---------------------------------------------------------------------
 
-  ({int memory, int iterations, int parallelism, List<int> salt,
-      List<int> hash})? _parsePhc(String phcString) {
+  ({
+    int memory,
+    int iterations,
+    int parallelism,
+    List<int> salt,
+    List<int> hash,
+  })?
+  _parsePhc(String phcString) {
     // Expected: '' / 'argon2id' / 'v=19' / 'm=..,t=..,p=..' / salt / hash
     final parts = phcString.split(r'$');
     if (parts.length != 6 || parts[0].isNotEmpty) return null;
@@ -128,7 +133,9 @@ class PasswordHasher {
     final memory = params['m'];
     final iterations = params['t'];
     final parallelism = params['p'];
-    if (memory == null || iterations == null || parallelism == null ||
+    if (memory == null ||
+        iterations == null ||
+        parallelism == null ||
         params.length != 3) {
       return null;
     }

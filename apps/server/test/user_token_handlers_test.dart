@@ -20,16 +20,15 @@ void main() {
     String role = 'member',
     String? sessionHash,
     String scope = 'full',
-  }) =>
-      AuthUser(
-        id: id,
-        username: 'user$id',
-        role: role,
-        mustChangePassword: false,
-        scope: scope,
-        via: sessionHash == null ? 'pat' : 'session',
-        sessionHash: sessionHash,
-      );
+  }) => AuthUser(
+    id: id,
+    username: 'user$id',
+    role: role,
+    mustChangePassword: false,
+    scope: scope,
+    via: sessionHash == null ? 'pat' : 'session',
+    sessionHash: sessionHash,
+  );
 
   setUp(() async {
     tempDir = Directory.systemTemp.createTempSync('salt_user_handlers');
@@ -101,8 +100,7 @@ void main() {
         username: 'sam',
         role: 'member',
       );
-      final samId =
-          (created['user']! as Map<String, Object?>)['id']! as int;
+      final samId = (created['user']! as Map<String, Object?>)['id']! as int;
       final sessionToken = generateOpaqueToken();
       db.createSession(
         tokenHash: hashToken(sessionToken),

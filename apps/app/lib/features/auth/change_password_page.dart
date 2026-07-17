@@ -41,9 +41,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       _error = null;
     });
     try {
-      await context
-          .read<AuthCubit>()
-          .changePassword(newPassword: _password.text);
+      await context.read<AuthCubit>().changePassword(
+        newPassword: _password.text,
+      );
     } on RepositoryException catch (exception) {
       setState(() => _error = exception.message);
     } finally {
@@ -58,7 +58,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     final username = context.watch<AuthCubit>().user?.username ?? '';
     return AuthCardScaffold(
       title: 'Choose a new password',
-      subtitle: 'Signed in as $username with a temporary password — set your '
+      subtitle:
+          'Signed in as $username with a temporary password — set your '
           'own to continue',
       children: [
         AuthField(

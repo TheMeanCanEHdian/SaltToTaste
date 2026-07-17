@@ -43,8 +43,9 @@ class ServerConfig {
     final env = environment ?? Platform.environment;
 
     final rawDataDir = env['DATA_DIR']?.trim();
-    final dataDirInput =
-        (rawDataDir == null || rawDataDir.isEmpty) ? '.data' : rawDataDir;
+    final dataDirInput = (rawDataDir == null || rawDataDir.isEmpty)
+        ? '.data'
+        : rawDataDir;
     var dataDir = Directory(dataDirInput).absolute.path;
     while (dataDir.length > 1 &&
         (dataDir.endsWith('/') || dataDir.endsWith(r'\'))) {
@@ -103,9 +104,9 @@ class ServerConfig {
       'WARN' || 'WARNING' => Level.WARNING,
       'DEBUG' => Level.FINE,
       _ => throw FormatException(
-          'Invalid LOG_LEVEL "$raw": '
-          'expected ERROR, WARN, WARNING, INFO, or DEBUG.',
-        ),
+        'Invalid LOG_LEVEL "$raw": '
+        'expected ERROR, WARN, WARNING, INFO, or DEBUG.',
+      ),
     };
   }
 }

@@ -27,12 +27,12 @@ enum CaloriesOp {
 
   /// The operator as written in a query (`<`, `<=`, `>`, `>=`, `=`).
   String get symbol => switch (this) {
-        CaloriesOp.lt => '<',
-        CaloriesOp.lte => '<=',
-        CaloriesOp.gt => '>',
-        CaloriesOp.gte => '>=',
-        CaloriesOp.eq => '=',
-      };
+    CaloriesOp.lt => '<',
+    CaloriesOp.lte => '<=',
+    CaloriesOp.gt => '>',
+    CaloriesOp.gte => '>=',
+    CaloriesOp.eq => '=',
+  };
 }
 
 /// A node in the parsed search query AST.
@@ -72,8 +72,7 @@ final class TermNode extends SearchNode {
   int get hashCode => Object.hash(scope, text, isPhrase);
 
   @override
-  String toString() =>
-      'Term(${scope.name}:${isPhrase ? '"$text"' : text})';
+  String toString() => 'Term(${scope.name}:${isPhrase ? '"$text"' : text})';
 }
 
 /// A numeric calories filter (`calories:<400`).

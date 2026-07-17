@@ -51,23 +51,23 @@ Page<void> fadePageForTest(GoRouterState state, Widget child) =>
 
 Page<void> _fadePage(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(
-  key: state.pageKey,
-  name: state.name ?? state.uri.path,
-  arguments: state.extra,
-  restorationId: state.pageKey.value,
-  child: child,
-  transitionDuration: const Duration(milliseconds: 180),
-  reverseTransitionDuration: const Duration(milliseconds: 140),
-  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-    if (MediaQuery.disableAnimationsOf(context)) {
-      return child;
-    }
-    return FadeTransition(
-      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      key: state.pageKey,
+      name: state.name ?? state.uri.path,
+      arguments: state.extra,
+      restorationId: state.pageKey.value,
       child: child,
+      transitionDuration: const Duration(milliseconds: 180),
+      reverseTransitionDuration: const Duration(milliseconds: 140),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        if (MediaQuery.disableAnimationsOf(context)) {
+          return child;
+        }
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: child,
+        );
+      },
     );
-  },
-);
 
 /// Splash while auth resolves; shows the failure + retry when bootstrap
 /// couldn't reach the server (so users aren't dumped onto a login form that
@@ -213,7 +213,8 @@ GoRouter buildRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: '/change-password',
-        pageBuilder: (context, state) => _fadePage(state, const ChangePasswordPage()),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const ChangePasswordPage()),
       ),
       GoRoute(
         path: '/',
@@ -225,12 +226,15 @@ GoRouter buildRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: '/favorites',
-        pageBuilder: (context, state) => _fadePage(state, const FavoritesPage()),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const FavoritesPage()),
       ),
       GoRoute(
         path: '/r/:slug',
-        pageBuilder: (context, state) =>
-            _fadePage(state, RecipeDetailPage(slug: state.pathParameters['slug']!)),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          RecipeDetailPage(slug: state.pathParameters['slug']!),
+        ),
       ),
       GoRoute(
         path: '/r/:slug/edit',
@@ -239,8 +243,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: '/search',
-        pageBuilder: (context, state) =>
-            _fadePage(state, SearchPage(query: state.uri.queryParameters['q'] ?? '')),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          SearchPage(query: state.uri.queryParameters['q'] ?? ''),
+        ),
       ),
       GoRoute(
         path: '/settings',

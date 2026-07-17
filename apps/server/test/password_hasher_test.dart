@@ -11,7 +11,8 @@ const _password = 'plum-Torte_Battery-91!';
 /// OWASP params) for the password below — pins the output across package
 /// and platform upgrades.
 const _knownPassword = 'correct horse battery staple';
-const _knownPhc = r'$argon2id$v=19$m=19456,t=2,p=1'
+const _knownPhc =
+    r'$argon2id$v=19$m=19456,t=2,p=1'
     r'$c2FsdC10by10YXN0ZS12Mg$ZcvQ66hAFnOYGst1nsWjj1x3yG9y+4Ax8QTOW2IjPpQ';
 
 final _phcPattern = RegExp(
@@ -23,20 +24,24 @@ void main() {
   final hasher = PasswordHasher();
 
   group('hash', () {
-    test('produces a PHC string with OWASP params and unpadded base64',
-        () async {
-      final phc = await hasher.hash(_password);
-      expect(phc, matches(_phcPattern));
-    });
+    test(
+      'produces a PHC string with OWASP params and unpadded base64',
+      () async {
+        final phc = await hasher.hash(_password);
+        expect(phc, matches(_phcPattern));
+      },
+    );
 
-    test('salts randomly: same password, different hashes, both verify',
-        () async {
-      final first = await hasher.hash(_password);
-      final second = await hasher.hash(_password);
-      expect(first, isNot(second));
-      expect(await hasher.verify(_password, first), isTrue);
-      expect(await hasher.verify(_password, second), isTrue);
-    });
+    test(
+      'salts randomly: same password, different hashes, both verify',
+      () async {
+        final first = await hasher.hash(_password);
+        final second = await hasher.hash(_password);
+        expect(first, isNot(second));
+        expect(await hasher.verify(_password, first), isTrue);
+        expect(await hasher.verify(_password, second), isTrue);
+      },
+    );
   });
 
   group('verify', () {
@@ -56,20 +61,22 @@ void main() {
       expect(await hasher.verify('incorrect horse', _knownPhc), isFalse);
     });
 
-    test('honours embedded params that differ from current defaults',
-        () async {
+    test('honours embedded params that differ from current defaults', () async {
       // Build a valid PHC string with non-default (cheap) params directly
       // from the algorithm, then check verify() reproduces it.
       const salt = [7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7];
-      final algorithm =
-          Argon2id(memory: 64, iterations: 3, parallelism: 2, hashLength: 16);
+      final algorithm = Argon2id(
+        memory: 64,
+        iterations: 3,
+        parallelism: 2,
+        hashLength: 16,
+      );
       final key = await algorithm.deriveKeyFromPassword(
         password: _password,
         nonce: salt,
       );
       final derived = await key.extractBytes();
-      String b64(List<int> bytes) =>
-          base64.encode(bytes).replaceAll('=', '');
+      String b64(List<int> bytes) => base64.encode(bytes).replaceAll('=', '');
       final phc =
           '\$argon2id\$v=19\$m=64,t=3,p=2\$${b64(salt)}\$${b64(derived)}';
       expect(await hasher.verify(_password, phc), isTrue);
@@ -101,8 +108,11 @@ void main() {
         'leading junk': 'x\$argon2id\$v=19\$m=19456,t=2,p=1\$$salt\$$digest',
       };
       for (final entry in malformed.entries) {
-        expect(await hasher.verify(_password, entry.value), isFalse,
-            reason: 'should reject ${entry.key}: ${entry.value}');
+        expect(
+          await hasher.verify(_password, entry.value),
+          isFalse,
+          reason: 'should reject ${entry.key}: ${entry.value}',
+        );
       }
     });
   });
@@ -116,8 +126,12 @@ void main() {
 
   group('underlying Argon2id implementation', () {
     test('matches the RFC 9106 section 5.3 Argon2id test vector', () async {
-      final algorithm =
-          Argon2id(memory: 32, iterations: 3, parallelism: 4, hashLength: 32);
+      final algorithm = Argon2id(
+        memory: 32,
+        iterations: 3,
+        parallelism: 4,
+        hashLength: 32,
+      );
       final key = await algorithm.deriveKey(
         secretKey: SecretKey(List.filled(32, 0x01)),
         nonce: List.filled(16, 0x02),
@@ -125,8 +139,7 @@ void main() {
         associatedData: List.filled(12, 0x04),
       );
       final tag = await key.extractBytes();
-      final hex =
-          tag.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+      final hex = tag.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
       expect(
         hex,
         '0d640df58d78766c08c037a34a8b53c9d01ef0452d75b65eb52520e96b01e659',

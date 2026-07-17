@@ -73,14 +73,16 @@ ResolvedImage resolveLibraryImage({
   final String canonicalPath;
   try {
     canonicalLibraryDir = Directory(libraryDir).resolveSymbolicLinksSync();
-    canonicalPath =
-        File('$libraryDir/$source/images/$file').resolveSymbolicLinksSync();
+    canonicalPath = File(
+      '$libraryDir/$source/images/$file',
+    ).resolveSymbolicLinksSync();
   } on FileSystemException {
     // Missing file, missing directory, or dangling symlink.
     throw NotFoundException('image not found: $source/$file');
   }
-  if (!canonicalPath
-      .startsWith('$canonicalLibraryDir${Platform.pathSeparator}')) {
+  if (!canonicalPath.startsWith(
+    '$canonicalLibraryDir${Platform.pathSeparator}',
+  )) {
     // A symlink (or other trickery) escaped the library dir.
     throw NotFoundException('image not found: $source/$file');
   }

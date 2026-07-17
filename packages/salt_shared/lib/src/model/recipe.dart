@@ -107,7 +107,11 @@ class Subsection with SubsectionMappable {
 /// One illustrated step in a technique sidebar.
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class TechniqueStep with TechniqueStepMappable {
-  const TechniqueStep({required this.number, this.image, required this.caption});
+  const TechniqueStep({
+    required this.number,
+    this.image,
+    required this.caption,
+  });
 
   final int number;
 

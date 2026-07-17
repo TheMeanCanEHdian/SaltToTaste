@@ -38,21 +38,21 @@ void deleteSessionHandler(SaltDatabase db, AuthUser actor, String id) {
 }
 
 Map<String, Object?> _tokenJson(ApiTokenRow token) => {
-      'id': token.id,
-      'name': token.name,
-      'prefix': token.prefix,
-      'scope': token.scope,
-      'created_at': isoUtc(token.createdAt),
-      'last_used_at': isoUtc(token.lastUsedAt),
-      'revoked': token.revokedAt != null,
-    };
+  'id': token.id,
+  'name': token.name,
+  'prefix': token.prefix,
+  'scope': token.scope,
+  'created_at': isoUtc(token.createdAt),
+  'last_used_at': isoUtc(token.lastUsedAt),
+  'revoked': token.revokedAt != null,
+};
 
 /// `GET /api/v1/tokens` — the actor's personal access tokens.
 Map<String, Object?> listTokensHandler(SaltDatabase db, AuthUser actor) => {
-      'items': [
-        for (final token in db.apiTokensForUser(actor.id)) _tokenJson(token),
-      ],
-    };
+  'items': [
+    for (final token in db.apiTokensForUser(actor.id)) _tokenJson(token),
+  ],
+};
 
 /// `POST /api/v1/tokens` `{name, scope}` — mints a PAT. The full token value
 /// appears only in this response.

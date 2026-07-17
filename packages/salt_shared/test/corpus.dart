@@ -17,7 +17,7 @@ import 'package:test/test.dart';
 final String corpusDir = Platform.environment['SALT_CORPUS_DIR'] != null
     ? '${Platform.environment['SALT_CORPUS_DIR']}/recipes'
     : '${Platform.environment['HOME'] ?? '.'}/recipe-corpus/'
-        'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023/recipes';
+          'The Complete America_s Test Kitchen TV Show Cookbook 2001–2023/recipes';
 
 const int expectedCorpusSize = 1198;
 
@@ -37,12 +37,13 @@ List<File> corpusFiles() {
     isTrue,
     reason: 'corpus directory not found: $corpusDir',
   );
-  final files = dir
-      .listSync()
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.yaml'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final files =
+      dir
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.yaml'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
   return files;
 }
 

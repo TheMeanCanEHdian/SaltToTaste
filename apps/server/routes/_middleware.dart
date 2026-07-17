@@ -43,14 +43,14 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// origin is echoed and `Allow-Credentials` set instead of `*`. Production
 /// serves the web build same-origin and leaves this off.
 Map<String, String> _corsHeaders(RequestContext context) => {
-      'Access-Control-Allow-Origin': context.request.headers['origin'] ?? '*',
-      'Vary': 'Origin',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers':
-          'Authorization, Content-Type, X-Requested-With',
-      'Access-Control-Max-Age': '86400',
-    };
+  'Access-Control-Allow-Origin': context.request.headers['origin'] ?? '*',
+  'Vary': 'Origin',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers':
+      'Authorization, Content-Type, X-Requested-With',
+  'Access-Control-Max-Age': '86400',
+};
 
 Middleware _devCors() {
   return (handler) {

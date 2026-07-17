@@ -101,12 +101,13 @@ ImportSummary importSourceRoot({
     sourceYaml.copySync('$librarySourceDir/source.yaml');
   }
 
-  final files = recipesDir
-      .listSync()
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.yaml'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final files =
+      recipesDir
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.yaml'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
   summary.total = files.length;
 
   final materializedImages = <String>{};
@@ -302,8 +303,9 @@ void _copyImages({
     final String canonicalSource;
     try {
       canonicalRoot = Directory(sourceRoot).resolveSymbolicLinksSync();
-      canonicalSource =
-          File('$sourceRoot/$relative').resolveSymbolicLinksSync();
+      canonicalSource = File(
+        '$sourceRoot/$relative',
+      ).resolveSymbolicLinksSync();
     } on FileSystemException {
       summary.warnings.add('$fileName: image not found: $relative');
       continue;

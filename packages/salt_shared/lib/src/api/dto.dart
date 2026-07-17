@@ -61,11 +61,7 @@ class RecipeCard with RecipeCardMappable {
 /// The uniform API error envelope: `{"error": {code, message, request_id}}`.
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class ApiError with ApiErrorMappable {
-  const ApiError({
-    required this.code,
-    required this.message,
-    this.requestId,
-  });
+  const ApiError({required this.code, required this.message, this.requestId});
 
   /// Stable machine-readable code (e.g. `not_found`, `validation`,
   /// `internal`). The catalog lives in docs/API.md.

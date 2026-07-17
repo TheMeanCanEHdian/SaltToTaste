@@ -40,8 +40,7 @@ void main() {
     expect(limiter.check('k').allowed, isTrue);
   });
 
-  test('each further failure doubles the lockout up to the 15-minute cap',
-      () {
+  test('each further failure doubles the lockout up to the 15-minute cap', () {
     const expected = [
       Duration(minutes: 1), // 5th failure
       Duration(minutes: 2), // 6th

@@ -79,7 +79,8 @@ class _RecoverPageState extends State<RecoverPage> {
           // The tool prints to its own stdout, so the code appears in the
           // terminal you run it from — it is NOT in the server's logs, and
           // `docker logs` will never show it.
-          helper: 'Docker: docker exec <container> /app/recover\n'
+          helper:
+              'Docker: docker exec <container> /app/recover\n'
               'From source: dart run salt_server:recover',
           autofocus: true,
         ),

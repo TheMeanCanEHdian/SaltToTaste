@@ -155,7 +155,9 @@ class RecipeTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (hero != null) _TileImage(url: apiUrl(hero)) else
+                  if (hero != null)
+                    _TileImage(url: apiUrl(hero))
+                  else
                     const PhotoFallback(),
                   const DecoratedBox(
                     decoration: BoxDecoration(

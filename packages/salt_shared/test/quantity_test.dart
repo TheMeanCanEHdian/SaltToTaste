@@ -208,8 +208,11 @@ void main() {
     // (which by design does not parse) or parses to a number.
     test('parses every non-range corpus quantity value', () {
       final values = _distinctCorpusQuantities();
-      expect(values.length, greaterThan(50),
-          reason: 'corpus not found at $corpusDir');
+      expect(
+        values.length,
+        greaterThan(50),
+        reason: 'corpus not found at $corpusDir',
+      );
 
       final range = RegExp('[–-]');
       final failures = <String>[];

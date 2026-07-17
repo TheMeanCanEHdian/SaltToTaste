@@ -16,17 +16,17 @@ class FdcCandidate {
 
   /// Decodes the cache-JSON form produced by [toJson].
   factory FdcCandidate.fromJson(Map<String, dynamic> json) => FdcCandidate(
-        fdcId: (json['fdc_id']! as num).toInt(),
-        description: json['description']! as String,
-        dataType: json['data_type']! as String,
-        nutrientsPer100g: json['nutrients'] is Map<String, dynamic>
-            ? {
-                for (final entry
-                    in (json['nutrients']! as Map<String, dynamic>).entries)
-                  entry.key: (entry.value as num).toDouble(),
-              }
-            : null,
-      );
+    fdcId: (json['fdc_id']! as num).toInt(),
+    description: json['description']! as String,
+    dataType: json['data_type']! as String,
+    nutrientsPer100g: json['nutrients'] is Map<String, dynamic>
+        ? {
+            for (final entry
+                in (json['nutrients']! as Map<String, dynamic>).entries)
+              entry.key: (entry.value as num).toDouble(),
+          }
+        : null,
+  );
 
   /// FDC's stable food id.
   final int fdcId;
@@ -43,20 +43,20 @@ class FdcCandidate {
 
   /// A portion-less food built from the search payload.
   FdcFood toFood() => FdcFood(
-        fdcId: fdcId,
-        description: description,
-        dataType: dataType,
-        nutrientsPer100g: nutrientsPer100g ?? const {},
-        portions: const [],
-      );
+    fdcId: fdcId,
+    description: description,
+    dataType: dataType,
+    nutrientsPer100g: nutrientsPer100g ?? const {},
+    portions: const [],
+  );
 
   /// Cache-JSON form.
   Map<String, Object?> toJson() => {
-        'fdc_id': fdcId,
-        'description': description,
-        'data_type': dataType,
-        if (nutrientsPer100g != null) 'nutrients': nutrientsPer100g,
-      };
+    'fdc_id': fdcId,
+    'description': description,
+    'data_type': dataType,
+    if (nutrientsPer100g != null) 'nutrients': nutrientsPer100g,
+  };
 }
 
 /// A household-measure portion of a food (`1 cup` → 125 g).
@@ -71,11 +71,11 @@ class FdcPortion {
 
   /// Decodes the cache-JSON form produced by [toJson].
   factory FdcPortion.fromJson(Map<String, dynamic> json) => FdcPortion(
-        gramWeight: (json['gram_weight']! as num).toDouble(),
-        amount: (json['amount'] as num?)?.toDouble(),
-        unit: json['unit'] as String?,
-        description: json['description'] as String?,
-      );
+    gramWeight: (json['gram_weight']! as num).toDouble(),
+    amount: (json['amount'] as num?)?.toDouble(),
+    unit: json['unit'] as String?,
+    description: json['description'] as String?,
+  );
 
   /// Grams of the whole portion.
   final double gramWeight;
@@ -91,11 +91,11 @@ class FdcPortion {
 
   /// Cache-JSON form.
   Map<String, Object?> toJson() => {
-        'gram_weight': gramWeight,
-        'amount': amount,
-        'unit': unit,
-        'description': description,
-      };
+    'gram_weight': gramWeight,
+    'amount': amount,
+    'unit': unit,
+    'description': description,
+  };
 }
 
 /// Food detail: per-100 g nutrient amounts (keyed by FDC nutrient number)
@@ -112,19 +112,18 @@ class FdcFood {
 
   /// Decodes the cache-JSON form produced by [toJson].
   factory FdcFood.fromJson(Map<String, dynamic> json) => FdcFood(
-        fdcId: (json['fdc_id']! as num).toInt(),
-        description: json['description']! as String,
-        dataType: json['data_type']! as String,
-        nutrientsPer100g: {
-          for (final entry
-              in (json['nutrients']! as Map<String, dynamic>).entries)
-            entry.key: (entry.value as num).toDouble(),
-        },
-        portions: [
-          for (final portion in json['portions']! as List<dynamic>)
-            FdcPortion.fromJson(portion as Map<String, dynamic>),
-        ],
-      );
+    fdcId: (json['fdc_id']! as num).toInt(),
+    description: json['description']! as String,
+    dataType: json['data_type']! as String,
+    nutrientsPer100g: {
+      for (final entry in (json['nutrients']! as Map<String, dynamic>).entries)
+        entry.key: (entry.value as num).toDouble(),
+    },
+    portions: [
+      for (final portion in json['portions']! as List<dynamic>)
+        FdcPortion.fromJson(portion as Map<String, dynamic>),
+    ],
+  );
 
   /// FDC's stable food id.
   final int fdcId;
@@ -143,12 +142,12 @@ class FdcFood {
 
   /// Cache-JSON form.
   Map<String, Object?> toJson() => {
-        'fdc_id': fdcId,
-        'description': description,
-        'data_type': dataType,
-        'nutrients': nutrientsPer100g,
-        'portions': [for (final portion in portions) portion.toJson()],
-      };
+    'fdc_id': fdcId,
+    'description': description,
+    'data_type': dataType,
+    'nutrients': nutrientsPer100g,
+    'portions': [for (final portion in portions) portion.toJson()],
+  };
 }
 
 /// Thrown when FDC cannot be used at all (no key configured, invalid key).

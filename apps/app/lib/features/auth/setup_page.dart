@@ -46,10 +46,10 @@ class _SetupPageState extends State<SetupPage> {
     });
     try {
       await context.read<AuthCubit>().completeSetup(
-            setupCode: _code.text.trim(),
-            username: _username.text.trim(),
-            password: _password.text,
-          );
+        setupCode: _code.text.trim(),
+        username: _username.text.trim(),
+        password: _password.text,
+      );
     } on RepositoryException catch (exception) {
       setState(() => _error = exception.message);
     } finally {

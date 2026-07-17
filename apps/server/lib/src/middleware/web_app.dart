@@ -8,7 +8,8 @@ import 'package:dart_frog/dart_frog.dart';
 /// plus what the Flutter engine itself needs: `wasm-unsafe-eval` for
 /// CanvasKit, inline styles injected by the engine, and data:/blob: image
 /// and worker URLs (service worker caching, decoded images).
-const String _contentSecurityPolicy = "default-src 'self'; "
+const String _contentSecurityPolicy =
+    "default-src 'self'; "
     "script-src 'self' 'wasm-unsafe-eval'; "
     "style-src 'self' 'unsafe-inline'; "
     "img-src 'self' data: blob:; "
@@ -26,8 +27,7 @@ Middleware securityHeaders() {
   return (handler) {
     return (context) async {
       final response = await handler(context);
-      final contentType =
-          response.headers[HttpHeaders.contentTypeHeader] ?? '';
+      final contentType = response.headers[HttpHeaders.contentTypeHeader] ?? '';
       return response.copyWith(
         headers: {
           ...response.headers,
