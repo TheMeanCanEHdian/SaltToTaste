@@ -267,11 +267,9 @@ class _UsersTabState extends State<UsersTab> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: SaltColors.maroon,
-                      ),
-                      onPressed: _busy ? null : _create,
+                    FButton(
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: _busy ? null : _create,
                       child: const Text('Add user'),
                     ),
                   ],
@@ -331,16 +329,11 @@ class _SmallAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: danger ? const Color(0xFF8A1212) : SaltColors.ink,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          // Compact on desktop, a 48px touch target on narrow/touch widths.
-          minimumSize: denseActionMinSize(context),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: const TextStyle(fontSize: 12.5, fontFamily: 'OpenSans'),
-        ),
-        onPressed: onTap,
+      child: FButton(
+        variant: danger ? FButtonVariant.destructive : FButtonVariant.outline,
+        size: FButtonSizeVariant.sm,
+        mainAxisSize: MainAxisSize.min,
+        onPress: onTap,
         child: Text(label),
       ),
     );

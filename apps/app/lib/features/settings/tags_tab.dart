@@ -92,28 +92,6 @@ const List<_Preset> _presets = [
 const Color _errInk = SaltColors.errInk;
 const Color _panelBackground = Color(0xFFFDFBF9);
 
-InputDecoration _outlinedFieldDecoration({String? hint}) {
-  return InputDecoration(
-    hintText: hint,
-    isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(9),
-      borderSide: const BorderSide(color: SaltColors.hairline),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(9),
-      borderSide: const BorderSide(color: SaltColors.hairline),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(9),
-      borderSide: const BorderSide(color: SaltColors.maroon, width: 2),
-    ),
-  );
-}
-
 /// Tags tab (admin): style each tag's chip — Lucide icon + text/background
 /// colors — with a live preview. Styles apply everywhere the tag appears.
 class TagsTab extends StatefulWidget {
@@ -202,11 +180,12 @@ class _TagsTabState extends State<TagsTab> {
               constraints: const BoxConstraints(maxWidth: 260),
               child: Semantics(
                 label: 'Filter tags',
-                child: TextField(
-                  controller: _filter,
-                  onChanged: _cubit.setFilter,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: _outlinedFieldDecoration(hint: 'Filter tags…'),
+                child: FTextField(
+                  control: FTextFieldControl.managed(
+                    controller: _filter,
+                    onChange: (value) => _cubit.setFilter(value.text),
+                  ),
+                  hint: 'Filter tags…',
                 ),
               ),
             ),
@@ -269,33 +248,18 @@ class _TagRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         if (editing)
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: SaltColors.maroon,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: denseActionMinSize(context),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              textStyle: const TextStyle(
-                fontSize: 12.5,
-                fontFamily: 'OpenSans',
-              ),
-            ),
-            onPressed: cubit.closeEditor,
+          FButton(
+            size: FButtonSizeVariant.sm,
+            mainAxisSize: MainAxisSize.min,
+            onPress: cubit.closeEditor,
             child: const Text('Editing…'),
           )
         else
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: SaltColors.ink,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: denseActionMinSize(context),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              textStyle: const TextStyle(
-                fontSize: 12.5,
-                fontFamily: 'OpenSans',
-              ),
-            ),
-            onPressed: () => cubit.openEditor(tag),
+          FButton(
+            variant: FButtonVariant.outline,
+            size: FButtonSizeVariant.sm,
+            mainAxisSize: MainAxisSize.min,
+            onPress: () => cubit.openEditor(tag),
             child: const Text('Edit'),
           ),
       ],
@@ -436,13 +400,12 @@ class _StyleEditorState extends State<_StyleEditor> {
         const _FieldLabel('Icon'),
         Semantics(
           label: 'Search icons',
-          child: TextField(
-            controller: _iconSearch,
-            onChanged: (value) => setState(() => _query = value),
-            style: const TextStyle(fontSize: 13.5),
-            decoration: _outlinedFieldDecoration(
-              hint: 'Search Lucide icons — e.g. cake, fish, leaf…',
+          child: FTextField(
+            control: FTextFieldControl.managed(
+              controller: _iconSearch,
+              onChange: (value) => setState(() => _query = value.text),
             ),
+            hint: 'Search Lucide icons — e.g. cake, fish, leaf…',
           ),
         ),
         const SizedBox(height: 10),
@@ -584,29 +547,24 @@ class _StyleEditorState extends State<_StyleEditor> {
   }
 
   Widget _actions(TagsTabCubit cubit, TagsTabState state, double width) {
-    Widget save = FilledButton(
-      style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-      onPressed: state.saving || !state.canSave ? null : cubit.save,
+    Widget save = FButton(
+      mainAxisSize: MainAxisSize.min,
+      onPress: state.saving || !state.canSave ? null : cubit.save,
       child: Text(state.saving ? 'Saving…' : 'Save style'),
     );
     if (!state.canSave) {
       save = Tooltip(message: 'Colors must be #RRGGBB', child: save);
     }
-    final cancel = OutlinedButton(
-      style: OutlinedButton.styleFrom(foregroundColor: SaltColors.ink),
-      onPressed: state.saving ? null : cubit.closeEditor,
+    final cancel = FButton(
+      variant: FButtonVariant.outline,
+      mainAxisSize: MainAxisSize.min,
+      onPress: state.saving ? null : cubit.closeEditor,
       child: const Text('Cancel'),
     );
-    final clear = TextButton(
-      style: TextButton.styleFrom(
-        foregroundColor: SaltColors.muted,
-        textStyle: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'OpenSans',
-        ),
-      ),
-      onPressed: state.saving ? null : cubit.clearStyle,
+    final clear = FButton(
+      variant: FButtonVariant.ghost,
+      mainAxisSize: MainAxisSize.min,
+      onPress: state.saving ? null : cubit.clearStyle,
       child: const Text('Clear style — back to default'),
     );
     return Container(

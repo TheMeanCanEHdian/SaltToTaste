@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:salt_app/core/api/library_repository.dart';
@@ -130,7 +131,6 @@ class _LibraryTabState extends State<LibraryTab> {
   }
 
   Future<void> _download(BackupItem item) async {
-    final messenger = ScaffoldMessenger.of(context);
     final url = context.read<LibraryRepository>().downloadUrl(item.name);
     var ok = false;
     try {
@@ -138,31 +138,61 @@ class _LibraryTabState extends State<LibraryTab> {
     } on Exception {
       ok = false;
     }
-    if (!ok) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text("Couldn't open the download.")),
+    if (!ok && mounted) {
+      showFToast(
+        context: context,
+        title: const Text("Couldn't open the download."),
+        variant: FToastVariant.destructive,
       );
     }
   }
 
   Future<void> _delete(BackupItem item) async {
     final repository = context.read<LibraryRepository>();
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showFDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete backup?'),
-        content: Text('Delete backup ${item.name}? This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _errInk),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
+      builder: (context, _, animation) => FDialog(
+        animation: animation,
+        builder: (context, style) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Text('Delete backup?', style: style.titleTextStyle),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Delete backup ${item.name}? This cannot be undone.',
+                style: style.bodyTextStyle,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: FButton(
+                      variant: FButtonVariant.outline,
+                      onPress: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FButton(
+                      variant: FButtonVariant.destructive,
+                      onPress: () => Navigator.of(context).pop(true),
+                      child: const Text('Delete'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
     if (confirmed != true || !mounted) {
@@ -205,8 +235,11 @@ class _LibraryTabState extends State<LibraryTab> {
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            OutlinedButton.icon(
-              icon: _scanning
+            FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: _scanning ? null : _rescan,
+              prefix: _scanning
                   ? const SizedBox(
                       width: 16,
                       height: 16,
@@ -216,8 +249,7 @@ class _LibraryTabState extends State<LibraryTab> {
                       ),
                     )
                   : const Icon(Icons.refresh, size: 18),
-              label: const Text('Rescan library'),
-              onPressed: _scanning ? null : _rescan,
+              child: const Text('Rescan library'),
             ),
             if (_report != null && _report!.startedAt.isNotEmpty)
               Text(
@@ -256,8 +288,11 @@ class _LibraryTabState extends State<LibraryTab> {
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            OutlinedButton.icon(
-              icon: _creatingBackup
+            FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: _backupBusy ? null : _createBackup,
+              prefix: _creatingBackup
                   ? const SizedBox(
                       width: 16,
                       height: 16,
@@ -267,8 +302,7 @@ class _LibraryTabState extends State<LibraryTab> {
                       ),
                     )
                   : const Icon(Icons.archive_outlined, size: 18),
-              label: const Text('Back up now'),
-              onPressed: _backupBusy ? null : _createBackup,
+              child: const Text('Back up now'),
             ),
             Tooltip(
               message: 'Full copy — much larger',
@@ -289,17 +323,12 @@ class _LibraryTabState extends State<LibraryTab> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Checkbox(
+                        FCheckbox(
                           value: _includePhotos,
-                          activeColor: SaltColors.maroon,
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          onChanged: _backupBusy
+                          onChange: _backupBusy
                               ? null
-                              : (value) => setState(
-                                  () => _includePhotos = value ?? false,
-                                ),
+                              : (value) =>
+                                    setState(() => _includePhotos = value),
                         ),
                         const SizedBox(width: 6),
                         const Text(
@@ -649,16 +678,11 @@ class _SmallAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: danger ? _errInk : SaltColors.ink,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          // Compact on desktop, a 48px touch target on narrow/touch widths.
-          minimumSize: denseActionMinSize(context),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: const TextStyle(fontSize: 12.5, fontFamily: 'OpenSans'),
-        ),
-        onPressed: onTap,
+      child: FButton(
+        variant: danger ? FButtonVariant.destructive : FButtonVariant.outline,
+        size: FButtonSizeVariant.sm,
+        mainAxisSize: MainAxisSize.min,
+        onPress: onTap,
         child: Text(label),
       ),
     );

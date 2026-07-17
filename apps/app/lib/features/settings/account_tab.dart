@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -151,9 +152,9 @@ class _AccountTabState extends State<AccountTab> {
           alignment: Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.only(top: 14),
-            child: FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-              onPressed: _busy ? null : _changePassword,
+            child: FButton(
+              mainAxisSize: MainAxisSize.min,
+              onPress: _busy ? null : _changePassword,
               child: const Text('Change password'),
             ),
           ),
@@ -229,8 +230,10 @@ class _AccountTabState extends State<AccountTab> {
                       ],
                     ),
                   ),
-                  OutlinedButton(
-                    onPressed: () => _signOutSession(session),
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: () => _signOutSession(session),
                     child: const Text('Sign out'),
                   ),
                 ],

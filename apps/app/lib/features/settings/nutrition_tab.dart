@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
@@ -27,28 +28,6 @@ const TextStyle _sectionHeading = TextStyle(
 );
 
 const TextStyle _hintStyle = TextStyle(fontSize: 12, color: SaltColors.muted);
-
-InputDecoration _outlinedFieldDecoration({String? hint}) {
-  return InputDecoration(
-    hintText: hint,
-    isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(9),
-      borderSide: const BorderSide(color: SaltColors.hairline),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(9),
-      borderSide: const BorderSide(color: SaltColors.hairline),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(9),
-      borderSide: const BorderSide(color: SaltColors.maroon, width: 2),
-    ),
-  );
-}
 
 /// Nutrition tab (admin): the write-only FoodData Central API key, bulk
 /// compute with live job progress, and the serving-basis explainer.
@@ -327,22 +306,11 @@ class _NutritionTabState extends State<NutritionTab> {
                   ),
                 const Spacer(),
                 const SizedBox(width: 10),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: SaltColors.ink,
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    minimumSize: denseActionMinSize(context),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    textStyle: const TextStyle(
-                      fontSize: 12.5,
-                      fontFamily: 'OpenSans',
-                    ),
-                  ),
-                  onPressed: () => setState(() {
+                FButton(
+                  variant: FButtonVariant.outline,
+                  size: FButtonSizeVariant.sm,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: () => setState(() {
                     _replacingKey = true;
                     _keySaveError = null;
                   }),
@@ -375,24 +343,19 @@ class _NutritionTabState extends State<NutritionTab> {
           child: Row(
             children: [
               Expanded(
-                child: TextField(
-                  controller: _keyField,
+                child: FTextField(
+                  control: FTextFieldControl.managed(controller: _keyField),
                   enabled: !_savingKey,
                   autofocus: _replacingKey,
                   autocorrect: false,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: _outlinedFieldDecoration(
-                    hint: 'Paste your api.data.gov key',
-                  ),
-                  onSubmitted: (_) => _saveKey(),
+                  hint: 'Paste your api.data.gov key',
+                  onSubmit: (_) => _saveKey(),
                 ),
               ),
               const SizedBox(width: 9),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: SaltColors.maroon,
-                ),
-                onPressed: canSave ? _saveKey : null,
+              FButton(
+                mainAxisSize: MainAxisSize.min,
+                onPress: canSave ? _saveKey : null,
                 child: _savingKey
                     ? const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -413,11 +376,10 @@ class _NutritionTabState extends State<NutritionTab> {
               ),
               if (_configured) ...[
                 const SizedBox(width: 9),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: SaltColors.ink,
-                  ),
-                  onPressed: _savingKey ? null : _cancelReplace,
+                FButton(
+                  variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: _savingKey ? null : _cancelReplace,
                   child: const Text('Cancel'),
                 ),
               ],
@@ -468,8 +430,11 @@ class _NutritionTabState extends State<NutritionTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OutlinedButton.icon(
-            icon: _bulkRunning
+          FButton(
+            variant: FButtonVariant.outline,
+            mainAxisSize: MainAxisSize.min,
+            onPress: _bulkRunning ? null : _startBulk,
+            prefix: _bulkRunning
                 ? const SizedBox(
                     width: 16,
                     height: 16,
@@ -479,8 +444,7 @@ class _NutritionTabState extends State<NutritionTab> {
                     ),
                   )
                 : const Icon(Icons.bolt, size: 18),
-            label: const Text('Compute all missing'),
-            onPressed: _bulkRunning ? null : _startBulk,
+            child: const Text('Compute all missing'),
           ),
           const SizedBox(height: 8),
           const Text(

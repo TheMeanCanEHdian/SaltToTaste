@@ -158,11 +158,10 @@ class _TokensTabState extends State<TokensTab> {
                     ),
                   ),
                   if (!token.revoked)
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF8A1212),
-                      ),
-                      onPressed: () => _revoke(token),
+                    FButton(
+                      variant: FButtonVariant.destructive,
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: () => _revoke(token),
                       child: const Text('Revoke'),
                     ),
                 ],
@@ -212,11 +211,9 @@ class _TokensTabState extends State<TokensTab> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: SaltColors.maroon,
-                      ),
-                      onPressed: _busy ? null : _create,
+                    FButton(
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: _busy ? null : _create,
                       child: const Text('Create token'),
                     ),
                   ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 /// One-time secret reveal (temp passwords, new API tokens): green panel,
 /// monospace value, copy button. Per the approved design the value is never
@@ -71,8 +72,10 @@ class _SecretRevealState extends State<SecretReveal> {
                 ),
               ),
               const SizedBox(width: 10),
-              OutlinedButton(
-                onPressed: () async {
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () async {
                   await Clipboard.setData(ClipboardData(text: widget.value));
                   if (mounted) {
                     setState(() => _copied = true);

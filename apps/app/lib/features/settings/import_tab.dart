@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/import_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -224,10 +225,12 @@ class _ImportTabState extends State<ImportTab> {
               child: const Text('Source folders', style: _sectionHeading),
             ),
             const Spacer(),
-            TextButton.icon(
-              onPressed: _importRunning ? null : _loadCandidates,
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Refresh'),
+            FButton(
+              variant: FButtonVariant.ghost,
+              mainAxisSize: MainAxisSize.min,
+              onPress: _importRunning ? null : _loadCandidates,
+              prefix: const Icon(Icons.refresh, size: 16),
+              child: const Text('Refresh'),
             ),
           ],
         ),
@@ -478,20 +481,12 @@ class _SourceRow extends StatelessWidget {
     if (_terminal) {
       return null;
     }
-    return FilledButton.icon(
-      style: FilledButton.styleFrom(
-        backgroundColor: SaltColors.maroon,
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        textStyle: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'OpenSans',
-        ),
-      ),
-      onPressed: anyRunning ? null : onImport,
-      icon: const Icon(Icons.drive_folder_upload_outlined, size: 15),
-      label: const Text('Import'),
+    return FButton(
+      size: FButtonSizeVariant.sm,
+      mainAxisSize: MainAxisSize.min,
+      onPress: anyRunning ? null : onImport,
+      prefix: const Icon(Icons.drive_folder_upload_outlined, size: 15),
+      child: const Text('Import'),
     );
   }
 
@@ -786,10 +781,12 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 14),
-            OutlinedButton.icon(
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Refresh'),
+            FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: onRefresh,
+              prefix: const Icon(Icons.refresh, size: 16),
+              child: const Text('Refresh'),
             ),
           ],
         ),
