@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:salt_app/features/recipes/pdf/recipe_pdf.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -43,6 +46,93 @@ void main() {
       for (final glyph in ['½', '¼', '¾', '⅓', '⅔', '⅛', '⅜', '⅝', '⅞']) {
         expect(drawableText('1$glyph cups'), '1$glyph cups');
       }
+    });
+  });
+
+  // The step layout picks between two structures, and the choice is what keeps
+  // the number beside its text. MultiPage MOVES a non-spanning widget whole to
+  // the next page when it does not fit (multi_page.dart:379), but ALWAYS SPLITS
+  // a spanning one (:376-393) — so a short step laid out as spanning had its
+  // badge stranded on the old page and its text on the next. Reported from a
+  // real export: Basic Double-Crust Pie Dough, step 3.
+  //
+  // So a step takes the non-spanning Row whenever it PROVABLY fits a page, and
+  // the spanning layout only when it genuinely cannot. These pin both halves.
+  group('step layout: the number never leaves its text', skip: skipIfNoCorpus, () {
+    late PdfFont font;
+    // The text column: letter width - margins - the badge column.
+    final columnWidth = PdfPageFormat.letter.width - PdfPageFormat.inch - 24;
+    const fontSize = 10.4; // _stepStyle
+
+    setUpAll(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final doc = pw.Document();
+      font = pw.Font.ttf(
+        await rootBundle.load('assets/fonts/OpenSans-Regular.ttf'),
+      ).getFont(pw.Context(document: doc.document));
+    });
+
+    int? bound(String text) => stepLineBound(
+      font: font,
+      fontSize: fontSize,
+      text: text,
+      columnWidth: columnWidth,
+    );
+
+    test('EVERY real corpus step provably fits a page, so none can split', () {
+      // 43 lines is what a page holds (699.8pt / 15.96pt). If any real step
+      // failed this it would take the spanning branch and could strand its
+      // number — which is exactly the reported bug.
+      var checked = 0;
+      String? worstText;
+      var worst = 0;
+      for (final recipe in loadAllCorpusRecipes()) {
+        for (final step in recipe.steps) {
+          final lines = bound(step.text);
+          expect(
+            lines,
+            isNotNull,
+            reason: 'unprovable for a REAL step: ${step.text}',
+          );
+          expect(
+            lines,
+            lessThanOrEqualTo(43),
+            reason: 'a real step would span and could strand its badge: '
+                '${step.text}',
+          );
+          if (lines! > worst) {
+            worst = lines;
+            worstText = step.text;
+          }
+          checked++;
+        }
+      }
+      expect(checked, greaterThan(5000));
+      // Headroom is the point: if this ever creeps toward 43, real recipes are
+      // about to start spanning.
+      expect(
+        worst,
+        lessThan(35),
+        reason: 'worst real step bounds at $worst lines '
+            '(${worstText?.length} chars)',
+      );
+    });
+
+    test('shapes that cannot fit a page are sent to the spanning layout', () {
+      // Each of these reached the hang band when a char-count gate wrongly
+      // routed it to the Row.
+      expect(bound('a\n' * 44), greaterThan(43), reason: '44 hard breaks');
+      expect(
+        bound(List.generate(44, (i) => 'Step detail line $i, keep going').join('\n')),
+        greaterThan(43),
+        reason: 'a realistic 44-line checklist, only 1,397 chars',
+      );
+      expect(bound(('MMM ' * 700).trim()), greaterThan(43), reason: 'wide glyphs');
+      expect(bound(('stir the pot ' * 769).trim()), greaterThan(43),
+          reason: 'an API-legal 10,000-char step');
+      // A word wider than half the column makes the half-full argument false,
+      // so the bound must refuse to certify it rather than guess.
+      expect(bound('W' * 3000), isNull, reason: 'one unbreakable 3,000-char word');
     });
   });
 

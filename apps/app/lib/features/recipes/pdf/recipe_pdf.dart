@@ -79,11 +79,16 @@ abstract final class _Ink {
 class _Fonts {
   const _Fonts({
     required this.theme,
+    required this.regular,
     required this.semiBold,
     required this.extraBold,
   });
 
   final pw.ThemeData theme;
+
+  /// The body face, held separately from [theme] so step layout can MEASURE
+  /// text (see `_stepLineBound`) instead of guessing at it.
+  final pw.Font regular;
   final pw.Font semiBold;
   final pw.Font extraBold;
 }
@@ -125,10 +130,54 @@ Future<_Fonts> _loadFonts() async {
       boldItalic: italic,
       fontFallback: [fallback],
     ),
+    regular: regular,
     semiBold: semiBold,
     extraBold: extraBold,
   );
   return _cachedFonts = fonts;
+}
+
+/// An upper bound on the lines [text] needs in a [columnWidth] column, or null
+/// when no bound can be proven.
+///
+/// A BOUND, not a guess — which is the whole point. Within a run containing no
+/// hard break, greedy wrapping leaves every line at least HALF full, provided
+/// no single word is wider than half the column. So such a run needs at most
+/// `2 * totalWidth / columnWidth` lines. A word wider than half the column
+/// breaks that argument, so this returns null and the caller must take the
+/// always-safe spanning branch rather than assume.
+///
+/// It exists because the two cheaper answers were both wrong, and this file
+/// paid for each: a CHARACTER COUNT cannot bound a height — a 1,397-char
+/// checklist of 44 short newline-separated lines reached the page-retry band
+/// and hung a release tab — and `maxLines` bounds height only by throwing text
+/// away invisibly (pdf's TextOverflow has no ellipsis member).
+@visibleForTesting
+int? stepLineBound({
+  required PdfFont font,
+  required double fontSize,
+  required String text,
+  required double columnWidth,
+}) {
+  double widthOf(String s) => font.stringMetrics(s).width * fontSize;
+  final half = columnWidth / 2;
+  var total = 0.0;
+  var hardBreaks = 0;
+  for (final line in text.split('\n')) {
+    hardBreaks++;
+    for (final word in line.split(' ')) {
+      if (word.isEmpty) {
+        continue;
+      }
+      if (widthOf(word) > half) {
+        // One word can hold a line on its own; the half-full argument
+        // collapses and nothing here is provable.
+        return null;
+      }
+    }
+    total += widthOf(line);
+  }
+  return hardBreaks + (2 * total / columnWidth).ceil();
 }
 
 // ---------------------------------------------------------------------------
@@ -160,8 +209,8 @@ class _RecipeDocument {
       ..._cookbookNote(prepNotes),
     if (_clean(personalNote) case final note?) ..._personalNote(note),
     ..._ingredientBlock(recipe.ingredients, heading: 'Ingredients'),
-    ..._stepBlock(recipe.steps, heading: 'Directions'),
-    for (final subsection in recipe.subsections) ..._subsection(subsection),
+    ..._stepBlock(context, recipe.steps, heading: 'Directions'),
+    for (final subsection in recipe.subsections) ..._subsection(context, subsection),
     for (final technique in recipe.techniques) ..._technique(technique),
     ..._recipeNotes(),
     _sourceLine(),
@@ -529,6 +578,7 @@ class _RecipeDocument {
   // -- directions -----------------------------------------------------------
 
   List<pw.Widget> _stepBlock(
+    pw.Context context,
     List<RecipeStep>? steps, {
     String? heading,
     bool compact = false,
@@ -548,40 +598,41 @@ class _RecipeDocument {
         widgets.add(_minorLabel(label));
       }
       previousLabel = label;
-      widgets.add(_stepRow(step, compact: compact));
+      widgets.add(_stepRow(context, step, compact: compact));
     }
     return widgets;
   }
 
+  /// The most lines a step may print and still keep the hanging indent.
+  ///
+  /// A page holds 43 lines of [_stepStyle] (699.8pt usable / 15.96pt per
+  /// line), so this is the ceiling, not a preference. The corpus's tallest
+  /// real step is 1,472 chars — 15 lines — so real recipes clear it by ~3x.
+  static const _maxIndentedStepLines = 43;
+
   /// A step: the number in its own column, the text hanging-indented beside it
-  /// (user-approved 2026-07-16), across as many pages as the text needs.
+  /// (user-approved 2026-07-16).
   ///
-  /// `Partitions` is the only structure that gives both. A Row would give the
-  /// indent but cannot span a page break (flex.dart:
-  /// `canSpan => direction == Axis.vertical`), so its height must clear the
-  /// (699.8pt, 720pt] band that hangs a release build — and NOTHING SAFE
-  /// BOUNDS THAT. Two attempts proved it:
-  ///   * `maxLines: 40` bounds height honestly, but truncates invisibly (pdf's
-  ///     TextOverflow has no ellipsis), silently eating ~44% of an API-legal
-  ///     10,000-char step.
-  ///   * gating the Row on `text.length > 3000` was worse: a CHAR COUNT CANNOT
-  ///     BOUND A HEIGHT. Measured, both inside that gate and so routed to the
-  ///     Row: `'MMM ' * 700` (2,799 chars) and a 1,397-char checklist of 44
-  ///     short newline-separated lines both landed IN the band — i.e. the
-  ///     "fix" reintroduced the exact hang it existed to prevent, reachable by
-  ///     typing an ordinary multi-line step into the editor.
+  /// TWO layouts, and the choice is forced by MultiPage rather than by taste:
   ///
-  /// `Partitions.canSpan => children.any((p) => p.canSpan)` and
-  /// `Partition.canSpan => child.canSpan` (partitions.dart:44,116), so two
-  /// spanning RichTexts make the whole two-column row spannable: the text flows
-  /// across pages and keeps its column. Both partitions must span — a
+  ///   * A **Row** cannot span (flex.dart: `canSpan => direction ==
+  ///     Axis.vertical`). MultiPage therefore MOVES IT WHOLE to the next page
+  ///     when it does not fit the remaining space (multi_page.dart:379), which
+  ///     is exactly what a numbered step wants — badge and text together.
+  ///   * **Partitions** CAN span (`canSpan => children.any(...)`,
+  ///     partitions.dart:116), so a step longer than a page still prints in
+  ///     full. But a spanning widget is ALWAYS split, never moved whole
+  ///     (multi_page.dart:376-393 falls straight through to the span branch) —
+  ///     so a short step at a page boundary had its badge placed on the old
+  ///     page and its text on the next, ORPHANING the number. Reported from a
+  ///     real export (Basic Double-Crust Pie Dough, step 3).
+  ///
+  /// So: take the Row whenever the step provably fits a page, and pay for the
+  /// span only when it genuinely cannot. Both partitions must span — a
   /// non-spanning one is skipped by `saveContext` but not by `restoreContext`,
   /// which then null-checks a context that was never saved
   /// (partitions.dart:233).
-  ///
-  /// With the layout spanning there is no height to bound, so there is no cap
-  /// here at all, and nothing to truncate.
-  pw.Widget _stepRow(RecipeStep step, {required bool compact}) {
+  pw.Widget _stepRow(pw.Context context, RecipeStep step, {required bool compact}) {
     final diameter = compact ? 14.0 : 16.0;
     final text = _drawable(step.text);
     final badge = pw.Container(
@@ -594,6 +645,45 @@ class _RecipeDocument {
       ),
       child: pw.Text('${step.number}', style: _stepNumberStyle(compact: compact)),
     );
+    final style = compact ? _compactStepStyle : _stepStyle;
+
+    // MultiPage hands its children the page width less the margins
+    // (multi_page.dart:260-264); the text column is what is left beside the
+    // badge.
+    final pageWidth = PdfPageFormat.letter.width - PdfPageFormat.inch;
+    final columnWidth = pageWidth - (diameter + 8);
+    final bound = stepLineBound(
+      font: fonts.regular.getFont(context),
+      fontSize: style.fontSize!,
+      text: text,
+      columnWidth: columnWidth,
+    );
+    final fits = bound != null && bound <= _maxIndentedStepLines;
+
+    if (fits) {
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 7),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // Nudged down to sit on the first line's baseline rather than its
+            // ascender — a Row aligns boxes, and the circle is taller than the
+            // glyphs beside it.
+            pw.Container(
+              margin: const pw.EdgeInsets.only(right: 8, top: 1.5),
+              child: badge,
+            ),
+            // Expanded, not Flexible: MultiPage gives loose width constraints
+            // (no minWidth), so anything that does not deliberately fill
+            // shrink-wraps — which once collapsed the ingredient hairlines
+            // from 540pt to 107pt.
+            pw.Expanded(child: pw.Text(text, style: style)),
+          ],
+        ),
+      );
+    }
+
+    // Too tall for one page (or unprovable): span, and keep every word.
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 7),
       child: pw.Partitions(
@@ -617,10 +707,7 @@ class _RecipeDocument {
           pw.Partition(
             child: pw.RichText(
               overflow: pw.TextOverflow.span,
-              text: pw.TextSpan(
-                text: text,
-                style: compact ? _compactStepStyle : _stepStyle,
-              ),
+              text: pw.TextSpan(text: text, style: style),
             ),
           ),
         ],
@@ -630,13 +717,13 @@ class _RecipeDocument {
 
   // -- subsections ----------------------------------------------------------
 
-  List<pw.Widget> _subsection(Subsection subsection) {
+  List<pw.Widget> _subsection(pw.Context context, Subsection subsection) {
     final title = _clean(subsection.title);
     final servings = _clean(subsection.servings);
     final body = _clean(subsection.body);
     final prepNotes = _clean(subsection.prepNotes);
     final ingredients = _ingredientBlock(subsection.ingredients);
-    final steps = _stepBlock(subsection.steps, compact: true);
+    final steps = _stepBlock(context, subsection.steps, compact: true);
     if (title == null &&
         body == null &&
         prepNotes == null &&

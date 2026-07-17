@@ -930,13 +930,23 @@ fallback.
      reachable by typing an ordinary multi-line step into the editor's own
      multiline field. Found by the review's completeness critics; no finder lens
      covered it.
-  3. **`Partitions`.** `Partitions.canSpan => children.any((p) => p.canSpan)`
-     and `Partition.canSpan => child.canSpan` (partitions.dart:44,116), so two
-     spanning RichTexts give a two-column row that spans. Both partitions must
-     span: a non-spanning one is skipped by `saveContext` but not by
-     `restoreContext`, which then null-checks a context that was never saved
-     (partitions.dart:233). With the layout spanning there is no height to
-     bound, so there is no cap and nothing to truncate.
+  3. **`Partitions` for everything.** It spans (`canSpan => children.any(...)`,
+     partitions.dart:116), so nothing truncates — but a spanning widget is
+     ALWAYS SPLIT and never moved whole (multi_page.dart:376-393), so a SHORT
+     step at a page boundary had its badge placed on the old page and its text
+     on the next. The number was orphaned. Caught by the user on a real export
+     (Basic Double-Crust Pie Dough, step 3) — no test saw it.
+  4. **Both, chosen per step.** MultiPage MOVES a non-spanning widget whole to
+     the next page when it does not fit (multi_page.dart:379), which is exactly
+     what a numbered step wants. So a step takes the non-spanning Row when it
+     PROVABLY fits a page, and Partitions only when it cannot. The gate is
+     `stepLineBound` — a real bound, not a guess: within a hard-break-free run,
+     greedy wrapping leaves every line at least half full unless a word is wider
+     than half the column, so the run needs at most `2 * totalWidth /
+     columnWidth` lines; a too-wide word returns null and takes the safe branch.
+     Measured over all 5,881 corpus steps: the worst bounds at under 35 lines
+     against a 43-line page, so no real step ever spans, and the adversarial
+     shapes (44 hard breaks, wide glyphs, 10,000 chars) all route to spanning.
   The generalisable rule, learned twice in one day: **bound a height with a
   height (or with a line count), never with a character count** — and the same
   error is why the header's `_maxTitleLines`/`_maxCategoryLines`/`_maxChipChars`
