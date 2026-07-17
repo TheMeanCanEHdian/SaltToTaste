@@ -44,8 +44,12 @@ final class RecipeReviewLoaded extends RecipeReviewState {
       : categories
             .firstWhere(
               (c) => c.id == issue,
-              orElse: () =>
-                  const RecipeReviewCategory(id: '', label: '', count: 0),
+              orElse: () => const RecipeReviewCategory(
+                id: '',
+                label: '',
+                description: '',
+                count: 0,
+              ),
             )
             .count;
 

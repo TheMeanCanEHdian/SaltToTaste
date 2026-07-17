@@ -58,13 +58,26 @@ class _Loaded extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Recipe review',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: SaltColors.ink,
-                  ),
+                Row(
+                  children: [
+                    const Text(
+                      'Recipe review',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: SaltColors.ink,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      icon: const Icon(Icons.help_outline, size: 20),
+                      color: SaltColors.muted,
+                      tooltip: 'What each category means',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () =>
+                          _showReviewHelp(context, state.categories),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -236,6 +249,100 @@ class _IssueBadge extends StatelessWidget {
       child: Text(
         issue.label,
         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: ink),
+      ),
+    );
+  }
+}
+
+/// Opens a modal explaining every category, driven by the server-provided
+/// descriptions — so a check added on the server documents itself here.
+void _showReviewHelp(
+  BuildContext context,
+  List<RecipeReviewCategory> categories,
+) {
+  showFDialog<void>(
+    context: context,
+    builder: (context, _, animation) => FDialog(
+      animation: animation,
+      builder: (context, style) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            child: Text(
+              'What each category means',
+              style: style.titleTextStyle,
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final category in categories) _HelpRow(category),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => Navigator.of(context).pop(),
+                child: const Text('Got it'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _HelpRow extends StatelessWidget {
+  const _HelpRow(this.category);
+
+  final RecipeReviewCategory category;
+
+  @override
+  Widget build(BuildContext context) {
+    final (bg, ink) = _issueColors(category.id);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              category.label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: ink,
+              ),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            category.description,
+            style: const TextStyle(
+              fontSize: 13.5,
+              color: SaltColors.bodyText,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }

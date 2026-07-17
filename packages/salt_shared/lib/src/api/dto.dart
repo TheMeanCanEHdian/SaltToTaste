@@ -97,18 +97,23 @@ class RecipeReviewReport with RecipeReviewReportMappable {
   final int limit;
 }
 
-/// One issue category and how many recipes currently have it.
+/// One issue category, its definition, and how many recipes currently have it.
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class RecipeReviewCategory with RecipeReviewCategoryMappable {
   const RecipeReviewCategory({
     required this.id,
     required this.label,
+    required this.description,
     required this.count,
   });
 
   /// Stable machine id (e.g. `no_instructions`); also the `issue` filter value.
   final String id;
   final String label;
+
+  /// One-sentence definition of what puts a recipe in this category — the
+  /// source of the help modal, so a new check documents itself.
+  final String description;
   final int count;
 }
 

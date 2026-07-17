@@ -635,6 +635,11 @@ class RecipeReviewCategoryMapper extends ClassMapperBase<RecipeReviewCategory> {
     'label',
     _$label,
   );
+  static String _$description(RecipeReviewCategory v) => v.description;
+  static const Field<RecipeReviewCategory, String> _f$description = Field(
+    'description',
+    _$description,
+  );
   static int _$count(RecipeReviewCategory v) => v.count;
   static const Field<RecipeReviewCategory, int> _f$count = Field(
     'count',
@@ -645,6 +650,7 @@ class RecipeReviewCategoryMapper extends ClassMapperBase<RecipeReviewCategory> {
   final MappableFields<RecipeReviewCategory> fields = const {
     #id: _f$id,
     #label: _f$label,
+    #description: _f$description,
     #count: _f$count,
   };
 
@@ -652,6 +658,7 @@ class RecipeReviewCategoryMapper extends ClassMapperBase<RecipeReviewCategory> {
     return RecipeReviewCategory(
       id: data.dec(_f$id),
       label: data.dec(_f$label),
+      description: data.dec(_f$description),
       count: data.dec(_f$count),
     );
   }
@@ -726,7 +733,7 @@ abstract class RecipeReviewCategoryCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? id, String? label, int? count});
+  $R call({String? id, String? label, String? description, int? count});
   RecipeReviewCategoryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -741,17 +748,20 @@ class _RecipeReviewCategoryCopyWithImpl<$R, $Out>
   late final ClassMapperBase<RecipeReviewCategory> $mapper =
       RecipeReviewCategoryMapper.ensureInitialized();
   @override
-  $R call({String? id, String? label, int? count}) => $apply(
-    FieldCopyWithData({
-      if (id != null) #id: id,
-      if (label != null) #label: label,
-      if (count != null) #count: count,
-    }),
-  );
+  $R call({String? id, String? label, String? description, int? count}) =>
+      $apply(
+        FieldCopyWithData({
+          if (id != null) #id: id,
+          if (label != null) #label: label,
+          if (description != null) #description: description,
+          if (count != null) #count: count,
+        }),
+      );
   @override
   RecipeReviewCategory $make(CopyWithData data) => RecipeReviewCategory(
     id: data.get(#id, or: $value.id),
     label: data.get(#label, or: $value.label),
+    description: data.get(#description, or: $value.description),
     count: data.get(#count, or: $value.count),
   );
 

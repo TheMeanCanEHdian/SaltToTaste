@@ -41,10 +41,12 @@ class NutritionSummary {
 /// one entry here — the DB query, the endpoint, and the DTO are all generic
 /// over it, so nothing else changes.
 class RecipeCheck {
-  /// Defines a check by its [id], display [label], and [evaluate] predicate.
+  /// Defines a check by its [id], display [label], [description], and
+  /// [evaluate] predicate.
   const RecipeCheck({
     required this.id,
     required this.label,
+    required this.description,
     required this.evaluate,
   });
 
@@ -53,6 +55,10 @@ class RecipeCheck {
 
   /// Human-readable category name (e.g. `No instructions`).
   final String label;
+
+  /// One-sentence definition of what puts a recipe in this category, surfaced
+  /// in the app's help modal (so a new check documents itself).
+  final String description;
 
   /// Returns a human-readable detail when the recipe HAS this issue, else null.
   final String? Function(RecipeHealth health) evaluate;
@@ -77,31 +83,47 @@ const List<RecipeCheck> recipeChecks = [
   RecipeCheck(
     id: 'no_instructions',
     label: 'No instructions',
+    description: 'The recipe has no method steps at all.',
     evaluate: _noInstructions,
   ),
   RecipeCheck(
     id: 'unparsed_ingredients',
     label: 'Unparsed ingredients',
+    description:
+        'An ingredient line starts with a quantity and a unit '
+        '(e.g. “2 tablespoons juice”) but no amount could be parsed from it. '
+        'Lines with an incidental number — a dimension like “1-inch dice” or '
+        'equipment like “2 pie plates” — are not flagged.',
     evaluate: _unparsedIngredients,
   ),
   RecipeCheck(
     id: 'incomplete_nutrition',
     label: 'Incomplete nutrition',
+    description:
+        'Nutrition was computed but some ingredient lines did not match a '
+        'food, so the totals are partial (e.g. 12 of 13 matched).',
     evaluate: _incompleteNutrition,
   ),
   RecipeCheck(
     id: 'no_nutrition',
     label: 'No nutrition data',
+    description: 'Nutrition has never been computed for this recipe.',
     evaluate: _noNutrition,
   ),
   RecipeCheck(
     id: 'extraction_warnings',
     label: 'Extraction warnings',
+    description:
+        'The extractor recorded a warning on this recipe (e.g. duplicate step '
+        'numbering) that is worth a human glance.',
     evaluate: _extractionWarnings,
   ),
   RecipeCheck(
     id: 'no_servings',
     label: 'No servings',
+    description:
+        'The recipe has no numeric serving count, so per-serving nutrition '
+        'cannot be computed.',
     evaluate: _noServings,
   ),
 ];
@@ -211,6 +233,7 @@ RecipeReviewReport buildRecipeReviewReport(
       RecipeReviewCategory(
         id: check.id,
         label: check.label,
+        description: check.description,
         count: counts[check.id]!,
       ),
   ];
