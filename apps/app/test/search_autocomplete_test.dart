@@ -218,6 +218,40 @@ void main() {
     );
   });
 
+  testWidgets('a mid-query row lands the caret after the INSERT', (
+    tester,
+  ) async {
+    // The caret contract only bites where option.cursor and query.length
+    // DIFFER, and every other test here takes a row at the end of the field
+    // where they coincide — so `_take` could ignore option.cursor entirely and
+    // stay green. Splicing mid-query is what separates them.
+    await tester.pumpWidget(host());
+    await tester.tap(find.byType(TextField).first);
+    await tester.pumpAndSettle();
+
+    // Text change WITH the caret mid-string: what typing after a click does.
+    final controller = tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!;
+    controller.value = const TextEditingValue(
+      text: 'ta pie',
+      selection: TextSelection.collapsed(offset: 2),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('tag:'));
+    await tester.pumpAndSettle();
+
+    expect(controller.text, 'tag: pie');
+    expect(
+      controller.selection.baseOffset,
+      4,
+      reason:
+          'the caret belongs after `tag:`, ready for the value — not at '
+          'the end of the query, past a word the user was not editing',
+    );
+  });
+
   testWidgets('resubmitting the query on screen refreshes in place', (
     tester,
   ) async {
