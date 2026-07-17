@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/search_help.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/search/search_suggestions.dart';
 
@@ -397,14 +398,36 @@ class _SearchFieldState extends State<_SearchField> {
                       size: 19,
                       color: SaltColors.muted,
                     ),
-                    suffixIcon: IconButton(
-                      tooltip: 'Search',
-                      icon: const Icon(
-                        Icons.arrow_forward,
-                        size: 18,
-                        color: SaltColors.rose,
-                      ),
-                      onPressed: () => _submit(controller.text),
+                    // A help affordance next to the search action, both living
+                    // inside the field (replaces the old floating "?" button).
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Search syntax',
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(
+                            Icons.help_outline,
+                            size: 18,
+                            color: SaltColors.muted,
+                          ),
+                          onPressed: () => showSearchHelp(context),
+                        ),
+                        IconButton(
+                          tooltip: 'Search',
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(
+                            Icons.arrow_forward,
+                            size: 18,
+                            color: SaltColors.rose,
+                          ),
+                          onPressed: () => _submit(controller.text),
+                        ),
+                      ],
+                    ),
+                    suffixIconConstraints: const BoxConstraints(
+                      minWidth: 0,
+                      minHeight: 0,
                     ),
                   ),
                 ),
@@ -752,8 +775,24 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-            child: Text('Search recipes', style: style.titleTextStyle),
+            padding: const EdgeInsets.fromLTRB(24, 16, 12, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text('Search recipes', style: style.titleTextStyle),
+                ),
+                IconButton(
+                  tooltip: 'Search syntax',
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(
+                    Icons.help_outline,
+                    size: 19,
+                    color: SaltColors.muted,
+                  ),
+                  onPressed: () => showSearchHelp(context),
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
