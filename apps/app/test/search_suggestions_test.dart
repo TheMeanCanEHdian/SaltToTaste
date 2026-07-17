@@ -71,8 +71,39 @@ void main() {
       // rows are keywords matching `ta` rather than tag values.
       final rows = suggestionsFor(text: 'tag:dessert', cursor: 2, tags: _tags);
       expect(rows.map((r) => r.label), ['tag:']);
-      // Taking it replaces the WHOLE lexeme; the half-typed value goes with it.
-      expect(rows.single.query, 'tag:');
+    });
+
+    test('fixing a misspelled scope KEEPS the value it is bound to', () {
+      // `titl|:dessert` -> `title:dessert`. Replacing the whole lexeme instead
+      // deletes `dessert`, and the scope then binds to whatever word comes
+      // next — a well-formed query with a different meaning and no error.
+      final rows = suggestionsFor(text: 'titl:dessert', cursor: 4, tags: _tags);
+      expect(rows.single.query, 'title:dessert');
+      expect(
+        parseSearchQuery(rows.single.query).root,
+        const TermNode(scope: SearchScope.title, text: 'dessert'),
+      );
+    });
+
+    test('fixing a scope does not swallow the FOLLOWING term', () {
+      // The one that makes it dangerous: `soup` silently became title-scoped
+      // and `dessert` vanished, with an empty error list.
+      final rows = suggestionsFor(
+        text: 'chicken titl:dessert soup',
+        cursor: 12,
+        tags: _tags,
+      );
+      expect(rows.single.query, 'chicken title:dessert soup');
+      final parsed = parseSearchQuery(rows.single.query);
+      expect(parsed.errors, isEmpty);
+      expect(
+        parsed.root,
+        const AndNode([
+          TermNode(text: 'chicken'),
+          TermNode(scope: SearchScope.title, text: 'dessert'),
+          TermNode(text: 'soup'),
+        ]),
+      );
     });
   });
 
@@ -87,10 +118,28 @@ void main() {
       ]);
     });
 
-    test('an exact match sorts above a longer tag containing it', () {
-      // `des` must not bury `dessert` under `desserts-frozen`.
-      final rows = suggestionsFor(text: 'tag:dessert', cursor: 11, tags: _tags);
+    test('an exact match sorts above tags that merely contain it', () {
+      // The tie-break must do the WORK, not ride on the alphabet: `dessert`
+      // sorts before `desserts-frozen` anyway, so a test using only those two
+      // passes with the ranking deleted entirely. `baked-dessert` sorts FIRST
+      // alphabetically, so only real ranking puts the exact hit on top.
+      final rows = suggestionsFor(
+        text: 'tag:dessert',
+        cursor: 11,
+        tags: [_tag('baked-dessert', 30), ..._tags],
+      );
       expect(rows.first.label, 'dessert');
+    });
+
+    test('a prefix match sorts above a mere substring match', () {
+      // Same trap one rank down: `almond-des` contains `des` but does not
+      // start with it, and sorts first alphabetically.
+      final rows = suggestionsFor(
+        text: 'tag:des',
+        cursor: 7,
+        tags: [_tag('almond-des', 4), _tag('desserts-frozen', 12)],
+      );
+      expect(rows.map((r) => r.label), ['desserts-frozen', 'almond-des']);
     });
 
     test('the row says how many recipes carry the tag', () {

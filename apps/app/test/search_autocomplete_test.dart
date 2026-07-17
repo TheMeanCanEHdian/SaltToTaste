@@ -19,12 +19,17 @@ import 'package:salt_app/features/auth/auth_cubit.dart';
 /// `des` beside `dessert`), reached from the opposite direction. Here the raw
 /// text IS the right answer unless the user chose a row.
 void main() {
+  /// Long enough that a test can observe the popover before the fetch lands.
+  const slowFetch = Duration(milliseconds: 300);
   late List<String> navigations;
 
-  Widget host({List<String> tags = const ['dessert', 'main']}) {
+  Widget host({
+    List<String> tags = const ['dessert', 'main'],
+    Duration delay = Duration.zero,
+  }) {
     navigations = [];
     final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
-      ..httpClientAdapter = _TagsAdapter(tags);
+      ..httpClientAdapter = _TagsAdapter(tags, delay: delay);
     final router = GoRouter(
       routes: [
         GoRoute(
@@ -96,6 +101,82 @@ void main() {
     expect(field.controller!.selection.baseOffset, 6);
   });
 
+  testWidgets('Escape after arrowing does not kill Enter', (tester) async {
+    // THE BUG: Escape hides the popover but could not tell `_arrowed`, so
+    // Enter routed to a handler guarded by `if (optionsView.isShowing)` and
+    // silently no-opped. The key stayed dead until another character was
+    // typed — no navigation, no feedback, nothing.
+    await tester.pumpWidget(host());
+    await type(tester, 'tag:d');
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(navigations, ['q=tag%3Ad'], reason: 'Enter must still search');
+  });
+
+  testWidgets('an arrow with no rows showing does not kill Enter', (
+    tester,
+  ) async {
+    // THE BUG: `chicken` offers nothing, so no popover ever opened — but the
+    // arrow still armed `_arrowed`, and Enter then tried to take a row from an
+    // empty list forever.
+    await tester.pumpWidget(host());
+    await type(tester, 'chicken');
+    expect(find.text('title:'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(navigations, ['q=chicken']);
+  });
+
+  testWidgets('taking tag: opens the tag list without another keystroke', (
+    tester,
+  ) async {
+    // The feature's flagship two-step. RawAutocomplete's own selection
+    // suppresses the refresh and hides the popover, so taking `tag:` used to
+    // close the list — the user had to type a character to see their tags.
+    await tester.pumpWidget(host(tags: ['dessert', 'main']));
+    await type(tester, 'tag');
+    await tester.tap(find.text('tag:'));
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(field.controller!.text, 'tag:');
+    expect(find.text('dessert'), findsOneWidget);
+    expect(find.text('main'), findsOneWidget);
+  });
+
+  testWidgets('a pre-filled query offers rows once the tags arrive', (
+    tester,
+  ) async {
+    // THE BUG: the vocabulary lands in a setState, and RawAutocomplete only
+    // recomputes rows on a TEXT change — so the results page, whose field is
+    // pre-filled, offered nothing at all until the user typed. optionsBuilder
+    // returns a Future while the fetch is in flight instead.
+    await tester.pumpWidget(host(tags: ['dessert'], delay: slowFetch));
+    await tester.tap(find.byType(TextField).first);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField).first, 'tag:des');
+    await tester.pump(); // the fetch is still in flight
+    await tester.pumpAndSettle(slowFetch);
+
+    expect(
+      find.text('dessert'),
+      findsOneWidget,
+      reason:
+          'the row must appear when the vocabulary lands, not on the next '
+          'keystroke',
+    );
+  });
+
   testWidgets('typing after arrowing un-chooses the row', (tester) async {
     await tester.pumpWidget(host());
     await type(tester, 't');
@@ -151,9 +232,12 @@ void main() {
 
 /// Serves a fixed tag list to TagsRepository.listTags().
 class _TagsAdapter implements HttpClientAdapter {
-  _TagsAdapter(this.tags);
+  _TagsAdapter(this.tags, {this.delay = Duration.zero});
 
   final List<String> tags;
+
+  /// Simulates a cold server: rows must arrive when the fetch does.
+  final Duration delay;
 
   @override
   Future<ResponseBody> fetch(
@@ -161,6 +245,9 @@ class _TagsAdapter implements HttpClientAdapter {
     Stream<Uint8List>? _,
     Future<void>? __,
   ) async {
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
     if (options.path.contains('/tags')) {
       return ResponseBody.fromString(
         '{"items":[${tags.map((t) => '{"name":"$t","count":7,"style":{}}').join(',')}]}',

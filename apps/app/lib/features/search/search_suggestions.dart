@@ -126,7 +126,13 @@ List<SearchSuggestion> suggestionsFor({
       typed: text.substring(span.start, caret),
       text: text,
       start: span.start,
-      end: span.end,
+      // Replace only up to and including an existing colon, so fixing `titl:`
+      // to `title:` keeps the value already attached to it. Replacing the
+      // whole lexeme would delete that value AND leave the scope dangling, so
+      // it silently rebinds to the NEXT word: `chicken titl:dessert soup`
+      // became `chicken title: soup` — a well-formed query, no error, and a
+      // different search than the one asked for.
+      end: colon > 0 ? span.start + colon + 1 : span.end,
       limit: limit,
     );
   }

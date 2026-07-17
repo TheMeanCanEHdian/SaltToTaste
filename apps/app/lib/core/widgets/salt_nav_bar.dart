@@ -132,16 +132,43 @@ class _SearchFieldState extends State<_SearchField> {
   /// whenever a recipe is edited, and one fetch per search interaction is
   /// cheaper than a stale vocabulary.
   List<TagInfo> _tags = const [];
-  bool _requestedTags = false;
+
+  /// Non-null while the vocabulary is in flight.
+  ///
+  /// `optionsBuilder` RETURNS this future rather than reading a list that has
+  /// not arrived, because RawAutocomplete only recomputes rows when the TEXT
+  /// changes: landing the tags in a `setState` could never refresh an open
+  /// popover, so a pre-filled `tag:dessert` on the results page would offer
+  /// nothing at all, permanently. Handing the waiting to the widget is the
+  /// same fix the editor's tag field needed for the same reason.
+  Future<void>? _loadingTags;
+
+  /// The rows currently on offer, captured as they are computed.
+  ///
+  /// Enter needs them and the field cannot ask for them:
+  /// `AutocompleteHighlightedOption` is installed inside the options view, not
+  /// above `fieldViewBuilder`.
+  List<SearchSuggestion> _rows = const [];
+
+  /// Which row RawAutocomplete has highlighted, mirrored out of the options
+  /// view for the same reason.
+  int _highlighted = 0;
 
   /// Whether the user has explicitly moved onto a row.
   ///
   /// This is the difference between a search bar and the editor's tag field.
   /// RawAutocomplete pre-highlights option 0 and its `onFieldSubmitted` takes
   /// whatever is highlighted — so wiring it up naively would make typing `t`
-  /// and pressing Enter search for `tag:` instead of `t`. Enter must mean "search
-  /// what I typed" unless the user has actually chosen a row, which is the same
-  /// explicit-act rule the tag input arrived at from the opposite direction.
+  /// and pressing Enter search for `tag:` instead of `t`. Enter must mean
+  /// "search what I typed" unless the user has actually chosen a row, which is
+  /// the same explicit-act rule the tag input arrived at from the opposite
+  /// direction.
+  ///
+  /// It is a flag rather than a derived value, which makes every way it can
+  /// desynchronise from the popover a bug — both of the ways found so far made
+  /// Enter a DEAD KEY, silently. So it may only ever be armed while rows are
+  /// actually on offer, and everything that takes the popover away disarms it:
+  /// Escape, a text change, losing focus.
   bool _arrowed = false;
 
   @override
@@ -161,26 +188,39 @@ class _SearchFieldState extends State<_SearchField> {
     super.dispose();
   }
 
-  void _onTextChange() {
-    // Typing un-chooses whatever was chosen: the rows underneath have changed.
+  void _disarm() {
     if (_arrowed) {
       setState(() => _arrowed = false);
     }
   }
 
+  void _onTextChange() {
+    // Typing un-chooses whatever was chosen: the rows underneath have changed.
+    _disarm();
+  }
+
   void _onFocusChange() {
     if (_focus.hasFocus) {
       unawaited(_loadTags());
-    } else if (_arrowed) {
-      setState(() => _arrowed = false);
+    } else {
+      _disarm();
     }
   }
 
   Future<void> _loadTags() async {
-    if (_requestedTags) {
+    if (_loadingTags != null || _tags.isNotEmpty) {
       return;
     }
-    _requestedTags = true;
+    final pending = _fetchTags();
+    // A block body, not an arrow: `() => _loadingTags = pending` RETURNS the
+    // future, and setState rejects a callback that returns one.
+    setState(() {
+      _loadingTags = pending;
+    });
+    await pending;
+  }
+
+  Future<void> _fetchTags() async {
     try {
       final tags = await context.read<TagsRepository>().listTags();
       if (mounted) {
@@ -188,15 +228,58 @@ class _SearchFieldState extends State<_SearchField> {
       }
     } on Object {
       // Suggestions are a convenience; a failed fetch must never break
-      // searching. The keyword rows do not depend on the vocabulary and keep
-      // working.
-      _requestedTags = false;
+      // searching. The keyword rows do not need the vocabulary and keep
+      // working, and a later focus may retry.
+    } finally {
+      if (mounted) {
+        setState(() => _loadingTags = null);
+      }
     }
   }
 
-  /// Arrow keys, seen before RawAutocomplete's own shortcuts get them.
+  /// The rows for [value], waiting for the vocabulary when it is still coming.
+  FutureOr<Iterable<SearchSuggestion>> _optionsFor(TextEditingValue value) {
+    final pending = _loadingTags;
+    if (pending != null) {
+      return pending.then((_) => _rowsFor(value));
+    }
+    return _rowsFor(value);
+  }
+
+  List<SearchSuggestion> _rowsFor(TextEditingValue value) {
+    return _rows = suggestionsFor(
+      text: value.text,
+      cursor: value.selection.baseOffset,
+      tags: _tags,
+    );
+  }
+
+  /// Puts [option]'s query in the field.
+  ///
+  /// Deliberately NOT RawAutocomplete's own selection: that suppresses the
+  /// options refresh (it sets `_selecting` while it writes) and then hides the
+  /// popover, so taking `tag:` would close the list instead of opening the
+  /// tags — the feature's whole two-step. Writing the controller is an ordinary
+  /// text change, so the rows recompute for the new caret and the popover
+  /// follows the user into the value.
+  void _take(SearchSuggestion option) {
+    _controller.value = TextEditingValue(
+      text: option.query,
+      selection: TextSelection.collapsed(offset: option.cursor),
+    );
+  }
+
+  /// Arrow and Escape keys, seen before RawAutocomplete's own shortcuts.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      // Escape hides the popover (RawAutocomplete's DismissIntent) but cannot
+      // tell this flag, and an armed Enter with no popover showing routes to a
+      // handler that no-ops: the key goes dead until another character is
+      // typed. Disarm and let the dismissal through.
+      _disarm();
       return KeyEventResult.ignored;
     }
     final isDown = event.logicalKey == LogicalKeyboardKey.arrowDown;
@@ -204,15 +287,35 @@ class _SearchFieldState extends State<_SearchField> {
     if (!isDown && !isUp) {
       return KeyEventResult.ignored;
     }
+    if (_rows.isEmpty) {
+      // Nothing to choose. Arming here is how an arrow press on an ordinary
+      // query — where no popover ever opened — killed Enter outright.
+      return KeyEventResult.ignored;
+    }
     if (!_arrowed) {
       // The FIRST arrow press chooses the row already sitting at index 0.
       // Letting it through would advance to index 1 and skip the top row,
       // because RawAutocomplete's highlight starts at 0 rather than at
       // "nothing".
-      setState(() => _arrowed = true);
+      setState(() {
+        _arrowed = true;
+        _highlighted = 0;
+      });
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
+  }
+
+  /// Enter: take the chosen row, or search exactly what was typed.
+  void _onEnter(String value) {
+    // Both halves are needed and each alone would do: _onKey will not arm
+    // without rows, and this refuses to take one from an empty list. Belt and
+    // braces on a flag whose every desync so far made Enter a dead key.
+    if (_arrowed && _rows.isNotEmpty) {
+      _take(_rows[_highlighted.clamp(0, _rows.length - 1)]);
+      return;
+    }
+    _submit(value);
   }
 
   void _submit(String value) {
@@ -238,33 +341,24 @@ class _SearchFieldState extends State<_SearchField> {
       child: RawAutocomplete<SearchSuggestion>(
         textEditingController: _controller,
         focusNode: _focus,
-        // The row already knows the whole query it produces, so "display" IS
-        // the spliced field text. RawAutocomplete writes this into the field
-        // on selection and puts the caret at its end; onSelected then moves
-        // the caret to where the row wants it.
+        // Rows are taken by _take, never by RawAutocomplete's own selection,
+        // so this only feeds the widget's internal bookkeeping.
         displayStringForOption: (option) => option.query,
-        optionsBuilder: (value) => suggestionsFor(
-          text: value.text,
-          cursor: value.selection.baseOffset,
-          tags: _tags,
-        ),
-        onSelected: (option) {
-          if (option.cursor != option.query.length) {
-            _controller.selection = TextSelection.collapsed(
-              offset: option.cursor,
-            );
-          }
+        optionsBuilder: _optionsFor,
+        optionsViewBuilder: (context, onSelected, options) {
+          // Mirrored out here because the field cannot reach it: this
+          // InheritedNotifier is installed inside the options view, not above
+          // fieldViewBuilder.
+          _highlighted = AutocompleteHighlightedOption.of(context);
+          return _SuggestionList(
+            options: options.toList(),
+            onSelected: _take,
+            // No highlight until the user has actually chosen: a highlighted
+            // row that Enter would not take is a lie about what Enter does.
+            highlight: _arrowed ? _highlighted : null,
+          );
         },
-        optionsViewBuilder: (context, onSelected, options) => _SuggestionList(
-          options: options.toList(),
-          onSelected: onSelected,
-          // No highlight until the user has actually chosen: a highlighted
-          // row that Enter would not take is a lie about what Enter does.
-          highlight: _arrowed
-              ? AutocompleteHighlightedOption.of(context)
-              : null,
-        ),
-        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        fieldViewBuilder: (context, controller, focusNode, _) {
           return Container(
             height: 38,
             decoration: BoxDecoration(
@@ -280,10 +374,9 @@ class _SearchFieldState extends State<_SearchField> {
                   controller: controller,
                   focusNode: focusNode,
                   textInputAction: TextInputAction.search,
-                  // NOT RawAutocomplete's onFieldSubmitted: that takes the
-                  // highlighted row, and nothing is chosen until _arrowed.
-                  onSubmitted: (value) =>
-                      _arrowed ? onFieldSubmitted() : _submit(value),
+                  // NOT RawAutocomplete's onFieldSubmitted: it takes whatever
+                  // is highlighted, and nothing is chosen until _arrowed.
+                  onSubmitted: _onEnter,
                   textAlignVertical: TextAlignVertical.center,
                   style: const TextStyle(fontSize: 14),
                   decoration: InputDecoration(

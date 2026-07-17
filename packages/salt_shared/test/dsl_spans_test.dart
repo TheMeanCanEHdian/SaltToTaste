@@ -93,7 +93,8 @@ void main() {
     // exact value the user picked. Anything less means a suggestion silently
     // searches for something other than what it said.
     void expectRoundTrip(String value) {
-      final query = 'tag:${quoteDslValue(value)}';
+      final rendered = quoteDslValue(value);
+      final query = 'tag:$rendered';
       final result = parseSearchQuery(query);
       expect(
         result.errors,
@@ -102,7 +103,14 @@ void main() {
       );
       expect(
         result.root,
-        TermNode(scope: SearchScope.tag, text: value, isPhrase: value.contains(' ')),
+        TermNode(
+          scope: SearchScope.tag,
+          text: value,
+          // Follows what quoteDslValue actually DID, rather than guessing from
+          // the value: `say"hi"` has no space and is still quoted, so it comes
+          // back a phrase.
+          isPhrase: rendered.startsWith('"'),
+        ),
         reason: 'value <$value> did not survive <$query>',
       );
     }
@@ -121,6 +129,16 @@ void main() {
       expectRoundTrip('say "hi"');
       expectRoundTrip('a b\\c');
       expectRoundTrip('a "b\\c"');
+    });
+
+    test('a quote with NO space still forces quoting', () {
+      // Every other quote case here also contains a space, so the whitespace
+      // clause alone satisfied them and `contains('"')` was never exercised:
+      // deleting it kept the suite green. A bare `say"hi"` would lex as TWO
+      // lexemes — the `"` ends a word — so the quote clause is load-bearing on
+      // its own.
+      expect(quoteDslValue('say"hi"'), r'"say\"hi\""');
+      expectRoundTrip('say"hi"');
     });
 
     test('a bare backslash is NOT quoted, because quoting would eat it', () {
