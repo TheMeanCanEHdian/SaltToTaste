@@ -254,42 +254,47 @@ class _HeaderInfo extends StatelessWidget {
           Text(recipe.background!, style: _prose),
         ],
         const SizedBox(height: 18),
-        Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            FButton(
-              variant: FButtonVariant.outline,
-              mainAxisSize: MainAxisSize.min,
-              onPress: () => context.read<RecipeDetailCubit>().toggleFavorite(),
-              prefix: Icon(
-                detail.favorite ? Icons.favorite : Icons.favorite_border,
-                size: 18,
-                color: SaltColors.maroon,
-              ),
-              child: Text(detail.favorite ? 'Favorited' : 'Favorite'),
-            ),
-            _DownloadPdfButton(detail: detail),
-            if (context.watch<AuthCubit>().user?.isAdmin ?? false) ...[
+        // Buttons are chrome, not selectable prose — without this the page's
+        // SelectionArea shows a text (I-beam) cursor over their labels.
+        SelectionContainer.disabled(
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
               FButton(
                 variant: FButtonVariant.outline,
                 mainAxisSize: MainAxisSize.min,
                 onPress: () =>
-                    showViewYamlDialog(context, recipeId: detail.recipe.id),
-                prefix: const Icon(Icons.code, size: 18),
-                child: const Text('View YAML'),
+                    context.read<RecipeDetailCubit>().toggleFavorite(),
+                prefix: Icon(
+                  detail.favorite ? Icons.favorite : Icons.favorite_border,
+                  size: 18,
+                  color: SaltColors.maroon,
+                ),
+                child: Text(detail.favorite ? 'Favorited' : 'Favorite'),
               ),
-              // Edit goes last: it leaves the page, so it reads as the end of
-              // the row rather than something to pass through.
-              FButton(
-                variant: FButtonVariant.outline,
-                mainAxisSize: MainAxisSize.min,
-                onPress: () => context.push('/r/${detail.recipe.slug}/edit'),
-                prefix: const Icon(Icons.edit_outlined, size: 18),
-                child: const Text('Edit'),
-              ),
+              _DownloadPdfButton(detail: detail),
+              if (context.watch<AuthCubit>().user?.isAdmin ?? false) ...[
+                FButton(
+                  variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: () =>
+                      showViewYamlDialog(context, recipeId: detail.recipe.id),
+                  prefix: const Icon(Icons.code, size: 18),
+                  child: const Text('View YAML'),
+                ),
+                // Edit goes last: it leaves the page, so it reads as the end of
+                // the row rather than something to pass through.
+                FButton(
+                  variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: () => context.push('/r/${detail.recipe.slug}/edit'),
+                  prefix: const Icon(Icons.edit_outlined, size: 18),
+                  child: const Text('Edit'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ],
     );
@@ -350,12 +355,14 @@ class _MyNotesCardState extends State<_MyNotesCard> {
     if (note == null && !_editing) {
       return Align(
         alignment: Alignment.centerLeft,
-        child: FButton(
-          variant: FButtonVariant.ghost,
-          mainAxisSize: MainAxisSize.min,
-          onPress: () => setState(() => _editing = true),
-          prefix: const Icon(Icons.sticky_note_2_outlined, size: 17),
-          child: const Text('Add a private note'),
+        child: SelectionContainer.disabled(
+          child: FButton(
+            variant: FButtonVariant.ghost,
+            mainAxisSize: MainAxisSize.min,
+            onPress: () => setState(() => _editing = true),
+            prefix: const Icon(Icons.sticky_note_2_outlined, size: 17),
+            child: const Text('Add a private note'),
+          ),
         ),
       );
     }
@@ -394,12 +401,14 @@ class _MyNotesCardState extends State<_MyNotesCard> {
               ),
               const Spacer(),
               if (!_editing)
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  mainAxisSize: MainAxisSize.min,
-                  onPress: () => setState(() => _editing = true),
-                  prefix: const Icon(Icons.edit_outlined, size: 15),
-                  child: const Text('Edit'),
+                SelectionContainer.disabled(
+                  child: FButton(
+                    variant: FButtonVariant.ghost,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: () => setState(() => _editing = true),
+                    prefix: const Icon(Icons.edit_outlined, size: 15),
+                    child: const Text('Edit'),
+                  ),
                 ),
             ],
           ),
@@ -418,26 +427,28 @@ class _MyNotesCardState extends State<_MyNotesCard> {
               ),
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                FButton(
-                  mainAxisSize: MainAxisSize.min,
-                  onPress: _saving ? null : _save,
-                  child: Text(_saving ? 'Saving…' : 'Save note'),
-                ),
-                const SizedBox(width: 8),
-                FButton(
-                  variant: FButtonVariant.ghost,
-                  mainAxisSize: MainAxisSize.min,
-                  onPress: _saving
-                      ? null
-                      : () => setState(() {
-                          _editing = false;
-                          _controller.text = widget.detail.note ?? '';
-                        }),
-                  child: const Text('Cancel'),
-                ),
-              ],
+            SelectionContainer.disabled(
+              child: Row(
+                children: [
+                  FButton(
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: _saving ? null : _save,
+                    child: Text(_saving ? 'Saving…' : 'Save note'),
+                  ),
+                  const SizedBox(width: 8),
+                  FButton(
+                    variant: FButtonVariant.ghost,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: _saving
+                        ? null
+                        : () => setState(() {
+                            _editing = false;
+                            _controller.text = widget.detail.note ?? '';
+                          }),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
             ),
           ] else
             Text(note ?? '', style: _prose),
