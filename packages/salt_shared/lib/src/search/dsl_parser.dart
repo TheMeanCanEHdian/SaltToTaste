@@ -195,6 +195,22 @@ const Map<String, SearchScope> _scopeNames = {
   'note': SearchScope.note,
 };
 
+/// The `calories:` prefix, hoisted so [searchKeywords] and [_emitWord] cannot
+/// drift apart.
+const String caloriesKeyword = 'calories';
+
+/// Every name a query may use as a `name:` prefix, for a UI that offers them.
+///
+/// Derived rather than restated, because a hand-written list is wrong in both
+/// directions: `calories` is not a [SearchScope] — [_emitWord] special-cases it
+/// — so a list built from [SearchScope] omits it, while [SearchScope.general]
+/// is not a keyword at all. `searchKeywords` is what the tokenizer actually
+/// accepts, and `dsl_parser_test.dart` proves each entry parses.
+final List<String> searchKeywords = List.unmodifiable([
+  ..._scopeNames.keys,
+  caloriesKeyword,
+]);
+
 bool _isWhitespace(String ch) => ch.trim().isEmpty;
 
 List<_Token> _tokenize(String input, List<String> errors) {
@@ -269,7 +285,7 @@ void _emitWord(String raw, List<_Token> tokens) {
   if (colon > 0) {
     final name = raw.substring(0, colon).toLowerCase();
     final rest = raw.substring(colon + 1);
-    if (name == 'calories') {
+    if (name == caloriesKeyword) {
       tokens.add(const _Token(_TokenKind.calories));
       if (rest.isNotEmpty) {
         tokens.add(_Token(_TokenKind.word, text: rest));

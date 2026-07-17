@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_app/features/search/search_suggestions.dart';
 
 /// The maroon top navigation bar: optional back control, logo, live search
 /// field, avatar menu.
@@ -119,11 +124,95 @@ class _SearchFieldState extends State<_SearchField> {
   late final TextEditingController _controller = TextEditingController(
     text: widget.initialQuery,
   );
+  final FocusNode _focus = FocusNode();
+
+  /// The tag vocabulary, fetched on first focus rather than on mount: the nav
+  /// bar is on every page, and most page views never touch the search field.
+  /// Not cached beyond this field's life — the list is small, it changes
+  /// whenever a recipe is edited, and one fetch per search interaction is
+  /// cheaper than a stale vocabulary.
+  List<TagInfo> _tags = const [];
+  bool _requestedTags = false;
+
+  /// Whether the user has explicitly moved onto a row.
+  ///
+  /// This is the difference between a search bar and the editor's tag field.
+  /// RawAutocomplete pre-highlights option 0 and its `onFieldSubmitted` takes
+  /// whatever is highlighted — so wiring it up naively would make typing `t`
+  /// and pressing Enter search for `tag:` instead of `t`. Enter must mean "search
+  /// what I typed" unless the user has actually chosen a row, which is the same
+  /// explicit-act rule the tag input arrived at from the opposite direction.
+  bool _arrowed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChange);
+    _controller.addListener(_onTextChange);
+  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _focus.removeListener(_onFocusChange);
+    _controller
+      ..removeListener(_onTextChange)
+      ..dispose();
+    _focus.dispose();
     super.dispose();
+  }
+
+  void _onTextChange() {
+    // Typing un-chooses whatever was chosen: the rows underneath have changed.
+    if (_arrowed) {
+      setState(() => _arrowed = false);
+    }
+  }
+
+  void _onFocusChange() {
+    if (_focus.hasFocus) {
+      unawaited(_loadTags());
+    } else if (_arrowed) {
+      setState(() => _arrowed = false);
+    }
+  }
+
+  Future<void> _loadTags() async {
+    if (_requestedTags) {
+      return;
+    }
+    _requestedTags = true;
+    try {
+      final tags = await context.read<TagsRepository>().listTags();
+      if (mounted) {
+        setState(() => _tags = tags);
+      }
+    } on Object {
+      // Suggestions are a convenience; a failed fetch must never break
+      // searching. The keyword rows do not depend on the vocabulary and keep
+      // working.
+      _requestedTags = false;
+    }
+  }
+
+  /// Arrow keys, seen before RawAutocomplete's own shortcuts get them.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+    final isDown = event.logicalKey == LogicalKeyboardKey.arrowDown;
+    final isUp = event.logicalKey == LogicalKeyboardKey.arrowUp;
+    if (!isDown && !isUp) {
+      return KeyEventResult.ignored;
+    }
+    if (!_arrowed) {
+      // The FIRST arrow press chooses the row already sitting at index 0.
+      // Letting it through would advance to index 1 and skip the top row,
+      // because RawAutocomplete's highlight starts at 0 rather than at
+      // "nothing".
+      setState(() => _arrowed = true);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   void _submit(String value) {
@@ -144,43 +233,162 @@ class _SearchFieldState extends State<_SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 38,
+    return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 620),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Semantics(
-        label: 'Search recipes',
-        child: TextField(
-          controller: _controller,
-          textInputAction: TextInputAction.search,
-          onSubmitted: _submit,
-          textAlignVertical: TextAlignVertical.center,
-          style: const TextStyle(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Search recipes — try title:cake or tag:dessert',
-            hintStyle: const TextStyle(color: SaltColors.muted, fontSize: 14),
-            border: InputBorder.none,
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 11,
+      child: RawAutocomplete<SearchSuggestion>(
+        textEditingController: _controller,
+        focusNode: _focus,
+        // The row already knows the whole query it produces, so "display" IS
+        // the spliced field text. RawAutocomplete writes this into the field
+        // on selection and puts the caret at its end; onSelected then moves
+        // the caret to where the row wants it.
+        displayStringForOption: (option) => option.query,
+        optionsBuilder: (value) => suggestionsFor(
+          text: value.text,
+          cursor: value.selection.baseOffset,
+          tags: _tags,
+        ),
+        onSelected: (option) {
+          if (option.cursor != option.query.length) {
+            _controller.selection = TextSelection.collapsed(
+              offset: option.cursor,
+            );
+          }
+        },
+        optionsViewBuilder: (context, onSelected, options) => _SuggestionList(
+          options: options.toList(),
+          onSelected: onSelected,
+          // No highlight until the user has actually chosen: a highlighted
+          // row that Enter would not take is a lie about what Enter does.
+          highlight: _arrowed
+              ? AutocompleteHighlightedOption.of(context)
+              : null,
+        ),
+        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+          return Container(
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(9),
             ),
-            prefixIcon: const Icon(
-              Icons.search,
-              size: 19,
-              color: SaltColors.muted,
-            ),
-            suffixIcon: IconButton(
-              tooltip: 'Search',
-              icon: const Icon(
-                Icons.arrow_forward,
-                size: 18,
-                color: SaltColors.rose,
+            child: Semantics(
+              label: 'Search recipes',
+              child: Focus(
+                canRequestFocus: false,
+                onKeyEvent: _onKey,
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  textInputAction: TextInputAction.search,
+                  // NOT RawAutocomplete's onFieldSubmitted: that takes the
+                  // highlighted row, and nothing is chosen until _arrowed.
+                  onSubmitted: (value) =>
+                      _arrowed ? onFieldSubmitted() : _submit(value),
+                  textAlignVertical: TextAlignVertical.center,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Search recipes — try title:cake or tag:dessert',
+                    hintStyle: const TextStyle(
+                      color: SaltColors.muted,
+                      fontSize: 14,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 11,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 19,
+                      color: SaltColors.muted,
+                    ),
+                    suffixIcon: IconButton(
+                      tooltip: 'Search',
+                      icon: const Icon(
+                        Icons.arrow_forward,
+                        size: 18,
+                        color: SaltColors.rose,
+                      ),
+                      onPressed: () => _submit(controller.text),
+                    ),
+                  ),
+                ),
               ),
-              onPressed: () => _submit(_controller.text),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// The suggestion popover: keyword rows and tag rows, styled to the nav bar
+/// rather than to Material's defaults.
+class _SuggestionList extends StatelessWidget {
+  const _SuggestionList({
+    required this.options,
+    required this.onSelected,
+    required this.highlight,
+  });
+
+  final List<SearchSuggestion> options;
+  final void Function(SearchSuggestion) onSelected;
+  final int? highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(9),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620, maxHeight: 280),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              shrinkWrap: true,
+              itemCount: options.length,
+              itemBuilder: (context, index) {
+                final option = options[index];
+                return InkWell(
+                  onTap: () => onSelected(option),
+                  child: Container(
+                    color: index == highlight
+                        ? SaltColors.maroon.withValues(alpha: 0.08)
+                        : null,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          option.label,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: SaltColors.ink,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            option.detail,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: SaltColors.muted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

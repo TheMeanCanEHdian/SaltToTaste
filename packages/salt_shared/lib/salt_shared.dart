@@ -8,6 +8,7 @@ export 'src/util/identifiers.dart';
 export 'src/util/ingredient_parser.dart';
 export 'src/util/yaml_plain.dart';
 export 'src/search/dsl_parser.dart';
+export 'src/search/dsl_spans.dart';
 export 'src/util/quantity.dart';
 export 'src/util/servings_parser.dart';
 export 'src/yaml/recipe_yaml_codec.dart';

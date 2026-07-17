@@ -475,4 +475,47 @@ void main() {
       skip: available ? false : 'recipe corpus not present on this machine',
     );
   });
+
+  group('searchKeywords', () {
+    // The search bar offers these as `name:` completions. A keyword the
+    // tokenizer does not actually accept would complete into a query that
+    // silently becomes a general text search — `calories` in particular is
+    // NOT a SearchScope, so the two ways of getting this list disagree.
+    test('every keyword parses as something other than a general term', () {
+      for (final keyword in searchKeywords) {
+        // calories: takes a number and nothing else; the scopes take text.
+        final term = keyword == caloriesKeyword ? '400' : 'dessert';
+        final query = '$keyword:$term';
+        final result = parseSearchQuery(query);
+        expect(result.errors, isEmpty, reason: '<$query>');
+        final root = result.root;
+        expect(root, isNotNull, reason: '<$query>');
+        if (root is TermNode) {
+          expect(
+            root.scope,
+            isNot(SearchScope.general),
+            reason: '<$keyword> did not bind its term — it is not a keyword',
+          );
+        } else {
+          // calories: parses to a CaloriesNode, not a TermNode.
+          expect(root, isA<CaloriesNode>(), reason: '<$query>');
+        }
+      }
+    });
+
+    test('holds every scope the parser knows, plus calories', () {
+      // Guards the drift the derivation exists to prevent: a scope added to
+      // the tokenizer must reach the search bar without a second edit.
+      for (final scope in SearchScope.values) {
+        if (scope == SearchScope.general) continue;
+        expect(
+          searchKeywords,
+          contains(scope.name),
+          reason: 'scope ${scope.name} is not offered by the search bar',
+        );
+      }
+      expect(searchKeywords, contains(caloriesKeyword));
+      expect(searchKeywords, isNot(contains(SearchScope.general.name)));
+    });
+  });
 }
