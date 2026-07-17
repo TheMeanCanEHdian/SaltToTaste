@@ -46,6 +46,23 @@ class SaltDatabase {
     return SaltDatabase._(db).._migrate();
   }
 
+  /// Opens a **read-only** connection to an already-created, already-migrated
+  /// database — for the search worker isolates (#48), which run the FTS ranked
+  /// query off the serving isolate. Under WAL many readers coexist with the one
+  /// writer, so a worker's connection sees committed data without blocking it.
+  ///
+  /// Opened read-write (WAL readers participate fully, avoiding the read-only
+  /// WAL-recovery pitfall) but pinned with `PRAGMA query_only` so it can never
+  /// write. It does NOT migrate: the writer connection owns the schema, and a
+  /// query-only connection could not run migrations anyway.
+  factory SaltDatabase.openReadOnly(String dbPath) {
+    final db = sqlite3.open(dbPath)
+      ..execute('PRAGMA busy_timeout = 5000')
+      ..execute('PRAGMA foreign_keys = ON')
+      ..execute('PRAGMA query_only = TRUE');
+    return SaltDatabase._(db);
+  }
+
   final Database _db;
   final Map<String, PreparedStatement> _statements = {};
 

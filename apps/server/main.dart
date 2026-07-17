@@ -23,6 +23,9 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
       ..writeln(stackTrace);
     rethrow;
   }
+  // Spawn the search worker isolate(s) AFTER initServer has opened and migrated
+  // the database, so their read-only connections can attach (#48).
+  await initSearchService();
   final server = await serve(handler, ip, port);
   // Reap half-open / idle sockets after this window: bounds slowloris-style
   // connection accumulation (measured in availability_vectors_test.dart), below
@@ -55,6 +58,9 @@ void _handleShutdownSignals(HttpServer server) {
       onForceClose: () =>
           _log.warning('Drain timed out; closing connections forcibly'),
     );
+    // Stop the search workers (closing their read-only connections) BEFORE the
+    // writer closes, so its final WAL checkpoint is not blocked by a reader.
+    await disposeSearchService();
     disposeServer();
     _log.info('Shutdown complete');
     exit(0);

@@ -87,6 +87,7 @@ All configuration is via environment variables:
 | `TRUST_PROXY` | `false` | Trust `X-Forwarded-*` from a reverse proxy. Inert on its own — set `TRUSTED_PROXIES` too |
 | `TRUSTED_PROXIES` | — | Comma-separated peers allowed to set `X-Forwarded-*`: exact IPs (`10.0.0.5`, `::1`) or IPv4 CIDR (`172.17.0.0/16`, a Docker bridge) |
 | `SECURE_COOKIES` | `false` | Always mark session cookies `Secure` |
+| `SEARCH_WORKER_ISOLATES` | `1` | Background isolates running the FTS ranked search off the serving isolate; raise for more concurrent-search throughput, `0` runs it inline |
 | `CONNECTION_IDLE_TIMEOUT_SECONDS` | `75` | Close a connection idle/stalled this long — bounds slowloris half-open sockets. Keep above the proxy's keep-alive; `0` disables |
 | `TZ` | `UTC` | Container time zone |
 

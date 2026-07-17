@@ -291,7 +291,7 @@ void main() {
 
           // Between the two values: exactly one hit.
           final threshold = (bundtCalories + pancakeCalories) / 2;
-          final below = listRecipes(
+          final below = await listRecipes(
             db,
             page: 1,
             limit: 24,
@@ -300,7 +300,7 @@ void main() {
           expect(below['total'], 1);
 
           // Everything computed, ordered ascending by calories.
-          final all = listRecipes(
+          final all = await listRecipes(
             db,
             page: 1,
             limit: 24,
@@ -315,7 +315,7 @@ void main() {
           );
 
           // Combined with a text term.
-          final combined = listRecipes(
+          final combined = await listRecipes(
             db,
             page: 1,
             limit: 24,
@@ -335,8 +335,13 @@ void main() {
         },
       );
 
-      test('text-only search results still carry the calorie badge', () {
-        final result = listRecipes(db, page: 1, limit: 24, query: 'chocolate');
+      test('text-only search results still carry the calorie badge', () async {
+        final result = await listRecipes(
+          db,
+          page: 1,
+          limit: 24,
+          query: 'chocolate',
+        );
         final items = (result['items']! as List).cast<Map<String, dynamic>>();
         final hit = items.singleWhere(
           (item) => item['slug'] == 'rich-chocolate-bundt-cake',

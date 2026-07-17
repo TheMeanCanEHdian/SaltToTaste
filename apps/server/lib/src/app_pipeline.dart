@@ -11,6 +11,7 @@ import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
 import 'package:salt_server/src/middleware/web_app.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/search/search_service.dart';
 
 /// Builds the top-level middleware chain from explicit collaborators.
 ///
@@ -26,8 +27,8 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// `.use` wraps, so the LAST `.use` is the OUTERMOST middleware. Order
 /// (outermost first): requestIdProvider -> requestLogger -> securityHeaders ->
 /// spaFallback -> devCors -> errorHandler -> ServerConfig provider ->
-/// SaltDatabase provider -> NutritionProvider provider -> AuthRuntime provider
-/// -> authProvider -> routes.
+/// SaltDatabase provider -> NutritionProvider provider -> SearchService
+/// provider -> AuthRuntime provider -> authProvider -> routes.
 ///
 /// spaFallback sits outside errorHandler (it rewrites the enveloped 404 for
 /// deep links) and inside securityHeaders (the fallback HTML must carry the
@@ -47,6 +48,7 @@ Handler buildAppMiddleware(
   required AuthRuntime authRuntime,
   required NutritionProvider nutritionProvider,
   required RequestRateLimiter searchRateLimiter,
+  required SearchService searchService,
   String indexPath = 'public/index.html',
 }) {
   return handler
@@ -55,6 +57,7 @@ Handler buildAppMiddleware(
       .use(authProvider())
       .use(provider<AuthRuntime>((_) => authRuntime))
       .use(provider<RequestRateLimiter>((_) => searchRateLimiter))
+      .use(provider<SearchService>((_) => searchService))
       .use(provider<NutritionProvider>((_) => nutritionProvider))
       .use(provider<SaltDatabase>((_) => database))
       .use(provider<ServerConfig>((_) => config))

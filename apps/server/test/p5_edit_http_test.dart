@@ -12,6 +12,7 @@ import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/import_job.dart' show importJobRunning;
 import 'package:salt_server/src/services/recipe_edit_service.dart'
     show editableRecipeKeys;
@@ -193,6 +194,7 @@ void main() {
         .use(provider<NutritionProvider>((_) => fixtureProvider))
         .use(provider<AuthRuntime>((_) => runtime))
         .use(provider<SaltDatabase>((_) => db))
+        .use(provider<SearchService>((_) => InlineSearchService(db)))
         .use(provider<ServerConfig>((_) => config))
         .use(errorHandler())
         .use(requestLogger())

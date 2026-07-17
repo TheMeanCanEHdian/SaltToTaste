@@ -176,13 +176,13 @@ void main() {
       expect(search('calories:<400 and tag:dessert').total, 0);
     });
 
-    test('a parse error surfaces as validation', () {
+    test('a parse error surfaces as validation', () async {
       final parsed = parseSearchQuery('title:');
       expect(parsed.errors, isNotEmpty);
       // The handler path is the actual contract: broken queries must become
       // 422s, never silent fallbacks to the full listing.
-      expect(
-        () => listRecipes(db, page: 1, limit: 24, query: 'title:'),
+      await expectLater(
+        listRecipes(db, page: 1, limit: 24, query: 'title:'),
         throwsA(
           isA<ValidationException>().having(
             (e) => e.message,
@@ -193,9 +193,9 @@ void main() {
       );
     });
 
-    test('an oversized query is rejected before parsing', () {
-      expect(
-        () => listRecipes(
+    test('an oversized query is rejected before parsing', () async {
+      await expectLater(
+        listRecipes(
           db,
           page: 1,
           limit: 24,

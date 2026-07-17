@@ -101,8 +101,8 @@ void main() {
   });
 
   group('listRecipes', () {
-    test('returns paged card maps ordered by title', () {
-      final pageOne = listRecipes(db, page: 1, limit: 1);
+    test('returns paged card maps ordered by title', () async {
+      final pageOne = await listRecipes(db, page: 1, limit: 1);
       expect(pageOne['total'], 2);
       expect(pageOne['page'], 1);
       expect(pageOne['limit'], 1);
@@ -113,15 +113,15 @@ void main() {
       expect(card['slug'], bundtCake.slug);
       expect(card['hero_image'], '/images/$_sourceSlug/$_heroJpg');
 
-      final pageTwo = listRecipes(db, page: 2, limit: 1);
+      final pageTwo = await listRecipes(db, page: 2, limit: 1);
       final secondItems = pageTwo['items']! as List<Object?>;
       final secondCard = secondItems.first! as Map<String, dynamic>;
       expect(secondCard['title'], 'Sweet Potato Soup');
       expect(pageTwo['total'], 2);
     });
 
-    test('returns an empty page past the end', () {
-      final page = listRecipes(db, page: 9, limit: 24);
+    test('returns an empty page past the end', () async {
+      final page = await listRecipes(db, page: 9, limit: 24);
       expect(page['items'], isEmpty);
       expect(page['total'], 2);
     });

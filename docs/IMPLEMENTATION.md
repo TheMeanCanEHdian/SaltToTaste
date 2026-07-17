@@ -391,10 +391,52 @@ about:
   **force-closed** near the bound, not after the full handler (also
   mutation-checked). New config parse unit-tested.
 
-Remaining for `#48`: the single-isolate **DB root cure** (moving the synchronous
-sqlite FFI off the serving isolate) — a large, cross-cutting change (~60 methods,
-54 call sites, shared in-memory guards) awaiting a scope decision, since the
-acute risk is already capped and search is auth-only.
+**The single-isolate DB root cure — a SURGICAL search isolate (`#48`, second
+half).** The residual after `#47` was that every synchronous `sqlite3` FFI call
+runs on the one serving isolate, so a ranked `bm25` search blocks the event loop
+while it runs. The cure moves *only the FTS ranked search* — the measured lever,
+the only attacker-reachable heavy query — onto dedicated background isolate(s),
+each owning its own read-only WAL connection. Everything else (admin-only writes,
+imports which already run in `Isolate.run`, cheap by-id reads) stays synchronous.
+
+- **Shape.** A `SearchService` interface (`lib/src/search/search_service.dart`)
+  with two impls: `InlineSearchService` (synchronous, the pre-#48 behavior, kept
+  for tests and `SEARCH_WORKER_ISOLATES=0`) and `IsolateSearchService` (a pool of
+  workers, round-robined). Each worker opens `SaltDatabase.openReadOnly` (a WAL
+  reader, `PRAGMA query_only`) and runs the unchanged `searchCards`. `RecipeCard`
+  and `CompiledSearch` cross the isolate boundary by copy (verified). The handler
+  (`listRecipes`/`_resolve`) went async and takes the service; parse+compile stay
+  on the serving isolate (cheap, capped by `#47`). Wired through a
+  `provider<SearchService>` and `buildAppMiddleware`, sized by
+  `SEARCH_WORKER_ISOLATES` (default 1). Workers spawn AFTER the writer migrates
+  and are disposed BEFORE it closes (readers before the checkpoint).
+- **Correctness.** `search_service_test.dart` proves the off-isolate path is
+  behavior-preserving on the whole real corpus — same rows, order, totals, and
+  favorite flags as inline across text/scoped/OR/AND/calorie/paged/no-hit
+  queries — including favorites written on the writer and read through a worker's
+  separate WAL connection. Plus: concurrent-burst parity, SQLite-error
+  propagation (not a hang), and a disposed-service guard. The parity suite is
+  mutation-checked (a worker that drops `favoritesOnly` reddens it). A crashed
+  worker respawns lazily (`onExit`); a stuck one is bounded by a per-request
+  timeout. Real-process smoke: boots "Search running on N background isolate(s)",
+  serves, and drains+disposes cleanly on SIGTERM.
+- **Why surgical, not the full cure — the reasons, recorded.** The mainstream
+  best practice ("don't run a synchronous DB on the serving isolate") is honored
+  where it is *measured to matter*, which is the correct scope, not a compromise.
+  The alternatives were weighed and rejected:
+  - *Full async DB isolate* (all ~60 methods async through one DB isolate):
+    complete but a rewrite of the entire data path with high risk, and — to be
+    real best practice — it would mean adopting a library (`drift`/`sqlite_async`)
+    over the deliberately hand-written raw-SQL layer, discarding an architecture
+    decision in `CLAUDE.md`. Poor ROI: writes are admin-only and imports already
+    run off-isolate, so there is no measured problem there.
+  - *Multi-isolate serving* (N serving isolates, `shared` socket): spreads CPU
+    but each isolate gets its own copy of the in-memory guards — the login-lockout
+    and search rate limiters, session/setup state — so a per-user limit enforced
+    per-isolate becomes N× looser and login lockout is bypassable by hitting
+    different isolates. A security regression; rejected.
+  - *Accept the residual*: defensible (acute risk capped, search auth-only, small
+    admin-created user base), but the user chose the surgical cure.
 
 **The token-row residual is closed (`#45`).** The active cap bounds *usable*
 tokens, but a mint+revoke loop still grew the table with permanent revoked rows.

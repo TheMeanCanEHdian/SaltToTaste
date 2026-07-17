@@ -7,6 +7,7 @@ import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
 import 'package:salt_server/src/middleware/auth.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/recipe_edit_service.dart' as edit;
 
 /// `GET /api/v1/recipes?page=&limit=&q=&favorites=` -> one page of recipe
@@ -22,10 +23,11 @@ Future<Response> onRequest(RequestContext context) async {
 
   if (context.request.method == HttpMethod.get) {
     final query = context.request.uri.queryParameters;
-    // Rate-limit only the text-search path: FTS runs synchronously on the one
-    // serving isolate, so a member looping expensive queries adds latency for
-    // everyone. Plain paginated listing (no `q`) is cheap and left unlimited so
-    // ordinary browsing is never throttled.
+    // Rate-limit only the text-search path: ranked FTS is the heavy query, so
+    // this bounds a member's share of the search worker pool (#48 moved it off
+    // the serving isolate; this cap is still the per-caller fairness guard).
+    // Plain paginated listing (no `q`) is cheap and left unlimited so ordinary
+    // browsing is never throttled.
     final searchText = query['q'];
     if (searchText != null && searchText.trim().isNotEmpty) {
       final limiter = context.read<RequestRateLimiter>();
@@ -38,13 +40,14 @@ Future<Response> onRequest(RequestContext context) async {
     }
     final params = parseListParams(query);
     return Response.json(
-      body: listRecipes(
+      body: await listRecipes(
         db,
         page: params.page,
         limit: params.limit,
         query: searchText,
         viewerId: user.id,
         favoritesOnly: query['favorites'] == 'true',
+        search: context.read<SearchService>(),
       ),
     );
   }

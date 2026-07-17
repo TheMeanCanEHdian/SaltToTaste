@@ -179,6 +179,7 @@ class ServerConfig {
     this.searchRateLimit = defaultSearchRateLimit,
     this.apiTokenRetentionDays = defaultApiTokenRetentionDays,
     this.connectionIdleTimeoutSeconds = defaultConnectionIdleTimeoutSeconds,
+    this.searchWorkerIsolates = defaultSearchWorkerIsolates,
   }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
@@ -217,14 +218,21 @@ class ServerConfig {
   ///   `DATA_DIR/import`). Only source folders inside it can be imported
   ///   through the API; mount a corpus there in Docker.
   /// * `SEARCH_RATE_LIMIT` — text searches (`GET /recipes?q=`) allowed per
-  ///   minute per user (default 60; `0` disables). Search runs synchronously
-  ///   on the one serving isolate, so this caps any single caller's share of
-  ///   it. An invalid value falls back to the default rather than disabling
-  ///   the guard.
+  ///   minute per user (default 60; `0` disables). Ranked search runs on the
+  ///   background isolate pool (`SEARCH_WORKER_ISOLATES`), so this caps any
+  ///   single caller's share of it. An invalid value falls back to the default
+  ///   rather than disabling the guard.
   /// * `API_TOKEN_RETENTION_DAYS` — how long a revoked API token row is kept
   ///   before daily housekeeping deletes it (default 90; `0` keeps them
   ///   forever). Bounds the table a mint-then-revoke loop would otherwise grow
   ///   without limit. An invalid value falls back to the default.
+  /// * `SEARCH_WORKER_ISOLATES` — how many background isolates run the FTS
+  ///   ranked search (`GET /recipes?q=`) off the serving isolate, each with its
+  ///   own read-only SQLite connection (default 1; `0` runs search inline on
+  ///   the serving isolate — the pre-#48 behavior). Raising it improves
+  ///   throughput
+  ///   when many users search at once. An invalid value falls back to the
+  ///   default.
   /// * `CONNECTION_IDLE_TIMEOUT_SECONDS` — how long a connection may sit with
   ///   no data flowing before the server closes it (default 75; `0` disables,
   ///   i.e. never auto-close). This is the lever against slowloris-style
@@ -271,6 +279,10 @@ class ServerConfig {
       connectionIdleTimeoutSeconds: _parseNonNegativeInt(
         env['CONNECTION_IDLE_TIMEOUT_SECONDS'],
         defaultConnectionIdleTimeoutSeconds,
+      ),
+      searchWorkerIsolates: _parseNonNegativeInt(
+        env['SEARCH_WORKER_ISOLATES'],
+        defaultSearchWorkerIsolates,
       ),
     );
     Directory(config.libraryDir).createSync(recursive: true);
@@ -328,9 +340,14 @@ class ServerConfig {
   /// sockets are reaped sooner, above a typical reverse-proxy keep-alive.
   static const int defaultConnectionIdleTimeoutSeconds = 75;
 
+  /// Default number of background search isolates (see
+  /// [searchWorkerIsolates]). One already keeps FTS ranking off the serving
+  /// isolate; raise it for more concurrent-search throughput.
+  static const int defaultSearchWorkerIsolates = 1;
+
   /// Text searches (`GET /recipes?q=`) allowed per minute per user; `0`
-  /// disables the limit. Search is synchronous FTS on the one serving
-  /// isolate, so this bounds any single caller's share of it.
+  /// disables the limit. Ranked FTS runs on the background isolate pool
+  /// ([searchWorkerIsolates]), so this bounds any single caller's share of it.
   final int searchRateLimit;
 
   /// Days a revoked API token row is kept before daily housekeeping deletes
@@ -342,6 +359,11 @@ class ServerConfig {
   /// it; `0` disables the timeout. Bounds slowloris-style half-open sockets
   /// (measured: a connection stalled mid-headers is reaped after this window).
   final int connectionIdleTimeoutSeconds;
+
+  /// Background isolates running the FTS ranked search off the serving isolate;
+  /// `0` runs search inline (pre-#48). Each worker holds its own read-only
+  /// SQLite connection, so a heavy `bm25` query no longer blocks the loop.
+  final int searchWorkerIsolates;
 
   /// The idle timeout as a [Duration], or `null` when disabled
   /// ([connectionIdleTimeoutSeconds] `<= 0`) — matching

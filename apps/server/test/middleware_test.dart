@@ -12,6 +12,7 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:test/test.dart';
 
 import '../routes/healthz.dart' as healthz_route;
@@ -95,6 +96,7 @@ void main() {
       authRuntime: AuthRuntime(),
       nutritionProvider: _UnusedNutrition(),
       searchRateLimiter: RequestRateLimiter(),
+      searchService: InlineSearchService(database),
       indexPath: '${tempDir.path}/index.html',
     );
     server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);

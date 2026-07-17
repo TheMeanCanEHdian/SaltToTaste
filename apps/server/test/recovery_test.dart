@@ -12,6 +12,7 @@ import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
@@ -482,6 +483,7 @@ void main() {
           .use(authProvider())
           .use(provider<AuthRuntime>((_) => runtime))
           .use(provider<SaltDatabase>((_) => db))
+          .use(provider<SearchService>((_) => InlineSearchService(db)))
           .use(provider<ServerConfig>((_) => config))
           .use(errorHandler())
           .use(requestIdProvider());

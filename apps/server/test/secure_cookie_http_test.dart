@@ -10,6 +10,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:test/test.dart';
 
 import '../routes/api/v1/auth/login.dart' as login_route;
@@ -68,6 +69,7 @@ void main() {
         .use(authProvider())
         .use(provider<AuthRuntime>((_) => runtime))
         .use(provider<SaltDatabase>((_) => db))
+        .use(provider<SearchService>((_) => InlineSearchService(db)))
         .use(provider<ServerConfig>((_) => config))
         .use(errorHandler())
         .use(requestLogger())

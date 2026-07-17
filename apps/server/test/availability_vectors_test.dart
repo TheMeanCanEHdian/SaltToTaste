@@ -9,6 +9,7 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/shutdown.dart';
 import 'package:test/test.dart';
 
@@ -63,6 +64,7 @@ void main() {
       authRuntime: AuthRuntime(),
       nutritionProvider: _UnusedNutrition(),
       searchRateLimiter: RequestRateLimiter(),
+      searchService: InlineSearchService(database),
       indexPath: '${tempDir.path}/index.html',
     );
     return serve(pipeline, InternetAddress.loopbackIPv4, 0);

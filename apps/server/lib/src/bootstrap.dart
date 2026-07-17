@@ -9,6 +9,7 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/nutrition/fdc_provider.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/backup_service.dart';
 import 'package:salt_server/src/services/library_scan.dart';
 import 'package:salt_server/src/services/serves_backfill.dart';
@@ -24,6 +25,7 @@ ServerConfig? _config;
 SaltDatabase? _database;
 AuthRuntime? _authRuntime;
 RequestRateLimiter? _searchRateLimiter;
+SearchService? _searchService;
 NutritionProvider? _nutritionProvider;
 NutritionProvider? _bulkNutritionProvider;
 TokenBucket? _fdcBucket;
@@ -65,6 +67,40 @@ AuthRuntime get authRuntime => _authRuntime ??= initAuthRuntime(
 /// how much of the single serving isolate one caller's text searches can hold.
 RequestRateLimiter get searchRateLimiter => _searchRateLimiter ??=
     RequestRateLimiter(maxRequests: serverConfig.searchRateLimit);
+
+/// The process-wide search service (#48). [initSearchService] replaces this
+/// with the background-isolate pool at startup; until then (and in tests) it
+/// falls back to running search inline on the caller's isolate, so the provider
+/// always resolves.
+SearchService get searchService =>
+    _searchService ??= InlineSearchService(saltDatabase);
+
+/// Spawns the background search isolates sized from `SEARCH_WORKER_ISOLATES`
+/// (default 1; `0` keeps search inline). Call once at startup AFTER the writer
+/// connection has opened and migrated the database, so the read-only workers
+/// can attach. Idempotent.
+Future<void> initSearchService() async {
+  if (_searchService is IsolateSearchService) {
+    return;
+  }
+  final count = serverConfig.searchWorkerIsolates;
+  if (count <= 0) {
+    _searchService = InlineSearchService(saltDatabase);
+    return;
+  }
+  _searchService = await IsolateSearchService.spawn(
+    dbPath: serverConfig.dbPath,
+    count: count,
+  );
+}
+
+/// Tears down the background search isolates (closing their read-only
+/// connections). Must run BEFORE [disposeServer], so the writer's final WAL
+/// checkpoint is not blocked by a still-open reader.
+Future<void> disposeSearchService() async {
+  await _searchService?.dispose();
+  _searchService = null;
+}
 
 /// Startup warnings for a configuration that LOOKS set up but is not.
 ///

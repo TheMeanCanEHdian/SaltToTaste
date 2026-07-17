@@ -1,6 +1,7 @@
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/image_paths.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -55,16 +56,23 @@ int _parsePositiveInt(
 ///
 /// [viewerId] fills each card's `favorite` flag; [favoritesOnly] restricts
 /// the listing (and any search) to the viewer's favorites.
-Map<String, Object?> listRecipes(
+///
+/// The ranked search runs through [search] — off the serving isolate in
+/// production (#48). It defaults to an [InlineSearchService] over [db] so
+/// callers that don't need the isolate boundary (tests, the plain listing) stay
+/// simple; the plain no-query listing never touches [search] at all.
+Future<Map<String, Object?>> listRecipes(
   SaltDatabase db, {
   required int page,
   required int limit,
   String? query,
   int? viewerId,
   bool favoritesOnly = false,
-}) {
-  final result = _resolve(
+  SearchService? search,
+}) async {
+  final result = await _resolve(
     db,
+    search ?? InlineSearchService(db),
     query,
     page: page,
     limit: limit,
@@ -84,14 +92,19 @@ Map<String, Object?> listRecipes(
 
 /// Runs the search DSL when [query] is present (parse errors are 422s with
 /// the parser's messages), otherwise the plain title-ordered listing.
-({List<RecipeCard> items, int total}) _resolve(
+///
+/// Parse + compile stay on the serving isolate (both are cheap and capped —
+/// #47's `maxSearchTerms`); only the ranked SQL execution — the measured
+/// lever — goes through [search].
+Future<({List<RecipeCard> items, int total})> _resolve(
   SaltDatabase db,
+  SearchService search,
   String? query, {
   required int page,
   required int limit,
   int? viewerId,
   bool favoritesOnly = false,
-}) {
+}) async {
   if (query == null || query.trim().isEmpty) {
     return db.listCards(
       page: page,
@@ -100,8 +113,9 @@ Map<String, Object?> listRecipes(
       favoritesOnly: favoritesOnly,
     );
   }
-  // Parsing and FTS evaluation are CPU-bound on the single isolate; a sane
-  // cap keeps a thousand-term query from stalling every other request.
+  // Parsing is CPU-bound on the serving isolate; a sane cap keeps a
+  // thousand-character query from stalling every other request before the
+  // parser's own term cap even applies.
   if (query.length > 512) {
     throw const ValidationException(
       'Search queries are limited to 512 characters.',
@@ -122,7 +136,7 @@ Map<String, Object?> listRecipes(
       favoritesOnly: favoritesOnly,
     );
   }
-  return db.searchCards(
+  return search.search(
     compileSearch(root),
     page: page,
     limit: limit,

@@ -120,8 +120,9 @@ Query parameters:
 
 A `q` search is rate-limited per user — `SEARCH_RATE_LIMIT` requests per minute
 (default 60; `0` disables), returning `429 rate_limited` with a `Retry-After`
-header past that. Search runs synchronously on the one serving isolate, so this
-caps any single caller's share of it. Plain listing (no `q`) is not limited.
+header past that, so it caps any single caller's share of the search worker
+pool. The ranked search runs on background isolate(s) (`SEARCH_WORKER_ISOLATES`),
+off the serving isolate. Plain listing (no `q`) is not limited.
 
 **Search DSL:** words next to each other all must match (`and` implied);
 `or` broadens; `"quoted phrases"` match exactly; scopes `title:`, `tag:`,
@@ -433,7 +434,9 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   user, default 60; `0` disables), `API_TOKEN_RETENTION_DAYS` (days a revoked
   token row is kept before daily pruning, default 90; `0` keeps forever),
   `CONNECTION_IDLE_TIMEOUT_SECONDS` (idle/stalled-connection reap, default 75;
-  `0` disables — bounds slowloris half-open sockets), `TZ` (container tzdata),
+  `0` disables — bounds slowloris half-open sockets),
+  `SEARCH_WORKER_ISOLATES` (background isolates running the ranked search off
+  the serving isolate, default 1; `0` runs it inline), `TZ` (container tzdata),
   plus the dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
   requests (bounded, force-closed only past the bound), then closes SQLite

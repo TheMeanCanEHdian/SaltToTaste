@@ -13,4 +13,5 @@ Handler middleware(Handler handler) => buildAppMiddleware(
   authRuntime: authRuntime,
   nutritionProvider: nutritionProvider,
   searchRateLimiter: searchRateLimiter,
+  searchService: searchService,
 );
