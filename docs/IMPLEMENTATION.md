@@ -262,11 +262,44 @@ needed no decision (`Max-Age` on the remember-me cookie; `application/json`
 required on request bodies). Each is mutation-checked, and the XFF work also
 closed the older shared-bucket entry and the key-collision rider.
 
-**Two remain**, both LOW and both recorded: nothing pins the real `middleware()`
-order (blocked on a small refactor — it hard-binds process globals, so a test
-cannot import it), and the rate-limit key collision (no longer reachable once
-XFF is peer-checked). The availability mode a critic flagged has still never
-been examined.
+**The first fix was wrong, and the second review caught it** (`d95a9d6`). The
+peer check shipped inert: the binary binds `anyIPv6`, so an IPv4 peer arrives
+as `::ffff:172.17.0.2` and never matched the `172.17.0.0/16` the code's own
+comment offers as the example. It compounded — `isSecureRequest` shares that
+check, so the cookie lost `Secure` while the new `Max-Age` made it persist 90
+days: strictly worse than shipping nothing. The test asserted
+`isTrustedProxy("127.0.0.1")`, a string the author invented, and passed
+throughout.
+
+**Reviewing that fix (`d95a9d6`) found six more, all verified, and three were
+the same defect as the original**: a load-bearing security guard with no test.
+Deleting the `::ffff:` prefix loop (a hostile `2001:db8::ffff:172.17.0.2`
+becomes the trusted proxy), deleting the peer check, or replacing
+`isSecureRequest` with `=> false` each left **320/320 green**. The only
+assertion on `Secure` in the whole repo was a NEGATIVE one, which a
+permanently-broken implementation satisfies. Now fixed and mutation-proven at
+335 tests: `secure_cookie_http_test.dart` drives the real login route over a
+real socket and pins both routes to a `Secure` cookie; `trusted_proxy_test.dart`
+pins each unmapping guard against an address chosen so only that guard stands
+between it and a false match. `_asIpv4` also now canonicalises IPv4 from the
+BYTES — dart:io echoes the input back, so `010.0.0.5` never matched
+`10.0.0.5`, correct config failing closed in silence.
+
+**Boot now reports config that looks set up and is not** (`configWarnings`,
+extracted from `_initAuthRuntime` so it is testable at all): an entry that can
+never match (`fd00::/8` — an IPv6 CIDR is unsupported — or a Compose service
+name) was previously silent, because the only warning was gated on the list
+being EMPTY. This also closes the recorded mirror case, `TRUSTED_PROXIES` set
+with `TRUST_PROXY` unset. Verified on the rebuilt binary, which named the two
+bad entries and left the good one alone.
+
+**One LOW remains**: nothing pins the real `middleware()` order (blocked on a
+small refactor — it hard-binds process globals, so a test cannot import it; the
+`configWarnings` extraction is the same shape of fix and a template for it).
+The rate-limit key collision is closed with the XFF peer check. **Availability
+has still never been examined** — and the user confirmed on 2026-07-16 that the
+deployment is internet-facing behind a TLS proxy, so every pre-auth endpoint is
+attacker-reachable and that gap is now a real one, not a hypothetical.
 
 ## P4 — Search + tags — **done** (core in `ffb833a`, 2026-07-15; the tag-style editor shipped against the approved `docs/mockups/p4-tags.html`)
 

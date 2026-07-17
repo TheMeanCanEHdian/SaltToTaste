@@ -55,30 +55,70 @@ SaltDatabase get saltDatabase =>
 /// the admin account via `POST /api/v1/auth/setup`.
 AuthRuntime get authRuntime => _authRuntime ??= _initAuthRuntime();
 
-AuthRuntime _initAuthRuntime() {
-  final runtime = AuthRuntime();
-  if (serverConfig.devAllowCors) {
+/// Startup warnings for a configuration that LOOKS set up but is not.
+///
+/// Returned rather than printed so they can be tested. Every warning here
+/// describes a config that fails closed silently, which is the shape of the
+/// bug this surface was fixed for twice: `TRUSTED_PROXIES` that matched no
+/// real peer looked configured and did nothing, and took the session cookie's
+/// `Secure` attribute down with it. A guard nobody can see is worth little
+/// more than no guard.
+List<String> configWarnings(ServerConfig config) {
+  final warnings = <String>[];
+  if (config.devAllowCors) {
     // Reflected-origin CORS with credentials defeats the CSRF protection
     // entirely; this must never be enabled outside local development.
-    stderr.writeln(
+    warnings.add(
       'WARNING: DEV_ALLOW_CORS is enabled. Cross-origin requests with '
       'credentials are allowed and CSRF protection is OFF. '
       'Never run production with this flag.',
     );
   }
-  if (serverConfig.trustProxy && serverConfig.trustedProxies.isEmpty) {
+  if (config.trustProxy && config.trustedProxies.isEmpty) {
     // Fail closed, but loudly: TRUST_PROXY on its own now believes nobody, so
     // rate limits key on the proxy's own address and the whole household
     // shares one bucket. That is the safe direction — the alternative was
     // believing X-Forwarded-For from any peer, which let anyone mint a fresh
     // bucket per request — but it is silent unless we say so here.
-    stderr.writeln(
+    warnings.add(
       'WARNING: TRUST_PROXY is enabled but TRUSTED_PROXIES is empty, so no '
       'peer is trusted and forwarded headers are ignored. Rate limits will '
       "key on the proxy's address (one bucket for everyone behind it). Set "
       'TRUSTED_PROXIES to your proxy, e.g. 172.17.0.0/16 for a Docker bridge.',
     );
   }
+  if (!config.trustProxy && config.trustedProxies.isNotEmpty) {
+    // The mirror image, and the easier mistake to make: the list is set, so
+    // the warning above cannot fire, but TRUST_PROXY gates the whole check.
+    warnings.add(
+      'WARNING: TRUSTED_PROXIES is set but TRUST_PROXY is not enabled, so the '
+      'list is ignored entirely and no forwarded header is believed. Set '
+      'TRUST_PROXY=true to use it.',
+    );
+  }
+  final unusable = config.trustedProxies
+      .where((entry) => !isUsableProxyEntry(entry))
+      .toList();
+  if (config.trustProxy && unusable.isNotEmpty) {
+    // A non-empty list of entries that can never match reaches the same dead
+    // end as an empty one, but slips past the warning above — the operator
+    // sees a configured TRUSTED_PROXIES and is told nothing. Name the entries
+    // rather than the count, since the whole failure is that they look fine.
+    warnings.add(
+      'WARNING: TRUSTED_PROXIES entries that can never match any peer and are '
+      'being ignored: ${unusable.join(', ')}. Entries must be an exact '
+      'address (10.0.0.5, ::1) or an IPv4 CIDR (172.17.0.0/16); an IPv6 CIDR '
+      'and a hostname are both unsupported. Forwarded headers from the '
+      'intended proxy will be ignored, so rate limits will key on its address '
+      'and the session cookie will not gain Secure behind a TLS proxy.',
+    );
+  }
+  return warnings;
+}
+
+AuthRuntime _initAuthRuntime() {
+  final runtime = AuthRuntime();
+  configWarnings(serverConfig).forEach(stderr.writeln);
   // Housekeeping: drop sessions that expired while the server was down.
   saltDatabase.deleteExpiredSessions();
   if (saltDatabase.userCount() == 0) {

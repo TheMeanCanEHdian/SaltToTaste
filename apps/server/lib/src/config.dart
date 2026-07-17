@@ -23,12 +23,24 @@ String? _asIpv4(String address) {
     return null;
   }
   if (parsed.type == InternetAddressType.IPv4) {
-    return parsed.address;
+    // From the BYTES, not `parsed.address` — dart:io echoes the input string
+    // back for IPv4, so `010.0.0.5` stays `010.0.0.5` and would never
+    // string-match the `10.0.0.5` a peer reports, despite both meaning the
+    // same address. Canonicalising here is what makes this function's promise
+    // ("what they MEAN, not how they are spelled") true on the IPv4 path too.
+    final quad = parsed.rawAddress;
+    return '${quad[0]}.${quad[1]}.${quad[2]}.${quad[3]}';
   }
   final bytes = parsed.rawAddress;
   if (bytes.length != 16) {
     return null;
   }
+  // The `::ffff:0:0/96` prefix check, and it is load-bearing SECURITY, not
+  // tidiness: without the all-zero test, ANY address ending in the right four
+  // octets — `2001:db8::ffff:172.17.0.2`, which an attacker picks — would
+  // unmap to `172.17.0.2` and match the README's own `172.17.0.0/16`, handing
+  // a hostile peer the trust reserved for the reverse proxy. `trusted_proxy_
+  // test.dart` pins both halves; delete either and it goes red.
   for (var i = 0; i < 10; i++) {
     if (bytes[i] != 0) {
       return null;
@@ -38,6 +50,27 @@ String? _asIpv4(String address) {
     return null;
   }
   return '${bytes[12]}.${bytes[13]}.${bytes[14]}.${bytes[15]}';
+}
+
+/// Whether [entry] could ever match a peer: an address dart:io can parse, or
+/// an IPv4 CIDR with a 0–32 prefix.
+///
+/// Existence is not usability. `_matchesProxy` fails closed on an entry it
+/// cannot read — an IPv6 CIDR, a Compose service name, `172.17.O.0/16` with a
+/// letter O — which is the right call, but silently, so the operator sees a
+/// configured `TRUSTED_PROXIES` that trusts nobody and is told nothing. That
+/// is the same "looks configured, does nothing" shape as the bug this whole
+/// surface was fixed for, so `bootstrap.dart` reports these at startup.
+bool isUsableProxyEntry(String entry) {
+  if (!entry.contains('/')) {
+    return InternetAddress.tryParse(entry) != null;
+  }
+  final parts = entry.split('/');
+  if (parts.length != 2) {
+    return false;
+  }
+  final bits = int.tryParse(parts[1]);
+  return bits != null && bits >= 0 && bits <= 32 && _asIpv4(parts[0]) != null;
 }
 
 /// Whether [entry] and [address] are the same address, comparing what they

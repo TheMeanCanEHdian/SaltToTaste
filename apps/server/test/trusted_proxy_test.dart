@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:salt_server/src/bootstrap.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:test/test.dart';
 
@@ -159,6 +160,138 @@ void main() {
       // must not be an accident of parsing, so it is spelled 0.0.0.0/0.
       final config = configFor('true', '0.0.0.0/0');
       expect(config.isTrustedProxy('8.8.8.8'), isTrue);
+    });
+  });
+
+  group('only a REAL IPv4-mapped address may unmap', () {
+    // The `::ffff:0:0/96` prefix guards in _asIpv4 are the security of this
+    // whole surface, and nothing pinned them: the review deleted the
+    // all-zero-prefix loop and all 320 tests stayed green while a hostile
+    // peer gained the proxy's trust. Every address here is chosen so that
+    // exactly one guard stands between it and a false match.
+    test('a public IPv6 ending in the bridge quad is NOT the bridge', () {
+      final config = configFor('true', '172.17.0.0/16');
+      // Bytes: [32,1,13,184, 0,0,0,0, 0,0, 255,255, 172,17,0,2] — the 0xffff
+      // marker and the trailing quad both look exactly like a mapped
+      // 172.17.0.2. Only the all-zero test on bytes[0..9] tells them apart,
+      // and the attacker picks this address.
+      expect(
+        config.isTrustedProxy('2001:db8::ffff:172.17.0.2'),
+        isFalse,
+        reason:
+            'a globally-routable IPv6 that merely ENDS in a trusted quad must '
+            'never be unmapped into it — delete the zero-prefix loop in '
+            '_asIpv4 and this is how a hostile peer becomes the proxy',
+      );
+      // The genuine mapped form of the same quad still works, so the guard
+      // above is not just refusing everything.
+      expect(config.isTrustedProxy('::ffff:172.17.0.2'), isTrue);
+    });
+
+    test('an IPv4-COMPATIBLE address is not an IPv4-mapped one', () {
+      // `::172.17.0.2` has the all-zero prefix but NOT the 0xffff marker: the
+      // deprecated IPv4-compatible form. It is not our proxy, and only the
+      // bytes[10..11] check says so.
+      final config = configFor('true', '172.17.0.0/16');
+      expect(
+        config.isTrustedProxy('::172.17.0.2'),
+        isFalse,
+        reason:
+            'without the 0xffff check this deprecated form unmaps into the '
+            'trusted block',
+      );
+    });
+
+    test('an exact IPv6 rule cannot be matched by a mapped IPv4 peer', () {
+      // The two address families must not leak into each other in either
+      // direction: ::ffff:0.0.0.1 is not ::1.
+      final config = configFor('true', '::1');
+      expect(config.isTrustedProxy('::ffff:0.0.0.1'), isFalse);
+      expect(config.isTrustedProxy('::1'), isTrue);
+    });
+
+    test('a leading-zero entry means what it says', () {
+      // dart:io echoes the input back for IPv4, so `010.0.0.5` stayed
+      // `010.0.0.5` and never string-matched the `10.0.0.5` a peer reports —
+      // correct configuration failing closed, silently. _asIpv4 canonicalises
+      // from the bytes now.
+      final config = configFor('true', '010.0.0.5');
+      expect(
+        config.isTrustedProxy('10.0.0.5'),
+        isTrue,
+        reason: '010.0.0.5 and 10.0.0.5 are the same address',
+      );
+      expect(config.isTrustedProxy('::ffff:10.0.0.5'), isTrue);
+      expect(config.isTrustedProxy('10.0.0.6'), isFalse);
+    });
+  });
+
+  group('configWarnings', () {
+    // Every warning here covers a config that fails closed IN SILENCE. That
+    // silence is the whole defect: an operator who sets TRUSTED_PROXIES and
+    // is told nothing has no way to learn it trusts nobody until a cookie
+    // goes missing its Secure flag in production.
+    test('a correct proxy config says nothing', () {
+      expect(configWarnings(configFor('true', '172.17.0.0/16')), isEmpty);
+      expect(configWarnings(configFor(null, null)), isEmpty);
+    });
+
+    test('TRUST_PROXY with an empty list warns', () {
+      expect(
+        configWarnings(configFor('true', null)),
+        contains(contains('TRUSTED_PROXIES is empty')),
+      );
+    });
+
+    test('TRUSTED_PROXIES without TRUST_PROXY warns', () {
+      // The list is set, so the empty-list warning cannot fire; without this
+      // one the misconfiguration is completely silent.
+      expect(
+        configWarnings(configFor(null, '172.17.0.0/16')),
+        contains(contains('TRUST_PROXY is not enabled')),
+      );
+    });
+
+    test('an entry that can never match is named', () {
+      final warnings = configWarnings(configFor('true', 'fd00::/8, caddy'));
+      expect(warnings, hasLength(1));
+      // Naming them matters: the operator has to find which one is wrong.
+      expect(warnings.single, contains('fd00::/8'));
+      expect(warnings.single, contains('caddy'));
+    });
+
+    test('a usable entry beside an unusable one still warns', () {
+      // The dangerous shape: it half works, so nothing looks broken.
+      expect(
+        configWarnings(configFor('true', '172.17.0.0/16, fd00::/8')),
+        contains(contains('fd00::/8')),
+      );
+    });
+  });
+
+  group('isUsableProxyEntry', () {
+    // Existence is not usability, and the boot warning only ever fired on an
+    // EMPTY list — so an entry that can never match looked configured and was
+    // ignored in silence, which is the exact shape of the bug this surface
+    // was fixed for.
+    test('the forms the README documents are usable', () {
+      for (final entry in ['172.17.0.0/16', '10.0.0.5', '::1', '0.0.0.0/0']) {
+        expect(isUsableProxyEntry(entry), isTrue, reason: entry);
+      }
+    });
+
+    test('the forms that silently match nothing are reported', () {
+      for (final entry in [
+        'fd00::/8', // IPv6 CIDR — unsupported, and the natural guess
+        '172.17.O.0/16', // letter O for zero
+        'caddy', // a Compose service name
+        '10.0.0.0/99',
+        '10.0.0.0/-1',
+        '/16',
+        '',
+      ]) {
+        expect(isUsableProxyEntry(entry), isFalse, reason: entry);
+      }
     });
   });
 }
