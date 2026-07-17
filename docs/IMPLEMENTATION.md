@@ -255,9 +255,18 @@ produce a weaker hash, so the input is unreachable. 3/3 refuted.
 | MED | **Availability was never a lens** (found by a critic): no lens asked whether an unauthenticated attacker can stop the server serving. |
 | LOW | The deliberate login/recovery rate-limit split is defeated by a **key-namespace collision** (`recover|<ip>` vs `<ip>|<username>` in one flat map, username unvalidated) — a rider on the XFF finding, closed by the same fix. |
 
-Recorded in `.claude/DEFERRED.md`. Fixing them is not mechanical: "should a
-password reset revoke PATs" and "how should recovery codes be stored" are policy
-calls, not defects with one right answer.
+**Five are now fixed** (`769920d`, `79b2476`) — the three policy calls after the
+user made them (revoke PATs on reset; peer-check `X-Forwarded-For` via the new
+`TRUSTED_PROXIES`; lengthen the recovery code to ~59 bits), plus the two that
+needed no decision (`Max-Age` on the remember-me cookie; `application/json`
+required on request bodies). Each is mutation-checked, and the XFF work also
+closed the older shared-bucket entry and the key-collision rider.
+
+**Two remain**, both LOW and both recorded: nothing pins the real `middleware()`
+order (blocked on a small refactor — it hard-binds process globals, so a test
+cannot import it), and the rate-limit key collision (no longer reachable once
+XFF is peer-checked). The availability mode a critic flagged has still never
+been examined.
 
 ## P4 — Search + tags — **done** (core in `ffb833a`, 2026-07-15; the tag-style editor shipped against the approved `docs/mockups/p4-tags.html`)
 
