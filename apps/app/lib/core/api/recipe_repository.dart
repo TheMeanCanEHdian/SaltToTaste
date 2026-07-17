@@ -192,6 +192,27 @@ class RecipeRepository {
     });
   }
 
+  /// The admin recipe data-quality report (`GET /api/v1/admin/recipe_review`).
+  /// [issue] narrows to one category; [page]/[limit] page the flagged list.
+  Future<RecipeReviewReport> getRecipeReview({
+    required int page,
+    int limit = 50,
+    String? issue,
+  }) {
+    return _request('recipe-review', () async {
+      final data = await _getMap(
+        '/api/v1/admin/recipe_review',
+        query: {
+          'page': '$page',
+          'limit': '$limit',
+          if (issue != null && issue.isNotEmpty) 'issue': issue,
+        },
+      );
+      RecipeReviewReportMapper.ensureInitialized();
+      return RecipeReviewReportMapper.fromMap(data);
+    });
+  }
+
   /// The full recipe matched by [idOrSlug].
   Future<RecipeDetail> getRecipe(String idOrSlug) {
     return _request('recipe', () async {

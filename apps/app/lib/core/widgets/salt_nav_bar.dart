@@ -578,6 +578,11 @@ class _AvatarMenu extends StatelessWidget {
                   title: const Text('Add recipe'),
                   onPress: () => go('/new'),
                 ),
+              if (user.isAdmin)
+                FItem(
+                  title: const Text('Recipe review'),
+                  onPress: () => go('/review'),
+                ),
               FItem(
                 title: const Text('My favorites'),
                 onPress: () => go('/favorites'),
