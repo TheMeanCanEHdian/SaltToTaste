@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -84,24 +85,46 @@ class _LoginPageState extends State<LoginPage> {
         ),
         Padding(
           padding: const EdgeInsets.only(top: 6),
-          // CheckboxListTile makes the whole row a single labelled control
-          // with a full-width (≥48px) tap target — the label toggles the box
-          // and screen readers announce "Keep me signed in, checkbox".
-          child: CheckboxListTile(
-            value: _remember,
-            onChanged: (value) => setState(() => _remember = value ?? false),
-            activeColor: SaltColors.maroon,
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            visualDensity: VisualDensity.compact,
-            title: const Text(
-              'Keep me signed in',
-              style: TextStyle(fontSize: 13, color: SaltColors.muted),
-            ),
-            secondary: const Text(
-              '90 days',
-              style: TextStyle(fontSize: 12, color: SaltColors.muted),
+          // Forui has no checkbox-tile, so rebuild the single labelled control
+          // by hand: a full-width (≥48px) tap target toggles the FCheckbox, and
+          // the merged Semantics node (checked state + label text) keeps the
+          // screen-reader announcement "Keep me signed in, 90 days, checkbox".
+          child: MergeSemantics(
+            child: Semantics(
+              checked: _remember,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _remember = !_remember),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Row(
+                    children: [
+                      ExcludeSemantics(
+                        child: FCheckbox(
+                          value: _remember,
+                          onChange: (value) =>
+                              setState(() => _remember = value),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Keep me signed in',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: SaltColors.muted,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '90 days',
+                        style: TextStyle(fontSize: 12, color: SaltColors.muted),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -113,17 +136,10 @@ class _LoginPageState extends State<LoginPage> {
           alignment: Alignment.center,
           child: Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: SaltColors.muted,
-                minimumSize: const Size(0, 40),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                textStyle: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              onPressed: () => context.go('/recover'),
+            child: FButton(
+              variant: FButtonVariant.ghost,
+              mainAxisSize: MainAxisSize.min,
+              onPress: () => context.go('/recover'),
               child: const Text('Locked out?'),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
 
@@ -148,35 +149,13 @@ class AuthField extends StatelessWidget {
         ),
         Semantics(
           label: label,
-          child: TextField(
-            controller: controller,
+          child: FTextField(
+            control: FTextFieldControl.managed(controller: controller),
             obscureText: obscure,
             autofocus: autofocus,
-            onSubmitted: onSubmitted,
-            decoration: InputDecoration(
-              hintText: hint,
-              helperText: helper,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(9),
-                borderSide: const BorderSide(color: SaltColors.hairline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(9),
-                borderSide: const BorderSide(color: SaltColors.hairline),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(9),
-                borderSide: const BorderSide(
-                  color: SaltColors.maroon,
-                  width: 2,
-                ),
-              ),
-            ),
+            onSubmit: onSubmitted,
+            hint: hint,
+            description: helper == null ? null : Text(helper!),
           ),
         ),
       ],
@@ -234,12 +213,11 @@ class AuthSubmitButton extends StatelessWidget {
       padding: const EdgeInsets.only(top: 20),
       child: SizedBox(
         width: double.infinity,
-        child: FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: SaltColors.maroon,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          onPressed: busy ? null : onPressed,
+        // FButton primary paints maroon/white from the theme; it has no
+        // built-in busy state, so while busy we disable it (onPress: null) and
+        // swap the label for a small spinner — matching the old behaviour.
+        child: FButton(
+          onPress: busy ? null : onPressed,
           child: busy
               ? const SizedBox(
                   width: 18,
