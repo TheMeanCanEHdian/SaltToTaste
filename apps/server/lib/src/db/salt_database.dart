@@ -1306,6 +1306,21 @@ class SaltDatabase {
     ).execute([_utcNowIso(), userId]);
     return _db.updatedRows;
   }
+
+  /// Housekeeping: deletes revoked API tokens whose revocation is older than
+  /// [cutoff], returning how many were removed. Live tokens (`revoked_at IS
+  /// NULL`) are never touched. How long a revoked row is kept is a
+  /// data-retention policy the operator sets via `API_TOKEN_RETENTION_DAYS`;
+  /// the mint-then-revoke loop that grows this table without such pruning was a
+  /// recorded residual. `datetime()` normalizes both sides, matching
+  /// [deleteExpiredSessions].
+  int deleteRevokedApiTokensBefore(DateTime cutoff) {
+    _prepared(
+      'DELETE FROM api_tokens '
+      'WHERE revoked_at IS NOT NULL AND datetime(revoked_at) < datetime(?)',
+    ).execute([cutoff.toUtc().toIso8601String()]);
+    return _db.updatedRows;
+  }
 }
 
 /// A row from the `users` table. `passwordHash` is a secret — never log it.

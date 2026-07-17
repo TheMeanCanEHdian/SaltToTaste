@@ -177,6 +177,7 @@ class ServerConfig {
     this.trustedProxies = const [],
     String? importDir,
     this.searchRateLimit = defaultSearchRateLimit,
+    this.apiTokenRetentionDays = defaultApiTokenRetentionDays,
   }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
@@ -219,6 +220,10 @@ class ServerConfig {
   ///   on the one serving isolate, so this caps any single caller's share of
   ///   it. An invalid value falls back to the default rather than disabling
   ///   the guard.
+  /// * `API_TOKEN_RETENTION_DAYS` — how long a revoked API token row is kept
+  ///   before daily housekeeping deletes it (default 90; `0` keeps them
+  ///   forever). Bounds the table a mint-then-revoke loop would otherwise grow
+  ///   without limit. An invalid value falls back to the default.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -246,7 +251,14 @@ class ServerConfig {
       importDir: (rawImportDir == null || rawImportDir.isEmpty)
           ? null
           : Directory(rawImportDir).absolute.path,
-      searchRateLimit: _parseSearchRateLimit(env['SEARCH_RATE_LIMIT']),
+      searchRateLimit: _parseNonNegativeInt(
+        env['SEARCH_RATE_LIMIT'],
+        defaultSearchRateLimit,
+      ),
+      apiTokenRetentionDays: _parseNonNegativeInt(
+        env['API_TOKEN_RETENTION_DAYS'],
+        defaultApiTokenRetentionDays,
+      ),
     );
     Directory(config.libraryDir).createSync(recursive: true);
     Directory(config.importDir).createSync(recursive: true);
@@ -294,22 +306,31 @@ class ServerConfig {
   /// [searchRateLimit]).
   static const int defaultSearchRateLimit = 60;
 
+  /// Default days a revoked API token row is kept (see
+  /// [apiTokenRetentionDays]).
+  static const int defaultApiTokenRetentionDays = 90;
+
   /// Text searches (`GET /recipes?q=`) allowed per minute per user; `0`
   /// disables the limit. Search is synchronous FTS on the one serving
   /// isolate, so this bounds any single caller's share of it.
   final int searchRateLimit;
 
-  /// Parses `SEARCH_RATE_LIMIT`, falling back to [defaultSearchRateLimit] when
-  /// unset or invalid — a typo must not silently disable the guard; only an
+  /// Days a revoked API token row is kept before daily housekeeping deletes
+  /// it; `0` keeps them forever. Bounds the table a mint-then-revoke loop
+  /// would otherwise grow without limit.
+  final int apiTokenRetentionDays;
+
+  /// Parses a non-negative integer env value, falling back to [fallback] when
+  /// unset or invalid — a typo must not silently disable a guard; only an
   /// explicit non-negative value (including `0`) is taken as written.
-  static int _parseSearchRateLimit(String? raw) {
+  static int _parseNonNegativeInt(String? raw, int fallback) {
     final trimmed = raw?.trim();
     if (trimmed == null || trimmed.isEmpty) {
-      return defaultSearchRateLimit;
+      return fallback;
     }
     final parsed = int.tryParse(trimmed);
     if (parsed == null || parsed < 0) {
-      return defaultSearchRateLimit;
+      return fallback;
     }
     return parsed;
   }

@@ -409,5 +409,22 @@ void main() {
       expect(limitFor('abc'), ServerConfig.defaultSearchRateLimit);
       expect(limitFor('-5'), ServerConfig.defaultSearchRateLimit);
     });
+
+    test('API_TOKEN_RETENTION_DAYS parses; an invalid value keeps default', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_ret_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      int daysFor(String? raw) => ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': dir.path,
+          if (raw != null) 'API_TOKEN_RETENTION_DAYS': raw,
+        },
+      ).apiTokenRetentionDays;
+
+      expect(daysFor(null), ServerConfig.defaultApiTokenRetentionDays);
+      expect(daysFor('30'), 30);
+      expect(daysFor('0'), 0, reason: '0 keeps revoked tokens forever');
+      expect(daysFor('nope'), ServerConfig.defaultApiTokenRetentionDays);
+      expect(daysFor('-1'), ServerConfig.defaultApiTokenRetentionDays);
+    });
   });
 }

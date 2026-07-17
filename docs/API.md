@@ -66,7 +66,7 @@ temporary password with `must_change_password`: until the user calls
 | `DELETE /api/v1/sessions/{id}` | any | sign out one session (own only) |
 | `GET /api/v1/tokens` | any | own PATs (prefix only) |
 | `POST /api/v1/tokens` | any | `{name, scope}` → `{token, item}` — full value only in this response. Capped at 20 live tokens per user (`422` past the cap); revoke one to free a slot |
-| `DELETE /api/v1/tokens/{id}` | any | revoke (own only) |
+| `DELETE /api/v1/tokens/{id}` | any | revoke (own only). The revoked row is deleted after `API_TOKEN_RETENTION_DAYS` (default 90) by daily housekeeping |
 
 ## Conventions
 
@@ -430,8 +430,9 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   in front of them.
 - **Env config**: `PORT`, `DATA_DIR`, `LOG_LEVEL`, `TRUST_PROXY`, `TRUSTED_PROXIES`,
   `SECURE_COOKIES`, `IMPORT_DIR`, `SEARCH_RATE_LIMIT` (text searches/min per
-  user, default 60; `0` disables), `TZ` (container tzdata), plus the
-  dev-only `DEV_ALLOW_CORS`.
+  user, default 60; `0` disables), `API_TOKEN_RETENTION_DAYS` (days a revoked
+  token row is kept before daily pruning, default 90; `0` keeps forever),
+  `TZ` (container tzdata), plus the dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
   requests (bounded), then closes SQLite cleanly — the WAL checkpoints
   and the next boot needs no recovery.

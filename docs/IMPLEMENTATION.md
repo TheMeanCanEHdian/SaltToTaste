@@ -368,11 +368,14 @@ remain out of scope. Still genuinely untested: slowloris and SIGTERM-drain
 completion (the critic reasoned about them but could not drive a raw half-open
 socket in the harness).
 
-**One LOW residual on the token fix:** the active cap bounds *usable* tokens,
-but a mint+revoke loop still adds permanent rows (revoked rows are never
-deleted) and `GET /tokens` is unpaginated. Slow (two requests per row) and
-lower-severity than the capped abuse; a retention policy for revoked rows is a
-data decision left for the user rather than invented here.
+**The token-row residual is closed (`#45`).** The active cap bounds *usable*
+tokens, but a mint+revoke loop still grew the table with permanent revoked rows.
+The user chose a retention window: daily housekeeping (and every boot) now
+deletes revoked rows older than `API_TOKEN_RETENTION_DAYS` (default 90; `0`
+keeps them forever) via `deleteRevokedApiTokensBefore`. That bounds the table —
+and with it the unpaginated `GET /tokens` list, whose size is now
+active (≤ 20) + revoked-within-window — so no separate pagination change was
+needed. DB prune + config parse are unit-tested, the comparison mutation-checked.
 
 **The P3 `middleware()`-order residual is closed** (`#44`): the chain moved to a
 parameterised `buildAppMiddleware` in `lib/`, the test now drives the real

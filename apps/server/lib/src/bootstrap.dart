@@ -220,7 +220,7 @@ ServerConfig initServer() {
   } catch (error, stackTrace) {
     _log.severe('Serves backfill failed', error, stackTrace);
   }
-  _scheduleDailyBackups(config);
+  _scheduleDailyMaintenance(config);
   return config;
 }
 
@@ -234,13 +234,16 @@ void disposeServer() {
   _database = null;
 }
 
-/// Runs a `scheduled` backup daily, plus one at boot when the newest backup
-/// is older than a day (covers servers that are not up for 24h straight).
-void _scheduleDailyBackups(ServerConfig config) {
+/// Runs daily housekeeping: a `scheduled` backup (plus one at boot when the
+/// newest backup is older than a day, covering servers not up 24h straight)
+/// and a prune of revoked API tokens past their retention window. The prune
+/// runs at every boot as well, so a long-lived server does not accumulate
+/// revoked rows only to shed them on restart.
+void _scheduleDailyMaintenance(ServerConfig config) {
   if (_backupTimer != null) {
     return;
   }
-  void run() {
+  void backup() {
     try {
       createBackup(db: saltDatabase, config: config, trigger: 'scheduled');
       // A failed backup must not kill the timer or the server; the backup
@@ -251,11 +254,43 @@ void _scheduleDailyBackups(ServerConfig config) {
     }
   }
 
-  final newest = listBackups(config).firstOrNull;
-  if (newest == null ||
-      DateTime.now().toUtc().difference(newest.createdAt) >
-          const Duration(hours: 24)) {
-    run();
+  void maintain({required bool includeBackup}) {
+    if (includeBackup) {
+      backup();
+    }
+    _pruneRevokedApiTokens(config);
   }
-  _backupTimer = Timer.periodic(const Duration(hours: 24), (_) => run());
+
+  final newest = listBackups(config).firstOrNull;
+  final backupDue =
+      newest == null ||
+      DateTime.now().toUtc().difference(newest.createdAt) >
+          const Duration(hours: 24);
+  // Boot: always prune; back up only when one is actually due.
+  maintain(includeBackup: backupDue);
+  _backupTimer = Timer.periodic(
+    const Duration(hours: 24),
+    (_) => maintain(includeBackup: true),
+  );
+}
+
+/// Deletes revoked API tokens whose revocation is older than the configured
+/// retention window ([ServerConfig.apiTokenRetentionDays]); a window of `0`
+/// keeps them forever. A failed prune must never take the server down.
+void _pruneRevokedApiTokens(ServerConfig config) {
+  final days = config.apiTokenRetentionDays;
+  if (days <= 0) {
+    return;
+  }
+  try {
+    final cutoff = DateTime.now().toUtc().subtract(Duration(days: days));
+    final pruned = saltDatabase.deleteRevokedApiTokensBefore(cutoff);
+    if (pruned > 0) {
+      _log.info('Pruned $pruned revoked API token(s) older than $days days');
+    }
+    // Housekeeping must not keep the server from booting or kill the timer.
+    // ignore: avoid_catches_without_on_clauses
+  } catch (error, stackTrace) {
+    _log.severe('Revoked-token prune failed', error, stackTrace);
+  }
 }

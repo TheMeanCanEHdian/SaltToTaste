@@ -418,5 +418,48 @@ void main() {
         reason: 'nonexistent id',
       );
     });
+
+    test('deleteRevokedApiTokensBefore prunes only old revoked tokens', () {
+      final owner = createDenis();
+      final revokedHash = _fakeTokenHash('pat-old');
+      final revokedId = db.createApiToken(
+        userId: owner,
+        name: 'revoked',
+        prefix: 'stt_pat_Old0',
+        tokenHash: revokedHash,
+        scope: 'read',
+      );
+      db.revokeApiToken(id: revokedId, userId: owner); // revoked_at ~= now
+      final activeHash = _fakeTokenHash('pat-active');
+      db.createApiToken(
+        userId: owner,
+        name: 'active',
+        prefix: 'stt_pat_Act0',
+        tokenHash: activeHash,
+        scope: 'read',
+      );
+
+      // A cutoff BEFORE the revocation prunes nothing.
+      expect(
+        db.deleteRevokedApiTokensBefore(
+          DateTime.now().toUtc().subtract(const Duration(days: 1)),
+        ),
+        0,
+        reason: 'a recently revoked token is within the window',
+      );
+      expect(db.apiTokenByHash(revokedHash), isNotNull);
+
+      // A cutoff AFTER the revocation prunes the revoked row — and only it.
+      final pruned = db.deleteRevokedApiTokensBefore(
+        DateTime.now().toUtc().add(const Duration(days: 1)),
+      );
+      expect(pruned, 1);
+      expect(db.apiTokenByHash(revokedHash), isNull, reason: 'revoked pruned');
+      expect(
+        db.apiTokenByHash(activeHash),
+        isNotNull,
+        reason: 'an active (unrevoked) token is never pruned',
+      );
+    });
   });
 }
