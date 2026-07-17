@@ -62,7 +62,17 @@ docker run -d -p 8080:8080 -v salt-data:/data \
 ```
 
 Run behind a TLS reverse proxy (Caddy/Traefik/nginx) and set
-`TRUST_PROXY=true` so secure cookies are detected via `X-Forwarded-Proto`.
+`TRUST_PROXY=true` so secure cookies are detected via `X-Forwarded-Proto`, and
+`TRUSTED_PROXIES` to name the proxy — e.g. `TRUSTED_PROXIES=172.17.0.0/16` for
+the default Docker bridge.
+
+`TRUST_PROXY` on its own now trusts nobody, and the server says so at boot.
+That is deliberate: it used to believe `X-Forwarded-For` from whoever
+connected, so anyone who could reach the port got a fresh rate-limit bucket per
+request just by inventing the header. A forwarded header only means anything
+coming from the hop that appends it. Getting `TRUSTED_PROXIES` wrong costs you
+one shared rate-limit bucket for everyone behind the proxy; leaving the header
+unchecked cost the rate limit entirely.
 
 ## Configuration
 
@@ -74,7 +84,8 @@ All configuration is via environment variables:
 | `DATA_DIR` | `/data` | Database, YAML library, backups |
 | `IMPORT_DIR` | `$DATA_DIR/import` | Allowlisted root for bulk imports |
 | `LOG_LEVEL` | `INFO` | `ERROR` / `WARN` / `INFO` / `DEBUG` |
-| `TRUST_PROXY` | `false` | Trust `X-Forwarded-*` from a reverse proxy |
+| `TRUST_PROXY` | `false` | Trust `X-Forwarded-*` from a reverse proxy. Inert on its own — set `TRUSTED_PROXIES` too |
+| `TRUSTED_PROXIES` | — | Comma-separated peers allowed to set `X-Forwarded-*`: exact IPs (`10.0.0.5`, `::1`) or IPv4 CIDR (`172.17.0.0/16`, a Docker bridge) |
 | `SECURE_COOKIES` | `false` | Always mark session cookies `Secure` |
 | `TZ` | `UTC` | Container time zone |
 

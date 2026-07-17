@@ -30,6 +30,18 @@ enum RecoveryCodeStatus {
   valid,
 }
 
+/// How many 4-character groups a recovery code carries: 12 characters over a
+/// 31-symbol alphabet, ~59 bits.
+///
+/// Longer than the first-boot setup code's 8 characters (~40 bits), and
+/// deliberately so. This code GRANTS ADMIN, and the storage below is an
+/// unsalted SHA-256 — which is the right choice for a high-entropy secret and
+/// the wrong one for a guessable one. 40 bits was the weak part, not the
+/// hash, so the fix is entropy rather than a slow KDF: argon2id here would
+/// cost 19 MiB per attempt to defend a code that lives 15 minutes, and would
+/// not change what an ONLINE guesser faces at all.
+const int recoveryCodeGroups = 3;
+
 /// Issues a fresh single-use recovery code, persists its digest and expiry,
 /// and returns the plaintext for the CLI to print.
 ///
@@ -37,7 +49,7 @@ enum RecoveryCodeStatus {
 /// only party who can be running this, and the newest code wins.
 /// [now] overrides the clock (tests).
 String issueRecoveryCode(SaltDatabase db, {DateTime? now}) {
-  final code = generateSetupCode();
+  final code = generateSetupCode(groups: recoveryCodeGroups);
   final expiresAt = (now ?? DateTime.now().toUtc()).toUtc().add(
     recoveryCodeLifetime,
   );

@@ -3,6 +3,57 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 
+/// Whether [address] matches a `TRUSTED_PROXIES` entry: an exact address, or
+/// an IPv4 CIDR block.
+///
+/// CIDR matters in practice — the documented deployment puts the reverse proxy
+/// on a Docker bridge, where its address is assigned and moves. Requiring an
+/// exact IP there would mean an operator either pins addresses by hand or,
+/// far more likely, gives up and leaves the header unchecked.
+bool _matchesProxy(String entry, String address) {
+  if (!entry.contains('/')) {
+    return entry == address;
+  }
+  final parts = entry.split('/');
+  if (parts.length != 2) {
+    return false;
+  }
+  final bits = int.tryParse(parts[1]);
+  final network = _ipv4ToInt(parts[0]);
+  final candidate = _ipv4ToInt(address);
+  if (bits == null ||
+      bits < 0 ||
+      bits > 32 ||
+      network == null ||
+      candidate == null) {
+    // Not parseable as IPv4 CIDR (an IPv6 entry, or a typo). Refuse rather
+    // than guess: an unparseable rule must never widen trust.
+    return false;
+  }
+  if (bits == 0) {
+    return true;
+  }
+  final mask = (0xFFFFFFFF << (32 - bits)) & 0xFFFFFFFF;
+  return (network & mask) == (candidate & mask);
+}
+
+/// [address] as a 32-bit int, or null when it is not dotted-quad IPv4.
+int? _ipv4ToInt(String address) {
+  final octets = address.split('.');
+  if (octets.length != 4) {
+    return null;
+  }
+  var value = 0;
+  for (final octet in octets) {
+    final part = int.tryParse(octet);
+    if (part == null || part < 0 || part > 255) {
+      return null;
+    }
+    value = (value << 8) | part;
+  }
+  return value;
+}
+
 /// Server configuration resolved from process environment variables.
 class ServerConfig {
   /// Creates a config from already-resolved values.
@@ -14,6 +65,7 @@ class ServerConfig {
     required this.trustProxy,
     this.devAllowCors = false,
     this.secureCookies = false,
+    this.trustedProxies = const [],
     String? importDir,
   }) : importDir = importDir ?? '$dataDir/import';
 
@@ -29,7 +81,20 @@ class ServerConfig {
   ///   (case-insensitive, default `INFO`). Throws [FormatException] on any
   ///   other value.
   /// * `TRUST_PROXY` — `true` to trust reverse-proxy headers; anything else
-  ///   (or unset) means `false`.
+  ///   (or unset) means `false`. Only takes effect together with
+  ///   `TRUSTED_PROXIES`: on its own it now trusts nothing, and says so at
+  ///   boot.
+  /// * `TRUSTED_PROXIES` — comma-separated addresses that may set
+  ///   `X-Forwarded-For`/`X-Forwarded-Proto`, as exact IPs (`10.0.0.5`,
+  ///   `::1`) or IPv4 CIDR (`172.17.0.0/16` — a Docker bridge). A forwarded
+  ///   header from any OTHER peer is ignored.
+  ///
+  ///   This exists because `TRUST_PROXY=true` alone honoured
+  ///   `X-Forwarded-For` from whoever connected, so anyone who could reach
+  ///   the port got a fresh rate-limit bucket per request by making the
+  ///   header up — login throttling was decorative in the deployment the
+  ///   README documents. The header is only meaningful from the hop that
+  ///   appends it, so the peer has to be checked.
   /// * `DEV_ALLOW_CORS` — `true` to add permissive CORS headers to every
   ///   response. DEVELOPMENT ONLY — this defeats CSRF protection (a loud
   ///   warning is logged at boot). Production serves the web build
@@ -57,6 +122,10 @@ class ServerConfig {
       dataDir: dataDir,
       logLevel: _parseLogLevel(env['LOG_LEVEL']),
       trustProxy: env['TRUST_PROXY']?.trim().toLowerCase() == 'true',
+      trustedProxies: [
+        for (final entry in (env['TRUSTED_PROXIES'] ?? '').split(','))
+          if (entry.trim().isNotEmpty) entry.trim(),
+      ],
       devAllowCors: env['DEV_ALLOW_CORS']?.trim().toLowerCase() == 'true',
       secureCookies: env['SECURE_COOKIES']?.trim().toLowerCase() == 'true',
       importDir: (rawImportDir == null || rawImportDir.isEmpty)
@@ -76,6 +145,25 @@ class ServerConfig {
 
   /// Whether reverse-proxy headers (e.g. `X-Forwarded-For`) are trusted.
   final bool trustProxy;
+
+  /// Peers whose `X-Forwarded-*` headers are honoured, when [trustProxy] is
+  /// on. Exact IPs or IPv4 CIDR. Empty means no peer is trusted, which makes
+  /// [trustProxy] inert — deliberately: failing closed costs a shared
+  /// rate-limit bucket, failing open costs the rate limit entirely.
+  final List<String> trustedProxies;
+
+  /// Whether [address] is one of [trustedProxies].
+  bool isTrustedProxy(String? address) {
+    if (address == null || !trustProxy) {
+      return false;
+    }
+    for (final entry in trustedProxies) {
+      if (_matchesProxy(entry, address)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /// Whether `Access-Control-Allow-Origin: *` is added to every response.
   /// Development only (Flutter dev server on a different port); production

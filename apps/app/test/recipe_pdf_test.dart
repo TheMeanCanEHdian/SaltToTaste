@@ -384,12 +384,15 @@ void main() {
             .map((r) => r.category ?? '')
             .reduce((a, b) => a.length >= b.length ? a : b);
 
-        final titleWords = title.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+        final titleWords = title
+            .split(RegExp(r'\s+'))
+            .where((w) => w.isNotEmpty);
         expect(
           await painted(bundt.copyWith(title: title)) -
               await painted(bundt.copyWith(title: 'X')),
           titleWords.length - 1,
-          reason: 'the corpus\'s longest title (${title.length} chars) must '
+          reason:
+              'the corpus\'s longest title (${title.length} chars) must '
               'print every word: "$title"',
         );
 
@@ -400,7 +403,8 @@ void main() {
           await painted(bundt.copyWith(category: category)) -
               await painted(bundt.copyWith(category: 'X')),
           categoryWords.length - 1,
-          reason: 'the corpus\'s longest category (${category.length} chars) '
+          reason:
+              'the corpus\'s longest category (${category.length} chars) '
               'must print every word: "$category"',
         );
       });

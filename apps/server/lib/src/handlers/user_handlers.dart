@@ -111,7 +111,19 @@ Map<String, Object?> patchUserHandler(
 
 /// `POST /api/v1/users/<id>/reset_password` (admin) — new temporary
 /// password (returned once), forces a change at next sign-in, and signs the
-/// user out everywhere.
+/// user out everywhere: every session AND every personal access token.
+///
+/// The tokens matter as much as the sessions, and used not to go. A PAT is its
+/// own credential: dropping the sessions left it alive, `must_change_password`
+/// only FROZE it (403), and the moment the user completed the forced change it
+/// returned to full service — so the action an operator reaches for first on a
+/// suspected compromise was the one path that evicted everything except the
+/// attacker. `recoverAdmin` already reasoned this out for the neighbouring
+/// flow; this now matches it.
+///
+/// The cost is real and accepted (user's call, 2026-07-16): a routine reset
+/// also kills that user's own scripts, and there is no reset that spares them.
+/// The count comes back in the response so the admin can see what went.
 Future<Map<String, Object?>> resetPasswordHandler(
   SaltDatabase db,
   PasswordHasher hasher,
@@ -135,8 +147,10 @@ Future<Map<String, Object?>> resetPasswordHandler(
     await hasher.hash(tempPassword),
     mustChangePassword: true,
   );
+  final revokedTokens = db.revokeAllApiTokens(userId);
   return {
     'user': _userJson(db.userById(userId)!),
     'temp_password': tempPassword,
+    'revoked_tokens': revokedTokens,
   };
 }

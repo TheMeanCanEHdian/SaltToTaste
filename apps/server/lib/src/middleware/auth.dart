@@ -183,16 +183,40 @@ void requireCsrf(RequestContext context, AuthUser user) {
   }
 }
 
+/// The socket peer's address, or null when there is no real connection (bare
+/// unit tests).
+String? _peerAddress(RequestContext context) {
+  try {
+    return context.request.connectionInfo.remoteAddress.address;
+    // `connectionInfo` null-asserts shelf's connection info, which is absent
+    // outside a real shelf_io server; treat that as address unknown.
+    // ignore: avoid_catching_errors
+  } on TypeError {
+    return null;
+  }
+}
+
+/// Whether this request's `X-Forwarded-*` headers may be believed: only when
+/// the socket peer is a configured proxy (`TRUST_PROXY` + `TRUSTED_PROXIES`).
+///
+/// The peer check is the whole point. `TRUST_PROXY=true` alone honoured
+/// `X-Forwarded-For` from whoever happened to connect, so anyone who could
+/// reach the port minted a fresh rate-limit bucket per request just by making
+/// the header up — login throttling was decorative in the deployment the
+/// README documents. A forwarded header only means anything coming from the
+/// hop that appends it.
+bool trustsForwardedHeaders(RequestContext context) =>
+    context.read<ServerConfig>().isTrustedProxy(_peerAddress(context));
+
 /// The client IP used for rate-limiting keys.
 ///
-/// Under [ServerConfig.trustProxy], the RIGHTMOST `X-Forwarded-For` value is
-/// used — that is the hop appended by our own reverse proxy. The leftmost
-/// values are client-supplied and trivially spoofable; keying rate limits on
-/// them would give an attacker a fresh bucket per request. Without a trusted
-/// proxy, the socket peer address is used (`unknown` when unavailable, e.g.
-/// in bare unit tests).
+/// From a trusted proxy, the RIGHTMOST `X-Forwarded-For` value is used — that
+/// is the hop our own proxy appended. The leftmost values are client-supplied
+/// and trivially spoofable; keying rate limits on them would give an attacker
+/// a fresh bucket per request. Otherwise the socket peer address is used
+/// (`unknown` when unavailable, e.g. in bare unit tests).
 String clientIp(RequestContext context) {
-  if (context.read<ServerConfig>().trustProxy) {
+  if (trustsForwardedHeaders(context)) {
     final forwarded = context.request.headers['x-forwarded-for'];
     if (forwarded != null) {
       final last = forwarded.split(',').last.trim();
@@ -201,14 +225,7 @@ String clientIp(RequestContext context) {
       }
     }
   }
-  try {
-    return context.request.connectionInfo.remoteAddress.address;
-    // `connectionInfo` null-asserts shelf's connection info, which is absent
-    // outside a real shelf_io server; treat that as address unknown.
-    // ignore: avoid_catching_errors
-  } on TypeError {
-    return 'unknown';
-  }
+  return _peerAddress(context) ?? 'unknown';
 }
 
 /// Whether the session cookie should carry `Secure`: when
@@ -221,7 +238,12 @@ bool isSecureRequest(RequestContext context) {
   if (config.secureCookies) {
     return true;
   }
-  if (!config.trustProxy) {
+  // Same peer check as clientIp: X-Forwarded-Proto means nothing from a peer
+  // that is not our proxy. Spoofing it is not an escalation (claiming https
+  // over http only stops the browser returning the cookie), but there is no
+  // reason to believe a header from an untrusted hop, and one rule is easier
+  // to keep true than two.
+  if (!trustsForwardedHeaders(context)) {
     return false;
   }
   final proto = context.request.headers['x-forwarded-proto'];

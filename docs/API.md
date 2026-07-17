@@ -14,7 +14,8 @@ Two interchangeable credentials, checked by the same middleware:
 
 - **Session token** — from `POST /auth/login` (or `/auth/setup`). Delivered
   both as an `stt_session` cookie (`HttpOnly; SameSite=Lax; Path=/`, plus
-  `Secure` behind a TLS proxy with `TRUST_PROXY=true`) and in the response
+  `Secure` behind a TLS proxy with `TRUST_PROXY=true` **and** `TRUSTED_PROXIES`
+  naming that proxy) and in the response
   body for non-browser clients (`Authorization: Bearer <token>`). Expiry:
   7 days, or 90 days sliding when `remember` was set.
 - **Personal access token (PAT)** — `stt_pat_…`, minted per user in
@@ -59,7 +60,7 @@ temporary password with `must_change_password`: until the user calls
 | `GET /api/v1/users` | admin | all accounts |
 | `POST /api/v1/users` | admin | `{username, role}` → `{user, temp_password}` (shown once); duplicate → `409 conflict` |
 | `PATCH /api/v1/users/{id}` | admin | `{role? \| disabled?}`; never your own account |
-| `POST /api/v1/users/{id}/reset_password` | admin | new `temp_password` (once), forces change, signs out everywhere; not your own account (use change password). A forced change also blocks the user's PATs until they sign in and set a password |
+| `POST /api/v1/users/{id}/reset_password` | admin | new `temp_password` (once), forces change, and signs out everywhere — every session AND every PAT, with the count returned as `revoked_tokens`. Not your own account (use change password). Revoking the PATs is deliberate: a PAT is its own credential, so a reset that only dropped sessions left an attacker's token frozen rather than gone, and it returned to full service the moment the user completed the forced change |
 | `GET /api/v1/sessions` | any | own sessions; `current` flags this one |
 | `DELETE /api/v1/sessions/{id}` | any | sign out one session (own only) |
 | `GET /api/v1/tokens` | any | own PATs (prefix only) |
@@ -413,7 +414,7 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`;
   HTML additionally gets a same-origin `Content-Security-Policy` and
   `X-Frame-Options: DENY`.
-- **Env config**: `PORT`, `DATA_DIR`, `LOG_LEVEL`, `TRUST_PROXY`,
+- **Env config**: `PORT`, `DATA_DIR`, `LOG_LEVEL`, `TRUST_PROXY`, `TRUSTED_PROXIES`,
   `SECURE_COOKIES`, `IMPORT_DIR`, `TZ` (container tzdata), plus the
   dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight

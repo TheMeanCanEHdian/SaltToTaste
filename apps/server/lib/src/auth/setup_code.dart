@@ -6,9 +6,14 @@ const String setupCodeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 final Random _secureRandom = Random.secure();
 
-/// Generates a first-boot setup code in `XXXX-XXXX` form from
-/// [setupCodeAlphabet] using a CSPRNG (~40 bits of entropy).
-String generateSetupCode() {
+/// Generates a code of [groups] dash-separated 4-character groups from
+/// [setupCodeAlphabet] using a CSPRNG.
+///
+/// Entropy is `log2(31^(4 * groups))`: 2 groups ~40 bits, 3 groups ~59 bits.
+/// The alphabet is deliberately 31 symbols (no I/L/O/0/1) so a code read off
+/// a terminal cannot be mistyped into a different valid one; length, not
+/// alphabet, is the knob for entropy.
+String generateSetupCode({int groups = 2}) {
   String group() => String.fromCharCodes(
     List<int>.generate(
       4,
@@ -17,7 +22,7 @@ String generateSetupCode() {
       ),
     ),
   );
-  return '${group()}-${group()}';
+  return List<String>.generate(groups, (_) => group()).join('-');
 }
 
 /// Whether [provided] matches [expected], ignoring case, dashes and

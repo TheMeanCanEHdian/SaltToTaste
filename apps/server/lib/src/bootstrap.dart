@@ -66,6 +66,19 @@ AuthRuntime _initAuthRuntime() {
       'Never run production with this flag.',
     );
   }
+  if (serverConfig.trustProxy && serverConfig.trustedProxies.isEmpty) {
+    // Fail closed, but loudly: TRUST_PROXY on its own now believes nobody, so
+    // rate limits key on the proxy's own address and the whole household
+    // shares one bucket. That is the safe direction — the alternative was
+    // believing X-Forwarded-For from any peer, which let anyone mint a fresh
+    // bucket per request — but it is silent unless we say so here.
+    stderr.writeln(
+      'WARNING: TRUST_PROXY is enabled but TRUSTED_PROXIES is empty, so no '
+      'peer is trusted and forwarded headers are ignored. Rate limits will '
+      "key on the proxy's address (one bucket for everyone behind it). Set "
+      'TRUSTED_PROXIES to your proxy, e.g. 172.17.0.0/16 for a Docker bridge.',
+    );
+  }
   // Housekeeping: drop sessions that expired while the server was down.
   saltDatabase.deleteExpiredSessions();
   if (saltDatabase.userCount() == 0) {

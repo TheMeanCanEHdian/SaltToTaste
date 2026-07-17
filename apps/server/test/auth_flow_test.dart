@@ -624,6 +624,70 @@ void main() {
     });
   });
 
+  group('admin password reset evicts every credential', () {
+    // The reported hole: reset dropped SESSIONS but left PATs. A PAT is its
+    // own credential, so must_change_password only FROZE it (403) — and the
+    // moment the legitimate user completed the forced change it came back to
+    // full service. The action an operator reaches for first on a suspected
+    // compromise was the one that evicted everything except the attacker.
+    test('a PAT does not survive the reset + forced-change cycle', () async {
+      final victim = createMember('reset-victim');
+      final pat = generatePat();
+      db.createApiToken(
+        userId: victim,
+        name: 'attacker token',
+        prefix: pat.prefix,
+        tokenHash: hashToken(pat.token),
+        scope: 'full',
+      );
+      Future<int> patStatus() async {
+        final (response, _) = await send(
+          'GET',
+          '/api/v1/recipes',
+          headers: {'Authorization': 'Bearer ${pat.token}'},
+        );
+        return response.statusCode;
+      }
+
+      expect(
+        await patStatus(),
+        HttpStatus.ok,
+        reason: 'the PAT must work to begin with, or this proves nothing',
+      );
+
+      final adminToken = await sessionTokenFor('admin', _adminPassword);
+      final (reset, resetBody) = await send(
+        'POST',
+        '/api/v1/users/$victim/reset_password',
+        headers: {'Authorization': 'Bearer $adminToken', ..._csrfHeader},
+      );
+      expect(reset.statusCode, HttpStatus.ok, reason: resetBody);
+      expect(
+        jsonOf(resetBody)['revoked_tokens'],
+        1,
+        reason: 'the admin must be told what the reset evicted',
+      );
+
+      // The victim completes the forced change — this is the step that used
+      // to REVIVE the attacker's token.
+      final temp = jsonOf(resetBody)['temp_password'] as String;
+      final victimToken = await sessionTokenFor('reset-victim', temp);
+      final (changed, changedBody) = await send(
+        'POST',
+        '/api/v1/auth/change_password',
+        headers: {'Authorization': 'Bearer $victimToken', ..._csrfHeader},
+        jsonBody: {'new_password': 'victim-brand-new-password'},
+      );
+      expect(changed.statusCode, HttpStatus.ok, reason: changedBody);
+
+      expect(
+        await patStatus(),
+        HttpStatus.unauthorized,
+        reason: 'the PAT came back to life after the password change',
+      );
+    });
+  });
+
   group('must_change_password', () {
     test('is blocked from recipes until the password is changed', () async {
       createMember('newbie', mustChangePassword: true);
