@@ -518,4 +518,56 @@ void main() {
       expect(searchKeywords, isNot(contains(SearchScope.general.name)));
     });
   });
+
+  group('maxSearchTerms', () {
+    // Availability: bm25 ranking is superlinear in term count and runs
+    // synchronously in the server's one isolate, so a query with hundreds of
+    // OR'd terms lets any member stall the whole server (measured: 320 terms =
+    // 2.7s on the corpus). The parser rejects an over-complex query so it
+    // becomes a 422 rather than 160ms+ of serialized work.
+    String terms(int n) => List.filled(n, 'the').join(' ');
+
+    test('a query at the limit parses cleanly', () {
+      final result = parseSearchQuery(terms(maxSearchTerms));
+      expect(result.errors, isEmpty);
+      expect(result.root, isNotNull);
+    });
+
+    test('one term over the limit is rejected', () {
+      final result = parseSearchQuery(terms(maxSearchTerms + 1));
+      expect(
+        result.errors,
+        contains(contains('too many terms')),
+        reason: 'the ${maxSearchTerms + 1}th term must trip the cap',
+      );
+    });
+
+    test('OR chains and calories filters count toward the limit', () {
+      // The attack shape is `the or the or ...`; each side is a leaf, and a
+      // calories filter is a leaf too, so a mixed query still hits the cap.
+      final orChain = List.filled(maxSearchTerms, 'the').join(' or ');
+      final withCalories = '$orChain and calories:<400';
+      expect(
+        parseSearchQuery(withCalories).errors,
+        contains(contains('too many terms')),
+      );
+    });
+
+    test('a realistic search is nowhere near the limit', () {
+      // No human query approaches 24 leaf terms; the cap must never bite one.
+      for (final q in [
+        'chicken soup',
+        'tag:dessert chocolate',
+        'title:cake or title:pie',
+        'ingredient:butter ingredient:flour ingredient:sugar',
+        'beef or pork or lamb or chicken or fish or tofu',
+      ]) {
+        expect(
+          parseSearchQuery(q).errors,
+          isEmpty,
+          reason: 'a real query <$q> must not trip the term cap',
+        );
+      }
+    });
+  });
 }

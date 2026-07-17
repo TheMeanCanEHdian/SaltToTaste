@@ -155,9 +155,7 @@ void main() {
         // accents. Tag names are almost unconstrained (1-60 chars) but the
         // corpus holds only one, so real titles are the honest source of
         // hostile-but-valid strings for the escaper.
-        final titles = decodeCorpus()
-            .results
-            .values
+        final titles = decodeCorpus().results.values
             .map((r) => r.recipe.title)
             .where((t) => t.trim() == t && t.isNotEmpty)
             .toSet();

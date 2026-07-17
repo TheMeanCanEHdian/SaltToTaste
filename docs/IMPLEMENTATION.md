@@ -322,12 +322,35 @@ measured BY HAND against a rebuilt server:
   single-row read. `maxActiveTokensPerUser` in `token_handlers.dart`,
   mutation-checked.
 
-**Still UNTESTED** (the void run never reached them, and hand-measuring stopped
-at the top leads): FTS/DSL superlinearity on a crafted `q=` (member-reachable),
-and the critic's exotic vectors — slowloris, SIGTERM drain completion,
-disk-fill during YAML export/backups, uncancellable jobs blocking the next, and
-recursion on attacker-shaped input (nested quotes, deep YAML). A re-run needs
-the worktree provisioning fixed first, or hand-measurement continued.
+**Second pass, 2026-07-17 — the review tool fixed, then re-run.** Once the
+preflight gate closed the worktree bug (`#46`), the workflow ran clean and
+reached the questions the void run had not:
+
+- **FIXED — MED: a member can stall the whole server with a handful of
+  ~500-byte search queries.** `GET /recipes?q=` ranks with FTS5 `bm25`, which is
+  superlinear in OR'd terms, run synchronously in the one serving isolate.
+  Measured on the corpus (and reproduced independently): 20 terms → 19 ms, 80 →
+  210 ms, 320 → 2.7 s — doubling terms ~quadruples time; dropping the `bm25`
+  ORDER BY takes an 80-term query from 210 ms to 0.5 ms, so ranking is the whole
+  lever. Uncapped, 3 looping connections drove `/healthz` from 4 ms to ~480 ms
+  (effective denial). Fixed by a `maxSearchTerms = 24` cap in the shared DSL
+  parser (`dsl_parser.dart`), enforced as a parse error → 422. Verified on a
+  live server: the 73-term attack now 422s in 7 ms; a real query is untouched;
+  the worst capped query is ~30 ms and 3 connections hold `/healthz` at ~89 ms
+  (degraded, not denied). Mutation-checked.
+- **Critic swept four more modes, all bounded** — sync image reads are
+  admin-gated to write, the recipe list caps `limit` at 100, the login username
+  regex is anchored, and the parser did not blow the stack on adversarial input.
+  Zero new findings.
+
+**Residual (filed):** the cap kills the *quadratic* but not the underlying fact
+that a synchronous sqlite call on a single isolate degrades under sustained
+load — a member sending capped ~30 ms queries on many connections still adds
+latency for everyone (linear now, not quadratic). The complete cure is a search
+rate-limit or moving the DB off the serving isolate — a larger change, not
+invented here. Still genuinely untested: slowloris and SIGTERM-drain completion
+(the critic reasoned about them but could not drive a raw half-open socket in
+the harness).
 
 **One LOW residual on the token fix:** the active cap bounds *usable* tokens,
 but a mint+revoke loop still adds permanent rows (revoked rows are never

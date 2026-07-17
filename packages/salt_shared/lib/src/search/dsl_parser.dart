@@ -158,6 +158,20 @@ class SearchParseResult {
   final List<String> errors;
 }
 
+/// The most leaf terms a single query may carry before it is rejected.
+///
+/// This is an availability bound, not a usability one. The server ranks matches
+/// with FTS5 `bm25`, whose cost is superlinear in the number of OR'd terms —
+/// measured on the 1,198-recipe corpus, query time roughly QUADRUPLES each time
+/// the term count doubles (20 terms → 19 ms, 80 → 210 ms, 320 → 2.7 s) — and
+/// every query runs synchronously in the server's single serving isolate, so a
+/// handful of many-term queries from any signed-in member serialize the whole
+/// server and deny service to everyone, admin included. A real search is a few
+/// words; 24 is far above any legitimate query and caps a single one at ~25 ms.
+/// Enforced as a parse error, so an over-complex query is a 422 like any other
+/// malformed one, at the one gate every search consumer already passes through.
+const int maxSearchTerms = 24;
+
 /// Parses a search DSL [input] string into a [SearchParseResult].
 ///
 /// Empty or whitespace-only input yields a `null` root and no errors.
@@ -168,8 +182,25 @@ SearchParseResult parseSearchQuery(String input) {
   final errors = <String>[];
   final tokens = _tokenize(input, errors);
   final root = _Parser(tokens, errors).parseQuery();
+  if (root != null && _leafTermCount(root) > maxSearchTerms) {
+    errors.add(
+      'Search has too many terms (limit $maxSearchTerms). '
+      'Use fewer words.',
+    );
+  }
   return SearchParseResult(root: root, errors: errors);
 }
+
+/// Counts the leaf terms in [node] — the FTS terms and calories filters that
+/// drive the server's ranking cost. Junctions contribute only their children.
+int _leafTermCount(SearchNode node) => switch (node) {
+  TermNode() => 1,
+  CaloriesNode() => 1,
+  JunctionNode(:final children) => children.fold(
+    0,
+    (sum, child) => sum + _leafTermCount(child),
+  ),
+};
 
 // --- Tokenizer -------------------------------------------------------------
 
