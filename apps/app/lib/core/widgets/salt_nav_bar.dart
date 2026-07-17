@@ -652,7 +652,7 @@ class _ReviewCountBadge extends StatelessWidget {
           return const SizedBox.shrink();
         }
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           decoration: BoxDecoration(
             color: SaltColors.maroon,
             borderRadius: BorderRadius.circular(20),
@@ -663,6 +663,7 @@ class _ReviewCountBadge extends StatelessWidget {
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w800,
+              height: 1,
             ),
           ),
         );

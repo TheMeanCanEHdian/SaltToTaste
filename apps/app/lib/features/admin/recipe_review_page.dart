@@ -45,41 +45,51 @@ class _Loaded extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<RecipeReviewCubit>();
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1100),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-          children: [
-            const Text(
-              'Recipe review',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: SaltColors.ink,
+    // The scroll view spans the full width so its scrollbar sits at the
+    // viewport edge (natural for a web page); each block is centred and capped
+    // at the app's 1100px content width.
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      children: [
+        _centered(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Recipe review',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: SaltColors.ink,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Recipes the server flagged as missing or incomplete data. '
-              'Open one to fix it in the editor or the nutrition review.',
-              style: TextStyle(fontSize: 14, color: SaltColors.muted),
-            ),
-            const SizedBox(height: 18),
-            _Filters(state: state, onSelect: cubit.filter),
-            const SizedBox(height: 18),
-            if (state.items.isEmpty)
-              const _Empty()
-            else
-              FTileGroup(
-                children: [
-                  for (final item in state.items) _reviewTile(context, item),
-                ],
+              const SizedBox(height: 4),
+              const Text(
+                'Recipes the server flagged as missing or incomplete data. '
+                'Open one to fix it in the editor or the nutrition review.',
+                style: TextStyle(fontSize: 14, color: SaltColors.muted),
               ),
-            if (state.hasMore) ...[
-              const SizedBox(height: 16),
-              Center(
+              const SizedBox(height: 18),
+              _Filters(state: state, onSelect: cubit.filter),
+              const SizedBox(height: 18),
+            ],
+          ),
+        ),
+        if (state.items.isEmpty)
+          _centered(const _Empty())
+        else
+          _centered(
+            FTileGroup(
+              children: [
+                for (final item in state.items) _reviewTile(context, item),
+              ],
+            ),
+          ),
+        if (state.hasMore)
+          _centered(
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Center(
                 child: FButton(
                   variant: FButtonVariant.outline,
                   mainAxisSize: MainAxisSize.min,
@@ -87,21 +97,32 @@ class _Loaded extends StatelessWidget {
                   child: Text(state.loadingMore ? 'Loading…' : 'Load more'),
                 ),
               ),
-            ],
-          ],
-        ),
-      ),
+            ),
+          ),
+      ],
     );
   }
+
+  /// Centres [child] and caps it at the content width, with horizontal padding.
+  Widget _centered(Widget child) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1100),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: child,
+      ),
+    ),
+  );
 
   FTile _reviewTile(BuildContext context, RecipeReviewItem item) {
     return FTile(
       title: Text(item.title),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [for (final issue in item.issues) _IssueLine(issue)],
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [for (final issue in item.issues) _IssueBadge(issue)],
         ),
       ),
       suffix: const Icon(Icons.chevron_right, color: SaltColors.muted),
@@ -161,9 +182,9 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final border = selected ? SaltColors.maroon : SaltColors.hairline;
-    final bg = selected
-        ? const Color(0xFFF7ECEC)
-        : (emphasized ? const Color(0xFFF7ECEC) : Colors.white);
+    // Selection alone drives the fill; "Need attention" is only emphasised by
+    // its maroon number, so it no longer looks selected when it isn't.
+    final bg = selected ? const Color(0xFFF7ECEC) : Colors.white;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -204,58 +225,39 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-/// One issue on a recipe: a coloured label pill followed by its detail text.
-class _IssueLine extends StatelessWidget {
-  const _IssueLine(this.issue);
+/// A coloured pill naming one issue on a recipe. The specific detail (e.g. the
+/// nutrition ratio, the unparsed line) lives on the recipe the row opens.
+class _IssueBadge extends StatelessWidget {
+  const _IssueBadge(this.issue);
 
   final RecipeReviewIssue issue;
 
   @override
   Widget build(BuildContext context) {
     final (bg, ink) = _issueColors(issue.check);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              issue.label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: ink,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                issue.detail,
-                style: const TextStyle(fontSize: 13, color: SaltColors.muted),
-              ),
-            ),
-          ),
-        ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        issue.label,
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: ink),
       ),
     );
   }
 }
 
-/// Maps a check id to a severity colour pair. Unknown ids (a check added on the
-/// server the app doesn't know yet) fall back to neutral.
+/// Maps a check id to a severity colour pair. Red = blocking, amber = needs
+/// fixing, grey = missing/informational. Nothing uses green — an issue should
+/// never read as a good thing. Unknown ids (a check added on the server the app
+/// doesn't know yet) fall back to neutral.
 (Color, Color) _issueColors(String checkId) => switch (checkId) {
   'no_instructions' => (SaltColors.errBg, SaltColors.errInk),
   'unparsed_ingredients' => (SaltColors.warnBg, SaltColors.warnInk),
   'extraction_warnings' => (SaltColors.warnBg, SaltColors.warnInk),
-  'incomplete_nutrition' => (SaltColors.infoBg, SaltColors.infoInk),
+  'incomplete_nutrition' => (SaltColors.warnBg, SaltColors.warnInk),
   _ => (SaltColors.chipNeutral, SaltColors.muted),
 };
 

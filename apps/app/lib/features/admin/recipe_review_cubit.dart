@@ -102,13 +102,49 @@ class RecipeReviewCubit extends Cubit<RecipeReviewState> {
     }
   }
 
-  /// Switches the category filter (null clears it) and reloads.
-  Future<void> filter(String? issue) {
+  /// Switches the category filter (null clears it). Unlike [load] this keeps the
+  /// chrome (chips + counts) on screen and swaps only the list, so changing a
+  /// filter updates values in place instead of flashing the full-page spinner.
+  Future<void> filter(String? issue) async {
     final current = state;
-    if (current is RecipeReviewLoaded && current.issue == issue) {
-      return Future.value();
+    if (current is! RecipeReviewLoaded || current.issue == issue) {
+      return;
     }
-    return load(issue: issue);
+    // Highlight the newly-selected chip immediately; keep the list visible.
+    emit(
+      RecipeReviewLoaded(
+        total: current.total,
+        categories: current.categories,
+        items: current.items,
+        issue: issue,
+        loadingMore: false,
+        exhausted: current.exhausted,
+      ),
+    );
+    _nextPage = 1;
+    try {
+      final report = await _repository.getRecipeReview(
+        page: 1,
+        limit: pageSize,
+        issue: issue,
+      );
+      if (isClosed) {
+        return;
+      }
+      _nextPage = 2;
+      emit(
+        RecipeReviewLoaded(
+          total: report.total,
+          categories: report.categories,
+          items: report.items,
+          issue: issue,
+          loadingMore: false,
+          exhausted: report.items.length < pageSize,
+        ),
+      );
+    } on RepositoryException {
+      // Keep the current view on a transient failure rather than blanking it.
+    }
   }
 
   Future<void> loadMore() async {
