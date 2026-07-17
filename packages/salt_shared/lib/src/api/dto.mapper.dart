@@ -219,6 +219,14 @@ class RecipeCardMapper extends ClassMapperBase<RecipeCard> {
     opt: true,
     def: false,
   );
+  static int _$variationCount(RecipeCard v) => v.variationCount;
+  static const Field<RecipeCard, int> _f$variationCount = Field(
+    'variationCount',
+    _$variationCount,
+    key: r'variation_count',
+    opt: true,
+    def: 0,
+  );
 
   @override
   final MappableFields<RecipeCard> fields = const {
@@ -232,6 +240,7 @@ class RecipeCardMapper extends ClassMapperBase<RecipeCard> {
     #totalMinutes: _f$totalMinutes,
     #caloriesPerServing: _f$caloriesPerServing,
     #favorite: _f$favorite,
+    #variationCount: _f$variationCount,
   };
 
   static RecipeCard _instantiate(DecodingData data) {
@@ -246,6 +255,7 @@ class RecipeCardMapper extends ClassMapperBase<RecipeCard> {
       totalMinutes: data.dec(_f$totalMinutes),
       caloriesPerServing: data.dec(_f$caloriesPerServing),
       favorite: data.dec(_f$favorite),
+      variationCount: data.dec(_f$variationCount),
     );
   }
 
@@ -321,6 +331,7 @@ abstract class RecipeCardCopyWith<$R, $In extends RecipeCard, $Out>
     int? totalMinutes,
     double? caloriesPerServing,
     bool? favorite,
+    int? variationCount,
   });
   RecipeCardCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -352,6 +363,7 @@ class _RecipeCardCopyWithImpl<$R, $Out>
     Object? totalMinutes = $none,
     Object? caloriesPerServing = $none,
     bool? favorite,
+    int? variationCount,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -364,6 +376,7 @@ class _RecipeCardCopyWithImpl<$R, $Out>
       if (totalMinutes != $none) #totalMinutes: totalMinutes,
       if (caloriesPerServing != $none) #caloriesPerServing: caloriesPerServing,
       if (favorite != null) #favorite: favorite,
+      if (variationCount != null) #variationCount: variationCount,
     }),
   );
   @override
@@ -381,6 +394,7 @@ class _RecipeCardCopyWithImpl<$R, $Out>
       or: $value.caloriesPerServing,
     ),
     favorite: data.get(#favorite, or: $value.favorite),
+    variationCount: data.get(#variationCount, or: $value.variationCount),
   );
 
   @override

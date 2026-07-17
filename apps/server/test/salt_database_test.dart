@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
@@ -176,5 +177,92 @@ void main() {
     } finally {
       raw.dispose();
     }
+  });
+
+  group('variation_count', () {
+    // Decided 2026-07-16: count `variation` subsections ONLY. A `component`
+    // is a sub-recipe (the dough for the pie), not a variant of the recipe,
+    // so badging it would be wrong.
+    test('counts variations, not components or subsections wholesale', () {
+      // Sweet Cream Ice Cream is the discriminator: 3 variations AND 3
+      // components, 6 subsections in all. A raw subsection count would say 6;
+      // the honest answer is 3. A component is a sub-recipe, not a variant.
+      final iceCream = _load('1164-sweet-cream-ice-cream.yaml');
+      final variations = iceCream.subsections
+          .where((s) => s.kind == 'variation')
+          .length;
+      final components = iceCream.subsections
+          .where((s) => s.kind == 'component')
+          .length;
+      expect(variations, 3, reason: 'the fixture must have variants');
+      expect(components, 3, reason: 'and components, or it proves nothing');
+      expect(iceCream.subsections.length, 6);
+
+      db.upsertRecipe(
+        iceCream,
+        sourceSlug: _sourceSlug,
+        contentHash: _hashOf(iceCream),
+      );
+      final card = db
+          .listCards(page: 1, limit: 50)
+          .items
+          .firstWhere((c) => c.id == iceCream.id);
+      expect(
+        card.variationCount,
+        3,
+        reason: 'counted the components too if this is 6',
+      );
+      expect(card.hasVariations, isTrue);
+    });
+
+    test('a recipe with no subsections carries 0, and says so', () {
+      db.upsertRecipe(
+        bundtCake,
+        sourceSlug: _sourceSlug,
+        contentHash: _hashOf(bundtCake),
+      );
+      final card = db.listCards(page: 1, limit: 50).items.single;
+      expect(card.variationCount, 0);
+      expect(card.hasVariations, isFalse);
+    });
+
+    test('an update keeps the count in step with the doc', () {
+      final iceCream = _load('1164-sweet-cream-ice-cream.yaml');
+      db.upsertRecipe(
+        iceCream,
+        sourceSlug: _sourceSlug,
+        contentHash: _hashOf(iceCream),
+      );
+      // Strip the variations and re-save: the card must follow, or the badge
+      // outlives the thing it describes. (The migration backfills once; only
+      // upsertRecipe keeps it true afterwards.)
+      final stripped = iceCream.copyWith(subsections: const []);
+      db.upsertRecipe(
+        stripped,
+        sourceSlug: _sourceSlug,
+        contentHash: '${_hashOf(iceCream)}-changed',
+      );
+      final card = db.listCards(page: 1, limit: 50).items.single;
+      expect(card.variationCount, 0);
+    });
+
+    test('search results carry it too, not just the list', () {
+      // searchCards has its OWN SELECT; adding the column to listCards alone
+      // would leave every search result silently un-badged.
+      final iceCream = _load('1164-sweet-cream-ice-cream.yaml');
+      db.upsertRecipe(
+        iceCream,
+        sourceSlug: _sourceSlug,
+        contentHash: _hashOf(iceCream),
+      );
+      final parsed = parseSearchQuery('ice cream');
+      final found = db.searchCards(
+        compileSearch(parsed.root!),
+        page: 1,
+        limit: 50,
+      );
+      expect(found.items, isNotEmpty);
+      expect(found.items.first.variationCount, 3);
+    });
   });
 }

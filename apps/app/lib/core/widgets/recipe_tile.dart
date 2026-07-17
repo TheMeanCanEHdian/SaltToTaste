@@ -169,7 +169,8 @@ class RecipeTile extends StatelessWidget {
                     ),
                   ),
                   if (card.servingsText != null ||
-                      card.caloriesPerServing != null)
+                      card.caloriesPerServing != null ||
+                      card.hasVariations)
                     Positioned(
                       top: 10,
                       left: 11,
@@ -184,6 +185,17 @@ class RecipeTile extends StatelessWidget {
                           if (card.caloriesPerServing != null)
                             _CardBadge(
                               '${card.caloriesPerServing!.round()} kcal',
+                            ),
+                          // Variations only — a `component` subsection is a
+                          // sub-recipe (the dough for the pie), not another
+                          // way to make this one, so it earns no badge. The
+                          // count is worth showing: "+3 variations" tells you
+                          // how much more is in there, which a flag cannot.
+                          if (card.hasVariations)
+                            _CardBadge(
+                              card.variationCount == 1
+                                  ? '+1 variation'
+                                  : '+${card.variationCount} variations',
                             ),
                         ],
                       ),

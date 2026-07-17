@@ -118,6 +118,13 @@ class SaltDatabase {
     final slug = _availableSlug(recipe.slug, ownerId: recipe.id);
     final stored = slug == recipe.slug ? recipe : recipe.copyWith(slug: slug);
     final doc = jsonEncode(stored.toMap());
+    // Kept in step with migration 007's backfill: `variation` only, because a
+    // `component` is a sub-recipe rather than a variant of this one. If these
+    // two ever disagree, a card's badge silently depends on whether the recipe
+    // has been re-saved since the migration.
+    final variationCount = stored.subsections
+        .where((subsection) => subsection.kind == 'variation')
+        .length;
 
     _inTransaction(() {
       if (isUpdate) {
@@ -125,6 +132,7 @@ class SaltDatabase {
           'UPDATE recipes SET slug = ?, source_slug = ?, title = ?, '
           'category = ?, servings_text = ?, serves_min = ?, serves_max = ?, '
           'prep_min = ?, cook_min = ?, total_min = ?, hero_image = ?, '
+          'variation_count = ?, '
           "doc = ?, content_hash = ?, updated_at = datetime('now') "
           'WHERE id = ?',
         ).execute([
@@ -139,6 +147,7 @@ class SaltDatabase {
           recipe.times.cook,
           recipe.times.total,
           recipe.images.hero,
+          variationCount,
           doc,
           contentHash,
           recipe.id,
@@ -147,8 +156,8 @@ class SaltDatabase {
         _prepared(
           'INSERT INTO recipes (id, slug, source_slug, title, category, '
           'servings_text, serves_min, serves_max, prep_min, cook_min, '
-          'total_min, hero_image, doc, content_hash) '
-          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'total_min, hero_image, variation_count, doc, content_hash) '
+          'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         ).execute([
           recipe.id,
           slug,
@@ -162,6 +171,7 @@ class SaltDatabase {
           recipe.times.cook,
           recipe.times.total,
           recipe.images.hero,
+          variationCount,
           doc,
           contentHash,
         ]);
@@ -368,8 +378,8 @@ class SaltDatabase {
             as int;
     final rows = _prepared(
       'SELECT recipes.id, slug, source_slug, title, category, '
-      'servings_text, total_min, hero_image, n.calories_per_serving '
-      'AS calories FROM recipes '
+      'servings_text, total_min, hero_image, variation_count, '
+      'n.calories_per_serving AS calories FROM recipes '
       'LEFT JOIN recipe_nutrition n ON n.recipe_id = recipes.id'
       '$favoriteFilter '
       'ORDER BY title COLLATE NOCASE LIMIT ? OFFSET ?',
@@ -401,6 +411,7 @@ class SaltDatabase {
           totalMinutes: row['total_min'] as int?,
           caloriesPerServing: (row['calories'] as num?)?.toDouble(),
           favorite: favorites.contains(row['id'] as String),
+          variationCount: row['variation_count'] as int? ?? 0,
         ),
     ];
   }
@@ -512,7 +523,7 @@ class SaltDatabase {
             as int;
     final rows = _prepared(
       'SELECT r.id, r.slug, r.source_slug, r.title, r.category, '
-      'r.servings_text, r.total_min, r.hero_image, '
+      'r.servings_text, r.total_min, r.hero_image, r.variation_count, '
       'n.calories_per_serving '
       'AS calories $from $where $order LIMIT ? OFFSET ?',
     ).select([...params, limit, offset]);

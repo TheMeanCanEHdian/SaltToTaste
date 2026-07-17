@@ -36,6 +36,7 @@ class RecipeCard with RecipeCardMappable {
     this.totalMinutes,
     this.caloriesPerServing,
     this.favorite = false,
+    this.variationCount = 0,
   });
 
   final String id;
@@ -56,6 +57,17 @@ class RecipeCard with RecipeCardMappable {
 
   /// Whether the requesting user has favorited this recipe.
   final bool favorite;
+
+  /// How many `variation` subsections the recipe carries — 0 for most.
+  ///
+  /// A COUNT rather than a flag, so a later `has:variants` filter or a
+  /// "3 variations" label needs no second migration. Counts `variation` only:
+  /// a `component` subsection is a sub-recipe (the dough for the pie), not a
+  /// variant of the recipe, and badging those would be wrong.
+  final int variationCount;
+
+  /// Whether the recipe has any variation to show.
+  bool get hasVariations => variationCount > 0;
 }
 
 /// The uniform API error envelope: `{"error": {code, message, request_id}}`.

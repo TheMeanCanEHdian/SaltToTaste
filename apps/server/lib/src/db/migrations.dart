@@ -250,4 +250,35 @@ CREATE TABLE nutrition_jobs (
     'ALTER TABLE import_jobs ADD COLUMN imported INTEGER NOT NULL DEFAULT 0',
     'ALTER TABLE import_jobs ADD COLUMN updated INTEGER NOT NULL DEFAULT 0',
   ],
+
+  // 007 — how many VARIATIONS a recipe carries, so a card can say so without
+  // decoding its doc.
+  //
+  // A count, not a boolean: it costs the same to store and lets a later
+  // `has:variants` search or a "3 variations" label land without a second
+  // migration.
+  //
+  // `variation` only. `Subsection.kind` is tri-valued — variation / component /
+  // unknown — and a component is a sub-recipe (a pie dough for the pie), not a
+  // variant of the recipe. Counting subsections wholesale would badge those
+  // wrongly. Measured over the 1,198-recipe corpus: 383 recipes carry
+  // subsections, 680 subsections in all, of which 648 are variations and 32
+  // components.
+  //
+  // The backfill reads `doc`, which is JSON (`jsonEncode(recipe.toMap())` in
+  // upsertRecipe) rather than the YAML export, so json_each can do it in SQL
+  // with no Dart pass and no re-import. Verified against the dev library: 374
+  // recipes get a non-zero count, 648 variations in total — the same figures
+  // the corpus itself reports.
+  [
+    'ALTER TABLE recipes ADD COLUMN variation_count INTEGER NOT NULL DEFAULT 0',
+    r'''
+UPDATE recipes SET variation_count = (
+  SELECT COUNT(*)
+  FROM json_each(json_extract(recipes.doc, '$.subsections'))
+  WHERE json_extract(json_each.value, '$.kind') = 'variation'
+)
+WHERE json_extract(doc, '$.subsections') IS NOT NULL
+''',
+  ],
 ];
