@@ -74,10 +74,21 @@ FThemeData buildForuiTheme() {
     foreground: SaltColors.ink,
     primary: SaltColors.maroon,
     primaryForeground: Colors.white,
-    secondary: SaltColors.chip,
-    secondaryForeground: SaltColors.chipInk,
+    // Secondary drives the NEUTRAL button family: outline/ghost/secondary
+    // buttons take their text from [secondaryForeground] and their hover fill
+    // from [secondary]. Keep these neutral (grey, not the pink `chip`/maroon
+    // `chipInk`) so a plain "Cancel"/"Add" button — and especially its hover —
+    // never reads as the red destructive button. Primary stays maroon,
+    // destructive stays red; only these must be neutral.
+    secondary: SaltColors.chipNeutral,
+    secondaryForeground: SaltColors.ink,
     mutedForeground: SaltColors.muted,
     border: SaltColors.hairline,
+    // Destructive buttons use Forui's tinted `.destructive` variant (a pale
+    // fill + this color as text). Point it at the app's own error red so every
+    // danger surface — button, error text, danger-card border — agrees, rather
+    // than Forui's default brighter `#E7000B`.
+    destructive: SaltColors.errInk,
   );
   return FThemeData(colors: colors, touch: false, debugLabel: 'SaltToTaste');
 }

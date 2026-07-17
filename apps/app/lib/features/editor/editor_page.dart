@@ -76,76 +76,76 @@ class EditorPage extends StatelessWidget {
   }
 }
 
+Future<void> _confirmLeave(BuildContext context) async {
+  final state = context.read<EditorCubit>().state;
+  if (!state.dirty) {
+    _leave(context);
+    return;
+  }
+  final leave = await showFDialog<bool>(
+    context: context,
+    builder: (context, _, animation) => FDialog(
+      animation: animation,
+      builder: (context, style) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            child: Text('Discard changes?', style: style.titleTextStyle),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'Unsaved changes will be lost.',
+              style: style.bodyTextStyle,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => Navigator.of(context).pop(false),
+                    child: const Text('Keep editing'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FButton(
+                    variant: FButtonVariant.destructive,
+                    onPress: () => Navigator.of(context).pop(true),
+                    child: const Text('Discard'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (leave ?? false) {
+    if (context.mounted) {
+      _leave(context);
+    }
+  }
+}
+
+void _leave(BuildContext context) {
+  final state = context.read<EditorCubit>().state;
+  if (context.canPop()) {
+    context.pop();
+  } else {
+    context.go(state.slug == null ? '/' : '/r/${state.slug}');
+  }
+}
+
 class _EditorScaffold extends StatelessWidget {
   const _EditorScaffold();
-
-  Future<void> _confirmLeave(BuildContext context) async {
-    final state = context.read<EditorCubit>().state;
-    if (!state.dirty) {
-      _leave(context);
-      return;
-    }
-    final leave = await showFDialog<bool>(
-      context: context,
-      builder: (context, _, animation) => FDialog(
-        animation: animation,
-        builder: (context, style) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-              child: Text('Discard changes?', style: style.titleTextStyle),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                'Unsaved changes will be lost.',
-                style: style.bodyTextStyle,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                    child: FButton(
-                      variant: FButtonVariant.outline,
-                      autofocus: true,
-                      onPress: () => Navigator.of(context).pop(false),
-                      child: const Text('Keep editing'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FButton(
-                      onPress: () => Navigator.of(context).pop(true),
-                      child: const Text('Discard'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (leave ?? false) {
-      if (context.mounted) {
-        _leave(context);
-      }
-    }
-  }
-
-  void _leave(BuildContext context) {
-    final state = context.read<EditorCubit>().state;
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(state.slug == null ? '/' : '/r/${state.slug}');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -192,33 +192,6 @@ class _EditorScaffold extends StatelessWidget {
               ],
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => _confirmLeave(context),
-              style: TextButton.styleFrom(foregroundColor: Colors.white),
-              child: const Text('Cancel'),
-            ),
-            const SizedBox(width: 6),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: SaltColors.maroon,
-                  // The theme forces filled-button icons white (for the maroon
-                  // buttons); this white-on-white save button must opt back
-                  // out or its icon vanishes.
-                  iconColor: SaltColors.maroon,
-                ),
-                onPressed: state.saving || state.uploadingImage
-                    ? null
-                    : () => context.read<EditorCubit>().save(),
-                icon: const Icon(Icons.save_outlined, size: 17),
-                label: Text(state.saving ? 'Saving…' : 'Save recipe'),
-              ),
-            ),
-            const SizedBox(width: 14),
-          ],
         ),
         body: Column(
           children: [
@@ -1756,7 +1729,6 @@ class _DangerCard extends StatelessWidget {
                   Expanded(
                     child: FButton(
                       variant: FButtonVariant.outline,
-                      autofocus: true,
                       onPress: () => Navigator.of(context).pop(false),
                       child: const Text('Cancel'),
                     ),
@@ -1857,11 +1829,17 @@ class _SaveBar extends StatelessWidget {
                 ),
               const SizedBox(width: 12),
               FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => _confirmLeave(context),
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              FButton(
                 mainAxisSize: MainAxisSize.min,
                 onPress: state.saving || state.uploadingImage
                     ? null
                     : cubit.save,
-                prefix: const Icon(Icons.save_outlined, size: 17),
                 child: Text(state.saving ? 'Saving…' : 'Save recipe'),
               ),
             ],
