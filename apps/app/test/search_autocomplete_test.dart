@@ -26,6 +26,8 @@ void main() {
   Widget host({
     List<String> tags = const ['dessert', 'main'],
     Duration delay = Duration.zero,
+    String? initialQuery,
+    VoidCallback? onRefresh,
   }) {
     navigations = [];
     final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
@@ -34,8 +36,13 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (context, state) =>
-              const Scaffold(appBar: SaltNavBar(), body: SizedBox()),
+          builder: (context, state) => Scaffold(
+            appBar: SaltNavBar(
+              initialQuery: initialQuery,
+              onSearchRefresh: onRefresh,
+            ),
+            body: const SizedBox(),
+          ),
         ),
         GoRoute(
           path: '/search',
@@ -209,6 +216,25 @@ void main() {
       'tag:"ice cream" ',
       reason: 'unquoted, this would search tag:ice AND the word cream',
     );
+  });
+
+  testWidgets('resubmitting the query on screen refreshes in place', (
+    tester,
+  ) async {
+    // The results page passes initialQuery + onSearchRefresh, because go() to
+    // the location you are already on is a no-op. Enter now routes through
+    // _onEnter, so this path runs through the new code and had no test.
+    var refreshes = 0;
+    await tester.pumpWidget(
+      host(initialQuery: 'chicken', onRefresh: () => refreshes++),
+    );
+    await tester.tap(find.byType(TextField).first);
+    await tester.pumpAndSettle();
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(refreshes, 1, reason: 'the same query must reload, not navigate');
+    expect(navigations, isEmpty);
   });
 
   testWidgets('an ordinary word offers no rows at all', (tester) async {
