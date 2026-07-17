@@ -47,11 +47,17 @@ void main() {
     }
   }
 
+  /// Waits for [jobId] to reach a terminal row AND for its isolate to exit.
+  ///
+  /// The terminal row is written from inside the isolate, which then disposes
+  /// its connection and exits; only once it has does the single-flight latch
+  /// clear. So a terminal status alone does not mean the next import can
+  /// start, and a re-run fired on the row alone races the latch.
   Future<Map<String, Object?>> awaitJob(int jobId) async {
     final deadline = DateTime.now().add(const Duration(seconds: 30));
     while (true) {
       final job = db.importJob(jobId)!;
-      if (job['status'] != 'running') {
+      if (job['status'] != 'running' && !importJobRunning) {
         return job;
       }
       if (DateTime.now().isAfter(deadline)) {

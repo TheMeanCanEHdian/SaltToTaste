@@ -11,9 +11,16 @@ import 'package:salt_shared/salt_shared.dart';
 Future<Uint8List> buildRecipePdf({
   required Recipe recipe,
   String? personalNote,
+  @visibleForTesting bool compress = true,
 }) async {
   final fonts = await _loadFonts();
   final doc = pw.Document(
+    // Tests turn compression off so they can count what was actually DRAWN.
+    // Byte length is not a proxy for that: a dropped widget still reserves its
+    // height, which shifts every later coordinate and changes the byte count
+    // on its own — a header ceiling once deleted every tag chip while the
+    // byte-length assertion stayed green.
+    compress: compress,
     title: recipe.title,
     author: recipe.source.name,
     creator: 'SaltToTaste',
@@ -165,15 +172,70 @@ class _RecipeDocument {
     padding: const pw.EdgeInsets.only(top: 10),
     child: pw.Text(
       '${context.pageNumber} of ${context.pagesCount}',
-      style: pw.TextStyle(
-        fontSize: 7.5,
-        color: _Ink.muted,
-        letterSpacing: 0.9,
-      ),
+      style: pw.TextStyle(fontSize: 7.5, color: _Ink.muted, letterSpacing: 0.9),
     ),
   );
 
   // -- header ---------------------------------------------------------------
+
+  /// The header's caps exist to keep ONE invariant true: the whole header must
+  /// always fit a single page. They are chosen together and must be changed
+  /// together — `header always fits one page, whatever the user typed` in
+  /// recipe_pdf_test.dart is the thing that actually enforces this.
+  ///
+  /// Why the invariant, rather than a cap per field: the header is a
+  /// `Container > Row`, a non-spanning direct MultiPage child, so its height is
+  /// the SUM of its children's caps. Bounding each child individually is not
+  /// enough and is actively dangerous — it was tried, and it made things worse.
+  /// MultiPage's fit check ignores the ~20pt footer (multi_page.dart:376-391),
+  /// so a widget in the band (699.8pt, 720pt] neither fits nor is big enough to
+  /// be rejected: it retries on a fresh page forever. The runaway guard is
+  /// inside an `assert`, which `flutter build web --release` strips — so the
+  /// tab hangs. Per-child caps summed to ~1004pt, which SWEEPS that band as a
+  /// title grows: input that used to throw cleanly began hanging instead.
+  /// Keeping the saturated sum below the band is what makes the band
+  /// unreachable, and no individual cap can express that.
+  ///
+  /// Measured against the corpus (1,198 recipes) and the API's own limits:
+  ///
+  /// | field    | corpus max | API cap | cap here            |
+  /// |----------|-----------:|--------:|---------------------|
+  /// | title    |   86 chars |     250 | [_maxTitleLines]    |
+  /// | category |   52 chars |     120 | [_maxCategoryLines] |
+  /// | tags     |     1 tag  |      50 | [_maxHeaderChips]   |
+  /// | tag text |    7 chars |      60 | [_maxChipChars]     |
+  ///
+  /// How many tag chips the header prints before summarising the rest.
+  ///
+  /// 50 API-legal tags cannot fit a page in any layout (~920pt of chips
+  /// alone), so a cap is unavoidable here. The overflow is STATED rather than
+  /// dropped — a height ceiling was tried and silently deleted every chip,
+  /// which is strictly worse than printing "+38 more".
+  static const _maxHeaderChips = 12;
+
+  /// A tag longer than this is truncated with an ellipsis, so a chip is always
+  /// exactly one line. 60 matches the API's own tag cap, so no tag the API
+  /// would accept is ever shortened; longer ones can only arrive through the
+  /// importer or hand-edited YAML, neither of which validates. Without this a
+  /// 69-char tag wrapped to 3 lines and 13 of them alone came to 578pt.
+  static const _maxChipChars = 60;
+
+  /// Measured: the API's longest legal title (250 chars) needs 9 lines, so 10
+  /// leaves one to spare and no legal title is ever cut. The corpus's longest
+  /// is 86 chars — 3 lines. 8 was tried and silently dropped 2 of 25 words.
+  static const _maxTitleLines = 10;
+
+  /// The yield rail is only 116pt wide, so this wraps far sooner than its
+  /// character count suggests. Measured in that rail: an API-legal 200-char
+  /// yield needs 12 lines, so 14 leaves margin. It was 10, which silently ate
+  /// 3 words of a 197-char yield the API itself accepts. The corpus's longest
+  /// real yield is 69 chars ("MAKES ABOUT ¼ CUP, ENOUGH TO DRESS 8 TO 10 CUPS
+  /// LIGHTLY PACKED GREENS"), so no real recipe is close.
+  static const _maxMetaValueLines = 14;
+
+  /// Measured: the API's longest legal category (120 chars) needs 3 lines. At
+  /// 2 it silently dropped a word. The corpus's longest is 52 chars.
+  static const _maxCategoryLines = 3;
 
   pw.Widget _header() {
     final category = _clean(recipe.category);
@@ -194,25 +256,37 @@ class _RecipeDocument {
               mainAxisSize: pw.MainAxisSize.min,
               children: [
                 if (category != null) ...[
-                  pw.Text(category.toUpperCase(), style: _eyebrowStyle),
+                  pw.Text(
+                    category.toUpperCase(),
+                    style: _eyebrowStyle,
+                    maxLines: _maxCategoryLines,
+                  ),
                   pw.SizedBox(height: 5),
                 ],
-                pw.Text(_drawable(recipe.title), style: _titleStyle),
+                pw.Text(
+                  _drawable(recipe.title),
+                  style: _titleStyle,
+                  maxLines: _maxTitleLines,
+                ),
                 if (tags.isNotEmpty) ...[
                   pw.SizedBox(height: 8),
                   pw.Wrap(
                     spacing: 5,
                     runSpacing: 4,
-                    children: [for (final tag in tags) _chip(tag)],
+                    children: [
+                      for (final tag in tags.take(_maxHeaderChips)) _chip(tag),
+                      if (tags.length > _maxHeaderChips)
+                        _chip(
+                          '+${tags.length - _maxHeaderChips} more',
+                          outlined: true,
+                        ),
+                    ],
                   ),
                 ],
               ],
             ),
           ),
-          if (meta.isNotEmpty) ...[
-            pw.SizedBox(width: 16),
-            _meta(meta),
-          ],
+          if (meta.isNotEmpty) ...[pw.SizedBox(width: 16), _meta(meta)],
         ],
       ),
     );
@@ -260,6 +334,7 @@ class _RecipeDocument {
             value,
             style: label == _servesLabel ? _metaValueStyle : _metaYieldStyle,
             textAlign: pw.TextAlign.right,
+            maxLines: _maxMetaValueLines,
           ),
         ],
       ],
@@ -379,10 +454,7 @@ class _RecipeDocument {
     if (notes == null) {
       return const [];
     }
-    return [
-      _sectionHeading('Notes'),
-      ..._prose(notes, style: _headnoteStyle),
-    ];
+    return [_sectionHeading('Notes'), ..._prose(notes, style: _headnoteStyle)];
   }
 
   // -- ingredients ----------------------------------------------------------
@@ -436,7 +508,19 @@ class _RecipeDocument {
             // The publisher's verbatim line — never recomposed from the
             // parsed amounts.
             pw.Expanded(
-              child: pw.Text(_drawable(item.raw), style: _ingredientStyle),
+              child: pw.Text(
+                _drawable(item.raw),
+                style: _ingredientStyle,
+                // Measured: 40 lines of this style is 613pt and the row 619pt
+                // — inside the 720pt page, and below the (699.8, 720] band
+                // that hangs. (An earlier comment here claimed ~500pt and that
+                // 60 lines "hung"; both were wrong. 60 lines is 742pt, which
+                // is TALLER than the page and so throws cleanly —
+                // multi_page.dart:385 — rather than hanging.) The API caps
+                // `raw` at 1000 chars, ~10 lines here, so this only ever bites
+                // hand-edited or imported YAML.
+                maxLines: 40,
+              ),
             ),
           ],
         ),
@@ -469,40 +553,77 @@ class _RecipeDocument {
     return widgets;
   }
 
+  /// A step: the number in its own column, the text hanging-indented beside it
+  /// (user-approved 2026-07-16), across as many pages as the text needs.
+  ///
+  /// `Partitions` is the only structure that gives both. A Row would give the
+  /// indent but cannot span a page break (flex.dart:
+  /// `canSpan => direction == Axis.vertical`), so its height must clear the
+  /// (699.8pt, 720pt] band that hangs a release build — and NOTHING SAFE
+  /// BOUNDS THAT. Two attempts proved it:
+  ///   * `maxLines: 40` bounds height honestly, but truncates invisibly (pdf's
+  ///     TextOverflow has no ellipsis), silently eating ~44% of an API-legal
+  ///     10,000-char step.
+  ///   * gating the Row on `text.length > 3000` was worse: a CHAR COUNT CANNOT
+  ///     BOUND A HEIGHT. Measured, both inside that gate and so routed to the
+  ///     Row: `'MMM ' * 700` (2,799 chars) and a 1,397-char checklist of 44
+  ///     short newline-separated lines both landed IN the band — i.e. the
+  ///     "fix" reintroduced the exact hang it existed to prevent, reachable by
+  ///     typing an ordinary multi-line step into the editor.
+  ///
+  /// `Partitions.canSpan => children.any((p) => p.canSpan)` and
+  /// `Partition.canSpan => child.canSpan` (partitions.dart:44,116), so two
+  /// spanning RichTexts make the whole two-column row spannable: the text flows
+  /// across pages and keeps its column. Both partitions must span — a
+  /// non-spanning one is skipped by `saveContext` but not by `restoreContext`,
+  /// which then null-checks a context that was never saved
+  /// (partitions.dart:233).
+  ///
+  /// With the layout spanning there is no height to bound, so there is no cap
+  /// here at all, and nothing to truncate.
   pw.Widget _stepRow(RecipeStep step, {required bool compact}) {
     final diameter = compact ? 14.0 : 16.0;
-    // The numbered badge rides inline as a WidgetSpan rather than sitting in
-    // a Row: a Row is horizontal, so it can never span a page break, and a
-    // step long enough to outrun a page would throw. As a span the whole step
-    // flows, and the badge keeps its circle.
+    final text = _drawable(step.text);
+    final badge = pw.Container(
+      width: diameter,
+      height: diameter,
+      alignment: pw.Alignment.center,
+      decoration: pw.BoxDecoration(
+        color: compact ? _Ink.rose : _Ink.maroon,
+        shape: pw.BoxShape.circle,
+      ),
+      child: pw.Text('${step.number}', style: _stepNumberStyle(compact: compact)),
+    );
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 7),
-      child: pw.RichText(
-        overflow: pw.TextOverflow.span,
-        text: pw.TextSpan(
-          children: [
-            pw.WidgetSpan(
-              child: pw.Container(
-                width: diameter,
-                height: diameter,
-                margin: const pw.EdgeInsets.only(right: 8),
-                alignment: pw.Alignment.center,
-                decoration: pw.BoxDecoration(
-                  color: compact ? _Ink.rose : _Ink.maroon,
-                  shape: pw.BoxShape.circle,
-                ),
-                child: pw.Text(
-                  '${step.number}',
-                  style: _stepNumberStyle(compact: compact),
-                ),
+      child: pw.Partitions(
+        children: [
+          pw.Partition(
+            width: diameter + 8,
+            child: pw.RichText(
+              overflow: pw.TextOverflow.span,
+              text: pw.TextSpan(
+                children: [
+                  pw.WidgetSpan(
+                    child: pw.Container(
+                      margin: const pw.EdgeInsets.only(top: 1.5),
+                      child: badge,
+                    ),
+                  ),
+                ],
               ),
             ),
-            pw.TextSpan(
-              text: _drawable(step.text),
-              style: compact ? _compactStepStyle : _stepStyle,
+          ),
+          pw.Partition(
+            child: pw.RichText(
+              overflow: pw.TextOverflow.span,
+              text: pw.TextSpan(
+                text: text,
+                style: compact ? _compactStepStyle : _stepStyle,
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -533,7 +654,13 @@ class _RecipeDocument {
             if (title != null) ...[
               // Flexible, not Expanded: the chip belongs beside the title, and
               // only a title long enough to need the room pushes it over.
-              pw.Flexible(child: pw.Text(title, style: _subsectionTitleStyle)),
+              pw.Flexible(
+                child: pw.Text(
+                  title,
+                  style: _subsectionTitleStyle,
+                  maxLines: 8,
+                ),
+              ),
               pw.SizedBox(width: 7),
             ],
             _chip(
@@ -547,7 +674,11 @@ class _RecipeDocument {
       if (servings != null)
         pw.Padding(
           padding: const pw.EdgeInsets.only(bottom: 5),
-          child: pw.Text(servings.toUpperCase(), style: _subsectionMetaStyle),
+          child: pw.Text(
+            servings.toUpperCase(),
+            style: _subsectionMetaStyle,
+            overflow: pw.TextOverflow.span,
+          ),
         ),
       ..._prose(body, style: _headnoteStyle),
       if (prepNotes != null) ..._cookbookNote(prepNotes),
@@ -573,7 +704,11 @@ class _RecipeDocument {
       if (heading != null)
         pw.Padding(
           padding: const pw.EdgeInsets.only(top: 8, bottom: 5),
-          child: pw.Text(heading.toUpperCase(), style: _techniqueHeadingStyle),
+          child: pw.Text(
+            heading.toUpperCase(),
+            style: _techniqueHeadingStyle,
+            overflow: pw.TextOverflow.span,
+          ),
         ),
       ..._prose(description, style: _techniqueDescriptionStyle),
       for (final step in steps)
@@ -590,6 +725,11 @@ class _RecipeDocument {
                 child: pw.Text(
                   _drawable(step.caption.trim()),
                   style: _compactStepStyle,
+                  // 40 lines of _compactStepStyle measures ~613pt — inside the
+                  // page and below the band that hangs. (Not ~500pt, as an
+                  // earlier revision of this comment asserted without
+                  // measuring.)
+                  maxLines: 40,
                 ),
               ),
             ],
@@ -616,6 +756,7 @@ class _RecipeDocument {
         border: pw.Border(top: pw.BorderSide(color: _Ink.hairline, width: 0.5)),
       ),
       child: pw.RichText(
+        overflow: pw.TextOverflow.span,
         text: pw.TextSpan(
           children: [
             pw.TextSpan(text: 'SOURCE  ', style: _sourceLabelStyle),
@@ -635,8 +776,22 @@ class _RecipeDocument {
 
   pw.Widget _minorLabel(String text) => pw.Padding(
     padding: const pw.EdgeInsets.only(top: 7, bottom: 3),
-    child: pw.Text(text.toUpperCase(), style: _minorLabelStyle),
+    child: pw.Text(
+      text.toUpperCase(),
+      style: _minorLabelStyle,
+      overflow: pw.TextOverflow.span,
+    ),
   );
+
+  /// [text] shortened to [max] characters with a trailing ellipsis.
+  ///
+  /// Used where a silent `maxLines` truncation would be indistinguishable from
+  /// the text simply ending: pdf's `TextOverflow` has no `ellipsis` member
+  /// (text.dart declares clip/visible/span only), so a capped line just stops.
+  /// An explicit ellipsis is the difference between STATING that something was
+  /// shortened and quietly dropping it.
+  static String _ellipsize(String text, int max) =>
+      text.length <= max ? text : '${text.substring(0, max - 1).trimRight()}…';
 
   pw.Widget _chip(String text, {bool outlined = false, double fontSize = 8}) =>
       pw.Container(
@@ -648,15 +803,21 @@ class _RecipeDocument {
               : null,
           borderRadius: pw.BorderRadius.circular(5),
         ),
+        // Exactly one line, always: a chip sits in the header's Wrap inside
+        // its Row and so can never span, and its height is one of the terms in
+        // the header's page-fit sum. The text is truncated rather than merely
+        // line-capped because maxLines alone truncates INVISIBLY — pdf's
+        // TextOverflow has no ellipsis (text.dart: clip/visible/span only) —
+        // and because a wrapping chip is what put that sum in the hang band.
         child: pw.Text(
-          text.toUpperCase(),
+          _ellipsize(text, _maxChipChars).toUpperCase(),
           style: _chipStyle(fontSize: fontSize, outlined: outlined),
+          maxLines: 1,
         ),
       );
 
   List<pw.Widget> _prose(
-    String? text,
-    {
+    String? text, {
     required pw.TextStyle style,
     bool justify = false,
   }) => [

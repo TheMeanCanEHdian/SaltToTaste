@@ -35,6 +35,88 @@ class _CardBadge extends StatelessWidget {
   }
 }
 
+/// A tile's hero photo, decoded at the size it is actually drawn.
+///
+/// The library's photos are full-resolution originals — a median 1819x1918,
+/// which is 13 MB once decoded to RGBA. A 48-tile page is therefore ~640 MB of
+/// bitmaps against Flutter's 100 MB image cache, so the cache evicts and
+/// re-decodes constantly while scrolling. Decoding to the tile's own width
+/// costs ~20 MB for the same page.
+///
+/// This only fixes the DECODE. Each original is still ~390 KB over the wire
+/// (~19 MB per page); shrinking that needs the server to generate thumbnails,
+/// which is a separate decision.
+class _TileImage extends StatelessWidget {
+  const _TileImage({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Bucket the target width so a few pixels of layout drift (a window
+        // resize, a scrollbar appearing) doesn't invalidate the cache and
+        // re-decode every visible tile.
+        //
+        // Width-only is right for these photos: under BoxFit.cover a source
+        // taller than the 4:3 tile is width-limited, so the tile's width IS
+        // the decoded width. Only 14 of the 1,242 library photos are wider
+        // than 4:3, and the worst of them under-resolves by 1.18x — invisible,
+        // and not worth decoding a source aspect we don't know yet to fix.
+        final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+        final drawn = constraints.maxWidth * devicePixelRatio;
+        final bucketed = (drawn / 160).ceil() * 160;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            // The tinted panel sits UNDER the photo rather than instead of it.
+            //
+            // It used to be a loadingBuilder, which was the worst of both
+            // worlds: Flutter web emits no ImageChunkEvent (its NetworkImage
+            // builds a chunkless MultiFrameImageStreamCompleter), so
+            // `progress` was always null, the placeholder never rendered, and
+            // the builder fell through to the AnimatedOpacity sitting at
+            // opacity 0 — leaving the tile FULLY TRANSPARENT for the whole
+            // download. On IO it was the mirror image: chunks fire, so the
+            // placeholder replaced the fade's subtree and the fade never ran.
+            // Underneath, the panel just works on both.
+            const PhotoFallback(showIcon: false),
+            Image.network(
+              url,
+              fit: BoxFit.cover,
+              cacheWidth: bucketed.clamp(160, 2048),
+              // Fade in rather than pop: on a cold grid the photos arrive
+              // scattered over a second or two, and 12 tiles snapping in at
+              // random is more distracting than the fade. While frame is null
+              // the image is transparent and the panel above shows through.
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded ||
+                    MediaQuery.disableAnimationsOf(context)) {
+                  return child;
+                }
+                return AnimatedOpacity(
+                  opacity: frame == null ? 0 : 1,
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  child: child,
+                );
+              },
+              // Just the icon: the tinted panel is already underneath, and a
+              // second PhotoFallback here would stack its translucent rose on
+              // top of the first — a broken photo would read as a DARKER tile
+              // than a photo-less one, which is exactly backwards.
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.restaurant, size: 40, color: SaltColors.rose),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class RecipeTile extends StatelessWidget {
   const RecipeTile({super.key, required this.card, required this.onTap});
 
@@ -73,13 +155,7 @@ class RecipeTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (hero != null)
-                    Image.network(
-                      apiUrl(hero),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const PhotoFallback(),
-                    )
-                  else
+                  if (hero != null) _TileImage(url: apiUrl(hero)) else
                     const PhotoFallback(),
                   const DecoratedBox(
                     decoration: BoxDecoration(

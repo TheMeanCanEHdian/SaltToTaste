@@ -18,6 +18,57 @@ import 'package:salt_app/features/recipes/list/home_page.dart';
 import 'package:salt_app/features/search/search_page.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
 
+/// Wraps [child] in the app's page transition: a short cross-fade.
+///
+/// Every route uses this instead of a bare `builder:`, which would take
+/// Material 3's default zoom — a big, springy scale that reads as a phone
+/// animation and is especially wrong on the wide home → search jump, where
+/// most of the frame is unchanged chrome.
+///
+/// [state] is required for its `pageKey`, which is not optional dressing:
+/// `builder:` supplies it for free, and without it every page here would have
+/// `key == null`, so `Page.canUpdate` returns true for ANY two pages. The
+/// Navigator would then reuse the existing route entry instead of pushing a
+/// new one — and a reused entry runs no transition at all. The fade would be
+/// dead on exactly the `context.go()` navigations this exists for (home →
+/// search among them), while still animating on `context.push()` and so
+/// looking fine in a spot check.
+///
+/// The fade is deliberately quicker than Material's 300ms default: this is a
+/// library you page through, so the transition should get out of the way. It
+/// is the only motion between pages, so it also has to honour a reduced-motion
+/// preference — [MediaQuery.disableAnimationsOf] covers both the OS setting
+/// and the browser's `prefers-reduced-motion`.
+/// The real [_fadePage], for tests.
+///
+/// Exported because the alternative — a copy of it in the test file — is
+/// exactly how the dead-fade bug survived: the test passed against its own
+/// copy while the shipped router had no `key` and ran no transition at all.
+/// A test must drive THIS function or it proves nothing.
+@visibleForTesting
+Page<void> fadePageForTest(GoRouterState state, Widget child) =>
+    _fadePage(state, child);
+
+Page<void> _fadePage(GoRouterState state, Widget child) =>
+    CustomTransitionPage<void>(
+  key: state.pageKey,
+  name: state.name ?? state.uri.path,
+  arguments: state.extra,
+  restorationId: state.pageKey.value,
+  child: child,
+  transitionDuration: const Duration(milliseconds: 180),
+  reverseTransitionDuration: const Duration(milliseconds: 140),
+  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return child;
+    }
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      child: child,
+    );
+  },
+);
+
 /// Splash while auth resolves; shows the failure + retry when bootstrap
 /// couldn't reach the server (so users aren't dumped onto a login form that
 /// can't succeed, and unclaimed instances aren't hidden from setup).
@@ -146,42 +197,54 @@ GoRouter buildRouter(AuthCubit authCubit) {
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const _SplashPage(),
+        pageBuilder: (context, state) => _fadePage(state, const _SplashPage()),
       ),
-      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-      GoRoute(path: '/setup', builder: (context, state) => const SetupPage()),
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) => _fadePage(state, const LoginPage()),
+      ),
+      GoRoute(
+        path: '/setup',
+        pageBuilder: (context, state) => _fadePage(state, const SetupPage()),
+      ),
       GoRoute(
         path: '/recover',
-        builder: (context, state) => const RecoverPage(),
+        pageBuilder: (context, state) => _fadePage(state, const RecoverPage()),
       ),
       GoRoute(
         path: '/change-password',
-        builder: (context, state) => const ChangePasswordPage(),
+        pageBuilder: (context, state) => _fadePage(state, const ChangePasswordPage()),
       ),
-      GoRoute(path: '/', builder: (context, state) => const HomePage()),
-      GoRoute(path: '/new', builder: (context, state) => const EditorPage()),
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) => _fadePage(state, const HomePage()),
+      ),
+      GoRoute(
+        path: '/new',
+        pageBuilder: (context, state) => _fadePage(state, const EditorPage()),
+      ),
       GoRoute(
         path: '/favorites',
-        builder: (context, state) => const FavoritesPage(),
+        pageBuilder: (context, state) => _fadePage(state, const FavoritesPage()),
       ),
       GoRoute(
         path: '/r/:slug',
-        builder: (context, state) =>
-            RecipeDetailPage(slug: state.pathParameters['slug']!),
+        pageBuilder: (context, state) =>
+            _fadePage(state, RecipeDetailPage(slug: state.pathParameters['slug']!)),
       ),
       GoRoute(
         path: '/r/:slug/edit',
-        builder: (context, state) =>
-            EditorPage(slug: state.pathParameters['slug']!),
+        pageBuilder: (context, state) =>
+            _fadePage(state, EditorPage(slug: state.pathParameters['slug']!)),
       ),
       GoRoute(
         path: '/search',
-        builder: (context, state) =>
-            SearchPage(query: state.uri.queryParameters['q'] ?? ''),
+        pageBuilder: (context, state) =>
+            _fadePage(state, SearchPage(query: state.uri.queryParameters['q'] ?? '')),
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const SettingsPage(),
+        pageBuilder: (context, state) => _fadePage(state, const SettingsPage()),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

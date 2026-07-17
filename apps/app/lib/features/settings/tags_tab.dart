@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -213,25 +214,16 @@ class _TagsTabState extends State<TagsTab> {
           const SizedBox(width: 10),
           SizedBox(
             width: 168,
-            child: DropdownButtonFormField<TagSort>(
-              initialValue: state.sort,
-              decoration: const InputDecoration(
-                labelText: 'Sort',
-                isDense: true,
-                border: OutlineInputBorder(),
+            child: FSelect<TagSort>(
+              items: const {
+                'Most recipes': TagSort.mostRecipes,
+                'A–Z': TagSort.alphabetical,
+              },
+              control: FSelectControl.lifted(
+                value: state.sort,
+                onChange: (value) => _cubit.setSort(value ?? TagSort.mostRecipes),
               ),
-              items: const [
-                DropdownMenuItem(
-                  value: TagSort.mostRecipes,
-                  child: Text('Most recipes', style: TextStyle(fontSize: 13.5)),
-                ),
-                DropdownMenuItem(
-                  value: TagSort.alphabetical,
-                  child: Text('A–Z', style: TextStyle(fontSize: 13.5)),
-                ),
-              ],
-              onChanged: (value) =>
-                  _cubit.setSort(value ?? TagSort.mostRecipes),
+              label: const Text('Sort'),
             ),
           ),
         ],

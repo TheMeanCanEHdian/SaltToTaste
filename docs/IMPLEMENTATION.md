@@ -819,3 +819,133 @@ fallback.
   alive under the detail page went stale. `setFavorite` is the only place a
   favorite changes, so it broadcasts; reloading instead would lose scroll and
   paging on a 1,198-recipe library.
+- 2026-07-16 — **Tag input rebuilt on Forui's `FAutocomplete`**, approved
+  mockup `docs/mockups/p9-tag-input.html`. Chips moved ABOVE the field: the
+  approved P5 design had chips and cursor sharing one bordered box, and
+  `FAutocomplete` renders its own bordered field, so the old shape would nest a
+  border in a border. Forui's default filter is `startsWith`; overridden to
+  substring to keep the old field's behaviour. Enter takes the matching tag
+  rather than the raw text — the vocabulary is shared across 1,198 recipes, so
+  `des` beside `dessert` is the failure worth designing against; creating a
+  near-miss needs the explicit `Create "x"` row. `FMultiSelect` was rejected:
+  it is a closed-set picker and tags must be creatable.
+- 2026-07-16 — **Enter resolves against the WHOLE tag vocabulary, not the
+  popover's filtered list.** The popover hides a tag the recipe already has
+  (offering it is noise), and `_onSubmit` reused that same filtered list to
+  decide what Enter meant — so once `dessert` was on the recipe it became
+  invisible to the matcher, and typing `des` + Enter minted `des` beside it:
+  the exact junk near-duplicate the widget exists to prevent, through its
+  primary path. Display and resolution are now separate (`_suggestions` vs
+  `_matches`). Resolving to a tag already present is a harmless no-op —
+  `EditorCubit.addTag` ignores duplicates. Found by the review's completeness
+  critic; none of the eight finder lenses covered it.
+- 2026-07-16 — **The `Create "x"` row is built from what the user TYPED**, not
+  from the live field text. Forui previews a highlighted row by writing its
+  value into the field, and hands `contentBuilder` that live text as the query
+  — so arrowing onto `dessert` to look at it made the query `dessert`, tripped
+  the exact-match guard, and deleted `Create "des"` from under the keyboard.
+  The escape hatch was mouse-only. `_typed` is recorded from the managed
+  control's `onChange`, gated on the FIELD having focus, which is what
+  separates a keystroke from a preview.
+
+- 2026-07-16 — **A tag is committed only by an explicit act** (user's call).
+  Enter, or pressing a popover row (including `Create "x"`). Blur commits
+  nothing. The field previously added whatever was typed when focus left it,
+  reasoning that clicking Save should not silently drop a half-typed tag — but
+  that made blur the last surviving route to the junk near-duplicate the widget
+  exists to prevent: Enter resolves `des` to `dessert` while blur took `des`
+  literally, so the same keystrokes meant different things depending on how you
+  left the field. Text left behind now stays visible in the field and unsaved,
+  which trades an invisible write for a visible no-op.
+
+- 2026-07-16 — **The tag input waits for its vocabulary via an async `filter`,
+  and carries no sentinel.** Both come from reading forui's source rather than
+  guessing at its contract, and both were live defects:
+  (1) `FAutocomplete` re-runs `filter` ONLY when the field text changes
+  (autocomplete.dart:1250 returns early otherwise), so a `setState` landing the
+  tags could not refresh an open popover — type before the fetch lands and the
+  popover offered `Create "des"` and nothing else, permanently. Returning a
+  `Future` from `filter` hands the waiting to forui: `Content` parks a pending
+  future behind a FutureBuilder and calls `contentBuilder` only once it
+  resolves, so no row can be offered against a vocabulary we do not know yet.
+  A `Create` row shown then is a lie — it claims no such tag exists when the
+  truth is that the tags have not arrived.
+  (2) An item's `value` is not a private channel: merely arrowing onto a row
+  writes it into the visible field (autocomplete.dart:1531-1535). The
+  `Create` row's `\x00create:` sentinel was therefore displayed verbatim and
+  committed as a literal tag name on blur. The row now carries the plain typed
+  text; adding it IS creating it, since the row only appears when nothing
+  matches exactly.
+- 2026-07-16 — **The PDF release-hang is fixed per-site, by rule. The
+  `_boundedBlock` container ceiling was REVERTED** (it replaces an earlier
+  entry here that recommended it — that recommendation was wrong). A height
+  ceiling does not clip in the `pdf` package, it DROPS: `Flex` adds each
+  child's height and `break`s once the total exceeds the constraint *without
+  incrementing its index* (flex.dart:280-286), so the child is never painted
+  while its height is still reserved. The 420pt ceiling silently deleted every
+  tag chip from the header, and the byte-length test that "proved" it worked
+  was measuring coordinate shift, not drawn content. Silently dropping a user's
+  content is worse than the hang it fixed.
+  The rule that replaced it, applied to all ~20 text sites rather than to
+  whichever instance was reported: a text that is a DIRECT MultiPage child gets
+  `overflow: TextOverflow.span` (only 9 pdf types can span at all; `Text extends
+  RichText`, which spans only with that flag); a text NESTED in a Row/Wrap
+  cannot span at any depth, so it gets a measured `maxLines`. Where the content
+  is countable rather than textual, the overflow is STATED, not dropped — the
+  header prints at most 12 tag chips plus a `+N more`.
+  Verification is by counting `TJ` operators in an uncompressed content stream
+  (one per word), which observes what was actually painted; byte length does
+  not.
+  **That rule is necessary but NOT sufficient, and on its own it made things
+  worse** (found by the adversarial review of the fix; two independent lenses,
+  no dissent across six refuters). A non-spanning CONTAINER's height is the SUM
+  of its children's caps, and capping the children lowered the header's sum
+  *into* the hang band (699.8pt, 720pt] instead of over it: input that threw a
+  clean PdfException at `0d655dd` began hanging the tab instead. A sweep of 216
+  header combinations measured 10 hangs and 73 throws. Enumerating the leaves
+  cannot see this — each field alone saturates safely; only combinations reach
+  the band.
+  So the caps are now chosen to keep ONE invariant: **the saturated header must
+  fit a page**, which makes the band unreachable rather than merely unlikely.
+  Caps are set from measurement against both the corpus and the API's limits
+  (title 10 lines — a legal 250-char title needs 9; category 3 — a legal
+  120-char one needs 3; yield 14 — a legal 200-char one needs 12; chips one
+  line each, text ellipsized at the API's own 60-char tag cap). The same sweep
+  now measures 343/343 clean. The invariant lives in a test that sweeps
+  combinations, because that is the only thing that can hold it.
+- 2026-07-16 — **PDF steps hang-indent, via `Partitions`** (user-approved
+  design, chosen from two rendered candidates). The number sits in its own
+  column and the text hangs-indented beside it, spanning as many pages as it
+  needs. It took three attempts, and the two failures are the lesson:
+  1. **Row + `maxLines: 40`.** A Row cannot span (flex.dart:
+     `canSpan => direction == Axis.vertical`), so it must fit one page. A LINE
+     cap does bound height honestly — but `maxLines` truncates INVISIBLY (pdf's
+     `TextOverflow` has no ellipsis member), silently eating ~44% of an
+     API-legal 10,000-char step, which `0d655dd` had printed in full.
+  2. **Row gated on `text.length > 3000`.** Strictly worse, and it shipped: a
+     CHAR COUNT CANNOT BOUND A HEIGHT. Measured inside that gate, so routed to
+     the Row: `'MMM ' * 700` (2,799 chars) and a **1,397-char checklist of 44
+     short newline-separated lines** both landed in the (699.8pt, 720pt] band —
+     reintroducing the exact release-build hang the work existed to prevent,
+     reachable by typing an ordinary multi-line step into the editor's own
+     multiline field. Found by the review's completeness critics; no finder lens
+     covered it.
+  3. **`Partitions`.** `Partitions.canSpan => children.any((p) => p.canSpan)`
+     and `Partition.canSpan => child.canSpan` (partitions.dart:44,116), so two
+     spanning RichTexts give a two-column row that spans. Both partitions must
+     span: a non-spanning one is skipped by `saveContext` but not by
+     `restoreContext`, which then null-checks a context that was never saved
+     (partitions.dart:233). With the layout spanning there is no height to
+     bound, so there is no cap and nothing to truncate.
+  The generalisable rule, learned twice in one day: **bound a height with a
+  height (or with a line count), never with a character count** — and the same
+  error is why the header's `_maxTitleLines`/`_maxCategoryLines`/`_maxChipChars`
+  comments are wrong about what they guarantee (open, see the deferred list).
+
+- 2026-07-16 — **Process**: the user made auto-review a standing order after
+  three prompts in one day. Reviews now run at every finish point, before
+  deploying for them to test. Evidence for why: a batch of four "small" UI
+  items shipped with two HIGH defects (a transition that never ran; a PDF
+  release-hang), and the fixes for those findings — committed in `0d655dd`
+  without their own review — themselves carried 12 defects. Fixing a review's
+  findings does not review the fixes.

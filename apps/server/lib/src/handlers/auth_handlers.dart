@@ -163,23 +163,30 @@ Future<SessionGrant> recoverAdmin(
   required String clientIp,
   String? userAgent,
 }) async {
+  // Recovery gets its OWN budget, deliberately NOT login's shared per-IP one.
+  //
+  // Gating this on `ipRateLimiter` — which is what "rate-limit it exactly like
+  // login" produces — inverts the feature: failed logins are precisely what
+  // makes an operator need /recover, and they would fill the very bucket that
+  // then refuses a VALID code. It is worse on the default deployment, where
+  // TRUST_PROXY is unset (config.dart) so clientIp resolves to the reverse
+  // proxy's address for every request and one user's fat-fingered logins would
+  // lock recovery for the whole household.
+  //
   // Keyed on the IP alone: the code IS the credential here, so unlike login
   // there is no account to scope the budget to.
   final key = 'recover|$clientIp';
   final gate = runtime.rateLimiter.check(key);
-  final ipGate = runtime.ipRateLimiter.check(clientIp);
-  if (!gate.allowed || !ipGate.allowed) {
+  if (!gate.allowed) {
     // Before the code check, so a locked-out caller learns nothing about
     // whether their guess was close.
-    final retryAfter = gate.retryAfter > ipGate.retryAfter
-        ? gate.retryAfter
-        : ipGate.retryAfter;
-    throw LockedException(_ceilSeconds(retryAfter));
+    throw LockedException(_ceilSeconds(gate.retryAfter));
   }
 
   void countFailure(String reason) {
+    // Only the recovery key: a wrong code must not spend login's budget
+    // either, or a code-guesser could lock the household out of signing in.
     runtime.rateLimiter.recordFailure(key);
-    runtime.ipRateLimiter.recordFailure(clientIp);
     // The attempted code is a secret and never reaches the log.
     _log.warning('Recovery attempt rejected from $clientIp: $reason.');
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -197,25 +198,17 @@ class _TokensTabState extends State<TokensTab> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _scope,
-                        decoration: const InputDecoration(
-                          labelText: 'Scope',
-                          isDense: true,
-                          border: OutlineInputBorder(),
+                      child: FSelect<String>(
+                        items: const {
+                          'read — browse and favorites': 'read',
+                          'full — everything my role allows': 'full',
+                        },
+                        control: FSelectControl.lifted(
+                          value: _scope,
+                          onChange: (value) =>
+                              setState(() => _scope = value ?? 'read'),
                         ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'read',
-                            child: Text('read — browse and favorites'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'full',
-                            child: Text('full — everything my role allows'),
-                          ),
-                        ],
-                        onChanged: (value) =>
-                            setState(() => _scope = value ?? 'read'),
+                        label: const Text('Scope'),
                       ),
                     ),
                     const SizedBox(width: 12),

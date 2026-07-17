@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
+import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
@@ -492,6 +494,19 @@ class _BasicsCard extends StatelessWidget {
   }
 }
 
+/// The tag field, exposed for widget tests.
+///
+/// Its keyboard contract (Enter takes a match rather than minting a
+/// near-duplicate) is the kind of thing that shipped broken once already, so
+/// it is tested directly rather than through the whole editor.
+@visibleForTesting
+class TagsInputForTest extends StatelessWidget {
+  const TagsInputForTest({super.key});
+
+  @override
+  Widget build(BuildContext context) => const _TagsInput();
+}
+
 class _TagsInput extends StatefulWidget {
   const _TagsInput();
 
@@ -500,8 +515,57 @@ class _TagsInput extends StatefulWidget {
 }
 
 class _TagsInputState extends State<_TagsInput> {
-  final TextEditingController _controller = TextEditingController();
+  // FAutocomplete's own controller: it extends TextEditingController, so
+  // clearing/reading text works as before, and it is what `control` expects.
+  final FAutocompleteController _controller = FAutocompleteController();
   final FocusNode _focus = FocusNode();
+
+  /// What the USER typed, as opposed to what is currently in the field.
+  ///
+  /// They diverge, and the `Create "x"` row depends on the difference. Forui
+  /// previews a highlighted row by writing its value INTO the field
+  /// (autocomplete.dart:1531-1535), and `contentBuilder` is handed the LIVE
+  /// field text as its query (autocomplete_content.dart:87). So arrowing onto
+  /// `dessert` merely to look at it turned the query into `dessert`, the
+  /// exact-match guard fired, and `Create "des"` vanished from under the
+  /// keyboard — leaving no keyboard route to the one row that exists for
+  /// deliberately creating a near-miss.
+  String _typed = '';
+
+  /// Every tag already in the library, most-used first — the suggestion pool.
+  ///
+  /// Fetched once when the editor opens. Tags are a small, shared vocabulary
+  /// (the whole library has a handful), so this is one cheap request and no
+  /// per-keystroke round-trip. A failure leaves the field a plain text input:
+  /// suggestions are a convenience, and must never block tagging.
+  List<String> _known = const [];
+
+  /// The in-flight fetch, so [_onSubmit] can wait for the vocabulary instead
+  /// of deciding against an empty one.
+  Future<void>? _loadingKnownTags;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadingKnownTags = _loadKnownTags();
+  }
+
+  Future<void> _loadKnownTags() async {
+    try {
+      final tags = await context.read<TagsRepository>().listTags();
+      if (mounted) {
+        setState(() => _known = [for (final tag in tags) tag.name]);
+      }
+    } on Exception {
+      // Progressive enhancement — keep the plain field.
+    } finally {
+      // Settled, success or not: a failed fetch means the vocabulary is
+      // legitimately empty (every tag is new) rather than not-known-yet, and
+      // nothing may keep waiting on it. Nulling this is what flips [_filter]
+      // back to synchronous and lets the `Create` row be offered again.
+      _loadingKnownTags = null;
+    }
+  }
 
   @override
   void dispose() {
@@ -510,64 +574,267 @@ class _TagsInputState extends State<_TagsInput> {
     super.dispose();
   }
 
-  void _add({bool keepFocus = false}) {
-    context.read<EditorCubit>().addTag(_controller.text);
-    _controller.clear();
-    if (keepFocus) {
-      // Adding several tags in a row shouldn't need a mouse round-trip.
-      _focus.requestFocus();
+  /// The tags already on this recipe, lower-cased.
+  Set<String> get _taken => context
+      .read<EditorCubit>()
+      .state
+      .tags
+      .map((tag) => tag.toLowerCase())
+      .toSet();
+
+  /// Every vocabulary tag matching [input], best first — INCLUDING tags this
+  /// recipe already has.
+  ///
+  /// This is what Enter RESOLVES against, and it must not be confused with
+  /// [_suggestions], which is what the popover DISPLAYS. The two differ by
+  /// exactly one rule — the popover hides a tag you already have, because
+  /// offering it is noise — and folding that display rule into the resolution
+  /// re-created the junk near-duplicate this whole widget exists to prevent:
+  /// with `dessert` already on the recipe it was filtered out of the match
+  /// set, so typing `des` + Enter found NOTHING to match and minted `des`
+  /// alongside it. Resolution must see the whole vocabulary; if the answer
+  /// turns out to be a tag the recipe already has, `EditorCubit.addTag`
+  /// already ignores the duplicate, so Enter is a harmless no-op.
+  List<String> _matches(String input) {
+    final typed = input.trim().toLowerCase();
+    // An empty field offers the whole vocabulary — on a small tag set that is
+    // a useful "what do we use?" list, not a wall.
+    final matches = _known
+        .where((tag) => typed.isEmpty || tag.toLowerCase().contains(typed))
+        .toList();
+    // Exact hit first, then the rest alphabetically (which is the order the
+    // server returns: `ORDER BY t.name`, salt_database.dart).
+    //
+    // This ordering is load-bearing, not cosmetic. Enter resolves to the head
+    // of this list, and the display list is capped — so if the tag the user
+    // typed EXACTLY were sorted mid-list, the cap could truncate it away and
+    // Enter would silently apply a different tag. Sorting the exact hit to the
+    // front makes the cap unable to hide it.
+    matches.sort((a, b) {
+      final aExact = a.toLowerCase() == typed;
+      final bExact = b.toLowerCase() == typed;
+      if (aExact != bExact) {
+        return aExact ? -1 : 1;
+      }
+      return a.compareTo(b);
+    });
+    return matches;
+  }
+
+  /// Suggestions for what has been typed: [_matches], minus the tags already
+  /// on this recipe (offering one you have is just noise).
+  Iterable<String> _suggestions(String input) =>
+      _matches(input).where((tag) => !_taken.contains(tag.toLowerCase()));
+
+  /// What the popover shows: [_suggestions] capped for display only.
+  ///
+  /// Kept separate from [_suggestions] on purpose. The cap belongs to the UI —
+  /// a popover of 50 rows is unusable — but applying it before the match search
+  /// is how Enter ended up adding the wrong tag.
+  ///
+  /// Returns a FUTURE while the vocabulary is still in flight, and that is the
+  /// whole fix for the fetch race. FAutocomplete re-runs this filter ONLY when
+  /// the field text changes (autocomplete.dart:1250 returns early otherwise), so
+  /// a `setState` landing the vocabulary could never refresh an open popover:
+  /// type "des" before the tags arrive and the popover offered `Create "des"`
+  /// and nothing else, permanently — pressing it minted the junk near-duplicate
+  /// this widget exists to prevent.
+  ///
+  /// Handing back a Future instead makes forui do the waiting: `Content` puts a
+  /// pending future behind a FutureBuilder and shows `contentLoadingBuilder`,
+  /// calling [_contentBuilder] only once it resolves
+  /// (autocomplete_content.dart:70-80). So the popover cannot offer ANY row —
+  /// least of all `Create` — until it knows the real vocabulary.
+  FutureOr<Iterable<String>> _filter(String input) {
+    final loading = _loadingKnownTags;
+    if (loading != null) {
+      return loading.then((_) => _suggestions(input).take(8));
     }
+    return _suggestions(input).take(8);
+  }
+
+  void _addNamed(String tag) {
+    context.read<EditorCubit>().addTag(tag);
+    _controller.clear();
+    _focus.requestFocus();
+  }
+
+  /// Pressing a popover row — including the `Create "x"` row — adds its value.
+  ///
+  /// There is deliberately no sentinel wrapper distinguishing the two. An
+  /// earlier version smuggled `Create` through the `List<String>` item channel
+  /// as a NUL-prefixed `\x00create:<text>`, which forui defeats twice over:
+  /// item values are NOT an opaque channel — merely ARROWING ONTO a row writes
+  /// its value into the field (`_controller.text = widget.format(value)`,
+  /// autocomplete.dart:1531-1535, where `format` is the identity for
+  /// `FAutocomplete.text`). So the sentinel was shown to the user verbatim, and
+  /// the blur handler below then committed `\x00create:sheet-pan` as a literal
+  /// tag name.
+  ///
+  /// Giving the `Create` row the typed text as its value removes the need for
+  /// any of it: arrowing onto it shows exactly what was typed, and adding it IS
+  /// creating it — the row is only offered when nothing in the vocabulary
+  /// already matches that text exactly.
+  void _onItemPress(String value) => _addNamed(value);
+
+  /// Enter's behaviour, and the reason this widget exists.
+  ///
+  /// FAutocomplete passes `onSubmit` straight through to its text field, so
+  /// Enter arrives here as the RAW typed text — the same trap the old
+  /// RawAutocomplete fell into, where typing "des" and pressing Enter minted a
+  /// junk tag `des` beside the real `dessert`. The tag vocabulary is shared
+  /// across the whole library, so a near-miss duplicate is the failure worth
+  /// designing against (approved mockup: docs/mockups/p9-tag-input.html).
+  ///
+  /// So: if what was typed matches anything, Enter takes the first match
+  /// ([_suggestions] sorts an exact hit to the front). Creating a tag that is a
+  /// near-miss of an existing one needs the explicit `Create "x"` row. With
+  /// nothing matching, Enter just creates.
+  ///
+  /// It AWAITS the vocabulary first, and must: `_known` is empty until the tags
+  /// request lands, and deciding against an empty vocabulary means every tag
+  /// looks new — silently reinstating the junk-tag bug for the whole duration
+  /// of the fetch, and permanently if it fails. The timeout keeps a dead
+  /// network from hanging Enter; past it we genuinely cannot know better than
+  /// the user, so the typed text is taken at its word.
+  Future<void> _onSubmit(String text) async {
+    final typed = text.trim();
+    if (typed.isEmpty) {
+      return;
+    }
+    // Empty the field BEFORE the await, not after: Enter should look like it
+    // worked the instant it is pressed, not whenever the tags request lands.
+    // (This also used to be load-bearing — a blur firing during the await
+    // committed the raw text and then the match landed on top of it, giving
+    // TWO tags. Blur no longer commits, so this is now only about feeling
+    // responsive.)
+    _controller.clear();
+    try {
+      await _loadingKnownTags?.timeout(const Duration(seconds: 3));
+    } on TimeoutException {
+      // Decide on what we have.
+    }
+    if (!mounted) {
+      return;
+    }
+    // Resolve against the WHOLE vocabulary — see [_matches].
+    final matches = _matches(typed);
+    // Add WITHOUT touching the controller. The field was already emptied above,
+    // before the await; clearing it a second time here wipes whatever the user
+    // typed DURING the await, which on a slow tags request is a real sentence's
+    // worth of typing silently deleted under them. Nor is focus re-requested:
+    // Enter never took focus out of the field, and grabbing it back would yank
+    // the caret away from a user who has since tabbed on to Save.
+    context.read<EditorCubit>().addTag(matches.isEmpty ? typed : matches.first);
   }
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.watch<EditorCubit>();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-      decoration: BoxDecoration(
-        border: Border.all(color: SaltColors.hairline, width: 1.5),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          for (final tag in cubit.state.tags)
-            InputChip(
-              label: Text(tag, style: const TextStyle(fontSize: 12)),
-              onDeleted: () => cubit.removeTag(tag),
-              visualDensity: VisualDensity.compact,
-              backgroundColor: SaltColors.chip,
-              side: BorderSide.none,
-              labelStyle: const TextStyle(color: SaltColors.chipInk),
-              deleteIconColor: SaltColors.chipInk,
-            ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 160),
-            // Commit on blur too: clicking Save (or tapping away on mobile)
-            // must not silently drop a half-typed tag.
-            child: Focus(
-              onFocusChange: (focused) {
-                if (!focused && _controller.text.trim().isNotEmpty) {
-                  _add();
-                }
-              },
-              child: TextField(
-                controller: _controller,
-                focusNode: _focus,
-                onSubmitted: (_) => _add(keepFocus: true),
-                style: const TextStyle(fontSize: 13),
-                decoration: const InputDecoration(
-                  hintText: 'Add tag…',
-                  border: InputBorder.none,
-                  isDense: true,
-                ),
-              ),
+    final tags = cubit.state.tags;
+    // Chips ABOVE the field, not inside it: FAutocomplete renders its own
+    // bordered field, and nesting that in the old bordered chip box would draw
+    // a border inside a border. It also reads better past two or three tags,
+    // where the old single box shoved the cursor onto its own line anyway.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (tags.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final tag in tags)
+                  InputChip(
+                    label: Text(tag, style: const TextStyle(fontSize: 12)),
+                    onDeleted: () => cubit.removeTag(tag),
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: SaltColors.chip,
+                    side: BorderSide.none,
+                    labelStyle: const TextStyle(color: SaltColors.chipInk),
+                    deleteIconColor: SaltColors.chipInk,
+                  ),
+              ],
             ),
           ),
-        ],
-      ),
+        // A tag is committed ONLY by an explicit act — Enter, or pressing a
+        // popover row (including `Create "x"`). Blur deliberately commits
+        // nothing (user's call, 2026-07-16).
+        //
+        // This field used to add whatever was typed when focus left it, so
+        // clicking Save turned a half-typed `des` into a real tag. That was the
+        // last surviving route to the junk near-duplicate the whole widget
+        // exists to prevent: Enter looks the text up and takes `dessert`, but
+        // blur took it literally, so the same keystrokes meant different things
+        // depending on how you left the field. Text left behind now simply
+        // stays in the field, visibly not a chip, and is not saved.
+        FAutocomplete.text(
+          items: _known,
+          control: FAutocompleteControl.managed(
+            controller: _controller,
+            // Fires for forui's own preview writes too (its `_mutating` guard
+            // gates the re-filter, not this callback), so gate on the FIELD
+            // having focus — that is what separates a keystroke from a preview.
+            onChange: (value) {
+              if (_focus.hasFocus) {
+                _typed = value.text;
+              }
+            },
+          ),
+          focusNode: _focus,
+          hint: 'Add a tag…',
+          // Forui's default filter is startsWith; substring matching is what
+          // the old field did and what makes a small vocabulary findable
+          // ("sert" should still reach "dessert").
+          filter: _filter,
+          contentBuilder: (context, query, values) {
+            // Re-filter here, not just in `filter`. FAutocomplete only re-runs
+            // `filter` when the field TEXT changes, and adding a tag does not
+            // change it — Enter clears the field first, so the list is
+            // computed while the new tag is not yet on the recipe and then
+            // never invalidated. That left the popover offering a tag the
+            // recipe already had (and clicking it did nothing). contentBuilder
+            // runs on every build, so it always sees the current tags.
+            final fresh = values.where(
+              (tag) => !_taken.contains(tag.toLowerCase()),
+            );
+            // Build the `Create` row from what the USER typed, NOT from
+            // `query` — see [_typed]. `query` is the live field text, which
+            // forui rewrites to the highlighted row's value the moment you
+            // arrow onto a suggestion, which used to delete this row mid-flow.
+            final creatable = _typed.trim();
+            return [
+              for (final tag in fresh) FAutocompleteItem(value: tag),
+              // Offer creating only what could be a NEW tag: something typed,
+              // and nothing in the vocabulary already IS that tag. Checked
+              // against `_known` rather than `values`, because `values` is the
+              // filtered display list and shrinks as forui previews rows.
+              if (creatable.isNotEmpty &&
+                  !_known.any(
+                    (tag) => tag.toLowerCase() == creatable.toLowerCase(),
+                  ))
+                FAutocompleteItem(
+                  // The value is the plain typed text — see [_onItemPress].
+                  // Only the TITLE says "Create"; the value must stay clean
+                  // because forui writes it into the field on arrow-down.
+                  value: creatable,
+                  title: Text(
+                    'Create “$creatable”',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: SaltColors.maroon,
+                    ),
+                  ),
+                ),
+            ];
+          },
+          onItemPress: _onItemPress,
+          onSubmit: _onSubmit,
+        ),
+      ],
     );
   }
 }

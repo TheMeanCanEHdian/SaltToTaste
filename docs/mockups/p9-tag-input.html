@@ -1,0 +1,344 @@
+<title>Tag input — FAutocomplete redesign</title>
+<style>
+  :root {
+    /* Real tokens from apps/app/lib/core/theme/salt_theme.dart */
+    --maroon: #960000;
+    --maroon-hover: #7D1420;
+    --rose: #8C4242;
+    --chip: #F6E4E4;
+    --chip-ink: #7D1420;
+    --ink: #23201F;
+    --muted: #6D6763;
+    --hairline: #E7E2DE;
+    --page-bg: #FAF7F4;
+    --panel: #FDFBF9;
+    --chip-neutral: #EFECEA;
+    --ok-bg: #E8F3E4;
+    --ok-ink: #2C5A1E;
+    --warn-bg: #FDF1E2;
+    --warn-ink: #8A5A12;
+
+    /* Page chrome (the doc around the mockups), theme-aware. */
+    --doc-bg: #F4F1EE;
+    --doc-ink: #2A2624;
+    --doc-muted: #6E6763;
+    --doc-rule: #DFD9D4;
+    --doc-card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --doc-bg: #1A1817;
+      --doc-ink: #EDE8E4;
+      --doc-muted: #A39B95;
+      --doc-rule: #34302D;
+      --doc-card: #232020;
+    }
+  }
+  :root[data-theme="dark"] {
+    --doc-bg: #1A1817;
+    --doc-ink: #EDE8E4;
+    --doc-muted: #A39B95;
+    --doc-rule: #34302D;
+    --doc-card: #232020;
+  }
+  :root[data-theme="light"] {
+    --doc-bg: #F4F1EE;
+    --doc-ink: #2A2624;
+    --doc-muted: #6E6763;
+    --doc-rule: #DFD9D4;
+    --doc-card: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--doc-bg);
+    color: var(--doc-ink);
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+
+  header.top { border-bottom: 1px solid var(--doc-rule); padding-bottom: 20px; margin-bottom: 32px; }
+  h1 { font-size: 25px; margin: 0 0 6px; letter-spacing: -0.3px; text-wrap: balance; }
+  .sub { color: var(--doc-muted); font-size: 14px; max-width: 76ch; margin: 0; }
+  .meta { font-size: 12.5px; color: var(--doc-muted); margin-top: 10px; }
+  .meta code { background: var(--doc-card); border: 1px solid var(--doc-rule); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+
+  h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--doc-muted); margin: 40px 0 14px; font-weight: 700;
+  }
+  .note { font-size: 13.5px; color: var(--doc-muted); max-width: 78ch; margin: 0 0 16px; }
+  .note strong { color: var(--doc-ink); }
+
+  .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); align-items: start; }
+
+  .state {
+    background: var(--doc-card); border: 1px solid var(--doc-rule);
+    border-radius: 12px; overflow: hidden;
+  }
+  .state > figcaption {
+    font-size: 12px; font-weight: 700; padding: 10px 14px;
+    border-bottom: 1px solid var(--doc-rule); color: var(--doc-ink);
+    display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+  }
+  .state > figcaption span { font-weight: 400; color: var(--doc-muted); font-size: 11.5px; }
+  .stage { background: var(--page-bg); padding: 20px; }
+
+  /* ---- the app itself: always its real light theme ---- */
+  .card {
+    background: #fff; border: 1px solid var(--hairline);
+    border-radius: 12px; padding: 16px;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .card-title { color: var(--maroon); font-weight: 700; font-size: 14.5px; margin: 0 0 14px; }
+  .field-label { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .helper { font-size: 11.5px; color: var(--muted); margin-top: 7px; }
+
+  /* chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--chip); color: var(--chip-ink);
+    border-radius: 999px; padding: 4px 6px 4px 10px;
+    font-size: 12px; font-weight: 600; line-height: 1.3;
+  }
+  .chip .x {
+    width: 15px; height: 15px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(125,20,32,.14); font-size: 10px; cursor: pointer;
+  }
+  .chips-empty { font-size: 12.5px; color: var(--muted); font-style: italic; }
+
+  /* forui field */
+  .ffield {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid var(--hairline);
+    border-radius: 8px; padding: 0 10px; height: 38px;
+    font-size: 13px; color: var(--ink);
+  }
+  .ffield.focus { border-color: var(--maroon); box-shadow: 0 0 0 3px rgba(150,0,0,.10); }
+  .ffield .ph { color: var(--muted); }
+  .caret { width: 1px; height: 16px; background: var(--maroon); display: inline-block; }
+
+  /* popover */
+  .pop {
+    margin-top: 4px; background: #fff;
+    border: 1px solid var(--hairline); border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(35,32,31,.10);
+    overflow: hidden;
+  }
+  .opt {
+    padding: 8px 11px; font-size: 13px; display: flex;
+    justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .opt + .opt { border-top: 1px solid #F3EFEC; }
+  .opt.hl { background: var(--chip); color: var(--chip-ink); font-weight: 600; }
+  .opt .count { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .opt.hl .count { color: var(--chip-ink); }
+  .opt.create { color: var(--maroon); font-weight: 600; }
+  .opt.create .kbd { font-weight: 400; }
+  .kbd {
+    font-size: 10.5px; color: var(--muted); border: 1px solid var(--hairline);
+    border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--panel);
+  }
+
+  .mob { max-width: 330px; }
+
+  table.cmp { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-top: 6px; }
+  table.cmp th, table.cmp td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--doc-rule); vertical-align: top; }
+  table.cmp th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--doc-muted); }
+  table.cmp td:first-child { white-space: nowrap; color: var(--doc-muted); }
+  .scroller { overflow-x: auto; }
+
+  .flag { border-left: 3px solid var(--maroon); padding: 2px 0 2px 12px; margin: 18px 0; }
+  .flag p { margin: 0 0 6px; font-size: 13.5px; }
+  .flag p:last-child { margin-bottom: 0; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Tag input — redesigned around <code>FAutocomplete</code></h1>
+    <p class="sub">
+      The tag field moves off a hand-rolled <code>RawAutocomplete</code> and onto Forui's
+      <code>FAutocomplete</code>. That kills two confirmed bugs and drops a bespoke overlay widget —
+      but <code>FAutocomplete</code> is a bordered field, so the chips can no longer sit inside it.
+      This is the layout that follows.
+    </p>
+    <p class="meta">
+      Real recipe: <code>0879-easy-caramel-cake.yaml</code> · real tag <code>dessert</code> (214 recipes) ·
+      real tokens from <code>salt_theme.dart</code> · the app is light-themed by design, so the frames stay light in both page themes
+    </p>
+  </header>
+
+  <div class="flag">
+    <p><strong>Why the layout has to change.</strong> Today the chips and the text cursor live in one
+      bordered box. <code>FAutocomplete</code> renders its own bordered field, so keeping that shape
+      would nest a border inside a border. Putting the chips <em>above</em> the field is the honest
+      Forui layout — and it reads better once a recipe has more than a couple of tags, since the
+      chips wrap freely instead of shoving the cursor onto a second line.</p>
+  </div>
+
+  <h2>Before → after</h2>
+  <div class="grid">
+    <figure class="state">
+      <figcaption>Before — today, shipped <span>chips + cursor in one box</span></figcaption>
+      <div class="stage">
+        <div class="card">
+          <p class="card-title">Basics</p>
+          <div class="field-label">Tags</div>
+          <div style="border:1.5px solid var(--hairline); border-radius:9px; padding:7px 9px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+            <span class="chip">dessert <span class="x">✕</span></span>
+            <span style="font-size:13px; color:var(--muted);">Add tag…</span>
+          </div>
+          <p class="helper">New tags are created on save and show up in Settings → Tags for styling.</p>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="state">
+      <figcaption>After — chips above, Forui field below <span>resting</span></figcaption>
+      <div class="stage">
+        <div class="card">
+          <p class="card-title">Basics</p>
+          <div class="field-label">Tags</div>
+          <div class="chips" style="margin-bottom:8px;">
+            <span class="chip">dessert <span class="x">✕</span></span>
+          </div>
+          <div class="ffield"><span class="ph">Add a tag…</span></div>
+          <p class="helper">New tags are created on save and show up in Settings → Tags for styling.</p>
+        </div>
+      </div>
+    </figure>
+  </div>
+
+  <h2>The states that matter</h2>
+  <p class="note">
+    Each of these is a bug the current field gets wrong. <strong>Enter</strong> currently commits the
+    raw text, so typing “des” and pressing Enter mints a junk tag <code>des</code> instead of taking
+    <code>dessert</code> — and the suggestion list can’t be reached by keyboard at all.
+  </p>
+  <div class="grid">
+    <figure class="state">
+      <figcaption>Focused, empty <span>offers the vocabulary</span></figcaption>
+      <div class="stage">
+        <div class="card">
+          <div class="field-label">Tags</div>
+          <div class="chips" style="margin-bottom:8px;">
+            <span class="chip">dessert <span class="x">✕</span></span>
+          </div>
+          <div class="ffield focus"><span class="caret"></span></div>
+          <div class="pop">
+            <div class="opt"><span>weeknight</span><span class="count">— new</span></div>
+            <div class="opt"><span>grilling</span><span class="count">— new</span></div>
+            <div class="opt"><span>make-ahead</span><span class="count">— new</span></div>
+          </div>
+          <p class="helper">Tags already on this recipe are never offered.</p>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="state">
+      <figcaption>Typing “des” <span>match highlighted; Enter takes it</span></figcaption>
+      <div class="stage">
+        <div class="card">
+          <div class="field-label">Tags</div>
+          <div class="chips" style="margin-bottom:8px;">
+            <span class="chips-empty">No tags yet</span>
+          </div>
+          <div class="ffield focus"><span>des</span><span class="caret"></span></div>
+          <div class="pop">
+            <div class="opt hl"><span>dessert</span><span class="count">214</span></div>
+            <div class="opt create"><span>Create “des”</span><span class="kbd">⌥↵</span></div>
+          </div>
+          <p class="helper">Enter takes the highlighted tag. A brand-new tag needs the explicit Create row.</p>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="state">
+      <figcaption>No match <span>creating is the only option</span></figcaption>
+      <div class="stage">
+        <div class="card">
+          <div class="field-label">Tags</div>
+          <div class="chips" style="margin-bottom:8px;">
+            <span class="chip">dessert <span class="x">✕</span></span>
+          </div>
+          <div class="ffield focus"><span>sheet-pan</span><span class="caret"></span></div>
+          <div class="pop">
+            <div class="opt create hl"><span>Create “sheet-pan”</span><span class="kbd">↵</span></div>
+          </div>
+          <p class="helper">With nothing to match, Enter creates — no extra keystroke.</p>
+        </div>
+      </div>
+    </figure>
+  </div>
+
+  <h2>Mobile</h2>
+  <div class="grid">
+    <figure class="state mob">
+      <figcaption>375px <span>chips wrap; field full width</span></figcaption>
+      <div class="stage">
+        <div class="card">
+          <div class="field-label">Tags</div>
+          <div class="chips" style="margin-bottom:8px;">
+            <span class="chip">dessert <span class="x">✕</span></span>
+            <span class="chip">make-ahead <span class="x">✕</span></span>
+            <span class="chip">weeknight <span class="x">✕</span></span>
+          </div>
+          <div class="ffield focus"><span>gr</span><span class="caret"></span></div>
+          <div class="pop">
+            <div class="opt hl"><span>grilling</span><span class="count">18</span></div>
+            <div class="opt create"><span>Create “gr”</span><span class="kbd">⌥↵</span></div>
+          </div>
+          <p class="helper">This is where the old layout hurt: three chips pushed the cursor onto its own line inside the box anyway.</p>
+        </div>
+      </div>
+    </figure>
+  </div>
+
+  <h2>Behaviour — what changes</h2>
+  <div class="scroller">
+    <table class="cmp">
+      <thead><tr><th>Action</th><th>Today (broken)</th><th>Proposed</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Type “des”, press Enter</td>
+          <td>Creates junk tag <code>des</code></td>
+          <td>Takes the highlighted <code>dessert</code></td>
+        </tr>
+        <tr>
+          <td>Arrow keys</td>
+          <td>Nothing — list unreachable by keyboard</td>
+          <td>Moves the highlight; Enter takes it</td>
+        </tr>
+        <tr>
+          <td>Create a genuinely new tag</td>
+          <td>Enter (the only behaviour)</td>
+          <td>Enter when nothing matches; explicit <em>Create</em> row when something does</td>
+        </tr>
+        <tr>
+          <td>Re-focus after adding a tag</td>
+          <td>Stale row re-offers the tag you just added; clicking it does nothing</td>
+          <td>List is recomputed; added tags never appear</td>
+        </tr>
+        <tr>
+          <td>Click away mid-typing</td>
+          <td>Commits the half-typed text</td>
+          <td>Same — a half-typed tag is still committed on blur</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flag">
+    <p><strong>One decision inside this.</strong> When the typed text matches an existing tag,
+      Enter takes the match and creating a near-identical tag needs the explicit <em>Create</em> row.
+      That is the whole point — the vocabulary is shared across 1,198 recipes, and
+      <code>des</code>/<code>desserts</code>/<code>Dessert</code> next to <code>dessert</code> is the
+      failure mode worth designing against. If you would rather Enter always create, say so and I’ll
+      flip it.</p>
+  </div>
+</div>

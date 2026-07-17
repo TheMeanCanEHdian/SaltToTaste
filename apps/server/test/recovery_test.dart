@@ -347,6 +347,61 @@ void main() {
       expect(grant.body['user'], isA<Map<String, Object?>>());
     });
 
+
+    test('failed logins must not disable the escape hatch', () async {
+      // THE BUG: recoverAdmin gated on the SAME per-IP bucket login records
+      // failures into. The condition that makes an operator need /recover —
+      // repeated failed logins — was the condition that refused a VALID code.
+      // It bit hardest on the default deployment: TRUST_PROXY is unset, so
+      // clientIp is the reverse proxy's address for every request and one
+      // household member's typos would lock recovery for everyone.
+      await createAdmin('lockedout', disabled: true);
+      const ip = '203.0.113.44';
+
+      // Spray failed logins from this IP across DISTINCT usernames, so login's
+      // per-account key never trips and only the aggregate IP bucket fills.
+      for (var i = 0; i < 25; i += 1) {
+        await expectLater(
+          login(db, runtime, {
+            'username': 'ghost$i',
+            'password': 'wrong-password-here',
+          }, clientIp: ip),
+          throwsA(isA<AppException>()),
+        );
+      }
+
+      // A freshly issued, VALID code from that same IP must still work.
+      final grant = await recover(issueRecoveryCode(db), 'lockedout',
+          clientIp: ip);
+      expect(
+        (grant.body['user']! as Map<String, Object?>)['username'],
+        'lockedout',
+        reason: 'a valid recovery code must survive a drained login bucket',
+      );
+    });
+
+    test('a recovery attempt must not lock out normal logins', () async {
+      // The mirror hazard: a code-guesser must not be able to spend the
+      // household's login budget and lock everyone out of signing in.
+      final id = await createAdmin('normal');
+      const ip = '198.51.100.77';
+      final code = issueRecoveryCode(db);
+      final wrong = _otherThan(code);
+
+      for (var i = 0; i < 6; i += 1) {
+        await expectLater(
+          recover(wrong, 'normal', clientIp: ip),
+          throwsA(isA<AppException>()),
+        );
+      }
+
+      // Login from the same IP is unaffected.
+      final grant = await login(db, runtime, {
+        'username': 'normal',
+        'password': _oldPassword,
+      }, clientIp: ip);
+      expect((grant.body['user']! as Map<String, Object?>)['id'], id);
+    });
     test('two concurrent redemptions of one code: exactly one wins', () async {
       final code = issueRecoveryCode(db);
       // Both requests get past the first check while suspended in the ~100ms

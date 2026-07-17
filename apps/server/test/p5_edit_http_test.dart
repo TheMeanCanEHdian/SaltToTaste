@@ -12,6 +12,7 @@ import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/services/import_job.dart' show importJobRunning;
 import 'package:salt_server/src/services/recipe_edit_service.dart'
     show editableRecipeKeys;
 import 'package:test/test.dart';
@@ -1232,7 +1233,10 @@ void main() {
             );
             expect(poll.statusCode, HttpStatus.ok, reason: pollBody);
             job = jsonOf(pollBody);
-            if (job['status'] != 'running') {
+            // The terminal row is written from inside the isolate, which only
+            // then clears the single-flight latch. The next test fires imports
+            // back-to-back, so waiting on the row alone races that latch.
+            if (job['status'] != 'running' && !importJobRunning) {
               break;
             }
             await Future<void>.delayed(const Duration(milliseconds: 100));

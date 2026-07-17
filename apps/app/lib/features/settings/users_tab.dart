@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -246,25 +247,14 @@ class _UsersTabState extends State<UsersTab> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _role,
-                        decoration: const InputDecoration(
-                          labelText: 'Role',
-                          isDense: true,
-                          border: OutlineInputBorder(),
+                      child: FSelect<String>(
+                        items: const {'member': 'member', 'admin': 'admin'},
+                        control: FSelectControl.lifted(
+                          value: _role,
+                          onChange: (value) =>
+                              setState(() => _role = value ?? 'member'),
                         ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'member',
-                            child: Text('member'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'admin',
-                            child: Text('admin'),
-                          ),
-                        ],
-                        onChanged: (value) =>
-                            setState(() => _role = value ?? 'member'),
+                        label: const Text('Role'),
                       ),
                     ),
                     const SizedBox(width: 12),

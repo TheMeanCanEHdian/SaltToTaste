@@ -296,12 +296,21 @@ first compute, else:
   "matched_count": 12,
   "total_count": 13,
   "low_confidence": 0,
-  "computed_at": "…"
+  "computed_at": "…",
+  "computing_job_id": 7
 }
 ```
 
 `low_confidence` counts auto-matched lines below 0.5 confidence that no
 one has reviewed yet (confirm/override/skip clears one).
+
+`computing_job_id` appears **only for admins, and only while a compute is in
+flight** — it is the handle for re-attaching a reopened page to a running job
+(see the compute endpoint below). It is omitted for members on purpose: the
+job endpoint it points at is admin-only, so a member handed the id would
+poll, get a 403 on every attempt, and surface a false error on a page they
+cannot compute from anyway. It is also absent from the `{"status": "none"}`
+body unless a first compute is currently running.
 
 `stale` means the ingredients changed since the compute. The ~30-nutrient
 key set and FDA Daily Values match the legacy app's panel.
@@ -323,8 +332,8 @@ Starts a background match+compute and returns `202 {job_id}` immediately;
 poll `GET /api/v1/nutrition/jobs/{id}` for progress (`status`: `running |
 done | failed`) and re-fetch `…/nutrition` when it finishes. Single-flight
 per recipe — a second call while one runs re-attaches to the same job — and
-the recipe's `…/nutrition` body carries `computing_job_id` while a compute
-is in flight so a reopened page can re-attach. Cached and rate-limited
+the recipe's `…/nutrition` body carries `computing_job_id` (admins only)
+while a compute is in flight so a reopened page can re-attach. Cached and rate-limited
 (~900 requests/hour shared budget); user decisions on unchanged lines
 survive recomputes. Water/ice lines are matched locally for free. The job
 fails (with the reason in its log) when no API key is configured.
