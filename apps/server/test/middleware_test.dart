@@ -426,5 +426,29 @@ void main() {
       expect(daysFor('nope'), ServerConfig.defaultApiTokenRetentionDays);
       expect(daysFor('-1'), ServerConfig.defaultApiTokenRetentionDays);
     });
+
+    test('CONNECTION_IDLE_TIMEOUT_SECONDS parses into a Duration', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_idle_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      ServerConfig cfgFor(String? raw) => ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': dir.path,
+          if (raw != null) 'CONNECTION_IDLE_TIMEOUT_SECONDS': raw,
+        },
+      );
+
+      // Default is below Dart's 120s so half-open sockets are reaped sooner.
+      expect(
+        cfgFor(null).connectionIdleTimeoutSeconds,
+        ServerConfig.defaultConnectionIdleTimeoutSeconds,
+      );
+      expect(cfgFor(null).connectionIdleTimeout, const Duration(seconds: 75));
+      expect(cfgFor('30').connectionIdleTimeout, const Duration(seconds: 30));
+      // 0 disables the timeout (never auto-close), matching HttpServer.
+      expect(cfgFor('0').connectionIdleTimeout, isNull);
+      // A typo must not silently disable the reaper.
+      expect(cfgFor('nope').connectionIdleTimeout, const Duration(seconds: 75));
+      expect(cfgFor('-5').connectionIdleTimeout, const Duration(seconds: 75));
+    });
   });
 }

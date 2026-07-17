@@ -432,10 +432,13 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   `SECURE_COOKIES`, `IMPORT_DIR`, `SEARCH_RATE_LIMIT` (text searches/min per
   user, default 60; `0` disables), `API_TOKEN_RETENTION_DAYS` (days a revoked
   token row is kept before daily pruning, default 90; `0` keeps forever),
-  `TZ` (container tzdata), plus the dev-only `DEV_ALLOW_CORS`.
+  `CONNECTION_IDLE_TIMEOUT_SECONDS` (idle/stalled-connection reap, default 75;
+  `0` disables — bounds slowloris half-open sockets), `TZ` (container tzdata),
+  plus the dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
-  requests (bounded), then closes SQLite cleanly — the WAL checkpoints
-  and the next boot needs no recovery.
+  requests (bounded, force-closed only past the bound), then closes SQLite
+  cleanly — the WAL checkpoints and the next boot needs no recovery. A slowloris
+  half-open socket is reaped by the initial close and never extends the drain.
 - `/data` must be a **local filesystem** (SQLite WAL is unsafe on
   NFS/SMB); the app assumes domain-root serving (sub-paths deferred).
 

@@ -178,6 +178,7 @@ class ServerConfig {
     String? importDir,
     this.searchRateLimit = defaultSearchRateLimit,
     this.apiTokenRetentionDays = defaultApiTokenRetentionDays,
+    this.connectionIdleTimeoutSeconds = defaultConnectionIdleTimeoutSeconds,
   }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
@@ -224,6 +225,14 @@ class ServerConfig {
   ///   before daily housekeeping deletes it (default 90; `0` keeps them
   ///   forever). Bounds the table a mint-then-revoke loop would otherwise grow
   ///   without limit. An invalid value falls back to the default.
+  /// * `CONNECTION_IDLE_TIMEOUT_SECONDS` — how long a connection may sit with
+  ///   no data flowing before the server closes it (default 75; `0` disables,
+  ///   i.e. never auto-close). This is the lever against slowloris-style
+  ///   half-open sockets: measured, a stalled connection that never finishes
+  ///   its request headers is reaped after this window, bounding how many an
+  ///   attacker can accumulate. It also caps idle keep-alive between requests,
+  ///   so keep it above the fronting proxy's keep-alive. An invalid value falls
+  ///   back to the default.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -258,6 +267,10 @@ class ServerConfig {
       apiTokenRetentionDays: _parseNonNegativeInt(
         env['API_TOKEN_RETENTION_DAYS'],
         defaultApiTokenRetentionDays,
+      ),
+      connectionIdleTimeoutSeconds: _parseNonNegativeInt(
+        env['CONNECTION_IDLE_TIMEOUT_SECONDS'],
+        defaultConnectionIdleTimeoutSeconds,
       ),
     );
     Directory(config.libraryDir).createSync(recursive: true);
@@ -310,6 +323,11 @@ class ServerConfig {
   /// [apiTokenRetentionDays]).
   static const int defaultApiTokenRetentionDays = 90;
 
+  /// Default connection idle timeout in seconds (see
+  /// [connectionIdleTimeoutSeconds]). Below Dart's 120s default so half-open
+  /// sockets are reaped sooner, above a typical reverse-proxy keep-alive.
+  static const int defaultConnectionIdleTimeoutSeconds = 75;
+
   /// Text searches (`GET /recipes?q=`) allowed per minute per user; `0`
   /// disables the limit. Search is synchronous FTS on the one serving
   /// isolate, so this bounds any single caller's share of it.
@@ -319,6 +337,18 @@ class ServerConfig {
   /// it; `0` keeps them forever. Bounds the table a mint-then-revoke loop
   /// would otherwise grow without limit.
   final int apiTokenRetentionDays;
+
+  /// Seconds a connection may sit with no data flowing before the server closes
+  /// it; `0` disables the timeout. Bounds slowloris-style half-open sockets
+  /// (measured: a connection stalled mid-headers is reaped after this window).
+  final int connectionIdleTimeoutSeconds;
+
+  /// The idle timeout as a [Duration], or `null` when disabled
+  /// ([connectionIdleTimeoutSeconds] `<= 0`) — matching
+  /// [HttpServer.idleTimeout], where `null` means never auto-close.
+  Duration? get connectionIdleTimeout => connectionIdleTimeoutSeconds <= 0
+      ? null
+      : Duration(seconds: connectionIdleTimeoutSeconds);
 
   /// Parses a non-negative integer env value, falling back to [fallback] when
   /// unset or invalid — a typo must not silently disable a guard; only an

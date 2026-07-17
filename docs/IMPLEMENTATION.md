@@ -364,9 +364,37 @@ through the `#44` `buildAppMiddleware`. Unit- and integration-tested over a real
 socket, both mutation-checked (limiter off-by-one; handler gate removed). This
 caps the single-abuser case but does NOT remove the single-isolate limit — many
 distinct users, or the true cure of moving the DB off the serving isolate,
-remain out of scope. Still genuinely untested: slowloris and SIGTERM-drain
-completion (the critic reasoned about them but could not drive a raw half-open
-socket in the harness).
+remain out of scope.
+
+**The two untested vectors are now driven and both benign (`#48`, first half).**
+`availability_vectors_test.dart` drives real half-open sockets and the real
+drain against the production chain — the thing #42's critic could only reason
+about:
+
+- **Slowloris — REFUTED as an event-loop DoS.** 300 half-open connections
+  (partial headers, never terminated) held open → `/healthz` still answered in
+  ~7 ms (vs a ~40 ms cold baseline). `connectionsInfo` counts them **`idle`, not
+  `active`**: the async single-isolate server parks half-open sockets cheaply, so
+  they never touch the serving isolate. The only residual is FD/connection
+  accumulation, which (a) is fronted by the deployment's TLS reverse proxy and
+  (b) is now bounded at the origin too: `CONNECTION_IDLE_TIMEOUT_SECONDS`
+  (default 75, below Dart's 120 s; `0` disables) sets `HttpServer.idleTimeout`,
+  and it was **measured** to reap a socket stalled mid-headers. Test asserts the
+  idle-not-active structural property + the reap.
+- **SIGTERM-drain — CONFIRMED, and made testable.** The drain loop was extracted
+  from `main.dart` into `drainConnections` (`lib/src/shutdown.dart`, the `#44`
+  pattern) so a test drives the real code. Verified: an in-flight request
+  **completes** (status 200, real body) rather than being killed, the drain
+  **blocks** until it finishes (a no-op drain that returns instantly is
+  mutation-checked red), an idle/half-open socket does **not** extend the drain
+  (reaped by the initial `close()`), and a request outlasting the bound is
+  **force-closed** near the bound, not after the full handler (also
+  mutation-checked). New config parse unit-tested.
+
+Remaining for `#48`: the single-isolate **DB root cure** (moving the synchronous
+sqlite FFI off the serving isolate) — a large, cross-cutting change (~60 methods,
+54 call sites, shared in-memory guards) awaiting a scope decision, since the
+acute risk is already capped and search is auth-only.
 
 **The token-row residual is closed (`#45`).** The active cap bounds *usable*
 tokens, but a mint+revoke loop still grew the table with permanent revoked rows.

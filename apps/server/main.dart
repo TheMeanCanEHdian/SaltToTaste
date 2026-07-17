@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/bootstrap.dart';
+import 'package:salt_server/src/shutdown.dart';
 
 final Logger _log = Logger('server');
 
@@ -23,6 +24,10 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
     rethrow;
   }
   final server = await serve(handler, ip, port);
+  // Reap half-open / idle sockets after this window: bounds slowloris-style
+  // connection accumulation (measured in availability_vectors_test.dart), below
+  // Dart's 120s default. `null` disables (CONNECTION_IDLE_TIMEOUT_SECONDS=0).
+  server.idleTimeout = serverConfig.connectionIdleTimeout;
   _handleShutdownSignals(server);
   return server;
 }
@@ -41,20 +46,15 @@ void _handleShutdownSignals(HttpServer server) {
     }
     shuttingDown = true;
     _log.info('$signal received; draining requests');
-    // close() only stops the listener and kills IDLE connections — its
-    // future does NOT wait for active requests. Poll the connection stats
-    // for a real drain (bounded well under Docker's 10s stop grace so the
-    // final WAL checkpoint still fits).
-    await server.close();
-    final deadline = DateTime.now().add(const Duration(seconds: 5));
-    while (server.connectionsInfo().active > 0 &&
-        DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    }
-    if (server.connectionsInfo().active > 0) {
-      _log.warning('Drain timed out; closing connections forcibly');
-      await server.close(force: true);
-    }
+    // Bounded well under Docker's 10s stop grace so the final WAL checkpoint
+    // still fits. drainConnections waits for in-flight requests to finish
+    // (idle/half-open sockets are reaped by its initial close()).
+    await drainConnections(
+      server,
+      bound: const Duration(seconds: 5),
+      onForceClose: () =>
+          _log.warning('Drain timed out; closing connections forcibly'),
+    );
     disposeServer();
     _log.info('Shutdown complete');
     exit(0);
