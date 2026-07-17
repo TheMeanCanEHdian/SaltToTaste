@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -74,14 +75,15 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
   }
 
   Future<void> _download() async {
-    final messenger = ScaffoldMessenger.of(context);
     final ok = await launchUrl(
       widget.repository.yamlUrl(widget.recipeId),
       mode: LaunchMode.platformDefault,
     ).catchError((_) => false);
-    if (!ok) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text("Couldn't open the download.")),
+    if (!ok && mounted) {
+      showFToast(
+        context: context,
+        variant: FToastVariant.destructive,
+        title: const Text("Couldn't open the download."),
       );
     }
   }
@@ -156,32 +158,28 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
             ),
           ),
           const SizedBox(width: 12),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: SaltColors.maroon,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              minimumSize: const Size(0, 36),
-            ),
-            onPressed: _yaml == null ? null : _copy,
-            icon: Icon(_copied ? Icons.check : Icons.copy, size: 16),
-            label: Text(_copied ? 'Copied' : 'Copy'),
+          FButton(
+            mainAxisSize: MainAxisSize.min,
+            onPress: _yaml == null ? null : _copy,
+            prefix: Icon(_copied ? Icons.check : Icons.copy, size: 16),
+            child: Text(_copied ? 'Copied' : 'Copy'),
           ),
           const SizedBox(width: 8),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: SaltColors.ink,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              minimumSize: const Size(0, 36),
-            ),
-            onPressed: _download,
-            icon: const Icon(Icons.download, size: 16),
-            label: const Text('Download'),
+          FButton(
+            variant: FButtonVariant.outline,
+            mainAxisSize: MainAxisSize.min,
+            onPress: _download,
+            prefix: const Icon(Icons.download, size: 16),
+            child: const Text('Download'),
           ),
           const SizedBox(width: 4),
-          IconButton(
-            tooltip: 'Close',
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close, size: 19),
+          Tooltip(
+            message: 'Close',
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: () => Navigator.of(context).pop(),
+              child: const Icon(Icons.close, size: 19),
+            ),
           ),
         ],
       ),

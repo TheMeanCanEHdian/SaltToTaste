@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
@@ -45,15 +46,15 @@ class RecipeDetailPage extends StatelessWidget {
       child: Scaffold(
         appBar: const SaltNavBar(showBack: true),
         body: BlocConsumer<RecipeDetailCubit, RecipeDetailState>(
-          // Failed favorite/note writes surface as a SnackBar while the
+          // Failed favorite/note writes surface as a toast while the
           // recipe stays on screen.
           listenWhen: (previous, next) =>
               next is RecipeDetailLoaded && next.personalDataError != null,
           listener: (context, state) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text((state as RecipeDetailLoaded).personalDataError!),
-              ),
+            showFToast(
+              context: context,
+              variant: FToastVariant.destructive,
+              title: Text((state as RecipeDetailLoaded).personalDataError!),
             );
           },
           builder: (context, state) => switch (state) {
@@ -257,30 +258,35 @@ class _HeaderInfo extends StatelessWidget {
           spacing: 10,
           runSpacing: 8,
           children: [
-            OutlinedButton.icon(
-              onPressed: () =>
-                  context.read<RecipeDetailCubit>().toggleFavorite(),
-              icon: Icon(
+            FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: () => context.read<RecipeDetailCubit>().toggleFavorite(),
+              prefix: Icon(
                 detail.favorite ? Icons.favorite : Icons.favorite_border,
                 size: 18,
                 color: SaltColors.maroon,
               ),
-              label: Text(detail.favorite ? 'Favorited' : 'Favorite'),
+              child: Text(detail.favorite ? 'Favorited' : 'Favorite'),
             ),
             _DownloadPdfButton(detail: detail),
             if (context.watch<AuthCubit>().user?.isAdmin ?? false) ...[
-              OutlinedButton.icon(
-                onPressed: () =>
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () =>
                     showViewYamlDialog(context, recipeId: detail.recipe.id),
-                icon: const Icon(Icons.code, size: 18),
-                label: const Text('View YAML'),
+                prefix: const Icon(Icons.code, size: 18),
+                child: const Text('View YAML'),
               ),
               // Edit goes last: it leaves the page, so it reads as the end of
               // the row rather than something to pass through.
-              OutlinedButton.icon(
-                onPressed: () => context.push('/r/${detail.recipe.slug}/edit'),
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Edit'),
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => context.push('/r/${detail.recipe.slug}/edit'),
+                prefix: const Icon(Icons.edit_outlined, size: 18),
+                child: const Text('Edit'),
               ),
             ],
           ],
@@ -344,10 +350,12 @@ class _MyNotesCardState extends State<_MyNotesCard> {
     if (note == null && !_editing) {
       return Align(
         alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          onPressed: () => setState(() => _editing = true),
-          icon: const Icon(Icons.sticky_note_2_outlined, size: 17),
-          label: const Text('Add a private note'),
+        child: FButton(
+          variant: FButtonVariant.ghost,
+          mainAxisSize: MainAxisSize.min,
+          onPress: () => setState(() => _editing = true),
+          prefix: const Icon(Icons.sticky_note_2_outlined, size: 17),
+          child: const Text('Add a private note'),
         ),
       );
     }
@@ -386,10 +394,12 @@ class _MyNotesCardState extends State<_MyNotesCard> {
               ),
               const Spacer(),
               if (!_editing)
-                TextButton.icon(
-                  onPressed: () => setState(() => _editing = true),
-                  icon: const Icon(Icons.edit_outlined, size: 15),
-                  label: const Text('Edit'),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: () => setState(() => _editing = true),
+                  prefix: const Icon(Icons.edit_outlined, size: 15),
+                  child: const Text('Edit'),
                 ),
             ],
           ),
@@ -397,31 +407,29 @@ class _MyNotesCardState extends State<_MyNotesCard> {
           if (_editing) ...[
             Semantics(
               label: 'My notes',
-              child: TextField(
-                controller: _controller,
+              child: FTextField(
+                control: FTextFieldControl.managed(controller: _controller),
                 minLines: 3,
                 maxLines: 8,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText:
-                      'Anything future-you should know — tweaks, timings, '
-                      'who loved it…',
-                ),
+                hint:
+                    'Anything future-you should know — tweaks, timings, '
+                    'who loved it…',
               ),
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: SaltColors.maroon,
-                  ),
-                  onPressed: _saving ? null : _save,
+                FButton(
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: _saving ? null : _save,
                   child: Text(_saving ? 'Saving…' : 'Save note'),
                 ),
                 const SizedBox(width: 8),
-                TextButton(
-                  onPressed: _saving
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: _saving
                       ? null
                       : () => setState(() {
                           _editing = false;
@@ -483,7 +491,6 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
       return;
     }
     setState(() => _busy = true);
-    final messenger = ScaffoldMessenger.of(context);
     try {
       final bytes = await buildRecipePdf(
         recipe: widget.detail.recipe,
@@ -498,9 +505,13 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
       // export must explain itself, never take the page down.
       // ignore: avoid_catches_without_on_clauses
     } catch (error) {
-      messenger.showSnackBar(
-        SnackBar(content: Text("Couldn't build the PDF: $error")),
-      );
+      if (mounted) {
+        showFToast(
+          context: context,
+          variant: FToastVariant.destructive,
+          title: Text("Couldn't build the PDF: $error"),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -510,10 +521,10 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.icon(
-      style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-      onPressed: _busy ? null : _download,
-      icon: _busy
+    return FButton(
+      mainAxisSize: MainAxisSize.min,
+      onPress: _busy ? null : _download,
+      prefix: _busy
           ? const SizedBox(
               width: 16,
               height: 16,
@@ -523,7 +534,7 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
               ),
             )
           : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-      label: Text(_busy ? 'Building PDF…' : 'Download PDF'),
+      child: Text(_busy ? 'Building PDF…' : 'Download PDF'),
     );
   }
 }
