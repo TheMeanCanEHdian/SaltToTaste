@@ -34,9 +34,11 @@ const Map<String, IconData> lucideIconsByName = {
   'align-center': LucideIcons.alignCenter,
   'align-end-horizontal': LucideIcons.alignEndHorizontal,
   'align-end-vertical': LucideIcons.alignEndVertical,
-  'align-horizontal-distribute-center': LucideIcons.alignHorizontalDistributeCenter,
+  'align-horizontal-distribute-center':
+      LucideIcons.alignHorizontalDistributeCenter,
   'align-horizontal-distribute-end': LucideIcons.alignHorizontalDistributeEnd,
-  'align-horizontal-distribute-start': LucideIcons.alignHorizontalDistributeStart,
+  'align-horizontal-distribute-start':
+      LucideIcons.alignHorizontalDistributeStart,
   'align-horizontal-justify-center': LucideIcons.alignHorizontalJustifyCenter,
   'align-horizontal-justify-end': LucideIcons.alignHorizontalJustifyEnd,
   'align-horizontal-justify-start': LucideIcons.alignHorizontalJustifyStart,
@@ -1641,8 +1643,10 @@ const Map<String, IconData> lucideIconsByName = {
   'square-arrow-up': LucideIcons.squareArrowUp,
   'square-asterisk': LucideIcons.squareAsterisk,
   'square-bottom-dashed-scissors': LucideIcons.squareBottomDashedScissors,
-  'square-centerline-dashed-horizontal': LucideIcons.squareCenterlineDashedHorizontal,
-  'square-centerline-dashed-vertical': LucideIcons.squareCenterlineDashedVertical,
+  'square-centerline-dashed-horizontal':
+      LucideIcons.squareCenterlineDashedHorizontal,
+  'square-centerline-dashed-vertical':
+      LucideIcons.squareCenterlineDashedVertical,
   'square-chart-gantt': LucideIcons.squareChartGantt,
   'square-check-big': LucideIcons.squareCheckBig,
   'square-check': LucideIcons.squareCheck,

@@ -37,4 +37,8 @@ with open(out, 'w') as f:
     for kebab, name in unique:
         f.write(f"  '{kebab}': LucideIcons.{name},\n")
     f.write("};\n")
+
+# Emit it already formatted, so regenerating never un-formats the tree (this
+# file is checked in, and `dart format` would otherwise rewrite it every time).
+subprocess.run(['dart', 'format', str(out)], check=True, capture_output=True)
 print(f'{len(unique)} icons -> {out}')
