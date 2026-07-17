@@ -162,6 +162,8 @@ class _Filters extends StatelessWidget {
             label: category.label,
             count: category.count,
             selected: state.issue == category.id,
+            // A category with nothing to show isn't a useful filter.
+            enabled: category.count > 0,
             onTap: () => onSelect(category.id),
           ),
       ],
@@ -176,25 +178,39 @@ class _StatChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.emphasized = false,
+    this.enabled = true,
   });
 
   final String label;
   final int count;
   final bool selected;
   final bool emphasized;
+
+  /// A disabled chip (a category with a count of 0) is greyed and not tappable.
+  final bool enabled;
   final VoidCallback onTap;
+
+  static const Color _disabled = Color(0xFFBCB3AC);
 
   @override
   Widget build(BuildContext context) {
-    final border = selected ? SaltColors.maroon : SaltColors.hairline;
     // Selection alone drives the fill; "Need attention" is only emphasised by
     // its maroon number, so it no longer looks selected when it isn't.
-    final bg = selected ? const Color(0xFFF7ECEC) : Colors.white;
+    final border = !enabled
+        ? SaltColors.hairline
+        : (selected ? SaltColors.maroon : SaltColors.hairline);
+    final bg = !enabled
+        ? const Color(0xFFFBF9F7)
+        : (selected ? const Color(0xFFF7ECEC) : Colors.white);
+    final numberColor = !enabled
+        ? _disabled
+        : (emphasized || selected ? SaltColors.maroon : SaltColors.ink);
+    final labelColor = enabled ? SaltColors.muted : _disabled;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         child: Container(
           constraints: const BoxConstraints(minWidth: 104),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -212,16 +228,11 @@ class _StatChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: emphasized || selected
-                      ? SaltColors.maroon
-                      : SaltColors.ink,
+                  color: numberColor,
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 12, color: SaltColors.muted),
-              ),
+              Text(label, style: TextStyle(fontSize: 12, color: labelColor)),
             ],
           ),
         ),
