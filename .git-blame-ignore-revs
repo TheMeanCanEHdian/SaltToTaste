@@ -1,0 +1,15 @@
+# Commits that changed formatting only, and should not own any line in
+# `git blame`. Each entry must be a pure reflow with no behaviour change.
+#
+# Not applied automatically — git only consults this file when told to:
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# (GitHub, GitLab and the JetBrains/VS Code blame views honour it by default.)
+
+# style: format the workspace — `dart format` over all 193 tracked Dart files,
+# 60 changed. HEAD had never been formatted and the workspace moved to Dart
+# 3.12's tall style, so the tree held two styles at once and every edit dragged
+# reflow churn into unrelated diffs. Suites identical before and after
+# (apps/server 296, salt_shared 124, apps/app 57), all analyzers clean.
+caf91b1be9a9131aaef5a139e1c9e36c0ace5cc5
