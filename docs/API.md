@@ -65,7 +65,7 @@ temporary password with `must_change_password`: until the user calls
 | `GET /api/v1/sessions` | any | own sessions; `current` flags this one |
 | `DELETE /api/v1/sessions/{id}` | any | sign out one session (own only) |
 | `GET /api/v1/tokens` | any | own PATs (prefix only) |
-| `POST /api/v1/tokens` | any | `{name, scope}` → `{token, item}` — full value only in this response |
+| `POST /api/v1/tokens` | any | `{name, scope}` → `{token, item}` — full value only in this response. Capped at 20 live tokens per user (`422` past the cap); revoke one to free a slot |
 | `DELETE /api/v1/tokens/{id}` | any | revoke (own only) |
 
 ## Conventions

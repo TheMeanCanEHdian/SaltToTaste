@@ -296,10 +296,47 @@ bad entries and left the good one alone.
 **One LOW remains**: nothing pins the real `middleware()` order (blocked on a
 small refactor — it hard-binds process globals, so a test cannot import it; the
 `configWarnings` extraction is the same shape of fix and a template for it).
-The rate-limit key collision is closed with the XFF peer check. **Availability
-has still never been examined** — and the user confirmed on 2026-07-16 that the
-deployment is internet-facing behind a TLS proxy, so every pre-auth endpoint is
-attacker-reachable and that gap is now a real one, not a hypothetical.
+The rate-limit key collision is closed with the XFF peer check.
+
+**Availability — first pass, 2026-07-17 (task #42), PARTIAL.** The workflow run
+was VOID: its finder worktrees were provisioned at `9497e68` (the deleted
+Python tree), so most agents had no `apps/` to test — the recurring
+worktree-provisioning bug, not a code result. The top leads were instead
+measured BY HAND against a rebuilt server:
+
+- **REFUTED — Argon2 does not stall the event loop.** 100 concurrent bogus
+  logins (each pays the full 19 MiB / t=2 hash via `dummyVerify`), and
+  `/healthz` stayed 2-50 ms throughout. The argon2 binding runs off-isolate;
+  the `await` is real. A whole class of "cheap login floods the CPU" finding is
+  dead.
+- **REFUTED — no unbounded body buffering.** `readJsonBody` rejects on
+  `Content-Length` before reading and aborts the stream past 2 MiB, so a 200 MB
+  POST to `/auth/login` returns 422 with RSS *falling* afterward (the +137 MB
+  in a first measurement was Argon2 residue from a preceding burst — a
+  confounded probe caught by re-measuring on a fresh server).
+- **FIXED — MED: a member could mint personal access tokens without bound.**
+  Session logins are always full-scope so `requireFullScope` does not gate on
+  role; a token row is permanent (revocation is an UPDATE, never a DELETE); and
+  the create path re-read the user's whole list. Reproduced live (200 rows, no
+  rejection). Now capped at 20 live tokens/user, and the create does a
+  single-row read. `maxActiveTokensPerUser` in `token_handlers.dart`,
+  mutation-checked.
+
+**Still UNTESTED** (the void run never reached them, and hand-measuring stopped
+at the top leads): FTS/DSL superlinearity on a crafted `q=` (member-reachable),
+and the critic's exotic vectors — slowloris, SIGTERM drain completion,
+disk-fill during YAML export/backups, uncancellable jobs blocking the next, and
+recursion on attacker-shaped input (nested quotes, deep YAML). A re-run needs
+the worktree provisioning fixed first, or hand-measurement continued.
+
+**One LOW residual on the token fix:** the active cap bounds *usable* tokens,
+but a mint+revoke loop still adds permanent rows (revoked rows are never
+deleted) and `GET /tokens` is unpaginated. Slow (two requests per row) and
+lower-severity than the capped abuse; a retention policy for revoked rows is a
+data decision left for the user rather than invented here.
+
+**One LOW remains from P3**: nothing pins the real `middleware()` order (blocked
+on the same process-globals refactor as the boot-warning call site — `#44`).
 
 ## P4 — Search + tags — **done** (core in `ffb833a`, 2026-07-15; the tag-style editor shipped against the approved `docs/mockups/p4-tags.html`)
 

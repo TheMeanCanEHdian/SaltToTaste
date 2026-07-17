@@ -54,6 +54,17 @@ Map<String, Object?> listTokensHandler(SaltDatabase db, AuthUser actor) => {
   ],
 };
 
+/// The most live tokens one user may hold at once.
+///
+/// A person managing personal access tokens keeps a handful; 20 is generous
+/// headroom. The cap is a resource bound, not a UX limit: a token mints with a
+/// cheap, non-Argon2 request and its row is permanent (revocation is an UPDATE,
+/// never a DELETE), so without a ceiling a member — session logins are always
+/// full-scope, so `requireFullScope` does not gate on role — can grow the
+/// `api_tokens` table for the deployment's lifetime and make every token
+/// listing do more work, on the single serving isolate.
+const int maxActiveTokensPerUser = 20;
+
 /// `POST /api/v1/tokens` `{name, scope}` — mints a PAT. The full token value
 /// appears only in this response.
 Map<String, Object?> createTokenHandler(
@@ -69,6 +80,12 @@ Map<String, Object?> createTokenHandler(
   if (scope != 'read' && scope != 'full') {
     throw const ValidationException("Scope must be 'read' or 'full'.");
   }
+  if (db.activeApiTokenCount(actor.id) >= maxActiveTokensPerUser) {
+    throw const ValidationException(
+      'You already have the maximum of $maxActiveTokensPerUser active tokens. '
+      'Revoke one before creating another.',
+    );
+  }
   final pat = generatePat();
   final id = db.createApiToken(
     userId: actor.id,
@@ -77,9 +94,9 @@ Map<String, Object?> createTokenHandler(
     tokenHash: hashToken(pat.token),
     scope: scope,
   );
-  final row = db
-      .apiTokensForUser(actor.id)
-      .firstWhere((token) => token.id == id);
+  // A single-row read, not a scan of the user's whole list: the create path
+  // must not get slower as revoked rows accumulate.
+  final row = db.apiTokenById(id: id, userId: actor.id)!;
   return {'token': pat.token, 'item': _tokenJson(row)};
 }
 

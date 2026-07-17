@@ -1246,6 +1246,26 @@ class SaltDatabase {
     return rows.isEmpty ? null : _apiTokenRow(rows.first);
   }
 
+  /// The API token with [id] owned by [userId], or null. A single-row lookup so
+  /// echoing a freshly-minted token does not re-read the user's whole list.
+  ApiTokenRow? apiTokenById({required int id, required int userId}) {
+    final rows = _prepared(
+      'SELECT $_apiTokenColumns FROM api_tokens WHERE id = ? AND user_id = ?',
+    ).select([id, userId]);
+    return rows.isEmpty ? null : _apiTokenRow(rows.first);
+  }
+
+  /// How many LIVE (non-revoked) tokens [userId] holds — the count a per-user
+  /// cap is enforced against. Revoked rows are excluded: they are spent, and
+  /// counting them would lock a user out of minting after routine rotation.
+  int activeApiTokenCount(int userId) {
+    final rows = _prepared(
+      'SELECT COUNT(*) AS n FROM api_tokens '
+      'WHERE user_id = ? AND revoked_at IS NULL',
+    ).select([userId]);
+    return rows.first['n'] as int;
+  }
+
   /// Sets the token's `last_used_at` to now.
   void touchApiToken(int id) {
     _prepared(

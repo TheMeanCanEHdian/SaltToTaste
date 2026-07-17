@@ -184,6 +184,57 @@ void main() {
       );
     });
 
+    test('a member cannot mint tokens without bound', () {
+      // Availability finding (#42): a token row is permanent (revocation is an
+      // UPDATE, never a DELETE) and a member's session is always full-scope, so
+      // without a cap a low-privilege account grows api_tokens for the
+      // deployment's lifetime. The member reaches this handler exactly as an
+      // admin does — the point is that role does not gate it.
+      final memberId = db.createUser(
+        username: 'member',
+        passwordHash: 'x',
+        role: 'member',
+      );
+      final member = actorFor(memberId);
+      for (var i = 0; i < maxActiveTokensPerUser; i++) {
+        createTokenHandler(db, member, name: 'tok$i', scope: 'read');
+      }
+      expect(
+        () =>
+            createTokenHandler(db, member, name: 'one too many', scope: 'read'),
+        throwsA(isA<ValidationException>()),
+        reason: 'the cap must reject the ${maxActiveTokensPerUser + 1}th',
+      );
+      expect(db.activeApiTokenCount(memberId), maxActiveTokensPerUser);
+    });
+
+    test('revoking frees a slot, but the revoked row is not counted', () {
+      final memberId = db.createUser(
+        username: 'rotator',
+        passwordHash: 'x',
+        role: 'member',
+      );
+      final member = actorFor(memberId);
+      final ids = [
+        for (var i = 0; i < maxActiveTokensPerUser; i++)
+          (createTokenHandler(db, member, name: 'tok$i', scope: 'read')['item']!
+                  as Map<String, Object?>)['id']!
+              as int,
+      ];
+      // At the cap: the next mint fails.
+      expect(
+        () => createTokenHandler(db, member, name: 'blocked', scope: 'read'),
+        throwsA(isA<ValidationException>()),
+      );
+      // Revoke one; a slot opens and the next mint succeeds.
+      db.revokeApiToken(id: ids.first, userId: memberId);
+      expect(db.activeApiTokenCount(memberId), maxActiveTokensPerUser - 1);
+      expect(
+        createTokenHandler(db, member, name: 'now ok', scope: 'read')['token'],
+        isA<String>(),
+      );
+    });
+
     test('revoke is owner-scoped and single-shot', () {
       final result = createTokenHandler(
         db,
