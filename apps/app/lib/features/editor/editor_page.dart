@@ -85,23 +85,50 @@ class _EditorScaffold extends StatelessWidget {
       _leave(context);
       return;
     }
-    final leave = await showDialog<bool>(
+    final leave = await showFDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Discard changes?'),
-        content: const Text('Unsaved changes will be lost.'),
-        actions: [
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep editing'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Discard'),
-          ),
-        ],
+      builder: (context, _, animation) => FDialog(
+        animation: animation,
+        builder: (context, style) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Text('Discard changes?', style: style.titleTextStyle),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Unsaved changes will be lost.',
+                style: style.bodyTextStyle,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: FButton(
+                      variant: FButtonVariant.outline,
+                      autofocus: true,
+                      onPress: () => Navigator.of(context).pop(false),
+                      child: const Text('Keep editing'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FButton(
+                      onPress: () => Navigator.of(context).pop(true),
+                      child: const Text('Discard'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
     if (leave ?? false) {
@@ -302,7 +329,7 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-/// A TextField that keeps its controller in sync with cubit state without
+/// An [FTextField] that keeps its controller in sync with cubit state without
 /// clobbering the caret while the user types.
 class _BoundField extends StatefulWidget {
   const _BoundField({
@@ -312,7 +339,6 @@ class _BoundField extends StatefulWidget {
     this.semanticLabel,
     this.minLines,
     this.maxLines = 1,
-    this.style,
   });
 
   final String value;
@@ -325,7 +351,6 @@ class _BoundField extends StatefulWidget {
   final String? semanticLabel;
   final int? minLines;
   final int? maxLines;
-  final TextStyle? style;
 
   @override
   State<_BoundField> createState() => _BoundFieldState();
@@ -360,14 +385,18 @@ class _BoundFieldState extends State<_BoundField> {
   Widget build(BuildContext context) {
     return Semantics(
       label: widget.semanticLabel ?? widget.hintText,
-      child: TextField(
-        controller: _controller,
+      child: FTextField(
+        control: FTextFieldControl.managed(
+          controller: _controller,
+          // The control fires onChange for its own writes too, but the sync in
+          // didUpdateWidget writes the controller directly (bypassing this), so
+          // this only ever carries real user edits back to the cubit.
+          onChange: (value) => widget.onChanged(value.text),
+        ),
         focusNode: _focus,
-        onChanged: widget.onChanged,
+        hint: widget.hintText,
         minLines: widget.minLines,
         maxLines: widget.maxLines,
-        style: widget.style ?? const TextStyle(fontSize: 14),
-        decoration: InputDecoration(hintText: widget.hintText, isDense: true),
       ),
     );
   }
@@ -447,7 +476,6 @@ class _BasicsCard extends StatelessWidget {
             value: state.title,
             onChanged: cubit.setTitle,
             semanticLabel: 'Title',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           if (!state.isNew)
             Padding(
@@ -939,20 +967,26 @@ class _IngredientsCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              OutlinedButton.icon(
-                onPressed: cubit.addLine,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Ingredient'),
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: cubit.addLine,
+                prefix: const Icon(Icons.add, size: 16),
+                child: const Text('Ingredient'),
               ),
-              OutlinedButton.icon(
-                onPressed: cubit.addGroupHeader,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Group header'),
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: cubit.addGroupHeader,
+                prefix: const Icon(Icons.add, size: 16),
+                child: const Text('Group header'),
               ),
-              OutlinedButton.icon(
-                onPressed: () => showPasteDialog(context),
-                icon: const Icon(Icons.content_paste_go, size: 16),
-                label: const Text('Paste a list…'),
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => showPasteDialog(context),
+                prefix: const Icon(Icons.content_paste_go, size: 16),
+                child: const Text('Paste a list…'),
               ),
             ],
           ),
@@ -997,22 +1031,20 @@ class _GroupHeaderRow extends StatelessWidget {
                   value: header.name,
                   onChanged: (value) => cubit.renameGroup(header.key, value),
                   hintText: 'GROUP NAME — e.g. FOR THE GLAZE',
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                  ),
                 ),
               ),
             ),
           ),
-          IconButton(
-            tooltip: 'Remove group header',
-            onPressed: () => cubit.removeEntry(header.key),
-            icon: const Icon(
-              Icons.delete_outline,
-              size: 17,
-              color: SaltColors.muted,
+          Tooltip(
+            message: 'Remove group header',
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: () => cubit.removeEntry(header.key),
+              child: const Icon(
+                Icons.delete_outline,
+                size: 17,
+                color: SaltColors.muted,
+              ),
             ),
           ),
         ],
@@ -1085,22 +1117,28 @@ class _IngredientRowState extends State<_IngredientRow> {
               ),
               const SizedBox(width: 8),
               _ConfidenceChip(line: line),
-              IconButton(
-                tooltip: line.expanded ? 'Collapse' : 'Structured fields',
-                onPressed: () => cubit.toggleLineExpanded(line.key),
-                icon: Icon(
-                  line.expanded ? Icons.expand_less : Icons.expand_more,
-                  size: 18,
-                  color: SaltColors.muted,
+              Tooltip(
+                message: line.expanded ? 'Collapse' : 'Structured fields',
+                child: FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => cubit.toggleLineExpanded(line.key),
+                  child: Icon(
+                    line.expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 18,
+                    color: SaltColors.muted,
+                  ),
                 ),
               ),
-              IconButton(
-                tooltip: 'Remove',
-                onPressed: () => cubit.removeEntry(line.key),
-                icon: const Icon(
-                  Icons.delete_outline,
-                  size: 17,
-                  color: SaltColors.muted,
+              Tooltip(
+                message: 'Remove',
+                child: FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => cubit.removeEntry(line.key),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 17,
+                    color: SaltColors.muted,
+                  ),
                 ),
               ),
             ],
@@ -1194,8 +1232,10 @@ class _StructuredPanel extends StatelessWidget {
         children: [
           for (final (i, amount) in line.amounts.indexed)
             _AmountRow(line: line, index: i, amount: amount),
-          TextButton.icon(
-            onPressed: () => cubit.setLineStructured(
+          FButton(
+            variant: FButtonVariant.ghost,
+            mainAxisSize: MainAxisSize.min,
+            onPress: () => cubit.setLineStructured(
               line.key,
               amounts: [
                 ...line.amounts,
@@ -1207,8 +1247,8 @@ class _StructuredPanel extends StatelessWidget {
                 ),
               ],
             ),
-            icon: const Icon(Icons.add, size: 15),
-            label: const Text(
+            prefix: const Icon(Icons.add, size: 15),
+            child: const Text(
               'Add amount (e.g. the weight in parentheses)',
               style: TextStyle(fontSize: 12.5),
             ),
@@ -1257,10 +1297,12 @@ class _StructuredPanel extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: () => cubit.reparseLine(line.key),
-                icon: const Icon(Icons.refresh, size: 15),
-                label: const Text('Re-parse from text'),
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => cubit.reparseLine(line.key),
+                prefix: const Icon(Icons.refresh, size: 15),
+                child: const Text('Re-parse from text'),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -1302,26 +1344,21 @@ class _AmountRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          DropdownButton<Measure>(
-            value: amount.measure,
-            isDense: true,
-            // DropdownButton.style REPLACES the ambient text style, so it must
-            // carry the bundled font or the selected value renders invisible
-            // in the offline (--no-web-resources-cdn) build.
-            style: const TextStyle(
-              fontSize: 13,
-              color: SaltColors.ink,
-              fontFamily: 'OpenSans',
+          SizedBox(
+            width: 122,
+            child: FSelect<Measure>(
+              items: {
+                for (final measure in Measure.values) measure.name: measure,
+              },
+              control: FSelectControl.lifted(
+                value: amount.measure,
+                onChange: (measure) {
+                  if (measure != null) {
+                    _replace(context, amount.copyWith(measure: measure));
+                  }
+                },
+              ),
             ),
-            items: [
-              for (final measure in Measure.values)
-                DropdownMenuItem(value: measure, child: Text(measure.name)),
-            ],
-            onChanged: (measure) {
-              if (measure != null) {
-                _replace(context, amount.copyWith(measure: measure));
-              }
-            },
           ),
           const SizedBox(width: 10),
           SizedBox(
@@ -1351,14 +1388,12 @@ class _AmountRow extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Checkbox(
+                FCheckbox(
                   value: amount.approximate,
-                  visualDensity: VisualDensity.compact,
-                  onChanged: (value) => _replace(
-                    context,
-                    amount.copyWith(approximate: value ?? false),
-                  ),
+                  onChange: (value) =>
+                      _replace(context, amount.copyWith(approximate: value)),
                 ),
+                const SizedBox(width: 4),
                 const Text('≈', style: TextStyle(fontSize: 13)),
               ],
             ),
@@ -1380,13 +1415,16 @@ class _AmountRow extends StatelessWidget {
               },
             ),
           ),
-          IconButton(
-            tooltip: 'Remove amount',
-            onPressed: () {
-              final amounts = [...line.amounts]..removeAt(index);
-              cubit.setLineStructured(line.key, amounts: amounts);
-            },
-            icon: const Icon(Icons.close, size: 15, color: SaltColors.muted),
+          Tooltip(
+            message: 'Remove amount',
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: () {
+                final amounts = [...line.amounts]..removeAt(index);
+                cubit.setLineStructured(line.key, amounts: amounts);
+              },
+              child: const Icon(Icons.close, size: 15, color: SaltColors.muted),
+            ),
           ),
         ],
       ),
@@ -1424,10 +1462,12 @@ class _DirectionsCard extends StatelessWidget {
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: cubit.addStep,
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('Step'),
+            child: FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: cubit.addStep,
+              prefix: const Icon(Icons.add, size: 16),
+              child: const Text('Step'),
             ),
           ),
           const Padding(
@@ -1488,7 +1528,6 @@ class _StepCard extends StatelessWidget {
                       onChanged: (value) =>
                           cubit.setStep(step.key, label: value),
                       hintText: 'Optional label — e.g. MAKE THE BATTER',
-                      style: const TextStyle(fontSize: 12.5),
                     ),
                   ),
                 ),
@@ -1521,13 +1560,16 @@ class _StepCard extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                tooltip: 'Remove step',
-                onPressed: () => cubit.removeStep(step.key),
-                icon: const Icon(
-                  Icons.delete_outline,
-                  size: 17,
-                  color: SaltColors.muted,
+              Tooltip(
+                message: 'Remove step',
+                child: FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => cubit.removeStep(step.key),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 17,
+                    color: SaltColors.muted,
+                  ),
                 ),
               ),
             ],
@@ -1614,10 +1656,12 @@ class _PhotosCardState extends State<_PhotosCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: state.uploadingImage ? null : _pickAndUpload,
-                      icon: const Icon(Icons.upload_outlined, size: 16),
-                      label: Text(
+                    FButton(
+                      variant: FButtonVariant.outline,
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: state.uploadingImage ? null : _pickAndUpload,
+                      prefix: const Icon(Icons.upload_outlined, size: 16),
+                      child: Text(
                         state.uploadingImage ? 'Working…' : 'Upload photo',
                       ),
                     ),
@@ -1625,18 +1669,18 @@ class _PhotosCardState extends State<_PhotosCard> {
                     Row(
                       children: [
                         Expanded(
-                          child: TextField(
-                            controller: _urlController,
-                            style: const TextStyle(fontSize: 13),
-                            decoration: const InputDecoration(
-                              hintText: '…or paste an image URL',
-                              isDense: true,
+                          child: FTextField(
+                            control: FTextFieldControl.managed(
+                              controller: _urlController,
                             ),
+                            hint: '…or paste an image URL',
                           ),
                         ),
                         const SizedBox(width: 8),
-                        OutlinedButton(
-                          onPressed: state.uploadingImage
+                        FButton(
+                          variant: FButtonVariant.outline,
+                          mainAxisSize: MainAxisSize.min,
+                          onPress: state.uploadingImage
                               ? null
                               : () => cubit.photoFromUrl(
                                   _urlController.text.trim(),
@@ -1684,26 +1728,52 @@ class _DangerCard extends StatelessWidget {
 
   Future<void> _confirmDelete(BuildContext context) async {
     final cubit = context.read<EditorCubit>();
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showFDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete this recipe?'),
-        content: const Text(
-          'A backup is taken first, so it can be recovered from '
-          'Settings → Library. The library YAML file is removed.',
+      builder: (context, _, animation) => FDialog(
+        animation: animation,
+        builder: (context, style) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Text('Delete this recipe?', style: style.titleTextStyle),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'A backup is taken first, so it can be recovered from '
+                'Settings → Library. The library YAML file is removed.',
+                style: style.bodyTextStyle,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: FButton(
+                      variant: FButtonVariant.outline,
+                      autofocus: true,
+                      onPress: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FButton(
+                      variant: FButtonVariant.destructive,
+                      onPress: () => Navigator.of(context).pop(true),
+                      child: const Text('Delete recipe'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: SaltColors.errInk),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete recipe'),
-          ),
-        ],
       ),
     );
     if (confirmed ?? false) {
@@ -1730,14 +1800,12 @@ class _DangerCard extends StatelessWidget {
             "taken first, so it's recoverable.",
             style: TextStyle(fontSize: 13, color: SaltColors.muted),
           ),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: SaltColors.errInk,
-              side: const BorderSide(color: Color(0xFFECCFCF)),
-            ),
-            onPressed: state.saving ? null : () => _confirmDelete(context),
-            icon: const Icon(Icons.delete_outline, size: 17),
-            label: const Text('Delete recipe'),
+          FButton(
+            variant: FButtonVariant.destructive,
+            mainAxisSize: MainAxisSize.min,
+            onPress: state.saving ? null : () => _confirmDelete(context),
+            prefix: const Icon(Icons.delete_outline, size: 17),
+            child: const Text('Delete recipe'),
           ),
         ],
       ),
@@ -1788,15 +1856,13 @@ class _SaveBar extends StatelessWidget {
                   ),
                 ),
               const SizedBox(width: 12),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: SaltColors.maroon,
-                ),
-                onPressed: state.saving || state.uploadingImage
+              FButton(
+                mainAxisSize: MainAxisSize.min,
+                onPress: state.saving || state.uploadingImage
                     ? null
                     : cubit.save,
-                icon: const Icon(Icons.save_outlined, size: 17),
-                label: Text(state.saving ? 'Saving…' : 'Save recipe'),
+                prefix: const Icon(Icons.save_outlined, size: 17),
+                child: Text(state.saving ? 'Saving…' : 'Save recipe'),
               ),
             ],
           ),
