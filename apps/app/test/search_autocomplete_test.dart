@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
+import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 
@@ -62,7 +64,13 @@ void main() {
         // own null check, so the harness dies without one. AuthUnknown leaves
         // the avatar hidden, which is fine for search.
         create: (_) => AuthCubit(AuthRepository(dio)),
-        child: MaterialApp.router(routerConfig: router),
+        child: MaterialApp.router(
+          routerConfig: router,
+          // Matches app.dart: Forui widgets (FDialog in the mobile search) need
+          // the FTheme's FAccessibilityScope ancestor or they throw at build.
+          builder: (context, child) =>
+              FTheme(data: buildForuiTheme(), child: child ?? const SizedBox()),
+        ),
       ),
     );
   }
@@ -368,7 +376,7 @@ void main() {
       await openMobile(tester);
       await tester.enterText(find.byType(TextField), 'tag:dessert');
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Search'));
+      await tester.tap(find.widgetWithText(FButton, 'Search'));
       await tester.pumpAndSettle();
       expect(navigations, ['q=tag%3Adessert']);
     });
@@ -396,7 +404,7 @@ void main() {
         initialQuery: 'chicken',
         onRefresh: () => refreshes++,
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Search'));
+      await tester.tap(find.widgetWithText(FButton, 'Search'));
       await tester.pumpAndSettle();
       expect(refreshes, 1, reason: 'the same query must reload, not navigate');
       expect(navigations, isEmpty);

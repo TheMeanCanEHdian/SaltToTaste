@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/tags_repository.dart';
@@ -486,7 +487,11 @@ class _SuggestionList extends StatelessWidget {
       ),
     );
     if (embedded) {
-      return list;
+      // The rows use InkWell, which needs a Material ancestor. The desktop
+      // overlay below supplies one via its elevated Material; the embedded
+      // (dialog) case has none — FDialog paints no Material — so add a
+      // transparent one here.
+      return Material(type: MaterialType.transparency, child: list);
     }
     return Align(
       alignment: Alignment.topLeft,
@@ -514,66 +519,86 @@ class _AvatarMenu extends StatelessWidget {
     if (user == null) {
       return const SizedBox.shrink();
     }
-    return PopupMenuButton<String>(
-      tooltip: 'Account menu',
-      offset: const Offset(0, 46),
-      onSelected: (value) {
-        switch (value) {
-          case 'add':
-            context.push('/new');
-          case 'favorites':
-            context.push('/favorites');
-          case 'settings':
-            context.push('/settings');
-          case 'signout':
-            context.read<AuthCubit>().signOut();
+    return FPopoverMenu(
+      // The menu drops from the avatar at the right edge of the bar.
+      menuAnchor: Alignment.topRight,
+      childAnchor: Alignment.bottomRight,
+      menuBuilder: (menuContext, controller, _) {
+        // Close the menu, then act. Popover items are not assumed to
+        // auto-dismiss — hide() explicitly so navigation never leaves an
+        // open menu behind.
+        void go(String route) {
+          controller.hide();
+          context.push(route);
         }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+
+        return [
+          FItemGroup(
             children: [
-              Text(
-                user.username,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: SaltColors.ink,
+              FItem(
+                enabled: false,
+                title: Text(
+                  user.username,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: SaltColors.ink,
+                  ),
                 ),
-              ),
-              Text(
-                user.role,
-                style: const TextStyle(fontSize: 12, color: SaltColors.muted),
+                subtitle: Text(user.role),
               ),
             ],
           ),
-        ),
-        const PopupMenuDivider(),
-        if (user.isAdmin)
-          const PopupMenuItem<String>(value: 'add', child: Text('Add recipe')),
-        const PopupMenuItem<String>(
-          value: 'favorites',
-          child: Text('My favorites'),
-        ),
-        const PopupMenuDivider(),
-        const PopupMenuItem<String>(value: 'settings', child: Text('Settings')),
-        const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          value: 'signout',
-          child: Text('Sign out', style: TextStyle(color: Color(0xFF8A1212))),
-        ),
-      ],
-      child: CircleAvatar(
-        radius: 17,
-        backgroundColor: Colors.white,
-        child: Text(
-          user.username.isEmpty ? '?' : user.username[0].toUpperCase(),
-          style: const TextStyle(
-            color: SaltColors.maroon,
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
+          FItemGroup(
+            children: [
+              if (user.isAdmin)
+                FItem(
+                  title: const Text('Add recipe'),
+                  onPress: () => go('/new'),
+                ),
+              FItem(
+                title: const Text('My favorites'),
+                onPress: () => go('/favorites'),
+              ),
+              FItem(
+                title: const Text('Settings'),
+                onPress: () => go('/settings'),
+              ),
+            ],
+          ),
+          FItemGroup(
+            children: [
+              FItem(
+                // Destructive: the theme paints errInk; label it red to match.
+                title: const Text(
+                  'Sign out',
+                  style: TextStyle(color: SaltColors.errInk),
+                ),
+                onPress: () {
+                  controller.hide();
+                  context.read<AuthCubit>().signOut();
+                },
+              ),
+            ],
+          ),
+        ];
+      },
+      builder: (context, controller, _) => Semantics(
+        button: true,
+        label: 'Account menu',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: controller.toggle,
+          child: CircleAvatar(
+            radius: 17,
+            backgroundColor: Colors.white,
+            child: Text(
+              user.username.isEmpty ? '?' : user.username[0].toUpperCase(),
+              style: const TextStyle(
+                color: SaltColors.maroon,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
           ),
         ),
       ),
@@ -603,11 +628,12 @@ class _MobileSearchButton extends StatelessWidget {
   Future<void> _openSearch(BuildContext context) async {
     // Read the repository from the nav bar's context, not the dialog's: the
     // dialog route may sit under a different provider scope.
-    final query = await showDialog<String>(
+    final query = await showFDialog<String>(
       context: context,
-      builder: (_) => _MobileSearchDialog(
+      builder: (_, __, animation) => _MobileSearchDialog(
         tagsRepository: context.read<TagsRepository>(),
         initialQuery: initialQuery,
+        animation: animation,
       ),
     );
     if (query == null || !context.mounted) {
@@ -636,9 +662,17 @@ class _MobileSearchButton extends StatelessWidget {
 /// whatever is in the field. The tags are fetched once when the dialog opens; a
 /// failed fetch is silent, and the keyword rows work without the vocabulary.
 class _MobileSearchDialog extends StatefulWidget {
-  const _MobileSearchDialog({required this.tagsRepository, this.initialQuery});
+  const _MobileSearchDialog({
+    required this.tagsRepository,
+    required this.animation,
+    this.initialQuery,
+  });
 
   final TagsRepository tagsRepository;
+
+  /// The dialog route's entrance animation, threaded into [FDialog] so it
+  /// scales/fades in.
+  final Animation<double> animation;
   final String? initialQuery;
 
   @override
@@ -711,50 +745,60 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Search recipes'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Semantics(
+    return FDialog(
+      animation: widget.animation,
+      builder: (context, style) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            child: Text('Search recipes', style: style.titleTextStyle),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Semantics(
               label: 'Search recipes',
-              child: TextField(
-                controller: _controller,
+              child: FTextField(
+                control: FTextFieldControl.managed(controller: _controller),
                 autofocus: true,
                 textInputAction: TextInputAction.search,
-                onSubmitted: _submit,
-                decoration: const InputDecoration(
-                  hintText: 'try title:cake or tag:dessert',
-                  prefixIcon: Icon(Icons.search),
-                ),
+                onSubmit: _submit,
+                hint: 'try title:cake or tag:dessert',
               ),
             ),
-            if (_rows.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _SuggestionList(
-                  options: _rows,
-                  onSelected: _take,
-                  highlight: null,
-                  embedded: true,
-                ),
+          ),
+          if (_rows.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+              child: _SuggestionList(
+                options: _rows,
+                onSelected: _take,
+                highlight: null,
+                embedded: true,
               ),
-          ],
-        ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FButton(onPress: _submit, child: const Text('Search')),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-          onPressed: _submit,
-          child: const Text('Search'),
-        ),
-      ],
     );
   }
 }
