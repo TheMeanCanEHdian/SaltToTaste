@@ -790,6 +790,12 @@ class _TagsInputState extends State<_TagsInput> {
           ),
           focusNode: _focus,
           hint: 'Add a tag…',
+          // A `description`, not a `hint`: a hint only renders while the field
+          // is EMPTY, so it would vanish at the one moment it is needed — when
+          // there is uncommitted text sitting there. This is the whole
+          // mitigation for the commit contract above (user's call: say so, do
+          // NOT make the editor dirty), so it has to be visible while you type.
+          description: const Text('Press Enter to add'),
           // Forui's default filter is startsWith; substring matching is what
           // the old field did and what makes a small vocabulary findable
           // ("sert" should still reach "dessert").

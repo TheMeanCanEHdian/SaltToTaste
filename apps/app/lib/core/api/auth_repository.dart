@@ -273,14 +273,26 @@ class AuthRepository {
     });
   }
 
-  Future<String> resetPassword(int id) => _guard(() async {
-    final data =
-        await _call(
-              () => _dio.post<dynamic>('/api/v1/users/$id/reset_password'),
-            )
-            as Map<String, dynamic>;
-    return data['temp_password'] as String;
-  });
+  /// Resets [id]'s password, returning the one-time password and how many of
+  /// their API tokens were revoked with it.
+  ///
+  /// The count is not trivia. A reset signs the user out everywhere — sessions
+  /// AND personal access tokens — because a PAT is its own credential, so a
+  /// reset that only dropped sessions left an attacker's token frozen rather
+  /// than gone. That is a side effect the admin cannot undo and did not
+  /// explicitly ask for, so it is reported rather than dropped.
+  Future<({String tempPassword, int revokedTokens})> resetPassword(int id) =>
+      _guard(() async {
+        final data =
+            await _call(
+                  () => _dio.post<dynamic>('/api/v1/users/$id/reset_password'),
+                )
+                as Map<String, dynamic>;
+        return (
+          tempPassword: data['temp_password'] as String,
+          revokedTokens: (data['revoked_tokens'] as num?)?.toInt() ?? 0,
+        );
+      });
 
   // --- own sessions & tokens -------------------------------------------------
 

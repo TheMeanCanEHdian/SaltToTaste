@@ -28,6 +28,10 @@ class _UsersTabState extends State<UsersTab> {
   String? _error;
   (String username, String password)? _revealed;
 
+  /// How many API tokens the last reset revoked, or null when [_revealed] came
+  /// from creating a user (which revokes nothing).
+  int? _revokedTokens;
+
   List<UserAccount>? _users;
 
   @override
@@ -88,17 +92,22 @@ class _UsersTabState extends State<UsersTab> {
       return;
     }
     _username.clear();
-    setState(() => _revealed = (result.user.username, result.tempPassword));
+    setState(() {
+      _revealed = (result.user.username, result.tempPassword);
+      // A new user has no tokens to revoke; clear any count left by a reset.
+      _revokedTokens = null;
+    });
   });
 
   Future<void> _reset(UserAccount user) => _run(() async {
-    final password = await context.read<AuthRepository>().resetPassword(
-      user.id,
-    );
+    final result = await context.read<AuthRepository>().resetPassword(user.id);
     if (!mounted) {
       return;
     }
-    setState(() => _revealed = (user.username, password));
+    setState(() {
+      _revealed = (user.username, result.tempPassword);
+      _revokedTokens = result.revokedTokens;
+    });
   });
 
   @override
@@ -275,7 +284,8 @@ class _UsersTabState extends State<UsersTab> {
           SecretReveal(
             title:
                 'Temporary password for ${_revealed!.$1} — hand it over '
-                "now; they'll set their own at first sign-in.",
+                "now; they'll set their own at first sign-in."
+                '${revokedTokensNote(_revokedTokens)}',
             value: _revealed!.$2,
           ),
         if (_error != null) AuthBanner(message: _error!),
@@ -335,4 +345,24 @@ class _SmallAction extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Says what a password reset took away, as well as what it gave.
+///
+/// A reset signs the user out everywhere, and "everywhere" includes revoking
+/// every one of their API tokens — a PAT is its own credential, so a reset
+/// that only dropped sessions left an attacker's token frozen rather than
+/// gone. That is irreversible, and the admin did not separately ask for it.
+/// The server has always reported `revoked_tokens`; the client dropped it, so
+/// the first anyone knew was an integration going dark.
+///
+/// Returns empty for null (a newly created user has no tokens) and for zero —
+/// "0 API tokens revoked" is noise on the common path.
+String revokedTokensNote(int? revoked) {
+  if (revoked == null || revoked == 0) {
+    return '';
+  }
+  final plural = revoked == 1 ? 'API token was' : 'API tokens were';
+  return ' Their $revoked $plural revoked too, and anything using them will '
+      'need a new one.';
 }
