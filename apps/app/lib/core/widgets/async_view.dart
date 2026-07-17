@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
 
@@ -49,9 +50,9 @@ class ErrorView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-              onPressed: onRetry,
+            FButton(
+              mainAxisSize: MainAxisSize.min,
+              onPress: onRetry,
               child: const Text('Retry'),
             ),
           ],

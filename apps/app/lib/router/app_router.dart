@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -94,11 +95,9 @@ class _SplashPage extends StatelessWidget {
                   style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(height: 16),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: SaltColors.maroon,
-                  ),
-                  onPressed: () => context.read<AuthCubit>().bootstrap(),
+                FButton(
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: () => context.read<AuthCubit>().bootstrap(),
                   child: const Text('Retry'),
                 ),
               ],
@@ -267,9 +266,9 @@ GoRouter buildRouter(AuthCubit authCubit) {
               ),
             ),
             const SizedBox(height: 12),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-              onPressed: () => context.go('/'),
+            FButton(
+              mainAxisSize: MainAxisSize.min,
+              onPress: () => context.go('/'),
               child: const Text('Back to recipes'),
             ),
           ],

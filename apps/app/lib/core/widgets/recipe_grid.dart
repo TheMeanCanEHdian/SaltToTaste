@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -152,9 +153,10 @@ class _GridFooter extends StatelessWidget {
                 style: TextStyle(color: SaltColors.muted),
               ),
               const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () =>
-                    context.read<RecipeListCubit>().retryLoadMore(),
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => context.read<RecipeListCubit>().retryLoadMore(),
                 child: const Text('Retry'),
               ),
             ],

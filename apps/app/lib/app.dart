@@ -92,8 +92,13 @@ class _SaltAppState extends State<SaltApp> {
           debugShowCheckedModeBanner: false,
           theme: buildMaterialTheme(forui),
           routerConfig: _router,
-          builder: (context, child) =>
-              FTheme(data: forui, child: child ?? const SizedBox.shrink()),
+          // FToaster hosts showFToast (used by library/recipe/nutrition
+          // toasts); it throws without an ancestor, and FScaffold does not
+          // provide one — so mount it once here, below FTheme.
+          builder: (context, child) => FTheme(
+            data: forui,
+            child: FToaster(child: child ?? const SizedBox.shrink()),
+          ),
         ),
       ),
     );

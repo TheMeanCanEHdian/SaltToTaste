@@ -4,10 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 
 void main() {
-  test('Forui theme carries the maroon brand color', () {
+  test('Forui theme carries the maroon brand and the button colour system', () {
     final theme = buildForuiTheme();
     expect(theme.colors.primary, SaltColors.maroon);
-    expect(theme.colors.secondaryForeground, SaltColors.chipInk);
+    // The button colour system for a red brand (see CLAUDE.md): destructive is
+    // distinguished from primary by FILL, not hue. Neutral buttons
+    // (outline/ghost/secondary) must be grey — their text is
+    // `secondaryForeground` and their hover fill is `secondary` — so a plain
+    // "Cancel"/"Add" never reads as the red destructive button on hover.
+    expect(theme.colors.secondary, SaltColors.chipNeutral);
+    expect(theme.colors.secondaryForeground, SaltColors.ink);
+    // Destructive uses the app's own error red so every danger surface (button,
+    // error text, danger-card border) agrees, not Forui's brighter default.
+    expect(theme.colors.destructive, SaltColors.errInk);
   });
 
   test('Material theme derives from the Forui theme with Open Sans', () {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -55,42 +56,61 @@ class SearchPage extends StatelessWidget {
 /// search conventions (documented decisions): a scope binds one term, and
 /// adjacent terms all narrow the results.
 void showSearchHelp(BuildContext context) {
-  showDialog<void>(
+  showFDialog<void>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Search syntax'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            _HelpRow('chicken soup', 'recipes containing both words'),
-            _HelpRow('"sweet potato"', 'exact phrase'),
-            _HelpRow('title:cake', 'scoped to the title (one word)'),
-            _HelpRow('title:"bundt cake"', 'scoped phrase'),
-            _HelpRow('tag:dessert or title:pie', 'either side'),
-            _HelpRow(
-              'ingredient:ginger and direction:"dutch oven"',
-              'combine scopes',
+    builder: (context, _, animation) => FDialog(
+      animation: animation,
+      builder: (context, style) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            child: Text('Search syntax', style: style.titleTextStyle),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  _HelpRow('chicken soup', 'recipes containing both words'),
+                  _HelpRow('"sweet potato"', 'exact phrase'),
+                  _HelpRow('title:cake', 'scoped to the title (one word)'),
+                  _HelpRow('title:"bundt cake"', 'scoped phrase'),
+                  _HelpRow('tag:dessert or title:pie', 'either side'),
+                  _HelpRow(
+                    'ingredient:ginger and direction:"dutch oven"',
+                    'combine scopes',
+                  ),
+                  _HelpRow('calories:<400', 'calorie filter (needs nutrition)'),
+                  SizedBox(height: 10),
+                  Text(
+                    'Scopes: title, tag, ingredient, direction, note. '
+                    'Words next to each other all need to match; use "or" to '
+                    'broaden. Scopes apply to the single word or "quoted '
+                    'phrase" after them.',
+                    style: TextStyle(fontSize: 13, color: SaltColors.muted),
+                  ),
+                ],
+              ),
             ),
-            _HelpRow('calories:<400', 'calorie filter (needs nutrition)'),
-            SizedBox(height: 10),
-            Text(
-              'Scopes: title, tag, ingredient, direction, note. '
-              'Words next to each other all need to match; use "or" to '
-              'broaden. Scopes apply to the single word or "quoted phrase" '
-              'after them.',
-              style: TextStyle(fontSize: 13, color: SaltColors.muted),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => Navigator.of(context).pop(),
+                child: const Text('Got it'),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Got it'),
-        ),
-      ],
     ),
   );
 }
