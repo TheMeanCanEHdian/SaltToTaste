@@ -45,74 +45,66 @@ class _Loaded extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<RecipeReviewCubit>();
-    // The scroll view spans the full width so its scrollbar sits at the
-    // viewport edge (natural for a web page); each block is centred and capped
-    // at the app's 1100px content width.
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      children: [
-        _centered(
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Recipe review',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: SaltColors.ink,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Recipes the server flagged as missing or incomplete data. '
-                'Open one to fix it in the editor or the nutrition review.',
-                style: TextStyle(fontSize: 14, color: SaltColors.muted),
-              ),
-              const SizedBox(height: 18),
-              _Filters(state: state, onSelect: cubit.filter),
-              const SizedBox(height: 18),
-            ],
-          ),
-        ),
-        if (state.items.isEmpty)
-          _centered(const _Empty())
-        else
-          _centered(
-            FTileGroup(
+    // A SingleChildScrollView (not a lazy ListView) so the scroll extent is
+    // measured exactly — the scrollbar thumb tracks correctly instead of
+    // jumping. It spans the full width so the bar sits at the viewport edge;
+    // the content is centred and capped at the app's 1100px width.
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final item in state.items) _reviewTile(context, item),
+                const Text(
+                  'Recipe review',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: SaltColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Recipes the server flagged as missing or incomplete data. '
+                  'Open one to fix it in the editor or the nutrition review.',
+                  style: TextStyle(fontSize: 14, color: SaltColors.muted),
+                ),
+                const SizedBox(height: 18),
+                _Filters(state: state, onSelect: cubit.filter),
+                const SizedBox(height: 18),
+                if (state.items.isEmpty)
+                  const _Empty()
+                else
+                  FTileGroup(
+                    children: [
+                      for (final item in state.items)
+                        _reviewTile(context, item),
+                    ],
+                  ),
+                if (state.hasMore)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Center(
+                      child: FButton(
+                        variant: FButtonVariant.outline,
+                        mainAxisSize: MainAxisSize.min,
+                        onPress: state.loadingMore ? null : cubit.loadMore,
+                        child: Text(
+                          state.loadingMore ? 'Loading…' : 'Load more',
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
-        if (state.hasMore)
-          _centered(
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Center(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  mainAxisSize: MainAxisSize.min,
-                  onPress: state.loadingMore ? null : cubit.loadMore,
-                  child: Text(state.loadingMore ? 'Loading…' : 'Load more'),
-                ),
-              ),
-            ),
-          ),
-      ],
+        ),
+      ),
     );
   }
-
-  /// Centres [child] and caps it at the content width, with horizontal padding.
-  Widget _centered(Widget child) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 1100),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: child,
-      ),
-    ),
-  );
 
   FTile _reviewTile(BuildContext context, RecipeReviewItem item) {
     return FTile(
