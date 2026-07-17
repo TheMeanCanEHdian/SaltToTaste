@@ -70,6 +70,85 @@ class RecipeCard with RecipeCardMappable {
   bool get hasVariations => variationCount > 0;
 }
 
+/// The admin recipe-data-quality report (`GET /api/v1/admin/recipe-review`):
+/// which recipes are missing or have incomplete data, grouped by issue.
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class RecipeReviewReport with RecipeReviewReportMappable {
+  const RecipeReviewReport({
+    required this.total,
+    required this.categories,
+    required this.items,
+    required this.page,
+    required this.limit,
+  });
+
+  /// Distinct recipes with at least one issue (across all categories).
+  final int total;
+
+  /// Every check with its count, in display order (a count of 0 is included so
+  /// the UI can render the full set of chips).
+  final List<RecipeReviewCategory> categories;
+
+  /// The flagged recipes on this page (narrowed by the `issue` filter).
+  final List<RecipeReviewItem> items;
+
+  /// 1-based page index over [items].
+  final int page;
+  final int limit;
+}
+
+/// One issue category and how many recipes currently have it.
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class RecipeReviewCategory with RecipeReviewCategoryMappable {
+  const RecipeReviewCategory({
+    required this.id,
+    required this.label,
+    required this.count,
+  });
+
+  /// Stable machine id (e.g. `no_instructions`); also the `issue` filter value.
+  final String id;
+  final String label;
+  final int count;
+}
+
+/// A flagged recipe with the specific issues found on it.
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class RecipeReviewItem with RecipeReviewItemMappable {
+  const RecipeReviewItem({
+    required this.id,
+    required this.slug,
+    required this.title,
+    required this.source,
+    required this.issues,
+  });
+
+  final String id;
+  final String slug;
+  final String title;
+
+  /// Source slug (e.g. `atk`) for a small provenance line.
+  final String source;
+  final List<RecipeReviewIssue> issues;
+}
+
+/// One issue on a recipe: the check that fired plus a human-readable detail.
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class RecipeReviewIssue with RecipeReviewIssueMappable {
+  const RecipeReviewIssue({
+    required this.check,
+    required this.label,
+    required this.detail,
+  });
+
+  /// The [RecipeReviewCategory.id] this issue belongs to.
+  final String check;
+  final String label;
+
+  /// e.g. `12 / 13 matched` or `no method steps`.
+  final String detail;
+}
+
 /// The uniform API error envelope: `{"error": {code, message, request_id}}`.
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class ApiError with ApiErrorMappable {

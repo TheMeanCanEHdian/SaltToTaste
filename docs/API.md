@@ -232,6 +232,19 @@ scan (also runs at every server start). Report fields: `started_at`,
 `elapsed_ms`, `files_seen`, `updated_from_disk`, `added`, `re_exported`,
 `skipped` (`[{file, reason}]`), `conflict_files`.
 
+### `GET /api/v1/admin/recipe_review?issue=&page=&limit=` (admin)
+
+The recipe data-quality report — which recipes are missing or have incomplete
+data, grouped by issue: `{total, categories: [{id, label, count}], items:
+[{id, slug, title, source, issues: [{check, label, detail}]}], page, limit}`.
+`total` is the whole-library count of recipes with any issue (stable across
+filters); each `categories[i].count` is per-issue. `issue` narrows `items` (and
+their pagination) to one category — an unknown id is a 422. Current checks:
+`no_instructions`, `unparsed_ingredients` (a quantified ingredient line that
+parsed no amount), `incomplete_nutrition` (nutrition `partial`), `no_nutrition`
+(never computed), `extraction_warnings`, `no_servings`. The set is an open
+registry, so categories can be added without an API shape change.
+
 ### `POST /api/v1/library/rescan` (admin, full scope)
 
 Reconcile the YAML library with the database now: a cleanly hand-edited

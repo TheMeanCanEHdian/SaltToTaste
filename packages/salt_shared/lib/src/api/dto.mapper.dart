@@ -403,6 +403,697 @@ class _RecipeCardCopyWithImpl<$R, $Out>
   ) => _RecipeCardCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
+class RecipeReviewReportMapper extends ClassMapperBase<RecipeReviewReport> {
+  RecipeReviewReportMapper._();
+
+  static RecipeReviewReportMapper? _instance;
+  static RecipeReviewReportMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = RecipeReviewReportMapper._());
+      RecipeReviewCategoryMapper.ensureInitialized();
+      RecipeReviewItemMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'RecipeReviewReport';
+
+  static int _$total(RecipeReviewReport v) => v.total;
+  static const Field<RecipeReviewReport, int> _f$total = Field(
+    'total',
+    _$total,
+  );
+  static List<RecipeReviewCategory> _$categories(RecipeReviewReport v) =>
+      v.categories;
+  static const Field<RecipeReviewReport, List<RecipeReviewCategory>>
+  _f$categories = Field('categories', _$categories);
+  static List<RecipeReviewItem> _$items(RecipeReviewReport v) => v.items;
+  static const Field<RecipeReviewReport, List<RecipeReviewItem>> _f$items =
+      Field('items', _$items);
+  static int _$page(RecipeReviewReport v) => v.page;
+  static const Field<RecipeReviewReport, int> _f$page = Field('page', _$page);
+  static int _$limit(RecipeReviewReport v) => v.limit;
+  static const Field<RecipeReviewReport, int> _f$limit = Field(
+    'limit',
+    _$limit,
+  );
+
+  @override
+  final MappableFields<RecipeReviewReport> fields = const {
+    #total: _f$total,
+    #categories: _f$categories,
+    #items: _f$items,
+    #page: _f$page,
+    #limit: _f$limit,
+  };
+
+  static RecipeReviewReport _instantiate(DecodingData data) {
+    return RecipeReviewReport(
+      total: data.dec(_f$total),
+      categories: data.dec(_f$categories),
+      items: data.dec(_f$items),
+      page: data.dec(_f$page),
+      limit: data.dec(_f$limit),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static RecipeReviewReport fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<RecipeReviewReport>(map);
+  }
+
+  static RecipeReviewReport fromJson(String json) {
+    return ensureInitialized().decodeJson<RecipeReviewReport>(json);
+  }
+}
+
+mixin RecipeReviewReportMappable {
+  String toJson() {
+    return RecipeReviewReportMapper.ensureInitialized()
+        .encodeJson<RecipeReviewReport>(this as RecipeReviewReport);
+  }
+
+  Map<String, dynamic> toMap() {
+    return RecipeReviewReportMapper.ensureInitialized()
+        .encodeMap<RecipeReviewReport>(this as RecipeReviewReport);
+  }
+
+  RecipeReviewReportCopyWith<
+    RecipeReviewReport,
+    RecipeReviewReport,
+    RecipeReviewReport
+  >
+  get copyWith =>
+      _RecipeReviewReportCopyWithImpl<RecipeReviewReport, RecipeReviewReport>(
+        this as RecipeReviewReport,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return RecipeReviewReportMapper.ensureInitialized().stringifyValue(
+      this as RecipeReviewReport,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return RecipeReviewReportMapper.ensureInitialized().equalsValue(
+      this as RecipeReviewReport,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return RecipeReviewReportMapper.ensureInitialized().hashValue(
+      this as RecipeReviewReport,
+    );
+  }
+}
+
+extension RecipeReviewReportValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, RecipeReviewReport, $Out> {
+  RecipeReviewReportCopyWith<$R, RecipeReviewReport, $Out>
+  get $asRecipeReviewReport => $base.as(
+    (v, t, t2) => _RecipeReviewReportCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class RecipeReviewReportCopyWith<
+  $R,
+  $In extends RecipeReviewReport,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<
+    $R,
+    RecipeReviewCategory,
+    RecipeReviewCategoryCopyWith<$R, RecipeReviewCategory, RecipeReviewCategory>
+  >
+  get categories;
+  ListCopyWith<
+    $R,
+    RecipeReviewItem,
+    RecipeReviewItemCopyWith<$R, RecipeReviewItem, RecipeReviewItem>
+  >
+  get items;
+  $R call({
+    int? total,
+    List<RecipeReviewCategory>? categories,
+    List<RecipeReviewItem>? items,
+    int? page,
+    int? limit,
+  });
+  RecipeReviewReportCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _RecipeReviewReportCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, RecipeReviewReport, $Out>
+    implements RecipeReviewReportCopyWith<$R, RecipeReviewReport, $Out> {
+  _RecipeReviewReportCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<RecipeReviewReport> $mapper =
+      RecipeReviewReportMapper.ensureInitialized();
+  @override
+  ListCopyWith<
+    $R,
+    RecipeReviewCategory,
+    RecipeReviewCategoryCopyWith<$R, RecipeReviewCategory, RecipeReviewCategory>
+  >
+  get categories => ListCopyWith(
+    $value.categories,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(categories: v),
+  );
+  @override
+  ListCopyWith<
+    $R,
+    RecipeReviewItem,
+    RecipeReviewItemCopyWith<$R, RecipeReviewItem, RecipeReviewItem>
+  >
+  get items => ListCopyWith(
+    $value.items,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(items: v),
+  );
+  @override
+  $R call({
+    int? total,
+    List<RecipeReviewCategory>? categories,
+    List<RecipeReviewItem>? items,
+    int? page,
+    int? limit,
+  }) => $apply(
+    FieldCopyWithData({
+      if (total != null) #total: total,
+      if (categories != null) #categories: categories,
+      if (items != null) #items: items,
+      if (page != null) #page: page,
+      if (limit != null) #limit: limit,
+    }),
+  );
+  @override
+  RecipeReviewReport $make(CopyWithData data) => RecipeReviewReport(
+    total: data.get(#total, or: $value.total),
+    categories: data.get(#categories, or: $value.categories),
+    items: data.get(#items, or: $value.items),
+    page: data.get(#page, or: $value.page),
+    limit: data.get(#limit, or: $value.limit),
+  );
+
+  @override
+  RecipeReviewReportCopyWith<$R2, RecipeReviewReport, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _RecipeReviewReportCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class RecipeReviewCategoryMapper extends ClassMapperBase<RecipeReviewCategory> {
+  RecipeReviewCategoryMapper._();
+
+  static RecipeReviewCategoryMapper? _instance;
+  static RecipeReviewCategoryMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = RecipeReviewCategoryMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'RecipeReviewCategory';
+
+  static String _$id(RecipeReviewCategory v) => v.id;
+  static const Field<RecipeReviewCategory, String> _f$id = Field('id', _$id);
+  static String _$label(RecipeReviewCategory v) => v.label;
+  static const Field<RecipeReviewCategory, String> _f$label = Field(
+    'label',
+    _$label,
+  );
+  static int _$count(RecipeReviewCategory v) => v.count;
+  static const Field<RecipeReviewCategory, int> _f$count = Field(
+    'count',
+    _$count,
+  );
+
+  @override
+  final MappableFields<RecipeReviewCategory> fields = const {
+    #id: _f$id,
+    #label: _f$label,
+    #count: _f$count,
+  };
+
+  static RecipeReviewCategory _instantiate(DecodingData data) {
+    return RecipeReviewCategory(
+      id: data.dec(_f$id),
+      label: data.dec(_f$label),
+      count: data.dec(_f$count),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static RecipeReviewCategory fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<RecipeReviewCategory>(map);
+  }
+
+  static RecipeReviewCategory fromJson(String json) {
+    return ensureInitialized().decodeJson<RecipeReviewCategory>(json);
+  }
+}
+
+mixin RecipeReviewCategoryMappable {
+  String toJson() {
+    return RecipeReviewCategoryMapper.ensureInitialized()
+        .encodeJson<RecipeReviewCategory>(this as RecipeReviewCategory);
+  }
+
+  Map<String, dynamic> toMap() {
+    return RecipeReviewCategoryMapper.ensureInitialized()
+        .encodeMap<RecipeReviewCategory>(this as RecipeReviewCategory);
+  }
+
+  RecipeReviewCategoryCopyWith<
+    RecipeReviewCategory,
+    RecipeReviewCategory,
+    RecipeReviewCategory
+  >
+  get copyWith =>
+      _RecipeReviewCategoryCopyWithImpl<
+        RecipeReviewCategory,
+        RecipeReviewCategory
+      >(this as RecipeReviewCategory, $identity, $identity);
+  @override
+  String toString() {
+    return RecipeReviewCategoryMapper.ensureInitialized().stringifyValue(
+      this as RecipeReviewCategory,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return RecipeReviewCategoryMapper.ensureInitialized().equalsValue(
+      this as RecipeReviewCategory,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return RecipeReviewCategoryMapper.ensureInitialized().hashValue(
+      this as RecipeReviewCategory,
+    );
+  }
+}
+
+extension RecipeReviewCategoryValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, RecipeReviewCategory, $Out> {
+  RecipeReviewCategoryCopyWith<$R, RecipeReviewCategory, $Out>
+  get $asRecipeReviewCategory => $base.as(
+    (v, t, t2) => _RecipeReviewCategoryCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class RecipeReviewCategoryCopyWith<
+  $R,
+  $In extends RecipeReviewCategory,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? id, String? label, int? count});
+  RecipeReviewCategoryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _RecipeReviewCategoryCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, RecipeReviewCategory, $Out>
+    implements RecipeReviewCategoryCopyWith<$R, RecipeReviewCategory, $Out> {
+  _RecipeReviewCategoryCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<RecipeReviewCategory> $mapper =
+      RecipeReviewCategoryMapper.ensureInitialized();
+  @override
+  $R call({String? id, String? label, int? count}) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (label != null) #label: label,
+      if (count != null) #count: count,
+    }),
+  );
+  @override
+  RecipeReviewCategory $make(CopyWithData data) => RecipeReviewCategory(
+    id: data.get(#id, or: $value.id),
+    label: data.get(#label, or: $value.label),
+    count: data.get(#count, or: $value.count),
+  );
+
+  @override
+  RecipeReviewCategoryCopyWith<$R2, RecipeReviewCategory, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _RecipeReviewCategoryCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class RecipeReviewItemMapper extends ClassMapperBase<RecipeReviewItem> {
+  RecipeReviewItemMapper._();
+
+  static RecipeReviewItemMapper? _instance;
+  static RecipeReviewItemMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = RecipeReviewItemMapper._());
+      RecipeReviewIssueMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'RecipeReviewItem';
+
+  static String _$id(RecipeReviewItem v) => v.id;
+  static const Field<RecipeReviewItem, String> _f$id = Field('id', _$id);
+  static String _$slug(RecipeReviewItem v) => v.slug;
+  static const Field<RecipeReviewItem, String> _f$slug = Field('slug', _$slug);
+  static String _$title(RecipeReviewItem v) => v.title;
+  static const Field<RecipeReviewItem, String> _f$title = Field(
+    'title',
+    _$title,
+  );
+  static String _$source(RecipeReviewItem v) => v.source;
+  static const Field<RecipeReviewItem, String> _f$source = Field(
+    'source',
+    _$source,
+  );
+  static List<RecipeReviewIssue> _$issues(RecipeReviewItem v) => v.issues;
+  static const Field<RecipeReviewItem, List<RecipeReviewIssue>> _f$issues =
+      Field('issues', _$issues);
+
+  @override
+  final MappableFields<RecipeReviewItem> fields = const {
+    #id: _f$id,
+    #slug: _f$slug,
+    #title: _f$title,
+    #source: _f$source,
+    #issues: _f$issues,
+  };
+
+  static RecipeReviewItem _instantiate(DecodingData data) {
+    return RecipeReviewItem(
+      id: data.dec(_f$id),
+      slug: data.dec(_f$slug),
+      title: data.dec(_f$title),
+      source: data.dec(_f$source),
+      issues: data.dec(_f$issues),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static RecipeReviewItem fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<RecipeReviewItem>(map);
+  }
+
+  static RecipeReviewItem fromJson(String json) {
+    return ensureInitialized().decodeJson<RecipeReviewItem>(json);
+  }
+}
+
+mixin RecipeReviewItemMappable {
+  String toJson() {
+    return RecipeReviewItemMapper.ensureInitialized()
+        .encodeJson<RecipeReviewItem>(this as RecipeReviewItem);
+  }
+
+  Map<String, dynamic> toMap() {
+    return RecipeReviewItemMapper.ensureInitialized()
+        .encodeMap<RecipeReviewItem>(this as RecipeReviewItem);
+  }
+
+  RecipeReviewItemCopyWith<RecipeReviewItem, RecipeReviewItem, RecipeReviewItem>
+  get copyWith =>
+      _RecipeReviewItemCopyWithImpl<RecipeReviewItem, RecipeReviewItem>(
+        this as RecipeReviewItem,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return RecipeReviewItemMapper.ensureInitialized().stringifyValue(
+      this as RecipeReviewItem,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return RecipeReviewItemMapper.ensureInitialized().equalsValue(
+      this as RecipeReviewItem,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return RecipeReviewItemMapper.ensureInitialized().hashValue(
+      this as RecipeReviewItem,
+    );
+  }
+}
+
+extension RecipeReviewItemValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, RecipeReviewItem, $Out> {
+  RecipeReviewItemCopyWith<$R, RecipeReviewItem, $Out>
+  get $asRecipeReviewItem =>
+      $base.as((v, t, t2) => _RecipeReviewItemCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class RecipeReviewItemCopyWith<$R, $In extends RecipeReviewItem, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<
+    $R,
+    RecipeReviewIssue,
+    RecipeReviewIssueCopyWith<$R, RecipeReviewIssue, RecipeReviewIssue>
+  >
+  get issues;
+  $R call({
+    String? id,
+    String? slug,
+    String? title,
+    String? source,
+    List<RecipeReviewIssue>? issues,
+  });
+  RecipeReviewItemCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _RecipeReviewItemCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, RecipeReviewItem, $Out>
+    implements RecipeReviewItemCopyWith<$R, RecipeReviewItem, $Out> {
+  _RecipeReviewItemCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<RecipeReviewItem> $mapper =
+      RecipeReviewItemMapper.ensureInitialized();
+  @override
+  ListCopyWith<
+    $R,
+    RecipeReviewIssue,
+    RecipeReviewIssueCopyWith<$R, RecipeReviewIssue, RecipeReviewIssue>
+  >
+  get issues => ListCopyWith(
+    $value.issues,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(issues: v),
+  );
+  @override
+  $R call({
+    String? id,
+    String? slug,
+    String? title,
+    String? source,
+    List<RecipeReviewIssue>? issues,
+  }) => $apply(
+    FieldCopyWithData({
+      if (id != null) #id: id,
+      if (slug != null) #slug: slug,
+      if (title != null) #title: title,
+      if (source != null) #source: source,
+      if (issues != null) #issues: issues,
+    }),
+  );
+  @override
+  RecipeReviewItem $make(CopyWithData data) => RecipeReviewItem(
+    id: data.get(#id, or: $value.id),
+    slug: data.get(#slug, or: $value.slug),
+    title: data.get(#title, or: $value.title),
+    source: data.get(#source, or: $value.source),
+    issues: data.get(#issues, or: $value.issues),
+  );
+
+  @override
+  RecipeReviewItemCopyWith<$R2, RecipeReviewItem, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _RecipeReviewItemCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class RecipeReviewIssueMapper extends ClassMapperBase<RecipeReviewIssue> {
+  RecipeReviewIssueMapper._();
+
+  static RecipeReviewIssueMapper? _instance;
+  static RecipeReviewIssueMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = RecipeReviewIssueMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'RecipeReviewIssue';
+
+  static String _$check(RecipeReviewIssue v) => v.check;
+  static const Field<RecipeReviewIssue, String> _f$check = Field(
+    'check',
+    _$check,
+  );
+  static String _$label(RecipeReviewIssue v) => v.label;
+  static const Field<RecipeReviewIssue, String> _f$label = Field(
+    'label',
+    _$label,
+  );
+  static String _$detail(RecipeReviewIssue v) => v.detail;
+  static const Field<RecipeReviewIssue, String> _f$detail = Field(
+    'detail',
+    _$detail,
+  );
+
+  @override
+  final MappableFields<RecipeReviewIssue> fields = const {
+    #check: _f$check,
+    #label: _f$label,
+    #detail: _f$detail,
+  };
+
+  static RecipeReviewIssue _instantiate(DecodingData data) {
+    return RecipeReviewIssue(
+      check: data.dec(_f$check),
+      label: data.dec(_f$label),
+      detail: data.dec(_f$detail),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static RecipeReviewIssue fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<RecipeReviewIssue>(map);
+  }
+
+  static RecipeReviewIssue fromJson(String json) {
+    return ensureInitialized().decodeJson<RecipeReviewIssue>(json);
+  }
+}
+
+mixin RecipeReviewIssueMappable {
+  String toJson() {
+    return RecipeReviewIssueMapper.ensureInitialized()
+        .encodeJson<RecipeReviewIssue>(this as RecipeReviewIssue);
+  }
+
+  Map<String, dynamic> toMap() {
+    return RecipeReviewIssueMapper.ensureInitialized()
+        .encodeMap<RecipeReviewIssue>(this as RecipeReviewIssue);
+  }
+
+  RecipeReviewIssueCopyWith<
+    RecipeReviewIssue,
+    RecipeReviewIssue,
+    RecipeReviewIssue
+  >
+  get copyWith =>
+      _RecipeReviewIssueCopyWithImpl<RecipeReviewIssue, RecipeReviewIssue>(
+        this as RecipeReviewIssue,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return RecipeReviewIssueMapper.ensureInitialized().stringifyValue(
+      this as RecipeReviewIssue,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return RecipeReviewIssueMapper.ensureInitialized().equalsValue(
+      this as RecipeReviewIssue,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return RecipeReviewIssueMapper.ensureInitialized().hashValue(
+      this as RecipeReviewIssue,
+    );
+  }
+}
+
+extension RecipeReviewIssueValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, RecipeReviewIssue, $Out> {
+  RecipeReviewIssueCopyWith<$R, RecipeReviewIssue, $Out>
+  get $asRecipeReviewIssue => $base.as(
+    (v, t, t2) => _RecipeReviewIssueCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class RecipeReviewIssueCopyWith<
+  $R,
+  $In extends RecipeReviewIssue,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? check, String? label, String? detail});
+  RecipeReviewIssueCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _RecipeReviewIssueCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, RecipeReviewIssue, $Out>
+    implements RecipeReviewIssueCopyWith<$R, RecipeReviewIssue, $Out> {
+  _RecipeReviewIssueCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<RecipeReviewIssue> $mapper =
+      RecipeReviewIssueMapper.ensureInitialized();
+  @override
+  $R call({String? check, String? label, String? detail}) => $apply(
+    FieldCopyWithData({
+      if (check != null) #check: check,
+      if (label != null) #label: label,
+      if (detail != null) #detail: detail,
+    }),
+  );
+  @override
+  RecipeReviewIssue $make(CopyWithData data) => RecipeReviewIssue(
+    check: data.get(#check, or: $value.check),
+    label: data.get(#label, or: $value.label),
+    detail: data.get(#detail, or: $value.detail),
+  );
+
+  @override
+  RecipeReviewIssueCopyWith<$R2, RecipeReviewIssue, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _RecipeReviewIssueCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
 class ApiErrorMapper extends ClassMapperBase<ApiError> {
   ApiErrorMapper._();
 

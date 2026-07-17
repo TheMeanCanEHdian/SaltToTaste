@@ -547,6 +547,43 @@ class SaltDatabase {
     return (items: _cardsFromRows(rows, viewerId: viewerId), total: total);
   }
 
+  /// Every recipe's stored doc plus its nutrition status, for the admin
+  /// recipe-review scan. `nutStatus == null` means nutrition was never
+  /// computed. Ordered by title so the review list is stable.
+  List<
+    ({
+      String id,
+      String slug,
+      String source,
+      String title,
+      String doc,
+      String? nutStatus,
+      int matched,
+      int total,
+    })
+  >
+  recipeReviewScanRows() {
+    final rows = _db.select(
+      'SELECT r.id, r.slug, r.source_slug AS source, r.title, r.doc, '
+      'n.status AS nut_status, n.matched_count, n.total_count '
+      'FROM recipes r LEFT JOIN recipe_nutrition n ON n.recipe_id = r.id '
+      'ORDER BY r.title COLLATE NOCASE',
+    );
+    return [
+      for (final row in rows)
+        (
+          id: row['id'] as String,
+          slug: row['slug'] as String,
+          source: row['source'] as String,
+          title: row['title'] as String,
+          doc: row['doc'] as String,
+          nutStatus: row['nut_status'] as String?,
+          matched: (row['matched_count'] as int?) ?? 0,
+          total: (row['total_count'] as int?) ?? 0,
+        ),
+    ];
+  }
+
   /// Every tag with its recipe count and (optional) chip style, ordered by
   /// name.
   List<TagInfoRow> listTags() {
