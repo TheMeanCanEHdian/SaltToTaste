@@ -288,6 +288,128 @@ void main() {
     await tester.pumpAndSettle();
     expect(navigations, ['q=t']);
   });
+
+  group('mobile search dialog (compact width)', () {
+    // Below Breakpoints.compact (600) the inline field is dropped for an icon
+    // that opens a dialog — the whole feature used to vanish there (#43).
+    // Shrinking the view swaps in that entirely different widget tree.
+    Future<void> openMobile(
+      WidgetTester tester, {
+      List<String> tags = const ['dessert', 'main'],
+      Duration delay = Duration.zero,
+      String? initialQuery,
+      VoidCallback? onRefresh,
+    }) async {
+      tester.view.physicalSize = const Size(400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        host(
+          tags: tags,
+          delay: delay,
+          initialQuery: initialQuery,
+          onRefresh: onRefresh,
+        ),
+      );
+      // The inline TextField is not built at this width; only the icon is.
+      expect(find.byType(TextField), findsNothing);
+      await tester.tap(find.byTooltip('Search'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the icon opens a dialog and typing offers keyword rows', (
+      tester,
+    ) async {
+      await openMobile(tester);
+      await tester.enterText(find.byType(TextField), 't');
+      await tester.pumpAndSettle();
+      expect(find.text('title:'), findsOneWidget);
+      expect(find.text('tag:'), findsOneWidget);
+    });
+
+    testWidgets('tapping tag: reveals the tags without another keystroke', (
+      tester,
+    ) async {
+      await openMobile(tester, tags: ['dessert', 'main']);
+      await tester.enterText(find.byType(TextField), 'tag');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('tag:'));
+      await tester.pumpAndSettle();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, 'tag:');
+      expect(find.text('dessert'), findsOneWidget);
+      expect(find.text('main'), findsOneWidget);
+    });
+
+    testWidgets('tapping a tag row fills the field and does not search', (
+      tester,
+    ) async {
+      await openMobile(tester, tags: ['ice cream']);
+      await tester.enterText(find.byType(TextField), 'tag:ice');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ice cream'));
+      await tester.pumpAndSettle();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(
+        field.controller!.text,
+        'tag:"ice cream" ',
+        reason: 'unquoted, this would search tag:ice AND the word cream',
+      );
+      expect(
+        navigations,
+        isEmpty,
+        reason: 'taking a row fills the field; it does not submit',
+      );
+    });
+
+    testWidgets('the Search button submits the typed query', (tester) async {
+      await openMobile(tester);
+      await tester.enterText(find.byType(TextField), 'tag:dessert');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Search'));
+      await tester.pumpAndSettle();
+      expect(navigations, ['q=tag%3Adessert']);
+    });
+
+    testWidgets('a pre-filled query offers rows once the tags arrive', (
+      tester,
+    ) async {
+      // The dialog opens pre-filled and never receives a keystroke; the rows
+      // must appear when the fetch lands, from the recompute in _loadTags.
+      await openMobile(
+        tester,
+        tags: ['dessert'],
+        delay: slowFetch,
+        initialQuery: 'tag:des',
+      );
+      expect(find.text('dessert'), findsOneWidget);
+    });
+
+    testWidgets('resubmitting the query on screen refreshes in place', (
+      tester,
+    ) async {
+      var refreshes = 0;
+      await openMobile(
+        tester,
+        initialQuery: 'chicken',
+        onRefresh: () => refreshes++,
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Search'));
+      await tester.pumpAndSettle();
+      expect(refreshes, 1, reason: 'the same query must reload, not navigate');
+      expect(navigations, isEmpty);
+    });
+
+    testWidgets('an ordinary word offers no rows', (tester) async {
+      await openMobile(tester);
+      await tester.enterText(find.byType(TextField), 'chicken');
+      await tester.pumpAndSettle();
+      expect(find.text('title:'), findsNothing);
+      expect(find.text('dessert'), findsNothing);
+    });
+  });
 }
 
 /// Serves a fixed tag list to TagsRepository.listTags().

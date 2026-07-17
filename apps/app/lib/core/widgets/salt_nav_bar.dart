@@ -416,21 +416,78 @@ class _SearchFieldState extends State<_SearchField> {
   }
 }
 
-/// The suggestion popover: keyword rows and tag rows, styled to the nav bar
+/// The suggestion rows: keyword rows and tag rows, styled to the nav bar
 /// rather than to Material's defaults.
+///
+/// Two hosts share this one renderer so the rows can never drift: the desktop
+/// field's floating overlay (the default) and the mobile dialog's inline list
+/// ([embedded]). Embedded drops the floating card — the Align, the top gap, the
+/// elevation, the overlay's own max width — because the dialog already provides
+/// the surface and the width.
 class _SuggestionList extends StatelessWidget {
   const _SuggestionList({
     required this.options,
     required this.onSelected,
     required this.highlight,
+    this.embedded = false,
   });
 
   final List<SearchSuggestion> options;
   final void Function(SearchSuggestion) onSelected;
   final int? highlight;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
+    final list = ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: embedded ? double.infinity : 620,
+        maxHeight: 280,
+      ),
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        shrinkWrap: true,
+        itemCount: options.length,
+        itemBuilder: (context, index) {
+          final option = options[index];
+          return InkWell(
+            onTap: () => onSelected(option),
+            child: Container(
+              color: index == highlight
+                  ? SaltColors.maroon.withValues(alpha: 0.08)
+                  : null,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              child: Row(
+                children: [
+                  Text(
+                    option.label,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: SaltColors.ink,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      option.detail,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: SaltColors.muted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    if (embedded) {
+      return list;
+    }
     return Align(
       alignment: Alignment.topLeft,
       child: Padding(
@@ -438,52 +495,7 @@ class _SuggestionList extends StatelessWidget {
         child: Material(
           elevation: 4,
           borderRadius: BorderRadius.circular(9),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620, maxHeight: 280),
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              shrinkWrap: true,
-              itemCount: options.length,
-              itemBuilder: (context, index) {
-                final option = options[index];
-                return InkWell(
-                  onTap: () => onSelected(option),
-                  child: Container(
-                    color: index == highlight
-                        ? SaltColors.maroon.withValues(alpha: 0.08)
-                        : null,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          option.label,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: SaltColors.ink,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            option.detail,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: SaltColors.muted,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          child: list,
         ),
       ),
     );
@@ -570,8 +582,9 @@ class _AvatarMenu extends StatelessWidget {
 }
 
 /// Compact-width search entry point: the inline search field is dropped on
-/// narrow screens, so this icon opens a labelled dialog with the same query
-/// field, keeping search reachable (and accessible) on mobile.
+/// narrow screens, so this icon opens a labelled dialog carrying the same
+/// suggestions (keyword rows, real tag names) the desktop field offers — the
+/// feature used to disappear entirely below [Breakpoints.compact].
 class _MobileSearchButton extends StatelessWidget {
   const _MobileSearchButton({this.initialQuery, this.onRefresh});
 
@@ -588,37 +601,15 @@ class _MobileSearchButton extends StatelessWidget {
   }
 
   Future<void> _openSearch(BuildContext context) async {
-    final controller = TextEditingController(text: initialQuery);
+    // Read the repository from the nav bar's context, not the dialog's: the
+    // dialog route may sit under a different provider scope.
     final query = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Search recipes'),
-        content: Semantics(
-          label: 'Search recipes',
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            textInputAction: TextInputAction.search,
-            decoration: const InputDecoration(
-              hintText: 'try title:cake or tag:dessert',
-            ),
-            onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-            child: const Text('Search'),
-          ),
-        ],
+      builder: (_) => _MobileSearchDialog(
+        tagsRepository: context.read<TagsRepository>(),
+        initialQuery: initialQuery,
       ),
     );
-    controller.dispose();
     if (query == null || !context.mounted) {
       return;
     }
@@ -632,5 +623,138 @@ class _MobileSearchButton extends StatelessWidget {
       return;
     }
     context.go('/search?q=${Uri.encodeQueryComponent(trimmed)}');
+  }
+}
+
+/// The mobile search dialog's content: a query field with the live suggestion
+/// list beneath it.
+///
+/// Simpler than the desktop [_SearchField] by design — a dialog is tap-driven,
+/// so none of the arrow-key / `_arrowed` / highlight machinery applies. A row is
+/// TAKEN (fills the field, exactly as the desktop `_take` does, so the `tag:`
+/// two-step still opens the tags in place); Enter or the Search button SUBMITS
+/// whatever is in the field. The tags are fetched once when the dialog opens; a
+/// failed fetch is silent, and the keyword rows work without the vocabulary.
+class _MobileSearchDialog extends StatefulWidget {
+  const _MobileSearchDialog({required this.tagsRepository, this.initialQuery});
+
+  final TagsRepository tagsRepository;
+  final String? initialQuery;
+
+  @override
+  State<_MobileSearchDialog> createState() => _MobileSearchDialogState();
+}
+
+class _MobileSearchDialogState extends State<_MobileSearchDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialQuery,
+  );
+  List<TagInfo> _tags = const [];
+  List<SearchSuggestion> _rows = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_recompute);
+    _rows = _rowsFor(_controller.value);
+    unawaited(_loadTags());
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_recompute)
+      ..dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadTags() async {
+    try {
+      final tags = await widget.tagsRepository.listTags();
+      if (mounted) {
+        setState(() {
+          _tags = tags;
+          // Recompute against the vocabulary that just arrived: a pre-filled
+          // `tag:des` must gain its rows when the fetch lands, not on the next
+          // keystroke.
+          _rows = _rowsFor(_controller.value);
+        });
+      }
+    } on Object {
+      // Suggestions are a convenience; a failed fetch must never break
+      // searching. Keyword rows need no vocabulary and keep working.
+    }
+  }
+
+  void _recompute() {
+    setState(() => _rows = _rowsFor(_controller.value));
+  }
+
+  List<SearchSuggestion> _rowsFor(TextEditingValue value) => suggestionsFor(
+    text: value.text,
+    cursor: value.selection.baseOffset,
+    tags: _tags,
+  );
+
+  /// Puts [option]'s query in the field; the listener recomputes the rows, so
+  /// taking `tag:` reveals the tags without another keystroke.
+  void _take(SearchSuggestion option) {
+    _controller.value = TextEditingValue(
+      text: option.query,
+      selection: TextSelection.collapsed(offset: option.cursor),
+    );
+  }
+
+  // One handler for both onSubmitted (String) and onPressed (no arg): the
+  // optional positional makes it assignable to each.
+  void _submit([String? _]) => Navigator.of(context).pop(_controller.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Search recipes'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Semantics(
+              label: 'Search recipes',
+              child: TextField(
+                controller: _controller,
+                autofocus: true,
+                textInputAction: TextInputAction.search,
+                onSubmitted: _submit,
+                decoration: const InputDecoration(
+                  hintText: 'try title:cake or tag:dessert',
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+            ),
+            if (_rows.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: _SuggestionList(
+                  options: _rows,
+                  onSelected: _take,
+                  highlight: null,
+                  embedded: true,
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
+          onPressed: _submit,
+          child: const Text('Search'),
+        ),
+      ],
+    );
   }
 }
