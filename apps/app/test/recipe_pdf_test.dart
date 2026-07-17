@@ -345,9 +345,28 @@ void main() {
         timeout: const Timeout(Duration(minutes: 2)),
       );
 
-      // The other half of the bargain: the caps that keep the header on one
-      // page must never touch data the API itself accepts.
-      test('the longest API-legal title and category print in full', () async {
+      // The caps that keep the header on one page must not touch data the API
+      // itself accepts. This tests what is TRUE — every real title and category
+      // prints in full — and deliberately no longer claims more than that.
+      //
+      // It used to assert "the longest API-legal title and category print in
+      // full" using ('Chocolate ' * 25). That passed, and was false assurance:
+      // line count depends on WORD COMPOSITION, not character count, and that
+      // generator is the one shape that fits. Measured at the same 249-char
+      // budget the API allows:
+      //
+      //   'Chocolate ' x25          249 chars -> all 25 words printed
+      //   'Buttermilk' x22          241 chars -> LOST 2      (plain English)
+      //   'Hasselbackpotatis' x13   233 chars -> LOST 3
+      //   'WWWWWWWWW' x25           249 chars -> LOST 15
+      //
+      // So `_maxTitleLines` does silently cut API-legal titles, and no cap
+      // VALUE fixes that — a char-derived cap cannot bound a line count. The
+      // real fix is to state the cut (ellipsis) or to restructure, and it is a
+      // design call: see .claude/DEFERRED.md. Nothing in the corpus reaches it
+      // (longest title 86 chars, category 52), which is exactly what the test
+      // below pins, so the gap is real but not live.
+      test('every REAL corpus title and category prints in full', () async {
         Future<int> painted(Recipe recipe) async {
           final bytes = await buildRecipePdf(recipe: recipe, compress: false);
           return RegExp(
@@ -355,24 +374,34 @@ void main() {
           ).allMatches(String.fromCharCodes(bytes)).length;
         }
 
-        // 25 countable words, 249 chars — the API caps a title at 250.
-        final title = ('Chocolate ' * 25).trim();
+        // The longest real title and category the library actually contains,
+        // measured rather than assumed.
+        final recipes = loadAllCorpusRecipes();
+        final title = recipes
+            .map((r) => r.title)
+            .reduce((a, b) => a.length >= b.length ? a : b);
+        final category = recipes
+            .map((r) => r.category ?? '')
+            .reduce((a, b) => a.length >= b.length ? a : b);
+
+        final titleWords = title.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
         expect(
           await painted(bundt.copyWith(title: title)) -
               await painted(bundt.copyWith(title: 'X')),
-          24,
-          reason:
-              'a 250-char title needs 9 lines; at _maxTitleLines: 8 two '
-              'words vanished with no ellipsis to show for it',
+          titleWords.length - 1,
+          reason: 'the corpus\'s longest title (${title.length} chars) must '
+              'print every word: "$title"',
         );
 
-        // 17 words, 118 chars — the API caps a category at 120.
-        final category = ('Dinner ' * 17).trim();
+        final categoryWords = category
+            .split(RegExp(r'\s+'))
+            .where((w) => w.isNotEmpty);
         expect(
           await painted(bundt.copyWith(category: category)) -
               await painted(bundt.copyWith(category: 'X')),
-          16,
-          reason: 'a 120-char category needs 3 lines; 2 dropped a word',
+          categoryWords.length - 1,
+          reason: 'the corpus\'s longest category (${category.length} chars) '
+              'must print every word: "$category"',
         );
       });
 

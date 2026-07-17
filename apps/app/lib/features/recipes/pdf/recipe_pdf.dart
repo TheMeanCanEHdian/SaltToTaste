@@ -257,17 +257,28 @@ class _RecipeDocument {
   ///
   /// How many tag chips the header prints before summarising the rest.
   ///
-  /// 50 API-legal tags cannot fit a page in any layout (~920pt of chips
-  /// alone), so a cap is unavoidable here. The overflow is STATED rather than
-  /// dropped — a height ceiling was tried and silently deleted every chip,
-  /// which is strictly worse than printing "+38 more".
+  /// 50 API-legal tags cannot fit a page in any layout — measured at 990.7pt
+  /// of chips alone against a 699.8pt usable page — so a cap is unavoidable
+  /// here. The overflow is STATED rather than dropped: a height ceiling was
+  /// tried and silently deleted every chip, which is strictly worse than
+  /// printing "+38 more".
   static const _maxHeaderChips = 12;
 
-  /// A tag longer than this is truncated with an ellipsis, so a chip is always
-  /// exactly one line. 60 matches the API's own tag cap, so no tag the API
-  /// would accept is ever shortened; longer ones can only arrive through the
-  /// importer or hand-edited YAML, neither of which validates. Without this a
-  /// 69-char tag wrapped to 3 lines and 13 of them alone came to 578pt.
+  /// A tag longer than this is ellipsized, so a chip is always exactly one
+  /// line. 60 matches the API's own tag cap, so no tag the API accepts is ever
+  /// shortened — a 60-char chip measures 15.9pt, one line, with room to spare.
+  ///
+  /// It earns its keep on the tags the API would REJECT but the importer lets
+  /// through (it never calls `_validateRecipe`, and library YAML is
+  /// hand-editable). Measured at the header's 408pt column: 120 chars wraps to
+  /// 2 lines (26.8pt), 200+ to 3 (37.7pt), and 13 such chips come to 537.9pt —
+  /// a third of the page spent on tags nobody asked for. The ellipsis, rather
+  /// than `maxLines` alone, is what makes the shortening VISIBLE: pdf's
+  /// TextOverflow has no ellipsis member, so a line cap just stops mid-word.
+  ///
+  /// (An earlier version of this comment claimed a 69-char tag wrapped to 3
+  /// lines and 13 of them came to 578pt. Both figures were invented; a 69-char
+  /// tag is one line, 15.9pt. The cap is right, the stated reason was not.)
   static const _maxChipChars = 60;
 
   /// Measured: the API's longest legal title (250 chars) needs 9 lines, so 10
@@ -561,14 +572,18 @@ class _RecipeDocument {
               child: pw.Text(
                 _drawable(item.raw),
                 style: _ingredientStyle,
-                // Measured: 40 lines of this style is 613pt and the row 619pt
-                // — inside the 720pt page, and below the (699.8, 720] band
-                // that hangs. (An earlier comment here claimed ~500pt and that
-                // 60 lines "hung"; both were wrong. 60 lines is 742pt, which
-                // is TALLER than the page and so throws cleanly —
-                // multi_page.dart:385 — rather than hanging.) The API caps
-                // `raw` at 1000 chars, ~10 lines here, so this only ever bites
-                // hand-edited or imported YAML.
+                // Measured: 40 lines of this style is 613.3pt — inside the
+                // 720pt page and below the (699.8, 720] band that hangs. 60
+                // lines is 920.6pt, which is TALLER than a page and so throws
+                // cleanly (multi_page.dart:385) rather than hanging.
+                //
+                // (Earlier revisions of this comment claimed ~500pt for 40
+                // lines and 742pt for 60, and said 60 "hung". All three were
+                // invented. The cap is right; the arithmetic behind it was
+                // never run.)
+                //
+                // The API caps `raw` at 1000 chars, so this only bites
+                // hand-edited or imported YAML, which nothing validates.
                 maxLines: 40,
               ),
             ),
@@ -820,10 +835,11 @@ class _RecipeDocument {
                 child: pw.Text(
                   _drawable(step.caption.trim()),
                   style: _compactStepStyle,
-                  // 40 lines of _compactStepStyle measures ~613pt — inside the
-                  // page and below the band that hangs. (Not ~500pt, as an
-                  // earlier revision of this comment asserted without
-                  // measuring.)
+                  // Measured: 40 lines of _compactStepStyle is 601.7pt —
+                  // inside the page and below the band that hangs. (Earlier
+                  // revisions said ~500pt, then ~613pt; the first was
+                  // invented and the second was the INGREDIENT style's figure
+                  // copied onto a smaller font.)
                   maxLines: 40,
                 ),
               ),

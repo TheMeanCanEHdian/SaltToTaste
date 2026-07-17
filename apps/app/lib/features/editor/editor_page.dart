@@ -532,7 +532,12 @@ class _TagsInputState extends State<_TagsInput> {
   /// deliberately creating a near-miss.
   String _typed = '';
 
-  /// Every tag already in the library, most-used first — the suggestion pool.
+  /// Every tag already in the library — the suggestion pool.
+  ///
+  /// Alphabetical, because that is what the server sends
+  /// (`GROUP BY t.id ORDER BY t.name`, salt_database.dart) — and it does not
+  /// matter either way, since [_matches] re-sorts every result itself. This
+  /// once claimed "most-used first", which was true of neither end.
   ///
   /// Fetched once when the editor opens. Tags are a small, shared vocabulary
   /// (the whole library has a handful), so this is one cheap request and no
