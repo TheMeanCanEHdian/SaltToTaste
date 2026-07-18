@@ -28,6 +28,7 @@ class _LogsTabState extends State<LogsTab> {
   String _query = '';
   bool _live = false;
   Timer? _pollTimer;
+  final TextEditingController _search = TextEditingController();
 
   LogsPage? _page;
   String? _error;
@@ -42,6 +43,7 @@ class _LogsTabState extends State<LogsTab> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _search.dispose();
     super.dispose();
   }
 
@@ -125,48 +127,59 @@ class _LogsTabState extends State<LogsTab> {
   }
 
   Widget _toolbar(LogsPage? page) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // All controls in one row on a wide screen; they wrap on narrow. Every
+    // control is 40px tall so the heights line up.
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _levelSegmented(),
-            SizedBox(
-              width: 190,
-              child: FSelect<String>(
-                items: {
-                  'All loggers': '',
-                  for (final name in page?.loggers ?? const <String>[])
-                    name: name,
-                },
-                control: FSelectControl.lifted(
-                  value: _logger,
-                  onChange: (value) {
-                    setState(() => _logger = value ?? '');
-                    _reload();
-                  },
-                ),
-              ),
-            ),
-            _liveToggle(),
-            FButton.icon(
-              onPress: _reload,
-              child: const Icon(Icons.refresh, size: 18),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
+        SizedBox(height: 40, child: _levelSegmented()),
         SizedBox(
-          width: 320,
+          height: 40,
+          width: 158,
+          child: FSelect<String>(
+            items: {
+              'All loggers': '',
+              for (final name in page?.loggers ?? const <String>[]) name: name,
+            },
+            control: FSelectControl.lifted(
+              value: _logger,
+              onChange: (value) {
+                setState(() => _logger = value ?? '');
+                _reload();
+              },
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 40,
+          width: 210,
           child: FTextField(
             hint: 'Search message or request id',
+            clearable: (value) => value.text.isNotEmpty,
+            control: FTextFieldControl.managed(
+              controller: _search,
+              onChange: (value) {
+                // React only to clearing (the x button empties the field).
+                if (value.text.isEmpty && _query.isNotEmpty) {
+                  setState(() => _query = '');
+                  _reload();
+                }
+              },
+            ),
             onSubmit: (value) {
               setState(() => _query = value);
               _reload();
             },
+          ),
+        ),
+        SizedBox(height: 40, child: _liveToggle()),
+        SizedBox(
+          height: 40,
+          child: FButton.icon(
+            onPress: _reload,
+            child: const Icon(Icons.refresh, size: 18),
           ),
         ),
       ],
@@ -183,6 +196,7 @@ class _LogsTabState extends State<LogsTab> {
       clipBehavior: Clip.antiAlias,
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final level in _levels)
             InkWell(
@@ -191,10 +205,8 @@ class _LogsTabState extends State<LogsTab> {
                 _reload();
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 color: _level == level ? SaltColors.maroon : Colors.transparent,
                 child: Text(
                   level.isEmpty ? 'All' : _titleCase(level),
@@ -218,7 +230,8 @@ class _LogsTabState extends State<LogsTab> {
       borderRadius: BorderRadius.circular(9),
       onTap: _toggleLive,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: _live ? SaltColors.infoBg : Colors.white,
           border: Border.all(
@@ -273,8 +286,43 @@ class _LogsTabState extends State<LogsTab> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
+          _header(),
           for (var i = 0; i < page.items.length; i++)
             _row(page.items[i], last: i == page.items.length - 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _header() {
+    Widget cell(String label, {double? width, bool expand = false}) {
+      final text = Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: Color(0xFF9A8D84),
+        ),
+      );
+      if (expand) return Expanded(child: text);
+      return SizedBox(width: width, child: text);
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFFAF6F2),
+        border: Border(bottom: BorderSide(color: SaltColors.hairline)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Row(
+        children: [
+          cell('TIME', width: 88),
+          cell('LEVEL', width: 66),
+          cell('LOGGER', width: 86),
+          cell('MESSAGE', expand: true),
+          const SizedBox(width: 10),
+          cell('REQUEST', width: 84),
         ],
       ),
     );
