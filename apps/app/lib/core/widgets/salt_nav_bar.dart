@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/salt_logo.dart';
 import 'package:salt_app/core/widgets/search_help.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/search/search_suggestions.dart';
@@ -47,6 +48,21 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < Breakpoints.compact;
+    final logo = Semantics(
+      button: true,
+      label: 'Home',
+      child: InkWell(
+        onTap: () => context.go('/'),
+        child: const Padding(
+          // Tight vertical padding so the enlarged pan glyph fills the 58px bar
+          // instead of being scaled back down by the banner's BoxFit.contain.
+          padding: EdgeInsets.symmetric(vertical: 6),
+          child: ExcludeSemantics(
+            child: SaltLogoBanner(color: Colors.white, titleSize: 20),
+          ),
+        ),
+      ),
+    );
     return Material(
       color: SaltColors.maroon,
       child: SafeArea(
@@ -78,41 +94,30 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   const SizedBox(width: 4),
                 ],
-                Semantics(
-                  button: true,
-                  label: 'Home',
-                  child: InkWell(
-                    onTap: () => context.go('/'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: ExcludeSemantics(
-                        child: Image.asset(
-                          'assets/images/logo_banner.png',
-                          height: 36,
-                          filterQuality: FilterQuality.medium,
-                          errorBuilder: (_, __, ___) => const Text(
-                            'Salt to Taste',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 18),
-                if (!compact)
+                if (!compact) ...[
+                  logo,
+                  const SizedBox(width: 18),
                   Expanded(
                     child: _SearchField(
                       initialQuery: initialQuery,
                       onRefresh: onSearchRefresh,
                     ),
-                  )
-                else ...[
-                  const Spacer(),
+                  ),
+                ] else ...[
+                  // The full lockup can be wider than a narrow bar; shrink it to
+                  // fit (never overflow) while it takes the free space on the
+                  // left, pushing the search + avatar to the right.
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: logo,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   _MobileSearchButton(
                     initialQuery: initialQuery,
                     onRefresh: onSearchRefresh,

@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/app.dart';
+import 'package:salt_app/core/widgets/salt_logo.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   // Clean path URLs on web (`/r/<slug>` instead of `/#/r/<slug>`); a no-op
   // on other platforms. The `includeHash: true` (the 2nd positional arg) keeps
   // the URL FRAGMENT on a cold load — `usePathUrlStrategy()` hardcodes it OFF,
@@ -19,5 +21,13 @@ void main() {
   // tracks the page and the browser Back button pops correctly (which is why
   // the in-app back control is dropped on web).
   GoRouter.optionURLReflectsImperativeAPIs = true;
+  // Warm the brand-mark SVG before first paint so it doesn't visibly pop in on
+  // the login card / nav bar. Best-effort AND time-boxed: on web this is a
+  // network fetch, and a slow/stalled one must never hold the app on the boot
+  // screen — cap the wait and proceed (an un-warmed mark just falls back to the
+  // normal async load). A thrown failure (e.g. 404) is likewise swallowed.
+  try {
+    await SaltLogoGlyph.precache().timeout(const Duration(milliseconds: 600));
+  } catch (_) {}
   runApp(const SaltApp());
 }
