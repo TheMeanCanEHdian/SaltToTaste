@@ -78,15 +78,18 @@ class _Preset {
   final String ink;
 }
 
+// The first entry is the default theme: a tag with no explicit style falls back
+// to these colours (see TagChip / [SaltColors.chip]). All names are
+// food/cooking themed.
 const List<_Preset> _presets = [
-  _Preset('rose', '#F6E4E4', '#7D1420'),
-  _Preset('raspberry', '#FDEEF3', '#A02040'),
+  _Preset('raspberry', '#F6E4E4', '#7D1420'),
   _Preset('pumpkin', '#FDF1E2', '#8A5A12'),
   _Preset('honey', '#FAF3D9', '#7A6210'),
   _Preset('herb', '#E8F3E4', '#2C5A1E'),
-  _Preset('ocean', '#E3F0F5', '#1E5A72'),
+  _Preset('blueberry', '#E3F0F5', '#1E5A72'),
   _Preset('plum', '#EFE9F7', '#5A3D8F'),
-  _Preset('slate', '#EBEBEB', '#444444'),
+  _Preset('cocoa', '#EEE4DC', '#5C3A1E'),
+  _Preset('pepper', '#EBEBEB', '#444444'),
 ];
 
 const Color _errInk = SaltColors.errInk;
@@ -355,9 +358,16 @@ class _StyleEditorState extends State<_StyleEditor> {
     );
   }
 
-  bool _presetSelected(TagsTabState state, _Preset preset) =>
-      state.draftColor.trim().toUpperCase() == preset.ink &&
-      state.draftBgColor.trim().toUpperCase() == preset.bg;
+  bool _presetSelected(TagsTabState state, _Preset preset) {
+    final ink = state.draftColor.trim().toUpperCase();
+    final bg = state.draftBgColor.trim().toUpperCase();
+    // A tag with no explicit colour falls back to the default theme, so show
+    // the default (first) preset selected rather than nothing.
+    if (ink.isEmpty && bg.isEmpty) {
+      return identical(preset, _presets.first);
+    }
+    return ink == preset.ink && bg == preset.bg;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -433,10 +443,18 @@ class _StyleEditorState extends State<_StyleEditor> {
             ),
             itemCount: icons.length + 1,
             itemBuilder: (context, index) {
+              // The active tag colours (draft, or the default 'raspberry') so the
+              // selected cell matches the tag being styled.
+              final accentInk =
+                  colorFromHex(state.draftColor) ?? SaltColors.chipInk;
+              final accentBg =
+                  colorFromHex(state.draftBgColor) ?? SaltColors.chip;
               if (index == 0) {
                 return _IconCell.none(
                   selected: state.draftIcon == null,
                   onTap: () => cubit.setDraftIcon(null),
+                  accentInk: accentInk,
+                  accentBg: accentBg,
                 );
               }
               final name = icons[index - 1];
@@ -444,6 +462,8 @@ class _StyleEditorState extends State<_StyleEditor> {
                 name: name,
                 selected: state.draftIcon == name,
                 onTap: () => cubit.setDraftIcon(name),
+                accentInk: accentInk,
+                accentBg: accentBg,
               );
             },
           ),
@@ -622,14 +642,25 @@ class _IconCell extends StatelessWidget {
     required String this.name,
     required this.selected,
     required this.onTap,
+    required this.accentInk,
+    required this.accentBg,
   });
 
-  const _IconCell.none({required this.selected, required this.onTap})
-    : name = null;
+  const _IconCell.none({
+    required this.selected,
+    required this.onTap,
+    required this.accentInk,
+    required this.accentBg,
+  }) : name = null;
 
   final String? name;
   final bool selected;
   final VoidCallback onTap;
+
+  /// The tag's active colours (the draft, or the default 'raspberry'), so a selected
+  /// cell matches the tag being styled rather than a fixed maroon.
+  final Color accentInk;
+  final Color accentBg;
 
   @override
   Widget build(BuildContext context) {
@@ -643,10 +674,10 @@ class _IconCell extends StatelessWidget {
         child: Container(
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? SaltColors.chip : null,
+            color: selected ? accentBg : null,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: selected ? SaltColors.maroon : Colors.transparent,
+              color: selected ? accentInk : Colors.transparent,
               width: 1.5,
             ),
           ),
@@ -663,7 +694,7 @@ class _IconCell extends StatelessWidget {
               : Icon(
                   lucideIconsByName[name],
                   size: 19,
-                  color: selected ? SaltColors.chipInk : SaltColors.ink,
+                  color: selected ? accentInk : SaltColors.ink,
                 ),
         ),
       ),
@@ -693,8 +724,9 @@ class _SwatchChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Selected state is a maroon border only; expose it to screen readers,
-    // and pad the ~22px pill up to a real (≥24px, larger on touch) target.
+    // Selected state is a border in the preset's own text colour; expose it to
+    // screen readers, and pad the ~22px pill up to a real (≥24px, larger on
+    // touch) target.
     final targetPad = isCompactWidth(context) ? 9.0 : 4.0;
     return MergeSemantics(
       child: Semantics(
@@ -712,7 +744,9 @@ class _SwatchChip extends StatelessWidget {
                 color: colorFromHex(preset.bg),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: selected ? SaltColors.maroon : Colors.transparent,
+                  color: selected
+                      ? (colorFromHex(preset.ink) ?? SaltColors.maroon)
+                      : Colors.transparent,
                   width: 1.5,
                 ),
               ),

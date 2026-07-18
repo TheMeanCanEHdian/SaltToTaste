@@ -58,9 +58,11 @@ class TagChip extends StatelessWidget {
       }
     }
     final ink = colorFromHex(style?.color) ?? SaltColors.chipInk;
-    final fill =
-        colorFromHex(style?.bgColor) ??
-        (onCard ? Colors.white.withValues(alpha: 0.92) : SaltColors.chip);
+    // The default (unstyled) chip is the same colour everywhere — the 'raspberry'
+    // fill on the page and on a photo tile. On a tile any chip gets a soft
+    // shadow to lift it off the photo (previously the default used a muddy
+    // semi-transparent white instead).
+    final fill = colorFromHex(style?.bgColor) ?? SaltColors.chip;
     final icon = style?.icon == null ? null : lucideIconsByName[style!.icon];
 
     final chip = Container(
@@ -68,7 +70,7 @@ class TagChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: fill,
         borderRadius: BorderRadius.circular(6),
-        boxShadow: onCard && style?.bgColor != null
+        boxShadow: onCard
             ? const [BoxShadow(color: Colors.black26, blurRadius: 4)]
             : null,
       ),

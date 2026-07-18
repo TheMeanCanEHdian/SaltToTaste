@@ -4,7 +4,7 @@ import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException, apiGuard;
 
 /// A tag's chip style: a Lucide icon name plus `#RRGGBB` text/background
-/// colors, each optional (null = the default rose chip look).
+/// colors, each optional (null = the default 'raspberry' chip look).
 class TagStyle {
   const TagStyle({this.icon, this.color, this.bgColor});
 
