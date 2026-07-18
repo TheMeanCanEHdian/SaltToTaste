@@ -337,10 +337,17 @@ class PaneTitle extends StatelessWidget {
   final String title;
   final String? description;
 
-  /// Optional action shown just after the title on its row (e.g. a download
+  /// Optional compact icon action shown just after the title (e.g. a download
   /// button), so a pane with an action still gets the shared heading style
-  /// instead of rolling its own.
+  /// instead of rolling its own. It renders at its natural size but occupies
+  /// only the title's height in layout (see [build]).
   final Widget? trailing;
+
+  /// The title text's line height. The trailing action is boxed to this so a
+  /// themed icon button (taller than the title) can't make the heading — and
+  /// the pane below it — sit lower than the tabs without an action. Measured:
+  /// without the box an FButton.icon adds ~8px.
+  static const double _titleHeight = 20;
 
   @override
   Widget build(BuildContext context) {
@@ -361,7 +368,22 @@ class PaneTitle extends StatelessWidget {
         if (trailing == null)
           heading
         else
-          Row(children: [heading, const SizedBox(width: 6), trailing!]),
+          Row(
+            children: [
+              heading,
+              const SizedBox(width: 6),
+              // Render the action full size but keep its LAYOUT height equal to
+              // the title's, so it never inflates the heading row.
+              SizedBox(
+                width: 30,
+                height: _titleHeight,
+                child: OverflowBox(
+                  maxHeight: double.infinity,
+                  child: trailing,
+                ),
+              ),
+            ],
+          ),
         if (description != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
