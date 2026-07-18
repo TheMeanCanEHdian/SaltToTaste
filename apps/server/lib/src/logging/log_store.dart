@@ -54,6 +54,12 @@ String _bucket(Level level) {
 /// A page of log records plus the distinct logger names present in the store.
 typedef LogQueryResult = ({List<LogEntry> items, List<String> loggers});
 
+/// How much of the END of each log file the VIEWER parses per poll. The tail
+/// holds far more than any `limit` of recent lines (~4k lines at 512 KiB), so a
+/// Live poll stays a few ms regardless of the on-disk size. The full-history
+/// export is exempt (it passes no cap).
+const int logViewerScanBytes = 512 * 1024;
+
 /// A persistent, file-backed store of server log records for the admin viewer.
 ///
 /// Attaches to `Logger.root` and appends each record (secrets redacted) as one
@@ -74,6 +80,7 @@ class LogStore {
   final int maxBytes;
 
   StreamSubscription<LogRecord>? _subscription;
+  bool _dirReady = false;
 
   String get _path => '$directory/server.jsonl';
   String get _backupPath => '$_path.1';
@@ -83,9 +90,17 @@ class LogStore {
     if (maxBytes <= 0) {
       return;
     }
-    Directory(directory).createSync(recursive: true);
+    _ensureDir();
     _subscription?.cancel();
     _subscription = records.listen(add);
+  }
+
+  void _ensureDir() {
+    if (_dirReady) {
+      return;
+    }
+    Directory(directory).createSync(recursive: true);
+    _dirReady = true;
   }
 
   /// Appends one record (redacted, request id lifted) to the active file, then
@@ -106,15 +121,22 @@ class LogStore {
       message: redactLogMessage(stripped),
       requestId: rid?.group(1),
     );
-    final file = File(_path);
-    file.parent.createSync(recursive: true);
-    file.writeAsStringSync(
-      '${jsonEncode(entry.toMap())}\n',
-      mode: FileMode.append,
-    );
-    if (file.lengthSync() >= maxBytes) {
-      _rotate();
-    }
+    // Logging is best-effort and runs on EVERY request (via Logger.root): a
+    // read-only or full data dir must never turn a log line into an uncaught
+    // error on the root zone. Create the dir once (not per record), then
+    // swallow write failures — a dropped log line beats a poisoned request.
+    try {
+      _ensureDir();
+      final file = File(_path)
+        ..writeAsStringSync(
+          '${jsonEncode(entry.toMap())}\n',
+          mode: FileMode.append,
+        );
+      if (file.lengthSync() >= maxBytes) {
+        _rotate();
+      }
+      // ignore: avoid_catches_without_on_clauses
+    } catch (_) {}
   }
 
   void _rotate() {
@@ -128,15 +150,49 @@ class LogStore {
     }
   }
 
+  /// The lines of [file], or only those within the last [maxScanBytes] when it
+  /// is set — reading from the end and dropping the partial line the window
+  /// sliced through. Bounds the parse cost to the tail instead of the whole
+  /// file when a caller only needs recent records.
+  List<String> _tailLines(File file, int? maxScanBytes) {
+    if (!file.existsSync()) {
+      return const [];
+    }
+    final length = file.lengthSync();
+    if (maxScanBytes == null || length <= maxScanBytes) {
+      return file.readAsLinesSync();
+    }
+    final handle = file.openSync();
+    try {
+      final bytes = (handle..setPositionSync(length - maxScanBytes)).readSync(
+        maxScanBytes,
+      );
+      final text = utf8.decode(bytes, allowMalformed: true);
+      final firstBreak = text.indexOf('\n');
+      return const LineSplitter().convert(
+        firstBreak < 0 ? '' : text.substring(firstBreak + 1),
+      );
+    } finally {
+      handle.closeSync();
+    }
+  }
+
   /// Reads the store (rotation + active file), newest first, filtered.
   /// [minLevel] shows that bucket and above; [logger] is an exact name; [query]
   /// is a case-insensitive substring of the message or request id; [limit] caps
   /// the item count. Also returns the distinct logger names for the filter.
+  ///
+  /// [maxScanBytes] bounds how much of the END of each file is read+parsed. The
+  /// viewer (polled every few seconds while Live is on) passes a cap so a poll
+  /// stays cheap regardless of the on-disk size — it only needs recent lines;
+  /// the full-history export passes null. This keeps the synchronous parse off
+  /// the serving isolate's critical path (see the #48 off-isolate lesson).
   LogQueryResult query({
     String? minLevel,
     String? logger,
     String? query,
     int limit = 300,
+    int? maxScanBytes,
   }) {
     final minRank = minLevel == null ? 0 : (logLevelRank[minLevel] ?? 0);
     final needle = query?.trim().toLowerCase();
@@ -144,11 +200,7 @@ class LogStore {
     final all = <LogEntry>[];
     // Oldest generation first, then active — so file order is oldest→newest.
     for (final path in [_backupPath, _path]) {
-      final file = File(path);
-      if (!file.existsSync()) {
-        continue;
-      }
-      for (final line in file.readAsLinesSync()) {
+      for (final line in _tailLines(File(path), maxScanBytes)) {
         if (line.trim().isEmpty) {
           continue;
         }

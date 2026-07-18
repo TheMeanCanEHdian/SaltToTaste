@@ -147,7 +147,12 @@ class RecipeReviewCubit extends Cubit<RecipeReviewState> {
         ),
       );
     } on RepositoryException {
-      // Keep the current view on a transient failure rather than blanking it.
+      // The filter didn't apply. Revert to the pre-filter state so the chip
+      // highlight matches the list still on screen — leaving the new chip
+      // selected over the old items shows data that contradicts the filter.
+      if (!isClosed) {
+        emit(current);
+      }
     }
   }
 

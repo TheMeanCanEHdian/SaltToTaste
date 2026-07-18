@@ -584,6 +584,24 @@ class SaltDatabase {
     ];
   }
 
+  /// A cheap fingerprint of everything the recipe-review report is derived from
+  /// (recipe rows and their nutrition), for memoizing the expensive full scan.
+  /// It changes whenever a recipe or a nutrition row is inserted, updated
+  /// (both stamp `updated_at`), or deleted (the counts move), so the cache is
+  /// never served stale beyond same-second concurrent edits — immaterial for a
+  /// data-quality view. Sub-millisecond: two counts and two indexed maxes.
+  String recipeReviewFingerprint() {
+    final row = _db
+        .select(
+          'SELECT (SELECT count(*) FROM recipes) AS rc, '
+          "(SELECT coalesce(max(updated_at), '') FROM recipes) AS rm, "
+          '(SELECT count(*) FROM recipe_nutrition) AS nc, '
+          "(SELECT coalesce(max(updated_at), '') FROM recipe_nutrition) AS nm",
+        )
+        .first;
+    return '${row['rc']}|${row['rm']}|${row['nc']}|${row['nm']}';
+  }
+
   /// Every tag with its recipe count and (optional) chip style, ordered by
   /// name.
   List<TagInfoRow> listTags() {

@@ -170,23 +170,34 @@ String? _noServings(RecipeHealth h) => h.recipe.serves == null
     ? 'no serving count — per-serving nutrition can’t be computed'
     : null;
 
-/// Builds the recipe-review report by running every [recipeChecks] entry over
-/// every recipe. `issue`, when set, narrows the item list (and its pagination)
-/// to recipes carrying that check; the category counts and the overall total
-/// stay whole-library so the chips are stable across filters.
-///
-/// This scans and decodes every stored doc on each call. It is admin-only and
-/// not a hot path; if the library grows large enough for that to bite, cache
-/// the report and invalidate it on recipe writes.
-RecipeReviewReport buildRecipeReviewReport(
-  SaltDatabase db, {
-  required int page,
-  required int limit,
-  String? issue,
-}) {
+/// The expensive part of the report: the full flagged list plus whole-library
+/// category counts, both independent of the `issue` filter and pagination.
+class _ReviewScan {
+  const _ReviewScan(this.key, this.flagged, this.categories);
+  final String key;
+  final List<RecipeReviewItem> flagged;
+  final List<RecipeReviewCategory> categories;
+}
+
+/// Memoized full scan, keyed by the DB identity + its review fingerprint.
+/// Paging and filter switches within one browsing session (no recipe writes
+/// between them) reuse it instead of re-decoding the whole library each call.
+_ReviewScan? _cachedScan;
+
+/// The full scan for [db], from cache when the review fingerprint is unchanged,
+/// otherwise recomputed (running every [recipeChecks] entry over every recipe)
+/// and cached. Decoding every stored doc is the ~0.25s cost this memoizes.
+_ReviewScan _reviewScan(SaltDatabase db) {
+  // identityHashCode keeps two SaltDatabase instances (e.g. parallel tests)
+  // from sharing a cache entry when their fingerprints happen to coincide.
+  final key = '${identityHashCode(db)}|${db.recipeReviewFingerprint()}';
+  final cached = _cachedScan;
+  if (cached != null && cached.key == key) {
+    return cached;
+  }
+
   final counts = {for (final check in recipeChecks) check.id: 0};
   final flagged = <RecipeReviewItem>[];
-
   for (final row in db.recipeReviewScanRows()) {
     final recipe = RecipeMapper.fromMap(
       jsonDecode(row.doc) as Map<String, dynamic>,
@@ -237,10 +248,28 @@ RecipeReviewReport buildRecipeReviewReport(
         count: counts[check.id]!,
       ),
   ];
+  final scan = _ReviewScan(key, flagged, categories);
+  _cachedScan = scan;
+  return scan;
+}
 
+/// Builds the recipe-review report. `issue`, when set, narrows the item list
+/// (and its pagination) to recipes carrying that check; the category counts and
+/// the overall total stay whole-library so the chips are stable across filters.
+///
+/// The whole-library scan is memoized (see [_reviewScan]) so paging and filter
+/// switches only re-slice an already-decoded list; the scan reruns when a
+/// recipe or nutrition write moves the fingerprint.
+RecipeReviewReport buildRecipeReviewReport(
+  SaltDatabase db, {
+  required int page,
+  required int limit,
+  String? issue,
+}) {
+  final scan = _reviewScan(db);
   final filtered = issue == null
-      ? flagged
-      : flagged
+      ? scan.flagged
+      : scan.flagged
             .where((item) => item.issues.any((i) => i.check == issue))
             .toList();
   final offset = (page - 1) * limit;
@@ -249,8 +278,8 @@ RecipeReviewReport buildRecipeReviewReport(
       : filtered.sublist(offset, (offset + limit).clamp(0, filtered.length));
 
   return RecipeReviewReport(
-    total: flagged.length,
-    categories: categories,
+    total: scan.flagged.length,
+    categories: scan.categories,
     items: pageItems,
     page: page,
     limit: limit,

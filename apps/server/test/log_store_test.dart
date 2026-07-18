@@ -137,6 +137,40 @@ void main() {
       expect(File('${dir.path}/server.jsonl.2').existsSync(), isFalse);
     });
 
+    test('maxScanBytes reads only the tail of the file', () {
+      final s = store();
+      for (var i = 0; i < 60; i++) {
+        s.add(_rec(Level.INFO, 'http', 'msg $i'));
+      }
+      // A small scan window: only the most recent lines are parsed.
+      final tail = s
+          .query(maxScanBytes: 400)
+          .items
+          .map((e) => e.message)
+          .toList();
+      expect(tail.first, 'msg 59', reason: 'newest is always present');
+      expect(
+        tail,
+        isNot(contains('msg 0')),
+        reason: 'lines beyond the window are not scanned',
+      );
+      expect(tail.length, lessThan(60), reason: 'the window bounds the scan');
+      // Without the cap the whole file is read (proves the cap is what bounds).
+      expect(s.query().items.map((e) => e.message), contains('msg 0'));
+    });
+
+    test(
+      'add() swallows write failures — best-effort logging never throws',
+      () {
+        final s = store();
+        // A directory where the active file should be makes every write throw;
+        // add() must DROP the record, not poison the request path (it runs on
+        // Logger.root for every request).
+        Directory('${dir.path}/server.jsonl').createSync(recursive: true);
+        expect(() => s.add(_rec(Level.INFO, 'http', 'x')), returnsNormally);
+      },
+    );
+
     test('attach consumes a record stream', () async {
       final controller = StreamController<LogRecord>.broadcast();
       final s = store()..attach(controller.stream);

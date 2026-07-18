@@ -253,5 +253,31 @@ void main() {
         throwsA(isA<ValidationException>()),
       );
     });
+
+    // Runs last: it adds a recipe, so it must not run before the count tests.
+    test('the memoized scan is invalidated by a recipe write', () {
+      final before = buildRecipeReviewReport(db, page: 1, limit: 100);
+      final noStepsBefore = count(before, 'no_instructions');
+
+      // A new recipe with no steps is a fresh no_instructions flag. If the
+      // scan were served from the stale cache (fingerprint ignored), neither
+      // the total nor the count would move.
+      final flawed = loadCorpusRecipe(
+        '0857-rich-chocolate-bundt-cake.yaml',
+      ).copyWith(steps: []);
+      db.upsertRecipe(
+        flawed,
+        sourceSlug: 'atk',
+        contentHash: contentHashOf(flawed),
+      );
+
+      final after = buildRecipeReviewReport(db, page: 1, limit: 100);
+      expect(
+        after.total,
+        before.total + 1,
+        reason: 'the write moved the fingerprint, so the scan re-ran',
+      );
+      expect(count(after, 'no_instructions'), noStepsBefore + 1);
+    });
   });
 }
