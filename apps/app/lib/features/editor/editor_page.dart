@@ -216,10 +216,21 @@ class _EditorScaffoldState extends State<_EditorScaffold> {
         automaticallyImplyLeading: false,
         leading: kIsWeb
             ? null
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                tooltip: 'Back',
-                onPressed: () => _leave(context),
+            : Tooltip(
+                message: 'Back',
+                child: FButton.icon(
+                  variant: FButtonVariant.ghost,
+                  size: FButtonSizeVariant.xs,
+                  semanticsLabel: 'Back',
+                  onPress: () => _leave(context),
+                  // White on the maroon AppBar (the ghost variant's theme
+                  // foreground is dark).
+                  child: const Icon(
+                    Icons.arrow_back,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
               ),
         title: Row(
           children: [

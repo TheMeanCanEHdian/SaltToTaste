@@ -58,11 +58,23 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
             child: Row(
               children: [
                 if (showBack && !kIsWeb) ...[
-                  IconButton(
-                    onPressed: () =>
-                        context.canPop() ? context.pop() : context.go('/'),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    tooltip: 'Back',
+                  Tooltip(
+                    message: 'Back',
+                    // On the maroon bar the icon is painted white explicitly
+                    // (the ghost variant's theme foreground is dark — it would
+                    // vanish against maroon).
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      size: FButtonSizeVariant.xs,
+                      semanticsLabel: 'Back',
+                      onPress: () =>
+                          context.canPop() ? context.pop() : context.go('/'),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 4),
                 ],
@@ -410,25 +422,30 @@ class _SearchFieldState extends State<_SearchField> {
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          tooltip: 'Search syntax',
-                          visualDensity: VisualDensity.compact,
-                          icon: const Icon(
-                            Icons.help_outline,
-                            size: 18,
-                            color: SaltColors.muted,
+                        Tooltip(
+                          message: 'Search syntax',
+                          child: FButton.icon(
+                            variant: FButtonVariant.ghost,
+                            size: FButtonSizeVariant.xs,
+                            semanticsLabel: 'Search syntax',
+                            onPress: () => showSearchHelp(context),
+                            child: const Icon(Icons.help_outline, size: 18),
                           ),
-                          onPressed: () => showSearchHelp(context),
                         ),
-                        IconButton(
-                          tooltip: 'Search',
-                          visualDensity: VisualDensity.compact,
-                          icon: const Icon(
-                            Icons.arrow_forward,
-                            size: 18,
-                            color: SaltColors.rose,
+                        Tooltip(
+                          message: 'Search',
+                          child: FButton.icon(
+                            variant: FButtonVariant.ghost,
+                            size: FButtonSizeVariant.xs,
+                            semanticsLabel: 'Search',
+                            onPress: () => _submit(controller.text),
+                            // Keep the rose accent on the submit arrow.
+                            child: const Icon(
+                              Icons.arrow_forward,
+                              size: 18,
+                              color: SaltColors.rose,
+                            ),
                           ),
-                          onPressed: () => _submit(controller.text),
                         ),
                       ],
                     ),
@@ -690,10 +707,15 @@ class _MobileSearchButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: 'Search',
-      icon: const Icon(Icons.search, color: Colors.white),
-      onPressed: () => _openSearch(context),
+    return Tooltip(
+      message: 'Search',
+      child: FButton.icon(
+        variant: FButtonVariant.ghost,
+        size: FButtonSizeVariant.xs,
+        semanticsLabel: 'Search',
+        onPress: () => _openSearch(context),
+        child: const Icon(Icons.search, size: 22, color: Colors.white),
+      ),
     );
   }
 
@@ -830,15 +852,15 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
                 Expanded(
                   child: Text('Search recipes', style: style.titleTextStyle),
                 ),
-                IconButton(
-                  tooltip: 'Search syntax',
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(
-                    Icons.help_outline,
-                    size: 19,
-                    color: SaltColors.muted,
+                Tooltip(
+                  message: 'Search syntax',
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    size: FButtonSizeVariant.xs,
+                    semanticsLabel: 'Search syntax',
+                    onPress: () => showSearchHelp(context),
+                    child: const Icon(Icons.help_outline, size: 19),
                   ),
-                  onPressed: () => showSearchHelp(context),
                 ),
               ],
             ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
+import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
 
 /// A [PaneTitle] with a trailing action (the Logs download button) must line up
@@ -23,27 +25,28 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: pane('PLAIN')),
-              Expanded(
-                child: pane(
-                  'WITH_ACTION',
-                  // The Logs tab's bounded download button.
-                  trailing: SizedBox(
-                    width: 32,
-                    height: 24,
-                    child: IconButton(
-                      icon: const Icon(Icons.download_outlined, size: 20),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {},
+        home: FTheme(
+          data: buildForuiTheme(),
+          child: Scaffold(
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: pane('PLAIN')),
+                Expanded(
+                  child: pane(
+                    'WITH_ACTION',
+                    // The Logs tab's actual download button: a Forui xs ghost
+                    // icon button, small enough not to inflate the heading.
+                    trailing: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      size: FButtonSizeVariant.xs,
+                      onPress: () {},
+                      child: const Icon(Icons.download_outlined, size: 18),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

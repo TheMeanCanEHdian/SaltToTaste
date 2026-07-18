@@ -133,19 +133,17 @@ class _LogsTabState extends State<LogsTab> {
               'Recent server activity from every logger, persisted across '
               'restarts. Live streams new records; the request id ties a '
               'request together. Secrets are redacted.',
-          // The SizedBox caps the button to ~the title's height so this
-          // heading matches the other tabs'. A default 48px IconButton (M3
-          // sizes it via ButtonStyle, ignoring `constraints`) would make the
-          // pane's content start lower than every other tab.
-          trailing: SizedBox(
-            width: 32,
-            height: 24,
-            child: IconButton(
-              icon: const Icon(Icons.download_outlined, size: 20),
-              color: SaltColors.muted,
-              tooltip: 'Download the log (matches the current filters)',
-              padding: EdgeInsets.zero,
-              onPressed: _download,
+          // A Forui ghost icon button at the `xs` size (~28px) — small enough
+          // to keep this heading level with the other tabs (measured: content
+          // offset delta 0 vs a plain title).
+          trailing: Tooltip(
+            message: 'Download the log (matches the current filters)',
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              size: FButtonSizeVariant.xs,
+              semanticsLabel: 'Download the log',
+              onPress: _download,
+              child: const Icon(Icons.download_outlined, size: 18),
             ),
           ),
         ),

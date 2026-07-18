@@ -69,13 +69,16 @@ class _Loaded extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    IconButton(
-                      icon: const Icon(Icons.help_outline, size: 20),
-                      color: SaltColors.muted,
-                      tooltip: 'What each category means',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () =>
-                          _showReviewHelp(context, state.categories),
+                    Tooltip(
+                      message: 'What each category means',
+                      child: FButton.icon(
+                        variant: FButtonVariant.ghost,
+                        size: FButtonSizeVariant.xs,
+                        semanticsLabel: 'What each category means',
+                        onPress: () =>
+                            _showReviewHelp(context, state.categories),
+                        child: const Icon(Icons.help_outline, size: 18),
+                      ),
                     ),
                   ],
                 ),
