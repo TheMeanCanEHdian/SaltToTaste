@@ -181,8 +181,9 @@ GoRouter buildRouter(AuthCubit authCubit, EditorExitGuard exitGuard) {
       ),
       GoRoute(
         path: '/new',
-        // Guards every exit (Back, Cancel, browser Back) with the discard
-        // confirmation — the editor installs the guard while mounted.
+        // Discard-confirmation guard for every exit go_router sees (Back,
+        // Cancel, browser Back); a full-page unload can't be intercepted here.
+        // The editor installs the guard while mounted.
         onExit: (context, state) => exitGuard.confirmExit(context),
         pageBuilder: (context, state) => _fadePage(state, const EditorPage()),
       ),

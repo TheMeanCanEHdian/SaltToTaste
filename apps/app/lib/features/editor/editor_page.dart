@@ -13,6 +13,7 @@ import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
+import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/editor/editor_cubit.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/paste_dialog.dart';
@@ -83,8 +84,12 @@ class EditorPage extends StatelessWidget {
 /// Only the dialog — it does NOT navigate. Leaving is go_router's job: this is
 /// invoked from the editor's exit guard ([EditorExitGuard]), which the router's
 /// `onExit` consults, so returning true lets the pending navigation proceed and
-/// false cancels it. That single guard covers every way out — Back, Cancel,
-/// the browser Back button — so the confirmation can never be skipped.
+/// false cancels it. The guard covers every exit go_router sees — the Back
+/// control, Cancel, and the browser Back/Forward buttons. It CANNOT catch a
+/// full-page unload (a hard refresh, closing the tab, an address-bar
+/// navigation): that tears the app down with no route transition, so unsaved
+/// edits are lost there without a prompt — the same limitation the old
+/// PopScope had.
 Future<bool> _confirmDiscard(BuildContext context) async {
   final leave = await showFDialog<bool>(
     context: context,
@@ -155,23 +160,40 @@ class _EditorScaffold extends StatefulWidget {
 
 class _EditorScaffoldState extends State<_EditorScaffold> {
   late final EditorCubit _cubit;
+  late final AuthCubit _auth;
   late final EditorExitGuard _guard;
   late final Future<bool> Function(BuildContext) _exitHandler;
+
+  /// True while a discard dialog is on screen, so a second exit attempt (e.g. a
+  /// second browser Back press) is refused rather than stacking a second dialog.
+  bool _confirming = false;
 
   @override
   void initState() {
     super.initState();
     _cubit = context.read<EditorCubit>();
+    _auth = context.read<AuthCubit>();
     _guard = context.read<EditorExitGuard>();
     // Consulted by the router's onExit (which runs above this BlocProvider, so
-    // it can't read the cubit itself). Confirm only when there is unsaved work
-    // left to lose — a saved or just-deleted editor leaves without a prompt.
+    // it can't read the cubit itself). Leave WITHOUT a prompt when there is
+    // nothing to lose (saved or just-deleted) OR when the session is gone — a
+    // forced-logout redirect must not be trapped behind a dialog whose "keep
+    // editing" would strand the user signed-out on a recipe they can no longer
+    // save. Otherwise confirm, refusing a re-entrant second dialog.
     _exitHandler = (ctx) async {
       final state = _cubit.state;
-      if (state.deleted || !state.dirty) {
+      if (state.deleted || !state.dirty || _auth.state is! AuthSignedIn) {
         return true;
       }
-      return _confirmDiscard(ctx);
+      if (_confirming) {
+        return false;
+      }
+      _confirming = true;
+      try {
+        return await _confirmDiscard(ctx);
+      } finally {
+        _confirming = false;
+      }
     };
     _guard.install(_exitHandler);
   }

@@ -34,9 +34,7 @@ const Set<SettingsTab> _memberTabs = {SettingsTab.account, SettingsTab.tokens};
 SettingsTab settingsTabForFragment(String fragment, {required bool isAdmin}) {
   for (final tab in SettingsTab.values) {
     if (tab.name == fragment) {
-      return isAdmin || _memberTabs.contains(tab)
-          ? tab
-          : SettingsTab.account;
+      return isAdmin || _memberTabs.contains(tab) ? tab : SettingsTab.account;
     }
   }
   return SettingsTab.account;
@@ -133,12 +131,13 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  /// Selects [tab] by updating the URL fragment. `replace` (not push/go)
-  /// reuses the settings page in place — the tab swap is instant, no
-  /// transition, and the page's state is kept — while preserving the back
-  /// stack and making each tab linkable (`/settings#tags`).
+  /// Selects [tab] by updating the URL fragment. `replace` reuses the settings
+  /// page in place (no transition, state kept), and [Router.neglect] makes the
+  /// URL change a browser history REPLACE rather than a push — so cycling
+  /// through tabs doesn't pile up history entries, and a single browser Back
+  /// still leaves settings — while each tab stays linkable (`/settings#tags`).
   void _select(BuildContext context, SettingsTab tab) =>
-      context.replace('/settings#${tab.name}');
+      Router.neglect(context, () => context.replace('/settings#${tab.name}'));
 
   List<(SettingsTab, String)> _tabsFor(bool isAdmin) => [
     (SettingsTab.account, 'Account'),
