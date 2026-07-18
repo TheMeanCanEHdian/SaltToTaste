@@ -1,5 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:logging/logging.dart';
+import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 
 final Logger _log = Logger('http');
@@ -19,13 +21,19 @@ final Logger _log = Logger('http');
 /// it is rare and worth a trace.
 const Set<String> unloggedPaths = {'/healthz', '/api/v1/admin/logs'};
 
-/// Middleware that logs `METHOD path -> status (Nms) rid=<id>` at INFO on
-/// the `http` logger once the response has resolved.
+/// Middleware that logs `METHOD path -> status (Nms) from <ip> rid=<id>` at
+/// INFO on the `http` logger once the response has resolved.
+///
+/// [config] supplies the trusted-proxy set so the client IP respects the proxy
+/// configuration (rightmost `X-Forwarded-For` from a trusted hop, else the
+/// socket peer). It is passed as a value, not read from a provider, because
+/// this middleware is wired UPSTREAM of the `ServerConfig` provider. When it is
+/// null (some hand-rolled test pipelines), the `from <ip>` clause is omitted.
 ///
 /// Wired outside the error handler so failed requests are still logged,
 /// with the status of the error envelope they produced. [unloggedPaths] are
 /// exempt (operational polling noise).
-Middleware requestLogger() {
+Middleware requestLogger([ServerConfig? config]) {
   return (handler) {
     return (context) async {
       final stopwatch = Stopwatch()..start();
@@ -35,10 +43,13 @@ Middleware requestLogger() {
         return response;
       }
       final rid = requestIdOf(context) ?? '-';
+      final from = config == null
+          ? ''
+          : ' from ${clientIpFor(context, config)}';
       _log.info(
         '${context.request.method.value} ${context.request.uri.path} '
         '-> ${response.statusCode} '
-        '(${stopwatch.elapsedMilliseconds}ms) rid=$rid',
+        '(${stopwatch.elapsedMilliseconds}ms)$from rid=$rid',
       );
       return response;
     };

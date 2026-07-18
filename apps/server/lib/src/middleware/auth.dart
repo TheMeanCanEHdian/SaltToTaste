@@ -208,15 +208,19 @@ String? _peerAddress(RequestContext context) {
 bool trustsForwardedHeaders(RequestContext context) =>
     context.read<ServerConfig>().isTrustedProxy(_peerAddress(context));
 
-/// The client IP used for rate-limiting keys.
+/// The client IP used for rate-limiting keys, taking [config] as the
+/// trusted-proxy set explicitly — so it works in middleware wired OUTSIDE the
+/// `ServerConfig` provider (the request logger, which runs upstream of the
+/// providers). See [clientIp] for the provider-reading convenience wrapper.
 ///
 /// From a trusted proxy, the RIGHTMOST `X-Forwarded-For` value is used — that
 /// is the hop our own proxy appended. The leftmost values are client-supplied
 /// and trivially spoofable; keying rate limits on them would give an attacker
 /// a fresh bucket per request. Otherwise the socket peer address is used
 /// (`unknown` when unavailable, e.g. in bare unit tests).
-String clientIp(RequestContext context) {
-  if (trustsForwardedHeaders(context)) {
+String clientIpFor(RequestContext context, ServerConfig config) {
+  final peer = _peerAddress(context);
+  if (config.isTrustedProxy(peer)) {
     final forwarded = context.request.headers['x-forwarded-for'];
     if (forwarded != null) {
       final last = forwarded.split(',').last.trim();
@@ -225,8 +229,12 @@ String clientIp(RequestContext context) {
       }
     }
   }
-  return _peerAddress(context) ?? 'unknown';
+  return peer ?? 'unknown';
 }
+
+/// [clientIpFor] resolved against the request-scoped `ServerConfig` provider.
+String clientIp(RequestContext context) =>
+    clientIpFor(context, context.read<ServerConfig>());
 
 /// Whether the session cookie should carry `Secure`: when
 /// [ServerConfig.secureCookies] forces it (direct-TLS or always-HTTPS

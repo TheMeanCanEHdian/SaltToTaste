@@ -73,6 +73,6 @@ Handler buildAppMiddleware(
       .use(devCors(config))
       .use(spaFallback(indexPath: indexPath))
       .use(securityHeaders())
-      .use(requestLogger())
+      .use(requestLogger(config))
       .use(requestIdProvider());
 }

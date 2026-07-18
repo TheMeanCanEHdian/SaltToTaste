@@ -260,7 +260,12 @@ process. `loggers` lists the distinct loggers present in the store, for the
 filter. This is the same stream the process prints to stdout (`docker logs`),
 persisted where the endpoint can read it. Secrets are redacted on the way in
 (the first-boot setup code and recovery code are the only secrets ever logged;
-both are masked), so the endpoint cannot hand out a live code.
+both are masked), so the endpoint cannot hand out a live code. The `http`
+logger's `message` carries the client IP (`… -> 200 (5ms) from <ip> rid=…`),
+resolved against the trusted-proxy config (rightmost `X-Forwarded-For` from a
+trusted hop, else the socket peer). The liveness probe (`/healthz`) and the log
+viewer's own reads (`/api/v1/admin/logs`) are **not** request-logged — they
+poll frequently and would otherwise flood the log.
 
 ### `GET /api/v1/admin/logs/export?level=&logger=&q=` (admin)
 

@@ -223,7 +223,10 @@ void main() {
       expect(
         http.single.message,
         matches(
-          RegExp(r'^GET /api/empty-404 -> 404 \(\d+ms\) rid=[0-9a-f]{16}$'),
+          RegExp(
+            r'^GET /api/empty-404 -> 404 \(\d+ms\) '
+            r'from \S+ rid=[0-9a-f]{16}$',
+          ),
         ),
       );
     });
