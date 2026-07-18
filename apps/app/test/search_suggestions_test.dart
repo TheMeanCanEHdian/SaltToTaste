@@ -34,13 +34,17 @@ void main() {
       expect(suggestionsFor(text: '', cursor: 0, tags: _tags), isEmpty);
     });
 
-    test('a fresh mid-query position offers every keyword, incl. calories', () {
-      // After a space nothing is being edited, so the full keyword vocabulary
-      // is on offer — the one place `calories:` (not a SearchScope) must appear
-      // and a bogus `general:` must not. The offered list must BE the parser
-      // list, not a copy of it.
-      final rows = suggestionsFor(text: 'x ', cursor: 2, tags: _tags);
-      expect(rows.map((r) => r.label), searchKeywords.map((k) => '$k:'));
+    test('a fresh mid-query position offers nothing — the ? button has syntax', () {
+      // After a space nothing is being edited; dumping the whole keyword
+      // vocabulary there was the same syntax-guide noise the "?" button
+      // replaced. Completions only resume when a token is being typed.
+      expect(suggestionsFor(text: 'x ', cursor: 2, tags: _tags), isEmpty);
+    });
+
+    test('typing a keyword prefix still completes it, incl. calories', () {
+      // `calories:` is not a SearchScope but must still complete; a bogus
+      // `general:` must never appear. The offered list is the parser's own.
+      final rows = suggestionsFor(text: 'cal', cursor: 3, tags: _tags);
       expect(rows.map((r) => r.label), contains('calories:'));
       expect(rows.map((r) => r.label), isNot(contains('general:')));
     });

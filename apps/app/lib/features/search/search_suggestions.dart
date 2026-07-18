@@ -92,15 +92,14 @@ List<SearchSuggestion> suggestionsFor({
   final caret = cursor.clamp(0, text.length);
   final span = spanAtCursor(lexQuerySpans(text), caret);
 
-  // A fresh position: nothing is being edited, so offer the vocabulary.
+  // A fresh position — the caret sits at a gap (typically just after a space),
+  // not on a token being edited. Offer nothing: dumping the whole keyword
+  // vocabulary here is the same syntax-guide noise the "?" button replaced
+  // (typing "chicken " then a space used to surface every operator). Real
+  // completions resume the moment a token is actually being typed — a partial
+  // keyword or a `tag:` value, handled below.
   if (span == null) {
-    return _keywordRows(
-      typed: '',
-      text: text,
-      start: caret,
-      end: caret,
-      limit: limit,
-    );
+    return const [];
   }
 
   if (span.quoted) {
