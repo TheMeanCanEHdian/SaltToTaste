@@ -71,16 +71,12 @@ class _RecipeRowState extends State<RecipeRow> {
     return Semantics(
       button: true,
       label: labelParts.join(', '),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          onHover: (hovering) => setState(() => _hover = hovering),
-          // The hover feedback is the border + fill change below, not an ink
-          // overlay — keep the overlay out of the way so they don't stack.
-          hoverColor: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
+      child: Stack(
+        children: [
+          // The card surface: opaque fill + border, both easing over 120ms on
+          // hover. AnimatedContainer tweens the fill (a plain Material won't —
+          // it only animates shape/elevation, not its colour).
+          AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
             decoration: BoxDecoration(
@@ -99,7 +95,24 @@ class _RecipeRowState extends State<RecipeRow> {
               ),
             ),
           ),
-        ),
+          // The tap surface sits ON TOP of the fill so its ink ripple is
+          // actually visible — the ripple paints on the Material, so the
+          // opaque fill below would hide it (this is why the grid tiles put
+          // their InkWell in a Positioned.fill too; see recipe_tile.dart).
+          // hoverColor stays transparent: the border + fill change above is the
+          // hover feedback, and a grey overlay would stack on top of it.
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onTap,
+                onHover: (hovering) => setState(() => _hover = hovering),
+                hoverColor: Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
