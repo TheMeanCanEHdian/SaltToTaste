@@ -6,8 +6,11 @@ import 'package:salt_app/app.dart';
 
 void main() {
   // Clean path URLs on web (`/r/<slug>` instead of `/#/r/<slug>`); a no-op
-  // on other platforms.
-  usePathUrlStrategy();
+  // on other platforms. The `includeHash: true` (the 2nd positional arg) keeps
+  // the URL FRAGMENT on a cold load — `usePathUrlStrategy()` hardcodes it OFF,
+  // which drops the `#` so a deep link like `/settings#import` would open the
+  // default tab instead of Import. Fragment routing (settings tabs) needs it.
+  setUrlStrategy(PathUrlStrategy(BrowserPlatformLocation(), true));
   // Make imperative navigation reflect in the browser URL (web only). go_router
   // defaults this OFF, so `context.push('/r/<slug>')` — how nearly every
   // drill-down here navigates (recipe cards, the avatar menu, edit) — left the

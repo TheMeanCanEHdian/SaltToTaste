@@ -133,12 +133,20 @@ class _LogsTabState extends State<LogsTab> {
               'Recent server activity from every logger, persisted across '
               'restarts. Live streams new records; the request id ties a '
               'request together. Secrets are redacted.',
-          trailing: IconButton(
-            icon: const Icon(Icons.download_outlined, size: 20),
-            color: SaltColors.muted,
-            tooltip: 'Download the log (matches the current filters)',
-            visualDensity: VisualDensity.compact,
-            onPressed: _download,
+          // The SizedBox caps the button to ~the title's height so this
+          // heading matches the other tabs'. A default 48px IconButton (M3
+          // sizes it via ButtonStyle, ignoring `constraints`) would make the
+          // pane's content start lower than every other tab.
+          trailing: SizedBox(
+            width: 32,
+            height: 24,
+            child: IconButton(
+              icon: const Icon(Icons.download_outlined, size: 20),
+              color: SaltColors.muted,
+              tooltip: 'Download the log (matches the current filters)',
+              padding: EdgeInsets.zero,
+              onPressed: _download,
+            ),
           ),
         ),
         _toolbar(page),
