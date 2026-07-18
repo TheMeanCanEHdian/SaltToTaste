@@ -36,23 +36,34 @@ Map<String, Object?> recipeReviewHandler(
 ///
 /// [level] shows that severity bucket and above; [logger] filters to one
 /// source; [query] is a message/request-id substring; [limit] caps the count.
-Map<String, Object?> logsHandler(
+///
+/// [fullScan] chooses the read strategy. The recurring Live poll leaves it
+/// false and reads only a recent tail (a few ms, on the serving isolate). An
+/// explicit filter/search sets it true, reading the WHOLE history off the
+/// serving isolate so a large log doesn't stall other requests.
+Future<Map<String, Object?>> logsHandler(
   LogStore store, {
   required int limit,
   String? level,
   String? logger,
   String? query,
-}) {
+  bool fullScan = false,
+}) async {
   LogEntryMapper.ensureInitialized();
-  final result = store.query(
-    minLevel: level,
-    logger: logger,
-    query: query,
-    limit: limit,
-    // The viewer polls this while Live is on; bound the parse to a recent tail
-    // so a poll can't stall the serving isolate on a large log.
-    maxScanBytes: logViewerScanBytes,
-  );
+  final result = fullScan
+      ? await store.queryFull(
+          minLevel: level,
+          logger: logger,
+          query: query,
+          limit: limit,
+        )
+      : store.query(
+          minLevel: level,
+          logger: logger,
+          query: query,
+          limit: limit,
+          maxScanBytes: logViewerScanBytes,
+        );
   return {
     'items': [for (final entry in result.items) entry.toMap()],
     'loggers': result.loggers,

@@ -55,11 +55,18 @@ class _LogsTabState extends State<LogsTab> {
   }
 
   Future<void> _load() async {
+    // With a filter active, matches can be older than the server's recent-tail
+    // window, so ask for a full-history scan (the server runs it off its
+    // serving isolate). An unfiltered view — including its Live poll — stays on
+    // the cheap tail. Using the same rule for polls and explicit fetches keeps
+    // a filtered Live view from collapsing to just the tail on the next poll.
+    final full = _level.isNotEmpty || _logger.isNotEmpty || _query.isNotEmpty;
     try {
       final page = await context.read<LogsRepository>().getLogs(
         level: _level,
         logger: _logger,
         query: _query,
+        fullScan: full,
       );
       if (!mounted) return;
       setState(() {

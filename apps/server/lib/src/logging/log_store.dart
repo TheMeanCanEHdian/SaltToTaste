@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:logging/logging.dart';
 import 'package:salt_shared/salt_shared.dart';
@@ -150,98 +151,155 @@ class LogStore {
     }
   }
 
-  /// The lines of [file], or only those within the last [maxScanBytes] when it
-  /// is set — reading from the end and dropping the partial line the window
-  /// sliced through. Bounds the parse cost to the tail instead of the whole
-  /// file when a caller only needs recent records.
-  List<String> _tailLines(File file, int? maxScanBytes) {
-    if (!file.existsSync()) {
-      return const [];
-    }
-    final length = file.lengthSync();
-    if (maxScanBytes == null || length <= maxScanBytes) {
-      return file.readAsLinesSync();
-    }
-    final handle = file.openSync();
-    try {
-      final bytes = (handle..setPositionSync(length - maxScanBytes)).readSync(
-        maxScanBytes,
-      );
-      final text = utf8.decode(bytes, allowMalformed: true);
-      final firstBreak = text.indexOf('\n');
-      return const LineSplitter().convert(
-        firstBreak < 0 ? '' : text.substring(firstBreak + 1),
-      );
-    } finally {
-      handle.closeSync();
-    }
-  }
-
-  /// Reads the store (rotation + active file), newest first, filtered.
-  /// [minLevel] shows that bucket and above; [logger] is an exact name; [query]
-  /// is a case-insensitive substring of the message or request id; [limit] caps
-  /// the item count. Also returns the distinct logger names for the filter.
+  /// Reads the store (rotation + active file) SYNCHRONOUSLY, newest first,
+  /// filtered. [minLevel] shows that bucket and above; [logger] is an exact
+  /// name; [query] is a case-insensitive substring of the message or request
+  /// id; [limit] caps the item count. Also returns the distinct logger names.
   ///
   /// [maxScanBytes] bounds how much of the END of each file is read+parsed. The
-  /// viewer (polled every few seconds while Live is on) passes a cap so a poll
-  /// stays cheap regardless of the on-disk size — it only needs recent lines;
-  /// the full-history export passes null. This keeps the synchronous parse off
-  /// the serving isolate's critical path (see the #48 off-isolate lesson).
+  /// Live poll passes a cap so a recurring poll stays a few ms regardless of
+  /// the on-disk size — it only needs recent lines. Pass null for the whole
+  /// history, but only where a synchronous full parse is acceptable (a one-off,
+  /// or a small store); the viewer's on-demand full search uses [queryFull].
   LogQueryResult query({
     String? minLevel,
     String? logger,
     String? query,
     int limit = 300,
     int? maxScanBytes,
+  }) => _scanLogFiles(
+    activePath: _path,
+    backupPath: _backupPath,
+    minLevel: minLevel,
+    logger: logger,
+    query: query,
+    limit: limit,
+    maxScanBytes: maxScanBytes,
+  );
+
+  /// Like [query] but reads the WHOLE history (no tail cap) OFF the serving
+  /// isolate, so a full-history filter/search over a large log doesn't stall
+  /// other requests. Used on demand (an explicit filter/search), NOT for the
+  /// recurring Live poll. The result is capped at [limit], so only a small page
+  /// — not the whole parsed log — crosses the isolate boundary back.
+  Future<LogQueryResult> queryFull({
+    String? minLevel,
+    String? logger,
+    String? query,
+    int limit = 300,
   }) {
-    final minRank = minLevel == null ? 0 : (logLevelRank[minLevel] ?? 0);
-    final needle = query?.trim().toLowerCase();
-
-    final all = <LogEntry>[];
-    // Oldest generation first, then active — so file order is oldest→newest.
-    for (final path in [_backupPath, _path]) {
-      for (final line in _tailLines(File(path), maxScanBytes)) {
-        if (line.trim().isEmpty) {
-          continue;
-        }
-        try {
-          all.add(
-            LogEntryMapper.fromMap(jsonDecode(line) as Map<String, dynamic>),
-          );
-          // A truncated/corrupt line must not fail the whole read.
-          // ignore: avoid_catches_without_on_clauses
-        } catch (_) {}
-      }
-    }
-
-    final loggers = {for (final entry in all) entry.logger}.toList()..sort();
-
-    final items = <LogEntry>[];
-    for (final entry in all.reversed) {
-      if ((logLevelRank[entry.level] ?? 0) < minRank) {
-        continue;
-      }
-      if (logger != null && logger.isNotEmpty && entry.logger != logger) {
-        continue;
-      }
-      if (needle != null && needle.isNotEmpty) {
-        final inMessage = entry.message.toLowerCase().contains(needle);
-        final inRid = entry.requestId?.toLowerCase().contains(needle) ?? false;
-        if (!inMessage && !inRid) {
-          continue;
-        }
-      }
-      items.add(entry);
-      if (items.length >= limit) {
-        break;
-      }
-    }
-    return (items: items, loggers: loggers);
+    // Capture sendable values; the closure must not reference `this`.
+    final activePath = _path;
+    final backupPath = _backupPath;
+    return Isolate.run(
+      () => _scanLogFiles(
+        activePath: activePath,
+        backupPath: backupPath,
+        minLevel: minLevel,
+        logger: logger,
+        query: query,
+        limit: limit,
+      ),
+    );
   }
 
   /// Cancels the log subscription.
   Future<void> dispose() async {
     await _subscription?.cancel();
     _subscription = null;
+  }
+}
+
+/// Reads + parses + filters the two log files, newest first. Top-level (not a
+/// method) and using only sendable arguments so it can run either inline (the
+/// sync tail read) or inside `Isolate.run` (the off-isolate full read) — a
+/// method closing over `this` could not cross the isolate boundary.
+///
+/// [LogEntry] is built directly from the decoded map rather than via its
+/// `dart_mappable` mapper, which would need re-initialising in a fresh isolate.
+LogQueryResult _scanLogFiles({
+  required String activePath,
+  required String backupPath,
+  required int limit,
+  String? minLevel,
+  String? logger,
+  String? query,
+  int? maxScanBytes,
+}) {
+  final minRank = minLevel == null ? 0 : (logLevelRank[minLevel] ?? 0);
+  final needle = query?.trim().toLowerCase();
+
+  final all = <LogEntry>[];
+  // Oldest generation first, then active — so file order is oldest→newest.
+  for (final path in [backupPath, activePath]) {
+    for (final line in _tailLinesOf(File(path), maxScanBytes)) {
+      if (line.trim().isEmpty) {
+        continue;
+      }
+      try {
+        final map = jsonDecode(line) as Map<String, dynamic>;
+        all.add(
+          LogEntry(
+            time: map['time'] as String,
+            level: map['level'] as String,
+            logger: map['logger'] as String,
+            message: map['message'] as String,
+            requestId: map['request_id'] as String?,
+          ),
+        );
+        // A truncated/corrupt line must not fail the whole read.
+        // ignore: avoid_catches_without_on_clauses
+      } catch (_) {}
+    }
+  }
+
+  final loggers = {for (final entry in all) entry.logger}.toList()..sort();
+
+  final items = <LogEntry>[];
+  for (final entry in all.reversed) {
+    if ((logLevelRank[entry.level] ?? 0) < minRank) {
+      continue;
+    }
+    if (logger != null && logger.isNotEmpty && entry.logger != logger) {
+      continue;
+    }
+    if (needle != null && needle.isNotEmpty) {
+      final inMessage = entry.message.toLowerCase().contains(needle);
+      final inRid = entry.requestId?.toLowerCase().contains(needle) ?? false;
+      if (!inMessage && !inRid) {
+        continue;
+      }
+    }
+    items.add(entry);
+    if (items.length >= limit) {
+      break;
+    }
+  }
+  return (items: items, loggers: loggers);
+}
+
+/// The lines of [file], or only those within the last [maxScanBytes] when it is
+/// set — reading from the end and dropping the partial line the window sliced
+/// through. Bounds the parse cost to the tail when a caller needs recent lines.
+List<String> _tailLinesOf(File file, int? maxScanBytes) {
+  if (!file.existsSync()) {
+    return const [];
+  }
+  final length = file.lengthSync();
+  if (maxScanBytes == null || length <= maxScanBytes) {
+    return file.readAsLinesSync();
+  }
+  final handle = file.openSync();
+  try {
+    final bytes = (handle..setPositionSync(length - maxScanBytes)).readSync(
+      maxScanBytes,
+    );
+    final text = utf8.decode(bytes, allowMalformed: true);
+    final firstBreak = text.indexOf('\n');
+    return const LineSplitter().convert(
+      firstBreak < 0 ? '' : text.substring(firstBreak + 1),
+    );
+  } finally {
+    handle.closeSync();
   }
 }

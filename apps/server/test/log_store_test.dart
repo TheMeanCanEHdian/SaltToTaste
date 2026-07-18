@@ -160,6 +160,31 @@ void main() {
     });
 
     test(
+      'queryFull reads the whole history off-isolate, not just the tail',
+      () async {
+        final s = store();
+        for (var i = 0; i < 60; i++) {
+          s.add(_rec(Level.INFO, 'http', 'msg $i'));
+        }
+        // The capped sync read (the Live poll) misses the oldest lines.
+        expect(
+          s.query(maxScanBytes: 400).items.map((e) => e.message),
+          isNot(contains('msg 0')),
+        );
+        // queryFull (on-demand search) scans everything, off the isolate.
+        final full = await s.queryFull(limit: 100);
+        expect(full.items.map((e) => e.message), contains('msg 0'));
+        expect(
+          full.items.first.message,
+          'msg 59',
+          reason: 'still newest-first',
+        );
+        final filtered = await s.queryFull(query: 'msg 42');
+        expect(filtered.items.single.message, 'msg 42');
+      },
+    );
+
+    test(
       'add() swallows write failures — best-effort logging never throws',
       () {
         final s = store();
@@ -183,23 +208,41 @@ void main() {
   });
 
   group('logsHandler', () {
-    test('returns items (newest first) and loggers', () {
+    test('returns items (newest first) and loggers', () async {
       final s = store()
         ..add(_rec(Level.INFO, 'http', 'one'))
         ..add(_rec(Level.WARNING, 'auth', 'two'));
-      final body = logsHandler(s, limit: 10);
+      final body = await logsHandler(s, limit: 10);
       final items = body['items']! as List;
       expect(items, hasLength(2));
       expect((items.first as Map)['message'], 'two');
       expect(body['loggers'], containsAll(<String>['http', 'auth']));
     });
 
-    test('limit caps the result', () {
+    test('limit caps the result', () async {
       final s = store();
       for (var i = 0; i < 10; i++) {
         s.add(_rec(Level.INFO, 'http', '$i'));
       }
-      expect(logsHandler(s, limit: 3)['items']! as List, hasLength(3));
+      final body = await logsHandler(s, limit: 3);
+      expect(body['items']! as List, hasLength(3));
+    });
+
+    test('fullScan reads the whole history, not just the tail', () async {
+      final s = store();
+      for (var i = 0; i < 60; i++) {
+        s.add(_rec(Level.INFO, 'http', 'msg $i'));
+      }
+      final tail = await logsHandler(s, limit: 100);
+      final full = await logsHandler(s, limit: 100, fullScan: true);
+      // Both return the newest; only the full scan reaches the oldest lines
+      // here (the seeded file is small, so assert on behavior via a huge store
+      // is unnecessary — fullScan wires queryFull, covered in the store tests).
+      expect(tail['items']! as List, isNotEmpty);
+      expect(
+        [for (final e in full['items']! as List) (e as Map)['message']],
+        contains('msg 0'),
+      );
     });
   });
 

@@ -252,7 +252,11 @@ Recent server log records from the persistent log store (newest first):
 `{items: [{time, level, logger, message, request_id}], loggers}`.
 `level` shows that severity bucket (`DEBUG` `INFO` `WARN` `ERROR`) and above;
 `logger` filters to one source; `q` is a message/request-id substring; `limit`
-caps the count (default 200, max 1000). Records are appended (one JSON line
+caps the count (default 200, max 1000). `scan=full` reads the whole history
+**off the serving isolate** (for an explicit filter/search whose matches may be
+older than the recent window); omitted, it reads only a recent tail synchronously
+(cheap — the Live poll of an unfiltered view uses this). Records are appended
+(one JSON line
 each) to `<dataDir>/logs/server.jsonl`, which **survives restarts** and rotates
 to a single `.1` backup once it passes `LOG_MAX_BYTES` (default 4 MiB; `0`
 disables the store) — so the viewer shows history from before the current

@@ -21,11 +21,17 @@ class LogsRepository {
 
   /// Recent log records (newest first). [level] shows that bucket and above;
   /// [logger] filters to one source; [query] is a message/request-id substring.
+  ///
+  /// [fullScan] asks the server to search the WHOLE history (off its serving
+  /// isolate) instead of only a recent tail — used when a filter is active, so
+  /// matches older than the tail window are found; the recurring Live poll of
+  /// an unfiltered view leaves it false to stay cheap.
   Future<LogsPage> getLogs({
     String? level,
     String? logger,
     String? query,
     int limit = 300,
+    bool fullScan = false,
   }) {
     return apiGuard(() async {
       final response = await _dio.get<dynamic>(
@@ -35,6 +41,7 @@ class LogsRepository {
           if (level != null && level.isNotEmpty) 'level': level,
           if (logger != null && logger.isNotEmpty) 'logger': logger,
           if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
+          if (fullScan) 'scan': 'full',
         },
       );
       final data = response.data as Map<String, dynamic>;
@@ -60,7 +67,9 @@ class LogsRepository {
       if (logger != null && logger.isNotEmpty) 'logger': logger,
       if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
     };
-    final suffix = params.isEmpty ? '' : '?${Uri(queryParameters: params).query}';
+    final suffix = params.isEmpty
+        ? ''
+        : '?${Uri(queryParameters: params).query}';
     return absoluteApiUrl('/api/v1/admin/logs/export$suffix');
   }
 }

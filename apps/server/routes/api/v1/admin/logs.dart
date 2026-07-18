@@ -13,12 +13,15 @@ Future<Response> onRequest(RequestContext context) async {
   final query = context.request.uri.queryParameters;
   final limit = (int.tryParse(query['limit'] ?? '') ?? 200).clamp(1, 1000);
   return Response.json(
-    body: logsHandler(
+    body: await logsHandler(
       store,
       limit: limit,
       level: query['level'],
       logger: query['logger'],
       query: query['q'],
+      // The client requests a full-history scan on an explicit filter/search;
+      // the recurring Live poll omits it and reads the cheap recent tail.
+      fullScan: query['scan'] == 'full',
     ),
   );
 }
