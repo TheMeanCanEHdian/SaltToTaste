@@ -215,16 +215,41 @@ void main() {
   group('request logger', () {
     test('logs method, path, status, duration, and rid at INFO', () async {
       records.clear();
-      await send('GET', '/healthz');
+      await send('GET', '/api/empty-404');
       final http = records
           .where((r) => r.loggerName == 'http' && r.level == Level.INFO)
           .toList();
       expect(http, hasLength(1));
       expect(
         http.single.message,
-        matches(RegExp(r'^GET /healthz -> 200 \(\d+ms\) rid=[0-9a-f]{16}$')),
+        matches(
+          RegExp(r'^GET /api/empty-404 -> 404 \(\d+ms\) rid=[0-9a-f]{16}$'),
+        ),
       );
     });
+
+    test(
+      'operational polling paths are not logged (noise suppression)',
+      () async {
+        records.clear();
+        // The liveness probe and the log viewer's own read both poll often;
+        // logging them would flood the log (and show reads inside the very
+        // list being read).
+        await send('GET', '/healthz');
+        await send('GET', '/api/v1/admin/logs');
+        await send('GET', '/api/empty-404'); // an ordinary request IS logged
+        final messages = records
+            .where((r) => r.loggerName == 'http' && r.level == Level.INFO)
+            .map((r) => r.message)
+            .toList();
+        expect(messages.where((m) => m.contains('/healthz')), isEmpty);
+        expect(
+          messages.where((m) => m.contains('/api/v1/admin/logs')),
+          isEmpty,
+        );
+        expect(messages.any((m) => m.contains('/api/empty-404')), isTrue);
+      },
+    );
 
     test('failed requests are logged with their envelope status', () async {
       records.clear();
