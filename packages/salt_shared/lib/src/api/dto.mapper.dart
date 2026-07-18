@@ -1104,6 +1104,161 @@ class _RecipeReviewIssueCopyWithImpl<$R, $Out>
   ) => _RecipeReviewIssueCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
+class LogEntryMapper extends ClassMapperBase<LogEntry> {
+  LogEntryMapper._();
+
+  static LogEntryMapper? _instance;
+  static LogEntryMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = LogEntryMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'LogEntry';
+
+  static String _$time(LogEntry v) => v.time;
+  static const Field<LogEntry, String> _f$time = Field('time', _$time);
+  static String _$level(LogEntry v) => v.level;
+  static const Field<LogEntry, String> _f$level = Field('level', _$level);
+  static String _$logger(LogEntry v) => v.logger;
+  static const Field<LogEntry, String> _f$logger = Field('logger', _$logger);
+  static String _$message(LogEntry v) => v.message;
+  static const Field<LogEntry, String> _f$message = Field('message', _$message);
+  static String? _$requestId(LogEntry v) => v.requestId;
+  static const Field<LogEntry, String> _f$requestId = Field(
+    'requestId',
+    _$requestId,
+    key: r'request_id',
+    opt: true,
+  );
+
+  @override
+  final MappableFields<LogEntry> fields = const {
+    #time: _f$time,
+    #level: _f$level,
+    #logger: _f$logger,
+    #message: _f$message,
+    #requestId: _f$requestId,
+  };
+
+  static LogEntry _instantiate(DecodingData data) {
+    return LogEntry(
+      time: data.dec(_f$time),
+      level: data.dec(_f$level),
+      logger: data.dec(_f$logger),
+      message: data.dec(_f$message),
+      requestId: data.dec(_f$requestId),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static LogEntry fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<LogEntry>(map);
+  }
+
+  static LogEntry fromJson(String json) {
+    return ensureInitialized().decodeJson<LogEntry>(json);
+  }
+}
+
+mixin LogEntryMappable {
+  String toJson() {
+    return LogEntryMapper.ensureInitialized().encodeJson<LogEntry>(
+      this as LogEntry,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return LogEntryMapper.ensureInitialized().encodeMap<LogEntry>(
+      this as LogEntry,
+    );
+  }
+
+  LogEntryCopyWith<LogEntry, LogEntry, LogEntry> get copyWith =>
+      _LogEntryCopyWithImpl<LogEntry, LogEntry>(
+        this as LogEntry,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return LogEntryMapper.ensureInitialized().stringifyValue(this as LogEntry);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return LogEntryMapper.ensureInitialized().equalsValue(
+      this as LogEntry,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return LogEntryMapper.ensureInitialized().hashValue(this as LogEntry);
+  }
+}
+
+extension LogEntryValueCopy<$R, $Out> on ObjectCopyWith<$R, LogEntry, $Out> {
+  LogEntryCopyWith<$R, LogEntry, $Out> get $asLogEntry =>
+      $base.as((v, t, t2) => _LogEntryCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class LogEntryCopyWith<$R, $In extends LogEntry, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({
+    String? time,
+    String? level,
+    String? logger,
+    String? message,
+    String? requestId,
+  });
+  LogEntryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _LogEntryCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, LogEntry, $Out>
+    implements LogEntryCopyWith<$R, LogEntry, $Out> {
+  _LogEntryCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<LogEntry> $mapper =
+      LogEntryMapper.ensureInitialized();
+  @override
+  $R call({
+    String? time,
+    String? level,
+    String? logger,
+    String? message,
+    Object? requestId = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (time != null) #time: time,
+      if (level != null) #level: level,
+      if (logger != null) #logger: logger,
+      if (message != null) #message: message,
+      if (requestId != $none) #requestId: requestId,
+    }),
+  );
+  @override
+  LogEntry $make(CopyWithData data) => LogEntry(
+    time: data.get(#time, or: $value.time),
+    level: data.get(#level, or: $value.level),
+    logger: data.get(#logger, or: $value.logger),
+    message: data.get(#message, or: $value.message),
+    requestId: data.get(#requestId, or: $value.requestId),
+  );
+
+  @override
+  LogEntryCopyWith<$R2, LogEntry, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _LogEntryCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
 class ApiErrorMapper extends ClassMapperBase<ApiError> {
   ApiErrorMapper._();
 

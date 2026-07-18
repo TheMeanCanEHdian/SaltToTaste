@@ -10,6 +10,7 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/logging/log_buffer.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
@@ -97,6 +98,7 @@ void main() {
       nutritionProvider: _UnusedNutrition(),
       searchRateLimiter: RequestRateLimiter(),
       searchService: () => InlineSearchService(database),
+      logBuffer: LogBuffer(),
       indexPath: '${tempDir.path}/index.html',
     );
     server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
@@ -451,6 +453,23 @@ void main() {
       // A typo must not silently disable the reaper.
       expect(cfgFor('nope').connectionIdleTimeout, const Duration(seconds: 75));
       expect(cfgFor('-5').connectionIdleTimeout, const Duration(seconds: 75));
+    });
+
+    test('LOG_BUFFER_SIZE parses; an invalid value keeps the default', () {
+      final dir = Directory.systemTemp.createTempSync('salt_cfg_log_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      int sizeFor(String? raw) => ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': dir.path,
+          if (raw != null) 'LOG_BUFFER_SIZE': raw,
+        },
+      ).logBufferSize;
+
+      expect(sizeFor(null), ServerConfig.defaultLogBufferSize);
+      expect(sizeFor('250'), 250);
+      expect(sizeFor('0'), 0, reason: '0 disables the buffer');
+      expect(sizeFor('nope'), ServerConfig.defaultLogBufferSize);
+      expect(sizeFor('-5'), ServerConfig.defaultLogBufferSize);
     });
   });
 }

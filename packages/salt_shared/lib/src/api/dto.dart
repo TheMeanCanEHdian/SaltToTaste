@@ -154,6 +154,34 @@ class RecipeReviewIssue with RecipeReviewIssueMappable {
   final String detail;
 }
 
+/// One buffered server log record (`GET /api/v1/admin/logs`). Secrets are
+/// redacted from [message] before it ever enters the buffer.
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class LogEntry with LogEntryMappable {
+  const LogEntry({
+    required this.time,
+    required this.level,
+    required this.logger,
+    required this.message,
+    this.requestId,
+  });
+
+  /// ISO-8601 timestamp.
+  final String time;
+
+  /// Normalised severity bucket: `DEBUG`, `INFO`, `WARN`, or `ERROR`.
+  final String level;
+
+  /// Name of the logger that emitted the record (e.g. `http`, `auth`).
+  final String logger;
+
+  /// The record's message, with secrets redacted.
+  final String message;
+
+  /// The request id this record belongs to, when it carried one (`rid=`).
+  final String? requestId;
+}
+
 /// The uniform API error envelope: `{"error": {code, message, request_id}}`.
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class ApiError with ApiErrorMappable {

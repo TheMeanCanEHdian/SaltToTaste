@@ -246,6 +246,18 @@ flagged), `incomplete_nutrition` (nutrition `partial`), `no_nutrition`
 (never computed), `extraction_warnings`, `no_servings`. The set is an open
 registry, so categories can be added without an API shape change.
 
+### `GET /api/v1/admin/logs?level=&logger=&q=&limit=` (admin)
+
+Recent server log records from an in-memory ring buffer (newest first):
+`{items: [{time, level, logger, message, request_id}], capacity, loggers}`.
+`level` shows that severity bucket (`DEBUG` `INFO` `WARN` `ERROR`) and above;
+`logger` filters to one source; `q` is a message/request-id substring; `limit`
+caps the count (default 200, max 1000). The buffer holds the last
+`LOG_BUFFER_SIZE` records (default 1000) across all loggers and is **not
+persisted** — a restart clears it. Secrets are redacted on the way in (the
+first-boot setup code and recovery code are the only secrets ever logged; both
+are masked), so the endpoint cannot hand out a live code.
+
 ### `POST /api/v1/library/rescan` (admin, full scope)
 
 Reconcile the YAML library with the database now: a cleanly hand-edited
@@ -450,7 +462,9 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   `CONNECTION_IDLE_TIMEOUT_SECONDS` (idle/stalled-connection reap, default 75;
   `0` disables — bounds slowloris half-open sockets),
   `SEARCH_WORKER_ISOLATES` (background isolates running the ranked search off
-  the serving isolate, default 1; `0` runs it inline), `TZ` (container tzdata),
+  the serving isolate, default 1; `0` runs it inline),
+  `LOG_BUFFER_SIZE` (admin log-viewer buffer, default 1000; `0` disables),
+  `TZ` (container tzdata),
   plus the dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
   requests (bounded, force-closed only past the bound), then closes SQLite

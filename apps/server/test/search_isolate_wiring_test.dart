@@ -8,6 +8,7 @@ import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/logging/log_buffer.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_server/src/search/search_service.dart';
@@ -74,6 +75,7 @@ void main() {
         nutritionProvider: _UnusedNutrition(),
         searchRateLimiter: RequestRateLimiter(),
         searchService: () => current,
+        logBuffer: LogBuffer(),
         indexPath: '${tempDir.path}/index.html',
       );
       final server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);

@@ -180,6 +180,7 @@ class ServerConfig {
     this.apiTokenRetentionDays = defaultApiTokenRetentionDays,
     this.connectionIdleTimeoutSeconds = defaultConnectionIdleTimeoutSeconds,
     this.searchWorkerIsolates = defaultSearchWorkerIsolates,
+    this.logBufferSize = defaultLogBufferSize,
   }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
@@ -241,6 +242,9 @@ class ServerConfig {
   ///   attacker can accumulate. It also caps idle keep-alive between requests,
   ///   so keep it above the fronting proxy's keep-alive. An invalid value falls
   ///   back to the default.
+  /// * `LOG_BUFFER_SIZE` — how many recent log records the admin log viewer
+  ///   keeps in memory (default 1000; `0` disables it). In-memory only, cleared
+  ///   on restart. An invalid value falls back to the default.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -283,6 +287,10 @@ class ServerConfig {
       searchWorkerIsolates: _parseNonNegativeInt(
         env['SEARCH_WORKER_ISOLATES'],
         defaultSearchWorkerIsolates,
+      ),
+      logBufferSize: _parseNonNegativeInt(
+        env['LOG_BUFFER_SIZE'],
+        defaultLogBufferSize,
       ),
     );
     Directory(config.libraryDir).createSync(recursive: true);
@@ -345,6 +353,9 @@ class ServerConfig {
   /// isolate; raise it for more concurrent-search throughput.
   static const int defaultSearchWorkerIsolates = 1;
 
+  /// Default in-memory log ring-buffer size (see [logBufferSize]).
+  static const int defaultLogBufferSize = 1000;
+
   /// Text searches (`GET /recipes?q=`) allowed per minute per user; `0`
   /// disables the limit. Ranked FTS runs on the background isolate pool
   /// ([searchWorkerIsolates]), so this bounds any single caller's share of it.
@@ -364,6 +375,10 @@ class ServerConfig {
   /// `0` runs search inline (pre-#48). Each worker holds its own read-only
   /// SQLite connection, so a heavy `bm25` query no longer blocks the loop.
   final int searchWorkerIsolates;
+
+  /// How many recent log records the admin log viewer keeps in memory; `0`
+  /// disables the buffer (and the log endpoint returns nothing). Not persisted.
+  final int logBufferSize;
 
   /// The idle timeout as a [Duration], or `null` when disabled
   /// ([connectionIdleTimeoutSeconds] `<= 0`) — matching

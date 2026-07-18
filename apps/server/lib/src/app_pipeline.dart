@@ -4,6 +4,7 @@ import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/logging/log_buffer.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/dev_cors.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
@@ -49,6 +50,7 @@ Handler buildAppMiddleware(
   required NutritionProvider nutritionProvider,
   required RequestRateLimiter searchRateLimiter,
   required SearchService Function() searchService,
+  required LogBuffer logBuffer,
   String indexPath = 'public/index.html',
 }) {
   return handler
@@ -63,6 +65,7 @@ Handler buildAppMiddleware(
       // and leave the isolate pool spawned-but-unused (#48 review, HIGH). The
       // thunk reads the live singleton, so the post-build swap is honored.
       .use(provider<SearchService>((_) => searchService()))
+      .use(provider<LogBuffer>((_) => logBuffer))
       .use(provider<NutritionProvider>((_) => nutritionProvider))
       .use(provider<SaltDatabase>((_) => database))
       .use(provider<ServerConfig>((_) => config))
