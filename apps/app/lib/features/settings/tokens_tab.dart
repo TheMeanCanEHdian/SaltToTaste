@@ -195,6 +195,9 @@ class _TokensTabState extends State<TokensTab> {
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Row(
+                  // Bottom-align the button to the Scope select's field (the
+                  // select is taller by its label), not the labelled column.
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
                       child: FSelect<String>(

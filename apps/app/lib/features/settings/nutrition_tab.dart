@@ -291,20 +291,22 @@ class _NutritionTabState extends State<NutritionTab> {
                     color: SaltColors.ink,
                   ),
                 ),
-                if (_masked != null)
-                  Flexible(
-                    child: Text(
-                      ' · $_masked',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'RobotoMono',
-                        fontSize: 13,
-                        color: SaltColors.muted,
-                      ),
+                // One flexible element takes all the slack so the button sits
+                // flush right. (A Flexible mask PLUS a Spacer both claimed
+                // flex, so the loose mask left space that stranded the button
+                // short of the edge.) The mask still ellipsizes when long.
+                Expanded(
+                  child: Text(
+                    _masked == null ? '' : ' · $_masked',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'RobotoMono',
+                      fontSize: 13,
+                      color: SaltColors.muted,
                     ),
                   ),
-                const Spacer(),
+                ),
                 const SizedBox(width: 10),
                 FButton(
                   variant: FButtonVariant.outline,

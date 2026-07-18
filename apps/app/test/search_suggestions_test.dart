@@ -27,19 +27,20 @@ final _tags = [
 
 void main() {
   group('keywords', () {
-    test('an empty field offers every keyword the parser accepts', () {
-      final rows = suggestionsFor(text: '', cursor: 0, tags: _tags);
-      expect(
-        rows.map((r) => r.label),
-        searchKeywords.map((k) => '$k:'),
-        reason: 'the offered list must BE the parser list, not a copy of it',
-      );
+    test('an empty field offers nothing — the guide moved to the ? button', () {
+      // Focusing the empty search bar used to dump the whole keyword
+      // vocabulary; the "?" syntax button replaced that, so the empty field is
+      // now silent.
+      expect(suggestionsFor(text: '', cursor: 0, tags: _tags), isEmpty);
     });
 
-    test('calories: is offered — it is not a SearchScope', () {
-      // The trap: a keyword list built from SearchScope.values omits calories
-      // entirely and includes `general`, which is not a keyword at all.
-      final rows = suggestionsFor(text: '', cursor: 0, tags: _tags);
+    test('a fresh mid-query position offers every keyword, incl. calories', () {
+      // After a space nothing is being edited, so the full keyword vocabulary
+      // is on offer — the one place `calories:` (not a SearchScope) must appear
+      // and a bogus `general:` must not. The offered list must BE the parser
+      // list, not a copy of it.
+      final rows = suggestionsFor(text: 'x ', cursor: 2, tags: _tags);
+      expect(rows.map((r) => r.label), searchKeywords.map((k) => '$k:'));
       expect(rows.map((r) => r.label), contains('calories:'));
       expect(rows.map((r) => r.label), isNot(contains('general:')));
     });

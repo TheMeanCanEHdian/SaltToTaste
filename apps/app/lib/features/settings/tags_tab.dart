@@ -174,6 +174,11 @@ class _TagsTabState extends State<TagsTab> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        // Both controls carry a label, so top-align them: the labels line up
+        // on one baseline and the fields line up beneath. (The Sort select
+        // used to be the only labelled one, leaving the unlabelled filter
+        // floating against its taller column.)
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Flexible(
             child: ConstrainedBox(
@@ -185,6 +190,7 @@ class _TagsTabState extends State<TagsTab> {
                     controller: _filter,
                     onChange: (value) => _cubit.setFilter(value.text),
                   ),
+                  label: const Text('Filter'),
                   hint: 'Filter tags…',
                 ),
               ),

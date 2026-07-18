@@ -254,6 +254,10 @@ class _UsersTabState extends State<UsersTab> {
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Row(
+                  // The Role select carries a label above its field, so
+                  // bottom-align the button to sit level with the field itself
+                  // rather than floating against the taller labelled column.
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
                       child: FSelect<String>(

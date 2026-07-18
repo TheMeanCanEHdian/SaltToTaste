@@ -81,6 +81,14 @@ List<SearchSuggestion> suggestionsFor({
   required List<TagInfo> tags,
   int limit = 8,
 }) {
+  // An empty field offers nothing: the syntax guide now lives behind the "?"
+  // button in the search bar, so dumping the whole keyword vocabulary the
+  // moment the empty field is focused is redundant noise. Mid-query fresh
+  // positions (after a space) still complete — only the empty field is silent.
+  if (text.trim().isEmpty) {
+    return const [];
+  }
+
   final caret = cursor.clamp(0, text.length);
   final span = spanAtCursor(lexQuerySpans(text), caret);
 
