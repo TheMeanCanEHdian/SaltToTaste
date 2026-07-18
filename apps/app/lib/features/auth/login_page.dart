@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
@@ -67,8 +66,9 @@ class _LoginPageState extends State<LoginPage> {
       _ => null,
     };
     return AuthCardScaffold(
-      title: 'Salt to Taste',
-      subtitle: 'Sign in to your household recipe library',
+      // Band only — no title/subtitle: the brand banner replaces the mark +
+      // heading + subtitle on the sign-in card.
+      header: const AuthBrandHeader(),
       children: [
         // A single banner slot at the top — the login error and the
         // signed-out notice share the same position (error takes priority).
@@ -129,21 +129,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         AuthSubmitButton(label: 'Sign in', busy: _busy, onPressed: _submit),
-        // Rare escape hatch (needs shell access to the server), so it stays
-        // deliberately quiet: muted text, no fill, well below the primary
-        // action.
-        Align(
-          alignment: Alignment.center,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: FButton(
-              variant: FButtonVariant.ghost,
-              mainAxisSize: MainAxisSize.min,
-              onPress: () => context.go('/recover'),
-              child: const Text('Locked out?'),
-            ),
-          ),
-        ),
       ],
     );
   }

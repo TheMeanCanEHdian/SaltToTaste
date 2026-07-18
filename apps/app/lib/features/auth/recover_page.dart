@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -64,6 +64,10 @@ class _RecoverPageState extends State<RecoverPage> {
   @override
   Widget build(BuildContext context) {
     return AuthCardScaffold(
+      // Same brand band as the sign-in card; recover keeps its purpose heading
+      // + how-to below it (unlike login's decorative subtitle, this is the
+      // instruction for actually obtaining the code).
+      header: const AuthBrandHeader(),
       title: 'Recover admin access',
       subtitle:
           'Run the recovery tool on the server host: it prints a code that is '
