@@ -24,6 +24,12 @@ class LogsTab extends StatefulWidget {
 class _LogsTabState extends State<LogsTab> {
   static const _levels = ['', 'DEBUG', 'INFO', 'WARN', 'ERROR'];
 
+  /// Shared toolbar control height. Forui's `FSelect`/`FTextField` render at a
+  /// fixed ~36px and don't stretch to a taller box (they'd paint centered,
+  /// leaving a gap), so every control is pinned to their natural height and the
+  /// heights line up exactly.
+  static const double _controlHeight = 36;
+
   String _level = '';
   String _logger = '';
   String _query = '';
@@ -166,11 +172,10 @@ class _LogsTabState extends State<LogsTab> {
   }
 
   Widget _toolbar(LogsPage? page) {
-    // The controls are built bare (no forced height). On a wide pane an
-    // IntrinsicHeight + stretch row makes every control adopt the same height
-    // (the tallest control's), so the fields, segmented, toggle, and button all
-    // line up; the search field flexes to fill the gap. Only when the pane is
-    // genuinely narrow (mobile) do they wrap.
+    // Every control is pinned to _controlHeight (the fields' natural height) so
+    // they line up exactly. On a wide pane they sit in one row with the search
+    // field flexing to fill the gap; only when the pane is genuinely narrow
+    // (mobile) do they wrap.
     final level = _levelSegmented();
     final logger = FSelect<String>(
       items: {
@@ -214,21 +219,20 @@ class _LogsTabState extends State<LogsTab> {
         // Below this the fixed controls leave the search box too cramped, so
         // wrap instead.
         if (constraints.maxWidth >= 720) {
-          return IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                level,
-                const SizedBox(width: 10),
-                SizedBox(width: 158, child: logger),
-                const SizedBox(width: 10),
-                Expanded(child: search),
-                const SizedBox(width: 10),
-                live,
-                const SizedBox(width: 10),
-                refresh,
-              ],
-            ),
+          return Row(
+            children: [
+              SizedBox(height: _controlHeight, child: level),
+              const SizedBox(width: 10),
+              SizedBox(width: 158, height: _controlHeight, child: logger),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SizedBox(height: _controlHeight, child: search),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(height: _controlHeight, child: live),
+              const SizedBox(width: 10),
+              SizedBox(height: _controlHeight, child: refresh),
+            ],
           );
         }
         return Wrap(
@@ -236,11 +240,11 @@ class _LogsTabState extends State<LogsTab> {
           runSpacing: 10,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            SizedBox(height: 38, child: level),
-            SizedBox(width: 158, height: 38, child: logger),
-            SizedBox(width: 210, height: 38, child: search),
-            SizedBox(height: 38, child: live),
-            SizedBox(height: 38, child: refresh),
+            SizedBox(height: _controlHeight, child: level),
+            SizedBox(width: 158, height: _controlHeight, child: logger),
+            SizedBox(width: 210, height: _controlHeight, child: search),
+            SizedBox(height: _controlHeight, child: live),
+            SizedBox(height: _controlHeight, child: refresh),
           ],
         );
       },
