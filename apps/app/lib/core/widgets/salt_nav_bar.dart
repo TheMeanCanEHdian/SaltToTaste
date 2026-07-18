@@ -48,21 +48,7 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < Breakpoints.compact;
-    final logo = Semantics(
-      button: true,
-      label: 'Home',
-      child: InkWell(
-        onTap: () => context.go('/'),
-        child: const Padding(
-          // Tight vertical padding so the enlarged pan glyph fills the 58px bar
-          // instead of being scaled back down by the banner's BoxFit.contain.
-          padding: EdgeInsets.symmetric(vertical: 6),
-          child: ExcludeSemantics(
-            child: SaltLogoBanner(color: Colors.white, titleSize: 20),
-          ),
-        ),
-      ),
-    );
+    const logo = _NavLogo();
     return Material(
       color: SaltColors.maroon,
       child: SafeArea(
@@ -126,6 +112,56 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 12),
                 const _AvatarMenu(),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The nav-bar brand lockup: taps home, and on hover/focus dims the glyph +
+/// text slightly instead of darkening the maroon bar behind them (an InkWell's
+/// default splash/hover overlay would darken the red). Kept an InkWell — not a
+/// bare GestureDetector — so keyboard focus and Enter/Space activation survive;
+/// only its paint overlays are suppressed.
+class _NavLogo extends StatefulWidget {
+  const _NavLogo();
+
+  @override
+  State<_NavLogo> createState() => _NavLogoState();
+}
+
+class _NavLogoState extends State<_NavLogo> {
+  bool _hover = false;
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = _hover || _focused;
+    return Semantics(
+      button: true,
+      label: 'Home',
+      child: InkWell(
+        onTap: () => context.go('/'),
+        onHover: (hovering) => setState(() => _hover = hovering),
+        onFocusChange: (focused) => setState(() => _focused = focused),
+        borderRadius: BorderRadius.circular(8),
+        // Suppress every default overlay: the interaction feedback is the
+        // glyph/text dim below, not a darkened background.
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        focusColor: Colors.transparent,
+        child: Padding(
+          // Tight vertical padding so the enlarged pan glyph fills the 58px bar
+          // instead of being scaled back down by the banner's BoxFit.contain.
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: ExcludeSemantics(
+            child: AnimatedOpacity(
+              opacity: active ? 0.78 : 1.0,
+              duration: const Duration(milliseconds: 120),
+              child: const SaltLogoBanner(color: Colors.white, titleSize: 20),
             ),
           ),
         ),
