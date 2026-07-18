@@ -7,6 +7,7 @@ import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/auth/auth_card.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
@@ -199,23 +200,9 @@ class _AccountTabState extends State<AccountTab> {
                             ),
                             if (session.current) ...[
                               const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8F3E4),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'this device',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF2C5A1E),
-                                  ),
-                                ),
+                              const SaltBadge(
+                                'this device',
+                                tone: SaltBadgeTone.ok,
                               ),
                             ],
                           ],

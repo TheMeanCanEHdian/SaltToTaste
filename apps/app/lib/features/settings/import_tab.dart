@@ -9,6 +9,7 @@ import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
 
 /// The mockup's 560px content cap.
@@ -420,7 +421,12 @@ class _SourceRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            _KindChip(kind: candidate.kind),
+            SaltBadge(
+              candidate.kind == 'legacy' ? 'LEGACY V0' : 'RECIPE EXTRACTION',
+              tone: candidate.kind == 'legacy'
+                  ? SaltBadgeTone.warn
+                  : SaltBadgeTone.info,
+            ),
           ],
         ),
         const SizedBox(height: 2),
@@ -655,33 +661,6 @@ class _LogBox extends StatelessWidget {
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _KindChip extends StatelessWidget {
-  const _KindChip({required this.kind});
-
-  final String kind;
-
-  @override
-  Widget build(BuildContext context) {
-    final legacy = kind == 'legacy';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: legacy ? SaltColors.warnBg : SaltColors.infoBg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        legacy ? 'LEGACY V0' : 'RECIPE EXTRACTION',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-          color: legacy ? SaltColors.warnInk : SaltColors.infoInk,
         ),
       ),
     );

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 import 'package:salt_app/features/nutrition/review_sheet.dart';
@@ -224,57 +226,20 @@ class _MatchBadge extends StatelessWidget {
     } else if (!complete) {
       label = '$label — review';
     }
-    final ink = complete ? SaltColors.okInk : SaltColors.warnInk;
-    final pill = MergeSemantics(
-      child: Semantics(
-        button: true,
-        hint: 'Opens ingredient review',
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () => showReviewSheet(context, isAdmin: isAdmin),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-            decoration: BoxDecoration(
-              color: complete ? SaltColors.okBg : SaltColors.warnBg,
-              border: Border.all(
-                color: complete
-                    ? const Color(0xFFCFE4C6)
-                    : const Color(0xFFF0DDBA),
-              ),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
-              children: [
-                Icon(
-                  complete
-                      ? Icons.check_circle_outline
-                      : Icons.warning_amber_rounded,
-                  size: 14,
-                  color: ink,
-                ),
-                const SizedBox(width: 7),
-                Flexible(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: ink,
-                    ),
-                  ),
-                ),
-                if (fullWidth) const Spacer() else const SizedBox(width: 7),
-                Icon(Icons.chevron_right, size: 14, color: ink),
-              ],
-            ),
-          ),
-        ),
-      ),
+    final badge = SaltBadge(
+      label,
+      tone: complete ? SaltBadgeTone.ok : SaltBadgeTone.warn,
+      icon: complete ? LucideIcons.circleCheck : LucideIcons.triangleAlert,
+      onTap: () => showReviewSheet(context, isAdmin: isAdmin),
+      semanticHint: 'Opens ingredient review',
+      expand: fullWidth,
     );
+    // The parent Column stretches; the intrinsic (rail) pill must be left-
+    // aligned so it hugs its label instead of spanning the whole column. The
+    // fullWidth variant fills by design.
     return fullWidth
-        ? pill
-        : Align(alignment: Alignment.centerLeft, child: pill);
+        ? badge
+        : Align(alignment: Alignment.centerLeft, child: badge);
   }
 }
 

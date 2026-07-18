@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/editor/editor_cubit.dart';
@@ -1151,7 +1153,28 @@ class _IngredientRowState extends State<_IngredientRow> {
                 ),
               ),
               const SizedBox(width: 8),
-              _ConfidenceChip(line: line),
+              line.manuallyEdited
+                  ? const SaltBadge(
+                      'manual',
+                      tone: SaltBadgeTone.neutral,
+                      icon: LucideIcons.lock,
+                    )
+                  : switch (line.confidence) {
+                      ParseConfidence.parsed => const SaltBadge(
+                        'parsed',
+                        tone: SaltBadgeTone.ok,
+                        icon: LucideIcons.check,
+                      ),
+                      ParseConfidence.check => const SaltBadge(
+                        'check',
+                        tone: SaltBadgeTone.warn,
+                        icon: LucideIcons.triangleAlert,
+                      ),
+                      ParseConfidence.none => const SaltBadge(
+                        'no amount',
+                        tone: SaltBadgeTone.neutral,
+                      ),
+                    },
               Tooltip(
                 message: line.expanded ? 'Collapse' : 'Structured fields',
                 child: FButton.icon(
@@ -1181,67 +1204,6 @@ class _IngredientRowState extends State<_IngredientRow> {
         ),
         if (line.expanded) _StructuredPanel(line: line),
       ],
-    );
-  }
-}
-
-class _ConfidenceChip extends StatelessWidget {
-  const _ConfidenceChip({required this.line});
-
-  final EditorLine line;
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, background, foreground, icon) = line.manuallyEdited
-        ? (
-            'manual',
-            SaltColors.chipNeutral,
-            SaltColors.muted,
-            Icons.lock_outline,
-          )
-        : switch (line.confidence) {
-            ParseConfidence.parsed => (
-              'parsed',
-              SaltColors.okBg,
-              SaltColors.okInk,
-              Icons.check,
-            ),
-            ParseConfidence.check => (
-              'check',
-              SaltColors.warnBg,
-              SaltColors.warnInk,
-              Icons.warning_amber_outlined,
-            ),
-            ParseConfidence.none => (
-              'no amount',
-              SaltColors.chipNeutral,
-              SaltColors.muted,
-              null,
-            ),
-          };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 12, color: foreground),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: foreground,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

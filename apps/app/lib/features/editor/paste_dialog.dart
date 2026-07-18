@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/editor/editor_cubit.dart';
 
 /// The bulk ingredient-entry dialog (approved P5 design): paste a block of
@@ -134,7 +135,7 @@ class _PreviewRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (line.endsWith(':')) {
       return _row(
-        chip: ('group', SaltColors.chipNeutral, SaltColors.muted),
+        chip: ('group', SaltBadgeTone.neutral),
         text: line.substring(0, line.length - 1).trim().toUpperCase(),
         bold: true,
         detail: null,
@@ -150,17 +151,9 @@ class _PreviewRow extends StatelessWidget {
               '${primary.unit == null ? '' : ' ${primary.unit}'}';
     return _row(
       chip: switch (parsed.confidence) {
-        ParseConfidence.parsed => ('parsed', SaltColors.okBg, SaltColors.okInk),
-        ParseConfidence.check => (
-          'check',
-          SaltColors.warnBg,
-          SaltColors.warnInk,
-        ),
-        ParseConfidence.none => (
-          'no amount',
-          SaltColors.chipNeutral,
-          SaltColors.muted,
-        ),
+        ParseConfidence.parsed => ('parsed', SaltBadgeTone.ok),
+        ParseConfidence.check => ('check', SaltBadgeTone.warn),
+        ParseConfidence.none => ('no amount', SaltBadgeTone.neutral),
       },
       text: line,
       bold: false,
@@ -169,31 +162,17 @@ class _PreviewRow extends StatelessWidget {
   }
 
   Widget _row({
-    required (String, Color, Color) chip,
+    required (String, SaltBadgeTone) chip,
     required String text,
     required bool bold,
     required String? detail,
   }) {
-    final (label, background, foreground) = chip;
+    final (label, tone) = chip;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: foreground,
-              ),
-            ),
-          ),
+          SaltBadge(label, tone: tone),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

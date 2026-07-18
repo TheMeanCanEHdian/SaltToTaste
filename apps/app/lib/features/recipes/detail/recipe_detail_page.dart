@@ -10,6 +10,7 @@ import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/core/widgets/tag_chip.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
@@ -383,22 +384,7 @@ class _MyNotesCardState extends State<_MyNotesCard> {
                 style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                decoration: BoxDecoration(
-                  color: SaltColors.chipNeutral,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: const Text(
-                  'ONLY YOU',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    color: SaltColors.muted,
-                  ),
-                ),
-              ),
+              const SaltBadge('ONLY YOU', tone: SaltBadgeTone.neutral),
               const Spacer(),
               if (!_editing)
                 SelectionContainer.disabled(

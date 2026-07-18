@@ -7,6 +7,7 @@ import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/auth/auth_card.dart';
 import 'package:salt_app/features/settings/secret_reveal.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
@@ -141,7 +142,12 @@ class _TokensTabState extends State<TokensTab> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            _ScopeBadge(scope: token.scope),
+                            SaltBadge(
+                              token.scope,
+                              tone: token.scope == 'read'
+                                  ? SaltBadgeTone.info
+                                  : SaltBadgeTone.warn,
+                            ),
                           ],
                         ),
                         Text(
@@ -232,32 +238,6 @@ class _TokensTabState extends State<TokensTab> {
           ),
         if (_error != null) AuthBanner(message: _error!),
       ],
-    );
-  }
-}
-
-class _ScopeBadge extends StatelessWidget {
-  const _ScopeBadge({required this.scope});
-
-  final String scope;
-
-  @override
-  Widget build(BuildContext context) {
-    final read = scope == 'read';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-      decoration: BoxDecoration(
-        color: read ? const Color(0xFFECE9F7) : const Color(0xFFFDF1E2),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        scope,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-          color: read ? const Color(0xFF4B3D8F) : const Color(0xFF8A5A12),
-        ),
-      ),
     );
   }
 }

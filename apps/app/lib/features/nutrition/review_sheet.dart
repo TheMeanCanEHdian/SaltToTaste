@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
 /// Opens the ingredient match review sheet (approved P6 design). Everyone
@@ -292,6 +293,22 @@ class _MatchRow extends StatelessWidget {
   final bool isAdmin;
   final bool busy;
 
+  /// The per-ingredient match-confidence badge. Label names the match state
+  /// plainly — "high/medium/low" alone read as mystery ratings; these say what
+  /// they mean (and unmatched lines are called out so it's clear they don't
+  /// count toward the totals).
+  SaltBadge get _confidenceBadge {
+    final (label, tone) = switch (match.status) {
+      'skipped' => ('skipped', SaltBadgeTone.neutral),
+      'unmatched' => ('not matched', SaltBadgeTone.err),
+      'overridden' || 'confirmed' => ('reviewed ✓', SaltBadgeTone.ok),
+      _ when match.confidence >= 0.75 => ('strong match', SaltBadgeTone.ok),
+      _ when match.confidence >= 0.5 => ('likely — check', SaltBadgeTone.warn),
+      _ => ('weak — check', SaltBadgeTone.err),
+    };
+    return SaltBadge(label, tone: tone);
+  }
+
   String get _gramSourceLabel => switch (match.gramSource) {
     'weight' => 'weight ✓ direct',
     'portion' => 'household portion',
@@ -323,7 +340,7 @@ class _MatchRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              _ConfidencePill(match: match),
+              _confidenceBadge,
             ],
           ),
           const SizedBox(height: 5),
@@ -368,27 +385,11 @@ class _MatchRow extends StatelessWidget {
                     ),
                   ),
                 if (match.dataType != null && match.dataType!.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: match.dataType == 'Foundation'
-                          ? SaltColors.okBg
-                          : SaltColors.chipNeutral,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      match.dataType!,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: match.dataType == 'Foundation'
-                            ? SaltColors.okInk
-                            : SaltColors.muted,
-                      ),
-                    ),
+                  SaltBadge(
+                    match.dataType!,
+                    tone: match.dataType == 'Foundation'
+                        ? SaltBadgeTone.ok
+                        : SaltBadgeTone.neutral,
                   ),
                 Text(
                   match.grams == null
@@ -616,51 +617,6 @@ class _MatchRow extends StatelessWidget {
     if (grams != null && grams > 0) {
       await cubit.override(match.position, grams: grams);
     }
-  }
-}
-
-class _ConfidencePill extends StatelessWidget {
-  const _ConfidencePill({required this.match});
-
-  final IngredientMatch match;
-
-  @override
-  Widget build(BuildContext context) {
-    // The label names the match state plainly — "high/medium/low" alone read
-    // as mystery ratings; these say what they mean (and unmatched lines are
-    // called out so it's clear they don't count toward the totals).
-    final (label, background, foreground) = switch (match.status) {
-      'skipped' => ('skipped', SaltColors.chipNeutral, SaltColors.muted),
-      'unmatched' => ('not matched', SaltColors.errBg, SaltColors.errInk),
-      'overridden' ||
-      'confirmed' => ('reviewed ✓', SaltColors.okBg, SaltColors.okInk),
-      _ when match.confidence >= 0.75 => (
-        'strong match',
-        SaltColors.okBg,
-        SaltColors.okInk,
-      ),
-      _ when match.confidence >= 0.5 => (
-        'likely — check',
-        SaltColors.warnBg,
-        SaltColors.warnInk,
-      ),
-      _ => ('weak — check', SaltColors.errBg, SaltColors.errInk),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: foreground,
-        ),
-      ),
-    );
   }
 }
 

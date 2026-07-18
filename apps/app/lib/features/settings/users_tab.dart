@@ -7,6 +7,7 @@ import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/auth/auth_card.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/settings/secret_reveal.dart';
@@ -159,7 +160,12 @@ class _UsersTabState extends State<UsersTab> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            _RoleBadge(role: user.role),
+                            SaltBadge(
+                              user.role,
+                              tone: user.role == 'admin'
+                                  ? SaltBadgeTone.brand
+                                  : SaltBadgeTone.neutral,
+                            ),
                             if (user.mustChangePassword) ...[
                               const SizedBox(width: 6),
                               const Tooltip(
@@ -292,32 +298,6 @@ class _UsersTabState extends State<UsersTab> {
           ),
         if (_error != null) AuthBanner(message: _error!),
       ],
-    );
-  }
-}
-
-class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.role});
-
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    final admin = role == 'admin';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-      decoration: BoxDecoration(
-        color: admin ? SaltColors.maroon : SaltColors.chip,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        role,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-          color: admin ? Colors.white : SaltColors.chipInk,
-        ),
-      ),
     );
   }
 }

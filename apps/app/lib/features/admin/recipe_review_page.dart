@@ -7,6 +7,7 @@ import 'package:salt_shared/salt_shared.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/admin/recipe_review_cubit.dart';
 
@@ -130,7 +131,10 @@ class _Loaded extends StatelessWidget {
         child: Wrap(
           spacing: 6,
           runSpacing: 6,
-          children: [for (final issue in item.issues) _IssueBadge(issue)],
+          children: [
+            for (final issue in item.issues)
+              SaltBadge(issue.label, tone: _issueTone(issue.check)),
+          ],
         ),
       ),
       suffix: const Icon(Icons.chevron_right, color: SaltColors.muted),
@@ -244,29 +248,16 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-/// A coloured pill naming one issue on a recipe. The specific detail (e.g. the
-/// nutrition ratio, the unparsed line) lives on the recipe the row opens.
-class _IssueBadge extends StatelessWidget {
-  const _IssueBadge(this.issue);
-
-  final RecipeReviewIssue issue;
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, ink) = _issueColors(issue.check);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        issue.label,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: ink),
-      ),
-    );
-  }
-}
+/// Maps a check id to a badge tone. Red = blocking, amber = needs fixing, grey
+/// = missing/informational. Unknown ids (a check added on the server the app
+/// doesn't know yet) fall back to neutral.
+SaltBadgeTone _issueTone(String check) => switch (check) {
+  'no_instructions' => SaltBadgeTone.err,
+  'unparsed_ingredients' => SaltBadgeTone.warn,
+  'extraction_warnings' => SaltBadgeTone.warn,
+  'incomplete_nutrition' => SaltBadgeTone.warn,
+  _ => SaltBadgeTone.neutral,
+};
 
 /// Opens a modal explaining every category, driven by the server-provided
 /// descriptions — so a check added on the server documents itself here.

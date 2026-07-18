@@ -10,6 +10,7 @@ import 'package:salt_app/core/api/logs_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/settings/settings_page.dart' show PaneTitle;
 
 /// Settings → Server → Logs (admin): a tail of recent server log records from
@@ -418,7 +419,7 @@ class _LogsTabState extends State<LogsTab> {
         children: [
           SizedBox(width: 88, child: _mono(_timeOf(entry.time))),
           const SizedBox(width: 12),
-          SizedBox(width: 66, child: _LevelBadge(entry.level)),
+          SizedBox(width: 66, child: _levelBadge(entry.level)),
           SizedBox(width: 86, child: _mono(entry.logger)),
           Expanded(
             child: Text(
@@ -493,38 +494,17 @@ class _LogsTabState extends State<LogsTab> {
 
   String _titleCase(String value) =>
       value[0] + value.substring(1).toLowerCase();
-}
 
-class _LevelBadge extends StatelessWidget {
-  const _LevelBadge(this.level);
-
-  final String level;
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, ink) = switch (level) {
-      'ERROR' => (SaltColors.errBg, SaltColors.errInk),
-      'WARN' => (SaltColors.warnBg, SaltColors.warnInk),
-      'INFO' => (SaltColors.infoBg, SaltColors.infoInk),
-      _ => (SaltColors.chipNeutral, SaltColors.muted),
+  Widget _levelBadge(String level) {
+    final tone = switch (level) {
+      'ERROR' => SaltBadgeTone.err,
+      'WARN' => SaltBadgeTone.warn,
+      'INFO' => SaltBadgeTone.info,
+      _ => SaltBadgeTone.neutral,
     };
     return Align(
       alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          level,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: ink,
-          ),
-        ),
-      ),
+      child: SaltBadge(level, tone: tone),
     );
   }
 }
