@@ -11,6 +11,7 @@ import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_app/features/search/search_chip_box.dart';
 
 /// The nav bar's search autocomplete, driven through the real widget.
 ///
@@ -207,9 +208,7 @@ void main() {
     expect(navigations, ['q=tomato']);
   });
 
-  testWidgets('a real tag is offered after tag: and splices in quoted', (
-    tester,
-  ) async {
+  testWidgets('taking a tag row lifts it into a quoted chip', (tester) async {
     await tester.pumpWidget(host(tags: ['ice cream']));
     await type(tester, 'tag:ice');
     await tester.pumpAndSettle();
@@ -221,9 +220,85 @@ void main() {
     final field = tester.widget<TextField>(find.byType(TextField).first);
     expect(
       field.controller!.text,
-      'tag:"ice cream" ',
-      reason: 'unquoted, this would search tag:ice AND the word cream',
+      '',
+      reason: 'the completed clause lifts out of the text into a chip',
     );
+    expect(
+      find.text('ice cream'),
+      findsOneWidget,
+      reason: 'the tag is now shown as a chip',
+    );
+
+    // The chip serializes with quoting: unquoted this would search tag:ice AND
+    // the word cream. (encodeQueryComponent renders the space as `+`.)
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(navigations, ['q=tag%3A%22ice+cream%22']);
+  });
+
+  testWidgets('a completed clause becomes a chip on the trailing space', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host());
+    // Type the clause and a space; the space commits it to a chip.
+    await type(tester, 'tag:dessert ');
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(field.controller!.text, '', reason: 'the clause left the text');
+    expect(find.text('dessert'), findsOneWidget, reason: 'now a chip');
+    expect(find.text('tag:'), findsOneWidget, reason: "the chip's scope label");
+
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(navigations, ['q=tag%3Adessert']);
+  });
+
+  testWidgets('a plain word does not become a chip', (tester) async {
+    await tester.pumpWidget(host());
+    await type(tester, 'chicken ');
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(
+      field.controller!.text,
+      'chicken ',
+      reason: 'bare words stay as editable text',
+    );
+  });
+
+  testWidgets('Backspace at the start pops the last chip back to text', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host());
+    await type(tester, 'tag:dessert ');
+    expect(find.text('dessert'), findsOneWidget);
+
+    // Caret is at offset 0 of the now-empty editor; Backspace pops the chip.
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(field.controller!.text, 'tag:dessert');
+    // The chip is gone (the text `tag:dessert` re-offers a `dessert` suggestion
+    // row, which is why we assert on the chip widget, not the word).
+    expect(find.byType(SearchChipView), findsNothing);
+  });
+
+  testWidgets('a pre-filled query seeds chips', (tester) async {
+    await tester.pumpWidget(host(initialQuery: 'tag:dessert chicken'));
+    await tester.pumpAndSettle();
+    // The scoped clause is a chip; the bare word stays as text.
+    expect(find.text('dessert'), findsOneWidget);
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(field.controller!.text, 'chicken');
+  });
+
+  testWidgets('a query with or is not chipped, it stays as text', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host(initialQuery: 'tag:dessert or tag:snack'));
+    await tester.pumpAndSettle();
+    expect(find.text('dessert'), findsNothing, reason: 'or → no chips');
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    expect(field.controller!.text, 'tag:dessert or tag:snack');
   });
 
   testWidgets('a mid-query row lands the caret after the INSERT', (
@@ -350,7 +425,7 @@ void main() {
       expect(find.text('main'), findsOneWidget);
     });
 
-    testWidgets('tapping a tag row fills the field and does not search', (
+    testWidgets('tapping a tag row makes a chip and does not search', (
       tester,
     ) async {
       await openMobile(tester, tags: ['ice cream']);
@@ -360,11 +435,8 @@ void main() {
       await tester.pumpAndSettle();
 
       final field = tester.widget<TextField>(find.byType(TextField));
-      expect(
-        field.controller!.text,
-        'tag:"ice cream" ',
-        reason: 'unquoted, this would search tag:ice AND the word cream',
-      );
+      expect(field.controller!.text, '', reason: 'the clause became a chip');
+      expect(find.text('ice cream'), findsOneWidget, reason: 'shown as a chip');
       expect(
         navigations,
         isEmpty,
@@ -381,18 +453,20 @@ void main() {
       expect(navigations, ['q=tag%3Adessert']);
     });
 
-    testWidgets('a pre-filled query offers rows once the tags arrive', (
-      tester,
-    ) async {
-      // The dialog opens pre-filled and never receives a keystroke; the rows
-      // must appear when the fetch lands, from the recompute in _loadTags.
-      await openMobile(
-        tester,
-        tags: ['dessert'],
-        delay: slowFetch,
-        initialQuery: 'tag:des',
-      );
+    testWidgets('a typed tag value offers matching rows', (tester) async {
+      // A pre-filled `tag:des` now seeds as a chip, so drive the value by
+      // typing instead; the row must appear for the typed value.
+      await openMobile(tester, tags: ['dessert']);
+      await tester.enterText(find.byType(TextField), 'tag:des');
+      await tester.pumpAndSettle();
       expect(find.text('dessert'), findsOneWidget);
+    });
+
+    testWidgets('a pre-filled query seeds a chip', (tester) async {
+      await openMobile(tester, initialQuery: 'tag:dessert');
+      expect(find.text('dessert'), findsOneWidget, reason: 'seeded as a chip');
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, '');
     });
 
     testWidgets('resubmitting the query on screen refreshes in place', (

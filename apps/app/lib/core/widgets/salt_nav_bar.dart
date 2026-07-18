@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
@@ -13,6 +14,8 @@ import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_logo.dart';
 import 'package:salt_app/core/widgets/search_help.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_app/features/search/search_chip_box.dart';
+import 'package:salt_app/features/search/search_chips_controller.dart';
 import 'package:salt_app/features/search/search_suggestions.dart';
 
 /// The maroon top navigation bar: optional back control, logo, live search
@@ -183,10 +186,19 @@ class _SearchField extends StatefulWidget {
 }
 
 class _SearchFieldState extends State<_SearchField> {
-  late final TextEditingController _controller = TextEditingController(
-    text: widget.initialQuery,
-  );
+  final TextEditingController _controller = TextEditingController();
   final FocusNode _focus = FocusNode();
+
+  /// The chips (recognized scoped clauses) sitting left of the editing text;
+  /// the controller above holds only the trailing free text.
+  late final SearchChipsController _chips = SearchChipsController(_controller);
+
+  /// Scrolls the chips + editor when they outgrow the fixed-height field.
+  final ScrollController _scroll = ScrollController();
+
+  /// The seeded query in canonical form, so resubmitting the untouched field
+  /// refreshes in place rather than re-navigating (see [_submit]).
+  String _seedQuery = '';
 
   /// The tag vocabulary, fetched on first focus rather than on mount: the nav
   /// bar is on every page, and most page views never touch the search field.
@@ -236,6 +248,9 @@ class _SearchFieldState extends State<_SearchField> {
   @override
   void initState() {
     super.initState();
+    // Seed before wiring the listener so the initial fill doesn't trip chip
+    // conversion, and remember its canonical form for the refresh check.
+    _seedQuery = _chips.seed(widget.initialQuery);
     _focus.addListener(_onFocusChange);
     _controller.addListener(_onTextChange);
   }
@@ -247,6 +262,7 @@ class _SearchFieldState extends State<_SearchField> {
       ..removeListener(_onTextChange)
       ..dispose();
     _focus.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -259,6 +275,34 @@ class _SearchFieldState extends State<_SearchField> {
   void _onTextChange() {
     // Typing un-chooses whatever was chosen: the rows underneath have changed.
     _disarm();
+    // A completed clause + space becomes a chip (or an `or` dissolves them).
+    if (_chips.handleTextChange()) {
+      setState(() {});
+    }
+    _scrollToTailIfAtEnd();
+  }
+
+  /// Keeps the tail of the field (where typing happens) in view when the chips
+  /// + editor outgrow the visible width.
+  void _scrollToTail() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) {
+        _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      }
+    });
+  }
+
+  void _scrollToTailIfAtEnd() {
+    final selection = _controller.selection;
+    if (selection.isCollapsed &&
+        selection.baseOffset >= _controller.text.length) {
+      _scrollToTail();
+    }
+  }
+
+  void _removeChip(int index) {
+    setState(() => _chips.removeChipAt(index));
+    _focus.requestFocus();
   }
 
   void _onFocusChange() {
@@ -336,6 +380,19 @@ class _SearchFieldState extends State<_SearchField> {
     if (event is! KeyDownEvent) {
       return KeyEventResult.ignored;
     }
+    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+      // Backspace at the very start of the text pops the last chip back into
+      // the editor to be corrected (there is nothing to the left to delete).
+      final selection = _controller.selection;
+      if (selection.isCollapsed &&
+          selection.baseOffset == 0 &&
+          _chips.popLastChip()) {
+        setState(() {});
+        _scrollToTail();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
       // Escape hides the popover (RawAutocomplete's DismissIntent) but cannot
       // tell this flag, and an armed Enter with no popover showing routes to a
@@ -377,19 +434,24 @@ class _SearchFieldState extends State<_SearchField> {
       _take(_rows[_highlighted.clamp(0, _rows.length - 1)]);
       return;
     }
-    _submit(value);
+    _submit();
   }
 
-  void _submit(String value) {
-    final query = value.trim();
+  void _submit() {
+    // The query is the chips plus the trailing text, serialized to one DSL
+    // string — the trailing text is included raw, so a clause the user typed
+    // but has not spaced into a chip still searches.
+    final query = _chips.query.trim();
     if (query.isEmpty) {
       return;
     }
-    // Resubmitting the query already on screen: go() to the same location
-    // is a no-op (the results cubit is keyed by query), so refresh the
-    // results in place instead — e.g. after an import or a load error.
+    // Resubmitting the query already on screen: go() to the same location is a
+    // no-op (the results cubit is keyed by query), so refresh the results in
+    // place instead — e.g. after an import or a load error. Compared against
+    // the canonical seed because the field may re-serialize an equivalent query
+    // with chips reordered to the front.
     final onRefresh = widget.onRefresh;
-    if (onRefresh != null && query == widget.initialQuery?.trim()) {
+    if (onRefresh != null && query == _seedQuery) {
       onRefresh();
       return;
     }
@@ -427,75 +489,53 @@ class _SearchFieldState extends State<_SearchField> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: Semantics(
-              label: 'Search recipes',
-              child: Focus(
-                canRequestFocus: false,
-                onKeyEvent: _onKey,
-                child: TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  textInputAction: TextInputAction.search,
-                  // NOT RawAutocomplete's onFieldSubmitted: it takes whatever
-                  // is highlighted, and nothing is chosen until _arrowed.
-                  onSubmitted: _onEnter,
-                  textAlignVertical: TextAlignVertical.center,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'Search recipes — try title:cake or tag:dessert',
-                    hintStyle: const TextStyle(
-                      color: SaltColors.muted,
-                      fontSize: 14,
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 11,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      size: 19,
-                      color: SaltColors.muted,
-                    ),
-                    // A help affordance next to the search action, both living
-                    // inside the field (replaces the old floating "?" button).
-                    suffixIcon: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Tooltip(
-                          message: 'Search syntax',
-                          child: FButton.icon(
-                            variant: FButtonVariant.ghost,
-                            size: FButtonSizeVariant.xs,
-                            semanticsLabel: 'Search syntax',
-                            onPress: () => showSearchHelp(context),
-                            child: const Icon(Icons.help_outline, size: 18),
-                          ),
-                        ),
-                        Tooltip(
-                          message: 'Search',
-                          child: FButton.icon(
-                            variant: FButtonVariant.ghost,
-                            size: FButtonSizeVariant.xs,
-                            semanticsLabel: 'Search',
-                            onPress: () => _submit(controller.text),
-                            // Keep the rose accent on the submit arrow.
-                            child: const Icon(
-                              Icons.arrow_forward,
-                              size: 18,
-                              color: SaltColors.rose,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    suffixIconConstraints: const BoxConstraints(
-                      minWidth: 0,
-                      minHeight: 0,
+            child: SearchChipBox(
+              chips: _chips.chips,
+              controller: controller,
+              focusNode: focusNode,
+              scrollController: _scroll,
+              onRemoveChip: _removeChip,
+              onKeyEvent: _onKey,
+              // NOT RawAutocomplete's onFieldSubmitted: it takes whatever is
+              // highlighted, and nothing is chosen until _arrowed.
+              onSubmitted: _onEnter,
+              semanticLabel: 'Search recipes',
+              hintText: 'Search recipes — try tag:dessert or calories:<400',
+              prefix: const Padding(
+                padding: EdgeInsets.only(left: 12, right: 8),
+                child: Icon(Icons.search, size: 19, color: SaltColors.muted),
+              ),
+              // A help affordance next to the search action, both living inside
+              // the field (replaces the old floating "?" button).
+              suffix: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Tooltip(
+                    message: 'Search syntax',
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      size: FButtonSizeVariant.xs,
+                      semanticsLabel: 'Search syntax',
+                      onPress: () => showSearchHelp(context),
+                      child: const Icon(Icons.help_outline, size: 18),
                     ),
                   ),
-                ),
+                  Tooltip(
+                    message: 'Search',
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      size: FButtonSizeVariant.xs,
+                      semanticsLabel: 'Search',
+                      onPress: _submit,
+                      // Keep the rose accent on the submit arrow.
+                      child: const Icon(
+                        Icons.arrow_forward,
+                        size: 18,
+                        color: SaltColors.rose,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -778,8 +818,11 @@ class _MobileSearchButton extends StatelessWidget {
     if (trimmed.isEmpty) {
       return;
     }
+    // Compared against the canonical seed: the dialog returns a re-serialized
+    // query (chips lifted to the front), which can differ character-for-
+    // character from the initial query while meaning the same search.
     final refresh = onRefresh;
-    if (refresh != null && trimmed == initialQuery?.trim()) {
+    if (refresh != null && trimmed == canonicalSearchQuery(initialQuery ?? '')) {
       refresh();
       return;
     }
@@ -815,15 +858,19 @@ class _MobileSearchDialog extends StatefulWidget {
 }
 
 class _MobileSearchDialogState extends State<_MobileSearchDialog> {
-  late final TextEditingController _controller = TextEditingController(
-    text: widget.initialQuery,
-  );
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focus = FocusNode();
+  final ScrollController _scroll = ScrollController();
+  late final SearchChipsController _chips = SearchChipsController(_controller);
   List<TagInfo> _tags = const [];
   List<SearchSuggestion> _rows = const [];
 
   @override
   void initState() {
     super.initState();
+    // Seed chips + text before wiring the listener so the fill doesn't trip
+    // chip conversion.
+    _chips.seed(widget.initialQuery);
     _controller.addListener(_recompute);
     _rows = _rowsFor(_controller.value);
     unawaited(_loadTags());
@@ -834,6 +881,8 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
     _controller
       ..removeListener(_recompute)
       ..dispose();
+    _focus.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -856,7 +905,19 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
   }
 
   void _recompute() {
+    // A completed clause + space becomes a chip (or an `or` dissolves them),
+    // then the rows follow the new trailing text.
+    _chips.handleTextChange();
     setState(() => _rows = _rowsFor(_controller.value));
+    _scrollToTail();
+  }
+
+  void _scrollToTail() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) {
+        _scroll.jumpTo(_scroll.position.maxScrollExtent);
+      }
+    });
   }
 
   List<SearchSuggestion> _rowsFor(TextEditingValue value) => suggestionsFor(
@@ -874,9 +935,32 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
     );
   }
 
+  void _removeChip(int index) {
+    setState(() => _chips.removeChipAt(index));
+    _focus.requestFocus();
+  }
+
+  /// Backspace at the start of the text pops the last chip back to text; the
+  /// dialog has no arrow-key machinery, so this is the only key it intercepts.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace) {
+      final selection = _controller.selection;
+      if (selection.isCollapsed &&
+          selection.baseOffset == 0 &&
+          _chips.popLastChip()) {
+        setState(() {});
+        _scrollToTail();
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
+  }
+
   // One handler for both onSubmitted (String) and onPressed (no arg): the
-  // optional positional makes it assignable to each.
-  void _submit([String? _]) => Navigator.of(context).pop(_controller.text);
+  // optional positional makes it assignable to each. Submits the serialized
+  // chips + text, not the raw controller text.
+  void _submit([String? _]) => Navigator.of(context).pop(_chips.query);
 
   @override
   Widget build(BuildContext context) {
@@ -908,14 +992,28 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Semantics(
-              label: 'Search recipes',
-              child: FTextField(
-                control: FTextFieldControl.managed(controller: _controller),
+            child: Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SaltColors.hairline),
+              ),
+              child: SearchChipBox(
+                chips: _chips.chips,
+                controller: _controller,
+                focusNode: _focus,
+                scrollController: _scroll,
+                onRemoveChip: _removeChip,
+                onKeyEvent: _onKey,
+                onSubmitted: _submit,
                 autofocus: true,
-                textInputAction: TextInputAction.search,
-                onSubmit: _submit,
-                hint: 'try title:cake or tag:dessert',
+                semanticLabel: 'Search recipes',
+                hintText: 'try tag:dessert or calories:<400',
+                prefix: const Padding(
+                  padding: EdgeInsets.only(left: 12, right: 8),
+                  child: Icon(Icons.search, size: 19, color: SaltColors.muted),
+                ),
               ),
             ),
           ),
