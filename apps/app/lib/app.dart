@@ -16,6 +16,7 @@ import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/auth/splash_view.dart';
+import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/tags/tag_styles_cubit.dart';
 import 'package:salt_app/router/app_router.dart';
 
@@ -43,6 +44,7 @@ class _SaltAppState extends State<SaltApp> {
   late final ImportRepository _importRepository;
   late final LogsRepository _logsRepository;
   late final TagStylesCubit _tagStylesCubit;
+  final EditorExitGuard _editorExitGuard = EditorExitGuard();
   late final GoRouter _router;
   StreamSubscription<AuthState>? _authSubscription;
 
@@ -68,7 +70,7 @@ class _SaltAppState extends State<SaltApp> {
         _tagStylesCubit.clear();
       }
     });
-    _router = buildRouter(_authCubit);
+    _router = buildRouter(_authCubit, _editorExitGuard);
   }
 
   @override
@@ -91,6 +93,7 @@ class _SaltAppState extends State<SaltApp> {
         RepositoryProvider.value(value: _nutritionRepository),
         RepositoryProvider.value(value: _importRepository),
         RepositoryProvider.value(value: _logsRepository),
+        RepositoryProvider.value(value: _editorExitGuard),
       ],
       child: MultiBlocProvider(
         providers: [

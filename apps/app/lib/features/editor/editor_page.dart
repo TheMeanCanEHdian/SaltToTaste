@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
@@ -13,6 +14,7 @@ import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
 import 'package:salt_app/features/editor/editor_cubit.dart';
+import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/paste_dialog.dart';
 
 /// The recipe editor (approved P5 design): raw-first ingredient rows with
@@ -76,12 +78,14 @@ class EditorPage extends StatelessWidget {
   }
 }
 
-Future<void> _confirmLeave(BuildContext context) async {
-  final state = context.read<EditorCubit>().state;
-  if (!state.dirty) {
-    _leave(context);
-    return;
-  }
+/// The discard-changes dialog. Returns true to leave (discard), false to stay.
+///
+/// Only the dialog — it does NOT navigate. Leaving is go_router's job: this is
+/// invoked from the editor's exit guard ([EditorExitGuard]), which the router's
+/// `onExit` consults, so returning true lets the pending navigation proceed and
+/// false cancels it. That single guard covers every way out — Back, Cancel,
+/// the browser Back button — so the confirmation can never be skipped.
+Future<bool> _confirmDiscard(BuildContext context) async {
   final leave = await showFDialog<bool>(
     context: context,
     builder: (context, _, animation) => FDialog(
@@ -128,13 +132,11 @@ Future<void> _confirmLeave(BuildContext context) async {
       ),
     ),
   );
-  if (leave ?? false) {
-    if (context.mounted) {
-      _leave(context);
-    }
-  }
+  return leave ?? false;
 }
 
+/// Leaves the editor. The exit guard (via `onExit`) intercepts this to confirm
+/// when there are unsaved changes, so callers navigate unconditionally.
 void _leave(BuildContext context) {
   final state = context.read<EditorCubit>().state;
   if (context.canPop()) {
@@ -144,88 +146,115 @@ void _leave(BuildContext context) {
   }
 }
 
-class _EditorScaffold extends StatelessWidget {
+class _EditorScaffold extends StatefulWidget {
   const _EditorScaffold();
+
+  @override
+  State<_EditorScaffold> createState() => _EditorScaffoldState();
+}
+
+class _EditorScaffoldState extends State<_EditorScaffold> {
+  late final EditorCubit _cubit;
+  late final EditorExitGuard _guard;
+  late final Future<bool> Function(BuildContext) _exitHandler;
+
+  @override
+  void initState() {
+    super.initState();
+    _cubit = context.read<EditorCubit>();
+    _guard = context.read<EditorExitGuard>();
+    // Consulted by the router's onExit (which runs above this BlocProvider, so
+    // it can't read the cubit itself). Confirm only when there is unsaved work
+    // left to lose — a saved or just-deleted editor leaves without a prompt.
+    _exitHandler = (ctx) async {
+      final state = _cubit.state;
+      if (state.deleted || !state.dirty) {
+        return true;
+      }
+      return _confirmDiscard(ctx);
+    };
+    _guard.install(_exitHandler);
+  }
+
+  @override
+  void dispose() {
+    _guard.remove(_exitHandler);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<EditorCubit>().state;
-    return PopScope(
-      // System/browser back gets the same discard confirmation as the
-      // in-app Back and Cancel buttons (best effort on web — a hard
-      // refresh can't be intercepted).
-      canPop: !state.dirty,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          _confirmLeave(context);
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: SaltColors.maroon,
-          foregroundColor: Colors.white,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: 'Back',
-            onPressed: () => _confirmLeave(context),
-          ),
-          title: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  state.isNew
-                      ? 'New recipe'
-                      : 'Editing · ${state.title.isEmpty ? '…' : state.title}',
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16.5),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: SaltColors.maroon,
+        foregroundColor: Colors.white,
+        // On web the browser Back button leaves the editor (guarded by
+        // onExit), so an in-app back control is redundant; keep it elsewhere.
+        automaticallyImplyLeading: false,
+        leading: kIsWeb
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Back',
+                onPressed: () => _leave(context),
+              ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                state.isNew
+                    ? 'New recipe'
+                    : 'Editing · ${state.title.isEmpty ? '…' : state.title}',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 16.5),
+              ),
+            ),
+            if (state.dirty) ...[
+              const SizedBox(width: 8),
+              const Tooltip(
+                message: 'Unsaved changes',
+                child: CircleAvatar(
+                  radius: 4,
+                  backgroundColor: Color(0xFFFFD28A),
                 ),
               ),
-              if (state.dirty) ...[
-                const SizedBox(width: 8),
-                const Tooltip(
-                  message: 'Unsaved changes',
-                  child: CircleAvatar(
-                    radius: 4,
-                    backgroundColor: Color(0xFFFFD28A),
-                  ),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 860),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: const [
-                          _BasicsCard(),
-                          SizedBox(height: 18),
-                          _StoryCard(),
-                          SizedBox(height: 18),
-                          _IngredientsCard(),
-                          SizedBox(height: 18),
-                          _DirectionsCard(),
-                          SizedBox(height: 18),
-                          _PhotosCard(),
-                          SizedBox(height: 18),
-                          _DangerCard(),
-                        ],
-                      ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 860),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: const [
+                        _BasicsCard(),
+                        SizedBox(height: 18),
+                        _StoryCard(),
+                        SizedBox(height: 18),
+                        _IngredientsCard(),
+                        SizedBox(height: 18),
+                        _DirectionsCard(),
+                        SizedBox(height: 18),
+                        _PhotosCard(),
+                        SizedBox(height: 18),
+                        _DangerCard(),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-            const _SaveBar(),
-          ],
-        ),
+          ),
+          const _SaveBar(),
+        ],
       ),
     );
   }
@@ -1831,7 +1860,9 @@ class _SaveBar extends StatelessWidget {
               FButton(
                 variant: FButtonVariant.outline,
                 mainAxisSize: MainAxisSize.min,
-                onPress: () => _confirmLeave(context),
+                // Navigate unconditionally; the route's onExit guard shows the
+                // discard confirmation when there are unsaved changes.
+                onPress: () => _leave(context),
                 child: const Text('Cancel'),
               ),
               const SizedBox(width: 8),

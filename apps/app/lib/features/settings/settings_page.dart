@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
@@ -24,18 +25,33 @@ enum SettingsTab {
   logs,
 }
 
+/// Tabs a non-admin (member) may see; everything else is admin-only.
+const Set<SettingsTab> _memberTabs = {SettingsTab.account, SettingsTab.tokens};
+
+/// The tab a `/settings#<fragment>` URL selects, restricted to what [isAdmin]
+/// can see. An unrecognised fragment — including an admin-only tab requested by
+/// a member — falls back to [SettingsTab.account].
+SettingsTab settingsTabForFragment(String fragment, {required bool isAdmin}) {
+  for (final tab in SettingsTab.values) {
+    if (tab.name == fragment) {
+      return isAdmin || _memberTabs.contains(tab)
+          ? tab
+          : SettingsTab.account;
+    }
+  }
+  return SettingsTab.account;
+}
+
 /// Settings shell (approved P3 design): left sidebar on wide screens,
 /// horizontal chips on narrow. Members see Account and API tokens; admins
 /// also see Users plus placeholders for later server tabs.
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key, this.tab = ''});
 
-  @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
-  SettingsTab _tab = SettingsTab.account;
+  /// The URL fragment that selects the active tab (`/settings#tags`). Empty or
+  /// unrecognised — including an admin-only tab requested by a member — falls
+  /// back to Account.
+  final String tab;
 
   static const _futureServerTabs = <String>[];
 
@@ -44,7 +60,10 @@ class _SettingsPageState extends State<SettingsPage> {
     final isAdmin = context.watch<AuthCubit>().user?.isAdmin ?? false;
     final wide =
         MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
-    final content = switch (_tab) {
+    // The active tab is derived from the URL fragment, restricted to the tabs
+    // this role can actually see; anything else falls back to Account.
+    final active = settingsTabForFragment(tab, isAdmin: isAdmin);
+    final content = switch (active) {
       SettingsTab.account => const AccountTab(),
       SettingsTab.users => const UsersTab(),
       SettingsTab.tokens => const TokensTab(),
@@ -78,7 +97,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(width: 230, child: _sidebar(isAdmin)),
+                        SizedBox(
+                          width: 230,
+                          child: _sidebar(context, isAdmin, active),
+                        ),
                         const VerticalDivider(
                           width: 1,
                           color: SaltColors.hairline,
@@ -94,7 +116,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _chips(isAdmin),
+                        _chips(context, isAdmin, active),
                         const Divider(height: 1, color: SaltColors.hairline),
                         Expanded(
                           child: SingleChildScrollView(
@@ -110,6 +132,13 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+
+  /// Selects [tab] by updating the URL fragment. `replace` (not push/go)
+  /// reuses the settings page in place — the tab swap is instant, no
+  /// transition, and the page's state is kept — while preserving the back
+  /// stack and making each tab linkable (`/settings#tags`).
+  void _select(BuildContext context, SettingsTab tab) =>
+      context.replace('/settings#${tab.name}');
 
   List<(SettingsTab, String)> _tabsFor(bool isAdmin) => [
     (SettingsTab.account, 'Account'),
@@ -128,7 +157,7 @@ class _SettingsPageState extends State<SettingsPage> {
     ],
   ];
 
-  Widget _sidebar(bool isAdmin) {
+  Widget _sidebar(BuildContext context, bool isAdmin, SettingsTab active) {
     return Container(
       color: const Color(0xFFFDFBF9),
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -139,16 +168,16 @@ class _SettingsPageState extends State<SettingsPage> {
           for (final (tab, label) in _tabsFor(isAdmin))
             _SideItem(
               label: label,
-              active: _tab == tab,
-              onTap: () => setState(() => _tab = tab),
+              active: active == tab,
+              onTap: () => _select(context, tab),
             ),
           if (isAdmin) ...[
             const _SideGroupLabel('Server'),
             for (final (tab, label) in _serverTabsFor(isAdmin))
               _SideItem(
                 label: label,
-                active: _tab == tab,
-                onTap: () => setState(() => _tab = tab),
+                active: active == tab,
+                onTap: () => _select(context, tab),
               ),
             for (final label in _futureServerTabs)
               _SideItem(label: label, comingSoon: true),
@@ -158,7 +187,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _chips(bool isAdmin) {
+  Widget _chips(BuildContext context, bool isAdmin, SettingsTab active) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.all(12),
@@ -172,9 +201,9 @@ class _SettingsPageState extends State<SettingsPage> {
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
                 label: Text(label),
-                selected: _tab == tab,
+                selected: active == tab,
                 selectedColor: SaltColors.chip,
-                onSelected: (_) => setState(() => _tab = tab),
+                onSelected: (_) => _select(context, tab),
               ),
             ),
         ],

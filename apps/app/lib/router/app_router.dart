@@ -10,6 +10,7 @@ import 'package:salt_app/features/auth/change_password_page.dart';
 import 'package:salt_app/features/auth/login_page.dart';
 import 'package:salt_app/features/auth/recover_page.dart';
 import 'package:salt_app/features/auth/setup_page.dart';
+import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/editor_page.dart';
 import 'package:salt_app/features/admin/recipe_review_page.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_page.dart';
@@ -100,7 +101,10 @@ class _AuthRefresh extends ChangeNotifier {
 /// The originally requested location survives the auth dance for the signed-out
 /// flow: a deep link visited while signed out is stashed and restored after
 /// login.
-GoRouter buildRouter(AuthCubit authCubit) {
+///
+/// [exitGuard] backs the editor routes' `onExit` — the discard-changes
+/// confirmation, which is the only hook the browser Back button reaches on web.
+GoRouter buildRouter(AuthCubit authCubit, EditorExitGuard exitGuard) {
   const authPaths = {'/login', '/setup', '/recover', '/change-password'};
   String? pendingLocation;
   return GoRouter(
@@ -177,6 +181,9 @@ GoRouter buildRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: '/new',
+        // Guards every exit (Back, Cancel, browser Back) with the discard
+        // confirmation — the editor installs the guard while mounted.
+        onExit: (context, state) => exitGuard.confirmExit(context),
         pageBuilder: (context, state) => _fadePage(state, const EditorPage()),
       ),
       GoRoute(
@@ -193,6 +200,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: '/r/:slug/edit',
+        onExit: (context, state) => exitGuard.confirmExit(context),
         pageBuilder: (context, state) =>
             _fadePage(state, EditorPage(slug: state.pathParameters['slug']!)),
       ),
@@ -205,7 +213,12 @@ GoRouter buildRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: '/settings',
-        pageBuilder: (context, state) => _fadePage(state, const SettingsPage()),
+        // The URL fragment (`/settings#tags`) selects the tab; passed in so a
+        // deep link opens straight to it. A fragment change is a same-page
+        // `replace`, so the pageKey (path-based) is unchanged and no transition
+        // runs — the tab just swaps.
+        pageBuilder: (context, state) =>
+            _fadePage(state, SettingsPage(tab: state.uri.fragment)),
       ),
       GoRoute(
         path: '/review',
