@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:salt_app/app.dart';
 import 'package:salt_app/core/widgets/salt_logo.dart';
@@ -29,5 +30,12 @@ Future<void> main() async {
   try {
     await SaltLogoGlyph.precache().timeout(const Duration(milliseconds: 600));
   } catch (_) {}
-  runApp(const SaltApp());
+  // Read the stored prefs (the list layout) before first paint so the choice
+  // is applied synchronously. Best-effort: a failure just means the in-memory
+  // default (grid) with no persistence this session.
+  SharedPreferences? prefs;
+  try {
+    prefs = await SharedPreferences.getInstance();
+  } catch (_) {}
+  runApp(SaltApp(prefs: prefs));
 }

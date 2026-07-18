@@ -17,9 +17,7 @@ class HomePage extends StatelessWidget {
           RecipeListCubit(context.read<RecipeRepository>())..load(),
       child: Scaffold(
         appBar: const SaltNavBar(),
-        body: RecipeGrid(
-          eyebrowBuilder: (state) => 'HOME · ${state.total} RECIPES',
-        ),
+        body: RecipeGrid(countLabel: (state) => '${state.total} RECIPES'),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/widgets/recipe_grid.dart';
@@ -24,7 +25,13 @@ class FavoritesPage extends StatelessWidget {
       child: Scaffold(
         appBar: const SaltNavBar(showBack: true),
         body: RecipeGrid(
-          eyebrowBuilder: (state) => 'MY FAVORITES · ${state.total}',
+          countLabel: (state) => '${state.total} RECIPES',
+          // Favorites reads like a filter on the library: count first, then a
+          // clearable pill whose ✕ returns to the whole library.
+          filter: RecipeListFilter(
+            label: 'My favorites',
+            onClear: () => context.go('/'),
+          ),
           emptyMessage:
               'No favorites yet — tap the heart on any recipe to keep it '
               'here.',

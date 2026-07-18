@@ -26,6 +26,9 @@ dependencies:
   # bytes to the platform (a file download on web, a share sheet elsewhere).
   pdf: ^3.13.0
   printing: ^5.15.0
+  # Persists the session's list-layout choice (grid/list) across reloads; on
+  # web this is backed by the browser's localStorage.
+  shared_preferences: ^2.3.0
   url_launcher: ^6.3.0
   salt_shared:
     path: ../../packages/salt_shared

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/widgets/recipe_grid.dart';
@@ -32,8 +33,13 @@ class SearchPage extends StatelessWidget {
             children: [
               Expanded(
                 child: RecipeGrid(
-                  eyebrowBuilder: (state) =>
-                      '${state.total} RESULTS · ${query.toUpperCase()}',
+                  countLabel: (state) => '${state.total} RESULTS',
+                  // The query rides as a clearable pill; ✕ returns to the
+                  // whole library.
+                  filter: RecipeListFilter(
+                    label: query,
+                    onClear: () => context.go('/'),
+                  ),
                 ),
               ),
             ],

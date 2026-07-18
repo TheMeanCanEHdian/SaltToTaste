@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/dio_client.dart';
@@ -17,6 +18,7 @@ import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/auth/splash_view.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
+import 'package:salt_app/features/recipes/list/recipe_layout_cubit.dart';
 import 'package:salt_app/features/tags/tag_styles_cubit.dart';
 import 'package:salt_app/router/app_router.dart';
 
@@ -28,7 +30,11 @@ bool _isResolving(AuthState state) =>
 /// Root widget: one shared HTTP client, repositories, the auth cubit, and
 /// the maroon-themed Forui/Material shell around the router.
 class SaltApp extends StatefulWidget {
-  const SaltApp({super.key});
+  const SaltApp({super.key, this.prefs});
+
+  /// Loaded preferences (list-layout choice). Null if unavailable — the app
+  /// then runs with in-memory defaults.
+  final SharedPreferences? prefs;
 
   @override
   State<SaltApp> createState() => _SaltAppState();
@@ -99,6 +105,9 @@ class _SaltAppState extends State<SaltApp> {
         providers: [
           BlocProvider.value(value: _authCubit),
           BlocProvider.value(value: _tagStylesCubit),
+          // List layout (grid/list), shared across the home, search, and
+          // favorites lists and persisted via prefs.
+          BlocProvider(create: (_) => RecipeLayoutCubit(widget.prefs)),
         ],
         child: MaterialApp.router(
           title: 'SaltToTaste',
