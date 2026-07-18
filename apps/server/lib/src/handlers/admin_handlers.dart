@@ -66,7 +66,10 @@ Future<Map<String, Object?>> logsHandler(
         );
   return {
     'items': [for (final entry in result.items) entry.toMap()],
-    'loggers': result.loggers,
+    // The dropdown lists ALL loggers in history (store.knownLoggers), not just
+    // those in this read's window — a tail poll would otherwise drop a quiet
+    // logger older than the 512 KiB window and make it unselectable.
+    'loggers': store.knownLoggers,
   };
 }
 

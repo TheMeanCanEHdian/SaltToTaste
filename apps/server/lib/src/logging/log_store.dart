@@ -82,6 +82,8 @@ class LogStore {
 
   StreamSubscription<LogRecord>? _subscription;
   bool _dirReady = false;
+  final Set<String> _knownLoggers = {};
+  bool _loggersSeeded = false;
 
   String get _path => '$directory/server.jsonl';
   String get _backupPath => '$_path.1';
@@ -92,6 +94,7 @@ class LogStore {
       return;
     }
     _ensureDir();
+    _seedKnownLoggers();
     _subscription?.cancel();
     _subscription = records.listen(add);
   }
@@ -104,6 +107,28 @@ class LogStore {
     _dirReady = true;
   }
 
+  /// One-off at boot: learn every logger already in the persisted history so
+  /// the viewer's dropdown lists loggers whose records predate this process OR
+  /// fall outside the Live-poll tail window. Kept fresh thereafter by [add].
+  void _seedKnownLoggers() {
+    if (_loggersSeeded) {
+      return;
+    }
+    _loggersSeeded = true;
+    _knownLoggers.addAll(
+      _scanLogFiles(
+        activePath: _path,
+        backupPath: _backupPath,
+        limit: 1,
+      ).loggers,
+    );
+  }
+
+  /// Every logger name that has appeared in the store — the FULL-history set
+  /// for the viewer's filter dropdown, independent of the tail window a Live
+  /// poll reads (a query's own `loggers` only covers the lines it scanned).
+  List<String> get knownLoggers => _knownLoggers.toList()..sort();
+
   /// Appends one record (redacted, request id lifted) to the active file, then
   /// rotates if it has grown past [maxBytes]. Writes are synchronous so a
   /// reader always sees complete lines and no flush lag.
@@ -111,6 +136,9 @@ class LogStore {
     if (maxBytes <= 0) {
       return;
     }
+    // Record the logger for the dropdown even if the write below fails — the
+    // logger IS active regardless of whether this line reached disk.
+    _knownLoggers.add(record.loggerName);
     final rid = _rid.firstMatch(record.message);
     final stripped = rid == null
         ? record.message

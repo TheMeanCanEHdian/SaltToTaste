@@ -330,6 +330,49 @@ void main() {
         contains('boot marker'),
       );
     });
+
+    test(
+      'dropdown lists loggers from full history, even a quiet old one',
+      () async {
+        // 'bootstrap' logged once, then > 512 KiB of http lines — bootstrap is
+        // outside the tail window a Live poll reads, but stays selectable.
+        final buffer = StringBuffer()
+          ..writeln(
+            jsonEncode(
+              const LogEntry(
+                time: '2020-01-01T00:00:00.000',
+                level: 'INFO',
+                logger: 'bootstrap',
+                message: 'boot',
+              ).toMap(),
+            ),
+          );
+        var i = 0;
+        while (buffer.length < 600 * 1024) {
+          buffer.writeln(
+            jsonEncode(
+              LogEntry(
+                time: '2026-01-01T00:00:00.000',
+                level: 'INFO',
+                logger: 'http',
+                message: 'padding $i',
+              ).toMap(),
+            ),
+          );
+          i++;
+        }
+        File('${dir.path}/server.jsonl').writeAsStringSync(buffer.toString());
+        final s = store();
+        // Boot seeds the known-logger set from history.
+        final controller = StreamController<LogRecord>.broadcast();
+        s.attach(controller.stream);
+        // A tail poll (fullScan:false) still lists the out-of-window logger.
+        final poll = await logsHandler(s, limit: 100);
+        expect(poll['loggers'], containsAll(<String>['bootstrap', 'http']));
+        await controller.close();
+        await s.dispose();
+      },
+    );
   });
 
   group('logsExportHandler', () {
