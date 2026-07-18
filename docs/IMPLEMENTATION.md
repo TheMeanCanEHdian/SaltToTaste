@@ -987,6 +987,49 @@ fallback.
   the exact pin is retained deliberately (pre-1.0, breaking changes can
   land in minor versions). No upgrade needed.
 
+## Admin pages (post-P8 backlog) — **done** (2026-07-17)
+
+Two admin-only pages beyond parity, both mockup-first:
+
+- **Recipe review** (profile-dropdown, admin only): a recipe DATA-QUALITY
+  report — NOT a security audit; the backlog's "audit" name was a misnomer.
+  Six checks in an extensible registry (no instructions; unparsed ingredients =
+  a quantity+unit line with no parsed amount; incomplete nutrition; no nutrition
+  data (separate category); extraction warnings; no servings) run over the whole
+  library. The server owns the check ids + labels + descriptions and ships them
+  in the DTO, so the app documents itself. `GET /api/v1/admin/recipe_review`;
+  422 on an unknown issue filter; whole-library counts, paginated item list.
+- **Logs viewer** (Settings → Server → Logs, admin only): a persistent,
+  file-backed store — one JSON line per record under `<dataDir>/logs/`, rotating
+  to a single `.1` at `LOG_MAX_BYTES` (default 4 MiB). Chosen over the initial
+  in-memory ring buffer (the user wanted comprehensive logs from a real store)
+  and over a DB table (avoids mid-transaction write contention); it's the same
+  stream stdout gets, persisted where the endpoint can read it. Secrets redacted
+  on ingest (defence-in-depth — the setup + recovery codes go straight to
+  stdout, never through the logger). `GET /api/v1/admin/logs` (+ `/export` text
+  download). The request logger now skips `/healthz` + the viewer's own poll
+  (self-referential flood) and stamps the proxy-aware client IP on the http line.
+
+### Admin-pages code review record (2026-07-17)
+
+Evidence-gated review (base `5cde892`, 4 lenses + 3 critics): the correctness,
+security and test-quality lenses found nothing; the two availability findings
+(one issue) and three critic gaps all traced to the #48 anti-pattern — heavy
+synchronous work on the single serving isolate — plus two robustness holes. All
+admin-only / post-auth. Fixed in `fc49517` + `596f7a3`:
+
+| area | issue | fix (measured) |
+|---|---|---|
+| Logs poll | `query()` re-parsed both full files every 3s Live poll | tail bound (512 KiB): **86ms → 11ms** |
+| Logs filter | a full-history search would reintroduce the block | off-isolate `queryFull` (`Isolate.run`): **86ms → 0.1ms** main-isolate; client sends `scan=full` only when a filter is active |
+| Recipe review | whole-library decode re-run per page/filter | memoized behind a DB fingerprint (recipe+nutrition counts, `max(updated_at)`) |
+| Log write | `add()` synced per record + no failure guard | dir created once; write wrapped (best-effort — never throws into the root zone) |
+| Cubit | `filter()` left the new chip over the old items on error | reverts to the pre-filter state |
+
+**Deferred:** the `/export` download still does a full *synchronous* read (a rare
+one-off; off-isolating it cleanly needs format-in-isolate or a large copy-back).
+See `.claude/DEFERRED.md`.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
