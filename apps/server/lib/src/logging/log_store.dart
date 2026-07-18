@@ -297,16 +297,25 @@ List<String> _tailLinesOf(File file, int? maxScanBytes) {
     if (maxScanBytes == null || length <= maxScanBytes) {
       return file.readAsLinesSync();
     }
+    // Read ONE byte before the window too. That lookback byte says whether the
+    // window began on a line boundary: if it's a newline, the window's first
+    // line is COMPLETE (keep it — drop only the lookback newline); otherwise
+    // the window sliced through a line and we drop that partial remainder (up
+    // to and including its terminating newline). `length > maxScanBytes` here,
+    // so the window start is >= 1 and the lookback never underflows.
+    final from = length - maxScanBytes - 1;
     final handle = file.openSync();
     try {
-      final bytes = (handle..setPositionSync(length - maxScanBytes)).readSync(
-        maxScanBytes,
-      );
+      final bytes = (handle..setPositionSync(from)).readSync(length - from);
       final text = utf8.decode(bytes, allowMalformed: true);
-      final firstBreak = text.indexOf('\n');
-      return const LineSplitter().convert(
-        firstBreak < 0 ? '' : text.substring(firstBreak + 1),
-      );
+      final String kept;
+      if (text.startsWith('\n')) {
+        kept = text.substring(1);
+      } else {
+        final firstBreak = text.indexOf('\n');
+        kept = firstBreak < 0 ? '' : text.substring(firstBreak + 1);
+      }
+      return const LineSplitter().convert(kept);
     } finally {
       handle.closeSync();
     }

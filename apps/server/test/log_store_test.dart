@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/handlers/admin_handlers.dart';
 import 'package:salt_server/src/logging/log_store.dart';
+import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
 LogRecord _rec(Level level, String logger, String message) =>
@@ -159,6 +160,40 @@ void main() {
       expect(s.query().items.map((e) => e.message), contains('msg 0'));
     });
 
+    test('tail read keeps a complete oldest line at the window boundary', () {
+      // Equal-length JSON lines, so a maxScanBytes that is an exact multiple of
+      // the line length lands the window start ON a line boundary — the case
+      // that used to drop that (complete, non-partial) boundary line.
+      final lines = [
+        for (var i = 0; i < 20; i++)
+          jsonEncode(
+            LogEntry(
+              time: '2026-01-01T00:00:00.000',
+              level: 'INFO',
+              logger: 'http',
+              message: 'row-${i.toString().padLeft(2, '0')}',
+            ).toMap(),
+          ),
+      ];
+      final lineLen = lines.first.length + 1; // + newline; all lines equal
+      File(
+        '${dir.path}/server.jsonl',
+      ).writeAsStringSync(lines.map((l) => '$l\n').join());
+      final s = store();
+      // A 5-line window starts exactly on a line boundary (byte 15*lineLen).
+      final got = s
+          .query(maxScanBytes: 5 * lineLen)
+          .items
+          .map((e) => e.message)
+          .toList();
+      expect(
+        got,
+        hasLength(5),
+        reason: 'the boundary line is kept, not dropped',
+      );
+      expect(got.last, 'row-15', reason: 'oldest line in the window survives');
+    });
+
     test(
       'queryFull reads the whole history off-isolate, not just the tail',
       () async {
@@ -247,20 +282,52 @@ void main() {
       expect(body['items']! as List, hasLength(3));
     });
 
-    test('fullScan reads the whole history, not just the tail', () async {
-      final s = store();
-      for (var i = 0; i < 60; i++) {
-        s.add(_rec(Level.INFO, 'http', 'msg $i'));
+    test('fullScan reaches a quiet logger the tail window misses', () async {
+      // A single old 'bootstrap' line, then > 512 KiB of recent http lines, so
+      // the marker is OUTSIDE the tail window but inside the full history. This
+      // distinguishes the two handler branches — a small seeded file where tail
+      // and full return the same rows would not.
+      final buffer = StringBuffer()
+        ..writeln(
+          jsonEncode(
+            const LogEntry(
+              time: '2020-01-01T00:00:00.000',
+              level: 'INFO',
+              logger: 'bootstrap',
+              message: 'boot marker',
+            ).toMap(),
+          ),
+        );
+      var i = 0;
+      while (buffer.length < 600 * 1024) {
+        buffer.writeln(
+          jsonEncode(
+            LogEntry(
+              time: '2026-01-01T00:00:00.000',
+              level: 'INFO',
+              logger: 'http',
+              message: 'padding line $i to push the marker past the tail',
+            ).toMap(),
+          ),
+        );
+        i++;
       }
-      final tail = await logsHandler(s, limit: 100);
-      final full = await logsHandler(s, limit: 100, fullScan: true);
-      // Both return the newest; only the full scan reaches the oldest lines
-      // here (the seeded file is small, so assert on behavior via a huge store
-      // is unnecessary — fullScan wires queryFull, covered in the store tests).
-      expect(tail['items']! as List, isNotEmpty);
+      File('${dir.path}/server.jsonl').writeAsStringSync(buffer.toString());
+      final s = store();
+
+      // The tail window (512 KiB) can't see the old bootstrap line...
+      final tail = await logsHandler(s, logger: 'bootstrap', limit: 100);
+      expect(tail['items']! as List, isEmpty, reason: 'tail excludes it');
+      // ...but the full scan reaches it — the whole reason fullScan exists.
+      final full = await logsHandler(
+        s,
+        logger: 'bootstrap',
+        limit: 100,
+        fullScan: true,
+      );
       expect(
         [for (final e in full['items']! as List) (e as Map)['message']],
-        contains('msg 0'),
+        contains('boot marker'),
       );
     });
   });
