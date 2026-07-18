@@ -40,6 +40,38 @@ SettingsTab settingsTabForFragment(String fragment, {required bool isAdmin}) {
   return SettingsTab.account;
 }
 
+/// Cross-fades the settings pane when the tab changes, matching the page
+/// transition (`_fadePage`: 180/140ms, easeOut). [contentKey] must differ per
+/// tab so [AnimatedSwitcher] treats each pane as a new child; it skips its FIRST
+/// child, so opening settings doesn't double-fade over the page's own fade.
+/// [reduceMotion] (the OS/browser preference) collapses it to an instant swap.
+///
+/// Top-level and reused by [SettingsPage.build] AND its test on purpose: the
+/// test must drive THIS builder, not a copy — a copy is exactly how the page
+/// fade once shipped dead (see router_transition_test).
+Widget settingsTabTransition({
+  required bool reduceMotion,
+  required Key contentKey,
+  required Widget child,
+}) {
+  return AnimatedSwitcher(
+    duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 180),
+    reverseDuration: reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 140),
+    switchInCurve: Curves.easeOut,
+    switchOutCurve: Curves.easeOut,
+    // Stack the panes top-left (they are top-aligned content); the default
+    // AnimatedSwitcher layout centres, which would make a shorter/taller pane
+    // hop during the fade.
+    layoutBuilder: (current, previous) => Stack(
+      alignment: Alignment.topLeft,
+      children: [...previous, if (current != null) current],
+    ),
+    child: KeyedSubtree(key: contentKey, child: child),
+  );
+}
+
 /// Settings shell (approved P3 design): left sidebar on wide screens,
 /// horizontal chips on narrow. Members see Account and API tokens; admins
 /// also see Users plus placeholders for later server tabs.
@@ -71,6 +103,12 @@ class SettingsPage extends StatelessWidget {
       SettingsTab.import => const ImportTab(),
       SettingsTab.logs => const LogsTab(),
     };
+    // Cross-fade the pane when the tab changes, matching the page transition.
+    final tabView = settingsTabTransition(
+      reduceMotion: MediaQuery.disableAnimationsOf(context),
+      contentKey: ValueKey(active),
+      child: content,
+    );
 
     return Scaffold(
       appBar: const SaltNavBar(showBack: true),
@@ -106,7 +144,7 @@ class SettingsPage extends StatelessWidget {
                         Expanded(
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.all(28),
-                            child: content,
+                            child: tabView,
                           ),
                         ),
                       ],
@@ -119,7 +157,7 @@ class SettingsPage extends StatelessWidget {
                         Expanded(
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.all(18),
-                            child: content,
+                            child: tabView,
                           ),
                         ),
                       ],
