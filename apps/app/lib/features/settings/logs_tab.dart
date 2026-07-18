@@ -11,8 +11,8 @@ import 'package:salt_app/core/api/recipe_repository.dart'
 import 'package:salt_app/core/theme/salt_theme.dart';
 
 /// Settings → Server → Logs (admin): a tail of recent server log records from
-/// the in-memory buffer. Live polls for new records; secrets are redacted
-/// server-side.
+/// the persisted, rotating log store (survives restarts). Live polls for new
+/// records; secrets are redacted server-side.
 class LogsTab extends StatefulWidget {
   const LogsTab({super.key});
 
@@ -98,8 +98,9 @@ class _LogsTabState extends State<LogsTab> {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Recent server activity from every logger. Live streams new records; '
-          'the request id ties a request together. Secrets are redacted.',
+          'Recent server activity from every logger, persisted across '
+          'restarts. Live streams new records; the request id ties a request '
+          'together. Secrets are redacted.',
           style: TextStyle(fontSize: 13.5, color: SaltColors.muted),
         ),
         const SizedBox(height: 16),
@@ -117,8 +118,9 @@ class _LogsTabState extends State<LogsTab> {
         if (page != null) ...[
           const SizedBox(height: 10),
           Text(
-            'Showing ${page.items.length} of up to ${page.capacity} buffered '
-            'records — in memory, cleared on restart.',
+            'Showing ${page.items.length} record'
+            '${page.items.length == 1 ? '' : 's'} from the persisted log — '
+            'it survives restarts. Full output also goes to the container logs.',
             style: const TextStyle(fontSize: 12, color: SaltColors.muted),
           ),
         ],

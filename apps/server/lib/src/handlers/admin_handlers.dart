@@ -1,6 +1,6 @@
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
-import 'package:salt_server/src/logging/log_buffer.dart';
+import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/services/recipe_health.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -30,29 +30,28 @@ Map<String, Object?> recipeReviewHandler(
   return report.toMap();
 }
 
-/// The JSON body of `GET /api/v1/admin/logs`: recent buffered log records
-/// (newest first, secrets already redacted) plus the buffer capacity and the
-/// distinct logger names for the viewer's source filter.
+/// The JSON body of `GET /api/v1/admin/logs`: recent persisted log records
+/// (newest first, secrets already redacted) plus the distinct logger names for
+/// the viewer's source filter.
 ///
 /// [level] shows that severity bucket and above; [logger] filters to one
 /// source; [query] is a message/request-id substring; [limit] caps the count.
 Map<String, Object?> logsHandler(
-  LogBuffer buffer, {
+  LogStore store, {
   required int limit,
   String? level,
   String? logger,
   String? query,
 }) {
   LogEntryMapper.ensureInitialized();
-  final entries = buffer.entries(
+  final result = store.query(
     minLevel: level,
     logger: logger,
     query: query,
     limit: limit,
   );
   return {
-    'items': [for (final entry in entries) entry.toMap()],
-    'capacity': buffer.capacity,
-    'loggers': buffer.loggers,
+    'items': [for (final entry in result.items) entry.toMap()],
+    'loggers': result.loggers,
   };
 }

@@ -17,5 +17,5 @@ Handler middleware(Handler handler) => buildAppMiddleware(
   // so reading the getter eagerly here would freeze the InlineSearchService
   // fallback into the provider and never use the isolate pool (#48 review).
   searchService: () => searchService,
-  logBuffer: logBuffer,
+  logStore: logStore,
 );

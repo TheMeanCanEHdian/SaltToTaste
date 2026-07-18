@@ -180,7 +180,7 @@ class ServerConfig {
     this.apiTokenRetentionDays = defaultApiTokenRetentionDays,
     this.connectionIdleTimeoutSeconds = defaultConnectionIdleTimeoutSeconds,
     this.searchWorkerIsolates = defaultSearchWorkerIsolates,
-    this.logBufferSize = defaultLogBufferSize,
+    this.logMaxBytes = defaultLogMaxBytes,
   }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
@@ -242,9 +242,10 @@ class ServerConfig {
   ///   attacker can accumulate. It also caps idle keep-alive between requests,
   ///   so keep it above the fronting proxy's keep-alive. An invalid value falls
   ///   back to the default.
-  /// * `LOG_BUFFER_SIZE` — how many recent log records the admin log viewer
-  ///   keeps in memory (default 1000; `0` disables it). In-memory only, cleared
-  ///   on restart. An invalid value falls back to the default.
+  /// * `LOG_MAX_BYTES` — size the admin log viewer's active file grows to
+  ///   before it rotates (default 4 MiB; `0` disables logging to the store).
+  ///   One rotation generation is kept, so on-disk history is up to ~2×. An
+  ///   invalid value falls back to the default.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -288,9 +289,9 @@ class ServerConfig {
         env['SEARCH_WORKER_ISOLATES'],
         defaultSearchWorkerIsolates,
       ),
-      logBufferSize: _parseNonNegativeInt(
-        env['LOG_BUFFER_SIZE'],
-        defaultLogBufferSize,
+      logMaxBytes: _parseNonNegativeInt(
+        env['LOG_MAX_BYTES'],
+        defaultLogMaxBytes,
       ),
     );
     Directory(config.libraryDir).createSync(recursive: true);
@@ -353,8 +354,9 @@ class ServerConfig {
   /// isolate; raise it for more concurrent-search throughput.
   static const int defaultSearchWorkerIsolates = 1;
 
-  /// Default in-memory log ring-buffer size (see [logBufferSize]).
-  static const int defaultLogBufferSize = 1000;
+  /// Default active-file rotation size for the admin log store (see
+  /// [logMaxBytes]) — 4 MiB, with one rotation generation kept (~8 MiB total).
+  static const int defaultLogMaxBytes = 4 * 1024 * 1024;
 
   /// Text searches (`GET /recipes?q=`) allowed per minute per user; `0`
   /// disables the limit. Ranked FTS runs on the background isolate pool
@@ -376,9 +378,10 @@ class ServerConfig {
   /// SQLite connection, so a heavy `bm25` query no longer blocks the loop.
   final int searchWorkerIsolates;
 
-  /// How many recent log records the admin log viewer keeps in memory; `0`
-  /// disables the buffer (and the log endpoint returns nothing). Not persisted.
-  final int logBufferSize;
+  /// Size the admin log store's active file grows to before it rotates to a
+  /// single `.1` generation; `0` disables logging to the store (and the log
+  /// endpoint returns nothing). Persisted under `<dataDir>/logs/`.
+  final int logMaxBytes;
 
   /// The idle timeout as a [Duration], or `null` when disabled
   /// ([connectionIdleTimeoutSeconds] `<= 0`) — matching
@@ -407,6 +410,9 @@ class ServerConfig {
 
   /// Directory holding the exported canonical YAML recipe library.
   String get libraryDir => '$dataDir/library';
+
+  /// Directory holding the admin log viewer's rotated JSONL files.
+  String get logDir => '$dataDir/logs';
 
   /// Allowlist root for bulk imports: only source folders that
   /// canonicalize inside this directory may be imported via the API.

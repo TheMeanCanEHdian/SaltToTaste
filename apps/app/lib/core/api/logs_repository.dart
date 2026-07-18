@@ -3,17 +3,12 @@ import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart' show apiGuard;
 
-/// A page of buffered server log records plus the buffer's capacity and the
-/// distinct logger names (for the source filter).
+/// A page of persisted server log records plus the distinct logger names
+/// present in the store (for the source filter).
 class LogsPage {
-  const LogsPage({
-    required this.items,
-    required this.capacity,
-    required this.loggers,
-  });
+  const LogsPage({required this.items, required this.loggers});
 
   final List<LogEntry> items;
-  final int capacity;
   final List<String> loggers;
 }
 
@@ -48,7 +43,6 @@ class LogsRepository {
           for (final item in data['items'] as List<dynamic>)
             LogEntryMapper.fromMap(item as Map<String, dynamic>),
         ],
-        capacity: (data['capacity'] as num).toInt(),
         loggers: [
           for (final name in data['loggers'] as List<dynamic>) name as String,
         ],

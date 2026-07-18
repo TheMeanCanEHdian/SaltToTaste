@@ -10,7 +10,7 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
-import 'package:salt_server/src/logging/log_buffer.dart';
+import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
@@ -98,7 +98,7 @@ void main() {
       nutritionProvider: _UnusedNutrition(),
       searchRateLimiter: RequestRateLimiter(),
       searchService: () => InlineSearchService(database),
-      logBuffer: LogBuffer(),
+      logStore: LogStore(directory: '${tempDir.path}/logs'),
       indexPath: '${tempDir.path}/index.html',
     );
     server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
@@ -455,21 +455,21 @@ void main() {
       expect(cfgFor('-5').connectionIdleTimeout, const Duration(seconds: 75));
     });
 
-    test('LOG_BUFFER_SIZE parses; an invalid value keeps the default', () {
+    test('LOG_MAX_BYTES parses; an invalid value keeps the default', () {
       final dir = Directory.systemTemp.createTempSync('salt_cfg_log_');
       addTearDown(() => dir.deleteSync(recursive: true));
-      int sizeFor(String? raw) => ServerConfig.fromEnvironment(
+      int bytesFor(String? raw) => ServerConfig.fromEnvironment(
         environment: {
           'DATA_DIR': dir.path,
-          if (raw != null) 'LOG_BUFFER_SIZE': raw,
+          if (raw != null) 'LOG_MAX_BYTES': raw,
         },
-      ).logBufferSize;
+      ).logMaxBytes;
 
-      expect(sizeFor(null), ServerConfig.defaultLogBufferSize);
-      expect(sizeFor('250'), 250);
-      expect(sizeFor('0'), 0, reason: '0 disables the buffer');
-      expect(sizeFor('nope'), ServerConfig.defaultLogBufferSize);
-      expect(sizeFor('-5'), ServerConfig.defaultLogBufferSize);
+      expect(bytesFor(null), ServerConfig.defaultLogMaxBytes);
+      expect(bytesFor('1048576'), 1048576);
+      expect(bytesFor('0'), 0, reason: '0 disables the store');
+      expect(bytesFor('nope'), ServerConfig.defaultLogMaxBytes);
+      expect(bytesFor('-5'), ServerConfig.defaultLogMaxBytes);
     });
   });
 }

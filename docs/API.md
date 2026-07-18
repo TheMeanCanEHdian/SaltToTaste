@@ -248,15 +248,19 @@ registry, so categories can be added without an API shape change.
 
 ### `GET /api/v1/admin/logs?level=&logger=&q=&limit=` (admin)
 
-Recent server log records from an in-memory ring buffer (newest first):
-`{items: [{time, level, logger, message, request_id}], capacity, loggers}`.
+Recent server log records from the persistent log store (newest first):
+`{items: [{time, level, logger, message, request_id}], loggers}`.
 `level` shows that severity bucket (`DEBUG` `INFO` `WARN` `ERROR`) and above;
 `logger` filters to one source; `q` is a message/request-id substring; `limit`
-caps the count (default 200, max 1000). The buffer holds the last
-`LOG_BUFFER_SIZE` records (default 1000) across all loggers and is **not
-persisted** — a restart clears it. Secrets are redacted on the way in (the
-first-boot setup code and recovery code are the only secrets ever logged; both
-are masked), so the endpoint cannot hand out a live code.
+caps the count (default 200, max 1000). Records are appended (one JSON line
+each) to `<dataDir>/logs/server.jsonl`, which **survives restarts** and rotates
+to a single `.1` backup once it passes `LOG_MAX_BYTES` (default 4 MiB; `0`
+disables the store) — so the viewer shows history from before the current
+process. `loggers` lists the distinct loggers present in the store, for the
+filter. This is the same stream the process prints to stdout (`docker logs`),
+persisted where the endpoint can read it. Secrets are redacted on the way in
+(the first-boot setup code and recovery code are the only secrets ever logged;
+both are masked), so the endpoint cannot hand out a live code.
 
 ### `POST /api/v1/library/rescan` (admin, full scope)
 
@@ -463,8 +467,8 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   `0` disables — bounds slowloris half-open sockets),
   `SEARCH_WORKER_ISOLATES` (background isolates running the ranked search off
   the serving isolate, default 1; `0` runs it inline),
-  `LOG_BUFFER_SIZE` (admin log-viewer buffer, default 1000; `0` disables),
-  `TZ` (container tzdata),
+  `LOG_MAX_BYTES` (admin log-store rotation size under `<dataDir>/logs/`,
+  default 4 MiB; `0` disables), `TZ` (container tzdata),
   plus the dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
   requests (bounded, force-closed only past the bound), then closes SQLite

@@ -7,7 +7,7 @@ import 'package:salt_server/src/auth/setup_code.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
-import 'package:salt_server/src/logging/log_buffer.dart';
+import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/nutrition/fdc_provider.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
@@ -27,7 +27,7 @@ SaltDatabase? _database;
 AuthRuntime? _authRuntime;
 RequestRateLimiter? _searchRateLimiter;
 SearchService? _searchService;
-LogBuffer? _logBuffer;
+LogStore? _logStore;
 NutritionProvider? _nutritionProvider;
 NutritionProvider? _bulkNutritionProvider;
 TokenBucket? _fdcBucket;
@@ -70,11 +70,15 @@ AuthRuntime get authRuntime => _authRuntime ??= initAuthRuntime(
 RequestRateLimiter get searchRateLimiter => _searchRateLimiter ??=
     RequestRateLimiter(maxRequests: serverConfig.searchRateLimit);
 
-/// The process-wide log ring buffer feeding the admin log viewer, sized from
-/// `LOG_BUFFER_SIZE`. [initServer] attaches it to the root logger at boot so it
-/// captures startup records (secrets redacted on the way in).
-LogBuffer get logBuffer =>
-    _logBuffer ??= LogBuffer(capacity: serverConfig.logBufferSize);
+/// The process-wide, file-backed log store feeding the admin log viewer,
+/// persisted under `<dataDir>/logs/` and rotated at `LOG_MAX_BYTES`.
+/// [initServer] attaches it to the root logger at boot so it captures startup
+/// records (secrets redacted on the way in). It survives restarts, so the
+/// viewer shows history from before the current process.
+LogStore get logStore => _logStore ??= LogStore(
+  directory: serverConfig.logDir,
+  maxBytes: serverConfig.logMaxBytes,
+);
 
 /// The process-wide search service (#48). [initSearchService] replaces this
 /// with the background-isolate pool at startup; until then (and in tests) it
@@ -239,9 +243,9 @@ NutritionProvider get bulkNutritionProvider =>
 /// backfill, and starts the daily backup timer. Call once at startup.
 ServerConfig initServer() {
   final config = serverConfig;
-  // Start buffering log records now, before initAuthRuntime emits the setup
+  // Start persisting log records now, before initAuthRuntime emits the setup
   // code, so the viewer has boot context (the code is redacted on the way in).
-  logBuffer.attach(Logger.root.onRecord);
+  logStore.attach(Logger.root.onRecord);
   _authRuntime ??= initAuthRuntime(config: config, database: saltDatabase);
   // Jobs only run inside this process; `running` rows at boot are
   // orphans from a restart and would poll as running forever.
@@ -277,8 +281,8 @@ ServerConfig initServer() {
 void disposeServer() {
   _backupTimer?.cancel();
   _backupTimer = null;
-  unawaited(_logBuffer?.dispose());
-  _logBuffer = null;
+  unawaited(_logStore?.dispose());
+  _logStore = null;
   _database?.dispose();
   _database = null;
 }
