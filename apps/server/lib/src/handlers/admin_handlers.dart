@@ -55,3 +55,49 @@ Map<String, Object?> logsHandler(
     'loggers': result.loggers,
   };
 }
+
+/// The download body + filename of `GET /api/v1/admin/logs/export`: the full
+/// matching log (no row cap, honoring [level]/[logger]/[query]) as one text
+/// line per record, oldest-first — the way a log file conventionally reads.
+///
+/// Secrets are already redacted in the store, so this is safe to hand out. The
+/// filename carries a UTC timestamp so repeated downloads don't collide.
+({String filename, String body}) logsExportHandler(
+  LogStore store, {
+  String? level,
+  String? logger,
+  String? query,
+}) {
+  // No row cap on an explicit export — read everything that matches.
+  final result = store.query(
+    minLevel: level,
+    logger: logger,
+    query: query,
+    limit: 1 << 30,
+  );
+  final buffer = StringBuffer();
+  // query() is newest-first; a downloaded log reads oldest-first.
+  for (final entry in result.items.reversed) {
+    buffer
+      ..write(entry.time)
+      ..write(' ')
+      ..write(entry.level)
+      ..write(' ')
+      ..write(entry.logger)
+      ..write(' ')
+      ..write(entry.message);
+    if (entry.requestId != null) {
+      buffer
+        ..write(' rid=')
+        ..write(entry.requestId);
+    }
+    buffer.writeln();
+  }
+  final stamp = DateTime.now()
+      .toUtc()
+      .toIso8601String()
+      .split('.')
+      .first
+      .replaceAll(':', '');
+  return (filename: 'salttotaste-logs-$stamp.log', body: buffer.toString());
+}

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:salt_shared/salt_shared.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:salt_app/core/api/logs_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -82,19 +83,55 @@ class _LogsTabState extends State<LogsTab> {
     }
   }
 
+  /// Opens the full persisted log (honoring the active filters, not the row
+  /// cap) as a download. The server sets a `Content-Disposition` filename, so
+  /// launching the URL saves a file rather than navigating.
+  Future<void> _download() async {
+    final url = context.read<LogsRepository>().downloadUrl(
+      level: _level,
+      logger: _logger,
+      query: _query,
+    );
+    var ok = false;
+    try {
+      ok = await launchUrl(url, mode: LaunchMode.platformDefault);
+    } on Exception {
+      ok = false;
+    }
+    if (!ok && mounted) {
+      showFToast(
+        context: context,
+        title: const Text("Couldn't start the download."),
+        variant: FToastVariant.destructive,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final page = _page;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Logs',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: SaltColors.ink,
-          ),
+        Row(
+          children: [
+            const Text(
+              'Logs',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: SaltColors.ink,
+              ),
+            ),
+            const SizedBox(width: 6),
+            IconButton(
+              icon: const Icon(Icons.download_outlined, size: 20),
+              color: SaltColors.muted,
+              tooltip: 'Download the log (matches the current filters)',
+              visualDensity: VisualDensity.compact,
+              onPressed: _download,
+            ),
+          ],
         ),
         const SizedBox(height: 4),
         const Text(
@@ -129,25 +166,23 @@ class _LogsTabState extends State<LogsTab> {
   }
 
   Widget _toolbar(LogsPage? page) {
-    // Every control is 40px tall so the heights line up. On a wide pane they
-    // sit in one row with the search field flexing to fill the gap; only when
-    // the pane is genuinely narrow (mobile) do they wrap.
-    final level = SizedBox(height: 40, child: _levelSegmented());
-    final logger = SizedBox(
-      height: 40,
-      width: 158,
-      child: FSelect<String>(
-        items: {
-          'All loggers': '',
-          for (final name in page?.loggers ?? const <String>[]) name: name,
+    // The controls are built bare (no forced height). On a wide pane an
+    // IntrinsicHeight + stretch row makes every control adopt the same height
+    // (the tallest control's), so the fields, segmented, toggle, and button all
+    // line up; the search field flexes to fill the gap. Only when the pane is
+    // genuinely narrow (mobile) do they wrap.
+    final level = _levelSegmented();
+    final logger = FSelect<String>(
+      items: {
+        'All loggers': '',
+        for (final name in page?.loggers ?? const <String>[]) name: name,
+      },
+      control: FSelectControl.lifted(
+        value: _logger,
+        onChange: (value) {
+          setState(() => _logger = value ?? '');
+          _reload();
         },
-        control: FSelectControl.lifted(
-          value: _logger,
-          onChange: (value) {
-            setState(() => _logger = value ?? '');
-            _reload();
-          },
-        ),
       ),
     );
     final search = FTextField(
@@ -168,13 +203,10 @@ class _LogsTabState extends State<LogsTab> {
         _reload();
       },
     );
-    final live = SizedBox(height: 40, child: _liveToggle());
-    final refresh = SizedBox(
-      height: 40,
-      child: FButton.icon(
-        onPress: _reload,
-        child: const Icon(Icons.refresh, size: 18),
-      ),
+    final live = _liveToggle();
+    final refresh = FButton.icon(
+      onPress: _reload,
+      child: const Icon(Icons.refresh, size: 18),
     );
 
     return LayoutBuilder(
@@ -182,18 +214,21 @@ class _LogsTabState extends State<LogsTab> {
         // Below this the fixed controls leave the search box too cramped, so
         // wrap instead.
         if (constraints.maxWidth >= 720) {
-          return Row(
-            children: [
-              level,
-              const SizedBox(width: 10),
-              logger,
-              const SizedBox(width: 10),
-              Expanded(child: SizedBox(height: 40, child: search)),
-              const SizedBox(width: 10),
-              live,
-              const SizedBox(width: 10),
-              refresh,
-            ],
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                level,
+                const SizedBox(width: 10),
+                SizedBox(width: 158, child: logger),
+                const SizedBox(width: 10),
+                Expanded(child: search),
+                const SizedBox(width: 10),
+                live,
+                const SizedBox(width: 10),
+                refresh,
+              ],
+            ),
           );
         }
         return Wrap(
@@ -201,11 +236,11 @@ class _LogsTabState extends State<LogsTab> {
           runSpacing: 10,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            level,
-            logger,
-            SizedBox(height: 40, width: 210, child: search),
-            live,
-            refresh,
+            SizedBox(height: 38, child: level),
+            SizedBox(width: 158, height: 38, child: logger),
+            SizedBox(width: 210, height: 38, child: search),
+            SizedBox(height: 38, child: live),
+            SizedBox(height: 38, child: refresh),
           ],
         );
       },

@@ -262,6 +262,15 @@ persisted where the endpoint can read it. Secrets are redacted on the way in
 (the first-boot setup code and recovery code are the only secrets ever logged;
 both are masked), so the endpoint cannot hand out a live code.
 
+### `GET /api/v1/admin/logs/export?level=&logger=&q=` (admin)
+
+The full matching log as a downloadable **text** file (`Content-Disposition:
+attachment; filename="salttotaste-logs-<utc-timestamp>.log"`). Same `level` /
+`logger` / `q` filters as the viewer, but **no row cap** — every matching record
+is emitted, one line per record (`<time> <LEVEL> <logger> <message> [rid=<id>]`),
+**oldest-first**. Records are already redacted in the store. The web app opens
+this via `launchUrl`, so the browser saves the file rather than navigating.
+
 ### `POST /api/v1/library/rescan` (admin, full scope)
 
 Reconcile the YAML library with the database now: a cleanly hand-edited

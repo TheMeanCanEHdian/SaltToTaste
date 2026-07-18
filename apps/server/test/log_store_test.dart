@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:logging/logging.dart';
@@ -165,6 +166,47 @@ void main() {
         s.add(_rec(Level.INFO, 'http', '$i'));
       }
       expect(logsHandler(s, limit: 3)['items']! as List, hasLength(3));
+    });
+  });
+
+  group('logsExportHandler', () {
+    test('renders every record oldest-first with a .log filename', () {
+      final s = store()
+        ..add(_rec(Level.INFO, 'http', 'first'))
+        ..add(_rec(Level.WARNING, 'auth', 'second'));
+      final export = logsExportHandler(s);
+      final lines = const LineSplitter().convert(export.body);
+      expect(lines, hasLength(2));
+      expect(lines.first, contains('INFO http first'));
+      expect(lines.last, contains('WARN auth second'));
+      expect(lines.first.indexOf('first'), isNonNegative);
+      // Oldest first: 'first' precedes 'second'.
+      expect(
+        export.body.indexOf('first'),
+        lessThan(export.body.indexOf('second')),
+      );
+      expect(export.filename, startsWith('salttotaste-logs-'));
+      expect(export.filename, endsWith('.log'));
+      expect(export.filename, isNot(contains(':')));
+    });
+
+    test('appends the request id and honors filters, with no row cap', () {
+      final s = store();
+      for (var i = 0; i < 500; i++) {
+        s.add(_rec(Level.INFO, 'http', 'req $i rid=00000000000000${i % 10}0'));
+      }
+      s.add(_rec(Level.SEVERE, 'nutrition', 'boom'));
+
+      // No 300-row cap on export: all 500 http lines come through.
+      final all = logsExportHandler(s, logger: 'http');
+      expect(const LineSplitter().convert(all.body), hasLength(500));
+      expect(all.body, contains('rid=0000000000000000'));
+
+      // Level filter narrows to the one error.
+      final errors = logsExportHandler(s, level: 'ERROR');
+      final errorLines = const LineSplitter().convert(errors.body);
+      expect(errorLines, hasLength(1));
+      expect(errorLines.single, contains('ERROR nutrition boom'));
     });
   });
 }

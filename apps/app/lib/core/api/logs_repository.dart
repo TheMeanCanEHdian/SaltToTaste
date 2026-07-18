@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:salt_shared/salt_shared.dart';
 
-import 'package:salt_app/core/api/recipe_repository.dart' show apiGuard;
+import 'package:salt_app/core/api/recipe_repository.dart'
+    show absoluteApiUrl, apiGuard;
 
 /// A page of persisted server log records plus the distinct logger names
 /// present in the store (for the source filter).
@@ -48,5 +49,18 @@ class LogsRepository {
         ],
       );
     });
+  }
+
+  /// Absolute URL of the log export (`GET /api/v1/admin/logs/export`) with the
+  /// active filters, for `launchUrl`. The server streams the full matching log
+  /// (no row cap) as a text file via `Content-Disposition`.
+  Uri downloadUrl({String? level, String? logger, String? query}) {
+    final params = <String, String>{
+      if (level != null && level.isNotEmpty) 'level': level,
+      if (logger != null && logger.isNotEmpty) 'logger': logger,
+      if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
+    };
+    final suffix = params.isEmpty ? '' : '?${Uri(queryParameters: params).query}';
+    return absoluteApiUrl('/api/v1/admin/logs/export$suffix');
   }
 }
