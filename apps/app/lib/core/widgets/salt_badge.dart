@@ -37,6 +37,10 @@ enum SaltBadgeTone {
 /// mobile layout); FBadge shrink-wraps, so that one variant renders an
 /// equivalent box rather than an FBadge.
 ///
+/// Pass [onDismiss] to make it a removable-filter chip: the label gains a
+/// trailing ✕ button (its own tap target) that runs [onDismiss] — the list
+/// views' active-filter pills (the search query, "My favorites").
+///
 /// Still NOT used for `TagChip` (per-tag admin colours), the numeric nav count
 /// badge, or the photo-tile overlay badges — those carry behaviour/among a
 /// palette this semantic API doesn't model.
@@ -49,7 +53,13 @@ class SaltBadge extends StatelessWidget {
     this.onTap,
     this.semanticHint,
     this.expand = false,
-  }) : assert(!expand || onTap != null, 'expand only applies to a tappable badge');
+    this.onDismiss,
+    this.dismissHint,
+  }) : assert(!expand || onTap != null, 'expand only applies to a tappable badge'),
+       assert(
+         onTap == null || onDismiss == null,
+         'a badge is a navigation button (onTap) or a removable chip (onDismiss), not both',
+       );
 
   final String label;
   final SaltBadgeTone tone;
@@ -69,6 +79,13 @@ class SaltBadge extends StatelessWidget {
   /// valid with [onTap].
   final bool expand;
 
+  /// When non-null the badge is a removable-filter chip: a trailing ✕ button
+  /// runs this. Mutually exclusive with [onTap].
+  final VoidCallback? onDismiss;
+
+  /// Screen-reader label for the ✕ button (defaults to 'Remove').
+  final String? dismissHint;
+
   /// The shared pill radius (matches `TagChip`).
   static const double radius = 6;
 
@@ -76,6 +93,7 @@ class SaltBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final ink = tone.foreground;
     final interactive = onTap != null;
+    final dismissible = onDismiss != null;
     final labelStyle = TextStyle(
       color: ink,
       fontSize: 11.5,
@@ -92,10 +110,57 @@ class SaltBadge extends StatelessWidget {
         ],
         // No explicit fontFamily: the label inherits the app font (OpenSans)
         // via the label style below / FBadge's DefaultTextStyle merge.
-        if (spread) Flexible(child: Text(label)) else Text(label),
+        //
+        // A dismissible chip (the list-view filter pill) can carry a long
+        // search query, so its label ellipsizes when the pill is width-bounded
+        // (it sits in a Flexible in _HeaderRow) — a pixel bound, not a
+        // character cap. Unbounded, it still shows in full.
+        if (spread)
+          Flexible(child: Text(label))
+        else if (dismissible)
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+            ),
+          )
+        else
+          Text(label),
         if (interactive) ...[
           if (spread) const Spacer() else const SizedBox(width: 6),
           Icon(LucideIcons.chevronRight, size: 14, color: ink),
+        ],
+        if (dismissible) ...[
+          const SizedBox(width: 4),
+          Semantics(
+            button: true,
+            label: dismissHint ?? 'Remove',
+            child: InkWell(
+              onTap: onDismiss,
+              borderRadius: BorderRadius.circular(20),
+              // A 24x24 tap target (WCAG 2.5.8) around the visible 18px circle,
+              // so the ✕ is comfortably tappable without enlarging the pill's
+              // look.
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: Center(
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: ink.withValues(alpha: 0.16),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(LucideIcons.x, size: 12, color: ink),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ],
     );
@@ -109,6 +174,11 @@ class SaltBadge extends StatelessWidget {
     );
     final padding = interactive
         ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+        // A dismissible chip pads tighter on the ✕ side (its 24px tap target
+        // already carries the spacing) so the button hugs the edge and the
+        // pill stays compact despite the larger target.
+        : dismissible
+        ? const EdgeInsets.only(left: 11, top: 2, right: 2, bottom: 2)
         : const EdgeInsets.symmetric(horizontal: 9, vertical: 3);
 
     final Widget pill;
