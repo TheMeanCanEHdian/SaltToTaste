@@ -349,24 +349,30 @@ class _LogsTabState extends State<LogsTab> {
         ),
       );
     }
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      // The border goes in the FOREGROUND so it paints on top of the header's
-      // fill; otherwise that fill covers the top corners of the outline.
-      foregroundDecoration: BoxDecoration(
-        border: Border.all(color: SaltColors.hairline),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          _header(),
-          for (var i = 0; i < page.items.length; i++)
-            _row(page.items[i], last: i == page.items.length - 1),
-        ],
+    // SelectionArea makes every cell's text selectable — including a drag
+    // across columns and rows — so a timestamp, request id, or message can be
+    // copied out. Only the table is wrapped; the interactive toolbar above is
+    // left outside it.
+    return SelectionArea(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        // The border goes in the FOREGROUND so it paints on top of the header's
+        // fill; otherwise that fill covers the top corners of the outline.
+        foregroundDecoration: BoxDecoration(
+          border: Border.all(color: SaltColors.hairline),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            _header(),
+            for (var i = 0; i < page.items.length; i++)
+              _row(page.items[i], last: i == page.items.length - 1),
+          ],
+        ),
       ),
     );
   }

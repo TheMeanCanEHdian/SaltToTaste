@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/auth/change_password_page.dart';
@@ -71,53 +69,6 @@ Page<void> _fadePage(GoRouterState state, Widget child) =>
       },
     );
 
-/// Splash while auth resolves; shows the failure + retry when bootstrap
-/// couldn't reach the server (so users aren't dumped onto a login form that
-/// can't succeed, and unclaimed instances aren't hidden from setup).
-class _SplashPage extends StatelessWidget {
-  const _SplashPage();
-
-  @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AuthCubit>().state;
-    if (state is AuthBootstrapFailed) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_off, size: 42, color: SaltColors.rose),
-                const SizedBox(height: 12),
-                Text(
-                  state.message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15),
-                ),
-                const SizedBox(height: 16),
-                FButton(
-                  mainAxisSize: MainAxisSize.min,
-                  onPress: () => context.read<AuthCubit>().bootstrap(),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(
-          color: SaltColors.maroon,
-          semanticsLabel: 'Loading',
-        ),
-      ),
-    );
-  }
-}
-
 /// Re-evaluates router redirects whenever the auth state changes.
 class _AuthRefresh extends ChangeNotifier {
   _AuthRefresh(Stream<AuthState> stream) {
@@ -134,41 +85,48 @@ class _AuthRefresh extends ChangeNotifier {
 }
 
 /// Builds the router; redirects are driven entirely by [authCubit]'s state:
-/// splash while unknown (or bootstrap-failed, with retry), /setup on first
-/// run, /login when signed out, /change-password while a temporary password
-/// is active. `/recover` is the one exception: it is an escape hatch for when
-/// nobody can sign in, so a signed-out user who asks for it is left there
-/// instead of being bounced to /login.
+/// /setup on first run, /login when signed out, /change-password while a
+/// temporary password is active. `/recover` is the one exception: it is an
+/// escape hatch for when nobody can sign in, so a signed-out user who asks for
+/// it is left there instead of being bounced to /login.
 ///
-/// The originally requested location survives the auth dance: a cold deep
-/// link (e.g. a shared `/r/<slug>`) is stashed while the state resolves and
-/// restored once signed in.
+/// While auth is still resolving ([AuthUnknown]/[AuthBootstrapFailed]) the
+/// router does NOT redirect: the URL is left exactly where the load landed and
+/// the app shell paints the splash over the router (see `SplashView` +
+/// `SaltApp.build`). That is what stops a refresh on `/settings` from flashing
+/// through a `/splash` address on its way back. The matched route is not built
+/// until the state resolves, so no page fires requests before auth is known.
+///
+/// The originally requested location survives the auth dance for the signed-out
+/// flow: a deep link visited while signed out is stashed and restored after
+/// login.
 GoRouter buildRouter(AuthCubit authCubit) {
-  const authPaths = {
-    '/login',
-    '/setup',
-    '/recover',
-    '/change-password',
-    '/splash',
-  };
+  const authPaths = {'/login', '/setup', '/recover', '/change-password'};
   String? pendingLocation;
   return GoRouter(
     refreshListenable: _AuthRefresh(authCubit.stream),
     initialLocation: '/',
     redirect: (context, state) {
+      // Auth still resolving: keep the current URL untouched. The shell shows
+      // the splash above the router until the state is known, then this runs
+      // again (via refreshListenable) and routes for real.
+      if (authCubit.state is AuthUnknown ||
+          authCubit.state is AuthBootstrapFailed) {
+        return null;
+      }
       final path = state.uri.path;
       // Recovery must stay reachable while signed out — that is its entire
-      // purpose. (Bootstrap-unknown/failed still wins: the code can't be
-      // redeemed against a server we can't reach.)
+      // purpose.
       if (path == '/recover' && authCubit.state is AuthSignedOut) {
         return null;
       }
       final target = switch (authCubit.state) {
-        AuthUnknown() || AuthBootstrapFailed() => '/splash',
         AuthSetupRequired() => '/setup',
         AuthSignedOut() => '/login',
         AuthPasswordChangeRequired() => '/change-password',
         AuthSignedIn() => null,
+        // Handled by the early return above; listed for switch exhaustiveness.
+        AuthUnknown() || AuthBootstrapFailed() => null,
       };
       if (target != null) {
         // Remember where the user was headed before parking them.
@@ -196,10 +154,6 @@ GoRouter buildRouter(AuthCubit authCubit) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/splash',
-        pageBuilder: (context, state) => _fadePage(state, const _SplashPage()),
-      ),
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => _fadePage(state, const LoginPage()),

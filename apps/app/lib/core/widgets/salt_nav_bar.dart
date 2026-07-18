@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,7 +24,12 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
     this.onSearchRefresh,
   });
 
-  /// Whether to show a leading back control (used on drill-down pages).
+  /// Whether to show a leading back control on drill-down pages.
+  ///
+  /// Suppressed on web: there the browser's own Back button is the affordance
+  /// (and now works, since imperative pushes reflect in the URL — see
+  /// `main.dart`), so an in-app duplicate is redundant. Kept for the portable
+  /// non-web targets, which have no chrome-level back control in this chrome.
   final bool showBack;
 
   /// Pre-fills the search field (the search page passes its query).
@@ -51,7 +57,7 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                if (showBack) ...[
+                if (showBack && !kIsWeb) ...[
                   IconButton(
                     onPressed: () =>
                         context.canPop() ? context.pop() : context.go('/'),

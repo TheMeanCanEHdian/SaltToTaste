@@ -15,8 +15,14 @@ import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_app/features/auth/splash_view.dart';
 import 'package:salt_app/features/tags/tag_styles_cubit.dart';
 import 'package:salt_app/router/app_router.dart';
+
+/// Whether auth is still resolving — bootstrap in flight, or failed with a
+/// retry offered. In both states the shell shows [SplashView] over the router.
+bool _isResolving(AuthState state) =>
+    state is AuthUnknown || state is AuthBootstrapFailed;
 
 /// Root widget: one shared HTTP client, repositories, the auth cubit, and
 /// the maroon-themed Forui/Material shell around the router.
@@ -101,7 +107,20 @@ class _SaltAppState extends State<SaltApp> {
           // provide one — so mount it once here, below FTheme.
           builder: (context, child) => FTheme(
             data: forui,
-            child: FToaster(child: child ?? const SizedBox.shrink()),
+            child: FToaster(
+              // While auth is resolving, paint the splash OVER the router
+              // instead of routing to a `/splash` URL. The router child is not
+              // mounted until the state is known, so the destination page never
+              // builds (or fires requests) mid-bootstrap, and the address bar
+              // stays on the loaded URL rather than flashing through /splash.
+              child: BlocBuilder<AuthCubit, AuthState>(
+                buildWhen: (previous, current) =>
+                    _isResolving(previous) != _isResolving(current),
+                builder: (context, state) => _isResolving(state)
+                    ? const SplashView()
+                    : (child ?? const SizedBox.shrink()),
+              ),
+            ),
           ),
         ),
       ),
