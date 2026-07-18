@@ -473,7 +473,13 @@ class _LogsTabState extends State<LogsTab> {
             style: const TextStyle(color: SaltColors.errInk),
           ),
         ),
-        TextButton(onPressed: _reload, child: const Text('Retry')),
+        FButton(
+          variant: FButtonVariant.outline,
+          size: FButtonSizeVariant.sm,
+          mainAxisSize: MainAxisSize.min,
+          onPress: _reload,
+          child: const Text('Retry'),
+        ),
       ],
     ),
   );

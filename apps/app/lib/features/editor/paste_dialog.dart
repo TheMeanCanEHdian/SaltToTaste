@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:forui/forui.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -98,13 +99,15 @@ class _PasteDialogState extends State<_PasteDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+        FButton(
+          variant: FButtonVariant.outline,
+          mainAxisSize: MainAxisSize.min,
+          onPress: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: SaltColors.maroon),
-          onPressed: _lines.isEmpty
+        FButton(
+          mainAxisSize: MainAxisSize.min,
+          onPress: _lines.isEmpty
               ? null
               : () {
                   context.read<EditorCubit>().addPastedLines(_lines);
