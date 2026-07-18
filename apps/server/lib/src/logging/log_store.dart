@@ -281,25 +281,36 @@ LogQueryResult _scanLogFiles({
 /// The lines of [file], or only those within the last [maxScanBytes] when it is
 /// set — reading from the end and dropping the partial line the window sliced
 /// through. Bounds the parse cost to the tail when a caller needs recent lines.
+///
+/// A file error (missing, or read-failed) yields an empty list rather than
+/// throwing: on the OFF-ISOLATE full-scan path ([LogStore.queryFull]) the read
+/// runs in a worker isolate that can race the serving isolate's rotation, which
+/// renames/deletes the file out from under it between the `existsSync` check and
+/// the read. That must degrade to "this file contributed nothing on this pass"
+/// (the next read sees the rotated file), not surface as a 500.
 List<String> _tailLinesOf(File file, int? maxScanBytes) {
-  if (!file.existsSync()) {
-    return const [];
-  }
-  final length = file.lengthSync();
-  if (maxScanBytes == null || length <= maxScanBytes) {
-    return file.readAsLinesSync();
-  }
-  final handle = file.openSync();
   try {
-    final bytes = (handle..setPositionSync(length - maxScanBytes)).readSync(
-      maxScanBytes,
-    );
-    final text = utf8.decode(bytes, allowMalformed: true);
-    final firstBreak = text.indexOf('\n');
-    return const LineSplitter().convert(
-      firstBreak < 0 ? '' : text.substring(firstBreak + 1),
-    );
-  } finally {
-    handle.closeSync();
+    if (!file.existsSync()) {
+      return const [];
+    }
+    final length = file.lengthSync();
+    if (maxScanBytes == null || length <= maxScanBytes) {
+      return file.readAsLinesSync();
+    }
+    final handle = file.openSync();
+    try {
+      final bytes = (handle..setPositionSync(length - maxScanBytes)).readSync(
+        maxScanBytes,
+      );
+      final text = utf8.decode(bytes, allowMalformed: true);
+      final firstBreak = text.indexOf('\n');
+      return const LineSplitter().convert(
+        firstBreak < 0 ? '' : text.substring(firstBreak + 1),
+      );
+    } finally {
+      handle.closeSync();
+    }
+  } on FileSystemException {
+    return const [];
   }
 }

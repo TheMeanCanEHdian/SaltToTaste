@@ -185,6 +185,25 @@ void main() {
     );
 
     test(
+      'queryFull survives a file that errors on read (concurrent rotation)',
+      () async {
+        if (Platform.isWindows) {
+          return; // the chmod trigger is POSIX-only; server runs on Linux.
+        }
+        final s = store()..add(_rec(Level.INFO, 'http', 'hello'));
+        // File exists but the read fails — the exact shape of a rotation's
+        // rename/delete landing between the existsSync check and the read on
+        // the off-isolate scan. Must degrade to empty, not throw a 500.
+        await Process.run('chmod', ['000', '${dir.path}/server.jsonl']);
+        addTearDown(
+          () => Process.run('chmod', ['644', '${dir.path}/server.jsonl']),
+        );
+        final result = await s.queryFull(limit: 10);
+        expect(result.items, isEmpty, reason: 'unreadable file skipped');
+      },
+    );
+
+    test(
       'add() swallows write failures — best-effort logging never throws',
       () {
         final s = store();
