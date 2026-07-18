@@ -10,6 +10,7 @@ import 'package:salt_app/core/api/logs_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/features/settings/settings_page.dart' show PaneTitle;
 
 /// Settings → Server → Logs (admin): a tail of recent server log records from
 /// the persisted, rotating log store (survives restarts). Live polls for new
@@ -126,34 +127,20 @@ class _LogsTabState extends State<LogsTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text(
-              'Logs',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: SaltColors.ink,
-              ),
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              icon: const Icon(Icons.download_outlined, size: 20),
-              color: SaltColors.muted,
-              tooltip: 'Download the log (matches the current filters)',
-              visualDensity: VisualDensity.compact,
-              onPressed: _download,
-            ),
-          ],
+        PaneTitle(
+          'Logs',
+          description:
+              'Recent server activity from every logger, persisted across '
+              'restarts. Live streams new records; the request id ties a '
+              'request together. Secrets are redacted.',
+          trailing: IconButton(
+            icon: const Icon(Icons.download_outlined, size: 20),
+            color: SaltColors.muted,
+            tooltip: 'Download the log (matches the current filters)',
+            visualDensity: VisualDensity.compact,
+            onPressed: _download,
+          ),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          'Recent server activity from every logger, persisted across '
-          'restarts. Live streams new records; the request id ties a request '
-          'together. Secrets are redacted.',
-          style: TextStyle(fontSize: 13.5, color: SaltColors.muted),
-        ),
-        const SizedBox(height: 16),
         _toolbar(page),
         const SizedBox(height: 14),
         if (_loading && page == null)

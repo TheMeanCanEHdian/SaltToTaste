@@ -332,27 +332,36 @@ class _SideItem extends StatelessWidget {
 
 /// Shared section heading inside settings panes.
 class PaneTitle extends StatelessWidget {
-  const PaneTitle(this.title, {super.key, this.description});
+  const PaneTitle(this.title, {super.key, this.description, this.trailing});
 
   final String title;
   final String? description;
 
+  /// Optional action shown just after the title on its row (e.g. a download
+  /// button), so a pane with an action still gets the shared heading style
+  /// instead of rolling its own.
+  final Widget? trailing;
+
   @override
   Widget build(BuildContext context) {
+    final heading = Semantics(
+      header: true,
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: SaltColors.maroon,
+        ),
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Semantics(
-          header: true,
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: SaltColors.maroon,
-            ),
-          ),
-        ),
+        if (trailing == null)
+          heading
+        else
+          Row(children: [heading, const SizedBox(width: 6), trailing!]),
         if (description != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
