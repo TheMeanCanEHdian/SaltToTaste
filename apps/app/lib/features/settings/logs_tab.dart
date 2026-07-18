@@ -129,62 +129,86 @@ class _LogsTabState extends State<LogsTab> {
   }
 
   Widget _toolbar(LogsPage? page) {
-    // All controls in one row on a wide screen; they wrap on narrow. Every
-    // control is 40px tall so the heights line up.
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        SizedBox(height: 40, child: _levelSegmented()),
-        SizedBox(
-          height: 40,
-          width: 158,
-          child: FSelect<String>(
-            items: {
-              'All loggers': '',
-              for (final name in page?.loggers ?? const <String>[]) name: name,
-            },
-            control: FSelectControl.lifted(
-              value: _logger,
-              onChange: (value) {
-                setState(() => _logger = value ?? '');
-                _reload();
-              },
-            ),
-          ),
+    // Every control is 40px tall so the heights line up. On a wide pane they
+    // sit in one row with the search field flexing to fill the gap; only when
+    // the pane is genuinely narrow (mobile) do they wrap.
+    final level = SizedBox(height: 40, child: _levelSegmented());
+    final logger = SizedBox(
+      height: 40,
+      width: 158,
+      child: FSelect<String>(
+        items: {
+          'All loggers': '',
+          for (final name in page?.loggers ?? const <String>[]) name: name,
+        },
+        control: FSelectControl.lifted(
+          value: _logger,
+          onChange: (value) {
+            setState(() => _logger = value ?? '');
+            _reload();
+          },
         ),
-        SizedBox(
-          height: 40,
-          width: 210,
-          child: FTextField(
-            hint: 'Search message or request id',
-            clearable: (value) => value.text.isNotEmpty,
-            control: FTextFieldControl.managed(
-              controller: _search,
-              onChange: (value) {
-                // React only to clearing (the x button empties the field).
-                if (value.text.isEmpty && _query.isNotEmpty) {
-                  setState(() => _query = '');
-                  _reload();
-                }
-              },
-            ),
-            onSubmit: (value) {
-              setState(() => _query = value);
-              _reload();
-            },
-          ),
-        ),
-        SizedBox(height: 40, child: _liveToggle()),
-        SizedBox(
-          height: 40,
-          child: FButton.icon(
-            onPress: _reload,
-            child: const Icon(Icons.refresh, size: 18),
-          ),
-        ),
-      ],
+      ),
+    );
+    final search = FTextField(
+      hint: 'Search message or request id',
+      clearable: (value) => value.text.isNotEmpty,
+      control: FTextFieldControl.managed(
+        controller: _search,
+        onChange: (value) {
+          // React only to clearing (the x button empties the field).
+          if (value.text.isEmpty && _query.isNotEmpty) {
+            setState(() => _query = '');
+            _reload();
+          }
+        },
+      ),
+      onSubmit: (value) {
+        setState(() => _query = value);
+        _reload();
+      },
+    );
+    final live = SizedBox(height: 40, child: _liveToggle());
+    final refresh = SizedBox(
+      height: 40,
+      child: FButton.icon(
+        onPress: _reload,
+        child: const Icon(Icons.refresh, size: 18),
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Below this the fixed controls leave the search box too cramped, so
+        // wrap instead.
+        if (constraints.maxWidth >= 720) {
+          return Row(
+            children: [
+              level,
+              const SizedBox(width: 10),
+              logger,
+              const SizedBox(width: 10),
+              Expanded(child: SizedBox(height: 40, child: search)),
+              const SizedBox(width: 10),
+              live,
+              const SizedBox(width: 10),
+              refresh,
+            ],
+          );
+        }
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            level,
+            logger,
+            SizedBox(height: 40, width: 210, child: search),
+            live,
+            refresh,
+          ],
+        );
+      },
     );
   }
 
@@ -282,6 +306,11 @@ class _LogsTabState extends State<LogsTab> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      // The border goes in the FOREGROUND so it paints on top of the header's
+      // fill; otherwise that fill covers the top corners of the outline.
+      foregroundDecoration: BoxDecoration(
         border: Border.all(color: SaltColors.hairline),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -320,6 +349,7 @@ class _LogsTabState extends State<LogsTab> {
       child: Row(
         children: [
           cell('TIME', width: 88),
+          const SizedBox(width: 12),
           cell('LEVEL', width: 66),
           cell('LOGGER', width: 86),
           cell('MESSAGE', expand: true),
@@ -342,6 +372,7 @@ class _LogsTabState extends State<LogsTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(width: 88, child: _mono(_timeOf(entry.time))),
+          const SizedBox(width: 12),
           SizedBox(width: 66, child: _LevelBadge(entry.level)),
           SizedBox(width: 86, child: _mono(entry.logger)),
           Expanded(

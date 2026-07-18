@@ -65,6 +65,11 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              // Foreground border so the sidebar's fill can't cover the
+              // outline at the left corners (see the same fix in logs_tab).
+              foregroundDecoration: BoxDecoration(
                 border: Border.all(color: SaltColors.hairline),
                 borderRadius: BorderRadius.circular(16),
               ),
