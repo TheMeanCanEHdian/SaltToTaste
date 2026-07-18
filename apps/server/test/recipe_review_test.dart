@@ -13,6 +13,42 @@ import 'support/corpus.dart';
 /// defect cases introduce a single flaw into a real recipe (a real recipe minus
 /// its steps, etc.) rather than fabricating a document.
 void main() {
+  // Schema-level guard, corpus-independent so it ALSO runs in CI: the review
+  // report's two hand-written queries (the memo fingerprint and the scan) must
+  // stay in sync with the real table columns. An empty migrated DB exercises
+  // both against the live schema — no recipe data needed, so it is exempt from
+  // the real-data rule (there is no data, only the schema). This is the exact
+  // guard that was missing when the fingerprint queried a non-existent
+  // `recipe_nutrition.updated_at` (the column is `computed_at`) and 500'd every
+  // recipe-review request, a regression the corpus-gated tests below skipped
+  // straight past on a corpus-less run.
+  group('review queries match the schema (empty DB, no corpus)', () {
+    late Directory tempDir;
+    late SaltDatabase db;
+
+    setUpAll(() {
+      tempDir = Directory.systemTemp.createTempSync('salt_review_schema_');
+      db = SaltDatabase.open('${tempDir.path}/salt.db');
+    });
+
+    tearDownAll(() {
+      db.dispose();
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('recipeReviewFingerprint runs against the live columns', () {
+      // The bug threw here (no such column). An empty DB → zero counts, empty
+      // maxes: '0||0|'. The point is that it RUNS, not the exact value.
+      expect(db.recipeReviewFingerprint(), '0||0|');
+    });
+
+    test('the report handler runs end-to-end on an empty library', () {
+      final body = recipeReviewHandler(db, page: 1, limit: 1);
+      expect(body['total'], 0);
+      expect(body['items'], isEmpty);
+    });
+  });
+
   if (!corpusAvailable) {
     test(
       'recipe-review tests (skipped: corpus absent)',
