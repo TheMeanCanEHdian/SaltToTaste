@@ -7,12 +7,22 @@ import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/settings/account_tab.dart';
 import 'package:salt_app/features/settings/import_tab.dart';
 import 'package:salt_app/features/settings/library_tab.dart';
+import 'package:salt_app/features/settings/logs_tab.dart';
 import 'package:salt_app/features/settings/nutrition_tab.dart';
 import 'package:salt_app/features/settings/tags_tab.dart';
 import 'package:salt_app/features/settings/tokens_tab.dart';
 import 'package:salt_app/features/settings/users_tab.dart';
 
-enum SettingsTab { account, users, tokens, tags, library, nutrition, import }
+enum SettingsTab {
+  account,
+  users,
+  tokens,
+  tags,
+  library,
+  nutrition,
+  import,
+  logs,
+}
 
 /// Settings shell (approved P3 design): left sidebar on wide screens,
 /// horizontal chips on narrow. Members see Account and API tokens; admins
@@ -42,6 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
       SettingsTab.library => const LibraryTab(),
       SettingsTab.nutrition => const NutritionTab(),
       SettingsTab.import => const ImportTab(),
+      SettingsTab.logs => const LogsTab(),
     };
 
     return Scaffold(
@@ -108,6 +119,7 @@ class _SettingsPageState extends State<SettingsPage> {
       (SettingsTab.library, 'Library'),
       (SettingsTab.nutrition, 'Nutrition'),
       (SettingsTab.import, 'Import'),
+      (SettingsTab.logs, 'Logs'),
     ],
   ];
 
