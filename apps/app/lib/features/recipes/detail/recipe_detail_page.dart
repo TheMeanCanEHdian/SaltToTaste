@@ -109,7 +109,10 @@ class _DetailBody extends StatelessWidget {
                   ],
                   for (final technique in recipe.techniques) ...[
                     const SizedBox(height: 26),
-                    _TechniqueView(technique: technique),
+                    _TechniqueView(
+                      technique: technique,
+                      sourceSlug: detail.sourceSlug,
+                    ),
                   ],
                   if (recipe.notes != null) ...[
                     const SizedBox(height: 26),
@@ -878,12 +881,15 @@ class _SubsectionView extends StatelessWidget {
 }
 
 class _TechniqueView extends StatelessWidget {
-  const _TechniqueView({required this.technique});
+  const _TechniqueView({required this.technique, required this.sourceSlug});
 
   final Technique technique;
+  final String sourceSlug;
 
   @override
   Widget build(BuildContext context) {
+    final hasIntro =
+        technique.heading != null || technique.description != null;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -907,15 +913,122 @@ class _TechniqueView extends StatelessWidget {
             const SizedBox(height: 6),
             Text(technique.description!, style: _prose),
           ],
-          for (final step in technique.steps) ...[
-            const SizedBox(height: 10),
-            Text(
-              '${step.number}. ${step.caption}',
-              style: _prose.copyWith(fontSize: 13.5),
-            ),
+          if (technique.steps.isNotEmpty) ...[
+            SizedBox(height: hasIntro ? 14 : 0),
+            _StepGrid(steps: technique.steps, sourceSlug: sourceSlug),
           ],
         ],
       ),
     );
   }
+}
+
+/// The illustrated steps as a responsive photo grid — 3 columns wide, reflowing
+/// to 2/1 as the aside narrows. Each card is a captioned photo; a step with no
+/// photo falls back to a numbered caption line so ordering is preserved.
+class _StepGrid extends StatelessWidget {
+  const _StepGrid({required this.steps, required this.sourceSlug});
+
+  final List<TechniqueStep> steps;
+  final String sourceSlug;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 14.0;
+        const minCard = 150.0;
+        final cols = (constraints.maxWidth / minCard).floor().clamp(1, 3);
+        final cardWidth = (constraints.maxWidth - gap * (cols - 1)) / cols;
+        return Wrap(
+          spacing: gap,
+          runSpacing: 16,
+          children: [
+            for (final step in steps)
+              SizedBox(
+                width: cardWidth,
+                child: _StepCard(step: step, sourceSlug: sourceSlug),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  const _StepCard({required this.step, required this.sourceSlug});
+
+  final TechniqueStep step;
+  final String sourceSlug;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = step.image;
+    final caption = Text(
+      step.caption,
+      style: _prose.copyWith(fontSize: 13, height: 1.5),
+    );
+    if (image == null || image.trim().isEmpty) {
+      // No photo: a numbered caption line keeps the step in reading order.
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _StepNumber(step.number),
+          const SizedBox(width: 8),
+          Expanded(child: caption),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(9),
+          child: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  apiUrl(imageUrl(sourceSlug, image)!),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      const PhotoFallback(showIcon: false),
+                ),
+                Positioned(top: 8, left: 8, child: _StepNumber(step.number)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 9),
+        caption,
+      ],
+    );
+  }
+}
+
+class _StepNumber extends StatelessWidget {
+  const _StepNumber(this.number);
+
+  final int number;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 23,
+    height: 23,
+    alignment: Alignment.center,
+    decoration: const BoxDecoration(
+      color: SaltColors.maroon,
+      shape: BoxShape.circle,
+    ),
+    child: Text(
+      '$number',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 12.5,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
 }
