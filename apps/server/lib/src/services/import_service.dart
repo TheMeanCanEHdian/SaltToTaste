@@ -6,7 +6,6 @@ import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
-import 'package:salt_server/src/services/image_paths.dart';
 import 'package:salt_server/src/services/slugify.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:yaml/yaml.dart';

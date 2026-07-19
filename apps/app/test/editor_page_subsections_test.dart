@@ -158,6 +158,55 @@ void main() {
     expect(find.widgetWithText(FButton, 'From URL'), findsOneWidget);
   });
 
+  testWidgets('a technique step photo requests a source-rooted image URL', (
+    tester,
+  ) async {
+    // The stored reference is the bare canonical `images/<file>`; the editor
+    // must root it under the source slug (/images/<source>/<file>) — feeding
+    // the bare reference to Image.network 404s and the photo never shows.
+    final recipe = Recipe(
+      id: 'r6',
+      title: 'Bread',
+      slug: 'bread',
+      source: const RecipeSource(name: 'ATK', type: 'manual'),
+      techniques: const [
+        Technique(
+          heading: 'Shaping the Loaf',
+          steps: [
+            TechniqueStep(
+              number: 1,
+              caption: 'Fold.',
+              image: 'images/shape-01.jpg',
+            ),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      host(RecipeDetail(recipe: recipe, sourceSlug: 'bread')),
+    );
+    await tester.pumpAndSettle();
+    final caret = find.byTooltip('Expand');
+    await tester.ensureVisible(caret);
+    await tester.pumpAndSettle();
+    await tester.tap(caret);
+    await tester.pumpAndSettle();
+
+    final urls = tester
+        .widgetList<Image>(find.byType(Image))
+        .map((i) => i.image)
+        .whereType<NetworkImage>()
+        .map((n) => n.url)
+        .toList();
+    // apiBaseUrl is '' in tests, so the rooted path is served as-is.
+    expect(urls, contains('/images/bread/shape-01.jpg'));
+    expect(
+      urls,
+      isNot(contains('images/shape-01.jpg')),
+      reason: 'must not feed the bare reference to Image.network',
+    );
+  });
+
   testWidgets('technique step photo controls do not overflow at mobile width', (
     tester,
   ) async {

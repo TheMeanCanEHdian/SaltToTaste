@@ -2371,7 +2371,10 @@ class _TechniqueStepCard extends StatelessWidget {
                   child: image == null
                       ? const PhotoFallback(iconSize: 40)
                       : Image.network(
-                          apiUrl(image),
+                          // The stored reference is the bare canonical
+                          // `images/<file>`; root it under the source slug the
+                          // serving route needs (as the server does for hero).
+                          apiUrl(imageUrl(cubit.state.sourceSlug, image)!),
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) =>
                               const PhotoFallback(showIcon: false),

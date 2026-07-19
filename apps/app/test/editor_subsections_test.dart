@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -19,6 +20,13 @@ class _FakeRepo extends RecipeRepository {
   int storeFromUrlCalls = 0;
   String? lastStoreId;
 
+  /// When set, `storeImage` blocks on this instead of returning — lets a test
+  /// hold an upload in flight to exercise single-flight and mid-upload races.
+  Completer<String>? storeGate;
+
+  /// When set, `storeImage` throws it (the error path).
+  Object? storeError;
+
   @override
   Future<RecipeDetail> getRecipe(String idOrSlug) async => _detail;
 
@@ -38,6 +46,8 @@ class _FakeRepo extends RecipeRepository {
   Future<String> storeImage(String idOrSlug, Uint8List bytes) async {
     storeImageCalls++;
     lastStoreId = idOrSlug;
+    if (storeError != null) throw storeError!;
+    if (storeGate != null) return storeGate!.future;
     return 'images/tech-stored.jpg';
   }
 
@@ -303,6 +313,91 @@ void main() {
       expect(repo.storeImageCalls, 0, reason: 'no id to attach to → no call');
       expect(cubit.state.techniques.single.steps.single.image, isNull);
       expect(cubit.state.uploadingImage, isFalse);
+    });
+
+    test('a failed store clears the upload flags and surfaces the error',
+        () async {
+      final repo = _FakeRepo(detail())
+        ..storeError = const RepositoryException('upload failed');
+      final cubit = EditorCubit(repo);
+      await cubit.load('meatballs');
+      final techKey = cubit.state.techniques.single.key;
+      final stepKey = cubit.state.techniques.single.steps.single.key;
+      final before = cubit.state.techniques.single.steps.single.image;
+
+      await cubit.uploadTechniqueStepImage(
+        techKey,
+        stepKey,
+        Uint8List.fromList([1]),
+      );
+
+      expect(cubit.state.uploadingImage, isFalse, reason: 'no lockout on error');
+      expect(cubit.state.uploadingStepKey, isNull);
+      expect(cubit.state.saveError, 'upload failed');
+      expect(
+        cubit.state.techniques.single.steps.single.image,
+        before,
+        reason: 'the step image is untouched on failure',
+      );
+    });
+
+    test('an upload in flight is single-flight — a second is dropped', () async {
+      final repo = _FakeRepo(detail())..storeGate = Completer<String>();
+      final cubit = EditorCubit(repo);
+      await cubit.load('meatballs');
+      final techKey = cubit.state.techniques.single.key;
+      final stepKey = cubit.state.techniques.single.steps.single.key;
+
+      // First upload blocks on the gate.
+      final first = cubit.uploadTechniqueStepImage(
+        techKey,
+        stepKey,
+        Uint8List.fromList([1]),
+      );
+      expect(cubit.state.uploadingImage, isTrue);
+      expect(cubit.state.uploadingStepKey, stepKey);
+
+      // A second, while the first is in flight, returns immediately without a
+      // store call (the cubit's single-flight guard).
+      await cubit.uploadTechniqueStepImage(
+        techKey,
+        stepKey,
+        Uint8List.fromList([2]),
+      );
+      expect(repo.storeImageCalls, 1, reason: 'the second upload is dropped');
+
+      repo.storeGate!.complete('images/tech-stored.jpg');
+      await first;
+      expect(cubit.state.uploadingImage, isFalse);
+      expect(cubit.state.techniques.single.steps.single.image,
+          'images/tech-stored.jpg');
+    });
+
+    test('deleting the step mid-upload drops the reference harmlessly',
+        () async {
+      final repo = _FakeRepo(detail())..storeGate = Completer<String>();
+      final cubit = EditorCubit(repo);
+      await cubit.load('meatballs');
+      final techKey = cubit.state.techniques.single.key;
+      final stepKey = cubit.state.techniques.single.steps.single.key;
+
+      final upload = cubit.uploadTechniqueStepImage(
+        techKey,
+        stepKey,
+        Uint8List.fromList([1]),
+      );
+      expect(cubit.state.uploadingImage, isTrue);
+
+      // The user deletes the very step being uploaded, then the store lands.
+      cubit.removeTechniqueStep(techKey, stepKey);
+      repo.storeGate!.complete('images/tech-stored.jpg');
+      await upload;
+
+      // No crash; the returned reference lands nowhere (step is gone); flags
+      // are cleared.
+      expect(cubit.state.techniques.single.steps, isEmpty);
+      expect(cubit.state.uploadingImage, isFalse);
+      expect(cubit.state.uploadingStepKey, isNull);
     });
   });
 

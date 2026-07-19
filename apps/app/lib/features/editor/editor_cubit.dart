@@ -247,6 +247,7 @@ final class EditorState {
     this.techniques = const [],
     this.images = const RecipeImages(),
     this.heroImageUrl,
+    this.sourceSlug = '',
     this.credit = '',
     this.dirty = false,
     this.saving = false,
@@ -286,6 +287,13 @@ final class EditorState {
   /// editor edits only the credit and attaches photos via the endpoints).
   final RecipeImages images;
   final String? heroImageUrl;
+
+  /// The recipe's source slug, needed to root a bare `images/<file>` reference
+  /// (e.g. a stored technique-step photo) into a servable
+  /// `/images/<source>/<file>` URL — the server does this for [heroImageUrl]
+  /// but hands technique-step references through in canonical model form.
+  final String sourceSlug;
+
   final String credit;
 
   final bool dirty;
@@ -331,6 +339,7 @@ final class EditorState {
     List<EditorTechnique>? techniques,
     RecipeImages? images,
     String? heroImageUrl,
+    String? sourceSlug,
     String? credit,
     bool? dirty,
     bool? saving,
@@ -361,6 +370,7 @@ final class EditorState {
     techniques: techniques ?? this.techniques,
     images: images ?? this.images,
     heroImageUrl: heroImageUrl ?? this.heroImageUrl,
+    sourceSlug: sourceSlug ?? this.sourceSlug,
     credit: credit ?? this.credit,
     dirty: dirty ?? this.dirty,
     saving: saving ?? this.saving,
@@ -507,6 +517,7 @@ class EditorCubit extends Cubit<EditorState> {
           ],
           images: recipe.images,
           heroImageUrl: detail.heroImageUrl,
+          sourceSlug: detail.sourceSlug,
           credit: recipe.images.credit ?? '',
         ),
       );

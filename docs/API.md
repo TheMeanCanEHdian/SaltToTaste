@@ -239,6 +239,17 @@ the recipe's own `PUT`). → `201 {"reference": "images/<file>"}`.
 image validation): downloads a photo into the library and returns its reference
 without attaching it. → `201 {"reference": "images/<file>"}`.
 
+> The reference is the bare canonical `images/<file>` (as stored in YAML); root
+> it under the recipe's source slug to display — `/images/<source>/<file>`,
+> which the reconciliation scan / detail response do for you elsewhere.
+>
+> **Known limitation:** a stored image only becomes referenced if a later
+> recipe `PUT` points a step at it. There is no garbage collection of
+> unreferenced image files, so a store call that is never followed by a
+> referencing save (the editor is discarded, the photo is replaced or removed,
+> or the step is deleted before saving) leaves the file on disk. Reachable only
+> by full-scope admins and bounded by the 25 MB cap; pruning is a future item.
+
 ### `GET /api/v1/library` (admin)
 
 `{"last_scan": {…} | null}` — the report of the most recent reconciliation

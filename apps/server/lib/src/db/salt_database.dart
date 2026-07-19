@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:salt_server/src/db/migrations.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
-import 'package:salt_server/src/services/image_paths.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart';
 

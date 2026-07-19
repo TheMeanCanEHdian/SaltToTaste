@@ -2,7 +2,6 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_server/src/search/search_service.dart';
-import 'package:salt_server/src/services/image_paths.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 /// Default `limit` for the recipe list endpoint.
