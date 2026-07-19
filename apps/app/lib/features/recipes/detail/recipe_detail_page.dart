@@ -455,7 +455,7 @@ class _HeroImage extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: url == null
-          ? const PhotoFallback(iconSize: 56)
+          ? const PhotoFallback(iconSize: 110)
           : Image.network(
               apiUrl(url),
               fit: BoxFit.cover,

@@ -108,7 +108,7 @@ class _TileImage extends StatelessWidget {
               // top of the first — a broken photo would read as a DARKER tile
               // than a photo-less one, which is exactly backwards.
               errorBuilder: (_, __, ___) => const Center(
-                child: SaltLogoGlyph(color: SaltColors.rose, width: 40),
+                child: SaltLogoGlyph(color: SaltColors.rose, width: 88),
               ),
             ),
           ],
@@ -159,7 +159,7 @@ class RecipeTile extends StatelessWidget {
                   if (hero != null)
                     _TileImage(url: apiUrl(hero))
                   else
-                    const PhotoFallback(),
+                    const PhotoFallback(iconSize: 88),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

@@ -7,7 +7,7 @@ import 'package:salt_app/core/widgets/salt_logo.dart';
 /// load: a rose-tinted panel with the rose-tinted brand mark. One definition
 /// shared by the grid tiles and the detail hero so they never drift apart.
 class PhotoFallback extends StatelessWidget {
-  const PhotoFallback({super.key, this.iconSize = 40, this.showIcon = true});
+  const PhotoFallback({super.key, this.iconSize = 64, this.showIcon = true});
 
   /// The width of the brand mark (the glyph is landscape, so its height follows
   /// from the logo's aspect ratio).

@@ -74,18 +74,18 @@ class _RecipeRowState extends State<RecipeRow> {
       label: labelParts.join(', '),
       child: Stack(
         children: [
-          // The card surface: opaque fill + border, both easing over 120ms on
-          // hover. AnimatedContainer tweens the fill (a plain Material won't —
-          // it only animates shape/elevation, not its colour).
+          // The card surface. Hover eases the fill over 120ms (AnimatedContainer
+          // tweens the colour — a plain Material won't, it only animates
+          // shape/elevation). The border stays a constant hairline: a hover
+          // outline read as an alarming red accent that the grid tiles don't
+          // have, so the hover is the subtle fill change alone.
           AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
             decoration: BoxDecoration(
               color: _hover ? SaltColors.panel : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _hover ? SaltColors.rose : SaltColors.hairline,
-              ),
+              border: Border.all(color: SaltColors.hairline),
             ),
             child: ExcludeSemantics(
               child: LayoutBuilder(
@@ -216,7 +216,7 @@ class _RecipeRowState extends State<RecipeRow> {
   Widget _thumb(RecipeCard card) {
     final hero = card.heroImage;
     final content = hero == null
-        ? const PhotoFallback(iconSize: 22)
+        ? const PhotoFallback(iconSize: 44)
         : Stack(
             fit: StackFit.expand,
             children: [
@@ -233,7 +233,7 @@ class _RecipeRowState extends State<RecipeRow> {
                       256,
                     ),
                 errorBuilder: (_, __, ___) => const Center(
-                  child: SaltLogoGlyph(color: SaltColors.rose, width: 22),
+                  child: SaltLogoGlyph(color: SaltColors.rose, width: 44),
                 ),
               ),
             ],
