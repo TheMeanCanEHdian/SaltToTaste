@@ -344,6 +344,12 @@ void main() {
         '/api/v1/recipes/anything/images/from_url',
         {'url': 'https://example.com/a.jpg'},
       ),
+      ('POST', '/api/v1/recipes/anything/images/store', null),
+      (
+        'POST',
+        '/api/v1/recipes/anything/images/store_from_url',
+        {'url': 'https://example.com/a.jpg'},
+      ),
       ('POST', '/api/v1/library/rescan', null),
       ('POST', '/api/v1/backups', {'include_images': false}),
       (
@@ -777,6 +783,73 @@ void main() {
       expect(bad.statusCode, HttpStatus.unprocessableEntity, reason: badBody);
 
       // Clean up so the shared library count stays predictable downstream.
+      await send(
+        'DELETE',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession, csrf: true),
+      );
+    });
+
+    test('images/store_from_url guards SSRF and bad input, attaches nothing',
+        () async {
+      final recipeNoImages = Map<String, Object?>.of(
+        submission['recipe']! as Map<String, Object?>,
+      )..remove('images');
+      final (create, createBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'recipe': recipeNoImages},
+      );
+      expect(create.statusCode, HttpStatus.created, reason: createBody);
+      final slug =
+          (jsonOf(createBody)['recipe'] as Map<String, dynamic>)['slug']
+              as String;
+
+      // A loopback target is rejected by the SSRF guard before any socket
+      // opens — the ValidationException surfaces as a 422.
+      final (ssrf, ssrfBody) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/images/store_from_url',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'url': 'http://127.0.0.1/a.jpg'},
+      );
+      expect(
+        ssrf.statusCode,
+        HttpStatus.unprocessableEntity,
+        reason: 'SSRF target must be rejected: $ssrfBody',
+      );
+
+      // A link-local metadata address is likewise rejected.
+      final (meta, metaBody) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/images/store_from_url',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'url': 'http://169.254.169.254/latest/meta-data'},
+      );
+      expect(meta.statusCode, HttpStatus.unprocessableEntity, reason: metaBody);
+
+      // A missing url is a 422, not a crash.
+      final (missing, missingBody) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/images/store_from_url',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: <String, Object?>{},
+      );
+      expect(
+        missing.statusCode,
+        HttpStatus.unprocessableEntity,
+        reason: missingBody,
+      );
+
+      // Nothing was attached to the recipe by any of the above.
+      final (get, getBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession),
+      );
+      expect(jsonOf(getBody)['hero_image_url'], isNull);
+
       await send(
         'DELETE',
         '/api/v1/recipes/$slug',

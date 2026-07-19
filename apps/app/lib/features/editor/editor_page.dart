@@ -2278,6 +2278,10 @@ class _TechniqueStepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<EditorCubit>();
     final isNew = cubit.state.isNew;
+    // Any in-flight upload disables every photo control (single-flight);
+    // only the step actually storing shows the 'Working…' label.
+    final uploading = cubit.state.uploadingImage;
+    final uploadingThis = cubit.state.uploadingStepKey == step.key;
     final image = step.image;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -2351,8 +2355,13 @@ class _TechniqueStepCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          // A Wrap (not Row + Expanded) so the controls drop below the
+          // thumbnail on narrow viewports instead of overflowing the squeezed
+          // slot — mirrors the hero photo card's layout.
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
@@ -2369,53 +2378,56 @@ class _TechniqueStepCard extends StatelessWidget {
                         ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: isNew
-                    ? const Text(
-                        'Save the recipe to add a step photo.',
-                        style: TextStyle(fontSize: 12, color: SaltColors.muted),
-                      )
-                    : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          FButton(
-                            variant: FButtonVariant.outline,
-                            mainAxisSize: MainAxisSize.min,
-                            onPress: () => _pick(context),
-                            prefix: const Icon(Icons.upload, size: 15),
-                            child: Text(image == null ? 'Upload' : 'Replace'),
-                          ),
-                          FButton(
-                            variant: FButtonVariant.outline,
-                            mainAxisSize: MainAxisSize.min,
-                            onPress: () async {
-                              final url = await _promptImageUrl(context);
-                              if (url != null && context.mounted) {
-                                await cubit.techniqueStepImageFromUrl(
-                                  techKey,
-                                  step.key,
-                                  url,
-                                );
-                              }
-                            },
-                            child: const Text('From URL'),
-                          ),
-                          if (image != null)
-                            FButton(
-                              variant: FButtonVariant.ghost,
-                              mainAxisSize: MainAxisSize.min,
-                              onPress: () => cubit.clearTechniqueStepImage(
-                                techKey,
-                                step.key,
-                              ),
-                              child: const Text('Remove'),
-                            ),
-                        ],
-                      ),
-              ),
+              if (isNew)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  child: const Text(
+                    'Save the recipe to add a step photo.',
+                    style: TextStyle(fontSize: 12, color: SaltColors.muted),
+                  ),
+                )
+              else ...[
+                FButton(
+                  variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: uploading ? null : () => _pick(context),
+                  prefix: uploadingThis
+                      ? null
+                      : const Icon(Icons.upload, size: 15),
+                  child: Text(
+                    uploadingThis
+                        ? 'Working…'
+                        : (image == null ? 'Upload' : 'Replace'),
+                  ),
+                ),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: uploading
+                      ? null
+                      : () async {
+                          final url = await _promptImageUrl(context);
+                          if (url != null && context.mounted) {
+                            await cubit.techniqueStepImageFromUrl(
+                              techKey,
+                              step.key,
+                              url,
+                            );
+                          }
+                        },
+                  child: const Text('From URL'),
+                ),
+                if (image != null)
+                  FButton(
+                    variant: FButtonVariant.ghost,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: uploading
+                        ? null
+                        : () =>
+                              cubit.clearTechniqueStepImage(techKey, step.key),
+                    child: const Text('Remove'),
+                  ),
+              ],
             ],
           ),
         ],
@@ -2428,34 +2440,38 @@ class _TechniqueStepCard extends StatelessWidget {
 /// entered URL, or null on cancel/empty.
 Future<String?> _promptImageUrl(BuildContext context) async {
   final controller = TextEditingController();
-  final result = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Semantics(header: true, child: const Text('Photo from URL')),
-      content: SizedBox(
-        width: 420,
-        child: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'https://…'),
+  try {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Semantics(header: true, child: const Text('Photo from URL')),
+        content: SizedBox(
+          width: 420,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'https://…'),
+          ),
         ),
+        actions: [
+          FButton(
+            variant: FButtonVariant.outline,
+            mainAxisSize: MainAxisSize.min,
+            onPress: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FButton(
+            mainAxisSize: MainAxisSize.min,
+            onPress: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('Fetch'),
+          ),
+        ],
       ),
-      actions: [
-        FButton(
-          variant: FButtonVariant.outline,
-          mainAxisSize: MainAxisSize.min,
-          onPress: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FButton(
-          mainAxisSize: MainAxisSize.min,
-          onPress: () => Navigator.of(context).pop(controller.text.trim()),
-          child: const Text('Fetch'),
-        ),
-      ],
-    ),
-  );
-  return (result == null || result.isEmpty) ? null : result;
+    );
+    return (result == null || result.isEmpty) ? null : result;
+  } finally {
+    controller.dispose();
+  }
 }
 
 // ---------------------------------------------------------------------

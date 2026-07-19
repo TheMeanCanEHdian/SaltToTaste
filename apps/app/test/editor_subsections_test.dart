@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:salt_shared/salt_shared.dart';
@@ -6,12 +8,16 @@ import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/features/editor/editor_cubit.dart';
 
 /// A repository stub: serves a canned recipe on load and captures the field map
-/// a save would send, so serialization can be asserted without a server.
+/// a save would send, so serialization can be asserted without a server. Also
+/// stubs the store-image endpoints so the step-photo flow is testable.
 class _FakeRepo extends RecipeRepository {
   _FakeRepo(this._detail) : super(dio: Dio());
 
   final RecipeDetail _detail;
   Map<String, Object?>? captured;
+  int storeImageCalls = 0;
+  int storeFromUrlCalls = 0;
+  String? lastStoreId;
 
   @override
   Future<RecipeDetail> getRecipe(String idOrSlug) async => _detail;
@@ -26,6 +32,20 @@ class _FakeRepo extends RecipeRepository {
   Future<RecipeDetail> createRecipe(Map<String, Object?> fields) async {
     captured = fields;
     return _detail;
+  }
+
+  @override
+  Future<String> storeImage(String idOrSlug, Uint8List bytes) async {
+    storeImageCalls++;
+    lastStoreId = idOrSlug;
+    return 'images/tech-stored.jpg';
+  }
+
+  @override
+  Future<String> storeImageFromUrl(String idOrSlug, String url) async {
+    storeFromUrlCalls++;
+    lastStoreId = idOrSlug;
+    return 'images/tech-from-url.jpg';
   }
 }
 
@@ -224,6 +244,65 @@ void main() {
       final steps = (added['steps']! as List).cast<Map<String, Object?>>();
       expect(steps.single['caption'], 'Fold gently.');
       expect(steps.single.containsKey('image'), isFalse);
+    });
+
+    test('uploadTechniqueStepImage stores the reference into the step', () async {
+      final repo = _FakeRepo(detail());
+      final cubit = EditorCubit(repo);
+      await cubit.load('meatballs');
+      final techKey = cubit.state.techniques.single.key;
+      final stepKey = cubit.state.techniques.single.steps.single.key;
+
+      await cubit.uploadTechniqueStepImage(
+        techKey,
+        stepKey,
+        Uint8List.fromList([1, 2, 3]),
+      );
+
+      expect(repo.storeImageCalls, 1);
+      expect(repo.lastStoreId, 'r1', reason: 'the recipe id, not the slug');
+      final step = cubit.state.techniques.single.steps.single;
+      expect(step.image, 'images/tech-stored.jpg');
+      expect(cubit.state.uploadingImage, isFalse);
+      expect(cubit.state.uploadingStepKey, isNull, reason: 'cleared on finish');
+      expect(cubit.state.dirty, isTrue);
+    });
+
+    test('techniqueStepImageFromUrl stores via the URL endpoint', () async {
+      final repo = _FakeRepo(detail());
+      final cubit = EditorCubit(repo);
+      await cubit.load('meatballs');
+      final techKey = cubit.state.techniques.single.key;
+      final stepKey = cubit.state.techniques.single.steps.single.key;
+
+      await cubit.techniqueStepImageFromUrl(techKey, stepKey, 'https://x/a.jpg');
+
+      expect(repo.storeFromUrlCalls, 1);
+      expect(
+        cubit.state.techniques.single.steps.single.image,
+        'images/tech-from-url.jpg',
+      );
+    });
+
+    test('a new (unsaved) recipe cannot store a step photo — the isNew gate',
+        () async {
+      final repo = _FakeRepo(detail());
+      final cubit = EditorCubit(repo);
+      cubit.startNew(); // recipeId stays null
+      cubit.addTechnique();
+      final techKey = cubit.state.techniques.single.key;
+      cubit.addTechniqueStep(techKey);
+      final stepKey = cubit.state.techniques.single.steps.single.key;
+
+      await cubit.uploadTechniqueStepImage(
+        techKey,
+        stepKey,
+        Uint8List.fromList([1]),
+      );
+
+      expect(repo.storeImageCalls, 0, reason: 'no id to attach to → no call');
+      expect(cubit.state.techniques.single.steps.single.image, isNull);
+      expect(cubit.state.uploadingImage, isFalse);
     });
   });
 

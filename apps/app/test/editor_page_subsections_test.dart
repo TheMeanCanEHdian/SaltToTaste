@@ -157,4 +157,51 @@ void main() {
     expect(find.widgetWithText(FButton, 'Upload'), findsOneWidget);
     expect(find.widgetWithText(FButton, 'From URL'), findsOneWidget);
   });
+
+  testWidgets('technique step photo controls do not overflow at mobile width', (
+    tester,
+  ) async {
+    // The app's own 'mobile' preset is 375px — the width the review's repro
+    // overflowed the Row+Expanded button slot on. The Wrap layout must not.
+    tester.view.physicalSize = const Size(375, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final recipe = Recipe(
+      id: 'r5',
+      title: 'Bread',
+      slug: 'bread',
+      source: const RecipeSource(name: 'ATK', type: 'manual'),
+      techniques: const [
+        Technique(
+          heading: 'Shaping the Loaf',
+          steps: [
+            TechniqueStep(number: 1, caption: 'Fold.', image: 'images/a.jpg'),
+          ],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      host(RecipeDetail(recipe: recipe, sourceSlug: 'bread')),
+    );
+    await tester.pumpAndSettle();
+
+    final caret = find.byTooltip('Expand');
+    await tester.ensureVisible(caret);
+    await tester.pumpAndSettle();
+    await tester.tap(caret);
+    await tester.pumpAndSettle();
+
+    // A RenderFlex overflow raises a FlutterError that takeException() catches.
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'no RenderFlex overflow at 375px',
+    );
+    // The step has an image, so the control set is Replace / From URL / Remove.
+    expect(find.widgetWithText(FButton, 'Replace'), findsOneWidget);
+    expect(find.widgetWithText(FButton, 'From URL'), findsOneWidget);
+    expect(find.widgetWithText(FButton, 'Remove'), findsOneWidget);
+  });
 }

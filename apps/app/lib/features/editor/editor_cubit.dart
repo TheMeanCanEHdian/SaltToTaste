@@ -251,6 +251,7 @@ final class EditorState {
     this.dirty = false,
     this.saving = false,
     this.uploadingImage = false,
+    this.uploadingStepKey,
     this.saveError,
     this.savedSlug,
     this.deleted = false,
@@ -290,6 +291,12 @@ final class EditorState {
   final bool dirty;
   final bool saving;
   final bool uploadingImage;
+
+  /// The technique step whose photo is being stored, so its card alone shows
+  /// the in-flight state; null for the hero upload (or when idle). While any
+  /// upload is in flight [uploadingImage] disables every photo control.
+  final int? uploadingStepKey;
+
   final String? saveError;
 
   /// Set after a successful save — the page navigates to this slug.
@@ -328,6 +335,8 @@ final class EditorState {
     bool? dirty,
     bool? saving,
     bool? uploadingImage,
+    int? uploadingStepKey,
+    bool clearUploadingStepKey = false,
     String? saveError,
     bool clearSaveError = false,
     String? savedSlug,
@@ -356,6 +365,9 @@ final class EditorState {
     dirty: dirty ?? this.dirty,
     saving: saving ?? this.saving,
     uploadingImage: uploadingImage ?? this.uploadingImage,
+    uploadingStepKey: clearUploadingStepKey
+        ? null
+        : (uploadingStepKey ?? this.uploadingStepKey),
     saveError: clearSaveError ? null : (saveError ?? this.saveError),
     savedSlug: savedSlug ?? this.savedSlug,
     deleted: deleted ?? this.deleted,
@@ -1090,7 +1102,13 @@ class EditorCubit extends Cubit<EditorState> {
     if (id == null || state.uploadingImage) {
       return;
     }
-    emit(state.copyWith(uploadingImage: true, clearSaveError: true));
+    emit(
+      state.copyWith(
+        uploadingImage: true,
+        uploadingStepKey: stepKey,
+        clearSaveError: true,
+      ),
+    );
     try {
       final reference = await store(id);
       if (isClosed) {
@@ -1099,6 +1117,7 @@ class EditorCubit extends Cubit<EditorState> {
       emit(
         state.copyWith(
           uploadingImage: false,
+          clearUploadingStepKey: true,
           dirty: true,
           techniques: _replaceTechStep(
             state.techniques,
@@ -1112,7 +1131,13 @@ class EditorCubit extends Cubit<EditorState> {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(uploadingImage: false, saveError: exception.message));
+      emit(
+        state.copyWith(
+          uploadingImage: false,
+          clearUploadingStepKey: true,
+          saveError: exception.message,
+        ),
+      );
     }
   }
 
