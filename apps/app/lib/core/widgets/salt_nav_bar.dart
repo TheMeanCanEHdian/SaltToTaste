@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -665,6 +666,7 @@ class _AvatarMenu extends StatelessWidget {
             children: [
               FItem(
                 enabled: false,
+                prefix: const Icon(LucideIcons.circleUser),
                 title: Text(
                   user.username,
                   style: const TextStyle(
@@ -678,22 +680,26 @@ class _AvatarMenu extends StatelessWidget {
           ),
           FItemGroup(
             children: [
+              FItem(
+                prefix: const Icon(LucideIcons.heart),
+                title: const Text('My favorites'),
+                onPress: () => go('/favorites'),
+              ),
               if (user.isAdmin)
                 FItem(
+                  prefix: const Icon(LucideIcons.plus),
                   title: const Text('Add recipe'),
                   onPress: () => go('/new'),
                 ),
               if (user.isAdmin)
                 FItem(
+                  prefix: const Icon(LucideIcons.clipboardCheck),
                   title: const Text('Recipe review'),
                   suffix: const _ReviewCountBadge(),
                   onPress: () => go('/review'),
                 ),
               FItem(
-                title: const Text('My favorites'),
-                onPress: () => go('/favorites'),
-              ),
-              FItem(
+                prefix: const Icon(LucideIcons.settings),
                 title: const Text('Settings'),
                 onPress: () => go('/settings'),
               ),
@@ -703,6 +709,10 @@ class _AvatarMenu extends StatelessWidget {
             children: [
               FItem(
                 // Destructive: the theme paints errInk; label it red to match.
+                prefix: const Icon(
+                  LucideIcons.logOut,
+                  color: SaltColors.errInk,
+                ),
                 title: const Text(
                   'Sign out',
                   style: TextStyle(color: SaltColors.errInk),
