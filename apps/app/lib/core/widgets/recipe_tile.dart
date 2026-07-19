@@ -4,6 +4,7 @@ import 'package:salt_shared/salt_shared.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
+import 'package:salt_app/core/widgets/salt_logo.dart';
 import 'package:salt_app/core/widgets/tag_chip.dart';
 
 /// A grid tile: full-bleed photo with the title and tag chips overlaid on a
@@ -107,7 +108,7 @@ class _TileImage extends StatelessWidget {
               // top of the first — a broken photo would read as a DARKER tile
               // than a photo-less one, which is exactly backwards.
               errorBuilder: (_, __, ___) => const Center(
-                child: Icon(Icons.restaurant, size: 40, color: SaltColors.rose),
+                child: SaltLogoGlyph(color: SaltColors.rose, width: 40),
               ),
             ),
           ],

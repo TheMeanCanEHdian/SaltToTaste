@@ -4,6 +4,7 @@ import 'package:salt_shared/salt_shared.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
+import 'package:salt_app/core/widgets/salt_logo.dart';
 import 'package:salt_app/core/widgets/tag_chip.dart';
 
 /// Formats a total-minutes duration for the list row's meta: "45 min",
@@ -232,7 +233,7 @@ class _RecipeRowState extends State<RecipeRow> {
                       256,
                     ),
                 errorBuilder: (_, __, ___) => const Center(
-                  child: Icon(Icons.restaurant, size: 22, color: SaltColors.rose),
+                  child: SaltLogoGlyph(color: SaltColors.rose, width: 22),
                 ),
               ),
             ],

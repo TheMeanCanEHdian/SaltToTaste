@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:salt_app/app.dart';
+import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_logo.dart';
 
 Future<void> main() async {
@@ -23,12 +24,18 @@ Future<void> main() async {
   // the in-app back control is dropped on web).
   GoRouter.optionURLReflectsImperativeAPIs = true;
   // Warm the brand-mark SVG before first paint so it doesn't visibly pop in on
-  // the login card / nav bar. Best-effort AND time-boxed: on web this is a
-  // network fetch, and a slow/stalled one must never hold the app on the boot
-  // screen — cap the wait and proceed (an un-warmed mark just falls back to the
-  // normal async load). A thrown failure (e.g. 404) is likewise swallowed.
+  // the login card / nav bar (white) or the recipe photo placeholders (rose —
+  // a fresh grid can show dozens at once). The cache key includes the tint, so
+  // each colour is warmed separately. Best-effort AND time-boxed: on web this
+  // is a network fetch, and a slow/stalled one must never hold the app on the
+  // boot screen — cap the wait and proceed (an un-warmed mark just falls back
+  // to the normal async load). A thrown failure (e.g. 404) is likewise
+  // swallowed.
   try {
-    await SaltLogoGlyph.precache().timeout(const Duration(milliseconds: 600));
+    await Future.wait([
+      SaltLogoGlyph.precache(),
+      SaltLogoGlyph.precache(SaltColors.rose),
+    ]).timeout(const Duration(milliseconds: 600));
   } catch (_) {}
   // Read the stored prefs (the list layout) before first paint so the choice
   // is applied synchronously. Best-effort: a failure just means the in-memory
