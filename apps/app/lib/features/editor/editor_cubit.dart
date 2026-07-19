@@ -173,6 +173,57 @@ final class EditorSubsection {
   );
 }
 
+/// One illustrated step of a [EditorTechnique] — a caption and an optional
+/// stored image reference (`images/<file>`, uploaded via the store endpoint).
+final class EditorTechniqueStep {
+  EditorTechniqueStep(this.key, {this.image, this.caption = ''});
+
+  final int key;
+  final String? image;
+  final String caption;
+
+  EditorTechniqueStep copyWith({
+    String? image,
+    bool clearImage = false,
+    String? caption,
+  }) => EditorTechniqueStep(
+    key,
+    image: clearImage ? null : (image ?? this.image),
+    caption: caption ?? this.caption,
+  );
+}
+
+/// An illustrated technique sidebar in the editor: a heading, a description,
+/// and a list of illustrated steps.
+final class EditorTechnique {
+  EditorTechnique(
+    this.key, {
+    this.heading = '',
+    this.description = '',
+    this.steps = const [],
+    this.expanded = true,
+  });
+
+  final int key;
+  final String heading;
+  final String description;
+  final List<EditorTechniqueStep> steps;
+  final bool expanded;
+
+  EditorTechnique copyWith({
+    String? heading,
+    String? description,
+    List<EditorTechniqueStep>? steps,
+    bool? expanded,
+  }) => EditorTechnique(
+    key,
+    heading: heading ?? this.heading,
+    description: description ?? this.description,
+    steps: steps ?? this.steps,
+    expanded: expanded ?? this.expanded,
+  );
+}
+
 /// The whole editor state — a working copy of the recipe's editable fields
 /// plus save/dirty bookkeeping.
 final class EditorState {
@@ -193,6 +244,7 @@ final class EditorState {
     this.entries = const [],
     this.steps = const [],
     this.subsections = const [],
+    this.techniques = const [],
     this.images = const RecipeImages(),
     this.heroImageUrl,
     this.credit = '',
@@ -225,6 +277,9 @@ final class EditorState {
 
   /// The recipe's variations/components.
   final List<EditorSubsection> subsections;
+
+  /// The recipe's illustrated technique sidebars.
+  final List<EditorTechnique> techniques;
 
   /// The stored images block (hero/gallery refs live server-side; the
   /// editor edits only the credit and attaches photos via the endpoints).
@@ -266,6 +321,7 @@ final class EditorState {
     List<EditorEntry>? entries,
     List<EditorStep>? steps,
     List<EditorSubsection>? subsections,
+    List<EditorTechnique>? techniques,
     RecipeImages? images,
     String? heroImageUrl,
     String? credit,
@@ -293,6 +349,7 @@ final class EditorState {
     entries: entries ?? this.entries,
     steps: steps ?? this.steps,
     subsections: subsections ?? this.subsections,
+    techniques: techniques ?? this.techniques,
     images: images ?? this.images,
     heroImageUrl: heroImageUrl ?? this.heroImageUrl,
     credit: credit ?? this.credit,
@@ -395,6 +452,17 @@ class EditorCubit extends Cubit<EditorState> {
     expanded: false,
   );
 
+  EditorTechnique _techniqueFrom(Technique tech) => EditorTechnique(
+    _key,
+    heading: tech.heading ?? '',
+    description: tech.description ?? '',
+    steps: [
+      for (final step in tech.steps)
+        EditorTechniqueStep(_key, image: step.image, caption: step.caption),
+    ],
+    expanded: false,
+  );
+
   /// Loads an existing recipe into the editor.
   Future<void> load(String idOrSlug) async {
     emit(const EditorState(loading: true));
@@ -421,6 +489,9 @@ class EditorCubit extends Cubit<EditorState> {
           steps: _stepsFrom(recipe.steps),
           subsections: [
             for (final sub in recipe.subsections) _subsectionFrom(sub),
+          ],
+          techniques: [
+            for (final tech in recipe.techniques) _techniqueFrom(tech),
           ],
           images: recipe.images,
           heroImageUrl: detail.heroImageUrl,
@@ -749,8 +820,11 @@ class EditorCubit extends Cubit<EditorState> {
     ),
   );
 
-  void toggleSubsectionExpanded(int key) =>
-      _mutateSub(key, (s) => s.copyWith(expanded: !s.expanded), markDirty: false);
+  void toggleSubsectionExpanded(int key) => _mutateSub(
+    key,
+    (s) => s.copyWith(expanded: !s.expanded),
+    markDirty: false,
+  );
 
   void setSubsectionTitle(int key, String value) =>
       _mutateSub(key, (s) => s.copyWith(title: value));
@@ -775,14 +849,16 @@ class EditorCubit extends Cubit<EditorState> {
 
   void promoteSubsectionSteps(int key) => _mutateSub(
     key,
-    (s) => s.hasSteps ? s : s.copyWith(hasSteps: true, steps: [EditorStep(_key)]),
+    (s) =>
+        s.hasSteps ? s : s.copyWith(hasSteps: true, steps: [EditorStep(_key)]),
   );
 
   // --- a subsection's ingredient entries ---
 
   void subAddLine(int subKey) => _mutateSub(
     subKey,
-    (s) => s.copyWith(hasIngredients: true, entries: [...s.entries, _emptyLine()]),
+    (s) =>
+        s.copyWith(hasIngredients: true, entries: [...s.entries, _emptyLine()]),
   );
 
   void subAddGroupHeader(int subKey) => _mutateSub(
@@ -800,8 +876,10 @@ class EditorCubit extends Cubit<EditorState> {
     }
     _mutateSub(
       subKey,
-      (s) =>
-          s.copyWith(hasIngredients: true, entries: [...s.entries, ...additions]),
+      (s) => s.copyWith(
+        hasIngredients: true,
+        entries: [...s.entries, ...additions],
+      ),
     );
   }
 
@@ -913,6 +991,179 @@ class EditorCubit extends Cubit<EditorState> {
     (s) => s.copyWith(entries: _replaceEntry(s.entries, key, transform)),
     markDirty: markDirty,
   );
+
+  // ------------------------------------------------------------------
+  // Techniques (illustrated sidebars).
+  // ------------------------------------------------------------------
+
+  void addTechnique() => emit(
+    state.copyWith(
+      techniques: [...state.techniques, EditorTechnique(_key)],
+      dirty: true,
+    ),
+  );
+
+  void removeTechnique(int key) => emit(
+    state.copyWith(
+      techniques: [
+        for (final tech in state.techniques)
+          if (tech.key != key) tech,
+      ],
+      dirty: true,
+    ),
+  );
+
+  void reorderTechniques(int oldIndex, int newIndex) => emit(
+    state.copyWith(
+      techniques: _reordered(state.techniques, oldIndex, newIndex),
+      dirty: true,
+    ),
+  );
+
+  void toggleTechniqueExpanded(int key) => _mutateTech(
+    key,
+    (t) => t.copyWith(expanded: !t.expanded),
+    markDirty: false,
+  );
+
+  void setTechniqueHeading(int key, String value) =>
+      _mutateTech(key, (t) => t.copyWith(heading: value));
+  void setTechniqueDescription(int key, String value) =>
+      _mutateTech(key, (t) => t.copyWith(description: value));
+
+  void addTechniqueStep(int techKey) => _mutateTech(
+    techKey,
+    (t) => t.copyWith(steps: [...t.steps, EditorTechniqueStep(_key)]),
+  );
+
+  void removeTechniqueStep(int techKey, int stepKey) => _mutateTech(
+    techKey,
+    (t) => t.copyWith(
+      steps: [
+        for (final step in t.steps)
+          if (step.key != stepKey) step,
+      ],
+    ),
+  );
+
+  void reorderTechniqueSteps(int techKey, int oldIndex, int newIndex) =>
+      _mutateTech(
+        techKey,
+        (t) => t.copyWith(steps: _reordered(t.steps, oldIndex, newIndex)),
+      );
+
+  void setTechniqueStepCaption(int techKey, int stepKey, String value) =>
+      _mutateTechStep(techKey, stepKey, (s) => s.copyWith(caption: value));
+
+  void clearTechniqueStepImage(int techKey, int stepKey) =>
+      _mutateTechStep(techKey, stepKey, (s) => s.copyWith(clearImage: true));
+
+  /// Uploads [bytes] as a technique step's photo (stored, not attached) and
+  /// drops the returned reference into the step. No-op on a not-yet-saved
+  /// recipe — the store endpoint needs a recipe id, like the hero photo.
+  Future<void> uploadTechniqueStepImage(
+    int techKey,
+    int stepKey,
+    Uint8List bytes,
+  ) => _storeTechniqueStepImage(
+    techKey,
+    stepKey,
+    (id) => _repository.storeImage(id, bytes),
+  );
+
+  Future<void> techniqueStepImageFromUrl(
+    int techKey,
+    int stepKey,
+    String url,
+  ) => _storeTechniqueStepImage(
+    techKey,
+    stepKey,
+    (id) => _repository.storeImageFromUrl(id, url),
+  );
+
+  Future<void> _storeTechniqueStepImage(
+    int techKey,
+    int stepKey,
+    Future<String> Function(String recipeId) store,
+  ) async {
+    final id = state.recipeId;
+    if (id == null || state.uploadingImage) {
+      return;
+    }
+    emit(state.copyWith(uploadingImage: true, clearSaveError: true));
+    try {
+      final reference = await store(id);
+      if (isClosed) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          uploadingImage: false,
+          dirty: true,
+          techniques: _replaceTechStep(
+            state.techniques,
+            techKey,
+            stepKey,
+            (s) => s.copyWith(image: reference),
+          ),
+        ),
+      );
+    } on RepositoryException catch (exception) {
+      if (isClosed) {
+        return;
+      }
+      emit(state.copyWith(uploadingImage: false, saveError: exception.message));
+    }
+  }
+
+  void _mutateTech(
+    int key,
+    EditorTechnique Function(EditorTechnique) transform, {
+    bool markDirty = true,
+  }) {
+    emit(
+      state.copyWith(
+        techniques: [
+          for (final tech in state.techniques)
+            if (tech.key == key) transform(tech) else tech,
+        ],
+        dirty: markDirty ? true : null,
+      ),
+    );
+  }
+
+  void _mutateTechStep(
+    int techKey,
+    int stepKey,
+    EditorTechniqueStep Function(EditorTechniqueStep) transform, {
+    bool markDirty = true,
+  }) => _mutateTech(
+    techKey,
+    (t) => t.copyWith(steps: _replaceTechStepIn(t.steps, stepKey, transform)),
+    markDirty: markDirty,
+  );
+
+  static List<EditorTechnique> _replaceTechStep(
+    List<EditorTechnique> techniques,
+    int techKey,
+    int stepKey,
+    EditorTechniqueStep Function(EditorTechniqueStep) transform,
+  ) => [
+    for (final tech in techniques)
+      if (tech.key == techKey)
+        tech.copyWith(steps: _replaceTechStepIn(tech.steps, stepKey, transform))
+      else
+        tech,
+  ];
+
+  static List<EditorTechniqueStep> _replaceTechStepIn(
+    List<EditorTechniqueStep> steps,
+    int stepKey,
+    EditorTechniqueStep Function(EditorTechniqueStep) transform,
+  ) => [
+    for (final step in steps)
+      if (step.key == stepKey) transform(step) else step,
+  ];
 
   // ------------------------------------------------------------------
   // Photos (existing recipes only — a new recipe has no id yet).
@@ -1036,8 +1287,8 @@ class EditorCubit extends Cubit<EditorState> {
 
   /// The editable-field map the server merges (see docs/API.md — an absent key
   /// stays untouched; a present key replaces wholesale, so a list must be the
-  /// COMPLETE edited list). `techniques` and `times` stay absent (preserved)
-  /// until their editors land.
+  /// COMPLETE edited list). `times` stays absent (preserved) until its editor
+  /// lands.
   Map<String, Object?> _fields() {
     return {
       'title': state.title.trim(),
@@ -1062,6 +1313,10 @@ class EditorCubit extends Cubit<EditorState> {
       'subsections': [
         for (final sub in state.subsections)
           if (!_subsectionIsEmpty(sub)) _subsectionMap(sub),
+      ],
+      'techniques': [
+        for (final tech in state.techniques)
+          if (!_techniqueIsEmpty(tech)) _techniqueMap(tech),
       ],
       // hero/gallery are only ever mutated through the image endpoints;
       // sending them here would race an in-flight upload under the PUT's
@@ -1136,6 +1391,29 @@ class EditorCubit extends Cubit<EditorState> {
       sub.prepNotes.trim().isEmpty &&
       _groupsFromEntries(sub.entries).isEmpty &&
       _stepsMap(sub.steps).isEmpty;
+
+  static Map<String, Object?> _techniqueMap(EditorTechnique tech) => {
+    if (tech.heading.trim().isNotEmpty) 'heading': tech.heading.trim(),
+    if (tech.description.trim().isNotEmpty)
+      'description': tech.description.trim(),
+    'steps': [
+      for (final (i, step) in tech.steps.indexed)
+        // A step earns a slot once it has a caption or a photo.
+        if (step.caption.trim().isNotEmpty || step.image != null)
+          {
+            'number': i + 1,
+            if (step.image != null) 'image': step.image,
+            'caption': step.caption.trim(),
+          },
+    ],
+  };
+
+  static bool _techniqueIsEmpty(EditorTechnique tech) =>
+      tech.heading.trim().isEmpty &&
+      tech.description.trim().isEmpty &&
+      tech.steps.every(
+        (step) => step.caption.trim().isEmpty && step.image == null,
+      );
 
   static String? _nullable(String value) {
     final trimmed = value.trim();

@@ -332,6 +332,38 @@ class RecipeRepository {
     });
   }
 
+  /// Stores photo [bytes] in the library and returns the `images/<file>`
+  /// reference WITHOUT attaching it to the recipe — for a technique step image,
+  /// which the recipe's own save then persists.
+  Future<String> storeImage(String idOrSlug, Uint8List bytes) {
+    return _request('store-image', () async {
+      final response = await _dio.post<dynamic>(
+        '/api/v1/recipes/${_seg(idOrSlug)}/images/store',
+        data: Stream.fromIterable([bytes]),
+        options: Options(
+          headers: {Headers.contentLengthHeader: bytes.length},
+          contentType: 'application/octet-stream',
+          sendTimeout: const Duration(minutes: 5),
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+      );
+      return _asMap(response.data)['reference'] as String;
+    });
+  }
+
+  /// Downloads a photo from [url] (SSRF-guarded server-side) into the library
+  /// and returns its reference without attaching it.
+  Future<String> storeImageFromUrl(String idOrSlug, String url) {
+    return _request('store-image-from-url', () async {
+      final response = await _dio.post<dynamic>(
+        '/api/v1/recipes/${_seg(idOrSlug)}/images/store_from_url',
+        data: {'url': url},
+        options: Options(receiveTimeout: const Duration(minutes: 1)),
+      );
+      return _asMap(response.data)['reference'] as String;
+    });
+  }
+
   // ------------------------------------------------------------------
   // Personal data (any role; read-scope PATs allowed server-side).
   // ------------------------------------------------------------------

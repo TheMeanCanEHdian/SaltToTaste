@@ -57,7 +57,13 @@ Recipe _recipe() => Recipe(
     ),
   ],
   techniques: const [
-    Technique(heading: 'Shaping', steps: [TechniqueStep(number: 1, caption: 'Roll.')]),
+    Technique(
+      heading: 'Shaping',
+      description: 'Keep your hands damp.',
+      steps: [
+        TechniqueStep(number: 1, image: 'images/shape-01.jpg', caption: 'Roll.'),
+      ],
+    ),
   ],
 );
 
@@ -87,18 +93,13 @@ void main() {
   });
 
   group('save serialization', () {
-    test('preserves the null-vs-empty distinction and leaves techniques alone',
-        () async {
+    test('preserves the null-vs-empty distinction', () async {
       final repo = _FakeRepo(detail());
       final cubit = EditorCubit(repo);
       await cubit.load('meatballs');
       await cubit.save();
 
       final fields = repo.captured!;
-      // Editing subsections must NOT start dropping techniques — they stay
-      // absent so the server merge preserves them.
-      expect(fields.containsKey('techniques'), isFalse);
-
       final subs = (fields['subsections']! as List).cast<Map<String, Object?>>();
       expect(subs, hasLength(2));
 
@@ -169,6 +170,60 @@ void main() {
           .last;
       expect(line.raw, '2 cups (10 ounces) flour');
       expect(line.amounts, isNotEmpty, reason: 'the parser ran on the nested line');
+    });
+  });
+
+  group('techniques', () {
+    test('load maps the technique and its illustrated step', () async {
+      final cubit = EditorCubit(_FakeRepo(detail()));
+      await cubit.load('meatballs');
+      expect(cubit.state.techniques, hasLength(1));
+      final tech = cubit.state.techniques.single;
+      expect(tech.heading, 'Shaping');
+      expect(tech.description, 'Keep your hands damp.');
+      expect(tech.steps.single.caption, 'Roll.');
+      expect(tech.steps.single.image, 'images/shape-01.jpg');
+    });
+
+    test('save round-trips heading, description, and the step image', () async {
+      final repo = _FakeRepo(detail());
+      final cubit = EditorCubit(repo);
+      await cubit.load('meatballs');
+      await cubit.save();
+
+      final techs =
+          (repo.captured!['techniques']! as List).cast<Map<String, Object?>>();
+      expect(techs, hasLength(1));
+      expect(techs[0]['heading'], 'Shaping');
+      expect(techs[0]['description'], 'Keep your hands damp.');
+      final steps = (techs[0]['steps']! as List).cast<Map<String, Object?>>();
+      expect(steps.single['image'], 'images/shape-01.jpg');
+      expect(steps.single['caption'], 'Roll.');
+      expect(steps.single['number'], 1);
+    });
+
+    test('an empty technique is dropped; a caption-only step survives', () async {
+      final repo = _FakeRepo(detail());
+      final cubit = EditorCubit(repo);
+      await cubit.load('meatballs');
+
+      cubit.addTechnique(); // empty → dropped
+      final techKey = cubit.state.techniques.last.key;
+      cubit.addTechniqueStep(techKey);
+      final stepKey = cubit.state.techniques.last.steps.single.key;
+      cubit.setTechniqueStepCaption(techKey, stepKey, 'Fold gently.');
+      await cubit.save();
+
+      final techs =
+          (repo.captured!['techniques']! as List).cast<Map<String, Object?>>();
+      // The loaded 'Shaping' technique plus the new one with a captioned step —
+      // an empty step would have been dropped, this one has a caption.
+      expect(techs, hasLength(2));
+      final added = techs[1];
+      expect(added.containsKey('heading'), isFalse);
+      final steps = (added['steps']! as List).cast<Map<String, Object?>>();
+      expect(steps.single['caption'], 'Fold gently.');
+      expect(steps.single.containsKey('image'), isFalse);
     });
   });
 

@@ -280,6 +280,8 @@ class _EditorScaffoldState extends State<_EditorScaffold> {
                         SizedBox(height: 18),
                         _SubsectionsCard(),
                         SizedBox(height: 18),
+                        _TechniquesCard(),
+                        SizedBox(height: 18),
                         _PhotosCard(),
                         SizedBox(height: 18),
                         _DangerCard(),
@@ -2059,6 +2061,401 @@ class _KindSelect extends StatelessWidget {
       ),
     );
   }
+}
+
+// ---------------------------------------------------------------------
+// Techniques — illustrated sidebars (a heading, a description, and steps
+// each with a caption and an optional photo).
+// ---------------------------------------------------------------------
+
+class _TechniquesCard extends StatelessWidget {
+  const _TechniquesCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.watch<EditorCubit>();
+    final techniques = cubit.state.techniques;
+    return _Card(
+      title: 'Techniques',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (techniques.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: Text(
+                'An illustrated aside — a heading and a few captioned, '
+                'photographed steps (e.g. how to shape a loaf).',
+                style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
+              ),
+            )
+          else
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: techniques.length,
+              onReorderItem: cubit.reorderTechniques,
+              itemBuilder: (context, index) => KeyedSubtree(
+                key: ValueKey(techniques[index].key),
+                child: _TechniqueBlock(
+                  index: index,
+                  technique: techniques[index],
+                ),
+              ),
+            ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: cubit.addTechnique,
+              prefix: const Icon(Icons.add, size: 16),
+              child: const Text('Add technique'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TechniqueBlock extends StatelessWidget {
+  const _TechniqueBlock({required this.index, required this.technique});
+
+  final int index;
+  final EditorTechnique technique;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<EditorCubit>();
+    final t = technique;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              color: SaltColors.panel,
+              padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+              child: Row(
+                children: [
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: const Tooltip(
+                      message: 'Drag to reorder',
+                      child: Icon(
+                        Icons.drag_indicator,
+                        size: 17,
+                        color: Color(0xFFCFC8C2),
+                        semanticLabel: 'Drag to reorder technique',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _BoundField(
+                      value: t.heading,
+                      onChanged: (v) => cubit.setTechniqueHeading(t.key, v),
+                      hintText: 'Heading — e.g. Shaping the Loaf',
+                    ),
+                  ),
+                  Tooltip(
+                    message: t.expanded ? 'Collapse' : 'Expand',
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => cubit.toggleTechniqueExpanded(t.key),
+                      child: Icon(
+                        t.expanded ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: SaltColors.muted,
+                      ),
+                    ),
+                  ),
+                  Tooltip(
+                    message: 'Remove',
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => cubit.removeTechnique(t.key),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 17,
+                        color: SaltColors.muted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (t.expanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _FieldLabel(
+                      'Description',
+                      hint: 'optional intro under the heading',
+                    ),
+                    _BoundField(
+                      value: t.description,
+                      onChanged: (v) => cubit.setTechniqueDescription(t.key, v),
+                      minLines: 2,
+                      maxLines: 6,
+                      hintText: 'What this technique achieves…',
+                    ),
+                    const SizedBox(height: 14),
+                    const _NestedLabel('Illustrated steps'),
+                    if (t.steps.isNotEmpty)
+                      ReorderableListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        buildDefaultDragHandles: false,
+                        itemCount: t.steps.length,
+                        onReorderItem: (o, n) =>
+                            cubit.reorderTechniqueSteps(t.key, o, n),
+                        itemBuilder: (context, i) => KeyedSubtree(
+                          key: ValueKey(t.steps[i].key),
+                          child: _TechniqueStepCard(
+                            techKey: t.key,
+                            index: i,
+                            step: t.steps[i],
+                          ),
+                        ),
+                      ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FButton(
+                        variant: FButtonVariant.outline,
+                        mainAxisSize: MainAxisSize.min,
+                        onPress: () => cubit.addTechniqueStep(t.key),
+                        prefix: const Icon(Icons.add, size: 16),
+                        child: const Text('Step'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TechniqueStepCard extends StatelessWidget {
+  const _TechniqueStepCard({
+    required this.techKey,
+    required this.index,
+    required this.step,
+  });
+
+  final int techKey;
+  final int index;
+  final EditorTechniqueStep step;
+
+  Future<void> _pick(BuildContext context) async {
+    final cubit = context.read<EditorCubit>();
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+      withData: true,
+    );
+    final bytes = result?.files.single.bytes;
+    if (bytes != null) {
+      await cubit.uploadTechniqueStepImage(techKey, step.key, bytes);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<EditorCubit>();
+    final isNew = cubit.state.isNew;
+    final image = step.image;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(13, 12, 8, 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 15,
+                backgroundColor: SaltColors.maroon,
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _BoundField(
+                  value: step.caption,
+                  onChanged: (v) =>
+                      cubit.setTechniqueStepCaption(techKey, step.key, v),
+                  minLines: 2,
+                  maxLines: 6,
+                  hintText: 'Caption for this step…',
+                ),
+              ),
+              const SizedBox(width: 4),
+              Column(
+                children: [
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: const Tooltip(
+                      message: 'Drag to reorder',
+                      child: Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(
+                          Icons.drag_indicator,
+                          size: 17,
+                          color: Color(0xFFCFC8C2),
+                          semanticLabel: 'Drag to reorder step',
+                        ),
+                      ),
+                    ),
+                  ),
+                  Tooltip(
+                    message: 'Remove step',
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () =>
+                          cubit.removeTechniqueStep(techKey, step.key),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 17,
+                        color: SaltColors.muted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 96,
+                  height: 62,
+                  child: image == null
+                      ? const PhotoFallback(iconSize: 40)
+                      : Image.network(
+                          apiUrl(image),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const PhotoFallback(showIcon: false),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: isNew
+                    ? const Text(
+                        'Save the recipe to add a step photo.',
+                        style: TextStyle(fontSize: 12, color: SaltColors.muted),
+                      )
+                    : Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          FButton(
+                            variant: FButtonVariant.outline,
+                            mainAxisSize: MainAxisSize.min,
+                            onPress: () => _pick(context),
+                            prefix: const Icon(Icons.upload, size: 15),
+                            child: Text(image == null ? 'Upload' : 'Replace'),
+                          ),
+                          FButton(
+                            variant: FButtonVariant.outline,
+                            mainAxisSize: MainAxisSize.min,
+                            onPress: () async {
+                              final url = await _promptImageUrl(context);
+                              if (url != null && context.mounted) {
+                                await cubit.techniqueStepImageFromUrl(
+                                  techKey,
+                                  step.key,
+                                  url,
+                                );
+                              }
+                            },
+                            child: const Text('From URL'),
+                          ),
+                          if (image != null)
+                            FButton(
+                              variant: FButtonVariant.ghost,
+                              mainAxisSize: MainAxisSize.min,
+                              onPress: () => cubit.clearTechniqueStepImage(
+                                techKey,
+                                step.key,
+                              ),
+                              child: const Text('Remove'),
+                            ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small dialog to fetch a technique-step photo from a URL — returns the
+/// entered URL, or null on cancel/empty.
+Future<String?> _promptImageUrl(BuildContext context) async {
+  final controller = TextEditingController();
+  final result = await showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Semantics(header: true, child: const Text('Photo from URL')),
+      content: SizedBox(
+        width: 420,
+        child: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'https://…'),
+        ),
+      ),
+      actions: [
+        FButton(
+          variant: FButtonVariant.outline,
+          mainAxisSize: MainAxisSize.min,
+          onPress: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FButton(
+          mainAxisSize: MainAxisSize.min,
+          onPress: () => Navigator.of(context).pop(controller.text.trim()),
+          child: const Text('Fetch'),
+        ),
+      ],
+    ),
+  );
+  return (result == null || result.isEmpty) ? null : result;
 }
 
 // ---------------------------------------------------------------------

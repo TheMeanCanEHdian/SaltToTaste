@@ -118,4 +118,43 @@ void main() {
     expect(find.widgetWithText(FButton, 'Add ingredients'), findsOneWidget);
     expect(find.widgetWithText(FButton, 'Add steps'), findsOneWidget);
   });
+
+  testWidgets('a technique expands to its illustrated-step editor', (
+    tester,
+  ) async {
+    final recipe = Recipe(
+      id: 'r3',
+      title: 'Bread',
+      slug: 'bread',
+      source: const RecipeSource(name: 'ATK', type: 'manual'),
+      techniques: const [
+        Technique(
+          heading: 'Shaping the Loaf',
+          description: 'Damp hands help.',
+          steps: [TechniqueStep(number: 1, caption: 'Fold the dough over.')],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      host(RecipeDetail(recipe: recipe, sourceSlug: 'bread')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shaping the Loaf'), findsOneWidget);
+    expect(find.text('Fold the dough over.'), findsNothing);
+
+    final caret = find.byTooltip('Expand');
+    expect(caret, findsOneWidget);
+    await tester.ensureVisible(caret);
+    await tester.pumpAndSettle();
+    await tester.tap(caret);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Damp hands help.'), findsOneWidget);
+    expect(find.text('Fold the dough over.'), findsOneWidget);
+    // The recipe is saved (has an id), so the per-step photo controls show.
+    expect(find.widgetWithText(FButton, 'Upload'), findsOneWidget);
+    expect(find.widgetWithText(FButton, 'From URL'), findsOneWidget);
+  });
 }

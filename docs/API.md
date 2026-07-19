@@ -225,6 +225,20 @@ the library. SSRF-guarded: http/https only, every resolved address must be
 public, redirects are re-validated per hop, response must be a real image
 (content-type **and** magic bytes), size/time capped. → `201` detail body.
 
+### `POST /api/v1/recipes/{idOrSlug}/images/store` (admin, full scope)
+
+Upload a photo as the **raw request body** and get back its stored reference
+WITHOUT attaching it to the recipe — the store-only twin of the upload above.
+Same magic-byte/25 MB validation; the recipe document is untouched (the client
+places the reference into a `techniques[].steps[].image` and persists it with
+the recipe's own `PUT`). → `201 {"reference": "images/<file>"}`.
+
+### `POST /api/v1/recipes/{idOrSlug}/images/store_from_url` (admin, full scope)
+
+`{"url": "https://…"}` — the store-only twin of `from_url` (same SSRF guard and
+image validation): downloads a photo into the library and returns its reference
+without attaching it. → `201 {"reference": "images/<file>"}`.
+
 ### `GET /api/v1/library` (admin)
 
 `{"last_scan": {…} | null}` — the report of the most recent reconciliation

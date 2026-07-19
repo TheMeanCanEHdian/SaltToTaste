@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
+import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/auth/tokens.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
@@ -31,6 +32,9 @@ import '../routes/api/v1/nutrition/jobs/[id].dart' as nutrition_job_route;
 import '../routes/api/v1/recipes/[id]/favorite.dart' as favorite_route;
 import '../routes/api/v1/recipes/[id]/images/from_url.dart' as from_url_route;
 import '../routes/api/v1/recipes/[id]/images/index.dart' as images_route;
+import '../routes/api/v1/recipes/[id]/images/store.dart' as store_route;
+import '../routes/api/v1/recipes/[id]/images/store_from_url.dart'
+    as store_from_url_route;
 import '../routes/api/v1/recipes/[id]/index.dart' as recipe_route;
 import '../routes/api/v1/recipes/[id]/note.dart' as note_route;
 import '../routes/api/v1/recipes/[id]/nutrition/compute.dart' as compute_route;
@@ -101,6 +105,14 @@ void main() {
               (
                 RegExp(r'^/api/v1/recipes/([^/]+)/images/from_url$'),
                 from_url_route.onRequest,
+              ),
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/images/store$'),
+                store_route.onRequest,
+              ),
+              (
+                RegExp(r'^/api/v1/recipes/([^/]+)/images/store_from_url$'),
+                store_from_url_route.onRequest,
               ),
               (
                 RegExp(r'^/api/v1/recipes/([^/]+)/nutrition/compute$'),
@@ -192,6 +204,14 @@ void main() {
     final pipeline = dispatch
         .use(authProvider())
         .use(provider<NutritionProvider>((_) => fixtureProvider))
+        // The recipe-listing route reads a search rate limiter for `?q=`
+        // queries; disabled here (maxRequests: 0) so the suite's many
+        // searches never trip it. Prod wires a live limiter in app_pipeline.
+        .use(
+          provider<RequestRateLimiter>(
+            (_) => RequestRateLimiter(maxRequests: 0),
+          ),
+        )
         .use(provider<AuthRuntime>((_) => runtime))
         .use(provider<SaltDatabase>((_) => db))
         .use(provider<SearchService>((_) => InlineSearchService(db)))
@@ -702,6 +722,66 @@ void main() {
         rawBody: utf8.encode('definitely not an image'),
       );
       expect(bad.statusCode, HttpStatus.unprocessableEntity, reason: badBody);
+    });
+
+    test('images/store returns a reference without attaching it', () async {
+      // Create with the `images` key stripped, so the hero legitimately
+      // starts null — that is what proves the store endpoint doesn't attach
+      // what it stores (the real Bundt submission ships a hero of its own).
+      final recipeNoImages = Map<String, Object?>.of(
+        submission['recipe']! as Map<String, Object?>,
+      )..remove('images');
+      final (create, createBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'recipe': recipeNoImages},
+      );
+      expect(create.statusCode, HttpStatus.created, reason: createBody);
+      final slug =
+          (jsonOf(createBody)['recipe'] as Map<String, dynamic>)['slug']
+              as String;
+
+      final photo = File(
+        '$corpusImagesDir/0857-rich-chocolate-bundt-cake-hero.jpg',
+      ).readAsBytesSync();
+      final (store, storeBody) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/images/store',
+        headers: auth(adminSession, csrf: true),
+        rawBody: photo,
+      );
+      expect(store.statusCode, HttpStatus.created, reason: storeBody);
+      expect(jsonOf(storeBody)['reference'] as String, startsWith('images/'));
+
+      // Store does NOT attach: the recipe's hero image stays null.
+      final (get, getBody) = await send(
+        'GET',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession),
+      );
+      expect(get.statusCode, HttpStatus.ok);
+      expect(
+        jsonOf(getBody)['hero_image_url'],
+        isNull,
+        reason: 'store must not set the hero',
+      );
+
+      // Garbage bytes are still rejected by the magic-byte check.
+      final (bad, badBody) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/images/store',
+        headers: auth(adminSession, csrf: true),
+        rawBody: utf8.encode('not an image'),
+      );
+      expect(bad.statusCode, HttpStatus.unprocessableEntity, reason: badBody);
+
+      // Clean up so the shared library count stays predictable downstream.
+      await send(
+        'DELETE',
+        '/api/v1/recipes/$slug',
+        headers: auth(adminSession, csrf: true),
+      );
     });
 
     test('missing recipes 404; bad inputs 422; wrong methods 405', () async {
