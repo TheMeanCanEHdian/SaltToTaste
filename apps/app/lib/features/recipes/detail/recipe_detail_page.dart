@@ -924,7 +924,7 @@ class _TechniqueView extends StatelessWidget {
 }
 
 /// The illustrated steps as a responsive photo grid — 3 columns wide, reflowing
-/// to 2/1 as the aside narrows. Each card is a captioned photo; a step with no
+/// to 2/1 as the view narrows. Each card is a captioned photo; a step with no
 /// photo falls back to a numbered caption line so ordering is preserved.
 class _StepGrid extends StatelessWidget {
   const _StepGrid({required this.steps, required this.sourceSlug});
@@ -937,7 +937,9 @@ class _StepGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 14.0;
-        const minCard = 150.0;
+        // 140 rather than 150 so common phones (360–414px) land on two columns,
+        // not one; only the narrowest (~320px) drops to a single column.
+        const minCard = 140.0;
         final cols = (constraints.maxWidth / minCard).floor().clamp(1, 3);
         final cardWidth = (constraints.maxWidth - gap * (cols - 1)) / cols;
         return Wrap(
@@ -990,11 +992,31 @@ class _StepCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
+                // Tint panel UNDER the photo: Flutter web emits no load
+                // progress, so this shows through while the image downloads and
+                // the photo fades in over it (the recipe-grid convention)
+                // rather than popping in.
+                const PhotoFallback(showIcon: false),
                 Image.network(
                   apiUrl(imageUrl(sourceSlug, image)!),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      const PhotoFallback(showIcon: false),
+                  // Decorative — the caption carries the meaning (as the hero).
+                  excludeFromSemantics: true,
+                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded ||
+                        MediaQuery.disableAnimationsOf(context)) {
+                      return child;
+                    }
+                    return AnimatedOpacity(
+                      opacity: frame == null ? 0 : 1,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOut,
+                      child: child,
+                    );
+                  },
+                  // The tint panel is already underneath; a broken image just
+                  // reads as a photo-less box (no doubled tint).
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
                 Positioned(top: 8, left: 8, child: _StepNumber(step.number)),
               ],
