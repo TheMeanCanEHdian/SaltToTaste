@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/salt_dismiss_button.dart';
 
 /// Semantic colour tone for a [SaltBadge], mapped to the `SaltColors` token
 /// pairs so every status pill tracks the theme.
@@ -134,32 +135,10 @@ class SaltBadge extends StatelessWidget {
         ],
         if (dismissible) ...[
           const SizedBox(width: 4),
-          Semantics(
-            button: true,
-            label: dismissHint ?? 'Remove',
-            child: InkWell(
-              onTap: onDismiss,
-              borderRadius: BorderRadius.circular(20),
-              // A 24x24 tap target (WCAG 2.5.8) around the visible 18px circle,
-              // so the ✕ is comfortably tappable without enlarging the pill's
-              // look.
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: Center(
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: ink.withValues(alpha: 0.16),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(LucideIcons.x, size: 12, color: ink),
-                  ),
-                ),
-              ),
-            ),
+          SaltDismissButton(
+            ink: ink,
+            onTap: onDismiss!,
+            semanticLabel: dismissHint ?? 'Remove',
           ),
         ],
       ],

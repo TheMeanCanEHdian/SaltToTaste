@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/salt_dismiss_button.dart';
 
 /// The inline search input surface: any committed [SearchChip]s, then a
 /// growing text editor for the clause being typed, laid out on a single
@@ -220,29 +220,10 @@ class SearchChipView extends StatelessWidget {
                 ),
               ),
             ),
-            Semantics(
-              button: true,
-              label: 'Remove ${chip.scopeLabel} ${chip.value}',
-              child: InkWell(
-                onTap: onRemove,
-                borderRadius: BorderRadius.circular(20),
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Center(
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: valueInk.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(LucideIcons.x, size: 12, color: valueInk),
-                    ),
-                  ),
-                ),
-              ),
+            SaltDismissButton(
+              ink: valueInk,
+              onTap: onRemove,
+              semanticLabel: 'Remove ${chip.scopeLabel} ${chip.value}',
             ),
           ],
         ),
