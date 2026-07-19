@@ -1057,9 +1057,7 @@ class _IngredientScope extends InheritedWidget {
   final IngredientActions actions;
 
   static IngredientActions of(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<_IngredientScope>()!
-          .actions;
+      context.dependOnInheritedWidgetOfExactType<_IngredientScope>()!.actions;
 
   @override
   bool updateShouldNotify(_IngredientScope oldWidget) => false;
@@ -1574,7 +1572,8 @@ StepActions _subStepActions(EditorCubit c, int subKey) => StepActions(
   reorder: (o, n) => c.subReorderSteps(subKey, o, n),
   add: () => c.subAddStep(subKey),
   remove: (k) => c.subRemoveStep(subKey, k),
-  setStep: (k, {label, text}) => c.subSetStep(subKey, k, label: label, text: text),
+  setStep: (k, {label, text}) =>
+      c.subSetStep(subKey, k, label: label, text: text),
 );
 
 class _StepScope extends InheritedWidget {
@@ -1836,147 +1835,156 @@ class _SubsectionBlock extends StatelessWidget {
         border: Border.all(color: SaltColors.hairline),
         borderRadius: BorderRadius.circular(12),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header — drag handle, kind toggle, title, expand, delete.
-          Container(
-            color: SaltColors.panel,
-            padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
-            child: Row(
-              children: [
-                ReorderableDragStartListener(
-                  index: index,
-                  child: const Tooltip(
-                    message: 'Drag to reorder',
-                    child: Icon(
-                      Icons.drag_indicator,
-                      size: 17,
-                      color: Color(0xFFCFC8C2),
-                      semanticLabel: 'Drag to reorder subsection',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _KindToggle(subsection: s),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _BoundField(
-                    value: s.title,
-                    onChanged: (v) => cubit.setSubsectionTitle(s.key, v),
-                    hintText: 'Title — e.g. Spicy Version',
-                  ),
-                ),
-                Tooltip(
-                  message: s.expanded ? 'Collapse' : 'Expand',
-                  child: FButton.icon(
-                    variant: FButtonVariant.ghost,
-                    onPress: () => cubit.toggleSubsectionExpanded(s.key),
-                    child: Icon(
-                      s.expanded ? Icons.expand_less : Icons.expand_more,
-                      size: 18,
-                      color: SaltColors.muted,
-                    ),
-                  ),
-                ),
-                Tooltip(
-                  message: 'Remove',
-                  child: FButton.icon(
-                    variant: FButtonVariant.ghost,
-                    onPress: () => cubit.removeSubsection(s.key),
-                    child: const Icon(
-                      Icons.delete_outline,
-                      size: 17,
-                      color: SaltColors.muted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (s.expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      // Clip the header's panel fill to the rounded corners via an INNER
+      // ClipRRect, not Container.clipBehavior — the latter clips the
+      // antialiased border stroke at the corners, leaving them borderless.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header — drag handle, kind select, title, expand, delete.
+            Container(
+              color: SaltColors.panel,
+              padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+              child: Row(
                 children: [
-                  const _FieldLabel(
-                    'Description',
-                    hint: 'prose shown under the recipe',
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: const Tooltip(
+                      message: 'Drag to reorder',
+                      child: Icon(
+                        Icons.drag_indicator,
+                        size: 17,
+                        color: Color(0xFFCFC8C2),
+                        semanticLabel: 'Drag to reorder subsection',
+                      ),
+                    ),
                   ),
-                  _BoundField(
-                    value: s.body,
-                    onChanged: (v) => cubit.setSubsectionBody(s.key, v),
-                    minLines: 2,
-                    maxLines: 8,
-                    hintText: 'How this differs from the main recipe…',
+                  const SizedBox(width: 8),
+                  _KindSelect(subsection: s),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _BoundField(
+                      value: s.title,
+                      onChanged: (v) => cubit.setSubsectionTitle(s.key, v),
+                      hintText: 'Title — e.g. Spicy Version',
+                    ),
                   ),
-                  if (full) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _FieldLabel('Servings', hint: 'optional'),
-                              _BoundField(
-                                value: s.servings,
-                                onChanged: (v) =>
-                                    cubit.setSubsectionServings(s.key, v),
-                                hintText: 'e.g. MAKES 2 CUPS',
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _FieldLabel('Prep notes', hint: 'optional'),
-                              _BoundField(
-                                value: s.prepNotes,
-                                onChanged: (v) =>
-                                    cubit.setSubsectionPrepNotes(s.key, v),
-                                hintText: 'Optional headnote…',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  Tooltip(
+                    message: s.expanded ? 'Collapse' : 'Expand',
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => cubit.toggleSubsectionExpanded(s.key),
+                      child: Icon(
+                        s.expanded ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: SaltColors.muted,
+                      ),
                     ),
-                  ],
-                  const SizedBox(height: 14),
-                  if (s.hasIngredients) ...[
-                    const _NestedLabel('Ingredients'),
-                    _IngredientScope(
-                      actions: _subIngredientActions(cubit, s.key),
-                      child: _IngredientListEditor(entries: s.entries),
+                  ),
+                  Tooltip(
+                    message: 'Remove',
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: () => cubit.removeSubsection(s.key),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 17,
+                        color: SaltColors.muted,
+                      ),
                     ),
-                  ] else
-                    _PromoteRow(
-                      label: 'Add ingredients',
-                      onPress: () => cubit.promoteSubsectionIngredients(s.key),
-                    ),
-                  const SizedBox(height: 14),
-                  if (s.hasSteps) ...[
-                    const _NestedLabel('Steps'),
-                    _StepScope(
-                      actions: _subStepActions(cubit, s.key),
-                      child: _StepListEditor(steps: s.steps),
-                    ),
-                  ] else
-                    _PromoteRow(
-                      label: 'Add steps',
-                      onPress: () => cubit.promoteSubsectionSteps(s.key),
-                    ),
+                  ),
                 ],
               ),
             ),
-        ],
+            if (s.expanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _FieldLabel(
+                      'Description',
+                      hint: 'prose shown under the recipe',
+                    ),
+                    _BoundField(
+                      value: s.body,
+                      onChanged: (v) => cubit.setSubsectionBody(s.key, v),
+                      minLines: 2,
+                      maxLines: 8,
+                      hintText: 'How this differs from the main recipe…',
+                    ),
+                    if (full) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _FieldLabel('Servings', hint: 'optional'),
+                                _BoundField(
+                                  value: s.servings,
+                                  onChanged: (v) =>
+                                      cubit.setSubsectionServings(s.key, v),
+                                  hintText: 'e.g. MAKES 2 CUPS',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _FieldLabel(
+                                  'Prep notes',
+                                  hint: 'optional',
+                                ),
+                                _BoundField(
+                                  value: s.prepNotes,
+                                  onChanged: (v) =>
+                                      cubit.setSubsectionPrepNotes(s.key, v),
+                                  hintText: 'Optional headnote…',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    if (s.hasIngredients) ...[
+                      const _NestedLabel('Ingredients'),
+                      _IngredientScope(
+                        actions: _subIngredientActions(cubit, s.key),
+                        child: _IngredientListEditor(entries: s.entries),
+                      ),
+                    ] else
+                      _PromoteRow(
+                        label: 'Add ingredients',
+                        onPress: () =>
+                            cubit.promoteSubsectionIngredients(s.key),
+                      ),
+                    const SizedBox(height: 14),
+                    if (s.hasSteps) ...[
+                      const _NestedLabel('Steps'),
+                      _StepScope(
+                        actions: _subStepActions(cubit, s.key),
+                        child: _StepListEditor(steps: s.steps),
+                      ),
+                    ] else
+                      _PromoteRow(
+                        label: 'Add steps',
+                        onPress: () => cubit.promoteSubsectionSteps(s.key),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -2024,64 +2032,29 @@ class _PromoteRow extends StatelessWidget {
   );
 }
 
-/// The Variation / Component segmented toggle in a subsection header.
-class _KindToggle extends StatelessWidget {
-  const _KindToggle({required this.subsection});
+/// The Variation / Component chooser in a subsection header — a Forui
+/// [FSelect], the same control the ingredient panel uses for the measure.
+class _KindSelect extends StatelessWidget {
+  const _KindSelect({required this.subsection});
 
   final EditorSubsection subsection;
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<EditorCubit>();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: SaltColors.hairline),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final kind in const ['variation', 'component'])
-              _KindSegment(
-                label: kind == 'variation' ? 'Variation' : 'Component',
-                selected: subsection.kind == kind,
-                onTap: () => cubit.setSubsectionKind(subsection.key, kind),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _KindSegment extends StatelessWidget {
-  const _KindSegment({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-        color: selected ? SaltColors.chip : Colors.white,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
-            color: selected ? SaltColors.chipInk : SaltColors.muted,
-          ),
+    return SizedBox(
+      width: 150,
+      child: FSelect<String>(
+        items: const {'Variation': 'variation', 'Component': 'component'},
+        control: FSelectControl.lifted(
+          // Every real subsection is a variation or a component; a stray other
+          // value just shows as a variation without changing what's stored.
+          value: subsection.kind == 'component' ? 'component' : 'variation',
+          onChange: (kind) {
+            if (kind != null) {
+              cubit.setSubsectionKind(subsection.key, kind);
+            }
+          },
         ),
       ),
     );
