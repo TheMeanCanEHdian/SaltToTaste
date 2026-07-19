@@ -2716,6 +2716,46 @@ class _SaveBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.watch<EditorCubit>();
     final state = cubit.state;
+    final isError = state.saveError != null;
+
+    final status = Text(
+      isError
+          ? state.saveError!
+          : state.dirty
+          ? 'Unsaved changes — saving updates the database and '
+                'rewrites the library YAML.'
+          : 'All changes saved.',
+      style: TextStyle(
+        fontSize: 12.5,
+        color: isError ? SaltColors.errInk : SaltColors.muted,
+        fontWeight: isError ? FontWeight.w600 : null,
+      ),
+    );
+
+    // Cancel + Save, right-aligned. A Wrap (not a Row) so on an ultra-narrow
+    // viewport where the two buttons can't share one line they drop to two
+    // right-aligned lines instead of overflowing.
+    final buttons = Wrap(
+      alignment: WrapAlignment.end,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        FButton(
+          variant: FButtonVariant.outline,
+          mainAxisSize: MainAxisSize.min,
+          // Navigate unconditionally; the route's onExit guard shows the
+          // discard confirmation when there are unsaved changes.
+          onPress: () => _leave(context),
+          child: const Text('Cancel'),
+        ),
+        FButton(
+          mainAxisSize: MainAxisSize.min,
+          onPress: state.saving || state.uploadingImage ? null : cubit.save,
+          child: Text(state.saving ? 'Saving…' : 'Save recipe'),
+        ),
+      ],
+    );
+
     return Material(
       color: SaltColors.panel,
       child: Container(
@@ -2725,50 +2765,26 @@ class _SaveBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         child: SafeArea(
           top: false,
-          child: Row(
-            children: [
-              if (state.saveError != null)
-                Expanded(
-                  child: Text(
-                    state.saveError!,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: SaltColors.errInk,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: Text(
-                    state.dirty
-                        ? 'Unsaved changes — saving updates the database and '
-                              'rewrites the library YAML.'
-                        : 'All changes saved.',
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: SaltColors.muted,
-                    ),
-                  ),
-                ),
-              const SizedBox(width: 12),
-              FButton(
-                variant: FButtonVariant.outline,
-                mainAxisSize: MainAxisSize.min,
-                // Navigate unconditionally; the route's onExit guard shows the
-                // discard confirmation when there are unsaved changes.
-                onPress: () => _leave(context),
-                child: const Text('Cancel'),
-              ),
-              const SizedBox(width: 8),
-              FButton(
-                mainAxisSize: MainAxisSize.min,
-                onPress: state.saving || state.uploadingImage
-                    ? null
-                    : cubit.save,
-                child: Text(state.saving ? 'Saving…' : 'Save recipe'),
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // On phone-width the two buttons plus spacing don't fit beside
+              // the status text, so stack the status above them (status stays
+              // readable, nothing overflows). Inline on wider screens.
+              if (constraints.maxWidth < 400) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [status, const SizedBox(height: 10), buttons],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: status),
+                  const SizedBox(width: 12),
+                  buttons,
+                ],
+              );
+            },
           ),
         ),
       ),

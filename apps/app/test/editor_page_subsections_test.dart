@@ -207,6 +207,35 @@ void main() {
     );
   });
 
+  testWidgets('the save bar does not overflow at a 320px viewport', (
+    tester,
+  ) async {
+    // iPhone SE portrait / Galaxy Fold cover — the Cancel + Save buttons plus
+    // spacing used to overflow the status Row by ~14px here.
+    tester.view.physicalSize = const Size(320, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final recipe = Recipe(
+      id: 'r7',
+      title: 'X',
+      slug: 'x',
+      source: const RecipeSource(name: 'ATK', type: 'manual'),
+    );
+    await tester.pumpWidget(host(RecipeDetail(recipe: recipe, sourceSlug: 'x')));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'the save bar must not overflow at 320px',
+    );
+    // Both actions still render (stacked below the status line).
+    expect(find.widgetWithText(FButton, 'Save recipe'), findsOneWidget);
+    expect(find.widgetWithText(FButton, 'Cancel'), findsOneWidget);
+  });
+
   testWidgets('technique step photo controls do not overflow at mobile width', (
     tester,
   ) async {
