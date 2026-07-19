@@ -96,6 +96,83 @@ final class EditorStep {
       EditorStep(key, label: label ?? this.label, text: text ?? this.text);
 }
 
+/// A recipe subsection (a variation or a component) in the editor.
+///
+/// Prose-only variations carry just [title]/[kind]/[body]. A full sub-recipe
+/// additionally carries its own ingredient [entries] and [steps].
+/// [hasIngredients]/[hasSteps] preserve the model's null-vs-empty distinction:
+/// false means the key is ABSENT (prose-only — the YAML omits it), true means
+/// present (possibly an empty list). Promoting a prose variation flips the flag
+/// on and seeds one empty row.
+final class EditorSubsection {
+  EditorSubsection(
+    this.key, {
+    this.title = '',
+    this.kind = 'variation',
+    this.kindNeedsReview = false,
+    this.body = '',
+    this.servings = '',
+    this.prepNotes = '',
+    this.hasIngredients = false,
+    this.entries = const [],
+    this.hasSteps = false,
+    this.steps = const [],
+    this.expanded = true,
+  });
+
+  final int key;
+  final String title;
+
+  /// `variation` | `component` | `unknown` — preserved verbatim so an untouched
+  /// subsection's kind never changes on save.
+  final String kind;
+
+  /// Whether the kind was auto-guessed and still awaits human confirmation
+  /// (drives the review queue). Cleared when the user picks a kind.
+  final bool kindNeedsReview;
+  final String body;
+  final String servings;
+  final String prepNotes;
+
+  /// Whether the subsection carries an ingredient list at all (null-vs-empty).
+  final bool hasIngredients;
+  final List<EditorEntry> entries;
+
+  /// Whether the subsection carries a step list at all (null-vs-empty).
+  final bool hasSteps;
+  final List<EditorStep> steps;
+
+  /// UI-only: whether the block is expanded in the editor.
+  final bool expanded;
+
+  EditorSubsection copyWith({
+    String? title,
+    String? kind,
+    bool? kindNeedsReview,
+    String? body,
+    String? servings,
+    String? prepNotes,
+    bool? hasIngredients,
+    List<EditorEntry>? entries,
+    bool? hasSteps,
+    List<EditorStep>? steps,
+    bool? expanded,
+  }) => EditorSubsection(
+    key,
+    title: title ?? this.title,
+    kind: kind ?? this.kind,
+    kindNeedsReview: kindNeedsReview ?? this.kindNeedsReview,
+    body: body ?? this.body,
+    servings: servings ?? this.servings,
+    prepNotes: prepNotes ?? this.prepNotes,
+    hasIngredients: hasIngredients ?? this.hasIngredients,
+    entries: entries ?? this.entries,
+    hasSteps: hasSteps ?? this.hasSteps,
+    steps: steps ?? this.steps,
+    expanded: expanded ?? this.expanded,
+  );
+}
+
 /// The whole editor state — a working copy of the recipe's editable fields
 /// plus save/dirty bookkeeping.
 final class EditorState {
@@ -115,6 +192,7 @@ final class EditorState {
     this.notes = '',
     this.entries = const [],
     this.steps = const [],
+    this.subsections = const [],
     this.images = const RecipeImages(),
     this.heroImageUrl,
     this.credit = '',
@@ -144,6 +222,9 @@ final class EditorState {
   final String notes;
   final List<EditorEntry> entries;
   final List<EditorStep> steps;
+
+  /// The recipe's variations/components.
+  final List<EditorSubsection> subsections;
 
   /// The stored images block (hero/gallery refs live server-side; the
   /// editor edits only the credit and attaches photos via the endpoints).
@@ -184,6 +265,7 @@ final class EditorState {
     String? notes,
     List<EditorEntry>? entries,
     List<EditorStep>? steps,
+    List<EditorSubsection>? subsections,
     RecipeImages? images,
     String? heroImageUrl,
     String? credit,
@@ -210,6 +292,7 @@ final class EditorState {
     notes: notes ?? this.notes,
     entries: entries ?? this.entries,
     steps: steps ?? this.steps,
+    subsections: subsections ?? this.subsections,
     images: images ?? this.images,
     heroImageUrl: heroImageUrl ?? this.heroImageUrl,
     credit: credit ?? this.credit,
@@ -268,6 +351,50 @@ class EditorCubit extends Cubit<EditorState> {
     return true;
   }
 
+  /// Flattens stored ingredient [groups] into the editor's interleaved entry
+  /// list (a group header row, then its lines). Shared by the top-level
+  /// ingredient list and each subsection's.
+  List<EditorEntry> _entriesFromGroups(List<IngredientGroup> groups) => [
+    for (final group in groups) ...[
+      if (group.group != null) EditorGroupHeader(_key, group.group!),
+      for (final line in group.items)
+        EditorLine(
+          _key,
+          raw: line.raw,
+          amounts: line.amounts,
+          item: line.item,
+          prep: line.prep,
+          confidence: line.amounts.isEmpty
+              ? ParseConfidence.none
+              : ParseConfidence.parsed,
+          // Curated structured data (differing from what the parser would
+          // produce) is locked against automatic re-parsing.
+          manuallyEdited: !_parserExplains(line),
+        ),
+    ],
+  ];
+
+  List<EditorStep> _stepsFrom(List<RecipeStep> steps) => [
+    for (final step in steps)
+      EditorStep(_key, label: step.label ?? '', text: step.text),
+  ];
+
+  EditorSubsection _subsectionFrom(Subsection sub) => EditorSubsection(
+    _key,
+    title: sub.title ?? '',
+    kind: sub.kind ?? 'variation',
+    kindNeedsReview: sub.kindNeedsReview,
+    body: sub.body ?? '',
+    servings: sub.servings ?? '',
+    prepNotes: sub.prepNotes ?? '',
+    hasIngredients: sub.ingredients != null,
+    entries: _entriesFromGroups(sub.ingredients ?? const []),
+    hasSteps: sub.steps != null,
+    steps: _stepsFrom(sub.steps ?? const []),
+    // Collapse on load so a recipe with several full sub-recipes isn't a wall.
+    expanded: false,
+  );
+
   /// Loads an existing recipe into the editor.
   Future<void> load(String idOrSlug) async {
     emit(const EditorState(loading: true));
@@ -290,28 +417,10 @@ class EditorCubit extends Cubit<EditorState> {
           background: recipe.background ?? '',
           prepNotes: recipe.prepNotes ?? '',
           notes: recipe.notes ?? '',
-          entries: [
-            for (final group in recipe.ingredients) ...[
-              if (group.group != null) EditorGroupHeader(_key, group.group!),
-              for (final line in group.items)
-                EditorLine(
-                  _key,
-                  raw: line.raw,
-                  amounts: line.amounts,
-                  item: line.item,
-                  prep: line.prep,
-                  confidence: line.amounts.isEmpty
-                      ? ParseConfidence.none
-                      : ParseConfidence.parsed,
-                  // Curated structured data (differing from what the parser
-                  // would produce) is locked against automatic re-parsing.
-                  manuallyEdited: !_parserExplains(line),
-                ),
-            ],
-          ],
-          steps: [
-            for (final step in recipe.steps)
-              EditorStep(_key, label: step.label ?? '', text: step.text),
+          entries: _entriesFromGroups(recipe.ingredients),
+          steps: _stepsFrom(recipe.steps),
+          subsections: [
+            for (final sub in recipe.subsections) _subsectionFrom(sub),
           ],
           images: recipe.images,
           heroImageUrl: detail.heroImageUrl,
@@ -361,33 +470,21 @@ class EditorCubit extends Cubit<EditorState> {
       emit(state.copyWith(tags: [...state.tags]..remove(tag), dirty: true));
 
   // ------------------------------------------------------------------
-  // Ingredient entries.
+  // Shared entry-list building blocks (used by the top-level ingredient list
+  // AND each subsection's, so the parse/lock rules can never drift between
+  // them). The transforms are pure `EditorEntry -> EditorEntry`; the list ops
+  // are pure `List -> List`.
   // ------------------------------------------------------------------
 
-  void addLine() => emit(
-    state.copyWith(
-      entries: [
-        ...state.entries,
-        EditorLine(
-          _key,
-          raw: '',
-          amounts: const [],
-          confidence: ParseConfidence.none,
-        ),
-      ],
-      dirty: true,
-    ),
+  EditorLine _emptyLine() => EditorLine(
+    _key,
+    raw: '',
+    amounts: const [],
+    confidence: ParseConfidence.none,
   );
 
-  void addGroupHeader() => emit(
-    state.copyWith(
-      entries: [...state.entries, EditorGroupHeader(_key, '')],
-      dirty: true,
-    ),
-  );
-
-  /// Appends parsed lines (and `Header:` group rows) from the paste dialog.
-  void addPastedLines(List<String> lines) {
+  /// Parses paste-dialog lines into entries (a `Header:` line becomes a group).
+  List<EditorEntry> _pastedEntries(List<String> lines) {
     final additions = <EditorEntry>[];
     for (final raw in lines) {
       final line = raw.trim();
@@ -405,6 +502,101 @@ class EditorCubit extends Cubit<EditorState> {
         additions.add(EditorLine.parsed(_key, line));
       }
     }
+    return additions;
+  }
+
+  static List<EditorEntry> _replaceEntry(
+    List<EditorEntry> entries,
+    int key,
+    EditorEntry Function(EditorEntry) transform,
+  ) => [
+    for (final entry in entries)
+      if (entry.key == key) transform(entry) else entry,
+  ];
+
+  static List<T> _reordered<T>(List<T> list, int oldIndex, int newIndex) {
+    final copy = [...list];
+    copy.insert(newIndex, copy.removeAt(oldIndex));
+    return copy;
+  }
+
+  static EditorEntry _rename(EditorEntry e, String name) =>
+      e is EditorGroupHeader ? e.withName(name) : e;
+  static EditorEntry _setRaw(EditorEntry e, String raw) =>
+      e is EditorLine ? e.copyWith(raw: raw) : e;
+  static EditorEntry _toggleExpanded(EditorEntry e) =>
+      e is EditorLine ? e.copyWith(expanded: !e.expanded) : e;
+
+  static EditorEntry _autoParse(EditorEntry e) {
+    if (e is! EditorLine || e.manuallyEdited) {
+      return e;
+    }
+    final parsed = parseIngredientLine(e.raw);
+    return e.copyWith(
+      amounts: parsed.amounts,
+      item: parsed.item,
+      clearItem: parsed.item == null,
+      prep: parsed.prep,
+      clearPrep: parsed.prep == null,
+      confidence: parsed.confidence,
+    );
+  }
+
+  static EditorEntry _reparse(EditorEntry e) {
+    if (e is! EditorLine) {
+      return e;
+    }
+    final parsed = parseIngredientLine(e.raw);
+    return e.copyWith(
+      amounts: parsed.amounts,
+      item: parsed.item,
+      clearItem: parsed.item == null,
+      prep: parsed.prep,
+      clearPrep: parsed.prep == null,
+      confidence: parsed.confidence,
+      manuallyEdited: false,
+    );
+  }
+
+  static EditorEntry _setStructured(
+    EditorEntry e, {
+    List<Amount>? amounts,
+    String? item,
+    bool clearItem = false,
+    String? prep,
+    bool clearPrep = false,
+  }) {
+    if (e is! EditorLine) {
+      return e;
+    }
+    return e.copyWith(
+      amounts: amounts,
+      item: item,
+      clearItem: clearItem,
+      prep: prep,
+      clearPrep: clearPrep,
+      manuallyEdited: true,
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // Ingredient entries (top-level list).
+  // ------------------------------------------------------------------
+
+  void addLine() => emit(
+    state.copyWith(entries: [...state.entries, _emptyLine()], dirty: true),
+  );
+
+  void addGroupHeader() => emit(
+    state.copyWith(
+      entries: [...state.entries, EditorGroupHeader(_key, '')],
+      dirty: true,
+    ),
+  );
+
+  /// Appends parsed lines (and `Header:` group rows) from the paste dialog.
+  void addPastedLines(List<String> lines) {
+    final additions = _pastedEntries(lines);
     if (additions.isEmpty) {
       return;
     }
@@ -424,50 +616,30 @@ class EditorCubit extends Cubit<EditorState> {
   );
 
   /// [newIndex] is already adjusted for the removal (onReorderItem).
-  void reorderEntries(int oldIndex, int newIndex) {
-    final entries = [...state.entries];
-    final entry = entries.removeAt(oldIndex);
-    entries.insert(newIndex, entry);
-    emit(state.copyWith(entries: entries, dirty: true));
-  }
-
-  void renameGroup(int key, String name) => _updateEntry(
-    key,
-    (entry) => entry is EditorGroupHeader ? entry.withName(name) : entry,
+  void reorderEntries(int oldIndex, int newIndex) => emit(
+    state.copyWith(
+      entries: _reordered(state.entries, oldIndex, newIndex),
+      dirty: true,
+    ),
   );
+
+  void renameGroup(int key, String name) =>
+      _updateEntry(key, (entry) => _rename(entry, name));
 
   /// The raw text changed. Committed to state IMMEDIATELY (a save or a
   /// leave-check must never miss in-flight typing); the structured-field
   /// parse follows separately via the debounced [applyAutoParse].
-  void setLineRaw(int key, String raw) => _updateEntry(
-    key,
-    (entry) => entry is EditorLine ? entry.copyWith(raw: raw) : entry,
-  );
+  void setLineRaw(int key, String raw) =>
+      _updateEntry(key, (entry) => _setRaw(entry, raw));
 
   /// Applies the parser to the line's CURRENT raw text — called on the
   /// widget's debounce. Hand-edited (locked) lines are left alone; the
   /// explicit re-parse button is their only path.
-  void applyAutoParse(int key) => _updateEntry(key, (entry) {
-    if (entry is! EditorLine || entry.manuallyEdited) {
-      return entry;
-    }
-    final parsed = parseIngredientLine(entry.raw);
-    return entry.copyWith(
-      amounts: parsed.amounts,
-      item: parsed.item,
-      clearItem: parsed.item == null,
-      prep: parsed.prep,
-      clearPrep: parsed.prep == null,
-      confidence: parsed.confidence,
-    );
-  }, markDirty: false);
+  void applyAutoParse(int key) =>
+      _updateEntry(key, _autoParse, markDirty: false);
 
-  void toggleLineExpanded(int key) => _updateEntry(
-    key,
-    (entry) =>
-        entry is EditorLine ? entry.copyWith(expanded: !entry.expanded) : entry,
-    markDirty: false,
-  );
+  void toggleLineExpanded(int key) =>
+      _updateEntry(key, _toggleExpanded, markDirty: false);
 
   /// Structured-field edits lock the line against automatic re-parsing.
   void setLineStructured(
@@ -477,36 +649,20 @@ class EditorCubit extends Cubit<EditorState> {
     bool clearItem = false,
     String? prep,
     bool clearPrep = false,
-  }) => _updateEntry(key, (entry) {
-    if (entry is! EditorLine) {
-      return entry;
-    }
-    return entry.copyWith(
+  }) => _updateEntry(
+    key,
+    (entry) => _setStructured(
+      entry,
       amounts: amounts,
       item: item,
       clearItem: clearItem,
       prep: prep,
       clearPrep: clearPrep,
-      manuallyEdited: true,
-    );
-  });
+    ),
+  );
 
   /// The explicit re-parse: applies the parser output and clears the lock.
-  void reparseLine(int key) => _updateEntry(key, (entry) {
-    if (entry is! EditorLine) {
-      return entry;
-    }
-    final parsed = parseIngredientLine(entry.raw);
-    return entry.copyWith(
-      amounts: parsed.amounts,
-      item: parsed.item,
-      clearItem: parsed.item == null,
-      prep: parsed.prep,
-      clearPrep: parsed.prep == null,
-      confidence: parsed.confidence,
-      manuallyEdited: false,
-    );
-  });
+  void reparseLine(int key) => _updateEntry(key, _reparse);
 
   void _updateEntry(
     int key,
@@ -515,10 +671,7 @@ class EditorCubit extends Cubit<EditorState> {
   }) {
     emit(
       state.copyWith(
-        entries: [
-          for (final entry in state.entries)
-            if (entry.key == key) transform(entry) else entry,
-        ],
+        entries: _replaceEntry(state.entries, key, transform),
         dirty: markDirty ? true : null,
       ),
     );
@@ -543,12 +696,12 @@ class EditorCubit extends Cubit<EditorState> {
   );
 
   /// [newIndex] is already adjusted for the removal (onReorderItem).
-  void reorderSteps(int oldIndex, int newIndex) {
-    final steps = [...state.steps];
-    final step = steps.removeAt(oldIndex);
-    steps.insert(newIndex, step);
-    emit(state.copyWith(steps: steps, dirty: true));
-  }
+  void reorderSteps(int oldIndex, int newIndex) => emit(
+    state.copyWith(
+      steps: _reordered(state.steps, oldIndex, newIndex),
+      dirty: true,
+    ),
+  );
 
   void setStep(int key, {String? label, String? text}) => emit(
     state.copyWith(
@@ -561,6 +714,204 @@ class EditorCubit extends Cubit<EditorState> {
       ],
       dirty: true,
     ),
+  );
+
+  // ------------------------------------------------------------------
+  // Subsections (variations / components). Each carries its own ingredient
+  // entry list and step list; nested edits route through the SAME shared
+  // transforms as the top-level lists, scoped to one subsection by key.
+  // ------------------------------------------------------------------
+
+  void addSubsection(String kind) => emit(
+    state.copyWith(
+      subsections: [
+        ...state.subsections,
+        EditorSubsection(_key, kind: kind),
+      ],
+      dirty: true,
+    ),
+  );
+
+  void removeSubsection(int key) => emit(
+    state.copyWith(
+      subsections: [
+        for (final sub in state.subsections)
+          if (sub.key != key) sub,
+      ],
+      dirty: true,
+    ),
+  );
+
+  void reorderSubsections(int oldIndex, int newIndex) => emit(
+    state.copyWith(
+      subsections: _reordered(state.subsections, oldIndex, newIndex),
+      dirty: true,
+    ),
+  );
+
+  void toggleSubsectionExpanded(int key) =>
+      _mutateSub(key, (s) => s.copyWith(expanded: !s.expanded), markDirty: false);
+
+  void setSubsectionTitle(int key, String value) =>
+      _mutateSub(key, (s) => s.copyWith(title: value));
+  // Picking a kind clears the auto-guess review flag — a human has classified it.
+  void setSubsectionKind(int key, String kind) =>
+      _mutateSub(key, (s) => s.copyWith(kind: kind, kindNeedsReview: false));
+  void setSubsectionBody(int key, String value) =>
+      _mutateSub(key, (s) => s.copyWith(body: value));
+  void setSubsectionServings(int key, String value) =>
+      _mutateSub(key, (s) => s.copyWith(servings: value));
+  void setSubsectionPrepNotes(int key, String value) =>
+      _mutateSub(key, (s) => s.copyWith(prepNotes: value));
+
+  /// Promotes a prose-only variation into a full sub-recipe: turns the
+  /// ingredient list "present" (null -> []) and seeds one empty line.
+  void promoteSubsectionIngredients(int key) => _mutateSub(
+    key,
+    (s) => s.hasIngredients
+        ? s
+        : s.copyWith(hasIngredients: true, entries: [_emptyLine()]),
+  );
+
+  void promoteSubsectionSteps(int key) => _mutateSub(
+    key,
+    (s) => s.hasSteps ? s : s.copyWith(hasSteps: true, steps: [EditorStep(_key)]),
+  );
+
+  // --- a subsection's ingredient entries ---
+
+  void subAddLine(int subKey) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(hasIngredients: true, entries: [...s.entries, _emptyLine()]),
+  );
+
+  void subAddGroupHeader(int subKey) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(
+      hasIngredients: true,
+      entries: [...s.entries, EditorGroupHeader(_key, '')],
+    ),
+  );
+
+  void subAddPastedLines(int subKey, List<String> lines) {
+    final additions = _pastedEntries(lines);
+    if (additions.isEmpty) {
+      return;
+    }
+    _mutateSub(
+      subKey,
+      (s) =>
+          s.copyWith(hasIngredients: true, entries: [...s.entries, ...additions]),
+    );
+  }
+
+  void subRemoveEntry(int subKey, int key) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(
+      entries: [
+        for (final entry in s.entries)
+          if (entry.key != key) entry,
+      ],
+    ),
+  );
+
+  void subReorderEntries(int subKey, int oldIndex, int newIndex) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(entries: _reordered(s.entries, oldIndex, newIndex)),
+  );
+
+  void subRenameGroup(int subKey, int key, String name) =>
+      _mutateSubEntry(subKey, key, (e) => _rename(e, name));
+  void subSetLineRaw(int subKey, int key, String raw) =>
+      _mutateSubEntry(subKey, key, (e) => _setRaw(e, raw));
+  void subApplyAutoParse(int subKey, int key) =>
+      _mutateSubEntry(subKey, key, _autoParse, markDirty: false);
+  void subToggleLineExpanded(int subKey, int key) =>
+      _mutateSubEntry(subKey, key, _toggleExpanded, markDirty: false);
+  void subReparseLine(int subKey, int key) =>
+      _mutateSubEntry(subKey, key, _reparse);
+  void subSetLineStructured(
+    int subKey,
+    int key, {
+    List<Amount>? amounts,
+    String? item,
+    bool clearItem = false,
+    String? prep,
+    bool clearPrep = false,
+  }) => _mutateSubEntry(
+    subKey,
+    key,
+    (e) => _setStructured(
+      e,
+      amounts: amounts,
+      item: item,
+      clearItem: clearItem,
+      prep: prep,
+      clearPrep: clearPrep,
+    ),
+  );
+
+  // --- a subsection's steps ---
+
+  void subAddStep(int subKey) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(hasSteps: true, steps: [...s.steps, EditorStep(_key)]),
+  );
+
+  void subRemoveStep(int subKey, int key) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(
+      steps: [
+        for (final step in s.steps)
+          if (step.key != key) step,
+      ],
+    ),
+  );
+
+  void subReorderSteps(int subKey, int oldIndex, int newIndex) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(steps: _reordered(s.steps, oldIndex, newIndex)),
+  );
+
+  void subSetStep(int subKey, int key, {String? label, String? text}) =>
+      _mutateSub(
+        subKey,
+        (s) => s.copyWith(
+          steps: [
+            for (final step in s.steps)
+              if (step.key == key)
+                step.copyWith(label: label, text: text)
+              else
+                step,
+          ],
+        ),
+      );
+
+  void _mutateSub(
+    int subKey,
+    EditorSubsection Function(EditorSubsection) transform, {
+    bool markDirty = true,
+  }) {
+    emit(
+      state.copyWith(
+        subsections: [
+          for (final sub in state.subsections)
+            if (sub.key == subKey) transform(sub) else sub,
+        ],
+        dirty: markDirty ? true : null,
+      ),
+    );
+  }
+
+  void _mutateSubEntry(
+    int subKey,
+    int key,
+    EditorEntry Function(EditorEntry) transform, {
+    bool markDirty = true,
+  }) => _mutateSub(
+    subKey,
+    (s) => s.copyWith(entries: _replaceEntry(s.entries, key, transform)),
+    markDirty: markDirty,
   );
 
   // ------------------------------------------------------------------
@@ -683,32 +1034,11 @@ class EditorCubit extends Cubit<EditorState> {
     }
   }
 
-  /// The editable-field map the server merges (see docs/API.md — absent
-  /// keys stay untouched, so times/subsections/techniques survive edits).
+  /// The editable-field map the server merges (see docs/API.md — an absent key
+  /// stays untouched; a present key replaces wholesale, so a list must be the
+  /// COMPLETE edited list). `techniques` and `times` stay absent (preserved)
+  /// until their editors land.
   Map<String, Object?> _fields() {
-    final groups = <Map<String, Object?>>[];
-    String? currentGroup;
-    var currentItems = <Map<String, Object?>>[];
-    void flush() {
-      if (currentItems.isNotEmpty) {
-        groups.add({'group': currentGroup, 'items': currentItems});
-      }
-      currentItems = [];
-    }
-
-    for (final entry in state.entries) {
-      switch (entry) {
-        case EditorGroupHeader(:final name):
-          flush();
-          currentGroup = name.trim().isEmpty ? null : name.trim();
-        case EditorLine():
-          if (entry.raw.trim().isNotEmpty) {
-            currentItems.add(entry.toIngredientLine().toMap());
-          }
-      }
-    }
-    flush();
-
     return {
       'title': state.title.trim(),
       'servings': _nullable(state.servings),
@@ -723,15 +1053,15 @@ class EditorCubit extends Cubit<EditorState> {
             : state.sourceName.trim(),
         'url': _nullable(state.sourceUrl),
       },
-      'ingredients': groups,
-      'steps': [
-        for (final (i, step) in state.steps.indexed)
-          if (step.text.trim().isNotEmpty)
-            {
-              'number': i + 1,
-              'label': _nullable(step.label),
-              'text': step.text.trim(),
-            },
+      'ingredients': _groupsFromEntries(state.entries),
+      'steps': _stepsMap(state.steps),
+      // Merge replaces the whole key, so emit every subsection (empty ones
+      // dropped). Inside each map, hasIngredients/hasSteps decide whether the
+      // ingredient/step key is present at all — that is the null-vs-empty
+      // distinction the model draws (prose-only omits it).
+      'subsections': [
+        for (final sub in state.subsections)
+          if (!_subsectionIsEmpty(sub)) _subsectionMap(sub),
       ],
       // hero/gallery are only ever mutated through the image endpoints;
       // sending them here would race an in-flight upload under the PUT's
@@ -744,6 +1074,68 @@ class EditorCubit extends Cubit<EditorState> {
         },
     };
   }
+
+  /// Re-groups an interleaved entry list into the API's `[{group, items}]`
+  /// shape (blank lines and empty trailing groups dropped). Shared by the
+  /// top-level ingredients and each subsection's.
+  static List<Map<String, Object?>> _groupsFromEntries(
+    List<EditorEntry> entries,
+  ) {
+    final groups = <Map<String, Object?>>[];
+    String? currentGroup;
+    var currentItems = <Map<String, Object?>>[];
+    void flush() {
+      if (currentItems.isNotEmpty) {
+        groups.add({'group': currentGroup, 'items': currentItems});
+      }
+      currentItems = [];
+    }
+
+    for (final entry in entries) {
+      switch (entry) {
+        case EditorGroupHeader(:final name):
+          flush();
+          currentGroup = name.trim().isEmpty ? null : name.trim();
+        case EditorLine():
+          if (entry.raw.trim().isNotEmpty) {
+            currentItems.add(entry.toIngredientLine().toMap());
+          }
+      }
+    }
+    flush();
+    return groups;
+  }
+
+  static List<Map<String, Object?>> _stepsMap(List<EditorStep> steps) => [
+    for (final (i, step) in steps.indexed)
+      if (step.text.trim().isNotEmpty)
+        {
+          'number': i + 1,
+          'label': _nullable(step.label),
+          'text': step.text.trim(),
+        },
+  ];
+
+  static Map<String, Object?> _subsectionMap(EditorSubsection sub) => {
+    if (sub.title.trim().isNotEmpty) 'title': sub.title.trim(),
+    'kind': sub.kind,
+    'kind_needs_review': sub.kindNeedsReview,
+    if (sub.body.trim().isNotEmpty) 'body': sub.body.trim(),
+    if (sub.servings.trim().isNotEmpty) 'servings': sub.servings.trim(),
+    if (sub.prepNotes.trim().isNotEmpty) 'prep_notes': sub.prepNotes.trim(),
+    if (sub.hasIngredients) 'ingredients': _groupsFromEntries(sub.entries),
+    if (sub.hasSteps) 'steps': _stepsMap(sub.steps),
+  };
+
+  /// A subsection with no title, prose, or non-empty ingredients/steps is
+  /// dropped on save rather than persisted as a junk empty block.
+  static bool _subsectionIsEmpty(EditorSubsection sub) =>
+      sub.title.trim().isEmpty &&
+      sub.body.trim().isEmpty &&
+      sub.servings.trim().isEmpty &&
+      sub.prepNotes.trim().isEmpty &&
+      _groupsFromEntries(sub.entries).isEmpty &&
+      _stepsMap(sub.steps).isEmpty;
 
   static String? _nullable(String value) {
     final trimmed = value.trim();

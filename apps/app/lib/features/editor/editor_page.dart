@@ -278,6 +278,8 @@ class _EditorScaffoldState extends State<_EditorScaffold> {
                         SizedBox(height: 18),
                         _DirectionsCard(),
                         SizedBox(height: 18),
+                        _SubsectionsCard(),
+                        SizedBox(height: 18),
                         _PhotosCard(),
                         SizedBox(height: 18),
                         _DangerCard(),
@@ -967,67 +969,180 @@ class _StoryCard extends StatelessWidget {
 // Ingredients.
 // ---------------------------------------------------------------------
 
+/// The edit operations an ingredient-list editor needs, decoupled from where
+/// the list lives (the top-level recipe or one subsection). One implementation
+/// of the rows can then serve both — the top-level card and a nested subsection
+/// hand it cubit methods scoped to their own list.
+class IngredientActions {
+  const IngredientActions({
+    required this.reorder,
+    required this.addLine,
+    required this.addGroupHeader,
+    required this.paste,
+    required this.removeEntry,
+    required this.renameGroup,
+    required this.setRaw,
+    required this.autoParse,
+    required this.toggleExpanded,
+    required this.setStructured,
+    required this.reparse,
+  });
+
+  final void Function(int oldIndex, int newIndex) reorder;
+  final VoidCallback addLine;
+  final VoidCallback addGroupHeader;
+  final void Function(List<String> lines) paste;
+  final void Function(int key) removeEntry;
+  final void Function(int key, String name) renameGroup;
+  final void Function(int key, String raw) setRaw;
+  final void Function(int key) autoParse;
+  final void Function(int key) toggleExpanded;
+  final void Function(
+    int key, {
+    List<Amount>? amounts,
+    String? item,
+    bool clearItem,
+    String? prep,
+    bool clearPrep,
+  })
+  setStructured;
+  final void Function(int key) reparse;
+}
+
+IngredientActions _topIngredientActions(EditorCubit c) => IngredientActions(
+  reorder: c.reorderEntries,
+  addLine: c.addLine,
+  addGroupHeader: c.addGroupHeader,
+  paste: c.addPastedLines,
+  removeEntry: c.removeEntry,
+  renameGroup: c.renameGroup,
+  setRaw: c.setLineRaw,
+  autoParse: c.applyAutoParse,
+  toggleExpanded: c.toggleLineExpanded,
+  setStructured: c.setLineStructured,
+  reparse: c.reparseLine,
+);
+
+IngredientActions _subIngredientActions(EditorCubit c, int subKey) =>
+    IngredientActions(
+      reorder: (o, n) => c.subReorderEntries(subKey, o, n),
+      addLine: () => c.subAddLine(subKey),
+      addGroupHeader: () => c.subAddGroupHeader(subKey),
+      paste: (lines) => c.subAddPastedLines(subKey, lines),
+      removeEntry: (k) => c.subRemoveEntry(subKey, k),
+      renameGroup: (k, name) => c.subRenameGroup(subKey, k, name),
+      setRaw: (k, raw) => c.subSetLineRaw(subKey, k, raw),
+      autoParse: (k) => c.subApplyAutoParse(subKey, k),
+      toggleExpanded: (k) => c.subToggleLineExpanded(subKey, k),
+      setStructured:
+          (k, {amounts, item, clearItem = false, prep, clearPrep = false}) =>
+              c.subSetLineStructured(
+                subKey,
+                k,
+                amounts: amounts,
+                item: item,
+                clearItem: clearItem,
+                prep: prep,
+                clearPrep: clearPrep,
+              ),
+      reparse: (k) => c.subReparseLine(subKey, k),
+    );
+
+/// Provides the [IngredientActions] the enclosed ingredient rows dispatch
+/// through. Never notifies: rows only call the actions, and the actions wrap
+/// the stable cubit, so a change never needs to rebuild a row.
+class _IngredientScope extends InheritedWidget {
+  const _IngredientScope({required this.actions, required super.child});
+
+  final IngredientActions actions;
+
+  static IngredientActions of(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<_IngredientScope>()!
+          .actions;
+
+  @override
+  bool updateShouldNotify(_IngredientScope oldWidget) => false;
+}
+
+/// The reorderable entry list + add/paste buttons. Reads its actions from the
+/// enclosing [_IngredientScope], so it renders identically for the recipe's
+/// ingredient list and a subsection's.
+class _IngredientListEditor extends StatelessWidget {
+  const _IngredientListEditor({required this.entries});
+
+  final List<EditorEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = _IngredientScope.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          itemCount: entries.length,
+          onReorderItem: actions.reorder,
+          itemBuilder: (context, index) {
+            final entry = entries[index];
+            return KeyedSubtree(
+              key: ValueKey(entry.key),
+              child: switch (entry) {
+                EditorGroupHeader() => _GroupHeaderRow(
+                  index: index,
+                  header: entry,
+                ),
+                EditorLine() => _IngredientRow(index: index, line: entry),
+              },
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: actions.addLine,
+              prefix: const Icon(Icons.add, size: 16),
+              child: const Text('Ingredient'),
+            ),
+            FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: actions.addGroupHeader,
+              prefix: const Icon(Icons.add, size: 16),
+              child: const Text('Group header'),
+            ),
+            FButton(
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              onPress: () => showPasteDialog(context, onSubmit: actions.paste),
+              prefix: const Icon(Icons.content_paste_go, size: 16),
+              child: const Text('Paste a list…'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _IngredientsCard extends StatelessWidget {
   const _IngredientsCard();
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.watch<EditorCubit>();
-    final entries = cubit.state.entries;
     return _Card(
       title: 'Ingredients',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ReorderableListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            buildDefaultDragHandles: false,
-            itemCount: entries.length,
-            onReorderItem: cubit.reorderEntries,
-            itemBuilder: (context, index) {
-              final entry = entries[index];
-              return KeyedSubtree(
-                key: ValueKey(entry.key),
-                child: switch (entry) {
-                  EditorGroupHeader() => _GroupHeaderRow(
-                    index: index,
-                    header: entry,
-                  ),
-                  EditorLine() => _IngredientRow(index: index, line: entry),
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FButton(
-                variant: FButtonVariant.outline,
-                mainAxisSize: MainAxisSize.min,
-                onPress: cubit.addLine,
-                prefix: const Icon(Icons.add, size: 16),
-                child: const Text('Ingredient'),
-              ),
-              FButton(
-                variant: FButtonVariant.outline,
-                mainAxisSize: MainAxisSize.min,
-                onPress: cubit.addGroupHeader,
-                prefix: const Icon(Icons.add, size: 16),
-                child: const Text('Group header'),
-              ),
-              FButton(
-                variant: FButtonVariant.outline,
-                mainAxisSize: MainAxisSize.min,
-                onPress: () => showPasteDialog(context),
-                prefix: const Icon(Icons.content_paste_go, size: 16),
-                child: const Text('Paste a list…'),
-              ),
-            ],
-          ),
-        ],
+      child: _IngredientScope(
+        actions: _topIngredientActions(cubit),
+        child: _IngredientListEditor(entries: cubit.state.entries),
       ),
     );
   }
@@ -1041,7 +1156,7 @@ class _GroupHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<EditorCubit>();
+    final actions = _IngredientScope.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Row(
@@ -1066,7 +1181,7 @@ class _GroupHeaderRow extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 320),
                 child: _BoundField(
                   value: header.name,
-                  onChanged: (value) => cubit.renameGroup(header.key, value),
+                  onChanged: (value) => actions.renameGroup(header.key, value),
                   hintText: 'GROUP NAME — e.g. FOR THE GLAZE',
                 ),
               ),
@@ -1076,7 +1191,7 @@ class _GroupHeaderRow extends StatelessWidget {
             message: 'Remove group header',
             child: FButton.icon(
               variant: FButtonVariant.ghost,
-              onPress: () => cubit.removeEntry(header.key),
+              onPress: () => actions.removeEntry(header.key),
               child: const Icon(
                 Icons.delete_outline,
                 size: 17,
@@ -1109,21 +1224,9 @@ class _IngredientRowState extends State<_IngredientRow> {
     super.dispose();
   }
 
-  void _rawChanged(String value) {
-    // Raw text goes to state IMMEDIATELY — a save or leave-check must never
-    // miss the last 350ms of typing. Only the parse is debounced.
-    context.read<EditorCubit>().setLineRaw(widget.line.key, value);
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), () {
-      if (mounted) {
-        context.read<EditorCubit>().applyAutoParse(widget.line.key);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<EditorCubit>();
+    final actions = _IngredientScope.of(context);
     final line = widget.line;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1148,7 +1251,18 @@ class _IngredientRowState extends State<_IngredientRow> {
               Expanded(
                 child: _BoundField(
                   value: line.raw,
-                  onChanged: _rawChanged,
+                  onChanged: (value) {
+                    // Raw text goes to state IMMEDIATELY — a save or leave-check
+                    // must never miss the last 350ms of typing. Only the parse
+                    // is debounced.
+                    actions.setRaw(line.key, value);
+                    _debounce?.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 350), () {
+                      if (mounted) {
+                        actions.autoParse(line.key);
+                      }
+                    });
+                  },
                   hintText: 'e.g. 2 cups (10 ounces) all-purpose flour',
                 ),
               ),
@@ -1179,7 +1293,7 @@ class _IngredientRowState extends State<_IngredientRow> {
                 message: line.expanded ? 'Collapse' : 'Structured fields',
                 child: FButton.icon(
                   variant: FButtonVariant.ghost,
-                  onPress: () => cubit.toggleLineExpanded(line.key),
+                  onPress: () => actions.toggleExpanded(line.key),
                   child: Icon(
                     line.expanded ? Icons.expand_less : Icons.expand_more,
                     size: 18,
@@ -1191,7 +1305,7 @@ class _IngredientRowState extends State<_IngredientRow> {
                 message: 'Remove',
                 child: FButton.icon(
                   variant: FButtonVariant.ghost,
-                  onPress: () => cubit.removeEntry(line.key),
+                  onPress: () => actions.removeEntry(line.key),
                   child: const Icon(
                     Icons.delete_outline,
                     size: 17,
@@ -1215,7 +1329,7 @@ class _StructuredPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<EditorCubit>();
+    final actions = _IngredientScope.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(25, 2, 0, 10),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -1232,7 +1346,7 @@ class _StructuredPanel extends StatelessWidget {
           FButton(
             variant: FButtonVariant.ghost,
             mainAxisSize: MainAxisSize.min,
-            onPress: () => cubit.setLineStructured(
+            onPress: () => actions.setStructured(
               line.key,
               amounts: [
                 ...line.amounts,
@@ -1262,7 +1376,7 @@ class _StructuredPanel extends StatelessWidget {
                     _BoundField(
                       value: line.item ?? '',
                       semanticLabel: 'Item',
-                      onChanged: (value) => cubit.setLineStructured(
+                      onChanged: (value) => actions.setStructured(
                         line.key,
                         item: value.isEmpty ? null : value,
                         clearItem: value.isEmpty,
@@ -1279,7 +1393,7 @@ class _StructuredPanel extends StatelessWidget {
                     const _FieldLabel('Prep'),
                     _BoundField(
                       value: line.prep ?? '',
-                      onChanged: (value) => cubit.setLineStructured(
+                      onChanged: (value) => actions.setStructured(
                         line.key,
                         prep: value.isEmpty ? null : value,
                         clearPrep: value.isEmpty,
@@ -1297,7 +1411,7 @@ class _StructuredPanel extends StatelessWidget {
               FButton(
                 variant: FButtonVariant.outline,
                 mainAxisSize: MainAxisSize.min,
-                onPress: () => cubit.reparseLine(line.key),
+                onPress: () => actions.reparse(line.key),
                 prefix: const Icon(Icons.refresh, size: 15),
                 child: const Text('Re-parse from text'),
               ),
@@ -1331,12 +1445,12 @@ class _AmountRow extends StatelessWidget {
   void _replace(BuildContext context, Amount updated) {
     final amounts = [...line.amounts];
     amounts[index] = updated;
-    context.read<EditorCubit>().setLineStructured(line.key, amounts: amounts);
+    _IngredientScope.of(context).setStructured(line.key, amounts: amounts);
   }
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<EditorCubit>();
+    final actions = _IngredientScope.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -1408,7 +1522,7 @@ class _AmountRow extends StatelessWidget {
                   for (final (i, a) in line.amounts.indexed)
                     a.copyWith(primary: i == index),
                 ];
-                cubit.setLineStructured(line.key, amounts: amounts);
+                actions.setStructured(line.key, amounts: amounts);
               },
             ),
           ),
@@ -1418,7 +1532,7 @@ class _AmountRow extends StatelessWidget {
               variant: FButtonVariant.ghost,
               onPress: () {
                 final amounts = [...line.amounts]..removeAt(index);
-                cubit.setLineStructured(line.key, amounts: amounts);
+                actions.setStructured(line.key, amounts: amounts);
               },
               child: const Icon(Icons.close, size: 15, color: SaltColors.muted),
             ),
@@ -1430,8 +1544,90 @@ class _AmountRow extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------
-// Directions.
+// Directions / step list — reused by the recipe and by each subsection.
 // ---------------------------------------------------------------------
+
+/// The edit operations a step-list editor needs, decoupled from where the list
+/// lives (top-level or one subsection).
+class StepActions {
+  const StepActions({
+    required this.reorder,
+    required this.add,
+    required this.remove,
+    required this.setStep,
+  });
+
+  final void Function(int oldIndex, int newIndex) reorder;
+  final VoidCallback add;
+  final void Function(int key) remove;
+  final void Function(int key, {String? label, String? text}) setStep;
+}
+
+StepActions _topStepActions(EditorCubit c) => StepActions(
+  reorder: c.reorderSteps,
+  add: c.addStep,
+  remove: c.removeStep,
+  setStep: c.setStep,
+);
+
+StepActions _subStepActions(EditorCubit c, int subKey) => StepActions(
+  reorder: (o, n) => c.subReorderSteps(subKey, o, n),
+  add: () => c.subAddStep(subKey),
+  remove: (k) => c.subRemoveStep(subKey, k),
+  setStep: (k, {label, text}) => c.subSetStep(subKey, k, label: label, text: text),
+);
+
+class _StepScope extends InheritedWidget {
+  const _StepScope({required this.actions, required super.child});
+
+  final StepActions actions;
+
+  static StepActions of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_StepScope>()!.actions;
+
+  @override
+  bool updateShouldNotify(_StepScope oldWidget) => false;
+}
+
+/// The reorderable step list + "Step" button. Reads its actions from the
+/// enclosing [_StepScope].
+class _StepListEditor extends StatelessWidget {
+  const _StepListEditor({required this.steps});
+
+  final List<EditorStep> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = _StepScope.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          itemCount: steps.length,
+          onReorderItem: actions.reorder,
+          itemBuilder: (context, index) => KeyedSubtree(
+            key: ValueKey(steps[index].key),
+            child: _StepCard(index: index, step: steps[index]),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FButton(
+            variant: FButtonVariant.outline,
+            mainAxisSize: MainAxisSize.min,
+            onPress: actions.add,
+            prefix: const Icon(Icons.add, size: 16),
+            child: const Text('Step'),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _DirectionsCard extends StatelessWidget {
   const _DirectionsCard();
@@ -1439,42 +1635,23 @@ class _DirectionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.watch<EditorCubit>();
-    final steps = cubit.state.steps;
     return _Card(
       title: 'Directions',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ReorderableListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            buildDefaultDragHandles: false,
-            itemCount: steps.length,
-            onReorderItem: cubit.reorderSteps,
-            itemBuilder: (context, index) => KeyedSubtree(
-              key: ValueKey(steps[index].key),
-              child: _StepCard(index: index, step: steps[index]),
+      child: _StepScope(
+        actions: _topStepActions(cubit),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _StepListEditor(steps: cubit.state.steps),
+            const Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: Text(
+                'Steps renumber automatically when reordered.',
+                style: TextStyle(fontSize: 11.5, color: SaltColors.muted),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FButton(
-              variant: FButtonVariant.outline,
-              mainAxisSize: MainAxisSize.min,
-              onPress: cubit.addStep,
-              prefix: const Icon(Icons.add, size: 16),
-              child: const Text('Step'),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(top: 10),
-            child: Text(
-              'Steps renumber automatically when reordered.',
-              style: TextStyle(fontSize: 11.5, color: SaltColors.muted),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1488,7 +1665,7 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<EditorCubit>();
+    final actions = _StepScope.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.fromLTRB(13, 12, 8, 12),
@@ -1523,7 +1700,7 @@ class _StepCard extends StatelessWidget {
                     child: _BoundField(
                       value: step.label,
                       onChanged: (value) =>
-                          cubit.setStep(step.key, label: value),
+                          actions.setStep(step.key, label: value),
                       hintText: 'Optional label — e.g. MAKE THE BATTER',
                     ),
                   ),
@@ -1531,7 +1708,7 @@ class _StepCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 _BoundField(
                   value: step.text,
-                  onChanged: (value) => cubit.setStep(step.key, text: value),
+                  onChanged: (value) => actions.setStep(step.key, text: value),
                   minLines: 2,
                   maxLines: 12,
                   hintText: 'What to do…',
@@ -1561,7 +1738,7 @@ class _StepCard extends StatelessWidget {
                 message: 'Remove step',
                 child: FButton.icon(
                   variant: FButtonVariant.ghost,
-                  onPress: () => cubit.removeStep(step.key),
+                  onPress: () => actions.remove(step.key),
                   child: const Icon(
                     Icons.delete_outline,
                     size: 17,
@@ -1572,6 +1749,340 @@ class _StepCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------
+// Variations & components (subsections). Each block reuses the top-level
+// ingredient and step list editors, scoped to its own lists.
+// ---------------------------------------------------------------------
+
+class _SubsectionsCard extends StatelessWidget {
+  const _SubsectionsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.watch<EditorCubit>();
+    final subs = cubit.state.subsections;
+    return _Card(
+      title: 'Variations & components',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (subs.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: Text(
+                'A variation is a prose tweak on the recipe; a component is a '
+                'full sub-recipe (its own ingredients and steps).',
+                style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
+              ),
+            )
+          else
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: subs.length,
+              onReorderItem: cubit.reorderSubsections,
+              itemBuilder: (context, index) => KeyedSubtree(
+                key: ValueKey(subs[index].key),
+                child: _SubsectionBlock(index: index, subsection: subs[index]),
+              ),
+            ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => cubit.addSubsection('variation'),
+                prefix: const Icon(Icons.add, size: 16),
+                child: const Text('Add variation'),
+              ),
+              FButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => cubit.addSubsection('component'),
+                prefix: const Icon(Icons.add, size: 16),
+                child: const Text('Add component'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubsectionBlock extends StatelessWidget {
+  const _SubsectionBlock({required this.index, required this.subsection});
+
+  final int index;
+  final EditorSubsection subsection;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<EditorCubit>();
+    final s = subsection;
+    final full = s.hasIngredients || s.hasSteps;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header — drag handle, kind toggle, title, expand, delete.
+          Container(
+            color: SaltColors.panel,
+            padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+            child: Row(
+              children: [
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Tooltip(
+                    message: 'Drag to reorder',
+                    child: Icon(
+                      Icons.drag_indicator,
+                      size: 17,
+                      color: Color(0xFFCFC8C2),
+                      semanticLabel: 'Drag to reorder subsection',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _KindToggle(subsection: s),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _BoundField(
+                    value: s.title,
+                    onChanged: (v) => cubit.setSubsectionTitle(s.key, v),
+                    hintText: 'Title — e.g. Spicy Version',
+                  ),
+                ),
+                Tooltip(
+                  message: s.expanded ? 'Collapse' : 'Expand',
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: () => cubit.toggleSubsectionExpanded(s.key),
+                    child: Icon(
+                      s.expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 18,
+                      color: SaltColors.muted,
+                    ),
+                  ),
+                ),
+                Tooltip(
+                  message: 'Remove',
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: () => cubit.removeSubsection(s.key),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      size: 17,
+                      color: SaltColors.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (s.expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _FieldLabel(
+                    'Description',
+                    hint: 'prose shown under the recipe',
+                  ),
+                  _BoundField(
+                    value: s.body,
+                    onChanged: (v) => cubit.setSubsectionBody(s.key, v),
+                    minLines: 2,
+                    maxLines: 8,
+                    hintText: 'How this differs from the main recipe…',
+                  ),
+                  if (full) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _FieldLabel('Servings', hint: 'optional'),
+                              _BoundField(
+                                value: s.servings,
+                                onChanged: (v) =>
+                                    cubit.setSubsectionServings(s.key, v),
+                                hintText: 'e.g. MAKES 2 CUPS',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _FieldLabel('Prep notes', hint: 'optional'),
+                              _BoundField(
+                                value: s.prepNotes,
+                                onChanged: (v) =>
+                                    cubit.setSubsectionPrepNotes(s.key, v),
+                                hintText: 'Optional headnote…',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  if (s.hasIngredients) ...[
+                    const _NestedLabel('Ingredients'),
+                    _IngredientScope(
+                      actions: _subIngredientActions(cubit, s.key),
+                      child: _IngredientListEditor(entries: s.entries),
+                    ),
+                  ] else
+                    _PromoteRow(
+                      label: 'Add ingredients',
+                      onPress: () => cubit.promoteSubsectionIngredients(s.key),
+                    ),
+                  const SizedBox(height: 14),
+                  if (s.hasSteps) ...[
+                    const _NestedLabel('Steps'),
+                    _StepScope(
+                      actions: _subStepActions(cubit, s.key),
+                      child: _StepListEditor(steps: s.steps),
+                    ),
+                  ] else
+                    _PromoteRow(
+                      label: 'Add steps',
+                      onPress: () => cubit.promoteSubsectionSteps(s.key),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small maroon sub-label for a nested ingredient/step list.
+class _NestedLabel extends StatelessWidget {
+  const _NestedLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4,
+        color: SaltColors.maroon,
+      ),
+    ),
+  );
+}
+
+/// The left-aligned "Add ingredients / Add steps" button shown when a
+/// subsection is still prose-only.
+class _PromoteRow extends StatelessWidget {
+  const _PromoteRow({required this.label, required this.onPress});
+
+  final String label;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: FButton(
+      variant: FButtonVariant.ghost,
+      mainAxisSize: MainAxisSize.min,
+      onPress: onPress,
+      prefix: const Icon(Icons.add, size: 15),
+      child: Text(label),
+    ),
+  );
+}
+
+/// The Variation / Component segmented toggle in a subsection header.
+class _KindToggle extends StatelessWidget {
+  const _KindToggle({required this.subsection});
+
+  final EditorSubsection subsection;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<EditorCubit>();
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final kind in const ['variation', 'component'])
+              _KindSegment(
+                label: kind == 'variation' ? 'Variation' : 'Component',
+                selected: subsection.kind == kind,
+                onTap: () => cubit.setSubsectionKind(subsection.key, kind),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _KindSegment extends StatelessWidget {
+  const _KindSegment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        color: selected ? SaltColors.chip : Colors.white,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
+            color: selected ? SaltColors.chipInk : SaltColors.muted,
+          ),
+        ),
       ),
     );
   }

@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
-import 'package:salt_app/features/editor/editor_cubit.dart';
 
 /// The bulk ingredient-entry dialog (approved P5 design): paste a block of
 /// text, one ingredient per line; lines ending with a colon become group
 /// headers. Each line previews through the same parser as the rows.
-Future<void> showPasteDialog(BuildContext context) {
-  final cubit = context.read<EditorCubit>();
+///
+/// [onSubmit] receives the accepted lines, so the same dialog serves the
+/// top-level ingredient list and each subsection's.
+Future<void> showPasteDialog(
+  BuildContext context, {
+  required void Function(List<String> lines) onSubmit,
+}) {
   return showDialog<void>(
     context: context,
-    builder: (context) =>
-        BlocProvider.value(value: cubit, child: const _PasteDialog()),
+    builder: (context) => _PasteDialog(onSubmit: onSubmit),
   );
 }
 
 class _PasteDialog extends StatefulWidget {
-  const _PasteDialog();
+  const _PasteDialog({required this.onSubmit});
+
+  final void Function(List<String> lines) onSubmit;
 
   @override
   State<_PasteDialog> createState() => _PasteDialogState();
@@ -111,7 +115,7 @@ class _PasteDialogState extends State<_PasteDialog> {
           onPress: _lines.isEmpty
               ? null
               : () {
-                  context.read<EditorCubit>().addPastedLines(_lines);
+                  widget.onSubmit(_lines);
                   Navigator.of(context).pop();
                 },
           child: Text(
