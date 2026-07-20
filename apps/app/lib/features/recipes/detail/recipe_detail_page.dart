@@ -769,6 +769,9 @@ class _StepsList extends StatelessWidget {
                     ),
                     child: Text(
                       '${step.number}',
+                      // Same fixed-badge rule as _StepNumber: don't let a
+                      // two-digit number outgrow the 24px circle at large scale.
+                      textScaler: TextScaler.noScaling,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -900,13 +903,18 @@ class _TechniqueView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (technique.heading != null)
-            Text(
-              technique.heading!,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: SaltColors.maroon,
-                letterSpacing: 0.6,
+            // Names a technique section; expose it to screen-reader heading
+            // navigation like _SectionTitle does for Ingredients/Directions.
+            Semantics(
+              header: true,
+              child: Text(
+                technique.heading!,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: SaltColors.maroon,
+                  letterSpacing: 0.6,
+                ),
               ),
             ),
           if (technique.description != null) ...[
@@ -1046,6 +1054,10 @@ class _StepNumber extends StatelessWidget {
     ),
     child: Text(
       '$number',
+      // Fixed-size index badge: pin the scale so a two-digit number can't
+      // overflow the 23px circle under large OS/browser text scaling. The
+      // caption beside it still scales (matches salt_logo's wordmark).
+      textScaler: TextScaler.noScaling,
       style: const TextStyle(
         color: Colors.white,
         fontSize: 12.5,
