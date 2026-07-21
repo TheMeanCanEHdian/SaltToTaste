@@ -83,6 +83,13 @@ class _DetailBody extends StatelessWidget {
     final wide =
         MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
     final isAdmin = context.watch<AuthCubit>().user?.isAdmin ?? false;
+    // Members never see the "no nutrition yet" placeholder; admins keep the
+    // compute box, so only then is the section worth a heading. select() keeps
+    // a compute-in-progress from rebuilding the whole body.
+    final hasNutrition = context.select<NutritionCubit, bool>(
+      (cubit) => cubit.state.nutrition?.exists ?? false,
+    );
+    final showNutrition = isAdmin || hasNutrition;
     // Let people select and copy the recipe text (ingredients, steps, notes).
     return SelectionArea(
       child: SingleChildScrollView(
@@ -123,11 +130,15 @@ class _DetailBody extends StatelessWidget {
                   // Narrow: the label follows the content, full width, with
                   // the match badge ABOVE the numbers (approved P6 mobile
                   // layout). Wide screens carry it in the header's right rail.
-                  if (!wide) ...[
+                  if (!wide && showNutrition) ...[
                     const SizedBox(height: 28),
                     const _SectionTitle('Nutrition'),
                     const SizedBox(height: 10),
-                    NutritionPanel(isAdmin: isAdmin, badgeFirst: true),
+                    NutritionPanel(
+                      isAdmin: isAdmin,
+                      badgeFirst: true,
+                      startExpanded: detail.heroImageUrl == null,
+                    ),
                   ],
                 ],
               ),
@@ -175,6 +186,16 @@ class _Header extends StatelessWidget {
     // Image.network reports no intrinsic size, so an IntrinsicHeight row
     // would leave it collapsed.
     final isAdmin = context.watch<AuthCubit>().user?.isAdmin ?? false;
+    final hasNutrition = context.select<NutritionCubit, bool>(
+      (cubit) => cubit.state.nutrition?.exists ?? false,
+    );
+    // The right rail only exists when it has something to hold: the hero, the
+    // label, or (admins only) the compute box. With none of those, the info
+    // spans the full width and reclaims the empty column.
+    final showRail = hero != null || isAdmin || hasNutrition;
+    if (!showRail) {
+      return info;
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -190,8 +211,9 @@ class _Header extends StatelessWidget {
                 const SizedBox(height: 16),
               ],
               // The right rail (approved P6 design): the FDA label lives
-              // under the hero, match badge below it.
-              NutritionPanel(isAdmin: isAdmin),
+              // under the hero, match badge below it. A recipe with a hero
+              // opens the label collapsed so they don't compete for height.
+              NutritionPanel(isAdmin: isAdmin, startExpanded: hero == null),
             ],
           ),
         ),
@@ -891,8 +913,7 @@ class _TechniqueView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasIntro =
-        technique.heading != null || technique.description != null;
+    final hasIntro = technique.heading != null || technique.description != null;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1010,18 +1031,19 @@ class _StepCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   // Decorative — the caption carries the meaning (as the hero).
                   excludeFromSemantics: true,
-                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded ||
-                        MediaQuery.disableAnimationsOf(context)) {
-                      return child;
-                    }
-                    return AnimatedOpacity(
-                      opacity: frame == null ? 0 : 1,
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOut,
-                      child: child,
-                    );
-                  },
+                  frameBuilder:
+                      (context, child, frame, wasSynchronouslyLoaded) {
+                        if (wasSynchronouslyLoaded ||
+                            MediaQuery.disableAnimationsOf(context)) {
+                          return child;
+                        }
+                        return AnimatedOpacity(
+                          opacity: frame == null ? 0 : 1,
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOut,
+                          child: child,
+                        );
+                      },
                   // The tint panel is already underneath; a broken image just
                   // reads as a photo-less box (no doubled tint).
                   errorBuilder: (_, __, ___) => const SizedBox.shrink(),

@@ -18,6 +18,7 @@ class NutritionPanel extends StatelessWidget {
     super.key,
     required this.isAdmin,
     this.badgeFirst = false,
+    this.startExpanded = true,
   });
 
   final bool isAdmin;
@@ -27,6 +28,10 @@ class NutritionPanel extends StatelessWidget {
   /// the wide right rail keeps it below.
   final bool badgeFirst;
 
+  /// Whether the facts label opens expanded. Recipes with a hero image start
+  /// collapsed (calories-and-above) so the image and the facts don't compete.
+  final bool startExpanded;
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<NutritionCubit>().state;
@@ -35,7 +40,11 @@ class NutritionPanel extends StatelessWidget {
     }
     final nutrition = state.nutrition;
     if (nutrition == null || !nutrition.exists) {
-      return _EmptyState(isAdmin: isAdmin, state: state);
+      // Members don't get an empty placeholder — only admins see the compute
+      // box; for everyone else the panel takes no space at all.
+      return isAdmin
+          ? _EmptyState(isAdmin: isAdmin, state: state)
+          : const SizedBox.shrink();
     }
     final badge = _MatchBadge(
       nutrition: nutrition,
@@ -50,7 +59,10 @@ class NutritionPanel extends StatelessWidget {
         if (badgeFirst) ...[badge, const SizedBox(height: 10)],
         Opacity(
           opacity: nutrition.status == 'stale' ? 0.55 : 1,
-          child: _FdaLabel(nutrition: nutrition),
+          child: _FdaLabel(
+            nutrition: nutrition,
+            initiallyExpanded: startExpanded,
+          ),
         ),
         const SizedBox(height: 10),
         if (!badgeFirst) ...[badge, const SizedBox(height: 4)],
@@ -245,10 +257,78 @@ class _MatchBadge extends StatelessWidget {
 
 /// The classic FDA facts panel. Deliberately black-on-white regardless of
 /// app theme — the regulation label IS the design (approved mockup).
-class _FdaLabel extends StatelessWidget {
-  const _FdaLabel({required this.nutrition});
+///
+/// Collapsible: everything below the big Calories row (the %DV heading, the
+/// nutrient rows, the vitamin block, and the footnote) folds behind an
+/// in-label toggle bar so the panel can shrink to "calories and above". It
+/// starts expanded and the choice is per-view only (not persisted).
+class _FdaLabel extends StatefulWidget {
+  const _FdaLabel({required this.nutrition, this.initiallyExpanded = true});
 
   final RecipeNutrition nutrition;
+
+  /// Whether the fold starts open. Driven by the caller (collapsed when the
+  /// recipe has a hero image).
+  final bool initiallyExpanded;
+
+  @override
+  State<_FdaLabel> createState() => _FdaLabelState();
+}
+
+class _FdaLabelState extends State<_FdaLabel>
+    with SingleTickerProviderStateMixin {
+  late bool _expanded = widget.initiallyExpanded;
+
+  // Drives the FCollapsible fold: 1 = fully open, 0 = clipped to nothing.
+  late final AnimationController _foldController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 200),
+    value: _expanded ? 1 : 0,
+  );
+  late final CurvedAnimation _fold = CurvedAnimation(
+    parent: _foldController,
+    curve: Curves.easeInOut,
+  );
+
+  @override
+  void dispose() {
+    _fold.dispose();
+    _foldController.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _expanded = !_expanded);
+    if (_expanded) {
+      _foldController.forward();
+    } else {
+      _foldController.reverse();
+    }
+  }
+
+  RecipeNutrition get nutrition => widget.nutrition;
+
+  // The nutrients that live in the collapsible region; when the recipe has
+  // none of them there is nothing to fold, so the toggle bar is omitted.
+  static const List<String> _detailKeys = [
+    'fat',
+    'saturated',
+    'trans',
+    'cholesterol',
+    'sodium',
+    'carbs',
+    'fiber',
+    'sugars',
+    'sugars_added',
+    'protein',
+    'vitamin_d',
+    'calcium',
+    'iron',
+    'potassium',
+  ];
+
+  bool get _hasDetails =>
+      _detailKeys.any((k) => nutrition.perServing[k] != null);
 
   // Arimo: metric-compatible Arial/Helvetica for the regulation label
   // look (bundled so it renders in the offline build).
@@ -362,54 +442,69 @@ class _FdaLabel extends StatelessWidget {
                 ),
               ],
             ),
-            const _Rule(4),
-            const Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '% Daily Value*',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
+            if (_hasDetails) ...[
+              // FCollapsible clips the detail region as its value lerps 0→1;
+              // at 0 it also drops the hidden rows from semantics and focus.
+              AnimatedBuilder(
+                animation: _fold,
+                builder: (context, child) =>
+                    FCollapsible(value: _fold.value, child: child!),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _details(),
                 ),
               ),
-            ),
-            _row('Total Fat', _n('fat'), bold: true, decimals: 1),
-            _row('Saturated Fat', _n('saturated'), indent: 1, decimals: 1),
-            _row(
-              'Trans Fat',
-              _n('trans'),
-              indent: 1,
-              decimals: 1,
-              italicName: true,
-            ),
-            _row('Cholesterol', _n('cholesterol'), bold: true),
-            _row('Sodium', _n('sodium'), bold: true),
-            _row('Total Carbohydrate', _n('carbs'), bold: true, decimals: 1),
-            _row('Dietary Fiber', _n('fiber'), indent: 1, decimals: 1),
-            _row('Total Sugars', _n('sugars'), indent: 1, decimals: 1),
-            _includesRow(_n('sugars_added')),
-            _row('Protein', _n('protein'), bold: true, decimals: 1),
-            const _Rule(8),
-            _row('Vitamin D', _n('vitamin_d'), decimals: 1),
-            _row('Calcium', _n('calcium')),
-            _row('Iron', _n('iron'), decimals: 1),
-            _row('Potassium', _n('potassium')),
-            const _Rule(4),
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Text(
-                '* The % Daily Value tells you how much a nutrient in a '
-                'serving contributes to a daily diet. 2,000 calories a day '
-                'is used for general nutrition advice.',
-                style: TextStyle(color: Colors.black, fontSize: 9.5),
-              ),
-            ),
+              const SizedBox(height: 8),
+              _ToggleBar(expanded: _expanded, onTap: _toggle),
+            ],
           ],
         ),
       ),
     );
   }
+
+  /// The collapsible region: the %DV heading down through the footnote. Kept
+  /// out of [build] so the calories-and-above header stays readable at a
+  /// glance and the fold point is unambiguous.
+  List<Widget> _details() => [
+    const _Rule(4),
+    const Align(
+      alignment: Alignment.centerRight,
+      child: Text(
+        '% Daily Value*',
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ),
+    _row('Total Fat', _n('fat'), bold: true, decimals: 1),
+    _row('Saturated Fat', _n('saturated'), indent: 1, decimals: 1),
+    _row('Trans Fat', _n('trans'), indent: 1, decimals: 1, italicName: true),
+    _row('Cholesterol', _n('cholesterol'), bold: true),
+    _row('Sodium', _n('sodium'), bold: true),
+    _row('Total Carbohydrate', _n('carbs'), bold: true, decimals: 1),
+    _row('Dietary Fiber', _n('fiber'), indent: 1, decimals: 1),
+    _row('Total Sugars', _n('sugars'), indent: 1, decimals: 1),
+    _includesRow(_n('sugars_added')),
+    _row('Protein', _n('protein'), bold: true, decimals: 1),
+    const _Rule(8),
+    _row('Vitamin D', _n('vitamin_d'), decimals: 1),
+    _row('Calcium', _n('calcium')),
+    _row('Iron', _n('iron'), decimals: 1),
+    _row('Potassium', _n('potassium')),
+    const _Rule(4),
+    const Padding(
+      padding: EdgeInsets.only(top: 4),
+      child: Text(
+        '* The % Daily Value tells you how much a nutrient in a '
+        'serving contributes to a daily diet. 2,000 calories a day '
+        'is used for general nutrition advice.',
+        style: TextStyle(color: Colors.black, fontSize: 9.5),
+      ),
+    ),
+  ];
 
   Widget _row(
     String name,
@@ -511,6 +606,71 @@ class _FdaLabel extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The in-label collapse control: a full-width bar with a top rule (matching
+/// the regulation row dividers) that folds the label to calories-and-above.
+///
+/// Built on [FTappable] (the Forui primitive [FButton] itself is built on)
+/// rather than a themed button, so it carries Forui's focus/hover/keyboard
+/// behaviour and button+expanded semantics while the child keeps the strict
+/// black-on-white facts styling — the regulation label IS the design.
+class _ToggleBar extends StatelessWidget {
+  const _ToggleBar({required this.expanded, required this.onTap});
+
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    // The label sits inside the detail page's SelectionArea; the bar is a
+    // control, not selectable prose, so opt it out (matches the page's other
+    // buttons and stops the I-beam cursor / text selection over its label).
+    return SelectionContainer.disabled(
+      child: FTappable(
+        onPress: onTap,
+        semanticsExpanded: expanded,
+        builder: (context, states, child) => DecoratedBox(
+          decoration: BoxDecoration(
+            // Monochrome hover tint keeps the black-on-white aesthetic intact.
+            color: states.contains(FTappableVariant.hovered)
+                ? const Color(0x0A000000)
+                : null,
+            border: const Border(top: BorderSide(color: Colors.black)),
+          ),
+          child: child,
+        ),
+        child: MouseRegion(
+          // FTappable defers the cursor by default; a control should show the
+          // pointer like the app's FButtons do.
+          cursor: SystemMouseCursors.click,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  expanded ? 'Hide details' : 'Full nutrition facts',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Arimo',
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  expanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                  size: 15,
+                  color: Colors.black,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
