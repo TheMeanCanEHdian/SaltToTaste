@@ -243,6 +243,11 @@ List<RankedCandidate> rankCandidates(
     score += switch (candidate.dataType) {
       'Foundation' => 0.1,
       'SR Legacy' => 0.05,
+      // FNDDS values are recipe-CALCULATED, not directly analyzed, so it sits
+      // just below SR Legacy for raw single ingredients — but it's the right
+      // (and often only) layer for cooked/composite lines ("chicken broth",
+      // "escarole, cooked"), so it wins there on the name match alone.
+      'Survey (FNDDS)' => 0.04,
       _ => 0.0,
     };
     for (final token in descriptionTokens) {

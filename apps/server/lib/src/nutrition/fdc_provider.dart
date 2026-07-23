@@ -106,11 +106,14 @@ class UsdaFdcProvider implements NutritionProvider {
     String query, {
     required bool requireAllWords,
   }) async {
-    final json = await _get('/fdc/v1/foods/search', {
+    // POST, not GET: the "Survey (FNDDS)" dataType value's space/parens 400 at
+    // the nginx edge on a query string. FNDDS adds USDA's cooked/composite
+    // layer (broths, cooked vegetables) that Foundation/SR Legacy lack.
+    final json = await _post('/fdc/v1/foods/search', {
       'query': query,
-      'dataType': 'Foundation,SR Legacy',
-      'pageSize': '25',
-      if (requireAllWords) 'requireAllWords': 'true',
+      'dataType': const ['Foundation', 'SR Legacy', 'Survey (FNDDS)'],
+      'pageSize': 25,
+      'requireAllWords': requireAllWords,
     });
     final foods = json['foods'];
     if (foods is! List) {
@@ -208,10 +211,20 @@ class UsdaFdcProvider implements NutritionProvider {
     );
   }
 
-  Future<Map<String, dynamic>> _get(
+  Future<Map<String, dynamic>> _get(String path, Map<String, String> query) =>
+      _request('GET', path, query: query);
+
+  Future<Map<String, dynamic>> _post(
     String path,
-    Map<String, String> query,
-  ) async {
+    Map<String, Object?> body,
+  ) => _request('POST', path, body: body);
+
+  Future<Map<String, dynamic>> _request(
+    String method,
+    String path, {
+    Map<String, String> query = const {},
+    Map<String, Object?>? body,
+  }) async {
     final key = apiKey();
     if (key == null || key.isEmpty) {
       throw const NutritionProviderException(
@@ -232,16 +245,22 @@ class UsdaFdcProvider implements NutritionProvider {
       attempt += 1;
       final client = HttpClient()..connectionTimeout = _timeout;
       try {
-        final request = await client.getUrl(uri);
+        final request = method == 'POST'
+            ? await client.postUrl(uri)
+            : await client.getUrl(uri);
         // Header, not query param: request URIs get logged; headers don't.
         request.headers.set('X-Api-Key', key);
+        if (body != null) {
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode(body));
+        }
         final response = await request.close().timeout(_timeout);
         // The body read needs its own timeout: a stalled stream after
         // headers would otherwise hang the caller forever.
-        final body = await utf8.decoder.bind(response).join().timeout(_timeout);
+        final text = await utf8.decoder.bind(response).join().timeout(_timeout);
         switch (response.statusCode) {
           case 200:
-            final decoded = jsonDecode(body);
+            final decoded = jsonDecode(text);
             if (decoded is! Map<String, dynamic>) {
               throw const NutritionProviderException(
                 'FoodData Central returned an unexpected response.',
@@ -256,16 +275,25 @@ class UsdaFdcProvider implements NutritionProvider {
               'FoodData Central rejected the API key. Check it in '
               'Settings → Nutrition.',
             );
+          // Rate limit and transient upstream errors both back off and retry —
+          // one FDC 503 shouldn't abort a whole compute.
           case 429:
+          case 500:
+          case 502:
+          case 503:
+          case 504:
             if (attempt >= 4) {
-              throw const NutritionProviderException(
-                'FoodData Central rate limit hit repeatedly; try again '
-                'later.',
+              throw NutritionProviderException(
+                'FoodData Central is unavailable (HTTP '
+                '${response.statusCode}); try again later.',
               );
             }
-            final delay = Duration(seconds: 15 * attempt * attempt);
+            final delay = response.statusCode == 429
+                ? Duration(seconds: 15 * attempt * attempt)
+                : Duration(seconds: 3 * attempt);
             _log.warning(
-              'FDC 429; backing off ${delay.inSeconds}s (attempt $attempt)',
+              'FDC ${response.statusCode}; backing off '
+              '${delay.inSeconds}s (attempt $attempt)',
             );
             await Future<void>.delayed(delay);
             continue;
