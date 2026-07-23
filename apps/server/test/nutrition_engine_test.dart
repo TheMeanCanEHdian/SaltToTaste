@@ -89,6 +89,56 @@ void main() {
     });
   });
 
+  group('rankCandidates concentrate penalty', () {
+    FdcCandidate food(String description, String dataType) => FdcCandidate(
+      fdcId: description.hashCode,
+      description: description,
+      dataType: dataType,
+    );
+
+    test('a broth prefers the ready liquid over a dry cube', () {
+      // Real FDC descriptions. "cubes" is the case the plural stemmer mangles
+      // to "cub", so a token-set penalty would have missed it — hence the
+      // substring marker.
+      final ranked = rankCandidates('chicken broth', [
+        food('Soup, chicken broth cubes, dry', 'SR Legacy'),
+        food('Soup, chicken broth, ready-to-serve', 'SR Legacy'),
+      ]);
+      expect(
+        ranked.first.candidate.description,
+        'Soup, chicken broth, ready-to-serve',
+        reason: 'a dry bouillon cube is not 8 cups of ready broth',
+      );
+    });
+
+    test('the penalty is gated by the query naming the form', () {
+      final bouillon = food(
+        'Soup, chicken broth or bouillon, dry',
+        'SR Legacy',
+      );
+      final named = rankCandidates('chicken bouillon', [bouillon]).first;
+      final unnamed = rankCandidates('chicken broth', [bouillon]).first;
+      expect(
+        named.confidence,
+        greaterThan(unnamed.confidence),
+        reason: 'naming "bouillon" keeps the concentrate penalty off',
+      );
+    });
+
+    test('a dry-only food (cocoa powder) is not sunk below the gate', () {
+      // Cocoa only exists as a dry powder — the penalty must NOT touch it, or
+      // it stops counting toward the label (the < 0.5 gate).
+      final ranked = rankCandidates('natural cocoa powder', [
+        food('Cocoa, dry powder, unsweetened', 'SR Legacy'),
+      ]);
+      expect(
+        ranked.first.candidate.description,
+        'Cocoa, dry powder, unsweetened',
+      );
+      expect(ranked.first.confidence, greaterThanOrEqualTo(0.5));
+    });
+  });
+
   group('resolveGrams on real corpus lines', skip: skipIfNoCorpus, () {
     late Recipe bundt;
 

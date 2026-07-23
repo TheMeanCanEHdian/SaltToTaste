@@ -209,6 +209,31 @@ const Set<String> _baseFormChangeTokens = {
   'butter',
 };
 
+/// Reconstitutable-concentrate markers. A bouillon CUBE, broth GRANULE, or
+/// juice CONCENTRATE is a fundamentally different food from the ready-to-use
+/// liquid a recipe asks for — and because grams are then estimated from the
+/// recipe's VOLUME, matching "8 cups chicken broth" to dry cubes overstates
+/// calories 10-50×. So a candidate whose description carries one of these takes
+/// the heavy base-form-class penalty, unless the query itself names the form
+/// ("beef bouillon" still matches bouillon).
+///
+/// Matched as SUBSTRINGS, not tokens, on purpose: the ranker's plural stemmer
+/// mangles the very words at issue ("cubes" → "cub", "granules" → "granul"), so
+/// a token-set check would silently miss them. Substrings also fold the
+/// singular/plural/-ed variants (cube/cubes/cubed) into one marker.
+///
+/// Deliberately excludes dry/dried/powder/powdered/condensed/instant: those
+/// correctly describe foods that ONLY exist concentrated (cocoa powder,
+/// gelatin, dry milk, condensed milk), and penalizing them would sink the one
+/// correct match below the review gate. The distinction rides on these narrow
+/// reconstitution nouns, not on "dry".
+const Set<String> _concentrateMarkers = {
+  'cube',
+  'bouillon',
+  'concentrate',
+  'granule',
+};
+
 /// Description tokens for the plain/whole form — a small tiebreak bonus.
 const Set<String> _plainFormTokens = {'whole', 'raw', 'regular'};
 
@@ -258,6 +283,16 @@ List<RankedCandidate> rankCandidates(
         score -= 0.25;
       } else if (_modifiedFormTokens.contains(token)) {
         score -= 0.06;
+      }
+    }
+    // Reconstitutable-concentrate penalty (substring, query-gated). One dock is
+    // enough — "bouillon cubes" is a single concept, not two errors.
+    final descriptionLower = candidate.description.toLowerCase();
+    final queryLower = query.toLowerCase();
+    for (final marker in _concentrateMarkers) {
+      if (descriptionLower.contains(marker) && !queryLower.contains(marker)) {
+        score -= 0.25;
+        break;
       }
     }
     if (descriptionTokens.any(_plainFormTokens.contains)) {
