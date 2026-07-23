@@ -90,8 +90,49 @@ FThemeData buildForuiTheme() {
     // than Forui's default brighter `#E7000B`.
     destructive: SaltColors.errInk,
   );
-  return FThemeData(colors: colors, touch: false, debugLabel: 'SaltToTaste');
+  // Built once to get Forui's derived styles, then rebuilt with a
+  // higher-contrast tab style (see [_contrastyTabs]). copyWith is avoided
+  // deliberately: it hardcodes `touch: true`, which would undo `touch: false`.
+  final defaults = FThemeData(
+    colors: colors,
+    touch: false,
+    debugLabel: 'SaltToTaste',
+  );
+  return FThemeData(
+    colors: colors,
+    touch: false,
+    debugLabel: 'SaltToTaste',
+    tabsStyle: _contrastyTabs(defaults.tabsStyle),
+  );
 }
+
+/// Forui derives the tab indicator from `background` (#FAF7F4) and the track
+/// from `secondary` (#EFECEA). In this warm palette those two sit ~4% apart, so
+/// the selected tab all but disappears. Paint the indicator white with a
+/// hairline border on a definitively grey track so the selection reads at a
+/// glance. Pinned by `test/theme_test.dart`.
+FTabsStyle _contrastyTabs(FTabsStyle base) => FTabsStyleDelta.delta(
+  // Square: the bar runs full-bleed between the panel edges, so Forui's
+  // rounded track left clipped-looking corners against the divider above it.
+  // The rounded indicator inside still carries the segmented-control read.
+  decoration: DecorationDelta.value(
+    const BoxDecoration(color: SaltColors.chipNeutral),
+  ),
+  indicatorDecoration: DecorationDelta.value(
+    BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(7),
+      border: Border.all(color: SaltColors.hairline),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x14000000),
+          blurRadius: 4,
+          offset: Offset(0, 1),
+        ),
+      ],
+    ),
+  ),
+)(base);
 
 /// Material theme derived from the Forui theme (for the router scaffolding
 /// and custom widgets), with Open Sans applied app-wide.

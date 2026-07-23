@@ -153,13 +153,31 @@ const List<(String, double)> _pieceWeights = [
 /// Result of a resolution attempt.
 class GramResolution {
   /// Pairs the resolved grams with how they were determined.
-  const GramResolution({required this.grams, required this.source});
+  const GramResolution({
+    required this.grams,
+    required this.source,
+    this.basis,
+  });
 
   /// Resolved grams for the whole line.
   final double grams;
 
   /// How [grams] was determined.
   final GramSource source;
+
+  /// A short, human-readable description of the INPUT the estimate ran
+  /// against — so a reviewer can sanity-check it (e.g. "½ cup ≈ 118 mL" for a
+  /// density estimate, or "8¾ ounces" for a direct weight). Null when there is
+  /// nothing to show. Not stored; re-derived for display.
+  final String? basis;
+}
+
+/// The amount as written, for a [GramResolution.basis] label ("½ cup", "2").
+String _amountText(Amount amount) {
+  final unit = amount.unit;
+  return unit == null || unit.isEmpty
+      ? amount.quantity
+      : '${amount.quantity} $unit';
 }
 
 double? _quantityValue(String quantity) {
@@ -249,6 +267,7 @@ GramResolution? resolveGrams({
       return GramResolution(
         grams: quantity * perUnit,
         source: GramSource.weight,
+        basis: 'from ${_amountText(amount)}',
       );
     }
   }
@@ -270,6 +289,7 @@ GramResolution? resolveGrams({
         return GramResolution(
           grams: quantity * perUnit,
           source: GramSource.portion,
+          basis: '${_amountText(amount)} · USDA portion',
         );
       }
     }
@@ -278,6 +298,7 @@ GramResolution? resolveGrams({
       return GramResolution(
         grams: quantity * ml * density,
         source: GramSource.density,
+        basis: '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL',
       );
     }
   }
@@ -298,6 +319,7 @@ GramResolution? resolveGrams({
           return GramResolution(
             grams: quantity * perUnit,
             source: GramSource.piece,
+            basis: '${_amountText(amount)} · USDA per-piece weight',
           );
         }
       }
@@ -307,6 +329,7 @@ GramResolution? resolveGrams({
       return GramResolution(
         grams: quantity * pieceWeight,
         source: GramSource.piece,
+        basis: '${_amountText(amount)} × ${pieceWeight.round()} g each',
       );
     }
   }

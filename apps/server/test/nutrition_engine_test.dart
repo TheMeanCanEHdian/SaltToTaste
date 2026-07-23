@@ -492,4 +492,90 @@ void main() {
       );
     });
   });
+
+  // The admin's manual escape hatch when the matcher searched the wrong words
+  // and every auto-found candidate is wrong. Needs no corpus — just the
+  // recorded real FDC responses.
+  group('searchCandidates (admin manual re-pick)', () {
+    late Directory tempDir;
+    late SaltDatabase db;
+    late FixtureProvider provider;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('salt-fdc-search-test');
+      db = SaltDatabase.open('${tempDir.path}/salt.db');
+      provider = FixtureProvider();
+    });
+
+    tearDown(() {
+      db.dispose();
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('ranks recorded real FDC results for a typed term', () async {
+      final results = await searchCandidates(db, provider, 'sour cream');
+      expect(results, isNotEmpty);
+      expect(results.length, lessThanOrEqualTo(8), reason: 'top 8 only');
+      for (var i = 1; i < results.length; i++) {
+        expect(
+          results[i - 1].confidence,
+          greaterThanOrEqualTo(results[i].confidence),
+          reason: 'ranked best-first',
+        );
+      }
+      expect(
+        results.first.candidate.description.toLowerCase(),
+        contains('cream'),
+      );
+    });
+
+    test(
+      'a repeated term is served from the cache, spending no FDC budget',
+      () async {
+        await searchCandidates(db, provider, 'sour cream');
+        final calls = provider.searchCalls;
+        expect(calls, greaterThan(0));
+        await searchCandidates(db, provider, 'sour cream');
+        expect(
+          provider.searchCalls,
+          calls,
+          reason: 'the second search must hit fdc_search_cache',
+        );
+      },
+    );
+
+    test('a blank term never reaches the provider', () async {
+      final calls = provider.searchCalls;
+      expect(await searchCandidates(db, provider, '   '), isEmpty);
+      expect(provider.searchCalls, calls);
+    });
+  });
+
+  // Lets a reviewer verify a volume/piece estimate ran against the right
+  // amount. Pure resolver math — no corpus, no DB.
+  group('GramResolution.basis', () {
+    test('a volume density estimate reports the volume it ran against', () {
+      final resolution = resolveGrams(
+        amounts: const [
+          Amount(measure: Measure.volume, quantity: '1/2', unit: 'cup'),
+        ],
+        food: null,
+        normalizedItem: 'oil',
+      )!;
+      expect(resolution.source, GramSource.density);
+      expect(resolution.basis, '1/2 cup ≈ 118 mL');
+    });
+
+    test('a direct weight reports the weight used', () {
+      final resolution = resolveGrams(
+        amounts: const [
+          Amount(measure: Measure.weight, quantity: '8', unit: 'oz'),
+        ],
+        food: null,
+        normalizedItem: 'anything',
+      )!;
+      expect(resolution.source, GramSource.weight);
+      expect(resolution.basis, 'from 8 oz');
+    });
+  });
 }

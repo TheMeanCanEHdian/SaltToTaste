@@ -344,6 +344,60 @@ Future<List<RankedCandidate>> candidatesForLine(
   return rankCandidates(normalized, candidates).take(8).toList();
 }
 
+/// Ranked candidates for an ADMIN-SUPPLIED search term — the review sheet's
+/// manual re-pick, for when none of the auto-found candidates fit (the
+/// matcher searched the wrong words, e.g. "minced oregano" -> ham).
+///
+/// Unlike [candidatesForLine]'s cache-only GET path this MAY spend the FDC
+/// request budget on a cache miss, which is why its route is admin-only. The
+/// term is normalized so it shares the matcher's cache keys and ranking.
+Future<List<RankedCandidate>> searchCandidates(
+  SaltDatabase db,
+  NutritionProvider provider,
+  String query,
+) async {
+  final normalized = normalizeItem(query);
+  if (normalized.isEmpty) {
+    return const [];
+  }
+  final candidates = await _cachedSearch(db, provider, normalized);
+  return rankCandidates(normalized, candidates).take(8).toList();
+}
+
+/// A short, human-readable description of what the stored grams were computed
+/// against — e.g. "½ cup ≈ 118 mL" for a density estimate, "8¾ ounces" for a
+/// direct weight — so a reviewer can sanity-check a volume/piece estimate.
+///
+/// Cache-only (the food comes from the local cache, never a fresh FDC call),
+/// so it is safe on the member-callable matches GET. Null when the line has no
+/// amount, or when the grams were entered by hand. Re-derived rather than
+/// stored; deterministic, so it matches the stored grams for the common case.
+String? gramBasisFor(
+  SaltDatabase db,
+  IngredientLine line,
+  IngredientMatchRow row,
+) {
+  if (row.grams == null) {
+    return null;
+  }
+  if (row.gramSource == 'override') {
+    return 'entered by hand';
+  }
+  FdcFood? food;
+  final fdcId = row.fdcId;
+  if (fdcId != null) {
+    final cached = db.fdcFoodCacheGet(fdcId);
+    if (cached != null) {
+      food = FdcFood.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+    }
+  }
+  return resolveGrams(
+    amounts: line.amounts,
+    food: food,
+    normalizedItem: normalizeItem(line.item ?? line.raw),
+  )?.basis;
+}
+
 Future<List<FdcCandidate>> _cachedSearch(
   SaltDatabase db,
   NutritionProvider provider,

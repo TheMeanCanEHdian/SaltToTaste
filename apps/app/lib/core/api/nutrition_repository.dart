@@ -109,6 +109,7 @@ class IngredientMatch {
     this.confidence = 0,
     this.grams,
     this.gramSource,
+    this.gramBasis,
     this.status = 'unmatched',
     this.candidates = const [],
   });
@@ -136,6 +137,7 @@ class IngredientMatch {
       confidence: (match['confidence'] as num?)?.toDouble() ?? 0,
       grams: (match['grams'] as num?)?.toDouble(),
       gramSource: match['gram_source'] as String?,
+      gramBasis: match['gram_basis'] as String?,
       status: match['status'] as String? ?? 'unmatched',
       candidates: candidates,
     );
@@ -153,6 +155,11 @@ class IngredientMatch {
 
   /// `weight` | `portion` | `density` | `piece` | `override`.
   final String? gramSource;
+
+  /// What the grams were computed against, for sanity-checking an estimate —
+  /// e.g. `½ cup ≈ 118 mL`, `8¾ ounces`, `entered by hand`. Null when there
+  /// is no amount.
+  final String? gramBasis;
 
   /// `auto` | `confirmed` | `overridden` | `skipped` | `unmatched`.
   final String status;
@@ -268,6 +275,25 @@ class NutritionRepository {
             IngredientMatch.fromJson(item as Map<String, dynamic>),
       ];
     }, notFoundMessage: 'Recipe not found.');
+  }
+
+  /// Ranked USDA foods for an admin-typed term (admin, full scope) — the
+  /// manual escape hatch for when none of a line's cached candidates fit,
+  /// because the matcher searched the wrong words. Feed the chosen
+  /// [MatchCandidate.fdcId] back through [overrideMatch].
+  Future<List<MatchCandidate>> searchFoods(String query) {
+    return apiGuard(() async {
+      final response = await _dio.get<dynamic>(
+        '/api/v1/nutrition/search',
+        queryParameters: {'q': query},
+      );
+      final data = _asMap(response.data);
+      return [
+        if (data['items'] is List)
+          for (final item in data['items'] as List<dynamic>)
+            MatchCandidate.fromJson(item as Map<String, dynamic>),
+      ];
+    });
   }
 
   /// Overrides one line (re-pick / set grams / confirm / skip) and returns

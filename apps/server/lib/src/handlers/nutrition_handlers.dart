@@ -58,6 +58,28 @@ Map<String, Object?> nutritionBody(
   };
 }
 
+/// `GET /api/v1/nutrition/search` body: ranked FDC candidates for an
+/// admin-typed term, in the same shape as a line's `candidates` so the review
+/// sheet can reuse one row widget.
+Future<Map<String, Object?>> foodSearchBody(
+  SaltDatabase db,
+  NutritionProvider provider,
+  String query,
+) async {
+  final ranked = await searchCandidates(db, provider, query);
+  return {
+    'items': [
+      for (final candidate in ranked)
+        {
+          'fdc_id': candidate.candidate.fdcId,
+          'description': candidate.candidate.description,
+          'data_type': candidate.candidate.dataType,
+          'confidence': candidate.confidence,
+        },
+    ],
+  };
+}
+
 /// `GET .../nutrition/matches` body: one entry per ingredient line with the
 /// stored decision and (for re-picking) the top-ranked candidates.
 Future<Map<String, Object?>> matchesBody(
@@ -95,6 +117,9 @@ Future<Map<String, Object?>> matchesBody(
               'confidence': row.confidence,
               'grams': row.grams,
               'gram_source': row.gramSource,
+              // What the grams were computed against, so a reviewer can
+              // sanity-check a volume/piece estimate. Cache-only.
+              'gram_basis': gramBasisFor(db, line, row),
               'status': row.status,
             },
       'candidates': [

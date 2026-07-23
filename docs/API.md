@@ -425,8 +425,12 @@ fails (with the reason in its log) when no API key is configured.
 Per-line match transparency: the stored decision (`fdc_id`,
 `description`, `data_type`, `confidence` 0–1, `grams`, `gram_source`:
 `weight` (direct) | `portion` | `density` (estimate) | `piece` (estimate)
-| `override`, `status`: `auto | confirmed | overridden | skipped |
-unmatched`) plus ranked `candidates` for re-picking. Candidates come
+| `override`, `gram_basis`: a short human string of what the grams were
+computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾ ounces"`, `"entered by
+hand"` — for sanity-checking an estimate (null when there is no amount;
+re-derived cache-only, never spends FDC budget), `status`: `auto |
+confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
+for re-picking. Candidates come
 from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
@@ -438,6 +442,19 @@ amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
 excludes the line. Totals recompute instantly. `422` for `{grams}` on a
 line with no matched food (there is nothing to scale — pick a food
 first).
+
+### `GET /api/v1/nutrition/search?q={term}` (admin, full scope)
+
+Search USDA FoodData Central for a term and get ranked `{items: [{fdc_id,
+description, data_type, confidence}]}` (top 8) — the manual escape hatch
+for when the matcher searched the wrong words and none of a line's
+`candidates` fit. Feed a chosen `fdc_id` back through
+`PUT …/nutrition/matches/{pos}`. Admin + full scope because a cache miss
+SPENDS the FDC request budget (the per-line `matches` read stays
+cache-only so members never can); repeat terms are served from the same
+search cache the matcher uses. The term is normalized like an ingredient
+line, so it shares those cache keys and ranking. `422` for a blank term,
+one over 120 characters, or when no FDC API key is configured.
 
 ### `POST /api/v1/nutrition/bulk` (admin, full scope)
 

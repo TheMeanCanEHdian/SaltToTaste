@@ -19,6 +19,21 @@ void main() {
     expect(theme.colors.destructive, SaltColors.errInk);
   });
 
+  test('tab indicator is distinguishable from the track', () {
+    // Forui derives the indicator from `background` (#FAF7F4) and the track
+    // from `secondary` (#EFECEA) — ~4% apart in this warm palette, so the
+    // selected tab vanishes. The theme repaints the indicator white on a grey
+    // track; if this regresses, "which tab am I on?" becomes unanswerable.
+    final tabs = buildForuiTheme().tabsStyle;
+    final indicator = tabs.indicatorDecoration as BoxDecoration;
+    final track = tabs.decoration as BoxDecoration;
+    expect(indicator.color, Colors.white);
+    expect(track.color, SaltColors.chipNeutral);
+    expect(indicator.color, isNot(track.color));
+    // A hairline border keeps the white pill legible on near-white surfaces.
+    expect(indicator.border, isNotNull);
+  });
+
   test('Material theme derives from the Forui theme with Open Sans', () {
     final material = buildMaterialTheme(buildForuiTheme());
     expect(material.colorScheme.primary, SaltColors.maroon);
