@@ -29,6 +29,58 @@ const Set<String> _stopWords = {
   'organic',
 };
 
+/// Preparation words — how the cook cuts/handles the food, never what it IS.
+/// Dropped from the query so "minced fresh oregano" searches "oregano"
+/// (otherwise "minced" hits "Ham, minced") and correct matches stop being
+/// confidence-deflated by noise tokens. Deliberately CONSERVATIVE: anything
+/// that could change the food's identity (raw/cooked/roasted/dried/ground)
+/// stays out of this list. "leaves"/"cut" also stay out — dropping them turns
+/// "bay leaves" into "bay".
+const Set<String> _prepWords = {
+  'minced',
+  'chopped',
+  'sliced',
+  'diced',
+  'grated',
+  'shredded',
+  'crushed',
+  'crumbled',
+  'halved',
+  'quartered',
+  'cored',
+  'peeled',
+  'seeded',
+  'pitted',
+  'trimmed',
+  'sifted',
+  'packed',
+  'softened',
+  'melted',
+  'beaten',
+  'cubed',
+  'mashed',
+  'thawed',
+  'drained',
+  'rinsed',
+  'divided',
+  'julienned',
+  'shaved',
+  'coarse',
+  'coarsely',
+  'fine',
+  'finely',
+  'thin',
+  'thinly',
+  'roughly',
+  // Size / vessel words: describe the piece bought, not the food. "small head
+  // escarole" must search "escarole", not drag in "Beans, Dry, Small Red".
+  // ("whole" stays — it's an FDC form, e.g. "whole milk", "whole wheat".)
+  'small',
+  'medium',
+  'large',
+  'head',
+};
+
 /// Items that are nutritionally (effectively) zero — matched locally so
 /// they never cost an FDC request and never dilute the match ratio.
 const Set<String> waterLikeItems = {
@@ -66,7 +118,9 @@ String normalizeItem(String item) {
   text = text.replaceAll(RegExp(r'\(.*?\)'), ' ');
   final words = [
     for (final word in text.split(RegExp('[^a-z0-9%-]+')))
-      if (word.isNotEmpty && !_stopWords.contains(word))
+      if (word.isNotEmpty &&
+          !_stopWords.contains(word) &&
+          !_prepWords.contains(word))
         _synonyms[word] ?? word,
   ];
   return words.join(' ');
@@ -140,6 +194,21 @@ const Set<String> _modifiedFormTokens = {
   'prepared',
 };
 
+/// A food processed into a DIFFERENT staple — "almonds" is not "almond FLOUR",
+/// "Dijon mustard" is not "mustard OIL", "rice" is not "rice FLOUR". A base-
+/// form change is a much bigger error than an off-form ([_modifiedFormTokens]),
+/// so it takes a heavier penalty — enough to reliably demote it below the whole
+/// food. Applied only when the query itself did not ask for the form.
+const Set<String> _baseFormChangeTokens = {
+  'flour',
+  'oil',
+  'juice',
+  'sauce',
+  'paste',
+  'meal',
+  'butter',
+};
+
 /// Description tokens for the plain/whole form — a small tiebreak bonus.
 const Set<String> _plainFormTokens = {'whole', 'raw', 'regular'};
 
@@ -177,7 +246,12 @@ List<RankedCandidate> rankCandidates(
       _ => 0.0,
     };
     for (final token in descriptionTokens) {
-      if (_modifiedFormTokens.contains(token) && !queryTokens.contains(token)) {
+      if (queryTokens.contains(token)) {
+        continue;
+      }
+      if (_baseFormChangeTokens.contains(token)) {
+        score -= 0.25;
+      } else if (_modifiedFormTokens.contains(token)) {
         score -= 0.06;
       }
     }

@@ -41,6 +41,52 @@ void main() {
       expect(isWaterLike(normalizeItem('boiling water')), isTrue);
       expect(isWaterLike(normalizeItem('milk')), isFalse);
     });
+
+    test('strips preparation words so the food noun leads the query', () {
+      // These are the real wrong-match culprits: the prep token was matching
+      // a different food ("minced" -> Ham, "chopped ... " deflating the score).
+      expect(normalizeItem('minced fresh oregano'), 'oregano');
+      expect(normalizeItem('chopped fresh chives'), 'chives');
+      expect(normalizeItem('sliced almonds'), 'almonds');
+      // size/vessel + prep all drop, leaving the food (the leading count digit
+      // is harmless — search ignores it).
+      expect(normalizeItem('1 large onion, chopped coarse'), '1 onion');
+      expect(normalizeItem('1 small head escarole'), '1 escarole');
+    });
+
+    test('keeps identity-changing words (not every adjective is prep)', () {
+      // "leaves"/"cut"/"cooked" stay — dropping them changes the food.
+      expect(normalizeItem('bay leaves'), 'bay leaves');
+      expect(normalizeItem('cooked ham'), 'cooked ham');
+    });
+  });
+
+  group('rankCandidates form-change penalty', () {
+    FdcCandidate food(String description, String dataType) => FdcCandidate(
+      fdcId: description.hashCode,
+      description: description,
+      dataType: dataType,
+    );
+
+    test('a base-form change loses to the whole food', () {
+      final ranked = rankCandidates('almonds', [
+        food('Flour, almond', 'Foundation'),
+        food('Nuts, almonds, whole, raw', 'SR Legacy'),
+      ]);
+      expect(
+        ranked.first.candidate.description,
+        'Nuts, almonds, whole, raw',
+        reason: '"almonds" is not "almond flour"',
+      );
+    });
+
+    test('the form still wins when the query asks for it', () {
+      final ranked = rankCandidates('almond flour', [
+        food('Flour, almond', 'Foundation'),
+        food('Nuts, almonds, whole, raw', 'SR Legacy'),
+      ]);
+      expect(ranked.first.candidate.description, 'Flour, almond');
+    });
   });
 
   group('resolveGrams on real corpus lines', skip: skipIfNoCorpus, () {

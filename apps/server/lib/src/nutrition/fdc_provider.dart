@@ -91,10 +91,26 @@ class UsdaFdcProvider implements NutritionProvider {
 
   @override
   Future<List<FdcCandidate>> search(String query) async {
+    // requireAllWords tightens relevance (drops partial-term noise like
+    // "minced" pulling in "Ham, minced"). But an extra word the food's name
+    // lacks can zero the whole search, so fall back to the loose search when
+    // the strict one finds nothing.
+    var hits = await _searchOnce(query, requireAllWords: true);
+    if (hits.isEmpty) {
+      hits = await _searchOnce(query, requireAllWords: false);
+    }
+    return hits;
+  }
+
+  Future<List<FdcCandidate>> _searchOnce(
+    String query, {
+    required bool requireAllWords,
+  }) async {
     final json = await _get('/fdc/v1/foods/search', {
       'query': query,
       'dataType': 'Foundation,SR Legacy',
       'pageSize': '25',
+      if (requireAllWords) 'requireAllWords': 'true',
     });
     final foods = json['foods'];
     if (foods is! List) {
