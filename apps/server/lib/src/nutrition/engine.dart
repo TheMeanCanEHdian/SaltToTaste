@@ -238,6 +238,14 @@ Future<void> recomputeTotals(
     if (grams == null || grams <= 0) {
       continue;
     }
+    // Held for review: a low-confidence auto match is likely the WRONG food,
+    // so it stays out of the totals — a bad match must never silently feed the
+    // label. It still surfaces in the review sheet ("check match"); confirming
+    // or re-picking it (status leaves 'auto') opts it back in. The recipe also
+    // stays "partial" until then, since the line is not yet accounted.
+    if (row.status == 'auto' && row.confidence < lowConfidence) {
+      continue;
+    }
     final food = await _cachedFood(db, provider, row.fdcId!);
     if (food == null) {
       continue;

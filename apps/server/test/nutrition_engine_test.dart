@@ -624,4 +624,84 @@ void main() {
       expect(resolution.basis, 'from 8 oz');
     });
   });
+
+  // Lever 5: a likely-wrong low-confidence auto match must not silently feed
+  // the label. No corpus needed — a synthetic recipe + a cached food.
+  group('recomputeTotals holds low-confidence auto matches', () {
+    late Directory tempDir;
+    late SaltDatabase db;
+    late FixtureProvider provider;
+
+    Recipe recipe() => const Recipe(
+      id: 'r1',
+      title: 'Test',
+      slug: 'test',
+      source: RecipeSource(name: 'Test', type: 'book'),
+      ingredients: [
+        IngredientGroup(
+          items: [
+            IngredientLine(raw: 'a', item: 'a'),
+            IngredientLine(raw: 'b', item: 'b'),
+          ],
+        ),
+      ],
+    );
+
+    IngredientMatchRow match(int pos, double conf, String status) =>
+        IngredientMatchRow(
+          recipeId: 'r1',
+          position: pos,
+          raw: pos == 0 ? 'a' : 'b',
+          fdcId: 111,
+          description: 'Food',
+          dataType: 'SR Legacy',
+          confidence: conf,
+          grams: 100,
+          gramSource: 'weight',
+          status: status,
+        );
+
+    Future<void> recompute() =>
+        recomputeTotals(db, provider, recipe(), servingBasis: 1);
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('salt-gate-test');
+      db = SaltDatabase.open('${tempDir.path}/salt.db');
+      provider = FixtureProvider();
+      db.upsertSource(slug: 'src', name: 'Test', type: 'book');
+      db.upsertRecipe(recipe(), sourceSlug: 'src', contentHash: 'h');
+      // A cached food so the recompute never calls the provider.
+      const food = FdcFood(
+        fdcId: 111,
+        description: 'Food',
+        dataType: 'SR Legacy',
+        nutrientsPer100g: {'203': 10, '204': 5, '205': 20, '208': 100},
+        portions: [],
+      );
+      db.fdcFoodCachePut(111, jsonEncode(food.toJson()));
+    });
+
+    tearDown(() {
+      db.dispose();
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('a <0.5 auto match is held out until a human confirms it', () async {
+      db.upsertIngredientMatch(match(0, 0.4, 'auto')); // held
+      db.upsertIngredientMatch(match(1, 0.8, 'auto')); // counts
+      await recompute();
+      var row = db.nutritionFor('r1')!;
+      expect(row.matchedCount, 1, reason: 'the 0.4 auto line is held out');
+      expect(row.totalGrams, 100);
+      expect(row.status, 'partial', reason: 'a held line leaves it incomplete');
+
+      // Confirming it (status leaves 'auto') opts it back into the totals.
+      db.upsertIngredientMatch(match(0, 0.4, 'confirmed'));
+      await recompute();
+      row = db.nutritionFor('r1')!;
+      expect(row.matchedCount, 2);
+      expect(row.totalGrams, 200);
+      expect(row.status, 'complete');
+    });
+  });
 }
