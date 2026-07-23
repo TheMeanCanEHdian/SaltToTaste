@@ -625,6 +625,45 @@ void main() {
     });
   });
 
+  // Workstream A slice 1: use the weight printed in a raw parenthetical that
+  // the amount parse dropped — a big chunk of the "matched but no grams" lines.
+  group('resolveGrams parenthetical weight', () {
+    GramResolution resolve(String raw, String qty) => resolveGrams(
+      amounts: [Amount(measure: Measure.count, quantity: qty)],
+      food: null,
+      normalizedItem: 'x',
+      raw: raw,
+    )!;
+
+    test('a per-unit weight scales by the count', () {
+      final r = resolve('4 (5 to 6-ounce) skinless chicken breasts', '4');
+      expect(r.source, GramSource.weight);
+      expect(r.grams, closeTo(4 * 5.5 * 28.3495, 1)); // 623.7 g
+    });
+
+    test('a single item uses the parenthetical as the total', () {
+      final r = resolve('1 medium russet potato (about 8 ounces), peeled', '1');
+      expect(r.grams, closeTo(8 * 28.3495, 1)); // 226.8 g
+    });
+
+    test('a can size scales by the number of cans', () {
+      final r = resolve('2 (15-ounce) cans cannellini beans, drained', '2');
+      expect(r.grams, closeTo(2 * 15 * 28.3495, 1)); // 850.5 g
+      // The count reads as a plain integer, not "2.0".
+      expect(r.basis, '2 × 425 g (printed weight)');
+    });
+
+    test('no parenthetical weight falls through to the estimate paths', () {
+      final r = resolveGrams(
+        amounts: const [Amount(measure: Measure.count, quantity: '1')],
+        food: null,
+        normalizedItem: 'unknown item with no table entry',
+        raw: '1 whatever, chopped',
+      );
+      expect(r, isNull);
+    });
+  });
+
   // Lever 5: a likely-wrong low-confidence auto match must not silently feed
   // the label. No corpus needed — a synthetic recipe + a cached food.
   group('recomputeTotals holds low-confidence auto matches', () {

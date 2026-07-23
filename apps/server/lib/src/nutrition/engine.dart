@@ -161,6 +161,7 @@ Future<void> matchAndCompute(
       amounts: line.amounts,
       food: food,
       normalizedItem: normalized,
+      raw: line.raw,
     );
     db.upsertIngredientMatch(
       IngredientMatchRow(
@@ -403,6 +404,7 @@ String? gramBasisFor(
     amounts: line.amounts,
     food: food,
     normalizedItem: normalizeItem(line.item ?? line.raw),
+    raw: line.raw,
   )?.basis;
 }
 

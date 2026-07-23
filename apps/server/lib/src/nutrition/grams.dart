@@ -199,6 +199,43 @@ double? _quantityValue(String quantity) {
   return null;
 }
 
+/// The FIRST count amount's numeric value ("2 cans" -> 2), or null.
+double? _countQty(List<Amount> amounts) {
+  for (final amount in amounts) {
+    if (amount.measure == Measure.count) {
+      final quantity = _quantityValue(amount.quantity);
+      if (quantity != null) {
+        return quantity;
+      }
+    }
+  }
+  return null;
+}
+
+/// Grams from the first weight printed in a raw parenthetical — the PER-unit
+/// weight the amount parse missed. "(5 to 6-ounce)" -> 156 g, "(28-ounce)" ->
+/// 794 g, "(about 8 ounces)" -> 227 g. Null when no parenthetical weight.
+double? _parenWeightGrams(String raw) {
+  final weight = RegExp(
+    r'([\d./]+(?:\s*(?:to|-)\s*[\d./]+)?)\s*-?\s*'
+    r'(ounces?|oz|pounds?|lbs?|grams?|kilograms?|kg)\b',
+    caseSensitive: false,
+  );
+  for (final paren in RegExp(r'\(([^)]*)\)').allMatches(raw)) {
+    final match = weight.firstMatch(paren.group(1)!);
+    if (match == null) {
+      continue;
+    }
+    final quantity = _quantityValue(match.group(1)!);
+    final unit = match.group(2)!.toLowerCase().replaceAll(RegExp(r's$'), '');
+    final perUnit = _weightUnitGrams[unit];
+    if (quantity != null && perUnit != null) {
+      return quantity * perUnit;
+    }
+  }
+  return null;
+}
+
 double? _tableLookup(List<(String, double)> table, String normalizedItem) {
   // Longest matching key wins, so "sour cream" beats "cream" regardless of
   // table order.
@@ -254,6 +291,7 @@ GramResolution? resolveGrams({
   required List<Amount> amounts,
   required FdcFood? food,
   required String normalizedItem,
+  String? raw,
 }) {
   // 1. Any weight amount converts directly — including the secondary of a
   //    dual "1¾ cups (8¾ ounces)" pair, which is exactly why ATK prints it.
@@ -268,6 +306,31 @@ GramResolution? resolveGrams({
         grams: quantity * perUnit,
         source: GramSource.weight,
         basis: 'from ${_amountText(amount)}',
+      );
+    }
+  }
+
+  // 1b. A weight printed in a raw PARENTHETICAL that the amount parse dropped
+  //     ("4 (5 to 6-ounce) chicken breasts", "2 (15-ounce) cans", "1 russet
+  //     potato (about 8 ounces)"). It reads PER counted unit, so scale by the
+  //     count; with no count it is the line total. Still the gold-standard
+  //     weight source — preferred over piece/density estimates below.
+  if (raw != null) {
+    final perUnitGrams = _parenWeightGrams(raw);
+    if (perUnitGrams != null) {
+      final count = _countQty(amounts);
+      final grams = perUnitGrams * (count ?? 1);
+      final countLabel = count == null
+          ? null
+          : (count == count.roundToDouble()
+                ? count.toInt().toString()
+                : count.toString());
+      return GramResolution(
+        grams: grams,
+        source: GramSource.weight,
+        basis: (count != null && count > 1)
+            ? '$countLabel × ${perUnitGrams.round()} g (printed weight)'
+            : 'from the printed weight',
       );
     }
   }
