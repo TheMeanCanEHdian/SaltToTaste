@@ -589,6 +589,139 @@ void main() {
     });
   });
 
+  // Slice 2: counted whole items resolve from the food's own portions (or a
+  // table backfill), so "1 leek" / "6 ears corn" stop contributing nothing.
+  group('count → whole-item portions', () {
+    const nutrients = {'208': 20.0};
+
+    GramResolution resolve(
+      List<FdcPortion> portions,
+      Amount amount, {
+      String item = 'no-table-entry item',
+    }) => resolveGrams(
+      amounts: [amount],
+      food: FdcFood(
+        fdcId: 1,
+        description: 'synthetic',
+        dataType: 'Survey (FNDDS)',
+        nutrientsPer100g: nutrients,
+        portions: portions,
+      ),
+      normalizedItem: item,
+      raw: 'x',
+    )!;
+
+    test("the amount's own unit matches the food portion (ears of corn)", () {
+      final r = resolve(
+        const [FdcPortion(gramWeight: 105, description: '1 regular ear')],
+        const Amount(quantity: '6', unit: 'ear', measure: Measure.count),
+      );
+      expect(r.source, GramSource.piece);
+      expect(r.grams, closeTo(630, 0.5)); // 6 × 105
+    });
+
+    test('a bare count prefers the medium whole-item portion', () {
+      // Real FDC tortilla shape: several sizes plus a volume serving.
+      final r = resolve(
+        const [
+          FdcPortion(gramWeight: 18, description: '1 small'),
+          FdcPortion(gramWeight: 28, description: '1 medium'),
+          FdcPortion(gramWeight: 44, description: '1 large'),
+          FdcPortion(gramWeight: 150, description: '1 cup'),
+        ],
+        const Amount(quantity: '2', measure: Measure.count),
+      );
+      expect(r.grams, closeTo(56, 0.5)); // 2 × the "1 medium", not cup/large
+    });
+
+    test('a bare count skips the volume serving portions (leek)', () {
+      final r = resolve(
+        const [
+          FdcPortion(gramWeight: 85, description: '1 whole'),
+          FdcPortion(gramWeight: 170, description: '1 cup'),
+          FdcPortion(gramWeight: 7, description: '1 slice'),
+        ],
+        const Amount(quantity: '2', measure: Measure.count),
+      );
+      expect(r.grams, closeTo(170, 0.5)); // 2 × "1 whole", never the cup
+    });
+
+    test('a Foundation reference-serving portion is NOT a whole item', () {
+      // "amount=1, unit=racc, description=null" is a ~85 g serving weight, not
+      // one cucumber — must fall through (here: to null, no table entry).
+      final r = resolveGrams(
+        amounts: const [Amount(quantity: '1', measure: Measure.count)],
+        food: const FdcFood(
+          fdcId: 1,
+          description: 'synthetic',
+          dataType: 'Foundation',
+          nutrientsPer100g: nutrients,
+          portions: [FdcPortion(gramWeight: 85, amount: 1, unit: 'racc')],
+        ),
+        normalizedItem: 'no-table-entry item',
+      );
+      expect(r, isNull);
+    });
+
+    test('the piece table backfills a portion-less food (fennel bulb)', () {
+      final r = resolveGrams(
+        amounts: const [Amount(quantity: '1', measure: Measure.count)],
+        food: const FdcFood(
+          fdcId: 1,
+          description: 'Fennel, bulb, raw',
+          dataType: 'Foundation',
+          nutrientsPer100g: nutrients,
+          portions: [],
+        ),
+        normalizedItem: 'fennel bulb',
+      )!;
+      expect(r.source, GramSource.piece);
+      expect(r.grams, closeTo(200, 0.5));
+      expect(r.basis, '1 × 200 g each');
+    });
+
+    test(
+      'a container-unit count does not borrow a table whole-item weight',
+      () {
+        // "1 can diced tomatoes" must NOT resolve to one 123 g tomato — a can's
+        // weight comes from its printed size, else the line is left for review.
+        final r = resolveGrams(
+          amounts: const [
+            Amount(quantity: '1', unit: 'can', measure: Measure.count),
+          ],
+          food: null,
+          normalizedItem: 'diced tomatoes',
+        );
+        expect(r, isNull);
+      },
+    );
+
+    test('a multi-unit or dish-serving portion is left null', () {
+      // "10 sprigs" (count > 1) and a large "1 piece"/"1 serving" dish serving
+      // on a wrong-food match are all rejected as "one item".
+      for (final portions in const [
+        [FdcPortion(gramWeight: 10, description: '10 sprigs')],
+        [
+          FdcPortion(gramWeight: 256, description: '1 piece'),
+          FdcPortion(gramWeight: 227, description: '1 serving'),
+        ],
+      ]) {
+        final r = resolveGrams(
+          amounts: const [Amount(quantity: '1', measure: Measure.count)],
+          food: FdcFood(
+            fdcId: 1,
+            description: 'wrong-food match',
+            dataType: 'Survey (FNDDS)',
+            nutrientsPer100g: nutrients,
+            portions: portions,
+          ),
+          normalizedItem: 'no-table-entry item',
+        );
+        expect(r, isNull);
+      }
+    });
+  });
+
   // The admin's manual escape hatch when the matcher searched the wrong words
   // and every auto-found candidate is wrong. Needs no corpus — just the
   // recorded real FDC responses.

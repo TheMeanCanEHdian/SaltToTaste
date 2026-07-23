@@ -106,7 +106,13 @@ const List<(String, double)> _densities = [
   ('mayonnaise', 0.91),
   ('mustard', 1.05),
   ('soy sauce', 1.16),
+  ('fish sauce', 1.2),
   ('peanut butter', 1.09),
+  ('ginger', 0.54),
+  ('tomato paste', 1.1),
+  ('lemon juice', 1.03),
+  ('lime juice', 1.03),
+  ('sherry', 0.99),
   ('jam', 1.35),
   ('breadcrumbs', 0.45),
   ('panko', 0.25),
@@ -117,6 +123,9 @@ const List<(String, double)> _densities = [
 ];
 
 /// Piece weights (grams each) for common counted items, keyed by tokens.
+/// A key's weight is PER counted unit as the recipe counts it — for items
+/// always counted a particular way that means per slice (bread, bacon), per
+/// ear (corn), per bulb (fennel), etc. Estimates, flagged as such in the UI.
 const List<(String, double)> _pieceWeights = [
   ('large eggs', 50),
   ('large egg', 50),
@@ -148,6 +157,31 @@ const List<(String, double)> _pieceWeights = [
   ('bell pepper', 119),
   ('jalapeno', 14),
   ('cinnamon stick', 3),
+  // Whole vegetables/fruit FDC gives no usable per-item portion for (its
+  // Foundation entries carry only a ~85 g reference-serving weight).
+  ('avocado', 150),
+  ('english cucumber', 300),
+  ('cucumber', 300),
+  ('zucchini', 196),
+  ('leek', 89),
+  ('fennel bulb', 200),
+  ('fennel', 200),
+  ('poblano', 45),
+  ('serrano', 6),
+  ('thai chile', 2),
+  ('eggplant', 300), // longer key than "egg", so it wins the substring match
+  // Counted-in-slices/sheets staples (per counted unit).
+  ('sandwich bread', 28),
+  ('bacon', 24),
+  ('corn tortilla', 26),
+  ('tortilla', 26),
+  ('hamburger bun', 52),
+  ('english muffin', 60),
+  ('graham cracker', 14),
+  ('ladyfinger', 11),
+  ('phyllo', 19), // per sheet
+  ('puff pastry', 245), // per sheet (a standard frozen sheet)
+  ('vanilla bean', 4),
 ];
 
 /// Result of a resolution attempt.
@@ -249,6 +283,155 @@ double? _tableLookup(List<(String, double)> table, String normalizedItem) {
     }
   }
   return bestValue;
+}
+
+/// Leading nouns in a portion description that mean a VOLUME/WEIGHT serving
+/// (or a package), not a single countable item — so a bare count never scales
+/// off "1 cup" or "1 serving".
+const Set<String> _portionServingWords = {
+  'cup',
+  'cups',
+  'tablespoon',
+  'tablespoons',
+  'tbsp',
+  'teaspoon',
+  'teaspoons',
+  'tsp',
+  'ounce',
+  'ounces',
+  'oz',
+  'fl',
+  'fluid',
+  'ml',
+  'milliliter',
+  'liter',
+  'l',
+  'gram',
+  'grams',
+  'g',
+  'lb',
+  'pound',
+  'quart',
+  'pint',
+  'gallon',
+  'slice',
+  'slices',
+  'cubic',
+  'serving',
+  'package',
+  'packet',
+  'can',
+  'bottle',
+  'jar',
+  'container',
+  // Composite-dish language, never how a single produce/bakery item is named:
+  // "1 piece"/"1 portion" of a wrong-food dish match is not one ingredient.
+  'piece',
+  'pieces',
+  'portion',
+};
+
+/// Grams for ONE whole item from a portion whose description reads like a
+/// single countable unit ("1 whole", "1 medium", "1 regular ear", "1 bun") as
+/// opposed to a volume/weight serving ("1 cup", "1 fl oz", "1 serving"). For a
+/// bare count ("1 leek") when the amount names no unit. When the food lists
+/// several sizes, prefers the medium/regular one (what an unsized recipe
+/// count means). Ignores Foundation "reference amount" portions (their
+/// description is empty), which are a serving weight, not a whole item.
+double? _wholeItemPortionGrams(FdcFood food) {
+  double? best;
+  var bestRank = -1;
+  for (final portion in food.portions) {
+    final description = (portion.description ?? '').toLowerCase().trim();
+    final match = RegExp(
+      r'^([\d][\d./\s]*)\s*([a-z]+)',
+    ).firstMatch(description);
+    if (match == null) {
+      continue;
+    }
+    final count = _quantityValue(match.group(1)!.trim());
+    // Exactly one: "1 whole"/"1 medium" is a single item; "10 sprigs"/"4 large"
+    // /"1/2 breast" is a multi-unit or partial serving, not one countable item.
+    if (count != 1) {
+      continue;
+    }
+    if (_portionServingWords.contains(match.group(2))) {
+      continue;
+    }
+    // A single countable item a recipe writes as a BARE count is well under
+    // 250 g (bigger ones — squash, cabbage — carry a unit or a printed
+    // weight); a heavier "1 X" is a prepared-dish serving on a wrong-food
+    // match ("1 piece" of "Lasagna, meatless" = 256 g), not one item.
+    if (portion.gramWeight > 250) {
+      continue;
+    }
+    final rank =
+        description.contains('regular') || description.contains('medium')
+        ? 2
+        : (description.contains('large') || description.contains('small')
+              ? 0
+              : 1);
+    if (rank > bestRank) {
+      // count is 1 here, so the portion weight IS the per-item weight.
+      bestRank = rank;
+      best = portion.gramWeight;
+    }
+  }
+  return best;
+}
+
+/// Count units that name a PACKAGE, not a whole food — their weight is the
+/// package size, which comes from a printed weight (the parenthetical handled
+/// earlier). Without one we cannot know it, so a whole-item table value
+/// ("1 can diced tomatoes" ≠ one 123 g tomato) must not fill in; leave it null.
+const Set<String> _containerUnits = {
+  'can',
+  'cans',
+  'jar',
+  'jars',
+  'bottle',
+  'bottles',
+  'package',
+  'packages',
+  'packet',
+  'packets',
+  'envelope',
+  'envelopes',
+  'block',
+  'blocks',
+  'bar',
+  'bars',
+  'cube',
+  'cubes',
+  'container',
+  'containers',
+  'box',
+  'boxes',
+  'tube',
+  'tubes',
+};
+
+/// A portion keyed by a STRUCTURED piece/each/whole/unit measure (some foods
+/// carry a `unit=piece, amount=n` portion whose description has no leading
+/// count). Structured only — NOT a description text match, so it cannot
+/// re-admit a "1 piece" dish serving the whole-item finder already excluded.
+double? _legacyPiecePortion(FdcFood food) {
+  const units = {'piece', 'pieces', 'each', 'whole', 'unit', 'units'};
+  for (final portion in food.portions) {
+    if (!units.contains((portion.unit ?? '').toLowerCase())) {
+      continue;
+    }
+    final amount = portion.amount ?? 1;
+    if (amount <= 0) {
+      continue;
+    }
+    final perItem = portion.gramWeight / amount;
+    if (perItem > 250) {
+      continue; // same single-item sanity bound as the whole-item finder
+    }
+    return perItem;
+  }
+  return null;
 }
 
 /// Grams-per-single-[unit] from the food's own portions, when one matches.
@@ -375,25 +558,51 @@ GramResolution? resolveGrams({
     if (quantity == null) {
       continue;
     }
-    if (food != null) {
-      for (final unit in const ['piece', 'each', 'whole', 'unit']) {
-        final perUnit = _portionGramsPerUnit(food, unit);
-        if (perUnit != null) {
-          return GramResolution(
-            grams: quantity * perUnit,
-            source: GramSource.piece,
-            basis: '${_amountText(amount)} · USDA per-piece weight',
-          );
-        }
+    final amountUnit = (amount.unit ?? '').toLowerCase();
+
+    // 3a. The amount's OWN unit against the food's portions — "6 ears corn",
+    //     "1 head lettuce": the recipe named the unit, so it is authoritative.
+    if (food != null && amountUnit.isNotEmpty) {
+      final perUnit = _portionGramsPerUnit(food, amountUnit);
+      if (perUnit != null) {
+        return GramResolution(
+          grams: quantity * perUnit,
+          source: GramSource.piece,
+          basis: '${_amountText(amount)} · USDA portion',
+        );
       }
     }
-    final pieceWeight = _tableLookup(_pieceWeights, normalizedItem);
+
+    // 3b. The curated piece table — hand-tuned to ATK's meaning, so it beats a
+    //     fuzzy whole-item portion (a "graham cracker" is the 14 g rectangle,
+    //     not FDC's ambiguous per-cracker serving). Skipped for a container
+    //     count with no printed size — a whole-item weight is not a can.
+    final pieceWeight = _containerUnits.contains(amountUnit)
+        ? null
+        : _tableLookup(_pieceWeights, normalizedItem);
     if (pieceWeight != null) {
       return GramResolution(
         grams: quantity * pieceWeight,
         source: GramSource.piece,
         basis: '${_amountText(amount)} × ${pieceWeight.round()} g each',
       );
+    }
+
+    // 3c. A BARE count on an uncovered item: the food's own whole-item weight,
+    //     then the legacy generic-piece portion. Last, because it is the
+    //     fuzziest — a wrong-food match can carry a large "1 serving" portion.
+    //     Only for bare counts: if the recipe named a unit ("1 bunch parsley")
+    //     that 3a could not match, guessing off an unrelated "1 sprig" is worse
+    //     than leaving the line for review.
+    if (food != null && amountUnit.isEmpty) {
+      final perUnit = _wholeItemPortionGrams(food) ?? _legacyPiecePortion(food);
+      if (perUnit != null) {
+        return GramResolution(
+          grams: quantity * perUnit,
+          source: GramSource.piece,
+          basis: '${_amountText(amount)} · USDA per-item weight',
+        );
+      }
     }
   }
   return null;
