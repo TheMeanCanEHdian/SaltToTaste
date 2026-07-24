@@ -183,8 +183,6 @@ const Set<String> _modifiedFormTokens = {
   'nonfat',
   'lowfat',
   'reduced',
-  'imitation',
-  'substitute',
   // Prepared-product forms: recipes call for the ingredient, not the
   // ready-to-drink/ready-to-pour product built from it.
   'beverage',
@@ -234,8 +232,87 @@ const Set<String> _concentrateMarkers = {
   'granule',
 };
 
+/// Meat-analog markers. An IMITATION/vegetarian version is a fundamentally
+/// different food from the meat a recipe asks for ("Bacon, meatless" is soy;
+/// "Hot dog, vegetarian" is not a beef frank). Whole-word, query-gated, so a
+/// query that itself names the analog ("vegetarian sausage") still matches it.
+const Set<String> _meatAnalogMarkers = {
+  'meatless',
+  'vegetarian',
+  'vegan',
+  'imitation',
+  'substitute',
+  'analog',
+  'analogue',
+};
+
+/// Prepared-dish / composite markers. A raw ingredient must not match a
+/// finished dish or beverage built from it ("ginger" → "Tea, ginger",
+/// "shrimp" → "Shrimp cocktail", "chicken" → "Chicken cacciatore"). Whole-word
+/// and query-gated ("curry powder", "shrimp salad" still match).
+///
+/// Deliberately EXCLUDES words that FDC also uses to file real INGREDIENTS,
+/// found by an adversarial live-FDC sweep:
+///  - `soup`/`salad` — broths are "Soup, X broth", mayo is "Salad dressing";
+///  - `pie` — "Pie crust" covers graham-cracker/cookie crusts and tart shells;
+///  - `wonton` — "Wonton wrappers" is FDC's entry for egg-roll/gyoza wrappers;
+///  - `dip` — tzatziki/queso/baba ganoush are filed "X dip";
+///  - `sandwich` — sandwich cookies (Oreos) are "Cookies, sandwich";
+///  - `adobo` — "chipotle in adobo" is a common ingredient.
+/// (`tea` is kept: ginger→"Tea, ginger" is common and correctable to Ginger
+/// root; the rare matcha/hibiscus whose ONLY match is tea-filed just fall to
+/// the review gate — an honest gap, not a wrong number.)
+const Set<String> _dishMarkers = {
+  'cocktail',
+  'scampi',
+  'fajita',
+  'teriyaki',
+  'creole',
+  'stroganoff',
+  'croquette',
+  'burrito',
+  'quesadilla',
+  'enchilada',
+  'tamale',
+  'risotto',
+  'pilaf',
+  'quiche',
+  'souffle',
+  'frittata',
+  'omelet',
+  'cacciatore',
+  'parmigiana',
+  'scallopini',
+  'marsala',
+  'gratin',
+  'tempura',
+  'lasagna',
+  'tea',
+  'pizza',
+  'taco',
+  'gumbo',
+  'chowder',
+  'bisque',
+  'casserole',
+  'stew',
+  'curry',
+  'pudding',
+  'toast',
+  'chips',
+  'nugget',
+  'fritter',
+  'dumpling',
+  'paella',
+  'jambalaya',
+};
+
 /// Description tokens for the plain/whole form — a small tiebreak bonus.
 const Set<String> _plainFormTokens = {'whole', 'raw', 'regular'};
+
+/// Whole words of [text], lowercased, no stemming — for marker sets that must
+/// match "tea" without also matching "steak" (a substring check would).
+Set<String> _words(String text) =>
+    text.toLowerCase().split(RegExp('[^a-z]+')).toSet();
 
 /// Ranks [candidates] against the normalized [query].
 ///
@@ -294,6 +371,20 @@ List<RankedCandidate> rankCandidates(
         score -= 0.25;
         break;
       }
+    }
+    // Meat-analog / prepared-dish penalty (whole-word, query-gated). A recipe's
+    // raw ingredient is not a soy analog or a finished dish built from it. One
+    // dock, base-form magnitude — a wrong food, not a modified form.
+    final descriptionWords = _words(candidate.description);
+    final queryWords = _words(query);
+    final wrongFood = _meatAnalogMarkers
+        .followedBy(_dishMarkers)
+        .any(
+          (marker) =>
+              descriptionWords.contains(marker) && !queryWords.contains(marker),
+        );
+    if (wrongFood) {
+      score -= 0.25;
     }
     if (descriptionTokens.any(_plainFormTokens.contains)) {
       score += 0.02;

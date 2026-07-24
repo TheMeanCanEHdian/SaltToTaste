@@ -139,6 +139,61 @@ void main() {
     });
   });
 
+  group('rankCandidates meat-analog / dish penalty', () {
+    FdcCandidate food(String description, String dataType) => FdcCandidate(
+      fdcId: description.hashCode,
+      description: description,
+      dataType: dataType,
+    );
+
+    test('a meat analog loses to the real meat', () {
+      final ranked = rankCandidates('bacon', [
+        food('Bacon, meatless', 'SR Legacy'),
+        food('Pork, cured, bacon, unprepared', 'SR Legacy'),
+      ]);
+      expect(
+        ranked.first.candidate.description,
+        'Pork, cured, bacon, unprepared',
+        reason: '"bacon" is pork, not a soy analog',
+      );
+    });
+
+    test('a prepared dish loses to the raw ingredient', () {
+      final ranked = rankCandidates('ginger', [
+        food('Tea, ginger', 'Survey (FNDDS)'),
+        food('Ginger root, raw', 'SR Legacy'),
+      ]);
+      expect(ranked.first.candidate.description, 'Ginger root, raw');
+    });
+
+    test('the penalty is gated when the query names the analog', () {
+      final analog = food('Hot dog, vegetarian', 'Survey (FNDDS)');
+      final named = rankCandidates('vegetarian hot dog', [analog]).first;
+      final unnamed = rankCandidates('hot dog', [analog]).first;
+      expect(
+        named.confidence,
+        greaterThan(unnamed.confidence),
+        reason: 'naming "vegetarian" keeps the analog penalty off',
+      );
+    });
+
+    test(
+      'an FDC category word that files real ingredients is not penalized',
+      () {
+        // "graham cracker crust" → "Pie crust, …": `pie` is deliberately NOT a
+        // marker (it files real crusts/shells), so the only good match keeps its
+        // full score instead of being demoted below the review gate.
+        final ranked = rankCandidates('graham cracker crust', [
+          food(
+            'Pie Crust, Cookie-type, Graham Cracker, Ready Crust',
+            'SR Legacy',
+          ),
+        ]);
+        expect(ranked.first.confidence, greaterThanOrEqualTo(0.75));
+      },
+    );
+  });
+
   group('resolveGrams on real corpus lines', skip: skipIfNoCorpus, () {
     late Recipe bundt;
 
