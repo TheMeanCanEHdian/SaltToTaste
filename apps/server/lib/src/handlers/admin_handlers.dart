@@ -1,6 +1,7 @@
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/logging/log_store.dart';
+import 'package:salt_server/src/services/nutrition_review.dart';
 import 'package:salt_server/src/services/recipe_health.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -28,6 +29,24 @@ Map<String, Object?> recipeReviewHandler(
   // Register the mappers so the nested DTOs encode at runtime (idempotent).
   RecipeReviewReportMapper.ensureInitialized();
   return report.toMap();
+}
+
+/// The JSON body of `GET /api/v1/admin/nutrition_review`: the cross-recipe
+/// queue of ingredient-match lines that still need a look.
+///
+/// [bucket], when a non-empty known triage bucket, narrows the item list to
+/// that bucket; an unknown id is a 422 rather than a silent empty list.
+Map<String, Object?> nutritionReviewHandler(
+  SaltDatabase db, {
+  required int page,
+  required int limit,
+  String? bucket,
+}) {
+  final filter = (bucket == null || bucket.isEmpty) ? null : bucket;
+  if (filter != null && !nutritionReviewBucketLabels.containsKey(filter)) {
+    throw ValidationException('Unknown bucket filter: $filter');
+  }
+  return buildNutritionReview(db, bucket: filter, page: page, limit: limit);
 }
 
 /// The JSON body of `GET /api/v1/admin/logs`: recent persisted log records

@@ -767,6 +767,64 @@ class SaltDatabase {
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
   }
 
+  /// The triage bucket for a match row, in SQL — the same buckets the
+  /// per-recipe review sheet uses (`_bucketOf`), EXCEPT that a `confirmed` or
+  /// `overridden` line is treated as `counted`: it has been resolved, so a
+  /// cross-recipe "needs attention" queue must not surface it (e.g. confirmed
+  /// water is a deliberate no-match, not a problem to fix).
+  static const String _reviewBucketCase = '''
+    CASE
+      WHEN im.status IN ('confirmed', 'overridden') THEN 'counted'
+      WHEN im.status = 'skipped' THEN 'skipped'
+      WHEN im.fdc_id IS NULL THEN 'no_match'
+      WHEN im.grams IS NULL THEN 'no_grams'
+      WHEN im.confidence < 0.5 THEN 'check'
+      ELSE 'counted'
+    END''';
+
+  /// Count of match rows in each triage bucket, across all computed recipes.
+  Map<String, int> nutritionReviewCounts() {
+    final rows = _prepared(
+      'SELECT bucket, COUNT(*) AS n FROM ( '
+      'SELECT $_reviewBucketCase AS bucket FROM ingredient_matches im '
+      ') GROUP BY bucket',
+    ).select();
+    return {for (final row in rows) row['bucket'] as String: row['n'] as int};
+  }
+
+  /// One page of flagged match lines across ALL recipes, worst-confidence
+  /// first, each carrying its recipe's slug + title. [bucket] narrows to a
+  /// single triage bucket; null returns every flagged bucket
+  /// (no_match / no_grams / check), never `skipped` or `counted`.
+  List<NutritionReviewLineRow> nutritionReviewLines({
+    required int limit,
+    required int offset,
+    String? bucket,
+  }) {
+    final where = bucket == null
+        ? "bucket IN ('no_match', 'no_grams', 'check')"
+        : 'bucket = ?';
+    final rows = _prepared(
+      'SELECT * FROM ( '
+      'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
+      'im.data_type, im.confidence, im.grams, im.gram_source, im.status, '
+      'im.updated_at, r.slug AS review_slug, r.title AS review_title, '
+      '$_reviewBucketCase AS bucket '
+      'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
+      ') WHERE $where '
+      'ORDER BY confidence ASC, review_title, position LIMIT ? OFFSET ?',
+    ).select([if (bucket != null) bucket, limit, offset]);
+    return [
+      for (final row in rows)
+        (
+          match: IngredientMatchRow.fromRow(row),
+          slug: row['review_slug'] as String,
+          title: row['review_title'] as String,
+          bucket: row['bucket'] as String,
+        ),
+    ];
+  }
+
   /// Creates or replaces one match row.
   void upsertIngredientMatch(IngredientMatchRow row) {
     _prepared(
@@ -1511,6 +1569,15 @@ class ApiTokenRow {
   /// Revocation instant (UTC ISO-8601), or null while active.
   final String? revokedAt;
 }
+
+/// A flagged match line for the cross-recipe nutrition-review queue: the match
+/// row plus the recipe context (slug/title) and its computed triage bucket.
+typedef NutritionReviewLineRow = ({
+  IngredientMatchRow match,
+  String slug,
+  String title,
+  String bucket,
+});
 
 /// One tag with its usage count and optional chip style.
 /// One row of `ingredient_matches`.

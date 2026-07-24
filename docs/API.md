@@ -271,6 +271,23 @@ flagged), `incomplete_nutrition` (nutrition `partial`), `no_nutrition`
 (never computed), `extraction_warnings`, `no_servings`. The set is an open
 registry, so categories can be added without an API shape change.
 
+### `GET /api/v1/admin/nutrition_review?bucket=&page=&limit=` (admin)
+
+The cross-recipe queue of ingredient-match lines that still need a look, worst
+(lowest name-confidence) first: `{total, buckets: [{id, label, count}], items:
+[{recipe: {id, slug, title}, position, raw, bucket, match: {fdc_id, description,
+data_type, confidence, grams, gram_source, status} | null}], page, limit}`.
+Triage buckets: `no_match` (no food matched), `no_grams` (matched but resolves
+no grams, so it contributes nothing), `check` (counting, but < 50% name
+confidence — probably wrong), and `skipped` (browsable via the filter, excluded
+from `total`). A line counts as flagged only while its status is `auto`/
+`unmatched`; a `confirmed` or `overridden` line is resolved and never appears
+(e.g. confirmed water is a deliberate no-match). `total` and the `buckets`
+counts are whole-library (stable across filters); `bucket` narrows `items` (and
+their pagination) to one bucket — an unknown id is a 422. Fix a line with the
+existing `PUT /api/v1/recipes/{id}/nutrition/matches/{position}` (candidates for
+its fix panel come from that recipe's `…/nutrition/matches`).
+
 ### `GET /api/v1/admin/logs?level=&logger=&q=&limit=` (admin)
 
 Recent server log records from the persistent log store (newest first):
