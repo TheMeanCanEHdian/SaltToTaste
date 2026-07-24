@@ -194,6 +194,45 @@ void main() {
     );
   });
 
+  group('rankCandidates added meat-qualifier penalty', () {
+    FdcCandidate food(String description, String dataType) => FdcCandidate(
+      fdcId: description.hashCode,
+      description: description,
+      dataType: dataType,
+    );
+
+    test('a deli/lunchmeat cut loses to the raw cut', () {
+      final ranked = rankCandidates('chicken breast', [
+        food('Lunchmeat, chicken breast, sliced', 'Foundation'),
+        food('Chicken, breast, boneless, skinless, raw', 'Foundation'),
+      ]);
+      expect(
+        ranked.first.candidate.description,
+        'Chicken, breast, boneless, skinless, raw',
+        reason: '"chicken breast" wants the raw cut, not sliced deli meat',
+      );
+    });
+
+    test('an added species loses to the default for a generic query', () {
+      final ranked = rankCandidates('sausage', [
+        food('Sausage, turkey, breakfast links', 'SR Legacy'),
+        food('Pork sausage', 'SR Legacy'),
+      ]);
+      expect(ranked.first.candidate.description, 'Pork sausage');
+    });
+
+    test('the species penalty is gated when the query names it', () {
+      final turkey = food('Sausage, turkey, links', 'SR Legacy');
+      final named = rankCandidates('turkey sausage', [turkey]).first.confidence;
+      final unnamed = rankCandidates('sausage', [turkey]).first.confidence;
+      expect(
+        named,
+        greaterThan(unnamed),
+        reason: 'naming "turkey" keeps the added-species penalty off',
+      );
+    });
+  });
+
   group('resolveGrams on real corpus lines', skip: skipIfNoCorpus, () {
     late Recipe bundt;
 

@@ -190,6 +190,19 @@ const Set<String> _modifiedFormTokens = {
   'syrup',
   'drink',
   'prepared',
+  // Added meat qualifiers a generic query didn't ask for: "bacon" defaults to
+  // pork, not "Bacon, turkey"; a deli/luncheon cut is not the raw ingredient
+  // ("chicken breast" wants the raw cut, not "Lunchmeat, chicken breast").
+  // Query-gated, so "turkey bacon"/"chicken sausage"/"deli ham" still match.
+  // Light — turkey/chicken are legitimate meats, just not the default. ("bits"
+  // is deliberately NOT here: penalizing it surfaced Canadian bacon — leaner
+  // and further from real bacon than the crumbled-bacon "Bacon bits".)
+  'turkey',
+  'chicken',
+  'lunchmeat',
+  'luncheon',
+  'deli',
+  'blood',
 };
 
 /// A food processed into a DIFFERENT staple — "almonds" is not "almond FLOUR",
