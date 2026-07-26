@@ -3,10 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
-import 'package:salt_app/core/api/recipe_repository.dart'
-    show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
+import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
 /// Opens the ingredient match review sheet (approved A+C hybrid redesign).
@@ -45,60 +44,6 @@ Future<void> showReviewSheet(BuildContext context, {required bool isAdmin}) {
   );
 }
 
-// A line falls into exactly one bucket, derived from its stored match state.
-// This mirrors the server: a line only "counts" with a food AND grams; only
-// `auto` rows below 0.5 are flagged low-confidence.
-enum _Bucket { counted, check, noAmount, noMatch, skipped }
-
-_Bucket _bucketOf(IngredientMatch m) {
-  if (m.status == 'skipped') return _Bucket.skipped;
-  if (m.fdcId == null) return _Bucket.noMatch;
-  if (m.grams == null) return _Bucket.noAmount;
-  if (m.status == 'auto' && m.confidence < 0.5) return _Bucket.check;
-  return _Bucket.counted;
-}
-
-const Map<String, double> _unitToGrams = {'g': 1, 'oz': 28.3495, 'lb': 453.592};
-
-String _fmtAmount(double v) =>
-    v < 10 ? v.toStringAsFixed(1) : v.round().toString();
-
-String _gramSourceLabel(String? source) => switch (source) {
-  'weight' => 'from the weight you gave',
-  'portion' => 'USDA household portion',
-  'density' => 'volume estimate',
-  'piece' => 'typical size',
-  'override' => 'set by hand',
-  _ => 'no amount',
-};
-
-Widget _sourceChip(String? dataType) {
-  if (dataType == null || dataType.isEmpty) {
-    return const SizedBox.shrink();
-  }
-  final foundation = dataType == 'Foundation';
-  return Tooltip(
-    message: foundation
-        ? "Foundation — USDA's newest lab-analyzed data (preferred)."
-        : "SR Legacy — USDA's classic reference tables (frozen 2019).",
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        border: Border.all(color: SaltColors.hairline),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        dataType,
-        style: const TextStyle(
-          fontSize: 11,
-          color: SaltColors.muted,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ),
-  );
-}
-
 class _ReviewSheet extends StatefulWidget {
   const _ReviewSheet({required this.isAdmin, this.animation});
 
@@ -130,10 +75,10 @@ class _ReviewSheetState extends State<_ReviewSheet>
     final skipped = <IngredientMatch>[];
     if (matches != null) {
       for (final m in matches) {
-        final b = _bucketOf(m);
-        if (b == _Bucket.skipped) {
+        final b = matchBucketOf(m);
+        if (b == MatchBucket.skipped) {
           skipped.add(m);
-        } else if (b == _Bucket.counted) {
+        } else if (b == MatchBucket.counted) {
           counted.add(m);
         } else {
           attention.add(m);
@@ -473,8 +418,8 @@ class _MatchRowState extends State<_MatchRow> {
   @override
   Widget build(BuildContext context) {
     final m = widget.match;
-    final b = _bucketOf(m);
-    final skipped = b == _Bucket.skipped;
+    final b = matchBucketOf(m);
+    final skipped = b == MatchBucket.skipped;
     return Container(
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: SaltColors.hairline)),
@@ -502,14 +447,14 @@ class _MatchRowState extends State<_MatchRow> {
               ],
             ),
             const SizedBox(height: 4),
-            _WhyLine(match: m, bucket: b),
-            _CurrentMatch(match: m, bucket: b),
+            WhyLine(match: m, bucket: b),
+            CurrentMatch(match: m, bucket: b),
             if (widget.isAdmin) ...[
               const SizedBox(height: 8),
               _actions(context, b),
               if (_fixOpen) ...[
                 const SizedBox(height: 8),
-                _FixPanel(
+                FixPanel(
                   match: m,
                   busy: widget.busy,
                   onDone: () => setState(() => _fixOpen = false),
@@ -522,19 +467,19 @@ class _MatchRowState extends State<_MatchRow> {
     );
   }
 
-  SaltBadge _statusBadge(_Bucket b) => switch (b) {
-    _Bucket.counted => const SaltBadge('counted', tone: SaltBadgeTone.ok),
-    _Bucket.check => const SaltBadge('check match', tone: SaltBadgeTone.warn),
-    _Bucket.noAmount => const SaltBadge('no amount', tone: SaltBadgeTone.info),
-    _Bucket.noMatch => const SaltBadge('no match', tone: SaltBadgeTone.err),
-    _Bucket.skipped => const SaltBadge('skipped', tone: SaltBadgeTone.neutral),
+  SaltBadge _statusBadge(MatchBucket b) => switch (b) {
+    MatchBucket.counted => const SaltBadge('counted', tone: SaltBadgeTone.ok),
+    MatchBucket.check => const SaltBadge('check match', tone: SaltBadgeTone.warn),
+    MatchBucket.noAmount => const SaltBadge('no amount', tone: SaltBadgeTone.info),
+    MatchBucket.noMatch => const SaltBadge('no match', tone: SaltBadgeTone.err),
+    MatchBucket.skipped => const SaltBadge('skipped', tone: SaltBadgeTone.neutral),
   };
 
-  Widget _actions(BuildContext context, _Bucket b) {
+  Widget _actions(BuildContext context, MatchBucket b) {
     final cubit = context.read<NutritionCubit>();
     final busy = widget.busy;
     final toggleFix = busy ? null : () => setState(() => _fixOpen = !_fixOpen);
-    if (b == _Bucket.skipped) {
+    if (b == MatchBucket.skipped) {
       return _ActionBar([
         _Action(
           icon: Icons.undo,
@@ -549,20 +494,20 @@ class _MatchRowState extends State<_MatchRow> {
     final primaryLabel = _fixOpen
         ? 'Close'
         : switch (b) {
-            _Bucket.counted => 'Adjust…',
-            _Bucket.check => 'Fix match & amount',
-            _Bucket.noAmount => 'Add amount',
-            _Bucket.noMatch => 'Find a match',
-            _Bucket.skipped => 'Fix…',
+            MatchBucket.counted => 'Adjust…',
+            MatchBucket.check => 'Fix match & amount',
+            MatchBucket.noAmount => 'Add amount',
+            MatchBucket.noMatch => 'Find a match',
+            MatchBucket.skipped => 'Fix…',
           };
     return _ActionBar([
       _Action(
         icon: _fixOpen ? Icons.close : Icons.tune,
         label: primaryLabel,
-        primary: b != _Bucket.counted && !_fixOpen,
+        primary: b != MatchBucket.counted && !_fixOpen,
         onPressed: toggleFix,
       ),
-      if (b == _Bucket.check)
+      if (b == MatchBucket.check)
         _Action(
           icon: Icons.check,
           label: 'Confirm as-is',
@@ -578,645 +523,6 @@ class _MatchRowState extends State<_MatchRow> {
             : () => cubit.override(widget.match.position, skipped: true),
       ),
     ]);
-  }
-}
-
-/// The plain-language reason a line is where it is.
-class _WhyLine extends StatelessWidget {
-  const _WhyLine({required this.match, required this.bucket});
-
-  final IngredientMatch match;
-  final _Bucket bucket;
-
-  @override
-  Widget build(BuildContext context) {
-    final (text, color) = switch (bucket) {
-      _Bucket.check => (
-        'Match looks off — ${(match.confidence * 100).round()}% name '
-            'confidence, but it is counting now',
-        SaltColors.warnInk,
-      ),
-      _Bucket.noAmount => (
-        'Matched, but no amount found — not counted yet',
-        SaltColors.infoInk,
-      ),
-      _Bucket.noMatch => (
-        'No USDA match found — not counted',
-        SaltColors.errInk,
-      ),
-      _Bucket.counted => ('', SaltColors.muted),
-      _Bucket.skipped => ('Excluded from the totals', SaltColors.muted),
-    };
-    if (text.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-/// Always shows what the line is currently matched to (even for no-amount /
-/// skipped lines) — never hides it behind a "looks fine".
-class _CurrentMatch extends StatelessWidget {
-  const _CurrentMatch({required this.match, required this.bucket});
-
-  final IngredientMatch match;
-  final _Bucket bucket;
-
-  @override
-  Widget build(BuildContext context) {
-    if (match.fdcId == null || match.description == null) {
-      return const SizedBox.shrink();
-    }
-    final grams = match.grams;
-    final amount = grams == null
-        ? 'no amount'
-        : '${_fmtAmount(grams)} g · ${_gramSourceLabel(match.gramSource)}';
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text.rich(
-                TextSpan(
-                  children: [
-                    const TextSpan(
-                      text: 'matched to ',
-                      style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
-                    ),
-                    TextSpan(
-                      text: match.description!,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _sourceChip(match.dataType),
-              Text(
-                '· $amount',
-                style: const TextStyle(fontSize: 12, color: SaltColors.muted),
-              ),
-            ],
-          ),
-          // What the amount was computed against, so a volume/piece estimate
-          // can be sanity-checked against the line.
-          if (match.gramBasis != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                'amount: ${match.gramBasis}',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  color: SaltColors.muted,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The combined "change the match AND set the amount" panel. Picking a
-/// candidate recomputes grams on the server (showing the real recommended
-/// amount); the amount field converts g / oz / lb.
-class _FixPanel extends StatefulWidget {
-  const _FixPanel({
-    super.key,
-    required this.match,
-    required this.busy,
-    required this.onDone,
-  });
-
-  final IngredientMatch match;
-  final bool busy;
-  final VoidCallback onDone;
-
-  @override
-  State<_FixPanel> createState() => _FixPanelState();
-}
-
-class _FixPanelState extends State<_FixPanel> {
-  final TextEditingController _amt = TextEditingController();
-  String _unit = 'g';
-
-  /// A food picked in this panel but NOT yet saved. Nothing is written until
-  /// Save, so picking a candidate can't silently change the label before you
-  /// have had a chance to set the amount.
-  int? _stagedFdcId;
-
-  /// Whether the amount field was edited by hand (as opposed to being filled
-  /// programmatically). On save, an untouched amount is omitted so the server
-  /// recalculates it for the newly picked food instead of freezing the old one.
-  bool _amountDirty = false;
-  bool _settingText = false;
-
-  void _setText(String value) {
-    _settingText = true;
-    _amt.text = value;
-    _settingText = false;
-  }
-
-  // Manual USDA search: kept LOCAL to this panel (not in the cubit) so two
-  // open rows never show each other's results.
-  final TextEditingController _term = TextEditingController();
-  List<MatchCandidate>? _results;
-  bool _searching = false;
-  String? _searchError;
-
-  Future<void> _runSearch() async {
-    final query = _term.text.trim();
-    if (query.isEmpty || _searching) {
-      return;
-    }
-    setState(() {
-      _searching = true;
-      _searchError = null;
-    });
-    try {
-      final found = await context.read<NutritionRepository>().searchFoods(
-        query,
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _results = found;
-        _searching = false;
-      });
-    } on RepositoryException catch (exception) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _searchError = exception.message;
-        _searching = false;
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _resetAmount();
-    // Rebuild on every keystroke so the "≈ N g" readout and the Save-enabled
-    // state track the field live (FTextField has no onChange callback).
-    _amt.addListener(_onChanged);
-  }
-
-  void _onChanged() {
-    if (!_settingText) {
-      _amountDirty = true;
-    }
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  @override
-  void didUpdateWidget(_FixPanel old) {
-    super.didUpdateWidget(old);
-    // A save landed and the server sent back the recomputed line — show its
-    // amount and drop the staged pick, which is now the stored match.
-    if (old.match.grams != widget.match.grams ||
-        old.match.fdcId != widget.match.fdcId) {
-      _unit = 'g';
-      _stagedFdcId = null;
-      _amountDirty = false;
-      _resetAmount();
-    }
-  }
-
-  void _resetAmount() {
-    final g = widget.match.grams;
-    _setText(g == null ? '' : _fmtAmount(g / _unitToGrams[_unit]!));
-  }
-
-  @override
-  void dispose() {
-    _amt.removeListener(_onChanged);
-    _amt.dispose();
-    _term.dispose();
-    super.dispose();
-  }
-
-  double? _gramsFromField() {
-    final v = double.tryParse(_amt.text.trim());
-    return v == null ? null : v * _unitToGrams[_unit]!;
-  }
-
-  void _changeUnit(String u) {
-    final grams = _gramsFromField();
-    _unit = u;
-    if (grams != null) {
-      // Keep the gram value; the listener rebuilds with the new unit. Not a
-      // hand edit — switching units must not count as setting the amount.
-      _setText(_fmtAmount(grams / _unitToGrams[u]!));
-    } else {
-      setState(() {});
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cubit = context.read<NutritionCubit>();
-    final m = widget.match;
-    final busy = widget.busy;
-
-    // Current match first, then the API's ranked alternatives (deduped).
-    final candidates = <MatchCandidate>[
-      if (m.fdcId != null)
-        MatchCandidate(
-          fdcId: m.fdcId!,
-          description: m.description ?? '(current match)',
-          dataType: m.dataType ?? '',
-          confidence: m.confidence,
-        ),
-      ...m.candidates.where((c) => c.fdcId != m.fdcId),
-    ];
-
-    final grams = _gramsFromField();
-    // What is selected in this panel right now (staged pick, else the stored
-    // match). Nothing is written until Save.
-    final selectedId = _stagedFdcId ?? m.fdcId;
-    final pickChanged = _stagedFdcId != null && _stagedFdcId != m.fdcId;
-    final canSave = !busy && (pickChanged || (_amountDirty && grams != null));
-    return Container(
-      decoration: BoxDecoration(
-        color: SaltColors.panel,
-        border: Border.all(color: SaltColors.hairline),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(12, 9, 12, 9),
-            child: Text(
-              'Change the match & set the amount',
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: SaltColors.muted,
-              ),
-            ),
-          ),
-          if (candidates.isEmpty)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(12, 0, 12, 10),
-              child: Text(
-                'No other cached matches for this line.',
-                style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
-              ),
-            )
-          else
-            for (final c in candidates)
-              _CandidateRow(
-                candidate: c,
-                isCurrent: c.fdcId == m.fdcId,
-                selected: c.fdcId == selectedId,
-                busy: busy,
-                onPick: busy
-                    ? null
-                    : () => setState(() => _stagedFdcId = c.fdcId),
-              ),
-          _SearchRow(
-            controller: _term,
-            searching: _searching,
-            onSearch: busy ? null : _runSearch,
-          ),
-          if (_searchError != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-              child: Text(
-                _searchError!,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: SaltColors.errInk,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          if (_results != null) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
-              child: Text(
-                _results!.isEmpty
-                    ? 'No USDA foods matched that term.'
-                    : 'Results for "${_term.text.trim()}"',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: SaltColors.muted,
-                ),
-              ),
-            ),
-            for (final c in _results!)
-              _CandidateRow(
-                candidate: c,
-                isCurrent: c.fdcId == m.fdcId,
-                selected: c.fdcId == selectedId,
-                busy: busy,
-                onPick: busy
-                    ? null
-                    : () => setState(() => _stagedFdcId = c.fdcId),
-              ),
-          ],
-          // The amount editor is all controls (field + unit toggle + save).
-          SelectionContainer.disabled(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: SaltColors.hairline)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Amount',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: SaltColors.muted,
-                    ),
-                  ),
-                  // What the current grams were computed from, so a volume or
-                  // piece estimate can be sanity-checked before adjusting.
-                  if (m.gramBasis != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        'currently: ${m.gramBasis}',
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: SaltColors.muted,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 7),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 92,
-                        child: FTextField(
-                          control: FTextFieldControl.managed(controller: _amt),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          hint: 'e.g. 250',
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _UnitToggle(unit: _unit, onChanged: _changeUnit),
-                      const SizedBox(width: 10),
-                      if (_unit != 'g' && grams != null)
-                        Expanded(
-                          child: Text(
-                            '≈ ${grams.round()} g',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: SaltColors.muted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (pickChanged && !_amountDirty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6),
-                      child: Text(
-                        'Leave this as-is and the amount is recalculated for '
-                        'the food you picked.',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: SaltColors.muted,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 11),
-                  Row(
-                    children: [
-                      FButton(
-                        mainAxisSize: MainAxisSize.min,
-                        // One explicit write: the staged food and (only if you
-                        // actually typed one) the amount. An untouched amount is
-                        // omitted so the server recalculates it for the new food
-                        // rather than freezing the previous food's grams.
-                        onPress: !canSave
-                            ? null
-                            : () {
-                                cubit.override(
-                                  m.position,
-                                  fdcId: pickChanged ? _stagedFdcId : null,
-                                  grams: _amountDirty ? grams : null,
-                                );
-                                widget.onDone();
-                              },
-                        child: const Text('Save match & amount'),
-                      ),
-                      const SizedBox(width: 8),
-                      FButton(
-                        variant: FButtonVariant.ghost,
-                        mainAxisSize: MainAxisSize.min,
-                        onPress: busy ? null : widget.onDone,
-                        child: const Text('Cancel'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Manual USDA search — the escape hatch when the matcher searched the wrong
-/// words and every cached candidate is wrong.
-class _SearchRow extends StatelessWidget {
-  const _SearchRow({
-    required this.controller,
-    required this.searching,
-    required this.onSearch,
-  });
-
-  final TextEditingController controller;
-  final bool searching;
-  final VoidCallback? onSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    // A control row (a text field owns its own selection) — opt it out of the
-    // sheet's SelectionArea so it doesn't fight the field or show an I-beam.
-    return SelectionContainer.disabled(
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: SaltColors.hairline)),
-        ),
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: FTextField(
-                control: FTextFieldControl.managed(controller: controller),
-                hint: 'Search USDA for a better match…',
-                onSubmit: (_) => onSearch?.call(),
-              ),
-            ),
-            const SizedBox(width: 8),
-            FButton(
-              variant: FButtonVariant.outline,
-              mainAxisSize: MainAxisSize.min,
-              onPress: searching ? null : onSearch,
-              prefix: searching
-                  ? const SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.search, size: 15),
-              child: Text(searching ? 'Searching…' : 'Search'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CandidateRow extends StatelessWidget {
-  const _CandidateRow({
-    required this.candidate,
-    required this.isCurrent,
-    required this.selected,
-    required this.busy,
-    required this.onPick,
-  });
-
-  final MatchCandidate candidate;
-
-  /// The stored match — what the line uses today.
-  final bool isCurrent;
-
-  /// Chosen in this panel (staged, or the stored match when nothing is
-  /// staged). Not written until Save.
-  final bool selected;
-  final bool busy;
-  final VoidCallback? onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    // A pick control, not prose — tapping it selects the food, so keep the
-    // sheet's SelectionArea from swallowing the tap or showing an I-beam.
-    return SelectionContainer.disabled(
-      child: FTappable(
-        onPress: onPick,
-        child: Container(
-          decoration: BoxDecoration(
-            color: selected ? SaltColors.chip : null,
-            border: const Border(top: BorderSide(color: SaltColors.hairline)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                child: selected
-                    ? const Icon(
-                        Icons.check,
-                        size: 15,
-                        color: SaltColors.maroon,
-                      )
-                    : null,
-              ),
-              Expanded(
-                child: Text(
-                  candidate.description,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                    color: SaltColors.ink,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isCurrent
-                    ? 'current · ${(candidate.confidence * 100).round()}%'
-                    : '${candidate.dataType} · '
-                          '${(candidate.confidence * 100).round()}%',
-                style: const TextStyle(fontSize: 11, color: SaltColors.muted),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _UnitToggle extends StatelessWidget {
-  const _UnitToggle({required this.unit, required this.onChanged});
-
-  final String unit;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget seg(String u) {
-      final selected = unit == u;
-      return FTappable(
-        onPress: () => onChanged(u),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          color: selected ? SaltColors.maroon : Colors.transparent,
-          child: Text(
-            u,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : SaltColors.muted,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: SaltColors.hairline),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [seg('g'), seg('oz'), seg('lb')],
-        ),
-      ),
-    );
   }
 }
 
@@ -1281,11 +587,11 @@ class _GuidedFlowState extends State<_GuidedFlow> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
-          _WhyLine(match: m, bucket: _bucketOf(m)),
-          _CurrentMatch(match: m, bucket: _bucketOf(m)),
+          WhyLine(match: m, bucket: matchBucketOf(m)),
+          CurrentMatch(match: m, bucket: matchBucketOf(m)),
           if (widget.isAdmin) ...[
             const SizedBox(height: 12),
-            _FixPanel(
+            FixPanel(
               key: ValueKey('guided-${m.position}'),
               match: m,
               busy: widget.busy,

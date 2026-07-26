@@ -9,37 +9,186 @@ import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
+import 'package:salt_app/core/widgets/stat_chip.dart';
+import 'package:salt_app/features/admin/nutrition_review_cubit.dart';
+import 'package:salt_app/features/admin/nutrition_review_queue.dart';
 import 'package:salt_app/features/admin/recipe_review_cubit.dart';
 
-/// Admin recipe data-quality review: recipes missing or with incomplete data,
-/// grouped by issue. Reached from the profile menu (admin only).
+/// Admin data-quality review, in two tabs: recipes the server flagged (missing
+/// or incomplete data) and the cross-recipe nutrition-match queue. Reached from
+/// the profile menu (admin only).
 class RecipeReviewPage extends StatelessWidget {
   const RecipeReviewPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          RecipeReviewCubit(context.read<RecipeRepository>())..load(),
-      child: Scaffold(
-        appBar: const SaltNavBar(showBack: true),
-        body: BlocBuilder<RecipeReviewCubit, RecipeReviewState>(
-          builder: (context, state) => switch (state) {
-            RecipeReviewLoading() => const LoadingView(),
-            RecipeReviewError(:final message) => ErrorView(
-              message: message,
-              onRetry: () => context.read<RecipeReviewCubit>().load(),
-            ),
-            RecipeReviewLoaded() => _Loaded(state: state),
-          },
+    final repository = context.read<RecipeRepository>();
+    // Both cubits live at the page so each tab's live total shows in its label
+    // and switching tabs never reloads.
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => RecipeReviewCubit(repository)..load()),
+        BlocProvider(create: (_) => NutritionReviewCubit(repository)..load()),
+      ],
+      child: const Scaffold(
+        appBar: SaltNavBar(showBack: true),
+        body: _ReviewTabs(),
+      ),
+    );
+  }
+}
+
+/// The shared heading over the two-tab body. Both tab labels carry their
+/// cubit's live total once loaded.
+class _ReviewTabs extends StatefulWidget {
+  const _ReviewTabs();
+
+  @override
+  State<_ReviewTabs> createState() => _ReviewTabsState();
+}
+
+class _ReviewTabsState extends State<_ReviewTabs>
+    with TickerProviderStateMixin {
+  late final FTabController _tabs = FTabController(length: 2, vsync: this);
+  int _tabIndex = 0;
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final recipeState = context.watch<RecipeReviewCubit>().state;
+    final nutritionState = context.watch<NutritionReviewCubit>().state;
+    final recipeCount = recipeState is RecipeReviewLoaded
+        ? recipeState.total
+        : null;
+    final nutritionCount = nutritionState is NutritionReviewLoaded
+        ? nutritionState.total
+        : null;
+    final categories = recipeState is RecipeReviewLoaded
+        ? recipeState.categories
+        : const <RecipeReviewCategory>[];
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1100),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Recipe review',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: SaltColors.ink,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  // The category help applies to the Recipes tab only, but its
+                  // space is always reserved (maintainSize) so the heading — and
+                  // everything below it — never jumps vertically when switching
+                  // tabs (the icon button is taller than the title text).
+                  Visibility(
+                    visible: _tabIndex == 0 && categories.isNotEmpty,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: Tooltip(
+                      message: 'What each category means',
+                      child: FButton.icon(
+                        variant: FButtonVariant.ghost,
+                        size: FButtonSizeVariant.xs,
+                        semanticsLabel: 'What each category means',
+                        onPress: () => _showReviewHelp(context, categories),
+                        child: const Icon(Icons.help_outline, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Recipes and ingredient matches the server flagged for a look. '
+                'Fix them here or open the full recipe.',
+                style: TextStyle(fontSize: 14, color: SaltColors.muted),
+              ),
+              const SizedBox(height: 18),
+              Expanded(
+                child: FTabs(
+                  control: FTabManagedControl(
+                    controller: _tabs,
+                    onChange: (index) => setState(() => _tabIndex = index),
+                  ),
+                  // Round the grey track on this page (the theme keeps it square
+                  // for the full-bleed review-sheet tabs); the white bordered
+                  // indicator from the theme is inherited.
+                  style: FTabsStyleDelta.delta(
+                    decoration: DecorationDelta.value(
+                      const BoxDecoration(
+                        color: SaltColors.chipNeutral,
+                        borderRadius: BorderRadius.all(Radius.circular(9)),
+                      ),
+                    ),
+                  ),
+                  expands: true,
+                  // The bar switches views; each tab scrolls on its own.
+                  contentPhysics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    FTabEntry(
+                      label: Text(
+                        recipeCount == null
+                            ? 'Recipes'
+                            : 'Recipes · $recipeCount',
+                      ),
+                      child: const _RecipesTab(),
+                    ),
+                    FTabEntry(
+                      label: Text(
+                        nutritionCount == null
+                            ? 'Nutrition matches'
+                            : 'Nutrition matches · $nutritionCount',
+                      ),
+                      child: const NutritionReviewQueue(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _Loaded extends StatelessWidget {
-  const _Loaded({required this.state});
+/// The recipes tab: the flagged-recipe list, driven by [RecipeReviewCubit].
+class _RecipesTab extends StatelessWidget {
+  const _RecipesTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<RecipeReviewCubit, RecipeReviewState>(
+      builder: (context, state) => switch (state) {
+        RecipeReviewLoading() => const LoadingView(),
+        RecipeReviewError(:final message) => ErrorView(
+          message: message,
+          onRetry: () => context.read<RecipeReviewCubit>().load(),
+        ),
+        RecipeReviewLoaded() => _RecipesList(state: state),
+      },
+    );
+  }
+}
+
+class _RecipesList extends StatelessWidget {
+  const _RecipesList({required this.state});
 
   final RecipeReviewLoaded state;
 
@@ -48,77 +197,35 @@ class _Loaded extends StatelessWidget {
     final cubit = context.read<RecipeReviewCubit>();
     // A SingleChildScrollView (not a lazy ListView) so the scroll extent is
     // measured exactly — the scrollbar thumb tracks correctly instead of
-    // jumping. It spans the full width so the bar sits at the viewport edge;
-    // the content is centred and capped at the app's 1100px width.
+    // jumping.
     return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(top: 4, bottom: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Filters(state: state, onSelect: cubit.filter),
+          const SizedBox(height: 18),
+          if (state.items.isEmpty)
+            const _Empty()
+          else
+            FTileGroup(
               children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Recipe review',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: SaltColors.ink,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Tooltip(
-                      message: 'What each category means',
-                      child: FButton.icon(
-                        variant: FButtonVariant.ghost,
-                        size: FButtonSizeVariant.xs,
-                        semanticsLabel: 'What each category means',
-                        onPress: () =>
-                            _showReviewHelp(context, state.categories),
-                        child: const Icon(Icons.help_outline, size: 18),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Recipes the server flagged as missing or incomplete data. '
-                  'Open one to fix it in the editor or the nutrition review.',
-                  style: TextStyle(fontSize: 14, color: SaltColors.muted),
-                ),
-                const SizedBox(height: 18),
-                _Filters(state: state, onSelect: cubit.filter),
-                const SizedBox(height: 18),
-                if (state.items.isEmpty)
-                  const _Empty()
-                else
-                  FTileGroup(
-                    children: [
-                      for (final item in state.items)
-                        _reviewTile(context, item),
-                    ],
-                  ),
-                if (state.hasMore)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Center(
-                      child: FButton(
-                        variant: FButtonVariant.outline,
-                        mainAxisSize: MainAxisSize.min,
-                        onPress: state.loadingMore ? null : cubit.loadMore,
-                        child: Text(
-                          state.loadingMore ? 'Loading…' : 'Load more',
-                        ),
-                      ),
-                    ),
-                  ),
+                for (final item in state.items) _reviewTile(context, item),
               ],
             ),
-          ),
-        ),
+          if (state.hasMore)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Center(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: state.loadingMore ? null : cubit.loadMore,
+                  child: Text(state.loadingMore ? 'Loading…' : 'Load more'),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -157,7 +264,7 @@ class _Filters extends StatelessWidget {
       spacing: 10,
       runSpacing: 10,
       children: [
-        _StatChip(
+        StatChip(
           label: 'Need attention',
           count: state.total,
           selected: state.issue == null,
@@ -165,7 +272,7 @@ class _Filters extends StatelessWidget {
           onTap: () => onSelect(null),
         ),
         for (final category in state.categories)
-          _StatChip(
+          StatChip(
             label: category.label,
             count: category.count,
             selected: state.issue == category.id,
@@ -174,76 +281,6 @@ class _Filters extends StatelessWidget {
             onTap: () => onSelect(category.id),
           ),
       ],
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({
-    required this.label,
-    required this.count,
-    required this.selected,
-    required this.onTap,
-    this.emphasized = false,
-    this.enabled = true,
-  });
-
-  final String label;
-  final int count;
-  final bool selected;
-  final bool emphasized;
-
-  /// A disabled chip (a category with a count of 0) is greyed and not tappable.
-  final bool enabled;
-  final VoidCallback onTap;
-
-  static const Color _disabled = Color(0xFFBCB3AC);
-
-  @override
-  Widget build(BuildContext context) {
-    // Selection alone drives the fill; "Need attention" is only emphasised by
-    // its maroon number, so it no longer looks selected when it isn't.
-    final border = !enabled
-        ? SaltColors.hairline
-        : (selected ? SaltColors.maroon : SaltColors.hairline);
-    final bg = !enabled
-        ? const Color(0xFFFBF9F7)
-        : (selected ? const Color(0xFFF7ECEC) : Colors.white);
-    final numberColor = !enabled
-        ? _disabled
-        : (emphasized || selected ? SaltColors.maroon : SaltColors.ink);
-    final labelColor = enabled ? SaltColors.muted : _disabled;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: enabled ? onTap : null,
-        child: Container(
-          constraints: const BoxConstraints(minWidth: 104),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: bg,
-            border: Border.all(color: border, width: selected ? 1.5 : 1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: numberColor,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(label, style: TextStyle(fontSize: 12, color: labelColor)),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -226,6 +226,42 @@ void main() {
     expect(cubit.overrides.single.grams, isNull);
   });
 
+  testWidgets('clicking into the amount field is not a hand edit — a re-pick '
+      'still lets the server recalculate', (tester) async {
+    final cubit = await open(tester);
+    await tester.tap(find.text('Fix match & amount'));
+    await tester.pumpAndSettle();
+
+    // Stage a different food…
+    final pick = find.text('Escarole, cooked, boiled, drained');
+    await tester.ensureVisible(pick);
+    await tester.tap(pick);
+    await tester.pumpAndSettle();
+
+    // …then merely click into the amount box (moving the caret, no typing).
+    // A TextEditingController fires its listener on selection moves too, so this
+    // used to flip the "edited by hand" flag and freeze the displayed grams.
+    final amountField = find.byType(FTextField).last;
+    await tester.ensureVisible(amountField);
+    await tester.tap(amountField);
+    await tester.pumpAndSettle();
+
+    final save = find.text('Save match & amount');
+    await tester.ensureVisible(save);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(cubit.overrides, hasLength(1));
+    expect(cubit.overrides.single.fdcId, 99);
+    // The key assertion: grams stays omitted so the server recomputes for the
+    // newly picked food, instead of freezing the old food's displayed weight.
+    expect(
+      cubit.overrides.single.grams,
+      isNull,
+      reason: 'a bare click must not turn into a hand-set amount',
+    );
+  });
+
   testWidgets('guided mode steps worst-match-first with Back disabled at the '
       'start', (tester) async {
     await open(tester);

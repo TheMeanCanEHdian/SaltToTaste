@@ -134,6 +134,172 @@ class RecipeDetail {
   );
 }
 
+/// One page of the cross-recipe nutrition-match review queue
+/// (`GET /api/v1/admin/nutrition_review`) — the small client mirror of the
+/// server body. Deliberately plain (no `salt_shared` DTO): the row's stored
+/// match is only for display, and the fix panel's candidates are fetched
+/// lazily from that recipe's `…/nutrition/matches` when a row is opened.
+class NutritionReviewReport {
+  const NutritionReviewReport({
+    required this.total,
+    required this.buckets,
+    required this.items,
+    required this.page,
+    required this.limit,
+  });
+
+  factory NutritionReviewReport.fromJson(Map<String, dynamic> json) =>
+      NutritionReviewReport(
+        total: (json['total'] as num?)?.toInt() ?? 0,
+        buckets: [
+          if (json['buckets'] is List)
+            for (final b in json['buckets'] as List<dynamic>)
+              NutritionReviewBucket.fromJson(b as Map<String, dynamic>),
+        ],
+        items: [
+          if (json['items'] is List)
+            for (final i in json['items'] as List<dynamic>)
+              NutritionReviewLine.fromJson(i as Map<String, dynamic>),
+        ],
+        page: (json['page'] as num?)?.toInt() ?? 1,
+        limit: (json['limit'] as num?)?.toInt() ?? 0,
+      );
+
+  /// Whole-library count of flagged lines (stable across the bucket filter;
+  /// excludes `skipped`).
+  final int total;
+
+  /// Every triage bucket with its whole-library count, in display order.
+  final List<NutritionReviewBucket> buckets;
+
+  /// The flagged lines on this page (narrowed by the `bucket` filter),
+  /// worst-confidence first.
+  final List<NutritionReviewLine> items;
+
+  /// 1-based page index over [items].
+  final int page;
+  final int limit;
+}
+
+/// A triage bucket and how many flagged lines it holds library-wide.
+class NutritionReviewBucket {
+  const NutritionReviewBucket({
+    required this.id,
+    required this.label,
+    required this.count,
+  });
+
+  factory NutritionReviewBucket.fromJson(Map<String, dynamic> json) =>
+      NutritionReviewBucket(
+        id: json['id'] as String? ?? '',
+        label: json['label'] as String? ?? '',
+        count: (json['count'] as num?)?.toInt() ?? 0,
+      );
+
+  /// Machine id (`no_match` | `no_grams` | `check` | `skipped`); also the
+  /// `bucket` filter value.
+  final String id;
+  final String label;
+  final int count;
+}
+
+/// One flagged ingredient line, with the recipe it belongs to.
+class NutritionReviewLine {
+  const NutritionReviewLine({
+    required this.recipe,
+    required this.position,
+    required this.raw,
+    required this.bucket,
+    this.match,
+  });
+
+  factory NutritionReviewLine.fromJson(Map<String, dynamic> json) {
+    final rawMatch = json['match'];
+    return NutritionReviewLine(
+      recipe: NutritionReviewRecipe.fromJson(
+        (json['recipe'] as Map?)?.cast<String, dynamic>() ?? const {},
+      ),
+      position: (json['position'] as num?)?.toInt() ?? 0,
+      raw: json['raw'] as String? ?? '',
+      bucket: json['bucket'] as String? ?? '',
+      match: rawMatch is Map<String, dynamic>
+          ? NutritionReviewMatch.fromJson(rawMatch)
+          : null,
+    );
+  }
+
+  final NutritionReviewRecipe recipe;
+
+  /// The line's index within the recipe — the key for the fix write
+  /// (`PUT …/nutrition/matches/{position}`).
+  final int position;
+  final String raw;
+
+  /// Which triage bucket this line is in (`no_match` | `no_grams` | `check` |
+  /// `skipped`).
+  final String bucket;
+
+  /// The stored match for the row display, or null for a no-match line.
+  final NutritionReviewMatch? match;
+
+  /// A stable id for selection (a recipe slug + line position is unique).
+  String get key => '${recipe.slug}#$position';
+}
+
+/// The recipe a flagged line belongs to (just enough to label it and open the
+/// per-recipe fix flow).
+class NutritionReviewRecipe {
+  const NutritionReviewRecipe({
+    required this.id,
+    required this.slug,
+    required this.title,
+  });
+
+  factory NutritionReviewRecipe.fromJson(Map<String, dynamic> json) =>
+      NutritionReviewRecipe(
+        id: json['id'] as String? ?? '',
+        slug: json['slug'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+      );
+
+  final String id;
+  final String slug;
+  final String title;
+}
+
+/// The stored match on a flagged line, for the queue row (a subset of the
+/// per-recipe match — no candidates or gram basis, which the fix panel fetches).
+class NutritionReviewMatch {
+  const NutritionReviewMatch({
+    required this.fdcId,
+    required this.confidence,
+    required this.status,
+    this.description,
+    this.dataType,
+    this.grams,
+    this.gramSource,
+  });
+
+  factory NutritionReviewMatch.fromJson(Map<String, dynamic> json) =>
+      NutritionReviewMatch(
+        fdcId: (json['fdc_id'] as num?)?.toInt() ?? 0,
+        confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+        status: json['status'] as String? ?? 'unmatched',
+        description: json['description'] as String?,
+        dataType: json['data_type'] as String?,
+        grams: (json['grams'] as num?)?.toDouble(),
+        gramSource: json['gram_source'] as String?,
+      );
+
+  final int fdcId;
+  final double confidence;
+  final String status;
+  final String? description;
+  final String? dataType;
+  final double? grams;
+  final String? gramSource;
+}
+
 /// Read access to the recipe API.
 class RecipeRepository {
   RecipeRepository({Dio? dio})
@@ -210,6 +376,28 @@ class RecipeRepository {
       );
       RecipeReviewReportMapper.ensureInitialized();
       return RecipeReviewReportMapper.fromMap(data);
+    });
+  }
+
+  /// The cross-recipe nutrition-match review queue
+  /// (`GET /api/v1/admin/nutrition_review`). [bucket] narrows the item list
+  /// (and its pagination) to one triage bucket; [page]/[limit] page it. The
+  /// bucket counts and [NutritionReviewReport.total] stay whole-library.
+  Future<NutritionReviewReport> getNutritionReview({
+    required int page,
+    int limit = 50,
+    String? bucket,
+  }) {
+    return _request('nutrition-review', () async {
+      final data = await _getMap(
+        '/api/v1/admin/nutrition_review',
+        query: {
+          'page': '$page',
+          'limit': '$limit',
+          if (bucket != null && bucket.isNotEmpty) 'bucket': bucket,
+        },
+      );
+      return NutritionReviewReport.fromJson(data);
     });
   }
 
