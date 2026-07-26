@@ -20,20 +20,26 @@ import 'package:salt_app/features/editor/editor_cubit.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/paste_dialog.dart';
 
-/// Drag proxy for the editor's reorderable lists. The Material default fills the
-/// lifted item with `canvasColor` — a grey box over a plain ingredient/direction
-/// row, and a rectangle whose corners bleed past a rounded variation/component
-/// card's border. This keeps the item's OWN look (transparent fill, so there's
-/// nothing grey and nothing rectangular to overflow) and just lifts it a touch.
+/// Drag proxy for the editor's reorderable lists. Flutter's default lifts the
+/// item in `Material(elevation: …)` — an OPAQUE `canvasColor` (grey) fill with a
+/// RECTANGULAR shadow: a grey box over a plain ingredient/direction row, and a
+/// rectangle whose corners bleed past a rounded variation/component card's
+/// border. This keeps it opaque (so nothing behind shows through) but paints the
+/// surrounding card's own white and rounds the shape, so the fill and shadow
+/// follow the corners — no grey, and nothing rectangular to overflow.
 Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
   return AnimatedBuilder(
     animation: animation,
     child: child,
     builder: (context, child) {
       final t = Curves.easeInOut.transform(animation.value);
-      return Transform.scale(
-        scale: 1 + 0.02 * t,
-        child: Material(type: MaterialType.transparency, child: child),
+      return Material(
+        color: Colors.white,
+        elevation: 6 * t,
+        shadowColor: const Color(0x33000000),
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: child,
       );
     },
   );

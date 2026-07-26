@@ -292,7 +292,7 @@ void main() {
     expect(find.widgetWithText(FButton, 'Remove'), findsOneWidget);
   });
 
-  testWidgets('reorderable lists lift the dragged item transparently', (
+  testWidgets('reorderable lists lift the dragged item on an opaque rounded surface', (
     tester,
   ) async {
     // A recipe exercising the top-level reorderable lists (ingredients + a
@@ -341,9 +341,9 @@ void main() {
         reason: 'every reorderable list must override the grey default proxy',
       );
 
-      // And it lifts the item TRANSPARENTLY — invoking it yields a
-      // MaterialType.transparency wrapper (no fill, nothing rectangular to
-      // overflow), not the default elevated canvas Material.
+      // And it lifts the item on an OPAQUE, page-matching, ROUNDED surface —
+      // invoking it yields a white Material with a borderRadius (so the fill and
+      // shadow follow the corners), not the default grey canvasColor rectangle.
       final proxy = list.proxyDecorator!(
         const SizedBox(key: Key('dragged')),
         0,
@@ -356,8 +356,16 @@ void main() {
           matching: find.byType(Material),
         ),
       );
-      expect(material.type, MaterialType.transparency);
-      expect(material.elevation, 0);
+      expect(
+        material.color,
+        Colors.white,
+        reason: 'opaque page-matching fill, not the grey canvasColor default',
+      );
+      expect(
+        material.borderRadius,
+        BorderRadius.circular(12),
+        reason: 'rounded so the shadow does not overflow a rounded card border',
+      );
     }
   });
 }
