@@ -32,7 +32,10 @@ void main() {
       create: (_) => AuthCubit(AuthRepository(Dio())),
       child: MaterialApp(
         theme: buildMaterialTheme(buildForuiTheme()),
-        home: FTheme(data: buildForuiTheme(), child: const EditorPage(slug: 'x')),
+        home: FTheme(
+          data: buildForuiTheme(),
+          child: const EditorPage(slug: 'x'),
+        ),
       ),
     ),
   );
@@ -46,7 +49,9 @@ void main() {
       slug: 'soup',
       source: const RecipeSource(name: 'ATK', type: 'manual'),
       ingredients: const [
-        IngredientGroup(items: [IngredientLine(raw: '2 (28-ounce) cans tomatoes')]),
+        IngredientGroup(
+          items: [IngredientLine(raw: '2 (28-ounce) cans tomatoes')],
+        ),
       ],
       steps: const [RecipeStep(number: 1, text: 'Simmer.')],
       subsections: const [
@@ -55,7 +60,9 @@ void main() {
           kind: 'component',
           servings: 'MAKES 2 CUPS',
           ingredients: [
-            IngredientGroup(items: [IngredientLine(raw: '4 slices bread, cubed')]),
+            IngredientGroup(
+              items: [IngredientLine(raw: '4 slices bread, cubed')],
+            ),
           ],
           steps: [RecipeStep(number: 1, text: 'Toast until golden.')],
         ),
@@ -223,7 +230,9 @@ void main() {
       slug: 'x',
       source: const RecipeSource(name: 'ATK', type: 'manual'),
     );
-    await tester.pumpWidget(host(RecipeDetail(recipe: recipe, sourceSlug: 'x')));
+    await tester.pumpWidget(
+      host(RecipeDetail(recipe: recipe, sourceSlug: 'x')),
+    );
     await tester.pumpAndSettle();
 
     expect(
@@ -281,5 +290,74 @@ void main() {
     expect(find.widgetWithText(FButton, 'Replace'), findsOneWidget);
     expect(find.widgetWithText(FButton, 'From URL'), findsOneWidget);
     expect(find.widgetWithText(FButton, 'Remove'), findsOneWidget);
+  });
+
+  testWidgets('reorderable lists lift the dragged item transparently', (
+    tester,
+  ) async {
+    // A recipe exercising the top-level reorderable lists (ingredients + a
+    // group header, steps, and a technique).
+    final recipe = Recipe(
+      id: 'r1',
+      title: 'Stew',
+      slug: 'stew',
+      source: const RecipeSource(name: 'ATK', type: 'manual'),
+      ingredients: const [
+        IngredientGroup(
+          group: 'For the stew',
+          items: [
+            IngredientLine(raw: '1 onion'),
+            IngredientLine(raw: '2 carrots'),
+          ],
+        ),
+      ],
+      steps: const [RecipeStep(number: 1, text: 'Cook.')],
+      techniques: const [
+        Technique(
+          heading: 'Searing',
+          steps: [TechniqueStep(number: 1, caption: 'Brown the meat.')],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      host(RecipeDetail(recipe: recipe, sourceSlug: 'stew')),
+    );
+    await tester.pumpAndSettle();
+
+    // Capture the widgets up front — the loop pumps a throwaway tree to render
+    // each proxy, which would invalidate a lazy finder iterable.
+    final lists = tester
+        .widgetList<ReorderableListView>(find.byType(ReorderableListView))
+        .toList();
+    expect(lists, isNotEmpty);
+
+    for (final list in lists) {
+      // A custom proxyDecorator is set — null would fall back to Flutter's
+      // default: a canvasColor Material at elevation 6 (the grey box that
+      // also bleeds past a rounded card's border).
+      expect(
+        list.proxyDecorator,
+        isNotNull,
+        reason: 'every reorderable list must override the grey default proxy',
+      );
+
+      // And it lifts the item TRANSPARENTLY — invoking it yields a
+      // MaterialType.transparency wrapper (no fill, nothing rectangular to
+      // overflow), not the default elevated canvas Material.
+      final proxy = list.proxyDecorator!(
+        const SizedBox(key: Key('dragged')),
+        0,
+        const AlwaysStoppedAnimation<double>(1),
+      );
+      await tester.pumpWidget(MaterialApp(home: proxy));
+      final material = tester.widget<Material>(
+        find.ancestor(
+          of: find.byKey(const Key('dragged')),
+          matching: find.byType(Material),
+        ),
+      );
+      expect(material.type, MaterialType.transparency);
+      expect(material.elevation, 0);
+    }
   });
 }

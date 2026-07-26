@@ -20,6 +20,25 @@ import 'package:salt_app/features/editor/editor_cubit.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/paste_dialog.dart';
 
+/// Drag proxy for the editor's reorderable lists. The Material default fills the
+/// lifted item with `canvasColor` — a grey box over a plain ingredient/direction
+/// row, and a rectangle whose corners bleed past a rounded variation/component
+/// card's border. This keeps the item's OWN look (transparent fill, so there's
+/// nothing grey and nothing rectangular to overflow) and just lifts it a touch.
+Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
+  return AnimatedBuilder(
+    animation: animation,
+    child: child,
+    builder: (context, child) {
+      final t = Curves.easeInOut.transform(animation.value);
+      return Transform.scale(
+        scale: 1 + 0.02 * t,
+        child: Material(type: MaterialType.transparency, child: child),
+      );
+    },
+  );
+}
+
 /// The recipe editor (approved P5 design): raw-first ingredient rows with
 /// parse-status chips and an expandable structured panel, direction cards,
 /// photos, and a sticky save bar. Admin-only (the router guards the route;
@@ -1083,6 +1102,7 @@ class _IngredientListEditor extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
+          proxyDecorator: _reorderDragProxy,
           itemCount: entries.length,
           onReorderItem: actions.reorder,
           itemBuilder: (context, index) {
@@ -1607,6 +1627,7 @@ class _StepListEditor extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
+          proxyDecorator: _reorderDragProxy,
           itemCount: steps.length,
           onReorderItem: actions.reorder,
           itemBuilder: (context, index) => KeyedSubtree(
@@ -1786,6 +1807,7 @@ class _SubsectionsCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              proxyDecorator: _reorderDragProxy,
               itemCount: subs.length,
               onReorderItem: cubit.reorderSubsections,
               itemBuilder: (context, index) => KeyedSubtree(
@@ -2094,6 +2116,7 @@ class _TechniquesCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
+              proxyDecorator: _reorderDragProxy,
               itemCount: techniques.length,
               onReorderItem: cubit.reorderTechniques,
               itemBuilder: (context, index) => KeyedSubtree(
@@ -2218,6 +2241,7 @@ class _TechniqueBlock extends StatelessWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         buildDefaultDragHandles: false,
+                        proxyDecorator: _reorderDragProxy,
                         itemCount: t.steps.length,
                         onReorderItem: (o, n) =>
                             cubit.reorderTechniqueSteps(t.key, o, n),
