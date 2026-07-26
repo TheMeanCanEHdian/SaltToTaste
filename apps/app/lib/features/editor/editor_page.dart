@@ -20,12 +20,14 @@ import 'package:salt_app/features/editor/editor_cubit.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/paste_dialog.dart';
 
-/// Drag proxy for the editor's ROW lists (ingredients, directions). Flutter's
-/// default lifts the item in `Material(elevation: …)` — an OPAQUE `canvasColor`
-/// (grey) fill with a RECTANGULAR shadow: a grey box over a plain row. This
-/// keeps it opaque but paints the surrounding card's own white and rounds the
-/// shape so the fill and shadow follow the corners — no grey, nothing to
-/// overflow. Rows carry only ~4px of padding, so an opaque fill reads clean.
+/// Drag proxy for the editor's plain ROW list (ingredients). Flutter's default
+/// lifts the item in `Material(elevation: …)` — an OPAQUE `canvasColor` (grey)
+/// fill with a RECTANGULAR shadow: a grey box over a plain row. This keeps it
+/// opaque but paints the surrounding card's own white and rounds the shape so
+/// the fill and shadow follow the corners — no grey, nothing to overflow.
+/// Ingredient rows carry only ~4px of padding (no border, no margin), so an
+/// opaque fill reads clean. Bordered CARD items — including direction steps —
+/// use [_reorderDragProxyFlat] instead so their margin isn't painted.
 Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
   return AnimatedBuilder(
     animation: animation,
@@ -44,11 +46,12 @@ Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
   );
 }
 
-/// Drag proxy for the editor's CARD lists (variations, components). Those items
-/// carry a bottom margin for inter-card spacing; an opaque fill would paint it
-/// as a strip of padding below the lifted card. A TRANSPARENT lift keeps the
-/// card's own bordered look and leaves that margin invisible (a small scale
-/// gives the pick-up cue without any fill to overflow or pad).
+/// Drag proxy for the editor's CARD lists (direction steps, variations,
+/// components). Those items carry a bottom margin for inter-card spacing; an
+/// opaque fill would paint it as a strip of padding below the lifted card. A
+/// TRANSPARENT lift keeps the card's own bordered look and leaves that margin
+/// invisible (a small scale gives the pick-up cue without any fill to overflow
+/// or pad).
 Widget _reorderDragProxyFlat(
   Widget child,
   int index,
@@ -1663,7 +1666,7 @@ class _StepListEditor extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
-          proxyDecorator: (child, i, dragAnimation) => _reorderDragProxy(
+          proxyDecorator: (child, i, dragAnimation) => _reorderDragProxyFlat(
             // Re-provide the step scope for the same reason as ingredients —
             // the overlay-rebuilt card would otherwise throw in
             // _StepScope.of() and render as a grey ErrorWidget.
