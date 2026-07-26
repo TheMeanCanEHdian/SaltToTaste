@@ -296,7 +296,7 @@ void main() {
   });
 
   testWidgets(
-    'reorderable lists lift the dragged item on an opaque rounded surface',
+    'reorderable lists set a custom drag lift, never the grey default',
     (tester) async {
       // A recipe exercising the top-level reorderable lists (ingredients + a
       // group header, steps, and a technique).
@@ -344,9 +344,10 @@ void main() {
           reason: 'every reorderable list must override the grey default proxy',
         );
 
-        // And it lifts the item on an OPAQUE, page-matching, ROUNDED surface —
-        // invoking it yields a white Material with a borderRadius (so the fill and
-        // shadow follow the corners), not the default grey canvasColor rectangle.
+        // Invoking it yields either the ROW lift (opaque page-white, rounded so
+        // the fill/shadow follow the corners) or the CARD lift (transparent, so
+        // a card's bottom-margin isn't painted as padding) — never Flutter's
+        // grey canvasColor default.
         final proxy = list.proxyDecorator!(
           const SizedBox(key: Key('dragged')),
           0,
@@ -359,16 +360,14 @@ void main() {
             matching: find.byType(Material),
           ),
         );
+        final isRowLift =
+            material.color == Colors.white &&
+            material.borderRadius == BorderRadius.circular(12);
+        final isCardLift = material.type == MaterialType.transparency;
         expect(
-          material.color,
-          Colors.white,
-          reason: 'opaque page-matching fill, not the grey canvasColor default',
-        );
-        expect(
-          material.borderRadius,
-          BorderRadius.circular(12),
-          reason:
-              'rounded so the shadow does not overflow a rounded card border',
+          isRowLift || isCardLift,
+          isTrue,
+          reason: 'a custom row/card lift, never the grey canvasColor default',
         );
       }
     },

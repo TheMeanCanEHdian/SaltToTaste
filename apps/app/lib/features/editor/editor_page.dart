@@ -20,13 +20,12 @@ import 'package:salt_app/features/editor/editor_cubit.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/paste_dialog.dart';
 
-/// Drag proxy for the editor's reorderable lists. Flutter's default lifts the
-/// item in `Material(elevation: …)` — an OPAQUE `canvasColor` (grey) fill with a
-/// RECTANGULAR shadow: a grey box over a plain ingredient/direction row, and a
-/// rectangle whose corners bleed past a rounded variation/component card's
-/// border. This keeps it opaque (so nothing behind shows through) but paints the
-/// surrounding card's own white and rounds the shape, so the fill and shadow
-/// follow the corners — no grey, and nothing rectangular to overflow.
+/// Drag proxy for the editor's ROW lists (ingredients, directions). Flutter's
+/// default lifts the item in `Material(elevation: …)` — an OPAQUE `canvasColor`
+/// (grey) fill with a RECTANGULAR shadow: a grey box over a plain row. This
+/// keeps it opaque but paints the surrounding card's own white and rounds the
+/// shape so the fill and shadow follow the corners — no grey, nothing to
+/// overflow. Rows carry only ~4px of padding, so an opaque fill reads clean.
 Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
   return AnimatedBuilder(
     animation: animation,
@@ -40,6 +39,29 @@ Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
         child: child,
+      );
+    },
+  );
+}
+
+/// Drag proxy for the editor's CARD lists (variations, components). Those items
+/// carry a bottom margin for inter-card spacing; an opaque fill would paint it
+/// as a strip of padding below the lifted card. A TRANSPARENT lift keeps the
+/// card's own bordered look and leaves that margin invisible (a small scale
+/// gives the pick-up cue without any fill to overflow or pad).
+Widget _reorderDragProxyFlat(
+  Widget child,
+  int index,
+  Animation<double> animation,
+) {
+  return AnimatedBuilder(
+    animation: animation,
+    child: child,
+    builder: (context, child) {
+      final t = Curves.easeInOut.transform(animation.value);
+      return Transform.scale(
+        scale: 1 + 0.02 * t,
+        child: Material(type: MaterialType.transparency, child: child),
       );
     },
   );
@@ -1828,7 +1850,7 @@ class _SubsectionsCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              proxyDecorator: _reorderDragProxy,
+              proxyDecorator: _reorderDragProxyFlat,
               itemCount: subs.length,
               onReorderItem: cubit.reorderSubsections,
               itemBuilder: (context, index) => KeyedSubtree(
@@ -2137,7 +2159,7 @@ class _TechniquesCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              proxyDecorator: _reorderDragProxy,
+              proxyDecorator: _reorderDragProxyFlat,
               itemCount: techniques.length,
               onReorderItem: cubit.reorderTechniques,
               itemBuilder: (context, index) => KeyedSubtree(
@@ -2262,7 +2284,7 @@ class _TechniqueBlock extends StatelessWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         buildDefaultDragHandles: false,
-                        proxyDecorator: _reorderDragProxy,
+                        proxyDecorator: _reorderDragProxyFlat,
                         itemCount: t.steps.length,
                         onReorderItem: (o, n) =>
                             cubit.reorderTechniqueSteps(t.key, o, n),
