@@ -1108,7 +1108,15 @@ class _IngredientListEditor extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
-          proxyDecorator: _reorderDragProxy,
+          proxyDecorator: (child, i, dragAnimation) => _reorderDragProxy(
+            // The drag overlay rebuilds the row OUTSIDE this list's
+            // InheritedWidget scope, so re-provide it — otherwise
+            // _IngredientScope.of() finds nothing, its `!` throws, and the
+            // release-mode ErrorWidget paints a blank grey box.
+            _IngredientScope(actions: actions, child: child),
+            i,
+            dragAnimation,
+          ),
           itemCount: entries.length,
           onReorderItem: actions.reorder,
           itemBuilder: (context, index) {
@@ -1633,7 +1641,14 @@ class _StepListEditor extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
-          proxyDecorator: _reorderDragProxy,
+          proxyDecorator: (child, i, dragAnimation) => _reorderDragProxy(
+            // Re-provide the step scope for the same reason as ingredients —
+            // the overlay-rebuilt card would otherwise throw in
+            // _StepScope.of() and render as a grey ErrorWidget.
+            _StepScope(actions: actions, child: child),
+            i,
+            dragAnimation,
+          ),
           itemCount: steps.length,
           onReorderItem: actions.reorder,
           itemBuilder: (context, index) => KeyedSubtree(
