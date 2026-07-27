@@ -296,8 +296,10 @@ class _HeaderInfo extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 onPress: () =>
                     context.read<RecipeDetailCubit>().toggleFavorite(),
-                prefix: Icon(
-                  detail.favorite ? Icons.favorite : Icons.favorite_border,
+                prefix: const Icon(
+                  // Lucide (forui's icon set) has no filled heart, so the
+                  // button label ('Favorited'/'Favorite') carries the state.
+                  FLucideIcons.heart,
                   size: 18,
                   color: SaltColors.maroon,
                 ),
@@ -310,7 +312,7 @@ class _HeaderInfo extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   onPress: () =>
                       showViewYamlDialog(context, recipeId: detail.recipe.id),
-                  prefix: const Icon(Icons.code, size: 18),
+                  prefix: const Icon(FLucideIcons.code, size: 18),
                   child: const Text('View YAML'),
                 ),
                 // Edit goes last: it leaves the page, so it reads as the end of
@@ -319,7 +321,7 @@ class _HeaderInfo extends StatelessWidget {
                   variant: FButtonVariant.outline,
                   mainAxisSize: MainAxisSize.min,
                   onPress: () => context.push('/r/${detail.recipe.slug}/edit'),
-                  prefix: const Icon(Icons.edit_outlined, size: 18),
+                  prefix: const Icon(FLucideIcons.pencil, size: 18),
                   child: const Text('Edit'),
                 ),
               ],
@@ -390,7 +392,7 @@ class _MyNotesCardState extends State<_MyNotesCard> {
             variant: FButtonVariant.ghost,
             mainAxisSize: MainAxisSize.min,
             onPress: () => setState(() => _editing = true),
-            prefix: const Icon(Icons.sticky_note_2_outlined, size: 17),
+            prefix: const Icon(FLucideIcons.stickyNote, size: 17),
             child: const Text('Add a private note'),
           ),
         ),
@@ -421,7 +423,7 @@ class _MyNotesCardState extends State<_MyNotesCard> {
                     variant: FButtonVariant.ghost,
                     mainAxisSize: MainAxisSize.min,
                     onPress: () => setState(() => _editing = true),
-                    prefix: const Icon(Icons.edit_outlined, size: 15),
+                    prefix: const Icon(FLucideIcons.pencil, size: 15),
                     child: const Text('Edit'),
                   ),
                 ),
