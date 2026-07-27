@@ -86,6 +86,91 @@ Widget _reorderDragProxyCard(
   );
 }
 
+/// A [ReorderableListView.builder] whose displayed order updates SYNCHRONOUSLY
+/// on drop, then notifies the store.
+///
+/// Why this exists: the reorderable never reorders its own children — it only
+/// slides them by a gap offset during a drag, and on drop it zeroes those
+/// offsets (`_dragReset`), snapping the items back to their ORIGINAL order in
+/// the same frame. The real reorder is applied by the store, but the editor's
+/// store is a Bloc whose `emit` delivers on a broadcast stream — i.e. one
+/// microtask later. So the drop frame paints the pre-drag order for one frame
+/// before the Bloc-driven rebuild lands: a visible "flip back to the previous
+/// order, then to the new order" flicker.
+///
+/// The fix is to reorder a LOCAL mirror of the list inside `onReorderItem`
+/// (synchronously, via `setState`) so the drop frame already shows the new
+/// order, and separately call [onReorder] to persist it. The mirror re-syncs
+/// from [items] on every external change (edit/add/remove and the store's own
+/// catch-up emit, which arrives in the same order).
+class _OptimisticReorderableList<T> extends StatefulWidget {
+  const _OptimisticReorderableList({
+    required this.items,
+    required this.keyOf,
+    required this.onReorder,
+    required this.itemBuilder,
+    this.proxyDecorator,
+    super.key,
+  });
+
+  final List<T> items;
+  final Object Function(T item) keyOf;
+
+  /// Persist the reorder to the store. Indices are already adjusted for the
+  /// removed item (the `onReorderItem` contract), matching `_reordered`.
+  final void Function(int oldIndex, int newIndex) onReorder;
+  final Widget Function(BuildContext context, T item, int index) itemBuilder;
+  final Widget Function(Widget child, int index, Animation<double> animation)?
+  proxyDecorator;
+
+  @override
+  State<_OptimisticReorderableList<T>> createState() =>
+      _OptimisticReorderableListState<T>();
+}
+
+class _OptimisticReorderableListState<T>
+    extends State<_OptimisticReorderableList<T>> {
+  late List<T> _items = widget.items;
+
+  @override
+  void didUpdateWidget(covariant _OptimisticReorderableList<T> old) {
+    super.didUpdateWidget(old);
+    // Adopt the source of truth on any external change. After our own
+    // optimistic reorder the store emits the same order (a new list instance),
+    // so this quietly re-anchors _items to it; for edits/adds/removes it takes
+    // the new content. The identity check avoids a needless rebuild-loop when
+    // the same list instance is passed back.
+    if (!identical(widget.items, _items)) {
+      _items = widget.items;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
+      proxyDecorator: widget.proxyDecorator,
+      itemCount: _items.length,
+      onReorderItem: (oldIndex, newIndex) {
+        // Reorder the mirror NOW so this drop frame paints the new order; the
+        // store catches up on its next (async) emit.
+        setState(() {
+          final copy = [..._items];
+          copy.insert(newIndex, copy.removeAt(oldIndex));
+          _items = copy;
+        });
+        widget.onReorder(oldIndex, newIndex);
+      },
+      itemBuilder: (context, index) => KeyedSubtree(
+        key: ValueKey(widget.keyOf(_items[index])),
+        child: widget.itemBuilder(context, _items[index], index),
+      ),
+    );
+  }
+}
+
 /// The recipe editor (approved P5 design): raw-first ingredient rows with
 /// parse-status chips and an expandable structured panel, direction cards,
 /// photos, and a sticky save bar. Admin-only (the router guards the route;
@@ -1145,10 +1230,10 @@ class _IngredientListEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false,
+        _OptimisticReorderableList<EditorEntry>(
+          items: entries,
+          keyOf: (entry) => entry.key,
+          onReorder: actions.reorder,
           proxyDecorator: (child, i, dragAnimation) => _reorderDragProxy(
             // The drag overlay rebuilds the row OUTSIDE this list's
             // InheritedWidget scope, so re-provide it — otherwise
@@ -1158,20 +1243,9 @@ class _IngredientListEditor extends StatelessWidget {
             i,
             dragAnimation,
           ),
-          itemCount: entries.length,
-          onReorderItem: actions.reorder,
-          itemBuilder: (context, index) {
-            final entry = entries[index];
-            return KeyedSubtree(
-              key: ValueKey(entry.key),
-              child: switch (entry) {
-                EditorGroupHeader() => _GroupHeaderRow(
-                  index: index,
-                  header: entry,
-                ),
-                EditorLine() => _IngredientRow(index: index, line: entry),
-              },
-            );
+          itemBuilder: (context, entry, index) => switch (entry) {
+            EditorGroupHeader() => _GroupHeaderRow(index: index, header: entry),
+            EditorLine() => _IngredientRow(index: index, line: entry),
           },
         ),
         const SizedBox(height: 12),
@@ -1678,10 +1752,10 @@ class _StepListEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false,
+        _OptimisticReorderableList<EditorStep>(
+          items: steps,
+          keyOf: (step) => step.key,
+          onReorder: actions.reorder,
           proxyDecorator: (child, i, dragAnimation) => _reorderDragProxyCard(
             // Re-provide the step scope for the same reason as ingredients —
             // the overlay-rebuilt card would otherwise throw in
@@ -1690,12 +1764,8 @@ class _StepListEditor extends StatelessWidget {
             dragAnimation,
             margin: 10,
           ),
-          itemCount: steps.length,
-          onReorderItem: actions.reorder,
-          itemBuilder: (context, index) => KeyedSubtree(
-            key: ValueKey(steps[index].key),
-            child: _StepCard(index: index, step: steps[index]),
-          ),
+          itemBuilder: (context, step, index) =>
+              _StepCard(index: index, step: step),
         ),
         const SizedBox(height: 10),
         Align(
@@ -1865,18 +1935,14 @@ class _SubsectionsCard extends StatelessWidget {
               ),
             )
           else
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              buildDefaultDragHandles: false,
+            _OptimisticReorderableList<EditorSubsection>(
+              items: subs,
+              keyOf: (sub) => sub.key,
+              onReorder: cubit.reorderSubsections,
               proxyDecorator: (child, i, dragAnimation) =>
                   _reorderDragProxyCard(child, dragAnimation, margin: 12),
-              itemCount: subs.length,
-              onReorderItem: cubit.reorderSubsections,
-              itemBuilder: (context, index) => KeyedSubtree(
-                key: ValueKey(subs[index].key),
-                child: _SubsectionBlock(index: index, subsection: subs[index]),
-              ),
+              itemBuilder: (context, sub, index) =>
+                  _SubsectionBlock(index: index, subsection: sub),
             ),
           const SizedBox(height: 12),
           Wrap(
@@ -2175,21 +2241,14 @@ class _TechniquesCard extends StatelessWidget {
               ),
             )
           else
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              buildDefaultDragHandles: false,
+            _OptimisticReorderableList<EditorTechnique>(
+              items: techniques,
+              keyOf: (technique) => technique.key,
+              onReorder: cubit.reorderTechniques,
               proxyDecorator: (child, i, dragAnimation) =>
                   _reorderDragProxyCard(child, dragAnimation, margin: 12),
-              itemCount: techniques.length,
-              onReorderItem: cubit.reorderTechniques,
-              itemBuilder: (context, index) => KeyedSubtree(
-                key: ValueKey(techniques[index].key),
-                child: _TechniqueBlock(
-                  index: index,
-                  technique: techniques[index],
-                ),
-              ),
+              itemBuilder: (context, technique, index) =>
+                  _TechniqueBlock(index: index, technique: technique),
             ),
           const SizedBox(height: 12),
           Align(
@@ -2301,26 +2360,21 @@ class _TechniqueBlock extends StatelessWidget {
                     const SizedBox(height: 14),
                     const _NestedLabel('Illustrated steps'),
                     if (t.steps.isNotEmpty)
-                      ReorderableListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        buildDefaultDragHandles: false,
+                      _OptimisticReorderableList<EditorTechniqueStep>(
+                        items: t.steps,
+                        keyOf: (step) => step.key,
+                        onReorder: (o, n) =>
+                            cubit.reorderTechniqueSteps(t.key, o, n),
                         proxyDecorator: (child, i, dragAnimation) =>
                             _reorderDragProxyCard(
                               child,
                               dragAnimation,
                               margin: 10,
                             ),
-                        itemCount: t.steps.length,
-                        onReorderItem: (o, n) =>
-                            cubit.reorderTechniqueSteps(t.key, o, n),
-                        itemBuilder: (context, i) => KeyedSubtree(
-                          key: ValueKey(t.steps[i].key),
-                          child: _TechniqueStepCard(
-                            techKey: t.key,
-                            index: i,
-                            step: t.steps[i],
-                          ),
+                        itemBuilder: (context, step, i) => _TechniqueStepCard(
+                          techKey: t.key,
+                          index: i,
+                          step: step,
                         ),
                       ),
                     Align(

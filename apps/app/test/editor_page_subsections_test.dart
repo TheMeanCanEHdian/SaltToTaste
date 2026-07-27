@@ -435,4 +435,50 @@ void main() {
       await tester.pumpAndSettle();
     }
   });
+
+  testWidgets('a drop reorders the list synchronously (no async gap)', (
+    tester,
+  ) async {
+    // The flicker fix: _OptimisticReorderableList reorders its DISPLAYED list
+    // inside onReorderItem (via setState), so the drop frame shows the new
+    // order without waiting on the cubit's async (broadcast-stream) emit. This
+    // invokes onReorderItem directly — a gesture-driven drop is too fragile to
+    // assert order here (the cards sit deep in a long, scrolling page) — and
+    // asserts the displayed order flips on the very next pump.
+    final recipe = Recipe(
+      id: 'r1',
+      title: 'Stew',
+      slug: 'stew',
+      source: const RecipeSource(name: 'ATK', type: 'manual'),
+      steps: const [
+        RecipeStep(number: 1, text: 'Chop.'),
+        RecipeStep(number: 2, text: 'Simmer.'),
+      ],
+    );
+    await tester.pumpWidget(
+      host(RecipeDetail(recipe: recipe, sourceSlug: 'stew')),
+    );
+    await tester.pumpAndSettle();
+
+    double dyOf(String text) => tester.getCenter(find.text(text)).dy;
+    expect(dyOf('Chop.') < dyOf('Simmer.'), isTrue, reason: 'initial order');
+
+    // Move step 0 to after step 1. onReorderItem's indices are already adjusted
+    // for the removal, so (0, 1) drops the first step below the second.
+    final list = tester.widget<ReorderableListView>(
+      find.ancestor(
+        of: find.text('Chop.'),
+        matching: find.byType(ReorderableListView),
+      ),
+    );
+    list.onReorderItem!(0, 1);
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      dyOf('Simmer.') < dyOf('Chop.'),
+      isTrue,
+      reason: 'the displayed order flips on the next pump, not a later frame',
+    );
+  });
 }
