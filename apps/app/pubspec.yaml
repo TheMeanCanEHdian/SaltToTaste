@@ -23,9 +23,11 @@ dependencies:
   go_router: ^15.1.2
   lucide_icons_flutter: ^3.1.15
   # Recipe PDF export: `pdf` lays the document out, `printing` hands the
-  # bytes to the platform (a file download on web, a share sheet elsewhere).
+  # bytes to the platform (a share/print fallback), and on web `web` opens the
+  # built PDF in a new tab (the browser's own viewer, for print / save-as-PDF).
   pdf: ^3.13.0
   printing: ^5.15.0
+  web: ^1.1.1
   # Persists the session's list-layout choice (grid/list) across reloads; on
   # web this is backed by the browser's localStorage.
   shared_preferences: ^2.3.0

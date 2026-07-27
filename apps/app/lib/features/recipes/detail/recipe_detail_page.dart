@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
@@ -18,6 +19,9 @@ import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 import 'package:salt_app/features/nutrition/nutrition_label.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_cubit.dart';
 import 'package:salt_app/features/recipes/detail/view_yaml_dialog.dart';
+import 'package:salt_app/features/recipes/pdf/pdf_tab_io.dart'
+    if (dart.library.js_interop)
+        'package:salt_app/features/recipes/pdf/pdf_tab_web.dart';
 import 'package:salt_app/features/recipes/pdf/recipe_pdf.dart';
 
 /// The recipe detail page (approved P2 design: two-column header on wide
@@ -508,25 +512,41 @@ class _DownloadPdfButton extends StatefulWidget {
 class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
   bool _busy = false;
 
-  Future<void> _download() async {
+  Future<void> _openPdf() async {
     if (_busy) {
       return;
     }
     setState(() => _busy = true);
+    // Open the tab NOW — synchronously inside the click gesture — so the pop-up
+    // blocker allows it; the async build then navigates it to the PDF. Off web
+    // this is a no-op handle and we fall through to the share/print sheet.
+    final tab = openPdfTab();
+    final fileName = '${widget.detail.recipe.slug}.pdf';
     try {
       final bytes = await buildRecipePdf(
         recipe: widget.detail.recipe,
         // The reader's own note travels with their copy.
         personalNote: widget.detail.note,
       );
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: '${widget.detail.recipe.slug}.pdf',
-      );
+      if (tab.isOpen) {
+        // Web: hand the bytes to the tab (browser PDF viewer → print / save).
+        tab.showPdf(bytes);
+      } else {
+        // Off web, or the pop-up was blocked: fall back to a share/download so
+        // the user still gets the PDF.
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+        if (mounted && kIsWeb) {
+          showFToast(
+            context: context,
+            title: const Text('Pop-up blocked — downloaded the PDF instead.'),
+          );
+        }
+      }
       // The PDF layout engine throws on shapes we cannot foresee; a failed
       // export must explain itself, never take the page down.
       // ignore: avoid_catches_without_on_clauses
     } catch (error) {
+      tab.closeIfOpen();
       if (mounted) {
         showFToast(
           context: context,
@@ -545,7 +565,7 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
   Widget build(BuildContext context) {
     return FButton(
       mainAxisSize: MainAxisSize.min,
-      onPress: _busy ? null : _download,
+      onPress: _busy ? null : _openPdf,
       prefix: _busy
           ? const SizedBox(
               width: 16,
@@ -556,7 +576,7 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
               ),
             )
           : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-      child: Text(_busy ? 'Building PDF…' : 'Download PDF'),
+      child: Text(_busy ? 'Building PDF…' : 'Open PDF'),
     );
   }
 }
