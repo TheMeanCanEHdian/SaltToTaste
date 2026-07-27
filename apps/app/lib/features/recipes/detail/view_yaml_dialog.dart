@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,6 +41,7 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
   String? _yaml;
   String? _error;
   bool _copied = false;
+  bool _expanded = false;
 
   /// Must match the server's `Content-Disposition` (recipe_handlers.dart) and
   /// the canonical export on disk — both are named for the id.
@@ -90,15 +93,30 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // Both sizes are bounded by the viewport (minus the 24px inset each side).
+    // Expanded fills it (width capped for readable line length); collapsed is a
+    // comfortable reading box.
+    final screen = MediaQuery.sizeOf(context);
+    final availableWidth = screen.width - 48;
+    final availableHeight = screen.height - 48;
+    final maxWidth = _expanded
+        ? math.min(1400.0, availableWidth)
+        : math.min(760.0, availableWidth);
+    final maxHeight = _expanded
+        ? availableHeight
+        : math.min(620.0, availableHeight);
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
       backgroundColor: Colors.white,
+      // Clip the content to the rounded shape — otherwise the opaque code area
+      // and footer paint square corners past the border (squared bottom).
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: SaltColors.hairline),
       ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760, maxHeight: 620),
+        constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -173,6 +191,18 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
             child: const Text('Download'),
           ),
           const SizedBox(width: 4),
+          Tooltip(
+            message: _expanded ? 'Shrink' : 'Expand',
+            child: FButton.icon(
+              variant: FButtonVariant.ghost,
+              onPress: () => setState(() => _expanded = !_expanded),
+              child: Icon(
+                _expanded ? Icons.close_fullscreen : Icons.open_in_full,
+                size: 18,
+                semanticLabel: _expanded ? 'Shrink dialog' : 'Expand dialog',
+              ),
+            ),
+          ),
           Tooltip(
             message: 'Close',
             child: FButton.icon(
