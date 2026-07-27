@@ -231,6 +231,26 @@ void main() {
         reason: 'naming "turkey" keeps the added-species penalty off',
       );
     });
+
+    test('breakfast sausage beats a turkey link and a breakfast biscuit', () {
+      // Real FDC results for "breakfast sausage": a raw turkey link (which also
+      // takes the +raw form bonus) and a composite egg-and-cheese breakfast
+      // biscuit both out-ranked the actual (pre-cooked) breakfast sausage. The
+      // species dock must outweigh the raw/cooked swing, and the biscuit must
+      // take the dish dock.
+      final ranked = rankCandidates('breakfast sausage', [
+        food('Sausage, turkey, breakfast links, mild, raw', 'Foundation'),
+        food('Sausage, egg and cheese breakfast biscuit', 'SR Legacy'),
+        food(
+          'Sausage, breakfast sausage, beef, pre-cooked, unprepared',
+          'Foundation',
+        ),
+      ]);
+      expect(
+        ranked.first.candidate.description,
+        'Sausage, breakfast sausage, beef, pre-cooked, unprepared',
+      );
+    });
   });
 
   group('resolveGrams on real corpus lines', skip: skipIfNoCorpus, () {

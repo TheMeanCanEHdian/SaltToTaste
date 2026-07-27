@@ -190,13 +190,24 @@ const Set<String> _modifiedFormTokens = {
   'syrup',
   'drink',
   'prepared',
-  // Added meat qualifiers a generic query didn't ask for: "bacon" defaults to
-  // pork, not "Bacon, turkey"; a deli/luncheon cut is not the raw ingredient
-  // ("chicken breast" wants the raw cut, not "Lunchmeat, chicken breast").
-  // Query-gated, so "turkey bacon"/"chicken sausage"/"deli ham" still match.
-  // Light — turkey/chicken are legitimate meats, just not the default. ("bits"
-  // is deliberately NOT here: penalizing it surfaced Canadian bacon — leaner
-  // and further from real bacon than the crumbled-bacon "Bacon bits".)
+};
+
+/// Added meat qualifiers a generic query didn't ask for: "sausage"/"bacon"
+/// default to pork, not "Sausage, turkey" / "Bacon, turkey"; a deli/luncheon
+/// cut is not the raw ingredient ("chicken breast" wants the raw cut, not
+/// "Lunchmeat, chicken breast"). Query-gated, so "turkey bacon"/"chicken
+/// sausage"/"deli ham" still match. ("bits" is deliberately NOT here:
+/// penalizing it surfaced Canadian bacon — leaner and further from real bacon
+/// than the crumbled-bacon "Bacon bits".)
+///
+/// Docked HARDER than a plain off-form ([_modifiedFormTokens], -0.06): the
+/// wrong MEAT is a bigger error than the wrong cook-state, and at -0.06 it lost
+/// to it — "breakfast sausage" matched a raw TURKEY link (which also took the
+/// +0.02 raw-form bonus) over the real pre-COOKED beef breakfast sausage
+/// (docked -0.06 for "cooked"). The species dock must outweigh that ~0.08 form
+/// swing so meat type wins. Still light enough that a turkey/chicken match with
+/// no better option merely falls toward the review gate, not off a cliff.
+const Set<String> _offMeatTokens = {
   'turkey',
   'chicken',
   'lunchmeat',
@@ -317,6 +328,10 @@ const Set<String> _dishMarkers = {
   'dumpling',
   'paella',
   'jambalaya',
+  // A "... breakfast biscuit" is a sandwich, not the meat: "breakfast sausage"
+  // otherwise matched "Sausage, egg and cheese breakfast biscuit" over the real
+  // sausage. Query-gated, so a recipe that asks for "biscuit(s)" still matches.
+  'biscuit',
 };
 
 /// Description tokens for the plain/whole form — a small tiebreak bonus.
@@ -371,6 +386,8 @@ List<RankedCandidate> rankCandidates(
       }
       if (_baseFormChangeTokens.contains(token)) {
         score -= 0.25;
+      } else if (_offMeatTokens.contains(token)) {
+        score -= 0.12;
       } else if (_modifiedFormTokens.contains(token)) {
         score -= 0.06;
       }
