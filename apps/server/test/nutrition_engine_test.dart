@@ -950,6 +950,22 @@ void main() {
       expect(r.basis, '2 × 425 g (printed weight)');
     });
 
+    test('a trailing total on a counted line is NOT scaled by the count', () {
+      // Real corpus line: "(9 ounces)" is the TOTAL weight of the 5 slices, not
+      // per slice. Scaling by the count read it as 5× (~1276 g, a real bug).
+      final r = resolve(
+        '5 (¾-inch-thick) slices rustic, crusty bread (9 ounces), cubed',
+        '5',
+      );
+      expect(r.grams, closeTo(9 * 28.3495, 1)); // 255 g total, not 5 × 255
+      expect(r.basis, 'from the printed weight');
+    });
+
+    test('an explicit per-item "(… each)" still scales', () {
+      final r = resolve('4 chicken thighs (6 ounces each), trimmed', '4');
+      expect(r.grams, closeTo(4 * 6 * 28.3495, 1)); // 680.4 g
+    });
+
     test('no parenthetical weight falls through to the estimate paths', () {
       final r = resolveGrams(
         amounts: const [Amount(measure: Measure.count, quantity: '1')],
@@ -958,6 +974,66 @@ void main() {
         raw: '1 whatever, chopped',
       );
       expect(r, isNull);
+    });
+  });
+
+  group('resolveGrams rustic bread (count-only)', () {
+    // Real corpus items (rustic/country/crusty loaves) FDC gives no usable
+    // per-slice/loaf portion for, counted with no printed weight — so they
+    // resolved to nothing before. Slice ≈ 50 g, whole loaf ≈ 454 g.
+    GramResolution? resolve(String qty, String? unit, String item) =>
+        resolveGrams(
+          amounts: [
+            Amount(
+              quantity: qty,
+              unit: unit,
+              measure: Measure.count,
+              primary: true,
+            ),
+          ],
+          food: null,
+          normalizedItem: normalizeItem(item),
+          raw: '$qty ${unit ?? ''} $item',
+        );
+
+    test('thick slices resolve at ~50 g each', () {
+      expect(resolve('8', 'slice', 'country white bread')!.grams, 400);
+      expect(resolve('4', 'slice', 'rustic white bread')!.grams, 200);
+      final thick = resolve('10', 'slices', 'thick-crusted country bread');
+      expect(thick!.grams, 500);
+    });
+
+    test('a whole loaf resolves at ~1 lb', () {
+      expect(resolve('1', 'loaf', 'crusty bread')!.grams, 454);
+      expect(resolve('1', 'loaf', 'country bread')!.grams, 454);
+    });
+
+    test('soft sandwich bread keeps its own 28 g/slice table entry', () {
+      expect(resolve('6', 'slice', 'sandwich bread')!.grams, closeTo(168, 0.5));
+    });
+
+    test('a plain (non-rustic) bread is not over-applied', () {
+      expect(resolve('2', 'slice', 'white bread'), isNull);
+    });
+
+    test('a real FDC slice portion still wins over the estimate', () {
+      // If the matched food carries a "1 slice" portion, that authoritative
+      // value is used, not the 50 g fallback.
+      final r = resolveGrams(
+        amounts: const [
+          Amount(quantity: '4', unit: 'slice', measure: Measure.count),
+        ],
+        food: const FdcFood(
+          fdcId: 1,
+          description: 'Bread, rustic',
+          dataType: 'SR Legacy',
+          nutrientsPer100g: {'208': 250},
+          portions: [FdcPortion(gramWeight: 40, description: '1 slice')],
+        ),
+        normalizedItem: 'rustic bread',
+        raw: '4 slices rustic bread',
+      );
+      expect(r!.grams, closeTo(160, 0.5)); // 4 × 40, not 4 × 50
     });
   });
 

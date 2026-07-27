@@ -184,6 +184,52 @@ const List<(String, double)> _pieceWeights = [
   ('vanilla bean', 4),
 ];
 
+/// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
+/// distinct from soft sandwich bread (which keeps its 28 g/slice table entry).
+/// FDC gives these breads no usable per-slice or per-loaf portion, and the flat
+/// [_pieceWeights] table can't serve them: a recipe counts them BOTH ways
+/// ("8 slices country bread", "1 loaf crusty bread"), which need different
+/// weights, and its substring keys wouldn't match "country WHITE bread" anyway.
+const Set<String> _rusticBreadWords = {
+  'rustic',
+  'country',
+  'crusty',
+  'artisan',
+  'peasant',
+  'sourdough',
+  'ciabatta',
+  'baguette',
+  'french',
+  'italian',
+};
+
+const Set<String> _sliceUnits = {'slice', 'slices'};
+const Set<String> _loafUnits = {'loaf', 'loaves'};
+
+/// Grams per counted unit for a rustic/artisan bread, by the unit the recipe
+/// used: a thick artisan SLICE ≈ 50 g (ATK's own "(9 ounces)" for 5 slices is
+/// ~51 g/slice), a whole LOAF ≈ 454 g (its standard "1 (1-pound) loaf"). Only
+/// for the crusty/rustic breads above; returns null for soft sandwich bread
+/// (handled by the piece table) and for any non-slice/loaf unit. An estimate,
+/// flagged as such — and only a FALLBACK: a real FDC slice/loaf portion is
+/// preferred (matched earlier in the count loop).
+double? _rusticBreadGrams(String normalizedItem, String unit) {
+  final looksBread =
+      normalizedItem.contains('bread') ||
+      normalizedItem.contains('ciabatta') ||
+      normalizedItem.contains('baguette');
+  if (!looksBread || !_rusticBreadWords.any(normalizedItem.contains)) {
+    return null;
+  }
+  if (_loafUnits.contains(unit)) {
+    return 454;
+  }
+  if (_sliceUnits.contains(unit)) {
+    return 50;
+  }
+  return null;
+}
+
 /// Result of a resolution attempt.
 class GramResolution {
   /// Pairs the resolved grams with how they were determined.
@@ -249,23 +295,40 @@ double? _countQty(List<Amount> amounts) {
 /// Grams from the first weight printed in a raw parenthetical — the PER-unit
 /// weight the amount parse missed. "(5 to 6-ounce)" -> 156 g, "(28-ounce)" ->
 /// 794 g, "(about 8 ounces)" -> 227 g. Null when no parenthetical weight.
-double? _parenWeightGrams(String raw) {
+/// A weight printed in a raw parenthetical, and whether it reads PER counted
+/// unit or as the line TOTAL.
+///
+/// Adjectival, before the food noun → per unit: "4 (5-ounce) breasts",
+/// "2 (15-ounce) cans", "1 (1-pound) loaf" (and an explicit "(… each)").
+/// Trailing, after the noun → total: "5 slices bread (9 ounces)",
+/// "1 potato (about 8 ounces)". The distinction only changes the result when
+/// the line is counted >1 — a trailing total was over-scaled by the count
+/// before ("5 slices … (9 ounces)" read as 5×, a ~5× error).
+({double grams, bool perUnit})? _parenWeight(String raw) {
   final weight = RegExp(
     r'([\d./]+(?:\s*(?:to|-)\s*[\d./]+)?)\s*-?\s*'
     r'(ounces?|oz|pounds?|lbs?|grams?|kilograms?|kg)\b',
     caseSensitive: false,
   );
   for (final paren in RegExp(r'\(([^)]*)\)').allMatches(raw)) {
-    final match = weight.firstMatch(paren.group(1)!);
+    final inner = paren.group(1)!;
+    final match = weight.firstMatch(inner);
     if (match == null) {
       continue;
     }
     final quantity = _quantityValue(match.group(1)!);
     final unit = match.group(2)!.toLowerCase().replaceAll(RegExp(r's$'), '');
-    final perUnit = _weightUnitGrams[unit];
-    if (quantity != null && perUnit != null) {
-      return quantity * perUnit;
+    final gramsPer = _weightUnitGrams[unit];
+    if (quantity == null || gramsPer == null) {
+      continue;
     }
+    // Per unit iff the parenthetical is adjectival — nothing but the leading
+    // count precedes it (no food noun, i.e. no letters) — or it says "each".
+    final before = raw.substring(0, paren.start);
+    final perUnit =
+        inner.toLowerCase().contains('each') ||
+        !RegExp('[a-z]', caseSensitive: false).hasMatch(before);
+    return (grams: quantity * gramsPer, perUnit: perUnit);
   }
   return null;
 }
@@ -499,10 +562,13 @@ GramResolution? resolveGrams({
   //     count; with no count it is the line total. Still the gold-standard
   //     weight source — preferred over piece/density estimates below.
   if (raw != null) {
-    final perUnitGrams = _parenWeightGrams(raw);
-    if (perUnitGrams != null) {
+    final paren = _parenWeight(raw);
+    if (paren != null) {
       final count = _countQty(amounts);
-      final grams = perUnitGrams * (count ?? 1);
+      // A per-unit weight scales by the count; a trailing total is the line as
+      // written (scaling it by the count is the ~5× "N slices … (X oz)" bug).
+      final scaled = paren.perUnit && count != null && count > 1;
+      final grams = scaled ? paren.grams * count : paren.grams;
       final countLabel = count == null
           ? null
           : (count == count.roundToDouble()
@@ -511,8 +577,8 @@ GramResolution? resolveGrams({
       return GramResolution(
         grams: grams,
         source: GramSource.weight,
-        basis: (count != null && count > 1)
-            ? '$countLabel × ${perUnitGrams.round()} g (printed weight)'
+        basis: scaled
+            ? '$countLabel × ${paren.grams.round()} g (printed weight)'
             : 'from the printed weight',
       );
     }
@@ -571,6 +637,18 @@ GramResolution? resolveGrams({
           basis: '${_amountText(amount)} · USDA portion',
         );
       }
+    }
+
+    // 3a.5 Rustic/artisan bread the flat piece table can't serve — its weight
+    //      depends on the UNIT (thick slice vs whole loaf), not just the name.
+    //      After 3a so a real FDC slice/loaf portion still wins.
+    final breadGrams = _rusticBreadGrams(normalizedItem, amountUnit);
+    if (breadGrams != null) {
+      return GramResolution(
+        grams: quantity * breadGrams,
+        source: GramSource.piece,
+        basis: '${_amountText(amount)} × ${breadGrams.round()} g each',
+      );
     }
 
     // 3b. The curated piece table — hand-tuned to ATK's meaning, so it beats a
