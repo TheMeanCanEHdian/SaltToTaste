@@ -27,7 +27,7 @@ import 'package:salt_app/features/editor/paste_dialog.dart';
 /// the fill and shadow follow the corners — no grey, nothing to overflow.
 /// Ingredient rows carry only ~4px of padding (no border, no margin), so an
 /// opaque fill reads clean. Bordered CARD items — including direction steps —
-/// use [_reorderDragProxyFlat] instead so their margin isn't painted.
+/// use [_reorderDragProxyCard] instead so their margin isn't painted.
 Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
   return AnimatedBuilder(
     animation: animation,
@@ -46,25 +46,41 @@ Widget _reorderDragProxy(Widget child, int index, Animation<double> animation) {
   );
 }
 
-/// Drag proxy for the editor's CARD lists (direction steps, variations,
-/// components). Those items carry a bottom margin for inter-card spacing; an
-/// opaque fill would paint it as a strip of padding below the lifted card. A
-/// TRANSPARENT lift keeps the card's own bordered look and leaves that margin
-/// invisible (a small scale gives the pick-up cue without any fill to overflow
-/// or pad).
-Widget _reorderDragProxyFlat(
+/// Drag proxy for the editor's bordered-CARD lists (direction steps, variations,
+/// components). Like the ingredient-row lift it is an OPAQUE page-white, rounded
+/// (r12) Material with a soft shadow — a dragged card should read as a solid,
+/// lifted object, not a see-through outline. But these items carry a bottom
+/// [margin] of inter-card spacing; a fill wrapping the whole item would paint
+/// that margin as a strip of padding below the card. So the lift is laid BEHIND
+/// the card (a Stack) and inset from the bottom by [margin]: the card's own
+/// transparent interior reveals the white fill and its hairline border paints on
+/// top, while the margin gap below stays unpainted.
+Widget _reorderDragProxyCard(
   Widget child,
-  int index,
-  Animation<double> animation,
-) {
+  Animation<double> animation, {
+  required double margin,
+}) {
   return AnimatedBuilder(
     animation: animation,
     child: child,
     builder: (context, child) {
       final t = Curves.easeInOut.transform(animation.value);
-      return Transform.scale(
-        scale: 1 + 0.02 * t,
-        child: Material(type: MaterialType.transparency, child: child),
+      return Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: margin,
+            child: Material(
+              color: Colors.white,
+              elevation: 6 * t,
+              shadowColor: const Color(0x33000000),
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child!,
+        ],
       );
     },
   );
@@ -1666,13 +1682,13 @@ class _StepListEditor extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           buildDefaultDragHandles: false,
-          proxyDecorator: (child, i, dragAnimation) => _reorderDragProxyFlat(
+          proxyDecorator: (child, i, dragAnimation) => _reorderDragProxyCard(
             // Re-provide the step scope for the same reason as ingredients —
             // the overlay-rebuilt card would otherwise throw in
             // _StepScope.of() and render as a grey ErrorWidget.
             _StepScope(actions: actions, child: child),
-            i,
             dragAnimation,
+            margin: 10,
           ),
           itemCount: steps.length,
           onReorderItem: actions.reorder,
@@ -1853,7 +1869,8 @@ class _SubsectionsCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              proxyDecorator: _reorderDragProxyFlat,
+              proxyDecorator: (child, i, dragAnimation) =>
+                  _reorderDragProxyCard(child, dragAnimation, margin: 12),
               itemCount: subs.length,
               onReorderItem: cubit.reorderSubsections,
               itemBuilder: (context, index) => KeyedSubtree(
@@ -2162,7 +2179,8 @@ class _TechniquesCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
-              proxyDecorator: _reorderDragProxyFlat,
+              proxyDecorator: (child, i, dragAnimation) =>
+                  _reorderDragProxyCard(child, dragAnimation, margin: 12),
               itemCount: techniques.length,
               onReorderItem: cubit.reorderTechniques,
               itemBuilder: (context, index) => KeyedSubtree(
@@ -2287,7 +2305,12 @@ class _TechniqueBlock extends StatelessWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         buildDefaultDragHandles: false,
-                        proxyDecorator: _reorderDragProxyFlat,
+                        proxyDecorator: (child, i, dragAnimation) =>
+                            _reorderDragProxyCard(
+                              child,
+                              dragAnimation,
+                              margin: 10,
+                            ),
                         itemCount: t.steps.length,
                         onReorderItem: (o, n) =>
                             cubit.reorderTechniqueSteps(t.key, o, n),

@@ -344,31 +344,42 @@ void main() {
           reason: 'every reorderable list must override the grey default proxy',
         );
 
-        // Invoking it yields either the ROW lift (opaque page-white, rounded so
-        // the fill/shadow follow the corners) or the CARD lift (transparent, so
-        // a card's bottom-margin isn't painted as padding) — never Flutter's
-        // grey canvasColor default.
+        // Every list lifts with an opaque page-white, rounded (r12) Material —
+        // never Flutter's grey canvasColor default (a bare elevated Material
+        // with no explicit colour). The ROW proxy wraps the dragged child in
+        // that Material; the CARD proxy lays it BEHIND the child, so search the
+        // whole proxy subtree rather than just the child's ancestors.
         final proxy = list.proxyDecorator!(
           const SizedBox(key: Key('dragged')),
           0,
           const AlwaysStoppedAnimation<double>(1),
         );
         await tester.pumpWidget(MaterialApp(home: proxy));
-        final material = tester.widget<Material>(
-          find.ancestor(
-            of: find.byKey(const Key('dragged')),
-            matching: find.byType(Material),
-          ),
-        );
-        final isRowLift =
-            material.color == Colors.white &&
-            material.borderRadius == BorderRadius.circular(12);
-        final isCardLift = material.type == MaterialType.transparency;
         expect(
-          isRowLift || isCardLift,
-          isTrue,
-          reason: 'a custom row/card lift, never the grey canvasColor default',
+          find.byWidgetPredicate(
+            (w) =>
+                w is Material &&
+                w.color == Colors.white &&
+                w.borderRadius == BorderRadius.circular(12),
+          ),
+          findsWidgets,
+          reason: 'a custom white/rounded lift, never the grey canvasColor '
+              'default',
         );
+
+        // Card lifts inset the fill from the bottom by the card's own margin (a
+        // Positioned with a non-zero bottom), so the inter-card gap is never
+        // painted as a strip of padding below the dragged card. Row lifts carry
+        // no such Positioned.
+        final positioned = find.byType(Positioned);
+        if (positioned.evaluate().isNotEmpty) {
+          final bottom = tester.widget<Positioned>(positioned.first).bottom;
+          expect(
+            bottom != null && bottom > 0,
+            isTrue,
+            reason: 'a card lift must inset its fill above the bottom margin',
+          );
+        }
       }
     },
   );
