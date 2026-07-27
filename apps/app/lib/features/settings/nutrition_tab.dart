@@ -281,7 +281,7 @@ class _NutritionTabState extends State<NutritionTab> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.key, size: 17, color: SaltColors.okInk),
+                const Icon(FLucideIcons.key, size: 17, color: SaltColors.okInk),
                 const SizedBox(width: 9),
                 const Text(
                   'Configured',
@@ -445,7 +445,7 @@ class _NutritionTabState extends State<NutritionTab> {
                       color: SaltColors.maroon,
                     ),
                   )
-                : const Icon(Icons.bolt, size: 18),
+                : const Icon(FLucideIcons.zap, size: 18),
             child: const Text('Compute all missing'),
           ),
           const SizedBox(height: 8),
@@ -529,7 +529,7 @@ class _NutritionTabState extends State<NutritionTab> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Icon(
-                failedJob ? Icons.error_outline : Icons.check_circle_outline,
+                failedJob ? FLucideIcons.circleAlert : FLucideIcons.circleCheck,
                 size: 16,
                 color: ink,
               ),

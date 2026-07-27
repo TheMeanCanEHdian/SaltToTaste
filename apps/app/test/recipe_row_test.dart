@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
+import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/recipe_row.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -59,18 +61,22 @@ void main() {
       bundt = loadCorpusRecipe('0857-rich-chocolate-bundt-cake.yaml');
     });
 
-    testWidgets('a favorited row shows a filled heart', (tester) async {
+    // Lucide (forui's set) has no filled heart, so the favorited state is the
+    // heart's COLOUR: maroon when favorited, faint when not.
+    testWidgets('a favorited row shows a maroon heart', (tester) async {
       await tester.pumpWidget(host(cardFrom(bundt, favorite: true), 800));
       await tester.pump();
-      expect(find.byIcon(Icons.favorite), findsOneWidget);
-      expect(find.byIcon(Icons.favorite_border), findsNothing);
+      expect(find.byIcon(FLucideIcons.heart), findsOneWidget);
+      final heart = tester.widget<Icon>(find.byIcon(FLucideIcons.heart));
+      expect(heart.color, SaltColors.maroon);
     });
 
-    testWidgets('a non-favorited row shows an outline heart', (tester) async {
+    testWidgets('a non-favorited row shows a faint heart', (tester) async {
       await tester.pumpWidget(host(cardFrom(bundt), 800));
       await tester.pump();
-      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
-      expect(find.byIcon(Icons.favorite), findsNothing);
+      expect(find.byIcon(FLucideIcons.heart), findsOneWidget);
+      final heart = tester.widget<Icon>(find.byIcon(FLucideIcons.heart));
+      expect(heart.color, SaltColors.muted.withValues(alpha: 0.3));
     });
 
     testWidgets('a wide row keeps the title and meta on one line', (

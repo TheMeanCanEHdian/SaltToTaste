@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
@@ -136,7 +135,7 @@ class _EmptyState extends StatelessWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.bolt, size: 17),
+                  : const Icon(FLucideIcons.zap, size: 17),
               child: Text(state.computing ? 'Computing…' : 'Compute'),
             ),
             const SizedBox(height: 8),
@@ -182,7 +181,7 @@ class _StaleBanner extends StatelessWidget {
       child: Row(
         children: [
           const Icon(
-            Icons.warning_amber_outlined,
+            FLucideIcons.triangleAlert,
             size: 16,
             color: SaltColors.warnInk,
           ),
@@ -241,7 +240,7 @@ class _MatchBadge extends StatelessWidget {
     final badge = SaltBadge(
       label,
       tone: complete ? SaltBadgeTone.ok : SaltBadgeTone.warn,
-      icon: complete ? LucideIcons.circleCheck : LucideIcons.triangleAlert,
+      icon: complete ? FLucideIcons.circleCheck : FLucideIcons.triangleAlert,
       onTap: () => showReviewSheet(context, isAdmin: isAdmin),
       semanticHint: 'Opens ingredient review',
       expand: fullWidth,
@@ -663,7 +662,7 @@ class _ToggleBar extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Icon(
-                  expanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                  expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
                   size: 15,
                   color: Colors.black,
                 ),

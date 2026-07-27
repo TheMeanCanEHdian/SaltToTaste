@@ -179,7 +179,7 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
           FButton(
             mainAxisSize: MainAxisSize.min,
             onPress: _yaml == null ? null : _copy,
-            prefix: Icon(_copied ? Icons.check : Icons.copy, size: 16),
+            prefix: Icon(_copied ? FLucideIcons.check : FLucideIcons.copy, size: 16),
             child: Text(_copied ? 'Copied' : 'Copy'),
           ),
           const SizedBox(width: 8),
@@ -187,7 +187,7 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
             variant: FButtonVariant.outline,
             mainAxisSize: MainAxisSize.min,
             onPress: _download,
-            prefix: const Icon(Icons.download, size: 16),
+            prefix: const Icon(FLucideIcons.download, size: 16),
             child: const Text('Download'),
           ),
           const SizedBox(width: 4),
@@ -197,7 +197,7 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
               variant: FButtonVariant.ghost,
               onPress: () => setState(() => _expanded = !_expanded),
               child: Icon(
-                _expanded ? Icons.close_fullscreen : Icons.open_in_full,
+                _expanded ? FLucideIcons.minimize2 : FLucideIcons.maximize2,
                 size: 18,
                 semanticLabel: _expanded ? 'Shrink dialog' : 'Expand dialog',
               ),
@@ -208,7 +208,7 @@ class _ViewYamlDialogState extends State<_ViewYamlDialog> {
             child: FButton.icon(
               variant: FButtonVariant.ghost,
               onPress: () => Navigator.of(context).pop(),
-              child: const Icon(Icons.close, size: 19),
+              child: const Icon(FLucideIcons.x, size: 19),
             ),
           ),
         ],

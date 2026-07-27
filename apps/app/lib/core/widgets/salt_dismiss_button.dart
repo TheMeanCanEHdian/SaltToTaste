@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:forui/forui.dart';
 
 /// The ✕ that removes a chip or dismisses a pill — a 24×24 tap target
 /// (WCAG 2.5.8) around a visible 18px tinted circle, in the host's [ink]
@@ -58,7 +58,7 @@ class _SaltDismissButtonState extends State<SaltDismissButton> {
                 color: widget.ink.withValues(alpha: _hover ? 0.30 : 0.14),
                 shape: BoxShape.circle,
               ),
-              child: Icon(LucideIcons.x, size: 12, color: widget.ink),
+              child: Icon(FLucideIcons.x, size: 12, color: widget.ink),
             ),
           ),
         ),

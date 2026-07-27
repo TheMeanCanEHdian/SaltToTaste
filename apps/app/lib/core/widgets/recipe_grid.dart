@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
@@ -226,7 +225,7 @@ class _LayoutToggle extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _LayoutButton(
-          icon: LucideIcons.layoutGrid,
+          icon: FLucideIcons.layoutGrid,
           label: 'Grid view',
           selected: current == RecipeLayout.grid,
           onPress: () =>
@@ -234,7 +233,7 @@ class _LayoutToggle extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         _LayoutButton(
-          icon: LucideIcons.list,
+          icon: FLucideIcons.list,
           label: 'List view',
           selected: current == RecipeLayout.list,
           onPress: () =>

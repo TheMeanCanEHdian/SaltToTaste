@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -379,7 +378,7 @@ class _EditorScaffoldState extends State<_EditorScaffold> {
                   // White on the maroon AppBar (the ghost variant's theme
                   // foreground is dark).
                   child: const Icon(
-                    Icons.arrow_back,
+                    FLucideIcons.arrowLeft,
                     size: 20,
                     color: Colors.white,
                   ),
@@ -1257,21 +1256,21 @@ class _IngredientListEditor extends StatelessWidget {
               variant: FButtonVariant.outline,
               mainAxisSize: MainAxisSize.min,
               onPress: actions.addLine,
-              prefix: const Icon(Icons.add, size: 16),
+              prefix: const Icon(FLucideIcons.plus, size: 16),
               child: const Text('Ingredient'),
             ),
             FButton(
               variant: FButtonVariant.outline,
               mainAxisSize: MainAxisSize.min,
               onPress: actions.addGroupHeader,
-              prefix: const Icon(Icons.add, size: 16),
+              prefix: const Icon(FLucideIcons.plus, size: 16),
               child: const Text('Group header'),
             ),
             FButton(
               variant: FButtonVariant.outline,
               mainAxisSize: MainAxisSize.min,
               onPress: () => showPasteDialog(context, onSubmit: actions.paste),
-              prefix: const Icon(Icons.content_paste_go, size: 16),
+              prefix: const Icon(FLucideIcons.clipboardPaste, size: 16),
               child: const Text('Paste a list…'),
             ),
           ],
@@ -1315,7 +1314,7 @@ class _GroupHeaderRow extends StatelessWidget {
             child: const Tooltip(
               message: 'Drag to reorder',
               child: Icon(
-                Icons.drag_indicator,
+                FLucideIcons.gripVertical,
                 size: 17,
                 color: Color(0xFFCFC8C2),
                 semanticLabel: 'Drag to reorder group',
@@ -1342,7 +1341,7 @@ class _GroupHeaderRow extends StatelessWidget {
               variant: FButtonVariant.ghost,
               onPress: () => actions.removeEntry(header.key),
               child: const Icon(
-                Icons.delete_outline,
+                FLucideIcons.trash2,
                 size: 17,
                 color: SaltColors.muted,
               ),
@@ -1389,7 +1388,7 @@ class _IngredientRowState extends State<_IngredientRow> {
                 child: const Tooltip(
                   message: 'Drag to reorder',
                   child: Icon(
-                    Icons.drag_indicator,
+                    FLucideIcons.gripVertical,
                     size: 17,
                     color: Color(0xFFCFC8C2),
                     semanticLabel: 'Drag to reorder ingredient',
@@ -1420,18 +1419,18 @@ class _IngredientRowState extends State<_IngredientRow> {
                   ? const SaltBadge(
                       'manual',
                       tone: SaltBadgeTone.neutral,
-                      icon: LucideIcons.lock,
+                      icon: FLucideIcons.lock,
                     )
                   : switch (line.confidence) {
                       ParseConfidence.parsed => const SaltBadge(
                         'parsed',
                         tone: SaltBadgeTone.ok,
-                        icon: LucideIcons.check,
+                        icon: FLucideIcons.check,
                       ),
                       ParseConfidence.check => const SaltBadge(
                         'check',
                         tone: SaltBadgeTone.warn,
-                        icon: LucideIcons.triangleAlert,
+                        icon: FLucideIcons.triangleAlert,
                       ),
                       ParseConfidence.none => const SaltBadge(
                         'no amount',
@@ -1444,7 +1443,7 @@ class _IngredientRowState extends State<_IngredientRow> {
                   variant: FButtonVariant.ghost,
                   onPress: () => actions.toggleExpanded(line.key),
                   child: Icon(
-                    line.expanded ? Icons.expand_less : Icons.expand_more,
+                    line.expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
                     size: 18,
                     color: SaltColors.muted,
                   ),
@@ -1456,7 +1455,7 @@ class _IngredientRowState extends State<_IngredientRow> {
                   variant: FButtonVariant.ghost,
                   onPress: () => actions.removeEntry(line.key),
                   child: const Icon(
-                    Icons.delete_outline,
+                    FLucideIcons.trash2,
                     size: 17,
                     color: SaltColors.muted,
                   ),
@@ -1507,7 +1506,7 @@ class _StructuredPanel extends StatelessWidget {
                 ),
               ],
             ),
-            prefix: const Icon(Icons.add, size: 15),
+            prefix: const Icon(FLucideIcons.plus, size: 15),
             child: const Text(
               'Add amount (e.g. the weight in parentheses)',
               style: TextStyle(fontSize: 12.5),
@@ -1561,7 +1560,7 @@ class _StructuredPanel extends StatelessWidget {
                 variant: FButtonVariant.outline,
                 mainAxisSize: MainAxisSize.min,
                 onPress: () => actions.reparse(line.key),
-                prefix: const Icon(Icons.refresh, size: 15),
+                prefix: const Icon(FLucideIcons.refreshCw, size: 15),
                 child: const Text('Re-parse from text'),
               ),
               const SizedBox(width: 12),
@@ -1683,7 +1682,7 @@ class _AmountRow extends StatelessWidget {
                 final amounts = [...line.amounts]..removeAt(index);
                 actions.setStructured(line.key, amounts: amounts);
               },
-              child: const Icon(Icons.close, size: 15, color: SaltColors.muted),
+              child: const Icon(FLucideIcons.x, size: 15, color: SaltColors.muted),
             ),
           ),
         ],
@@ -1774,7 +1773,7 @@ class _StepListEditor extends StatelessWidget {
             variant: FButtonVariant.outline,
             mainAxisSize: MainAxisSize.min,
             onPress: actions.add,
-            prefix: const Icon(Icons.add, size: 16),
+            prefix: const Icon(FLucideIcons.plus, size: 16),
             child: const Text('Step'),
           ),
         ),
@@ -1880,7 +1879,7 @@ class _StepCard extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsets.all(6),
                     child: Icon(
-                      Icons.drag_indicator,
+                      FLucideIcons.gripVertical,
                       size: 17,
                       color: Color(0xFFCFC8C2),
                       semanticLabel: 'Drag to reorder step',
@@ -1894,7 +1893,7 @@ class _StepCard extends StatelessWidget {
                   variant: FButtonVariant.ghost,
                   onPress: () => actions.remove(step.key),
                   child: const Icon(
-                    Icons.delete_outline,
+                    FLucideIcons.trash2,
                     size: 17,
                     color: SaltColors.muted,
                   ),
@@ -1953,14 +1952,14 @@ class _SubsectionsCard extends StatelessWidget {
                 variant: FButtonVariant.outline,
                 mainAxisSize: MainAxisSize.min,
                 onPress: () => cubit.addSubsection('variation'),
-                prefix: const Icon(Icons.add, size: 16),
+                prefix: const Icon(FLucideIcons.plus, size: 16),
                 child: const Text('Add variation'),
               ),
               FButton(
                 variant: FButtonVariant.outline,
                 mainAxisSize: MainAxisSize.min,
                 onPress: () => cubit.addSubsection('component'),
-                prefix: const Icon(Icons.add, size: 16),
+                prefix: const Icon(FLucideIcons.plus, size: 16),
                 child: const Text('Add component'),
               ),
             ],
@@ -2007,7 +2006,7 @@ class _SubsectionBlock extends StatelessWidget {
                     child: const Tooltip(
                       message: 'Drag to reorder',
                       child: Icon(
-                        Icons.drag_indicator,
+                        FLucideIcons.gripVertical,
                         size: 17,
                         color: Color(0xFFCFC8C2),
                         semanticLabel: 'Drag to reorder subsection',
@@ -2030,7 +2029,7 @@ class _SubsectionBlock extends StatelessWidget {
                       variant: FButtonVariant.ghost,
                       onPress: () => cubit.toggleSubsectionExpanded(s.key),
                       child: Icon(
-                        s.expanded ? Icons.expand_less : Icons.expand_more,
+                        s.expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
                         size: 18,
                         color: SaltColors.muted,
                       ),
@@ -2042,7 +2041,7 @@ class _SubsectionBlock extends StatelessWidget {
                       variant: FButtonVariant.ghost,
                       onPress: () => cubit.removeSubsection(s.key),
                       child: const Icon(
-                        Icons.delete_outline,
+                        FLucideIcons.trash2,
                         size: 17,
                         color: SaltColors.muted,
                       ),
@@ -2179,7 +2178,7 @@ class _PromoteRow extends StatelessWidget {
       variant: FButtonVariant.ghost,
       mainAxisSize: MainAxisSize.min,
       onPress: onPress,
-      prefix: const Icon(Icons.add, size: 15),
+      prefix: const Icon(FLucideIcons.plus, size: 15),
       child: Text(label),
     ),
   );
@@ -2257,7 +2256,7 @@ class _TechniquesCard extends StatelessWidget {
               variant: FButtonVariant.outline,
               mainAxisSize: MainAxisSize.min,
               onPress: cubit.addTechnique,
-              prefix: const Icon(Icons.add, size: 16),
+              prefix: const Icon(FLucideIcons.plus, size: 16),
               child: const Text('Add technique'),
             ),
           ),
@@ -2298,7 +2297,7 @@ class _TechniqueBlock extends StatelessWidget {
                     child: const Tooltip(
                       message: 'Drag to reorder',
                       child: Icon(
-                        Icons.drag_indicator,
+                        FLucideIcons.gripVertical,
                         size: 17,
                         color: Color(0xFFCFC8C2),
                         semanticLabel: 'Drag to reorder technique',
@@ -2319,7 +2318,7 @@ class _TechniqueBlock extends StatelessWidget {
                       variant: FButtonVariant.ghost,
                       onPress: () => cubit.toggleTechniqueExpanded(t.key),
                       child: Icon(
-                        t.expanded ? Icons.expand_less : Icons.expand_more,
+                        t.expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
                         size: 18,
                         color: SaltColors.muted,
                       ),
@@ -2331,7 +2330,7 @@ class _TechniqueBlock extends StatelessWidget {
                       variant: FButtonVariant.ghost,
                       onPress: () => cubit.removeTechnique(t.key),
                       child: const Icon(
-                        Icons.delete_outline,
+                        FLucideIcons.trash2,
                         size: 17,
                         color: SaltColors.muted,
                       ),
@@ -2383,7 +2382,7 @@ class _TechniqueBlock extends StatelessWidget {
                         variant: FButtonVariant.outline,
                         mainAxisSize: MainAxisSize.min,
                         onPress: () => cubit.addTechniqueStep(t.key),
-                        prefix: const Icon(Icons.add, size: 16),
+                        prefix: const Icon(FLucideIcons.plus, size: 16),
                         child: const Text('Step'),
                       ),
                     ),
@@ -2476,7 +2475,7 @@ class _TechniqueStepCard extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.all(6),
                         child: Icon(
-                          Icons.drag_indicator,
+                          FLucideIcons.gripVertical,
                           size: 17,
                           color: Color(0xFFCFC8C2),
                           semanticLabel: 'Drag to reorder step',
@@ -2491,7 +2490,7 @@ class _TechniqueStepCard extends StatelessWidget {
                       onPress: () =>
                           cubit.removeTechniqueStep(techKey, step.key),
                       child: const Icon(
-                        Icons.delete_outline,
+                        FLucideIcons.trash2,
                         size: 17,
                         color: SaltColors.muted,
                       ),
@@ -2543,7 +2542,7 @@ class _TechniqueStepCard extends StatelessWidget {
                   onPress: uploading ? null : () => _pick(context),
                   prefix: uploadingThis
                       ? null
-                      : const Icon(Icons.upload, size: 15),
+                      : const Icon(FLucideIcons.upload, size: 15),
                   child: Text(
                     uploadingThis
                         ? 'Working…'
@@ -2704,7 +2703,7 @@ class _PhotosCardState extends State<_PhotosCard> {
                       variant: FButtonVariant.outline,
                       mainAxisSize: MainAxisSize.min,
                       onPress: state.uploadingImage ? null : _pickAndUpload,
-                      prefix: const Icon(Icons.upload_outlined, size: 16),
+                      prefix: const Icon(FLucideIcons.upload, size: 16),
                       child: Text(
                         state.uploadingImage ? 'Working…' : 'Upload photo',
                       ),
@@ -2847,7 +2846,7 @@ class _DangerCard extends StatelessWidget {
             variant: FButtonVariant.destructive,
             mainAxisSize: MainAxisSize.min,
             onPress: state.saving ? null : () => _confirmDelete(context),
-            prefix: const Icon(Icons.delete_outline, size: 17),
+            prefix: const Icon(FLucideIcons.trash2, size: 17),
             child: const Text('Delete recipe'),
           ),
         ],

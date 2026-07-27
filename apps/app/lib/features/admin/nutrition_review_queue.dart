@@ -530,7 +530,7 @@ class _FixContent extends StatelessWidget {
                     onPress: busy
                         ? null
                         : () => cubit.override(match.position, confirmed: true),
-                    prefix: const Icon(Icons.check, size: 14),
+                    prefix: const Icon(FLucideIcons.check, size: 14),
                     child: const Text('Confirm as-is'),
                   ),
                 ),
@@ -540,7 +540,7 @@ class _FixContent extends StatelessWidget {
                 onPress: busy
                     ? null
                     : () => cubit.override(match.position, skipped: true),
-                prefix: const Icon(Icons.block, size: 14),
+                prefix: const Icon(FLucideIcons.ban, size: 14),
                 child: const Text('Skip'),
               ),
             ],
@@ -621,7 +621,7 @@ class _Empty extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.check_circle_outline, size: 40, color: SaltColors.okInk),
+            Icon(FLucideIcons.circleCheck, size: 40, color: SaltColors.okInk),
             SizedBox(height: 12),
             Text(
               'Every ingredient line is matched — nothing to review.',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -271,7 +272,7 @@ class RecipeTile extends StatelessWidget {
                 child: Semantics(
                   label: 'Favorited',
                   child: const Icon(
-                    Icons.favorite,
+                    FLucideIcons.heart,
                     size: 15,
                     color: SaltColors.maroon,
                   ),

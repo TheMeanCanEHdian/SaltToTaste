@@ -198,7 +198,7 @@ class _Header extends StatelessWidget {
               child: FButton.icon(
                 variant: FButtonVariant.ghost,
                 onPress: () => Navigator.of(context).pop(),
-                child: const Icon(Icons.close, size: 19),
+                child: const Icon(FLucideIcons.x, size: 19),
               ),
             ),
           ),
@@ -355,7 +355,7 @@ class _CollapsibleGroupState extends State<_CollapsibleGroup> {
             child: Row(
               children: [
                 Icon(
-                  _expanded ? Icons.expand_more : Icons.chevron_right,
+                  _expanded ? FLucideIcons.chevronDown : FLucideIcons.chevronRight,
                   size: 18,
                   color: SaltColors.muted,
                 ),
@@ -482,13 +482,13 @@ class _MatchRowState extends State<_MatchRow> {
     if (b == MatchBucket.skipped) {
       return _ActionBar([
         _Action(
-          icon: Icons.undo,
+          icon: FLucideIcons.undo2,
           label: 'Include again',
           onPressed: busy
               ? null
               : () => cubit.override(widget.match.position, confirmed: true),
         ),
-        _Action(icon: Icons.tune, label: 'Fix…', onPressed: toggleFix),
+        _Action(icon: FLucideIcons.slidersHorizontal, label: 'Fix…', onPressed: toggleFix),
       ]);
     }
     final primaryLabel = _fixOpen
@@ -502,21 +502,21 @@ class _MatchRowState extends State<_MatchRow> {
           };
     return _ActionBar([
       _Action(
-        icon: _fixOpen ? Icons.close : Icons.tune,
+        icon: _fixOpen ? FLucideIcons.x : FLucideIcons.slidersHorizontal,
         label: primaryLabel,
         primary: b != MatchBucket.counted && !_fixOpen,
         onPressed: toggleFix,
       ),
       if (b == MatchBucket.check)
         _Action(
-          icon: Icons.check,
+          icon: FLucideIcons.check,
           label: 'Confirm as-is',
           onPressed: busy
               ? null
               : () => cubit.override(widget.match.position, confirmed: true),
         ),
       _Action(
-        icon: Icons.block,
+        icon: FLucideIcons.ban,
         label: 'Skip',
         onPressed: busy
             ? null
@@ -605,7 +605,7 @@ class _GuidedFlowState extends State<_GuidedFlow> {
                 variant: FButtonVariant.ghost,
                 mainAxisSize: MainAxisSize.min,
                 onPress: i == 0 ? null : () => setState(() => _i = i - 1),
-                prefix: const Icon(Icons.arrow_back, size: 15),
+                prefix: const Icon(FLucideIcons.arrowLeft, size: 15),
                 child: const Text('Back'),
               ),
               const Spacer(),
@@ -655,7 +655,7 @@ class _GuidedFlowState extends State<_GuidedFlow> {
               color: SaltColors.okBg,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, color: SaltColors.okInk),
+            child: const Icon(FLucideIcons.check, color: SaltColors.okInk),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -767,7 +767,7 @@ class _BasisRow extends StatelessWidget {
                 onPress: busy || basis <= 1
                     ? null
                     : () => cubit.setServingBasis(basis - 1),
-                child: const Icon(Icons.remove, size: 16),
+                child: const Icon(FLucideIcons.minus, size: 16),
               ),
             ),
             Text(
@@ -781,7 +781,7 @@ class _BasisRow extends StatelessWidget {
                 onPress: busy || basis >= 1000
                     ? null
                     : () => cubit.setServingBasis(basis + 1),
-                child: const Icon(Icons.add, size: 16),
+                child: const Icon(FLucideIcons.plus, size: 16),
               ),
             ),
             const SizedBox(width: 6),

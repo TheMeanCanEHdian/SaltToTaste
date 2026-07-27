@@ -107,7 +107,7 @@ class _ReviewTabsState extends State<_ReviewTabs>
                         size: FButtonSizeVariant.xs,
                         semanticsLabel: 'What each category means',
                         onPress: () => _showReviewHelp(context, categories),
-                        child: const Icon(Icons.help_outline, size: 18),
+                        child: const Icon(FLucideIcons.circleHelp, size: 18),
                       ),
                     ),
                   ),
@@ -244,7 +244,7 @@ class _RecipesList extends StatelessWidget {
           ],
         ),
       ),
-      suffix: const Icon(Icons.chevron_right, color: SaltColors.muted),
+      suffix: const Icon(FLucideIcons.chevronRight, color: SaltColors.muted),
       onPress: () => context.push('/r/${item.slug}'),
     );
   }
@@ -412,7 +412,7 @@ class _Empty extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.check_circle_outline, size: 40, color: SaltColors.okInk),
+            Icon(FLucideIcons.circleCheck, size: 40, color: SaltColors.okInk),
             SizedBox(height: 12),
             Text(
               'Nothing to review here.',

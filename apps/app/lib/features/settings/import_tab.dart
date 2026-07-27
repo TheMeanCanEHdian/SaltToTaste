@@ -230,7 +230,7 @@ class _ImportTabState extends State<ImportTab> {
               variant: FButtonVariant.ghost,
               mainAxisSize: MainAxisSize.min,
               onPress: _importRunning ? null : _loadCandidates,
-              prefix: const Icon(Icons.refresh, size: 16),
+              prefix: const Icon(FLucideIcons.refreshCw, size: 16),
               child: const Text('Refresh'),
             ),
           ],
@@ -365,7 +365,7 @@ class _SourceRow extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 1, right: 11),
                   child: Icon(
-                    Icons.folder_outlined,
+                    FLucideIcons.folder,
                     size: 18,
                     color: _running ? SaltColors.maroon : SaltColors.muted,
                   ),
@@ -491,7 +491,7 @@ class _SourceRow extends StatelessWidget {
       size: FButtonSizeVariant.sm,
       mainAxisSize: MainAxisSize.min,
       onPress: anyRunning ? null : onImport,
-      prefix: const Icon(Icons.drive_folder_upload_outlined, size: 15),
+      prefix: const Icon(FLucideIcons.folderUp, size: 15),
       child: const Text('Import'),
     );
   }
@@ -555,7 +555,7 @@ class _SourceRow extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Icon(
-                failedJob ? Icons.error_outline : Icons.check_circle_outline,
+                failedJob ? FLucideIcons.circleAlert : FLucideIcons.circleCheck,
                 size: 16,
                 color: ink,
               ),
@@ -764,7 +764,7 @@ class _EmptyState extends StatelessWidget {
               variant: FButtonVariant.outline,
               mainAxisSize: MainAxisSize.min,
               onPress: onRefresh,
-              prefix: const Icon(Icons.refresh, size: 16),
+              prefix: const Icon(FLucideIcons.refreshCw, size: 16),
               child: const Text('Refresh'),
             ),
           ],

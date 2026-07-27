@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_dismiss_button.dart';
@@ -131,7 +130,7 @@ class SaltBadge extends StatelessWidget {
           Text(label),
         if (interactive) ...[
           if (spread) const Spacer() else const SizedBox(width: 6),
-          Icon(LucideIcons.chevronRight, size: 14, color: ink),
+          Icon(FLucideIcons.chevronRight, size: 14, color: ink),
         ],
         if (dismissible) ...[
           const SizedBox(width: 4),

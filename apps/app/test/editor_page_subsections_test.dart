@@ -416,7 +416,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Handles are in document order: ingredient rows first, then step cards.
-    final handles = find.byIcon(Icons.drag_indicator);
+    final handles = find.byIcon(FLucideIcons.gripVertical);
     for (final index in [0, 2]) {
       final handle = handles.at(index);
       await tester.ensureVisible(handle);

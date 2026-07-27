@@ -144,7 +144,7 @@ class _LogsTabState extends State<LogsTab> {
               size: FButtonSizeVariant.xs,
               semanticsLabel: 'Download the log',
               onPress: _download,
-              child: const Icon(Icons.download_outlined, size: 18),
+              child: const Icon(FLucideIcons.download, size: 18),
             ),
           ),
         ),
@@ -212,7 +212,7 @@ class _LogsTabState extends State<LogsTab> {
     final live = _liveToggle();
     final refresh = FButton.icon(
       onPress: _reload,
-      child: const Icon(Icons.refresh, size: 18),
+      child: const Icon(FLucideIcons.refreshCw, size: 18),
     );
 
     return LayoutBuilder(
@@ -464,7 +464,7 @@ class _LogsTabState extends State<LogsTab> {
     ),
     child: Row(
       children: [
-        const Icon(Icons.error_outline, color: SaltColors.errInk, size: 20),
+        const Icon(FLucideIcons.circleAlert, color: SaltColors.errInk, size: 20),
         const SizedBox(width: 10),
         Expanded(
           child: Text(

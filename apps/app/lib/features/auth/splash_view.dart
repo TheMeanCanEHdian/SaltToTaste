@@ -28,7 +28,7 @@ class SplashView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.cloud_off, size: 42, color: SaltColors.rose),
+                const Icon(FLucideIcons.cloudOff, size: 42, color: SaltColors.rose),
                 const SizedBox(height: 12),
                 Text(
                   state.message,

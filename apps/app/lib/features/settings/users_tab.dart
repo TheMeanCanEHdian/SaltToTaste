@@ -171,7 +171,7 @@ class _UsersTabState extends State<UsersTab> {
                               const Tooltip(
                                 message: 'Temporary password not yet changed',
                                 child: Icon(
-                                  Icons.hourglass_bottom,
+                                  FLucideIcons.hourglass,
                                   size: 15,
                                   color: SaltColors.muted,
                                 ),

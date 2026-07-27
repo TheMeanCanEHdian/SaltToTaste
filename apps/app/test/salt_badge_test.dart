@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 
@@ -22,7 +21,7 @@ void main() {
     await pump(tester, const SaltBadge('read', tone: SaltBadgeTone.info));
     expect(find.text('read'), findsOneWidget);
     expect(find.byType(InkWell), findsNothing);
-    expect(find.byIcon(LucideIcons.chevronRight), findsNothing);
+    expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
   });
 
   testWidgets('tone maps to the SaltColors pair (info)', (tester) async {
@@ -47,14 +46,14 @@ void main() {
       SaltBadge(
         '4/5 matched — review',
         tone: SaltBadgeTone.warn,
-        icon: LucideIcons.triangleAlert,
+        icon: FLucideIcons.triangleAlert,
         semanticHint: 'Opens review',
         onTap: () => tapped = true,
       ),
     );
     expect(find.text('4/5 matched — review'), findsOneWidget);
-    expect(find.byIcon(LucideIcons.triangleAlert), findsOneWidget);
-    expect(find.byIcon(LucideIcons.chevronRight), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.triangleAlert), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.chevronRight), findsOneWidget);
     await tester.tap(find.byType(InkWell));
     expect(tapped, isTrue);
   });
@@ -89,11 +88,11 @@ void main() {
       ),
     );
     expect(find.text('chicken'), findsOneWidget);
-    expect(find.byIcon(LucideIcons.x), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.x), findsOneWidget);
     // A removable chip, not a navigation button.
-    expect(find.byIcon(LucideIcons.chevronRight), findsNothing);
+    expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
 
-    await tester.tap(find.byIcon(LucideIcons.x));
+    await tester.tap(find.byIcon(FLucideIcons.x));
     expect(dismissed, isTrue);
   });
 
@@ -101,7 +100,7 @@ void main() {
     await pump(tester, SaltBadge('chicken', onDismiss: () {}));
     final target = tester.getSize(
       find.ancestor(
-        of: find.byIcon(LucideIcons.x),
+        of: find.byIcon(FLucideIcons.x),
         matching: find.byType(InkWell),
       ),
     );
@@ -134,6 +133,6 @@ void main() {
     // ellipsize and the ✕ survives.
     final text = tester.widget<Text>(find.text(long));
     expect(text.overflow, TextOverflow.ellipsis);
-    expect(find.byIcon(LucideIcons.x), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.x), findsOneWidget);
   });
 }

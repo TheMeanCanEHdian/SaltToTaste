@@ -35,7 +35,7 @@ class ErrorView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.restaurant,
+              FLucideIcons.utensils,
               size: 40,
               color: SaltColors.rose,
               semanticLabel: 'Something went wrong',

@@ -613,7 +613,7 @@ class SearchRow extends StatelessWidget {
                       height: 13,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.search, size: 15),
+                  : const Icon(FLucideIcons.search, size: 15),
               child: Text(searching ? 'Searching…' : 'Search'),
             ),
           ],
@@ -663,7 +663,7 @@ class CandidateRow extends StatelessWidget {
                 width: 20,
                 child: selected
                     ? const Icon(
-                        Icons.check,
+                        FLucideIcons.check,
                         size: 15,
                         color: SaltColors.maroon,
                       )

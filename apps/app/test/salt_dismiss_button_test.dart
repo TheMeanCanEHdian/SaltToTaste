@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/widgets/salt_dismiss_button.dart';
 
@@ -31,14 +31,14 @@ void main() {
 
     final target = tester.getSize(
       find.ancestor(
-        of: find.byIcon(LucideIcons.x),
+        of: find.byIcon(FLucideIcons.x),
         matching: find.byType(InkWell),
       ),
     );
     expect(target.width, greaterThanOrEqualTo(24));
     expect(target.height, greaterThanOrEqualTo(24));
 
-    await tester.tap(find.byIcon(LucideIcons.x));
+    await tester.tap(find.byIcon(FLucideIcons.x));
     expect(tapped, isTrue);
   });
 
@@ -50,7 +50,7 @@ void main() {
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
     await tester.pump();
-    await gesture.moveTo(tester.getCenter(find.byIcon(LucideIcons.x)));
+    await gesture.moveTo(tester.getCenter(find.byIcon(FLucideIcons.x)));
     await tester.pumpAndSettle();
 
     final hovered = circleDecoration(tester).color!;

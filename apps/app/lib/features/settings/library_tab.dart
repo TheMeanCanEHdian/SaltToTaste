@@ -248,7 +248,7 @@ class _LibraryTabState extends State<LibraryTab> {
                         color: SaltColors.maroon,
                       ),
                     )
-                  : const Icon(Icons.refresh, size: 18),
+                  : const Icon(FLucideIcons.refreshCw, size: 18),
               child: const Text('Rescan library'),
             ),
             if (_report != null && _report!.startedAt.isNotEmpty)
@@ -267,7 +267,7 @@ class _LibraryTabState extends State<LibraryTab> {
           ..._scanLines(_report),
           if (_scanError != null)
             _ScanLine(
-              icon: Icons.error_outline,
+              icon: FLucideIcons.circleAlert,
               ink: _errInk,
               background: _errBg,
               lead: 'Scan failed',
@@ -301,7 +301,7 @@ class _LibraryTabState extends State<LibraryTab> {
                         color: SaltColors.maroon,
                       ),
                     )
-                  : const Icon(Icons.archive_outlined, size: 18),
+                  : const Icon(FLucideIcons.archive, size: 18),
               child: const Text('Back up now'),
             ),
             Tooltip(
@@ -355,7 +355,7 @@ class _LibraryTabState extends State<LibraryTab> {
         else ...[
           if (_backupsError != null)
             _ScanLine(
-              icon: Icons.error_outline,
+              icon: FLucideIcons.circleAlert,
               ink: _errInk,
               background: _errBg,
               lead: 'Backup action failed',
@@ -393,7 +393,7 @@ class _LibraryTabState extends State<LibraryTab> {
     if (report.clean) {
       return [
         _ScanLine(
-          icon: Icons.check_circle_outline,
+          icon: FLucideIcons.circleCheck,
           ink: _okInk,
           background: _okBg,
           lead: 'Everything in sync',
@@ -406,7 +406,7 @@ class _LibraryTabState extends State<LibraryTab> {
     return [
       if (report.updatedFromDisk.isNotEmpty)
         _ScanLine(
-          icon: Icons.check_circle_outline,
+          icon: FLucideIcons.circleCheck,
           ink: _okInk,
           background: _okBg,
           lead:
@@ -416,7 +416,7 @@ class _LibraryTabState extends State<LibraryTab> {
         ),
       if (report.added.isNotEmpty)
         _ScanLine(
-          icon: Icons.check_circle_outline,
+          icon: FLucideIcons.circleCheck,
           ink: _okInk,
           background: _okBg,
           lead:
@@ -426,7 +426,7 @@ class _LibraryTabState extends State<LibraryTab> {
         ),
       if (report.reExported.isNotEmpty)
         _ScanLine(
-          icon: Icons.check_circle_outline,
+          icon: FLucideIcons.circleCheck,
           ink: _okInk,
           background: _okBg,
           lead:
@@ -436,7 +436,7 @@ class _LibraryTabState extends State<LibraryTab> {
         ),
       for (final entry in report.skipped)
         _ScanLine(
-          icon: Icons.error_outline,
+          icon: FLucideIcons.circleAlert,
           ink: _errInk,
           background: _errBg,
           lead: entry.file,
@@ -444,7 +444,7 @@ class _LibraryTabState extends State<LibraryTab> {
         ),
       for (final file in report.conflictFiles)
         _ScanLine(
-          icon: Icons.warning_amber,
+          icon: FLucideIcons.triangleAlert,
           ink: _warnInk,
           background: _warnBg,
           lead: 'Conflict copy awaiting review: ',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -205,8 +206,10 @@ class _RecipeRowState extends State<RecipeRow> {
     style: TextStyle(fontSize: fontSize, color: SaltColors.muted),
   );
 
+  // Lucide (forui's set) has no filled heart, so the favorited state reads from
+  // the colour: maroon when favorited, faint when not.
   Widget _heart(RecipeCard card) => Icon(
-    card.favorite ? Icons.favorite : Icons.favorite_border,
+    FLucideIcons.heart,
     size: 18,
     color: card.favorite
         ? SaltColors.maroon

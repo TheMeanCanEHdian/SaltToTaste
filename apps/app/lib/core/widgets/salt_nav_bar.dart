@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -76,7 +75,7 @@ class SaltNavBar extends StatelessWidget implements PreferredSizeWidget {
                       onPress: () =>
                           context.canPop() ? context.pop() : context.go('/'),
                       child: const Icon(
-                        Icons.arrow_back,
+                        FLucideIcons.arrowLeft,
                         size: 20,
                         color: Colors.white,
                       ),
@@ -504,7 +503,7 @@ class _SearchFieldState extends State<_SearchField> {
               hintText: 'Search recipes — try tag:dessert or calories:<400',
               prefix: const Padding(
                 padding: EdgeInsets.only(left: 12, right: 8),
-                child: Icon(Icons.search, size: 19, color: SaltColors.muted),
+                child: Icon(FLucideIcons.search, size: 19, color: SaltColors.muted),
               ),
               // A help affordance next to the search action, both living inside
               // the field (replaces the old floating "?" button).
@@ -518,7 +517,7 @@ class _SearchFieldState extends State<_SearchField> {
                       size: FButtonSizeVariant.xs,
                       semanticsLabel: 'Search syntax',
                       onPress: () => showSearchHelp(context),
-                      child: const Icon(Icons.help_outline, size: 18),
+                      child: const Icon(FLucideIcons.circleHelp, size: 18),
                     ),
                   ),
                   Tooltip(
@@ -530,7 +529,7 @@ class _SearchFieldState extends State<_SearchField> {
                       onPress: _submit,
                       // Keep the rose accent on the submit arrow.
                       child: const Icon(
-                        Icons.arrow_forward,
+                        FLucideIcons.arrowRight,
                         size: 18,
                         color: SaltColors.rose,
                       ),
@@ -666,7 +665,7 @@ class _AvatarMenu extends StatelessWidget {
             children: [
               FItem(
                 enabled: false,
-                prefix: const Icon(LucideIcons.circleUser),
+                prefix: const Icon(FLucideIcons.circleUser),
                 title: Text(
                   user.username,
                   style: const TextStyle(
@@ -681,25 +680,25 @@ class _AvatarMenu extends StatelessWidget {
           FItemGroup(
             children: [
               FItem(
-                prefix: const Icon(LucideIcons.heart),
+                prefix: const Icon(FLucideIcons.heart),
                 title: const Text('My favorites'),
                 onPress: () => go('/favorites'),
               ),
               if (user.isAdmin)
                 FItem(
-                  prefix: const Icon(LucideIcons.plus),
+                  prefix: const Icon(FLucideIcons.plus),
                   title: const Text('Add recipe'),
                   onPress: () => go('/new'),
                 ),
               if (user.isAdmin)
                 FItem(
-                  prefix: const Icon(LucideIcons.clipboardCheck),
+                  prefix: const Icon(FLucideIcons.clipboardCheck),
                   title: const Text('Recipe review'),
                   suffix: const _ReviewCountBadge(),
                   onPress: () => go('/review'),
                 ),
               FItem(
-                prefix: const Icon(LucideIcons.settings),
+                prefix: const Icon(FLucideIcons.settings),
                 title: const Text('Settings'),
                 onPress: () => go('/settings'),
               ),
@@ -710,7 +709,7 @@ class _AvatarMenu extends StatelessWidget {
               FItem(
                 // Destructive: the theme paints errInk; label it red to match.
                 prefix: const Icon(
-                  LucideIcons.logOut,
+                  FLucideIcons.logOut,
                   color: SaltColors.errInk,
                 ),
                 title: const Text(
@@ -805,7 +804,7 @@ class _MobileSearchButton extends StatelessWidget {
         size: FButtonSizeVariant.xs,
         semanticsLabel: 'Search',
         onPress: () => _openSearch(context),
-        child: const Icon(Icons.search, size: 22, color: Colors.white),
+        child: const Icon(FLucideIcons.search, size: 22, color: Colors.white),
       ),
     );
   }
@@ -994,7 +993,7 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
                     size: FButtonSizeVariant.xs,
                     semanticsLabel: 'Search syntax',
                     onPress: () => showSearchHelp(context),
-                    child: const Icon(Icons.help_outline, size: 19),
+                    child: const Icon(FLucideIcons.circleHelp, size: 19),
                   ),
                 ),
               ],
@@ -1022,7 +1021,7 @@ class _MobileSearchDialogState extends State<_MobileSearchDialog> {
                 hintText: 'try tag:dessert or calories:<400',
                 prefix: const Padding(
                   padding: EdgeInsets.only(left: 12, right: 8),
-                  child: Icon(Icons.search, size: 19, color: SaltColors.muted),
+                  child: Icon(FLucideIcons.search, size: 19, color: SaltColors.muted),
                 ),
               ),
             ),
