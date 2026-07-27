@@ -296,12 +296,12 @@ class _HeaderInfo extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 onPress: () =>
                     context.read<RecipeDetailCubit>().toggleFavorite(),
-                prefix: const Icon(
-                  // Lucide (forui's icon set) has no filled heart, so the
-                  // button label ('Favorited'/'Favorite') carries the state.
+                prefix: Icon(
+                  // Lucide (forui's set) has no filled heart, so the favorited
+                  // state reads from the colour (maroon vs grey) plus the label.
                   FLucideIcons.heart,
                   size: 18,
-                  color: SaltColors.maroon,
+                  color: detail.favorite ? SaltColors.maroon : SaltColors.muted,
                 ),
                 child: Text(detail.favorite ? 'Favorited' : 'Favorite'),
               ),
@@ -566,6 +566,9 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
   @override
   Widget build(BuildContext context) {
     return FButton(
+      // Outline, matching the rest of the row — a solid button read as the odd
+      // one out (heavier than the outlined siblings).
+      variant: FButtonVariant.outline,
       mainAxisSize: MainAxisSize.min,
       onPress: _busy ? null : _openPdf,
       prefix: _busy
@@ -574,7 +577,8 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                // Maroon, not white — the button is now light-filled.
+                color: SaltColors.maroon,
               ),
             )
           : const Icon(FLucideIcons.printer, size: 18),
