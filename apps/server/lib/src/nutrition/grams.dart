@@ -120,6 +120,41 @@ const List<(String, double)> _densities = [
   ('cheese', 0.47),
   ('nuts', 0.55),
   ('chocolate chips', 0.72),
+  // Ground spices & dried herbs (g/ml). FDC files these as "Spices, X" with
+  // tsp/tbsp portions, but their measure unit is "undetermined" and the unit
+  // sits in an amount-less description ("tsp") — so the portion matcher can't
+  // use them and they fell through to nothing. Each density is BACK-DERIVED
+  // from FDC's own 1-tsp gram weight (g ÷ 4.929 mL), so a volume estimate here
+  // reproduces FDC's value. Keys are chosen to beat existing shorter entries by
+  // length ("ground ginger" over fresh "ginger"; "dry mustard" over prepared
+  // "mustard") and, for herbs with a fresh form, gated to "dried …" so a fresh
+  // sprig isn't sized as fluffy dried leaf.
+  ('black pepper', 0.47),
+  ('white pepper', 0.49),
+  ('cayenne', 0.37),
+  ('paprika', 0.47),
+  ('cumin', 0.43),
+  ('cinnamon', 0.53),
+  ('coriander', 0.37),
+  ('nutmeg', 0.45),
+  ('ground cloves', 0.43), // specific, so "garlic cloves" is untouched
+  ('chili powder', 0.55),
+  ('allspice', 0.39),
+  ('ground ginger', 0.37), // beats fresh 'ginger' (0.54) by length
+  ('cardamom', 0.41),
+  ('turmeric', 0.61),
+  ('curry powder', 0.41),
+  ('ground fennel', 0.41),
+  ('fennel seed', 0.41),
+  ('dry mustard', 0.41), // beats prepared 'mustard' (1.05) by length
+  ('ground mustard', 0.41),
+  ('mustard powder', 0.41),
+  ('garlic powder', 0.63),
+  ('onion powder', 0.49),
+  ('dried oregano', 0.20),
+  ('dried thyme', 0.20),
+  ('dried basil', 0.14),
+  ('dried rosemary', 0.24),
 ];
 
 /// Piece weights (grams each) for common counted items, keyed by tokens.

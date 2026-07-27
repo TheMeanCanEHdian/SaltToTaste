@@ -977,6 +977,51 @@ void main() {
     });
   });
 
+  group('resolveGrams ground-spice densities', () {
+    // FDC files spices as "Spices, X" with tsp/tbsp portions, but their measure
+    // unit is "undetermined" and the unit sits in an amount-less description,
+    // so the portion matcher can't use them — a volume spice line resolved to
+    // nothing. The density table now covers them (values back-derived from
+    // FDC's own 1-tsp gram weight, so these reproduce it).
+    double? g(String unit, String item) => resolveGrams(
+      amounts: [Amount(quantity: '1', unit: unit, measure: Measure.volume)],
+      food: null,
+      normalizedItem: normalizeItem(item),
+      raw: '1 $unit $item',
+    )?.grams;
+
+    test('common ground spices resolve to ~their FDC 1-tsp weight', () {
+      expect(g('teaspoon', 'ground cinnamon'), closeTo(2.6, 0.15));
+      expect(g('teaspoon', 'ground cumin'), closeTo(2.1, 0.15));
+      expect(g('teaspoon', 'cayenne pepper'), closeTo(1.8, 0.15));
+      expect(g('teaspoon', 'paprika'), closeTo(2.3, 0.15));
+      expect(g('teaspoon', 'ground black pepper'), closeTo(2.3, 0.15));
+      expect(g('teaspoon', 'garlic powder'), closeTo(3.1, 0.2));
+      expect(g('tablespoon', 'chili powder'), closeTo(8.0, 0.3));
+    });
+
+    test('a dried herb keys off "dried"; a fresh sprig is left alone', () {
+      expect(g('teaspoon', 'dried oregano'), closeTo(1.0, 0.1));
+      // Fresh oregano has no key (would be wrong at the dried density), so it
+      // stays unresolved rather than mis-sized.
+      expect(g('tablespoon', 'chopped fresh oregano'), isNull);
+    });
+
+    test('ground ginger does not borrow the fresh-ginger density', () {
+      // fresh 'ginger' is 0.54; ground is lighter (0.37).
+      final fresh = g('tablespoon', 'grated fresh ginger')!;
+      final ground = g('tablespoon', 'ground ginger')!;
+      expect(ground, lessThan(fresh));
+      expect(ground, closeTo(14.79 * 0.37, 0.3));
+    });
+
+    test('dry mustard does not borrow the prepared-mustard density', () {
+      // prepared 'mustard' is 1.05 (a liquid); dry powder is 0.41.
+      expect(g('teaspoon', 'Dijon mustard'), closeTo(4.929 * 1.05, 0.3));
+      expect(g('teaspoon', 'dry mustard'), closeTo(4.929 * 0.41, 0.3));
+    });
+  });
+
   group('resolveGrams rustic bread (count-only)', () {
     // Real corpus items (rustic/country/crusty loaves) FDC gives no usable
     // per-slice/loaf portion for, counted with no printed weight — so they
