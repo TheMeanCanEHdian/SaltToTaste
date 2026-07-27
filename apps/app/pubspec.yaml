@@ -21,7 +21,6 @@ dependencies:
   flutter_svg: ^2.0.10
   forui: 0.24.0
   go_router: ^15.1.2
-  lucide_icons_flutter: ^3.1.15
   # Recipe PDF export: `pdf` lays the document out, `printing` hands the
   # bytes to the platform (a share/print fallback), and on web `web` opens the
   # built PDF in a new tab (the browser's own viewer, for print / save-as-PDF).
