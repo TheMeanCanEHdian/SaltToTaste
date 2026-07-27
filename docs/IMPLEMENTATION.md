@@ -3,7 +3,7 @@
 Living status of the approved rewrite plan (kept locally, not in the
 repo). Statuses: `pending` / `in-progress` / `done` / `changed(reason)`.
 
-Last updated: 2026-07-16
+Last updated: 2026-07-26
 
 ## P0 — Workspace + salt_shared — **done**
 
@@ -1030,6 +1030,86 @@ admin-only / post-auth. Fixed in `fc49517` + `596f7a3`:
 one-off; off-isolating it cleanly needs format-in-isolate or a large copy-back).
 See `.claude/DEFERRED.md`.
 
+## Post-P8 continued (2026-07-18 → 2026-07-26)
+
+Work past the parity cutover and the two admin pages, in five threads. All on
+`feat/dart-rewrite`; each finish point reviewed (standing order — see the
+Decision log), then deployed for the user to test.
+
+### Editor: subsections & techniques (2026-07-18)
+
+- **Variations & components** editable in the structured editor (`4f0a1a5`,
+  mockup-first): prose-only variations with promote-to-full affordances, and
+  full components with their own nested ingredient/step editors. Forui kind
+  select; bordered-block corner rendering fixed (`1867e41`).
+- **Techniques** — illustrated asides with captioned, photographed steps
+  (`07f644d`): per-step photo upload / from-URL, source-rooted image URLs,
+  rendered in the detail view (`6770e8e`). Review + a11y follow-ups (`580da04`,
+  `54ff2ad`, `2402c36`, `d05adc4`, `edcde3c`).
+
+### Nutrition matching quality (2026-07-23 → 2026-07-26)
+
+The P6 matcher/grams matured against live FDC + the 1,198-recipe corpus, driven
+by adversarial probing. Ranker (`matcher.dart`):
+
+- FNDDS layer added via POST search + transient-error retry (`0885488`); query
+  cleaned, all-words required, base-form changes penalized (`5581d87`).
+- A ladder of query-gated, individually-measured penalties: reconstitutable
+  concentrates — broth cubes / bouillon (`97b8e62`); meat analogs + prepared
+  dishes (`c820cca`); added meat qualifiers turkey/deli (`8673605`); and the
+  breakfast-sausage fix — split the meat-qualifier dock out to −0.12 so the
+  wrong MEAT beats a raw/cooked tiebreak, plus "biscuit" as a dish marker
+  (`c1ad124`).
+- Low-confidence (<0.5) auto matches held OUT of the label totals until a human
+  confirms (`5bf4fee`).
+
+Grams (`grams.dart`):
+
+- Weight printed in a raw parenthetical is used (`c0ba59e`); counted whole items
+  resolve from FDC portions + a curated piece table (`d614c2e`).
+- Rustic/country/crusty bread piece fallback (≈50 g/slice, 454 g/loaf), and
+  fixed a TRAILING parenthetical total being over-scaled by the count — "5
+  slices bread (9 ounces)" read as 5× (`858c30f`).
+- Ground-spice / dried-herb densities, back-derived from FDC's own 1-tsp gram
+  weight so a volume estimate reproduces FDC (`f504427`).
+
+### Nutrition-match review queue (2026-07-24 → 2026-07-26)
+
+A cross-recipe, line-level admin review, distinct from the recipe-level report:
+a "Nutrition matches" tab on the Recipe Review page (master-detail, worst-first)
+listing every flagged ingredient match across the library in one queue. Buckets
+`no_match` / `no_grams` / `check` (<0.5 name conf) / `skipped`; a
+confirmed/overridden line counts as resolved (keeps confirmed water out of the
+queue). Server `GET /api/v1/admin/nutrition_review` (`d7192f9`); Flutter tab
+reusing a fix panel extracted from the review sheet (`75a08bb`). Alongside it:
+the per-recipe label got a collapsible facts panel (`4d49c14`) and the match-fix
+modal was rebuilt with manual USDA search + verifiable amounts (`e6b25be`).
+
+### UI / brand polish pass (2026-07-18 → 2026-07-22)
+
+A broad Forui/brand sweep, mostly cosmetic: all action buttons → `FButton`, icon
+affordances → `FButton.icon` xs (`9ebcfb1`, `e95359d`); vector brand-logo widgets
+replacing raster PNGs (`b3dd14e`); sign-in / recover redesigned with the maroon
+brand band (`27c9225`); a shared `SaltBadge` status pill + dismissible filter
+chips (`64e18ff`, `afb4ead`); scoped search clauses rendered as dismissible chips
+(`830547a`); recipe-list row layout + clearable filters (`fa0ee6d`). App routing
+decisions (`48099cc`, `7a46b47`): pushes reflect the URL, the in-app web Back
+button is dropped for the browser's, the splash gates above the router, and
+editor-exit is guarded on browser Back.
+
+### Editor drag-and-drop fixes (2026-07-26)
+
+The editor's reorderable lists had a run of drag visual bugs, each fixed in turn
+(`e56a0ce` → `08151ae`; see the Decision log for the scope trap and the
+flicker): a grey `ErrorWidget` from the drag overlay rebuilding an item outside
+its `InheritedWidget` scope; border-overflow from Flutter's default grey lift; a
+white margin strip painted under lifted cards; and a one-frame flip back to the
+pre-drag order on drop. Final state: ingredient rows lift opaque-white; bordered
+cards (steps, variations, components) lift opaque-white **inset off their bottom
+margin**; every scoped list re-provides its scope inside the `proxyDecorator`;
+and an optimistic local list reorders synchronously so the drop frame already
+shows the new order.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
@@ -1252,3 +1332,56 @@ See `.claude/DEFERRED.md`.
   release-hang), and the fixes for those findings — committed in `0d655dd`
   without their own review — themselves carried 12 defects. Fixing a review's
   findings does not review the fixes.
+- 2026-07-24 — **The added-species matcher nudge is deliberately SMALL** (user
+  chose "small turkey/deli nudge" from the options): turkey/chicken are
+  legitimate meats, just not the default for a generic query, so the dock only
+  needs to break a tie — over-docking would sink a legitimate turkey/chicken
+  match below the review gate. It later proved too small in one case (see the
+  breakfast-sausage entry below), which split it into its own −0.12 bucket
+  rather than raising the shared off-form penalty.
+- 2026-07-26 — **breakfast sausage matched a turkey link / a breakfast
+  biscuit.** FDC's "breakfast sausage" results carry no pork option; the best
+  available is a beef Foundation entry (nutrition close to the pork default,
+  unlike lean turkey). The −0.06 species nudge was overwhelmed by the raw/cooked
+  form swing (the turkey link was "raw", +0.02; the beef "pre-cooked", −0.06),
+  so the meat qualifiers were split into `_offMeatTokens` at −0.12 (wrong meat >
+  wrong cook-state), and "biscuit" added to the dish markers (a "…breakfast
+  biscuit" is a sandwich). Live-verified no regression: turkey bacon / chicken
+  sausage / deli ham still match (query names the qualifier).
+- 2026-07-26 — **A trailing parenthetical weight is the line TOTAL, not
+  per-unit.** `_parenWeightGrams` treated every printed weight as per counted
+  unit and scaled by the count, so "5 slices bread (9 ounces)" (9 oz = the
+  total) read as 5× (~1276 g vs 255 g). `_parenWeight` now marks a weight
+  per-unit only when it is adjectival — nothing but the count precedes it
+  ("4 (5-ounce) breasts") or it says "each" — and leaves a trailing total
+  unscaled. Only changes counts >1; found while resolving rustic-bread grams.
+- 2026-07-26 — **Ground spices resolve via the density table, not the FDC
+  portion.** FDC *does* carry tsp/tbsp portions for "Spices, X", but their
+  `measureUnit` is "undetermined" and the unit sits in an amount-less
+  description ("tsp"), which `_portionGramsPerUnit` can't use — so a volume
+  spice line fell through to nothing. Filled the density table (the designed
+  fallback) with 26 spice/dried-herb densities back-derived from FDC's own 1-tsp
+  gram weight, rather than reworking the shared portion matcher (riskier; some
+  foods list two tsp portions, e.g. oregano leaves 1.0 g vs ground 1.8 g). Keys
+  beat existing shorter entries by length (`ground ginger` over fresh `ginger`),
+  and herbs with a fresh form are gated to "dried …".
+- 2026-07-26 — **The editor reorder drop-flicker is a Bloc-vs-reorderable timing
+  bug, fixed with an optimistic local list.** A `ReorderableListView` never
+  reorders its own children — on drop it zeroes the drag-gap offsets in the same
+  frame, snapping items back to the ORIGINAL order — while the real reorder
+  arrives one microtask later over Bloc's async broadcast stream, so the drop
+  frame paints the old order for a frame. `_OptimisticReorderableList` mirrors
+  the list locally and reorders it synchronously in `onReorderItem` before
+  notifying the cubit. Not reproducible in a widget test (`tester.pump` drains
+  the very microtask that causes it), so the on-device flicker is verified by
+  eye; the test asserts the synchronous local path instead.
+- 2026-07-26 — **A ReorderableListView drag proxy rebuilds the item OUTSIDE its
+  ancestor scopes.** The editor's ingredient/step rows read a per-list
+  `InheritedWidget` scope via a `.of(context)!`; in the drag overlay that scope
+  is absent, the `!` throws, and a release-build `ErrorWidget` paints a blank
+  grey box stretched to the overlay — read as a styling bug, and two symptom-only
+  fixes shipped before the thrown-error root cause was found. Each scoped list's
+  `proxyDecorator` now re-provides its scope around the lifted child. Bordered
+  cards carry a bottom margin, so their opaque lift is laid behind the card and
+  inset by that margin (an opaque fill over the whole item painted the margin as
+  a padding strip).

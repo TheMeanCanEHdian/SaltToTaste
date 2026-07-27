@@ -60,3 +60,15 @@ capability was lost by accident.
   a candidate for a small follow-up if wanted.
 - The author's personal **Donate/PayPal** navbar link was intentionally
   not carried over.
+
+## Scope of this document
+
+This is a point-in-time audit taken at the **P8 cutover (2026-07-15)**, when
+the legacy Python app was removed. It records legacy → v2 parity only; the
+matrix above still holds. The app has since grown well beyond parity — a
+structured editor for subsections/techniques, a matured USDA matcher + grams
+estimator, two admin-only pages (recipe data-quality review and a cross-recipe
+nutrition-match review queue), and a Logs viewer — none of which existed in the
+legacy app. That post-cutover work is tracked in `docs/IMPLEMENTATION.md`, not
+here. The **"Save and add another"** bulk-entry button remains the only known
+legacy gap.
