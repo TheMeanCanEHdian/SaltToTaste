@@ -575,8 +575,8 @@ class _DownloadPdfButtonState extends State<_DownloadPdfButton> {
                 color: Colors.white,
               ),
             )
-          : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-      child: Text(_busy ? 'Building PDF…' : 'Open PDF'),
+          : const Icon(FLucideIcons.printer, size: 18),
+      child: Text(_busy ? 'Building PDF…' : 'Print'),
     );
   }
 }
