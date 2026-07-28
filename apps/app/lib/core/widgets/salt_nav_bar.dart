@@ -638,14 +638,35 @@ class _SuggestionList extends StatelessWidget {
 /// Role-aware avatar menu (approved P3 design): username/role header,
 /// Settings, Sign out. Members and admins currently share the same entries;
 /// admin-only actions (add recipe, import) arrive with their phases.
-class _AvatarMenu extends StatelessWidget {
+class _AvatarMenu extends StatefulWidget {
   const _AvatarMenu();
+
+  @override
+  State<_AvatarMenu> createState() => _AvatarMenuState();
+}
+
+class _AvatarMenuState extends State<_AvatarMenu> {
+  int? _reviewCount;
+  bool _requested = false;
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthCubit>().user;
     if (user == null) {
       return const SizedBox.shrink();
+    }
+    // Preload the review tally on the first admin build — the avatar is on
+    // screen well before the menu opens — so the badge is already sized when
+    // the menu appears instead of popping in and shoving the items sideways.
+    // (reviewCount is memoized per session and never invalidated, so once is
+    // enough.)
+    if (user.isAdmin && !_requested) {
+      _requested = true;
+      context.read<RecipeRepository>().reviewCount().then((count) {
+        if (mounted) {
+          setState(() => _reviewCount = count);
+        }
+      });
     }
     return FPopoverMenu(
       // The menu drops from the avatar at the right edge of the bar.
@@ -665,7 +686,7 @@ class _AvatarMenu extends StatelessWidget {
             children: [
               FItem(
                 enabled: false,
-                prefix: const Icon(FLucideIcons.circleUser),
+                prefix: const Icon(FLucideIcons.circleUser, color: SaltColors.ink),
                 title: Text(
                   user.username,
                   style: const TextStyle(
@@ -680,25 +701,28 @@ class _AvatarMenu extends StatelessWidget {
           FItemGroup(
             children: [
               FItem(
-                prefix: const Icon(FLucideIcons.heart),
+                prefix: const Icon(FLucideIcons.heart, color: SaltColors.ink),
                 title: const Text('My favorites'),
                 onPress: () => go('/favorites'),
               ),
               if (user.isAdmin)
                 FItem(
-                  prefix: const Icon(FLucideIcons.plus),
+                  prefix: const Icon(FLucideIcons.plus, color: SaltColors.ink),
                   title: const Text('Add recipe'),
                   onPress: () => go('/new'),
                 ),
               if (user.isAdmin)
                 FItem(
-                  prefix: const Icon(FLucideIcons.clipboardCheck),
+                  prefix: const Icon(
+                    FLucideIcons.clipboardCheck,
+                    color: SaltColors.ink,
+                  ),
                   title: const Text('Recipe review'),
-                  suffix: const _ReviewCountBadge(),
+                  suffix: _ReviewCountBadge(count: _reviewCount),
                   onPress: () => go('/review'),
                 ),
               FItem(
-                prefix: const Icon(FLucideIcons.settings),
+                prefix: const Icon(FLucideIcons.settings, color: SaltColors.ink),
                 title: const Text('Settings'),
                 onPress: () => go('/settings'),
               ),
@@ -750,37 +774,34 @@ class _AvatarMenu extends StatelessWidget {
 }
 
 /// The count of recipes needing review, as a small maroon pill beside the
-/// "Recipe review" menu item. The tally is memoized on the repository, so this
-/// costs one fetch per session; it hides itself while loading or when zero.
+/// "Recipe review" menu item. The count is preloaded by [_AvatarMenu] (so the
+/// badge is already sized when the menu opens — no shift); hides when null
+/// (not yet loaded) or zero.
 class _ReviewCountBadge extends StatelessWidget {
-  const _ReviewCountBadge();
+  const _ReviewCountBadge({required this.count});
+
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<int>(
-      future: context.read<RecipeRepository>().reviewCount(),
-      builder: (context, snapshot) {
-        final count = snapshot.data ?? 0;
-        if (count <= 0) {
-          return const SizedBox.shrink();
-        }
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-          decoration: BoxDecoration(
-            color: SaltColors.maroon,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            '$count',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
-        );
-      },
+    if ((count ?? 0) <= 0) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: SaltColors.maroon,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1,
+        ),
+      ),
     );
   }
 }
