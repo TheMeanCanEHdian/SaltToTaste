@@ -221,17 +221,70 @@ class _TagsTabState extends State<TagsTab> {
   }
 }
 
-/// One tag listing row: live-styled chip, name, recipe count, Edit. While
-/// editing, the row and its inline editor merge into a single outlined card.
-class _TagRow extends StatelessWidget {
+/// One tag listing row: live-styled chip, name, recipe count, Edit. Every row
+/// is an outlined card; editing keeps the same card shell and reveals a divider
+/// plus the inline style editor beneath the header ("top bar") with the same
+/// fold the nutrition label uses (FCollapsible, 200ms easeInOut).
+class _TagRow extends StatefulWidget {
   const _TagRow({required this.tag, required this.editing});
 
   final TagInfo tag;
   final bool editing;
 
   @override
+  State<_TagRow> createState() => _TagRowState();
+}
+
+class _TagRowState extends State<_TagRow>
+    with SingleTickerProviderStateMixin {
+  // Drives the editor reveal: 1 = fully open, 0 = clipped to the header.
+  late final AnimationController _foldController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 200),
+    value: widget.editing ? 1 : 0,
+  );
+  late final CurvedAnimation _fold = CurvedAnimation(
+    parent: _foldController,
+    curve: Curves.easeInOut,
+  );
+
+  // The editor stays mounted while the fold has any height so the close
+  // animation can play; once fully folded it is dropped, so a reopen rebuilds
+  // it fresh and re-seeds the hex fields from the tag's saved style.
+  late bool _showEditor = widget.editing;
+
+  @override
+  void initState() {
+    super.initState();
+    _foldController.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed && mounted && _showEditor) {
+        setState(() => _showEditor = false);
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(_TagRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.editing && !oldWidget.editing) {
+      _showEditor = true;
+      _foldController.forward();
+    } else if (!widget.editing && oldWidget.editing) {
+      _foldController.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _fold.dispose();
+    _foldController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cubit = context.read<TagsTabCubit>();
+    final tag = widget.tag;
     final row = Row(
       children: [
         Expanded(
@@ -256,35 +309,28 @@ class _TagRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        if (editing)
-          FButton(
-            size: FButtonSizeVariant.sm,
-            mainAxisSize: MainAxisSize.min,
-            onPress: cubit.closeEditor,
-            child: const Text('Editing…'),
-          )
-        else
-          FButton(
+        // While editing there's no Edit button — the editor's own Cancel
+        // closes it — but we keep the button's footprint (invisible and
+        // non-interactive) so the header, and the card's top bar, stays the
+        // same height whether or not the button is shown.
+        Visibility(
+          visible: !widget.editing,
+          maintainSize: true,
+          maintainAnimation: true,
+          maintainState: true,
+          child: FButton(
             variant: FButtonVariant.outline,
             size: FButtonSizeVariant.sm,
             mainAxisSize: MainAxisSize.min,
             onPress: () => cubit.openEditor(tag),
             child: const Text('Edit'),
           ),
+        ),
       ],
     );
 
-    if (!editing) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: SaltColors.hairline)),
-        ),
-        child: row,
-      );
-    }
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: _panelBackground,
         border: Border.all(color: SaltColors.hairline),
@@ -297,8 +343,25 @@ class _TagRow extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
             child: row,
           ),
-          const Divider(height: 1, color: SaltColors.hairline),
-          _StyleEditor(key: ValueKey(tag.name), tagName: tag.name),
+          // FCollapsible clips the editor as the fold lerps 0→1; at 0 it also
+          // drops the hidden region from semantics and focus.
+          AnimatedBuilder(
+            animation: _fold,
+            builder: (context, child) =>
+                FCollapsible(value: _fold.value, child: child!),
+            child: _showEditor
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Divider(height: 1, color: SaltColors.hairline),
+                      _StyleEditor(
+                        key: ValueKey(tag.name),
+                        tagName: tag.name,
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -356,6 +419,14 @@ class _StyleEditorState extends State<_StyleEditor> {
       color: preset.ink,
       bgColor: preset.bg,
     );
+  }
+
+  // Resets the draft to the default look (no icon, empty colours) without
+  // saving. Clears the local hex fields too, since they hold their own text.
+  void _reset() {
+    _color.clear();
+    _bgColor.clear();
+    context.read<TagsTabCubit>().resetDraft();
   }
 
   bool _presetSelected(TagsTabState state, _Preset preset) {
@@ -587,11 +658,11 @@ class _StyleEditorState extends State<_StyleEditor> {
       onPress: state.saving ? null : cubit.closeEditor,
       child: const Text('Cancel'),
     );
-    final clear = FButton(
+    final reset = FButton(
       variant: FButtonVariant.ghost,
       mainAxisSize: MainAxisSize.min,
-      onPress: state.saving ? null : cubit.clearStyle,
-      child: const Text('Clear style — back to default'),
+      onPress: state.saving ? null : _reset,
+      child: const Text('Reset'),
     );
     return Container(
       padding: const EdgeInsets.only(top: 14),
@@ -601,18 +672,18 @@ class _StyleEditorState extends State<_StyleEditor> {
       child: width >= 460
           ? Row(
               children: [
+                reset,
+                const Spacer(),
                 save,
                 const SizedBox(width: 10),
                 cancel,
-                const Spacer(),
-                clear,
               ],
             )
           : Wrap(
               spacing: 10,
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
-              children: [save, cancel, clear],
+              children: [reset, save, cancel],
             ),
     );
   }

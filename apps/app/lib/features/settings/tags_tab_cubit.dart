@@ -199,8 +199,10 @@ class TagsTabCubit extends Cubit<TagsTabState> {
     await _submit(state.draftStyle);
   }
 
-  /// Clears the style (all-null) — back to the default chip look.
-  Future<void> clearStyle() => _submit(const TagStyle());
+  /// Resets the open editor's draft to the default chip look (no icon, default
+  /// colours) without saving — the user still chooses Save or Cancel.
+  void resetDraft() =>
+      emit(state.copyWith(draftIcon: null, draftColor: '', draftBgColor: ''));
 
   Future<void> _submit(TagStyle style) async {
     final tag = state.editingTag;
