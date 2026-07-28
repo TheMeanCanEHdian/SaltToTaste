@@ -37,20 +37,46 @@ void deleteSessionHandler(SaltDatabase db, AuthUser actor, String id) {
   db.deleteSession(id);
 }
 
-Map<String, Object?> _tokenJson(ApiTokenRow token) => {
-  'id': token.id,
-  'name': token.name,
-  'prefix': token.prefix,
-  'scope': token.scope,
-  'created_at': isoUtc(token.createdAt),
-  'last_used_at': isoUtc(token.lastUsedAt),
-  'revoked': token.revokedAt != null,
-};
+/// [retentionDays] is the operator's `API_TOKEN_RETENTION_DAYS`. When it is
+/// positive and the token is revoked, `deletes_at` is when the housekeeping
+/// prune becomes eligible to remove the row (`revoked_at + retention`), letting
+/// the UI show a countdown. It stays null for a live token and when retention
+/// is 0 ("keep forever").
+Map<String, Object?> _tokenJson(ApiTokenRow token, {int retentionDays = 0}) {
+  final revokedAt = token.revokedAt;
+  String? deletesAt;
+  if (revokedAt != null && retentionDays > 0) {
+    final parsed = DateTime.tryParse(revokedAt);
+    if (parsed != null) {
+      deletesAt = parsed
+          .toUtc()
+          .add(Duration(days: retentionDays))
+          .toIso8601String();
+    }
+  }
+  return {
+    'id': token.id,
+    'name': token.name,
+    'prefix': token.prefix,
+    'scope': token.scope,
+    'created_at': isoUtc(token.createdAt),
+    'last_used_at': isoUtc(token.lastUsedAt),
+    'revoked': revokedAt != null,
+    'deletes_at': deletesAt,
+  };
+}
 
-/// `GET /api/v1/tokens` — the actor's personal access tokens.
-Map<String, Object?> listTokensHandler(SaltDatabase db, AuthUser actor) => {
+/// `GET /api/v1/tokens` — the actor's personal access tokens. [retentionDays]
+/// (the operator's `API_TOKEN_RETENTION_DAYS`) drives each revoked token's
+/// `deletes_at`.
+Map<String, Object?> listTokensHandler(
+  SaltDatabase db,
+  AuthUser actor, {
+  int retentionDays = 0,
+}) => {
   'items': [
-    for (final token in db.apiTokensForUser(actor.id)) _tokenJson(token),
+    for (final token in db.apiTokensForUser(actor.id))
+      _tokenJson(token, retentionDays: retentionDays),
   ],
 };
 

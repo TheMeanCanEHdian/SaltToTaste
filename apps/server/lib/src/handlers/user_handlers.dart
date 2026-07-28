@@ -109,6 +109,25 @@ Map<String, Object?> patchUserHandler(
   return {'user': _userJson(db.userById(userId)!)};
 }
 
+/// `DELETE /api/v1/users/<id>` (admin) — permanently removes the account and
+/// everything keyed to it (sessions, API tokens, favorites, and personal notes
+/// cascade; recipes are not user-owned, so they survive). Admins cannot delete
+/// themselves, which keeps at least the acting admin in place — the same guard
+/// that stops the last admin locking the server (see [patchUserHandler]).
+Map<String, Object?> deleteUserHandler(
+  SaltDatabase db,
+  AuthUser actor,
+  int userId,
+) {
+  if (userId == actor.id) {
+    throw const ValidationException('You cannot delete your own account.');
+  }
+  if (!db.deleteUser(userId)) {
+    throw NotFoundException('user not found: $userId');
+  }
+  return {'ok': true};
+}
+
 /// `POST /api/v1/users/<id>/reset_password` (admin) — new temporary
 /// password (returned once), forces a change at next sign-in, and signs the
 /// user out everywhere: every session AND every personal access token.

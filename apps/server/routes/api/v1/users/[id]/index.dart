@@ -8,8 +8,10 @@ import 'package:salt_server/src/middleware/auth.dart';
 
 /// `PATCH /api/v1/users/<id>` (admin) `{role? | disabled?}` — change a
 /// user's role or disable/enable the account (never your own).
+/// `DELETE /api/v1/users/<id>` (admin) — permanently remove the account
+/// (never your own); its sessions, tokens, favorites, and notes cascade.
 Future<Response> onRequest(RequestContext context, String id) async {
-  requireMethods(context, {HttpMethod.patch});
+  requireMethods(context, {HttpMethod.patch, HttpMethod.delete});
   final actor = requireAdmin(context);
   requireCsrf(context, actor);
   requireFullScope(actor);
@@ -18,6 +20,13 @@ Future<Response> onRequest(RequestContext context, String id) async {
   if (userId == null) {
     throw const ValidationException('User id must be an integer.');
   }
+
+  if (context.request.method == HttpMethod.delete) {
+    return Response.json(
+      body: deleteUserHandler(context.read<SaltDatabase>(), actor, userId),
+    );
+  }
+
   final body = await readJsonBody(context.request);
   final role = body['role'];
   final disabled = body['disabled'];

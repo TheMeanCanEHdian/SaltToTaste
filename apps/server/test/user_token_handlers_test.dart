@@ -92,6 +92,50 @@ void main() {
       );
     });
 
+    test(
+      'delete removes the account and cascades its sessions and tokens',
+      () async {
+        final created = await createUserHandler(
+          db,
+          hasher,
+          admin,
+          username: 'sam',
+          role: 'member',
+        );
+        final samId = (created['user']! as Map<String, Object?>)['id']! as int;
+        final sam = actorFor(samId);
+        db.createSession(
+          tokenHash: hashToken(generateOpaqueToken()),
+          userId: samId,
+          expiresAt: DateTime.now().toUtc().add(const Duration(days: 7)),
+          remember: false,
+        );
+        createTokenHandler(db, sam, name: 'sam-token', scope: 'read');
+        expect(db.sessionsForUser(samId), isNotEmpty);
+        expect(db.apiTokensForUser(samId), isNotEmpty);
+
+        final result = deleteUserHandler(db, admin, samId);
+        expect(result['ok'], isTrue);
+        expect(db.userById(samId), isNull);
+        expect(db.sessionsForUser(samId), isEmpty);
+        expect(db.apiTokensForUser(samId), isEmpty);
+      },
+    );
+
+    test('cannot delete your own account', () {
+      expect(
+        () => deleteUserHandler(db, admin, admin.id),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('deleting an unknown user is a 404', () {
+      expect(
+        () => deleteUserHandler(db, admin, 999999),
+        throwsA(isA<NotFoundException>()),
+      );
+    });
+
     test('reset password issues a new temp and kills sessions', () async {
       final created = await createUserHandler(
         db,
@@ -257,6 +301,25 @@ void main() {
       final listed = listTokensHandler(db, admin);
       final items = (listed['items']! as List).cast<Map<String, Object?>>();
       expect(items.single['revoked'], isTrue);
+    });
+
+    test('a revoked token reports deletes_at at revoked_at + retention', () {
+      final result = createTokenHandler(db, admin, name: 'old', scope: 'read');
+      final id = (result['item']! as Map<String, Object?>)['id']! as int;
+      revokeTokenHandler(db, admin, id);
+
+      Map<String, Object?> listedWith(int days) =>
+          (listTokensHandler(db, admin, retentionDays: days)['items']! as List)
+              .cast<Map<String, Object?>>()
+              .single;
+
+      // Retention 0 ("keep forever") means no scheduled deletion.
+      expect(listedWith(0)['deletes_at'], isNull);
+
+      // Retention 90 puts deletion ~90 days out from revocation.
+      final deletesAt = DateTime.parse(listedWith(90)['deletes_at']! as String);
+      final days = deletesAt.difference(DateTime.now().toUtc()).inDays;
+      expect(days, inInclusiveRange(89, 90));
     });
   });
 }

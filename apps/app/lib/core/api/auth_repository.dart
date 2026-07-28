@@ -93,6 +93,7 @@ class TokenInfo {
     required this.revoked,
     this.createdAt,
     this.lastUsedAt,
+    this.deletesAt,
   });
 
   factory TokenInfo.fromJson(Map<String, dynamic> json) => TokenInfo(
@@ -103,6 +104,7 @@ class TokenInfo {
     revoked: json['revoked'] as bool,
     createdAt: json['created_at'] as String?,
     lastUsedAt: json['last_used_at'] as String?,
+    deletesAt: json['deletes_at'] as String?,
   );
 
   final int id;
@@ -112,6 +114,11 @@ class TokenInfo {
   final bool revoked;
   final String? createdAt;
   final String? lastUsedAt;
+
+  /// When the retention prune becomes eligible to remove this revoked token
+  /// (`revoked_at + API_TOKEN_RETENTION_DAYS`). Null for a live token or when
+  /// retention is "keep forever" (0).
+  final String? deletesAt;
 }
 
 /// Auth and account-management access to the API.
@@ -272,6 +279,11 @@ class AuthRepository {
       return UserAccount.fromJson(data['user'] as Map<String, dynamic>);
     });
   }
+
+  /// Permanently deletes user [id]. The server cascades their sessions, API
+  /// tokens, favorites, and notes; recipes are not user-owned and survive.
+  Future<void> deleteUser(int id) =>
+      _call(() => _dio.delete<dynamic>('/api/v1/users/$id'));
 
   /// Resets [id]'s password, returning the one-time password and how many of
   /// their API tokens were revoked with it.

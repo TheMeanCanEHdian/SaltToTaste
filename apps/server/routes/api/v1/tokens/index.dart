@@ -1,4 +1,5 @@
 import 'package:dart_frog/dart_frog.dart';
+import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/token_handlers.dart';
@@ -14,7 +15,13 @@ Future<Response> onRequest(RequestContext context) async {
   final db = context.read<SaltDatabase>();
 
   if (context.request.method == HttpMethod.get) {
-    return Response.json(body: listTokensHandler(db, actor));
+    return Response.json(
+      body: listTokensHandler(
+        db,
+        actor,
+        retentionDays: context.read<ServerConfig>().apiTokenRetentionDays,
+      ),
+    );
   }
 
   requireCsrf(context, actor);

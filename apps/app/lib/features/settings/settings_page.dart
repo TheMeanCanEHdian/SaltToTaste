@@ -180,7 +180,7 @@ class SettingsPage extends StatelessWidget {
   List<(SettingsTab, String)> _tabsFor(bool isAdmin) => [
     (SettingsTab.account, 'Account'),
     if (isAdmin) (SettingsTab.users, 'Users'),
-    (SettingsTab.tokens, 'API tokens'),
+    (SettingsTab.tokens, 'API Tokens'),
   ];
 
   /// Server-administration tabs (admins only).

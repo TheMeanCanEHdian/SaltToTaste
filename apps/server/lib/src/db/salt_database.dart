@@ -1273,6 +1273,15 @@ class SaltDatabase {
     });
   }
 
+  /// Permanently deletes the user. Everything keyed to them — sessions, API
+  /// tokens, favorites, and personal notes — cascades (`ON DELETE CASCADE`);
+  /// recipes are not user-owned, so they are untouched. Returns whether a row
+  /// was removed (false = no such user). Unlike disable, this is irreversible.
+  bool deleteUser(int userId) {
+    _prepared('DELETE FROM users WHERE id = ?').execute([userId]);
+    return _db.updatedRows > 0;
+  }
+
   /// Sets the user's `last_active_at` to now.
   void touchUserActivity(int userId) {
     _prepared(

@@ -198,6 +198,7 @@ class AuthField extends StatelessWidget {
     this.obscure = false,
     this.hint,
     this.helper,
+    this.error,
     this.autofocus = false,
     this.onSubmitted,
   });
@@ -207,6 +208,10 @@ class AuthField extends StatelessWidget {
   final bool obscure;
   final String? hint;
   final String? helper;
+
+  /// When set, the field renders in Forui's error state (red border) with this
+  /// message beneath it — used for inline validation.
+  final String? error;
   final bool autofocus;
   final void Function(String)? onSubmitted;
 
@@ -239,6 +244,7 @@ class AuthField extends StatelessWidget {
             onSubmit: onSubmitted,
             hint: hint,
             description: helper == null ? null : Text(helper!),
+            error: error == null ? null : Text(error!),
           ),
         ),
       ],
