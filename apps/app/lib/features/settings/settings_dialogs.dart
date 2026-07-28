@@ -19,6 +19,10 @@ Future<void> showSecretDialog(
 }) {
   return showFDialog<void>(
     context: context,
+    // The value shown here is returned by the server exactly once. A barrier
+    // tap or Esc would discard it as completely as scrolling past the old
+    // inline panel did, so the only way out is the explicit "I've saved it".
+    barrierDismissible: false,
     builder: (context, _, animation) => FDialog(
       animation: animation,
       builder: (context, style) =>
