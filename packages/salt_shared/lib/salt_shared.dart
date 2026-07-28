@@ -3,6 +3,7 @@ library;
 
 export 'src/api/dto.dart';
 export 'src/api/error_codes.dart';
+export 'src/api/match_bucket.dart';
 export 'src/model/recipe.dart';
 export 'src/util/identifiers.dart';
 export 'src/util/image_paths.dart';

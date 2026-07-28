@@ -180,6 +180,11 @@ Future<void> applyMatchOverride(
 
   if (skipped == true) {
     row = row.copyWith(status: 'skipped');
+  } else if (skipped == false) {
+    // Un-skip returns the line to automatic triage. It must NOT set
+    // 'confirmed': blessing whatever low-confidence match the line had
+    // would hide it from the review queue as resolved (review B7).
+    row = row.copyWith(status: 'auto');
   } else if (fdcId != null) {
     if (fdcId is! num || fdcId <= 0) {
       throw const ValidationException("'fdc_id' must be a positive number.");
@@ -194,6 +199,7 @@ Future<void> applyMatchOverride(
       amounts: line.amounts,
       food: food,
       normalizedItem: normalizeItem(line.item ?? line.raw),
+      raw: line.raw,
     );
     row = row.copyWith(
       fdcId: food.fdcId,

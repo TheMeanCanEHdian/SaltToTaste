@@ -420,11 +420,10 @@ class _FixPane extends StatelessWidget {
       // Keyed by the exact line: selecting another row rebuilds a fresh cubit
       // (and fix-panel state) for the new recipe/position.
       key: ValueKey(selected.key),
-      create: (context) =>
-          NutritionCubit(
-            context.read<NutritionRepository>(),
-            selected.recipe.slug,
-          )..loadMatches(),
+      create: (context) => NutritionCubit(
+        context.read<NutritionRepository>(),
+        selected.recipe.slug,
+      )..loadMatches(),
       child: _FixPaneBody(line: selected),
     );
   }
@@ -438,11 +437,16 @@ class _FixPaneBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<NutritionCubit, NutritionState>(
-      // An override just completed (position cleared) — the line is resolved,
-      // so drop it from the queue and advance to the next.
+      // An override just completed SUCCESSFULLY (position cleared, no
+      // error) — the line is resolved, so drop it from the queue and
+      // advance. The error check is load-bearing: a FAILED override also
+      // clears the position (in the same emit that sets the error), and
+      // advancing on it moved the selection past a line that was never
+      // fixed (review B5).
       listenWhen: (previous, current) =>
           previous.overridingPosition != null &&
-          current.overridingPosition == null,
+          current.overridingPosition == null &&
+          current.error == null,
       listener: (context, _) =>
           context.read<NutritionReviewCubit>().completeFix(),
       child: BlocBuilder<NutritionCubit, NutritionState>(
@@ -516,6 +520,20 @@ class _FixContent extends StatelessWidget {
           const SizedBox(height: 8),
           WhyLine(match: match, bucket: bucket),
           CurrentMatch(match: match, bucket: bucket),
+          // A failed Skip/Confirm/Save must say so — without this the
+          // button re-enabled silently and the admin believed the fix
+          // landed (review B5).
+          if (state.error != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              state.error!,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: SaltColors.errInk,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           FixPanel(match: match, busy: busy, onDone: () {}, showCancel: false),
           const SizedBox(height: 12),

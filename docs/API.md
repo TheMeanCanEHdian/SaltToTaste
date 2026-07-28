@@ -281,9 +281,12 @@ data_type, confidence, grams, gram_source, status} | null}], page, limit}`.
 Triage buckets: `no_match` (no food matched), `no_grams` (matched but resolves
 no grams, so it contributes nothing), `check` (counting, but < 50% name
 confidence — probably wrong), and `skipped` (browsable via the filter, excluded
-from `total`). A line counts as flagged only while its status is `auto`/
-`unmatched`; a `confirmed` or `overridden` line is resolved and never appears
-(e.g. confirmed water is a deliberate no-match). `total` and the `buckets`
+from `total`). A `confirmed` line is always resolved and never appears (e.g.
+confirmed water is a deliberate no-match); an `overridden` line is resolved
+ONLY once it has grams — overridden with no grams stays in `no_grams`, because
+the picked food still contributes nothing (an unfinished fix). The rule is
+shared verbatim with the per-recipe review sheet (salt_shared
+`matchBucketFor`), so the two admin surfaces always agree. `total` and the `buckets`
 counts are whole-library (stable across filters); `bucket` narrows `items` (and
 their pagination) to one bucket — an unknown id is a 422. Fix a line with the
 existing `PUT /api/v1/recipes/{id}/nutrition/matches/{position}` (candidates for
@@ -457,8 +460,10 @@ compute is reported as unmatched (`match: null`).
 
 Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
-excludes the line. Totals recompute instantly. `422` for `{grams}` on a
-line with no matched food (there is nothing to scale — pick a food
+excludes the line, `{skipped: false}` un-skips it — back to automatic
+triage (`auto`), deliberately NOT `confirmed`, so a low-confidence match
+is not silently blessed. Totals recompute instantly. `422` for `{grams}`
+on a line with no matched food (there is nothing to scale — pick a food
 first).
 
 ### `GET /api/v1/nutrition/search?q={term}` (admin, full scope)

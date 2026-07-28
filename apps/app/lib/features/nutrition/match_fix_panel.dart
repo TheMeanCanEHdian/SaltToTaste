@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 
+import 'package:salt_shared/salt_shared.dart' show MatchBucket, matchBucketFor;
+
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
+
+export 'package:salt_shared/salt_shared.dart' show MatchBucket;
 
 /// The combined "change the match & set the amount" panel and the small pieces
 /// it is built from ([WhyLine], [CurrentMatch], [CandidateRow], [SearchRow],
@@ -17,18 +21,16 @@ import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 /// the same [NutritionCubit.override], so a fix looks and behaves identically
 /// whether you reach it from one recipe's sheet or the whole-library queue.
 
-// A line falls into exactly one bucket, derived from its stored match state.
-// This mirrors the server: a line only "counts" with a food AND grams; only
-// `auto` rows below 0.5 are flagged low-confidence.
-enum MatchBucket { counted, check, noAmount, noMatch, skipped }
-
-MatchBucket matchBucketOf(IngredientMatch m) {
-  if (m.status == 'skipped') return MatchBucket.skipped;
-  if (m.fdcId == null) return MatchBucket.noMatch;
-  if (m.grams == null) return MatchBucket.noAmount;
-  if (m.status == 'auto' && m.confidence < 0.5) return MatchBucket.check;
-  return MatchBucket.counted;
-}
+/// Buckets an app-model match row via the ONE shared rule (salt_shared's
+/// [matchBucketFor]) — the server's queue SQL mirrors the same rule, so the
+/// two admin surfaces can never disagree about what still needs attention
+/// (review B7).
+MatchBucket matchBucketOf(IngredientMatch m) => matchBucketFor(
+  status: m.status,
+  fdcId: m.fdcId,
+  grams: m.grams,
+  confidence: m.confidence,
+);
 
 const Map<String, double> unitToGrams = {'g': 1, 'oz': 28.3495, 'lb': 453.592};
 
@@ -199,6 +201,11 @@ class FixPanel extends StatefulWidget {
 
   final IngredientMatch match;
   final bool busy;
+
+  /// Fired ONLY by the Cancel button — an explicit "close without saving".
+  /// Save deliberately fires nothing: the override is async, so hosts must
+  /// observe success from cubit state (bucket change / attention-list
+  /// shrink / error) rather than assume it at press time (review B5/B6).
   final VoidCallback onDone;
 
   /// Whether to show the ghost "Cancel" button. The review sheet opens the
@@ -536,16 +543,19 @@ class _FixPanelState extends State<FixPanel> {
                         // actually typed one) the amount. An untouched amount is
                         // omitted so the server recalculates it for the new food
                         // rather than freezing the previous food's grams.
+                        // No onDone here: the override is async, so success
+                        // must be OBSERVED from cubit state (the resolved
+                        // line changes bucket / leaves the attention list),
+                        // never assumed at press time — a failed save once
+                        // advanced the guided flow and closed the panel as
+                        // if it had worked (review B5/B6).
                         onPress: !canSave
                             ? null
-                            : () {
-                                cubit.override(
-                                  m.position,
-                                  fdcId: pickChanged ? _stagedFdcId : null,
-                                  grams: _amountDirty ? grams : null,
-                                );
-                                widget.onDone();
-                              },
+                            : () => cubit.override(
+                                m.position,
+                                fdcId: pickChanged ? _stagedFdcId : null,
+                                grams: _amountDirty ? grams : null,
+                              ),
                         child: const Text('Save match & amount'),
                       ),
                       if (widget.showCancel) ...[

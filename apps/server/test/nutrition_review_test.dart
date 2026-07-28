@@ -53,6 +53,8 @@ void main() {
                   IngredientLine(raw: 'd'),
                   IngredientLine(raw: 'e'),
                   IngredientLine(raw: 'f'),
+                  IngredientLine(raw: 'g'),
+                  IngredientLine(raw: 'h'),
                 ],
               ),
             ],
@@ -66,7 +68,16 @@ void main() {
         ..upsertIngredientMatch(m(3, fdcId: 5)) // counted
         // Confirmed water: no fdc, no grams — but resolved, so NOT flagged.
         ..upsertIngredientMatch(m(4, grams: null, status: 'confirmed'))
-        ..upsertIngredientMatch(m(5, fdcId: 5, status: 'skipped')); // skipped
+        ..upsertIngredientMatch(m(5, fdcId: 5, status: 'skipped')) // skipped
+        // Overridden with NULL grams: the human picked a food expecting it
+        // to count and it doesn't — an unfinished fix, so it STAYS flagged
+        // (review B7's decided corner; it was once hidden as 'counted').
+        ..upsertIngredientMatch(
+          m(6, fdcId: 5, grams: null, status: 'overridden'),
+        )
+        ..upsertIngredientMatch(
+          m(7, conf: 0, grams: null, status: 'unmatched'),
+        );
     });
 
     tearDown(() {
@@ -81,10 +92,10 @@ void main() {
 
     test('flags only unresolved problem lines; total excludes skipped', () {
       final body = nutritionReviewHandler(db, page: 1, limit: 50);
-      expect(body['total'], 3, reason: 'no_match + no_grams + check');
+      expect(body['total'], 5, reason: 'no_match x2 + no_grams x2 + check');
       expect(countsOf(body), {
-        'no_match': 1,
-        'no_grams': 1,
+        'no_match': 2,
+        'no_grams': 2,
         'check': 1,
         'skipped': 1,
       });
@@ -93,12 +104,14 @@ void main() {
     test('confirmed/resolved lines never appear in the queue', () {
       final body = nutritionReviewHandler(db, page: 1, limit: 50);
       final items = body['items']! as List;
-      expect(items, hasLength(3));
+      expect(items, hasLength(5));
       final positions = {for (final i in items) (i as Map)['position']};
       expect(
         positions,
-        {0, 1, 2},
-        reason: 'confirmed water (4), counted (3), skipped (5) are excluded',
+        {0, 1, 2, 6, 7},
+        reason:
+            'confirmed water (4), counted (3), skipped (5) are excluded; '
+            'overridden-with-no-grams (6) stays flagged (review B7)',
       );
     });
 
@@ -107,14 +120,14 @@ void main() {
           nutritionReviewHandler(db, page: 1, limit: 50)['items']! as List;
       expect(
         [for (final i in items) (i as Map)['bucket']],
-        ['no_match', 'check', 'no_grams'],
-        reason: 'confidence asc: 0.0, 0.4, 0.9',
+        ['no_match', 'no_match', 'check', 'no_grams', 'no_grams'],
+        reason: 'confidence asc: 0.0, 0.0, 0.4, 0.9, 0.9',
       );
       final first = items.first as Map;
       expect((first['recipe']! as Map)['title'], 'Soup');
       expect((first['recipe']! as Map)['slug'], 'soup');
       expect(first['match'], isNull, reason: 'no_match line has no match');
-      final check = items[1] as Map;
+      final check = items[2] as Map;
       expect((check['match']! as Map)['confidence'], 0.4);
     });
 
@@ -126,10 +139,10 @@ void main() {
         bucket: 'no_grams',
       );
       final items = body['items']! as List;
-      expect(items, hasLength(1));
-      expect((items.single as Map)['position'], 1);
+      expect(items, hasLength(2));
+      expect({for (final i in items) (i as Map)['position']}, {1, 6});
       // Counts stay whole-library so the chips don't move when filtering.
-      expect(body['total'], 3);
+      expect(body['total'], 5);
       expect(countsOf(body)['check'], 1);
     });
 
@@ -143,6 +156,25 @@ void main() {
       final items = body['items']! as List;
       expect(items, hasLength(1));
       expect((items.single as Map)['position'], 5);
+    });
+
+    test('the SQL bucket CASE mirrors salt_shared matchBucketFor exactly', () {
+      // ONE rule, two implementations (review B7): the app buckets rows in
+      // Dart via matchBucketFor; the queue buckets in SQL. This parity pin
+      // is what keeps them from drifting apart again — the seeded rows
+      // cover every corner shape (auto/unmatched/confirmed/overridden/
+      // skipped, with and without food and grams).
+      final expected = <String, int>{};
+      for (final row in db.ingredientMatchesFor('r1')) {
+        final bucket = matchBucketFor(
+          status: row.status,
+          fdcId: row.fdcId,
+          grams: row.grams,
+          confidence: row.confidence,
+        ).wire;
+        expected[bucket] = (expected[bucket] ?? 0) + 1;
+      }
+      expect(db.nutritionReviewCounts(), expected);
     });
 
     test('an unknown bucket filter is rejected', () {

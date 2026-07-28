@@ -35,6 +35,57 @@ class _SeededCubit extends NutritionCubit {
   }
 }
 
+/// Simulates the real cubit's override emissions offline: on success the row
+/// is rewritten (skipped/confirmed/overridden) in a fresh match list — the
+/// exact state sequence `NutritionCubit.override` emits; with [failWith] set
+/// it emits the failure sequence (position cleared + error in one emit).
+class _FlowCubit extends _SeededCubit {
+  _FlowCubit(super.s, {this.failWith});
+
+  final String? failWith;
+
+  Future<void> override(
+    int position, {
+    int? fdcId,
+    double? grams,
+    bool? confirmed,
+    bool? skipped,
+  }) async {
+    overrides.add((position: position, fdcId: fdcId, grams: grams));
+    emit(state.copyWith(overridingPosition: position, clearError: true));
+    final error = failWith;
+    if (error != null) {
+      emit(state.copyWith(clearOverriding: true, error: error));
+      return;
+    }
+    final status = skipped == true
+        ? 'skipped'
+        : confirmed == true
+        ? 'confirmed'
+        : 'overridden';
+    final updated = [
+      for (final m in state.matches!)
+        if (m.position == position)
+          IngredientMatch(
+            position: m.position,
+            raw: m.raw,
+            fdcId: fdcId ?? m.fdcId,
+            description: m.description,
+            dataType: m.dataType,
+            confidence: m.confidence,
+            grams: grams ?? m.grams,
+            gramSource: m.gramSource,
+            gramBasis: m.gramBasis,
+            status: status,
+            candidates: m.candidates,
+          )
+        else
+          m,
+    ];
+    emit(state.copyWith(matches: updated, clearOverriding: true));
+  }
+}
+
 // Match rows shaped like the real stored ingredient_matches for Acquacotta
 // (nutrition is DB-only — never in the YAML corpus).
 const _matches = <IngredientMatch>[
@@ -116,13 +167,17 @@ NutritionState _state() => NutritionState(
 );
 
 void main() {
-  Future<_SeededCubit> open(WidgetTester tester, {bool isAdmin = true}) async {
+  Future<_SeededCubit> open(
+    WidgetTester tester, {
+    bool isAdmin = true,
+    _SeededCubit? seeded,
+  }) async {
     tester.view.physicalSize = const Size(1000, 1400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final cubit = _SeededCubit(_state());
+    final cubit = seeded ?? _SeededCubit(_state());
     await tester.pumpWidget(
       MaterialApp(
         theme: buildMaterialTheme(buildForuiTheme()),
@@ -284,5 +339,58 @@ void main() {
     expect(find.text('Needs your attention'), findsOneWidget);
     expect(find.text('Fix match & amount'), findsNothing);
     expect(find.text('Skip'), findsNothing);
+  });
+
+  testWidgets('guided skip advances by the list shrink alone (review B6)', (
+    tester,
+  ) async {
+    // A third flagged line between escarole (0.34) and fennel (1.0): the
+    // old code advanced the index AND let the list shrink, so this middle
+    // line was silently jumped over on every fix/skip.
+    const celery = IngredientMatch(
+      position: 12,
+      raw: '2 celery ribs, chopped',
+      fdcId: 6,
+      description: 'Celery, raw',
+      dataType: 'Foundation',
+      confidence: 0.42,
+      grams: 80,
+      gramSource: 'piece',
+      status: 'auto',
+    );
+    final cubit = _FlowCubit(_state().copyWith(matches: [..._matches, celery]));
+    await open(tester, seeded: cubit);
+    await tester.tap(find.text('Guided (3)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Line 1 of 3'), findsOneWidget);
+    expect(find.text('1 small head escarole (10 oz), cut up'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Skip line'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Skip line'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Line 1 of 2'), findsOneWidget);
+    expect(find.text('2 celery ribs, chopped'), findsOneWidget);
+  });
+
+  testWidgets('a failed guided skip keeps the line and shows the error '
+      '(review B5)', (tester) async {
+    final cubit = _FlowCubit(_state(), failWith: "Couldn't reach the server.");
+    await open(tester, seeded: cubit);
+    await tester.tap(find.text('Guided (2)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Line 1 of 2'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Skip line'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Skip line'));
+    await tester.pumpAndSettle();
+
+    // The failure is on screen, and the flow did NOT move on as if the
+    // skip had landed.
+    expect(find.text("Couldn't reach the server."), findsOneWidget);
+    expect(find.text('Line 1 of 2'), findsOneWidget);
+    expect(find.text('1 small head escarole (10 oz), cut up'), findsOneWidget);
   });
 }

@@ -17,6 +17,17 @@ import 'package:salt_app/features/admin/nutrition_review_queue.dart';
 /// recipe's per-line matches (fetched when a row is selected, so the fix panel
 /// gets candidates).
 class _Adapter implements HttpClientAdapter {
+  _Adapter({this.failOverride = false});
+
+  /// When true, every override PUT fails with a 422 envelope — the network
+  /// blip / budget-drained case the queue once silently advanced past
+  /// (review B5).
+  final bool failOverride;
+
+  /// How many times the cross-recipe review list was (re)fetched —
+  /// completeFix() reloads it, so this count observes queue advancement.
+  int reviewFetches = 0;
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -24,8 +35,27 @@ class _Adapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     final path = options.path;
+    if (failOverride &&
+        options.method == 'PUT' &&
+        path.contains('/nutrition/matches/')) {
+      return ResponseBody.fromString(
+        jsonEncode({
+          'error': {
+            'code': 'validation',
+            'message':
+                'The FoodData Central request budget for this hour '
+                'is used up.',
+          },
+        }),
+        422,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+    }
     Object? body;
     if (path.contains('/admin/nutrition_review')) {
+      reviewFetches += 1;
       body = {
         'total': 2,
         'buckets': [
@@ -106,14 +136,18 @@ class _Adapter implements HttpClientAdapter {
 }
 
 void main() {
-  Future<void> pumpQueue(WidgetTester tester) async {
+  Future<_Adapter> pumpQueue(
+    WidgetTester tester, {
+    bool failOverride = false,
+  }) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final adapter = _Adapter(failOverride: failOverride);
     final dio = Dio(BaseOptions(baseUrl: 'http://test'))
-      ..httpClientAdapter = _Adapter();
+      ..httpClientAdapter = adapter;
     final recipeRepo = RecipeRepository(dio: dio);
     final nutritionRepo = NutritionRepository(dio);
 
@@ -135,6 +169,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    return adapter;
   }
 
   testWidgets('renders the worst-first queue and selects the first line', (
@@ -165,5 +200,36 @@ void main() {
     expect(find.text('Skip'), findsOneWidget);
     // The persistent detail pane hides the fix panel's Cancel button.
     expect(find.text('Cancel'), findsNothing);
+  });
+
+  testWidgets('a failed override shows its error and does NOT advance the '
+      'queue (review B5)', (tester) async {
+    final adapter = await pumpQueue(tester, failOverride: true);
+    final fetchesBefore = adapter.reviewFetches;
+
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+
+    // The real, actionable message is on screen — not silence.
+    expect(
+      find.textContaining('FoodData Central request budget'),
+      findsOneWidget,
+    );
+    // The selection stayed on the line that was never fixed, and the queue
+    // was not reloaded (completeFix() must not fire on failure).
+    expect(find.text('2 tablespoons Grand Marnier'), findsWidgets);
+    expect(adapter.reviewFetches, fetchesBefore);
+  });
+
+  testWidgets('a successful override completes the fix and reloads the queue', (
+    tester,
+  ) async {
+    final adapter = await pumpQueue(tester);
+    final fetchesBefore = adapter.reviewFetches;
+
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+
+    expect(adapter.reviewFetches, fetchesBefore + 1);
   });
 }

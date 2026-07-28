@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/fdc_provider.dart';
@@ -614,6 +615,99 @@ void main() {
           items.length - 1,
         );
       });
+    },
+  );
+
+  group(
+    'match override keeps the printed parenthetical weight (review B3)',
+    skip: skipIfNoCorpus,
+    () {
+      late Directory tempDir;
+      late SaltDatabase db;
+      late FixtureProvider provider;
+      late Recipe chili;
+      late int tomatoPosition;
+
+      setUpAll(() async {
+        tempDir = Directory.systemTemp.createTempSync('salt-override-test');
+        final config = ServerConfig(
+          dataDir: tempDir.path,
+          logLevel: Level.WARNING,
+          trustProxy: false,
+        );
+        db = SaltDatabase.open(config.dbPath);
+        final sourceRoot = Directory('${tempDir.path}/source')
+          ..createSync(recursive: true);
+        Directory('${sourceRoot.path}/recipes').createSync();
+        const name = '0009-best-ground-beef-chili.yaml';
+        File(
+          '$corpusRecipesDir/$name',
+        ).copySync('${sourceRoot.path}/recipes/$name');
+        importSourceRoot(
+          sourceRootPath: sourceRoot.path,
+          db: db,
+          config: config,
+        );
+        provider = FixtureProvider();
+        chili = db.recipeByIdOrSlug('best-ground-beef-chili')!.recipe;
+        tomatoPosition = nutritionLines(
+          chili,
+        ).indexWhere((line) => line.raw.contains('(14.5-ounce) can'));
+        expect(tomatoPosition, greaterThanOrEqualTo(0));
+      });
+
+      tearDownAll(() {
+        db.dispose();
+        tempDir.deleteSync(recursive: true);
+      });
+
+      test(
+        're-picking a food must not lose the printed-weight grams',
+        () async {
+          // "1 (14.5-ounce) can whole peeled tomatoes": the printed weight is
+          // the gold-standard gram source, and it only resolves when the raw
+          // line is passed through. The auto-match path and the gram_basis
+          // display path both pass it; the override path once did not, so an
+          // admin re-picking a better food silently dropped the grams.
+          await applyMatchOverride(db, provider, chili, tomatoPosition, {
+            'fdc_id': 746784, // any cached real FDC food; grams come from raw
+          });
+          final row = db
+              .ingredientMatchesFor(chili.id)
+              .singleWhere((match) => match.position == tomatoPosition);
+          expect(row.status, 'overridden');
+          expect(row.gramSource, 'weight');
+          expect(row.grams, closeTo(14.5 * 28.3495, 0.1));
+        },
+      );
+
+      test(
+        'un-skip returns the line to automatic triage (review B7)',
+        () async {
+          // skipped:false must NOT bless the line as confirmed — that would
+          // hide whatever match it had from the review queue as resolved.
+          await applyMatchOverride(db, provider, chili, tomatoPosition, {
+            'skipped': true,
+          });
+          expect(
+            db
+                .ingredientMatchesFor(chili.id)
+                .singleWhere((match) => match.position == tomatoPosition)
+                .status,
+            'skipped',
+          );
+          await applyMatchOverride(db, provider, chili, tomatoPosition, {
+            'skipped': false,
+          });
+          expect(
+            db
+                .ingredientMatchesFor(chili.id)
+                .singleWhere((match) => match.position == tomatoPosition)
+                .status,
+            'auto',
+          );
+        },
+      );
     },
   );
 

@@ -820,15 +820,20 @@ class SaltDatabase {
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
   }
 
-  /// The triage bucket for a match row, in SQL — the same buckets the
-  /// per-recipe review sheet uses (`_bucketOf`), EXCEPT that a `confirmed` or
-  /// `overridden` line is treated as `counted`: it has been resolved, so a
-  /// cross-recipe "needs attention" queue must not surface it (e.g. confirmed
-  /// water is a deliberate no-match, not a problem to fix).
+  /// The triage bucket for a match row, in SQL — a verbatim mirror of the
+  /// ONE shared rule in salt_shared's `matchBucketFor` (which the app's
+  /// review sheet uses), parity-pinned by a test. The two copies once
+  /// disagreed (review B7): an `overridden` row with NULL grams was
+  /// "resolved" here yet "needs attention" on the sheet, so a line could
+  /// vanish from this queue while contributing nothing. Decided corners:
+  /// overridden+NULL grams stays `no_grams` (an unfinished fix); `confirmed`
+  /// is always resolved, even matchless (confirmed water is a deliberate
+  /// no-match).
   static const String _reviewBucketCase = '''
     CASE
-      WHEN im.status IN ('confirmed', 'overridden') THEN 'counted'
       WHEN im.status = 'skipped' THEN 'skipped'
+      WHEN im.status = 'overridden' AND im.grams IS NULL THEN 'no_grams'
+      WHEN im.status IN ('confirmed', 'overridden') THEN 'counted'
       WHEN im.fdc_id IS NULL THEN 'no_match'
       WHEN im.grams IS NULL THEN 'no_grams'
       WHEN im.confidence < 0.5 THEN 'check'

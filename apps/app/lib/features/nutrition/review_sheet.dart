@@ -143,6 +143,27 @@ class _ReviewSheetState extends State<_ReviewSheet>
                 state.nutrition!.servingBasis != null)
               _BasisRow(state: state),
             const Divider(height: 1, color: SaltColors.hairline),
+            // A failed action (Skip/Confirm/Save — network blip, expired
+            // session, server reject) must be visible: once matches are
+            // loaded, _LoadingOrError never shows, so without this strip
+            // the admin believes the fix was applied (review B5).
+            if (matches != null && state.error != null)
+              Container(
+                width: double.infinity,
+                color: SaltColors.errBg,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                child: Text(
+                  state.error!,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: SaltColors.errInk,
+                  ),
+                ),
+              ),
             Expanded(child: content),
           ],
         ),
@@ -355,7 +376,9 @@ class _CollapsibleGroupState extends State<_CollapsibleGroup> {
             child: Row(
               children: [
                 Icon(
-                  _expanded ? FLucideIcons.chevronDown : FLucideIcons.chevronRight,
+                  _expanded
+                      ? FLucideIcons.chevronDown
+                      : FLucideIcons.chevronRight,
                   size: 18,
                   color: SaltColors.muted,
                 ),
@@ -454,10 +477,21 @@ class _MatchRowState extends State<_MatchRow> {
               _actions(context, b),
               if (_fixOpen) ...[
                 const SizedBox(height: 8),
-                FixPanel(
-                  match: m,
-                  busy: widget.busy,
-                  onDone: () => setState(() => _fixOpen = false),
+                // Close only on OBSERVED success for this row. A failed
+                // save keeps the panel (and its staged fix) open with the
+                // error strip above — closing at press time discarded the
+                // admin's work as if it had saved (review B5).
+                BlocListener<NutritionCubit, NutritionState>(
+                  listenWhen: (previous, current) =>
+                      previous.overridingPosition == m.position &&
+                      current.overridingPosition == null &&
+                      current.error == null,
+                  listener: (context, _) => setState(() => _fixOpen = false),
+                  child: FixPanel(
+                    match: m,
+                    busy: widget.busy,
+                    onDone: () => setState(() => _fixOpen = false),
+                  ),
                 ),
               ],
             ],
@@ -469,10 +503,19 @@ class _MatchRowState extends State<_MatchRow> {
 
   SaltBadge _statusBadge(MatchBucket b) => switch (b) {
     MatchBucket.counted => const SaltBadge('counted', tone: SaltBadgeTone.ok),
-    MatchBucket.check => const SaltBadge('check match', tone: SaltBadgeTone.warn),
-    MatchBucket.noAmount => const SaltBadge('no amount', tone: SaltBadgeTone.info),
+    MatchBucket.check => const SaltBadge(
+      'check match',
+      tone: SaltBadgeTone.warn,
+    ),
+    MatchBucket.noAmount => const SaltBadge(
+      'no amount',
+      tone: SaltBadgeTone.info,
+    ),
     MatchBucket.noMatch => const SaltBadge('no match', tone: SaltBadgeTone.err),
-    MatchBucket.skipped => const SaltBadge('skipped', tone: SaltBadgeTone.neutral),
+    MatchBucket.skipped => const SaltBadge(
+      'skipped',
+      tone: SaltBadgeTone.neutral,
+    ),
   };
 
   Widget _actions(BuildContext context, MatchBucket b) {
@@ -484,11 +527,18 @@ class _MatchRowState extends State<_MatchRow> {
         _Action(
           icon: FLucideIcons.undo2,
           label: 'Include again',
+          // Un-skip, back to automatic triage — NOT confirmed:true, which
+          // would bless whatever match the line had and hide it from the
+          // admin queue as resolved (review B7).
           onPressed: busy
               ? null
-              : () => cubit.override(widget.match.position, confirmed: true),
+              : () => cubit.override(widget.match.position, skipped: false),
         ),
-        _Action(icon: FLucideIcons.slidersHorizontal, label: 'Fix…', onPressed: toggleFix),
+        _Action(
+          icon: FLucideIcons.slidersHorizontal,
+          label: 'Fix…',
+          onPressed: toggleFix,
+        ),
       ]);
     }
     final primaryLabel = _fixOpen
@@ -591,6 +641,10 @@ class _GuidedFlowState extends State<_GuidedFlow> {
           CurrentMatch(match: m, bucket: matchBucketOf(m)),
           if (widget.isAdmin) ...[
             const SizedBox(height: 12),
+            // onDone only fires for Cancel ("changed nothing, next"). A
+            // SAVED line leaves the attention list on the refresh, which
+            // advances the flow by itself — incrementing here too skipped
+            // the next flagged line on every fix (review B6).
             FixPanel(
               key: ValueKey('guided-${m.position}'),
               match: m,
@@ -613,12 +667,13 @@ class _GuidedFlowState extends State<_GuidedFlow> {
                 FButton(
                   variant: FButtonVariant.ghost,
                   mainAxisSize: MainAxisSize.min,
+                  // No _next(): on success the line leaves the attention
+                  // list, so this index already shows the next flagged
+                  // line — incrementing too skipped one (review B6). On
+                  // failure the line stays and the error strip explains.
                   onPress: widget.busy
                       ? null
-                      : () {
-                          cubit.override(m.position, skipped: true);
-                          _next();
-                        },
+                      : () => cubit.override(m.position, skipped: true),
                   child: const Text('Skip line'),
                 ),
               const SizedBox(width: 8),
