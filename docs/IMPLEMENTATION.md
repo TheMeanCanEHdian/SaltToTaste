@@ -1385,3 +1385,34 @@ shows the new order.
   cards carry a bottom margin, so their opaque lift is laid behind the card and
   inset by that margin (an opaque fill over the whole item painted the margin as
   a padding strip).
+- 2026-07-28 — **The 2026-07-27 whole-branch review's defect and refactor
+  batches landed** (the full findings document with severities and evidence
+  lives locally in `.claude/reviews/2026-07-27-whole-branch-review.md`).
+  Fixed: FTS now indexes subsection/technique content (migration 008 +
+  Dart-side reindex at open); the nutrition match override passes `raw:` so
+  printed-weight grams survive a re-pick; editor saves preserve meaningful
+  duplicate step numbers (valid-run rule, app + server); the guided review
+  flow advances by list-shrink alone and failed overrides surface their
+  error on both admin surfaces instead of silently advancing; the triage
+  bucketing rule is now ONE shared function (salt_shared `matchBucketFor`,
+  SQL parity-pinned) with decided corners (overridden+no-grams stays
+  flagged; un-skip returns to `auto`, not confirmed); path params are
+  percent-decoded (multi-word tags stylable); `serves` derives at decode
+  time for all schema versions and unrelated edits preserve a hand-set
+  value (plus a `serves_mismatch` review check); hand-added YAML lines
+  without an `amounts` key parse their `raw`; `kind_needs_review` left the
+  canonical format; `images.credit` is pinned as free-text and rendered;
+  imports take the documented before-import backup; recipe PUT gained an
+  optional `base_hash` 409 precondition (editor echoes it; browser
+  beforeunload guard added); scan/import validate documents at ingest;
+  backup retention is per-trigger with a `BACKUP_RETENTION` knob; FDC and
+  image-fetch failures are 422s with real messages; log timestamps are
+  UTC-with-Z and every surface renders viewer-local times; favorites
+  paging is count-derived (no skipped cards); corpus-free tests were
+  hoisted out of whole-file corpus gates (CI now runs the SSRF, validation,
+  containment, and PDF-spanning pins); simplifications: `Paged<T>` deleted,
+  slugify derives from `vulgarFractionAscii`, dead `formatQuantity`
+  removed, `invalidateReviewCount` wired, one shared tag-colour rule and
+  error-envelope decoder. Ranged parenthetical weights resolving to the
+  upper bound was ruled INTENDED (won't fix). Suites: 196/491/210 green
+  with corpus (baseline 192/473/201).

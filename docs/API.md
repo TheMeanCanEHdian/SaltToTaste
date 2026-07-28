@@ -48,7 +48,7 @@ temporary password with `must_change_password`: until the user calls
 | Endpoint | Notes |
 |---|---|
 | `POST /api/v1/auth/setup` | `{setup_code, username, password}` — first boot only (zero users); code from server stdout; creates the admin |
-| `POST /api/v1/auth/recover` | `{recovery_code, username, new_password}` — no auth; code from `salt_server:recover` on the server host; resets/creates that account as an enabled admin and revokes its sessions + API tokens; rate-limited per IP (`423 locked`) |
+| `POST /api/v1/auth/recover` | `{recovery_code, username, new_password}` — no auth; code from `salt_server:recover` on the server host; resets/creates that account as an enabled admin and revokes its sessions + API tokens; rate-limited per IP (`429 locked`) |
 | `POST /api/v1/auth/login` | `{username, password, remember?}` → `{token, user}` + cookie; failures are uniform `422 validation` (unknown username / wrong password), except a **disabled** account whose password is correct gets a specific "account disabled" `422` — revealed only after a correct password, so it stays enumeration-safe |
 | `POST /api/v1/auth/logout` | ends the current session (cookie/session bearer only) |
 | `GET /api/v1/auth/me` | `{user: {id, username, role, must_change_password, scope, via}}` |
@@ -103,7 +103,11 @@ temporary password with `must_change_password`: until the user calls
 
 ### `GET /healthz`
 
-Liveness probe (outside `/api/v1`, no auth ever). → `200 {"status": "ok"}`
+Liveness probe (outside `/api/v1`, no auth ever). →
+`200 {"status": "ok", "setup_required": bool}` — `setup_required` is true
+while the instance has zero users, telling a fresh client to run the
+first-boot `/auth/setup` flow (it reveals only whether the instance is
+claimed).
 
 ### `GET /api/v1/recipes`
 
@@ -149,7 +153,8 @@ MATCH syntax cannot be injected.
 `RecipeCard`: `id`, `slug`, `title`, `category`, `hero_image`
 (`/images/<source-slug>/<file>` or null), `tags` (string list),
 `servings_text`, `total_minutes`, `calories_per_serving` (null until
-computed), `favorite` (the **caller's** favorite flag).
+computed), `favorite` (the **caller's** favorite flag), `variation_count`
+(how many `variation` subsections the recipe carries — the card badge).
 
 ### `POST /api/v1/recipes` (admin, full scope)
 
@@ -374,11 +379,16 @@ The canonical schema-v2 YAML document.
 
 ### `GET /images/{sourceSlug}/{file}`
 
-Recipe images from the library. Segments are strictly validated (no path
-traversal; extension whitelist `.jpg` `.jpeg` `.png` `.webp`).
+Recipe images from the library. **Requires authentication** (any role).
+Segments are strictly validated (no path traversal; extension whitelist
+`.jpg` `.jpeg` `.png` `.webp`).
 
-→ `200` with correct `Content-Type` and `Cache-Control: public, max-age=86400`;
-`404 not_found` for anything else.
+→ `200` with correct `Content-Type` and `Cache-Control: private,
+max-age=86400` (`private` because the response is authenticated — a shared
+proxy cache must not serve it). Supports `Last-Modified` /
+`If-Modified-Since` revalidation (`304`). Malformed segments are
+`422 validation`; an unknown extension, missing file, or escaping path is
+`404 not_found`.
 
 ### `GET /api/v1/tags`
 
@@ -599,7 +609,7 @@ container) is the whole authorization story — the same trust model as the
 first-boot setup code. `POST /api/v1/auth/recover` therefore takes no
 credentials; it answers `403 forbidden` when no code is pending or the
 pending one expired, `422 validation` for a wrong code or an invalid
-username/password, and `423 locked` once the per-IP rate limit trips.
+username/password, and `429 locked` once the per-IP rate limit trips.
 Rate-limited like `POST /api/v1/auth/login` (5 consecutive failures, then an
 exponential lockout to 15 minutes) and every failed attempt is logged:
 the endpoint is unauthenticated and grants admin, and checking a code costs
