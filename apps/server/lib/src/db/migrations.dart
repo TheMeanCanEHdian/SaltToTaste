@@ -281,4 +281,16 @@ UPDATE recipes SET variation_count = (
 WHERE json_extract(doc, '$.subsections') IS NOT NULL
 ''',
   ],
+
+  // 008 — the FTS row widens to subsection content (ingredients, steps,
+  // titles, body) and technique captions/headings, so search stops missing
+  // a third of the library's text (review B1: `chanterelle` found nothing
+  // because the only mention sat in a "Sautéed Wild Mushrooms" component).
+  //
+  // The FTS text is derived from nested arrays of the doc JSON — beyond
+  // what a maintainable SQL backfill can express — so the rebuild happens
+  // in Dart: SaltDatabase._migrate() re-derives every FTS row via
+  // _rebuildFts when it crosses this version. The statement below only
+  // marks the schema version; the paired Dart pass is what reindexes.
+  ['SELECT 1'],
 ];

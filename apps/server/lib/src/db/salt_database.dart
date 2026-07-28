@@ -78,8 +78,16 @@ class SaltDatabase {
     _db.dispose();
   }
 
+  /// The migration that widened FTS content to subsections/techniques; a
+  /// database upgrading across it needs its FTS rows re-derived in Dart
+  /// (see _reindexAllFts — the text comes from nested doc JSON that SQL
+  /// cannot maintainably re-derive).
+  static const int _ftsWideningVersion = 8;
+
   void _migrate() {
-    var version = _db.select('PRAGMA user_version').first.columnAt(0) as int;
+    final startVersion =
+        _db.select('PRAGMA user_version').first.columnAt(0) as int;
+    var version = startVersion;
     while (version < migrations.length) {
       _db.execute('BEGIN');
       try {
@@ -97,6 +105,24 @@ class SaltDatabase {
       }
       version += 1;
     }
+    if (startVersion < _ftsWideningVersion &&
+        migrations.length >= _ftsWideningVersion) {
+      _reindexAllFts();
+    }
+  }
+
+  /// Re-derives every FTS row from the stored doc JSON. Runs once when an
+  /// existing database upgrades across [_ftsWideningVersion]; on a fresh
+  /// database there are no rows and this is a no-op.
+  void _reindexAllFts() {
+    _inTransaction(() {
+      for (final row in _db.select('SELECT rowid, doc FROM recipes')) {
+        final recipe = RecipeMapper.fromMap(
+          jsonDecode(row['doc'] as String) as Map<String, dynamic>,
+        );
+        _rebuildFts(recipe, row['rowid'] as int);
+      }
+    });
   }
 
   void _inTransaction(void Function() action) {
@@ -304,6 +330,12 @@ class SaltDatabase {
 
   /// Rebuilds the FTS row for a recipe, keyed by the recipes rowid (the FTS
   /// docid) so delete/insert are O(1) rather than a full virtual-table scan.
+  ///
+  /// Subsection content joins the same columns as its top-level counterpart
+  /// (383 of the 1,198 corpus recipes carry subsections — their ingredients
+  /// and steps must be searchable). Subsection titles/body and technique
+  /// headings/descriptions fold into the background column: prose, not
+  /// recipe titles, so they must not skew bm25's title weighting.
   void _rebuildFts(Recipe recipe, int rowid) {
     _prepared('DELETE FROM recipe_fts WHERE rowid = ?').execute([rowid]);
     final tags = [
@@ -312,8 +344,29 @@ class SaltDatabase {
     final ingredients = [
       for (final group in recipe.ingredients)
         for (final line in group.items) line.raw,
+      for (final sub in recipe.subsections)
+        for (final group in sub.ingredients ?? const <IngredientGroup>[])
+          for (final line in group.items) line.raw,
     ].join('\n');
-    final directions = [for (final step in recipe.steps) step.text].join('\n');
+    final directions = [
+      for (final step in recipe.steps) step.text,
+      for (final sub in recipe.subsections)
+        for (final step in sub.steps ?? const <RecipeStep>[]) step.text,
+      for (final technique in recipe.techniques)
+        for (final step in technique.steps)
+          if (step.caption.isNotEmpty) step.caption,
+    ].join('\n');
+    final background = [
+      if ((recipe.background ?? '').isNotEmpty) recipe.background!,
+      for (final sub in recipe.subsections) ...[
+        if ((sub.title ?? '').isNotEmpty) sub.title!,
+        if ((sub.body ?? '').isNotEmpty) sub.body!,
+      ],
+      for (final technique in recipe.techniques) ...[
+        if ((technique.heading ?? '').isNotEmpty) technique.heading!,
+        if ((technique.description ?? '').isNotEmpty) technique.description!,
+      ],
+    ].join('\n');
     _prepared(
       'INSERT INTO recipe_fts '
       '(rowid, recipe_id, title, category, tags, ingredients, directions, '
@@ -328,7 +381,7 @@ class SaltDatabase {
       ingredients,
       directions,
       recipe.notes ?? '',
-      recipe.background ?? '',
+      background,
       recipe.prepNotes ?? '',
     ]);
   }

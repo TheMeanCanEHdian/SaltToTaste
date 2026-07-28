@@ -74,13 +74,34 @@ void main() {
     ).hasMatch(text);
   }
 
+  // These mirror what _rebuildFts indexes (including subsection and
+  // technique content — review B1), independently re-derived from the
+  // decoded documents so the counts don't just restate the implementation.
   String ingredientsText(Recipe recipe) => [
     for (final group in recipe.ingredients)
       for (final line in group.items) line.raw,
+    for (final sub in recipe.subsections)
+      for (final group in sub.ingredients ?? const <IngredientGroup>[])
+        for (final line in group.items) line.raw,
   ].join('\n');
 
-  String directionsText(Recipe recipe) =>
-      [for (final step in recipe.steps) step.text].join('\n');
+  String directionsText(Recipe recipe) => [
+    for (final step in recipe.steps) step.text,
+    for (final sub in recipe.subsections)
+      for (final step in sub.steps ?? const <RecipeStep>[]) step.text,
+    for (final technique in recipe.techniques)
+      for (final step in technique.steps)
+        if (step.caption.isNotEmpty) step.caption,
+  ].join('\n');
+
+  String backgroundText(Recipe recipe) => [
+    recipe.background ?? '',
+    for (final sub in recipe.subsections) ...[sub.title ?? '', sub.body ?? ''],
+    for (final technique in recipe.techniques) ...[
+      technique.heading ?? '',
+      technique.description ?? '',
+    ],
+  ].join('\n');
 
   group('P4 gate: DSL results match grep-derived corpus counts', () {
     test('title:chicken and ingredient:ginger', () {
@@ -112,9 +133,7 @@ void main() {
 
     test('direction:"dutch oven" (phrase)', () {
       final expected = expectedCount(
-        (recipe) => recipe.steps.any(
-          (step) => step.text.toLowerCase().contains('dutch oven'),
-        ),
+        (recipe) => directionsText(recipe).toLowerCase().contains('dutch oven'),
       );
       expect(expected, greaterThan(0));
       expect(search('direction:"dutch oven"').total, expected);
@@ -129,7 +148,7 @@ void main() {
         ingredientsText(recipe),
         directionsText(recipe),
         recipe.notes ?? '',
-        recipe.background ?? '',
+        backgroundText(recipe),
         recipe.prepNotes ?? '',
       ].join('\n');
       final expected = expectedCount(
@@ -154,7 +173,7 @@ void main() {
       // review's FTS-column fix) — a general search must find them.
       final expected = expectedCount(
         (recipe) =>
-            hasWord(recipe.background, 'bloomed') ||
+            hasWord(backgroundText(recipe), 'bloomed') ||
             hasWord(recipe.title, 'bloomed') ||
             hasWord(recipe.prepNotes, 'bloomed') ||
             hasWord(ingredientsText(recipe), 'bloomed') ||
@@ -169,6 +188,54 @@ void main() {
         search('bloomed').total,
         greaterThanOrEqualTo(expected),
       );
+    });
+
+    test('search reaches subsection ingredients (review B1)', () {
+      // "chanterelle" appears in Creamy Mushroom Soup ONLY inside the
+      // "Sautéed Wild Mushrooms" component's ingredient list — the exact
+      // silent miss the review reproduced.
+      final soup = decodedByName['0017-creamy-mushroom-soup.yaml']!;
+      expect(
+        hasWord(
+          [
+            for (final group in soup.ingredients)
+              for (final line in group.items) line.raw,
+          ].join('\n'),
+          'chanterelle',
+        ),
+        isFalse,
+        reason: 'fixture check: the word lives only in a subsection',
+      );
+      expect(hasWord(ingredientsText(soup), 'chanterelle'), isTrue);
+
+      final expected = expectedCount(
+        (recipe) => hasWord(ingredientsText(recipe), 'chanterelle'),
+      );
+      expect(expected, greaterThan(0));
+      expect(
+        search('ingredient:chanterelle').total,
+        greaterThanOrEqualTo(expected),
+        reason: 'porter stemming may only ever add matches',
+      );
+      final slugs = [
+        for (final card in search('chanterelle').items) card.slug,
+      ];
+      expect(slugs, contains(soup.slug));
+    });
+
+    test('direction: reaches subsection steps (review B1)', () {
+      final expected = expectedCount(
+        (recipe) => recipe.subsections.any(
+          (sub) => (sub.steps ?? const []).any(
+            (step) => step.text.toLowerCase().contains('dutch oven'),
+          ),
+        ),
+      );
+      expect(expected, greaterThan(0), reason: 'sanity: corpus has matches');
+      final full = expectedCount(
+        (recipe) => directionsText(recipe).toLowerCase().contains('dutch oven'),
+      );
+      expect(search('direction:"dutch oven"').total, full);
     });
 
     test('calories filter matches nothing until nutrition lands', () {
