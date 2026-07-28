@@ -85,19 +85,23 @@ class Subsection with SubsectionMappable {
     this.title,
     this.kind,
     this.body,
-    this.kindNeedsReview = false,
     this.servings,
     this.prepNotes,
     this.ingredients,
     this.steps,
   });
 
+  // `kind_needs_review` was dropped from the canonical format (review Y4):
+  // extractor workflow state that leaked into the document — 0 of the
+  // corpus's 680 subsections ever set it and nothing read it. dart_mappable
+  // ignores unknown keys, so v1 corpus files and older exports still decode;
+  // the key simply stops being emitted.
+
   final String? title;
 
   /// `variation` | `component` | `unknown`.
   final String? kind;
   final String? body;
-  final bool kindNeedsReview;
   final String? servings;
   final String? prepNotes;
   final List<IngredientGroup>? ingredients;
@@ -193,7 +197,11 @@ class RecipeImages with RecipeImagesMappable {
   /// v2: additional image paths.
   final List<String> gallery;
 
-  /// v2: URL the hero image came from (old app's `imagecredit`).
+  /// Free-text photo attribution, shown as a caption under the hero (detail
+  /// page + PDF). Successor of the old app's `imagecredit`. The editor
+  /// presents it as a plain "Photo credit" field; the image-from-URL flow
+  /// defaults it to the download URL when empty — but it is text, not a URL
+  /// (pinned semantics, review Y6).
   final String? credit;
 }
 

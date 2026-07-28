@@ -55,12 +55,18 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
     found.recipe.id,
     reference: reference,
     role: role,
+    // Default the free-text photo credit to where the photo came from —
+    // only when no credit was ever written (review Y6).
+    creditIfEmpty: url.trim(),
   );
   return Response.json(
     statusCode: 201,
     body: recipeDetailBody(
       result.recipe,
       result.sourceSlug,
+      // Attaching a photo changes the content hash; hand the editor the
+      // fresh one so its next save's precondition holds (review B11).
+      baseHash: db.contentHashOf(result.recipe.id),
       favorite: db.isFavorite(userId: user.id, recipeId: result.recipe.id),
       note: db.noteFor(userId: user.id, recipeId: result.recipe.id),
     ),

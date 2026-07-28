@@ -119,7 +119,6 @@ final class EditorSubsection {
     this.key, {
     this.title = '',
     this.kind = 'variation',
-    this.kindNeedsReview = false,
     this.body = '',
     this.servings = '',
     this.prepNotes = '',
@@ -139,7 +138,6 @@ final class EditorSubsection {
 
   /// Whether the kind was auto-guessed and still awaits human confirmation
   /// (drives the review queue). Cleared when the user picks a kind.
-  final bool kindNeedsReview;
   final String body;
   final String servings;
   final String prepNotes;
@@ -158,7 +156,6 @@ final class EditorSubsection {
   EditorSubsection copyWith({
     String? title,
     String? kind,
-    bool? kindNeedsReview,
     String? body,
     String? servings,
     String? prepNotes,
@@ -171,7 +168,6 @@ final class EditorSubsection {
     key,
     title: title ?? this.title,
     kind: kind ?? this.kind,
-    kindNeedsReview: kindNeedsReview ?? this.kindNeedsReview,
     body: body ?? this.body,
     servings: servings ?? this.servings,
     prepNotes: prepNotes ?? this.prepNotes,
@@ -877,7 +873,7 @@ class EditorCubit extends Cubit<EditorState> {
       _mutateSub(key, (s) => s.copyWith(title: value));
   // Picking a kind clears the auto-guess review flag — a human has classified it.
   void setSubsectionKind(int key, String kind) =>
-      _mutateSub(key, (s) => s.copyWith(kind: kind, kindNeedsReview: false));
+      _mutateSub(key, (s) => s.copyWith(kind: kind));
   void setSubsectionBody(int key, String value) =>
       _mutateSub(key, (s) => s.copyWith(body: value));
   void setSubsectionServings(int key, String value) =>

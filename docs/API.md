@@ -231,7 +231,10 @@ image; `role=gallery` appends. → `201` detail body.
 `{"url": "https://…", "role": "hero" | "gallery"}` — downloads a photo into
 the library. SSRF-guarded: http/https only, every resolved address must be
 public, redirects are re-validated per hop, response must be a real image
-(content-type **and** magic bytes), size/time capped. → `201` detail body.
+(content-type **and** magic bytes), size/time capped. When the recipe has no
+photo credit yet, `images.credit` (free-text attribution, shown under the
+hero) defaults to the download URL; an existing credit is never touched.
+→ `201` detail body.
 
 ### `POST /api/v1/recipes/{idOrSlug}/images/store` (admin, full scope)
 

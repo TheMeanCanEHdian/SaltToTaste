@@ -695,14 +695,6 @@ class SubsectionMapper extends ClassMapperBase<Subsection> {
     _$body,
     opt: true,
   );
-  static bool _$kindNeedsReview(Subsection v) => v.kindNeedsReview;
-  static const Field<Subsection, bool> _f$kindNeedsReview = Field(
-    'kindNeedsReview',
-    _$kindNeedsReview,
-    key: r'kind_needs_review',
-    opt: true,
-    def: false,
-  );
   static String? _$servings(Subsection v) => v.servings;
   static const Field<Subsection, String> _f$servings = Field(
     'servings',
@@ -734,7 +726,6 @@ class SubsectionMapper extends ClassMapperBase<Subsection> {
     #title: _f$title,
     #kind: _f$kind,
     #body: _f$body,
-    #kindNeedsReview: _f$kindNeedsReview,
     #servings: _f$servings,
     #prepNotes: _f$prepNotes,
     #ingredients: _f$ingredients,
@@ -746,7 +737,6 @@ class SubsectionMapper extends ClassMapperBase<Subsection> {
       title: data.dec(_f$title),
       kind: data.dec(_f$kind),
       body: data.dec(_f$body),
-      kindNeedsReview: data.dec(_f$kindNeedsReview),
       servings: data.dec(_f$servings),
       prepNotes: data.dec(_f$prepNotes),
       ingredients: data.dec(_f$ingredients),
@@ -826,7 +816,6 @@ abstract class SubsectionCopyWith<$R, $In extends Subsection, $Out>
     String? title,
     String? kind,
     String? body,
-    bool? kindNeedsReview,
     String? servings,
     String? prepNotes,
     List<IngredientGroup>? ingredients,
@@ -870,7 +859,6 @@ class _SubsectionCopyWithImpl<$R, $Out>
     Object? title = $none,
     Object? kind = $none,
     Object? body = $none,
-    bool? kindNeedsReview,
     Object? servings = $none,
     Object? prepNotes = $none,
     Object? ingredients = $none,
@@ -880,7 +868,6 @@ class _SubsectionCopyWithImpl<$R, $Out>
       if (title != $none) #title: title,
       if (kind != $none) #kind: kind,
       if (body != $none) #body: body,
-      if (kindNeedsReview != null) #kindNeedsReview: kindNeedsReview,
       if (servings != $none) #servings: servings,
       if (prepNotes != $none) #prepNotes: prepNotes,
       if (ingredients != $none) #ingredients: ingredients,
@@ -892,7 +879,6 @@ class _SubsectionCopyWithImpl<$R, $Out>
     title: data.get(#title, or: $value.title),
     kind: data.get(#kind, or: $value.kind),
     body: data.get(#body, or: $value.body),
-    kindNeedsReview: data.get(#kindNeedsReview, or: $value.kindNeedsReview),
     servings: data.get(#servings, or: $value.servings),
     prepNotes: data.get(#prepNotes, or: $value.prepNotes),
     ingredients: data.get(#ingredients, or: $value.ingredients),

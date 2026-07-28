@@ -20,8 +20,7 @@ import 'package:salt_app/features/nutrition/nutrition_label.dart';
 import 'package:salt_app/features/recipes/detail/recipe_detail_cubit.dart';
 import 'package:salt_app/features/recipes/detail/view_yaml_dialog.dart';
 import 'package:salt_app/features/recipes/pdf/pdf_tab_io.dart'
-    if (dart.library.js_interop)
-        'package:salt_app/features/recipes/pdf/pdf_tab_web.dart';
+    if (dart.library.js_interop) 'package:salt_app/features/recipes/pdf/pdf_tab_web.dart';
 import 'package:salt_app/features/recipes/pdf/recipe_pdf.dart';
 
 /// The recipe detail page (approved P2 design: two-column header on wide
@@ -174,12 +173,17 @@ class _Header extends StatelessWidget {
     final hero = detail.heroImageUrl == null
         ? null
         : _HeroImage(detail: detail);
+    final credit = detail.recipe.images.credit?.trim();
+    final creditLine = (hero != null && credit != null && credit.isNotEmpty)
+        ? _PhotoCredit(credit)
+        : null;
     if (!wide) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (hero != null) ...[
             AspectRatio(aspectRatio: 16 / 10, child: hero),
+            if (creditLine != null) ...[const SizedBox(height: 5), creditLine],
             const SizedBox(height: 18),
           ],
           info,
@@ -212,6 +216,10 @@ class _Header extends StatelessWidget {
             children: [
               if (hero != null) ...[
                 AspectRatio(aspectRatio: 4 / 3, child: hero),
+                if (creditLine != null) ...[
+                  const SizedBox(height: 5),
+                  creditLine,
+                ],
                 const SizedBox(height: 16),
               ],
               // The right rail (approved P6 design): the FDA label lives
@@ -473,6 +481,22 @@ class _MyNotesCardState extends State<_MyNotesCard> {
       ),
     );
   }
+}
+
+/// Free-text photo attribution under the hero (the `images.credit` field —
+/// finally rendered; it was write-only before review Y6).
+class _PhotoCredit extends StatelessWidget {
+  const _PhotoCredit(this.credit);
+
+  final String credit;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    'Photo: $credit',
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: const TextStyle(fontSize: 11.5, color: SaltColors.muted),
+  );
 }
 
 class _HeroImage extends StatelessWidget {

@@ -167,17 +167,25 @@ EditResult attachRecipeImage(
   String key, {
   required String reference,
   required String role,
+  String? creditIfEmpty,
 }) {
   requireImageRole(role);
   final existing = db.recipeByIdOrSlug(key);
   if (existing == null) {
     throw NotFoundException('recipe not found: $key');
   }
-  final images = role == 'hero'
+  var images = role == 'hero'
       ? existing.recipe.images.copyWith(hero: reference)
       : existing.recipe.images.copyWith(
           gallery: [...existing.recipe.images.gallery, reference],
         );
+  // A web-fetched photo defaults the free-text credit to its download URL —
+  // but only when no credit was ever written; an authored credit is never
+  // touched (review Y6).
+  if (creditIfEmpty != null &&
+      (existing.recipe.images.credit?.trim() ?? '').isEmpty) {
+    images = images.copyWith(credit: creditIfEmpty);
+  }
   final previousHash = db.contentHashOf(existing.recipe.id);
   final recipe = existing.recipe.copyWith(images: images);
   _validateRecipe(recipe);
