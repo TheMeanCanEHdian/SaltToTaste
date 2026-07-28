@@ -17,6 +17,61 @@ import 'support/corpus.dart';
 /// A client submission is built from the real document's editable fields —
 /// exactly what the editor will send after loading the recipe.
 void main() {
+  // Pure request-validation pins — no corpus data involved, so they run
+  // everywhere (CI included). They once sat behind the whole-file corpus
+  // gate and never ran there (review T1). Synthesized bodies: negative-path
+  // inputs the corpus cannot produce.
+  group('validation (corpus-free)', () {
+    late Directory validationDir;
+    late ServerConfig validationConfig;
+    late SaltDatabase validationDb;
+
+    setUpAll(() {
+      validationDir = Directory.systemTemp.createTempSync('salt-edit-val');
+      validationConfig = ServerConfig(
+        dataDir: validationDir.path,
+        logLevel: Level.WARNING,
+        trustProxy: false,
+      );
+      validationDb = SaltDatabase.open(validationConfig.dbPath);
+    });
+
+    tearDownAll(() {
+      validationDb.dispose();
+      validationDir.deleteSync(recursive: true);
+    });
+
+    test('rejects a missing title', () {
+      expect(
+        () => createRecipe(validationDb, validationConfig, {
+          'servings': 'SERVES 4',
+        }),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('rejects a malformed ingredient shape with a 422, not a 500', () {
+      expect(
+        () => createRecipe(validationDb, validationConfig, {
+          'title': 'Broken',
+          // A mapping where the schema requires a list of groups.
+          'ingredients': {'items': 'nope'},
+        }),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('rejects an image path that escapes the library', () {
+      expect(
+        () => createRecipe(validationDb, validationConfig, {
+          'title': 'Sneaky',
+          'images': {'hero': '../../etc/passwd'},
+        }),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+  });
+
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
@@ -94,34 +149,6 @@ void main() {
       expect(report.updatedFromDisk, isEmpty);
       expect(report.added, isEmpty);
       expect(report.skipped, isEmpty);
-    });
-
-    test('rejects a missing title', () {
-      expect(
-        () => createRecipe(db, config, {'servings': 'SERVES 4'}),
-        throwsA(isA<ValidationException>()),
-      );
-    });
-
-    test('rejects a malformed ingredient shape with a 422, not a 500', () {
-      expect(
-        () => createRecipe(db, config, {
-          'title': 'Broken',
-          // A mapping where the schema requires a list of groups.
-          'ingredients': {'items': 'nope'},
-        }),
-        throwsA(isA<ValidationException>()),
-      );
-    });
-
-    test('rejects an image path that escapes the library', () {
-      expect(
-        () => createRecipe(db, config, {
-          'title': 'Sneaky',
-          'images': {'hero': '../../etc/passwd'},
-        }),
-        throwsA(isA<ValidationException>()),
-      );
     });
 
     group('update', () {
@@ -287,6 +314,92 @@ void main() {
           throwsA(isA<NotFoundException>()),
         );
       });
+    });
+  });
+
+  group('hand-set serves survives unrelated edits (review B9/Y1)', () {
+    test('a category edit keeps a scan-imported serves; a servings edit '
+        're-derives', () {
+      // A real yield-only recipe: its servings text parses to no count, so
+      // any stored serves can only be a hand-set override.
+      final vinaigrette = loadCorpusRecipe('0038-foolproof-vinaigrette.yaml');
+      expect(vinaigrette.serves, isNull, reason: 'yield-only fixture');
+      final doc = vinaigrette.toMap();
+      final created = createRecipe(db, config, {
+        for (final key in editableRecipeKeys)
+          if (doc.containsKey(key)) key: doc[key],
+      }).recipe;
+      expect(created.serves, isNull);
+
+      // The library scan imports a hand-edited file verbatim ("file wins");
+      // simulate its upsert of a hand-set serves on this yield-only recipe.
+      final handEdited = created.copyWith(
+        serves: const Serves(min: 8, max: 8),
+      );
+      db.upsertRecipe(
+        handEdited,
+        sourceSlug: manualSourceSlug,
+        contentHash: contentHashOfText(RecipeYamlCodec.encode(handEdited)),
+      );
+
+      final updated = updateRecipe(db, config, created.id, {
+        'category': 'Dressings',
+      }).recipe;
+      expect(
+        updated.serves?.min,
+        8,
+        reason: 'an unrelated edit must not revert the hand-set value',
+      );
+
+      final rederived = updateRecipe(db, config, created.id, {
+        'servings': 'SERVES 4',
+      }).recipe;
+      expect(
+        rederived.serves?.min,
+        4,
+        reason: 'editing the servings text itself re-derives',
+      );
+
+      deleteRecipe(db, config, created.id);
+    });
+  });
+
+  group('step numbering (review B4)', () {
+    test('a save preserves meaningful duplicate step numbers', () {
+      // 0485-steak-fajitas encodes the book's alternate branches as two
+      // steps sharing a number (charcoal step 2 vs gas step 2). A routine
+      // save must not linearize that run — ~103 corpus recipes carry one.
+      final fajitas = loadCorpusRecipe('0485-steak-fajitas.yaml');
+      final authored = [for (final step in fajitas.steps) step.number];
+      expect(
+        authored,
+        isNot([for (var i = 1; i <= authored.length; i++) i]),
+        reason: 'the fixture really is non-sequential',
+      );
+
+      final doc = fajitas.toMap();
+      final result = createRecipe(db, config, {
+        for (final key in editableRecipeKeys)
+          if (doc.containsKey(key)) key: doc[key],
+      });
+      expect(
+        [for (final step in result.recipe.steps) step.number],
+        authored,
+      );
+      deleteRecipe(db, config, result.recipe.id);
+    });
+
+    test('a broken numbering is still normalized to 1..n', () {
+      // Synthesized negative path: no corpus recipe carries a gapped run.
+      final result = createRecipe(db, config, {
+        'title': 'Gapped numbering',
+        'steps': [
+          {'number': 3, 'text': 'first'},
+          {'number': 9, 'text': 'second'},
+        ],
+      });
+      expect([for (final step in result.recipe.steps) step.number], [1, 2]);
+      deleteRecipe(db, config, result.recipe.id);
     });
   });
 }

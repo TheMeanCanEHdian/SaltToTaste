@@ -17,6 +17,41 @@ Recipe _load(String fileName) => loadCorpusRecipe(fileName);
 String _hashOf(Recipe recipe) => contentHashOf(recipe);
 
 void main() {
+  // Pure parameter validation — no corpus, runs everywhere (CI included).
+  // It once sat behind the whole-file corpus gate and never ran there
+  // (review T1).
+  group('parseListParams', () {
+    test('defaults to page 1 / limit 24', () {
+      expect(parseListParams(const {}), (page: 1, limit: 24));
+    });
+
+    test('accepts explicit values within bounds', () {
+      expect(
+        parseListParams(const {'page': '3', 'limit': '100'}),
+        (page: 3, limit: 100),
+      );
+      expect(parseListParams(const {'limit': '1'}).limit, 1);
+    });
+
+    test('rejects non-integer, zero, negative, and oversized values', () {
+      for (final query in [
+        const {'page': 'abc'},
+        const {'page': '0'},
+        const {'page': '-1'},
+        const {'page': ''},
+        const {'limit': 'abc'},
+        const {'limit': '0'},
+        const {'limit': '101'},
+      ]) {
+        expect(
+          () => parseListParams(query),
+          throwsA(isA<ValidationException>()),
+          reason: 'query $query should be rejected',
+        );
+      }
+    });
+  });
+
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
@@ -66,38 +101,6 @@ void main() {
   tearDown(() {
     db.dispose();
     tempDir.deleteSync(recursive: true);
-  });
-
-  group('parseListParams', () {
-    test('defaults to page 1 / limit 24', () {
-      expect(parseListParams(const {}), (page: 1, limit: 24));
-    });
-
-    test('accepts explicit values within bounds', () {
-      expect(
-        parseListParams(const {'page': '3', 'limit': '100'}),
-        (page: 3, limit: 100),
-      );
-      expect(parseListParams(const {'limit': '1'}).limit, 1);
-    });
-
-    test('rejects non-integer, zero, negative, and oversized values', () {
-      for (final query in [
-        const {'page': 'abc'},
-        const {'page': '0'},
-        const {'page': '-1'},
-        const {'page': ''},
-        const {'limit': 'abc'},
-        const {'limit': '0'},
-        const {'limit': '101'},
-      ]) {
-        expect(
-          () => parseListParams(query),
-          throwsA(isA<ValidationException>()),
-          reason: 'query $query should be rejected',
-        );
-      }
-    });
   });
 
   group('listRecipes', () {

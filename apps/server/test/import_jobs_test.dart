@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/services/backup_service.dart';
 import 'package:salt_server/src/services/import_job.dart';
 import 'package:salt_server/src/services/legacy_import.dart';
 import 'package:test/test.dart';
@@ -13,7 +14,114 @@ import 'support/corpus.dart';
 /// P7 import-job tests against REAL data: two corpus files as a v1 source
 /// root and the legacy app's shipped sample as a v0 root, both placed
 /// inside the allowlisted import directory.
+///
+/// Path-containment and job-machinery pins are corpus-free and run
+/// everywhere (CI included) — a whole-file corpus gate once skipped them
+/// there (review T1). Their directory shapes are synthesized: filesystem
+/// layout, not recipe content.
 void main() {
+  /// Waits for [jobId] to reach a terminal row AND for its isolate to exit.
+  ///
+  /// The terminal row is written from inside the isolate, which then disposes
+  /// its connection and exits; only once it has does the single-flight latch
+  /// clear. So a terminal status alone does not mean the next import can
+  /// start, and a re-run fired on the row alone races the latch.
+  Future<Map<String, Object?>> awaitJob(SaltDatabase db, int jobId) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 30));
+    while (true) {
+      final job = db.importJob(jobId)!;
+      if (job['status'] != 'running' && !importJobRunning) {
+        return job;
+      }
+      if (DateTime.now().isAfter(deadline)) {
+        fail('import job $jobId still running after 30s: $job');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+  }
+
+  group('corpus-free import machinery', () {
+    late Directory freeDir;
+    late ServerConfig freeConfig;
+    late SaltDatabase freeDb;
+
+    setUpAll(() {
+      freeDir = Directory.systemTemp.createTempSync('salt_import_free_');
+      freeConfig = ServerConfig(
+        dataDir: freeDir.path,
+        logLevel: Level.WARNING,
+        trustProxy: false,
+      );
+      Directory(freeConfig.libraryDir).createSync(recursive: true);
+      Directory(freeConfig.importDir).createSync(recursive: true);
+      freeDb = SaltDatabase.open(freeConfig.dbPath);
+      // A directory with a space in its name, like the real corpus root.
+      Directory(
+        '${freeConfig.importDir}/sample dir/recipes',
+      ).createSync(recursive: true);
+    });
+
+    tearDownAll(() {
+      freeDb.dispose();
+      freeDir.deleteSync(recursive: true);
+    });
+
+    test('containment: traversal, outside paths, and symlink escapes', () {
+      // A sibling directory outside the allowlist root.
+      final outside = Directory('${freeDir.path}/outside')..createSync();
+      expect(
+        () => resolveImportPath(freeConfig, '../outside'),
+        throwsA(isA<ValidationException>()),
+      );
+      expect(
+        () => resolveImportPath(freeConfig, outside.path),
+        throwsA(isA<ValidationException>()),
+      );
+      expect(
+        () => resolveImportPath(freeConfig, ''),
+        throwsA(isA<ValidationException>()),
+      );
+      expect(
+        () => resolveImportPath(freeConfig, 'does-not-exist'),
+        throwsA(isA<ValidationException>()),
+      );
+      // A symlink INSIDE the import dir pointing OUTSIDE must not pass.
+      Link('${freeConfig.importDir}/sneaky').createSync(outside.path);
+      expect(
+        () => resolveImportPath(freeConfig, 'sneaky'),
+        throwsA(isA<ValidationException>()),
+      );
+      // The happy path resolves (spaces included — the real corpus name has
+      // them).
+      expect(
+        resolveImportPath(freeConfig, 'sample dir'),
+        startsWith(
+          Directory(freeConfig.importDir).resolveSymbolicLinksSync(),
+        ),
+      );
+    });
+
+    test('a nonexistent recipes dir fails the JOB, not silently', () async {
+      final empty = Directory('${freeConfig.importDir}/empty')..createSync();
+      final path = resolveImportPath(freeConfig, 'empty');
+      final job = await awaitJob(
+        freeDb,
+        startImportJob(freeDb, freeConfig, path: path)!,
+      );
+      expect(job['status'], 'failed');
+      expect('${job['log']}', contains('recipes'));
+      expect(empty.existsSync(), isTrue);
+    });
+
+    test('boot reconciliation fails orphaned running jobs', () {
+      final orphan = freeDb.createImportJob(sourcePath: '/x', legacy: false);
+      expect(freeDb.failOrphanedImportJobs(), 1);
+      final job = freeDb.importJob(orphan)!;
+      expect(job['status'], 'failed');
+      expect('${job['log']}', contains('interrupted'));
+    });
+  });
+
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
@@ -44,26 +152,6 @@ void main() {
         File('$to/$relative').parent.createSync(recursive: true);
         entity.copySync('$to/$relative');
       }
-    }
-  }
-
-  /// Waits for [jobId] to reach a terminal row AND for its isolate to exit.
-  ///
-  /// The terminal row is written from inside the isolate, which then disposes
-  /// its connection and exits; only once it has does the single-flight latch
-  /// clear. So a terminal status alone does not mean the next import can
-  /// start, and a re-run fired on the row alone races the latch.
-  Future<Map<String, Object?>> awaitJob(int jobId) async {
-    final deadline = DateTime.now().add(const Duration(seconds: 30));
-    while (true) {
-      final job = db.importJob(jobId)!;
-      if (job['status'] != 'running' && !importJobRunning) {
-        return job;
-      }
-      if (DateTime.now().isAfter(deadline)) {
-        fail('import job $jobId still running after 30s: $job');
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 50));
     }
   }
 
@@ -106,39 +194,6 @@ void main() {
     expect(byPath['legacy-sample']!.fileCount, greaterThan(0));
   });
 
-  test('containment: traversal, outside paths, and symlink escapes', () {
-    // A sibling directory outside the allowlist root.
-    final outside = Directory('${tempDir.path}/outside')..createSync();
-    expect(
-      () => resolveImportPath(config, '../outside'),
-      throwsA(isA<ValidationException>()),
-    );
-    expect(
-      () => resolveImportPath(config, outside.path),
-      throwsA(isA<ValidationException>()),
-    );
-    expect(
-      () => resolveImportPath(config, ''),
-      throwsA(isA<ValidationException>()),
-    );
-    expect(
-      () => resolveImportPath(config, 'does-not-exist'),
-      throwsA(isA<ValidationException>()),
-    );
-    // A symlink INSIDE the import dir pointing OUTSIDE must not pass.
-    Link('${config.importDir}/sneaky').createSync(outside.path);
-    expect(
-      () => resolveImportPath(config, 'sneaky'),
-      throwsA(isA<ValidationException>()),
-    );
-    // The happy path resolves (spaces included — the real corpus name has
-    // them).
-    expect(
-      resolveImportPath(config, 'corpus sample'),
-      startsWith(Directory(config.importDir).resolveSymbolicLinksSync()),
-    );
-  });
-
   test('a v1 import runs to done and is idempotent on re-run', () async {
     final path = resolveImportPath(config, 'corpus sample');
     final jobId = startImportJob(db, config, path: path)!;
@@ -146,11 +201,20 @@ void main() {
     // Single flight: a second start while running returns null.
     expect(startImportJob(db, config, path: path), isNull);
 
-    final job = await awaitJob(jobId);
+    final job = await awaitJob(db, jobId);
     expect(job['status'], 'done', reason: '$job');
     expect(job['total'], 2);
     expect(job['imported'], 2);
     expect(job['legacy'], false);
+    // The documented safety net (review B10): starting an import takes a
+    // before-import backup, so changed files overwriting hand-tuned
+    // recipes stay recoverable.
+    expect(
+      Directory(backupsDir(config)).listSync().whereType<File>().where(
+        (file) => file.path.endsWith('-before-import.tar.gz'),
+      ),
+      isNotEmpty,
+    );
     expect(
       db.recipeByIdOrSlug('rich-chocolate-bundt-cake'),
       isNotNull,
@@ -169,7 +233,7 @@ void main() {
     );
 
     // Idempotent: unchanged files skip.
-    final second = await awaitJob(startImportJob(db, config, path: path)!);
+    final second = await awaitJob(db, startImportJob(db, config, path: path)!);
     expect(second['status'], 'done');
     expect(second['skipped'], 2);
     expect(second['imported'], 0);
@@ -178,7 +242,7 @@ void main() {
   test('a legacy v0 import auto-detects and maps to schema v2', () async {
     final path = resolveImportPath(config, 'legacy-sample');
     expect(looksLikeLegacyRoot(path), isTrue);
-    final job = await awaitJob(startImportJob(db, config, path: path)!);
+    final job = await awaitJob(db, startImportJob(db, config, path: path)!);
     expect(job['status'], 'done', reason: '$job');
     expect(job['legacy'], true);
     expect(job['imported'], greaterThan(0));
@@ -192,22 +256,5 @@ void main() {
     expect(imported, isNotEmpty, reason: 'legacy recipes land with v0- ids');
     final detail = db.recipeByIdOrSlug(imported.first.id)!;
     expect(detail.recipe.source.type, 'legacy-v0');
-  });
-
-  test('a nonexistent recipes dir fails the JOB, not silently', () async {
-    final empty = Directory('${config.importDir}/empty')..createSync();
-    final path = resolveImportPath(config, 'empty');
-    final job = await awaitJob(startImportJob(db, config, path: path)!);
-    expect(job['status'], 'failed');
-    expect('${job['log']}', contains('recipes'));
-    expect(empty.existsSync(), isTrue);
-  });
-
-  test('boot reconciliation fails orphaned running jobs', () {
-    final orphan = db.createImportJob(sourcePath: '/x', legacy: false);
-    expect(db.failOrphanedImportJobs(), 1);
-    final job = db.importJob(orphan)!;
-    expect(job['status'], 'failed');
-    expect('${job['log']}', contains('interrupted'));
   });
 }

@@ -17,6 +17,31 @@ import 'support/corpus.dart';
 /// snapshot, images stay out unless asked for, retention prunes, and the
 /// download-name check refuses traversal.
 void main() {
+  // Pure name-containment pin — no corpus, no filesystem; runs everywhere
+  // (CI included). It once sat behind the whole-file corpus gate and never
+  // ran there (review T1). Crafted hostile names: negative-path inputs.
+  test('backupPathFor refuses names that do not match the pattern', () {
+    final freeDir = Directory.systemTemp.createTempSync('salt_backup_free_');
+    addTearDown(() => freeDir.deleteSync(recursive: true));
+    final freeConfig = ServerConfig(
+      dataDir: freeDir.path,
+      logLevel: Level.WARNING,
+      trustProxy: false,
+    );
+    for (final name in [
+      '../salt.db',
+      'salt-backup-20260715T091423-manual.tar.gz/../../x',
+      r'salt-backup-20260715T091423-manual.tar.gz\evil',
+      'notabackup.tar.gz',
+    ]) {
+      expect(
+        () => backupPathFor(freeConfig, name),
+        throwsA(isA<Exception>()),
+        reason: '"$name" must be rejected',
+      );
+    }
+  });
+
   // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
   // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
   if (!corpusAvailable) {
@@ -145,20 +170,5 @@ void main() {
     final second = createBackup(db: db, config: config, trigger: 'manual');
     expect(first, isNot(second));
     expect(backupNamePattern.hasMatch(second), isTrue);
-  });
-
-  test('backupPathFor refuses names that do not match the pattern', () {
-    for (final name in [
-      '../salt.db',
-      'salt-backup-20260715T091423-manual.tar.gz/../../x',
-      r'salt-backup-20260715T091423-manual.tar.gz\evil',
-      'notabackup.tar.gz',
-    ]) {
-      expect(
-        () => backupPathFor(config, name),
-        throwsA(isA<Exception>()),
-        reason: '"$name" must be rejected',
-      );
-    }
   });
 }

@@ -122,41 +122,66 @@ void main() {
               '(${worstText?.length} chars)',
         );
       });
-
-      test('shapes that cannot fit a page are sent to the spanning layout', () {
-        // Each of these reached the hang band when a char-count gate wrongly
-        // routed it to the Row.
-        expect(bound('a\n' * 44), greaterThan(43), reason: '44 hard breaks');
-        expect(
-          bound(
-            List.generate(
-              44,
-              (i) => 'Step detail line $i, keep going',
-            ).join('\n'),
-          ),
-          greaterThan(43),
-          reason: 'a realistic 44-line checklist, only 1,397 chars',
-        );
-        expect(
-          bound(('MMM ' * 700).trim()),
-          greaterThan(43),
-          reason: 'wide glyphs',
-        );
-        expect(
-          bound(('stir the pot ' * 769).trim()),
-          greaterThan(43),
-          reason: 'an API-legal 10,000-char step',
-        );
-        // A word wider than half the column makes the half-full argument false,
-        // so the bound must refuse to certify it rather than guess.
-        expect(
-          bound('W' * 3000),
-          isNull,
-          reason: 'one unbreakable 3,000-char word',
-        );
-      });
     },
   );
+
+  // The direct regression pin for the shipped badge-stranding/page-split bug
+  // ("caps must compose"): 100% synthetic shapes, so it must run everywhere,
+  // CI included — it once sat inside the corpus-gated group above only
+  // because that group's FIRST test iterates the corpus (review T2).
+  group('step layout: spanning shapes (corpus-free pin)', () {
+    late PdfFont font;
+    final columnWidth = PdfPageFormat.letter.width - PdfPageFormat.inch - 24;
+    const fontSize = 10.4; // _stepStyle
+
+    setUpAll(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final doc = pw.Document();
+      font = pw.Font.ttf(
+        await rootBundle.load('assets/fonts/OpenSans-Regular.ttf'),
+      ).getFont(pw.Context(document: doc.document));
+    });
+
+    int? bound(String text) => stepLineBound(
+      font: font,
+      fontSize: fontSize,
+      text: text,
+      columnWidth: columnWidth,
+    );
+
+    test('shapes that cannot fit a page are sent to the spanning layout', () {
+      // Each of these reached the hang band when a char-count gate wrongly
+      // routed it to the Row.
+      expect(bound('a\n' * 44), greaterThan(43), reason: '44 hard breaks');
+      expect(
+        bound(
+          List.generate(
+            44,
+            (i) => 'Step detail line $i, keep going',
+          ).join('\n'),
+        ),
+        greaterThan(43),
+        reason: 'a realistic 44-line checklist, only 1,397 chars',
+      );
+      expect(
+        bound(('MMM ' * 700).trim()),
+        greaterThan(43),
+        reason: 'wide glyphs',
+      );
+      expect(
+        bound(('stir the pot ' * 769).trim()),
+        greaterThan(43),
+        reason: 'an API-legal 10,000-char step',
+      );
+      // A word wider than half the column makes the half-full argument false,
+      // so the bound must refuse to certify it rather than guess.
+      expect(
+        bound('W' * 3000),
+        isNull,
+        reason: 'one unbreakable 3,000-char word',
+      );
+    });
+  });
 
   group('recipe PDF', skip: skipIfNoCorpus, () {
     // A plain single-section recipe.

@@ -12,20 +12,13 @@ import 'support/corpus.dart';
 /// P5 image-ingest tests: magic-byte sniffing against a real corpus photo,
 /// the streaming size cap, server-generated names, and the SSRF guards
 /// (private/loopback hosts are rejected before any connection is made).
+///
+/// Only the tests that READ corpus files sit behind the corpus gate — the
+/// URL-guard, signature, and cap regression pins run everywhere, CI
+/// included. A whole-file gate once skipped all of them there (review T1).
 void main() {
-  // Corpus-backed integration tests: skip (not fail) when the ATK corpus is
-  // absent — e.g. CI — so `dart test` stays green. Set SALT_CORPUS_DIR to run.
-  if (!corpusAvailable) {
-    test(
-      'corpus-backed tests (skipped: corpus absent)',
-      () {},
-      skip: 'ATK corpus not present; set SALT_CORPUS_DIR',
-    );
-    return;
-  }
   late Directory tempDir;
   late ServerConfig config;
-  late Uint8List heroJpeg;
 
   setUpAll(() {
     tempDir = Directory.systemTemp.createTempSync('salt-image-test');
@@ -34,81 +27,50 @@ void main() {
       logLevel: Level.WARNING,
       trustProxy: false,
     );
-    heroJpeg = File(
-      '$corpusImagesDir/0857-rich-chocolate-bundt-cake-hero.jpg',
-    ).readAsBytesSync();
   });
 
   tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-  group('sniffImage', () {
-    test('identifies a real corpus JPEG', () {
-      final sniffed = sniffImage(heroJpeg);
-      expect(sniffed, isNotNull);
-      expect(sniffed!.extension, 'jpg');
-      expect(sniffed.mimeType, 'image/jpeg');
-    });
-
-    test('identifies PNG and WebP signatures', () {
-      // Synthesized headers: negative/limits inputs that cannot come from
-      // the corpus (it only ships JPEGs).
-      final png = Uint8List.fromList([
-        0x89,
-        0x50,
-        0x4E,
-        0x47,
-        0x0D,
-        0x0A,
-        0x1A,
-        0x0A,
-        0,
-        0,
-        0,
-        0,
-      ]);
-      expect(sniffImage(png)?.extension, 'png');
-      final webp = Uint8List.fromList([
-        ...'RIFF'.codeUnits,
-        0,
-        0,
-        0,
-        0,
-        ...'WEBP'.codeUnits,
-      ]);
-      expect(sniffImage(webp)?.extension, 'webp');
-    });
-
-    test('rejects a YAML file posing as an image', () {
-      final yamlBytes = File(
-        '$corpusRecipesDir/0857-rich-chocolate-bundt-cake.yaml',
-      ).readAsBytesSync();
-      expect(sniffImage(yamlBytes), isNull);
-    });
+  test('sniffImage identifies PNG and WebP signatures', () {
+    // Synthesized headers: negative/limits inputs that cannot come from
+    // the corpus (it only ships JPEGs).
+    final png = Uint8List.fromList([
+      0x89,
+      0x50,
+      0x4E,
+      0x47,
+      0x0D,
+      0x0A,
+      0x1A,
+      0x0A,
+      0,
+      0,
+      0,
+      0,
+    ]);
+    expect(sniffImage(png)?.extension, 'png');
+    final webp = Uint8List.fromList([
+      ...'RIFF'.codeUnits,
+      0,
+      0,
+      0,
+      0,
+      ...'WEBP'.codeUnits,
+    ]);
+    expect(sniffImage(webp)?.extension, 'webp');
   });
 
   test('collectImageBytes enforces the cap while streaming', () async {
+    // A synthetic filler chunk: this is a size-limits input (content never
+    // matters to the cap), which the corpus cannot produce.
+    final chunk = Uint8List(1024 * 1024);
     final oversized = Stream<List<int>>.fromIterable([
-      for (var i = 0; i <= maxImageBytes ~/ heroJpeg.length + 1; i += 1)
-        heroJpeg,
+      for (var i = 0; i <= maxImageBytes ~/ chunk.length + 1; i += 1) chunk,
     ]);
     await expectLater(
       collectImageBytes(oversized),
       throwsA(isA<ValidationException>()),
     );
-  });
-
-  test('saveRecipeImage stores under a server-generated safe name', () {
-    final reference = saveRecipeImage(
-      config: config,
-      sourceSlug: 'my-recipes',
-      recipeId: 'manual-20260715-test-recipe',
-      bytes: heroJpeg,
-    );
-    expect(reference, startsWith('images/manual-20260715-test-recipe-'));
-    expect(reference, endsWith('.jpg'));
-    final stored = File('${config.libraryDir}/my-recipes/$reference');
-    expect(stored.existsSync(), isTrue);
-    expect(stored.lengthSync(), heroJpeg.length);
   });
 
   test('saveRecipeImage rejects non-image bytes', () {
@@ -153,5 +115,43 @@ void main() {
         );
       });
     }
+  });
+
+  group('against the real corpus photo', skip: skipIfNoCorpus, () {
+    late Uint8List heroJpeg;
+
+    setUpAll(() {
+      heroJpeg = File(
+        '$corpusImagesDir/0857-rich-chocolate-bundt-cake-hero.jpg',
+      ).readAsBytesSync();
+    });
+
+    test('sniffImage identifies a real corpus JPEG', () {
+      final sniffed = sniffImage(heroJpeg);
+      expect(sniffed, isNotNull);
+      expect(sniffed!.extension, 'jpg');
+      expect(sniffed.mimeType, 'image/jpeg');
+    });
+
+    test('sniffImage rejects a YAML file posing as an image', () {
+      final yamlBytes = File(
+        '$corpusRecipesDir/0857-rich-chocolate-bundt-cake.yaml',
+      ).readAsBytesSync();
+      expect(sniffImage(yamlBytes), isNull);
+    });
+
+    test('saveRecipeImage stores under a server-generated safe name', () {
+      final reference = saveRecipeImage(
+        config: config,
+        sourceSlug: 'my-recipes',
+        recipeId: 'manual-20260715-test-recipe',
+        bytes: heroJpeg,
+      );
+      expect(reference, startsWith('images/manual-20260715-test-recipe-'));
+      expect(reference, endsWith('.jpg'));
+      final stored = File('${config.libraryDir}/my-recipes/$reference');
+      expect(stored.existsSync(), isTrue);
+      expect(stored.lengthSync(), heroJpeg.length);
+    });
   });
 }
