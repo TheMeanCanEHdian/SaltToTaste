@@ -6,6 +6,7 @@ import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/app_pipeline.dart';
 import 'package:salt_server/src/auth/rate_limiter.dart';
+import 'package:salt_server/src/auth/tokens.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
@@ -16,6 +17,7 @@ import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
 import 'package:test/test.dart';
 
+import '../routes/api/v1/recipes/index.dart' as recipes_route;
 import '../routes/healthz.dart' as healthz_route;
 import '../routes/index.dart' as index_route;
 
@@ -47,6 +49,8 @@ void main() {
         return index_route.onRequest(context);
       case '/healthz':
         return healthz_route.onRequest(context);
+      case '/api/v1/recipes':
+        return recipes_route.onRequest(context);
       case '/api/throws-not-found':
         throw const NotFoundException('Recipe does not exist.');
       case '/api/throws-validation':
@@ -113,11 +117,13 @@ void main() {
 
   Future<(HttpClientResponse, String)> send(
     String method,
-    String path,
-  ) async {
+    String path, {
+    Map<String, String> headers = const {},
+  }) async {
     final client = HttpClient();
     try {
       final request = await client.openUrl(method, baseUri.resolve(path));
+      headers.forEach(request.headers.set);
       final response = await request.close();
       final body = await utf8.decoder.bind(response).join();
       return (response, body);
@@ -353,6 +359,41 @@ void main() {
         reason: 'CSP is for HTML, not JSON',
       );
     });
+  });
+
+  group('production search path', () {
+    test(
+      'an authenticated ?q= search runs through the real chain (no drift)',
+      () async {
+        // A read-scoped PAT (auth via PAT sidesteps password hashing). Created
+        // here rather than setUpAll so the empty-DB `setup_required` healthz
+        // assertion upstream still sees zero users.
+        final pat = generatePat();
+        final searcherId = database.createUser(
+          username: 'searcher',
+          passwordHash: 'unused-hash',
+          role: 'member',
+        );
+        database.createApiToken(
+          userId: searcherId,
+          name: 'search-smoke',
+          prefix: pat.prefix,
+          tokenHash: hashToken(pat.token),
+          scope: 'read',
+        );
+        // The heavy text-search path reads RequestRateLimiter and SearchService
+        // from the middleware chain; a provider missing from buildAppMiddleware
+        // 500s here (it has, once). An empty library returns empty results.
+        final (response, body) = await send(
+          'GET',
+          '/api/v1/recipes?q=chocolate',
+          headers: {'Authorization': 'Bearer ${pat.token}'},
+        );
+        expect(response.statusCode, HttpStatus.ok, reason: body);
+        final decoded = jsonDecode(body) as Map<String, dynamic>;
+        expect(decoded['items'], isEmpty);
+      },
+    );
   });
 
   group('ServerConfig', () {

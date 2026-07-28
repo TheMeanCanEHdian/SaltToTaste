@@ -399,6 +399,66 @@ void main() {
     );
   });
 
+  group('disabled account lockout', () {
+    test(
+      'disabling a user ends its live session and kills its PAT mid-session',
+      () async {
+        final id = createMember('midshift');
+        final sessionToken = await sessionTokenFor('midshift', _memberPassword);
+        final pat = generatePat();
+        db.createApiToken(
+          userId: id,
+          name: 'phone',
+          prefix: pat.prefix,
+          tokenHash: hashToken(pat.token),
+          scope: 'read',
+        );
+
+        // Both credentials authenticate while the account is enabled.
+        final (session0, _) = await send(
+          'GET',
+          '/api/v1/auth/me',
+          headers: {'Cookie': '$sessionCookieName=$sessionToken'},
+        );
+        expect(session0.statusCode, HttpStatus.ok);
+        final (pat0, _) = await send(
+          'GET',
+          '/api/v1/auth/me',
+          headers: {'Authorization': 'Bearer ${pat.token}'},
+        );
+        expect(pat0.statusCode, HttpStatus.ok);
+
+        // The operator flips the kill switch.
+        db.setUserDisabled(id, disabled: true);
+
+        // The session is gone — disabling deletes the user's sessions.
+        final (session1, sessionBody) = await send(
+          'GET',
+          '/api/v1/auth/me',
+          headers: {'Cookie': '$sessionCookieName=$sessionToken'},
+        );
+        expect(session1.statusCode, HttpStatus.unauthorized);
+        expect(errorOf(sessionBody)['code'], 'unauthorized');
+
+        // The load-bearing half: a disable does NOT revoke PATs, so only the
+        // middleware resolving a disabled user to null stops this one. Without
+        // it the kill switch would silently degrade to login-only while every
+        // issued PAT stayed live.
+        final (pat1, patBody) = await send(
+          'GET',
+          '/api/v1/auth/me',
+          headers: {'Authorization': 'Bearer ${pat.token}'},
+        );
+        expect(
+          pat1.statusCode,
+          HttpStatus.unauthorized,
+          reason: "a disabled user's PAT must resolve to unauthenticated",
+        );
+        expect(errorOf(patBody)['code'], 'unauthorized');
+      },
+    );
+  });
+
   group('sessions', () {
     test('cookie POST without X-Requested-With -> 403 csrf (and the session '
         'survives)', () async {
