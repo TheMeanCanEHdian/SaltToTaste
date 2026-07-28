@@ -5,6 +5,7 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/services/image_ingest.dart';
 import 'package:salt_server/src/services/recipe_edit_service.dart' as edit;
@@ -16,7 +17,8 @@ import 'package:salt_server/src/services/recipe_edit_service.dart' as edit;
 /// re-validated, size/time capped) and the payload must pass the same
 /// magic-byte validation as an upload. `role` is `hero` (default) or
 /// `gallery`. Responds with the updated detail body.
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String rawId) async {
+  final id = decodePathParam(rawId);
   requireMethods(context, {HttpMethod.post});
   final user = requireUser(context);
   requireCsrf(context, user);

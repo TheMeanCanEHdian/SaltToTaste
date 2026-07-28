@@ -4,6 +4,7 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
@@ -14,7 +15,8 @@ import 'package:salt_server/src/nutrition/provider.dart';
 ///
 /// `PUT {serving_basis}` (admin, full scope) — change the per-serving
 /// divisor and recompute instantly from the stored matches (no FDC calls).
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String rawId) async {
+  final id = decodePathParam(rawId);
   requireMethods(context, {HttpMethod.get, HttpMethod.put});
   final user = requireUser(context);
   final db = context.read<SaltDatabase>();

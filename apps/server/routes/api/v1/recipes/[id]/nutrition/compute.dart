@@ -2,6 +2,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
@@ -15,7 +16,8 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// Asynchronous so the request returns immediately instead of holding a
 /// connection open (and erroring) for the seconds a cold compute can take.
 /// Single-flight per recipe: a second call while one runs re-attaches to it.
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String rawId) async {
+  final id = decodePathParam(rawId);
   requireMethods(context, {HttpMethod.post});
   final user = requireUser(context);
   requireCsrf(context, user);

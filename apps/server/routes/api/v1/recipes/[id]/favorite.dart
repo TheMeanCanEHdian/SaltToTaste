@@ -2,6 +2,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
 /// `PUT /api/v1/recipes/<id-or-slug>/favorite` marks the recipe as one of
@@ -11,7 +12,8 @@ import 'package:salt_server/src/middleware/auth.dart';
 /// Favorites are personal data: members may write them, and (unlike server
 /// data) a `read`-scoped PAT may too — the documented scope model reserves
 /// `full` for mutations of shared state.
-Response onRequest(RequestContext context, String id) {
+Response onRequest(RequestContext context, String rawId) {
+  final id = decodePathParam(rawId);
   requireMethods(context, {HttpMethod.put, HttpMethod.delete});
   final user = requireUser(context);
   requireCsrf(context, user);

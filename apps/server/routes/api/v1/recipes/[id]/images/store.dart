@@ -3,6 +3,7 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/services/image_ingest.dart';
 
@@ -14,7 +15,8 @@ import 'package:salt_server/src/services/image_ingest.dart';
 /// editor drops the returned reference into a technique step's `image` and
 /// persists it with the recipe's own PUT. Same magic-byte + 25 MB validation.
 /// Responds `{"reference": "images/<file>"}`.
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String rawId) async {
+  final id = decodePathParam(rawId);
   requireMethods(context, {HttpMethod.post});
   final user = requireUser(context);
   requireCsrf(context, user);

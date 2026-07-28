@@ -1,9 +1,11 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/services/backup_service.dart';
 import 'package:salt_server/src/services/recipe_edit_service.dart' as edit;
@@ -20,7 +22,8 @@ import 'package:salt_server/src/services/recipe_edit_service.dart' as edit;
 /// database row and the library YAML.
 ///
 /// 404 envelope when no recipe matches.
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String rawId) async {
+  final id = decodePathParam(rawId);
   requireMethods(
     context,
     {HttpMethod.get, HttpMethod.put, HttpMethod.delete},

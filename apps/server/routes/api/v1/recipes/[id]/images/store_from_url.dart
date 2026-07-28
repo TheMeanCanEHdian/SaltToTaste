@@ -4,6 +4,7 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/services/image_ingest.dart';
 
@@ -15,7 +16,8 @@ import 'package:salt_server/src/services/image_ingest.dart';
 /// Same SSRF guard (http/https only, public hosts only, redirects re-validated,
 /// size/time capped) and magic-byte validation as `from_url`. Responds
 /// `{"reference": "images/<file>"}`.
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String rawId) async {
+  final id = decodePathParam(rawId);
   requireMethods(context, {HttpMethod.post});
   final user = requireUser(context);
   requireCsrf(context, user);

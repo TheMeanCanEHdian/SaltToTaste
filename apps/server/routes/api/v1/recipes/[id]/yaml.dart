@@ -4,6 +4,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
 /// `GET /api/v1/recipes/<id-or-slug>/yaml` -> the canonical schema-v2 YAML
@@ -13,7 +14,8 @@ import 'package:salt_server/src/middleware/auth.dart';
 /// The recipe id is validated at import time (isSafeRecipeId), so it is a
 /// safe `Content-Disposition` filename with no quote/CRLF injection surface.
 /// 404 envelope when no recipe matches.
-Response onRequest(RequestContext context, String id) {
+Response onRequest(RequestContext context, String rawId) {
+  final id = decodePathParam(rawId);
   requireUser(context);
   requireGet(context);
   final result = recipeYaml(context.read<SaltDatabase>(), id);

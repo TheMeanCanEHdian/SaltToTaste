@@ -4,6 +4,7 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 
@@ -13,9 +14,10 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// match, `{skipped: true}` excludes the line. Totals recompute instantly.
 Future<Response> onRequest(
   RequestContext context,
-  String id,
+  String rawId,
   String pos,
 ) async {
+  final id = decodePathParam(rawId);
   requireMethods(context, {HttpMethod.put});
   final user = requireUser(context);
   requireCsrf(context, user);

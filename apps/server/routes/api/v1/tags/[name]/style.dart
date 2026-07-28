@@ -4,11 +4,13 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/handlers/tag_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
 /// `PUT /api/v1/tags/<name>/style` (admin) `{icon?, color?, bg_color?}` —
 /// set or clear the tag's chip style (Lucide icon + `#RRGGBB` colors).
-Future<Response> onRequest(RequestContext context, String name) async {
+Future<Response> onRequest(RequestContext context, String rawName) async {
+  final name = decodePathParam(rawName);
   requireMethods(context, {HttpMethod.put});
   final actor = requireAdmin(context);
   requireCsrf(context, actor);

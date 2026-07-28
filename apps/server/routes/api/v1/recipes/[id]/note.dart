@@ -3,6 +3,7 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
+import 'package:salt_server/src/http/path_params.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
 /// Maximum length of a personal note body.
@@ -15,7 +16,8 @@ const int _maxNoteLength = 20000;
 /// `PUT` `{note: string}` sets it (an empty string deletes, like DELETE).
 /// `DELETE` removes it. All roles may write their own note; like favorites,
 /// a `read`-scoped PAT may too (personal data, not shared state).
-Future<Response> onRequest(RequestContext context, String id) async {
+Future<Response> onRequest(RequestContext context, String rawId) async {
+  final id = decodePathParam(rawId);
   requireMethods(
     context,
     {HttpMethod.get, HttpMethod.put, HttpMethod.delete},
