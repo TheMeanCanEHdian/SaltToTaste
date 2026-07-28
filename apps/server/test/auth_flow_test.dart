@@ -32,6 +32,8 @@ const _setupCode = 'ABCD-EFGH';
 const _adminPassword = 'admin-password-123';
 const _memberPassword = 'correct-horse-battery';
 const _uniformLoginError = 'Invalid username or password.';
+const _accountDisabledError =
+    'This account has been disabled. Contact an administrator.';
 const _csrfHeader = {'X-Requested-With': 'SaltToTaste'};
 
 void main() {
@@ -346,10 +348,24 @@ void main() {
     });
 
     test(
-      'disabled user with the correct password -> same uniform 422',
+      'disabled user with the correct password -> specific disabled 422',
       () async {
         createMember('sleepy', disabled: true);
         final (response, body) = await loginAs('sleepy', _memberPassword);
+        expect(response.statusCode, HttpStatus.unprocessableEntity);
+        final error = errorOf(body);
+        expect(error['code'], 'validation');
+        expect(error['message'], _accountDisabledError);
+      },
+    );
+
+    test(
+      'disabled user with a WRONG password -> uniform 422 (no enumeration)',
+      () async {
+        // The disabled state is only ever named after a correct password; a
+        // wrong guess must look identical to any other bad login.
+        createMember('dozing', disabled: true);
+        final (response, body) = await loginAs('dozing', 'not-the-password');
         expect(response.statusCode, HttpStatus.unprocessableEntity);
         final error = errorOf(body);
         expect(error['code'], 'validation');

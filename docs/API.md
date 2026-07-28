@@ -49,7 +49,7 @@ temporary password with `must_change_password`: until the user calls
 |---|---|
 | `POST /api/v1/auth/setup` | `{setup_code, username, password}` — first boot only (zero users); code from server stdout; creates the admin |
 | `POST /api/v1/auth/recover` | `{recovery_code, username, new_password}` — no auth; code from `salt_server:recover` on the server host; resets/creates that account as an enabled admin and revokes its sessions + API tokens; rate-limited per IP (`423 locked`) |
-| `POST /api/v1/auth/login` | `{username, password, remember?}` → `{token, user}` + cookie; failures are uniform `422 validation` |
+| `POST /api/v1/auth/login` | `{username, password, remember?}` → `{token, user}` + cookie; failures are uniform `422 validation` (unknown username / wrong password), except a **disabled** account whose password is correct gets a specific "account disabled" `422` — revealed only after a correct password, so it stays enumeration-safe |
 | `POST /api/v1/auth/logout` | ends the current session (cookie/session bearer only) |
 | `GET /api/v1/auth/me` | `{user: {id, username, role, must_change_password, scope, via}}` |
 | `POST /api/v1/auth/change_password` | `{current_password?, new_password}` — current required unless a change was forced; other sessions are signed out |

@@ -17,10 +17,17 @@ final Logger _log = Logger('auth');
 /// Minimum accepted password length.
 const int minPasswordLength = 12;
 
-/// Uniform failure message for every unsuccessful login (unknown username,
-/// wrong password, disabled account) so responses never reveal which
-/// condition failed.
+/// Uniform failure message for an unsuccessful login (unknown username or
+/// wrong password) so responses never reveal which condition failed.
 const String _invalidCredentials = 'Invalid username or password.';
+
+/// Shown when the password checks out but the account is disabled. Reachable
+/// only *after* a correct password, so — unlike a state check before auth —
+/// it cannot enumerate usernames or account state: an attacker without the
+/// password still gets [_invalidCredentials]. It only tells the account's own
+/// owner why a correct password was refused.
+const String _accountDisabled =
+    'This account has been disabled. Contact an administrator.';
 
 /// Shown when no recovery code is pending (or the pending one expired):
 /// names the command that opens the window, since only someone on the
@@ -276,12 +283,13 @@ Future<SessionGrant> recoverAdmin(
 /// Core of `POST /api/v1/auth/login`.
 ///
 /// Rate-limited per `<clientIp>|<username-lowercase>`: when locked, throws
-/// [LockedException] carrying the remaining seconds. All failure modes
-/// (unknown username — verified against a dummy hash so timing does not
-/// leak existence — wrong password, disabled account) throw the same
-/// uniform [ValidationException]. On success the failure count resets and
-/// a session opens: fixed 7-day expiry, or 90-day sliding when
-/// `remember: true`.
+/// [LockedException] carrying the remaining seconds. An unknown username
+/// (verified against a dummy hash so timing does not leak existence) or a
+/// wrong password throws the uniform [_invalidCredentials]. A disabled
+/// account whose password checks out throws the specific [_accountDisabled]
+/// instead — reachable only with the correct password, so it stays
+/// enumeration-safe. On success the failure count resets and a session opens:
+/// fixed 7-day expiry, or 90-day sliding when `remember: true`.
 Future<SessionGrant> login(
   SaltDatabase db,
   AuthRuntime runtime,
@@ -315,9 +323,17 @@ Future<SessionGrant> login(
     throw const ValidationException(_invalidCredentials);
   }
   final verified = await runtime.hasher.verify(password, user.passwordHash);
-  if (!verified || user.disabled) {
+  if (!verified) {
     countFailure();
     throw const ValidationException(_invalidCredentials);
+  }
+  if (user.disabled) {
+    // Reached only with the correct password, so this only ever names the
+    // state to the account's own owner (or someone already holding valid
+    // credentials). A wrong password still yields the uniform error above, so
+    // this cannot be used to enumerate usernames or account state.
+    countFailure();
+    throw const ValidationException(_accountDisabled);
   }
 
   runtime.rateLimiter.recordSuccess(key);
