@@ -63,6 +63,11 @@ Future<Response> onRequest(RequestContext context) async {
     statusCode: 201,
     // A just-created recipe trivially has no personal data yet; the keys are
     // present so every detail-shaped response looks the same to clients.
-    body: recipeDetailBody(result.recipe, result.sourceSlug, favorite: false),
+    body: recipeDetailBody(
+      result.recipe,
+      result.sourceSlug,
+      baseHash: db.contentHashOf(result.recipe.id),
+      favorite: false,
+    ),
   );
 }

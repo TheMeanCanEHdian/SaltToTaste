@@ -40,16 +40,26 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
   final config = context.read<ServerConfig>();
 
   if (context.request.method == HttpMethod.put) {
+    final body = await readJsonBody(context.request);
+    final baseHash = body['base_hash'];
+    if (baseHash is! String?) {
+      throw const ValidationException(
+        "'base_hash' must be a string when present.",
+      );
+    }
     final result = edit.updateRecipe(
       db,
       config,
       id,
-      edit.recipeObjectOf(await readJsonBody(context.request)),
+      edit.recipeObjectOf(body),
+      baseHash: baseHash,
     );
     return Response.json(
       body: recipeDetailBody(
         result.recipe,
         result.sourceSlug,
+        // The fresh hash, so the still-open editor can save again.
+        baseHash: db.contentHashOf(result.recipe.id),
         favorite: db.isFavorite(userId: user.id, recipeId: result.recipe.id),
         note: db.noteFor(userId: user.id, recipeId: result.recipe.id),
       ),

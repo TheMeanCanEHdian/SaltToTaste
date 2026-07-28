@@ -51,6 +51,9 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
     body: recipeDetailBody(
       result.recipe,
       result.sourceSlug,
+      // Attaching a photo changes the content hash; hand the editor the
+      // fresh one so its next save's precondition holds (review B11).
+      baseHash: db.contentHashOf(result.recipe.id),
       favorite: db.isFavorite(userId: user.id, recipeId: result.recipe.id),
       note: db.noteFor(userId: user.id, recipeId: result.recipe.id),
     ),

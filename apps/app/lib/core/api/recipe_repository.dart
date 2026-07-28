@@ -104,10 +104,16 @@ class RecipeDetail {
     this.heroImageUrl,
     this.favorite = false,
     this.note,
+    this.baseHash,
   });
 
   final Recipe recipe;
   final String sourceSlug;
+
+  /// The stored content hash this detail was loaded at. The editor echoes it
+  /// on `PUT` as `base_hash` so a concurrent save is a 409 `conflict`, not a
+  /// silent overwrite (review B11).
+  final String? baseHash;
 
   /// Server-relative hero URL (`/images/...`) or null.
   final String? heroImageUrl;
@@ -131,6 +137,7 @@ class RecipeDetail {
     heroImageUrl: heroImageUrl,
     favorite: favorite ?? this.favorite,
     note: clearNote ? null : (note ?? this.note),
+    baseHash: baseHash,
   );
 }
 
@@ -462,12 +469,17 @@ class RecipeRepository {
   /// only the keys present are changed).
   Future<RecipeDetail> updateRecipe(
     String idOrSlug,
-    Map<String, Object?> fields,
-  ) {
+    Map<String, Object?> fields, {
+    String? baseHash,
+  }) {
     return _request('update', () async {
       final response = await _dio.put<dynamic>(
         '/api/v1/recipes/${_seg(idOrSlug)}',
-        data: {'recipe': fields},
+        data: {
+          'recipe': fields,
+          // Concurrency precondition: mismatch is a 409 (review B11).
+          if (baseHash != null) 'base_hash': baseHash,
+        },
       );
       return _detailFrom(_asMap(response.data));
     });
@@ -590,6 +602,7 @@ class RecipeRepository {
     heroImageUrl: data['hero_image_url'] as String?,
     favorite: data['favorite'] == true,
     note: data['note'] as String?,
+    baseHash: data['base_hash'] as String?,
   );
 
   static String _seg(String idOrSlug) => Uri.encodeComponent(idOrSlug);

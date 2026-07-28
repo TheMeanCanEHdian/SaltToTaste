@@ -177,6 +177,7 @@ or slug (`rich-chocolate-bundt-cake`).
   "recipe": { /* full schema-v2 recipe document, snake_case */ },
   "source_slug": "the-complete-americas-test-kitchen-tv-show-cookbook-2001-2023",
   "hero_image_url": "/images/<source-slug>/<file>.jpg",
+  "base_hash": "<stored content hash — echo it on PUT to detect conflicts>",
   "favorite": false,
   "note": null
 }
@@ -190,11 +191,17 @@ user's). → `404 not_found` when neither id nor slug matches.
 Update. Same body shape as create with **merge semantics**: an editable key
 *present* in the submission replaces the stored value (an explicit `null`
 clears an optional field); an *absent* key is left untouched — so a script
-can safely update a single field. The slug is stable across renames (links
+can safely update a single field. An optional top-level `base_hash`
+(sibling of `recipe`) makes the save conditional: when it no longer matches
+the stored content hash — another save landed since the client loaded — the
+request is a `409 conflict` and nothing is written. The web editor always
+echoes the hash it loaded; a request without `base_hash` keeps plain
+last-write-wins. The slug is stable across renames (links
 keep working); id, source identity, and extraction provenance are
 preserved. Saving re-exports the canonical YAML; if the on-disk file had an
 unsynced hand edit, that edit is preserved next to it as
-`<id>.conflict-<timestamp>.yaml` (the save wins). → `200` detail body.
+`<id>.conflict-<timestamp>.yaml` (the save wins). → `200` detail body
+(carrying the fresh `base_hash`).
 
 ### `DELETE /api/v1/recipes/{idOrSlug}` (admin, full scope)
 

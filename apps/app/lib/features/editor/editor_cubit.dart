@@ -249,6 +249,7 @@ final class EditorState {
     this.heroImageUrl,
     this.sourceSlug = '',
     this.credit = '',
+    this.baseHash,
     this.dirty = false,
     this.saving = false,
     this.uploadingImage = false,
@@ -296,6 +297,12 @@ final class EditorState {
 
   final String credit;
 
+  /// The content hash the working copy was loaded at, echoed on save so a
+  /// concurrent save is a 409 conflict instead of a silent overwrite
+  /// (review B11). Refreshed from every detail response (save, image
+  /// attach) so the still-open editor can keep saving.
+  final String? baseHash;
+
   final bool dirty;
   final bool saving;
   final bool uploadingImage;
@@ -341,6 +348,7 @@ final class EditorState {
     String? heroImageUrl,
     String? sourceSlug,
     String? credit,
+    String? baseHash,
     bool? dirty,
     bool? saving,
     bool? uploadingImage,
@@ -372,6 +380,7 @@ final class EditorState {
     heroImageUrl: heroImageUrl ?? this.heroImageUrl,
     sourceSlug: sourceSlug ?? this.sourceSlug,
     credit: credit ?? this.credit,
+    baseHash: baseHash ?? this.baseHash,
     dirty: dirty ?? this.dirty,
     saving: saving ?? this.saving,
     uploadingImage: uploadingImage ?? this.uploadingImage,
@@ -519,6 +528,7 @@ class EditorCubit extends Cubit<EditorState> {
           heroImageUrl: detail.heroImageUrl,
           sourceSlug: detail.sourceSlug,
           credit: recipe.images.credit ?? '',
+          baseHash: detail.baseHash,
         ),
       );
     } on RepositoryException catch (exception) {
@@ -1224,6 +1234,7 @@ class EditorCubit extends Cubit<EditorState> {
         state.copyWith(
           uploadingImage: false,
           images: detail.recipe.images,
+          baseHash: detail.baseHash,
           heroImageUrl: detail.heroImageUrl,
         ),
       );
@@ -1250,6 +1261,7 @@ class EditorCubit extends Cubit<EditorState> {
         state.copyWith(
           uploadingImage: false,
           images: detail.recipe.images,
+          baseHash: detail.baseHash,
           heroImageUrl: detail.heroImageUrl,
         ),
       );
@@ -1280,10 +1292,18 @@ class EditorCubit extends Cubit<EditorState> {
       final fields = _fields();
       final detail = state.isNew
           ? await _repository.createRecipe(fields)
-          : await _repository.updateRecipe(state.recipeId!, fields);
+          : await _repository.updateRecipe(
+              state.recipeId!,
+              fields,
+              baseHash: state.baseHash,
+            );
       if (isClosed) {
         return;
       }
+      // A save can change the recipe-review tally (fixing a flagged issue,
+      // or introducing one), so the nav badge's session memo must refetch —
+      // this is the wiring invalidateReviewCount was written for (review S4).
+      _repository.invalidateReviewCount();
       emit(
         state.copyWith(
           saving: false,
@@ -1291,6 +1311,7 @@ class EditorCubit extends Cubit<EditorState> {
           recipeId: detail.recipe.id,
           slug: detail.recipe.slug,
           savedSlug: detail.recipe.slug,
+          baseHash: detail.baseHash,
         ),
       );
     } on RepositoryException catch (exception) {

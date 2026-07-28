@@ -31,7 +31,11 @@ class _FakeRepo extends RecipeRepository {
   Future<RecipeDetail> getRecipe(String idOrSlug) async => _detail;
 
   @override
-  Future<RecipeDetail> updateRecipe(String id, Map<String, Object?> fields) async {
+  Future<RecipeDetail> updateRecipe(
+    String id,
+    Map<String, Object?> fields, {
+    String? baseHash,
+  }) async {
     captured = fields;
     return _detail;
   }
@@ -91,7 +95,11 @@ Recipe _recipe() => Recipe(
       heading: 'Shaping',
       description: 'Keep your hands damp.',
       steps: [
-        TechniqueStep(number: 1, image: 'images/shape-01.jpg', caption: 'Roll.'),
+        TechniqueStep(
+          number: 1,
+          image: 'images/shape-01.jpg',
+          caption: 'Roll.',
+        ),
       ],
     ),
   ],
@@ -130,7 +138,8 @@ void main() {
       await cubit.save();
 
       final fields = repo.captured!;
-      final subs = (fields['subsections']! as List).cast<Map<String, Object?>>();
+      final subs = (fields['subsections']! as List)
+          .cast<Map<String, Object?>>();
       expect(subs, hasLength(2));
 
       // Prose-only variation: no ingredients/steps keys at all.
@@ -147,22 +156,24 @@ void main() {
       expect((subs[1]['steps']! as List), hasLength(1));
     });
 
-    test('promoting a prose variation emits an (empty) ingredients key',
-        () async {
-      final repo = _FakeRepo(detail());
-      final cubit = EditorCubit(repo);
-      await cubit.load('meatballs');
-      final proseKey = cubit.state.subsections[0].key;
-      cubit.promoteSubsectionIngredients(proseKey);
-      // The seeded empty line carries no text, so it serializes to an empty
-      // ingredient list — present, not absent (the null-vs-empty flip).
-      await cubit.save();
+    test(
+      'promoting a prose variation emits an (empty) ingredients key',
+      () async {
+        final repo = _FakeRepo(detail());
+        final cubit = EditorCubit(repo);
+        await cubit.load('meatballs');
+        final proseKey = cubit.state.subsections[0].key;
+        cubit.promoteSubsectionIngredients(proseKey);
+        // The seeded empty line carries no text, so it serializes to an empty
+        // ingredient list — present, not absent (the null-vs-empty flip).
+        await cubit.save();
 
-      final subs =
-          (repo.captured!['subsections']! as List).cast<Map<String, Object?>>();
-      expect(subs[0].containsKey('ingredients'), isTrue);
-      expect(subs[0]['ingredients'], isEmpty);
-    });
+        final subs = (repo.captured!['subsections']! as List)
+            .cast<Map<String, Object?>>();
+        expect(subs[0].containsKey('ingredients'), isTrue);
+        expect(subs[0]['ingredients'], isEmpty);
+      },
+    );
 
     test('an emptied subsection is dropped on save', () async {
       final repo = _FakeRepo(detail());
@@ -173,8 +184,8 @@ void main() {
       cubit.setSubsectionBody(proseKey, '');
       await cubit.save();
 
-      final subs =
-          (repo.captured!['subsections']! as List).cast<Map<String, Object?>>();
+      final subs = (repo.captured!['subsections']! as List)
+          .cast<Map<String, Object?>>();
       expect(subs, hasLength(1), reason: 'the blanked variation is gone');
       expect(subs[0]['kind'], 'component');
     });
@@ -199,7 +210,11 @@ void main() {
           .whereType<EditorLine>()
           .last;
       expect(line.raw, '2 cups (10 ounces) flour');
-      expect(line.amounts, isNotEmpty, reason: 'the parser ran on the nested line');
+      expect(
+        line.amounts,
+        isNotEmpty,
+        reason: 'the parser ran on the nested line',
+      );
     });
   });
 
@@ -221,8 +236,8 @@ void main() {
       await cubit.load('meatballs');
       await cubit.save();
 
-      final techs =
-          (repo.captured!['techniques']! as List).cast<Map<String, Object?>>();
+      final techs = (repo.captured!['techniques']! as List)
+          .cast<Map<String, Object?>>();
       expect(techs, hasLength(1));
       expect(techs[0]['heading'], 'Shaping');
       expect(techs[0]['description'], 'Keep your hands damp.');
@@ -244,8 +259,8 @@ void main() {
       cubit.setTechniqueStepCaption(techKey, stepKey, 'Fold gently.');
       await cubit.save();
 
-      final techs =
-          (repo.captured!['techniques']! as List).cast<Map<String, Object?>>();
+      final techs = (repo.captured!['techniques']! as List)
+          .cast<Map<String, Object?>>();
       // The loaded 'Shaping' technique plus the new one with a captioned step —
       // an empty step would have been dropped, this one has a caption.
       expect(techs, hasLength(2));
@@ -256,27 +271,34 @@ void main() {
       expect(steps.single.containsKey('image'), isFalse);
     });
 
-    test('uploadTechniqueStepImage stores the reference into the step', () async {
-      final repo = _FakeRepo(detail());
-      final cubit = EditorCubit(repo);
-      await cubit.load('meatballs');
-      final techKey = cubit.state.techniques.single.key;
-      final stepKey = cubit.state.techniques.single.steps.single.key;
+    test(
+      'uploadTechniqueStepImage stores the reference into the step',
+      () async {
+        final repo = _FakeRepo(detail());
+        final cubit = EditorCubit(repo);
+        await cubit.load('meatballs');
+        final techKey = cubit.state.techniques.single.key;
+        final stepKey = cubit.state.techniques.single.steps.single.key;
 
-      await cubit.uploadTechniqueStepImage(
-        techKey,
-        stepKey,
-        Uint8List.fromList([1, 2, 3]),
-      );
+        await cubit.uploadTechniqueStepImage(
+          techKey,
+          stepKey,
+          Uint8List.fromList([1, 2, 3]),
+        );
 
-      expect(repo.storeImageCalls, 1);
-      expect(repo.lastStoreId, 'r1', reason: 'the recipe id, not the slug');
-      final step = cubit.state.techniques.single.steps.single;
-      expect(step.image, 'images/tech-stored.jpg');
-      expect(cubit.state.uploadingImage, isFalse);
-      expect(cubit.state.uploadingStepKey, isNull, reason: 'cleared on finish');
-      expect(cubit.state.dirty, isTrue);
-    });
+        expect(repo.storeImageCalls, 1);
+        expect(repo.lastStoreId, 'r1', reason: 'the recipe id, not the slug');
+        final step = cubit.state.techniques.single.steps.single;
+        expect(step.image, 'images/tech-stored.jpg');
+        expect(cubit.state.uploadingImage, isFalse);
+        expect(
+          cubit.state.uploadingStepKey,
+          isNull,
+          reason: 'cleared on finish',
+        );
+        expect(cubit.state.dirty, isTrue);
+      },
+    );
 
     test('techniqueStepImageFromUrl stores via the URL endpoint', () async {
       final repo = _FakeRepo(detail());
@@ -285,7 +307,11 @@ void main() {
       final techKey = cubit.state.techniques.single.key;
       final stepKey = cubit.state.techniques.single.steps.single.key;
 
-      await cubit.techniqueStepImageFromUrl(techKey, stepKey, 'https://x/a.jpg');
+      await cubit.techniqueStepImageFromUrl(
+        techKey,
+        stepKey,
+        'https://x/a.jpg',
+      );
 
       expect(repo.storeFromUrlCalls, 1);
       expect(
@@ -294,111 +320,126 @@ void main() {
       );
     });
 
-    test('a new (unsaved) recipe cannot store a step photo — the isNew gate',
-        () async {
-      final repo = _FakeRepo(detail());
-      final cubit = EditorCubit(repo);
-      cubit.startNew(); // recipeId stays null
-      cubit.addTechnique();
-      final techKey = cubit.state.techniques.single.key;
-      cubit.addTechniqueStep(techKey);
-      final stepKey = cubit.state.techniques.single.steps.single.key;
+    test(
+      'a new (unsaved) recipe cannot store a step photo — the isNew gate',
+      () async {
+        final repo = _FakeRepo(detail());
+        final cubit = EditorCubit(repo);
+        cubit.startNew(); // recipeId stays null
+        cubit.addTechnique();
+        final techKey = cubit.state.techniques.single.key;
+        cubit.addTechniqueStep(techKey);
+        final stepKey = cubit.state.techniques.single.steps.single.key;
 
-      await cubit.uploadTechniqueStepImage(
-        techKey,
-        stepKey,
-        Uint8List.fromList([1]),
-      );
+        await cubit.uploadTechniqueStepImage(
+          techKey,
+          stepKey,
+          Uint8List.fromList([1]),
+        );
 
-      expect(repo.storeImageCalls, 0, reason: 'no id to attach to → no call');
-      expect(cubit.state.techniques.single.steps.single.image, isNull);
-      expect(cubit.state.uploadingImage, isFalse);
-    });
+        expect(repo.storeImageCalls, 0, reason: 'no id to attach to → no call');
+        expect(cubit.state.techniques.single.steps.single.image, isNull);
+        expect(cubit.state.uploadingImage, isFalse);
+      },
+    );
 
-    test('a failed store clears the upload flags and surfaces the error',
-        () async {
-      final repo = _FakeRepo(detail())
-        ..storeError = const RepositoryException('upload failed');
-      final cubit = EditorCubit(repo);
-      await cubit.load('meatballs');
-      final techKey = cubit.state.techniques.single.key;
-      final stepKey = cubit.state.techniques.single.steps.single.key;
-      final before = cubit.state.techniques.single.steps.single.image;
+    test(
+      'a failed store clears the upload flags and surfaces the error',
+      () async {
+        final repo = _FakeRepo(detail())
+          ..storeError = const RepositoryException('upload failed');
+        final cubit = EditorCubit(repo);
+        await cubit.load('meatballs');
+        final techKey = cubit.state.techniques.single.key;
+        final stepKey = cubit.state.techniques.single.steps.single.key;
+        final before = cubit.state.techniques.single.steps.single.image;
 
-      await cubit.uploadTechniqueStepImage(
-        techKey,
-        stepKey,
-        Uint8List.fromList([1]),
-      );
+        await cubit.uploadTechniqueStepImage(
+          techKey,
+          stepKey,
+          Uint8List.fromList([1]),
+        );
 
-      expect(cubit.state.uploadingImage, isFalse, reason: 'no lockout on error');
-      expect(cubit.state.uploadingStepKey, isNull);
-      expect(cubit.state.saveError, 'upload failed');
-      expect(
-        cubit.state.techniques.single.steps.single.image,
-        before,
-        reason: 'the step image is untouched on failure',
-      );
-    });
+        expect(
+          cubit.state.uploadingImage,
+          isFalse,
+          reason: 'no lockout on error',
+        );
+        expect(cubit.state.uploadingStepKey, isNull);
+        expect(cubit.state.saveError, 'upload failed');
+        expect(
+          cubit.state.techniques.single.steps.single.image,
+          before,
+          reason: 'the step image is untouched on failure',
+        );
+      },
+    );
 
-    test('an upload in flight is single-flight — a second is dropped', () async {
-      final repo = _FakeRepo(detail())..storeGate = Completer<String>();
-      final cubit = EditorCubit(repo);
-      await cubit.load('meatballs');
-      final techKey = cubit.state.techniques.single.key;
-      final stepKey = cubit.state.techniques.single.steps.single.key;
+    test(
+      'an upload in flight is single-flight — a second is dropped',
+      () async {
+        final repo = _FakeRepo(detail())..storeGate = Completer<String>();
+        final cubit = EditorCubit(repo);
+        await cubit.load('meatballs');
+        final techKey = cubit.state.techniques.single.key;
+        final stepKey = cubit.state.techniques.single.steps.single.key;
 
-      // First upload blocks on the gate.
-      final first = cubit.uploadTechniqueStepImage(
-        techKey,
-        stepKey,
-        Uint8List.fromList([1]),
-      );
-      expect(cubit.state.uploadingImage, isTrue);
-      expect(cubit.state.uploadingStepKey, stepKey);
+        // First upload blocks on the gate.
+        final first = cubit.uploadTechniqueStepImage(
+          techKey,
+          stepKey,
+          Uint8List.fromList([1]),
+        );
+        expect(cubit.state.uploadingImage, isTrue);
+        expect(cubit.state.uploadingStepKey, stepKey);
 
-      // A second, while the first is in flight, returns immediately without a
-      // store call (the cubit's single-flight guard).
-      await cubit.uploadTechniqueStepImage(
-        techKey,
-        stepKey,
-        Uint8List.fromList([2]),
-      );
-      expect(repo.storeImageCalls, 1, reason: 'the second upload is dropped');
+        // A second, while the first is in flight, returns immediately without a
+        // store call (the cubit's single-flight guard).
+        await cubit.uploadTechniqueStepImage(
+          techKey,
+          stepKey,
+          Uint8List.fromList([2]),
+        );
+        expect(repo.storeImageCalls, 1, reason: 'the second upload is dropped');
 
-      repo.storeGate!.complete('images/tech-stored.jpg');
-      await first;
-      expect(cubit.state.uploadingImage, isFalse);
-      expect(cubit.state.techniques.single.steps.single.image,
-          'images/tech-stored.jpg');
-    });
+        repo.storeGate!.complete('images/tech-stored.jpg');
+        await first;
+        expect(cubit.state.uploadingImage, isFalse);
+        expect(
+          cubit.state.techniques.single.steps.single.image,
+          'images/tech-stored.jpg',
+        );
+      },
+    );
 
-    test('deleting the step mid-upload drops the reference harmlessly',
-        () async {
-      final repo = _FakeRepo(detail())..storeGate = Completer<String>();
-      final cubit = EditorCubit(repo);
-      await cubit.load('meatballs');
-      final techKey = cubit.state.techniques.single.key;
-      final stepKey = cubit.state.techniques.single.steps.single.key;
+    test(
+      'deleting the step mid-upload drops the reference harmlessly',
+      () async {
+        final repo = _FakeRepo(detail())..storeGate = Completer<String>();
+        final cubit = EditorCubit(repo);
+        await cubit.load('meatballs');
+        final techKey = cubit.state.techniques.single.key;
+        final stepKey = cubit.state.techniques.single.steps.single.key;
 
-      final upload = cubit.uploadTechniqueStepImage(
-        techKey,
-        stepKey,
-        Uint8List.fromList([1]),
-      );
-      expect(cubit.state.uploadingImage, isTrue);
+        final upload = cubit.uploadTechniqueStepImage(
+          techKey,
+          stepKey,
+          Uint8List.fromList([1]),
+        );
+        expect(cubit.state.uploadingImage, isTrue);
 
-      // The user deletes the very step being uploaded, then the store lands.
-      cubit.removeTechniqueStep(techKey, stepKey);
-      repo.storeGate!.complete('images/tech-stored.jpg');
-      await upload;
+        // The user deletes the very step being uploaded, then the store lands.
+        cubit.removeTechniqueStep(techKey, stepKey);
+        repo.storeGate!.complete('images/tech-stored.jpg');
+        await upload;
 
-      // No crash; the returned reference lands nowhere (step is gone); flags
-      // are cleared.
-      expect(cubit.state.techniques.single.steps, isEmpty);
-      expect(cubit.state.uploadingImage, isFalse);
-      expect(cubit.state.uploadingStepKey, isNull);
-    });
+        // No crash; the returned reference lands nowhere (step is gone); flags
+        // are cleared.
+        expect(cubit.state.techniques.single.steps, isEmpty);
+        expect(cubit.state.uploadingImage, isFalse);
+        expect(cubit.state.uploadingStepKey, isNull);
+      },
+    );
   });
 
   group('top-level editing still works after the refactor', () {
@@ -413,8 +454,8 @@ void main() {
       cubit.applyAutoParse(newKey);
       await cubit.save();
 
-      final ingredients =
-          (repo.captured!['ingredients']! as List).cast<Map<String, Object?>>();
+      final ingredients = (repo.captured!['ingredients']! as List)
+          .cast<Map<String, Object?>>();
       final items = (ingredients.first['items']! as List);
       expect(items, hasLength(2));
       expect((repo.captured!['steps']! as List), hasLength(1));

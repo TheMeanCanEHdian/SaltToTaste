@@ -159,6 +159,7 @@ Map<String, Object?> recipeDetail(
   return recipeDetailBody(
     found.recipe,
     found.sourceSlug,
+    baseHash: db.contentHashOf(found.recipe.id),
     favorite: viewerId == null
         ? null
         : db.isFavorite(userId: viewerId, recipeId: found.recipe.id),
@@ -171,16 +172,21 @@ Map<String, Object?> recipeDetail(
 /// The detail-response shape shared by the read and edit endpoints.
 ///
 /// [favorite]/[note] are the viewer's personal data; when [favorite] is null
-/// (no viewer context) both keys are omitted entirely.
+/// (no viewer context) both keys are omitted entirely. [baseHash] is the
+/// stored content hash — the editor echoes it on `PUT` as `base_hash` so a
+/// concurrent save is detected (409 `conflict`) instead of silently
+/// overwritten (review B11).
 Map<String, Object?> recipeDetailBody(
   Recipe recipe,
   String sourceSlug, {
   bool? favorite,
   String? note,
+  String? baseHash,
 }) => {
   'recipe': recipe.toMap(),
   'source_slug': sourceSlug,
   'hero_image_url': imageUrl(sourceSlug, recipe.images.hero),
+  if (baseHash != null) 'base_hash': baseHash,
   if (favorite != null) 'favorite': favorite,
   if (favorite != null) 'note': note,
 };
