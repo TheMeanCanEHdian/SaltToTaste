@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,6 +32,11 @@ class _LogsTabState extends State<LogsTab> {
   /// leaving a gap), so every control is pinned to their natural height and the
   /// heights line up exactly.
   static const double _controlHeight = 36;
+
+  /// Rows shown per page. The server sends up to 300 records; rendering them
+  /// all in one Column hitched the pane on open, so the table is paged.
+  static const int _pageSize = 50;
+  int _pageIndex = 0;
 
   String _level = '';
   String _logger = '';
@@ -75,6 +81,11 @@ class _LogsTabState extends State<LogsTab> {
         _page = page;
         _error = null;
         _loading = false;
+        // Keep the current page in range if a Live poll shrank the result set.
+        final maxIndex = page.items.isEmpty
+            ? 0
+            : (page.items.length - 1) ~/ _pageSize;
+        if (_pageIndex > maxIndex) _pageIndex = maxIndex;
       });
     } on RepositoryException catch (exception) {
       if (!mounted) return;
@@ -86,7 +97,11 @@ class _LogsTabState extends State<LogsTab> {
   }
 
   void _reload() {
-    setState(() => _loading = true);
+    // A new filter/refresh starts back at the newest page.
+    setState(() {
+      _loading = true;
+      _pageIndex = 0;
+    });
     _load();
   }
 
@@ -159,10 +174,11 @@ class _LogsTabState extends State<LogsTab> {
           _errorBox(_error!)
         else if (page != null)
           _table(page),
+        if (page != null && page.items.isNotEmpty) _pager(page),
         if (page != null) ...[
           const SizedBox(height: 10),
           Text(
-            'Showing ${page.items.length} record'
+            '${page.items.length} record'
             '${page.items.length == 1 ? '' : 's'} from the persisted log — '
             'it survives restarts. Full output also goes to the container logs.',
             style: const TextStyle(fontSize: 12, color: SaltColors.muted),
@@ -343,6 +359,13 @@ class _LogsTabState extends State<LogsTab> {
         ),
       );
     }
+    // Only the current page's rows are built — rendering all ~300 at once
+    // hitched the pane on open.
+    final start = _pageIndex * _pageSize;
+    final rows = page.items.sublist(
+      start,
+      math.min(start + _pageSize, page.items.length),
+    );
     // SelectionArea makes every cell's text selectable — including a drag
     // across columns and rows — so a timestamp, request id, or message can be
     // copied out. Only the table is wrapped; the interactive toolbar above is
@@ -363,10 +386,55 @@ class _LogsTabState extends State<LogsTab> {
         child: Column(
           children: [
             _header(),
-            for (var i = 0; i < page.items.length; i++)
-              _row(page.items[i], last: i == page.items.length - 1),
+            for (var i = 0; i < rows.length; i++)
+              _row(rows[i], last: i == rows.length - 1),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Prev/Next pager under the table; hidden when everything fits one page.
+  Widget _pager(LogsPage page) {
+    final total = page.items.length;
+    final pageCount = (total + _pageSize - 1) ~/ _pageSize;
+    if (pageCount <= 1) return const SizedBox.shrink();
+    final start = _pageIndex * _pageSize + 1;
+    final end = math.min(start + _pageSize - 1, total);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        children: [
+          Text(
+            'Showing $start–$end of $total',
+            style: const TextStyle(fontSize: 12, color: SaltColors.muted),
+          ),
+          const Spacer(),
+          FButton(
+            variant: FButtonVariant.outline,
+            size: FButtonSizeVariant.sm,
+            mainAxisSize: MainAxisSize.min,
+            onPress: _pageIndex > 0
+                ? () => setState(() => _pageIndex--)
+                : null,
+            child: const Text('Prev'),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            'Page ${_pageIndex + 1} of $pageCount',
+            style: const TextStyle(fontSize: 12.5, color: SaltColors.ink),
+          ),
+          const SizedBox(width: 10),
+          FButton(
+            variant: FButtonVariant.outline,
+            size: FButtonSizeVariant.sm,
+            mainAxisSize: MainAxisSize.min,
+            onPress: _pageIndex < pageCount - 1
+                ? () => setState(() => _pageIndex++)
+                : null,
+            child: const Text('Next'),
+          ),
+        ],
       ),
     );
   }
