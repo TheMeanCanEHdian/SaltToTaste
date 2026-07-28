@@ -1343,6 +1343,8 @@ class EditorCubit extends Cubit<EditorState> {
       if (isClosed) {
         return;
       }
+      // A deleted recipe takes its flagged issues with it (review S4).
+      _repository.invalidateReviewCount();
       emit(state.copyWith(saving: false, deleted: true));
     } on RepositoryException catch (exception) {
       if (isClosed) {

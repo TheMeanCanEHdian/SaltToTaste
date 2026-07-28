@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart'
-    show RepositoryException;
+    show RepositoryException, decodeErrorEnvelope;
 
 /// The signed-in account as reported by `/auth/me` and `/auth/login`.
 class AuthUserInfo {
@@ -359,15 +359,14 @@ class AuthRepository {
     try {
       return (await request()).data;
     } on DioException catch (exception) {
-      final body = exception.response?.data;
-      if (body is Map && body['error'] is Map) {
-        final error = (body['error'] as Map).cast<String, dynamic>();
+      // The shared envelope decode (review S6); the auth-specific POLICY —
+      // server messages surface verbatim — stays here.
+      final envelope = decodeErrorEnvelope(exception.response?.data);
+      if (envelope != null) {
         throw RepositoryException(
-          error['message'] is String
-              ? error['message'] as String
-              : 'Something went wrong. Please try again.',
-          code: error['code'] as String?,
-          requestId: error['request_id'] as String?,
+          envelope.message ?? 'Something went wrong. Please try again.',
+          code: envelope.code,
+          requestId: envelope.requestId,
         );
       }
       if (exception.response?.statusCode == 401) {

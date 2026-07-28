@@ -39,8 +39,6 @@ final String vulgarFractionChars = vulgarFractionAscii.keys.join();
 final RegExp _wholeNumber = RegExp(r'^\d+$');
 final RegExp _asciiFraction = RegExp(r'^(?:(\d+)\s+)?(\d+)\s*/\s*(\d+)$');
 final RegExp _decimal = RegExp(r'^(?:\d+(?:\.\d+)?|\.\d+)$');
-final RegExp _trailingZeros = RegExp(r'0+$');
-final RegExp _trailingDot = RegExp(r'\.$');
 
 /// Parses a corpus quantity string to its numeric value.
 ///
@@ -77,48 +75,3 @@ double? parseQuantity(String text) {
   if (_decimal.hasMatch(trimmed)) return double.parse(trimmed);
   return null;
 }
-
-/// Formats a numeric quantity for display in the editor.
-///
-/// Whole values render as bare integers (`'2'`). Other values render as the
-/// nearest "nice" fraction — halves, thirds, quarters, or eighths — in ASCII
-/// mixed-number form (`'1 3/4'`). When no such fraction is within 1% relative
-/// error of [value], falls back to a decimal trimmed to at most three places.
-String formatQuantity(double value) {
-  if (!value.isFinite) return value.toString();
-  if (value < 0) return '-${formatQuantity(-value)}';
-
-  final nearestInt = value.round();
-  if ((value - nearestInt).abs() < 1e-9) return nearestInt.toString();
-
-  double? bestError;
-  var bestNumerator = 0;
-  var bestDenominator = 1;
-  for (final denominator in const [2, 3, 4, 8]) {
-    final numerator = (value * denominator).round();
-    if (numerator == 0) continue;
-    final error = (numerator / denominator - value).abs() / value;
-    if (bestError == null || error < bestError) {
-      bestError = error;
-      bestNumerator = numerator;
-      bestDenominator = denominator;
-    }
-  }
-  if (bestError != null && bestError <= 0.01) {
-    final divisor = _gcd(bestNumerator, bestDenominator);
-    final denominator = bestDenominator ~/ divisor;
-    var numerator = bestNumerator ~/ divisor;
-    final whole = numerator ~/ denominator;
-    numerator -= whole * denominator;
-    if (numerator == 0) return whole.toString();
-    final fraction = '$numerator/$denominator';
-    return whole == 0 ? fraction : '$whole $fraction';
-  }
-
-  var text = value.toStringAsFixed(3);
-  text = text.replaceFirst(_trailingZeros, '');
-  text = text.replaceFirst(_trailingDot, '');
-  return text;
-}
-
-int _gcd(int a, int b) => b == 0 ? a : _gcd(b, a % b);

@@ -1,7 +1,11 @@
-/// Common Latin diacritics and ligatures folded to plain ASCII, plus unicode
-/// vulgar fractions expanded to their digit forms (the `/` then collapses to
-/// `-` like every other non-alphanumeric run).
-const Map<String, String> _foldings = {
+import 'package:salt_shared/salt_shared.dart' show vulgarFractionAscii;
+
+/// Common Latin diacritics and ligatures folded to plain ASCII. Unicode
+/// vulgar fractions come from salt_shared's [vulgarFractionAscii] — derived,
+/// not copied, so the two can never drift apart (a hand-copied table here
+/// once went stale, missing ⅐/⅑/⅒ — review S2). The fraction's `/` then
+/// collapses to `-` like every other non-alphanumeric run.
+final Map<String, String> _foldings = {
   'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'ā': 'a',
   'æ': 'ae',
   'ç': 'c', 'ć': 'c', 'č': 'c',
@@ -14,11 +18,7 @@ const Map<String, String> _foldings = {
   'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u', 'ū': 'u',
   'ý': 'y', 'ÿ': 'y',
   'ž': 'z', 'ź': 'z', 'ż': 'z',
-  '¼': '1/4', '½': '1/2', '¾': '3/4',
-  '⅓': '1/3', '⅔': '2/3',
-  '⅕': '1/5', '⅖': '2/5', '⅗': '3/5', '⅘': '4/5',
-  '⅙': '1/6', '⅚': '5/6',
-  '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8',
+  ...vulgarFractionAscii,
   // Apostrophes vanish entirely ("America's" -> "americas") instead of
   // splitting the word.
   "'": '', '’': '', 'ʼ': '',

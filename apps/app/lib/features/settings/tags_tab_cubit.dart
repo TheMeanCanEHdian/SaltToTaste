@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salt_shared/salt_shared.dart' show isValidTagColorHex;
 
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
@@ -48,12 +49,12 @@ class TagsTabState {
   final bool saving;
   final String? saveError;
 
-  static final RegExp _hexPattern = RegExp(r'^#[0-9a-fA-F]{6}$');
-
-  /// The trimmed text when it is exactly `#RRGGBB`, otherwise null.
+  /// The trimmed text when it is exactly `#RRGGBB` (the ONE shared rule —
+  /// salt_shared's [isValidTagColorHex], which the server validator and the
+  /// chip renderer also consume — review S5), otherwise null.
   static String? validHexOrNull(String text) {
     final trimmed = text.trim();
-    return _hexPattern.hasMatch(trimmed) ? trimmed : null;
+    return isValidTagColorHex(trimmed) ? trimmed : null;
   }
 
   /// Non-empty text that is not a valid `#RRGGBB` color.

@@ -48,6 +48,29 @@ class RepositoryException implements Exception {
 
 /// Runs [action], mapping every failure — Dio transport errors, envelope
 /// errors, and decode/shape surprises alike — to a [RepositoryException].
+/// The decoded `{error: {code, message, request_id}}` envelope of a failed
+/// response body, or null when the body carries none (a transport failure or
+/// a non-API response). ONE wire-format rule, consumed by both [apiGuard]
+/// and AuthRepository's `_call` — the field reads were once written twice,
+/// so an envelope change applied to one would silently miss the other's
+/// error paths (review S6). Message POLICY (which codes surface their text
+/// verbatim) deliberately stays at each caller.
+({String? code, String? message, String? requestId})? decodeErrorEnvelope(
+  Object? body,
+) {
+  if (body is! Map || body['error'] is! Map) {
+    return null;
+  }
+  final error = (body['error'] as Map).cast<String, dynamic>();
+  return (
+    code: error['code'] is String ? error['code'] as String : null,
+    message: error['message'] is String ? error['message'] as String : null,
+    requestId: error['request_id'] is String
+        ? error['request_id'] as String
+        : null,
+  );
+}
+
 /// The single error funnel shared by all repositories.
 Future<T> apiGuard<T>(
   Future<T> Function() action, {
@@ -58,24 +81,19 @@ Future<T> apiGuard<T>(
   } on RepositoryException {
     rethrow;
   } on DioException catch (exception) {
-    final data = exception.response?.data;
-    if (data is Map && data['error'] is Map) {
-      final error = (data['error'] as Map).cast<String, dynamic>();
-      final code = error['code'];
-      final message = switch (code) {
+    final envelope = decodeErrorEnvelope(exception.response?.data);
+    if (envelope != null) {
+      final message = switch (envelope.code) {
         'not_found' => notFoundMessage,
-        'validation' when error['message'] is String =>
-          error['message'] as String,
-        'forbidden' when error['message'] is String =>
-          error['message'] as String,
-        'conflict' when error['message'] is String =>
-          error['message'] as String,
+        'validation' when envelope.message != null => envelope.message!,
+        'forbidden' when envelope.message != null => envelope.message!,
+        'conflict' when envelope.message != null => envelope.message!,
         _ => 'Something went wrong on the server. Please try again.',
       };
       throw RepositoryException(
         message,
-        code: code is String ? code : null,
-        requestId: error['request_id'] as String?,
+        code: envelope.code,
+        requestId: envelope.requestId,
       );
     }
     // No envelope: a transport failure, or a non-API response (proxy/HTML).

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salt_shared/salt_shared.dart' show isValidTagColorHex;
 
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -14,9 +15,10 @@ String tagQuery(String tag) {
   return 'tag:"$escaped"';
 }
 
-/// Parses a `#RRGGBB` string, or null.
+/// Parses a `#RRGGBB` string (the ONE shared rule — salt_shared's
+/// [isValidTagColorHex], review S5), or null.
 Color? colorFromHex(String? hex) {
-  if (hex == null || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(hex)) {
+  if (hex == null || !isValidTagColorHex(hex)) {
     return null;
   }
   return Color(0xFF000000 | int.parse(hex.substring(1), radix: 16));

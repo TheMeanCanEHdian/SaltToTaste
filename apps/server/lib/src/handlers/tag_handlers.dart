@@ -1,7 +1,7 @@
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_shared/salt_shared.dart' show isValidTagColorHex;
 
-final RegExp _colorPattern = RegExp(r'^#[0-9a-fA-F]{6}$');
 final RegExp _iconPattern = RegExp(r'^[a-z0-9-]{1,50}$');
 
 /// `GET /api/v1/tags` — every tag with its recipe count and chip style.
@@ -37,7 +37,7 @@ Map<String, Object?> putTagStyleHandler(
     );
   }
   for (final (field, value) in [('color', color), ('bg_color', bgColor)]) {
-    if (value != null && !_colorPattern.hasMatch(value)) {
+    if (value != null && !isValidTagColorHex(value)) {
       throw ValidationException("'$field' must be #RRGGBB.");
     }
   }

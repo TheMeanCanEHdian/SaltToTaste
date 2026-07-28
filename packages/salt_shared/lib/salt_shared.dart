@@ -14,5 +14,6 @@ export 'src/search/dsl_spans.dart';
 export 'src/search/search_chips.dart';
 export 'src/util/quantity.dart';
 export 'src/util/servings_parser.dart';
+export 'src/util/tag_style.dart';
 export 'src/yaml/recipe_yaml_codec.dart';
 export 'src/yaml/yaml_emitter.dart';

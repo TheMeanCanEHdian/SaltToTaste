@@ -2,26 +2,6 @@ import 'package:dart_mappable/dart_mappable.dart';
 
 part 'dto.mapper.dart';
 
-/// A page of results from a list endpoint.
-@MappableClass(caseStyle: CaseStyle.snakeCase)
-class Paged<T> with PagedMappable<T> {
-  const Paged({
-    required this.items,
-    required this.total,
-    required this.page,
-    required this.limit,
-  });
-
-  final List<T> items;
-
-  /// Total matching items across all pages.
-  final int total;
-
-  /// 1-based page index.
-  final int page;
-  final int limit;
-}
-
 /// The grid-card projection of a recipe returned by the list endpoint.
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class RecipeCard with RecipeCardMappable {

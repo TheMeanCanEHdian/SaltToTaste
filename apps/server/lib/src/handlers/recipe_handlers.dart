@@ -48,10 +48,12 @@ int _parsePositiveInt(
   return value;
 }
 
-/// One page of recipe cards as the JSON body of `GET /api/v1/recipes`,
-/// serialized from the shared [Paged] DTO so the wire shape has a single
-/// definition the Flutter client also decodes: `{"items": [...], "total": n,
-/// "page": p, "limit": l}`.
+/// One page of recipe cards as the JSON body of `GET /api/v1/recipes`:
+/// `{"items": [...], "total": n, "page": p, "limit": l}` — items are the
+/// shared [RecipeCard] DTO; the envelope is a plain literal (a generic
+/// `Paged<T>` DTO once wrapped it, with a runtime mapper-registration hack
+/// to serialize the single configuration ever used, and the client
+/// hand-parses the envelope anyway — review S1).
 ///
 /// [viewerId] fills each card's `favorite` flag; [favoritesOnly] restricts
 /// the listing (and any search) to the viewer's favorites.
@@ -78,15 +80,12 @@ Future<Map<String, Object?>> listRecipes(
     viewerId: viewerId,
     favoritesOnly: favoritesOnly,
   );
-  // Register the element mapper so the generic Paged<RecipeCard> encoder can
-  // resolve RecipeCard at runtime (idempotent).
-  RecipeCardMapper.ensureInitialized();
-  return Paged<RecipeCard>(
-    items: result.items,
-    total: result.total,
-    page: page,
-    limit: limit,
-  ).toMap();
+  return {
+    'items': [for (final card in result.items) card.toMap()],
+    'total': result.total,
+    'page': page,
+    'limit': limit,
+  };
 }
 
 /// Runs the search DSL when [query] is present (parse errors are 422s with
