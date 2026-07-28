@@ -17,8 +17,41 @@ import 'package:logging/logging.dart';
 ///
 /// `image_ingest.dart` already unmaps this exact form for its SSRF guard; the
 /// same care is needed here.
+/// If [address] is a dotted-quad IPv4 in decimal (four all-digit octets, each
+/// 0-255, leading zeros allowed), returns it with leading zeros stripped so
+/// `010.0.0.5` becomes `10.0.0.5`. Digits are read base-10, never octal.
+///
+/// This is what makes parsing platform-independent: macOS's parser accepts a
+/// leading-zero octet, but Linux's `inet_pton` REJECTS it, so `010.0.0.5`
+/// parsed to null there and a correctly-configured entry silently matched
+/// nobody in the Docker deployment. Anything that is not a plain decimal
+/// dotted-quad returns null, so IPv6 and mapped forms fall through unchanged.
+String? _canonicalDottedQuad(String address) {
+  final parts = address.split('.');
+  if (parts.length != 4) {
+    return null;
+  }
+  final octets = <int>[];
+  for (final part in parts) {
+    if (part.isEmpty ||
+        !part.codeUnits.every((c) => c >= 0x30 && c <= 0x39)) {
+      return null;
+    }
+    final value = int.parse(part);
+    if (value > 255) {
+      return null;
+    }
+    octets.add(value);
+  }
+  return octets.join('.');
+}
+
 String? _asIpv4(String address) {
-  final parsed = InternetAddress.tryParse(address);
+  // Canonicalise a leading-zero dotted-quad before parsing so every platform
+  // agrees (see [_canonicalDottedQuad]); non-IPv4 forms pass through untouched.
+  final parsed = InternetAddress.tryParse(
+    _canonicalDottedQuad(address) ?? address,
+  );
   if (parsed == null) {
     return null;
   }
@@ -63,7 +96,9 @@ String? _asIpv4(String address) {
 /// surface was fixed for, so `bootstrap.dart` reports these at startup.
 bool isUsableProxyEntry(String entry) {
   if (!entry.contains('/')) {
-    return InternetAddress.tryParse(entry) != null;
+    // `_asIpv4` also accepts a leading-zero dotted-quad (`010.0.0.5`), which
+    // Linux's raw parser rejects — keep usability consistent with matching.
+    return _asIpv4(entry) != null || InternetAddress.tryParse(entry) != null;
   }
   final parts = entry.split('/');
   if (parts.length != 2) {
