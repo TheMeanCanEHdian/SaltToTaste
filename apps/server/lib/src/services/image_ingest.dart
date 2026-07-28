@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:logging/logging.dart';
+import 'package:meta/meta.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/exceptions.dart';
 
@@ -117,6 +118,19 @@ String saveRecipeImage({
   return 'images/$name';
 }
 
+/// Test-only substitute for the HTTP transport [fetchImageFromUrl] uses.
+///
+/// Null in production, where the client is exactly `HttpClient()`. It swaps
+/// the transport ONLY, and it sits *below* every SSRF guard: the URL is
+/// scheme/host/credential-validated and each hop's resolved addresses are
+/// checked before this client is asked for anything, the connected peer is
+/// re-checked after, and status/content-type/size/magic-byte validation is
+/// unchanged. A substituted client therefore cannot reach a host — or smuggle
+/// a body past a check — that the real one could not. Never set outside
+/// tests.
+@visibleForTesting
+HttpClient Function()? debugImageHttpClientFactory;
+
 /// Downloads an image from [rawUrl] with SSRF guards and returns its bytes.
 ///
 /// Guards (per the plan's security section): http/https only; every DNS
@@ -126,7 +140,7 @@ String saveRecipeImage({
 /// sniffing; size and time are capped.
 Future<Uint8List> fetchImageFromUrl(String rawUrl) async {
   final url = _validatedImageUrl(rawUrl);
-  final client = HttpClient()
+  final client = (debugImageHttpClientFactory?.call() ?? HttpClient())
     ..userAgent = 'SaltToTaste'
     ..connectionTimeout = const Duration(seconds: 10)
     ..maxConnectionsPerHost = 2;
