@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "name": "hello fresh",
+      "count": 1,
+      "icon": null,
+      "color": null,
+      "bg_color": null
+    },
+    {
+      "name": "meal",
+      "count": 1,
+      "icon": null,
+      "color": null,
+      "bg_color": null
+    },
+    {
+      "name": "vegetarian",
+      "count": 1,
+      "icon": null,
+      "color": null,
+      "bg_color": null
+    }
+  ]
+}

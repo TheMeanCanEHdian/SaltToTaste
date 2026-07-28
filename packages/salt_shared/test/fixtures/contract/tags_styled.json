@@ -1,0 +1,25 @@
+{
+  "items": [
+    {
+      "name": "hello fresh",
+      "count": 1,
+      "icon": "utensils-crossed",
+      "color": "#960000",
+      "bg_color": "#F6E7E7"
+    },
+    {
+      "name": "meal",
+      "count": 1,
+      "icon": null,
+      "color": null,
+      "bg_color": null
+    },
+    {
+      "name": "vegetarian",
+      "count": 1,
+      "icon": null,
+      "color": null,
+      "bg_color": null
+    }
+  ]
+}

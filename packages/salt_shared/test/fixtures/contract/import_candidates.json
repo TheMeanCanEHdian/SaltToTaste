@@ -1,0 +1,10 @@
+{
+  "import_dir": "<path>",
+  "items": [
+    {
+      "path": "atk sample",
+      "kind": "v1",
+      "file_count": 3
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": "v0-brown-butter-gemelli-with-asparagus-walnuts-and-lemony-ricotta",
+      "slug": "brown-butter-gemelli-with-asparagus-walnuts-and-lemony-ricotta",
+      "title": "Brown Butter Gemelli with Asparagus, Walnuts, and Lemony Ricotta",
+      "category": null,
+      "hero_image": "/images/legacy-import/brown-butter-gemelli-with-asparagus-walnuts-and-lemony-ricotta.jpg",
+      "tags": [
+        "hello fresh",
+        "meal",
+        "vegetarian"
+      ],
+      "servings_text": "2",
+      "total_minutes": null,
+      "calories_per_serving": null,
+      "favorite": true,
+      "variation_count": 0
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 24
+}

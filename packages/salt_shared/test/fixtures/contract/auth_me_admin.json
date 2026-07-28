@@ -1,0 +1,10 @@
+{
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "role": "admin",
+    "must_change_password": false,
+    "scope": "full",
+    "via": "session"
+  }
+}

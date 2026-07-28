@@ -1,0 +1,10 @@
+{
+  "user": {
+    "id": 2,
+    "username": "newcomer",
+    "role": "member",
+    "must_change_password": true,
+    "scope": "full",
+    "via": "session"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": 1,
+  "status": "done",
+  "source_path": "<path>",
+  "legacy": false,
+  "total": 3,
+  "done": 3,
+  "imported": 2,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 1,
+  "log": [
+    "zzzz-malformed-document.yaml: Error on line 2, column 1: Unexpected end of file.\n  ╷\n2 │ \n  │ ^\n  ╵"
+  ],
+  "started_at": "<timestamp>",
+  "finished_at": "<timestamp>"
+}

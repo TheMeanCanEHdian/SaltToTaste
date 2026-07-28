@@ -1,0 +1,679 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "12 tablespoons (1½ sticks) unsalted butter, softened, plus 1 tablespoon, melted, for the pan",
+      "match": {
+        "fdc_id": 173430,
+        "description": "Butter, without salt",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 170.16649439999998,
+        "gram_source": "density",
+        "gram_basis": "12 tablespoon ≈ 177 mL",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 173430,
+          "description": "Butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 170155,
+          "description": "Seeds, sunflower seed butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 172469,
+          "description": "Peanut butter, chunk style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 172470,
+          "description": "Peanut butter, smooth style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 168588,
+          "description": "Nuts, almond butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 170163,
+          "description": "Nuts, cashew butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 169052,
+          "description": "Margarine-like, butter-margarine blend, 80% fat, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 172344,
+          "description": "Butter, light, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8600000000000001
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "raw": "¾ cup natural cocoa powder, plus 1 tablespoon for the pan",
+      "match": {
+        "fdc_id": 169593,
+        "description": "Cocoa, dry powder, unsweetened",
+        "data_type": "SR Legacy",
+        "confidence": 0.5833333333333334,
+        "grams": 92.26932000000001,
+        "gram_source": "density",
+        "gram_basis": "3/4 cup ≈ 177 mL",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 169593,
+          "description": "Cocoa, dry powder, unsweetened",
+          "data_type": "SR Legacy",
+          "confidence": 0.5833333333333334
+        },
+        {
+          "fdc_id": 2705587,
+          "description": "Cocoa powder, not reconstituted",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.5733333333333334
+        },
+        {
+          "fdc_id": 168774,
+          "description": "Cocoa, dry powder, unsweetened, HERSHEY'S European Style Cocoa",
+          "data_type": "SR Legacy",
+          "confidence": 0.5404761904761906
+        },
+        {
+          "fdc_id": 169594,
+          "description": "Cocoa, dry powder, unsweetened, processed with alkali",
+          "data_type": "SR Legacy",
+          "confidence": 0.5404761904761906
+        },
+        {
+          "fdc_id": 174122,
+          "description": "Beverages, Cocoa mix, powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.5233333333333334
+        },
+        {
+          "fdc_id": 170657,
+          "description": "Cocoa, dry powder, hi-fat or breakfast, processed with alkali",
+          "data_type": "SR Legacy",
+          "confidence": 0.5233333333333334
+        },
+        {
+          "fdc_id": 171886,
+          "description": "Beverages, Cocoa mix, no sugar added, powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.48047619047619056
+        },
+        {
+          "fdc_id": 174123,
+          "description": "Beverages, Cocoa mix, powder, prepared with water",
+          "data_type": "SR Legacy",
+          "confidence": 0.42047619047619056
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "6 ounces bittersweet chocolate, chopped coarse",
+      "match": {
+        "fdc_id": 2710336,
+        "description": "Dark chocolate candy",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.9233333333333333,
+        "grams": 170.09699999999998,
+        "gram_source": "weight",
+        "gram_basis": "from 6 ounce",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 2710336,
+          "description": "Dark chocolate candy",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9233333333333333
+        },
+        {
+          "fdc_id": 169592,
+          "description": "Candies, SPECIAL DARK Chocolate Bar",
+          "data_type": "SR Legacy",
+          "confidence": 0.88
+        },
+        {
+          "fdc_id": 2710338,
+          "description": "Dark chocolate candy with nuts",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710335,
+          "description": "Dark chocolate candy, other, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 169634,
+          "description": "Candies, dark chocolate coated coffee beans",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 170271,
+          "description": "Chocolate, dark, 45- 59% cacao solids",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 170272,
+          "description": "Chocolate, dark, 60-69% cacao solids",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 170273,
+          "description": "Chocolate, dark, 70-85% cacao solids",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "1 teaspoon instant espresso powder (optional)",
+      "match": {
+        "fdc_id": 171893,
+        "description": "Beverages, coffee, instant, regular, powder",
+        "data_type": "SR Legacy",
+        "confidence": 0.5833333333333335,
+        "grams": 2.1194355999999996,
+        "gram_source": "density",
+        "gram_basis": "1 teaspoon ≈ 5 mL",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 171893,
+          "description": "Beverages, coffee, instant, regular, powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.5833333333333335
+        },
+        {
+          "fdc_id": 174133,
+          "description": "Beverages, coffee, instant, decaffeinated, powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.5033333333333334
+        },
+        {
+          "fdc_id": 169073,
+          "description": "Beverage, instant breakfast powder, chocolate, not reconstituted",
+          "data_type": "SR Legacy",
+          "confidence": 0.48047619047619056
+        },
+        {
+          "fdc_id": 2710729,
+          "description": "Nutritional powder mix (Carnation Instant Breakfast)",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.48000000000000004
+        },
+        {
+          "fdc_id": 169897,
+          "description": "Beverage, instant breakfast powder, chocolate, sugar-free, not reconstituted",
+          "data_type": "SR Legacy",
+          "confidence": 0.4677777777777778
+        },
+        {
+          "fdc_id": 2710730,
+          "description": "Nutritional powder mix, sugar free (Carnation Instant Breakfast)",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.4633333333333333
+        },
+        {
+          "fdc_id": 167806,
+          "description": "Baobab powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.36666666666666664
+        },
+        {
+          "fdc_id": 170461,
+          "description": "Tomato powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.36666666666666664
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "raw": "¾ cup boiling water",
+      "match": {
+        "fdc_id": null,
+        "description": "Water/ice — counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed"
+      },
+      "candidates": []
+    },
+    {
+      "position": 5,
+      "raw": "1 cup sour cream, at room temperature",
+      "match": {
+        "fdc_id": 2346387,
+        "description": "Cream, sour, full fat",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 229.49035999999998,
+        "gram_source": "density",
+        "gram_basis": "1 cup ≈ 237 mL",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 2346387,
+          "description": "Cream, sour, full fat",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 2705614,
+          "description": "Sour cream, regular",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9433333333333334
+        },
+        {
+          "fdc_id": 171257,
+          "description": "Cream, sour, cultured",
+          "data_type": "SR Legacy",
+          "confidence": 0.9333333333333333
+        },
+        {
+          "fdc_id": 173444,
+          "description": "Sour cream, fat free",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2705616,
+          "description": "Sour cream, fat free",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 173443,
+          "description": "Sour cream, light",
+          "data_type": "SR Legacy",
+          "confidence": 0.8733333333333333
+        },
+        {
+          "fdc_id": 172211,
+          "description": "KRAFT BREAKSTONE'S FREE Fat Free Sour Cream",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 2705615,
+          "description": "Sour cream, light",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8633333333333333
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "raw": "1¾ cups (8¾ ounces) unbleached all-purpose flour",
+      "match": {
+        "fdc_id": 789890,
+        "description": "Flour, wheat, all-purpose, enriched, bleached",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 248.058125,
+        "gram_source": "weight",
+        "gram_basis": "from 8 3/4 ounce",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 789890,
+          "description": "Flour, wheat, all-purpose, enriched, bleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 789951,
+          "description": "Flour, wheat, all-purpose, enriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 790018,
+          "description": "Flour, wheat, all-purpose, unenriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 169761,
+          "description": "Wheat flour, white, all-purpose, unenriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.8400000000000001
+        },
+        {
+          "fdc_id": 168894,
+          "description": "Wheat flour, white, all-purpose, enriched, bleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8257142857142858
+        },
+        {
+          "fdc_id": 168936,
+          "description": "Wheat flour, white, all-purpose, enriched, unbleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8257142857142858
+        },
+        {
+          "fdc_id": 169754,
+          "description": "Wheat flour, white, all-purpose, enriched, calcium-fortified",
+          "data_type": "SR Legacy",
+          "confidence": 0.8150000000000002
+        },
+        {
+          "fdc_id": 168895,
+          "description": "Wheat flour, white, all-purpose, self-rising, enriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.8150000000000002
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "raw": "1 teaspoon table salt",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 6.0132824,
+        "gram_source": "density",
+        "gram_basis": "1 teaspoon ≈ 5 mL",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "raw": "1 teaspoon baking soda",
+      "match": {
+        "fdc_id": 175040,
+        "description": "Leavening agents, baking soda",
+        "data_type": "SR Legacy",
+        "confidence": 0.9,
+        "grams": 4.5838956,
+        "gram_source": "density",
+        "gram_basis": "1 teaspoon ≈ 5 mL",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 175040,
+          "description": "Leavening agents, baking soda",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "raw": "2 cups packed (14 ounces) light brown sugar",
+      "match": {
+        "fdc_id": 168833,
+        "description": "Sugars, brown",
+        "data_type": "SR Legacy",
+        "confidence": 0.6833333333333333,
+        "grams": 396.893,
+        "gram_source": "weight",
+        "gram_basis": "from 14 ounce",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 168833,
+          "description": "Sugars, brown",
+          "data_type": "SR Legacy",
+          "confidence": 0.6833333333333333
+        },
+        {
+          "fdc_id": 2710260,
+          "description": "Sugar, brown",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.6733333333333333
+        },
+        {
+          "fdc_id": 172801,
+          "description": "Toaster pastries, brown-sugar-cinnamon",
+          "data_type": "SR Legacy",
+          "confidence": 0.5633333333333335
+        },
+        {
+          "fdc_id": 168557,
+          "description": "Mushrooms, brown, italian, or crimini, exposed to ultraviolet light, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.5433333333333334
+        },
+        {
+          "fdc_id": 169633,
+          "description": "Ice creams, chocolate, light, no sugar added",
+          "data_type": "SR Legacy",
+          "confidence": 0.5404761904761906
+        },
+        {
+          "fdc_id": 169631,
+          "description": "Ice creams, vanilla, light, no sugar added",
+          "data_type": "SR Legacy",
+          "confidence": 0.5404761904761906
+        },
+        {
+          "fdc_id": 170672,
+          "description": "Sweeteners, for baking, brown, contains sugar and sucralose",
+          "data_type": "SR Legacy",
+          "confidence": 0.5333333333333333
+        },
+        {
+          "fdc_id": 172230,
+          "description": "Ice cream sandwich, vanilla, light, no sugar added",
+          "data_type": "SR Legacy",
+          "confidence": 0.5333333333333333
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "raw": "1 tablespoon vanilla extract",
+      "match": {
+        "fdc_id": 173471,
+        "description": "Vanilla extract",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 13.012383999999999,
+        "gram_source": "density",
+        "gram_basis": "1 tablespoon ≈ 15 mL",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 173471,
+          "description": "Vanilla extract",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 172235,
+          "description": "Vanilla extract, imitation, alcohol",
+          "data_type": "SR Legacy",
+          "confidence": 0.65
+        },
+        {
+          "fdc_id": 172236,
+          "description": "Vanilla extract, imitation, no alcohol",
+          "data_type": "SR Legacy",
+          "confidence": 0.63
+        }
+      ]
+    },
+    {
+      "position": 11,
+      "raw": "5 large eggs, at room temperature",
+      "match": {
+        "fdc_id": 748967,
+        "description": "Eggs, Grade A, Large, egg whole",
+        "data_type": "Foundation",
+        "confidence": 0.92,
+        "grams": 250.0,
+        "gram_source": "piece",
+        "gram_basis": "5 × 50 g each",
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 748967,
+          "description": "Eggs, Grade A, Large, egg whole",
+          "data_type": "Foundation",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 174901,
+          "description": "Bagels, egg",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 172673,
+          "description": "Bread, egg",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2707180,
+          "description": "Egg, Benedict",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2707179,
+          "description": "Egg, creamed",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2707181,
+          "description": "Egg, deviled",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2708602,
+          "description": "Taquito, egg",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2708984,
+          "description": "Congee, with egg",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        }
+      ]
+    },
+    {
+      "position": 12,
+      "raw": "Confectioners’ sugar, for dusting",
+      "match": {
+        "fdc_id": 169656,
+        "description": "Sugars, powdered",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "auto"
+      },
+      "candidates": [
+        {
+          "fdc_id": 169656,
+          "description": "Sugars, powdered",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 2708065,
+          "description": "Doughnut, cake type, powdered sugar",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710259,
+          "description": "Sugar, white, confectioner's, powdered",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8300000000000001
+        },
+        {
+          "fdc_id": 174824,
+          "description": "Beverages, chocolate powder, no sugar added",
+          "data_type": "SR Legacy",
+          "confidence": 0.4083333333333333
+        },
+        {
+          "fdc_id": 2705609,
+          "description": "Coffee creamer,powder, sugar free, flavored",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.3983333333333333
+        },
+        {
+          "fdc_id": 171886,
+          "description": "Beverages, Cocoa mix, no sugar added, powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.3435714285714286
+        },
+        {
+          "fdc_id": 2710599,
+          "description": "Fruit flavored drink, powdered, reconstituted, diet",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.3383333333333333
+        },
+        {
+          "fdc_id": 169897,
+          "description": "Beverage, instant breakfast powder, chocolate, sugar-free, not reconstituted",
+          "data_type": "SR Legacy",
+          "confidence": 0.3372222222222222
+        }
+      ]
+    }
+  ]
+}

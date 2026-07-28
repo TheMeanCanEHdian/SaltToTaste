@@ -1,0 +1,25 @@
+{
+  "last_scan": {
+    "started_at": "<timestamp>",
+    "elapsed_ms": 0,
+    "files_seen": 3,
+    "updated_from_disk": [
+      "atk-tv-2023-0747-100-percent-whole-wheat-pancakes"
+    ],
+    "added": [
+      "atk-tv-2023-0020-sweet-potato-soup"
+    ],
+    "re_exported": [
+      "atk-tv-2023-0857-rich-chocolate-bundt-cake"
+    ],
+    "skipped": [
+      {
+        "file": "the-complete-americas-test-kitchen-tv-show-cookbook-2001-2023/recipes/zzzz-malformed-document.yaml",
+        "reason": "not importable: Error on line 2, column 1: Unexpected end of file."
+      }
+    ],
+    "conflict_files": [
+      "the-complete-americas-test-kitchen-tv-show-cookbook-2001-2023/recipes/atk-tv-2023-0857-rich-chocolate-bundt-cake.conflict-20260101T120000.yaml"
+    ]
+  }
+}

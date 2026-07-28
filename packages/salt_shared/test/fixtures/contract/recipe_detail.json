@@ -1,0 +1,278 @@
+{
+  "recipe": {
+    "schema_version": 2,
+    "id": "v0-brown-butter-gemelli-with-asparagus-walnuts-and-lemony-ricotta",
+    "title": "Brown Butter Gemelli with Asparagus, Walnuts, and Lemony Ricotta",
+    "slug": "brown-butter-gemelli-with-asparagus-walnuts-and-lemony-ricotta",
+    "source": {
+      "name": "Legacy SaltToTaste",
+      "type": "legacy-v0",
+      "publisher": null,
+      "isbn": null,
+      "source_file": null,
+      "chapter": null,
+      "section_id": null,
+      "page_start": null,
+      "page_end": null,
+      "url": "https://www.hellofresh.com/recipes/brown-butter-asparagus-gemelli-5d485f2c9697b100155ba6e6"
+    },
+    "servings": "2",
+    "serves": {
+      "min": 2,
+      "max": 2
+    },
+    "times": {
+      "prep": 30,
+      "cook": null,
+      "total": null
+    },
+    "category": null,
+    "tags": [
+      "meal",
+      "hello fresh",
+      "vegetarian"
+    ],
+    "background": "The week just isn’t complete without a pasta night. If you agree (and how could you not?), you’re in luck! Our chefs put together a dish that’s sure to curb the most ferocious of carb cravings. Twisty gemelli is studded with tender asparagus and cloaked in lemony, garlicky brown butter sauce. The dish is finished with dollops of creamy ricotta and a sprinkle of Parmesan and toasted walnuts. It doesn’t get much better than this, folks.",
+    "prep_notes": null,
+    "ingredients": [
+      {
+        "group": null,
+        "items": [
+          {
+            "raw": "8 ounce Asparagus",
+            "amounts": [
+              {
+                "measure": "weight",
+                "quantity": "8",
+                "unit": "ounce",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Asparagus",
+            "prep": null
+          },
+          {
+            "raw": "1 unit Lemon",
+            "amounts": [
+              {
+                "measure": "count",
+                "quantity": "1",
+                "unit": null,
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "unit Lemon",
+            "prep": null
+          },
+          {
+            "raw": "2 clove Garlic",
+            "amounts": [
+              {
+                "measure": "count",
+                "quantity": "2",
+                "unit": "clove",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Garlic",
+            "prep": null
+          },
+          {
+            "raw": "2 unit Scallions",
+            "amounts": [
+              {
+                "measure": "count",
+                "quantity": "2",
+                "unit": null,
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "unit Scallions",
+            "prep": null
+          },
+          {
+            "raw": "6 ounce Gemelli Pasta",
+            "amounts": [
+              {
+                "measure": "weight",
+                "quantity": "6",
+                "unit": "ounce",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Gemelli Pasta",
+            "prep": null
+          },
+          {
+            "raw": "4 ounce Ricotta Cheese",
+            "amounts": [
+              {
+                "measure": "weight",
+                "quantity": "4",
+                "unit": "ounce",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Ricotta Cheese",
+            "prep": null
+          },
+          {
+            "raw": "1 teaspoon Chili Flakes",
+            "amounts": [
+              {
+                "measure": "volume",
+                "quantity": "1",
+                "unit": "teaspoon",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Chili Flakes",
+            "prep": null
+          },
+          {
+            "raw": "¼ cup Parmesan Cheese",
+            "amounts": [
+              {
+                "measure": "volume",
+                "quantity": "1/4",
+                "unit": "cup",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Parmesan Cheese",
+            "prep": null
+          },
+          {
+            "raw": "1 ounce Walnuts",
+            "amounts": [
+              {
+                "measure": "weight",
+                "quantity": "1",
+                "unit": "ounce",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Walnuts",
+            "prep": null
+          },
+          {
+            "raw": "1 unit Vegetable Stock Concentrate",
+            "amounts": [
+              {
+                "measure": "count",
+                "quantity": "1",
+                "unit": null,
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "unit Vegetable Stock Concentrate",
+            "prep": null
+          },
+          {
+            "raw": "2 teaspoon Olive Oil",
+            "amounts": [
+              {
+                "measure": "volume",
+                "quantity": "2",
+                "unit": "teaspoon",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Olive Oil",
+            "prep": null
+          },
+          {
+            "raw": "3 tablespoon Butter",
+            "amounts": [
+              {
+                "measure": "volume",
+                "quantity": "3",
+                "unit": "tablespoon",
+                "approximate": false,
+                "primary": true
+              }
+            ],
+            "item": "Butter",
+            "prep": null
+          },
+          {
+            "raw": "Salt",
+            "amounts": [],
+            "item": "Salt",
+            "prep": null
+          },
+          {
+            "raw": "Pepper",
+            "amounts": [],
+            "item": "Pepper",
+            "prep": null
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "number": 1,
+        "label": null,
+        "text": "Bring a medium pot of salted water to a boil. Wash and dry all produce. Trim and discard woody bottom ends from asparagus; cut stalks crosswise into 1-inch pieces. Zest and quarter lemon. Mince garlic. Trim and thinly slice scallions, separating whites from greens. Cut 3 TBSP butter into cubes (6 TBSP for 4 servings)."
+      },
+      {
+        "number": 2,
+        "label": null,
+        "text": "Once water is boiling, add gemelli to pot. Cook until al dente, 9-11 minutes. Reserve 1 cup pasta cooking water, then drain. Meanwhile, in a small bowl, combine ricotta, lemon zest, a squeeze of lemon juice, and a large pinch of salt and pepper."
+      },
+      {
+        "number": 3,
+        "label": null,
+        "text": "Heat a large, dry pan over medium-high heat. Add walnuts and cook, stirring occasionally, until golden and fragrant, 3-5 minutes. Transfer to a plate. Heat a drizzle of olive oil in same pan over medium-high heat. Add asparagus, salt, and pepper. Cook, stirring, until browned and just tender, 4-6 minutes. Turn off heat; transfer to a plate. Wash out pan."
+      },
+      {
+        "number": 4,
+        "label": null,
+        "text": "Add cubed butter to same pan over medium heat. Cook, stirring, until melted and foamy. Continue stirring until foaming subsides and butter is flecked with amber bits, 2-3 minutes. Immediately remove from heat and stir in juice from half the lemon, garlic, scallion whites, and chili flakes to taste. Cook, stirring, until fragrant, 30 seconds to 1 minute."
+      },
+      {
+        "number": 5,
+        "label": null,
+        "text": "Return same pan to medium heat and stir in gemelli, stock concentrate, and asparagus. Season with salt and pepper. Add half the Parmesan and a splash of reserved pasta cooking water. Cook, stirring and adding splashes of pasta cooking water as necessary until smooth and creamy, 2-3 minutes. TIP; If cheese clumps, continue stirring and adding splashes of pasta cooking water until smooth."
+      },
+      {
+        "number": 6,
+        "label": null,
+        "text": "Taste and season gemelli with salt and pepper; divide between bowls. Dollop with lemony ricotta and sprinkle with scallion greens, toasted walnuts, remaining Parmesan, and a pinch of chili flakes if desired. Drizzle with olive oil. Cut remaining lemon wedge in half and serve on the side."
+      }
+    ],
+    "subsections": [],
+    "techniques": [],
+    "images": {
+      "hero": "images/brown-butter-gemelli-with-asparagus,-walnuts,-and-lemony-ricotta.jpg",
+      "gallery": [],
+      "credit": "https://img.hellofresh.com/f_auto,fl_lossy,q_auto,w_1200/hellofresh_s3/image/brown-butter-asparagus-gemelli-baa4c81a.jpg"
+    },
+    "notes": null,
+    "extraction": {
+      "extractor": "salt-server-legacy-v0",
+      "extractor_version": "1.0.0",
+      "extracted_at": "2026-07-16",
+      "warnings": [
+        "legacy calories value (810) dropped; nutrition is recomputed from FDC data"
+      ]
+    }
+  },
+  "source_slug": "legacy-import",
+  "hero_image_url": "/images/legacy-import/brown-butter-gemelli-with-asparagus-walnuts-and-lemony-ricotta.jpg",
+  "base_hash": "82c6dfc9bf92f26ba1acf15fe1a063a67a80000594aa4308d2debea94d0a772a",
+  "favorite": true,
+  "note": "Halved the chili flakes."
+}

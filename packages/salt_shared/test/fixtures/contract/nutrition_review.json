@@ -1,0 +1,48 @@
+{
+  "total": 1,
+  "buckets": [
+    {
+      "id": "no_match",
+      "label": "No match",
+      "count": 0
+    },
+    {
+      "id": "no_grams",
+      "label": "No grams",
+      "count": 1
+    },
+    {
+      "id": "check",
+      "label": "Low confidence",
+      "count": 0
+    },
+    {
+      "id": "skipped",
+      "label": "Skipped",
+      "count": 0
+    }
+  ],
+  "items": [
+    {
+      "recipe": {
+        "id": "atk-tv-2023-0857-rich-chocolate-bundt-cake",
+        "slug": "rich-chocolate-bundt-cake",
+        "title": "Rich Chocolate Bundt Cake"
+      },
+      "position": 12,
+      "raw": "Confectioners’ sugar, for dusting",
+      "bucket": "no_grams",
+      "match": {
+        "fdc_id": 169656,
+        "description": "Sugars, powdered",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "status": "auto"
+      }
+    }
+  ],
+  "page": 1,
+  "limit": 24
+}
