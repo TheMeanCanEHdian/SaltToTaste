@@ -7,6 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/services/backup_service.dart';
 import 'package:salt_server/src/services/import_service.dart';
 import 'package:salt_server/src/services/legacy_import.dart';
 
@@ -203,6 +204,11 @@ int? startImportJob(
     return null;
   }
   final legacy = looksLikeLegacyRoot(path);
+  // Changed source files overwrite hand-tuned recipes and their exported
+  // YAML directly, so the documented safety net must actually exist: one
+  // backup before any of that starts (review B10 — API.md promised this
+  // and nothing took it).
+  createBackup(db: db, config: config, trigger: 'before-import');
   final jobId = db.createImportJob(sourcePath: path, legacy: legacy);
   _importRunning = true;
   unawaited(

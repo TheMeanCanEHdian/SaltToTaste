@@ -33,8 +33,7 @@ String? _canonicalDottedQuad(String address) {
   }
   final octets = <int>[];
   for (final part in parts) {
-    if (part.isEmpty ||
-        !part.codeUnits.every((c) => c >= 0x30 && c <= 0x39)) {
+    if (part.isEmpty || !part.codeUnits.every((c) => c >= 0x30 && c <= 0x39)) {
       return null;
     }
     final value = int.parse(part);
@@ -216,6 +215,7 @@ class ServerConfig {
     this.connectionIdleTimeoutSeconds = defaultConnectionIdleTimeoutSeconds,
     this.searchWorkerIsolates = defaultSearchWorkerIsolates,
     this.logMaxBytes = defaultLogMaxBytes,
+    this.backupRetention = defaultBackupRetention,
   }) : importDir = importDir ?? '$dataDir/import';
 
   /// Builds a config from [environment] (defaults to
@@ -281,6 +281,10 @@ class ServerConfig {
   ///   before it rotates (default 4 MiB; `0` disables logging to the store).
   ///   One rotation generation is kept, so on-disk history is up to ~2×. An
   ///   invalid value falls back to the default.
+  /// * `BACKUP_RETENTION` — how many backups are kept PER TRIGGER
+  ///   (scheduled / manual / before-delete / before-import each get their
+  ///   own pool; default 14, minimum 1). An invalid value falls back to the
+  ///   default.
   factory ServerConfig.fromEnvironment({Map<String, String>? environment}) {
     final env = environment ?? Platform.environment;
 
@@ -323,6 +327,10 @@ class ServerConfig {
       searchWorkerIsolates: _parseNonNegativeInt(
         env['SEARCH_WORKER_ISOLATES'],
         defaultSearchWorkerIsolates,
+      ),
+      backupRetention: _parsePositiveInt(
+        env['BACKUP_RETENTION'],
+        defaultBackupRetention,
       ),
       logMaxBytes: _parseNonNegativeInt(
         env['LOG_MAX_BYTES'],
@@ -393,6 +401,9 @@ class ServerConfig {
   /// [logMaxBytes]) — 4 MiB, with one rotation generation kept (~8 MiB total).
   static const int defaultLogMaxBytes = 4 * 1024 * 1024;
 
+  /// Default per-trigger backup retention (see `BACKUP_RETENTION`).
+  static const int defaultBackupRetention = 14;
+
   /// Text searches (`GET /recipes?q=`) allowed per minute per user; `0`
   /// disables the limit. Ranked FTS runs on the background isolate pool
   /// ([searchWorkerIsolates]), so this bounds any single caller's share of it.
@@ -418,6 +429,9 @@ class ServerConfig {
   /// endpoint returns nothing). Persisted under `<dataDir>/logs/`.
   final int logMaxBytes;
 
+  /// Backups kept per trigger kind before pruning (`BACKUP_RETENTION`).
+  final int backupRetention;
+
   /// The idle timeout as a [Duration], or `null` when disabled
   /// ([connectionIdleTimeoutSeconds] `<= 0`) — matching
   /// [HttpServer.idleTimeout], where `null` means never auto-close.
@@ -428,6 +442,11 @@ class ServerConfig {
   /// Parses a non-negative integer env value, falling back to [fallback] when
   /// unset or invalid — a typo must not silently disable a guard; only an
   /// explicit non-negative value (including `0`) is taken as written.
+  static int _parsePositiveInt(String? raw, int fallback) {
+    final parsed = _parseNonNegativeInt(raw, fallback);
+    return parsed < 1 ? fallback : parsed;
+  }
+
   static int _parseNonNegativeInt(String? raw, int fallback) {
     final trimmed = raw?.trim();
     if (trimmed == null || trimmed.isEmpty) {

@@ -351,7 +351,11 @@ missing export is re-materialized, and a hand-dropped new file is imported.
 `.tar.gz` holding the YAML library plus a compacted SQLite snapshot
 (`salt.db`). Images (97% of the bytes, untouched by destructive operations)
 are excluded unless `include_images` is true. Backups also run
-automatically before every recipe delete and daily; the newest 14 are kept.
+automatically before every recipe delete, before every import, and daily.
+Retention keeps the newest `BACKUP_RETENTION` (default 14) **per trigger**
+— scheduled, manual, before-delete, and before-import each have their own
+pool, so a bulk-delete session's burst of before-delete archives can never
+evict the scheduled history.
 
 ### `GET | DELETE /api/v1/backups/{name}` (admin, full scope)
 
@@ -561,7 +565,8 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   `SEARCH_WORKER_ISOLATES` (background isolates running the ranked search off
   the serving isolate, default 1; `0` runs it inline),
   `LOG_MAX_BYTES` (admin log-store rotation size under `<dataDir>/logs/`,
-  default 4 MiB; `0` disables), `TZ` (container tzdata),
+  default 4 MiB; `0` disables), `BACKUP_RETENTION` (backups kept per
+  trigger, default 14, minimum 1), `TZ` (container tzdata),
   plus the dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
   requests (bounded, force-closed only past the bound), then closes SQLite

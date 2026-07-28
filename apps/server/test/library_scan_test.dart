@@ -113,6 +113,29 @@ void main() {
     exportFile.writeAsStringSync(good);
   });
 
+  test('an over-cap hand edit is skipped, not imported (review B13)', () {
+    // Synthesized negative path: a title beyond the editor's 250 cap. The
+    // scan once imported it verbatim, after which every UNRELATED in-app
+    // save 422'd — the recipe became uneditable from the editor.
+    final good = exportFile.readAsStringSync();
+    final decoded = RecipeYamlCodec.decode(good).recipe;
+    final overCap = decoded.copyWith(title: 'X' * 300);
+    exportFile.writeAsStringSync(RecipeYamlCodec.encode(overCap));
+
+    final report = scanLibrary(db: db, config: config);
+    expect(report.updatedFromDisk, isEmpty);
+    expect(report.skipped, hasLength(1));
+    expect(report.skipped.single.reason, contains('fails validation'));
+    expect(
+      db.recipeByIdOrSlug(recipeId)!.recipe.title,
+      isNot(overCap.title),
+      reason: 'the database version stays authoritative',
+    );
+
+    exportFile.writeAsStringSync(good);
+    scanLibrary(db: db, config: config);
+  });
+
   test('a file whose document id does not match its name is skipped', () {
     final text = exportFile.readAsStringSync();
     final impostor = File('${exportFile.parent.path}/some-other-name.yaml')

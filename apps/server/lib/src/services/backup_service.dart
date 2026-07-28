@@ -9,7 +9,9 @@ import 'package:salt_server/src/exceptions.dart';
 final Logger _log = Logger('backup');
 
 /// How many backups [pruneBackups] keeps by default.
-const int defaultBackupRetention = 14;
+/// Kept for callers/tests that name it; the runtime default now lives on
+/// ServerConfig.backupRetention (`BACKUP_RETENTION`).
+const int defaultBackupRetention = ServerConfig.defaultBackupRetention;
 
 /// Backup file names: `salt-backup-<utc stamp>[-<n>]-<trigger>.tar.gz`
 /// (the `-<n>` disambiguates several backups within one second). The strict
@@ -50,14 +52,18 @@ String backupsDir(ServerConfig config) => '${config.dataDir}/backups';
 /// touched by destructive operations, and self-heal on re-import — so they
 /// are excluded unless [includeImages] is set (a full manual backup).
 ///
-/// Everything streams (bounded memory): files are added to the tar from
-/// file streams and the gzip pass reads the tar back from disk.
+/// Memory is bounded by the LARGEST single archived file, not a fixed
+/// streaming bound: TarEncoder.add materializes one file's bytes per call
+/// (the DB snapshot is the biggest, and it grows with the nutrition cache);
+/// only the gzip pass truly streams, reading the tar back from disk
+/// (review B20 — this comment once promised full streaming; size container
+/// memory for the snapshot). Streamed tar entries are a possible upgrade.
 String createBackup({
   required SaltDatabase db,
   required ServerConfig config,
   required String trigger,
   bool includeImages = false,
-  int keep = defaultBackupRetention,
+  int? keep,
 }) {
   final safeTrigger = trigger.toLowerCase().replaceAll(RegExp('[^a-z-]'), '-');
   if (safeTrigger.isEmpty || safeTrigger.length > 32) {
@@ -164,14 +170,31 @@ List<BackupInfo> listBackups(ServerConfig config) {
   return infos;
 }
 
-/// Deletes all but the newest [keep] backups.
-void pruneBackups(ServerConfig config, {int keep = defaultBackupRetention}) {
-  final backups = listBackups(config);
-  for (final backup in backups.skip(keep)) {
-    File('${backupsDir(config)}/${backup.name}').deleteSync();
-    _log.info('Pruned old backup ${backup.name}');
+/// Deletes old backups, keeping the newest [keep] (default
+/// `config.backupRetention`) PER TRIGGER.
+///
+/// Per-trigger pools, not one shared pool: a bulk-delete session's burst of
+/// `before-delete` archives once evicted the entire scheduled history within
+/// minutes, falsifying deleteRecipe's recoverability promise (review B14).
+/// A flood of one kind can now never erase another kind's timeline.
+void pruneBackups(ServerConfig config, {int? keep}) {
+  final limit = keep ?? config.backupRetention;
+  final byTrigger = <String, List<BackupInfo>>{};
+  for (final backup in listBackups(config)) {
+    // listBackups is newest-first, so each group stays newest-first.
+    byTrigger.putIfAbsent(_triggerOf(backup.name), () => []).add(backup);
+  }
+  for (final group in byTrigger.values) {
+    for (final backup in group.skip(limit)) {
+      File('${backupsDir(config)}/${backup.name}').deleteSync();
+      _log.info('Pruned old backup ${backup.name}');
+    }
   }
 }
+
+/// The trigger baked into a backup file name (`…-<trigger>.tar.gz`).
+String _triggerOf(String name) =>
+    RegExp(r'-([a-z-]{1,32})\.tar\.gz$').firstMatch(name)!.group(1)!;
 
 /// Absolute path of the named backup for download, or throws.
 ///

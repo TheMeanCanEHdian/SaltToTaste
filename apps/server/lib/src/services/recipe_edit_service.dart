@@ -203,8 +203,11 @@ EditResult attachRecipeImage(
 /// Deletes the recipe matching [key] (id or slug) and its library export.
 ///
 /// [beforeDestructive] runs first (the caller passes the backup hook), so
-/// the delete is always recoverable. Conflict copies and image files are
-/// left in place — they may be shared or hand-managed.
+/// the delete is recoverable while its `before-delete` backup survives
+/// retention — the newest `BACKUP_RETENTION` per trigger are kept (see
+/// pruneBackups), so a burst of deletes can age the earliest ones out.
+/// Conflict copies and image files are left in place — they may be shared
+/// or hand-managed.
 void deleteRecipe(
   SaltDatabase db,
   ServerConfig config,

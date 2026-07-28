@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/services/library_io.dart';
+import 'package:salt_server/src/services/recipe_edit_service.dart'
+    show validateRecipeDocument;
 import 'package:salt_shared/salt_shared.dart';
 import 'package:yaml/yaml.dart' show loadYaml;
 
@@ -213,6 +216,21 @@ void _scanSourceDir(
         (
           file: '$sourceSlug/recipes/$fileName',
           reason: 'document id "${recipe.id}" does not match the file name',
+        ),
+      );
+      continue;
+    }
+    // The same caps the editor enforces. Without this, "file wins" imported
+    // an over-cap document that every LATER in-app save then 422'd on —
+    // the recipe became uneditable, blaming fields the admin never touched
+    // (review B13). Skipping surfaces the real problem file instead.
+    try {
+      validateRecipeDocument(recipe);
+    } on ValidationException catch (error) {
+      report.skipped.add(
+        (
+          file: '$sourceSlug/recipes/$fileName',
+          reason: 'fails validation: ${error.message}',
         ),
       );
       continue;

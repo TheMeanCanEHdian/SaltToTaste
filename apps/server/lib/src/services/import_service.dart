@@ -6,6 +6,8 @@ import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/services/recipe_edit_service.dart'
+    show validateRecipeDocument;
 import 'package:salt_server/src/services/slugify.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:yaml/yaml.dart';
@@ -126,6 +128,11 @@ ImportSummary importSourceRoot({
       if (!isSafeRecipeId(recipe.id)) {
         throw ValidationException('unsafe recipe id: "${recipe.id}"');
       }
+      // The editor's caps apply on the way IN too: an over-cap document
+      // imported here would make the recipe uneditable later — every
+      // in-app save 422s on content the admin never touched (review B13).
+      // Throws ValidationException → the per-file catch reports it failed.
+      validateRecipeDocument(recipe);
       // Resolve slug collisions BEFORE encoding, so the exported YAML, the
       // content hash, and the stored document all carry the same slug.
       recipe = recipe.copyWith(
