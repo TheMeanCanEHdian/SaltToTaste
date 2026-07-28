@@ -6,6 +6,7 @@ import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/util/timestamps.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/auth/auth_card.dart';
@@ -159,7 +160,9 @@ class _UsersTabState extends State<UsersTab> {
       _error = null;
     });
     try {
-      final result = await context.read<AuthRepository>().resetPassword(user.id);
+      final result = await context.read<AuthRepository>().resetPassword(
+        user.id,
+      );
       if (!mounted) {
         return;
       }
@@ -414,11 +417,8 @@ class _UsersTabState extends State<UsersTab> {
                 Text(
                   user.id == selfId
                       ? "that's you"
-                      : 'last active ${user.lastActiveAt ?? 'never'}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: SaltColors.muted,
-                  ),
+                      : 'last active ${user.lastActiveAt == null ? 'never' : formatTimestamp(user.lastActiveAt!)}',
+                  style: const TextStyle(fontSize: 12, color: SaltColors.muted),
                 ),
               ],
             ),

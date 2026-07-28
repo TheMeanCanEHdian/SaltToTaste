@@ -7,6 +7,7 @@ import 'package:salt_app/core/api/library_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/util/timestamps.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/features/settings/settings_page.dart';
 
@@ -475,19 +476,10 @@ String _idList(List<String> ids) {
   return ids.length > cap ? '$shown, …' : shown;
 }
 
-/// Renders a raw server timestamp readably without a date-format package:
-/// "2026-07-15T09:14:03.221Z" -> "2026-07-15 09:14:03".
-String _prettyTimestamp(String raw) {
-  var pretty = raw.trim().replaceFirst('T', ' ');
-  final dot = pretty.indexOf('.');
-  if (dot != -1) {
-    pretty = pretty.substring(0, dot);
-  }
-  if (pretty.endsWith('Z')) {
-    pretty = pretty.substring(0, pretty.length - 1);
-  }
-  return pretty.trim();
-}
+/// Renders a raw server timestamp readably in the viewer's LOCAL zone —
+/// the old inline version stripped the `Z` and showed the UTC clock as if
+/// it were local (review B18).
+String _prettyTimestamp(String raw) => formatTimestamp(raw);
 
 /// `salt-backup-<stamp>[-n]-<trigger>.tar.gz` -> the trailing trigger word.
 String _triggerFromName(String name) {

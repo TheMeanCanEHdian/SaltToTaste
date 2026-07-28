@@ -6,6 +6,7 @@ import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/util/timestamps.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/auth/auth_card.dart';
@@ -268,7 +269,10 @@ class _TokensTabState extends State<TokensTab> {
   Widget _subtitle(TokenInfo token) {
     const style = TextStyle(fontSize: 12, color: SaltColors.muted);
     if (!token.revoked) {
-      return Text('last used ${token.lastUsedAt ?? 'never'}', style: style);
+      return Text(
+        'last used ${token.lastUsedAt == null ? 'never' : formatTimestamp(token.lastUsedAt!)}',
+        style: style,
+      );
     }
     final countdown = _deletesInLabel(token.deletesAt);
     if (countdown == null) {

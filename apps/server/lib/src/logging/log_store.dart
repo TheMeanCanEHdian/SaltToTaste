@@ -144,7 +144,11 @@ class LogStore {
         ? record.message
         : record.message.replaceFirst(_rid, '');
     final entry = LogEntry(
-      time: record.time.toIso8601String(),
+      // package:logging stamps LOCAL time; the API convention is UTC with a
+      // Z suffix, and every other timestamp complies — a local wall clock
+      // here made log/backup correlation off by the server's UTC offset
+      // (review B19). Older stored lines keep their local form.
+      time: record.time.toUtc().toIso8601String(),
       level: _bucket(record.level),
       logger: record.loggerName,
       message: redactLogMessage(stripped),

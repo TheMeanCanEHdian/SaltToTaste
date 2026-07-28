@@ -6,6 +6,7 @@ import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/util/timestamps.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/auth/auth_card.dart';
@@ -208,7 +209,7 @@ class _AccountTabState extends State<AccountTab> {
                           ],
                         ),
                         Text(
-                          'Last seen ${session.lastSeenAt ?? 'just now'}',
+                          'Last seen ${session.lastSeenAt == null ? 'just now' : formatTimestamp(session.lastSeenAt!)}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: SaltColors.muted,

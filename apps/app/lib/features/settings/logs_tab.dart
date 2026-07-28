@@ -11,6 +11,7 @@ import 'package:salt_app/core/api/logs_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/util/timestamps.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/settings/settings_page.dart' show PaneTitle;
 
@@ -414,9 +415,7 @@ class _LogsTabState extends State<LogsTab> {
             variant: FButtonVariant.outline,
             size: FButtonSizeVariant.sm,
             mainAxisSize: MainAxisSize.min,
-            onPress: _pageIndex > 0
-                ? () => setState(() => _pageIndex--)
-                : null,
+            onPress: _pageIndex > 0 ? () => setState(() => _pageIndex--) : null,
             child: const Text('Prev'),
           ),
           const SizedBox(width: 10),
@@ -532,7 +531,11 @@ class _LogsTabState extends State<LogsTab> {
     ),
     child: Row(
       children: [
-        const Icon(FLucideIcons.circleAlert, color: SaltColors.errInk, size: 20),
+        const Icon(
+          FLucideIcons.circleAlert,
+          color: SaltColors.errInk,
+          size: 20,
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -551,14 +554,10 @@ class _LogsTabState extends State<LogsTab> {
     ),
   );
 
-  /// The clock part of the ISO-8601 timestamp (HH:MM:SS.mmm).
-  String _timeOf(String iso) {
-    final t = iso.indexOf('T');
-    if (t < 0) return iso;
-    final rest = iso.substring(t + 1);
-    final dot = rest.indexOf('.');
-    return dot < 0 ? rest : rest.substring(0, dot + 4);
-  }
+  /// The clock part, in the viewer's LOCAL zone — the old inline version
+  /// showed the raw (UTC) clock, off by the zone offset when correlating
+  /// with local wall clocks (review B18).
+  String _timeOf(String iso) => formatClock(iso);
 
   String _titleCase(String value) =>
       value[0] + value.substring(1).toLowerCase();

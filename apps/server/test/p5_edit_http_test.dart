@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/auth/tokens.dart';
+import 'package:salt_server/src/bootstrap.dart' show fdcApiKeySetting;
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
@@ -29,6 +30,7 @@ import '../routes/api/v1/library/index.dart' as library_route;
 import '../routes/api/v1/library/rescan.dart' as rescan_route;
 import '../routes/api/v1/nutrition/bulk.dart' as bulk_route;
 import '../routes/api/v1/nutrition/jobs/[id].dart' as nutrition_job_route;
+import '../routes/api/v1/nutrition/search.dart' as nutrition_search_route;
 import '../routes/api/v1/recipes/[id]/favorite.dart' as favorite_route;
 import '../routes/api/v1/recipes/[id]/images/from_url.dart' as from_url_route;
 import '../routes/api/v1/recipes/[id]/images/index.dart' as images_route;
@@ -45,6 +47,8 @@ import '../routes/api/v1/recipes/[id]/nutrition/matches/index.dart'
     as matches_route;
 import '../routes/api/v1/recipes/index.dart' as recipes_route;
 import '../routes/api/v1/settings/fdc_key.dart' as fdc_key_route;
+import '../routes/api/v1/tags/[name]/style.dart' as tag_style_route;
+import '../routes/api/v1/tags/index.dart' as tags_route;
 import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
@@ -84,12 +88,16 @@ void main() {
         return backups_route.onRequest(context);
       case '/api/v1/nutrition/bulk':
         return bulk_route.onRequest(context);
+      case '/api/v1/nutrition/search':
+        return nutrition_search_route.onRequest(context);
       case '/api/v1/import':
         return import_route.onRequest(context);
       case '/api/v1/import/candidates':
         return candidates_route.onRequest(context);
       case '/api/v1/settings/fdc_key':
         return fdc_key_route.onRequest(context);
+      case '/api/v1/tags':
+        return tags_route.onRequest(context);
       default:
         for (final (pattern, handler)
             in <(RegExp, FutureOr<Response> Function(RequestContext, String))>[
@@ -127,6 +135,10 @@ void main() {
                 nutrition_route.onRequest,
               ),
               (RegExp(r'^/api/v1/backups/([^/]+)$'), backup_route.onRequest),
+              (
+                RegExp(r'^/api/v1/tags/([^/]+)/style$'),
+                tag_style_route.onRequest,
+              ),
               (RegExp(r'^/api/v1/recipes/([^/]+)$'), recipe_route.onRequest),
             ]) {
           final match = pattern.firstMatch(path);
@@ -790,72 +802,78 @@ void main() {
       );
     });
 
-    test('images/store_from_url guards SSRF and bad input, attaches nothing',
-        () async {
-      final recipeNoImages = Map<String, Object?>.of(
-        submission['recipe']! as Map<String, Object?>,
-      )..remove('images');
-      final (create, createBody) = await send(
-        'POST',
-        '/api/v1/recipes',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'recipe': recipeNoImages},
-      );
-      expect(create.statusCode, HttpStatus.created, reason: createBody);
-      final slug =
-          (jsonOf(createBody)['recipe'] as Map<String, dynamic>)['slug']
-              as String;
+    test(
+      'images/store_from_url guards SSRF and bad input, attaches nothing',
+      () async {
+        final recipeNoImages = Map<String, Object?>.of(
+          submission['recipe']! as Map<String, Object?>,
+        )..remove('images');
+        final (create, createBody) = await send(
+          'POST',
+          '/api/v1/recipes',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'recipe': recipeNoImages},
+        );
+        expect(create.statusCode, HttpStatus.created, reason: createBody);
+        final slug =
+            (jsonOf(createBody)['recipe'] as Map<String, dynamic>)['slug']
+                as String;
 
-      // A loopback target is rejected by the SSRF guard before any socket
-      // opens — the ValidationException surfaces as a 422.
-      final (ssrf, ssrfBody) = await send(
-        'POST',
-        '/api/v1/recipes/$slug/images/store_from_url',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'url': 'http://127.0.0.1/a.jpg'},
-      );
-      expect(
-        ssrf.statusCode,
-        HttpStatus.unprocessableEntity,
-        reason: 'SSRF target must be rejected: $ssrfBody',
-      );
+        // A loopback target is rejected by the SSRF guard before any socket
+        // opens — the ValidationException surfaces as a 422.
+        final (ssrf, ssrfBody) = await send(
+          'POST',
+          '/api/v1/recipes/$slug/images/store_from_url',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'url': 'http://127.0.0.1/a.jpg'},
+        );
+        expect(
+          ssrf.statusCode,
+          HttpStatus.unprocessableEntity,
+          reason: 'SSRF target must be rejected: $ssrfBody',
+        );
 
-      // A link-local metadata address is likewise rejected.
-      final (meta, metaBody) = await send(
-        'POST',
-        '/api/v1/recipes/$slug/images/store_from_url',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: {'url': 'http://169.254.169.254/latest/meta-data'},
-      );
-      expect(meta.statusCode, HttpStatus.unprocessableEntity, reason: metaBody);
+        // A link-local metadata address is likewise rejected.
+        final (meta, metaBody) = await send(
+          'POST',
+          '/api/v1/recipes/$slug/images/store_from_url',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'url': 'http://169.254.169.254/latest/meta-data'},
+        );
+        expect(
+          meta.statusCode,
+          HttpStatus.unprocessableEntity,
+          reason: metaBody,
+        );
 
-      // A missing url is a 422, not a crash.
-      final (missing, missingBody) = await send(
-        'POST',
-        '/api/v1/recipes/$slug/images/store_from_url',
-        headers: auth(adminSession, csrf: true),
-        jsonBody: <String, Object?>{},
-      );
-      expect(
-        missing.statusCode,
-        HttpStatus.unprocessableEntity,
-        reason: missingBody,
-      );
+        // A missing url is a 422, not a crash.
+        final (missing, missingBody) = await send(
+          'POST',
+          '/api/v1/recipes/$slug/images/store_from_url',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: <String, Object?>{},
+        );
+        expect(
+          missing.statusCode,
+          HttpStatus.unprocessableEntity,
+          reason: missingBody,
+        );
 
-      // Nothing was attached to the recipe by any of the above.
-      final (get, getBody) = await send(
-        'GET',
-        '/api/v1/recipes/$slug',
-        headers: auth(adminSession),
-      );
-      expect(jsonOf(getBody)['hero_image_url'], isNull);
+        // Nothing was attached to the recipe by any of the above.
+        final (get, getBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug',
+          headers: auth(adminSession),
+        );
+        expect(jsonOf(getBody)['hero_image_url'], isNull);
 
-      await send(
-        'DELETE',
-        '/api/v1/recipes/$slug',
-        headers: auth(adminSession, csrf: true),
-      );
-    });
+        await send(
+          'DELETE',
+          '/api/v1/recipes/$slug',
+          headers: auth(adminSession, csrf: true),
+        );
+      },
+    );
 
     test('missing recipes 404; bad inputs 422; wrong methods 405', () async {
       // Personal-data and image endpoints on a recipe that does not exist —
@@ -1456,4 +1474,170 @@ void main() {
       });
     },
   );
+
+  group('concurrent-save precondition (review B11)', () {
+    // Corpus-free: the precondition mechanics need any recipe at all.
+    late String recipeId;
+    late String baseHash;
+
+    test('detail carries base_hash; a stale echo is a 409', () async {
+      final (created, createdBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'title': 'Two Tabs Probe'},
+        },
+      );
+      expect(created.statusCode, HttpStatus.created, reason: createdBody);
+      recipeId = (jsonOf(createdBody)['recipe'] as Map)['id'] as String;
+      baseHash = jsonOf(createdBody)['base_hash'] as String;
+
+      // Tab B saves first (no precondition — scripted last-write-wins
+      // stays legal).
+      final (other, otherBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$recipeId',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'category': 'Tab B'},
+        },
+      );
+      expect(other.statusCode, HttpStatus.ok, reason: otherBody);
+
+      // Tab A still holds the original hash: its save must NOT silently
+      // obliterate Tab B's.
+      final (conflicted, conflictedBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$recipeId',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'category': 'Tab A'},
+          'base_hash': baseHash,
+        },
+      );
+      expect(conflicted.statusCode, HttpStatus.conflict);
+      expect(errorOf(conflictedBody)['code'], 'conflict');
+
+      // Reload → fresh hash → the save goes through, and the response
+      // carries the NEXT hash so the editor can keep saving.
+      final (reloaded, reloadedBody) = await send(
+        'GET',
+        '/api/v1/recipes/$recipeId',
+        headers: auth(adminSession),
+      );
+      expect(reloaded.statusCode, HttpStatus.ok);
+      final freshHash = jsonOf(reloadedBody)['base_hash'] as String;
+      final (saved, savedBody) = await send(
+        'PUT',
+        '/api/v1/recipes/$recipeId',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'category': 'Tab A'},
+          'base_hash': freshHash,
+        },
+      );
+      expect(saved.statusCode, HttpStatus.ok, reason: savedBody);
+      expect(jsonOf(savedBody)['base_hash'], isA<String>());
+      expect(jsonOf(savedBody)['base_hash'], isNot(freshHash));
+    });
+
+    test('cleanup: the probe recipe deletes', () async {
+      final (deleted, _) = await send(
+        'DELETE',
+        '/api/v1/recipes/$recipeId',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(deleted.statusCode, HttpStatus.noContent);
+    });
+  });
+
+  group('FDC provider failure surfaces as 422 (review B15)', () {
+    test('the manual food search names the fixable cause, not a 500', () async {
+      db.setSetting(fdcApiKeySetting, 'test-key');
+      fixtureProvider.failWith =
+          'FoodData Central rejected the API key. '
+          'Check it in Settings → Nutrition.';
+      try {
+        // A unique term so the search cache cannot answer before the
+        // provider throws.
+        final (response, body) = await send(
+          'GET',
+          '/api/v1/nutrition/search?q=b15-probe-term',
+          headers: auth(adminSession),
+        );
+        expect(
+          response.statusCode,
+          HttpStatus.unprocessableEntity,
+          reason: body,
+        );
+        expect(errorOf(body)['code'], 'validation');
+        expect(errorOf(body)['message'], contains('rejected the API key'));
+      } finally {
+        fixtureProvider.failWith = null;
+      }
+    });
+  });
+
+  group('encoded path parameters (review B8)', () {
+    // dart_frog's router matches the percent-ENCODED path and hands captures
+    // to onRequest undecoded, and the app client encodes correctly — so any
+    // tag with a space or non-ASCII letter arrived as 'main%20course' and
+    // 404ed forever. Synthesized names: the encoding path is unreachable
+    // with single-word corpus tags. Runs corpus-free (CI covers it).
+    late String recipeId;
+
+    test('a tag with a space (and accents) can be styled', () async {
+      final (created, createdBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {
+            'title': 'Tag URL Encoding Probe',
+            'tags': ['main course', 'sazón'],
+          },
+        },
+      );
+      expect(created.statusCode, HttpStatus.created, reason: createdBody);
+      recipeId = (jsonOf(createdBody)['recipe'] as Map)['id'] as String;
+
+      for (final tag in ['main course', 'sazón']) {
+        final (styled, styledBody) = await send(
+          'PUT',
+          '/api/v1/tags/${Uri.encodeComponent(tag)}/style',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'icon': 'utensils', 'color': '#960000'},
+        );
+        expect(
+          styled.statusCode,
+          HttpStatus.ok,
+          reason: '$tag: $styledBody',
+        );
+      }
+
+      final (listed, listedBody) = await send(
+        'GET',
+        '/api/v1/tags',
+        headers: auth(adminSession),
+      );
+      expect(listed.statusCode, HttpStatus.ok);
+      final items = (jsonOf(listedBody)['items'] as List)
+          .cast<Map<String, dynamic>>();
+      final styledNames = [
+        for (final item in items)
+          if (item['icon'] == 'utensils') item['name'],
+      ];
+      expect(styledNames, containsAll(['main course', 'sazón']));
+    });
+
+    test('cleanup: the probe recipe deletes by its id', () async {
+      final (deleted, deletedBody) = await send(
+        'DELETE',
+        '/api/v1/recipes/$recipeId',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(deleted.statusCode, HttpStatus.noContent, reason: deletedBody);
+    });
+  });
 }

@@ -35,7 +35,15 @@ Future<Response> onRequest(RequestContext context) async {
       'Settings → Nutrition first (free at api.data.gov/signup).',
     );
   }
-  return Response.json(
-    body: await foodSearchBody(db, context.read<NutritionProvider>(), query),
-  );
+  try {
+    return Response.json(
+      body: await foodSearchBody(db, context.read<NutritionProvider>(), query),
+    );
+    // A provider failure (rejected key, drained hourly budget, FDC outage)
+    // is an expected, actionable condition — a 422 with the provider's own
+    // message, exactly like the sibling nutrition routes, never a 500
+    // (review B15).
+  } on NutritionProviderException catch (error) {
+    throw ValidationException(error.message);
+  }
 }

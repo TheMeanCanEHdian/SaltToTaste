@@ -18,6 +18,8 @@ import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/editor/editor_cubit.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
 import 'package:salt_app/features/editor/paste_dialog.dart';
+import 'package:salt_app/features/editor/unload_guard_io.dart'
+    if (dart.library.js_interop) 'package:salt_app/features/editor/unload_guard_web.dart';
 
 /// Drag proxy for the editor's plain ROW list (ingredients). Flutter's default
 /// lifts the item in `Material(elevation: …)` — an OPAQUE `canvasColor` (grey)
@@ -316,6 +318,10 @@ class _EditorScaffoldState extends State<_EditorScaffold> {
   late final EditorExitGuard _guard;
   late final Future<bool> Function(BuildContext) _exitHandler;
 
+  /// Browser refresh/tab-close guard — the one leave path the router (and
+  /// so [EditorExitGuard]) never sees (review B12). No-op off web.
+  final UnloadGuard _unloadGuard = UnloadGuard();
+
   /// True while a discard dialog is on screen, so a second exit attempt (e.g. a
   /// second browser Back press) is refused rather than stacking a second dialog.
   bool _confirming = false;
@@ -348,10 +354,17 @@ class _EditorScaffoldState extends State<_EditorScaffold> {
       }
     };
     _guard.install(_exitHandler);
+    // Same leave-free conditions as the router guard: prompt only while
+    // there are unsaved changes a signed-in user could still save.
+    _unloadGuard.install(() {
+      final state = _cubit.state;
+      return !state.deleted && state.dirty && _auth.state is AuthSignedIn;
+    });
   }
 
   @override
   void dispose() {
+    _unloadGuard.remove();
     _guard.remove(_exitHandler);
     super.dispose();
   }
@@ -1443,7 +1456,9 @@ class _IngredientRowState extends State<_IngredientRow> {
                   variant: FButtonVariant.ghost,
                   onPress: () => actions.toggleExpanded(line.key),
                   child: Icon(
-                    line.expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                    line.expanded
+                        ? FLucideIcons.chevronUp
+                        : FLucideIcons.chevronDown,
                     size: 18,
                     color: SaltColors.muted,
                   ),
@@ -1682,7 +1697,11 @@ class _AmountRow extends StatelessWidget {
                 final amounts = [...line.amounts]..removeAt(index);
                 actions.setStructured(line.key, amounts: amounts);
               },
-              child: const Icon(FLucideIcons.x, size: 15, color: SaltColors.muted),
+              child: const Icon(
+                FLucideIcons.x,
+                size: 15,
+                color: SaltColors.muted,
+              ),
             ),
           ),
         ],
@@ -2029,7 +2048,9 @@ class _SubsectionBlock extends StatelessWidget {
                       variant: FButtonVariant.ghost,
                       onPress: () => cubit.toggleSubsectionExpanded(s.key),
                       child: Icon(
-                        s.expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                        s.expanded
+                            ? FLucideIcons.chevronUp
+                            : FLucideIcons.chevronDown,
                         size: 18,
                         color: SaltColors.muted,
                       ),
@@ -2318,7 +2339,9 @@ class _TechniqueBlock extends StatelessWidget {
                       variant: FButtonVariant.ghost,
                       onPress: () => cubit.toggleTechniqueExpanded(t.key),
                       child: Icon(
-                        t.expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+                        t.expanded
+                            ? FLucideIcons.chevronUp
+                            : FLucideIcons.chevronDown,
                         size: 18,
                         color: SaltColors.muted,
                       ),

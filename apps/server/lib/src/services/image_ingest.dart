@@ -137,6 +137,24 @@ Future<Uint8List> fetchImageFromUrl(String rawUrl) async {
         'Fetching the image took too long.',
       ),
     );
+    // Transport-level failures are ordinary bad user input (a pasted URL
+    // whose site has an expired certificate, refuses the connection, or
+    // resets it) — a 422 naming the cause, like every other fetch failure
+    // here, never a 500 with a SEVERE stack (review B16).
+  } on HandshakeException {
+    throw const ValidationException(
+      'Could not fetch the image: the site’s TLS certificate failed '
+      'verification (expired or self-signed?).',
+    );
+  } on SocketException catch (error) {
+    throw ValidationException(
+      'Could not fetch the image: connection failed '
+      '(${error.osError?.message ?? error.message}).',
+    );
+  } on HttpException catch (error) {
+    throw ValidationException(
+      'Could not fetch the image: ${error.message}',
+    );
   } finally {
     client.close(force: true);
   }

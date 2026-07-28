@@ -33,9 +33,18 @@ class FixtureProvider implements NutritionProvider {
   /// mid-flight long enough to assert on what the API reports while it runs.
   Completer<void>? gate;
 
+  /// When set, every search throws a [NutritionProviderException] with this
+  /// message — the rejected-key / drained-budget / FDC-outage class of
+  /// failure (review B15).
+  String? failWith;
+
   @override
   Future<List<FdcCandidate>> search(String query) async {
     searchCalls += 1;
+    final failure = failWith;
+    if (failure != null) {
+      throw NutritionProviderException(failure);
+    }
     await gate?.future;
     final hits = _searches[query];
     if (hits is! List) {

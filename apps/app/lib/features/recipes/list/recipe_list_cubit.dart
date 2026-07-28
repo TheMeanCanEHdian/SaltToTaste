@@ -73,7 +73,6 @@ class RecipeListCubit extends Cubit<RecipeListState> {
 
   /// Restrict to the signed-in user's favorites.
   final bool favoritesOnly;
-  int _nextPage = 1;
 
   late final StreamSubscription<FavoriteChange> _favorites;
 
@@ -130,7 +129,6 @@ class RecipeListCubit extends Cubit<RecipeListState> {
 
   Future<void> load() async {
     emit(const RecipeListLoading());
-    _nextPage = 1;
     try {
       final page = await _repository.listRecipes(
         page: 1,
@@ -141,7 +139,6 @@ class RecipeListCubit extends Cubit<RecipeListState> {
       if (isClosed) {
         return;
       }
-      _nextPage = 2;
       emit(
         RecipeListLoaded(
           items: page.items,
@@ -167,9 +164,15 @@ class RecipeListCubit extends Cubit<RecipeListState> {
       return;
     }
     emit(current.copyWith(loadingMore: true));
+    // Page from the CURRENT item count, not a counter: client-side removals
+    // (unfavoriting from the detail page) shift the server-side list left,
+    // and a fixed page counter then starts one recipe too far per removal —
+    // cards silently fall between the pages (review B17). The count-derived
+    // page overlaps instead, and the id-dedup below absorbs the overlap.
+    final fetchPage = (current.items.length ~/ pageSize) + 1;
     try {
       final page = await _repository.listRecipes(
-        page: _nextPage,
+        page: fetchPage,
         limit: pageSize,
         query: query,
         favoritesOnly: favoritesOnly,
@@ -177,7 +180,6 @@ class RecipeListCubit extends Cubit<RecipeListState> {
       if (isClosed) {
         return;
       }
-      _nextPage += 1;
       // Merge into the LATEST state, not the pre-await snapshot — an
       // optimistic unfavorite that landed while this page was in flight
       // must survive. New items are deduped by id for the same reason.

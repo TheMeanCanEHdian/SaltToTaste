@@ -36,12 +36,24 @@ class _FakeAdapter implements HttpClientAdapter {
       return ResponseBody.fromString('{}', 200, headers: _jsonHeaders);
     }
     if (path.contains('/api/v1/recipes')) {
+      // Honor page/limit like the real server, so paging math is testable.
+      final page = int.parse(options.uri.queryParameters['page'] ?? '1');
+      final limit = int.parse(
+        options.uri.queryParameters['limit'] ?? '${RecipeListCubit.pageSize}',
+      );
+      final start = (page - 1) * limit;
+      final slice = start >= cards.length
+          ? const <RecipeCard>[]
+          : cards.sublist(
+              start,
+              start + limit > cards.length ? cards.length : start + limit,
+            );
       return ResponseBody.fromString(
         jsonEncode({
-          'items': [for (final card in cards) card.toMap()],
+          'items': [for (final card in slice) card.toMap()],
           'total': cards.length,
-          'page': 1,
-          'limit': RecipeListCubit.pageSize,
+          'page': page,
+          'limit': limit,
         }),
         200,
         headers: _jsonHeaders,
@@ -168,6 +180,50 @@ void main() {
       // outlive every visited grid.
       await repository.setFavorite('anything', favorite: false);
       await Future<void>.delayed(Duration.zero);
+    });
+
+    test('unfavoriting then scrolling skips no recipe (review B17)', () async {
+      // 50 real corpus recipes as favorites: one full page (48) plus two.
+      final many = [
+        for (final recipe in loadAllCorpusRecipes().take(50))
+          RecipeCard(
+            id: recipe.id,
+            slug: recipe.slug,
+            title: recipe.title,
+            servingsText: recipe.servings,
+            favorite: true,
+          ),
+      ];
+      adapter.cards = many;
+      final cubit = RecipeListCubit(repository, favoritesOnly: true);
+      addTearDown(cubit.close);
+      await cubit.load();
+      expect((cubit.state as RecipeListLoaded).items, hasLength(48));
+
+      // Unfavorite one from the "detail page": the card leaves this grid
+      // AND the server-side list shrinks by one.
+      final gone = many.first;
+      adapter.cards = many.sublist(1);
+      await repository.setFavorite(gone.slug, favorite: false);
+      await Future<void>.delayed(Duration.zero);
+      expect((cubit.state as RecipeListLoaded).items, hasLength(47));
+
+      // Scroll to the end (the grid calls loadMore per scroll notch).
+      var guard = 0;
+      while ((cubit.state as RecipeListLoaded).hasMore && guard < 5) {
+        await cubit.loadMore();
+        guard += 1;
+      }
+      final after = cubit.state as RecipeListLoaded;
+      // A fixed page counter fetched server rows 49.. of the shrunken list,
+      // and the recipe that shifted into row 48 fell between the pages —
+      // the grid completed with 48 of 49 favorites shown.
+      expect(after.items, hasLength(49));
+      expect(
+        after.items.map((card) => card.id),
+        containsAll(adapter.cards.map((card) => card.id)),
+        reason: 'every remaining favorite must be shown — none skipped',
+      );
     });
   });
 }
