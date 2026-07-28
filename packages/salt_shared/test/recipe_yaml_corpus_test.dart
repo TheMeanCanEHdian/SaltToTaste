@@ -364,6 +364,76 @@ void main() {
       expect(emitted, contains("extracted_at: '2026-06-30'"));
     });
   });
+
+  // Hand-edit conveniences: mechanical transforms of a REAL corpus export,
+  // the way a human editor produces them (review Y1/Y2).
+  group('hand-edited documents (review Y1/Y2)', () {
+    late Recipe bundt;
+
+    setUpAll(() {
+      bundt = _decode('0857-rich-chocolate-bundt-cake.yaml').recipe;
+    });
+
+    test('a v2 doc with serves: null derives it from the servings text', () {
+      final map = bundt.toMap()
+        ..['serves'] = null
+        ..['servings'] = 'SERVES 8';
+      final decoded = RecipeYamlCodec.decode(
+        RecipeYamlCodec.encode(RecipeMapper.fromMap(map)),
+      );
+      // The hand edit deleted the derived key; the codec re-derives it —
+      // for v2 too, not just on the v1 upgrade path.
+      expect(decoded.recipe.schemaVersion, 2);
+      expect(decoded.recipe.serves?.min, 8);
+      expect(decoded.recipe.serves?.max, 8);
+      expect(decoded.warnings, isEmpty);
+    });
+
+    test('a present serves is never overwritten by the derivation', () {
+      final map = bundt.toMap()..['servings'] = 'SERVES 8';
+      final decoded = RecipeYamlCodec.decode(
+        RecipeYamlCodec.encode(RecipeMapper.fromMap(map)),
+      );
+      // Stored 12 vs text saying 8: the codec must not guess — the
+      // recipe-review `serves_mismatch` check surfaces it to a human.
+      expect(decoded.recipe.serves?.min, 12);
+    });
+
+    test('a hand-added line with no amounts key parses its raw text', () {
+      final map = bundt.toMap();
+      final groups = map['ingredients']! as List;
+      final items = (groups.first as Map<String, Object?>)['items']! as List;
+      // The dual-amount flour line, stripped to what a human would type.
+      final flour = (items.first as Map<String, Object?>);
+      final original = RecipeMapper.fromMap(map).ingredients.first.items.first;
+      flour
+        ..remove('amounts')
+        ..remove('item')
+        ..remove('prep');
+      final decoded = RecipeYamlCodec.decode(
+        emitYamlDocument(map),
+      ).recipe.ingredients.first.items.first;
+      // The parser reproduces the stored corpus extraction for this line
+      // (it is the ingredient_parser doc-comment's own example).
+      expect(decoded.amounts, original.amounts);
+      expect(decoded.item, original.item);
+    });
+
+    test('an explicit amounts: [] stays a deliberate amount-less line', () {
+      final garnish = bundt.ingredients.first.items.firstWhere(
+        (line) => line.raw.contains('Confectioners'),
+      );
+      expect(garnish.amounts, isEmpty, reason: 'fixture check');
+      final roundTripped = RecipeYamlCodec.decode(RecipeYamlCodec.encode(bundt))
+          .recipe
+          .ingredients
+          .first
+          .items
+          .firstWhere((line) => line.raw.contains('Confectioners'));
+      // Present-and-empty is authored data, not an invitation to re-parse.
+      expect(roundTripped.amounts, isEmpty);
+    });
+  });
 }
 
 /// Names the top-level fields whose encoded values differ between [a] and

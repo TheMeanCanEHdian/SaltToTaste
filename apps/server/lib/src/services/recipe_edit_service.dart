@@ -99,18 +99,29 @@ EditResult updateRecipe(
   SaltDatabase db,
   ServerConfig config,
   String key,
-  Map<String, Object?> submission,
-) {
+  Map<String, Object?> submission, {
+  String? baseHash,
+}) {
   final existing = db.recipeByIdOrSlug(key);
   if (existing == null) {
     throw NotFoundException('recipe not found: $key');
   }
   final previousHash = db.contentHashOf(existing.recipe.id);
+  // Optimistic concurrency (review B11): a client that echoes the
+  // `base_hash` it loaded gets a 409 instead of silently obliterating a
+  // concurrent save (two admins, or one editor open in two tabs). Clients
+  // that send no hash (scripted merge-PUTs) keep last-write-wins.
+  if (baseHash != null && baseHash != previousHash) {
+    throw const ConflictException(
+      'This recipe changed since you loaded it (another save landed). '
+      'Reload to pick up those changes, then re-apply yours.',
+    );
+  }
 
   final merged = _overlay(existing.recipe.toMap(), submission);
   var recipe = _recipeFromMap(merged);
   _validateRecipe(recipe);
-  recipe = _normalized(recipe).copyWith(
+  recipe = _normalized(recipe, previous: existing.recipe).copyWith(
     id: existing.recipe.id,
     slug: existing.recipe.slug,
     schemaVersion: existing.recipe.schemaVersion,
@@ -283,10 +294,12 @@ Recipe _recipeFromMap(Map<String, Object?> map) {
   }
 }
 
-/// Renumbers steps sequentially (top level, subsections, techniques) and
-/// derives `serves` from the verbatim servings text, exactly like the YAML
-/// decode path does, so a round-trip through the editor is a no-op.
-Recipe _normalized(Recipe recipe) {
+/// Normalizes step numbering (top level, subsections, techniques) and
+/// keeps `serves` in step with the verbatim servings text, so a round-trip
+/// through the editor is a no-op. The YAML decode path preserves authored
+/// numbers; so does this, as long as they form a valid run
+/// (see [_renumbered]).
+Recipe _normalized(Recipe recipe, {Recipe? previous}) {
   final tags = <String>[];
   for (final tag in recipe.tags) {
     final normalized = tag.trim().toLowerCase();
@@ -296,7 +309,7 @@ Recipe _normalized(Recipe recipe) {
   }
   return recipe.copyWith(
     schemaVersion: 2,
-    serves: parseServings(recipe.servings),
+    serves: _servesFor(recipe, previous),
     tags: tags,
     steps: _renumbered(recipe.steps),
     subsections: [
@@ -317,9 +330,49 @@ Recipe _normalized(Recipe recipe) {
   );
 }
 
-List<RecipeStep> _renumbered(List<RecipeStep> steps) => [
-  for (final (i, step) in steps.indexed) step.copyWith(number: i + 1),
-];
+/// `serves` is derived from the servings text — but a hand-set `serves`
+/// (imported from a hand-edited file, e.g. on a yield-only recipe whose
+/// servings string parses to nothing) must survive UNRELATED edits: an
+/// update recomputes it only when the servings text itself changed, else
+/// the stored value stands (review B9 — a category-typo fix once silently
+/// reverted a hand-maintained serves to null). Creates always derive: there
+/// is no stored value to preserve. The decode path applies the same
+/// derive-only-when-absent rule (RecipeYamlCodec._deriveServes).
+Serves? _servesFor(Recipe recipe, Recipe? previous) {
+  if (previous != null && previous.servings == recipe.servings) {
+    return previous.serves;
+  }
+  return parseServings(recipe.servings);
+}
+
+/// Keeps authored step numbers when they form a valid run — non-decreasing
+/// from 1 with no gaps. Duplicate numbers are meaningful in real cookbook
+/// data (~103 corpus recipes encode alternate branches as two steps sharing
+/// a number: charcoal step 2 vs gas step 2), so a routine save must not
+/// linearize them. Anything else (gaps, zeros, out-of-order — e.g. after a
+/// reorder or insert) is renumbered sequentially.
+List<RecipeStep> _renumbered(List<RecipeStep> steps) {
+  if (_isValidNumbering([for (final step in steps) step.number])) {
+    return steps;
+  }
+  return [for (final (i, step) in steps.indexed) step.copyWith(number: i + 1)];
+}
+
+bool _isValidNumbering(List<int> numbers) {
+  if (numbers.isEmpty) {
+    return true;
+  }
+  if (numbers.first != 1) {
+    return false;
+  }
+  for (var i = 1; i < numbers.length; i++) {
+    final delta = numbers[i] - numbers[i - 1];
+    if (delta != 0 && delta != 1) {
+      return false;
+    }
+  }
+  return true;
+}
 
 // ---------------------------------------------------------------------
 // Validation. Caps are generous for real cookbook content but low enough
@@ -327,6 +380,13 @@ List<RecipeStep> _renumbered(List<RecipeStep> steps) => [
 // ---------------------------------------------------------------------
 
 const int _maxTextField = 50000;
+
+/// The editor's document caps, callable by every ingest path. The scan and
+/// importer must enforce the SAME rule at decode time: a document that
+/// bypasses validation on the way in becomes uneditable later — every
+/// subsequent in-app save 422s on content the admin never touched
+/// (review B13).
+void validateRecipeDocument(Recipe recipe) => _validateRecipe(recipe);
 
 void _validateRecipe(Recipe recipe) {
   _requireLength('title', recipe.title, min: 1, max: 250);

@@ -126,6 +126,16 @@ const List<RecipeCheck> recipeChecks = [
         'cannot be computed.',
     evaluate: _noServings,
   ),
+  RecipeCheck(
+    id: 'serves_mismatch',
+    label: 'Servings disagree',
+    description:
+        'The stored serving count disagrees with what the servings text '
+        'says (e.g. the text was hand-edited to “SERVES 8” while the stored '
+        'count still reads 6). A hand-set count on a text that states no '
+        'servings at all is a deliberate override and is not flagged.',
+    evaluate: _servesMismatch,
+  ),
 ];
 
 String? _noInstructions(RecipeHealth h) =>
@@ -169,6 +179,24 @@ String? _extractionWarnings(RecipeHealth h) {
 String? _noServings(RecipeHealth h) => h.recipe.serves == null
     ? 'no serving count — per-serving nutrition can’t be computed'
     : null;
+
+String? _servesMismatch(RecipeHealth h) {
+  // Both sides must state a value: a null stored count is `no_servings`'s
+  // territory, and a hand-set count on an unparseable servings string is a
+  // legitimate manual override (the corpus's yield-only recipes), not a
+  // disagreement (review Y1/B9).
+  final derived = parseServings(h.recipe.servings);
+  final stored = h.recipe.serves;
+  if (derived == null || stored == null) {
+    return null;
+  }
+  if (derived.min == stored.min && derived.max == stored.max) {
+    return null;
+  }
+  String range(Serves s) => s.min == s.max ? '${s.min}' : '${s.min}–${s.max}';
+  return 'stored serves ${range(stored)} vs “${h.recipe.servings}” '
+      '(parses to ${range(derived)})';
+}
 
 /// The expensive part of the report: the full flagged list plus whole-library
 /// category counts, both independent of the `issue` filter and pagination.

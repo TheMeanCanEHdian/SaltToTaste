@@ -1,6 +1,7 @@
 import 'package:yaml/yaml.dart';
 
 import '../model/recipe.dart';
+import '../util/ingredient_parser.dart';
 import '../util/servings_parser.dart';
 import '../util/yaml_plain.dart';
 import 'yaml_emitter.dart';
@@ -88,6 +89,7 @@ class RecipeYamlCodec {
     }
     final warnings = <String>[];
     _normalizeNullQuantities(root);
+    _parseBareLines(root);
     _upgrade(root, warnings);
     try {
       return RecipeDecodeResult(
@@ -148,9 +150,51 @@ class RecipeYamlCodec {
     }
   }
 
+  /// Hand-added ingredient lines: an item whose `amounts` key is ABSENT
+  /// (not present-and-empty) gets `amounts`/`item`/`prep` filled by parsing
+  /// `raw` — hand editing should mean writing the ingredient line, not
+  /// authoring the parser's 5-key-per-amount output by hand (review Y2).
+  /// Present keys — including an explicit `amounts: []` on a deliberately
+  /// amount-less line (`Salt and pepper`) — are never touched; the corpus
+  /// and every export always write the key. Absent-vs-present is already
+  /// this format's convention (see the subsection key omission). The scan's
+  /// normalize-back pass then writes the parse into the file, showing the
+  /// hand-editor what the parser understood.
+  static void _parseBareLines(Map<String, Object?> root) {
+    _parseBareLinesIn(root['ingredients']);
+    final subsections = root['subsections'];
+    if (subsections is List) {
+      for (final Object? subsection in subsections) {
+        if (subsection is Map<String, Object?>) {
+          _parseBareLinesIn(subsection['ingredients']);
+        }
+      }
+    }
+  }
+
+  static void _parseBareLinesIn(Object? groups) {
+    if (groups is! List) return;
+    for (final Object? group in groups) {
+      if (group is! Map<String, Object?>) continue;
+      final items = group['items'];
+      if (items is! List) continue;
+      for (final Object? item in items) {
+        if (item is! Map<String, Object?>) continue;
+        if (item.containsKey('amounts')) continue;
+        final raw = item['raw'];
+        if (raw is! String || raw.trim().isEmpty) continue;
+        final parsed = parseIngredientLine(raw);
+        item['amounts'] = [for (final a in parsed.amounts) a.toMap()];
+        // Fill only what the hand didn't write — a partial hand entry
+        // (raw + item, no prep) keeps its authored halves.
+        if (!item.containsKey('item')) item['item'] = parsed.item;
+        if (!item.containsKey('prep')) item['prep'] = parsed.prep;
+      }
+    }
+  }
+
   /// Upgrades a v1 document (schema_version absent, 1, or unrecognizable) to
-  /// v2: stamps `schema_version: 2` and derives `serves` from the verbatim
-  /// `servings` string when absent. Versions are read tolerantly (`1`, `'1'`,
+  /// v2: stamps `schema_version: 2`. Versions are read tolerantly (`1`, `'1'`,
   /// and `1.0` all count as 1 — hand-edited files lose quotes both ways). A
   /// version above 2 records a warning but decoding is still attempted.
   static void _upgrade(Map<String, Object?> root, List<String> warnings) {
@@ -165,24 +209,37 @@ class RecipeYamlCodec {
     }
     if (version == null || version <= 1) {
       root['schema_version'] = 2;
-      if (root['serves'] == null) {
-        final servingsText = root['servings']?.toString();
-        final serves = parseServings(servingsText);
-        if (serves != null) {
-          root['serves'] = serves.toMap();
-        } else if (servingsText != null &&
-            parseYieldCount(servingsText) == null) {
-          // A pure yield ('MAKES 2 LOAVES') states no serving count — that
-          // is expected, not a parse failure. Warn only when the string
-          // carries neither servings nor a recognizable yield.
-          warnings.add('unparseable servings: $servingsText');
-        }
-      }
     } else if (version > 2) {
       warnings.add(
         'unsupported schema_version: $version (this codec understands <= 2); '
         'attempting to decode anyway',
       );
+    }
+    _deriveServes(root, warnings);
+  }
+
+  /// Derives `serves` from the verbatim `servings` string whenever the
+  /// document does not carry it — for EVERY schema version, not just v1
+  /// upgrades (review Y1/B9). A hand-editor who changes the servings text
+  /// and deletes (or never writes) the derived `serves` key gets the
+  /// re-derivation for free on the next scan. A PRESENT `serves` is never
+  /// overwritten: a hand-set value on an unparseable servings string (the
+  /// corpus's 173 yield-only recipes) is a legitimate manual override — the
+  /// recipe-review `serves_mismatch` check surfaces disagreements instead
+  /// of this codec guessing.
+  static void _deriveServes(Map<String, Object?> root, List<String> warnings) {
+    if (root['serves'] != null) {
+      return;
+    }
+    final servingsText = root['servings']?.toString();
+    final serves = parseServings(servingsText);
+    if (serves != null) {
+      root['serves'] = serves.toMap();
+    } else if (servingsText != null && parseYieldCount(servingsText) == null) {
+      // A pure yield ('MAKES 2 LOAVES') states no serving count — that
+      // is expected, not a parse failure. Warn only when the string
+      // carries neither servings nor a recognizable yield.
+      warnings.add('unparseable servings: $servingsText');
     }
   }
 

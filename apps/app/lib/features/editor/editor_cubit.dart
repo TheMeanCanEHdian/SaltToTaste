@@ -86,14 +86,24 @@ final class EditorLine extends EditorEntry {
 
 /// One direction step in the editor.
 final class EditorStep {
-  EditorStep(this.key, {this.label = '', this.text = ''});
+  EditorStep(this.key, {this.label = '', this.text = '', this.number});
 
   final int key;
   final String label;
   final String text;
 
-  EditorStep copyWith({String? label, String? text}) =>
-      EditorStep(key, label: label ?? this.label, text: text ?? this.text);
+  /// The authored step number as loaded, null for a step added this session.
+  /// Duplicate numbers are meaningful in real cookbook data (alternate
+  /// branches: charcoal step 2 vs gas step 2), so saves preserve a valid
+  /// authored run instead of linearizing — see [EditorCubit._stepsMap].
+  final int? number;
+
+  EditorStep copyWith({String? label, String? text}) => EditorStep(
+    key,
+    label: label ?? this.label,
+    text: text ?? this.text,
+    number: number,
+  );
 }
 
 /// A recipe subsection (a variation or a component) in the editor.
@@ -464,14 +474,18 @@ class EditorCubit extends Cubit<EditorState> {
 
   List<EditorStep> _stepsFrom(List<RecipeStep> steps) => [
     for (final step in steps)
-      EditorStep(_key, label: step.label ?? '', text: step.text),
+      EditorStep(
+        _key,
+        label: step.label ?? '',
+        text: step.text,
+        number: step.number,
+      ),
   ];
 
   EditorSubsection _subsectionFrom(Subsection sub) => EditorSubsection(
     _key,
     title: sub.title ?? '',
     kind: sub.kind ?? 'variation',
-    kindNeedsReview: sub.kindNeedsReview,
     body: sub.body ?? '',
     servings: sub.servings ?? '',
     prepNotes: sub.prepNotes ?? '',
@@ -1418,20 +1432,47 @@ class EditorCubit extends Cubit<EditorState> {
     return groups;
   }
 
-  static List<Map<String, Object?>> _stepsMap(List<EditorStep> steps) => [
-    for (final (i, step) in steps.indexed)
-      if (step.text.trim().isNotEmpty)
+  static List<Map<String, Object?>> _stepsMap(List<EditorStep> steps) {
+    final kept = [
+      for (final step in steps)
+        if (step.text.trim().isNotEmpty) step,
+    ];
+    // Preserve the authored numbering when every kept step still carries its
+    // loaded number and the sequence is a valid run (non-decreasing from 1,
+    // no gaps — duplicates encode alternate branches). An insert, reorder,
+    // or leading-step delete breaks the run and falls back to 1..n. The
+    // server applies the same rule (recipe_edit_service `_renumbered`).
+    final numbers = [for (final step in kept) step.number];
+    final preserve = !numbers.contains(null) && _isValidRun(numbers.cast());
+    return [
+      for (final (i, step) in kept.indexed)
         {
-          'number': i + 1,
+          'number': preserve ? step.number : i + 1,
           'label': _nullable(step.label),
           'text': step.text.trim(),
         },
-  ];
+    ];
+  }
+
+  static bool _isValidRun(List<int> numbers) {
+    if (numbers.isEmpty) {
+      return true;
+    }
+    if (numbers.first != 1) {
+      return false;
+    }
+    for (var i = 1; i < numbers.length; i++) {
+      final delta = numbers[i] - numbers[i - 1];
+      if (delta != 0 && delta != 1) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   static Map<String, Object?> _subsectionMap(EditorSubsection sub) => {
     if (sub.title.trim().isNotEmpty) 'title': sub.title.trim(),
     'kind': sub.kind,
-    'kind_needs_review': sub.kindNeedsReview,
     if (sub.body.trim().isNotEmpty) 'body': sub.body.trim(),
     if (sub.servings.trim().isNotEmpty) 'servings': sub.servings.trim(),
     if (sub.prepNotes.trim().isNotEmpty) 'prep_notes': sub.prepNotes.trim(),
