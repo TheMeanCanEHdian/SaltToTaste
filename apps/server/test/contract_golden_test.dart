@@ -172,6 +172,18 @@ void main() {
       File('$_legacyDir/_recipes/$_legacyFile').copySync(
         '${root.path}/_recipes/$_legacyFile',
       );
+      // A legacy-v0 import takes `extraction.extracted_at` from the source
+      // file's MTIME rather than the wall clock, on purpose (legacy_import
+      // .dart: a wall-clock date made every re-run on a later day an "update"
+      // that clobbered in-app edits). Git does not preserve mtimes, so the
+      // checked-out fixture carries whatever instant the clone happened —
+      // which differs between a developer's machine and every CI run, and
+      // flows through the recipe document into `base_hash`. Pinning the COPY's
+      // mtime makes both deterministic, and turns the drift into an assertion:
+      // the golden's extracted_at is exactly this date.
+      File(
+        '${root.path}/_recipes/$_legacyFile',
+      ).setLastModifiedSync(DateTime.utc(2026, 7, 16, 12));
       File('$_legacyDir/_images/$_legacyImage').copySync(
         '${root.path}/_images/$_legacyImage',
       );
