@@ -145,6 +145,65 @@ void main() {
     }
   });
 
+  test(
+    'a restored snapshot brings back the library plus favorites and notes',
+    () {
+      // Per-user data (favorites, notes) lives ONLY in the DB snapshot, never
+      // in the exported YAML — a restore that opened just the library files
+      // would silently drop it. This walks the disaster-recovery path end to
+      // end: back up, extract into a FRESH data dir, reopen, assert it's back.
+      final userId = db.createUser(
+        username: 'restorer',
+        passwordHash: 'unused-hash',
+        role: 'member',
+      );
+      db
+        ..setFavorite(userId: userId, recipeId: recipeId, favorite: true)
+        ..setNote(
+          userId: userId,
+          recipeId: recipeId,
+          body: 'add a pinch more salt',
+        );
+
+      final name = createBackup(db: db, config: config, trigger: 'manual');
+      final archive = TarDecoder().decodeBytes(
+        const GZipDecoder().decodeBytes(
+          File('${backupsDir(config)}/$name').readAsBytesSync(),
+        ),
+      );
+
+      final freshDir = Directory.systemTemp.createTempSync('salt-restore-');
+      addTearDown(() => freshDir.deleteSync(recursive: true));
+      final restoredDbPath = '${freshDir.path}/salt.db';
+      File(restoredDbPath).writeAsBytesSync(
+        archive.files.firstWhere((f) => f.name == 'salt.db').content
+            as List<int>,
+      );
+
+      // Open the real app database (migrations + pragmas), not raw sqlite3.
+      final restored = SaltDatabase.open(restoredDbPath);
+      addTearDown(restored.dispose);
+      expect(restored.recipeExists(recipeId), isTrue);
+      expect(
+        restored.isFavorite(userId: userId, recipeId: recipeId),
+        isTrue,
+        reason: 'a favorite must survive a backup/restore',
+      );
+      expect(
+        restored.noteFor(userId: userId, recipeId: recipeId),
+        'add a pinch more salt',
+        reason: 'a personal note must survive a backup/restore',
+      );
+
+      // The canonical YAML library is archived too, so a file-based rescan
+      // could rebuild the recipes even without the snapshot.
+      expect(
+        archive.files.map((f) => f.name),
+        contains('library/$manualSourceSlug/recipes/$recipeId.yaml'),
+      );
+    },
+  );
+
   test('include_images pulls the image files in', () {
     final name = createBackup(
       db: db,
