@@ -232,6 +232,20 @@ String clientIpFor(RequestContext context, ServerConfig config) {
   return peer ?? 'unknown';
 }
 
+/// Whether [clientIp] is an address many clients share rather than one
+/// client's own, so a per-address penalty would fall on everyone.
+///
+/// True when the request carries `X-Forwarded-For` from a peer we do not
+/// trust: something is proxying, but `TRUST_PROXY`/`TRUSTED_PROXIES` does not
+/// say so, and every request therefore keys on that one hop's address. The
+/// header cannot be believed (that is the point of the peer check) but its
+/// presence is still evidence about the shape of the deployment, and the safe
+/// reading of "I cannot tell these clients apart" is to not punish them as
+/// one. A direct peer, or a correctly configured proxy, is not shared.
+bool clientIpIsShared(RequestContext context) =>
+    context.request.headers['x-forwarded-for'] != null &&
+    !trustsForwardedHeaders(context);
+
 /// [clientIpFor] resolved against the request-scoped `ServerConfig` provider.
 String clientIp(RequestContext context) =>
     clientIpFor(context, context.read<ServerConfig>());

@@ -54,17 +54,31 @@ class AuthRuntime {
     PasswordHasher? hasher,
     LoginRateLimiter? rateLimiter,
     LoginRateLimiter? ipRateLimiter,
+    ConcurrencyGate? verifyGate,
     this.setupCode,
   }) : hasher = hasher ?? PasswordHasher(),
        rateLimiter = rateLimiter ?? LoginRateLimiter(),
        ipRateLimiter =
            ipRateLimiter ??
-           LoginRateLimiter(failureThreshold: ipFailureThreshold);
+           LoginRateLimiter(failureThreshold: ipFailureThreshold),
+       verifyGate =
+           verifyGate ?? ConcurrencyGate(limit: maxConcurrentVerifications);
 
   /// Aggregate failures from one address at which the whole IP locks —
   /// catches password spraying across many usernames, which per-account
   /// keys can't see.
   static const int ipFailureThreshold = 25;
+
+  /// Password verifications allowed in flight at once, across all accounts
+  /// and addresses.
+  ///
+  /// The per-key throttles cannot bound this: an attacker spreading guesses
+  /// over many usernames stays under every threshold while still starting an
+  /// unbounded number of hashes, and each Argon2id holds ~19 MiB on the one
+  /// serving isolate. At this limit a burst costs roughly 150 MiB instead of
+  /// the 2.9 GiB measured before the gate — enough headroom that ordinary
+  /// simultaneous logins never touch it.
+  static const int maxConcurrentVerifications = 8;
 
   /// Argon2id password hasher.
   final PasswordHasher hasher;
@@ -74,6 +88,9 @@ class AuthRuntime {
 
   /// Per-IP aggregate throttle (horizontal password spraying).
   final LoginRateLimiter ipRateLimiter;
+
+  /// Ceiling on simultaneous password verifications.
+  final ConcurrencyGate verifyGate;
 
   /// First-boot setup code, or null once used (or when users already
   /// exist).
@@ -280,6 +297,11 @@ Future<SessionGrant> recoverAdmin(
   );
 }
 
+/// Retry advertised when [AuthRuntime.verifyGate] is full. Short on purpose:
+/// the backlog drains in the time one hash takes, so this is backpressure,
+/// not a lockout, and must not read as one to a legitimate client.
+const Duration _verifyBusyRetry = Duration(seconds: 2);
+
 /// Core of `POST /api/v1/auth/login`.
 ///
 /// Rate-limited per `<clientIp>|<username-lowercase>`: when locked, throws
@@ -290,20 +312,40 @@ Future<SessionGrant> recoverAdmin(
 /// instead — reachable only with the correct password, so it stays
 /// enumeration-safe. On success the failure count resets and a session opens:
 /// fixed 7-day expiry, or 90-day sliding when `remember: true`.
+///
+/// [sharedClientIp] says [clientIp] cannot identify one client — it is the
+/// address of a reverse proxy every request arrives from — which suppresses
+/// the aggregate per-address lockout that would otherwise deny the whole
+/// deployment. The per-account throttle is unaffected.
 Future<SessionGrant> login(
   SaltDatabase db,
   AuthRuntime runtime,
   Map<String, Object?> body, {
   required String clientIp,
   String? userAgent,
+  bool sharedClientIp = false,
 }) async {
   final username = requireStringField(body, 'username');
   final password = requireStringField(body, 'password');
   final remember = _optionalBoolField(body, 'remember') ?? false;
 
   final key = '$clientIp|${username.toLowerCase()}';
-  final gate = runtime.rateLimiter.check(key);
-  final ipGate = runtime.ipRateLimiter.check(clientIp);
+  // Count both attempts BEFORE the hash, not after it. These two calls and
+  // the checks inside them contain no await, so they are atomic against
+  // every other in-flight request; splitting them around the ~60-100ms
+  // Argon2id below is what let N concurrent attempts all pass a gate meant
+  // to admit five. See LoginRateLimiter.reserve.
+  final gate = runtime.rateLimiter.reserve(key);
+  // A shared address cannot identify a client, so the aggregate bucket is
+  // not applied to one: with TRUST_PROXY off (the default) every request
+  // arrives from the reverse proxy, and 25 failures across distinct
+  // usernames would lock out every account on the deployment — permanently,
+  // since success deliberately does not clear this bucket. Skipping it costs
+  // spray detection; enforcing it hands any unauthenticated peer a total
+  // denial of service. The per-account throttle above still stands.
+  final ipGate = sharedClientIp
+      ? (allowed: true, retryAfter: Duration.zero)
+      : runtime.ipRateLimiter.reserve(clientIp);
   if (!gate.allowed || !ipGate.allowed) {
     final retryAfter = gate.retryAfter > ipGate.retryAfter
         ? gate.retryAfter
@@ -311,20 +353,33 @@ Future<SessionGrant> login(
     throw LockedException(_ceilSeconds(retryAfter));
   }
 
-  void countFailure() {
-    runtime.rateLimiter.recordFailure(key);
-    runtime.ipRateLimiter.recordFailure(clientIp);
+  // Both reservations stand as failures unless this request reaches a
+  // conclusion that says otherwise, so an attempt abandoned mid-hash stays
+  // counted rather than evaporating.
+  void releaseIpReservation() {
+    if (!sharedClientIp) runtime.ipRateLimiter.releaseReservation(clientIp);
   }
 
   final user = db.userByUsername(username);
-  if (user == null) {
-    await runtime.hasher.dummyVerify(password);
-    countFailure();
-    throw const ValidationException(_invalidCredentials);
+  // Nothing past here may start an Argon2id hash without a slot: the
+  // throttles bound attempts per key, never the total in flight.
+  if (!runtime.verifyGate.tryAcquire()) {
+    throw LockedException(_ceilSeconds(_verifyBusyRetry));
   }
-  final verified = await runtime.hasher.verify(password, user.passwordHash);
-  if (!verified) {
-    countFailure();
+  final bool verified;
+  try {
+    if (user == null) {
+      // Still hashed for an unknown username: the uniform cost is what keeps
+      // login from enumerating accounts by timing.
+      await runtime.hasher.dummyVerify(password);
+      verified = false;
+    } else {
+      verified = await runtime.hasher.verify(password, user.passwordHash);
+    }
+  } finally {
+    runtime.verifyGate.release();
+  }
+  if (user == null || !verified) {
     throw const ValidationException(_invalidCredentials);
   }
   if (user.disabled) {
@@ -332,13 +387,16 @@ Future<SessionGrant> login(
     // state to the account's own owner (or someone already holding valid
     // credentials). A wrong password still yields the uniform error above, so
     // this cannot be used to enumerate usernames or account state.
-    countFailure();
     throw const ValidationException(_accountDisabled);
   }
 
   runtime.rateLimiter.recordSuccess(key);
   // Success does NOT clear the aggregate IP bucket: a sprayer who finds one
-  // valid credential must not regain a fresh horizontal budget.
+  // valid credential must not regain a fresh horizontal budget. It does give
+  // back THIS attempt's reservation, which was taken before the password was
+  // known and is not a failure — otherwise ordinary logins from one address
+  // would march the shared bucket to its own threshold.
+  releaseIpReservation();
   final token = _openSession(
     db,
     userId: user.id,

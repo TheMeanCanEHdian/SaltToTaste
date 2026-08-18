@@ -18,6 +18,7 @@ Future<Response> onRequest(RequestContext context) async {
     context.read<AuthRuntime>(),
     body,
     clientIp: clientIp(context),
+    sharedClientIp: clientIpIsShared(context),
     userAgent: context.request.headers['user-agent'],
   );
   return Response.json(

@@ -59,6 +59,42 @@ class LoginRateLimiter {
     return (allowed: false, retryAfter: remaining);
   }
 
+  /// Checks [key] and counts the attempt in ONE synchronous step, returning
+  /// the same verdict [check] would.
+  ///
+  /// This exists because [check] and [recordFailure] used to sit on either
+  /// side of the ~60-100ms Argon2id await in `login`, and Dart only switches
+  /// tasks at an await: every request in flight during that gap saw a limiter
+  /// with zero recorded failures, so N simultaneous attempts all passed a
+  /// gate meant to admit [failureThreshold]. The limiter bounded the
+  /// sequential RATE of attempts and never their CONCURRENT count — measured
+  /// at 100 concurrent guesses against one account all being verified, and
+  /// 150 concurrent logins holding 2.9 GiB of Argon2id state at once.
+  ///
+  /// Counting up front is what closes it: no await runs between the read and
+  /// the write, so the (N+1)th concurrent caller sees the Nth's increment.
+  /// An attempt that is abandoned mid-flight therefore stays counted, which
+  /// is the safe direction for a throttle. Clear it with [recordSuccess], or
+  /// give back just this one count with [releaseReservation].
+  ({bool allowed, Duration retryAfter}) reserve(String key) {
+    final gate = check(key);
+    if (!gate.allowed) return gate;
+    recordFailure(key);
+    return gate;
+  }
+
+  /// Gives back a single [reserve] count for [key] without clearing its
+  /// history, for a caller whose attempt turned out not to be a failure but
+  /// whose earlier failures must still stand.
+  void releaseReservation(String key) {
+    final state = _states[key];
+    if (state == null || state.failures == 0) return;
+    state
+      ..failures -= 1
+      ..lastActivity = _now();
+    if (state.failures < failureThreshold) state.lockedUntil = null;
+  }
+
   /// Records a failed login attempt for [key], starting or extending the
   /// lockout once the threshold is reached.
   void recordFailure(String key) {
@@ -108,6 +144,45 @@ class _KeyState {
   int failures = 0;
   DateTime lastActivity = DateTime.fromMillisecondsSinceEpoch(0);
   DateTime? lockedUntil;
+}
+
+/// A hard ceiling on how many of something may be in flight at once.
+///
+/// The login throttles bound attempts per account and per address; neither
+/// bounds the TOTAL. An attacker spreading guesses over many usernames stays
+/// under every per-key threshold while still starting an unbounded number of
+/// concurrent Argon2id hashes, each holding its own ~19 MiB block array on the
+/// single serving isolate — measured at 2.9 GiB resident from one burst, from
+/// ~30 KB of request traffic.
+///
+/// Refuses rather than queues: under attack a queue is itself the memory sink
+/// it was meant to prevent, and a caller told to retry costs nothing to hold.
+class ConcurrencyGate {
+  /// Creates a gate admitting at most [limit] holders at once. A [limit] of
+  /// zero or less disables it, so an operator can turn it off.
+  ConcurrencyGate({required this.limit});
+
+  /// Maximum simultaneous holders; zero or less disables the gate.
+  final int limit;
+
+  int _inFlight = 0;
+
+  /// Holders currently admitted.
+  int get inFlight => _inFlight;
+
+  /// Takes a slot if one is free. Balance every `true` with [release].
+  bool tryAcquire() {
+    if (limit <= 0) return true;
+    if (_inFlight >= limit) return false;
+    _inFlight += 1;
+    return true;
+  }
+
+  /// Returns a slot taken by [tryAcquire].
+  void release() {
+    if (limit <= 0) return;
+    if (_inFlight > 0) _inFlight -= 1;
+  }
 }
 
 /// In-memory per-key request-RATE limiter (sliding window).
