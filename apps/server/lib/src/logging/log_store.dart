@@ -27,9 +27,131 @@ String redactLogMessage(String message) {
   return result;
 }
 
-/// The `rid=<16 hex>` correlation id the request logger appends. Pulled into
-/// its own field and stripped from the message so it isn't shown twice.
-final RegExp _rid = RegExp(r'\s*rid=([0-9a-f]{16})\b');
+/// A log message that carries its request id as DATA rather than only as text.
+///
+/// `package:logging` keeps a non-String message on `LogRecord.object`, so
+/// [LogStore.add] reads the id from the record instead of scraping it out of a
+/// line the attacker shares (the request path is logged verbatim, and a path
+/// like `/rid=00000000000000ff/probe` used to supply the stored id and delete
+/// itself from the message — review S8). This is the ONLY way a record gets a
+/// `request_id`: the store no longer parses one out of text at all, so no
+/// emitter — present or future — can hand an attacker that field. [toString]
+/// keeps the on-stdout format unchanged.
+class RequestLogMessage {
+  /// Wraps [text] with the server-generated [requestId] (null when the request
+  /// id middleware is not installed).
+  const RequestLogMessage(this.text, this.requestId);
+
+  /// The formatted message, WITHOUT the `rid=` suffix.
+  final String text;
+
+  /// The server-generated request id, or null.
+  final String? requestId;
+
+  @override
+  String toString() => '$text rid=${requestId ?? '-'}';
+}
+
+/// Longest request path written to a log record, in characters.
+///
+/// The path is attacker-chosen and `HttpServer` imposes no request-line limit
+/// (a 200 KB path is accepted), while the log store retains a fixed number of
+/// BYTES — so an uncapped path let an unauthenticated peer rotate all retained
+/// history out in a few dozen requests (review S7). The longest path this app
+/// can legitimately serve is `/images/<source>/<file>`; measured against the
+/// 1,198-recipe ATK corpus that is 176 characters (a 62-char source slug plus
+/// the 105-char longest image filename), and the longest API route with the
+/// longest recipe id is 128. 256 keeps ~45% headroom over the real maximum;
+/// nothing longer can address a resource that exists.
+///
+/// A path over the cap is cut with a marker stating how much was dropped —
+/// never silently, which would make an attack read like an ordinary request.
+const int maxLoggedPathChars = 256;
+
+/// [path] bounded to [maxLoggedPathChars] for logging.
+///
+/// Lives HERE, next to the store, rather than in one middleware: every emitter
+/// that formats a request path into a log line must route through it. The cap
+/// was first applied only in `requestLogger`, and the sibling emitter in
+/// `errorHandler` kept logging the raw path — one call site fixed, the finding
+/// retired, the hole open (review P1).
+String loggedPath(String path) => path.length <= maxLoggedPathChars
+    ? path
+    : '${path.substring(0, maxLoggedPathChars)}'
+          '…[+${path.length - maxLoggedPathChars} chars]';
+
+/// Longest message persisted per record, in characters — including any
+/// exception and stack appended below it.
+///
+/// Retention is a fixed byte budget shared by every record, so an unbounded
+/// message is an eviction primitive (S7) — and once stacks are persisted
+/// (S15), a 500-storm is the same primitive. Measured: a real unhandled-error
+/// record produced by this server's own middleware chain (message + the
+/// exception + the FULL stack, down to the isolate bottom) is ~4,120
+/// characters, so 8 KiB retains every frame of a genuine crash with room for a
+/// deeper production chain, while still bounding a flood.
+const int maxLogMessageChars = 8192;
+
+/// Longest EMITTER TEXT persisted per record, before the exception and stack
+/// are appended below it.
+///
+/// The text is the only part of a record an attacker can grow — it is where a
+/// request path gets formatted in. A single head-keeping cap over the finished
+/// concatenation therefore inverted the whole point of S15: a long enough path
+/// pushed the exception type and every `#0` frame past the cut, so the stored
+/// crash record was 8 KiB of the attacker's own path and nothing else. Giving
+/// the text its own budget means the forensic tail is reserved and cannot be
+/// evicted by anything the caller chooses. 1 KiB is ~3x the longest line this
+/// server emits (method + the 256-char path cap + status + timing + client IP).
+const int maxLogTextChars = 1024;
+
+/// [message] with the record's exception and stack appended, when it carries
+/// them.
+///
+/// `errorHandler` deliberately keeps the exception out of the response envelope
+/// and logs it with the record — but the store persisted the message ALONE, so
+/// the admin viewer showed every 500 as `Unhandled error on POST …` with no
+/// type, no message and no frame (S15). Both go through the same
+/// [redactLogMessage] the message does: an exception string or a frame can
+/// carry a secret, and "secrets never logged" is binding.
+String _withError(String message, LogRecord record) {
+  final error = record.error;
+  final stack = record.stackTrace;
+  if (error == null && stack == null) {
+    return message;
+  }
+  final buffer = StringBuffer(message);
+  if (error != null) {
+    // The type is NOT redundant: `StateError.toString()` is "Bad state: …"
+    // and names nothing, and triage starts from the type.
+    buffer.write('\n${error.runtimeType}: $error');
+  }
+  if (stack != null) {
+    buffer.write('\n$stack');
+  }
+  return buffer.toString();
+}
+
+/// [message] bounded to [max], with a marker naming what was dropped — a
+/// truncation the reader can see beats a line that lies.
+String _cap(String message, int max) => message.length <= max
+    ? message
+    : '${message.substring(0, max)}'
+          '\n[+${message.length - max} chars truncated]';
+
+/// The persisted `message` for [record]: the emitter's [text] bounded on its
+/// own, THEN the exception and stack appended, then the whole bounded again.
+///
+/// Two budgets, not one: see [maxLogTextChars]. Redaction runs before each cut
+/// — the cap must never be what saves a secret, and a secret must not survive
+/// by sitting past a cut.
+String _composeMessage(String text, LogRecord record) {
+  final capped = _cap(redactLogMessage(text), maxLogTextChars);
+  return _cap(
+    redactLogMessage(_withError(capped, record)),
+    maxLogMessageChars,
+  );
+}
 
 /// Severity buckets, ordered — a `minLevel` filter shows its rank and above.
 const Map<String, int> logLevelRank = {
@@ -82,6 +204,7 @@ class LogStore {
 
   StreamSubscription<LogRecord>? _subscription;
   bool _dirReady = false;
+  int? _bytes;
   final Set<String> _knownLoggers = {};
   bool _loggersSeeded = false;
 
@@ -129,9 +252,10 @@ class LogStore {
   /// poll reads (a query's own `loggers` only covers the lines it scanned).
   List<String> get knownLoggers => _knownLoggers.toList()..sort();
 
-  /// Appends one record (redacted, request id lifted) to the active file, then
-  /// rotates if it has grown past [maxBytes]. Writes are synchronous so a
-  /// reader always sees complete lines and no flush lag.
+  /// Appends one record (redacted, capped, request id lifted, any exception and
+  /// stack persisted with it) to the active file, then rotates if it has grown
+  /// past [maxBytes]. Writes are synchronous so a reader always sees complete
+  /// lines and no flush lag.
   void add(LogRecord record) {
     if (maxBytes <= 0) {
       return;
@@ -139,37 +263,53 @@ class LogStore {
     // Record the logger for the dropdown even if the write below fails — the
     // logger IS active regardless of whether this line reached disk.
     _knownLoggers.add(record.loggerName);
-    final rid = _rid.firstMatch(record.message);
-    final stripped = rid == null
-        ? record.message
-        : record.message.replaceFirst(_rid, '');
-    final entry = LogEntry(
-      // package:logging stamps LOCAL time; the API convention is UTC with a
-      // Z suffix, and every other timestamp complies — a local wall clock
-      // here made log/backup correlation off by the server's UTC offset
-      // (review B19). Older stored lines keep their local form.
-      time: record.time.toUtc().toIso8601String(),
-      level: _bucket(record.level),
-      logger: record.loggerName,
-      message: redactLogMessage(stripped),
-      requestId: rid?.group(1),
-    );
     // Logging is best-effort and runs on EVERY request (via Logger.root): a
-    // read-only or full data dir must never turn a log line into an uncaught
-    // error on the root zone. Create the dir once (not per record), then
-    // swallow write failures — a dropped log line beats a poisoned request.
+    // read-only or full data dir — or an object whose toString throws — must
+    // never turn a log line into an uncaught error on the root zone. Create the
+    // dir once (not per record), then swallow failures: a dropped log line
+    // beats a poisoned request.
     try {
+      final object = record.object;
+      // The request id is SERVER-generated and only ever travels as data. An
+      // emitter that did not pass a RequestLogMessage gets request_id: null
+      // and its text verbatim — recovering an id from message text is what let
+      // a path (and later, any message ending in attacker text) set the field
+      // and silently delete itself from the record (S8 / review P5).
+      final text = object is RequestLogMessage ? object.text : record.message;
+      final requestId = object is RequestLogMessage ? object.requestId : null;
+      final entry = LogEntry(
+        // package:logging stamps LOCAL time; the API convention is UTC with a
+        // Z suffix, and every other timestamp complies — a local wall clock
+        // here made log/backup correlation off by the server's UTC offset
+        // (review B19). Older stored lines keep their local form.
+        time: record.time.toUtc().toIso8601String(),
+        level: _bucket(record.level),
+        logger: record.loggerName,
+        message: _composeMessage(text, record),
+        requestId: requestId,
+      );
       _ensureDir();
-      final file = File(_path)
-        ..writeAsStringSync(
-          '${jsonEncode(entry.toMap())}\n',
-          mode: FileMode.append,
-        );
-      if (file.lengthSync() >= maxBytes) {
+      final line = utf8.encode('${jsonEncode(entry.toMap())}\n');
+      // Track the size instead of stat-ing the file per record: this runs on
+      // the serving isolate for every PRE-AUTH request, so the syscall is one
+      // an unauthenticated peer gets to schedule (S7 aggravator). Seeded from
+      // disk on the first write of a process, reset by _rotate.
+      _bytes ??= _lengthOnDisk();
+      File(_path).writeAsBytesSync(line, mode: FileMode.append);
+      _bytes = _bytes! + line.length;
+      if (_bytes! >= maxBytes) {
         _rotate();
       }
       // ignore: avoid_catches_without_on_clauses
-    } catch (_) {}
+    } catch (_) {
+      // The counter may not reflect what actually reached disk; re-seed it.
+      _bytes = null;
+    }
+  }
+
+  int _lengthOnDisk() {
+    final file = File(_path);
+    return file.existsSync() ? file.lengthSync() : 0;
   }
 
   void _rotate() {
@@ -181,6 +321,7 @@ class LogStore {
     if (active.existsSync()) {
       active.renameSync(_backupPath);
     }
+    _bytes = 0;
   }
 
   /// Reads the store (rotation + active file) SYNCHRONOUSLY, newest first,

@@ -2,9 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+// dart_frog ships its own `requestLogger`; ours is the one under test.
+import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/handlers/admin_handlers.dart';
 import 'package:salt_server/src/logging/log_store.dart';
+import 'package:salt_server/src/middleware/error_handler.dart';
+import 'package:salt_server/src/middleware/request_context.dart';
+import 'package:salt_server/src/middleware/request_logger.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
@@ -59,10 +64,14 @@ void main() {
       ]);
     });
 
-    test('lifts and strips the request id', () {
+    test('lifts the request id from the record, not the text', () {
+      const message = RequestLogMessage(
+        'GET /x -> 200 (5ms)',
+        '0123456789abcdef',
+      );
       final s = store()
         ..add(
-          _rec(Level.INFO, 'http', 'GET /x -> 200 (5ms) rid=0123456789abcdef'),
+          LogRecord(Level.INFO, '$message', 'http', null, null, null, message),
         );
       final entry = s.query().items.single;
       expect(entry.requestId, '0123456789abcdef');
@@ -93,8 +102,11 @@ void main() {
     });
 
     test('filters by logger and by query (message or rid)', () {
+      const cake = RequestLogMessage('chocolate cake', '00000000000000aa');
       final s = store()
-        ..add(_rec(Level.INFO, 'http', 'chocolate cake rid=00000000000000aa'))
+        ..add(
+          LogRecord(Level.INFO, '$cake', 'http', null, null, null, cake),
+        )
         ..add(_rec(Level.INFO, 'auth', 'login ok'));
       expect(s.query(logger: 'auth').items.map((e) => e.message), ['login ok']);
       expect(s.query(query: 'CHOCOLATE').items.map((e) => e.logger), ['http']);
@@ -136,6 +148,23 @@ void main() {
       expect(messages.length, lessThan(12), reason: 'history is bounded');
       // At most the active file + one backup exist (no unbounded .2, .3, ...).
       expect(File('${dir.path}/server.jsonl.2').existsSync(), isFalse);
+    });
+
+    test('rotation resets the size counter — retention is not one line', () {
+      // The in-memory counter that replaced the per-record lengthSync() is
+      // load-bearing for S7, and only its SEED was pinned. Drop the reset in
+      // _rotate() and it stays >= maxBytes forever, so EVERY subsequent record
+      // rotates and the store keeps a single line per generation — 90%+ of
+      // retained history silently destroyed, with the rest of the suite green.
+      final s = store(maxBytes: 1024);
+      for (var i = 0; i < 60; i++) {
+        s.add(_rec(Level.INFO, 'http', 'msg $i'));
+      }
+      expect(
+        s.query().items,
+        hasLength(greaterThan(5)),
+        reason: 'a full generation is retained, not one line per rotation',
+      );
     });
 
     test('maxScanBytes reads only the tail of the file', () {
@@ -258,6 +287,294 @@ void main() {
       expect(s.query().items.single.message, 'streamed');
       await s.dispose();
       await controller.close();
+    });
+  });
+
+  group('attacker-controlled input', () {
+    test('caps an oversized message, with a marker naming the loss', () {
+      // Retention is a fixed byte budget, so an unbounded message is an
+      // eviction primitive (S7). The cut must be visible: a silently truncated
+      // line reads like the real thing.
+      final s = store()..add(_rec(Level.INFO, 'http', 'A' * 10000));
+      final message = s.query().items.single.message;
+      expect(message.length, lessThan(10000));
+      expect(message, startsWith('A' * maxLogTextChars));
+      expect(
+        message,
+        endsWith(
+          '[+${10000 - maxLogTextChars} chars '
+          'truncated]',
+        ),
+      );
+    });
+
+    test('an oversized message cannot evict the exception and stack', () {
+      // The text budget exists for this: a head-keeping cap over the FINISHED
+      // concatenation let an attacker-sized message prefix push the exception
+      // type and every frame past the cut, so the stored crash record was the
+      // attacker's own text and nothing else — S15 defeated by the very
+      // request that crashed the server.
+      final s = store()
+        ..add(
+          LogRecord(
+            Level.SEVERE,
+            'Unhandled error on GET /${'A' * 10000}',
+            'http',
+            StateError('sensitive internal detail'),
+            StackTrace.current,
+          ),
+        );
+      final message = s.query().items.single.message;
+      expect(message, contains('StateError'));
+      expect(message, contains('sensitive internal detail'));
+      expect(message, contains('#0'));
+      expect(message.length, lessThanOrEqualTo(maxLogMessageChars + 64));
+    });
+
+    test('the text budget is small enough to keep a deep stack', () {
+      // maxLogTextChars is a VALUE, not just a mechanism: whatever it is comes
+      // straight off the record's total budget, so raising it silently eats
+      // frames off the other end. The test above proves SOME of the stack
+      // survives; this one pins how much. Measured on the record below: at
+      // 1 KiB it keeps 104 of its 120 frames, at 4 KiB only 59 — and every
+      // other test in this file stays green either way.
+      const frames = 120;
+      const frame =
+          '      package:salt_server/src/handlers/auth_handlers.dart 471:22';
+      final stack = StackTrace.fromString(
+        [
+          for (var i = 0; i < frames; i++)
+            '#${i.toString().padLeft(3, '0')}$frame',
+        ].join('\n'),
+      );
+      final s = store()
+        ..add(
+          LogRecord(
+            Level.SEVERE,
+            'Unhandled error on GET /${'A' * 10000}',
+            'http',
+            StateError('boom'),
+            stack,
+          ),
+        );
+      final kept = RegExp(
+        r'^#\d+ ',
+        multiLine: true,
+      ).allMatches(s.query().items.single.message).length;
+      expect(
+        kept,
+        greaterThanOrEqualTo(95),
+        reason:
+            'the emitter-text budget grew and ate the forensic tail: a '
+            'record capped at $maxLogMessageChars chars cannot spend '
+            '$maxLogTextChars of them on attacker text',
+      );
+    });
+
+    test('a `rid=` in the message text cannot supply the request id', () {
+      // The store does not parse an id out of text at all any more. The
+      // anchored fallback that replaced the unanchored scan (S8) still let any
+      // emitter whose message ENDS with attacker text set the field AND have
+      // that text silently deleted — e.g. import's 'Failed to import <name>'.
+      final s = store()
+        ..add(
+          _rec(
+            Level.INFO,
+            'importer',
+            'Failed to import cake.yaml rid=deadbeefdeadbeef',
+          ),
+        );
+      final entry = s.query().items.single;
+      expect(entry.requestId, isNull, reason: 'ids are data, never text');
+      expect(
+        entry.message,
+        'Failed to import cake.yaml rid=deadbeefdeadbeef',
+        reason: 'and nothing is silently stripped out of the record',
+      );
+    });
+
+    test('a structured request id is taken from the record, not the text', () {
+      const message = RequestLogMessage(
+        'GET /rid=00000000000000ff/probe -> 404 (1ms)',
+        'deadbeefdeadbeef',
+      );
+      final s = store()
+        ..add(
+          LogRecord(Level.INFO, '$message', 'http', null, null, null, message),
+        );
+      final entry = s.query().items.single;
+      expect(entry.requestId, 'deadbeefdeadbeef');
+      expect(entry.message, contains('/rid=00000000000000ff/probe'));
+    });
+
+    test('an exception and its stack are persisted, redacted', () {
+      // S15: the store kept only record.message, so a 500 was retained with no
+      // type, message or frame. Both new parts must pass through the SAME
+      // redaction — a secret in an exception string is still a secret.
+      const summary = RequestLogMessage(
+        'Unhandled error on POST /x',
+        'deadbeefdeadbeef',
+      );
+      final s = store()
+        ..add(
+          LogRecord(
+            Level.SEVERE,
+            '$summary',
+            'http',
+            StateError('rejected, recovery code: HUNTER2'),
+            StackTrace.current,
+            null,
+            summary,
+          ),
+        );
+      final entry = s.query().items.single;
+      expect(entry.requestId, 'deadbeefdeadbeef');
+      expect(entry.message, contains('StateError'));
+      expect(entry.message, contains('#0'));
+      expect(entry.message, contains('recovery code: ••••'));
+      expect(entry.message, isNot(contains('HUNTER2')));
+      // ...and nothing survives unredacted on disk either.
+      final onDisk = File('${dir.path}/server.jsonl').readAsStringSync();
+      expect(onDisk, isNot(contains('HUNTER2')));
+    });
+
+    test('a reopened store rotates on the existing size, not from zero', () {
+      // The size is tracked in memory now (no stat per pre-auth record), so a
+      // fresh store over an existing file must seed the counter from disk —
+      // otherwise a restart grants a whole extra maxBytes of growth.
+      final first = store(maxBytes: 400);
+      final file = File('${dir.path}/server.jsonl');
+      do {
+        first.add(_rec(Level.INFO, 'http', 'filling'));
+      } while (file.lengthSync() < 300);
+      final before = file.lengthSync();
+      store(maxBytes: 400).add(_rec(Level.INFO, 'http', 'after restart'));
+      expect(
+        File('${dir.path}/server.jsonl.1').existsSync(),
+        isTrue,
+        reason: 'the pre-existing $before bytes count toward maxBytes',
+      );
+    });
+  });
+
+  group('request logging over a real chain', () {
+    late HttpServer server;
+    late Uri baseUri;
+    late LogStore logStore;
+
+    setUp(() async {
+      logStore = store();
+      Logger.root.level = Level.ALL;
+      logStore.attach(Logger.root.onRecord);
+      Response dispatch(RequestContext context) {
+        // startsWith, not ==: the flood/eviction tests must be able to drive
+        // the EXPENSIVE (500 + persisted stack) path with a long path too.
+        if (context.request.uri.path.startsWith('/boom')) {
+          throw StateError('sensitive internal detail');
+        }
+        return Response(body: 'ok');
+      }
+
+      // The real middlewares, in the production order (outermost last).
+      final pipeline = const Pipeline()
+          .addMiddleware(requestIdProvider())
+          .addMiddleware(requestLogger())
+          .addMiddleware(errorHandler())
+          .addHandler(dispatch);
+      server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
+      baseUri = Uri.parse('http://127.0.0.1:${server.port}');
+    });
+
+    tearDown(() async {
+      await logStore.dispose();
+      await server.close(force: true);
+    });
+
+    Future<HttpClientResponse> send(String path) async {
+      final client = HttpClient();
+      try {
+        final request = await client.getUrl(baseUri.resolve(path));
+        final response = await request.close();
+        await response.drain<void>();
+        return response;
+      } finally {
+        client.close();
+      }
+    }
+
+    test('a 100 KB request path cannot flood the store', () async {
+      // HttpServer imposes no request-line limit, and the store keeps a fixed
+      // number of BYTES — so an uncapped path let an unauthenticated peer
+      // rotate all retained history out in a few dozen requests (S7).
+      await send('/${'a' * (100 * 1024)}');
+      await Future<void>.delayed(Duration.zero);
+      final entry = logStore.query().items.single;
+      expect(entry.message.length, lessThan(maxLoggedPathChars + 128));
+      expect(entry.message, contains('…[+'));
+      expect(
+        File('${dir.path}/server.jsonl').lengthSync(),
+        lessThan(1024),
+        reason: 'one junk request costs the store well under a KiB',
+      );
+    });
+
+    test('a 100 KB request path on the 500 path cannot flood it either',
+        () async {
+      // The EXPENSIVE path, which the flood test above does not exercise: a
+      // 500 persists the exception and the full stack as well, and the error
+      // handler formats the same attacker-chosen path into its own record.
+      // Both records must stay bounded, and — the S15 point — the forensics
+      // must survive a path chosen to evict them.
+      final response = await send('/boom/${'a' * (100 * 1024)}');
+      expect(response.statusCode, HttpStatus.internalServerError);
+      await Future<void>.delayed(Duration.zero);
+      final entry = logStore.query(minLevel: 'ERROR').items.single;
+      expect(entry.message, contains('…[+'), reason: 'path is capped');
+      expect(entry.message, contains('StateError'));
+      expect(entry.message, contains('sensitive internal detail'));
+      expect(entry.message, contains('#0'));
+      expect(entry.requestId, response.headers.value(requestIdHeader));
+      expect(entry.requestId, isNotNull);
+      // Measured on this chain: 4,939 bytes for the pair of records (INFO
+      // access line + ERROR with its whole stack), independent of the 100 KB
+      // path. Uncapped it was 8,741 — and that larger record was pure
+      // attacker padding, with the stack evicted.
+      expect(
+        File('${dir.path}/server.jsonl').lengthSync(),
+        lessThan(6 * 1024),
+        reason: 'one junk 500 costs a bounded, mostly-forensic ~5 KiB',
+      );
+    });
+
+    test(
+      'the stored request id is the server id, not one from the path',
+      () async {
+        final response = await send('/rid=00000000000000ff/secret-probe');
+        await Future<void>.delayed(Duration.zero);
+        final entry = logStore.query().items.single;
+        expect(entry.requestId, response.headers.value(requestIdHeader));
+        expect(entry.requestId, isNot('00000000000000ff'));
+        expect(
+          entry.message,
+          contains('/rid=00000000000000ff/secret-probe'),
+          reason: 'the viewer must show what was actually requested',
+        );
+      },
+    );
+
+    test('a 500 is retained WITH its exception and stack', () async {
+      final response = await send('/boom');
+      expect(response.statusCode, HttpStatus.internalServerError);
+      await Future<void>.delayed(Duration.zero);
+      final entry = logStore.query(minLevel: 'ERROR').items.single;
+      expect(entry.message, contains('Unhandled error on GET /boom'));
+      expect(entry.message, contains('StateError'));
+      expect(entry.message, contains('sensitive internal detail'));
+      expect(entry.message, contains('#0'));
+      expect(entry.requestId, response.headers.value(requestIdHeader));
+      // The cap is sized from this: a real crash record must fit whole.
+      expect(entry.message.length, lessThan(maxLogMessageChars));
+      printOnFailure('crash record: ${entry.message.length} chars');
     });
   });
 
@@ -394,6 +711,40 @@ void main() {
       expect(export.filename, startsWith('salttotaste-logs-'));
       expect(export.filename, endsWith('.log'));
       expect(export.filename, isNot(contains(':')));
+    });
+
+    test('a multi-line crash keeps its rid on the header line', () {
+      // ERROR records are routinely multi-line now (exception + stack below
+      // the summary). Appending ' rid=<id>' after the message put a crash's
+      // correlation id on its LAST stack frame while the header line — the one
+      // a reader scans — carried none.
+      const summary = RequestLogMessage(
+        'Unhandled error on GET /boom',
+        'deadbeefdeadbeef',
+      );
+      final s = store()
+        ..add(
+          LogRecord(
+            Level.SEVERE,
+            '$summary',
+            'http',
+            StateError('kaboom'),
+            StackTrace.current,
+            null,
+            summary,
+          ),
+        );
+      final lines = const LineSplitter().convert(logsExportHandler(s).body);
+      expect(lines.length, greaterThan(1), reason: 'the stack is persisted');
+      expect(lines.first, contains('ERROR http rid=deadbeefdeadbeef'));
+      expect(lines.first, endsWith('Unhandled error on GET /boom'));
+      expect(lines.last, isNot(contains('rid=')));
+      expect(
+        lines.skip(1),
+        everyElement(startsWith('  ')),
+        reason: 'continuation lines are indented, so a reader can tell them '
+            'from the start of the next record',
+      );
     });
 
     test('appends the request id and honors filters, with no row cap', () {

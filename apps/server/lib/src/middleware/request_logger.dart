@@ -1,6 +1,7 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 
@@ -42,14 +43,19 @@ Middleware requestLogger([ServerConfig? config]) {
       if (unloggedPaths.contains(context.request.uri.path)) {
         return response;
       }
-      final rid = requestIdOf(context) ?? '-';
       final from = config == null
           ? ''
           : ' from ${clientIpFor(context, config)}';
+      // The id travels as DATA (RequestLogMessage), so the store never has to
+      // recover it from text an attacker shares a line with — see S8.
       _log.info(
-        '${context.request.method.value} ${context.request.uri.path} '
-        '-> ${response.statusCode} '
-        '(${stopwatch.elapsedMilliseconds}ms)$from rid=$rid',
+        RequestLogMessage(
+          '${context.request.method.value} '
+          '${loggedPath(context.request.uri.path)} '
+          '-> ${response.statusCode} '
+          '(${stopwatch.elapsedMilliseconds}ms)$from',
+          requestIdOf(context),
+        ),
       );
       return response;
     };

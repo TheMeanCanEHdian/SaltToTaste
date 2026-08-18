@@ -114,20 +114,25 @@ Future<Map<String, Object?>> logsHandler(
   final buffer = StringBuffer();
   // query() is newest-first; a downloaded log reads oldest-first.
   for (final entry in result.items.reversed) {
+    // A record's message is routinely MULTI-LINE now (an ERROR carries its
+    // exception and stack below the summary), so the record's metadata all
+    // belongs on the header line — `rid=` appended last landed on a crash's
+    // final stack frame while the header carried none. Continuation lines are
+    // indented, so a line-oriented reader can tell a new record from a frame.
     buffer
       ..write(entry.time)
       ..write(' ')
       ..write(entry.level)
       ..write(' ')
-      ..write(entry.logger)
-      ..write(' ')
-      ..write(entry.message);
+      ..write(entry.logger);
     if (entry.requestId != null) {
       buffer
         ..write(' rid=')
         ..write(entry.requestId);
     }
-    buffer.writeln();
+    buffer
+      ..write(' ')
+      ..writeln(entry.message.replaceAll('\n', '\n  '));
   }
   final stamp = DateTime.now()
       .toUtc()

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -62,9 +63,17 @@ Middleware errorHandler() {
           requestId: requestId,
         );
       } catch (error, stackTrace) {
+        // Same two rules as the request logger, because the same attacker
+        // chooses the same path: the path goes through `loggedPath` (uncapped,
+        // it evicted the exception and every stack frame out of the record the
+        // store had just started keeping — review P1/P2), and the request id
+        // travels as DATA, never as text the store has to parse back out (S8).
         _log.severe(
-          'Unhandled error on ${context.request.method.value} '
-          '${context.request.uri.path} rid=${requestId ?? '-'}',
+          RequestLogMessage(
+            'Unhandled error on ${context.request.method.value} '
+            '${loggedPath(context.request.uri.path)}',
+            requestId,
+          ),
           error,
           stackTrace,
         );
