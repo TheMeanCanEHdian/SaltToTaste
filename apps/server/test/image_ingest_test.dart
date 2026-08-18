@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:logging/logging.dart';
@@ -16,6 +17,13 @@ import 'support/corpus.dart';
 /// Only the tests that READ corpus files sit behind the corpus gate — the
 /// URL-guard, signature, and cap regression pins run everywhere, CI
 /// included. A whole-file gate once skipped all of them there (review T1).
+/// The one real photo committed to this repo (the legacy-v0 importer
+/// fixture kept at the P8 cutover) — real JPEG bytes for the tests that need
+/// them without the external corpus, so they run in CI too.
+const String _fixtureImage =
+    'test/fixtures/legacy-v0/_images/brown-butter-gemelli-with-asparagus,'
+    '-walnuts,-and-lemony-ricotta.jpg';
+
 void main() {
   late Directory tempDir;
   late ServerConfig config;
@@ -83,6 +91,91 @@ void main() {
       ),
       throwsA(isA<ValidationException>()),
     );
+  });
+
+  test('concurrent saves for one recipe never clobber each other', () async {
+    // The lost-write race (2026-07-28 review, item 5) needs two writers, and
+    // `saveRecipeImage` is synchronous — nothing inside one isolate can
+    // interleave with it — so reproducing it takes real isolates on one
+    // library directory, which is also the shipped shape (a second replica
+    // on the same volume). Every writer saves under the SAME recipe id in
+    // the same second, so every save computes the same `<id>-<stamp>`
+    // prefix: exactly the input the old scan-for-the-first-free-name
+    // mishandled, both for `<name>.tmp` and for the rename target.
+    const writers = 4;
+    const perWriter = 15;
+    final raceDir = Directory.systemTemp.createTempSync('salt-image-race');
+    addTearDown(() => raceDir.deleteSync(recursive: true));
+    final dataDir = raceDir.path;
+    final bytes = File(_fixtureImage).readAsBytesSync();
+    // A shared start instant, so the writers overlap instead of queueing
+    // behind each other's isolate spawn.
+    final startAt = DateTime.now()
+        .add(const Duration(milliseconds: 300))
+        .microsecondsSinceEpoch;
+
+    final saved = await Future.wait([
+      for (var writer = 0; writer < writers; writer += 1)
+        Isolate.run(() async {
+          final until = DateTime.fromMicrosecondsSinceEpoch(startAt);
+          while (DateTime.now().isBefore(until)) {
+            await Future<void>.delayed(const Duration(milliseconds: 1));
+          }
+          return [
+            for (var i = 0; i < perWriter; i += 1)
+              saveRecipeImage(
+                config: ServerConfig(
+                  dataDir: dataDir,
+                  logLevel: Level.WARNING,
+                  trustProxy: false,
+                ),
+                sourceSlug: 'my-recipes',
+                recipeId: 'manual-20260715-race',
+                bytes: bytes,
+              ),
+          ];
+        }),
+    ]);
+
+    final references = saved.expand((refs) => refs).toList();
+    expect(references, hasLength(writers * perWriter));
+    expect(
+      references.toSet(),
+      hasLength(writers * perWriter),
+      reason: 'two writers were handed the same stored filename',
+    );
+    for (final reference in references) {
+      expect(
+        File('$dataDir/library/my-recipes/$reference').readAsBytesSync(),
+        bytes,
+        reason: '$reference is not the photo its saver stored',
+      );
+    }
+  });
+
+  group('creditUrl keeps a credential out of the stored credit', () {
+    // Crafted URLs: a presigned download URL is a negative-path input the
+    // recipe corpus cannot supply.
+    test('drops the query string a presigned URL signs with', () {
+      expect(
+        creditUrl(
+          'https://bucket.s3.amazonaws.com/photos/hero.jpg'
+          '?X-Amz-Signature=deadbeefdeadbeef&X-Amz-Expires=900',
+        ),
+        'https://bucket.s3.amazonaws.com/photos/hero.jpg',
+      );
+    });
+
+    test('drops the fragment and userinfo, keeps a non-default port', () {
+      expect(
+        creditUrl('https://user:secret@cdn.example:8443/a/hero.jpg#frag'),
+        'https://cdn.example:8443/a/hero.jpg',
+      );
+    });
+
+    test('a URL with no host yields no credit at all', () {
+      expect(creditUrl('not a url at all'), isEmpty);
+    });
   });
 
   group('fetchImageFromUrl SSRF guards', () {

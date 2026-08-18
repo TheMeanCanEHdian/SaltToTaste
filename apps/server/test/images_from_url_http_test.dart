@@ -60,16 +60,19 @@ void main() {
     debugImageHttpClientFactory = () => _FakeHttpClient(responder, requested);
   }
 
-  /// A 200 image response whose socket landed on [peer].
+  /// A 200 image response whose socket landed on [peer] — or, when [peer] is
+  /// null, one the transport reports no connection info for at all.
   _FakeResponse imageResponse(
     List<int> body, {
     String contentType = 'image/jpeg',
-    String peer = publicHost,
+    String? peer = publicHost,
   }) => _FakeResponse(
     body: body,
     statusCode: HttpStatus.ok,
     headers: _FakeHeaders({HttpHeaders.contentTypeHeader: contentType}),
-    connectionInfo: _FakeConnectionInfo(InternetAddress(peer)),
+    connectionInfo: peer == null
+        ? null
+        : _FakeConnectionInfo(InternetAddress(peer)),
   );
 
   /// A 302 pointing at [location].
@@ -81,6 +84,19 @@ void main() {
         headers: _FakeHeaders({HttpHeaders.locationHeader: location}),
         connectionInfo: _FakeConnectionInfo(InternetAddress(peer)),
       );
+
+  /// The message a caller actually receives when [transport] answers.
+  Future<String> refusalMessage(
+    Future<HttpClientResponse> Function(Uri) transport,
+  ) async {
+    installTransport(transport);
+    try {
+      await fetchImageFromUrl(imageUrlText);
+      fail('the fetch should have been refused');
+    } on ValidationException catch (error) {
+      return error.message;
+    }
+  }
 
   tearDown(() {
     debugImageHttpClientFactory = null;
@@ -111,7 +127,7 @@ void main() {
           isA<ValidationException>().having(
             (e) => e.message,
             'message',
-            contains('public host'),
+            imageFetchFailedMessage,
           ),
         ),
       );
@@ -139,7 +155,27 @@ void main() {
           isA<ValidationException>().having(
             (e) => e.message,
             'message',
-            contains('public host'),
+            imageFetchFailedMessage,
+          ),
+        ),
+      );
+    });
+
+    test('a response with no connection info is refused', () async {
+      // Fail CLOSED. A null `connectionInfo` used to skip the rebinding
+      // re-check entirely (2026-07-28 review, item 2) — and that re-check is
+      // the only thing closing the window between the DNS guard and the
+      // socket, so "I cannot tell you where this landed" has to deny. An
+      // empty body would otherwise sail through content-type and size and
+      // come back as a successful zero-byte fetch.
+      installTransport((url) async => imageResponse(const [], peer: null));
+      await expectLater(
+        fetchImageFromUrl(imageUrlText),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            imageFetchFailedMessage,
           ),
         ),
       );
@@ -220,6 +256,138 @@ void main() {
             contains('HTTP 404'),
           ),
         ),
+      );
+    });
+  });
+
+  group('a blocked fetch is not a port scanner', () {
+    // Review S13. A socket that CONNECTED to an internal address answered
+    // 'must point at a public host', a REFUSED one answered 'connection
+    // failed (Connection refused)', and a filtered one ran out the clock —
+    // three distinguishable 422 bodies, i.e. a complete open/closed/filtered
+    // oracle over loopback, the Docker bridge and cloud metadata for anyone
+    // who can rebind DNS after the host check. `errorHandler()` copies an
+    // AppException's message into the envelope verbatim, so the message IS
+    // the client-visible outcome.
+    //
+    // A filtered port is a connect timeout, not the 20 s fetch timeout:
+    // `connectionTimeout` is 10 s, so the client gives up first — which is
+    // why this can be driven through the transport seam rather than by
+    // waiting out the wall clock.
+    test('open, closed and filtered are indistinguishable', () async {
+      final open = await refusalMessage(
+        (url) async => imageResponse(const [], peer: '127.0.0.1'),
+      );
+      final closed = await refusalMessage(
+        (url) async => throw const SocketException(
+          'Connection failed',
+          osError: OSError('Connection refused', 61),
+          port: 8080,
+        ),
+      );
+      final filtered = await refusalMessage(
+        (url) async => throw const SocketException(
+          'Connection timed out',
+          osError: OSError('Operation timed out', 60),
+          port: 8080,
+        ),
+      );
+      expect(open, imageFetchFailedMessage);
+      expect(closed, open, reason: 'a closed port must answer like an open');
+      expect(filtered, open, reason: 'a filtered port must answer alike too');
+    });
+
+    test('a TLS failure and an unverifiable peer answer alike', () async {
+      final handshake = await refusalMessage(
+        (url) async => throw const HandshakeException('certificate expired'),
+      );
+      final noPeer = await refusalMessage(
+        (url) async => imageResponse(const [], peer: null),
+      );
+      expect(handshake, imageFetchFailedMessage);
+      expect(noPeer, handshake);
+    });
+  });
+
+  group('a rejected response is dropped, not drained', () {
+    // Review S3: `drain()` has NO size limit, and the 25 MB cap is enforced
+    // only in `collectImageBytes` on the ACCEPTED path — so every rejection
+    // branch read the whole hostile body first (measured: 8,496 MB in 20 s
+    // for one API call). The oversized-Content-Length branch was the
+    // sharpest: it decided the body was too large and then read all of it.
+    late _CountingBody body;
+
+    setUp(() => body = _CountingBody());
+
+    /// Asserts the fetch is refused AND that the refusal cost at most one
+    /// already-buffered chunk of the body.
+    Future<void> expectDropped(_FakeResponse Function(Stream<List<int>>) build)
+    async {
+      installTransport((url) async => build(body.stream));
+      await expectLater(
+        fetchImageFromUrl(imageUrlText),
+        throwsA(isA<ValidationException>()),
+      );
+      expect(
+        body.pulled,
+        lessThanOrEqualTo(_CountingBody.chunkBytes),
+        reason:
+            'a rejected body must cost at most one buffered chunk, not the '
+            '${_CountingBody.totalBytes ~/ (1024 * 1024)} MB on offer',
+      );
+    }
+
+    _FakeResponse rejectable(
+      Stream<List<int>> stream, {
+      int statusCode = HttpStatus.ok,
+      String contentType = 'image/jpeg',
+      String peer = publicHost,
+      String? location,
+      int contentLength = 1,
+    }) => _FakeResponse.streaming(
+      stream: stream,
+      statusCode: statusCode,
+      isRedirect: location != null,
+      headers: _FakeHeaders({
+        HttpHeaders.contentTypeHeader: contentType,
+        if (location != null) HttpHeaders.locationHeader: location,
+      }),
+      connectionInfo: _FakeConnectionInfo(InternetAddress(peer)),
+      contentLength: contentLength,
+    );
+
+    test('an over-long Content-Length is not read', () async {
+      await expectDropped(
+        (stream) =>
+            rejectable(stream, contentLength: maxImageBytes + 1),
+      );
+    });
+
+    test('a private peer is not read', () async {
+      await expectDropped((stream) => rejectable(stream, peer: '10.0.0.5'));
+    });
+
+    test('a redirect body is not read', () async {
+      // The hop targets a private host, so the loop stops after this one
+      // response and the count belongs to it alone.
+      await expectDropped(
+        (stream) => rejectable(
+          stream,
+          statusCode: HttpStatus.found,
+          location: 'http://10.0.0.7/a.jpg',
+        ),
+      );
+    });
+
+    test('a non-200 body is not read', () async {
+      await expectDropped(
+        (stream) => rejectable(stream, statusCode: HttpStatus.notFound),
+      );
+    });
+
+    test('a non-image body is not read', () async {
+      await expectDropped(
+        (stream) => rejectable(stream, contentType: 'text/html'),
       );
     });
   });
@@ -477,6 +645,42 @@ void main() {
       expect(exported, contains(reference.substring('images/'.length)));
     });
 
+    test('the stored credit drops the download URL query string', () async {
+      // A presigned S3/CDN URL carries its token in the query, and
+      // `images.credit` is exported into the hand-editable YAML library and
+      // shown in the UI — so the full URL wrote a live credential into a
+      // file the user is invited to edit and share (2026-07-28 review,
+      // item 1). The signature below is crafted: a negative-path input the
+      // recipe corpus cannot supply.
+      const signature = 'X-Amz-Signature=deadbeefdeadbeefdeadbeefdeadbeef';
+      const presigned = '$imageUrlText?$signature&X-Amz-Expires=900';
+      final created = await createRecipe();
+      final createdRecipe = created['recipe'] as Map<String, dynamic>;
+      final id = createdRecipe['id'] as String;
+      final slug = createdRecipe['slug'] as String;
+
+      installTransport((url) async => imageResponse(heroJpeg));
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/recipes/$slug/images/from_url',
+        headers: auth(withCsrf: true),
+        jsonBody: {'url': presigned},
+      );
+      expect(response.statusCode, HttpStatus.created, reason: body);
+      // The query is stripped from what is STORED, never from what is
+      // fetched — the signed URL still has to be the one downloaded.
+      expect(requested.map((u) => u.toString()), [presigned]);
+
+      final images =
+          ((jsonOf(body)['recipe'] as Map<String, dynamic>)['images'])
+              as Map<String, dynamic>;
+      expect(images['credit'], imageUrlText);
+      final exported = File(
+        '${config.libraryDir}/$manualSourceSlug/recipes/$id.yaml',
+      ).readAsStringSync();
+      expect(exported, isNot(contains(signature)));
+    });
+
     test('role=gallery appends and leaves the hero alone', () async {
       final created = await createRecipe();
       final slug =
@@ -615,6 +819,18 @@ class _FakeResponse extends StreamView<List<int>>
   }) : contentLength = body.length,
        super(Stream<List<int>>.fromIterable([body]));
 
+  /// A response whose body is [stream] and whose declared [contentLength] is
+  /// whatever the origin claimed — the two things a rejection path must be
+  /// able to disagree about.
+  _FakeResponse.streaming({
+    required Stream<List<int>> stream,
+    required this.statusCode,
+    required this.headers,
+    required this.connectionInfo,
+    required this.contentLength,
+    this.isRedirect = false,
+  }) : super(stream);
+
   @override
   final int statusCode;
 
@@ -650,6 +866,26 @@ class _FakeHeaders implements HttpHeaders {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+/// A response body that hands out fixed-size chunks and counts the bytes it
+/// was actually ASKED for. Its total dwarfs [maxImageBytes], so a reader with
+/// no limit of its own consumes all of it — which is the difference the
+/// rejection-path tests measure.
+class _CountingBody {
+  static const int chunkBytes = 64 * 1024;
+  static const int chunks = 512;
+  static const int totalBytes = chunkBytes * chunks; // 32 MiB
+
+  int pulled = 0;
+
+  Stream<List<int>> get stream async* {
+    final chunk = Uint8List(chunkBytes);
+    for (var i = 0; i < chunks; i += 1) {
+      pulled += chunkBytes;
+      yield chunk;
+    }
+  }
 }
 
 class _FakeConnectionInfo implements HttpConnectionInfo {

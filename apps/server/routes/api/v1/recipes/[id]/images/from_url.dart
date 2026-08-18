@@ -42,6 +42,10 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
   // Role first: an invalid role must not leave an orphan image on disk.
   edit.requireImageRole(role);
 
+  // Scheme/host/port/path only. The full URL used to be stored verbatim, so
+  // a presigned download URL wrote its token into the exported YAML
+  // (2026-07-28 review, item 1).
+  final credit = creditUrl(url);
   final bytes = await fetchImageFromUrl(url);
   final reference = saveRecipeImage(
     config: config,
@@ -56,8 +60,9 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
     reference: reference,
     role: role,
     // Default the free-text photo credit to where the photo came from —
-    // only when no credit was ever written (review Y6).
-    creditIfEmpty: url.trim(),
+    // only when no credit was ever written (review Y6). Null leaves it
+    // alone, which is the right answer for a URL that yields no safe form.
+    creditIfEmpty: credit.isEmpty ? null : credit,
   );
   return Response.json(
     statusCode: 201,

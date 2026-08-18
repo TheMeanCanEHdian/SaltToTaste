@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:logging/logging.dart';
@@ -17,6 +18,19 @@ const Duration _fetchTimeout = Duration(seconds: 20);
 
 /// Redirect hops a from-URL fetch will follow (each re-validated).
 const int _maxRedirects = 3;
+
+/// The one client-facing message for every from-URL fetch failure.
+///
+/// A refused port, a filtered port, and a socket that landed on an internal
+/// address used to answer differently — an open/closed/filtered oracle over
+/// loopback, the Docker bridge, and cloud metadata for anyone who can rebind
+/// DNS after the host check (review S13). One answer for all of them; the
+/// detail an operator needs stays in the log.
+const String imageFetchFailedMessage =
+    'Could not fetch an image from that URL.';
+
+/// Source of the unguessable component of a stored image's filename.
+final Random _nameRandom = Random.secure();
 
 /// What the magic bytes say the image is.
 typedef SniffedImage = ({String extension, String mimeType});
@@ -79,8 +93,8 @@ Future<Uint8List> collectImageBytes(Stream<List<int>> source) async {
 /// images directory under a server-generated name.
 ///
 /// Returns the document-relative reference (`images/<file>`) to store in
-/// the recipe. The name is `<recipeId>-<utc stamp>.<sniffed ext>` — the id
-/// is already filename-safe and the caller never controls the name.
+/// the recipe. The name is `<recipeId>-<utc stamp>-<token>.<sniffed ext>` —
+/// the id is already filename-safe and the caller never controls the name.
 String saveRecipeImage({
   required ServerConfig config,
   required String sourceSlug,
@@ -105,12 +119,16 @@ String saveRecipeImage({
       .substring(0, 15);
   final dir = Directory('${config.libraryDir}/$sourceSlug/images')
     ..createSync(recursive: true);
-  var name = '$recipeId-$stamp.${sniffed.extension}';
-  var suffix = 2;
-  while (File('${dir.path}/$name').existsSync()) {
-    name = '$recipeId-$stamp-$suffix.${sniffed.extension}';
-    suffix += 1;
-  }
+  // A random token, NOT a scan for the first free name: the scan was
+  // check-then-act, so two writers on the same library (a second isolate, a
+  // second replica on one volume) both saw `<name>` free, both wrote
+  // `<name>.tmp`, and one rename clobbered the other's photo. A token needs
+  // no coordination between writers (2026-07-28 review, item 5).
+  final token = List.generate(
+    4,
+    (_) => _nameRandom.nextInt(256).toRadixString(16).padLeft(2, '0'),
+  ).join();
+  final name = '$recipeId-$stamp-$token.${sniffed.extension}';
   File('${dir.path}/$name.tmp')
     ..writeAsBytesSync(bytes, flush: true)
     ..renameSync('${dir.path}/$name');
@@ -147,37 +165,52 @@ Future<Uint8List> fetchImageFromUrl(String rawUrl) async {
   try {
     return await _fetch(client, url).timeout(
       _fetchTimeout,
-      onTimeout: () => throw const ValidationException(
-        'Fetching the image took too long.',
-      ),
+      onTimeout: () => throw _fetchFailed(url, 'timed out'),
     );
     // Transport-level failures are ordinary bad user input (a pasted URL
     // whose site has an expired certificate, refuses the connection, or
-    // resets it) — a 422 naming the cause, like every other fetch failure
-    // here, never a 500 with a SEVERE stack (review B16).
-  } on HandshakeException {
-    throw const ValidationException(
-      'Could not fetch the image: the site’s TLS certificate failed '
-      'verification (expired or self-signed?).',
-    );
+    // resets it) — a 422, never a 500 with a SEVERE stack (review B16).
+    // Which one it was is logged, not returned: telling them apart is what
+    // made this a port scanner (review S13).
+  } on HandshakeException catch (error) {
+    throw _fetchFailed(url, 'TLS handshake failed: ${error.message}');
   } on SocketException catch (error) {
-    throw ValidationException(
-      'Could not fetch the image: connection failed '
-      '(${error.osError?.message ?? error.message}).',
+    throw _fetchFailed(
+      url,
+      'connection failed: ${error.osError?.message ?? error.message}',
     );
   } on HttpException catch (error) {
-    throw ValidationException(
-      'Could not fetch the image: ${error.message}',
-    );
+    throw _fetchFailed(url, 'protocol error: ${error.message}');
   } finally {
     client.close(force: true);
   }
 }
 
+/// Logs why a fetch failed and returns the one message the caller gets.
+///
+/// The host, never the whole URL: a from-URL query string can be a presigned
+/// credential and this line lands in the operator log.
+ValidationException _fetchFailed(Uri url, String detail) {
+  _log.info('Image fetch from ${url.host} failed: $detail');
+  return const ValidationException(imageFetchFailedMessage);
+}
+
+/// Drops a response we have already decided to reject, WITHOUT reading it.
+///
+/// `drain()` reads to EOF with no size limit — [maxImageBytes] is enforced
+/// only on the accepted path — so a hostile origin could answer a rejection
+/// with an endless body and be swallowed for the whole [_fetchTimeout]
+/// budget (measured: 8,496 MB from one API call; review S3). Cancelling the
+/// subscription drops the connection instead, so a rejected response costs
+/// at most what the transport had already buffered when we decided: this
+/// function never asks for another byte.
+Future<void> _abandon(HttpClientResponse response) =>
+    response.listen(null, cancelOnError: true).cancel();
+
 Future<Uint8List> _fetch(HttpClient client, Uri initialUrl) async {
   var url = initialUrl;
   for (var hop = 0; hop <= _maxRedirects; hop += 1) {
-    await _requirePublicHost(url.host);
+    await _requirePublicHost(url);
     final request = await client.getUrl(url)
       ..followRedirects = false;
     final response = await request.close();
@@ -185,17 +218,21 @@ Future<Uint8List> _fetch(HttpClient client, Uri initialUrl) async {
     // window); verify where the socket actually landed before consuming
     // anything. A GET has already been sent by now — the residual exposure
     // is one side-effect-free request, never a readable internal response.
+    // No verifiable peer REFUSES: a null connectionInfo used to skip the
+    // re-check entirely, which is the only thing closing that window
+    // (2026-07-28 review, item 2).
     final connected = response.connectionInfo?.remoteAddress;
-    if (connected != null && !_isPublicUnicast(connected)) {
-      await response.drain<void>();
-      throw const ValidationException(
-        'Image URLs must point at a public host.',
+    if (connected == null || !_isPublicUnicast(connected)) {
+      await _abandon(response);
+      throw _fetchFailed(
+        url,
+        'peer ${connected?.address ?? '<unknown>'} is not public unicast',
       );
     }
 
     if (response.isRedirect) {
       final location = response.headers.value(HttpHeaders.locationHeader);
-      await response.drain<void>();
+      await _abandon(response);
       if (location == null) {
         throw const ValidationException('Image URL redirect has no target.');
       }
@@ -205,20 +242,20 @@ Future<Uint8List> _fetch(HttpClient client, Uri initialUrl) async {
       continue;
     }
     if (response.statusCode != 200) {
-      await response.drain<void>();
+      await _abandon(response);
       throw ValidationException(
         'Image URL returned HTTP ${response.statusCode}.',
       );
     }
     final contentType = response.headers.contentType?.mimeType ?? '';
     if (!contentType.startsWith('image/')) {
-      await response.drain<void>();
+      await _abandon(response);
       throw ValidationException(
         "Image URL returned '$contentType', not an image.",
       );
     }
     if (response.contentLength > maxImageBytes) {
-      await response.drain<void>();
+      await _abandon(response);
       throw const ValidationException('Image is too large (25 MB maximum).');
     }
     return collectImageBytes(response);
@@ -244,10 +281,14 @@ Uri _validatedImageUrl(String rawUrl) {
   return url;
 }
 
-/// Resolves [host] and rejects it unless every answer is a public unicast
-/// address — loopback, RFC1918/ULA, link-local, multicast, and unspecified
-/// ranges would let a URL reach the server's own network.
-Future<void> _requirePublicHost(String host) async {
+/// Resolves [url]'s host and rejects it unless every answer is a public
+/// unicast address — loopback, RFC1918/ULA, link-local, multicast, and
+/// unspecified ranges would let a URL reach the server's own network.
+///
+/// "Does not resolve" and "resolves somewhere internal" answer alike: told
+/// apart, they enumerate the deployment's split-horizon DNS (review S13).
+Future<void> _requirePublicHost(Uri url) async {
+  final host = url.host;
   List<InternetAddress> addresses;
   final literal = InternetAddress.tryParse(host);
   if (literal != null) {
@@ -255,20 +296,42 @@ Future<void> _requirePublicHost(String host) async {
   } else {
     try {
       addresses = await InternetAddress.lookup(host);
-    } on SocketException {
-      throw ValidationException("Could not resolve host '$host'.");
+    } on SocketException catch (error) {
+      throw _fetchFailed(url, 'lookup failed: ${error.message}');
     }
   }
   if (addresses.isEmpty) {
-    throw ValidationException("Could not resolve host '$host'.");
+    throw _fetchFailed(url, 'lookup returned no addresses');
   }
   for (final address in addresses) {
     if (!_isPublicUnicast(address)) {
-      throw const ValidationException(
-        'Image URLs must point at a public host.',
+      throw _fetchFailed(
+        url,
+        'resolved to ${address.address}, not public unicast',
       );
     }
   }
+}
+
+/// The credit-safe form of a download URL: scheme, host, port and path, with
+/// the query, fragment and userinfo dropped.
+///
+/// `images.credit` is exported into the hand-editable YAML library and shown
+/// in the UI, and a presigned S3/CDN URL carries its token in the query — so
+/// storing the URL verbatim wrote a live credential into a file the user is
+/// invited to edit and share (2026-07-28 review, item 1). Anything
+/// unparseable yields the empty string: a missing credit, never a leaked one.
+String creditUrl(String rawUrl) {
+  final url = Uri.tryParse(rawUrl.trim());
+  if (url == null || url.host.isEmpty) {
+    return '';
+  }
+  return Uri(
+    scheme: url.scheme,
+    host: url.host,
+    port: url.hasPort ? url.port : null,
+    path: url.path,
+  ).toString();
 }
 
 bool _isPublicUnicast(InternetAddress address) {
