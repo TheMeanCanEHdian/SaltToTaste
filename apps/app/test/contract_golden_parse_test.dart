@@ -20,9 +20,10 @@ void main() {
     test('/auth/me carries must_change_password through as TRUE', () async {
       final raw = golden('auth_me_must_change');
       final user = raw['user']! as Map<String, dynamic>;
-      // The claim the whole fixture exists for: the app defaults this to
-      // false when the key is missing, so a server-side rename would
-      // silently stop forcing the password change (review T5).
+      // The claim the whole fixture exists for: this key is what forces the
+      // password change, so a server-side rename must be caught here rather
+      // than in production (review T5). The parse now fails closed too —
+      // pinned by the next test.
       expect(
         user['must_change_password'],
         isTrue,
@@ -39,20 +40,103 @@ void main() {
       expect(parsed.isAdmin, isFalse, reason: "the golden's role is member");
     });
 
-    test('a renamed must_change_password key silently reads as false', () {
-      // Not a wish — a demonstration of why the golden is pinned. Mutating
-      // the real body is the only way to show the failure mode.
+    test('a renamed must_change_password key fails CLOSED', () async {
+      // The golden body minus the one key a server-side rename would move —
+      // the only way to exercise the failure mode is to mutate the real
+      // body. The safe answer is "still required", never "signed in".
       final raw = golden('auth_me_must_change');
       final user = Map<String, dynamic>.from(raw['user']! as Map);
       expect(user.remove('must_change_password'), isTrue);
+      expect(AuthUserInfo.fromJson(user).mustChangePassword, isTrue);
+
+      final parsed = await AuthRepository(goldenDio({'user': user})).me();
       expect(
-        AuthUserInfo.fromJson(user).mustChangePassword,
-        isFalse,
-        reason:
-            'the parse defaults to false, so only the golden catches a '
-            'server-side rename',
+        parsed!.mustChangePassword,
+        isTrue,
+        reason: 'a dropped key must not retire the forced change',
+      );
+
+      // /auth/login builds the same object from the same key.
+      final loginRaw = Map<String, dynamic>.from(golden('auth_login_admin'));
+      final loginUser = Map<String, dynamic>.from(loginRaw['user']! as Map)
+        ..remove('must_change_password');
+      loginRaw['user'] = loginUser;
+      final loggedIn = await AuthRepository(goldenDio(loginRaw)).login(
+        username: '${loginUser['username']}',
+        password: 'unused-by-the-adapter',
+        remember: false,
+      );
+      expect(loggedIn.mustChangePassword, isTrue);
+    });
+
+    test('a non-bool must_change_password is an error, not a sign-in', () {
+      final user = Map<String, dynamic>.from(
+        golden('auth_me_must_change')['user']! as Map,
+      )..['must_change_password'] = 'true';
+      return expectLater(
+        AuthRepository(goldenDio({'user': user})).me(),
+        throwsA(isA<RepositoryException>()),
+        reason: 'an unparseable flag is surfaced, never guessed at',
       );
     });
+
+    test('UserAccount reads the same key the same way', () {
+      // The admin Users tab parses the same flag off its own row shape; the
+      // two parses must not disagree about a missing key. Built from the
+      // captured user object plus the `disabled` the users list adds.
+      final row = Map<String, dynamic>.from(
+        golden('auth_me_admin')['user']! as Map,
+      )..['disabled'] = false;
+      expect(UserAccount.fromJson(row).mustChangePassword, isFalse);
+      row.remove('must_change_password');
+      expect(
+        UserAccount.fromJson(row).mustChangePassword,
+        isTrue,
+        reason: 'absent means "must change" on both parses',
+      );
+    });
+
+    test(
+      '/auth/setup and /auth/recover are the deliberate exemption',
+      () async {
+        // Those two bodies never carry the flag (auth_handlers.dart:162,295)
+        // and their caller just chose the password, so failing closed there
+        // would strand a fresh admin on a change screen the server rejects.
+        final body = Map<String, dynamic>.from(golden('auth_login_admin'));
+        final user = Map<String, dynamic>.from(body['user']! as Map)
+          ..remove('must_change_password');
+        body['user'] = user;
+        final repository = AuthRepository(goldenDio(body));
+        await expectLater(
+          repository.setup(
+            setupCode: 'unused-by-the-adapter',
+            username: '${user['username']}',
+            password: 'unused-by-the-adapter',
+          ),
+          completion(
+            isA<AuthUserInfo>().having(
+              (info) => info.mustChangePassword,
+              'mustChangePassword',
+              isFalse,
+            ),
+          ),
+        );
+        await expectLater(
+          repository.recover(
+            code: 'unused-by-the-adapter',
+            username: '${user['username']}',
+            newPassword: 'unused-by-the-adapter',
+          ),
+          completion(
+            isA<AuthUserInfo>().having(
+              (info) => info.mustChangePassword,
+              'mustChangePassword',
+              isFalse,
+            ),
+          ),
+        );
+      },
+    );
 
     test('/auth/me for an ordinary admin', () async {
       final raw = golden('auth_me_admin');

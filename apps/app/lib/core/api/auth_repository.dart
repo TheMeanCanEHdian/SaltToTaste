@@ -12,11 +12,26 @@ class AuthUserInfo {
     required this.mustChangePassword,
   });
 
-  factory AuthUserInfo.fromJson(Map<String, dynamic> json) => AuthUserInfo(
+  /// `must_change_password` fails CLOSED: an absent key means the forced
+  /// change is STILL REQUIRED, so a server-side rename (or a stripped body)
+  /// cannot silently retire the control — the user lands on the change
+  /// screen, which is recoverable, instead of walking past it. A non-bool
+  /// value is not guessed at either: the cast throws and [_guard] turns it
+  /// into a [RepositoryException], which is also not a sign-in.
+  ///
+  /// [absentMeansRequired] is false only for `/auth/setup` and
+  /// `/auth/recover`, whose bodies never carry the flag by contract
+  /// (`auth_handlers.dart:162,295`) and whose caller just chose the very
+  /// password a forced change would ask for.
+  factory AuthUserInfo.fromJson(
+    Map<String, dynamic> json, {
+    bool absentMeansRequired = true,
+  }) => AuthUserInfo(
     id: json['id'] as int,
     username: json['username'] as String,
     role: json['role'] as String,
-    mustChangePassword: (json['must_change_password'] as bool?) ?? false,
+    mustChangePassword:
+        (json['must_change_password'] as bool?) ?? absentMeansRequired,
   );
 
   final int id;
@@ -43,7 +58,10 @@ class UserAccount {
     username: json['username'] as String,
     role: json['role'] as String,
     disabled: json['disabled'] as bool,
-    mustChangePassword: json['must_change_password'] as bool,
+    // Same key, same fail-closed answer as [AuthUserInfo.fromJson] — an
+    // absent flag reads as "must change" here too (the admin list then
+    // over-reports rather than hiding an account still on a temp password).
+    mustChangePassword: (json['must_change_password'] as bool?) ?? true,
     lastActiveAt: json['last_active_at'] as String?,
   );
 
@@ -168,6 +186,7 @@ class AuthRepository {
       );
       return AuthUserInfo.fromJson(
         (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
+        absentMeansRequired: false,
       );
     });
   }
@@ -193,6 +212,7 @@ class AuthRepository {
       );
       return AuthUserInfo.fromJson(
         (data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
+        absentMeansRequired: false,
       );
     });
   }

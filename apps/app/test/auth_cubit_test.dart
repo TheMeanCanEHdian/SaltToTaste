@@ -225,21 +225,36 @@ void main() {
       );
     });
 
-    test('an absent must_change_password key means not forced', () async {
-      // AuthUserInfo.fromJson defaults the flag to false, so a body without
-      // the key is a normal sign-in — the documented default, and the
-      // fail-OPEN direction: dropping the key from the one body that
-      // carries `true` signs the account straight in.
+    test(
+      'an absent must_change_password key still forces the change',
+      () async {
+        // The fail-CLOSED direction: dropping the key from the one body that
+        // carries `true` — a server-side rename, a stripped body — must not
+        // sign the account straight in past the control.
+        claimedAndSignedIn({
+          'user': Map<String, dynamic>.from(_user(_forcedMe))
+            ..remove('must_change_password'),
+        });
+
+        await cubit.bootstrap();
+        await settle();
+
+        expect(seen.last, isA<AuthPasswordChangeRequired>());
+        expect(cubit.user!.mustChangePassword, isTrue);
+      },
+    );
+
+    test('a non-bool must_change_password fails bootstrap, not open', () async {
       claimedAndSignedIn({
         'user': Map<String, dynamic>.from(_user(_forcedMe))
-          ..remove('must_change_password'),
+          ..['must_change_password'] = 'yes',
       });
 
       await cubit.bootstrap();
       await settle();
 
-      expect(seen.last, isA<AuthSignedIn>());
-      expect(cubit.user!.mustChangePassword, isFalse);
+      expect(seen.last, isA<AuthBootstrapFailed>());
+      expect(cubit.user, isNull);
     });
 
     test('an unreachable server shows retry, not a login form', () async {
