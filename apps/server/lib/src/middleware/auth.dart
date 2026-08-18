@@ -158,15 +158,50 @@ void requireFullScope(AuthUser user) {
   }
 }
 
-/// Enforces the anti-CSRF header on mutating session requests.
+/// Whether the caller attached this request's credential EXPLICITLY, rather
+/// than the browser attaching it ambiently.
 ///
-/// When [user] authenticated via session and the method is POST, PUT,
+/// The cookie is the only ambient credential: a browser never sends
+/// `Authorization` by itself. So any bearer credential — a PAT, and equally a
+/// SESSION token presented as a bearer, which is the documented non-browser
+/// client path (`docs/API.md`: the login response returns the token "for
+/// non-browser clients") — was set by the caller's own code and cannot be the
+/// cross-site shape the CSRF guards exist to stop. Keying on
+/// `user.via == 'session'` instead refuses that caller, since a curl/script
+/// client sends no proof header at all.
+///
+/// THE predicate both guards share, and deliberately the same [bearerToken]
+/// the authenticator resolves the credential with. A bearer header that
+/// [bearerToken] rejects leaves the request UNAUTHENTICATED — [_authenticate]
+/// lets the header win outright and never falls back to the cookie — so a
+/// guard reached with a resolved [AuthUser] and this predicate true is one the
+/// bearer really authenticated. That is the whole reason the parse must not be
+/// re-derived per call site: the guards used to test
+/// `startsWith('bearer ')` themselves, which a malformed
+/// `Authorization: Bearer <vertical tab>` satisfies while [bearerToken] trims
+/// it to nothing — exempting a request the ambient cookie then authenticated.
+///
+/// Fail closed: absent, `Basic`, or malformed is ambient, so a credential kind
+/// added later is guarded until someone decides otherwise.
+bool _credentialIsExplicit(RequestContext context) =>
+    bearerToken(context.request.headers['authorization']) != null;
+
+/// Enforces the anti-CSRF header on mutating requests carrying an AMBIENT
+/// credential.
+///
+/// When the request's credential was attached by the browser itself (the
+/// session cookie — see [_credentialIsExplicit]) and the method is POST, PUT,
 /// PATCH, or DELETE, the request must carry
 /// `X-Requested-With: SaltToTaste` — a header cross-site HTML forms and
-/// no-CORS fetches cannot set. PATs are exempt (they are never sent
-/// ambiently by a browser). Throws [CsrfException] on failure.
+/// no-CORS fetches cannot set. Bearer requests are exempt (a browser never
+/// attaches one ambiently). Throws [CsrfException] on failure.
+///
+/// [user] is kept so every mutating route reads `requireCsrf(context, user)`;
+/// the decision no longer needs the principal, because whether the browser
+/// attached the credential is a property of the request, not of who it
+/// resolved to.
 void requireCsrf(RequestContext context, AuthUser user) {
-  if (user.via != 'session') {
+  if (_credentialIsExplicit(context)) {
     return;
   }
   const mutating = {
@@ -181,6 +216,54 @@ void requireCsrf(RequestContext context, AuthUser user) {
   if (context.request.headers['x-requested-with'] != csrfHeaderValue) {
     throw const CsrfException();
   }
+}
+
+/// `Sec-Fetch-Site` values that prove a request is not cross-site.
+///
+/// `same-origin` is our own page; `none` is a request with no initiator at all
+/// (the address bar, a bookmark) — neither is something an attacker's page can
+/// produce. `same-site` is NOT here: a sibling subdomain is not us. An ABSENT
+/// header is not here either, which is the fail-closed half of
+/// [requireNotCrossSite].
+const Set<String> _notCrossSite = {'same-origin', 'none'};
+
+/// Refuses an ambient (cookie) credential on a side-effectful GET that cannot
+/// prove it is not a cross-site drive.
+///
+/// [requireCsrf] gates mutating METHODS only, and the session cookie is
+/// `SameSite=Lax`, which a browser DOES send on a cross-site top-level
+/// navigation. So an attacker page can point an admin's browser at an
+/// expensive GET and the cookie rides along.
+///
+/// Two ways to prove it, because the callers differ:
+/// * `X-Requested-With: SaltToTaste` — the app's dio sets it on every request,
+///   and a cross-origin form or navigation cannot set a custom header.
+/// * a `Sec-Fetch-Site` the browser itself stamped as not cross-site — needed
+///   because the app opens the log export and the backup download with
+///   `launchUrl` (a top-level navigation for the `Content-Disposition`
+///   download), which carries no custom header.
+///
+/// Neither present is a refusal.
+///
+/// ONE implementation, called by every guarded route. It was copied into five
+/// handlers, each re-deriving "is this a bearer request?" with its own
+/// `startsWith('bearer ')` — five chances to disagree with the authenticator,
+/// and they did (see [_credentialIsExplicit]).
+///
+/// Call it LAST among a route's guards but ABOVE the work it protects: the
+/// whole point is cost, so a call placed under the expensive statement refuses
+/// just as loudly while paying for it anyway. `route_auth_matrix_test` pins
+/// that ordering, because no status assertion can see it.
+void requireNotCrossSite(RequestContext context) {
+  if (_credentialIsExplicit(context)) {
+    return;
+  }
+  final headers = context.request.headers;
+  if (headers['x-requested-with'] == csrfHeaderValue ||
+      _notCrossSite.contains(headers['sec-fetch-site'])) {
+    return;
+  }
+  throw const CsrfException();
 }
 
 /// The socket peer's address, or null when there is no real connection (bare
@@ -277,7 +360,7 @@ bool isSecureRequest(RequestContext context) {
 
 AuthUser? _authenticate(RequestContext context) {
   final db = context.read<SaltDatabase>();
-  final bearer = _bearerToken(context.request.headers['authorization']);
+  final bearer = bearerToken(context.request.headers['authorization']);
   if (bearer != null) {
     if (looksLikePat(bearer)) {
       return _authenticatePat(db, bearer);
@@ -348,7 +431,15 @@ AuthUser? _authenticatePat(SaltDatabase db, String token) {
   );
 }
 
-String? _bearerToken(String? authorization) {
+/// The token from an `Authorization: Bearer <token>` header, or null when the
+/// header is absent, is not a bearer credential, or carries a token that is
+/// empty once trimmed.
+///
+/// THE bearer parser. [_authenticate] resolves the credential with it and
+/// [_credentialIsExplicit] decides the CSRF guards with it, so "this request
+/// carries a bearer credential" cannot mean two different things — which is
+/// exactly what it meant while the guards re-implemented the test themselves.
+String? bearerToken(String? authorization) {
   if (authorization == null) {
     return null;
   }

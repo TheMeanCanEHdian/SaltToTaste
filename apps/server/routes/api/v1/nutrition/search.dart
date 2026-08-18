@@ -17,6 +17,11 @@ Future<Response> onRequest(RequestContext context) async {
   requireGet(context);
   final user = requireAdmin(context);
   requireFullScope(user);
+  // Not cross-site drivable: a cache miss spends up to 2 calls of a 900/hr
+  // shared FDC budget and writes a cache row, and requireCsrf gates mutating
+  // METHODS only. Above every line below it, because the guard exists to stop
+  // the COST — including the cache keys an unguarded drive would mint.
+  requireNotCrossSite(context);
   final query = context.request.uri.queryParameters['q']?.trim() ?? '';
   if (query.isEmpty) {
     throw const ValidationException('Pass a search term as ?q=.');

@@ -73,16 +73,33 @@ final class ForbiddenException extends AppException {
   ]) : super(403, ApiErrorCodes.forbidden, message);
 }
 
-/// A mutating session request is missing the anti-CSRF `X-Requested-With`
-/// header (HTTP 403, code `csrf`).
+/// A request carrying an AMBIENT credential could not prove it is not a
+/// cross-site drive (HTTP 403, code `csrf`).
+///
+/// Two request shapes land here, and they accept different proofs:
+/// * a MUTATING method (POST/PUT/PATCH/DELETE) on a session, without
+///   `X-Requested-With: SaltToTaste` — the header is the only proof
+///   accepted, because a cross-site form submission is a mutation too;
+/// * a side-effectful GET (`admin/logs`, `admin/logs/export`,
+///   `nutrition/search`, `backups/<name>`, `import/candidates`) carrying
+///   neither that header NOR a `Sec-Fetch-Site` the browser itself stamped
+///   as not cross-site (`same-origin` or `none`). The second proof exists
+///   because the app opens two of those by top-level navigation, which
+///   cannot carry a custom header.
+///
+/// A request authenticated by `Authorization: Bearer` — a PAT, or a session
+/// token sent the way the login response hands it to non-browser clients —
+/// never reaches the GET guard: a browser cannot attach that header
+/// ambiently, so it is not the shape either guard exists to stop.
 final class CsrfException extends AppException {
-  /// Creates a CSRF exception naming the required header.
+  /// Creates a CSRF exception naming both accepted proofs.
   const CsrfException()
     : super(
         403,
         ApiErrorCodes.csrf,
-        'This request requires the header '
-        '"X-Requested-With: SaltToTaste".',
+        'This request must prove it is not cross-site: send the header '
+        '"X-Requested-With: SaltToTaste", or (on a side-effectful GET) '
+        'make it a same-origin request. Bearer tokens are exempt.',
       );
 }
 

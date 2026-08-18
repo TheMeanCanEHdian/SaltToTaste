@@ -14,6 +14,13 @@ import 'package:salt_server/src/services/backup_service.dart';
 /// compacted database snapshot; `include_images` adds the image files
 /// (much larger, for a full off-machine copy). Old backups beyond the
 /// retention window are pruned.
+///
+/// The POST writes an [auditLog] line naming the actor and the archive, at
+/// WARNING like its download and delete siblings so the three read as one
+/// story under a single filter. Before this the trail recorded who took the
+/// snapshot off the box and who erased it, but never who made it — and an
+/// archive is only exfiltrable once it exists. `name` is server-generated, so
+/// no caller-chosen text reaches the record.
 Future<Response> onRequest(RequestContext context) async {
   requireMethods(context, {HttpMethod.get, HttpMethod.post});
   final user = requireAdmin(context);
@@ -41,6 +48,9 @@ Future<Response> onRequest(RequestContext context) async {
     config: config,
     trigger: 'manual',
     includeImages: body['include_images'] == true,
+  );
+  auditLog.warning(
+    'Backup created: $name by ${user.username} (id ${user.id}).',
   );
   final info = listBackups(config).firstWhere((b) => b.name == name);
   return Response.json(statusCode: 201, body: {'backup': _backupJson(info)});

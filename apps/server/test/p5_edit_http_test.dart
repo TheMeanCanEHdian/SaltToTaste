@@ -433,11 +433,18 @@ void main() {
       }
     });
 
-    test('a session mutation without the CSRF header -> 403 csrf', () async {
+    test('a COOKIE mutation without the CSRF header -> 403 csrf', () async {
+      // The cookie, not `auth()`'s bearer. The anti-CSRF header exists for
+      // AMBIENT credentials — the ones the browser attaches by itself — and
+      // the cookie is the only one of those. This used to drive the same
+      // session token as `Authorization: Bearer` and pass, because the guard
+      // keyed on `user.via == 'session'`: it refused the documented
+      // non-browser client (docs/API.md hands that exact token to one, and
+      // says bearer requests are exempt) and this test pinned the refusal.
       final (response, body) = await send(
         'POST',
         '/api/v1/recipes',
-        headers: auth(adminSession),
+        headers: {'Cookie': '$sessionCookieName=$adminSession'},
         jsonBody: submission,
       );
       expect(response.statusCode, HttpStatus.forbidden);
@@ -1561,10 +1568,13 @@ void main() {
       try {
         // A unique term so the search cache cannot answer before the
         // provider throws.
+        // csrf: true even though this is a GET — the manual food search
+        // spends the FDC budget, so it refuses a session credential that
+        // cannot prove the request is not a cross-site drive (finding S12).
         final (response, body) = await send(
           'GET',
           '/api/v1/nutrition/search?q=b15-probe-term',
-          headers: auth(adminSession),
+          headers: auth(adminSession, csrf: true),
         );
         expect(
           response.statusCode,

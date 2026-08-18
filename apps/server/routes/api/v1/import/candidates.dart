@@ -10,6 +10,13 @@ import 'package:salt_server/src/services/import_job.dart';
 Response onRequest(RequestContext context) {
   requireGet(context);
   requireAdmin(context);
+  // Not cross-site drivable: the walk below reads the import directory and
+  // every direct child SYNCHRONOUSLY on the serving isolate, counting every
+  // YAML file in each (~1,200 dirents for a real corpus root), and
+  // requireCsrf gates mutating METHODS only. Above every line below it,
+  // because the guard exists to stop the COST — a refusal thrown after the
+  // walk has run is not a guard, it is a receipt.
+  requireNotCrossSite(context);
   final config = context.read<ServerConfig>();
   return Response.json(
     body: {

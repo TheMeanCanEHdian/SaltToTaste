@@ -33,7 +33,41 @@ exception:** favorites and personal notes are writable with a `read` PAT —
 they affect only the token's owner. Session logins always act as `full`.
 
 CSRF: cookie-authenticated **mutating** requests must send
-`X-Requested-With: SaltToTaste` (bearer requests are exempt).
+`X-Requested-With: SaltToTaste`. Bearer requests are exempt — **any**
+bearer, a PAT and equally a session token presented as one, because what
+the rule keys on is whether the *browser* attached the credential by itself.
+An absent, `Basic`, or malformed `Authorization` is treated as ambient and
+stays guarded. Identical rule to the side-effectful GETs below; one
+implementation serves both.
+
+<a name="cross-site-gets"></a>
+**Side-effectful GETs carry the same protection.** The session cookie is
+`SameSite=Lax`, which a browser *does* send on a cross-site top-level
+navigation, so a GET that spends something is drivable from an attacker's
+page even though it is not a mutation. Five reads therefore refuse a
+cookie-authenticated request unless it proves it is not cross-site — either
+`X-Requested-With: SaltToTaste`, **or** a `Sec-Fetch-Site` the browser
+itself stamped `same-origin` or `none` (which is what lets a download
+opened by a top-level navigation through). Neither present — including a
+client that sends no `Sec-Fetch-*` at all — is `403 csrf`.
+
+**Anything sent as `Authorization: Bearer` is exempt** on all five — a PAT
+*and* a session token presented as a bearer (the form the login response
+hands to non-browser clients). What these guards key on is whether the
+browser attached the credential *ambiently*, which only the cookie is; a
+`curl`/script client therefore needs neither header. An absent, `Basic`, or
+malformed `Authorization` is treated as ambient and stays guarded —
+"malformed" as the *authenticator* judges it, since one parser decides both:
+`Bearer` with an empty or whitespace-only token grants no exemption, and it
+does not authenticate either.
+
+| Route | What it spends |
+|---|---|
+| `GET /api/v1/admin/logs` | `scan=full` spawns an isolate over the whole history |
+| `GET /api/v1/admin/logs/export` | synchronous whole-history parse, no row cap |
+| `GET /api/v1/nutrition/search` | up to 2 calls of the shared FDC request budget |
+| `GET /api/v1/backups/{name}` | streams the entire database snapshot off disk |
+| `GET /api/v1/import/candidates` | synchronous walk of the import dir and every child |
 
 Login rate limiting: per IP+username; 5 consecutive failures lock the pair
 for 1 minute, doubling per further failure up to 15 minutes (`429 locked`).
@@ -52,7 +86,7 @@ temporary password with `must_change_password`: until the user calls
 | `POST /api/v1/auth/login` | `{username, password, remember?}` → `{token, user}` + cookie; failures are uniform `422 validation` (unknown username / wrong password), except a **disabled** account whose password is correct gets a specific "account disabled" `422` — revealed only after a correct password, so it stays enumeration-safe |
 | `POST /api/v1/auth/logout` | ends the current session (cookie/session bearer only) |
 | `GET /api/v1/auth/me` | `{user: {id, username, role, must_change_password, scope, via}}` |
-| `POST /api/v1/auth/change_password` | `{current_password?, new_password}` — current required unless a change was forced; other sessions are signed out |
+| `POST /api/v1/auth/change_password` | `{current_password?, new_password}` → `{ok, revoked_tokens}` — current required unless a change was forced. Signs out everywhere: the caller's other sessions AND **every** one of their PATs, with the count returned as `revoked_tokens`. No opt-out, deliberately: a session alone can mint a full-scope PAT and a PAT never expires, so a change that spared them would evict the honest sessions and leave a token minted from a stolen cookie alive forever. The cost is accepted — the user's own scripts stop too, exactly as with an admin reset |
 
 ### Account management
 
@@ -89,7 +123,7 @@ temporary password with `must_change_password`: until the user calls
   | `method_not_allowed` | 405 | Route exists; HTTP method not supported |
   | `unauthorized` | 401 | Missing/expired/revoked credential — sign in |
   | `forbidden` | 403 | Authenticated but not permitted (role or scope) |
-  | `csrf` | 403 | Cookie-authed mutation missing `X-Requested-With: SaltToTaste` |
+  | `csrf` | 403 | Cookie-authed request that cannot prove it is not cross-site: a mutation missing `X-Requested-With: SaltToTaste`, or a [side-effectful GET](#cross-site-gets) missing both that header and a same-origin `Sec-Fetch-Site` |
   | `password_change_required` | 403 | Must change password before anything else |
   | `conflict` | 409 | Conflicts with existing state (e.g. duplicate username) |
   | `locked` | 429 | Login lockout; message says when to retry |
@@ -307,7 +341,22 @@ their pagination) to one bucket — an unknown id is a 422. Fix a line with the
 existing `PUT /api/v1/recipes/{id}/nutrition/matches/{position}` (candidates for
 its fix panel come from that recipe's `…/nutrition/matches`).
 
-### `GET /api/v1/admin/logs?level=&logger=&q=&limit=` (admin)
+### `GET /api/v1/admin/logs?level=&logger=&q=&limit=` (admin, full scope)
+
+**Full scope on a read**, like the backup download and for the same reason:
+the log is secret material no other endpoint returns (client IPs, recovery
+lines, backup names, every request path), so a leaked `read` PAT gets
+`403 forbidden`. Also a [side-effectful GET](#cross-site-gets): a cookie
+session without `X-Requested-With` or a same-origin `Sec-Fetch-Site` gets
+`403 csrf`.
+
+Recorded on the `auth` logger at `WARNING` naming the actor
+(`Server log read by <user> (id <n>)`) — the access line names nobody, and
+this endpoint returns client IPs, recovery lines and persisted stack traces.
+**Throttled to one record per actor per 10 minutes**: the viewer polls this
+route every 3 seconds with Live on, so a record per read would write ~1,200
+lines an hour into the very store being read and rotate the history away.
+No filter text is echoed, so nothing a caller chooses reaches the record.
 
 Recent server log records from the persistent log store (newest first):
 `{items: [{time, level, logger, message, request_id}], loggers}`.
@@ -332,13 +381,62 @@ trusted hop, else the socket peer). The liveness probe (`/healthz`) and the log
 viewer's own reads (`/api/v1/admin/logs`) are **not** request-logged — they
 poll frequently and would otherwise flood the log.
 
-### `GET /api/v1/admin/logs/export?level=&logger=&q=` (admin)
+The `auth` logger carries the security-relevant events the `http` access line
+cannot name, each with its actor and its target: sign-in success/failure/
+lockout and refusal of a disabled account, logout, password change (and a
+rejected one), first-boot setup, user create/role change/enable/disable/delete,
+admin password reset, PAT mint/revoke, session revoke, **backup
+create/download/delete**, **server-log read/export**, and **FDC key
+set/clear**. Usernames and ids only —
+never a password, token, hash, or code — and an attempted username that cannot
+name an account (`login` does not validate that field) is recorded as
+`<invalid>` rather than written through, so a peer cannot pump the store or
+smuggle a `rid=` into a record. Filter `logger=auth` for the whole account
+story.
+
+**`LOG_LEVEL` does not apply to `auth`.** That logger's level is pinned, so
+its records are written at every supported setting — including `WARN` and
+`ERROR`, which would otherwise discard the entire trail (sign-ins, PAT mints,
+backup downloads) while keeping only the failures, on a routine verbosity
+choice. Every other logger (`http`, `search`, `import`, …) still follows
+`LOG_LEVEL` as documented.
+
+An `ERROR` record for an unhandled exception carries the exception type, its
+message and its stack in `message`, on lines below the summary (they are
+redacted like any other text, and are still never in the response envelope).
+`request_id` is the server-generated id carried with the record as data — the
+store never parses one out of message text at all, so neither a request path
+containing `rid=…` nor a message that merely ends in one can set it.
+Retention is a fixed byte budget, so an unbounded record is how an
+unauthenticated peer would rotate the history away — three caps bound it, each
+cut with a marker stating how much was dropped: a request path over 256
+characters (longer than anything this app can serve), the emitter's own text
+over 1 KiB, and the finished record (text plus exception plus stack) over
+8 KiB. The text has its own budget so that a long attacker-chosen path can
+never push the exception type and stack frames out of an `ERROR` record.
+
+### `GET /api/v1/admin/logs/export?level=&logger=&q=` (admin, full scope)
+
+Same posture as the viewer above: **full scope** (`403 forbidden` to a
+`read` PAT) and a [side-effectful GET](#cross-site-gets) (`403 csrf` to a
+cookie session that proves neither header). The app opens this by top-level
+navigation, which is why the `Sec-Fetch-Site` proof exists at all.
+
+Every export is recorded on the `auth` logger at `WARNING` naming the actor
+(`Server log exported by <user> (id <n>)`) — the whole persisted log leaving
+the box is the same class of act as a backup download. Not throttled (a
+one-shot user action, unlike the viewer's poll) and no filter text is
+echoed.
 
 The full matching log as a downloadable **text** file (`Content-Disposition:
 attachment; filename="salttotaste-logs-<utc-timestamp>.log"`). Same `level` /
 `logger` / `q` filters as the viewer, but **no row cap** — every matching record
-is emitted, one line per record (`<time> <LEVEL> <logger> <message> [rid=<id>]`),
-**oldest-first**. Records are already redacted in the store. The web app opens
+is emitted **oldest-first**, each starting a header line
+(`<time> <LEVEL> <logger> [rid=<id>] <message>`). An `ERROR` record's exception
+and stack sit on **two-space-indented continuation lines** under that header,
+so a crash spans several lines but only its first line carries the metadata —
+`rid=` is on the header, never stranded on the last stack frame. Records are
+already redacted in the store. The web app opens
 this via `launchUrl`, so the browser saves the file rather than navigating.
 
 ### `POST /api/v1/library/rescan` (admin, full scope)
@@ -362,13 +460,29 @@ Retention keeps the newest `BACKUP_RETENTION` (default 14) **per trigger**
 pool, so a bulk-delete session's burst of before-delete archives can never
 evict the scheduled history.
 
+A `POST` is recorded on the `auth` logger at `WARNING` with the acting admin
+and the archive name (`Backup created: <name> by <user> (id <n>)`), the same
+level as its download and delete siblings so the three read as one story
+under `logger=auth`. An archive is only exfiltrable once it exists, and the
+access line names neither actor nor object.
+
 ### `GET | DELETE /api/v1/backups/{name}` (admin, full scope)
 
 `GET` streams the archive (`application/gzip`, attachment). `DELETE` →
-`204`. Names must match the strict backup pattern. The download requires
-full scope even though it is a read: the archive contains the database
-snapshot (credential hashes, private notes) — material no other endpoint
-returns.
+`204`. Names must match the strict backup pattern; an unknown one is
+`404 not_found` (after the permission checks, never before). The download
+requires full scope even though it is a read: the archive contains the
+database snapshot (credential hashes, private notes) — material no other
+endpoint returns. `GET` is also a [side-effectful GET](#cross-site-gets) —
+it streams the whole snapshot off disk and the app opens it by top-level
+navigation — so a cookie session proving neither header gets `403 csrf`.
+
+Both arms are recorded on the `auth` logger with the acting admin and the
+archive name (`Backup downloaded: <name> (<bytes>) by <user> (id <n>)`,
+`Backup deleted: …`), at `WARNING`: taking the snapshot off the box is the
+highest-value exfiltration this API permits and deleting it is the most
+useful way to erase evidence, and the access line names neither actor nor
+object.
 
 ### `GET /api/v1/recipes/{idOrSlug}/yaml`
 
@@ -407,6 +521,11 @@ The per-deployment USDA FoodData Central API key (free at
 api.data.gov/signup). **Write-only**: `GET` → `{configured, masked}` (last
 four characters only); `PUT {api_key}` stores/replaces it (empty string
 clears). The key is sent to FDC as a header and never logged.
+
+A `PUT` is recorded on the `auth` logger as `FDC API key set|cleared by
+<user> (id <n>)` — who changed the deployment credential and whether they
+removed it (which silently breaks every nutrition lookup). No part of the
+key reaches the record, not even the masked tail the `GET` returns.
 
 ### `GET /api/v1/recipes/{idOrSlug}/nutrition`
 
@@ -498,8 +617,10 @@ for when the matcher searched the wrong words and none of a line's
 `candidates` fit. Feed a chosen `fdc_id` back through
 `PUT …/nutrition/matches/{pos}`. Admin + full scope because a cache miss
 SPENDS the FDC request budget (the per-line `matches` read stays
-cache-only so members never can); repeat terms are served from the same
-search cache the matcher uses. The term is normalized like an ingredient
+cache-only so members never can) — which also makes it a
+[side-effectful GET](#cross-site-gets): a cookie session with neither
+`X-Requested-With` nor a same-origin `Sec-Fetch-Site` gets `403 csrf`.
+Repeat terms are served from the same search cache the matcher uses. The term is normalized like an ingredient
 line, so it shares those cache keys and ranking. `422` for a blank term,
 one over 120 characters, or when no FDC API key is configured.
 
@@ -533,6 +654,11 @@ directory itself plus direct children):
 `kind`: `v1` (Recipe Extraction root with `recipes/*.yaml`) or `legacy`
 (old SaltToTaste v0 data dir with `_recipes/`).
 
+The scan is synchronous over the import directory and every direct child,
+so this is a [side-effectful GET](#cross-site-gets): a cookie session with
+neither `X-Requested-With` nor a same-origin `Sec-Fetch-Site` gets
+`403 csrf`.
+
 ### `POST /api/v1/import` (admin, full scope)
 
 `{path}` — a folder relative to the import directory (or absolute), which
@@ -558,7 +684,11 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
 - **Security headers**: every response carries
   `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`;
   HTML additionally gets a same-origin `Content-Security-Policy` and
-  `X-Frame-Options: DENY`.
+  `X-Frame-Options: DENY`. "Every" includes the static `public/` tree
+  (`/index.html`, `/main.dart.js`, assets), which dart_frog serves from a
+  cascade arm *above* the route middleware: the entry point wraps the whole
+  cascade, not just the routes, because for a while `/r/<slug>` and
+  `/index.html` returned the same shell with different headers.
 - **Request bodies** must be sent as `Content-Type: application/json`; anything
   else is a `422 validation` envelope. This is a CSRF defence, not pedantry: a
   cross-site HTML form can only emit the three "simple" content types, and

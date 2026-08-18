@@ -23,6 +23,11 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
     {HttpMethod.get, HttpMethod.put, HttpMethod.delete},
   );
   final user = requireUser(context);
+  // Permission before existence: the anti-CSRF guard runs BEFORE the recipe
+  // lookup, so a cross-origin probe cannot learn which ids exist from the
+  // 404/403 split. (It is a no-op on GET, which requireCsrf does not gate.)
+  // Sibling favorite.dart and nutrition/index.dart order it the same way.
+  requireCsrf(context, user);
   final db = context.read<SaltDatabase>();
 
   final found = db.recipeByIdOrSlug(id);
@@ -37,7 +42,6 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
         body: {'note': db.noteFor(userId: user.id, recipeId: recipeId)},
       );
     case HttpMethod.put:
-      requireCsrf(context, user);
       final body = await readJsonBody(context.request);
       final note = body['note'];
       if (note is! String) {
@@ -57,7 +61,6 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
     // requireMethods narrowed the method set; anything left is DELETE.
     // ignore: no_default_cases
     default:
-      requireCsrf(context, user);
       db.deleteNote(userId: user.id, recipeId: recipeId);
       return Response.json(body: {'note': null});
   }
