@@ -15,6 +15,7 @@ class LoginRateLimiter {
   /// clock.
   LoginRateLimiter({
     this.failureThreshold = defaultFailureThreshold,
+    this.escalate = true,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
@@ -25,6 +26,14 @@ class LoginRateLimiter {
 
   /// Consecutive failures at which lockout begins for this instance.
   final int failureThreshold;
+
+  /// Whether each failure past the threshold doubles the lockout.
+  ///
+  /// True for a key that names one account, where a longer lockout falls on
+  /// the attacker. False for a key that may be SHARED — an address behind an
+  /// undeclared proxy is every client at once, and escalating there lets one
+  /// attacker hold everyone at the 15-minute cap.
+  final bool escalate;
 
   /// Lockout applied at the [failureThreshold]th failure.
   static const Duration baseLockout = Duration(minutes: 1);
@@ -104,7 +113,7 @@ class LoginRateLimiter {
       ..failures += 1
       ..lastActivity = now;
     if (state.failures >= failureThreshold) {
-      final doublings = state.failures - failureThreshold;
+      final doublings = escalate ? state.failures - failureThreshold : 0;
       state.lockedUntil = now.add(_lockoutForDoublings(doublings));
     }
   }

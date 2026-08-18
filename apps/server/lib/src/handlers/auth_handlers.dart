@@ -77,6 +77,23 @@ final RegExp _usernamePattern = RegExp(
   caseSensitive: false,
 );
 
+/// Longest username [_usernamePattern] can accept — and so the most of one
+/// worth keeping in a throttle key.
+const int _maxUsernameLength = 32;
+
+/// The name portion of a login throttle key: lowercased and bounded.
+///
+/// Bounded because the key outlives the request by up to an hour and the
+/// caller chooses its length. Anything past [_maxUsernameLength] cannot name
+/// a real account, so truncating only ever merges buckets that could never
+/// have authenticated — stricter than separate ones, never looser.
+String _throttleName(String username) {
+  final lower = username.toLowerCase();
+  return lower.length <= _maxUsernameLength
+      ? lower
+      : lower.substring(0, _maxUsernameLength);
+}
+
 /// Process-wide mutable auth collaborators, provided into the request
 /// context by `routes/_middleware.dart` (tests construct their own).
 ///
@@ -96,13 +113,24 @@ class AuthRuntime {
        rateLimiter = rateLimiter ?? LoginRateLimiter(),
        ipRateLimiter =
            ipRateLimiter ??
-           LoginRateLimiter(failureThreshold: ipFailureThreshold),
+           LoginRateLimiter(
+             failureThreshold: ipFailureThreshold,
+             escalate: false,
+           ),
        verifyGate =
            verifyGate ?? ConcurrencyGate(limit: maxConcurrentVerifications);
 
   /// Aggregate failures from one address at which the whole IP locks —
   /// catches password spraying across many usernames, which per-account
   /// keys can't see.
+  ///
+  /// This one does NOT escalate. Its key is an address, and an address is
+  /// not always one client: behind a proxy the operator has not declared
+  /// with TRUST_PROXY, every request shares it, so an escalating lockout
+  /// would let one attacker take the whole deployment to the 15-minute cap
+  /// and hold it there. A flat lockout keeps horizontal-spray detection while
+  /// bounding what a shared address can cost everyone behind it. The
+  /// per-account limiter, whose key names one account, still escalates.
   static const int ipFailureThreshold = 25;
 
   /// Password verifications allowed in flight at once, across all accounts
@@ -346,18 +374,12 @@ const Duration _verifyBusyRetry = Duration(seconds: 2);
 /// instead — reachable only with the correct password, so it stays
 /// enumeration-safe. On success the failure count resets and a session opens:
 /// fixed 7-day expiry, or 90-day sliding when `remember: true`.
-///
-/// [sharedClientIp] says [clientIp] cannot identify one client — it is the
-/// address of a reverse proxy every request arrives from — which suppresses
-/// the aggregate per-address lockout that would otherwise deny the whole
-/// deployment. The per-account throttle is unaffected.
 Future<SessionGrant> login(
   SaltDatabase db,
   AuthRuntime runtime,
   Map<String, Object?> body, {
   required String clientIp,
   String? userAgent,
-  bool sharedClientIp = false,
 }) async {
   final username = requireStringField(body, 'username');
   final password = requireStringField(body, 'password');
@@ -365,23 +387,37 @@ Future<SessionGrant> login(
 
   // Bounded, log-safe rendering of the attempted name; see [_logName].
   final attempted = _logName(username);
-  final key = '$clientIp|${username.toLowerCase()}';
+  // The key is retained for an hour, so its size is the attacker's to choose
+  // unless it is bounded here: `reserve()` below inserts it BEFORE every
+  // refusal path, so 2 MiB usernames cost the server 279 MiB of resident
+  // state for 200 free requests (measured) without ever charging an Argon2id.
+  // Truncating at the longest name that could ever be real makes two overlong
+  // names share a bucket, which is stricter than separate ones, never looser.
+  final key = '$clientIp|${_throttleName(username)}';
   // Count both attempts BEFORE the hash, not after it. These two calls and
   // the checks inside them contain no await, so they are atomic against
   // every other in-flight request; splitting them around the ~60-100ms
   // Argon2id below is what let N concurrent attempts all pass a gate meant
   // to admit five. See LoginRateLimiter.reserve.
   final gate = runtime.rateLimiter.reserve(key);
-  // A shared address cannot identify a client, so the aggregate bucket is
-  // not applied to one: with TRUST_PROXY off (the default) every request
-  // arrives from the reverse proxy, and 25 failures across distinct
-  // usernames would lock out every account on the deployment — permanently,
-  // since success deliberately does not clear this bucket. Skipping it costs
-  // spray detection; enforcing it hands any unauthenticated peer a total
-  // denial of service. The per-account throttle above still stands.
-  final ipGate = sharedClientIp
-      ? (allowed: true, retryAfter: Duration.zero)
-      : runtime.ipRateLimiter.reserve(clientIp);
+  // The aggregate bucket is ALWAYS applied, and keyed on an address no
+  // caller can choose: `clientIp` is the socket peer unless a TRUSTED proxy
+  // supplied a forwarded value. An earlier attempt skipped this bucket when
+  // the request carried `X-Forwarded-For` from an untrusted peer, reasoning
+  // that such an address cannot identify one client — but the header is
+  // attacker-supplied, so that handed any unauthenticated peer an opt-out
+  // from horizontal-spray detection by adding one header (measured: 60
+  // sprayed usernames, zero refusals). A security decision must never read a
+  // value the attacker writes.
+  //
+  // What that leaves is the real dilemma the skip was trying to dodge: behind
+  // a proxy the operator has not declared with TRUST_PROXY, every request
+  // shares one address, so this bucket throttles the whole deployment as one
+  // client. That is bounded rather than removed — the aggregate limiter does
+  // not escalate (see AuthRuntime.ipRateLimiter), so the worst case is a
+  // recurring short lockout instead of a 15-minute one, and the untrusted-
+  // proxy warning tells the operator to fix the configuration that causes it.
+  final ipGate = runtime.ipRateLimiter.reserve(clientIp);
   if (!gate.allowed || !ipGate.allowed) {
     final retryAfter = gate.retryAfter > ipGate.retryAfter
         ? gate.retryAfter
@@ -400,13 +436,22 @@ Future<SessionGrant> login(
   // conclusion that says otherwise, so an attempt abandoned mid-hash stays
   // counted rather than evaporating.
   void releaseIpReservation() {
-    if (!sharedClientIp) runtime.ipRateLimiter.releaseReservation(clientIp);
+    runtime.ipRateLimiter.releaseReservation(clientIp);
   }
 
   final user = db.userByUsername(username);
   // Nothing past here may start an Argon2id hash without a slot: the
   // throttles bound attempts per key, never the total in flight.
   if (!runtime.verifyGate.tryAcquire()) {
+    // A full gate is BACKPRESSURE, not a failed attempt, so it must give the
+    // reservations back. Keeping them let a third party lock an account out
+    // of itself: hold all 8 slots with throwaway usernames, and the real
+    // owner's CORRECT password burns one reservation per try until their own
+    // per-account bucket locks them out for 15 minutes. The reservation
+    // exists to bound guesses; a request that was never allowed to guess has
+    // not made one.
+    runtime.rateLimiter.releaseReservation(key);
+    runtime.ipRateLimiter.releaseReservation(clientIp);
     throw LockedException(_ceilSeconds(_verifyBusyRetry));
   }
   final bool verified;

@@ -1302,10 +1302,9 @@ void main() {
       db,
       auth,
       {'username': username, 'password': password},
+      // Each of these tests builds its own AuthRuntime, so the aggregate
+      // bucket is fresh and one test's attempts cannot lock another's.
       clientIp: '198.51.100.4',
-      // The address is a stand-in, not a real client: skip the aggregate
-      // bucket so these attempts cannot lock anything for anyone.
-      sharedClientIp: true,
     );
 
     test('failure, success and a disabled account each name it', () async {

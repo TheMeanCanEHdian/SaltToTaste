@@ -518,33 +518,35 @@ void main() {
       );
     });
 
-    test('a 100 KB request path on the 500 path cannot flood it either',
-        () async {
-      // The EXPENSIVE path, which the flood test above does not exercise: a
-      // 500 persists the exception and the full stack as well, and the error
-      // handler formats the same attacker-chosen path into its own record.
-      // Both records must stay bounded, and — the S15 point — the forensics
-      // must survive a path chosen to evict them.
-      final response = await send('/boom/${'a' * (100 * 1024)}');
-      expect(response.statusCode, HttpStatus.internalServerError);
-      await Future<void>.delayed(Duration.zero);
-      final entry = logStore.query(minLevel: 'ERROR').items.single;
-      expect(entry.message, contains('…[+'), reason: 'path is capped');
-      expect(entry.message, contains('StateError'));
-      expect(entry.message, contains('sensitive internal detail'));
-      expect(entry.message, contains('#0'));
-      expect(entry.requestId, response.headers.value(requestIdHeader));
-      expect(entry.requestId, isNotNull);
-      // Measured on this chain: 4,939 bytes for the pair of records (INFO
-      // access line + ERROR with its whole stack), independent of the 100 KB
-      // path. Uncapped it was 8,741 — and that larger record was pure
-      // attacker padding, with the stack evicted.
-      expect(
-        File('${dir.path}/server.jsonl').lengthSync(),
-        lessThan(6 * 1024),
-        reason: 'one junk 500 costs a bounded, mostly-forensic ~5 KiB',
-      );
-    });
+    test(
+      'a 100 KB request path on the 500 path cannot flood it either',
+      () async {
+        // The EXPENSIVE path, which the flood test above does not exercise: a
+        // 500 persists the exception and the full stack as well, and the error
+        // handler formats the same attacker-chosen path into its own record.
+        // Both records must stay bounded, and — the S15 point — the forensics
+        // must survive a path chosen to evict them.
+        final response = await send('/boom/${'a' * (100 * 1024)}');
+        expect(response.statusCode, HttpStatus.internalServerError);
+        await Future<void>.delayed(Duration.zero);
+        final entry = logStore.query(minLevel: 'ERROR').items.single;
+        expect(entry.message, contains('…[+'), reason: 'path is capped');
+        expect(entry.message, contains('StateError'));
+        expect(entry.message, contains('sensitive internal detail'));
+        expect(entry.message, contains('#0'));
+        expect(entry.requestId, response.headers.value(requestIdHeader));
+        expect(entry.requestId, isNotNull);
+        // Measured on this chain: 4,939 bytes for the pair of records (INFO
+        // access line + ERROR with its whole stack), independent of the 100 KB
+        // path. Uncapped it was 8,741 — and that larger record was pure
+        // attacker padding, with the stack evicted.
+        expect(
+          File('${dir.path}/server.jsonl').lengthSync(),
+          lessThan(6 * 1024),
+          reason: 'one junk 500 costs a bounded, mostly-forensic ~5 KiB',
+        );
+      },
+    );
 
     test(
       'the stored request id is the server id, not one from the path',
@@ -742,7 +744,8 @@ void main() {
       expect(
         lines.skip(1),
         everyElement(startsWith('  ')),
-        reason: 'continuation lines are indented, so a reader can tell them '
+        reason:
+            'continuation lines are indented, so a reader can tell them '
             'from the start of the next record',
       );
     });
@@ -764,6 +767,47 @@ void main() {
       final errorLines = const LineSplitter().convert(errors.body);
       expect(errorLines, hasLength(1));
       expect(errorLines.single, contains('ERROR nutrition boom'));
+    });
+  });
+  group('a database exception cannot carry a secret to disk', () {
+    // SqliteException.toString() renders the causing statement AND its bound
+    // parameters. Persisting record.error (review S15) therefore turned any
+    // DB-level failure into a disclosure: a SQLITE_BUSY while rotating a
+    // password writes the argon2 hash, and one while saving the FoodData
+    // Central key writes that key in plaintext — both then readable over
+    // GET /api/v1/admin/logs. Crafted exception strings, since no real input
+    // can force SQLITE_FULL on demand.
+    test('bound parameters are masked, the statement is kept', () {
+      const fdcKey = 'DEMO0000LIVEKEY0000';
+      final rendered = redactLogMessage(
+        'SqliteException(13): database or disk is full\n'
+        '  Causing statement: INSERT INTO settings (key, value) VALUES (?, ?), '
+        'parameters: fdc_api_key, $fdcKey',
+      );
+      expect(rendered, contains('INSERT INTO settings'));
+      expect(rendered, contains('database or disk is full'));
+      expect(
+        rendered,
+        isNot(contains(fdcKey)),
+        reason: 'the live API key must not survive redaction',
+      );
+      expect(
+        rendered,
+        isNot(contains('fdc_api_key,')),
+        reason: 'everything after "parameters:" goes, not just the last value',
+      );
+    });
+
+    test('an argon2 hash bound to a password rotation is masked', () {
+      const phc =
+          r'$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHQ$aGFzaHZhbHVlaGVyZQ';
+      final rendered = redactLogMessage(
+        'SqliteException(5): database is locked\n'
+        '  Causing statement: UPDATE users SET password_hash = ? WHERE id = ?, '
+        'parameters: $phc, 7',
+      );
+      expect(rendered, contains('UPDATE users SET password_hash'));
+      expect(rendered, isNot(contains(phc)));
     });
   });
 }

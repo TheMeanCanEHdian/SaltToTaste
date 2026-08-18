@@ -89,7 +89,6 @@ void main() {
     required String username,
     String password = 'wrong-password',
     String clientIp = '203.0.113.9',
-    bool sharedClientIp = false,
     String Function(int)? usernameFor,
   }) => Future.wait([
     for (var i = 0; i < count; i += 1)
@@ -101,7 +100,6 @@ void main() {
               'password': password,
             },
             clientIp: clientIp,
-            sharedClientIp: sharedClientIp,
           )
           .then<Object>((grant) => 'ok')
           .onError<AppException>((error, _) => error),
@@ -223,67 +221,57 @@ void main() {
     });
   });
 
-  group('the aggregate bucket behind a shared address (S2)', () {
-    test('a shared address cannot be used to lock out every account', () async {
-      // With TRUST_PROXY off (the default) every request arrives from the
-      // reverse proxy, so the aggregate per-IP bucket is really a GLOBAL
-      // bucket: 25 failures across distinct usernames locked out the whole
-      // deployment, permanently, since success does not clear it.
+  group('the aggregate per-address bucket (S2)', () {
+    test('an attacker-chosen header cannot switch the bucket off', () async {
+      // The first attempt at S2 skipped the aggregate bucket whenever the
+      // request carried X-Forwarded-For from an untrusted peer, reasoning that
+      // such an address cannot identify one client. But that header is
+      // attacker-supplied, so it handed any unauthenticated peer an opt-out
+      // from horizontal-spray detection: measured at 60 sprayed usernames and
+      // zero refusals. login() no longer takes that signal at all, so this
+      // pins the property structurally — spraying is bounded whatever the
+      // caller sends.
       final hasher = _FakeHasher();
       final runtime = AuthRuntime(hasher: hasher);
-      createUser('bystander');
-
-      for (var round = 0; round < 12; round += 1) {
-        await stormLogin(
+      var refusals = 0;
+      for (var round = 0; round < 8; round += 1) {
+        final outcomes = await stormLogin(
           runtime,
           count: 5,
           username: 'unused',
           usernameFor: (i) => 'sprayed${round * 5 + i}',
-          sharedClientIp: true,
         );
+        refusals += outcomes.whereType<LockedException>().length;
       }
-
-      final grant = await login(
-        db,
-        runtime,
-        {'username': 'bystander', 'password': _FakeHasher.correctPassword},
-        clientIp: '203.0.113.9',
-        sharedClientIp: true,
-        userAgent: 'test',
-      );
       expect(
-        grant.token,
-        isNotEmpty,
+        refusals,
+        greaterThan(0),
         reason:
-            'an unrelated account must still be able to log in after 60 '
-            'failures from the address everyone shares',
+            'the aggregate bucket must fire on a horizontal spray no matter '
+            'what headers the caller attached',
       );
     });
 
-    test('a real per-client address still catches spraying', () async {
-      // The protection must survive the fix: when the address does identify
-      // one client, the aggregate lockout is exactly what should fire.
-      final hasher = _FakeHasher();
-      final runtime = AuthRuntime(hasher: hasher);
-      createUser('target');
-
-      for (var round = 0; round < 12; round += 1) {
-        await stormLogin(
-          runtime,
-          count: 5,
-          username: 'unused',
-          usernameFor: (i) => 'sprayed${round * 5 + i}',
-        );
+    test('the aggregate lockout does not escalate', () {
+      // The per-account key names one account, so a longer lockout falls on
+      // the attacker and escalation is right. An ADDRESS may be shared — behind
+      // a proxy the operator has not declared, it is every client at once — so
+      // escalating there would let one attacker take everyone to the 15-minute
+      // cap and hold them. Flat instead: spray detection kept, blast radius
+      // bounded.
+      final limiter = LoginRateLimiter(
+        failureThreshold: AuthRuntime.ipFailureThreshold,
+        escalate: false,
+      );
+      for (var i = 0; i < AuthRuntime.ipFailureThreshold * 3; i += 1) {
+        limiter.recordFailure('198.51.100.7');
       }
-
-      await expectLater(
-        login(
-          db,
-          runtime,
-          {'username': 'target', 'password': _FakeHasher.correctPassword},
-          clientIp: '203.0.113.9',
-        ),
-        throwsA(isA<LockedException>()),
+      final blocked = limiter.check('198.51.100.7');
+      expect(blocked.allowed, isFalse);
+      expect(
+        blocked.retryAfter,
+        lessThanOrEqualTo(LoginRateLimiter.baseLockout),
+        reason: 'a shared address must never reach the escalated cap',
       );
     });
 
@@ -312,6 +300,89 @@ void main() {
             reason: 'login $i must still succeed',
           );
         }
+      },
+    );
+  });
+  group('a gate refusal is backpressure, not a failed attempt', () {
+    test('a full gate does not lock a user out of their own account', () async {
+      // The gate refusal used to keep the reservations it had already taken,
+      // which handed a third party an account-lockout primitive: hold every
+      // slot with throwaway usernames, and the real owner's CORRECT password
+      // burns one reservation per try until their own per-account bucket
+      // locks them out for 15 minutes. The gate is taken directly here so the
+      // test turns on the property, not on timing.
+      final hasher = _FakeHasher();
+      final runtime = AuthRuntime(
+        hasher: hasher,
+        verifyGate: ConcurrencyGate(limit: 1),
+      );
+      createUser('victim');
+
+      expect(runtime.verifyGate.tryAcquire(), isTrue, reason: 'hold the slot');
+      for (var i = 0; i < 6; i += 1) {
+        await expectLater(
+          login(
+            db,
+            runtime,
+            {'username': 'victim', 'password': _FakeHasher.correctPassword},
+            clientIp: '203.0.113.55',
+          ),
+          throwsA(isA<LockedException>()),
+          reason: 'attempt $i must be refused by the full gate',
+        );
+      }
+      runtime.verifyGate.release();
+
+      // Six refusals is past the 5-failure threshold. If they had counted,
+      // this correct password would now be locked out.
+      final grant = await login(
+        db,
+        runtime,
+        {'username': 'victim', 'password': _FakeHasher.correctPassword},
+        clientIp: '203.0.113.55',
+      );
+      expect(
+        grant.token,
+        isNotEmpty,
+        reason: 'requests the gate never let guess must not count as guesses',
+      );
+      expect(hasher.verifications, 1, reason: 'only the admitted one hashed');
+    });
+
+    test(
+      'an overlong username cannot mint an unbounded throttle key',
+      () async {
+        // reserve() inserts the key BEFORE every refusal path and holds it for
+        // an hour, so an unbounded name is retained memory the caller chooses:
+        // measured at 279 MiB of RSS for 200 free requests. Truncating at the
+        // longest name that could ever be real means two overlong names share a
+        // bucket — which is what this asserts, and which is stricter than
+        // separate buckets, never looser.
+        final runtime = AuthRuntime(hasher: _FakeHasher());
+        final stem = 'z' * 40;
+        for (var i = 0; i < LoginRateLimiter.defaultFailureThreshold; i += 1) {
+          await expectLater(
+            login(
+              db,
+              runtime,
+              {'username': '$stem-A', 'password': 'nope'},
+              clientIp: '203.0.113.77',
+            ),
+            throwsA(isA<AppException>()),
+          );
+        }
+        await expectLater(
+          login(
+            db,
+            runtime,
+            {'username': '$stem-B', 'password': 'nope'},
+            clientIp: '203.0.113.77',
+          ),
+          throwsA(isA<LockedException>()),
+          reason:
+              'two names sharing their first 32 characters must share one '
+              'bucket, or the key is the caller-chosen length again',
+        );
       },
     );
   });

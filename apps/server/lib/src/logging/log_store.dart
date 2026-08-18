@@ -16,6 +16,17 @@ import 'package:salt_shared/salt_shared.dart';
 final List<RegExp> logRedactions = [
   RegExp(r'(setup code:\s*)(\S+)', caseSensitive: false),
   RegExp(r'(recovery code:\s*)(\S+)', caseSensitive: false),
+  // `SqliteException.toString()` appends ", parameters: <the bound values>"
+  // after the causing statement (sqlite3/lib/src/exception.dart), and this
+  // codebase binds an argon2 password hash, a session token hash on every
+  // authenticated request, and the FoodData Central API key in plaintext.
+  // Since those exceptions began being PERSISTED and served through the admin
+  // log API, an ordinary SQLITE_BUSY or SQLITE_FULL on the wrong statement
+  // would write a live secret to disk. The statement itself is kept — it is
+  // what triage needs and is always a literal from this codebase — and the
+  // values, which are never needed to diagnose, are not. Runs to end of line,
+  // which is where that rendering ends.
+  RegExp(r'(parameters:\s*).*', caseSensitive: false),
 ];
 
 /// Masks any secret [logRedactions] recognises in [message].
