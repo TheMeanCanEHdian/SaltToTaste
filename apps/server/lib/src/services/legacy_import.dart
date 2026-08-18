@@ -100,6 +100,7 @@ ImportSummary importLegacyRoot({
       _copyLegacyImage(
         recipe: recipe,
         fileName: fileName,
+        sourceRoot: root.path,
         imagesDirs: imagesDirs,
         libraryImagesDir: libraryImagesDir,
         summary: summary,
@@ -306,9 +307,18 @@ String? _notes(Object? raw) {
   return _text(raw);
 }
 
+/// Copies the recipe's `_images/` file into the library under its
+/// route-safe name ([safeImageName]).
+///
+/// The candidate is resolved (symlinks followed) and must stay inside
+/// [sourceRoot], so a symlinked source image cannot smuggle a host file into
+/// the publicly served library — the same boundary `_copyImages` enforces for
+/// v1 roots. A candidate that resolves outside is skipped with a warning
+/// naming the file, never copied.
 void _copyLegacyImage({
   required Recipe recipe,
   required String fileName,
+  required String sourceRoot,
   required List<Directory> imagesDirs,
   required Directory libraryImagesDir,
   required ImportSummary summary,
@@ -332,12 +342,34 @@ void _copyLegacyImage({
     summary.warnings.add('$fileName: image path escapes the root: $bare');
     return;
   }
+  final String canonicalRoot;
+  try {
+    canonicalRoot = Directory(sourceRoot).resolveSymbolicLinksSync();
+  } on FileSystemException {
+    summary.warnings.add('$fileName: source root is unreadable: $sourceRoot');
+    return;
+  }
+  final rootPrefix = '$canonicalRoot${Platform.pathSeparator}';
   for (final dir in imagesDirs) {
-    final candidate = File('${dir.path}/$bare');
-    if (candidate.existsSync()) {
-      candidate.copySync(destination.path);
+    final String canonicalSource;
+    try {
+      canonicalSource = File('${dir.path}/$bare').resolveSymbolicLinksSync();
+    } on FileSystemException {
+      // Absent (or a broken link) in this candidate directory — try the next.
+      continue;
+    }
+    if (!canonicalSource.startsWith(rootPrefix)) {
+      summary.warnings.add(
+        '$fileName: image resolves outside the source root: $bare',
+      );
+      _log.warning(
+        'Skipped legacy image for $fileName: "$bare" resolves outside '
+        'the source root',
+      );
       return;
     }
+    File(canonicalSource).copySync(destination.path);
+    return;
   }
   summary.warnings.add('$fileName: image not found: $bare');
 }
