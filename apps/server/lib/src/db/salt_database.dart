@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:salt_server/src/db/migrations.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_shared/salt_shared.dart';
@@ -66,8 +67,17 @@ class SaltDatabase {
   final Map<String, PreparedStatement> _statements = {};
 
   /// Returns a cached prepared statement for [sql], preparing it on first use.
+  ///
+  /// The cache is never evicted, so every SQL text this class can emit must
+  /// come from a fixed, finite set — no request input may reach the SQL
+  /// string itself. [preparedSqlTexts] is the seam that pins it.
   PreparedStatement _prepared(String sql) =>
       _statements[sql] ??= _db.prepare(sql);
+
+  /// The distinct SQL texts this connection has cached prepared statements
+  /// for. Bounded by the code, not by traffic — see [_prepared].
+  @visibleForTesting
+  Iterable<String> get preparedSqlTexts => _statements.keys;
 
   /// Closes the underlying connection and all cached statements.
   void dispose() {
@@ -519,6 +529,22 @@ class SaltDatabase {
     return result;
   }
 
+  /// The four conditions a collapsed calories range can emit.
+  ///
+  /// Any number of ANDed `calories:` terms reduces to at most one lower and
+  /// one upper bound (see [_caloriesRange]), so the calories fragment is one
+  /// of nine combinations of these CONSTANTS whatever the caller types —
+  /// versus one interpolated condition per parsed term, which let a caller
+  /// mint a new SQL text (and so a new permanently cached prepared
+  /// statement) per operator sequence, up to 5^24 of them. Each is a plain
+  /// comparison against the indexed column, so SQLite still range-scans
+  /// `idx_recipe_nutrition_calories` (migration 005) — a `(? IS NULL OR ...)`
+  /// slot per operator would be constant too, but is not sargable.
+  static const String _caloriesGt = 'n.calories_per_serving > ?';
+  static const String _caloriesGte = 'n.calories_per_serving >= ?';
+  static const String _caloriesLt = 'n.calories_per_serving < ?';
+  static const String _caloriesLte = 'n.calories_per_serving <= ?';
+
   /// One page of search results for a parsed and [compiled] query, ordered
   /// by relevance (bm25) — or by calories when the query filters on them.
   ///
@@ -552,8 +578,9 @@ class SaltDatabase {
     // FTS match, the calories filter (via recipe_nutrition — recipes
     // without computed nutrition truthfully never match), and favorites.
     // Calorie queries order lowest-first (the old app's contract);
-    // otherwise relevance. All values are bound parameters; the only
-    // interpolations are operator symbols from the CaloriesOp enum.
+    // otherwise relevance. Every value is a bound parameter and nothing
+    // attacker-varied is interpolated, so the set of SQL texts this method
+    // can emit is fixed and tiny (see _caloriesGt and friends).
     final params = <Object?>[];
     var from = 'FROM recipes r';
     final conditions = <String>[];
@@ -567,10 +594,22 @@ class SaltDatabase {
     // via the IS NOT NULL condition.
     from += ' LEFT JOIN recipe_nutrition n ON n.recipe_id = r.id';
     if (compiled.calories.isNotEmpty) {
+      final range = _caloriesRange(compiled.calories);
       conditions.add('n.calories_per_serving IS NOT NULL');
-      for (final node in compiled.calories) {
-        conditions.add('n.calories_per_serving ${node.op.symbol} ?');
-        params.add(node.value);
+      // A bound is absent only when the query asked for no bound on that
+      // side; its value is a non-nullable num, so no code path can bind a
+      // null here and turn the filter off. Contradictory terms
+      // (`calories:=300 calories:=400`) survive as an unsatisfiable range and
+      // SQLite answers zero rows — the filter is never silently dropped.
+      final lower = range.lower;
+      if (lower != null) {
+        conditions.add(lower.inclusive ? _caloriesGte : _caloriesGt);
+        params.add(lower.value);
+      }
+      final upper = range.upper;
+      if (upper != null) {
+        conditions.add(upper.inclusive ? _caloriesLte : _caloriesLt);
+        params.add(upper.value);
       }
     }
     if (favoritesOnly) {
@@ -859,9 +898,14 @@ class SaltDatabase {
     required int offset,
     String? bucket,
   }) {
-    final where = bucket == null
-        ? "bucket IN ('no_match', 'no_grams', 'check')"
-        : 'bucket = ?';
+    // The bucket filter is BOUND (twice — null takes the flagged-set branch,
+    // a value takes the equality one), never concatenated. It used to be a
+    // local named `where`, which is also the name of one of searchCards'
+    // shape-pinned locals, so the class-wide "every cached SQL text is
+    // constant" guard whitelisted it while nothing counted what this method
+    // could emit — request input was one edit from the never-evicted
+    // statement cache (review S6). A single constant text cannot go wrong
+    // that way.
     final rows = _prepared(
       'SELECT * FROM ( '
       'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
@@ -869,9 +913,10 @@ class SaltDatabase {
       'im.updated_at, r.slug AS review_slug, r.title AS review_title, '
       '$_reviewBucketCase AS bucket '
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
-      ') WHERE $where '
+      ") WHERE (? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
+      'OR bucket = ? '
       'ORDER BY confidence ASC, review_title, position LIMIT ? OFFSET ?',
-    ).select([if (bucket != null) bucket, limit, offset]);
+    ).select([bucket, bucket, limit, offset]);
     return [
       for (final row in rows)
         (
@@ -1292,25 +1337,85 @@ class SaltDatabase {
   /// Replaces the user's password hash and `must_change_password` flag, and
   /// deletes all of the user's sessions in the same transaction — except
   /// [keepSessionHash] when given (the session that performed the change).
-  void updatePasswordHash(
+  ///
+  /// [revokeApiTokens] revokes every live API token of the user inside that
+  /// SAME transaction; the return value is how many went (0 when not asked).
+  /// A parameter rather than a second call on purpose: a PAT is a standalone
+  /// credential that outlives a password, so "password rotated, tokens still
+  /// live" is the compromise state the eviction exists to prevent (review
+  /// S4). Two statements outside one transaction can only ORDER that risk — a
+  /// partial failure still splits them, and the caller sees a 500 that reads
+  /// as "nothing happened". One transaction removes the split: both land or
+  /// neither does.
+  int updatePasswordHash(
     int userId,
     String passwordHash, {
     required bool mustChangePassword,
+    // Required, with no default: this is the one method every password
+    // rotation routes through, and a defaulted `false` would let a fourth
+    // caller ship "password changed, every token still live" — the exact
+    // compromise state above — by saying nothing at all. Costs one word at
+    // each call site and cannot be got wrong by omission.
+    required bool revokeApiTokens,
     String? keepSessionHash,
   }) {
+    var revoked = 0;
     _inTransaction(() {
-      _prepared(
-        'UPDATE users SET password_hash = ?, must_change_password = ? '
-        'WHERE id = ?',
-      ).execute([passwordHash, if (mustChangePassword) 1 else 0, userId]);
-      if (keepSessionHash == null) {
-        _prepared('DELETE FROM sessions WHERE user_id = ?').execute([userId]);
-      } else {
-        _prepared(
-          'DELETE FROM sessions WHERE user_id = ? AND token_hash != ?',
-        ).execute([userId, keepSessionHash]);
+      if (revokeApiTokens) {
+        revoked = _revokeAllApiTokens(userId);
       }
+      _writePasswordHash(
+        userId,
+        passwordHash,
+        mustChangePassword: mustChangePassword,
+      );
+      _deleteSessions(userId, keepTokenHash: keepSessionHash);
     });
+    return revoked;
+  }
+
+  /// Account recovery as ONE transaction: revokes every live API token,
+  /// rotates the password (dropping every session), promotes to `admin` and
+  /// re-enables. Returns how many tokens were revoked.
+  ///
+  /// Four writes, one commit. Any one of them alone can be the lockout, so as
+  /// separate commits a failure between them left the account half recovered
+  /// — the operator's new password live on an account still disabled, or the
+  /// tokens dead and nothing else done. Recovery is used when control of the
+  /// account is in doubt, which is why the tokens go at all: see
+  /// [updatePasswordHash] for why they go inside the transaction.
+  int resetToEnabledAdmin(int userId, String passwordHash) {
+    var revoked = 0;
+    _inTransaction(() {
+      revoked = _revokeAllApiTokens(userId);
+      _writePasswordHash(userId, passwordHash, mustChangePassword: false);
+      _deleteSessions(userId);
+      _prepared(
+        "UPDATE users SET role = 'admin', disabled = 0 WHERE id = ?",
+      ).execute([userId]);
+    });
+    return revoked;
+  }
+
+  void _writePasswordHash(
+    int userId,
+    String passwordHash, {
+    required bool mustChangePassword,
+  }) {
+    _prepared(
+      'UPDATE users SET password_hash = ?, must_change_password = ? '
+      'WHERE id = ?',
+    ).execute([passwordHash, if (mustChangePassword) 1 else 0, userId]);
+  }
+
+  void _deleteSessions(int userId, {String? keepTokenHash}) {
+    if (keepTokenHash == null) {
+      _prepared('DELETE FROM sessions WHERE user_id = ?').execute([userId]);
+      return;
+    }
+    _prepared(
+      'DELETE FROM sessions WHERE user_id = ? AND token_hash != ?',
+    ).execute([userId, keepTokenHash]);
   }
 
   /// Sets the user's role (`admin` or `member`).
@@ -1327,7 +1432,7 @@ class SaltDatabase {
     }
     _inTransaction(() {
       _prepared('UPDATE users SET disabled = 1 WHERE id = ?').execute([userId]);
-      _prepared('DELETE FROM sessions WHERE user_id = ?').execute([userId]);
+      _deleteSessions(userId);
     });
   }
 
@@ -1495,10 +1600,12 @@ class SaltDatabase {
 
   /// Revokes every live API token belonging to [userId]; returns how many.
   ///
-  /// For account recovery: a PAT is a standalone credential that survives a
-  /// password reset, so leaving them live would hand whoever caused the
-  /// lockout a way straight back in.
-  int revokeAllApiTokens(int userId) {
+  /// A PAT is a standalone credential that survives a password reset, so
+  /// leaving them live would hand whoever caused the lockout a way straight
+  /// back in. PRIVATE on purpose: every caller wants it welded to a password
+  /// rotation, so it is reachable only through [updatePasswordHash] and
+  /// [resetToEnabledAdmin], which run it in their own transaction.
+  int _revokeAllApiTokens(int userId) {
     _prepared(
       'UPDATE api_tokens SET revoked_at = ? '
       'WHERE user_id = ? AND revoked_at IS NULL',
@@ -1521,6 +1628,62 @@ class SaltDatabase {
     return _db.updatedRows;
   }
 }
+
+/// One end of a calories range: a threshold and whether it is inclusive.
+///
+/// `value` is non-nullable on purpose — "no bound" is the absence of the
+/// whole record, never a null inside one, so a filter can never be turned
+/// off by a missing value, and a nullable [CaloriesNode.value] would stop
+/// compiling here rather than start returning unfiltered rows.
+typedef _CaloriesBound = ({num value, bool inclusive});
+
+/// Collapses ANDed calories [nodes] to at most one lower and one upper bound.
+///
+/// A conjunction over one numeric column is an interval: repeats of an
+/// operator reduce to the tightest bound (`c < 300 AND c < 500` is
+/// `c < 300`), and `=` is simply both bounds at once (`c = 300` is
+/// `c >= 300 AND c <= 300`). Contradictions need no special case — they come
+/// out as an empty interval (`c >= 400 AND c <= 300`), which matches nothing.
+({_CaloriesBound? lower, _CaloriesBound? upper}) _caloriesRange(
+  List<CaloriesNode> nodes,
+) {
+  _CaloriesBound? lower;
+  _CaloriesBound? upper;
+  for (final node in nodes) {
+    final value = node.value;
+    switch (node.op) {
+      case CaloriesOp.lt:
+        upper = _tighterUpper(upper, (value: value, inclusive: false));
+      case CaloriesOp.lte:
+        upper = _tighterUpper(upper, (value: value, inclusive: true));
+      case CaloriesOp.gt:
+        lower = _tighterLower(lower, (value: value, inclusive: false));
+      case CaloriesOp.gte:
+        lower = _tighterLower(lower, (value: value, inclusive: true));
+      case CaloriesOp.eq:
+        lower = _tighterLower(lower, (value: value, inclusive: true));
+        upper = _tighterUpper(upper, (value: value, inclusive: true));
+    }
+  }
+  return (lower: lower, upper: upper);
+}
+
+/// The stricter of two lower bounds: the larger value, and on a tie the
+/// exclusive one (`> 300` admits less than `>= 300`).
+_CaloriesBound _tighterLower(_CaloriesBound? current, _CaloriesBound other) =>
+    current == null ||
+        other.value > current.value ||
+        (other.value == current.value && !other.inclusive)
+    ? other
+    : current;
+
+/// The stricter of two upper bounds: the smaller value, exclusive on a tie.
+_CaloriesBound _tighterUpper(_CaloriesBound? current, _CaloriesBound other) =>
+    current == null ||
+        other.value < current.value ||
+        (other.value == current.value && !other.inclusive)
+    ? other
+    : current;
 
 /// A row from the `users` table. `passwordHash` is a secret — never log it.
 class UserRow {

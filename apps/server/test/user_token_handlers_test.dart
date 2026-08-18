@@ -1,12 +1,15 @@
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:salt_server/src/auth/password_hasher.dart';
 import 'package:salt_server/src/auth/tokens.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/handlers/auth_handlers.dart' show auditLog;
 import 'package:salt_server/src/handlers/token_handlers.dart';
 import 'package:salt_server/src/handlers/user_handlers.dart';
 import 'package:salt_server/src/middleware/auth.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -29,6 +32,19 @@ void main() {
     via: sessionHash == null ? 'pat' : 'session',
     sessionHash: sessionHash,
   );
+
+  setUpAll(() {
+    // `LOG_LEVEL=WARN` (and `ERROR`) are supported operator settings that set
+    // Logger.root.level. Raising it here means every INFO expectation in
+    // "account administration is recorded" holds only because `auditLog` pins
+    // its own level — which is the point: an audit record a routine config
+    // choice deletes is not an audit record.
+    Logger.root.level = Level.SEVERE;
+  });
+
+  tearDownAll(() {
+    Logger.root.level = Level.INFO;
+  });
 
   setUp(() async {
     tempDir = Directory.systemTemp.createTempSync('salt_user_handlers');
@@ -320,6 +336,167 @@ void main() {
       final deletesAt = DateTime.parse(listedWith(90)['deletes_at']! as String);
       final days = deletesAt.difference(DateTime.now().toUtc()).inDays;
       expect(days, inInclusiveRange(89, 90));
+    });
+  });
+
+  group('account administration is recorded', () {
+    // These handlers had ZERO loggers, so the only trace of an account being
+    // created, promoted, disabled, deleted, or of a PAT being minted, was an
+    // access line reading `PATCH /users/7 -> 200` — no actor, no target.
+
+    /// Collects `auth` records emitted while [action] runs.
+    ///
+    /// Deliberately does NOT open the logger: [auditLog] pins its own level so
+    /// the trail survives `LOG_LEVEL=WARN`/`ERROR`, and forcing the level here
+    /// would mask the removal of that pin. `setUpAll` raises the root level to
+    /// prove it.
+    Future<List<LogRecord>> capture(Future<void> Function() action) async {
+      final records = <LogRecord>[];
+      final subscription = auditLog.onRecord.listen(records.add);
+      try {
+        await action();
+        await Future<void>.delayed(Duration.zero);
+      } finally {
+        await subscription.cancel();
+      }
+      return records;
+    }
+
+    test('every event names the actor and the target', () async {
+      late String tempPassword;
+      late String patValue;
+      late String resetTempPassword;
+      late int samId;
+      final records = await capture(() async {
+        final created = await createUserHandler(
+          db,
+          hasher,
+          admin,
+          username: 'sam',
+          role: 'member',
+        );
+        tempPassword = created['temp_password']! as String;
+        samId = (created['user']! as Map<String, Object?>)['id']! as int;
+        patchUserHandler(db, admin, samId, role: 'admin');
+        patchUserHandler(db, admin, samId, disabled: true);
+        patchUserHandler(db, admin, samId, disabled: false);
+
+        // After the disable/enable cycle: disabling drops the user's
+        // sessions, so a session made earlier would not survive to be
+        // revoked here.
+        final sam = actorFor(samId, sessionHash: hashToken('sam-session'));
+        db.createSession(
+          tokenHash: hashToken('sam-session'),
+          userId: samId,
+          expiresAt: DateTime.now().toUtc().add(const Duration(days: 7)),
+          remember: false,
+        );
+
+        final minted = createTokenHandler(
+          db,
+          sam,
+          name: 'kitchen ipad',
+          scope: 'full',
+        );
+        patValue = minted['token']! as String;
+        final tokenId = (minted['item']! as Map<String, Object?>)['id']! as int;
+        revokeTokenHandler(db, sam, tokenId);
+        deleteSessionHandler(db, sam, hashToken('sam-session'));
+
+        final reset = await resetPasswordHandler(db, hasher, admin, samId);
+        resetTempPassword = reset['temp_password']! as String;
+        deleteUserHandler(db, admin, samId);
+      });
+
+      final messages = [for (final record in records) record.message];
+      final actor = admin.username;
+      final owner = 'user$samId';
+      for (final expected in [
+        allOf(contains('User created: sam'), contains(actor)),
+        allOf(contains('Role changed: sam'), contains(actor)),
+        allOf(contains('Account disabled: sam'), contains(actor)),
+        allOf(contains('Account enabled: sam'), contains(actor)),
+        allOf(contains('API token minted:'), contains(owner)),
+        allOf(contains('API token revoked:'), contains(owner)),
+        allOf(contains('Session revoked'), contains(owner)),
+        allOf(contains('Password reset: sam'), contains(actor)),
+        allOf(contains('User deleted: sam'), contains(actor)),
+      ]) {
+        expect(messages, contains(expected));
+      }
+
+      // The token's NAME is caller-supplied text and stays out of the record
+      // (it could carry a `rid=` the viewer would adopt as a correlation id);
+      // the id and scope identify the token just as well.
+      expect(messages, everyElement(isNot(contains('kitchen ipad'))));
+      for (final secret in [
+        tempPassword,
+        resetTempPassword,
+        patValue,
+        hashToken('sam-session'),
+        db.userById(admin.id)!.passwordHash,
+      ]) {
+        expect(messages, everyElement(isNot(contains(secret))));
+      }
+    });
+  });
+
+  group('a reset that fails leaves no half-done credential state', () {
+    test('the eviction and the rotation are one transaction', () async {
+      // `updatePasswordHash` revokes INSIDE its own transaction, so the two
+      // cannot split. Ordering them was the older, weaker control: whichever
+      // ran first, a partial failure still returned a 500 that reads as
+      // "nothing happened" over a database where something had happened —
+      // and with the rotation first that something is the compromise state
+      // (new password committed, every PAT alive). Atomic: both or neither.
+      final samId = db.createUser(
+        username: 'sam',
+        passwordHash: await hasher.hash('a-long-member-password'),
+        role: 'member',
+      );
+      final sam = actorFor(samId);
+      createTokenHandler(db, sam, name: 'nightly script', scope: 'full');
+
+      // Hostile condition, synthesized because no request can produce it: a
+      // trigger on the test's own database aborts the password UPDATE — and
+      // only that UPDATE — the way a disk or constraint failure would.
+      final raw = sqlite3.open('${tempDir.path}/salt.db');
+      try {
+        raw.execute(
+          'CREATE TRIGGER halt_rotation AFTER UPDATE OF password_hash '
+          "ON users BEGIN SELECT RAISE(ABORT, 'rotation failed'); END",
+        );
+        await expectLater(
+          resetPasswordHandler(db, hasher, admin, samId),
+          throwsA(isA<SqliteException>()),
+        );
+      } finally {
+        raw
+          ..execute('DROP TRIGGER IF EXISTS halt_rotation')
+          ..dispose();
+      }
+
+      final items = (listTokensHandler(db, sam)['items']! as List)
+          .cast<Map<String, Object?>>();
+      final stored = db.userById(samId)!;
+      expect(
+        stored.mustChangePassword,
+        isFalse,
+        reason: 'the rotation itself must have rolled back',
+      );
+      // The forbidden combination is "password rotated, PAT alive". The
+      // rotation rolled back, so the revocation must have gone with it —
+      // anything else is half a reset the caller was told did not happen.
+      expect(
+        items.single['revoked'],
+        isFalse,
+        reason: 'the revocation must roll back with the rotation, not alone',
+      );
+      // Cheapest proof the two really are welded: the same handler, with
+      // nothing sabotaging it, does both.
+      final done = await resetPasswordHandler(db, hasher, admin, samId);
+      expect(done['revoked_tokens'], 1);
+      expect(db.userById(samId)!.mustChangePassword, isTrue);
     });
   });
 }

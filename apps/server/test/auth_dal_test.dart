@@ -156,6 +156,9 @@ void main() {
           id,
           _hashB,
           mustChangePassword: false,
+          // This case is about which SESSIONS survive; token eviction is
+          // covered by its own tests.
+          revokeApiTokens: false,
           keepSessionHash: keep,
         );
 
@@ -177,7 +180,12 @@ void main() {
           expiresAt: future,
           remember: true,
         )
-        ..updatePasswordHash(id, _hashB, mustChangePassword: true);
+        ..updatePasswordHash(
+          id,
+          _hashB,
+          mustChangePassword: true,
+          revokeApiTokens: false,
+        );
       expect(db.sessionsForUser(id), isEmpty);
       expect(db.userById(id)!.mustChangePassword, isTrue);
     });

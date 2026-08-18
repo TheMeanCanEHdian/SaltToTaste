@@ -3,15 +3,22 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
+import 'package:logging/logging.dart';
+import 'package:salt_server/src/auth/rate_limiter.dart';
+import 'package:salt_server/src/auth/recovery.dart';
 import 'package:salt_server/src/auth/tokens.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
 import 'package:salt_server/src/search/search_service.dart';
+import 'package:salt_server/src/services/backup_service.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
 import '../routes/api/v1/auth/change_password.dart' as change_password_route;
@@ -19,8 +26,10 @@ import '../routes/api/v1/auth/login.dart' as login_route;
 import '../routes/api/v1/auth/logout.dart' as logout_route;
 import '../routes/api/v1/auth/me.dart' as me_route;
 import '../routes/api/v1/auth/setup.dart' as setup_route;
+import '../routes/api/v1/backups/[name].dart' as backup_route;
 import '../routes/api/v1/recipes/index.dart' as recipes_route;
 import '../routes/api/v1/sessions/[id].dart' as session_route;
+import '../routes/api/v1/settings/fdc_key.dart' as fdc_key_route;
 import '../routes/api/v1/tokens/[id].dart' as token_route;
 import '../routes/api/v1/tokens/index.dart' as tokens_route;
 import '../routes/api/v1/users/[id]/index.dart' as user_route;
@@ -69,8 +78,16 @@ void main() {
         return tokens_route.onRequest(context);
       case '/api/v1/users':
         return users_route.onRequest(context);
+      case '/api/v1/settings/fdc_key':
+        return fdc_key_route.onRequest(context);
       default:
         final path = context.request.uri.path;
+        final backupMatch = RegExp(
+          r'^/api/v1/backups/([^/]+)$',
+        ).firstMatch(path);
+        if (backupMatch != null) {
+          return backup_route.onRequest(context, backupMatch.group(1)!);
+        }
         final tokenMatch = RegExp(r'^/api/v1/tokens/([^/]+)$').firstMatch(path);
         if (tokenMatch != null) {
           return token_route.onRequest(context, tokenMatch.group(1)!);
@@ -929,6 +946,611 @@ void main() {
       expect(meAfter.statusCode, HttpStatus.ok);
       final meUser = jsonOf(meBody)['user'] as Map<String, dynamic>;
       expect(meUser['must_change_password'], false);
+    });
+  });
+
+  group('a password change evicts every credential', () {
+    // The reported hole: change_password dropped the user's other SESSIONS
+    // and never touched api_tokens. A session alone mints a full-scope PAT
+    // (session logins are always `full`), PATs have no expiry, so a cookie
+    // held for one minute bought permanent access that the victim's password
+    // change did not take away.
+    test('a PAT minted from the session dies with the password', () async {
+      createMember('pat-minter');
+      final session = await sessionTokenFor('pat-minter', _memberPassword);
+      final (mint, mintBody) = await send(
+        'POST',
+        '/api/v1/tokens',
+        headers: {'Cookie': '$sessionCookieName=$session', ..._csrfHeader},
+        jsonBody: {'name': 'minted from a stolen cookie', 'scope': 'full'},
+      );
+      expect(mint.statusCode, HttpStatus.ok, reason: mintBody);
+      final pat = jsonOf(mintBody)['token'] as String;
+
+      Future<int> patStatus() async {
+        final (response, _) = await send(
+          'GET',
+          '/api/v1/recipes',
+          headers: {'Authorization': 'Bearer $pat'},
+        );
+        return response.statusCode;
+      }
+
+      expect(
+        await patStatus(),
+        HttpStatus.ok,
+        reason: 'the PAT must work to begin with, or this proves nothing',
+      );
+
+      final (changed, changedBody) = await send(
+        'POST',
+        '/api/v1/auth/change_password',
+        headers: {'Cookie': '$sessionCookieName=$session', ..._csrfHeader},
+        jsonBody: {
+          'current_password': _memberPassword,
+          'new_password': 'the-minted-token-must-die',
+        },
+      );
+      expect(changed.statusCode, HttpStatus.ok, reason: changedBody);
+      expect(
+        await patStatus(),
+        HttpStatus.unauthorized,
+        reason: 'the PAT outlived the password it was minted behind',
+      );
+      expect(
+        jsonOf(changedBody)['revoked_tokens'],
+        1,
+        reason: 'the user must be told what their password change evicted',
+      );
+    });
+
+    test('a rotation that fails changes nothing at all', () async {
+      // The eviction and the rotation are ONE transaction:
+      // `updatePasswordHash` revokes inside the transaction it already opens.
+      // Ordering two separate statements was the older, weaker control — it
+      // ruled out the compromise state (new password committed, every PAT
+      // alive) but still left the caller a 500 that reads as "nothing
+      // happened" over a database where half of it had. Atomic: the 500 is
+      // now true.
+      createMember('pat-partial');
+      final session = await sessionTokenFor('pat-partial', _memberPassword);
+      final auth = {'Cookie': '$sessionCookieName=$session', ..._csrfHeader};
+      final (mint, mintBody) = await send(
+        'POST',
+        '/api/v1/tokens',
+        headers: auth,
+        jsonBody: {'name': 'survives a half-done rotation', 'scope': 'full'},
+      );
+      expect(mint.statusCode, HttpStatus.ok, reason: mintBody);
+      final pat = jsonOf(mintBody)['token'] as String;
+
+      // Hostile condition, synthesized because no input can produce it: a
+      // trigger on the test's own database makes the password UPDATE — and
+      // only that UPDATE — abort mid-request.
+      final raw = sqlite3.open(config.dbPath);
+      try {
+        raw.execute(
+          'CREATE TRIGGER halt_rotation AFTER UPDATE OF password_hash '
+          "ON users BEGIN SELECT RAISE(ABORT, 'rotation failed'); END",
+        );
+        final (response, _) = await send(
+          'POST',
+          '/api/v1/auth/change_password',
+          headers: auth,
+          jsonBody: {
+            'current_password': _memberPassword,
+            'new_password': 'this-rotation-cannot-land',
+          },
+        );
+        expect(
+          response.statusCode,
+          HttpStatus.internalServerError,
+          reason: 'the trigger must actually break the rotation',
+        );
+      } finally {
+        raw
+          ..execute('DROP TRIGGER IF EXISTS halt_rotation')
+          ..dispose();
+      }
+
+      // The forbidden outcome is "the new password works AND a PAT survived".
+      // Nothing landed, so neither half of it did: the old password still
+      // signs in and the PAT is exactly as it was.
+      final (newPassword, newPasswordBody) = await loginAs(
+        'pat-partial',
+        'this-rotation-cannot-land',
+      );
+      expect(
+        newPassword.statusCode,
+        HttpStatus.unprocessableEntity,
+        reason: 'the rotation must have rolled back',
+      );
+      expect(errorOf(newPasswordBody)['message'], _uniformLoginError);
+      final (stillIn, stillInBody) = await loginAs(
+        'pat-partial',
+        _memberPassword,
+      );
+      expect(stillIn.statusCode, HttpStatus.ok, reason: stillInBody);
+      final (patResponse, _) = await send(
+        'GET',
+        '/api/v1/recipes',
+        headers: {'Authorization': 'Bearer $pat'},
+      );
+      expect(
+        patResponse.statusCode,
+        HttpStatus.ok,
+        reason: 'the revocation must roll back with the rotation, not alone',
+      );
+
+      // And with nothing sabotaging it the same request does both — the pin
+      // above must not be satisfiable by a handler that revokes nothing.
+      final (changed, changedBody) = await send(
+        'POST',
+        '/api/v1/auth/change_password',
+        headers: auth,
+        jsonBody: {
+          'current_password': _memberPassword,
+          'new_password': 'this-rotation-does-land',
+        },
+      );
+      expect(changed.statusCode, HttpStatus.ok, reason: changedBody);
+      expect(jsonOf(changedBody)['revoked_tokens'], 1);
+    });
+
+    test(
+      'a rotation whose EVICTION fails does not change the password',
+      () async {
+        // The other direction, and the one that is actually finding S4: the
+        // test above aborts the PASSWORD write, which in the fixed order comes
+        // after the revoke, so it only catches a revoke that committed too
+        // early. It stays green even if the revocation is moved back OUT of the
+        // transaction — the very split the fix removed — because then the abort
+        // simply stops the revoke from running at all.
+        //
+        // Aborting the REVOKE instead is what distinguishes them. Atomic: the
+        // password rolls back with it. Split: the password commits and every
+        // PAT stays live, which is precisely the compromise state ("password
+        // rotated, tokens still live") the eviction exists to prevent.
+        createMember('evict-partial');
+        final session = await sessionTokenFor('evict-partial', _memberPassword);
+        final auth = {'Cookie': '$sessionCookieName=$session', ..._csrfHeader};
+        final (mint, mintBody) = await send(
+          'POST',
+          '/api/v1/tokens',
+          headers: auth,
+          jsonBody: {'name': 'outlives a split rotation', 'scope': 'full'},
+        );
+        expect(mint.statusCode, HttpStatus.ok, reason: mintBody);
+
+        // Synthesized hostile condition — no input can make the revoke fail.
+        final raw = sqlite3.open(config.dbPath);
+        try {
+          raw.execute(
+            'CREATE TRIGGER halt_eviction AFTER UPDATE OF revoked_at '
+            "ON api_tokens BEGIN SELECT RAISE(ABORT, 'eviction failed'); END",
+          );
+          final (response, _) = await send(
+            'POST',
+            '/api/v1/auth/change_password',
+            headers: auth,
+            jsonBody: {
+              'current_password': _memberPassword,
+              'new_password': 'this-eviction-cannot-land',
+            },
+          );
+          expect(
+            response.statusCode,
+            HttpStatus.internalServerError,
+            reason: 'the trigger must actually break the eviction',
+          );
+        } finally {
+          raw
+            ..execute('DROP TRIGGER IF EXISTS halt_eviction')
+            ..dispose();
+        }
+
+        final (newPassword, newPasswordBody) = await loginAs(
+          'evict-partial',
+          'this-eviction-cannot-land',
+        );
+        expect(
+          newPassword.statusCode,
+          HttpStatus.unprocessableEntity,
+          reason:
+              'the password must not have landed while the eviction failed — '
+              'that is the compromise state, not a rolled-back request',
+        );
+        expect(errorOf(newPasswordBody)['message'], _uniformLoginError);
+        final (stillIn, stillInBody) = await loginAs(
+          'evict-partial',
+          _memberPassword,
+        );
+        expect(stillIn.statusCode, HttpStatus.ok, reason: stillInBody);
+      },
+    );
+
+    test('a failed recovery leaves no half-recovered admin', () async {
+      // recoverAdmin used to make FOUR separate commits — revoke, rotate,
+      // promote, re-enable — so a failure between them left the account part
+      // way: the operator's new password live on an account still disabled,
+      // or the tokens dead and nothing else done. `resetToEnabledAdmin` is
+      // one transaction, and nothing pinned that before (the ordering at the
+      // other two call sites was pinned; this one was not).
+      final userId = createMember('recover-partial');
+      final session = await sessionTokenFor('recover-partial', _memberPassword);
+      final (mint, mintBody) = await send(
+        'POST',
+        '/api/v1/tokens',
+        headers: {'Cookie': '$sessionCookieName=$session', ..._csrfHeader},
+        jsonBody: {'name': 'outlives a failed recovery', 'scope': 'full'},
+      );
+      expect(mint.statusCode, HttpStatus.ok, reason: mintBody);
+      final pat = jsonOf(mintBody)['token'] as String;
+      db.setUserDisabled(userId, disabled: true);
+
+      final code = issueRecoveryCode(db);
+      final raw = sqlite3.open(config.dbPath);
+      try {
+        // Aborts the PROMOTION, the third of the four writes, so a version
+        // that commits them separately gets the first two through: tokens
+        // dead and the operator's new password live on an account still a
+        // disabled member. One transaction has no such point.
+        raw.execute(
+          'CREATE TRIGGER halt_recovery AFTER UPDATE OF role '
+          "ON users BEGIN SELECT RAISE(ABORT, 'promotion failed'); END",
+        );
+        await expectLater(
+          recoverAdmin(db, runtime, {
+            'recovery_code': code,
+            'username': 'recover-partial',
+            'new_password': 'recovered-the-hard-way',
+          }, clientIp: '10.0.0.9'),
+          throwsA(isA<SqliteException>()),
+        );
+      } finally {
+        raw
+          ..execute('DROP TRIGGER IF EXISTS halt_recovery')
+          ..dispose();
+      }
+
+      final stored = db.userById(userId)!;
+      expect(
+        [stored.role, stored.disabled],
+        ['member', true],
+        reason: 'the promotion and the re-enable must have rolled back',
+      );
+      expect(
+        stored.passwordHash,
+        memberHash,
+        reason: 'a recovery that did not complete must not rotate anything',
+      );
+      expect(
+        db.apiTokensForUser(userId).single.revokedAt,
+        isNull,
+        reason: 'the revocation must roll back with the rest, not alone',
+      );
+      // The recovery code is single-use and was consumed before the account
+      // was touched, so a retry needs a fresh one — and with nothing
+      // sabotaging it, all four writes land together.
+      final grant = await recoverAdmin(db, runtime, {
+        'recovery_code': issueRecoveryCode(db),
+        'username': 'recover-partial',
+        'new_password': 'recovered-the-hard-way',
+      }, clientIp: '10.0.0.9');
+      expect(grant.body['user'], containsPair('role', 'admin'));
+      final recovered = db.userById(userId)!;
+      expect([recovered.role, recovered.disabled], ['admin', false]);
+      final (deadPat, _) = await send(
+        'GET',
+        '/api/v1/recipes',
+        headers: {'Authorization': 'Bearer $pat'},
+      );
+      expect(
+        deadPat.statusCode,
+        HttpStatus.unauthorized,
+        reason: 'recovery must evict every API token it found',
+      );
+    });
+  });
+
+  group('auth events reach the log', () {
+    /// Collects `auth` records emitted while [action] runs.
+    ///
+    /// Deliberately does NOT open the `auth` logger: this file boots the root
+    /// logger at `LOG_LEVEL=ERROR`, the strictest supported setting, so every
+    /// INFO expectation below only holds because [auditLog] pins its own
+    /// level. Forcing the level here (as this helper used to) would have hidden
+    /// exactly the defect that pin exists to stop.
+    Future<List<LogRecord>> capture(Future<void> Function() action) async {
+      final records = <LogRecord>[];
+      final subscription = auditLog.onRecord.listen(records.add);
+      try {
+        await action();
+        await Future<void>.delayed(Duration.zero);
+      } finally {
+        await subscription.cancel();
+      }
+      return records;
+    }
+
+    /// Fails if any [messages] entry carries something a log must never hold.
+    void expectNoSecrets(List<String> messages, List<String> secrets) {
+      for (final message in messages) {
+        for (final secret in secrets) {
+          expect(
+            message,
+            isNot(contains(secret)),
+            reason: 'a secret reached an auth log line',
+          );
+        }
+        expect(
+          redactLogMessage(message),
+          message,
+          reason: 'a redactable secret reached an auth log line',
+        );
+      }
+    }
+
+    // These call `login` directly with a PRIVATE AuthRuntime: the shared
+    // limiter in this file is process-wide sequential state, and a test that
+    // spends its budget would silently change what a later test measures.
+    Future<SessionGrant> loginWith(
+      AuthRuntime auth,
+      String username,
+      String password,
+    ) => login(
+      db,
+      auth,
+      {'username': username, 'password': password},
+      clientIp: '198.51.100.4',
+      // The address is a stand-in, not a real client: skip the aggregate
+      // bucket so these attempts cannot lock anything for anyone.
+      sharedClientIp: true,
+    );
+
+    test('failure, success and a disabled account each name it', () async {
+      createMember('log-hit');
+      createMember('log-off', disabled: true);
+      final auth = AuthRuntime(hasher: runtime.hasher);
+      late SessionGrant grant;
+      final records = await capture(() async {
+        await expectLater(
+          loginWith(auth, 'log-hit', 'not-the-password'),
+          throwsA(isA<ValidationException>()),
+        );
+        grant = await loginWith(auth, 'log-hit', _memberPassword);
+        await expectLater(
+          loginWith(auth, 'log-off', _memberPassword),
+          throwsA(isA<ValidationException>()),
+        );
+      });
+
+      final messages = [for (final record in records) record.message];
+      // The access line says only "POST /auth/login -> 422": no actor, so it
+      // cannot say which account was sprayed. These must.
+      expect(
+        messages,
+        contains(
+          allOf(contains('Login failed: log-hit'), contains('198.51.100.4')),
+        ),
+      );
+      expect(messages, contains(contains('Login: log-hit')));
+      expect(messages, contains(contains('Login refused: log-off')));
+      expect(
+        records.where((record) => record.level >= Level.WARNING).length,
+        2,
+        reason: 'the two rejections are warnings; the sign-in is not',
+      );
+      expectNoSecrets(messages, [
+        _memberPassword,
+        grant.token,
+        memberHash,
+      ]);
+    });
+
+    test('a lockout says which account it locked', () async {
+      createMember('log-lock');
+      // failureThreshold 1 so one wrong password locks the key: this proves
+      // the lockout branch logs without spending 5 real Argon2id hashes.
+      final auth = AuthRuntime(
+        hasher: runtime.hasher,
+        rateLimiter: LoginRateLimiter(failureThreshold: 1),
+      );
+      final records = await capture(() async {
+        await expectLater(
+          loginWith(auth, 'log-lock', 'not-the-password'),
+          throwsA(isA<ValidationException>()),
+        );
+        await expectLater(
+          loginWith(auth, 'log-lock', _memberPassword),
+          throwsA(isA<LockedException>()),
+        );
+      });
+      final messages = [for (final record in records) record.message];
+      expect(messages, contains(contains('Login locked out: log-lock')));
+      expectNoSecrets(messages, [_memberPassword, memberHash]);
+    });
+
+    test('an attempted username that cannot be one is not written '
+        'through', () async {
+      final auth = AuthRuntime(hasher: runtime.hasher);
+      // `login` does not validate this field, so it is arbitrary attacker
+      // text: writing it verbatim would let a peer pump the size-bounded log
+      // store (evicting history), or smuggle a `rid=` the viewer would adopt
+      // as the record's correlation id.
+      for (final junk in ['A' * 4096, 'rid=00000000000000ff']) {
+        final records = await capture(() async {
+          await expectLater(
+            loginWith(auth, junk, 'not-the-password'),
+            throwsA(isA<ValidationException>()),
+          );
+        });
+        final message = records.single.message;
+        expect(message, contains('<invalid>'));
+        expect(message, isNot(contains(junk)));
+        expect(message.length, lessThan(120));
+      }
+    });
+
+    test('a password change and a logout are recorded', () async {
+      createMember('log-rotate');
+      final session = await sessionTokenFor('log-rotate', _memberPassword);
+      final auth = {'Cookie': '$sessionCookieName=$session', ..._csrfHeader};
+      const newPassword = 'a-brand-new-password-9';
+      final records = await capture(() async {
+        final (bad, _) = await send(
+          'POST',
+          '/api/v1/auth/change_password',
+          headers: auth,
+          jsonBody: {
+            'current_password': 'not-the-password',
+            'new_password': newPassword,
+          },
+        );
+        expect(bad.statusCode, HttpStatus.unprocessableEntity);
+        final (ok, okBody) = await send(
+          'POST',
+          '/api/v1/auth/change_password',
+          headers: auth,
+          jsonBody: {
+            'current_password': _memberPassword,
+            'new_password': newPassword,
+          },
+        );
+        expect(ok.statusCode, HttpStatus.ok, reason: okBody);
+        final (out, _) = await send(
+          'POST',
+          '/api/v1/auth/logout',
+          headers: auth,
+        );
+        expect(out.statusCode, HttpStatus.ok);
+      });
+
+      final messages = [for (final record in records) record.message];
+      expect(
+        messages,
+        contains(contains('Password change rejected: log-rotate')),
+      );
+      expect(messages, contains(contains('Password changed: log-rotate')));
+      expect(messages, contains(contains('Logout: log-rotate')));
+      expectNoSecrets(messages, [
+        _memberPassword,
+        newPassword,
+        session,
+        memberHash,
+      ]);
+    });
+
+    test('the trail survives the strictest supported LOG_LEVEL', () async {
+      // `LOG_LEVEL=ERROR` and `WARN` are both supported operator settings
+      // (ServerConfig._parseLogLevel) and both feed Logger.root.level. This
+      // file boots at ERROR — the strictest — so if the audit channel
+      // inherited the root level, every INFO record below would be discarded
+      // and the whole account trail would vanish on a routine config choice.
+      expect(
+        Logger.root.level,
+        Level.SEVERE,
+        reason: 'this test is only meaningful with the root level raised',
+      );
+      createMember('log-level');
+      // Subscribed at the ROOT, not at `auth`: that is the stream the stdout
+      // printer and the admin log store both attach to, so this is what an
+      // operator would actually be able to read back.
+      final records = <LogRecord>[];
+      final subscription = Logger.root.onRecord.listen(records.add);
+      try {
+        await sessionTokenFor('log-level', _memberPassword);
+        await Future<void>.delayed(Duration.zero);
+      } finally {
+        await subscription.cancel();
+      }
+      expect(
+        [
+          for (final record in records)
+            if (record.level == Level.INFO) record.message,
+        ],
+        contains(contains('Login: log-level')),
+      );
+    });
+
+    test('a backup download and delete name the admin who took it', () async {
+      // The archive is every password/session/token hash and every private
+      // note. `GET /api/v1/backups/x -> 200` names nobody, so before this the
+      // highest-value exfiltration in the system left no attributable trace,
+      // and DELETE let an intruder erase the evidence just as quietly.
+      final token = await sessionTokenFor('admin', _adminPassword);
+      final headers = {'Cookie': '$sessionCookieName=$token', ..._csrfHeader};
+      // A real archive from the real service, not a planted file.
+      final name = createBackup(db: db, config: config, trigger: 'manual');
+      final records = await capture(() async {
+        // Not `send`: the archive is gzip, so the body cannot be utf8-decoded.
+        final client = HttpClient();
+        try {
+          final request = await client.openUrl(
+            'GET',
+            baseUri.resolve('/api/v1/backups/$name'),
+          );
+          headers.forEach(request.headers.set);
+          final response = await request.close();
+          final bytes = await response.fold<int>(
+            0,
+            (total, chunk) => total + chunk.length,
+          );
+          expect(response.statusCode, HttpStatus.ok);
+          expect(bytes, greaterThan(0), reason: 'the archive really streamed');
+        } finally {
+          client.close();
+        }
+        final (gone, goneBody) = await send(
+          'DELETE',
+          '/api/v1/backups/$name',
+          headers: headers,
+        );
+        expect(gone.statusCode, HttpStatus.noContent, reason: goneBody);
+      });
+      final messages = [for (final record in records) record.message];
+      expect(
+        messages,
+        contains(
+          allOf(contains('Backup downloaded: $name'), contains('admin')),
+        ),
+      );
+      expect(
+        messages,
+        contains(allOf(contains('Backup deleted: $name'), contains('admin'))),
+      );
+      expect(
+        records.every((record) => record.level >= Level.WARNING),
+        isTrue,
+        reason: 'both belong in the viewer default filter, like a reset',
+      );
+      expectNoSecrets(messages, [token, memberHash]);
+    });
+
+    test('setting and clearing the FDC key names the admin', () async {
+      final token = await sessionTokenFor('admin', _adminPassword);
+      final headers = {'Cookie': '$sessionCookieName=$token', ..._csrfHeader};
+      // Synthesized: a deployment API key cannot come from the recipe corpus.
+      const key = 'not-a-real-fdc-key-abcdefgh';
+      final records = await capture(() async {
+        for (final value in [key, '']) {
+          final (response, body) = await send(
+            'PUT',
+            '/api/v1/settings/fdc_key',
+            headers: headers,
+            jsonBody: {'api_key': value},
+          );
+          expect(response.statusCode, HttpStatus.ok, reason: body);
+        }
+      });
+      final messages = [for (final record in records) record.message];
+      expect(
+        messages,
+        contains(allOf(contains('FDC API key set'), contains('admin'))),
+      );
+      expect(messages, contains(contains('FDC API key cleared')));
+      // Not even the masked tail the GET hands back reaches the record.
+      expectNoSecrets(messages, [key, key.substring(key.length - 4)]);
     });
   });
 }

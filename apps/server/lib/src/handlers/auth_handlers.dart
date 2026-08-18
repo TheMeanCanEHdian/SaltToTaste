@@ -12,7 +12,43 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
-final Logger _log = Logger('auth');
+/// The audit channel: authentication, account administration, and the admin
+/// actions that touch secret material — from here, from
+/// `user_handlers`/`token_handlers`, and from the backup-download and
+/// FDC-key routes. One logger name so an operator can filter the admin log
+/// viewer to `auth` and read the whole story: who signed in, who failed, who
+/// changed which account, and who took the database out of the building.
+///
+/// The viewer is `requireAdmin`-only and an admin can already list every
+/// account, so naming a user here is not an enumeration oracle. No secret ever
+/// reaches these lines: not a password, a token, a hash, or a setup/recovery
+/// code.
+///
+/// ITS LEVEL IS PINNED, deliberately NOT inherited from `Logger.root`.
+/// `LOG_LEVEL` is an operator verbosity knob and both `WARN` and `ERROR` are
+/// supported values (`ServerConfig._parseLogLevel`) that feed
+/// `Logger.root.level`. At either setting the whole audit trail — sign-ins,
+/// PAT mints, backup downloads — would silently vanish while the failure
+/// lines stayed, and an audit record that a routine verbosity choice deletes
+/// is not an audit record. So this channel opts out of the knob: every audit
+/// record it emits is published, at every supported `LOG_LEVEL`.
+///
+/// INFO, not ALL: INFO is the floor of the entire existing trail (every line
+/// on this channel is `.info` or `.warning`), so nothing audit-worthy is
+/// lost, while a `.fine()` debug line added here later is not force-published
+/// to every deployment by a pin meant for the audit trail.
+///
+/// `configureLogging` already enables hierarchical logging; setting the flag
+/// here too keeps the pin legal (the level setter throws without it) for
+/// tests and CLI tools that never call it.
+final Logger auditLog = _pinnedAuditLog();
+
+Logger _pinnedAuditLog() {
+  hierarchicalLoggingEnabled = true;
+  return Logger('auth')..level = Level.INFO;
+}
+
+final Logger _log = auditLog;
 
 /// Minimum accepted password length.
 const int minPasswordLength = 12;
@@ -148,6 +184,7 @@ Future<SessionGrant> setupAdmin(
     passwordHash: passwordHash,
     role: 'admin',
   );
+  _log.info('First-boot setup: admin $username (id $userId) created.');
   final token = _openSession(
     db,
     userId: userId,
@@ -260,18 +297,15 @@ Future<SessionGrant> recoverAdmin(
     );
   } else {
     userId = existing.id;
-    // Reset, promote, re-enable: any of the three alone can be the lockout.
-    // The password update drops the account's existing sessions, so whoever
-    // (or whatever) held one loses it here.
-    db
-      ..updatePasswordHash(userId, passwordHash, mustChangePassword: false)
-      ..setUserRole(userId, 'admin')
-      ..setUserDisabled(userId, disabled: false);
-    // Sessions alone are not enough: a PAT is its own credential and would
-    // outlive the password reset. Recovery is used when control of the
-    // account is in doubt, so every existing token goes too — the operator
-    // can mint new ones once they are back in.
-    revokedTokens = db.revokeAllApiTokens(userId);
+    // Reset, promote, re-enable, and evict every API token — ONE transaction
+    // (`resetToEnabledAdmin`). Any of the four alone can be the lockout, and
+    // sessions alone are not enough: a PAT is its own credential and would
+    // outlive the reset, so every existing token goes too and the operator
+    // mints new ones once they are back in. As separate commits, a failure
+    // between them left the account half recovered — new password live but
+    // still disabled, or tokens dead and nothing else done. The rotation
+    // drops the account's sessions, so whoever held one loses it here.
+    revokedTokens = db.resetToEnabledAdmin(userId, passwordHash);
   }
   runtime.rateLimiter.recordSuccess(key);
   // The code itself is a secret and never reaches the log; that recovery was
@@ -329,6 +363,8 @@ Future<SessionGrant> login(
   final password = requireStringField(body, 'password');
   final remember = _optionalBoolField(body, 'remember') ?? false;
 
+  // Bounded, log-safe rendering of the attempted name; see [_logName].
+  final attempted = _logName(username);
   final key = '$clientIp|${username.toLowerCase()}';
   // Count both attempts BEFORE the hash, not after it. These two calls and
   // the checks inside them contain no await, so they are atomic against
@@ -350,6 +386,13 @@ Future<SessionGrant> login(
     final retryAfter = gate.retryAfter > ipGate.retryAfter
         ? gate.retryAfter
         : ipGate.retryAfter;
+    // The generic access line says only "POST /auth/login -> 429": it carries
+    // no actor, so without this an operator cannot tell which account is
+    // being sprayed. One short fixed-shape line per rejected attempt, and the
+    // request logger already writes one for the same request — both are
+    // bounded (the path by `loggedPath`, the whole record again by the log
+    // store), so this adds a constant, not a new amplification.
+    _log.warning('Login locked out: $attempted from $clientIp.');
     throw LockedException(_ceilSeconds(retryAfter));
   }
 
@@ -380,6 +423,10 @@ Future<SessionGrant> login(
     runtime.verifyGate.release();
   }
   if (user == null || !verified) {
+    // Deliberately the same line whether the account exists or not: the
+    // response is uniform for anti-enumeration reasons and the log has no
+    // business being sharper than the response.
+    _log.warning('Login failed: $attempted from $clientIp.');
     throw const ValidationException(_invalidCredentials);
   }
   if (user.disabled) {
@@ -387,6 +434,10 @@ Future<SessionGrant> login(
     // state to the account's own owner (or someone already holding valid
     // credentials). A wrong password still yields the uniform error above, so
     // this cannot be used to enumerate usernames or account state.
+    _log.warning(
+      'Login refused: ${user.username} (id ${user.id}) is disabled, '
+      'from $clientIp.',
+    );
     throw const ValidationException(_accountDisabled);
   }
 
@@ -397,6 +448,7 @@ Future<SessionGrant> login(
   // known and is not a failure — otherwise ordinary logins from one address
   // would march the shared bucket to its own threshold.
   releaseIpReservation();
+  _log.info('Login: ${user.username} (id ${user.id}) from $clientIp.');
   final token = _openSession(
     db,
     userId: user.id,
@@ -430,6 +482,7 @@ Map<String, Object?> logoutUser(SaltDatabase db, AuthUser user) {
     );
   }
   db.deleteSession(sessionHash);
+  _log.info('Logout: ${user.username} (id ${user.id}).');
   return {'ok': true};
 }
 
@@ -452,7 +505,8 @@ Map<String, Object?> currentUserBody(AuthUser user) => {
 /// must-change-password (its holder proved nothing but a temp credential,
 /// which is exactly what is being replaced). The new password must be at
 /// least [minPasswordLength] characters. All other sessions of the user are
-/// deleted; the current one is kept.
+/// deleted (the current one is kept) and every personal access token of the
+/// user is revoked — the count comes back as `revoked_tokens`.
 Future<Map<String, Object?>> changePassword(
   SaltDatabase db,
   AuthRuntime runtime,
@@ -475,17 +529,45 @@ Future<Map<String, Object?>> changePassword(
     final current = requireStringField(body, 'current_password');
     final verified = await runtime.hasher.verify(current, row.passwordHash);
     if (!verified) {
+      _log.warning(
+        'Password change rejected: ${user.username} (id ${user.id}) gave the '
+        'wrong current password.',
+      );
       throw const ValidationException('Current password is incorrect.');
     }
   }
   final passwordHash = await runtime.hasher.hash(newPassword);
-  db.updatePasswordHash(
+  // Eviction and rotation are ONE transaction (`updatePasswordHash` runs the
+  // revocation inside its own): both land or neither does. As two statements
+  // they could only be ORDERED, and the dangerous partial failure commits the
+  // new password while leaving every PAT alive behind a 500 that reads as
+  // "nothing happened" — the exact compromise state this eviction exists to
+  // prevent.
+  final revokedTokens = db.updatePasswordHash(
     user.id,
     passwordHash,
     mustChangePassword: false,
     keepSessionHash: user.sessionHash,
+    revokeApiTokens: true,
   );
-  return {'ok': true};
+  // Every personal access token goes too, and there is deliberately no way to
+  // opt out. A session alone is enough to mint a FULL-scope PAT (session
+  // logins are always `full`, so `requireFullScope` admits them) and a PAT
+  // has no expiry at all — so a password change that spared them evicted the
+  // honest sessions and left the one credential an attacker minted from a
+  // briefly-stolen cookie alive forever. "Changing my password ends any
+  // credential minted from my account" has to hold on the path a victim
+  // actually reaches for.
+  //
+  // The cost is the same one `resetPasswordHandler` already accepted for the
+  // admin-driven path: a routine change also stops the user's own scripts,
+  // and there is no version of this that spares them. Made visible rather
+  // than silent — `revoked_tokens` says how many went.
+  _log.info(
+    'Password changed: ${user.username} (id ${user.id}); other sessions '
+    'dropped, $revokedTokens API token(s) revoked.',
+  );
+  return {'ok': true, 'revoked_tokens': revokedTokens};
 }
 
 /// `Set-Cookie` value installing the session [token] (HttpOnly,
@@ -585,6 +667,20 @@ bool? _optionalBoolField(Map<String, Object?> body, String name) {
     throw ValidationException("'$name' must be a boolean.");
   }
   return value;
+}
+
+/// The ATTEMPTED username in a form that is safe to persist in the log.
+///
+/// [login] deliberately does not validate this field before using it, so it is
+/// arbitrary caller-controlled text of arbitrary length. A value that cannot
+/// match [_usernamePattern] cannot name an account either, so it is recorded
+/// as a placeholder instead: that keeps an unbounded attacker-chosen string
+/// out of the size-bounded log store (which rotates, so junk evicts history)
+/// and out of the viewer's `rid=` correlation, without hiding any name that
+/// could actually own an account.
+String _logName(String username) {
+  final normalized = username.trim().toLowerCase();
+  return _usernamePattern.hasMatch(normalized) ? normalized : '<invalid>';
 }
 
 String _validUsername(String username) {

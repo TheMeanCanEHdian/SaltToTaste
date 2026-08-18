@@ -12,6 +12,13 @@ import 'package:salt_server/src/middleware/auth.dart';
 /// The key is WRITE-ONLY: `GET` returns `{configured, masked}` — never the
 /// full value — and it is never logged. `PUT {api_key}` stores/replaces it
 /// (full scope); an empty string clears it.
+///
+/// A write leaves an [auditLog] line naming the actor and whether the key was
+/// set or cleared — the access line is only `PUT /api/v1/settings/fdc_key ->
+/// 200` and names nobody, so replacing a deployment credential (or silently
+/// clearing it, which breaks every nutrition lookup) left no trace at all.
+/// The key itself, and even its masked tail, stay out of the record: nothing
+/// an operator needs from this line requires any part of the secret.
 Future<Response> onRequest(RequestContext context) async {
   requireMethods(context, {HttpMethod.get, HttpMethod.put});
   final user = requireAdmin(context);
@@ -39,6 +46,10 @@ Future<Response> onRequest(RequestContext context) async {
     throw const ValidationException("'api_key' is implausibly long.");
   }
   db.setSetting(fdcApiKeySetting, trimmed);
+  auditLog.info(
+    'FDC API key ${trimmed.isEmpty ? 'cleared' : 'set'} by ${user.username} '
+    '(id ${user.id}).',
+  );
   return Response.json(
     body: {
       'configured': trimmed.isNotEmpty,

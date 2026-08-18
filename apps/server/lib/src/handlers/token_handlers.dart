@@ -1,8 +1,18 @@
+import 'package:logging/logging.dart';
 import 'package:salt_server/src/auth/tokens.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
+import 'package:salt_server/src/handlers/auth_handlers.dart' show auditLog;
 import 'package:salt_server/src/http/timestamps.dart';
 import 'package:salt_server/src/middleware/auth.dart';
+
+/// Credential lifecycle events share the `auth` audit channel (see
+/// [auditLog], whose pinned level keeps them alive at `LOG_LEVEL=WARN`).
+/// Minting a PAT is how a briefly-held session becomes a permanent one, so it
+/// is exactly the step an operator needs to find afterwards. Never logged: the
+/// token value, its hash, or the caller-supplied token NAME — the id and scope
+/// identify it just as well without putting attacker-chosen text into a record.
+final Logger _log = auditLog;
 
 /// `GET /api/v1/sessions` — the actor's sessions, newest first. The id is
 /// the stored token hash (already one-way; safe as an opaque identifier).
@@ -35,6 +45,7 @@ void deleteSessionHandler(SaltDatabase db, AuthUser actor, String id) {
     throw const NotFoundException('session not found');
   }
   db.deleteSession(id);
+  _log.info('Session revoked by ${actor.username} (id ${actor.id}).');
 }
 
 /// [retentionDays] is the operator's `API_TOKEN_RETENTION_DAYS`. When it is
@@ -123,6 +134,10 @@ Map<String, Object?> createTokenHandler(
   // A single-row read, not a scan of the user's whole list: the create path
   // must not get slower as revoked rows accumulate.
   final row = db.apiTokenById(id: id, userId: actor.id)!;
+  _log.info(
+    'API token minted: id $id, scope $scope, for ${actor.username} '
+    '(id ${actor.id}).',
+  );
   return {'token': pat.token, 'item': _tokenJson(row)};
 }
 
@@ -132,4 +147,7 @@ void revokeTokenHandler(SaltDatabase db, AuthUser actor, int id) {
   if (!db.revokeApiToken(id: id, userId: actor.id)) {
     throw const NotFoundException('token not found');
   }
+  _log.info(
+    'API token revoked: id $id, by ${actor.username} (id ${actor.id}).',
+  );
 }
