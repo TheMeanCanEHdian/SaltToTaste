@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:logging/logging.dart';
+import 'package:salt_server/src/app_pipeline.dart';
 import 'package:salt_server/src/bootstrap.dart';
 import 'package:salt_server/src/shutdown.dart';
 
@@ -26,7 +27,11 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
   // Spawn the search worker isolate(s) AFTER initServer has opened and migrated
   // the database, so their read-only connections can attach (#48).
   await initSearchService();
-  final server = await serve(handler, ip, port);
+  // [handler] is the whole generated cascade, static `public/` arm included —
+  // the only place the security headers can be put outside it. Without this
+  // the shipped app shell got a full CSP at /r/<slug> and none at
+  // /index.html; see buildOutermostMiddleware.
+  final server = await serve(buildOutermostMiddleware(handler), ip, port);
   // Reap half-open / idle sockets after this window: bounds slowloris-style
   // connection accumulation (measured in availability_vectors_test.dart), below
   // Dart's 120s default. `null` disables (CONNECTION_IDLE_TIMEOUT_SECONDS=0).

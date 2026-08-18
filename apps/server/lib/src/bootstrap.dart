@@ -122,6 +122,11 @@ Future<void> disposeSearchService() async {
 /// real peer looked configured and did nothing, and took the session cookie's
 /// `Secure` attribute down with it. A guard nobody can see is worth little
 /// more than no guard.
+///
+/// One case cannot be decided here: an entry that parses fine and matches
+/// nobody (`172.17.0.0/16` when the proxy is on a compose bridge at 172.18+).
+/// Boot does not know the peer's address, so that one is caught at runtime by
+/// `untrustedProxyWarning` in `app_pipeline.dart`.
 List<String> configWarnings(ServerConfig config) {
   final warnings = <String>[];
   if (config.devAllowCors) {

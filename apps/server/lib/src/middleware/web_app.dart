@@ -23,6 +23,12 @@ const String _contentSecurityPolicy =
 /// Adds defense-in-depth headers to every response: `nosniff` and a strict
 /// referrer policy globally, plus CSP and `X-Frame-Options: DENY` on HTML
 /// (the web-app shell — API responses are JSON and gain nothing from CSP).
+///
+/// "Every response" only became true once `buildOutermostMiddleware` applied
+/// this around the WHOLE generated cascade. Wired only into
+/// `buildAppMiddleware`, it missed the static `public/` arm entirely — the
+/// shipped `/index.html` had no CSP while `/r/<slug>`, the same shell through
+/// [spaFallback], had one.
 Middleware securityHeaders() {
   return (handler) {
     return (context) async {

@@ -1,9 +1,27 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:dart_frog/dart_frog.dart' hide requestLogger;
+import 'package:logging/logging.dart';
+import 'package:salt_server/src/app_pipeline.dart';
+import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/bootstrap.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/logging/log_store.dart';
+import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/search/search_service.dart';
 import 'package:test/test.dart';
+
+/// No route here touches nutrition; this lets the REAL chain be assembled.
+class _UnusedNutrition implements NutritionProvider {
+  @override
+  Future<List<FdcCandidate>> search(String query) => throw UnimplementedError();
+
+  @override
+  Future<FdcFood?> food(int fdcId) => throw UnimplementedError();
+}
 
 /// `TRUST_PROXY` alone used to mean "believe X-Forwarded-For from whoever
 /// connected", so anyone who could reach the port minted a fresh rate-limit
@@ -293,6 +311,150 @@ void main() {
       ]) {
         expect(isUsableProxyEntry(entry), isFalse, reason: entry);
       }
+    });
+  });
+
+  group('a TRUSTED_PROXIES entry that parses but matches nobody', () {
+    // The case configWarnings CANNOT cover, and the likeliest one to hit: the
+    // README's own worked example is 172.17.0.0/16, the DEFAULT Docker bridge,
+    // while `docker compose` puts the proxy on a user-defined bridge at
+    // 172.18+. The entry is well-formed, so isUsableProxyEntry is happy and
+    // the boot is silent — measured `warnings: []` — while every forwarded
+    // header is ignored: rate limits collapse onto the proxy's own address and
+    // isSecureRequest goes false, so every session cookie ships WITHOUT
+    // `Secure`. Only a live request carries the peer address that proves it.
+    late Directory tempDir;
+    late SaltDatabase database;
+    late StreamSubscription<LogRecord> subscription;
+    final records = <LogRecord>[];
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('salt_proxy_warn_');
+      database = SaltDatabase.open('${tempDir.path}/salt.db');
+      records.clear();
+      subscription = Logger.root.onRecord.listen(records.add);
+    });
+    tearDown(() async {
+      await subscription.cancel();
+      database.dispose();
+      tempDir.deleteSync(recursive: true);
+    });
+
+    List<String> warnings() => [
+      for (final record in records)
+        if (record.level >= Level.WARNING) record.message,
+    ];
+
+    /// Serves the REAL chain under [environment] on a production-shaped
+    /// dual-stack bind, so the peer arrives as `::ffff:127.0.0.1` — the shape
+    /// a reverse proxy on a Docker bridge has, and the one this whole surface
+    /// gets wrong.
+    Future<Uri> serveChain(Map<String, String> environment) async {
+      final config = ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': tempDir.path,
+          'LOG_LEVEL': 'INFO',
+          ...environment,
+        },
+      );
+      configureLogging(config);
+      final pipeline = buildAppMiddleware(
+        (_) => Response(body: 'ok'),
+        config: config,
+        database: database,
+        authRuntime: AuthRuntime(),
+        nutritionProvider: _UnusedNutrition(),
+        searchRateLimiter: RequestRateLimiter(),
+        searchService: () => InlineSearchService(database),
+        logStore: LogStore(directory: '${tempDir.path}/logs'),
+      );
+      final server = await serve(pipeline, InternetAddress.anyIPv6, 0);
+      addTearDown(() => server.close(force: true));
+      return Uri.parse('http://127.0.0.1:${server.port}');
+    }
+
+    Future<void> hit(Uri base, Map<String, String> headers) async {
+      final client = HttpClient();
+      addTearDown(client.close);
+      final request = await client.getUrl(base);
+      headers.forEach(request.headers.set);
+      final response = await request.close();
+      await response.drain<void>();
+    }
+
+    test('warns, naming the peer, the entries and the cookie cost', () async {
+      final base = await serveChain({
+        'TRUST_PROXY': 'true',
+        'TRUSTED_PROXIES': '172.17.0.0/16',
+      });
+      await hit(base, {'X-Forwarded-For': '203.0.113.7'});
+
+      expect(
+        warnings(),
+        hasLength(1),
+        reason:
+            'a proxy configured with the wrong address is indistinguishable '
+            'from no proxy at all unless the server says so',
+      );
+      expect(warnings().single, contains('::ffff:127.0.0.1'));
+      expect(warnings().single, contains('172.17.0.0/16'));
+      expect(
+        warnings().single,
+        contains('Secure'),
+        reason:
+            'the README understated this as a shared rate-limit bucket; the '
+            'session cookie losing Secure is the sharper half',
+      );
+    });
+
+    test('X-Forwarded-Proto alone is enough to warn', () async {
+      // The cookie half arrives on its own header — a proxy that forwards
+      // the scheme but not the client address still trips isSecureRequest.
+      final base = await serveChain({
+        'TRUST_PROXY': 'true',
+        'TRUSTED_PROXIES': '172.17.0.0/16',
+      });
+      await hit(base, {'X-Forwarded-Proto': 'https'});
+      expect(warnings(), hasLength(1));
+    });
+
+    test('repeated requests warn exactly once', () async {
+      // The log store rotates keeping one generation, so an unbounded
+      // per-request warning would erase the history it exists to preserve.
+      final base = await serveChain({
+        'TRUST_PROXY': 'true',
+        'TRUSTED_PROXIES': '172.17.0.0/16',
+      });
+      for (var i = 0; i < 5; i++) {
+        await hit(base, {'X-Forwarded-For': '203.0.113.7'});
+      }
+      expect(warnings(), hasLength(1));
+    });
+
+    test('a correctly named proxy says nothing', () async {
+      final base = await serveChain({
+        'TRUST_PROXY': 'true',
+        'TRUSTED_PROXIES': '127.0.0.0/8',
+      });
+      await hit(base, {'X-Forwarded-For': '203.0.113.7'});
+      expect(warnings(), isEmpty);
+    });
+
+    test('no forwarded header from an untrusted peer says nothing', () async {
+      // A direct client is not evidence of a misconfigured proxy, and every
+      // one of them warning would drown the signal.
+      final base = await serveChain({
+        'TRUST_PROXY': 'true',
+        'TRUSTED_PROXIES': '172.17.0.0/16',
+      });
+      await hit(base, {});
+      expect(warnings(), isEmpty);
+    });
+
+    test('TRUST_PROXY off says nothing — boot already covers it', () async {
+      final base = await serveChain({'TRUSTED_PROXIES': '172.17.0.0/16'});
+      await hit(base, {'X-Forwarded-For': '203.0.113.7'});
+      expect(warnings(), isEmpty);
     });
   });
 

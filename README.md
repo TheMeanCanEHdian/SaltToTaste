@@ -63,16 +63,33 @@ docker run -d -p 8080:8080 -v salt-data:/data \
 
 Run behind a TLS reverse proxy (Caddy/Traefik/nginx) and set
 `TRUST_PROXY=true` so secure cookies are detected via `X-Forwarded-Proto`, and
-`TRUSTED_PROXIES` to name the proxy — e.g. `TRUSTED_PROXIES=172.17.0.0/16` for
-the default Docker bridge.
+`TRUSTED_PROXIES` to name the proxy. **Use the address your proxy actually
+has**: `172.17.0.0/16` is the *default* Docker bridge, and a stack brought up
+with `docker compose` gets a user-defined bridge at `172.18.0.0/16` or higher
+instead — `docker inspect <proxy-container> | grep IPAddress` prints the
+address it really has.
 
 `TRUST_PROXY` on its own now trusts nobody, and the server says so at boot.
 That is deliberate: it used to believe `X-Forwarded-For` from whoever
 connected, so anyone who could reach the port got a fresh rate-limit bucket per
 request just by inventing the header. A forwarded header only means anything
-coming from the hop that appends it. Getting `TRUSTED_PROXIES` wrong costs you
-one shared rate-limit bucket for everyone behind the proxy; leaving the header
-unchecked cost the rate limit entirely.
+coming from the hop that appends it; leaving it unchecked cost the rate limit
+entirely.
+
+Getting `TRUSTED_PROXIES` wrong costs you **two** things, and neither is
+visible in the app:
+
+- every client behind the proxy shares one rate-limit bucket, because
+  `X-Forwarded-For` is ignored and the proxy's own address is all that is left;
+- **session cookies are issued without `Secure`**, because `X-Forwarded-Proto`
+  is ignored too, so the server cannot tell the request arrived over TLS. A
+  browser will then send a live session token over plaintext to that host.
+
+A well-formed entry that simply matches nothing (the `172.17.0.0/16` case
+above) passes every boot check. The server logs one `WARNING` naming the peer
+the first time a forwarded header arrives from an address `TRUSTED_PROXIES`
+does not cover, repeated at most hourly — check the log after wiring the proxy
+up. Set `SECURE_COOKIES=true` to force `Secure` regardless.
 
 ## Configuration
 
