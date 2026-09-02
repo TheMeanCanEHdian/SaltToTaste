@@ -38,11 +38,10 @@ Future<Response> onRequest(RequestContext context) async {
 
   requireCsrf(context, user);
   requireFullScope(user);
-  final body =
-      context.request.headers['content-length'] == null ||
-          context.request.headers['content-length'] == '0'
-      ? const <String, Object?>{}
-      : await readJsonBody(context.request);
+  // Optional body. Judged by the bytes, not Content-Length: a chunked body
+  // carries no length and shelf strips Transfer-Encoding, so the old header
+  // gate treated a real `{"include_images": true}` as absent.
+  final body = await readJsonBody(context.request, allowEmpty: true);
   final name = createBackup(
     db: context.read<SaltDatabase>(),
     config: config,

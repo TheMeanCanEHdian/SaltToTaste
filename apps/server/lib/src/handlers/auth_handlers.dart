@@ -654,7 +654,19 @@ const int maxJsonBodyBytes = 2 * 1024 * 1024;
 /// *while reading* (a declared or actual body over [maxJsonBodyBytes] is
 /// rejected before it is buffered whole); throws [ValidationException] on
 /// oversize, malformed JSON, or any non-object shape.
-Future<Map<String, Object?>> readJsonBody(Request request) async {
+///
+/// [allowEmpty] is for the few routes whose body is OPTIONAL: a request with
+/// no body at all yields an empty map, and the content-type check moves to
+/// after the read, applied only when bytes actually arrived. Presence cannot
+/// be judged from headers — dart:io sends a written body chunked with no
+/// Content-Length, and shelf strips Transfer-Encoding after dechunking — so
+/// gating on either silently dropped real bodies. For every other caller the
+/// content-type is still refused BEFORE a byte is read, so an unauthenticated
+/// endpoint never pays to read an attacker's body it was going to reject.
+Future<Map<String, Object?>> readJsonBody(
+  Request request, {
+  bool allowEmpty = false,
+}) async {
   // The Content-Type is a security check, not politeness, and it is the only
   // thing guarding the UNAUTHENTICATED endpoints — `requireCsrf` needs a
   // session to key on, so login and setup cannot use it.
@@ -667,7 +679,8 @@ Future<Map<String, Object?>> readJsonBody(Request request) async {
   // produce that header, and a scripted `fetch` that sets it triggers a CORS
   // preflight this server never approves.
   final mime = request.headers['content-type']?.split(';').first.trim();
-  if (mime?.toLowerCase() != 'application/json') {
+  final isJson = mime?.toLowerCase() == 'application/json';
+  if (!isJson && !allowEmpty) {
     throw const ValidationException('Request body must be application/json.');
   }
   final declared = int.tryParse(request.headers['content-length'] ?? '');
@@ -680,6 +693,14 @@ Future<Map<String, Object?>> readJsonBody(Request request) async {
     if (builder.length > maxJsonBodyBytes) {
       throw const ValidationException('Request body is too large.');
     }
+  }
+  if (builder.isEmpty && allowEmpty) {
+    return const <String, Object?>{};
+  }
+  if (!isJson) {
+    // Bytes arrived under the wrong type. Reached only via allowEmpty; every
+    // other caller was refused above before reading.
+    throw const ValidationException('Request body must be application/json.');
   }
   Object? decoded;
   try {

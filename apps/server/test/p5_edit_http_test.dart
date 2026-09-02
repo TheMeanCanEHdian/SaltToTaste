@@ -13,6 +13,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
+import 'package:salt_server/src/nutrition/bulk_job.dart' show bulkJobRunning;
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/import_job.dart' show importJobRunning;
@@ -1657,6 +1658,91 @@ void main() {
     // unrecognised value must be refused rather than quietly treated as the
     // default -- silently computing something other than what was asked
     // spends that budget on the wrong recipes.
+    //
+    // The route refuses with the no-key 422 BEFORE it parses a scope, so
+    // these need a key of their own -- they used to pass only because an
+    // earlier group leaked one, and one of them was proving the no-key path.
+    setUp(() {
+      db.setSetting(fdcApiKeySetting, 'scope-tests-key');
+      // A 202 here STARTS a real job. Make it fail on its first provider
+      // call so it finishes immediately, then wait for it: `_bulkRunning` is
+      // process-wide and a job still winding down 409s the next test.
+      fixtureProvider.failWith = 'scope tests: no provider';
+    });
+    tearDown(() async {
+      while (bulkJobRunning) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      fixtureProvider.failWith = null;
+      db.deleteSetting(fdcApiKeySetting);
+    });
+
+    test('a valid non-default scope reaches the job, and is echoed', () async {
+      // Wiring, not parsing: a job that ignored the scope and always ran
+      // `missing` passed every other test while the 202 echoed the scope it
+      // did not run. `all` counts every recipe; `missing` would count fewer --
+      // but only if at least one recipe is already computed, which this
+      // harness does not guarantee by this point, so seed one here. The
+      // discriminator is the count, so the recipe's content is irrelevant
+      // (same minimal shape the harness uses for its CI-safe payloads).
+      final (created, createdBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'title': 'Scope Probe (computed)'},
+        },
+      );
+      expect(created.statusCode, HttpStatus.created, reason: createdBody);
+      final computedId = (jsonOf(createdBody)['recipe'] as Map)['id'] as String;
+      db.upsertRecipeNutrition(
+        recipeId: computedId,
+        servingBasis: 1,
+        caloriesPerServing: null,
+        nutrientsJson: '{}',
+        totalGrams: 0,
+        matchedCount: 0,
+        totalCount: 0,
+        status: 'complete',
+        ingredientsHash: 'seeded-as-computed',
+      );
+
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/nutrition/bulk',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'scope': 'all'},
+      );
+      expect(response.statusCode, HttpStatus.accepted, reason: body);
+      final decoded = jsonDecode(body) as Map<String, dynamic>;
+      expect(decoded['scope'], 'all');
+      expect(decoded['total'], db.allRecipeIds().length);
+      expect(
+        decoded['total'],
+        greaterThan(db.recipeIdsWithoutNutrition().length),
+        reason: 'all must include already-computed recipes, not just missing',
+      );
+    });
+
+    test('a scope sent with a non-JSON body is refused, not dropped', () async {
+      // Gating the body parse on content-type silently discarded a scope
+      // sent as text/plain and ran the job as `missing` -- the exact silent
+      // fallback the unknown-scope 422 exists to prevent, reached by a far
+      // more common mistake. The gate is on body PRESENCE; a present body
+      // that is not JSON gets readJsonBody's own 422.
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/nutrition/bulk',
+        headers: {
+          ...auth(adminSession, csrf: true),
+          'Content-Type': 'text/plain',
+        },
+        rawBody: utf8.encode('{"scope":"all"}'),
+      );
+      expect(response.statusCode, HttpStatus.unprocessableEntity, reason: body);
+      expect(body, contains('application/json'));
+    });
+
     test('an unknown scope is refused, and starts nothing', () async {
       final (response, body) = await send(
         'POST',

@@ -107,10 +107,10 @@ enum BulkScope {
 /// Recipe ids [scope] selects.
 ///
 /// `stale` is the only one that cannot be a query: the staleness test is a
-/// Dart-side hash (see [SaltDatabase.recipesPossiblyStaleNutrition]). The SQL
-/// prefilter there keeps this to the recipes edited since their last compute,
-/// so the decode below is normally a handful and never the whole library —
-/// except after a mass re-import, which bumps every `updated_at`.
+/// Dart-side hash, so every recipe with nutrition is decoded and compared
+/// (see [SaltDatabase.recipesWithNutrition] for why there is no timestamp
+/// shortcut). Measured at ~110-190 ms for the whole 1,198-recipe library,
+/// synchronously on the serving isolate, on an admin-only endpoint.
 List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
   switch (scope) {
     case BulkScope.missing:
@@ -119,7 +119,7 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
       return db.allRecipeIds();
     case BulkScope.stale:
       final ids = <String>[];
-      for (final candidate in db.recipesPossiblyStaleNutrition()) {
+      for (final candidate in db.recipesWithNutrition()) {
         final recipe = RecipeMapper.fromMap(
           jsonDecode(candidate.doc) as Map<String, dynamic>,
         );
@@ -140,9 +140,11 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
 /// `nutrition_jobs` row — silent partial failure is prohibited.
 ///
 /// Recomputing is non-destructive, which is what makes a broad scope safe to
-/// offer: `matchAndCompute` preserves confirmed/overridden/skipped matches
-/// whose raw text is unchanged, so a sweep re-resolves `auto` and genuinely
-/// changed lines and leaves human decisions alone.
+/// offer: the engine's writes land only where no human decision stands
+/// ([SaltDatabase.upsertIngredientMatchIfUndecided]) — checked at WRITE time,
+/// so a confirm made while a recipe's compute is waiting on the provider
+/// survives it. A sweep re-resolves `auto`, `unmatched` and genuinely changed
+/// lines and leaves confirmed/overridden/skipped ones alone.
 int? startBulkJob(
   SaltDatabase db,
   NutritionProvider provider, {
@@ -178,6 +180,17 @@ Future<void> _run(
         done += 1;
         continue; // Deleted mid-job.
       }
+      // Single-flight with the per-recipe compute: if one is already running
+      // for this id, the bulk job would spend the FDC budget twice on the
+      // same lines and both would write. Skip it — the running job finishes
+      // it. Registering here is also what lets the recipe page and the review
+      // queue see `computing_job_id` for a recipe the bulk sweep is on.
+      if (_recipeJobs.containsKey(id)) {
+        log.add('$id: skipped, a compute is already running');
+        done += 1;
+        continue;
+      }
+      _recipeJobs[id] = jobId;
       try {
         await matchAndCompute(db, provider, found.recipe);
       } on NutritionProviderException catch (error) {
@@ -197,6 +210,12 @@ Future<void> _run(
       } catch (error) {
         failed += 1;
         log.add('$id: $error');
+      } finally {
+        // Balanced on EVERY exit, including the provider-failure `return`
+        // above: a registration left behind makes the per-recipe compute
+        // hand back a dead job id forever and every later sweep skip the
+        // recipe as "already running".
+        _recipeJobs.remove(id);
       }
       done += 1;
       if (done % 10 == 0 || done == ids.length) {

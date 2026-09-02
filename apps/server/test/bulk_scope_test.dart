@@ -13,6 +13,7 @@
 // rows forever. Every test here therefore drives real edits through the real
 // upsert path rather than asserting on that column.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:salt_server/src/db/salt_database.dart';
@@ -24,6 +25,7 @@ import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
 import 'support/corpus.dart';
+import 'support/fdc_fixtures.dart';
 
 void main() {
   late Directory tempDir;
@@ -165,22 +167,169 @@ void main() {
       expect(stored.ingredientsHash, ingredientsHashOf(reloaded));
     });
 
-    test('the prefilter compares timestamps that are NOT the same format', () {
-      // recipes.updated_at is SQLite datetime('now') -- "2026-07-16 02:07:09".
-      // recipe_nutrition.computed_at is Dart toIso8601String() --
-      // "2026-07-16T02:11:15.849334Z". A raw >= compares ' ' (0x20) against
-      // 'T' (0x54) at the eleventh character and answers false for every
-      // same-day pair whatever the real times are, so the prefilter would
-      // select nothing and `stale` would silently be a no-op. This is the
-      // regression that caught me writing it.
-      markComputed(alpha);
-      store(alpha.copyWith(title: 'touched after its compute'));
-      final candidates = db.recipesPossiblyStaleNutrition();
+    test('an edit that lands DURING a compute is still found stale', () async {
+      // The third trap. A timestamp prefilter (updated_at >= computed_at)
+      // was tried and is wrong by construction: computed_at is stamped when
+      // the ROW is written, at the END of a compute, but the stored hash
+      // describes the recipe as it was when the compute STARTED. An edit
+      // that lands while the compute waits on the provider therefore has
+      // updated_at < computed_at with a hash that no longer matches -- the
+      // UI says stale, `missing` skips it (row exists), and a prefiltered
+      // `stale` skipped it too. Only hashing every row is correct.
+      final provider = FixtureProvider();
+      final gate = Completer<void>();
+      provider.gate = gate;
+      final compute = matchAndCompute(db, provider, alpha);
+      while (provider.searchCalls == 0) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      // The compute is now parked on the provider. Edit underneath it.
+      final g = alpha.ingredients.first;
+      store(
+        alpha.copyWith(
+          ingredients: [
+            g.copyWith(
+              items: [
+                g.items.first.copyWith(raw: 'edited while computing'),
+                ...g.items.skip(1),
+              ],
+            ),
+            ...alpha.ingredients.skip(1),
+          ],
+        ),
+      );
+      // Let the provider "answer" in a LATER second than the edit. Both
+      // timestamps truncate to seconds, so an edit and a completion inside
+      // the same second look simultaneous and a `>=` prefilter would keep
+      // the row by coincidence -- this test then pins nothing. Spanning a
+      // second boundary is what makes the window observable.
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+      gate.complete();
+      await compute;
+
+      final reloaded = db.recipeByIdOrSlug(alpha.id)!.recipe;
       expect(
-        candidates.map((c) => c.id),
+        db.nutritionFor(alpha.id)!.ingredientsHash,
+        isNot(ingredientsHashOf(reloaded)),
+        reason: 'sanity: the UI would label this stale',
+      );
+      expect(
+        bulkScopeIds(db, BulkScope.stale),
         contains(alpha.id),
-        reason: 'a recipe updated after its compute must reach the hash check',
+        reason: 'a recipe the UI labels stale must be in the stale sweep',
       );
     });
+
+    test('a human decision made DURING a compute survives it', () async {
+      // The "non-destructive" promise a broad scope rests on. matchAndCompute
+      // snapshots the existing rows at entry and used to write `auto`
+      // unconditionally at the end, so a confirm made through the review UI
+      // while the compute waited on the provider was erased -- job done,
+      // zero failures, nothing logged. The guard now sits in the statement,
+      // against the row as it is at WRITE time.
+      final provider = FixtureProvider();
+      await matchAndCompute(db, provider, alpha); // first pass: rows exist
+      final target = db
+          .ingredientMatchesFor(alpha.id)
+          .firstWhere((m) => m.position > 0 && m.status == 'auto');
+
+      final gate = Completer<void>();
+      provider.gate = gate;
+      final sweep = matchAndCompute(db, provider, alpha);
+      while (provider.searchCalls == 0) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      // The admin confirms this line while the sweep is parked.
+      db.upsertIngredientMatch(
+        IngredientMatchRow(
+          recipeId: alpha.id,
+          position: target.position,
+          raw: target.raw,
+          fdcId: target.fdcId,
+          description: target.description,
+          dataType: target.dataType,
+          confidence: 1,
+          grams: target.grams,
+          gramSource: target.gramSource,
+          status: 'confirmed',
+        ),
+      );
+      gate.complete();
+      await sweep;
+
+      final after = db
+          .ingredientMatchesFor(alpha.id)
+          .firstWhere((m) => m.position == target.position);
+      expect(after.status, 'confirmed', reason: 'the decision must stand');
+    });
+
+    test('an unmatched line IS retried by a sweep', () async {
+      // `unmatched` is the engine's own "FDC had nothing", not a decision.
+      // It used to be preserved forever alongside confirmed/overridden/
+      // skipped, so a sweep re-ranked the lines that already matched and
+      // never retried the ones that did not -- the lines a sweep exists for.
+      final provider = FixtureProvider();
+      await matchAndCompute(db, provider, alpha);
+      final matched = db
+          .ingredientMatchesFor(alpha.id)
+          .firstWhere((m) => m.status == 'auto' && m.fdcId != null);
+      // Overwrite it as if FDC had returned nothing last time.
+      db.upsertIngredientMatch(
+        IngredientMatchRow(
+          recipeId: alpha.id,
+          position: matched.position,
+          raw: matched.raw,
+          fdcId: null,
+          description: 'No FoodData Central match',
+          dataType: null,
+          confidence: 0,
+          grams: null,
+          gramSource: null,
+          status: 'unmatched',
+        ),
+      );
+      await matchAndCompute(db, provider, alpha);
+      final after = db
+          .ingredientMatchesFor(alpha.id)
+          .firstWhere((m) => m.position == matched.position);
+      expect(after.fdcId, matched.fdcId, reason: 'the retry must re-match it');
+      expect(after.status, 'auto');
+    });
+  });
+  group('bulk job bookkeeping', skip: skipIfNoCorpus, () {
+    test(
+      'a sweep that stops on a provider failure unregisters its recipe',
+      () async {
+        // _run registers each recipe in the per-recipe job table for the
+        // duration of its compute (single-flight with the per-recipe route,
+        // and what surfaces computing_job_id). The provider-failure path
+        // `return`s out of the loop; without a finally the registration stayed
+        // behind, so the per-recipe compute handed back a dead job id forever
+        // and every later sweep skipped the recipe as "already running".
+        db.upsertSource(
+          slug: manualSourceSlug,
+          name: 'My recipes',
+          type: 'manual',
+        );
+        final recipe = loadCorpusRecipe('0857-rich-chocolate-bundt-cake.yaml');
+        db.upsertRecipe(
+          recipe,
+          sourceSlug: manualSourceSlug,
+          contentHash: contentHashOf(recipe),
+        );
+        final provider = FixtureProvider()..failWith = 'budget exhausted';
+        final jobId = startBulkJob(db, provider);
+        expect(jobId, isNotNull);
+        while (bulkJobRunning) {
+          await Future<void>.delayed(const Duration(milliseconds: 5));
+        }
+        expect(db.nutritionJob(jobId!)!['status'], 'failed');
+        expect(
+          recipeComputeJobId(recipe.id),
+          isNull,
+          reason: 'the failed sweep must not leave the recipe registered',
+        );
+      },
+    );
   });
 }

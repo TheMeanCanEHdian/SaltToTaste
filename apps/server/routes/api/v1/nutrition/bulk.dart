@@ -31,19 +31,12 @@ Future<Response> onRequest(RequestContext context) async {
   // that posts nothing is unaffected. An UNRECOGNISED scope is refused rather
   // than quietly treated as the default: silently computing something other
   // than what was asked spends the FDC budget on the wrong recipes.
-  // Only PARSE a body when one is declared as JSON. The existing client
-  // posts nothing at all, and `readJsonBody` rejects a missing/!json
-  // content-type by design (it is the CSRF guard for the unauthenticated
-  // endpoints), so calling it unconditionally would break every caller that
-  // never sent a body. Anyone who does send JSON still gets that full check.
-  final mime = context.request.headers['content-type']
-      ?.split(';')
-      .first
-      .trim()
-      .toLowerCase();
-  final body = mime == 'application/json'
-      ? await readJsonBody(context.request)
-      : const <String, Object?>{};
+  // The body is optional -- the shipped client posts none -- but a body that
+  // IS present must be JSON, else 422 like every other endpoint. Gating the
+  // parse on content-type silently dropped a scope sent as text/plain and
+  // ran the job as `missing`; gating on Content-Length missed chunked bodies
+  // entirely (shelf strips Transfer-Encoding). Only the bytes can say.
+  final body = await readJsonBody(context.request, allowEmpty: true);
   final requested = body['scope'];
   final BulkScope? scope;
   if (requested == null) {

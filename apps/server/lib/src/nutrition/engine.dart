@@ -63,13 +63,21 @@ Future<void> matchAndCompute(
 
   for (final (position, line) in lines.indexed) {
     final kept = existing[position];
-    if (kept != null && kept.raw == line.raw && kept.status != 'auto') {
-      continue; // A human decided this row; their call stands.
+    // A human decided this row; their call stands. `unmatched` is NOT a
+    // decision — it is the engine's own "FDC had nothing", and a sweep exists
+    // precisely to retry those once FDC gains data or the matcher improves.
+    // (A cached empty search answer still short-circuits it, so the retry is
+    // free but only helps once the normalised query or the cache changes.)
+    if (kept != null &&
+        kept.raw == line.raw &&
+        kept.status != 'auto' &&
+        kept.status != 'unmatched') {
+      continue;
     }
 
     final normalized = normalizeItem(line.item ?? line.raw);
     if (normalized.isEmpty || isWaterLike(normalized)) {
-      db.upsertIngredientMatch(
+      db.upsertIngredientMatchIfUndecided(
         IngredientMatchRow(
           recipeId: recipe.id,
           position: position,
@@ -91,7 +99,7 @@ Future<void> matchAndCompute(
     final candidates = await _cachedSearch(db, provider, normalized);
     final ranked = rankCandidates(normalized, candidates);
     if (ranked.isEmpty) {
-      db.upsertIngredientMatch(
+      db.upsertIngredientMatchIfUndecided(
         IngredientMatchRow(
           recipeId: recipe.id,
           position: position,
@@ -141,7 +149,7 @@ Future<void> matchAndCompute(
       food = fallbackFood;
     }
     if (best == null) {
-      db.upsertIngredientMatch(
+      db.upsertIngredientMatchIfUndecided(
         IngredientMatchRow(
           recipeId: recipe.id,
           position: position,
@@ -163,7 +171,7 @@ Future<void> matchAndCompute(
       normalizedItem: normalized,
       raw: line.raw,
     );
-    db.upsertIngredientMatch(
+    db.upsertIngredientMatchIfUndecided(
       IngredientMatchRow(
         recipeId: recipe.id,
         position: position,

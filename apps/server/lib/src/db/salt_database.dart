@@ -954,6 +954,49 @@ class SaltDatabase {
     ]);
   }
 
+  /// [upsertIngredientMatch] for the ENGINE's own writes: lands only where no
+  /// human decision stands.
+  ///
+  /// `matchAndCompute` snapshots the existing rows once at entry, then awaits
+  /// the provider per line — for the bulk provider, an uncapped rate-limit
+  /// wait. A confirm/override/skip made through the review UI DURING that
+  /// window was invisible to the snapshot, and the unconditional write at the
+  /// end erased it: job done, zero failures, nothing logged. The guard is in
+  /// the statement rather than in Dart because the decision has to be made
+  /// against the row as it is at WRITE time, not as it was at entry.
+  ///
+  /// Overwrites when the existing row is undecided (`auto`, or `unmatched` —
+  /// the engine's own "FDC had nothing", not a person's call), or when its
+  /// raw text differs (a decision about old text does not apply to new text —
+  /// the same rule the entry snapshot uses). A decided row with the same raw
+  /// is left exactly as it is.
+  void upsertIngredientMatchIfUndecided(IngredientMatchRow row) {
+    _prepared(
+      'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
+      'description, data_type, confidence, grams, gram_source, status, '
+      'updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
+      'fdc_id = excluded.fdc_id, description = excluded.description, '
+      'data_type = excluded.data_type, confidence = excluded.confidence, '
+      'grams = excluded.grams, gram_source = excluded.gram_source, '
+      'status = excluded.status, updated_at = excluded.updated_at '
+      "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
+      'OR ingredient_matches.raw != excluded.raw',
+    ).execute([
+      row.recipeId,
+      row.position,
+      row.raw,
+      row.fdcId,
+      row.description,
+      row.dataType,
+      row.confidence,
+      row.grams,
+      row.gramSource,
+      row.status,
+      _utcNowIso(),
+    ]);
+  }
+
   /// Drops match rows at or beyond [fromPosition] (an edit shortened the
   /// ingredient list).
   void deleteIngredientMatchesFrom(String recipeId, int fromPosition) {
@@ -1028,44 +1071,33 @@ class SaltDatabase {
     return [for (final row in rows) row['id'] as String];
   }
 
-  /// Recipes whose stored nutrition MIGHT be stale, with the doc and stored
-  /// hash needed to decide for certain.
+  /// Every recipe that has stored nutrition, with the doc and the hash the
+  /// compute stored — everything the caller needs to decide staleness.
   ///
-  /// Staleness is `recipe_nutrition.ingredients_hash != ingredientsHashOf(
-  /// recipe)`, and that hash is a SHA-256 over a JSON projection of the
-  /// ingredient lines computed in Dart — SQLite cannot express it, so the
-  /// caller confirms. (Note `recipe_nutrition.status` is no help: its CHECK
-  /// constraint allows 'stale' but nothing ever WRITES it; the value is
-  /// derived at read time, so `WHERE status = 'stale'` matches zero rows
-  /// forever.)
+  /// Staleness is `ingredients_hash != ingredientsHashOf(recipe)`, a SHA-256
+  /// over a JSON projection of the ingredient lines computed in Dart, so it
+  /// cannot be a WHERE clause; the caller decodes and compares. (Note
+  /// `recipe_nutrition.status` is no help: its CHECK constraint allows
+  /// 'stale' but nothing ever WRITES it — the value is derived at read time.)
   ///
-  /// This narrows the set the caller has to decode. A recipe whose ingredients
-  /// changed was rewritten by `upsertRecipe`, which bumps `updated_at`, so
-  /// "updated at or after the compute" is a NECESSARY condition — anything
-  /// older cannot be stale and is not worth decoding.
-  ///
-  /// Both sides go through `datetime()` because THE TWO COLUMNS ARE NOT THE
-  /// SAME FORMAT and comparing them directly is meaningless: `updated_at` is
-  /// SQLite's `datetime('now')` (`2026-07-16 02:07:09`) while `computed_at` is
-  /// Dart's `toIso8601String()` (`2026-07-16T02:11:15.849334Z`). A raw `>=`
-  /// compares `' '` (0x20) against `'T'` (0x54) at the eleventh character, so
-  /// it answers false for every same-day pair regardless of the actual times —
-  /// measured on the live database. `datetime()` parses both, microseconds and
-  /// trailing Z included, and canonicalises to seconds.
-  ///
-  /// `>=` not `>` because that canonicalisation truncates to the second: an
-  /// edit landing in the same second as its compute would slip past `>`. An
-  /// unparseable timestamp keeps the row as a CANDIDATE rather than dropping
-  /// it — the hash below is what decides, and a maintenance pass should
-  /// re-examine a row it cannot reason about, not silently skip it.
+  /// Deliberately NO timestamp prefilter. Two were tried and both were wrong.
+  /// Comparing `updated_at` against `computed_at` first failed on FORMAT (one
+  /// is SQLite's `datetime('now')`, the other Dart's `toIso8601String()`; a
+  /// raw `>=` compares ' ' to 'T' at char 11 and is false for every same-day
+  /// pair) and then, once normalised, on SEMANTICS: `computed_at` is stamped
+  /// when the ROW is written, but the hash describes the recipe as it was
+  /// when the compute STARTED, before its provider awaits — so an edit that
+  /// lands during a compute has `updated_at < computed_at` while the stored
+  /// hash no longer matches, and a plain recompute (serving basis, match
+  /// override) restamps `computed_at` while keeping the old hash. Either way
+  /// the prefilter dropped a recipe the UI itself labels stale. Hashing every
+  /// row is correct by definition and was measured at ~110 ms for the whole
+  /// 1,198-recipe library — cheaper than a third trap.
   List<({String id, String doc, String ingredientsHash})>
-  recipesPossiblyStaleNutrition() {
+  recipesWithNutrition() {
     final rows = _db.select(
       'SELECT r.id AS id, r.doc AS doc, n.ingredients_hash AS h '
       'FROM recipes r JOIN recipe_nutrition n ON n.recipe_id = r.id '
-      'WHERE datetime(r.updated_at) >= datetime(n.computed_at) '
-      'OR datetime(r.updated_at) IS NULL '
-      'OR datetime(n.computed_at) IS NULL '
       'ORDER BY r.id',
     );
     return [

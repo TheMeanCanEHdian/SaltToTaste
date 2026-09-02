@@ -645,9 +645,21 @@ is skipped silently. A job interrupted by a server restart is marked
 `failed` at the next boot.
 
 Recomputing is non-destructive: confirmed, overridden and skipped ingredient
-matches whose raw text is unchanged are preserved, so a broad scope
-re-resolves `auto` and genuinely changed lines without discarding review
-work.
+matches whose raw text is unchanged are preserved — checked at write time, so
+a decision made through the review UI while that recipe's compute is waiting
+on FoodData Central survives it. A broad scope re-resolves `auto`,
+`unmatched` (the engine's own "no match", not a decision) and genuinely
+changed lines. A previously empty FDC search answer is served from the cache,
+so an `unmatched` retry only finds something once the matcher's normalised
+query or the cache changes.
+
+A recipe already being computed by a per-recipe job is skipped by the sweep
+(logged in the job) rather than computed twice; while a sweep is on a recipe,
+`GET /recipes/{id}/nutrition` reports its `computing_job_id`.
+
+A body is optional, but a body that is present must be `application/json`
+(`422` otherwise, like every other endpoint) — a scope sent with another
+content-type is refused, never silently treated as `missing`.
 
 Note `stale` is derived, not stored: `recipe_nutrition.status` accepts the
 value in its CHECK constraint but nothing ever writes it, so staleness is a
