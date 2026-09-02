@@ -78,18 +78,80 @@ Future<void> _runOne(
   }
 }
 
-/// Starts a background bulk compute over every recipe without stored
-/// nutrition; returns the job id, or null when one is already running.
+/// Which recipes a bulk compute covers.
+enum BulkScope {
+  /// Never computed. The historical behaviour and the default.
+  missing('missing'),
+
+  /// Computed, but the ingredient lines have changed since — the results on
+  /// screen are wrong and only a recompute fixes them.
+  stale('stale'),
+
+  /// Every recipe, computed or not.
+  all('all');
+
+  const BulkScope(this.wireName);
+
+  /// The value clients send as `scope`.
+  final String wireName;
+
+  /// [BulkScope] for [name], or null when it names nothing.
+  static BulkScope? fromWire(String name) {
+    for (final scope in values) {
+      if (scope.wireName == name) return scope;
+    }
+    return null;
+  }
+}
+
+/// Recipe ids [scope] selects.
+///
+/// `stale` is the only one that cannot be a query: the staleness test is a
+/// Dart-side hash (see [SaltDatabase.recipesPossiblyStaleNutrition]). The SQL
+/// prefilter there keeps this to the recipes edited since their last compute,
+/// so the decode below is normally a handful and never the whole library —
+/// except after a mass re-import, which bumps every `updated_at`.
+List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
+  switch (scope) {
+    case BulkScope.missing:
+      return db.recipeIdsWithoutNutrition();
+    case BulkScope.all:
+      return db.allRecipeIds();
+    case BulkScope.stale:
+      final ids = <String>[];
+      for (final candidate in db.recipesPossiblyStaleNutrition()) {
+        final recipe = RecipeMapper.fromMap(
+          jsonDecode(candidate.doc) as Map<String, dynamic>,
+        );
+        if (ingredientsHashOf(recipe) != candidate.ingredientsHash) {
+          ids.add(candidate.id);
+        }
+      }
+      return ids;
+  }
+}
+
+/// Starts a background bulk compute over the recipes [scope] selects;
+/// returns the job id, or null when one is already running.
 ///
 /// Runs on the server's event loop (no isolate): the work is I/O-bound and
 /// self-throttled by the provider's token bucket, so interactive requests
 /// interleave freely. Progress and per-recipe failures land in the
 /// `nutrition_jobs` row — silent partial failure is prohibited.
-int? startBulkJob(SaltDatabase db, NutritionProvider provider) {
+///
+/// Recomputing is non-destructive, which is what makes a broad scope safe to
+/// offer: `matchAndCompute` preserves confirmed/overridden/skipped matches
+/// whose raw text is unchanged, so a sweep re-resolves `auto` and genuinely
+/// changed lines and leaves human decisions alone.
+int? startBulkJob(
+  SaltDatabase db,
+  NutritionProvider provider, {
+  BulkScope scope = BulkScope.missing,
+}) {
   if (_bulkRunning) {
     return null;
   }
-  final ids = db.recipeIdsWithoutNutrition();
+  final ids = bulkScopeIds(db, scope);
   final jobId = db.createNutritionJob(ids.length);
   _bulkRunning = true;
   unawaited(_run(db, provider, jobId, ids));

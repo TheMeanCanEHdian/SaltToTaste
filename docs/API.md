@@ -626,10 +626,33 @@ one over 120 characters, or when no FDC API key is configured.
 
 ### `POST /api/v1/nutrition/bulk` (admin, full scope)
 
-Start a background compute over every recipe without stored nutrition.
-→ `202 {"job_id"}`; `409 conflict` while one is running. Failures land in
-the job log — nothing is skipped silently. A job interrupted by a server
-restart is marked `failed` at the next boot.
+Start a background compute. Optional body `{"scope": "..."}`:
+
+| `scope` | Covers |
+|---|---|
+| `missing` *(default)* | Recipes with no stored nutrition. |
+| `stale` | Recipes whose INGREDIENT lines changed since their last compute — the results the UI already labels `stale`. |
+| `all` | Every recipe, computed or not. |
+
+A body is optional; sending none means `missing`, which is the historical
+behaviour. An unrecognised scope is `422` rather than a silent fallback —
+computing the wrong set spends real FoodData Central budget.
+
+→ `202 {"job_id", "scope", "total"}` (`total` is the number of recipes
+selected, so a `stale` sweep that finds nothing is visible immediately);
+`409 conflict` while one is running. Failures land in the job log — nothing
+is skipped silently. A job interrupted by a server restart is marked
+`failed` at the next boot.
+
+Recomputing is non-destructive: confirmed, overridden and skipped ingredient
+matches whose raw text is unchanged are preserved, so a broad scope
+re-resolves `auto` and genuinely changed lines without discarding review
+work.
+
+Note `stale` is derived, not stored: `recipe_nutrition.status` accepts the
+value in its CHECK constraint but nothing ever writes it, so staleness is a
+comparison between the stored `ingredients_hash` and one recomputed from the
+recipe.
 
 ### `GET /api/v1/nutrition/jobs/{id}` (admin)
 

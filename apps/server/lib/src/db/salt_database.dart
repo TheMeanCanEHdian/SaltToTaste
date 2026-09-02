@@ -1028,6 +1028,56 @@ class SaltDatabase {
     return [for (final row in rows) row['id'] as String];
   }
 
+  /// Recipes whose stored nutrition MIGHT be stale, with the doc and stored
+  /// hash needed to decide for certain.
+  ///
+  /// Staleness is `recipe_nutrition.ingredients_hash != ingredientsHashOf(
+  /// recipe)`, and that hash is a SHA-256 over a JSON projection of the
+  /// ingredient lines computed in Dart — SQLite cannot express it, so the
+  /// caller confirms. (Note `recipe_nutrition.status` is no help: its CHECK
+  /// constraint allows 'stale' but nothing ever WRITES it; the value is
+  /// derived at read time, so `WHERE status = 'stale'` matches zero rows
+  /// forever.)
+  ///
+  /// This narrows the set the caller has to decode. A recipe whose ingredients
+  /// changed was rewritten by `upsertRecipe`, which bumps `updated_at`, so
+  /// "updated at or after the compute" is a NECESSARY condition — anything
+  /// older cannot be stale and is not worth decoding.
+  ///
+  /// Both sides go through `datetime()` because THE TWO COLUMNS ARE NOT THE
+  /// SAME FORMAT and comparing them directly is meaningless: `updated_at` is
+  /// SQLite's `datetime('now')` (`2026-07-16 02:07:09`) while `computed_at` is
+  /// Dart's `toIso8601String()` (`2026-07-16T02:11:15.849334Z`). A raw `>=`
+  /// compares `' '` (0x20) against `'T'` (0x54) at the eleventh character, so
+  /// it answers false for every same-day pair regardless of the actual times —
+  /// measured on the live database. `datetime()` parses both, microseconds and
+  /// trailing Z included, and canonicalises to seconds.
+  ///
+  /// `>=` not `>` because that canonicalisation truncates to the second: an
+  /// edit landing in the same second as its compute would slip past `>`. An
+  /// unparseable timestamp keeps the row as a CANDIDATE rather than dropping
+  /// it — the hash below is what decides, and a maintenance pass should
+  /// re-examine a row it cannot reason about, not silently skip it.
+  List<({String id, String doc, String ingredientsHash})>
+  recipesPossiblyStaleNutrition() {
+    final rows = _db.select(
+      'SELECT r.id AS id, r.doc AS doc, n.ingredients_hash AS h '
+      'FROM recipes r JOIN recipe_nutrition n ON n.recipe_id = r.id '
+      'WHERE datetime(r.updated_at) >= datetime(n.computed_at) '
+      'OR datetime(r.updated_at) IS NULL '
+      'OR datetime(n.computed_at) IS NULL '
+      'ORDER BY r.id',
+    );
+    return [
+      for (final row in rows)
+        (
+          id: row['id'] as String,
+          doc: row['doc'] as String,
+          ingredientsHash: row['h'] as String,
+        ),
+    ];
+  }
+
   /// Creates a nutrition bulk-job row; returns its id.
   int createNutritionJob(int total) {
     _prepared(

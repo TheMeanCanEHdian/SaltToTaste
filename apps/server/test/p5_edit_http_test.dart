@@ -1650,4 +1650,56 @@ void main() {
       expect(deleted.statusCode, HttpStatus.noContent, reason: deletedBody);
     });
   });
+  group('POST /api/v1/nutrition/bulk scope', () {
+    // The scope is what the job COMPUTES, and computing spends real FDC
+    // budget, so the wire contract matters: a body-less post must keep
+    // meaning "missing" forever (the shipped client sends none), and an
+    // unrecognised value must be refused rather than quietly treated as the
+    // default -- silently computing something other than what was asked
+    // spends that budget on the wrong recipes.
+    test('an unknown scope is refused, and starts nothing', () async {
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/nutrition/bulk',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'scope': 'everything'},
+      );
+      expect(response.statusCode, HttpStatus.unprocessableEntity, reason: body);
+      final error = jsonDecode(body) as Map<String, dynamic>;
+      final message =
+          (error['error'] as Map<String, dynamic>)['message'] as String;
+      expect(message, contains('everything'));
+      expect(message, contains('missing'), reason: 'names the valid scopes');
+    });
+
+    test('a non-string scope is refused too', () async {
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/nutrition/bulk',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'scope': 7},
+      );
+      expect(response.statusCode, HttpStatus.unprocessableEntity, reason: body);
+    });
+
+    test('a body-less post still means "missing"', () async {
+      // Backwards compatibility with the shipped client, which posts no body
+      // at all. `readJsonBody` rejects a missing content-type by design, so
+      // the route must not call it unconditionally.
+      final (response, body) = await send(
+        'POST',
+        '/api/v1/nutrition/bulk',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(response.statusCode, HttpStatus.accepted, reason: body);
+      final decoded = jsonDecode(body) as Map<String, dynamic>;
+      expect(decoded['scope'], 'missing');
+      expect(decoded['job_id'], isA<int>());
+      expect(
+        decoded['total'],
+        isA<int>(),
+        reason: 'the count is visible before the first poll',
+      );
+    });
+  });
 }
