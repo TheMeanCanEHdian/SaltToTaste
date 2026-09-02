@@ -485,6 +485,32 @@ void main() {
       }
     });
 
+    test('the bulk counts parse every scope and fail CLOSED', () async {
+      final raw = golden('nutrition_bulk_counts');
+      final dio = goldenDio(raw);
+      final counts = await NutritionRepository(dio).bulkCounts();
+      expect(counts.missing, raw['missing']);
+      expect(counts.stale, raw['stale']);
+      expect(counts.all, raw['all']);
+      for (final scope in BulkScope.values) {
+        expect(counts.of(scope), raw[scope.wireName]);
+      }
+      expect(
+        (dio.httpClientAdapter as GoldenAdapter).requests.single.path,
+        '/api/v1/nutrition/bulk/counts',
+      );
+      // A dropped key must be an error, never 0 — a 0 here disables the
+      // compute button (a Stale of 0 reads as "nothing is stale").
+      for (final scope in BulkScope.values) {
+        final mutated = Map<String, dynamic>.from(raw)..remove(scope.wireName);
+        await expectLater(
+          NutritionRepository(goldenDio(mutated)).bulkCounts(),
+          throwsA(isA<RepositoryException>()),
+          reason: 'a missing ${scope.wireName} count must not read as 0',
+        );
+      }
+    });
+
     test('the review queue parses buckets, rows, and their recipes', () async {
       final raw = golden('nutrition_review');
       final buckets = (raw['buckets']! as List<dynamic>)

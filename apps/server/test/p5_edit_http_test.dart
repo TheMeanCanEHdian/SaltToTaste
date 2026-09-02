@@ -13,7 +13,7 @@ import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
-import 'package:salt_server/src/nutrition/bulk_job.dart' show bulkJobRunning;
+import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/import_job.dart' show importJobRunning;
@@ -29,7 +29,8 @@ import '../routes/api/v1/import/index.dart' as import_route;
 import '../routes/api/v1/import/jobs/[id].dart' as import_job_route;
 import '../routes/api/v1/library/index.dart' as library_route;
 import '../routes/api/v1/library/rescan.dart' as rescan_route;
-import '../routes/api/v1/nutrition/bulk.dart' as bulk_route;
+import '../routes/api/v1/nutrition/bulk/counts.dart' as bulk_counts_route;
+import '../routes/api/v1/nutrition/bulk/index.dart' as bulk_route;
 import '../routes/api/v1/nutrition/jobs/[id].dart' as nutrition_job_route;
 import '../routes/api/v1/nutrition/search.dart' as nutrition_search_route;
 import '../routes/api/v1/recipes/[id]/favorite.dart' as favorite_route;
@@ -89,6 +90,8 @@ void main() {
         return backups_route.onRequest(context);
       case '/api/v1/nutrition/bulk':
         return bulk_route.onRequest(context);
+      case '/api/v1/nutrition/bulk/counts':
+        return bulk_counts_route.onRequest(context);
       case '/api/v1/nutrition/search':
         return nutrition_search_route.onRequest(context);
       case '/api/v1/import':
@@ -217,6 +220,14 @@ void main() {
     final pipeline = dispatch
         .use(authProvider())
         .use(provider<NutritionProvider>((_) => fixtureProvider))
+        // The bulk route reads its OWN provider type; without this line every
+        // bulk job here would run against the real USDA API through whatever
+        // key sits in the developer's .data (it did, for one run).
+        .use(
+          provider<BulkNutritionProvider>(
+            (_) => BulkNutritionProvider(fixtureProvider),
+          ),
+        )
         // The recipe-listing route reads a search rate limiter for `?q=`
         // queries; disabled here (maxRequests: 0) so the suite's many
         // searches never trip it. Prod wires a live limiter in app_pipeline.
@@ -1664,8 +1675,9 @@ void main() {
     // earlier group leaked one, and one of them was proving the no-key path.
     setUp(() {
       db.setSetting(fdcApiKeySetting, 'scope-tests-key');
-      // A 202 here STARTS a real job. Make it fail on its first provider
-      // call so it finishes immediately, then wait for it: `_bulkRunning` is
+      // A 202 here STARTS a real job against the injected fixture (wired
+      // above as the bulk client). Make it fail on its first provider call
+      // so it finishes immediately, then wait for it: `_bulkRunning` is
       // process-wide and a job still winding down 409s the next test.
       fixtureProvider.failWith = 'scope tests: no provider';
     });
@@ -1785,6 +1797,137 @@ void main() {
         decoded['total'],
         isA<int>(),
         reason: 'the count is visible before the first poll',
+      );
+    });
+
+    test('GET counts: one int per scope, the same selection the sweep '
+        'runs', () async {
+      // The preview exists so the admin sees what a scope will spend BEFORE
+      // committing to it, which only holds if it is the sweep's own
+      // selection and not a second implementation that can drift. Every
+      // scope must count something here, or a hard-coded zero agrees with
+      // the selection by accident -- so seed one recipe per state: one
+      // never computed, and one computed under a hash that no longer
+      // matches its ingredients, which is the whole definition of `stale`.
+      // Same minimal shape the test above uses; the content is irrelevant.
+      for (final title in ['Scope Probe (uncomputed)', 'Scope Probe (stale)']) {
+        final (created, createdBody) = await send(
+          'POST',
+          '/api/v1/recipes',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {
+            'recipe': {'title': title},
+          },
+        );
+        expect(created.statusCode, HttpStatus.created, reason: createdBody);
+        if (title.endsWith('(stale)')) {
+          db.upsertRecipeNutrition(
+            recipeId: (jsonOf(createdBody)['recipe'] as Map)['id'] as String,
+            servingBasis: 1,
+            caloriesPerServing: null,
+            nutrientsJson: '{}',
+            totalGrams: 0,
+            matchedCount: 0,
+            totalCount: 0,
+            status: 'complete',
+            ingredientsHash: 'seeded-with-a-hash-the-recipe-no-longer-has',
+          );
+        }
+      }
+      final (response, body) = await send(
+        'GET',
+        '/api/v1/nutrition/bulk/counts',
+        headers: auth(adminSession),
+      );
+      expect(response.statusCode, HttpStatus.ok, reason: body);
+      final counts = jsonOf(body);
+      expect(counts.keys, unorderedEquals(['missing', 'stale', 'all']));
+      for (final scope in BulkScope.values) {
+        expect(
+          counts[scope.wireName],
+          greaterThan(0),
+          reason: '${scope.wireName}: a zero here pins nothing',
+        );
+        expect(
+          counts[scope.wireName],
+          bulkScopeIds(db, scope).length,
+          reason: scope.wireName,
+        );
+      }
+    });
+
+    test('GET counts is admin-only', () async {
+      final (response, body) = await send(
+        'GET',
+        '/api/v1/nutrition/bulk/counts',
+        headers: auth(memberSession),
+      );
+      expect(response.statusCode, HttpStatus.forbidden, reason: body);
+      expect(errorOf(body)['code'], 'forbidden');
+    });
+
+    test('counts move once a sweep finishes: missing drops', () async {
+      // The app re-reads the counts after each job, and the mockup's "Stale
+      // drops to 0" outcome rests on the preview reflecting the sweep's
+      // writes. The recorded fixture provider answers unknown queries with
+      // nothing (like FDC for gibberish) rather than failing, so every
+      // `missing` recipe gets a nutrition row -- unmatched lines and all --
+      // and leaves the `missing` set.
+      fixtureProvider.failWith = null;
+      // Guarantee something IS missing: earlier groups clean up after
+      // themselves, so by here the library may hold only the computed probe
+      // above. Same minimal shape that test uses -- the discriminator is
+      // the count, not the content.
+      final (created, createdBody) = await send(
+        'POST',
+        '/api/v1/recipes',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {'title': 'Scope Probe (missing)'},
+        },
+      );
+      expect(created.statusCode, HttpStatus.created, reason: createdBody);
+      final (beforeResponse, beforeBody) = await send(
+        'GET',
+        '/api/v1/nutrition/bulk/counts',
+        headers: auth(adminSession),
+      );
+      expect(beforeResponse.statusCode, HttpStatus.ok, reason: beforeBody);
+      final before = jsonOf(beforeBody);
+      expect(before['missing'], greaterThan(0), reason: beforeBody);
+
+      final (started, startedBody) = await send(
+        'POST',
+        '/api/v1/nutrition/bulk',
+        headers: auth(adminSession, csrf: true),
+        jsonBody: {'scope': 'missing'},
+      );
+      expect(started.statusCode, HttpStatus.accepted, reason: startedBody);
+      final jobId = jsonOf(startedBody)['job_id'];
+      expect(jsonOf(startedBody)['total'], before['missing']);
+      while (bulkJobRunning) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      final (_, jobBody) = await send(
+        'GET',
+        '/api/v1/nutrition/jobs/$jobId',
+        headers: auth(adminSession),
+      );
+      expect(jsonOf(jobBody)['status'], 'done', reason: jobBody);
+
+      final (afterResponse, afterBody) = await send(
+        'GET',
+        '/api/v1/nutrition/bulk/counts',
+        headers: auth(adminSession),
+      );
+      expect(afterResponse.statusCode, HttpStatus.ok, reason: afterBody);
+      final after = jsonOf(afterBody);
+      expect(after['missing'], 0, reason: afterBody);
+      expect(after['all'], before['all'], reason: 'a sweep adds no recipe');
+      expect(
+        after['stale'],
+        before['stale'],
+        reason: 'a fresh compute is not stale',
       );
     });
   });

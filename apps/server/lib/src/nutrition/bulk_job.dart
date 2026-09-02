@@ -78,6 +78,24 @@ Future<void> _runOne(
   }
 }
 
+/// The FDC client a BULK job uses, as a context-provided value.
+///
+/// Distinct type on purpose: the interactive client (`NutritionProvider`) gives
+/// up after ~30s of rate-limit waiting so a drained budget becomes an
+/// explained 4xx, while the bulk client has no wait cap and rides out the
+/// hour. They must be separately injectable. The bulk route used to reach for
+/// bootstrap's process-wide getter directly, which no test could substitute —
+/// so every HTTP test that started a bulk job was silently hitting the REAL
+/// USDA API through whatever key sat in the developer's `.data`, and a test
+/// that set `failWith` on the injected fixture never touched the job at all.
+class BulkNutritionProvider {
+  /// Wraps [provider] for `context.read<BulkNutritionProvider>()`.
+  const BulkNutritionProvider(this.provider);
+
+  /// The client bulk jobs call.
+  final NutritionProvider provider;
+}
+
 /// Which recipes a bulk compute covers.
 enum BulkScope {
   /// Never computed. The historical behaviour and the default.
@@ -110,7 +128,9 @@ enum BulkScope {
 /// Dart-side hash, so every recipe with nutrition is decoded and compared
 /// (see [SaltDatabase.recipesWithNutrition] for why there is no timestamp
 /// shortcut). Measured at ~110-190 ms for the whole 1,198-recipe library,
-/// synchronously on the serving isolate, on an admin-only endpoint.
+/// synchronously on the serving isolate, on admin-only endpoints (the sweep
+/// itself and the `bulk/counts` preview, which is why the preview is
+/// guarded against a cross-site drive).
 List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
   switch (scope) {
     case BulkScope.missing:

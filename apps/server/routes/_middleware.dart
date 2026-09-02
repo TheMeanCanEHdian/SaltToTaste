@@ -12,6 +12,7 @@ Handler middleware(Handler handler) => buildAppMiddleware(
   database: saltDatabase,
   authRuntime: authRuntime,
   nutritionProvider: nutritionProvider,
+  bulkNutritionProvider: bulkNutritionProvider,
   searchRateLimiter: searchRateLimiter,
   // A thunk, not a value: this chain is built before initSearchService() runs,
   // so reading the getter eagerly here would freeze the InlineSearchService

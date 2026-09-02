@@ -221,6 +221,63 @@ class NutritionJob {
   final List<String> log;
 }
 
+/// Which recipes a bulk compute covers (`POST /api/v1/nutrition/bulk`).
+enum BulkScope {
+  missing('missing'),
+  stale('stale'),
+  all('all');
+
+  const BulkScope(this.wireName);
+
+  /// The value sent on the wire and echoed back on the 202.
+  final String wireName;
+
+  static BulkScope fromWire(Object? name) => values.firstWhere(
+    (scope) => scope.wireName == name,
+    orElse: () => throw RepositoryException(
+      'The server returned an unknown bulk scope "$name".',
+    ),
+  );
+}
+
+/// How many recipes each [BulkScope] would select right now
+/// (`GET /api/v1/nutrition/bulk/counts`).
+class BulkCounts {
+  const BulkCounts({
+    required this.missing,
+    required this.stale,
+    required this.all,
+  });
+
+  /// Fails CLOSED: a missing or non-numeric count is an error, never 0 — a
+  /// 0 here disables the compute button.
+  factory BulkCounts.fromJson(Map<String, dynamic> json) => BulkCounts(
+    missing: _count(json, BulkScope.missing),
+    stale: _count(json, BulkScope.stale),
+    all: _count(json, BulkScope.all),
+  );
+
+  static int _count(Map<String, dynamic> json, BulkScope scope) {
+    final value = json[scope.wireName];
+    if (value is! num) {
+      throw RepositoryException(
+        'The server returned no "${scope.wireName}" count.',
+      );
+    }
+    return value.toInt();
+  }
+
+  final int missing;
+  final int stale;
+  final int all;
+
+  int of(BulkScope scope) => switch (scope) {
+    BulkScope.missing => missing,
+    BulkScope.stale => stale,
+    BulkScope.all => all,
+  };
+}
+
 /// Access to the nutrition API.
 class NutritionRepository {
   NutritionRepository(this._dio);
@@ -354,13 +411,31 @@ class NutritionRepository {
     });
   }
 
-  /// Starts a bulk compute; returns the job id.
-  Future<int> startBulk() {
+  /// How many recipes each bulk scope would select right now — the preview
+  /// the Settings → Nutrition scope control shows before the click.
+  Future<BulkCounts> bulkCounts() {
+    return apiGuard(() async {
+      final response = await _dio.get<dynamic>('/api/v1/nutrition/bulk/counts');
+      return BulkCounts.fromJson(_asMap(response.data));
+    });
+  }
+
+  /// Starts a bulk compute over [scope]; returns the job id to poll via
+  /// [job] plus the echoed scope and the number of recipes it selected
+  /// (0 means there was nothing to do — the job is already finished).
+  Future<({int jobId, BulkScope scope, int total})> startBulk(BulkScope scope) {
     return apiGuard(() async {
       final data = _asMap(
-        (await _dio.post<dynamic>('/api/v1/nutrition/bulk')).data,
+        (await _dio.post<dynamic>(
+          '/api/v1/nutrition/bulk',
+          data: {'scope': scope.wireName},
+        )).data,
       );
-      return (data['job_id']! as num).toInt();
+      return (
+        jobId: (data['job_id']! as num).toInt(),
+        scope: BulkScope.fromWire(data['scope']),
+        total: (data['total']! as num).toInt(),
+      );
     });
   }
 

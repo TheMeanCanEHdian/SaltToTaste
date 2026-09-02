@@ -22,6 +22,10 @@ const double _sectionMaxWidth = 560;
 /// endpoint to rediscover it from).
 int? _activeBulkJobId;
 
+/// The scope [_activeBulkJobId] was started with, so a re-attached tab can
+/// still name it in the done summary.
+BulkScope? _activeBulkScope;
+
 const TextStyle _sectionHeading = TextStyle(
   fontSize: 16,
   fontWeight: FontWeight.w700,
@@ -51,8 +55,15 @@ class _NutritionTabState extends State<NutritionTab> {
   final _keyField = TextEditingController();
 
   // Bulk compute job.
+  BulkScope _scope = BulkScope.missing;
+
+  /// Null until the preview lands (or when it failed): the segments show no
+  /// count rather than 0 — a 0 disables the Stale button.
+  BulkCounts? _counts;
+  bool _confirmingAll = false;
   bool _startingBulk = false;
   NutritionJob? _job;
+  BulkScope? _jobScope;
   String? _bulkError;
   Timer? _pollTimer;
   bool _pollInFlight = false;
@@ -67,10 +78,16 @@ class _NutritionTabState extends State<NutritionTab> {
     // Re-renders on typing so the Save button enables/disables.
     _keyField.addListener(() => setState(() {}));
     _loadKeyStatus();
+    _loadCounts();
     // A job started before a tab switch is still running server-side —
     // re-attach instead of presenting a button that would only 409.
     final activeJob = _activeBulkJobId;
     if (activeJob != null) {
+      _jobScope = _activeBulkScope;
+      // The control must show the RUNNING job's scope, not the default: a
+      // remounted tab with a Stale sweep in flight otherwise selects Missing
+      // and the spinning button reads "Compute N missing".
+      _scope = _activeBulkScope ?? _scope;
       _watchJob(activeJob);
       // Show progress right away rather than after the first 2s tick.
       Future<void>.microtask(() {
@@ -146,22 +163,55 @@ class _NutritionTabState extends State<NutritionTab> {
     });
   }
 
+  Future<void> _loadCounts() async {
+    try {
+      final counts = await context.read<NutritionRepository>().bulkCounts();
+      if (mounted) {
+        setState(() => _counts = counts);
+      }
+    } on RepositoryException catch (exception) {
+      if (mounted) {
+        setState(() => _bulkError = exception.message);
+      }
+    }
+  }
+
+  /// `All` confirms inline before spending hours of FDC budget; the other
+  /// scopes start at once.
+  void _computePressed() {
+    if (_scope == BulkScope.all && !_confirmingAll) {
+      setState(() => _confirmingAll = true);
+    } else {
+      _startBulk();
+    }
+  }
+
   Future<void> _startBulk() async {
     final repository = context.read<NutritionRepository>();
+    final scope = _scope;
     setState(() {
       _startingBulk = true;
+      _confirmingAll = false;
       _bulkError = null;
       _job = null;
+      _jobScope = scope;
       _logExpanded = false;
     });
     try {
-      final jobId = await repository.startBulk();
+      final started = await repository.startBulk(scope);
       if (!mounted) {
         return;
       }
-      _activeBulkJobId = jobId;
-      _watchJob(jobId);
-      await _poll(repository, jobId);
+      if (started.total == 0) {
+        // Nothing selected (the preview was out of date): the job is already
+        // finished server-side, so refresh the counts instead of polling.
+        await _loadCounts();
+        return;
+      }
+      _activeBulkJobId = started.jobId;
+      _activeBulkScope = started.scope;
+      _watchJob(started.jobId);
+      await _poll(repository, started.jobId);
     } on RepositoryException catch (exception) {
       // Includes the 409 "already running" case (its message comes
       // through the conflict error code).
@@ -203,6 +253,8 @@ class _NutritionTabState extends State<NutritionTab> {
         _pollTimer?.cancel();
         _pollTimer = null;
         _activeBulkJobId = null;
+        _activeBulkScope = null;
+        unawaited(_loadCounts());
       }
     } on RepositoryException catch (exception) {
       // An hour-long job WILL see a transient blip; keep polling and only
@@ -249,7 +301,7 @@ class _NutritionTabState extends State<NutritionTab> {
         const SizedBox(height: 28),
         Semantics(
           header: true,
-          child: const Text('Compute all recipes', style: _sectionHeading),
+          child: const Text('Compute nutrition', style: _sectionHeading),
         ),
         const SizedBox(height: 10),
         _computeSection(),
@@ -427,16 +479,32 @@ class _NutritionTabState extends State<NutritionTab> {
 
   Widget _computeSection() {
     final job = _job;
+    final count = _counts?.of(_scope);
+    final running = _bulkRunning;
+    // A 0 count is a job that does nothing; no count yet is still startable
+    // (the 202 reports the total).
+    final canStart = !running && count != 0;
+    final nothingStale = _scope == BulkScope.stale && count == 0;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: _sectionMaxWidth),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _ScopeControl(
+            scope: _scope,
+            counts: _counts,
+            enabled: !running,
+            onSelect: (scope) => setState(() {
+              _scope = scope;
+              _confirmingAll = false;
+            }),
+          ),
+          const SizedBox(height: 12),
           FButton(
             variant: FButtonVariant.outline,
             mainAxisSize: MainAxisSize.min,
-            onPress: _bulkRunning ? null : _startBulk,
-            prefix: _bulkRunning
+            onPress: canStart ? _computePressed : null,
+            prefix: running
                 ? const SizedBox(
                     width: 16,
                     height: 16,
@@ -445,16 +513,40 @@ class _NutritionTabState extends State<NutritionTab> {
                       color: SaltColors.maroon,
                     ),
                   )
-                : const Icon(FLucideIcons.zap, size: 18),
-            child: const Text('Compute all missing'),
+                : Icon(
+                    _scope == BulkScope.missing
+                        ? FLucideIcons.zap
+                        : FLucideIcons.refreshCw,
+                    size: 18,
+                  ),
+            child: Text(_buttonLabel(count)),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Throttled to ~900 requests/hour — a large first run takes a '
-            'while and resumes rate-limiting automatically. Already-computed '
-            'recipes are skipped.',
-            style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
-          ),
+          // The idle banner and a job's summary are both green messages
+          // about the same fact; a finished sweep shows its summary alone
+          // (the mockup's Done card), the banner only when there is no job.
+          if (nothingStale && job == null)
+            const _OkBanner(
+              'Nothing is stale — every computed recipe still matches its '
+              'ingredients.',
+            )
+          else if (_confirmingAll)
+            _confirmAll()
+          else if (_scope != BulkScope.all)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _scope == BulkScope.missing
+                    ? 'Recipes with no nutrition yet. Throttled to ~900 '
+                          'requests/hour — a large first run takes a while '
+                          'and resumes rate-limiting automatically.'
+                    : 'Recipes whose ingredient lines changed since their '
+                          'last compute — the ones showing the amber '
+                          '“ingredients changed” banner. Your confirmed and '
+                          'overridden matches are kept; only unreviewed and '
+                          'changed lines are re-resolved.',
+                style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
+              ),
+            ),
           if (_bulkError != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -471,6 +563,89 @@ class _NutritionTabState extends State<NutritionTab> {
               _jobProgress(job)
             else
               _jobSummary(job),
+        ],
+      ),
+    );
+  }
+
+  /// "Compute 1,190 missing" / "Recompute 3 stale" / "Recompute all 1,198";
+  /// without a count yet, the bare verb form.
+  String _buttonLabel(int? count) {
+    final n = count == null ? null : _thousands(count);
+    return switch (_scope) {
+      BulkScope.missing => n == null ? 'Compute missing' : 'Compute $n missing',
+      BulkScope.stale => n == null ? 'Recompute stale' : 'Recompute $n stale',
+      BulkScope.all => n == null ? 'Recompute all' : 'Recompute all $n',
+    };
+  }
+
+  /// The inline confirm for `All` — shown before anything is started.
+  Widget _confirmAll() {
+    const ink = SaltColors.warnInk;
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: SaltColors.warnBg,
+        border: Border.all(color: const Color(0xFFF0DDBA), width: 1.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(FLucideIcons.triangleAlert, size: 15, color: ink),
+              SizedBox(width: 7),
+              Text(
+                'This re-resolves every recipe',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: ink,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text:
+                      'At ~900 requests/hour that is several hours of '
+                      'FoodData Central budget, most of it re-ranking lines '
+                      'that already match. Your confirmed and overridden '
+                      'matches are kept. Usually ',
+                ),
+                TextSpan(
+                  text: 'Stale',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(text: ' is what you want.'),
+              ],
+            ),
+            style: TextStyle(fontSize: 13, height: 1.5, color: ink),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              FButton(
+                size: FButtonSizeVariant.sm,
+                mainAxisSize: MainAxisSize.min,
+                onPress: _startBulk,
+                child: const Text('Start anyway'),
+              ),
+              const SizedBox(width: 8),
+              FButton(
+                variant: FButtonVariant.ghost,
+                size: FButtonSizeVariant.sm,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => setState(() => _confirmingAll = false),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -517,7 +692,16 @@ class _NutritionTabState extends State<NutritionTab> {
           '${_thousands(job.done)} computed, '
           '${_thousands(job.failed)} failed —';
     } else {
-      text = 'All ${_thousands(job.total)} computed';
+      final n = _thousands(job.total);
+      text = switch (_jobScope) {
+        BulkScope.stale => 'All $n stale recipes recomputed.',
+        BulkScope.all => 'All $n recipes recomputed.',
+        BulkScope.missing || null => 'All $n missing recipes computed.',
+      };
+    }
+    if (!showLog) {
+      // Nothing failed and nothing to expand: the summary IS the banner.
+      return _OkBanner(text);
     }
     return Padding(
       padding: const EdgeInsets.only(top: 12),
@@ -647,6 +831,175 @@ class _NutritionTabState extends State<NutritionTab> {
             color: SaltColors.bodyText,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The Missing / Stale / All choice, each segment carrying its preview
+/// count. Forui 0.24 has no segmented single-choice widget (FTabs is a view
+/// switcher with no disabled state; FSelectGroup draws radio circles), so
+/// this is built on [FTappable] — the primitive FButton and FRadio share —
+/// the way the label's collapse bar and the review queue's rows are: it
+/// carries Forui's focus/hover/keyboard handling and radio semantics while
+/// the segment paints the mockup's chip tint. A selection, not an action, so
+/// the tint is the chip colour, never solid maroon.
+class _ScopeControl extends StatelessWidget {
+  const _ScopeControl({
+    required this.scope,
+    required this.counts,
+    required this.enabled,
+    required this.onSelect,
+  });
+
+  final BulkScope scope;
+  final BulkCounts? counts;
+
+  /// False while a job runs — one bulk job at a time (the server 409s a
+  /// second).
+  final bool enabled;
+  final ValueChanged<BulkScope> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (index, option) in BulkScope.values.indexed) ...[
+            if (index > 0) const SizedBox(width: 3),
+            _Segment(
+              label: switch (option) {
+                BulkScope.missing => 'Missing',
+                BulkScope.stale => 'Stale',
+                BulkScope.all => 'All',
+              },
+              count: counts?.of(option),
+              selected: option == scope,
+              onPress: enabled ? () => onSelect(option) : null,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Segment extends StatelessWidget {
+  const _Segment({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.onPress,
+  });
+
+  final String label;
+
+  /// Null while the preview is loading: no pill rather than a false 0.
+  final int? count;
+  final bool selected;
+  final VoidCallback? onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = this.count;
+    final ink = selected ? SaltColors.chipInk : SaltColors.muted;
+    return FTappable(
+      onPress: onPress,
+      selected: selected,
+      semanticsButton: false,
+      semanticsChecked: selected,
+      semanticsInMutuallyExclusiveGroup: true,
+      builder: (context, states, child) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: selected ? SaltColors.chip : null,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: child,
+      ),
+      child: MouseRegion(
+        cursor: onPress == null
+            ? SystemMouseCursors.basic
+            : SystemMouseCursors.click,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: ink,
+                ),
+              ),
+              if (count != null) ...[
+                const SizedBox(width: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected ? Colors.white : const Color(0xFFF4EFE9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    _thousands(count),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: count == 0 ? const Color(0xFFB8B1AC) : ink,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The green "nothing to do" line under the button.
+class _OkBanner extends StatelessWidget {
+  const _OkBanner(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+      decoration: BoxDecoration(
+        color: SaltColors.okBg,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(FLucideIcons.check, size: 16, color: SaltColors.okInk),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13, color: SaltColors.okInk),
+            ),
+          ),
+        ],
       ),
     );
   }

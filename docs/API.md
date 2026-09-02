@@ -44,14 +44,14 @@ implementation serves both.
 **Side-effectful GETs carry the same protection.** The session cookie is
 `SameSite=Lax`, which a browser *does* send on a cross-site top-level
 navigation, so a GET that spends something is drivable from an attacker's
-page even though it is not a mutation. Five reads therefore refuse a
+page even though it is not a mutation. Six reads therefore refuse a
 cookie-authenticated request unless it proves it is not cross-site — either
 `X-Requested-With: SaltToTaste`, **or** a `Sec-Fetch-Site` the browser
 itself stamped `same-origin` or `none` (which is what lets a download
 opened by a top-level navigation through). Neither present — including a
 client that sends no `Sec-Fetch-*` at all — is `403 csrf`.
 
-**Anything sent as `Authorization: Bearer` is exempt** on all five — a PAT
+**Anything sent as `Authorization: Bearer` is exempt** on all six — a PAT
 *and* a session token presented as a bearer (the form the login response
 hands to non-browser clients). What these guards key on is whether the
 browser attached the credential *ambiently*, which only the cookie is; a
@@ -665,6 +665,24 @@ Note `stale` is derived, not stored: `recipe_nutrition.status` accepts the
 value in its CHECK constraint but nothing ever writes it, so staleness is a
 comparison between the stored `ingredients_hash` and one recomputed from the
 recipe.
+
+### `GET /api/v1/nutrition/bulk/counts` (admin)
+
+How many recipes each `POST /nutrition/bulk` scope would select right now —
+the preview the Settings → Nutrition scope control shows before the click:
+
+```json
+{"missing": 1190, "stale": 3, "all": 1198}
+```
+
+The same selection the sweep runs (`bulkScopeIds`), so each number is the
+`total` the corresponding 202 would echo. Re-read it after a job finishes;
+a `stale` count of `0` means every computed recipe still matches its
+ingredients. Spends no FDC budget and writes nothing, so a `read` PAT may
+read it — but `stale` hashes every computed recipe synchronously on the
+serving isolate (~110–190 ms across a 1,198-recipe library), which makes
+this a [side-effectful GET](#cross-site-gets): a cookie session with neither
+`X-Requested-With` nor a same-origin `Sec-Fetch-Site` gets `403 csrf`.
 
 ### `GET /api/v1/nutrition/jobs/{id}` (admin)
 

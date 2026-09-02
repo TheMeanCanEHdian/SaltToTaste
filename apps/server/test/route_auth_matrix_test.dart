@@ -70,7 +70,8 @@ import '../routes/api/v1/import/index.dart' as import_index;
 import '../routes/api/v1/import/jobs/[id].dart' as import_job;
 import '../routes/api/v1/library/index.dart' as library_index;
 import '../routes/api/v1/library/rescan.dart' as library_rescan;
-import '../routes/api/v1/nutrition/bulk.dart' as nutrition_bulk;
+import '../routes/api/v1/nutrition/bulk/counts.dart' as nutrition_bulk_counts;
+import '../routes/api/v1/nutrition/bulk/index.dart' as nutrition_bulk;
 import '../routes/api/v1/nutrition/jobs/[id].dart' as nutrition_job;
 import '../routes/api/v1/nutrition/search.dart' as nutrition_search;
 import '../routes/api/v1/recipes/[id]/favorite.dart' as recipe_favorite;
@@ -468,9 +469,19 @@ final List<_Route> _routes = [
   ),
 
   // --- nutrition. The manual food SEARCH is admin + full scope on a GET: a
-  // cache miss spends the deployment's FDC request budget.
+  // cache miss spends the deployment's FDC request budget. The bulk COUNTS
+  // spend no budget and write nothing, so a read-scope PAT may read them —
+  // but `stale` hashes every computed recipe synchronously on the serving
+  // isolate (~110-190 ms across the real library), which is S12's class:
+  // guarded against a cross-site drive like the other cost-bearing reads.
   const _Route(
-    'api/v1/nutrition/bulk.dart',
+    'api/v1/nutrition/bulk/counts.dart',
+    '/api/v1/nutrition/bulk/counts',
+    nutrition_bulk_counts.onRequest,
+    [_Probe('GET', access: _Access.admin, sideEffect: true)],
+  ),
+  const _Route(
+    'api/v1/nutrition/bulk/index.dart',
     '/api/v1/nutrition/bulk',
     nutrition_bulk.onRequest,
     [
@@ -880,6 +891,7 @@ const Map<String, String> _guardedWork = {
   'api/v1/admin/logs/export.dart': 'logsExportHandler(',
   'api/v1/backups/[name].dart': 'file.openRead()',
   'api/v1/import/candidates.dart': 'importCandidates(',
+  'api/v1/nutrition/bulk/counts.dart': 'bulkScopeIds(',
   'api/v1/nutrition/search.dart': 'foodSearchBody(',
 };
 

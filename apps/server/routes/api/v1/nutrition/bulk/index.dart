@@ -1,6 +1,5 @@
 import 'package:dart_frog/dart_frog.dart';
-import 'package:salt_server/src/bootstrap.dart'
-    show bulkNutritionProvider, fdcApiKeySetting;
+import 'package:salt_server/src/bootstrap.dart' show fdcApiKeySetting;
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart' show readJsonBody;
@@ -54,7 +53,11 @@ Future<Response> onRequest(RequestContext context) async {
   }
   // The bulk provider has no rate-limit wait cap: the job is expected to
   // ride out the hourly budget, unlike interactive requests.
-  final jobId = startBulkJob(db, bulkNutritionProvider, scope: scope);
+  final jobId = startBulkJob(
+    db,
+    context.read<BulkNutritionProvider>().provider,
+    scope: scope,
+  );
   if (jobId == null) {
     throw const ConflictException('A bulk nutrition job is already running.');
   }

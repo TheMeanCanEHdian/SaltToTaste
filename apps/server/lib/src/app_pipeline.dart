@@ -12,6 +12,8 @@ import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/middleware/request_logger.dart';
 import 'package:salt_server/src/middleware/web_app.dart';
+import 'package:salt_server/src/nutrition/bulk_job.dart'
+    show BulkNutritionProvider;
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
 
@@ -129,6 +131,10 @@ Handler buildAppMiddleware(
   required SearchService Function() searchService,
   required LogStore logStore,
   String indexPath = 'public/index.html',
+  // Optional so every existing harness keeps working AND becomes hermetic:
+  // a test that injects a fixture as the interactive client gets the same
+  // fixture for bulk jobs. Production passes the uncapped bulk client.
+  NutritionProvider? bulkNutritionProvider,
 }) {
   return handler
       // Innermost: lazily resolves AuthUser? from the session cookie or
@@ -144,6 +150,13 @@ Handler buildAppMiddleware(
       .use(provider<SearchService>((_) => searchService()))
       .use(provider<LogStore>((_) => logStore))
       .use(provider<NutritionProvider>((_) => nutritionProvider))
+      .use(
+        provider<BulkNutritionProvider>(
+          (_) => BulkNutritionProvider(
+            bulkNutritionProvider ?? nutritionProvider,
+          ),
+        ),
+      )
       .use(provider<SaltDatabase>((_) => database))
       // Inside the ServerConfig provider it reads, outside everything else so
       // it sees every request that reaches the chain.

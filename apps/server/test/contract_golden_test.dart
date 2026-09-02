@@ -21,6 +21,7 @@ import '../routes/api/v1/import/index.dart' as import_route;
 import '../routes/api/v1/import/jobs/[id].dart' as import_job_route;
 import '../routes/api/v1/library/index.dart' as library_route;
 import '../routes/api/v1/library/rescan.dart' as rescan_route;
+import '../routes/api/v1/nutrition/bulk/counts.dart' as bulk_counts_route;
 import '../routes/api/v1/nutrition/jobs/[id].dart' as nutrition_job_route;
 import '../routes/api/v1/recipes/[id]/favorite.dart' as favorite_route;
 import '../routes/api/v1/recipes/[id]/index.dart' as recipe_route;
@@ -416,6 +417,43 @@ void main() {
           '/api/v1/library',
           headers: harness.auth(adminSession),
         );
+
+        // --- bulk-scope counts, with every scope non-zero ------------------
+        // Last, so nothing above sees the edit. The library now holds the
+        // computed Bundt plus two never-computed recipes (pancakes, and the
+        // soup the scan just added). Dropping the Bundt's last ingredient
+        // line through the real PUT changes its ingredients hash, which is
+        // the one thing that makes a computed recipe `stale` — so the golden
+        // carries a real stale count rather than a zero the app-side parse
+        // could not tell from a dropped key.
+        final (detailStatus, detailBody) = await harness.send(
+          'GET',
+          '/api/v1/recipes/$_bundtSlug',
+          headers: harness.auth(adminSession),
+        );
+        expect(detailStatus, HttpStatus.ok, reason: detailBody);
+        final bundt =
+            (jsonDecode(detailBody) as Map<String, dynamic>)['recipe']!
+                as Map<String, dynamic>;
+        final groups = (bundt['ingredients']! as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        final lastItems = (groups.last['items']! as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        groups.last['items'] = lastItems.sublist(0, lastItems.length - 1);
+        await harness.expectOk(
+          'PUT',
+          '/api/v1/recipes/$_bundtSlug',
+          headers: harness.auth(adminSession, csrf: true),
+          jsonBody: {
+            'recipe': {'ingredients': groups},
+          },
+        );
+        await harness.capture(
+          'nutrition_bulk_counts',
+          'GET',
+          '/api/v1/nutrition/bulk/counts',
+          headers: harness.auth(adminSession),
+        );
       });
 
       tearDownAll(harness.stop);
@@ -729,6 +767,8 @@ FutureOr<Response> _dispatch(RequestContext context) {
       return import_route.onRequest(context);
     case '/api/v1/import/candidates':
       return candidates_route.onRequest(context);
+    case '/api/v1/nutrition/bulk/counts':
+      return bulk_counts_route.onRequest(context);
   }
   for (final (pattern, handler)
       in <(RegExp, FutureOr<Response> Function(RequestContext, String))>[

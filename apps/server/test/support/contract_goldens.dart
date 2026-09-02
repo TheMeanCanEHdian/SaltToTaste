@@ -50,9 +50,10 @@ const List<String> corpusFreeContractGoldenNames = [
 ];
 
 /// Goldens that genuinely need the ATK corpus: a real v1 import source (with
-/// its `source.yaml` and hero images), a reconciliation scan over it, and a
+/// its `source.yaml` and hero images), a reconciliation scan over it, a
 /// nutrition compute whose FDC responses were recorded against those exact
-/// ingredient lines.
+/// ingredient lines, and the bulk-scope counts over that library once one of
+/// its computed recipes has gone stale.
 const List<String> corpusBackedContractGoldenNames = [
   'import_candidates',
   'import_job',
@@ -60,6 +61,7 @@ const List<String> corpusBackedContractGoldenNames = [
   'nutrition',
   'nutrition_matches',
   'nutrition_review',
+  'nutrition_bulk_counts',
 ];
 
 /// Every golden this contract covers. The server test writes/compares all of
