@@ -85,4 +85,73 @@ void main() {
       reason: 'a registered worker serves a stale bundle after every upgrade',
     );
   });
+  group('declared icons exist and are what they claim to be', () {
+    // web/favicon.png held real ICO bytes and was declared image/png. The tab
+    // icon still looked right -- browsers sniff -- so the only symptom was a
+    // 404 on the automatic /favicon.ico probe, once per page load, which is
+    // invisible unless someone reads the access log. A wrong declared type is
+    // exactly the kind of thing nothing else in this build checks.
+    final magic = <String, List<int>>{
+      // ICO: reserved=0, type=1 (icon).
+      '.ico': [0x00, 0x00, 0x01, 0x00],
+      // PNG signature.
+      '.png': [0x89, 0x50, 0x4E, 0x47],
+    };
+
+    test('every <link rel="icon"> href resolves to a file', () {
+      final html = File('web/index.html').readAsStringSync();
+      final links = RegExp(
+        r'''<link\s+rel="icon"[^>]*href="([^"]+)"''',
+      ).allMatches(html).map((m) => m.group(1)!).toList();
+      expect(links, isNotEmpty, reason: 'no icon links found to check');
+      for (final href in links) {
+        expect(
+          File('web/$href').existsSync(),
+          isTrue,
+          reason: '<link rel="icon" href="$href"> points at nothing',
+        );
+      }
+    });
+
+    test('the automatic /favicon.ico probe finds a real ICO', () {
+      // Browsers request this whether or not it is declared, so the name is
+      // not ours to choose.
+      final ico = File('web/favicon.ico');
+      expect(ico.existsSync(), isTrue, reason: '/favicon.ico will 404');
+      expect(
+        ico.readAsBytesSync().take(4),
+        magic['.ico'],
+        reason: 'favicon.ico is not ICO-formatted',
+      );
+    });
+
+    test('each icon href declares the type its bytes actually are', () {
+      final html = File('web/index.html').readAsStringSync();
+      final links = RegExp(
+        r'''<link\s+rel="icon"\s+type="([^"]+)"\s+href="([^"]+)"''',
+      ).allMatches(html);
+      const expectedFor = {
+        'image/x-icon': '.ico',
+        'image/vnd.microsoft.icon': '.ico',
+        'image/png': '.png',
+      };
+      for (final m in links) {
+        final declared = m.group(1)!;
+        final href = m.group(2)!;
+        final wantExt = expectedFor[declared];
+        if (wantExt == null) continue; // svg and friends: nothing to sniff
+        expect(
+          href.endsWith(wantExt),
+          isTrue,
+          reason: '$href is declared $declared but is not a $wantExt',
+        );
+        expect(
+          File('web/$href').readAsBytesSync().take(4),
+          magic[wantExt],
+          reason: '$href is declared $declared, bytes say otherwise',
+        );
+      }
+    });
+  });
+
 }

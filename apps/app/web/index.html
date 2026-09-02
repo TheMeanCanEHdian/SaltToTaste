@@ -26,9 +26,16 @@
   <meta name="apple-mobile-web-app-title" content="Salt to Taste">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon: SVG for crisp scaling on modern browsers, PNG as fallback. -->
+  <!-- Favicon: SVG for crisp scaling on modern browsers, ICO as fallback.
+       The ICO is also what browsers probe for unconditionally at
+       /favicon.ico whether or not it is declared here, so it must live at
+       that exact name. It shipped as "favicon.png" from the first web
+       build (P2): real ICO bytes under a PNG extension, declared as
+       image/png. Browsers sniffed past the wrong type so the tab icon
+       always looked right, while the automatic /favicon.ico probe 404ed on
+       every page load. -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
 
   <!-- Shown until Flutter boots and sets the document title. -->
   <title>Salt to Taste</title>
