@@ -27,4 +27,17 @@ if ('serviceWorker' in navigator) {
 {{flutter_js}}
 {{flutter_build_config}}
 
-_flutter.loader.load();
+// The engine's font-fallback base URL defaults to https://fonts.gstatic.com/s/,
+// so a build that bundles all of its own fonts STILL calls Google on every
+// load: once for its default face (roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2)
+// and again per missing glyph for Noto. This app renders entirely in bundled
+// OpenSans/Arimo/Inter/RobotoMono and is meant to be self-hosted, so that
+// request buys nothing and leaks every visitor's IP to a third party. It only
+// became visible when the app shell gained a CSP (`connect-src 'self'`), which
+// blocked it -- the fetch had been happening silently since the first build.
+// Same-origin base: the engine asks this server, and gets an honest answer.
+_flutter.loader.load({
+  config: {
+    fontFallbackBaseUrl: "fallback-fonts/",
+  },
+});
