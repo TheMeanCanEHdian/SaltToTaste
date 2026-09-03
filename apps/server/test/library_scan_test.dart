@@ -67,6 +67,18 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
+  /// Puts the shared fixture (file AND database) back to [good] once the
+  /// calling test finishes — pass or fail. Restoring inline at the end of
+  /// the body instead lets the first failed expectation throw past the
+  /// restore, corrupting the fixture for every later test in the file and
+  /// turning one real failure into a fan-out of misleading ones.
+  void restoreFixtureAfterTest(String good) {
+    addTearDown(() {
+      exportFile.writeAsStringSync(good);
+      scanLibrary(db: db, config: config);
+    });
+  }
+
   test('an in-sync library scans clean', () {
     final report = scanLibrary(db: db, config: config);
     expect(report.filesSeen, 1);
@@ -105,6 +117,7 @@ void main() {
 
   test('a malformed hand edit is skipped and the database version stays', () {
     final good = exportFile.readAsStringSync();
+    restoreFixtureAfterTest(good);
     exportFile.writeAsStringSync('$good\n\t: this is not valid yaml');
 
     final report = scanLibrary(db: db, config: config);
@@ -119,9 +132,6 @@ void main() {
       'Rich Chocolate Bundt Cake (Hand Edited)',
       reason: 'the malformed file must not clobber the database',
     );
-
-    // Put the good text back for the next tests.
-    exportFile.writeAsStringSync(good);
   });
 
   test('an over-cap hand edit is skipped, not imported (review B13)', () {
@@ -129,6 +139,7 @@ void main() {
     // scan once imported it verbatim, after which every UNRELATED in-app
     // save 422'd — the recipe became uneditable from the editor.
     final good = exportFile.readAsStringSync();
+    restoreFixtureAfterTest(good);
     final decoded = RecipeYamlCodec.decode(good).recipe;
     final overCap = decoded.copyWith(title: 'X' * 300);
     exportFile.writeAsStringSync(RecipeYamlCodec.encode(overCap));
@@ -142,9 +153,6 @@ void main() {
       isNot(overCap.title),
       reason: 'the database version stays authoritative',
     );
-
-    exportFile.writeAsStringSync(good);
-    scanLibrary(db: db, config: config);
   });
 
   test('a file whose document id does not match its name is skipped', () {
@@ -203,18 +211,6 @@ void main() {
   // editor may reflow a mapping or reorder keys. Each case below starts from
   // the CURRENT export (real corpus data) and reshapes only its *text*.
   group('editor-realistic hand edits', () {
-    /// Puts the shared fixture (file AND database) back to [good] once the
-    /// calling test finishes — pass or fail. Restoring inline at the end of
-    /// the body instead lets the first failed expectation throw past the
-    /// restore, corrupting the fixture for every later test in the file and
-    /// turning one real failure into a fan-out of misleading ones.
-    void restoreFixtureAfterTest(String good) {
-      addTearDown(() {
-        exportFile.writeAsStringSync(good);
-        scanLibrary(db: db, config: config);
-      });
-    }
-
     test('a CRLF hand edit (Windows editor) wins and is stored as LF', () {
       final good = exportFile.readAsStringSync();
       restoreFixtureAfterTest(good);

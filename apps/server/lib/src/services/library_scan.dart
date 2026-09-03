@@ -180,9 +180,6 @@ void _scanSourceDir(
       report.conflictFiles.add('$sourceSlug/recipes/$fileName');
       continue;
     }
-    if (fileName.endsWith('.tmp')) {
-      continue;
-    }
     report.filesSeen += 1;
     final id = fileName.substring(0, fileName.length - '.yaml'.length);
     if (!isSafeRecipeId(id)) {
