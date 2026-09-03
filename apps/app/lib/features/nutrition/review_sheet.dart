@@ -69,7 +69,12 @@ class _ReviewSheetState extends State<_ReviewSheet>
   Widget build(BuildContext context) {
     final state = context.watch<NutritionCubit>().state;
     final matches = state.matches;
-    final busy = state.overridingPosition != null;
+    // An apply-to-all in flight walks every other recipe; a decision made on
+    // another row meanwhile would race its receipt.
+    final busy = state.overridingPosition != null || state.applying;
+    // The row that just raised an offer (or holds its receipt) may have moved
+    // into a collapsed group by the very decision that raised it.
+    final spotlight = state.offer?.position ?? state.applied?.position;
 
     final attention = <IngredientMatch>[];
     final counted = <IngredientMatch>[];
@@ -92,6 +97,7 @@ class _ReviewSheetState extends State<_ReviewSheet>
     final listView = _ListView(
       isAdmin: widget.isAdmin,
       busy: busy,
+      spotlight: spotlight,
       attention: attention,
       counted: counted,
       skipped: skipped,
@@ -274,6 +280,7 @@ class _ListView extends StatelessWidget {
   const _ListView({
     required this.isAdmin,
     required this.busy,
+    required this.spotlight,
     required this.attention,
     required this.counted,
     required this.skipped,
@@ -284,6 +291,10 @@ class _ListView extends StatelessWidget {
   final List<IngredientMatch> attention;
   final List<IngredientMatch> counted;
   final List<IngredientMatch> skipped;
+
+  /// The position whose apply-to-all offer or receipt is showing, if any —
+  /// the group holding it opens so the strip is on screen.
+  final int? spotlight;
 
   @override
   Widget build(BuildContext context) {
@@ -296,6 +307,7 @@ class _ListView extends StatelessWidget {
             dot: SaltColors.warnInk,
             count: attention.length,
             initiallyExpanded: true,
+            expandOn: attention.any((m) => m.position == spotlight),
             children: [
               for (final m in attention)
                 _MatchRow(
@@ -311,6 +323,7 @@ class _ListView extends StatelessWidget {
           dot: SaltColors.okInk,
           count: counted.length,
           initiallyExpanded: attention.isEmpty,
+          expandOn: counted.any((m) => m.position == spotlight),
           children: [
             for (final m in counted)
               _MatchRow(
@@ -327,6 +340,7 @@ class _ListView extends StatelessWidget {
             dot: SaltColors.muted,
             count: skipped.length,
             initiallyExpanded: false,
+            expandOn: skipped.any((m) => m.position == spotlight),
             children: [
               for (final m in skipped)
                 _MatchRow(
@@ -349,6 +363,7 @@ class _CollapsibleGroup extends StatefulWidget {
     required this.count,
     required this.initiallyExpanded,
     required this.children,
+    this.expandOn = false,
   });
 
   final String title;
@@ -357,12 +372,25 @@ class _CollapsibleGroup extends StatefulWidget {
   final bool initiallyExpanded;
   final List<Widget> children;
 
+  /// Opens the group (once, when this turns true) because a child needs to
+  /// be seen — the row a just-made decision moved here along with its
+  /// apply-to-all offer. The person can still collapse it afterwards.
+  final bool expandOn;
+
   @override
   State<_CollapsibleGroup> createState() => _CollapsibleGroupState();
 }
 
 class _CollapsibleGroupState extends State<_CollapsibleGroup> {
-  late bool _expanded = widget.initiallyExpanded;
+  late bool _expanded = widget.initiallyExpanded || widget.expandOn;
+
+  @override
+  void didUpdateWidget(_CollapsibleGroup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.expandOn && !oldWidget.expandOn && !_expanded) {
+      _expanded = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

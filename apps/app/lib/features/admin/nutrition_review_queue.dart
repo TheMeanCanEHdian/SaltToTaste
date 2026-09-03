@@ -430,6 +430,23 @@ class _FixPane extends StatelessWidget {
   }
 }
 
+/// Whether a [NutritionState] transition means the selected line is done
+/// and the queue should drop it and move on: a fix landed with no
+/// apply-to-all offer pending, or the offer (or its receipt) was just
+/// closed — and never while an error is showing (a failed override, or a
+/// failed apply until it is dismissed, which clears the error too).
+bool queueShouldAdvance(NutritionState previous, NutritionState current) {
+  if (current.error != null) {
+    return false;
+  }
+  final settled = current.offer == null && current.applied == null;
+  final fixLanded =
+      previous.overridingPosition != null && current.overridingPosition == null;
+  final offerClosed =
+      (previous.offer != null || previous.applied != null) && settled;
+  return (fixLanded && settled) || offerClosed;
+}
+
 class _FixPaneBody extends StatelessWidget {
   const _FixPaneBody({required this.line});
 
@@ -447,18 +464,7 @@ class _FixPaneBody extends StatelessWidget {
       // …unless the fix raised an apply-to-all offer: then the pane stays
       // on this line until the admin applies or declines (and the receipt
       // is dismissed), and advances at that moment instead.
-      listenWhen: (previous, current) {
-        if (current.error != null) {
-          return false;
-        }
-        final settled = current.offer == null && current.applied == null;
-        final fixLanded =
-            previous.overridingPosition != null &&
-            current.overridingPosition == null;
-        final offerClosed =
-            (previous.offer != null || previous.applied != null) && settled;
-        return (fixLanded && settled) || offerClosed;
-      },
+      listenWhen: queueShouldAdvance,
       listener: (context, _) =>
           context.read<NutritionReviewCubit>().completeFix(),
       child: BlocBuilder<NutritionCubit, NutritionState>(
@@ -513,7 +519,7 @@ class _FixContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<NutritionCubit>();
-    final busy = state.overridingPosition != null;
+    final busy = state.overridingPosition != null || state.applying;
     final bucket = matchBucketOf(match);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),

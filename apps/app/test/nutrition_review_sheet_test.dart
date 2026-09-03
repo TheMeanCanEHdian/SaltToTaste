@@ -434,6 +434,7 @@ void main() {
           label: 'escarole',
           fdcId: 99,
           confirmed: false,
+          grams: null,
           others: 41,
         ),
       ),
@@ -458,6 +459,27 @@ void main() {
     expect(find.textContaining('Applied to '), findsNothing);
   });
 
+  testWidgets('the strip is on screen even when its row just moved into the '
+      'collapsed Counted group', (tester) async {
+    // Position 7 (chicken broth) is counted; with attention lines present
+    // that group starts collapsed — and a decision moves the decided row
+    // there. The offer must not vanish with it.
+    final cubit = _ApplyCubit(
+      _state().copyWith(
+        offer: (
+          position: 7,
+          label: 'chicken broth',
+          fdcId: 4,
+          confirmed: true,
+          grams: null,
+          others: 3,
+        ),
+      ),
+    );
+    await open(tester, seeded: cubit);
+    expect(find.text('Apply to 3 recipes'), findsOneWidget);
+  });
+
   testWidgets('no offer, no strip; a member never sees one', (tester) async {
     await open(tester, seeded: _ApplyCubit(_state()));
     expect(find.textContaining('with a different match.'), findsNothing);
@@ -473,6 +495,7 @@ void main() {
             label: 'escarole',
             fdcId: 99,
             confirmed: false,
+            grams: null,
             others: 41,
           ),
         ),

@@ -129,6 +129,8 @@ class ApplyToAllStrip extends StatelessWidget {
           ),
           child: Text(
             applying ? 'Applying…' : 'Apply to ${_recipes(o.others)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         if (!applying)
@@ -145,6 +147,7 @@ class ApplyToAllStrip extends StatelessWidget {
           'decided are left alone. Reversible: pick a different food here and '
           'apply again.';
     }
+    final actions = Wrap(spacing: 6, runSpacing: 6, children: buttons);
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: SaltColors.hairline, width: 1.5),
@@ -156,14 +159,34 @@ class ApplyToAllStrip extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
-            child: Row(
-              children: [
-                icon,
-                const SizedBox(width: 12),
-                Expanded(child: text),
-                const SizedBox(width: 12),
-                Wrap(spacing: 6, runSpacing: 6, children: buttons),
-              ],
+            // Inline on a wide sheet; on a phone the buttons take their own
+            // line. A Wrap as a plain Row child gets unbounded width and
+            // never wraps — it overflowed and clipped "Not now" off-screen.
+            child: LayoutBuilder(
+              builder: (context, constraints) => constraints.maxWidth < 560
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            icon,
+                            const SizedBox(width: 12),
+                            Expanded(child: text),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Align(alignment: Alignment.centerRight, child: actions),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        icon,
+                        const SizedBox(width: 12),
+                        Expanded(child: text),
+                        const SizedBox(width: 12),
+                        actions,
+                      ],
+                    ),
             ),
           ),
           if (footer != null)

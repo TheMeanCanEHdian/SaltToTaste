@@ -594,8 +594,10 @@ computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾ ounces"`, `"entered by
 hand"` — for sanity-checking an estimate (null when there is no amount;
 re-derived cache-only, never spends FDC budget), `status`: `auto |
 confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
-for re-picking, `item` (the parsed ingredient item, e.g. `unsalted
-butter`, null when the line has none), and `others`: how many recipes hold an undecided line
+for re-picking, `item` (the parsed ingredient item VERBATIM — it can carry
+the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client
+wanting a bare name strips parentheticals, as the app does; null when the
+line has none), and `others`: how many recipes hold an undecided line
 with the same ingredient item (the same recipe's other lines count) that
 is not already on this line's food — at most what `apply_to_all` (below)
 would reach, since a row whose line text changed since its compute is

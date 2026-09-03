@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -24,6 +25,10 @@ class _Adapter implements HttpClientAdapter {
 
   /// When set, the next PUT fails with a 500 envelope.
   bool failNextPut = false;
+
+  /// When set, an apply_to_all PUT waits here before answering — a sweep
+  /// held open so a test can act while it runs.
+  Completer<void>? gate;
 
   Map<String, dynamic> _matches() {
     final body = golden('nutrition_matches');
@@ -53,6 +58,9 @@ class _Adapter implements HttpClientAdapter {
       }
       final sent = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
       puts.add(sent);
+      if (sent['apply_to_all'] == true && gate != null) {
+        await gate!.future;
+      }
       if (failNextPut) {
         failNextPut = false;
         return ResponseBody.fromString(
@@ -130,6 +138,7 @@ void main() {
       label: itemLabel(line.item)!,
       fdcId: 123456,
       confirmed: false,
+      grams: null,
       others: 41,
     ));
     expect(cubit.state.applied, isNull);
@@ -202,6 +211,90 @@ void main() {
     );
     expect(itemLabel('(optional)'), isNull);
     expect(itemLabel(null), isNull);
+  });
+
+  test('the amount typed with the pick travels with the apply', () async {
+    // "Save match & amount" sends fdc_id AND grams in one PUT; the resend
+    // must carry both, or the server recomputes this line's grams from the
+    // estimate and the typed amount is gone.
+    await boot(others: 41);
+    final line = flour();
+    await cubit.override(line.position, fdcId: 123456, grams: 250);
+    await pumpEventQueue();
+    expect(cubit.state.offer?.grams, 250);
+    adapter.puts.clear();
+    await cubit.applyToAll();
+    await pumpEventQueue();
+    expect(adapter.puts, [
+      {'fdc_id': 123456, 'grams': 250, 'apply_to_all': true},
+    ]);
+  });
+
+  test('a decision on another row while an apply runs keeps ITS offer; the '
+      'receipt lands for the applied row', () async {
+    await boot(others: 41);
+    final a = flour();
+    final b = cubit.state.matches!.firstWhere(
+      (m) => m.position != a.position && m.fdcId != null,
+    );
+    await cubit.override(a.position, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.gate = Completer<void>();
+    final sweep = cubit.applyToAll();
+    await pumpEventQueue();
+    expect(cubit.state.applying, isTrue);
+
+    await cubit.override(b.position, confirmed: true);
+    await pumpEventQueue();
+    expect(cubit.state.offer?.position, b.position);
+
+    adapter.gate!.complete();
+    await sweep;
+    await pumpEventQueue();
+    expect(cubit.state.offer?.position, b.position, reason: 'B stands');
+    expect(cubit.state.applied?.position, a.position);
+  });
+
+  test('a second tap while applying is a no-op', () async {
+    await boot(others: 41);
+    await cubit.override(flour().position, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.puts.clear();
+    adapter.gate = Completer<void>();
+    final first = cubit.applyToAll();
+    await pumpEventQueue();
+    await cubit.applyToAll(); // ignored
+    adapter.gate!.complete();
+    await first;
+    await pumpEventQueue();
+    expect(adapter.puts, hasLength(1));
+  });
+
+  test('the next decision clears a shown receipt', () async {
+    await boot(others: 41);
+    final a = flour();
+    await cubit.override(a.position, fdcId: 123456);
+    await pumpEventQueue();
+    await cubit.applyToAll();
+    await pumpEventQueue();
+    expect(cubit.state.applied, isNotNull);
+    final b = cubit.state.matches!.firstWhere((m) => m.position != a.position);
+    await cubit.override(b.position, skipped: true);
+    await pumpEventQueue();
+    expect(cubit.state.applied, isNull);
+  });
+
+  test('dismissing a failed apply clears its error too', () async {
+    await boot(others: 41);
+    await cubit.override(flour().position, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.failNextPut = true;
+    await cubit.applyToAll();
+    await pumpEventQueue();
+    expect(cubit.state.error, isNotNull);
+    cubit.dismissApply();
+    expect(cubit.state.error, isNull, reason: 'the queue must not stall');
+    expect(cubit.state.offer, isNull);
   });
 
   test('a failed apply keeps the offer and says why', () async {

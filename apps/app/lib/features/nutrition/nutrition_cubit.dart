@@ -14,6 +14,7 @@ typedef ApplyOffer = ({
   String label,
   int? fdcId,
   bool confirmed,
+  double? grams,
   int others,
 });
 
@@ -348,6 +349,9 @@ class NutritionCubit extends Cubit<NutritionState> {
             label: itemLabel(row.item) ?? row.raw,
             fdcId: fdcId,
             confirmed: confirmed == true,
+            // The SAME save: a typed amount travels with the pick, or the
+            // resend would recompute this line's grams from the estimate.
+            grams: grams,
             others: row.others,
           )
         : null;
@@ -398,6 +402,7 @@ class NutritionCubit extends Cubit<NutritionState> {
         idOrSlug,
         offer.position,
         fdcId: offer.fdcId,
+        grams: offer.grams,
         confirmed: offer.confirmed ? true : null,
         applyToAll: true,
       );
@@ -412,11 +417,14 @@ class NutritionCubit extends Cubit<NutritionState> {
       return;
     }
     final applied = result.applied;
+    // A decision landed on ANOTHER row while this apply was in flight raises
+    // its own offer; that newer offer stands — only this one is retired.
+    final stillCurrent = state.offer == offer;
     emit(
       state.copyWith(
         matches: result.matches,
         applying: false,
-        clearOffer: true,
+        clearOffer: stillCurrent,
         applied: applied == null
             ? null
             : (
@@ -434,6 +442,10 @@ class NutritionCubit extends Cubit<NutritionState> {
     if (state.offer == null && state.applied == null) {
       return;
     }
-    emit(state.copyWith(clearOffer: true, clearApplied: true));
+    // A failed apply's error goes with the offer it belonged to; leaving it
+    // would hold the admin queue on a line that is in fact resolved.
+    emit(
+      state.copyWith(clearOffer: true, clearApplied: true, clearError: true),
+    );
   }
 }
