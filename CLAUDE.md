@@ -81,6 +81,8 @@ cd packages/salt_shared && dart test          # includes the 1,198-file corpus g
 cd apps/app && python3 tool/gen_lucide_catalog.py  # regen lucide_catalog.g.dart (tag-icon vocabulary) after a forui/forui_assets upgrade
 cd apps/app && python3 tool/gen_logo_assets.py     # after editing assets/images/logo.svg: re-adds the currentColor
                                                    # tint hook (colorFilter blanks on CanvasKit) + regens web/favicon.svg
+                                                   # and the PWA icons in web/icons (rasterised with macOS qlmanage;
+                                                   # skipped elsewhere — the PNGs are committed)
 
 # Server (apps/server)
 cd apps/server && dart test

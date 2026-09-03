@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:salt_app/core/widgets/document_title.dart';
 import 'package:salt_app/core/widgets/salt_nav_bar.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/auth/change_password_page.dart';
@@ -47,16 +48,22 @@ import 'package:salt_app/features/settings/settings_page.dart';
 /// copy while the shipped router had no `key` and ran no transition at all.
 /// A test must drive THIS function or it proves nothing.
 @visibleForTesting
-Page<void> fadePageForTest(GoRouterState state, Widget child) =>
-    _fadePage(state, child);
+Page<void> fadePageForTest(
+  GoRouterState state,
+  Widget child, {
+  String? title,
+}) => _fadePage(state, child, title: title);
 
-Page<void> _fadePage(GoRouterState state, Widget child) =>
+/// [title] names the browser tab ("Favorites · Salt to Taste"); null is the
+/// bare app name. A page that knows a better name once it has loaded (the
+/// recipe page) nests its own [DocumentTitle], which wins while it is current.
+Page<void> _fadePage(GoRouterState state, Widget child, {String? title}) =>
     CustomTransitionPage<void>(
       key: state.pageKey,
       name: state.name ?? state.uri.path,
       arguments: state.extra,
       restorationId: state.pageKey.value,
-      child: child,
+      child: DocumentTitle(title: title, child: child),
       transitionDuration: const Duration(milliseconds: 180),
       reverseTransitionDuration: const Duration(milliseconds: 140),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -160,20 +167,26 @@ GoRouter buildRouter(AuthCubit authCubit, EditorExitGuard exitGuard) {
     routes: [
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => _fadePage(state, const LoginPage()),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const LoginPage(), title: 'Sign in'),
       ),
       GoRoute(
         path: '/setup',
-        pageBuilder: (context, state) => _fadePage(state, const SetupPage()),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const SetupPage(), title: 'Set up'),
       ),
       GoRoute(
         path: '/recover',
-        pageBuilder: (context, state) => _fadePage(state, const RecoverPage()),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const RecoverPage(), title: 'Recover access'),
       ),
       GoRoute(
         path: '/change-password',
-        pageBuilder: (context, state) =>
-            _fadePage(state, const ChangePasswordPage()),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          const ChangePasswordPage(),
+          title: 'Change password',
+        ),
       ),
       GoRoute(
         path: '/',
@@ -185,12 +198,13 @@ GoRouter buildRouter(AuthCubit authCubit, EditorExitGuard exitGuard) {
         // Cancel, browser Back); a full-page unload can't be intercepted here.
         // The editor installs the guard while mounted.
         onExit: (context, state) => exitGuard.confirmExit(context),
-        pageBuilder: (context, state) => _fadePage(state, const EditorPage()),
+        pageBuilder: (context, state) =>
+            _fadePage(state, const EditorPage(), title: 'New recipe'),
       ),
       GoRoute(
         path: '/favorites',
         pageBuilder: (context, state) =>
-            _fadePage(state, const FavoritesPage()),
+            _fadePage(state, const FavoritesPage(), title: 'Favorites'),
       ),
       GoRoute(
         path: '/r/:slug',
@@ -202,14 +216,18 @@ GoRouter buildRouter(AuthCubit authCubit, EditorExitGuard exitGuard) {
       GoRoute(
         path: '/r/:slug/edit',
         onExit: (context, state) => exitGuard.confirmExit(context),
-        pageBuilder: (context, state) =>
-            _fadePage(state, EditorPage(slug: state.pathParameters['slug']!)),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          EditorPage(slug: state.pathParameters['slug']!),
+          title: 'Edit recipe',
+        ),
       ),
       GoRoute(
         path: '/search',
         pageBuilder: (context, state) => _fadePage(
           state,
           SearchPage(query: state.uri.queryParameters['q'] ?? ''),
+          title: 'Search',
         ),
       ),
       GoRoute(
@@ -218,35 +236,41 @@ GoRouter buildRouter(AuthCubit authCubit, EditorExitGuard exitGuard) {
         // deep link opens straight to it. A fragment change is a same-page
         // `replace`, so the pageKey (path-based) is unchanged and no transition
         // runs — the tab just swaps.
-        pageBuilder: (context, state) =>
-            _fadePage(state, SettingsPage(tab: state.uri.fragment)),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          SettingsPage(tab: state.uri.fragment),
+          title: 'Settings',
+        ),
       ),
       GoRoute(
         path: '/review',
         pageBuilder: (context, state) =>
-            _fadePage(state, const RecipeReviewPage()),
+            _fadePage(state, const RecipeReviewPage(), title: 'Recipe review'),
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      appBar: const SaltNavBar(),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Semantics(
-              header: true,
-              child: const Text(
-                'Page not found',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+    errorBuilder: (context, state) => DocumentTitle(
+      title: 'Page not found',
+      child: Scaffold(
+        appBar: const SaltNavBar(),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Semantics(
+                header: true,
+                child: const Text(
+                  'Page not found',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            FButton(
-              mainAxisSize: MainAxisSize.min,
-              onPress: () => context.go('/'),
-              child: const Text('Back to recipes'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              FButton(
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => context.go('/'),
+                child: const Text('Back to recipes'),
+              ),
+            ],
+          ),
         ),
       ),
     ),

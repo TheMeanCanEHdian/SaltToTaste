@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:salt_app/router/app_router.dart' show fadePageForTest;
@@ -102,6 +103,47 @@ void main() {
           'this is the dead-fade bug, asserted so it cannot come back unnoticed',
     );
     expect(events, isNot(contains('push')));
+  });
+  testWidgets('the real _fadePage names the tab after the route', (
+    tester,
+  ) async {
+    final labels = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'SystemChrome.setApplicationSwitcherDescription') {
+            labels.add((call.arguments as Map)['label'] as String);
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          pageBuilder: (context, state) => fadePage(state, const Text('HOME')),
+        ),
+        GoRoute(
+          path: '/search',
+          pageBuilder: (context, state) =>
+              fadePage(state, const Text('SEARCH'), title: 'Search'),
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(labels.last, 'Salt to Taste');
+
+    router.go('/search');
+    await tester.pumpAndSettle();
+    expect(labels.last, 'Search · Salt to Taste');
+
+    router.go('/');
+    await tester.pumpAndSettle();
+    expect(labels.last, 'Salt to Taste');
   });
 }
 

@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/document_title.dart';
 import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/photo_fallback.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
@@ -67,7 +68,10 @@ class RecipeDetailPage extends StatelessWidget {
               message: message,
               onRetry: () => context.read<RecipeDetailCubit>().load(slug),
             ),
-            RecipeDetailLoaded(:final detail) => _DetailBody(detail: detail),
+            RecipeDetailLoaded(:final detail) => DocumentTitle(
+              title: detail.recipe.title,
+              child: _DetailBody(detail: detail),
+            ),
           },
         ),
       ),

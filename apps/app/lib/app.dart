@@ -15,6 +15,7 @@ import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/widgets/document_title.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
 import 'package:salt_app/features/auth/splash_view.dart';
 import 'package:salt_app/features/editor/editor_exit_guard.dart';
@@ -110,7 +111,7 @@ class _SaltAppState extends State<SaltApp> {
           BlocProvider(create: (_) => RecipeLayoutCubit(widget.prefs)),
         ],
         child: MaterialApp.router(
-          title: 'SaltToTaste',
+          title: DocumentTitle.appName,
           debugShowCheckedModeBanner: false,
           theme: buildMaterialTheme(forui),
           routerConfig: _router,

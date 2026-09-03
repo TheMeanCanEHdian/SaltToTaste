@@ -1,12 +1,12 @@
 {
-    "name": "salt_app",
-    "short_name": "salt_app",
+    "name": "Salt to Taste",
+    "short_name": "Salt to Taste",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#faf7f4",
+    "theme_color": "#960000",
+    "description": "Your household recipe library.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
