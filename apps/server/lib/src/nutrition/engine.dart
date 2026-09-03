@@ -103,7 +103,7 @@ Future<void> matchAndCompute(
     // treats it as counted — confidence 1 says a person chose it.
     final prior = db.decidedMatchForItemKey(
       normalized,
-      excludingRecipeId: recipe.id,
+      excluding: (recipeId: recipe.id, position: position),
     );
     if (prior != null) {
       final food = await _cachedFood(db, provider, prior.fdcId!);
@@ -500,84 +500,99 @@ Future<FdcFood?> cachedFood(
   int fdcId,
 ) => _cachedFood(db, provider, fdcId);
 
-/// Lands [food] — a person's decision on [itemKey] made in
-/// [excludingRecipeId] — on every UNDECIDED line with that item in every
-/// other recipe, each with grams from its own amounts, then recomputes those
-/// recipes' totals. A decision already made on a target line stands: the
-/// write is guarded at the statement, so one made while this runs stands too.
-/// A row whose recipe no longer has that line (or whose text changed) is
-/// left for the next compute. Returns how many recipes and lines changed.
-Future<({int recipes, int lines})> applyDecisionToOthers(
+/// Lands [food] — a person's decision on [itemKey] made on the line
+/// [excluding] — on every other undecided line with that item (other
+/// recipes, and the same recipe's other lines) not already on that food,
+/// each with grams from its own amounts, then recomputes those recipes'
+/// totals.
+///
+/// The rows are written as `auto` at confidence 1 — machine propagation of
+/// a human decision, exactly like inheritance at compute time — NOT as a
+/// human status: a status of `overridden` would shield them from every
+/// later propagation, so a wrong pick applied to 456 recipes could never be
+/// corrected in bulk. As `auto` rows they are reached again by a corrective
+/// apply-to-all and re-inherited from the newest decision at the next
+/// sweep, while a decision a person makes on any of them still stands.
+///
+/// A decision already made on a target line stands: the write is guarded
+/// at the statement, and a guarded-out write is not counted. A row whose
+/// recipe no longer has that line, or whose text changed, is left for the
+/// next compute. A recipe that fails — its document will not decode, or the
+/// provider fails while its totals recompute — is logged, counted in
+/// `failed`, and does not stop the rest; what was already written stays,
+/// and the counts say exactly what landed.
+Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
   SaltDatabase db,
   NutritionProvider provider, {
   required String itemKey,
   required FdcFood food,
-  required String excludingRecipeId,
+  required ({String recipeId, int position}) excluding,
 }) async {
   final byRecipe = <String, List<IngredientMatchRow>>{};
   for (final target in db.undecidedMatchesForItemKey(
     itemKey,
-    excludingRecipeId: excludingRecipeId,
+    excluding: excluding,
+    fdcId: food.fdcId,
   )) {
     byRecipe.putIfAbsent(target.recipeId, () => []).add(target);
   }
   var recipes = 0;
   var lines = 0;
+  var failed = 0;
   for (final entry in byRecipe.entries) {
-    final ({Recipe recipe, String sourceSlug})? found;
     try {
-      found = db.recipeByIdOrSlug(entry.key);
-      // A stored document that will not decode must not abort the rest.
-      // ignore: avoid_catches_without_on_clauses
-    } catch (error) {
-      _log.warning(
-        'apply-to-all skipped ${entry.key}: its stored document does not '
-        'decode ($error).',
-      );
-      continue;
-    }
-    if (found == null) {
-      continue;
-    }
-    final recipeLines = nutritionLines(found.recipe);
-    var applied = 0;
-    for (final target in entry.value) {
-      if (target.position >= recipeLines.length) {
+      final found = db.recipeByIdOrSlug(entry.key);
+      if (found == null) {
+        continue; // Deleted meanwhile; its rows cascaded away.
+      }
+      final recipeLines = nutritionLines(found.recipe);
+      var applied = 0;
+      for (final target in entry.value) {
+        if (target.position >= recipeLines.length) {
+          continue;
+        }
+        final line = recipeLines[target.position];
+        if (line.raw != target.raw) {
+          continue; // The line changed since that row was written.
+        }
+        final resolution = resolveGrams(
+          amounts: line.amounts,
+          food: food,
+          normalizedItem: itemKey,
+          raw: line.raw,
+        );
+        final written = db.upsertIngredientMatchIfUndecided(
+          IngredientMatchRow(
+            recipeId: found.recipe.id,
+            position: target.position,
+            raw: line.raw,
+            itemKey: itemKey,
+            fdcId: food.fdcId,
+            description: food.description,
+            dataType: food.dataType,
+            confidence: 1,
+            grams: resolution?.grams,
+            gramSource: resolution?.source.name,
+            status: 'auto',
+          ),
+        );
+        if (written) {
+          applied += 1;
+        }
+      }
+      if (applied == 0) {
         continue;
       }
-      final line = recipeLines[target.position];
-      if (line.raw != target.raw) {
-        continue; // The line changed since that row was written.
-      }
-      final resolution = resolveGrams(
-        amounts: line.amounts,
-        food: food,
-        normalizedItem: itemKey,
-        raw: line.raw,
-      );
-      db.upsertIngredientMatchIfUndecided(
-        IngredientMatchRow(
-          recipeId: found.recipe.id,
-          position: target.position,
-          raw: line.raw,
-          itemKey: itemKey,
-          fdcId: food.fdcId,
-          description: food.description,
-          dataType: food.dataType,
-          confidence: 1,
-          grams: resolution?.grams,
-          gramSource: resolution?.source.name,
-          status: 'overridden',
-        ),
-      );
-      applied += 1;
+      await recomputeTotals(db, provider, found.recipe);
+      recipes += 1;
+      lines += applied;
+      // A recipe that will not decode, or whose totals cannot recompute
+      // (the provider failed), must not stop the rest — and must be counted.
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error) {
+      failed += 1;
+      _log.warning('apply-to-all failed for ${entry.key}: $error');
     }
-    if (applied == 0) {
-      continue;
-    }
-    await recomputeTotals(db, provider, found.recipe);
-    recipes += 1;
-    lines += applied;
   }
-  return (recipes: recipes, lines: lines);
+  return (recipes: recipes, lines: lines, failed: failed);
 }

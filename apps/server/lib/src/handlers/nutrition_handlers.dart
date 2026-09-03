@@ -115,7 +115,8 @@ Future<Map<String, Object?>> matchesBody(
           ? 0
           : db.otherRecipesUndecidedCount(
               itemKey,
-              excludingRecipeId: recipe.id,
+              excluding: (recipeId: recipe.id, position: position),
+              fdcId: row?.fdcId,
             ),
       'match': row == null
           ? null
@@ -145,8 +146,9 @@ Future<Map<String, Object?>> matchesBody(
   return {'items': items};
 }
 
-/// What an `apply_to_all` reached: recipes and lines changed.
-typedef AppliedToOthers = ({int recipes, int lines});
+/// What an `apply_to_all` reached: recipes and lines changed, and recipes
+/// that failed part-way (logged; their earlier lines stay as written).
+typedef AppliedToOthers = ({int recipes, int lines, int failed});
 
 /// Applies a `PUT .../nutrition/matches/<pos>` override [body] and
 /// recomputes the stored totals (no FDC searches; at most one cached food
@@ -265,11 +267,14 @@ Future<AppliedToOthers?> applyMatchOverride(
   // a refused request changes nothing — not the line, not the totals.
   FdcFood? food;
   if (applyToAll == true) {
-    if (row.fdcId == null ||
-        (row.status != 'overridden' && row.status != 'confirmed')) {
+    // The decision must be made IN THIS REQUEST — a pick (`fdc_id`) or a
+    // confirm. A grams-only edit promotes the engine's own guess to
+    // `overridden` on this line, and broadcasting that guess as if a person
+    // had chosen the food is exactly what the gate exists to refuse.
+    if (row.fdcId == null || (fdcId == null && confirmed != true)) {
       throw const ValidationException(
-        "'apply_to_all' needs a food decision on this line — pick or "
-        'confirm a food.',
+        "'apply_to_all' needs a food decision in this request — pick a food "
+        '(fdc_id) or confirm the current one.',
       );
     }
     if (itemKey.isEmpty) {
@@ -296,7 +301,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     provider,
     itemKey: itemKey,
     food: food,
-    excludingRecipeId: recipe.id,
+    excluding: (recipeId: recipe.id, position: position),
   );
 }
 

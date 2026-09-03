@@ -48,7 +48,11 @@ Future<Response> onRequest(
     body: {
       ...await matchesBody(db, provider, found.recipe),
       if (applied != null)
-        'applied': {'recipes': applied.recipes, 'lines': applied.lines},
+        'applied': {
+          'recipes': applied.recipes,
+          'lines': applied.lines,
+          'failed': applied.failed,
+        },
     },
   );
 }

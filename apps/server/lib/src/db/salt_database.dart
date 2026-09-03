@@ -956,50 +956,62 @@ class SaltDatabase {
   }
 
   /// The most recent HUMAN decision (confirmed/overridden, with a food) on
-  /// [itemKey] in any recipe other than [excludingRecipeId] — what a line
-  /// with that item inherits at compute time. Skips are not decisions about
-  /// the item, only about one recipe's line, so they never travel.
+  /// [itemKey] on any line but [excluding] — what a line with that item
+  /// inherits at compute time. Another line of the SAME recipe counts: a
+  /// recipe that lists an item twice is common (247 of the 1,198 corpus
+  /// recipes). Skips are not decisions about the item, only about one
+  /// recipe's line, so they never travel.
   IngredientMatchRow? decidedMatchForItemKey(
     String itemKey, {
-    required String excludingRecipeId,
+    required ({String recipeId, int position}) excluding,
   }) {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
       'confidence, grams, gram_source, status, updated_at, item_key '
-      'FROM ingredient_matches WHERE item_key = ? AND recipe_id != ? '
+      'FROM ingredient_matches WHERE item_key = ? '
+      'AND NOT (recipe_id = ? AND position = ?) '
       "AND status IN ('confirmed', 'overridden') "
       'AND fdc_id IS NOT NULL ORDER BY updated_at DESC LIMIT 1',
-    ).select([itemKey, excludingRecipeId]);
+    ).select([itemKey, excluding.recipeId, excluding.position]);
     return rows.isEmpty ? null : IngredientMatchRow.fromRow(rows.first);
   }
 
-  /// Every UNDECIDED row (`auto` / `unmatched`) carrying [itemKey] in a recipe
-  /// other than [excludingRecipeId] — the targets of an apply-to-all.
+  /// Every UNDECIDED row (`auto` / `unmatched`) carrying [itemKey], on any
+  /// line but [excluding], that does not already hold [fdcId] — the rows an
+  /// apply-to-all of that food would change. A row already on the food is
+  /// not a target: rewriting it would change nothing but the count.
   List<IngredientMatchRow> undecidedMatchesForItemKey(
     String itemKey, {
-    required String excludingRecipeId,
+    required ({String recipeId, int position}) excluding,
+    required int fdcId,
   }) {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
       'confidence, grams, gram_source, status, updated_at, item_key '
-      'FROM ingredient_matches WHERE item_key = ? AND recipe_id != ? '
+      'FROM ingredient_matches WHERE item_key = ? '
+      'AND NOT (recipe_id = ? AND position = ?) '
       "AND status IN ('auto', 'unmatched') "
-      'ORDER BY recipe_id, position',
-    ).select([itemKey, excludingRecipeId]);
+      'AND (fdc_id IS NULL OR fdc_id != ?) ORDER BY recipe_id, position',
+    ).select([itemKey, excluding.recipeId, excluding.position, fdcId]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
   }
 
-  /// How many OTHER recipes hold an undecided line with [itemKey] — what an
-  /// apply-to-all from [excludingRecipeId] would reach.
+  /// How many recipes hold an undecided line with [itemKey] (any line but
+  /// [excluding]) not already on [fdcId] — at most what an apply-to-all of
+  /// that food would reach; a row whose line text changed since its compute
+  /// is counted here but skipped there. With no [fdcId] (the line has no
+  /// food yet) every undecided row counts.
   int otherRecipesUndecidedCount(
     String itemKey, {
-    required String excludingRecipeId,
+    required ({String recipeId, int position}) excluding,
+    int? fdcId,
   }) {
     final rows = _prepared(
       'SELECT COUNT(DISTINCT recipe_id) AS n FROM ingredient_matches '
-      'WHERE item_key = ? AND recipe_id != ? '
-      "AND status IN ('auto', 'unmatched')",
-    ).select([itemKey, excludingRecipeId]);
+      'WHERE item_key = ? AND NOT (recipe_id = ? AND position = ?) '
+      "AND status IN ('auto', 'unmatched') "
+      'AND (? IS NULL OR fdc_id IS NULL OR fdc_id != ?)',
+    ).select([itemKey, excluding.recipeId, excluding.position, fdcId, fdcId]);
     return rows.first['n'] as int;
   }
 
@@ -1144,8 +1156,9 @@ class SaltDatabase {
   /// the engine's own "FDC had nothing", not a person's call), or when its
   /// raw text differs (a decision about old text does not apply to new text —
   /// the same rule the entry snapshot uses). A decided row with the same raw
-  /// is left exactly as it is.
-  void upsertIngredientMatchIfUndecided(IngredientMatchRow row) {
+  /// is left exactly as it is. Returns whether the row was written — the
+  /// guard is in the statement, so this is the only way a caller can know.
+  bool upsertIngredientMatchIfUndecided(IngredientMatchRow row) {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
@@ -1172,6 +1185,7 @@ class SaltDatabase {
       row.itemKey,
       _utcNowIso(),
     ]);
+    return _db.updatedRows > 0;
   }
 
   /// Drops match rows at or beyond [fromPosition] (an edit shortened the
@@ -1510,7 +1524,11 @@ class SaltDatabase {
 
   /// Current time as UTC ISO-8601 text, the storage format for timestamps
   /// written by this layer.
-  static String _utcNowIso() => DateTime.now().toUtc().toIso8601String();
+  /// UTC ISO-8601 with a FIXED six-digit fraction. `toIso8601String` emits
+  /// three digits when the microseconds happen to be zero and six otherwise,
+  /// and `...001Z` sorts AFTER `...001005Z` as text — so "most recent by
+  /// updated_at" could pick the older of two writes in the same millisecond.
+  static String _utcNowIso() => fixedWidthUtcIso(DateTime.now());
 
   static UserRow _userRow(Row row) => UserRow(
     id: row['id'] as int,
@@ -2067,6 +2085,16 @@ typedef NutritionReviewLineRow = ({
   String title,
   String bucket,
 });
+
+/// [time] in UTC as ISO-8601 with a FIXED six-digit fraction
+/// (`2026-09-03T01:02:03.001000Z`). `toIso8601String` emits three digits
+/// when the microseconds happen to be zero and six otherwise, and as text
+/// `...001Z` sorts AFTER `...001005Z` — so anything ordered by such a column
+/// could rank the older of two writes in the same millisecond as newer.
+String fixedWidthUtcIso(DateTime time) {
+  final iso = time.toUtc().toIso8601String(); // ...SS.mmmZ or ...SS.mmmuuuZ
+  return iso.length == 24 ? '${iso.substring(0, 23)}000Z' : iso;
+}
 
 /// One tag with its usage count and optional chip style.
 /// One row of `ingredient_matches`.

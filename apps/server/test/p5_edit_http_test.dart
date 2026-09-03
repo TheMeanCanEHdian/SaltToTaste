@@ -1145,6 +1145,14 @@ void main() {
         expect(badFlag.statusCode, HttpStatus.unprocessableEntity);
         expect(errorOf(badFlagBody)['code'], 'validation');
 
+        final (gramsOnly, gramsOnlyBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition/matches/$position',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'grams': 12, 'apply_to_all': true},
+        );
+        expect(gramsOnly.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(gramsOnlyBody)['code'], 'validation');
         final (noFood, noFoodBody) = await send(
           'PUT',
           '/api/v1/recipes/$slug/nutrition/matches/$position',
@@ -1167,6 +1175,11 @@ void main() {
           isNot('skipped'),
           reason: 'a refused apply_to_all must be all-or-nothing',
         );
+        expect(
+          (flourAfter['match']! as Map<String, dynamic>)['grams'],
+          isNot(12),
+          reason: 'nor may the grams-only refusal have set the grams',
+        );
 
         final (applied, appliedBody) = await send(
           'PUT',
@@ -1176,7 +1189,7 @@ void main() {
         );
         expect(applied.statusCode, HttpStatus.ok, reason: appliedBody);
         final body = jsonOf(appliedBody);
-        expect(body['applied'], {'recipes': 0, 'lines': 0});
+        expect(body['applied'], {'recipes': 0, 'lines': 0, 'failed': 0});
         expect(body['items'], isA<List<dynamic>>());
         final (plain, plainBody) = await send(
           'PUT',
