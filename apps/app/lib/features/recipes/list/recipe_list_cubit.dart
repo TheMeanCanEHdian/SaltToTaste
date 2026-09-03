@@ -62,6 +62,7 @@ class RecipeListCubit extends Cubit<RecipeListState> {
   RecipeListCubit(this._repository, {this.query, this.favoritesOnly = false})
     : super(const RecipeListLoading()) {
     _favorites = _repository.favoriteChanges.listen(_onFavoriteChanged);
+    _changes = _repository.recipeChanges.listen(_onRecipeChanged);
   }
 
   static const int pageSize = 48;
@@ -75,11 +76,23 @@ class RecipeListCubit extends Cubit<RecipeListState> {
   final bool favoritesOnly;
 
   late final StreamSubscription<FavoriteChange> _favorites;
+  late final StreamSubscription<RecipeChange> _changes;
 
   @override
   Future<void> close() {
     _favorites.cancel();
+    _changes.cancel();
     return super.close();
+  }
+
+  /// A recipe was created, edited, or deleted while this grid stayed alive
+  /// underneath (the home page is always reached by go(), so the editor's
+  /// go('/') after a delete keeps it in place). Only the server knows the
+  /// new order, title, or card set, so a loaded grid reloads.
+  void _onRecipeChanged(RecipeChange change) {
+    if (state is RecipeListLoaded) {
+      load();
+    }
   }
 
   /// Reconciles the grid when the favorite is toggled elsewhere — in

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -31,12 +33,46 @@ final class RecipeDetailLoaded extends RecipeDetailState {
 /// Loads a single recipe by id or slug and mutates the viewer's personal
 /// data (favorite mark, private note).
 class RecipeDetailCubit extends Cubit<RecipeDetailState> {
-  RecipeDetailCubit(this._repository) : super(const RecipeDetailLoading());
+  RecipeDetailCubit(this._repository) : super(const RecipeDetailLoading()) {
+    _changes = _repository.recipeChanges.listen(_onRecipeChanged);
+  }
 
   final RecipeRepository _repository;
   bool _togglingFavorite = false;
+  late final StreamSubscription<RecipeChange> _changes;
+
+  /// What [load] was last asked for — the reload key.
+  String? _key;
+
+  @override
+  Future<void> close() {
+    _changes.cancel();
+    return super.close();
+  }
+
+  /// Reloads when THIS recipe was saved elsewhere — the editor pushed over
+  /// this page. A deep-linked (or refreshed) detail page is keyed by its
+  /// route pattern, so the editor's `go('/r/<slug>')` after a save keeps
+  /// this very element instead of mounting a fresh one; without this, the
+  /// page (and the tab) went on showing the pre-edit recipe.
+  void _onRecipeChanged(RecipeChange change) {
+    final key = _key;
+    if (key == null || change.kind != RecipeChangeKind.updated) {
+      return;
+    }
+    final loaded = state;
+    final mine =
+        change.idOrSlug == key ||
+        (loaded is RecipeDetailLoaded &&
+            (change.idOrSlug == loaded.detail.recipe.slug ||
+                change.idOrSlug == loaded.detail.recipe.id));
+    if (mine) {
+      load(key);
+    }
+  }
 
   Future<void> load(String idOrSlug) async {
+    _key = idOrSlug;
     emit(const RecipeDetailLoading());
     try {
       final detail = await _repository.getRecipe(idOrSlug);

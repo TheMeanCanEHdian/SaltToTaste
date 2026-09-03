@@ -10,6 +10,15 @@ import 'package:salt_shared/salt_shared.dart';
 /// slugs).
 typedef FavoriteChange = ({String idOrSlug, bool favorite});
 
+/// What happened to a recipe through this repository.
+enum RecipeChangeKind { created, updated, deleted }
+
+/// A recipe this session created, edited, or deleted — announced on
+/// [RecipeRepository.recipeChanges] so a page that is KEPT across the
+/// navigation (a deep-linked detail page under the editor, the home grid
+/// under a pushed recipe) reloads instead of showing what it had.
+typedef RecipeChange = ({String idOrSlug, RecipeChangeKind kind});
+
 /// Base URL of the SaltToTaste API.
 ///
 /// Defaults to empty (same-origin) so a production web build served by the
@@ -342,6 +351,12 @@ class RecipeRepository {
 
   final StreamController<FavoriteChange> _favoriteChanges =
       StreamController<FavoriteChange>.broadcast();
+  final StreamController<RecipeChange> _recipeChanges =
+      StreamController<RecipeChange>.broadcast();
+
+  /// Recipes the caller created, edited, or deleted this session, announced
+  /// once the server has accepted each change. See [RecipeChange].
+  Stream<RecipeChange> get recipeChanges => _recipeChanges.stream;
 
   /// Favourite marks the caller has changed this session, announced as they
   /// are accepted by the server.
@@ -354,7 +369,8 @@ class RecipeRepository {
 
   /// Releases [favoriteChanges]. The repository is an app-lifetime singleton,
   /// so this only matters to tests.
-  Future<void> dispose() => _favoriteChanges.close();
+  Future<void> dispose() =>
+      Future.wait([_favoriteChanges.close(), _recipeChanges.close()]);
 
   /// One page of recipe cards plus the total count; [query] runs the
   /// search DSL server-side, [favoritesOnly] narrows to the caller's
@@ -479,7 +495,12 @@ class RecipeRepository {
         '/api/v1/recipes',
         data: {'recipe': fields},
       );
-      return _detailFrom(_asMap(response.data));
+      final detail = _detailFrom(_asMap(response.data));
+      _recipeChanges.add((
+        idOrSlug: detail.recipe.slug,
+        kind: RecipeChangeKind.created,
+      ));
+      return detail;
     });
   }
 
@@ -499,7 +520,12 @@ class RecipeRepository {
           if (baseHash != null) 'base_hash': baseHash,
         },
       );
-      return _detailFrom(_asMap(response.data));
+      final detail = _detailFrom(_asMap(response.data));
+      _recipeChanges.add((
+        idOrSlug: detail.recipe.slug,
+        kind: RecipeChangeKind.updated,
+      ));
+      return detail;
     });
   }
 
@@ -507,6 +533,7 @@ class RecipeRepository {
   Future<void> deleteRecipe(String idOrSlug) {
     return _request('delete', () async {
       await _dio.delete<dynamic>('/api/v1/recipes/${_seg(idOrSlug)}');
+      _recipeChanges.add((idOrSlug: idOrSlug, kind: RecipeChangeKind.deleted));
     });
   }
 

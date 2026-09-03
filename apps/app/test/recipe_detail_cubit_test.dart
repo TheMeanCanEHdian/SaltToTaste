@@ -212,6 +212,36 @@ void main() {
   group('with the captured detail body', () {
     setUp(() => adapter.detail = detailBody());
 
+    test(
+      'reloads when THIS recipe is saved elsewhere, and only then',
+      () async {
+        // The editor is pushed over the detail page and saves through the
+        // same repository; a deep-linked page is KEPT across the editor's
+        // return, so it must refetch on the announcement. A save of some
+        // other recipe, or a delete, is not its business.
+        await cubit.load(_goldenSlug);
+        await settle();
+        seen.clear();
+
+        await repository.updateRecipe(_goldenSlug, {'title': 'edited'});
+        await pumpEventQueue(); // event-driven reload: flush it all
+        expect(seen, [isA<RecipeDetailLoading>(), isA<RecipeDetailLoaded>()]);
+        expect(adapter.calls.where((c) => c.$1 == 'GET').length, 2);
+
+        // Another recipe entirely (the golden's document with a different
+        // identity — a synthesized negative-path body).
+        seen.clear();
+        adapter.detail = {
+          ...detailBody(),
+          'recipe': {..._goldenRecipe, 'id': 'other-id', 'slug': 'other-slug'},
+        };
+        await repository.updateRecipe('other-slug', {'title': 'x'});
+        await repository.deleteRecipe(_goldenSlug);
+        await pumpEventQueue();
+        expect(seen, isEmpty, reason: 'neither an unrelated save nor a delete');
+      },
+    );
+
     test('the captured body loads with every field it carries', () async {
       // The golden verbatim: favorite AND note as the server really sent
       // them, so the two per-user fields are pinned in their captured state

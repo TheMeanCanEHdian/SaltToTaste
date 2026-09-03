@@ -127,6 +127,25 @@ void main() {
       expect(after.total, 1, reason: 'the eyebrow count must follow');
     });
 
+    test('a loaded grid reloads when a recipe is deleted elsewhere', () async {
+      // The home grid is always reached by go(), so the editor's go('/')
+      // after a delete keeps this very cubit alive; only a refetch can drop
+      // the card.
+      final cubit = RecipeListCubit(repository);
+      addTearDown(cubit.close);
+      await cubit.load();
+      expect((cubit.state as RecipeListLoaded).items, hasLength(2));
+
+      final gone = adapter.cards.first;
+      adapter.cards = [adapter.cards.last]; // what the server lists now
+      await repository.deleteRecipe(gone.slug);
+      await pumpEventQueue(); // event-driven reload: flush it all
+
+      final after = cubit.state as RecipeListLoaded;
+      expect(after.items.map((card) => card.id), isNot(contains(gone.id)));
+      expect(after.items, hasLength(1));
+    });
+
     test('a library grid keeps the card and clears its heart', () async {
       final cubit = RecipeListCubit(repository);
       addTearDown(cubit.close);

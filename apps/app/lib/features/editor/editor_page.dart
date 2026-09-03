@@ -205,7 +205,18 @@ class EditorPage extends StatelessWidget {
           if (state.deleted) {
             context.go('/');
           } else if (state.savedSlug != null) {
-            context.go('/r/${state.savedSlug}');
+            // An existing recipe's editor is pushed over its detail page,
+            // which reloads itself off RecipeRepository.recipeChanges — so
+            // pop back to it. go() would keep a deep-linked page (same
+            // route key) but mount a fresh one over a card-opened page,
+            // after the kept one had already refetched: two requests for
+            // one save. go() only when there is nothing to return to (a
+            // new recipe; a refresh while editing).
+            if (slug != null && context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/r/${state.savedSlug}');
+            }
           }
         },
         builder: (context, state) {
