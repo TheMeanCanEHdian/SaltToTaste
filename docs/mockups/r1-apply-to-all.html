@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaltToTaste — R1 apply to all</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --maroon: #960000; --maroon-hover: #7d1420; --rose: #8c4242;
+    --chip: #f6e4e4; --chip-text: #7d1420; --ink: #23201f; --muted: #6d6763;
+    --line: #e7e2de; --bg: #faf7f4; --ok-bg: #e8f3e4; --ok-ink: #2c5a1e;
+    --warn-bg: #fdf1e2; --warn-ink: #8a5a12; --err-bg: #fbe9e9; --err-ink: #8a1212;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; padding-bottom: 80px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 36px 24px; }
+  h1 { font-size: 22px; color: var(--maroon); }
+  .lede { color: var(--muted); font-size: 14px; max-width: 880px; margin-top: 6px; }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--rose); font-weight: 700; margin: 42px 0 14px; }
+  .note { font-size: 13px; color: var(--muted); margin: -8px 0 16px; max-width: 880px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; background: #f4efe9; border-radius: 5px; padding: 1px 6px; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 9px 16px; font: 600 14px 'Open Sans', system-ui, sans-serif; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .btn.primary { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+  .btn.small { padding: 6px 12px; font-size: 12.5px; }
+  .btn.tiny { padding: 4px 9px; font-size: 12px; border-radius: 7px; }
+  .btn.ghost { color: var(--muted); border-color: transparent; background: transparent; }
+  .btn[disabled] { opacity: .55; cursor: default; }
+  .btn svg { width: 14px; height: 14px; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; max-width: 620px; }
+  .banner { border-radius: 9px; padding: 10px 13px; font-size: 13px; display: flex; gap: 9px; align-items: flex-start; max-width: 620px; }
+  .banner.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .banner.ok { background: var(--ok-bg); color: var(--ok-ink); }
+  .banner svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+
+  /* ===== match review sheet (approved P6 shell) ===== */
+  .sheet { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,.10); overflow: hidden; max-width: 1136px; }
+  .sheet-head { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--line); background: #fdfbf9; }
+  .sheet-head h3 { font-size: 16px; color: var(--maroon); }
+  .sheet-head .sub { font-size: 12.5px; color: var(--muted); }
+  .sheet-head .x { margin-left: auto; color: var(--muted); font-size: 18px; cursor: pointer; }
+  .m-grid { display: grid; grid-template-columns: 1.15fr 1.25fr 128px 84px 196px; gap: 0 14px; align-items: center;
+            padding: 9px 22px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .m-grid.head { padding: 8px 22px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; background: #fdfbf9; }
+  .m-grid .raw { font-size: 13px; }
+  .m-grid .fdc { font-weight: 600; }
+  .dt-chip { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .04em; border-radius: 5px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px; }
+  .dt-chip.foundation { background: var(--ok-bg); color: var(--ok-ink); }
+  .dt-chip.sr { background: #efecea; color: var(--muted); }
+  .grams { display: inline-flex; align-items: baseline; gap: 4px; border: 1.5px solid var(--line); border-radius: 8px; padding: 4px 9px; font-weight: 700; font-size: 13px; background: #fff; }
+  .grams .u { font-weight: 400; color: var(--muted); font-size: 11.5px; }
+  .gsrc { display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+  .gsrc svg { width: 11px; height: 11px; flex: none; }
+  .conf { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; border-radius: 12px; padding: 2px 10px; }
+  .conf.high { background: var(--ok-bg); color: var(--ok-ink); }
+  .conf.med { background: var(--warn-bg); color: var(--warn-ink); }
+  .conf.low { background: var(--err-bg); color: var(--err-ink); }
+  .m-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+  .m-grid.just-saved { background: #fdf7ee; border-bottom: none; }
+
+  /* ===== the new piece: the offer strip under a just-decided row ===== */
+  .offer { margin: 0 22px 14px 22px; border: 1.5px solid #ecc9c9; border-radius: 12px; background: #fff; overflow: hidden; }
+  .offer .o-body { display: flex; align-items: center; gap: 12px; padding: 11px 16px; }
+  .offer .o-body svg { width: 17px; height: 17px; color: var(--maroon); flex: none; }
+  .offer .o-text { flex: 1; font-size: 13px; }
+  .offer .o-text b { font-weight: 700; }
+  .offer .o-foot { padding: 8px 16px 10px; font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); background: #fdfbf9; }
+  .offer.busy .o-body svg { color: var(--muted); }
+  .offer.done { border-color: #cfe3c7; }
+  .offer.done .o-body svg { color: var(--ok-ink); }
+  .offer.partial { border-color: #f0ddba; }
+  .offer.partial .o-body svg { color: var(--warn-ink); }
+
+  /* ===== admin queue card (approved recipe-review shell) ===== */
+  .qcard { background: #fff; border: 1px solid var(--line); border-radius: 16px; max-width: 760px; overflow: hidden; }
+  .qhead { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: #fdfbf9; font-size: 12.5px; color: var(--muted); }
+  .qhead .t { color: var(--ink); font-weight: 700; font-size: 13.5px; }
+  .qbody { padding: 16px 18px; }
+  .qline { font-size: 14px; font-weight: 600; }
+  .why { font-size: 12.5px; color: var(--warn-ink); margin: 6px 0 10px; }
+  .cur { font-size: 13px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fdfbf9; margin-bottom: 12px; }
+  .qfoot { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: #fdfbf9; }
+  .qfoot .spacer { flex: 1; }
+
+  /* toast */
+  .toast { display: inline-flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 10px 14px; font-size: 13px; }
+  .toast svg { width: 16px; height: 16px; color: var(--ok-ink); }
+  .toast .t { font-weight: 700; }
+
+  .variants { display: grid; gap: 18px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .var-cap { font-size: 12px; font-weight: 700; color: var(--rose); margin-bottom: 10px; }
+  table.spec { border-collapse: collapse; font-size: 13px; max-width: 880px; }
+  table.spec td { padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.spec td:first-child { font-weight: 700; white-space: nowrap; width: 190px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-copy-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></symbol>
+  <symbol id="i-circle-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-triangle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+</svg>
+
+<div class="wrap">
+  <h1>R1 — apply a match decision to every recipe with that ingredient</h1>
+  <p class="lede">The server now reuses a person's match decision across recipes (the same ingredient item appears in
+  two or more recipes for 88% of all lines in the library). At compute time this is automatic. This page is the one
+  place a person <em>chooses</em> to push a decision out right away: an offer that appears under a line the moment it
+  has been decided, sized by the server's count of what would change. Nothing here is a checkbox to remember to tick
+  before saving — the count for the new food only exists after the pick has landed.</p>
+
+  <div class="eyebrow">1 · The review sheet — the offer, right after a re-pick lands</div>
+  <p class="note">The admin opened <strong>Change…</strong> on the butter line, picked <em>Butter, stick, unsalted</em>
+  and pressed <strong>Use selected</strong>. The row updates as it does today. Because the response now says
+  <code>others: 41</code>, the panel's place is taken by the offer. It is dismissable, it is one tap, and it says what
+  it will and will not touch.</p>
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h3>Ingredient matches — Rich Chocolate Bundt Cake</h3>
+        <div class="sub">13 lines · 12 matched · 1 skipped · last computed today 9:41 AM</div>
+      </div>
+      <span class="x">✕</span>
+    </div>
+    <div class="m-grid head"><span>Ingredient line</span><span>Matched FDC food</span><span>Grams</span><span>Confidence</span><span>Actions</span></div>
+
+    <div class="m-grid just-saved">
+      <span class="raw">12 tablespoons (1½ sticks) unsalted butter, softened, plus 1 tablespoon, melted, for the pan</span>
+      <span class="fdc">Butter, stick, unsalted<span class="dt-chip foundation">Foundation</span></span>
+      <span><span class="grams">184<span class="u">g</span></span><span class="gsrc"><svg><use href="#i-chevron-right"/></svg>tbsp → portion (14.2 g)</span></span>
+      <span><span class="conf high">decided</span></span>
+      <span class="m-actions"><button class="btn tiny ghost"><svg><use href="#i-sliders"/></svg>Adjust…</button><button class="btn tiny ghost"><svg><use href="#i-ban"/></svg>Skip</button></span>
+    </div>
+    <div class="offer">
+      <div class="o-body">
+        <svg><use href="#i-copy-check"/></svg>
+        <div class="o-text"><b>41 other recipes</b> use <b>unsalted butter</b> with a different match.</div>
+        <button class="btn small primary"><svg><use href="#i-copy-check"/></svg>Apply to 41 recipes</button>
+        <button class="btn small ghost">Not now</button>
+      </div>
+      <div class="o-foot">Sets this food on their unreviewed butter lines, each with its own amount, and recomputes their labels.
+      Lines someone already decided are left alone. Reversible: pick a different food here and apply again.</div>
+    </div>
+
+    <div class="m-grid">
+      <span class="raw">¾ cup natural cocoa powder, plus 1 tablespoon for the pan</span>
+      <span class="fdc">Cocoa, dry powder, unsweetened<span class="dt-chip sr">SR Legacy</span></span>
+      <span><span class="grams">65<span class="u">g</span></span><span class="gsrc"><svg><use href="#i-chevron-right"/></svg>cup → portion (86 g)</span></span>
+      <span><span class="conf high">high</span></span>
+      <span class="m-actions"><button class="btn tiny"><svg><use href="#i-check"/></svg>Confirm</button><button class="btn tiny ghost">Change…</button><button class="btn tiny ghost">Skip</button></span>
+    </div>
+    <div class="m-grid">
+      <span class="raw">6 ounces bittersweet chocolate, chopped coarse</span>
+      <span class="fdc">Chocolate, dark, 60–69% cacao solids<span class="dt-chip sr">SR Legacy</span></span>
+      <span><span class="grams">170<span class="u">g</span></span><span class="gsrc"><svg><use href="#i-check"/></svg>weight ✓ direct</span></span>
+      <span><span class="conf high">high</span></span>
+      <span class="m-actions"><button class="btn tiny"><svg><use href="#i-check"/></svg>Confirm</button><button class="btn tiny ghost">Change…</button><button class="btn tiny ghost">Skip</button></span>
+    </div>
+  </div>
+
+  <div class="eyebrow">2 · While it runs, and what it says when it lands</div>
+  <p class="note">The apply is one request; on the real library it finishes in well under a second (measured: 456 recipes,
+  522 lines, 113 ms). The strip is the progress and the receipt — no modal, no page change. The sheet stays open so the
+  admin keeps reviewing. A toast is <em>not</em> added on top: the strip already says it.</p>
+  <div class="variants">
+    <div class="card">
+      <div class="var-cap">Running — the button turns into the verb, everything else in the sheet stays enabled</div>
+      <div class="offer busy">
+        <div class="o-body">
+          <svg><use href="#i-loader"/></svg>
+          <div class="o-text">Applying <b>Butter, stick, unsalted</b> to 41 recipes…</div>
+          <button class="btn small primary" disabled><svg><use href="#i-loader"/></svg>Applying…</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="var-cap">Landed — the receipt uses the server's own counts (<code>applied: {recipes, lines, failed}</code>)</div>
+      <div class="offer done">
+        <div class="o-body">
+          <svg><use href="#i-circle-check"/></svg>
+          <div class="o-text">Applied to <b>41 recipes</b> (44 lines). Their labels are recomputed.</div>
+          <button class="btn small ghost"><svg><use href="#i-x"/></svg>Dismiss</button>
+        </div>
+      </div>
+      <div class="hint">44 &gt; 41 because three of those recipes list butter twice. Both lines got the food.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap">Partly — a recipe could not be recomputed (its document would not decode, or the FDC budget ran out mid-way)</div>
+      <div class="offer partial">
+        <div class="o-body">
+          <svg><use href="#i-triangle-alert"/></svg>
+          <div class="o-text">Applied to <b>39 recipes</b> (42 lines). <b>2 recipes</b> could not be recomputed — their lines are set, their labels will refresh at the next compute. Details are in the server log.</div>
+          <button class="btn small ghost"><svg><use href="#i-x"/></svg>Dismiss</button>
+        </div>
+      </div>
+      <div class="hint">Never a red error for this: what landed is real and stays; the two are named so the admin knows the count is short.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap">Nothing to offer — the common case, and the only state most rows will ever be in</div>
+      <p class="muted">A pick or a confirm whose food every other recipe already carries (or an item used nowhere else) shows
+      no strip at all: <code>others: 0</code>. The offer never appears for a Skip, and never for a grams-only change — the
+      server refuses to broadcast those, and the UI does not ask.</p>
+    </div>
+  </div>
+
+  <div class="eyebrow">3 · “Confirm as-is” gets the same offer</div>
+  <p class="note">Confirming a low-confidence match is a decision too, and often the more common one. Same strip, same count,
+  same words — the confirm happened on this line already; the offer is only about the others.</p>
+  <div class="sheet">
+    <div class="m-grid head"><span>Ingredient line</span><span>Matched FDC food</span><span>Grams</span><span>Confidence</span><span>Actions</span></div>
+    <div class="m-grid just-saved">
+      <span class="raw">1 teaspoon instant espresso powder (optional)</span>
+      <span class="fdc">Coffee, instant, regular, powder<span class="dt-chip sr">SR Legacy</span></span>
+      <span><span class="grams">2<span class="u">g</span></span><span class="gsrc"><svg><use href="#i-chevron-right"/></svg>density est.</span></span>
+      <span><span class="conf high">decided</span></span>
+      <span class="m-actions"><button class="btn tiny ghost"><svg><use href="#i-sliders"/></svg>Adjust…</button><button class="btn tiny ghost"><svg><use href="#i-ban"/></svg>Skip</button></span>
+    </div>
+    <div class="offer">
+      <div class="o-body">
+        <svg><use href="#i-copy-check"/></svg>
+        <div class="o-text"><b>7 other recipes</b> use <b>instant espresso powder</b> with a different match.</div>
+        <button class="btn small primary"><svg><use href="#i-copy-check"/></svg>Apply to 7 recipes</button>
+        <button class="btn small ghost">Not now</button>
+      </div>
+      <div class="o-foot">Sets this food on their unreviewed espresso lines, each with its own amount, and recomputes their labels.
+      Lines someone already decided are left alone. Reversible: pick a different food here and apply again.</div>
+    </div>
+  </div>
+
+  <div class="eyebrow">4 · The admin Recipe Review queue — same strip, before “Next”</div>
+  <p class="note">The queue card already hosts the fix panel and advances after a fix. The offer sits between the receipt of
+  the fix and the Next button, so an admin working the queue can push a decision out without leaving the flow. Applying
+  also shrinks the queue: the recipes it reaches drop out of <em>check match</em>.</p>
+  <div class="qcard">
+    <div class="qhead"><span class="t">Easy Caramel Cake</span><span>·</span><span>line 9 of 15</span><span class="spacer" style="flex:1"></span><span>12 of 38 flagged</span></div>
+    <div class="qbody">
+      <div class="qline">1½ cups (10½ ounces) granulated sugar</div>
+      <div class="why">check match — the engine's pick scored 0.48</div>
+      <div class="cur"><b>Sugars, granulated</b><span class="dt-chip foundation">Foundation</span> · 298 g · weight ✓ direct · <span class="muted">just confirmed</span></div>
+      <div class="offer" style="margin:0">
+        <div class="o-body">
+          <svg><use href="#i-copy-check"/></svg>
+          <div class="o-text"><b>212 other recipes</b> use <b>sugar</b> with a different match.</div>
+          <button class="btn small primary"><svg><use href="#i-copy-check"/></svg>Apply to 212 recipes</button>
+          <button class="btn small ghost">Not now</button>
+        </div>
+        <div class="o-foot">Sets this food on their unreviewed sugar lines, each with its own amount, and recomputes their labels.
+        Lines someone already decided are left alone. Reversible: pick a different food here and apply again.</div>
+      </div>
+    </div>
+    <div class="qfoot">
+      <button class="btn small ghost"><svg><use href="#i-ban"/></svg>Skip line</button>
+      <span class="spacer"></span>
+      <button class="btn small"><svg><use href="#i-chevron-right"/></svg>Next</button>
+    </div>
+  </div>
+
+  <div class="eyebrow">5 · What the app needs from the server (all shipped)</div>
+  <table class="spec">
+    <tr><td>Count</td><td><code>others</code> on every line of <code>GET …/nutrition/matches</code> — recipes with an unreviewed line of the item not already on this line's food. The PUT returns the same list, so the number is fresh right after a pick or a confirm.</td></tr>
+    <tr><td>Apply</td><td><code>PUT …/matches/{pos}</code> with <code>{fdc_id, apply_to_all: true}</code> (or <code>{confirmed: true, apply_to_all: true}</code>) — the same decision, sent again with the flag. A grams-only or skip request with the flag is refused with a 422 and nothing changes.</td></tr>
+    <tr><td>Receipt</td><td><code>applied: {recipes, lines, failed}</code> in that PUT's response — exact counts of what was written; <code>failed</code> names how many recipes could not be recomputed.</td></tr>
+    <tr><td>Reversal</td><td>None needed: the rows land as unreviewed (<code>auto</code>) at full confidence, so a second apply with a different food reaches every one of them.</td></tr>
+    <tr><td>Ingredient name</td><td>The strip names the <em>item</em> (“unsalted butter”), not the whole line — the app has the parsed line from the recipe it is showing.</td></tr>
+  </table>
+
+  <div class="eyebrow">Not in this pass</div>
+  <p class="note">A library-wide “decisions” page listing every item with a human decision and its reach; a per-item undo
+  history; the review queue surfacing items whose decisions disagree between recipes (with propagation now
+  <code>auto</code> everywhere, the newest decision simply wins). Each is a separate item if wanted.</p>
+</div>
+</body>
+</html>
