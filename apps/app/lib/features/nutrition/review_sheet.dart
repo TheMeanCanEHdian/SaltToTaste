@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
+import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
@@ -475,6 +476,36 @@ class _MatchRowState extends State<_MatchRow> {
             if (widget.isAdmin) ...[
               const SizedBox(height: 8),
               _actions(context, b),
+              // The apply-to-all offer (or its receipt) for THIS row, right
+              // under the decision that raised it.
+              BlocBuilder<NutritionCubit, NutritionState>(
+                buildWhen: (previous, current) =>
+                    previous.offer != current.offer ||
+                    previous.applied != current.applied ||
+                    previous.applying != current.applying,
+                builder: (context, state) {
+                  final offer = state.offer?.position == m.position
+                      ? state.offer
+                      : null;
+                  final receipt = state.applied?.position == m.position
+                      ? state.applied
+                      : null;
+                  if (offer == null && receipt == null) {
+                    return const SizedBox.shrink();
+                  }
+                  final cubit = context.read<NutritionCubit>();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: ApplyToAllStrip(
+                      offer: offer,
+                      applied: receipt,
+                      applying: state.applying,
+                      onApply: cubit.applyToAll,
+                      onDismiss: cubit.dismissApply,
+                    ),
+                  );
+                },
+              ),
               if (_fixOpen) ...[
                 const SizedBox(height: 8),
                 // Close only on OBSERVED success for this row. A failed

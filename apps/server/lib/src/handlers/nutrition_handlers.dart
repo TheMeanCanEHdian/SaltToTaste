@@ -109,6 +109,10 @@ Future<Map<String, Object?>> matchesBody(
     items.add({
       'position': position,
       'raw': line.raw,
+      // The parsed ingredient item ("unsalted butter"), null when the line
+      // has none — what an apply-to-all offer names, since `others` is
+      // counted by item, not by line.
+      'item': line.item,
       // How many OTHER recipes hold an undecided line with this item — what
       // an apply-to-all from here would reach.
       'others': itemKey.isEmpty

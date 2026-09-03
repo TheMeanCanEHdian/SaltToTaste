@@ -6,6 +6,34 @@ import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 
+/// An offer to push a decision just made on one line out to every other
+/// recipe's unreviewed line of the same ingredient item: what to resend
+/// (the pick, or the confirm) and how many recipes it would change.
+typedef ApplyOffer = ({
+  int position,
+  String label,
+  int? fdcId,
+  bool confirmed,
+  int others,
+});
+
+/// The receipt of an apply-to-all, shown in place of the offer.
+typedef ApplyReceipt = ({int position, int recipes, int lines, int failed});
+
+/// The parsed ingredient item as a person would name it: parentheticals
+/// dropped ("(1 1/2 sticks) unsalted butter" → "unsalted butter"), trimmed;
+/// null when nothing is left.
+String? itemLabel(String? item) {
+  if (item == null) {
+    return null;
+  }
+  final cleaned = item
+      .replaceAll(RegExp(r'\([^)]*\)'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  return cleaned.isEmpty ? null : cleaned;
+}
+
 /// State of one recipe's nutrition panel + review sheet.
 final class NutritionState {
   const NutritionState({
@@ -15,6 +43,9 @@ final class NutritionState {
     this.computing = false,
     this.savingBasis = false,
     this.overridingPosition,
+    this.offer,
+    this.applied,
+    this.applying = false,
     this.error,
   });
 
@@ -33,6 +64,15 @@ final class NutritionState {
   /// Position of the row whose override is in flight, or null.
   final int? overridingPosition;
 
+  /// A pending apply-to-all offer for a line just decided, or null.
+  final ApplyOffer? offer;
+
+  /// The receipt of the last apply-to-all, until dismissed.
+  final ApplyReceipt? applied;
+
+  /// An apply-to-all request is in flight.
+  final bool applying;
+
   /// Last failure message (surfaced inline; cleared on the next action).
   final String? error;
 
@@ -45,6 +85,11 @@ final class NutritionState {
     bool? savingBasis,
     int? overridingPosition,
     bool clearOverriding = false,
+    ApplyOffer? offer,
+    bool clearOffer = false,
+    ApplyReceipt? applied,
+    bool clearApplied = false,
+    bool? applying,
     String? error,
     bool clearError = false,
   }) => NutritionState(
@@ -56,6 +101,9 @@ final class NutritionState {
     overridingPosition: clearOverriding
         ? null
         : (overridingPosition ?? this.overridingPosition),
+    offer: clearOffer ? null : (offer ?? this.offer),
+    applied: clearApplied ? null : (applied ?? this.applied),
+    applying: applying ?? this.applying,
     error: clearError ? null : (error ?? this.error),
   );
 }
@@ -260,9 +308,9 @@ class NutritionCubit extends Cubit<NutritionState> {
       return;
     }
     emit(state.copyWith(overridingPosition: position, clearError: true));
-    final List<IngredientMatch> matches;
+    final MatchOverrideResult result;
     try {
-      matches = await _repository.overrideMatch(
+      result = await _repository.overrideMatch(
         idOrSlug,
         position,
         fdcId: fdcId,
@@ -280,10 +328,41 @@ class NutritionCubit extends Cubit<NutritionState> {
     if (isClosed) {
       return;
     }
+    final matches = result.matches;
+    // A pick or a confirm is a decision about the ingredient; if other
+    // recipes' unreviewed lines of that item are not on this food yet, offer
+    // to push it out. The count is the server's, fresh for the NEW food —
+    // which is why the offer can only appear after the decision has landed.
+    // A skip or a grams-only change is not a decision to broadcast.
+    final decided = fdcId != null || confirmed == true;
+    IngredientMatch? row;
+    for (final m in matches) {
+      if (m.position == position) {
+        row = m;
+        break;
+      }
+    }
+    final offer = decided && row != null && row.others > 0
+        ? (
+            position: position,
+            label: itemLabel(row.item) ?? row.raw,
+            fdcId: fdcId,
+            confirmed: confirmed == true,
+            others: row.others,
+          )
+        : null;
     // The PUT persisted: show its fresh match list even if the label
     // refresh below fails — discarding it would render rows the server
     // no longer has.
-    emit(state.copyWith(matches: matches, clearOverriding: true));
+    emit(
+      state.copyWith(
+        matches: matches,
+        clearOverriding: true,
+        offer: offer,
+        clearOffer: offer == null,
+        clearApplied: true,
+      ),
+    );
     try {
       final nutrition = await _repository.nutrition(idOrSlug);
       if (isClosed) {
@@ -302,5 +381,59 @@ class NutritionCubit extends Cubit<NutritionState> {
         ),
       );
     }
+  }
+
+  /// Sends the pending offer's decision again with `apply_to_all`, and shows
+  /// the server's receipt in its place. The offer stays on failure, so the
+  /// admin can retry or dismiss it.
+  Future<void> applyToAll() async {
+    final offer = state.offer;
+    if (offer == null || state.applying) {
+      return;
+    }
+    emit(state.copyWith(applying: true, clearError: true));
+    final MatchOverrideResult result;
+    try {
+      result = await _repository.overrideMatch(
+        idOrSlug,
+        offer.position,
+        fdcId: offer.fdcId,
+        confirmed: offer.confirmed ? true : null,
+        applyToAll: true,
+      );
+    } on RepositoryException catch (exception) {
+      if (isClosed) {
+        return;
+      }
+      emit(state.copyWith(applying: false, error: exception.message));
+      return;
+    }
+    if (isClosed) {
+      return;
+    }
+    final applied = result.applied;
+    emit(
+      state.copyWith(
+        matches: result.matches,
+        applying: false,
+        clearOffer: true,
+        applied: applied == null
+            ? null
+            : (
+                position: offer.position,
+                recipes: applied.recipes,
+                lines: applied.lines,
+                failed: applied.failed,
+              ),
+      ),
+    );
+  }
+
+  /// Drops the pending offer or the shown receipt.
+  void dismissApply() {
+    if (state.offer == null && state.applied == null) {
+      return;
+    }
+    emit(state.copyWith(clearOffer: true, clearApplied: true));
   }
 }

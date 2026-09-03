@@ -86,6 +86,38 @@ class _FlowCubit extends _SeededCubit {
   }
 }
 
+/// Answers the apply-to-all offer offline: records the tap and emits the
+/// receipt the real cubit would emit from the server's `applied` counts.
+class _ApplyCubit extends _SeededCubit {
+  _ApplyCubit(super.s);
+
+  int applies = 0;
+  int dismissals = 0;
+
+  Future<void> applyToAll() async {
+    final offer = state.offer!;
+    applies += 1;
+    emit(state.copyWith(applying: true));
+    emit(
+      state.copyWith(
+        applying: false,
+        clearOffer: true,
+        applied: (
+          position: offer.position,
+          recipes: offer.others,
+          lines: offer.others + 3,
+          failed: 0,
+        ),
+      ),
+    );
+  }
+
+  void dismissApply() {
+    dismissals += 1;
+    emit(state.copyWith(clearOffer: true, clearApplied: true));
+  }
+}
+
 // Match rows shaped like the real stored ingredient_matches for Acquacotta
 // (nutrition is DB-only — never in the YAML corpus).
 const _matches = <IngredientMatch>[
@@ -392,5 +424,60 @@ void main() {
     expect(find.text("Couldn't reach the server."), findsOneWidget);
     expect(find.text('Line 1 of 2'), findsOneWidget);
     expect(find.text('1 small head escarole (10 oz), cut up'), findsOneWidget);
+  });
+  testWidgets('the apply-to-all offer sits under its row, applies in one '
+      'tap, and turns into the receipt', (tester) async {
+    final cubit = _ApplyCubit(
+      _state().copyWith(
+        offer: (
+          position: 10,
+          label: 'escarole',
+          fdcId: 99,
+          confirmed: false,
+          others: 41,
+        ),
+      ),
+    );
+    await open(tester, seeded: cubit);
+    expect(find.text('Apply to 41 recipes'), findsOneWidget);
+    expect(find.textContaining('with a different match.'), findsOneWidget);
+    expect(find.text('Not now'), findsOneWidget);
+
+    await tester.tap(find.text('Apply to 41 recipes'));
+    await tester.pumpAndSettle();
+
+    expect(cubit.applies, 1);
+    expect(find.text('Apply to 41 recipes'), findsNothing);
+    expect(find.textContaining('Applied to '), findsOneWidget);
+    expect(find.textContaining('41 recipes'), findsOneWidget);
+    expect(find.textContaining('44 lines'), findsOneWidget);
+
+    await tester.tap(find.text('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(cubit.dismissals, 1);
+    expect(find.textContaining('Applied to '), findsNothing);
+  });
+
+  testWidgets('no offer, no strip; a member never sees one', (tester) async {
+    await open(tester, seeded: _ApplyCubit(_state()));
+    expect(find.textContaining('with a different match.'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await open(
+      tester,
+      isAdmin: false,
+      seeded: _ApplyCubit(
+        _state().copyWith(
+          offer: (
+            position: 10,
+            label: 'escarole',
+            fdcId: 99,
+            confirmed: false,
+            others: 41,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Apply to 41 recipes'), findsNothing);
   });
 }

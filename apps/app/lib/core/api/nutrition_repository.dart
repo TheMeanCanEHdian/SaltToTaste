@@ -99,10 +99,23 @@ class RecipeNutrition {
 }
 
 /// One ingredient line's match state on the review sheet.
+/// What an `apply_to_all` reached: recipes and lines written, and recipes
+/// that failed part-way (their lines are set; their labels wait for the
+/// next compute).
+typedef MatchApplied = ({int recipes, int lines, int failed});
+
+/// A match override's answer: the refreshed match list, and the apply-to-all
+/// receipt when one was asked for.
+typedef MatchOverrideResult = ({
+  List<IngredientMatch> matches,
+  MatchApplied? applied,
+});
+
 class IngredientMatch {
   const IngredientMatch({
     required this.position,
     required this.raw,
+    this.item,
     this.others = 0,
     this.fdcId,
     this.description,
@@ -126,6 +139,7 @@ class IngredientMatch {
       return IngredientMatch(
         position: (json['position']! as num).toInt(),
         raw: json['raw'] as String? ?? '',
+        item: json['item'] as String?,
         others: (json['others'] as num?)?.toInt() ?? 0,
         candidates: candidates,
       );
@@ -133,6 +147,7 @@ class IngredientMatch {
     return IngredientMatch(
       position: (json['position']! as num).toInt(),
       raw: json['raw'] as String? ?? '',
+      item: json['item'] as String?,
       others: (json['others'] as num?)?.toInt() ?? 0,
       fdcId: (match['fdc_id'] as num?)?.toInt(),
       description: match['description'] as String?,
@@ -148,6 +163,10 @@ class IngredientMatch {
 
   final int position;
   final String raw;
+
+  /// The parsed ingredient item ("unsalted butter"), null when the line has
+  /// none — what an apply-to-all offer names.
+  final String? item;
 
   /// Other recipes holding an undecided line with this same ingredient item
   /// — what an apply-to-all from this line would reach.
@@ -361,8 +380,9 @@ class NutritionRepository {
   }
 
   /// Overrides one line (re-pick / set grams / confirm / skip) and returns
-  /// the refreshed match list.
-  Future<List<IngredientMatch>> overrideMatch(
+  /// the refreshed match list — plus, when [applyToAll] was asked for, what
+  /// the apply reached.
+  Future<MatchOverrideResult> overrideMatch(
     String idOrSlug,
     int position, {
     int? fdcId,
@@ -383,11 +403,21 @@ class NutritionRepository {
         },
       );
       final data = _asMap(response.data);
-      return [
-        if (data['items'] is List)
-          for (final item in data['items'] as List<dynamic>)
-            IngredientMatch.fromJson(item as Map<String, dynamic>),
-      ];
+      final applied = data['applied'];
+      return (
+        matches: [
+          if (data['items'] is List)
+            for (final item in data['items'] as List<dynamic>)
+              IngredientMatch.fromJson(item as Map<String, dynamic>),
+        ],
+        applied: applied is Map<String, dynamic>
+            ? (
+                recipes: (applied['recipes'] as num?)?.toInt() ?? 0,
+                lines: (applied['lines'] as num?)?.toInt() ?? 0,
+                failed: (applied['failed'] as num?)?.toInt() ?? 0,
+              )
+            : null,
+      );
     }, notFoundMessage: 'Recipe not found.');
   }
 

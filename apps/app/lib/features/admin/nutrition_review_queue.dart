@@ -9,6 +9,7 @@ import 'package:salt_app/core/widgets/async_view.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/core/widgets/stat_chip.dart';
 import 'package:salt_app/features/admin/nutrition_review_cubit.dart';
+import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
@@ -443,10 +444,21 @@ class _FixPaneBody extends StatelessWidget {
       // clears the position (in the same emit that sets the error), and
       // advancing on it moved the selection past a line that was never
       // fixed (review B5).
-      listenWhen: (previous, current) =>
-          previous.overridingPosition != null &&
-          current.overridingPosition == null &&
-          current.error == null,
+      // …unless the fix raised an apply-to-all offer: then the pane stays
+      // on this line until the admin applies or declines (and the receipt
+      // is dismissed), and advances at that moment instead.
+      listenWhen: (previous, current) {
+        if (current.error != null) {
+          return false;
+        }
+        final settled = current.offer == null && current.applied == null;
+        final fixLanded =
+            previous.overridingPosition != null &&
+            current.overridingPosition == null;
+        final offerClosed =
+            (previous.offer != null || previous.applied != null) && settled;
+        return (fixLanded && settled) || offerClosed;
+      },
       listener: (context, _) =>
           context.read<NutritionReviewCubit>().completeFix(),
       child: BlocBuilder<NutritionCubit, NutritionState>(
@@ -536,6 +548,21 @@ class _FixContent extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           FixPanel(match: match, busy: busy, onDone: () {}, showCancel: false),
+          if (state.offer?.position == match.position ||
+              state.applied?.position == match.position) ...[
+            const SizedBox(height: 12),
+            ApplyToAllStrip(
+              offer: state.offer?.position == match.position
+                  ? state.offer
+                  : null,
+              applied: state.applied?.position == match.position
+                  ? state.applied
+                  : null,
+              applying: state.applying,
+              onApply: cubit.applyToAll,
+              onDismiss: cubit.dismissApply,
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [

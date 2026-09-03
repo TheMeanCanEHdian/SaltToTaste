@@ -3,6 +3,7 @@
     {
       "position": 0,
       "raw": "12 tablespoons (1½ sticks) unsalted butter, softened, plus 1 tablespoon, melted, for the pan",
+      "item": "(1 1/2 sticks) unsalted butter",
       "others": 0,
       "match": {
         "fdc_id": 173430,
@@ -68,6 +69,7 @@
     {
       "position": 1,
       "raw": "¾ cup natural cocoa powder, plus 1 tablespoon for the pan",
+      "item": "natural cocoa powder",
       "others": 0,
       "match": {
         "fdc_id": 169593,
@@ -133,6 +135,7 @@
     {
       "position": 2,
       "raw": "6 ounces bittersweet chocolate, chopped coarse",
+      "item": "bittersweet chocolate",
       "others": 0,
       "match": {
         "fdc_id": 2710336,
@@ -198,6 +201,7 @@
     {
       "position": 3,
       "raw": "1 teaspoon instant espresso powder (optional)",
+      "item": "instant espresso powder (optional)",
       "others": 0,
       "match": {
         "fdc_id": 171893,
@@ -263,6 +267,7 @@
     {
       "position": 4,
       "raw": "¾ cup boiling water",
+      "item": "boiling water",
       "others": 0,
       "match": {
         "fdc_id": null,
@@ -279,6 +284,7 @@
     {
       "position": 5,
       "raw": "1 cup sour cream, at room temperature",
+      "item": "sour cream",
       "others": 0,
       "match": {
         "fdc_id": 2346387,
@@ -344,6 +350,7 @@
     {
       "position": 6,
       "raw": "1¾ cups (8¾ ounces) unbleached all-purpose flour",
+      "item": "unbleached all-purpose flour",
       "others": 0,
       "match": {
         "fdc_id": 789890,
@@ -409,6 +416,7 @@
     {
       "position": 7,
       "raw": "1 teaspoon table salt",
+      "item": "table salt",
       "others": 0,
       "match": {
         "fdc_id": 173468,
@@ -438,6 +446,7 @@
     {
       "position": 8,
       "raw": "1 teaspoon baking soda",
+      "item": "baking soda",
       "others": 0,
       "match": {
         "fdc_id": 175040,
@@ -461,6 +470,7 @@
     {
       "position": 9,
       "raw": "2 cups packed (14 ounces) light brown sugar",
+      "item": "packed light brown sugar",
       "others": 0,
       "match": {
         "fdc_id": 168833,
@@ -526,6 +536,7 @@
     {
       "position": 10,
       "raw": "1 tablespoon vanilla extract",
+      "item": "vanilla extract",
       "others": 0,
       "match": {
         "fdc_id": 173471,
@@ -561,6 +572,7 @@
     {
       "position": 11,
       "raw": "5 large eggs, at room temperature",
+      "item": "large eggs",
       "others": 0,
       "match": {
         "fdc_id": 748967,
@@ -626,6 +638,7 @@
     {
       "position": 12,
       "raw": "Confectioners’ sugar, for dusting",
+      "item": "Confectioners’ sugar",
       "others": 0,
       "match": {
         "fdc_id": 169656,
