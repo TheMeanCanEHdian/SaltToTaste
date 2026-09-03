@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:logging/logging.dart';
 import 'package:salt_server/src/auth/password_hasher.dart';
 import 'package:salt_server/src/auth/tokens.dart';
 import 'package:salt_server/src/db/migrations.dart';
@@ -52,8 +53,8 @@ const Map<int, String> _capabilityByVersion = {
   6: 'import_jobs.legacy / .imported / .updated',
   7: 'recipes.variation_count (backfilled by 007)',
   8:
-      'recipe_fts widened to subsection + technique text '
-      '(reindexed in Dart by SaltDatabase._migrate)',
+      'recipe_fts widened to subsection + technique text (reindexed in Dart '
+      'by SaltDatabase._migrate, keyed on the fts.widened_v8 settings marker)',
 };
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
@@ -73,6 +74,9 @@ const String _sourceSlug = 'atk-tv-2023';
 const String _sourceName =
     "The Complete America's Test Kitchen TV Show Cookbook 2001–2023";
 const Map<String, Object?> _sourceMeta = {'isbn': '9781954210110'};
+
+/// Value of the seeded [SaltDatabase.ftsWidenedSetting] row for a healthy v8.
+const String _ftsWidenedValue = '2026-07-16T02:11:15.000Z';
 
 /// Value of the seeded [servesBackfillSetting] row — the completion timestamp
 /// the backfill records. Compared byte-exact after the upgrade: corrupt this
@@ -449,6 +453,16 @@ _Seed _seed(
     servesBackfillSetting,
     _servesBackfillValue,
   ]);
+  // A deployment that reached v8 the normal way completed its FTS reindex
+  // and holds the marker. Seeding it is what makes the at-head case below a
+  // real "healthy database" and not the stuck one (v8, narrow rows, no
+  // marker) that the self-heal test seeds on purpose.
+  if (version >= _ftsWideningVersion) {
+    raw.execute('INSERT INTO settings (key, value) VALUES (?, ?)', [
+      SaltDatabase.ftsWidenedSetting,
+      _ftsWidenedValue,
+    ]);
+  }
 
   // import_jobs exists from 001; 006 adds three counters.
   final jobColumns = [
@@ -615,6 +629,22 @@ void main() {
       } finally {
         dir.deleteSync(recursive: true);
       }
+    }
+  });
+
+  test('a fresh database is marked FTS-widened at its first open', () {
+    // No rows to reindex, so the marker is written at once and every later
+    // boot skips the pass. The MARKER is the key, not the start version: a
+    // reindex keyed on "started below v8" ran exactly once, after the loop
+    // had already committed version 8, so a single undecodable row made it
+    // throw once and never run again.
+    final dir = Directory.systemTemp.createTempSync('salt_migr_fresh');
+    try {
+      final db = SaltDatabase.open('${dir.path}/salt.db');
+      expect(db.getSetting(SaltDatabase.ftsWidenedSetting), isNotNull);
+      db.dispose();
+    } finally {
+      dir.deleteSync(recursive: true);
     }
   });
 
@@ -931,12 +961,11 @@ void main() {
                 idsFor(term),
                 isNot(contains(recipe.id)),
                 reason:
-                    'a database already at v${migrations.length} must not be '
-                    'reindexed — the narrow tracer rows prove _migrate did '
-                    'no FTS work. NOTE: this pins an OPTIMIZATION (skipping '
-                    'the reindex at head), not a data rule; a change that '
-                    'made the reindex unconditional would be safe-but-slower '
-                    'and would fail here.',
+                    'a database at v${migrations.length} that HOLDS the '
+                    'completion marker must not be reindexed — the narrow '
+                    'tracer rows prove _migrate honoured it. (A v8 database '
+                    'WITHOUT the marker is the stuck case and IS reindexed; '
+                    'see the self-heal test.)',
               );
             }
           }
@@ -1105,5 +1134,170 @@ void main() {
         }
       });
     }
+
+    /// Every text column of the FTS row for [recipeId], joined — where a
+    /// subsection word lands (title, ingredients, directions, background)
+    /// depends on the fold, and this test cares only that it landed.
+    String ftsText(Database raw, String recipeId) {
+      final rowid =
+          raw.select('SELECT rowid FROM recipes WHERE id = ?', [
+                recipeId,
+              ]).first['rowid']
+              as int;
+      final row = raw.select('SELECT * FROM recipe_fts WHERE rowid = ?', [
+        rowid,
+      ]).first;
+      return [
+        for (final column in row.keys)
+          if (row[column] is String) row[column] as String,
+      ].join(' ');
+    }
+
+    /// A word that lives only in a subsection of [withVariations] and that
+    /// the seeded NARROW row provably lacks — the sanity check inside makes
+    /// the choice empirical rather than assumed.
+    String narrowMissingTerm(Database raw) {
+      final narrow = ftsText(raw, withVariations.id);
+      final candidates = _subsectionWords(
+        withVariations,
+      ).difference(_topLevelWords(withVariations));
+      return candidates.firstWhere(
+        (word) => !narrow.contains(word),
+        orElse: () => fail('no subsection-only word is absent from the seed'),
+      );
+    }
+
+    test(
+      'a v${migrations.length} database with narrow rows and NO marker is '
+      'healed at the next open',
+      () {
+        // The stuck deployment: it reached v8 on a boot whose reindex threw,
+        // so the version committed and the rows stayed narrow. Keying on the
+        // marker heals it. A reindex inside the 008 transaction never could —
+        // at version 8 there is nothing left to roll back.
+        final dir = Directory.systemTemp.createTempSync('salt_migr_stuck');
+        final path = '${dir.path}/salt.db';
+        try {
+          final raw = sqlite3.open(path)..execute('PRAGMA foreign_keys = ON');
+          _applyPrefix(raw, migrations.length);
+          _seed(
+            raw,
+            migrations.length,
+            recipes,
+            passwordHash: passwordHash,
+            sessionToken: sessionToken,
+            patToken: patToken,
+            nutritionRows: nutritionRows,
+          );
+          raw.execute('DELETE FROM settings WHERE key = ?', [
+            SaltDatabase.ftsWidenedSetting,
+          ]);
+          final term = narrowMissingTerm(raw);
+          raw.dispose();
+
+          SaltDatabase.open(path).dispose();
+
+          final after = sqlite3.open(path);
+          expect(
+            after.select('SELECT value FROM settings WHERE key = ?', [
+              SaltDatabase.ftsWidenedSetting,
+            ]),
+            isNotEmpty,
+            reason: 'healed: the completion marker is written',
+          );
+          expect(
+            ftsText(after, withVariations.id),
+            contains(term),
+            reason:
+                '"$term" lives only in a subsection; a healed row carries it',
+          );
+          after.dispose();
+        } finally {
+          dir.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test(
+      'an undecodable stored doc is skipped and named, and the pass retries '
+      'until it is fixed',
+      () {
+        // Crafted negative input — the one class the corpus cannot supply.
+        // What a real deployment hits when a model change makes an OLD doc
+        // stop decoding on the upgrade boot.
+        final dir = Directory.systemTemp.createTempSync('salt_migr_baddoc');
+        final path = '${dir.path}/salt.db';
+        final records = <LogRecord>[];
+        final subscription = Logger.root.onRecord.listen(records.add);
+        addTearDown(subscription.cancel);
+        try {
+          final raw = sqlite3.open(path)..execute('PRAGMA foreign_keys = ON');
+          _applyPrefix(raw, _ftsWideningVersion - 1);
+          final seed = _seed(
+            raw,
+            _ftsWideningVersion - 1,
+            recipes,
+            passwordHash: passwordHash,
+            sessionToken: sessionToken,
+            patToken: patToken,
+            nutritionRows: nutritionRows,
+          );
+          final term = narrowMissingTerm(raw);
+          raw
+            ..execute('UPDATE recipes SET doc = ? WHERE id = ?', [
+              'not json',
+              plain.id,
+            ])
+            ..dispose();
+
+          Iterable<LogRecord> namingTheVictim() => records.where(
+            (record) =>
+                record.level >= Level.WARNING &&
+                record.message.contains(plain.id),
+          );
+
+          // Boot 1: succeeds, skips the bad row, names it, does NOT mark.
+          var db = SaltDatabase.open(path);
+          expect(
+            db.getSetting(SaltDatabase.ftsWidenedSetting),
+            isNull,
+            reason: 'one skipped row must leave the pass unmarked',
+          );
+          expect(namingTheVictim(), isNotEmpty, reason: 'the log names it');
+          db.dispose();
+          final check = sqlite3.open(path);
+          expect(
+            ftsText(check, withVariations.id),
+            contains(term),
+            reason: 'the rows that DID decode are widened and committed',
+          );
+          check.dispose();
+
+          // Boot 2: retries and names it again — every boot, until fixed.
+          final named = namingTheVictim().length;
+          db = SaltDatabase.open(path);
+          expect(db.getSetting(SaltDatabase.ftsWidenedSetting), isNull);
+          expect(namingTheVictim().length, greaterThan(named));
+          db.dispose();
+
+          // Fix the row (restore the exact seeded document) and boot 3.
+          sqlite3.open(path)
+            ..execute('UPDATE recipes SET doc = ? WHERE id = ?', [
+              seed.docs[plain.id],
+              plain.id,
+            ])
+            ..dispose();
+          db = SaltDatabase.open(path);
+          expect(
+            db.getSetting(SaltDatabase.ftsWidenedSetting),
+            isNotNull,
+            reason: 'with every row decodable the pass completes and marks',
+          );
+          db.dispose();
+        } finally {
+          dir.deleteSync(recursive: true);
+        }
+      },
+    );
   }, skip: skipIfNoCorpus);
 }

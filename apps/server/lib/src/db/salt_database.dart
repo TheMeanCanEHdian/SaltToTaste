@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:salt_server/src/db/migrations.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart';
+
+final Logger _log = Logger('db');
 
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
 enum UpsertOutcome {
@@ -94,6 +97,22 @@ class SaltDatabase {
   /// cannot maintainably re-derive).
   static const int _ftsWideningVersion = 8;
 
+  /// `settings` key written when the 008 FTS reindex has covered EVERY row.
+  ///
+  /// The reindex is keyed on this marker, not on the start version. It used
+  /// to run only when `startVersion < 8`, AFTER the loop had already committed
+  /// `user_version = 8` — so if one stored doc failed to decode, the reindex
+  /// rolled back and `open` threw exactly once; the next boot saw version 8
+  /// and never tried again. One crash, then a deployment permanently serving
+  /// the pre-008 narrow rows: subsection and technique text invisible to
+  /// search, with no signal (review S-D1, the B1 symptom reachable through
+  /// the upgrade path). A marker set only on full success makes the pass
+  /// idempotent and retried at every boot until it is, and it heals a
+  /// database that is already stuck at version 8 with narrow rows — which a
+  /// fix inside the 008 transaction could not, since there is nothing left
+  /// to roll back.
+  static const String ftsWidenedSetting = 'fts.widened_v8';
+
   void _migrate() {
     final startVersion =
         _db.select('PRAGMA user_version').first.columnAt(0) as int;
@@ -115,24 +134,59 @@ class SaltDatabase {
       }
       version += 1;
     }
-    if (startVersion < _ftsWideningVersion &&
-        migrations.length >= _ftsWideningVersion) {
+    if (migrations.length >= _ftsWideningVersion &&
+        getSetting(ftsWidenedSetting) == null) {
       _reindexAllFts();
     }
   }
 
-  /// Re-derives every FTS row from the stored doc JSON. Runs once when an
-  /// existing database upgrades across [_ftsWideningVersion]; on a fresh
-  /// database there are no rows and this is a no-op.
+  /// Re-derives every FTS row from the stored doc JSON, then writes
+  /// [ftsWidenedSetting] — but only if EVERY row was re-derived.
+  ///
+  /// A row whose doc will not decode is skipped, named in the log at WARNING,
+  /// and leaves the marker unset, so the pass runs again at the next boot
+  /// (~110 ms for 1,198 recipes) and names it again, until the row is fixed.
+  /// The rows that did decode are committed, so search works for everything
+  /// else in the meantime. Boot succeeds: for a household server a warning
+  /// the operator sees at every start beats a process that will not start
+  /// over one recipe. A database error inside the write is NOT caught — that
+  /// is not a bad row, and it should fail loudly.
+  ///
+  /// On a fresh database there are no rows; the marker is written at once.
   void _reindexAllFts() {
+    var failed = 0;
     _inTransaction(() {
-      for (final row in _db.select('SELECT rowid, doc FROM recipes')) {
-        final recipe = RecipeMapper.fromMap(
-          jsonDecode(row['doc'] as String) as Map<String, dynamic>,
-        );
+      for (final row in _db.select('SELECT rowid, id, doc FROM recipes')) {
+        final Recipe recipe;
+        try {
+          recipe = RecipeMapper.fromMap(
+            jsonDecode(row['doc'] as String) as Map<String, dynamic>,
+          );
+          // A stored doc that will not decode is a data problem, not a code
+          // path — whatever the parser throws, the answer is the same: name
+          // the row and keep going.
+          // ignore: avoid_catches_without_on_clauses
+        } catch (error) {
+          failed += 1;
+          _log.warning(
+            'FTS reindex skipped ${row['id']}: its stored document does not '
+            'decode ($error). Search will not see its subsections until it '
+            'is re-saved; the reindex retries at every boot.',
+          );
+          continue;
+        }
         _rebuildFts(recipe, row['rowid'] as int);
       }
+      if (failed == 0) {
+        setSetting(ftsWidenedSetting, DateTime.now().toUtc().toIso8601String());
+      }
     });
+    if (failed > 0) {
+      _log.warning(
+        'FTS reindex incomplete: $failed recipe(s) skipped; not marking done, '
+        'will retry at next boot.',
+      );
+    }
   }
 
   void _inTransaction(void Function() action) {

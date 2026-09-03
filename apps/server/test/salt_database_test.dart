@@ -350,6 +350,10 @@ void _preparedStatementCacheIsBounded() {
     const searchShapes = 8 * 2 * 2 * 2 + 1 * 2 * 2;
 
     test('a widening space of query shapes does not grow it', () {
+      // Statements cached by OPENING the database (migration bookkeeping —
+      // the FTS-widened marker's read and write) are code-derived, not
+      // request-derived, so the shape pin counts growth from there.
+      final bootStatements = db.preparedSqlTexts.length;
       search('chocolate');
       search('chocolate or cake');
       final baseline = db.preparedSqlTexts.length;
@@ -369,10 +373,11 @@ void _preparedStatementCacheIsBounded() {
         reason: 'a new query shape pinned a new prepared statement',
       );
       expect(afterAll, greaterThan(baseline), reason: 'calories path unused?');
-      expect(afterAll, searchShapes);
+      expect(afterAll - bootStatements, searchShapes);
     });
 
     test('the DSL term cap cannot mint a statement either', () {
+      final bootStatements = db.preparedSqlTexts.length;
       search('chocolate');
       sweep(1);
       sweep(2);
@@ -386,10 +391,11 @@ void _preparedStatementCacheIsBounded() {
       search(terms);
       search('chocolate $terms');
       expect(db.preparedSqlTexts.length, before);
-      expect(before, searchShapes);
+      expect(before - bootStatements, searchShapes);
     });
 
     test('the unfiltered listing interpolates only a bool-picked filter', () {
+      final bootStatements = db.preparedSqlTexts.length;
       // listCards is the other method that interpolates into _prepared (its
       // favorites filter). Its whole space: 2 filter states x 2 statements.
       for (final favoritesOnly in [false, true]) {
@@ -402,7 +408,7 @@ void _preparedStatementCacheIsBounded() {
           );
         }
       }
-      expect(db.preparedSqlTexts.length, 2 * 2);
+      expect(db.preparedSqlTexts.length - bootStatements, 2 * 2);
     });
 
     test('the review queue binds its bucket filter instead of naming it', () {
@@ -412,11 +418,12 @@ void _preparedStatementCacheIsBounded() {
       // while no shape test bounded what it could emit. Binding the bucket
       // makes the text a single compile-time constant: every bucket state,
       // one statement, nothing request-derived in the cache key.
+      final bootStatements = db.preparedSqlTexts.length;
       for (final bucket in [null, 'no_match', 'no_grams', 'check', 'counted']) {
         db.nutritionReviewLines(limit: 20, offset: 0, bucket: bucket);
       }
       expect(
-        db.preparedSqlTexts.length,
+        db.preparedSqlTexts.length - bootStatements,
         1,
         reason: 'the review queue emits one SQL text for every bucket',
       );
