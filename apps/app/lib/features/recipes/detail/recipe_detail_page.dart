@@ -62,17 +62,23 @@ class RecipeDetailPage extends StatelessWidget {
               title: Text((state as RecipeDetailLoaded).personalDataError!),
             );
           },
-          builder: (context, state) => switch (state) {
-            RecipeDetailLoading() => const LoadingView(),
-            RecipeDetailError(:final message) => ErrorView(
-              message: message,
-              onRetry: () => context.read<RecipeDetailCubit>().load(slug),
-            ),
-            RecipeDetailLoaded(:final detail) => DocumentTitle(
-              title: detail.recipe.title,
-              child: _DetailBody(detail: detail),
-            ),
-          },
+          // One DocumentTitle over every arm, so a same-route move to
+          // another recipe (an in-place update, not a new page) drops the
+          // old name the moment loading starts rather than keeping it until
+          // the new one lands.
+          builder: (context, state) => DocumentTitle(
+            title: state is RecipeDetailLoaded
+                ? state.detail.recipe.title
+                : null,
+            child: switch (state) {
+              RecipeDetailLoading() => const LoadingView(),
+              RecipeDetailError(:final message) => ErrorView(
+                message: message,
+                onRetry: () => context.read<RecipeDetailCubit>().load(slug),
+              ),
+              RecipeDetailLoaded(:final detail) => _DetailBody(detail: detail),
+            },
+          ),
         ),
       ),
     );

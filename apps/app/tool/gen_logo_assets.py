@@ -20,20 +20,26 @@ It does two things, both idempotent:
    content is stripped of it before being wrapped.
 
 3. Regenerates the PWA icons under ``web/icons/`` (declared by
-   ``web/manifest.json``): the plain 192/512 ones are the favicon disc, the
-   maskable ones are a full-bleed maroon square with the glyph held inside the
-   80% safe zone that Android's icon masks keep. Rasterised with macOS's
-   built-in ``qlmanage`` (no SVG rasteriser is a project dependency); on any
-   other OS this step is skipped with a note — the PNGs are committed, so only
-   the machine that edits the logo needs it.
+   ``web/manifest.json`` and as the apple-touch-icon). Both kinds are an
+   OPAQUE full-bleed maroon square — ``qlmanage`` flattens onto white, so a
+   transparent disc is not on offer, and Apple asks for opaque touch icons
+   anyway. The plain 192/512 ones carry the glyph at the favicon's inset; the
+   maskable ones hold it inside the 80% safe zone that Android's icon masks
+   keep. Rasterised with macOS's built-in ``qlmanage`` (no SVG rasteriser is a
+   project dependency); on any other OS this step is skipped with a note — the
+   PNGs are committed, so only the machine that edits the logo needs it.
+   ``qlmanage`` exits 0 and writes SOMETHING for any input, so each PNG is
+   checked for its expected size and for not being a blank tile.
 """
 from __future__ import annotations
 
 import pathlib
 import re
 import shutil
+import struct
 import subprocess
 import tempfile
+import zlib
 
 APP = pathlib.Path(__file__).resolve().parents[1]
 LOGO = APP / "assets" / "images" / "logo.svg"
@@ -94,27 +100,60 @@ def main() -> None:
     n = FAVICON.read_text().count("<path")
     print(f"web/favicon.svg: regenerated ({n} paths, glyph {INSET:.0%} of disc)")
 
-    # 3. PWA icons. Plain = the favicon disc; maskable = full bleed, glyph
-    #    scaled into the safe zone so no mask shape clips it.
+    # 3. PWA icons: opaque full-bleed squares (qlmanage flattens onto white,
+    #    so the disc's transparent corners would ship as white ones). Plain =
+    #    glyph at the favicon inset; maskable = glyph inside the safe zone.
     if not shutil.which("qlmanage"):
         print("web/icons: skipped (needs macOS qlmanage to rasterise; PNGs are committed)")
         return
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = pathlib.Path(tmp)
         for name, svg_text in (
-            ("Icon", icon_svg(INSET, full_bleed=False)),
+            ("Icon", icon_svg(INSET, full_bleed=True)),
             ("Icon-maskable", icon_svg(INSET * SAFE_ZONE, full_bleed=True)),
         ):
             src = tmp_dir / f"{name}.svg"
             src.write_text(svg_text)
             for size in (192, 512):
-                subprocess.run(
+                run = subprocess.run(
                     ["qlmanage", "-t", "-s", str(size), "-o", tmp, str(src)],
-                    check=True,
                     capture_output=True,
+                    text=True,
                 )
-                (tmp_dir / f"{name}.svg.png").replace(ICONS / f"{name}-{size}.png")
+                out = tmp_dir / f"{name}.svg.png"
+                if run.returncode != 0 or not out.exists():
+                    raise SystemExit(
+                        f"qlmanage failed for {name} at {size}px (exit {run.returncode}):\n"
+                        f"{run.stdout}{run.stderr}"
+                    )
+                _check_png(out, size)
+                out.replace(ICONS / f"{name}-{size}.png")
                 print(f"web/icons/{name}-{size}.png: regenerated")
+
+
+def _check_png(path: pathlib.Path, size: int) -> None:
+    """Refuse a PNG that is not ``size``×``size`` or that is a blank tile.
+
+    ``qlmanage`` exits 0 and writes an image for any input at all — plain text,
+    a broken path — so a fresh export that WebKit cannot draw would otherwise
+    ship as a white square with "regenerated" printed next to it.
+    """
+    data = path.read_bytes()
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise SystemExit(f"{path.name}: not a PNG")
+    width, height = struct.unpack(">II", data[16:24])
+    if (width, height) != (size, size):
+        raise SystemExit(f"{path.name}: expected {size}x{size}, got {width}x{height}")
+    idat, pos = b"", 8
+    while pos < len(data):
+        length, kind = struct.unpack(">I4s", data[pos : pos + 8])
+        if kind == b"IDAT":
+            idat += data[pos + 8 : pos + 8 + length]
+        pos += 12 + length
+    # A uniform tile compresses to filter bytes plus a handful of values; the
+    # real glyph over maroon uses far more than a dozen distinct byte values.
+    if len(set(zlib.decompress(idat))) < 16:
+        raise SystemExit(f"{path.name}: rendered blank — does logo.svg still draw?")
 
 
 if __name__ == "__main__":

@@ -145,6 +145,71 @@ void main() {
     await tester.pumpAndSettle();
     expect(labels.last, 'Salt to Taste');
   });
+
+  testWidgets('Back to a kept go_router page re-asserts its title', (
+    tester,
+  ) async {
+    // push() adds a second route on top of the kept '/' page; pop() (what
+    // browser Back does) uncovers it. go_router calls the pageBuilder again
+    // on pop, but the route and its State are KEPT (one initState across the
+    // round trip, asserted below), so the DocumentTitle only sees a same-
+    // title didUpdateWidget. A build-time title — Flutter's own Title widget
+    // — passes the go() pin above and fails this one: nothing but the route
+    // becoming current again can put the name back.
+    final labels = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'SystemChrome.setApplicationSwitcherDescription') {
+            labels.add((call.arguments as Map)['label'] as String);
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    var homeMounts = 0;
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          pageBuilder: (context, state) => fadePage(
+            state,
+            _MountCounter(
+              onMount: () => homeMounts++,
+              child: const Text('HOME'),
+            ),
+            title: 'Favorites',
+          ),
+        ),
+        GoRoute(
+          path: '/edit',
+          pageBuilder: (context, state) =>
+              fadePage(state, const Text('EDIT'), title: 'Edit recipe'),
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    expect(labels.last, 'Favorites · Salt to Taste');
+
+    router.push('/edit');
+    await tester.pumpAndSettle();
+    expect(labels.last, 'Edit recipe · Salt to Taste');
+
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('HOME'), findsOneWidget);
+    expect(
+      homeMounts,
+      1,
+      reason:
+          'pop must uncover the KEPT page (one initState across the round '
+          'trip); a fresh mount would let a build-time title pass this pin',
+    );
+    expect(labels.last, 'Favorites · Salt to Taste');
+  });
 }
 
 /// The broken shape, for the contrast test above. Do not use in the app.
@@ -154,6 +219,27 @@ Page<void> _keylessFadePage(Widget child) => CustomTransitionPage<void>(
   transitionsBuilder: (context, animation, _, child) =>
       FadeTransition(opacity: animation, child: child),
 );
+
+/// Counts initState so a test can tell a kept route from a fresh mount.
+class _MountCounter extends StatefulWidget {
+  const _MountCounter({required this.onMount, required this.child});
+  final VoidCallback onMount;
+  final Widget child;
+
+  @override
+  State<_MountCounter> createState() => _MountCounterState();
+}
+
+class _MountCounterState extends State<_MountCounter> {
+  @override
+  void initState() {
+    super.initState();
+    widget.onMount();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 class _RecordingObserver extends NavigatorObserver {
   _RecordingObserver(this.events);
