@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/services/import_service.dart';
@@ -121,6 +122,30 @@ void main() {
       expect(liqueur.description, 'Liqueur');
       expect(liqueur.itemKey, 'grand marnier');
       expect(liqueur.confidence, greaterThanOrEqualTo(0.5));
+    });
+
+    test('the matches body names the rewritten query and finds its cache '
+        'row under it', () async {
+      // A lookup under the raw item key would find nothing: the answer was
+      // stored under the rewritten words.
+      final provider = FixtureProvider();
+      for (final (recipe, key, query) in [
+        (acquacotta, 'red pepper flakes', 'spices pepper red cayenne'),
+        (tarte, 'grand marnier', 'liqueur'),
+      ]) {
+        final body = await matchesBody(db, provider, recipe);
+        final line = (body['items']! as List)
+            .cast<Map<String, Object?>>()
+            .firstWhere(
+              (item) => normalizeItem((item['item'] as String?) ?? '') == key,
+            );
+        expect(line['candidates_query'], query, reason: key);
+        expect(
+          line['candidates_cached_at'],
+          matches(RegExp(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$')),
+          reason: '$key: asked at compute, under the rewritten words',
+        );
+      }
     });
 
     test('a salt line with an amount is matched normally', () {

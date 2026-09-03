@@ -86,6 +86,32 @@ class _FlowCubit extends _SeededCubit {
   }
 }
 
+/// A repository whose only live behaviour is the hand search: records what
+/// was asked and answers as a LIVE search would.
+class _SearchRepo extends NutritionRepository {
+  _SearchRepo() : super(Dio());
+
+  final List<({String query, bool fresh})> searches = [];
+
+  @override
+  Future<FoodSearch> searchFoods(String query, {bool fresh = false}) async {
+    searches.add((query: query, fresh: fresh));
+    return (
+      items: const [
+        MatchCandidate(
+          fdcId: 170931,
+          description: 'Spices, pepper, black',
+          dataType: 'SR Legacy',
+          confidence: 1,
+        ),
+      ],
+      query: 'spices pepper black',
+      cached: false,
+      cachedAt: DateTime.now(),
+    );
+  }
+}
+
 /// Answers the apply-to-all offer offline: records the tap and emits the
 /// receipt the real cubit would emit from the server's `applied` counts.
 class _ApplyCubit extends _SeededCubit {
@@ -498,6 +524,7 @@ void main() {
             gramBasis: m.gramBasis,
             status: m.status,
             candidates: m.candidates,
+            candidatesQuery: 'escarole',
             candidatesCachedAt: DateTime.now().subtract(
               const Duration(days: 21),
             ),
@@ -546,6 +573,78 @@ void main() {
       find.textContaining('no amount found — not counted'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('a line FDC found nothing for still shows its age and offers '
+      'a live search, which sends fresh=true and then reads live', (
+    tester,
+  ) async {
+    // The unmatched line: no candidates at all — the answer most worth
+    // refreshing, and the one the first cut hid the line for.
+    final matches = [
+      for (final m in _matches)
+        if (m.position == 10)
+          IngredientMatch(
+            position: 10,
+            raw: m.raw,
+            item: 'escarole',
+            description: 'No FoodData Central match',
+            status: 'unmatched',
+            candidatesQuery: 'spices pepper black',
+            candidatesCachedAt: DateTime.now().subtract(
+              const Duration(days: 21),
+            ),
+          )
+        else
+          m,
+    ];
+    final repo = _SearchRepo();
+    final cubit = _ApplyCubit(_state().copyWith(matches: matches));
+    tester.view.physicalSize = const Size(1000, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      RepositoryProvider<NutritionRepository>.value(
+        value: repo,
+        child: MaterialApp(
+          theme: buildMaterialTheme(buildForuiTheme()),
+          builder: (context, child) =>
+              FTheme(data: buildForuiTheme(), child: child!),
+          home: BlocProvider<NutritionCubit>.value(
+            value: cubit,
+            child: Builder(
+              builder: (ctx) => Scaffold(
+                body: Center(
+                  child: FButton(
+                    onPress: () => showReviewSheet(ctx, isAdmin: true),
+                    child: const Text('open'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Find a match'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('“spices pepper black”'), findsOneWidget);
+    expect(find.textContaining('cached 3 wk ago'), findsOneWidget);
+    expect(find.text('Search live'), findsOneWidget);
+
+    await tester.tap(find.text('Search live'));
+    await tester.pumpAndSettle();
+    expect(repo.searches, [(query: 'spices pepper black', fresh: true)]);
+    expect(find.textContaining('live, just now'), findsOneWidget);
+    expect(
+      find.text('Search live'),
+      findsNothing,
+      reason: 'nothing to refresh',
+    );
+    expect(find.text('Spices, pepper, black'), findsOneWidget);
   });
 
   testWidgets('no offer, no strip; a member never sees one', (tester) async {

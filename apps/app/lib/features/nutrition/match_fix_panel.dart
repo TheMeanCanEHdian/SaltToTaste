@@ -271,6 +271,26 @@ class _FixPanelState extends State<FixPanel> {
 
   /// The last hand search's answer as a whole (its cache state and age).
   FoodSearch? _search;
+
+  /// That answer when it was for the LINE's own words (the "Search live"
+  /// under the candidate list), so the line's cache line can reflect it.
+  FoodSearch? get _lineSearch {
+    final search = _search;
+    final query = widget.match.candidatesQuery;
+    return search != null && query != null && search.query == query
+        ? search
+        : null;
+  }
+
+  /// The words a live search for this line asks: the server's own query
+  /// (already normalized and rewritten, so the answer lands under the same
+  /// cache key the line reads), falling back to the item and then the raw
+  /// line — capped at the search route's 120-character limit.
+  static String _lineTerm(IngredientMatch m) {
+    final term = m.candidatesQuery ?? m.item ?? m.raw;
+    return term.length > 120 ? term.substring(0, 120) : term;
+  }
+
   bool _searching = false;
   String? _searchError;
 
@@ -446,15 +466,17 @@ class _FixPanelState extends State<FixPanel> {
                     ? null
                     : () => setState(() => _stagedFdcId = c.fdcId),
               ),
-          if (candidates.isNotEmpty && m.candidatesCachedAt != null)
+          // Shown whenever FDC was asked — including a line it found NOTHING
+          // for, which is the answer most worth refreshing. After a live
+          // search for this line's own words, the line reflects that answer.
+          if (m.candidatesCachedAt != null)
             CacheLine(
-              cachedAt: m.candidatesCachedAt!,
-              live: false,
-              // A live search for this line's own words replaces the stored
-              // answer for everyone; its results show as a hand search.
+              query: m.candidatesQuery,
+              cachedAt: _lineSearch?.cachedAt ?? m.candidatesCachedAt!,
+              live: _lineSearch != null && !_lineSearch!.cached,
               onSearchLive: busy || _searching
                   ? null
-                  : () => _runSearch(term: m.item ?? m.raw, fresh: true),
+                  : () => _runSearch(term: _lineTerm(m), fresh: true),
             ),
           SearchRow(
             controller: _term,
@@ -497,7 +519,11 @@ class _FixPanelState extends State<FixPanel> {
                     ? null
                     : () => setState(() => _stagedFdcId = c.fdcId),
               ),
-            if (_search != null && _search!.cachedAt != null)
+            // The line above already speaks for a search of the line's own
+            // words; say it once.
+            if (_search != null &&
+                _search!.cachedAt != null &&
+                _lineSearch == null)
               CacheLine(
                 query: _search!.query,
                 cachedAt: _search!.cachedAt!,

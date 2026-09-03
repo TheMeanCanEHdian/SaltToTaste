@@ -5,6 +5,7 @@
       "raw": "8 ounce Asparagus",
       "item": "Asparagus",
       "others": 0,
+      "candidates_query": "asparagus",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -14,6 +15,7 @@
       "raw": "1 unit Lemon",
       "item": "unit Lemon",
       "others": 0,
+      "candidates_query": "unit lemon",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -23,6 +25,7 @@
       "raw": "2 clove Garlic",
       "item": "Garlic",
       "others": 0,
+      "candidates_query": "garlic",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -32,6 +35,7 @@
       "raw": "2 unit Scallions",
       "item": "unit Scallions",
       "others": 0,
+      "candidates_query": "unit green onions",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -41,6 +45,7 @@
       "raw": "6 ounce Gemelli Pasta",
       "item": "Gemelli Pasta",
       "others": 0,
+      "candidates_query": "gemelli pasta",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -50,6 +55,7 @@
       "raw": "4 ounce Ricotta Cheese",
       "item": "Ricotta Cheese",
       "others": 0,
+      "candidates_query": "ricotta cheese",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -59,6 +65,7 @@
       "raw": "1 teaspoon Chili Flakes",
       "item": "Chili Flakes",
       "others": 0,
+      "candidates_query": "chili flakes",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -68,6 +75,7 @@
       "raw": "¼ cup Parmesan Cheese",
       "item": "Parmesan Cheese",
       "others": 0,
+      "candidates_query": "parmesan cheese",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -77,6 +85,7 @@
       "raw": "1 ounce Walnuts",
       "item": "Walnuts",
       "others": 0,
+      "candidates_query": "walnuts",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -86,6 +95,7 @@
       "raw": "1 unit Vegetable Stock Concentrate",
       "item": "unit Vegetable Stock Concentrate",
       "others": 0,
+      "candidates_query": "unit vegetable stock concentrate",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -95,6 +105,7 @@
       "raw": "2 teaspoon Olive Oil",
       "item": "Olive Oil",
       "others": 0,
+      "candidates_query": "olive oil",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -104,6 +115,7 @@
       "raw": "3 tablespoon Butter",
       "item": "Butter",
       "others": 0,
+      "candidates_query": "butter",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -113,6 +125,7 @@
       "raw": "Salt",
       "item": "Salt",
       "others": 0,
+      "candidates_query": "salt",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -122,6 +135,7 @@
       "raw": "Pepper",
       "item": "Pepper",
       "others": 0,
+      "candidates_query": "spices pepper black",
       "candidates_cached_at": null,
       "match": null,
       "candidates": []

@@ -161,11 +161,11 @@ bool isSeasoningToTaste(String normalizedItem) =>
     seasoningToTasteItems.contains(normalizedItem);
 
 /// Phrases FDC's search cannot find under the recipe's words, rewritten to
-/// the words FDC files them under. Keyed by the NORMALIZED item — exactly as
-/// [normalizeItem] leaves it, prep words already gone — the value is the
+/// the words FDC files them under. Keyed by the NORMALIZED item — exactly
+/// as [normalizeItem] leaves it, prep words already gone — the value is the
 /// query. Bare 'rye' is deliberately absent: in recipes it is a grain or a
-/// bread (every corpus use), the spirit is 'rye whiskey'. Every target was chosen from a recorded FDC answer (see
-/// test/fixtures/fdc/searches.json).
+/// bread (every corpus use); the spirit is 'rye whiskey'. Every target was
+/// chosen from a recorded FDC answer (test/fixtures/fdc/searches.json).
 ///
 /// Pepper: FDC's search for "black pepper", "pepper" or "red pepper flakes"
 /// returns only the vegetables ("Peppers, sweet, green…"); the spice records

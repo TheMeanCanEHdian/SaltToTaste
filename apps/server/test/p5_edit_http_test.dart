@@ -1135,7 +1135,7 @@ void main() {
           expect(
             item['candidates_cached_at'],
             key != null && !key.toLowerCase().contains('water')
-                ? isA<String>()
+                ? matches(RegExp(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$'))
                 : isNull,
             reason:
                 'FDC was asked for every matched line at compute; water '
@@ -1719,7 +1719,12 @@ void main() {
       final a = jsonOf(firstBody);
       expect(a['query'], 'brandy');
       expect(a['cached'], isFalse, reason: 'never asked before');
-      expect(a['cached_at'], isA<String>());
+      // SQLite stores "YYYY-MM-DD HH:MM:SS" (UTC); the wire carries ISO with
+      // a Z, or the app would read it as local time and shift every age.
+      expect(
+        a['cached_at'],
+        matches(RegExp(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$')),
+      );
       expect(fixtureProvider.searchCalls, calls + 1);
 
       final (second, secondBody) = await send(

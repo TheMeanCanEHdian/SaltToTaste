@@ -595,9 +595,12 @@ computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾ ounces"`, `"entered by
 hand"` — for sanity-checking an estimate (null when there is no amount;
 re-derived cache-only, never spends FDC budget), `status`: `auto |
 confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
-for re-picking, `candidates_cached_at` (when FDC was last asked for this
-line's candidates, null if never — the search cache never expires on its
-own; the admin search endpoint's `fresh=true` replaces it), `item` (the parsed ingredient item VERBATIM — it can carry
+for re-picking, `candidates_query` (the words FDC is asked for this line's
+candidates, after normalization and the matcher's rewrites — e.g. `spices
+pepper black` for a pepper line; null when the line has nothing
+searchable) and `candidates_cached_at` (when FDC was last asked them, null
+if never — the search cache never expires on its own; the admin search
+endpoint's `fresh=true` replaces it), `item` (the parsed ingredient item VERBATIM — it can carry
 the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client
 wanting a bare name strips parentheticals, as the app does; null when the
 line has none), and `others`: how many recipes hold an undecided line

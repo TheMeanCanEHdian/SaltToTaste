@@ -133,8 +133,11 @@ Future<Map<String, Object?>> matchesBody(
               excluding: (recipeId: recipe.id, position: position),
               fdcId: row?.fdcId,
             ),
-      // When FDC was last asked for this line's candidates (the search
-      // cache never expires); null when it never was.
+      // The words FDC is asked for this line's candidates (after the
+      // matcher's rewrites — "spices pepper black" for a pepper line), and
+      // when it was last asked (the search cache never expires); null when
+      // the line has nothing searchable / was never asked.
+      'candidates_query': itemKey.isEmpty ? null : searchQueryFor(itemKey),
       'candidates_cached_at': itemKey.isEmpty
           ? null
           : db.fdcSearchCacheEntry(searchQueryFor(itemKey))?.fetchedAt,

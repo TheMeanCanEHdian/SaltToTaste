@@ -130,6 +130,7 @@ class IngredientMatch {
     required this.raw,
     this.item,
     this.others = 0,
+    this.candidatesQuery,
     this.candidatesCachedAt,
     this.fdcId,
     this.description,
@@ -155,6 +156,7 @@ class IngredientMatch {
         raw: json['raw'] as String? ?? '',
         item: json['item'] as String?,
         others: (json['others'] as num?)?.toInt() ?? 0,
+        candidatesQuery: json['candidates_query'] as String?,
         candidatesCachedAt: _timestamp(json['candidates_cached_at']),
         candidates: candidates,
       );
@@ -164,6 +166,7 @@ class IngredientMatch {
       raw: json['raw'] as String? ?? '',
       item: json['item'] as String?,
       others: (json['others'] as num?)?.toInt() ?? 0,
+      candidatesQuery: json['candidates_query'] as String?,
       candidatesCachedAt: _timestamp(json['candidates_cached_at']),
       fdcId: (match['fdc_id'] as num?)?.toInt(),
       description: match['description'] as String?,
@@ -187,6 +190,10 @@ class IngredientMatch {
   /// Other recipes holding an undecided line with this same ingredient item
   /// — what an apply-to-all from this line would reach.
   final int others;
+
+  /// The words FDC is asked for this line's candidates, after the matcher's
+  /// normalization and rewrites; null when the line has nothing searchable.
+  final String? candidatesQuery;
 
   /// When FDC was last asked for this line's candidates (the search cache
   /// never expires on its own); null when it never was.
