@@ -76,7 +76,8 @@ Future<void> matchAndCompute(
     }
 
     final normalized = normalizeItem(line.item ?? line.raw);
-    if (normalized.isEmpty || isWaterLike(normalized)) {
+    final seasoning = line.amounts.isEmpty && isSeasoningToTaste(normalized);
+    if (normalized.isEmpty || isWaterLike(normalized) || seasoning) {
       db.upsertIngredientMatchIfUndecided(
         IngredientMatchRow(
           recipeId: recipe.id,
@@ -86,6 +87,8 @@ Future<void> matchAndCompute(
           fdcId: null,
           description: normalized.isEmpty
               ? 'Nothing searchable in this line'
+              : seasoning
+              ? 'Seasoning to taste — no measurable amount'
               : 'Water/ice — counts as zero',
           dataType: null,
           confidence: 1,
@@ -133,8 +136,9 @@ Future<void> matchAndCompute(
       }
     }
 
-    final candidates = await _cachedSearch(db, provider, normalized);
-    final ranked = rankCandidates(normalized, candidates);
+    final query = searchQueryFor(normalized);
+    final candidates = await _cachedSearch(db, provider, query);
+    final ranked = rankCandidates(query, candidates);
     if (ranked.isEmpty) {
       db.upsertIngredientMatchIfUndecided(
         IngredientMatchRow(
@@ -385,9 +389,10 @@ Future<List<RankedCandidate>> candidatesForLine(
   if (normalized.isEmpty || isWaterLike(normalized)) {
     return const [];
   }
+  final query = searchQueryFor(normalized);
   final List<FdcCandidate> candidates;
   if (cacheOnly) {
-    final cached = db.fdcSearchCacheGet(normalized);
+    final cached = db.fdcSearchCacheGet(query);
     if (cached == null) {
       return const [];
     }
@@ -396,9 +401,9 @@ Future<List<RankedCandidate>> candidatesForLine(
         FdcCandidate.fromJson(entry as Map<String, dynamic>),
     ];
   } else {
-    candidates = await _cachedSearch(db, provider, normalized);
+    candidates = await _cachedSearch(db, provider, query);
   }
-  return rankCandidates(normalized, candidates).take(8).toList();
+  return rankCandidates(query, candidates).take(8).toList();
 }
 
 /// Ranked candidates for an ADMIN-SUPPLIED search term — the review sheet's
@@ -417,8 +422,9 @@ Future<List<RankedCandidate>> searchCandidates(
   if (normalized.isEmpty) {
     return const [];
   }
-  final candidates = await _cachedSearch(db, provider, normalized);
-  return rankCandidates(normalized, candidates).take(8).toList();
+  final rewritten = searchQueryFor(normalized);
+  final candidates = await _cachedSearch(db, provider, rewritten);
+  return rankCandidates(rewritten, candidates).take(8).toList();
 }
 
 /// A short, human-readable description of what the stored grams were computed

@@ -327,9 +327,10 @@ The cross-recipe queue of ingredient-match lines that still need a look, worst
 (lowest name-confidence) first: `{total, buckets: [{id, label, count}], items:
 [{recipe: {id, slug, title}, position, raw, bucket, match: {fdc_id, description,
 data_type, confidence, grams, gram_source, status} | null}], page, limit}`.
-Triage buckets: `no_match` (no food matched), `no_grams` (matched but resolves
-no grams, so it contributes nothing), `check` (counting, but < 50% name
-confidence — probably wrong), and `skipped` (browsable via the filter, excluded
+Triage buckets: `no_match` (no food matched), `check` (an automatic match
+below 50% name confidence — probably the wrong food, whether or not it has
+an amount), `no_grams` (a plausible match that resolves no grams, so it
+contributes nothing), and `skipped` (browsable via the filter, excluded
 from `total`). A `confirmed` line is always resolved and never appears (e.g.
 confirmed water is a deliberate no-match); an `overridden` line is resolved
 ONLY once it has grams — overridden with no grams stays in `no_grams`, because
@@ -606,6 +607,12 @@ from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
 
+A line with no amount whose item is seasoning to taste — salt, pepper,
+"salt and pepper" and their common spellings — is confirmed as a deliberate
+no-match ("Seasoning to taste — no measurable amount"), like water: it
+contributes nothing measurable, and FDC's search for it returns vegetables
+and salted nuts. A seasoning line WITH an amount is matched normally.
+
 Decisions travel: at compute time a line whose item (the matcher's
 normalized text, e.g. `without salt butter`) has a `confirmed` or
 `overridden` food on any other line — another recipe's, or the same
@@ -653,7 +660,11 @@ cache-only so members never can) — which also makes it a
 [side-effectful GET](#cross-site-gets): a cookie session with neither
 `X-Requested-With` nor a same-origin `Sec-Fetch-Site` gets `403 csrf`.
 Repeat terms are served from the same search cache the matcher uses. The term is normalized like an ingredient
-line, so it shares those cache keys and ranking. `422` for a blank term,
+line, so it shares those cache keys and ranking — including the matcher's
+rewrites of phrases FDC files elsewhere (pepper as a spice: `pepper`,
+`black pepper`, `red pepper flakes` search FDC's `Spices, pepper, …`
+records; brand liqueurs and spirits — Grand Marnier, Calvados, spiced rum,
+bourbon — search the generic liqueur, brandy, rum and whiskey entries). `422` for a blank term,
 one over 120 characters, or when no FDC API key is configured.
 
 ### `POST /api/v1/nutrition/bulk` (admin, full scope)

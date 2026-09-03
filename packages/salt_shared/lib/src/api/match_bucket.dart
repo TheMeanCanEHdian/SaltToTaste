@@ -54,11 +54,14 @@ MatchBucket matchBucketFor({
   if (fdcId == null) {
     return MatchBucket.noMatch;
   }
-  if (grams == null) {
-    return MatchBucket.noAmount;
-  }
+  // A weak match is first a WRONG food, whether or not it has an amount: a
+  // 0.41 "100 GRAND Bar" for a liqueur line must read "check match", not the
+  // calm "no amount" — the amount is the smaller of its problems.
   if (status == 'auto' && confidence < 0.5) {
     return MatchBucket.check;
+  }
+  if (grams == null) {
+    return MatchBucket.noAmount;
   }
   return MatchBucket.counted;
 }

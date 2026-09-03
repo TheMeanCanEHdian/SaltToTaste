@@ -27,6 +27,13 @@ void main() {
       );
     });
 
+    test('a weak auto match is "check" whether or not it has grams', () {
+      // A 0.41 "100 GRAND Bar" for a liqueur line with no portion used to
+      // read as the calm "no amount"; the wrong food is the larger problem.
+      expect(bucket(confidence: 0.41, grams: null), MatchBucket.check);
+      expect(bucket(confidence: 0.41), MatchBucket.check);
+      expect(bucket(grams: null), MatchBucket.noAmount);
+    });
     test('overridden with no grams STAYS flagged — an unfinished fix', () {
       expect(bucket(status: 'overridden', grams: null), MatchBucket.noAmount);
     });

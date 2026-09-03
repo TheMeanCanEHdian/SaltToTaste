@@ -130,6 +130,99 @@ String normalizeItem(String item) {
 bool isWaterLike(String normalizedItem) =>
     waterLikeItems.contains(normalizedItem);
 
+/// Seasoning a recipe adds "to taste": with no amount on the line it
+/// contributes nothing measurable, and FDC's search for it returns bell
+/// peppers and salted nuts. Such a line is confirmed as a deliberate
+/// no-match instead of sitting in the review queue forever. A line WITH an
+/// amount ("1 teaspoon table salt") is matched normally.
+const Set<String> seasoningToTasteItems = {
+  'salt',
+  'table salt',
+  'kosher salt',
+  'sea salt',
+  'flaky sea salt',
+  'pepper',
+  'black pepper',
+  'ground pepper',
+  'ground black pepper',
+  'salt and pepper',
+  'salt and black pepper',
+  'salt and ground pepper',
+  'salt and ground black pepper',
+  'table salt and pepper',
+  'table salt and ground black pepper',
+  'kosher salt and pepper',
+  'kosher salt and ground black pepper',
+};
+
+/// Whether an amount-less line of [normalizedItem] is seasoning to taste.
+bool isSeasoningToTaste(String normalizedItem) =>
+    seasoningToTasteItems.contains(normalizedItem);
+
+/// Phrases FDC's search cannot find under the recipe's words, rewritten to
+/// the words FDC files them under. Keyed by the NORMALIZED item; the value is
+/// the query. Every target was chosen from a recorded FDC answer (see
+/// test/fixtures/fdc/searches.json).
+///
+/// Pepper: FDC's search for "black pepper", "pepper" or "red pepper flakes"
+/// returns only the vegetables ("Peppers, sweet, green…"); the spice records
+/// answer to "spices pepper …". Spirits: FDC has no brand liqueurs at all —
+/// "grand marnier" found a candy bar — but clean generic entries for
+/// liqueur, brandy, rum and whiskey.
+const Map<String, String> _queryRewrites = {
+  // pepper, the spice
+  'pepper': 'spices pepper black',
+  'black pepper': 'spices pepper black',
+  'ground pepper': 'spices pepper black',
+  'ground black pepper': 'spices pepper black',
+  'coarsely ground black pepper': 'spices pepper black',
+  'cracked black pepper': 'spices pepper black',
+  'black peppercorns': 'spices pepper black',
+  'peppercorns': 'spices pepper black',
+  'white pepper': 'spices pepper white',
+  'ground white pepper': 'spices pepper white',
+  'red pepper flakes': 'spices pepper red cayenne',
+  'crushed red pepper': 'spices pepper red cayenne',
+  'crushed red pepper flakes': 'spices pepper red cayenne',
+  'cayenne': 'spices pepper red cayenne',
+  'cayenne pepper': 'spices pepper red cayenne',
+  'ground cayenne pepper': 'spices pepper red cayenne',
+  // orange liqueurs and liqueurs in general
+  'grand marnier': 'liqueur',
+  'cointreau': 'liqueur',
+  'triple sec': 'liqueur',
+  'orange liqueur': 'liqueur',
+  'amaretto': 'liqueur',
+  'kahlua': 'liqueur',
+  'coffee liqueur': 'liqueur',
+  // brandies
+  'calvados': 'brandy',
+  'cognac': 'brandy',
+  'armagnac': 'brandy',
+  'apple brandy': 'brandy',
+  // rums
+  'spiced rum': 'rum',
+  'dark rum': 'rum',
+  'light rum': 'rum',
+  'white rum': 'rum',
+  'gold rum': 'rum',
+  // whiskeys
+  'bourbon': 'whiskey',
+  'bourbon whiskey': 'whiskey',
+  'rye whiskey': 'whiskey',
+  'rye': 'whiskey',
+  'scotch': 'whiskey',
+  'scotch whisky': 'whiskey',
+  'whisky': 'whiskey',
+};
+
+/// The FDC search query for a normalized item: the item itself, unless a
+/// [_queryRewrites] phrase applies. The item key (identity across recipes)
+/// stays the normalized item; only what is sent to FDC — and so the search
+/// cache key — changes.
+String searchQueryFor(String normalizedItem) =>
+    _queryRewrites[normalizedItem] ?? normalizedItem;
+
 /// A ranked candidate.
 class RankedCandidate {
   /// Pairs a candidate with its score.

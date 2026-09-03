@@ -55,12 +55,111 @@ void main() {
       expect(normalizeItem('1 small head escarole'), '1 escarole');
     });
 
+    test('the FDC query rewrites what FDC files under other words', () {
+      // Pepper the spice: FDC's search for these returns only vegetables.
+      expect(searchQueryFor('pepper'), 'spices pepper black');
+      expect(
+        searchQueryFor(normalizeItem('freshly ground black pepper')),
+        'spices pepper black',
+      );
+      expect(searchQueryFor('red pepper flakes'), 'spices pepper red cayenne');
+      expect(searchQueryFor('white pepper'), 'spices pepper white');
+      // The vegetable keeps its own words.
+      expect(searchQueryFor('red bell pepper'), 'red bell pepper');
+      expect(searchQueryFor('jalapeño'), 'jalapeño');
+      // Brand liqueurs and spirits: FDC has only the generic entries.
+      expect(searchQueryFor('grand marnier'), 'liqueur');
+      expect(searchQueryFor('calvados'), 'brandy');
+      expect(searchQueryFor('spiced rum'), 'rum');
+      expect(searchQueryFor('bourbon'), 'whiskey');
+      // Everything else is itself — the item key never changes.
+      expect(searchQueryFor('without salt butter'), 'without salt butter');
+    });
+
+    test('seasoning to taste is recognised by its normalized item', () {
+      for (final raw in [
+        'Salt and pepper',
+        'Table salt and ground black pepper',
+        'Kosher salt',
+        'Freshly ground black pepper',
+      ]) {
+        expect(isSeasoningToTaste(normalizeItem(raw)), isTrue, reason: raw);
+      }
+      expect(isSeasoningToTaste(normalizeItem('red pepper flakes')), isFalse);
+      expect(isSeasoningToTaste(normalizeItem('salted butter')), isFalse);
+    });
+
     test('keeps identity-changing words (not every adjective is prep)', () {
       // "leaves"/"cut"/"cooked" stay — dropping them changes the food.
       expect(normalizeItem('bay leaves'), 'bay leaves');
       expect(normalizeItem('cooked ham'), 'cooked ham');
     });
   });
+
+  group(
+    'rankCandidates over recorded FDC answers for the rewritten queries',
+    () {
+      final provider = FixtureProvider();
+
+      Future<String> top(String query) async => rankCandidates(
+        query,
+        await provider.search(query),
+      ).first.candidate.description;
+
+      test('the spice records win under their own words', () async {
+        expect(await top('spices pepper black'), 'Spices, pepper, black');
+        expect(
+          await top('spices pepper red cayenne'),
+          'Spices, pepper, red or cayenne',
+        );
+        expect(await top('spices pepper white'), 'Spices, pepper, white');
+      });
+
+      test(
+        "under the recipe's own words a vegetable or a dish ranks first",
+        () async {
+          // Measured on the recorded answers: 'red pepper flakes' puts the spice
+          // 6th behind bell peppers (0.56 vs 0.65); bare 'pepper' puts it 10th
+          // behind "Pepper steak" (0.87 vs 0.89); 'salt and pepper' returns no
+          // spice at all. Ranking alone could not make these right — the query
+          // has to change.
+          for (final query in [
+            'red pepper flakes',
+            'pepper',
+            'salt and pepper',
+          ]) {
+            final ranked = rankCandidates(query, await provider.search(query));
+            expect(ranked, isNotEmpty, reason: 'recorded from the live cache');
+            expect(
+              ranked.first.candidate.description,
+              isNot(startsWith('Spices,')),
+              reason: query,
+            );
+          }
+          final saltAndPepper = await provider.search('salt and pepper');
+          expect(
+            saltAndPepper.any((c) => c.description.startsWith('Spices,')),
+            isFalse,
+            reason: 'nothing to promote',
+          );
+        },
+      );
+
+      test('spirits land on their generic entries', () async {
+        expect(await top('liqueur'), 'Liqueur');
+        expect(await top('brandy'), 'Brandy');
+        expect(await top('rum'), 'Rum');
+        expect(await top('whiskey'), 'Whiskey');
+        // What "grand marnier" found before the rewrite: a candy bar, weakly.
+        final before = rankCandidates(
+          'grand marnier',
+          await provider.search('grand marnier'),
+        ).first;
+        expect(before.candidate.description, contains('100 GRAND'));
+        expect(before.confidence, lessThan(0.5));
+      });
+    },
+  );
 
   group('rankCandidates form-change penalty', () {
     FdcCandidate food(String description, String dataType) => FdcCandidate(

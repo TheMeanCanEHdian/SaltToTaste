@@ -1051,15 +1051,16 @@ class SaltDatabase {
   /// vanish from this queue while contributing nothing. Decided corners:
   /// overridden+NULL grams stays `no_grams` (an unfinished fix); `confirmed`
   /// is always resolved, even matchless (confirmed water is a deliberate
-  /// no-match).
+  /// no-match); a low-confidence auto match is `check` whether or not it has
+  /// grams — a wrong food is the larger problem, and "no amount" read as calm.
   static const String _reviewBucketCase = '''
     CASE
       WHEN im.status = 'skipped' THEN 'skipped'
       WHEN im.status = 'overridden' AND im.grams IS NULL THEN 'no_grams'
       WHEN im.status IN ('confirmed', 'overridden') THEN 'counted'
       WHEN im.fdc_id IS NULL THEN 'no_match'
-      WHEN im.grams IS NULL THEN 'no_grams'
       WHEN im.confidence < 0.5 THEN 'check'
+      WHEN im.grams IS NULL THEN 'no_grams'
       ELSE 'counted'
     END''';
 
