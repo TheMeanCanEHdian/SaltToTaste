@@ -489,6 +489,48 @@ void main() {
       expect(contentHashOfText(text), lib.db.contentHashOf(copyId));
     });
   });
+  test(
+    'one row whose document does not decode does not abort the self-heal',
+    () {
+      // Both export files vanish. The good row must be re-exported even though
+      // the bad row sits next to it in the same loop; the bad one is skipped
+      // with a WARNING, and — via the identity lookup — remains deletable.
+      final doc = bundt.toMap();
+      final bad = createRecipe(db, config, {
+        for (final key in editableRecipeKeys)
+          if (doc.containsKey(key)) key: doc[key],
+      }).recipe;
+      final badFile = File(exportPathFor(config, manualSourceSlug, bad.id));
+      sqlite3.open(config.dbPath)
+        ..execute('UPDATE recipes SET doc = ? WHERE id = ?', [
+          '{"title": ',
+          bad.id,
+        ])
+        ..dispose();
+      exportFile.deleteSync();
+      badFile.deleteSync();
+      final records = <LogRecord>[];
+      final subscription = Logger.root.onRecord.listen(records.add);
+      addTearDown(subscription.cancel);
+
+      final report = scanLibrary(db: db, config: config);
+
+      expect(report.reExported, [recipeId], reason: 'the good row healed');
+      expect(exportFile.existsSync(), isTrue);
+      expect(badFile.existsSync(), isFalse);
+      expect(
+        records.where(
+          (r) =>
+              r.level >= Level.WARNING &&
+              r.message.contains('Self-heal skipped ${bad.id}'),
+        ),
+        hasLength(1),
+      );
+
+      deleteRecipe(db, config, bad.id);
+      expect(db.recipeIdentityByIdOrSlug(bad.id), isNull);
+    },
+  );
 }
 
 /// Reconciliation branches that need no recipe data at all, so they run

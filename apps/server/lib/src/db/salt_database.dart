@@ -116,6 +116,19 @@ class SaltDatabase {
   void _migrate() {
     final startVersion =
         _db.select('PRAGMA user_version').first.columnAt(0) as int;
+    // A NEWER release wrote this file. Opening it anyway is how a rollback
+    // silently corrupts derived state: a pre-008 build ran fine against a v8
+    // database (008's SQL is a no-op), wrote narrow FTS rows under a SET
+    // widened marker, and the re-upgrade then trusted the marker and never
+    // re-derived them. Nothing a build can do with a schema it does not know
+    // is safe; refuse, and say which build is needed.
+    if (startVersion > migrations.length) {
+      throw StateError(
+        'This database is at schema version $startVersion, but this build '
+        'only knows ${migrations.length}. It was written by a newer release; '
+        'run that release (or newer), not this one.',
+      );
+    }
     var version = startVersion;
     while (version < migrations.length) {
       _db.execute('BEGIN');
@@ -136,9 +149,27 @@ class SaltDatabase {
     }
     if (migrations.length >= _ftsWideningVersion &&
         getSetting(ftsWidenedSetting) == null) {
-      _reindexAllFts();
+      try {
+        _reindexAllFts();
+      } on SqliteException catch (error) {
+        // Marker absent means this open takes the write lock (BEGIN
+        // IMMEDIATE), which an at-head open never used to. Another
+        // connection holding a write transaction past busy_timeout — an
+        // operator's sqlite3 shell mid-transaction — would otherwise turn a
+        // transient lock into a boot failure. The marker is still absent,
+        // so the pass simply runs at the next open; nothing is lost.
+        if (error.resultCode != _sqliteBusy) rethrow;
+        _log.warning(
+          'FTS reindex deferred: the database is locked by another '
+          'connection ($error). It will run at the next open.',
+        );
+      }
     }
   }
+
+  /// SQLITE_BUSY — the primary result code for "another connection holds the
+  /// lock past busy_timeout".
+  static const int _sqliteBusy = 5;
 
   /// Re-derives every FTS row from the stored doc JSON, then writes
   /// [ftsWidenedSetting] — but only if EVERY row was re-derived.
@@ -170,8 +201,9 @@ class SaltDatabase {
           failed += 1;
           _log.warning(
             'FTS reindex skipped ${row['id']}: its stored document does not '
-            'decode ($error). Search will not see its subsections until it '
-            'is re-saved; the reindex retries at every boot.',
+            'decode ($error). Search will not see its subsections. Delete it '
+            'from the app, re-import its source, or fix its exported YAML '
+            'and rescan; the reindex retries at every boot.',
           );
           continue;
         }
@@ -808,6 +840,26 @@ class SaltDatabase {
     return (
       recipe: RecipeMapper.fromMap(doc),
       sourceSlug: row['source_slug'] as String,
+    );
+  }
+
+  /// The id and source of the recipe [key] names (by id or slug) WITHOUT
+  /// decoding its document.
+  ///
+  /// [recipeByIdOrSlug] decodes, so every per-recipe route — including
+  /// delete — threw on a row whose stored document no longer parses, and the
+  /// reindex warning that told the operator to remove that recipe pointed at
+  /// a door that would not open. Deleting needs only the id and the source.
+  ({String id, String sourceSlug})? recipeIdentityByIdOrSlug(String key) {
+    final rows = _prepared(
+      'SELECT id, source_slug FROM recipes WHERE id = ? OR slug = ? LIMIT 1',
+    ).select([key, key]);
+    if (rows.isEmpty) {
+      return null;
+    }
+    return (
+      id: rows.first['id'] as String,
+      sourceSlug: rows.first['source_slug'] as String,
     );
   }
 

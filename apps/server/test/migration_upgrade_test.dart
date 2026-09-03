@@ -16,6 +16,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
 
 import 'package:logging/logging.dart';
@@ -647,6 +648,83 @@ void main() {
       dir.deleteSync(recursive: true);
     }
   });
+
+  test('a database written by a NEWER release is refused', () {
+    // Rollback is the one way a set marker ends up over narrow rows: a
+    // pre-008 build opens a v8 file without complaint (008's SQL is a no-op),
+    // writes narrow FTS rows, and the re-upgrade trusts the marker. No build
+    // can safely drive a schema it does not know; refuse instead.
+    final dir = Directory.systemTemp.createTempSync('salt_migr_newer');
+    final path = '${dir.path}/salt.db';
+    try {
+      SaltDatabase.open(path).dispose();
+      sqlite3.open(path)
+        ..execute('PRAGMA user_version = ${migrations.length + 1}')
+        ..dispose();
+      expect(
+        () => SaltDatabase.open(path),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('newer release'),
+          ),
+        ),
+      );
+    } finally {
+      dir.deleteSync(recursive: true);
+    }
+  });
+
+  test(
+    'a lock held by another connection defers the reindex, not the boot',
+    () async {
+      // With the marker absent, open() takes the write lock for the reindex.
+      // A connection holding a write transaction past busy_timeout (5 s) —
+      // an operator's sqlite3 shell mid-transaction — must not turn that into
+      // a failed boot: the marker stays absent, the pass runs next time.
+      // This test genuinely waits out busy_timeout, so it costs ~5 s.
+      final dir = Directory.systemTemp.createTempSync('salt_migr_locked');
+      final path = '${dir.path}/salt.db';
+      final records = <LogRecord>[];
+      final subscription = Logger.root.onRecord.listen(records.add);
+      addTearDown(subscription.cancel);
+      try {
+        SaltDatabase.open(path).dispose(); // fresh: marked at once
+        sqlite3.open(path)
+          ..execute('DELETE FROM settings WHERE key = ?', [
+            SaltDatabase.ftsWidenedSetting,
+          ])
+          ..dispose();
+        final holder = Isolate.run(() {
+          final lock = sqlite3.open(path)..execute('BEGIN IMMEDIATE');
+          sleep(const Duration(milliseconds: 6500));
+          lock
+            ..execute('COMMIT')
+            ..dispose();
+        });
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+
+        final db = SaltDatabase.open(path); // must NOT throw
+        expect(
+          db.getSetting(SaltDatabase.ftsWidenedSetting),
+          isNull,
+          reason: 'deferred, not done: the marker stays absent for next boot',
+        );
+        db.dispose();
+        expect(
+          records.where(
+            (r) => r.level >= Level.WARNING && r.message.contains('deferred'),
+          ),
+          isNotEmpty,
+          reason: 'the deferral is announced, not silent',
+        );
+        await holder;
+      } finally {
+        dir.deleteSync(recursive: true);
+      }
+    },
+  );
 
   // ---- Corpus-backed: the populated upgrade. ----
 

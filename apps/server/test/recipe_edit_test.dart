@@ -8,6 +8,7 @@ import 'package:salt_server/src/services/library_io.dart';
 import 'package:salt_server/src/services/library_scan.dart';
 import 'package:salt_server/src/services/recipe_edit_service.dart';
 import 'package:salt_shared/salt_shared.dart';
+import 'package:sqlite3/sqlite3.dart' show sqlite3;
 import 'package:test/test.dart';
 
 import 'support/corpus.dart';
@@ -142,6 +143,34 @@ void main() {
       expect(result.recipe.slug, 'rich-chocolate-bundt-cake-2');
       // Clean up so later expectations stay simple.
       deleteRecipe(db, config, result.recipe.id);
+    });
+
+    test('a recipe whose stored document no longer decodes is still '
+        'deletable', () {
+      // The reindex warning tells the operator to delete such a recipe.
+      // Every per-recipe route decodes the document first, so before the
+      // identity lookup that door threw the same FormatException the
+      // warning was about (D1 review, critique #1).
+      final victim = createRecipe(db, config, submission).recipe;
+      sqlite3.open(config.dbPath)
+        ..execute('UPDATE recipes SET doc = ? WHERE id = ?', [
+          '{"title": ',
+          victim.id,
+        ])
+        ..dispose();
+      expect(
+        () => db.recipeByIdOrSlug(victim.id),
+        throwsFormatException,
+        reason: 'the read path is genuinely broken for this row',
+      );
+
+      deleteRecipe(db, config, victim.id);
+
+      expect(db.recipeIdentityByIdOrSlug(victim.id), isNull);
+      expect(
+        File(exportPathFor(config, manualSourceSlug, victim.id)).existsSync(),
+        isFalse,
+      );
     });
 
     test('a scan right after creating finds nothing to reconcile', () {

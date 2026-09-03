@@ -214,14 +214,16 @@ void deleteRecipe(
   String key, {
   void Function()? beforeDestructive,
 }) {
-  final existing = db.recipeByIdOrSlug(key);
+  // Identity only: a recipe whose stored document no longer decodes must
+  // still be deletable, or the reindex warning's "delete it" is unreachable.
+  final existing = db.recipeIdentityByIdOrSlug(key);
   if (existing == null) {
     throw NotFoundException('recipe not found: $key');
   }
   beforeDestructive?.call();
-  db.deleteRecipe(existing.recipe.id);
-  deleteExport(config, existing.sourceSlug, existing.recipe.id);
-  _log.info('Deleted recipe ${existing.recipe.id}');
+  db.deleteRecipe(existing.id);
+  deleteExport(config, existing.sourceSlug, existing.id);
+  _log.info('Deleted recipe ${existing.id}');
 }
 
 /// Encodes, hashes, upserts, and exports [recipe] (whose slug is already

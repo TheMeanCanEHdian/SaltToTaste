@@ -108,7 +108,21 @@ ScanReport scanLibrary({
     if (seenIds.contains(row.id)) {
       continue;
     }
-    final found = db.recipeByIdOrSlug(row.id);
+    final ({Recipe recipe, String sourceSlug})? found;
+    try {
+      found = db.recipeByIdOrSlug(row.id);
+      // A stored document that will not decode is a data problem; whatever
+      // the parser throws, one bad row must not abort the self-heal for the
+      // rest of the library.
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error) {
+      _log.warning(
+        'Self-heal skipped ${row.id}: its stored document does not decode '
+        '($error). Its library file cannot be re-exported until it is '
+        'deleted or re-imported.',
+      );
+      continue;
+    }
     if (found == null) {
       continue;
     }
