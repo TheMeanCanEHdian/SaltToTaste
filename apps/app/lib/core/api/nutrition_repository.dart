@@ -103,6 +103,7 @@ class IngredientMatch {
   const IngredientMatch({
     required this.position,
     required this.raw,
+    this.others = 0,
     this.fdcId,
     this.description,
     this.dataType,
@@ -125,12 +126,14 @@ class IngredientMatch {
       return IngredientMatch(
         position: (json['position']! as num).toInt(),
         raw: json['raw'] as String? ?? '',
+        others: (json['others'] as num?)?.toInt() ?? 0,
         candidates: candidates,
       );
     }
     return IngredientMatch(
       position: (json['position']! as num).toInt(),
       raw: json['raw'] as String? ?? '',
+      others: (json['others'] as num?)?.toInt() ?? 0,
       fdcId: (match['fdc_id'] as num?)?.toInt(),
       description: match['description'] as String?,
       dataType: match['data_type'] as String?,
@@ -145,6 +148,10 @@ class IngredientMatch {
 
   final int position;
   final String raw;
+
+  /// Other recipes holding an undecided line with this same ingredient item
+  /// — what an apply-to-all from this line would reach.
+  final int others;
   final int? fdcId;
   final String? description;
 
@@ -362,6 +369,7 @@ class NutritionRepository {
     double? grams,
     bool? confirmed,
     bool? skipped,
+    bool? applyToAll,
   }) {
     return apiGuard(() async {
       final response = await _dio.put<dynamic>(
@@ -371,6 +379,7 @@ class NutritionRepository {
           if (grams != null) 'grams': grams,
           if (confirmed != null) 'confirmed': confirmed,
           if (skipped != null) 'skipped': skipped,
+          if (applyToAll != null) 'apply_to_all': applyToAll,
         },
       );
       final data = _asMap(response.data);

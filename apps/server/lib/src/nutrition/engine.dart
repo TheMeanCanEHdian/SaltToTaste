@@ -82,6 +82,7 @@ Future<void> matchAndCompute(
           recipeId: recipe.id,
           position: position,
           raw: line.raw,
+          itemKey: normalized,
           fdcId: null,
           description: normalized.isEmpty
               ? 'Nothing searchable in this line'
@@ -96,6 +97,42 @@ Future<void> matchAndCompute(
       continue;
     }
 
+    // A person already decided this item in another recipe: their food
+    // travels, with grams from THIS line's amounts. Still `auto` (an engine
+    // write), so a decision made here later still wins, and the review queue
+    // treats it as counted — confidence 1 says a person chose it.
+    final prior = db.decidedMatchForItemKey(
+      normalized,
+      excludingRecipeId: recipe.id,
+    );
+    if (prior != null) {
+      final food = await _cachedFood(db, provider, prior.fdcId!);
+      if (food != null) {
+        final resolution = resolveGrams(
+          amounts: line.amounts,
+          food: food,
+          normalizedItem: normalized,
+          raw: line.raw,
+        );
+        db.upsertIngredientMatchIfUndecided(
+          IngredientMatchRow(
+            recipeId: recipe.id,
+            position: position,
+            raw: line.raw,
+            itemKey: normalized,
+            fdcId: food.fdcId,
+            description: food.description,
+            dataType: food.dataType,
+            confidence: 1,
+            grams: resolution?.grams,
+            gramSource: resolution?.source.name,
+            status: 'auto',
+          ),
+        );
+        continue;
+      }
+    }
+
     final candidates = await _cachedSearch(db, provider, normalized);
     final ranked = rankCandidates(normalized, candidates);
     if (ranked.isEmpty) {
@@ -104,6 +141,7 @@ Future<void> matchAndCompute(
           recipeId: recipe.id,
           position: position,
           raw: line.raw,
+          itemKey: normalized,
           fdcId: null,
           description: 'No FoodData Central match',
           dataType: null,
@@ -154,6 +192,7 @@ Future<void> matchAndCompute(
           recipeId: recipe.id,
           position: position,
           raw: line.raw,
+          itemKey: normalized,
           fdcId: null,
           description: 'No fetchable FoodData Central match',
           dataType: null,
@@ -176,6 +215,7 @@ Future<void> matchAndCompute(
         recipeId: recipe.id,
         position: position,
         raw: line.raw,
+        itemKey: normalized,
         fdcId: best.candidate.fdcId,
         description: best.candidate.description,
         dataType: best.candidate.dataType,
@@ -459,3 +499,85 @@ Future<FdcFood?> cachedFood(
   NutritionProvider provider,
   int fdcId,
 ) => _cachedFood(db, provider, fdcId);
+
+/// Lands [food] — a person's decision on [itemKey] made in
+/// [excludingRecipeId] — on every UNDECIDED line with that item in every
+/// other recipe, each with grams from its own amounts, then recomputes those
+/// recipes' totals. A decision already made on a target line stands: the
+/// write is guarded at the statement, so one made while this runs stands too.
+/// A row whose recipe no longer has that line (or whose text changed) is
+/// left for the next compute. Returns how many recipes and lines changed.
+Future<({int recipes, int lines})> applyDecisionToOthers(
+  SaltDatabase db,
+  NutritionProvider provider, {
+  required String itemKey,
+  required FdcFood food,
+  required String excludingRecipeId,
+}) async {
+  final byRecipe = <String, List<IngredientMatchRow>>{};
+  for (final target in db.undecidedMatchesForItemKey(
+    itemKey,
+    excludingRecipeId: excludingRecipeId,
+  )) {
+    byRecipe.putIfAbsent(target.recipeId, () => []).add(target);
+  }
+  var recipes = 0;
+  var lines = 0;
+  for (final entry in byRecipe.entries) {
+    final ({Recipe recipe, String sourceSlug})? found;
+    try {
+      found = db.recipeByIdOrSlug(entry.key);
+      // A stored document that will not decode must not abort the rest.
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error) {
+      _log.warning(
+        'apply-to-all skipped ${entry.key}: its stored document does not '
+        'decode ($error).',
+      );
+      continue;
+    }
+    if (found == null) {
+      continue;
+    }
+    final recipeLines = nutritionLines(found.recipe);
+    var applied = 0;
+    for (final target in entry.value) {
+      if (target.position >= recipeLines.length) {
+        continue;
+      }
+      final line = recipeLines[target.position];
+      if (line.raw != target.raw) {
+        continue; // The line changed since that row was written.
+      }
+      final resolution = resolveGrams(
+        amounts: line.amounts,
+        food: food,
+        normalizedItem: itemKey,
+        raw: line.raw,
+      );
+      db.upsertIngredientMatchIfUndecided(
+        IngredientMatchRow(
+          recipeId: found.recipe.id,
+          position: target.position,
+          raw: line.raw,
+          itemKey: itemKey,
+          fdcId: food.fdcId,
+          description: food.description,
+          dataType: food.dataType,
+          confidence: 1,
+          grams: resolution?.grams,
+          gramSource: resolution?.source.name,
+          status: 'overridden',
+        ),
+      );
+      applied += 1;
+    }
+    if (applied == 0) {
+      continue;
+    }
+    await recomputeTotals(db, provider, found.recipe);
+    recipes += 1;
+    lines += applied;
+  }
+  return (recipes: recipes, lines: lines);
+}

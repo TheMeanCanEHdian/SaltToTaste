@@ -293,4 +293,15 @@ WHERE json_extract(doc, '$.subsections') IS NOT NULL
   // _rebuildFts when it crosses this version. The statement below only
   // marks the schema version; the paired Dart pass is what reindexes.
   ['SELECT 1'],
+
+  // 009 — cross-recipe reuse of human match decisions (review R1). The
+  // matcher's normalized item text is stored per match row so a decision made
+  // on "unsalted butter" in one recipe can be found from any other. Existing
+  // rows are keyed in Dart at boot (services/item_key_backfill.dart, marker
+  // backfill.item_key): the key derives from the recipe's parsed lines, which
+  // SQL cannot reach.
+  [
+    'ALTER TABLE ingredient_matches ADD COLUMN item_key TEXT',
+    'CREATE INDEX idx_matches_item_key ON ingredient_matches(item_key)',
+  ],
 ];

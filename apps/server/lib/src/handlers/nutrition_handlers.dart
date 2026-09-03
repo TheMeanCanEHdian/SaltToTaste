@@ -105,9 +105,18 @@ Future<Map<String, Object?>> matchesBody(
     final candidates = row == null
         ? const <RankedCandidate>[]
         : await candidatesForLine(db, provider, line, cacheOnly: true);
+    final itemKey = normalizeItem(line.item ?? line.raw);
     items.add({
       'position': position,
       'raw': line.raw,
+      // How many OTHER recipes hold an undecided line with this item — what
+      // an apply-to-all from here would reach.
+      'others': itemKey.isEmpty
+          ? 0
+          : db.otherRecipesUndecidedCount(
+              itemKey,
+              excludingRecipeId: recipe.id,
+            ),
       'match': row == null
           ? null
           : {
@@ -136,10 +145,15 @@ Future<Map<String, Object?>> matchesBody(
   return {'items': items};
 }
 
+/// What an `apply_to_all` reached: recipes and lines changed.
+typedef AppliedToOthers = ({int recipes, int lines});
+
 /// Applies a `PUT .../nutrition/matches/<pos>` override [body] and
 /// recomputes the stored totals (no FDC searches; at most one cached food
-/// fetch for a re-pick).
-Future<void> applyMatchOverride(
+/// fetch for a re-pick). With `apply_to_all: true`, also lands the decided
+/// food on every other recipe's undecided line of the same item and returns
+/// what that reached; null otherwise.
+Future<AppliedToOthers?> applyMatchOverride(
   SaltDatabase db,
   NutritionProvider provider,
   Recipe recipe,
@@ -151,6 +165,7 @@ Future<void> applyMatchOverride(
     throw NotFoundException('No ingredient line at position $position.');
   }
   final line = lines[position];
+  final itemKey = normalizeItem(line.item ?? line.raw);
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
   };
@@ -170,9 +185,14 @@ Future<void> applyMatchOverride(
       grams: row?.grams,
       gramSource: row?.gramSource,
       status: row?.status ?? 'unmatched',
+      itemKey: itemKey,
     );
   }
 
+  final applyToAll = body['apply_to_all'];
+  if (applyToAll != null && applyToAll is! bool) {
+    throw const ValidationException("'apply_to_all' must be true or false.");
+  }
   final skipped = body['skipped'];
   final confirmed = body['confirmed'];
   final fdcId = body['fdc_id'];
@@ -241,8 +261,43 @@ Future<void> applyMatchOverride(
       "Provide at least one of 'fdc_id', 'grams', 'confirmed', 'skipped'.",
     );
   }
-  db.upsertIngredientMatch(row);
+  // Everything apply_to_all needs is checked BEFORE the line is written, so
+  // a refused request changes nothing — not the line, not the totals.
+  FdcFood? food;
+  if (applyToAll == true) {
+    if (row.fdcId == null ||
+        (row.status != 'overridden' && row.status != 'confirmed')) {
+      throw const ValidationException(
+        "'apply_to_all' needs a food decision on this line — pick or "
+        'confirm a food.',
+      );
+    }
+    if (itemKey.isEmpty) {
+      throw const ValidationException(
+        'Nothing searchable in this line to match other recipes on.',
+      );
+    }
+    food = await cachedFood(db, provider, row.fdcId!);
+    if (food == null) {
+      throw const ValidationException(
+        'FoodData Central has no food with that id.',
+      );
+    }
+  }
+
+  db.upsertIngredientMatch(row.copyWith(itemKey: itemKey));
   await recomputeTotals(db, provider, recipe);
+
+  if (food == null) {
+    return null;
+  }
+  return applyDecisionToOthers(
+    db,
+    provider,
+    itemKey: itemKey,
+    food: food,
+    excludingRecipeId: recipe.id,
+  );
 }
 
 /// Masks a stored API key for display: last four characters only.

@@ -594,10 +594,19 @@ computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾ ounces"`, `"entered by
 hand"` — for sanity-checking an estimate (null when there is no amount;
 re-derived cache-only, never spends FDC budget), `status`: `auto |
 confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
-for re-picking. Candidates come
+for re-picking, and `others`: how many OTHER recipes hold an undecided
+line with the same ingredient item — what `apply_to_all` (below) would
+reach. Candidates come
 from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
+
+Decisions travel: at compute time a line whose item (the matcher's
+normalized text, e.g. `without salt butter`) has a `confirmed` or
+`overridden` food in any other recipe inherits that food — the most recent
+decision wins — with grams from its own amounts, at confidence 1 and still
+`auto` (a decision made on the line itself still wins). `skipped` does
+not travel: it is a call about one recipe's line, not about the item.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition/matches/{pos}` (admin, full scope)
 
@@ -608,6 +617,15 @@ triage (`auto`), deliberately NOT `confirmed`, so a low-confidence match
 is not silently blessed. Totals recompute instantly. `422` for `{grams}`
 on a line with no matched food (there is nothing to scale — pick a food
 first).
+
+Add `apply_to_all: true` to land the same food on every other recipe's
+undecided (`auto` / `unmatched`) line with the same ingredient item, each
+with grams from its own amounts, marked `overridden`, and recompute those
+recipes' totals; a line a person already decided is left alone, as is one
+whose text changed since its compute. The response then carries `applied:
+{recipes, lines}`. `422` when the decision on this line is not a food
+(`skipped`, or no `fdc_id`/`confirmed`), or the line has nothing
+searchable to match on.
 
 ### `GET /api/v1/nutrition/search?q={term}` (admin, full scope)
 

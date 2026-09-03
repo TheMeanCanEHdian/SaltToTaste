@@ -32,8 +32,9 @@ Future<Response> onRequest(
     throw NotFoundException('recipe not found: $id');
   }
   final provider = context.read<NutritionProvider>();
+  final AppliedToOthers? applied;
   try {
-    await applyMatchOverride(
+    applied = await applyMatchOverride(
       db,
       provider,
       found.recipe,
@@ -44,6 +45,10 @@ Future<Response> onRequest(
     throw ValidationException(exception.message);
   }
   return Response.json(
-    body: await matchesBody(db, provider, found.recipe),
+    body: {
+      ...await matchesBody(db, provider, found.recipe),
+      if (applied != null)
+        'applied': {'recipes': applied.recipes, 'lines': applied.lines},
+    },
   );
 }

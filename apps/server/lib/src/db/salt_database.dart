@@ -955,11 +955,77 @@ class SaltDatabase {
     ).execute([fdcId, responseJson]);
   }
 
+  /// The most recent HUMAN decision (confirmed/overridden, with a food) on
+  /// [itemKey] in any recipe other than [excludingRecipeId] — what a line
+  /// with that item inherits at compute time. Skips are not decisions about
+  /// the item, only about one recipe's line, so they never travel.
+  IngredientMatchRow? decidedMatchForItemKey(
+    String itemKey, {
+    required String excludingRecipeId,
+  }) {
+    final rows = _prepared(
+      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
+      'confidence, grams, gram_source, status, updated_at, item_key '
+      'FROM ingredient_matches WHERE item_key = ? AND recipe_id != ? '
+      "AND status IN ('confirmed', 'overridden') "
+      'AND fdc_id IS NOT NULL ORDER BY updated_at DESC LIMIT 1',
+    ).select([itemKey, excludingRecipeId]);
+    return rows.isEmpty ? null : IngredientMatchRow.fromRow(rows.first);
+  }
+
+  /// Every UNDECIDED row (`auto` / `unmatched`) carrying [itemKey] in a recipe
+  /// other than [excludingRecipeId] — the targets of an apply-to-all.
+  List<IngredientMatchRow> undecidedMatchesForItemKey(
+    String itemKey, {
+    required String excludingRecipeId,
+  }) {
+    final rows = _prepared(
+      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
+      'confidence, grams, gram_source, status, updated_at, item_key '
+      'FROM ingredient_matches WHERE item_key = ? AND recipe_id != ? '
+      "AND status IN ('auto', 'unmatched') "
+      'ORDER BY recipe_id, position',
+    ).select([itemKey, excludingRecipeId]);
+    return [for (final row in rows) IngredientMatchRow.fromRow(row)];
+  }
+
+  /// How many OTHER recipes hold an undecided line with [itemKey] — what an
+  /// apply-to-all from [excludingRecipeId] would reach.
+  int otherRecipesUndecidedCount(
+    String itemKey, {
+    required String excludingRecipeId,
+  }) {
+    final rows = _prepared(
+      'SELECT COUNT(DISTINCT recipe_id) AS n FROM ingredient_matches '
+      'WHERE item_key = ? AND recipe_id != ? '
+      "AND status IN ('auto', 'unmatched')",
+    ).select([itemKey, excludingRecipeId]);
+    return rows.first['n'] as int;
+  }
+
+  /// Recipe ids that still have a match row with no item key (pre-009 rows
+  /// the boot-time backfill has yet to key).
+  List<String> recipesWithUnkeyedMatches() {
+    final rows = _prepared(
+      'SELECT DISTINCT recipe_id FROM ingredient_matches '
+      'WHERE item_key IS NULL',
+    ).select();
+    return [for (final row in rows) row['recipe_id'] as String];
+  }
+
+  /// Sets the item key of one match row (the backfill's only write).
+  void setMatchItemKey(String recipeId, int position, String itemKey) {
+    _prepared(
+      'UPDATE ingredient_matches SET item_key = ? '
+      'WHERE recipe_id = ? AND position = ?',
+    ).execute([itemKey, recipeId, position]);
+  }
+
   /// All ingredient matches for a recipe, in position order.
   List<IngredientMatchRow> ingredientMatchesFor(String recipeId) {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
-      'confidence, grams, gram_source, status, updated_at '
+      'confidence, grams, gram_source, status, updated_at, item_key '
       'FROM ingredient_matches WHERE recipe_id = ? ORDER BY position',
     ).select([recipeId]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
@@ -1016,7 +1082,8 @@ class SaltDatabase {
       'SELECT * FROM ( '
       'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
       'im.data_type, im.confidence, im.grams, im.gram_source, im.status, '
-      'im.updated_at, r.slug AS review_slug, r.title AS review_title, '
+      'im.updated_at, im.item_key, r.slug AS review_slug, '
+      'r.title AS review_title, '
       '$_reviewBucketCase AS bucket '
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
       ") WHERE (? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
@@ -1039,12 +1106,13 @@ class SaltDatabase {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
-      'updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'item_key, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
       'grams = excluded.grams, gram_source = excluded.gram_source, '
-      'status = excluded.status, updated_at = excluded.updated_at',
+      'status = excluded.status, item_key = excluded.item_key, '
+      'updated_at = excluded.updated_at',
     ).execute([
       row.recipeId,
       row.position,
@@ -1056,6 +1124,7 @@ class SaltDatabase {
       row.grams,
       row.gramSource,
       row.status,
+      row.itemKey,
       _utcNowIso(),
     ]);
   }
@@ -1080,12 +1149,13 @@ class SaltDatabase {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
-      'updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'item_key, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
       'grams = excluded.grams, gram_source = excluded.gram_source, '
-      'status = excluded.status, updated_at = excluded.updated_at '
+      'status = excluded.status, item_key = excluded.item_key, '
+      'updated_at = excluded.updated_at '
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
       'OR ingredient_matches.raw != excluded.raw',
     ).execute([
@@ -1099,6 +1169,7 @@ class SaltDatabase {
       row.grams,
       row.gramSource,
       row.status,
+      row.itemKey,
       _utcNowIso(),
     ]);
   }
@@ -2013,6 +2084,7 @@ class IngredientMatchRow {
     required this.gramSource,
     required this.status,
     this.updatedAt,
+    this.itemKey,
   });
 
   /// Decodes a database row.
@@ -2028,6 +2100,7 @@ class IngredientMatchRow {
     gramSource: row['gram_source'] as String?,
     status: row['status'] as String,
     updatedAt: row['updated_at'] as String?,
+    itemKey: row['item_key'] as String?,
   );
 
   /// Recipe the line belongs to.
@@ -2063,6 +2136,11 @@ class IngredientMatchRow {
   /// Last write time (UTC ISO-8601).
   final String? updatedAt;
 
+  /// The matcher's normalized item text (`normalizeItem`) — the key under
+  /// which a human decision on this line is found from OTHER recipes.
+  /// Null only on rows written before migration 009 and not yet backfilled.
+  final String? itemKey;
+
   /// Copy with changed fields (explicit clears for the nullables).
   IngredientMatchRow copyWith({
     int? fdcId,
@@ -2075,6 +2153,7 @@ class IngredientMatchRow {
     String? gramSource,
     bool clearGramSource = false,
     String? status,
+    String? itemKey,
   }) => IngredientMatchRow(
     recipeId: recipeId,
     position: position,
@@ -2086,6 +2165,7 @@ class IngredientMatchRow {
     grams: clearGrams ? null : (grams ?? this.grams),
     gramSource: clearGramSource ? null : (gramSource ?? this.gramSource),
     status: status ?? this.status,
+    itemKey: itemKey ?? this.itemKey,
   );
 }
 

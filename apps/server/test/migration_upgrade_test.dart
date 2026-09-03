@@ -26,6 +26,7 @@ import 'package:salt_server/src/db/migrations.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
+import 'package:salt_server/src/services/item_key_backfill.dart';
 import 'package:salt_server/src/services/serves_backfill.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -56,7 +57,15 @@ const Map<int, String> _capabilityByVersion = {
   8:
       'recipe_fts widened to subsection + technique text (reindexed in Dart '
       'by SaltDatabase._migrate, keyed on the fts.widened_v8 settings marker)',
+  9:
+      'ingredient_matches.item_key (+ index): the cross-recipe reuse key, '
+      'backfilled at boot by backfillItemKeys under the backfill.item_key '
+      'marker',
 };
+
+/// Mirror of migration 009: rows captured from the current engine carry
+/// `item_key`, which a database below this version has no column for.
+const int _itemKeyVersion = 9;
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
 /// start version is below this gets its FTS rows re-derived in Dart on open.
@@ -555,7 +564,16 @@ _Seed _seed(
     // Real engine output over recorded real FDC payloads, replayed verbatim
     // (see [_captureNutritionRows]) — the rows a v5+ deployment really holds.
     for (final table in _nutritionTables.keys) {
-      _replay(raw, table, nutritionRows[table]!);
+      _replay(raw, table, [
+        for (final row in nutritionRows[table]!)
+          if (table == 'ingredient_matches' && version < _itemKeyVersion)
+            {
+              for (final entry in row.entries)
+                if (entry.key != 'item_key') entry.key: entry.value,
+            }
+          else
+            row,
+      ]);
     }
     // Job bookkeeping, not nutrition data: one completed run over one recipe.
     raw.execute(
@@ -1177,27 +1195,51 @@ void main() {
           }
           if (startVersion >= 5) {
             // Every nutrition row, every column, byte-identical to the real
-            // engine output that was seeded.
-            for (final entry in _nutritionTables.entries) {
-              final expected = nutritionRows[entry.key]!;
-              final rows = after.select(
-                'SELECT * FROM ${entry.key} ORDER BY ${entry.value}',
-              );
-              expect(
-                rows,
-                hasLength(expected.length),
-                reason: '${entry.key} must survive the upgrade intact',
-              );
-              for (final (index, row) in rows.indexed) {
+            // engine output that was seeded. The one exception is the column
+            // 009 adds: a pre-009 database comes through the upgrade with
+            // item_key NULL — SQL cannot derive it — and the boot-time
+            // backfill is what keys it. Run that pass, then demand identity.
+            void expectIdentical({required bool keysExpected}) {
+              for (final entry in _nutritionTables.entries) {
+                final expected = nutritionRows[entry.key]!;
+                final rows = after.select(
+                  'SELECT * FROM ${entry.key} ORDER BY ${entry.value}',
+                );
                 expect(
-                  {
+                  rows,
+                  hasLength(expected.length),
+                  reason: '${entry.key} must survive the upgrade intact',
+                );
+                for (final (index, row) in rows.indexed) {
+                  final actual = {
                     for (final column in row.keys)
                       column: row[column] as Object?,
-                  },
-                  expected[index],
-                  reason: '${entry.key} row $index must come back unchanged',
-                );
+                  };
+                  if (entry.key == 'ingredient_matches' && !keysExpected) {
+                    expect(
+                      actual.remove('item_key'),
+                      isNull,
+                      reason:
+                          'nothing at open fills item_key for a pre-009 row',
+                    );
+                    expect(actual, {...expected[index]}..remove('item_key'));
+                    continue;
+                  }
+                  expect(
+                    actual,
+                    expected[index],
+                    reason: '${entry.key} row $index must come back unchanged',
+                  );
+                }
               }
+            }
+
+            expectIdentical(keysExpected: startVersion >= _itemKeyVersion);
+            if (startVersion < _itemKeyVersion) {
+              final booted = SaltDatabase.open(path);
+              expect(backfillItemKeys(booted), greaterThan(0));
+              booted.dispose();
+              expectIdentical(keysExpected: true);
             }
             expect(
               after

@@ -1115,6 +1115,82 @@ void main() {
         expect(jsonOf(finalBody)['status'], 'complete');
       });
 
+      test('apply_to_all over HTTP: the contract, and its refusals', () async {
+        // Only the Bundt cake is computed in this harness, so every line's
+        // `others` is 0 and an apply-to-all reaches nothing — which pins the
+        // shape (`others` on GET, `applied` on PUT) without the engine-level
+        // reach tests (nutrition_reuse_test.dart) having to repeat over HTTP.
+        final (read, readBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition/matches',
+          headers: auth(memberSession),
+        );
+        expect(read.statusCode, HttpStatus.ok);
+        final items = (jsonOf(readBody)['items']! as List)
+            .cast<Map<String, dynamic>>();
+        for (final item in items) {
+          expect(item['others'], 0, reason: 'no other computed recipe');
+        }
+        final flour = items.firstWhere(
+          (item) => (item['raw']! as String).contains('all-purpose flour'),
+        );
+        final position = flour['position'];
+
+        final (badFlag, badFlagBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition/matches/$position',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'confirmed': true, 'apply_to_all': 'yes'},
+        );
+        expect(badFlag.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(badFlagBody)['code'], 'validation');
+
+        final (noFood, noFoodBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition/matches/$position',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'skipped': true, 'apply_to_all': true},
+        );
+        expect(noFood.statusCode, HttpStatus.unprocessableEntity);
+        expect(errorOf(noFoodBody)['code'], 'validation');
+        // The refused request must not have skipped the line either.
+        final (afterRefusal, afterRefusalBody) = await send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition/matches',
+          headers: auth(memberSession),
+        );
+        expect(afterRefusal.statusCode, HttpStatus.ok);
+        final flourAfter = (jsonOf(afterRefusalBody)['items']! as List)
+            .cast<Map<String, dynamic>>()[position! as int];
+        expect(
+          (flourAfter['match']! as Map<String, dynamic>)['status'],
+          isNot('skipped'),
+          reason: 'a refused apply_to_all must be all-or-nothing',
+        );
+
+        final (applied, appliedBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition/matches/$position',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'confirmed': true, 'apply_to_all': true},
+        );
+        expect(applied.statusCode, HttpStatus.ok, reason: appliedBody);
+        final body = jsonOf(appliedBody);
+        expect(body['applied'], {'recipes': 0, 'lines': 0});
+        expect(body['items'], isA<List<dynamic>>());
+        final (plain, plainBody) = await send(
+          'PUT',
+          '/api/v1/recipes/$slug/nutrition/matches/$position',
+          headers: auth(adminSession, csrf: true),
+          jsonBody: {'confirmed': true},
+        );
+        expect(plain.statusCode, HttpStatus.ok);
+        expect(
+          jsonOf(plainBody).containsKey('applied'),
+          isFalse,
+          reason: 'applied appears only when apply_to_all was asked for',
+        );
+      });
       test(
         'a compute in flight: single-flight, and admin-only re-attach',
         () async {
