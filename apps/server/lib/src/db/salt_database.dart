@@ -922,11 +922,25 @@ class SaltDatabase {
   // --------------------------------------------------------------------
 
   /// Cached FDC search response JSON for a normalized query, or null.
-  String? fdcSearchCacheGet(String query) {
+  String? fdcSearchCacheGet(String query) =>
+      fdcSearchCacheEntry(query)?.response;
+
+  /// The cached FDC search answer for [query] with WHEN it was fetched
+  /// (UTC ISO-8601), or null when FDC has never been asked. Nothing expires
+  /// this cache; the age is what a person sees to decide on a fresh search.
+  ({String response, String fetchedAt})? fdcSearchCacheEntry(String query) {
     final rows = _prepared(
-      'SELECT response FROM fdc_search_cache WHERE query = ?',
+      'SELECT response, fetched_at FROM fdc_search_cache WHERE query = ?',
     ).select([query]);
-    return rows.isEmpty ? null : rows.first['response'] as String;
+    if (rows.isEmpty) {
+      return null;
+    }
+    // Stored by SQLite's datetime('now'): "YYYY-MM-DD HH:MM:SS", UTC.
+    final stored = rows.first['fetched_at'] as String;
+    return (
+      response: rows.first['response'] as String,
+      fetchedAt: '${stored.replaceFirst(' ', 'T')}Z',
+    );
   }
 
   /// Stores a search response in the cache.

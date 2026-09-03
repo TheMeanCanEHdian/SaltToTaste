@@ -595,7 +595,9 @@ computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾ ounces"`, `"entered by
 hand"` — for sanity-checking an estimate (null when there is no amount;
 re-derived cache-only, never spends FDC budget), `status`: `auto |
 confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
-for re-picking, `item` (the parsed ingredient item VERBATIM — it can carry
+for re-picking, `candidates_cached_at` (when FDC was last asked for this
+line's candidates, null if never — the search cache never expires on its
+own; the admin search endpoint's `fresh=true` replaces it), `item` (the parsed ingredient item VERBATIM — it can carry
 the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client
 wanting a bare name strips parentheticals, as the app does; null when the
 line has none), and `others`: how many recipes hold an undecided line
@@ -648,10 +650,16 @@ stays). `422`, with nothing written, when the request carries no food
 decision (`grams` alone or `skipped`), or the line has nothing searchable
 to match on.
 
-### `GET /api/v1/nutrition/search?q={term}` (admin, full scope)
+### `GET /api/v1/nutrition/search?q={term}&fresh=` (admin, full scope)
 
 Search USDA FoodData Central for a term and get ranked `{items: [{fdc_id,
-description, data_type, confidence}]}` (top 8) — the manual escape hatch
+description, data_type, confidence}], query, cached, cached_at}` (top 8;
+`query` is what FDC was actually asked after normalization and rewrites,
+`cached` whether this answer was served from the search cache, `cached_at`
+when FDC was last asked it — the cache never expires on its own). Pass
+`fresh=true` to bypass the cache and replace its row with a live answer
+(one FDC request; the next compute of any line with that item sees it
+too) — the manual escape hatch
 for when the matcher searched the wrong words and none of a line's
 `candidates` fit. Feed a chosen `fdc_id` back through
 `PUT …/nutrition/matches/{pos}`. Admin + full scope because a cache miss

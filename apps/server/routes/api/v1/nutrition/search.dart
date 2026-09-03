@@ -23,6 +23,13 @@ Future<Response> onRequest(RequestContext context) async {
   // the COST — including the cache keys an unguarded drive would mint.
   requireNotCrossSite(context);
   final query = context.request.uri.queryParameters['q']?.trim() ?? '';
+  // `fresh=true`: bypass the search cache and replace its row — a person
+  // asking for a live answer, which costs one FDC request.
+  final freshParam = context.request.uri.queryParameters['fresh'];
+  if (freshParam != null && freshParam != 'true' && freshParam != 'false') {
+    throw const ValidationException("'fresh' must be true or false.");
+  }
+  final fresh = freshParam == 'true';
   if (query.isEmpty) {
     throw const ValidationException('Pass a search term as ?q=.');
   }
@@ -42,7 +49,12 @@ Future<Response> onRequest(RequestContext context) async {
   }
   try {
     return Response.json(
-      body: await foodSearchBody(db, context.read<NutritionProvider>(), query),
+      body: await foodSearchBody(
+        db,
+        context.read<NutritionProvider>(),
+        query,
+        fresh: fresh,
+      ),
     );
     // A provider failure (rejected key, drained hourly budget, FDC outage)
     // is an expected, actionable condition — a 422 with the provider's own

@@ -103,6 +103,8 @@ const Map<String, Object> contractVolatileFields = {
   'started_at': '<timestamp>',
   'finished_at': '<timestamp>',
   'computed_at': '<timestamp>',
+  'cached_at': '<timestamp>',
+  'candidates_cached_at': '<timestamp>',
   'created_at': '<timestamp>',
   'last_seen_at': '<timestamp>',
   'last_active_at': '<timestamp>',

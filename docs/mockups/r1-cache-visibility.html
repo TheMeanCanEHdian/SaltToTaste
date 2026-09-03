@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaltToTaste — search cache visibility</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --maroon: #960000; --rose: #8c4242; --chip: #f6e4e4; --ink: #23201f; --muted: #6d6763;
+    --line: #e7e2de; --bg: #faf7f4; --panel: #fdfbf9; --ok-bg: #e8f3e4; --ok-ink: #2c5a1e;
+    --warn-bg: #fdf1e2; --warn-ink: #8a5a12;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; padding-bottom: 80px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 36px 24px; }
+  h1 { font-size: 22px; color: var(--maroon); }
+  .lede { color: var(--muted); font-size: 14px; max-width: 860px; margin-top: 6px; }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--rose); font-weight: 700; margin: 42px 0 14px; }
+  .note { font-size: 13px; color: var(--muted); margin: -8px 0 16px; max-width: 860px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; background: #f4efe9; border-radius: 5px; padding: 1px 6px; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 6px 12px; font: 600 12.5px 'Open Sans', system-ui, sans-serif; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .btn.primary { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+  .btn.ghost { color: var(--muted); border-color: transparent; background: transparent; }
+  .btn.tiny { padding: 3px 8px; font-size: 11.5px; border-radius: 7px; }
+  .btn svg { width: 13px; height: 13px; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+
+  /* the fix panel (approved P6 shape) */
+  .panel { max-width: 640px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .p-cap { padding: 9px 12px; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+  .cand { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 13px; }
+  .cand input { accent-color: var(--maroon); }
+  .cand .d { flex: 1; }
+  .cand .score { font-size: 11px; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  .dt { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .04em; border-radius: 5px; padding: 1px 6px; margin-left: 6px; background: #efecea; color: var(--muted); vertical-align: 1px; }
+  .cache { display: flex; align-items: center; gap: 8px; padding: 6px 12px 8px; font-size: 11.5px; color: var(--muted); border-top: 1px dashed var(--line); }
+  .cache svg { width: 12px; height: 12px; flex: none; }
+  .cache .spacer { flex: 1; }
+  .cache.live { color: var(--ok-ink); }
+  .search { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+  .search input { flex: 1; height: 32px; font: 13px 'Open Sans', system-ui, sans-serif; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .results-cap { padding: 8px 12px 4px; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+  .amount { padding: 11px 12px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted); }
+  .amount .box { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; background: #fff; color: var(--ink); font-weight: 700; }
+
+  .variants { display: grid; gap: 18px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .var-cap { font-size: 12px; font-weight: 700; color: var(--rose); margin-bottom: 10px; }
+  table.spec { border-collapse: collapse; font-size: 13px; max-width: 860px; }
+  table.spec td { padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.spec td:first-child { font-weight: 700; white-space: nowrap; width: 170px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+</svg>
+
+<div class="wrap">
+  <h1>Where a match's candidates came from, and how old they are</h1>
+  <p class="lede">Every FoodData Central answer is kept forever under the exact words FDC was asked; the review sheet's
+  candidate list and the search box both read it. Nothing said so, and nothing offered a way past it. This adds one
+  quiet line with the age and one action — <em>Search live</em> — that spends a single FDC request and replaces the
+  stored answer for everyone (the next compute of any line with that ingredient sees it too).</p>
+
+  <div class="eyebrow">1 · The fix panel — candidates from the cache, with their age</div>
+  <p class="note">Under the candidate list, where today's panel already says <em>"No other cached matches for this line"</em>
+  when there are none. The line names what FDC was actually asked — after the matcher's rewrites, so the admin sees
+  <code>spices pepper black</code> for a pepper line and understands the results — and when.</p>
+  <div class="panel">
+    <div class="p-cap">Change the match &amp; set the amount</div>
+    <label class="cand"><input type="radio" name="c" checked /><span class="d">Spices, pepper, black<span class="dt">SR Legacy</span></span><span class="score">score 1.00</span></label>
+    <label class="cand"><input type="radio" name="c" /><span class="d">Spices, pepper, white<span class="dt">SR Legacy</span></span><span class="score">score 0.86</span></label>
+    <label class="cand"><input type="radio" name="c" /><span class="d">Spices, pepper, red or cayenne<span class="dt">SR Legacy</span></span><span class="score">score 0.78</span></label>
+    <div class="cache">
+      <svg><use href="#i-clock"/></svg>
+      <span>FDC asked for <code>spices pepper black</code> · cached 3 weeks ago</span>
+      <span class="spacer"></span>
+      <button class="btn tiny ghost"><svg><use href="#i-refresh"/></svg>Search live</button>
+    </div>
+    <div class="search"><input type="text" placeholder="Search USDA for a better match…" /><button class="btn"><svg><use href="#i-search"/></svg>Search</button></div>
+    <div class="amount">Amount <span class="box">2.3 g</span> <span class="muted">≈ 1 tsp</span> <span style="flex:1"></span><button class="btn primary">Save match &amp; amount</button></div>
+  </div>
+
+  <div class="eyebrow">2 · A hand search, and what it says about its own answer</div>
+  <p class="note">The same line under the results, in the same words. A cached answer offers <em>Search live</em>; a live one
+  says so and offers nothing more. Every state is one line, never a banner.</p>
+  <div class="variants">
+    <div class="card">
+      <div class="var-cap">Cached — the common case</div>
+      <div class="panel">
+        <div class="search"><input type="text" value="pepper spice" /><button class="btn"><svg><use href="#i-search"/></svg>Search</button></div>
+        <div class="results-cap">Results for “pepper spice”</div>
+        <label class="cand"><input type="radio" name="r" /><span class="d">Spices, pepper, black<span class="dt">SR Legacy</span></span><span class="score">score 1.00</span></label>
+        <label class="cand"><input type="radio" name="r" /><span class="d">Spices, pepper, white<span class="dt">SR Legacy</span></span><span class="score">score 0.86</span></label>
+        <div class="cache">
+          <svg><use href="#i-clock"/></svg>
+          <span>FDC asked for <code>pepper spice</code> · cached 2 months ago</span>
+          <span class="spacer"></span>
+          <button class="btn tiny ghost"><svg><use href="#i-refresh"/></svg>Search live</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="var-cap">Live — just fetched (or refreshed): the age is “just now”, and there is nothing to refresh</div>
+      <div class="panel">
+        <div class="results-cap">Results for “pepper spice”</div>
+        <label class="cand"><input type="radio" name="s" /><span class="d">Spices, pepper, black<span class="dt">SR Legacy</span></span><span class="score">score 1.00</span></label>
+        <div class="cache live">
+          <svg><use href="#i-zap"/></svg>
+          <span>FDC asked for <code>pepper spice</code> · live, just now</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="var-cap">Never asked — a line whose candidates were never fetched (water, seasoning to taste, an empty item)</div>
+      <p class="muted">No line at all. The panel's existing “No other cached matches for this line” stands, and the hand search is the way to ask.</p>
+    </div>
+  </div>
+
+  <div class="eyebrow">3 · What the app needs from the server (shipped)</div>
+  <table class="spec">
+    <tr><td>Per line</td><td><code>candidates_cached_at</code> on every matches line: when FDC was last asked for that line's candidates, null if never.</td></tr>
+    <tr><td>Per search</td><td><code>GET /api/v1/nutrition/search?q=…</code> now answers <code>query</code> (the words FDC was asked), <code>cached</code>, <code>cached_at</code>.</td></tr>
+    <tr><td>Live</td><td><code>&amp;fresh=true</code> bypasses the cache, spends one FDC request, and replaces the stored row — so a later compute uses the new answer too. Admin only, like every search.</td></tr>
+    <tr><td>Age wording</td><td>just now · 5 min ago · 3 h ago · 2 d ago · 3 wk ago · 2 mo ago · 1 yr ago. Never a raw timestamp in the line; the exact time is the tooltip.</td></tr>
+  </table>
+
+  <div class="eyebrow">Not in this pass</div>
+  <p class="note">An expiry policy (the cache still never expires on its own); a library-wide “refresh every cached search” sweep;
+  refreshing a food's nutrient record (the second cache) — each is a separate item if wanted.</p>
+</div>
+</body>
+</html>

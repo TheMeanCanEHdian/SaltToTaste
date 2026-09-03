@@ -416,14 +416,15 @@ Future<List<RankedCandidate>> candidatesForLine(
 Future<List<RankedCandidate>> searchCandidates(
   SaltDatabase db,
   NutritionProvider provider,
-  String query,
-) async {
+  String query, {
+  bool fresh = false,
+}) async {
   final normalized = normalizeItem(query);
   if (normalized.isEmpty) {
     return const [];
   }
   final rewritten = searchQueryFor(normalized);
-  final candidates = await _cachedSearch(db, provider, rewritten);
+  final candidates = await _cachedSearch(db, provider, rewritten, fresh: fresh);
   return rankCandidates(rewritten, candidates).take(8).toList();
 }
 
@@ -465,9 +466,12 @@ String? gramBasisFor(
 Future<List<FdcCandidate>> _cachedSearch(
   SaltDatabase db,
   NutritionProvider provider,
-  String query,
-) async {
-  final cached = db.fdcSearchCacheGet(query);
+  String query, {
+  bool fresh = false,
+}) async {
+  // [fresh]: a person asked for a live answer — skip the cache and replace
+  // the stored row, so the next compute sees the newer answer too.
+  final cached = fresh ? null : db.fdcSearchCacheGet(query);
   if (cached != null) {
     return [
       for (final entry in jsonDecode(cached) as List<dynamic>)

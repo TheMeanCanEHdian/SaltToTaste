@@ -99,6 +99,19 @@ class RecipeNutrition {
 }
 
 /// One ingredient line's match state on the review sheet.
+/// A hand search's answer: the ranked foods, the words FDC was actually
+/// asked (after the matcher's normalization and rewrites), whether the
+/// answer came from the search cache, and when FDC was last asked.
+typedef FoodSearch = ({
+  List<MatchCandidate> items,
+  String query,
+  bool cached,
+  DateTime? cachedAt,
+});
+
+DateTime? _timestamp(Object? value) =>
+    value is String ? DateTime.tryParse(value) : null;
+
 /// What an `apply_to_all` reached: recipes and lines written, and recipes
 /// that failed part-way (their lines are set; their labels wait for the
 /// next compute).
@@ -117,6 +130,7 @@ class IngredientMatch {
     required this.raw,
     this.item,
     this.others = 0,
+    this.candidatesCachedAt,
     this.fdcId,
     this.description,
     this.dataType,
@@ -141,6 +155,7 @@ class IngredientMatch {
         raw: json['raw'] as String? ?? '',
         item: json['item'] as String?,
         others: (json['others'] as num?)?.toInt() ?? 0,
+        candidatesCachedAt: _timestamp(json['candidates_cached_at']),
         candidates: candidates,
       );
     }
@@ -149,6 +164,7 @@ class IngredientMatch {
       raw: json['raw'] as String? ?? '',
       item: json['item'] as String?,
       others: (json['others'] as num?)?.toInt() ?? 0,
+      candidatesCachedAt: _timestamp(json['candidates_cached_at']),
       fdcId: (match['fdc_id'] as num?)?.toInt(),
       description: match['description'] as String?,
       dataType: match['data_type'] as String?,
@@ -171,6 +187,10 @@ class IngredientMatch {
   /// Other recipes holding an undecided line with this same ingredient item
   /// — what an apply-to-all from this line would reach.
   final int others;
+
+  /// When FDC was last asked for this line's candidates (the search cache
+  /// never expires on its own); null when it never was.
+  final DateTime? candidatesCachedAt;
   final int? fdcId;
   final String? description;
 
@@ -364,18 +384,25 @@ class NutritionRepository {
   /// manual escape hatch for when none of a line's cached candidates fit,
   /// because the matcher searched the wrong words. Feed the chosen
   /// [MatchCandidate.fdcId] back through [overrideMatch].
-  Future<List<MatchCandidate>> searchFoods(String query) {
+  /// Searches FDC for [query] through the server's search cache; [fresh]
+  /// bypasses the cache and replaces its row (one FDC request).
+  Future<FoodSearch> searchFoods(String query, {bool fresh = false}) {
     return apiGuard(() async {
       final response = await _dio.get<dynamic>(
         '/api/v1/nutrition/search',
-        queryParameters: {'q': query},
+        queryParameters: {'q': query, if (fresh) 'fresh': 'true'},
       );
       final data = _asMap(response.data);
-      return [
-        if (data['items'] is List)
-          for (final item in data['items'] as List<dynamic>)
-            MatchCandidate.fromJson(item as Map<String, dynamic>),
-      ];
+      return (
+        items: [
+          if (data['items'] is List)
+            for (final item in data['items'] as List<dynamic>)
+              MatchCandidate.fromJson(item as Map<String, dynamic>),
+        ],
+        query: data['query'] as String? ?? query,
+        cached: data['cached'] == true,
+        cachedAt: _timestamp(data['cached_at']),
+      );
     });
   }
 

@@ -19,6 +19,7 @@ import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/import_job.dart' show importJobRunning;
 import 'package:salt_server/src/services/recipe_edit_service.dart'
     show editableRecipeKeys;
+import 'package:sqlite3/sqlite3.dart' show sqlite3;
 import 'package:test/test.dart';
 
 import '../routes/api/v1/auth/login.dart' as login_route;
@@ -1130,6 +1131,16 @@ void main() {
             .cast<Map<String, dynamic>>();
         for (final item in items) {
           expect(item['others'], 0, reason: 'no other computed recipe');
+          final key = item['item'] as String?;
+          expect(
+            item['candidates_cached_at'],
+            key != null && !key.toLowerCase().contains('water')
+                ? isA<String>()
+                : isNull,
+            reason:
+                'FDC was asked for every matched line at compute; water '
+                'and empty items never — $key',
+          );
         }
         final flour = items.firstWhere(
           (item) => (item['raw']! as String).contains('all-purpose flour'),
@@ -1687,6 +1698,78 @@ void main() {
       } finally {
         fixtureProvider.failWith = null;
       }
+    });
+  });
+
+  group('the search cache is visible and refreshable (recorded FDC data)', () {
+    setUp(() => db.setSetting(fdcApiKeySetting, 'cache-tests-key'));
+    tearDown(() => db.deleteSetting(fdcApiKeySetting));
+
+    test('a search says what was asked, whether it came from the cache, and '
+        'when; fresh=true asks FDC again and replaces the row', () async {
+      // 'brandy' is a recorded query no recipe in this harness has asked, so
+      // the fixture provider answers it and the cache cannot have it yet.
+      final calls = fixtureProvider.searchCalls;
+      final (first, firstBody) = await send(
+        'GET',
+        '/api/v1/nutrition/search?q=Brandy',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(first.statusCode, HttpStatus.ok, reason: firstBody);
+      final a = jsonOf(firstBody);
+      expect(a['query'], 'brandy');
+      expect(a['cached'], isFalse, reason: 'never asked before');
+      expect(a['cached_at'], isA<String>());
+      expect(fixtureProvider.searchCalls, calls + 1);
+
+      final (second, secondBody) = await send(
+        'GET',
+        '/api/v1/nutrition/search?q=brandy',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(second.statusCode, HttpStatus.ok);
+      final b = jsonOf(secondBody);
+      expect(b['cached'], isTrue);
+      expect(b['cached_at'], a['cached_at'], reason: 'the same stored row');
+      expect(fixtureProvider.searchCalls, calls + 1, reason: 'no FDC call');
+
+      // Age the row so a fresh fetch is observable within one second.
+      sqlite3.open(config.dbPath)
+        ..execute(
+          "UPDATE fdc_search_cache SET fetched_at = '2026-01-01 00:00:00' "
+          'WHERE query = ?',
+          ['brandy'],
+        )
+        ..dispose();
+      final (fresh, freshBody) = await send(
+        'GET',
+        '/api/v1/nutrition/search?q=brandy&fresh=true',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(fresh.statusCode, HttpStatus.ok, reason: freshBody);
+      final c = jsonOf(freshBody);
+      expect(c['cached'], isFalse);
+      expect(c['cached_at'], isNot('2026-01-01T00:00:00Z'), reason: 'replaced');
+      expect(fixtureProvider.searchCalls, calls + 2, reason: 'one live call');
+      expect(c['items']! as List, isNotEmpty);
+
+      final (bad, badBody) = await send(
+        'GET',
+        '/api/v1/nutrition/search?q=brandy&fresh=maybe',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(bad.statusCode, HttpStatus.unprocessableEntity);
+      expect(errorOf(badBody)['code'], 'validation');
+    });
+
+    test("the search box shares the matcher's rewrites", () async {
+      final (response, body) = await send(
+        'GET',
+        '/api/v1/nutrition/search?q=Grand%20Marnier',
+        headers: auth(adminSession, csrf: true),
+      );
+      expect(response.statusCode, HttpStatus.ok, reason: body);
+      expect(jsonOf(body)['query'], 'liqueur');
     });
   });
 

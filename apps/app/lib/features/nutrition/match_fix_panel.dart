@@ -8,6 +8,7 @@ import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/core/util/relative_age.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
 export 'package:salt_shared/salt_shared.dart' show MatchBucket;
@@ -249,13 +250,19 @@ class _FixPanelState extends State<FixPanel> {
   // open rows never show each other's results.
   final TextEditingController _term = TextEditingController();
   List<MatchCandidate>? _results;
+
+  /// The last hand search's answer as a whole (its cache state and age).
+  FoodSearch? _search;
   bool _searching = false;
   String? _searchError;
 
-  Future<void> _runSearch() async {
-    final query = _term.text.trim();
+  Future<void> _runSearch({String? term, bool fresh = false}) async {
+    final query = (term ?? _term.text).trim();
     if (query.isEmpty || _searching) {
       return;
+    }
+    if (term != null) {
+      _term.text = term;
     }
     setState(() {
       _searching = true;
@@ -264,12 +271,14 @@ class _FixPanelState extends State<FixPanel> {
     try {
       final found = await context.read<NutritionRepository>().searchFoods(
         query,
+        fresh: fresh,
       );
       if (!mounted) {
         return;
       }
       setState(() {
-        _results = found;
+        _results = found.items;
+        _search = found;
         _searching = false;
       });
     } on RepositoryException catch (exception) {
@@ -419,6 +428,16 @@ class _FixPanelState extends State<FixPanel> {
                     ? null
                     : () => setState(() => _stagedFdcId = c.fdcId),
               ),
+          if (candidates.isNotEmpty && m.candidatesCachedAt != null)
+            CacheLine(
+              cachedAt: m.candidatesCachedAt!,
+              live: false,
+              // A live search for this line's own words replaces the stored
+              // answer for everyone; its results show as a hand search.
+              onSearchLive: busy || _searching
+                  ? null
+                  : () => _runSearch(term: m.item ?? m.raw, fresh: true),
+            ),
           SearchRow(
             controller: _term,
             searching: _searching,
@@ -459,6 +478,15 @@ class _FixPanelState extends State<FixPanel> {
                 onPick: busy
                     ? null
                     : () => setState(() => _stagedFdcId = c.fdcId),
+              ),
+            if (_search != null && _search!.cachedAt != null)
+              CacheLine(
+                query: _search!.query,
+                cachedAt: _search!.cachedAt!,
+                live: !_search!.cached,
+                onSearchLive: _search!.cached && !busy && !_searching
+                    ? () => _runSearch(fresh: true)
+                    : null,
               ),
           ],
           // The amount editor is all controls (field + unit toggle + save).
@@ -581,6 +609,73 @@ class _FixPanelState extends State<FixPanel> {
 
 /// Manual USDA search — the escape hatch when the matcher searched the wrong
 /// words and every cached candidate is wrong.
+/// Where a candidate list came from and how old it is — one quiet line
+/// with the age (the exact instant is the tooltip) and, for a cached
+/// answer, the one action past the cache: a live search, which spends one
+/// FDC request and replaces the stored answer for everyone.
+class CacheLine extends StatelessWidget {
+  const CacheLine({
+    required this.cachedAt,
+    required this.live,
+    required this.onSearchLive,
+    this.query,
+    super.key,
+  });
+
+  /// When FDC was asked (UTC).
+  final DateTime cachedAt;
+
+  /// True when this answer was just fetched — nothing to refresh.
+  final bool live;
+
+  /// The words FDC was asked, when known (a hand search says; a line's
+  /// candidate list does not).
+  final String? query;
+  final VoidCallback? onSearchLive;
+
+  @override
+  Widget build(BuildContext context) {
+    final age = relativeAge(cachedAt);
+    final asked = query == null ? 'FDC' : 'FDC asked for “$query”';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 5, 8, 6),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: SaltColors.hairline)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            live ? FLucideIcons.zap : FLucideIcons.clock,
+            size: 12,
+            color: live ? SaltColors.okInk : SaltColors.muted,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Tooltip(
+              message: cachedAt.toLocal().toString(),
+              child: Text(
+                live ? '$asked · live, $age' : '$asked · cached $age',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: live ? SaltColors.okInk : SaltColors.muted,
+                ),
+              ),
+            ),
+          ),
+          if (!live)
+            FButton(
+              variant: FButtonVariant.ghost,
+              mainAxisSize: MainAxisSize.min,
+              onPress: onSearchLive,
+              prefix: const Icon(FLucideIcons.refreshCw, size: 12),
+              child: const Text('Search live'),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class SearchRow extends StatelessWidget {
   const SearchRow({
     super.key,

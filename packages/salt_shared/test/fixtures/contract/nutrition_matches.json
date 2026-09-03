@@ -5,6 +5,7 @@
       "raw": "12 tablespoons (1½ sticks) unsalted butter, softened, plus 1 tablespoon, melted, for the pan",
       "item": "(1 1/2 sticks) unsalted butter",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 173430,
         "description": "Butter, without salt",
@@ -71,6 +72,7 @@
       "raw": "¾ cup natural cocoa powder, plus 1 tablespoon for the pan",
       "item": "natural cocoa powder",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 169593,
         "description": "Cocoa, dry powder, unsweetened",
@@ -137,6 +139,7 @@
       "raw": "6 ounces bittersweet chocolate, chopped coarse",
       "item": "bittersweet chocolate",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 2710336,
         "description": "Dark chocolate candy",
@@ -203,6 +206,7 @@
       "raw": "1 teaspoon instant espresso powder (optional)",
       "item": "instant espresso powder (optional)",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 171893,
         "description": "Beverages, coffee, instant, regular, powder",
@@ -269,6 +273,7 @@
       "raw": "¾ cup boiling water",
       "item": "boiling water",
       "others": 0,
+      "candidates_cached_at": null,
       "match": {
         "fdc_id": null,
         "description": "Water/ice — counts as zero",
@@ -286,6 +291,7 @@
       "raw": "1 cup sour cream, at room temperature",
       "item": "sour cream",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 2346387,
         "description": "Cream, sour, full fat",
@@ -352,6 +358,7 @@
       "raw": "1¾ cups (8¾ ounces) unbleached all-purpose flour",
       "item": "unbleached all-purpose flour",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 789890,
         "description": "Flour, wheat, all-purpose, enriched, bleached",
@@ -418,6 +425,7 @@
       "raw": "1 teaspoon table salt",
       "item": "table salt",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 173468,
         "description": "Salt, table",
@@ -448,6 +456,7 @@
       "raw": "1 teaspoon baking soda",
       "item": "baking soda",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 175040,
         "description": "Leavening agents, baking soda",
@@ -472,6 +481,7 @@
       "raw": "2 cups packed (14 ounces) light brown sugar",
       "item": "packed light brown sugar",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 168833,
         "description": "Sugars, brown",
@@ -538,6 +548,7 @@
       "raw": "1 tablespoon vanilla extract",
       "item": "vanilla extract",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 173471,
         "description": "Vanilla extract",
@@ -574,6 +585,7 @@
       "raw": "5 large eggs, at room temperature",
       "item": "large eggs",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 748967,
         "description": "Eggs, Grade A, Large, egg whole",
@@ -640,6 +652,7 @@
       "raw": "Confectioners’ sugar, for dusting",
       "item": "Confectioners’ sugar",
       "others": 0,
+      "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 169656,
         "description": "Sugars, powdered",

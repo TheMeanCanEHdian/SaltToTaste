@@ -64,9 +64,15 @@ Map<String, Object?> nutritionBody(
 Future<Map<String, Object?>> foodSearchBody(
   SaltDatabase db,
   NutritionProvider provider,
-  String query,
-) async {
-  final ranked = await searchCandidates(db, provider, query);
+  String query, {
+  bool fresh = false,
+}) async {
+  // What the cache held BEFORE this search decides whether the answer was
+  // served from it; the entry afterwards says when it was fetched.
+  final key = searchQueryFor(normalizeItem(query));
+  final before = key.isEmpty ? null : db.fdcSearchCacheEntry(key);
+  final ranked = await searchCandidates(db, provider, query, fresh: fresh);
+  final after = key.isEmpty ? null : db.fdcSearchCacheEntry(key);
   return {
     'items': [
       for (final candidate in ranked)
@@ -77,6 +83,11 @@ Future<Map<String, Object?>> foodSearchBody(
           'confidence': candidate.confidence,
         },
     ],
+    // The words FDC was actually asked (after normalization and rewrites),
+    // whether this answer came from the cache, and when it was fetched.
+    'query': key,
+    'cached': before != null && !fresh,
+    'cached_at': after?.fetchedAt,
   };
 }
 
@@ -122,6 +133,11 @@ Future<Map<String, Object?>> matchesBody(
               excluding: (recipeId: recipe.id, position: position),
               fdcId: row?.fdcId,
             ),
+      // When FDC was last asked for this line's candidates (the search
+      // cache never expires); null when it never was.
+      'candidates_cached_at': itemKey.isEmpty
+          ? null
+          : db.fdcSearchCacheEntry(searchQueryFor(itemKey))?.fetchedAt,
       'match': row == null
           ? null
           : {

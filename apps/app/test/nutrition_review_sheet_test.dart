@@ -480,6 +480,42 @@ void main() {
     expect(find.text('Apply to 3 recipes'), findsOneWidget);
   });
 
+  testWidgets('the fix panel says how old its candidates are and offers a '
+      'live search', (tester) async {
+    final matches = [
+      for (final m in _matches)
+        if (m.position == 10)
+          IngredientMatch(
+            position: m.position,
+            raw: m.raw,
+            item: 'escarole',
+            fdcId: m.fdcId,
+            description: m.description,
+            dataType: m.dataType,
+            confidence: m.confidence,
+            grams: m.grams,
+            gramSource: m.gramSource,
+            gramBasis: m.gramBasis,
+            status: m.status,
+            candidates: m.candidates,
+            candidatesCachedAt: DateTime.now().subtract(
+              const Duration(days: 21),
+            ),
+          )
+        else
+          m,
+    ];
+    await open(
+      tester,
+      seeded: _ApplyCubit(_state().copyWith(matches: matches)),
+    );
+    await tester.tap(find.text('Fix match & amount'));
+    await tester.pumpAndSettle();
+    expect(find.text('Change the match & set the amount'), findsOneWidget);
+    expect(find.textContaining('cached 3 wk ago'), findsOneWidget);
+    expect(find.text('Search live'), findsOneWidget);
+  });
+
   testWidgets('no offer, no strip; a member never sees one', (tester) async {
     await open(tester, seeded: _ApplyCubit(_state()));
     expect(find.textContaining('with a different match.'), findsNothing);
