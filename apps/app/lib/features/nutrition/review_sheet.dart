@@ -616,7 +616,10 @@ class _MatchRowState extends State<_MatchRow> {
         primary: b != MatchBucket.counted && !_fixOpen,
         onPressed: toggleFix,
       ),
-      if (b == MatchBucket.check)
+      // Blessing a weak match makes it count; with no amount it would count
+      // nothing and merely vanish from the queue, so the line needs a pick
+      // and an amount instead.
+      if (b == MatchBucket.check && widget.match.grams != null)
         _Action(
           icon: FLucideIcons.check,
           label: 'Confirm as-is',

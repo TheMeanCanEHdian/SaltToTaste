@@ -516,6 +516,38 @@ void main() {
     expect(find.text('Search live'), findsOneWidget);
   });
 
+  testWidgets('"Confirm as-is" is offered only for a weak match that has an '
+      'amount to count', (tester) async {
+    // Position 10 (escarole, 0.34 with 283 g) is check WITH grams: offered.
+    // Position 8 turned into a check row WITHOUT grams: not offered — a
+    // blessing would resolve a line that contributes nothing.
+    final matches = [
+      for (final m in _matches)
+        if (m.position == 8)
+          IngredientMatch(
+            position: 8,
+            raw: m.raw,
+            fdcId: m.fdcId,
+            description: m.description,
+            dataType: m.dataType,
+            confidence: 0.4,
+            status: 'auto',
+          )
+        else
+          m,
+    ];
+    await open(
+      tester,
+      seeded: _ApplyCubit(_state().copyWith(matches: matches)),
+    );
+    final confirms = find.text('Confirm as-is');
+    expect(confirms, findsOneWidget, reason: 'the escarole row only');
+    expect(
+      find.textContaining('no amount found — not counted'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('no offer, no strip; a member never sees one', (tester) async {
     await open(tester, seeded: _ApplyCubit(_state()));
     expect(find.textContaining('with a different match.'), findsNothing);

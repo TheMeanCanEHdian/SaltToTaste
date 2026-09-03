@@ -572,7 +572,9 @@ class _FixContent extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              if (bucket == MatchBucket.check)
+              // Only a weak match WITH an amount can be blessed as-is; without
+              // one, confirming resolves a line that contributes nothing.
+              if (bucket == MatchBucket.check && match.grams != null)
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FButton(

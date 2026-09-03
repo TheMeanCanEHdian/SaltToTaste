@@ -18,6 +18,17 @@ import 'package:test/test.dart';
 import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
+/// The item text of a raw line as the corpus parser stores it: the amount
+/// and unit dropped, trailing prep after a comma dropped.
+String _itemOf(String raw) => raw
+    .replaceFirst(
+      RegExp(r'^[\d½¼¾⅓⅔⅛\s/-]+(cup|cups|tablespoons?|teaspoons?)?\s*'),
+      '',
+    )
+    .split(',')
+    .first
+    .trim();
+
 void main() {
   group('normalizeItem', () {
     test('strips noise from real corpus items', () {
@@ -74,6 +85,36 @@ void main() {
       expect(searchQueryFor('bourbon'), 'whiskey');
       // Everything else is itself — the item key never changes.
       expect(searchQueryFor('without salt butter'), 'without salt butter');
+    });
+
+    test('every rewrite key and seasoning item is a normalized form the '
+        'normalizer actually produces', () {
+      // A key the normalizer rewrites first can never be looked up: the
+      // review found 'crushed red pepper' in the table while the line
+      // normalized to 'red pepper' and searched the vegetable.
+      for (final key in queryRewriteKeys) {
+        expect(normalizeItem(key), key, reason: 'dead rewrite key: $key');
+      }
+      for (final item in seasoningToTasteItems) {
+        expect(normalizeItem(item), item, reason: 'dead seasoning item: $item');
+      }
+      // The corpus's own peppercorn phrasings reach the spice.
+      for (final raw in [
+        '8 whole peppercorns',
+        '3 tablespoons whole black peppercorns, crushed',
+        '1 tablespoon cracked black peppercorns',
+        '½ cup coarsely cracked black peppercorns',
+      ]) {
+        expect(
+          searchQueryFor(normalizeItem(_itemOf(raw))),
+          'spices pepper black',
+          reason: raw,
+        );
+      }
+      expect(searchQueryFor(normalizeItem('rye flour')), 'rye flour');
+      expect(searchQueryFor(normalizeItem('rye')), 'rye', reason: 'a grain');
+      expect(isSeasoningToTaste(normalizeItem('Flake sea salt')), isTrue);
+      expect(isSeasoningToTaste(normalizeItem('Coarse sea salt')), isTrue);
     });
 
     test('seasoning to taste is recognised by its normalized item', () {

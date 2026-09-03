@@ -84,9 +84,12 @@ class WhyLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (text, color) = switch (bucket) {
+      // A weak match counts only when it has an amount; without one it is a
+      // wrong food AND an unfilled amount, and it contributes nothing.
       MatchBucket.check => (
         'Match looks off — ${(match.confidence * 100).round()}% name '
-            'confidence, but it is counting now',
+            'confidence, '
+            '${match.grams == null ? 'and no amount found — not counted' : 'but it is counting now'}',
         SaltColors.warnInk,
       ),
       MatchBucket.noAmount => (
@@ -127,7 +130,22 @@ class CurrentMatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (match.fdcId == null || match.description == null) {
+    final description = match.description;
+    if (match.fdcId == null) {
+      // A deliberate no-match the engine explains — water, seasoning to
+      // taste — says so; the badge alone read as "looks fine" for no reason.
+      if (description == null || match.status != 'confirmed') {
+        return const SizedBox.shrink();
+      }
+      return Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Text(
+          '$description · counts as zero',
+          style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
+        ),
+      );
+    }
+    if (description == null) {
       return const SizedBox.shrink();
     }
     final grams = match.grams;

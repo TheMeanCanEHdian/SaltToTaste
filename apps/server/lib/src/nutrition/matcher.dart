@@ -141,6 +141,7 @@ const Set<String> seasoningToTasteItems = {
   'kosher salt',
   'sea salt',
   'flaky sea salt',
+  'flake sea salt',
   'pepper',
   'black pepper',
   'ground pepper',
@@ -160,8 +161,10 @@ bool isSeasoningToTaste(String normalizedItem) =>
     seasoningToTasteItems.contains(normalizedItem);
 
 /// Phrases FDC's search cannot find under the recipe's words, rewritten to
-/// the words FDC files them under. Keyed by the NORMALIZED item; the value is
-/// the query. Every target was chosen from a recorded FDC answer (see
+/// the words FDC files them under. Keyed by the NORMALIZED item — exactly as
+/// [normalizeItem] leaves it, prep words already gone — the value is the
+/// query. Bare 'rye' is deliberately absent: in recipes it is a grain or a
+/// bread (every corpus use), the spirit is 'rye whiskey'. Every target was chosen from a recorded FDC answer (see
 /// test/fixtures/fdc/searches.json).
 ///
 /// Pepper: FDC's search for "black pepper", "pepper" or "red pepper flakes"
@@ -175,15 +178,16 @@ const Map<String, String> _queryRewrites = {
   'black pepper': 'spices pepper black',
   'ground pepper': 'spices pepper black',
   'ground black pepper': 'spices pepper black',
-  'coarsely ground black pepper': 'spices pepper black',
   'cracked black pepper': 'spices pepper black',
   'black peppercorns': 'spices pepper black',
   'peppercorns': 'spices pepper black',
+  'whole peppercorns': 'spices pepper black',
+  'whole black peppercorns': 'spices pepper black',
+  'cracked peppercorns': 'spices pepper black',
+  'cracked black peppercorns': 'spices pepper black',
   'white pepper': 'spices pepper white',
   'ground white pepper': 'spices pepper white',
   'red pepper flakes': 'spices pepper red cayenne',
-  'crushed red pepper': 'spices pepper red cayenne',
-  'crushed red pepper flakes': 'spices pepper red cayenne',
   'cayenne': 'spices pepper red cayenne',
   'cayenne pepper': 'spices pepper red cayenne',
   'ground cayenne pepper': 'spices pepper red cayenne',
@@ -210,7 +214,6 @@ const Map<String, String> _queryRewrites = {
   'bourbon': 'whiskey',
   'bourbon whiskey': 'whiskey',
   'rye whiskey': 'whiskey',
-  'rye': 'whiskey',
   'scotch': 'whiskey',
   'scotch whisky': 'whiskey',
   'whisky': 'whiskey',
@@ -522,3 +525,9 @@ List<RankedCandidate> rankCandidates(
   ranked.sort((a, b) => b.confidence.compareTo(a.confidence));
   return ranked;
 }
+
+/// The rewrite table's keys. Every key must be a normalized item exactly as
+/// [normalizeItem] produces it — a key the normalizer would rewrite first is
+/// dead (pinned by a test): 'crushed red pepper' once sat in the table while
+/// the line normalized to 'red pepper' and searched the vegetable.
+Iterable<String> get queryRewriteKeys => _queryRewrites.keys;
