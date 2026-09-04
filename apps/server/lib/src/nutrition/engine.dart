@@ -479,6 +479,17 @@ Future<List<FdcCandidate>> _cachedSearch(
     ];
   }
   final results = await provider.search(query);
+  // A live answer with NO hits must not evict a stored one that had some:
+  // the cache never expires and an empty row is a hit, so one no-hits reply
+  // would blank every line with this item — and the compute path — for
+  // good. (A provider error already throws before this write; this is the
+  // 200-with-no-foods case.) The caller still gets the live answer.
+  if (fresh && results.isEmpty) {
+    final stored = db.fdcSearchCacheGet(query);
+    if (stored != null && stored != '[]') {
+      return results;
+    }
+  }
   db.fdcSearchCachePut(
     query,
     jsonEncode([for (final candidate in results) candidate.toJson()]),

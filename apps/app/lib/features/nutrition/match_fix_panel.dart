@@ -528,8 +528,10 @@ class _FixPanelState extends State<FixPanel> {
                 query: _search!.query,
                 cachedAt: _search!.cachedAt!,
                 live: !_search!.cached,
+                // Refresh the search this line speaks for, not whatever the
+                // box says now.
                 onSearchLive: _search!.cached && !busy && !_searching
-                    ? () => _runSearch(fresh: true)
+                    ? () => _runSearch(term: _search!.query, fresh: true)
                     : null,
               ),
           ],

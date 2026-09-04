@@ -98,6 +98,16 @@ void main() {
       for (final item in seasoningToTasteItems) {
         expect(normalizeItem(item), item, reason: 'dead seasoning item: $item');
       }
+      // A rewritten query re-submitted as a search (the sheet's "Search live"
+      // re-asks the line's own query) must land under the same cache key.
+      for (final key in queryRewriteKeys) {
+        final rewritten = searchQueryFor(key);
+        expect(
+          searchQueryFor(normalizeItem(rewritten)),
+          rewritten,
+          reason: 'unstable: $key → $rewritten',
+        );
+      }
       // The corpus's own peppercorn phrasings reach the spice.
       for (final raw in [
         '8 whole peppercorns',

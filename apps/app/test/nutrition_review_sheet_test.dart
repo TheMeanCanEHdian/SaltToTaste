@@ -106,8 +106,10 @@ class _SearchRepo extends NutritionRepository {
         ),
       ],
       query: 'spices pepper black',
-      cached: false,
-      cachedAt: DateTime.now(),
+      cached: !fresh,
+      cachedAt: fresh
+          ? DateTime.now()
+          : DateTime.now().subtract(const Duration(days: 40)),
     );
   }
 }
@@ -645,6 +647,74 @@ void main() {
       reason: 'nothing to refresh',
     );
     expect(find.text('Spices, pepper, black'), findsOneWidget);
+  });
+
+  testWidgets("the results line's Search live re-asks the search it names, "
+      'not whatever the box says now', (tester) async {
+    final matches = [
+      for (final m in _matches)
+        if (m.position == 10)
+          IngredientMatch(
+            position: 10,
+            raw: m.raw,
+            item: 'escarole',
+            description: 'No FoodData Central match',
+            status: 'unmatched',
+            candidatesQuery: 'escarole',
+            candidatesCachedAt: DateTime.now().subtract(
+              const Duration(days: 21),
+            ),
+          )
+        else
+          m,
+    ];
+    final repo = _SearchRepo();
+    final cubit = _ApplyCubit(_state().copyWith(matches: matches));
+    tester.view.physicalSize = const Size(1000, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      RepositoryProvider<NutritionRepository>.value(
+        value: repo,
+        child: MaterialApp(
+          theme: buildMaterialTheme(buildForuiTheme()),
+          builder: (context, child) =>
+              FTheme(data: buildForuiTheme(), child: child!),
+          home: BlocProvider<NutritionCubit>.value(
+            value: cubit,
+            child: Builder(
+              builder: (ctx) => Scaffold(
+                body: Center(
+                  child: FButton(
+                    onPress: () => showReviewSheet(ctx, isAdmin: true),
+                    child: const Text('open'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Find a match'));
+    await tester.pumpAndSettle();
+
+    // A hand search, answered from the cache: its line offers Search live.
+    await tester.enterText(find.byType(FTextField).first, 'pepper');
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+    expect(repo.searches, [(query: 'pepper', fresh: false)]);
+    expect(find.textContaining('“spices pepper black”'), findsOneWidget);
+    expect(find.textContaining('cached 1 mo ago'), findsOneWidget);
+    // The box drifts; the line still speaks for the search that made it.
+    await tester.enterText(find.byType(FTextField).first, 'zucchini');
+    await tester.tap(find.text('Search live').last);
+    await tester.pumpAndSettle();
+    expect(repo.searches.last, (query: 'spices pepper black', fresh: true));
+    expect(find.textContaining('live, just now'), findsOneWidget);
   });
 
   testWidgets('no offer, no strip; a member never sees one', (tester) async {

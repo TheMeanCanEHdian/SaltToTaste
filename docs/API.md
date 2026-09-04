@@ -662,7 +662,9 @@ description, data_type, confidence}], query, cached, cached_at}` (top 8;
 when FDC was last asked it — the cache never expires on its own). Pass
 `fresh=true` to bypass the cache and replace its row with a live answer
 (one FDC request; the next compute of any line with that item sees it
-too) — the manual escape hatch
+too; a live answer with NO hits is reported but does not replace a stored
+answer that had some — the cache never expires and an empty row counts as
+a hit, so it would blank every line with that item for good) — the manual escape hatch
 for when the matcher searched the wrong words and none of a line's
 `candidates` fit. Feed a chosen `fdc_id` back through
 `PUT …/nutrition/matches/{pos}`. Admin + full scope because a cache miss
