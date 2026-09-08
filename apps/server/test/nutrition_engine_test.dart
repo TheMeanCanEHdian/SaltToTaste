@@ -132,6 +132,48 @@ void main() {
       expect(itemKeyFor(''), '');
     });
 
+    test('"juice from 1 lemon" is lemon juice: the fruit leads, the count '
+        'goes, the fruit is named once', () {
+      // 120 corpus lines; before, they searched 'juice from 1 lemon' and
+      // matched bottled concentrate with no grams.
+      expect(normalizeItem('juice from 1 lemon'), 'lemon juice');
+      expect(normalizeItem('lemon juice from 1 lemon'), 'lemon juice');
+      expect(normalizeItem('juice from 2 limes'), 'lime juice');
+      expect(normalizeItem('juice from about 6 lemons'), 'lemon juice');
+      expect(normalizeItem('juice from 1 to 2 lemons'), 'lemon juice');
+      expect(normalizeItem('grated zest from 1 orange'), 'orange zest');
+      expect(
+        normalizeItem('zest and juice from 2 lemons'),
+        'lemon zest and juice',
+      );
+      expect(normalizeItem('lemons'), 'lemons', reason: 'no tail, no change');
+      expect(normalizeItem('juice from concentrate'), 'juice from concentrate');
+    });
+
+    test('the head noun: what names the food, after the words that only say '
+        'how it comes', () {
+      expect(headNounOf('table salt for cooking pasta'), 'salt');
+      expect(headNounOf('table salt or 1 recipe topping'), 'salt');
+      expect(
+        headNounOf('instant or rapid-rise yeast'),
+        'yeast',
+        reason: 'a plain "or" keeps its last alternative',
+      );
+      expect(headNounOf('anchovy paste'), 'anchovy');
+      expect(headNounOf('celery root'), 'celery');
+      expect(headNounOf('crushed tomatoes or plain tomato sauce'), 'tomato');
+      expect(headNounOf('garlic cloves'), 'garlic');
+      expect(headNounOf('garlic clove'), 'garlic');
+      expect(headNounOf('bay leaves'), 'bay');
+      expect(headNounOf('jalapeno chiles'), 'pepper');
+      expect(headNounOf('juice from 2 limes'.split(' ').join(' ')), 'lime');
+      expect(headNounOf(normalizeItem('juice from 2 limes')), 'juice');
+      expect(headNounOf('egg yolk'), isNull, reason: 'a modified form');
+      expect(headNounOf('half-and-half'), isNull);
+      expect(headNounOf('dry sherry'), 'sherry');
+      expect(headNounOf('ground cumin'), 'cumin');
+    });
+
     test('every rewrite key and seasoning item is a normalized form the '
         'normalizer actually produces', () {
       // A key the normalizer rewrites first can never be looked up: the
@@ -251,7 +293,9 @@ void main() {
           'grand marnier',
           await provider.search('grand marnier'),
         ).first;
-        expect(before.candidate.description, contains('100 GRAND'));
+        // (Once a candy bar; since the brand dock, another sub-0.5 record —
+        // which junk wins is not the point, its weakness is.)
+        expect(before.confidence, lessThan(0.5));
         expect(before.confidence, lessThan(0.5));
       });
     },
@@ -1450,4 +1494,170 @@ void main() {
       expect(row.status, 'complete');
     });
   });
+
+  group(
+    'rankCandidates after design review D4 (recorded 2026-09-08 answers)',
+    () {
+      final provider = FixtureProvider();
+      Future<List<RankedCandidate>> rank(String query) async =>
+          rankCandidates(query, await provider.search(query));
+
+      test(
+        'a modifier word no longer carries a wrong food over the line',
+        () async {
+          // 'dry' matched "Lentils, dry" at 0.53 and 156 g of lentils counted
+          // for the sherry; 'ground' matched "Flaxseed, ground" for the cumin.
+          final sherry = await rank('dry sherry');
+          expect(sherry.first.confidence, lessThan(0.5));
+          expect(
+            candidatesNameIngredient(
+              'dry sherry',
+              await provider.search('dry sherry'),
+            ),
+            isFalse,
+          );
+          final wine = await rank(searchQueryFor('dry sherry'));
+          expect(
+            wine.first.candidate.description,
+            'Alcoholic beverage, wine, dessert, dry',
+          );
+          expect(wine.first.confidence, greaterThanOrEqualTo(0.5));
+          // On the raw answer the head noun keeps flaxseed out; the rewrite
+          // ('cumin seeds') is what lands the spice above the line.
+          final rawCumin = await rank('ground cumin');
+          expect(rawCumin.first.candidate.description, 'Spices, cumin seed');
+          expect(
+            rawCumin.first.confidence,
+            lessThan(0.5),
+            reason: 'coverage cap',
+          );
+          expect(
+            candidatesNameIngredient(
+              'ground cumin',
+              await provider.search('ground cumin'),
+            ),
+            isTrue,
+          );
+          final cumin = await rank(searchQueryFor('ground cumin'));
+          expect(cumin.first.candidate.description, 'Spices, cumin seed');
+          expect(cumin.first.confidence, greaterThanOrEqualTo(0.5));
+          // 'cinnamon' alone is never searched now: the rewrite asks for
+          // 'ground cinnamon', whose answer is the spice.
+          final cinnamon = await rank(searchQueryFor('cinnamon'));
+          expect(
+            cinnamon.first.candidate.description,
+            'Spices, cinnamon, ground',
+          );
+          expect(cinnamon.first.confidence, greaterThanOrEqualTo(0.5));
+        },
+      );
+
+      test('a dish or a brand does not outrank the food', () async {
+        final chicken = await rank('whole chicken');
+        expect(
+          chicken.first.confidence,
+          lessThan(0.5),
+          reason: 'nuggets held out',
+        );
+        final ice = await rank('ice cream');
+        expect(ice.first.candidate.description, 'Ice creams, chocolate');
+        final broth = await rank('low-sodium beef broth');
+        expect(
+          broth.first.candidate.description,
+          'Soup, beef broth, less/reduced sodium, ready to serve',
+        );
+        expect(broth.first.confidence, greaterThanOrEqualTo(0.5));
+        // The brand dock alone would have handed SWANSON's broth to a mushroom
+        // soup; with the head noun the soup (no 'broth') ranks below.
+        final mushroom = broth.firstWhere(
+          (c) => c.candidate.description.startsWith('Soup, beef and mushroom'),
+        );
+        expect(mushroom.confidence, lessThan(broth.first.confidence));
+      });
+
+      test(
+        'a sandwich COOKIE is not a sandwich; a sandwich cracker is',
+        () async {
+          // FDC files Oreos as "Cookie, vanilla/chocolate sandwich". Guarded,
+          // a sandwich cookie scores like the plain wafer cookie beside it;
+          // unguarded it would sit 0.40 below. (Both score low here because
+          // the ranker's own stemmer reads 'cookies' as 'cooky' — a separate,
+          // older quirk.)
+          // Ranked as 'oreo cookie' (singular, so the ranker's stemmer finds
+          // 'Cookie') over the recorded 'oreo cookies' answer.
+          final cookies = rankCandidates(
+            'oreo cookie',
+            await provider.search('oreo cookies'),
+          );
+          final sandwich = cookies.firstWhere(
+            (c) => c.candidate.description == 'Cookie, vanilla sandwich',
+          );
+          final wafer = cookies.firstWhere(
+            (c) => c.candidate.description == 'Cookie, chocolate wafer',
+          );
+          expect(sandwich.confidence, greaterThanOrEqualTo(0.4));
+          expect(sandwich.confidence, closeTo(wafer.confidence, 0.02));
+          // The same word on a non-cookie record is a dish and is docked.
+          final grahams = await rank('graham crackers');
+          final plain = grahams.firstWhere(
+            (c) => c.candidate.description == 'Graham crackers',
+          );
+          final filled = grahams.firstWhere(
+            (c) =>
+                c.candidate.description ==
+                'Graham crackers, sandwich, with filling',
+          );
+          expect(filled.confidence, lessThan(plain.confidence - 0.3));
+        },
+      );
+
+      test(
+        "an -ies head matches its -ie spelling: 'cookies' finds 'Cookie'",
+        () async {
+          expect(
+            headNounOf('oreo cookies'),
+            'cooky',
+            reason: 'the key stemmer',
+          );
+          final answer = await provider.search('oreo cookies');
+          expect(candidatesNameIngredient('oreo cookies', answer), isTrue);
+          // A record that only says 'Cookie' must not be docked for the head:
+          // docked, its score clamps to exactly zero.
+          final sandwich = rankCandidates('oreo cookies', answer).firstWhere(
+            (c) => c.candidate.description == 'Cookie, vanilla sandwich',
+          );
+          expect(sandwich.confidence, greaterThan(0.0));
+        },
+      );
+
+      test('a correct count-noun match is untouched', () async {
+        final garlic = await rank('garlic cloves');
+        expect(garlic.first.candidate.description, 'Garlic, raw');
+        expect(garlic.first.confidence, greaterThanOrEqualTo(0.5));
+      });
+
+      test(
+        "every rewrite target's head noun occurs in its intended record",
+        () async {
+          for (final key in queryRewriteKeys) {
+            final target = searchQueryFor(key);
+            if (target == key) continue;
+            final answer = await provider.search(target);
+            if (answer.isEmpty)
+              continue; // unrecorded: the reachability pin covers the key
+            expect(
+              candidatesNameIngredient(target, answer),
+              isTrue,
+              reason: '$key → $target',
+            );
+            expect(
+              rankCandidates(target, answer).first.confidence,
+              greaterThanOrEqualTo(0.5),
+              reason: '$key → $target',
+            );
+          }
+        },
+      );
+    },
+  );
 }

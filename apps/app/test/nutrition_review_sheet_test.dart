@@ -717,6 +717,45 @@ void main() {
     expect(find.textContaining('live, just now'), findsOneWidget);
   });
 
+  testWidgets('a line whose search names nothing of the ingredient says so '
+      'above its candidates', (tester) async {
+    final matches = [
+      for (final m in _matches)
+        if (m.position == 10)
+          IngredientMatch(
+            position: 10,
+            raw: m.raw,
+            item: 'dry sherry',
+            fdcId: 172420,
+            description: 'Lentils, dry',
+            status: 'auto',
+            confidence: 0.22,
+            candidatesQuery: 'dry sherry',
+            candidatesNameIngredient: false,
+            candidates: const [
+              MatchCandidate(
+                fdcId: 172420,
+                description: 'Lentils, dry',
+                dataType: 'Foundation',
+                confidence: 0.22,
+              ),
+            ],
+          )
+        else
+          m,
+    ];
+    await open(
+      tester,
+      seeded: _ApplyCubit(_state().copyWith(matches: matches)),
+    );
+    await tester.tap(find.text('Fix match & amount'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Nothing in the search names this ingredient'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('no offer, no strip; a member never sees one', (tester) async {
     await open(tester, seeded: _ApplyCubit(_state()));
     expect(find.textContaining('with a different match.'), findsNothing);

@@ -120,8 +120,13 @@ const Map<String, String> _synonyms = {
 /// when this changes (services/decision_rekey.dart).
 ///
 /// History: 1 = everything before 2026-09-07; 2 = diacritics folded, canned
-/// crushed/diced tomatoes keep their form word, singular decision keys.
-const int matcherVersion = 2;
+/// crushed/diced tomatoes keep their form word, singular decision keys;
+/// 3 = the ranker requires the ingredient's head noun, docks composite and
+/// branded records harder, 'juice from 1 lemon' normalizes to 'lemon juice',
+/// and the rewrite table gained the spice/bacon/shrimp/sherry/beer/mustard/
+/// pasta entries (design review D4, measured on the 2026-09-08 diagnostic
+/// set: 19 of 31 confidently wrong foods fixed, 0 correct lines regressed).
+const int matcherVersion = 3;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -182,7 +187,46 @@ String normalizeItem(String item) {
     }
     words.add(_synonyms[word] ?? word);
   }
-  return words.join(' ');
+  return _fruitFromTail(words).join(' ');
+}
+
+/// Citrus the corpus writes as "juice from 1 lemon" / "zest from 2 limes":
+/// FDC names the fruit first ("Lemon juice, raw"), and the count is not part
+/// of the food. 120 corpus lines; before this they searched 'juice from 1
+/// lemon' (bottled concentrate won) under a key no other lemon-juice line
+/// shared.
+const Set<String> _citrus = {
+  'lemon',
+  'lime',
+  'orange',
+  'grapefruit',
+  'tangerine',
+  'clementine',
+};
+
+/// "<what> from [about] N [to M] <citrus>" → "<citrus> <what>", the fruit
+/// named once. Anything else is returned unchanged.
+List<String> _fruitFromTail(List<String> words) {
+  final from = words.lastIndexOf('from');
+  if (from < 1 || from == words.length - 1) {
+    return words;
+  }
+  final tail = words.sublist(from + 1);
+  final fruit = _keyWord(tail.last);
+  if (!_citrus.contains(fruit)) {
+    return words;
+  }
+  final countWords = tail.sublist(0, tail.length - 1);
+  if (!countWords.every(
+    (w) => RegExp(r'^\d+$').hasMatch(w) || w == 'about' || w == 'to',
+  )) {
+    return words;
+  }
+  final what = [
+    for (final w in words.sublist(0, from))
+      if (_keyWord(w) != fruit) w,
+  ];
+  return [fruit, ...what];
 }
 
 /// The key a human decision is stored and reused under (`ingredient_matches
@@ -330,6 +374,51 @@ const Map<String, String> _queryRewrites = {
   'scotch': 'whiskey',
   'scotch whisky': 'whiskey',
   'whisky': 'whiskey',
+  // Design review D4 (2026-09-08), every target's answer recorded from live
+  // FDC in the diagnostic cache: ground spices file under their seed; canned
+  // tomatoes aside, FDC's spice records lead with "Spices, …".
+  'ground cumin': 'cumin seeds',
+  'ground coriander': 'coriander seeds',
+  'ground fennel': 'fennel seeds',
+  'cinnamon': 'ground cinnamon',
+  'cinnamon stick': 'ground cinnamon',
+  'cinnamon sticks': 'ground cinnamon',
+  'whole cloves': 'ground cloves',
+  'frozen phyllo': 'phyllo',
+  'bay leaves': 'bay leaf',
+  'parsley leaves': 'parsley',
+  'vegetable oil for frying': 'vegetable oil',
+  // 'bacon' alone returns bits, meatless and turkey bacon before pork.
+  'bacon': 'pork cured bacon unprepared',
+  // Every bare 'shrimp' answer is a dish (cocktail, scampi, fried).
+  'shrimp': 'shrimp raw',
+  'extra-large shrimp': 'shrimp raw',
+  'jumbo shrimp': 'shrimp raw',
+  'shell-on shrimp': 'shrimp raw',
+  // FDC files sherry under dessert wine and lager under beer.
+  'sherry': 'wine dessert dry',
+  'dry sherry': 'wine dessert dry',
+  'lager': 'beer',
+  'mild lager': 'beer',
+  'dijon mustard': 'mustard prepared',
+  // Pasta shapes FDC does not know by name.
+  'penne': 'pasta dry enriched',
+  'campanelle': 'pasta dry enriched',
+  'spaghettini': 'pasta dry enriched',
+  'linguine': 'pasta dry enriched',
+  'rigatoni': 'pasta dry enriched',
+  'orecchiette': 'pasta dry enriched',
+  'farfalle': 'pasta dry enriched',
+  'ziti': 'pasta dry enriched',
+  'fusilli': 'pasta dry enriched',
+  'gemelli': 'pasta dry enriched',
+  'cavatappi': 'pasta dry enriched',
+  'bucatini': 'pasta dry enriched',
+  'tagliatelle': 'pasta dry enriched',
+  'fettuccine': 'pasta dry enriched',
+  'pappardelle': 'pasta dry enriched',
+  'orzo': 'pasta dry enriched',
+  'ditalini': 'pasta dry enriched',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -551,6 +640,188 @@ const Set<String> _plainFormTokens = {'whole', 'raw', 'regular'};
 Set<String> _words(String text) =>
     text.toLowerCase().split(RegExp('[^a-z]+')).toSet();
 
+/// Words that say how an ingredient comes, never what it is. Dropped when
+/// looking for the head noun. The conjunctions are here because
+/// 'half-and-half' would otherwise have the head 'and' (21 corpus lines).
+const Set<String> _formWords = {
+  'ground',
+  'whole',
+  'dry',
+  'dried',
+  'fresh',
+  'frozen',
+  'ripe',
+  'firm',
+  'mild',
+  'large',
+  'small',
+  'medium',
+  'chopped',
+  'and',
+  'or',
+  'plus',
+};
+
+/// Count nouns, BOTH numbers: 'garlic clove' and 'garlic cloves' must both
+/// give the head 'garlic' (a plural-only list docked 'Garlic, raw' on 93
+/// corpus lines).
+const Set<String> _countNouns = {
+  'leaf',
+  'leaves',
+  'wedge',
+  'wedges',
+  'clove',
+  'cloves',
+  'rib',
+  'ribs',
+  'sprig',
+  'sprigs',
+  'stalk',
+  'stalks',
+  'fillet',
+  'fillets',
+  'piece',
+  'pieces',
+  'half',
+  'halves',
+  'slice',
+  'slices',
+  'stick',
+  'sticks',
+  'head',
+  'heads',
+  'ear',
+  'ears',
+  'bunch',
+  'bunches',
+};
+
+/// Compound identities whose LAST word names the form: 'anchovy paste',
+/// 'celery root', 'tomato sauce' — the head is the word before.
+const Set<String> _identityTails = {
+  'paste',
+  'sauce',
+  'root',
+  'dough',
+  'zest',
+  'thread',
+  'threads',
+  'mix',
+  'spray',
+};
+
+/// The corpus says chile; FDC says pepper.
+const Map<String, String> _headSynonyms = {
+  'chile': 'pepper',
+  'chili': 'pepper',
+  'chily': 'pepper',
+};
+
+Set<String> _keyTokens(String text) => {
+  for (final word in text.toLowerCase().split(RegExp('[^a-z0-9%]+')))
+    if (word.length > 1) _keyWord(word),
+};
+
+/// Whether [tokens] carry [head]. The key stemmer turns 'cookies' into
+/// 'cooky' but leaves 'cookie' alone, so an -ies head also matches its -ie
+/// spelling (cookies/cookie, brownies/brownie).
+bool _carriesHead(Set<String> tokens, String head) =>
+    tokens.contains(head) ||
+    (head.endsWith('y') &&
+        tokens.contains('${head.substring(0, head.length - 1)}ie'));
+
+/// The word that names the food in [query] (the FDC search query), in its
+/// key form — or null when nothing identifies one. A trailing " for …"
+/// clause and an "or … recipe …" cross-reference are cut (never a plain
+/// "or": 'instant or rapid-rise yeast' needs its last alternative); form,
+/// prep and stop words and count nouns are dropped; the last survivor is
+/// the head, stepping back over an identity tail ('anchovy paste' →
+/// anchovy). A modified-form word ('yolk', 'white') is never the identity.
+///
+/// Measured over all 13,614 corpus lines (design review D4): 484 distinct
+/// heads, 261 lines with none; the risky heads a literal "last token" rule
+/// produced (paste 106, chil 48, whit 29, and 21, lim 8) all go to zero.
+String? headNounOf(String query) {
+  var text = query;
+  final forIdx = text.indexOf(' for ');
+  if (forIdx > 0) {
+    text = text.substring(0, forIdx);
+  }
+  final parts = text.split(' or ');
+  while (parts.length > 1 && parts.last.contains('recipe')) {
+    parts.removeLast();
+  }
+  text = parts.join(' or ');
+  final kept = <String>[
+    for (final w in text.split(RegExp('[^a-z0-9%]+')))
+      if (w.length >= 2 &&
+          !_formWords.contains(w) &&
+          !_prepWords.contains(w) &&
+          !_stopWords.contains(w) &&
+          !_countNouns.contains(w))
+        w,
+  ];
+  if (kept.isEmpty) {
+    return null;
+  }
+  while (_identityTails.contains(kept.last) && kept.length > 1) {
+    kept.removeLast();
+  }
+  final head = _keyWord(kept.last);
+  if (_modifiedFormTokens.contains(head)) {
+    return null;
+  }
+  return _headSynonyms[head] ?? head;
+}
+
+/// Whether any of [candidates] names the ingredient's head noun. False means
+/// the search answer holds no record of the food at all — a list that is
+/// hopeless, not mis-ranked (37 of 878 diagnostic lines): the sheet says so
+/// instead of offering the top junk record.
+bool candidatesNameIngredient(String query, List<FdcCandidate> candidates) {
+  final head = headNounOf(query);
+  if (head == null) {
+    return true;
+  }
+  return candidates.any((c) => _carriesHead(_keyTokens(c.description), head));
+}
+
+/// Composite records — a dish or a product built from the food, never the
+/// food. Only the markers MEASURED to change a chosen food on the 878-line
+/// diagnostic set, both numbers (the older dish list is unstemmed, which is
+/// why 'nugget' never docked "chicken nuggets"). Not 'bits' (FDC files
+/// Canadian bacon under it), not 'pie'/'cookie' (they would dock "Pie
+/// Crust, Cookie-type, Graham Cracker" — pinned).
+const Set<String> _compositeMarkers = {
+  'sandwich',
+  'sandwiches',
+  'cake',
+  'cakes',
+  'roll',
+  'rolls',
+  'bun',
+  'buns',
+  'nugget',
+  'nuggets',
+  'mock',
+  'dressing',
+  'dressings',
+  'topping',
+  'toppings',
+  'candy',
+  'candies',
+};
+const List<String> _compositePhrases = ['school lunch', 'with meat'];
+
+/// The dock for a wrong-food record (analog, dish, composite): −0.25 left
+/// "School Lunch, chicken nuggets" counted for 'whole chicken' at 0.627;
+/// −0.40 puts it at 0.477. Measured: only those lines differ.
+const double _wrongFoodDock = 0.40;
+
+/// A token FDC writes in capitals is a brand (SWANSON, POPEYES, REAL LEMON)
+/// unless the query names it; "USDA's" is a programme note, not a brand.
+final RegExp _brandToken = RegExp(r"\b[A-Z][A-Z'&-]{3,}\b");
+
 /// Ranks [candidates] against the normalized [query].
 ///
 /// Score = token overlap between the query and the candidate description
@@ -566,6 +837,7 @@ List<RankedCandidate> rankCandidates(
   if (queryTokens.isEmpty || candidates.isEmpty) {
     return const [];
   }
+  final head = headNounOf(query);
   final ranked = <RankedCandidate>[];
   for (final candidate in candidates) {
     final descriptionTokens = _tokens(candidate.description);
@@ -616,17 +888,48 @@ List<RankedCandidate> rankCandidates(
     // dock, base-form magnitude — a wrong food, not a modified form.
     final descriptionWords = _words(candidate.description);
     final queryWords = _words(query);
-    final wrongFood = _meatAnalogMarkers
-        .followedBy(_dishMarkers)
-        .any(
-          (marker) =>
-              descriptionWords.contains(marker) && !queryWords.contains(marker),
+    // 'sandwich' never docks a sandwich COOKIE: FDC files Oreos as
+    // "Cookie, chocolate sandwich" (recorded 2026-09-08).
+    final cookieRecord =
+        descriptionWords.contains('cookie') ||
+        descriptionWords.contains('cookies');
+    final wrongFood =
+        _meatAnalogMarkers
+            .followedBy(_dishMarkers)
+            .followedBy(_compositeMarkers)
+            .any(
+              (marker) =>
+                  descriptionWords.contains(marker) &&
+                  !queryWords.contains(marker) &&
+                  !(cookieRecord && marker.startsWith('sandwich')),
+            ) ||
+        _compositePhrases.any(
+          (phrase) =>
+              descriptionLower.contains(phrase) && !queryLower.contains(phrase),
         );
     if (wrongFood) {
-      score -= 0.25;
+      score -= _wrongFoodDock;
     }
     if (descriptionTokens.any(_plainFormTokens.contains)) {
       score += 0.02;
+    }
+    // The ingredient's head noun must be in the record. Docked uniformly
+    // even when NO candidate carries it: that is exactly what stops 156 g of
+    // "Lentils, dry" counting for 'dry sherry'. Never excludes a candidate —
+    // the sheet still shows the top one, held in `check`.
+    if (head != null &&
+        !_carriesHead(_keyTokens(candidate.description), head)) {
+      score -= 0.30;
+    }
+    // A brand the query did not name. Safe only WITH the head-noun dock:
+    // alone it handed "Soup, SWANSON, beef broth" to a beef-and-mushroom soup.
+    if (_brandToken
+        .allMatches(candidate.description)
+        .map((m) => m[0]!)
+        .any(
+          (t) => !t.startsWith('USDA') && !queryLower.contains(t.toLowerCase()),
+        )) {
+      score -= 0.25;
     }
     ranked.add(
       RankedCandidate(

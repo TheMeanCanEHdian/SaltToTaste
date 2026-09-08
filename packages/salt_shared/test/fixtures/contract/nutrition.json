@@ -1,75 +1,75 @@
 {
   "status": "partial",
   "serving_basis": 12,
-  "calories_per_serving": 470.65,
+  "calories_per_serving": 470.08,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 470.65,
+      "amount": 470.08,
       "unit": "kcal",
       "dv_percent": 23.5
     },
     "fat": {
       "label": "Total Fat",
-      "amount": 22.94,
+      "amount": 22.81,
       "unit": "g",
-      "dv_percent": 29.4
+      "dv_percent": 29.2
     },
     "saturated": {
       "label": "Saturated Fat",
-      "amount": 13.19,
+      "amount": 13.12,
       "unit": "g",
-      "dv_percent": 65.9
+      "dv_percent": 65.6
     },
     "trans": {
       "label": "Trans Fat",
-      "amount": 0.0,
+      "amount": 0.02,
       "unit": "g"
     },
     "monounsaturated": {
       "label": "Monounsaturated Fat",
-      "amount": 6.55,
+      "amount": 6.51,
       "unit": "g"
     },
     "polyunsaturated": {
       "label": "Polyunsaturated Fat",
-      "amount": 1.0,
+      "amount": 0.99,
       "unit": "g"
     },
     "cholesterol": {
       "label": "Cholesterol",
-      "amount": 127.18,
+      "amount": 127.32,
       "unit": "mg",
       "dv_percent": 42.4
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 351.45,
+      "amount": 351.59,
       "unit": "mg",
       "dv_percent": 15.3
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 62.92,
+      "amount": 63.09,
       "unit": "g",
       "dv_percent": 22.9
     },
     "fiber": {
       "label": "Dietary Fiber",
-      "amount": 3.87,
+      "amount": 3.84,
       "unit": "g",
-      "dv_percent": 13.8
+      "dv_percent": 13.7
     },
     "sugars": {
       "label": "Total Sugars",
-      "amount": 38.9,
+      "amount": 39.16,
       "unit": "g"
     },
     "protein": {
       "label": "Protein",
-      "amount": 7.83,
+      "amount": 7.8,
       "unit": "g",
-      "dv_percent": 15.7
+      "dv_percent": 15.6
     },
     "vitamin_d": {
       "label": "Vitamin D",
@@ -79,19 +79,19 @@
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 83.69,
+      "amount": 83.55,
       "unit": "mg",
       "dv_percent": 6.4
     },
     "iron": {
       "label": "Iron",
-      "amount": 3.98,
+      "amount": 3.96,
       "unit": "mg",
-      "dv_percent": 22.1
+      "dv_percent": 22.0
     },
     "potassium": {
       "label": "Potassium",
-      "amount": 338.0,
+      "amount": 336.73,
       "unit": "mg",
       "dv_percent": 7.2
     },
@@ -115,7 +115,7 @@
     },
     "vitamin_k": {
       "label": "Vitamin K",
-      "amount": 2.55,
+      "amount": 2.57,
       "unit": "µg",
       "dv_percent": 2.1
     },
@@ -162,15 +162,15 @@
     },
     "magnesium": {
       "label": "Magnesium",
-      "amount": 73.72,
+      "amount": 72.86,
       "unit": "mg",
-      "dv_percent": 17.6
+      "dv_percent": 17.3
     },
     "phosphorus": {
       "label": "Phosphorus",
-      "amount": 172.26,
+      "amount": 171.13,
       "unit": "mg",
-      "dv_percent": 13.8
+      "dv_percent": 13.7
     }
   },
   "total_grams": 1582.7,

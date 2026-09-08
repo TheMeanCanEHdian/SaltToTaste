@@ -1171,6 +1171,68 @@ A run of nutrition work, each commit dual-fleet reviewed (RUNLOG Runs 032–036)
   - Measured on the corpus before building: 1,840 query forms → 1,778 keys;
     62 keys merge >1 form, all genuine plural pairs, 0 false merges.
 
+### Ranker: the head noun, composites and brands (2026-09-08)
+
+Driven by a DIAGNOSTIC SWEEP rather than the full library: 69 corpus recipes
+chosen by greedy cover over the survey's 18 categories (≥8 each) plus 30 random
+controls, computed against live FDC in 8.5 min (~600 requests). Every category
+behaved as the survey predicted; the random control found two classes nobody
+had listed — a modifier word outranking the ingredient ('dry sherry' →
+"Lentils, dry" 0.53 COUNTED; 'ground cumin' → "Flaxseed, ground") and
+prepared-dish/branded records outranking the raw food ('whole chicken' →
+"School Lunch, chicken nuggets" 0.88 COUNTED; 'ice cream' → "Ice cream
+sandwich"; 'bacon' → "Bacon bits"). Both produce confident WRONG foods that the
+review queue never shows. The run, its caches and every artefact below live in
+`.claude/diag/2026-09-08/` (gitignored; the API key removed).
+
+Design review D4 (RUNLOG) attacked a written proposal with seven lenses that
+could each implement a rule and recompute the 878 cached lines for free (a
+provider that throws on any network call proves the recompute spent nothing).
+Verdict: adopt with changes — R2 (a description-category dock) and IDF
+weighting were rejected on measurement; the judge's own ablation grid showed
+only the COMBINATION passes.
+
+Shipped (`matcherVersion` 3):
+- **Head-noun dock −0.30** (`headNounOf`): the word that names the food —
+  after cutting a trailing " for …" clause and an "or … recipe …"
+  cross-reference (never a plain "or"), dropping form/prep/stop words and
+  count nouns in BOTH numbers, stepping back over identity tails (anchovy
+  paste → anchovy), stemmed with the key stemmer on both sides (an -ies head
+  also matches its -ie spelling), silent on modified forms (yolk) and with
+  chile → pepper. Docked uniformly even when no candidate carries it: that is
+  what un-counts the lentils. Never excludes a candidate.
+- **Composite dock −0.40** (was −0.25 for dishes/analogs): the nine marker
+  families measured to change a chosen food, both numbers (sandwich, cake,
+  roll, bun, nugget, mock, dressing, topping, candy) + 'school lunch' / 'with
+  meat'; 'sandwich' never docks a cookie (FDC files Oreos as "Cookie, …
+  sandwich" — recorded). Not 'bits' (Canadian bacon), not pie/cookie (the
+  graham-cracker crust pin).
+- **Brand dock −0.25**: an ALL-CAPS token the query does not name (not
+  "USDA'…"). Safe only WITH the head-noun dock (alone it handed SWANSON's beef
+  broth to a mushroom soup).
+- **Rewrites** (all targets recorded from live FDC): ground cumin/coriander/
+  fennel → their seeds, cinnamon (+stick) → ground cinnamon, whole cloves →
+  ground cloves, frozen phyllo → phyllo, bay leaves → bay leaf, parsley leaves
+  → parsley, vegetable oil for frying → vegetable oil, bacon → pork cured bacon
+  unprepared, shrimp family → shrimp raw, (dry) sherry → wine dessert dry,
+  (mild) lager → beer, dijon mustard → mustard prepared, 17 pasta shapes →
+  pasta dry enriched. Curry paste has no FDC record and stays unmatched.
+- **Normalizer**: "juice from 1 lemon" / "zest from 2 limes" → "lemon juice" /
+  "lime zest" (the fruit leads, the count goes; 120 corpus lines).
+- **`candidates_name_ingredient`** on every matches line: false when the
+  answer holds no record naming the food (37 of 878 diagnostic lines); the fix
+  panel then says "Nothing in the search names this ingredient — search by
+  hand below" instead of offering the top junk record.
+
+Measured on the diagnostic set (cache-only recompute, 0 provider calls): 70
+lines changed; 26 of the 31 confidently wrong foods fixed or out of `counted`
+(21 now on the right food and counting); 0 correct lines regressed; counted
+601 → 622, check 136 → 118. The 5 that remain wrong (white sandwich bread,
+frozen peas, clam juice, rice vermicelli, cremini, celery root) are variety
+or normalizer items for a later round, as is the count-noun coverage cap
+(right foods parked at 0.44–0.55 — the next design round, as a head-noun
+WEIGHT). The recorded answers became test fixtures (46 queries, 52 foods).
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
@@ -1489,3 +1551,12 @@ A run of nutrition work, each commit dual-fleet reviewed (RUNLOG Runs 032–036)
   Run 036 measured `xhigh` as not a superset for either model. Every review
   runs a Sonnet fleet then an Opus fleet and the RUNLOG records the nature of
   each fleet's catches; the user reviews the accumulated log later.
+- 2026-09-08 — Ranker (user, after design review D4): ship the head-noun dock,
+  the composite/brand docks and the verified rewrites; drop R2 and IDF; put the
+  "juice from N lemon" rule in the normalizer; add the no-match flag to the
+  matches body and the fix panel; keep the judge's switched harness only as a
+  saved diff (ship unconditional code); record a cookie answer to pin the
+  sandwich guard; a second recorded mini-sweep for the still-wrong lines. The
+  count-noun coverage cap is the NEXT design round, not this one. Subagents
+  run on Opus 5 from 2026-09-08 (session-limit reasons), except the Sonnet
+  fleet of the dual-fleet reviews.

@@ -6,6 +6,7 @@
       "item": "Asparagus",
       "others": 0,
       "candidates_query": "asparagus",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -16,6 +17,7 @@
       "item": "unit Lemon",
       "others": 0,
       "candidates_query": "unit lemon",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -26,6 +28,7 @@
       "item": "Garlic",
       "others": 0,
       "candidates_query": "garlic",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -36,6 +39,7 @@
       "item": "unit Scallions",
       "others": 0,
       "candidates_query": "unit green onions",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -46,6 +50,7 @@
       "item": "Gemelli Pasta",
       "others": 0,
       "candidates_query": "gemelli pasta",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -56,6 +61,7 @@
       "item": "Ricotta Cheese",
       "others": 0,
       "candidates_query": "ricotta cheese",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -66,6 +72,7 @@
       "item": "Chili Flakes",
       "others": 0,
       "candidates_query": "chili flakes",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -76,6 +83,7 @@
       "item": "Parmesan Cheese",
       "others": 0,
       "candidates_query": "parmesan cheese",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -86,6 +94,7 @@
       "item": "Walnuts",
       "others": 0,
       "candidates_query": "walnuts",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -96,6 +105,7 @@
       "item": "unit Vegetable Stock Concentrate",
       "others": 0,
       "candidates_query": "unit vegetable stock concentrate",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -106,6 +116,7 @@
       "item": "Olive Oil",
       "others": 0,
       "candidates_query": "olive oil",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -116,6 +127,7 @@
       "item": "Butter",
       "others": 0,
       "candidates_query": "butter",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -126,6 +138,7 @@
       "item": "Salt",
       "others": 0,
       "candidates_query": "salt",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []
@@ -136,6 +149,7 @@
       "item": "Pepper",
       "others": 0,
       "candidates_query": "spices pepper black",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": null,
       "candidates": []

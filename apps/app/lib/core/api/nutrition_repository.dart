@@ -131,6 +131,7 @@ class IngredientMatch {
     this.item,
     this.others = 0,
     this.candidatesQuery,
+    this.candidatesNameIngredient,
     this.candidatesCachedAt,
     this.fdcId,
     this.description,
@@ -157,6 +158,7 @@ class IngredientMatch {
         item: json['item'] as String?,
         others: (json['others'] as num?)?.toInt() ?? 0,
         candidatesQuery: json['candidates_query'] as String?,
+        candidatesNameIngredient: json['candidates_name_ingredient'] as bool?,
         candidatesCachedAt: _timestamp(json['candidates_cached_at']),
         candidates: candidates,
       );
@@ -167,6 +169,7 @@ class IngredientMatch {
       item: json['item'] as String?,
       others: (json['others'] as num?)?.toInt() ?? 0,
       candidatesQuery: json['candidates_query'] as String?,
+      candidatesNameIngredient: json['candidates_name_ingredient'] as bool?,
       candidatesCachedAt: _timestamp(json['candidates_cached_at']),
       fdcId: (match['fdc_id'] as num?)?.toInt(),
       description: match['description'] as String?,
@@ -194,6 +197,11 @@ class IngredientMatch {
   /// The words FDC is asked for this line's candidates, after the matcher's
   /// normalization and rewrites; null when the line has nothing searchable.
   final String? candidatesQuery;
+
+  /// False when FDC's answer holds no record that names this ingredient at
+  /// all — the candidate list is hopeless, not mis-ranked, so the sheet says
+  /// so instead of offering its top record. Null when never searched.
+  final bool? candidatesNameIngredient;
 
   /// When FDC was last asked for this line's candidates (the search cache
   /// never expires on its own); null when it never was.

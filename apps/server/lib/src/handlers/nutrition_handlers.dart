@@ -142,6 +142,13 @@ Future<Map<String, Object?>> matchesBody(
       // when it was last asked (the search cache never expires); null when
       // the line has nothing searchable / was never asked.
       'candidates_query': query,
+      // False when the answer holds no record of the food at all — a list
+      // that is hopeless, not mis-ranked; null when never searched.
+      'candidates_name_ingredient': query == null || candidates.isEmpty
+          ? null
+          : candidatesNameIngredient(query, [
+              for (final c in candidates) c.candidate,
+            ]),
       'candidates_cached_at': query == null
           ? null
           : db.fdcSearchCacheEntry(query)?.fetchedAt,

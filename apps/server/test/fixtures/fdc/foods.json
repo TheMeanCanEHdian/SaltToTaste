@@ -1,915 +1,3682 @@
 {
-  "173430": {
-    "fdc_id": 173430,
-    "description": "Butter, without salt",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 717.0,
-      "203": 0.85,
-      "204": 81.11,
-      "205": 0.06,
-      "291": 0.0,
-      "269": 0.06,
-      "301": 24.0,
-      "303": 0.02,
-      "304": 2.0,
-      "305": 24.0,
-      "306": 24.0,
-      "307": 11.0,
-      "401": 0.0,
-      "404": 0.005,
-      "405": 0.034,
-      "406": 0.042,
-      "415": 0.003,
-      "432": 3.0,
-      "435": 3.0,
-      "418": 0.17,
-      "320": 684.0,
-      "323": 2.32,
-      "328": 0.0,
-      "430": 7.0,
-      "606": 50.489,
-      "645": 23.43,
-      "646": 3.01,
-      "601": 215.0
-    },
-    "portions": [
-      {
-        "gram_weight": 5.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "pat (1\" sq, 1/3\" high)"
-      },
-      {
-        "gram_weight": 14.2,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tbsp"
-      },
-      {
-        "gram_weight": 113.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "stick"
-      },
-      {
-        "gram_weight": 227.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup"
-      }
-    ]
+ "173430": {
+  "fdc_id": 173430,
+  "description": "Butter, without salt",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 717.0,
+   "203": 0.85,
+   "204": 81.11,
+   "205": 0.06,
+   "291": 0.0,
+   "269": 0.06,
+   "301": 24.0,
+   "303": 0.02,
+   "304": 2.0,
+   "305": 24.0,
+   "306": 24.0,
+   "307": 11.0,
+   "401": 0.0,
+   "404": 0.005,
+   "405": 0.034,
+   "406": 0.042,
+   "415": 0.003,
+   "432": 3.0,
+   "435": 3.0,
+   "418": 0.17,
+   "320": 684.0,
+   "323": 2.32,
+   "328": 0.0,
+   "430": 7.0,
+   "606": 50.489,
+   "645": 23.43,
+   "646": 3.01,
+   "601": 215.0
   },
-  "169593": {
-    "fdc_id": 169593,
-    "description": "Cocoa, dry powder, unsweetened",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 228.0,
-      "203": 19.6,
-      "204": 13.7,
-      "205": 57.9,
-      "291": 37.0,
-      "269": 1.75,
-      "301": 128.0,
-      "303": 13.86,
-      "304": 499.0,
-      "305": 734.0,
-      "306": 1524.0,
-      "307": 21.0,
-      "401": 0.0,
-      "404": 0.078,
-      "405": 0.241,
-      "406": 2.185,
-      "415": 0.118,
-      "432": 32.0,
-      "435": 32.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.1,
-      "328": 0.0,
-      "430": 2.5,
-      "606": 8.07,
-      "645": 4.57,
-      "646": 0.44,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 5.4,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tbsp"
-      },
-      {
-        "gram_weight": 86.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "pat (1\" sq, 1/3\" high)"
+   },
+   {
+    "gram_weight": 14.2,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "stick"
+   },
+   {
+    "gram_weight": 227.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "169593": {
+  "fdc_id": 169593,
+  "description": "Cocoa, dry powder, unsweetened",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 228.0,
+   "203": 19.6,
+   "204": 13.7,
+   "205": 57.9,
+   "291": 37.0,
+   "269": 1.75,
+   "301": 128.0,
+   "303": 13.86,
+   "304": 499.0,
+   "305": 734.0,
+   "306": 1524.0,
+   "307": 21.0,
+   "401": 0.0,
+   "404": 0.078,
+   "405": 0.241,
+   "406": 2.185,
+   "415": 0.118,
+   "432": 32.0,
+   "435": 32.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.1,
+   "328": 0.0,
+   "430": 2.5,
+   "606": 8.07,
+   "645": 4.57,
+   "646": 0.44,
+   "601": 0.0
   },
-  "2710336": {
-    "fdc_id": 2710336,
-    "description": "Dark chocolate candy",
-    "data_type": "Survey (FNDDS)",
-    "nutrients": {
-      "203": 5.09,
-      "204": 32.2,
-      "205": 60.0,
-      "208": 550.0,
-      "269": 46.1,
-      "291": 7.2,
-      "301": 57.0,
-      "303": 8.13,
-      "304": 152.0,
-      "305": 214.0,
-      "306": 568.0,
-      "307": 23.0,
-      "320": 2.0,
-      "323": 0.55,
-      "328": 0.0,
-      "401": 0.0,
-      "404": 0.026,
-      "405": 0.051,
-      "406": 0.747,
-      "415": 0.041,
-      "418": 0.23,
-      "430": 8.0,
-      "432": 0.0,
-      "435": 0.0,
-      "601": 7.0,
-      "606": 19.0,
-      "645": 9.8,
-      "646": 1.11
-    },
-    "portions": [
-      {
-        "gram_weight": 45.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 pouch/regular size"
-      },
-      {
-        "gram_weight": 10.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 miniature/bite size"
-      },
-      {
-        "gram_weight": 90.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 large/king size"
-      },
-      {
-        "gram_weight": 180.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 sharing/movie theater size"
-      },
-      {
-        "gram_weight": 8.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 piece"
-      },
-      {
-        "gram_weight": 45.0,
-        "amount": null,
-        "unit": null,
-        "description": "Quantity not specified"
-      },
-      {
-        "gram_weight": 160.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 cup"
-      },
-      {
-        "gram_weight": 15.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 fun/snack size"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 5.4,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 86.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "2710336": {
+  "fdc_id": 2710336,
+  "description": "Dark chocolate candy",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 5.09,
+   "204": 32.2,
+   "205": 60.0,
+   "208": 550.0,
+   "269": 46.1,
+   "291": 7.2,
+   "301": 57.0,
+   "303": 8.13,
+   "304": 152.0,
+   "305": 214.0,
+   "306": 568.0,
+   "307": 23.0,
+   "320": 2.0,
+   "323": 0.55,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.026,
+   "405": 0.051,
+   "406": 0.747,
+   "415": 0.041,
+   "418": 0.23,
+   "430": 8.0,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 7.0,
+   "606": 19.0,
+   "645": 9.8,
+   "646": 1.11
   },
-  "171893": {
-    "fdc_id": 171893,
-    "description": "Beverages, coffee, instant, regular, powder",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 353.0,
-      "203": 12.2,
-      "204": 0.5,
-      "205": 75.4,
-      "291": 0.0,
-      "269": 0.0,
-      "301": 141.0,
-      "303": 4.41,
-      "304": 327.0,
-      "305": 303.0,
-      "306": 3535.0,
-      "307": 37.0,
-      "401": 0.0,
-      "404": 0.008,
-      "405": 0.074,
-      "406": 28.173,
-      "415": 0.029,
-      "432": 0.0,
-      "435": 0.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.0,
-      "328": 0.0,
-      "430": 1.9,
-      "606": 0.197,
-      "645": 0.041,
-      "646": 0.196,
-      "605": 0.0,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 2.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "packet"
-      },
-      {
-        "gram_weight": 1.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 45.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 pouch/regular size"
+   },
+   {
+    "gram_weight": 10.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 miniature/bite size"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large/king size"
+   },
+   {
+    "gram_weight": 180.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 sharing/movie theater size"
+   },
+   {
+    "gram_weight": 8.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 piece"
+   },
+   {
+    "gram_weight": 45.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 160.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fun/snack size"
+   }
+  ]
+ },
+ "171893": {
+  "fdc_id": 171893,
+  "description": "Beverages, coffee, instant, regular, powder",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 353.0,
+   "203": 12.2,
+   "204": 0.5,
+   "205": 75.4,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 141.0,
+   "303": 4.41,
+   "304": 327.0,
+   "305": 303.0,
+   "306": 3535.0,
+   "307": 37.0,
+   "401": 0.0,
+   "404": 0.008,
+   "405": 0.074,
+   "406": 28.173,
+   "415": 0.029,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 1.9,
+   "606": 0.197,
+   "645": 0.041,
+   "646": 0.196,
+   "605": 0.0,
+   "601": 0.0
   },
-  "2346387": {
-    "fdc_id": 2346387,
-    "description": "Cream, sour, full fat",
-    "data_type": "Foundation",
-    "nutrients": {
-      "957": 196.4148,
-      "958": 192.7437716,
-      "203": 3.070694,
-      "204": 17.99,
-      "205": 5.555506,
-      "301": 107.2,
-      "303": 0.0,
-      "304": 10.11,
-      "305": 102.0,
-      "306": 153.8,
-      "307": 50.04,
-      "404": 0.04275,
-      "406": 0.1,
-      "415": 0.0385,
-      "418": 0.06175,
-      "430": 1.2,
-      "606": 10.7,
-      "645": 3.805,
-      "601": 52.69
-    },
-    "portions": [
-      {
-        "gram_weight": 30.0,
-        "amount": 1.0,
-        "unit": "racc",
-        "description": null
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 2.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "packet"
+   },
+   {
+    "gram_weight": 1.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "2346387": {
+  "fdc_id": 2346387,
+  "description": "Cream, sour, full fat",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 196.4148,
+   "958": 192.7437716,
+   "203": 3.070694,
+   "204": 17.99,
+   "205": 5.555506,
+   "301": 107.2,
+   "303": 0.0,
+   "304": 10.11,
+   "305": 102.0,
+   "306": 153.8,
+   "307": 50.04,
+   "404": 0.04275,
+   "406": 0.1,
+   "415": 0.0385,
+   "418": 0.06175,
+   "430": 1.2,
+   "606": 10.7,
+   "645": 3.805,
+   "601": 52.69
   },
-  "789890": {
-    "fdc_id": 789890,
-    "description": "Flour, wheat, all-purpose, enriched, bleached",
-    "data_type": "Foundation",
-    "nutrients": {
-      "208": 366.0,
-      "203": 10.9,
-      "204": 1.48,
-      "205": 77.3,
-      "301": 19.0,
-      "303": 5.62,
-      "304": 26.7,
-      "305": 108.0,
-      "306": 136.0,
-      "307": 2.0,
-      "404": 0.939,
-      "405": 0.443,
-      "406": 6.74,
-      "415": 0.066
-    },
-    "portions": [
-      {
-        "gram_weight": 30.0,
-        "amount": 1.0,
-        "unit": "racc",
-        "description": null
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "789890": {
+  "fdc_id": 789890,
+  "description": "Flour, wheat, all-purpose, enriched, bleached",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 366.0,
+   "203": 10.9,
+   "204": 1.48,
+   "205": 77.3,
+   "301": 19.0,
+   "303": 5.62,
+   "304": 26.7,
+   "305": 108.0,
+   "306": 136.0,
+   "307": 2.0,
+   "404": 0.939,
+   "405": 0.443,
+   "406": 6.74,
+   "415": 0.066
   },
-  "173468": {
-    "fdc_id": 173468,
-    "description": "Salt, table",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 0.0,
-      "203": 0.0,
-      "204": 0.0,
-      "205": 0.0,
-      "291": 0.0,
-      "269": 0.0,
-      "301": 24.0,
-      "303": 0.33,
-      "304": 1.0,
-      "305": 0.0,
-      "306": 8.0,
-      "307": 38758.0,
-      "401": 0.0,
-      "404": 0.0,
-      "405": 0.0,
-      "406": 0.0,
-      "415": 0.0,
-      "432": 0.0,
-      "435": 0.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.0,
-      "328": 0.0,
-      "430": 0.0,
-      "606": 0.0,
-      "645": 0.0,
-      "646": 0.0,
-      "605": 0.0,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 292.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup"
-      },
-      {
-        "gram_weight": 6.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp"
-      },
-      {
-        "gram_weight": 18.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tbsp"
-      },
-      {
-        "gram_weight": 0.4,
-        "amount": 1.0,
-        "unit": null,
-        "description": "dash"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "173468": {
+  "fdc_id": 173468,
+  "description": "Salt, table",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 0.0,
+   "203": 0.0,
+   "204": 0.0,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 24.0,
+   "303": 0.33,
+   "304": 1.0,
+   "305": 0.0,
+   "306": 8.0,
+   "307": 38758.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "605": 0.0,
+   "601": 0.0
   },
-  "175040": {
-    "fdc_id": 175040,
-    "description": "Leavening agents, baking soda",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 0.0,
-      "203": 0.0,
-      "204": 0.0,
-      "205": 0.0,
-      "291": 0.0,
-      "269": 0.0,
-      "301": 0.0,
-      "303": 0.0,
-      "304": 0.0,
-      "305": 0.0,
-      "306": 0.0,
-      "307": 27360.0,
-      "401": 0.0,
-      "404": 0.0,
-      "405": 0.0,
-      "406": 0.0,
-      "415": 0.0,
-      "432": 0.0,
-      "435": 0.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.0,
-      "328": 0.0,
-      "430": 0.0,
-      "606": 0.0,
-      "645": 0.0,
-      "646": 0.0,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 2.3,
-        "amount": 0.5,
-        "unit": null,
-        "description": "tsp"
-      },
-      {
-        "gram_weight": 4.6,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 292.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 6.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 18.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 0.4,
+    "amount": 1.0,
+    "unit": null,
+    "description": "dash"
+   }
+  ]
+ },
+ "175040": {
+  "fdc_id": 175040,
+  "description": "Leavening agents, baking soda",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 0.0,
+   "203": 0.0,
+   "204": 0.0,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 0.0,
+   "303": 0.0,
+   "304": 0.0,
+   "305": 0.0,
+   "306": 0.0,
+   "307": 27360.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "601": 0.0
   },
-  "168833": {
-    "fdc_id": 168833,
-    "description": "Sugars, brown",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 380.0,
-      "203": 0.12,
-      "204": 0.0,
-      "205": 98.09,
-      "291": 0.0,
-      "269": 97.02,
-      "301": 83.0,
-      "303": 0.71,
-      "304": 9.0,
-      "305": 4.0,
-      "306": 133.0,
-      "307": 28.0,
-      "401": 0.0,
-      "404": 0.0,
-      "405": 0.0,
-      "406": 0.11,
-      "415": 0.041,
-      "432": 1.0,
-      "435": 1.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.0,
-      "328": 0.0,
-      "430": 0.0,
-      "606": 0.0,
-      "645": 0.0,
-      "646": 0.0,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 220.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup packed"
-      },
-      {
-        "gram_weight": 4.6,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp packed"
-      },
-      {
-        "gram_weight": 145.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup unpacked"
-      },
-      {
-        "gram_weight": 3.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp unpacked"
-      },
-      {
-        "gram_weight": 3.2,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp brownulated"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 2.3,
+    "amount": 0.5,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 4.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "168833": {
+  "fdc_id": 168833,
+  "description": "Sugars, brown",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 380.0,
+   "203": 0.12,
+   "204": 0.0,
+   "205": 98.09,
+   "291": 0.0,
+   "269": 97.02,
+   "301": 83.0,
+   "303": 0.71,
+   "304": 9.0,
+   "305": 4.0,
+   "306": 133.0,
+   "307": 28.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.11,
+   "415": 0.041,
+   "432": 1.0,
+   "435": 1.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "601": 0.0
   },
-  "173471": {
-    "fdc_id": 173471,
-    "description": "Vanilla extract",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 288.0,
-      "203": 0.06,
-      "204": 0.06,
-      "205": 12.65,
-      "291": 0.0,
-      "269": 12.65,
-      "301": 11.0,
-      "303": 0.12,
-      "304": 12.0,
-      "305": 6.0,
-      "306": 148.0,
-      "307": 9.0,
-      "401": 0.0,
-      "404": 0.011,
-      "405": 0.095,
-      "406": 0.425,
-      "415": 0.026,
-      "432": 0.0,
-      "435": 0.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.0,
-      "328": 0.0,
-      "430": 0.0,
-      "606": 0.01,
-      "645": 0.01,
-      "646": 0.004,
-      "605": 0.0,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 4.2,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp"
-      },
-      {
-        "gram_weight": 208.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup"
-      },
-      {
-        "gram_weight": 13.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tbsp"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 220.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup packed"
+   },
+   {
+    "gram_weight": 4.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp packed"
+   },
+   {
+    "gram_weight": 145.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup unpacked"
+   },
+   {
+    "gram_weight": 3.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp unpacked"
+   },
+   {
+    "gram_weight": 3.2,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp brownulated"
+   }
+  ]
+ },
+ "173471": {
+  "fdc_id": 173471,
+  "description": "Vanilla extract",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 288.0,
+   "203": 0.06,
+   "204": 0.06,
+   "205": 12.65,
+   "291": 0.0,
+   "269": 12.65,
+   "301": 11.0,
+   "303": 0.12,
+   "304": 12.0,
+   "305": 6.0,
+   "306": 148.0,
+   "307": 9.0,
+   "401": 0.0,
+   "404": 0.011,
+   "405": 0.095,
+   "406": 0.425,
+   "415": 0.026,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.01,
+   "645": 0.01,
+   "646": 0.004,
+   "605": 0.0,
+   "601": 0.0
   },
-  "174901": {
-    "fdc_id": 174901,
-    "description": "Bagels, egg",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 278.0,
-      "203": 10.6,
-      "204": 2.1,
-      "205": 53.0,
-      "291": 2.3,
-      "301": 13.0,
-      "303": 3.98,
-      "304": 25.0,
-      "305": 84.0,
-      "306": 68.0,
-      "307": 505.0,
-      "401": 0.6,
-      "404": 0.536,
-      "405": 0.235,
-      "406": 3.443,
-      "415": 0.087,
-      "432": 22.0,
-      "435": 134.0,
-      "418": 0.16,
-      "320": 33.0,
-      "606": 0.421,
-      "645": 0.42,
-      "646": 0.642,
-      "601": 24.0
-    },
-    "portions": [
-      {
-        "gram_weight": 69.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "small bagel (3\" dia)"
-      },
-      {
-        "gram_weight": 105.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "medium bagel (3-1/2\" to 4\" dia)"
-      },
-      {
-        "gram_weight": 28.35,
-        "amount": 1.0,
-        "unit": null,
-        "description": "oz"
-      },
-      {
-        "gram_weight": 131.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "large bagel (4-1/2\" dia)"
-      },
-      {
-        "gram_weight": 26.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "mini bagel (2-1/2\" dia)"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 4.2,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 208.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 13.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "174901": {
+  "fdc_id": 174901,
+  "description": "Bagels, egg",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 278.0,
+   "203": 10.6,
+   "204": 2.1,
+   "205": 53.0,
+   "291": 2.3,
+   "301": 13.0,
+   "303": 3.98,
+   "304": 25.0,
+   "305": 84.0,
+   "306": 68.0,
+   "307": 505.0,
+   "401": 0.6,
+   "404": 0.536,
+   "405": 0.235,
+   "406": 3.443,
+   "415": 0.087,
+   "432": 22.0,
+   "435": 134.0,
+   "418": 0.16,
+   "320": 33.0,
+   "606": 0.421,
+   "645": 0.42,
+   "646": 0.642,
+   "601": 24.0
   },
-  "169656": {
-    "fdc_id": 169656,
-    "description": "Sugars, powdered",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 389.0,
-      "203": 0.0,
-      "204": 0.0,
-      "205": 99.77,
-      "291": 0.0,
-      "269": 97.81,
-      "301": 1.0,
-      "303": 0.06,
-      "304": 0.0,
-      "305": 0.0,
-      "306": 2.0,
-      "307": 2.0,
-      "401": 0.0,
-      "404": 0.0,
-      "405": 0.019,
-      "406": 0.0,
-      "415": 0.0,
-      "432": 0.0,
-      "435": 0.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.0,
-      "328": 0.0,
-      "430": 0.0,
-      "606": 0.0,
-      "645": 0.0,
-      "646": 0.0,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 100.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup sifted"
-      },
-      {
-        "gram_weight": 2.5,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp"
-      },
-      {
-        "gram_weight": 8.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tbsp unsifted"
-      },
-      {
-        "gram_weight": 120.0,
-        "amount": 1.0,
-        "unit": null,
-        "description": "cup unsifted"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 69.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small bagel (3\" dia)"
+   },
+   {
+    "gram_weight": 105.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium bagel (3-1/2\" to 4\" dia)"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 131.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large bagel (4-1/2\" dia)"
+   },
+   {
+    "gram_weight": 26.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "mini bagel (2-1/2\" dia)"
+   }
+  ]
+ },
+ "169656": {
+  "fdc_id": 169656,
+  "description": "Sugars, powdered",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 389.0,
+   "203": 0.0,
+   "204": 0.0,
+   "205": 99.77,
+   "291": 0.0,
+   "269": 97.81,
+   "301": 1.0,
+   "303": 0.06,
+   "304": 0.0,
+   "305": 0.0,
+   "306": 2.0,
+   "307": 2.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.019,
+   "406": 0.0,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "601": 0.0
   },
-  "790085": {
-    "fdc_id": 790085,
-    "description": "Flour, whole wheat, unenriched",
-    "data_type": "Foundation",
-    "nutrients": {
-      "208": 370.0,
-      "203": 15.1,
-      "204": 2.73,
-      "205": 71.2,
-      "291": 10.6,
-      "301": 38.0,
-      "303": 3.86,
-      "304": 136.0,
-      "305": 352.0,
-      "306": 376.0,
-      "307": 3.0,
-      "404": 0.504,
-      "405": 0.128,
-      "406": 5.55,
-      "415": 0.268
-    },
-    "portions": [
-      {
-        "gram_weight": 30.0,
-        "amount": 1.0,
-        "unit": "racc",
-        "description": null
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 100.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup sifted"
+   },
+   {
+    "gram_weight": 2.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 8.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp unsifted"
+   },
+   {
+    "gram_weight": 120.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup unsifted"
+   }
+  ]
+ },
+ "790085": {
+  "fdc_id": 790085,
+  "description": "Flour, whole wheat, unenriched",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 370.0,
+   "203": 15.1,
+   "204": 2.73,
+   "205": 71.2,
+   "291": 10.6,
+   "301": 38.0,
+   "303": 3.86,
+   "304": 136.0,
+   "305": 352.0,
+   "306": 376.0,
+   "307": 3.0,
+   "404": 0.504,
+   "405": 0.128,
+   "406": 5.55,
+   "415": 0.268
   },
-  "746784": {
-    "fdc_id": 746784,
-    "description": "Sugars, granulated",
-    "data_type": "Foundation",
-    "nutrients": {
-      "208": 385.0,
-      "203": 0.0,
-      "204": 0.32,
-      "205": 99.6,
-      "301": 1.0,
-      "303": 0.05,
-      "304": 0.3,
-      "305": 0.0,
-      "306": 2.0,
-      "307": 1.0
-    },
-    "portions": [
-      {
-        "gram_weight": 4.0,
-        "amount": 1.0,
-        "unit": "teaspoon",
-        "description": null
-      },
-      {
-        "gram_weight": 188.0,
-        "amount": 1.0,
-        "unit": "cup",
-        "description": null
-      },
-      {
-        "gram_weight": 8.0,
-        "amount": 1.0,
-        "unit": "racc",
-        "description": null
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "746784": {
+  "fdc_id": 746784,
+  "description": "Sugars, granulated",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 385.0,
+   "203": 0.0,
+   "204": 0.32,
+   "205": 99.6,
+   "301": 1.0,
+   "303": 0.05,
+   "304": 0.3,
+   "305": 0.0,
+   "306": 2.0,
+   "307": 1.0
   },
-  "172804": {
-    "fdc_id": 172804,
-    "description": "Leavening agents, baking powder, double-acting, straight phosphate",
-    "data_type": "SR Legacy",
-    "nutrients": {
-      "208": 51.0,
-      "203": 0.1,
-      "204": 0.0,
-      "205": 24.1,
-      "291": 0.2,
-      "269": 0.0,
-      "301": 7364.0,
-      "303": 11.27,
-      "304": 39.0,
-      "305": 9918.0,
-      "306": 5.0,
-      "307": 7893.0,
-      "401": 0.0,
-      "404": 0.0,
-      "405": 0.0,
-      "406": 0.0,
-      "415": 0.0,
-      "432": 0.0,
-      "435": 0.0,
-      "418": 0.0,
-      "320": 0.0,
-      "323": 0.0,
-      "328": 0.0,
-      "430": 0.0,
-      "606": 0.0,
-      "645": 0.0,
-      "646": 0.0,
-      "601": 0.0
-    },
-    "portions": [
-      {
-        "gram_weight": 2.3,
-        "amount": 0.5,
-        "unit": null,
-        "description": "tsp"
-      },
-      {
-        "gram_weight": 4.6,
-        "amount": 1.0,
-        "unit": null,
-        "description": "tsp"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 4.0,
+    "amount": 1.0,
+    "unit": "teaspoon",
+    "description": null
+   },
+   {
+    "gram_weight": 188.0,
+    "amount": 1.0,
+    "unit": "cup",
+    "description": null
+   },
+   {
+    "gram_weight": 8.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "172804": {
+  "fdc_id": 172804,
+  "description": "Leavening agents, baking powder, double-acting, straight phosphate",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 51.0,
+   "203": 0.1,
+   "204": 0.0,
+   "205": 24.1,
+   "291": 0.2,
+   "269": 0.0,
+   "301": 7364.0,
+   "303": 11.27,
+   "304": 39.0,
+   "305": 9918.0,
+   "306": 5.0,
+   "307": 7893.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "601": 0.0
   },
-  "746775": {
-    "fdc_id": 746775,
-    "description": "Salt, table, iodized",
-    "data_type": "Foundation",
-    "nutrients": {
-      "301": 50.0,
-      "303": 0.0,
-      "304": 0.0,
-      "305": 0.0,
-      "306": 2.0,
-      "307": 38700.0
-    },
-    "portions": [
-      {
-        "gram_weight": 6.1,
-        "amount": 1.0,
-        "unit": "teaspoon",
-        "description": ""
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 2.3,
+    "amount": 0.5,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 4.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "746775": {
+  "fdc_id": 746775,
+  "description": "Salt, table, iodized",
+  "data_type": "Foundation",
+  "nutrients": {
+   "301": 50.0,
+   "303": 0.0,
+   "304": 0.0,
+   "305": 0.0,
+   "306": 2.0,
+   "307": 38700.0
   },
-  "2705393": {
-    "fdc_id": 2705393,
-    "description": "Buttermilk",
-    "data_type": "Survey (FNDDS)",
-    "nutrients": {
-      "203": 3.46,
-      "204": 1.08,
-      "205": 4.81,
-      "208": 43.0,
-      "269": 5.36,
-      "291": 0.0,
-      "301": 120.0,
-      "303": 0.01,
-      "304": 11.0,
-      "305": 92.0,
-      "306": 158.0,
-      "307": 92.0,
-      "320": 36.0,
-      "323": 0.05,
-      "328": 0.5,
-      "401": 1.0,
-      "404": 0.048,
-      "405": 0.196,
-      "406": 0.128,
-      "415": 0.039,
-      "418": 0.22,
-      "430": 0.1,
-      "432": 5.0,
-      "435": 5.0,
-      "601": 5.0,
-      "606": 0.552,
-      "645": 0.199,
-      "646": 0.033
-    },
-    "portions": [
-      {
-        "gram_weight": 244.0,
-        "amount": null,
-        "unit": null,
-        "description": "Quantity not specified"
-      },
-      {
-        "gram_weight": 244.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 cup"
-      },
-      {
-        "gram_weight": 30.5,
-        "amount": null,
-        "unit": null,
-        "description": "1 fl oz"
-      }
-    ]
+  "portions": [
+   {
+    "gram_weight": 6.1,
+    "amount": 1.0,
+    "unit": "teaspoon",
+    "description": ""
+   }
+  ]
+ },
+ "2705393": {
+  "fdc_id": 2705393,
+  "description": "Buttermilk",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 3.46,
+   "204": 1.08,
+   "205": 4.81,
+   "208": 43.0,
+   "269": 5.36,
+   "291": 0.0,
+   "301": 120.0,
+   "303": 0.01,
+   "304": 11.0,
+   "305": 92.0,
+   "306": 158.0,
+   "307": 92.0,
+   "320": 36.0,
+   "323": 0.05,
+   "328": 0.5,
+   "401": 1.0,
+   "404": 0.048,
+   "405": 0.196,
+   "406": 0.128,
+   "415": 0.039,
+   "418": 0.22,
+   "430": 0.1,
+   "432": 5.0,
+   "435": 5.0,
+   "601": 5.0,
+   "606": 0.552,
+   "645": 0.199,
+   "646": 0.033
   },
-  "2710180": {
-    "fdc_id": 2710180,
-    "description": "Vegetable oil, NFS",
-    "data_type": "Survey (FNDDS)",
-    "nutrients": {
-      "203": 0.0,
-      "204": 100.0,
-      "205": 0.0,
-      "208": 900.0,
-      "269": 0.0,
-      "291": 0.0,
-      "301": 0.0,
-      "303": 0.16,
-      "304": 0.0,
-      "305": 0.0,
-      "306": 0.0,
-      "307": 0.0,
-      "320": 0.0,
-      "323": 19.0,
-      "328": 0.0,
-      "401": 0.0,
-      "404": 0.0,
-      "405": 0.0,
-      "406": 0.0,
-      "415": 0.0,
-      "418": 0.0,
-      "430": 100.0,
-      "432": 0.0,
-      "435": 0.0,
-      "601": 0.0,
-      "606": 13.4,
-      "645": 42.4,
-      "646": 38.4
-    },
-    "portions": [
-      {
-        "gram_weight": 14.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 tablespoon"
-      },
-      {
-        "gram_weight": 14.0,
-        "amount": null,
-        "unit": null,
-        "description": "Quantity not specified"
-      },
-      {
-        "gram_weight": 224.0,
-        "amount": null,
-        "unit": null,
-        "description": "1 cup"
-      }
-    ]
-  }
+  "portions": [
+   {
+    "gram_weight": 244.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 244.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 30.5,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz"
+   }
+  ]
+ },
+ "2710180": {
+  "fdc_id": 2710180,
+  "description": "Vegetable oil, NFS",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.0,
+   "204": 100.0,
+   "205": 0.0,
+   "208": 900.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 0.0,
+   "303": 0.16,
+   "304": 0.0,
+   "305": 0.0,
+   "306": 0.0,
+   "307": 0.0,
+   "320": 0.0,
+   "323": 19.0,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "418": 0.0,
+   "430": 100.0,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 0.0,
+   "606": 13.4,
+   "645": 42.4,
+   "646": 38.4
+  },
+  "portions": [
+   {
+    "gram_weight": 14.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 14.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 224.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "2644283": {
+  "fdc_id": 2644283,
+  "description": "Lentils, dry",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 360.285,
+   "958": 350.9328,
+   "203": 23.56875,
+   "204": 1.925,
+   "205": 62.17125,
+   "301": 61.85,
+   "303": 7.158,
+   "304": 106.7,
+   "305": 373.6,
+   "306": 948.9,
+   "307": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 35.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "175112": {
+  "fdc_id": 175112,
+  "description": "Alcoholic beverage, wine, dessert, dry",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 152.0,
+   "203": 0.2,
+   "204": 0.0,
+   "205": 11.67,
+   "291": 0.0,
+   "269": 1.09,
+   "301": 8.0,
+   "303": 0.24,
+   "304": 9.0,
+   "305": 9.0,
+   "306": 92.0,
+   "307": 9.0,
+   "401": 0.0,
+   "404": 0.018,
+   "405": 0.018,
+   "406": 0.213,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 103.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "glass (3.5 fl oz)"
+   },
+   {
+    "gram_weight": 29.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fl oz"
+   }
+  ]
+ },
+ "170923": {
+  "fdc_id": 170923,
+  "description": "Spices, cumin seed",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 375.0,
+   "203": 17.81,
+   "204": 22.27,
+   "205": 44.24,
+   "291": 10.5,
+   "269": 2.25,
+   "301": 931.0,
+   "303": 66.36,
+   "304": 366.0,
+   "305": 499.0,
+   "306": 1788.0,
+   "307": 168.0,
+   "401": 7.7,
+   "404": 0.628,
+   "405": 0.327,
+   "406": 4.579,
+   "415": 0.435,
+   "432": 10.0,
+   "435": 10.0,
+   "418": 0.0,
+   "320": 64.0,
+   "323": 3.33,
+   "328": 0.0,
+   "430": 5.4,
+   "606": 1.535,
+   "645": 14.04,
+   "646": 3.279,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 2.1,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, whole"
+   },
+   {
+    "gram_weight": 6.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp, whole"
+   }
+  ]
+ },
+ "170922": {
+  "fdc_id": 170922,
+  "description": "Spices, coriander seed",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 298.0,
+   "203": 12.37,
+   "204": 17.77,
+   "205": 54.99,
+   "291": 41.9,
+   "301": 709.0,
+   "303": 16.32,
+   "304": 330.0,
+   "305": 409.0,
+   "306": 1267.0,
+   "307": 35.0,
+   "401": 21.0,
+   "404": 0.239,
+   "405": 0.29,
+   "406": 2.13,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "328": 0.0,
+   "606": 0.99,
+   "645": 13.58,
+   "646": 1.75,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 1.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "169997": {
+  "fdc_id": 169997,
+  "description": "Coriander (cilantro) leaves, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 23.0,
+   "203": 2.13,
+   "204": 0.52,
+   "205": 3.67,
+   "291": 2.8,
+   "269": 0.87,
+   "301": 67.0,
+   "303": 1.77,
+   "304": 26.0,
+   "305": 48.0,
+   "306": 521.0,
+   "307": 46.0,
+   "401": 27.0,
+   "404": 0.067,
+   "405": 0.162,
+   "406": 1.114,
+   "415": 0.149,
+   "432": 62.0,
+   "435": 62.0,
+   "418": 0.0,
+   "320": 337.0,
+   "323": 2.5,
+   "328": 0.0,
+   "430": 310.0,
+   "606": 0.014,
+   "645": 0.275,
+   "646": 0.04,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 20.0,
+    "amount": 9.0,
+    "unit": null,
+    "description": "sprigs"
+   },
+   {
+    "gram_weight": 4.0,
+    "amount": 0.25,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "2747655": {
+  "fdc_id": 2747655,
+  "description": "Fennel, bulb, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 26.8924,
+   "203": 0.921875,
+   "204": 0.14,
+   "205": 5.486225,
+   "291": 2.046,
+   "301": 41.3,
+   "303": 0.0,
+   "304": 14.98,
+   "305": 33.38,
+   "306": 332.4,
+   "307": 49.03,
+   "401": 14.7
+  },
+  "portions": []
+ },
+ "171323": {
+  "fdc_id": 171323,
+  "description": "Spices, fennel seed",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 345.0,
+   "203": 15.8,
+   "204": 14.87,
+   "205": 52.29,
+   "291": 39.8,
+   "301": 1196.0,
+   "303": 18.54,
+   "304": 385.0,
+   "305": 487.0,
+   "306": 1694.0,
+   "307": 88.0,
+   "401": 21.0,
+   "404": 0.408,
+   "405": 0.353,
+   "406": 6.05,
+   "415": 0.47,
+   "418": 0.0,
+   "320": 7.0,
+   "328": 0.0,
+   "606": 0.48,
+   "645": 9.91,
+   "646": 1.69,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 5.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp, whole"
+   },
+   {
+    "gram_weight": 2.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, whole"
+   }
+  ]
+ },
+ "171849": {
+  "fdc_id": 171849,
+  "description": "Bread, cinnamon",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 253.0,
+   "203": 7.05,
+   "204": 5.29,
+   "205": 44.38,
+   "291": 3.5,
+   "269": 14.11,
+   "301": 71.0,
+   "303": 2.54,
+   "304": 11.0,
+   "305": 57.0,
+   "306": 74.0,
+   "307": 388.0,
+   "401": 0.0,
+   "404": 0.317,
+   "405": 0.12,
+   "406": 2.822,
+   "415": 0.027,
+   "432": 21.0,
+   "435": 81.0,
+   "418": 0.05,
+   "320": 0.0,
+   "323": 0.5,
+   "328": 0.0,
+   "430": 9.5,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 3.527,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice 1 serving"
+   }
+  ]
+ },
+ "171320": {
+  "fdc_id": 171320,
+  "description": "Spices, cinnamon, ground",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 247.0,
+   "203": 3.99,
+   "204": 1.24,
+   "205": 80.59,
+   "291": 53.1,
+   "269": 2.17,
+   "301": 1002.0,
+   "303": 8.32,
+   "304": 60.0,
+   "305": 64.0,
+   "306": 431.0,
+   "307": 10.0,
+   "401": 3.8,
+   "404": 0.022,
+   "405": 0.041,
+   "406": 1.332,
+   "415": 0.158,
+   "432": 6.0,
+   "435": 6.0,
+   "418": 0.0,
+   "320": 15.0,
+   "323": 2.32,
+   "328": 0.0,
+   "430": 31.2,
+   "606": 0.345,
+   "645": 0.246,
+   "646": 0.068,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 2.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 7.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "2707668": {
+  "fdc_id": 2707668,
+  "description": "Roll, sweet, cinnamon bun, frosted",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 4.45,
+   "204": 26.6,
+   "205": 48.6,
+   "208": 452.0,
+   "269": 25.7,
+   "291": 1.2,
+   "301": 183.0,
+   "303": 1.37,
+   "304": 14.0,
+   "305": 131.0,
+   "306": 102.0,
+   "307": 305.0,
+   "320": 0.0,
+   "323": 1.15,
+   "328": 0.0,
+   "401": 0.3,
+   "404": 0.211,
+   "405": 0.138,
+   "406": 2.4,
+   "415": 0.038,
+   "418": 0.16,
+   "430": 15.2,
+   "432": 19.0,
+   "435": 109.0,
+   "601": 5.0,
+   "606": 12.6,
+   "645": 8.72,
+   "646": 3.68
+  },
+  "portions": [
+   {
+    "gram_weight": 240.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 Cinnabon"
+   },
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 Papa John stick"
+   },
+   {
+    "gram_weight": 6.5,
+    "amount": null,
+    "unit": null,
+    "description": "1 cubic inch"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 27.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 Pizza Hut stick"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 medium"
+   },
+   {
+    "gram_weight": 153.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large"
+   },
+   {
+    "gram_weight": 54.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 miniature roll"
+   },
+   {
+    "gram_weight": 66.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 Little Debbie"
+   }
+  ]
+ },
+ "171321": {
+  "fdc_id": 171321,
+  "description": "Spices, cloves, ground",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 274.0,
+   "203": 5.97,
+   "204": 13.0,
+   "205": 65.53,
+   "291": 33.9,
+   "269": 2.38,
+   "301": 632.0,
+   "303": 11.83,
+   "304": 259.0,
+   "305": 104.0,
+   "306": 1020.0,
+   "307": 277.0,
+   "401": 0.2,
+   "404": 0.158,
+   "405": 0.22,
+   "406": 1.56,
+   "415": 0.391,
+   "432": 25.0,
+   "435": 25.0,
+   "418": 0.0,
+   "320": 8.0,
+   "323": 8.82,
+   "328": 0.0,
+   "430": 141.8,
+   "606": 3.952,
+   "645": 1.393,
+   "646": 3.606,
+   "605": 0.254,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 2.1,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 6.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "2705385": {
+  "fdc_id": 2705385,
+  "description": "Milk, whole",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 3.27,
+   "204": 3.2,
+   "205": 4.63,
+   "208": 61.0,
+   "269": 4.81,
+   "291": 0.0,
+   "301": 123.0,
+   "303": 0.0,
+   "304": 12.0,
+   "305": 101.0,
+   "306": 150.0,
+   "307": 38.0,
+   "320": 32.0,
+   "323": 0.05,
+   "328": 1.1,
+   "401": 0.0,
+   "404": 0.056,
+   "405": 0.138,
+   "406": 0.105,
+   "415": 0.061,
+   "418": 0.54,
+   "430": 0.3,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 12.0,
+   "606": 1.86,
+   "645": 0.688,
+   "646": 0.108
+  },
+  "portions": [
+   {
+    "gram_weight": 2.5,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per fl oz of beverage"
+   },
+   {
+    "gram_weight": 244.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 244.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 individual school container"
+   },
+   {
+    "gram_weight": 244.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 61.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per cup of hot cereal"
+   },
+   {
+    "gram_weight": 30.5,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz"
+   }
+  ]
+ },
+ "172791": {
+  "fdc_id": 172791,
+  "description": "Phyllo dough",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 299.0,
+   "203": 7.1,
+   "204": 6.0,
+   "205": 52.6,
+   "291": 1.9,
+   "269": 0.18,
+   "301": 11.0,
+   "303": 3.21,
+   "304": 15.0,
+   "305": 75.0,
+   "306": 74.0,
+   "307": 483.0,
+   "401": 0.0,
+   "404": 0.541,
+   "405": 0.341,
+   "406": 4.073,
+   "415": 0.03,
+   "432": 18.0,
+   "435": 137.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.08,
+   "328": 0.0,
+   "430": 2.5,
+   "606": 1.47,
+   "645": 3.149,
+   "646": 0.923,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 19.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "sheet dough"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "168416": {
+  "fdc_id": 168416,
+  "description": "Drumstick leaves, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 64.0,
+   "203": 9.4,
+   "204": 1.4,
+   "205": 8.28,
+   "291": 2.0,
+   "301": 185.0,
+   "303": 4.0,
+   "304": 42.0,
+   "305": 112.0,
+   "306": 337.0,
+   "307": 9.0,
+   "401": 51.7,
+   "404": 0.257,
+   "405": 0.66,
+   "406": 2.22,
+   "415": 1.2,
+   "432": 40.0,
+   "435": 40.0,
+   "418": 0.0,
+   "320": 378.0,
+   "328": 0.0,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 21.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, chopped"
+   }
+  ]
+ },
+ "170917": {
+  "fdc_id": 170917,
+  "description": "Spices, bay leaf",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 313.0,
+   "203": 7.61,
+   "204": 8.36,
+   "205": 74.97,
+   "291": 26.3,
+   "301": 834.0,
+   "303": 43.0,
+   "304": 120.0,
+   "305": 113.0,
+   "306": 529.0,
+   "307": 23.0,
+   "401": 46.5,
+   "404": 0.009,
+   "405": 0.421,
+   "406": 2.005,
+   "415": 1.74,
+   "432": 180.0,
+   "435": 180.0,
+   "418": 0.0,
+   "320": 309.0,
+   "328": 0.0,
+   "606": 2.28,
+   "645": 1.64,
+   "646": 2.29,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 1.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp, crumbled"
+   },
+   {
+    "gram_weight": 0.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, crumbled"
+   }
+  ]
+ },
+ "2709782": {
+  "fdc_id": 2709782,
+  "description": "Cilantro, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 2.13,
+   "204": 0.52,
+   "205": 3.67,
+   "208": 23.0,
+   "269": 0.87,
+   "291": 2.8,
+   "301": 67.0,
+   "303": 1.77,
+   "304": 26.0,
+   "305": 48.0,
+   "306": 521.0,
+   "307": 46.0,
+   "320": 337.0,
+   "323": 2.5,
+   "328": 0.0,
+   "401": 27.0,
+   "404": 0.067,
+   "405": 0.162,
+   "406": 1.11,
+   "415": 0.149,
+   "418": 0.0,
+   "430": 310.0,
+   "432": 62.0,
+   "435": 62.0,
+   "601": 0.0,
+   "606": 0.014,
+   "645": 0.275,
+   "646": 0.04
+  },
+  "portions": [
+   {
+    "gram_weight": 16.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 0.3,
+    "amount": null,
+    "unit": null,
+    "description": "1 guideline amount per item"
+   },
+   {
+    "gram_weight": 1.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 1.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 sprig"
+   }
+  ]
+ },
+ "2709796": {
+  "fdc_id": 2709796,
+  "description": "Parsley, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 2.97,
+   "204": 0.79,
+   "205": 6.33,
+   "208": 36.0,
+   "269": 0.85,
+   "291": 3.3,
+   "301": 138.0,
+   "303": 6.2,
+   "304": 50.0,
+   "305": 58.0,
+   "306": 554.0,
+   "307": 56.0,
+   "320": 421.0,
+   "323": 0.75,
+   "328": 0.0,
+   "401": 133.0,
+   "404": 0.086,
+   "405": 0.098,
+   "406": 1.31,
+   "415": 0.09,
+   "418": 0.0,
+   "430": 1640.0,
+   "432": 152.0,
+   "435": 152.0,
+   "601": 0.0,
+   "606": 0.132,
+   "645": 0.295,
+   "646": 0.124
+  },
+  "portions": [
+   {
+    "gram_weight": 1.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 sprig"
+   },
+   {
+    "gram_weight": 4.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 60.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "172360": {
+  "fdc_id": 172360,
+  "description": "Oil, industrial, canola (partially hydrogenated) oil for deep fat frying",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 884.0,
+   "203": 0.0,
+   "204": 100.0,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 0.0,
+   "303": 0.0,
+   "304": 0.0,
+   "305": 0.0,
+   "306": 0.0,
+   "307": 0.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 17.46,
+   "430": 71.3,
+   "606": 10.117,
+   "645": 71.075,
+   "646": 14.038,
+   "605": 27.017,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 13.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tablespoon"
+   },
+   {
+    "gram_weight": 218.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 4.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "teaspoon"
+   }
+  ]
+ },
+ "2707466": {
+  "fdc_id": 2707466,
+  "description": "Bacon bits",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 32.0,
+   "204": 25.9,
+   "205": 28.6,
+   "208": 476.0,
+   "269": 0.0,
+   "291": 10.2,
+   "301": 101.0,
+   "303": 0.72,
+   "304": 95.0,
+   "305": 217.0,
+   "306": 145.0,
+   "307": 1770.0,
+   "320": 0.0,
+   "323": 6.9,
+   "328": 0.0,
+   "401": 1.9,
+   "404": 0.6,
+   "405": 0.07,
+   "406": 1.6,
+   "415": 0.08,
+   "418": 1.2,
+   "430": 0.0,
+   "432": 127.0,
+   "435": 127.0,
+   "601": 0.0,
+   "606": 4.06,
+   "645": 6.22,
+   "646": 13.5
+  },
+  "portions": [
+   {
+    "gram_weight": 7.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 4.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "168277": {
+  "fdc_id": 168277,
+  "description": "Pork, cured, bacon, unprepared",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 393.0,
+   "203": 13.66,
+   "204": 37.13,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.35,
+   "301": 6.0,
+   "303": 0.38,
+   "304": 13.0,
+   "305": 166.0,
+   "306": 201.0,
+   "307": 751.0,
+   "401": 0.0,
+   "404": 0.276,
+   "405": 0.081,
+   "406": 4.022,
+   "415": 0.266,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.5,
+   "320": 11.0,
+   "323": 0.43,
+   "328": 0.4,
+   "430": 0.0,
+   "606": 12.615,
+   "645": 15.922,
+   "646": 5.757,
+   "605": 0.147,
+   "601": 66.0
+  },
+  "portions": [
+   {
+    "gram_weight": 442.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "package"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice raw"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "2706364": {
+  "fdc_id": 2706364,
+  "description": "Shrimp, fried",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 12.3,
+   "204": 12.9,
+   "205": 12.4,
+   "208": 218.0,
+   "269": 0.2,
+   "291": 0.5,
+   "301": 56.0,
+   "303": 1.05,
+   "304": 22.0,
+   "305": 208.0,
+   "306": 110.0,
+   "307": 434.0,
+   "320": 42.0,
+   "323": 3.25,
+   "328": 0.1,
+   "401": 0.0,
+   "404": 0.158,
+   "405": 0.084,
+   "406": 2.31,
+   "415": 0.123,
+   "418": 0.74,
+   "430": 12.2,
+   "432": 15.0,
+   "435": 49.0,
+   "601": 102.0,
+   "606": 1.86,
+   "645": 5.19,
+   "646": 4.85
+  },
+  "portions": [
+   {
+    "gram_weight": 20.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 prawn"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tiny shrimp"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large/jumbo shrimp"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 10.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small/medium shrimp"
+   },
+   {
+    "gram_weight": 135.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "175179": {
+  "fdc_id": 175179,
+  "description": "Crustaceans, shrimp, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 85.0,
+   "203": 20.1,
+   "204": 0.51,
+   "205": 0.0,
+   "301": 64.0,
+   "303": 0.52,
+   "304": 35.0,
+   "305": 214.0,
+   "306": 264.0,
+   "307": 119.0,
+   "606": 0.101,
+   "645": 0.086,
+   "646": 0.152,
+   "605": 0.004,
+   "601": 161.0
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 3.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "2684443": {
+  "fdc_id": 2684443,
+  "description": "Crustaceans, shrimp, farm raised, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 71.4265,
+   "958": 75.699433,
+   "203": 15.56875,
+   "204": 0.8013,
+   "205": 0.48495,
+   "301": 64.63,
+   "303": 0.5223,
+   "304": 22.53,
+   "305": 190.6,
+   "306": 145.9,
+   "307": 474.9,
+   "418": 0.9963,
+   "601": 136.0
+  },
+  "portions": [
+   {
+    "gram_weight": 115.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "174210": {
+  "fdc_id": 174210,
+  "description": "Crustaceans, shrimp, mixed species, raw (may contain additives to retain moisture)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 71.0,
+   "203": 13.61,
+   "204": 1.01,
+   "205": 0.91,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 54.0,
+   "303": 0.21,
+   "304": 22.0,
+   "305": 244.0,
+   "306": 113.0,
+   "307": 566.0,
+   "401": 0.0,
+   "404": 0.02,
+   "405": 0.015,
+   "406": 1.778,
+   "415": 0.161,
+   "432": 19.0,
+   "435": 19.0,
+   "418": 1.11,
+   "320": 54.0,
+   "323": 1.32,
+   "328": 0.1,
+   "430": 0.3,
+   "606": 0.261,
+   "645": 0.181,
+   "646": 0.295,
+   "605": 0.018,
+   "601": 126.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "large"
+   },
+   {
+    "gram_weight": 6.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": 3.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "2707022": {
+  "fdc_id": 2707022,
+  "description": "Crab cake sandwich",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 12.7,
+   "204": 11.2,
+   "205": 19.4,
+   "208": 231.0,
+   "269": 2.22,
+   "291": 1.0,
+   "301": 123.0,
+   "303": 1.66,
+   "304": 28.0,
+   "305": 166.0,
+   "306": 180.0,
+   "307": 436.0,
+   "320": 14.0,
+   "323": 1.88,
+   "328": 0.2,
+   "401": 1.7,
+   "404": 0.213,
+   "405": 0.167,
+   "406": 3.08,
+   "415": 0.115,
+   "418": 1.6,
+   "430": 15.4,
+   "432": 37.0,
+   "435": 90.0,
+   "601": 76.0,
+   "606": 1.92,
+   "645": 3.26,
+   "646": 5.42
+  },
+  "portions": [
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 submarine"
+   },
+   {
+    "gram_weight": 180.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 regular sandwich"
+   },
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large sandwich"
+   },
+   {
+    "gram_weight": 180.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 miniature/slider"
+   }
+  ]
+ },
+ "171631": {
+  "fdc_id": 171631,
+  "description": "Sausage, Italian, pork, mild, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 290.0,
+   "203": 13.9,
+   "204": 24.26,
+   "205": 2.97,
+   "291": 0.0,
+   "269": 1.19,
+   "301": 12.0,
+   "303": 1.77,
+   "304": 16.0,
+   "305": 126.0,
+   "306": 211.0,
+   "307": 563.0,
+   "401": 0.0,
+   "405": 0.23,
+   "406": 5.8,
+   "418": 1.0,
+   "320": 0.0,
+   "606": 8.615,
+   "645": 11.024,
+   "646": 4.386,
+   "605": 0.115,
+   "601": 69.0
+  },
+  "portions": [
+   {
+    "gram_weight": 101.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "link"
+   }
+  ]
+ },
+ "2710616": {
+  "fdc_id": 2710616,
+  "description": "Beer",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.46,
+   "204": 0.0,
+   "205": 3.55,
+   "208": 43.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 4.0,
+   "303": 0.02,
+   "304": 6.0,
+   "305": 14.0,
+   "306": 27.0,
+   "307": 4.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.005,
+   "405": 0.025,
+   "406": 0.513,
+   "415": 0.046,
+   "418": 0.02,
+   "430": 0.0,
+   "432": 6.0,
+   "435": 6.0,
+   "601": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz"
+   },
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 can or bottle (12 fl oz)"
+   },
+   {
+    "gram_weight": 480.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 can or bottle (16 fl oz)"
+   },
+   {
+    "gram_weight": 1200.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 bottle (40 fl oz)"
+   }
+  ]
+ },
+ "2710610": {
+  "fdc_id": 2710610,
+  "description": "Beer, nonalcoholic",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.21,
+   "204": 0.12,
+   "205": 8.05,
+   "208": 37.0,
+   "269": 8.05,
+   "291": 0.0,
+   "301": 7.0,
+   "303": 0.06,
+   "304": 7.0,
+   "305": 16.0,
+   "306": 8.0,
+   "307": 13.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "401": 0.5,
+   "404": 0.016,
+   "405": 0.048,
+   "406": 1.11,
+   "415": 0.027,
+   "418": 0.02,
+   "430": 0.0,
+   "432": 14.0,
+   "435": 14.0,
+   "601": 0.0,
+   "606": 0.024,
+   "645": 0.015,
+   "646": 0.056
+  },
+  "portions": [
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz"
+   },
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 can or bottle (12 fl oz)"
+   }
+  ]
+ },
+ "2710617": {
+  "fdc_id": 2710617,
+  "description": "Beer, light",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.24,
+   "204": 0.0,
+   "205": 1.64,
+   "208": 29.0,
+   "269": 0.09,
+   "291": 0.0,
+   "301": 4.0,
+   "303": 0.03,
+   "304": 5.0,
+   "305": 12.0,
+   "306": 21.0,
+   "307": 4.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.005,
+   "405": 0.015,
+   "406": 0.391,
+   "415": 0.034,
+   "418": 0.02,
+   "430": 0.0,
+   "432": 6.0,
+   "435": 6.0,
+   "601": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz"
+   },
+   {
+    "gram_weight": 480.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 can or bottle (16 fl oz)"
+   },
+   {
+    "gram_weight": 360.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 can or bottle (12 fl oz)"
+   }
+  ]
+ },
+ "2710202": {
+  "fdc_id": 2710202,
+  "description": "Honey mustard dressing",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.87,
+   "204": 40.8,
+   "205": 23.3,
+   "208": 464.0,
+   "269": 15.8,
+   "291": 0.4,
+   "301": 12.0,
+   "303": 0.29,
+   "304": 5.0,
+   "305": 22.0,
+   "306": 20.0,
+   "307": 512.0,
+   "320": 12.0,
+   "323": 3.53,
+   "328": 0.1,
+   "401": 0.2,
+   "404": 0.039,
+   "405": 0.023,
+   "406": 0.061,
+   "415": 0.017,
+   "418": 0.05,
+   "430": 70.0,
+   "432": 5.0,
+   "435": 5.0,
+   "601": 29.0,
+   "606": 5.0,
+   "645": 11.5,
+   "646": 22.8
+  },
+  "portions": [
+   {
+    "gram_weight": 57.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 dipping-size container"
+   },
+   {
+    "gram_weight": 44.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 packet"
+   },
+   {
+    "gram_weight": 15.6,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 250.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "172234": {
+  "fdc_id": 172234,
+  "description": "Mustard, prepared, yellow",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 60.0,
+   "203": 3.74,
+   "204": 3.34,
+   "205": 5.83,
+   "291": 4.0,
+   "269": 0.92,
+   "301": 63.0,
+   "303": 1.61,
+   "304": 48.0,
+   "305": 108.0,
+   "306": 152.0,
+   "307": 1104.0,
+   "401": 0.3,
+   "404": 0.177,
+   "405": 0.07,
+   "406": 0.565,
+   "415": 0.07,
+   "432": 7.0,
+   "435": 7.0,
+   "418": 0.0,
+   "320": 5.0,
+   "323": 0.36,
+   "328": 0.0,
+   "430": 1.4,
+   "606": 0.214,
+   "645": 2.182,
+   "646": 0.774,
+   "605": 0.009,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 249.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp or 1 packet"
+   }
+  ]
+ },
+ "169738": {
+  "fdc_id": 169738,
+  "description": "Pasta, whole-wheat, dry (Includes foods for USDA's Food Distribution Program)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 352.0,
+   "203": 13.87,
+   "204": 2.93,
+   "205": 73.37,
+   "291": 9.2,
+   "269": 2.74,
+   "301": 29.0,
+   "303": 3.62,
+   "304": 128.0,
+   "305": 343.0,
+   "306": 434.0,
+   "307": 6.0,
+   "404": 0.407,
+   "405": 0.218,
+   "406": 8.691,
+   "415": 0.283,
+   "432": 69.0,
+   "435": 69.0,
+   "418": 0.0,
+   "323": 0.46,
+   "328": 0.0,
+   "430": 1.4,
+   "606": 0.428,
+   "645": 0.361,
+   "646": 1.136,
+   "605": 0.002,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 96.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup rotini"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup lasagne"
+   },
+   {
+    "gram_weight": 91.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup spaghetti"
+   },
+   {
+    "gram_weight": 95.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup penne"
+   },
+   {
+    "gram_weight": 81.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup farfalle"
+   },
+   {
+    "gram_weight": 122.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup elbows"
+   },
+   {
+    "gram_weight": 64.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup shells"
+   }
+  ]
+ },
+ "169736": {
+  "fdc_id": 169736,
+  "description": "Pasta, dry, enriched",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 371.0,
+   "203": 13.04,
+   "204": 1.51,
+   "205": 74.67,
+   "291": 3.2,
+   "269": 2.67,
+   "301": 21.0,
+   "303": 3.3,
+   "304": 53.0,
+   "305": 189.0,
+   "306": 223.0,
+   "307": 6.0,
+   "401": 0.0,
+   "404": 0.891,
+   "405": 0.4,
+   "406": 7.177,
+   "415": 0.142,
+   "432": 18.0,
+   "435": 391.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.11,
+   "328": 0.0,
+   "430": 0.1,
+   "606": 0.277,
+   "645": 0.171,
+   "646": 0.564,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 64.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup shells"
+   },
+   {
+    "gram_weight": 57.0,
+    "amount": 2.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 96.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup rotini"
+   },
+   {
+    "gram_weight": 122.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup elbows"
+   },
+   {
+    "gram_weight": 91.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup spaghetti"
+   },
+   {
+    "gram_weight": 95.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup penne"
+   },
+   {
+    "gram_weight": 81.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup farfalle"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup lasagna"
+   }
+  ]
+ },
+ "2758998": {
+  "fdc_id": 2758998,
+  "description": "Pasta, dry, enriched, spaghetti",
+  "data_type": "Foundation",
+  "nutrients": {
+   "301": 18.27,
+   "303": 3.887,
+   "304": 56.74,
+   "305": 190.4,
+   "306": 237.4,
+   "307": 2.406,
+   "404": 0.8657,
+   "405": 0.4096,
+   "406": 11.59
+  },
+  "portions": []
+ },
+ "172025": {
+  "fdc_id": 172025,
+  "description": "Pasta, whole grain, 51% whole wheat, remaining enriched semolina, dry (Includes foods for USDA's Food Distribution Program)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 361.0,
+   "203": 13.2,
+   "204": 2.55,
+   "205": 73.3,
+   "291": 11.3,
+   "269": 2.2,
+   "301": 25.0,
+   "303": 3.41,
+   "304": 94.0,
+   "305": 252.0,
+   "306": 318.0,
+   "307": 12.0,
+   "404": 0.55,
+   "405": 0.313,
+   "406": 8.63,
+   "415": 0.24,
+   "432": 59.0,
+   "435": 153.0,
+   "430": 0.9,
+   "606": 0.324,
+   "645": 0.241,
+   "646": 0.846,
+   "605": 0.002
+  },
+  "portions": [
+   {
+    "gram_weight": 122.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup elbows"
+   },
+   {
+    "gram_weight": 95.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup penne"
+   },
+   {
+    "gram_weight": 64.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup shells"
+   },
+   {
+    "gram_weight": 81.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup farfalle"
+   },
+   {
+    "gram_weight": 96.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup rotini"
+   },
+   {
+    "gram_weight": 91.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup spaghetti"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup lasagne"
+   }
+  ]
+ },
+ "170795": {
+  "fdc_id": 170795,
+  "description": "School Lunch, chicken nuggets, whole grain breaded",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 270.0,
+   "203": 15.67,
+   "204": 12.9,
+   "205": 22.86,
+   "291": 2.2,
+   "269": 0.49,
+   "301": 32.0,
+   "303": 1.99,
+   "304": 24.0,
+   "305": 183.0,
+   "306": 231.0,
+   "307": 511.0,
+   "401": 0.6,
+   "404": 0.092,
+   "405": 0.204,
+   "406": 5.985,
+   "415": 0.309,
+   "432": 6.0,
+   "435": 15.0,
+   "418": 0.24,
+   "320": 16.0,
+   "323": 1.23,
+   "328": 0.3,
+   "430": 10.4,
+   "606": 2.83,
+   "645": 3.593,
+   "646": 4.189,
+   "605": 0.0,
+   "601": 50.0
+  },
+  "portions": [
+   {
+    "gram_weight": 88.0,
+    "amount": 5.0,
+    "unit": null,
+    "description": "pieces"
+   }
+  ]
+ },
+ "2705911": {
+  "fdc_id": 2705911,
+  "description": "Mock chicken legs",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 21.5,
+   "204": 13.6,
+   "205": 8.04,
+   "208": 242.0,
+   "269": 0.13,
+   "291": 0.3,
+   "301": 17.0,
+   "303": 1.11,
+   "304": 24.0,
+   "305": 182.0,
+   "306": 254.0,
+   "307": 313.0,
+   "320": 2.0,
+   "323": 1.93,
+   "328": 0.5,
+   "401": 0.0,
+   "404": 0.355,
+   "405": 0.238,
+   "406": 6.5,
+   "415": 0.476,
+   "418": 1.24,
+   "430": 9.6,
+   "432": 6.0,
+   "435": 28.0,
+   "601": 57.0,
+   "606": 2.81,
+   "645": 5.75,
+   "646": 3.96
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 stick"
+   }
+  ]
+ },
+ "172226": {
+  "fdc_id": 172226,
+  "description": "Ice cream sandwich",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 237.0,
+   "203": 4.29,
+   "204": 8.57,
+   "205": 37.14,
+   "291": 0.0,
+   "269": 18.57,
+   "301": 86.0,
+   "303": 0.26,
+   "304": 29.0,
+   "305": 72.0,
+   "306": 115.0,
+   "307": 129.0,
+   "401": 0.0,
+   "404": 0.111,
+   "405": 0.146,
+   "406": 1.566,
+   "415": 0.028,
+   "432": 6.0,
+   "435": 53.0,
+   "418": 0.05,
+   "320": 86.0,
+   "323": 0.4,
+   "328": 0.0,
+   "430": 1.3,
+   "606": 2.317,
+   "645": 2.661,
+   "646": 2.272,
+   "601": 21.0
+  },
+  "portions": [
+   {
+    "gram_weight": 70.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "serving"
+   }
+  ]
+ },
+ "173304": {
+  "fdc_id": 173304,
+  "description": "McDONALD'S, McFLURRY with OREO cookies",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 165.0,
+   "203": 3.97,
+   "204": 5.66,
+   "205": 25.55,
+   "291": 0.1,
+   "269": 21.19,
+   "301": 129.0,
+   "303": 0.61,
+   "304": 14.0,
+   "305": 111.0,
+   "306": 198.0,
+   "307": 75.0,
+   "404": 0.048,
+   "405": 0.229,
+   "406": 0.264,
+   "415": 0.058,
+   "432": 5.0,
+   "418": 0.58,
+   "323": 0.09,
+   "606": 2.577,
+   "645": 1.716,
+   "646": 0.364,
+   "605": 0.565,
+   "601": 15.0
+  },
+  "portions": [
+   {
+    "gram_weight": 487.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large (16 fl oz)"
+   },
+   {
+    "gram_weight": 337.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "regular (12 fl oz)"
+   }
+  ]
+ },
+ "175084": {
+  "fdc_id": 175084,
+  "description": "Nabisco, Nabisco Oreo Crunchies, Cookie Crumb Topping",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 476.0,
+   "203": 4.78,
+   "204": 21.5,
+   "205": 70.23,
+   "291": 3.2,
+   "269": 36.0,
+   "301": 24.0,
+   "303": 4.9,
+   "304": 48.0,
+   "305": 103.0,
+   "306": 194.0,
+   "307": 528.0,
+   "404": 0.122,
+   "405": 0.165,
+   "406": 1.845,
+   "415": 0.032,
+   "432": 30.0,
+   "418": 0.02,
+   "606": 4.14,
+   "645": 3.17,
+   "646": 0.82
+  },
+  "portions": [
+   {
+    "gram_weight": 11.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "serving"
+   }
+  ]
+ },
+ "2707975": {
+  "fdc_id": 2707975,
+  "description": "Cookie, vanilla sandwich",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 4.5,
+   "204": 20.0,
+   "205": 72.1,
+   "208": 483.0,
+   "269": 39.3,
+   "291": 1.5,
+   "301": 27.0,
+   "303": 2.21,
+   "304": 14.0,
+   "305": 75.0,
+   "306": 91.0,
+   "307": 388.0,
+   "320": 0.0,
+   "323": 1.6,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.261,
+   "405": 0.243,
+   "406": 2.69,
+   "415": 0.018,
+   "418": 0.0,
+   "430": 5.0,
+   "432": 4.0,
+   "435": 82.0,
+   "601": 0.0,
+   "606": 2.98,
+   "645": 8.44,
+   "646": 7.55
+  },
+  "portions": [
+   {
+    "gram_weight": 14.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 sandwich"
+   },
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 36.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large sandwich"
+   },
+   {
+    "gram_weight": 3.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 miniature/bite size"
+   },
+   {
+    "gram_weight": 18.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 E.L. Fudge (Elfin)"
+   },
+   {
+    "gram_weight": 12.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 Oreo sandwich"
+   }
+  ]
+ },
+ "2708133": {
+  "fdc_id": 2708133,
+  "description": "Graham crackers",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 6.69,
+   "204": 10.6,
+   "205": 77.7,
+   "208": 430.0,
+   "269": 24.8,
+   "291": 3.4,
+   "301": 77.0,
+   "303": 3.78,
+   "304": 40.0,
+   "305": 185.0,
+   "306": 170.0,
+   "307": 516.0,
+   "320": 0.0,
+   "323": 1.51,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.265,
+   "405": 0.317,
+   "406": 4.44,
+   "415": 0.156,
+   "418": 0.0,
+   "430": 14.3,
+   "432": 19.0,
+   "435": 142.0,
+   "601": 0.0,
+   "606": 1.63,
+   "645": 2.51,
+   "646": 5.39
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup, crushed"
+   },
+   {
+    "gram_weight": 45.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small or medium single serving bag"
+   },
+   {
+    "gram_weight": 18.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 21.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 100 calorie package"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large single serving bag"
+   },
+   {
+    "gram_weight": 3.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 stick"
+   },
+   {
+    "gram_weight": 3.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 miniature/bite size"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large rectangular piece or 2 squares or 4 small rectangular pieces"
+   }
+  ]
+ },
+ "2708134": {
+  "fdc_id": 2708134,
+  "description": "Graham crackers (Teddy Grahams)",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 6.69,
+   "204": 10.6,
+   "205": 77.7,
+   "208": 430.0,
+   "269": 24.8,
+   "291": 3.4,
+   "301": 77.0,
+   "303": 3.78,
+   "304": 40.0,
+   "305": 185.0,
+   "306": 170.0,
+   "307": 516.0,
+   "320": 0.0,
+   "323": 1.51,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.265,
+   "405": 0.317,
+   "406": 4.44,
+   "415": 0.156,
+   "418": 0.0,
+   "430": 14.3,
+   "432": 19.0,
+   "435": 142.0,
+   "601": 0.0,
+   "606": 1.63,
+   "645": 2.51,
+   "646": 5.39
+  },
+  "portions": [
+   {
+    "gram_weight": 70.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup, NFS"
+   },
+   {
+    "gram_weight": 18.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large single serving bag"
+   },
+   {
+    "gram_weight": 45.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small or medium single serving bag"
+   },
+   {
+    "gram_weight": 1.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cracker"
+   }
+  ]
+ },
+ "2708135": {
+  "fdc_id": 2708135,
+  "description": "Graham crackers, chocolate covered",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 4.0,
+   "204": 25.8,
+   "205": 66.8,
+   "208": 500.0,
+   "269": 37.3,
+   "291": 2.2,
+   "301": 46.0,
+   "303": 2.0,
+   "304": 16.0,
+   "305": 87.0,
+   "306": 267.0,
+   "307": 265.0,
+   "320": 2.0,
+   "323": 0.99,
+   "328": 0.0,
+   "401": 0.1,
+   "404": 0.27,
+   "405": 0.15,
+   "406": 1.7,
+   "415": 0.064,
+   "418": 0.1,
+   "430": 6.4,
+   "432": 12.0,
+   "435": 77.0,
+   "601": 1.0,
+   "606": 17.2,
+   "645": 2.7,
+   "646": 4.9
+  },
+  "portions": [
+   {
+    "gram_weight": 10.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 Keebler Deluxe Graham"
+   },
+   {
+    "gram_weight": 25.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cracker"
+   },
+   {
+    "gram_weight": 21.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 100 calorie package"
+   },
+   {
+    "gram_weight": 18.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "171609": {
+  "fdc_id": 171609,
+  "description": "Soup, chicken broth, low sodium, canned",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 16.0,
+   "203": 2.0,
+   "204": 0.6,
+   "205": 1.2,
+   "291": 0.0,
+   "269": 0.13,
+   "301": 4.0,
+   "303": 0.21,
+   "304": 1.0,
+   "305": 30.0,
+   "306": 86.0,
+   "307": 30.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.03,
+   "406": 1.37,
+   "415": 0.01,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.1,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.179,
+   "645": 0.274,
+   "646": 0.126,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 240.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "171179": {
+  "fdc_id": 171179,
+  "description": "Soup, SWANSON, beef broth, lower sodium",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 6.0,
+   "203": 1.2,
+   "204": 0.08,
+   "205": 0.21,
+   "269": 0.2,
+   "301": 2.0,
+   "303": 0.04,
+   "304": 1.0,
+   "305": 10.0,
+   "306": 23.0,
+   "307": 180.0,
+   "404": 0.02,
+   "405": 0.085,
+   "406": 0.5,
+   "415": 0.107,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "606": 0.03,
+   "645": 0.012,
+   "646": 0.002,
+   "605": 0.003,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 213.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 413.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "can 14.5 oz"
+   },
+   {
+    "gram_weight": 925.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "carton 32 oz"
+   }
+  ]
+ },
+ "167747": {
+  "fdc_id": 167747,
+  "description": "Lemon juice, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 22.0,
+   "203": 0.35,
+   "204": 0.24,
+   "205": 6.9,
+   "291": 0.3,
+   "269": 2.52,
+   "301": 6.0,
+   "303": 0.08,
+   "304": 6.0,
+   "305": 8.0,
+   "306": 103.0,
+   "307": 1.0,
+   "401": 38.7,
+   "404": 0.024,
+   "405": 0.015,
+   "406": 0.091,
+   "415": 0.046,
+   "432": 20.0,
+   "435": 20.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.15,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.04,
+   "645": 0.006,
+   "646": 0.021,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 5.9,
+    "amount": 1.0,
+    "unit": null,
+    "description": "wedge yields"
+   },
+   {
+    "gram_weight": 48.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "lemon yields"
+   },
+   {
+    "gram_weight": 244.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 30.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fl oz"
+   }
+  ]
+ },
+ "167802": {
+  "fdc_id": 167802,
+  "description": "Lemon juice from concentrate, bottled, REAL LEMON",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 17.0,
+   "203": 0.47,
+   "204": 0.07,
+   "205": 5.66,
+   "291": 0.7,
+   "269": 1.59,
+   "301": 9.0,
+   "303": 0.06,
+   "304": 6.0,
+   "305": 9.0,
+   "306": 109.0,
+   "307": 26.0,
+   "401": 16.6,
+   "404": 0.02,
+   "405": 0.017,
+   "406": 0.18,
+   "415": 0.037,
+   "432": 11.0,
+   "320": 2.0,
+   "323": 0.23,
+   "430": 0.1,
+   "606": 0.027,
+   "645": 0.006,
+   "646": 0.017,
+   "605": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "168156": {
+  "fdc_id": 168156,
+  "description": "Lime juice, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 25.0,
+   "203": 0.42,
+   "204": 0.07,
+   "205": 8.42,
+   "291": 0.4,
+   "269": 1.69,
+   "301": 14.0,
+   "303": 0.09,
+   "304": 8.0,
+   "305": 14.0,
+   "306": 117.0,
+   "307": 2.0,
+   "401": 30.0,
+   "404": 0.025,
+   "405": 0.015,
+   "406": 0.142,
+   "415": 0.038,
+   "432": 10.0,
+   "435": 10.0,
+   "418": 0.0,
+   "320": 2.0,
+   "323": 0.22,
+   "328": 0.0,
+   "430": 0.6,
+   "606": 0.008,
+   "645": 0.008,
+   "646": 0.023,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 242.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 30.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fl oz"
+   },
+   {
+    "gram_weight": 44.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "lime yields"
+   }
+  ]
+ },
+ "2709956": {
+  "fdc_id": 2709956,
+  "description": "Blackeyed peas, from frozen",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 8.23,
+   "204": 3.18,
+   "205": 23.0,
+   "208": 151.0,
+   "269": 4.32,
+   "291": 6.2,
+   "301": 23.0,
+   "303": 2.06,
+   "304": 48.0,
+   "305": 118.0,
+   "306": 363.0,
+   "307": 126.0,
+   "320": 15.0,
+   "323": 0.67,
+   "328": 0.0,
+   "401": 2.5,
+   "404": 0.252,
+   "405": 0.062,
+   "406": 0.705,
+   "415": 0.108,
+   "418": 0.0,
+   "430": 37.7,
+   "432": 137.0,
+   "435": 137.0,
+   "601": 2.0,
+   "606": 0.836,
+   "645": 0.961,
+   "646": 1.0
+  },
+  "portions": [
+   {
+    "gram_weight": 185.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 92.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "2707307": {
+  "fdc_id": 2707307,
+  "description": "Egg sandwich on white bread",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 10.5,
+   "204": 9.05,
+   "205": 26.1,
+   "208": 228.0,
+   "269": 2.88,
+   "291": 1.2,
+   "301": 132.0,
+   "303": 2.5,
+   "304": 19.0,
+   "305": 141.0,
+   "306": 120.0,
+   "307": 353.0,
+   "320": 92.0,
+   "323": 0.99,
+   "328": 1.1,
+   "401": 0.0,
+   "404": 0.292,
+   "405": 0.303,
+   "406": 2.48,
+   "415": 0.092,
+   "418": 0.36,
+   "430": 2.5,
+   "432": 37.0,
+   "435": 113.0,
+   "601": 185.0,
+   "606": 2.57,
+   "645": 2.96,
+   "646": 2.57
+  },
+  "portions": [
+   {
+    "gram_weight": 175.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 submarine"
+   },
+   {
+    "gram_weight": 115.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 175.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large"
+   },
+   {
+    "gram_weight": 115.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 regular"
+   },
+   {
+    "gram_weight": 60.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 miniature/slider"
+   }
+  ]
+ },
+ "2003603": {
+  "fdc_id": 2003603,
+  "description": "Mushroom, beech",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 39.8018,
+   "958": 32.995442,
+   "203": 2.18,
+   "204": 0.4494,
+   "205": 6.7593,
+   "291": 3.139,
+   "301": 0.4325,
+   "303": 0.7388,
+   "304": 10.49,
+   "305": 85.9,
+   "306": 375.9,
+   "307": 0.8913,
+   "404": 0.007875,
+   "405": 0.2075,
+   "406": 6.4,
+   "415": 0.1054,
+   "328": 0.37
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ }
 }

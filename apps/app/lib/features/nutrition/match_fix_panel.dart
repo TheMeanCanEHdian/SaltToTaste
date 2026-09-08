@@ -447,6 +447,15 @@ class _FixPanelState extends State<FixPanel> {
               ),
             ),
           ),
+          if (m.candidatesNameIngredient == false)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Text(
+                'Nothing in the search names this ingredient — search by '
+                'hand below.',
+                style: TextStyle(fontSize: 12.5, color: SaltColors.muted),
+              ),
+            ),
           if (candidates.isEmpty)
             const Padding(
               padding: EdgeInsets.fromLTRB(12, 0, 12, 10),

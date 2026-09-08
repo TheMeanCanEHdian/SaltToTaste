@@ -6,6 +6,7 @@
       "item": "(1 1/2 sticks) unsalted butter",
       "others": 0,
       "candidates_query": "without salt butter",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 173430,
@@ -74,6 +75,7 @@
       "item": "natural cocoa powder",
       "others": 0,
       "candidates_query": "natural cocoa powder",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 169593,
@@ -97,12 +99,6 @@
           "description": "Cocoa powder, not reconstituted",
           "data_type": "Survey (FNDDS)",
           "confidence": 0.5733333333333334
-        },
-        {
-          "fdc_id": 168774,
-          "description": "Cocoa, dry powder, unsweetened, HERSHEY'S European Style Cocoa",
-          "data_type": "SR Legacy",
-          "confidence": 0.5404761904761906
         },
         {
           "fdc_id": 169594,
@@ -133,6 +129,12 @@
           "description": "Beverages, Cocoa mix, powder, prepared with water",
           "data_type": "SR Legacy",
           "confidence": 0.42047619047619056
+        },
+        {
+          "fdc_id": 175092,
+          "description": "Beverages, cocoa mix, with aspartame, powder, prepared with water",
+          "data_type": "SR Legacy",
+          "confidence": 0.41333333333333333
         }
       ]
     },
@@ -142,48 +144,19 @@
       "item": "bittersweet chocolate",
       "others": 0,
       "candidates_query": "dark chocolate",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
-        "fdc_id": 2710336,
-        "description": "Dark chocolate candy",
-        "data_type": "Survey (FNDDS)",
-        "confidence": 0.9233333333333333,
+        "fdc_id": 170271,
+        "description": "Chocolate, dark, 45- 59% cacao solids",
+        "data_type": "SR Legacy",
+        "confidence": 0.8666666666666667,
         "grams": 170.09699999999998,
         "gram_source": "weight",
         "gram_basis": "from 6 ounce",
         "status": "auto"
       },
       "candidates": [
-        {
-          "fdc_id": 2710336,
-          "description": "Dark chocolate candy",
-          "data_type": "Survey (FNDDS)",
-          "confidence": 0.9233333333333333
-        },
-        {
-          "fdc_id": 169592,
-          "description": "Candies, SPECIAL DARK Chocolate Bar",
-          "data_type": "SR Legacy",
-          "confidence": 0.88
-        },
-        {
-          "fdc_id": 2710338,
-          "description": "Dark chocolate candy with nuts",
-          "data_type": "Survey (FNDDS)",
-          "confidence": 0.87
-        },
-        {
-          "fdc_id": 2710335,
-          "description": "Dark chocolate candy, other, NFS",
-          "data_type": "Survey (FNDDS)",
-          "confidence": 0.87
-        },
-        {
-          "fdc_id": 169634,
-          "description": "Candies, dark chocolate coated coffee beans",
-          "data_type": "SR Legacy",
-          "confidence": 0.8666666666666667
-        },
         {
           "fdc_id": 170271,
           "description": "Chocolate, dark, 45- 59% cacao solids",
@@ -201,6 +174,36 @@
           "description": "Chocolate, dark, 70-85% cacao solids",
           "data_type": "SR Legacy",
           "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 2710336,
+          "description": "Dark chocolate candy",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.5233333333333333
+        },
+        {
+          "fdc_id": 2710338,
+          "description": "Dark chocolate candy with nuts",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.47
+        },
+        {
+          "fdc_id": 2710335,
+          "description": "Dark chocolate candy, other, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.47
+        },
+        {
+          "fdc_id": 169634,
+          "description": "Candies, dark chocolate coated coffee beans",
+          "data_type": "SR Legacy",
+          "confidence": 0.4666666666666667
+        },
+        {
+          "fdc_id": 2710337,
+          "description": "Dark chocolate candy with nuts, other, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.4471428571428572
         }
       ]
     },
@@ -210,6 +213,7 @@
       "item": "instant espresso powder (optional)",
       "others": 0,
       "candidates_query": "instant espresso powder",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 171893,
@@ -278,6 +282,7 @@
       "item": "boiling water",
       "others": 0,
       "candidates_query": "boiling water",
+      "candidates_name_ingredient": null,
       "candidates_cached_at": null,
       "match": {
         "fdc_id": null,
@@ -297,6 +302,7 @@
       "item": "sour cream",
       "others": 0,
       "candidates_query": "sour cream",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 2346387,
@@ -346,16 +352,16 @@
           "confidence": 0.8733333333333333
         },
         {
-          "fdc_id": 172211,
-          "description": "KRAFT BREAKSTONE'S FREE Fat Free Sour Cream",
-          "data_type": "SR Legacy",
-          "confidence": 0.8666666666666667
-        },
-        {
           "fdc_id": 2705615,
           "description": "Sour cream, light",
           "data_type": "Survey (FNDDS)",
           "confidence": 0.8633333333333333
+        },
+        {
+          "fdc_id": 2709526,
+          "description": "Potato, baked, peel eaten, with sour cream",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8471428571428572
         }
       ]
     },
@@ -365,6 +371,7 @@
       "item": "unbleached all-purpose flour",
       "others": 0,
       "candidates_query": "all-purpose flour",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 789890,
@@ -433,6 +440,7 @@
       "item": "table salt",
       "others": 0,
       "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 173468,
@@ -465,6 +473,7 @@
       "item": "baking soda",
       "others": 0,
       "candidates_query": "baking soda",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 175040,
@@ -491,6 +500,7 @@
       "item": "packed light brown sugar",
       "others": 0,
       "candidates_query": "light brown sugar",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 168833,
@@ -522,12 +532,6 @@
           "confidence": 0.5633333333333335
         },
         {
-          "fdc_id": 168557,
-          "description": "Mushrooms, brown, italian, or crimini, exposed to ultraviolet light, raw",
-          "data_type": "SR Legacy",
-          "confidence": 0.5433333333333334
-        },
-        {
           "fdc_id": 169633,
           "description": "Ice creams, chocolate, light, no sugar added",
           "data_type": "SR Legacy",
@@ -546,10 +550,16 @@
           "confidence": 0.5333333333333333
         },
         {
-          "fdc_id": 172230,
-          "description": "Ice cream sandwich, vanilla, light, no sugar added",
+          "fdc_id": 173920,
+          "description": "Cereals, oats, instant, fortified, maple and brown sugar, dry",
           "data_type": "SR Legacy",
-          "confidence": 0.5333333333333333
+          "confidence": 0.5277777777777778
+        },
+        {
+          "fdc_id": 2644290,
+          "description": "Beans, kidney, light red, canned, sodium added, sugar added, drained and rinsed",
+          "data_type": "Foundation",
+          "confidence": 0.5096969696969698
         }
       ]
     },
@@ -559,6 +569,7 @@
       "item": "vanilla extract",
       "others": 0,
       "candidates_query": "vanilla extract",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 173471,
@@ -581,13 +592,13 @@
           "fdc_id": 172235,
           "description": "Vanilla extract, imitation, alcohol",
           "data_type": "SR Legacy",
-          "confidence": 0.65
+          "confidence": 0.5
         },
         {
           "fdc_id": 172236,
           "description": "Vanilla extract, imitation, no alcohol",
           "data_type": "SR Legacy",
-          "confidence": 0.63
+          "confidence": 0.48
         }
       ]
     },
@@ -597,6 +608,7 @@
       "item": "large eggs",
       "others": 0,
       "candidates_query": "eggs",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 748967,
@@ -665,6 +677,7 @@
       "item": "Confectioners’ sugar",
       "others": 0,
       "candidates_query": "powdered sugar",
+      "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 169656,
@@ -684,16 +697,16 @@
           "confidence": 1.0
         },
         {
-          "fdc_id": 2708065,
-          "description": "Doughnut, cake type, powdered sugar",
-          "data_type": "Survey (FNDDS)",
-          "confidence": 0.87
-        },
-        {
           "fdc_id": 2710259,
           "description": "Sugar, white, confectioner's, powdered",
           "data_type": "Survey (FNDDS)",
           "confidence": 0.8300000000000001
+        },
+        {
+          "fdc_id": 2708065,
+          "description": "Doughnut, cake type, powdered sugar",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.47
         },
         {
           "fdc_id": 174824,
@@ -714,16 +727,16 @@
           "confidence": 0.3435714285714286
         },
         {
-          "fdc_id": 2710599,
-          "description": "Fruit flavored drink, powdered, reconstituted, diet",
-          "data_type": "Survey (FNDDS)",
-          "confidence": 0.3383333333333333
-        },
-        {
           "fdc_id": 169897,
           "description": "Beverage, instant breakfast powder, chocolate, sugar-free, not reconstituted",
           "data_type": "SR Legacy",
           "confidence": 0.3372222222222222
+        },
+        {
+          "fdc_id": 2710738,
+          "description": "Nutritional powder mix, sugar free (Slim Fast)",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.3335714285714286
         }
       ]
     }
