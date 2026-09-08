@@ -168,7 +168,11 @@ void main() {
       expect(headNounOf('jalapeno chiles'), 'pepper');
       expect(headNounOf('juice from 2 limes'.split(' ').join(' ')), 'lime');
       expect(headNounOf(normalizeItem('juice from 2 limes')), 'juice');
-      expect(headNounOf('egg yolk'), isNull, reason: 'a modified form');
+      expect(
+        headNounOf('egg yolk'),
+        'egg',
+        reason: 'steps back over a modified form',
+      );
       expect(headNounOf('half-and-half'), isNull);
       expect(headNounOf('dry sherry'), 'sherry');
       expect(headNounOf('ground cumin'), 'cumin');
@@ -1627,6 +1631,201 @@ void main() {
             (c) => c.candidate.description == 'Cookie, vanilla sandwich',
           );
           expect(sandwich.confidence, greaterThan(0.0));
+        },
+      );
+
+      test('the head noun after both fleets: cuts, units, tails, forms', () {
+        // 'rib' counts celery; on a cut it is the food (Sonnet fleet).
+        expect(headNounOf('celery ribs'), 'celery');
+        expect(headNounOf('boneless beef short ribs'), 'rib');
+        expect(headNounOf('country-style pork ribs'), 'rib');
+        // A trailing qualifier and a hyphen fragment (Sonnet fleet).
+        expect(headNounOf('bone-in fresh half ham with skin'), 'ham');
+        expect(headNounOf('thai with salt preserved radish'), 'radish');
+        expect(headNounOf('radishes without salt'), 'radish');
+        // A measurement unit left by "or ¼ teaspoon dried" (Opus fleet).
+        expect(headNounOf('thyme or 1 4 teaspoon dried'), 'thyme');
+        expect(
+          headNounOf(
+            normalizeItem(
+              '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+            ),
+          ),
+          isNot('teaspoon'),
+        );
+        // FDC form words on rewritten queries (Sonnet fleet).
+        expect(headNounOf('cumin seeds'), 'cumin');
+        expect(headNounOf('pasta dry enriched'), 'pasta');
+        expect(headNounOf('shrimp raw'), 'shrimp');
+        expect(headNounOf('wine dessert dry'), 'wine');
+        expect(headNounOf('pork cured bacon unprepared'), 'bacon');
+        expect(headNounOf('mustard prepared'), 'mustard');
+        // A modified-form word steps back to the food instead of going
+        // silent (Sonnet fleet): the older rewrite targets keep their dock.
+        expect(headNounOf('spices pepper white'), 'pepper');
+        expect(headNounOf('egg yolk'), 'egg');
+        expect(headNounOf('yolks'), isNull);
+      });
+
+      test('brand tokens: capitals anywhere in the word, never USDA or NFS', () {
+        expect(
+          brandTokensOf(
+            "McDONALD'S, McFLURRY with OREO cookies",
+            queryLower: 'oreo cookies',
+          ),
+          ['McDONALD\'S', 'McFLURRY'],
+          reason: 'a lowercase Mc defeated the all-caps rule',
+        );
+        expect(brandTokensOf('Soup, SWANSON, beef broth, lower sodium'), [
+          'SWANSON',
+        ]);
+        expect(
+          brandTokensOf(
+            'Soup, SWANSON, beef broth',
+            queryLower: 'swanson beef broth',
+          ),
+          isEmpty,
+        );
+        expect(
+          brandTokensOf(
+            "Pasta, whole grain (Includes foods for USDA's Food Distribution Program)",
+          ),
+          isEmpty,
+        );
+        expect(brandTokensOf('Vegetable oil, NFS'), isEmpty);
+        expect(brandTokensOf('Salsa, NS as to type'), isEmpty);
+      });
+
+      test(
+        'a brand is a wrong food: the McFlurry no longer counts for oreo cookies',
+        () async {
+          final cookies = await rank('oreo cookies');
+          expect(cookies.first.confidence, lessThan(0.5));
+        },
+      );
+
+      test("FDC's own bun records are buns, not dishes (Opus fleet)", () async {
+        final buns = await rank('hamburger buns');
+        expect(buns.first.candidate.description, contains('hamburger bun'));
+        expect(buns.first.confidence, greaterThanOrEqualTo(0.5));
+        final hotDog = await rank('hot dog buns');
+        expect(hotDog.first.candidate.description, contains('hot dog bun'));
+        expect(hotDog.first.confidence, greaterThanOrEqualTo(0.5));
+        // "Chili hot dog, no bun" covers every query word: only the negated
+        // head tells it from a bun.
+        final chili = hotDog.firstWhere(
+          (c) => c.candidate.description == 'Chili hot dog, no bun',
+        );
+        expect(chili.confidence, lessThan(hotDog.first.confidence - 0.2));
+        expect(
+          candidatesNameIngredient('hot dog buns', [chili.candidate]),
+          isFalse,
+        );
+      });
+
+      test("'with meat' is a dish (both fleets: unpinned before)", () async {
+        final pepper = await rank('pepper');
+        final stuffed = pepper.firstWhere(
+          (c) => c.candidate.description == 'Stuffed pepper, with meat',
+        );
+        expect(stuffed.confidence, lessThan(0.5));
+      });
+
+      test(
+        'the flag judges the WHOLE answer, not the eight shown (Opus fleet)',
+        () async {
+          // "Peppers, hot chile, sun-dried" carries the head but ranks 11th.
+          final answer = await provider.search('thai chiles');
+          expect(candidatesNameIngredient('thai chiles', answer), isTrue);
+          final shown = rankCandidates(
+            'thai chiles',
+            answer,
+          ).take(8).map((c) => c.candidate).toList();
+          expect(
+            candidatesNameIngredient('thai chiles', shown),
+            isFalse,
+            reason: 'why the body must use the answer',
+          );
+        },
+      );
+
+      test(
+        'every new rewrite, by name: the raw query was wrong, the target is right',
+        () async {
+          // An explicit table, so a deleted entry fails here (Opus fleet: the
+          // table-driven pin could not notice a removed key).
+          const expected = {
+            'bacon': (
+              'pork cured bacon unprepared',
+              'Pork, cured, bacon, unprepared',
+            ),
+            'shrimp': ('shrimp raw', 'Crustaceans, shrimp, raw'),
+            'shell-on shrimp': ('shrimp raw', 'Crustaceans, shrimp, raw'),
+            'dry sherry': (
+              'wine dessert dry',
+              'Alcoholic beverage, wine, dessert, dry',
+            ),
+            'mild lager': ('beer', 'Beer'),
+            'dijon mustard': ('mustard prepared', 'Mustard, prepared, yellow'),
+            'ground cumin': ('cumin seeds', 'Spices, cumin seed'),
+            'ground coriander': ('coriander seeds', 'Spices, coriander seed'),
+            'ground fennel': ('fennel seeds', 'Spices, fennel seed'),
+            'cinnamon': ('ground cinnamon', 'Spices, cinnamon, ground'),
+            'cinnamon stick': ('ground cinnamon', 'Spices, cinnamon, ground'),
+            'whole cloves': ('ground cloves', 'Spices, cloves, ground'),
+            'frozen phyllo': ('phyllo', 'Phyllo dough'),
+            'bay leaves': ('bay leaf', 'Spices, bay leaf'),
+            'parsley leaves': ('parsley', 'Parsley, raw'),
+            'vegetable oil for frying': ('vegetable oil', 'Vegetable oil, NFS'),
+            'penne': ('pasta dry enriched', 'Pasta, dry, enriched'),
+            'campanelle': ('pasta dry enriched', 'Pasta, dry, enriched'),
+          };
+          for (final entry in expected.entries) {
+            expect(
+              searchQueryFor(entry.key),
+              entry.value.$1,
+              reason: entry.key,
+            );
+            final top = (await rank(entry.value.$1)).first;
+            expect(
+              top.candidate.description,
+              entry.value.$2,
+              reason: entry.key,
+            );
+            expect(
+              top.confidence,
+              greaterThanOrEqualTo(0.5),
+              reason: entry.key,
+            );
+          }
+          for (final shape in [
+            'spaghettini',
+            'linguine',
+            'rigatoni',
+            'orecchiette',
+            'farfalle',
+            'ziti',
+            'fusilli',
+            'gemelli',
+            'cavatappi',
+            'bucatini',
+            'tagliatelle',
+            'fettuccine',
+            'pappardelle',
+            'orzo',
+            'ditalini',
+          ]) {
+            expect(searchQueryFor(shape), 'pasta dry enriched', reason: shape);
+          }
+          // What the raw query gave: the wrong food, confidently.
+          expect(
+            (await rank('bacon')).first.candidate.description,
+            'Bacon bits',
+          );
+          expect(
+            (await rank('whole cloves')).first.candidate.description,
+            isNot('Spices, cloves, ground'),
+          );
         },
       );
 

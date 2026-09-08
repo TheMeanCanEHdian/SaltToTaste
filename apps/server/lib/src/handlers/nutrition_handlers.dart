@@ -144,11 +144,9 @@ Future<Map<String, Object?>> matchesBody(
       'candidates_query': query,
       // False when the answer holds no record of the food at all — a list
       // that is hopeless, not mis-ranked; null when never searched.
-      'candidates_name_ingredient': query == null || candidates.isEmpty
+      'candidates_name_ingredient': query == null
           ? null
-          : candidatesNameIngredient(query, [
-              for (final c in candidates) c.candidate,
-            ]),
+          : _answerNamesIngredient(db, query),
       'candidates_cached_at': query == null
           ? null
           : db.fdcSearchCacheEntry(query)?.fetchedAt,
@@ -367,6 +365,22 @@ Future<AppliedToOthers?> applyMatchOverride(
     food: food,
     excluding: (recipeId: recipe.id, position: position),
   );
+}
+
+/// Whether FDC's WHOLE cached answer for [query] names the ingredient —
+/// the answer, not the eight candidates the body shows (a carrier ranked
+/// ninth still means the search found the food). Null when never searched;
+/// false for an empty answer.
+bool? _answerNamesIngredient(SaltDatabase db, String query) {
+  final cached = db.fdcSearchCacheGet(query);
+  if (cached == null) {
+    return null;
+  }
+  final answer = [
+    for (final entry in jsonDecode(cached) as List<dynamic>)
+      FdcCandidate.fromJson(entry as Map<String, dynamic>),
+  ];
+  return answer.isNotEmpty && candidatesNameIngredient(query, answer);
 }
 
 /// Masks a stored API key for display: last four characters only.

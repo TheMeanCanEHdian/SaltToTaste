@@ -89,7 +89,7 @@ class WhyLine extends StatelessWidget {
       MatchBucket.check => (
         'Match looks off — ${(match.confidence * 100).round()}% name '
             'confidence, '
-            '${match.grams == null ? 'and no amount found — not counted' : 'but it is counting now'}',
+            '${match.grams == null ? 'and no amount found — not counted' : 'held out of the totals until you confirm it'}',
         SaltColors.warnInk,
       ),
       MatchBucket.noAmount => (

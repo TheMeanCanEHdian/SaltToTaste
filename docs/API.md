@@ -598,9 +598,10 @@ confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
 for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
 pepper black` for a pepper line; null when the line has nothing
-searchable) and `candidates_name_ingredient` (false when FDC's answer holds no record
-that names the ingredient at all — the list is hopeless, not mis-ranked;
-null when never searched), `candidates_cached_at` (when FDC was last asked them, null
+searchable) and `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
+just the candidates shown — holds no record naming the ingredient, or the
+answer was empty: the list is hopeless, not mis-ranked; null when FDC was
+never asked), `candidates_cached_at` (when FDC was last asked them, null
 if never — the search cache never expires on its own; the admin search
 endpoint's `fresh=true` replaces it), `item` (the parsed ingredient item VERBATIM — it can carry
 the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client

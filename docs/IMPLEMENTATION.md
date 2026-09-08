@@ -1198,8 +1198,10 @@ Shipped (`matcherVersion` 3):
   cross-reference (never a plain "or"), dropping form/prep/stop words and
   count nouns in BOTH numbers, stepping back over identity tails (anchovy
   paste → anchovy), stemmed with the key stemmer on both sides (an -ies head
-  also matches its -ie spelling), silent on modified forms (yolk) and with
-  chile → pepper. Docked uniformly even when no candidate carries it: that is
+  also matches its -ie spelling), stepping back over a modified form to the
+  food it modifies ('egg yolk' → egg; a lone 'yolks' names nothing) and with
+  chile → pepper. A negated head ("Chili hot dog, no bun", "… no sugar
+  added") is not carried. Docked uniformly even when no candidate carries it: that is
   what un-counts the lentils. Never excludes a candidate.
 - **Composite dock −0.40** (was −0.25 for dishes/analogs): the nine marker
   families measured to change a chosen food, both numbers (sandwich, cake,
@@ -1207,9 +1209,11 @@ Shipped (`matcherVersion` 3):
   meat'; 'sandwich' never docks a cookie (FDC files Oreos as "Cookie, …
   sandwich" — recorded). Not 'bits' (Canadian bacon), not pie/cookie (the
   graham-cracker crust pin).
-- **Brand dock −0.25**: an ALL-CAPS token the query does not name (not
-  "USDA'…"). Safe only WITH the head-noun dock (alone it handed SWANSON's beef
-  broth to a mushroom soup).
+- **Brand dock −0.40** (a wrong food's worth; at −0.25 a McFlurry still
+  counted for 'oreo cookies'): a token with three capitals in a row that the
+  query does not name ('McFLURRY', "McDONALD'S" — a lowercase "Mc" defeated
+  the all-caps rule), never "USDA's" programme note or NFS/NS. Safe only WITH
+  the head-noun dock (alone it handed SWANSON's beef broth to a mushroom soup).
 - **Rewrites** (all targets recorded from live FDC): ground cumin/coriander/
   fennel → their seeds, cinnamon (+stick) → ground cinnamon, whole cloves →
   ground cloves, frozen phyllo → phyllo, bay leaves → bay leaf, parsley leaves
@@ -1232,6 +1236,30 @@ frozen peas, clam juice, rice vermicelli, cremini, celery root) are variety
 or normalizer items for a later round, as is the count-noun coverage cap
 (right foods parked at 0.44–0.55 — the next design round, as a head-noun
 WEIGHT). The recorded answers became test fixtures (46 queries, 52 foods).
+
+Review fixes (Run 038 in the evidence repo's RUNLOG, both fleets on
+`8ac8936`, same day): the head noun keeps a cut's own 'ribs' ('rib' is a
+count noun only after 'celery' — 72 corpus lines count celery by the rib, 25
+name a cut), skips a preposition and its object ('ham with skin'; 'thai with
+salt preserved radish', which is how the normalizer spells "salted"), drops
+measurement units left by "or ¼ teaspoon dried" and FDC's own form words on
+the rewrite targets ('shrimp raw' → shrimp, 'wine dessert dry' → wine, 'pasta
+dry enriched' → pasta, 'cumin seeds' → cumin) — so every rewrite target has an
+identifying head instead of a null or a form word. A marker the query itself
+names in any number ('buns' names bun, and bun ⇄ roll because FDC files buns
+under "Roll, …") is the food, so FDC's own hamburger-bun records count again.
+`candidates_name_ingredient` judges the WHOLE cached answer, not the eight the
+sheet shows ("Peppers, hot chile, sun-dried" is 11th of 16 for 'thai chiles').
+The fix panel now says a weak match is "held out of the totals until you
+confirm it" — it was telling the admin the line "is counting now" while the
+engine held it out. Pinned by name: an explicit rewrite table (a deleted entry
+fails), the brand rules, the recorded bun answer, the 'with meat' phrase, the
+negated head, and a corpus recipe's Thai-chile line read through the matches
+body over the seeded answer; 14 mutants bite. Re-measured on the diagnostic
+set: bucket counts unchanged (622 / 118 / 80 / 4 / 54), two weak check-bucket
+lines re-ordered among wrong foods, 0 regressions. Deferred: 'fresh
+fettuccine' counted at dry-pasta density (LOW), the normalizer's "trimmed to
+bottom 6 inches" tail.
 
 ## Decision log (deviations & clarifications)
 

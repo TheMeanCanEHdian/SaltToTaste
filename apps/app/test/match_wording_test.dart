@@ -4,8 +4,8 @@ import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 
 /// What the review sheet SAYS about a row — the two review fleets found the
-/// engine's own explanation never reaching the screen, and a weak match with
-/// no amount being told it "is counting now".
+/// engine's own explanation never reaching the screen, and a weak match
+/// being told it "is counting now" when the totals hold it out.
 void main() {
   Future<void> pump(WidgetTester tester, IngredientMatch match) async {
     final bucket = matchBucketOf(match);
@@ -64,23 +64,27 @@ void main() {
     expect(find.textContaining('no amount'), findsWidgets);
   });
 
-  testWidgets('a weak match with an amount is counting, and says so', (
-    tester,
-  ) async {
-    await pump(
-      tester,
-      const IngredientMatch(
-        position: 10,
-        raw: '1 small head escarole (10 oz), cut up',
-        fdcId: 2,
-        description: 'Cottage cheese, full fat, curd',
-        dataType: 'Foundation',
-        confidence: 0.34,
-        grams: 283,
-        gramSource: 'weight',
-        status: 'auto',
-      ),
-    );
-    expect(find.textContaining('counting now'), findsOneWidget);
-  });
+  testWidgets(
+    'a weak match with an amount is held out of the totals, and says so',
+    (tester) async {
+      await pump(
+        tester,
+        const IngredientMatch(
+          position: 10,
+          raw: '1 small head escarole (10 oz), cut up',
+          fdcId: 2,
+          description: 'Cottage cheese, full fat, curd',
+          dataType: 'Foundation',
+          confidence: 0.34,
+          grams: 283,
+          gramSource: 'weight',
+          status: 'auto',
+        ),
+      );
+      // The engine holds a low-confidence auto match out of the totals until
+      // it is confirmed — the sheet once claimed it "is counting now".
+      expect(find.textContaining('held out of the totals'), findsOneWidget);
+      expect(find.textContaining('counting now'), findsNothing);
+    },
+  );
 }

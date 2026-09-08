@@ -660,6 +660,37 @@ const Set<String> _formWords = {
   'and',
   'or',
   'plus',
+  // Prepositions a hyphen split leaves behind ('bone-in' → 'in').
+  'in',
+  'on',
+  'with',
+  'without',
+  // Measurement units a trailing "or ¼ teaspoon dried" leaves as the last
+  // word (14 corpus lines).
+  'teaspoon',
+  'teaspoons',
+  'tablespoon',
+  'tablespoons',
+  'cup',
+  'cups',
+  'ounce',
+  'ounces',
+  'pound',
+  'pounds',
+  'inch',
+  'inches',
+  'quart',
+  'quarts',
+  'pint',
+  'pints',
+  // FDC's own form words, met on REWRITTEN queries ('shrimp raw', 'pasta
+  // dry enriched', 'wine dessert dry', 'pork cured bacon unprepared').
+  'raw',
+  'enriched',
+  'prepared',
+  'unprepared',
+  'cured',
+  'dessert',
 };
 
 /// Count nouns, BOTH numbers: 'garlic clove' and 'garlic cloves' must both
@@ -672,8 +703,6 @@ const Set<String> _countNouns = {
   'wedges',
   'clove',
   'cloves',
-  'rib',
-  'ribs',
   'sprig',
   'sprigs',
   'stalk',
@@ -708,6 +737,9 @@ const Set<String> _identityTails = {
   'threads',
   'mix',
   'spray',
+  // Rewritten spice queries: 'cumin seeds' names cumin.
+  'seed',
+  'seeds',
 };
 
 /// The corpus says chile; FDC says pepper.
@@ -722,13 +754,29 @@ Set<String> _keyTokens(String text) => {
     if (word.length > 1) _keyWord(word),
 };
 
-/// Whether [tokens] carry [head]. The key stemmer turns 'cookies' into
-/// 'cooky' but leaves 'cookie' alone, so an -ies head also matches its -ie
-/// spelling (cookies/cookie, brownies/brownie).
-bool _carriesHead(Set<String> tokens, String head) =>
-    tokens.contains(head) ||
-    (head.endsWith('y') &&
-        tokens.contains('${head.substring(0, head.length - 1)}ie'));
+/// Whether [description] carries [head]. The key stemmer turns 'cookies'
+/// into 'cooky' but leaves 'cookie' alone, so an -ies head also matches its
+/// -ie spelling (cookies/cookie, brownies/brownie). A negated head does not
+/// count: "Chili hot dog, no bun" is not a bun.
+bool _carriesHead(String description, String head) {
+  final words = [
+    for (final word in description.toLowerCase().split(RegExp('[^a-z0-9%]+')))
+      if (word.length > 1) _keyWord(word),
+  ];
+  final ie = head.endsWith('y')
+      ? '${head.substring(0, head.length - 1)}ie'
+      : head;
+  for (var i = 0; i < words.length; i++) {
+    if (words[i] != head && words[i] != ie) {
+      continue;
+    }
+    if (i > 0 && (words[i - 1] == 'no' || words[i - 1] == 'without')) {
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
 
 /// The word that names the food in [query] (the FDC search query), in its
 /// key form — or null when nothing identifies one. A trailing " for …"
@@ -743,28 +791,52 @@ bool _carriesHead(Set<String> tokens, String head) =>
 /// produced (paste 106, chil 48, whit 29, and 21, lim 8) all go to zero.
 String? headNounOf(String query) {
   var text = query;
-  final forIdx = text.indexOf(' for ');
-  if (forIdx > 0) {
-    text = text.substring(0, forIdx);
+  // A trailing purpose: "table salt for cooking pasta".
+  final purpose = text.indexOf(' for ');
+  if (purpose > 0) {
+    text = text.substring(0, purpose);
   }
   final parts = text.split(' or ');
   while (parts.length > 1 && parts.last.contains('recipe')) {
     parts.removeLast();
   }
   text = parts.join(' or ');
-  final kept = <String>[
-    for (final w in text.split(RegExp('[^a-z0-9%]+')))
-      if (w.length >= 2 &&
-          !_formWords.contains(w) &&
-          !_prepWords.contains(w) &&
-          !_stopWords.contains(w) &&
-          !_countNouns.contains(w))
-        w,
-  ];
+  final words = text.split(RegExp('[^a-z0-9%]+'));
+  final kept = <String>[];
+  for (var i = 0; i < words.length; i++) {
+    final w = words[i];
+    // "with skin", "without salt": the preposition and its object are how
+    // the food comes, never the food ('ham with skin'; 'thai with salt
+    // preserved radish' — normalizeItem spells "salted" that way).
+    if (w == 'with' || w == 'without') {
+      i++;
+      continue;
+    }
+    if (w.length < 2 ||
+        _formWords.contains(w) ||
+        _prepWords.contains(w) ||
+        _stopWords.contains(w)) {
+      continue;
+    }
+    // 'rib' counts celery (72 corpus lines); on a cut it IS the food
+    // ('short ribs', 'country-style pork ribs', 'baby back ribs' — 25).
+    final celeryRib =
+        (w == 'rib' || w == 'ribs') && i > 0 && words[i - 1] == 'celery';
+    if (_countNouns.contains(w) || celeryRib) {
+      continue;
+    }
+    kept.add(w);
+  }
   if (kept.isEmpty) {
     return null;
   }
-  while (_identityTails.contains(kept.last) && kept.length > 1) {
+  // The last survivor names the food — stepping back over a form tail
+  // ('anchovy paste' → anchovy) and over a modified-form word when a food
+  // word precedes it ('spices pepper white' → pepper; 'egg yolk' → egg).
+  // A lone modified-form word ('yolks') names no identity.
+  while (kept.length > 1 &&
+      (_identityTails.contains(kept.last) ||
+          _modifiedFormTokens.contains(_keyWord(kept.last)))) {
     kept.removeLast();
   }
   final head = _keyWord(kept.last);
@@ -783,7 +855,7 @@ bool candidatesNameIngredient(String query, List<FdcCandidate> candidates) {
   if (head == null) {
     return true;
   }
-  return candidates.any((c) => _carriesHead(_keyTokens(c.description), head));
+  return candidates.any((c) => _carriesHead(c.description, head));
 }
 
 /// Composite records — a dish or a product built from the food, never the
@@ -818,9 +890,21 @@ const List<String> _compositePhrases = ['school lunch', 'with meat'];
 /// −0.40 puts it at 0.477. Measured: only those lines differ.
 const double _wrongFoodDock = 0.40;
 
-/// A token FDC writes in capitals is a brand (SWANSON, POPEYES, REAL LEMON)
-/// unless the query names it; "USDA's" is a programme note, not a brand.
-final RegExp _brandToken = RegExp(r"\b[A-Z][A-Z'&-]{3,}\b");
+/// A token FDC writes with three or more capitals in a row is a brand
+/// (SWANSON, POPEYES, REAL LEMON — and McDONALD'S, McFLURRY, whose lowercase
+/// 'c' defeated an all-caps rule) unless the query names it. "USDA's" is a
+/// programme note and NFS/NS are "not further specified", never brands.
+final RegExp _brandToken = RegExp(r"[A-Za-z'&-]*[A-Z]{3,}[A-Za-z'&-]*");
+const Set<String> _notBrands = {'NFS', 'NS'};
+
+/// The brand tokens of [description] the query [queryLower] does not name.
+List<String> brandTokensOf(String description, {String queryLower = ''}) => [
+  for (final m in _brandToken.allMatches(description))
+    if (!m[0]!.startsWith('USDA') &&
+        !_notBrands.contains(m[0]) &&
+        !queryLower.contains(m[0]!.toLowerCase()))
+      m[0]!,
+];
 
 /// Ranks [candidates] against the normalized [query].
 ///
@@ -893,6 +977,19 @@ List<RankedCandidate> rankCandidates(
     final cookieRecord =
         descriptionWords.contains('cookie') ||
         descriptionWords.contains('cookies');
+    // A marker the query itself names (any number: 'buns' names 'bun') is
+    // the food, not a dish — and FDC files buns under "Rolls, hamburger…",
+    // so bun and roll gate each other.
+    final queryKeys = _keyTokens(query);
+    bool queryNames(String marker) {
+      final key = _keyWord(marker);
+      if (queryWords.contains(marker) || queryKeys.contains(key)) {
+        return true;
+      }
+      return (key == 'bun' && queryKeys.contains('roll')) ||
+          (key == 'roll' && queryKeys.contains('bun'));
+    }
+
     final wrongFood =
         _meatAnalogMarkers
             .followedBy(_dishMarkers)
@@ -900,7 +997,7 @@ List<RankedCandidate> rankCandidates(
             .any(
               (marker) =>
                   descriptionWords.contains(marker) &&
-                  !queryWords.contains(marker) &&
+                  !queryNames(marker) &&
                   !(cookieRecord && marker.startsWith('sandwich')),
             ) ||
         _compositePhrases.any(
@@ -917,19 +1014,18 @@ List<RankedCandidate> rankCandidates(
     // even when NO candidate carries it: that is exactly what stops 156 g of
     // "Lentils, dry" counting for 'dry sherry'. Never excludes a candidate —
     // the sheet still shows the top one, held in `check`.
-    if (head != null &&
-        !_carriesHead(_keyTokens(candidate.description), head)) {
+    if (head != null && !_carriesHead(candidate.description, head)) {
       score -= 0.30;
     }
-    // A brand the query did not name. Safe only WITH the head-noun dock:
-    // alone it handed "Soup, SWANSON, beef broth" to a beef-and-mushroom soup.
-    if (_brandToken
-        .allMatches(candidate.description)
-        .map((m) => m[0]!)
-        .any(
-          (t) => !t.startsWith('USDA') && !queryLower.contains(t.toLowerCase()),
-        )) {
-      score -= 0.25;
+    // A brand the query did not name — a wrong food's worth: at −0.25 a
+    // McFlurry "with OREO cookies" still counted at 0.63 for 'oreo cookies'.
+    // Safe only WITH the head-noun dock: alone it handed "Soup, SWANSON,
+    // beef broth" to a beef-and-mushroom soup.
+    if (brandTokensOf(
+      candidate.description,
+      queryLower: queryLower,
+    ).isNotEmpty) {
+      score -= _wrongFoodDock;
     }
     ranked.add(
       RankedCandidate(
