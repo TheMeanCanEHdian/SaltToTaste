@@ -116,7 +116,11 @@ Future<Map<String, Object?>> matchesBody(
     final candidates = row == null
         ? const <RankedCandidate>[]
         : await candidatesForLine(db, provider, line, cacheOnly: true);
-    final itemKey = normalizeItem(line.item ?? line.raw);
+    final itemKey = itemKeyFor(line.item ?? line.raw);
+    // The KEY (singular) joins decisions; the QUERY keeps the line's words.
+    final query = itemKey.isEmpty
+        ? null
+        : searchQueryFor(normalizeItem(line.item ?? line.raw));
     items.add({
       'position': position,
       'raw': line.raw,
@@ -137,10 +141,10 @@ Future<Map<String, Object?>> matchesBody(
       // matcher's rewrites — "spices pepper black" for a pepper line), and
       // when it was last asked (the search cache never expires); null when
       // the line has nothing searchable / was never asked.
-      'candidates_query': itemKey.isEmpty ? null : searchQueryFor(itemKey),
-      'candidates_cached_at': itemKey.isEmpty
+      'candidates_query': query,
+      'candidates_cached_at': query == null
           ? null
-          : db.fdcSearchCacheEntry(searchQueryFor(itemKey))?.fetchedAt,
+          : db.fdcSearchCacheEntry(query)?.fetchedAt,
       'match': row == null
           ? null
           : {
@@ -183,14 +187,15 @@ Future<AppliedToOthers?> applyMatchOverride(
   NutritionProvider provider,
   Recipe recipe,
   int position,
-  Map<String, Object?> body,
-) async {
+  Map<String, Object?> body, {
+  int? decidedBy,
+}) async {
   final lines = nutritionLines(recipe);
   if (position < 0 || position >= lines.length) {
     throw NotFoundException('No ingredient line at position $position.');
   }
   final line = lines[position];
-  final itemKey = normalizeItem(line.item ?? line.raw);
+  final itemKey = itemKeyFor(line.item ?? line.raw);
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
   };
@@ -313,6 +318,24 @@ Future<AppliedToOthers?> applyMatchOverride(
     }
   }
 
+  // A food decided IN THIS REQUEST — a pick, or a confirm of a food — is the
+  // ingredient's decision from now on, in every recipe: it gets a row of its
+  // own, so it outlives this recipe being edited or deleted (before, other
+  // lines borrowed it from this row and lost it with it). A grams-only edit
+  // decides the amount, not the food, and writes nothing; neither does a
+  // skip. The same gate apply_to_all uses.
+  if (row.fdcId != null &&
+      (fdcId != null || confirmed == true) &&
+      itemKey.isNotEmpty) {
+    db.putDecision(
+      itemKey: itemKey,
+      item: line.item ?? line.raw,
+      fdcId: row.fdcId,
+      description: row.description,
+      dataType: row.dataType,
+      decidedBy: decidedBy,
+    );
+  }
   db.upsertIngredientMatch(row.copyWith(itemKey: itemKey));
   await recomputeTotals(db, provider, recipe);
 

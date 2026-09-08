@@ -202,7 +202,7 @@ void main() {
         final lines = nutritionLines(recipe);
         for (final row in db.ingredientMatchesFor(recipe.id)) {
           final line = lines[row.position];
-          expect(row.itemKey, normalizeItem(line.item ?? line.raw));
+          expect(row.itemKey, itemKeyFor(line.item ?? line.raw));
         }
       }
     });
@@ -299,28 +299,19 @@ void main() {
       expect(rowOf(pancakes, 'baking soda').fdcId, alt2);
     });
 
-    test('two decisions in the same millisecond still order by time', () {
-      // The raw shape the old writer produced: the older write with a zero
-      // microsecond component came out three digits SHORTER and sorted last.
-      final older = positionOf(bundt, 'baking soda');
-      final newer = positionOf(caramel, 'baking soda');
-      sqlite3.open(config.dbPath)
-        ..execute(
-          'UPDATE ingredient_matches SET updated_at = ? '
-          'WHERE recipe_id = ? AND position = ?',
-          ['2026-09-03T01:02:03.001000Z', bundt.id, older],
-        )
-        ..execute(
-          'UPDATE ingredient_matches SET updated_at = ? '
-          'WHERE recipe_id = ? AND position = ?',
-          ['2026-09-03T01:02:03.001005Z', caramel.id, newer],
-        )
-        ..dispose();
-      final winner = db.decidedMatchForItemKey(
-        'baking soda',
-        excluding: (recipeId: pancakes.id, position: 0),
-      );
-      expect(winner!.recipeId, caramel.id, reason: 'the later microsecond');
+    test('the newest decision wins, by write order: the decision row is '
+        'replaced, not ordered by a row timestamp', () async {
+      final first = positionOf(bundt, 'baking soda');
+      final second = positionOf(caramel, 'baking soda');
+      final alt = await otherFoodFor(bundt, 'baking soda', {bakingSodaAlt});
+      await put(bundt, first, {'fdc_id': bakingSodaAlt});
+      expect(db.decisionFor('baking soda')!.fdcId, bakingSodaAlt);
+      await put(caramel, second, {'fdc_id': alt});
+      final decision = db.decisionFor('baking soda')!;
+      expect(decision.fdcId, alt, reason: 'the later pick');
+      expect(decision.item, 'baking soda');
+      await matchAndCompute(db, provider, pancakes);
+      expect(rowOf(pancakes, 'baking soda').fdcId, alt);
     });
 
     test('a decision on the inheriting line itself stands', () async {
@@ -348,6 +339,16 @@ void main() {
           ['confirmed', bundt.id, position],
         )
         ..dispose();
+      // The ingredient's own decision row is the only source now; a decision
+      // with no food (reserved for a human "no match") must not travel.
+      db.putDecision(
+        itemKey: 'baking soda',
+        item: 'baking soda',
+        fdcId: null,
+        description: null,
+        dataType: null,
+        decidedBy: null,
+      );
       final caramelPos = positionOf(caramel, 'baking soda');
       await put(caramel, caramelPos, {'skipped': true}); // no other source
       await put(pancakes, positionOf(pancakes, 'baking soda'), {
@@ -687,10 +688,10 @@ void main() {
         ])
         ..dispose();
       expect(backfillItemKeys(db), greaterThan(0));
-      expect(db.getSetting(itemKeyBackfillSetting), isNotNull);
+      expect(db.getSetting(itemKeyBackfillSetting), '$matcherVersion');
       for (final row in db.ingredientMatchesFor(bundt.id)) {
         final line = nutritionLines(bundt)[row.position];
-        final expected = normalizeItem(line.item ?? line.raw);
+        final expected = itemKeyFor(line.item ?? line.raw);
         expect(row.itemKey, expected.isEmpty ? isNull : expected);
       }
       expect(backfillItemKeys(db), 0, reason: 'guarded by the marker');

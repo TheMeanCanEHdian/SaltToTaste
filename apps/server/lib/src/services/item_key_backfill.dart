@@ -7,30 +7,32 @@ import 'package:salt_shared/salt_shared.dart';
 
 final Logger _log = Logger('backfill');
 
-/// Settings key marking the item-key backfill as complete (value: the
-/// completion timestamp, informational).
+/// Settings key holding the [matcherVersion] every match row's item_key was
+/// derived under. Any other value (an older version, or the completion
+/// timestamp the first backfill wrote) means every row is re-keyed at boot.
 const String itemKeyBackfillSetting = 'backfill.item_key';
 
-/// Keys every match row written before migration 009 with the matcher's
-/// normalized item text, so decisions made before cross-recipe reuse existed
-/// are found by it.
+/// Keys every match row with the matcher's decision key ([itemKeyFor]) —
+/// first for rows written before migration 009, and again whenever
+/// [matcherVersion] changes what the key is (a singular form, a folded
+/// accent), so cross-recipe reuse keeps finding decisions.
 ///
 /// The key comes from the recipe's PARSED line (`item`, falling back to the
 /// raw text), so it is derived here rather than in SQL. A row whose position
 /// no longer exists, or whose raw text differs from the line — a stale row an
-/// edit left behind — is left unkeyed; the next compute replaces it.
+/// edit left behind — is left as it is; the next compute replaces it.
 ///
 /// Runs until every recipe's rows are keyed: a recipe whose stored document
 /// does not decode is skipped with a warning and the marker is NOT set, so the
 /// pass retries at every boot (as the FTS reindex does). Returns the number of
-/// rows keyed (0 when already complete).
+/// rows keyed (0 when already at this matcher version).
 int backfillItemKeys(SaltDatabase db) {
-  if (db.getSetting(itemKeyBackfillSetting) != null) {
+  if (db.getSetting(itemKeyBackfillSetting) == '$matcherVersion') {
     return 0;
   }
   var keyed = 0;
   var failed = 0;
-  for (final recipeId in db.recipesWithUnkeyedMatches()) {
+  for (final recipeId in db.recipesWithMatches()) {
     final ({Recipe recipe, String sourceSlug})? found;
     try {
       found = db.recipeByIdOrSlug(recipeId);
@@ -49,15 +51,15 @@ int backfillItemKeys(SaltDatabase db) {
     }
     final lines = nutritionLines(found.recipe);
     for (final row in db.ingredientMatchesFor(recipeId)) {
-      if (row.itemKey != null || row.position >= lines.length) {
+      if (row.position >= lines.length) {
         continue;
       }
       final line = lines[row.position];
       if (line.raw != row.raw) {
         continue;
       }
-      final key = normalizeItem(line.item ?? line.raw);
-      if (key.isEmpty) {
+      final key = itemKeyFor(line.item ?? line.raw);
+      if (key.isEmpty || key == row.itemKey) {
         continue;
       }
       db.setMatchItemKey(recipeId, row.position, key);
@@ -65,10 +67,7 @@ int backfillItemKeys(SaltDatabase db) {
     }
   }
   if (failed == 0) {
-    db.setSetting(
-      itemKeyBackfillSetting,
-      DateTime.now().toUtc().toIso8601String(),
-    );
+    db.setSetting(itemKeyBackfillSetting, '$matcherVersion');
   }
   if (keyed > 0 || failed > 0) {
     final retry = failed > 0

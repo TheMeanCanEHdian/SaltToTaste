@@ -40,6 +40,7 @@ Future<Response> onRequest(
       found.recipe,
       position,
       await readJsonBody(context.request),
+      decidedBy: user.id,
     );
   } on NutritionProviderException catch (exception) {
     throw ValidationException(exception.message);

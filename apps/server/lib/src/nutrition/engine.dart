@@ -36,14 +36,20 @@ List<IngredientLine> nutritionLines(Recipe recipe) => [
 /// Hash of everything nutrition depends on — when it changes, stored
 /// results are stale.
 String ingredientsHashOf(Recipe recipe) {
-  final payload = jsonEncode([
-    for (final line in nutritionLines(recipe))
-      {
-        'raw': line.raw,
-        'item': line.item,
-        'amounts': [for (final amount in line.amounts) amount.toMap()],
-      },
-  ]);
+  // The matcher version is part of it: a bump makes every computed recipe
+  // stale, so the stale sweep re-resolves its engine rows instead of leaving
+  // scores and picks frozen at the matcher that wrote them.
+  final payload = jsonEncode({
+    'matcher': matcherVersion,
+    'lines': [
+      for (final line in nutritionLines(recipe))
+        {
+          'raw': line.raw,
+          'item': line.item,
+          'amounts': [for (final amount in line.amounts) amount.toMap()],
+        },
+    ],
+  });
   return sha256.convert(utf8.encode(payload)).toString();
 }
 
@@ -57,9 +63,21 @@ Future<void> matchAndCompute(
   Recipe recipe,
 ) async {
   final lines = nutritionLines(recipe);
-  final existing = {
-    for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
-  };
+  final existingRows = db.ingredientMatchesFor(recipe.id);
+  final existing = {for (final row in existingRows) row.position: row};
+  // Decided rows by their text, in position order. Rows are keyed by
+  // POSITION, so an edit above a decided line (insert, delete, reorder)
+  // moved the line out from under its row and the decision was lost —
+  // reproduced on the Bundt cake, survey 2026-09-04. A moved line is found
+  // here by its text and its row travels with it. A list per text, not a
+  // map: 80 corpus recipes repeat a raw line, and the nth line keeps the
+  // nth row.
+  final decidedByRaw = <String, List<IngredientMatchRow>>{};
+  for (final row in existingRows) {
+    if (_isDecided(row)) {
+      decidedByRaw.putIfAbsent(row.raw, () => []).add(row);
+    }
+  }
 
   for (final (position, line) in lines.indexed) {
     final kept = existing[position];
@@ -68,14 +86,62 @@ Future<void> matchAndCompute(
     // precisely to retry those once FDC gains data or the matcher improves.
     // (A cached empty search answer still short-circuits it, so the retry is
     // free but only helps once the normalised query or the cache changes.)
-    if (kept != null &&
-        kept.raw == line.raw &&
-        kept.status != 'auto' &&
-        kept.status != 'unmatched') {
+    if (kept != null && kept.raw == line.raw && _isDecided(kept)) {
+      decidedByRaw[line.raw]?.remove(kept);
       continue;
     }
 
     final normalized = normalizeItem(line.item ?? line.raw);
+    // The query keeps the line's own words; the KEY a decision is stored and
+    // reused under is the singular form, so "onion" and "onions" are one.
+    final key = itemKeyFor(line.item ?? line.raw);
+
+    // The line moved: a decided row for exactly this text sits at another
+    // position. Bring it here, decision and all; its old position is either
+    // rewritten by the line now there or dropped past the end.
+    final moved = decidedByRaw[line.raw];
+    if (moved != null && moved.isNotEmpty) {
+      final row = moved.removeAt(0);
+      db.upsertIngredientMatchIfUndecided(
+        row.copyWith(position: position, itemKey: key),
+      );
+      continue;
+    }
+
+    // The line's own decided row, with the amount changed but the same
+    // ingredient: the food and the status stand, the grams are re-derived
+    // for the new amount (a weight typed for the old amount no longer
+    // applies); a skip stays a skip.
+    if (kept != null &&
+        _isDecided(kept) &&
+        key.isNotEmpty &&
+        kept.itemKey == key) {
+      if (kept.status == 'skipped') {
+        db.upsertIngredientMatchIfUndecided(kept.copyWith(raw: line.raw));
+        continue;
+      }
+      if (kept.fdcId != null) {
+        final food = await _cachedFood(db, provider, kept.fdcId!);
+        if (food != null) {
+          final resolution = resolveGrams(
+            amounts: line.amounts,
+            food: food,
+            normalizedItem: normalized,
+            raw: line.raw,
+          );
+          db.upsertIngredientMatchIfUndecided(
+            kept.copyWith(
+              raw: line.raw,
+              grams: resolution?.grams,
+              clearGrams: resolution == null,
+              gramSource: resolution?.source.name,
+              clearGramSource: resolution == null,
+            ),
+          );
+          continue;
+        }
+      }
+    }
     final seasoning = line.amounts.isEmpty && isSeasoningToTaste(normalized);
     if (normalized.isEmpty || isWaterLike(normalized) || seasoning) {
       db.upsertIngredientMatchIfUndecided(
@@ -83,7 +149,7 @@ Future<void> matchAndCompute(
           recipeId: recipe.id,
           position: position,
           raw: line.raw,
-          itemKey: normalized,
+          itemKey: key,
           fdcId: null,
           description: normalized.isEmpty
               ? 'Nothing searchable in this line'
@@ -100,15 +166,13 @@ Future<void> matchAndCompute(
       continue;
     }
 
-    // A person already decided this item in another recipe: their food
-    // travels, with grams from THIS line's amounts. Still `auto` (an engine
-    // write), so a decision made here later still wins, and the review queue
-    // treats it as counted — confidence 1 says a person chose it.
-    final prior = db.decidedMatchForItemKey(
-      normalized,
-      excluding: (recipeId: recipe.id, position: position),
-    );
-    if (prior != null) {
+    // A person already decided this ingredient (in any recipe, even one
+    // since deleted): their food travels, with grams from THIS line's
+    // amounts. Still `auto` (an engine write), so a decision made here later
+    // still wins, and the review queue treats it as counted — confidence 1
+    // says a person chose it.
+    final prior = db.decisionFor(key);
+    if (prior != null && prior.fdcId != null) {
       final food = await _cachedFood(db, provider, prior.fdcId!);
       if (food != null) {
         final resolution = resolveGrams(
@@ -122,7 +186,7 @@ Future<void> matchAndCompute(
             recipeId: recipe.id,
             position: position,
             raw: line.raw,
-            itemKey: normalized,
+            itemKey: key,
             fdcId: food.fdcId,
             description: food.description,
             dataType: food.dataType,
@@ -145,7 +209,7 @@ Future<void> matchAndCompute(
           recipeId: recipe.id,
           position: position,
           raw: line.raw,
-          itemKey: normalized,
+          itemKey: key,
           fdcId: null,
           description: 'No FoodData Central match',
           dataType: null,
@@ -196,7 +260,7 @@ Future<void> matchAndCompute(
           recipeId: recipe.id,
           position: position,
           raw: line.raw,
-          itemKey: normalized,
+          itemKey: key,
           fdcId: null,
           description: 'No fetchable FoodData Central match',
           dataType: null,
@@ -219,7 +283,7 @@ Future<void> matchAndCompute(
         recipeId: recipe.id,
         position: position,
         raw: line.raw,
-        itemKey: normalized,
+        itemKey: key,
         fdcId: best.candidate.fdcId,
         description: best.candidate.description,
         dataType: best.candidate.dataType,
@@ -236,6 +300,11 @@ Future<void> matchAndCompute(
 
   await recomputeTotals(db, provider, recipe, freshMatch: true);
 }
+
+/// A person's call on a row: anything but the engine's own `auto` and
+/// `unmatched`.
+bool _isDecided(IngredientMatchRow row) =>
+    row.status != 'auto' && row.status != 'unmatched';
 
 /// Recomputes the stored per-serving totals from the persisted matches —
 /// instant (food details come from the cache; no searches).

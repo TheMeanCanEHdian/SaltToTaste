@@ -28,6 +28,9 @@ class FixtureProvider implements NutritionProvider {
   /// How many searches were served — cache-behavior assertions.
   int searchCalls = 0;
 
+  /// How many food-detail lookups reached the provider.
+  int foodCalls = 0;
+
   /// When set, every search blocks until it completes. Recorded fixtures
   /// answer instantly, so this is the only way to hold a background compute
   /// mid-flight long enough to assert on what the API reports while it runs.
@@ -58,6 +61,7 @@ class FixtureProvider implements NutritionProvider {
 
   @override
   Future<FdcFood?> food(int fdcId) async {
+    foodCalls += 1;
     final raw = _foods['$fdcId'];
     return raw == null ? null : FdcFood.fromJson(raw as Map<String, dynamic>);
   }

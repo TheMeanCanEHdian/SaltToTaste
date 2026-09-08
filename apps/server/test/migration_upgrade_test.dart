@@ -61,6 +61,10 @@ const Map<int, String> _capabilityByVersion = {
       'ingredient_matches.item_key (+ index): the cross-recipe reuse key, '
       'backfilled at boot by backfillItemKeys under the backfill.item_key '
       'marker',
+  10:
+      'ingredient_decisions: a human food decision keyed by ingredient '
+      '(human-only, not seeded; re-keyed at boot by rekeyDecisions under the '
+      'decisions.matcher_version marker)',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry

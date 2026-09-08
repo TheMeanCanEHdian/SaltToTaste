@@ -969,25 +969,74 @@ class SaltDatabase {
     ).execute([fdcId, responseJson]);
   }
 
-  /// The most recent HUMAN decision (confirmed/overridden, with a food) on
-  /// [itemKey] on any line but [excluding] — what a line with that item
-  /// inherits at compute time. Another line of the SAME recipe counts: a
-  /// recipe that lists an item twice is common (247 of the 1,198 corpus
-  /// recipes). Skips are not decisions about the item, only about one
-  /// recipe's line, so they never travel.
-  IngredientMatchRow? decidedMatchForItemKey(
-    String itemKey, {
-    required ({String recipeId, int position}) excluding,
-  }) {
+  /// The ingredient's own decision: the food a person last picked or
+  /// confirmed for [itemKey] in any recipe, or null when nobody has.
+  IngredientDecisionRow? decisionFor(String itemKey) {
     final rows = _prepared(
-      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
-      'confidence, grams, gram_source, status, updated_at, item_key '
-      'FROM ingredient_matches WHERE item_key = ? '
-      'AND NOT (recipe_id = ? AND position = ?) '
-      "AND status IN ('confirmed', 'overridden') "
-      'AND fdc_id IS NOT NULL ORDER BY updated_at DESC LIMIT 1',
-    ).select([itemKey, excluding.recipeId, excluding.position]);
-    return rows.isEmpty ? null : IngredientMatchRow.fromRow(rows.first);
+      'SELECT item_key, item, fdc_id, description, data_type, decided_by, '
+      'decided_at FROM ingredient_decisions WHERE item_key = ?',
+    ).select([itemKey]);
+    return rows.isEmpty ? null : IngredientDecisionRow.fromRow(rows.first);
+  }
+
+  /// Records a person's food decision for an ingredient — the newest write
+  /// wins, whoever made it. [item] is the parsed text the key came from.
+  void putDecision({
+    required String itemKey,
+    required String item,
+    required int? fdcId,
+    required String? description,
+    required String? dataType,
+    required int? decidedBy,
+  }) {
+    _prepared(
+      'INSERT INTO ingredient_decisions (item_key, item, fdc_id, description, '
+      'data_type, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, ?, ?) '
+      'ON CONFLICT(item_key) DO UPDATE SET item = excluded.item, '
+      'fdc_id = excluded.fdc_id, description = excluded.description, '
+      'data_type = excluded.data_type, decided_by = excluded.decided_by, '
+      'decided_at = excluded.decided_at',
+    ).execute([
+      itemKey,
+      item,
+      fdcId,
+      description,
+      dataType,
+      decidedBy,
+      _utcNowIso(),
+    ]);
+  }
+
+  /// Forgets an ingredient's decision (its lines keep their rows).
+  void deleteDecision(String itemKey) {
+    _prepared(
+      'DELETE FROM ingredient_decisions WHERE item_key = ?',
+    ).execute([itemKey]);
+  }
+
+  /// Every decision, oldest first.
+  List<IngredientDecisionRow> allDecisions() {
+    final rows = _prepared(
+      'SELECT item_key, item, fdc_id, description, data_type, decided_by, '
+      'decided_at FROM ingredient_decisions ORDER BY decided_at, item_key',
+    ).select();
+    return [for (final row in rows) IngredientDecisionRow.fromRow(row)];
+  }
+
+  /// Moves a decision to a new key (the matcher re-derived it). The caller
+  /// has checked that [newKey] is free.
+  void renameDecision(String oldKey, String newKey) {
+    _prepared(
+      'UPDATE ingredient_decisions SET item_key = ? WHERE item_key = ?',
+    ).execute([newKey, oldKey]);
+  }
+
+  /// Recipe ids that have any match row (the key re-derivation's scan).
+  List<String> recipesWithMatches() {
+    final rows = _prepared(
+      'SELECT DISTINCT recipe_id FROM ingredient_matches',
+    ).select();
+    return [for (final row in rows) row['recipe_id'] as String];
   }
 
   /// Every UNDECIDED row (`auto` / `unmatched`) carrying [itemKey], on any
@@ -2113,6 +2162,55 @@ String fixedWidthUtcIso(DateTime time) {
 
 /// One tag with its usage count and optional chip style.
 /// One row of `ingredient_matches`.
+/// One row of `ingredient_decisions`: a person's food for an ingredient.
+class IngredientDecisionRow {
+  /// Builds a row from its parts.
+  const IngredientDecisionRow({
+    required this.itemKey,
+    required this.item,
+    required this.fdcId,
+    required this.description,
+    required this.dataType,
+    required this.decidedBy,
+    required this.decidedAt,
+  });
+
+  /// Decodes a selected row.
+  factory IngredientDecisionRow.fromRow(Row row) => IngredientDecisionRow(
+    itemKey: row['item_key'] as String,
+    item: row['item'] as String,
+    fdcId: row['fdc_id'] as int?,
+    description: row['description'] as String?,
+    dataType: row['data_type'] as String?,
+    decidedBy: row['decided_by'] as int?,
+    decidedAt: row['decided_at'] as String,
+  );
+
+  /// The decision key (`itemKeyFor` of [item]).
+  final String itemKey;
+
+  /// The parsed ingredient text the key was derived from.
+  final String item;
+
+  /// The chosen FoodData Central food; null is reserved for a human
+  /// "no match" (not written yet).
+  final int? fdcId;
+
+  /// The food's description and data type as stored at decision time.
+  final String? description;
+
+  /// See [description].
+  final String? dataType;
+
+  /// Who decided (null when the account is gone).
+  final int? decidedBy;
+
+  /// When, UTC ISO.
+  final String decidedAt;
+}
+
+/// One row of `ingredient_matches`: a recipe line's food, grams, status
+/// and decision key.
 class IngredientMatchRow {
   /// Builds a row from its parts.
   const IngredientMatchRow({
@@ -2186,6 +2284,8 @@ class IngredientMatchRow {
 
   /// Copy with changed fields (explicit clears for the nullables).
   IngredientMatchRow copyWith({
+    int? position,
+    String? raw,
     int? fdcId,
     bool clearFdcId = false,
     String? description,
@@ -2199,8 +2299,8 @@ class IngredientMatchRow {
     String? itemKey,
   }) => IngredientMatchRow(
     recipeId: recipeId,
-    position: position,
-    raw: raw,
+    position: position ?? this.position,
+    raw: raw ?? this.raw,
     fdcId: clearFdcId ? null : (fdcId ?? this.fdcId),
     description: description ?? this.description,
     dataType: dataType ?? this.dataType,

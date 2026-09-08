@@ -604,7 +604,8 @@ endpoint's `fresh=true` replaces it), `item` (the parsed ingredient item VERBATI
 the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client
 wanting a bare name strips parentheticals, as the app does; null when the
 line has none), and `others`: how many recipes hold an undecided line
-with the same ingredient item (the same recipe's other lines count) that
+with the same ingredient (keys are singular and accent-folded, so "onion"
+and "onions" are one; the same recipe's other lines count) that
 is not already on this line's food — at most what `apply_to_all` (below)
 would reach, since a row whose line text changed since its compute is
 counted here but skipped there. Candidates come
@@ -627,6 +628,19 @@ the line itself still wins). `skipped` does not travel: it is a call about
 one recipe's line, not about the item.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition/matches/{pos}` (admin, full scope)
+
+A food decided here — a pick (`fdc_id`), or `confirmed: true` on a line that
+has a food — becomes the INGREDIENT's decision, library-wide: it is stored in
+its own row keyed by the ingredient (not by this recipe or this line), so
+every other recipe's line of that ingredient inherits it at its next compute
+as `auto` at confidence 1, and it survives this recipe being edited or
+deleted. A grams-only edit decides the amount, not the food, and records no
+ingredient decision; neither does `skipped`. The newest decision wins.
+Ingredient keys are singular ("onion" and "onions" are one ingredient) and
+accent-folded. A decided line also follows its text: an ingredient inserted,
+deleted or reordered above it moves the line, and its decision moves with it;
+an amount edit on a decided line keeps the food and the status and re-derives
+the grams (a hand-typed weight for the old amount is dropped).
 
 Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
@@ -687,7 +701,7 @@ Start a background compute. Optional body `{"scope": "..."}`:
 | `scope` | Covers |
 |---|---|
 | `missing` *(default)* | Recipes with no stored nutrition. |
-| `stale` | Recipes whose INGREDIENT lines changed since their last compute — the results the UI already labels `stale`. |
+| `stale` | Recipes whose INGREDIENT lines changed since their last compute — the results the UI already labels `stale` — or that were computed under an older matcher version (the version is part of the staleness hash, so a matcher change re-resolves every engine row while decisions stand). Re-resolving spends FDC only for words the change altered. |
 | `all` | Every recipe, computed or not. |
 
 A body is optional; sending none means `missing`, which is the historical

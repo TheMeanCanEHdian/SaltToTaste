@@ -110,20 +110,133 @@ const Map<String, String> _synonyms = {
   'semisweet': 'dark',
 };
 
-/// The FDC search query for an ingredient item: lowercased, parentheticals
-/// and stop-words removed, synonyms applied, whitespace collapsed. Empty
-/// when nothing searchable remains.
+/// Bumped whenever [normalizeItem], [itemKeyFor], the rewrite table or the
+/// ranker changes what a line searches, how it is keyed, or how candidates
+/// score. Folded into the nutrition staleness hash, so every computed recipe
+/// becomes `stale` and the stale sweep re-resolves its engine rows (human
+/// decisions are kept) — otherwise stored scores and picks stay frozen at the
+/// matcher that wrote them, which the 2026-09-04 survey measured on every
+/// computed recipe. Decision rows are re-keyed at boot from their item text
+/// when this changes (services/decision_rekey.dart).
+///
+/// History: 1 = everything before 2026-09-07; 2 = diacritics folded, canned
+/// crushed/diced tomatoes keep their form word, singular decision keys.
+const int matcherVersion = 2;
+
+/// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
+/// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
+const Map<String, String> _folded = {
+  'á': 'a',
+  'à': 'a',
+  'â': 'a',
+  'ä': 'a',
+  'ã': 'a',
+  'é': 'e',
+  'è': 'e',
+  'ê': 'e',
+  'ë': 'e',
+  'í': 'i',
+  'ì': 'i',
+  'î': 'i',
+  'ï': 'i',
+  'ó': 'o',
+  'ò': 'o',
+  'ô': 'o',
+  'ö': 'o',
+  'õ': 'o',
+  'ú': 'u',
+  'ù': 'u',
+  'û': 'u',
+  'ü': 'u',
+  'ñ': 'n',
+  'ç': 'c',
+};
+
+/// Prep words that name the PRODUCT when they precede these foods: a can of
+/// crushed or diced tomatoes is a different food from a fresh one (FDC files
+/// them apart), and stripping the word folded 51 canned lines into the
+/// 9 fresh ones under one key.
+const Set<String> _formPhrases = {'crushed tomatoes', 'diced tomatoes'};
+
+/// The FDC search query for an ingredient item: lowercased, accents folded,
+/// parentheticals and stop-words removed, synonyms applied, whitespace
+/// collapsed. Empty when nothing searchable remains.
 String normalizeItem(String item) {
   var text = item.toLowerCase();
+  text = text.replaceAllMapped(
+    RegExp('[${_folded.keys.join()}]'),
+    (m) => _folded[m[0]]!,
+  );
   text = text.replaceAll(RegExp(r'\(.*?\)'), ' ');
-  final words = [
-    for (final word in text.split(RegExp('[^a-z0-9%-]+')))
-      if (word.isNotEmpty &&
-          !_stopWords.contains(word) &&
-          !_prepWords.contains(word))
-        _synonyms[word] ?? word,
-  ];
+  final raw = text.split(RegExp('[^a-z0-9%-]+'));
+  final words = <String>[];
+  for (var i = 0; i < raw.length; i++) {
+    final word = raw[i];
+    if (word.isEmpty || _stopWords.contains(word)) {
+      continue;
+    }
+    final formWord =
+        i + 1 < raw.length && _formPhrases.contains('$word ${raw[i + 1]}');
+    if (_prepWords.contains(word) && !formWord) {
+      continue;
+    }
+    words.add(_synonyms[word] ?? word);
+  }
   return words.join(' ');
+}
+
+/// The key a human decision is stored and reused under (`ingredient_matches
+/// .item_key`, `ingredient_decisions.item_key`): [normalizeItem] with every
+/// word singular, so "1 onion" and "2 onions" — 66 such pairs, 2,036 corpus
+/// lines — are one ingredient. Only the KEY: the FDC query keeps the line's
+/// own words, so nothing cached is invalidated and ranking is unchanged.
+/// Empty when nothing searchable remains.
+String itemKeyFor(String item) => [
+  for (final word in normalizeItem(item).split(' '))
+    if (word.isNotEmpty) _keyWord(word),
+].join(' ');
+
+/// Singular form for a decision key. Deliberately plain: a key only has to
+/// be the SAME for both spellings, not a dictionary word ('cooky' is fine).
+/// Guards keep singular words that end in s ('asparagus', 'molasses').
+String _keyWord(String word) {
+  if (word.length <= 3 ||
+      word.endsWith('ss') ||
+      word.endsWith('us') ||
+      word.endsWith('is')) {
+    return word;
+  }
+  if (word.endsWith('ies')) {
+    return '${word.substring(0, word.length - 3)}y';
+  }
+  if (word.endsWith('ves')) {
+    // leaves → leaf, halves → half, loaves → loaf; but 'olives', 'chives',
+    // 'cloves' keep their v: strip the s only.
+    const fToVes = {'leaves', 'halves', 'loaves', 'calves', 'knives'};
+    return fToVes.contains(word)
+        ? '${word.substring(0, word.length - 3)}f'
+        : word.substring(0, word.length - 1);
+  }
+  if (word.endsWith('oes')) {
+    return word.substring(0, word.length - 2);
+  }
+  if (word.endsWith('es')) {
+    final stem = word.substring(0, word.length - 2);
+    if (stem.endsWith('ss')) {
+      return word; // molasses
+    }
+    final sibilant =
+        stem.endsWith('s') ||
+        stem.endsWith('x') ||
+        stem.endsWith('z') ||
+        stem.endsWith('ch') ||
+        stem.endsWith('sh');
+    return sibilant ? stem : word.substring(0, word.length - 1);
+  }
+  if (word.endsWith('s')) {
+    return word.substring(0, word.length - 1);
+  }
+  return word;
 }
 
 /// Whether the normalized item is water/ice (skip FDC, contribute zeros).

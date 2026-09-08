@@ -112,7 +112,8 @@ void main() {
         (line) => normalizeItem(line.item ?? line.raw) == 'red pepper flakes',
       );
       expect(flakes.description, 'Spices, pepper, red or cayenne');
-      expect(flakes.itemKey, 'red pepper flakes', reason: 'identity stays');
+      // The KEY is singular; the identity words stay (the query is not).
+      expect(flakes.itemKey, 'red pepper flake');
       expect(flakes.status, 'auto');
 
       final liqueur = rowWhere(

@@ -1110,6 +1110,67 @@ margin**; every scoped list re-provides its scope inside the `proxyDecorator`;
 and an optimistic local list reorders synchronously so the drop frame already
 shows the new order.
 
+### Nutrition: decisions get a home, keys go singular (2026-09-02 → 2026-09-07)
+
+A run of nutrition work, each commit dual-fleet reviewed (RUNLOG Runs 032–036):
+
+- **Bulk scopes** (`7f6afc2`, `bbd4710`): `POST /nutrition/bulk` takes
+  `missing` (default) / `stale` / `all`; `GET /nutrition/bulk/counts`. Staleness
+  is DERIVED by hashing every computed recipe (~110–190 ms for 1,198) — the
+  stored `status` column never holds `stale` and timestamps cannot be trusted
+  (see the staleness-traps note in the decision log).
+- **Cross-recipe reuse, R1** (`88101b1`, `753662d`, `7219e67`, `7cf9be9`):
+  migration 009 adds `ingredient_matches.item_key` (backfilled at boot under
+  the `backfill.item_key` marker); a new line inherits a decided sibling's food
+  as `auto` at confidence 1 (an engine write, so a later decision on the line
+  wins); `apply_to_all` on the match PUT lands a decision on every other
+  undecided line of the item and answers `applied {recipes, lines, failed}`;
+  the app offers it after a decision (approved mockup `r1-apply-to-all.html`).
+- **Matcher** (`1e95f39`, `2f31130`): pepper is a spice and brand liqueurs are
+  liqueur (a query-rewrite table keyed by normalized items — every key is
+  pinned reachable); an amount-less salt/pepper line is confirmed as zero
+  ("Seasoning to taste"); a weak match with no amount is `check`, not
+  `no_grams`; the sheet explains a zeroed line.
+- **Search-cache visibility** (`c8519df`, `6bd06d3`, `9646dbc`): every matches
+  line carries `candidates_query` and `candidates_cached_at`; the admin search
+  answers `query`/`cached`/`cached_at`; `fresh=true` bypasses and replaces the
+  cache row — but a live answer with NO hits never evicts a stored one that had
+  some (an empty row is a cache hit and the cache never expires).
+- **Survey 2026-09-04** (9 read-only agents over the corpus + a DB copy): the
+  library has never been swept (8 of 1,198 computed), decisions were keyed by
+  position and lost on edit (reproduced), and a class of confident wrong-mass
+  rows never reaches review (scallions as onions, frying oil, bone-in gross
+  weights). Full backlog in memory; the user chose the order.
+- **Design review D3 (2026-09-07)**: an "ingredient dictionary" proposal was
+  attacked by 7 lenses and REJECTED for a smaller design — the one built here:
+  - **Migration 010 `ingredient_decisions`**: a human food decision (a pick, or
+    a confirm of a food — never a grams-only edit, never a skip) gets a row of
+    its own keyed by the ingredient, written at the match PUT and consulted
+    first by the compute. It outlives the recipe and the line it was made on
+    (before, every other line BORROWED it from that row). Human-only, not
+    seeded (test data only at the time); `item` keeps the parsed text so a
+    matcher change re-keys the row at boot (`services/decision_rekey.dart`,
+    marker `decisions.matcher_version`).
+  - **Decisions follow their lines**: `matchAndCompute` re-attaches a decided
+    row to the position whose line carries its text (a per-text LIST — 80
+    corpus recipes repeat a line — nth line keeps the nth row); an amount edit
+    on a decided line keeps the food and status and re-derives the grams (a
+    hand-typed weight for the old amount is dropped); a skip stays a skip.
+  - **`matcherVersion`** (`matcher.dart`) is part of `ingredientsHashOf`, so a
+    bump makes every computed recipe `stale` and the stale sweep re-resolves
+    engine rows (decisions kept). A bump spends FDC only on keys whose
+    rewritten query text changed — pinned: a fully cached recompute makes 0
+    provider calls. The CI-visible hash literal must be updated with each bump.
+  - **Keys are singular, the query is not**: `itemKeyFor` (decision/reuse
+    key: "onion"/"onions" are one ingredient — 66 pairs, 2,036 corpus lines)
+    vs `normalizeItem` (the FDC query, the line's own words — so no cached
+    answer is invalidated and ranking is unchanged). Accents fold
+    (jalapeño → jalapeno, 65 lines); canned "crushed/diced tomatoes" keep their
+    form word (51 canned lines had merged with 9 fresh under "tomatoes"). The
+    item-key backfill re-runs whenever its marker is not the current version.
+  - Measured on the corpus before building: 1,840 query forms → 1,778 keys;
+    62 keys merge >1 form, all genuine plural pairs, 0 false merges.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
@@ -1416,3 +1477,15 @@ shows the new order.
   error-envelope decoder. Ranged parenthetical weights resolving to the
   upper bound was ruled INTENDED (won't fix). Suites: 196/491/210 green
   with corpus (baseline 192/473/201).
+- 2026-09-07 — Ingredient decisions (user): build the human-only
+  `ingredient_decisions` table (design review D3's third design), NOT the
+  full dictionary; no seed (only test data existed); the review queue will
+  group by ingredient by default for the food buckets with a lines view behind
+  a toggle for amount problems, a group opening the EXISTING fix panel on its
+  example line with apply-to-all spreading (mockup first); fix canned
+  "tomatoes" and fold plural keys BEFORE the first library sweep. The first
+  sweep runs on a database COPY with the real key to baseline the buckets.
+- 2026-09-07 — Evidence-gated reviews stay at Find effort `high` (user);
+  Run 036 measured `xhigh` as not a superset for either model. Every review
+  runs a Sonnet fleet then an Opus fleet and the RUNLOG records the nature of
+  each fleet's catches; the user reviews the accumulated log later.

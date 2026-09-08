@@ -304,4 +304,26 @@ WHERE json_extract(doc, '$.subsections') IS NOT NULL
     'ALTER TABLE ingredient_matches ADD COLUMN item_key TEXT',
     'CREATE INDEX idx_matches_item_key ON ingredient_matches(item_key)',
   ],
+
+  // 010 — a human food decision gets a row of its own, keyed by the
+  // ingredient (design review D3, 2026-09-07). Before this a decision lived
+  // only on the line it was made on and every other line BORROWED it, so
+  // deleting that recipe or editing that line's amount silently reverted
+  // every borrower at its next compute. `item` is the parsed text the key
+  // was derived from, so a matcher change can re-derive the key at boot
+  // (services/decision_rekey.dart). Not seeded: the table fills as
+  // decisions are made. Human-only — the engine never writes it.
+  [
+    '''
+CREATE TABLE ingredient_decisions (
+  item_key TEXT PRIMARY KEY CHECK(item_key <> ''),
+  item TEXT NOT NULL,
+  fdc_id INTEGER,
+  description TEXT,
+  data_type TEXT,
+  decided_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  decided_at TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID
+''',
+  ],
 ];

@@ -87,6 +87,51 @@ void main() {
       expect(searchQueryFor('without salt butter'), 'without salt butter');
     });
 
+    test('accents fold: jalapeño searches jalapeno, not "jalape o"', () {
+      // 65 corpus lines carry ñ/è/î/ç; the split treated them as
+      // punctuation and sent an orphan letter to FDC.
+      expect(normalizeItem('jalapeño chiles'), 'jalapeno chiles');
+      expect(normalizeItem('Gruyère cheese'), 'gruyere cheese');
+      expect(normalizeItem('crème fraîche'), 'creme fraiche');
+    });
+
+    test('canned crushed/diced tomatoes keep their form word; prep words '
+        'elsewhere are still dropped', () {
+      // 51 canned lines folded into 9 fresh ones under 'tomatoes'.
+      expect(normalizeItem('(14.5-ounce) diced tomatoes'), 'diced tomatoes');
+      expect(normalizeItem('(28-ounce) crushed tomatoes'), 'crushed tomatoes');
+      expect(normalizeItem('tomatoes, cored'), 'tomatoes');
+      expect(normalizeItem('diced avocado'), 'avocado');
+      // The spice rewrite stays reachable: 'crushed' is prep here.
+      expect(
+        searchQueryFor(normalizeItem('crushed red pepper flakes')),
+        'spices pepper red cayenne',
+      );
+    });
+
+    test('the decision key is singular per word; the query is not', () {
+      // 66 plural pairs (2,036 corpus lines) become one ingredient each,
+      // while the FDC query keeps the line's own words so nothing cached
+      // is invalidated.
+      expect(itemKeyFor('garlic cloves'), 'garlic clove');
+      expect(itemKeyFor('garlic clove'), 'garlic clove');
+      expect(normalizeItem('garlic cloves'), 'garlic cloves');
+      // The parser hands the ITEM ('onions'), never the amount.
+      expect(itemKeyFor('onions'), itemKeyFor('onion'));
+      expect(itemKeyFor('bay leaves'), 'bay leaf');
+      expect(itemKeyFor('russet potatoes'), 'russet potato');
+      expect(itemKeyFor('radishes'), 'radish');
+      expect(itemKeyFor('anchovies'), 'anchovy');
+      expect(itemKeyFor('scallions'), itemKeyFor('green onion'));
+      expect(itemKeyFor('diced tomatoes'), 'diced tomato');
+      expect(itemKeyFor('tomatoes'), 'tomato', reason: 'a different key');
+      // Singular words that end in s stay whole.
+      for (final word in ['asparagus', 'molasses', 'hummus', 'couscous']) {
+        expect(itemKeyFor(word), word);
+      }
+      expect(itemKeyFor(''), '');
+    });
+
     test('every rewrite key and seasoning item is a normalized form the '
         'normalizer actually produces', () {
       // A key the normalizer rewrites first can never be looked up: the

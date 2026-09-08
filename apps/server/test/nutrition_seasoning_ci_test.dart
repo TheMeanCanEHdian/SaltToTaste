@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
+import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/services/legacy_import.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
@@ -47,6 +48,26 @@ void main() {
         .recipe;
     await matchAndCompute(db, FixtureProvider(), recipe);
   });
+
+  test('the staleness hash carries the matcher version, so a bump makes '
+      'every computed recipe stale (update the literal with the bump)', () {
+    expect(matcherVersion, 2);
+    expect(
+      ingredientsHashOf(recipe),
+      '34a93c56fa4cfe0d18ae1aa7b718d086504638b6337763c0c9f5e4bf72cacc59',
+    );
+  });
+
+  test(
+    'a recompute whose queries are all cached spends no FDC request — '
+    'the stale sweep after a version bump is free for unchanged words',
+    () async {
+      final provider = FixtureProvider();
+      await matchAndCompute(db, provider, recipe);
+      expect(provider.searchCalls, 0);
+      expect(provider.foodCalls, 0);
+    },
+  );
 
   tearDownAll(() {
     db.dispose();
