@@ -78,6 +78,34 @@ Future<void> matchAndCompute(
       decidedByRaw.putIfAbsent(row.raw, () => []).add(row);
     }
   }
+  // Decided rows whose exact text is GONE from the recipe: the line was
+  // edited (an amount changed), possibly moved too. Such a row may be
+  // re-attached by ingredient key — but only when the recipe still holds
+  // as many lines of that ingredient as it held rows, i.e. an edit, not a
+  // delete-and-add. Never by position alone: after a shift the row at a
+  // line's old position can belong to a DIFFERENT line of the same
+  // ingredient, and a skip copied onto it would silently drop that line
+  // from the label (review, 2026-09-07).
+  final newRaws = {for (final line in lines) line.raw};
+  final orphansByKey = <String, List<IngredientMatchRow>>{};
+  final oldKeyCounts = <String, int>{};
+  for (final row in existingRows) {
+    final rowKey = row.itemKey;
+    if (rowKey == null || rowKey.isEmpty) {
+      continue;
+    }
+    oldKeyCounts.update(rowKey, (n) => n + 1, ifAbsent: () => 1);
+    if (_isDecided(row) && !newRaws.contains(row.raw)) {
+      orphansByKey.putIfAbsent(rowKey, () => []).add(row);
+    }
+  }
+  final newKeyCounts = <String, int>{};
+  for (final line in lines) {
+    final lineKey = itemKeyFor(line.item ?? line.raw);
+    if (lineKey.isNotEmpty) {
+      newKeyCounts.update(lineKey, (n) => n + 1, ifAbsent: () => 1);
+    }
+  }
 
   for (final (position, line) in lines.indexed) {
     final kept = existing[position];
@@ -108,20 +136,26 @@ Future<void> matchAndCompute(
       continue;
     }
 
-    // The line's own decided row, with the amount changed but the same
-    // ingredient: the food and the status stand, the grams are re-derived
-    // for the new amount (a weight typed for the old amount no longer
-    // applies); a skip stays a skip.
-    if (kept != null &&
-        _isDecided(kept) &&
-        key.isNotEmpty &&
-        kept.itemKey == key) {
-      if (kept.status == 'skipped') {
-        db.upsertIngredientMatchIfUndecided(kept.copyWith(raw: line.raw));
+    // A decided line whose amount was edited (and possibly moved): its
+    // text is gone, but the recipe still holds the same number of lines of
+    // that ingredient. The food and the status stand, the grams are
+    // re-derived for the new amount (a weight typed for the old amount no
+    // longer applies); a skip stays a skip.
+    // (A decided row kept at THIS position cannot be this line's own — a
+    // same-text row was kept above — so it never blocks a re-attachment.)
+    final orphans = orphansByKey[key];
+    if (orphans != null &&
+        orphans.isNotEmpty &&
+        oldKeyCounts[key] == newKeyCounts[key]) {
+      final edited = orphans.removeAt(0);
+      if (edited.status == 'skipped') {
+        db.upsertIngredientMatchIfUndecided(
+          edited.copyWith(position: position, raw: line.raw, itemKey: key),
+        );
         continue;
       }
-      if (kept.fdcId != null) {
-        final food = await _cachedFood(db, provider, kept.fdcId!);
+      if (edited.fdcId != null) {
+        final food = await _cachedFood(db, provider, edited.fdcId!);
         if (food != null) {
           final resolution = resolveGrams(
             amounts: line.amounts,
@@ -130,8 +164,10 @@ Future<void> matchAndCompute(
             raw: line.raw,
           );
           db.upsertIngredientMatchIfUndecided(
-            kept.copyWith(
+            edited.copyWith(
+              position: position,
               raw: line.raw,
+              itemKey: key,
               grams: resolution?.grams,
               clearGrams: resolution == null,
               gramSource: resolution?.source.name,
@@ -648,7 +684,8 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
         final resolution = resolveGrams(
           amounts: line.amounts,
           food: food,
-          normalizedItem: itemKey,
+          // The grams tables match on the line's own words, not the key.
+          normalizedItem: normalizeItem(line.item ?? line.raw),
           raw: line.raw,
         );
         final written = db.upsertIngredientMatchIfUndecided(

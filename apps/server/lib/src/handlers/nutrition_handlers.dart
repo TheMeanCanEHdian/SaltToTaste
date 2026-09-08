@@ -228,6 +228,17 @@ Future<AppliedToOthers?> applyMatchOverride(
   final fdcId = body['fdc_id'];
   final grams = body['grams'];
 
+  // One verb at a time: `skipped` together with a food verb would let the
+  // status chain drop the food (skip wins) while the decision below still
+  // fired on the request — recording the engine's own guess as a person's
+  // decision, library-wide. Refuse rather than guess (review, 2026-09-07).
+  if (skipped != null && (fdcId != null || confirmed != null)) {
+    throw const ValidationException(
+      "'skipped' cannot be combined with 'fdc_id' or 'confirmed'.",
+    );
+  }
+  // Set only by the branches that PUT a food on the row in this request.
+  var decidedFood = false;
   if (skipped == true) {
     row = row.copyWith(status: 'skipped');
   } else if (skipped == false) {
@@ -262,8 +273,10 @@ Future<AppliedToOthers?> applyMatchOverride(
       clearGramSource: resolution == null,
       status: 'overridden',
     );
+    decidedFood = true;
   } else if (confirmed == true) {
     row = row.copyWith(status: 'confirmed');
+    decidedFood = row.fdcId != null;
   }
 
   if (grams != null) {
@@ -299,7 +312,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     // confirm. A grams-only edit promotes the engine's own guess to
     // `overridden` on this line, and broadcasting that guess as if a person
     // had chosen the food is exactly what the gate exists to refuse.
-    if (row.fdcId == null || (fdcId == null && confirmed != true)) {
+    if (!decidedFood) {
       throw const ValidationException(
         "'apply_to_all' needs a food decision in this request — pick a food "
         '(fdc_id) or confirm the current one.',
@@ -324,9 +337,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   // lines borrowed it from this row and lost it with it). A grams-only edit
   // decides the amount, not the food, and writes nothing; neither does a
   // skip. The same gate apply_to_all uses.
-  if (row.fdcId != null &&
-      (fdcId != null || confirmed == true) &&
-      itemKey.isNotEmpty) {
+  if (decidedFood && itemKey.isNotEmpty) {
     db.putDecision(
       itemKey: itemKey,
       item: line.item ?? line.raw,

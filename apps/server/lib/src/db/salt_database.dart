@@ -1023,12 +1023,21 @@ class SaltDatabase {
     return [for (final row in rows) IngredientDecisionRow.fromRow(row)];
   }
 
-  /// Moves a decision to a new key (the matcher re-derived it). The caller
-  /// has checked that [newKey] is free.
-  void renameDecision(String oldKey, String newKey) {
+  /// Inserts a decision row as it is, stamps included (the re-key pass
+  /// moving a row to its re-derived key). The caller has freed [row.itemKey].
+  void insertDecision(IngredientDecisionRow row) {
     _prepared(
-      'UPDATE ingredient_decisions SET item_key = ? WHERE item_key = ?',
-    ).execute([newKey, oldKey]);
+      'INSERT INTO ingredient_decisions (item_key, item, fdc_id, description, '
+      'data_type, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ).execute([
+      row.itemKey,
+      row.item,
+      row.fdcId,
+      row.description,
+      row.dataType,
+      row.decidedBy,
+      row.decidedAt,
+    ]);
   }
 
   /// Recipe ids that have any match row (the key re-derivation's scan).

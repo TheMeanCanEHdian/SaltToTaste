@@ -28,6 +28,7 @@ void main() {
     late FixtureProvider provider;
     late Recipe bundt;
     late Recipe acquacotta;
+    late Recipe brownies;
 
     setUpAll(() async {
       tempDir = Directory.systemTemp.createTempSync('salt-carry-test');
@@ -43,6 +44,7 @@ void main() {
       for (final name in [
         '0857-rich-chocolate-bundt-cake.yaml',
         '0405-acquacotta-tuscan-white-bean-and-escarole-soup.yaml',
+        '0846-cream-cheese-brownies.yaml',
       ]) {
         File(
           '$corpusRecipesDir/$name',
@@ -54,7 +56,8 @@ void main() {
       acquacotta = db
           .recipeByIdOrSlug('acquacotta-tuscan-white-bean-and-escarole-soup')!
           .recipe;
-      for (final recipe in [bundt, acquacotta]) {
+      brownies = db.recipeByIdOrSlug('cream-cheese-brownies')!.recipe;
+      for (final recipe in [bundt, acquacotta, brownies]) {
         await matchAndCompute(db, provider, recipe);
       }
     });
@@ -228,6 +231,63 @@ void main() {
         expect(after.fdcId, eggsAlt);
         expect(after.grams, closeTo(before.grams! * 7 / 5, 0.01));
         expect(after.gramSource, isNot('override'), reason: 'typed for 6');
+      },
+    );
+
+    test(
+      'a decided line moved AND amount-edited in one save keeps its '
+      'decision (Sonnet fleet, 2026-09-07)',
+      () async {
+        final position = positionOf(bundt, 'baking soda');
+        expect(rowAt(bundt, position).status, 'skipped');
+        final lines = [...nutritionLines(bundt)];
+        final soda = lines.removeAt(position);
+        lines.add(lineFrom(soda.raw.replaceFirst(RegExp(r'^\S+'), '3')));
+        bundt = await store(bundt, lines);
+        final moved = positionOf(bundt, 'baking soda');
+        expect(moved, lines.length - 1);
+        expect(rowAt(bundt, moved).status, 'skipped');
+        expect(rowAt(bundt, moved).raw, startsWith('3 '));
+      },
+    );
+
+    test(
+      'a decision never leaks onto a DIFFERENT line of the same ingredient '
+      'when lines shift (Opus fleet, 2026-09-07)',
+      () async {
+        // Two adjacent all-purpose-flour lines: a dusting tablespoon and the
+        // ⅔ cup the batter needs. Skip only the tablespoon, then delete an
+        // unrelated line above both.
+        final flours = positionsOf(brownies, 'all-purpose flour');
+        expect(flours, hasLength(2));
+        final tablespoon = flours.firstWhere(
+          (p) => nutritionLines(brownies)[p].raw.startsWith('1 tablespoon'),
+        );
+        final cup = flours.firstWhere((p) => p != tablespoon);
+        await applyMatchOverride(db, provider, brownies, tablespoon, {
+          'skipped': true,
+        });
+        brownies = await store(brownies, nutritionLines(brownies).sublist(1));
+        final after = positionsOf(brownies, 'all-purpose flour');
+        expect(after, [tablespoon - 1, cup - 1]);
+        expect(rowAt(brownies, tablespoon - 1).status, 'skipped');
+        expect(rowAt(brownies, cup - 1).status, isNot('skipped'));
+      },
+    );
+
+    test(
+      'deleting a decided line outright does not hand its decision to the '
+      'surviving line of the same ingredient',
+      () async {
+        final flours = positionsOf(brownies, 'all-purpose flour');
+        final tablespoon = flours.firstWhere(
+          (p) => nutritionLines(brownies)[p].raw.startsWith('1 tablespoon'),
+        );
+        expect(rowAt(brownies, tablespoon).status, 'skipped');
+        final lines = [...nutritionLines(brownies)]..removeAt(tablespoon);
+        brownies = await store(brownies, lines);
+        final survivor = positionOf(brownies, 'all-purpose flour');
+        expect(rowAt(brownies, survivor).status, isNot('skipped'));
       },
     );
 

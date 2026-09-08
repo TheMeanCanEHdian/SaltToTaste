@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
@@ -200,6 +201,29 @@ void main() {
       },
     );
 
+    test(
+      'a body mixing `skipped` with a food verb is refused and writes '
+      'nothing — the gate keys on what landed, not on the request',
+      () async {
+        final position = positionOf(pancakes, 'baking soda');
+        final before = rowAt(pancakes, position);
+        expect(db.decisionFor('baking soda'), isNull);
+        for (final body in [
+          {'skipped': true, 'confirmed': true},
+          {'skipped': false, 'fdc_id': before.fdcId},
+          {'skipped': true, 'fdc_id': before.fdcId, 'apply_to_all': true},
+        ]) {
+          await expectLater(
+            applyMatchOverride(db, provider, pancakes, position, body),
+            throwsA(isA<ValidationException>()),
+            reason: '$body',
+          );
+        }
+        expect(db.decisionFor('baking soda'), isNull);
+        expect(rowAt(pancakes, position).status, before.status);
+      },
+    );
+
     test('a decision with no food is not inherited', () async {
       db.putDecision(
         itemKey: 'baking soda',
@@ -256,6 +280,32 @@ void main() {
         expect(db.decisionFor('onion')!.description, 'newer');
         expect(db.getSetting(decisionRekeySetting), '$matcherVersion');
         expect(rekeyDecisions(db), 0, reason: 'guarded by the marker');
+
+        // A chain: X moves INTO the key Y is moving OUT of. Collisions are
+        // judged on final keys, so nothing is lost (Opus fleet, 2026-09-07).
+        db
+          ..deleteDecision('onion')
+          ..putDecision(
+            itemKey: 'stale-key-for-eggs',
+            item: 'eggs',
+            fdcId: eggsAlt,
+            description: 'X',
+            dataType: 'SR Legacy',
+            decidedBy: null,
+          )
+          ..putDecision(
+            itemKey: 'egg',
+            item: 'onions',
+            fdcId: eggsAlt,
+            description: 'Y',
+            dataType: 'SR Legacy',
+            decidedBy: null,
+          )
+          ..setSetting(decisionRekeySetting, '1');
+        expect(rekeyDecisions(db), 2, reason: 'both moved, none dropped');
+        expect(db.decisionFor('egg')!.description, 'X');
+        expect(db.decisionFor('onion')!.description, 'Y');
+        expect(db.decisionFor('stale-key-for-eggs'), isNull);
       },
     );
 
