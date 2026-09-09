@@ -92,10 +92,10 @@ class ApplyToAllStrip extends StatelessWidget {
         size: 17,
         color: applying ? SaltColors.muted : SaltColors.maroon,
       );
-      // The decision kept this line's food, so the other lines are not on a
-      // different match — they are the ones this decision has yet to reach,
-      // and the unit that matters is lines (a recipe can hold several).
-      final unit = o.keptFood ? _lines(o.lines) : _recipes(o.others);
+      // The reach is food-agnostic: the others are not "on a different
+      // match", they are the lines this decision has yet to reach — and the
+      // unit that matters is lines (a recipe can hold several).
+      final unit = _lines(o.lines);
       text = applying
           ? Text.rich(
               TextSpan(
@@ -109,33 +109,19 @@ class ApplyToAllStrip extends StatelessWidget {
             )
           : Text.rich(
               TextSpan(
-                children: o.keptFood
-                    ? [
-                        TextSpan(
-                          text: o.lines == 1
-                              ? '1 other line'
-                              : '${o.lines} other lines',
-                          style: bold,
-                        ),
-                        const TextSpan(text: ' of '),
-                        TextSpan(text: o.label, style: bold),
-                        TextSpan(text: ', in ${_recipes(o.others)}, '),
-                        TextSpan(text: o.lines == 1 ? 'is' : 'are'),
-                        const TextSpan(
-                          text: ' still waiting on this decision.',
-                        ),
-                      ]
-                    : [
-                        TextSpan(
-                          text: o.others == 1
-                              ? '1 other recipe'
-                              : '${o.others} other recipes',
-                          style: bold,
-                        ),
-                        TextSpan(text: o.others == 1 ? ' uses ' : ' use '),
-                        TextSpan(text: o.label, style: bold),
-                        const TextSpan(text: ' with a different match.'),
-                      ],
+                children: [
+                  TextSpan(
+                    text: o.lines == 1
+                        ? '1 other line'
+                        : '${o.lines} other lines',
+                    style: bold,
+                  ),
+                  const TextSpan(text: ' of '),
+                  TextSpan(text: o.label, style: bold),
+                  TextSpan(text: ', in ${_recipes(o.others)}, '),
+                  TextSpan(text: o.lines == 1 ? 'is' : 'are'),
+                  const TextSpan(text: ' still waiting on this decision.'),
+                ],
               ),
               style: const TextStyle(fontSize: 13),
             );

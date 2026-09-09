@@ -465,20 +465,22 @@ void main() {
           grams: null,
           others: 41,
           lines: 41,
-          keptFood: false,
         ),
       ),
     );
     await open(tester, seeded: cubit);
-    expect(find.text('Apply to 41 recipes'), findsOneWidget);
-    expect(find.textContaining('with a different match.'), findsOneWidget);
+    expect(find.text('Apply to 41 lines'), findsOneWidget);
+    expect(
+      find.textContaining('still waiting on this decision.'),
+      findsOneWidget,
+    );
     expect(find.text('Not now'), findsOneWidget);
 
-    await tester.tap(find.text('Apply to 41 recipes'));
+    await tester.tap(find.text('Apply to 41 lines'));
     await tester.pumpAndSettle();
 
     expect(cubit.applies, 1);
-    expect(find.text('Apply to 41 recipes'), findsNothing);
+    expect(find.text('Apply to 41 lines'), findsNothing);
     expect(find.textContaining('Applied to '), findsOneWidget);
     expect(find.textContaining('41 recipes'), findsOneWidget);
     expect(find.textContaining('44 lines'), findsOneWidget);
@@ -503,9 +505,8 @@ void main() {
           confirmed: true,
           grams: null,
           others: 3,
-          // A confirm keeps the food, so the strip counts LINES.
+          // A recipe can hold several lines of one ingredient.
           lines: 4,
-          keptFood: true,
         ),
       ),
     );
@@ -763,7 +764,10 @@ void main() {
 
   testWidgets('no offer, no strip; a member never sees one', (tester) async {
     await open(tester, seeded: _ApplyCubit(_state()));
-    expect(find.textContaining('with a different match.'), findsNothing);
+    expect(
+      find.textContaining('still waiting on this decision.'),
+      findsNothing,
+    );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
     await open(
@@ -779,11 +783,10 @@ void main() {
             grams: null,
             others: 41,
             lines: 41,
-            keptFood: false,
           ),
         ),
       ),
     );
-    expect(find.text('Apply to 41 recipes'), findsNothing);
+    expect(find.text('Apply to 41 lines'), findsNothing);
   });
 }

@@ -631,10 +631,12 @@ Future<FdcFood?> cachedFood(
 /// recipes, and the same recipe's other lines), each with grams from its own
 /// amounts, then recomputes those recipes' totals.
 ///
-/// A line already on that food as a low-confidence guess is a target too:
-/// rewritten at confidence 1 it leaves the `check` bucket, which is what a
-/// confirm on a group whose siblings share the engine's pick is for. A line
-/// already on that food at confidence 1 carries the decision and is skipped.
+/// A line already on that food is a target only while its score is below
+/// [lowConfidence] — the flagged threshold: rewritten at confidence 1 it
+/// leaves the `check` bucket, which is what a confirm on a group whose
+/// siblings share the engine's pick is for. A sibling already on that food
+/// at or above the threshold is counted (or short only an amount) and is
+/// skipped: it waits on nothing this decision can give it.
 ///
 /// The rows are written as `auto` at confidence 1 — machine propagation of
 /// a human decision, exactly like inheritance at compute time — NOT as a
@@ -663,6 +665,7 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
     itemKey,
     excluding: excluding,
     fdcId: food.fdcId,
+    belowConfidence: lowConfidence,
   )) {
     byRecipe.putIfAbsent(target.recipeId, () => []).add(target);
   }

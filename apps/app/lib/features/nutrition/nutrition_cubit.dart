@@ -10,10 +10,9 @@ import 'package:salt_app/core/api/recipe_repository.dart'
 /// undecided line of the same ingredient item: what to resend (the pick, or
 /// the confirm), and how many recipes and lines it would change.
 ///
-/// [keptFood] says which sentence the strip tells: the decision left the line
-/// on the food it already had (a confirm, or re-picking the same food), so the
-/// other lines are not on a *different* match — they are waiting for this
-/// decision to reach them.
+/// The reach is food-agnostic: the others are the undecided lines of this
+/// ingredient, whatever food they happen to sit on — so the strip tells one
+/// sentence, about lines waiting on this decision.
 typedef ApplyOffer = ({
   int position,
   String label,
@@ -22,7 +21,6 @@ typedef ApplyOffer = ({
   double? grams,
   int others,
   int lines,
-  bool keptFood,
 });
 
 /// The receipt of an apply-to-all, shown in place of the offer.
@@ -315,15 +313,6 @@ class NutritionCubit extends Cubit<NutritionState> {
     if (state.overridingPosition != null) {
       return;
     }
-    // The food this line was on BEFORE the write, so the offer can tell
-    // "kept this food" (a confirm, or the same pick again) from "changed it".
-    int? previousFdcId;
-    for (final m in state.matches ?? const <IngredientMatch>[]) {
-      if (m.position == position) {
-        previousFdcId = m.fdcId;
-        break;
-      }
-    }
     emit(state.copyWith(overridingPosition: position, clearError: true));
     final MatchOverrideResult result;
     try {
@@ -370,8 +359,6 @@ class NutritionCubit extends Cubit<NutritionState> {
             grams: grams,
             others: row.others,
             lines: row.othersLines,
-            keptFood:
-                confirmed == true || (fdcId != null && fdcId == previousFdcId),
           )
         : null;
     // The PUT persisted: show its fresh match list even if the label

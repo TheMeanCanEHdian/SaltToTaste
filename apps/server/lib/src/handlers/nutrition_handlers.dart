@@ -118,14 +118,17 @@ Future<Map<String, Object?>> matchesBody(
         : await candidatesForLine(db, provider, line, cacheOnly: true);
     final itemKey = itemKeyFor(line.item ?? line.raw);
     // How far an apply-to-all from this line would reach: the undecided lines
-    // of the same ingredient, in recipes and in lines. Food-agnostic — a
-    // sibling already on this food is still waiting to be blessed.
+    // of the same ingredient, in recipes and in lines — a sibling on another
+    // food at any score, a sibling on THIS food only while it is still a
+    // flagged guess (below `lowConfidence`); one already counted waits on
+    // nothing this decision can give it.
     final reach = itemKey.isEmpty
         ? (recipes: 0, lines: 0)
         : db.otherRecipesUndecidedCount(
             itemKey,
             excluding: (recipeId: recipe.id, position: position),
             fdcId: row?.fdcId,
+            belowConfidence: lowConfidence,
           );
     // The KEY (singular) joins decisions; the QUERY keeps the line's words.
     final query = itemKey.isEmpty

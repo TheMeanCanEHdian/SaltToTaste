@@ -1313,6 +1313,24 @@ pre-fix sweep for the live data) was approved with all six recommendations.
   decisions): no group-scoped Skip, no inline member list (the Lines toggle
   is the member view), chips never count ingredients.
 
+Review fixes (Run 039, both fleets on `c7d811e`): the reach stops at the
+flagged threshold — a same-food sibling counts (and is rewritten) only while
+it is a guess below `lowConfidence`; a counted 0.92 line is not "waiting" on
+anything, and at corpus scale the old rule would have rewritten 302 flour
+lines inside one PUT. A decided row (overridden without an amount, skipped)
+is a group of one, never part of an ingredient's reach, so the pill is exact
+in the food buckets. The strip has ONE sentence ("N other lines of X, in M
+recipes, are still waiting on this decision") — the old "with a different
+match" became false once the count was food-agnostic — and `keptFood` is
+gone. A failed toggle restores the per-bucket memory and leaves the paging
+cursor alone; the "Confirm as-is is unavailable" warning follows the EXAMPLE
+line's grams, which is what gates the button. Five pins were missing (the
+example rule's confidence/title/position clauses, the key tie-break in the
+ORDER BY, the stale-line guard on `item`, grouped paging, the Skipped
+guard); eleven mutants now die. The title tie-break is pinned on the corpus's
+two "Chicken Francese" recipes, which share a title and differ only in
+position.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

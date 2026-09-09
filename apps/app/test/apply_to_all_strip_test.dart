@@ -39,7 +39,6 @@ void main() {
     grams: null,
     others: 41,
     lines: 41,
-    keptFood: false,
   );
 
   Future<void> pumpAt(
@@ -69,7 +68,6 @@ void main() {
                 grams: offer.grams,
                 others: others,
                 lines: others,
-                keptFood: false,
               ),
               applied: null,
               applying: false,
@@ -89,9 +87,9 @@ void main() {
     expect(find.text('Not now'), findsOneWidget);
   });
 
-  /// The kept-food strip: a confirm (or the same pick again) on a group's
-  /// example line, sized by the group's other lines. Real numbers from the
-  /// approved mockup's jalapeno chile group (5 lines, 5 recipes).
+  /// The strip, sized by the group's other lines — the one sentence it
+  /// tells. Real numbers from the approved mockup's jalapeno chile group
+  /// (5 lines, 5 recipes).
   Future<void> pumpKept(
     WidgetTester tester, {
     required int lines,
@@ -119,7 +117,6 @@ void main() {
                 grams: null,
                 others: others,
                 lines: lines,
-                keptFood: true,
               ),
               applied: null,
               applying: applying,
@@ -133,7 +130,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a confirm says the other LINES are waiting on the decision', (
+  testWidgets('the strip says the other LINES are waiting on the decision', (
     tester,
   ) async {
     await pumpKept(tester, lines: 4, others: 4);
@@ -181,7 +178,7 @@ void main() {
       var dismissed = 0;
       await pumpAt(tester, width, onDismiss: () => dismissed++);
       expect(tester.takeException(), isNull, reason: 'no overflow');
-      expect(find.text('Apply to 41 recipes'), findsOneWidget);
+      expect(find.text('Apply to 41 lines'), findsOneWidget);
       expect(find.text('Not now'), findsOneWidget);
       final notNow = tester.getRect(find.text('Not now'));
       expect(notNow.right, lessThanOrEqualTo(width), reason: 'on screen');

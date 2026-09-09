@@ -1051,50 +1051,66 @@ class SaltDatabase {
   /// Every UNDECIDED row (`auto` / `unmatched`) carrying [itemKey], on any
   /// line but [excluding] — the rows an apply-to-all would land on.
   ///
-  /// Food-agnostic on purpose: a row that already holds [fdcId] as a GUESS
-  /// (confidence below 1) is a target too. Rewritten as `auto` at confidence
-  /// 1 with grams from its own amounts, it leaves the `check` bucket — the
-  /// commonest shape in the queue (the engine's food is right and only the
-  /// score flagged it), and the whole reason a confirm on one line can clear
-  /// an ingredient's group. A row already on [fdcId] at confidence 1 carries
-  /// this decision already (propagated or inherited) and is not a target:
+  /// A row on a DIFFERENT food is a target whatever its score — the decision
+  /// changes its food. A row already on [fdcId] is a target only BELOW
+  /// [belowConfidence] (the flagged threshold): such a guess sits in `check`
+  /// and a confirm is what lifts it out, rewritten as `auto` at confidence 1
+  /// with grams from its own amounts. At or above it the row is already
+  /// counted (or missing only an amount) — it waits on nothing here, and
   /// rewriting it would change nothing but the receipt.
   List<IngredientMatchRow> undecidedMatchesForItemKey(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
     required int fdcId,
+    required double belowConfidence,
   }) {
-    final rows = _prepared(
-      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
-      'confidence, grams, gram_source, status, updated_at, item_key '
-      'FROM ingredient_matches WHERE item_key = ? '
-      'AND NOT (recipe_id = ? AND position = ?) '
-      "AND status IN ('auto', 'unmatched') "
-      'AND (COALESCE(fdc_id, -1) != ? OR confidence < 1) '
-      'ORDER BY recipe_id, position',
-    ).select([itemKey, excluding.recipeId, excluding.position, fdcId]);
+    final rows =
+        _prepared(
+          'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
+          'confidence, grams, gram_source, status, updated_at, item_key '
+          'FROM ingredient_matches WHERE item_key = ? '
+          'AND NOT (recipe_id = ? AND position = ?) '
+          "AND status IN ('auto', 'unmatched') "
+          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ?) '
+          'ORDER BY recipe_id, position',
+        ).select([
+          itemKey,
+          excluding.recipeId,
+          excluding.position,
+          fdcId,
+          fdcId,
+          belowConfidence,
+        ]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
   }
 
   /// How many recipes (and lines) hold an undecided line with [itemKey], any
   /// line but [excluding] — at most what an apply-to-all would reach; a row
   /// whose line text changed since its compute is counted here but skipped
-  /// there. Food-agnostic exactly like [undecidedMatchesForItemKey]: a row
-  /// already on [fdcId] at confidence 1 is not waiting on anything and is not
-  /// counted; with no [fdcId] (the line has no food yet) every undecided row
-  /// counts.
+  /// there. The same reach as [undecidedMatchesForItemKey]: a different food
+  /// at any score, this food only below [belowConfidence]; with no [fdcId]
+  /// (the line has no food yet) every undecided row counts.
   ({int recipes, int lines}) otherRecipesUndecidedCount(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
+    required double belowConfidence,
     int? fdcId,
   }) {
-    final rows = _prepared(
-      'SELECT COUNT(DISTINCT recipe_id) AS n, COUNT(*) AS lines '
-      'FROM ingredient_matches '
-      'WHERE item_key = ? AND NOT (recipe_id = ? AND position = ?) '
-      "AND status IN ('auto', 'unmatched') "
-      'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < 1)',
-    ).select([itemKey, excluding.recipeId, excluding.position, fdcId, fdcId]);
+    final rows =
+        _prepared(
+          'SELECT COUNT(DISTINCT recipe_id) AS n, COUNT(*) AS lines '
+          'FROM ingredient_matches '
+          'WHERE item_key = ? AND NOT (recipe_id = ? AND position = ?) '
+          "AND status IN ('auto', 'unmatched') "
+          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ?)',
+        ).select([
+          itemKey,
+          excluding.recipeId,
+          excluding.position,
+          fdcId,
+          fdcId,
+          belowConfidence,
+        ]);
     return (
       recipes: rows.first['n'] as int,
       lines: rows.first['lines'] as int,
@@ -1211,10 +1227,18 @@ class SaltDatabase {
   /// GROUPING KEY. A row whose `item_key` is null or empty is keyed by its own
   /// identity, so unkeyed rows stay groups of one instead of collapsing into
   /// a single bucket-sized "group" of everything the backfill has not keyed.
+  ///
+  /// So is a row a person already DECIDED (`overridden` / `confirmed` /
+  /// `skipped`): an apply-to-all reaches only undecided rows, so a decided
+  /// one can never be part of an ingredient's reach — an `overridden` row
+  /// with no grams is an amount problem on that one line. Keying it by its
+  /// own identity keeps the group's "N lines · M recipes" equal to what the
+  /// apply would land on, and draws that row as today's single line.
   static const String _reviewFlaggedCte =
       'WITH flagged AS (SELECT im.*, r.slug AS review_slug, '
       'r.title AS review_title, $_reviewBucketCase AS bucket, '
       "CASE WHEN im.item_key IS NULL OR im.item_key = '' "
+      "OR im.status NOT IN ('auto', 'unmatched') "
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
 
@@ -1264,7 +1288,7 @@ class SaltDatabase {
       'a.gmin, a.gmax, a.gmissing, a.worst_bucket, '
       '(d.item_key IS NOT NULL) AS decided '
       'FROM agg a JOIN example e ON e.gkey = a.gkey AND e.rn = 1 '
-      'LEFT JOIN ingredient_decisions d ON d.item_key = a.gkey '
+      'LEFT JOIN ingredient_decisions d ON d.item_key = e.item_key '
       'ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey '
       'LIMIT ? OFFSET ?',
     ).select([bucket, bucket, limit, offset]);

@@ -147,14 +147,31 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
     if (current is! NutritionReviewLoaded || current.grouped == grouped) {
       return;
     }
+    // The memory has to be set before the fetch (_reload reads it), so a
+    // failed fetch has to put it back: otherwise the toggle silently flips
+    // the memory and the NEXT reload (completeFix) switches the unit by
+    // itself. Failure is silent, as in filter() — nothing changed.
+    final previous = _groupedByBucket[current.bucket];
     _groupedByBucket[current.bucket] = grouped;
-    await _reload(current.bucket, selectIndex: 0);
+    try {
+      await _reload(current.bucket, selectIndex: 0);
+    } on RepositoryException {
+      if (previous == null) {
+        _groupedByBucket.remove(current.bucket);
+      } else {
+        _groupedByBucket[current.bucket] = previous;
+      }
+    }
   }
 
   /// One page-1 fetch in the current view, replacing the list. Throws
   /// [RepositoryException] — each caller decides what a failure looks like.
+  ///
+  /// The paging cursor moves only once the new list is on screen: reset before
+  /// the fetch, a failure would leave the cubit asking for page 1 again while
+  /// the state still holds page N, and every row of that reply would be
+  /// dropped by loadMore's dedupe — "load more" stuck for good.
   Future<void> _reload(String? bucket, {required int selectIndex}) async {
-    _nextPage = 1;
     final report = await _repository.getNutritionReview(
       page: 1,
       limit: pageSize,

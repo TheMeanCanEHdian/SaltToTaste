@@ -471,11 +471,24 @@ void main() {
     double? min,
     double? max,
     String bucket = 'no_grams',
+    double? exampleGrams,
   }) => NutritionReviewLine(
     recipe: const NutritionReviewRecipe(id: 'x', slug: 'x', title: 'X'),
     position: 0,
     raw: 'x',
     bucket: bucket,
+    // Confirm as-is is gated on the EXAMPLE line's own amount, so the row
+    // carries the example's match, not the aggregate.
+    match: exampleGrams == null
+        ? null
+        : NutritionReviewMatch(
+            fdcId: 173430,
+            description: 'Butter, without salt',
+            dataType: 'SR Legacy',
+            confidence: 0.4,
+            status: 'auto',
+            grams: exampleGrams,
+          ),
     lines: lines,
     recipes: lines,
     gramsMin: min,
@@ -510,5 +523,47 @@ void main() {
     );
     // A group of one has nothing to aggregate.
     expect(groupAmountLine(amountGroup(lines: 1, missing: 1)), isNull);
+  });
+
+  test('the Confirm warning follows the EXAMPLE line, not the aggregate', () {
+    // The unsalted-butter group: the tarte's amount-less line is the example
+    // (it is the lower-confidence member), the Bundt cake's carries its
+    // 170 g. The pane opens on the example, so Confirm as-is is gone even
+    // though the group has amounts — the aggregate alone never knew that.
+    final example = amountGroup(
+      lines: 2,
+      missing: 1,
+      min: 170.16649439999998,
+      max: 170.16649439999998,
+      bucket: 'check',
+    );
+    final warned = groupAmountLine(example)!;
+    expect(
+      warned.text,
+      'amounts 170–170 g · 1 of 2 lines have no amount — '
+      'Confirm as-is is unavailable',
+    );
+    expect(warned.warn, isTrue);
+
+    // The same group with the 170 g line as its example: the button is
+    // there, so there is nothing to warn about.
+    final fine = groupAmountLine(
+      amountGroup(
+        lines: 2,
+        missing: 1,
+        min: 170.16649439999998,
+        max: 170.16649439999998,
+        bucket: 'check',
+        exampleGrams: 170.16649439999998,
+      ),
+    )!;
+    expect(fine.text, 'amounts 170–170 g · 1 of 2 lines have no amount');
+    expect(fine.warn, isFalse);
+
+    // Outside `check` an amount-less example has no Confirm to lose.
+    final counted = groupAmountLine(
+      amountGroup(lines: 2, missing: 1, min: 170.2, max: 170.2),
+    )!;
+    expect(counted.warn, isFalse);
   });
 }

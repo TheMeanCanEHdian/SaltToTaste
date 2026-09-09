@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/features/admin/nutrition_review_cubit.dart';
+import 'package:salt_shared/salt_shared.dart';
+
+import '../../support/corpus.dart';
 
 /// One flagged line, as the server would emit it.
 Map<String, dynamic> _line(
@@ -106,6 +110,10 @@ class _FakeAdapter implements HttpClientAdapter {
   /// Every request, so a test can assert on the query the repository built.
   final List<Map<String, dynamic>> queries = [];
 
+  /// When set, the next fetch fails with a 500 envelope — the blip a toggle
+  /// or a page-2 request has to survive without changing what is on screen.
+  bool failNext = false;
+
   static const _flagged = {'no_match', 'no_grams', 'check'};
 
   @override
@@ -115,6 +123,22 @@ class _FakeAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     queries.add(options.queryParameters);
+    if (failNext) {
+      failNext = false;
+      return ResponseBody.fromString(
+        jsonEncode({
+          'error': {
+            'code': 'internal',
+            'message': 'the server fell over',
+            'request_id': 'req-test',
+          },
+        }),
+        500,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+    }
     final bucket = options.queryParameters['bucket'] as String?;
     final grouped = options.queryParameters['group'] == 'item';
     final page = int.parse(options.queryParameters['page'] as String? ?? '1');
@@ -253,6 +277,48 @@ void main() {
       item: 'gochujang',
     ),
   ];
+
+  /// One no-match line per distinct ingredient, drawn from the first corpus
+  /// recipes until there are [count] of them — the queue's page size is a
+  /// constant, so only real volume can exercise page 2.
+  List<Map<String, dynamic>> volumeSeed({int count = 51}) {
+    final files =
+        Directory(corpusRecipesDir)
+            .listSync()
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.yaml'))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
+    final rows = <Map<String, dynamic>>[];
+    final seen = <String>{};
+    for (final file in files) {
+      final recipe = RecipeYamlCodec.decode(file.readAsStringSync()).recipe;
+      var position = 0;
+      for (final group in recipe.ingredients) {
+        for (final line in group.items) {
+          final item = line.item;
+          final key = item?.toLowerCase();
+          if (key != null && seen.add(key) && rows.length < count) {
+            rows.add(
+              _line(
+                recipe.slug,
+                position,
+                'no_match',
+                itemKey: key,
+                item: item,
+                raw: line.raw,
+              ),
+            );
+          }
+          position += 1;
+        }
+      }
+      if (rows.length >= count) {
+        break;
+      }
+    }
+    return rows;
+  }
 
   NutritionReviewCubit cubitWith(_FakeAdapter adapter) {
     final dio = Dio(BaseOptions(baseUrl: 'http://test'))
@@ -489,5 +555,101 @@ void main() {
       expect(state.selectedKey, state.items.single.key);
       await cubit.close();
     });
+
+    test('a failed toggle changes nothing — not the view, and not the '
+        'memory the NEXT reload reads', () async {
+      final adapter = _FakeAdapter(corpusSeed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      await cubit.filter('no_grams'); // an amount bucket opens in lines
+      expect((cubit.state as NutritionReviewLoaded).grouped, isFalse);
+
+      adapter.failNext = true;
+      await cubit.setGrouped(true);
+      expect(cubit.groupedFor('no_grams'), isFalse, reason: 'memory restored');
+      expect((cubit.state as NutritionReviewLoaded).grouped, isFalse);
+      expect((cubit.state as NutritionReviewLoaded).items, hasLength(2));
+
+      // The reload after the next fix is where a flipped memory used to
+      // switch the unit by itself, long after the toggle failed.
+      await cubit.completeFix();
+      final state = cubit.state as NutritionReviewLoaded;
+      expect(state.grouped, isFalse);
+      expect(adapter.queries.last.containsKey('group'), isFalse);
+      expect(state.items, hasLength(2));
+      await cubit.close();
+    });
+
+    test('Skipped refuses the toggle: no memory, no group request', () async {
+      final adapter = _FakeAdapter(corpusSeed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      await cubit.filter('skipped');
+      final before = adapter.queries.length;
+
+      await cubit.setGrouped(true);
+      expect(cubit.groupedFor('skipped'), isFalse);
+      expect((cubit.state as NutritionReviewLoaded).grouped, isFalse);
+      // A skip does not travel, so nothing ever asks for it grouped.
+      expect(
+        adapter.queries.skip(before).where((q) => q.containsKey('group')),
+        isEmpty,
+      );
+
+      // And the flip did not leak into the bucket the admin came from.
+      await cubit.filter('check');
+      expect((cubit.state as NutritionReviewLoaded).grouped, isTrue);
+      expect(cubit.groupedFor('check'), isTrue);
+      await cubit.close();
+    });
+
+    test(
+      'paging counts GROUPS: page 2 is asked for grouped and appended',
+      () async {
+        final adapter = _FakeAdapter(volumeSeed());
+        final cubit = cubitWith(adapter);
+        await cubit.load();
+        var state = cubit.state as NutritionReviewLoaded;
+        expect(state.grouped, isTrue);
+        expect(state.items, hasLength(NutritionReviewCubit.pageSize));
+        expect(state.groupsTotal, 51);
+        expect(state.hasMore, isTrue);
+
+        await cubit.loadMore();
+        state = cubit.state as NutritionReviewLoaded;
+        // Page 2 in the SAME unit — asked for lines it would return line rows
+        // and the list would mix the two.
+        expect(adapter.queries.last['page'], '2');
+        expect(adapter.queries.last['group'], 'item');
+        expect(state.grouped, isTrue);
+        expect(state.items, hasLength(51));
+        expect(state.items.map((line) => line.key).toSet(), hasLength(51));
+        expect(state.items.every((line) => line.itemKey != null), isTrue);
+        expect(state.hasMore, isFalse, reason: 'the last page was short');
+        await cubit.close();
+      },
+      skip: skipIfNoCorpus,
+    );
+
+    test('a failed toggle leaves the paging cursor on page 2', () async {
+      final adapter = _FakeAdapter(volumeSeed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      expect((cubit.state as NutritionReviewLoaded).hasMore, isTrue);
+
+      adapter.failNext = true;
+      await cubit.setGrouped(false);
+      expect((cubit.state as NutritionReviewLoaded).grouped, isTrue);
+
+      // The failed reload never showed a page 1, so the next page is still
+      // 2. Asking for page 1 here returns rows the list already has, the
+      // dedupe drops every one of them, and "load more" never advances.
+      await cubit.loadMore();
+      final state = cubit.state as NutritionReviewLoaded;
+      expect(adapter.queries.last['page'], '2');
+      expect(state.items, hasLength(51));
+      expect(state.hasMore, isFalse);
+      await cubit.close();
+    }, skip: skipIfNoCorpus);
   });
 }

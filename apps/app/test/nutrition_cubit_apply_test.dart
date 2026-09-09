@@ -133,8 +133,7 @@ void main() {
   IngredientMatch flour() =>
       cubit.state.matches!.firstWhere((m) => (m.item ?? '').contains('flour'));
 
-  test('a pick whose food others are not on raises the offer, sized and '
-      'named by the server', () async {
+  test('a pick raises the offer, sized and named by the server', () async {
     await boot(others: 41);
     final line = flour();
     await cubit.override(line.position, fdcId: 123456);
@@ -147,34 +146,27 @@ void main() {
       grams: null,
       others: 41,
       lines: 44,
-      // A different food from the one the line was on: the strip says the
-      // others "use <item> with a different match".
-      keptFood: false,
     ));
     expect(cubit.state.applied, isNull);
   });
 
-  test('a confirm keeps the food, so the offer is counted in LINES', () async {
+  test('a confirm carries the same two counts: lines and recipes', () async {
     await boot(others: 41);
     final line = flour();
     await cubit.override(line.position, confirmed: true);
     await pumpEventQueue();
-    expect(cubit.state.offer!.keptFood, isTrue);
     expect(cubit.state.offer!.lines, 44);
     expect(cubit.state.offer!.others, 41);
   });
 
-  test(
-    're-picking the food the line already had also counts as kept',
-    () async {
-      await boot(others: 41);
-      final line = flour();
-      await cubit.override(line.position, fdcId: line.fdcId);
-      await pumpEventQueue();
-      expect(line.fdcId, isNotNull, reason: 'the golden line is matched');
-      expect(cubit.state.offer!.keptFood, isTrue);
-    },
-  );
+  test('re-picking the food the line already had still offers', () async {
+    await boot(others: 41);
+    final line = flour();
+    await cubit.override(line.position, fdcId: line.fdcId);
+    await pumpEventQueue();
+    expect(line.fdcId, isNotNull, reason: 'the golden line is matched');
+    expect(cubit.state.offer!.lines, 44);
+  });
 
   test('applying resends the same decision with apply_to_all and shows the '
       "server's receipt in the offer's place", () async {

@@ -351,8 +351,9 @@ value is a 422. A group item is a line item FLATTENED — `recipe`, `position`,
 `item_key` (the ingredient key the group is joined on, and the key
 `ingredient_decisions` lands on; empty for a row the key backfill has not
 reached, which is always a group of one), `item` (the example line's parsed
-ingredient VERBATIM, exactly what `…/nutrition/matches` reports for it; null
-when the line has none), `lines` and `recipes` (its reach), `decided` (an
+ingredient VERBATIM; null when the line has none, and null too when the
+line's text changed since its compute — the same drift `…/nutrition/matches`
+reports as unmatched), `lines` and `recipes` (its reach), `decided` (an
 ingredient decision already exists for the key) and `grams: {min, max,
 missing}` over the members' amounts. Members are the lines that pass the
 current filter, so every count is counted inside it; a group's `bucket` is its
@@ -361,6 +362,10 @@ is its lowest-confidence line — among ties one that has grams, then the recipe
 title, then the position — so `match.confidence` is the group's minimum.
 Groups are ordered worst confidence first, then `lines`, `recipes`, then the
 key; `page`/`limit` count GROUPS and a group is never split across a page.
+Only UNDECIDED lines (`auto` / `unmatched`) join an ingredient's group: a line
+someone already decided is a group of one — an amount problem for that line,
+never part of an ingredient's reach, since `apply_to_all` cannot touch it —
+and it still reports its own `item_key`.
 
 `groups` — at the top level and on every `buckets[]` entry — is reported in
 BOTH modes: the number of distinct ingredient groups among the flagged lines,
@@ -637,11 +642,12 @@ with the same ingredient (keys are singular and accent-folded, so "onion"
 and "onions" are one; the same recipe's other lines count) — at most what
 `apply_to_all` (below) would reach, since a row whose line text changed since
 its compute is counted here but skipped there — and `others_lines`: the same
-rows counted as lines. Both are FOOD-AGNOSTIC: a sibling already on this
-line's food as a low-confidence guess is still waiting on the decision, and
-blessing it at confidence 1 is what moves it out of the `check` bucket. A
-sibling already on this line's food at confidence 1 carries the decision
-(propagated or inherited) and is neither counted nor rewritten. Candidates come
+rows counted as lines. A sibling on a DIFFERENT food counts whatever its
+score — the decision changes its food. A sibling already on this line's food
+counts only while it is still a flagged guess (confidence below 0.5): blessing
+it at confidence 1 is what moves it out of the `check` bucket. One on this
+food at or above that threshold is already counted (or short only an amount)
+and is neither counted here nor rewritten. Candidates come
 from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
@@ -687,11 +693,12 @@ Add `apply_to_all: true` — together with `fdc_id` or `confirmed: true`,
 the decision being broadcast — to land the same food on every other
 undecided (`auto` / `unmatched`) line with the same ingredient item (other
 recipes, and this recipe's other lines), each with grams from its own amounts,
-and recompute those recipes' totals. A line that already carries that food as
-a low-confidence guess is a target too: rewritten as `auto` at confidence 1 it
-stops being a guess, which is how confirming one line clears an ingredient's
-whole group; a line already on it at confidence 1 is left as it is. The rows
-land
+and recompute those recipes' totals. A line on a different food is a target
+whatever its score; a line already carrying that food is one only below the
+flagged threshold (confidence 0.5), where rewriting it as `auto` at confidence
+1 stops it being a guess — how confirming one line clears an ingredient's
+whole group. A line already on that food at or above 0.5 is left as it is.
+The rows land
 as `auto` at confidence 1, machine propagation of a human decision exactly
 like inheritance — not as a human status, so a wrong pick applied
 library-wide is corrected the same way, by a second `apply_to_all` with

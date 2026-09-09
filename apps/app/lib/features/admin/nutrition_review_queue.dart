@@ -587,41 +587,37 @@ class _GroupMeta extends StatelessWidget {
     return null;
   }
   final missing = line.gramsMissing;
+  final String text;
   if (missing >= n) {
-    final none = n == 2
+    text = n == 2
         ? 'no amount on either line'
         : 'no amount on any of the $n lines';
-    // A weak match with no amount cannot be blessed as-is: say so before the
-    // click, not after the pane opens without the button.
-    return line.bucket == 'check'
-        ? (text: '$none — Confirm as-is is unavailable', warn: true)
-        : (text: none, warn: false);
-  }
-  final min = line.gramsMin;
-  final max = line.gramsMax;
-  if (min == null || max == null) {
-    return null;
-  }
-  if (missing == 0) {
-    if (min == max) {
-      return (
-        text: n == 2
-            ? '${fmtAmount(min)} g on both lines'
-            : '${fmtAmount(min)} g on all $n lines',
-        warn: false,
-      );
+  } else {
+    final min = line.gramsMin;
+    final max = line.gramsMax;
+    if (min == null || max == null) {
+      return null;
     }
-    return (
-      text: 'amounts ${fmtAmount(min)}–${fmtAmount(max)} g, one per line',
-      warn: false,
-    );
+    if (missing == 0) {
+      text = min == max
+          ? (n == 2
+                ? '${fmtAmount(min)} g on both lines'
+                : '${fmtAmount(min)} g on all $n lines')
+          : 'amounts ${fmtAmount(min)}–${fmtAmount(max)} g, one per line';
+    } else {
+      text =
+          'amounts ${fmtAmount(min)}–${fmtAmount(max)} g · '
+          '$missing of $n lines have no amount';
+    }
   }
-  return (
-    text:
-        'amounts ${fmtAmount(min)}–${fmtAmount(max)} g · '
-        '$missing of $n lines have no amount',
-    warn: false,
-  );
+  // Confirm as-is is offered on the EXAMPLE line and gated on ITS grams, so
+  // the warning follows that line, not the aggregate: a group where only the
+  // example is amount-less still loses the button. Say so before the click,
+  // not after the pane opens without it.
+  if (line.bucket == 'check' && line.match?.grams == null) {
+    return (text: '$text — Confirm as-is is unavailable', warn: true);
+  }
+  return (text: text, warn: false);
 }
 
 String _rowBadgeLabel(String bucket) => switch (bucket) {

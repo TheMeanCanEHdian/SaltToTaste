@@ -437,4 +437,371 @@ void main() {
       }
     });
   });
+
+  /// A second library, seeded for the ORDER the queue produces: every tie
+  /// here is inserted in the REVERSE of the order the clauses ask for, so a
+  /// deleted clause falls back to insertion order and fails a test. Its
+  /// decided row also pins that only UNDECIDED lines join an ingredient.
+  group('nutrition-review group ordering', skip: skipIfNoCorpus, () {
+    late Directory tempDir;
+    late ServerConfig config;
+    late SaltDatabase db;
+    late FixtureProvider provider;
+    late Recipe bundt;
+    late Recipe acquacotta;
+    late Recipe caramel;
+    // The corpus holds the show's two Chicken Francese recipes — same TITLE,
+    // different documents: the only pair that can tell the title tie-break
+    // from the position one.
+    late Recipe franceseA;
+    late Recipe franceseB;
+
+    const salt = (id: 173468, desc: 'Salt, table', type: 'SR Legacy');
+    const butter = (
+      id: 173430,
+      desc: 'Butter, without salt',
+      type: 'SR Legacy',
+    );
+    const broth = (
+      id: 171609,
+      desc: 'Soup, chicken broth, low sodium, canned',
+      type: 'SR Legacy',
+    );
+    const powdered = (id: 169656, desc: 'Sugars, powdered', type: 'SR Legacy');
+    const flour = (
+      id: 789890,
+      desc: 'Flour, wheat, all-purpose, enriched, bleached',
+      type: 'Foundation',
+    );
+
+    List<int> positionsOf(Recipe recipe, String key) => [
+      for (final (index, line) in nutritionLines(recipe).indexed)
+        if (itemKeyFor(line.item ?? line.raw) == key) index,
+    ];
+
+    int positionOf(Recipe recipe, String key) {
+      final positions = positionsOf(recipe, key);
+      expect(positions, isNotEmpty, reason: '$key must be a real line');
+      return positions.first;
+    }
+
+    /// Writes one match row for a REAL line, in a crafted triage state.
+    /// [raw] overrides the stored text (the drift a recipe edit leaves).
+    void seed(
+      Recipe recipe,
+      int position, {
+      required double confidence,
+      required ({int id, String desc, String type}) food,
+      double? grams,
+      String status = 'auto',
+      String? raw,
+    }) {
+      final line = nutritionLines(recipe)[position];
+      db.upsertIngredientMatch(
+        IngredientMatchRow(
+          recipeId: recipe.id,
+          position: position,
+          raw: raw ?? line.raw,
+          itemKey: itemKeyFor(line.item ?? line.raw),
+          fdcId: food.id,
+          description: food.desc,
+          dataType: food.type,
+          confidence: confidence,
+          grams: grams,
+          gramSource: grams == null ? null : 'weight',
+          status: status,
+        ),
+      );
+    }
+
+    setUpAll(() {
+      tempDir = Directory.systemTemp.createTempSync('salt-review-order');
+      config = ServerConfig(
+        dataDir: tempDir.path,
+        logLevel: Level.WARNING,
+        trustProxy: false,
+      );
+      db = SaltDatabase.open(config.dbPath);
+      provider = FixtureProvider();
+      final sourceRoot = Directory('${tempDir.path}/source')
+        ..createSync(recursive: true);
+      Directory('${sourceRoot.path}/recipes').createSync();
+      for (final name in [
+        '0857-rich-chocolate-bundt-cake.yaml',
+        '0405-acquacotta-tuscan-white-bean-and-escarole-soup.yaml',
+        '0879-easy-caramel-cake.yaml',
+        '0420-chicken-francese.yaml',
+        '1133-chicken-francese.yaml',
+      ]) {
+        File(
+          '$corpusRecipesDir/$name',
+        ).copySync('${sourceRoot.path}/recipes/$name');
+      }
+      importSourceRoot(sourceRootPath: sourceRoot.path, db: db, config: config);
+      bundt = db.recipeByIdOrSlug('rich-chocolate-bundt-cake')!.recipe;
+      acquacotta = db
+          .recipeByIdOrSlug('acquacotta-tuscan-white-bean-and-escarole-soup')!
+          .recipe;
+      caramel = db.recipeByIdOrSlug('easy-caramel-cake')!.recipe;
+      franceseA = db
+          .recipeByIdOrSlug('atk-tv-2023-0420-chicken-francese')!
+          .recipe;
+      franceseB = db
+          .recipeByIdOrSlug('atk-tv-2023-1133-chicken-francese')!
+          .recipe;
+      expect(franceseA.title, franceseB.title, reason: 'the same dish twice');
+      expect(franceseA.id.compareTo(franceseB.id), lessThan(0));
+
+      // Two single-line groups alike in worst, lines and recipes: only the
+      // KEY separates them, and the later key is written first.
+      seed(
+        bundt,
+        positionOf(bundt, 'powdered sugar'),
+        confidence: 0.05,
+        food: powdered,
+        grams: 30,
+      );
+      seed(
+        acquacotta,
+        positionOf(acquacotta, 'chicken broth'),
+        confidence: 0.05,
+        food: broth,
+        grams: 1920,
+      );
+      // The lowest-confidence member has NO grams while the higher one has:
+      // confidence outranks the grams tie-break.
+      seed(
+        bundt,
+        positionOf(bundt, 'all-purpose flour'),
+        confidence: 0.4,
+        food: flour,
+        grams: 510,
+      );
+      seed(
+        caramel,
+        positionOf(caramel, 'all-purpose flour'),
+        confidence: 0.1,
+        food: flour,
+      );
+      // Tied on confidence, on having grams AND on the position: the TITLE
+      // decides, and the later title is written first.
+      seed(
+        bundt,
+        positionOf(bundt, 'table salt'),
+        confidence: 0.45,
+        food: salt,
+        grams: 6,
+      );
+      seed(
+        caramel,
+        positionsOf(caramel, 'table salt').first,
+        confidence: 0.45,
+        food: salt,
+        grams: 12,
+      );
+      // Tied on confidence, on having grams and on the TITLE (the same dish
+      // twice): only the position separates them, and it runs against the
+      // order the rows are stored in — the higher position is written first.
+      seed(
+        franceseA,
+        positionsOf(franceseA, 'without salt butter').last,
+        confidence: 0.3,
+        food: butter,
+        grams: 28,
+      );
+      seed(
+        franceseB,
+        positionOf(franceseB, 'without salt butter'),
+        confidence: 0.3,
+        food: butter,
+        grams: 28,
+      );
+      // A line a person decided and left without an amount: never a member
+      // of the salt group, however many lines that ingredient has.
+      seed(
+        caramel,
+        positionsOf(caramel, 'table salt').last,
+        confidence: 0.6,
+        food: salt,
+        status: 'overridden',
+      );
+      db.putDecision(
+        itemKey: 'table salt',
+        item: 'table salt',
+        fdcId: salt.id,
+        description: salt.desc,
+        dataType: salt.type,
+        decidedBy: null,
+      );
+    });
+
+    tearDownAll(() {
+      db.dispose();
+      tempDir.deleteSync(recursive: true);
+    });
+
+    Map<String, Object?> report({
+      String? bucket,
+      int page = 1,
+      int limit = 50,
+    }) => nutritionReviewHandler(
+      db,
+      page: page,
+      limit: limit,
+      bucket: bucket,
+      group: 'item',
+    );
+
+    List<Map<String, Object?>> itemsOf(Map<String, Object?> body) => [
+      for (final item in body['items']! as List)
+        (item as Map).cast<String, Object?>(),
+    ];
+
+    Map<String, Object?> groupFor(String itemKey, {String? bucket}) =>
+        itemsOf(report(bucket: bucket)).firstWhere(
+          (item) => item['item_key'] == itemKey,
+          orElse: () => fail('no group for $itemKey'),
+        );
+
+    test('the example is the LOWEST-confidence member even when a higher one '
+        'has grams and it has none', () {
+      final group = groupFor('all-purpose flour');
+      expect(
+        group['recipe'],
+        containsPair('slug', caramel.slug),
+        reason: 'confidence outranks the grams tie-break',
+      );
+      expect((group['match']! as Map)['grams'], isNull);
+      expect(
+        (group['match']! as Map)['confidence'],
+        0.1,
+        reason: "the example's score IS the group's minimum",
+      );
+      expect(group['grams'], {'min': 510.0, 'max': 510.0, 'missing': 1});
+    });
+
+    test('members tied on confidence, on having grams and on the position '
+        'break on the recipe title, not on when they were written', () {
+      expect(
+        bundt.title.compareTo(caramel.title),
+        greaterThan(0),
+        reason: 'the row written FIRST sorts LAST by title',
+      );
+      expect(
+        positionOf(bundt, 'table salt'),
+        positionsOf(caramel, 'table salt').first,
+        reason: 'the position cannot separate them',
+      );
+      expect(
+        groupFor('table salt', bucket: 'check')['recipe'],
+        containsPair('slug', caramel.slug),
+      );
+    });
+
+    test('members tied on everything the title can see break on the '
+        'position, not on the order the rows are stored in', () {
+      final group = groupFor('without salt butter');
+      expect(group['lines'], 2);
+      expect(group['recipes'], 2);
+      expect(
+        positionsOf(franceseA, 'without salt butter').last,
+        greaterThan(positionOf(franceseB, 'without salt butter')),
+        reason: 'the row stored FIRST holds the higher position',
+      );
+      expect(group['recipe'], containsPair('slug', franceseB.slug));
+      expect(group['position'], positionOf(franceseB, 'without salt butter'));
+    });
+
+    test('two groups tied on worst, lines and recipes page in KEY order', () {
+      expect(
+        [for (final group in itemsOf(report())) group['item_key']],
+        [
+          'chicken broth',
+          'powdered sugar',
+          'all-purpose flour',
+          'without salt butter',
+          'table salt', // the two undecided lines
+          'table salt', // the decided line, its own group
+        ],
+      );
+      expect(itemsOf(report(limit: 1)).single['item_key'], 'chicken broth');
+      expect(
+        itemsOf(report(page: 2, limit: 1)).single['item_key'],
+        'powdered sugar',
+        reason: 'the later key, though it was written first',
+      );
+    });
+
+    test(
+      'the key tie-break is IN the ORDER BY, not left to the query plan',
+      () {
+        // The test above proves the DIRECTION (`a.gkey DESC` reverses the tied
+        // pair) but cannot prove the clause is there at all: `agg` is GROUP BY
+        // gkey, so SQLite already emits its rows in key order and deleting the
+        // tie-break changes nothing observable. Order across ties would then
+        // rest on a plan property nothing documents — so pin the text.
+        db.nutritionReviewGroups(limit: 1, offset: 0);
+        final sql = db.preparedSqlTexts.singleWhere(
+          (text) => text.contains('ROW_NUMBER() OVER (PARTITION BY gkey'),
+          orElse: () => fail('the grouped query was not prepared'),
+        );
+        expect(
+          sql,
+          contains(
+            'ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey '
+            'LIMIT ? OFFSET ?',
+          ),
+        );
+      },
+    );
+
+    test('a line someone already decided is a group of one — never part of '
+        'the ingredient reach an apply would land on', () async {
+      final decidedPosition = positionsOf(caramel, 'table salt').last;
+      final undecided = groupFor('table salt', bucket: 'check');
+      expect(undecided['lines'], 2);
+      expect(undecided['recipes'], 2);
+
+      final alone = itemsOf(report(bucket: 'no_grams')).single;
+      expect(alone['item_key'], 'table salt', reason: 'it still reports it');
+      expect(alone['lines'], 1);
+      expect(alone['recipes'], 1);
+      expect(alone['position'], decidedPosition);
+      expect((alone['match']! as Map)['status'], 'overridden');
+      expect(
+        alone['decided'],
+        isTrue,
+        reason: "its ingredient's decision still shows on it",
+      );
+
+      // The pill promises exactly what the apply reaches: the example line's
+      // own reach, counted the same way, is the group minus itself.
+      final matches = await matchesBody(db, provider, caramel);
+      final example =
+          (matches['items']! as List)[undecided['position']! as int] as Map;
+      expect(example['others_lines'], (undecided['lines']! as int) - 1);
+    });
+
+    test('a group whose example line text changed since the compute has no '
+        '`item` — the row still says what it was written for', () {
+      final position = positionOf(acquacotta, 'chicken broth');
+      final line = nutritionLines(acquacotta)[position];
+      expect(groupFor('chicken broth')['item'], isNotNull);
+
+      seed(
+        acquacotta,
+        position,
+        confidence: 0.05,
+        food: broth,
+        grams: 1920,
+        raw: '${line.raw} (edited)',
+      );
+      final drifted = groupFor('chicken broth');
+      expect(drifted['item'], isNull, reason: 'it describes a line that went');
+      expect(drifted['raw'], '${line.raw} (edited)');
+
+      seed(acquacotta, position, confidence: 0.05, food: broth, grams: 1920);
+      expect(groupFor('chicken broth')['item'], isNotNull);
+    });
+  });
 }

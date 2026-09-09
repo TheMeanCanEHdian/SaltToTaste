@@ -373,11 +373,16 @@ void main() {
         await put(bundt, eggsPos, {'skipped': false});
         await put(pancakes, positionOf(pancakes, 'eggs'), {'confirmed': true});
         final pancakesEggsBefore = rowOf(pancakes, 'eggs');
-        // Food-agnostic: the caramel cake's undecided eggs line is waiting on
-        // a decision even though it already sits on this food (blessing it is
-        // exactly what moves such a line out of `check`); the pancakes' line
-        // was just decided, so it is not.
-        expect(await othersOf(bundt, eggsPos), 1, reason: 'the caramel cake');
+        // The reach stops at the flagged threshold: the caramel cake's eggs
+        // line sits on this same food ABOVE 0.5 — counted, waiting on nothing
+        // this decision could give it — and the pancakes' line was just
+        // decided, so neither is reached while the pick stands.
+        expect(
+          rowOf(caramel, 'eggs').confidence,
+          greaterThanOrEqualTo(lowConfidence),
+        );
+        expect(rowOf(caramel, 'eggs').fdcId, rowOf(bundt, 'eggs').fdcId);
+        expect(await othersOf(bundt, eggsPos), 0, reason: 'a counted sibling');
 
         // The review flow: re-pick on this line, then the count says how
         // many other recipes are not on that food yet, then apply.
@@ -650,9 +655,9 @@ void main() {
       expect(db.upsertIngredientMatchIfUndecided(auto), isTrue);
     });
 
-    test('a confirm reaches the siblings that already sit on the same food: '
-        'the count and the apply are food-agnostic, and the rewrite lifts '
-        'them out of `check`', () async {
+    test('a confirm reaches the siblings that already sit on the same food '
+        'while they are still guesses: the count and the apply take them, '
+        'and the rewrite lifts them out of `check`', () async {
       await matchAndCompute(db, provider, bundt);
       await matchAndCompute(db, provider, caramel);
       final bundtSalt = positionOf(bundt, 'table salt');
@@ -717,6 +722,70 @@ void main() {
       expect(rowAt(caramel, salts[1]).fdcId, other);
       // Leave the rows undecided again for the tests that follow.
       await put(caramel, salts[0], {'skipped': false});
+      await matchAndCompute(db, provider, caramel);
+    });
+
+    test('the reach stops at the flagged threshold: a sibling COUNTED on the '
+        'same food is neither offered nor rewritten, one still guessing is '
+        'both, and another food is reached at any score', () async {
+      await matchAndCompute(db, provider, bundt);
+      await matchAndCompute(db, provider, caramel);
+      final bundtSalt = positionOf(bundt, 'table salt');
+      final salts = positionsOf(caramel, 'table salt');
+      final food = rowAt(bundt, bundtSalt).fdcId!;
+      final source = rowAt(bundt, bundtSalt);
+
+      /// Puts one caramel salt line on [fdcId] at [confidence], undecided.
+      void seed(int position, int fdcId, double confidence) =>
+          sqlite3.open(config.dbPath)
+            ..execute(
+              "UPDATE ingredient_matches SET status = 'auto', "
+              'confidence = ?, fdc_id = ?, description = ?, data_type = ?, '
+              "grams = 5, gram_source = 'weight' "
+              'WHERE recipe_id = ? AND position = ?',
+              [
+                confidence,
+                fdcId,
+                source.description,
+                source.dataType,
+                caramel.id,
+                position,
+              ],
+            )
+            ..dispose();
+
+      // One counted sibling (0.92, with grams) and one still guessing (0.4),
+      // both on the food this line already holds.
+      seed(salts[0], food, 0.92);
+      seed(salts[1], food, 0.4);
+      var item = (await matchesBody(db, provider, bundt))['items']! as List;
+      expect((item[bundtSalt] as Map)['others'], 1);
+      expect(
+        (item[bundtSalt] as Map)['others_lines'],
+        1,
+        reason: 'only the 0.4 guess is waiting on this decision',
+      );
+
+      final applied = await put(bundt, bundtSalt, {
+        'confirmed': true,
+        'apply_to_all': true,
+      });
+      expect(applied, (recipes: 1, lines: 1, failed: 0));
+      final counted = rowAt(caramel, salts[0]);
+      expect(counted.confidence, 0.92, reason: 'its score was not rewritten');
+      expect(counted.grams, 5);
+      expect(rowAt(caramel, salts[1]).confidence, 1);
+
+      // Another food is reached however sure the engine was of it.
+      final other = await otherFoodFor(caramel, 'table salt', {food});
+      seed(salts[0], other, 0.9);
+      item = (await matchesBody(db, provider, bundt))['items']! as List;
+      expect((item[bundtSalt] as Map)['others_lines'], 1);
+      expect(
+        await put(bundt, bundtSalt, {'confirmed': true, 'apply_to_all': true}),
+        (recipes: 1, lines: 1, failed: 0),
+      );
+      expect(rowAt(caramel, salts[0]).fdcId, food);
       await matchAndCompute(db, provider, caramel);
     });
 
