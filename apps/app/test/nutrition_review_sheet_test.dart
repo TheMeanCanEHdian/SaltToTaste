@@ -464,6 +464,8 @@ void main() {
           confirmed: false,
           grams: null,
           others: 41,
+          lines: 41,
+          keptFood: false,
         ),
       ),
     );
@@ -501,11 +503,14 @@ void main() {
           confirmed: true,
           grams: null,
           others: 3,
+          // A confirm keeps the food, so the strip counts LINES.
+          lines: 4,
+          keptFood: true,
         ),
       ),
     );
     await open(tester, seeded: cubit);
-    expect(find.text('Apply to 3 recipes'), findsOneWidget);
+    expect(find.text('Apply to 4 lines'), findsOneWidget);
   });
 
   testWidgets('the fix panel says how old its candidates are and offers a '
@@ -773,6 +778,8 @@ void main() {
             confirmed: false,
             grams: null,
             others: 41,
+            lines: 41,
+            keptFood: false,
           ),
         ),
       ),

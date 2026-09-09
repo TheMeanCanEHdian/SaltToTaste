@@ -7,8 +7,13 @@ import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
 
 /// An offer to push a decision just made on one line out to every other
-/// recipe's unreviewed line of the same ingredient item: what to resend
-/// (the pick, or the confirm) and how many recipes it would change.
+/// undecided line of the same ingredient item: what to resend (the pick, or
+/// the confirm), and how many recipes and lines it would change.
+///
+/// [keptFood] says which sentence the strip tells: the decision left the line
+/// on the food it already had (a confirm, or re-picking the same food), so the
+/// other lines are not on a *different* match — they are waiting for this
+/// decision to reach them.
 typedef ApplyOffer = ({
   int position,
   String label,
@@ -16,6 +21,8 @@ typedef ApplyOffer = ({
   bool confirmed,
   double? grams,
   int others,
+  int lines,
+  bool keptFood,
 });
 
 /// The receipt of an apply-to-all, shown in place of the offer.
@@ -308,6 +315,15 @@ class NutritionCubit extends Cubit<NutritionState> {
     if (state.overridingPosition != null) {
       return;
     }
+    // The food this line was on BEFORE the write, so the offer can tell
+    // "kept this food" (a confirm, or the same pick again) from "changed it".
+    int? previousFdcId;
+    for (final m in state.matches ?? const <IngredientMatch>[]) {
+      if (m.position == position) {
+        previousFdcId = m.fdcId;
+        break;
+      }
+    }
     emit(state.copyWith(overridingPosition: position, clearError: true));
     final MatchOverrideResult result;
     try {
@@ -330,10 +346,10 @@ class NutritionCubit extends Cubit<NutritionState> {
       return;
     }
     final matches = result.matches;
-    // A pick or a confirm is a decision about the ingredient; if other
-    // recipes' unreviewed lines of that item are not on this food yet, offer
-    // to push it out. The count is the server's, fresh for the NEW food —
-    // which is why the offer can only appear after the decision has landed.
+    // A pick or a confirm is a decision about the ingredient; if any other
+    // undecided line carries that item — on this food or another — offer to
+    // push the decision out. The count is the server's, fresh after the
+    // write, which is why the offer can only appear once it has landed.
     // A skip or a grams-only change is not a decision to broadcast.
     final decided = fdcId != null || confirmed == true;
     IngredientMatch? row;
@@ -353,6 +369,9 @@ class NutritionCubit extends Cubit<NutritionState> {
             // resend would recompute this line's grams from the estimate.
             grams: grams,
             others: row.others,
+            lines: row.othersLines,
+            keptFood:
+                confirmed == true || (fdcId != null && fdcId == previousFdcId),
           )
         : null;
     // The PUT persisted: show its fresh match list even if the label

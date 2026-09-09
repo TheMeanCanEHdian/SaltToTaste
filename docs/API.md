@@ -321,10 +321,11 @@ flagged), `incomplete_nutrition` (nutrition `partial`), `no_nutrition`
 (never computed), `extraction_warnings`, `no_servings`. The set is an open
 registry, so categories can be added without an API shape change.
 
-### `GET /api/v1/admin/nutrition_review?bucket=&page=&limit=` (admin)
+### `GET /api/v1/admin/nutrition_review?group=&bucket=&page=&limit=` (admin)
 
 The cross-recipe queue of ingredient-match lines that still need a look, worst
-(lowest name-confidence) first: `{total, buckets: [{id, label, count}], items:
+(lowest name-confidence) first: `{total, groups, buckets: [{id, label, count,
+groups}], items:
 [{recipe: {id, slug, title}, position, raw, bucket, match: {fdc_id, description,
 data_type, confidence, grams, gram_source, status} | null}], page, limit}`.
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
@@ -341,6 +342,31 @@ counts are whole-library (stable across filters); `bucket` narrows `items` (and
 their pagination) to one bucket — an unknown id is a 422. Fix a line with the
 existing `PUT /api/v1/recipes/{id}/nutrition/matches/{position}` (candidates for
 its fix panel come from that recipe's `…/nutrition/matches`).
+
+`group=item` changes the UNIT of `items` to one row per ingredient — a wrong
+food is an ingredient-level problem, and the decision it takes reaches the whole
+library. Absent or empty means lines (the response above, unchanged); any other
+value is a 422. A group item is a line item FLATTENED — `recipe`, `position`,
+`raw`, `bucket`, `match`, all describing the group's EXAMPLE line — plus
+`item_key` (the ingredient key the group is joined on, and the key
+`ingredient_decisions` lands on; empty for a row the key backfill has not
+reached, which is always a group of one), `item` (the example line's parsed
+ingredient VERBATIM, exactly what `…/nutrition/matches` reports for it; null
+when the line has none), `lines` and `recipes` (its reach), `decided` (an
+ingredient decision already exists for the key) and `grams: {min, max,
+missing}` over the members' amounts. Members are the lines that pass the
+current filter, so every count is counted inside it; a group's `bucket` is its
+WORST member's (`no_match` > `check` > `no_grams` > `skipped`) and the example
+is its lowest-confidence line — among ties one that has grams, then the recipe
+title, then the position — so `match.confidence` is the group's minimum.
+Groups are ordered worst confidence first, then `lines`, `recipes`, then the
+key; `page`/`limit` count GROUPS and a group is never split across a page.
+
+`groups` — at the top level and on every `buckets[]` entry — is reported in
+BOTH modes: the number of distinct ingredient groups among the flagged lines,
+and among each bucket's lines (a key whose lines sit in two buckets counts once
+at the top level). `total` and `buckets[].count` stay LINE counts in both
+modes, so the filter chips never change unit.
 
 ### `GET /api/v1/admin/logs?level=&logger=&q=&limit=` (admin, full scope)
 
@@ -606,12 +632,16 @@ if never — the search cache never expires on its own; the admin search
 endpoint's `fresh=true` replaces it), `item` (the parsed ingredient item VERBATIM — it can carry
 the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client
 wanting a bare name strips parentheticals, as the app does; null when the
-line has none), and `others`: how many recipes hold an undecided line
+line has none), `others`: how many recipes hold an undecided line
 with the same ingredient (keys are singular and accent-folded, so "onion"
-and "onions" are one; the same recipe's other lines count) that
-is not already on this line's food — at most what `apply_to_all` (below)
-would reach, since a row whose line text changed since its compute is
-counted here but skipped there. Candidates come
+and "onions" are one; the same recipe's other lines count) — at most what
+`apply_to_all` (below) would reach, since a row whose line text changed since
+its compute is counted here but skipped there — and `others_lines`: the same
+rows counted as lines. Both are FOOD-AGNOSTIC: a sibling already on this
+line's food as a low-confidence guess is still waiting on the decision, and
+blessing it at confidence 1 is what moves it out of the `check` bucket. A
+sibling already on this line's food at confidence 1 carries the decision
+(propagated or inherited) and is neither counted nor rewritten. Candidates come
 from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
@@ -656,8 +686,12 @@ first).
 Add `apply_to_all: true` — together with `fdc_id` or `confirmed: true`,
 the decision being broadcast — to land the same food on every other
 undecided (`auto` / `unmatched`) line with the same ingredient item (other
-recipes, and this recipe's other lines) not already on it, each with grams
-from its own amounts, and recompute those recipes' totals. The rows land
+recipes, and this recipe's other lines), each with grams from its own amounts,
+and recompute those recipes' totals. A line that already carries that food as
+a low-confidence guess is a target too: rewritten as `auto` at confidence 1 it
+stops being a guess, which is how confirming one line clears an ingredient's
+whole group; a line already on it at confidence 1 is left as it is. The rows
+land
 as `auto` at confidence 1, machine propagation of a human decision exactly
 like inheritance — not as a human status, so a wrong pick applied
 library-wide is corrected the same way, by a second `apply_to_all` with

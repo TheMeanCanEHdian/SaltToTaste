@@ -5,10 +5,11 @@ import 'package:salt_server/src/handlers/recipe_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
 import 'package:salt_server/src/middleware/auth.dart';
 
-/// `GET /api/v1/admin/nutrition_review?bucket=&page=&limit=` (admin) — the
-/// cross-recipe queue of ingredient-match lines that still need a look
+/// `GET /api/v1/admin/nutrition_review?group=&bucket=&page=&limit=` (admin) —
+/// the cross-recipe queue of ingredient-match lines that still need a look
 /// (wrong/no match, no grams, low confidence), worst first. `bucket` narrows
-/// the list to one triage bucket.
+/// the list to one triage bucket; `group=item` lists one row per ingredient
+/// instead of one per line.
 Future<Response> onRequest(RequestContext context) async {
   requireMethods(context, {HttpMethod.get});
   requireAdmin(context);
@@ -19,6 +20,7 @@ Future<Response> onRequest(RequestContext context) async {
     body: nutritionReviewHandler(
       db,
       bucket: query['bucket'],
+      group: query['group'],
       page: params.page,
       limit: params.limit,
     ),

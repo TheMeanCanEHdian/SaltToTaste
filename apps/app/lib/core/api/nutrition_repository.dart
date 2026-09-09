@@ -130,6 +130,7 @@ class IngredientMatch {
     required this.raw,
     this.item,
     this.others = 0,
+    this.othersLines = 0,
     this.candidatesQuery,
     this.candidatesNameIngredient,
     this.candidatesCachedAt,
@@ -157,6 +158,7 @@ class IngredientMatch {
         raw: json['raw'] as String? ?? '',
         item: json['item'] as String?,
         others: (json['others'] as num?)?.toInt() ?? 0,
+        othersLines: (json['others_lines'] as num?)?.toInt() ?? 0,
         candidatesQuery: json['candidates_query'] as String?,
         candidatesNameIngredient: json['candidates_name_ingredient'] as bool?,
         candidatesCachedAt: _timestamp(json['candidates_cached_at']),
@@ -168,6 +170,7 @@ class IngredientMatch {
       raw: json['raw'] as String? ?? '',
       item: json['item'] as String?,
       others: (json['others'] as num?)?.toInt() ?? 0,
+      othersLines: (json['others_lines'] as num?)?.toInt() ?? 0,
       candidatesQuery: json['candidates_query'] as String?,
       candidatesNameIngredient: json['candidates_name_ingredient'] as bool?,
       candidatesCachedAt: _timestamp(json['candidates_cached_at']),
@@ -193,6 +196,10 @@ class IngredientMatch {
   /// Other recipes holding an undecided line with this same ingredient item
   /// — what an apply-to-all from this line would reach.
   final int others;
+
+  /// The same undecided lines counted as LINES — two lines of one ingredient
+  /// in one recipe are 1 recipe but 2 lines.
+  final int othersLines;
 
   /// The words FDC is asked for this line's candidates, after the matcher's
   /// normalization and rewrites; null when the line has nothing searchable.

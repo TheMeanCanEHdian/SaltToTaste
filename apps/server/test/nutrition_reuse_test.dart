@@ -367,14 +367,17 @@ void main() {
     test(
       'apply_to_all lands on the other undecided lines of the item as `auto` '
       '(machine propagation), leaves decisions alone, reports what it wrote, '
-      'and `others` counts what it would change',
+      'and `others` counts what it would reach',
       () async {
         final eggsPos = positionOf(bundt, 'eggs');
         await put(bundt, eggsPos, {'skipped': false});
         await put(pancakes, positionOf(pancakes, 'eggs'), {'confirmed': true});
         final pancakesEggsBefore = rowOf(pancakes, 'eggs');
-        // Every eggs line is on the same auto food, so nothing would change.
-        expect(await othersOf(bundt, eggsPos), 0);
+        // Food-agnostic: the caramel cake's undecided eggs line is waiting on
+        // a decision even though it already sits on this food (blessing it is
+        // exactly what moves such a line out of `check`); the pancakes' line
+        // was just decided, so it is not.
+        expect(await othersOf(bundt, eggsPos), 1, reason: 'the caramel cake');
 
         // The review flow: re-pick on this line, then the count says how
         // many other recipes are not on that food yet, then apply.
@@ -407,7 +410,9 @@ void main() {
         expect(
           await othersOf(bundt, eggsPos),
           0,
-          reason: 'nothing left that this food would change',
+          reason:
+              'the row the apply wrote carries this decision at confidence 1 — '
+              'machine propagation, but no longer waiting on anything',
         );
       },
     );
@@ -571,6 +576,9 @@ void main() {
         eggsPos,
         {'fdc_id': food, 'apply_to_all': true},
       );
+      // Only the caramel cake is a target: the pancakes' eggs line already
+      // carries this food at confidence 1 (a decision that reached it), so
+      // the reach skips it and only the cake's recompute fails.
       expect(applied, (recipes: 0, lines: 0, failed: 1));
       expect(rowOf(bundt, 'eggs').fdcId, food, reason: 'the source stayed');
       // The line itself landed before its recipe's totals failed.
@@ -640,6 +648,76 @@ void main() {
       );
       final auto = rowOf(pancakes, 'eggs');
       expect(db.upsertIngredientMatchIfUndecided(auto), isTrue);
+    });
+
+    test('a confirm reaches the siblings that already sit on the same food: '
+        'the count and the apply are food-agnostic, and the rewrite lifts '
+        'them out of `check`', () async {
+      await matchAndCompute(db, provider, bundt);
+      await matchAndCompute(db, provider, caramel);
+      final bundtSalt = positionOf(bundt, 'table salt');
+      final salts = positionsOf(caramel, 'table salt');
+      final source = rowAt(bundt, bundtSalt);
+      final food = source.fdcId!;
+      // The commonest group in the queue: every line of the ingredient on
+      // the SAME food, undecided, flagged `check` because the score is low
+      // and not because the food is wrong.
+      sqlite3.open(config.dbPath)
+        ..execute(
+          "UPDATE ingredient_matches SET status = 'auto', confidence = 0.4, "
+          'fdc_id = ?, description = ?, data_type = ? '
+          "WHERE item_key = 'table salt'",
+          [food, source.description, source.dataType],
+        )
+        ..dispose();
+      bool stillFlagged() => db
+          .nutritionReviewLines(limit: 500, offset: 0, bucket: 'check')
+          .any((line) => line.match.recipeId == caramel.id);
+      expect(stillFlagged(), isTrue);
+
+      final matches = await matchesBody(db, provider, bundt);
+      final item = (matches['items']! as List)[bundtSalt] as Map;
+      expect(item['others'], 1, reason: 'the caramel cake');
+      expect(
+        item['others_lines'],
+        2,
+        reason: 'which salts twice — lines, not recipes',
+      );
+
+      // Confirming the food here is a decision about the INGREDIENT, and
+      // the apply carries it to lines that already hold that food: rewritten
+      // at confidence 1 they stop being `check`, which is the only way this
+      // group ever clears.
+      final applied = await put(bundt, bundtSalt, {
+        'confirmed': true,
+        'apply_to_all': true,
+      });
+      expect(applied, (recipes: 1, lines: 2, failed: 0));
+      for (final position in salts) {
+        final row = rowAt(caramel, position);
+        expect(row.fdcId, food);
+        expect(row.status, 'auto', reason: 'machine propagation');
+        expect(row.confidence, 1);
+        expect(row.grams, await ownGrams(caramel, position, food));
+      }
+      expect(stillFlagged(), isFalse, reason: 'they left the check bucket');
+
+      // A decided sibling is not a target, whichever decision it carries.
+      final other = await otherFoodFor(caramel, 'table salt', {food});
+      await put(caramel, salts[0], {'skipped': true});
+      await put(caramel, salts[1], {'fdc_id': other});
+      expect(await othersOf(bundt, bundtSalt), 0);
+      final again = await put(bundt, bundtSalt, {
+        'fdc_id': other,
+        'apply_to_all': true,
+      });
+      expect(again, (recipes: 0, lines: 0, failed: 0));
+      expect(rowAt(caramel, salts[0]).status, 'skipped');
+      expect(rowAt(caramel, salts[1]).status, 'overridden');
+      expect(rowAt(caramel, salts[1]).fdcId, other);
+      // Leave the rows undecided again for the tests that follow.
+      await put(caramel, salts[0], {'skipped': false});
+      await matchAndCompute(db, provider, caramel);
     });
 
     test('the boot-time backfill keys pre-009 rows from their recipes, leaves '

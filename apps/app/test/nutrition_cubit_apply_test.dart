@@ -35,7 +35,13 @@ class _Adapter implements HttpClientAdapter {
     return {
       'items': [
         for (final item in body['items'] as List)
-          {...item as Map<String, dynamic>, 'others': others},
+          {
+            ...item as Map<String, dynamic>,
+            'others': others,
+            // Distinct from `others` on purpose: two lines of one ingredient
+            // in one recipe are 1 recipe but 2 lines.
+            'others_lines': others == 0 ? 0 : others + 3,
+          },
       ],
     };
   }
@@ -140,9 +146,35 @@ void main() {
       confirmed: false,
       grams: null,
       others: 41,
+      lines: 44,
+      // A different food from the one the line was on: the strip says the
+      // others "use <item> with a different match".
+      keptFood: false,
     ));
     expect(cubit.state.applied, isNull);
   });
+
+  test('a confirm keeps the food, so the offer is counted in LINES', () async {
+    await boot(others: 41);
+    final line = flour();
+    await cubit.override(line.position, confirmed: true);
+    await pumpEventQueue();
+    expect(cubit.state.offer!.keptFood, isTrue);
+    expect(cubit.state.offer!.lines, 44);
+    expect(cubit.state.offer!.others, 41);
+  });
+
+  test(
+    're-picking the food the line already had also counts as kept',
+    () async {
+      await boot(others: 41);
+      final line = flour();
+      await cubit.override(line.position, fdcId: line.fdcId);
+      await pumpEventQueue();
+      expect(line.fdcId, isNotNull, reason: 'the golden line is matched');
+      expect(cubit.state.offer!.keptFood, isTrue);
+    },
+  );
 
   test('applying resends the same decision with apply_to_all and shows the '
       "server's receipt in the offer's place", () async {

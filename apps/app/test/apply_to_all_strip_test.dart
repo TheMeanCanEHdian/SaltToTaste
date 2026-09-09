@@ -38,6 +38,8 @@ void main() {
     confirmed: false,
     grams: null,
     others: 41,
+    lines: 41,
+    keptFood: false,
   );
 
   Future<void> pumpAt(
@@ -66,6 +68,8 @@ void main() {
                 confirmed: offer.confirmed,
                 grams: offer.grams,
                 others: others,
+                lines: others,
+                keptFood: false,
               ),
               applied: null,
               applying: false,
@@ -83,6 +87,93 @@ void main() {
     await pumpAt(tester, 360, onDismiss: () {}, others: 1198);
     expect(tester.takeException(), isNull, reason: 'no overflow');
     expect(find.text('Not now'), findsOneWidget);
+  });
+
+  /// The kept-food strip: a confirm (or the same pick again) on a group's
+  /// example line, sized by the group's other lines. Real numbers from the
+  /// approved mockup's jalapeno chile group (5 lines, 5 recipes).
+  Future<void> pumpKept(
+    WidgetTester tester, {
+    required int lines,
+    required int others,
+    bool applying = false,
+  }) async {
+    tester.view.physicalSize = const Size(900, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildMaterialTheme(buildForuiTheme()),
+        builder: (context, child) =>
+            FTheme(data: buildForuiTheme(), child: child!),
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(18),
+            child: ApplyToAllStrip(
+              offer: (
+                position: 2,
+                label: 'jalapeno chile',
+                fdcId: null,
+                confirmed: true,
+                grams: null,
+                others: others,
+                lines: lines,
+                keptFood: true,
+              ),
+              applied: null,
+              applying: applying,
+              onApply: () {},
+              onDismiss: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a confirm says the other LINES are waiting on the decision', (
+    tester,
+  ) async {
+    await pumpKept(tester, lines: 4, others: 4);
+    expect(find.textContaining('4 other lines'), findsOneWidget);
+    expect(find.textContaining('jalapeno chile'), findsWidgets);
+    expect(find.textContaining('in 4 recipes'), findsOneWidget);
+    expect(
+      find.textContaining('are still waiting on this decision.'),
+      findsOneWidget,
+    );
+    // Never the pick wording — nothing here is on a different match.
+    expect(find.textContaining('with a different match'), findsNothing);
+    expect(find.text('Apply to 4 lines'), findsOneWidget);
+  });
+
+  testWidgets('one line in one recipe reads in the singular', (tester) async {
+    await pumpKept(tester, lines: 1, others: 1);
+    expect(find.textContaining('1 other line'), findsOneWidget);
+    expect(find.textContaining('in 1 recipe,'), findsOneWidget);
+    expect(
+      find.textContaining('is still waiting on this decision.'),
+      findsOneWidget,
+    );
+    expect(find.text('Apply to 1 line'), findsOneWidget);
+  });
+
+  testWidgets('two lines in one recipe count lines, not recipes', (
+    tester,
+  ) async {
+    // Saffron threads: two lines of one ingredient in a single recipe.
+    await pumpKept(tester, lines: 2, others: 1);
+    expect(find.textContaining('2 other lines'), findsOneWidget);
+    expect(find.textContaining('in 1 recipe,'), findsOneWidget);
+    expect(find.text('Apply to 2 lines'), findsOneWidget);
+  });
+
+  testWidgets('applying counts lines too', (tester) async {
+    await pumpKept(tester, lines: 4, others: 4, applying: true);
+    expect(find.textContaining('Applying to '), findsOneWidget);
+    expect(find.textContaining('4 lines'), findsWidgets);
   });
 
   for (final width in [360.0, 900.0]) {

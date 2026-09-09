@@ -1261,6 +1261,58 @@ lines re-ordered among wrong foods, 0 regressions. Deferred: 'fresh
 fettuccine' counted at dry-pasta density (LOW), the normalizer's "trimmed to
 bottom 6 inches" tail.
 
+### Nutrition queue: grouped by ingredient (Batch B, 2026-09-09)
+
+The admin queue's unit of work in the food buckets is now the INGREDIENT: a
+wrong food is fixed once, library-wide, so 202 flagged lines on the
+diagnostic copy read as 131 rows, 102 of them a single line drawn exactly as
+before. Mockup-first: `docs/mockups/b1-grouped-queue.html` (a four-angle
+design panel, three comparative judges, one synthesis, then a correct→verify
+loop against the recomputed diagnostic copy — the judges had mistaken the
+pre-fix sweep for the live data) was approved with all six recommendations.
+
+- **`GET /api/v1/admin/nutrition_review?group=item`** — a mode on the existing
+  endpoint (any other value is a 422). A group item is the LINE item flattened
+  (recipe/position/raw/bucket/match = the group's example line, so the app's
+  `slug#position` key, `select()`, the fix pane and `queueShouldAdvance` are
+  unchanged) plus `item_key`, `item` (the example line's parsed ingredient,
+  decoded per recipe and memoised within the request — the label the app
+  prints through `itemLabel`, falling back to the key), `lines`, `recipes`,
+  `decided` (an `ingredient_decisions` row exists) and `grams:{min,max,
+  missing}`. One constant SQL text (`_reviewFlaggedCte` + a window function
+  for the example: lowest confidence, then a member WITH grams, then title,
+  then position); a NULL/'' key is a group of one keyed by its own row;
+  group bucket = worst member; sort MIN(confidence), lines DESC, recipes DESC,
+  key; paging counts groups. `groups` is reported at the top level and per
+  bucket in BOTH modes; `total`/`count` stay line counts so the chips never
+  change unit. The line view gained an `item_key` tie-break so an
+  ingredient's lines sit together.
+- **`others` is food-agnostic** (the one change the grouped queue could not
+  ship without): undecided siblings already on this line's food as a
+  low-confidence GUESS count, and `apply_to_all` rewrites them as `auto` at
+  confidence 1 — which is what lifts a same-food group out of `check` after a
+  Confirm as-is. A sibling already on the food at confidence 1 carries the
+  decision (propagated or inherited) and is neither counted nor rewritten —
+  without that exclusion every later confirm re-offered the rows the last
+  apply had just written. `others_lines` joins `others` (recipes).
+- **App**: `NutritionReviewCubit` keeps a per-bucket grouped flag for the
+  session (default `bucket != 'no_grams' && bucket != 'skipped'`; Skipped
+  never groups and hides the segment); the header reads "N ingredients, M
+  lines" in grouped view; `hasMore` compares against groups there. The group
+  row = today's row with the meta slot swapped for the label + a maroon-
+  tinted reach pill ("5 lines · 5 recipes"), an "e.g." prefix on the raw
+  line, a `decided` badge, and an amount slot ("amounts 14–63 g, one per
+  line" / "no amount on any of the 6 lines — Confirm as-is is unavailable" /
+  "264 g on both lines" / "… · 3 of 5 lines have no amount"). The strip
+  says "N other lines of <item>, in M recipes, are still waiting on this
+  decision" + "Apply to N lines" when the decision KEPT the line's food
+  (a confirm, or re-picking the same food — judged app-side from the row
+  before the PUT), today's wording when it changed.
+- Contract goldens: `nutrition_review_grouped` added; `nutrition_review`
+  and both matches goldens regenerated. Deliberately not built (user
+  decisions): no group-scoped Skip, no inline member list (the Lines toggle
+  is the member view), chips never count ingredients.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
@@ -1588,3 +1640,9 @@ bottom 6 inches" tail.
   count-noun coverage cap is the NEXT design round, not this one. Subagents
   run on Opus 5 from 2026-09-08 (session-limit reasons), except the Sonnet
   fleet of the dual-fleet reviews.
+- 2026-09-09 — Grouped queue (user, on the approved mockup): six calls —
+  (1) widen `others`/`apply_to_all` to be food-agnostic (refined during the
+  build: a sibling already on the food at confidence 1 is excluded); (2) row
+  label = the example line's parsed item via `itemLabel`, key as fallback;
+  (3) no group-scoped Skip; (4) no inline members this pass; (5) toggle
+  remembered per bucket for the session; (6) chips always count lines.

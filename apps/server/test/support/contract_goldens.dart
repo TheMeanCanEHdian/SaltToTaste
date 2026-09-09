@@ -61,6 +61,7 @@ const List<String> corpusBackedContractGoldenNames = [
   'nutrition',
   'nutrition_matches',
   'nutrition_review',
+  'nutrition_review_grouped',
   'nutrition_bulk_counts',
 ];
 

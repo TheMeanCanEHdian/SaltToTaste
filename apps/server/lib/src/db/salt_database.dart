@@ -1024,7 +1024,7 @@ class SaltDatabase {
   }
 
   /// Inserts a decision row as it is, stamps included (the re-key pass
-  /// moving a row to its re-derived key). The caller has freed [row.itemKey].
+  /// moving a row to its re-derived key). The caller has freed `row.itemKey`.
   void insertDecision(IngredientDecisionRow row) {
     _prepared(
       'INSERT INTO ingredient_decisions (item_key, item, fdc_id, description, '
@@ -1049,9 +1049,16 @@ class SaltDatabase {
   }
 
   /// Every UNDECIDED row (`auto` / `unmatched`) carrying [itemKey], on any
-  /// line but [excluding], that does not already hold [fdcId] — the rows an
-  /// apply-to-all of that food would change. A row already on the food is
-  /// not a target: rewriting it would change nothing but the count.
+  /// line but [excluding] — the rows an apply-to-all would land on.
+  ///
+  /// Food-agnostic on purpose: a row that already holds [fdcId] as a GUESS
+  /// (confidence below 1) is a target too. Rewritten as `auto` at confidence
+  /// 1 with grams from its own amounts, it leaves the `check` bucket — the
+  /// commonest shape in the queue (the engine's food is right and only the
+  /// score flagged it), and the whole reason a confirm on one line can clear
+  /// an ingredient's group. A row already on [fdcId] at confidence 1 carries
+  /// this decision already (propagated or inherited) and is not a target:
+  /// rewriting it would change nothing but the receipt.
   List<IngredientMatchRow> undecidedMatchesForItemKey(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
@@ -1063,28 +1070,35 @@ class SaltDatabase {
       'FROM ingredient_matches WHERE item_key = ? '
       'AND NOT (recipe_id = ? AND position = ?) '
       "AND status IN ('auto', 'unmatched') "
-      'AND (fdc_id IS NULL OR fdc_id != ?) ORDER BY recipe_id, position',
+      'AND (COALESCE(fdc_id, -1) != ? OR confidence < 1) '
+      'ORDER BY recipe_id, position',
     ).select([itemKey, excluding.recipeId, excluding.position, fdcId]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
   }
 
-  /// How many recipes hold an undecided line with [itemKey] (any line but
-  /// [excluding]) not already on [fdcId] — at most what an apply-to-all of
-  /// that food would reach; a row whose line text changed since its compute
-  /// is counted here but skipped there. With no [fdcId] (the line has no
-  /// food yet) every undecided row counts.
-  int otherRecipesUndecidedCount(
+  /// How many recipes (and lines) hold an undecided line with [itemKey], any
+  /// line but [excluding] — at most what an apply-to-all would reach; a row
+  /// whose line text changed since its compute is counted here but skipped
+  /// there. Food-agnostic exactly like [undecidedMatchesForItemKey]: a row
+  /// already on [fdcId] at confidence 1 is not waiting on anything and is not
+  /// counted; with no [fdcId] (the line has no food yet) every undecided row
+  /// counts.
+  ({int recipes, int lines}) otherRecipesUndecidedCount(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
     int? fdcId,
   }) {
     final rows = _prepared(
-      'SELECT COUNT(DISTINCT recipe_id) AS n FROM ingredient_matches '
+      'SELECT COUNT(DISTINCT recipe_id) AS n, COUNT(*) AS lines '
+      'FROM ingredient_matches '
       'WHERE item_key = ? AND NOT (recipe_id = ? AND position = ?) '
       "AND status IN ('auto', 'unmatched') "
-      'AND (? IS NULL OR fdc_id IS NULL OR fdc_id != ?)',
+      'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < 1)',
     ).select([itemKey, excluding.recipeId, excluding.position, fdcId, fdcId]);
-    return rows.first['n'] as int;
+    return (
+      recipes: rows.first['n'] as int,
+      lines: rows.first['lines'] as int,
+    );
   }
 
   /// Recipe ids that still have a match row with no item key (pre-009 rows
@@ -1150,6 +1164,11 @@ class SaltDatabase {
   /// first, each carrying its recipe's slug + title. [bucket] narrows to a
   /// single triage bucket; null returns every flagged bucket
   /// (no_match / no_grams / check), never `skipped` or `counted`.
+  ///
+  /// Ties break on the ingredient key before the recipe title, so one
+  /// ingredient's lines sit together: this list is the member view of the
+  /// grouped queue ([nutritionReviewGroups]), and working an ingredient's
+  /// lines one after another is a straight run down the page.
   List<NutritionReviewLineRow> nutritionReviewLines({
     required int limit,
     required int offset,
@@ -1173,7 +1192,8 @@ class SaltDatabase {
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
       ") WHERE (? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
       'OR bucket = ? '
-      'ORDER BY confidence ASC, review_title, position LIMIT ? OFFSET ?',
+      'ORDER BY confidence ASC, item_key, review_title, position '
+      'LIMIT ? OFFSET ?',
     ).select([bucket, bucket, limit, offset]);
     return [
       for (final row in rows)
@@ -1184,6 +1204,113 @@ class SaltDatabase {
           bucket: row['bucket'] as String,
         ),
     ];
+  }
+
+  /// The flagged-line derived table both grouped queries below start from:
+  /// every match row with its recipe context, its triage bucket and its
+  /// GROUPING KEY. A row whose `item_key` is null or empty is keyed by its own
+  /// identity, so unkeyed rows stay groups of one instead of collapsing into
+  /// a single bucket-sized "group" of everything the backfill has not keyed.
+  static const String _reviewFlaggedCte =
+      'WITH flagged AS (SELECT im.*, r.slug AS review_slug, '
+      'r.title AS review_title, $_reviewBucketCase AS bucket, '
+      "CASE WHEN im.item_key IS NULL OR im.item_key = '' "
+      "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
+      'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
+
+  /// The triage buckets by severity, worst first — the rank
+  /// [nutritionReviewGroups] aggregates over (a group is as bad as its worst
+  /// member) and the order this index decodes.
+  static const List<String> _reviewBucketRanks = [
+    'no_match',
+    'check',
+    'no_grams',
+    'skipped',
+  ];
+
+  /// One page of flagged match lines GROUPED by ingredient key: one row per
+  /// group, carrying its example line (the lowest-confidence member, then one
+  /// that has grams, then recipe title, then position — deterministic, so a
+  /// reload never shuffles the work) plus the group's reach and amount spread.
+  ///
+  /// Members are the lines that pass the same filter as [nutritionReviewLines]
+  /// — [bucket] null means the three flagged buckets — so every count here is
+  /// counted inside the current filter. Groups are ordered worst-confidence
+  /// first, then by reach, then by key: a stable page boundary, and a group is
+  /// never split across pages.
+  List<NutritionReviewGroupRow> nutritionReviewGroups({
+    required int limit,
+    required int offset,
+    String? bucket,
+  }) {
+    // Bound, never concatenated — the same rule (and the same reason) as
+    // nutritionReviewLines: one constant text for every bucket state.
+    final rows = _prepared(
+      '$_reviewFlaggedCte, '
+      'members AS (SELECT * FROM flagged WHERE '
+      "(? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
+      'OR bucket = ?), '
+      'agg AS (SELECT gkey, COUNT(*) AS lines, '
+      'COUNT(DISTINCT recipe_id) AS recipes, MIN(confidence) AS worst, '
+      'MIN(grams) AS gmin, MAX(grams) AS gmax, '
+      'COUNT(*) FILTER (WHERE grams IS NULL) AS gmissing, '
+      "MIN(CASE bucket WHEN 'no_match' THEN 0 WHEN 'check' THEN 1 "
+      "WHEN 'no_grams' THEN 2 ELSE 3 END) AS worst_bucket "
+      'FROM members GROUP BY gkey), '
+      'example AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY gkey '
+      'ORDER BY confidence, (grams IS NULL), review_title, position) AS rn '
+      'FROM members) '
+      'SELECT e.*, a.lines AS group_lines, a.recipes AS group_recipes, '
+      'a.gmin, a.gmax, a.gmissing, a.worst_bucket, '
+      '(d.item_key IS NOT NULL) AS decided '
+      'FROM agg a JOIN example e ON e.gkey = a.gkey AND e.rn = 1 '
+      'LEFT JOIN ingredient_decisions d ON d.item_key = a.gkey '
+      'ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey '
+      'LIMIT ? OFFSET ?',
+    ).select([bucket, bucket, limit, offset]);
+    return [
+      for (final row in rows)
+        (
+          match: IngredientMatchRow.fromRow(row),
+          slug: row['review_slug'] as String,
+          title: row['review_title'] as String,
+          bucket: _reviewBucketRanks[row['worst_bucket'] as int],
+          // The SYNTHETIC key of an unkeyed row is an implementation detail
+          // and never leaves the database: such a group reports no key.
+          itemKey: (row['item_key'] as String?) ?? '',
+          lines: row['group_lines'] as int,
+          recipes: row['group_recipes'] as int,
+          decided: (row['decided'] as int) != 0,
+          gramsMin: (row['gmin'] as num?)?.toDouble(),
+          gramsMax: (row['gmax'] as num?)?.toDouble(),
+          gramsMissing: row['gmissing'] as int,
+        ),
+    ];
+  }
+
+  /// How many distinct ingredient GROUPS the flagged lines make: one count per
+  /// triage bucket, plus `flagged` over the three flagged buckets together (a
+  /// key whose lines span two buckets counts once there). The line counts stay
+  /// [nutritionReviewCounts]' job — the chips never change unit.
+  ({int flagged, Map<String, int> byBucket}) nutritionReviewGroupCounts() {
+    final rows = _prepared(
+      '$_reviewFlaggedCte '
+      'SELECT bucket, COUNT(DISTINCT gkey) AS n FROM flagged GROUP BY bucket '
+      'UNION ALL '
+      "SELECT '', COUNT(DISTINCT gkey) FROM flagged "
+      "WHERE bucket IN ('no_match', 'no_grams', 'check')",
+    ).select();
+    final byBucket = <String, int>{};
+    var flagged = 0;
+    for (final row in rows) {
+      final bucket = row['bucket'] as String;
+      if (bucket.isEmpty) {
+        flagged = row['n'] as int;
+      } else {
+        byBucket[bucket] = row['n'] as int;
+      }
+    }
+    return (flagged: flagged, byBucket: byBucket);
   }
 
   /// Creates or replaces one match row.
@@ -2157,6 +2284,27 @@ typedef NutritionReviewLineRow = ({
   String slug,
   String title,
   String bucket,
+});
+
+/// One ingredient GROUP of the review queue: its EXAMPLE line (the same shape
+/// as [NutritionReviewLineRow] — match row, recipe slug/title) plus what the
+/// group adds: `bucket` is the worst member's bucket, `itemKey` the key the
+/// group is joined on (empty for an unkeyed row, which is a group of one),
+/// `lines`/`recipes` its reach inside the current filter, `decided` whether
+/// `ingredient_decisions` already holds the key, and the grams triple the
+/// amount spread over the members.
+typedef NutritionReviewGroupRow = ({
+  IngredientMatchRow match,
+  String slug,
+  String title,
+  String bucket,
+  String itemKey,
+  int lines,
+  int recipes,
+  bool decided,
+  double? gramsMin,
+  double? gramsMax,
+  int gramsMissing,
 });
 
 /// [time] in UTC as ISO-8601 with a FIXED six-digit fraction

@@ -176,6 +176,7 @@ class RecipeDetail {
 class NutritionReviewReport {
   const NutritionReviewReport({
     required this.total,
+    required this.groups,
     required this.buckets,
     required this.items,
     required this.page,
@@ -185,6 +186,7 @@ class NutritionReviewReport {
   factory NutritionReviewReport.fromJson(Map<String, dynamic> json) =>
       NutritionReviewReport(
         total: (json['total'] as num?)?.toInt() ?? 0,
+        groups: (json['groups'] as num?)?.toInt() ?? 0,
         buckets: [
           if (json['buckets'] is List)
             for (final b in json['buckets'] as List<dynamic>)
@@ -202,6 +204,10 @@ class NutritionReviewReport {
   /// Whole-library count of flagged lines (stable across the bucket filter;
   /// excludes `skipped`).
   final int total;
+
+  /// The same lines counted as distinct ingredient groups — what the grouped
+  /// view lists and pages over. Reported in both modes.
+  final int groups;
 
   /// Every triage bucket with its whole-library count, in display order.
   final List<NutritionReviewBucket> buckets;
@@ -221,6 +227,7 @@ class NutritionReviewBucket {
     required this.id,
     required this.label,
     required this.count,
+    required this.groups,
   });
 
   factory NutritionReviewBucket.fromJson(Map<String, dynamic> json) =>
@@ -228,13 +235,20 @@ class NutritionReviewBucket {
         id: json['id'] as String? ?? '',
         label: json['label'] as String? ?? '',
         count: (json['count'] as num?)?.toInt() ?? 0,
+        groups: (json['groups'] as num?)?.toInt() ?? 0,
       );
 
   /// Machine id (`no_match` | `no_grams` | `check` | `skipped`); also the
   /// `bucket` filter value.
   final String id;
   final String label;
+
+  /// Flagged LINES in this bucket — what the chips and the tab badge count,
+  /// in both views.
   final int count;
+
+  /// The same lines as distinct ingredient groups.
+  final int groups;
 }
 
 /// One flagged ingredient line, with the recipe it belongs to.
@@ -245,10 +259,19 @@ class NutritionReviewLine {
     required this.raw,
     required this.bucket,
     this.match,
+    this.itemKey,
+    this.item,
+    this.lines = 1,
+    this.recipes = 1,
+    this.decided = false,
+    this.gramsMin,
+    this.gramsMax,
+    this.gramsMissing = 0,
   });
 
   factory NutritionReviewLine.fromJson(Map<String, dynamic> json) {
     final rawMatch = json['match'];
+    final grams = (json['grams'] as Map?)?.cast<String, dynamic>();
     return NutritionReviewLine(
       recipe: NutritionReviewRecipe.fromJson(
         (json['recipe'] as Map?)?.cast<String, dynamic>() ?? const {},
@@ -259,6 +282,14 @@ class NutritionReviewLine {
       match: rawMatch is Map<String, dynamic>
           ? NutritionReviewMatch.fromJson(rawMatch)
           : null,
+      itemKey: json['item_key'] as String?,
+      item: json['item'] as String?,
+      lines: (json['lines'] as num?)?.toInt() ?? 1,
+      recipes: (json['recipes'] as num?)?.toInt() ?? 1,
+      decided: json['decided'] as bool? ?? false,
+      gramsMin: (grams?['min'] as num?)?.toDouble(),
+      gramsMax: (grams?['max'] as num?)?.toDouble(),
+      gramsMissing: (grams?['missing'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -276,7 +307,34 @@ class NutritionReviewLine {
   /// The stored match for the row display, or null for a no-match line.
   final NutritionReviewMatch? match;
 
+  // ── Grouped mode (`group=item`) only. On a line item these carry their
+  // single-line defaults, so both views render from the same row widget.
+
+  /// The ingredient key this group is joined on (`ingredient_matches
+  /// .item_key`), null on a line item.
+  final String? itemKey;
+
+  /// The example line's parsed ingredient item, verbatim — the row label,
+  /// once `itemLabel()` has tidied it. Null when the line has none.
+  final String? item;
+
+  /// Members of this group inside the current filter, and the distinct
+  /// recipes among them (1 / 1 for a line item).
+  final int lines;
+  final int recipes;
+
+  /// `ingredient_decisions` already holds this key — the group was decided
+  /// and is waiting for its members' next compute.
+  final bool decided;
+
+  /// The members' gram range and how many of them have no amount.
+  final double? gramsMin;
+  final double? gramsMax;
+  final int gramsMissing;
+
   /// A stable id for selection (a recipe slug + line position is unique).
+  /// In grouped mode this is the group's EXAMPLE line, which is what the fix
+  /// pane opens on.
   String get key => '${recipe.slug}#$position';
 }
 
@@ -428,6 +486,7 @@ class RecipeRepository {
     required int page,
     int limit = 50,
     String? bucket,
+    bool grouped = false,
   }) {
     return _request('nutrition-review', () async {
       final data = await _getMap(
@@ -436,6 +495,8 @@ class RecipeRepository {
           'page': '$page',
           'limit': '$limit',
           if (bucket != null && bucket.isNotEmpty) 'bucket': bucket,
+          // Grouped mode pages over ingredient groups, not lines.
+          if (grouped) 'group': 'item',
         },
       );
       return NutritionReviewReport.fromJson(data);

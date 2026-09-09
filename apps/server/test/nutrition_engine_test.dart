@@ -260,8 +260,9 @@ void main() {
       test(
         "under the recipe's own words a vegetable or a dish ranks first",
         () async {
-          // Measured on the recorded answers: 'red pepper flakes' puts the spice
-          // 6th behind bell peppers (0.56 vs 0.65); bare 'pepper' puts it 10th
+          // Measured on the recorded answers: 'red pepper flakes' puts the
+          // spice 6th behind bell peppers (0.56 vs 0.65); bare 'pepper' puts
+          // it 10th
           // behind "Pepper steak" (0.87 vs 0.89); 'salt and pepper' returns no
           // spice at all. Ranking alone could not make these right — the query
           // has to change.
@@ -1462,8 +1463,9 @@ void main() {
       tempDir = Directory.systemTemp.createTempSync('salt-gate-test');
       db = SaltDatabase.open('${tempDir.path}/salt.db');
       provider = FixtureProvider();
-      db.upsertSource(slug: 'src', name: 'Test', type: 'book');
-      db.upsertRecipe(recipe(), sourceSlug: 'src', contentHash: 'h');
+      db
+        ..upsertSource(slug: 'src', name: 'Test', type: 'book')
+        ..upsertRecipe(recipe(), sourceSlug: 'src', contentHash: 'h');
       // A cached food so the recompute never calls the provider.
       const food = FdcFood(
         fdcId: 111,
@@ -1481,8 +1483,9 @@ void main() {
     });
 
     test('a <0.5 auto match is held out until a human confirms it', () async {
-      db.upsertIngredientMatch(match(0, 0.4, 'auto')); // held
-      db.upsertIngredientMatch(match(1, 0.8, 'auto')); // counts
+      db
+        ..upsertIngredientMatch(match(0, 0.4, 'auto')) // held
+        ..upsertIngredientMatch(match(1, 0.8, 'auto')); // counts
       await recompute();
       var row = db.nutritionFor('r1')!;
       expect(row.matchedCount, 1, reason: 'the 0.4 auto line is held out');
@@ -1667,37 +1670,42 @@ void main() {
         expect(headNounOf('yolks'), isNull);
       });
 
-      test('brand tokens: capitals anywhere in the word, never USDA or NFS', () {
-        expect(
-          brandTokensOf(
-            "McDONALD'S, McFLURRY with OREO cookies",
-            queryLower: 'oreo cookies',
-          ),
-          ['McDONALD\'S', 'McFLURRY'],
-          reason: 'a lowercase Mc defeated the all-caps rule',
-        );
-        expect(brandTokensOf('Soup, SWANSON, beef broth, lower sodium'), [
-          'SWANSON',
-        ]);
-        expect(
-          brandTokensOf(
-            'Soup, SWANSON, beef broth',
-            queryLower: 'swanson beef broth',
-          ),
-          isEmpty,
-        );
-        expect(
-          brandTokensOf(
-            "Pasta, whole grain (Includes foods for USDA's Food Distribution Program)",
-          ),
-          isEmpty,
-        );
-        expect(brandTokensOf('Vegetable oil, NFS'), isEmpty);
-        expect(brandTokensOf('Salsa, NS as to type'), isEmpty);
-      });
+      test(
+        'brand tokens: capitals anywhere in the word, never USDA or NFS',
+        () {
+          expect(
+            brandTokensOf(
+              "McDONALD'S, McFLURRY with OREO cookies",
+              queryLower: 'oreo cookies',
+            ),
+            ["McDONALD'S", 'McFLURRY'],
+            reason: 'a lowercase Mc defeated the all-caps rule',
+          );
+          expect(brandTokensOf('Soup, SWANSON, beef broth, lower sodium'), [
+            'SWANSON',
+          ]);
+          expect(
+            brandTokensOf(
+              'Soup, SWANSON, beef broth',
+              queryLower: 'swanson beef broth',
+            ),
+            isEmpty,
+          );
+          expect(
+            brandTokensOf(
+              "Pasta, whole grain (Includes foods for USDA's Food Distribution "
+              'Program)',
+            ),
+            isEmpty,
+          );
+          expect(brandTokensOf('Vegetable oil, NFS'), isEmpty);
+          expect(brandTokensOf('Salsa, NS as to type'), isEmpty);
+        },
+      );
 
       test(
-        'a brand is a wrong food: the McFlurry no longer counts for oreo cookies',
+        'a brand is a wrong food: the McFlurry no longer counts for oreo '
+        'cookies',
         () async {
           final cookies = await rank('oreo cookies');
           expect(cookies.first.confidence, lessThan(0.5));
@@ -1750,7 +1758,8 @@ void main() {
       );
 
       test(
-        'every new rewrite, by name: the raw query was wrong, the target is right',
+        'every new rewrite, by name: the raw query was wrong, the target is '
+        'right',
         () async {
           // An explicit table, so a deleted entry fails here (Opus fleet: the
           // table-driven pin could not notice a removed key).
@@ -1842,8 +1851,9 @@ void main() {
             final target = searchQueryFor(key);
             if (target == key) continue;
             final answer = await provider.search(target);
-            if (answer.isEmpty)
+            if (answer.isEmpty) {
               continue; // unrecorded: the reachability pin covers the key
+            }
             expect(
               candidatesNameIngredient(target, answer),
               isTrue,

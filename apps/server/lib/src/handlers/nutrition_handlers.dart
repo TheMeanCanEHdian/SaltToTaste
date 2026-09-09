@@ -117,6 +117,16 @@ Future<Map<String, Object?>> matchesBody(
         ? const <RankedCandidate>[]
         : await candidatesForLine(db, provider, line, cacheOnly: true);
     final itemKey = itemKeyFor(line.item ?? line.raw);
+    // How far an apply-to-all from this line would reach: the undecided lines
+    // of the same ingredient, in recipes and in lines. Food-agnostic — a
+    // sibling already on this food is still waiting to be blessed.
+    final reach = itemKey.isEmpty
+        ? (recipes: 0, lines: 0)
+        : db.otherRecipesUndecidedCount(
+            itemKey,
+            excluding: (recipeId: recipe.id, position: position),
+            fdcId: row?.fdcId,
+          );
     // The KEY (singular) joins decisions; the QUERY keeps the line's words.
     final query = itemKey.isEmpty
         ? null
@@ -129,14 +139,9 @@ Future<Map<String, Object?>> matchesBody(
       // counted by item, not by line.
       'item': line.item,
       // How many OTHER recipes hold an undecided line with this item — what
-      // an apply-to-all from here would reach.
-      'others': itemKey.isEmpty
-          ? 0
-          : db.otherRecipesUndecidedCount(
-              itemKey,
-              excluding: (recipeId: recipe.id, position: position),
-              fdcId: row?.fdcId,
-            ),
+      // an apply-to-all from here would reach — and how many lines that is.
+      'others': reach.recipes,
+      'others_lines': reach.lines,
       // The words FDC is asked for this line's candidates (after the
       // matcher's rewrites — "spices pepper black" for a pepper line), and
       // when it was last asked (the search cache never expires); null when

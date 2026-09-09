@@ -417,6 +417,9 @@ void main() {
           final row = items[index]! as Map<String, dynamic>;
           expect(line.position, row['position']);
           expect(line.raw, row['raw']);
+          // The apply-to-all reach, in both units.
+          expect(line.others, row['others']);
+          expect(line.othersLines, row['others_lines']);
 
           final candidates = (row['candidates'] as List<dynamic>?) ?? const [];
           expect(line.candidates, hasLength(candidates.length));
@@ -553,6 +556,55 @@ void main() {
         expect(line.match!.grams, match['grams']);
         expect(line.match!.gramSource, match['gram_source']);
         expect(line.match!.status, match['status']);
+      }
+    });
+
+    test('the grouped queue parses the group fields', () async {
+      final raw = golden('nutrition_review_grouped');
+      final items = (raw['items']! as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final dio = goldenDio(raw);
+      final report = await RecipeRepository(
+        dio: dio,
+      ).getNutritionReview(page: 1, grouped: true);
+
+      // Grouped mode is a MODE on the same endpoint, not a new one.
+      final sent = (dio.httpClientAdapter as GoldenAdapter).requests.single;
+      expect(sent.path, '/api/v1/admin/nutrition_review');
+      expect(sent.queryParameters['group'], 'item');
+
+      // `total` stays a LINE count in both modes; `groups` is the new one.
+      expect(report.total, raw['total']);
+      expect(report.groups, raw['groups']);
+      expect(report.groups, isNotNull);
+      for (final (index, bucket) in report.buckets.indexed) {
+        final b =
+            (raw['buckets']! as List<dynamic>)[index] as Map<String, dynamic>;
+        expect(bucket.count, b['count']);
+        expect(bucket.groups, b['groups']);
+      }
+
+      expect(report.items, hasLength(items.length));
+      expect(report.items, isNotEmpty, reason: 'the golden flags a group');
+      for (final (index, group) in report.items.indexed) {
+        final row = items[index];
+        final grams = (row['grams']! as Map).cast<String, dynamic>();
+        // The example line is at TOP LEVEL, so the key, the fix pane and
+        // queueShouldAdvance are untouched by grouping.
+        expect(
+          group.key,
+          '${(row['recipe']! as Map)['slug']}#'
+          '${row['position']}',
+        );
+        expect(group.raw, row['raw']);
+        expect(group.itemKey, row['item_key']);
+        expect(group.item, row['item']);
+        expect(group.lines, row['lines']);
+        expect(group.recipes, row['recipes']);
+        expect(group.decided, row['decided']);
+        expect(group.gramsMin, grams['min']);
+        expect(group.gramsMax, grams['max']);
+        expect(group.gramsMissing, grams['missing']);
       }
     });
   });

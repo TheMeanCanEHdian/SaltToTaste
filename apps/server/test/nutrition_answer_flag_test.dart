@@ -31,7 +31,8 @@ void main() {
       );
       addTearDown(db.dispose);
       final recipe = loadCorpusRecipe(
-        '0642-thai-grilled-cornish-game-hens-with-gai-yang-chili-dipping-sauce.yaml',
+        '0642-thai-grilled-cornish-game-hens-with-gai-yang-chili-dipping-'
+        'sauce.yaml',
       );
       // The recorded answer, stored the way a compute stores it. No compute
       // ran: the line has no match row and nothing to show.

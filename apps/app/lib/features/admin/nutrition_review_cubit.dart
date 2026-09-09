@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -22,9 +20,11 @@ final class NutritionReviewError extends NutritionReviewState {
 final class NutritionReviewLoaded extends NutritionReviewState {
   const NutritionReviewLoaded({
     required this.total,
+    required this.groups,
     required this.buckets,
     required this.items,
     required this.bucket,
+    required this.grouped,
     required this.selectedKey,
     required this.loadingMore,
     required this.exhausted,
@@ -32,11 +32,20 @@ final class NutritionReviewLoaded extends NutritionReviewState {
 
   /// Whole-library count of flagged lines (stable across the bucket filter).
   final int total;
+
+  /// The same lines as distinct ingredient groups — reported in both views,
+  /// so the header can name both units from one request.
+  final int groups;
   final List<NutritionReviewBucket> buckets;
+
+  /// The rows on screen: flagged LINES, or ingredient GROUPS when [grouped].
   final List<NutritionReviewLine> items;
 
   /// The active bucket filter, or null for "all flagged" (the default queue).
   final String? bucket;
+
+  /// True when [items] are ingredient groups (`group=item`) rather than lines.
+  final bool grouped;
 
   /// The line shown in the fix pane, keyed by [NutritionReviewLine.key], or
   /// null when nothing is selected (e.g. an empty queue).
@@ -56,7 +65,7 @@ final class NutritionReviewLoaded extends NutritionReviewState {
   }
 
   /// Flagged lines matching the current filter (a bucket count, or [total]).
-  int get filteredTotal {
+  int get linesTotal {
     if (bucket == null) {
       return total;
     }
@@ -68,6 +77,23 @@ final class NutritionReviewLoaded extends NutritionReviewState {
     return 0;
   }
 
+  /// The same, counted as ingredient groups.
+  int get groupsTotal {
+    if (bucket == null) {
+      return groups;
+    }
+    for (final b in buckets) {
+      if (b.id == bucket) {
+        return b.groups;
+      }
+    }
+    return 0;
+  }
+
+  /// Rows matching the current filter, in the unit [items] is listed in —
+  /// so paging compares like with like (against lines it over-reports).
+  int get filteredTotal => grouped ? groupsTotal : linesTotal;
+
   bool get hasMore => !exhausted && items.length < filteredTotal;
 
   NutritionReviewLoaded copyWith({
@@ -77,9 +103,11 @@ final class NutritionReviewLoaded extends NutritionReviewState {
     bool? loadingMore,
   }) => NutritionReviewLoaded(
     total: total,
+    groups: groups,
     buckets: buckets,
     items: items ?? this.items,
     bucket: bucket,
+    grouped: grouped,
     selectedKey: clearSelection ? null : (selectedKey ?? this.selectedKey),
     loadingMore: loadingMore ?? this.loadingMore,
     exhausted: exhausted,
@@ -97,23 +125,56 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   final RecipeRepository _repository;
   int _nextPage = 1;
 
+  /// Which view each bucket was last left in, for this session — flipping the
+  /// toggle under one chip must survive a trip through the others.
+  final Map<String?, bool> _groupedByBucket = {};
+
+  /// The view a bucket opens in: grouped everywhere the work is a food
+  /// problem an ingredient decision fixes, lines where it is per-line (an
+  /// amount, a skip). `skipped` is never grouped — a skip does not travel.
+  bool groupedFor(String? bucket) {
+    if (bucket == 'skipped') {
+      return false;
+    }
+    return _groupedByBucket[bucket] ??
+        (bucket != 'no_grams' && bucket != 'skipped');
+  }
+
+  /// Switches the current bucket between ingredients and lines, remembers it
+  /// for that bucket, and reloads from page 1 (the unit of paging changed).
+  Future<void> setGrouped(bool grouped) async {
+    final current = state;
+    if (current is! NutritionReviewLoaded || current.grouped == grouped) {
+      return;
+    }
+    _groupedByBucket[current.bucket] = grouped;
+    await _reload(current.bucket, selectIndex: 0);
+  }
+
+  /// One page-1 fetch in the current view, replacing the list. Throws
+  /// [RepositoryException] — each caller decides what a failure looks like.
+  Future<void> _reload(String? bucket, {required int selectIndex}) async {
+    _nextPage = 1;
+    final report = await _repository.getNutritionReview(
+      page: 1,
+      limit: pageSize,
+      bucket: bucket,
+      grouped: groupedFor(bucket),
+    );
+    if (isClosed) {
+      return;
+    }
+    _nextPage = 2;
+    emit(_loadedFrom(report, bucket: bucket, selectIndex: selectIndex));
+  }
+
   /// (Re)loads from the first page under the [bucket] filter (null = all
   /// flagged). The first line is auto-selected so the fix pane is never blank
   /// while there is work to do.
   Future<void> load({String? bucket}) async {
     emit(const NutritionReviewLoading());
-    _nextPage = 1;
     try {
-      final report = await _repository.getNutritionReview(
-        page: 1,
-        limit: pageSize,
-        bucket: bucket,
-      );
-      if (isClosed) {
-        return;
-      }
-      _nextPage = 2;
-      emit(_loadedFrom(report, bucket: bucket, selectIndex: 0));
+      await _reload(bucket, selectIndex: 0);
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
@@ -131,18 +192,8 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
     if (current is! NutritionReviewLoaded || current.bucket == bucket) {
       return;
     }
-    _nextPage = 1;
     try {
-      final report = await _repository.getNutritionReview(
-        page: 1,
-        limit: pageSize,
-        bucket: bucket,
-      );
-      if (isClosed) {
-        return;
-      }
-      _nextPage = 2;
-      emit(_loadedFrom(report, bucket: bucket, selectIndex: 0));
+      await _reload(bucket, selectIndex: 0);
     } on RepositoryException {
       // The filter didn't apply — leave the current view untouched.
       return;
@@ -163,6 +214,7 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
         page: _nextPage,
         limit: pageSize,
         bucket: current.bucket,
+        grouped: current.grouped,
       );
       if (isClosed) {
         return;
@@ -172,6 +224,7 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       emit(
         NutritionReviewLoaded(
           total: report.total,
+          groups: report.groups,
           buckets: report.buckets,
           items: [
             ...current.items,
@@ -179,6 +232,7 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
               if (!seen.contains(line.key)) line,
           ],
           bucket: current.bucket,
+          grouped: current.grouped,
           selectedKey: current.selectedKey,
           loadingMore: false,
           exhausted: report.items.length < pageSize,
@@ -223,23 +277,10 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
         break;
       }
     }
-    _nextPage = 1;
     try {
-      final report = await _repository.getNutritionReview(
-        page: 1,
-        limit: pageSize,
-        bucket: current.bucket,
-      );
-      if (isClosed) {
-        return;
-      }
-      _nextPage = 2;
-      final selectIndex = report.items.isEmpty
-          ? -1
-          : math.min(index, report.items.length - 1);
-      emit(
-        _loadedFrom(report, bucket: current.bucket, selectIndex: selectIndex),
-      );
+      // _loadedFrom clamps: an emptied queue clears the selection, and a
+      // shorter one lands on its new last row.
+      await _reload(current.bucket, selectIndex: index);
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
@@ -259,9 +300,11 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
         : items[selectIndex.clamp(0, items.length - 1)].key;
     return NutritionReviewLoaded(
       total: report.total,
+      groups: report.groups,
       buckets: report.buckets,
       items: items,
       bucket: bucket,
+      grouped: groupedFor(bucket),
       selectedKey: key,
       loadingMore: false,
       exhausted: items.length < pageSize,

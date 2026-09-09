@@ -628,9 +628,13 @@ Future<FdcFood?> cachedFood(
 
 /// Lands [food] — a person's decision on [itemKey] made on the line
 /// [excluding] — on every other undecided line with that item (other
-/// recipes, and the same recipe's other lines) not already on that food,
-/// each with grams from its own amounts, then recomputes those recipes'
-/// totals.
+/// recipes, and the same recipe's other lines), each with grams from its own
+/// amounts, then recomputes those recipes' totals.
+///
+/// A line already on that food as a low-confidence guess is a target too:
+/// rewritten at confidence 1 it leaves the `check` bucket, which is what a
+/// confirm on a group whose siblings share the engine's pick is for. A line
+/// already on that food at confidence 1 carries the decision and is skipped.
 ///
 /// The rows are written as `auto` at confidence 1 — machine propagation of
 /// a human decision, exactly like inheritance at compute time — NOT as a

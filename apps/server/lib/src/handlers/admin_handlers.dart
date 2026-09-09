@@ -36,17 +36,33 @@ Map<String, Object?> recipeReviewHandler(
 ///
 /// [bucket], when a non-empty known triage bucket, narrows the item list to
 /// that bucket; an unknown id is a 422 rather than a silent empty list.
+///
+/// [group] chooses the unit of the item list: absent or empty means lines
+/// (today's response), `item` means one row per ingredient. Any other value is
+/// a 422, for the same reason an unknown bucket is — a typo must not be served
+/// as "the default view".
 Map<String, Object?> nutritionReviewHandler(
   SaltDatabase db, {
   required int page,
   required int limit,
   String? bucket,
+  String? group,
 }) {
   final filter = (bucket == null || bucket.isEmpty) ? null : bucket;
   if (filter != null && !nutritionReviewBucketLabels.containsKey(filter)) {
     throw ValidationException('Unknown bucket filter: $filter');
   }
-  return buildNutritionReview(db, bucket: filter, page: page, limit: limit);
+  final grouping = (group == null || group.isEmpty) ? null : group;
+  if (grouping != null && grouping != 'item') {
+    throw ValidationException('Unknown grouping: $grouping');
+  }
+  return buildNutritionReview(
+    db,
+    bucket: filter,
+    page: page,
+    limit: limit,
+    grouped: grouping != null,
+  );
 }
 
 /// The JSON body of `GET /api/v1/admin/logs`: recent persisted log records

@@ -15,6 +15,8 @@ void main() {
     confirmed: false,
     grams: null,
     others: 2,
+    lines: 2,
+    keptFood: false,
   );
   const receipt = (position: 3, recipes: 2, lines: 2, failed: 0);
   final inFlight = idle.copyWith(overridingPosition: 3);

@@ -219,12 +219,14 @@ class _QueueList extends StatelessWidget {
           ),
         ),
       if (state.items.isEmpty)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 40),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
           child: Center(
             child: Text(
-              'No lines in this bucket.',
-              style: TextStyle(fontSize: 13, color: SaltColors.muted),
+              state.grouped
+                  ? 'No ingredients in this bucket.'
+                  : 'No lines in this bucket.',
+              style: const TextStyle(fontSize: 13, color: SaltColors.muted),
             ),
           ),
         ),
@@ -235,21 +237,40 @@ class _QueueList extends StatelessWidget {
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: SaltColors.hairline)),
       ),
-      child: Text.rich(
-        TextSpan(
-          style: const TextStyle(fontSize: 12, color: SaltColors.muted),
-          children: [
-            const TextSpan(text: 'Showing '),
+      // Wrap, not Row: on a narrow (stacked) card the toggle drops under the
+      // sentence instead of squeezing it.
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 10,
+        runSpacing: 6,
+        children: [
+          Text.rich(
             TextSpan(
-              text: label,
-              style: const TextStyle(
-                color: SaltColors.ink,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 12, color: SaltColors.muted),
+              children: [
+                const TextSpan(text: 'Showing '),
+                TextSpan(
+                  text: label,
+                  style: const TextStyle(
+                    color: SaltColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                TextSpan(
+                  text: state.grouped
+                      ? ' · ${state.groupsTotal} ingredients, '
+                            '${state.linesTotal} lines · worst first'
+                      : ' · ${state.linesTotal} lines, worst first',
+                ),
+              ],
             ),
-            TextSpan(text: ' · ${state.filteredTotal} lines, worst first'),
-          ],
-        ),
+          ),
+          // A skip is per line and never travels, so there is no ingredient
+          // view of that bucket to offer — hidden beats a dead control.
+          if (state.bucket != 'skipped')
+            _ViewToggle(grouped: state.grouped, onChanged: cubit.setGrouped),
+        ],
       ),
     );
 
@@ -277,8 +298,73 @@ class _QueueList extends StatelessWidget {
   }
 }
 
+/// The Ingredients | Lines segment at the right end of the queue header: it
+/// sets the UNIT of the list and nothing else. Neutral grey — switching a view
+/// is not a primary action, so it is never maroon.
+class _ViewToggle extends StatelessWidget {
+  const _ViewToggle({required this.grouped, required this.onChanged});
+
+  final bool grouped;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _cell('Ingredients', FLucideIcons.layers, on: grouped, value: true),
+          _cell('Lines', FLucideIcons.list, on: !grouped, value: false),
+        ],
+      ),
+    );
+  }
+
+  Widget _cell(
+    String label,
+    IconData icon, {
+    required bool on,
+    required bool value,
+  }) {
+    final color = on ? SaltColors.ink : SaltColors.muted;
+    return FTappable(
+      onPress: on ? null : () => onChanged(value),
+      child: ColoredBox(
+        color: on ? SaltColors.chipNeutral : Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: color),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// One flagged line in the queue: a bucket-coloured stripe, the recipe and raw
 /// line, the current (often wrong) food, a bucket pill, and name confidence.
+///
+/// A multi-line GROUP is the same shape with one slot swapped: the meta line
+/// names the ingredient and its reach, the raw line is one member marked
+/// "e.g.", and a fourth slot aggregates the members' amounts.
 class _QueueRow extends StatelessWidget {
   const _QueueRow({
     super.key,
@@ -299,6 +385,10 @@ class _QueueRow extends StatelessWidget {
       'no_match' || 'check' => SaltColors.errInk,
       _ => SaltColors.bodyText,
     };
+    // A group of one IS today's row — no pill, no "e.g.", no amount slot —
+    // which is what makes grouping free on the majority of rows.
+    final group = line.lines > 1;
+    final amount = groupAmountLine(line);
     return FTappable(
       onPress: onTap,
       child: DecoratedBox(
@@ -321,18 +411,36 @@ class _QueueRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '${line.recipe.title} · line ${line.position}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: SaltColors.muted,
+                    if (group)
+                      _GroupMeta(line: line)
+                    else
+                      Text(
+                        '${line.recipe.title} · line ${line.position}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: SaltColors.muted,
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 2),
-                    Text(
-                      line.raw,
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          // The bold line is one member standing for the rest,
+                          // so it never claims to be the thing being decided.
+                          if (group)
+                            const TextSpan(
+                              text: 'e.g. ',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: SaltColors.muted,
+                              ),
+                            ),
+                          TextSpan(text: line.raw),
+                        ],
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -362,6 +470,34 @@ class _QueueRow extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (amount != null) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            FLucideIcons.scale,
+                            size: 11,
+                            color: amount.warn
+                                ? SaltColors.warnInk
+                                : SaltColors.muted,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              amount.text,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: amount.warn
+                                    ? SaltColors.warnInk
+                                    : SaltColors.muted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -392,6 +528,100 @@ class _QueueRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A group row's meta slot: the ingredient, how far it reaches, and whether
+/// it has already been decided (so the same ingredient is not decided twice).
+class _GroupMeta extends StatelessWidget {
+  const _GroupMeta({required this.line});
+
+  final NutritionReviewLine line;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = itemLabel(line.item) ?? line.itemKey ?? '';
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: SaltColors.ink,
+          ),
+        ),
+        // The leverage, findable by a scan without reading.
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: SaltColors.chip,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+            child: Text(
+              '${line.lines} lines · '
+              '${line.recipes == 1 ? '1 recipe' : '${line.recipes} recipes'}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: SaltColors.chipInk,
+              ),
+            ),
+          ),
+        ),
+        if (line.decided) const SaltBadge('decided', tone: SaltBadgeTone.ok),
+      ],
+    );
+  }
+}
+
+/// The group row's amount slot — one aggregate over the members' grams — and
+/// whether it is a warning. Null when there is nothing to aggregate (a group
+/// of one, or a range the server didn't report).
+({String text, bool warn})? groupAmountLine(NutritionReviewLine line) {
+  final n = line.lines;
+  if (n < 2) {
+    return null;
+  }
+  final missing = line.gramsMissing;
+  if (missing >= n) {
+    final none = n == 2
+        ? 'no amount on either line'
+        : 'no amount on any of the $n lines';
+    // A weak match with no amount cannot be blessed as-is: say so before the
+    // click, not after the pane opens without the button.
+    return line.bucket == 'check'
+        ? (text: '$none — Confirm as-is is unavailable', warn: true)
+        : (text: none, warn: false);
+  }
+  final min = line.gramsMin;
+  final max = line.gramsMax;
+  if (min == null || max == null) {
+    return null;
+  }
+  if (missing == 0) {
+    if (min == max) {
+      return (
+        text: n == 2
+            ? '${fmtAmount(min)} g on both lines'
+            : '${fmtAmount(min)} g on all $n lines',
+        warn: false,
+      );
+    }
+    return (
+      text: 'amounts ${fmtAmount(min)}–${fmtAmount(max)} g, one per line',
+      warn: false,
+    );
+  }
+  return (
+    text:
+        'amounts ${fmtAmount(min)}–${fmtAmount(max)} g · '
+        '$missing of $n lines have no amount',
+    warn: false,
+  );
 }
 
 String _rowBadgeLabel(String bucket) => switch (bucket) {

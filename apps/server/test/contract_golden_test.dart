@@ -380,6 +380,15 @@ void main() {
           '/api/v1/admin/nutrition_review',
           headers: harness.auth(adminSession),
         );
+        // The same queue GROUPED by ingredient: one row per ingredient key,
+        // each carrying its example line flattened exactly like a line item
+        // plus the group's reach, decided flag and amount spread.
+        await harness.capture(
+          'nutrition_review_grouped',
+          'GET',
+          '/api/v1/admin/nutrition_review?group=item',
+          headers: harness.auth(adminSession),
+        );
 
         // --- library: every branch of a reconciliation scan -----------------
         // All real data: the pancakes' ORIGINAL corpus text stands in for a

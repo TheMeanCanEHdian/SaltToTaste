@@ -204,7 +204,7 @@ const Set<String> _citrus = {
   'clementine',
 };
 
-/// "<what> from [about] N [to M] <citrus>" → "<citrus> <what>", the fruit
+/// "<what> from (about) N (to M) <citrus>" → "<citrus> <what>", the fruit
 /// named once. Anything else is returned unchanged.
 List<String> _fruitFromTail(List<String> words) {
   final from = words.lastIndexOf('from');
@@ -894,7 +894,7 @@ const double _wrongFoodDock = 0.40;
 /// (SWANSON, POPEYES, REAL LEMON — and McDONALD'S, McFLURRY, whose lowercase
 /// 'c' defeated an all-caps rule) unless the query names it. "USDA's" is a
 /// programme note and NFS/NS are "not further specified", never brands.
-final RegExp _brandToken = RegExp(r"[A-Za-z'&-]*[A-Z]{3,}[A-Za-z'&-]*");
+final RegExp _brandToken = RegExp("[A-Za-z'&-]*[A-Z]{3,}[A-Za-z'&-]*");
 const Set<String> _notBrands = {'NFS', 'NS'};
 
 /// The brand tokens of [description] the query [queryLower] does not name.

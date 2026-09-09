@@ -420,12 +420,17 @@ void _preparedStatementCacheIsBounded() {
       // one statement, nothing request-derived in the cache key.
       final bootStatements = db.preparedSqlTexts.length;
       for (final bucket in [null, 'no_match', 'no_grams', 'check', 'counted']) {
-        db.nutritionReviewLines(limit: 20, offset: 0, bucket: bucket);
+        db
+          ..nutritionReviewLines(limit: 20, offset: 0, bucket: bucket)
+          // The grouped mode of the same queue binds the same filter twice,
+          // in a longer text with a window function and four CTEs: exactly
+          // the shape where "just interpolate the bucket" looks harmless.
+          ..nutritionReviewGroups(limit: 20, offset: 0, bucket: bucket);
       }
       expect(
         db.preparedSqlTexts.length - bootStatements,
-        1,
-        reason: 'the review queue emits one SQL text for every bucket',
+        2,
+        reason: 'each review queue emits one SQL text for every bucket',
       );
     });
   });

@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaltToTaste — nutrition matches, grouped by ingredient</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --maroon: #960000; --maroon-hover: #7d1420; --rose: #8c4242;
+    --chip: #f6e4e4; --chip-text: #7d1420; --ink: #23201f; --muted: #6d6763;
+    --line: #e7e2de; --bg: #faf7f4; --panel: #fdfbf9; --sel: #f7ecec;
+    --ok-bg: #e8f3e4; --ok-ink: #2c5a1e; --warn-bg: #fdf1e2; --warn-ink: #8a5a12;
+    --err-bg: #fbe9e9; --err-ink: #8a1212; --info-bg: #e2efec; --info-ink: #1f5c52;
+    --neutral-bg: #efecea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Open Sans', system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; padding-bottom: 80px; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 36px 24px; }
+  h1 { font-size: 22px; color: var(--maroon); }
+  .lede { color: var(--muted); font-size: 14px; max-width: 920px; margin-top: 6px; }
+  .lede b { color: var(--ink); }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--rose); font-weight: 700; margin: 44px 0 14px; }
+  .note { font-size: 13px; color: var(--muted); margin: -8px 0 16px; max-width: 920px; }
+  .note b, .note strong { color: var(--ink); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; background: #f4efe9; border-radius: 5px; padding: 1px 6px; }
+  .btn { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 9px 16px; font: 600 14px 'Open Sans', system-ui, sans-serif; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .btn.primary { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+  .btn.neutral { background: var(--neutral-bg); border-color: var(--neutral-bg); color: var(--ink); }
+  .btn.small { padding: 6px 12px; font-size: 12.5px; }
+  .btn.tiny { padding: 4px 9px; font-size: 12px; border-radius: 7px; }
+  .btn.ghost { color: var(--muted); border-color: transparent; background: transparent; }
+  .btn[disabled] { opacity: .55; cursor: default; }
+  .btn svg { width: 14px; height: 14px; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; max-width: 700px; }
+  .hint b { color: var(--ink); }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .var-cap { font-size: 12px; font-weight: 700; color: var(--rose); margin-bottom: 10px; }
+  .variants { display: grid; gap: 18px; max-width: 1136px; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; max-width: 1136px; }
+  .frame { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+
+  /* ===== filter chips (StatChip, unchanged) ===== */
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .statchip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 14px; font-size: 12.5px; cursor: pointer; }
+  .statchip .n { font-weight: 700; }
+  .statchip.em { font-weight: 600; }
+  .statchip.sel { background: var(--chip); border-color: #e7c9c9; color: var(--chip-text); }
+  .statchip.off { opacity: .45; cursor: default; }
+
+  /* ===== the two-pane queue card (shipped shell: 23fr list / 20fr pane) ===== */
+  .qcard { background: #fff; border: 1px solid var(--line); border-radius: 12px; max-width: 1136px; overflow: hidden; display: grid; grid-template-columns: 23fr 1px 20fr; }
+  .qcard.solo { display: block; max-width: 620px; }
+  .divider { background: var(--line); }
+  .qright { background: var(--panel); min-width: 0; }
+  .qleft { min-width: 0; }
+  .qhead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .qhead .t { color: var(--ink); font-weight: 700; }
+  .qhead .sp { flex: 1; }
+
+  /* grouped/lines toggle — neutral grey, never maroon (it is not a primary action) */
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; flex: none; }
+  .seg span { font-size: 11.5px; font-weight: 600; padding: 3px 9px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .seg span svg { width: 12px; height: 12px; }
+  .seg span.on { background: var(--neutral-bg); color: var(--ink); }
+
+  /* ===== the queue row — ONE shape for both views ===== */
+  .qrow { display: flex; gap: 10px; align-items: center; padding: 11px 14px 11px 13px; border-left: 3px solid var(--muted); border-bottom: 1px solid var(--line); cursor: pointer; }
+  .qrow.check { border-left-color: var(--warn-ink); }
+  .qrow.nomatch { border-left-color: var(--err-ink); }
+  .qrow.nogram { border-left-color: var(--info-ink); }
+  .qrow.sel { background: var(--sel); }
+  .qrow.leaving { opacity: .32; }
+  .qrow .main { flex: 1; min-width: 0; }
+  .qrow .meta { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .qrow .meta .item { color: var(--ink); font-weight: 700; }
+  .qrow .raw { font-size: 13.5px; font-weight: 700; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .qrow .raw .eg { font-weight: 400; color: var(--muted); font-size: 12px; }
+  .qrow .food { font-size: 12px; color: var(--ink); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .qrow .food .ar { color: var(--muted); }
+  .qrow .food.bad { color: var(--err-ink); }
+  .qrow .amt { font-size: 11px; color: var(--muted); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+  .qrow .amt svg { width: 11px; height: 11px; flex: none; }
+  .qrow .amt.warn { color: var(--warn-ink); }
+  .qrow .right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 12px; padding: 2px 9px; white-space: nowrap; background: var(--neutral-bg); color: var(--muted); }
+  .badge.err { background: var(--err-bg); color: var(--err-ink); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn-ink); }
+  .badge.info { background: var(--info-bg); color: var(--info-ink); }
+  .badge.ok { background: var(--ok-bg); color: var(--ok-ink); }
+  .conf { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .reach { font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 7px; background: var(--chip); color: var(--chip-text); white-space: nowrap; }
+  .qmore { padding: 12px; text-align: center; }
+  .qempty { padding: 40px 14px; text-align: center; font-size: 13px; color: var(--muted); }
+
+  /* ===== fix pane pieces (existing components, drawn for context) ===== */
+  .pane { padding: 16px 18px 18px; }
+  .p-where { font-size: 11.5px; color: var(--muted); }
+  .p-raw { font-size: 15px; font-weight: 700; margin-top: 3px; }
+  .p-why { font-size: 12px; font-weight: 600; margin-top: 8px; }
+  .p-why.warn { color: var(--warn-ink); } .p-why.err { color: var(--err-ink); } .p-why.info { color: var(--info-ink); }
+  .cur { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .cur b { color: var(--ink); font-weight: 600; }
+  .cur .basis { display: block; font-size: 11.5px; font-style: italic; margin-top: 2px; }
+  .dt-chip { display: inline-block; font-size: 10px; font-weight: 600; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin-left: 5px; color: var(--muted); vertical-align: 1px; }
+  .fixbox { border: 1px solid var(--line); background: #fff; border-radius: 10px; margin-top: 12px; }
+  .fixbox .cap { font-size: 11.5px; font-weight: 700; color: var(--muted); padding: 9px 12px; }
+  .fixbox .subcap { font-size: 12.5px; color: var(--muted); padding: 0 12px 8px; }
+  .cand { display: flex; gap: 8px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 12.5px; cursor: pointer; }
+  .cand.on { background: var(--sel); }
+  .cand .nm { flex: 1; min-width: 0; }
+  .cand .c { color: var(--muted); font-size: 11.5px; flex: none; }
+  .cacheline { display: flex; gap: 6px; align-items: center; border-top: 1px solid var(--line); padding: 5px 8px 6px 12px; font-size: 11.5px; color: var(--muted); }
+  .cacheline svg { width: 12px; height: 12px; flex: none; }
+  .cacheline .sp { flex: 1; }
+  .searchrow { display: flex; gap: 7px; padding: 8px 12px; border-top: 1px solid var(--line); }
+  .field { flex: 1; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; padding: 6px 10px; font-size: 12.5px; color: var(--muted); }
+  .amtrow { display: flex; gap: 8px; align-items: center; padding: 9px 12px; border-top: 1px solid var(--line); }
+  .amtrow .field { max-width: 110px; flex: none; }
+  .fixfoot { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+  .panefoot { display: flex; gap: 8px; margin-top: 12px; }
+  .placeholder { padding: 40px 24px; text-align: center; font-size: 13px; color: var(--muted); }
+
+  /* ===== apply-to-all strip (existing component) ===== */
+  .offer { border: 1.5px solid #ecc9c9; border-radius: 12px; background: #fff; overflow: hidden; margin-top: 12px; }
+  .offer .o-body { display: flex; align-items: center; gap: 12px; padding: 11px 14px; flex-wrap: wrap; }
+  .offer .o-body > svg { width: 17px; height: 17px; color: var(--maroon); flex: none; }
+  .offer .o-text { flex: 1; min-width: 200px; font-size: 13px; }
+  .offer .o-foot { padding: 8px 14px 10px; font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); background: var(--panel); }
+  .offer.done { border-color: #cfe3c7; }
+  .offer.done .o-body > svg { color: var(--ok-ink); }
+
+  /* tables and lists */
+  table.anat, table.spec { border-collapse: collapse; font-size: 13px; max-width: 940px; }
+  table.anat td, table.spec td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.anat td:first-child, table.spec td:first-child { font-weight: 700; white-space: nowrap; width: 200px; }
+  table.spec th { text-align: left; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  ol.q { font-size: 13px; color: var(--muted); max-width: 920px; margin: 8px 0 0 20px; }
+  ol.q li { margin-bottom: 8px; }
+  ol.q b { color: var(--ink); }
+  .steps { display: grid; gap: 14px; max-width: 720px; }
+  .stepnum { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--maroon); color: #fff; font-size: 11px; font-weight: 700; margin-right: 7px; }
+  .callout { font-size: 11.5px; color: var(--rose); font-weight: 700; margin: 10px 0 4px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-copy-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-circle-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-triangle-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m6.08 10.37-3.5 1.6a1 1 0 0 0 0 1.83l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9a1 1 0 0 0 0-1.83l-3.48-1.59"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></symbol>
+</svg>
+<div class="wrap">
+  <h1>Nutrition matches, grouped by ingredient</h1>
+  <p class="lede">202 flagged lines are only <b>131 ingredients</b>. A wrong food is an ingredient-level problem — the
+  decision is stored against <code>item_key</code> and reaches the whole library — so in the food buckets the queue's
+  unit of work becomes the ingredient. Nothing new is invented: the same filter chips, the same two-pane card, the same
+  fix pane opened on one real line of the group, the same apply-to-all strip, the same advance-after-fix. What the user
+  is being asked to approve is the <b>group row</b>, an <b>Ingredients / Lines toggle</b> with a per-bucket default, and
+  four exact server additions.</p>
+  <p class="note"><b>Data.</b> Every recipe, line, food, count and confidence on this page was queried out of the
+  recomputed diagnostic copy — <code>.claude/diag/2026-09-08/work.db</code>: the 69-recipe sweep recomputed
+  cache-only with the matcher that ships today, 0 provider calls. Measured there: <b>202</b> flagged lines out of 878,
+  <b>131</b> groups, <b>102</b> of them a single line, and — checked, not assumed — <b>0</b> groups whose flagged
+  lines sit in two buckets and <b>0</b> on two different foods. Buckets: no match 4, no grams 80 (46 ingredients),
+  low confidence 118 (81 ingredients), skipped 0; the other 676 lines are counted. The <code>diag.db</code> sitting
+  beside it is the <b>pre-fix</b> sweep (223 / 144 / 112), computed before the ranker fixes shipped — it is not what
+  ships, and nothing on this page quotes it.</p>
+
+  <div class="eyebrow">1 · The group row</div>
+  <p class="note">Today's row has three stacked slots — a muted 11px meta line, the raw line in bold 13.5px, the matched
+  food in 12px — plus a right rail. <b>The group row keeps all of it and changes one slot.</b> Where a line row's meta
+  says “<em>recipe</em> · line N”, a group row says the <b>ingredient</b> and its <b>reach</b>, and the reach is a
+  maroon-tinted pill so a scan finds the leverage without reading. The bold line stays the raw ingredient text — it is
+  the evidence, and for a group it is prefixed <em>e.g.</em> because it is one member standing for the rest. A fourth
+  slot appears only when the amounts change what the admin can do.</p>
+  <div class="card" style="max-width:700px">
+    <div class="var-cap">Two multi-line groups, then a group of one — the same row shape three times</div>
+    <div class="frame">
+      <div class="qrow check sel">
+        <div class="main">
+          <div class="meta"><span class="item">instant or rapid-rise yeast</span><span class="reach">6 lines · 5 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>½ teaspoon instant or rapid-rise yeast</div>
+          <div class="food bad"><span class="ar">→ </span>Yeast</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>amounts 1.6–24 g, one per line</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">37% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta"><span class="item">jalapeno chile</span><span class="reach">5 lines · 5 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>2 large jalapeño chiles, sliced thin (about ¼ cup)</div>
+          <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>amounts 14–63 g, one per line</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div>
+      </div>
+      <div class="qrow nomatch">
+        <div class="main">
+          <div class="meta">Dakgangjeong (Korean Fried Chicken Wings)<span>·</span>line 5</div>
+          <div class="raw">2–3 tablespoons gochujang</div>
+          <div class="food bad"><span class="ar">→ </span>no food matched</div>
+        </div>
+        <div class="right"><span class="badge err">no match</span></div>
+      </div>
+    </div>
+    <div class="callout">↑ a group of one — 102 of the 131 — is byte-for-byte the row that ships today. No pill, no
+    “e.g.”, no amount line, no group vocabulary: there is nothing extra to render, so grouping costs those rows nothing.</div>
+  </div>
+  <table class="anat" style="margin-top:16px">
+    <tr><td>Stripe</td><td>3px in the group's bucket colour — unchanged (red no match, amber check, teal no grams, grey skipped). A group takes its worst member's bucket.</td></tr>
+    <tr><td>Meta slot, 11px</td><td>Multi-line: the <code>item_key</code> in bold ink + the reach pill. Single-line and the whole Lines view: today's “<em>recipe</em> · line N”, muted. Same slot, same size — the two views are the same widget with different text.</td></tr>
+    <tr><td>Reach pill</td><td><code>N lines · M recipes</code>, maroon-tinted (<code>#F6E4E4 / #7D1420</code>) — the chip tone already in the theme. Rendered only when N &gt; 1, so it never appears as a flat “1 line”.</td></tr>
+    <tr><td>Name</td><td>The <code>item_key</code> verbatim: accent-folded and singular (“nicoise olive”, “herbe de provence”, “parsley leaf”). It reads oddly on purpose — that string is the exact key <code>ingredient_decisions</code> lands on, and it is why “onions” and “onion” are one row. There is no cheap server-side display label (see the spec table); open question 2.</td></tr>
+    <tr><td>Raw line, 13.5px bold</td><td>Today's treatment, untouched. For a group it is the <b>example line</b> — the one the pane will open on — marked by a muted “e.g.” so the row never claims the bold text is the thing being decided.</td></tr>
+    <tr><td>Food, 12px</td><td>What the group's flagged lines are on now, red for <em>no match</em> and <em>check</em> exactly as today. One food per group is measured, not assumed: 0 of 131 groups' flagged lines sit on two foods.</td></tr>
+    <tr><td>Amount slot, 11px</td><td>One aggregate over the members — <code>MIN</code>/<code>MAX</code>/count-missing of <code>grams</code>, free in the same <code>GROUP BY</code>. A range (“14–63 g”), never a single number, because each line's amount is its own. Absent on a single-line group. It earns its place in one case above all: “no amount on any of the 6 lines — <b>Confirm as-is</b> is unavailable”, which tells the admin before the click that the button they came for will not be there (<code>bucket == check &amp;&amp; grams != null</code>).</td></tr>
+    <tr><td>Right rail</td><td>The bucket SaltBadge over “NN% name” — the group's <em>minimum</em> confidence, printed with today's <code>(confidence * 100).round()</code>. Omitted for <em>no match</em>, which has no score.</td></tr>
+  </table>
+
+  <div class="eyebrow">2 · The screen, working — Low confidence, grouped, at 1136px</div>
+  <p class="note">The card is the one that ships: chips above, list left (flex 23), fix pane right (flex 20). The admin
+  narrowed to <b>Low confidence</b> — 81 ingredients over 118 lines — and the list is in its true worst-first order:
+  the first <b>seven</b> rows are single-line groups, drawn as today's line rows with nothing added, and the first
+  multi-line group is row <b>8</b>. The selection is on row 10, <em>makrut lime leaf</em>. The pane is the
+  <b>existing fix pane on the group's example line</b>, with nothing added to it: the group's identity is the
+  selected row two inches to its left, and the apply-to-all strip names the ingredient again when it appears. The
+  candidate list, the cache line, the search row, the amount field, Confirm as-is and Skip are all as they are today —
+  and for <em>makrut lime leaf</em> what they show is the real state: every one of the eight candidates the pane
+  offers for “makrut lime leaves” is some other plant's leaves at 5%, so the pane's own note sends the admin to a
+  hand search.</p>
+  <div class="chips">
+    <span class="statchip em">Need attention <span class="n">202</span></span>
+    <span class="statchip">No match <span class="n">4</span></span>
+    <span class="statchip">No grams <span class="n">80</span></span>
+    <span class="statchip sel">Low confidence <span class="n">118</span></span>
+    <span class="statchip off">Skipped <span class="n">0</span></span>
+  </div>
+  <div class="qcard">
+    <div class="qleft">
+      <div class="qhead">
+        <span>Showing <span class="t">Low confidence</span> · 81 ingredients, 118 lines · worst first</span>
+        <span class="sp"></span>
+        <span class="seg"><span class="on"><svg><use href="#i-layers"/></svg>Ingredients</span><span><svg><use href="#i-list"/></svg>Lines</span></span>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Beef Stir-Fry with Bell Peppers and Black Pepper Sauce<span>·</span>line 0</div>
+          <div class="raw">1 tablespoon plus ¼ cup water</div>
+          <div class="food bad"><span class="ar">→ </span>WENDY'S, DAVE'S Hot 'N Juicy 1/4 LB, single</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Apple Galette<span>·</span>line 9</div>
+          <div class="raw">3 tablespoons apple jelly</div>
+          <div class="food bad"><span class="ar">→ </span>Pan Dulce, with fruit, no frosting</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Chicken Bouillabaisse<span>·</span>line 19</div>
+          <div class="raw">1 baguette</div>
+          <div class="food bad"><span class="ar">→ </span>Bread, French or Vienna</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Multicooker Hawaiian Oxtail Soup<span>·</span>line 2</div>
+          <div class="raw">¼ ounce chen pi</div>
+          <div class="food bad"><span class="ar">→ </span>Pie, fried pies, cherry</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Four-Cheese Lasagna<span>·</span>line 15</div>
+          <div class="raw">15 no-boil lasagna noodles</div>
+          <div class="food bad"><span class="ar">→ </span>Lasagna with meat</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Chicken Bouillabaisse<span>·</span>line 16</div>
+          <div class="raw">1 tablespoon chopped fresh tarragon leaves or parsley leaves</div>
+          <div class="food bad"><span class="ar">→ </span>Drumstick leaves, raw</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Stir-Fried Thai-Style Beef with Chiles and Shallots<span>·</span>line 4</div>
+          <div class="raw">1 tablespoon Asian chili-garlic paste</div>
+          <div class="food bad"><span class="ar">→ </span>Almond paste</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta"><span class="item">herbe de provence</span><span class="reach">2 lines · 2 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>1 teaspoon herbes de Provence (optional)</div>
+          <div class="food bad"><span class="ar">→ </span>Dulce de Leche</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>no amount on either line — Confirm as-is is unavailable</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">3% name</span></div>
+      </div>
+      <div class="qrow check">
+        <div class="main">
+          <div class="meta">Crispy Salt and Pepper Shrimp<span>·</span>line 4</div>
+          <div class="raw">2 teaspoons Sichuan peppercorns</div>
+          <div class="food bad"><span class="ar">→ </span>Salad dressing, peppercorn dressing, commercial, regular</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">3% name</span></div>
+      </div>
+      <div class="qrow check sel">
+        <div class="main">
+          <div class="meta"><span class="item">makrut lime leaf</span><span class="reach">2 lines · 2 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>6 makrut lime leaves, torn if large</div>
+          <div class="food bad"><span class="ar">→ </span>Drumstick leaves, raw</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>264 g on both lines</div>
+        </div>
+        <div class="right"><span class="badge warn">check match</span><span class="conf">5% name</span></div>
+      </div>
+      <div class="qmore"><button class="btn small">Load more</button></div>
+    </div>
+    <div class="divider"></div>
+    <div class="qright">
+      <div class="pane">
+        <div class="p-where">Guay Tiew Tom Yum Goong (Thai Hot and Sour Noodle Soup with Shrimp) · ingredient line 3</div>
+        <div class="p-raw">6 makrut lime leaves, torn if large</div>
+        <div class="p-why warn">Match looks off — 5% name confidence, held out of the totals until you confirm it</div>
+        <div class="cur">matched to <b>Drumstick leaves, raw</b><span class="dt-chip">SR Legacy</span> · 264 g · typical size</div>
+        <div class="fixbox">
+          <div class="cap">Change the match &amp; set the amount</div>
+          <div class="subcap">Nothing in the search names this ingredient — search by hand below.</div>
+          <div class="cand on"><span class="nm">Drumstick leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cand"><span class="nm">Amaranth leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cand"><span class="nm">Broccoli, leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cand"><span class="nm">Chrysanthemum leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cand"><span class="nm">Fireweed, leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cand"><span class="nm">Grape leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cand"><span class="nm">Pumpkin leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cand"><span class="nm">Taro leaves, raw<span class="dt-chip">SR Legacy</span></span><span class="c">5%</span></div>
+          <div class="cacheline"><svg><use href="#i-clock"/></svg><span class="sp">FDC asked for “makrut lime leaves” · cached 10 h ago</span><button class="btn tiny ghost"><svg><use href="#i-refresh"/></svg>Search live</button></div>
+          <div class="searchrow"><span class="field">Search USDA for a better match…</span><button class="btn small"><svg><use href="#i-search"/></svg>Search</button></div>
+          <div class="amtrow"><span class="field">264</span><span class="seg"><span class="on">g</span><span>oz</span><span>lb</span></span></div>
+          <div class="fixfoot"><button class="btn small primary" disabled><svg><use href="#i-check"/></svg>Save match &amp; amount</button></div>
+        </div>
+        <div class="panefoot">
+          <button class="btn small"><svg><use href="#i-check"/></svg>Confirm as-is</button>
+          <button class="btn small ghost"><svg><use href="#i-ban"/></svg>Skip</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="hint" style="max-width:1136px">Both counts on the header come from one request. The chips keep counting
+  <b>lines</b> in both views — so the tab badge “Nutrition matches · 202” never changes meaning and no number moves when
+  the toggle does. <b>Confirm as-is</b> is present here — the line is a <em>check</em> with grams, which is the pane's
+  untouched rule — and it is the <b>wrong button</b> on this row: 264 g of drumstick leaves for six lime leaves is a
+  wrong food <em>and</em> a wrong mass. The fix is a hand search and <b>Save match &amp; amount</b>, after which the
+  strip offers the group's other line (Panang Beef Curry · line 7) in today's words, because the pick changed the food:
+  “<b>1 other recipe</b> uses <b>makrut lime leaf</b> with a different match.” → <b>Apply to 1 recipe</b>. This hero
+  needs no server change at all; §3 is the case that does.</p>
+
+  <div class="eyebrow">3 · The loop — one group cleared, and the one change the server owes</div>
+  <p class="note"><b>jalapeno chile</b> is the commonest shape in the data: the engine's food is right and only the 0.495
+  score flagged it. <b>31 of the 81</b> low-confidence groups sit at 0.46–0.50 with a food that is fine. So the
+  decision is <b>Confirm as-is</b>, and the strip's job is to carry it to the group's other four lines. This is exactly
+  where today's server does nothing — step 3.</p>
+  <div class="steps">
+    <div class="card">
+      <div class="var-cap"><span class="stepnum">1</span>Tap the group — the pane loads its example line, one request</div>
+      <div class="frame">
+        <div class="qrow check sel">
+          <div class="main">
+            <div class="meta"><span class="item">jalapeno chile</span><span class="reach">5 lines · 5 recipes</span></div>
+            <div class="raw"><span class="eg">e.g. </span>2 large jalapeño chiles, sliced thin (about ¼ cup)</div>
+            <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+            <div class="amt"><svg><use href="#i-scale"/></svg>amounts 14–63 g, one per line</div>
+          </div>
+          <div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div>
+        </div>
+      </div>
+      <div class="hint">One recipe fetch per group, as today for a line row — <code>select()</code> takes the example's
+      <code>slug#position</code> key and nothing else changes. The pane opens on <b>Cheesy Nachos with Guacamole and
+      Salsa · line 2</b>, matched to <em>Peppers, jalapeno, seeded, raw</em> (Foundation) at 28 g, with the real cached
+      alternatives beneath it in rank order: <em>Peppers, jalapenos</em> 47% (FNDDS), <em>Peppers, jalapeno, raw</em> 46%
+      (SR Legacy), <em>Stuffed jalapeno pepper</em> 43% (FNDDS), <em>Peppers, jalapeno, canned, solids and liquids</em>
+      35% (SR Legacy).</div>
+    </div>
+    <div class="card">
+      <div class="var-cap"><span class="stepnum">2</span>Confirm as-is — the pane's own button, on that one line</div>
+      <div class="cur" style="margin-top:0">matched to <b>Peppers, jalapeno, seeded, raw</b><span class="dt-chip">Foundation</span> · 28 g · typical size · <span class="muted">just confirmed</span></div>
+      <div class="hint">The confirm writes Cheesy Nachos line 2 <em>and</em> records the decision for the item key
+      <code>jalapeno chile</code> library-wide (<code>ingredient_decisions</code>). Every other jalapeño line inherits it
+      — but at its <em>next</em> compute, which is why four siblings are still flagged the moment this returns.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap"><span class="stepnum">3</span>The offer, sized by the group — <b>this is the server change the design depends on</b></div>
+      <div class="offer" style="margin-top:0">
+        <div class="o-body">
+          <svg><use href="#i-copy-check"/></svg>
+          <div class="o-text"><b>4 other lines</b> of <b>jalapeno chile</b>, in 4 recipes, are still waiting on this decision.</div>
+          <button class="btn small primary"><svg><use href="#i-copy-check"/></svg>Apply to 4 lines</button>
+          <button class="btn small ghost">Not now</button>
+        </div>
+        <div class="o-foot">Sets this food on their unreviewed jalapeno chile lines, each with its own amount, and
+        recomputes their labels. Lines someone already decided are left alone. Reversible: pick a different food here and
+        apply again.</div>
+      </div>
+      <div class="hint">Today <code>others</code> is <code>COUNT(DISTINCT recipe_id)</code> of undecided rows with this
+      item key <em>that are not already on this food</em> (<code>salt_database.dart</code>, <code>… AND (? IS NULL OR
+      fdc_id IS NULL OR fdc_id != ?)</code>). For a confirm-as-is on a group whose siblings share the engine's pick that
+      count is <b>0</b>: no strip appears, nothing is spread, and the group sits in the queue until some later compute.
+      The fix is to <b>drop the same-food filter</b> in the count and in the apply — “undecided lines of this item key,
+      other than this one”. Same-recipe siblings are <em>already</em> reached (the SQL excludes only
+      <code>NOT (recipe_id = ? AND position = ?)</code>), so that half needs nothing; the count just has to be reported
+      in lines as well as recipes. One filter, one extra number, and the strip component is untouched.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap"><span class="stepnum">4</span>Receipt — the server's own counts, and the chips fall in a step</div>
+      <div class="offer done" style="margin-top:0">
+        <div class="o-body">
+          <svg><use href="#i-circle-check"/></svg>
+          <div class="o-text">Applied to <b>4 recipes</b> (4 lines). Their labels are recomputed.</div>
+          <button class="btn small ghost"><svg><use href="#i-x"/></svg>Dismiss</button>
+        </div>
+      </div>
+      <div class="chips" style="margin:12px 0 0">
+        <span class="statchip em">Need attention <span class="n">197</span></span>
+        <span class="statchip">No match <span class="n">4</span></span>
+        <span class="statchip">No grams <span class="n">80</span></span>
+        <span class="statchip sel">Low confidence <span class="n">113</span></span>
+        <span class="statchip off">Skipped <span class="n">0</span></span>
+      </div>
+      <div class="hint">Chili con Carne, Crispy Salt and Pepper Shrimp, Steak Tacos and White Chicken Chili — the four
+      recipes holding the rest. Five lines left the queue, so Low confidence goes 118 → 113 and the header goes 81 → 80
+      ingredients. Each keeps its own amount: 63 g, 28 g, 14 g, 42 g.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap"><span class="stepnum">5</span>Advance — unchanged <code>queueShouldAdvance</code></div>
+      <div class="frame">
+        <div class="qrow check leaving">
+          <div class="main">
+            <div class="meta"><span class="item">jalapeno chile</span><span class="reach">5 lines · 5 recipes</span></div>
+            <div class="raw"><span class="eg">e.g. </span>2 large jalapeño chiles, sliced thin (about ¼ cup)</div>
+            <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+          </div>
+          <div class="right"><span class="badge">cleared</span></div>
+        </div>
+        <div class="qrow check sel">
+          <div class="main">
+            <div class="meta"><span class="item">poblano chile</span><span class="reach">2 lines · 2 recipes</span></div>
+            <div class="raw"><span class="eg">e.g. </span>1 pound (3 to 4) poblano chiles, stemmed, halved, and seeded</div>
+            <div class="food bad"><span class="ar">→ </span>Peppers, poblano, seeded, raw</div>
+            <div class="amt"><svg><use href="#i-scale"/></svg>amounts 135–454 g, one per line</div>
+          </div>
+          <div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div>
+        </div>
+      </div>
+      <div class="hint">Dismiss (or Not now) is what advances, so nothing moves under the cursor while the receipt is
+      being read — today's behaviour exactly. The selection lands on the next group by the same worst-first sort and the
+      pane loads its example line.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap"><span class="stepnum">5b</span>“Not now” — the group shrinks, and says it has been decided</div>
+      <div class="frame">
+        <div class="qrow check">
+          <div class="main">
+            <div class="meta"><span class="item">jalapeno chile</span><span class="reach">4 lines · 4 recipes</span><span class="badge ok">decided</span></div>
+            <div class="raw"><span class="eg">e.g. </span>4–5 small jalapeño chiles, stemmed, seeded, and minced</div>
+            <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+            <div class="amt"><svg><use href="#i-scale"/></svg>amounts 14–63 g · your decision reaches these at their next compute</div>
+          </div>
+          <div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div>
+        </div>
+      </div>
+      <div class="hint">The <b>decided</b> pill is one boolean from a left join on <code>ingredient_decisions</code>.
+      Without it the row looks untouched and the same ingredient gets decided twice. The example rotates to the next
+      undecided member (Chili con Carne · line 10), and declining still advances.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap"><span class="stepnum">5c</span>The example line was resolved by someone else — no new state</div>
+      <div style="border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:30px 18px;text-align:center;font-size:13px;color:var(--muted)">This line has been resolved.</div>
+      <div class="hint">Already shipped: the pane says this when the position is gone from the recipe's matches. For a
+      group it heals itself — the next queue load drops the resolved line and the example rotates to the next undecided
+      member, or the group disappears if that was the last one.</div>
+    </div>
+  </div>
+
+  <div class="eyebrow">4 · The toggle, and why each bucket opens differently</div>
+  <p class="note">One two-cell segment at the right end of the existing header line, next to the count it changes, in the
+  theme's neutral grey — it switches a view, it is not a primary action, so it is never maroon. It sets the
+  <em>unit of the list</em> and nothing else: chips, card, pane, strip and sort are identical in both. The default is one
+  expression — <code>grouped = bucket != 'no_grams' &amp;&amp; bucket != 'skipped'</code> — and a flip is remembered for
+  that bucket for the session (one map on the cubit), so changing chips does not undo it.</p>
+  <table class="anat">
+    <tr><td>Need attention</td><td><b>Ingredients.</b> Mixed work, and the food problems dominate: the food buckets hold 122 of the 202 lines.</td></tr>
+    <tr><td>No match</td><td><b>Ingredients.</b> A missing food is an ingredient's problem by definition. All four here are single-line groups, so the rows are today's rows.</td></tr>
+    <tr><td>Low confidence</td><td><b>Ingredients.</b> The leverage case: 81 ingredients over 118 lines.</td></tr>
+    <tr><td>No grams</td><td><b>Lines.</b> The food is already right (every multi-line group here sits at 61–100%, and most of them are a herb or a spice); each line's amount is its own question and <code>{grams}</code> never travels. Ingredients stays selectable as a map — see below.</td></tr>
+    <tr><td>Skipped</td><td><b>Lines, and the segment is hidden.</b> A skip is per line and never travels, so an ingredient row there would promise a reach the API refuses. Hidden beats disabled: no dead control to click.</td></tr>
+  </table>
+  <div class="variants" style="margin-top:18px">
+    <div class="card">
+      <div class="var-cap">Low confidence in <b>Lines</b> — the five rows the jalapeno chile group stood for</div>
+      <div class="qhead" style="border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0">
+        <span>Showing <span class="t">Low confidence</span> · 118 lines, worst first</span>
+        <span class="sp"></span>
+        <span class="seg"><span><svg><use href="#i-layers"/></svg>Ingredients</span><span class="on"><svg><use href="#i-list"/></svg>Lines</span></span>
+      </div>
+      <div class="frame" style="border-top:none;border-radius:0 0 10px 10px">
+        <div class="qrow check"><div class="main">
+          <div class="meta">Cheesy Nachos with Guacamole and Salsa<span>·</span>line 2</div>
+          <div class="raw">2 large jalapeño chiles, sliced thin (about ¼ cup)</div>
+          <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+        </div><div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div></div>
+        <div class="qrow check"><div class="main">
+          <div class="meta">Chili con Carne<span>·</span>line 10</div>
+          <div class="raw">4–5 small jalapeño chiles, stemmed, seeded, and minced</div>
+          <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+        </div><div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div></div>
+        <div class="qrow check"><div class="main">
+          <div class="meta">Crispy Salt and Pepper Shrimp<span>·</span>line 9</div>
+          <div class="raw">2 jalapeño chiles, stemmed, seeded, and sliced into ⅛-inch-thick rings</div>
+          <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+        </div><div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div></div>
+        <div class="qrow check"><div class="main">
+          <div class="meta">Steak Tacos<span>·</span>line 2</div>
+          <div class="raw">1 medium jalapeño chile, stemmed and roughly chopped</div>
+          <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+        </div><div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div></div>
+        <div class="qrow check"><div class="main">
+          <div class="meta">White Chicken Chili<span>·</span>line 3</div>
+          <div class="raw">3 medium jalapeño chiles</div>
+          <div class="food bad"><span class="ar">→ </span>Peppers, jalapeno, seeded, raw</div>
+        </div><div class="right"><span class="badge warn">check match</span><span class="conf">50% name</span></div></div>
+      </div>
+      <div class="hint">Byte-for-byte today's rows — no grams appended, no group vocabulary. Same food, same score, five
+      times, five trips through the pane: that is the argument for the grouped default. And the Lines view is why no
+      member list is needed anywhere: it <em>is</em> the member view, one toggle away, and it is where an admin who
+      distrusts the example checks a second line first. One ORDER BY tie-break (<code>item_key</code> after confidence)
+      makes an ingredient's lines sit together here, so working them one after another is a straight run.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap">No grams in <b>Ingredients</b> — allowed, and honest about being a map<br />
+        <span style="font-weight:400;color:var(--muted)">scrolled past the eight single-line rows that open the bucket
+        (table salt for cooking pasta 51%, cherry tomato 53%, lime zest… 53%, baby back rib 53%, whole chicken leg
+        55%, …) to the multi-line groups</span></div>
+      <div class="qhead" style="border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0">
+        <span>Showing <span class="t">No grams</span> · 46 ingredients, 80 lines · worst first</span>
+        <span class="sp"></span>
+        <span class="seg"><span class="on"><svg><use href="#i-layers"/></svg>Ingredients</span><span><svg><use href="#i-list"/></svg>Lines</span></span>
+      </div>
+      <div class="frame" style="border-top:none;border-radius:0 0 10px 10px">
+        <div class="qrow nogram"><div class="main">
+          <div class="meta"><span class="item">vegetable oil spray</span><span class="reach">2 lines · 2 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>Vegetable oil spray</div>
+          <div class="food"><span class="ar">→ </span>Vegetable oil, NFS</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>no amount on either line — amounts are per line, the food is not in question</div>
+        </div><div class="right"><span class="badge info">no grams</span><span class="conf">61% name</span></div></div>
+        <div class="qrow nogram"><div class="main">
+          <div class="meta"><span class="item">thyme</span><span class="reach">4 lines · 4 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>5 sprigs fresh thyme, tied together with kitchen twine</div>
+          <div class="food"><span class="ar">→ </span>Thyme, fresh</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>no amount on any of the 4 lines</div>
+        </div><div class="right"><span class="badge info">no grams</span><span class="conf">90% name</span></div></div>
+        <div class="qrow nogram"><div class="main">
+          <div class="meta"><span class="item">cilantro leaf</span><span class="reach">8 lines · 7 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>½ cup fresh cilantro leaves</div>
+          <div class="food"><span class="ar">→ </span>Coriander (cilantro) leaves, raw</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>no amount on any of the 8 lines</div>
+        </div><div class="right"><span class="badge info">no grams</span><span class="conf">92% name</span></div></div>
+        <div class="qrow nogram"><div class="main">
+          <div class="meta"><span class="item">red pepper flake</span><span class="reach">7 lines · 7 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>⅛–¼ teaspoon red pepper flakes</div>
+          <div class="food"><span class="ar">→ </span>Spices, pepper, red or cayenne</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>no amount on any of the 7 lines</div>
+        </div><div class="right"><span class="badge info">no grams</span><span class="conf">96% name</span></div></div>
+        <div class="qrow nogram"><div class="main">
+          <div class="meta"><span class="item">pepper</span><span class="reach">7 lines · 6 recipes</span></div>
+          <div class="raw"><span class="eg">e.g. </span>1 teaspoon pepper</div>
+          <div class="food"><span class="ar">→ </span>Spices, pepper, black</div>
+          <div class="amt"><svg><use href="#i-scale"/></svg>no amount on any of the 7 lines</div>
+        </div><div class="right"><span class="badge info">no grams</span><span class="conf">100% name</span></div></div>
+      </div>
+      <div class="hint">Grouping here buys a map, not a decision: it tells you the seven pepper lines are one ingredient,
+      and the amount slot says plainly that the work is per line. Tapping one still opens the pane on the example, and
+      the strip never appears (a grams-only save is not a decision to broadcast — the server refuses
+      <code>apply_to_all</code> for it). This is why <b>Lines</b> is the default here and why nothing auto-expands: the
+      Lines view already <em>is</em> the expansion, and the toggle is one click.</div>
+    </div>
+  </div>
+
+  <div class="eyebrow">5 · Single-line groups, and the two things a group must not hide</div>
+  <p class="note"><b>a. 102 of the 131 groups are one line</b>, and all four <em>No match</em> ingredients are. Those rows
+  are today's rows with nothing added — the reason grouping is safe to make the default is that it is invisible on the
+  majority of rows.</p>
+  <div class="cols2">
+    <div class="card">
+      <div class="var-cap">No match, grouped — four ingredients, four single lines</div>
+      <div class="frame">
+        <div class="qrow nomatch"><div class="main">
+          <div class="meta">Spanish-Style Toasted Pasta with Shrimp<span>·</span>line 16</div>
+          <div class="raw">1 recipe Aioli (optional) (recipe follows)</div>
+          <div class="food bad"><span class="ar">→ </span>no food matched</div>
+        </div><div class="right"><span class="badge err">no match</span></div></div>
+        <div class="qrow nomatch"><div class="main">
+          <div class="meta">Guay Tiew Tom Yum Goong (Thai Hot and Sour Noodle Soup with Shrimp)<span>·</span>line 5</div>
+          <div class="raw">1 (2-inch) piece fresh galangal, peeled and sliced into ¼-inch-thick rounds</div>
+          <div class="food bad"><span class="ar">→ </span>no food matched</div>
+        </div><div class="right"><span class="badge err">no match</span></div></div>
+        <div class="qrow nomatch"><div class="main">
+          <div class="meta">Dakgangjeong (Korean Fried Chicken Wings)<span>·</span>line 5</div>
+          <div class="raw">2–3 tablespoons gochujang</div>
+          <div class="food bad"><span class="ar">→ </span>no food matched</div>
+        </div><div class="right"><span class="badge err">no match</span></div></div>
+        <div class="qrow nomatch"><div class="main">
+          <div class="meta">Chicken Bouillabaisse<span>·</span>line 14</div>
+          <div class="raw">¼ cup pastis or Pernod</div>
+          <div class="food bad"><span class="ar">→ </span>no food matched</div>
+        </div><div class="right"><span class="badge err">no match</span></div></div>
+      </div>
+      <div class="hint">Their panes are what ships today, including the note that the cache holds nothing usable — for
+      gochujang FDC's cached answer is literally an empty list, so “Nothing in the search names this ingredient — search
+      by hand below” with <b>No other cached matches for this line</b> under it, and no Confirm as-is (there is nothing
+      to confirm). The strip stays away: <code>others</code> is 0, because no other recipe here uses gochujang,
+      galangal, aioli or pastis.</div>
+    </div>
+    <div class="card">
+      <div class="var-cap">b. A food decision can <b>move</b> a group instead of emptying it</div>
+      <div class="offer done" style="margin-top:0">
+        <div class="o-body">
+          <svg><use href="#i-circle-check"/></svg>
+          <div class="o-text">Applied to <b>5 recipes</b> (5 lines). Their labels are recomputed.</div>
+          <button class="btn small ghost"><svg><use href="#i-x"/></svg>Dismiss</button>
+        </div>
+        <div class="o-foot">The food is settled on all six <b>lemon wedge</b> lines. None of them has an amount, so they
+        move to <b>No grams</b> — “Lemon wedges” gives nothing to weigh.</div>
+      </div>
+      <div class="chips" style="margin:12px 0 0">
+        <span class="statchip em">Need attention <span class="n">202</span></span>
+        <span class="statchip">No match <span class="n">4</span></span>
+        <span class="statchip">No grams <span class="n">86</span></span>
+        <span class="statchip sel">Low confidence <span class="n">112</span></span>
+        <span class="statchip off">Skipped <span class="n">0</span></span>
+      </div>
+      <div class="hint">Six lines left one bucket and entered another, so <b>Need attention</b> does not budge: an
+      <em>overridden</em> line with no grams buckets as <em>no grams</em>. Twelve lines in this copy are shaped like this
+      (lemon wedge and lime wedge, 6 each). One muted sentence on the receipt is the whole fix; hiding it would make
+      118 → 112 read as six lines finished. The honest end for a garnish that will never be weighable is <b>Skip</b>,
+      which is per line by design — six skips (open question 3).</div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:20px"><b>c. A group counts only its flagged lines — and that is visible in the data.</b>
+  <em>table salt</em> has thirty-three lines in this copy: twenty-four counted on <em>Salt, table</em> at 100% (e.g.
+  “1 teaspoon table salt”), seven counted as zero on <em>Seasoning to taste — no measurable amount</em> (raw “Table
+  salt”), and two flagged in <em>No grams</em> — “Pinch table salt” in Sous Vide Crème Brûlée · line 4
+  and Pear Crisp · line 11. The row says <b>2 lines · 2 recipes</b>, because grouping happens inside
+  the bucket filter and an apply only ever touches undecided lines. Mixed <em>foods</em> and mixed <em>buckets</em> inside
+  a group's flagged lines were measured at <b>0 of 131</b>, so nothing is built for them: the group is described by its
+  worst member, and if it ever happens the food slot reads “→ 2 foods” and the Lines view shows which. Not a state worth
+  a widget until it is seen.</p>
+  <div class="cols2" style="margin-top:16px">
+    <div>
+      <div class="var-cap">Narrow / stacked — list over pane, as today; the toggle wraps under the count</div>
+      <div class="qcard solo" style="max-width:430px">
+        <div class="qhead" style="flex-wrap:wrap">
+          <span>Showing <span class="t">all flagged</span> · 131 ingredients, 202 lines · worst first</span>
+          <span class="seg" style="margin-top:6px"><span class="on"><svg><use href="#i-layers"/></svg>Ingredients</span><span><svg><use href="#i-list"/></svg>Lines</span></span>
+        </div>
+        <div class="qrow check sel">
+          <div class="main">
+            <div class="meta"><span class="item">lime wedge</span><span class="reach">6 lines · 6 recipes</span></div>
+            <div class="raw"><span class="eg">e.g. </span>Lime wedges, for serving</div>
+            <div class="food bad"><span class="ar">→ </span>Lime, raw</div>
+            <div class="amt warn"><svg><use href="#i-scale"/></svg>no amount on any of the 6 lines — Confirm as-is is unavailable</div>
+          </div>
+          <div class="right"><span class="badge warn">check match</span><span class="conf">49% name</span></div>
+        </div>
+        <div class="pane" style="border-top:1px solid var(--line);background:var(--panel)">
+          <div class="p-where">Cheesy Nachos with Guacamole and Salsa · ingredient line 7</div>
+          <div class="p-raw">Lime wedges, for serving</div>
+          <div class="p-why warn">Match looks off — 49% name confidence, and no amount found — not counted</div>
+          <div class="cur">matched to <b>Lime, raw</b><span class="dt-chip">Survey (FNDDS)</span> · no amount</div>
+          <div class="panefoot"><button class="btn small ghost"><svg><use href="#i-ban"/></svg>Skip</button></div>
+        </div>
+      </div>
+      <div class="hint">The stacked branch already scrolls the whole tab with the pane under the list; the group row is
+      just the row above it. The amount slot is what wraps first at this width, and it is the slot that matters least
+      once the pane is open. No Confirm as-is here — a weak match with no amount has nothing to bless.</div>
+    </div>
+    <div>
+      <div class="var-cap">Skipped — segment hidden, empty text unchanged</div>
+      <div class="qcard solo" style="max-width:420px">
+        <div class="qhead"><span>Showing <span class="t">Skipped</span> · 0 lines, worst first</span></div>
+        <div class="qempty">No lines in this bucket.</div>
+      </div>
+      <div class="hint">Nothing is skipped in this copy, so the chip is the disabled one it already is. The bucket keeps
+      the line-shaped empty text; in Ingredients view every other bucket's empty text becomes “No ingredients in this
+      bucket.” — one string, and it stops the view lying about what it lists.</div>
+    </div>
+  </div>
+
+  <div class="eyebrow">6 · “Worst first” for groups, and which line is the example</div>
+  <table class="anat">
+    <tr><td>Sort</td><td><code>MIN(confidence) ASC</code>, then <code>lines DESC</code>, <code>recipes DESC</code>, <code>item_key</code> for a stable page boundary. A <em>no match</em> row stores confidence <code>0.0</code>, not null, so no-food groups do not lead as a block — they tie with the 0% <em>check</em> groups and interleave with them: in <b>Need attention</b> grouped the first eleven rows are all single-line groups at 0.0–0.003, four <em>no match</em> and seven <em>check</em>, and the first multi-line group (<em>herbe de provence</em>) is row 12. A group is as bad as its worst line. Reach is the tie-break, never the key: sorting by reach would bury <em>herbes de Provence → Dulce de Leche</em> (3%, 2 lines) under <em>cilantro leaf</em> (8 lines at 92%).</td></tr>
+    <tr><td>Example line</td><td>The group's lowest-confidence line; among ties one that <b>has grams</b> (so <b>Confirm as-is</b> is reachable when the food is fine); then recipe title, then position. Deterministic, so a reload never shuffles the work. Worked through: jalapeno chile → Cheesy Nachos line 2; lemon wedge → Chicken Schnitzel line 8 (no member has grams, so the title decides); makrut lime leaf → Guay Tiew Tom Yum Goong line 3 (both members are 264 g, so the title decides again); instant or rapid-rise yeast → Best Whole-Wheat Sandwich Bread line 2 (all six lines are 0.37 with grams — title first, then position 2 ahead of position 8 in the same recipe).</td></tr>
+    <tr><td>Header, grouped</td><td>Showing <b>&lt;all flagged|bucket&gt;</b> · <b>N ingredients, M lines</b> · worst first.</td></tr>
+    <tr><td>Header, lines</td><td>Showing <b>&lt;bucket&gt;</b> · <b>M lines</b>, worst first — today's sentence, verbatim.</td></tr>
+    <tr><td>Paging</td><td><code>page</code>/<code>limit</code> count <b>groups</b> in grouped view (131 groups at limit 50 is three pages, not five). A group is never split across a page — which is why the grouping has to be server-side, not a client <code>groupBy</code> over a 50-line page.</td></tr>
+    <tr><td>Lines view sort</td><td>Unchanged, plus one tie-break: <code>item_key</code> after confidence, so the eight cilantro lines sit together and their amounts can be worked in a straight run.</td></tr>
+  </table>
+
+  <div class="eyebrow">7 · What the server and the app must add</div>
+  <table class="spec">
+    <tr><th>Piece</th><th>Change</th></tr>
+    <tr><td>Grouped mode</td><td><code>GET /api/v1/admin/nutrition_review?group=item&amp;bucket=&amp;page=&amp;limit=</code> — a mode on the existing endpoint, same envelope. Without the parameter the response is exactly today's. No new endpoint.</td></tr>
+    <tr><td>Group item shape</td><td><b>Today's item, flattened, plus five fields.</b> Each entry keeps <code>recipe / position / raw / bucket / match</code> — the example line, at top level — and adds <code>item_key</code>, <code>lines</code>, <code>recipes</code>, <code>decided</code>, <code>grams: {min, max, missing}</code>. This matters: <code>NutritionReviewLine.fromJson</code> reads those five keys at top level and <code>key</code> is <code>slug#position</code>, so the model, <code>select()</code>, <code>_FixPane</code>, <code>FixPanel</code> and <code>queueShouldAdvance</code> parse and behave unchanged. Nesting the example under <code>example: {…}</code> would break the parse for no gain.</td></tr>
+    <tr><td>Grouping key</td><td>The existing <code>ingredient_matches.item_key</code> (indexed) — the same key <code>ingredient_decisions</code> is keyed by, so a group is precisely “what one decision fixes”. <code>GROUP BY item_key</code> over the same <code>_reviewBucketCase</code> derived table, inside the bucket filter. Rows with a null item_key stay ungrouped single rows.</td></tr>
+    <tr><td>Group bucket &amp; confidence</td><td>Worst member wins (<code>no_match</code> &gt; <code>check</code> &gt; <code>no_grams</code> &gt; <code>skipped</code>); confidence is <code>MIN(confidence)</code>. Both free in the same aggregate.</td></tr>
+    <tr><td>Counts</td><td><code>total</code> and <code>buckets[].count</code> stay <b>line</b> counts — the chips and the tab badge are untouched. Add <code>groups</code> at the top level and <code>groups</code> on each <code>buckets[]</code> entry, so the header can say “81 ingredients, 118 lines” and a chip can never disagree with it without a second request.</td></tr>
+    <tr><td>Amount aggregate</td><td><code>MIN(grams)</code>, <code>MAX(grams)</code>, <code>COUNT(*) FILTER (WHERE grams IS NULL)</code> — the row's amount slot. A range and a missing-count only; no plausibility judgment, because no API field can supply one.</td></tr>
+    <tr><td><code>decided</code> flag</td><td><code>true</code> when <code>ingredient_decisions</code> holds the item key — one LEFT JOIN. Without it a group whose offer was declined looks untouched and gets decided twice.</td></tr>
+    <tr><td><b><code>others</code> must be food-agnostic</b></td><td><b>The one change the grouped queue cannot ship without.</b> Drop the same-food filter from <code>otherRecipesUndecidedCount</code> (<code>… AND (? IS NULL OR fdc_id IS NULL OR fdc_id != ?)</code>) so it means “undecided lines of this item key other than this one”, and report both units: keep <code>others</code> as the recipe count (the shipped field the strip already reads) and <b>add <code>others_lines</code></b> — additive, so nothing that consumes <code>others</code> breaks. Same-recipe siblings already count (the SQL excludes only the one <code>(recipe_id, position)</code>), so saffron thread's 2-lines-in-1-recipe needs nothing extra.</td></tr>
+    <tr><td><code>apply_to_all</code> reach</td><td>The same filter dropped in <code>undecidedMatchesForItemKey</code>, so the apply lands on undecided same-item lines <em>that already carry this food</em> — which is what makes them leave the <em>check</em> bucket. Its receipt <code>applied:{recipes,lines,failed}</code> is already the right shape.</td></tr>
+    <tr><td>Strip wording</td><td>One conditional sentence in <code>ApplyToAllStrip</code>: “<b>N other lines</b> of <b>&lt;item&gt;</b>, in M recipes, are still waiting on this decision” when the decision kept the current food, today's “use &lt;item&gt; with a different match” when it changed. Same component, same buttons, same receipt.</td></tr>
+    <tr><td>Row label</td><td><b>The raw <code>item_key</code>.</b> There is no cheap display label: <code>ingredient_matches</code> stores no item text, <code>ingredient_decisions.item</code> exists only for ingredients already decided (which never appear in the queue), and the strip's label is computed app-side by <code>itemLabel(row.item)</code> from the parsed recipe document. A prettier label means a migration and a backfill — open question 2.</td></tr>
+    <tr><td>App state</td><td><code>NutritionReviewCubit</code>: one <code>grouped</code> flag with a per-bucket map (<code>grouped = bucket != 'no_grams' &amp;&amp; bucket != 'skipped'</code>, session-remembered), forwarded as <code>group=item</code>; <code>hasMore</code> compares <code>items.length</code> against the <b>group</b> count in grouped view (it compares against a line count today, which would over-report); the header sentence; and the five optional fields on <code>NutritionReviewLine</code>. <code>select()</code>, <code>loadMore()</code>, <code>completeFix()</code> unchanged.</td></tr>
+    <tr><td>Deliberately not built</td><td>No inline member list (the Lines toggle is the member view — decision 2), so no <code>members[]</code>, no cap, no expansion state, no change to what “advance” means. No mixed-food or mixed-bucket UI (measured 0 of 131). No group-scoped Skip (open question 3). No new panel, no new endpoint, no new write.</td></tr>
+  </table>
+
+  <div class="eyebrow">8 · Open questions</div>
+  <ol class="q">
+    <li><b>GO / NO-GO on the <code>others</code> widening.</b> Nothing else here is contentious, and nothing else here
+    works without it: a Confirm as-is on the commonest group shape (a food that is already right at 0.46–0.50) offers
+    nothing and clears nothing today. The catch is that the same strip lives in the per-recipe match sheet, so offers
+    would start appearing there on confirms that are silent now. Welcome — one confirm, whole library — or should the
+    sheet keep the narrower count?</li>
+    <li><b>Row label: raw <code>item_key</code>, or a display label?</b> This page ships the key (“herbe de provence”,
+    “nicoise olive”, “parsley leaf”) because it is honest, free, and the exact string the decision is keyed on. A label
+    with accents and plurals restored needs an <code>item</code> column on <code>ingredient_matches</code> plus a
+    backfill, or per-recipe document parsing inside the queue query.</li>
+    <li><b>Group-scoped Skip?</b> Six lemon-wedge and six lime-wedge garnish lines will never be weighable, and
+    <code>{skipped:true}</code> is per line by design — twelve skips. A loop behind one button is trivial; whether the
+    library should let one click do it is a decision about the data, not the UI.</li>
+    <li><b>Members inline, later?</b> This pass says no: the Lines toggle is the member view, which costs nothing and
+    keeps “advance to the next row” meaning what it means today. If “let me check a second line before I decide for six
+    recipes” turns out to be a habit rather than a hypothesis, an inline member list is a separate, additive change.</li>
+    <li><b>Toggle memory: per bucket for the session</b> (proposed — so the segment appears to move on its own when you
+    change chips) <b>or one setting for the whole tab?</b></li>
+    <li><b>Do the chips ever count ingredients?</b> Proposed: never — always lines, in both views, so the tab badge
+    “Nutrition matches · 202” keeps its meaning and <code>filteredTotal</code>/<code>hasMore</code> keep working. The
+    ingredient count lives in the header sentence only.</li>
+  </ol>
+</div>
+</body>
+</html>
