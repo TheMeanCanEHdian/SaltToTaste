@@ -6,6 +6,7 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
+import 'package:salt_server/src/nutrition/grams.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/services/import_service.dart';
@@ -49,7 +50,7 @@ class _Recording implements NutritionProvider {
 /// Changes from the 2026-09-26 sweep audit (plan items 2, 3b, 4, 5, 6),
 /// pinned on real corpus lines.
 void main() {
-  group('matcher v4 on real corpus items', () {
+  group('matcher v5 on real corpus items', () {
     test('a second amount left in the item leaves the query and the key', () {
       // '½ cup plus 2 tablespoons extra-virgin olive oil'
       expect(
@@ -58,8 +59,12 @@ void main() {
       );
       // '3 tablespoons plus 2 teaspoons kosher salt' matched pickles.
       expect(itemKeyFor('plus 2 teaspoons kosher salt'), 'kosher salt');
-      // '2 teaspoons minced fresh thyme or ½ teaspoon dried'
-      expect(normalizeItem('fresh thyme or 1/2 teaspoon dried'), 'thyme');
+      // '2 teaspoons minced fresh thyme or ½ teaspoon dried': B's own amount
+      // goes, B stays.
+      expect(
+        normalizeItem('fresh thyme or 1/2 teaspoon dried'),
+        'thyme or dried',
+      );
       // '¼ teaspoon finely grated lemon zest plus ½ teaspoon juice'
       expect(
         normalizeItem('finely grated lemon zest plus 1/2 teaspoon juice'),
@@ -74,8 +79,58 @@ void main() {
       // '1 teaspoon juice from 1 lemon or 1 teaspoon champagne vinegar'
       expect(
         normalizeItem('juice from 1 lemon or 1 teaspoon champagne vinegar'),
-        'lemon juice',
+        'lemon juice or champagne vinegar',
       );
+      // '¼ cup plus 1 tablespoon juice from 2 to 3 lemons, spent halves
+      // reserved' (0286): the moved fruit is not a food ahead of the leading
+      // amount — lemon juice, not the whole-lemon key.
+      const juice = 'plus 1 tablespoon juice from 2 to 3 lemons';
+      expect(normalizeItem(juice), 'lemon juice');
+      expect(itemKeyFor(juice), 'lemon juice');
+      expect(itemKeyFor(juice), isNot(itemKeyFor('lemons')));
+      // '1 teaspoon cornstarch dissolved in 1 teaspoon water' (0673),
+      // '½ teaspoon instant espresso powder mixed with 1 tablespoon water'
+      // (0930): the dangling connector goes with the cut.
+      expect(
+        normalizeItem('cornstarch dissolved in 1 teaspoon water'),
+        'cornstarch dissolved',
+      );
+      expect(
+        normalizeItem('instant espresso powder mixed with 1 tablespoon water'),
+        'instant espresso powder mixed',
+      );
+      // '1 teaspoon plus 2 pinches table salt, divided' (0049).
+      expect(normalizeItem('plus 2 pinches table salt'), 'table salt');
+      // 'Small pinch cayenne pepper' (0301): a measure word with no number
+      // before it is not an amount.
+      expect(
+        normalizeItem('Small pinch cayenne pepper'),
+        'pinch cayenne pepper',
+      );
+    });
+
+    test('"A or <amount> B" drops only the amount: B is a food', () {
+      for (final (item, expected) in [
+        // '5 tablespoons masa harina or 3 tablespoons cornstarch' (0495)
+        (
+          'masa harina or 3 tablespoons cornstarch',
+          'masa harina or cornstarch',
+        ),
+        // '… crushed saltines (about 16) or quick oatmeal or 1⅓ cups fresh
+        // bread crumbs' (0306)
+        (
+          'crushed saltines (about 16) or quick oatmeal or 1 1/3 cups fresh '
+              'bread crumbs',
+          'saltines or quick oatmeal or bread crumbs',
+        ),
+        // '1 pound fresh Chinese noodles or 8 ounces dried linguine' (0540)
+        (
+          'fresh Chinese noodles or 8 ounces dried linguine',
+          'chinese noodles or dried linguine',
+        ),
+      ]) {
+        expect(normalizeItem(item), expected, reason: item);
+      }
     });
 
     test('a number that is not an amount stays', () {
@@ -97,6 +152,10 @@ void main() {
         '36-inch square cheesecloth',
         'wood chips',
         '(13 by 9-inch) disposable aluminum roasting pan',
+        // '4 (2-inch) wood chunks' (0587), '2 wood chunks soaked in water …'
+        // (0646)
+        '(2-inch) wood chunks',
+        'wood chunks',
       ]) {
         expect(isNonFood(normalizeItem(item)), isTrue, reason: item);
       }
@@ -134,6 +193,17 @@ void main() {
         leftAlternative(normalizeItem('fresh parsley or basil leaves'), never),
         'parsley',
       );
+      // A rewrite KEY splits too, uncached: '1 pound ziti or other short
+      // tubular pasta' (0367) — a one-word A that is a food noun, not an
+      // adjective — and '1 pound linguine or spaghetti' (0337).
+      expect(
+        leftAlternative('ziti or other short tubular pasta', never),
+        'ziti',
+      );
+      expect(leftAlternative('linguine or spaghetti', never), 'linguine');
+      // Nothing after the "or": no alternative to split from (a hand-edited
+      // item; the corpus has none — negative path).
+      expect(leftAlternative('brandy or', always), isNull);
     });
   });
 
@@ -490,6 +560,71 @@ void main() {
         expect(db.fdcFoodCacheGet(pick.candidate.fdcId), isNull);
       },
     );
+
+    GramResolution? onDetail(IngredientLine line, FdcFood food) => resolveGrams(
+      amounts: line.amounts,
+      food: food,
+      normalizedItem: normalizeItem(line.item ?? line.raw),
+      raw: line.raw,
+    );
+
+    test('a volume line takes its grams from the fetched detail, portions '
+        'and all', () async {
+      final (line, row) = rowOf('mujaddara', '1 teaspoon sugar');
+      final detail = (await provider.inner.food(row.fdcId!))!;
+      expect(detail.portions, isNotEmpty);
+      final expected = onDetail(line, detail)!;
+      expect(expected.source, GramSource.portion);
+      expect(row.gramSource, 'portion');
+      expect(row.grams, expected.grams);
+    });
+
+    test('a macro-complete record below a macro-incomplete top hit is the '
+        'food', () async {
+      final (line, row) = rowOf('mujaddara', '½ teaspoon salt');
+      final search = lineSearchFor(
+        db,
+        normalizeItem(line.item ?? line.raw),
+        itemKeyFor(line.item ?? line.raw),
+      );
+      final top = rankCandidates(
+        search.query,
+        await provider.inner.search(search.answer),
+      ).first.candidate;
+      expect(
+        top.nutrientsPer100g!.keys,
+        isNot(contains('208')),
+        reason: 'the Foundation salt record publishes no energy',
+      );
+      expect(row.fdcId, isNot(top.fdcId));
+    });
+
+    test(
+      'a pick on a volume line fetches the detail for its portions',
+      () async {
+        final bundt = recipes['bundt']!;
+        final (line, _) = rowOf('bundt', '1 teaspoon table salt');
+        final pick = (await provider.inner.search('table salt')).firstWhere(
+          (hit) => db.fdcFoodCacheGet(hit.fdcId) == null,
+        );
+        await applyMatchOverride(
+          db,
+          provider,
+          bundt,
+          nutritionLines(bundt).indexOf(line),
+          {'fdc_id': pick.fdcId},
+        );
+        final (_, row) = rowOf('bundt', '1 teaspoon table salt');
+        final expected = onDetail(
+          line,
+          (await provider.inner.food(pick.fdcId))!,
+        )!;
+        expect(row.fdcId, pick.fdcId);
+        expect(row.gramSource, 'portion');
+        expect(row.grams, expected.grams);
+        expect(db.fdcFoodCacheGet(pick.fdcId), isNotNull);
+      },
+    );
   });
 
   test(
@@ -527,4 +662,501 @@ void main() {
       expect(later.caloriesPerServing, fresh.caloriesPerServing);
     },
   );
+
+  group('which cached answer a line reads (review of the sweep batch)', () {
+    late Directory tmp;
+    late SaltDatabase db;
+    final fixtures = FixtureProvider();
+
+    setUp(() {
+      tmp = Directory.systemTemp.createTempSync('salt-line-search');
+      db = SaltDatabase.open('${tmp.path}/salt.db');
+    });
+    tearDown(() {
+      db.dispose();
+      tmp.deleteSync(recursive: true);
+    });
+
+    Future<String> recorded(String query) async => jsonEncode([
+      for (final hit in await fixtures.search(query)) hit.toJson(),
+    ]);
+
+    test('an EMPTY cached answer for A is not a known query: '
+        '"pancetta or bacon" is searched whole', () {
+      // '6 ounces pancetta or bacon, sliced …' (0332). FDC has no pancetta
+      // record: the plain pancetta lines cache 'pancetta' -> [].
+      db.fdcSearchCachePut('pancetta', '[]');
+      expect(
+        lineSearchFor(db, 'pancetta or bacon', 'pancetta or bacon'),
+        (query: 'pancetta or bacon', answer: 'pancetta or bacon'),
+      );
+    });
+
+    test('a rewritten line never reads its key-form sibling', () async {
+      // '⅛ teaspoon red pepper flakes' (0000): FDC answers the raw phrase
+      // with bell peppers — the reason 'red pepper flakes' is rewritten.
+      db.fdcSearchCachePut(
+        'red pepper flake',
+        await recorded('red pepper flakes'),
+      );
+      final query = searchQueryFor('red pepper flakes');
+      expect(query, isNot('red pepper flakes'));
+      expect(
+        lineSearchFor(db, 'red pepper flakes', 'red pepper flake'),
+        (query: query, answer: query),
+      );
+    });
+
+    test('the left alternative is searched rewritten', () {
+      // '1 pound linguine or spaghetti' (0337): 'linguine' is a rewrite key.
+      final query = searchQueryFor('linguine');
+      expect(query, isNot('linguine'));
+      expect(
+        lineSearchFor(db, 'linguine or spaghetti', 'linguine or spaghetti'),
+        (query: query, answer: query),
+      );
+    });
+
+    test("the line's own cached answer beats its key-form sibling's", () async {
+      // '1 tablespoon minced Thai chiles' (0642): its own words searched,
+      // and the key form holding a different (empty) answer.
+      db
+        ..fdcSearchCachePut('thai chiles', await recorded('thai chiles'))
+        ..fdcSearchCachePut('thai chile', '[]');
+      expect(
+        lineSearchFor(db, 'thai chiles', 'thai chile'),
+        (query: 'thai chiles', answer: 'thai chiles'),
+      );
+      const line = IngredientLine(
+        raw: '1 tablespoon minced Thai chiles',
+        item: 'minced Thai chiles',
+      );
+      final ranked = await candidatesForLine(
+        db,
+        _Recording()..down = true,
+        line,
+        cacheOnly: true,
+      );
+      expect(ranked, isNotEmpty);
+    });
+
+    test("a sibling answer is ranked under the line's own words", () async {
+      final answer = await fixtures.search('thai chiles');
+      db.fdcSearchCachePut('thai chile', await recorded('thai chiles'));
+      String top(String query) =>
+          rankCandidates(query, answer).first.candidate.description;
+      expect(top('thai chiles'), isNot(top('thai chile')));
+      const line = IngredientLine(
+        raw: '1 tablespoon minced Thai chiles',
+        item: 'minced Thai chiles',
+      );
+      for (final cacheOnly in [true, false]) {
+        final ranked = await candidatesForLine(
+          db,
+          _Recording()..down = true,
+          line,
+          cacheOnly: cacheOnly,
+        );
+        expect(
+          [for (final c in ranked) (c.candidate.fdcId, c.confidence)],
+          [
+            for (final c in rankCandidates('thai chiles', answer).take(8))
+              (c.candidate.fdcId, c.confidence),
+          ],
+          reason: 'cacheOnly: $cacheOnly',
+        );
+      }
+    });
+
+    test("knownFood reads the line's own answer first: the whole-cache scan "
+        'runs only when that answer lacks the food', () async {
+      // '5 medium garlic cloves, minced …' (0000).
+      db.fdcSearchCachePut('garlic cloves', await recorded('garlic cloves'));
+      const line = IngredientLine(
+        raw:
+            '5 medium garlic cloves, minced or pressed through a garlic press '
+            '(about 5 teaspoons)',
+        item: 'medium garlic cloves',
+      );
+      final id = (await fixtures.search('garlic cloves')).first.fdcId;
+      bool scanned() =>
+          db.preparedSqlTexts.any((sql) => sql.contains('instr(response'));
+      expect(knownFood(db, id, line: line)?.fdcId, id);
+      expect(scanned(), isFalse);
+      // No line: the scan is the only way to find it (the seam works).
+      expect(knownFood(db, id)?.fdcId, id);
+      expect(scanned(), isTrue);
+    });
+
+    test('a cached hit with no nutrients is not a food (negative path: the '
+        'recorded answer with its top hit stripped)', () async {
+      final hits = await fixtures.search('garlic cloves');
+      final bare = hits.first;
+      db.fdcSearchCachePut(
+        'garlic cloves',
+        jsonEncode([
+          FdcCandidate(
+            fdcId: bare.fdcId,
+            description: bare.description,
+            dataType: bare.dataType,
+          ).toJson(),
+          for (final hit in hits.skip(1)) hit.toJson(),
+        ]),
+      );
+      const line = IngredientLine(
+        raw: '5 medium garlic cloves',
+        item: 'medium garlic cloves',
+      );
+      expect(knownFood(db, bare.fdcId, line: line), isNull);
+      expect(knownFood(db, hits[1].fdcId, line: line)?.fdcId, hits[1].fdcId);
+    });
+
+    test('an equipment line never reaches FDC from the review sheet', () async {
+      final provider = _Recording();
+      const line = IngredientLine(
+        raw: '4 (2-inch) wood chunks',
+        item: '(2-inch) wood chunks',
+      );
+      expect(await candidatesForLine(db, provider, line), isEmpty);
+      expect(provider.searched, isEmpty);
+    });
+  });
+
+  test("a search hit carries the detail's nutrients rounded to fewer digits: "
+      'every recorded food within 1% on energy and the macros', () async {
+    final searches =
+        jsonDecode(File('test/fixtures/fdc/searches.json').readAsStringSync())
+            as Map<String, dynamic>;
+    final provider = FixtureProvider();
+    var compared = 0;
+    var differ = 0;
+    final seen = <int>{};
+    for (final query in searches.keys) {
+      for (final hit in await provider.search(query)) {
+        final detail = await provider.food(hit.fdcId);
+        final fromHit = hit.nutrientsPer100g;
+        if (detail == null || fromHit == null || !seen.add(hit.fdcId)) {
+          continue;
+        }
+        compared += 1;
+        final numbers = {...fromHit.keys, ...detail.nutrientsPer100g.keys};
+        if (numbers.any((n) => fromHit[n] != detail.nutrientsPer100g[n])) {
+          differ += 1;
+        }
+        for (final number in const ['208', '203', '204', '205']) {
+          final a = fromHit[number];
+          final b = detail.nutrientsPer100g[number];
+          if (a == null || b == null || b == 0) {
+            continue;
+          }
+          expect(
+            (a - b).abs() / b.abs(),
+            lessThan(0.01),
+            reason: '${hit.fdcId} $number: hit $a, detail $b',
+          );
+        }
+      }
+    }
+    // Light brown sugar (168833): carbohydrate 98.1 in the hit, 98.09 in
+    // the detail. Equal is the exception, not the rule.
+    expect(compared, 70);
+    expect(differ, 54);
+  });
+
+  group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
+    // Recipes by slug, imported into a fresh library.
+    Future<(SaltDatabase, Map<String, Recipe>)> library(
+      List<String> files,
+    ) async {
+      final tmp = Directory.systemTemp.createTempSync('salt-lazy');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final config = ServerConfig(
+        dataDir: tmp.path,
+        logLevel: Level.WARNING,
+        trustProxy: false,
+      );
+      final db = SaltDatabase.open(config.dbPath);
+      addTearDown(db.dispose);
+      Directory('${tmp.path}/source/recipes').createSync(recursive: true);
+      for (final name in files) {
+        File(
+          '$corpusRecipesDir/$name',
+        ).copySync('${tmp.path}/source/recipes/$name');
+      }
+      importSourceRoot(
+        sourceRootPath: '${tmp.path}/source',
+        db: db,
+        config: config,
+      );
+      return (
+        db,
+        {
+          for (final name in files)
+            name.substring(5, name.length - 5): db
+                .recipeByIdOrSlug(name.substring(5, name.length - 5))!
+                .recipe,
+        },
+      );
+    }
+
+    (IngredientLine, IngredientMatchRow, int) rowIn(
+      SaltDatabase db,
+      Recipe recipe,
+      String raw,
+    ) {
+      final lines = nutritionLines(recipe);
+      final position = lines.indexWhere((line) => line.raw == raw);
+      expect(position, isNonNegative, reason: raw);
+      return (
+        lines[position],
+        db
+            .ingredientMatchesFor(recipe.id)
+            .firstWhere((row) => row.position == position),
+        position,
+      );
+    }
+
+    test('a food whose detail an earlier line cached keeps its portions on '
+        'the next volume line', () async {
+      final (db, recipes) = await library([
+        '0159-julia-childs-stuffed-turkey-updated.yaml',
+        '0005-best-beef-stew.yaml',
+      ]);
+      final provider = _Recording();
+      await matchAndCompute(
+        db,
+        provider,
+        recipes['julia-childs-stuffed-turkey-updated']!,
+      );
+      await matchAndCompute(db, provider, recipes['best-beef-stew']!);
+      final (line, row, _) = rowIn(
+        db,
+        recipes['best-beef-stew']!,
+        '2 tablespoons vegetable oil',
+      );
+      final detail = (await provider.inner.food(row.fdcId!))!;
+      final expected = resolveGrams(
+        amounts: line.amounts,
+        food: detail,
+        normalizedItem: normalizeItem(line.item ?? line.raw),
+        raw: line.raw,
+      )!;
+      expect(expected.source, GramSource.portion);
+      expect(row.gramSource, 'portion');
+      expect(row.grams, expected.grams);
+      expect(provider.fetched.where((id) => id == row.fdcId), hasLength(1));
+    });
+
+    test('apply_to_all fetches the portions a target needs, and counts a '
+        'failed fetch in `failed`', () async {
+      final (db, recipes) = await library([
+        '0013-ultimate-cream-of-tomato-soup.yaml',
+        '0857-rich-chocolate-bundt-cake.yaml',
+      ]);
+      final soup = recipes['ultimate-cream-of-tomato-soup']!;
+      final bundt = recipes['rich-chocolate-bundt-cake']!;
+      final provider = _Recording();
+      await matchAndCompute(db, provider, soup);
+      await matchAndCompute(db, provider, bundt);
+      // The review sheet's own search: a person looks up another flour.
+      final pick = (await searchCandidates(
+        db,
+        provider,
+        'whole-wheat flour',
+      )).first.candidate.fdcId;
+      expect(db.fdcFoodCacheGet(pick), isNull);
+      const weighed = '1¾ cups (8¾ ounces) unbleached all-purpose flour';
+      const spoons = '2 tablespoons unbleached all-purpose flour';
+      final (_, before, position) = rowIn(db, bundt, weighed);
+      expect(before.fdcId, isNot(pick));
+      final target = rowIn(db, soup, spoons).$2;
+
+      provider.down = true;
+      final Object? failedRun;
+      try {
+        failedRun = await applyMatchOverride(db, provider, bundt, position, {
+          'fdc_id': pick,
+          'apply_to_all': true,
+        });
+      } finally {
+        provider.down = false;
+      }
+      expect(failedRun, (recipes: 0, lines: 0, failed: 1));
+      expect(rowIn(db, soup, spoons).$2.fdcId, target.fdcId);
+
+      final applied = await applyMatchOverride(db, provider, bundt, position, {
+        'fdc_id': pick,
+        'apply_to_all': true,
+      });
+      expect(applied, (recipes: 1, lines: 1, failed: 0));
+      expect(rowIn(db, soup, spoons).$2.fdcId, pick);
+      expect(provider.fetched, contains(pick));
+      expect(db.fdcFoodCacheGet(pick), isNotNull);
+    });
+
+    test('a decision on a superseded (detail-404) food survives the next '
+        'compute, and no compute asks FDC for that 404 again', () async {
+      final (db, recipes) = await library([
+        '0857-rich-chocolate-bundt-cake.yaml',
+        '0072-skillet-tamale-pie.yaml',
+      ]);
+      final bundt = recipes['rich-chocolate-bundt-cake']!;
+      final pie = recipes['skillet-tamale-pie']!;
+      final provider = _Recording()..detail404 = true;
+      await matchAndCompute(db, provider, bundt);
+      await matchAndCompute(db, provider, pie);
+      const flour = '1¾ cups (8¾ ounces) unbleached all-purpose flour';
+      const pieFlour = '¾ cup (3¾ ounces) unbleached all-purpose flour';
+      final (line, row, position) = rowIn(db, bundt, flour);
+      final pick = (await candidatesForLine(
+        db,
+        provider,
+        line,
+        cacheOnly: true,
+      )).firstWhere((c) => c.candidate.fdcId != row.fdcId).candidate.fdcId;
+      await applyMatchOverride(db, provider, bundt, position, {
+        'fdc_id': pick,
+        'apply_to_all': true,
+      });
+      expect(rowIn(db, pie, pieFlour).$2.fdcId, pick);
+
+      final calls = provider.fetched.length + provider.searched.length;
+      await matchAndCompute(db, provider, pie);
+      await matchAndCompute(db, provider, bundt);
+      final after = rowIn(db, pie, pieFlour).$2;
+      expect(after.fdcId, pick);
+      expect(after.confidence, 1);
+      expect(
+        provider.fetched.length + provider.searched.length,
+        calls,
+        reason: 'every 404 was remembered: ${provider.fetched}',
+      );
+    });
+
+    test('an override on a superseded (detail-404) food survives an edit of '
+        "the line's amount: still overridden, and FDC is not asked", () async {
+      final (db, recipes) = await library([
+        '0857-rich-chocolate-bundt-cake.yaml',
+      ]);
+      final bundt = recipes.values.single;
+      final provider = _Recording()..detail404 = true;
+      await matchAndCompute(db, provider, bundt);
+      const flour = '1¾ cups (8¾ ounces) unbleached all-purpose flour';
+      final (line, row, position) = rowIn(db, bundt, flour);
+      final pick = (await candidatesForLine(
+        db,
+        provider,
+        line,
+        cacheOnly: true,
+      )).firstWhere((c) => c.candidate.fdcId != row.fdcId).candidate.fdcId;
+      await applyMatchOverride(db, provider, bundt, position, {'fdc_id': pick});
+
+      final lines = nutritionLines(bundt);
+      db.upsertRecipe(
+        bundt.copyWith(
+          ingredients: [
+            IngredientGroup(
+              items: [
+                for (final (i, l) in lines.indexed)
+                  i == position
+                      ? IngredientLine(
+                          raw: l.raw.replaceFirst('1¾ cups', '2 cups'),
+                          item: l.item,
+                          prep: l.prep,
+                          amounts: l.amounts,
+                        )
+                      : l,
+              ],
+            ),
+          ],
+        ),
+        sourceSlug: db.recipeByIdOrSlug(bundt.id)!.sourceSlug,
+        contentHash: 'edited-flour',
+      );
+      final edited = db.recipeByIdOrSlug(bundt.id)!.recipe;
+      provider.fetched.clear();
+      await matchAndCompute(db, provider, edited);
+      final after = rowIn(
+        db,
+        edited,
+        flour.replaceFirst('1¾ cups', '2 cups'),
+      ).$2;
+      expect(after.fdcId, pick);
+      expect(after.status, 'overridden');
+      expect(provider.fetched, isEmpty);
+    });
+
+    test(
+      'a hit with no nutrients is not the food: its detail is fetched '
+      '(negative path: the recorded answer with its top hit stripped)',
+      () async {
+        const file = '0711-mujaddara-rice-and-lentils-with-crispy-onions.yaml';
+        final (db, recipes) = await library([file]);
+        final mujaddara = recipes.values.single;
+        final line = nutritionLines(mujaddara).firstWhere(
+          (line) => line.raw == '1 teaspoon sugar',
+        );
+        final search = lineSearchFor(
+          db,
+          normalizeItem(line.item ?? line.raw),
+          itemKeyFor(line.item ?? line.raw),
+        );
+        final provider = _Recording();
+        final hits = await provider.inner.search(search.answer);
+        final first = rankCandidates(search.query, hits).first.candidate.fdcId;
+        final stripped = [
+          for (final hit in hits)
+            FdcCandidate(
+              fdcId: hit.fdcId,
+              description: hit.description,
+              dataType: hit.dataType,
+              nutrientsPer100g: hit.fdcId == first
+                  ? null
+                  : hit.nutrientsPer100g,
+            ),
+        ];
+        final top = rankCandidates(search.query, stripped).first.candidate;
+        expect(
+          top.nutrientsPer100g,
+          isNull,
+          reason: 'the stripped hit ranks top',
+        );
+        expect(await provider.inner.food(top.fdcId), isNotNull);
+        db.fdcSearchCachePut(
+          search.answer,
+          jsonEncode([for (final hit in stripped) hit.toJson()]),
+        );
+        await matchAndCompute(db, provider, mujaddara);
+        final (_, row, _) = rowIn(db, mujaddara, '1 teaspoon sugar');
+        expect(provider.fetched, contains(top.fdcId));
+        expect(row.fdcId, top.fdcId);
+      },
+    );
+
+    test("a sibling answer is ranked under the line's own words when the "
+        'engine matches it', () async {
+      const file =
+          '0642-thai-grilled-cornish-game-hens-with-gai-yang-chili-'
+          'dipping-sauce.yaml';
+      final (db, recipes) = await library([file]);
+      final provider = _Recording();
+      final answer = await provider.inner.search('thai chiles');
+      db.fdcSearchCachePut(
+        'thai chile',
+        jsonEncode([for (final hit in answer) hit.toJson()]),
+      );
+      final hens = recipes.values.single;
+      await matchAndCompute(db, provider, hens);
+      final (_, row, _) = rowIn(db, hens, '1 tablespoon minced Thai chiles');
+      expect(provider.searched, isNot(contains('thai chiles')));
+      expect(row.fdcId, isNotNull);
+      expect(
+        [
+          for (final c in rankCandidates('thai chiles', answer).take(3))
+            (c.candidate.fdcId, c.confidence),
+        ],
+        contains((row.fdcId, row.confidence)),
+      );
+    });
+  });
 }

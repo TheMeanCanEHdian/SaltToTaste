@@ -29,21 +29,13 @@ class TokenBucket {
   /// FDC requests by kind since the process started — `search_strict`,
   /// `search_loose`, `food`, `food_404` (also counted as a `food`), `retry`.
   /// [UsdaFdcProvider] counts them here because the interactive and bulk
-  /// clients share this bucket, so one tally is the whole budget's split. A
-  /// retry takes no token, but api.data.gov counts it all the same.
+  /// clients share this bucket, so one tally is the whole budget's split.
+  /// Every attempt takes a token, a retry too (api.data.gov counts it), so
+  /// strict + loose + food + retry is the number of grants.
   final Map<String, int> tally = {};
 
   /// [tally] as one log phrase — numbers only, never a key or a URI.
-  String get tallyText => [
-    for (final kind in const [
-      'search_strict',
-      'search_loose',
-      'food',
-      'food_404',
-      'retry',
-    ])
-      '$kind ${tally[kind] ?? 0}',
-  ].join(', ');
+  String get tallyText => fdcTallyText(tally);
 
   /// Completes when a request slot is available (immediately when under
   /// the limit; otherwise after the oldest grant leaves the window).
@@ -77,6 +69,19 @@ class TokenBucket {
     }
   }
 }
+
+/// A request tally ([TokenBucket.tally], or a difference of two) as one log
+/// phrase.
+String fdcTallyText(Map<String, int> tally) => [
+  for (final kind in const [
+    'search_strict',
+    'search_loose',
+    'food',
+    'food_404',
+    'retry',
+  ])
+    '$kind ${tally[kind] ?? 0}',
+].join(', ');
 
 /// USDA FoodData Central client.
 ///
@@ -268,21 +273,20 @@ class UsdaFdcProvider implements NutritionProvider {
         'in Settings → Nutrition (free at api.data.gov/signup).',
       );
     }
-    if (!await _bucket.acquire(maxWait: maxRateWait)) {
-      throw const NutritionProviderException(
-        'The FoodData Central request budget for this hour is used up '
-        '(a bulk compute may be running). Try again in a little while.',
-      );
-    }
-    _count(kind);
-
     final uri = Uri.https(_host, path, query.isEmpty ? null : query);
     var attempt = 0;
     while (true) {
       attempt += 1;
-      if (attempt > 1) {
-        _count('retry');
+      // Every attempt spends a grant: a retry is a request api.data.gov
+      // counts, and one riding the first grant let a troubled FDC push real
+      // traffic past the hourly cap.
+      if (!await _bucket.acquire(maxWait: maxRateWait)) {
+        throw const NutritionProviderException(
+          'The FoodData Central request budget for this hour is used up '
+          '(a bulk compute may be running). Try again in a little while.',
+        );
       }
+      _count(attempt > 1 ? 'retry' : kind);
       final client = HttpClient()..connectionTimeout = _timeout;
       try {
         final request = method == 'POST'

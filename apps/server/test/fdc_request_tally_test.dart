@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:logging/logging.dart';
+import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/fdc_provider.dart';
 import 'package:test/test.dart';
 
@@ -62,9 +64,11 @@ void main() {
       final id = foods.keys.first;
       var failNextSearch = false;
       final requests = <String>[];
+      // Room for exactly the seven requests below.
+      final bucket = TokenBucket(capacity: 7);
       final provider = UsdaFdcProvider(
         apiKey: () => 'fixture-key-not-real',
-        bucket: TokenBucket(capacity: 50),
+        bucket: bucket,
       );
 
       await HttpOverrides.runZoned(
@@ -81,8 +85,8 @@ void main() {
           expect(provider.requestCounts['food'], 2);
           expect(provider.requestCounts['food_404'], 1);
 
-          // One 503, then the answer: a retry api.data.gov counts, the bucket
-          // does not.
+          // One 503, then the answer: a retry is a request api.data.gov
+          // counts, and it takes a grant of its own.
           failNextSearch = true;
           await provider.search('sour cream');
           expect(provider.requestCounts['retry'], 1);
@@ -120,8 +124,57 @@ void main() {
         provider.requestCountsText,
         'search_strict 2, search_loose 2, food 2, food_404 1, retry 1',
       );
+      // strict + loose + food (404s included) + retry = grants.
+      final counts = provider.requestCounts;
+      expect(
+        counts['search_strict']! +
+            counts['search_loose']! +
+            counts['food']! +
+            counts['retry']!,
+        requests.length,
+      );
+      expect(
+        await bucket.acquire(maxWait: Duration.zero),
+        isFalse,
+        reason: 'seven requests spent all seven grants',
+      );
     },
   );
+
+  test("a bulk job's closing line counts its own requests, not the "
+      "process's", () async {
+    final records = <String>[];
+    final sub = Logger.root.onRecord.listen((r) => records.add(r.message));
+    addTearDown(sub.cancel);
+    final tmp = Directory.systemTemp.createTempSync('salt-bulk-tally');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    final db = SaltDatabase.open('${tmp.path}/salt.db');
+    addTearDown(db.dispose);
+    final provider = UsdaFdcProvider(
+      apiKey: () => 'fixture-key-not-real',
+      bucket: TokenBucket(capacity: 50),
+    );
+    await HttpOverrides.runZoned(
+      () async {
+        // Interactive traffic before the job: one strict search.
+        await provider.search('sour cream');
+        // An empty library: the job itself asks FDC nothing.
+        expect(startBulkJob(db, provider), isNotNull);
+        for (var i = 0; i < 100 && !records.any(_ended); i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+      },
+      createHttpClient: (_) =>
+          _FakeClient((method, uri, body) => (200, searchBody('sour cream'))),
+    );
+    expect(
+      records.singleWhere(_ended),
+      contains(
+        'by this job: search_strict 0, search_loose 0, food 0, food_404 0, '
+        'retry 0 (process total: search_strict 1,',
+      ),
+    );
+  });
 
   test('a rate-limit wait logs the tally, not the key', () async {
     final records = <String>[];
@@ -149,6 +202,8 @@ void main() {
     expect(records.join(), isNot(contains('fixture-key-not-real')));
   });
 }
+
+bool _ended(String message) => message.contains('ended; FDC requests');
 
 /// Answers each request from [respond] — (status, body) — with no network.
 class _FakeClient implements HttpClient {

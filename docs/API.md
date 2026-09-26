@@ -628,9 +628,12 @@ re-derived cache-only, never spends FDC budget), `status`: `auto |
 confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
 for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
-pepper black` for a pepper line, `brandy` for "brandy or dry sherry", or
-the singular `pork tenderloin` whose cached answer a "pork tenderloins"
-line reads; null when the line has nothing searchable) and `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
+pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
+"A or B" line reads A alone only when A's cached answer holds foods — an
+empty one, like `pancetta`'s, keeps the whole phrase), or the singular
+`pork tenderloin` whose cached answer a "pork tenderloins" line reads (a
+line the rewrites changed never reads its singular form's answer); null
+when the line has nothing searchable) and `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
 just the candidates shown — holds no record naming the ingredient, or the
 answer was empty: the list is hopeless, not mis-ranked; null when FDC was
 never asked), `candidates_cached_at` (when FDC was last asked them, null

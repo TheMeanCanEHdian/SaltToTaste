@@ -1385,6 +1385,32 @@ accuracy batch (whole-bird and species rewrites, the energy fallback, the
 dish-record cut, the count-noun cap, grams from cached portions, discarded
 media and edible yields) follows, replayed cache-only with a `stale` sweep.
 
+Review fixes (Run 040, both fleets on `13030d0`): the " or N unit" cut
+dropped the whole alternate food ("masa harina or 3 tablespoons cornstarch"
+→ "masa harina"; Sonnet HIGH) — it now drops only the amount and the
+or-split decides what is searched; the fruit move ran before the amount cut,
+so "plus 1 tablespoon juice from 2 to 3 lemons" became "lemon" (now "lemon
+juice"); the or-split treated an EMPTY cached answer as a known query
+("pancetta or bacon" lost its 25 candidates); a decision on a lazily matched
+superseded (detail-404) food was reverted by the next compute because the
+prior-decision and edited-orphan paths still fetched (now cache-first via
+knownFood, one 404 remembered); knownFood scanned the whole search cache
+before reading the line's own answer (164 ms → 1 ms at 13k rows); retries
+rode an already-spent budget grant (each attempt now acquires one, so the
+tally equals the grants); the bulk job's closing tally is the job's delta,
+not the process total; a rewrite-keyed line no longer falls back to the raw
+sibling phrase; the "563 of 563 equal" comment was false — a search hit is
+the detail rounded (54 of 70 fixture foods differ, all under 1%), which the
+lazy path accepts and a test now documents. Fourteen missing pins added
+(sibling precedence and own-query ranking, every equipment word, the cut
+connectors and unit words, the detail's portions in gramsFor, cache-first,
+the apply-to-all portion fetch and its `failed`, the pick path, macro
+completeness, the or-split branches, the 404 stand-in write, the tally log).
+`matcherVersion` 5. The library-wide sweep itself finished the same evening:
+1,190 recipes in 3 h 04 min, 0 failures, 13,615 lines — counted 76.4%, check
+11.9%, no grams 11.1%, no match 0.6%; 142 recipes complete; 1,802 searches
+and 961 foods cached (archive `.claude/diag/2026-09-26/`).
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

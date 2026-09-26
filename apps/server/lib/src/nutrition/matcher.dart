@@ -129,8 +129,12 @@ const Map<String, String> _synonyms = {
 /// 4 = a second amount left in the item ("plus 2 tablespoons …", "or ¼
 /// teaspoon dried") is dropped from the query and the key, equipment lines
 /// are zeros, and the engine searches a cached "A or B" alternative alone and
-/// reads a same-key sibling's cached answer (sweep audit, 2026-09-26).
-const int matcherVersion = 4;
+/// reads a same-key sibling's cached answer (sweep audit, 2026-09-26);
+/// 5 = "A or <amount> B" keeps B (only the amount goes), a leading amount
+/// before "juice from N lemons" no longer eats the juice, an empty cached
+/// answer for A no longer splits "A or B", and a rewritten line never reads
+/// its key-form sibling (sweep-batch review, 2026-09-26).
+const int matcherVersion = 5;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -192,9 +196,25 @@ String normalizeItem(String item) {
     words.add(_synonyms[word] ?? word);
   }
   // Citrus first, so "zest plus 1 tablespoon juice from 1 lemon" still names
-  // the fruit before the second amount is cut; and again after, for "juice
-  // from 1 lemon or 1 teaspoon champagne vinegar".
-  return _fruitFromTail(_withoutAmounts(_fruitFromTail(words))).join(' ');
+  // the fruit before the second amount is cut — the moved fruit does not
+  // count as a food ahead of a leading amount ("plus 1 tablespoon juice from
+  // 2 to 3 lemons" is lemon juice); and again after, per alternative, for
+  // "juice from 1 lemon or 1 teaspoon champagne vinegar".
+  final moved = _fruitFromTail(words);
+  final lead = identical(moved, words) ? 0 : 1;
+  final kept = _withoutAmounts(moved, lead: lead);
+  final out = <String>[];
+  var start = 0;
+  for (var k = 0; k <= kept.length; k++) {
+    if (k == kept.length || kept[k] == 'or') {
+      out.addAll(_fruitFromTail(kept.sublist(start, k)));
+      if (k < kept.length) {
+        out.add('or');
+      }
+      start = k + 1;
+    }
+  }
+  return out.join(' ');
 }
 
 /// Measure words a leaked second amount carries ("plus 2 tablespoons").
@@ -238,16 +258,20 @@ const Set<String> _cutConnectors = {'or', 'and', 'in', 'with'};
 /// tablespoons olive oil" keeps "plus 2 tablespoons olive oil", "thyme or ¼
 /// teaspoon dried", "zest plus ½ cup juice" (the split turns "1/4" into
 /// "1 4"). A number run followed by a measure word is dropped when it leads
-/// the item, and cuts the item when it follows a food (the rest names another
-/// amount, usually of another food; a trailing "or"/"and"/"in"/"with" goes
-/// with it).
+/// the item (the first [lead] words — a fruit [_fruitFromTail] moved to the
+/// front — do not count) or directly follows an "or" (B's own amount in
+/// "masa harina or 3 tablespoons cornstarch": the amount goes, B stays), and
+/// cuts the item when it follows a food (the rest names another amount of
+/// the same or another food; a trailing "or"/"and"/"in"/"with" goes with
+/// it).
 /// Before this, 252 library lines searched and were keyed with the second
 /// amount in them (153 queries, 70 once it is gone), and "2 teaspoon kosher
 /// salt" matched pickles. A number followed by anything else stays: "85
 /// percent lean", "2 percent milk", "egg 1 yolk".
-List<String> _withoutAmounts(List<String> words) {
+List<String> _withoutAmounts(List<String> words, {int lead = 0}) {
   final digits = RegExp(r'^\d+$');
   final out = <String>[];
+  var dropped = false;
   var i = 0;
   while (i < words.length) {
     var j = i;
@@ -255,17 +279,18 @@ List<String> _withoutAmounts(List<String> words) {
       j++;
     }
     if (j > i && j < words.length && _amountUnits.contains(words[j])) {
-      if (out.isNotEmpty) {
-        while (out.isNotEmpty && _cutConnectors.contains(out.last)) {
-          out.removeLast();
-        }
-        break;
-      }
+      dropped = true;
       i = j + 1;
-      continue;
+      if (out.length <= lead || out.last == 'or') {
+        continue;
+      }
+      break;
     }
     out.add(words[i]);
     i++;
+  }
+  while (dropped && out.isNotEmpty && _cutConnectors.contains(out.last)) {
+    out.removeLast();
   }
   return out;
 }

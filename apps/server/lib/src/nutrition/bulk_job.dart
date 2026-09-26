@@ -190,6 +190,11 @@ Future<void> _run(
   var done = 0;
   var failed = 0;
   final log = <String>[];
+  // The bucket's tally is process-wide (interactive traffic and earlier jobs
+  // too); the job's own spend is the difference.
+  final tallyAtStart = provider is UsdaFdcProvider
+      ? Map.of(provider.requestCounts)
+      : const <String, int>{};
   try {
     for (final id in ids) {
       // Yield the event loop between recipes: fully cached computes are
@@ -260,9 +265,14 @@ Future<void> _run(
     _bulkRunning = false;
     // The spend split for the pause that reads it (a stopped job too).
     if (provider is UsdaFdcProvider) {
+      final spent = {
+        for (final MapEntry(:key, :value) in provider.requestCounts.entries)
+          key: value - (tallyAtStart[key] ?? 0),
+      };
       _log.info(
-        'Bulk nutrition job $jobId ended; FDC requests since start: '
-        '${provider.requestCountsText}',
+        'Bulk nutrition job $jobId ended; FDC requests by this job: '
+        '${fdcTallyText(spent)} (process total: '
+        '${provider.requestCountsText})',
       );
     }
   }
