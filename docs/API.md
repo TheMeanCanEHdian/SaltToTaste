@@ -628,8 +628,9 @@ re-derived cache-only, never spends FDC budget), `status`: `auto |
 confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
 for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
-pepper black` for a pepper line; null when the line has nothing
-searchable) and `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
+pepper black` for a pepper line, `brandy` for "brandy or dry sherry", or
+the singular `pork tenderloin` whose cached answer a "pork tenderloins"
+line reads; null when the line has nothing searchable) and `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
 just the candidates shown — holds no record naming the ingredient, or the
 answer was empty: the list is hopeless, not mis-ranked; null when FDC was
 never asked), `candidates_cached_at` (when FDC was last asked them, null
@@ -706,8 +707,10 @@ the right food. A line a person already decided is left alone, as is one
 whose text changed since its compute. The response carries `applied:
 {recipes, lines, failed}`: what was written, and how many recipes failed
 part-way (their document would not decode, or the provider failed while
-their totals recomputed — logged; what was written before the failure
-stays). `422`, with nothing written, when the request carries no food
+fetching the household portions one of their lines needed, or while their
+totals recomputed — logged; what was written before the failure stays).
+The decision itself needs no FDC call when the food is in a cached search
+answer, so it lands with no key set or the hourly budget spent. `422`, with nothing written, when the request carries no food
 decision (`grams` alone or `skipped`), or the line has nothing searchable
 to match on.
 

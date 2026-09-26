@@ -75,6 +75,12 @@ class _FailingFoodProvider implements NutritionProvider {
   }
 }
 
+/// Evicts every cached search answer that holds the food `?` as a hit, so a
+/// recompute has no local record of it and must ask the provider.
+const _deleteSearchesHolding =
+    'DELETE FROM fdc_search_cache '
+    "WHERE response LIKE '%\"fdc_id\":' || ? || ',%'";
+
 void main() {
   group('cross-recipe reuse of match decisions', skip: skipIfNoCorpus, () {
     late Directory tempDir;
@@ -558,7 +564,8 @@ void main() {
     test('a provider failure part-way through a sweep is counted, not '
         'reported as a refusal; what landed stays', () async {
       // Recompute of the caramel cake's totals needs its OTHER lines' foods;
-      // evict one from the cache and make the provider fail on it.
+      // evict one from the caches (its detail, and the search answers that
+      // hold its hit) and make the provider fail on it.
       final eggsPos = positionOf(bundt, 'eggs');
       final caramelEggs = positionOf(caramel, 'eggs');
       final victim = db
@@ -567,6 +574,7 @@ void main() {
           .fdcId!;
       sqlite3.open(config.dbPath)
         ..execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [victim])
+        ..execute(_deleteSearchesHolding, [victim])
         ..execute(
           "UPDATE ingredient_matches SET status = 'auto', fdc_id = NULL "
           'WHERE recipe_id = ? AND position = ?',
@@ -612,13 +620,15 @@ void main() {
           [first.id, firstEggs, second.id, secondEggs],
         )
         ..dispose();
-      // Park the first recipe's recompute on one of its OTHER foods.
+      // Park the first recipe's recompute on one of its OTHER foods, held
+      // by no local record (a recompute reads a cached search hit first).
       final parkOn = db
           .ingredientMatchesFor(first.id)
           .firstWhere((r) => r.fdcId != null && r.position != firstEggs)
           .fdcId!;
       sqlite3.open(config.dbPath)
         ..execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [parkOn])
+        ..execute(_deleteSearchesHolding, [parkOn])
         ..dispose();
       final gated = _GatedFoodProvider(provider, parkOn);
       final food = rowOf(bundt, 'eggs').fdcId!;

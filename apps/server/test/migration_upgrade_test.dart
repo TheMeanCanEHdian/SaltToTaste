@@ -854,7 +854,13 @@ void main() {
     test('the seeded nutrition rows are real engine output over real FDC '
         'payloads', () {
       final matches = nutritionRows['ingredient_matches']!;
+      // A food the compute built from its search hit (the detail is fetched
+      // only when the grams need its portions) is in a captured search
+      // answer instead of the food cache.
       final foods = {
+        for (final row in nutritionRows['fdc_search_cache']!)
+          for (final hit in jsonDecode(row['response']! as String) as List)
+            (hit as Map<String, dynamic>)['fdc_id']! as int: hit,
         for (final row in nutritionRows['fdc_food_cache']!)
           row['fdc_id']! as int:
               jsonDecode(row['response']! as String) as Map<String, dynamic>,
@@ -875,7 +881,9 @@ void main() {
         expect(
           food,
           isNotNull,
-          reason: 'every matched fdc_id must be in the captured food cache',
+          reason:
+              'every matched fdc_id must be in the captured food cache or '
+              'a captured search answer',
         );
         expect(
           row['data_type'],

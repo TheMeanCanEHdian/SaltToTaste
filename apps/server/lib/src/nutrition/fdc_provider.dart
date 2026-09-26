@@ -26,6 +26,25 @@ class TokenBucket {
   final Duration _window;
   final List<DateTime> _grants = [];
 
+  /// FDC requests by kind since the process started — `search_strict`,
+  /// `search_loose`, `food`, `food_404` (also counted as a `food`), `retry`.
+  /// [UsdaFdcProvider] counts them here because the interactive and bulk
+  /// clients share this bucket, so one tally is the whole budget's split. A
+  /// retry takes no token, but api.data.gov counts it all the same.
+  final Map<String, int> tally = {};
+
+  /// [tally] as one log phrase — numbers only, never a key or a URI.
+  String get tallyText => [
+    for (final kind in const [
+      'search_strict',
+      'search_loose',
+      'food',
+      'food_404',
+      'retry',
+    ])
+      '$kind ${tally[kind] ?? 0}',
+  ].join(', ');
+
   /// Completes when a request slot is available (immediately when under
   /// the limit; otherwise after the oldest grant leaves the window).
   ///
@@ -52,7 +71,7 @@ class TokenBucket {
       }
       _log.info(
         'FDC rate limit reached; waiting ${wait.inSeconds}s '
-        '(queue drains automatically)',
+        '(queue drains automatically). Requests since start: $tallyText',
       );
       await Future<void>.delayed(wait + const Duration(milliseconds: 50));
     }
@@ -89,6 +108,15 @@ class UsdaFdcProvider implements NutritionProvider {
 
   static const Duration _timeout = Duration(seconds: 30);
 
+  /// FDC requests this process has made, by kind ([TokenBucket.tally]).
+  Map<String, int> get requestCounts => Map.unmodifiable(_bucket.tally);
+
+  /// [requestCounts] as one log phrase.
+  String get requestCountsText => _bucket.tallyText;
+
+  void _count(String kind) =>
+      _bucket.tally.update(kind, (n) => n + 1, ifAbsent: () => 1);
+
   @override
   Future<List<FdcCandidate>> search(String query) async {
     // requireAllWords tightens relevance (drops partial-term noise like
@@ -109,12 +137,16 @@ class UsdaFdcProvider implements NutritionProvider {
     // POST, not GET: the "Survey (FNDDS)" dataType value's space/parens 400 at
     // the nginx edge on a query string. FNDDS adds USDA's cooked/composite
     // layer (broths, cooked vegetables) that Foundation/SR Legacy lack.
-    final json = await _post('/fdc/v1/foods/search', {
-      'query': query,
-      'dataType': const ['Foundation', 'SR Legacy', 'Survey (FNDDS)'],
-      'pageSize': 25,
-      'requireAllWords': requireAllWords,
-    });
+    final json = await _post(
+      '/fdc/v1/foods/search',
+      {
+        'query': query,
+        'dataType': const ['Foundation', 'SR Legacy', 'Survey (FNDDS)'],
+        'pageSize': 25,
+        'requireAllWords': requireAllWords,
+      },
+      kind: requireAllWords ? 'search_strict' : 'search_loose',
+    );
     final foods = json['foods'];
     if (foods is! List) {
       return const [];
@@ -159,6 +191,7 @@ class UsdaFdcProvider implements NutritionProvider {
     try {
       json = await _get('/fdc/v1/food/$fdcId', const {});
     } on _NotFound {
+      _count('food_404');
       return null;
     }
     // Detail nutrients arrive as {nutrient: {number, ...}, amount} per 100g.
@@ -212,16 +245,19 @@ class UsdaFdcProvider implements NutritionProvider {
   }
 
   Future<Map<String, dynamic>> _get(String path, Map<String, String> query) =>
-      _request('GET', path, query: query);
+      _request('GET', path, kind: 'food', query: query);
 
   Future<Map<String, dynamic>> _post(
     String path,
-    Map<String, Object?> body,
-  ) => _request('POST', path, body: body);
+    Map<String, Object?> body, {
+    required String kind,
+  }) => _request('POST', path, kind: kind, body: body);
 
+  /// [kind] is the [TokenBucket.tally] entry the request counts under.
   Future<Map<String, dynamic>> _request(
     String method,
     String path, {
+    required String kind,
     Map<String, String> query = const {},
     Map<String, Object?>? body,
   }) async {
@@ -238,11 +274,15 @@ class UsdaFdcProvider implements NutritionProvider {
         '(a bulk compute may be running). Try again in a little while.',
       );
     }
+    _count(kind);
 
     final uri = Uri.https(_host, path, query.isEmpty ? null : query);
     var attempt = 0;
     while (true) {
       attempt += 1;
+      if (attempt > 1) {
+        _count('retry');
+      }
       final client = HttpClient()..connectionTimeout = _timeout;
       try {
         final request = method == 'POST'

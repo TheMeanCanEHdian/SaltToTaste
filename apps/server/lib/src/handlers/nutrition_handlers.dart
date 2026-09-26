@@ -130,10 +130,13 @@ Future<Map<String, Object?>> matchesBody(
             fdcId: row?.fdcId,
             belowConfidence: lowConfidence,
           );
-    // The KEY (singular) joins decisions; the QUERY keeps the line's words.
-    final query = itemKey.isEmpty
+    // The KEY (singular) joins decisions; the QUERY keeps the line's words —
+    // reported as the words whose cached answer the line reads (a same-key
+    // sibling's, or an "A or B" line's A), so a live search lands there.
+    final search = itemKey.isEmpty
         ? null
-        : searchQueryFor(normalizeItem(line.item ?? line.raw));
+        : lineSearchFor(db, normalizeItem(line.item ?? line.raw), itemKey);
+    final query = search?.answer;
     items.add({
       'position': position,
       'raw': line.raw,
@@ -152,9 +155,9 @@ Future<Map<String, Object?>> matchesBody(
       'candidates_query': query,
       // False when the answer holds no record of the food at all — a list
       // that is hopeless, not mis-ranked; null when never searched.
-      'candidates_name_ingredient': query == null
+      'candidates_name_ingredient': search == null
           ? null
-          : _answerNamesIngredient(db, query),
+          : _answerNamesIngredient(db, search.query, search.answer),
       'candidates_cached_at': query == null
           ? null
           : db.fdcSearchCacheEntry(query)?.fetchedAt,
@@ -263,18 +266,18 @@ Future<AppliedToOthers?> applyMatchOverride(
     if (fdcId is! num || fdcId <= 0) {
       throw const ValidationException("'fdc_id' must be a positive number.");
     }
-    final food = await cachedFood(db, provider, fdcId.toInt());
-    if (food == null) {
+    // A candidate the sheet showed is a cached hit: it stands in until the
+    // grams need FDC's portions (gramsFor), so a pick lands with no provider
+    // call while the hourly budget is spent.
+    final picked =
+        knownFood(db, fdcId.toInt(), line: line) ??
+        await cachedFood(db, provider, fdcId.toInt());
+    if (picked == null) {
       throw const ValidationException(
         'FoodData Central has no food with that id.',
       );
     }
-    final resolution = resolveGrams(
-      amounts: line.amounts,
-      food: food,
-      normalizedItem: normalizeItem(line.item ?? line.raw),
-      raw: line.raw,
-    );
+    final (food, resolution) = await gramsFor(db, provider, picked, line);
     row = row.copyWith(
       fdcId: food.fdcId,
       description: food.description,
@@ -336,7 +339,12 @@ Future<AppliedToOthers?> applyMatchOverride(
         'Nothing searchable in this line to match other recipes on.',
       );
     }
-    food = await cachedFood(db, provider, row.fdcId!);
+    // The food this line was matched on, with no provider call when a
+    // cache holds it: a lazy compute's stand-in lives only in a cached
+    // search answer, and a decision must land while FDC is out of budget.
+    food =
+        knownFood(db, row.fdcId!, line: line) ??
+        await cachedFood(db, provider, row.fdcId!);
     if (food == null) {
       throw const ValidationException(
         'FoodData Central has no food with that id.',
@@ -370,17 +378,21 @@ Future<AppliedToOthers?> applyMatchOverride(
     db,
     provider,
     itemKey: itemKey,
-    food: food,
+    decided: food,
     excluding: (recipeId: recipe.id, position: position),
   );
 }
 
-/// Whether FDC's WHOLE cached answer for [query] names the ingredient —
-/// the answer, not the eight candidates the body shows (a carrier ranked
-/// ninth still means the search found the food). Null when never searched;
-/// false for an empty answer.
-bool? _answerNamesIngredient(SaltDatabase db, String query) {
-  final cached = db.fdcSearchCacheGet(query);
+/// Whether FDC's WHOLE cached answer (the row under [answerQuery]) names
+/// the ingredient of [query] — the answer, not the eight candidates the body
+/// shows (a carrier ranked ninth still means the search found the food).
+/// Null when never searched; false for an empty answer.
+bool? _answerNamesIngredient(
+  SaltDatabase db,
+  String query,
+  String answerQuery,
+) {
+  final cached = db.fdcSearchCacheGet(answerQuery);
   if (cached == null) {
     return null;
   }

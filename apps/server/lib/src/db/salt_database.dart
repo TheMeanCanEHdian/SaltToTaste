@@ -943,6 +943,16 @@ class SaltDatabase {
     );
   }
 
+  /// Every cached search response that lists [fdcId] as a hit. The hits are
+  /// stored as `jsonEncode` of FdcCandidate.toJson, whose first key is
+  /// `fdc_id`, so the needle cannot match anything but a hit's id.
+  List<String> fdcSearchCacheHolding(int fdcId) => [
+    for (final row in _prepared(
+      'SELECT response FROM fdc_search_cache WHERE instr(response, ?) > 0',
+    ).select(['{"fdc_id":$fdcId,']))
+      row['response'] as String,
+  ];
+
   /// Stores a search response in the cache.
   void fdcSearchCachePut(String query, String responseJson) {
     _prepared(

@@ -99,6 +99,9 @@ Future<void> matchAndCompute(
       orphansByKey.putIfAbsent(rowKey, () => []).add(row);
     }
   }
+  // Foods built from a search hit this compute (see the candidate loop):
+  // the totals read them here, since they are not in fdc_food_cache.
+  final standIns = <int, FdcFood>{};
   final newKeyCounts = <String, int>{};
   for (final line in lines) {
     final lineKey = itemKeyFor(line.item ?? line.raw);
@@ -179,7 +182,11 @@ Future<void> matchAndCompute(
       }
     }
     final seasoning = line.amounts.isEmpty && isSeasoningToTaste(normalized);
-    if (normalized.isEmpty || isWaterLike(normalized) || seasoning) {
+    final equipment = isNonFood(normalized);
+    if (normalized.isEmpty ||
+        isWaterLike(normalized) ||
+        seasoning ||
+        equipment) {
       db.upsertIngredientMatchIfUndecided(
         IngredientMatchRow(
           recipeId: recipe.id,
@@ -191,6 +198,8 @@ Future<void> matchAndCompute(
               ? 'Nothing searchable in this line'
               : seasoning
               ? 'Seasoning to taste — no measurable amount'
+              : equipment
+              ? 'Equipment — not food, counts as zero'
               : 'Water/ice — counts as zero',
           dataType: null,
           confidence: 1,
@@ -236,9 +245,9 @@ Future<void> matchAndCompute(
       }
     }
 
-    final query = searchQueryFor(normalized);
-    final candidates = await _cachedSearch(db, provider, query);
-    final ranked = rankCandidates(query, candidates);
+    final search = lineSearchFor(db, normalized, key);
+    final candidates = await _cachedSearch(db, provider, search.answer);
+    final ranked = rankCandidates(search.query, candidates);
     if (ranked.isEmpty) {
       db.upsertIngredientMatchIfUndecided(
         IngredientMatchRow(
@@ -264,17 +273,28 @@ Future<void> matchAndCompute(
     // (Foundation butter publishes no energy or saturated fat at all) —
     // a macro-complete record slightly lower in the ranking beats an
     // incomplete one at the top.
+    //
+    // The detail is fetched only when it adds something: a search hit
+    // already carries the food's nutrients (equal to the detail's on 563 of
+    // 563 foods, sweep audit 2026-09-26), so the hit itself is the food until
+    // the grams need FDC's household portions. That stand-in is held in
+    // [standIns] for this compute's totals and NEVER written to
+    // fdc_food_cache — a portion-less row there would starve every later
+    // volume line of its portions. 92 of the sweep's first 227 detail fetches
+    // fed only weight-sourced lines.
     RankedCandidate? best;
     FdcFood? food;
     RankedCandidate? fallbackCandidate;
     FdcFood? fallbackFood;
     for (final candidate in ranked.take(3)) {
-      var resolved = await _cachedFood(db, provider, candidate.candidate.fdcId);
-      if (resolved == null &&
-          (candidate.candidate.nutrientsPer100g?.isNotEmpty ?? false)) {
-        resolved = candidate.candidate.toFood();
-        db.fdcFoodCachePut(resolved.fdcId, jsonEncode(resolved.toJson()));
-      }
+      final id = candidate.candidate.fdcId;
+      final hasNutrients =
+          candidate.candidate.nutrientsPer100g?.isNotEmpty ?? false;
+      final resolved =
+          _foodFromCache(db, id) ??
+          (hasNutrients
+              ? candidate.candidate.toFood()
+              : await _cachedFood(db, provider, id));
       if (resolved == null) {
         continue;
       }
@@ -308,12 +328,10 @@ Future<void> matchAndCompute(
       );
       continue;
     }
-    final resolution = resolveGrams(
-      amounts: line.amounts,
-      food: food,
-      normalizedItem: normalized,
-      raw: line.raw,
-    );
+    final (gramsFood, resolution) = await gramsFor(db, provider, food!, line);
+    if (_foodFromCache(db, gramsFood.fdcId) == null) {
+      standIns[gramsFood.fdcId] = gramsFood;
+    }
     db.upsertIngredientMatchIfUndecided(
       IngredientMatchRow(
         recipeId: recipe.id,
@@ -334,7 +352,55 @@ Future<void> matchAndCompute(
   // Lines removed by an edit leave orphan rows behind.
   db.deleteIngredientMatchesFrom(recipe.id, lines.length);
 
-  await recomputeTotals(db, provider, recipe, freshMatch: true);
+  await recomputeTotals(
+    db,
+    provider,
+    recipe,
+    freshMatch: true,
+    standIns: standIns,
+  );
+}
+
+/// Whether [resolveGrams] may read the food's portions for these [amounts]:
+/// it reads them only past the weight steps, and only for a volume or a
+/// count amount. A resolution computed on a portion-less food is therefore
+/// final when it came from a weight, or when the line has neither.
+bool _needsPortions(List<Amount> amounts, GramResolution? withoutPortions) =>
+    withoutPortions?.source != GramSource.weight &&
+    amounts.any(
+      (amount) =>
+          amount.measure == Measure.volume || amount.measure == Measure.count,
+    );
+
+/// [line]'s grams on [food], and the food they were read from. A search hit
+/// (no fdc_food_cache row) is enough unless the grams may need FDC's
+/// household portions; then the detail is fetched and cached — the only
+/// provider call. A 404 (superseded record) leaves the hit as FDC's only
+/// record of the food, so it is cached as the food, as it always was.
+Future<(FdcFood, GramResolution?)> gramsFor(
+  SaltDatabase db,
+  NutritionProvider provider,
+  FdcFood food,
+  IngredientLine line,
+) async {
+  GramResolution? resolve(FdcFood on) => resolveGrams(
+    amounts: line.amounts,
+    food: on,
+    // The grams tables match on the line's own words, not the key.
+    normalizedItem: normalizeItem(line.item ?? line.raw),
+    raw: line.raw,
+  );
+  final resolution = resolve(food);
+  if (_foodFromCache(db, food.fdcId) != null ||
+      !_needsPortions(line.amounts, resolution)) {
+    return (food, resolution);
+  }
+  final detail = await _cachedFood(db, provider, food.fdcId);
+  if (detail == null) {
+    db.fdcFoodCachePut(food.fdcId, jsonEncode(food.toJson()));
+    return (food, resolution);
+  }
+  return (detail, resolve(detail));
 }
 
 /// A person's call on a row: anything but the engine's own `auto` and
@@ -343,13 +409,19 @@ bool _isDecided(IngredientMatchRow row) =>
     row.status != 'auto' && row.status != 'unmatched';
 
 /// Recomputes the stored per-serving totals from the persisted matches —
-/// instant (food details come from the cache; no searches).
+/// instant (food details come from the cache; no searches). [standIns] are
+/// the foods a fresh match built from search hits (never cached); a later
+/// recompute reads a food no cache row holds from the line's cached search
+/// hit, and asks FDC only when neither holds it — so a serving-basis change
+/// or a decision still recomputes with no key set or the hourly budget
+/// spent (the normal state while a bulk sweep runs).
 Future<void> recomputeTotals(
   SaltDatabase db,
   NutritionProvider provider,
   Recipe recipe, {
   int? servingBasis,
   bool freshMatch = false,
+  Map<int, FdcFood> standIns = const {},
 }) async {
   final lines = nutritionLines(recipe);
   // Rows beyond the current line count are orphans from an edit — they
@@ -404,7 +476,10 @@ Future<void> recomputeTotals(
     if (row.status == 'auto' && row.confidence < lowConfidence) {
       continue;
     }
-    final food = await _cachedFood(db, provider, row.fdcId!);
+    final food =
+        standIns[row.fdcId] ??
+        knownFood(db, row.fdcId!, line: lines[row.position]) ??
+        await _cachedFood(db, provider, row.fdcId!);
     if (food == null) {
       continue;
     }
@@ -491,13 +566,17 @@ Future<List<RankedCandidate>> candidatesForLine(
   bool cacheOnly = false,
 }) async {
   final normalized = normalizeItem(line.item ?? line.raw);
-  if (normalized.isEmpty || isWaterLike(normalized)) {
+  if (normalized.isEmpty || isWaterLike(normalized) || isNonFood(normalized)) {
     return const [];
   }
-  final query = searchQueryFor(normalized);
+  final search = lineSearchFor(
+    db,
+    normalized,
+    itemKeyFor(line.item ?? line.raw),
+  );
   final List<FdcCandidate> candidates;
   if (cacheOnly) {
-    final cached = db.fdcSearchCacheGet(query);
+    final cached = db.fdcSearchCacheGet(search.answer);
     if (cached == null) {
       return const [];
     }
@@ -506,9 +585,9 @@ Future<List<RankedCandidate>> candidatesForLine(
         FdcCandidate.fromJson(entry as Map<String, dynamic>),
     ];
   } else {
-    candidates = await _cachedSearch(db, provider, query);
+    candidates = await _cachedSearch(db, provider, search.answer);
   }
-  return rankCandidates(query, candidates).take(8).toList();
+  return rankCandidates(search.query, candidates).take(8).toList();
 }
 
 /// Ranked candidates for an ADMIN-SUPPLIED search term — the review sheet's
@@ -602,6 +681,79 @@ Future<List<FdcCandidate>> _cachedSearch(
   return results;
 }
 
+/// Which cached search answers a line, and the words that rank it: `query`
+/// ranks the candidates; `answer` is the fdc_search_cache row that holds them
+/// — and, when it holds nothing yet, the words FDC is asked. They differ in
+/// one case: a line whose own words were never searched reads the answer
+/// stored under its KEY's words ("pork tenderloins" reads "pork tenderloin":
+/// 56 of 56 such cached pairs ranked the same top food, sweep audit
+/// 2026-09-26), still ranked under its own words. An "A or B" line whose A is
+/// a known query searches A alone ([leftAlternative]).
+({String query, String answer}) lineSearchFor(
+  SaltDatabase db,
+  String normalized,
+  String key,
+) {
+  final left = leftAlternative(
+    normalized,
+    (query) => db.fdcSearchCacheEntry(query) != null,
+  );
+  if (left != null) {
+    final query = searchQueryFor(left);
+    return (query: query, answer: query);
+  }
+  final query = searchQueryFor(normalized);
+  final sibling = searchQueryFor(key);
+  if (sibling != query &&
+      db.fdcSearchCacheEntry(query) == null &&
+      db.fdcSearchCacheEntry(sibling) != null) {
+    return (query: query, answer: sibling);
+  }
+  return (query: query, answer: query);
+}
+
+/// Food detail from the cache alone; null when it holds none.
+FdcFood? _foodFromCache(SaltDatabase db, int fdcId) {
+  final cached = db.fdcFoodCacheGet(fdcId);
+  return cached == null
+      ? null
+      : FdcFood.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+}
+
+/// A food with NO provider call: the detail in fdc_food_cache, else the
+/// search hit a lazy compute stood in with (or FDC's only record of a
+/// superseded, 404 food) — read from [line]'s cached answer when given, and
+/// else from any cached answer that holds it. The fallback matters: which
+/// answer a line reads depends on what is cached NOW ([lineSearchFor]), not
+/// on what was cached when the row was matched, and a food decided on one
+/// line is recomputed on others. A hit is never cached as the food: a
+/// portion-less row in fdc_food_cache would starve every later volume line
+/// of its portions. Null when no cache holds it.
+FdcFood? knownFood(SaltDatabase db, int fdcId, {IngredientLine? line}) {
+  final cached = _foodFromCache(db, fdcId);
+  if (cached != null) {
+    return cached;
+  }
+  final own = line == null
+      ? null
+      : db.fdcSearchCacheGet(
+          lineSearchFor(
+            db,
+            normalizeItem(line.item ?? line.raw),
+            itemKeyFor(line.item ?? line.raw),
+          ).answer,
+        );
+  for (final answer in [?own, ...db.fdcSearchCacheHolding(fdcId)]) {
+    for (final entry in jsonDecode(answer) as List<dynamic>) {
+      final hit = FdcCandidate.fromJson(entry as Map<String, dynamic>);
+      if (hit.fdcId == fdcId && (hit.nutrientsPer100g?.isNotEmpty ?? false)) {
+        return hit.toFood();
+      }
+    }
+  }
+  return null;
+}
+
 /// Food detail through the cache; null when FDC has no such id.
 Future<FdcFood?> _cachedFood(
   SaltDatabase db,
@@ -626,7 +778,7 @@ Future<FdcFood?> cachedFood(
   int fdcId,
 ) => _cachedFood(db, provider, fdcId);
 
-/// Lands [food] — a person's decision on [itemKey] made on the line
+/// Lands [decided] — a person's decision on [itemKey] made on the line
 /// [excluding] — on every other undecided line with that item (other
 /// recipes, and the same recipe's other lines), each with grams from its own
 /// amounts, then recomputes those recipes' totals.
@@ -657,9 +809,10 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
   SaltDatabase db,
   NutritionProvider provider, {
   required String itemKey,
-  required FdcFood food,
+  required FdcFood decided,
   required ({String recipeId, int position}) excluding,
 }) async {
+  var food = decided;
   final byRecipe = <String, List<IngredientMatchRow>>{};
   for (final target in db.undecidedMatchesForItemKey(
     itemKey,
@@ -688,13 +841,10 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
         if (line.raw != target.raw) {
           continue; // The line changed since that row was written.
         }
-        final resolution = resolveGrams(
-          amounts: line.amounts,
-          food: food,
-          // The grams tables match on the line's own words, not the key.
-          normalizedItem: normalizeItem(line.item ?? line.raw),
-          raw: line.raw,
-        );
+        // A search hit stands in until a target needs portions; then the
+        // detail is fetched once and serves every later target.
+        final GramResolution? resolution;
+        (food, resolution) = await gramsFor(db, provider, food, line);
         final written = db.upsertIngredientMatchIfUndecided(
           IngredientMatchRow(
             recipeId: found.recipe.id,

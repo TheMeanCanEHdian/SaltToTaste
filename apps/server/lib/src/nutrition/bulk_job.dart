@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
+import 'package:salt_server/src/nutrition/fdc_provider.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -257,5 +258,12 @@ Future<void> _run(
     _log.info('Bulk nutrition job $jobId finished: $done done, $failed failed');
   } finally {
     _bulkRunning = false;
+    // The spend split for the pause that reads it (a stopped job too).
+    if (provider is UsdaFdcProvider) {
+      _log.info(
+        'Bulk nutrition job $jobId ended; FDC requests since start: '
+        '${provider.requestCountsText}',
+      );
+    }
   }
 }

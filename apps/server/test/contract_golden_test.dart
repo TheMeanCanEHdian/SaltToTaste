@@ -348,6 +348,17 @@ void main() {
         );
 
         // --- nutrition: a real compute over recorded real FDC responses ----
+        // Over a library whose food details are already cached (every
+        // compute cached them until details turned lazy): a search hit's
+        // nutrients are FDC's detail rounded, so a stand-in
+        // would move the pinned amounts by rounding alone. The lazy path is
+        // pinned in nutrition_sweep_audit_test.dart.
+        (jsonDecode(File('test/fixtures/fdc/foods.json').readAsStringSync())
+                as Map<String, dynamic>)
+            .forEach(
+              (id, food) =>
+                  harness.db.fdcFoodCachePut(int.parse(id), jsonEncode(food)),
+            );
         final (computeStatus, computeBody) = await harness.send(
           'POST',
           '/api/v1/recipes/$_bundtSlug/nutrition/compute',

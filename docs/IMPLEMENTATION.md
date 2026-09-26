@@ -1331,6 +1331,60 @@ guard); eleven mutants now die. The title tie-break is pinned on the corpus's
 two "Chicken Francese" recipes, which share a title and differ only in
 position.
 
+### Library sweep, checkpoint audits and the efficiency batch (2026-09-26)
+
+The first library-wide `missing` sweep ran on a scratch copy of the data
+against live FDC (1,190 recipes, job 13, ~3 windows of the 900/hour
+budget). Per the user's standing instruction the hourly budget pauses became
+checkpoints: a key-stripped snapshot, a quick report, then an Opus 5.5 audit
+workflow (accuracy of the food, accuracy of the mass, efficiency, the
+normalizer and keys, a synthesizer ranking adjustments by impact × cost).
+
+Checkpoint 1 (250 recipes, 2,969 lines): 76.7% of lines counted; 3.7 FDC
+requests per recipe with ~27% of the window spent on the `requireAllWords`
+fallback pass and ~20% of searches on junk queries (quantities leaked into
+keys, equipment, "A or B"); 93 counted lines carried a wrong food (11 whole
+turkeys as "Bologna, turkey", +48,058 kcal; beef broth as condensed soup in
+14 recipes; romaine as the organ "Heart"); 42 bone-in/whole-bird lines at
+gross weight; 20 brine-salt and 3 frying-oil lines counted in full;
+scallions at 110 g; 106 check lines held the right food (the count-noun
+cap). Checkpoint 2 (585 recipes): 2.7 requests per recipe, fallback share
+34% (the "or" and digit-leak shapes doubled), and a class bigger than any
+in checkpoint 1 — two Foundation records publish no energy (extra-virgin
+olive oil keeps its fat only under NLEA nutrient 298; whole-grain spaghetti
+has no macros) so 144 counted lines added 0 kcal (~53,600 kcal missing);
+frying oil was undercounted by the "for frying" rule (19 counted oil lines
+≥ 400 g, 26.6 kg).
+
+The efficiency batch (cache-safe, built from checkpoint 1's plan):
+- **FDC request counters** on the provider (strict search, loose/fallback
+  search, food fetch, food 404, retry), logged at each rate-limit wait and
+  at the end of a bulk job — the accounting the audits had to infer.
+- **Quantity leaks out of the keys** (`normalizeItem`): a leading "N [N]
+  unit" left by the `plus` stopword, a mid-item "N unit", " or N unit";
+  "N percent" kept. `matcherVersion` 4 (the boot re-key covers every row).
+- **Equipment is a confirmed zero, never searched**: cheesecloth, skewers,
+  twine, parchment, toothpicks, wood chips/chunks, charcoal, disposable
+  aluminum pans ("pan" alone stays food-neutral).
+- **Sibling cache lookup**: a line whose own words were never searched
+  reads the answer stored under its key's words before FDC is asked.
+- **Lazy food detail**: the food is built from the search hit's nutrients
+  when they are macro-complete; `/food/{id}` is fetched only when the grams
+  need FDC portions; no stand-in is written to `fdc_food_cache`. A decision
+  (pick, confirm, apply-to-all) on such a line spends no request; a target
+  that needs portions fetches once and a failure counts in `applied.failed`.
+- **"A or B" split**, narrow form: the left alternative is searched when it
+  is itself a known query or rewrite key, never an adjective.
+
+Measured on the checkpoint-1 snapshot before shipping: only the 361
+regex-matched library lines change key or query; 56/56 sibling pairs rank
+the same top food; grams and gram_source identical for all 2,969 lines under
+the lazy path; 64 lines / 54 phrases split, every left side a noun food.
+Projected saving at checkpoint 1: ~540 of ~2,170 remaining requests. The
+accuracy batch (whole-bird and species rewrites, the energy fallback, the
+dish-record cut, the count-noun cap, grams from cached portions, discarded
+media and edible yields) follows, replayed cache-only with a `stale` sweep.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

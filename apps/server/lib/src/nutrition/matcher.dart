@@ -125,8 +125,12 @@ const Map<String, String> _synonyms = {
 /// branded records harder, 'juice from 1 lemon' normalizes to 'lemon juice',
 /// and the rewrite table gained the spice/bacon/shrimp/sherry/beer/mustard/
 /// pasta entries (design review D4, measured on the 2026-09-08 diagnostic
-/// set: 19 of 31 confidently wrong foods fixed, 0 correct lines regressed).
-const int matcherVersion = 3;
+/// set: 19 of 31 confidently wrong foods fixed, 0 correct lines regressed);
+/// 4 = a second amount left in the item ("plus 2 tablespoons …", "or ¼
+/// teaspoon dried") is dropped from the query and the key, equipment lines
+/// are zeros, and the engine searches a cached "A or B" alternative alone and
+/// reads a same-key sibling's cached answer (sweep audit, 2026-09-26).
+const int matcherVersion = 4;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -187,7 +191,83 @@ String normalizeItem(String item) {
     }
     words.add(_synonyms[word] ?? word);
   }
-  return _fruitFromTail(words).join(' ');
+  // Citrus first, so "zest plus 1 tablespoon juice from 1 lemon" still names
+  // the fruit before the second amount is cut; and again after, for "juice
+  // from 1 lemon or 1 teaspoon champagne vinegar".
+  return _fruitFromTail(_withoutAmounts(_fruitFromTail(words))).join(' ');
+}
+
+/// Measure words a leaked second amount carries ("plus 2 tablespoons").
+const Set<String> _amountUnits = {
+  'teaspoon',
+  'teaspoons',
+  'tsp',
+  'tablespoon',
+  'tablespoons',
+  'tbsp',
+  'cup',
+  'cups',
+  'pint',
+  'pints',
+  'quart',
+  'quarts',
+  'gallon',
+  'gallons',
+  'ounce',
+  'ounces',
+  'oz',
+  'pound',
+  'pounds',
+  'lb',
+  'lbs',
+  'gram',
+  'grams',
+  'liter',
+  'liters',
+  'ml',
+  'pinch',
+  'pinches',
+  'dash',
+  'dashes',
+};
+
+/// Words left dangling by a cut: "thyme or", "cornstarch dissolved in".
+const Set<String> _cutConnectors = {'or', 'and', 'in', 'with'};
+
+/// A SECOND amount the corpus parse left in the item — "½ cup plus 2
+/// tablespoons olive oil" keeps "plus 2 tablespoons olive oil", "thyme or ¼
+/// teaspoon dried", "zest plus ½ cup juice" (the split turns "1/4" into
+/// "1 4"). A number run followed by a measure word is dropped when it leads
+/// the item, and cuts the item when it follows a food (the rest names another
+/// amount, usually of another food; a trailing "or"/"and"/"in"/"with" goes
+/// with it).
+/// Before this, 252 library lines searched and were keyed with the second
+/// amount in them (153 queries, 70 once it is gone), and "2 teaspoon kosher
+/// salt" matched pickles. A number followed by anything else stays: "85
+/// percent lean", "2 percent milk", "egg 1 yolk".
+List<String> _withoutAmounts(List<String> words) {
+  final digits = RegExp(r'^\d+$');
+  final out = <String>[];
+  var i = 0;
+  while (i < words.length) {
+    var j = i;
+    while (j < words.length && digits.hasMatch(words[j])) {
+      j++;
+    }
+    if (j > i && j < words.length && _amountUnits.contains(words[j])) {
+      if (out.isNotEmpty) {
+        while (out.isNotEmpty && _cutConnectors.contains(out.last)) {
+          out.removeLast();
+        }
+        break;
+      }
+      i = j + 1;
+      continue;
+    }
+    out.add(words[i]);
+    i++;
+  }
+  return out;
 }
 
 /// Citrus the corpus writes as "juice from 1 lemon" / "zest from 2 limes":
@@ -286,6 +366,32 @@ String _keyWord(String word) {
 /// Whether the normalized item is water/ice (skip FDC, contribute zeros).
 bool isWaterLike(String normalizedItem) =>
     waterLikeItems.contains(normalizedItem);
+
+/// Equipment the corpus lists among the ingredients ("Wooden skewers", "2 cups
+/// wood chips", "1 36-inch square cheesecloth", "disposable aluminum roasting
+/// pan"): 55 library lines that FDC answered with crackers, cereal and
+/// baking powder ("cheesecloth" counted 30 g of oat squares). Matched like
+/// water — a confirmed zero, never searched. "pan" alone is deliberately
+/// absent: "pan sauce", "giblet pan gravy" and "pan-seared steaks" are food.
+const Set<String> _nonFoodWords = {
+  'disposable',
+  'aluminum',
+  'cheesecloth',
+  'skewer',
+  'skewers',
+  'twine',
+  'parchment',
+  'toothpick',
+  'toothpicks',
+  'charcoal',
+};
+
+/// Whether the normalized item names equipment, not food (skip FDC,
+/// contribute zeros).
+bool isNonFood(String normalizedItem) =>
+    normalizedItem.split(' ').any(_nonFoodWords.contains) ||
+    normalizedItem.contains('wood chips') ||
+    normalizedItem.contains('wood chunks');
 
 /// Seasoning a recipe adds "to taste": with no amount on the line it
 /// contributes nothing measurable, and FDC's search for it returns bell
@@ -427,6 +533,37 @@ const Map<String, String> _queryRewrites = {
 /// cache key — changes.
 String searchQueryFor(String normalizedItem) =>
     _queryRewrites[normalizedItem] ?? normalizedItem;
+
+/// The first alternative of an "A or B" item, searched alone in place of the
+/// whole phrase — whose extra words empty FDC's strict search and pull the
+/// ranker's coverage down ("brandy or dry sherry" matched Brandy at 0.10,
+/// "madeira or dry sherry" matched dry lentils). Null when the item should be
+/// searched as written.
+///
+/// Narrow on purpose: A must already be a known query — [isCached] (a stored
+/// FDC answer) or a rewrite phrase. And a one-word A before a longer B is
+/// usually an adjective sharing B's noun ("green or brown lentils", "chicken or
+/// vegetable broth", "light or dark brown sugar": 'chicken', 'dark' and
+/// 'light' are all cached queries), so it splits only when the rewrite table
+/// names it — a key or a target, i.e. a food noun ("brandy", "calvados",
+/// "parsley").
+String? leftAlternative(
+  String normalizedItem,
+  bool Function(String query) isCached,
+) {
+  final words = normalizedItem.split(' ');
+  final or = words.indexOf('or');
+  if (or < 1 || or == words.length - 1) {
+    return null;
+  }
+  final left = words.sublist(0, or).join(' ');
+  final rewrite =
+      _queryRewrites.containsKey(left) || _queryRewrites.containsValue(left);
+  if (or == 1 && words.length - or - 1 > 1 && !rewrite) {
+    return null;
+  }
+  return rewrite || isCached(left) ? left : null;
+}
 
 /// A ranked candidate.
 class RankedCandidate {
