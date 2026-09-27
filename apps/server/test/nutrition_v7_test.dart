@@ -394,6 +394,36 @@ void main() {
     });
   });
 
+  group('Run 041 critic: an amount edit on a decided discarded line', () {
+    test('a confirmed frying-oil line typed over from 2 cups to 3 cups stays '
+        'at 0 g discarded (Chicken Schnitzel 0116)', () async {
+      final db = tempDb();
+      final r = recipeOf(db, 'r1', ['2 cups vegetable oil for frying']);
+      await matchAndCompute(db, provider, r);
+      await applyMatchOverride(db, provider, r, 0, {'confirmed': true});
+      final confirmed = db.ingredientMatchesFor('r1').single;
+      expect(confirmed.status, 'confirmed');
+      expect((confirmed.grams, confirmed.gramSource), (0, 'discarded'));
+      expect(db.nutritionFor('r1')!.totalGrams, 0);
+      // The amount typed over: the decided row is re-attached by key and
+      // its grams re-derived — through the same outcome as a fresh compute.
+      final edited = r.copyWith(
+        ingredients: [
+          IngredientGroup(items: [lineOf('3 cups vegetable oil for frying')]),
+        ],
+      );
+      db.upsertRecipe(edited, sourceSlug: 'src', contentHash: 'edited');
+      await matchAndCompute(db, provider, edited);
+      final row = db.ingredientMatchesFor('r1').single;
+      expect(row.raw, '3 cups vegetable oil for frying');
+      expect(row.status, 'confirmed', reason: 'the decision stands');
+      expect(row.fdcId, confirmed.fdcId);
+      expect((row.grams, row.gramSource), (0, 'discarded'));
+      expect(bucketOf(row), MatchBucket.counted);
+      expect(db.nutritionFor('r1')!.totalGrams, 0);
+    });
+  });
+
   group('M4/M5/M6/M13/M15: lines, plus parts, ranges, portions, keys', () {
     test('M4: a lone qualifier reads segment by segment to the food', () {
       IngredientLine as(String raw, String item) => IngredientLine(

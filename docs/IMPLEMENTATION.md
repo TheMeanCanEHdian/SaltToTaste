@@ -1519,6 +1519,17 @@ engine pick below the gate. Sixteen pins added, three of them on synthesized
 frying/soaking lines the corpus lacks (a stated exception, the user's call).
 Cache-only replay: counted 11,896 → 11,999, check 1,276 → 1,154, no grams
 366 → 237, with 149 lines waiting on unrecorded answers.
+Real replay on the scratch copy (27 live requests, 24 s): counted 12,220
+(90%), check 1,073, no grams 246, no match 76; recipes complete 334 → 414;
+over 1,500 kcal a serving 44 → 39; over 4,000 mg sodium 15 → 14. The
+review's critics found three gaps outside every lens: a reached or
+inherited decision re-holding `second_food` siblings (closed by M1's
+`decided` flag), an amount edit on a confirmed discarded frying-oil line
+re-deriving the full oil through the orphan re-attach path (fixed after the
+batch: that path now takes `engineOutcome` with `decided: true`; pinned on
+0116 typed over to 3 cups), and `_macroComplete` without the NLEA-298 fat
+fallback (not shipped: no record among 33,708 cached candidates publishes
+energy, carbohydrate and protein with fat only as 298).
 
 ## Decision log (deviations & clarifications)
 

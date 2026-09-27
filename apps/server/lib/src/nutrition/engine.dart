@@ -668,15 +668,26 @@ Future<void> matchAndCompute(
           if (_foodFromCache(db, food.fdcId) == null) {
             standIns[food.fdcId] = food;
           }
+          // The same outcome as a fresh compute on a decided food: a
+          // discarded medium stays at 0 g however its amount changed
+          // (Run 041's Opus critic: "3 cups" typed over "2 cups vegetable
+          // oil for frying" counted the whole oil).
+          final outcome = engineOutcome(
+            recipe,
+            line,
+            food,
+            resolution,
+            decided: true,
+          );
           db.upsertIngredientMatchIfUndecided(
             edited.copyWith(
               position: position,
               raw: line.raw,
               itemKey: key,
-              grams: resolution?.grams,
-              clearGrams: resolution == null,
-              gramSource: resolution?.source.name,
-              clearGramSource: resolution == null,
+              grams: outcome.grams,
+              clearGrams: outcome.grams == null,
+              gramSource: outcome.source,
+              clearGramSource: outcome.source == null,
             ),
           );
           continue;
