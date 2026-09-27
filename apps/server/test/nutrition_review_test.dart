@@ -22,6 +22,7 @@ void main() {
       double? grams = 100,
       String status = 'auto',
       String? hold,
+      String? source,
     }) => IngredientMatchRow(
       recipeId: 'r1',
       position: pos,
@@ -31,7 +32,7 @@ void main() {
       dataType: fdcId == null ? null : 'SR Legacy',
       confidence: conf,
       grams: grams,
-      gramSource: grams == null ? null : 'weight',
+      gramSource: source ?? (grams == null ? null : 'weight'),
       status: status,
       hold: hold,
     );
@@ -167,7 +168,22 @@ void main() {
       // cover every corner shape (auto/unmatched/confirmed/overridden/
       // skipped, with and without food and grams) — plus a HELD auto row
       // (migration 011): passing on its score, in `check` for its reason.
-      db.upsertIngredientMatch(m(3, fdcId: 5, hold: 'no_nutrients'));
+      // And the engine's 0 g (audit 4): counted at any score or hold but
+      // unnamed_food, until it has grams (the eaten part of a "plus" medium).
+      db
+        ..upsertIngredientMatch(m(3, fdcId: 5, hold: 'no_nutrients'))
+        ..upsertIngredientMatch(
+          m(8, fdcId: 5, conf: 0.3, grams: 0, source: 'discarded'),
+        )
+        ..upsertIngredientMatch(
+          m(9, fdcId: 5, grams: 0, hold: 'unnamed_food', source: 'unmeasured'),
+        )
+        ..upsertIngredientMatch(
+          m(11, fdcId: 5, grams: 0, hold: 'no_nutrients', source: 'unmeasured'),
+        )
+        ..upsertIngredientMatch(
+          m(10, fdcId: 5, conf: 0.3, grams: 12, source: 'discarded'),
+        );
       final expected = <String, int>{};
       for (final row in db.ingredientMatchesFor('r1')) {
         final bucket = matchBucketFor(
@@ -176,11 +192,13 @@ void main() {
           grams: row.grams,
           confidence: row.confidence,
           hold: row.hold,
+          gramSource: row.gramSource,
         ).wire;
         expected[bucket] = (expected[bucket] ?? 0) + 1;
       }
       expect(db.nutritionReviewCounts(), expected);
-      expect(expected['check'], 2);
+      expect(expected['check'], 4);
+      expect(expected['counted'], 3);
       final held =
           (nutritionReviewHandler(db, page: 1, limit: 50)['items']! as List)
               .cast<Map<String, Object?>>()

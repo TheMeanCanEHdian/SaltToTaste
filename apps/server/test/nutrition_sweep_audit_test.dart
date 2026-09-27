@@ -866,8 +866,12 @@ void main() {
     // 2644288 (a hit in 'chickpeas') and its 'mustard seeds' answer holds
     // 170929: two more compared, both differ in some digit. The refix
     // recorded 169599 (gelatin, a hit in 'unsweetened'): equal in every digit.
-    expect(compared, 78);
-    expect(differ, 59);
+    // Audit 4 recorded tuna (173708), allspice (171315) and lemon (2709168),
+    // and a new answer holds half-and-half (2705594) as a hit: all four
+    // differ in some digit. Refix 1 recorded thyme (173470), a hit in
+    // 'thyme' and 'thyme leaves': it differs too.
+    expect(compared, 83);
+    expect(differ, 63);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

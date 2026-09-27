@@ -38,12 +38,23 @@ enum MatchBucket {
 /// looked at it). [hold] is the engine's reason for holding an `auto` row
 /// out of the totals although its name score passes (`no_nutrients`,
 /// `discarded_medium`, `second_food`): such a row is `check` too.
+///
+/// [gramSource] `discarded` (a cooking medium the recipe throws away) or
+/// `unmeasured` (a line with no amount, a sprig) at 0 g is the engine's
+/// resolved zero: such a row is `counted` whatever its score or hold — no
+/// decision on its food can change a total (audit 4: 34 such rows sat in
+/// `check` for nothing) — except `unnamed_food`, which the engine sets on
+/// purpose: "2 tablespoons juice" (the parser kept the amount in the item)
+/// names no food and its 0 g drops a real amount, so it waits for a person
+/// like any held line. The eaten part of a "plus" medium has grams and is bucketed
+/// like any line.
 MatchBucket matchBucketFor({
   required String status,
   required int? fdcId,
   required double? grams,
   required double confidence,
   String? hold,
+  String? gramSource,
 }) {
   if (status == 'skipped') {
     return MatchBucket.skipped;
@@ -56,6 +67,11 @@ MatchBucket matchBucketFor({
   }
   if (fdcId == null) {
     return MatchBucket.noMatch;
+  }
+  if ((gramSource == 'discarded' || gramSource == 'unmeasured') &&
+      grams == 0 &&
+      hold != 'unnamed_food') {
+    return MatchBucket.counted;
   }
   // A weak match is first a WRONG food, whether or not it has an amount: a
   // 0.41 "100 GRAND Bar" for a liqueur line must read "check match", not the

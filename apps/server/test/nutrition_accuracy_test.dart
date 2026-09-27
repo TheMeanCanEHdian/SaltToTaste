@@ -20,7 +20,6 @@ import 'support/fdc_fixtures.dart';
 /// fixtures hold only the SOURCE key's answer). Never fetched by a test.
 const Set<String> _pendingLiveVerification = {
   'turkey whole meat and skin raw',
-  'chicken broilers or fryers meat and skin raw',
   'beef rib whole raw',
   'beef sirloin tip',
   'bread white commercially prepared',
@@ -37,8 +36,7 @@ const Set<String> _pendingLiveVerification = {
   'pasta fresh-refrigerated plain as purchased',
   'dill weed',
   'spearmint',
-  'salt table',
-  'nuts coconut meat dried',
+  'nuts coconut meat dried not sweetened',
   'nuts coconut meat dried sweetened',
   'pork backribs raw',
   // Audit 3 (ACCURACY-2): burger buns, compound heads, kind words.
@@ -49,6 +47,8 @@ const Set<String> _pendingLiveVerification = {
   'peas green raw',
   'lima beans',
   'celeriac raw',
+  // Audit 4: the raw Cornish hen.
+  'chicken cornish game hens meat and skin raw',
 };
 
 /// A real corpus line (pasta e fagioli) whose top pick publishes nothing.
@@ -99,7 +99,7 @@ const Map<String, String> _batchRewrites = {
   'mint': 'spearmint',
   'mint leaves': 'spearmint',
   'kosher salt': 'salt table',
-  'unsweetened coconut': 'nuts coconut meat dried',
+  'unsweetened coconut': 'nuts coconut meat dried not sweetened',
   'sweetened coconut': 'nuts coconut meat dried sweetened',
   'baby back ribs': 'pork backribs raw',
   'orange-flavored liqueur': 'liqueur',
@@ -507,8 +507,9 @@ void main() {
     });
 
     test(
-      'dried-for-fresh herbs stay off until user answer #5; a KNOWN cost '
-      'of the count-noun cap: bone-in chicken pieces as "Chicken skin"',
+      'dried-for-fresh herbs stay off until user answer #5; bone-in '
+      'chicken pieces, "Chicken skin" under the count-noun cap, are the '
+      'whole bird (audit 4)',
       () async {
         expect(allowDriedForFresh, isFalse);
         // The count noun stays in the query for a dried record the line does
@@ -517,8 +518,16 @@ void main() {
         final oregano = await rank('oregano leaves');
         expect(oregano.first.candidate.description, 'Spices, oregano, dried');
         expect(oregano.first.confidence, lessThan(lowConfidence));
-        final pieces = await rank('bone-in skin-on chicken pieces');
-        expect(pieces.first.candidate.description, 'Chicken skin');
+        // The cap's known cost crossed the gate at exactly 0.50 (4 lines,
+        // 6,577 g): under its own words the piece line still ranks "Chicken
+        // skin" first, so the line searches the whole bird instead.
+        final own = await rank('bone-in skin-on chicken pieces');
+        expect(own.first.candidate.description, 'Chicken skin');
+        final pieces = await rank(
+          searchQueryFor('bone-in skin-on chicken pieces'),
+        );
+        expect(pieces.first.candidate.fdcId, 171447);
+        expect(pieces.first.confidence, greaterThanOrEqualTo(lowConfidence));
       },
     );
 
@@ -1081,8 +1090,12 @@ void main() {
         '3 cups unsweetened, shredded, desiccated (dried) coconut',
         'unsweetened',
       );
-      expect(lineItemOf(coconut), 'unsweetened');
-      expect(namesNoFood(coconut), isTrue);
+      // Audit 4: every segment is read until one names a food.
+      expect(
+        lineItemOf(coconut),
+        'unsweetened shredded desiccated (dried) coconut',
+      );
+      expect(namesNoFood(coconut), isFalse);
       expect(
         namesNoFood(
           line(
@@ -1091,7 +1104,7 @@ void main() {
             'medium red',
           ),
         ),
-        isTrue,
+        isFalse,
       );
       final pasta = line(
         '1 pound short, curly pasta, such as fusilli or campanelle',
@@ -1135,7 +1148,7 @@ void main() {
         (
           '2 large eggs plus 2 large yolks',
           'large eggs plus 2 large yolks',
-          'egg 2 yolk plus yolk',
+          'egg plus yolk',
         ),
       ]) {
         final l = line(raw, item);
@@ -1298,14 +1311,12 @@ void main() {
         ..upsertRecipe(recipe, sourceSlug: 'src', contentHash: 'h');
       await matchAndCompute(db, provider, recipe);
       final rows = db.ingredientMatchesFor('r3');
-      expect(rows[0].description, 'Applesauce, unsweetened');
-      expect(
-        [for (final row in rows) row.hold],
-        [
-          'unnamed_food',
-          'unnamed_food',
-        ],
-      );
+      // The coconut line names its food once every segment is read (audit
+      // 4): it searches 'unsweetened desiccated coconut', pending one live
+      // search, never "Applesauce, unsweetened".
+      expect(rows[0].status, 'unmatched');
+      expect(rows[0].hold, isNull);
+      expect(rows[1].hold, 'unnamed_food');
     });
   });
 

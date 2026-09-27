@@ -4155,5 +4155,301 @@
     "description": "envelope (1 tbsp)"
    }
   ]
+ },
+ "173708": {
+  "fdc_id": 173708,
+  "description": "Fish, tuna, light, canned in oil, drained solids",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 198.0,
+   "203": 29.13,
+   "204": 8.21,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 13.0,
+   "303": 1.39,
+   "304": 31.0,
+   "305": 311.0,
+   "306": 207.0,
+   "307": 416.0,
+   "401": 0.0,
+   "404": 0.038,
+   "405": 0.12,
+   "406": 12.4,
+   "415": 0.11,
+   "432": 5.0,
+   "435": 5.0,
+   "418": 2.2,
+   "320": 23.0,
+   "323": 0.87,
+   "328": 6.7,
+   "430": 44.0,
+   "606": 1.534,
+   "645": 2.949,
+   "646": 2.885,
+   "601": 18.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": 3.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 321.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "can (12.5 oz), drained"
+   },
+   {
+    "gram_weight": 171.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "can"
+   },
+   {
+    "gram_weight": 146.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, solid or chunks"
+   }
+  ]
+ },
+ "171315": {
+  "fdc_id": 171315,
+  "description": "Spices, allspice, ground",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 263.0,
+   "203": 6.09,
+   "204": 8.69,
+   "205": 72.12,
+   "291": 21.6,
+   "301": 661.0,
+   "303": 7.06,
+   "304": 135.0,
+   "305": 113.0,
+   "306": 1044.0,
+   "307": 77.0,
+   "401": 39.2,
+   "404": 0.101,
+   "405": 0.063,
+   "406": 2.86,
+   "415": 0.21,
+   "432": 36.0,
+   "435": 36.0,
+   "418": 0.0,
+   "320": 27.0,
+   "328": 0.0,
+   "606": 2.55,
+   "645": 0.66,
+   "646": 2.36,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 1.9,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 6.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "2709168": {
+  "fdc_id": 2709168,
+  "description": "Lemon, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 1.1,
+   "204": 0.3,
+   "205": 9.32,
+   "208": 29.0,
+   "269": 2.5,
+   "291": 2.8,
+   "301": 26.0,
+   "303": 0.6,
+   "304": 8.0,
+   "305": 16.0,
+   "306": 138.0,
+   "307": 2.0,
+   "320": 1.0,
+   "323": 0.15,
+   "328": 0.0,
+   "401": 53.0,
+   "404": 0.04,
+   "405": 0.02,
+   "406": 0.1,
+   "415": 0.08,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 11.0,
+   "435": 11.0,
+   "601": 0.0,
+   "606": 0.039,
+   "645": 0.011,
+   "646": 0.089
+  },
+  "portions": [
+   {
+    "gram_weight": 8.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice or wedge"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 200.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 65.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fruit"
+   }
+  ]
+ },
+ "170567": {
+  "fdc_id": 170567,
+  "description": "Nuts, almonds",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 579.0,
+   "203": 21.15,
+   "204": 49.93,
+   "205": 21.55,
+   "291": 12.5,
+   "269": 4.35,
+   "301": 269.0,
+   "303": 3.71,
+   "304": 270.0,
+   "305": 481.0,
+   "306": 733.0,
+   "307": 1.0,
+   "401": 0.0,
+   "404": 0.205,
+   "405": 1.138,
+   "406": 3.618,
+   "415": 0.137,
+   "432": 44.0,
+   "435": 44.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 25.63,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 3.802,
+   "645": 31.551,
+   "646": 12.329,
+   "605": 0.015,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz (23 whole kernels)"
+   },
+   {
+    "gram_weight": 1.2,
+    "amount": 1.0,
+    "unit": null,
+    "description": "almond"
+   },
+   {
+    "gram_weight": 143.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, whole"
+   },
+   {
+    "gram_weight": 108.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, slivered"
+   },
+   {
+    "gram_weight": 95.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, ground"
+   },
+   {
+    "gram_weight": 92.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, sliced"
+   }
+  ]
+ },
+ "173470": {
+  "fdc_id": 173470,
+  "description": "Thyme, fresh",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 101.0,
+   "203": 5.56,
+   "204": 1.68,
+   "205": 24.45,
+   "291": 14.0,
+   "301": 405.0,
+   "303": 17.45,
+   "304": 160.0,
+   "305": 106.0,
+   "306": 609.0,
+   "307": 9.0,
+   "401": 160.1,
+   "404": 0.048,
+   "405": 0.471,
+   "406": 1.824,
+   "415": 0.348,
+   "432": 45.0,
+   "435": 45.0,
+   "418": 0.0,
+   "320": 238.0,
+   "328": 0.0,
+   "606": 0.467,
+   "645": 0.081,
+   "646": 0.532,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 0.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 0.4,
+    "amount": 0.5,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
  }
 }

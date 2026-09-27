@@ -23,6 +23,23 @@ void main() {
     );
   }
 
+  test('the sheet buckets an engine 0 g by its gram source, as the queue '
+      'does', () {
+    // Crispy Fish Sandwiches (1081): the frying oil is discarded at 0 g.
+    const frying = IngredientMatch(
+      position: 11,
+      raw: '2 quarts peanut or vegetable oil for frying',
+      fdcId: 2710187,
+      description: 'Peanut oil',
+      dataType: 'Survey (FNDDS)',
+      confidence: 0.457,
+      grams: 0,
+      gramSource: 'discarded',
+      status: 'auto',
+    );
+    expect(matchBucketOf(frying), MatchBucket.counted);
+  });
+
   testWidgets('a seasoning-to-taste row says why it counts as zero', (
     tester,
   ) async {
@@ -114,21 +131,24 @@ void main() {
   testWidgets('a line that names no food says so (hold `unnamed_food`)', (
     tester,
   ) async {
+    // Mechouia (0661), as the v7 replay stores it.
     await pump(
       tester,
       const IngredientMatch(
-        position: 0,
-        raw: '3 cups unsweetened, shredded, desiccated (dried) coconut',
-        item: 'unsweetened',
-        fdcId: 2709217,
-        description: 'Applesauce, unsweetened',
+        position: 11,
+        raw: '2 tablespoons juice',
+        item: '2 tablespoons juice',
+        fdcId: 2709682,
+        description: 'Beet juice',
         confidence: 0.89,
-        grams: 735,
+        grams: 0,
         status: 'auto',
         hold: 'unnamed_food',
       ),
     );
     expect(find.textContaining('does not say which food'), findsOneWidget);
+    expect(find.textContaining('like "2 tablespoons'), findsOneWidget);
+    expect(find.textContaining('unsweetened'), findsNothing);
   });
 
   testWidgets('a fresh herb line on a dried spice says so (hold '
@@ -149,5 +169,29 @@ void main() {
       ),
     );
     expect(find.textContaining('asks for a fresh herb'), findsOneWidget);
+  });
+
+  testWidgets('a fresh meat line on a cured record says so (hold '
+      '`dried_for_fresh`)', (tester) async {
+    // Roast Fresh Ham (0249), as the v7 replay stores it.
+    await pump(
+      tester,
+      const IngredientMatch(
+        position: 0,
+        raw:
+            '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably '
+            'shank end, rinsed',
+        item: '(6- to 8-pound) bone-in fresh half ham with skin',
+        fdcId: 169174,
+        description:
+            'Pork, cured, ham, rump, bone-in, separable lean only, unheated',
+        confidence: 0.5,
+        grams: 3628.7,
+        status: 'auto',
+        hold: 'dried_for_fresh',
+      ),
+    );
+    expect(find.textContaining('fresh meat'), findsOneWidget);
+    expect(find.textContaining('cured'), findsWidgets);
   });
 }

@@ -31,17 +31,24 @@ Map<String, Object?> nutritionBody(
     };
   }
   final stale = row.ingredientsHash != ingredientsHashOf(recipe);
-  // Unreviewed low-confidence matches: the UI's badge only turns green
-  // once every line is matched AND none of these remain (a human
-  // confirm/override clears one).
+  // Unreviewed low-confidence or held matches — the `check` bucket: the
+  // UI's badge only turns green once every line is matched AND none of these
+  // remain (a human confirm/override clears one).
   final lineCount = nutritionLines(recipe).length;
   final lowConfidence = db
       .ingredientMatchesFor(recipe.id)
       .where(
         (match) =>
             match.position < lineCount &&
-            match.status == 'auto' &&
-            (match.confidence < 0.5 || match.hold != null),
+            matchBucketFor(
+                  status: match.status,
+                  fdcId: match.fdcId,
+                  grams: match.grams,
+                  confidence: match.confidence,
+                  hold: match.hold,
+                  gramSource: match.gramSource,
+                ) ==
+                MatchBucket.check,
       )
       .length;
   return {
@@ -264,8 +271,30 @@ Future<AppliedToOthers?> applyMatchOverride(
   } else if (skipped == false) {
     // Un-skip returns the line to automatic triage. It must NOT set
     // 'confirmed': blessing whatever low-confidence match the line had
-    // would hide it from the review queue as resolved (review B7).
-    row = row.copyWith(status: 'auto');
+    // would hide it from the review queue as resolved (review B7). Its hold
+    // is re-derived for the food now on the row — never an engine-era hold
+    // left over from another food; a person's food (confidence 1: a pick or
+    // a decision) is held only as a discarded medium.
+    row = row.copyWith(status: 'auto', clearHold: true);
+    final onRow = row.fdcId == null
+        ? null
+        : knownFood(db, row.fdcId!, line: line);
+    final source = GramSource.values.asNameMap()[row.gramSource];
+    if (onRow != null) {
+      final personal = row.confidence >= 1;
+      final outcome = engineOutcome(
+        recipe,
+        line,
+        onRow,
+        row.grams == null || source == null
+            ? null
+            : GramResolution(grams: row.grams!, source: source),
+        picked: !personal,
+        decided: personal,
+        confidence: row.confidence,
+      );
+      row = row.copyWith(hold: outcome.hold);
+    }
   } else if (fdcId != null) {
     if (fdcId is! num || fdcId <= 0) {
       throw const ValidationException("'fdc_id' must be a positive number.");
@@ -282,21 +311,51 @@ Future<AppliedToOthers?> applyMatchOverride(
       );
     }
     final (food, resolution) = await gramsFor(db, provider, picked, line);
+    // A discarded medium stays discarded whatever food a person picks for
+    // it — frying oil re-picked as "Oil, peanut" is still thrown away (a
+    // grams edit is how a person counts it).
+    final outcome = engineOutcome(
+      recipe,
+      line,
+      food,
+      resolution,
+      decided: true,
+    );
+    final discarded = outcome.source == GramSource.discarded.name;
+    final pickedGrams = discarded ? outcome.grams : resolution?.grams;
     row = row.copyWith(
       fdcId: food.fdcId,
       description: food.description,
       dataType: food.dataType,
       confidence: 1,
-      grams: resolution?.grams,
-      clearGrams: resolution == null,
-      gramSource: resolution?.source.name,
-      clearGramSource: resolution == null,
+      grams: pickedGrams,
+      clearGrams: pickedGrams == null,
+      gramSource: discarded ? outcome.source : resolution?.source.name,
+      clearGramSource: pickedGrams == null,
       status: 'overridden',
     );
     decidedFood = true;
   } else if (confirmed == true) {
     row = row.copyWith(status: 'confirmed');
     decidedFood = row.fdcId != null;
+    // An engine pick below the review gate was stored without the detail
+    // fetch its grams may need (engine.gramsFor): a confirm resolves them.
+    if (row.fdcId != null &&
+        row.grams == null &&
+        row.gramSource != GramSource.override.name) {
+      final onRow =
+          knownFood(db, row.fdcId!, line: line) ??
+          await cachedFood(db, provider, row.fdcId!);
+      if (onRow != null) {
+        final (_, resolution) = await gramsFor(db, provider, onRow, line);
+        if (resolution != null) {
+          row = row.copyWith(
+            grams: resolution.grams,
+            gramSource: resolution.source.name,
+          );
+        }
+      }
+    }
   }
 
   if (grams != null) {
@@ -372,7 +431,11 @@ Future<AppliedToOthers?> applyMatchOverride(
       decidedBy: decidedBy,
     );
   }
-  db.upsertIngredientMatch(row.copyWith(itemKey: itemKey));
+  // A person's decision supersedes the engine's reason to hold the row (an
+  // un-skip re-derived its own above).
+  db.upsertIngredientMatch(
+    row.copyWith(itemKey: itemKey, clearHold: skipped != false),
+  );
   await recomputeTotals(db, provider, recipe);
 
   if (food == null) {

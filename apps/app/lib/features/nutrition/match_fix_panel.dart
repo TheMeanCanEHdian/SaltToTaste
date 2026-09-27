@@ -32,6 +32,7 @@ MatchBucket matchBucketOf(IngredientMatch m) => matchBucketFor(
   grams: m.grams,
   confidence: m.confidence,
   hold: m.hold,
+  gramSource: m.gramSource,
 );
 
 const Map<String, double> unitToGrams = {'g': 1, 'oz': 28.3495, 'lb': 453.592};
@@ -87,10 +88,11 @@ String? holdReason(String? hold) => switch (hold) {
   'second_food' =>
     'This line also calls for a second ingredient the match does not cover',
   'unnamed_food' =>
-    'The line does not say which food this is (only a word like '
-        '"unsweetened" or "juice")',
+    'The line does not say which food this is (like "2 tablespoons '
+        'juice")',
   'dried_for_fresh' =>
-    'The line asks for a fresh herb, but this is the dried or ground spice',
+    'The line asks for a fresh herb or fresh meat, but this is a dried, '
+        'ground, or cured food',
   'borderline' => 'The match score is borderline; please confirm the food',
   _ => null,
 };

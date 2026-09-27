@@ -12,12 +12,14 @@ void main() {
     double? grams = 100,
     double confidence = 0.9,
     String? hold,
+    String? gramSource,
   }) => matchBucketFor(
     status: status,
     fdcId: fdcId,
     grams: grams,
     confidence: confidence,
     hold: hold,
+    gramSource: gramSource,
   );
 
   group('matchBucketFor', () {
@@ -45,6 +47,41 @@ void main() {
         expect(bucket(hold: hold, status: 'skipped'), MatchBucket.skipped);
       }
     });
+    test('an engine 0 g (discarded / unmeasured) is counted at any score or '
+        'hold but unnamed_food; with grams it is bucketed like any line', () {
+      // Audit 4: 34 such rows sat in `check` though no decision could change
+      // a total ("2 quarts peanut or vegetable oil for frying" at 0.457).
+      for (final source in ['discarded', 'unmeasured']) {
+        expect(
+          bucket(confidence: 0.457, grams: 0, gramSource: source),
+          MatchBucket.counted,
+          reason: source,
+        );
+        expect(
+          bucket(grams: 0, hold: 'no_nutrients', gramSource: source),
+          MatchBucket.counted,
+          reason: source,
+        );
+        // "2 tablespoons juice" (0661, the parser kept the amount in the
+        // item): its 0 g drops a real amount, so a person looks.
+        expect(
+          bucket(grams: 0, hold: 'unnamed_food', gramSource: source),
+          MatchBucket.check,
+          reason: source,
+        );
+        // The eaten part of a "plus" medium has grams.
+        expect(
+          bucket(confidence: 0.457, grams: 12, gramSource: source),
+          MatchBucket.check,
+          reason: source,
+        );
+      }
+      expect(
+        bucket(confidence: 0.457, grams: 0, gramSource: 'weight'),
+        MatchBucket.check,
+      );
+    });
+
     test('overridden with no grams STAYS flagged — an unfinished fix', () {
       expect(bucket(status: 'overridden', grams: null), MatchBucket.noAmount);
     });

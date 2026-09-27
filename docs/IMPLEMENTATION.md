@@ -1491,6 +1491,35 @@ its sources' cached answers): counted 10,548 → 11,789, check 1,527 → 1,336,
 no grams 1,463 → 413; the real numbers come from the replay on the scratch
 copy, which spends one live search per pending target.
 
+Measured on the real replay (75 live requests): counted 10,548 → 11,896
+(87%), check 1,527 → 1,276, no grams 1,463 → 366, recipes complete 154 →
+334, recipes over 1,500 kcal a serving 62 → 44, over 4,000 mg sodium 57 →
+15; of 916 food changes 854 improved, 57 neutral, 5 regressed.
+
+Review fixes (Run 041, both fleets on `d60bcd1`, matcherVersion 7): the
+apply-to-all reach and `others` now include a held sibling, and a decision
+(pick, confirm, skip, un-skip) clears the hold; a discarded or unmeasured
+0 g row counts whatever its confidence (bucket rule, totals and queue SQL
+agree); `lineItemOf` walks comma segments until one names a food; a "plus"
+line is one food only when both parts name the same food (brown sugar plus
+granulated sugar is `second_food`); "(3½- to 4-pound)" is a range; the
+edible yield fetches the detail it needs once and a stand-in never claims a
+factor; a re-pick on a discarded medium keeps 0 g; the eaten part of a
+"plus" line is counted; the count-noun cap keeps "half" and never leaves only
+a dish marker ("curry leaves"); the volume-portion fallback prefers the
+portion whose words match the item, else the median; a parenthetical
+restatement is not summed twice; second-food keys come from the normalized
+parts. From checkpoint 4: "bone-in (skin-on) chicken pieces" → the whole
+chicken record, "instant or rapid-rise yeast" → instant yeast (+21 complete
+recipes), Cornish hens → the raw record with FNDDS "cooked" as a cook-state
+token, "imported"/"australian" as variety words, cherry tomatoes, packed
+qualifiers, "oven bag", pink curing salt, a pinch or dash as the food's
+teaspoon portion ÷ 16 and a sprig at 0 g (switch), no detail fetch for an
+engine pick below the gate. Sixteen pins added, three of them on synthesized
+frying/soaking lines the corpus lacks (a stated exception, the user's call).
+Cache-only replay: counted 11,896 → 11,999, check 1,276 → 1,154, no grams
+366 → 237, with 149 lines waiting on unrecorded answers.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

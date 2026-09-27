@@ -1063,11 +1063,13 @@ class SaltDatabase {
   ///
   /// A row on a DIFFERENT food is a target whatever its score — the decision
   /// changes its food. A row already on [fdcId] is a target only BELOW
-  /// [belowConfidence] (the flagged threshold): such a guess sits in `check`
-  /// and a confirm is what lifts it out, rewritten as `auto` at confidence 1
-  /// with grams from its own amounts. At or above it the row is already
-  /// counted (or missing only an amount) — it waits on nothing here, and
-  /// rewriting it would change nothing but the receipt.
+  /// [belowConfidence] (the flagged threshold) or while HELD (`hold`, the
+  /// engine's reason for keeping a passing score out of the totals): either
+  /// sits in `check`, and a confirm is what lifts it out, rewritten as `auto`
+  /// at confidence 1 with grams from its own amounts and the hold cleared (a
+  /// discarded medium stays one). An unheld row at or above the threshold is
+  /// already counted (or missing only an amount) — it waits on nothing here,
+  /// and rewriting it would change nothing but the receipt.
   List<IngredientMatchRow> undecidedMatchesForItemKey(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
@@ -1081,7 +1083,8 @@ class SaltDatabase {
           'FROM ingredient_matches WHERE item_key = ? '
           'AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
-          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ?) '
+          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ? '
+          'OR hold IS NOT NULL) '
           'ORDER BY recipe_id, position',
         ).select([
           itemKey,
@@ -1098,8 +1101,8 @@ class SaltDatabase {
   /// line but [excluding] — at most what an apply-to-all would reach; a row
   /// whose line text changed since its compute is counted here but skipped
   /// there. The same reach as [undecidedMatchesForItemKey]: a different food
-  /// at any score, this food only below [belowConfidence]; with no [fdcId]
-  /// (the line has no food yet) every undecided row counts.
+  /// at any score, this food only below [belowConfidence] or held; with no
+  /// [fdcId] (the line has no food yet) every undecided row counts.
   ({int recipes, int lines}) otherRecipesUndecidedCount(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
@@ -1112,7 +1115,8 @@ class SaltDatabase {
           'FROM ingredient_matches '
           'WHERE item_key = ? AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
-          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ?)',
+          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ? '
+          'OR hold IS NOT NULL)',
         ).select([
           itemKey,
           excluding.recipeId,
@@ -1163,14 +1167,18 @@ class SaltDatabase {
   /// vanish from this queue while contributing nothing. Decided corners:
   /// overridden+NULL grams stays `no_grams` (an unfinished fix); `confirmed`
   /// is always resolved, even matchless (confirmed water is a deliberate
-  /// no-match); a low-confidence auto match is `check` whether or not it has
-  /// grams — a wrong food is the larger problem, and "no amount" read as calm.
+  /// no-match); an engine 0 g (`discarded` / `unmeasured`) is `counted`
+  /// whatever its score or hold but `unnamed_food`; a low-confidence auto
+  /// match is `check` whether or not it has grams — a wrong food is the
+  /// larger problem, and "no amount" read as calm.
   static const String _reviewBucketCase = '''
     CASE
       WHEN im.status = 'skipped' THEN 'skipped'
       WHEN im.status = 'overridden' AND im.grams IS NULL THEN 'no_grams'
       WHEN im.status IN ('confirmed', 'overridden') THEN 'counted'
       WHEN im.fdc_id IS NULL THEN 'no_match'
+      WHEN im.gram_source IN ('discarded', 'unmeasured') AND im.grams = 0
+        AND COALESCE(im.hold, '') != 'unnamed_food' THEN 'counted'
       WHEN im.confidence < 0.5 OR im.hold IS NOT NULL THEN 'check'
       WHEN im.grams IS NULL THEN 'no_grams'
       ELSE 'counted'
@@ -2483,7 +2491,9 @@ class IngredientMatchRow {
   /// passes (migration 011): `no_nutrients` (the record publishes no energy
   /// and no macros), `discarded_medium` (frying oil, a brine, a soak or
   /// cheese-making milk set to review), `second_food` (the line names a
-  /// second ingredient). Null when nothing holds it. Ignored on a decided row.
+  /// second ingredient). Null when nothing holds it. A person's decision on
+  /// the row clears it (a skip, a pick, a confirm, a grams edit); an un-skip
+  /// re-derives it for the food on the row.
   final String? hold;
 
   /// Copy with changed fields (explicit clears for the nullables).
@@ -2501,6 +2511,7 @@ class IngredientMatchRow {
     bool clearGramSource = false,
     String? status,
     String? itemKey,
+    String? hold,
     bool clearHold = false,
   }) => IngredientMatchRow(
     recipeId: recipeId,
@@ -2514,7 +2525,7 @@ class IngredientMatchRow {
     gramSource: clearGramSource ? null : (gramSource ?? this.gramSource),
     status: status ?? this.status,
     itemKey: itemKey ?? this.itemKey,
-    hold: clearHold ? null : hold,
+    hold: clearHold ? null : (hold ?? this.hold),
   );
 }
 

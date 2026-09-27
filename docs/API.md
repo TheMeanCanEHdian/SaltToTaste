@@ -331,7 +331,12 @@ data_type, confidence, grams, gram_source, status, hold} | null}], page, limit}`
 (`hold` as in the per-recipe matches body below).
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
 below 50% name confidence — probably the wrong food, whether or not it has
-an amount — or one the engine holds for a `hold` reason at any score),
+an amount — or one the engine holds for a `hold` reason at any score; an
+engine 0 g, `gram_source` `discarded` or `unmeasured` at `grams: 0`, is
+`counted` whatever its score or hold, since no decision on its food can
+change a total — except `hold: unnamed_food`: "2 tablespoons juice" with its
+amount left in the item names no food and its 0 g drops a real amount, so it
+stays in `check`),
 `no_grams` (a plausible match that resolves no grams, so it
 contributes nothing), and `skipped` (browsable via the filter, excluded
 from `total`). A `confirmed` line is always resolved and never appears (e.g.
@@ -581,9 +586,11 @@ first compute, else:
 }
 ```
 
-`low_confidence` counts auto-matched lines below 0.5 confidence, or held
-for a `hold` reason (see the matches body), that no one has reviewed yet
-(confirm/override/skip clears one).
+`low_confidence` counts the lines in the `check` bucket: auto-matched lines
+below 0.5 confidence, or held for a `hold` reason (see the matches body),
+that no one has reviewed yet (confirm/override/skip clears one) — never an
+engine 0 g (`discarded` / `unmeasured` at `grams: 0`) unless it is held
+`unnamed_food`.
 
 `computing_job_id` appears **only for admins, and only while a compute is in
 flight** — it is the handle for re-attaching a reopened page to a running job
@@ -627,13 +634,22 @@ Per-line match transparency: the stored decision (`fdc_id`,
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
 buttermilk soak — stored as
-`grams: 0`: resolved, adds nothing) | `unmeasured` (a matched line with no
-amount at all — "Lemon wedges, for serving" — stored as `grams: 0`, its food
-kept, so it leaves the review queue), `gram_basis`: a short human string of
+`grams: 0`: resolved, adds nothing; a "plus" line whose second part a step
+eats — "1 cup plus 2 teaspoons table salt" with "remaining 2 teaspoons salt"
+in the rub — stores that part's grams and counts them) | `unmeasured` (a
+matched line with no amount at all — "Lemon wedges, for serving" — or a sprig
+the record gives no portion for, stored as `grams: 0`, its food kept, so it
+leaves the review queue), `gram_basis`: a short human string of
 what the grams were computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾
 ounces"`, `"entered by hand"`, `"… × 0.57 edible (USDA refuse)"` for a
-bone-in cut whose record publishes its raw refuse, `"discarded in cooking —
-counted as 0 g"`, `"no amount on the line — counted as 0 g"` — for
+bone-in cut whose record publishes its raw refuse, `"… · no edible yield (no
+USDA refuse portion)"` for one whose record publishes none (or whose detail
+was never fetched — the basis never claims a yield the stored grams lack),
+`"… · drained (USDA can portion)"` for a drained can or jar (its printed
+weight × the drained share of the record's own can portion), `"discarded in
+cooking — counted as 0 g"`, `"discarded in cooking — only \"plus 2 teaspoons
+table salt\" counted"`, `"no amount on the line — counted as 0 g"`, `"4
+sprigs — a sprig is not measured, counted as 0 g"` — for
 sanity-checking an estimate (null when there is no
 amount; re-derived cache-only, never spends FDC budget), `status`: `auto |
 confirmed | overridden | skipped | unmatched`, `hold`: why an `auto` line
@@ -646,18 +662,25 @@ make up 90 g per 100 g, such as an oil, is not held), `discarded_medium`
 whose whey is drained; brine sugar and ¼ cup or more of salt no step
 brines in or rubs on — a salt bed, an ice bath — are always held),
 `second_food` (the line names a second ingredient —
-"zest plus 2 tablespoons juice", "eggs plus 2 yolks" — that the match does
-not cover; such a line is also keyed apart from the first food's lines, e.g.
+"zest plus 2 tablespoons juice", "eggs plus 2 yolks", "egg whites plus 1
+large egg" — that the match does not cover; a counted fruit cut into
+wedges, "plus 1 lemon, cut into wedges", is for serving and holds nothing; such a line is also keyed apart from the first food's lines, e.g.
 `lemon zest plus juice`, so a decision on `lemon zest` never reaches it),
-`unnamed_food` (the line names no food the matcher can read — a lone
-qualifier such as "unsweetened, shredded, desiccated coconut" cut to
-`unsweetened`, or "2 tablespoons juice" of no named fruit),
+`unnamed_food` (the line names no food the matcher can read — a
+continuation of the line above such as "lengthwise, seeded, and sliced thin
+on bias", or "2 tablespoons juice" of no named fruit, with or without an
+amount),
 `dried_for_fresh` (the line asks for a fresh herb — "1 tablespoon minced
-fresh oregano" — and the engine's pick is a dried or ground spice record;
+fresh oregano" — and the engine's pick is a dried or ground spice record,
+or a fresh meat on a cured record — "bone-in fresh half ham" on a cured ham;
 off when the server's dried-for-fresh switch accepts them), `borderline`
 (only when the server's borderline-band switch is on, off by default: an
 engine pick scored from 0.52 up to 0.54); such a line sits in the `check` bucket until a person confirms,
-re-picks or skips it, and a decided line ignores it) plus ranked `candidates`
+re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
+a skip, a grams edit), and an un-skip re-derives it for the food now on the
+line, so a person's food is never held for the engine's old reason. A
+decision reaching the line by `apply_to_all` or inheritance clears it too,
+except `discarded_medium`) plus ranked `candidates`
 for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
 pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
@@ -680,10 +703,11 @@ and "onions" are one; the same recipe's other lines count) — at most what
 its compute is counted here but skipped there — and `others_lines`: the same
 rows counted as lines. A sibling on a DIFFERENT food counts whatever its
 score — the decision changes its food. A sibling already on this line's food
-counts only while it is still a flagged guess (confidence below 0.5): blessing
-it at confidence 1 is what moves it out of the `check` bucket. One on this
-food at or above that threshold is already counted (or short only an amount)
-and is neither counted here nor rewritten. Candidates come
+counts only while it is still a flagged guess (confidence below 0.5) or held
+(`hold` set): blessing it at confidence 1 is what moves it out of the `check`
+bucket. One on this food at or above that threshold and unheld is already
+counted (or short only an amount) and is neither counted here nor
+rewritten. Candidates come
 from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
@@ -721,7 +745,12 @@ Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
 excludes the line, `{skipped: false}` un-skips it — back to automatic
 triage (`auto`), deliberately NOT `confirmed`, so a low-confidence match
-is not silently blessed. Totals recompute instantly. `422` for `{grams}`
+is not silently blessed. Totals recompute instantly. A re-pick of a line
+the engine discarded as a cooking medium keeps it discarded (0 g) whatever
+food is picked — `{grams}` is how a person counts it. An engine pick below
+0.5 is stored without fetching FDC's food detail, so a volume or count line
+may have no grams yet; `{confirmed: true}` resolves them (at most one food
+detail fetch). `422` for `{grams}`
 on a line with no matched food (there is nothing to scale — pick a food
 first).
 
@@ -731,9 +760,11 @@ undecided (`auto` / `unmatched`) line with the same ingredient item (other
 recipes, and this recipe's other lines), each with grams from its own amounts,
 and recompute those recipes' totals. A line on a different food is a target
 whatever its score; a line already carrying that food is one only below the
-flagged threshold (confidence 0.5), where rewriting it as `auto` at confidence
-1 stops it being a guess — how confirming one line clears an ingredient's
-whole group. A line already on that food at or above 0.5 is left as it is.
+flagged threshold (confidence 0.5) or while held, where rewriting it as
+`auto` at confidence 1 with its hold cleared (a discarded medium stays one)
+stops it being a guess — how confirming one line clears an ingredient's
+whole group. A line already on that food at or above 0.5 and unheld is left
+as it is.
 The rows land
 as `auto` at confidence 1, machine propagation of a human decision exactly
 like inheritance — not as a human status, so a wrong pick applied

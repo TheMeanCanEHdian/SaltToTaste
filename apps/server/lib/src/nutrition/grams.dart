@@ -245,6 +245,8 @@ const List<(String, double)> _pieceWeights = [
   ('corn tortilla', 26),
   ('tortilla', 26),
   ('hamburger bun', 52),
+  // "6 burger buns" matched the right roll and had no grams (audit 4).
+  ('burger bun', 52),
   ('english muffin', 60),
   ('graham cracker', 14),
   ('ladyfinger', 11),
@@ -334,11 +336,16 @@ String _amountText(Amount amount) {
 /// answers) sizes a parenthetical weight range written with a fraction at
 /// its upper bound, as before unicode fractions were read: "(3½ to
 /// 4-pound)" 1,814 g like its sibling "(3½- to 4-pound)", "(8¾ to 10
-/// ounces)" 283 g (audit 3: 4 counted/check lines). True sizes it at the
+/// ounces)" 283 g (audit 3: 4 counted/check lines). True sizes both at the
 /// midpoint (1,701 g; 266 g). Whole-number "(5 to 6-ounce)" keeps its
 /// midpoint and "(6- to 8-ounce)" its upper bound either way — the B2
 /// ruling (2026-07-28) left both as they were.
 const bool rangeWeightsMidpoint = false;
+
+/// The grams of a parenthetical weight in [raw] (see [_parenWeight]) under
+/// the range switch [midpoint] — the switch's behaviour, testable both ways.
+double? parenWeightGrams(String raw, {bool midpoint = rangeWeightsMidpoint}) =>
+    _parenWeight(raw, midpoint: midpoint)?.grams;
 
 double? _quantityValue(String quantity, {bool upper = false}) {
   final direct = parseQuantity(quantity);
@@ -398,12 +405,17 @@ double? _countQty(List<Amount> amounts) {
 /// "1 potato (about 8 ounces)". The distinction only changes the result when
 /// the line is counted >1 — a trailing total was over-scaled by the count
 /// before ("5 slices … (9 ounces)" read as 5×, a ~5× error).
-({double grams, bool perUnit})? _parenWeight(String raw) {
+({double grams, bool perUnit})? _parenWeight(
+  String raw, {
+  bool midpoint = rangeWeightsMidpoint,
+}) {
   final weight = RegExp(
     // Unicode fractions too: "(1¼- to 1½-pound)" Cornish hens read 80 g
-    // through a per-item portion, "(3½-pound)" roasts nothing (audit 1).
+    // through a per-item portion, "(3½-pound)" roasts nothing (audit 1). The
+    // hyphen before "to" is part of the range: without it "(3½- to
+    // 4-pound)" read only "4-pound", and the midpoint switch never saw it.
     '([\\d./$vulgarFractionChars]+'
-    '(?:\\s*(?:to|-)\\s*[\\d./$vulgarFractionChars]+)?)\\s*-?\\s*'
+    '(?:\\s*(?:-?\\s*to|-)\\s*[\\d./$vulgarFractionChars]+)?)\\s*-?\\s*'
     r'(ounces?|oz|pounds?|lbs?|grams?|kilograms?|kg)\b',
     caseSensitive: false,
   );
@@ -413,12 +425,14 @@ double? _countQty(List<Amount> amounts) {
     if (match == null) {
       continue;
     }
-    final text = match.group(1)!;
+    // "3½- to 4" reads as "3½ to 4". A whole-number hyphenated range
+    // ("6- to 8-ounce") keeps the upper bound it always read (B2).
+    final hyphenated = RegExp(r'-\s*to').hasMatch(match.group(1)!);
+    final text = match.group(1)!.replaceAll(RegExp(r'-\s*to'), ' to');
+    final fraction = text.contains(RegExp('[$vulgarFractionChars]'));
     final quantity = _quantityValue(
       text,
-      upper:
-          !rangeWeightsMidpoint &&
-          text.contains(RegExp('[$vulgarFractionChars]')),
+      upper: fraction ? !midpoint : hyphenated,
     );
     final unit = match.group(2)!.toLowerCase().replaceAll(RegExp(r's$'), '');
     final gramsPer = _weightUnitGrams[unit];
@@ -537,9 +551,8 @@ const Set<String> _portionServingWords = {
   'piece',
   'pieces',
   'portion',
-  // Package nouns: "1 sleeve" of saltines is 115 g, not one cracker (audit
-  // 2: '30 saltine crackers' counted 3,450 g).
-  'sleeve',
+  // Package nouns ('sleeve' was here for '30 saltine crackers', audit 2: the
+  // record's "1 cracker" portion now sizes it, no line moves, audit 4).
   'box',
   'bag',
   'loaf',
@@ -629,9 +642,9 @@ const Set<String> _containerUnits = {
   'tubes',
   // A strip of zest or a wedge is a piece of the fruit, not the fruit: "12
   // (3-inch) strips lemon zest" counted 12 whole lemons (696 g). Without a
-  // portion of its own the line goes to review.
+  // portion of its own the line goes to review. (The plural reads as
+  // 'strip': 'strips' here moved no line, audit 4.)
   'strip',
-  'strips',
   'wedge',
   'wedges',
 };
@@ -703,7 +716,29 @@ double? _portionGramsPerUnit(FdcFood food, String unit) {
 /// parentheses — 169599 gelatin's "envelope (1 tbsp)" = 7 g — is read when
 /// no portion leads with one: the count there is the whole portion's, so the
 /// structured amount is not applied (audit 3 refix: 30 gelatin lines).
-double? _foodGramsPerMl(FdcFood food) {
+///
+/// Of several volume portions, one whose words the line shares wins ("cup
+/// spaghetti" for a spaghetti line, "cup, sliced" for sliced almonds, "tbsp,
+/// leaves" for tarragon leaves), else their median: SR 169736 "Pasta, dry,
+/// enriched" lists cup shells 64 g first and spaghetti 91 g, penne 95 g
+/// after — the first one sized '½ cup orzo' at 32 g (audit 4). [lineText] is
+/// the raw line, whose prep words ('sliced', 'packed') name portions too.
+///
+/// [onlyUnit] reads that volume portion alone ('teaspoon': a pinch).
+double? _foodGramsPerMl(
+  FdcFood food, [
+  String lineText = '',
+  String? onlyUnit,
+]) {
+  final itemWords = {
+    for (final word in lineText.toLowerCase().split(RegExp('[^a-z]+')))
+      if (word.length > 2 &&
+          !_volumeAliases.containsKey(word) &&
+          !_amountWords.contains(word))
+        keyWordOf(word),
+  };
+  final perMl = <double>[];
+  double? named;
   double? parenthesized;
   for (final portion in food.portions) {
     final description = (portion.description ?? '').toLowerCase().trim();
@@ -730,10 +765,32 @@ double? _foodGramsPerMl(FdcFood food) {
       }
       continue;
     }
-    return portion.gramWeight / (amount * _volumeUnitMl[unit]!);
+    final value = portion.gramWeight / (amount * _volumeUnitMl[unit]!);
+    if (onlyUnit != null) {
+      if (unit == onlyUnit) {
+        return value;
+      }
+      continue;
+    }
+    perMl.add(value);
+    final words = description.split(RegExp('[^a-z]+')).map(keyWordOf);
+    if (named == null && words.any(itemWords.contains)) {
+      named = value;
+    }
   }
-  return parenthesized;
+  if (named != null) {
+    return named;
+  }
+  if (perMl.isEmpty) {
+    return onlyUnit == null ? parenthesized : null;
+  }
+  perMl.sort();
+  final mid = perMl.length ~/ 2;
+  return perMl.length.isOdd ? perMl[mid] : (perMl[mid - 1] + perMl[mid]) / 2;
 }
+
+/// Measure words a line and a portion share without naming a form.
+const Set<String> _amountWords = {'ounce', 'ounces', 'fluid', 'about', 'plus'};
 
 /// Portion spellings of a volume unit → the [_volumeUnitMl] key.
 const Map<String, String> _volumeAliases = {
@@ -779,6 +836,34 @@ class PlusPart {
   /// ("1 teaspoon plus 1⅛ cups (8 ounces) sugar"): the weight already is the
   /// total, so the second amount is never added to it.
   final bool weighsTotal;
+}
+
+/// Whether the key of [first] is the key of [second] with qualifiers before
+/// it ('european-style without salt butter' / 'without salt butter'). Every
+/// word counts, so a form word tells foods apart ('light brown sugar' /
+/// 'granulated sugar'); a food after "in"/"with" is a component, not the
+/// food ('chipotle chile in adobo sauce' / 'adobo sauce'). Count nouns and
+/// fillers ('at room temperature') are not read.
+bool _qualifiesSame(String? first, String? second) {
+  List<String> words(String? item) => [
+    for (final word in itemKeyFor(item ?? '').split(' '))
+      if (word.isNotEmpty &&
+          !isCountNoun(word) &&
+          (word == 'and' || !_plusFiller.contains(word)))
+        word,
+  ];
+  final a = words(first);
+  final b = words(second);
+  if (b.isEmpty || b.length >= a.length) {
+    return false;
+  }
+  final at = a.length - b.length;
+  for (var i = 0; i < b.length; i++) {
+    if (a[at + i] != b[i]) {
+      return false;
+    }
+  }
+  return !const {'in', 'with', 'from', 'of', 'and', 'or'}.contains(a[at - 1]);
 }
 
 /// USER ANSWER #4 SWITCH (edible yield). True (the recommended default)
@@ -892,16 +977,27 @@ PlusPart? plusPartOf(String raw) {
           !_plusFiller.contains(word))
         word,
   };
-  final firstWords = foodWords(
-    parseIngredientLine(
-      text.substring(0, plus.start).replaceAll(RegExp(r'\s+'), ' '),
-    ).item,
-  );
+  final firstItem = parseIngredientLine(
+    text.substring(0, plus.start).replaceAll(RegExp(r'\s+'), ' '),
+  ).item;
+  final firstWords = foodWords(firstItem);
+  final secondWords = foodWords(second.item);
   return PlusPart(
     amount: second.amounts.first,
     text: part,
+    // The same food both ways, not one part's words inside the other's:
+    // "chipotle chile in adobo sauce plus 2 teaspoons adobo sauce" names the
+    // sauce apart (the subset test summed it as the chile). A part that
+    // names no food ("¼ cup plus 2 teaspoons olive oil", "plus ½
+    // tablespoon, melted") is the other part's. The first part may qualify
+    // the second's food: "European-style unsalted butter, very cold, plus 3
+    // tablespoons unsalted butter" (0758) is butter both ways.
     sameFood:
-        firstWords.isEmpty || firstWords.containsAll(foodWords(second.item)),
+        firstWords.isEmpty ||
+        secondWords.isEmpty ||
+        (firstWords.length == secondWords.length &&
+            firstWords.containsAll(secondWords)) ||
+        _qualifiesSame(firstItem, second.item),
     // "½ cup (3½ ounces) plus 2 tablespoons sugar" weighs only the first.
     weighsTotal:
         raw.substring(plus.end, plus.end + span).contains('(') &&
@@ -920,14 +1016,39 @@ const Map<String, String> _smallMeasures = {
   'sprigs': 'sprig',
 };
 
+/// USER QUESTION SWITCH (sprigs, audit 4 question 4). True (the default
+/// until the user answers) counts a sprig the matched record gives no
+/// "sprig" portion for as 0 g (`gram_source: unmeasured`, resolved): a sprig
+/// of thyme or rosemary is steeped and fished out, or a garnish (58 no_grams
+/// lines). False leaves it in `no_grams` for a person (or a per-herb
+/// constant, if the user prefers one).
+const bool sprigZeroOn = true;
+
+/// A teaspoon over 16: a pinch or a dash when the record has no "dash"
+/// portion of its own (audit 4: 66 pinch/dash lines sat in no_grams).
+const double _pinchPerTeaspoon = 1 / 16;
+
 /// Grams per [unit] (a [_smallMeasures] key) from the food's portion whose
 /// description LEADS with that portion name (SR "dash", "sprig" with the
-/// count in the structured amount; "10 sprigs" with it in the text).
+/// count in the structured amount; "10 sprigs" with it in the text). A pinch
+/// or a dash without one is the food's own teaspoon portion ÷ 16.
 double? _smallMeasureGrams(FdcFood food, String unit) {
   final wanted = _smallMeasures[unit];
   if (wanted == null) {
     return null;
   }
+  final named = _namedPortionGrams(food, wanted);
+  if (named != null || wanted != 'dash') {
+    return named;
+  }
+  final perMl = _foodGramsPerMl(food, '', 'teaspoon');
+  return perMl == null
+      ? null
+      : perMl * _volumeUnitMl['teaspoon']! * _pinchPerTeaspoon;
+}
+
+/// Grams of one [wanted] portion ('dash', 'sprig') the food names, or null.
+double? _namedPortionGrams(FdcFood food, String wanted) {
   final named = RegExp('^(?:([\\d][\\d./\\s]*)\\s*)?${wanted}s?\\b');
   for (final portion in food.portions) {
     final match = named.firstMatch(
@@ -962,14 +1083,13 @@ GramResolution? resolveGrams({
     normalizedItem: normalizedItem,
     raw: raw,
   );
-  final yieldFactor =
-      !edibleYieldOn ||
-          first?.source != GramSource.weight ||
-          food == null ||
-          raw == null ||
-          !buysRefuse(raw)
-      ? null
-      : edibleYieldOf(food);
+  final refuse =
+      edibleYieldOn &&
+      first?.source == GramSource.weight &&
+      food != null &&
+      raw != null &&
+      buysRefuse(raw);
+  final yieldFactor = refuse ? edibleYieldOf(food) : null;
   if (yieldFactor != null) {
     first = GramResolution(
       grams: first!.grams * yieldFactor,
@@ -978,9 +1098,18 @@ GramResolution? resolveGrams({
           '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
           '(USDA refuse)',
     );
+  } else if (refuse) {
+    // The record publishes no refuse portion — or its detail was never
+    // fetched (a search hit has no portions): the bone is counted, and the
+    // basis says so rather than implying a yield.
+    first = GramResolution(
+      grams: first!.grams,
+      source: first.source,
+      basis: '${first.basis} · no edible yield (no USDA refuse portion)',
+    );
   }
   final drained = first?.source == GramSource.weight && raw != null
-      ? _drainedCanGrams(amounts, food, raw)
+      ? drainedCanGrams(first!.grams, food, raw)
       : null;
   if (drained != null) {
     first = GramResolution(
@@ -1008,7 +1137,11 @@ GramResolution? resolveGrams({
   }
   return GramResolution(
     grams: first!.grams + second.grams,
-    source: first.source,
+    // "3 sprigs tarragon plus 1 teaspoon minced": the sprigs are 0 g, the
+    // teaspoon is what the line measures.
+    source: first.source == GramSource.unmeasured
+        ? second.source
+        : first.source,
     basis: '${first.basis ?? ''} + ${plus.text}',
   );
 }
@@ -1020,40 +1153,51 @@ final RegExp _lostVolumeUnit = RegExp(
 );
 
 /// USER ANSWER SWITCH (canned beans, audit 3). True (the default) counts a
-/// can the line drains or rinses at its DRAINED weight — the food's own
-/// USDA portion for a drained can — instead of the can's net weight (425 g
-/// for 15 oz, about 240 g of it beans). False counts the net weight. Only a
-/// record that publishes such a portion is changed; none of the records
-/// cached today does (their details are pending live fetches), so until then
-/// the net weight stands.
+/// can or jar the line drains or rinses at its DRAINED weight: the printed
+/// net weight × the drained share the food's own USDA portion gives ("can
+/// (12.5 oz), drained" = 321 g of 354 g: 0.91 for oil-packed tuna, 173708)
+/// — never that portion's can size in place of the line's ("2 (6½-ounce)
+/// jars"). False counts the net weight. Only a record whose drained portion
+/// names its can size changes anything; the canned-bean records are pending
+/// live detail fetches, so until then their net weight stands.
 const bool cannedDrained = true;
 
-/// [raw]'s cans at their drained weight on [food], or null.
-double? _drainedCanGrams(List<Amount> amounts, FdcFood? food, String raw) {
+/// Whether [raw] drains or rinses a can or jar ([cannedDrained] reads the
+/// food's drained portion for it).
+bool drainsCan(String raw) {
   final text = raw.toLowerCase();
-  if (!cannedDrained ||
-      food == null ||
-      !RegExp(r'\bcans?\b').hasMatch(text) ||
-      !RegExp(r'\b(drained|rinsed)\b').hasMatch(text) ||
-      RegExp(r'\b(undrained|do not drain)\b').hasMatch(text)) {
+  return RegExp(r'\b(cans?|jars?)\b').hasMatch(text) &&
+      RegExp(r'\b(drained|rinsed)\b').hasMatch(text) &&
+      !RegExp(r'\b(undrained|do not drain)\b').hasMatch(text);
+}
+
+/// The [net] printed grams of [raw]'s cans or jars at their drained weight
+/// on [food], or null — under the switch [on] (default [cannedDrained]).
+double? drainedCanGrams(
+  double net,
+  FdcFood? food,
+  String raw, {
+  bool on = cannedDrained,
+}) {
+  if (!on || food == null || !drainsCan(raw)) {
     return null;
   }
-  final cans = amounts
-      .where(
-        (a) =>
-            a.measure == Measure.count &&
-            RegExp(r'^cans?$').hasMatch((a.unit ?? '').toLowerCase()),
-      )
-      .map((a) => _quantityValue(a.quantity))
-      .whereType<double>()
-      .firstOrNull;
-  if (cans == null) {
-    return null;
-  }
+  final sized = RegExp(r'\(([\d.]+)\s*oz\)');
   for (final portion in food.portions) {
     final name = (portion.description ?? '').toLowerCase();
-    if (name.contains('can') && name.contains('drained')) {
-      return cans * portion.gramWeight / (portion.amount ?? 1);
+    final ounces = double.tryParse(sized.firstMatch(name)?[1] ?? '');
+    if (!RegExp(r'\b(can|jar)\b').hasMatch(name) ||
+        !name.contains('drained') ||
+        ounces == null ||
+        ounces <= 0) {
+      continue;
+    }
+    final share =
+        portion.gramWeight /
+        (portion.amount ?? 1) /
+        (ounces * _weightUnitGrams['ounce']!);
+    if (share > 0 && share < 1) {
+      return net * share;
     }
   }
   return null;
@@ -1139,7 +1283,9 @@ GramResolution? _resolveGrams({
         basis: '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL',
       );
     }
-    final perMl = food == null ? null : _foodGramsPerMl(food);
+    final perMl = food == null
+        ? null
+        : _foodGramsPerMl(food, raw ?? normalizedItem);
     if (perMl != null) {
       return GramResolution(
         grams: quantity * ml * perMl,
@@ -1180,6 +1326,15 @@ GramResolution? _resolveGrams({
         grams: quantity * small,
         source: GramSource.piece,
         basis: '${_amountText(amount)} · USDA portion',
+      );
+    }
+    if (sprigZeroOn && _smallMeasures[amountUnit] == 'sprig') {
+      return GramResolution(
+        grams: 0,
+        source: GramSource.unmeasured,
+        basis:
+            '${_amountText(amount)} — a sprig is not measured, counted as '
+            '0 g',
       );
     }
 
