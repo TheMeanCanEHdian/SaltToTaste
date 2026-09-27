@@ -1519,8 +1519,10 @@ engine pick below the gate. Sixteen pins added, three of them on synthesized
 frying/soaking lines the corpus lacks (a stated exception, the user's call).
 Cache-only replay: counted 11,896 → 11,999, check 1,276 → 1,154, no grams
 366 → 237, with 149 lines waiting on unrecorded answers.
-Real replay on the scratch copy (27 live requests, 24 s): counted 12,220
-(90%), check 1,073, no grams 246, no match 76; recipes complete 334 → 414;
+Real replay on the scratch copy (27 live requests, 24 s), counted with the
+queue's own bucket SQL: counted 11,929 → 12,133 (89%; snap6 re-bucketed
+under the v7 rule), check 1,243 → 1,164, no grams 366 → 242, no match 76;
+recipes complete 334 → 414;
 over 1,500 kcal a serving 44 → 39; over 4,000 mg sodium 15 → 14. The
 review's critics found three gaps outside every lens: a reached or
 inherited decision re-holding `second_food` siblings (closed by M1's
