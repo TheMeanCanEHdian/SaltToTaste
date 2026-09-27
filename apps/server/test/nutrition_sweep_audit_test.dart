@@ -103,11 +103,9 @@ void main() {
       // '1 teaspoon plus 2 pinches table salt, divided' (0049).
       expect(normalizeItem('plus 2 pinches table salt'), 'table salt');
       // 'Small pinch cayenne pepper' (0301): a measure word with no number
-      // before it is not an amount.
-      expect(
-        normalizeItem('Small pinch cayenne pepper'),
-        'pinch cayenne pepper',
-      );
+      // before it is not an amount — but it is no food either: leading, it
+      // leaves the item (matcher v8).
+      expect(normalizeItem('Small pinch cayenne pepper'), 'cayenne pepper');
     });
 
     test('"A or <amount> B" drops only the amount: B is a food', () {
@@ -683,13 +681,24 @@ void main() {
     ]);
 
     test('an EMPTY cached answer for A is not a known query: '
-        '"pancetta or bacon" is searched whole', () {
-      // '6 ounces pancetta or bacon, sliced …' (0332). FDC has no pancetta
-      // record: the plain pancetta lines cache 'pancetta' -> [].
+        '"mirin or sweet sherry" is searched whole', () {
+      // '2 tablespoons mirin or sweet sherry' (0524 Chicken Teriyaki). FDC
+      // has no mirin record: the sweep cached 'mirin' -> [].
+      db.fdcSearchCachePut('mirin', '[]');
+      expect(
+        lineSearchFor(db, 'mirin or sweet sherry', 'mirin or sweet sherry'),
+        (query: 'mirin or sweet sherry', answer: 'mirin or sweet sherry'),
+      );
+      // '6 ounces pancetta or bacon, sliced …' (0332): pancetta (whose
+      // answer is [] too) is a rewrite key since matcher v8, so A is searched
+      // as its stand-in.
       db.fdcSearchCachePut('pancetta', '[]');
       expect(
         lineSearchFor(db, 'pancetta or bacon', 'pancetta or bacon'),
-        (query: 'pancetta or bacon', answer: 'pancetta or bacon'),
+        (
+          query: 'pork cured bacon unprepared',
+          answer: 'pork cured bacon unprepared',
+        ),
       );
     });
 
@@ -742,14 +751,18 @@ void main() {
     });
 
     test("a sibling answer is ranked under the line's own words", () async {
-      final answer = await fixtures.search('thai chiles');
-      db.fdcSearchCachePut('thai chile', await recorded('thai chiles'));
+      // Thai chiles (the pin until matcher v8, whose chile credit ranks
+      // 'chil' and 'chile' alike) gave way to prunes: the ranker stems
+      // 'prunes' and 'prune' apart.
+      final answer = await fixtures.search('prunes');
+      db.fdcSearchCachePut('prune', await recorded('prunes'));
       String top(String query) =>
           rankCandidates(query, answer).first.candidate.description;
-      expect(top('thai chiles'), isNot(top('thai chile')));
+      expect(top('prunes'), isNot(top('prune')));
+      // Slow-Cooker Beer-Braised Short Ribs (0088).
       const line = IngredientLine(
-        raw: '1 tablespoon minced Thai chiles',
-        item: 'minced Thai chiles',
+        raw: '12 pitted prunes',
+        item: 'pitted prunes',
       );
       for (final cacheOnly in [true, false]) {
         final ranked = await candidatesForLine(
@@ -761,7 +774,7 @@ void main() {
         expect(
           [for (final c in ranked) (c.candidate.fdcId, c.confidence)],
           [
-            for (final c in rankCandidates('thai chiles', answer).take(8))
+            for (final c in rankCandidates('prunes', answer).take(8))
               (c.candidate.fdcId, c.confidence),
           ],
           reason: 'cacheOnly: $cacheOnly',
@@ -869,9 +882,13 @@ void main() {
     // Audit 4 recorded tuna (173708), allspice (171315) and lemon (2709168),
     // and a new answer holds half-and-half (2705594) as a hit: all four
     // differ in some digit. Refix 1 recorded thyme (173470), a hit in
-    // 'thyme' and 'thyme leaves': it differs too.
-    expect(compared, 83);
-    expect(differ, 63);
+    // 'thyme' and 'thyme leaves': it differs too. Checkpoint 5 recorded 25
+    // more foods that are also a recorded hit (the juice, egg, peel,
+    // sibling and bird records among them): 19 differ in some digit. Its
+    // second refix recorded the skinned leg, turkey thigh and skin-on thigh
+    // (173619, 174518, 2727567), all recorded hits that differ in some digit.
+    expect(compared, 111);
+    expect(differ, 85);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
@@ -1146,27 +1163,31 @@ void main() {
 
     test("a sibling answer is ranked under the line's own words when the "
         'engine matches it', () async {
-      const file =
-          '0642-thai-grilled-cornish-game-hens-with-gai-yang-chili-'
-          'dipping-sauce.yaml';
+      // Prunes, not Thai chiles, since matcher v8 ranks 'chil' and 'chile'
+      // alike: 'prunes' and 'prune' rank apart.
+      const file = '0088-slow-cooker-beer-braised-short-ribs.yaml';
       final (db, recipes) = await library([file]);
       final provider = _Recording();
-      final answer = await provider.inner.search('thai chiles');
+      final answer = await provider.inner.search('prunes');
       db.fdcSearchCachePut(
-        'thai chile',
+        'prune',
         jsonEncode([for (final hit in answer) hit.toJson()]),
       );
-      final hens = recipes.values.single;
-      await matchAndCompute(db, provider, hens);
-      final (_, row, _) = rowIn(db, hens, '1 tablespoon minced Thai chiles');
-      expect(provider.searched, isNot(contains('thai chiles')));
+      final ribs = recipes.values.single;
+      await matchAndCompute(db, provider, ribs);
+      final (_, row, _) = rowIn(db, ribs, '12 pitted prunes');
+      expect(provider.searched, isNot(contains('prunes')));
       expect(row.fdcId, isNotNull);
       expect(
         [
-          for (final c in rankCandidates('thai chiles', answer).take(3))
+          for (final c in rankCandidates('prunes', answer).take(3))
             (c.candidate.fdcId, c.confidence),
         ],
         contains((row.fdcId, row.confidence)),
+      );
+      expect(
+        row.fdcId,
+        isNot(rankCandidates('prune', answer).first.candidate.fdcId),
       );
     });
   });

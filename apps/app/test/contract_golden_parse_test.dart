@@ -5,6 +5,7 @@ import 'package:salt_app/core/api/library_repository.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
+import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 
 import 'support/contract_goldens.dart';
 
@@ -460,6 +461,36 @@ void main() {
         expect(withGramBasis, lessThan(parsed.length));
       },
     );
+
+    test('the matcher-v8 bases and holds parse and read in words', () async {
+      // Real corpus lines computed over the recorded FDC answers: the
+      // citrus-juice and egg-sum second foods, a pinch, bird pieces on the
+      // whole-bird record and a fresh ham held off the cured record.
+      final raw = golden('nutrition_matches_rules');
+      final items = (raw['items']! as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final parsed = await NutritionRepository(
+        goldenDio(raw),
+      ).matches('nutrition-rules-sample');
+      expect(parsed, hasLength(items.length));
+      for (final (index, line) in parsed.indexed) {
+        final match = items[index]['match']! as Map<String, dynamic>;
+        expect(line.gramBasis, match['gram_basis']);
+        expect(line.hold, match['hold']);
+      }
+      expect(
+        [for (final line in parsed) line.gramBasis],
+        containsAll(<Matcher>[
+          contains('juice only (the zest is dropped)'),
+          contains('summed on the whole egg'),
+          contains('1/16 tsp (USDA tsp portion)'),
+          contains('approximate (gross weight, no part yield)'),
+        ]),
+      );
+      final ham = parsed.singleWhere((line) => line.hold != null);
+      expect(ham.hold, 'cured_for_fresh');
+      expect(holdReason(ham.hold), contains('a preserved record'));
+    });
 
     test('an uncomputed recipe parses as unmatched lines', () async {
       // A real GET .../nutrition/matches on a recipe nobody has computed:

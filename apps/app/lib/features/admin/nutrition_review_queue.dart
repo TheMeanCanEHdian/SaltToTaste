@@ -539,7 +539,7 @@ class _GroupMeta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = itemLabel(line.item) ?? line.itemKey ?? '';
+    final label = groupLabel(line);
     return Wrap(
       spacing: 6,
       runSpacing: 4,
@@ -576,6 +576,18 @@ class _GroupMeta extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A group row's label: the example line's item, tidied — except for a key
+/// that names a second food ('lemon zest plus juice', 'egg plus yolk'),
+/// labelled by the key itself: the example's item names only its first
+/// food, so the group read as plain lemon zest (checkpoint 5).
+String groupLabel(NutritionReviewLine line) {
+  final key = line.itemKey;
+  if (key != null && key.contains(' plus ')) {
+    return key;
+  }
+  return itemLabel(line.item) ?? key ?? '';
 }
 
 /// The group row's amount slot — one aggregate over the members' grams — and

@@ -171,28 +171,10 @@ void main() {
     });
   });
 
-  test('M1: a key-wide decision supersedes second_food on the lines it '
-      'reaches', () async {
-    final db = tempDb();
-    // Italian-Style Grilled Chicken (0423).
-    const zest = '1 teaspoon grated lemon zest plus 2 tablespoons juice';
-    final a = recipeOf(db, 'ra', [zest]);
-    final b = recipeOf(db, 'rb', [zest]);
-    for (final r in [a, b]) {
-      await matchAndCompute(db, provider, r);
-    }
-    expect(db.ingredientMatchesFor('rb').single.hold, 'second_food');
-    final applied = await applyMatchOverride(db, provider, a, 0, {
-      'confirmed': true,
-      'apply_to_all': true,
-    });
-    expect(applied!.lines, 1);
-    expect(db.ingredientMatchesFor('rb').single.hold, isNull);
-    // A recipe computed later inherits the decision, and the hold goes too.
-    final c = recipeOf(db, 'rc', [zest]);
-    await matchAndCompute(db, provider, c);
-    expect(db.ingredientMatchesFor('rc').single.hold, isNull);
-  });
+  // v7's "a key-wide decision supersedes second_food" was reversed by
+  // matcher v8 (checkpoint 5: it counted 48 lemon lines at the zest's
+  // grams): a line hold never clears by key — pinned in
+  // nutrition_v8_test.dart.
 
   group('M2: a person decision clears the hold', () {
     test('pick, skip and un-skip: the picked food is never held for the '
@@ -440,15 +422,16 @@ void main() {
           'medium red',
           'red yellow or orange bell peppers (about 6 ounces each)',
         ),
+        // Matcher v8 drops the segments of prep words only.
         (
           '2 tablespoons toasted, skinned, and chopped hazelnuts',
           'toasted',
-          'toasted skinned and chopped hazelnuts',
+          'and chopped hazelnuts',
         ),
         (
           '¼ cup stemmed, patted dry, and minced pepperoncini',
           'stemmed',
-          'stemmed patted dry and minced pepperoncini',
+          'and minced pepperoncini',
         ),
       ]) {
         final line = as(raw, item);
@@ -536,13 +519,12 @@ void main() {
       expect(gramsOf('1 cup ditalini pasta', pasta)!.grams, closeTo(91, 0.01));
       // "Nuts, almonds" (170567): "cup, sliced" 92 g for sliced almonds
       // (Almond-Crusted Chicken 0042), not the first-listed whole 143 g; a
-      // line naming no form reads the median (Nut-Crusted Chicken 0117).
+      // line naming no form reads the whole nut since matcher v8 (the
+      // median of whole, slivered, ground and sliced was 101.5 g; Nut-Crusted
+      // Chicken 0117).
       final almonds = await food(170567);
       expect(gramsOf('1 cup sliced almonds', almonds)!.grams, 92);
-      expect(
-        gramsOf('1 cup almonds, chopped coarse', almonds)!.grams,
-        closeTo((95 + 108) / 2, 0.01),
-      );
+      expect(gramsOf('1 cup almonds, chopped coarse', almonds)!.grams, 143);
     });
 
     // M14 (the restated-parenthetical guard) is not shipped: with M5 the
@@ -683,31 +665,31 @@ void main() {
         'no portion grams; a confirm resolves them', () async {
       final db = tempDb();
       final fixtures = FixtureProvider();
-      // Lemon zest lines ("Lemon, raw" 2709168 at 0.485).
-      final r = recipeOf(db, 'r1', ['¼ teaspoon finely grated lemon zest']);
+      // Lime zest lines ("Lime, raw" 2709170 at 0.485 — FDC has no lime
+      // peel record; lemon zest reads "Lemon peel, raw" since matcher v8).
+      final r = recipeOf(db, 'r1', ['2 teaspoons grated lime zest']);
       await matchAndCompute(db, fixtures, r);
       final row = db.ingredientMatchesFor('r1').single;
-      expect((row.fdcId, row.grams), (2709168, null));
+      expect((row.fdcId, row.grams), (2709170, null));
       expect(row.confidence, lessThan(lowConfidence));
       expect(fixtures.foodCalls, 0);
       await applyMatchOverride(db, fixtures, r, 0, {'confirmed': true});
       final confirmed = db.ingredientMatchesFor('r1').single;
       expect(fixtures.foodCalls, 1);
-      expect(confirmed.grams, closeTo(1.04, 0.01));
+      // "1 cup" 200 g.
+      expect(confirmed.grams, closeTo(2 * 4.92892 * 200 / 236.588, 0.01));
       expect(confirmed.status, 'confirmed');
 
       // A detail already cached is the engine's food, fetch or not: the pick
       // below the gate gets its portion grams with no provider call.
       final cached = tempDb()
-        ..fdcFoodCachePut(2709168, jsonEncode((await food(2709168)).toJson()));
+        ..fdcFoodCachePut(2709170, jsonEncode((await food(2709170)).toJson()));
       final again = FixtureProvider();
-      final r2 = recipeOf(cached, 'r2', [
-        '¼ teaspoon finely grated lemon zest',
-      ]);
+      final r2 = recipeOf(cached, 'r2', ['2 teaspoons grated lime zest']);
       await matchAndCompute(cached, again, r2);
       expect(
         cached.ingredientMatchesFor('r2').single.grams,
-        closeTo(1.04, 0.01),
+        closeTo(2 * 4.92892 * 200 / 236.588, 0.01),
       );
       expect(again.foodCalls, 0);
     });
@@ -739,7 +721,8 @@ void main() {
         null,
         picked: true,
       );
-      expect(outcome.hold, 'dried_for_fresh');
+      // Its own reason since matcher v8 (a cured meat, not a dried herb).
+      expect(outcome.hold, 'cured_for_fresh');
     });
 
     test('M11: the cap never leaves only a dish word — curry leaves (0109) '
@@ -832,10 +815,19 @@ void main() {
         // "1½ cups long-grain or basmati rice" (0062): not the instant rice.
         final rice = await rank('long-grain or basmati rice');
         expect(rice.first.candidate.description, isNot(contains('instant')));
-        // "12 ounces cherry tomatoes, halved" (0011).
-        expect(searchQueryFor('cherry tomatoes'), 'tomatoes');
-        final tomatoes = await rank('tomatoes');
+        // "12 ounces cherry tomatoes, halved" (0011): matcher v8 retargets
+        // 'ripe tomatoes', whose recorded answer leads with 170457 — roma
+        // won under 'tomatoes' and has no volume portion.
+        expect(searchQueryFor('cherry tomatoes'), 'ripe tomatoes');
+        final tomatoes = await rank('ripe tomatoes');
+        expect(tomatoes.first.candidate.fdcId, 170457);
         expect(tomatoes.first.confidence, greaterThanOrEqualTo(lowConfidence));
+        expect((await rank('tomatoes')).first.candidate.fdcId, isNot(170457));
+        // Crispy Thai Eggplant Salad (0053): its cup of cherry tomatoes.
+        expect(
+          gramsOf('1 cup cherry tomatoes, halved', await food(170457)),
+          isNotNull,
+        );
         // "1 large plastic oven bag" (0251).
         expect(isNonFood(normalizeItem('large plastic oven bag')), isTrue);
         // "2 teaspoons pink curing salt #1" (0091).
@@ -1090,8 +1082,11 @@ void main() {
         db,
         'r1',
         [
-          // Italian-Style Grilled Chicken (0423); Ciambotta (0405); 0134.
-          '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+          // Tinga de Pollo (0482; the lemon zest line held here until
+          // matcher v8 counts it by rule); Ciambotta (0405); 0134.
+          // ignore: no_adjacent_strings_in_list
+          '2 tablespoons minced canned chipotle chile in adobo sauce plus 2 '
+              'teaspoons adobo sauce',
           '⅓ cup fresh oregano leaves',
           '½ cup sugar',
         ],
@@ -1123,10 +1118,12 @@ void main() {
     test('the cook-state dock: roasted, a line naming the cooking, dry '
         'roasted nuts, beans from dried', () async {
       // "10 ounces boneless country-style pork ribs, trimmed" (0510): the
-      // roasted record would lead at 0.763 undocked.
+      // roasted record would lead at 0.763 undocked. (Since matcher v8 the
+      // lean-and-fat broiled record, 169199, ties it and leads by answer
+      // order: the 'and' of "lean and fat" no longer costs precision.)
       expect(
         (await rank('boneless country-style pork ribs')).first.candidate.fdcId,
-        169197,
+        anyOf(169197, 169199),
       );
       // Turkey Tetrazzini (0303) names its cooking: no dock.
       final leftover = await rank(
@@ -1173,9 +1170,11 @@ void main() {
 
     test('imported is a variety; "lightly packed" drops the adverb; a romaine '
         'heart is romaine; whole peppercorns have their own density', () async {
-      // Braised Lamb Shanks (1192): the domestic shank half, not the New
-      // Zealand fore-shank.
-      expect((await rank('lamb shanks')).first.candidate.fdcId, 174315);
+      // Braised Lamb Shanks (1192): matcher v8 docks 'imported' only beside
+      // a domestic record of the same cut, and no domestic fore-shank is in
+      // the answer — the New Zealand fore-shank (lean and fat), not the
+      // leg's shank half the v7 dock sent it to (174315).
+      expect((await rank('lamb shanks')).first.candidate.fdcId, 172513);
       // "½ cup lightly packed baby spinach" (0216).
       expect(normalizeItem('lightly packed baby spinach'), 'baby spinach');
       // "1 romaine heart, cut into ½-inch pieces (about 3 cups)" (0044).

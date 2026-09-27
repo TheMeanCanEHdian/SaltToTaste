@@ -172,8 +172,8 @@ void main() {
   });
 
   testWidgets('a fresh meat line on a cured record says so (hold '
-      '`dried_for_fresh`)', (tester) async {
-    // Roast Fresh Ham (0249), as the v7 replay stores it.
+      '`cured_for_fresh`)', (tester) async {
+    // Roast Fresh Ham (0249), as the v8 replay stores it.
     await pump(
       tester,
       const IngredientMatch(
@@ -188,10 +188,14 @@ void main() {
         confidence: 0.5,
         grams: 3628.7,
         status: 'auto',
-        hold: 'dried_for_fresh',
+        hold: 'cured_for_fresh',
       ),
     );
-    expect(find.textContaining('fresh meat'), findsOneWidget);
+    expect(
+      find.textContaining('a preserved record for a fresh ingredient'),
+      findsOneWidget,
+    );
     expect(find.textContaining('cured'), findsWidgets);
+    expect(find.textContaining('fresh herb'), findsNothing);
   });
 }

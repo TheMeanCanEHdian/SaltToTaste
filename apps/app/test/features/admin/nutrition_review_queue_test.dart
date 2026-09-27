@@ -525,6 +525,29 @@ void main() {
     expect(groupAmountLine(amountGroup(lines: 1, missing: 1)), isNull);
   });
 
+  test('a second-food group is labelled by its key, not the first food', () {
+    NutritionReviewLine group(String key, String item) => NutritionReviewLine(
+      recipe: const NutritionReviewRecipe(id: 'x', slug: 'x', title: 'X'),
+      position: 2,
+      // Italian-Style Grilled Chicken (0423).
+      raw: '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+      bucket: 'check',
+      itemKey: key,
+      item: item,
+      lines: 49,
+      recipes: 48,
+    );
+    expect(
+      groupLabel(group('lemon zest plus juice', 'grated lemon zest')),
+      'lemon zest plus juice',
+    );
+    // Any other key keeps the example's tidied item.
+    expect(
+      groupLabel(group('lemon zest', 'grated lemon zest')),
+      isNot(contains('plus')),
+    );
+  });
+
   test('the Confirm warning follows the EXAMPLE line, not the aggregate', () {
     // The unsalted-butter group: the tarte's amount-less line is the example
     // (it is the lower-confidence member), the Bundt cake's carries its

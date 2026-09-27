@@ -36,7 +36,8 @@ const Set<String> _pendingLiveVerification = {
   'pasta fresh-refrigerated plain as purchased',
   'dill weed',
   'spearmint',
-  'nuts coconut meat dried not sweetened',
+  // 'nuts coconut meat dried not sweetened' is recorded since checkpoint 5
+  // (the sweep asked FDC for it).
   'nuts coconut meat dried sweetened',
   'pork backribs raw',
   // Audit 3 (ACCURACY-2): burger buns, compound heads, kind words.
@@ -336,9 +337,12 @@ void main() {
       );
       expect(headNounOf('romaine hearts'), 'romaine');
       expect(headNounOf('artichoke hearts'), 'artichoke');
+      // A romaine record, not the organ: with the connector words out of
+      // the ranker (matcher v8), SR's "Lettuce, cos or romaine, raw" edges
+      // the Foundation "Lettuce, romaine, green, raw" — the same food.
       expect(
         (await rank('romaine hearts')).first.candidate.description,
-        'Lettuce, romaine, green, raw',
+        allOf(startsWith('Lettuce,'), contains('romaine')),
       );
       expect(
         (await rank('2 percent milk')).first.candidate.description,
@@ -1014,8 +1018,26 @@ void main() {
 
     test('N2: a record cooked a way the line does not say is docked; a line '
         'that names the cooking is not', () async {
+      // With 'or' scored as a word (connectorTokensDropped off), FDC's own
+      // "steamed or boiled" covered the line's "or"; the broiled record is
+      // docked either way. With the switch on (matcher v8) the raw clams win.
+      final recorded = await provider.search('littleneck or cherrystone clams');
+      final scored = rankCandidates(
+        'littleneck or cherrystone clams',
+        recorded,
+        dropConnectors: false,
+      );
+      expect(scored.first.candidate.description, 'Clams, steamed or boiled');
       final clams = await rank('littleneck or cherrystone clams');
-      expect(clams.first.candidate.description, 'Clams, steamed or boiled');
+      expect(clams.first.candidate.description, 'Clams, raw');
+      for (final ranked in [scored, clams]) {
+        expect(
+          ranked.indexWhere(
+            (c) => c.candidate.description == 'Clams, baked or broiled',
+          ),
+          greaterThan(0),
+        );
+      }
       // The four right cooked lines stay: kielbasa is "fully cooked" (not a
       // docked word), smoked ham names its cooking.
       expect((await rank('kielbasa')).first.candidate.fdcId, 173877);
@@ -1239,15 +1261,33 @@ void main() {
       );
     });
 
-    test('a count the parse lost its unit from gets no grams (Strawberry '
-        'Shortcakes: half-and-half sized as half a piece, 7.5 g)', () async {
+    test('a count the parse lost its unit from reads the unit back from the '
+        'line (Strawberry Shortcakes: half-and-half was sized as half a '
+        'piece, 7.5 g, then left without grams)', () async {
       // The corpus parsed "½ cup plus 1 tablespoon" as the bare count ½;
-      // FDC's '1 individual container (.5 fl oz)' is 15 g.
+      // FDC's '1 individual container (.5 fl oz)' is 15 g. Matcher v8 reads
+      // "½ cup" back from the raw line, and the plus part adds.
+      final shortcake = gramsOf(
+        '½ cup plus 1 tablespoon half-and-half or milk',
+        amounts: const [Amount(measure: Measure.count, quantity: '1/2')],
+        on: await food(2705594),
+      )!;
+      // "1 cup" 240 g for the half cup; the tablespoon at milk's density.
+      expect(shortcake.source, GramSource.portion);
+      expect(shortcake.grams, closeTo(240 / 2 + 14.7868 * 1.03, 0.01));
+      // Fried Rice with Shrimp, Pork, and Shiitakes (0521): the bare count 3.
+      expect(
+        gramsOf(
+          '3 tablespoons plus 1½ teaspoons peanut or vegetable oil',
+          amounts: const [Amount(measure: Measure.count, quantity: '3')],
+        )!.grams,
+        closeTo((3 * 14.7868 + 1.5 * 4.92892) * 0.92, 0.01),
+      );
+      // Only when the raw's leading number is the amount's own.
       expect(
         gramsOf(
           '½ cup plus 1 tablespoon half-and-half or milk',
-          amounts: const [Amount(measure: Measure.count, quantity: '1/2')],
-          on: await food(2705594),
+          amounts: const [Amount(measure: Measure.count, quantity: '2')],
         ),
         isNull,
       );
@@ -1312,9 +1352,12 @@ void main() {
       await matchAndCompute(db, provider, recipe);
       final rows = db.ingredientMatchesFor('r3');
       // The coconut line names its food once every segment is read (audit
-      // 4): it searches 'unsweetened desiccated coconut', pending one live
-      // search, never "Applesauce, unsweetened".
-      expect(rows[0].status, 'unmatched');
+      // 4), never "Applesauce, unsweetened" — and since matcher v8 its key
+      // 'unsweetened desiccated coconut' is rewritten to the not-sweetened
+      // record (170170), whose cups are read from its shredded sibling
+      // (168586: "cup, shredded" 93 g).
+      expect((rows[0].status, rows[0].fdcId), ('auto', 170170));
+      expect(rows[0].grams, closeTo(3 * 93, 0.01));
       expect(rows[0].hold, isNull);
       expect(rows[1].hold, 'unnamed_food');
     });
@@ -1536,12 +1579,14 @@ void main() {
       );
     });
 
-    test('a line naming a second food is held, not counted for the first', () {
+    test('a zest-plus-juice line is never counted for the zest: since '
+        'matcher v8 the juice counts on its own record', () {
       final (_, _, row) = lineOf(
         'grilled',
         '1 teaspoon grated lemon zest plus 2 tablespoons juice',
       );
-      expect(row.hold, 'second_food');
+      expect((row.fdcId, row.hold), (167747, null));
+      expect(row.grams, closeTo(2 * 14.7868 * 1.03, 0.01));
       expect(
         matchBucketFor(
           status: row.status,
@@ -1549,8 +1594,9 @@ void main() {
           grams: row.grams,
           confidence: row.confidence,
           hold: row.hold,
+          gramSource: row.gramSource,
         ),
-        MatchBucket.check,
+        MatchBucket.counted,
       );
     });
   });

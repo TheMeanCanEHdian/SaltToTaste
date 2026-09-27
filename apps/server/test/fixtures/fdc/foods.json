@@ -4451,5 +4451,1448 @@
     "description": "tsp"
    }
   ]
+ },
+ "2709170": {
+  "fdc_id": 2709170,
+  "description": "Lime, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.7,
+   "204": 0.2,
+   "205": 10.5,
+   "208": 30.0,
+   "269": 1.69,
+   "291": 2.8,
+   "301": 33.0,
+   "303": 0.6,
+   "304": 6.0,
+   "305": 18.0,
+   "306": 102.0,
+   "307": 2.0,
+   "320": 2.0,
+   "323": 0.22,
+   "328": 0.0,
+   "401": 29.1,
+   "404": 0.03,
+   "405": 0.02,
+   "406": 0.2,
+   "415": 0.043,
+   "418": 0.0,
+   "430": 0.6,
+   "432": 8.0,
+   "435": 8.0,
+   "601": 0.0,
+   "606": 0.022,
+   "645": 0.019,
+   "646": 0.055
+  },
+  "portions": [
+   {
+    "gram_weight": 8.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice or wedge"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 200.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 65.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fruit"
+   }
+  ]
+ },
+ "170457": {
+  "fdc_id": 170457,
+  "description": "Tomatoes, red, ripe, raw, year round average",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 18.0,
+   "203": 0.88,
+   "204": 0.2,
+   "205": 3.89,
+   "291": 1.2,
+   "269": 2.63,
+   "301": 10.0,
+   "303": 0.27,
+   "304": 11.0,
+   "305": 24.0,
+   "306": 237.0,
+   "307": 5.0,
+   "401": 13.7,
+   "404": 0.037,
+   "405": 0.019,
+   "406": 0.594,
+   "415": 0.08,
+   "432": 15.0,
+   "435": 15.0,
+   "418": 0.0,
+   "320": 42.0,
+   "323": 0.54,
+   "328": 0.0,
+   "430": 7.9,
+   "606": 0.028,
+   "645": 0.031,
+   "646": 0.083,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 123.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium whole (2-3/5\" dia)"
+   },
+   {
+    "gram_weight": 20.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, medium (1/4\" thick)"
+   },
+   {
+    "gram_weight": 182.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large whole (3\" dia)"
+   },
+   {
+    "gram_weight": 17.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cherry"
+   },
+   {
+    "gram_weight": 62.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "Italian tomato"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, thin/small"
+   },
+   {
+    "gram_weight": 180.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, chopped or sliced"
+   },
+   {
+    "gram_weight": 91.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small whole (2-2/5\" dia)"
+   },
+   {
+    "gram_weight": 27.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, thick/large (1/2\" thick)"
+   },
+   {
+    "gram_weight": 149.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup cherry tomatoes"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "wedge (1/4 of medium tomato)"
+   },
+   {
+    "gram_weight": 148.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "NLEA serving"
+   },
+   {
+    "gram_weight": 62.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "plum tomato"
+   }
+  ]
+ },
+ "2708809": {
+  "fdc_id": 2708809,
+  "description": "Adobo, with noodles",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 16.9,
+   "204": 7.66,
+   "205": 8.14,
+   "208": 172.0,
+   "269": 0.03,
+   "291": 0.4,
+   "301": 15.0,
+   "303": 0.99,
+   "304": 18.0,
+   "305": 149.0,
+   "306": 200.0,
+   "307": 510.0,
+   "320": 4.0,
+   "323": 0.2,
+   "328": 0.3,
+   "401": 0.0,
+   "404": 0.192,
+   "405": 0.204,
+   "406": 3.06,
+   "415": 0.216,
+   "418": 0.43,
+   "430": 0.0,
+   "432": 3.0,
+   "435": 3.0,
+   "601": 72.0,
+   "606": 2.48,
+   "645": 3.47,
+   "646": 0.973
+  },
+  "portions": [
+   {
+    "gram_weight": 224.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 224.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "169098": {
+  "fdc_id": 169098,
+  "description": "Orange juice, raw (Includes foods for USDA's Food Distribution Program)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 45.0,
+   "203": 0.7,
+   "204": 0.2,
+   "205": 10.4,
+   "291": 0.2,
+   "269": 8.4,
+   "301": 11.0,
+   "303": 0.2,
+   "304": 11.0,
+   "305": 17.0,
+   "306": 200.0,
+   "307": 1.0,
+   "401": 50.0,
+   "404": 0.09,
+   "405": 0.03,
+   "406": 0.4,
+   "415": 0.04,
+   "432": 30.0,
+   "435": 30.0,
+   "418": 0.0,
+   "320": 10.0,
+   "323": 0.04,
+   "328": 0.0,
+   "430": 0.1,
+   "606": 0.024,
+   "645": 0.036,
+   "646": 0.04,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 31.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fl oz"
+   },
+   {
+    "gram_weight": 86.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fruit yields"
+   },
+   {
+    "gram_weight": 248.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "748967": {
+  "fdc_id": 748967,
+  "description": "Eggs, Grade A, Large, egg whole",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 148.0,
+   "404": 0.077,
+   "405": 0.419,
+   "418": 1.02,
+   "601": 411.0,
+   "606": 3.2,
+   "203": 12.4,
+   "303": 1.67,
+   "304": 11.4,
+   "305": 184.0,
+   "307": 129.0,
+   "320": 180.0,
+   "301": 48.0,
+   "306": 132.0,
+   "204": 9.96,
+   "645": 3.63,
+   "646": 1.82,
+   "406": 0.0,
+   "415": 0.063,
+   "205": 0.96,
+   "328": 2.46,
+   "298": 8.65,
+   "291": 0.0
+  },
+  "portions": []
+ },
+ "170170": {
+  "fdc_id": 170170,
+  "description": "Nuts, coconut meat, dried (desiccated), not sweetened",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 660.0,
+   "203": 6.88,
+   "204": 64.53,
+   "205": 23.65,
+   "291": 16.3,
+   "269": 7.35,
+   "301": 26.0,
+   "303": 3.32,
+   "304": 90.0,
+   "305": 206.0,
+   "306": 543.0,
+   "307": 37.0,
+   "401": 1.5,
+   "404": 0.06,
+   "405": 0.1,
+   "406": 0.603,
+   "415": 0.3,
+   "432": 9.0,
+   "435": 9.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.44,
+   "328": 0.0,
+   "430": 0.3,
+   "606": 57.218,
+   "645": 2.745,
+   "646": 0.706,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "168586": {
+  "fdc_id": 168586,
+  "description": "Nuts, coconut meat, dried (desiccated), sweetened, shredded",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 501.0,
+   "203": 2.88,
+   "204": 35.49,
+   "205": 47.67,
+   "291": 4.5,
+   "269": 43.17,
+   "301": 15.0,
+   "303": 1.92,
+   "304": 50.0,
+   "305": 107.0,
+   "306": 337.0,
+   "307": 262.0,
+   "401": 0.7,
+   "404": 0.031,
+   "405": 0.02,
+   "406": 0.474,
+   "415": 0.271,
+   "432": 8.0,
+   "435": 8.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.39,
+   "328": 0.0,
+   "430": 0.3,
+   "606": 31.468,
+   "645": 1.51,
+   "646": 0.388,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 93.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, shredded"
+   },
+   {
+    "gram_weight": 199.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "package (7 oz)"
+   }
+  ]
+ },
+ "170000": {
+  "fdc_id": 170000,
+  "description": "Onions, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 40.0,
+   "203": 1.1,
+   "204": 0.1,
+   "205": 9.34,
+   "291": 1.7,
+   "269": 4.24,
+   "301": 23.0,
+   "303": 0.21,
+   "304": 10.0,
+   "305": 29.0,
+   "306": 146.0,
+   "307": 4.0,
+   "401": 7.4,
+   "404": 0.046,
+   "405": 0.027,
+   "406": 0.116,
+   "415": 0.12,
+   "432": 19.0,
+   "435": 19.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.02,
+   "328": 0.0,
+   "430": 0.4,
+   "606": 0.042,
+   "645": 0.013,
+   "646": 0.017,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 160.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, chopped"
+   },
+   {
+    "gram_weight": 14.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, medium (1/8\" thick)"
+   },
+   {
+    "gram_weight": 110.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium (2-1/2\" dia)"
+   },
+   {
+    "gram_weight": 150.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large"
+   },
+   {
+    "gram_weight": 60.0,
+    "amount": 10.0,
+    "unit": null,
+    "description": "rings"
+   },
+   {
+    "gram_weight": 10.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp chopped"
+   },
+   {
+    "gram_weight": 115.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, sliced"
+   },
+   {
+    "gram_weight": 9.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, thin"
+   },
+   {
+    "gram_weight": 70.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small"
+   },
+   {
+    "gram_weight": 38.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, large (1/4\" thick)"
+   }
+  ]
+ },
+ "790646": {
+  "fdc_id": 790646,
+  "description": "Onions, yellow, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 38.0,
+   "203": 0.83,
+   "204": 0.05,
+   "205": 8.61,
+   "291": 1.9,
+   "301": 15.0,
+   "303": 0.28,
+   "304": 9.0,
+   "305": 34.0,
+   "306": 182.0,
+   "307": 1.0,
+   "401": 8.2
+  },
+  "portions": [
+   {
+    "gram_weight": 143.0,
+    "amount": 1.0,
+    "unit": "onion",
+    "description": "Edible"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "790577": {
+  "fdc_id": 790577,
+  "description": "Onions, red, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 44.0,
+   "203": 0.94,
+   "204": 0.1,
+   "205": 9.93,
+   "291": 2.2,
+   "301": 17.0,
+   "303": 0.24,
+   "304": 11.4,
+   "305": 41.0,
+   "306": 197.0,
+   "307": 1.0,
+   "401": 8.1
+  },
+  "portions": [
+   {
+    "gram_weight": 197.0,
+    "amount": 1.0,
+    "unit": "onion",
+    "description": "Edible"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2515379": {
+  "fdc_id": 2515379,
+  "description": "Nuts, pistachio nuts, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 597.98,
+   "958": 560.68798,
+   "203": 20.5057,
+   "204": 45.02,
+   "205": 27.6943,
+   "291": 6.969,
+   "301": 117.4,
+   "303": 3.456,
+   "304": 109.7,
+   "305": 499.6,
+   "306": 947.0,
+   "307": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "170185": {
+  "fdc_id": 170185,
+  "description": "Nuts, pistachio nuts, dry roasted, without salt added",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 572.0,
+   "203": 21.05,
+   "204": 45.82,
+   "205": 28.28,
+   "291": 10.3,
+   "269": 7.74,
+   "301": 107.0,
+   "303": 4.03,
+   "304": 109.0,
+   "305": 469.0,
+   "306": 1007.0,
+   "307": 6.0,
+   "401": 3.0,
+   "404": 0.695,
+   "405": 0.234,
+   "406": 1.373,
+   "415": 1.122,
+   "432": 51.0,
+   "435": 51.0,
+   "418": 0.0,
+   "320": 13.0,
+   "323": 2.17,
+   "328": 0.0,
+   "430": 13.2,
+   "606": 5.645,
+   "645": 24.534,
+   "646": 13.346,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 0.7,
+    "amount": 1.0,
+    "unit": null,
+    "description": "kernel"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz (49 kernels)"
+   },
+   {
+    "gram_weight": 123.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "171447": {
+  "fdc_id": 171447,
+  "description": "Chicken, broilers or fryers, meat and skin, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 215.0,
+   "203": 18.6,
+   "204": 15.06,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 11.0,
+   "303": 0.9,
+   "304": 20.0,
+   "305": 147.0,
+   "306": 189.0,
+   "307": 70.0,
+   "401": 1.6,
+   "404": 0.06,
+   "405": 0.12,
+   "406": 6.801,
+   "415": 0.35,
+   "432": 6.0,
+   "435": 6.0,
+   "418": 0.31,
+   "320": 41.0,
+   "323": 0.3,
+   "328": 0.2,
+   "430": 1.5,
+   "606": 4.31,
+   "645": 6.24,
+   "646": 3.23,
+   "605": 0.097,
+   "601": 75.0
+  },
+  "portions": [
+   {
+    "gram_weight": 460.0,
+    "amount": 0.5,
+    "unit": null,
+    "description": "chicken, bone removed"
+   },
+   {
+    "gram_weight": 276.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "unit (yield from 1 lb ready-to-cook chicken)"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "171507": {
+  "fdc_id": 171507,
+  "description": "Chicken, cornish game hens, meat and skin, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 200.0,
+   "203": 17.15,
+   "204": 14.02,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 11.0,
+   "303": 0.78,
+   "304": 18.0,
+   "305": 140.0,
+   "306": 236.0,
+   "307": 61.0,
+   "401": 0.5,
+   "404": 0.073,
+   "405": 0.17,
+   "406": 5.675,
+   "415": 0.295,
+   "432": 3.0,
+   "435": 3.0,
+   "418": 0.33,
+   "320": 32.0,
+   "323": 0.28,
+   "430": 2.4,
+   "606": 3.89,
+   "645": 6.16,
+   "646": 2.77,
+   "601": 101.0
+  },
+  "portions": [
+   {
+    "gram_weight": 168.0,
+    "amount": 0.5,
+    "unit": null,
+    "description": "bird"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": 3.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "167749": {
+  "fdc_id": 167749,
+  "description": "Lemon peel, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 47.0,
+   "203": 1.5,
+   "204": 0.3,
+   "205": 16.0,
+   "291": 10.6,
+   "269": 4.17,
+   "301": 134.0,
+   "303": 0.8,
+   "304": 15.0,
+   "305": 12.0,
+   "306": 160.0,
+   "307": 6.0,
+   "401": 129.0,
+   "404": 0.06,
+   "405": 0.08,
+   "406": 0.4,
+   "415": 0.172,
+   "432": 13.0,
+   "435": 13.0,
+   "418": 0.0,
+   "320": 3.0,
+   "323": 0.25,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.039,
+   "645": 0.011,
+   "646": 0.089,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 2.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 6.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "171329": {
+  "fdc_id": 171329,
+  "description": "Spices, paprika",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 282.0,
+   "203": 14.14,
+   "204": 12.89,
+   "205": 53.99,
+   "291": 34.9,
+   "269": 10.34,
+   "301": 229.0,
+   "303": 21.14,
+   "304": 178.0,
+   "305": 314.0,
+   "306": 2280.0,
+   "307": 68.0,
+   "401": 0.9,
+   "404": 0.33,
+   "405": 1.23,
+   "406": 10.06,
+   "415": 2.141,
+   "432": 49.0,
+   "435": 49.0,
+   "418": 0.0,
+   "320": 2463.0,
+   "323": 29.1,
+   "328": 0.0,
+   "430": 80.3,
+   "606": 2.14,
+   "645": 1.695,
+   "646": 7.766,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 6.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 2.3,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "2747661": {
+  "fdc_id": 2747661,
+  "description": "Peppers, jalapeno, seeded, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 24.1264,
+   "203": 0.621125,
+   "204": 0.1488,
+   "205": 5.075675,
+   "291": 1.725,
+   "301": 10.1,
+   "303": 0.03763,
+   "304": 8.946,
+   "305": 19.07,
+   "306": 166.9,
+   "307": 0.0,
+   "401": 89.94,
+   "415": 0.2671
+  },
+  "portions": []
+ },
+ "171328": {
+  "fdc_id": 171328,
+  "description": "Spices, oregano, dried",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 265.0,
+   "203": 9.0,
+   "204": 4.28,
+   "205": 68.92,
+   "291": 42.5,
+   "269": 4.09,
+   "301": 1597.0,
+   "303": 36.8,
+   "304": 270.0,
+   "305": 148.0,
+   "306": 1260.0,
+   "307": 25.0,
+   "401": 2.3,
+   "404": 0.177,
+   "405": 0.528,
+   "406": 4.64,
+   "415": 1.044,
+   "432": 237.0,
+   "435": 237.0,
+   "418": 0.0,
+   "320": 85.0,
+   "323": 18.26,
+   "328": 0.0,
+   "430": 621.7,
+   "606": 1.551,
+   "645": 0.716,
+   "646": 1.369,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 1.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, leaves"
+   },
+   {
+    "gram_weight": 1.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, ground"
+   }
+  ]
+ },
+ "168164": {
+  "fdc_id": 168164,
+  "description": "Raisins, golden, seedless",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 301.0,
+   "203": 3.28,
+   "204": 0.2,
+   "205": 80.02,
+   "291": 3.3,
+   "269": 65.7,
+   "301": 64.0,
+   "303": 0.98,
+   "304": 35.0,
+   "305": 101.0,
+   "306": 746.0,
+   "307": 24.0,
+   "401": 3.2,
+   "404": 0.008,
+   "405": 0.191,
+   "406": 1.142,
+   "415": 0.323,
+   "432": 3.0,
+   "435": 3.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.12,
+   "328": 0.0,
+   "430": 3.5,
+   "606": 0.065,
+   "645": 0.014,
+   "646": 0.057,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 145.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup (not packed)"
+   },
+   {
+    "gram_weight": 165.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, packed"
+   }
+  ]
+ },
+ "173473": {
+  "fdc_id": 173473,
+  "description": "Rosemary, fresh",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 131.0,
+   "203": 3.31,
+   "204": 5.86,
+   "205": 20.7,
+   "291": 14.1,
+   "301": 317.0,
+   "303": 6.65,
+   "304": 91.0,
+   "305": 66.0,
+   "306": 668.0,
+   "307": 26.0,
+   "401": 21.8,
+   "404": 0.036,
+   "405": 0.152,
+   "406": 0.912,
+   "415": 0.336,
+   "432": 109.0,
+   "435": 109.0,
+   "418": 0.0,
+   "320": 146.0,
+   "328": 0.0,
+   "606": 2.838,
+   "645": 1.16,
+   "646": 0.901,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 1.7,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 0.7,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "170932": {
+  "fdc_id": 170932,
+  "description": "Spices, pepper, red or cayenne",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 318.0,
+   "203": 12.01,
+   "204": 17.27,
+   "205": 56.63,
+   "291": 27.2,
+   "269": 10.34,
+   "301": 148.0,
+   "303": 7.8,
+   "304": 152.0,
+   "305": 293.0,
+   "306": 2014.0,
+   "307": 30.0,
+   "401": 76.4,
+   "404": 0.328,
+   "405": 0.919,
+   "406": 8.701,
+   "415": 2.45,
+   "432": 106.0,
+   "435": 106.0,
+   "418": 0.0,
+   "320": 2081.0,
+   "323": 29.83,
+   "328": 0.0,
+   "430": 80.3,
+   "606": 3.26,
+   "645": 2.75,
+   "646": 8.37,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 5.3,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 1.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "171093": {
+  "fdc_id": 171093,
+  "description": "Turkey, all classes, breast, meat and skin, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 157.0,
+   "203": 21.89,
+   "204": 7.02,
+   "205": 0.0,
+   "291": 0.0,
+   "301": 13.0,
+   "303": 1.2,
+   "304": 24.0,
+   "305": 186.0,
+   "306": 275.0,
+   "307": 59.0,
+   "401": 0.0,
+   "404": 0.058,
+   "405": 0.115,
+   "406": 5.2,
+   "415": 0.48,
+   "432": 7.0,
+   "435": 7.0,
+   "418": 0.42,
+   "320": 2.0,
+   "606": 1.91,
+   "645": 2.66,
+   "646": 1.66,
+   "601": 65.0
+  },
+  "portions": [
+   {
+    "gram_weight": 146.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "unit (yield from 1 lb ready-to-cook turkey)"
+   },
+   {
+    "gram_weight": 1132.0,
+    "amount": 0.5,
+    "unit": null,
+    "description": "breast, bone removed"
+   }
+  ]
+ },
+ "169373": {
+  "fdc_id": 169373,
+  "description": "Peppers, sweet, red, freeze-dried",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 314.0,
+   "203": 17.9,
+   "204": 3.0,
+   "205": 68.7,
+   "291": 21.3,
+   "269": 40.77,
+   "301": 134.0,
+   "303": 10.4,
+   "304": 188.0,
+   "305": 327.0,
+   "306": 3170.0,
+   "307": 193.0,
+   "401": 1900.0,
+   "404": 1.2,
+   "405": 1.2,
+   "406": 7.4,
+   "415": 2.223,
+   "432": 229.0,
+   "435": 229.0,
+   "418": 0.0,
+   "320": 3863.0,
+   "323": 4.0,
+   "328": 0.0,
+   "430": 114.2,
+   "606": 0.447,
+   "645": 0.202,
+   "646": 1.607,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 1.6,
+    "amount": 0.25,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 0.4,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "2003601": {
+  "fdc_id": 2003601,
+  "description": "Mushroom, crimini",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 30.2035,
+   "958": 23.722638,
+   "203": 3.09375,
+   "204": 0.1967,
+   "205": 4.01455,
+   "291": 1.781,
+   "301": 4.105,
+   "303": 0.3115,
+   "304": 10.25,
+   "305": 100.5,
+   "306": 380.3,
+   "307": 4.572,
+   "404": 0.004167,
+   "405": 0.5167,
+   "406": 4.17,
+   "415": 0.1125,
+   "328": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "171081": {
+  "fdc_id": 171081,
+  "description": "Turkey, whole, meat and skin, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 144.0,
+   "203": 21.64,
+   "204": 5.64,
+   "205": 0.14,
+   "291": 0.0,
+   "269": 0.07,
+   "301": 11.0,
+   "303": 0.86,
+   "304": 25.0,
+   "305": 183.0,
+   "306": 224.0,
+   "307": 112.0,
+   "401": 0.0,
+   "404": 0.048,
+   "405": 0.185,
+   "406": 7.631,
+   "415": 0.599,
+   "432": 7.0,
+   "435": 7.0,
+   "418": 1.22,
+   "320": 17.0,
+   "323": 0.09,
+   "328": 0.3,
+   "430": 0.0,
+   "606": 1.461,
+   "645": 1.826,
+   "646": 1.466,
+   "605": 0.062,
+   "601": 72.0
+  },
+  "portions": [
+   {
+    "gram_weight": 5002.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "bird"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "171874": {
+  "fdc_id": 171874,
+  "description": "Beverages, chocolate malt powder, prepared with 1% milk, fortified",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 57.0,
+   "203": 3.32,
+   "204": 0.97,
+   "205": 8.81,
+   "291": 0.0,
+   "269": 7.81,
+   "301": 160.0,
+   "303": 1.14,
+   "304": 24.0,
+   "305": 94.0,
+   "306": 191.0,
+   "307": 60.0,
+   "401": 3.0,
+   "404": 0.167,
+   "405": 0.262,
+   "406": 1.427,
+   "415": 0.132,
+   "432": 7.0,
+   "435": 7.0,
+   "418": 0.47,
+   "320": 171.0,
+   "323": 13.79,
+   "328": 2.5,
+   "430": 0.1,
+   "606": 0.63,
+   "645": 0.276,
+   "646": 0.035,
+   "601": 5.0
+  },
+  "portions": [
+   {
+    "gram_weight": 98.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup dry mix"
+   },
+   {
+    "gram_weight": 251.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup prepared"
+   }
+  ]
+ },
+ "173619": {
+  "fdc_id": 173619,
+  "description": "Chicken, broilers or fryers, leg, meat only, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 120.0,
+   "203": 19.16,
+   "204": 4.22,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 10.0,
+   "303": 0.78,
+   "304": 23.0,
+   "305": 180.0,
+   "306": 238.0,
+   "307": 96.0,
+   "401": 0.0,
+   "404": 0.087,
+   "405": 0.179,
+   "406": 5.578,
+   "415": 0.406,
+   "432": 4.0,
+   "435": 4.0,
+   "418": 0.57,
+   "320": 10.0,
+   "323": 0.18,
+   "328": 0.0,
+   "430": 2.8,
+   "606": 1.05,
+   "645": 1.44,
+   "646": 0.962,
+   "605": 0.015,
+   "601": 91.0
+  },
+  "portions": [
+   {
+    "gram_weight": 88.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "drumstick bone and skin removed"
+   },
+   {
+    "gram_weight": 147.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "thigh bone and skin removed"
+   },
+   {
+    "gram_weight": 265.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leg, bone and skin removed (Sum of drumstick+thigh+back meat only)"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "back bone and skin removed"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "174518": {
+  "fdc_id": 174518,
+  "description": "Turkey, retail parts, thigh, meat only, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 116.0,
+   "203": 20.6,
+   "204": 3.69,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 4.0,
+   "303": 1.42,
+   "304": 22.0,
+   "305": 177.0,
+   "306": 269.0,
+   "307": 75.0,
+   "401": 0.0,
+   "404": 0.059,
+   "405": 0.307,
+   "406": 6.183,
+   "415": 0.482,
+   "432": 7.0,
+   "418": 2.17,
+   "320": 19.0,
+   "323": 0.18,
+   "328": 0.5,
+   "430": 0.0,
+   "606": 0.782,
+   "645": 0.749,
+   "646": 0.722,
+   "605": 0.031,
+   "601": 78.0
+  },
+  "portions": [
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 454.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "thigh"
+   }
+  ]
+ },
+ "2727567": {
+  "fdc_id": 2727567,
+  "description": "Chicken, thigh, meat and skin, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 187.8848,
+   "958": 192.792919,
+   "203": 17.10625,
+   "204": 13.35,
+   "205": -0.17255,
+   "301": 5.726,
+   "303": 0.5861,
+   "304": 18.51,
+   "305": 153.6,
+   "306": 246.0,
+   "307": 63.55,
+   "601": 95.5
+  },
+  "portions": [
+   {
+    "gram_weight": 114.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
  }
 }

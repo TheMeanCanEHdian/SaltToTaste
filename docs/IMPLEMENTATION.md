@@ -1533,6 +1533,48 @@ batch: that path now takes `engineOutcome` with `decided: true`; pinned on
 fallback (not shipped: no record among 33,708 cached candidates publishes
 energy, carbohydrate and protein with fat only as 298).
 
+### Checkpoint-5 batch (matcher v8)
+
+Checkpoint 5 (five Opus 5.5 auditors over snapshot 7 vs 6) found two real
+regressions in v7 (the comma walk built a key the coconut rewrite never
+saw, so a macaroon line counted 720 g of coconut water; pink curing salt
+counted inside a discarded brine), that 12 of 15 detail fetches bought
+nothing (Foundation and FNDDS records publish no refuse or drained
+portions), that the 0.45–0.50 band holds 395 lines whose score is capped
+whenever one query word has no FDC counterpart (47% right, 27% wrong, so
+the gate stays at 0.5), and that a group decision RELEASED `second_food`
+siblings at first-part grams (about 4,846 g of juice, yolk and white over
+108 lines would vanish on the first click). The batch, built by a fixer
+with three verify/refix rounds and measured cache-only on a copy of
+snapshot 7: holds are split into FOOD holds (cleared by a decision that
+reaches the line) and LINE holds (`second_food`, `discarded_medium`, never
+cleared by key; the reach SQL skips them and `applied` counts only rows
+whose bucket changed); the coconut rewrite, the same-sentence brine rule
+and prep-only comma segments dropped from keys; coverage-only synonyms
+(chile → pepper, zest → peel), "Spices," qualifiers and a no-credit word
+set with a head guard (+52 complete, 0 wrong band lines counted);
+second-food resolution behind two switches on by default — a zest of at
+most a tablespoon plus the same fruit's juice counts the juice on the
+fruit's juice record, eggs plus yolks or whites count the parts' summed
+piece weights on the whole-egg record (100 of 125 held lines released, 25
+stay held); volume grams from a cached SR sibling for portion-less
+Foundation records; rewrites to cached targets (pancetta → bacon is a
+flagged approximation); normalizer leaks (a leading or/and, pinch, very,
+torn, tightly) and the pinch basis; yield and drained-can fetches only for
+SR Legacy records, the whole-bird "yield from 1 lb ready-to-cook" read on
+171447 for whole-bird lines (switch), Cornish hens sized by the record's
+bird portion; connector tokens dropped from ranker scoring (switch,
+measured apart: 69 lean-only picks flip to lean-and-fat); ranker tidy-ups
+(imported docked only against a domestic record of the same cut, the white
+dock only on egg records, the volume fallback prefers the line's own unit
+then a default form, `cured_for_fresh` as its own hold). Removed as
+unobservable on the recorded answers: cremini → crimini, the chili/chily
+synonyms, the hungarian/spanish qualifiers, the basmati/jasmine rule.
+Cache-only replay on snapshot 7 (queue SQL): counted 12,133 → 12,514,
+check 1,164 → 840, no grams 242 → 210, no match 76 → 51, recipes complete
+414 → 540; three recipes and 24 lean-and-fat lines wait on unrecorded
+answers (about 16 live requests).
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

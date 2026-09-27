@@ -360,7 +360,9 @@ value is a 422. A group item is a line item FLATTENED — `recipe`, `position`,
 reached, which is always a group of one), `item` (the example line's parsed
 ingredient VERBATIM; null when the line has none, and null too when the
 line's text changed since its compute — the same drift `…/nutrition/matches`
-reports as unmatched), `lines` and `recipes` (its reach), `decided` (an
+reports as unmatched; the app labels a group by `item_key` instead when the
+key names a second food, `… plus …`, since the item names only its first
+food), `lines` and `recipes` (its reach), `decided` (an
 ingredient decision already exists for the key) and `grams: {min, max,
 missing}` over the members' amounts. Members are the lines that pass the
 current filter, so every count is counted inside it; a group's `bucket` is its
@@ -642,9 +644,23 @@ the record gives no portion for, stored as `grams: 0`, its food kept, so it
 leaves the review queue), `gram_basis`: a short human string of
 what the grams were computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾
 ounces"`, `"entered by hand"`, `"… × 0.57 edible (USDA refuse)"` for a
-bone-in cut whose record publishes its raw refuse, `"… · no edible yield (no
-USDA refuse portion)"` for one whose record publishes none (or whose detail
-was never fetched — the basis never claims a yield the stored grams lack),
+bone-in cut whose record publishes its raw refuse — or, for a WHOLE bird
+("1 (4-pound) whole chicken") on a whole-bird record, its "yield from 1 lb
+ready-to-cook" share (`"… × 0.61 edible (USDA refuse)"` on 171447) — `"… ·
+no edible yield read"` for one whose record gives no yield the server reads
+(or whose detail was never fetched — the basis never claims a yield the
+stored grams lack, nor that the record has none), `"… · approximate (gross
+weight, no part yield)"` for bird pieces ("4 pounds bone-in chicken pieces")
+on the whole-bird record, whose yield is the whole bird's, `"4 × 336 g (USDA
+edible bird portion)"` for counted birds ("4 Cornish game hens") sized by the
+record's own edible bird rather than the printed weight, `"½ cup · USDA
+portion of \"Onions, raw\""` for a volume on a record with no volume portion
+of its own, read from a cached SR sibling's (the food stays the line's),
+`"pinch ≈ 1/16 tsp (USDA tsp portion)"` for a pinch or dash on a record with
+no dash portion (a teaspoon ÷ 16), `"2 tablespoon ≈ 30 mL · juice only (the
+zest is dropped)"` for a zest-plus-juice line counted on the fruit's juice
+record, `"2 × 50 g egg + 2 × 17 g yolk, summed on the whole egg"` for an
+eggs-plus-parts line counted on the whole-egg record,
 `"… · drained (USDA can portion)"` for a drained can or jar (its printed
 weight × the drained share of the record's own can portion), `"discarded in
 cooking — counted as 0 g"`, `"discarded in cooking — only \"plus 2 teaspoons
@@ -662,25 +678,41 @@ make up 90 g per 100 g, such as an oil, is not held), `discarded_medium`
 whose whey is drained; brine sugar and ¼ cup or more of salt no step
 brines in or rubs on — a salt bed, an ice bath — are always held),
 `second_food` (the line names a second ingredient —
-"zest plus 2 tablespoons juice", "eggs plus 2 yolks", "egg whites plus 1
-large egg" — that the match does not cover; a counted fruit cut into
-wedges, "plus 1 lemon, cut into wedges", is for serving and holds nothing; such a line is also keyed apart from the first food's lines, e.g.
-`lemon zest plus juice`, so a decision on `lemon zest` never reaches it),
+"egg whites plus 1 large egg", "chipotle chile in adobo sauce plus 2
+teaspoons adobo sauce" — that the match does not cover; a counted fruit cut
+into wedges, "plus 1 lemon, cut into wedges", is for serving and holds
+nothing; such a line is also keyed apart from the first food's lines, e.g.
+`egg white plus egg`, so a decision on `egg white` never reaches it. Two
+shapes are counted by rule instead, unheld, under server switches on by
+default: a zest or peel of at most a tablespoon plus the same fruit's juice,
+either part first ("1 teaspoon grated lemon zest plus 2 tablespoons juice",
+"½ cup juice plus 2½ teaspoons grated zest"), counts the juice amount on the
+fruit's juice record (lemon 167747, lime 168156, orange 169098) with the
+zest dropped, and eggs plus yolks or whites, or yolks plus whites ("1 large
+egg, separated, plus 2 large yolks"), count the parts' summed piece weights
+(egg 50 g, yolk 17 g, white 33 g) on the whole-egg record 748967. Their keys
+name both parts, one key for either order: `lemon zest plus juice`, `egg
+plus yolk` — "whole" before egg and a "with …" tail are not part of it),
 `unnamed_food` (the line names no food the matcher can read — a
 continuation of the line above such as "lengthwise, seeded, and sliced thin
 on bias", or "2 tablespoons juice" of no named fruit, with or without an
 amount),
 `dried_for_fresh` (the line asks for a fresh herb — "1 tablespoon minced
-fresh oregano" — and the engine's pick is a dried or ground spice record,
-or a fresh meat on a cured record — "bone-in fresh half ham" on a cured ham;
-off when the server's dried-for-fresh switch accepts them), `borderline`
+fresh oregano" — and the engine's pick is a dried or ground spice record;
+off when the server's dried-for-fresh switch accepts them),
+`cured_for_fresh` (the line asks for a fresh meat — "bone-in fresh half
+ham" — and the engine's pick is a cured, preserved record; the same
+switch), `borderline`
 (only when the server's borderline-band switch is on, off by default: an
 engine pick scored from 0.52 up to 0.54); such a line sits in the `check` bucket until a person confirms,
 re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
 a skip, a grams edit), and an un-skip re-derives it for the food now on the
 line, so a person's food is never held for the engine's old reason. A
-decision reaching the line by `apply_to_all` or inheritance clears it too,
-except `discarded_medium`) plus ranked `candidates`
+decision reaching the line by `apply_to_all` or inheritance clears a FOOD
+hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`, `borderline`,
+`unnamed_food`) too, never a LINE hold (`discarded_medium`, `second_food`):
+a decision on the key names one food and cannot count the line's other part
+or say what a discarded medium leaves) plus ranked `candidates`
 for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
 pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
@@ -704,8 +736,11 @@ its compute is counted here but skipped there — and `others_lines`: the same
 rows counted as lines. A sibling on a DIFFERENT food counts whatever its
 score — the decision changes its food. A sibling already on this line's food
 counts only while it is still a flagged guess (confidence below 0.5) or held
-(`hold` set): blessing it at confidence 1 is what moves it out of the `check`
-bucket. One on this food at or above that threshold and unheld is already
+by a food hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`,
+`borderline`, `unnamed_food`): blessing it at confidence 1 is what moves it
+out of the `check` bucket. A sibling held by a line hold (`second_food`,
+`discarded_medium`) is never counted, whatever its food or score: no
+decision on the key releases it. One on this food at or above that threshold and unheld is already
 counted (or short only an amount) and is neither counted here nor
 rewritten. Candidates come
 from the compute-time search cache only — reading this never spends the
@@ -760,18 +795,22 @@ undecided (`auto` / `unmatched`) line with the same ingredient item (other
 recipes, and this recipe's other lines), each with grams from its own amounts,
 and recompute those recipes' totals. A line on a different food is a target
 whatever its score; a line already carrying that food is one only below the
-flagged threshold (confidence 0.5) or while held, where rewriting it as
-`auto` at confidence 1 with its hold cleared (a discarded medium stays one)
-stops it being a guess — how confirming one line clears an ingredient's
-whole group. A line already on that food at or above 0.5 and unheld is left
-as it is.
+flagged threshold (confidence 0.5) or while held by a food hold, where
+rewriting it as `auto` at confidence 1 with its hold cleared stops it being a
+guess — how confirming one line clears an ingredient's whole group. A line
+already on that food at or above 0.5 and unheld is left as it is, as is a
+line a line hold holds (`second_food`, `discarded_medium`, whatever its food
+or score) and a line counted by the second-food rule.
 The rows land
 as `auto` at confidence 1, machine propagation of a human decision exactly
 like inheritance — not as a human status, so a wrong pick applied
 library-wide is corrected the same way, by a second `apply_to_all` with
 the right food. A line a person already decided is left alone, as is one
 whose text changed since its compute. The response carries `applied:
-{recipes, lines, failed}`: what was written, and how many recipes failed
+{recipes, lines, failed}`: `lines` counts the lines the decision moved —
+whose review bucket changed, or a counted line that took the decided food
+(a line re-held by a line hold is written but not counted) — `recipes` the
+recipes holding one, and `failed` how many recipes failed
 part-way (their document would not decode, or the provider failed while
 fetching the household portions one of their lines needed, or while their
 totals recomputed — logged; what was written before the failure stays).

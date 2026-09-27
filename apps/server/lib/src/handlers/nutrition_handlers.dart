@@ -321,8 +321,12 @@ Future<AppliedToOthers?> applyMatchOverride(
       resolution,
       decided: true,
     );
-    final discarded = outcome.source == GramSource.discarded.name;
-    final pickedGrams = discarded ? outcome.grams : resolution?.grams;
+    // So does a second food picked onto its rule's record: the juice
+    // amount, or the egg parts' sum, not the first part's grams.
+    final byEngine =
+        outcome.source == GramSource.discarded.name ||
+        secondFoodRuleOf(line)?.fdcId == food.fdcId;
+    final pickedGrams = byEngine ? outcome.grams : resolution?.grams;
     row = row.copyWith(
       fdcId: food.fdcId,
       description: food.description,
@@ -330,7 +334,7 @@ Future<AppliedToOthers?> applyMatchOverride(
       confidence: 1,
       grams: pickedGrams,
       clearGrams: pickedGrams == null,
-      gramSource: discarded ? outcome.source : resolution?.source.name,
+      gramSource: byEngine ? outcome.source : resolution?.source.name,
       clearGramSource: pickedGrams == null,
       status: 'overridden',
     );

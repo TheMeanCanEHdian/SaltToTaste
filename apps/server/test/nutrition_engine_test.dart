@@ -1531,14 +1531,15 @@ void main() {
             'Alcoholic beverage, wine, dessert, dry',
           );
           expect(wine.first.confidence, greaterThanOrEqualTo(0.5));
-          // On the raw answer the head noun keeps flaxseed out; the rewrite
-          // ('cumin seeds') is what lands the spice above the line.
+          // On the raw answer the head noun keeps flaxseed out. Since
+          // matcher v8 'ground' does not count against a 'Spices,' record
+          // (FDC files ground spices bare), so the raw answer passes too.
           final rawCumin = await rank('ground cumin');
           expect(rawCumin.first.candidate.description, 'Spices, cumin seed');
           expect(
             rawCumin.first.confidence,
-            lessThan(0.5),
-            reason: 'coverage cap',
+            greaterThanOrEqualTo(0.5),
+            reason: 'spice qualifier credit',
           );
           expect(
             candidatesNameIngredient(
@@ -1744,15 +1745,17 @@ void main() {
       test(
         'the flag judges the WHOLE answer, not the eight shown (Opus fleet)',
         () async {
-          // "Peppers, hot chile, sun-dried" carries the head but ranks 11th.
-          final answer = await provider.search('thai chiles');
-          expect(candidatesNameIngredient('thai chiles', answer), isTrue);
+          // A record carrying the head ranks below the eight shown. (Thai
+          // chiles was the pin until matcher v8's chile credit lifted
+          // "Peppers, hot chile, sun-dried" into the eight.)
+          final answer = await provider.search('beef flap meat');
+          expect(candidatesNameIngredient('beef flap meat', answer), isTrue);
           final shown = rankCandidates(
-            'thai chiles',
+            'beef flap meat',
             answer,
           ).take(8).map((c) => c.candidate).toList();
           expect(
-            candidatesNameIngredient('thai chiles', shown),
+            candidatesNameIngredient('beef flap meat', shown),
             isFalse,
             reason: 'why the body must use the answer',
           );

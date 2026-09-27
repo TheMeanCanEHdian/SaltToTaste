@@ -72,6 +72,8 @@ const Set<String> _prepWords = {
   'thin',
   'thinly',
   'roughly',
+  // "torn fresh basil" keyed 'torn basil' (checkpoint 5).
+  'torn',
   // Size / vessel words: describe the piece bought, not the food. "small head
   // escarole" must search "escarole", not drag in "Beans, Dry, Small Red".
   // ("whole" stays — it's an FDC form, e.g. "whole milk", "whole wheat".)
@@ -151,8 +153,17 @@ const Map<String, String> _synonyms = {
 /// count-noun cap never leaves only a dish word, a cured meat for a fresh
 /// line is held as dried-for-fresh, a lone qualifier reads on until a
 /// segment names a food, and a second food's key comes from each part with
-/// its amounts cut.
-const int matcherVersion = 7;
+/// its amounts cut;
+/// 8 = checkpoint 5 (2026-09-27): coverage-only credits (chile→pepper,
+/// zest→peel, spice qualifiers, descriptor words) with
+/// literal precision, 'or'/'and' out of the ranker (switch), 'imported'
+/// docked only beside a domestic record of its cut, 'white' docked only on
+/// an egg, pods as count nouns, a dropped
+/// word's leaked connector/measure cut from the key, prep-only comma
+/// segments dropped, egg and citrus second-food keys tidied, and rewrites
+/// for desiccated coconut, pancetta, panko, stout, madeira, tubetti, mezze
+/// rigatoni, sukang maasim and cherry tomatoes.
+const int matcherVersion = 8;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -222,8 +233,16 @@ String normalizeItem(String item) {
         raw[i + 1] == 'packed') {
       continue;
     }
+    // "very finely minced shallot" keyed 'very shallot' (checkpoint 5); a
+    // very ripe banana is still a ripe one.
+    if (word == 'very' &&
+        i + 1 < raw.length &&
+        _prepWords.contains(raw[i + 1])) {
+      continue;
+    }
     words.add(_synonyms[word] ?? word);
   }
+  _dropLeadingLeaks(words);
   // Citrus first, so "zest plus 1 tablespoon juice from 1 lemon" still names
   // the fruit before the second amount is cut — the moved fruit does not
   // count as a food ahead of a leading amount ("plus 1 tablespoon juice from
@@ -246,8 +265,35 @@ String normalizeItem(String item) {
   return out.join(' ');
 }
 
+/// What a dropped word leaves at the front of an item (checkpoint 5: 38
+/// lines under 21 keys, split from their siblings): the connector of a
+/// dropped alternative ("minced or grated fresh ginger" keyed 'or ginger';
+/// "fresh or frozen cranberries" 'or frozen cranberry', its form word an
+/// alternative too), a measure with no number ("1 small pinch saffron";
+/// "Dash of hot sauce" parses 'dash' as its unit and leaves 'of'). ('dash',
+/// 'pinches' and a doubled "or" were here too: none changed a key of the
+/// library, refix round 1.)
+void _dropLeadingLeaks(List<String> words) {
+  while (words.length > 1) {
+    final first = words.first;
+    if (first == 'or' || first == 'and') {
+      words.removeAt(0);
+      if (words.length > 1 && _formWords.contains(words.first)) {
+        words.removeAt(0);
+      }
+    } else if (_leadingMeasures.contains(first)) {
+      words.removeAt(0);
+    } else {
+      return;
+    }
+  }
+}
+
+/// A measure the parse left at the front of the item, with its "of".
+const Set<String> _leadingMeasures = {'pinch', 'of'};
+
 /// Adverbs of "packed" ([normalizeItem] drops them with it).
-const Set<String> _packedAdverbs = {'loosely', 'lightly'};
+const Set<String> _packedAdverbs = {'loosely', 'lightly', 'tightly'};
 
 /// Measure words a leaked second amount carries ("plus 2 tablespoons").
 const Set<String> _amountUnits = {
@@ -477,7 +523,10 @@ bool isNonFood(String normalizedItem) =>
     normalizedItem.contains('wood chips') ||
     normalizedItem.contains('wood chunks') ||
     // "1 large oven bag" searched french fries (audit 4: one detail fetch).
-    normalizedItem.contains('oven bag');
+    normalizedItem.contains('oven bag') ||
+    // "lollipop or popsicle sticks" counted 120 g of "Popsicle" at the gate
+    // (checkpoint 5).
+    normalizedItem.contains('popsicle stick');
 
 /// Seasoning a recipe adds "to taste": with no amount on the line it
 /// contributes nothing measurable, and FDC's search for it returns bell
@@ -748,10 +797,27 @@ const Map<String, String> _queryRewrites = {
   'cornish game hens': 'chicken cornish game hens meat and skin raw',
   'whole cornish game hens': 'chicken cornish game hens meat and skin raw',
   // Cherry tomatoes are tomatoes: under their own words every record fell
-  // below the gate once roma was docked (9 lines, 5,408 g).
-  'cherry tomatoes': 'tomatoes',
+  // below the gate once roma was docked (9 lines, 5,408 g). Under 'tomatoes'
+  // roma won and has no volume portion (2 lines in no_grams); the recorded
+  // 'ripe tomatoes' answer ranks 170457 first, whose portions include a cup
+  // of cherry tomatoes (checkpoint 5).
+  'cherry tomatoes': 'ripe tomatoes',
   // Curing salt is salt to FDC ("Pork, cured, salt pork" at 0.34).
   'pink curing salt': 'salt table',
+  // Checkpoint 5. The desiccated coconut the joined comma segments name:
+  // "Coconut water, unsweetened" counted 720 g for the macaroons (0831).
+  // (Bare 'desiccated coconut' is no line's key: not here.)
+  'unsweetened desiccated coconut': 'nuts coconut meat dried not sweetened',
+  // Names FDC has no record under — each answer is recorded as [] — moved to
+  // a recorded stand-in. Pancetta is an APPROXIMATION the user flagged:
+  // cured unsmoked pork belly, counted as bacon (18 lines).
+  'pancetta': 'pork cured bacon unprepared',
+  'panko': 'bread crumbs',
+  'stout': 'beer',
+  'mezze rigatoni': 'pasta dry enriched',
+  'tubetti': 'pasta dry enriched',
+  'madeira': 'wine dessert dry',
+  'sukang maasim': 'vinegar',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -1067,6 +1133,10 @@ const Set<String> _varietyWords = {
   'imported',
 };
 
+/// The variety a food means unqualified, never docked: rice is white rice
+/// (checkpoint 5: 0005, 0062 and 0709 counted brown rice).
+const Map<String, String> _defaultVariety = {'rice': 'white'};
+
 /// The variety dock: small, a tiebreak between records of the same food.
 const double _varietyDock = 0.03;
 
@@ -1092,9 +1162,14 @@ bool namesCannedLegume(String raw, String normalizedItem) =>
 bool impliesSkinOn(String raw, String normalizedItem) =>
     normalizedItem.contains('bone-in') &&
     _birdCuts.contains(headNounOf(normalizedItem)) &&
-    !RegExp(
-      'skinless|skinned|skin removed|without skin|remove(d)? (the )?skin',
-    ).hasMatch(raw.toLowerCase());
+    !removesSkin(raw);
+
+/// Whether [raw] says the skin comes off ("4 whole chicken legs, separated
+/// into drumsticks and thighs and skin removed"): [rankCandidates] docks a
+/// "meat and skin" record for it.
+bool removesSkin(String raw) => RegExp(
+  'skinless|skinned|skin removed|without skin|remove(d)? (the )?skin',
+).hasMatch(raw.toLowerCase());
 
 /// The bird cuts sold skin-on: [impliesSkinOn]. ponytail: no bone-in veal
 /// breast or lamb leg is in the corpus; gate on the animal if one appears.
@@ -1228,6 +1303,10 @@ const Set<String> _countNouns = {
   'ears',
   'bunch',
   'bunches',
+  // "cardamom pods": the head is the spice (checkpoint 5: 'pod' was the
+  // head, and "Drumstick pods" won the cardamom line). (Singular 'pod'
+  // moved only a confidence that stays in check, refix round 1.)
+  'pods',
 };
 
 /// Whether [word] counts pieces of a food ('sprig', 'leaves', 'cloves')
@@ -1434,6 +1513,9 @@ const Set<String> _compositeMarkers = {
   // "Refried beans, canned (pinto)" out-ranked the canned pinto beans once a
   // can on the line named 'canned' (audit 3, N1).
   'refried',
+  // "Turkey and gravy, frozen" counted 9,979 g for a whole frozen turkey
+  // (0155) once the connectors stopped costing it precision (refix round 1).
+  'gravy',
 };
 const List<String> _compositePhrases = ['school lunch', 'with meat'];
 
@@ -1516,13 +1598,27 @@ const bool allowDriedForFresh = false;
 /// nutmeg" or "fresh ground pepper" — there the ground spice is the food.
 /// A cured meat is the same mistake: "bone-in fresh half ham with skin"
 /// (0249) scored exactly 0.50 on "Pork, cured, ham, rump, …" (audit 4).
-bool driedForFresh(String raw, String description) {
+bool driedForFresh(String raw, String description) =>
+    freshHoldOf(raw, description) != null;
+
+/// The hold [driedForFresh] puts on a fresh line: `cured_for_fresh` for a
+/// cured record (a preserved meat — the 0249 fresh ham), `dried_for_fresh`
+/// for a dried or ground one; null when the line is not fresh or the record
+/// is (checkpoint 5: the ham was held under the herb's label).
+String? freshHoldOf(String raw, String description) {
   final line = raw.toLowerCase();
   final record = description.toLowerCase();
-  return RegExp(r'\bfresh\b(?!\s+(grated|ground))').hasMatch(line) &&
-      (record.contains(RegExp(r'\b(dried|cured)\b')) ||
+  if (!RegExp(r'\bfresh\b(?!\s+(grated|ground))').hasMatch(line)) {
+    return null;
+  }
+  if (record.contains(RegExp(r'\bcured\b'))) {
+    return 'cured_for_fresh';
+  }
+  return record.contains(RegExp(r'\bdried\b')) ||
           (record.startsWith('spices,') &&
-              record.contains(RegExp(r'\bground\b'))));
+              record.contains(RegExp(r'\bground\b')))
+      ? 'dried_for_fresh'
+      : null;
 }
 
 /// The query tokens a candidate is scored against: [tokens] less its count
@@ -1556,6 +1652,85 @@ Set<String> _countedTokens(Set<String> tokens) {
   return dishOnly ? tokens : kept;
 }
 
+/// USER QUESTION SWITCH (connector tokens, checkpoint 5 — measured apart).
+/// True (the audit's recommendation) drops 'or' and 'and' from the query's
+/// and every record's tokens: 'or' capped every "A or B" line and credited
+/// FDC's own "X or Y" descriptions ("canola or vegetable oil" counted a
+/// Spanish rice mix "…canola/vegetable oil blend or…"), and the 'and' of
+/// "lean and fat" cost that record precision against "lean only" (68 lines
+/// flip to lean and fat — the user may veto that list). False scores them
+/// as words, as before.
+const bool connectorTokensDropped = true;
+
+/// The connector words [connectorTokensDropped] drops.
+const Set<String> _connectorTokens = {'or', 'and'};
+
+/// Coverage-only synonyms, in the ranker's stem form (plural 'chiles'
+/// stems to 'chil'): the corpus's word covers the one FDC files it under.
+/// ('chili' and 'chily' were measured too: neither moved a recorded answer
+/// of the library, so they are not here.)
+/// Measured on the checkpoint-5 gate band: 45 right chile lines sat at
+/// 0.495, and lemon zest scored "Lemon, raw" over "Lemon peel, raw".
+/// (cremini → crimini was measured too: it raised 19 counted cremini lines
+/// from 0.525 to 0.95 and moved no food, bucket or gram, so it is not here.)
+const Map<String, String> _coverageSynonyms = {
+  'chil': 'pepper',
+  'chile': 'pepper',
+  'zest': 'peel',
+};
+
+/// Qualifiers FDC's ground-spice records never carry ("Spices, paprika" is
+/// sweet, smoked or hot): not counted against a 'Spices,' record. Never
+/// globally — smoked is a fish's identity, sweet a potato's. ('hungarian'
+/// and 'spanish' moved no recorded answer of the library.)
+final Set<String> _spiceQualifiers = {
+  for (final word in const ['smoked', 'sweet', 'ground', 'hot'])
+    _singular(word),
+};
+
+/// Variety and descriptor words no FDC record of the food carries, measured
+/// one at a time on the gate band with 0 wrong lines counted: not counted
+/// against coverage when uncovered and not the head ('red plums' is plums).
+/// Not 'skinless' (it lifted "Lomi salmon") or 'whole' (it moved egg yolks).
+final Set<String> _noCreditWords = {
+  for (final word in const [
+    'english',
+    'plum',
+    'slivered',
+    'thread',
+    'pecorino',
+    'littleneck',
+    'ripe',
+    'prewashed',
+    'mcintosh',
+    'pearl',
+    'seedless',
+    'unseasoned',
+  ])
+    _singular(word),
+};
+
+/// The comma segments of [description], lowercased.
+Iterable<String> _segments(String description) =>
+    description.toLowerCase().split(',').map((segment) => segment.trim());
+
+/// The cut an imported record names: its first segment after 'imported'
+/// that is not a descriptor ("Lamb, New Zealand, imported, fore-shank, …" →
+/// 'fore-shank'). 'imported' is docked only when a domestic record in the
+/// same answer files that cut: the 85% ground beef has one, but no domestic
+/// fore-shank exists, and the dock sent 1192's lamb shanks to a leg roast
+/// (checkpoint 5).
+String? _importedCut(String description) {
+  final segments = _segments(description).toList();
+  final at = segments.indexOf('imported');
+  for (final segment in at < 0 ? const <String>[] : segments.skip(at + 1)) {
+    if (!const {'grass-fed', 'fresh', 'frozen'}.contains(segment)) {
+      return segment;
+    }
+  }
+  return null;
+}
+
 /// Ranks [candidates] against the normalized [query].
 ///
 /// Score = token overlap between the query and the candidate description
@@ -1568,12 +1743,17 @@ List<RankedCandidate> rankCandidates(
   List<FdcCandidate> candidates, {
   bool canned = false,
   bool skinOn = false,
+  bool skinless = false,
+  bool dropConnectors = connectorTokensDropped,
 }) {
+  Set<String> tokensOf(String text) => dropConnectors
+      ? _tokens(text).difference(_connectorTokens)
+      : _tokens(text);
   // A can or jar on the line is the canned record's word, ranked but never
   // searched: 7 canned-bean lines counted dry or raw beans (audit 3, N1).
   // A bone-in bird cut is sold skin-on ([impliesSkinOn]), ranked the same way.
   final allTokens = {
-    ..._tokens(query),
+    ...tokensOf(query),
     if (canned) 'canned',
     if (skinOn) 'skin',
   };
@@ -1583,9 +1763,15 @@ List<RankedCandidate> rankCandidates(
   }
   final countedTokens = _countedTokens(allTokens);
   final head = headNounOf(query);
+  // The cuts some record files WITHOUT 'imported' ([_importedCut]).
+  final domesticSegments = {
+    for (final candidate in candidates)
+      if (!_tokens(candidate.description).contains('imported'))
+        ..._segments(candidate.description),
+  };
   final ranked = <RankedCandidate>[];
   for (final candidate in candidates) {
-    final descriptionTokens = _tokens(candidate.description);
+    final descriptionTokens = tokensOf(candidate.description);
     if (descriptionTokens.isEmpty) {
       continue;
     }
@@ -1604,11 +1790,37 @@ List<RankedCandidate> rankCandidates(
       ))
         _singular(match[1]!),
     };
-    final overlap = queryTokens
-        .intersection(descriptionTokens.difference(negated))
-        .length;
-    final coverage = overlap / queryTokens.length;
-    final precision = overlap / descriptionTokens.length;
+    final own = descriptionTokens.difference(negated);
+    // Coverage credits (checkpoint 5): a word FDC files under another word
+    // covers it ([_coverageSynonyms]); a word no record of the food carries
+    // leaves the denominator when uncovered and not the head — a qualifier
+    // on a 'Spices,' record ([_spiceQualifiers]) or a variety or descriptor
+    // word ([_noCreditWords]). Precision stays the LITERAL overlap.
+    // A sweet record takes no synonym credit — a sweet pepper is no chile:
+    // the credit lifted "whole dried red chile" onto "Peppers, sweet, red,
+    // freeze-dried" (0525, 0545; judged wrong).
+    final covered = {
+      for (final token in queryTokens)
+        if (own.contains(token) ||
+            (own.contains(_coverageSynonyms[token] ?? token) &&
+                !own.contains('sweet')))
+          token,
+    };
+    final spice = candidate.description.toLowerCase().startsWith('spices,');
+    final uncredited = covered.isEmpty
+        ? 0
+        : queryTokens
+              .where(
+                (token) =>
+                    !covered.contains(token) &&
+                    token != head &&
+                    (_noCreditWords.contains(token) ||
+                        (spice && _spiceQualifiers.contains(token))),
+              )
+              .length;
+    final coverage = covered.length / (queryTokens.length - uncredited);
+    final precision =
+        queryTokens.intersection(own).length / descriptionTokens.length;
     var score = 0.65 * coverage + 0.2 * precision;
     if (coverage == 1) {
       score += 0.1;
@@ -1631,7 +1843,11 @@ List<RankedCandidate> rankCandidates(
         score -= 0.25;
       } else if (_offMeatTokens.contains(token)) {
         score -= 0.12;
-      } else if (_modifiedFormTokens.contains(token)) {
+      } else if (_modifiedFormTokens.contains(token) &&
+          // 'white' is an egg's part; on rice, onions or cornmeal it is a
+          // variety ([_varietyDock] below): as a modified form it sent '1
+          // cup long-grain rice' (0005) to brown rice (checkpoint 5).
+          (token != 'white' || descriptionTokens.contains('egg'))) {
         score -= 0.06;
       }
     }
@@ -1705,7 +1921,14 @@ List<RankedCandidate> rankCandidates(
     }
     if (varietyDockOn) {
       for (final token in descriptionTokens) {
-        if (_varietyWords.contains(token) && !queryTokens.contains(token)) {
+        if ((_varietyWords.contains(token) ||
+                (token == 'white' && !descriptionTokens.contains('egg'))) &&
+            !queryTokens.contains(token) &&
+            _defaultVariety[head] != token &&
+            (token != 'imported' ||
+                domesticSegments.contains(
+                  _importedCut(candidate.description),
+                ))) {
           score -= _varietyDock;
         }
       }
@@ -1719,7 +1942,16 @@ List<RankedCandidate> rankCandidates(
     if ((queryLower.contains('bone-in') &&
             descriptionWords.contains('boneless')) ||
         ((queryLower.contains('bone-in') || queryLower.contains('skin-on')) &&
-            descriptionLower.contains('meat only'))) {
+            !skinless &&
+            descriptionLower.contains('meat only')) ||
+        // A skinned line is not "meat and skin" ([removesSkin]): once the
+        // connectors stopped costing precision, "whole chicken legs … skin
+        // removed" (0150) tied with and took the skin-on leg (refix round 1).
+        // A line that names the skin ("skin-on thighs, … skin removed",
+        // 0461) keeps its skin-on pick.
+        (skinless &&
+            !allTokens.contains('skin') &&
+            descriptionLower.contains('meat and skin'))) {
       score -= _cutDock;
     }
     final queryAnimals = queryTokens.intersection(_animals);

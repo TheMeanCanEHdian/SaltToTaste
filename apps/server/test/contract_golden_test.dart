@@ -72,6 +72,64 @@ const String _bundtSlug = 'rich-chocolate-bundt-cake';
 const String _malformedName = 'zzzz-malformed-document.yaml';
 const String _malformedYaml = 'title: "unterminated\n';
 
+/// Real corpus lines, parsed amounts and items exactly as the corpus stores
+/// them: Italian-Style Grilled Chicken (0423), Duchess Potato Casserole
+/// (0447), Super Greens Soup (0021), Stovetop Roast Chicken (0142), Roast
+/// Fresh Ham (0249).
+const List<Map<String, Object?>> _rulesLines = [
+  {
+    'raw': '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+    'amounts': [
+      {
+        'measure': 'volume',
+        'quantity': '1',
+        'unit': 'teaspoon',
+        'primary': true,
+      },
+    ],
+    'item': 'grated lemon zest plus 2 tablespoons juice',
+  },
+  {
+    'raw': '1 large egg, separated, plus 2 large yolks',
+    'amounts': [
+      {'measure': 'count', 'quantity': '1', 'primary': true},
+    ],
+    'item': 'large egg',
+  },
+  {
+    'raw': 'Pinch cayenne pepper',
+    'amounts': [
+      {'measure': 'count', 'quantity': '', 'unit': 'pinch', 'primary': true},
+    ],
+    'item': 'cayenne pepper',
+  },
+  {
+    'raw':
+        '3½ pounds bone-in, skin-on chicken pieces (split breasts cut in '
+        'half, drumsticks, and/or thighs), trimmed',
+    'amounts': [
+      {
+        'measure': 'weight',
+        'quantity': '3 1/2',
+        'unit': 'pound',
+        'primary': true,
+      },
+    ],
+    'item':
+        'bone-in, skin-on chicken pieces (split breasts cut in half, '
+        'drumsticks, and/or thighs)',
+  },
+  {
+    'raw':
+        '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably '
+        'shank end, rinsed',
+    'amounts': [
+      {'measure': 'count', 'quantity': '1', 'primary': true},
+    ],
+    'item': '(6- to 8-pound) bone-in fresh half ham with skin',
+  },
+];
+
 // A conflict copy exactly as `exportRecipeYaml` names them.
 const String _conflictSuffix = '.conflict-20260101T120000.yaml';
 
@@ -270,6 +328,48 @@ void main() {
       );
 
       await harness.captureMustChangeAccount(adminSession);
+
+      // --- nutrition rules: the matcher-v8 bases and holds, corpus-free ---
+      // A recipe made through the real POST of real corpus lines (their
+      // parsed amounts and items exactly as the corpus stores them), computed
+      // over the recorded FDC answers: the citrus-juice and egg-sum second
+      // foods, a pinch sized from the teaspoon, bird pieces on the
+      // whole-bird record, and a fresh ham held off the cured record.
+      final (created, createdBody) = await harness.send(
+        'POST',
+        '/api/v1/recipes',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {
+            'title': 'Nutrition rules sample',
+            'ingredients': [
+              {'items': _rulesLines},
+            ],
+          },
+        },
+      );
+      expect(created, HttpStatus.created, reason: createdBody);
+      final rulesSlug =
+          ((jsonDecode(createdBody) as Map<String, dynamic>)['recipe']!
+                  as Map<String, dynamic>)['slug']!
+              as String;
+      final (computed, computeBody) = await harness.send(
+        'POST',
+        '/api/v1/recipes/$rulesSlug/nutrition/compute',
+        headers: harness.auth(adminSession, csrf: true),
+      );
+      expect(computed, HttpStatus.accepted, reason: computeBody);
+      await harness.awaitJob(
+        '/api/v1/nutrition/jobs/'
+        '${(jsonDecode(computeBody) as Map<String, dynamic>)['job_id']}',
+        harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_matches_rules',
+        'GET',
+        '/api/v1/recipes/$rulesSlug/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
     });
 
     tearDownAll(harness.stop);

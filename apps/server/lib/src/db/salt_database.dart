@@ -1063,13 +1063,17 @@ class SaltDatabase {
   ///
   /// A row on a DIFFERENT food is a target whatever its score — the decision
   /// changes its food. A row already on [fdcId] is a target only BELOW
-  /// [belowConfidence] (the flagged threshold) or while HELD (`hold`, the
-  /// engine's reason for keeping a passing score out of the totals): either
-  /// sits in `check`, and a confirm is what lifts it out, rewritten as `auto`
-  /// at confidence 1 with grams from its own amounts and the hold cleared (a
-  /// discarded medium stays one). An unheld row at or above the threshold is
-  /// already counted (or missing only an amount) — it waits on nothing here,
-  /// and rewriting it would change nothing but the receipt.
+  /// [belowConfidence] (the flagged threshold) or while held by a FOOD hold
+  /// (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`, `borderline`,
+  /// `unnamed_food` — a food decision answers them): either sits in
+  /// `check`, and a confirm is what lifts it out, rewritten as `auto` at
+  /// confidence 1 with grams from its own amounts and the hold cleared. A
+  /// row with a LINE hold (`second_food`, `discarded_medium`) is never
+  /// reached, whatever its food or score: no decision on the key clears it
+  /// (checkpoint 5). An unheld row at or above
+  /// the threshold is already counted (or missing only an amount) — it
+  /// waits on nothing here, and rewriting it would change nothing but the
+  /// receipt.
   List<IngredientMatchRow> undecidedMatchesForItemKey(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
@@ -1083,6 +1087,7 @@ class SaltDatabase {
           'FROM ingredient_matches WHERE item_key = ? '
           'AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
+          "AND COALESCE(hold, '') NOT IN ('second_food', 'discarded_medium') "
           'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ? '
           'OR hold IS NOT NULL) '
           'ORDER BY recipe_id, position',
@@ -1101,8 +1106,9 @@ class SaltDatabase {
   /// line but [excluding] — at most what an apply-to-all would reach; a row
   /// whose line text changed since its compute is counted here but skipped
   /// there. The same reach as [undecidedMatchesForItemKey]: a different food
-  /// at any score, this food only below [belowConfidence] or held; with no
-  /// [fdcId] (the line has no food yet) every undecided row counts.
+  /// at any score, this food only below [belowConfidence] or held by a food
+  /// hold, and never a row a line hold holds; with no [fdcId] (the line has
+  /// no food yet) every other undecided row counts.
   ({int recipes, int lines}) otherRecipesUndecidedCount(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
@@ -1115,6 +1121,7 @@ class SaltDatabase {
           'FROM ingredient_matches '
           'WHERE item_key = ? AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
+          "AND COALESCE(hold, '') NOT IN ('second_food', 'discarded_medium') "
           'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ? '
           'OR hold IS NOT NULL)',
         ).select([

@@ -236,7 +236,8 @@ class IngredientMatch {
   final String status;
 
   /// Why the engine holds an `auto` line out of the totals although its name
-  /// confidence passes: `no_nutrients` | `discarded_medium` | `second_food`;
+  /// confidence passes: `no_nutrients` | `discarded_medium` | `second_food`
+  /// | `unnamed_food` | `dried_for_fresh` | `cured_for_fresh` | `borderline`;
   /// null when nothing holds it.
   final String? hold;
   final List<MatchCandidate> candidates;

@@ -1,0 +1,219 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "1 teaspoon grated lemon zest plus 2 tablespoons juice",
+      "item": "grated lemon zest plus 2 tablespoons juice",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "lemon zest",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": 167747,
+        "description": "Lemon juice, raw",
+        "data_type": "SR Legacy",
+        "confidence": 0.9533333333333334,
+        "grams": 30.460808,
+        "gram_source": "density",
+        "gram_basis": "2 tablespoon ≈ 30 mL · juice only (the zest is dropped)",
+        "status": "auto",
+        "hold": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 1,
+      "raw": "1 large egg, separated, plus 2 large yolks",
+      "item": "large egg",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "egg",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": 748967,
+        "description": "Eggs, Grade A, Large, egg whole",
+        "data_type": "Foundation",
+        "confidence": 0.92,
+        "grams": 84.0,
+        "gram_source": "piece",
+        "gram_basis": "1 × 50 g egg + 2 × 17 g yolk, summed on the whole egg",
+        "status": "auto",
+        "hold": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 2,
+      "raw": "Pinch cayenne pepper",
+      "item": "cayenne pepper",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "spices pepper red cayenne",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 170932,
+        "description": "Spices, pepper, red or cayenne",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 0.1125,
+        "gram_source": "piece",
+        "gram_basis": "pinch ≈ 1/16 tsp (USDA tsp portion)",
+        "status": "auto",
+        "hold": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 170932,
+          "description": "Spices, pepper, red or cayenne",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "3½ pounds bone-in, skin-on chicken pieces (split breasts cut in half, drumsticks, and/or thighs), trimmed",
+      "item": "bone-in, skin-on chicken pieces (split breasts cut in half, drumsticks, and/or thighs)",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "chicken broilers or fryers meat and skin raw",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 171447,
+        "description": "Chicken, broilers or fryers, meat and skin, raw",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 1587.572,
+        "gram_source": "weight",
+        "gram_basis": "from 3 1/2 pound · approximate (gross weight, no part yield)",
+        "status": "auto",
+        "hold": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 171447,
+          "description": "Chicken, broilers or fryers, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 171469,
+          "description": "Chicken, broilers or fryers, back, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 171474,
+          "description": "Chicken, broilers or fryers, breast, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172373,
+          "description": "Chicken, broilers or fryers, drumstick, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172378,
+          "description": "Chicken, broilers or fryers, leg, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172382,
+          "description": "Chicken, broilers or fryers, neck, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172385,
+          "description": "Chicken, broilers or fryers, thigh, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172390,
+          "description": "Chicken, broilers or fryers, wing, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "raw": "1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed",
+      "item": "(6- to 8-pound) bone-in fresh half ham with skin",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "bone-in half ham with skin",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 168367,
+        "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, unheated",
+        "data_type": "SR Legacy",
+        "confidence": 0.5,
+        "grams": 3628.736,
+        "gram_source": "weight",
+        "gram_basis": "from the printed weight · no edible yield read",
+        "status": "auto",
+        "hold": "cured_for_fresh"
+      },
+      "candidates": [
+        {
+          "fdc_id": 168367,
+          "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, unheated",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 169174,
+          "description": "Pork, cured, ham, rump, bone-in, separable lean only, unheated",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 168358,
+          "description": "Pork, cured, ham, shank, bone-in, separable lean and fat, unheated",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 169176,
+          "description": "Pork, cured, ham, shank, bone-in, separable lean only, unheated",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 169177,
+          "description": "Pork, cured, ham, slice, bone-in, separable lean and fat, unheated",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 168360,
+          "description": "Pork, cured, ham, slice, bone-in, separable lean only, unheated",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 168356,
+          "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, heated, roasted",
+          "data_type": "SR Legacy",
+          "confidence": 0.3345454545454546
+        },
+        {
+          "fdc_id": 169173,
+          "description": "Pork, cured, ham, rump, bone-in, separable lean only, heated, roasted",
+          "data_type": "SR Legacy",
+          "confidence": 0.3345454545454546
+        }
+      ]
+    }
+  ]
+}

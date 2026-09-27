@@ -91,8 +91,10 @@ String? holdReason(String? hold) => switch (hold) {
     'The line does not say which food this is (like "2 tablespoons '
         'juice")',
   'dried_for_fresh' =>
-    'The line asks for a fresh herb or fresh meat, but this is a dried, '
-        'ground, or cured food',
+    'The line asks for a fresh herb, but this is a dried or ground spice',
+  'cured_for_fresh' =>
+    'This is a preserved record for a fresh ingredient: the line asks for '
+        'fresh meat, the match is cured',
   'borderline' => 'The match score is borderline; please confirm the food',
   _ => null,
 };
