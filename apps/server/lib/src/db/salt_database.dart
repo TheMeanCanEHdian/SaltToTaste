@@ -1033,6 +1033,20 @@ class SaltDatabase {
     return [for (final row in rows) IngredientDecisionRow.fromRow(row)];
   }
 
+  /// Every match row keyed [itemKey], a person's rows on [fdcId] first (the
+  /// line a decision was made on), then by recipe and position — the
+  /// example lines the decision re-key reads a key change from.
+  List<IngredientMatchRow> matchesForItemKey(String itemKey, {int? fdcId}) {
+    final rows = _prepared(
+      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
+      'confidence, grams, gram_source, status, updated_at, item_key, hold '
+      'FROM ingredient_matches WHERE item_key = ? '
+      "ORDER BY (status IN ('confirmed', 'overridden') AND fdc_id IS ?) DESC, "
+      'recipe_id, position',
+    ).select([itemKey, fdcId]);
+    return [for (final row in rows) IngredientMatchRow.fromRow(row)];
+  }
+
   /// Inserts a decision row as it is, stamps included (the re-key pass
   /// moving a row to its re-derived key). The caller has freed `row.itemKey`.
   void insertDecision(IngredientDecisionRow row) {
@@ -1059,7 +1073,9 @@ class SaltDatabase {
   }
 
   /// Every UNDECIDED row (`auto` / `unmatched`) carrying [itemKey], on any
-  /// line but [excluding] — the rows an apply-to-all would land on.
+  /// line but [excluding] — the rows an apply-to-all would land on, before
+  /// the engine leaves out the lines naming a second food (`decisionReach`,
+  /// which `others` / `others_lines` count).
   ///
   /// A row on a DIFFERENT food is a target whatever its score — the decision
   /// changes its food. A row already on [fdcId] is a target only BELOW
@@ -1073,12 +1089,16 @@ class SaltDatabase {
   /// (checkpoint 5). An unheld row at or above
   /// the threshold is already counted (or missing only an amount) — it
   /// waits on nothing here, and rewriting it would change nothing but the
-  /// receipt.
+  /// receipt. Nor does an engine 0 g on this food (an amount-less line, a
+  /// sprig): counted whatever its score or food hold, a confirm leaves it
+  /// counted (checkpoint 5 review: "Chili oil" was offered and never
+  /// applied). With no [fdcId] (the line has no food yet) every other
+  /// undecided row not line-held is one.
   List<IngredientMatchRow> undecidedMatchesForItemKey(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
-    required int fdcId,
     required double belowConfidence,
+    int? fdcId,
   }) {
     final rows =
         _prepared(
@@ -1088,8 +1108,10 @@ class SaltDatabase {
           'AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
           "AND COALESCE(hold, '') NOT IN ('second_food', 'discarded_medium') "
-          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ? '
-          'OR hold IS NOT NULL) '
+          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR ((confidence < ? '
+          "OR hold IS NOT NULL) AND NOT (COALESCE(gram_source, '') IN "
+          "('discarded', 'unmeasured') AND COALESCE(grams, -1) = 0 "
+          "AND COALESCE(hold, '') != 'unnamed_food'))) "
           'ORDER BY recipe_id, position',
         ).select([
           itemKey,
@@ -1100,42 +1122,6 @@ class SaltDatabase {
           belowConfidence,
         ]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
-  }
-
-  /// How many recipes (and lines) hold an undecided line with [itemKey], any
-  /// line but [excluding] — at most what an apply-to-all would reach; a row
-  /// whose line text changed since its compute is counted here but skipped
-  /// there. The same reach as [undecidedMatchesForItemKey]: a different food
-  /// at any score, this food only below [belowConfidence] or held by a food
-  /// hold, and never a row a line hold holds; with no [fdcId] (the line has
-  /// no food yet) every other undecided row counts.
-  ({int recipes, int lines}) otherRecipesUndecidedCount(
-    String itemKey, {
-    required ({String recipeId, int position}) excluding,
-    required double belowConfidence,
-    int? fdcId,
-  }) {
-    final rows =
-        _prepared(
-          'SELECT COUNT(DISTINCT recipe_id) AS n, COUNT(*) AS lines '
-          'FROM ingredient_matches '
-          'WHERE item_key = ? AND NOT (recipe_id = ? AND position = ?) '
-          "AND status IN ('auto', 'unmatched') "
-          "AND COALESCE(hold, '') NOT IN ('second_food', 'discarded_medium') "
-          'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR confidence < ? '
-          'OR hold IS NOT NULL)',
-        ).select([
-          itemKey,
-          excluding.recipeId,
-          excluding.position,
-          fdcId,
-          fdcId,
-          belowConfidence,
-        ]);
-    return (
-      recipes: rows.first['n'] as int,
-      lines: rows.first['lines'] as int,
-    );
   }
 
   /// Recipe ids that still have a match row with no item key (pre-009 rows
@@ -1259,11 +1245,17 @@ class SaltDatabase {
   /// with no grams is an amount problem on that one line. Keying it by its
   /// own identity keeps the group's "N lines · M recipes" equal to what the
   /// apply would land on, and draws that row as today's single line.
+  ///
+  /// So, too, is a row a LINE hold holds (`second_food`,
+  /// `discarded_medium`): no decision on the key reaches it (checkpoint 5
+  /// review: "sugar · 17 lines · 17 recipes" were 17 brine sugars one
+  /// decision could never clear — 17 groups of one).
   static const String _reviewFlaggedCte =
       'WITH flagged AS (SELECT im.*, r.slug AS review_slug, '
       'r.title AS review_title, $_reviewBucketCase AS bucket, '
       "CASE WHEN im.item_key IS NULL OR im.item_key = '' "
       "OR im.status NOT IN ('auto', 'unmatched') "
+      "OR COALESCE(im.hold, '') IN ('second_food', 'discarded_medium') "
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
 
@@ -1293,7 +1285,8 @@ class SaltDatabase {
     String? bucket,
   }) {
     // Bound, never concatenated — the same rule (and the same reason) as
-    // nutritionReviewLines: one constant text for every bucket state.
+    // nutritionReviewLines: one constant text for every bucket state. A
+    // line-held example is decided by nothing on its key: never badged.
     final rows = _prepared(
       '$_reviewFlaggedCte, '
       'members AS (SELECT * FROM flagged WHERE '
@@ -1311,7 +1304,8 @@ class SaltDatabase {
       'FROM members) '
       'SELECT e.*, a.lines AS group_lines, a.recipes AS group_recipes, '
       'a.gmin, a.gmax, a.gmissing, a.worst_bucket, '
-      '(d.item_key IS NOT NULL) AS decided '
+      "(d.item_key IS NOT NULL AND COALESCE(e.hold, '') NOT IN "
+      "('second_food', 'discarded_medium')) AS decided "
       'FROM agg a JOIN example e ON e.gkey = a.gkey AND e.rn = 1 '
       'LEFT JOIN ingredient_decisions d ON d.item_key = e.item_key '
       'ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey '

@@ -677,7 +677,11 @@ class _Harness {
     Directory(config.importDir).createSync(recursive: true);
     db = SaltDatabase.open(config.dbPath);
     runtime = AuthRuntime();
-    fdc = FixtureProvider();
+    // 168367 ("Pork, cured, ham, rump, bone-in…", the fresh-ham row of the
+    // rules golden) is in no sweep snapshot: the golden pins it as a
+    // superseded record — its detail 404s, the search hit stands in, and the
+    // basis says no edible yield was read.
+    fdc = FixtureProvider(superseded: {168367});
 
     final pipeline = buildAppMiddleware(
       _dispatch,

@@ -13,7 +13,6 @@ import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
 import 'package:salt_server/src/services/backup_service.dart';
 import 'package:salt_server/src/services/decision_rekey.dart';
-import 'package:salt_server/src/services/item_key_backfill.dart';
 import 'package:salt_server/src/services/library_scan.dart';
 import 'package:salt_server/src/services/serves_backfill.dart';
 
@@ -278,18 +277,7 @@ ServerConfig initServer() {
   } catch (error, stackTrace) {
     _log.severe('Serves backfill failed', error, stackTrace);
   }
-  try {
-    backfillItemKeys(saltDatabase);
-    // ignore: avoid_catches_without_on_clauses
-  } catch (error, stackTrace) {
-    _log.severe('Item-key backfill failed', error, stackTrace);
-  }
-  try {
-    rekeyDecisions(saltDatabase);
-    // ignore: avoid_catches_without_on_clauses
-  } catch (error, stackTrace) {
-    _log.severe('Decision re-key failed', error, stackTrace);
-  }
+  rekeyAfterMatcherChange(saltDatabase);
   _scheduleDailyMaintenance(config);
   return config;
 }

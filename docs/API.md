@@ -374,7 +374,10 @@ key; `page`/`limit` count GROUPS and a group is never split across a page.
 Only UNDECIDED lines (`auto` / `unmatched`) join an ingredient's group: a line
 someone already decided is a group of one — an amount problem for that line,
 never part of an ingredient's reach, since `apply_to_all` cannot touch it —
-and it still reports its own `item_key`.
+and it still reports its own `item_key`. So is a line a LINE hold holds
+(`second_food`, `discarded_medium`): no decision on its key clears it, so
+each brine sugar is a group of one, never one "sugar · N lines" group, and
+such a group's `decided` is always false.
 
 `groups` — at the top level and on every `buckets[]` entry — is reported in
 BOTH modes: the number of distinct ingredient groups among the flagged lines,
@@ -626,7 +629,14 @@ the recipe's `…/nutrition` body carries `computing_job_id` (admins only)
 while a compute is in flight so a reopened page can re-attach. Cached and rate-limited
 (~900 requests/hour shared budget); user decisions on unchanged lines
 survive recomputes. Water/ice lines are matched locally for free. The job
-fails (with the reason in its log) when no API key is configured.
+fails (with the reason in its log) when no API key is configured, or when
+FDC fails a request the compute needs — a search, or a food detail its
+grams read (household portions, a bone-in cut's edible yield, a drained
+can's share, a rule's record): its totals are not recomputed (lines
+matched before the failure keep their new rows) and it stays `stale`, so
+the next compute or `stale` sweep retries it. A line is
+never stored counted at the printed weight because a yield could not be
+fetched.
 
 ### `GET /api/v1/recipes/{idOrSlug}/nutrition/matches`
 
@@ -682,7 +692,8 @@ brines in or rubs on — a salt bed, an ice bath — are always held),
 teaspoons adobo sauce" — that the match does not cover; a counted fruit cut
 into wedges, "plus 1 lemon, cut into wedges", is for serving and holds
 nothing; such a line is also keyed apart from the first food's lines, e.g.
-`egg white plus egg`, so a decision on `egg white` never reaches it. Two
+`egg plus white` for "5 large egg whites plus 1 large egg", so a decision on
+`egg white` never reaches it. Two
 shapes are counted by rule instead, unheld, under server switches on by
 default: a zest or peel of at most a tablespoon plus the same fruit's juice,
 either part first ("1 teaspoon grated lemon zest plus 2 tablespoons juice",
@@ -691,8 +702,12 @@ fruit's juice record (lemon 167747, lime 168156, orange 169098) with the
 zest dropped, and eggs plus yolks or whites, or yolks plus whites ("1 large
 egg, separated, plus 2 large yolks"), count the parts' summed piece weights
 (egg 50 g, yolk 17 g, white 33 g) on the whole-egg record 748967. Their keys
-name both parts, one key for either order: `lemon zest plus juice`, `egg
-plus yolk` — "whole" before egg and a "with …" tail are not part of it),
+name both parts, one key for either order: `lemon zest plus juice` (a zest
+line whose item names no fruit takes the line's — "grated zest plus ½ cup
+juice from 3 or 4 limes" is `lime zest plus juice`), `egg plus yolk`, `egg
+plus white`, `egg yolk plus white` — the whole egg first, then the yolk,
+whichever part the line names first; "whole" and a "with …" tail are not
+part of it),
 `unnamed_food` (the line names no food the matcher can read — a
 continuation of the line above such as "lengthwise, seeded, and sliced thin
 on bias", or "2 tablespoons juice" of no named fruit, with or without an
@@ -707,7 +722,11 @@ switch), `borderline`
 engine pick scored from 0.52 up to 0.54); such a line sits in the `check` bucket until a person confirms,
 re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
 a skip, a grams edit), and an un-skip re-derives it for the food now on the
-line, so a person's food is never held for the engine's old reason. A
+line, so a person's food is never held for the engine's old reason (a
+person's food — confidence 1 — is held again only as a discarded medium,
+never `second_food`: a person looked), and an engine row whose line the
+second-food rule counts moves to the rule's record with the rule's grams,
+as a compute writes it. A
 decision reaching the line by `apply_to_all` or inheritance clears a FOOD
 hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`, `borderline`,
 `unnamed_food`) too, never a LINE hold (`discarded_medium`, `second_food`):
@@ -740,9 +759,15 @@ by a food hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`,
 `borderline`, `unnamed_food`): blessing it at confidence 1 is what moves it
 out of the `check` bucket. A sibling held by a line hold (`second_food`,
 `discarded_medium`) is never counted, whatever its food or score: no
-decision on the key releases it. One on this food at or above that threshold and unheld is already
+decision on the key releases it — nor is a sibling whose line names a
+second food (one the second-food rule counts on its own record, or one not
+matched yet, which the decision's food would hold `second_food`), nor an
+unmatched discarded medium the engine holds (a brine sugar). These are
+exactly the rows `apply_to_all` writes. One on this food at or above that threshold and unheld is already
 counted (or short only an amount) and is neither counted here nor
-rewritten. Candidates come
+rewritten, nor is one on this food the engine counts at 0 g whatever its
+score or food hold (an amount-less line, a sprig) — a confirm would leave it
+where it is. Candidates come
 from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
@@ -782,7 +807,13 @@ excludes the line, `{skipped: false}` un-skips it — back to automatic
 triage (`auto`), deliberately NOT `confirmed`, so a low-confidence match
 is not silently blessed. Totals recompute instantly. A re-pick of a line
 the engine discarded as a cooking medium keeps it discarded (0 g) whatever
-food is picked — `{grams}` is how a person counts it. An engine pick below
+food is picked — `{grams}` is how a person counts it. A re-pick of the
+record the second-food rule counts a line on (the fruit's juice record for
+a zest-plus-juice line, the whole egg 748967 for eggs plus yolks or
+whites) keeps the rule's grams — the juice amount, or the parts' summed
+weights — and its `gram_basis`; a pick of any other record on such a line
+gets grams from the line's own first amount (the zest's teaspoon, the
+whole eggs) like any pick. An engine pick below
 0.5 is stored without fetching FDC's food detail, so a volume or count line
 may have no grams yet; `{confirmed: true}` resolves them (at most one food
 detail fetch). `422` for `{grams}`
@@ -795,12 +826,15 @@ undecided (`auto` / `unmatched`) line with the same ingredient item (other
 recipes, and this recipe's other lines), each with grams from its own amounts,
 and recompute those recipes' totals. A line on a different food is a target
 whatever its score; a line already carrying that food is one only below the
-flagged threshold (confidence 0.5) or while held by a food hold, where
+flagged threshold (confidence 0.5) or while held by a food hold, and not
+counted at an engine 0 g (an amount-less line, a sprig), where
 rewriting it as `auto` at confidence 1 with its hold cleared stops it being a
 guess — how confirming one line clears an ingredient's whole group. A line
 already on that food at or above 0.5 and unheld is left as it is, as is a
 line a line hold holds (`second_food`, `discarded_medium`, whatever its food
-or score) and a line counted by the second-food rule.
+or score), a line that names a second food (counted by the second-food rule,
+or unmatched) and an unmatched discarded medium the engine holds — the same
+rows `others` leaves out, so the offer and the apply agree.
 The rows land
 as `auto` at confidence 1, machine propagation of a human decision exactly
 like inheritance — not as a human status, so a wrong pick applied
@@ -808,14 +842,22 @@ library-wide is corrected the same way, by a second `apply_to_all` with
 the right food. A line a person already decided is left alone, as is one
 whose text changed since its compute. The response carries `applied:
 {recipes, lines, failed}`: `lines` counts the lines the decision moved —
-whose review bucket changed, or a counted line that took the decided food
-(a line re-held by a line hold is written but not counted) — `recipes` the
-recipes holding one, and `failed` how many recipes failed
-part-way (their document would not decode, or the provider failed while
-fetching the household portions one of their lines needed, or while their
-totals recomputed — logged; what was written before the failure stays).
+whose review bucket changed, or that took the decided food (a line left
+short of an amount on it too, which stays `no_grams`) — every line `others`
+counted, less one a person decided meanwhile, one whose text changed since its compute, or one whose recipe failed —
+`recipes` the recipes holding one, and `failed` how many recipes
+failed part-way (their document would not decode, or the provider failed
+while fetching a food detail one of their lines' grams read — household
+portions, an edible yield, a drained can — or while their totals
+recomputed — logged; what was written before the failure stays).
 The decision itself needs no FDC call when the food is in a cached search
-answer, so it lands with no key set or the hourly budget spent. `422`, with nothing written, when the request carries no food
+answer and its grams need no food detail no cache holds, so it lands with no
+key set or the hourly budget spent. Grams that need one — a volume or count
+amount (household portions), or a weight an SR Legacy record's edible yield,
+drained can or game hen scales (a bone-in chop, a drained can) — fetch it;
+when FDC fails the pick (or the confirm resolving an engine pick's grams)
+answers `422` with nothing written, never a row stored at the printed
+weight. `422`, with nothing written, when the request carries no food
 decision (`grams` alone or `skipped`), or the line has nothing searchable
 to match on.
 

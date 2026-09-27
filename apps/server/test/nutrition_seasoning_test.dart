@@ -55,7 +55,9 @@ void main() {
           .recipeByIdOrSlug('acquacotta-tuscan-white-bean-and-escarole-soup')!
           .recipe;
       tarte = db.recipeByIdOrSlug('30-minute-tarte-tatin')!.recipe;
-      final provider = FixtureProvider();
+      // Acquacotta's (0405) country bread is in no snapshot: pending
+      // (fdc_fixtures.dart). Every other answer is recorded.
+      final provider = FixtureProvider(pending: pendingSearches);
       for (final recipe in [soup, bundt, acquacotta, tarte]) {
         await matchAndCompute(db, provider, recipe);
       }

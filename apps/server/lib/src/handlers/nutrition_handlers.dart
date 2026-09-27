@@ -128,14 +128,15 @@ Future<Map<String, Object?>> matchesBody(
     // of the same ingredient, in recipes and in lines — a sibling on another
     // food at any score, a sibling on THIS food only while it is still a
     // flagged guess (below `lowConfidence`); one already counted waits on
-    // nothing this decision can give it.
+    // nothing this decision can give it, and neither does a line-held row or
+    // a line naming a second food. The same rows the apply writes.
     final reach = itemKey.isEmpty
-        ? (recipes: 0, lines: 0)
-        : db.otherRecipesUndecidedCount(
+        ? const <IngredientMatchRow>[]
+        : decisionReach(
+            db,
             itemKey,
             excluding: (recipeId: recipe.id, position: position),
             fdcId: row?.fdcId,
-            belowConfidence: lowConfidence,
           );
     // The KEY (singular) joins decisions; the QUERY keeps the line's words —
     // reported as the words whose cached answer the line reads (a same-key
@@ -153,8 +154,8 @@ Future<Map<String, Object?>> matchesBody(
       'item': line.item,
       // How many OTHER recipes hold an undecided line with this item — what
       // an apply-to-all from here would reach — and how many lines that is.
-      'others': reach.recipes,
-      'others_lines': reach.lines,
+      'others': {for (final other in reach) other.recipeId}.length,
+      'others_lines': reach.length,
       // The words FDC is asked for this line's candidates (after the
       // matcher's rewrites — "spices pepper black" for a pepper line), and
       // when it was last asked (the search cache never expires); null when
@@ -274,14 +275,23 @@ Future<AppliedToOthers?> applyMatchOverride(
     // would hide it from the review queue as resolved (review B7). Its hold
     // is re-derived for the food now on the row — never an engine-era hold
     // left over from another food; a person's food (confidence 1: a pick or
-    // a decision) is held only as a discarded medium.
+    // a decision) is held only as a discarded medium — a person looked, so
+    // it is never re-held second_food. An engine row whose line the
+    // second-food rule counts moves to the rule's record with the rule's
+    // grams, as a fresh compute writes it (checkpoint 5 review: an un-skip
+    // left a rule line held on the peel for good).
     row = row.copyWith(status: 'auto', clearHold: true);
-    final onRow = row.fdcId == null
+    final personal = row.confidence >= 1;
+    final byRule = personal || secondFoodRuleOf(line)?.fdcId == row.fdcId
+        ? null
+        : await ruleRowFor(db, provider, recipe, position, line);
+    final onRow = row.fdcId == null || byRule != null
         ? null
         : knownFood(db, row.fdcId!, line: line);
     final source = GramSource.values.asNameMap()[row.gramSource];
-    if (onRow != null) {
-      final personal = row.confidence >= 1;
+    if (byRule != null) {
+      row = byRule.row;
+    } else if (onRow != null) {
       final outcome = engineOutcome(
         recipe,
         line,
@@ -293,7 +303,11 @@ Future<AppliedToOthers?> applyMatchOverride(
         decided: personal,
         confidence: row.confidence,
       );
-      row = row.copyWith(hold: outcome.hold);
+      row = row.copyWith(
+        hold: personal && outcome.hold != 'discarded_medium'
+            ? null
+            : outcome.hold,
+      );
     }
   } else if (fdcId != null) {
     if (fdcId is! num || fdcId <= 0) {

@@ -822,6 +822,18 @@ double? _foodGramsPerMl(
       if (portion.unit == lineUnit) portion,
   ];
   final pool = sameUnit.isEmpty ? perMl : sameUnit;
+  // A fine cut no portion names reads the chopped one: "¼ cup grated
+  // onion" is 170000's 'cup, chopped' (160 g) as "4 tablespoons grated
+  // onion" is its 'tbsp chopped' — the mean with 'cup, sliced' made a cup
+  // 14% lighter than 16 tablespoons (checkpoint 5 review: 6 grated-onion
+  // lines).
+  if (_fineCut.hasMatch(lineText.toLowerCase())) {
+    for (final portion in pool) {
+      if (_choppedPortion.hasMatch(portion.description)) {
+        return portion.value;
+      }
+    }
+  }
   final spice = food.description.toLowerCase().startsWith('spices,');
   for (final form in spice ? _spiceDefaultForms : _defaultForms) {
     for (final portion in pool) {
@@ -836,6 +848,12 @@ double? _foodGramsPerMl(
       ? values[mid]
       : (values[mid - 1] + values[mid]) / 2;
 }
+
+/// A line's fine cut ([_foodGramsPerMl]).
+final RegExp _fineCut = RegExp(r'\b(chopped|minced|diced|grated)\b');
+
+/// A portion of a fine cut.
+final RegExp _choppedPortion = RegExp(r'\b(chopped|minced|diced)\b');
 
 /// The portion words that name a food's plain form when the line names
 /// none, in order: loose, whole, dry ("cup (not packed)" 145 g of golden
@@ -969,10 +987,15 @@ bool buysRefuse(String raw) {
 /// share of a turkey. False keeps the printed weights.
 const bool wholeBirdYieldOn = true;
 
-/// A line that buys a whole bird.
+/// A line that buys a whole bird: "whole chicken", or a weighed bird ("1
+/// (3½- to 4-pound) chicken, cut into 8 pieces", 0452). Neither form when
+/// a part names what is bought: "4 whole chicken legs" buys legs
+/// (checkpoint 5 review: the exclusion guarded only the weighed form). A
+/// part after a comma is what the cook does to the bird: "1 (4-pound)
+/// whole chicken, breast removed" (0002) is a whole chicken.
 final RegExp _wholeBirdLine = RegExp(
-  r'\bwhole (chickens?|turkeys?)\b|\)\s*(chickens?|turkeys?)\b'
-  r'(?![ ,]*(breasts?|thighs?|legs?|wings?|drumsticks?|parts|pieces)\b)',
+  r'(?:\bwhole\s+|\)\s*)(chickens?|turkeys?)\b'
+  r'(?!\s+(breasts?|thighs?|legs?|wings?|drumsticks?|parts|pieces)\b)',
   caseSensitive: false,
 );
 
@@ -1004,14 +1027,15 @@ double? _readyToCookYield(FdcFood food) {
 bool countsGameHens(String raw) =>
     RegExp(r'\bgame hens?\b', caseSensitive: false).hasMatch(raw);
 
-/// A counted bird on a whole-bird record with a "bird" portion: the count
-/// and the edible grams of one bird, or null.
+/// A counted bird on a record with a "bird" portion — only whole-bird
+/// records publish one (171507, 171081) — the count and the edible grams of
+/// one bird, or null.
 ({double count, double grams})? _birdGrams(
   FdcFood? food,
   List<Amount> amounts,
 ) {
   final count = _countQty(amounts);
-  if (food == null || count == null || !_wholeBirdRecord(food)) {
+  if (food == null || count == null) {
     return null;
   }
   for (final portion in food.portions) {
@@ -1202,13 +1226,11 @@ const double _pinchPerTeaspoon = 1 / 16;
     return null;
   }
   final perMl = _foodGramsPerMl(food, '', 'teaspoon');
-  final count = _quantityValue(amount.quantity) ?? 1;
-  final each = count == 1 ? '' : '${amount.quantity.trim()} × ';
   return perMl == null
       ? null
       : (
           grams: perMl * _volumeUnitMl['teaspoon']! * _pinchPerTeaspoon,
-          basis: '${_amountText(amount)} ≈ ${each}1/16 tsp (USDA tsp portion)',
+          basis: '${_amountText(amount)} ≈ 1/16 tsp (USDA tsp portion)',
         );
 }
 

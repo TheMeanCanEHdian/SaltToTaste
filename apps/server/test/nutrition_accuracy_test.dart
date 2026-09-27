@@ -15,43 +15,6 @@ import 'package:test/test.dart';
 import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
-/// Rewrite targets FDC was never asked for: each needs ONE live search
-/// before its pick can be verified (the sweep's cache and the recorded
-/// fixtures hold only the SOURCE key's answer). Never fetched by a test.
-const Set<String> _pendingLiveVerification = {
-  'turkey whole meat and skin raw',
-  'beef rib whole raw',
-  'beef sirloin tip',
-  'bread white commercially prepared',
-  'sweet potato raw unprepared',
-  'peas green frozen unprepared',
-  'mollusks clam canned liquid',
-  'tomato products canned sauce',
-  'orange juice raw',
-  'chocolate dark',
-  'lettuce romaine raw',
-  'pork boston butt lean and fat',
-  'cheese cottage creamed curd',
-  'corn flour masa harina',
-  'pasta fresh-refrigerated plain as purchased',
-  'dill weed',
-  'spearmint',
-  // 'nuts coconut meat dried not sweetened' is recorded since checkpoint 5
-  // (the sweep asked FDC for it).
-  'nuts coconut meat dried sweetened',
-  'pork backribs raw',
-  // Audit 3 (ACCURACY-2): burger buns, compound heads, kind words.
-  'rolls hamburger or hotdog plain',
-  'butter salted',
-  'coconut cream canned sweetened',
-  'gelatins dry powder unsweetened',
-  'peas green raw',
-  'lima beans',
-  'celeriac raw',
-  // Audit 4: the raw Cornish hen.
-  'chicken cornish game hens meat and skin raw',
-};
-
 /// A real corpus line (pasta e fagioli) whose top pick publishes nothing.
 const String _pastaLine =
     '8 ounces small pasta such as ditalini, tubetini, conchiglietti, or orzo';
@@ -143,25 +106,18 @@ void main() {
       rankCandidates(query, await provider.search(recorded ?? query));
   Future<FdcFood> food(int id) async => (await provider.food(id))!;
 
-  test('every rewrite target has a recorded answer or is pending one live '
-      'search', () {
+  test('every rewrite target has a recorded answer', () {
+    // The 27 targets once pending a live search are recorded from sweep
+    // snapshot 7's cache (the sweep asked FDC for each).
     final recorded =
         jsonDecode(File('test/fixtures/fdc/searches.json').readAsStringSync())
             as Map<String, dynamic>;
-    final targets = {for (final key in queryRewriteKeys) searchQueryFor(key)};
-    for (final target in targets) {
-      // A pending target is not recorded; every other one is.
-      expect(
-        recorded.containsKey(target),
-        !_pendingLiveVerification.contains(target),
-        reason: target,
-      );
+    for (final key in queryRewriteKeys) {
+      expect(recorded.containsKey(searchQueryFor(key)), isTrue, reason: key);
     }
     for (final MapEntry(:key, :value) in _batchRewrites.entries) {
       expect(searchQueryFor(key), value, reason: key);
     }
-    // A pending target that no key names any more is a stale entry.
-    expect(targets.containsAll(_pendingLiveVerification), isTrue);
   });
 
   group('A1: a record with no energy', () {

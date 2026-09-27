@@ -841,12 +841,19 @@ void main() {
     final searches =
         jsonDecode(File('test/fixtures/fdc/searches.json').readAsStringSync())
             as Map<String, dynamic>;
+    // Every hit of every recorded answer whose detail is recorded too.
+    final foods =
+        jsonDecode(File('test/fixtures/fdc/foods.json').readAsStringSync())
+            as Map<String, dynamic>;
     final provider = FixtureProvider();
     var compared = 0;
     var differ = 0;
     final seen = <int>{};
     for (final query in searches.keys) {
       for (final hit in await provider.search(query)) {
+        if (!foods.containsKey('${hit.fdcId}')) {
+          continue;
+        }
         final detail = await provider.food(hit.fdcId);
         final fromHit = hit.nutrientsPer100g;
         if (detail == null || fromHit == null || !seen.add(hit.fdcId)) {
@@ -887,8 +894,14 @@ void main() {
     // sibling and bird records among them): 19 differ in some digit. Its
     // second refix recorded the skinned leg, turkey thigh and skin-on thigh
     // (173619, 174518, 2727567), all recorded hits that differ in some digit.
-    expect(compared, 111);
-    expect(differ, 85);
+    // The checkpoint-5 review (matcher v9) recorded 172370, 2709682,
+    // 2727583, 748236, 2709215, 2710078 and 172336 and the answers its pins
+    // read from snapshot 7: eight more compared, five of them differ in some
+    // digit. Its refix recorded every answer the corpus-backed suites ask
+    // for from snapshot 7 (no fixture miss passes as FDC's own answer): 47
+    // more compared, 32 of them differ in some digit.
+    expect(compared, 166);
+    expect(differ, 122);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

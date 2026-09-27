@@ -1226,9 +1226,14 @@ void main() {
           // Hold the compute open so the in-flight state is observable; the
           // recorded fixtures otherwise finish before the next request lands.
           final gate = Completer<void>();
-          fixtureProvider.gate = gate;
+          // The deliberately unrecorded flour is FDC's gibberish: no hits.
+          fixtureProvider
+            ..gate = gate
+            ..pending = {'uncached-single-flight-test-flour'};
           addTearDown(() {
-            fixtureProvider.gate = null;
+            fixtureProvider
+              ..gate = null
+              ..pending = const {};
             if (!gate.isCompleted) gate.complete();
           });
 

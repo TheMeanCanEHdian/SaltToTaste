@@ -46,15 +46,22 @@ void main() {
           'brown-butter-gemelli-with-asparagus-walnuts-and-lemony-ricotta',
         )!
         .recipe;
-    await matchAndCompute(db, FixtureProvider(), recipe);
+    // The legacy recipe's other lines ('unit lemon', 'gemelli pasta') are in
+    // no snapshot: pending (fdc_fixtures.dart) — this file pins the
+    // seasoning lines, which ask FDC nothing.
+    await matchAndCompute(
+      db,
+      FixtureProvider(pending: pendingSearches),
+      recipe,
+    );
   });
 
   test('the staleness hash carries the matcher version, so a bump makes '
       'every computed recipe stale (update the literal with the bump)', () {
-    expect(matcherVersion, 8);
+    expect(matcherVersion, 9);
     expect(
       ingredientsHashOf(recipe),
-      '93407100de5f90172812e96d4e21ca72e0b415bb74b4aed11894926ec9cd4e62',
+      '3dea1c4240715592722f8d0b0570e84509917f0dcccb026787c98743aa5723ae',
     );
   });
 
@@ -62,7 +69,7 @@ void main() {
     'a recompute whose queries are all cached spends no FDC request — '
     'the stale sweep after a version bump is free for unchanged words',
     () async {
-      final provider = FixtureProvider();
+      final provider = FixtureProvider(pending: pendingSearches);
       await matchAndCompute(db, provider, recipe);
       expect(provider.searchCalls, 0);
       expect(provider.foodCalls, 0);

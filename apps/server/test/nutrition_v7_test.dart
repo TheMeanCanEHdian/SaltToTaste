@@ -155,13 +155,13 @@ void main() {
       db
         ..upsertIngredientMatch(held('r1'))
         ..upsertIngredientMatch(held('r2'));
-      final reach = db.otherRecipesUndecidedCount(
+      final reach = decisionReach(
+        db,
         lineKeyOf(lineOf(raw)),
         excluding: (recipeId: 'r1', position: 0),
         fdcId: 748608,
-        belowConfidence: lowConfidence,
       );
-      expect(reach, (recipes: 1, lines: 1));
+      expect([for (final row in reach) row.recipeId], ['r2']);
       final applied = await applyMatchOverride(db, provider, r1, 0, {
         'confirmed': true,
         'apply_to_all': true,
@@ -596,7 +596,8 @@ void main() {
         '4 (12-ounce) bone-in pork rib chops, 1½ inches thick, trimmed';
 
     test('M7: a bone-in weight on a search hit fetches the detail once for '
-        'its yield; offline, the basis says no yield was applied', () async {
+        'its yield; offline, the compute fails (matcher v9) and a gross row '
+        'stored before says no yield was applied', () async {
       final detail = await food(167833);
       final hit = FdcFood(
         fdcId: detail.fdcId,
@@ -616,11 +617,19 @@ void main() {
 
       final bare = tempDb();
       final offline = _Offline();
-      final (_, gross) = await gramsFor(bare, offline, hit, lineOf(chops));
+      // Offline, the yield fails the compute: a row counted at the gross
+      // weight with a current hash would never fetch it again (checkpoint 5
+      // review: 0201's chops counted 1,361 g).
+      await expectLater(
+        gramsFor(bare, offline, hit, lineOf(chops)),
+        throwsA(isA<NutritionProviderException>()),
+      );
       expect(offline.calls, 1);
-      expect(gross!.grams, closeTo(4 * 12 * 28.3495, 0.01));
+      // A row a v8 compute stored at the gross weight, the detail cached
+      // later: its basis never claims the yield.
+      final gross = gramsOf(chops, hit)!;
+      expect(gross.grams, closeTo(4 * 12 * 28.3495, 0.01));
       expect(gross.basis, contains('no edible yield'));
-      // The detail cached later: the stored gross grams never claim it.
       bare.fdcFoodCachePut(167833, jsonEncode(detail.toJson()));
       final row = IngredientMatchRow(
         recipeId: 'r',

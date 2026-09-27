@@ -283,19 +283,22 @@ void main() {
 
         // A chain: X moves INTO the key Y is moving OUT of. Collisions are
         // judged on final keys, so nothing is lost (Opus fleet, 2026-09-07).
+        // Keys no match row carries, so each follows its item text (a key
+        // a row still carries follows that row's line: matcher v9).
         db
           ..deleteDecision('onion')
+          ..deleteDecision('egg')
           ..putDecision(
-            itemKey: 'stale-key-for-eggs',
-            item: 'eggs',
+            itemKey: 'stale-key-for-onions',
+            item: 'onions',
             fdcId: eggsAlt,
             description: 'X',
             dataType: 'SR Legacy',
             decidedBy: null,
           )
           ..putDecision(
-            itemKey: 'egg',
-            item: 'onions',
+            itemKey: 'onion',
+            item: 'eggs',
             fdcId: eggsAlt,
             description: 'Y',
             dataType: 'SR Legacy',
@@ -303,9 +306,9 @@ void main() {
           )
           ..setSetting(decisionRekeySetting, '1');
         expect(rekeyDecisions(db), 2, reason: 'both moved, none dropped');
-        expect(db.decisionFor('egg')!.description, 'X');
-        expect(db.decisionFor('onion')!.description, 'Y');
-        expect(db.decisionFor('stale-key-for-eggs'), isNull);
+        expect(db.decisionFor('onion')!.description, 'X');
+        expect(db.decisionFor('egg')!.description, 'Y');
+        expect(db.decisionFor('stale-key-for-onions'), isNull);
       },
     );
 

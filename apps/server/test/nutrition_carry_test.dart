@@ -51,7 +51,9 @@ void main() {
         ).copySync('${sourceRoot.path}/recipes/$name');
       }
       importSourceRoot(sourceRootPath: sourceRoot.path, db: db, config: config);
-      provider = FixtureProvider();
+      // Acquacotta's (0405) country bread is in no snapshot: pending
+      // (fdc_fixtures.dart). Every other answer is recorded.
+      provider = FixtureProvider(pending: pendingSearches);
       bundt = db.recipeByIdOrSlug('rich-chocolate-bundt-cake')!.recipe;
       acquacotta = db
           .recipeByIdOrSlug('acquacotta-tuscan-white-bean-and-escarole-soup')!

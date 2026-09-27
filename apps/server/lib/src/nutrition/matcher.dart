@@ -162,8 +162,15 @@ const Map<String, String> _synonyms = {
 /// word's leaked connector/measure cut from the key, prep-only comma
 /// segments dropped, egg and citrus second-food keys tidied, and rewrites
 /// for desiccated coconut, pancetta, panko, stout, madeira, tubetti, mezze
-/// rigatoni, sukang maasim and cherry tomatoes.
-const int matcherVersion = 8;
+/// rigatoni, sukang maasim and cherry tomatoes;
+/// 9 = checkpoint 5 review (2026-09-27): a credited word leaves the
+/// denominator only of a record carrying the head (a variety word only of
+/// one naming no variety), the chile credit only on a hot pepper record, a
+/// count noun that is an alternative's food kept, identity participles kept
+/// in a comma-listed food, "3 or 4 limes" moved to the front, a fruitless
+/// zest-plus-juice item keyed by the line's fruit, and egg-part keys food
+/// first.
+const int matcherVersion = 9;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -425,7 +432,8 @@ List<String> _fruitFromTail(List<String> words) {
   }
   final countWords = tail.sublist(0, tail.length - 1);
   if (!countWords.every(
-    (w) => RegExp(r'^\d+$').hasMatch(w) || w == 'about' || w == 'to',
+    (w) =>
+        RegExp(r'^\d+$').hasMatch(w) || w == 'about' || w == 'to' || w == 'or',
   )) {
     return words;
   }
@@ -1635,9 +1643,21 @@ String? freshHoldOf(String raw, String description) {
 /// every curry dish 0.89 (audit 4). ('half' stays a count noun: kept, it
 /// sent breast halves and spiral-sliced half hams to check; the fresh half
 /// ham it lifted onto a cured record is held by [driedForFresh].)
-Set<String> _countedTokens(Set<String> tokens) {
+///
+/// A count noun that IS an alternative's food stays: the spice of "ground
+/// cloves or allspice" (0241), whose 'ground cloves' names nothing else
+/// ([headNounOf] finds no head in it). Dropped, the whole phrase covered
+/// allspice fully and counted the second alternative (checkpoint 5 review,
+/// once 'or' stopped costing coverage).
+Set<String> _countedTokens(Set<String> tokens, String query) {
+  final named = {
+    for (final alternative in query.split(' or '))
+      if (alternative.contains(' ') && headNounOf(alternative) == null)
+        ..._tokens(alternative),
+  };
   final drop = {
-    for (final noun in _countNouns) _singular(noun),
+    for (final noun in _countNouns)
+      if (!named.contains(_singular(noun))) _singular(noun),
     if (tokens.contains('celery')) 'rib',
   };
   if (tokens.contains('fish')) {
@@ -1710,6 +1730,59 @@ final Set<String> _noCreditWords = {
     _singular(word),
 };
 
+/// The [_noCreditWords] that name a VARIETY of the food: credited only on a
+/// record that names no variety of its own — every word it adds is plain
+/// ([_plainVarietyTokens]). FDC files Fuji and Gala apples but no McIntosh:
+/// 'mcintosh' left the denominator of "Apples, fuji, with skin, raw" too,
+/// and 1005's McIntosh apples counted as Fuji at 0.91 (checkpoint 5
+/// review).
+final Set<String> _noCreditVarieties = {
+  for (final word in const ['mcintosh', 'english', 'littleneck'])
+    _singular(word),
+};
+
+/// The words a record may add and still name no variety of its own.
+final Set<String> _plainVarietyTokens = {
+  for (final word in const [
+    ..._plainFormTokens,
+    'with',
+    'without',
+    'skin',
+    'peel',
+    'peeled',
+    'fresh',
+    'nfs',
+  ])
+    _singular(word),
+};
+
+/// The words of a HOT pepper record, which alone take the chile → pepper
+/// credit ([_coverageSynonyms]): FNDDS files sweet bell peppers without
+/// 'sweet' — "Peppers, red, cooked" (2709977) took the credit over "Peppers,
+/// hot chile, sun-dried" for a Thai red chile (0551, 0053, 0523, 0547;
+/// checkpoint 5 review).
+final Set<String> _hotPepperTokens = {
+  for (final word in const [
+    'hot',
+    'chili',
+    'chile',
+    'chilies',
+    'chiles',
+    'jalapeno',
+    'jalapenos',
+    'serrano',
+    'poblano',
+    'ancho',
+    'chipotle',
+    'habanero',
+    'cayenne',
+    'guajillo',
+    'pasilla',
+    'arbol',
+  ])
+    _singular(word),
+};
+
 /// The comma segments of [description], lowercased.
 Iterable<String> _segments(String description) =>
     description.toLowerCase().split(',').map((segment) => segment.trim());
@@ -1761,7 +1834,7 @@ List<RankedCandidate> rankCandidates(
   if (allTokens.isEmpty || candidates.isEmpty) {
     return const [];
   }
-  final countedTokens = _countedTokens(allTokens);
+  final countedTokens = _countedTokens(allTokens, query);
   final head = headNounOf(query);
   // The cuts some record files WITHOUT 'imported' ([_importedCut]).
   final domesticSegments = {
@@ -1798,23 +1871,44 @@ List<RankedCandidate> rankCandidates(
     // word ([_noCreditWords]). Precision stays the LITERAL overlap.
     // A sweet record takes no synonym credit — a sweet pepper is no chile:
     // the credit lifted "whole dried red chile" onto "Peppers, sweet, red,
-    // freeze-dried" (0525, 0545; judged wrong).
+    // freeze-dried" (0525, 0545; judged wrong). The chile credit goes to a
+    // hot pepper record only: FNDDS's sweet bell peppers do not say sweet.
+    bool synonymCovers(String token) {
+      final synonym = _coverageSynonyms[token];
+      return synonym != null &&
+          own.contains(synonym) &&
+          !own.contains('sweet') &&
+          (synonym != 'pepper' || own.any(_hotPepperTokens.contains));
+    }
+
     final covered = {
       for (final token in queryTokens)
-        if (own.contains(token) ||
-            (own.contains(_coverageSynonyms[token] ?? token) &&
-                !own.contains('sweet')))
-          token,
+        if (own.contains(token) || synonymCovers(token)) token,
     };
     final spice = candidate.description.toLowerCase().startsWith('spices,');
-    final uncredited = covered.isEmpty
+    // A credited word leaves the denominator only of a record of the food:
+    // one that carries the head ("Tofu, raw, firm" covered 'firm' of 'firm
+    // mcintosh apples' and overtook "Apple, raw", checkpoint 5 review) — and,
+    // for a variety word, names no variety of its own.
+    final ofTheFood =
+        covered.isNotEmpty &&
+        (head == null || _carriesHead(candidate.description, head));
+    final ownVariety = own.any(
+      (token) =>
+          !queryTokens.contains(token) &&
+          token != head &&
+          !_plainVarietyTokens.contains(token),
+    );
+    final uncredited = !ofTheFood
         ? 0
         : queryTokens
               .where(
                 (token) =>
                     !covered.contains(token) &&
                     token != head &&
-                    (_noCreditWords.contains(token) ||
+                    ((_noCreditWords.contains(token) &&
+                            !(ownVariety &&
+                                _noCreditVarieties.contains(token))) ||
                         (spice && _spiceQualifiers.contains(token))),
               )
               .length;

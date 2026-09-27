@@ -236,15 +236,6 @@ void main() {
       }
       const excluding = (recipeId: 'r0', position: 0);
       expect(
-        db.otherRecipesUndecidedCount(
-          'k',
-          excluding: excluding,
-          belowConfidence: lowConfidence,
-          fdcId: 167747,
-        ),
-        (recipes: 1, lines: 1),
-      );
-      expect(
         [
           for (final target in db.undecidedMatchesForItemKey(
             'k',
@@ -259,13 +250,13 @@ void main() {
       // On another food a line-held row is still out of the reach.
       expect(
         db
-            .otherRecipesUndecidedCount(
+            .undecidedMatchesForItemKey(
               'k',
               excluding: excluding,
               belowConfidence: lowConfidence,
               fdcId: 1,
             )
-            .lines,
+            .length,
         1,
         reason: 'r3 only',
       );
@@ -562,7 +553,10 @@ void main() {
         ('littleneck clams', null),
         ('ripe avocados', null),
         ('prewashed quinoa', null),
-        ('mcintosh apples', null),
+        // Easy Apple Strudel (0957), "1 medium McIntosh apple": "Apple,
+        // raw". (The plural answer holds only Fuji and Gala among raw
+        // apples: no credit there since matcher v9 — nutrition_v9_test.)
+        ('mcintosh apple', 2709215),
         ('pearl barley', null),
         ('seedless raspberry jam', null),
         ('unseasoned rice vinegar', null),

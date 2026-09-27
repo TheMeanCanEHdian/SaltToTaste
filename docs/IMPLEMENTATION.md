@@ -1575,6 +1575,44 @@ check 1,164 → 840, no grams 242 → 210, no match 76 → 51, recipes complete
 414 → 540; three recipes and 24 lean-and-fat lines wait on unrecorded
 answers (about 16 live requests).
 
+Review fixes (Run 042, both fleets on `f72094f`, matcherVersion 9). The
+one root both fleets found four ways: the apply-to-all offer (`others`,
+`others_lines`, the reach SQL) counted siblings the citrus and egg rules
+had already resolved, which the writer skipped — "Apply to 43 lines" then
+applied 0. One Dart-side reach (`decisionReach`) now feeds the offer and
+the writer, leaves out rule-resolved and line-held lines, and counts a row
+as applied only when its bucket changed or it took the decided food; a
+line-held row is a group of one in the queue and never `decided`. Un-skip
+of a person's row is never re-held `second_food`, and un-skip of an
+engine row the rule covers moves it to the rule record like a fresh
+compute. "Juice from 3 or 4 limes" keys `lime zest plus juice` (the fruit
+taken from the raw line when the item has none). A no-credit word leaves
+the denominator only on a record that carries the head (Tofu no longer
+overtakes "Apple, raw" on the McIntosh line), the chile → pepper credit
+applies only to hot-pepper records ("Thai red chiles" → the hot chile),
+and mcintosh/english/littleneck are credited only on plain records. One
+whole-bird regex with the part-word exclusion on both branches, pinned on
+0452 (1,104 g, not 1,814). Identity participles (sweetened, smoked, dried,
+salted, cooked, canned, pickled, …) stay with their food in a comma list.
+"¼ teaspoon ground cloves or allspice" counts cloves. Among same-unit
+portions a chopped/minced/grated line reads the matching portion first
+(¼ cup grated onion 40 g, the same per mL as 2 tablespoons). A failed
+yield, drained-can, sibling or rule-record fetch now fails the compute
+like the search path (the sweep retries; the line is never stored counted
+at gross weight with the hash current — 12 bone-in pork lines were). Egg
+part keys are food-first (`egg plus white`, `egg plus yolk`, `egg yolk
+plus white`). API.md documents the PUT override's rule-grams special case
+and the fetch-failure rule. The fixture provider throws `UnrecordedAnswer`
+for any answer not recorded (a miss is never a silent 404); 7 foods and
+39 searches were recorded from the snapshot cache. Boot now re-keys
+DECISIONS BEFORE ROWS in one shared step (`rekeyAfterMatcherChange`): a
+decision's old-key row is the only reliable example once a line's
+prep-kept reading changes too (Key Lime Pie's v8 pick, pinned). Cache-only
+replay on snapshot 7: counted 12,514 → 12,509, check 840 → 843, no grams
+210 → 212, complete 540 → 536 — the four lost are recipes whose required
+detail fetch now fails instead of storing gross weight; 27 recipes wait
+on 11 food details and 1 search the live replay will make.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

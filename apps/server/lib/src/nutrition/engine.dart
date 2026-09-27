@@ -268,13 +268,15 @@ bool _dissolvedWithBrineSalt(
   if (sentences.isEmpty) {
     return false;
   }
+  // (Another line is brine only when its head is salt, and a twin of the
+  // line — the same text — is brine by volume exactly when the line is:
+  // neither needs a check of its own, checkpoint 5 review.)
   for (final other in nutritionLines(recipe)) {
-    if (identical(other, line) || other.raw == line.raw) {
+    if (identical(other, line)) {
       continue;
     }
     final item = normalizeItem(lineItemOf(other));
-    if (headNounOf(item) != 'salt' ||
-        !sentences.any((sentence) => sentence.contains(item)) ||
+    if (!sentences.any((sentence) => sentence.contains(item)) ||
         discardedMediumOf(recipe, other, item, bySentence: false) !=
             DiscardedMedium.brine) {
       continue;
@@ -338,20 +340,7 @@ bool _dissolvedWithBrineSalt(
     final resolved = rule.gramsOn(food);
     return (grams: resolved?.grams, source: resolved?.source.name, hold: null);
   }
-  final plus = plusPartOf(line.raw);
-  final secondFood =
-      plus != null &&
-      !plus.sameFood &&
-      // A counted extra cut into wedges ("plus 1 lemon, cut into wedges") is
-      // for serving, never in the dish, whichever fruit it is. Other counted
-      // extras are eaten — lemon halves grilled and squeezed into the
-      // dressing (0654), the whole egg in the batter (0878) — so a person
-      // looks.
-      !(plus.amount.measure == Measure.count &&
-          RegExp(
-            r'\bplus\b.*\bwedges?\b',
-            caseSensitive: false,
-          ).hasMatch(line.raw));
+  final secondFood = namesSecondFood(line.raw);
   if (decided) {
     final zero = amountlessLinesZero && line.amounts.isEmpty;
     return (
@@ -393,6 +382,25 @@ bool _dissolvedWithBrineSalt(
     source: resolution?.source.name,
     hold: hold,
   );
+}
+
+/// Whether the line [raw] names a second food the first food's record does
+/// not cover ("2 large eggs plus 6 large yolks", "zest plus 2 tablespoons
+/// juice"): the engine counts it by its [secondFoodRuleOf] or holds it
+/// `second_food`, and a decision on its key reaches it never
+/// ([decisionReach]). Read from the raw text alone, so the reach filters
+/// stored rows with no recipe loaded.
+bool namesSecondFood(String raw) {
+  final plus = plusPartOf(raw);
+  return plus != null &&
+      !plus.sameFood &&
+      // A counted extra cut into wedges ("plus 1 lemon, cut into wedges") is
+      // for serving, never in the dish, whichever fruit it is. Other counted
+      // extras are eaten — lemon halves grilled and squeezed into the
+      // dressing (0654), the whole egg in the batter (0878) — so a person
+      // looks.
+      !(plus.amount.measure == Measure.count &&
+          RegExp(r'\bplus\b.*\bwedges?\b', caseSensitive: false).hasMatch(raw));
 }
 
 /// USER ANSWER SWITCH (queue keys, audit 3 N5). True (the recommended
@@ -458,14 +466,16 @@ SecondFoodRule? secondFoodRuleOf(
   bool citrus = citrusJuiceRuleOn,
   bool eggs = eggPartsMassSumOn,
 }) {
-  final plus = plusPartOf(line.raw);
+  // Only a line that names a second food: the reach leaves out exactly
+  // those ([decisionReach]), so a rule line is never offered.
   final at = RegExp(
     '\\bplus\\s+(?=[\\d$vulgarFractionChars])',
     caseSensitive: false,
   ).firstMatch(line.raw);
-  if (plus == null || plus.sameFood || at == null) {
+  if (!namesSecondFood(line.raw) || at == null) {
     return null;
   }
+  final plus = plusPartOf(line.raw)!;
   final firstText = line.raw.substring(0, at.start).toLowerCase();
   final citrusKey = RegExp(
     r'^(lemon|lime|orange) (zest|peel) plus juice$',
@@ -602,8 +612,10 @@ final RegExp _citrusWord = RegExp(
 /// whole-grain yellow cornmeal'), or bare 'juice', which takes its fruit
 /// from the line ("6 tablespoons juice (2 lemons)" → 'lemon juice'; it
 /// searched Beet juice). A rewrite key is left to its rewrite ('short',
-/// 'dark').
-String lineItemOf(IngredientLine line) {
+/// 'dark'). With [dropPrep] false a prep-only segment is kept, as before v8
+/// — the reading a v7 decision's item text was stored under (the boot
+/// re-key finds its line by it: `rekeyDecisions`).
+String lineItemOf(IngredientLine line, {bool dropPrep = true}) {
   final item = line.item ?? line.raw;
   final normalized = normalizeItem(item);
   if (normalized == 'juice') {
@@ -636,7 +648,7 @@ String lineItemOf(IngredientLine line) {
       // peppers").
       return [
         for (final (i, part) in parts.take(n).indexed)
-          if (i == n - 1 || !_prepOnly(part)) part,
+          if (i == n - 1 || !dropPrep || !_prepOnly(part)) part,
       ].join(' ');
     }
   }
@@ -655,12 +667,36 @@ bool _prepOnly(String segment) => normalizeItem(segment)
           !_identityParticiples.contains(word),
     );
 
-/// Participles that name the food's form, kept with it: "roasted, salted
-/// pepitas" (1071) is roasted pepitas — its cached query — and
-/// "unsweetened, shredded, desiccated (dried) coconut" (0831) unsweetened
-/// coconut. (The other form participles — salted, dried, smoked — never
-/// open a prep-only segment in the library.)
-const Set<String> _identityParticiples = {'roasted', 'unsweetened'};
+/// Participles that name a form the food is BOUGHT in, kept with it:
+/// "roasted, salted pepitas" (1071) is roasted pepitas — its cached query —
+/// and "unsweetened, shredded, desiccated (dried) coconut" (0831)
+/// unsweetened coconut. Only 'roasted' and 'unsweetened' open a prep-only
+/// segment in the library; the rest keep a recipe typed later with its food
+/// — "1 cup sweetened, shredded coconut" stays 'sweetened coconut', its v7
+/// key and cached rewrite (checkpoint 5 review). A word here says what the
+/// food IS; a prep word (toasted, skinned, stemmed, chopped) says what the
+/// cook does to it. Each word is one a real corpus line puts before its food
+/// (pinned: the line with a comma after the word keys as the line does);
+/// 'salted' and 'unsalted' need no entry — [normalizeItem] reads them as
+/// 'with salt', no participle.
+const Set<String> _identityParticiples = {
+  'roasted',
+  'unsweetened',
+  'sweetened',
+  'smoked',
+  'dried',
+  'cooked',
+  'canned',
+  'pickled',
+  'candied',
+  'crystallized',
+  'blanched',
+  'fried',
+  'powdered',
+  'unseasoned',
+  'aged',
+  'cracked',
+};
 
 bool _participle(String word) =>
     word.endsWith('ed') && !word.endsWith('eed') && !word.endsWith('ead');
@@ -678,16 +714,24 @@ bool namesNoFood(IngredientLine line) {
 /// (`ingredient_decisions.item`): [lineItemOf], with a second food's part
 /// when [secondFoodOwnKey] keys it apart and the item lost it ("(3-inch)
 /// lemon zest" of "12 (3-inch) strips lemon zest plus 6 tablespoons juice").
-String decisionItemOf(IngredientLine line) {
-  final item = lineItemOf(line);
+/// [dropPrep] as [lineItemOf]'s.
+String decisionItemOf(IngredientLine line, {bool dropPrep = true}) {
+  var item = lineItemOf(line, dropPrep: dropPrep);
   final plus = plusPartOf(line.raw);
-  if (!secondFoodOwnKey ||
-      plus == null ||
-      plus.sameFood ||
-      plusPartOf(item) != null) {
+  if (!secondFoodOwnKey || plus == null || plus.sameFood) {
     return item;
   }
-  return '$item plus ${plus.text}';
+  // A zest the item leaves fruitless takes its fruit from the line, as bare
+  // 'juice' does ([lineItemOf]): Key Lime Pie's (0989) item is "grated zest
+  // plus 1/2 cup juice", its fruit only in the prep "from 3 or 4 limes" — it
+  // keyed 'zest plus juice' (checkpoint 5 review).
+  final fruit = _citrusWord.firstMatch(line.raw.toLowerCase());
+  if (fruit != null &&
+      !_citrusWord.hasMatch(item.toLowerCase()) &&
+      RegExp(r'\b(zest|peel)\b').hasMatch(item.toLowerCase())) {
+    item = '${fruit[1]} $item';
+  }
+  return plusPartOf(item) != null ? item : '$item plus ${plus.text}';
 }
 
 /// A number as the corpus writes one: "8", "1½", "1/2".
@@ -769,8 +813,32 @@ String decisionKeyFor(String itemText) {
   if (juiceFirst != null && (second == 'zest' || second == 'peel')) {
     return '${juiceFirst[1]} $second plus juice';
   }
+  // Egg parts too, the whole egg first, then the yolk: "5 large egg whites
+  // plus 1 large egg" (0878) is 'egg plus white' like "2 large eggs, plus 1
+  // large white" (0841), and "7 large egg yolks plus 2 large whole eggs"
+  // (0994) 'egg plus yolk' (checkpoint 5 review: 'egg white plus egg',
+  // 'egg yolk plus whole').
+  final parts = [_eggParts[first], _eggParts[second]];
+  if (parts.every((part) => part != null) && parts[0] != parts[1]) {
+    final sorted = parts.cast<String>()..sort();
+    return switch (sorted) {
+      ['egg', final other] => 'egg plus $other',
+      _ => 'egg yolk plus white',
+    };
+  }
   return '$first plus $second';
 }
+
+/// The egg part a key's side names, for [decisionKeyFor]'s one order.
+const Map<String, String> _eggParts = {
+  'egg': 'egg',
+  'whole': 'egg',
+  'whole egg': 'egg',
+  'egg yolk': 'yolk',
+  'yolk': 'yolk',
+  'egg white': 'white',
+  'white': 'white',
+};
 
 /// The decision key of [line].
 String lineKeyOf(IngredientLine line) => decisionKeyFor(decisionItemOf(line));
@@ -971,46 +1039,13 @@ Future<void> matchAndCompute(
     // A second food the engine counts by rule ([secondFoodRuleOf]): the
     // line's own record, ahead of any key decision — a decision names the
     // first food only.
-    final rule = secondFoodRuleOf(line);
-    if (rule != null) {
-      final target =
-          knownFood(db, rule.fdcId, line: line) ??
-          await _cachedFood(db, provider, rule.fdcId);
-      if (target != null) {
-        if (_foodFromCache(db, target.fdcId) == null) {
-          standIns[target.fdcId] = target;
-        }
-        final outcome = engineOutcome(
-          recipe,
-          line,
-          target,
-          null,
-          picked: true,
-        );
-        db.upsertIngredientMatchIfUndecided(
-          IngredientMatchRow(
-            recipeId: recipe.id,
-            position: position,
-            raw: line.raw,
-            itemKey: key,
-            fdcId: target.fdcId,
-            description: target.description,
-            dataType: target.dataType,
-            confidence: rankCandidates(rule.query, [
-              FdcCandidate(
-                fdcId: target.fdcId,
-                description: target.description,
-                dataType: target.dataType,
-              ),
-            ]).first.confidence,
-            grams: outcome.grams,
-            gramSource: outcome.source,
-            status: 'auto',
-            hold: outcome.hold,
-          ),
-        );
-        continue;
+    final byRule = await ruleRowFor(db, provider, recipe, position, line);
+    if (byRule != null) {
+      if (_foodFromCache(db, byRule.food.fdcId) == null) {
+        standIns[byRule.food.fdcId] = byRule.food;
       }
+      db.upsertIngredientMatchIfUndecided(byRule.row);
+      continue;
     }
 
     // A person already decided this ingredient (in any recipe, even one
@@ -1205,6 +1240,54 @@ Future<void> matchAndCompute(
   );
 }
 
+/// The engine row of [line] (position [position] of [recipe]) when its
+/// [secondFoodRuleOf] counts it: on the rule's record, ranked under the
+/// rule's words, with the rule's grams — what a fresh compute writes, and
+/// what an un-skip of an engine row moves to. Null when no rule applies, or
+/// FDC has no such record; a provider failure fetching it propagates.
+Future<({IngredientMatchRow row, FdcFood food})?> ruleRowFor(
+  SaltDatabase db,
+  NutritionProvider provider,
+  Recipe recipe,
+  int position,
+  IngredientLine line,
+) async {
+  final rule = secondFoodRuleOf(line);
+  if (rule == null) {
+    return null;
+  }
+  final target =
+      knownFood(db, rule.fdcId, line: line) ??
+      await _cachedFood(db, provider, rule.fdcId);
+  if (target == null) {
+    return null;
+  }
+  final outcome = engineOutcome(recipe, line, target, null, picked: true);
+  return (
+    food: target,
+    row: IngredientMatchRow(
+      recipeId: recipe.id,
+      position: position,
+      raw: line.raw,
+      itemKey: lineKeyOf(line),
+      fdcId: target.fdcId,
+      description: target.description,
+      dataType: target.dataType,
+      confidence: rankCandidates(rule.query, [
+        FdcCandidate(
+          fdcId: target.fdcId,
+          description: target.description,
+          dataType: target.dataType,
+        ),
+      ]).first.confidence,
+      grams: outcome.grams,
+      gramSource: outcome.source,
+      status: 'auto',
+      hold: outcome.hold,
+    ),
+  );
+}
+
 /// Whether [resolveGrams] may read the food's portions for these [amounts]
 /// past the weight steps: only for a volume or a count amount. A resolution
 /// computed on a portion-less food is therefore final there when it came
@@ -1239,8 +1322,11 @@ bool _weightReadsPortions(
 /// yield or a drained can scales; then the detail is fetched once and cached
 /// — the only provider call. A 404 (superseded record) leaves the hit as
 /// FDC's only record of the food, so it is cached as the food, as it always
-/// was. A failed fetch for a yield or a drain keeps the printed weight (its
-/// basis says no yield was applied) instead of failing the line.
+/// was. A failed fetch fails the compute, a yield's or a drain's too: kept
+/// at the printed weight, a bone-in pork chop was stored counted at 1.76×
+/// its edible grams with the recipe's hash current, so no sweep fetched the
+/// yield again (checkpoint 5 review). Failed, the recipe stays stale and
+/// the next sweep retries it, as it does a failed search.
 ///
 /// With [fetch] false (an engine pick below [lowConfidence], likely a wrong
 /// food: audit 4 found 8 of 10 such fetches served one) nothing is asked:
@@ -1261,16 +1347,7 @@ Future<(FdcFood, GramResolution?)> gramsFor(
       (!portions && !_weightReadsPortions(line.raw, food, resolution))) {
     return (food, resolution);
   }
-  final FdcFood? detail;
-  try {
-    detail = await _cachedFood(db, provider, food.fdcId);
-  } on NutritionProviderException catch (error) {
-    if (portions) {
-      rethrow;
-    }
-    _log.warning('No detail for ${food.fdcId} (yield/drain): $error');
-    return (food, resolution);
-  }
+  final detail = await _cachedFood(db, provider, food.fdcId);
   if (detail == null) {
     db.fdcFoodCachePut(food.fdcId, jsonEncode(food.toJson()));
     return (food, resolution);
@@ -1829,6 +1906,59 @@ Future<FdcFood?> cachedFood(
   int fdcId,
 ) => _cachedFood(db, provider, fdcId);
 
+/// The rows a decision on [itemKey] made on the line [excluding] lands on
+/// — what `others` / `others_lines` count and exactly what
+/// [applyDecisionToOthers] writes: [SaltDatabase.undecidedMatchesForItemKey]
+/// (a different food at any score, [fdcId] only below [lowConfidence] or
+/// held by a food hold, never a line-held row; with no [fdcId] every
+/// undecided row) less every row a line hold would hold once it took the
+/// food: a line that names a second food ([namesSecondFood]) — its rule
+/// counts it on its own record, or it is held `second_food` whatever food
+/// the key gives it — and an unmatched line that is a held discarded medium
+/// (an unmatched brine sugar). No decision on the key moves either
+/// (checkpoint 5 review: the offer counted 43 rule rows and the apply
+/// landed 0; an unmatched second-food line was reported applied).
+List<IngredientMatchRow> decisionReach(
+  SaltDatabase db,
+  String itemKey, {
+  required ({String recipeId, int position}) excluding,
+  int? fdcId,
+}) => [
+  for (final row in db.undecidedMatchesForItemKey(
+    itemKey,
+    excluding: excluding,
+    fdcId: fdcId,
+    belowConfidence: lowConfidence,
+  ))
+    if (!namesSecondFood(row.raw) && !_heldMediumOnceMatched(db, row)) row,
+];
+
+/// Whether the unmatched [row] is a discarded medium the engine would hold
+/// (`discarded_medium`) once it had a food. A matched one already carries
+/// the hold; only an unmatched row (rare: 51 in the library) reads its
+/// recipe here.
+bool _heldMediumOnceMatched(SaltDatabase db, IngredientMatchRow row) {
+  if (row.fdcId != null) {
+    return false;
+  }
+  final recipe = db.recipeByIdOrSlug(row.recipeId)?.recipe;
+  final lines = recipe == null
+      ? const <IngredientLine>[]
+      : nutritionLines(recipe);
+  if (row.position >= lines.length || lines[row.position].raw != row.raw) {
+    return false;
+  }
+  final line = lines[row.position];
+  final medium = discardedMediumOf(
+    recipe!,
+    line,
+    normalizeItem(lineItemOf(line)),
+  );
+  return medium != null &&
+      !(medium.followsPolicy &&
+          discardedMediaPolicy == DiscardedMediaPolicy.zero);
+}
+
 /// Lands [decided] — a person's decision on [itemKey] made on the line
 /// [excluding] — on every other undecided line with that item (other
 /// recipes, and the same recipe's other lines), each with grams from its own
@@ -1856,9 +1986,9 @@ Future<FdcFood?> cachedFood(
 /// provider fails while its totals recompute — is logged, counted in
 /// `failed`, and does not stop the rest; what was already written stays,
 /// and the counts say exactly what landed: `lines` counts the rows whose
-/// review bucket changed (or a counted row that took the decided food) —
-/// a row a line hold re-holds is written but not counted — and `recipes`
-/// the recipes holding one.
+/// review bucket changed or that took the decided food — the rows
+/// [decisionReach] offered, less those skipped or guarded out — and
+/// `recipes` the recipes holding one.
 Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
   SaltDatabase db,
   NutritionProvider provider, {
@@ -1868,11 +1998,11 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
 }) async {
   var food = decided;
   final byRecipe = <String, List<IngredientMatchRow>>{};
-  for (final target in db.undecidedMatchesForItemKey(
+  for (final target in decisionReach(
+    db,
     itemKey,
     excluding: excluding,
     fdcId: food.fdcId,
-    belowConfidence: lowConfidence,
   )) {
     byRecipe.putIfAbsent(target.recipeId, () => []).add(target);
   }
@@ -1894,10 +2024,6 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
         final line = recipeLines[target.position];
         if (line.raw != target.raw) {
           continue; // The line changed since that row was written.
-        }
-        // A second food the engine counts by rule is not the key's food.
-        if (secondFoodRuleOf(line) != null) {
-          continue;
         }
         // A search hit stands in until a target needs portions; then the
         // detail is fetched once and serves every later target.
@@ -1927,13 +2053,12 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
         if (!db.upsertIngredientMatchIfUndecided(row)) {
           continue;
         }
-        // Applied = the row's bucket changed, or a counted row took the
-        // decided food. A row re-held by a line hold (a discarded medium, a
-        // second food) is written but not applied (checkpoint 5: a 'Sugar'
-        // confirm reported 17 brine sugars applied that stayed held).
-        final after = _bucketOf(row);
-        if (after != _bucketOf(target) ||
-            (after == MatchBucket.counted && target.fdcId != food.fdcId)) {
+        // Applied = the row's bucket changed, or it took the decided food —
+        // a line left short of an amount on it too ("2 (2-inch) strips lemon
+        // zest" stays no_grams on "Lemon, raw"): the offer counted it, and
+        // the decision reached it (checkpoint 5 review). A row a line hold
+        // would re-hold is not reached at all ([decisionReach]).
+        if (_bucketOf(row) != _bucketOf(target) || target.fdcId != food.fdcId) {
           applied += 1;
         }
       }
