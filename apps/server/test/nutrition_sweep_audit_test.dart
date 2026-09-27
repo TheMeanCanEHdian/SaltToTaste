@@ -90,14 +90,15 @@ void main() {
       expect(itemKeyFor(juice), isNot(itemKeyFor('lemons')));
       // '1 teaspoon cornstarch dissolved in 1 teaspoon water' (0673),
       // '½ teaspoon instant espresso powder mixed with 1 tablespoon water'
-      // (0930): the dangling connector goes with the cut.
+      // (0930): the dangling connector goes with the cut, and so does the
+      // participle before it (audit 3, N8: both base queries are cached).
       expect(
         normalizeItem('cornstarch dissolved in 1 teaspoon water'),
-        'cornstarch dissolved',
+        'cornstarch',
       );
       expect(
         normalizeItem('instant espresso powder mixed with 1 tablespoon water'),
-        'instant espresso powder mixed',
+        'instant espresso powder',
       );
       // '1 teaspoon plus 2 pinches table salt, divided' (0049).
       expect(normalizeItem('plus 2 pinches table salt'), 'table salt');
@@ -859,8 +860,14 @@ void main() {
     }
     // Light brown sugar (168833): carbohydrate 98.1 in the hit, 98.09 in
     // the detail. Equal is the exception, not the rule.
-    expect(compared, 70);
-    expect(differ, 54);
+    // The accuracy batch recorded seven more foods from the sweep snapshot;
+    // five are also a recorded search hit (748608, 2759000, 2708167, 170931,
+    // 2709794) and three of those differ in some digit. Audit 3 recorded
+    // 2644288 (a hit in 'chickpeas') and its 'mustard seeds' answer holds
+    // 170929: two more compared, both differ in some digit. The refix
+    // recorded 169599 (gelatin, a hit in 'unsweetened'): equal in every digit.
+    expect(compared, 78);
+    expect(differ, 59);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

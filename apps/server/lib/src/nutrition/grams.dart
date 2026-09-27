@@ -4,6 +4,7 @@
 /// portions or a piece-weight table.
 library;
 
+import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
 
@@ -23,6 +24,16 @@ enum GramSource {
 
   /// The user typed the grams by hand.
   override,
+
+  /// A line with no amount at all ("Lemon wedges, for serving", "Vegetable
+  /// oil spray"), counted as 0 g with its food still matched (the engine's
+  /// `amountlessLinesZero`, user answer #3).
+  unmeasured,
+
+  /// A cooking medium the recipe discards — deep-frying oil, a brine, a
+  /// buttermilk soak — counted as 0 g (the engine's discarded-media rule
+  /// and its policy switch, engine.dart `discardedMediaPolicy`).
+  discarded,
 }
 
 /// Grams per unit of weight.
@@ -155,6 +166,13 @@ const List<(String, double)> _densities = [
   ('dried thyme', 0.20),
   ('dried basil', 0.14),
   ('dried rosemary', 0.24),
+  // Whole peppercorns (sweep accuracy batch): 'black pepper' (ground) sized
+  // them. FDC 170931 "Spices, pepper, black" 'tsp, whole' = 2.9 g. No whole
+  // MUSTARD seed entry: FDC's only record is ground (170929, tsp = 2.0 g),
+  // which sized whole seeds at about half; they stay on 'mustard' (1.05)
+  // until a whole-seed density is sourced (refix round 2).
+  ('peppercorn', 0.59),
+  ('black peppercorn', 0.59), // beats 'black pepper' (ground) by length
 ];
 
 /// Piece weights (grams each) for common counted items, keyed by tokens.
@@ -177,6 +195,11 @@ const List<(String, double)> _pieceWeights = [
   ('shallot', 30),
   ('scallions', 15),
   ('scallion', 15),
+  // The matcher's synonym turns scallions into green onions before this
+  // table sees the line, and 'onion' (110 g) caught them: 16 counted lines
+  // at 110 g each. FDC 2709794 "Onions, green, raw" '1 whole' = 15 g.
+  ('green onions', 15),
+  ('green onion', 15),
   ('lemon', 58),
   ('lime', 44),
   ('orange', 131),
@@ -189,6 +212,13 @@ const List<(String, double)> _pieceWeights = [
   ('potato', 213),
   ('apple', 182),
   ('banana', 118),
+  // Whole tokens anchored to the head noun (audit 3, N7): 'apple' sized
+  // pineapples at 91/182 g, 'garlic' (a clove) garlic heads at 3 g, and
+  // 'tomato' 20 cherry tomatoes at 2,460 g. FDC SR 169124 "Pineapple, raw"
+  // '1 fruit' = 905 g; 170457 'cherry' = 17 g; a head is about 50 g.
+  ('pineapple', 905),
+  ('cherry tomato', 17),
+  ('garlic head', 50),
   ('bell pepper', 119),
   ('jalapeno', 14),
   ('cinnamon stick', 3),
@@ -197,6 +227,10 @@ const List<(String, double)> _pieceWeights = [
   ('avocado', 150),
   ('english cucumber', 300),
   ('cucumber', 300),
+  // FDC SR 168409 "Cucumber, with peel, raw": small (6-3/8") 158 g, medium
+  // 201 g; 300 is its large (8-1/4") — 'small' read as the 300 g one.
+  ('small cucumber', 158),
+  ('medium cucumber', 201),
   ('zucchini', 196),
   ('leek', 89),
   ('fennel bulb', 200),
@@ -215,6 +249,7 @@ const List<(String, double)> _pieceWeights = [
   ('graham cracker', 14),
   ('ladyfinger', 11),
   ('phyllo', 19), // per sheet
+  ('phyllo sheet', 19), // 'sheet' is the head of "phyllo sheets"
   ('puff pastry', 245), // per sheet (a standard frozen sheet)
   ('vanilla bean', 4),
 ];
@@ -295,12 +330,22 @@ String _amountText(Amount amount) {
       : '${amount.quantity} $unit';
 }
 
-double? _quantityValue(String quantity) {
+/// USER ANSWER #1 SWITCH (ranges). False (the default until the user
+/// answers) sizes a parenthetical weight range written with a fraction at
+/// its upper bound, as before unicode fractions were read: "(3½ to
+/// 4-pound)" 1,814 g like its sibling "(3½- to 4-pound)", "(8¾ to 10
+/// ounces)" 283 g (audit 3: 4 counted/check lines). True sizes it at the
+/// midpoint (1,701 g; 266 g). Whole-number "(5 to 6-ounce)" keeps its
+/// midpoint and "(6- to 8-ounce)" its upper bound either way — the B2
+/// ruling (2026-07-28) left both as they were.
+const bool rangeWeightsMidpoint = false;
+
+double? _quantityValue(String quantity, {bool upper = false}) {
   final direct = parseQuantity(quantity);
   if (direct != null) {
     return direct;
   }
-  // Ranges take the midpoint ("4-6", "4 to 6").
+  // Ranges take the midpoint ("4-6", "4 to 6"), or the [upper] bound.
   final range = RegExp(
     r'^\s*(\S+)\s*(?:-|–|to)\s*(\S+)\s*$',
   ).firstMatch(quantity);
@@ -308,7 +353,21 @@ double? _quantityValue(String quantity) {
     final low = parseQuantity(range.group(1)!);
     final high = parseQuantity(range.group(2)!);
     if (low != null && high != null) {
-      return (low + high) / 2;
+      // The larger bound: "(14⅔ to 6½ ounces) bread flour" is a corpus typo
+      // for 16½, and 6½ ounces is not 2⅔–3 cups.
+      return upper ? (low > high ? low : high) : (low + high) / 2;
+    }
+  }
+  return null;
+}
+
+/// The line's volume in mL — its first volume amount — or null.
+double? volumeMlOf(List<Amount> amounts) {
+  for (final amount in _byPreference(amounts)) {
+    final ml = _volumeUnitMl[(amount.unit ?? '').toLowerCase()];
+    final quantity = _quantityValue(amount.quantity);
+    if (amount.measure == Measure.volume && ml != null && quantity != null) {
+      return quantity * ml;
     }
   }
   return null;
@@ -341,7 +400,10 @@ double? _countQty(List<Amount> amounts) {
 /// before ("5 slices … (9 ounces)" read as 5×, a ~5× error).
 ({double grams, bool perUnit})? _parenWeight(String raw) {
   final weight = RegExp(
-    r'([\d./]+(?:\s*(?:to|-)\s*[\d./]+)?)\s*-?\s*'
+    // Unicode fractions too: "(1¼- to 1½-pound)" Cornish hens read 80 g
+    // through a per-item portion, "(3½-pound)" roasts nothing (audit 1).
+    '([\\d./$vulgarFractionChars]+'
+    '(?:\\s*(?:to|-)\\s*[\\d./$vulgarFractionChars]+)?)\\s*-?\\s*'
     r'(ounces?|oz|pounds?|lbs?|grams?|kilograms?|kg)\b',
     caseSensitive: false,
   );
@@ -351,7 +413,13 @@ double? _countQty(List<Amount> amounts) {
     if (match == null) {
       continue;
     }
-    final quantity = _quantityValue(match.group(1)!);
+    final text = match.group(1)!;
+    final quantity = _quantityValue(
+      text,
+      upper:
+          !rangeWeightsMidpoint &&
+          text.contains(RegExp('[$vulgarFractionChars]')),
+    );
     final unit = match.group(2)!.toLowerCase().replaceAll(RegExp(r's$'), '');
     final gramsPer = _weightUnitGrams[unit];
     if (quantity == null || gramsPer == null) {
@@ -366,6 +434,48 @@ double? _countQty(List<Amount> amounts) {
     return (grams: quantity * gramsPer, perUnit: perUnit);
   }
   return null;
+}
+
+/// The piece weight for [normalizedItem]: a key matches on WHOLE words
+/// (key form), and its last word must be the item's head noun — 'apple' is
+/// not in 'pineapple', and 'garlic' is not the food of 'mustard-garlic
+/// butter'. The size and 'head' words normalizing strips are read back from
+/// [raw] and the amount's [unit] ("1 garlic head", "1 small cucumber").
+double? _pieceLookup(String normalizedItem, String? raw, String unit) {
+  final alternatives = normalizedItem.split(' or ');
+  final heads = {for (final item in alternatives) headNounOf(item)};
+  final rawWords = (raw ?? '').toLowerCase().split(RegExp('[^a-z-]+'));
+  final head =
+      unit == 'head' || rawWords.contains('head') || rawWords.contains('heads');
+  final sizes = [
+    for (final size in const ['small', 'medium'])
+      if (rawWords.contains(size)) size,
+  ];
+  // Each alternative as a run of key-form words, with the size before it and
+  // 'head' after it: ' small cucumber ', ' whole garlic head '.
+  final runs = [
+    for (final item in alternatives)
+      ' ${[
+        ...sizes,
+        ...item.split(' ').map(keyWordOf),
+        if (head) 'head',
+      ].join(' ')} ',
+  ];
+  String? bestKey;
+  double? bestValue;
+  for (final (key, value) in _pieceWeights) {
+    final keyHead = headNounOf(key);
+    // A chile is FDC's pepper: 'jalapeno chiles' is the jalapeno.
+    final anchored = heads.contains(keyHead) || heads.contains('pepper');
+    final run = ' ${key.split(' ').map(keyWordOf).join(' ')} ';
+    if (anchored &&
+        runs.any((words) => words.contains(run)) &&
+        (bestKey == null || key.length > bestKey.length)) {
+      bestKey = key;
+      bestValue = value;
+    }
+  }
+  return bestValue;
 }
 
 double? _tableLookup(List<(String, double)> table, String normalizedItem) {
@@ -427,6 +537,12 @@ const Set<String> _portionServingWords = {
   'piece',
   'pieces',
   'portion',
+  // Package nouns: "1 sleeve" of saltines is 115 g, not one cracker (audit
+  // 2: '30 saltine crackers' counted 3,450 g).
+  'sleeve',
+  'box',
+  'bag',
+  'loaf',
 };
 
 /// Grams for ONE whole item from a portion whose description reads like a
@@ -436,7 +552,10 @@ const Set<String> _portionServingWords = {
 /// several sizes, prefers the medium/regular one (what an unsized recipe
 /// count means). Ignores Foundation "reference amount" portions (their
 /// description is empty), which are a serving weight, not a whole item.
-double? _wholeItemPortionGrams(FdcFood food) {
+///
+/// A portion whose noun the item itself names wins over any size rank:
+/// "1 cracker" for 'saltine crackers', whatever FDC lists first.
+double? _wholeItemPortionGrams(FdcFood food, String normalizedItem) {
   double? best;
   var bestRank = -1;
   for (final portion in food.portions) {
@@ -463,8 +582,9 @@ double? _wholeItemPortionGrams(FdcFood food) {
     if (portion.gramWeight > 250) {
       continue;
     }
-    final rank =
-        description.contains('regular') || description.contains('medium')
+    final rank = normalizedItem.contains(match.group(2)!)
+        ? 3
+        : description.contains('regular') || description.contains('medium')
         ? 2
         : (description.contains('large') || description.contains('small')
               ? 0
@@ -507,6 +627,13 @@ const Set<String> _containerUnits = {
   'boxes',
   'tube',
   'tubes',
+  // A strip of zest or a wedge is a piece of the fruit, not the fruit: "12
+  // (3-inch) strips lemon zest" counted 12 whole lemons (696 g). Without a
+  // portion of its own the line goes to review.
+  'strip',
+  'strips',
+  'wedge',
+  'wedges',
 };
 
 /// A portion keyed by a STRUCTURED piece/each/whole/unit measure (some foods
@@ -565,10 +692,374 @@ double? _portionGramsPerUnit(FdcFood food, String unit) {
   return null;
 }
 
+/// Grams per mL from the food's OWN volume portions, for a volume line the
+/// density table does not cover. SR Legacy writes a volume portion as
+/// "tbsp"/"tsp"/"cup chopped" with the count in the structured amount (the
+/// unit field is "undetermined", so [_portionGramsPerUnit] never matches
+/// 'tablespoon' to it); FNDDS writes "1 cup". Audit 1: 190 no_grams lines on
+/// the right food (parsley, black pepper, capers, thyme). Called AFTER the
+/// density table, never before: food-first sized 26 kosher-salt lines ×1.71
+/// on table salt's portion. A portion that names its volume only in
+/// parentheses — 169599 gelatin's "envelope (1 tbsp)" = 7 g — is read when
+/// no portion leads with one: the count there is the whole portion's, so the
+/// structured amount is not applied (audit 3 refix: 30 gelatin lines).
+double? _foodGramsPerMl(FdcFood food) {
+  double? parenthesized;
+  for (final portion in food.portions) {
+    final description = (portion.description ?? '').toLowerCase().trim();
+    final lead = RegExp(
+      r'^([\d][\d./\s]*)?\s*([a-z]+)',
+    ).firstMatch(description);
+    var unit = _volumeAliases[(portion.unit ?? '').toLowerCase()];
+    var amount = portion.amount;
+    if (unit == null && lead != null) {
+      unit = _volumeAliases[lead.group(2)];
+      final count = lead.group(1);
+      if (count != null) {
+        amount = _quantityValue(count.trim());
+      }
+    }
+    if (unit == null || amount == null || amount <= 0) {
+      final paren = RegExp(
+        r'\((\d[\d./\s]*?)\s*([a-z]+)',
+      ).firstMatch(description);
+      final inner = _volumeAliases[paren?.group(2)];
+      final count = paren == null ? null : _quantityValue(paren.group(1)!);
+      if (inner != null && count != null && count > 0) {
+        parenthesized ??= portion.gramWeight / (count * _volumeUnitMl[inner]!);
+      }
+      continue;
+    }
+    return portion.gramWeight / (amount * _volumeUnitMl[unit]!);
+  }
+  return parenthesized;
+}
+
+/// Portion spellings of a volume unit → the [_volumeUnitMl] key.
+const Map<String, String> _volumeAliases = {
+  'tbsp': 'tablespoon',
+  'tbs': 'tablespoon',
+  'tablespoon': 'tablespoon',
+  'tablespoons': 'tablespoon',
+  'tsp': 'teaspoon',
+  'teaspoon': 'teaspoon',
+  'teaspoons': 'teaspoon',
+  'cup': 'cup',
+  'cups': 'cup',
+  'fl': 'fluid ounce',
+  'pint': 'pint',
+  'quart': 'quart',
+};
+
+/// The second amount of a "plus" line: "¾ cup plus 2 tablespoons vegetable
+/// oil", "6 sprigs parsley, plus 2 teaspoons minced", "2 teaspoons lemon zest
+/// plus 2 tablespoons juice", "2 large eggs plus 1 large yolk". The corpus
+/// parse keeps only the first amount, so the second was dropped (audit 1:
+/// 26 volume-plus lines, 1,243 g) or, naming another food, silently left out.
+class PlusPart {
+  /// Pairs the second amount with what it names.
+  const PlusPart({
+    required this.amount,
+    required this.text,
+    required this.sameFood,
+    this.weighsTotal = false,
+  });
+
+  /// The second amount as parsed.
+  final Amount amount;
+
+  /// The second part as written ("2 tablespoons juice").
+  final String text;
+
+  /// Whether the second part names no food beyond the first part's (or the
+  /// first part names none: "¼ cup plus 2 teaspoons olive oil").
+  final bool sameFood;
+
+  /// Whether a parenthesis after the second amount weighs the WHOLE line
+  /// ("1 teaspoon plus 1⅛ cups (8 ounces) sugar"): the weight already is the
+  /// total, so the second amount is never added to it.
+  final bool weighsTotal;
+}
+
+/// USER ANSWER #4 SWITCH (edible yield). True (the recommended default)
+/// scales a weight on a bone-in cut, a whole bird or shellfish in the shell
+/// by the edible yield FDC publishes for the matched record — its raw
+/// "excluding refuse (yield from 1 raw chop, with refuse, weighing 151 g)"
+/// portion (167833, a bone-in rib chop: 0.57) — and shows it in the basis.
+/// FDC's nutrients are per 100 g EDIBLE, so the printed gross weight counted
+/// bone as meat (audit 2: 59 counted lines, 143.7 kg). A record without such
+/// a portion is left at the printed weight (no factor is guessed); false
+/// turns the scaling off.
+const bool edibleYieldOn = true;
+
+/// A raw line that buys bone, a carcass or a shell by weight — the audit's
+/// classifier (audit1/bone2.py). Boneless, ground and broth lines never are.
+bool buysRefuse(String raw) {
+  final line = raw.toLowerCase();
+  if (RegExp(r'boneless|broth|stock|\bground\b').hasMatch(line)) {
+    return false;
+  }
+  return RegExp(
+    r'giblets|whole chicken|whole turkey\b|\) turkey\b|\bturkey \(|'
+    'shoulder chops?|with or without bone|'
+    'bone-in|standing rib|oxtails?|shanks?|racks? of|short ribs|spareribs|'
+    r'baby back|drumsticks?|wings?\b|leg quarters?|'
+    r'clams|mussels|oysters|lobsters?|shell-on|in the shell|crabs?\b',
+  ).hasMatch(line);
+}
+
+/// The edible share of [food] as bought: FDC's own raw refuse portion
+/// ("…excluding refuse (yield from 1 raw chop, with refuse, weighing 151
+/// g)" = 86 g → 0.57), or null when the record publishes none.
+double? edibleYieldOf(FdcFood food) {
+  final refuse = RegExp(
+    r'yield from 1 raw .*with refuse, weighing ([\d.]+) ?g',
+  );
+  for (final portion in food.portions) {
+    final gross = refuse.firstMatch((portion.description ?? '').toLowerCase());
+    final weighing = gross == null ? null : double.tryParse(gross.group(1)!);
+    if (weighing == null || weighing <= 0) {
+      continue;
+    }
+    final edible = portion.gramWeight / (portion.amount ?? 1);
+    if (edible > 0 && edible < weighing) {
+      return edible / weighing;
+    }
+  }
+  return null;
+}
+
+/// Words of a second part that name no food ("at room temperature",
+/// "16 individual raspberries", "reserved").
+const Set<String> _plusFiller = {
+  'and',
+  'at',
+  'room',
+  'temperature',
+  'very',
+  'cold',
+  'individual',
+  'reserved',
+};
+
+/// The [PlusPart] of [raw], or null: only a NUMBER right after "plus" is a
+/// second amount ("plus extra for serving" is not), and a part that says
+/// what it is for ("plus 2 Thai chiles, sliced thin, for serving") is an
+/// optional extra, never part of the line.
+PlusPart? plusPartOf(String raw) {
+  // "(about 2 tablespoons plus 2 teaspoons)" restates the first amount. The
+  // blanking keeps every position, so [raw] still shows where a paren was.
+  final text = raw.replaceAllMapped(
+    RegExp(r'\([^)]*\)'),
+    (paren) => ' ' * paren[0]!.length,
+  );
+  final plus = RegExp(
+    '\\bplus\\s+(?=[\\d$vulgarFractionChars])',
+    caseSensitive: false,
+  ).firstMatch(text);
+  if (plus == null) {
+    return null;
+  }
+  var rest = text.substring(plus.end);
+  final next = rest.toLowerCase().indexOf(' plus ');
+  if (next >= 0) {
+    rest = rest.substring(0, next);
+  }
+  if (RegExp(r'\bfor\b', caseSensitive: false).hasMatch(rest)) {
+    return null;
+  }
+  // The amount and its food end at the first comma ("plus 4 tablespoons,
+  // softened"); "2 additional tablespoons" is 2 tablespoons.
+  final comma = rest.indexOf(',');
+  final span = comma < 0 ? rest.length : comma;
+  final part = rest
+      .substring(0, span)
+      .replaceAll(RegExp(r'\badditional\s+', caseSensitive: false), '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  final second = parseIngredientLine(part);
+  if (second.amounts.isEmpty) {
+    return null;
+  }
+  // The words that could name a food: not a count noun, not a participle
+  // or adverb ("melted and cooled slightly"), not a filler.
+  Set<String> foodWords(String? item) => {
+    for (final word in itemKeyFor(item ?? '').split(' '))
+      if (word.isNotEmpty &&
+          !isCountNoun(word) &&
+          !word.endsWith('ed') &&
+          !word.endsWith('ly') &&
+          !_plusFiller.contains(word))
+        word,
+  };
+  final firstWords = foodWords(
+    parseIngredientLine(
+      text.substring(0, plus.start).replaceAll(RegExp(r'\s+'), ' '),
+    ).item,
+  );
+  return PlusPart(
+    amount: second.amounts.first,
+    text: part,
+    sameFood:
+        firstWords.isEmpty || firstWords.containsAll(foodWords(second.item)),
+    // "½ cup (3½ ounces) plus 2 tablespoons sugar" weighs only the first.
+    weighsTotal:
+        raw.substring(plus.end, plus.end + span).contains('(') &&
+        !raw.substring(0, plus.start).contains('('),
+  );
+}
+
+/// A recipe's small measures → the FDC portion name that sizes them: FDC
+/// has no "pinch", and a pinch is the same pinch of spice as its "dash".
+const Map<String, String> _smallMeasures = {
+  'pinch': 'dash',
+  'pinches': 'dash',
+  'dash': 'dash',
+  'dashes': 'dash',
+  'sprig': 'sprig',
+  'sprigs': 'sprig',
+};
+
+/// Grams per [unit] (a [_smallMeasures] key) from the food's portion whose
+/// description LEADS with that portion name (SR "dash", "sprig" with the
+/// count in the structured amount; "10 sprigs" with it in the text).
+double? _smallMeasureGrams(FdcFood food, String unit) {
+  final wanted = _smallMeasures[unit];
+  if (wanted == null) {
+    return null;
+  }
+  final named = RegExp('^(?:([\\d][\\d./\\s]*)\\s*)?${wanted}s?\\b');
+  for (final portion in food.portions) {
+    final match = named.firstMatch(
+      (portion.description ?? '').toLowerCase().trim(),
+    );
+    if (match == null) {
+      continue;
+    }
+    final count = match.group(1) == null
+        ? portion.amount
+        : _quantityValue(match.group(1)!.trim());
+    if (count != null && count > 0) {
+      return portion.gramWeight / count;
+    }
+  }
+  return null;
+}
+
 /// Resolves one ingredient line to grams using its parsed [amounts], the
 /// matched [food] (may be null), and the normalized item (for the fallback
-/// tables). Null when nothing resolvable exists.
+/// tables). Null when nothing resolvable exists. A same-food second amount
+/// ([plusPartOf]) is added: "¾ cup plus 2 tablespoons oil" is both.
 GramResolution? resolveGrams({
+  required List<Amount> amounts,
+  required FdcFood? food,
+  required String normalizedItem,
+  String? raw,
+}) {
+  var first = _resolveGrams(
+    amounts: amounts,
+    food: food,
+    normalizedItem: normalizedItem,
+    raw: raw,
+  );
+  final yieldFactor =
+      !edibleYieldOn ||
+          first?.source != GramSource.weight ||
+          food == null ||
+          raw == null ||
+          !buysRefuse(raw)
+      ? null
+      : edibleYieldOf(food);
+  if (yieldFactor != null) {
+    first = GramResolution(
+      grams: first!.grams * yieldFactor,
+      source: first.source,
+      basis:
+          '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
+          '(USDA refuse)',
+    );
+  }
+  final drained = first?.source == GramSource.weight && raw != null
+      ? _drainedCanGrams(amounts, food, raw)
+      : null;
+  if (drained != null) {
+    first = GramResolution(
+      grams: drained,
+      source: GramSource.weight,
+      basis: '${first!.basis} · drained (USDA can portion)',
+    );
+  }
+  final plus = raw == null || first == null ? null : plusPartOf(raw);
+  // A counted extra of the same food ("plus 1 lemon, cut into wedges") is
+  // for serving, not in the dish; only a measured second amount is added.
+  if (plus == null ||
+      !plus.sameFood ||
+      plus.amount.measure == Measure.count ||
+      (plus.weighsTotal && first!.source == GramSource.weight)) {
+    return first;
+  }
+  final second = _resolveGrams(
+    amounts: [plus.amount],
+    food: food,
+    normalizedItem: normalizedItem,
+  );
+  if (second == null) {
+    return first;
+  }
+  return GramResolution(
+    grams: first!.grams + second.grams,
+    source: first.source,
+    basis: '${first.basis ?? ''} + ${plus.text}',
+  );
+}
+
+/// A line that opens with a quantity and a volume unit.
+final RegExp _lostVolumeUnit = RegExp(
+  '^\\s*[\\d$vulgarFractionChars/ .-]+\\s*(cups?|tablespoons?|teaspoons?)\\b',
+  caseSensitive: false,
+);
+
+/// USER ANSWER SWITCH (canned beans, audit 3). True (the default) counts a
+/// can the line drains or rinses at its DRAINED weight — the food's own
+/// USDA portion for a drained can — instead of the can's net weight (425 g
+/// for 15 oz, about 240 g of it beans). False counts the net weight. Only a
+/// record that publishes such a portion is changed; none of the records
+/// cached today does (their details are pending live fetches), so until then
+/// the net weight stands.
+const bool cannedDrained = true;
+
+/// [raw]'s cans at their drained weight on [food], or null.
+double? _drainedCanGrams(List<Amount> amounts, FdcFood? food, String raw) {
+  final text = raw.toLowerCase();
+  if (!cannedDrained ||
+      food == null ||
+      !RegExp(r'\bcans?\b').hasMatch(text) ||
+      !RegExp(r'\b(drained|rinsed)\b').hasMatch(text) ||
+      RegExp(r'\b(undrained|do not drain)\b').hasMatch(text)) {
+    return null;
+  }
+  final cans = amounts
+      .where(
+        (a) =>
+            a.measure == Measure.count &&
+            RegExp(r'^cans?$').hasMatch((a.unit ?? '').toLowerCase()),
+      )
+      .map((a) => _quantityValue(a.quantity))
+      .whereType<double>()
+      .firstOrNull;
+  if (cans == null) {
+    return null;
+  }
+  for (final portion in food.portions) {
+    final name = (portion.description ?? '').toLowerCase();
+    if (name.contains('can') && name.contains('drained')) {
+      return cans * portion.gramWeight / (portion.amount ?? 1);
+    }
+  }
+  return null;
+}
+
+GramResolution? _resolveGrams({
   required List<Amount> amounts,
   required FdcFood? food,
   required String normalizedItem,
@@ -648,6 +1139,14 @@ GramResolution? resolveGrams({
         basis: '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL',
       );
     }
+    final perMl = food == null ? null : _foodGramsPerMl(food);
+    if (perMl != null) {
+      return GramResolution(
+        grams: quantity * ml * perMl,
+        source: GramSource.portion,
+        basis: '${_amountText(amount)} · USDA portion',
+      );
+    }
   }
 
   // 3. Counts through piece portions / the piece table.
@@ -655,11 +1154,34 @@ GramResolution? resolveGrams({
     if (amount.measure != Measure.count) {
       continue;
     }
-    final quantity = _quantityValue(amount.quantity);
+    final amountUnit = (amount.unit ?? '').toLowerCase();
+    // "Pinch cayenne pepper" parses with an empty quantity: one pinch.
+    final quantity =
+        _quantityValue(amount.quantity) ??
+        (amount.quantity.trim().isEmpty &&
+                _smallMeasures.containsKey(amountUnit)
+            ? 1
+            : null);
     if (quantity == null) {
       continue;
     }
-    final amountUnit = (amount.unit ?? '').toLowerCase();
+    // A unit the parse lost: "½ cup plus 1 tablespoon half-and-half or milk"
+    // came through as the bare count ½ and was sized as half a piece (7.5 g,
+    // Strawberry Shortcakes; audit 3). No grams beats a wrong count.
+    if (amountUnit.isEmpty && raw != null && _lostVolumeUnit.hasMatch(raw)) {
+      continue;
+    }
+    // A pinch, a dash, a sprig: the food's own FDC portion of that name
+    // ("dash" 0.1 g of black pepper, 0.4 g of salt; "sprig" of parsley), the
+    // count in its structured amount (user answer #3's second half).
+    final small = food == null ? null : _smallMeasureGrams(food, amountUnit);
+    if (small != null) {
+      return GramResolution(
+        grams: quantity * small,
+        source: GramSource.piece,
+        basis: '${_amountText(amount)} · USDA portion',
+      );
+    }
 
     // 3a. The amount's OWN unit against the food's portions — "6 ears corn",
     //     "1 head lettuce": the recipe named the unit, so it is authoritative.
@@ -690,9 +1212,12 @@ GramResolution? resolveGrams({
     //     fuzzy whole-item portion (a "graham cracker" is the 14 g rectangle,
     //     not FDC's ambiguous per-cracker serving). Skipped for a container
     //     count with no printed size — a whole-item weight is not a can.
-    final pieceWeight = _containerUnits.contains(amountUnit)
+    //     Skipped too for a bunch: every entry is per piece, and '2 bunches
+    //     scallions' read as 2 scallions (30 g).
+    final pieceWeight =
+        _containerUnits.contains(amountUnit) || amountUnit == 'bunch'
         ? null
-        : _tableLookup(_pieceWeights, normalizedItem);
+        : _pieceLookup(normalizedItem, raw, amountUnit);
     if (pieceWeight != null) {
       return GramResolution(
         grams: quantity * pieceWeight,
@@ -708,7 +1233,9 @@ GramResolution? resolveGrams({
     //     that 3a could not match, guessing off an unrelated "1 sprig" is worse
     //     than leaving the line for review.
     if (food != null && amountUnit.isEmpty) {
-      final perUnit = _wholeItemPortionGrams(food) ?? _legacyPiecePortion(food);
+      final perUnit =
+          _wholeItemPortionGrams(food, normalizedItem) ??
+          _legacyPiecePortion(food);
       if (perUnit != null) {
         return GramResolution(
           grams: quantity * perUnit,

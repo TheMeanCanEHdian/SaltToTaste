@@ -35,12 +35,15 @@ enum MatchBucket {
 /// `ingredient_matches` table: [status] is one of
 /// auto/unmatched/confirmed/overridden/skipped; [confidence] only flags
 /// `auto` rows (a human-touched row is never "low confidence" — a human
-/// looked at it).
+/// looked at it). [hold] is the engine's reason for holding an `auto` row
+/// out of the totals although its name score passes (`no_nutrients`,
+/// `discarded_medium`, `second_food`): such a row is `check` too.
 MatchBucket matchBucketFor({
   required String status,
   required int? fdcId,
   required double? grams,
   required double confidence,
+  String? hold,
 }) {
   if (status == 'skipped') {
     return MatchBucket.skipped;
@@ -57,7 +60,7 @@ MatchBucket matchBucketFor({
   // A weak match is first a WRONG food, whether or not it has an amount: a
   // 0.41 "100 GRAND Bar" for a liqueur line must read "check match", not the
   // calm "no amount" — the amount is the smaller of its problems.
-  if (status == 'auto' && confidence < 0.5) {
+  if (status == 'auto' && (confidence < 0.5 || hold != null)) {
     return MatchBucket.check;
   }
   if (grams == null) {

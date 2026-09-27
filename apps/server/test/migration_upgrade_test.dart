@@ -65,11 +65,17 @@ const Map<int, String> _capabilityByVersion = {
       'ingredient_decisions: a human food decision keyed by ingredient '
       '(human-only, not seeded; re-keyed at boot by rekeyDecisions under the '
       'decisions.matcher_version marker)',
+  11:
+      'ingredient_matches.hold: why an auto row is held out of the totals '
+      '(NULL on every existing row; the next compute sets it)',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
 /// `item_key`, which a database below this version has no column for.
 const int _itemKeyVersion = 9;
+
+/// Mirror of migration 011: the same for `hold`.
+const int _holdVersion = 11;
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
 /// start version is below this gets its FTS rows re-derived in Dart on open.
@@ -570,10 +576,12 @@ _Seed _seed(
     for (final table in _nutritionTables.keys) {
       _replay(raw, table, [
         for (final row in nutritionRows[table]!)
-          if (table == 'ingredient_matches' && version < _itemKeyVersion)
+          if (table == 'ingredient_matches' && version < _holdVersion)
             {
               for (final entry in row.entries)
-                if (entry.key != 'item_key') entry.key: entry.value,
+                if (entry.key != 'hold' &&
+                    (entry.key != 'item_key' || version >= _itemKeyVersion))
+                  entry.key: entry.value,
             }
           else
             row,

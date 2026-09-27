@@ -142,6 +142,7 @@ class IngredientMatch {
     this.gramSource,
     this.gramBasis,
     this.status = 'unmatched',
+    this.hold,
     this.candidates = const [],
   });
 
@@ -182,6 +183,7 @@ class IngredientMatch {
       gramSource: match['gram_source'] as String?,
       gramBasis: match['gram_basis'] as String?,
       status: match['status'] as String? ?? 'unmatched',
+      hold: match['hold'] as String?,
       candidates: candidates,
     );
   }
@@ -221,7 +223,8 @@ class IngredientMatch {
   final double confidence;
   final double? grams;
 
-  /// `weight` | `portion` | `density` | `piece` | `override`.
+  /// `weight` | `portion` | `density` | `piece` | `override` | `discarded` |
+  /// `unmeasured`.
   final String? gramSource;
 
   /// What the grams were computed against, for sanity-checking an estimate —
@@ -231,6 +234,11 @@ class IngredientMatch {
 
   /// `auto` | `confirmed` | `overridden` | `skipped` | `unmatched`.
   final String status;
+
+  /// Why the engine holds an `auto` line out of the totals although its name
+  /// confidence passes: `no_nutrients` | `discarded_medium` | `second_food`;
+  /// null when nothing holds it.
+  final String? hold;
   final List<MatchCandidate> candidates;
 }
 

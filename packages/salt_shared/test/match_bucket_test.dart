@@ -11,11 +11,13 @@ void main() {
     int? fdcId = 5,
     double? grams = 100,
     double confidence = 0.9,
+    String? hold,
   }) => matchBucketFor(
     status: status,
     fdcId: fdcId,
     grams: grams,
     confidence: confidence,
+    hold: hold,
   );
 
   group('matchBucketFor', () {
@@ -33,6 +35,15 @@ void main() {
       expect(bucket(confidence: 0.41, grams: null), MatchBucket.check);
       expect(bucket(confidence: 0.41), MatchBucket.check);
       expect(bucket(grams: null), MatchBucket.noAmount);
+    });
+    test('a held auto match is "check" at any score; a decision ignores '
+        'the hold', () {
+      for (final hold in ['no_nutrients', 'discarded_medium', 'second_food']) {
+        expect(bucket(hold: hold), MatchBucket.check, reason: hold);
+        expect(bucket(hold: hold, grams: null), MatchBucket.check);
+        expect(bucket(hold: hold, status: 'confirmed'), MatchBucket.counted);
+        expect(bucket(hold: hold, status: 'skipped'), MatchBucket.skipped);
+      }
     });
     test('overridden with no grams STAYS flagged — an unfinished fix', () {
       expect(bucket(status: 'overridden', grams: null), MatchBucket.noAmount);

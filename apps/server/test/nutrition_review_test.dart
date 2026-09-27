@@ -21,6 +21,7 @@ void main() {
       double conf = 0.9,
       double? grams = 100,
       String status = 'auto',
+      String? hold,
     }) => IngredientMatchRow(
       recipeId: 'r1',
       position: pos,
@@ -32,6 +33,7 @@ void main() {
       grams: grams,
       gramSource: grams == null ? null : 'weight',
       status: status,
+      hold: hold,
     );
 
     setUp(() {
@@ -163,7 +165,9 @@ void main() {
       // Dart via matchBucketFor; the queue buckets in SQL. This parity pin
       // is what keeps them from drifting apart again — the seeded rows
       // cover every corner shape (auto/unmatched/confirmed/overridden/
-      // skipped, with and without food and grams).
+      // skipped, with and without food and grams) — plus a HELD auto row
+      // (migration 011): passing on its score, in `check` for its reason.
+      db.upsertIngredientMatch(m(3, fdcId: 5, hold: 'no_nutrients'));
       final expected = <String, int>{};
       for (final row in db.ingredientMatchesFor('r1')) {
         final bucket = matchBucketFor(
@@ -171,10 +175,18 @@ void main() {
           fdcId: row.fdcId,
           grams: row.grams,
           confidence: row.confidence,
+          hold: row.hold,
         ).wire;
         expected[bucket] = (expected[bucket] ?? 0) + 1;
       }
       expect(db.nutritionReviewCounts(), expected);
+      expect(expected['check'], 2);
+      final held =
+          (nutritionReviewHandler(db, page: 1, limit: 50)['items']! as List)
+              .cast<Map<String, Object?>>()
+              .singleWhere((item) => item['position'] == 3);
+      expect(held['bucket'], 'check');
+      expect((held['match']! as Map)['hold'], 'no_nutrients');
     });
 
     test('an unknown bucket filter is rejected', () {

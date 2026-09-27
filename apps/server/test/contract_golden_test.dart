@@ -28,6 +28,8 @@ import '../routes/api/v1/recipes/[id]/index.dart' as recipe_route;
 import '../routes/api/v1/recipes/[id]/note.dart' as note_route;
 import '../routes/api/v1/recipes/[id]/nutrition/compute.dart' as compute_route;
 import '../routes/api/v1/recipes/[id]/nutrition/index.dart' as nutrition_route;
+import '../routes/api/v1/recipes/[id]/nutrition/matches/[pos].dart'
+    as match_pos_route;
 import '../routes/api/v1/recipes/[id]/nutrition/matches/index.dart'
     as matches_route;
 import '../routes/api/v1/recipes/index.dart' as recipes_route;
@@ -370,6 +372,18 @@ void main() {
         await harness.awaitJob(
           '/api/v1/nutrition/jobs/$computeJobId',
           harness.auth(adminSession),
+        );
+        // Every bundt line resolves since amount-less lines count as a
+        // matched 0 g (matcher v6), so the bodies below would hold no
+        // flagged line for the app to parse. A reviewer's real move gives
+        // one: picking a food for "Confectioners' sugar, for dusting" leaves
+        // an overridden line with no amount — flagged in `no_grams`, and the
+        // recipe partial.
+        await harness.expectOk(
+          'PUT',
+          '/api/v1/recipes/$_bundtSlug/nutrition/matches/12',
+          headers: harness.auth(adminSession, csrf: true),
+          jsonBody: {'fdc_id': 169656},
         );
         await harness.capture(
           'nutrition',
@@ -789,6 +803,17 @@ FutureOr<Response> _dispatch(RequestContext context) {
       return candidates_route.onRequest(context);
     case '/api/v1/nutrition/bulk/counts':
       return bulk_counts_route.onRequest(context);
+  }
+  // The one two-parameter route: a reviewer's decision on one line.
+  final linePick = RegExp(
+    r'^/api/v1/recipes/([^/]+)/nutrition/matches/([^/]+)$',
+  ).firstMatch(path);
+  if (linePick != null) {
+    return match_pos_route.onRequest(
+      context,
+      linePick.group(1)!,
+      linePick.group(2)!,
+    );
   }
   for (final (pattern, handler)
       in <(RegExp, FutureOr<Response> Function(RequestContext, String))>[

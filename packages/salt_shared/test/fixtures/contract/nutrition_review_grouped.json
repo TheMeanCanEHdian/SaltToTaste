@@ -44,13 +44,14 @@
         "confidence": 1.0,
         "grams": null,
         "gram_source": null,
-        "status": "auto"
+        "status": "overridden",
+        "hold": null
       },
       "item_key": "powdered sugar",
       "item": "Confectioners’ sugar",
       "lines": 1,
       "recipes": 1,
-      "decided": false,
+      "decided": true,
       "grams": {
         "min": null,
         "max": null,

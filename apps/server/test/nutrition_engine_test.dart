@@ -609,19 +609,21 @@ void main() {
         'the Bundt cake label is plausible; the review flow completes it',
         () async {
           var row = db.nutritionFor(bundt.id)!;
-          // Honestly partial out of the box: the amount-less garnish line
-          // needs a human decision — the match-transparency badge the design
-          // promises ("12/13 matched — review").
-          expect(row.status, 'partial');
+          // Complete out of the box since matcher v6: the amount-less
+          // garnish is a matched 0 g (`amountlessLinesZero`, user answer #3)
+          // instead of a line waiting on a person.
+          expect(row.status, 'complete');
           expect(row.servingBasis, 12, reason: 'SERVES 12');
           expect(row.totalCount, 13);
-          expect(row.matchedCount, 12, reason: 'espresso now has a density');
+          expect(row.matchedCount, 13, reason: 'espresso now has a density');
 
           // The review flow: skip the garnish, hand-set the espresso grams.
           final matches = db.ingredientMatchesFor(bundt.id);
           final garnish = matches.firstWhere(
             (match) => match.raw.contains('Confectioners'),
           );
+          expect(garnish.grams, 0);
+          expect(garnish.gramSource, 'unmeasured');
           db.upsertIngredientMatch(garnish.copyWith(status: 'skipped'));
           final espresso = matches.firstWhere(
             (match) => match.raw.contains('espresso'),

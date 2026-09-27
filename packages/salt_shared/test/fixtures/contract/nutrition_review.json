@@ -44,7 +44,8 @@
         "confidence": 1.0,
         "grams": null,
         "gram_source": null,
-        "status": "auto"
+        "status": "overridden",
+        "hold": null
       }
     }
   ],

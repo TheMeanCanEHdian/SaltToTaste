@@ -87,4 +87,67 @@ void main() {
       expect(find.textContaining('counting now'), findsNothing);
     },
   );
+
+  testWidgets('a line the engine holds at a passing score says why '
+      '(the matches body\'s `hold`)', (tester) async {
+    await pump(
+      tester,
+      const IngredientMatch(
+        position: 0,
+        raw: '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+        item: 'grated lemon zest plus',
+        fdcId: 2709168,
+        description: 'Lemon, raw',
+        confidence: 0.9,
+        grams: 4.2,
+        status: 'auto',
+        hold: 'second_food',
+      ),
+    );
+    expect(
+      find.textContaining('also calls for a second ingredient'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('name confidence'), findsNothing);
+  });
+
+  testWidgets('a line that names no food says so (hold `unnamed_food`)', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const IngredientMatch(
+        position: 0,
+        raw: '3 cups unsweetened, shredded, desiccated (dried) coconut',
+        item: 'unsweetened',
+        fdcId: 2709217,
+        description: 'Applesauce, unsweetened',
+        confidence: 0.89,
+        grams: 735,
+        status: 'auto',
+        hold: 'unnamed_food',
+      ),
+    );
+    expect(find.textContaining('does not say which food'), findsOneWidget);
+  });
+
+  testWidgets('a fresh herb line on a dried spice says so (hold '
+      '`dried_for_fresh`)', (tester) async {
+    // Ciambotta (0405).
+    await pump(
+      tester,
+      const IngredientMatch(
+        position: 0,
+        raw: '⅓ cup fresh oregano leaves',
+        item: 'fresh oregano leaves',
+        fdcId: 171328,
+        description: 'Spices, oregano, dried',
+        confidence: 0.382,
+        grams: 16,
+        status: 'auto',
+        hold: 'dried_for_fresh',
+      ),
+    );
+    expect(find.textContaining('asks for a fresh herb'), findsOneWidget);
+  });
 }

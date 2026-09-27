@@ -31,6 +31,7 @@ MatchBucket matchBucketOf(IngredientMatch m) => matchBucketFor(
   fdcId: m.fdcId,
   grams: m.grams,
   confidence: m.confidence,
+  hold: m.hold,
 );
 
 const Map<String, double> unitToGrams = {'g': 1, 'oz': 28.3495, 'lb': 453.592};
@@ -44,6 +45,8 @@ String gramSourceLabel(String? source) => switch (source) {
   'density' => 'volume estimate',
   'piece' => 'typical size',
   'override' => 'set by hand',
+  'discarded' => 'discarded in cooking',
+  'unmeasured' => 'no amount on the line',
   _ => 'no amount',
 };
 
@@ -74,6 +77,24 @@ Widget sourceChip(String? dataType) {
   );
 }
 
+/// The plain-language reason the engine holds a line (the matches body's
+/// `hold`), or null for none / an unknown code.
+String? holdReason(String? hold) => switch (hold) {
+  'no_nutrients' => 'USDA publishes no calories or macros for this food',
+  'discarded_medium' =>
+    'Looks like a cooking medium the recipe discards (frying oil, a brine, '
+        'a soak, cheese-making milk)',
+  'second_food' =>
+    'This line also calls for a second ingredient the match does not cover',
+  'unnamed_food' =>
+    'The line does not say which food this is (only a word like '
+        '"unsweetened" or "juice")',
+  'dried_for_fresh' =>
+    'The line asks for a fresh herb, but this is the dried or ground spice',
+  'borderline' => 'The match score is borderline; please confirm the food',
+  _ => null,
+};
+
 /// The plain-language reason a line is where it is.
 class WhyLine extends StatelessWidget {
   const WhyLine({super.key, required this.match, required this.bucket});
@@ -83,7 +104,14 @@ class WhyLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final held = bucket == MatchBucket.check ? holdReason(match.hold) : null;
     final (text, color) = switch (bucket) {
+      // A held line passes on its name: the reason is the engine's, not the
+      // score's.
+      MatchBucket.check when held != null => (
+        '$held — held out of the totals until you confirm it',
+        SaltColors.warnInk,
+      ),
       // A weak match counts only when it has an amount; without one it is a
       // wrong food AND an unfilled amount, and it contributes nothing.
       MatchBucket.check => (

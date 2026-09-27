@@ -17,7 +17,8 @@
         "grams": 170.16649439999998,
         "gram_source": "density",
         "gram_basis": "12 tablespoon ≈ 177 mL",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -87,7 +88,8 @@
         "grams": 92.26932000000001,
         "gram_source": "density",
         "gram_basis": "3/4 cup ≈ 177 mL",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -133,8 +135,8 @@
           "confidence": 0.42047619047619056
         },
         {
-          "fdc_id": 175092,
-          "description": "Beverages, cocoa mix, with aspartame, powder, prepared with water",
+          "fdc_id": 173220,
+          "description": "Beverages, Malted drink mix, natural, powder, dairy based.",
           "data_type": "SR Legacy",
           "confidence": 0.41333333333333333
         }
@@ -157,7 +159,8 @@
         "grams": 170.09699999999998,
         "gram_source": "weight",
         "gram_basis": "from 6 ounce",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -227,7 +230,8 @@
         "grams": 2.1194355999999996,
         "gram_source": "density",
         "gram_basis": "1 teaspoon ≈ 5 mL",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -297,7 +301,8 @@
         "grams": null,
         "gram_source": null,
         "gram_basis": null,
-        "status": "confirmed"
+        "status": "confirmed",
+        "hold": null
       },
       "candidates": []
     },
@@ -318,7 +323,8 @@
         "grams": 229.49035999999998,
         "gram_source": "density",
         "gram_basis": "1 cup ≈ 237 mL",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -364,10 +370,10 @@
           "confidence": 0.8633333333333333
         },
         {
-          "fdc_id": 2709526,
-          "description": "Potato, baked, peel eaten, with sour cream",
-          "data_type": "Survey (FNDDS)",
-          "confidence": 0.8471428571428572
+          "fdc_id": 173442,
+          "description": "Sour cream, reduced fat",
+          "data_type": "SR Legacy",
+          "confidence": 0.8400000000000001
         }
       ]
     },
@@ -388,7 +394,8 @@
         "grams": 248.058125,
         "gram_source": "weight",
         "gram_basis": "from 8 3/4 ounce",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -458,7 +465,8 @@
         "grams": 6.0132824,
         "gram_source": "density",
         "gram_basis": "1 teaspoon ≈ 5 mL",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -492,7 +500,8 @@
         "grams": 4.5838956,
         "gram_source": "density",
         "gram_basis": "1 teaspoon ≈ 5 mL",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -520,7 +529,8 @@
         "grams": 396.893,
         "gram_source": "weight",
         "gram_basis": "from 14 ounce",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -557,7 +567,7 @@
           "fdc_id": 2644290,
           "description": "Beans, kidney, light red, canned, sodium added, sugar added, drained and rinsed",
           "data_type": "Foundation",
-          "confidence": 0.5096969696969698
+          "confidence": 0.47969696969696973
         },
         {
           "fdc_id": 168557,
@@ -590,7 +600,8 @@
         "grams": 13.012383999999999,
         "gram_source": "density",
         "gram_basis": "1 tablespoon ≈ 15 mL",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -630,7 +641,8 @@
         "grams": 250.0,
         "gram_source": "piece",
         "gram_basis": "5 × 50 g each",
-        "status": "auto"
+        "status": "auto",
+        "hold": null
       },
       "candidates": [
         {
@@ -676,10 +688,10 @@
           "confidence": 0.89
         },
         {
-          "fdc_id": 2708984,
-          "description": "Congee, with egg",
-          "data_type": "Survey (FNDDS)",
-          "confidence": 0.8566666666666667
+          "fdc_id": 747997,
+          "description": "Eggs, Grade A, Large, egg white",
+          "data_type": "Foundation",
+          "confidence": 0.8400000000000001
         }
       ]
     },
@@ -700,7 +712,8 @@
         "grams": null,
         "gram_source": null,
         "gram_basis": null,
-        "status": "auto"
+        "status": "overridden",
+        "hold": null
       },
       "candidates": [
         {

@@ -3678,5 +3678,482 @@
     "description": null
    }
   ]
+ },
+ "748608": {
+  "fdc_id": 748608,
+  "description": "Oil, olive, extra virgin",
+  "data_type": "Foundation",
+  "nutrients": {
+   "298": 93.7,
+   "606": 15.4,
+   "645": 69.2,
+   "646": 9.07
+  },
+  "portions": [
+   {
+    "gram_weight": 90.7,
+    "amount": 100.0,
+    "unit": "milliliter",
+    "description": ""
+   }
+  ]
+ },
+ "2759000": {
+  "fdc_id": 2759000,
+  "description": "Pasta, dry, whole grain, spaghetti ",
+  "data_type": "Foundation",
+  "nutrients": {
+   "301": 28.3,
+   "303": 4.523,
+   "304": 120.1,
+   "305": 353.0,
+   "306": 426.7,
+   "307": 4.583,
+   "404": 0.5967,
+   "405": 0.29,
+   "406": 12.63
+  },
+  "portions": []
+ },
+ "2708167": {
+  "fdc_id": 2708167,
+  "description": "Crackers, saltine",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 9.46,
+   "204": 8.64,
+   "205": 74.0,
+   "208": 418.0,
+   "269": 1.29,
+   "291": 2.8,
+   "301": 19.0,
+   "303": 5.57,
+   "304": 23.0,
+   "305": 102.0,
+   "306": 152.0,
+   "307": 941.0,
+   "320": 1.0,
+   "323": 1.15,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.702,
+   "405": 0.487,
+   "406": 6.44,
+   "415": 0.086,
+   "418": 0.09,
+   "430": 25.4,
+   "432": 17.0,
+   "435": 216.0,
+   "601": 0.0,
+   "606": 1.65,
+   "645": 1.99,
+   "646": 4.84
+  },
+  "portions": [
+   {
+    "gram_weight": 115.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 sleeve"
+   },
+   {
+    "gram_weight": 1.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 miniature/bite size"
+   },
+   {
+    "gram_weight": 50.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup, NFS"
+   },
+   {
+    "gram_weight": 3.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cracker"
+   },
+   {
+    "gram_weight": 18.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "170931": {
+  "fdc_id": 170931,
+  "description": "Spices, pepper, black",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 251.0,
+   "203": 10.39,
+   "204": 3.26,
+   "205": 63.95,
+   "291": 25.3,
+   "269": 0.64,
+   "301": 443.0,
+   "303": 9.71,
+   "304": 171.0,
+   "305": 158.0,
+   "306": 1329.0,
+   "307": 20.0,
+   "401": 0.0,
+   "404": 0.108,
+   "405": 0.18,
+   "406": 1.143,
+   "415": 0.291,
+   "432": 17.0,
+   "435": 17.0,
+   "418": 0.0,
+   "320": 27.0,
+   "323": 1.04,
+   "328": 0.0,
+   "430": 163.7,
+   "606": 1.392,
+   "645": 0.739,
+   "646": 0.998,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 6.9,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp, ground"
+   },
+   {
+    "gram_weight": 0.1,
+    "amount": 1.0,
+    "unit": null,
+    "description": "dash"
+   },
+   {
+    "gram_weight": 2.3,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, ground"
+   },
+   {
+    "gram_weight": 2.9,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, whole"
+   }
+  ]
+ },
+ "170929": {
+  "fdc_id": 170929,
+  "description": "Spices, mustard seed, ground",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 508.0,
+   "203": 26.08,
+   "204": 36.24,
+   "205": 28.09,
+   "291": 12.2,
+   "269": 6.79,
+   "301": 266.0,
+   "303": 9.21,
+   "304": 370.0,
+   "305": 828.0,
+   "306": 738.0,
+   "307": 13.0,
+   "401": 7.1,
+   "404": 0.805,
+   "405": 0.261,
+   "406": 4.733,
+   "415": 0.397,
+   "432": 162.0,
+   "435": 162.0,
+   "418": 0.0,
+   "320": 2.0,
+   "323": 5.07,
+   "328": 0.0,
+   "430": 5.4,
+   "606": 1.989,
+   "645": 22.518,
+   "646": 10.088,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 6.3,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 2.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "2709794": {
+  "fdc_id": 2709794,
+  "description": "Onions, green, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 1.83,
+   "204": 0.19,
+   "205": 7.34,
+   "208": 32.0,
+   "269": 2.33,
+   "291": 2.6,
+   "301": 72.0,
+   "303": 1.48,
+   "304": 20.0,
+   "305": 37.0,
+   "306": 276.0,
+   "307": 16.0,
+   "320": 50.0,
+   "323": 0.55,
+   "328": 0.0,
+   "401": 18.8,
+   "404": 0.055,
+   "405": 0.08,
+   "406": 0.525,
+   "415": 0.061,
+   "418": 0.0,
+   "430": 207.0,
+   "432": 64.0,
+   "435": 64.0,
+   "601": 0.0,
+   "606": 0.032,
+   "645": 0.027,
+   "646": 0.074
+  },
+  "portions": [
+   {
+    "gram_weight": 100.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 whole"
+   }
+  ]
+ },
+ "167833": {
+  "fdc_id": 167833,
+  "description": "Pork, fresh, loin, center rib (chops or roasts), bone-in, separable lean only, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 136.0,
+   "203": 21.79,
+   "204": 4.8,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 24.0,
+   "303": 0.61,
+   "304": 25.0,
+   "305": 216.0,
+   "306": 359.0,
+   "307": 60.0,
+   "401": 0.0,
+   "404": 0.484,
+   "405": 0.186,
+   "406": 6.685,
+   "415": 0.735,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.5,
+   "320": 0.0,
+   "323": 0.13,
+   "328": 0.5,
+   "430": 0.0,
+   "606": 1.617,
+   "645": 1.999,
+   "646": 0.524,
+   "601": 56.0
+  },
+  "portions": [
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 86.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "chop, excluding refuse (yield from 1 raw chop, with refuse, weighing 151 g)"
+   }
+  ]
+ },
+ "747431": {
+  "fdc_id": 747431,
+  "description": "Beans, Dry, Red (0% moisture)",
+  "data_type": "Foundation",
+  "nutrients": {
+   "203": 21.3,
+   "204": 1.16,
+   "291": 4.0,
+   "301": 148.0,
+   "303": 5.05,
+   "304": 152.0,
+   "305": 380.0,
+   "306": 1540.0
+  },
+  "portions": []
+ },
+ "2644288": {
+  "fdc_id": 2644288,
+  "description": "Chickpeas (garbanzo beans, bengal gram), canned, sodium added, drained and rinsed",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 137.22,
+   "958": 132.972,
+   "203": 7.01875,
+   "204": 3.096,
+   "205": 20.32025,
+   "301": 40.48,
+   "303": 1.042,
+   "304": 28.41,
+   "305": 86.48,
+   "306": 136.8,
+   "307": 201.7
+  },
+  "portions": [
+   {
+    "gram_weight": 130.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2705594": {
+  "fdc_id": 2705594,
+  "description": "Cream, half and half",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 3.13,
+   "204": 11.5,
+   "205": 4.3,
+   "208": 131.0,
+   "269": 4.13,
+   "291": 0.0,
+   "301": 107.0,
+   "303": 0.05,
+   "304": 10.0,
+   "305": 95.0,
+   "306": 132.0,
+   "307": 61.0,
+   "320": 97.0,
+   "323": 0.25,
+   "328": 0.0,
+   "401": 0.9,
+   "404": 0.03,
+   "405": 0.194,
+   "406": 0.109,
+   "415": 0.05,
+   "418": 0.19,
+   "430": 1.3,
+   "432": 3.0,
+   "435": 3.0,
+   "601": 35.0,
+   "606": 7.03,
+   "645": 3.32,
+   "646": 0.554
+  },
+  "portions": [
+   {
+    "gram_weight": 20.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 individual container (.5 fl oz)"
+   },
+   {
+    "gram_weight": 2.5,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per fl oz of beverage"
+   },
+   {
+    "gram_weight": 240.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz"
+   }
+  ]
+ },
+ "169599": {
+  "fdc_id": 169599,
+  "description": "Gelatins, dry powder, unsweetened",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 335.0,
+   "203": 85.6,
+   "204": 0.1,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 55.0,
+   "303": 1.11,
+   "304": 22.0,
+   "305": 39.0,
+   "306": 16.0,
+   "307": 196.0,
+   "401": 0.0,
+   "404": 0.025,
+   "405": 0.23,
+   "406": 0.085,
+   "415": 0.007,
+   "432": 30.0,
+   "435": 30.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.07,
+   "645": 0.06,
+   "646": 0.01,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "package (1 oz)"
+   },
+   {
+    "gram_weight": 7.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "envelope (1 tbsp)"
+   }
+  ]
  }
 }

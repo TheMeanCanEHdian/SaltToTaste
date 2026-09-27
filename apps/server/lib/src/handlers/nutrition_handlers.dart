@@ -41,7 +41,7 @@ Map<String, Object?> nutritionBody(
         (match) =>
             match.position < lineCount &&
             match.status == 'auto' &&
-            match.confidence < 0.5,
+            (match.confidence < 0.5 || match.hold != null),
       )
       .length;
   return {
@@ -116,7 +116,7 @@ Future<Map<String, Object?>> matchesBody(
     final candidates = row == null
         ? const <RankedCandidate>[]
         : await candidatesForLine(db, provider, line, cacheOnly: true);
-    final itemKey = itemKeyFor(line.item ?? line.raw);
+    final itemKey = lineKeyOf(line);
     // How far an apply-to-all from this line would reach: the undecided lines
     // of the same ingredient, in recipes and in lines — a sibling on another
     // food at any score, a sibling on THIS food only while it is still a
@@ -135,7 +135,7 @@ Future<Map<String, Object?>> matchesBody(
     // sibling's, or an "A or B" line's A), so a live search lands there.
     final search = itemKey.isEmpty
         ? null
-        : lineSearchFor(db, normalizeItem(line.item ?? line.raw), itemKey);
+        : lineSearchFor(db, normalizeItem(lineItemOf(line)), itemKey);
     final query = search?.answer;
     items.add({
       'position': position,
@@ -174,6 +174,10 @@ Future<Map<String, Object?>> matchesBody(
               // sanity-check a volume/piece estimate. Cache-only.
               'gram_basis': gramBasisFor(db, line, row),
               'status': row.status,
+              // Why an `auto` row is held out of the totals although its
+              // score passes (`no_nutrients` | `discarded_medium` |
+              // `second_food`); null when nothing holds it.
+              'hold': row.hold,
             },
       'candidates': [
         for (final ranked in candidates)
@@ -211,7 +215,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     throw NotFoundException('No ingredient line at position $position.');
   }
   final line = lines[position];
-  final itemKey = itemKeyFor(line.item ?? line.raw);
+  final itemKey = lineKeyOf(line);
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
   };
@@ -361,7 +365,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   if (decidedFood && itemKey.isNotEmpty) {
     db.putDecision(
       itemKey: itemKey,
-      item: line.item ?? line.raw,
+      item: decisionItemOf(line),
       fdcId: row.fdcId,
       description: row.description,
       dataType: row.dataType,

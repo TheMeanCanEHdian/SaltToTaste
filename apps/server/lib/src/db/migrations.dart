@@ -326,4 +326,13 @@ CREATE TABLE ingredient_decisions (
 ) WITHOUT ROWID
 ''',
   ],
+
+  // 011 — an engine match held out of the totals for a reason other than a
+  // weak name score (sweep accuracy batch, 2026-09-26): a record that
+  // publishes no energy and no macros would count as 0 kcal, a discarded
+  // medium set to review, a line that names a second ingredient. The code
+  // (`no_nutrients` | `discarded_medium` | `second_food`) is what the review
+  // sheet explains; it only holds an `auto` row — a person's decision on the
+  // row always counts. NULL on every existing row: the next compute sets it.
+  ['ALTER TABLE ingredient_matches ADD COLUMN hold TEXT'],
 ];

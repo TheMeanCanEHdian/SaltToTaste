@@ -58,7 +58,7 @@ int backfillItemKeys(SaltDatabase db) {
       if (line.raw != row.raw) {
         continue;
       }
-      final key = itemKeyFor(line.item ?? line.raw);
+      final key = lineKeyOf(line);
       if (key.isEmpty || key == row.itemKey) {
         continue;
       }

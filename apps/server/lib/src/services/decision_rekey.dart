@@ -1,5 +1,6 @@
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 
 final Logger _log = Logger('backfill');
@@ -25,7 +26,9 @@ int rekeyDecisions(SaltDatabase db) {
   final all = db.allDecisions();
   final byFinalKey = <String, List<IngredientDecisionRow>>{};
   for (final decision in all) {
-    byFinalKey.putIfAbsent(itemKeyFor(decision.item), () => []).add(decision);
+    byFinalKey
+        .putIfAbsent(decisionKeyFor(decision.item), () => [])
+        .add(decision);
   }
   var changed = 0;
   final movers = <(IngredientDecisionRow, String)>[];

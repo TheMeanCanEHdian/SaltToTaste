@@ -1005,7 +1005,8 @@ void main() {
         expect(early.statusCode, HttpStatus.unprocessableEntity);
         expect(errorOf(earlyBody)['code'], 'validation');
 
-        // Admin computes; the Bundt is honestly partial (garnish line).
+        // Admin computes; the Bundt is complete — its amount-less garnish is
+        // a matched 0 g since matcher v6 (user answer #3).
         final job = await computeAndWait(slug);
         expect(job['status'], 'done', reason: 'compute job failed: $job');
 
@@ -1017,9 +1018,9 @@ void main() {
         );
         expect(computed.statusCode, HttpStatus.ok, reason: computedBody);
         final label = jsonOf(computedBody);
-        expect(label['status'], 'partial');
+        expect(label['status'], 'complete');
         expect(label['total_count'], 13);
-        expect(label['matched_count'], 12);
+        expect(label['matched_count'], 13);
         expect(
           label['computing_job_id'],
           isNull,
@@ -1041,7 +1042,7 @@ void main() {
           headers: auth(memberSession),
         );
         expect(memberRead.statusCode, HttpStatus.ok);
-        expect(jsonOf(memberBody)['status'], 'partial');
+        expect(jsonOf(memberBody)['status'], 'complete');
 
         final (matchesRead, matchesReadBody) = await send(
           'GET',
@@ -1088,10 +1089,14 @@ void main() {
         expect(gramsOnly.statusCode, HttpStatus.unprocessableEntity);
         expect(errorOf(gramsOnlyBody)['code'], 'validation');
 
-        // The garnish line matched a food but has no resolvable amount;
-        // skipping it completes the label.
+        // The garnish line matched a food and has no amount: a resolved
+        // 0 g. Skipping it (a person's call) keeps the label complete.
         final garnish = items.firstWhere(
           (item) => (item['raw']! as String).contains('Confectioners'),
+        );
+        expect(
+          (garnish['match']! as Map<String, dynamic>)['gram_source'],
+          'unmeasured',
         );
         final position = garnish['position'];
         final (skip, skipBody) = await send(

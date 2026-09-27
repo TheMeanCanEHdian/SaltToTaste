@@ -1411,6 +1411,86 @@ completeness, the or-split branches, the 404 stand-in write, the tally log).
 11.9%, no grams 11.1%, no match 0.6%; 142 recipes complete; 1,802 searches
 and 961 foods cached (archive `.claude/diag/2026-09-26/`).
 
+### The accuracy batch (2026-09-26 → 27, matcherVersion 6)
+
+Built from checkpoints 1–3 of the library sweep (the whole library replayed
+cache-only on the efficiency batch: counted 76.4% → 77.5%, 154 recipes
+complete) by an Opus 5.5 builder/verifier loop in two passes, each validated
+by replaying the cached answers and foods over a copy of the 13,615-line
+snapshot with a provider that throws on any network call.
+
+- **Energy-less records (A1)**: the Atwater fallback reads fat from nutrient
+  204, then 298 (FDC files extra-virgin olive oil's fat only under 298 —
+  240 counted lines added 0 kcal); a food with no energy and a missing
+  macro is held out of the totals with `hold: no_nutrients`; 'spaghetti'
+  joins the dry-pasta rewrite.
+- **A `hold` reason on match rows** (`no_nutrients`, `discarded_medium`,
+  `second_food`, `dried_for_fresh`): the engine's reason for keeping an
+  `auto` row whose name score passes out of the totals. `matchBucketFor`
+  treats a held row as `check`; the matches body and the review sheet's
+  WhyLine say why. Documented in API.md.
+- **Whole birds and species (A2)**: rewrites for turkey, whole chicken,
+  chicken, standing rib roast, sirloin tips; a species-mismatch dock (−0.30
+  when the query names an animal the record does not).
+- **Dish and product records (A3, N3, N10)**: `_carriesHead` cuts the
+  description at the first " with " / " on " (34 lines on snap1: beef broth
+  → "Soup, vegetable with beef broth" no more); markers toddler / babyfood /
+  tots / puffs / julep; identity tails heart(s), meat; "N percent" → "N%";
+  ~30 rewrites (sandwich bread, buns, sweet potatoes, frozen peas, clam
+  juice, tomato sauce, orange juice, pork butt, cottage cheese, masa harina,
+  cream of coconut, gelatin, fresh peas, butter beans, celeriac, mustard
+  seed …). Targets whose answer is not recorded sit in
+  `_pendingLiveVerification` until one live search confirms them.
+- **The count-noun cap (A4)**: count nouns (leaf, wedge, sprig, clove,
+  fillet, rib after celery …) leave the query tokens when another token
+  remains — 217 right lines move check → counted on the library (lemon,
+  basil, thyme, anchovy, lime …); kosher salt → 'salt table' (108 lines).
+  `allowDriedForFresh` (user answer #5, default false): a fresh-herb line
+  the engine put on a dried or ground spice record is held
+  `dried_for_fresh` (55 lines) rather than counted at the fresh amount.
+- **Grams from what is cached (A5)**: volume portions from SR/FNDDS records
+  after the density table (798 no-grams lines resolve), unicode fractions in
+  parenthetical weights, scallions and green onions at 15 g a piece (87
+  lines were 110 g), package nouns (sleeve, box, bag, loaf), piece keys
+  matched on whole tokens (pineapple ≠ apple, garlic head ≠ clove), amount
+  ranges keep the upper bound unless `rangeWeightsMidpoint` (user answer
+  #7) is on.
+- **Variety dock (A6, user answer #6, on)**: −0.03 for red / baby / brown /
+  roma / beech the query does not name — 251 onion lines leave "Onions,
+  red", 94 carrot lines leave "baby", 19 cremini leave "beech".
+- **Macro fallback (A7)**: a fallback candidate is accepted only when its
+  extra words are form words (the token-subset rule); `RankedCandidate.
+  docked` records the head-noun, wrong-food, species and brand docks.
+- **Discarded media (A8, user answer #2)**: oil / shortening / lard of
+  400 g or more, or any "for (deep-)frying" line, brine salt of 3 tbsp or
+  more dissolved in a brine, soaks → `gram_source: discarded` at 0 g under
+  the zero policy (29 frying lines / 41 kg / 368,000 kcal; 35 brine-salt
+  lines / 2.6 M mg sodium); brine sugar, salt baths and cheese-making milk
+  are held for review with their grams. Rubs and cures are kept.
+- **Edible yield (A9, user answer #4, on)**: FDC's own "excluding refuse
+  (yield from …)" portion scales a bone-in / whole-bird / shell-on weight
+  (pork rib chops ×0.57); boneless and meat-only records are docked when
+  the line says bone-in or skin-on (12 lines). Records without a refuse
+  portion keep the printed weight — 17 cuts need one live fetch each.
+- **Or-split guard (A10)**: the left alternative is searched only when its
+  answer names it AND its top confidence is at least the whole phrase's
+  (the vermouth lines are back on white wine); vermouth → the dessert-wine
+  target.
+- **Second-food lines (A11, N5, user answer #10)**: "zest plus juice",
+  "eggs plus yolks" and the like are held `second_food` under their own key
+  (`lemon zest plus juice`) so a decision on the zest never reaches them;
+  same-food "plus" amounts are summed (120 lines); leaked jar / can / #N
+  amounts leave the keys.
+- **Canned legumes (N1, user answer #9)**: a can or jar in the amount sends
+  the query to the canned record; the drained weight is a switch (default
+  drained). **Cook-state dock (N2)**, **lone-adjective items (N4)**,
+  **participles after a cut (N8)**, **the 0.52–0.54 review band (N9, off)**.
+
+Simulated on the whole library (a rewrite target answered by the union of
+its sources' cached answers): counted 10,548 → 11,789, check 1,527 → 1,336,
+no grams 1,463 → 413; the real numbers come from the replay on the scratch
+copy, which spends one live search per pending target.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

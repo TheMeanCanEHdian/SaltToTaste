@@ -164,6 +164,7 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
             'grams': match.grams,
             'gram_source': match.gramSource,
             'status': match.status,
+            'hold': match.hold,
           },
   };
 }

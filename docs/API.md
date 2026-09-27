@@ -327,10 +327,12 @@ The cross-recipe queue of ingredient-match lines that still need a look, worst
 (lowest name-confidence) first: `{total, groups, buckets: [{id, label, count,
 groups}], items:
 [{recipe: {id, slug, title}, position, raw, bucket, match: {fdc_id, description,
-data_type, confidence, grams, gram_source, status} | null}], page, limit}`.
+data_type, confidence, grams, gram_source, status, hold} | null}], page, limit}`
+(`hold` as in the per-recipe matches body below).
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
 below 50% name confidence — probably the wrong food, whether or not it has
-an amount), `no_grams` (a plausible match that resolves no grams, so it
+an amount — or one the engine holds for a `hold` reason at any score),
+`no_grams` (a plausible match that resolves no grams, so it
 contributes nothing), and `skipped` (browsable via the filter, excluded
 from `total`). A `confirmed` line is always resolved and never appears (e.g.
 confirmed water is a deliberate no-match); an `overridden` line is resolved
@@ -579,8 +581,9 @@ first compute, else:
 }
 ```
 
-`low_confidence` counts auto-matched lines below 0.5 confidence that no
-one has reviewed yet (confirm/override/skip clears one).
+`low_confidence` counts auto-matched lines below 0.5 confidence, or held
+for a `hold` reason (see the matches body), that no one has reviewed yet
+(confirm/override/skip clears one).
 
 `computing_job_id` appears **only for admins, and only while a compute is in
 flight** — it is the handle for re-attaching a reopened page to a running job
@@ -621,11 +624,40 @@ fails (with the reason in its log) when no API key is configured.
 Per-line match transparency: the stored decision (`fdc_id`,
 `description`, `data_type`, `confidence` 0–1, `grams`, `gram_source`:
 `weight` (direct) | `portion` | `density` (estimate) | `piece` (estimate)
-| `override`, `gram_basis`: a short human string of what the grams were
-computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾ ounces"`, `"entered by
-hand"` — for sanity-checking an estimate (null when there is no amount;
-re-derived cache-only, never spends FDC budget), `status`: `auto |
-confirmed | overridden | skipped | unmatched`) plus ranked `candidates`
+| `override` | `discarded` (a cooking medium the recipe throws away —
+deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
+buttermilk soak — stored as
+`grams: 0`: resolved, adds nothing) | `unmeasured` (a matched line with no
+amount at all — "Lemon wedges, for serving" — stored as `grams: 0`, its food
+kept, so it leaves the review queue), `gram_basis`: a short human string of
+what the grams were computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾
+ounces"`, `"entered by hand"`, `"… × 0.57 edible (USDA refuse)"` for a
+bone-in cut whose record publishes its raw refuse, `"discarded in cooking —
+counted as 0 g"`, `"no amount on the line — counted as 0 g"` — for
+sanity-checking an estimate (null when there is no
+amount; re-derived cache-only, never spends FDC budget), `status`: `auto |
+confirmed | overridden | skipped | unmatched`, `hold`: why an `auto` line
+is held out of the totals although its name confidence passes — `null`
+(nothing holds it), `no_nutrients` (the record publishes no energy and is
+missing protein, fat or carbohydrate, so counting it would add its grams at
+0 kcal or a fraction of its energy; a record whose published macros already
+make up 90 g per 100 g, such as an oil, is not held), `discarded_medium`
+(frying oil, a brine or soak set to review, or milk curdled into cheese
+whose whey is drained; brine sugar and ¼ cup or more of salt no step
+brines in or rubs on — a salt bed, an ice bath — are always held),
+`second_food` (the line names a second ingredient —
+"zest plus 2 tablespoons juice", "eggs plus 2 yolks" — that the match does
+not cover; such a line is also keyed apart from the first food's lines, e.g.
+`lemon zest plus juice`, so a decision on `lemon zest` never reaches it),
+`unnamed_food` (the line names no food the matcher can read — a lone
+qualifier such as "unsweetened, shredded, desiccated coconut" cut to
+`unsweetened`, or "2 tablespoons juice" of no named fruit),
+`dried_for_fresh` (the line asks for a fresh herb — "1 tablespoon minced
+fresh oregano" — and the engine's pick is a dried or ground spice record;
+off when the server's dried-for-fresh switch accepts them), `borderline`
+(only when the server's borderline-band switch is on, off by default: an
+engine pick scored from 0.52 up to 0.54); such a line sits in the `check` bucket until a person confirms,
+re-picks or skips it, and a decided line ignores it) plus ranked `candidates`
 for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
 pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
