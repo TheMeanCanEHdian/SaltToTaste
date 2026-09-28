@@ -892,11 +892,15 @@ void main() {
     });
 
     test('P1: an unqualified cut (Best Beef Stew, 0005) takes the lean-and-fat '
-        'record; off, lean only', () async {
+        'record; off, it ties with lean only — and the tie goes to lean and '
+        "fat (v11), where FDC's order gave lean only", () async {
       final on = await rank('boneless chuck-eye roast');
       expect(on.first.candidate.description, contains('lean and fat'));
+      expect(on.first.confidence, greaterThan(on[3].confidence));
       final off = await rank('boneless chuck-eye roast', dropConnectors: false);
-      expect(off.first.candidate.description, contains('lean only'));
+      expect(off.first.candidate.description, contains('lean and fat'));
+      expect(off[2].candidate.description, contains('lean only'));
+      expect(off.first.confidence, off[2].confidence);
     });
   });
 

@@ -275,12 +275,16 @@ Future<AppliedToOthers?> applyMatchOverride(
     // 'confirmed': blessing whatever low-confidence match the line had
     // would hide it from the review queue as resolved (review B7). Its hold
     // is re-derived for the food now on the row — never an engine-era hold
-    // left over from another food; a person's food (confidence 1: a pick or
-    // a decision) is held only as a discarded medium — a person looked, so
-    // it is never re-held second_food. An engine row whose line the
-    // second-food rule counts moves to the rule's record with the rule's
-    // grams, as a fresh compute writes it (checkpoint 5 review: an un-skip
-    // left a rule line held on the peel for good).
+    // left over from another food. A person's food (confidence 1: a pick or
+    // a decision, inherited or not) answers every FOOD hold, never a LINE
+    // hold ([engineOutcome] with `decided`): a discarded medium, a second
+    // food, shellfish bought in the shell stay held — an un-skip is no
+    // confirm, and a decision inherited from another recipe was never a
+    // look at this line (v11: skip then un-skip counted 1,814 g of mussels
+    // in the shell, 0294). Only a confirm or a pick clears them. An engine
+    // row whose line the second-food rule counts moves to the rule's record
+    // with the rule's grams, as a fresh compute writes it (checkpoint 5
+    // review: an un-skip left a rule line held on the peel for good).
     row = row.copyWith(status: 'auto', clearHold: true);
     final personal = row.confidence >= 1;
     final byRule = personal || secondFoodRuleOf(line)?.fdcId == row.fdcId
@@ -304,11 +308,7 @@ Future<AppliedToOthers?> applyMatchOverride(
         decided: personal,
         confidence: row.confidence,
       );
-      row = row.copyWith(
-        hold: personal && outcome.hold != 'discarded_medium'
-            ? null
-            : outcome.hold,
-      );
+      row = row.copyWith(hold: outcome.hold);
     }
   } else if (fdcId != null) {
     if (fdcId is! num || fdcId <= 0) {

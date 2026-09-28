@@ -291,10 +291,12 @@ void main() {
         // Chicken and Sausage Gumbo (0028).
         '8 ounces andouille sausage, sliced into ¼-inch thick half-moons':
             174584,
-        // French-Style Pork Stew (0462).
+        // French-Style Pork Stew (0462): "Kielbasa, fully cooked,
+        // unheated" — tied with "…, grilled", the tie goes to the record of
+        // no cooking (v11).
         '12 ounces kielbasa sausage, halved lengthwise and sliced ½ inch '
                 'thick':
-            173877,
+            173879,
         // APPROXIMATIONS: Skillet Chicken, Broccoli, and Ziti (0069);
         // Alcatra (0007); Jerk Chicken (0632).
         '1 ounce Asiago cheese, grated (about ½ cup), plus extra for '
@@ -326,9 +328,9 @@ void main() {
       }
     });
 
-    test('B12: lime zest searches the peel — pending ONE approved live '
-        'search: Thai Chicken Curry (0550), Jerk Chicken (0632), Key Lime '
-        'Bars (0849)', () {
+    test('B12: lime zest searches the peel — Thai Chicken Curry (0550), '
+        'Jerk Chicken (0632), Key Lime Bars (0849): as lemon zest since v11 '
+        '(see nutrition_v11_test.dart for the pick)', () {
       for (final raw in [
         '2 teaspoons grated lime zest',
         '2 tablespoons finely grated lime zest (3 limes), plus lime wedges '
@@ -337,9 +339,9 @@ void main() {
       ]) {
         final normalized = normalizeItem(lineItemOf(lineOf(raw)));
         expect(normalized, 'lime zest', reason: raw);
-        expect(searchQueryFor(normalized), 'lime peel raw', reason: raw);
+        expect(searchQueryFor(normalized), 'lemon zest', reason: raw);
       }
-      expect(pendingSearches, contains('lime peel raw'));
+      expect(pendingSearches, isNot(contains('lemon zest')));
       // Lemon's own answer already holds its peel.
       expect(searchQueryFor('lemon zest'), 'lemon zest');
     });
@@ -851,13 +853,14 @@ void main() {
         ),
       )!;
       expect(hit.basis, endsWith('· no edible yield read'));
-      // Shellfish in the shell is held instead, and says only that.
+      // Shellfish in the shell is held, labelled approximate like any
+      // gross weight — what a person's confirm counts (v11).
       expect(
         gramsOf(
           '1 pound mussels, scrubbed and debearded',
           await food(2706350),
         )!.basis,
-        endsWith('· no edible yield read'),
+        endsWith(approximate),
       );
     });
   });

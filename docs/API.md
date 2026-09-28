@@ -618,7 +618,10 @@ poll, get a 403 on every attempt, and surface a false error on a page they
 cannot compute from anyway. It is also absent from the `{"status": "none"}`
 body unless a first compute is currently running.
 
-`stale` means the ingredients changed since the compute. The ~30-nutrient
+`stale` means the ingredients — or the recipe's own steps or its title,
+which the discarded-media rules read (a drain added or removed changes what
+counts) — changed since the compute; matcher v11 made every computed recipe
+stale once for that. The ~30-nutrient
 key set and FDA Daily Values match the legacy app's panel.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition` (admin, full scope)
@@ -662,7 +665,11 @@ deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
 buttermilk soak — stored as
 `grams: 0`: resolved, adds nothing; a "plus" line whose second part a step
 eats — "1 cup plus 2 teaspoons table salt" with "remaining 2 teaspoons salt"
-in the rub — stores that part's grams and counts them) | `unmeasured` (a
+in the rub — stores that part's grams and counts them; a HELD medium's eaten
+"plus" part is its grams too, held with it — "1 tablespoon plus 1 teaspoon
+table salt" with 1 tablespoon in the drained pasta water and the "remaining 1
+teaspoon salt" in the roux stores 6 g, `hold: discarded_medium`, and a
+confirm counts those 6 g) | `unmeasured` (a
 matched line with no amount at all — "Lemon wedges, for serving" — or a sprig
 the record gives no portion for, stored as `grams: 0`, its food kept, so it
 leaves the review queue), `gram_basis`: a short human string of
@@ -676,11 +683,13 @@ bone-in, whole-bird or other refuse-bought line whose record publishes no
 refuse portion (a whole turkey, a Foundation chicken part, a lamb chop, bird
 pieces on the whole-bird record, whose yield is the whole bird's): counted at
 the printed weight, bone included — no factor is borrowed (FDC gives no
-turkey share) — and labelled; `"… · no edible yield read"` for one whose SR
+turkey share) — and labelled, shellfish bought in the shell too (held
+`in_shell`, below, and counted so once a person confirms it); the label is
+the line's, read on the food's cached detail or else its cached search hit,
+never lost for want of a detail no compute fetches (a Foundation or FNDDS
+weight line); `"… · no edible yield read"` for one on an SR record whose
 detail was never fetched (the basis never claims a yield the stored grams
-lack, nor that the record has none) and for shellfish bought in the shell
-(held `in_shell`, below) whose record's detail is cached — with none, the
-basis is the weight alone — `"4 × 336 g (USDA
+lack, nor that the record has none) — `"4 × 336 g (USDA
 edible bird portion)"` for counted birds ("4 Cornish game hens") sized by the
 record's own edible bird rather than the printed weight, `"½ cup · USDA
 portion of \"Onions, raw\""` for a volume on a record with no volume portion
@@ -690,7 +699,8 @@ fresh or frozen blueberries" on Foundation "Blueberries, raw" reads
 (pe-tsai), raw\""` for a line on a record that publishes no energy whose
 totals read a sibling record's nutrients (Foundation napa cabbage, 2727583,
 reads SR 169979; the food and grams stay the line's, and it is not held
-`no_nutrients`),
+`no_nutrients`; hand-entered grams say so too: `"entered by hand · nutrients
+of \"Cabbage, chinese (pe-tsai), raw\""`),
 `"pinch ≈ 1/16 tsp (USDA tsp portion)"` for a pinch or dash on a record with
 no dash portion (a teaspoon ÷ 16), `"2 tablespoon ≈ 30 mL · juice only (the
 zest is dropped)"` for a zest-plus-juice line counted on the fruit's juice
@@ -715,12 +725,20 @@ brines in or rubs on — a salt bed, an ice bath — and salt or baking soda a
 step puts in boiling water (named earlier in that step or in the salt's
 sentence) that a drain then follows — pasta water, a
 blanching pot, a skinning bath; the line's own amount written in the step, or
-a bare "salt" when it is the recipe's only salt line; not a line that
-measures its salt apart, "plus salt for cooking …" — are always held; salt a
-step dissolves in a written amount ("Dissolve salt in 2½ quarts water") is
-a brine at any volume, zeroed like one),
+a bare "salt" when it is the recipe's only salt line — or, among several, the
+one no step names with its amount and no volume makes a brine ("Add the
+pasta and salt" is the 2 tablespoons' when the sauce names "1½ teaspoons
+salt"); not a line that measures its salt apart, "plus salt for cooking …" —
+are always held; salt a step dissolves in a written amount, the salt the
+verb's object ("Dissolve salt in 2½ quarts water", not "dissolve sugar in 2
+cups water, then whisk in the salt"), in a step that submerges the food, is
+a brine at any volume, zeroed like one — a dough's salt dissolved in a little
+water is eaten; these rules read the recipe's own steps only, never a
+subsection's: a variation's pot never makes a main line a medium),
 `in_shell` (shellfish bought in the shell — clams, mussels or oysters
-scrubbed or debearded, live lobsters, shell-on shrimp; shucked shellfish, lobster
+scrubbed, live lobsters, shell-on shrimp — "shell-on shrimp …, peeled,
+deveined …, shells reserved" too: its weight includes the shells the cook
+peels off), with or without an amount (never 0 g counted); shucked shellfish, lobster
 meat and clam juice name none of these: no record FDC answers publishes an edible share, so the gross weight
 is not counted as meat; a LINE hold, like `second_food`),
 `second_food` (the line names a second ingredient —
@@ -759,8 +777,10 @@ engine pick scored from 0.52 up to 0.54); such a line sits in the `check` bucket
 re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
 a skip, a grams edit), and an un-skip re-derives it for the food now on the
 line, so a person's food is never held for the engine's old reason (a
-person's food — confidence 1 — is held again only as a discarded medium,
-never `second_food`: a person looked), and an engine row whose line the
+person's food — confidence 1, a pick or a decision, inherited or not — is
+held again only by a LINE hold: `discarded_medium`, `second_food`,
+`in_shell`; an un-skip is no confirm, and only a confirm or a pick on the
+line clears one), and an engine row whose line the
 second-food rule counts moves to the rule's record with the rule's grams,
 as a compute writes it. A
 decision reaching the line by `apply_to_all` or inheritance clears a FOOD
@@ -778,7 +798,14 @@ empty one, like `pancetta`'s, keeps the whole phrase), or the singular
 line the rewrites changed never reads its singular form's answer); null
 when the line has nothing searchable; a few rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
-as bacon, Asiago as Parmesan, whole allspice berries as ground allspice) and
+as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
+zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
+lime peel, and its answer for `lime peel raw` ties lemon and orange peel; the
+ranker breaks two kinds of exact score tie toward the plainer record: the
+"separable lean and fat" record over "lean only" (the default for an
+unqualified cut), and the record naming fewer cookings — "Kielbasa, fully
+cooked, unheated" over "…, grilled"; any other exact tie still goes to the
+record FDC lists first) and
 `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
 just the candidates shown — holds no record naming the ingredient, or the
 answer was empty: the list is hopeless, not mis-ranked; null when FDC was
@@ -937,7 +964,7 @@ Start a background compute. Optional body `{"scope": "..."}`:
 | `scope` | Covers |
 |---|---|
 | `missing` *(default)* | Recipes with no stored nutrition. |
-| `stale` | Recipes whose INGREDIENT lines changed since their last compute — the results the UI already labels `stale` — or that were computed under an older matcher version (the version is part of the staleness hash, so a matcher change re-resolves every engine row while decisions stand). Re-resolving spends FDC only for words the change altered. |
+| `stale` | Recipes whose INGREDIENT lines, own steps or title changed since their last compute — the results the UI already labels `stale` — or that were computed under an older matcher version (the version is part of the staleness hash, so a matcher change re-resolves every engine row while decisions stand). Re-resolving spends FDC only for words the change altered. |
 | `all` | Every recipe, computed or not. |
 
 A body is optional; sending none means `missing`, which is the historical

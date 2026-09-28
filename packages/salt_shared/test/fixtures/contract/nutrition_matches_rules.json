@@ -172,26 +172,26 @@
           "confidence": 0.5
         },
         {
-          "fdc_id": 169174,
-          "description": "Pork, cured, ham, rump, bone-in, separable lean only, unheated",
-          "data_type": "SR Legacy",
-          "confidence": 0.5
-        },
-        {
           "fdc_id": 168358,
           "description": "Pork, cured, ham, shank, bone-in, separable lean and fat, unheated",
           "data_type": "SR Legacy",
           "confidence": 0.5
         },
         {
-          "fdc_id": 169176,
-          "description": "Pork, cured, ham, shank, bone-in, separable lean only, unheated",
+          "fdc_id": 169177,
+          "description": "Pork, cured, ham, slice, bone-in, separable lean and fat, unheated",
           "data_type": "SR Legacy",
           "confidence": 0.5
         },
         {
-          "fdc_id": 169177,
-          "description": "Pork, cured, ham, slice, bone-in, separable lean and fat, unheated",
+          "fdc_id": 169174,
+          "description": "Pork, cured, ham, rump, bone-in, separable lean only, unheated",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 169176,
+          "description": "Pork, cured, ham, shank, bone-in, separable lean only, unheated",
           "data_type": "SR Legacy",
           "confidence": 0.5
         },
@@ -208,8 +208,8 @@
           "confidence": 0.3345454545454546
         },
         {
-          "fdc_id": 169173,
-          "description": "Pork, cured, ham, rump, bone-in, separable lean only, heated, roasted",
+          "fdc_id": 168357,
+          "description": "Pork, cured, ham, shank, bone-in, separable lean and fat, heated, roasted",
           "data_type": "SR Legacy",
           "confidence": 0.3345454545454546
         }
@@ -302,7 +302,7 @@
         "confidence": 0.9900000000000001,
         "grams": 453.592,
         "gram_source": "weight",
-        "gram_basis": "from 1 pound",
+        "gram_basis": "from 1 pound · approximate (gross weight, no USDA refuse portion)",
         "status": "auto",
         "hold": "in_shell"
       },
@@ -430,6 +430,76 @@
           "description": "Cabbage, napa, cooked",
           "data_type": "SR Legacy",
           "confidence": 0.8733333333333333
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "raw": "1 pound napa cabbage (1 small head), cored and cut into ½-inch strips",
+      "item": "napa cabbage (1 small head)",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "napa cabbage",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2727583,
+        "description": "Cabbage, napa, leaf, destemmed, raw",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 400.0,
+        "gram_source": "override",
+        "gram_basis": "entered by hand · nutrients of \"Cabbage, chinese (pe-tsai), raw\"",
+        "status": "overridden",
+        "hold": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2727583,
+          "description": "Cabbage, napa, leaf, destemmed, raw",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 168572,
+          "description": "Cabbage, napa, cooked",
+          "data_type": "SR Legacy",
+          "confidence": 0.8733333333333333
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "raw": "1 tablespoon plus 1 teaspoon table salt",
+      "item": "plus 1 teaspoon table salt",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 6.0132824,
+        "gram_source": "discarded",
+        "gram_basis": "discarded in cooking — only \"plus 1 teaspoon table salt\" counted",
+        "status": "auto",
+        "hold": "discarded_medium"
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
         }
       ]
     }

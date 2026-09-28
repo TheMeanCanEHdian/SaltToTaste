@@ -177,8 +177,20 @@ const Map<String, String> _synonyms = {
 /// dishes, and rewrites for country-style ribs (to the raw record),
 /// gorgonzola, arborio, 90% lean ground sirloin, andouille, kielbasa
 /// sausage, the flagged asiago and allspice-berry approximations, and lime
-/// zest.
-const int matcherVersion = 10;
+/// zest (a bare 'peel' item is left alone: no line of the library is one —
+/// this entry said it took the fruit too, corrected in v11);
+/// 11 = checkpoint 6 review (2026-09-28): a lean-only/lean-and-fat tie
+/// goes to the lean-and-fat record and a cooked/uncooked one to the record
+/// naming fewer cookings (other exact ties still follow FDC's order); lime zest
+/// searches as lemon zest, "Lemon peel, raw" (a flagged approximation); the
+/// water and dissolve rules read the recipe's own steps only, a dissolve
+/// needs the salt as its object and a submerge, a bare "salt" in cooking
+/// water is the one salt line no step names with its amount, a held
+/// medium's eaten "plus" part is its grams; an amount-less line in the
+/// shell is held (shell-on shrimp the line peels stays held: weighed with
+/// its shells); the
+/// staleness hash reads the steps and the title.
+const int matcherVersion = 11;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -862,10 +874,13 @@ const Map<String, String> _queryRewrites = {
   'asiago cheese': 'parmesan cheese',
   'allspice berries': 'ground allspice',
   'whole allspice berries': 'ground allspice',
-  // FDC's answer for 'lime zest' holds no lime peel ("Lime, raw" won at
-  // 0.485), where lemon's and orange's hold their peel record: the zest →
-  // peel credit reads the peel's words here. Pending ONE live search.
-  'lime zest': 'lime peel raw',
+  // An APPROXIMATION the user accepted (like pancetta above): FDC has no
+  // lime peel — its answer for 'lime zest' held none ("Lime, raw" won at
+  // 0.485), and the ONE approved live search for 'lime peel raw' tied
+  // "Lemon peel, raw" with "Orange peel, raw" at 0.637, so FDC's order
+  // picked. Lime zest searches as lemon zest, whose answer ranks "Lemon
+  // peel, raw" (167749) alone first (v11).
+  'lime zest': 'lemon zest',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -2142,7 +2157,28 @@ List<RankedCandidate> rankCandidates(
       ),
     );
   }
-  ranked.sort((a, b) => b.confidence.compareTo(a.confidence));
+  // Two kinds of exact tie are broken toward the plainer record: the cut's
+  // lean-and-fat record over "lean only" (the user's default for an
+  // unqualified cut — 6 country-style rib lines tie 167895 with 168305 at
+  // 0.5214, above the gate), and the record naming fewer cookings
+  // ("Kielbasa, fully cooked, unheated" over
+  // "…, grilled" at 0.79, 3 lines). v11, both fleets. Any other exact tie
+  // still falls to FDC's order: 310 of the 1,818 cached
+  // answers change their top pick when reversed ("bell pepper" green or
+  // yellow at 0.97), a known ceiling. (Sparing a line that says "lean" or
+  // names a cooking from either tie-break moved no line of the library and
+  // no top pick of the recorded answers but the unsearched "90 percent lean
+  // ground sirloin": removed, refix round 2.)
+  int tieRank(RankedCandidate r) {
+    final words = _words(r.candidate.description);
+    return (words.contains('only') && words.contains('lean') ? 1 : 0) +
+        words.where(_cookingWords.contains).length;
+  }
+
+  ranked.sort((a, b) {
+    final byScore = b.confidence.compareTo(a.confidence);
+    return byScore != 0 ? byScore : tieRank(a).compareTo(tieRank(b));
+  });
   return ranked;
 }
 

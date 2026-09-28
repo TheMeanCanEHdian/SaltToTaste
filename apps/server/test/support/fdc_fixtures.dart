@@ -104,10 +104,6 @@ const Set<String> pendingSearches = {
   'unit green onions',
   'unit lemon',
   'unit vegetable stock concentrate',
-  // Matcher v10's 'lime zest' target (checkpoint 6): FDC's 'lime zest'
-  // answer holds no lime peel. The user approved ONE live search for it;
-  // until it is recorded every lime-zest line reads as pending.
-  'lime peel raw',
 };
 
 /// A fixture miss: the test asked FDC something no fixture recorded. A

@@ -312,16 +312,24 @@ void main() {
 
   group('M3: an un-skip re-derives the row as a compute would', () {
     test("0142: a person's pick on the held zest line, skipped then "
-        'un-skipped, is not re-held second_food', () async {
+        'un-skipped, is re-held second_food — an un-skip is no pick (the '
+        "user's ruling, v11); a pick clears it again", () async {
       final db = tempDb();
       final r = recipeOf(db, 'r1', [heldZest]);
       await matchAndCompute(db, provider, r);
       await applyMatchOverride(db, provider, r, 0, {'fdc_id': 167749});
+      expect(db.ingredientMatchesFor('r1').single.hold, isNull);
       await applyMatchOverride(db, provider, r, 0, {'skipped': true});
       await applyMatchOverride(db, provider, r, 0, {'skipped': false});
-      final row = db.ingredientMatchesFor('r1').single;
-      expect((row.status, row.fdcId, row.hold), ('auto', 167749, null));
-      expect(bucketOf(row), MatchBucket.counted);
+      var row = db.ingredientMatchesFor('r1').single;
+      expect(
+        (row.status, row.fdcId, row.hold),
+        ('auto', 167749, 'second_food'),
+      );
+      expect(bucketOf(row), MatchBucket.check);
+      await applyMatchOverride(db, provider, r, 0, {'fdc_id': 167749});
+      row = db.ingredientMatchesFor('r1').single;
+      expect((row.status, row.hold), ('overridden', null));
     });
 
     test(

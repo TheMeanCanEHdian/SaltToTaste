@@ -994,20 +994,31 @@ bool buysRefuse(String raw) {
 }
 
 /// Whether [raw] buys shellfish IN THE SHELL: clams, mussels or oysters
-/// scrubbed or debearded, live lobsters, shell-on shrimp. Shucked shellfish,
-/// lobster meat and clam juice name none of those words (an exclusion of
-/// "shucked", "meat" and "juice" changed no line of the library: removed,
-/// refix round 1). No record FDC answered them with publishes an edible share
-/// (FNDDS "Clams, raw", "Mussels", "Lobster"; SR "Crustaceans, shrimp, raw"
-/// has an ounce only), so the engine holds such a line bought by weight
-/// (`hold: in_shell`) rather than count shell as meat — the user's ruling,
-/// checkpoint 6: 3 littleneck lines had newly counted 1,361 g of shell, 5
-/// mussel, 2 lobster and 2 shrimp lines already did.
+/// scrubbed, live lobsters, shell-on shrimp. Shucked
+/// shellfish, lobster meat and clam juice name none of those words (an
+/// exclusion of "shucked", "meat" and "juice" changed no line of the
+/// library: removed, refix round 1; so did "debearded" beside "scrubbed" —
+/// every debearded line is scrubbed too: removed, v11). "1 pound large
+/// shell-on shrimp …, peeled, deveined …, shells reserved" (0429) is held
+/// too: its pound is weighed WITH the shells the cook peels off (Step 2
+/// simmers them into stock and strains them out), and the user ruled
+/// shellfish bought in the shell held (v11 refix: a "peeled" exclusion
+/// counted it at the gross 453.59 g). ("Unpeeled" or "in the shell" shrimp
+/// is no line of the library.)
+/// No record FDC answered them with publishes an edible share (FNDDS "Clams,
+/// raw", "Mussels", "Lobster"; SR "Crustaceans, shrimp, raw" has an ounce
+/// only), so the engine holds such a line (`hold: in_shell`) rather than
+/// count shell as meat — the user's ruling, checkpoint 6: 3 littleneck lines
+/// had newly counted 1,361 g of shell, 5 mussel, 2 lobster and 2 shrimp
+/// lines already did. The 18 lines of the library it holds: 6 clam, 6
+/// mussel, 1 oyster (1184), 2 live-lobster and 3 shell-on shrimp lines (one
+/// live-lobster line is a subsection's, never matched).
 bool boughtInShell(String raw) {
   final line = raw.toLowerCase();
   return RegExp(r'\b(clams|mussels|oysters)\b').hasMatch(line) &&
-          RegExp(r'\b(scrubbed|debearded)\b').hasMatch(line) ||
-      RegExp(r'\blive lobsters?\b|\bshell-on\b').hasMatch(line);
+          RegExp(r'\bscrubbed\b').hasMatch(line) ||
+      RegExp(r'\blive lobsters?\b').hasMatch(line) ||
+      RegExp(r'\bshell-on\b').hasMatch(line);
 }
 
 /// USER QUESTION SWITCH (whole birds, checkpoint 5). True (the audit's
@@ -1357,10 +1368,9 @@ GramResolution? resolveGrams({
     // user's ruling, checkpoint 6. Only SR Legacy publishes refuse, so an
     // SR search hit whose detail was never fetched (no portions) says only
     // that no yield was read: its record may publish one. Shellfish in the
-    // shell is held instead ([boughtInShell]).
-    final noRefuse =
-        (food.dataType != 'SR Legacy' || food.portions.isNotEmpty) &&
-        !boughtInShell(raw);
+    // shell is labelled the same — held `in_shell`, and approximate once a
+    // person's confirm counts it at its gross weight (v11).
+    final noRefuse = food.dataType != 'SR Legacy' || food.portions.isNotEmpty;
     first = GramResolution(
       grams: first!.grams,
       source: first.source,

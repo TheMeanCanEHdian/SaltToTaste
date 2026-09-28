@@ -1001,8 +1001,10 @@ void main() {
         );
       }
       // The four right cooked lines stay: kielbasa is "fully cooked" (not a
-      // docked word), smoked ham names its cooking.
-      expect((await rank('kielbasa')).first.candidate.fdcId, 173877);
+      // docked word), smoked ham names its cooking. Its grilled and
+      // unheated records tie; v11 breaks the tie toward the one of no
+      // cooking (matcher.rankCandidates).
+      expect((await rank('kielbasa')).first.candidate.fdcId, 173879);
       expect(
         (await rank('smoked ham')).first.candidate.description,
         'Ham, honey, smoked, cooked',
@@ -1463,7 +1465,15 @@ void main() {
         final (_, medium, row) = lineOf(recipe, raw);
         expect(medium, kind, reason: raw);
         expect(row.hold, 'discarded_medium', reason: raw);
-        expect(row.grams, greaterThan(40), reason: 'grams kept: $raw');
+        if (raw.contains(' plus ')) {
+          // Its "plus" part a step eats is its grams, held with it (v11): the
+          // potatoes' "remaining ⅛ teaspoon salt" in the butter, the
+          // gelato's ¼ teaspoon in the custard.
+          expect(row.gramSource, 'discarded', reason: raw);
+          expect(row.grams, inInclusiveRange(0.5, 2), reason: raw);
+        } else {
+          expect(row.grams, greaterThan(40), reason: 'grams kept: $raw');
+        }
       }
       expect(
         lineOf('corned', '½ cup packed brown sugar').$2,

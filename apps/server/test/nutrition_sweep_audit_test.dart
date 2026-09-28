@@ -901,9 +901,11 @@ void main() {
     // for from snapshot 7 (no fixture miss passes as FDC's own answer): 47
     // more compared, 32 of them differ in some digit. Checkpoint 6 (matcher
     // v10) recorded its pins' answers from snapshot 8: 9 more compared, 8
-    // of them differ in some digit.
-    expect(compared, 175);
-    expect(differ, 130);
+    // of them differ in some digit. The checkpoint-6 review (matcher v11)
+    // recorded "Mushroom, oyster" (1999627) from snapshot 9, a hit in
+    // 'oysters': it differs too.
+    expect(compared, 176);
+    expect(differ, 131);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

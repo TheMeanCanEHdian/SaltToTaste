@@ -150,13 +150,16 @@ void main() {
       );
     });
 
-    test('an edit that leaves the ingredients alone is NOT stale', () {
-      // The prefilter is `updated_at >= computed_at`, which a title change
+    test('an edit that leaves the ingredients, steps and title alone is NOT '
+        'stale; a title edit is (the media rules read it, v11)', () {
+      // The prefilter is `updated_at >= computed_at`, which a category change
       // also satisfies — the Dart hash is what stops it becoming a recompute.
       // This matters: a false positive spends real FDC budget.
       markComputed(alpha);
-      store(alpha.copyWith(title: '${alpha.title} (renamed)'));
+      store(alpha.copyWith(category: '${alpha.category} (renamed)'));
       expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
+      store(alpha.copyWith(title: '${alpha.title} (renamed)'));
+      expect(bulkScopeIds(db, BulkScope.stale), [alpha.id]);
     });
 
     test('the stored hash is the engine own, not a reimplementation', () {

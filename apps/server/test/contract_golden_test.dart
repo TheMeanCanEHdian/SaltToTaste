@@ -168,6 +168,54 @@ const List<Map<String, Object?>> _rulesLines = [
     'item': 'napa cabbage (1/2 medium head)',
     'prep': 'cored and minced',
   },
+  // Matcher v11: napa with its grams entered by hand (Pork Lo Mein, 0540)
+  // still names the sibling whose nutrients its totals read.
+  {
+    'raw':
+        '1 pound napa cabbage (1 small head), cored and cut into ½-inch '
+        'strips',
+    'amounts': [
+      {'measure': 'weight', 'quantity': '1', 'unit': 'pound', 'primary': true},
+    ],
+    'item': 'napa cabbage (1 small head)',
+    'prep': 'cored and cut into 1/2-inch strips',
+  },
+  // Classic Macaroni and Cheese (0300), with its two salt steps
+  // ([_rulesSteps]): the pasta water's tablespoon held for review, the
+  // roux's "remaining 1 teaspoon" its grams.
+  {
+    'raw': '1 tablespoon plus 1 teaspoon table salt',
+    'amounts': [
+      {
+        'measure': 'volume',
+        'quantity': '1',
+        'unit': 'tablespoon',
+        'primary': true,
+      },
+    ],
+    'item': 'plus 1 teaspoon table salt',
+  },
+];
+
+/// Classic Macaroni and Cheese's (0300) salt steps, verbatim (the second
+/// cut after its whisking sentence).
+const List<Map<String, Object?>> _rulesSteps = [
+  {
+    'number': 1,
+    'text':
+        'Adjust an oven rack to the lower-middle position and heat the '
+        'broiler. Bring 4 quarts water to a rolling boil in a large pot. Add '
+        '1 tablespoon of the salt and the macaroni and stir to separate the '
+        'noodles. Cook until tender, drain, and set aside.',
+  },
+  {
+    'number': 2,
+    'text':
+        'In the now-empty pot, melt the butter over medium-high heat. Add the '
+        'flour, mustard, cayenne (if using), and remaining 1 teaspoon salt '
+        'and whisk well to combine. Continue whisking until the mixture '
+        'becomes fragrant and deepens in color, about 1 minute.',
+  },
 ];
 
 // A conflict copy exactly as `exportRecipeYaml` names them.
@@ -385,6 +433,7 @@ void main() {
             'ingredients': [
               {'items': _rulesLines},
             ],
+            'steps': _rulesSteps,
           },
         },
       );
@@ -404,6 +453,13 @@ void main() {
         '${(jsonDecode(computeBody) as Map<String, dynamic>)['job_id']}',
         harness.auth(adminSession),
       );
+      final (edited, editBody) = await harness.send(
+        'PUT',
+        '/api/v1/recipes/$rulesSlug/nutrition/matches/9',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {'grams': 400},
+      );
+      expect(edited, HttpStatus.ok, reason: editBody);
       await harness.capture(
         'nutrition_matches_rules',
         'GET',

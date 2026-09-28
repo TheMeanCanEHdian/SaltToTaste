@@ -490,15 +490,24 @@ void main() {
           contains('approximate (gross weight, no USDA refuse portion)'),
           contains('× 0.61 edible (USDA ready-to-cook yield)'),
           contains('nutrients of "Cabbage, chinese (pe-tsai), raw"'),
+          // Matcher v11: napa grams entered by hand, and the pasta water's
+          // held salt whose eaten "plus" part is its grams.
+          equals(
+            'entered by hand · nutrients of "Cabbage, chinese (pe-tsai), raw"',
+          ),
+          equals(
+            'discarded in cooking — only "plus 1 teaspoon table salt" counted',
+          ),
         ]),
       );
       final held = {
         for (final line in parsed)
           if (line.hold != null) line.hold!: holdReason(line.hold),
       };
-      expect(held.keys, {'cured_for_fresh', 'in_shell'});
+      expect(held.keys, {'cured_for_fresh', 'in_shell', 'discarded_medium'});
       expect(held['cured_for_fresh'], contains('a preserved record'));
       expect(held['in_shell'], contains('Bought in the shell'));
+      expect(held['discarded_medium'], contains('drained cooking water'));
     });
 
     test('an uncomputed recipe parses as unmatched lines', () async {

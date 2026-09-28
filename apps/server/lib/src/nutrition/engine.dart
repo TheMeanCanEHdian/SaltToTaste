@@ -163,11 +163,15 @@ final RegExp _kept = RegExp(
   caseSensitive: false,
 );
 
-/// Every step text of [recipe], subsections included.
+/// The step texts of [recipe] itself — never a subsection's: a variation
+/// or sub-recipe is out of the main totals (the user's ruling, 2026-09-27),
+/// and its own pot and its own salt must not make a main line a medium
+/// (v11, Sonnet: a variation's bare "Add the spaghetti and salt … Drain"
+/// held the recipe's one seasoning salt as cooking water). Measured: no line
+/// of the library moves, so the bound is pinned on a synthesized subsection
+/// (a stated exception).
 List<String> _stepsOf(Recipe recipe) => [
   for (final step in recipe.steps) step.text,
-  for (final subsection in recipe.subsections)
-    for (final step in subsection.steps ?? const <RecipeStep>[]) step.text,
 ];
 
 /// The second part of a discarded-medium "plus" line that a step uses
@@ -276,9 +280,11 @@ DiscardedMedium? discardedMediumOf(
 /// and the offset of a mention that is THIS line's — its amount written
 /// before it ("Add pasta and 1 tablespoon salt" for "1 tablespoon salt"),
 /// or a bare "salt" when no other line of [recipe] is salt ("Add the
-/// noodles and salt"). A step naming another amount ("Add 2 tablespoons
-/// salt" beside "¼ teaspoon table salt, plus salt for blanching") names a
-/// salt the line does not measure, and so does a line that measures its
+/// noodles and salt") — or, for [drained] water, when the line is the one
+/// salt line no step names with its amount and no volume makes a medium.
+/// A step naming another amount ("Add 2 tablespoons salt" beside "¼
+/// teaspoon table salt, plus salt for blanching") names a salt the line
+/// does not measure, and so does a line that measures its
 /// salt apart from the pot's: "1 teaspoon table salt, plus salt for cooking
 /// lentils and bulgur" (1186). Salt pork is not salt. "1 teaspoon of the
 /// salt" is a written amount too: Cincinnati Chili (0303) blanches its beef
@@ -289,8 +295,9 @@ DiscardedMedium? discardedMediumOf(
 Iterable<({int step, int at})> _ownMentions(
   Recipe recipe,
   IngredientLine line,
-  List<String> steps,
-) sync* {
+  List<String> steps, {
+  bool drained = false,
+}) sync* {
   final raw = line.raw.toLowerCase();
   if (RegExp(r'\bplus salt\b').hasMatch(raw)) {
     return;
@@ -307,16 +314,48 @@ Iterable<({int step, int at})> _ownMentions(
     '([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]*'
     r'(?:teaspoons?|tablespoons?))\s+(?:of the\s+)?$',
   );
-  for (final (i, step) in steps.indexed) {
-    final text = step.toLowerCase();
-    for (final mention in word.allMatches(text)) {
-      final before = text.substring(0, mention.start);
-      final written = amount.firstMatch(before)?[1];
-      if (written != null
-          ? raw.startsWith(written.trim())
-          : salts.length == 1 && identical(salts.single, line)) {
-        yield (step: i, at: mention.start);
-      }
+  final mentions = [
+    for (final (i, step) in steps.indexed)
+      for (final mention in word.allMatches(step.toLowerCase()))
+        (
+          step: i,
+          at: mention.start,
+          written: amount
+              .firstMatch(step.toLowerCase().substring(0, mention.start))?[1]
+              ?.trim(),
+        ),
+  ];
+  // In a recipe of several salt lines, a bare "salt" in cooking water
+  // ([drained]) is the one salt line's that no step names with its amount
+  // and no volume makes a medium: 0358 Spaghetti and Meatballs for a Crowd
+  // names "1½ teaspoons salt" in its sauce, so "Add the pasta and salt" is
+  // the 2 tablespoons'; 0461 Simplified Cassoulet's ½ cup is its brine, so
+  // the beans' "salt" is the 1 teaspoon (v11, Opus). Never for a dissolve:
+  // "Dissolve the salt and sugar in 2 gallons cold water … submerge" is the
+  // brine line's own bare salt — read for any line, it zeroed 6 small table
+  // salt lines of brined roasts as brine (measured, v11).
+  final bare = [
+    for (final other in salts)
+      if (!mentions.any(
+            (m) =>
+                m.written != null &&
+                other.raw.toLowerCase().startsWith(m.written!),
+          ) &&
+          discardedMediumOf(
+                recipe,
+                other,
+                normalizeItem(lineItemOf(other)),
+                bySentence: false,
+              ) ==
+              null)
+        other,
+  ];
+  final ownsBare = salts.length == 1
+      ? identical(salts.single, line)
+      : drained && bare.length == 1 && identical(bare.single, line);
+  for (final (:step, :at, :written) in mentions) {
+    if (written != null ? raw.startsWith(written) : ownsBare) {
+      yield (step: step, at: at);
     }
   }
 }
@@ -341,7 +380,12 @@ String _sentenceAt(String text, int at) {
 bool _drainedWater(Recipe recipe, IngredientLine line, List<String> steps) {
   final water = RegExp(r'\bwater\b');
   final drain = RegExp(r'(?<!not )\bdrain');
-  for (final (:step, :at) in _ownMentions(recipe, line, steps)) {
+  for (final (:step, :at) in _ownMentions(
+    recipe,
+    line,
+    steps,
+    drained: true,
+  )) {
     final text = steps[step].toLowerCase();
     // Milk is no water: Saag Paneer's (0563) curds drain, but its salt went
     // in boiled milk. The water must be named BEFORE the end of the salt's
@@ -362,34 +406,41 @@ bool _drainedWater(Recipe recipe, IngredientLine line, List<String> steps) {
 }
 
 /// Whether a step dissolves [line]'s salt ([_ownMentions]) in a measured
-/// volume of water — a brine whatever its volume or name: "Dissolve salt in
-/// 2½ quarts water in Dutch oven; place ribs in pot so they are fully
-/// submerged" (0617: 2 tablespoons, under the 3-tablespoon threshold, and
-/// never called a brine; checkpoint 6). (A further "submerg" requirement
-/// changed no line of the library: removed, refix round 1. So did the unit
-/// after the amount — quarts, gallons or cups — and a "water" after it:
-/// every salt the library dissolves "in" a written amount is in quarts of
-/// water, or a brine by its own volume, or no line's own mention. Removed,
-/// refix round 3; the written amount stays — "in remaining 2 tablespoons
-/// warm water" is a dough's, Easy Sandwich Bread 0807.)
+/// volume of water the food is then submerged in — a brine whatever its
+/// volume or name: "Dissolve salt in 2½ quarts water in Dutch oven; place
+/// ribs in pot so they are fully submerged" (0617: 2 tablespoons, under the
+/// 3-tablespoon threshold, and never called a brine; checkpoint 6). The
+/// salt is what the verb dissolves: the mention sits between "dissolv…" and
+/// "in <amount>" in its own sentence — "Dissolve sugar in 2 cups warm
+/// water, then whisk in the salt" dissolves the sugar — and the step says
+/// "submerg": a dough's "Dissolve salt in 2 tablespoons warm water" is
+/// eaten (v11, both fleets). No clause moves a line of the library
+/// (every salt it dissolves in a written amount is 0617's or a brine by its
+/// own volume), so each — the verb before the mention, the amount after
+/// it, the submerge — is pinned on a synthesized line (stated exceptions).
+/// (The unit after the amount — quarts, gallons or cups — and a "water"
+/// after it changed no line of the library: removed, refix round 3; the
+/// written amount stays — "in remaining 2 tablespoons warm water" is
+/// a dough's, Easy Sandwich Bread 0807.)
 bool _dissolvedInWater(
   Recipe recipe,
   IngredientLine line,
   List<String> steps,
 ) {
-  final dissolved = RegExp(
-    // The verb keeps a whisked or simmered salt out ("Whisk together flour
-    // and salt in 8-cup liquid measuring cup", Popovers 1109). The match is
-    // read within the salt's OWN sentence (_sentenceAt): a dough's "Dissolve
-    // yeast in 2 tablespoons warm water" one sentence over must not turn its
-    // salt into brine — no corpus line has that shape, so the guard is
-    // pinned on a synthesized one (a stated exception, review Run 043).
-    '\\bdissolv\\w*\\b.*\\bin [\\d$vulgarFractionChars]',
-  );
+  // The verb keeps a whisked or simmered salt out ("Whisk together flour
+  // and salt in 8-cup liquid measuring cup", Popovers 1109).
+  final verb = RegExp(r'\bdissolv\w*\b');
+  final into = RegExp('\\bin [\\d$vulgarFractionChars]');
   for (final (:step, :at) in _ownMentions(recipe, line, steps)) {
-    if (dissolved.hasMatch(
-      _sentenceAt(steps[step].toLowerCase(), at),
-    )) {
+    final text = steps[step].toLowerCase();
+    if (!text.contains('submerg')) {
+      continue;
+    }
+    final start = text.lastIndexOf(RegExp(r'\.\s'), at) + 1;
+    final sentence = _sentenceAt(text, at);
+    final mention = at - start;
+    if (verb.allMatches(sentence).any((v) => v.end <= mention) &&
+        into.allMatches(sentence).any((i) => i.start > mention)) {
       return true;
     }
   }
@@ -455,7 +506,7 @@ bool _dissolvedWithBrineSalt(
   Recipe recipe,
   IngredientLine line,
   FdcFood food,
-  GramResolution? resolution, {
+  GramResolution? resolved, {
   bool picked = false,
   bool decided = false,
   double? confidence,
@@ -467,27 +518,42 @@ bool _dissolvedWithBrineSalt(
     recipe,
     line,
     normalized,
-    grams: resolution?.grams,
+    grams: resolved?.grams,
   );
+  // Only the first part of a "plus" line is the medium when a step eats
+  // the second ([_eatenPlusPart]).
+  final plus = medium == null
+      ? null
+      : _eatenPlusPart(recipe, line, headNounOf(normalized));
+  final kept = plus == null
+      ? null
+      : resolveGrams(
+          amounts: [plus.amount],
+          food: food,
+          normalizedItem: normalized,
+        );
   if (medium != null &&
       medium.followsPolicy &&
       discardedMediaPolicy == DiscardedMediaPolicy.zero) {
-    // Only the first part of a "plus" line is the medium when a step eats
-    // the second ([_eatenPlusPart]).
-    final plus = _eatenPlusPart(recipe, line, headNounOf(normalized));
-    final kept = plus == null
-        ? null
-        : resolveGrams(
-            amounts: [plus.amount],
-            food: food,
-            normalizedItem: normalized,
-          );
     return (
       grams: kept?.grams ?? 0,
       source: GramSource.discarded.name,
       hold: null,
     );
   }
+  // A HELD medium's eaten part is its grams too, held with the line: a
+  // confirm counts that part, never the water's (0300 Classic Macaroni and
+  // Cheese: "1 tablespoon plus 1 teaspoon table salt", 1 tablespoon in the
+  // drained pasta water, "remaining 1 teaspoon salt" in the roux — v10 held
+  // all 24 g, a confirm would count them; v11, Opus). How much of the water's
+  // part the food keeps nothing says, so the line stays held for a person.
+  final resolution = kept == null
+      ? resolved
+      : GramResolution(
+          grams: kept.grams,
+          source: GramSource.discarded,
+          basis: kept.basis,
+        );
   final rule = secondFoodRuleOf(line, citrus: citrus, eggs: eggs);
   if (rule != null && rule.fdcId == food.fdcId) {
     final resolved = rule.gramsOn(food);
@@ -496,8 +562,12 @@ bool _dissolvedWithBrineSalt(
   final secondFood = namesSecondFood(line.raw);
   // A LINE hold too: no food decision says how much of a shell is eaten.
   final inShell = boughtInShell(line.raw);
+  // An amount-less line counts as 0 g — never one bought in the shell: 0 g
+  // would read resolved (`counted`) and leave the queue, hold or no hold.
+  // No corpus line buys shellfish without an amount, so the guard is pinned
+  // on a synthesized one (a stated exception, v11).
+  final zero = amountlessLinesZero && line.amounts.isEmpty && !inShell;
   if (decided) {
-    final zero = amountlessLinesZero && line.amounts.isEmpty;
     return (
       grams: zero ? 0 : resolution?.grams,
       source: zero ? GramSource.unmeasured.name : resolution?.source.name,
@@ -513,7 +583,7 @@ bool _dissolvedWithBrineSalt(
   // A line that names no food goes to a person even when it has no amount
   // ("2 tablespoons juice", which the parser kept whole).
   final unnamed = picked && namesNoFood(line);
-  if (amountlessLinesZero && line.amounts.isEmpty) {
+  if (zero) {
     return (
       grams: 0,
       source: GramSource.unmeasured.name,
@@ -1036,9 +1106,14 @@ List<IngredientLine> nutritionLines(Recipe recipe) => [
 String ingredientsHashOf(Recipe recipe) {
   // The matcher version is part of it: a bump makes every computed recipe
   // stale, so the stale sweep re-resolves its engine rows instead of leaving
-  // scores and picks frozen at the matcher that wrote them.
+  // scores and picks frozen at the matcher that wrote them. So are the
+  // recipe's own steps and its title, which the discarded-media rules read
+  // ([discardedMediumOf]): a steps-only edit adding or removing a drain
+  // left the hold and the totals frozen, never stale (v11, Opus critic).
   final payload = jsonEncode({
     'matcher': matcherVersion,
+    'title': recipe.title,
+    'steps': [for (final step in recipe.steps) step.text],
     'lines': [
       for (final line in nutritionLines(recipe))
         {
@@ -1862,8 +1937,16 @@ String? gramBasisFor(
   if (row.grams == null) {
     return null;
   }
+  final fdcId = row.fdcId;
+  // A record whose nutrients are a sibling's says so ([nutrientSiblings]),
+  // whoever gave the grams: the totals read the sibling's for a hand-entered
+  // weight too (v11, Opus critic).
+  final sibling = fdcId == null ? null : nutrientSiblings[fdcId];
+  final nutrientsOf = sibling == null
+      ? ''
+      : ' · nutrients of "${knownFood(db, sibling)?.description ?? sibling}"';
   if (row.gramSource == 'override') {
-    return 'entered by hand';
+    return 'entered by hand$nutrientsOf';
   }
   if (row.gramSource == GramSource.discarded.name) {
     final plus = plusPartOf(line.raw);
@@ -1874,14 +1957,12 @@ String? gramBasisFor(
   if (row.gramSource == GramSource.unmeasured.name && line.amounts.isEmpty) {
     return 'no amount on the line — counted as 0 g';
   }
-  FdcFood? food;
-  final fdcId = row.fdcId;
-  if (fdcId != null) {
-    final cached = db.fdcFoodCacheGet(fdcId);
-    if (cached != null) {
-      food = FdcFood.fromJson(jsonDecode(cached) as Map<String, dynamic>);
-    }
-  }
+  // The food's cached detail, else its cached search hit — as the engine
+  // resolved the grams on: with neither, a counted bone-in line read a plain
+  // "from 4 pound", its approximate label lost for want of a detail no
+  // compute fetches for a Foundation or FNDDS weight line (v11, Opus:
+  // braised oxtails, 2705843).
+  final food = fdcId == null ? null : knownFood(db, fdcId, line: line);
   final rule = secondFoodRuleOf(line);
   if (rule != null && rule.fdcId == fdcId) {
     final byRule = rule.gramsOn(food);
@@ -1889,11 +1970,6 @@ String? gramBasisFor(
       return byRule.basis;
     }
   }
-  // A record whose nutrients are a sibling's says so ([nutrientSiblings]).
-  final sibling = fdcId == null ? null : nutrientSiblings[fdcId];
-  final nutrientsOf = sibling == null
-      ? ''
-      : ' · nutrients of "${knownFood(db, sibling)?.description ?? sibling}"';
   GramResolution? on(FdcFood? food) {
     final grams = lineGrams(db, line, food);
     return grams == null || nutrientsOf.isEmpty
