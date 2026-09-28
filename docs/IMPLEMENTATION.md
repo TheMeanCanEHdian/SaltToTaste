@@ -1642,8 +1642,9 @@ ranges, zest strips with a juice volume, a bare zest keyed by its fruit);
 the "skinless" credit only on records carrying the head with "lomi" and
 "<head> salad" as dish markers; a 0.5 − 1e-9 gate floor; the lime zest →
 "lime peel raw" rewrite (one approved live search, pending); and a
-`basis_kind` flag ("per_batch" when the basis is ≤ 2 with no serves count)
-shown as a small "per batch" label. Cache-only replay on snapshot 8:
+`basis_kind` flag ("per_batch" when the serving basis is exactly 1 — the
+fixer's first cut, basis ≤ 2 with no serves count, mislabelled 29 two-yield
+recipes and was refixed) shown as a small "per batch" label. Cache-only replay on snapshot 8:
 counted 12,513 → 12,540, check 841 → 819, no grams 210 → 206, no match
 51 → 50, complete 540 → 553 (23 gained; 9 dropped on purpose because a
 line is now held for review, plus the carbonara pasta-water salt); 5
