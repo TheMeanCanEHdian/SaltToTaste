@@ -84,7 +84,9 @@ String? holdReason(String? hold) => switch (hold) {
   'no_nutrients' => 'USDA publishes no calories or macros for this food',
   'discarded_medium' =>
     'Looks like a cooking medium the recipe discards (frying oil, a brine, '
-        'a soak, cheese-making milk)',
+        'a soak, cheese-making milk, drained cooking water)',
+  'in_shell' =>
+    'Bought in the shell — USDA has no edible share for this record',
   'second_food' =>
     'This line also calls for a second ingredient the match does not cover',
   'unnamed_food' =>

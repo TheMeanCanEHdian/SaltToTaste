@@ -97,15 +97,19 @@ void main() {
     gramSource: row.gramSource,
   );
 
-  // Pan-Seared Napa Cabbage lines (Foundation 2727583 publishes no energy).
-  const napa = '12 ounces napa cabbage (½ medium head), cored and minced';
+  // Red Beans and Rice (0712): Foundation 747431 "Beans, Dry, Red (0%
+  // moisture)" publishes protein and fat, no energy and no carbohydrate —
+  // held `no_nutrients`. (Napa cabbage was the example here until matcher
+  // v10 read its nutrients from a sibling record: nutrition_v10_test.)
+  const redBeans =
+      '1 pound (about 2 cups) dried small red beans, picked over and rinsed';
 
   group('M1: apply-to-all reaches a held sibling on the same food', () {
-    test('napa cabbage: others counts the held sibling, the confirm lands '
+    test('dried red beans: others counts the held sibling, the confirm lands '
         'on it and clears the hold', () async {
       final db = tempDb();
-      final a = recipeOf(db, 'ra', [napa]);
-      final b = recipeOf(db, 'rb', [napa]);
+      final a = recipeOf(db, 'ra', [redBeans]);
+      final b = recipeOf(db, 'rb', [redBeans]);
       for (final r in [a, b]) {
         await matchAndCompute(db, provider, r);
       }
@@ -180,23 +184,23 @@ void main() {
     test('pick, skip and un-skip: the picked food is never held for the '
         "engine's old reason; un-skip re-derives the engine's own", () async {
       final db = tempDb();
-      final b = recipeOf(db, 'rb', [napa]);
+      final b = recipeOf(db, 'rb', [redBeans]);
       await matchAndCompute(db, provider, b);
       IngredientMatchRow row() => db.ingredientMatchesFor('rb').single;
-      // "Cabbage, napa, cooked" (168572) publishes energy.
-      await applyMatchOverride(db, provider, b, 0, {'fdc_id': 168572});
+      // "Beans, kidney, red, mature seeds, raw" (173744) publishes energy.
+      await applyMatchOverride(db, provider, b, 0, {'fdc_id': 173744});
       expect((row().status, row().hold), ('overridden', null));
       await applyMatchOverride(db, provider, b, 0, {'skipped': true});
       expect((row().status, row().hold), ('skipped', null));
       await applyMatchOverride(db, provider, b, 0, {'skipped': false});
-      expect((row().status, row().fdcId, row().hold), ('auto', 168572, null));
+      expect((row().status, row().fdcId, row().hold), ('auto', 173744, null));
       expect(bucketOf(row()), MatchBucket.counted);
       expect(db.nutritionFor('rb')!.status, 'complete');
 
       // The engine's own food (a library with no decision on the key):
       // skipped and back, its reason is re-derived.
       final fresh = tempDb();
-      final c = recipeOf(fresh, 'rc', [napa]);
+      final c = recipeOf(fresh, 'rc', [redBeans]);
       await matchAndCompute(fresh, provider, c);
       await applyMatchOverride(fresh, provider, c, 0, {'skipped': true});
       expect(fresh.ingredientMatchesFor('rc').single.hold, isNull);
@@ -212,21 +216,21 @@ void main() {
       // Before the hold was cleared on skip (d60bcd1), a skipped row kept
       // the engine's reason; with no cached food it cannot be re-derived.
       final db = tempDb();
-      final b = recipeOf(db, 'rb', [napa]);
+      final b = recipeOf(db, 'rb', [redBeans]);
       db.upsertIngredientMatch(
         IngredientMatchRow(
           recipeId: 'rb',
           position: 0,
-          raw: napa,
-          fdcId: 2727583,
-          description: 'Cabbage, napa, leaf, destemmed, raw',
+          raw: redBeans,
+          fdcId: 747431,
+          description: 'Beans, Dry, Red (0% moisture)',
           dataType: 'Foundation',
-          confidence: 0.95,
-          grams: 340.2,
+          confidence: 0.61,
+          grams: 453.6,
           gramSource: 'weight',
           status: 'skipped',
           hold: 'no_nutrients',
-          itemKey: lineKeyOf(lineOf(napa)),
+          itemKey: lineKeyOf(lineOf(redBeans)),
         ),
       );
       await applyMatchOverride(db, provider, b, 0, {'skipped': false});
@@ -674,31 +678,34 @@ void main() {
         'no portion grams; a confirm resolves them', () async {
       final db = tempDb();
       final fixtures = FixtureProvider();
-      // Lime zest lines ("Lime, raw" 2709170 at 0.485 — FDC has no lime
-      // peel record; lemon zest reads "Lemon peel, raw" since matcher v8).
-      final r = recipeOf(db, 'r1', ['2 teaspoons grated lime zest']);
+      // Ground Beef and Cheese Enchiladas (0486): "Adobo, with noodles"
+      // (2708809) at 0.215. (Lime zest was the example until matcher v10
+      // rewrote it to a pending search.)
+      const chipotle =
+          '1 tablespoon minced canned chipotle chile in adobo sauce';
+      final r = recipeOf(db, 'r1', [chipotle]);
       await matchAndCompute(db, fixtures, r);
       final row = db.ingredientMatchesFor('r1').single;
-      expect((row.fdcId, row.grams), (2709170, null));
+      expect((row.fdcId, row.grams), (2708809, null));
       expect(row.confidence, lessThan(lowConfidence));
       expect(fixtures.foodCalls, 0);
       await applyMatchOverride(db, fixtures, r, 0, {'confirmed': true});
       final confirmed = db.ingredientMatchesFor('r1').single;
       expect(fixtures.foodCalls, 1);
-      // "1 cup" 200 g.
-      expect(confirmed.grams, closeTo(2 * 4.92892 * 200 / 236.588, 0.01));
+      // Its FNDDS "1 tablespoon" portion.
+      expect(confirmed.grams, closeTo(14, 0.01));
       expect(confirmed.status, 'confirmed');
 
       // A detail already cached is the engine's food, fetch or not: the pick
       // below the gate gets its portion grams with no provider call.
       final cached = tempDb()
-        ..fdcFoodCachePut(2709170, jsonEncode((await food(2709170)).toJson()));
+        ..fdcFoodCachePut(2708809, jsonEncode((await food(2708809)).toJson()));
       final again = FixtureProvider();
-      final r2 = recipeOf(cached, 'r2', ['2 teaspoons grated lime zest']);
+      final r2 = recipeOf(cached, 'r2', [chipotle]);
       await matchAndCompute(cached, again, r2);
       expect(
         cached.ingredientMatchesFor('r2').single.grams,
-        closeTo(2 * 4.92892 * 200 / 236.588, 0.01),
+        closeTo(14, 0.01),
       );
       expect(again.foodCalls, 0);
     });
@@ -855,7 +862,7 @@ void main() {
         'ways', () async {
       final db = tempDb();
       const evoo = '¼ cup extra-virgin olive oil';
-      final r = recipeOf(db, 'r1', [evoo, napa]);
+      final r = recipeOf(db, 'r1', [evoo, redBeans]);
       IngredientMatchRow stale(int position, String raw, String? hold) =>
           IngredientMatchRow(
             recipeId: 'r1',
@@ -873,7 +880,7 @@ void main() {
           );
       db
         ..upsertIngredientMatch(stale(0, evoo, 'second_food'))
-        ..upsertIngredientMatch(stale(1, napa, null));
+        ..upsertIngredientMatch(stale(1, redBeans, null));
       await matchAndCompute(db, provider, r);
       final rows = db.ingredientMatchesFor('r1');
       expect([for (final row in rows) row.hold], [null, 'no_nutrients']);
@@ -971,7 +978,7 @@ void main() {
 
       final db = tempDb();
       final r = recipeOf(db, 'r1', [
-        napa,
+        redBeans,
         '2 cups vegetable oil for frying',
         'Lemon wedges',
       ]);

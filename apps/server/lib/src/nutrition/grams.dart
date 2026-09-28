@@ -245,6 +245,10 @@ const List<(String, double)> _pieceWeights = [
   ('corn tortilla', 26),
   ('tortilla', 26),
   ('hamburger bun', 52),
+  // "4 hamburger rolls" (0576): SR 172796 "Rolls, hamburger or hotdog,
+  // plain" gives its roll as 'roll 1 serving' = 44 g, a portion no step
+  // reads (checkpoint 6: 208 g on a multigrain bun went to no grams).
+  ('hamburger roll', 44),
   // "6 burger buns" matched the right roll and had no grams (audit 4).
   ('burger bun', 52),
   ('english muffin', 60),
@@ -276,6 +280,11 @@ const Map<int, int> volumeSiblings = {
   // Nuts, coconut meat, dried (desiccated), not sweetened (an "oz" portion
   // only) → its sweetened shredded sibling: "cup, shredded" 93 g.
   170170: 168586,
+  // Blueberries, raw (Foundation, racc only) → FNDDS "Blueberries, frozen":
+  // "1 cup" 150 g. The 'or frozen blueberry' leak fix moved "1 cup fresh or
+  // frozen blueberries" (0745) onto the raw record and Blueberry Pancakes
+  // lost complete (checkpoint 6).
+  2346411: 2709277,
 };
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
@@ -376,9 +385,11 @@ double? _quantityValue(String quantity, {bool upper = false}) {
   if (direct != null) {
     return direct;
   }
-  // Ranges take the midpoint ("4-6", "4 to 6"), or the [upper] bound.
+  // Ranges take the midpoint ("4-6", "4 to 6"), or the [upper] bound. A
+  // bound may be a mixed number: "1 1/2–2" (0471's juice, checkpoint 6),
+  // "3–3 1/2".
   final range = RegExp(
-    r'^\s*(\S+)\s*(?:-|–|to)\s*(\S+)\s*$',
+    r'^\s*(\d+\s+\d+/\d+|\S+?)\s*(?:-|–|to)\s*(\d+\s+\d+/\d+|\S+)\s*$',
   ).firstMatch(quantity);
   if (range != null) {
     final low = parseQuantity(range.group(1)!);
@@ -965,7 +976,12 @@ const bool edibleYieldOn = true;
 /// classifier (audit1/bone2.py). Boneless, ground and broth lines never are.
 bool buysRefuse(String raw) {
   final line = raw.toLowerCase();
-  if (RegExp(r'boneless|broth|stock|\bground\b').hasMatch(line)) {
+  // "1 pound lobster meat" (0292) is picked meat, as a boneless cut is (not
+  // 0222's rib roast, "meat removed from bones" and tied back on). (Crab and
+  // clam meat changed no line of the library: removed, refix round 2.)
+  if (RegExp(
+    r'boneless|broth|stock|\bground\b|\blobster\s*meat\b',
+  ).hasMatch(line)) {
     return false;
   }
   return RegExp(
@@ -975,6 +991,23 @@ bool buysRefuse(String raw) {
     r'baby back|drumsticks?|wings?\b|leg quarters?|'
     r'clams|mussels|oysters|lobsters?|shell-on|in the shell|crabs?\b',
   ).hasMatch(line);
+}
+
+/// Whether [raw] buys shellfish IN THE SHELL: clams, mussels or oysters
+/// scrubbed or debearded, live lobsters, shell-on shrimp. Shucked shellfish,
+/// lobster meat and clam juice name none of those words (an exclusion of
+/// "shucked", "meat" and "juice" changed no line of the library: removed,
+/// refix round 1). No record FDC answered them with publishes an edible share
+/// (FNDDS "Clams, raw", "Mussels", "Lobster"; SR "Crustaceans, shrimp, raw"
+/// has an ounce only), so the engine holds such a line bought by weight
+/// (`hold: in_shell`) rather than count shell as meat — the user's ruling,
+/// checkpoint 6: 3 littleneck lines had newly counted 1,361 g of shell, 5
+/// mussel, 2 lobster and 2 shrimp lines already did.
+bool boughtInShell(String raw) {
+  final line = raw.toLowerCase();
+  return RegExp(r'\b(clams|mussels|oysters)\b').hasMatch(line) &&
+          RegExp(r'\b(scrubbed|debearded)\b').hasMatch(line) ||
+      RegExp(r'\blive lobsters?\b|\bshell-on\b').hasMatch(line);
 }
 
 /// USER QUESTION SWITCH (whole birds, checkpoint 5). True (the audit's
@@ -1062,14 +1095,9 @@ double? edibleYieldOf(
   String? raw,
   bool wholeBird = wholeBirdYieldOn,
 }) {
-  if (wholeBird &&
-      raw != null &&
-      _wholeBirdLine.hasMatch(raw) &&
-      _wholeBirdRecord(food)) {
-    final share = _readyToCookYield(food);
-    if (share != null) {
-      return share;
-    }
+  final share = _wholeBirdShare(food, raw, wholeBird);
+  if (share != null) {
+    return share;
   }
   final refuse = RegExp(
     r'yield from 1 raw .*with refuse, weighing ([\d.]+) ?g',
@@ -1087,6 +1115,16 @@ double? edibleYieldOf(
   }
   return null;
 }
+
+/// The ready-to-cook share [edibleYieldOf] reads for a whole-bird line
+/// [raw] on a whole-bird record under [wholeBird], or null.
+double? _wholeBirdShare(FdcFood food, String? raw, bool wholeBird) =>
+    wholeBird &&
+        raw != null &&
+        _wholeBirdLine.hasMatch(raw) &&
+        _wholeBirdRecord(food)
+    ? _readyToCookYield(food)
+    : null;
 
 /// Words of a second part that name no food ("at room temperature",
 /// "16 individual raspberries", "reserved").
@@ -1300,28 +1338,35 @@ GramResolution? resolveGrams({
       ? edibleYieldOf(food, raw: raw, wholeBird: wholeBirdYield)
       : null;
   if (yieldFactor != null) {
+    // A whole bird's share is the record's ready-to-cook yield, not a refuse
+    // portion (checkpoint 6: the basis said "USDA refuse" for both).
+    final readyToCook = _wholeBirdShare(food!, raw, wholeBirdYield) != null;
     first = GramResolution(
       grams: first!.grams * yieldFactor,
       source: first.source,
       basis:
           '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
-          '(USDA refuse)',
+          '(${readyToCook ? 'USDA ready-to-cook yield' : 'USDA refuse'})',
     );
   } else if (refuse) {
-    // The record publishes no refuse portion — or its detail was never
-    // fetched (a search hit has no portions): the bone is counted, and the
-    // basis says so rather than implying a yield.
-    // Pieces on the whole-bird record: its ready-to-cook yield is the
-    // whole bird's, not a part's, so the gross weight stands — labelled.
-    final approximate =
-        wholeBirdYield &&
-        _wholeBirdRecord(food) &&
-        _readyToCookYield(food) != null;
+    // The record publishes no refuse portion: the bone (a whole turkey's,
+    // a Foundation chicken part's, a lamb chop's; pieces on the whole-bird
+    // record, whose yield is the whole bird's) is counted at the gross
+    // weight — never a borrowed factor (FDC gives no turkey share; the
+    // chicken 0.61 is not a turkey's) — and the basis says approximate: the
+    // user's ruling, checkpoint 6. Only SR Legacy publishes refuse, so an
+    // SR search hit whose detail was never fetched (no portions) says only
+    // that no yield was read: its record may publish one. Shellfish in the
+    // shell is held instead ([boughtInShell]).
+    final noRefuse =
+        (food.dataType != 'SR Legacy' || food.portions.isNotEmpty) &&
+        !boughtInShell(raw);
     first = GramResolution(
       grams: first!.grams,
       source: first.source,
-      basis: approximate
-          ? '${first.basis} · approximate (gross weight, no part yield)'
+      basis: noRefuse
+          ? '${first.basis} · approximate (gross weight, no USDA refuse '
+                'portion)'
           : '${first.basis} · no edible yield read',
     );
   }

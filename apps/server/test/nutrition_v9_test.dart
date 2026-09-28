@@ -508,7 +508,11 @@ void main() {
         for (final raw in [fortyCloves, noodleSoup]) {
           final grams = gramsOf(raw, chicken)!;
           expect(grams.grams, closeTo(1104, 0.5), reason: raw);
-          expect(grams.basis, contains('0.61 edible'), reason: raw);
+          expect(
+            grams.basis,
+            contains('0.61 edible (USDA ready-to-cook yield)'),
+            reason: raw,
+          );
         }
         final quarters = gramsOf(
           '8 (14-ounce) chicken leg quarters, trimmed',
@@ -517,7 +521,7 @@ void main() {
         expect(quarters.grams, closeTo(8 * 14 * 28.3495, 0.1));
         expect(
           quarters.basis,
-          endsWith('approximate (gross weight, no part yield)'),
+          endsWith('approximate (gross weight, no USDA refuse portion)'),
         );
         // "whole" before a part is the part's, not a bird's: the corpus's
         // only such line (0150, "4 whole chicken legs, separated") is a bare
@@ -894,16 +898,8 @@ void main() {
       );
     });
 
-    test('P1: Classic Guacamole (0471): a juice range has no volume, so the '
-        'citrus rule leaves the line held on its own pick', () async {
-      final db = tempDb();
-      final r = recipeOf(db, 'r1', [
-        '¼ teaspoon grated lime zest plus 1½–2 tablespoons juice',
-      ]);
-      await matchAndCompute(db, provider, r);
-      final row = db.ingredientMatchesFor('r1').single;
-      expect((row.fdcId, row.hold), (2709170, 'second_food'));
-    });
+    // Classic Guacamole's (0471) juice range, once held here, is counted
+    // since matcher v10: nutrition_v10_test.dart (B9).
 
     test('a rule fires only on a line the reach leaves out: a counted extra '
         'cut into wedges names no second food, so no rule counts it '

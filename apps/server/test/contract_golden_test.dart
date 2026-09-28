@@ -128,6 +128,46 @@ const List<Map<String, Object?>> _rulesLines = [
     ],
     'item': '(6- to 8-pound) bone-in fresh half ham with skin',
   },
+  // Matcher v10 (checkpoint 6): a whole bird on its ready-to-cook yield
+  // (0004), mussels held in the shell (Cioppino, 0108), and napa counted on
+  // its sibling's nutrients (0506) — read from the cached answer the
+  // vinegar line before it holds (Pai Huang Gua, 0504).
+  {
+    'raw': '1 (4-pound) whole chicken, giblets discarded',
+    'amounts': [
+      {'measure': 'count', 'quantity': '1', 'primary': true},
+    ],
+    'item': '(4-pound) whole chicken',
+    'prep': 'giblets discarded',
+  },
+  {
+    'raw': '1 pound mussels, scrubbed and debearded',
+    'amounts': [
+      {'measure': 'weight', 'quantity': '1', 'unit': 'pound', 'primary': true},
+    ],
+    'item': 'mussels',
+    'prep': 'scrubbed and debearded',
+  },
+  {
+    'raw': '4 teaspoons Chinese black vinegar',
+    'amounts': [
+      {
+        'measure': 'volume',
+        'quantity': '4',
+        'unit': 'teaspoon',
+        'primary': true,
+      },
+    ],
+    'item': 'Chinese black vinegar',
+  },
+  {
+    'raw': '12 ounces napa cabbage (½ medium head), cored and minced',
+    'amounts': [
+      {'measure': 'weight', 'quantity': '12', 'unit': 'ounce', 'primary': true},
+    ],
+    'item': 'napa cabbage (1/2 medium head)',
+    'prep': 'cored and minced',
+  },
 ];
 
 // A conflict copy exactly as `exportRecipeYaml` names them.

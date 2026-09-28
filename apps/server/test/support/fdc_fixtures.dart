@@ -90,8 +90,8 @@ class FixtureProvider implements NutritionProvider {
   }
 }
 
-/// Searches the corpus-backed suites ask that NO sweep snapshot's cache
-/// holds (snapshots 1–7, r2 and the diag DBs checked; checkpoint 5 review):
+/// Searches the suites ask that NO sweep snapshot's cache holds (snapshots
+/// 1–8, r2 and the diag DBs checked; checkpoint 5 review, checkpoint 6):
 /// pending one live search each, answered as no hits by a test that names
 /// them. Every other answer those suites need is recorded from snapshot 7.
 const Set<String> pendingSearches = {
@@ -104,6 +104,10 @@ const Set<String> pendingSearches = {
   'unit green onions',
   'unit lemon',
   'unit vegetable stock concentrate',
+  // Matcher v10's 'lime zest' target (checkpoint 6): FDC's 'lime zest'
+  // answer holds no lime peel. The user approved ONE live search for it;
+  // until it is recorded every lime-zest line reads as pending.
+  'lime peel raw',
 };
 
 /// A fixture miss: the test asked FDC something no fixture recorded. A

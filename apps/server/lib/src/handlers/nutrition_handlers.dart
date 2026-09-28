@@ -54,6 +54,7 @@ Map<String, Object?> nutritionBody(
   return {
     'status': stale ? 'stale' : row.status,
     'serving_basis': row.servingBasis,
+    'basis_kind': basisKindOf(row.servingBasis ?? 1),
     'calories_per_serving': row.caloriesPerServing,
     'per_serving': jsonDecode(row.nutrientsJson),
     'total_grams': row.totalGrams,

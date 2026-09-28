@@ -1854,7 +1854,7 @@ void main() {
         () async {
           for (final key in queryRewriteKeys) {
             final target = searchQueryFor(key);
-            if (target == key) continue;
+            if (target == key || pendingSearches.contains(target)) continue;
             final answer = await provider.search(target);
             if (answer.isEmpty) {
               continue; // unrecorded: the reachability pin covers the key

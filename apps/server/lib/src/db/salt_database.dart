@@ -1086,7 +1086,8 @@ class SaltDatabase {
   /// confidence 1 with grams from its own amounts and the hold cleared. A
   /// row with a LINE hold (`second_food`, `discarded_medium`) is never
   /// reached, whatever its food or score: no decision on the key clears it
-  /// (checkpoint 5). An unheld row at or above
+  /// (checkpoint 5); an `in_shell` row is left out by its text
+  /// (`decisionReach`), matched or not. An unheld row at or above
   /// the threshold is already counted (or missing only an amount) — it
   /// waits on nothing here, and rewriting it would change nothing but the
   /// receipt. Nor does an engine 0 g on this food (an amount-less line, a
@@ -1158,9 +1159,11 @@ class SaltDatabase {
   /// disagreed (review B7): an `overridden` row with NULL grams was
   /// "resolved" here yet "needs attention" on the sheet, so a line could
   /// vanish from this queue while contributing nothing. Decided corners:
-  /// overridden+NULL grams stays `no_grams` (an unfinished fix); `confirmed`
-  /// is always resolved, even matchless (confirmed water is a deliberate
-  /// no-match); an engine 0 g (`discarded` / `unmeasured`) is `counted`
+  /// overridden+NULL grams stays `no_grams` (an unfinished fix), and so does
+  /// a confirmed FOOD with NULL grams (the totals skip it, checkpoint 6);
+  /// `confirmed` is otherwise resolved, even matchless (confirmed water is a
+  /// deliberate no-match); the gate is `confidenceGateFloor` (0.5 less a
+  /// 1e-9 drift tolerance); an engine 0 g (`discarded` / `unmeasured`) is `counted`
   /// whatever its score or hold but `unnamed_food`; a low-confidence auto
   /// match is `check` whether or not it has grams — a wrong food is the
   /// larger problem, and "no amount" read as calm.
@@ -1168,11 +1171,13 @@ class SaltDatabase {
     CASE
       WHEN im.status = 'skipped' THEN 'skipped'
       WHEN im.status = 'overridden' AND im.grams IS NULL THEN 'no_grams'
+      WHEN im.status = 'confirmed' AND im.fdc_id IS NOT NULL
+        AND im.grams IS NULL THEN 'no_grams'
       WHEN im.status IN ('confirmed', 'overridden') THEN 'counted'
       WHEN im.fdc_id IS NULL THEN 'no_match'
       WHEN im.gram_source IN ('discarded', 'unmeasured') AND im.grams = 0
         AND COALESCE(im.hold, '') != 'unnamed_food' THEN 'counted'
-      WHEN im.confidence < 0.5 OR im.hold IS NOT NULL THEN 'check'
+      WHEN im.confidence < 0.499999999 OR im.hold IS NOT NULL THEN 'check'
       WHEN im.grams IS NULL THEN 'no_grams'
       ELSE 'counted'
     END''';
@@ -1247,15 +1252,16 @@ class SaltDatabase {
   /// apply would land on, and draws that row as today's single line.
   ///
   /// So, too, is a row a LINE hold holds (`second_food`,
-  /// `discarded_medium`): no decision on the key reaches it (checkpoint 5
-  /// review: "sugar · 17 lines · 17 recipes" were 17 brine sugars one
-  /// decision could never clear — 17 groups of one).
+  /// `discarded_medium`, `in_shell`): no decision on the key reaches it
+  /// (checkpoint 5 review: "sugar · 17 lines · 17 recipes" were 17 brine
+  /// sugars one decision could never clear — 17 groups of one).
   static const String _reviewFlaggedCte =
       'WITH flagged AS (SELECT im.*, r.slug AS review_slug, '
       'r.title AS review_title, $_reviewBucketCase AS bucket, '
       "CASE WHEN im.item_key IS NULL OR im.item_key = '' "
       "OR im.status NOT IN ('auto', 'unmatched') "
-      "OR COALESCE(im.hold, '') IN ('second_food', 'discarded_medium') "
+      "OR COALESCE(im.hold, '') IN ('second_food', 'discarded_medium', "
+      "'in_shell') "
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
 
@@ -1305,7 +1311,7 @@ class SaltDatabase {
       'SELECT e.*, a.lines AS group_lines, a.recipes AS group_recipes, '
       'a.gmin, a.gmax, a.gmissing, a.worst_bucket, '
       "(d.item_key IS NOT NULL AND COALESCE(e.hold, '') NOT IN "
-      "('second_food', 'discarded_medium')) AS decided "
+      "('second_food', 'discarded_medium', 'in_shell')) AS decided "
       'FROM agg a JOIN example e ON e.gkey = a.gkey AND e.rn = 1 '
       'LEFT JOIN ingredient_decisions d ON d.item_key = e.item_key '
       'ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey '

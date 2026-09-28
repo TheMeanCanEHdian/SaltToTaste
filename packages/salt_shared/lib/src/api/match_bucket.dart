@@ -12,9 +12,13 @@
 /// - `overridden` with NULL grams stays in `no_grams`: the human picked a
 ///   food expecting it to count, and it doesn't yet — an unfinished fix,
 ///   not a resolution.
-/// - `confirmed` is always resolved, even with no match: confirming is the
+/// - `confirmed` is resolved, even with no match: confirming is the
 ///   deliberate "as-is is right" verdict (confirmed water is a no-match on
-///   purpose).
+///   purpose) — but a confirmed FOOD with NULL grams stays in `no_grams`,
+///   like an overridden one: the totals skip a food with no grams, so a
+///   confirm on a line with no amount took it out of the queue while its
+///   recipe stayed partial (checkpoint 6: 381 lines exposed, 17 recipes
+///   left partial with nothing to review).
 enum MatchBucket {
   counted('counted'),
   check('check'),
@@ -30,6 +34,19 @@ enum MatchBucket {
   static MatchBucket fromWire(String value) =>
       values.firstWhere((bucket) => bucket.wire == value);
 }
+
+/// The name-confidence gate: an `auto` match scored below it is flagged
+/// `check`. Scores are sums of fixed fractions, so a line can land exactly on
+/// it (checkpoint 6: 5 counted rows at 0.500); every comparison reads
+/// [confidenceGateFloor], so a 1e-16 float drift never flips one.
+const double confidenceGate = 0.5;
+
+/// [confidenceGate] less a 1e-9 drift tolerance — what every "below the
+/// gate" compares against, in Dart and in the server's SQL alike.
+const double confidenceGateFloor = confidenceGate - 1e-9;
+
+/// Whether [confidence] is below the gate ([confidenceGateFloor]).
+bool belowConfidenceGate(double confidence) => confidence < confidenceGateFloor;
 
 /// Buckets a match row from its stored state. Field semantics follow the
 /// `ingredient_matches` table: [status] is one of
@@ -59,7 +76,8 @@ MatchBucket matchBucketFor({
   if (status == 'skipped') {
     return MatchBucket.skipped;
   }
-  if (status == 'overridden' && grams == null) {
+  if ((status == 'overridden' && grams == null) ||
+      (status == 'confirmed' && fdcId != null && grams == null)) {
     return MatchBucket.noAmount;
   }
   if (status == 'confirmed' || status == 'overridden') {
@@ -76,7 +94,7 @@ MatchBucket matchBucketFor({
   // A weak match is first a WRONG food, whether or not it has an amount: a
   // 0.41 "100 GRAND Bar" for a liqueur line must read "check match", not the
   // calm "no amount" — the amount is the smaller of its problems.
-  if (status == 'auto' && (confidence < 0.5 || hold != null)) {
+  if (status == 'auto' && (belowConfidenceGate(confidence) || hold != null)) {
     return MatchBucket.check;
   }
   if (grams == null) {

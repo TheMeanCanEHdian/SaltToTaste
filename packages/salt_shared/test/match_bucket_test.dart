@@ -90,12 +90,22 @@ void main() {
       expect(bucket(status: 'overridden'), MatchBucket.counted);
     });
 
-    test('confirmed is always resolved, even matchless (confirmed water)', () {
+    test('confirmed is resolved, even matchless (confirmed water) — but a '
+        'confirmed FOOD with no grams stays flagged (checkpoint 6)', () {
       expect(
         bucket(status: 'confirmed', fdcId: null, grams: null),
         MatchBucket.counted,
       );
       expect(bucket(status: 'confirmed'), MatchBucket.counted);
+      expect(bucket(status: 'confirmed', grams: null), MatchBucket.noAmount);
+    });
+
+    test('the gate reads 0.5 less a 1e-9 drift tolerance (checkpoint 6: '
+        'five rows sat at exactly 0.500)', () {
+      expect(bucket(confidence: 0.5), MatchBucket.counted);
+      expect(bucket(confidence: 0.5 - 1e-12), MatchBucket.counted);
+      expect(bucket(confidence: 0.4999), MatchBucket.check);
+      expect(confidenceGateFloor, lessThan(confidenceGate));
     });
 
     test('auto/unmatched rows triage by their data', () {

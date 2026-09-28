@@ -785,10 +785,15 @@ void main() {
       expect(wholeBirdYieldOn, isTrue);
       final on = gramsOf(chicken, bird)!;
       expect(on.grams, closeTo(4 * 453.592 * 276 / 453.592, 0.01));
-      expect(on.basis, contains('× 0.61 edible (USDA refuse)'));
+      expect(on.basis, contains('× 0.61 edible (USDA ready-to-cook yield)'));
       final off = gramsOf(chicken, bird, false)!;
       expect(off.grams, closeTo(4 * 453.592, 0.01));
-      expect(off.basis, endsWith('· no edible yield read'));
+      // Off, the gross weight on a record with no refuse portion: labelled
+      // approximate (checkpoint 6).
+      expect(
+        off.basis,
+        endsWith('· approximate (gross weight, no USDA refuse portion)'),
+      );
     });
 
     test('P1: pieces (Stovetop Roast Chicken, 0142) stay at gross weight, '
@@ -796,10 +801,13 @@ void main() {
       final bird = await food(171447);
       final on = gramsOf(pieces, bird)!;
       expect(on.grams, closeTo(3.5 * 453.592, 0.01));
-      expect(on.basis, endsWith('· approximate (gross weight, no part yield)'));
+      expect(
+        on.basis,
+        endsWith('· approximate (gross weight, no USDA refuse portion)'),
+      );
       final off = gramsOf(pieces, bird, false)!;
       expect(off.grams, on.grams);
-      expect(off.basis, endsWith('· no edible yield read'));
+      expect(off.basis, on.basis);
     });
 
     test("P1: counted hens (Roasted Cornish Game Hens, 0147) are the record's "
@@ -826,7 +834,10 @@ void main() {
         await food(171093),
       )!;
       expect(breast.grams, closeTo(7 * 453.592, 0.01));
-      expect(breast.basis, endsWith('· no edible yield read'));
+      expect(
+        breast.basis,
+        endsWith('· approximate (gross weight, no USDA refuse portion)'),
+      );
       // Nor for a whole bird matched to the part record (Classic Roast
       // Turkey, 0154, on the breast's 171093): its "yield from 1 lb
       // ready-to-cook turkey" is the breast's share, not the bird's yield.

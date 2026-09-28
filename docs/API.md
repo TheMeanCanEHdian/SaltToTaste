@@ -330,7 +330,9 @@ groups}], items:
 data_type, confidence, grams, gram_source, status, hold} | null}], page, limit}`
 (`hold` as in the per-recipe matches body below).
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
-below 50% name confidence — probably the wrong food, whether or not it has
+below 50% name confidence — compared with a 1e-9 tolerance, so a score that
+lands exactly on 0.5 counts whatever its float rounding — probably the wrong
+food, whether or not it has
 an amount — or one the engine holds for a `hold` reason at any score; an
 engine 0 g, `gram_source` `discarded` or `unmeasured` at `grams: 0`, is
 `counted` whatever its score or hold, since no decision on its food can
@@ -339,10 +341,12 @@ amount left in the item names no food and its 0 g drops a real amount, so it
 stays in `check`),
 `no_grams` (a plausible match that resolves no grams, so it
 contributes nothing), and `skipped` (browsable via the filter, excluded
-from `total`). A `confirmed` line is always resolved and never appears (e.g.
-confirmed water is a deliberate no-match); an `overridden` line is resolved
-ONLY once it has grams — overridden with no grams stays in `no_grams`, because
-the picked food still contributes nothing (an unfinished fix). The rule is
+from `total`). A `confirmed` line with no food is resolved and never appears
+(confirmed water is a deliberate no-match); a `confirmed` or `overridden`
+line with a food is resolved ONLY once it has grams — with no grams it stays
+in `no_grams`, because the food still contributes nothing (an unfinished
+fix; a confirm on a line whose record gives no amount leaves it in the queue
+and its recipe `partial`). The rule is
 shared verbatim with the per-recipe review sheet (salt_shared
 `matchBucketFor`), so the two admin surfaces always agree. `total` and the `buckets`
 counts are whole-library (stable across filters); `bucket` narrows `items` (and
@@ -375,8 +379,8 @@ Only UNDECIDED lines (`auto` / `unmatched`) join an ingredient's group: a line
 someone already decided is a group of one — an amount problem for that line,
 never part of an ingredient's reach, since `apply_to_all` cannot touch it —
 and it still reports its own `item_key`. So is a line a LINE hold holds
-(`second_food`, `discarded_medium`): no decision on its key clears it, so
-each brine sugar is a group of one, never one "sugar · N lines" group, and
+(`second_food`, `discarded_medium`, `in_shell`): no decision on its key
+clears it, so each brine sugar is a group of one, never one "sugar · N lines" group, and
 such a group's `decided` is always false.
 
 `groups` — at the top level and on every `buckets[]` entry — is reported in
@@ -580,6 +584,7 @@ first compute, else:
 {
   "status": "complete | partial | stale",
   "serving_basis": 12,
+  "basis_kind": "per_serving | per_batch",
   "calories_per_serving": 466.2,
   "per_serving": { "<key>": {"label", "amount", "unit", "dv_percent"?} },
   "total_grams": 1730.5,
@@ -590,6 +595,14 @@ first compute, else:
   "computing_job_id": 7
 }
 ```
+
+`basis_kind` says what `serving_basis` divides by: `per_batch` when the basis
+is 1 — the whole batch: "MAKES 1 LOAF", no servings at all, or an admin's
+1 — else `per_serving`. A larger basis
+divides the batch by a serves count or by a MAKES yield count, where one
+"serving" is one of the yield ("MAKES TWO 9-INCH PIZZAS": one pizza), not the
+batch. The app marks a per-batch label "per batch" beside its per-serving
+header.
 
 `low_confidence` counts the lines in the `check` bucket: auto-matched lines
 below 0.5 confidence, or held for a `hold` reason (see the matches body),
@@ -632,7 +645,8 @@ survive recomputes. Water/ice lines are matched locally for free. The job
 fails (with the reason in its log) when no API key is configured, or when
 FDC fails a request the compute needs — a search, or a food detail its
 grams read (household portions, a bone-in cut's edible yield, a drained
-can's share, a rule's record): its totals are not recomputed (lines
+can's share, a rule's record) or its totals read (a record's nutrient
+sibling, when no cache holds it): its totals are not recomputed (lines
 matched before the failure keep their new rows) and it stays `stale`, so
 the next compute or `stale` sweep retries it. A line is
 never stored counted at the printed weight because a yield could not be
@@ -656,16 +670,27 @@ what the grams were computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾
 ounces"`, `"entered by hand"`, `"… × 0.57 edible (USDA refuse)"` for a
 bone-in cut whose record publishes its raw refuse — or, for a WHOLE bird
 ("1 (4-pound) whole chicken") on a whole-bird record, its "yield from 1 lb
-ready-to-cook" share (`"… × 0.61 edible (USDA refuse)"` on 171447) — `"… ·
-no edible yield read"` for one whose record gives no yield the server reads
-(or whose detail was never fetched — the basis never claims a yield the
-stored grams lack, nor that the record has none), `"… · approximate (gross
-weight, no part yield)"` for bird pieces ("4 pounds bone-in chicken pieces")
-on the whole-bird record, whose yield is the whole bird's, `"4 × 336 g (USDA
+ready-to-cook" share (`"… × 0.61 edible (USDA ready-to-cook yield)"` on
+171447) — `"… · approximate (gross weight, no USDA refuse portion)"` for a
+bone-in, whole-bird or other refuse-bought line whose record publishes no
+refuse portion (a whole turkey, a Foundation chicken part, a lamb chop, bird
+pieces on the whole-bird record, whose yield is the whole bird's): counted at
+the printed weight, bone included — no factor is borrowed (FDC gives no
+turkey share) — and labelled; `"… · no edible yield read"` for one whose SR
+detail was never fetched (the basis never claims a yield the stored grams
+lack, nor that the record has none) and for shellfish bought in the shell
+(held `in_shell`, below) whose record's detail is cached — with none, the
+basis is the weight alone — `"4 × 336 g (USDA
 edible bird portion)"` for counted birds ("4 Cornish game hens") sized by the
 record's own edible bird rather than the printed weight, `"½ cup · USDA
 portion of \"Onions, raw\""` for a volume on a record with no volume portion
-of its own, read from a cached SR sibling's (the food stays the line's),
+of its own, read from a cached sibling's (the food stays the line's; "1 cup
+fresh or frozen blueberries" on Foundation "Blueberries, raw" reads
+"Blueberries, frozen"'s cup), `"… · nutrients of \"Cabbage, chinese
+(pe-tsai), raw\""` for a line on a record that publishes no energy whose
+totals read a sibling record's nutrients (Foundation napa cabbage, 2727583,
+reads SR 169979; the food and grams stay the line's, and it is not held
+`no_nutrients`),
 `"pinch ≈ 1/16 tsp (USDA tsp portion)"` for a pinch or dash on a record with
 no dash portion (a teaspoon ÷ 16), `"2 tablespoon ≈ 30 mL · juice only (the
 zest is dropped)"` for a zest-plus-juice line counted on the fruit's juice
@@ -685,8 +710,19 @@ missing protein, fat or carbohydrate, so counting it would add its grams at
 0 kcal or a fraction of its energy; a record whose published macros already
 make up 90 g per 100 g, such as an oil, is not held), `discarded_medium`
 (frying oil, a brine or soak set to review, or milk curdled into cheese
-whose whey is drained; brine sugar and ¼ cup or more of salt no step
-brines in or rubs on — a salt bed, an ice bath — are always held),
+whose whey is drained; brine sugar, ¼ cup or more of salt no step
+brines in or rubs on — a salt bed, an ice bath — and salt or baking soda a
+step puts in boiling water (named earlier in that step or in the salt's
+sentence) that a drain then follows — pasta water, a
+blanching pot, a skinning bath; the line's own amount written in the step, or
+a bare "salt" when it is the recipe's only salt line; not a line that
+measures its salt apart, "plus salt for cooking …" — are always held; salt a
+step dissolves in a written amount ("Dissolve salt in 2½ quarts water") is
+a brine at any volume, zeroed like one),
+`in_shell` (shellfish bought in the shell — clams, mussels or oysters
+scrubbed or debearded, live lobsters, shell-on shrimp; shucked shellfish, lobster
+meat and clam juice name none of these: no record FDC answers publishes an edible share, so the gross weight
+is not counted as meat; a LINE hold, like `second_food`),
 `second_food` (the line names a second ingredient —
 "egg whites plus 1 large egg", "chipotle chile in adobo sauce plus 2
 teaspoons adobo sauce" — that the match does not cover; a counted fruit cut
@@ -729,9 +765,10 @@ second-food rule counts moves to the rule's record with the rule's grams,
 as a compute writes it. A
 decision reaching the line by `apply_to_all` or inheritance clears a FOOD
 hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`, `borderline`,
-`unnamed_food`) too, never a LINE hold (`discarded_medium`, `second_food`):
-a decision on the key names one food and cannot count the line's other part
-or say what a discarded medium leaves) plus ranked `candidates`
+`unnamed_food`) too, never a LINE hold (`discarded_medium`, `second_food`,
+`in_shell`): a decision on the key names one food and cannot count the
+line's other part, say what a discarded medium leaves or how much of a shell
+is eaten) plus ranked `candidates`
 for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
 pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
@@ -739,7 +776,10 @@ pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
 empty one, like `pancetta`'s, keeps the whole phrase), or the singular
 `pork tenderloin` whose cached answer a "pork tenderloins" line reads (a
 line the rewrites changed never reads its singular form's answer); null
-when the line has nothing searchable) and `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
+when the line has nothing searchable; a few rewrites are APPROXIMATIONS, flagged in
+the server's rewrite table, for foods FDC has no record of: pancetta counts
+as bacon, Asiago as Parmesan, whole allspice berries as ground allspice) and
+`candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
 just the candidates shown — holds no record naming the ingredient, or the
 answer was empty: the list is hopeless, not mis-ranked; null when FDC was
 never asked), `candidates_cached_at` (when FDC was last asked them, null
@@ -758,11 +798,12 @@ counts only while it is still a flagged guess (confidence below 0.5) or held
 by a food hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`,
 `borderline`, `unnamed_food`): blessing it at confidence 1 is what moves it
 out of the `check` bucket. A sibling held by a line hold (`second_food`,
-`discarded_medium`) is never counted, whatever its food or score: no
+`discarded_medium`, `in_shell`) is never counted, whatever its food or score: no
 decision on the key releases it — nor is a sibling whose line names a
 second food (one the second-food rule counts on its own record, or one not
 matched yet, which the decision's food would hold `second_food`), nor an
-unmatched discarded medium the engine holds (a brine sugar). These are
+unmatched discarded medium the engine holds (a brine sugar), nor a line of
+shellfish bought in the shell (held `in_shell` on any food). These are
 exactly the rows `apply_to_all` writes. One on this food at or above that threshold and unheld is already
 counted (or short only an amount) and is neither counted here nor
 rewritten, nor is one on this food the engine counts at 0 g whatever its
@@ -831,9 +872,10 @@ counted at an engine 0 g (an amount-less line, a sprig), where
 rewriting it as `auto` at confidence 1 with its hold cleared stops it being a
 guess — how confirming one line clears an ingredient's whole group. A line
 already on that food at or above 0.5 and unheld is left as it is, as is a
-line a line hold holds (`second_food`, `discarded_medium`, whatever its food
-or score), a line that names a second food (counted by the second-food rule,
-or unmatched) and an unmatched discarded medium the engine holds — the same
+line a line hold holds (`second_food`, `discarded_medium`, `in_shell`,
+whatever its food or score), a line that names a second food (counted by the
+second-food rule, or unmatched), shellfish bought in the shell and an
+unmatched discarded medium the engine holds — the same
 rows `others` leaves out, so the offer and the apply agree.
 The rows land
 as `auto` at confidence 1, machine propagation of a human decision exactly

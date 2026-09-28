@@ -374,6 +374,9 @@ void main() {
       expect(parsed.status, raw['status']);
       expect(parsed.exists, isTrue);
       expect(parsed.servingBasis, raw['serving_basis']);
+      expect(raw['basis_kind'], 'per_serving');
+      expect(parsed.basisKind, raw['basis_kind']);
+      expect(parsed.perBatch, isFalse);
       expect(parsed.caloriesPerServing, raw['calories_per_serving']);
       expect(parsed.totalGrams, raw['total_grams']);
       expect(parsed.matchedCount, raw['matched_count']);
@@ -484,12 +487,18 @@ void main() {
           contains('juice only (the zest is dropped)'),
           contains('summed on the whole egg'),
           contains('1/16 tsp (USDA tsp portion)'),
-          contains('approximate (gross weight, no part yield)'),
+          contains('approximate (gross weight, no USDA refuse portion)'),
+          contains('× 0.61 edible (USDA ready-to-cook yield)'),
+          contains('nutrients of "Cabbage, chinese (pe-tsai), raw"'),
         ]),
       );
-      final ham = parsed.singleWhere((line) => line.hold != null);
-      expect(ham.hold, 'cured_for_fresh');
-      expect(holdReason(ham.hold), contains('a preserved record'));
+      final held = {
+        for (final line in parsed)
+          if (line.hold != null) line.hold!: holdReason(line.hold),
+      };
+      expect(held.keys, {'cured_for_fresh', 'in_shell'});
+      expect(held['cured_for_fresh'], contains('a preserved record'));
+      expect(held['in_shell'], contains('Bought in the shell'));
     });
 
     test('an uncomputed recipe parses as unmatched lines', () async {

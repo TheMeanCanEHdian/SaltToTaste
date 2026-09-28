@@ -1613,6 +1613,44 @@ replay on snapshot 7: counted 12,514 → 12,509, check 840 → 843, no grams
 detail fetch now fails instead of storing gross weight; 27 recipes wait
 on 11 food details and 1 search the live replay will make.
 
+### Checkpoint-6 batch under the user's rulings (matcher v10)
+
+Checkpoint 6 (five Opus 5.5 auditors over snapshot 8 vs 7) found 3
+regressions in 712 changed rows (two lines that lost their grams on a
+better record, one tuna light → white), 318 upward gate crossings all
+right or acceptable, and one new hole: a confirm on a line with no grams
+left the queue while the recipe stayed partial. The user then ruled on
+every open question (2026-09-27): variations and "(recipe follows)"
+sub-recipes stay OUT of the main totals (revisited later); everything
+else went with the recommendations. The batch, built by a fixer with
+three verify/refix rounds plus a fourth pass for three pin-vacuity
+leftovers: a `confirmed` row with a food and no grams is `no_grams` in
+Dart, SQL and the totals alike; the two lost-grams regressions
+(blueberries via the frozen sibling's cup, hamburger rolls via the
+record's roll portion); raw country-style ribs (rewrite to the raw record
+with its 0.65 yield — the general cook-state dock moved no line); cached
+band rewrites (gorgonzola, arborio, 90 percent lean sirloin, andouille,
+kielbasa; asiago → Parmesan and allspice berries → ground allspice as
+FLAGGED approximations); a cooking-water medium — salt or baking soda in
+water that boils and is later drained is held for review, and "dissolve …
+in N … submerge" is brine at any volume; shellfish bought in the shell are
+held (`in_shell`, 18 lines); every counted gross-weight meat or bird on a
+record without a refuse portion carries an "approximate" basis and the
+whole-bird basis names the ready-to-cook yield; a nutrient sibling for the
+energy-less Foundation napa record; the second-food tail (mixed-number
+ranges, zest strips with a juice volume, a bare zest keyed by its fruit);
+the "skinless" credit only on records carrying the head with "lomi" and
+"<head> salad" as dish markers; a 0.5 − 1e-9 gate floor; the lime zest →
+"lime peel raw" rewrite (one approved live search, pending); and a
+`basis_kind` flag ("per_batch" when the basis is ≤ 2 with no serves count)
+shown as a small "per batch" label. Cache-only replay on snapshot 8:
+counted 12,513 → 12,540, check 841 → 819, no grams 210 → 206, no match
+51 → 50, complete 540 → 553 (23 gained; 9 dropped on purpose because a
+line is now held for review, plus the carbonara pasta-water salt); 5
+recipes wait on the lime search. Three guards the corpus cannot exercise
+(the dissolve verb's own-sentence scope, the water-before-the-salt bound)
+are pinned on synthesized lines, stated as an exception in the test.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

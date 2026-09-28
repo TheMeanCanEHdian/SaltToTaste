@@ -89,7 +89,7 @@
         "confidence": 1.0,
         "grams": 1587.572,
         "gram_source": "weight",
-        "gram_basis": "from 3 1/2 pound · approximate (gross weight, no part yield)",
+        "gram_basis": "from 3 1/2 pound · approximate (gross weight, no USDA refuse portion)",
         "status": "auto",
         "hold": null
       },
@@ -212,6 +212,224 @@
           "description": "Pork, cured, ham, rump, bone-in, separable lean only, heated, roasted",
           "data_type": "SR Legacy",
           "confidence": 0.3345454545454546
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "raw": "1 (4-pound) whole chicken, giblets discarded",
+      "item": "(4-pound) whole chicken",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "chicken broilers or fryers meat and skin raw",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 171447,
+        "description": "Chicken, broilers or fryers, meat and skin, raw",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 1104.0,
+        "gram_source": "weight",
+        "gram_basis": "from the printed weight × 0.61 edible (USDA ready-to-cook yield)",
+        "status": "auto",
+        "hold": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 171447,
+          "description": "Chicken, broilers or fryers, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 171469,
+          "description": "Chicken, broilers or fryers, back, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 171474,
+          "description": "Chicken, broilers or fryers, breast, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172373,
+          "description": "Chicken, broilers or fryers, drumstick, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172378,
+          "description": "Chicken, broilers or fryers, leg, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172382,
+          "description": "Chicken, broilers or fryers, neck, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172385,
+          "description": "Chicken, broilers or fryers, thigh, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172390,
+          "description": "Chicken, broilers or fryers, wing, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "raw": "1 pound mussels, scrubbed and debearded",
+      "item": "mussels",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "mussels",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2706350,
+        "description": "Mussels",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.9900000000000001,
+        "grams": 453.592,
+        "gram_source": "weight",
+        "gram_basis": "from 1 pound",
+        "status": "auto",
+        "hold": "in_shell"
+      },
+      "candidates": [
+        {
+          "fdc_id": 2706350,
+          "description": "Mussels",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9900000000000001
+        },
+        {
+          "fdc_id": 174216,
+          "description": "Mollusks, mussel, blue, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8700000000000001
+        },
+        {
+          "fdc_id": 174217,
+          "description": "Mollusks, mussel, blue, cooked, moist heat",
+          "data_type": "SR Legacy",
+          "confidence": 0.7733333333333334
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "raw": "4 teaspoons Chinese black vinegar",
+      "item": "Chinese black vinegar",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "chinese black vinegar",
+      "candidates_name_ingredient": false,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2708343,
+        "description": "Chinese pancake",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.05666666666666664,
+        "grams": 19.9128368,
+        "gram_source": "density",
+        "gram_basis": "4 teaspoon ≈ 20 mL",
+        "status": "auto",
+        "hold": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2708343,
+          "description": "Chinese pancake",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.05666666666666664
+        },
+        {
+          "fdc_id": 169404,
+          "description": "Broccoli, chinese, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.053333333333333344
+        },
+        {
+          "fdc_id": 2709657,
+          "description": "Broccoli, chinese, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.043333333333333335
+        },
+        {
+          "fdc_id": 2709774,
+          "description": "Cabbage, Chinese, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.043333333333333335
+        },
+        {
+          "fdc_id": 170164,
+          "description": "Nuts, chestnuts, chinese, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.03666666666666668
+        },
+        {
+          "fdc_id": 170066,
+          "description": "Waterchestnuts, chinese, (matai), raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.03666666666666668
+        },
+        {
+          "fdc_id": 170390,
+          "description": "Cabbage, chinese (pak-choi), raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.026666666666666727
+        },
+        {
+          "fdc_id": 169979,
+          "description": "Cabbage, chinese (pe-tsai), raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.026666666666666727
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "raw": "12 ounces napa cabbage (½ medium head), cored and minced",
+      "item": "napa cabbage (1/2 medium head)",
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "napa cabbage",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2727583,
+        "description": "Cabbage, napa, leaf, destemmed, raw",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 340.19399999999996,
+        "gram_source": "weight",
+        "gram_basis": "from 12 ounce · nutrients of \"Cabbage, chinese (pe-tsai), raw\"",
+        "status": "auto",
+        "hold": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2727583,
+          "description": "Cabbage, napa, leaf, destemmed, raw",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 168572,
+          "description": "Cabbage, napa, cooked",
+          "data_type": "SR Legacy",
+          "confidence": 0.8733333333333333
         }
       ]
     }

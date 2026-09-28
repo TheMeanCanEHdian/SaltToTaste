@@ -386,7 +386,11 @@ class _FdaLabelState extends State<_FdaLabel>
               ),
             ),
             if (basis != null)
-              Text('Per serving · serves $basis', style: _base),
+              Text(
+                'Per serving · serves $basis'
+                '${nutrition.perBatch ? ' · per batch' : ''}',
+                style: _base,
+              ),
             if (servingGrams != null)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

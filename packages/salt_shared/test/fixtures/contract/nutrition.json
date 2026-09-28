@@ -1,6 +1,7 @@
 {
   "status": "partial",
   "serving_basis": 12,
+  "basis_kind": "per_serving",
   "calories_per_serving": 470.08,
   "per_serving": {
     "energy": {

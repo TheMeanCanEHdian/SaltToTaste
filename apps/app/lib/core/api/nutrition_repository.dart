@@ -28,6 +28,7 @@ class RecipeNutrition {
   const RecipeNutrition({
     required this.status,
     this.servingBasis,
+    this.basisKind = 'per_serving',
     this.caloriesPerServing,
     this.perServing = const {},
     this.totalGrams,
@@ -58,6 +59,7 @@ class RecipeNutrition {
     return RecipeNutrition(
       status: json['status'] as String? ?? 'none',
       servingBasis: (json['serving_basis'] as num?)?.toInt(),
+      basisKind: json['basis_kind'] as String? ?? 'per_serving',
       caloriesPerServing: (json['calories_per_serving'] as num?)?.toDouble(),
       perServing: perServing,
       totalGrams: (json['total_grams'] as num?)?.toDouble(),
@@ -72,6 +74,11 @@ class RecipeNutrition {
   /// `none` | `complete` | `partial` | `stale`.
   final String status;
   final int? servingBasis;
+
+  /// `per_serving`, or `per_batch` when the basis is 1 — the figure is the
+  /// whole batch (a loaf, a pie); the label says so.
+  final String basisKind;
+  bool get perBatch => basisKind == 'per_batch';
   final double? caloriesPerServing;
 
   /// Nutrient key → value, in the server's (label) order.
@@ -237,8 +244,8 @@ class IngredientMatch {
 
   /// Why the engine holds an `auto` line out of the totals although its name
   /// confidence passes: `no_nutrients` | `discarded_medium` | `second_food`
-  /// | `unnamed_food` | `dried_for_fresh` | `cured_for_fresh` | `borderline`;
-  /// null when nothing holds it.
+  /// | `in_shell` | `unnamed_food` | `dried_for_fresh` | `cured_for_fresh` |
+  /// `borderline`; null when nothing holds it.
   final String? hold;
   final List<MatchCandidate> candidates;
 }

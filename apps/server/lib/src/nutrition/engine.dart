@@ -11,8 +11,9 @@ import 'package:salt_shared/salt_shared.dart';
 
 final Logger _log = Logger('nutrition');
 
-/// Confidence below which an auto match is reported as needs-review.
-const double lowConfidence = 0.5;
+/// Confidence below which an auto match is reported as needs-review
+/// (salt_shared's [confidenceGate]; compared through [belowConfidenceGate]).
+const double lowConfidence = confidenceGate;
 
 /// Whether [food] reports all four macros (energy — any variant — fat,
 /// carbs, protein). Vitamins may still be missing; macros are the floor
@@ -55,6 +56,17 @@ bool publishesNothing(FdcFood food) {
 /// Grams of macros per 100 g that leave no room for a missing one.
 const double _wholeMassMacros = 90;
 
+/// Records whose NUTRIENTS the totals read from a sibling record of the same
+/// food: Foundation "Cabbage, napa, leaf, destemmed, raw" (2727583)
+/// publishes 9 nutrients and no energy, so 7 napa lines were held
+/// `no_nutrients` (checkpoint 6), while SR 169979 "Cabbage, chinese
+/// (pe-tsai), raw" is the same raw leaf. The line keeps its own food and
+/// grams (and so its portions, [volumeSiblings]); only the per-100 g values
+/// are the sibling's, and the basis names it ([gramBasisFor]). The
+/// sibling is read from the caches — a search hit is enough — and fetched
+/// once only when no cache holds it.
+const Map<int, int> nutrientSiblings = {2727583: 169979};
+
 /// A cooking medium the recipe throws away, found from the line and the
 /// recipe's steps (audit 1 rank 12, audit 2: 19 counted frying-oil lines of
 /// 400 g or more, 26.6 kg; 25 brine-salt lines; 2 buttermilk soaks; 2 lines
@@ -87,7 +99,15 @@ enum DiscardedMedium {
 
   /// Milk made into cheese (4+ cups, a whey or curds step): only the curds
   /// are eaten, in an amount nothing on the line says — always review.
-  cheeseMilk;
+  cheeseMilk,
+
+  /// Salt or baking soda a step puts in boiling water that is then drained
+  /// away from the food: pasta and noodle water, a blanching pot, 0778's
+  /// baking-soda skinning bath (11,287 mg sodium a serving counted,
+  /// checkpoint 6). How much the food keeps nothing says — always review,
+  /// like a salt bath. Water the food absorbs, and a pot no step drains,
+  /// count in full.
+  cookingWater;
 
   /// Whether [discardedMediaPolicy] decides how it counts; the others are
   /// always held for a person.
@@ -216,8 +236,12 @@ DiscardedMedium? discardedMediumOf(
     }
     if (head == 'salt' &&
         bySentence &&
-        _dissolvedWithBrineSalt(recipe, line, normalized, steps)) {
+        (_dissolvedWithBrineSalt(recipe, line, normalized, steps) ||
+            _dissolvedInWater(recipe, line, steps))) {
       return DiscardedMedium.brine;
+    }
+    if (head == 'salt' && bySentence && _drainedWater(recipe, line, steps)) {
+      return DiscardedMedium.cookingWater;
     }
     // A rub the meat keeps, like a dry brine: pork shoulder's overnight
     // salt-sugar rub, gravlax, a salted turkey.
@@ -242,7 +266,134 @@ DiscardedMedium? discardedMediumOf(
       steps.any(RegExp(r'\b(whey|curds?)\b', caseSensitive: false).hasMatch)) {
     return DiscardedMedium.cheeseMilk;
   }
+  if (head == 'soda' && bySentence && _drainedWater(recipe, line, steps)) {
+    return DiscardedMedium.cookingWater;
+  }
   return null;
+}
+
+/// The mentions of [line]'s own salt or baking soda in [steps]: each step
+/// and the offset of a mention that is THIS line's — its amount written
+/// before it ("Add pasta and 1 tablespoon salt" for "1 tablespoon salt"),
+/// or a bare "salt" when no other line of [recipe] is salt ("Add the
+/// noodles and salt"). A step naming another amount ("Add 2 tablespoons
+/// salt" beside "¼ teaspoon table salt, plus salt for blanching") names a
+/// salt the line does not measure, and so does a line that measures its
+/// salt apart from the pot's: "1 teaspoon table salt, plus salt for cooking
+/// lentils and bulgur" (1186). Salt pork is not salt. "1 teaspoon of the
+/// salt" is a written amount too: Cincinnati Chili (0303) blanches its beef
+/// in half of "2 teaspoons table salt, plus more to taste" and counts the
+/// line in full. ("plus more", a kind of salt or a cup before the mention,
+/// and requiring the other salt lines to be measured changed no line of the
+/// library: removed, refix round 2.)
+Iterable<({int step, int at})> _ownMentions(
+  Recipe recipe,
+  IngredientLine line,
+  List<String> steps,
+) sync* {
+  final raw = line.raw.toLowerCase();
+  if (RegExp(r'\bplus salt\b').hasMatch(raw)) {
+    return;
+  }
+  final soda = headNounOf(normalizeItem(lineItemOf(line))) == 'soda';
+  final word = RegExp(soda ? r'\bbaking soda\b' : r'\bsalt\b(?!\s+pork)');
+  final salts = [
+    for (final other in nutritionLines(recipe))
+      if (headNounOf(normalizeItem(lineItemOf(other))) ==
+          (soda ? 'soda' : 'salt'))
+        other,
+  ];
+  final amount = RegExp(
+    '([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]*'
+    r'(?:teaspoons?|tablespoons?))\s+(?:of the\s+)?$',
+  );
+  for (final (i, step) in steps.indexed) {
+    final text = step.toLowerCase();
+    for (final mention in word.allMatches(text)) {
+      final before = text.substring(0, mention.start);
+      final written = amount.firstMatch(before)?[1];
+      if (written != null
+          ? raw.startsWith(written.trim())
+          : salts.length == 1 && identical(salts.single, line)) {
+        yield (step: i, at: mention.start);
+      }
+    }
+  }
+}
+
+/// The sentence of [text] holding offset [at].
+String _sentenceAt(String text, int at) {
+  final start = text.lastIndexOf(RegExp(r'\.\s'), at) + 1;
+  final end = text.indexOf(RegExp(r'\.(\s|$)'), at);
+  return text.substring(start, end < 0 ? text.length : end);
+}
+
+/// Whether a step puts [line]'s salt or baking soda ([_ownMentions]) in
+/// water that boils — the step names the water before the mention or in
+/// its sentence ("Bring 6 quarts water to a boil. Add the noodles and salt";
+/// "bring 2 quarts water to boil in Dutch oven. Set colander in large bowl.
+/// Add spaghetti and salt to pot", Foolproof Spaghetti Carbonara 0362,
+/// where the water is two sentences back; requiring the sentence to open
+/// with "add" changed no line of the library: removed, refix round 2) — and
+/// a drain follows it, AFTER the mention in that step
+/// or in the next ("Drain the noodles"; not "do not drain"): the water
+/// leaves with its salt ([DiscardedMedium.cookingWater]).
+bool _drainedWater(Recipe recipe, IngredientLine line, List<String> steps) {
+  final water = RegExp(r'\bwater\b');
+  final drain = RegExp(r'(?<!not )\bdrain');
+  for (final (:step, :at) in _ownMentions(recipe, line, steps)) {
+    final text = steps[step].toLowerCase();
+    // Milk is no water: Saag Paneer's (0563) curds drain, but its salt went
+    // in boiled milk. The water must be named BEFORE the end of the salt's
+    // own sentence: a salt seasoned onto meat before a later pasta pot is
+    // no cooking water — no corpus line has that shape, so the bound is
+    // pinned on a synthesized one (a stated exception, review Run 043).
+    final end = text.indexOf(RegExp(r'\.(\s|$)'), at);
+    final inWater = water.hasMatch(end < 0 ? text : text.substring(0, end));
+    if (!inWater || !text.contains(RegExp(r'\bboil'))) {
+      continue;
+    }
+    final next = step + 1 < steps.length ? steps[step + 1].toLowerCase() : '';
+    if (drain.hasMatch(text.substring(at)) || drain.hasMatch(next)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Whether a step dissolves [line]'s salt ([_ownMentions]) in a measured
+/// volume of water — a brine whatever its volume or name: "Dissolve salt in
+/// 2½ quarts water in Dutch oven; place ribs in pot so they are fully
+/// submerged" (0617: 2 tablespoons, under the 3-tablespoon threshold, and
+/// never called a brine; checkpoint 6). (A further "submerg" requirement
+/// changed no line of the library: removed, refix round 1. So did the unit
+/// after the amount — quarts, gallons or cups — and a "water" after it:
+/// every salt the library dissolves "in" a written amount is in quarts of
+/// water, or a brine by its own volume, or no line's own mention. Removed,
+/// refix round 3; the written amount stays — "in remaining 2 tablespoons
+/// warm water" is a dough's, Easy Sandwich Bread 0807.)
+bool _dissolvedInWater(
+  Recipe recipe,
+  IngredientLine line,
+  List<String> steps,
+) {
+  final dissolved = RegExp(
+    // The verb keeps a whisked or simmered salt out ("Whisk together flour
+    // and salt in 8-cup liquid measuring cup", Popovers 1109). The match is
+    // read within the salt's OWN sentence (_sentenceAt): a dough's "Dissolve
+    // yeast in 2 tablespoons warm water" one sentence over must not turn its
+    // salt into brine — no corpus line has that shape, so the guard is
+    // pinned on a synthesized one (a stated exception, review Run 043).
+    '\\bdissolv\\w*\\b.*\\bin [\\d$vulgarFractionChars]',
+  );
+  for (final (:step, :at) in _ownMentions(recipe, line, steps)) {
+    if (dissolved.hasMatch(
+      _sentenceAt(steps[step].toLowerCase(), at),
+    )) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// Whether a step dissolves [line] (a salt, [normalized]) in the SAME
@@ -295,7 +446,9 @@ bool _dissolvedWithBrineSalt(
 /// dried_for_fresh, cured_for_fresh, borderline, unnamed_food) but never a
 /// LINE hold — a discarded medium, or a second food, which a decision on
 /// the first food's key cannot count (checkpoint 5: one confirm on 'lemon
-/// zest plus juice' counted 48 lines at the zest's grams). A second food
+/// zest plus juice' counted 48 lines at the zest's grams), or shellfish
+/// bought in the shell ([boughtInShell], `in_shell`), whose edible share no
+/// food decision gives. A second food
 /// [secondFoodRuleOf] resolves counts on its own record, held by nothing
 /// ([citrus] and [eggs] are its switches).
 ({double? grams, String? source, String? hold}) engineOutcome(
@@ -341,6 +494,8 @@ bool _dissolvedWithBrineSalt(
     return (grams: resolved?.grams, source: resolved?.source.name, hold: null);
   }
   final secondFood = namesSecondFood(line.raw);
+  // A LINE hold too: no food decision says how much of a shell is eaten.
+  final inShell = boughtInShell(line.raw);
   if (decided) {
     final zero = amountlessLinesZero && line.amounts.isEmpty;
     return (
@@ -350,6 +505,8 @@ bool _dissolvedWithBrineSalt(
           ? 'discarded_medium'
           : secondFood
           ? 'second_food'
+          : inShell
+          ? 'in_shell'
           : null,
     );
   }
@@ -372,7 +529,12 @@ bool _dissolvedWithBrineSalt(
       // counting it alone would drop the second silently.
       : secondFood
       ? 'second_food'
-      : picked && publishesNothing(food)
+      // Shellfish bought in the shell: no record publishes its edible share.
+      : inShell
+      ? 'in_shell'
+      : picked &&
+            publishesNothing(food) &&
+            !nutrientSiblings.containsKey(food.fdcId)
       ? 'no_nutrients'
       : unnamed
       ? 'unnamed_food'
@@ -485,9 +647,24 @@ SecondFoodRule? secondFoodRuleOf(
     final lineVolume = line.amounts
         .where((amount) => amount.measure == Measure.volume)
         .firstOrNull;
+    // A zest pared in strips and counted, with no volume of its own ("12
+    // (3-inch) strips lemon zest plus 6 tablespoons juice", 0005; "1
+    // tablespoon lemon juice …, plus 3 strips zest", 0851) is steeped or
+    // candied, never a measure of grated peel: it drops like a small zest
+    // (checkpoint 6). A strip line that gives the peel a volume ("10
+    // (3-inch) strips orange peel … (¼ cup)", 0536) is read by the volume.
+    bool strips(Amount amount) =>
+        amount.measure == Measure.count &&
+        RegExp(r'^strips?$').hasMatch(amount.unit ?? '');
     final juice = zestFirst ? plus.amount : lineVolume;
-    final zest = zestFirst ? lineVolume : plus.amount;
-    final zestMl = zest == null ? null : volumeMlOf([zest]);
+    final zest = zestFirst
+        ? lineVolume ?? line.amounts.where(strips).firstOrNull
+        : plus.amount;
+    final zestMl = zest == null
+        ? null
+        : strips(zest)
+        ? 0.0
+        : volumeMlOf([zest]);
     if (juice == null ||
         volumeMlOf([juice]) == null ||
         zestMl == null ||
@@ -609,18 +786,23 @@ final RegExp _citrusWord = RegExp(
 /// The item text the matcher normalizes, searches and keys [line] by: its
 /// parsed item — unless that is a lone qualifier, which reads on to the
 /// next comma ("short, curly pasta" → 'short curly pasta'; 'fine-ground,
-/// whole-grain yellow cornmeal'), or bare 'juice', which takes its fruit
-/// from the line ("6 tablespoons juice (2 lemons)" → 'lemon juice'; it
-/// searched Beet juice). A rewrite key is left to its rewrite ('short',
-/// 'dark'). With [dropPrep] false a prep-only segment is kept, as before v8
-/// — the reading a v7 decision's item text was stored under (the boot
-/// re-key finds its line by it: `rekeyDecisions`).
+/// whole-grain yellow cornmeal'), or bare 'juice' or 'zest', which takes
+/// its fruit from the line ("6 tablespoons juice (2 lemons)" → 'lemon
+/// juice'; it searched Beet juice). A rewrite key is left to its rewrite
+/// ('short', 'dark'). With [dropPrep] false a prep-only segment is kept,
+/// as before v8 — the reading a v7 decision's item text was stored under
+/// (the boot re-key finds its line by it: `rekeyDecisions`).
 String lineItemOf(IngredientLine line, {bool dropPrep = true}) {
   final item = line.item ?? line.raw;
   final normalized = normalizeItem(item);
-  if (normalized == 'juice') {
+  // A bare 'zest' too: Key Lime Pie's (0989) item "grated zest plus 1/2 cup
+  // juice" keeps its fruit in the prep "from 3 or 4 limes" and searched
+  // 'zest' (FDC: no hits) — its key already read the line's fruit
+  // ([decisionItemOf]; checkpoint 6). (No line of the library is a bare
+  // 'peel'.)
+  if (normalized == 'juice' || normalized == 'zest') {
     final fruit = _citrusWord.firstMatch(line.raw.toLowerCase());
-    return fruit == null ? item : '${fruit[1]} juice';
+    return fruit == null ? item : '${fruit[1]} $normalized';
   }
   if (!_namesNoFood(normalized) ||
       searchQueryFor(normalized) != normalized ||
@@ -1197,7 +1379,7 @@ Future<void> matchAndCompute(
       provider,
       food!,
       line,
-      fetch: best.confidence >= lowConfidence,
+      fetch: !belowConfidenceGate(best.confidence),
     );
     if (_foodFromCache(db, gramsFood.fdcId) == null) {
       standIns[gramsFood.fdcId] = gramsFood;
@@ -1493,7 +1675,7 @@ Future<void> recomputeTotals(
     // [IngredientMatchRow.hold] reason holds a row the same way.
     if (!engineZero &&
         row.status == 'auto' &&
-        (row.confidence < lowConfidence || row.hold != null)) {
+        (belowConfidenceGate(row.confidence) || row.hold != null)) {
       continue;
     }
     if (grams <= 0) {
@@ -1503,10 +1685,16 @@ Future<void> recomputeTotals(
       }
       continue;
     }
-    final food =
+    final own =
         standIns[row.fdcId] ??
         knownFood(db, row.fdcId!, line: lines[row.position]) ??
         await _cachedFood(db, provider, row.fdcId!);
+    final sibling = nutrientSiblings[row.fdcId];
+    final food = sibling == null || own == null
+        ? own
+        : standIns[sibling] ??
+              knownFood(db, sibling) ??
+              await _cachedFood(db, provider, sibling);
     if (food == null) {
       continue;
     }
@@ -1586,6 +1774,15 @@ Future<void> recomputeTotals(
     '${calories?.toStringAsFixed(0) ?? '?'} kcal/serving (basis $basis)',
   );
 }
+
+/// What [basis] divides a recipe's totals by: `per_batch` when it is 1 —
+/// the whole batch ("MAKES 1 LOAF", no servings at all, or an admin's 1).
+/// Any larger basis divides the batch: by a serves count, or by a MAKES
+/// yield count ([recomputeTotals]), where a "serving" is one of the yield —
+/// one of "MAKES TWO 9-INCH PIZZAS", not the batch (refix round 1: the first
+/// rule, basis 2 or less with no serves count, labelled 29 such basis-2
+/// recipes per batch). `per_serving` otherwise.
+String basisKindOf(int basis) => basis == 1 ? 'per_batch' : 'per_serving';
 
 /// Re-ranked candidates for one line. With [cacheOnly] (the GET path —
 /// any authenticated user) the search cache is the sole source: a read
@@ -1692,7 +1889,22 @@ String? gramBasisFor(
       return byRule.basis;
     }
   }
-  GramResolution? on(FdcFood? food) => lineGrams(db, line, food);
+  // A record whose nutrients are a sibling's says so ([nutrientSiblings]).
+  final sibling = fdcId == null ? null : nutrientSiblings[fdcId];
+  final nutrientsOf = sibling == null
+      ? ''
+      : ' · nutrients of "${knownFood(db, sibling)?.description ?? sibling}"';
+  GramResolution? on(FdcFood? food) {
+    final grams = lineGrams(db, line, food);
+    return grams == null || nutrientsOf.isEmpty
+        ? grams
+        : GramResolution(
+            grams: grams.grams,
+            source: grams.source,
+            basis: '${grams.basis ?? ''}$nutrientsOf',
+          );
+  }
+
   final now = on(food);
   // Stored grams resolved on a search hit (no portions) before the detail
   // was cached: the basis is the hit's, never a yield or a portion the
@@ -1796,7 +2008,7 @@ Future<List<FdcCandidate>> _cachedSearch(
     return (query: split, answer: split);
   }
   final topWhole = _topCachedConfidence(db, whole.query, whole.answer);
-  return topSplit >= (topWhole ?? lowConfidence)
+  return topSplit >= (topWhole ?? confidenceGateFloor)
       ? (query: split, answer: split)
       : whole;
 }
@@ -1914,8 +2126,9 @@ Future<FdcFood?> cachedFood(
 /// undecided row) less every row a line hold would hold once it took the
 /// food: a line that names a second food ([namesSecondFood]) — its rule
 /// counts it on its own record, or it is held `second_food` whatever food
-/// the key gives it — and an unmatched line that is a held discarded medium
-/// (an unmatched brine sugar). No decision on the key moves either
+/// the key gives it — shellfish bought in the shell ([boughtInShell], held
+/// `in_shell` on any food), and an unmatched line that is a held discarded
+/// medium (an unmatched brine sugar). No decision on the key moves either
 /// (checkpoint 5 review: the offer counted 43 rule rows and the apply
 /// landed 0; an unmatched second-food line was reported applied).
 List<IngredientMatchRow> decisionReach(
@@ -1928,9 +2141,12 @@ List<IngredientMatchRow> decisionReach(
     itemKey,
     excluding: excluding,
     fdcId: fdcId,
-    belowConfidence: lowConfidence,
+    belowConfidence: confidenceGateFloor,
   ))
-    if (!namesSecondFood(row.raw) && !_heldMediumOnceMatched(db, row)) row,
+    if (!namesSecondFood(row.raw) &&
+        !boughtInShell(row.raw) &&
+        !_heldMediumOnceMatched(db, row))
+      row,
 ];
 
 /// Whether the unmatched [row] is a discarded medium the engine would hold

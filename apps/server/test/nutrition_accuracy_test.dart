@@ -112,8 +112,14 @@ void main() {
     final recorded =
         jsonDecode(File('test/fixtures/fdc/searches.json').readAsStringSync())
             as Map<String, dynamic>;
+    // A target no snapshot holds is named pending ([pendingSearches]).
     for (final key in queryRewriteKeys) {
-      expect(recorded.containsKey(searchQueryFor(key)), isTrue, reason: key);
+      final target = searchQueryFor(key);
+      expect(
+        recorded.containsKey(target) || pendingSearches.contains(target),
+        isTrue,
+        reason: key,
+      );
     }
     for (final MapEntry(:key, :value) in _batchRewrites.entries) {
       expect(searchQueryFor(key), value, reason: key);

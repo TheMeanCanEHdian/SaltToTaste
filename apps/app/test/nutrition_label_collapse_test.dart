@@ -16,8 +16,7 @@ import 'package:salt_app/features/nutrition/nutrition_label.dart';
 // status=complete, serves 15). Nutrition is DB-only — it never lives in the
 // YAML corpus — so a captured real payload is the closest to real-data
 // testing this UI allows.
-const _perServingJson =
-    r'''
+const _perServingJson = r'''
 {"energy":{"label":"Calories","amount":156.22,"unit":"kcal","dv_percent":7.8},
 "fat":{"label":"Total Fat","amount":6.98,"unit":"g","dv_percent":9.0},
 "saturated":{"label":"Saturated Fat","amount":1.6,"unit":"g","dv_percent":8.0},
@@ -101,6 +100,28 @@ void main() {
     // The toggle offers to fold, not unfold.
     expect(find.text('Hide details'), findsOneWidget);
     expect(find.text('Full nutrition facts'), findsNothing);
+  });
+
+  testWidgets('a per-batch basis says so beside the per-serving header; a '
+      'serves count does not (basis_kind, checkpoint 6)', (tester) async {
+    await pumpPanel(tester);
+    expect(find.text('Per serving · serves 15'), findsOneWidget);
+    expect(find.textContaining('per batch'), findsNothing);
+
+    // The same real payload on the basis a MAKES 1 LOAF recipe gets.
+    await pumpPanel(
+      tester,
+      nutrition: RecipeNutrition.fromJson({
+        'status': 'complete',
+        'serving_basis': 1,
+        'basis_kind': 'per_batch',
+        'total_grams': 1066.9,
+        'matched_count': 8,
+        'total_count': 8,
+        'per_serving': jsonDecode(_perServingJson),
+      }),
+    );
+    expect(find.text('Per serving · serves 1 · per batch'), findsOneWidget);
   });
 
   testWidgets('collapsing folds the detail region shut', (tester) async {

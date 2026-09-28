@@ -169,8 +169,16 @@ const Map<String, String> _synonyms = {
 /// count noun that is an alternative's food kept, identity participles kept
 /// in a comma-listed food, "3 or 4 limes" moved to the front, a fruitless
 /// zest-plus-juice item keyed by the line's fruit, and egg-part keys food
-/// first.
-const int matcherVersion = 9;
+/// first;
+/// 10 = checkpoint 6 (2026-09-27): a bare 'zest'/'peel' item searches and
+/// keys the line's fruit ("1 (2-inch) strip zest from 1 lemon" is 'lemon
+/// zest'), 'skinless' credited (not on a line that names no species) with
+/// "Lomi salmon" and a salad named for the food ("Salmon salad") docked as
+/// dishes, and rewrites for country-style ribs (to the raw record),
+/// gorgonzola, arborio, 90% lean ground sirloin, andouille, kielbasa
+/// sausage, the flagged asiago and allspice-berry approximations, and lime
+/// zest.
+const int matcherVersion = 10;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -826,6 +834,38 @@ const Map<String, String> _queryRewrites = {
   'tubetti': 'pasta dry enriched',
   'madeira': 'wine dessert dry',
   'sukang maasim': 'vinegar',
+  // Checkpoint 6. FDC answers the country-style rib lines' own words with
+  // COOKED records only ("…, boneless, cooked, broiled", 4 each): 7 raw
+  // lines counted broiled meat at bought weight (0612 about 619 kcal a
+  // serving over). The recorded answer for the 0352 phrase ranks the raw
+  // record 167895 first — whose detail's refuse yield (0.65) the bone-in
+  // line reads. (A cook-state dock beside a raw record of the same cut was
+  // measured first: no answer of these lines holds one, 0 rows moved.)
+  'boneless country-style pork ribs':
+      'pork spareribs or country-style ribs or beef short ribs',
+  'bone-in country-style pork ribs':
+      'pork spareribs or country-style ribs or beef short ribs',
+  // Variety words FDC files under another name (checkpoint 6: each answer
+  // was all dishes tying at 0.465 — "Cheese, Monterey" for gorgonzola, "Rice
+  // crackers" for arborio, veal for 90% lean ground sirloin). Every target's
+  // answer is recorded and ranks the named record first.
+  'gorgonzola cheese': 'blue cheese',
+  'arborio rice': 'short-grain white rice',
+  'valencia or arborio rice': 'short-grain white rice',
+  '90 percent lean ground sirloin': '90 percent lean ground beef',
+  'andouille sausage': 'smoked sausage',
+  'kielbasa sausage': 'kielbasa',
+  // APPROXIMATIONS the user accepted (like pancetta above): FDC has no Asiago
+  // (its answer is dishes and "Cheese, Monterey") — counted as Parmesan, the
+  // hard grating cheese it is closest to; and no whole allspice — counted as
+  // "Spices, allspice, ground" (the answer's top was "Berries, NFS").
+  'asiago cheese': 'parmesan cheese',
+  'allspice berries': 'ground allspice',
+  'whole allspice berries': 'ground allspice',
+  // FDC's answer for 'lime zest' holds no lime peel ("Lime, raw" won at
+  // 0.485), where lemon's and orange's hold their peel record: the zest →
+  // peel credit reads the peel's words here. Pending ONE live search.
+  'lime zest': 'lime peel raw',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -1116,6 +1156,11 @@ const Set<String> _dishMarkers = {
   // otherwise matched "Sausage, egg and cheese breakfast biscuit" over the real
   // sausage. Query-gated, so a recipe that asks for "biscuit(s)" still matches.
   'biscuit',
+  // "Lomi salmon" is a Hawaiian salmon-and-tomato salad: it tied "Fish,
+  // salmon, raw" on coverage and won on precision for skinless salmon
+  // fillets once 'skinless' was credited (checkpoint 6). ("Salmon salad",
+  // the next tie, is a salad NAMED for the food: [rankCandidates].)
+  'lomi',
 };
 
 /// USER ANSWER #6 SWITCH (variety dock). True (the recommended default)
@@ -1711,9 +1756,11 @@ final Set<String> _spiceQualifiers = {
 /// Variety and descriptor words no FDC record of the food carries, measured
 /// one at a time on the gate band with 0 wrong lines counted: not counted
 /// against coverage when uncovered and not the head ('red plums' is plums).
-/// Not 'skinless' (it lifted "Lomi salmon") or 'whole' (it moved egg yolks).
+/// 'skinless' (checkpoint 6) only once "Lomi salmon" is a dish
+/// ([_dishMarkers]); not 'whole' (it moved egg yolks).
 final Set<String> _noCreditWords = {
   for (final word in const [
+    'skinless',
     'english',
     'plum',
     'slivered',
@@ -1899,7 +1946,10 @@ List<RankedCandidate> rankCandidates(
           token != head &&
           !_plainVarietyTokens.contains(token),
     );
-    final uncredited = !ofTheFood
+    // Nor on a line that names no species ('skinless white fish fillets':
+    // 'white' alone covers "Fish, sucker, white, raw"), as for 'fillet'
+    // ([_countedTokens]).
+    final uncredited = !ofTheFood || head == 'fish'
         ? 0
         : queryTokens
               .where(
@@ -1996,7 +2046,15 @@ List<RankedCandidate> rankCandidates(
         _compositePhrases.any(
           (phrase) =>
               descriptionLower.contains(phrase) && !queryLower.contains(phrase),
-        );
+        ) ||
+        // A salad named for the food — "Salmon salad", "Egg salad" — is a
+        // dish of it; 'salad' alone is no marker ("Salad dressing,
+        // mayonnaise" is mayonnaise). (Sparing a query that says 'salad'
+        // changed no recorded answer: removed, refix round 2.)
+        (head != null &&
+            RegExp(
+              '\\b${RegExp.escape(head)}s? salad\\b',
+            ).hasMatch(descriptionLower));
     var docked = wrongFood;
     if (wrongFood) {
       score -= _wrongFoodDock;

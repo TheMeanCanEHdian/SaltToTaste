@@ -899,9 +899,11 @@ void main() {
     // read from snapshot 7: eight more compared, five of them differ in some
     // digit. Its refix recorded every answer the corpus-backed suites ask
     // for from snapshot 7 (no fixture miss passes as FDC's own answer): 47
-    // more compared, 32 of them differ in some digit.
-    expect(compared, 166);
-    expect(differ, 122);
+    // more compared, 32 of them differ in some digit. Checkpoint 6 (matcher
+    // v10) recorded its pins' answers from snapshot 8: 9 more compared, 8
+    // of them differ in some digit.
+    expect(compared, 175);
+    expect(differ, 130);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

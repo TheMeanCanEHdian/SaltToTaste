@@ -183,7 +183,16 @@ void main() {
         )
         ..upsertIngredientMatch(
           m(10, fdcId: 5, conf: 0.3, grams: 12, source: 'discarded'),
-        );
+        )
+        // Checkpoint 6: a confirmed FOOD with no grams stays no_grams (the
+        // totals skip it); the gate reads 0.5 less a drift tolerance; an
+        // in-shell line is held like any line hold.
+        ..upsertIngredientMatch(
+          m(12, fdcId: 5, grams: null, status: 'confirmed'),
+        )
+        ..upsertIngredientMatch(m(13, fdcId: 5, conf: 0.5 - 1e-12))
+        ..upsertIngredientMatch(m(14, fdcId: 5, conf: 0.4999))
+        ..upsertIngredientMatch(m(15, fdcId: 5, hold: 'in_shell'));
       final expected = <String, int>{};
       for (final row in db.ingredientMatchesFor('r1')) {
         final bucket = matchBucketFor(
@@ -197,8 +206,9 @@ void main() {
         expected[bucket] = (expected[bucket] ?? 0) + 1;
       }
       expect(db.nutritionReviewCounts(), expected);
-      expect(expected['check'], 4);
-      expect(expected['counted'], 3);
+      expect(expected['check'], 6);
+      expect(expected['counted'], 4);
+      expect(expected['no_grams'], 3);
       final held =
           (nutritionReviewHandler(db, page: 1, limit: 50)['items']! as List)
               .cast<Map<String, Object?>>()
