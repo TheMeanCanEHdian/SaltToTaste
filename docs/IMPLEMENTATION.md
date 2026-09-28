@@ -1658,10 +1658,11 @@ second_food, discarded_medium) — toggling an inherited-decision shellfish
 line off and on had counted its shell weight; only a person's own confirm
 or pick clears in_shell. An amount-less bought-in-shell line ("1 dozen
 mussels", "24 oysters") is held on a fresh match too, never counted at
-0 g. A shell-on shrimp line the recipe peels is bought in the shell no
-longer than the line says "peeled" (0429 counts at gross weight, labelled
-approximate); "debearded" went (every such line also says scrubbed); the
-rule holds 17 lines. A dissolve is brine only when the salt's own mention
+0 g. A shell-on shrimp line the recipe peels is still bought in the shell
+and stays held (0429, weighed with its shells — the fixer's first cut had
+counted it at gross weight and the last verify round reverted that to the
+ruling); "debearded" went (every such line also says scrubbed); the rule
+holds 18 lines. A dissolve is brine only when the salt's own mention
 follows the verb, the "in <amount>" follows in the same sentence, and the
 step says "submerge" (a dough's yeast water and a sugar dissolved beside a
 stirred-in salt are pinned as synthesized negatives). A held medium's
@@ -1674,7 +1675,7 @@ line. The "approximate" basis comes from the line and the cached search
 hit, never from whether the detail was fetched, and an in-shell line
 reads it too. An exact ranker tie breaks toward the plainer record: the
 lean-and-fat sibling over "lean only", the unheated or unbaked record over
-a cooked one (kielbasa 3 lines, pie dough 10, shrimp 7; 16 cached answers
+a cooked one (kielbasa 3 lines, pie dough 12, shrimp 5; 14 cached answers
 change top pick, every one a tie). Lime zest is a FLAGGED approximation
 on "Lemon peel, raw" (the live search settled that FDC has no lime peel
 record; the answer is recorded). The napa nutrient sibling is pinned and
@@ -1682,10 +1683,16 @@ named in a hand-entered row's basis. The staleness hash now covers the
 recipe title and its own step texts, since the media rules read them: a
 drain added or removed makes the recipe stale (every recipe goes stale
 once at this bump). The changelog no longer claims a bare "peel" is
-handled. Cache-only replay on snapshot 9 (the v10 live replay): counted
-12,544 → 12,543, check 816 → 817, complete 553 (0429 gained, 0358 lost to
-the cooking-water hold); 46 rows moved, all attributed. No live answer is
-pending.
+handled. Live replay on the scratch copy (0 requests — every recipe
+recomputed from cache after the hash change): counted 12,544 → 12,542,
+check 816 → 818, complete 553 → 552 (0358 lost to the cooking-water
+hold; 0461's pasta-water salt held too). Checkpoint 7 (five Opus 5.5
+auditors) confirmed those numbers and found that the fixer's cache-only
+replay had run on an intermediate build (the first paragraph's 17 lines
+/ 553 figures were from it). Its two counted wrong-food regressions since
+v9: the "skinless" credit lifts both skinless-halibut lines onto FNDDS
+"Fish, halibut", a cooked record at 175 kcal/100 g (0273 complete about
+190 kcal a serving over) — needs one live search for the raw record.
 
 ## Decision log (deviations & clarifications)
 
