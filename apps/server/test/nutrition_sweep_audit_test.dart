@@ -752,17 +752,21 @@ void main() {
 
     test("a sibling answer is ranked under the line's own words", () async {
       // Thai chiles (the pin until matcher v8, whose chile credit ranks
-      // 'chil' and 'chile' alike) gave way to prunes: the ranker stems
-      // 'prunes' and 'prune' apart.
-      final answer = await fixtures.search('prunes');
-      db.fdcSearchCachePut('prune', await recorded('prunes'));
+      // 'chil' and 'chile' alike) gave way to prunes, and prunes (until v12
+      // stemmed 'prunes' as 'prune') to cardamom pods: the count noun leaves
+      // the plural's tokens, not the singular key's.
+      final answer = await fixtures.search('green cardamom pods');
+      db.fdcSearchCachePut(
+        'green cardamom pod',
+        await recorded('green cardamom pods'),
+      );
       String top(String query) =>
           rankCandidates(query, answer).first.candidate.description;
-      expect(top('prunes'), isNot(top('prune')));
-      // Slow-Cooker Beer-Braised Short Ribs (0088).
+      expect(top('green cardamom pods'), isNot(top('green cardamom pod')));
+      // Indian Curry (0567).
       const line = IngredientLine(
-        raw: '12 pitted prunes',
-        item: 'pitted prunes',
+        raw: '4 green cardamom pods',
+        item: 'green cardamom pods',
       );
       for (final cacheOnly in [true, false]) {
         final ranked = await candidatesForLine(
@@ -774,7 +778,10 @@ void main() {
         expect(
           [for (final c in ranked) (c.candidate.fdcId, c.confidence)],
           [
-            for (final c in rankCandidates('prunes', answer).take(8))
+            for (final c in rankCandidates(
+              'green cardamom pods',
+              answer,
+            ).take(8))
               (c.candidate.fdcId, c.confidence),
           ],
           reason: 'cacheOnly: $cacheOnly',
@@ -903,9 +910,13 @@ void main() {
     // v10) recorded its pins' answers from snapshot 8: 9 more compared, 8
     // of them differ in some digit. The checkpoint-6 review (matcher v11)
     // recorded "Mushroom, oyster" (1999627) from snapshot 9, a hit in
-    // 'oysters': it differs too.
-    expect(compared, 176);
-    expect(differ, 131);
+    // 'oysters': it differs too. Checkpoint 7 (matcher v12) recorded
+    // pickled hot peppers (2710095), avocado (2710824), egg white (747997)
+    // and navel oranges (746771) from snapshot 10, and the foods its
+    // repointed Indian Curry pin (0567) reads (172231, 2685581, 2707427):
+    // seven more compared, four of them differ in some digit.
+    expect(compared, 183);
+    expect(differ, 135);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
@@ -1180,31 +1191,37 @@ void main() {
 
     test("a sibling answer is ranked under the line's own words when the "
         'engine matches it', () async {
-      // Prunes, not Thai chiles, since matcher v8 ranks 'chil' and 'chile'
-      // alike: 'prunes' and 'prune' rank apart.
-      const file = '0088-slow-cooker-beer-braised-short-ribs.yaml';
+      // Cardamom pods, not Thai chiles (matcher v8 ranks 'chil' and 'chile'
+      // alike) nor prunes (v12 stems 'prunes' as 'prune'): 'green cardamom
+      // pods' and 'green cardamom pod' rank apart.
+      const file = '0567-indian-curry.yaml';
       final (db, recipes) = await library([file]);
       final provider = _Recording();
-      final answer = await provider.inner.search('prunes');
+      final answer = await provider.inner.search('green cardamom pods');
       db.fdcSearchCachePut(
-        'prune',
+        'green cardamom pod',
         jsonEncode([for (final hit in answer) hit.toJson()]),
       );
-      final ribs = recipes.values.single;
-      await matchAndCompute(db, provider, ribs);
-      final (_, row, _) = rowIn(db, ribs, '12 pitted prunes');
-      expect(provider.searched, isNot(contains('prunes')));
+      final curry = recipes.values.single;
+      await matchAndCompute(db, provider, curry);
+      final (_, row, _) = rowIn(db, curry, '4 green cardamom pods');
+      expect(provider.searched, isNot(contains('green cardamom pods')));
       expect(row.fdcId, isNotNull);
       expect(
         [
-          for (final c in rankCandidates('prunes', answer).take(3))
+          for (final c in rankCandidates(
+            'green cardamom pods',
+            answer,
+          ).take(3))
             (c.candidate.fdcId, c.confidence),
         ],
         contains((row.fdcId, row.confidence)),
       );
       expect(
         row.fdcId,
-        isNot(rankCandidates('prune', answer).first.candidate.fdcId),
+        isNot(
+          rankCandidates('green cardamom pod', answer).first.candidate.fdcId,
+        ),
       );
     });
   });

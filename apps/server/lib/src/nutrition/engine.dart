@@ -826,6 +826,7 @@ const Set<String> _loneAdjectives = {
   'white',
   'plain',
   'ripe',
+  'firm',
   'fine-ground',
   'lengthwise',
   'dry',
@@ -874,7 +875,10 @@ String lineItemOf(IngredientLine line, {bool dropPrep = true}) {
     final fruit = _citrusWord.firstMatch(line.raw.toLowerCase());
     return fruit == null ? item : '${fruit[1]} $normalized';
   }
-  if (!_namesNoFood(normalized) ||
+  // A lone size word normalizes to nothing: "2 medium, firm, ripe tomatoes"
+  // parsed its item as 'medium' and searched nothing (checkpoint 7: 4
+  // no_match lines).
+  if ((normalized.isNotEmpty && !_namesNoFood(normalized)) ||
       searchQueryFor(normalized) != normalized ||
       line.item == null) {
     return item;
@@ -898,9 +902,14 @@ String lineItemOf(IngredientLine line, {bool dropPrep = true}) {
       // 'toasted skinned and hazelnut' a key and a live search (checkpoint
       // 5). A colour or variety segment stays ("red, yellow, or orange bell
       // peppers").
+      // A firmness segment ("medium, firm, ripe tomatoes") says how firm,
+      // never what: kept, the tomatoes keyed and searched 'firm ripe
+      // tomatoes' beside 9 'ripe tomato' lines. (A size word stays, as in
+      // 'medium onion': the key drops it.)
       return [
         for (final (i, part) in parts.take(n).indexed)
-          if (i == n - 1 || !dropPrep || !_prepOnly(part)) part,
+          if (i == n - 1 || !dropPrep || !(_prepOnly(part) || part == 'firm'))
+            part,
       ].join(' ');
     }
   }

@@ -27,6 +27,8 @@ const Set<String> _stopWords = {
   'assorted',
   'unbleached',
   'organic',
+  // "1 dozen mussels" is mussels (Paella, 0105); the grams read the dozen.
+  'dozen',
 };
 
 /// Preparation words — how the cook cuts/handles the food, never what it IS.
@@ -189,8 +191,17 @@ const Map<String, String> _synonyms = {
 /// medium's eaten "plus" part is its grams; an amount-less line in the
 /// shell is held (shell-on shrimp the line peels stays held: weighed with
 /// its shells); the
-/// staleness hash reads the steps and the title.
-const int matcherVersion = 11;
+/// staleness hash reads the steps and the title;
+/// 12 = checkpoint 7 (2026-09-28): the ranker strips "-es" only after s,
+/// ch, sh or o ('whites' is 'white', not 'whit'), with the class word
+/// "Spices," covering nothing, "puree" a base-form change, an "Alaska
+/// Native" record docked and V8 covered by "vegetable"; "1 dozen" read as 12
+/// and keyed without 'dozen'; a dangling "and" cut from a split line; the
+/// segments before the food in "medium, firm, ripe tomatoes" read past,
+/// 'firm' dropped; rewrites for the shrimp size words, skin-on salmon,
+/// pepperoncini, juice oranges, ripe avocado and bananas, chen pi (a flagged
+/// approximation) and the halibut lines (pending one live search).
+const int matcherVersion = 12;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -288,6 +299,12 @@ String normalizeItem(String item) {
       }
       start = k + 1;
     }
+  }
+  // A line the corpus split mid-phrase keeps its dangling connector: "1
+  // teaspoon grated fresh lime zest and" (Sweet and Saucy Glazed Salmon)
+  // keyed 'lime zest and' and missed the lime-zest rewrite (checkpoint 7).
+  if (out.lastOrNull == 'and') {
+    out.removeLast();
   }
   return out.join(' ');
 }
@@ -664,6 +681,11 @@ const Map<String, String> _queryRewrites = {
   'extra-large shrimp': 'shrimp raw',
   'jumbo shrimp': 'shrimp raw',
   'shell-on shrimp': 'shrimp raw',
+  // The size words the list above missed (checkpoint 7): each answer was
+  // dishes, and "Shrimp, NFS" held 4 lines under the gate.
+  'medium-large shrimp': 'shrimp raw',
+  'colossal shrimp': 'shrimp raw',
+  'shell-on jumbo shrimp': 'shrimp raw',
   // FDC files sherry under dessert wine and lager under beer.
   'sherry': 'wine dessert dry',
   'dry sherry': 'wine dessert dry',
@@ -881,6 +903,34 @@ const Map<String, String> _queryRewrites = {
   // picked. Lime zest searches as lemon zest, whose answer ranks "Lemon
   // peel, raw" (167749) alone first (v11).
   'lime zest': 'lemon zest',
+  // Checkpoint 7, each target's answer recorded and ranking the named record
+  // first. A skin-on fillet's answer holds no raw salmon ("…king, with skin,
+  // kippered, (Alaska Native)" held 9 lines at 0.473); the skinless
+  // fillet's ranks "Fish, salmon, raw" first — the skin changes little.
+  'skin-on salmon fillet': 'skinless salmon fillet',
+  'skin-on salmon fillets': 'skinless salmon fillet',
+  // FDC has no pepperoncini (its answer is []): a pickled hot pepper, whose
+  // generic record "Peppers, hot, pickled" (2710095) leads this answer.
+  'pepperoncini': 'pickled hot cherry peppers',
+  // Oranges for juicing are oranges: "Orange Pineapple Juice Blend" took the
+  // line at 0.90 once 'oranges' stemmed to 'orange' (v12).
+  'juice oranges': 'oranges',
+  // An APPROXIMATION (like pancetta above): FDC has no dried tangerine peel;
+  // its answer for 'chen pi' is all cookies and pies at 0 — counted as
+  // "Orange peel, raw".
+  'chen pi': 'orange peel',
+  // "1 medium, ripe avocado, diced medium" (0487) and "2 large, firm, ripe
+  // bananas" (0959) searched nothing until v12 read past their size
+  // segment; the recorded plural and 'very ripe' answers rank "Avocado,
+  // Hass, peeled, raw" and "Bananas, ripe and slightly ripe, raw" first.
+  'ripe avocado': 'ripe avocados',
+  'ripe bananas': 'very ripe bananas',
+  // The raw halibut record 174200 leads no recorded answer: the cooked FNDDS
+  // "Fish, halibut" (175 kcal / 100 g) took the skinless lines, and "Pepper
+  // steak" the steaks. PENDING one live search (pendingSearches).
+  'skinless halibut fillet': 'halibut atlantic and pacific raw',
+  'skinless halibut fillets': 'halibut atlantic and pacific raw',
+  'halibut steaks': 'halibut atlantic and pacific raw',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -964,11 +1014,18 @@ class RankedCandidate {
   final bool docked;
 }
 
+/// The ranker's stem of [word] — both the query's and every record's words
+/// go through it. "-es" comes off only after s, ch, sh or o (peaches,
+/// radishes, tomatoes; 'cheeses' stems 'chees', which keeps "Classic Grilled
+/// Cheese Sandwiches" off a seven-layer salad); any other plural loses its
+/// "s" alone: the
+/// "-es" rule stemmed 'whites' to 'whit' against the record's 'white', and
+/// 26 "egg whites" lines sat at 0.415 on the right record (checkpoint 7).
 String _singular(String word) {
   if (word.length > 3 && word.endsWith('ies')) {
     return '${word.substring(0, word.length - 3)}y';
   }
-  if (word.length > 3 && word.endsWith('es')) {
+  if (word.length > 3 && RegExp(r'(s|ch|sh|o)es$').hasMatch(word)) {
     return word.substring(0, word.length - 2);
   }
   if (word.length > 2 && word.endsWith('s')) {
@@ -1061,6 +1118,9 @@ const Set<String> _offMeatTokens = {
 /// so it takes a heavier penalty — enough to reliably demote it below the whole
 /// food. Applied only when the query itself did not ask for the form.
 const Set<String> _baseFormChangeTokens = {
+  // "Prune puree" out-ranked the dried prunes once 'prunes' stemmed to
+  // 'prune' (v12, 3 lines; 2 counted 96 g for 58 g).
+  'puree',
   'flour',
   'oil',
   'juice',
@@ -1584,8 +1644,23 @@ const Set<String> _compositeMarkers = {
   // "Turkey and gravy, frozen" counted 9,979 g for a whole frozen turkey
   // (0155) once the connectors stopped costing it precision (refix round 1).
   'gravy',
+  // "Olive tapenade" took 4 niçoise olive lines from "Olives, black" once
+  // 'olives' stemmed to 'olive' (v12).
+  'tapenade',
 };
-const List<String> _compositePhrases = ['school lunch', 'with meat'];
+
+/// FDC's class first segments ([rankCandidates]): a filing, not the food.
+const Set<String> _classSegments = {'spices', 'beverages'};
+
+const List<String> _compositePhrases = [
+  'school lunch',
+  'with meat',
+  // A traditional food of one programme: "Caribou, bone marrow, raw (Alaska
+  // Native)" counted 680 g for "1½ pounds marrow bones" once 'bones' stemmed
+  // to 'bone' (v12); "…salmon, king, with skin, kippered, (Alaska Native)"
+  // held 9 skin-on salmon lines.
+  'alaska native',
+];
 
 /// "not sweetened": the word after "not" is what the record is NOT.
 final RegExp _negated = RegExp(r'\bnot\s+([a-z0-9%]+)');
@@ -1745,8 +1820,9 @@ const bool connectorTokensDropped = true;
 /// The connector words [connectorTokensDropped] drops.
 const Set<String> _connectorTokens = {'or', 'and'};
 
-/// Coverage-only synonyms, in the ranker's stem form (plural 'chiles'
-/// stems to 'chil'): the corpus's word covers the one FDC files it under.
+/// Coverage-only synonyms, in the ranker's stem form: the corpus's word
+/// covers the one FDC files it under. (A 'chil' entry for the old stem of
+/// 'chiles' went with it: v12 stems the plural to 'chile'.)
 /// ('chili' and 'chily' were measured too: neither moved a recorded answer
 /// of the library, so they are not here.)
 /// Measured on the checkpoint-5 gate band: 45 right chile lines sat at
@@ -1754,9 +1830,12 @@ const Set<String> _connectorTokens = {'or', 'and'};
 /// (cremini → crimini was measured too: it raised 19 counted cremini lines
 /// from 0.525 to 0.95 and moved no food, bucket or gram, so it is not here.)
 const Map<String, String> _coverageSynonyms = {
-  'chil': 'pepper',
   'chile': 'pepper',
   'zest': 'peel',
+  // V8 is FDC's "Tomato and vegetable juice, 100%": once 'juices' stemmed
+  // to 'juice' (v12), "Beverages, V8 V-FUSION Juices, Tropical" took the two
+  // V8 juice lines (0028, 0286) at 0.48 with no grams.
+  'v8': 'vegetable',
 };
 
 /// Qualifiers FDC's ground-spice records never carry ("Spices, paprika" is
@@ -1898,6 +1977,7 @@ List<RankedCandidate> rankCandidates(
   }
   final countedTokens = _countedTokens(allTokens, query);
   final head = headNounOf(query);
+  final queryWords = _words(query);
   // The cuts some record files WITHOUT 'imported' ([_importedCut]).
   final domesticSegments = {
     for (final candidate in candidates)
@@ -1925,7 +2005,22 @@ List<RankedCandidate> rankCandidates(
       ))
         _singular(match[1]!),
     };
-    final own = descriptionTokens.difference(negated);
+    // FDC's "Spices," and "Beverages," are its classes, not the food: once
+    // v12 stemmed them 'spice' and 'beverage' (not 'spic', 'beverag'), the
+    // class covered "five-spice powder" ("Spices, chili powder" counted for
+    // it, 10 lines) and took the ready-to-drink dock ([_modifiedFormTokens])
+    // on "Beverages, coffee, instant, regular, powder". A later segment's
+    // word ("Spices, pumpkin pie spice") is the food's own, and a query
+    // naming the class ('spices pepper black', a rewrite target) keeps it.
+    final segments = candidate.description.toLowerCase().split(',');
+    final first = segments.first.trim();
+    final classWord =
+        _classSegments.contains(first) &&
+            !queryWords.contains(first) &&
+            !_tokens(segments.skip(1).join(',')).contains(_singular(first))
+        ? _singular(first)
+        : null;
+    final own = descriptionTokens.difference({...negated, ?classWord});
     // Coverage credits (checkpoint 5): a word FDC files under another word
     // covers it ([_coverageSynonyms]); a word no record of the food carries
     // leaves the denominator when uncovered and not the head — a qualifier
@@ -1995,7 +2090,7 @@ List<RankedCandidate> rankCandidates(
       _ => 0.0,
     };
     for (final token in descriptionTokens) {
-      if (queryTokens.contains(token)) {
+      if (queryTokens.contains(token) || token == classWord) {
         continue;
       }
       if (_baseFormChangeTokens.contains(token)) {
@@ -2024,7 +2119,6 @@ List<RankedCandidate> rankCandidates(
     // raw ingredient is not a soy analog or a finished dish built from it. One
     // dock, base-form magnitude — a wrong food, not a modified form.
     final descriptionWords = _words(candidate.description);
-    final queryWords = _words(query);
     // 'sandwich' never docks a sandwich COOKIE: FDC files Oreos as
     // "Cookie, chocolate sandwich" (recorded 2026-09-08).
     final cookieRecord =

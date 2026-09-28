@@ -104,6 +104,9 @@ const Set<String> pendingSearches = {
   'unit green onions',
   'unit lemon',
   'unit vegetable stock concentrate',
+  // Checkpoint 7: the raw halibut query (Braised Halibut 0273, Cioppino
+  // 0108, Pan-Roasted Halibut Steaks) — no snapshot 1–10 holds it.
+  'halibut atlantic and pacific raw',
 };
 
 /// A fixture miss: the test asked FDC something no fixture recorded. A

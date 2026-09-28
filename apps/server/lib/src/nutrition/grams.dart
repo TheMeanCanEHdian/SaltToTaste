@@ -1450,6 +1450,21 @@ Amount? _parsedUnit(Amount amount, String raw) {
     caseSensitive: false,
   ).firstMatch(raw);
   final quantity = _quantityValue(amount.quantity);
+  // "1 dozen mussels" (Paella, 0105) parsed as a count of 1: a dozen is 12,
+  // as the yield parser reads it ([parseYieldCount]).
+  final dozen = RegExp(
+    '^\\s*[\\d$vulgarFractionChars/ .-]+?\\s*dozen\\b',
+    caseSensitive: false,
+  ).hasMatch(raw);
+  if (dozen && quantity != null) {
+    final n = quantity * 12;
+    return Amount(
+      measure: Measure.count,
+      quantity: n == n.roundToDouble() ? '${n.toInt()}' : '$n',
+      approximate: amount.approximate,
+      primary: amount.primary,
+    );
+  }
   if (lead == null ||
       quantity == null ||
       _quantityValue(lead.group(1)!.trim()) != quantity) {

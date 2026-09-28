@@ -1694,6 +1694,35 @@ v9: the "skinless" credit lifts both skinless-halibut lines onto FNDDS
 "Fish, halibut", a cooked record at 175 kcal/100 g (0273 complete about
 190 kcal a serving over) — needs one live search for the raw record.
 
+### Checkpoint-7 zero-request batch (matcher v12)
+
+Only the checkpoint-7 items that need neither a ruling nor a live answer.
+`_singular` strips "-es" only after s, x, z, ch, sh or o and otherwise the
+"s" alone ("whites" → "white", not "whit"; "tomatoes" still → "tomato"):
+26 egg-white lines leave the check bucket at 0.95 and 14 recipes complete
+on them alone; four wrong foods the stem let through got guards (FDC's
+"Spices," and "Beverages," class segments cover nothing and take no
+ready-to-drink dock unless the query names the class; a puree base form;
+a tapenade composite; the "Alaska Native" phrase). Zero-request rewrites,
+each ranking its record first on a recorded answer: medium-large,
+colossal and shell-on jumbo shrimp → the raw shrimp answer; skin-on
+salmon fillets → the raw salmon record (10 lines off a kippered record);
+pepperoncini → "Peppers, hot, pickled"; chen pi → orange peel (flagged
+approximation); juice oranges → navel oranges. The normalizer cuts a
+dangling trailing "and"/"or" ("lime zest and"), and lineItemOf reads on
+past a lone size or firmness segment ("2 medium, firm, ripe tomatoes":
+four no-match lines now count). "N dozen" is a count of N × 12 (0105's
+mussels 15 g → 180 g, still held); a `_varietyHosts` record that files the
+head after a different food noun ("Mushroom, oyster") is docked when
+another record files the head first, so 1184's oysters rank "Oysters,
+raw". The three halibut keys rewrite to a query for the raw record that
+stays PENDING (no recorded answer; the user decides the live search).
+matcherVersion 12; decisions re-key before rows. Cache-only replay on
+snapshot 10: counted 12,542 → 12,594, check 818 → 773, no grams
+206 → 208, no match 49 → 40, complete 552 → 573 (20 gained, 0 lost); the
+next live sweep would ask about five answers (the halibut search, "ripe
+avocado", "ripe bananas", the prune and oyster details).
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
