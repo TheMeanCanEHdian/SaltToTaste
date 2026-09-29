@@ -1747,14 +1747,18 @@ number belongs to; a below-gate pick that moved to an uncached twin keeps
 the grams path; "⅔ cup crushed saltines" reads the line's own count; API.md
 names chen pi (dried peel on a raw-peel record, about 3× short per gram —
 a ruling item) and pepperoncini. From the Opus critic: "(recipe follows)"
-and "(this page)" reference lines are never counted on a food — 119 such
-lines were, up to 2,082 g of frosting — except a bare COUNT of the food
-itself (four hard-cooked-egg lines count their eggs; taco shells whose
-pick has no weight stay at 0 g). The user's rulings of 2026-09-28:
+and "(this page)" reference lines are never counted on a food — of the
+119 such lines, 116 had been matched to a food and 11 counted with grams,
+up to 2,082 g of frosting — except a bare COUNT of the food itself (four
+hard-cooked-egg lines count their eggs; taco shells stay at 0 g because
+their record's "shell" portion is written in a form the grams code does
+not yet read — checkpoint 8). The user's rulings of 2026-09-28:
 poured-away media the rules could not see (a poaching liquid's soy, salt
 rinsed off in a colander, salt or acid in a cheese milk, a pot emptied
 with a skimmer, the written pot share of a divided salt line) are held
-with the eaten part as grams (17 lines in 12 recipes); sugar and aromatics
+(18 lines in 12 recipes; the eaten part is stored as grams only on the
+"plus" lines — checkpoint 8 found the other held rows still carry the
+whole poured-away amount, a fix for the next batch); sugar and aromatics
 dissolved in a dissolve-and-submerge brine go to zero like the salt (a
 dunk that leaves liquid on the food stays held); fresh herbs with no fresh
 FDC record count on "Spices, X, dried" as a flagged approximation and a
