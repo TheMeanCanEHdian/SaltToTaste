@@ -39,6 +39,15 @@ final class ValidationException extends AppException {
     : super(422, ApiErrorCodes.validation, message);
 }
 
+/// A plain confirm of a below-gate zero row (HTTP 422, code `zero_row`):
+/// the row's food is a hidden guess, and a confirm would decide it
+/// library-wide.
+final class ZeroRowException extends AppException {
+  /// Creates a zero-row exception with the client-facing [message].
+  const ZeroRowException(String message)
+    : super(422, ApiErrorCodes.zeroRow, message);
+}
+
 /// The route exists but the HTTP method is not supported (HTTP 405, code
 /// `method_not_allowed`). [allow] is the value for the `Allow` response
 /// header the error handler attaches.

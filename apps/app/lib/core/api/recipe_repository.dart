@@ -356,7 +356,10 @@ class NutritionReviewLine {
   final int gramsMissing;
 
   /// How many recipes one decision on this group completes (the server's
-  /// `finishes`); 0 on a line item and for a group that finishes none.
+  /// `finishes`), 0 for a group that finishes none. On a line item, 1 when
+  /// confirming it finishes its recipe: the recipe's last open line, with
+  /// grams or a No grams line (whose confirm carries the amount); else 0.
+  /// Read from the stored rows: an upper bound for a recipe edited since.
   final int finishes;
 
   /// The recipes [finishes] counts, by title.

@@ -10128,5 +10128,170 @@
     "description": "fruit (2-1/8\" dia)"
    }
   ]
+ },
+ "2710675": {
+  "fdc_id": 2710675,
+  "description": "Champagne punch",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.16,
+   "204": 0.06,
+   "205": 11.5,
+   "208": 120.0,
+   "269": 9.52,
+   "291": 0.1,
+   "301": 8.0,
+   "303": 0.25,
+   "304": 8.0,
+   "305": 11.0,
+   "306": 83.0,
+   "307": 4.0,
+   "320": 0.0,
+   "323": 0.01,
+   "328": 0.0,
+   "401": 4.0,
+   "404": 0.024,
+   "405": 0.018,
+   "406": 0.135,
+   "415": 0.055,
+   "418": 0.0,
+   "430": 0.1,
+   "432": 7.0,
+   "435": 7.0,
+   "601": 0.0,
+   "606": 0.004,
+   "645": 0.005,
+   "646": 0.015
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz"
+   },
+   {
+    "gram_weight": 180.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 drink"
+   },
+   {
+    "gram_weight": 180.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "2710093": {
+  "fdc_id": 2710093,
+  "description": "Hot pepper sauce",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 1.29,
+   "204": 0.76,
+   "205": 0.8,
+   "208": 12.0,
+   "269": 0.13,
+   "291": 0.6,
+   "301": 12.0,
+   "303": 1.16,
+   "304": 12.0,
+   "305": 23.0,
+   "306": 128.0,
+   "307": 633.0,
+   "320": 82.0,
+   "323": 0.01,
+   "328": 0.0,
+   "401": 4.5,
+   "404": 0.032,
+   "405": 0.084,
+   "406": 0.178,
+   "415": 0.154,
+   "418": 0.0,
+   "430": 0.2,
+   "432": 0.0,
+   "435": 2.0,
+   "601": 0.0,
+   "606": 0.106,
+   "645": 0.061,
+   "646": 0.401
+  },
+  "portions": [
+   {
+    "gram_weight": 5.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 0.8,
+    "amount": null,
+    "unit": null,
+    "description": "10 drops"
+   },
+   {
+    "gram_weight": 9.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 packet"
+   },
+   {
+    "gram_weight": 16.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 9.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per sandwich"
+   }
+  ]
+ },
+ "167682": {
+  "fdc_id": 167682,
+  "description": "Pectin, liquid",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 11.0,
+   "203": 0.0,
+   "204": 0.0,
+   "205": 2.1,
+   "291": 2.1,
+   "269": 0.0,
+   "301": 0.0,
+   "303": 0.0,
+   "304": 0.0,
+   "305": 0.0,
+   "306": 0.0,
+   "307": 0.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.4,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fl oz assumed specific gravity of honey"
+   }
+  ]
  }
 }

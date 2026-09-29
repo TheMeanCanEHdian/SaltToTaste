@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 
 import 'package:salt_shared/salt_shared.dart'
-    show MatchBucket, belowConfidenceGate, matchBucketFor;
+    show MatchBucket, belowConfidenceGate, matchBucketFor, vulgarFractionChars;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -41,7 +41,8 @@ MatchBucket matchBucketOf(IngredientMatch m) => matchBucketFor(
 /// nothing, and the weak food is often a wrong guess ("Gel food dye" on
 /// "Fast foods, coleslaw"), so the row reads [zeroLabel] with the food
 /// hidden, and its fix asks for a food AND an amount. At 0.5 and above the
-/// food stays.
+/// food stays. A SKIPPED zero row keeps it: skipping is no food choice, so
+/// the weak guess stays hidden; a person's confirm or pick shows its food.
 bool countsAsZeroGuess({
   required String status,
   required int? fdcId,
@@ -50,7 +51,7 @@ bool countsAsZeroGuess({
   String? gramSource,
   String? hold,
 }) =>
-    status == 'auto' &&
+    (status == 'auto' || status == 'skipped') &&
     fdcId != null &&
     grams == 0 &&
     (gramSource == 'discarded' || gramSource == 'unmeasured') &&
@@ -67,10 +68,21 @@ bool zeroGuessOf(IngredientMatch m) => countsAsZeroGuess(
   hold: m.hold,
 );
 
-/// What a [countsAsZeroGuess] row reads in place of its food.
-String zeroLabel(String? gramSource) => gramSource == 'discarded'
+/// What a [countsAsZeroGuess] row reads in place of its food. An
+/// 'unmeasured' zero WITH a written amount (sprigs, a sub-recipe line) has
+/// an amount the engine does not measure — not an amount-less line.
+String zeroLabel(IngredientMatch m) => m.gramSource == 'discarded'
     ? 'Counts as zero (discarded in cooking)'
-    : 'Counts as zero (no amount)';
+    : m.lineAmount == null
+    ? 'Counts as zero (no amount)'
+    : 'Counts as zero (not measured)';
+
+/// Why a [countsAsZeroGuess] row adds nothing, after its [zeroLabel].
+String zeroReason(IngredientMatch m) => m.gramSource == 'discarded'
+    ? ': the recipe discards it in cooking, so it adds nothing to the label.'
+    : m.lineAmount == null
+    ? ': the line gives no amount, so it adds nothing to the label.'
+    : ': ${m.lineAmount} — not measured, counts as 0 g.';
 
 /// A line held as a poured-away medium or as shellfish bought in the shell
 /// (ruling 5): its card leads with "Skip, poured away" / "Enter edible
@@ -270,23 +282,26 @@ class _ZeroRowState extends State<ZeroRow> {
           TextSpan(
             children: [
               TextSpan(
-                text: zeroLabel(m.gramSource),
+                text: zeroLabel(m),
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: SaltColors.ink,
                 ),
               ),
-              TextSpan(
-                text: m.gramSource == 'discarded'
-                    ? ': the recipe discards it in cooking, so it adds '
-                          'nothing to the label.'
-                    : ': the line gives no amount, so it adds nothing to '
-                          'the label.',
-              ),
+              TextSpan(text: zeroReason(m)),
             ],
           ),
           style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
         ),
+        // ZeroRow stands in for WhyLine, so it carries the engine's hold.
+        if (holdReason(m.hold) case final held?)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              held,
+              style: const TextStyle(fontSize: 12, color: SaltColors.muted),
+            ),
+          ),
         if (widget.isAdmin) ...[
           const SizedBox(height: 4),
           SelectionContainer.disabled(
@@ -606,6 +621,12 @@ class _FixPanelState extends State<FixPanel> {
       _stagedFdcId = null;
       _amountDirty = false;
       _resetAmount();
+    } else if (old.match.portions.isEmpty && !_amountDirty) {
+      // The record's portions may have arrived with grams and food
+      // unchanged (a plain Confirm USDA could not convert caches the
+      // detail): their one fill prefills now, as on a fresh mount. A typed
+      // amount stays; once portions are shown, a tapped fill stays too.
+      _resetAmount();
     }
     // A plain Confirm that USDA could not convert leaves the line in No
     // grams (C): the amount block takes over, and its field — remounted
@@ -615,7 +636,8 @@ class _FixPanelState extends State<FixPanel> {
   void _resetAmount() {
     final m = widget.match;
     final g = m.grams;
-    if (g == null && confirmsWithAmount(m)) {
+    // A No grams line (grams null by its bucket) on a plausible food.
+    if (confirmsWithAmount(m)) {
       // The line's unit names exactly one USDA portion: its fill is the
       // amount (4 × stick 113 g = 452 g), shown in the field and on the
       // button, never written until Confirm. Otherwise the field waits.
@@ -630,6 +652,21 @@ class _FixPanelState extends State<FixPanel> {
     _setText(
       g == null || zeroGuessOf(m) ? '' : fmtAmount(g / unitToGrams[_unit]!),
     );
+  }
+
+  /// Stages [fdcId] as the panel's pick. An untouched prefill is the STORED
+  /// record's portion fill, which means nothing for another food: it is
+  /// cleared on a new pick (and comes back on a re-pick of the stored one),
+  /// so a Save without a typed amount lets the server recompute (A2).
+  void _stage(int fdcId) {
+    setState(() => _stagedFdcId = fdcId);
+    if (!_amountDirty && confirmsWithAmount(widget.match)) {
+      if (fdcId == widget.match.fdcId) {
+        _resetAmount();
+      } else {
+        _setText('');
+      }
+    }
   }
 
   @override
@@ -699,9 +736,11 @@ class _FixPanelState extends State<FixPanel> {
     void save() => cubit.override(
       m.position,
       fdcId: pickChanged ? _stagedFdcId : null,
-      // A zero row and the amount-first block always send the field: the
-      // line has no amount of its own to recompute from.
-      grams: zero || confirmMode || _amountDirty ? grams : null,
+      // A zero row always sends the field: the line has no amount of its own
+      // to recompute from. Otherwise only a typed amount goes out — the
+      // amount-first block's prefill is the stored record's fill, cleared on
+      // a new pick ([_stage]), so the server recomputes for the pick (A2).
+      grams: zero || _amountDirty ? grams : null,
     );
 
     final saveButton = FButton(
@@ -752,7 +791,7 @@ class _FixPanelState extends State<FixPanel> {
             guess: zero && c.fdcId == m.fdcId,
             selected: c.fdcId == selectedId,
             busy: busy,
-            onPick: busy ? null : () => setState(() => _stagedFdcId = c.fdcId),
+            onPick: busy ? null : () => _stage(c.fdcId),
           ),
       // Shown whenever FDC was asked — including a line it found NOTHING
       // for, which is the answer most worth refreshing. After a live search
@@ -803,7 +842,7 @@ class _FixPanelState extends State<FixPanel> {
             isCurrent: c.fdcId == m.fdcId,
             selected: c.fdcId == selectedId,
             busy: busy,
-            onPick: busy ? null : () => setState(() => _stagedFdcId = c.fdcId),
+            onPick: busy ? null : () => _stage(c.fdcId),
           ),
         // The line above already speaks for a search of the line's own
         // words; say it once.
@@ -879,11 +918,14 @@ class _FixPanelState extends State<FixPanel> {
             // estimate can be sanity-checked before adjusting — or, on a zero
             // row, that there is none.
             if (zero && m.gramSource == 'unmeasured')
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
                 child: Text(
-                  'The line gives no amount.',
-                  style: TextStyle(fontSize: 12, color: SaltColors.ink),
+                  m.lineAmount == null
+                      ? 'The line gives no amount.'
+                      : 'The line says ${m.lineAmount} — not measured, '
+                            'counts as 0 g.',
+                  style: const TextStyle(fontSize: 12, color: SaltColors.ink),
                 ),
               )
             else if (!zero && m.gramBasis != null)
@@ -1008,14 +1050,25 @@ class _FixPanelState extends State<FixPanel> {
     );
   }
 
-  /// Confirms the food WITH the typed amount (C); nothing without one.
+  /// Confirms the food WITH the typed amount (C); nothing without one. A
+  /// staged pick of another food is what the person chose: it is written
+  /// with the amount (the "Save match & amount" write), never a confirm of
+  /// the food they rejected (A1).
   void _confirm(NutritionCubit cubit) {
     final grams = _gramsFromField();
+    final m = widget.match;
     if (widget.busy || grams == null) {
       return;
     }
-    cubit.override(widget.match.position, confirmed: true, grams: grams);
+    final staged = _stagedFdcId;
+    if (staged != null && staged != m.fdcId) {
+      cubit.override(m.position, fdcId: staged, grams: grams);
+    } else {
+      cubit.override(m.position, confirmed: true, grams: grams);
+    }
   }
+
+  static final _hasNumber = RegExp('[0-9$vulgarFractionChars]');
 
   /// The amount-first block (C): what the line says, the record's USDA
   /// portions — the ones naming the line's unit tap-to-fill, the rest for
@@ -1027,8 +1080,21 @@ class _FixPanelState extends State<FixPanel> {
   ) {
     final m = widget.match;
     final grams = _gramsFromField();
+    // The portions are the STORED record's: after a pick of another food
+    // they describe the rejected one, so they step aside (A2).
+    final picked = _stagedFdcId != null && _stagedFdcId != m.fdcId;
     final fits = m.portions.any((p) => p.fill != null);
-    final unit = m.lineAmount?.split(' ').last;
+    // A bare count ("8", "1–16") names no unit a portion could miss; a
+    // one-word amount with no number in it is the unit alone ("dash": the
+    // codec's quantity is empty).
+    final words = m.lineAmount?.split(' ');
+    final unit = words == null
+        ? null
+        : words.length > 1
+        ? words.last
+        : _hasNumber.hasMatch(words.single)
+        ? null
+        : words.single;
     final size = leadingSize(m.raw);
     // A count shows on every chip once one portion is not "1" ("1 tsp"
     // beside "5 slices"); a list of ones shows none ("tbsp", "cup").
@@ -1062,7 +1128,11 @@ class _FixPanelState extends State<FixPanel> {
                     ),
                     if (size != null) TextSpan(text: ' $size'),
                     TextSpan(
-                      text: m.portions.isNotEmpty && !fits
+                      text:
+                          !picked &&
+                              unit != null &&
+                              m.portions.isNotEmpty &&
+                              !fits
                           ? ". USDA's portions for this food don't include "
                                 'a $unit, so the engine could not convert:'
                           : '.',
@@ -1071,7 +1141,16 @@ class _FixPanelState extends State<FixPanel> {
                 ),
                 style: says,
               ),
-            if (m.portions.isEmpty)
+            if (picked)
+              const Padding(
+                padding: EdgeInsets.only(top: 3),
+                child: Text(
+                  "Type the picked food's grams, or save the pick without "
+                  'an amount to have it recalculated.',
+                  style: TextStyle(fontSize: 11.5, color: SaltColors.muted),
+                ),
+              )
+            else if (m.portions.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 3),
                 child: Text(

@@ -1199,7 +1199,8 @@ class SaltDatabase {
   ///
   /// [sort] `worst` (the default here) is worst-confidence first;
   /// `finishes` first puts the lines that finish their recipe (`finishes`
-  /// 1: its last open line), then worst first — the grouped queue's order
+  /// 1: its last open line, with grams or in No grams — see the query),
+  /// then worst first — the grouped queue's order
   /// ([nutritionReviewGroups]) at line grain.
   ///
   /// Ties break on the ingredient key before the recipe title, so one
@@ -1223,8 +1224,15 @@ class SaltDatabase {
     // that way.
     // `open_lines` is windowed over EVERY row of the recipe before the
     // filter: a line is its recipe's last open line whatever the chip.
+    // `finishes` is the promise a confirm can keep (checkpoint-8 review,
+    // Run 046): the last open line AND grams to count — a Check line with
+    // grams, or a No grams line (the amount-first confirm supplies them).
+    // A No match line (no food) or a Check line with no grams (a plain
+    // Confirm leaves it without grams when USDA cannot convert) is 0.
     final rows = _prepared(
-      'SELECT * FROM (SELECT *, '
+      "SELECT *, (open_lines = 1 AND (bucket = 'no_grams' "
+      "OR (bucket = 'check' AND grams IS NOT NULL))) AS finishes "
+      'FROM (SELECT *, '
       "SUM(bucket IN ('no_match', 'no_grams', 'check')) "
       'OVER (PARTITION BY recipe_id) AS open_lines FROM ( '
       'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
@@ -1235,8 +1243,7 @@ class SaltDatabase {
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
       ")) WHERE (? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
       'OR bucket = ? '
-      "ORDER BY CASE WHEN ? = 'finishes' THEN "
-      "(bucket <> 'skipped' AND open_lines = 1) ELSE 0 END DESC, "
+      "ORDER BY CASE WHEN ? = 'finishes' THEN finishes ELSE 0 END DESC, "
       'confidence ASC, item_key, review_title, position '
       'LIMIT ? OFFSET ?',
     ).select([bucket, bucket, sort, limit, offset]);
@@ -1247,9 +1254,7 @@ class SaltDatabase {
           slug: row['review_slug'] as String,
           title: row['review_title'] as String,
           bucket: row['bucket'] as String,
-          finishes: row['bucket'] != 'skipped' && row['open_lines'] == 1
-              ? 1
-              : 0,
+          finishes: row['finishes'] as int,
         ),
     ];
   }
@@ -1271,6 +1276,13 @@ class SaltDatabase {
   /// `discarded_medium`, `in_shell`): no decision on the key reaches it
   /// (checkpoint 5 review: "sugar · 17 lines · 17 recipes" were 17 brine
   /// sugars one decision could never clear — 17 groups of one).
+  ///
+  /// Everything built on it reads the STORED match rows (Run 046): for a
+  /// recipe edited since its last compute (`stale`, derived, never stored) a
+  /// reworded or added line has no row of its own, so `finishes` (both
+  /// grains) and `finishable` are an upper bound for it — the apply skips a
+  /// reworded line and the recompute cannot account an added one. No SQL
+  /// filter here: staleness needs the recipe hashed, and it is never stored.
   static const String _reviewFlaggedCte =
       'WITH flagged AS (SELECT im.*, r.slug AS review_slug, '
       'r.title AS review_title, $_reviewBucketCase AS bucket, '
@@ -1287,9 +1299,11 @@ class SaltDatabase {
   /// then position), and `solo` — every recipe whose flagged lines (in any
   /// bucket, whatever the filter) all sit in ONE group, so that group holds
   /// its last open lines, with `short` counting those of them that have no
-  /// grams and are not the group's example. A recipe with none short is one
-  /// the group's decision finishes: the confirm on screen supplies the
-  /// example's grams.
+  /// grams and are not a No grams example. A recipe with none short is one
+  /// the group's decision finishes: the amount-first confirm supplies a No
+  /// grams example's grams. A Check or No match example with no grams is
+  /// short (Run 046: 22 of 22 such Check examples on snapshot 12 stayed
+  /// partial after a plain Confirm — USDA could not convert them).
   static const String _reviewFinishCte =
       '$_reviewFlaggedCte, '
       'members AS (SELECT * FROM flagged WHERE '
@@ -1299,7 +1313,8 @@ class SaltDatabase {
       'ORDER BY confidence, (grams IS NULL), review_title, position) AS rn '
       'FROM members), '
       'solo AS (SELECT o.recipe_id, MIN(o.gkey) AS gkey, '
-      'SUM(o.grams IS NULL AND x.rn IS NULL) AS short FROM flagged o '
+      "SUM(o.grams IS NULL AND (x.rn IS NULL OR o.bucket <> 'no_grams')) "
+      'AS short FROM flagged o '
       'LEFT JOIN example x ON x.rn = 1 AND x.recipe_id = o.recipe_id '
       'AND x.position = o.position '
       "WHERE o.bucket IN ('no_match', 'no_grams', 'check') "
@@ -1361,7 +1376,8 @@ class SaltDatabase {
   /// Each group carries `finishes`: the recipes one decision applied to the
   /// group completes — a recipe whose every flagged line (whatever the
   /// filter) sits in this group, each one with grams already or being the
-  /// group's example (the confirm on screen supplies the example's grams).
+  /// group's No grams example (the amount-first confirm supplies its grams;
+  /// a Check or No match example with no grams finishes nothing).
   /// A pick of a different food can finish more (it recomputes the reached
   /// lines' grams): the count may undercount, never over-promise a confirm.
   /// `finishesRecipes` names those recipes, and `lastOpen` counts every

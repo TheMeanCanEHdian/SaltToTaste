@@ -181,8 +181,9 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
     'position': match.position,
     'raw': match.raw,
     'bucket': line.bucket,
-    // A line item: 1 when it is its recipe's last open line (any decision
-    // finishes the recipe), else 0. A group overrides it with its own count.
+    // A line item: 1 when it is its recipe's last open line AND a confirm
+    // can count it (a Check line with grams, or a No grams line), else 0.
+    // A group overrides it with its own count.
     'finishes': line.finishes,
     // The stored match for the row display; candidates are fetched lazily from
     // the per-recipe matches endpoint when a row is opened.

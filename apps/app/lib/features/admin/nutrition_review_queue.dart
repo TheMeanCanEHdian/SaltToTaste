@@ -14,7 +14,9 @@ import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
 /// The cross-recipe nutrition-match review queue (Layout A, master-detail): a
-/// worst-first list of flagged ingredient lines on the left, the shared fix
+/// list of flagged ingredient lines (or groups) on the left, in the chosen
+/// order (what one decision finishes, by default, or the worst match first),
+/// the shared fix
 /// panel docked on the right. Fixing a line drops it and advances to the next.
 ///
 /// Assumes an ancestor `BlocProvider<NutritionReviewCubit>` (the review page
@@ -184,7 +186,7 @@ class _BucketFilters extends StatelessWidget {
   }
 }
 
-/// The left pane: a header line over the worst-first list of flagged rows.
+/// The left pane: a header line over the ordered list of flagged rows.
 class _QueueList extends StatelessWidget {
   const _QueueList({required this.state, required this.bounded});
 
@@ -897,14 +899,12 @@ bool queueShouldAdvance(NutritionState previous, NutritionState current) {
   return (fixLanded && settled) || offerClosed;
 }
 
-/// Whether the fix on the line at [position] took it from Check to waiting
-/// on an amount (No grams on a food): a plain Confirm USDA could not
-/// convert. The queue then keeps the pane on that line — it is not done.
-bool leftWaitingOnAmount(
-  NutritionState previous,
-  NutritionState current,
-  int position,
-) {
+/// Whether the line at [position] is, after the transition, waiting on an
+/// amount (No grams on a food): a plain Confirm USDA could not convert, a
+/// pick from any bucket (No match, No grams) that ended without grams, or an
+/// apply-to-all offer or receipt closing over such a line. The queue then
+/// keeps the pane on that line — it is not done (A4).
+bool leftWaitingOnAmount(NutritionState current, int position) {
   IngredientMatch? at(List<IngredientMatch>? matches) {
     for (final m in matches ?? const <IngredientMatch>[]) {
       if (m.position == position) {
@@ -914,13 +914,19 @@ bool leftWaitingOnAmount(
     return null;
   }
 
-  final before = at(previous.matches);
   final after = at(current.matches);
-  return before != null &&
-      after != null &&
-      matchBucketOf(before) == MatchBucket.check &&
-      confirmsWithAmount(after);
+  return after != null && confirmsWithAmount(after);
 }
+
+/// The pane's advance rule: [queueShouldAdvance], unless the line at
+/// [position] is left waiting on an amount ([leftWaitingOnAmount]).
+bool paneAdvances(
+  NutritionState previous,
+  NutritionState current,
+  int position,
+) =>
+    queueShouldAdvance(previous, current) &&
+    !leftWaitingOnAmount(current, position);
 
 class _FixPaneBody extends StatelessWidget {
   const _FixPaneBody({required this.line});
@@ -942,8 +948,7 @@ class _FixPaneBody extends StatelessWidget {
       // …and unless a plain Confirm (or a pick) left the line waiting on an
       // amount: the pane stays on it, the field focused (C).
       listenWhen: (previous, current) =>
-          queueShouldAdvance(previous, current) &&
-          !leftWaitingOnAmount(previous, current, line.position),
+          paneAdvances(previous, current, line.position),
       listener: (context, _) =>
           context.read<NutritionReviewCubit>().completeFix(),
       child: BlocBuilder<NutritionCubit, NutritionState>(
@@ -1128,7 +1133,7 @@ class _FixContentState extends State<_FixContent> {
           // Before the decision: what it finishes, by path (B).
           if (split) ...[
             const SizedBox(height: 12),
-            FinishesSplit(line: line, waiting: waiting),
+            FinishesSplit(line: line, match: match, waiting: waiting),
           ],
           if (state.offer?.position == match.position ||
               state.applied?.position == match.position) ...[
@@ -1172,9 +1177,10 @@ class _FixContentState extends State<_FixContent> {
 /// The recipes the group's `finishes` promises the APPLY completes, less
 /// the decided line's own (its own confirm finishes that one, not the
 /// apply). The pane's split, the offer and the receipt all hold to this one
-/// list, so the pane never says one number and the strip another. (A
-/// recipe with a second open line in the same group would finish by the
-/// apply and go unnamed — an undercount; snapshot 11 has none.)
+/// list, so the pane never says one number and the strip another. (The
+/// decided line's own recipe can still complete through the apply when a
+/// second open line of it is in the group — Cranberry Pecan Muffins' two
+/// pecan lines — and the receipt counts it as a bonus.)
 List<({String id, String title})> othersPromised(NutritionReviewLine line) => [
   for (final r in line.finishesRecipes)
     if (r.id != line.recipe.id) r,
@@ -1182,12 +1188,22 @@ List<({String id, String title})> othersPromised(NutritionReviewLine line) => [
 
 /// The pane's "What this decision finishes" (B), before the decision: this
 /// line alone — its recipe finishes only when it is the recipe's last open
-/// line — and then the apply to the rest of the group, with the recipes it
-/// completes by name.
+/// line AND a confirm can count it: it has grams, or it is a No grams line
+/// whose confirm carries the amount (the server's `finishes`, S1) — and
+/// then the apply to the rest of the group, with the recipes it completes
+/// by name.
 class FinishesSplit extends StatelessWidget {
-  const FinishesSplit({super.key, required this.line, required this.waiting});
+  const FinishesSplit({
+    super.key,
+    required this.line,
+    required this.match,
+    required this.waiting,
+  });
 
   final NutritionReviewLine line;
+
+  /// The group's example line as the recipe holds it now.
+  final IngredientMatch match;
 
   /// The example recipe's other open lines.
   final List<IngredientMatch> waiting;
@@ -1196,7 +1212,12 @@ class FinishesSplit extends StatelessWidget {
   Widget build(BuildContext context) {
     const bold = TextStyle(fontWeight: FontWeight.w700);
     const body = TextStyle(fontSize: 12.5, color: SaltColors.ink);
-    final alone = waiting.isEmpty ? 1 : 0;
+    final alone =
+        waiting.isEmpty &&
+            (match.grams != null ||
+                matchBucketOf(match) == MatchBucket.noAmount)
+        ? 1
+        : 0;
     final names = [for (final r in othersPromised(line)) r.title];
     final others = line.lines - 1;
     return Container(

@@ -292,15 +292,22 @@ class _FdaLabelState extends State<_FdaLabel>
   late bool _expanded = widget.initiallyExpanded;
 
   // Drives the FCollapsible fold: 1 = fully open, 0 = clipped to nothing.
-  late final AnimationController _foldController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 200),
-    value: _expanded ? 1 : 0,
-  );
-  late final CurvedAnimation _fold = CurvedAnimation(
-    parent: _foldController,
-    curve: Curves.easeInOut,
-  );
+  // Built in initState, not lazily: a label with no detail nutrient never
+  // reads them, and a first read in dispose would look up the deactivated
+  // context for its ticker (a debug-mode throw).
+  late final AnimationController _foldController;
+  late final CurvedAnimation _fold;
+
+  @override
+  void initState() {
+    super.initState();
+    _foldController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: _expanded ? 1 : 0,
+    );
+    _fold = CurvedAnimation(parent: _foldController, curve: Curves.easeInOut);
+  }
 
   @override
   void dispose() {
@@ -743,16 +750,18 @@ class _Rule extends StatelessWidget {
 /// The line under a per-batch label naming the yield it came from (D): 'The
 /// recipe says "MAKES 1 LOAF", so one serving is the whole loaf.' — the
 /// yield up to its first comma or semicolon; a yield of exactly one thing
-/// names that thing, any other says "the whole batch". Null when the
-/// servings text is no MAKES yield (none at all, as Latin Flan, or an
-/// admin's basis of 1 on a serves count): the tag then stands alone.
+/// names that thing (less a trailing parenthetical), any other — a range
+/// from one ("MAKES 1 TO 16 EGGS", whose totals are the midpoint batch)
+/// included — says "the whole batch". Null when the servings text is no
+/// MAKES yield (none at all, as Latin Flan, or an admin's basis of 1 on a
+/// serves count): the tag then stands alone.
 String? perBatchYieldLine(String? servings) {
   final yieldText = (servings ?? '').split(RegExp('[,;]')).first.trim();
   if (!yieldText.toUpperCase().startsWith('MAKES ')) {
     return null;
   }
   final one = RegExp(
-    r'^MAKES (?:1|ONE) (.+)$',
+    r'^MAKES (?:1|ONE) (?!TO\b|-|–)(.+?)(?:\s*\([^)]*\))?$',
     caseSensitive: false,
   ).firstMatch(yieldText);
   final whole = one == null ? 'batch' : one.group(1)!.toLowerCase();

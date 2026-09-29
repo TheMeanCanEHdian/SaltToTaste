@@ -17,6 +17,7 @@ import 'package:salt_app/features/tags/tag_styles_cubit.dart';
 import 'package:salt_app/router/app_router.dart' show fadePageForTest;
 
 import 'support/contract_goldens.dart';
+import 'support/corpus.dart';
 
 /// After a save, the editor returns with `go('/r/<slug>')`. A detail page
 /// reached by deep link or refresh is keyed by its route PATTERN, so that
@@ -56,6 +57,73 @@ class _OfflineNutrition extends NutritionRepository {
   @override
   Future<RecipeNutrition> nutrition(String idOrSlug) async =>
       throw const RepositoryException('offline');
+}
+
+/// Irish Soda Bread (corpus 0786, "MAKES 1 LOAF") over the golden's source.
+class _SodaBread extends RecipeRepository {
+  _SodaBread() : super(dio: goldenDio(golden('recipe_detail')));
+
+  @override
+  Future<RecipeDetail> getRecipe(String idOrSlug) async {
+    final detail = await super.getRecipe(idOrSlug);
+    return RecipeDetail(
+      recipe: loadCorpusRecipe('0786-irish-soda-bread.yaml'),
+      sourceSlug: detail.sourceSlug,
+    );
+  }
+}
+
+/// Its label as snapshot 12 stores it (basis 1, complete 8/8) and the
+/// server reads it: per_batch, a MAKES yield of one loaf.
+class _SodaBreadLabel extends NutritionRepository {
+  _SodaBreadLabel() : super(Dio());
+
+  @override
+  Future<RecipeNutrition> nutrition(String idOrSlug) async =>
+      RecipeNutrition.fromJson(const {
+        'status': 'complete',
+        'serving_basis': 1,
+        'basis_kind': 'per_batch',
+        'calories_per_serving': 2469.89,
+        'total_grams': 1042.5,
+        'matched_count': 8,
+        'total_count': 8,
+        'low_confidence': 0,
+        // The core rows of its stored nutrients (a label with only
+        // energy has no fold, whose lazy controller then trips dispose).
+        'per_serving': {
+          'energy': {
+            'label': 'Calories',
+            'amount': 2469.89,
+            'unit': 'kcal',
+            'dv_percent': 123.5,
+          },
+          'fat': {
+            'label': 'Total Fat',
+            'amount': 34.96,
+            'unit': 'g',
+            'dv_percent': 44.8,
+          },
+          'sodium': {
+            'label': 'Sodium',
+            'amount': 5788.04,
+            'unit': 'mg',
+            'dv_percent': 251.7,
+          },
+          'carbs': {
+            'label': 'Total Carbohydrate',
+            'amount': 467.38,
+            'unit': 'g',
+            'dv_percent': 170.0,
+          },
+          'protein': {
+            'label': 'Protein',
+            'amount': 70.67,
+            'unit': 'g',
+            'dv_percent': 141.3,
+          },
+        },
+      });
 }
 
 class _SignedIn extends AuthCubit {
@@ -98,8 +166,11 @@ void main() {
   Future<(GoRouter, _Repo)> pumpApp(
     WidgetTester tester, {
     required bool deepLink,
+    RecipeRepository? recipes,
+    NutritionRepository? nutrition,
+    Size size = const Size(1200, 1000),
   }) async {
-    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -131,9 +202,9 @@ void main() {
     await tester.pumpWidget(
       MultiRepositoryProvider(
         providers: [
-          RepositoryProvider<RecipeRepository>.value(value: repo),
+          RepositoryProvider<RecipeRepository>.value(value: recipes ?? repo),
           RepositoryProvider<NutritionRepository>.value(
-            value: _OfflineNutrition(),
+            value: nutrition ?? _OfflineNutrition(),
           ),
           RepositoryProvider<TagsRepository>.value(
             value: TagsRepository(Dio()),
@@ -202,5 +273,34 @@ void main() {
         expect(labels.last, 'RENAMED $realTitle · Salt to Taste');
       },
     );
+  }
+
+  // Both layouts hand the recipe's servings to the label: the right rail
+  // (wide) and the section after the content (narrow).
+  for (final (layout, size) in [
+    ('wide', const Size(1200, 1000)),
+    ('narrow', const Size(600, 1000)),
+  ]) {
+    testWidgets('the recipe page says where a per-batch serving comes from '
+        '($layout)', (tester) async {
+      await pumpApp(
+        tester,
+        deepLink: true,
+        recipes: _SodaBread(),
+        nutrition: _SodaBreadLabel(),
+        size: size,
+      );
+      await tester.scrollUntilVisible(
+        find.text('per batch'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        find.text(
+          'The recipe says "MAKES 1 LOAF", so one serving is the whole loaf.',
+        ),
+        findsOneWidget,
+      );
+    }, skip: skipIfNoCorpus != null);
   }
 }

@@ -937,8 +937,12 @@ void main() {
     // 'red wine', 'pork boston butt lean and fat', 'pepper' and 'thai
     // chiles', and the plums (169949), a hit in 'red plums'; and its
     // rewrites' recorded 'bosc pear' answer holds the Bosc pear (167778):
-    // five of the six differ in some digit.
-    expect(compared, 198);
+    // five of the six differ in some digit. Matcher v15 recorded "Champagne
+    // punch" (2710675) from snapshot 12 for the paren-volume pin, a hit in
+    // 'champagne': equal in every digit. Its leftovers recorded "Hot pepper
+    // sauce" (2710093) from snapshot 12 for the unit-only line_amount pin,
+    // a hit in 'pepper': equal in every digit.
+    expect(compared, 200);
     expect(differ, 149);
   });
 

@@ -290,7 +290,7 @@ void main() {
       expect((row.raw, row.fdcId, row.status), (raw, 2710180, 'auto'));
       expect(row.grams, closeTo(336 / 24 * 3, 0.01));
       expect(
-        gramBasisFor(db, nutritionLines(recipe).single, row),
+        gramBasisFor(db, nutritionLines(recipe).single, row, recipe: recipe),
         '3 tablespoon · USDA portion',
       );
       expect(bucketOf(row), MatchBucket.counted);
@@ -355,8 +355,25 @@ void main() {
       const raw = '8 Home-Fried Taco Shells (recipe follows)';
       final before = recipeOf(db: db, [raw]);
       await matchAndCompute(db, fixtures, before);
+      // The pick itself is gated since v15 (Run 047, E9): a food no count
+      // sizes, with no grams typed, stores the sub-recipe.
       await applyMatchOverride(db, fixtures, before, 0, {'fdc_id': 2710180});
-      expect(db.ingredientMatchesFor('r').single.status, 'overridden');
+      final picked = db.ingredientMatchesFor('r').single;
+      expect(
+        (picked.fdcId, picked.grams, picked.description),
+        (null, 0, subRecipeNote),
+      );
+      // A person's pick as v14 stored it: overridden, no grams.
+      db.upsertIngredientMatch(
+        picked.copyWith(
+          fdcId: 2710180,
+          description: 'Vegetable oil, NFS',
+          dataType: 'Survey (FNDDS)',
+          clearGrams: true,
+          clearGramSource: true,
+          status: 'overridden',
+        ),
+      );
       final after = recipeOf(db: db, [
         '10 Home-Fried Taco Shells (recipe follows)',
       ]);

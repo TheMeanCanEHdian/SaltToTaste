@@ -122,11 +122,14 @@ Future<Map<String, Object?>> matchesBody(
     if (row != null && row.raw != line.raw) {
       row = null;
     }
+    // What the line weighs, matches and queries: a sub-recipe's eaten
+    // "plus" part (0711's oil), as every write path reads it.
+    final weighed = weighedLine(recipe, line);
     // Cache-only: a GET must never spend FDC budget or block on the rate
     // limiter (members can call this).
     final candidates = row == null
         ? const <RankedCandidate>[]
-        : await candidatesForLine(db, provider, line, cacheOnly: true);
+        : await candidatesForLine(db, provider, weighed, cacheOnly: true);
     final itemKey = lineKeyOf(line);
     // How far an apply-to-all from this line would reach: the undecided lines
     // of the same ingredient, in recipes and in lines — a sibling on another
@@ -147,13 +150,21 @@ Future<Map<String, Object?>> matchesBody(
     // sibling's, or an "A or B" line's A), so a live search lands there.
     final search = itemKey.isEmpty
         ? null
-        : lineSearchFor(db, normalizeItem(lineItemOf(line)), itemKey);
+        : lineSearchFor(
+            db,
+            normalizeItem(lineItemOf(weighed)),
+            lineKeyOf(weighed),
+          );
     final query = search?.answer;
     // The picked record's USDA portions, from the cache alone (a search hit
     // stand-in has none): what the fix sheet's amount block offers.
     final food = row?.fdcId == null
         ? null
-        : knownFood(db, row!.fdcId!, line: line);
+        : knownFood(db, row!.fdcId!, line: weighed);
+    // What the totals count for [food]: its [nutrientSiblings] record when
+    // it has one (null while that is uncached — a GET never fetches).
+    final sibling = food == null ? null : nutrientSiblings[food.fdcId];
+    final counted = sibling == null ? food : knownFood(db, sibling);
     items.add({
       'position': position,
       'raw': line.raw,
@@ -161,11 +172,15 @@ Future<Map<String, Object?>> matchesBody(
       // has none — what an apply-to-all offer names, since `others` is
       // counted by item, not by line.
       'item': line.item,
-      // The line's first unit amount as written ("4 stick"), null when none.
-      'line_amount': lineAmountText(line.amounts),
+      // The line's first unit amount as written ("4 stick"), else its bare
+      // count ("8"); null when the line gives no amount.
+      'line_amount': lineAmountText(weighed.amounts),
       // The picked record's calories per 100 g, from the same cache: the
-      // fix sheet says it where a line has no amount yet.
-      'kcal_per_100g': food == null ? null : kcalPer100g(food),
+      // fix sheet says it where a line has no amount yet. As the totals
+      // count them — a record in [nutrientSiblings] by its sibling's
+      // nutrients (napa 2727583 counts 169979's 16, not its own 4.26); null
+      // while the sibling is uncached (a GET never fetches).
+      'kcal_per_100g': counted == null ? null : kcalPer100g(counted),
       // The picked record's cached portions, each with `fill`: the grams
       // the line's unit amount weighs on it when the portion names that
       // unit (4 × stick 113 g = 452), else null. Empty when the record's
@@ -177,7 +192,7 @@ Future<Map<String, Object?>> matchesBody(
             'unit': portion.unit,
             'description': portion.description,
             'grams': portion.gramWeight,
-            'fill': portionFill(portion, line.amounts),
+            'fill': portionFill(portion, weighed.amounts),
           },
       ],
       // How many OTHER recipes hold an undecided line with this item — what
@@ -208,7 +223,7 @@ Future<Map<String, Object?>> matchesBody(
               'gram_source': row.gramSource,
               // What the grams were computed against, so a reviewer can
               // sanity-check a volume/piece estimate. Cache-only.
-              'gram_basis': gramBasisFor(db, line, row),
+              'gram_basis': gramBasisFor(db, line, row, recipe: recipe),
               'status': row.status,
               // Why an `auto` row is held out of the totals although its
               // score passes (`no_nutrients` | `discarded_medium` |
@@ -267,6 +282,9 @@ Future<AppliedToOthers?> applyMatchOverride(
     throw NotFoundException('No ingredient line at position $position.');
   }
   final line = lines[position];
+  // What the line weighs and matches: a sub-recipe's eaten "plus" part
+  // (0711's oil), as the compute weighs it.
+  final weighed = weighedLine(recipe, line);
   final itemKey = lineKeyOf(line);
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
@@ -314,45 +332,11 @@ Future<AppliedToOthers?> applyMatchOverride(
   if (skipped == true) {
     row = row.copyWith(status: 'skipped');
   } else if (skipped == false) {
-    // Un-skip returns the line to automatic triage. It must NOT set
-    // 'confirmed': blessing whatever low-confidence match the line had
-    // would hide it from the review queue as resolved (review B7). Its hold
-    // is re-derived for the food now on the row — never an engine-era hold
-    // left over from another food. A person's food (confidence 1: a pick or
-    // a decision, inherited or not) answers every FOOD hold, never a LINE
-    // hold ([engineOutcome] with `decided`): a discarded medium, a second
-    // food, shellfish bought in the shell stay held — an un-skip is no
-    // confirm, and a decision inherited from another recipe was never a
-    // look at this line (v11: skip then un-skip counted 1,814 g of mussels
-    // in the shell, 0294). Only a confirm or a pick clears them. An engine
-    // row whose line the second-food rule counts moves to the rule's record
-    // with the rule's grams, as a fresh compute writes it (checkpoint 5
-    // review: an un-skip left a rule line held on the peel for good).
-    row = row.copyWith(status: 'auto', clearHold: true);
-    final personal = row.confidence >= 1;
-    final byRule = personal || secondFoodRuleOf(line)?.fdcId == row.fdcId
-        ? null
-        : await ruleRowFor(db, provider, recipe, position, line);
-    final onRow = row.fdcId == null || byRule != null
-        ? null
-        : knownFood(db, row.fdcId!, line: line);
-    final source = GramSource.values.asNameMap()[row.gramSource];
-    if (byRule != null) {
-      row = byRule.row;
-    } else if (onRow != null) {
-      final outcome = engineOutcome(
-        recipe,
-        line,
-        onRow,
-        row.grams == null || source == null
-            ? null
-            : GramResolution(grams: row.grams!, source: source),
-        picked: !personal,
-        decided: personal,
-        confidence: row.confidence,
-      );
-      row = row.copyWith(hold: outcome.hold);
-    }
+    // Un-skip returns the line to automatic triage, as a compute writes it
+    // ([unskippedRow]). It must NOT set 'confirmed': blessing whatever
+    // low-confidence match the line had would hide it from the review queue
+    // as resolved (review B7).
+    row = await unskippedRow(db, provider, recipe, position, row);
   } else if (fdcId != null) {
     if (fdcId is! num || fdcId <= 0) {
       throw const ValidationException("'fdc_id' must be a positive number.");
@@ -361,17 +345,19 @@ Future<AppliedToOthers?> applyMatchOverride(
     // grams need FDC's portions (gramsFor), so a pick lands with no provider
     // call while the hourly budget is spent.
     final picked =
-        knownFood(db, fdcId.toInt(), line: line) ??
+        knownFood(db, fdcId.toInt(), line: weighed) ??
         await cachedFood(db, provider, fdcId.toInt());
     if (picked == null) {
       throw const ValidationException(
         'FoodData Central has no food with that id.',
       );
     }
-    final (food, resolution) = await gramsFor(db, provider, picked, line);
+    final (food, resolution) = await gramsFor(db, provider, picked, weighed);
     // A discarded medium stays discarded whatever food a person picks for
     // it — frying oil re-picked as "Oil, peanut" is still thrown away (a
-    // grams edit is how a person counts it).
+    // grams edit is how a person counts it). Read on the line's own text:
+    // the one line whose eaten part differs (0711's) reads no medium on
+    // either, so its grams are the weighed resolution's.
     final outcome = engineOutcome(
       recipe,
       line,
@@ -389,7 +375,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     final byEngine =
         poured ||
         outcome.source == GramSource.discarded.name ||
-        secondFoodRuleOf(line)?.fdcId == food.fdcId;
+        secondFoodRuleOf(weighed)?.fdcId == food.fdcId;
     final pickedGrams = poured
         ? 0.0
         : byEngine
@@ -412,24 +398,44 @@ Future<AppliedToOthers?> applyMatchOverride(
     );
     decidedFood = true;
   } else if (confirmed == true) {
+    // A below-gate zero row (0 g, unmeasured or discarded) hides its food:
+    // the weak guess is no food a person looked at (ruling 9), and the UI
+    // offers no confirm-as-is on it. A bare confirm would still decide
+    // that food library-wide — refused (Run 046). A pick, or typed grams,
+    // is a real answer; so is a skip. A skipped zero row hides it too.
+    if (grams == null &&
+        (row.status == 'auto' || row.status == 'skipped') &&
+        row.fdcId != null &&
+        row.grams == 0 &&
+        (row.gramSource == GramSource.unmeasured.name ||
+            row.gramSource == GramSource.discarded.name) &&
+        row.hold != 'unnamed_food' &&
+        belowConfidenceGate(row.confidence)) {
+      throw const ZeroRowException(
+        'This line counts as zero on a guessed food: pick a food (with an '
+        'amount) or skip it — it cannot be confirmed as it is.',
+      );
+    }
     row = row.copyWith(status: 'confirmed');
     decidedFood = row.fdcId != null;
     // A held medium with no eaten part (B6, checkpoint 8: its row stores
     // no grams — or, written before v14, the whole poured-away line): a
     // confirm says it is poured away, 0 g — typed grams (below) count
-    // that much instead. One with an eaten part keeps it.
+    // that much instead. One with an eaten part keeps it. Held by the
+    // engine's own detector, not only the stored hold (Run 047: a row an
+    // amount edit had left with no hold counted the whole line).
     if (row.fdcId != null &&
-        row.hold == 'discarded_medium' &&
+        (row.hold == 'discarded_medium' || heldMediumLine(recipe, weighed)) &&
         row.gramSource != GramSource.discarded.name) {
       row = row.copyWith(grams: 0, gramSource: GramSource.discarded.name);
     } else if (row.fdcId != null &&
         row.grams == null &&
         row.gramSource != GramSource.override.name) {
       final onRow =
-          knownFood(db, row.fdcId!, line: line) ??
+          knownFood(db, row.fdcId!, line: weighed) ??
           await cachedFood(db, provider, row.fdcId!);
       if (onRow != null) {
-        final (_, resolution) = await gramsFor(db, provider, onRow, line);
+        final (_, resolution) = await gramsFor(db, provider, onRow, weighed);
         if (resolution != null) {
           row = row.copyWith(
             grams: resolution.grams,
@@ -514,9 +520,24 @@ Future<AppliedToOthers?> applyMatchOverride(
     );
   }
   // A person's decision supersedes the engine's reason to hold the row (an
-  // un-skip re-derived its own above).
+  // un-skip re-derived its own above). The sub-recipe rule gates a confirm
+  // and a pick as it gates the compute ([subRecipeRowFor]): a marked line
+  // whose food gives no grams, and a sub-recipe the recipe makes apart, are
+  // the 0 g sub-recipe unless a person types the grams. The decision on
+  // the food stands (above).
+  final stored = skipped == null && grams == null
+      ? subRecipeRowFor(recipe, position, line) ??
+            subRecipeRowFor(
+              recipe,
+              position,
+              line,
+              onFood: true,
+              grams: row.grams,
+            ) ??
+            row
+      : row;
   db.upsertIngredientMatch(
-    row.copyWith(itemKey: itemKey, clearHold: skipped != false),
+    stored.copyWith(itemKey: itemKey, clearHold: skipped != false),
   );
   await recomputeTotals(db, provider, recipe);
 

@@ -1873,6 +1873,63 @@ resolves through the cached "jarred hot cherry peppers" answer; 0711's
 plus-line substitution lives in the compute path only (a later pick
 re-derives from "1 recipe" and stores no grams).
 
+### Review fixes for the UI build and the v14 engine (Runs 046 and 047; matcher v15)
+
+Run 046 (both fleets on the review-UI commit; the first with the Sonnet
+fleet on Sonnet 5.5 — 22 claims, no empty lens) and Run 047 (both fleets
+on v14) were fixed in one batch. The UI: the amount-first Confirm and the
+field's Enter now write the STAGED pick (they had confirmed the food the
+person just rejected at the typed grams — the worst defect of either run,
+Opus alone); an untouched prefill is not sent after a pick of another food
+and the old record's portion chips hide; "finishes" now promises only what
+a confirm can count — a Check example or line with no grams, or a No match
+line, never counts its recipe (snapshot 11: finishable 326 → 281, line
+promises 372 → 303; the finishes order's payoff held at 46 / 85 while
+worst-first fell to 11 / 15); the receipt reconciles by id, an unpromised
+completed recipe is a bonus and a missing one "was not completed by this
+apply"; a bare count is a line amount ("8" for the scallops — a quarter of
+the no-grams lines with a count had read "no amount"), and a one-word unit
+("dash") stays a unit; `kcal_per_100g` follows the nutrient sibling the
+totals use (napa 4 → 16); a bare confirm on a below-gate zero row is a 422
+`zero_row`; the approximation suffix follows the record whoever chose it
+but never a skipped row (invariant 7 as first written was too strong);
+`basis_kind` reads per_serving for "SERVES 1" and per_batch for "MAKES 1
+TO 16 EGGS" (a singular head noun only, a trailing parenthetical dropped);
+a stale page-two reply no longer overwrites a later sort switch (request
+tickets); the pane stays on any line left waiting on an amount; a skipped
+zero row keeps its guess hidden; the single-portion prefill appears when
+the portions first arrive; the label's fold controller is built in
+initState. The engine (v15): a repeated line takes the nth row of its OWN
+text from a list of all rows by text — a kept engine rule row is re-derived
+in place and never pops a later twin line's decision (0405's second "Salt
+and pepper" override had been copied onto the first by any recompute; 21
+library recipes repeat a rule line), which also fixed a pre-existing case
+where an auto first copy took the second copy's skip; the orphan re-attach
+path carries the discarded_medium hold and a Confirm writes 0 g whenever
+the engine's own detector holds the line (a confirmed 0 g salt, edited,
+had come back with no hold and the next Confirm counted the whole line);
+ONE weighed line (`weighedLine`: the sub-recipe's eaten plus part) and ONE
+sub-recipe gate (`subRecipeRowFor`) now serve compute, pick, confirm,
+un-skip, apply_to_all, the candidates and the matches body (0711's re-pick
+had stored one onion's weight as oil; apply_to_all had bypassed the rule);
+un-skipping a 0 g held medium restores the engine's row instead of counting
+it as resolved; the second-"or" guard keeps the animal/adjective exemption
+("chicken or beef or vegetable broth" had matched raw chicken at 1.0); the
+staleness hash covers the referenced subsection; flake and coarse sea salt
+take the kosher density (0.72; table salt had been 2–3× heavy); a sub-gram
+"pepper" portion weighs only a small DRIED chile (arbol, bird, "small …
+dried" — a fresh Thai chile had read 0.5 g); a bare count with a printed
+paren volume is weighed at that volume (the chard's "4–6 leaves (about 2
+cups)" 240 → 72 g); no herb suffix on typed grams or 0 g sprigs; API.md
+corrected (the taco shells count 103.2 g, `freshOverCured`, the chile
+guard, the poured-away wording). Cache-only replay on snapshot 12 is
+unchanged in every bucket (counted 12,860 / check 563 / no grams 155 / no
+match 37 / complete 712); eight rows re-massed, none re-matched, one recipe
+−8 kcal. Deploy note: the 26 v14 rewrites resolve through search answers
+cached in the scratch copy — the live database must carry those
+`fdc_search_cache` rows before a live recompute, or it will spend requests
+or keep the old matches.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

@@ -60,12 +60,15 @@ IngredientMatch rulesLine(int position) => [
 /// portion unread. Matcher v14 reads the portion, so the rules golden
 /// counts them at 452 g; the amount-first block below is what a person
 /// sees on any such no-grams row, pinned on the golden's own portions.
-IngredientMatch butterNoGrams() {
+IngredientMatch butterNoGrams({bool uncached = false}) {
   final item = Map<String, dynamic>.of(
     (golden('nutrition_matches_rules')['items'] as List)
         .cast<Map<String, dynamic>>()
         .singleWhere((m) => m['position'] == 12),
   );
+  if (uncached) {
+    item['portions'] = <Object?>[];
+  }
   item['match'] = {
     ...item['match'] as Map<String, dynamic>,
     'grams': null,
@@ -74,6 +77,49 @@ IngredientMatch butterNoGrams() {
   };
   return IngredientMatch.fromJson(item);
 }
+
+// "1 cup packed brown sugar" (Cranberry Chutney with Apples and
+// Crystallized Ginger) on "Sugars, brown" (168833): the record's
+// "cup packed" and "cup unpacked" both name a cup — the fills the
+// server computes — so which one the line means is the person's call.
+IngredientMatch _brownSugar() => IngredientMatch.fromJson(const {
+  'position': 6,
+  'raw': '1 cup packed brown sugar',
+  'line_amount': '1 cup',
+  'portions': [
+    {
+      'amount': 1.0,
+      'unit': null,
+      'description': 'cup packed',
+      'grams': 220.0,
+      'fill': 220.0,
+    },
+    {
+      'amount': 1.0,
+      'unit': null,
+      'description': 'tsp packed',
+      'grams': 4.6,
+      'fill': null,
+    },
+    {
+      'amount': 1.0,
+      'unit': null,
+      'description': 'cup unpacked',
+      'grams': 145.0,
+      'fill': 145.0,
+    },
+  ],
+  'match': {
+    'fdc_id': 168833,
+    'description': 'Sugars, brown',
+    'data_type': 'SR Legacy',
+    'confidence': 1.0,
+    'grams': null,
+    'gram_source': null,
+    'status': 'auto',
+  },
+  'candidates': [],
+});
 
 /// Real sweep-snapshot-11 rows (nutrition is DB-only, never in the corpus).
 // Rainbow Cake pos 8: an amount-less line the engine counts at 0 g on a 3%
@@ -476,6 +522,358 @@ void main() {
     });
   });
 
+  group('Run 046 A1/A2: the staged pick is what the amount-first block '
+      'writes', () {
+    const peanut = 'Peanut butter, smooth style, without salt';
+
+    Future<_Recording> pickPeanutButter(WidgetTester tester) async {
+      final cubit = await pumpPanel(tester, butterNoGrams());
+      await tester.tap(find.text('Wrong food? Change the match…'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(peanut));
+      await tester.pumpAndSettle();
+      return cubit;
+    }
+
+    testWidgets("A2: a new pick clears the stored record's prefill and hides "
+        'its portion chips', (tester) async {
+      await pickPeanutButter(tester);
+      expect(find.text('4 × stick 113 g = 452 g'), findsNothing);
+      expect(find.text('tbsp · 14.2 g'), findsNothing);
+      expect(find.text('Confirm with amount'), findsOneWidget);
+      expect(enabled(tester, 'Confirm with amount'), isFalse);
+      // A re-pick of the stored food brings the prefill back.
+      await tester.tap(find.text('Butter, without salt'));
+      await tester.pumpAndSettle();
+      expect(find.text('Confirm · 452 g'), findsOneWidget);
+      expect(find.text('4 × stick 113 g = 452 g'), findsOneWidget);
+    });
+
+    testWidgets('A2: Save after a pick, amount untouched, sends no grams — '
+        'the server recomputes for the pick', (tester) async {
+      final cubit = await pickPeanutButter(tester);
+      await tester.tap(find.text('Save match & amount'));
+      await tester.pumpAndSettle();
+      expect(cubit.writes, [
+        (
+          position: 12,
+          fdcId: 172470,
+          grams: null,
+          confirmed: null,
+          skipped: null,
+        ),
+      ]);
+    });
+
+    testWidgets('A1: Enter in the amount field writes the pick with the '
+        'amount, never a confirm of the rejected butter', (tester) async {
+      final cubit = await pickPeanutButter(tester);
+      await tester.enterText(find.byType(EditableText).first, '300');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(cubit.writes, [
+        (
+          position: 12,
+          fdcId: 172470,
+          grams: 300.0,
+          confirmed: null,
+          skipped: null,
+        ),
+      ]);
+    });
+
+    testWidgets('A1: the Confirm button writes the pick with the amount', (
+      tester,
+    ) async {
+      final cubit = await pickPeanutButter(tester);
+      await tester.enterText(find.byType(EditableText).first, '452');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm · 452 g'));
+      await tester.pumpAndSettle();
+      expect(cubit.writes.single.fdcId, 172470);
+      expect(cubit.writes.single.grams, 452);
+      expect(cubit.writes.single.confirmed, isNull);
+    });
+  });
+
+  testWidgets('S3: a bare count ("6 whole cloves") says the count and asks '
+      'grams for it; no portion "misses a unit"', (tester) async {
+    // Vietnamese Beef Pho pos 8: its matches body over a copy of snapshot
+    // 12 (cache only): line_amount "6", the ground-clove record's two
+    // cached portions, neither a fill.
+    final cloves = IngredientMatch.fromJson(const {
+      'position': 8,
+      'raw': '6 whole cloves',
+      'item': 'whole cloves',
+      'line_amount': '6',
+      'kcal_per_100g': 274.0,
+      'portions': [
+        {'amount': 1.0, 'description': 'tsp', 'grams': 2.1},
+        {'amount': 1.0, 'description': 'tbsp', 'grams': 6.5},
+      ],
+      'match': {
+        'fdc_id': 171321,
+        'description': 'Spices, cloves, ground',
+        'data_type': 'SR Legacy',
+        'confidence': 0.9333333333333333,
+        'grams': null,
+        'status': 'auto',
+      },
+    });
+    await pumpPanel(tester, cloves);
+    expect(
+      find.textContaining('The line says 6.', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining("don't include", findRichText: true),
+      findsNothing,
+    );
+    expect(find.text('grams for 6'), findsOneWidget);
+    expect(find.text('tsp · 2.1 g'), findsOneWidget);
+  });
+
+  testWidgets('R1: a unit-only amount ("Dash of hot sauce") is the unit: '
+      'the portions "don\'t include a dash"', (tester) async {
+    // Easier Fried Chicken (0149) pos 2: its matches body over snapshot 12's
+    // cached 2710093 (pinned server-side in nutrition_c1_test.dart):
+    // line_amount "dash", five portions, none a fill.
+    final dash = IngredientMatch.fromJson(const {
+      'position': 2,
+      'raw': 'Dash of hot sauce',
+      'item': 'of hot sauce',
+      'line_amount': 'dash',
+      'portions': [
+        {'description': 'Quantity not specified', 'grams': 5.0},
+        {'description': '10 drops', 'grams': 0.8},
+        {'description': '1 packet', 'grams': 9.0},
+        {'description': '1 tablespoon', 'grams': 16.0},
+        {'description': 'Guideline amount per sandwich', 'grams': 9.0},
+      ],
+      'match': {
+        'fdc_id': 2710093,
+        'description': 'Hot pepper sauce',
+        'data_type': 'Survey (FNDDS)',
+        'confidence': 0.92333333333333334,
+        'grams': null,
+        'status': 'auto',
+      },
+    });
+    await pumpPanel(tester, dash);
+    expect(
+      find.textContaining(
+        "The line says dash. USDA's portions for this food don't include a "
+        'dash, so the engine could not convert:',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('grams for dash'), findsOneWidget);
+  });
+
+  test('the zero-guess guards, one by one', () {
+    // Indoor Pulled Pork (0246) pos 2 on snapshot 12: a discarded medium
+    // whose "plus 2 teaspoons" is eaten and counted (9.5 g) on a 17.5%
+    // guess — a line that counts shows its food.
+    expect(
+      countsAsZeroGuess(
+        status: 'auto',
+        fdcId: 167682,
+        grams: 9.4666730687946981,
+        confidence: 0.17500000000000004,
+        gramSource: 'discarded',
+      ),
+      isFalse,
+    );
+    // Synthesized (stated exception): no snapshot row reaches these guards
+    // below the gate — an unnamed food at 0 g waits for a person (Mechouia's
+    // "2 tablespoons juice" sits at 0.89), a zero with no food has nothing
+    // to hide, and the engine zeroes only a discarded or unmeasured line.
+    const base = (
+      status: 'auto',
+      fdcId: 2709682,
+      grams: 0.0,
+      confidence: 0.3,
+      gramSource: 'unmeasured',
+    );
+    expect(
+      countsAsZeroGuess(
+        status: base.status,
+        fdcId: base.fdcId,
+        grams: base.grams,
+        confidence: base.confidence,
+        gramSource: base.gramSource,
+      ),
+      isTrue,
+    );
+    expect(
+      countsAsZeroGuess(
+        status: base.status,
+        fdcId: base.fdcId,
+        grams: base.grams,
+        confidence: base.confidence,
+        gramSource: base.gramSource,
+        hold: 'unnamed_food',
+      ),
+      isFalse,
+    );
+    expect(
+      countsAsZeroGuess(
+        status: base.status,
+        fdcId: null,
+        grams: base.grams,
+        confidence: base.confidence,
+        gramSource: base.gramSource,
+      ),
+      isFalse,
+    );
+    expect(
+      countsAsZeroGuess(
+        status: base.status,
+        fdcId: base.fdcId,
+        grams: base.grams,
+        confidence: base.confidence,
+        gramSource: 'weight',
+      ),
+      isFalse,
+    );
+    // zeroGuessOf passes the hold through.
+    final unnamed = IngredientMatch.fromJson(const {
+      'position': 11,
+      'raw': '2 tablespoons juice',
+      'match': {
+        'fdc_id': 2709682,
+        'description': 'Beet juice',
+        'confidence': 0.3,
+        'grams': 0,
+        'gram_source': 'unmeasured',
+        'status': 'auto',
+        'hold': 'unnamed_food',
+      },
+    });
+    expect(zeroGuessOf(unnamed), isFalse);
+    // Synthesized: the pasta water's salt once a person confirmed its eaten
+    // part is no longer held (no snapshot holds a decided held row).
+    final confirmedSalt = IngredientMatch.fromJson({
+      'position': 10,
+      'raw': '1 tablespoon plus 1 teaspoon table salt',
+      'match': {
+        ...(golden('nutrition_matches_rules')['items'] as List)
+                .cast<Map<String, dynamic>>()
+                .singleWhere((m) => m['position'] == 10)['match']
+            as Map<String, dynamic>,
+        'status': 'confirmed',
+      },
+    });
+    expect(isHeldLine(rulesLine(10)), isTrue);
+    expect(isHeldLine(confirmedSalt), isFalse);
+  });
+
+  group('Run 046 A5/A7: zero rows', () {
+    // Snapshot 12: Tortilla Soup pos 7, below the gate at 0 g with a written
+    // sprig amount (its line_amount from the server's lineAmountText over
+    // the corpus line: "2 sprig") and a second_food hold.
+    const epazote = IngredientMatch(
+      position: 7,
+      raw:
+          '2 sprigs fresh epazote or 8 to 10 sprigs fresh cilantro plus 1 '
+          'sprig fresh oregano',
+      lineAmount: '2 sprig',
+      fdcId: 171328,
+      description: 'Spices, oregano, dried',
+      dataType: 'SR Legacy',
+      confidence: 0.18666666666666665,
+      grams: 0,
+      gramSource: 'unmeasured',
+      status: 'auto',
+      hold: 'second_food',
+    );
+
+    testWidgets('A7: a written sprig amount reads "not measured", not "no '
+        'amount", and the second_food hold still shows', (tester) async {
+      await openSheet(tester, [epazote], isAdmin: false);
+      expect(
+        find.textContaining(
+          'Counts as zero (not measured): 2 sprig — not measured, counts as '
+          '0 g.',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('gives no amount', findRichText: true),
+        findsNothing,
+      );
+      expect(find.text(holdReason('second_food')!), findsOneWidget);
+      expect(find.textContaining('oregano, dried'), findsNothing);
+    });
+
+    testWidgets('A7: the fix panel says what the line writes', (tester) async {
+      await pumpPanel(tester, epazote);
+      expect(
+        find.text('The line says 2 sprig — not measured, counts as 0 g.'),
+        findsOneWidget,
+      );
+      expect(find.text('The line gives no amount.'), findsNothing);
+    });
+
+    // The dye row as an admin left it after tapping Skip (the skip route
+    // keeps fdc_id and grams, changing only the status).
+    final skippedDye = IngredientMatch.fromJson({
+      'position': _dye.position,
+      'raw': _dye.raw,
+      'match': {
+        'fdc_id': _dye.fdcId,
+        'description': _dye.description,
+        'data_type': _dye.dataType,
+        'confidence': _dye.confidence,
+        'grams': 0,
+        'gram_source': 'unmeasured',
+        'status': 'skipped',
+      },
+    });
+
+    testWidgets('A5: a skipped zero keeps its guess hidden from a member, '
+        'and is not counted as a zero', (tester) async {
+      await openSheet(tester, [skippedDye, _lemon], isAdmin: false);
+      await tester.tap(find.text('Skipped'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Counts as zero (no amount)', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.textContaining('coleslaw'), findsNothing);
+      expect(find.text('skipped'), findsOneWidget);
+      expect(find.textContaining('of them as zero'), findsNothing);
+    });
+
+    // Synthesized (stated exception): no snapshot holds a person's confirm
+    // of a below-gate zero row (S4 now refuses one), so the dye row is set
+    // to 'confirmed' to pin that a person's decision shows its food.
+    testWidgets("a person's confirmed zero row shows its food", (tester) async {
+      final confirmed = IngredientMatch.fromJson({
+        'position': _dye.position,
+        'raw': _dye.raw,
+        'match': {
+          'fdc_id': _dye.fdcId,
+          'description': _dye.description,
+          'data_type': _dye.dataType,
+          'confidence': _dye.confidence,
+          'grams': 0,
+          'gram_source': 'unmeasured',
+          'status': 'confirmed',
+        },
+      });
+      expect(zeroGuessOf(confirmed), isFalse);
+      await openSheet(tester, [confirmed], isAdmin: false);
+      expect(
+        find.textContaining('Fast foods, coleslaw', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Counts as zero'), findsNothing);
+    });
+  });
+
   group('U4: a held medium or shell line (ruling 5)', () {
     testWidgets('a brine sugar leads with "Skip, poured away" and "Enter '
         'edible grams" — no Confirm of the whole 94 g', (tester) async {
@@ -564,6 +962,24 @@ void main() {
       status: 'auto',
     );
     expect(hasEatenPlusPart(schnitzelOil), isFalse);
+    // Synthesized (stated exception): no snapshot holds a held medium with
+    // nothing eaten (every discarded held row is a "plus" part), so the
+    // pasta water's salt at 0 g pins that a held medium with no eaten
+    // grams offers no confirm of an eaten part.
+    final nothingEaten = IngredientMatch.fromJson({
+      'position': 10,
+      'raw': '1 tablespoon plus 1 teaspoon table salt',
+      'match': {
+        'fdc_id': 173468,
+        'description': 'Salt, table',
+        'confidence': 1.0,
+        'grams': 0,
+        'gram_source': 'discarded',
+        'status': 'auto',
+        'hold': 'discarded_medium',
+      },
+    });
+    expect(hasEatenPlusPart(nothingEaten), isFalse);
   });
 
   group('C: a Check line with no grams confirms without an amount', () {
@@ -683,7 +1099,7 @@ void main() {
     });
 
     testWidgets('"as promised" when every promised recipe completed; else '
-        'the ones that still wait, by name', (tester) async {
+        'the ones this apply did not complete, by name', (tester) async {
       await pumpStrip(
         tester,
         applied: receipt([for (final r in promised) r.id]),
@@ -704,7 +1120,8 @@ void main() {
       expect(
         find.textContaining(
           '1 recipe is now complete, short of the promise — Best Almond '
-          'Cake and Easy Holiday Sugar Cookies still wait on another line.',
+          'Cake and Easy Holiday Sugar Cookies were not completed by this '
+          'apply.',
           findRichText: true,
         ),
         findsOneWidget,
@@ -717,11 +1134,50 @@ void main() {
       expect(
         find.textContaining(
           'No recipe is complete yet: short of the promise — Angel Food '
-          'Cake still waits on another line.',
+          'Cake was not completed by this apply.',
           findRichText: true,
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets('A6: reconciled by id — an unpromised completion is a bonus, '
+        'and it never hides a promised recipe that did not complete', (
+      tester,
+    ) async {
+      // Stands for S7's case: the decided line's own recipe (Cranberry Pecan
+      // Muffins, two open pecan lines in one group) completes through the
+      // reach, outside the promise.
+      const own = 'atk-tv-2023-0765-cranberry-pecan-muffins';
+      await pumpStrip(
+        tester,
+        applied: receipt([for (final r in promised) r.id, own]),
+        promise: promised,
+      );
+      expect(
+        find.textContaining(
+          '4 recipes are now complete, one more than promised.',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+      // As many completions as promised, but one promised recipe is missing:
+      // a count comparison would say "as promised".
+      await pumpStrip(
+        tester,
+        applied: receipt([promised[0].id, promised[1].id, own]),
+        promise: promised,
+      );
+      expect(
+        find.textContaining(
+          '3 recipes are now complete, one more than promised; short of the '
+          'promise — Easy Holiday Sugar Cookies was not completed by this '
+          'apply.',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('as promised'), findsNothing);
     });
 
     testWidgets('off the queue: N recipes, one recipe, or nothing said at 0', (
@@ -810,49 +1266,7 @@ void main() {
 
     testWidgets('two portions naming the unit: nothing is prefilled, both '
         'fill on a tap', (tester) async {
-      // "1 cup packed brown sugar" (Cranberry Chutney with Apples and
-      // Crystallized Ginger) on "Sugars, brown" (168833): the record's
-      // "cup packed" and "cup unpacked" both name a cup — the fills the
-      // server computes — so which one the line means is the person's call.
-      final sugar = IngredientMatch.fromJson(const {
-        'position': 6,
-        'raw': '1 cup packed brown sugar',
-        'line_amount': '1 cup',
-        'portions': [
-          {
-            'amount': 1.0,
-            'unit': null,
-            'description': 'cup packed',
-            'grams': 220.0,
-            'fill': 220.0,
-          },
-          {
-            'amount': 1.0,
-            'unit': null,
-            'description': 'tsp packed',
-            'grams': 4.6,
-            'fill': null,
-          },
-          {
-            'amount': 1.0,
-            'unit': null,
-            'description': 'cup unpacked',
-            'grams': 145.0,
-            'fill': 145.0,
-          },
-        ],
-        'match': {
-          'fdc_id': 168833,
-          'description': 'Sugars, brown',
-          'data_type': 'SR Legacy',
-          'confidence': 1.0,
-          'grams': null,
-          'gram_source': null,
-          'status': 'auto',
-        },
-        'candidates': [],
-      });
-      await pumpPanel(tester, sugar);
+      await pumpPanel(tester, _brownSugar());
       expect(find.text('Confirm with amount'), findsOneWidget);
       expect(enabled(tester, 'Confirm with amount'), isFalse);
       await tester.tap(find.text('1 × cup unpacked 145 g = 145 g'));
@@ -910,6 +1324,84 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('How much is it?'), findsOneWidget);
       expect(focus.hasFocus, isTrue);
+    });
+
+    group('R5: portions arriving on the same food and grams', () {
+      // Stated exception (synthesized): the butter row (the rules golden's
+      // real portions) first seen with its detail uncached — portions [],
+      // as the matches body sends before a confirm caches the record.
+      Future<ValueNotifier<IngredientMatch>> pumpLive(
+        WidgetTester tester, [
+        IngredientMatch? initial,
+      ]) async {
+        final match = ValueNotifier<IngredientMatch>(
+          initial ?? butterNoGrams(uncached: true),
+        );
+        addTearDown(match.dispose);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildMaterialTheme(buildForuiTheme()),
+            builder: (context, child) =>
+                FTheme(data: buildForuiTheme(), child: child!),
+            home: RepositoryProvider<NutritionRepository>.value(
+              value: NutritionRepository(Dio()),
+              child: BlocProvider<NutritionCubit>.value(
+                value: _Recording(_state([butterNoGrams()])),
+                child: Scaffold(
+                  body: SingleChildScrollView(
+                    child: ValueListenableBuilder<IngredientMatch>(
+                      valueListenable: match,
+                      builder: (context, m, _) => FixPanel(
+                        match: m,
+                        busy: false,
+                        onDone: () {},
+                        showCancel: false,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        return match;
+      }
+
+      testWidgets('the one fitting portion prefills without a remount', (
+        tester,
+      ) async {
+        final match = await pumpLive(tester);
+        expect(
+          find.text('USDA portions load after the first confirm.'),
+          findsOneWidget,
+        );
+        expect(find.text('Confirm with amount'), findsOneWidget);
+        match.value = butterNoGrams();
+        await tester.pumpAndSettle();
+        expect(find.text('Confirm · 452 g'), findsOneWidget);
+      });
+
+      testWidgets('a typed amount stays', (tester) async {
+        final match = await pumpLive(tester);
+        await tester.enterText(find.byType(EditableText).first, '100');
+        await tester.pumpAndSettle();
+        match.value = butterNoGrams();
+        await tester.pumpAndSettle();
+        expect(find.text('4 × stick 113 g = 452 g'), findsOneWidget);
+        expect(find.text('Confirm · 100 g'), findsOneWidget);
+      });
+
+      testWidgets('a tapped fill survives a rebuild that keeps the '
+          'portions', (tester) async {
+        final match = await pumpLive(tester, _brownSugar());
+        await tester.tap(find.text('1 × cup unpacked 145 g = 145 g'));
+        await tester.pumpAndSettle();
+        match.value = _brownSugar();
+        await tester.pumpAndSettle();
+        expect(find.text('Confirm · 145 g'), findsOneWidget);
+      });
     });
   });
 }

@@ -838,7 +838,7 @@
       "position": 11,
       "raw": "5 large eggs, at room temperature",
       "item": "large eggs",
-      "line_amount": null,
+      "line_amount": "5",
       "kcal_per_100g": 148.0,
       "portions": [],
       "others": 0,

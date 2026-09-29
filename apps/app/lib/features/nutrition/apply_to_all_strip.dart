@@ -36,39 +36,49 @@ class ApplyToAllStrip extends StatelessWidget {
 
   /// The OTHER recipes the queue's `finishes` promised this apply completes
   /// (the decided line's own recipe left out), or null off the queue: the
-  /// offer says the count, and the receipt reconciles against it — "as
-  /// promised", or naming the ones that still wait.
+  /// offer says the count, and the receipt reconciles against it by id.
   final List<({String id, String title})>? promised;
 
   static String _recipes(int n) => n == 1 ? '1 recipe' : '$n recipes';
   static String _lines(int n) => n == 1 ? '1 line' : '$n lines';
 
-  /// The receipt's reconciliation with [promised]: ", as promised." when
-  /// every promised recipe completed, else the ones that still wait, by
-  /// name; a plain "." without a promise.
+  /// The receipt's reconciliation with [promised], by recipe id: ", as
+  /// promised." when exactly the promised recipes completed; a completed
+  /// recipe outside the promise (the decided line's own recipe can be one)
+  /// is a bonus, "one more than promised"; a promised recipe missing from
+  /// `completed` "was not completed by this apply" — the strip cannot know
+  /// why (completed elsewhere since the page loaded, changed since, or its
+  /// recompute failed), so it never claims it still waits. A plain "."
+  /// without a promise.
   List<TextSpan> _reconcile(ApplyReceipt receipt) {
     final promise = promised ?? const [];
+    if (promise.isEmpty) {
+      return [if (receipt.completed > 0) const TextSpan(text: '.')];
+    }
     final done = receipt.completedRecipes.toSet();
     final short = [
       for (final r in promise)
         if (!done.contains(r.id)) r.title,
     ];
-    if (promise.isEmpty) {
-      return [if (receipt.completed > 0) const TextSpan(text: '.')];
-    }
-    if (short.isEmpty) {
+    final ids = {for (final r in promise) r.id};
+    final bonus = done.where((id) => !ids.contains(id)).length;
+    if (short.isEmpty && bonus == 0) {
       return const [TextSpan(text: ', as promised.')];
     }
-    final names = short.length == 1
-        ? short.single
+    final names = short.length <= 1
+        ? short.join()
         : '${short.sublist(0, short.length - 1).join(', ')} and ${short.last}';
+    final parts = [
+      if (bonus > 0) '${bonus == 1 ? 'one' : '$bonus'} more than promised',
+      if (short.isNotEmpty)
+        'short of the promise — $names '
+            '${short.length == 1 ? 'was' : 'were'} not completed by this apply',
+    ];
     return [
       TextSpan(
         text:
             '${receipt.completed > 0 ? ',' : ' No recipe is complete yet:'}'
-            ' short of the promise — $names '
-            '${short.length == 1 ? 'still waits' : 'still wait'} on another '
-            'line.',
+            ' ${parts.join('; ')}.',
       ),
     ];
   }

@@ -223,8 +223,18 @@ const Map<String, String> _synonyms = {
 /// portions, an in-item weight and a bottle's printed volume are read; soda
 /// rinsed off, a later drain, a court-bouillon, a dip, a drained pickle, a
 /// poaching brine's salt and a dunk's sugar are held; and 26 rewrites of
-/// checkpoint 8's cached-answer keys (thick-cut bacon … white baking chips).
-const int matcherVersion = 14;
+/// checkpoint 8's cached-answer keys (thick-cut bacon … white baking chips);
+/// 15 = the Run 047 review: a repeated line takes the nth row of its text
+/// (an engine row never takes another copy's decision), one weighed line
+/// (a sub-recipe's eaten "plus" part) and one sub-recipe gate on every
+/// write path — a confirm, a pick, an un-skip and an apply-to-all too — an
+/// edited held medium keeps its hold, and an un-skip gives a held medium
+/// back the engine's grams; flake and coarse sea salt weigh like kosher
+/// salt, a sub-gram "pepper" portion weighs only a small dried chile, a
+/// bare count's printed paren volume wins, an animal or adjective before a
+/// list of foods is never split, and the detector and portion alternatives
+/// no library line reached are gone.
+const int matcherVersion = 15;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -1047,11 +1057,14 @@ String? leftAlternative(
   // A second "or" makes a list of foods, never an adjective: "crushed
   // saltines (about 16) or quick oatmeal or 1⅓ cups fresh bread crumbs"
   // (Meatloaf with Brown Sugar-Ketchup Glaze, 0306) is the saltines, which
-  // read 192 g of dry bread crumbs by the salt density (Run 045).
+  // read 192 g of dry bread crumbs by the salt density (Run 045) — but an
+  // animal or an adjective stays one before a list too: "chicken or beef or
+  // vegetable broth" is broth, never a raw whole chicken (Run 047).
   if (or == 1 &&
       words.length - or - 1 > 1 &&
-      !words.skip(or + 1).contains('or') &&
-      (!rewrite || _animals.contains(left) || _adjectiveKeys.contains(left))) {
+      (_animals.contains(left) ||
+          _adjectiveKeys.contains(left) ||
+          (!rewrite && !words.skip(or + 1).contains('or')))) {
     return null;
   }
   return rewrite || isCached(left) ? left : null;
@@ -1856,8 +1869,10 @@ bool _asksFresh(String raw) =>
 /// that rewrite's answer leads to (snapshot 11, every such line): pancetta
 /// counted as bacon, Asiago as Parmesan, whole allspice berries as ground
 /// allspice, lime zest as lemon peel, chen pi as orange peel, pepperoncini
-/// as "Peppers, hot, pickled". A line on another record (a person's own
-/// pick, "pancetta or bacon", which reads the whole phrase) is not one.
+/// as "Peppers, hot, pickled". A line on another record (a person's pick of
+/// another record, "pancetta or bacon", which reads the whole phrase) is not
+/// one; a person's confirm or pick of THIS record is — the record relation
+/// is the approximation, whoever chose it (Run 046).
 const Map<String, int> approximationRecords = {
   'pancetta': 168277,
   'asiago cheese': 325036,
@@ -1871,8 +1886,10 @@ const Map<String, int> approximationRecords = {
 /// Whether the food [fdcId] ([description]) on the line [raw], whose
 /// normalized item is [item], is a flagged approximation: the record an
 /// approximation rewrite led to ([approximationRecords]), or a fresh herb
-/// line on its dried spice record ([freshHerbOnSpiceRecord]). What the
-/// matches body's `gram_basis` says as "· approximation (counted as …)".
+/// line on its dried spice record ([freshHerbOnSpiceRecord]). The matches
+/// body's `gram_basis` says the first as "· approximation (counted as …)";
+/// a fresh herb's basis says "· approximate (dried herb record for a fresh
+/// herb)" instead (`gramBasisFor` reads it first).
 bool isApproximation({
   required String item,
   required String raw,

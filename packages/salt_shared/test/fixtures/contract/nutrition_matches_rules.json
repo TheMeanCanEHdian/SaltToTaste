@@ -58,7 +58,7 @@
       "position": 1,
       "raw": "1 large egg, separated, plus 2 large yolks",
       "item": "large egg",
-      "line_amount": null,
+      "line_amount": "1",
       "kcal_per_100g": 148.0,
       "portions": [],
       "others": 0,
@@ -226,7 +226,7 @@
       "position": 4,
       "raw": "1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed",
       "item": "(6- to 8-pound) bone-in fresh half ham with skin",
-      "line_amount": null,
+      "line_amount": "1",
       "kcal_per_100g": 193.0,
       "portions": [],
       "others": 0,
@@ -246,6 +246,12 @@
         "hold": null
       },
       "candidates": [
+        {
+          "fdc_id": 168226,
+          "description": "Pork, fresh, leg (ham), shank half, separable lean and fat, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.22
+        },
         {
           "fdc_id": 168367,
           "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, unheated",
@@ -287,12 +293,6 @@
           "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, heated, roasted",
           "data_type": "SR Legacy",
           "confidence": 0.3345454545454546
-        },
-        {
-          "fdc_id": 168357,
-          "description": "Pork, cured, ham, shank, bone-in, separable lean and fat, heated, roasted",
-          "data_type": "SR Legacy",
-          "confidence": 0.3345454545454546
         }
       ]
     },
@@ -300,7 +300,7 @@
       "position": 5,
       "raw": "1 (4-pound) whole chicken, giblets discarded",
       "item": "(4-pound) whole chicken",
-      "line_amount": null,
+      "line_amount": "1",
       "kcal_per_100g": 215.0,
       "portions": [
         {
@@ -515,7 +515,7 @@
       "raw": "12 ounces napa cabbage (½ medium head), cored and minced",
       "item": "napa cabbage (1/2 medium head)",
       "line_amount": "12 ounce",
-      "kcal_per_100g": 4.24,
+      "kcal_per_100g": 16.0,
       "portions": [],
       "others": 0,
       "others_lines": 0,
@@ -553,7 +553,7 @@
       "raw": "1 pound napa cabbage (1 small head), cored and cut into ½-inch strips",
       "item": "napa cabbage (1 small head)",
       "line_amount": "1 pound",
-      "kcal_per_100g": 4.24,
+      "kcal_per_100g": 16.0,
       "portions": [],
       "others": 0,
       "others_lines": 0,

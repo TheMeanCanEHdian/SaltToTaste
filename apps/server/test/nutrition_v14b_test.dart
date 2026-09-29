@@ -102,10 +102,10 @@ void main() {
       ]) {
         final (grams, source, basis) = await sized(raw, 170935);
         expect((grams, source), (0.0, 'unmeasured'), reason: raw);
+        // No "approximate" suffix: a 0 g leaf counts nothing (Run 047).
         expect(
           basis,
-          '$n leaves — a fresh leaf is not measured, counted as 0 g · '
-          'approximate (dried herb record for a fresh herb)',
+          '$n leaves — a fresh leaf is not measured, counted as 0 g',
         );
       }
     });
@@ -169,12 +169,14 @@ void main() {
           103.2,
           '8 · USDA per-item weight',
         );
+        // Since v15 the line's printed "(about 2 cups)" wins over 5 whole
+        // leaves (Run 047, E7): 2 × the record's cup, 72 g, not 5 × 48 g.
         final (chard, _) = await on(
           '4–6 Swiss chard leaves, ribs removed, torn into 1-inch pieces '
           '(about 2 cups; optional)',
           169991,
         );
-        expect(chard, closeTo(5 * 48, 0.001));
+        expect(chard, closeTo(72, 0.001));
       },
     );
 

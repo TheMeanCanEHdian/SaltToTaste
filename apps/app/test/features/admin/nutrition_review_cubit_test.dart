@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -114,6 +115,11 @@ class _FakeAdapter implements HttpClientAdapter {
   /// or a page-2 request has to survive without changing what is on screen.
   bool failNext = false;
 
+  /// When set, every reply waits on its own [Completer] in [held] (in
+  /// request order), so a test can land replies in any order.
+  bool hold = false;
+  final List<Completer<void>> held = [];
+
   static const _flagged = {'no_match', 'no_grams', 'check'};
 
   @override
@@ -123,6 +129,11 @@ class _FakeAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     queries.add(options.queryParameters);
+    if (hold) {
+      final reply = Completer<void>();
+      held.add(reply);
+      await reply.future;
+    }
     if (failNext) {
       failNext = false;
       return ResponseBody.fromString(
@@ -164,6 +175,11 @@ class _FakeAdapter implements HttpClientAdapter {
                 ..remove('item')
                 ..remove('decided'),
           ];
+    // `sort=worst` reads the seed backwards, so a test can tell the two
+    // orders' pages apart (the seed stands for the default order).
+    final ordered = options.queryParameters['sort'] == 'worst'
+        ? rows.reversed.toList()
+        : rows;
     final offset = (page - 1) * limit;
 
     return ResponseBody.fromString(
@@ -184,7 +200,7 @@ class _FakeAdapter implements HttpClientAdapter {
               'groups': _groupsOf(inBucket(id)).length,
             },
         ],
-        'items': rows.skip(offset).take(limit).toList(),
+        'items': ordered.skip(offset).take(limit).toList(),
         'page': page,
         'limit': limit,
       }),
@@ -651,5 +667,134 @@ void main() {
       expect(state.hasMore, isFalse);
       await cubit.close();
     }, skip: skipIfNoCorpus);
+  });
+
+  group('Run 046 A3: the last tap wins', () {
+    /// Lets the cubit's requests reach the adapter.
+    Future<void> waitFor(_FakeAdapter adapter, int replies) async {
+      for (var i = 0; i < 100 && adapter.held.length < replies; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(adapter.held, hasLength(replies));
+    }
+
+    test('a Load more reply that lands after a sort switch reloaded the '
+        'list is dropped', () async {
+      final adapter = _FakeAdapter(volumeSeed(count: 120));
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final more = cubit.loadMore();
+      await waitFor(adapter, 1);
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 2);
+      expect(adapter.queries.last['sort'], 'worst');
+      // The reload answers first, then the old order's page 2.
+      adapter.held[1].complete();
+      await worst;
+      adapter.held[0].complete();
+      await more;
+      var state = cubit.state as NutritionReviewLoaded;
+      expect(state.sort, 'worst');
+      expect(state.items, hasLength(NutritionReviewCubit.pageSize));
+      expect(state.loadingMore, isFalse);
+      expect(state.hasMore, isTrue);
+      // The cursor still points at the new list's page 2.
+      adapter.hold = false;
+      await cubit.loadMore();
+      expect(adapter.queries.last['page'], '2');
+      expect(adapter.queries.last['sort'], 'worst');
+      state = cubit.state as NutritionReviewLoaded;
+      expect(state.items, hasLength(100));
+      await cubit.close();
+    }, skip: skipIfNoCorpus);
+
+    test(
+      'a Load more tapped while a sort switch is in flight extends the '
+      'order ON SCREEN, and its reply landing first says that order',
+      () async {
+        final adapter = _FakeAdapter(volumeSeed(count: 120));
+        final cubit = cubitWith(adapter);
+        await cubit.load();
+        final page1 = (cubit.state as NutritionReviewLoaded).items;
+        adapter.hold = true;
+        final worst = cubit.setSort('worst');
+        await waitFor(adapter, 1);
+        final more = cubit.loadMore();
+        await waitFor(adapter, 2);
+        expect(adapter.queries.last['page'], '2');
+        expect(adapter.queries.last['sort'], NutritionReviewCubit.defaultSort);
+        // Page 2 answers first: the list on screen grows, in its own order.
+        adapter.held[1].complete();
+        await more;
+        var state = cubit.state as NutritionReviewLoaded;
+        expect(state.sort, NutritionReviewCubit.defaultSort);
+        expect(state.items, hasLength(100));
+        expect(state.items.take(50).map((l) => l.key), page1.map((l) => l.key));
+        // Then the switch lands and replaces it.
+        adapter.held[0].complete();
+        await worst;
+        state = cubit.state as NutritionReviewLoaded;
+        expect(state.sort, 'worst');
+        expect(state.items, hasLength(NutritionReviewCubit.pageSize));
+        await cubit.close();
+      },
+      skip: skipIfNoCorpus,
+    );
+
+    test('a second sort tap in flight is sent, and wins even when the first '
+        "tap's reply lands last", () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 1);
+      final back = cubit.setSort('finishes');
+      await waitFor(adapter, 2);
+      expect(
+        [for (final q in adapter.queries.skip(1)) q['sort']],
+        ['worst', 'finishes'],
+      );
+      adapter.held[1].complete();
+      await back;
+      adapter.held[0].complete();
+      await worst;
+      final state = cubit.state as NutritionReviewLoaded;
+      expect(state.sort, 'finishes');
+      // The late worst-order reply was dropped, not shown under "finishes".
+      expect(state.items.map((l) => l.key), ['soup#2', 'tatin#5', 'risotto#6']);
+      await cubit.close();
+    });
+
+    test('re-selecting the order on screen sends nothing', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      await cubit.setSort(NutritionReviewCubit.defaultSort);
+      expect(adapter.queries, hasLength(1));
+      await cubit.close();
+    });
+
+    test('copyWith keeps the order and the banner counts', () {
+      const loaded = NutritionReviewLoaded(
+        total: 3,
+        groups: 3,
+        buckets: [],
+        items: [],
+        bucket: null,
+        grouped: true,
+        selectedKey: null,
+        loadingMore: false,
+        exhausted: true,
+        sort: 'worst',
+        finishable: 4,
+        openRecipes: 8,
+      );
+      final copy = loaded.copyWith(selectedKey: 'soup#2', loadingMore: true);
+      expect(copy.sort, 'worst');
+      expect(copy.finishable, 4);
+      expect(copy.openRecipes, 8);
+    });
   });
 }

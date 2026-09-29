@@ -144,6 +144,15 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   final RecipeRepository _repository;
   int _nextPage = 1;
 
+  /// Page-1 fetches asked for: a reply to an older one, superseded by a later
+  /// tap, is dropped — the last tap wins (A3).
+  int _requested = 0;
+
+  /// Page-1 lists put on screen: a "Load more" reply that lands after a
+  /// reload replaced its list is dropped rather than appended to (or
+  /// replacing) the new list (A3).
+  int _shown = 0;
+
   /// The order for this session, in either view (`finishes` | `worst`).
   String _sort = defaultSort;
 
@@ -187,18 +196,22 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   }
 
   /// Switches the order (`finishes` | `worst`) and reloads from page 1.
-  /// A failed fetch puts the order back and leaves the view as it was.
+  /// Compared with the REQUESTED order, so a second tap while the first is
+  /// in flight wins (A3). A failed fetch puts the order back to the one on
+  /// screen and leaves the view as it was.
   Future<void> setSort(String sort) async {
     final current = state;
-    if (current is! NutritionReviewLoaded || current.sort == sort) {
+    if (current is! NutritionReviewLoaded || _sort == sort) {
       return;
     }
-    final previous = _sort;
     _sort = sort;
     try {
       await _reload(current.bucket, selectIndex: 0);
     } on RepositoryException {
-      _sort = previous;
+      final shown = state;
+      if (shown is NutritionReviewLoaded) {
+        _sort = shown.sort;
+      }
     }
   }
 
@@ -211,12 +224,18 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   /// dropped by loadMore's dedupe — "load more" stuck for good.
   ///
   /// [stayOn], when that ingredient key is still on the new page, selects it
-  /// in place of the row at [selectIndex].
+  /// in place of the row at [selectIndex]. Only page 1 is fetched, so a
+  /// group reached through "Load more" that now sorts past row [pageSize]
+  /// is not found, and the selection falls back to [selectIndex] (A8: the
+  /// stated page-1 fallback, not a re-fetch of every loaded page).
+  ///
+  /// A reply superseded by a later reload is dropped (A3).
   Future<void> _reload(
     String? bucket, {
     required int selectIndex,
     String? stayOn,
   }) async {
+    final ticket = ++_requested;
     final report = await _repository.getNutritionReview(
       page: 1,
       limit: pageSize,
@@ -224,10 +243,11 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       grouped: groupedFor(bucket),
       sort: _sort,
     );
-    if (isClosed) {
+    if (isClosed || ticket != _requested) {
       return;
     }
     _nextPage = 2;
+    _shown += 1;
     emit(
       _loadedFrom(
         report,
@@ -279,15 +299,18 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       return;
     }
     emit(current.copyWith(loadingMore: true));
+    final shown = _shown;
     try {
       final report = await _repository.getNutritionReview(
         page: _nextPage,
         limit: pageSize,
         bucket: current.bucket,
         grouped: current.grouped,
-        sort: _sort,
+        // The order of the list on screen, which this page extends.
+        sort: current.sort,
       );
-      if (isClosed) {
+      // A reload replaced the list meanwhile: this page belongs to the old one.
+      if (isClosed || shown != _shown) {
         return;
       }
       _nextPage += 1;
@@ -307,13 +330,13 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
           selectedKey: current.selectedKey,
           loadingMore: false,
           exhausted: report.items.length < pageSize,
-          sort: _sort,
+          sort: current.sort,
           finishable: current.finishable,
           openRecipes: current.openRecipes,
         ),
       );
     } on RepositoryException {
-      if (isClosed) {
+      if (isClosed || shown != _shown) {
         return;
       }
       final latest = state;
@@ -334,10 +357,11 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   /// Called once a fix (re-pick / confirm / skip) has been written for the
   /// selected line: reloads the top of the queue — the fixed line drops out —
   /// and advances the selection to the line that took its place (the next
-  /// worst), or the new last line when it was at the end.
+  /// in the queue's order), or the new last line when it was at the end.
   ///
-  /// Reloading resets to page one; a burn-down works from the worst lines at
-  /// the top, so re-fetching the worst page after each fix is exactly right.
+  /// Reloading resets to page one; a burn-down works from the top of the
+  /// order (`finishes` or `worst`), so re-fetching page one after each fix is
+  /// exactly right.
   Future<void> completeFix() async {
     final current = state;
     if (current is! NutritionReviewLoaded) {

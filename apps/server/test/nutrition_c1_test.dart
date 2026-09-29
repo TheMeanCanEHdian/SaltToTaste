@@ -10,6 +10,8 @@ import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/admin_handlers.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/middleware/auth.dart';
+import 'package:salt_server/src/middleware/error_handler.dart';
+import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/grams.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
@@ -17,6 +19,7 @@ import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
+import '../routes/api/v1/admin/nutrition_review.dart' as review_route;
 import '../routes/api/v1/recipes/[id]/nutrition/matches/[pos].dart'
     as match_route;
 import 'support/applied.dart';
@@ -32,6 +35,55 @@ import 'support/fdc_fixtures.dart';
 void main() {
   final provider = FixtureProvider();
 
+  /// Sends [method] (with [body], if any) to [route] through the real
+  /// pipeline's error handler, as a signed-in admin; returns the status and
+  /// the decoded body.
+  Future<(int, Map<String, dynamic>)> callRoute(
+    SaltDatabase db,
+    frog.Handler route,
+    String method, {
+    String path = '/',
+    Map<String, Object?>? body,
+  }) async {
+    final adminId =
+        db.userByUsername('admin')?.id ??
+        db.createUser(username: 'admin', passwordHash: 'unused', role: 'admin');
+    final pipeline = route
+        .use(
+          frog.provider<AuthUser?>(
+            (_) => AuthUser(
+              id: adminId,
+              username: 'admin',
+              role: 'admin',
+              mustChangePassword: false,
+              scope: 'full',
+              via: 'session',
+            ),
+          ),
+        )
+        .use(frog.provider<NutritionProvider>((_) => provider))
+        .use(frog.provider<SaltDatabase>((_) => db))
+        .use(errorHandler())
+        .use(requestIdProvider());
+    final server = await frog.serve(pipeline, InternetAddress.loopbackIPv4, 0);
+    final client = HttpClient();
+    try {
+      final request = await client.open(method, '127.0.0.1', server.port, path);
+      request.headers
+        ..contentType = ContentType.json
+        ..set('X-Requested-With', csrfHeaderValue);
+      if (body != null) {
+        request.write(jsonEncode(body));
+      }
+      final response = await request.close();
+      final text = await utf8.decoder.bind(response).join();
+      return (response.statusCode, jsonDecode(text) as Map<String, dynamic>);
+    } finally {
+      client.close();
+      await server.close(force: true);
+    }
+  }
+
   /// PUTs [body] to line [pos] of [slug] through the real override route,
   /// as a signed-in admin, and returns the decoded response.
   Future<Map<String, dynamic>> putOverRoute(
@@ -40,44 +92,14 @@ void main() {
     int pos,
     Map<String, Object?> body,
   ) async {
-    final adminId = db.createUser(
-      username: 'admin',
-      passwordHash: 'unused',
-      role: 'admin',
+    final (status, json) = await callRoute(
+      db,
+      (context) => match_route.onRequest(context, slug, '$pos'),
+      'PUT',
+      body: body,
     );
-    final pipeline =
-        ((frog.RequestContext context) =>
-                match_route.onRequest(context, slug, '$pos'))
-            .use(
-              frog.provider<AuthUser?>(
-                (_) => AuthUser(
-                  id: adminId,
-                  username: 'admin',
-                  role: 'admin',
-                  mustChangePassword: false,
-                  scope: 'full',
-                  via: 'session',
-                ),
-              ),
-            )
-            .use(frog.provider<NutritionProvider>((_) => provider))
-            .use(frog.provider<SaltDatabase>((_) => db));
-    final server = await frog.serve(pipeline, InternetAddress.loopbackIPv4, 0);
-    final client = HttpClient();
-    try {
-      final request = await client.put('127.0.0.1', server.port, '/');
-      request.headers
-        ..contentType = ContentType.json
-        ..set('X-Requested-With', csrfHeaderValue);
-      request.write(jsonEncode(body));
-      final response = await request.close();
-      final text = await utf8.decoder.bind(response).join();
-      expect(response.statusCode, HttpStatus.ok, reason: text);
-      return jsonDecode(text) as Map<String, dynamic>;
-    } finally {
-      client.close();
-      await server.close(force: true);
-    }
+    expect(status, HttpStatus.ok, reason: '$json');
+    return json;
   }
 
   IngredientLine lineOf(String raw) {
@@ -99,8 +121,9 @@ void main() {
     String title,
     List<String> raws, {
     String? servings,
+    String? id,
   }) {
-    final id = title.toLowerCase().replaceAll(RegExp('[^a-z]+'), '-');
+    id ??= title.toLowerCase().replaceAll(RegExp('[^a-z]+'), '-');
     final recipe = Recipe(
       id: id,
       title: title,
@@ -127,6 +150,7 @@ void main() {
     double? grams,
     String? gramSource,
     String? hold,
+    String status = 'auto',
   }) {
     final line = nutritionLines(recipe)[position];
     db.upsertIngredientMatch(
@@ -141,7 +165,7 @@ void main() {
         confidence: confidence,
         grams: grams,
         gramSource: gramSource,
-        status: 'auto',
+        status: status,
         hold: hold,
       ),
     );
@@ -415,6 +439,355 @@ void main() {
         ),
         throwsA(isA<ValidationException>()),
       );
+    });
+  });
+
+  group('Run 046: finishes promises only what a confirm can count', () {
+    /// The library plus three real snapshot-11 rows: Parmesan Farrotto's
+    /// farro, a Check line with NO grams (0.495) and the recipe's only open
+    /// line; Greek-Style Shrimp's ouzo, a No match line, its recipe's only
+    /// open line; and Stovetop Rice Pudding's counted sugar (complete).
+    SaltDatabase wider() {
+      final db = library();
+      seed(
+        db,
+        recipeOf(db, 'Parmesan Farrotto', ['1½ cups whole farro']),
+        0,
+        confidence: 0.495,
+        fdcId: 2710828,
+        description: 'Farro, pearled, dry, raw',
+      );
+      seed(
+        db,
+        recipeOf(db, 'Greek-Style Shrimp with Tomatoes and Feta', [
+          '3 tablespoons ouzo',
+        ]),
+        0,
+        confidence: 0,
+        status: 'unmatched',
+      );
+      seed(
+        db,
+        recipeOf(db, 'Stovetop Rice Pudding', ['⅔ cup (4⅔ ounces) sugar']),
+        0,
+        confidence: 0.95,
+        fdcId: 746784,
+        grams: 132.29766666666666,
+        gramSource: 'weight',
+        description: 'Sugars, granulated',
+      );
+      return db;
+    }
+
+    test('groups: the farro (a Check example with no grams) and the ouzo '
+        "(No match) finish nothing, though each is its recipe's last open "
+        'line; the banner counts neither, nor the complete rice pudding as '
+        'open', () {
+      final db = wider();
+      final groups = {
+        for (final g in db.nutritionReviewGroups(limit: 50, offset: 0))
+          g.itemKey: g,
+      };
+      for (final key in ['whole farro', 'ouzo']) {
+        expect(groups[key]!.finishes, 0, reason: key);
+        expect(groups[key]!.finishesRecipes, isEmpty, reason: key);
+        expect(groups[key]!.lastOpen, 1, reason: key);
+      }
+      // The No grams pecan example still finishes its own recipe.
+      expect(groups['pecan']!.finishes, 1);
+      expect(db.nutritionReviewFinishable(), (finishable: 4, open: 8));
+    });
+
+    test('lines: the farro and the ouzo are 0, the No grams pecans 1; a '
+        'skipped line with grams is never a finisher', () {
+      final db = wider();
+      Map<String, int> finishesOf(String? bucket) => {
+        for (final item
+            in (nutritionReviewHandler(
+                      db,
+                      page: 1,
+                      limit: 50,
+                      bucket: bucket,
+                    )['items']!
+                    as List<Object?>)
+                .cast<Map<String, Object?>>())
+          item['raw']! as String: item['finishes']! as int,
+      };
+      final all = finishesOf(null);
+      expect(all['1½ cups whole farro'], 0);
+      expect(all['3 tablespoons ouzo'], 0);
+      expect(all['⅓ cup pecans, chopped fine'], 1);
+      expect(all['½ teaspoon almond extract'], 1);
+      // Skip Angel Food Cake's egg whites (396 g): the almond extract stays
+      // its last open line, and the skipped line finishes nothing.
+      final angel = db.recipeByIdOrSlug('angel-food-cake')!.recipe;
+      db.upsertIngredientMatch(
+        db.ingredientMatchesFor(angel.id)[0].copyWith(status: 'skipped'),
+      );
+      expect(finishesOf('skipped'), {
+        '12 large egg whites, at room temperature': 0,
+      });
+      expect(finishesOf(null)['½ teaspoon almond extract'], 1);
+    });
+
+    test('finishes_recipes is in title order, not the row order: the almond '
+        'extract recipes under their real ids (0856 Angel Food Cake, 0832 '
+        'Easy Holiday Sugar Cookies) come out of SQLite by id', () {
+      final db = tempDb();
+      for (final (id, title, raw, grams) in [
+        (
+          'atk-tv-2023-0856-angel-food-cake',
+          'Angel Food Cake',
+          '½ teaspoon almond extract',
+          2.1,
+        ),
+        (
+          'atk-tv-2023-0832-easy-holiday-sugar-cookies',
+          'Easy Holiday Sugar Cookies',
+          '¼ teaspoon almond extract',
+          1.05,
+        ),
+      ]) {
+        seed(
+          db,
+          recipeOf(db, title, [raw], id: id),
+          0,
+          confidence: 0.475,
+          fdcId: vanilla,
+          grams: grams,
+          gramSource: 'portion',
+          description: 'Vanilla extract',
+        );
+      }
+      final almond = db.nutritionReviewGroups(limit: 50, offset: 0).single;
+      expect(
+        [for (final r in almond.finishesRecipes) r.title],
+        [
+          'Angel Food Cake',
+          'Easy Holiday Sugar Cookies',
+        ],
+      );
+    });
+  });
+
+  group('Run 046 over the routes', () {
+    test(
+      'GET /admin/nutrition_review forwards sort: worst orders '
+      'worst-first, the default is finishes, an unknown sort is a 422',
+      () async {
+        final db = library();
+        Future<(int, Map<String, dynamic>)> get(String query) => callRoute(
+          db,
+          review_route.onRequest,
+          'GET',
+          path: '/?group=item$query',
+        );
+        String firstKey(Map<String, dynamic> body) =>
+            ((body['items']! as List<Object?>).first!
+                    as Map<String, Object?>)['item_key']!
+                as String;
+        final (defaultStatus, byDefault) = await get('');
+        expect(defaultStatus, HttpStatus.ok);
+        expect(firstKey(byDefault), 'almond extract');
+        final (worstStatus, worst) = await get('&sort=worst');
+        expect(worstStatus, HttpStatus.ok);
+        expect(firstKey(worst), 'garam masala');
+        final (bogusStatus, bogus) = await get('&sort=bogus');
+        expect(bogusStatus, HttpStatus.unprocessableEntity);
+        expect((bogus['error']! as Map<String, Object?>)['code'], 'validation');
+      },
+    );
+
+    test('a bare confirm of a below-gate zero row is refused (zero_row): '
+        "Tacos Dorados' pickled jalapeño slices (0.465, 0 g, unmeasured) — "
+        'auto or skipped; its chopped tomato (0.92, 0 g) confirms, and so '
+        'does a zero row with typed grams', () async {
+      final db = tempDb();
+      final tacos = recipeOf(db, 'Tacos Dorados (Crispy Tacos)', [
+        'Chopped tomato',
+        'Pickled jalapeño slices',
+      ]);
+      seed(
+        db,
+        tacos,
+        0,
+        confidence: 0.92,
+        fdcId: 1999634,
+        grams: 0,
+        gramSource: 'unmeasured',
+        description: 'Tomato, roma',
+      );
+      seed(
+        db,
+        tacos,
+        1,
+        confidence: 0.465,
+        fdcId: 2710096,
+        grams: 0,
+        gramSource: 'unmeasured',
+        description: 'Peppers, jalapenos',
+      );
+      Future<(int, Map<String, dynamic>)> confirm(int pos) => callRoute(
+        db,
+        (context) => match_route.onRequest(context, tacos.slug, '$pos'),
+        'PUT',
+        body: {'confirmed': true},
+      );
+      for (final status in ['auto', 'skipped']) {
+        db.upsertIngredientMatch(
+          db.ingredientMatchesFor(tacos.id)[1].copyWith(status: status),
+        );
+        final (code, body) = await confirm(1);
+        expect(code, HttpStatus.unprocessableEntity, reason: status);
+        expect(
+          (body['error']! as Map<String, Object?>)['code'],
+          'zero_row',
+          reason: status,
+        );
+        expect(db.ingredientMatchesFor(tacos.id)[1].status, status);
+        expect(
+          db.decisionFor(lineKeyOf(nutritionLines(tacos)[1])),
+          isNull,
+        );
+      }
+      final (tomato, _) = await confirm(0);
+      expect(tomato, HttpStatus.ok);
+      expect(db.ingredientMatchesFor(tacos.id)[0].status, 'confirmed');
+      // Typed grams are a real answer: Chinese Pork Dumplings' chili oil
+      // (on "Oil, canola" at 0.475, 0 g) confirms with 5 g.
+      final dumplings = recipeOf(db, 'Chinese Pork Dumplings', ['Chili oil']);
+      seed(
+        db,
+        dumplings,
+        0,
+        confidence: 0.475,
+        fdcId: 172336,
+        grams: 0,
+        gramSource: 'unmeasured',
+        description: 'Oil, canola',
+      );
+      final (oil, _) = await callRoute(
+        db,
+        (context) => match_route.onRequest(context, dumplings.slug, '0'),
+        'PUT',
+        body: {'confirmed': true, 'grams': 5},
+      );
+      expect(oil, HttpStatus.ok);
+      final row = db.ingredientMatchesFor(dumplings.id).single;
+      expect((row.status, row.grams), ('confirmed', 5.0));
+    });
+  });
+
+  group('R2: the zero-row guard, term by term, over the route', () {
+    Future<(int, Map<String, dynamic>)> confirm(
+      SaltDatabase db,
+      Recipe recipe,
+    ) => callRoute(
+      db,
+      (context) => match_route.onRequest(context, recipe.slug, '0'),
+      'PUT',
+      body: {'confirmed': true},
+    );
+
+    test('Indoor Pulled Pork (0246) pos 2, snapshot 12: below the gate '
+        '(0.175), discarded, but its eaten "plus 2 teaspoons" weighs '
+        '9.47 g — not a zero, so a bare confirm stands', () async {
+      final db = tempDb();
+      final pork = recipeOf(
+        db,
+        'Indoor Pulled Pork with Sweet and Tangy Barbecue Sauce',
+        ['3 tablespoons plus 2 teaspoons liquid smoke'],
+      );
+      seed(
+        db,
+        pork,
+        0,
+        confidence: 0.17500000000000004,
+        fdcId: 167682,
+        grams: 9.4666730687946981,
+        gramSource: 'discarded',
+        description: 'Pectin, liquid',
+      );
+      final (code, body) = await confirm(db, pork);
+      expect(code, HttpStatus.ok, reason: '$body');
+      final row = db.ingredientMatchesFor(pork.id).single;
+      expect(row.status, 'confirmed');
+      expect(row.grams, closeTo(9.4667, 1e-4));
+    });
+
+    test('Chicken Francese (1133) pos 8, snapshot 12: below the gate '
+        '(0.457), 0 g discarded on "Olive oil" — a zero: a bare confirm is '
+        'refused (zero_row)', () async {
+      final db = tempDb();
+      final francese = recipeOf(db, 'Chicken Francese', [
+        '⅓ cup extra-virgin olive oil for frying',
+      ]);
+      seed(
+        db,
+        francese,
+        0,
+        confidence: 0.45666666666666667,
+        fdcId: 2710186,
+        grams: 0,
+        gramSource: 'discarded',
+        description: 'Olive oil',
+      );
+      final (code, body) = await confirm(db, francese);
+      expect(code, HttpStatus.unprocessableEntity, reason: '$body');
+      expect((body['error']! as Map<String, Object?>)['code'], 'zero_row');
+      expect(db.ingredientMatchesFor(francese.id).single.status, 'auto');
+    });
+
+    test('a 0 g below-gate row on another gram source is no engine zero: '
+        'it confirms', () async {
+      // Stated exception (synthesized): snapshot 12 holds no 0 g row on a
+      // source but unmeasured or discarded. Tacos Dorados' real jalapeño
+      // row (0.465) with its source swapped to portion.
+      final db = tempDb();
+      final tacos = recipeOf(db, 'Tacos Dorados (Crispy Tacos)', [
+        'Pickled jalapeño slices',
+      ]);
+      seed(
+        db,
+        tacos,
+        0,
+        confidence: 0.465,
+        fdcId: 2710096,
+        grams: 0,
+        gramSource: 'portion',
+        description: 'Peppers, jalapenos',
+      );
+      final (code, body) = await confirm(db, tacos);
+      expect(code, HttpStatus.ok, reason: '$body');
+      expect(db.ingredientMatchesFor(tacos.id).single.status, 'confirmed');
+    });
+
+    test('a line that names no food (hold unnamed_food) is held, not a '
+        'zero: it confirms', () async {
+      // Stated exception (synthesized): the one unnamed_food row on
+      // snapshot 12, Mechouia (0661) pos 11 "2 tablespoons juice" (0 g,
+      // unmeasured, on Beet juice), sits ABOVE the gate at 0.89; its
+      // confidence is lowered to 0.475 here.
+      final db = tempDb();
+      final mechouia = recipeOf(
+        db,
+        'Mechouia (Tunisian-Style Grilled Vegetables)',
+        ['2 tablespoons juice'],
+      );
+      seed(
+        db,
+        mechouia,
+        0,
+        confidence: 0.475,
+        fdcId: 2709682,
+        grams: 0,
+        gramSource: 'unmeasured',
+        hold: 'unnamed_food',
+        description: 'Beet juice',
+      );
+      final (code, body) = await confirm(db, mechouia);
+      expect(code, HttpStatus.ok, reason: '$body');
+      expect(db.ingredientMatchesFor(mechouia.id).single.status, 'confirmed');
     });
   });
 
@@ -725,6 +1098,37 @@ void main() {
       );
     });
 
+    test('a portion\'s leading count divides its weight: "2 (750-ml) bottles '
+        'rosé wine" (Rosé Sangria, 1136) on "Wine, rose" (2710690), whose '
+        'cached portion is "1/2 bottle" 375 g, fills 2 ÷ ½ × 375', () {
+      // Snapshot 11's fdc_food_cache portion for 2710690, verbatim (one of
+      // the 23 whose leading count differs from `amount`, here null).
+      const halfBottle = FdcPortion(
+        gramWeight: 375,
+        description: '1/2 bottle',
+      );
+      final wine = lineOf('2 (750-ml) bottles rosé wine');
+      expect(portionFill(halfBottle, wine.amounts), 1500.0);
+    });
+
+    test('a zero quantity or a blank unit fills nothing; an empty amount '
+        'says none', () async {
+      // Stated exceptions (synthesized): the parser never writes a quantity
+      // of 0, a unit of spaces, or an empty quantity with no unit, but a
+      // hand-edited YAML document can.
+      final stick = (await provider.food(173430))!.portions.firstWhere(
+        (p) => p.description == 'stick',
+      );
+      const zero = Amount(measure: Measure.count, quantity: '0', unit: 'stick');
+      expect(portionFill(stick, const [zero]), isNull);
+      const blank = Amount(measure: Measure.count, quantity: '4', unit: '  ');
+      expect(unitAmountOf(const [blank]), isNull);
+      expect(lineAmountText(const [blank]), '4');
+      // Nor an empty quantity with no unit: no amount to say, not "".
+      const empty = Amount(measure: Measure.count, quantity: '');
+      expect(lineAmountText(const [empty]), isNull);
+    });
+
     test(
       'the matches body reads portions from fdc_food_cache alone: empty '
       'and no fetch while the detail is uncached, listed once it is',
@@ -774,6 +1178,101 @@ void main() {
           'fill': 452.0,
         });
         expect(counting.foodCalls, 0);
+      },
+    );
+  });
+
+  group('Run 046: line_amount reads a bare count, kcal_per_100g the '
+      'nutrient sibling', () {
+    test('"8 large sea scallops, tendons removed" (Grilled Scallops with '
+        'Fennel and Orange Salad for Two, 0651) gives "8", which fills no '
+        'portion; a line with no amount gives null', () async {
+      final scallops = lineOf('8 large sea scallops, tendons removed');
+      expect(lineAmountText(scallops.amounts), '8');
+      final butter = (await provider.food(173430))!;
+      expect([
+        for (final p in butter.portions) portionFill(p, scallops.amounts),
+      ], everyElement(isNull));
+      // A unit amount still wins over a count ("4 sticks").
+      expect(
+        lineAmountText(lineOf('4 sticks unsalted butter').amounts),
+        '4 stick',
+      );
+      // Ultimate Cream of Tomato Soup's seasoning line gives none.
+      expect(
+        lineAmountText(lineOf('Table salt and cayenne pepper').amounts),
+        isNull,
+      );
+    });
+
+    test('"Dash of hot sauce" (Easier Fried Chicken, 0149, snapshot 12: '
+        'auto on 2710093 with no grams) gives the unit alone, "dash", which '
+        'fills none of the cached portions', () async {
+      final db = tempDb();
+      final chicken = recipeOf(db, 'Easier Fried Chicken', [
+        'Dash of hot sauce',
+      ]);
+      seed(
+        db,
+        chicken,
+        0,
+        confidence: 0.92333333333333334,
+        fdcId: 2710093,
+        description: 'Hot pepper sauce',
+      );
+      db.fdcFoodCachePut(
+        2710093,
+        jsonEncode((await provider.food(2710093))!.toJson()),
+      );
+      final line =
+          ((await matchesBody(db, provider, chicken))['items']!
+                      as List<Object?>)
+                  .single!
+              as Map<String, Object?>;
+      expect(line['line_amount'], 'dash');
+      final portions = line['portions']! as List<Object?>;
+      expect(portions, hasLength(5));
+      expect([
+        for (final p in portions) (p! as Map<String, Object?>)['fill'],
+      ], everyElement(isNull));
+    });
+
+    test(
+      'a No grams napa line (Yakisoba, 0520, snapshot 12) reads 16 kcal '
+      'per 100 g from SR 169979, as the totals count it — not the '
+      "Foundation record's own 4.26; null while the sibling is uncached",
+      () async {
+        final db = tempDb();
+        final yakisoba = recipeOf(
+          db,
+          'Yakisoba (Japanese Stir-Fried Noodles with Beef)',
+          ['6 cups napa cabbage, sliced crosswise into ½-inch strips'],
+        );
+        seed(
+          db,
+          yakisoba,
+          0,
+          confidence: 0.95,
+          fdcId: 2727583,
+          description: 'Cabbage, napa, leaf, destemmed, raw',
+        );
+        db.fdcFoodCachePut(
+          2727583,
+          jsonEncode((await provider.food(2727583))!.toJson()),
+        );
+        Future<num?> kcal() async =>
+            (((await matchesBody(db, provider, yakisoba))['items']!
+                            as List<Object?>)
+                        .single!
+                    as Map<String, Object?>)['kcal_per_100g']
+                as num?;
+        expect(await kcal(), isNull, reason: 'the sibling is uncached');
+        // The recorded answer that holds 169979 (its search hit, 208 = 16).
+        db.fdcSearchCachePut(
+          'chinese wheat noodles',
+          jsonEncode(await provider.search('chinese wheat noodles')),
+        );
+        expect(await kcal(), 16.0);
       },
     );
   });
@@ -896,6 +1395,28 @@ void main() {
         isNull,
       );
     });
+
+    test("a person's confirm or pick of the record keeps the suffix (the "
+        'record relation is the approximation); a skipped row, which counts '
+        'nothing, drops it (Run 046)', () {
+      final db = tempDb();
+      const raw = '2 ounces pancetta, cut into ½-inch pieces';
+      final row = rowOf(raw, 168277, 'Pork, cured, bacon, unprepared');
+      const flaggedBasis =
+          'from 2 ounce · approximation (counted as Pork, cured, bacon, '
+          'unprepared)';
+      for (final status in ['overridden', 'confirmed']) {
+        expect(
+          gramBasisFor(db, lineOf(raw), row.copyWith(status: status)),
+          flaggedBasis,
+          reason: status,
+        );
+      }
+      expect(
+        gramBasisFor(db, lineOf(raw), row.copyWith(status: 'skipped')),
+        'from 2 ounce',
+      );
+    });
   });
 
   group('U6: per batch at a basis of 1, never a single-portion yield '
@@ -914,12 +1435,15 @@ void main() {
           'per_batch',
         ),
         (null, 'per_batch'), // Latin Flan: no yield at all
-        // Its yield is cups; the sandwiches are what it dresses (at an
-        // admin's basis of 1).
+        // An admin's 1 on a larger serves count or yield: the batch.
+        ('SERVES 8 (MAKES ABOUT 1 QUART)', 'per_batch'),
+        ('MAKES ONE 8-INCH LOAF, SERVING 8', 'per_batch'),
         ('MAKES ABOUT 2 CUPS, ENOUGH FOR 4 SANDWICHES', 'per_batch'),
         ('MAKES 1 OMELET', 'per_serving'),
         ('MAKES 1 COCKTAIL', 'per_serving'),
-        ('MAKES 1 TO 16 EGGS', 'per_serving'),
+        // A range starting at one is a batch: Sous Vide Soft-Poached Eggs
+        // counts '1–16 large eggs' at the midpoint, 425 g (Run 046).
+        ('MAKES 1 TO 16 EGGS', 'per_batch'),
         // A yield of MORE than one portion is a batch: an admin's basis of
         // 1 then divides by nothing (refix round 2) — the snapshot-11
         // yields that name a listed noun with another count or head.
@@ -944,11 +1468,14 @@ void main() {
       expect(basisKindOf(2, servings: 'MAKES 2 LOAVES'), 'per_serving');
     });
 
-    test('the head noun decides, in the first clause only', () {
+    test('the head noun decides, in the first clause only, a trailing '
+        'parenthetical dropped; "ONE" counts as 1', () {
       // Stated exceptions (synthesized): no corpus yield has a count of 1
-      // with a listed noun as a modifier, nor a single portion before a
-      // second clause, so these two parts of the rule are pinned on made-up
-      // yields another library could carry.
+      // with a listed noun as a modifier, a second clause that names a
+      // listed noun (before or after the single portion), a parenthetical
+      // after a single portion, or ONE spelled out before a listed noun, so
+      // these parts of the rule are pinned on made-up yields another
+      // library could carry.
       // The head is the loaf; "sandwich" only modifies it.
       expect(basisKindOf(1, servings: 'MAKES 1 SANDWICH LOAF'), 'per_batch');
       // The first clause is one cocktail; what follows is not the yield.
@@ -956,6 +1483,35 @@ void main() {
         basisKindOf(1, servings: 'MAKES 1 COCKTAIL; EASILY DOUBLED'),
         'per_serving',
       );
+      // The first clause is a cup (a batch); the sandwich after the comma
+      // is what it dresses — never the head noun.
+      expect(
+        basisKindOf(1, servings: 'MAKES 1 CUP, ENOUGH FOR 1 SANDWICH'),
+        'per_batch',
+      );
+      expect(
+        basisKindOf(1, servings: 'MAKES 1 COCKTAIL (ABOUT 4 OUNCES)'),
+        'per_serving',
+      );
+      expect(basisKindOf(1, servings: 'MAKES ONE OMELET'), 'per_serving');
+      // The yield count must be one: a singular listed noun after a larger
+      // count (a hand edit dropping the plural) is still a batch at an
+      // admin's basis of 1.
+      expect(basisKindOf(1, servings: 'MAKES 2 OMELET'), 'per_batch');
+    });
+
+    test('a recipe that SERVES one is a serving, never a batch', () {
+      // Stated exception (synthesized): no corpus recipe serves 1 (the ATK
+      // corpus has no serves_min of 1); an edited or imported recipe can.
+      for (final servings in ['SERVES 1', 'SERVES 1 TO 2', '1']) {
+        expect(
+          basisKindOf(1, servings: servings),
+          'per_serving',
+          reason: servings,
+        );
+      }
+      // An admin's 1 on a recipe that serves more is still the batch.
+      expect(basisKindOf(1, servings: 'SERVES 4'), 'per_batch');
     });
 
     test("the nutrition body reads the recipe's own yield", () async {
@@ -976,8 +1532,8 @@ void main() {
   });
 
   group('U6 on the corpus recipes', skip: skipIfNoCorpus, () {
-    test('Challah and the loaves per batch; the omelet, the cocktail and the '
-        'sous-vide eggs per serving', () async {
+    test('Challah, the loaves and the sous-vide eggs (1 to 16) per batch; '
+        'the omelet and the cocktail per serving', () async {
       final db = tempDb();
       for (final (file, kind) in [
         ('1110-challah.yaml', 'per_batch'),
@@ -986,7 +1542,7 @@ void main() {
         ('0929-latin-flan.yaml', 'per_batch'),
         ('1148-omelet-with-cheddar-and-chives.yaml', 'per_serving'),
         ('1155-champagne-cocktail.yaml', 'per_serving'),
-        ('0728-sous-vide-soft-poached-eggs.yaml', 'per_serving'),
+        ('0728-sous-vide-soft-poached-eggs.yaml', 'per_batch'),
         ('0803-ciabatta.yaml', 'per_serving'),
       ]) {
         final recipe = loadCorpusRecipe(file);
@@ -1025,6 +1581,7 @@ void main() {
                 String recipe,
                 String title,
                 String key,
+                MatchBucket bucket,
                 IngredientMatchRow row,
               })
             >[];
@@ -1055,6 +1612,7 @@ void main() {
               recipe: recipe.id,
               title: recipe.title,
               key: perLine ? '${recipe.id}#${row.position}' : row.itemKey!,
+              bucket: bucket,
               row: row,
             ));
           }
@@ -1083,13 +1641,36 @@ void main() {
         final byRecipe = <String, List<({String key, bool ok})>>{};
         for (final line in open) {
           final ex = example[line.key]!;
+          // A confirm can supply grams only on a No grams example (the
+          // amount-first block): a Check or No match example with no grams
+          // stays short (Run 046).
           byRecipe.putIfAbsent(line.recipe, () => []).add((
             key: line.key,
             ok:
                 line.row.grams != null ||
-                (ex.recipe == line.recipe && ex.position == line.row.position),
+                (line.bucket == MatchBucket.noAmount &&
+                    ex.recipe == line.recipe &&
+                    ex.position == line.row.position),
           ));
         }
+        // The Lines grain: a line finishes when it is its recipe's only open
+        // line AND it has grams or sits in No grams.
+        final lineFinishes = {
+          for (final line in open)
+            '${line.recipe}#${line.row.position}':
+                byRecipe[line.recipe]!.length == 1 &&
+                    (line.row.grams != null ||
+                        line.bucket == MatchBucket.noAmount)
+                ? 1
+                : 0,
+        };
+        final lines = db.nutritionReviewLines(limit: 100000, offset: 0);
+        expect(lines, hasLength(open.length));
+        for (final l in lines) {
+          final id = '${l.match.recipeId}#${l.match.position}';
+          expect(l.finishes, lineFinishes[id], reason: id);
+        }
+        final linePromises = lineFinishes.values.where((f) => f == 1).length;
         final expected = <String, int>{};
         for (final lines in byRecipe.values) {
           final keys = {for (final l in lines) l.key};
@@ -1106,6 +1687,10 @@ void main() {
             .key;
         final groups = db.nutritionReviewGroups(limit: 100000, offset: 0);
         expect(groups, hasLength(example.length));
+        expect(db.nutritionReviewFinishable(), (
+          finishable: expected.values.fold(0, (a, b) => a + b),
+          open: byRecipe.length,
+        ));
         for (final g in groups) {
           expect(g.finishes, expected[keyOf(g)] ?? 0, reason: keyOf(g));
         }
@@ -1177,7 +1762,10 @@ void main() {
         printOnFailure('payoff: $table');
         // The measured table, for the review record.
         // ignore: avoid_print
-        print('C1 payoff on $snapshot: $table');
+        print(
+          'C1 payoff on $snapshot: $table; finishable '
+          '${db.nutritionReviewFinishable()}; line promises $linePromises',
+        );
         for (final row in table.values) {
           expect(row.finishes, greaterThan(row.worst));
         }

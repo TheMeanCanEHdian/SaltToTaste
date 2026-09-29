@@ -43,4 +43,9 @@ abstract final class ApiErrorCodes {
   /// The request conflicts with existing state, e.g. a duplicate username
   /// (HTTP 409).
   static const String conflict = 'conflict';
+
+  /// A confirm-as-is of a below-gate zero row: its food is a hidden guess,
+  /// so confirming it would decide that food library-wide (HTTP 422). Pick
+  /// a food, or skip the line.
+  static const String zeroRow = 'zero_row';
 }

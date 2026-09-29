@@ -190,6 +190,31 @@ void main() {
         'The recipe says "MAKES ENOUGH FOR ONE 9-INCH PIE", so one serving '
             'is the whole batch.',
       ),
+      // The first clause ends at a semicolon too.
+      (
+        'MAKES ABOUT 1½ CUPS; ENOUGH FOR 3 CUPS ICED COFFEE',
+        'The recipe says "MAKES ABOUT 1½ CUPS", so one serving is the whole '
+            'batch.',
+      ),
+      // A range from one is the midpoint batch, never "the whole to 16
+      // eggs" (S6: per_batch).
+      (
+        'MAKES 1 TO 16 EGGS',
+        'The recipe says "MAKES 1 TO 16 EGGS", so one serving is the whole '
+            'batch.',
+      ),
+      // Synthesized (stated exception): the corpus writes every yield in
+      // capitals; an editor-typed one is read the same way, and a trailing
+      // parenthetical is no part of the thing.
+      (
+        'Makes 1 loaf',
+        'The recipe says "Makes 1 loaf", so one serving is the whole loaf.',
+      ),
+      (
+        'MAKES 1 LOAF (ABOUT 2 POUNDS)',
+        'The recipe says "MAKES 1 LOAF (ABOUT 2 POUNDS)", so one serving is '
+            'the whole loaf.',
+      ),
       // No yield (Latin Flan), or a serves count at an admin's basis of 1.
       (null, null),
       ('SERVES 4', null),
@@ -269,5 +294,28 @@ void main() {
     );
 
     expect(find.text('No nutrition data yet'), findsOneWidget);
+  });
+
+  testWidgets('a label with no detail nutrient has no fold, and disposes '
+      'without building one', (tester) async {
+    // Stated exception (synthesized): every stored label carries the
+    // detail nutrients; an energy-only map (the captured label cut to its
+    // calories) is the no-fold case the widget still has to handle.
+    await pumpPanel(
+      tester,
+      nutrition: RecipeNutrition.fromJson({
+        'status': 'complete',
+        'serving_basis': 15,
+        'matched_count': 8,
+        'total_count': 8,
+        'per_serving': {
+          'energy': (jsonDecode(_perServingJson) as Map)['energy'],
+        },
+      }),
+    );
+    expect(find.text('Nutrition Facts'), findsOneWidget);
+    expect(find.byType(FCollapsible), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(tester.takeException(), isNull);
   });
 }

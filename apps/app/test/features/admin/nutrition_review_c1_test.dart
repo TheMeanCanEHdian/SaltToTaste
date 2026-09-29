@@ -13,6 +13,8 @@ import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/admin/nutrition_review_cubit.dart';
 import 'package:salt_app/features/admin/nutrition_review_queue.dart';
+import 'package:salt_app/features/nutrition/match_fix_panel.dart'
+    show confirmsWithoutAmount, heldSkipLabel;
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
 /// Sweep-snapshot-11 groups as the grouped queue serves them (the example
@@ -332,6 +334,66 @@ final _satay = _group(
   ],
 );
 
+// Snapshot 12's held lines (ruling 5): Classic Macaroni and Cheese's
+// pasta-water salt, its "plus 1 teaspoon" eaten, and Roasted Oysters on the
+// Half Shell's oysters, in the shell with no grams.
+const Map<String, dynamic> _macSaltMatch = {
+  'fdc_id': 173468,
+  'description': 'Salt, table',
+  'data_type': 'SR Legacy',
+  'confidence': 1.0,
+  'grams': 6.0132824,
+  'gram_source': 'discarded',
+  'status': 'auto',
+  'hold': 'discarded_medium',
+};
+const Map<String, dynamic> _oysterMatch = {
+  'fdc_id': 1999627,
+  'description': 'Mushroom, oyster',
+  'data_type': 'Foundation',
+  'confidence': 0.95,
+  'grams': null,
+  'gram_source': null,
+  'status': 'auto',
+  'hold': 'in_shell',
+};
+Map<String, dynamic> _held(
+  String id,
+  String title,
+  int position,
+  String raw,
+  Map<String, dynamic> match,
+) => {
+  'recipe': {
+    'id': id,
+    'slug': id.substring('atk-tv-2023-0000-'.length),
+    'title': title,
+  },
+  'position': position,
+  'raw': raw,
+  'bucket': 'check',
+  'match': match,
+  'item_key': '',
+  'lines': 1,
+  'recipes': 1,
+  'decided': false,
+  'grams': {'min': match['grams'], 'max': match['grams'], 'missing': 0},
+};
+final _macSalt = _held(
+  'atk-tv-2023-0300-classic-macaroni-and-cheese',
+  'Classic Macaroni and Cheese',
+  2,
+  '1 tablespoon plus 1 teaspoon table salt',
+  _macSaltMatch,
+);
+final _oysters = _held(
+  'atk-tv-2023-1184-roasted-oysters-on-the-half-shell-with-mustard-butter',
+  'Roasted Oysters on the Half Shell with Mustard Butter',
+  3,
+  '24 oysters, 2½ to 3 inches long, well scrubbed',
+  _oysterMatch,
+);
+
 Map<String, dynamic> _body(List<Map<String, dynamic>> items) => {
   'total': 30,
   'groups': items.length,
@@ -373,7 +435,31 @@ class _Adapter implements HttpClientAdapter {
     if (options.method == 'PUT') {
       puts.add((options.path, options.data));
     }
-    if (options.path.contains('/beef-satay/nutrition/matches')) {
+    if (options.path.contains('/classic-macaroni-and-cheese/nutrition/')) {
+      body = {
+        'items': [
+          {
+            'position': 2,
+            'raw': '1 tablespoon plus 1 teaspoon table salt',
+            'item': 'table salt',
+            'match': _macSaltMatch,
+            'candidates': <Object>[],
+          },
+        ],
+      };
+    } else if (options.path.contains('/roasted-oysters-on-the-half-shell')) {
+      body = {
+        'items': [
+          {
+            'position': 3,
+            'raw': '24 oysters, 2½ to 3 inches long, well scrubbed',
+            'item': 'oysters',
+            'match': _oysterMatch,
+            'candidates': <Object>[],
+          },
+        ],
+      };
+    } else if (options.path.contains('/beef-satay/nutrition/matches')) {
       // Beef Satay's only open line: a sub-recipe reference no amount
       // converts (matcher v13), so its plain confirm lands in No grams.
       body = {
@@ -804,6 +890,145 @@ void main() {
     );
   });
 
+  group('Run 046 A10: the held lines in the pane (ruling 5)', () {
+    testWidgets('the pasta-water salt offers Confirm for its eaten part, '
+        'and the confirm writes it', (tester) async {
+      final adapter = await pumpQueue(tester, [
+        _body([_macSalt]),
+      ]);
+      expect(find.text('Enter edible grams'), findsOneWidget);
+      expect(find.text(heldSkipLabel), findsOneWidget);
+      expect(find.text('Confirm'), findsOneWidget);
+      await tester.tap(find.text('Confirm'));
+      await tester.pumpAndSettle();
+      expect(adapter.puts.single.$1, endsWith('/matches/2'));
+      expect(adapter.puts.single.$2, {'confirmed': true});
+    });
+
+    testWidgets('the oysters in the shell, no grams: never a plain Confirm', (
+      tester,
+    ) async {
+      await pumpQueue(tester, [
+        _body([_oysters]),
+      ]);
+      expect(find.text('Enter edible grams'), findsOneWidget);
+      expect(find.text('Confirm'), findsNothing);
+      expect(
+        confirmsWithoutAmount(
+          IngredientMatch.fromJson(const {
+            'position': 3,
+            'raw': '24 oysters, 2½ to 3 inches long, well scrubbed',
+            'match': _oysterMatch,
+          }),
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('Run 046 A10: the split and the group wiring', () {
+    testWidgets('a group of six lines that finishes nothing shows no split', (
+      tester,
+    ) async {
+      await pumpQueue(tester, [
+        _body([_garam]),
+      ]);
+      expect(find.text('What this decision finishes'), findsNothing);
+    });
+
+    testWidgets('a No grams line of one has no group notes', (tester) async {
+      await pumpQueue(tester, [
+        _body([_ginger(lines: 1)]),
+      ]);
+      expect(find.text('Confirm with amount'), findsOneWidget);
+      expect(
+        find.textContaining('No apply-to-all offer', findRichText: true),
+        findsNothing,
+      );
+      expect(
+        find.textContaining('the pane stays on', findRichText: true),
+        findsNothing,
+      );
+    });
+
+    testWidgets('five promised names: four shown and "+1"', (tester) async {
+      // Snapshot 11's tarragon group (by the server's nutritionReviewGroups
+      // over a copy of snap11): its example finishes Broccoli Salad by
+      // itself, and the apply the five others, in title order.
+      final tarragon = _group(
+        id: 'atk-tv-2023-1073-broccoli-salad-with-creamy-avocado-dressing',
+        slug: 'broccoli-salad-with-creamy-avocado-dressing',
+        title: 'Broccoli Salad with Creamy Avocado Dressing',
+        position: 11,
+        raw: '1 tablespoon minced fresh tarragon',
+        bucket: 'check',
+        itemKey: 'tarragon',
+        item: 'fresh tarragon',
+        lines: 7,
+        finishes: 6,
+        fdcId: 170937,
+        description: 'Spices, tarragon, dried',
+        confidence: 0.8066666666666666,
+        grams: 1.8,
+        gramSource: 'portion',
+        lastOpen: 6,
+        finishesRecipes: [
+          [
+            'atk-tv-2023-1073-broccoli-salad-with-creamy-avocado-dressing',
+            'Broccoli Salad with Creamy Avocado Dressing',
+          ],
+          ['atk-tv-2023-0298-classic-chicken-salad', 'Classic Chicken Salad'],
+          [
+            'atk-tv-2023-0628-grilled-stuffed-chicken-breasts-with-prosciutto-and-fontina',
+            'Grilled Stuffed Chicken Breasts with Prosciutto and Fontina',
+          ],
+          [
+            'atk-tv-2023-1092-poulet-au-vinaigre-chicken-with-vinegar',
+            'Poulet au Vinaigre (Chicken with Vinegar)',
+          ],
+          ['atk-tv-2023-0286-shrimp-salad', 'Shrimp Salad'],
+          [
+            'atk-tv-2023-0021-super-greens-soup-with-lemon-tarragon-cream',
+            'Super Greens Soup with Lemon-Tarragon Cream',
+          ],
+        ],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: FinishesSplit(
+              line: NutritionReviewLine.fromJson(tarragon),
+              match: const IngredientMatch(
+                position: 11,
+                raw: '1 tablespoon minced fresh tarragon',
+                fdcId: 170937,
+                description: 'Spices, tarragon, dried',
+                confidence: 0.8066666666666666,
+                grams: 1.8,
+                gramSource: 'portion',
+                status: 'auto',
+              ),
+              waiting: const [],
+            ),
+          ),
+        ),
+      );
+      expect(
+        find.textContaining('This line only: 1 recipe.', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.text('5 recipes complete'), findsOneWidget);
+      expect(
+        find.text(
+          'Classic Chicken Salad, Grilled Stuffed Chicken Breasts with '
+          'Prosciutto and Fontina, Poulet au Vinaigre (Chicken with '
+          'Vinegar), Shrimp Salad … +1',
+        ),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('the pane stays on a Check line a plain Confirm left in No grams', () {
     // Chana Masala pos 12 before and after a confirm USDA could not convert.
     const before = IngredientMatch(
@@ -833,7 +1058,8 @@ void main() {
     test('no grams after: stay', () {
       const landed = NutritionState(loading: false, matches: [after]);
       expect(queueShouldAdvance(inFlight, landed), isTrue);
-      expect(leftWaitingOnAmount(inFlight, landed, 12), isTrue);
+      expect(leftWaitingOnAmount(landed, 12), isTrue);
+      expect(paneAdvances(inFlight, landed, 12), isFalse);
     });
 
     test('grams after, or another line: advance', () {
@@ -853,9 +1079,10 @@ void main() {
           ),
         ],
       );
-      expect(leftWaitingOnAmount(inFlight, counted, 12), isFalse);
+      expect(leftWaitingOnAmount(counted, 12), isFalse);
+      expect(paneAdvances(inFlight, counted, 12), isTrue);
       const landed = NutritionState(loading: false, matches: [after]);
-      expect(leftWaitingOnAmount(inFlight, landed, 2), isFalse);
+      expect(leftWaitingOnAmount(landed, 2), isFalse);
     });
   });
 
@@ -978,6 +1205,14 @@ void main() {
           home: Scaffold(
             body: FinishesSplit(
               line: NutritionReviewLine.fromJson(_pecan),
+              match: const IngredientMatch(
+                position: 3,
+                raw: '⅓ cup coarsely chopped pecans, toasted',
+                fdcId: 2346395,
+                description: 'Nuts, pecans, halves, raw',
+                confidence: 0.92,
+                status: 'auto',
+              ),
               waiting: const [],
             ),
           ),
@@ -989,6 +1224,52 @@ void main() {
       );
       expect(find.textContaining('Then Apply'), findsNothing);
       expect(find.byType(FinishesPill), findsNothing);
+    });
+
+    testWidgets('S1: a Check example with no grams finishes nothing by '
+        'itself — a plain Confirm leaves it without grams', (tester) async {
+      // Snapshot 11: Parmesan Farrotto's last open line, whole farro at
+      // 0.495 with no grams (the server's finishes is 0 at both grains).
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: FinishesSplit(
+              line: NutritionReviewLine.fromJson(
+                _group(
+                  id: 'atk-tv-2023-0412-parmesan-farrotto',
+                  slug: 'parmesan-farrotto',
+                  title: 'Parmesan Farrotto',
+                  position: 0,
+                  raw: '1½ cups whole farro',
+                  bucket: 'check',
+                  itemKey: 'whole farro',
+                  item: 'whole farro',
+                  lines: 2,
+                  finishes: 0,
+                  fdcId: 2710828,
+                  description: 'Farro, pearled, dry, raw',
+                  confidence: 0.495,
+                  missing: 2,
+                ),
+              ),
+              match: const IngredientMatch(
+                position: 0,
+                raw: '1½ cups whole farro',
+                fdcId: 2710828,
+                description: 'Farro, pearled, dry, raw',
+                dataType: 'Foundation',
+                confidence: 0.495,
+                status: 'auto',
+              ),
+              waiting: const [],
+            ),
+          ),
+        ),
+      );
+      expect(
+        find.textContaining('This line only: 0 recipes.', findRichText: true),
+        findsOneWidget,
+      );
     });
 
     testWidgets('the queue pane wires C: the Skip beside "Confirm with '

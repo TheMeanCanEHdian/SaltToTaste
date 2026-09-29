@@ -527,7 +527,8 @@ class _MatchRowState extends State<_MatchRow> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                if (zero)
+                // A skipped zero keeps its hidden guess but reads skipped.
+                if (zero && !skipped)
                   const SaltBadge('counts as zero', tone: SaltBadgeTone.neutral)
                 else
                   _statusBadge(b),
@@ -916,7 +917,12 @@ String? _summaryLine(NutritionState state) {
     return null;
   }
   // Ruling 9: the counted zeros below the gate are said, not hidden.
-  final zeros = state.matches?.where(zeroGuessOf).length ?? 0;
+  // A skipped zero counts nothing at all: it is among the skipped.
+  final zeros =
+      state.matches
+          ?.where((match) => zeroGuessOf(match) && match.status == 'auto')
+          .length ??
+      0;
   final parts = <String>[
     '${nutrition.totalCount} lines',
     '${nutrition.matchedCount} counting'

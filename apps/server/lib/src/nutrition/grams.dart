@@ -114,6 +114,14 @@ const List<(String, double)> _densities = [
   ('oats', 0.41),
   ('salt', 1.22),
   ('kosher salt', 0.72),
+  // Flake and coarse sea salt pack like kosher salt, not like table salt
+  // (1.22 counted "2 tablespoons flake sea salt" at 36 g, Run 047): no FDC
+  // record or corpus weight sizes them, so kosher's figure stands. The
+  // normalized item drops "coarse" ("2 teaspoons coarse sea salt, divided"
+  // reads "sea salt"), so the key is "sea salt". ponytail: a fine sea salt
+  // would weigh like table salt; no corpus line measures one — split the
+  // key when one does.
+  ('sea salt', 0.72),
   ('baking powder', 0.92),
   ('baking soda', 0.93),
   ('yeast', 0.64),
@@ -502,7 +510,7 @@ double? _countQty(List<Amount> amounts) {
   // Tangy Barbecue Sauce; checkpoint 8).
   final inItem = RegExp(
     '^\\s*[\\d$vulgarFractionChars/.]+\\s+([\\d$vulgarFractionChars/.]+)-'
-    r'(ounces?|pounds?)\b',
+    r'(pounds?)\b',
     caseSensitive: false,
   ).firstMatch(raw);
   final quantity = inItem == null ? null : _quantityValue(inItem[1]!);
@@ -637,28 +645,26 @@ const Set<String> _portionServingWords = {
 /// 12.9 g of "Taco shells, baked", "leaf" of Swiss chard, "medium" of a
 /// Bosc pear, "pepper" of a dried chile — read as "1 shell" (checkpoint 8:
 /// 23 no_grams lines on a cached portion the finder never read).
-/// The nouns an SR bare-noun portion names one item by whatever the item.
-const Set<String> _oneItemNouns = {
-  'small',
-  'medium',
-  'large',
-  'extra',
-  'jumbo',
-  'regular',
-  'miniature',
-  'fruit',
-  'whole',
-};
+/// The nouns an SR bare-noun portion names one item by whatever the item —
+/// the medium one and a whole fruit (the other sizes and "whole" sized no
+/// line of the library: removed, v15).
+const Set<String> _oneItemNouns = {'medium', 'fruit'};
 
 /// A chile, whose SR record counts it as a "pepper" ("2 dried ancho
 /// chiles" on "Peppers, ancho, dried": 17 g a pepper).
 final RegExp _chile = RegExp(r'\bchil(e|es|i|ies)\b');
 
-/// A chile the line calls small, or names by a small variety: the only dried
-/// chiles a sub-gram "pepper" portion can weigh.
-final RegExp _smallChile = RegExp(
-  r'\b(small|arbol|árbol|thai|japon[eé]s|pequin|bird)\b',
-);
+/// A small DRIED chile: one named by a variety sold dried, or one the line
+/// calls small and dried — the only chiles a sub-gram "pepper" portion
+/// (168570 "Peppers, hot chile, sun-dried", 0.5 g) can weigh. A Thai chile
+/// is fresh in every corpus line: "1 Thai red chile" (Panang Beef Curry)
+/// read 0.5 g for a ~2 g chile (Run 047); japonés and pequin name no corpus
+/// chile of their own, and "árbol" is read as the normalized item's
+/// "arbol" (a word boundary never falls before "á").
+bool _smallDriedChile(String text) =>
+    RegExp(r'\b(arbol|bird)\b').hasMatch(text) ||
+    (RegExp(r'\bsmall\b').hasMatch(text) &&
+        RegExp(r'\bdried\b').hasMatch(text));
 
 double? _wholeItemPortionGrams(
   FdcFood food,
@@ -706,14 +712,17 @@ double? _wholeItemPortionGrams(
     // ponytail: 168570 "Peppers, hot chile, sun-dried" weighs its "pepper" at
     // 0.5 g — a bird chile. A dried New Mexican or guajillo pod is ~7 g by the
     // corpus's own parens ("3 medium New Mexican pods (about ¾ ounce)"), so a
-    // sub-gram pepper portion sizes only a chile the line calls small (or
-    // arbol, Thai, japonés); the rest stay unweighed until a dried-chile
+    // sub-gram pepper portion sizes only a small dried chile
+    // ([_smallDriedChile]); the rest stay unweighed until a dried-chile
     // piece table exists (Run 047 verifier: 14× under, 3 false completes).
-    final chile =
-        noun == 'pepper' &&
-        _chile.hasMatch(normalizedItem) &&
-        (portion.gramWeight >= 1 ||
-            _smallChile.hasMatch('${raw ?? ''} $normalizedItem'.toLowerCase()));
+    // The guard holds for the whole "pepper" portion, whatever names it — a
+    // "bell pepper" item names the noun itself (Run 047 critic).
+    if (noun == 'pepper' &&
+        portion.gramWeight < 1 &&
+        !_smallDriedChile('${raw ?? ''} $normalizedItem'.toLowerCase())) {
+      continue;
+    }
+    final chile = noun == 'pepper' && _chile.hasMatch(normalizedItem);
     final named =
         normalizedItem.contains(noun) ||
         itemWords.contains(keyWordOf(noun)) ||
@@ -820,10 +829,9 @@ double? _portionGramsPerUnit(FdcFood food, String unit, {bool bare = false}) {
       // SR Legacy's bare noun with no unit of its own: "stick" 113 g of
       // "Butter, without salt" is one stick ('4 sticks unsalted butter',
       // Classic Yellow Layer Cake, 0884; checkpoint 8).
-      final named =
-          bare &&
-          parsed == null &&
-          description.split(RegExp('[^a-z]+')).first == wanted;
+      // (Requiring the unit to LEAD the description changed no line of the
+      // library: removed, v15.)
+      final named = bare && parsed == null;
       if (parsed == null && !named) {
         continue;
       }
@@ -1528,17 +1536,14 @@ GramResolution? _parenVolumeGrams(
   String raw,
 ) {
   final printed = RegExp(
-    r'\((\d[\d.]*)[-\s]?(ml|milliliters?|liters?)\)',
+    r'\((\d[\d.]*)[-\s]?(ml|milliliters?)\)',
     caseSensitive: false,
   ).firstMatch(raw);
   final count = _countQty(amounts);
   if (printed == null || count == null) {
     return null;
   }
-  final ml =
-      count *
-      double.parse(printed[1]!) *
-      (printed[2]!.toLowerCase().startsWith('l') ? 1000 : 1);
+  final ml = count * double.parse(printed[1]!);
   return _resolveGrams(
     amounts: [
       Amount(
@@ -1551,6 +1556,47 @@ GramResolution? _parenVolumeGrams(
     food: food,
     normalizedItem: normalizedItem,
   );
+}
+
+/// The volume a raw parenthetical prints for the whole line — "(about 2
+/// cups; optional)", "(½ cup plus 3 tablespoons)", both parts: Champagne
+/// Cocktail's "5½ fluid ounces (½ cup plus 3 tablespoons) champagne",
+/// stored as the bare count 5½, read 990 g as 5½ "punch" servings — as an
+/// amount; null for none.
+Amount? _parenVolume(String raw) {
+  final q = '([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ .]*?)';
+  const u = r'\s*(cups?|tablespoons?|teaspoons?)\b';
+  final match = RegExp(
+    '\\((?:about\\s+)?$q$u(?:\\s+plus\\s+$q$u)?',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (match == null) {
+    return null;
+  }
+  String unit(String word) => word.toLowerCase().replaceAll(RegExp(r's$'), '');
+  if (match[3] == null) {
+    return Amount(
+      measure: Measure.volume,
+      quantity: match[1]!.trim(),
+      unit: unit(match[2]!),
+      primary: true,
+    );
+  }
+  double? ml(String quantity, String word) {
+    final n = _quantityValue(quantity.trim());
+    return n == null ? null : n * _volumeUnitMl[unit(word)]!;
+  }
+
+  final first = ml(match[1]!, match[2]!);
+  final second = ml(match[3]!, match[4]!);
+  return first == null || second == null
+      ? null
+      : Amount(
+          measure: Measure.volume,
+          quantity: (first + second).toStringAsFixed(0),
+          unit: 'ml',
+          primary: true,
+        );
 }
 
 /// A line that opens with a quantity and a volume unit.
@@ -1727,6 +1773,25 @@ GramResolution? _resolveGrams({
             ? '$countLabel × ${paren.grams.round()} g (printed weight)'
             : 'from the printed weight',
       );
+    }
+  }
+
+  // 1c. A bare count whose parenthetical prints the line's VOLUME is that
+  //     volume, as a printed weight is, when the food sizes it: "4–6 Swiss
+  //     chard leaves, ribs removed, torn into 1-inch pieces (about 2 cups;
+  //     optional)" (Hearty Chicken Noodle Soup) is 2 cups, 72 g — never 5
+  //     whole leaves with their stalks, 240 g (Run 047).
+  final printed = raw == null ? null : _parenVolume(raw);
+  // (Requiring the count unit-less, or any amount at all — an amount-less
+  // line counts 0 g — changed no line of the library: not asked.)
+  if (printed != null && amounts.every((a) => a.measure == Measure.count)) {
+    final volume = _resolveGrams(
+      amounts: [printed],
+      food: food,
+      normalizedItem: normalizedItem,
+    );
+    if (volume != null) {
+      return volume;
     }
   }
 
@@ -1959,10 +2024,14 @@ Amount? unitAmountOf(List<Amount> amounts) {
   return null;
 }
 
-/// [unitAmountOf] as text ("4 stick"), or null.
+/// The line's amount as written: [unitAmountOf] as text ("4 stick"), else
+/// its first amount, a bare count ("8" for "8 large sea scallops" — a count
+/// is an amount the person converts to grams, Run 046); null when the line
+/// gives no amount at all. [portionFill] still sizes the unit amount only.
 String? lineAmountText(List<Amount> amounts) {
-  final amount = unitAmountOf(amounts);
-  return amount == null ? null : _amountText(amount);
+  final amount = unitAmountOf(amounts) ?? amounts.firstOrNull;
+  final text = amount == null ? '' : _amountText(amount);
+  return text.isEmpty ? null : text;
 }
 
 /// A unit or portion word in one spelling: a volume alias's unit
@@ -1973,9 +2042,8 @@ String _unitWord(String word) {
   if (alias != null) {
     return alias;
   }
-  return lower.length > 3 && lower.endsWith('s')
-      ? lower.substring(0, lower.length - 1)
-      : lower;
+  // Both sides go through here, so a short word ending in s strips alike.
+  return lower.endsWith('s') ? lower.substring(0, lower.length - 1) : lower;
 }
 
 /// The grams the line's unit amount ([unitAmountOf] of [amounts]) weighs on
@@ -1993,17 +2061,12 @@ double? portionFill(FdcPortion portion, List<Amount> amounts) {
   }
   final description = (portion.description ?? '').toLowerCase().trim();
   final leading = RegExp(r'^([\d][\d./\s]*)').firstMatch(description);
+  // FDC's "undetermined" unit arrives as null (fdc_provider), and a leading
+  // count holds no letters: the description's first word is the unit's.
   final unit = (portion.unit ?? '').toLowerCase();
-  final word = unit.isNotEmpty && unit != 'undetermined'
+  final word = unit.isNotEmpty
       ? unit
-      : RegExp('[a-z]+')
-                .firstMatch(
-                  leading == null
-                      ? description
-                      : description.substring(leading.end),
-                )
-                ?.group(0) ??
-            '';
+      : RegExp('[a-z]+').firstMatch(description)?.group(0) ?? '';
   if (word.isEmpty || _unitWord(word) != _unitWord(amount.unit!)) {
     return null;
   }

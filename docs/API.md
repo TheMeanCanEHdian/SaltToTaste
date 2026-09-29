@@ -128,6 +128,7 @@ temporary password with `must_change_password`: until the user calls
   | `conflict` | 409 | Conflicts with existing state (e.g. duplicate username) |
   | `locked` | 429 | Login lockout; message says when to retry |
   | `rate_limited` | 429 | Too many text searches; retry after the `Retry-After` header |
+  | `zero_row` | 422 | A bare confirm of a below-gate zero row (its food is a hidden guess): pick a food or skip it |
   | `internal` | 500 | Unhandled server error (details only in server logs) |
 
 - Timestamps are UTC ISO-8601 strings with a `Z` suffix. Keys are
@@ -330,10 +331,18 @@ groups}], items:
 description, data_type, confidence, grams, gram_source, status, hold} |
 null}], page, limit}` (`hold` as in the per-recipe matches body below).
 A line item's `finishes` is 1 when the line is its recipe's LAST open line
-(the only one in `no_match` / `check` / `no_grams`, whatever the filter) —
-any decision on it, a confirm taking its amount included, completes the
-recipe — else 0 (always 0 on a `skipped` line). A group item overrides it
-with the group's count (below).
+(the only one in `no_match` / `check` / `no_grams`, whatever the filter)
+AND a confirm can count it: a `check` line that has grams, or a `no_grams`
+line (its confirm takes the amount) — else 0. A `no_match` line (no food to
+confirm) and a `check` line with no grams (a plain confirm converts it only
+if USDA can; when it cannot, the line lands in `no_grams` and the recipe
+stays partial) are 0, as is a `skipped` or `counted` line. A group item
+overrides it with the group's count (below). Every `finishes` count (both
+modes, and `finishable`) reads the STORED match rows: for a recipe edited
+since its last compute (`stale` on its nutrition — derived, never stored) a
+reworded or added line has no row of its own, so the count is an upper
+bound for that recipe (the apply skips a reworded line; the recompute
+cannot account an added one).
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
 below 50% name confidence — compared with a 1e-9 tolerance, so a score that
 lands exactly on 0.5 counts whatever its float rounding — probably the wrong
@@ -377,9 +386,11 @@ missing}` over the members' amounts, and `finishes`: how many recipes one
 decision on the group completes when it is applied to the group — a recipe
 counts when EVERY flagged line it has (in any bucket, whatever the filter)
 sits in this group and each of them already has grams or is the group's
-example (a confirm on the example takes its grams in the same step); a group
-of one (a line hold, a decided line) counts its own recipe when that line is
-the recipe's last open one. A pick of a different food recomputes every
+example IN `no_grams` (the confirm on it takes its grams in the same step; a
+`check` or `no_match` example with no grams finishes nothing, since a plain
+confirm cannot promise grams); a group of one (a line hold, a decided line)
+counts its own recipe when that line is the recipe's last open one and it
+has grams or sits in `no_grams`. A pick of a different food recomputes every
 reached line's grams from its own amounts, so it can finish more than the
 count says (accepted: the count may undercount, never promises a confirm
 more). `finishes_recipes: [{id, title}]` names those recipes, by title, and
@@ -628,17 +639,20 @@ first compute, else:
 
 `basis_kind` says what `serving_basis` divides by: `per_batch` when the basis
 is 1 — the whole batch: "MAKES 1 LOAF", no servings at all, or an admin's
-1 — unless the recipe's yield (its servings text up to the first comma or
-semicolon: "MAKES ABOUT 2 CUPS, ENOUGH FOR 4 SANDWICHES" is cups) is ONE
-single portion: its count is 1 (or "one"; "MAKES 1 TO 16 EGGS" starts at
-one) and its head noun, the yield's last word, is on the ruling's list —
-omelet, cocktail, sandwich, egg or drink, singular or plural ("MAKES 1
-OMELET", "MAKES 1 COCKTAIL", "MAKES 1 TO 16 EGGS"; never "MAKES 12
-SANDWICHES", a batch, or "MAKES 32 SANDWICH COOKIES", cookies) — the only
-such nouns among the corpus's MAKES-1 yields; the rest
-are loaves, quarts, pies, tarts, crusts, a square and a quarter cup of
-dressing), whose one is a real serving (the user's ruling, 2026-09-28) —
-else `per_serving`. A larger basis
+1 on a larger yield or serves count — unless the recipe SERVES one (its
+serves count starts at 1: "SERVES 1", a bare "1") or its MAKES yield is
+exactly ONE single portion: a yield count of 1 ("1" or "ONE") whose head
+noun — the last word of the yield's first clause (up to a comma or
+semicolon), a trailing parenthetical dropped ("MAKES 1 COCKTAIL (ABOUT 4
+OUNCES)" is a cocktail) — is on the ruling's list, singular: omelet,
+cocktail, sandwich, egg or drink. "MAKES 1 OMELET" and "MAKES 1 COCKTAIL"
+are single portions; "MAKES 12 SANDWICHES" is a batch, "MAKES 1 SANDWICH
+LOAF" a loaf, "MAKES 32 SANDWICH COOKIES" cookies, and a range starting at
+one, "MAKES 1 TO 16 EGGS", names a plural and is a batch (its totals are
+the range's midpoint, not one egg). These are the only such nouns among the
+corpus's MAKES-1 yields; the rest are loaves, quarts, pies, tarts, crusts,
+a square and a quarter cup of dressing. A single portion is a real serving
+(the user's ruling, 2026-09-28), so it reads `per_serving`, as does every basis above 1: a larger basis
 divides the batch by a serves count or by a MAKES yield count, where one
 "serving" is one of the yield ("MAKES TWO 9-INCH PIZZAS": one pizza), not the
 batch. The app marks a per-batch label "per batch" beside its per-serving
@@ -754,8 +768,15 @@ almonds, whole, raw" SR "Nuts, almonds"' `cup, whole`), `"8 · USDA
 per-item weight"` for a bare count on the record's one-item portion — SR
 Legacy's amount-1 bare noun counts as one ("shell" 12.9 g of "Taco shells,
 baked", "leaf" of Swiss chard, "pepper" of a dried chile, "medium" of a
-pear), and of several portions the item names the medium one ("4 leaves
-Bibb lettuce" on "leaf, medium") — `"4 stick · USDA portion"` for a count
+pear — a sub-gram "pepper", 168570's 0.5 g, weighs only a small DRIED
+chile: an arbol or bird chile, or one the line calls small and dried; a
+fresh Thai chile, or any other pepper line, on it has no grams), and of
+several portions the item names the medium one ("4 leaves Bibb lettuce" on
+"leaf, medium") — `"2 cup · USDA portion"` for a bare count whose
+parenthetical prints its volume, which wins as a printed weight does ("4–6
+Swiss chard leaves, ribs removed, torn into 1-inch pieces (about 2 cups;
+optional)" is 72 g, not five whole leaves; "(½ cup plus 3 tablespoons)"
+is both parts, in mL) — `"4 stick · USDA portion"` for a count
 unit an SR bare noun names ("4 sticks unsalted butter" on `stick` 113 g),
 `"750 ml · USDA portion"` for a count unit sized by the volume printed
 before it ("1 (750-ml) bottle red Burgundy or Pinot Noir") when the unit
@@ -775,7 +796,8 @@ eggs-plus-parts line counted on the whole-egg record,
 `"… · drained (USDA can portion)"` for a drained can or jar (its printed
 weight × the drained share of the record's own can portion), `"discarded in
 cooking — counted as 0 g"`, `"poured away — counted as 0 g"` (a person's
-confirm of a held medium), `"discarded in cooking — only \"plus 2 teaspoons
+confirm or pick of a line counted as discarded with no eaten part — a held
+medium, or one the policy zeroes such as frying oil), `"discarded in cooking — only \"plus 2 teaspoons
 table salt\" counted"`, `"discarded in cooking — only the part the recipe
 keeps counted"` (a divided salt's written pot share, a divided aromatic's
 written brine share), `"2/3 cup ≈ 16 crackers · USDA cracker portion"` for
@@ -851,7 +873,14 @@ later sentence cooks it, else as a salt bath. A held medium stores only its EATE
 written, no grams at all (`grams: null`), never the whole poured-away line;
 `confirmed: true` on such a row writes `grams: 0`, `gram_source:
 discarded` (basis "poured away — counted as 0 g") unless `grams` are typed
-in the same request, and a pick of a food on it does the same; a
+in the same request — on any line the engine's own detector holds, whatever
+hold the row stores — and a pick of a food on it does the same (one with an
+eaten part keeps that part: Shrimp Salad's "¼ cup plus 1 tablespoon juice"
+picked on "Lemon juice, raw" is its tablespoon, 15.2 g); an amount edit on a
+confirmed held medium keeps its hold with no grams (a confirm writes 0 g
+again), and an un-skip gives it back the engine's grams — none, or its
+eaten part — and its hold, never a person's 0 g (which would read resolved
+with nobody's decision); a
 brine aromatic whose rest is tied into cheesecloth — "Place remaining 3
 garlic cloves … in center of cheesecloth and tie into bundle" — is zero
 whole, not just its written brine share),
@@ -893,9 +922,14 @@ never a fresh oregano, sage, tarragon, marjoram or chervil line — FDC has
 no fresh record of them, so it counts on "Spices, <herb>, dried" (sage:
 "…, ground"), a flagged approximation (below), a line offering the dried
 form too),
-`cured_for_fresh` (the line asks for a fresh meat — "bone-in fresh half
-ham" — and the engine's pick is a cured, preserved record; the same
-switch), `borderline`
+`cured_for_fresh` (the line asks for a fresh meat and the engine's pick is
+a cured, preserved record, when the answer holds no uncured one: the engine
+first takes the answer's best uncured, undocked record — the one sharing
+most of the line's words — so "1 (6- to 8-pound) bone-in fresh half ham
+with skin, preferably shank end, rinsed" (Roast Fresh Ham) is "Pork, fresh,
+leg (ham), shank half, separable lean and fat, raw" (168226), unheld and
+still below the gate for a person, and the matches GET's `candidates` rank
+it first the same way; the same switch), `borderline`
 (only when the server's borderline-band switch is on, off by default: an
 engine pick scored from 0.52 up to 0.54); such a line sits in the `check` bucket until a person confirms,
 re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
@@ -917,7 +951,11 @@ for re-picking, `candidates_query` (the words FDC is asked for this line's
 candidates, after normalization and the matcher's rewrites — e.g. `spices
 pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
 "A or B" line reads A alone only when A's cached answer holds foods — an
-empty one, like `pancetta`'s, keeps the whole phrase), or the singular
+empty one, like `pancetta`'s, keeps the whole phrase; a second "or" makes
+a list of foods, "⅔ cup crushed saltines (about 16) or quick oatmeal or 1⅓
+cups fresh bread crumbs" the saltines, but an animal or adjective before a
+longer B stays one, list or not: "chicken or beef or vegetable broth" is
+never a whole chicken), or the singular
 `pork tenderloin` whose cached answer a "pork tenderloins" line reads (a
 line the rewrites changed never reads its singular form's answer); null
 when the line has nothing searchable; matcher v14 (checkpoint 8) rewrites,
@@ -931,7 +969,8 @@ lasagna noodles` → `pasta dry enriched`; `80 percent lean ground chuck` →
 `oyster-flavored sauce` → `oyster sauce`; `shaoxing wine or dry sherry` →
 `dry sherry or chinese rice wine` ("Wine, rice", 2710691); `dried new
 mexican chiles` → `mild dried chile`; `flake sea salt` and `sea salt` →
-`salt table`; `whole grain mustard` and `whole-grain mustard` → `mustard
+`salt table` (weighed like kosher salt, 0.72 g/mL, never table salt's 1.22:
+"2 tablespoons flake sea salt" is 21.3 g); `whole grain mustard` and `whole-grain mustard` → `mustard
 prepared`; `beef tenderloin center-cut chateaubriand`, `center-cut filet
 mignon` and `center-cut filets mignons` → `beef tenderloin`; `kale or
 collard greens` → `kale`; `broccoli florets` → `broccoli`; `stone-ground
@@ -955,29 +994,39 @@ the corpus's own fresh-to-dried ratio, "1 tablespoon minced fresh oregano"
 1 g of the tablespoon's 3 g; a sprig and a count of fresh leaves ("12
 whole fresh sage leaves") are 0 g unmeasured; a printed weight stays as
 written; such a row's `gram_basis` ends `" · approximate (dried herb
-record for a fresh herb)"` instead, e.g. `"1 tablespoon · USDA portion × ⅓
+record for a fresh herb)"` instead — never on grams typed by hand, nor on a
+0 g sprig or leaf count, e.g. `"1 tablespoon · USDA portion × ⅓
 (a fresh volume on the dried record) · approximate (dried herb record for
 a fresh herb)"`) — a row on one of these records through one of these
 rewrites ends its `gram_basis` with `" · approximation (counted as
 <record description>)"`,
 e.g. `"from 2 ounce · approximation (counted as Pork, cured, bacon,
-unprepared)"`; never "pancetta or bacon" (which reads the whole phrase), the
-food's own line, or a person's pick of another record; the
+unprepared)"`, whoever put the row there — a person's confirm or pick of
+the record keeps it (the record relation IS the approximation); never
+"pancetta or bacon" (which reads the whole phrase), the
+food's own line, a person's pick of another record, or a SKIPPED row (it
+counts nothing — nor does it carry the fresh-herb "approximate"); the
 ranker breaks two kinds of exact score tie toward the plainer record: the
 "separable lean and fat" record over "lean only" (the default for an
 unqualified cut), and the record naming fewer cookings — "Kielbasa, fully
 cooked, unheated" over "…, grilled"; any other exact tie still goes to the
 record FDC lists first) and
 `line_amount` (the line's first amount that names a unit, as written — `"4
-stick"`, `"1 piece"` — null when none does), `kcal_per_100g` (the picked
+stick"`, `"1 piece"`, or the unit alone when the line writes no number,
+`"dash"` for `"Dash of hot sauce"` — else its bare count, `"8"` for `"8 large sea
+scallops"`: a count is an amount the person converts; null only when the line
+gives no amount at all), `kcal_per_100g` (the picked
 record's calories per 100 g as the totals count them — its energy, else
-4/9/4 from protein, fat and carbohydrate — from the same caches ALONE, never
-a fetch; null when nothing is picked or the record is uncached), `portions` (the picked record's
+4/9/4 from protein, fat and carbohydrate; a record whose nutrients are a
+sibling's (Foundation napa 2727583 → SR 169979) reads the SIBLING, 16 not 4 —
+from the same caches ALONE, never
+a fetch; null when nothing is picked or the record (or its sibling) is
+uncached), `portions` (the picked record's
 USDA household portions from the food-detail cache ALONE — reading them never
 fetches; empty when the detail was never fetched or nothing is picked — each
 `{amount, unit, description, grams, fill}`: `grams` the whole portion's
-weight, `fill` the grams the line's `line_amount` weighs on it when the
-portion NAMES that unit — its unit, or the first word of its description after
+weight, `fill` the grams the line's unit amount weighs on it when the
+portion NAMES that unit (a bare count fills nothing) — its unit, or the first word of its description after
 any count, `tbsp` for a tablespoon — e.g. `"4 sticks unsalted butter"` on
 "Butter, without salt" (173430) fills its `stick` (113 g) with 452; null for a
 portion of another unit. The app prefills a confirm's amount only when exactly
@@ -1032,19 +1081,28 @@ after it does not count ("1 recipe Green Curry Paste (recipe follows) or 2
 tablespoons store-bought green curry paste" stays 0 g). A bare count of the
 food itself — every amount unit-less, "3 hard-cooked eggs (recipe
 follows)", not "4 cups Cream Cheese Frosting" or an amount-less line — is
-matched like any other line and counted on its food; it stays the 0 g
-sub-recipe only when its FOOD gives no grams ("8 Home-Fried Taco Shells
-(recipe follows)") — a pick below the review gate, whose detail was never
-fetched, stays that held pick in `check` instead. "1 recipe X" whose
+matched like any other line and counted on its food ("8 Home-Fried Taco
+Shells (recipe follows)" is 8 × the 12.9 g "shell" of "Taco shells, baked",
+103.2 g); it stays the 0 g sub-recipe only when its FOOD gives no grams (no
+corpus line since matcher v14) — a pick below the review gate whose detail
+was never fetched stays that held pick in `check` instead (one whose detail
+IS cached and gives no grams is the sub-recipe). "1 recipe X" whose
 subsection X is one counted food is that food's yield on the line's own
 pick (the user's ruling Q1, 2026-09-28: "1 recipe Easy-Peel Hard-Cooked
 Eggs" is the subsection's "6 large eggs", 300 g); every other "1 recipe X"
 stays 0 g. A measured "plus" part of another food is eaten and counted as
 the line, the row keeping the line's text: "1 recipe Crispy Onions, plus 3
 tablespoons reserved oil (recipe follows)" is 3 tablespoons of the
-subsection's vegetable oil. The rule holds on every write: a fresh match,
-a decision reused from another recipe, and an amount edit's re-attached
-decision alike. The engine's own rows — a sub-recipe's, a seasoning's, an
+subsection's vegetable oil — the line every path weighs and shows: a
+person's pick or confirm weighs the 3 tablespoons (42 g of oil, never "1
+recipe" as one onion), and the matches GET's `line_amount` (`"3
+tablespoon"`), `portions` fills, `candidates` and `candidates_query` are
+the oil's; an edit to that subsection line makes the totals stale. The rule
+holds on every write: a fresh match, a decision reused from another recipe,
+an amount edit's re-attached decision, an `apply_to_all` landing on the
+line, an un-skip, and a person's pick or confirm with no grams typed (a
+marked line its food gives no grams is stored as the 0 g sub-recipe; the
+ingredient's decision is still recorded). The engine's own rows — a sub-recipe's, a seasoning's, an
 equipment or water line's — are rewritten whenever the rule changes (a
 person's confirm of a food, or a skip, is never).
 
@@ -1075,13 +1133,20 @@ Ingredient keys are singular ("onion" and "onions" are one ingredient) and
 accent-folded. A decided line also follows its text: an ingredient inserted,
 deleted or reordered above it moves the line, and its decision moves with it;
 an amount edit on a decided line keeps the food and the status and re-derives
-the grams (a hand-typed weight for the old amount is dropped).
+the grams (a hand-typed weight for the old amount is dropped). A line
+repeated word for word takes the nth row of its text — its own when nothing
+moved: a decision on the second "Salt and pepper" of Acquacotta stays on it,
+and the first's engine row (a rule row, `auto` or `unmatched`) is re-derived
+where it stands, never given another copy's decision.
 
 Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
 excludes the line, `{skipped: false}` un-skips it — back to automatic
 triage (`auto`), deliberately NOT `confirmed`, so a low-confidence match
-is not silently blessed. Totals recompute instantly. A re-pick of a line
+is not silently blessed; the row is what a compute writes, weighed and
+gated by the sub-recipe rule (a skipped rule row — a sub-recipe's, a
+seasoning's, water or equipment — is that `confirmed` rule row again, never
+an `auto` row on no food). Totals recompute instantly. A re-pick of a line
 the engine discarded as a cooking medium keeps it discarded (0 g) whatever
 food is picked — `{grams}` is how a person counts it. A re-pick of the
 record the second-food rule counts a line on (the fruit's juice record for
@@ -1096,13 +1161,19 @@ detail fetch). `{confirmed: true, grams}` confirms the food WITH its amount
 in one write (the queue's grams-on-confirm): the line is `confirmed` with
 `gram_source: override`. `422` for `{grams}`
 on a line with no matched food (there is nothing to scale — pick a food
-first).
+first). `422 zero_row` for a bare `{confirmed: true}` (no `fdc_id`, no
+`grams`) on a below-gate zero row — `auto` or `skipped`, a food below 0.5 at
+0 g `unmeasured` or `discarded`, not held `unnamed_food`: its food is a
+hidden guess the app never shows, and a confirm would decide it
+library-wide. Pick a food (with an amount), type grams, or skip it.
 
 Add `apply_to_all: true` — together with `fdc_id` or `confirmed: true`,
 the decision being broadcast — to land the same food on every other
 undecided (`auto` / `unmatched`) line with the same ingredient item (other
-recipes, and this recipe's other lines), each with grams from its own amounts,
-and recompute those recipes' totals. A line on a different food is a target
+recipes, and this recipe's other lines), each with grams from its own amounts
+— weighed and gated as a compute writes it: a sub-recipe's eaten "plus"
+part, and a marked count the food gives no grams lands as the 0 g
+sub-recipe, never a no-grams row — and recompute those recipes' totals. A line on a different food is a target
 whatever its score; a line already carrying that food is one only below the
 flagged threshold (confidence 0.5) or while held by a food hold, and not
 counted at an engine 0 g (an amount-less line, a sprig), where
@@ -1122,9 +1193,15 @@ the right food. A line a person already decided is left alone, as is one
 whose text changed since its compute. The response carries `applied:
 {recipes, lines, failed, completed, completed_recipes}`: `completed` counts
 the reached recipes whose stored status turned `complete` with this apply
-(the line's own recipe is not among them, nor a reached recipe that was
-complete already — a different-food pick reaches counted lines) — what the
-queue's `finishes` promised, so the receipt can say whether it came true —
+(not a reached recipe that was complete already — a different-food pick
+reaches counted lines). The decided line's OWN recipe can be among them:
+the apply reaches the same recipe's other lines of the ingredient, and when
+they were its last open ones it completes during the apply (a pick on one of
+Cranberry Pecan Muffins' two pecan lines reaches the other). The app's
+apply offer promises only the OTHER recipes of the group's
+`finishes_recipes` (less the line's own), so a receipt may complete MORE
+than the offer promised — an extra id is a bonus, never an error — and
+says whether the promise came true —
 and `completed_recipes` lists their ids, so a shortfall can be named;
 `lines` counts the lines the decision moved —
 whose review bucket changed, or that took the decided food (a line left

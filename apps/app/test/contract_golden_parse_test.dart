@@ -536,7 +536,45 @@ void main() {
         expect(line.status, 'unmatched');
         expect(line.grams, isNull);
         expect(line.candidates, isEmpty);
+        // The uncached branch keeps the line's own amount (S3: a bare
+        // count reads as the count, "1 unit Lemon" -> "1").
+        expect(line.lineAmount, items[index]['line_amount']);
+        expect(line.kcalPer100g, items[index]['kcal_per_100g']);
+        expect(line.portions, hasLength(0));
       }
+      expect(
+        [for (final line in parsed.take(2)) line.lineAmount],
+        ['8 ounce', '1'],
+      );
+      expect(parsed.last.lineAmount, isNull);
+    });
+
+    test('Run 046: every line_amount, kcal_per_100g and portion field of '
+        'the matches golden parses, a portion unit included', () async {
+      final raw = golden('nutrition_matches');
+      final items = (raw['items']! as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final parsed = await NutritionRepository(
+        goldenDio(raw),
+      ).matches('nutrition-sample');
+      var units = 0;
+      for (final (index, line) in parsed.indexed) {
+        final row = items[index];
+        expect(line.lineAmount, row['line_amount']);
+        expect(line.kcalPer100g, row['kcal_per_100g']);
+        final portions = (row['portions'] as List<dynamic>? ?? const [])
+            .cast<Map<String, dynamic>>();
+        expect(line.portions, hasLength(portions.length));
+        for (final (i, portion) in line.portions.indexed) {
+          expect(portion.unit, portions[i]['unit']);
+          expect(portion.grams, portions[i]['grams']);
+          if (portion.unit != null) {
+            units += 1;
+          }
+        }
+      }
+      // The sour cream and the flour carry an FDC "racc" portion.
+      expect(units, greaterThan(0));
     });
 
     test('the bulk counts parse every scope and fail CLOSED', () async {
