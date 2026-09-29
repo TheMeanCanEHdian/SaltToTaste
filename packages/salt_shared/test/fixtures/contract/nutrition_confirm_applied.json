@@ -612,7 +612,7 @@
           "unit": null,
           "description": "tbsp",
           "grams": 18.0,
-          "fill": 18.0
+          "fill": null
         },
         {
           "amount": 1.0,

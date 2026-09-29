@@ -1302,8 +1302,11 @@ class SaltDatabase {
   /// grams and are not a No grams example. A recipe with none short is one
   /// the group's decision finishes: the amount-first confirm supplies a No
   /// grams example's grams. A Check or No match example with no grams is
-  /// short (Run 046: 22 of 22 such Check examples on snapshot 12 stayed
-  /// partial after a plain Confirm — USDA could not convert them).
+  /// short: a plain Confirm promises no grams. The count may under-promise
+  /// a Check example whose cached record does convert (Run 048: 4 of
+  /// snapshot 12's 28 such examples convert on a cache-only Confirm under
+  /// v15) — the accepted direction: never promise what a confirm may not
+  /// count.
   static const String _reviewFinishCte =
       '$_reviewFlaggedCte, '
       'members AS (SELECT * FROM flagged WHERE '
@@ -1567,6 +1570,56 @@ class SaltDatabase {
     _prepared(
       'DELETE FROM ingredient_matches WHERE recipe_id = ? AND position >= ?',
     ).execute([recipeId, fromPosition]);
+  }
+
+  /// Lays a recipe's match rows out anew in ONE transaction, before the
+  /// engine awaits anything (matchAndCompute's pairing): every row at a
+  /// position in [drop] is deleted (its line is gone), and each entry of
+  /// [moves] takes the row at its key (the old position) to `to`, with
+  /// `itemKey`. A row is moved, never rewritten — its status, food and
+  /// grams stay as a person left them. The movers are parked at negative
+  /// positions first, so a swap or a shift never meets the primary key, and
+  /// whatever still sits at a destination (the engine's row of that line,
+  /// re-derived after) is deleted; a destination is never another mover's
+  /// or a kept row's position, by the pairing's construction.
+  void relayoutIngredientMatches(
+    String recipeId, {
+    required Set<int> drop,
+    required Map<int, ({int to, String? itemKey})> moves,
+  }) {
+    if (drop.isEmpty && moves.isEmpty) {
+      return;
+    }
+    final delete = _prepared(
+      'DELETE FROM ingredient_matches WHERE recipe_id = ? AND position = ?',
+    );
+    final park = _prepared(
+      'UPDATE ingredient_matches SET position = ? '
+      'WHERE recipe_id = ? AND position = ?',
+    );
+    final place = _prepared(
+      'UPDATE ingredient_matches SET position = ?, item_key = ?, '
+      'updated_at = ? WHERE recipe_id = ? AND position = ?',
+    );
+    _inTransaction(() {
+      for (final at in drop) {
+        delete.execute([recipeId, at]);
+      }
+      final parked = [...moves.entries];
+      for (final (i, move) in parked.indexed) {
+        park.execute([-1 - i, recipeId, move.key]);
+      }
+      for (final (i, move) in parked.indexed) {
+        delete.execute([recipeId, move.value.to]);
+        place.execute([
+          move.value.to,
+          move.value.itemKey,
+          _utcNowIso(),
+          recipeId,
+          -1 - i,
+        ]);
+      }
+    });
   }
 
   /// The computed nutrition row for a recipe, or null.

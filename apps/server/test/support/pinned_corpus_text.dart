@@ -2,10 +2,10 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 /// The corpus text the corpus-free nutrition pins transcribe as string
-/// literals (nutrition_v14a, v14b and v15: ingredient lines and step texts),
-/// each with the corpus file it comes from. nutrition_v15_test's P7 guard
+/// literals (nutrition_v14a, v14b, v15 and v16: ingredient lines and step
+/// texts), each with the corpus file it comes from. nutrition_v15_test's P7 guard
 /// proves each still exists there, so a pin never passes on text the
-/// corpus no longer has (Run 047 critic). Collected from the three files'
+/// corpus no longer has (Run 047 critic). Collected from the four files'
 /// literals that match a corpus `raw` or `text` exactly; a literal that
 /// matches none is a stated synthesized input or a fragment.
 const List<(String, String)> pinnedCorpusText = [
@@ -398,5 +398,34 @@ const List<(String, String)> pinnedCorpusText = [
   (
     '1208-albondigas-en-chipotle.yaml',
     '1 tablespoon minced fresh oregano or 1 teaspoon dried',
+  ),
+  // nutrition_v16 (and the two trims Run 048 restored in v15 / c1).
+  (
+    '0405-acquacotta-tuscan-white-bean-and-escarole-soup.yaml',
+    'Salt and pepper',
+  ),
+  (
+    '0405-acquacotta-tuscan-white-bean-and-escarole-soup.yaml',
+    '½ cup extra-virgin olive oil',
+  ),
+  (
+    '0711-mujaddara-rice-and-lentils-with-crispy-onions.yaml',
+    '2 teaspoons salt',
+  ),
+  (
+    '0471-classic-guacamole.yaml',
+    '¼ teaspoon grated lime zest plus 1½–2 tablespoons juice',
+  ),
+  (
+    '0108-cioppino.yaml',
+    '1 pound littleneck clams, scrubbed',
+  ),
+  (
+    '0416-lighter-chicken-parmesan.yaml',
+    '1 recipe Simple Tomato Sauce (recipe follows), warmed (see note)',
+  ),
+  (
+    '0809-multigrain-bread.yaml',
+    '1 envelope (2¼ teaspoons) instant or rapid-rise yeast',
   ),
 ];

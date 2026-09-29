@@ -767,6 +767,106 @@ void main() {
       await cubit.close();
     });
 
+    test('Run 048 A2: a superseded setSort whose fetch FAILS does not '
+        'rewind the order under the later request', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 1);
+      final check = cubit.filter('check');
+      await waitFor(adapter, 2);
+      expect(adapter.queries.last['sort'], 'worst');
+      adapter.failNext = true;
+      adapter.held[0].complete();
+      await worst;
+      adapter.held[1].complete();
+      await check;
+      final state = cubit.state as NutritionReviewLoaded;
+      expect(state.bucket, 'check');
+      expect(state.sort, 'worst');
+      // The remembered order was not rewound: the next reload asks for it.
+      adapter.hold = false;
+      await cubit.completeFix();
+      expect(adapter.queries.last['sort'], 'worst');
+      await cubit.close();
+    });
+
+    test('Run 048 A2: a superseded setGrouped whose fetch FAILS does not '
+        'restore the old grouping under the later request', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      expect((cubit.state as NutritionReviewLoaded).grouped, isTrue);
+      adapter.hold = true;
+      final lines = cubit.setGrouped(false);
+      await waitFor(adapter, 1);
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 2);
+      expect(adapter.queries.last['group'], isNot('item'));
+      adapter.failNext = true;
+      adapter.held[0].complete();
+      await lines;
+      adapter.held[1].complete();
+      await worst;
+      final state = cubit.state as NutritionReviewLoaded;
+      expect(state.grouped, isFalse);
+      expect(state.sort, 'worst');
+      // The grouping memory was not restored: the next reload asks lines.
+      adapter.hold = false;
+      await cubit.completeFix();
+      expect(adapter.queries.last['group'], isNot('item'));
+      expect((cubit.state as NutritionReviewLoaded).grouped, isFalse);
+      await cubit.close();
+    });
+
+    test('Run 048 A2: a superseded completeFix reload that FAILS never '
+        'replaces the newer list with the error screen', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final first = cubit.completeFix();
+      await waitFor(adapter, 1);
+      final second = cubit.completeFix();
+      await waitFor(adapter, 2);
+      adapter.held[1].complete();
+      await second;
+      adapter.failNext = true;
+      adapter.held[0].complete();
+      await first;
+      expect(cubit.state, isA<NutritionReviewLoaded>());
+      await cubit.close();
+    });
+
+    test('Run 048 P1: a stale Load more that FAILS leaves the new list\'s '
+        'own Load more in flight', () async {
+      final adapter = _FakeAdapter(volumeSeed(count: 120));
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final stale = cubit.loadMore();
+      await waitFor(adapter, 1);
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 2);
+      adapter.held[1].complete();
+      await worst;
+      final more = cubit.loadMore();
+      await waitFor(adapter, 3);
+      expect((cubit.state as NutritionReviewLoaded).loadingMore, isTrue);
+      adapter.failNext = true;
+      adapter.held[0].complete();
+      await stale;
+      expect((cubit.state as NutritionReviewLoaded).loadingMore, isTrue);
+      adapter.held[2].complete();
+      await more;
+      final state = cubit.state as NutritionReviewLoaded;
+      expect(state.sort, 'worst');
+      expect(state.items, hasLength(100));
+      await cubit.close();
+    }, skip: skipIfNoCorpus);
+
     test('re-selecting the order on screen sends nothing', () async {
       final adapter = _FakeAdapter(seed());
       final cubit = cubitWith(adapter);

@@ -203,8 +203,8 @@ void main() {
 
     test("E2: 0052's rinsed-off salt — confirmed 0 g, then its amount edited "
         '(to "2 tablespoons table salt": a synthesized edit, a stated '
-        'exception) — keeps its hold with no grams, and a second confirm '
-        'writes 0 g again, never 36 g', () async {
+        'exception) — keeps its hold and (v16, Run 048) its 0 g poured away, '
+        'and a second confirm writes 0 g again, never 36 g', () async {
       final db = tempDb();
       final provider = FixtureProvider();
       final r = recipeOf(
@@ -233,7 +233,7 @@ void main() {
       row = rowAt(db, 0);
       expect(
         (row.status, row.fdcId, row.grams, row.hold),
-        ('confirmed', 173468, null, 'discarded_medium'),
+        ('confirmed', 173468, 0, 'discarded_medium'),
       );
       await applyMatchOverride(db, provider, edited, 0, {'confirmed': true});
       row = rowAt(db, 0);
@@ -722,11 +722,12 @@ void main() {
 
     test('E11: a food a person typed grams for on a sub-recipe the recipe '
         'makes apart, skipped and un-skipped, is the 0 g sub-recipe again — '
-        '"1 recipe Simple Tomato Sauce (recipe follows)" (Lighter Chicken '
-        'Parmesan, 0416; the pick synthesized: a stated exception)', () async {
+        '"1 recipe Simple Tomato Sauce (recipe follows), warmed (see note)" '
+        '(Lighter Chicken Parmesan, 0416; the pick synthesized: a stated '
+        'exception)', () async {
       final db = tempDb();
       final r = recipeOf(db: db, [
-        ['1 recipe Simple Tomato Sauce (recipe follows)'],
+        ['1 recipe Simple Tomato Sauce (recipe follows), warmed (see note)'],
       ]);
       await matchAndCompute(db, provider, r);
       await applyMatchOverride(db, provider, r, 0, {
@@ -1194,7 +1195,7 @@ void main() {
     });
   });
   test('P7: every corpus line and step the corpus-free pins transcribe '
-      '(v14a, v14b, v15) still reads so in its corpus file', () {
+      '(v14a, v14b, v15, v16) still reads so in its corpus file', () {
     final texts = <String, Set<String>>{};
     Set<String> textOf(String file) => texts.putIfAbsent(file, () {
       final r = loadCorpusRecipe(file);

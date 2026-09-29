@@ -738,6 +738,31 @@ void main() {
       expect(db.ingredientMatchesFor(francese.id).single.status, 'auto');
     });
 
+    test('P12 (Run 048), the status term: the same Chicken Francese row '
+        "ALREADY confirmed (a person's 0 g poured away: synthesized from "
+        "snapshot 12's row, a stated exception) re-confirms — the guard "
+        'refuses only a guess no person looked at', () async {
+      final db = tempDb();
+      final francese = recipeOf(db, 'Chicken Francese', [
+        '⅓ cup extra-virgin olive oil for frying',
+      ]);
+      seed(
+        db,
+        francese,
+        0,
+        confidence: 0.45666666666666667,
+        fdcId: 2710186,
+        grams: 0,
+        gramSource: 'discarded',
+        description: 'Olive oil',
+        status: 'confirmed',
+      );
+      final (code, body) = await confirm(db, francese);
+      expect(code, HttpStatus.ok, reason: '$body');
+      final row = db.ingredientMatchesFor(francese.id).single;
+      expect((row.status, row.grams), ('confirmed', 0));
+    });
+
     test('a 0 g below-gate row on another gram source is no engine zero: '
         'it confirms', () async {
       // Stated exception (synthesized): snapshot 12 holds no 0 g row on a
@@ -839,6 +864,39 @@ void main() {
         pecanMuffins,
         sugar,
       ]);
+    });
+
+    test('P8 (Run 048): the finishes order reads the `finishes` flag, never '
+        "the last open line alone — Greek-Style Shrimp's last open line, "
+        '"3 tablespoons ouzo", No match, finishes nothing and sorts after '
+        'Oatmeal Muffins\' pecans (no grams on "Pecans" at 0.92: a Confirm '
+        "can count them), whatever the rows' order", () {
+      final db = tempDb();
+      final shrimp = recipeOf(db, 'Greek-Style Shrimp', [
+        '3 tablespoons ouzo',
+      ]);
+      seed(db, shrimp, 0, confidence: 0, status: 'unmatched');
+      final muffins = recipeOf(db, 'Oatmeal Muffins', [
+        '⅓ cup pecans, chopped fine',
+      ]);
+      seed(
+        db,
+        muffins,
+        0,
+        confidence: 0.92,
+        fdcId: 2346395,
+        description: 'Pecans',
+      );
+      final items =
+          nutritionReviewHandler(db, page: 1, limit: 50)['items']!
+              as List<Object?>;
+      expect(
+        [
+          for (final item in items.cast<Map<String, Object?>>())
+            (item['raw'], item['finishes']),
+        ],
+        [('⅓ cup pecans, chopped fine', 1), ('3 tablespoons ouzo', 0)],
+      );
     });
 
     test('almond extract, the pecans and the held brine sugar each finish '
@@ -1193,9 +1251,14 @@ void main() {
       expect([
         for (final p in butter.portions) portionFill(p, scallops.amounts),
       ], everyElement(isNull));
-      // A unit amount still wins over a count ("4 sticks").
+      // A unit amount still wins over a count ("4 sticks": Classic Yellow
+      // Layer Cake's line, 0884).
       expect(
-        lineAmountText(lineOf('4 sticks unsalted butter').amounts),
+        lineAmountText(
+          lineOf(
+            '4 sticks unsalted butter, cut into chunks and softened',
+          ).amounts,
+        ),
         '4 stick',
       );
       // Ultimate Cream of Tomato Soup's seasoning line gives none.

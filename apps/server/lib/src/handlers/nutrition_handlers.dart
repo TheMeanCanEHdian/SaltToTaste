@@ -148,6 +148,9 @@ Future<Map<String, Object?>> matchesBody(
     // The KEY (singular) joins decisions; the QUERY keeps the line's words —
     // reported as the words whose cached answer the line reads (a same-key
     // sibling's, or an "A or B" line's A), so a live search lands there.
+    // (The weighed line's key, Run 048 P9: equivalent to the line's own on
+    // every line — a plus line's own key, "crispy onion plus reserved oil",
+    // is words nothing searches, so its sibling answer is never cached.)
     final search = itemKey.isEmpty
         ? null
         : lineSearchFor(
@@ -157,7 +160,9 @@ Future<Map<String, Object?>> matchesBody(
           );
     final query = search?.answer;
     // The picked record's USDA portions, from the cache alone (a search hit
-    // stand-in has none): what the fix sheet's amount block offers.
+    // stand-in has none): what the fix sheet's amount block offers. (`line:`
+    // only orders the cached answers [knownFood] scans for the food — the
+    // same hit either way, Run 048 P9; weighed like every path.)
     final food = row?.fdcId == null
         ? null
         : knownFood(db, row!.fdcId!, line: weighed);
@@ -165,6 +170,10 @@ Future<Map<String, Object?>> matchesBody(
     // it has one (null while that is uncached — a GET never fetches).
     final sibling = food == null ? null : nutrientSiblings[food.fdcId];
     final counted = sibling == null ? food : knownFood(db, sibling);
+    // A held medium's line amount is what is poured away: no portion is
+    // filled from it (Run 048: the sheet offered "Confirm · 36 g" of a
+    // rinsed-off salt).
+    final held = heldMediumLine(recipe, weighed);
     items.add({
       'position': position,
       'raw': line.raw,
@@ -183,8 +192,9 @@ Future<Map<String, Object?>> matchesBody(
       'kcal_per_100g': counted == null ? null : kcalPer100g(counted),
       // The picked record's cached portions, each with `fill`: the grams
       // the line's unit amount weighs on it when the portion names that
-      // unit (4 × stick 113 g = 452), else null. Empty when the record's
-      // detail was never fetched, or nothing is picked. Never a fetch.
+      // unit (4 × stick 113 g = 452), else null — always null on a held
+      // medium's line. Empty when the record's detail was never fetched,
+      // or nothing is picked. Never a fetch.
       'portions': [
         for (final portion in food?.portions ?? const <FdcPortion>[])
           {
@@ -192,7 +202,7 @@ Future<Map<String, Object?>> matchesBody(
             'unit': portion.unit,
             'description': portion.description,
             'grams': portion.gramWeight,
-            'fill': portionFill(portion, weighed.amounts),
+            'fill': held ? null : portionFill(portion, weighed.amounts),
           },
       ],
       // How many OTHER recipes hold an undecided line with this item — what
@@ -344,6 +354,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     // A candidate the sheet showed is a cached hit: it stands in until the
     // grams need FDC's portions (gramsFor), so a pick lands with no provider
     // call while the hourly budget is spent.
+    // (`line:` orders the answers scanned — equivalent, as in matchesBody.)
     final picked =
         knownFood(db, fdcId.toInt(), line: weighed) ??
         await cachedFood(db, provider, fdcId.toInt());
@@ -355,12 +366,13 @@ Future<AppliedToOthers?> applyMatchOverride(
     final (food, resolution) = await gramsFor(db, provider, picked, weighed);
     // A discarded medium stays discarded whatever food a person picks for
     // it — frying oil re-picked as "Oil, peanut" is still thrown away (a
-    // grams edit is how a person counts it). Read on the line's own text:
-    // the one line whose eaten part differs (0711's) reads no medium on
-    // either, so its grams are the weighed resolution's.
+    // grams edit is how a person counts it). Read on the weighed line, as
+    // the compute reads it (Run 048: a plus line whose eaten part is a
+    // medium — 0711's reserve at 2 cups — counted the oil the compute
+    // zeroes).
     final outcome = engineOutcome(
       recipe,
-      line,
+      weighed,
       food,
       resolution,
       decided: true,
@@ -375,6 +387,9 @@ Future<AppliedToOthers?> applyMatchOverride(
     final byEngine =
         poured ||
         outcome.source == GramSource.discarded.name ||
+        // (The weighed line, Run 048 P9: equivalent — a rule reads "zest
+        // plus juice" or "eggs plus yolks", and neither a "1 recipe X, plus
+        // …" line nor its single eaten part is one.)
         secondFoodRuleOf(weighed)?.fdcId == food.fdcId;
     final pickedGrams = poured
         ? 0.0
@@ -403,6 +418,9 @@ Future<AppliedToOthers?> applyMatchOverride(
     // offers no confirm-as-is on it. A bare confirm would still decide
     // that food library-wide — refused (Run 046). A pick, or typed grams,
     // is a real answer; so is a skip. A skipped zero row hides it too.
+    // (The food term is equivalent, Run 048 P9: a row on no food at 0 g is
+    // a rule row, written at confidence 1, over the gate — it stands for
+    // what "hides its food" means.)
     if (grams == null &&
         (row.status == 'auto' || row.status == 'skipped') &&
         row.fdcId != null &&
@@ -423,14 +441,22 @@ Future<AppliedToOthers?> applyMatchOverride(
     // confirm says it is poured away, 0 g — typed grams (below) count
     // that much instead. One with an eaten part keeps it. Held by the
     // engine's own detector, not only the stored hold (Run 047: a row an
-    // amount edit had left with no hold counted the whole line).
+    // amount edit had left with no hold counted the whole line). (The
+    // stored-hold term is equivalent to the detector for every row this
+    // engine writes — the hold IS the detector's, and the one medium its
+    // grams decide, frying oil by mass, is zeroed, never held; it stands
+    // for a row an older matcher held, Run 048 P9.) Grams a
+    // person typed for the eaten part stand (Run 048: a bare re-confirm
+    // zeroed them).
     if (row.fdcId != null &&
         (row.hold == 'discarded_medium' || heldMediumLine(recipe, weighed)) &&
-        row.gramSource != GramSource.discarded.name) {
+        row.gramSource != GramSource.discarded.name &&
+        row.gramSource != GramSource.override.name) {
       row = row.copyWith(grams: 0, gramSource: GramSource.discarded.name);
     } else if (row.fdcId != null &&
         row.grams == null &&
         row.gramSource != GramSource.override.name) {
+      // (`line:` orders the answers scanned — equivalent, Run 048 P9.)
       final onRow =
           knownFood(db, row.fdcId!, line: weighed) ??
           await cachedFood(db, provider, row.fdcId!);
@@ -523,9 +549,14 @@ Future<AppliedToOthers?> applyMatchOverride(
   // un-skip re-derived its own above). The sub-recipe rule gates a confirm
   // and a pick as it gates the compute ([subRecipeRowFor]): a marked line
   // whose food gives no grams, and a sub-recipe the recipe makes apart, are
-  // the 0 g sub-recipe unless a person types the grams. The decision on
-  // the food stands (above).
-  final stored = skipped == null && grams == null
+  // the 0 g sub-recipe unless a person types the grams — in this request
+  // or before it (Run 048: a bare confirm replaced typed grams on a
+  // made-apart line with the 0 g row). The decision on the food stands
+  // (above).
+  final stored =
+      skipped == null &&
+          grams == null &&
+          row.gramSource != GramSource.override.name
       ? subRecipeRowFor(recipe, position, line) ??
             subRecipeRowFor(
               recipe,

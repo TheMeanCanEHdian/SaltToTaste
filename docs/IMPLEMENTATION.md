@@ -1804,7 +1804,9 @@ route's receipt over HTTP; the yield head noun, the first-clause split and
 the 4-kcal carbohydrate factor on synthesized inputs stated as exceptions),
 the totals' duplicated 4/9/4 now calls `kcalPer100g`, and the Lines view
 also defaults to the finishes order (finishes-1 lines first, then worst) -
-the mockup's open question 5 as recommended, built but NOT yet ruled on; a
+the mockup's open question 5 as recommended (ruled by the user 2026-09-30:
+keep it — on the v15 replay the first 50 lines finish 50 recipes against 12
+worst-first); a
 consumer that relied on worst-first lines passes `sort=worst`. Wire changes
 in API.md.
 
@@ -1929,6 +1931,44 @@ match 37 / complete 712); eight rows re-massed, none re-matched, one recipe
 cached in the scratch copy — the live database must carry those
 `fdc_search_cache` rows before a live recompute, or it will spend requests
 or keep the old matches.
+
+### Review fixes for v15 (Run 048; matcher v16)
+
+Run 048 (both fleets on the v15 commit) found that v15's twin-line pairing
+was worse than v14's: pairing rows by their stored text meant editing the
+FIRST copy of a repeated line dropped the person's decision on the SECOND
+copy, which never moved (Opus, HIGH); a line inserted above two decided
+twins lost one decision and duplicated the other (both fleets); and the new
+"demotion" of a decided row was the engine's only unguarded write, so a
+provider failure or a person's write during the compute's wait erased a
+decision (both critics). The pairing is rebuilt (`pairRowsToLines`): rows
+are aligned to lines by the longest common subsequence of their text, so
+every line nothing moved keeps its row and a shifted run keeps its rows;
+only the leftovers are re-paired (same position first, then nth order of
+the same text). The whole layout is computed in memory and written in ONE
+transaction before any wait (`relayoutIngredientMatches`: drop the rows
+whose line was deleted, park movers at negative positions, place them) —
+a person's row is moved, never rewritten, and the engine has no unguarded
+write left. Held media keep a person's resolution through an amount edit,
+a re-confirm and an un-skip (0 g poured away or their typed grams, never
+grams-less), the review sheet never prefills a poured-away amount, and the
+app treats a held line as held whatever its status. The pin batch's
+"unobservable" reverts and deletions were undone where they protected real
+lines: the pick and apply-to-all weigh the eaten plus part again; the SR
+portion noun must lead its description ("cup, sliced" is no slice); "Do
+not drain" is not a drain; the in-item ounces and "(1-liter)" readers are
+back; a paren volume that says "each" is per item; only flake/flaky/coarse
+sea salt takes the kosher density (fine sea salt stays table salt). In the
+app, portions arriving while another food is staged no longer prefill the
+rejected food's grams, a superseded failed reload no longer rewinds the
+order or paints the error screen, and a mixed number ("1 1/2") is never
+read as a unit. matcherVersion 16: every v16 rule change is invisible on
+the ATK corpus — the cache-only replay on snapshot 12 is byte-identical to
+v15 (12,860 / 563 / 155 / 37 / 712, zero provider calls) — but they change
+what the engine writes for other libraries' lines, so recipes go stale.
+Eight surviving mutants are argued equivalent in comments at their sites.
+The user ruled on 2026-09-30 that the Lines view keeps the finishes order,
+and approved any further live requests the analyzer work needs.
 
 ## Decision log (deviations & clarifications)
 

@@ -551,7 +551,10 @@ DiscardedMedium? _drainedAway(
     final nth = same.indexWhere((other) => identical(other, line));
     mentions = nth >= 0 && nth < all.length ? [all[nth]] : const [];
   }
-  final drain = RegExp(r'\bdrain\s+(?:the\s+)?([a-z]+)');
+  // "Do not drain slaw" drains nothing (Run 048: a quick-pickle slaw's
+  // dressing held as a salt bath; no corpus step says it — kept for other
+  // libraries), as the other drain readers read it.
+  final drain = RegExp(r'(?<!not )\bdrain\s+(?:the\s+)?([a-z]+)');
   for (final (step, sentence) in mentions) {
     if (!RegExp(r'\b(combine|whisk|dissolve)').hasMatch(sentence)) {
       continue;
@@ -1251,9 +1254,7 @@ IngredientLine? subRecipePlusLine(Recipe recipe, IngredientLine line) {
 /// a sub-recipe reference's eaten "plus" part ([subRecipePlusLine]) when it
 /// has one, else [line] itself — the compute, a person's confirm, pick and
 /// un-skip, the matches GET's candidates, amount and portions, and the
-/// stale hash alike; an apply-to-all never reaches a plus line (it names a
-/// second food, outside [decisionReach]), so it weighs the line as written
-/// (Run 047: a re-pick on Mujaddara's
+/// stale hash and an apply-to-all alike (Run 047: a re-pick on Mujaddara's
 /// plus line, 0711, weighed "1 recipe Crispy Onions" as one onion — 110 g
 /// of oil for 42 — and an un-skip held it `second_food`).
 IngredientLine weighedLine(Recipe recipe, IngredientLine line) =>
@@ -1881,23 +1882,43 @@ Future<void> matchAndCompute(
 ) async {
   final lines = nutritionLines(recipe);
   final existingRows = db.ingredientMatchesFor(recipe.id);
-  // Every row by its text, in position order. Rows are keyed by POSITION,
-  // so an edit above a decided line (insert, delete, reorder) moved the line
-  // out from under its row and the decision was lost — reproduced on the
-  // Bundt cake, survey 2026-09-04. A line finds its row here by its text,
-  // and a person's decision travels with it. A list per text, not a map: 80
-  // corpus recipes repeat a raw line, and the nth line takes the nth row of
-  // its text — its own when nothing moved. An engine row (`auto`,
-  // `unmatched`, a rule row [isEngineRuleRow]) holds its place in that
-  // order and is re-derived; its line never takes another copy's decision
-  // (Run 047: Acquacotta, 0405, lists "Salt and pepper" twice — a pick on
-  // the second was copied onto the first's seasoning row by any recompute,
-  // the salt counted twice).
-  final byRaw = <String, List<IngredientMatchRow>>{};
-  for (final row in existingRows) {
-    byRaw.putIfAbsent(row.raw, () => []).add(row);
-  }
-  final existing = {for (final row in existingRows) row.position: row};
+  // Rows are keyed by POSITION, so an edit above a decided line (insert,
+  // delete, reorder) moves the line out from under its row; each line finds
+  // its row by the pairing ([pairRowsToLines]) and a person's decision
+  // travels with it. The layout, matcher v16 (Run 048):
+  //  1. IDENTITY first: the stored rows' texts are aligned with the lines'
+  //     texts in order (the longest common subsequence), so a line nothing
+  //     moved keeps its row, decided or not, whatever was edited, inserted
+  //     or deleted around it — and a run of lines an insert or a delete
+  //     shifted keeps its rows too, shifted with it. (Same position and same
+  //     text alone is not identity: a line inserted above two decided
+  //     copies of "Salt and pepper" leaves the first copy at the second's
+  //     old position, and deleting the first of 0405's two copies leaves
+  //     neither at its own.) 80 corpus recipes repeat a raw line.
+  //  2. Only the lines and rows the alignment left over are re-paired: a
+  //     row at a leftover line's own position with its text first, then by
+  //     nth order of the same text among themselves (a reorder).
+  //  3. The whole layout is computed here, in memory, before any write, and
+  //     written in ONE transaction ([SaltDatabase.relayoutIngredientMatches])
+  //     before the first await: a decided row carried to its line's new
+  //     position, an edited decided row ("orphan", below) carried to the line
+  //     that re-attaches it, a decided row whose line is gone deleted. The
+  //     movers are parked at negative positions, so no guarded write is ever
+  //     refused and no decision is lost or copied onto a twin (Run 048: the
+  //     guard refused a carry onto the next copy's decided row).
+  //  4. No demotion and no unguarded engine write: a person's decided row is
+  //     moved or kept, never rewritten; an engine row (`auto`, `unmatched`,
+  //     a rule row [isEngineRuleRow]) holds its line's place and is
+  //     re-derived — its line never takes another copy's decision (Run 047:
+  //     0405's pick on the second copy was copied onto the first's rule row).
+  //  5. Every write after an await stays guarded
+  //     ([SaltDatabase.upsertIngredientMatchIfUndecided]): a provider throw
+  //     mid-compute leaves the layout's decided rows where it put them, and a
+  //     person's write during an await stands (Run 048: the demotion wrote an
+  //     entry-time snapshot over both).
+  final paired = pairRowsToLines(existingRows, [
+    for (final line in lines) line.raw,
+  ]);
   // Decided rows whose exact text is GONE from the recipe: the line was
   // edited (an amount changed), possibly moved too. Such a row may be
   // re-attached by ingredient key — but only when the recipe still holds
@@ -1929,38 +1950,57 @@ Future<void> matchAndCompute(
       newKeyCounts.update(lineKey, (n) => n + 1, ifAbsent: () => 1);
     }
   }
+  // The layout (3 above): each line's decided row, or the orphan it
+  // re-attaches; every other decided row's line is gone.
+  final decidedAt = <int, IngredientMatchRow>{};
+  final orphanAt = <int, IngredientMatchRow>{};
+  final moves = <int, ({int to, String? itemKey})>{};
+  for (final (position, line) in lines.indexed) {
+    final own = paired[position];
+    final key = lineKeyOf(line);
+    if (own != null && _isDecided(own)) {
+      decidedAt[position] = own;
+      if (own.position != position) {
+        moves[own.position] = (to: position, itemKey: key);
+      }
+      continue;
+    }
+    final orphans = orphansByKey[key];
+    if (orphans != null &&
+        orphans.isNotEmpty &&
+        oldKeyCounts[key] == newKeyCounts[key]) {
+      final edited = orphans.removeAt(0);
+      orphanAt[position] = edited;
+      if (edited.position != position) {
+        moves[edited.position] = (to: position, itemKey: edited.itemKey);
+      }
+    }
+  }
+  final placed = {
+    for (final row in [...decidedAt.values, ...orphanAt.values]) row.position,
+  };
+  db.relayoutIngredientMatches(
+    recipe.id,
+    drop: {
+      for (final row in existingRows)
+        if (_isDecided(row) && !placed.contains(row.position)) row.position,
+    },
+    moves: moves,
+  );
 
   for (final (position, line) in lines.indexed) {
     // The query keeps the line's own words; the KEY a decision is stored and
     // reused under is the singular form, so "onion" and "onions" are one.
     final key = lineKeyOf(line);
 
-    // A human decided this row; their call stands, brought here when the
-    // line moved (its old position is rewritten by the line now there, or
-    // dropped past the end). `unmatched` is NOT a decision — it is the
-    // engine's own "FDC had nothing", and a sweep exists precisely to retry
-    // those once FDC gains data or the matcher improves. (A cached empty
-    // search answer still short-circuits it, so the retry is free but only
-    // helps once the normalised query or the cache changes.)
-    final ownRows = byRaw[line.raw];
-    final own = ownRows == null || ownRows.isEmpty ? null : ownRows.removeAt(0);
-    if (own != null && _isDecided(own)) {
-      if (own.position != position) {
-        db.upsertIngredientMatchIfUndecided(
-          own.copyWith(position: position, itemKey: key),
-        );
-      }
+    // A human decided this row; their call stands, placed at this line by
+    // the layout above. `unmatched` is NOT a decision — it is the engine's
+    // own "FDC had nothing", and a sweep exists precisely to retry those
+    // once FDC gains data or the matcher improves. (A cached empty search
+    // answer still short-circuits it, so the retry is free but only helps
+    // once the normalised query or the cache changes.)
+    if (decidedAt.containsKey(position)) {
       continue;
-    }
-    // A decided row of this text sitting HERE is another copy's, carried to
-    // it: this line is re-derived over it, which the write guard would
-    // refuse while it reads decided.
-    final here = existing[position];
-    if (here != null &&
-        here.raw == line.raw &&
-        !identical(here, own) &&
-        _isDecided(here)) {
-      db.upsertIngredientMatch(here.copyWith(status: 'auto'));
     }
 
     // The sub-recipe rule ([subRecipeRowFor]) gates EVERY write below — the
@@ -1992,13 +2032,9 @@ Future<void> matchAndCompute(
     // that ingredient. The food and the status stand, the grams are
     // re-derived for the new amount (a weight typed for the old amount no
     // longer applies); a skip stays a skip.
-    // (A decided row kept at THIS position cannot be this line's own — a
-    // same-text row was kept above — so it never blocks a re-attachment.)
-    final orphans = orphansByKey[key];
-    if (orphans != null &&
-        orphans.isNotEmpty &&
-        oldKeyCounts[key] == newKeyCounts[key]) {
-      final edited = orphans.removeAt(0);
+    // The layout carried it here, its old text still on it.
+    final edited = orphanAt[position];
+    if (edited != null) {
       if (uncounted != null) {
         db.upsertIngredientMatchIfUndecided(uncounted);
         continue;
@@ -2037,21 +2073,36 @@ Future<void> matchAndCompute(
             db.upsertIngredientMatchIfUndecided(sub);
             continue;
           }
-          // A held medium's hold too: its row stores no grams, and a
-          // confirm writes it 0 g poured away while it is held (Run 047: an
-          // amount edit left a person's 0 g confirm a confirmed row with no
-          // grams and no hold; the next confirm counted 36 g of rinsed-off
-          // salt). A person's look at the line answers every other hold.
+          // A held medium's hold too (Run 047: an amount edit left a
+          // person's 0 g confirm a confirmed row with no grams and no hold;
+          // the next confirm counted 36 g of rinsed-off salt) — and the
+          // person's resolution of it, which no amount edit changes (Run
+          // 048: it came back with no grams, in `no_grams`, the sheet
+          // offering the whole bath): grams they typed stay; a confirm or
+          // a pick stays poured away, 0 g — or its eaten part, as a
+          // confirm writes it. A person's look at the line answers every
+          // other hold.
           final medium = outcome.hold == 'discarded_medium';
+          final typed = medium && edited.gramSource == GramSource.override.name;
+          final grams = typed
+              ? edited.grams
+              : medium
+              ? outcome.grams ?? 0
+              : outcome.grams;
+          final source = typed
+              ? edited.gramSource
+              : medium && outcome.grams == null
+              ? GramSource.discarded.name
+              : outcome.source;
           db.upsertIngredientMatchIfUndecided(
             edited.copyWith(
               position: position,
               raw: line.raw,
               itemKey: key,
-              grams: outcome.grams,
-              clearGrams: outcome.grams == null,
-              gramSource: outcome.source,
-              clearGramSource: outcome.source == null,
+              grams: grams,
+              clearGrams: grams == null,
+              gramSource: source,
+              clearGramSource: source == null,
               hold: medium ? outcome.hold : null,
             ),
           );
@@ -2325,6 +2376,66 @@ Future<void> matchAndCompute(
     freshMatch: true,
     standIns: standIns,
   );
+}
+
+/// The stored row each of [raws] (a recipe's lines, in order) takes, or null
+/// — [matchAndCompute]'s pairing, steps 1 and 2. [rows] are aligned with the
+/// lines by text in order (the longest common subsequence, an equal pair
+/// taken as soon as it is met), so the lines an edit did not touch keep
+/// their rows however the lines around them moved. A leftover line then
+/// takes a leftover row of its text at its own position, and the rest pair
+/// by nth order of the same text among themselves (a reorder).
+List<IngredientMatchRow?> pairRowsToLines(
+  List<IngredientMatchRow> rows,
+  List<String> raws,
+) {
+  final old = [...rows]..sort((a, b) => a.position.compareTo(b.position));
+  final n = old.length;
+  final m = raws.length;
+  // common[i][j]: the longest common subsequence of old[i..] and raws[j..].
+  final common = List.generate(n + 1, (_) => List.filled(m + 1, 0));
+  for (var i = n - 1; i >= 0; i--) {
+    for (var j = m - 1; j >= 0; j--) {
+      common[i][j] = old[i].raw == raws[j]
+          ? common[i + 1][j + 1] + 1
+          : common[i + 1][j] >= common[i][j + 1]
+          ? common[i + 1][j]
+          : common[i][j + 1];
+    }
+  }
+  final paired = List<IngredientMatchRow?>.filled(m, null);
+  final left = <IngredientMatchRow>[];
+  var i = 0;
+  var j = 0;
+  while (i < n && j < m) {
+    if (old[i].raw == raws[j]) {
+      paired[j++] = old[i++];
+    } else if (common[i + 1][j] >= common[i][j + 1]) {
+      left.add(old[i++]);
+    } else {
+      j++;
+    }
+  }
+  left.addAll(old.skip(i));
+  for (final (at, raw) in raws.indexed) {
+    if (paired[at] != null) {
+      continue;
+    }
+    final here = left.indexWhere((row) => row.position == at && row.raw == raw);
+    if (here >= 0) {
+      paired[at] = left.removeAt(here);
+    }
+  }
+  for (final (at, raw) in raws.indexed) {
+    if (paired[at] != null) {
+      continue;
+    }
+    final next = left.indexWhere((row) => row.raw == raw);
+    if (next >= 0) {
+      paired[at] = left.removeAt(next);
+    }
+  }
+  return paired;
 }
 
 /// [ranked] with, when its top record is a cured one for a line asking for
@@ -3391,6 +3502,11 @@ Future<IngredientMatchRow> unskippedRow(
   final eaten = weighedLine(recipe, line);
   var out = row.copyWith(status: 'auto', clearHold: true);
   final personal = out.confidence >= 1;
+  // An engine row already on the rule's record skips the re-derive: the
+  // row the rule would write is the one [engineOutcome] gives it below (an
+  // equivalence, Run 048 P4 — "¼ teaspoon grated lime zest plus 1½–2
+  // tablespoons juice" un-skips to the same row either way; it saves a
+  // cache read).
   final byRule = personal || secondFoodRuleOf(line)?.fdcId == out.fdcId
       ? null
       : await ruleRowFor(db, provider, recipe, position, line);
@@ -3409,6 +3525,9 @@ Future<IngredientMatchRow> unskippedRow(
   }
   final medium = heldMediumLine(recipe, eaten);
   final source = GramSource.values.asNameMap()[out.gramSource];
+  // Grams a person typed for what is eaten stay through a skip and back
+  // (Run 048: typed, skipped, un-skipped came back with none).
+  final typed = medium && source == GramSource.override;
   final outcome = engineOutcome(
     recipe,
     eaten,
@@ -3422,7 +3541,7 @@ Future<IngredientMatchRow> unskippedRow(
     decided: personal,
     confidence: out.confidence,
   );
-  out = medium
+  out = medium && !typed
       ? out.copyWith(
           grams: outcome.grams,
           clearGrams: outcome.grams == null,
@@ -3530,14 +3649,17 @@ applyDecisionToOthers(
         // A search hit stands in until a target needs portions; then the
         // detail is fetched once and serves every later target. Gated as
         // the compute writes it ([subRecipeRowFor]): a marked count its food
-        // gives no grams is the 0 g sub-recipe (Run 047 critic). No reached
-        // line has an eaten part to weigh ([weighedLine]): the one such line,
-        // 0711's, names a second food, which [decisionReach] never reaches.
+        // gives no grams is the 0 g sub-recipe (Run 047 critic). Weighed as
+        // the compute weighs it ([weighedLine]): a same-food "plus" part
+        // names no second food, so [decisionReach] reaches it (Run 048
+        // critic: "1 recipe Garlic Oil (recipe follows), plus 2 tablespoons
+        // garlic oil" weighed as the whole recipe, 140 g for 28).
+        final eaten = weighedLine(found.recipe, line);
         final GramResolution? resolution;
-        (food, resolution) = await gramsFor(db, provider, food, line);
+        (food, resolution) = await gramsFor(db, provider, food, eaten);
         final outcome = engineOutcome(
           found.recipe,
-          line,
+          eaten,
           food,
           resolution,
           decided: true,

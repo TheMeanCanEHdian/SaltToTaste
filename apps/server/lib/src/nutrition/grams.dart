@@ -74,6 +74,9 @@ const Map<String, double> _volumeUnitMl = {
   'l': 1000,
 };
 
+/// Kosher salt's g/ml ([_densities], [_packsLikeKosher]).
+const double _kosherSaltDensity = 0.72;
+
 /// Density fallbacks (g/ml) for pantry staples, keyed by tokens matched
 /// against the normalized item — used only when the matched food carries no
 /// usable volume portion. Values are round kitchen figures, flagged as
@@ -113,15 +116,7 @@ const List<(String, double)> _densities = [
   ('rice', 0.85),
   ('oats', 0.41),
   ('salt', 1.22),
-  ('kosher salt', 0.72),
-  // Flake and coarse sea salt pack like kosher salt, not like table salt
-  // (1.22 counted "2 tablespoons flake sea salt" at 36 g, Run 047): no FDC
-  // record or corpus weight sizes them, so kosher's figure stands. The
-  // normalized item drops "coarse" ("2 teaspoons coarse sea salt, divided"
-  // reads "sea salt"), so the key is "sea salt". ponytail: a fine sea salt
-  // would weigh like table salt; no corpus line measures one — split the
-  // key when one does.
-  ('sea salt', 0.72),
+  ('kosher salt', _kosherSaltDensity),
   ('baking powder', 0.92),
   ('baking soda', 0.93),
   ('yeast', 0.64),
@@ -507,10 +502,12 @@ double? _countQty(List<Amount> amounts) {
   }
   // The per-unit weight written in the item with no parenthesis: "1
   // 5-pound boneless pork butt roast" (Indoor Pulled Pork with Sweet and
-  // Tangy Barbecue Sauce; checkpoint 8).
+  // Tangy Barbecue Sauce; checkpoint 8) — and in ounces, as other
+  // libraries print a package ("1 15-ounce can chickpeas"; ATK always
+  // parenthesizes it — kept for them, Run 048).
   final inItem = RegExp(
     '^\\s*[\\d$vulgarFractionChars/.]+\\s+([\\d$vulgarFractionChars/.]+)-'
-    r'(pounds?)\b',
+    r'(ounces?|pounds?)\b',
     caseSensitive: false,
   ).firstMatch(raw);
   final quantity = inItem == null ? null : _quantityValue(inItem[1]!);
@@ -577,6 +574,18 @@ double? _tableLookup(List<(String, double)> table, String normalizedItem) {
   }
   return bestValue;
 }
+
+/// Flake and coarse sea salt pack like kosher salt, not like table salt
+/// (1.22 counted "2 tablespoons flake sea salt", 0227, at 36 g, Run 047): no
+/// FDC record or corpus weight sizes them, so kosher's figure stands. Read
+/// on the raw line — the normalized item drops "coarse" ("2 teaspoons
+/// coarse sea salt, divided", 0805) — and only for those: plain and fine
+/// sea salt weigh as table salt (Run 048: a "sea salt" key took them to
+/// 3.5 g a teaspoon).
+final RegExp _packsLikeKosher = RegExp(
+  r'\b(flake|flaky|coarse)\s+sea\s+salt\b',
+  caseSensitive: false,
+);
 
 /// Leading nouns in a portion description that mean a VOLUME/WEIGHT serving
 /// (or a package), not a single countable item — so a bare count never scales
@@ -829,9 +838,14 @@ double? _portionGramsPerUnit(FdcFood food, String unit, {bool bare = false}) {
       // SR Legacy's bare noun with no unit of its own: "stick" 113 g of
       // "Butter, without salt" is one stick ('4 sticks unsalted butter',
       // Classic Yellow Layer Cake, 0884; checkpoint 8).
-      // (Requiring the unit to LEAD the description changed no line of the
-      // library: removed, v15.)
-      final named = bare && parsed == null;
+      // The unit must LEAD the description: a portion that merely contains
+      // it ("cup, sliced", "cup, slices") is a cup, and weighed "2 slices
+      // pears" as two cups, 280 g (Run 048; no corpus line reaches it —
+      // restored for other libraries' lines).
+      final named =
+          bare &&
+          parsed == null &&
+          description.split(RegExp('[^a-z]+')).first == wanted;
       if (parsed == null && !named) {
         continue;
       }
@@ -1536,14 +1550,19 @@ GramResolution? _parenVolumeGrams(
   String raw,
 ) {
   final printed = RegExp(
-    r'\((\d[\d.]*)[-\s]?(ml|milliliters?)\)',
+    r'\((\d[\d.]*)[-\s]?(ml|milliliters?|liters?)\)',
     caseSensitive: false,
   ).firstMatch(raw);
   final count = _countQty(amounts);
   if (printed == null || count == null) {
     return null;
   }
-  final ml = count * double.parse(printed[1]!);
+  // "(1-liter) bottle": no ATK line prints litres; other libraries do
+  // (Run 048).
+  final ml =
+      count *
+      double.parse(printed[1]!) *
+      (printed[2]!.toLowerCase().startsWith('l') ? 1000 : 1);
   return _resolveGrams(
     amounts: [
       Amount(
@@ -1562,8 +1581,12 @@ GramResolution? _parenVolumeGrams(
 /// cups; optional)", "(½ cup plus 3 tablespoons)", both parts: Champagne
 /// Cocktail's "5½ fluid ounces (½ cup plus 3 tablespoons) champagne",
 /// stored as the bare count 5½, read 990 g as 5½ "punch" servings — as an
-/// amount; null for none.
-Amount? _parenVolume(String raw) {
+/// amount; null for none. A paren that says "each", or an adjectival one
+/// (nothing but the count before it), prints ONE item's volume, as
+/// [_parenWeight] reads a weight: "2 ripe pears, sliced (about 1 cup each)"
+/// is [count] cups (Run 048; no corpus line prints one — kept for other
+/// libraries), null with no count.
+Amount? _parenVolume(String raw, double? count) {
   final q = '([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ .]*?)';
   const u = r'\s*(cups?|tablespoons?|teaspoons?)\b';
   final match = RegExp(
@@ -1573,8 +1596,21 @@ Amount? _parenVolume(String raw) {
   if (match == null) {
     return null;
   }
+  final close = raw.indexOf(')', match.start);
+  final perUnit =
+      raw
+          .substring(match.start, close < 0 ? raw.length : close)
+          .toLowerCase()
+          .contains(RegExp(r'\beach\b')) ||
+      !RegExp('[a-z]', caseSensitive: false).hasMatch(
+        raw.substring(0, match.start),
+      );
+  final times = perUnit ? count : 1.0;
+  if (times == null) {
+    return null;
+  }
   String unit(String word) => word.toLowerCase().replaceAll(RegExp(r's$'), '');
-  if (match[3] == null) {
+  if (match[3] == null && times == 1) {
     return Amount(
       measure: Measure.volume,
       quantity: match[1]!.trim(),
@@ -1588,12 +1624,12 @@ Amount? _parenVolume(String raw) {
   }
 
   final first = ml(match[1]!, match[2]!);
-  final second = ml(match[3]!, match[4]!);
+  final second = match[3] == null ? 0.0 : ml(match[3]!, match[4]!);
   return first == null || second == null
       ? null
       : Amount(
           measure: Measure.volume,
-          quantity: (first + second).toStringAsFixed(0),
+          quantity: ((first + second) * times).toStringAsFixed(0),
           unit: 'ml',
           primary: true,
         );
@@ -1781,7 +1817,7 @@ GramResolution? _resolveGrams({
   //     chard leaves, ribs removed, torn into 1-inch pieces (about 2 cups;
   //     optional)" (Hearty Chicken Noodle Soup) is 2 cups, 72 g — never 5
   //     whole leaves with their stalks, 240 g (Run 047).
-  final printed = raw == null ? null : _parenVolume(raw);
+  final printed = raw == null ? null : _parenVolume(raw, _countQty(amounts));
   // (Requiring the count unit-less, or any amount at all — an amount-less
   // line counts 0 g — changed no line of the library: not asked.)
   if (printed != null && amounts.every((a) => a.measure == Measure.count)) {
@@ -1835,7 +1871,9 @@ GramResolution? _resolveGrams({
         );
       }
     }
-    final density = _tableLookup(_densities, normalizedItem);
+    final density = _packsLikeKosher.hasMatch(raw ?? normalizedItem)
+        ? _kosherSaltDensity
+        : _tableLookup(_densities, normalizedItem);
     if (density != null) {
       return GramResolution(
         grams: quantity * ml * density,

@@ -198,7 +198,8 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   /// Switches the order (`finishes` | `worst`) and reloads from page 1.
   /// Compared with the REQUESTED order, so a second tap while the first is
   /// in flight wins (A3). A failed fetch puts the order back to the one on
-  /// screen and leaves the view as it was.
+  /// screen and leaves the view as it was — unless a later request
+  /// superseded it ([_reload] drops that failure).
   Future<void> setSort(String sort) async {
     final current = state;
     if (current is! NutritionReviewLoaded || _sort == sort) {
@@ -229,20 +230,36 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   /// is not found, and the selection falls back to [selectIndex] (A8: the
   /// stated page-1 fallback, not a re-fetch of every loaded page).
   ///
-  /// A reply superseded by a later reload is dropped (A3).
+  /// A reply superseded by a later reload is dropped (A3), and so is a
+  /// superseded FAILURE: it returns silently, so no caller's catch rewinds
+  /// the order or the grouping, or shows an error, under the newer request.
+  /// The list is stamped with the order and view it was fetched with (with
+  /// the failure drop that equals `_sort` at emit time — a current reply's
+  /// order cannot have moved since it was sent — so the stamp is the
+  /// request's own, and the two can never drift).
   Future<void> _reload(
     String? bucket, {
     required int selectIndex,
     String? stayOn,
   }) async {
     final ticket = ++_requested;
-    final report = await _repository.getNutritionReview(
-      page: 1,
-      limit: pageSize,
-      bucket: bucket,
-      grouped: groupedFor(bucket),
-      sort: _sort,
-    );
+    final sort = _sort;
+    final grouped = groupedFor(bucket);
+    final NutritionReviewReport report;
+    try {
+      report = await _repository.getNutritionReview(
+        page: 1,
+        limit: pageSize,
+        bucket: bucket,
+        grouped: grouped,
+        sort: sort,
+      );
+    } on RepositoryException {
+      if (ticket != _requested) {
+        return;
+      }
+      rethrow;
+    }
     if (isClosed || ticket != _requested) {
       return;
     }
@@ -252,6 +269,8 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       _loadedFrom(
         report,
         bucket: bucket,
+        grouped: grouped,
+        sort: sort,
         selectIndex: selectIndex,
         stayOn: stayOn,
       ),
@@ -396,6 +415,8 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   NutritionReviewLoaded _loadedFrom(
     NutritionReviewReport report, {
     required String? bucket,
+    required bool grouped,
+    required String sort,
     required int selectIndex,
     String? stayOn,
   }) {
@@ -416,11 +437,11 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       buckets: report.buckets,
       items: items,
       bucket: bucket,
-      grouped: groupedFor(bucket),
+      grouped: grouped,
       selectedKey: key,
       loadingMore: false,
       exhausted: items.length < pageSize,
-      sort: _sort,
+      sort: sort,
       finishable: report.finishable,
       openRecipes: report.openRecipes,
     );

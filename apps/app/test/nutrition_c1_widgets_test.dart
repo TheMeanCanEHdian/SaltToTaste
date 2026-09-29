@@ -60,7 +60,7 @@ IngredientMatch rulesLine(int position) => [
 /// portion unread. Matcher v14 reads the portion, so the rules golden
 /// counts them at 452 g; the amount-first block below is what a person
 /// sees on any such no-grams row, pinned on the golden's own portions.
-IngredientMatch butterNoGrams({bool uncached = false}) {
+IngredientMatch butterNoGrams({bool uncached = false, double? confidence}) {
   final item = Map<String, dynamic>.of(
     (golden('nutrition_matches_rules')['items'] as List)
         .cast<Map<String, dynamic>>()
@@ -74,6 +74,7 @@ IngredientMatch butterNoGrams({bool uncached = false}) {
     'grams': null,
     'gram_source': null,
     'gram_basis': null,
+    'confidence': ?confidence,
   };
   return IngredientMatch.fromJson(item);
 }
@@ -594,6 +595,84 @@ void main() {
       expect(cubit.writes.single.grams, 452);
       expect(cubit.writes.single.confirmed, isNull);
     });
+
+    testWidgets('Run 048 P6: an amount typed BEFORE the pick stays', (
+      tester,
+    ) async {
+      await pumpPanel(tester, butterNoGrams());
+      await tester.tap(find.text('Wrong food? Change the match…'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).first, '300');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(peanut));
+      await tester.pumpAndSettle();
+      expect(find.text('Confirm · 300 g'), findsOneWidget);
+    });
+
+    testWidgets("Run 048 P6: a pick on a counted line keeps its stored "
+        'grams in the field (only the amount-first prefill clears)', (
+      tester,
+    ) async {
+      // The rules golden's butter, counted at 452 g (matcher v14).
+      await pumpPanel(tester, rulesLine(12));
+      expect(find.text('452'), findsOneWidget);
+      await tester.tap(find.text(peanut));
+      await tester.pumpAndSettle();
+      expect(find.text('452'), findsOneWidget);
+    });
+
+    testWidgets('Run 048 P6: a re-pick of the STORED food confirms it with '
+        'the amount, never a pick write', (tester) async {
+      final cubit = await pickPeanutButter(tester);
+      await tester.tap(find.text('Butter, without salt'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm · 452 g'));
+      await tester.pumpAndSettle();
+      expect(cubit.writes, [
+        (
+          position: 12,
+          fdcId: null,
+          grams: 452.0,
+          confirmed: true,
+          skipped: null,
+        ),
+      ]);
+    });
+
+    testWidgets("Run 048 P6: after a pick the stored record's portions stop "
+        'explaining the miss', (tester) async {
+      // Stated exception (synthesized grams): the rules golden's chicken
+      // pieces (pos 3, its real portions and candidates) with grams null — a
+      // pound line always converts by weight, so no stored row puts a
+      // unit-bearing line with non-fitting portions AND other candidates
+      // in No grams.
+      final item = Map<String, dynamic>.of(
+        (golden('nutrition_matches_rules')['items'] as List)
+            .cast<Map<String, dynamic>>()
+            .singleWhere((m) => m['position'] == 3),
+      );
+      item['match'] = {
+        ...item['match'] as Map<String, dynamic>,
+        'grams': null,
+        'gram_source': null,
+        'gram_basis': null,
+      };
+      await pumpPanel(tester, IngredientMatch.fromJson(item));
+      expect(
+        find.textContaining("don't include a pound", findRichText: true),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Wrong food? Change the match…'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text('Chicken, broilers or fryers, thigh, meat and skin, raw'),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining("don't include", findRichText: true),
+        findsNothing,
+      );
+    });
   });
 
   testWidgets('S3: a bare count ("6 whole cloves") says the count and asks '
@@ -669,6 +748,69 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('grams for dash'), findsOneWidget);
+  });
+
+  // Braised Chicken with Mustard and Herbs (0125) pos 1 in snapshot 12:
+  // auto on 2727569 just above the gate with grams null (No grams), the
+  // stored quantity '1 1/2–2' with no unit, and the record's one cached
+  // portion (racc 114 g), which fills nothing.
+  Map<String, dynamic> chicken0125({String lineAmount = '1 1/2–2'}) => {
+    'position': 1,
+    'raw':
+        '1½–2 ounds bone-in split chicken breasts, trimmed and each cut '
+        'crosswise into 2 pieces of equal mass',
+    'line_amount': lineAmount,
+    'portions': [
+      {
+        'amount': 1.0,
+        'unit': 'racc',
+        'description': null,
+        'grams': 114.0,
+        'fill': null,
+      },
+    ],
+    'match': {
+      'fdc_id': 2727569,
+      'description': 'Chicken, breast, meat and skin, raw',
+      'data_type': 'Foundation',
+      'confidence': 0.51857142857142857,
+      'grams': null,
+      'gram_source': null,
+      'status': 'auto',
+    },
+  };
+
+  testWidgets("Run 048 A3: the codec's mixed number ('1 1/2–2') is a bare "
+      'count, never the unit "1/2–2"', (tester) async {
+    await pumpPanel(tester, IngredientMatch.fromJson(chicken0125()));
+    expect(
+      find.textContaining('The line says 1 1/2–2', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining("don't include", findRichText: true),
+      findsNothing,
+    );
+  });
+
+  testWidgets("Run 048 P6: a one-word vulgar fraction ('½') is a count, "
+      'not a unit', (tester) async {
+    // Stated exception (synthesized amount): the codec writes a half as
+    // '1/2', so no corpus line_amount holds a vulgar fraction; a
+    // hand-edited YAML quantity can ('quantity' is any string). 0125's
+    // real row with its amount replaced by a bare '½'.
+    await pumpPanel(
+      tester,
+      IngredientMatch.fromJson(chicken0125(lineAmount: '½')),
+    );
+    expect(
+      find.textContaining('The line says ½', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining("don't include", findRichText: true),
+      findsNothing,
+    );
   });
 
   test('the zero-guess guards, one by one', () {
@@ -752,8 +894,11 @@ void main() {
       },
     });
     expect(zeroGuessOf(unnamed), isFalse);
-    // Synthesized: the pasta water's salt once a person confirmed its eaten
-    // part is no longer held (no snapshot holds a decided held row).
+    // Synthesized (no snapshot holds a decided held row): the pasta water's
+    // salt once a person confirmed its eaten part. It keeps its hold
+    // (matcher v16), and the line is still held whatever its status —
+    // Run 048 H1: an amount edit re-attached a decided held medium, and a
+    // status-keyed isHeldLine dropped its "Skip, poured away" card.
     final confirmedSalt = IngredientMatch.fromJson({
       'position': 10,
       'raw': '1 tablespoon plus 1 teaspoon table salt',
@@ -766,7 +911,7 @@ void main() {
       },
     });
     expect(isHeldLine(rulesLine(10)), isTrue);
-    expect(isHeldLine(confirmedSalt), isFalse);
+    expect(isHeldLine(confirmedSalt), isTrue);
   });
 
   group('Run 046 A5/A7: zero rows', () {
@@ -1333,6 +1478,7 @@ void main() {
       Future<ValueNotifier<IngredientMatch>> pumpLive(
         WidgetTester tester, [
         IngredientMatch? initial,
+        _Recording? cubit,
       ]) async {
         final match = ValueNotifier<IngredientMatch>(
           initial ?? butterNoGrams(uncached: true),
@@ -1347,7 +1493,7 @@ void main() {
             home: RepositoryProvider<NutritionRepository>.value(
               value: NutritionRepository(Dio()),
               child: BlocProvider<NutritionCubit>.value(
-                value: _Recording(_state([butterNoGrams()])),
+                value: cubit ?? _Recording(_state([butterNoGrams()])),
                 child: Scaffold(
                   body: SingleChildScrollView(
                     child: ValueListenableBuilder<IngredientMatch>(
@@ -1401,6 +1547,34 @@ void main() {
         match.value = _brownSugar();
         await tester.pumpAndSettle();
         expect(find.text('Confirm · 145 g'), findsOneWidget);
+      });
+
+      testWidgets('Run 048 A1: portions arriving while ANOTHER food is '
+          "staged never prefill the stored record's fill onto the pick", (
+        tester,
+      ) async {
+        // Stated exception (synthesized, the Opus repro): the butter row
+        // below the gate (confidence 0.3, a Check line with no grams) and
+        // its detail uncached; the person stages peanut butter, a plain
+        // Confirm of the stored butter lands in No grams on the same food,
+        // and the butter's portions arrive.
+        final cubit = _Recording(_state([butterNoGrams()]));
+        final match = await pumpLive(
+          tester,
+          butterNoGrams(uncached: true, confidence: 0.3),
+          cubit,
+        );
+        await tester.tap(
+          find.text('Peanut butter, smooth style, without salt'),
+        );
+        await tester.pumpAndSettle();
+        match.value = butterNoGrams();
+        await tester.pumpAndSettle();
+        expect(find.text('Confirm · 452 g'), findsNothing);
+        expect(find.text('Confirm with amount'), findsOneWidget);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+        expect(cubit.writes, isEmpty);
       });
     });
   });

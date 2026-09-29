@@ -233,8 +233,16 @@ const Map<String, String> _synonyms = {
 /// salt, a sub-gram "pepper" portion weighs only a small dried chile, a
 /// bare count's printed paren volume wins, an animal or adjective before a
 /// list of foods is never split, and the detector and portion alternatives
-/// no library line reached are gone.
-const int matcherVersion = 15;
+/// no library line reached are gone; 16 = the Run 048 review: the pairing
+/// laid out before any write (lines aligned with rows by text, one
+/// transaction, no demotion), a held medium keeps a person's resolution
+/// through an edit, a confirm and an un-skip, a pick and an apply-to-all
+/// weigh the weighed line, only flake and coarse sea salt weigh like kosher
+/// salt (plain and fine sea salt as table salt again), a volume paren
+/// saying "each" is per item, and the guards other libraries' lines need
+/// are back (a portion must lead with its unit, "do not drain" drains
+/// nothing, an in-item ounce weight, a litre paren).
+const int matcherVersion = 16;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

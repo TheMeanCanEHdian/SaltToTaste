@@ -86,10 +86,11 @@ String zeroReason(IngredientMatch m) => m.gramSource == 'discarded'
 
 /// A line held as a poured-away medium or as shellfish bought in the shell
 /// (ruling 5): its card leads with "Skip, poured away" / "Enter edible
-/// grams", never a plain confirm of the whole weight.
+/// grams", never a plain confirm of the whole weight. Keyed on the hold
+/// whatever the status: a person's decision on a held line keeps the hold
+/// (matcher v16), and the line is still poured away or in the shell.
 bool isHeldLine(IngredientMatch m) =>
-    m.status == 'auto' &&
-    (m.hold == 'discarded_medium' || m.hold == 'in_shell');
+    m.hold == 'discarded_medium' || m.hold == 'in_shell';
 
 /// Whether a held medium carries an eaten part: its engine grams are only
 /// what is eaten ("… only \"plus 1 teaspoon table salt\" counted" — every
@@ -621,11 +622,15 @@ class _FixPanelState extends State<FixPanel> {
       _stagedFdcId = null;
       _amountDirty = false;
       _resetAmount();
-    } else if (old.match.portions.isEmpty && !_amountDirty) {
+    } else if (old.match.portions.isEmpty &&
+        !_amountDirty &&
+        (_stagedFdcId == null || _stagedFdcId == widget.match.fdcId)) {
       // The record's portions may have arrived with grams and food
       // unchanged (a plain Confirm USDA could not convert caches the
       // detail): their one fill prefills now, as on a fresh mount. A typed
-      // amount stays; once portions are shown, a tapped fill stays too.
+      // amount stays; once portions are shown, a tapped fill stays too. A
+      // staged pick of ANOTHER food keeps its field empty: the fill is the
+      // stored record's, never the pick's.
       _resetAmount();
     }
     // A plain Confirm that USDA could not convert leaves the line in No
@@ -737,7 +742,10 @@ class _FixPanelState extends State<FixPanel> {
       m.position,
       fdcId: pickChanged ? _stagedFdcId : null,
       // A zero row always sends the field: the line has no amount of its own
-      // to recompute from. Otherwise only a typed amount goes out — the
+      // to recompute from. (Equivalent today, Run 048: a zero row's field
+      // starts empty and shows no portion chips, so a number in it was
+      // typed; kept so a future zero-row prefill is still sent.) Otherwise
+      // only a typed amount goes out — the
       // amount-first block's prefill is the stored record's fill, cleared on
       // a new pick ([_stage]), so the server recomputes for the pick (A2).
       grams: zero || _amountDirty ? grams : null,
@@ -1084,17 +1092,12 @@ class _FixPanelState extends State<FixPanel> {
     // they describe the rejected one, so they step aside (A2).
     final picked = _stagedFdcId != null && _stagedFdcId != m.fdcId;
     final fits = m.portions.any((p) => p.fill != null);
-    // A bare count ("8", "1–16") names no unit a portion could miss; a
-    // one-word amount with no number in it is the unit alone ("dash": the
-    // codec's quantity is empty).
-    final words = m.lineAmount?.split(' ');
-    final unit = words == null
-        ? null
-        : words.length > 1
-        ? words.last
-        : _hasNumber.hasMatch(words.single)
-        ? null
-        : words.single;
+    // The unit is the last word when it holds no digit or fraction: a bare
+    // count ("8", "1–16", the codec's mixed number "1 1/2–2") names no unit
+    // a portion could miss; a one-word amount with no number in it is the
+    // unit alone ("dash": the codec's quantity is empty).
+    final last = m.lineAmount?.split(' ').last;
+    final unit = last == null || _hasNumber.hasMatch(last) ? null : last;
     final size = leadingSize(m.raw);
     // A count shows on every chip once one portion is not "1" ("1 tsp"
     // beside "5 slices"); a list of ones shows none ("tbsp", "cup").
