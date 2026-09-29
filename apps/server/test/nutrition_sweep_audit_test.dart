@@ -19,7 +19,7 @@ import 'support/fdc_fixtures.dart';
 
 /// The recorded provider, recording what it is asked.
 class _Recording implements NutritionProvider {
-  final FixtureProvider inner = FixtureProvider(pendingFoods: pendingFoods);
+  final FixtureProvider inner = FixtureProvider();
   final List<String> searched = [];
   final List<int> fetched = [];
 
@@ -948,9 +948,15 @@ void main() {
     // all four differ in some digit. Its second batch recorded the
     // tenderloin roast (171748) for the capped "roast" pin, a hit in 'beef
     // tenderloin': it differs too (the French bread, 2707610, is a hit in
-    // no recorded answer).
-    expect(compared, 205);
-    expect(differ, 154);
+    // no recorded answer). Its live run (snapshot 13) recorded the 13
+    // searches and 12 details it fetched, and the answers the v17 pins read
+    // (tapioca 169717, spareribs 167853, and four searches): 14 more
+    // compared — 12 newly recorded foods and two recorded before that are
+    // hits in the new answers ('french bread' 2707610, 'iceberg lettuce'
+    // 2346388); all but celery, carrots, napa and iceberg (169988, 170393,
+    // 169979, 169248) differ in some digit.
+    expect(compared, 219);
+    expect(differ, 164);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

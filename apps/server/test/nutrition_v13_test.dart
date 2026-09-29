@@ -251,19 +251,26 @@ void main() {
     const seeds = '½ cup pomegranate seeds';
 
     test('since matcher v17 "½ cup pomegranate seeds" (Barley Salad with '
-        'Pomegranate, 0718) searches `pomegranate raw` — pending that one '
-        'live search the line is unmatched, '
-        'and no detail is fetched; the twin rule stays pinned by the guards '
-        'below on the recorded answer', () async {
+        "Pomegranate, 0718) searches `pomegranate raw`: FDC's answer (live, "
+        'snapshot 13) puts FNDDS "Pomegranate, raw" (2709267) first, tied '
+        'at 1.0 with SR 169134 — counted at 87.5 g on its own cup (175 g), '
+        'over the gate, and SR 169134 is never fetched', () async {
       final db = tempDb();
-      final fixtures = FixtureProvider(pending: pendingSearches);
+      final fixtures = FixtureProvider();
       final r = recipeOf(db: db, [seeds]);
       await matchAndCompute(db, fixtures, r);
       final row = db.ingredientMatchesFor('r').single;
-      expect((row.fdcId, row.grams), (null, null));
+      expect((row.fdcId, row.grams), (2709267, 87.5));
+      expect(row.confidence, closeTo(1, 1e-9));
+      expect(bucketOf(row), MatchBucket.counted);
       expect(fixtures.searchCalls, 1);
-      expect(fixtures.foodCalls, 0);
-      expect(db.fdcSearchCacheGet('pomegranate raw'), '[]');
+      expect(fixtures.foodCalls, 1);
+      final ranked = rankCandidates(
+        'pomegranate raw',
+        await fixtures.search('pomegranate raw'),
+      );
+      expect([for (final c in ranked) c.candidate.fdcId], [2709267, 169134]);
+      expect(ranked[1].confidence, closeTo(1, 1e-9));
     });
   });
 

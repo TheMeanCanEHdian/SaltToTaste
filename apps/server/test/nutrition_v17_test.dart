@@ -1,6 +1,8 @@
-// Real corpus lines wrap across adjacent literals.
-// ignore_for_file: no_adjacent_strings_in_list
+// Real corpus lines wrap across adjacent literals; the C3/C4 tables keep
+// each corpus line verbatim, one literal per entry.
+// ignore_for_file: no_adjacent_strings_in_list, lines_longer_than_80_chars
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:salt_server/src/db/salt_database.dart';
@@ -15,12 +17,12 @@ import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
 /// Matcher v17: checkpoint 8's approved requests — rewrites of names FDC
-/// spells another way (each target pending ONE live search, never an
-/// invented answer), rewrites to answers snapshot 12 already holds, an
+/// spells another way (each target searched live ONCE, recorded from
+/// snapshot 13), rewrites to answers snapshot 12 already holds, an
 /// unasked 'liquid' docked as a modified form, and eight SR volume
 /// siblings whose detail is fetched once. Real corpus lines (recipe named on
 /// each, pinnedCorpusText proves each exists); FDC answers recorded from
-/// sweep snapshot 12 (tool/record_fdc_fixtures.dart --from-db).
+/// sweep snapshots 12 and 13 (tool/record_fdc_fixtures.dart --from-db).
 void main() {
   final provider = FixtureProvider(pending: pendingSearches);
 
@@ -50,6 +52,44 @@ void main() {
     );
     db.upsertRecipe(recipe, sourceSlug: 'src', contentHash: 'hr');
     return recipe;
+  }
+
+  // A corpus line as its file stores it: the St. Louis racks keep 'racks'
+  // as the count's unit, not in the item, as parseIngredientLine would
+  // (C5 proves every table line equals its corpus line).
+  IngredientLine corpusLine(String raw) {
+    if (!raw.contains('racks St. Louis')) {
+      return lineOf(raw);
+    }
+    return IngredientLine(
+      raw: raw,
+      item: '(2 1/2- to 3-pound) St. Louis–style spareribs',
+      amounts: const [
+        Amount(
+          measure: Measure.count,
+          quantity: '2',
+          unit: 'racks',
+          primary: true,
+        ),
+      ],
+    );
+  }
+
+  // One corpus line alone, computed on the recorded answers.
+  Future<IngredientMatchRow> computeLine(String raw) async {
+    final db = tempDb();
+    final recipe = Recipe(
+      id: 'r',
+      title: 'r',
+      slug: 'r',
+      source: const RecipeSource(name: 'Test', type: 'book'),
+      ingredients: [
+        IngredientGroup(items: [corpusLine(raw)]),
+      ],
+    );
+    db.upsertRecipe(recipe, sourceSlug: 'src', contentHash: 'hr');
+    await matchAndCompute(db, FixtureProvider(), recipe);
+    return db.ingredientMatchesFor('r').single;
   }
 
   // (corpus file, line, normalized item, query). One line per rewrite key.
@@ -202,11 +242,23 @@ void main() {
     ),
   ];
 
-  test('R1: each v17 rewrite searches its target — a name FDC spells '
-      'another way is PENDING one live search (answered as no hits, never '
-      'invented); a target snapshot 12 holds ranks the named record first, '
-      'over the gate', () async {
-    const cached = {
+  test("R1: each v17 rewrite searches its target, and FDC's answer to it "
+      '(live, snapshot 13; or cached, snapshot 12) ranks the named record '
+      'first, over the gate', () async {
+    const top = {
+      'french bread': 2707610,
+      'broccoli raab': 170381,
+      'tapioca pearl dry': 169717,
+      'pork spareribs raw': 167853,
+      'pomegranate raw': 2709267,
+      'milk chocolate candy': 167587,
+      'swordfish raw': 173703,
+      'tuna raw': 2706308,
+      'milk dry nonfat regular': 172195,
+      'pumpkin canned without salt': 168450,
+      'chocolate hazelnut spread': 2710289,
+      'waterchestnuts chinese raw': 170066,
+      'milk buttermilk dried': 171274,
       'pork spareribs or country-style ribs or beef short ribs': 167895,
       'bone-in turkey breast': 171093,
       'jarred hot cherry peppers': 2709798,
@@ -214,21 +266,16 @@ void main() {
     };
     for (final (_, raw, item, target) in rewrites) {
       expect(searchQueryFor(item), target, reason: item);
-      final fdcId = cached[target];
-      if (fdcId == null) {
-        expect(pendingSearches, contains(target), reason: item);
-        expect(await provider.search(target), isEmpty, reason: item);
-        continue;
-      }
+      expect(pendingSearches, isNot(contains(target)), reason: item);
       // Ranked as the engine ranks the line: a whole bone-in breast is
       // skin-on ([impliesSkinOn]).
-      final top = rankCandidates(
+      final ranked = rankCandidates(
         target,
         await provider.search(target),
         skinOn: impliesSkinOn(raw, item),
       ).first;
-      expect(top.candidate.fdcId, fdcId, reason: item);
-      expect(belowConfidenceGate(top.confidence), isFalse, reason: item);
+      expect(ranked.candidate.fdcId, top[target], reason: item);
+      expect(belowConfidenceGate(ranked.confidence), isFalse, reason: item);
     }
   });
 
@@ -354,47 +401,56 @@ void main() {
     },
   );
 
+  // (Foundation record, SR sibling, a corpus volume line on it, its grams
+  // in snapshot 13 — the live run that fetched each sibling once).
+  const siblings = <(int, int, String, double)>[
+    (2346395, 170182, '2 cups raw pecan halves', 198), // 0719
+    (1104647, 169230, '1 teaspoon garlic, minced to paste', 2.8), // 0504
+    (2346407, 169975, '3 cups thinly sliced green cabbage', 238.5), // 0542
+    (2258586, 170393, '2⅔ cups shredded carrots (4 carrots)', 325.33), // 0868
+    (2346405, 169988, '2 tablespoons minced celery', 15), // 0292
+    (1999632, 168462, '1 cup baby spinach', 30), // 0603
+    (2346388, 169248, '2 cups shredded iceberg lettuce', 144), // 1185
+    (
+      2727583,
+      169979,
+      '6 cups napa cabbage, sliced crosswise into ½-inch strips', // 0520
+      456,
+    ),
+  ];
+
   test(
     'S1: the eight v17 volume siblings — a volume line on the '
     'portion-less Foundation record asks FDC for exactly its SR '
-    "sibling's detail, once (unrecorded: the approved fetch is pending)",
+    "sibling's detail, once, and is sized on the sibling's portions",
     () async {
-      // (Foundation record, SR sibling, a corpus volume line on it).
-      const siblings = <(int, int, String)>[
-        (2346395, 170182, '2 cups raw pecan halves'), // 0719
-        (1104647, 169230, '1 teaspoon garlic, minced to paste'), // 0504
-        (2346407, 169975, '3 cups thinly sliced green cabbage'), // 0542
-        (2258586, 170393, '2⅔ cups shredded carrots (4 carrots)'), // 0868
-        (2346405, 169988, '2 tablespoons minced celery'), // 0292
-        (1999632, 168462, '1 cup baby spinach'), // 0603
-        (2346388, 169248, '2 cups shredded iceberg lettuce'), // 1185
-        (
-          2727583,
-          169979,
-          '6 cups napa cabbage, sliced crosswise into ½-inch strips', // 0520
-        ),
-      ];
-      for (final (foundation, sibling, raw) in siblings) {
+      for (final (foundation, sibling, raw, grams) in siblings) {
         expect(volumeSiblings[foundation], sibling, reason: raw);
         final food = (await provider.food(foundation))!;
         final line = lineOf(raw);
-        final db = tempDb();
+        final db = tempDb()
+          ..fdcFoodCachePut(foundation, jsonEncode(food.toJson()));
         // The record's own detail sizes nothing: only the sibling can.
         expect(lineGrams(db, line, food), isNull, reason: raw);
-        await expectLater(
-          gramsFor(db, provider, food, line),
-          throwsA(
-            isA<UnrecordedAnswer>().having(
-              (e) => e.message,
-              'message',
-              contains('food $sibling'),
-            ),
-          ),
-          reason: raw,
-        );
+        final fixtures = FixtureProvider();
+        final (_, sized) = await gramsFor(db, fixtures, food, line);
+        expect(sized?.grams, closeTo(grams, 0.005), reason: raw);
+        expect(fixtures.foodCalls, 1, reason: raw);
+        await gramsFor(db, fixtures, food, line);
+        expect(fixtures.foodCalls, 1, reason: raw);
       }
     },
   );
+
+  test('S2: each sibling line computed end to end stays on its Foundation '
+      "record and counts at the sibling's grams", () async {
+    for (final (foundation, _, raw, grams) in siblings) {
+      final row = await computeLine(raw);
+      expect(row.fdcId, foundation, reason: raw);
+      expect(row.grams, closeTo(grams, 0.005), reason: raw);
+      expect(belowConfidenceGate(row.confidence), isFalse, reason: raw);
+    }
+  });
 
   test('C1: rewrites to cached answers, computed with no live request — '
       'granulated garlic on "Spices, garlic powder" (1142), boneless '
@@ -429,19 +485,327 @@ void main() {
   });
 
   test('C2: milk chocolate never lands on the chocolate-MILK drink '
-      '(2705467): the line asks "milk chocolate candy" — pending its one '
-      'live search, it is unmatched, not the drink (1168)', () async {
+      '(2705467): the line asks only "milk chocolate candy", whose answer '
+      'leads with "Candies, milk chocolate" (167587, 535 kcal / 100 g) '
+      '(1168)', () async {
     final db = tempDb();
-    final fixtures = FixtureProvider(pending: pendingSearches);
+    final fixtures = FixtureProvider();
     await matchAndCompute(
       db,
       fixtures,
       recipeOf(db, ['12 ounces milk chocolate, chopped fine']),
     );
     final row = db.ingredientMatchesFor('r').single;
-    expect(row.fdcId, isNull);
+    expect(row.fdcId, 167587);
     expect(fixtures.searchCalls, 1);
-    expect(db.fdcSearchCacheGet('milk chocolate candy'), '[]');
     expect(db.fdcSearchCacheGet('milk chocolate'), isNull);
+    final hit = (await fixtures.search('milk chocolate candy')).first;
+    expect((hit.fdcId, hit.nutrientsPer100g?['208']), (167587, 535));
   });
+
+  // (corpus file, line, FDC record, grams — null: none). Every line the
+  // v17 plan said its 13 live searches would move, as snapshot 13 stored
+  // it, recomputed here one line at a time on the recorded answers.
+  const moved = <(String, String, int, double?)>[
+    // french bread
+    (
+      '0401-cheesy-garlic-bread.yaml',
+      '1 (18- to 20-inch) baguette, sliced in half horizontally',
+      2707610,
+      324.0,
+    ),
+    ('0450-chicken-bouillabaisse.yaml', '1 baguette', 2707610, 324.0),
+    (
+      '0432-classic-french-onion-soup.yaml',
+      '1 small baguette, cut on the bias into ½-inch slices',
+      2707610,
+      152.0,
+    ),
+    (
+      '0194-flank-steak-and-arugula-sandwiches-with-red-onion.yaml',
+      '1 baguette, cut into four 5-inch lengths, each piece split into top and bottom pieces',
+      2707610,
+      324.0,
+    ),
+    (
+      '0467-pan-bagnat-provencal-tuna-sandwich.yaml',
+      '1 large baguette, halved horizontally',
+      2707610,
+      324.0,
+    ),
+    (
+      '0279-garlicky-shrimp-with-buttered-bread-crumbs.yaml',
+      '1 (3-inch) piece baguette, cut into small pieces',
+      2707610,
+      null,
+    ),
+    (
+      '0708-best-summer-tomato-gratin.yaml',
+      '6 ounces crusty baguette, cut into ¾-inch cubes (4 cups)',
+      2707610,
+      170.1,
+    ),
+    // broccoli raab
+    (
+      '0345-orecchiette-with-broccoli-rabe-and-sausage.yaml',
+      '1 bunch broccoli rabe (about 1 pound), washed, trimmed, and cut into 1½-inch pieces',
+      170381,
+      453.59,
+    ),
+    (
+      '1132-orecchiette-with-broccoli-rabe-and-sausage.yaml',
+      '1 pound broccoli rabe, trimmed and cut into 1½-inch pieces',
+      170381,
+      453.59,
+    ),
+    (
+      '1190-ricotta-calzones-with-sausage-and-broccoli-rabe.yaml',
+      '12 ounces trimmed broccoli rabe, cut into 1-inch pieces',
+      170381,
+      340.19,
+    ),
+    // tapioca pearl dry
+    (
+      '0979-blueberry-pie.yaml',
+      '2 tablespoons instant tapioca, ground',
+      169717,
+      19.0,
+    ),
+    (
+      '0986-strawberry-rhubarb-pie.yaml',
+      '3 tablespoons instant tapioca',
+      169717,
+      28.5,
+    ),
+    (
+      '1204-triple-berry-slab-pie-with-ginger-lemon-streusel.yaml',
+      '6 tablespoons instant tapioca, ground',
+      169717,
+      57.0,
+    ),
+    (
+      '0458-slow-cooker-beef-burgundy.yaml',
+      '3 tablespoons Minute tapioca',
+      169717,
+      28.5,
+    ),
+    (
+      '0088-slow-cooker-beer-braised-short-ribs.yaml',
+      '2 tablespoons Minute tapioca',
+      169717,
+      19.0,
+    ),
+    // pork spareribs raw
+    (
+      '0538-chinese-style-barbecued-spareribs.yaml',
+      '2 (2½- to 3-pound) racks St. Louis–style spareribs, cut into individual ribs',
+      167853,
+      2721.55,
+    ),
+    (
+      '0614-memphis-style-barbecued-spareribs.yaml',
+      '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed',
+      167853,
+      2721.55,
+    ),
+    (
+      '0615-oven-barbecued-spareribs.yaml',
+      '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut in half',
+      167853,
+      2721.55,
+    ),
+    (
+      '0611-rosticciana-tuscan-grilled-pork-ribs.yaml',
+      '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut into 2-rib sections',
+      167853,
+      2721.55,
+    ),
+    (
+      '0613-kansas-city-sticky-ribs.yaml',
+      '2 (2½- to 3-pound) full racks pork spareribs, trimmed of any large pieces of fat and membrane removed',
+      167853,
+      2721.55,
+    ),
+    // pomegranate raw
+    (
+      '0718-barley-salad-with-pomegranate-pistachios-and-feta.yaml',
+      '½ cup pomegranate seeds',
+      2709267,
+      87.5,
+    ),
+    (
+      '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
+      '1 cup pomegranate seeds',
+      2709267,
+      175.0,
+    ),
+    // milk chocolate candy
+    (
+      '0889-chocolate-sheet-cake-with-easy-chocolate-frosting.yaml',
+      '10 ounces milk chocolate, chopped',
+      167587,
+      283.5,
+    ),
+    (
+      '0885-fluffy-yellow-layer-cake-with-milk-chocolate-frosting.yaml',
+      '8 ounces milk chocolate, melted and cooled slightly',
+      167587,
+      226.8,
+    ),
+    (
+      '1168-milk-chocolate-cremeux-tart.yaml',
+      '12 ounces milk chocolate, chopped fine',
+      167587,
+      340.19,
+    ),
+    (
+      '0890-simple-chocolate-sheet-cake-with-milk-chocolate-frosting.yaml',
+      '1 pound milk chocolate, chopped',
+      167587,
+      453.59,
+    ),
+    (
+      '1114-browned-butter-blondies.yaml',
+      '½ cup (3 ounces) milk chocolate chips',
+      167587,
+      85.05,
+    ),
+    // swordfish raw
+    (
+      '0270-pan-seared-swordfish-steaks.yaml',
+      '2 pounds skinless swordfish steaks, ¾ to 1 inch thick',
+      173703,
+      907.18,
+    ),
+    (
+      '0649-grilled-fish-tacos.yaml',
+      '2 pounds skinless swordfish steaks, 1 inch thick, cut lengthwise into 1-inch-wide strips',
+      173703,
+      907.18,
+    ),
+    (
+      '0654-grilled-swordfish-skewers-with-tomato-scallion-caponata.yaml',
+      '1½ pounds skinless swordfish steaks, 1¼ to 1½ inches thick, cut into 1¼-inch pieces',
+      173703,
+      680.39,
+    ),
+    // tuna raw
+    (
+      '0271-pan-seared-sesame-crusted-tuna-steaks.yaml',
+      '4 (8-ounce) tuna steaks, preferably yellowfin, about 1 inch thick',
+      2706308,
+      907.18,
+    ),
+    (
+      '0647-grilled-tuna-steaks-with-vinaigrette.yaml',
+      '6 (8-ounce) tuna steaks, 1 inch thick',
+      2706308,
+      1360.78,
+    ),
+    // milk dry nonfat regular
+    (
+      '0778-mexican-hot-chocolate.yaml',
+      '½ cup (1½ ounces) nonfat dry milk powder',
+      172195,
+      42.52,
+    ),
+    (
+      '0801-cinnamon-swirl-bread.yaml',
+      '¾ cup (2¾ ounces) nonfat dry milk powder',
+      172195,
+      77.96,
+    ),
+    // pumpkin canned without salt
+    ('0987-pumpkin-pie.yaml', '1 (15-ounce) can pumpkin puree', 168450, 425.24),
+    (
+      '0784-pumpkin-bread.yaml',
+      '1 (15-ounce) can unsweetened pumpkin puree',
+      168450,
+      425.24,
+    ),
+    // chocolate hazelnut spread
+    (
+      '0923-chocolate-hazelnut-slow-cooker-bread-pudding.yaml',
+      '1 cup Nutella',
+      2710289,
+      320.0,
+    ),
+    ('1207-nutella-tart.yaml', '1¼ cups Nutella', 2710289, 400.0),
+  ];
+
+  test('C3: every line the 13 live searches moved counts on its record, '
+      'over the gate, at the grams snapshot 13 stored (the small piece of '
+      'baguette has none on the bread)', () async {
+    for (final (_, raw, fdcId, grams) in moved) {
+      final row = await computeLine(raw);
+      expect(row.fdcId, fdcId, reason: raw);
+      expect(belowConfidenceGate(row.confidence), isFalse, reason: raw);
+      expect(
+        row.grams,
+        grams == null ? isNull : closeTo(grams, 0.005),
+        reason: raw,
+      );
+    }
+  });
+
+  // (corpus file, line, FDC record): volume lines whose grams snapshot 13
+  // stored from the density table's substring keys — 'milk' and
+  // 'buttermilk' 1.03 g/mL, 'water' 1.0 — which resolveGrams reads BEFORE
+  // the record's own "cup" portions (120 g, "cup slices" 124 g/cup): ½ cup
+  // (1½ ounces) of the same powder weighs 42.5 g in 0778, the table 122 g.
+  // A defect reported with this batch, not fixed here: only the food is
+  // pinned.
+  const densityRead = <(String, String, int)>[
+    (
+      '0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml',
+      '2 teaspoons nonfat dry milk powder',
+      172195,
+    ),
+    (
+      '1114-sweet-cream-ice-cream.yaml',
+      '½ cup plus ⅓ cup nonfat dry milk powder',
+      172195,
+    ),
+    (
+      '0508-shu-mai-steamed-chinese-dumplings.yaml',
+      '¼ cup chopped water chestnuts',
+      170066,
+    ),
+    (
+      '0513-sung-choy-bao-chicken-lettuce-wraps.yaml',
+      '½ cup water chestnuts, cut into ¼-inch pieces',
+      170066,
+    ),
+    (
+      '0750-easy-buttermilk-waffles.yaml',
+      '½ cup dried buttermilk powder',
+      171274,
+    ),
+    ('0868-carrot-layer-cake.yaml', '⅓ cup buttermilk powder', 171274),
+  ];
+
+  test('C4: the dry-milk, buttermilk-powder and water-chestnut volume lines '
+      'land on their records (their grams: see densityRead)', () async {
+    for (final (_, raw, fdcId) in densityRead) {
+      final row = await computeLine(raw);
+      expect(row.fdcId, fdcId, reason: raw);
+      expect(row.gramSource, 'density', reason: raw);
+    }
+  });
+
+  test('C5: every C3 and C4 line is its corpus line — the same raw text, '
+      'item and amounts as the corpus file stores', () {
+    for (final (file, raw) in [
+      for (final (file, raw, _, _) in moved) (file, raw),
+      for (final (file, raw, _) in densityRead) (file, raw),
+    ]) {
+      final recipe = loadCorpusRecipe(file);
+      final stored = [
+        for (final g in recipe.ingredients) ...g.items,
+      ].firstWhere((l) => l.raw == raw, orElse: () => fail('$file: $raw'));
+      final line = corpusLine(raw);
+      expect(line.item, stored.item, reason: raw);
+      expect(line.amounts, stored.amounts, reason: raw);
+    }
+  }, skip: skipIfNoCorpus);
 }

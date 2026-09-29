@@ -1026,7 +1026,8 @@ const Map<String, String> _queryRewrites = {
   'white baking chips': 'white chocolate',
   // Matcher v17 (checkpoint 8, approved live searches): names FDC spells
   // another way, whose right record sat under the gate in every cached
-  // answer. Each target is PENDING one live search (pendingSearches).
+  // answer. Each target was searched live once (snapshot 13) and is
+  // recorded; the pins read FDC's real answer.
   // FDC has no 'baguette': "Bread, French or Vienna" (2707610) scored 0.
   'baguette': 'french bread',
   'crusty baguette': 'french bread',

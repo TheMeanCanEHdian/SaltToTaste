@@ -10667,5 +10667,880 @@
     "description": "roast"
    }
   ]
+ },
+ "168462": {
+  "fdc_id": 168462,
+  "description": "Spinach, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 23.0,
+   "203": 2.86,
+   "204": 0.39,
+   "205": 3.63,
+   "291": 2.2,
+   "269": 0.42,
+   "301": 99.0,
+   "303": 2.71,
+   "304": 79.0,
+   "305": 49.0,
+   "306": 558.0,
+   "307": 79.0,
+   "401": 28.1,
+   "404": 0.078,
+   "405": 0.189,
+   "406": 0.724,
+   "415": 0.195,
+   "432": 194.0,
+   "435": 194.0,
+   "418": 0.0,
+   "320": 469.0,
+   "323": 2.03,
+   "328": 0.0,
+   "430": 482.9,
+   "606": 0.063,
+   "645": 0.01,
+   "646": 0.165,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 340.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "bunch"
+   },
+   {
+    "gram_weight": 10.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 284.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "package (10 oz)"
+   }
+  ]
+ },
+ "169230": {
+  "fdc_id": 169230,
+  "description": "Garlic, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 149.0,
+   "203": 6.36,
+   "204": 0.5,
+   "205": 33.06,
+   "291": 2.1,
+   "269": 1.0,
+   "301": 181.0,
+   "303": 1.7,
+   "304": 25.0,
+   "305": 153.0,
+   "306": 401.0,
+   "307": 17.0,
+   "401": 31.2,
+   "404": 0.2,
+   "405": 0.11,
+   "406": 0.7,
+   "415": 1.235,
+   "432": 3.0,
+   "435": 3.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.08,
+   "328": 0.0,
+   "430": 1.7,
+   "606": 0.089,
+   "645": 0.011,
+   "646": 0.249,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 2.8,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 3.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "clove"
+   },
+   {
+    "gram_weight": 9.0,
+    "amount": 3.0,
+    "unit": null,
+    "description": "cloves"
+   },
+   {
+    "gram_weight": 136.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "169248": {
+  "fdc_id": 169248,
+  "description": "Lettuce, iceberg (includes crisphead types), raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 14.0,
+   "203": 0.9,
+   "204": 0.14,
+   "205": 2.97,
+   "291": 1.2,
+   "269": 1.97,
+   "301": 18.0,
+   "303": 0.41,
+   "304": 7.0,
+   "305": 20.0,
+   "306": 141.0,
+   "307": 10.0,
+   "401": 2.8,
+   "404": 0.041,
+   "405": 0.025,
+   "406": 0.123,
+   "415": 0.042,
+   "432": 29.0,
+   "435": 29.0,
+   "418": 0.0,
+   "320": 25.0,
+   "323": 0.18,
+   "328": 0.0,
+   "430": 24.1,
+   "606": 0.018,
+   "645": 0.006,
+   "646": 0.074,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 57.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, chopped (1/2\" pieces, loosely packed)"
+   },
+   {
+    "gram_weight": 755.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "head, large"
+   },
+   {
+    "gram_weight": 539.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "head, medium (6\" dia)"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf, large"
+   },
+   {
+    "gram_weight": 72.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup shredded"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf, small"
+   },
+   {
+    "gram_weight": 324.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "head, small"
+   },
+   {
+    "gram_weight": 89.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "NLEA Serving"
+   },
+   {
+    "gram_weight": 8.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf, medium"
+   }
+  ]
+ },
+ "169975": {
+  "fdc_id": 169975,
+  "description": "Cabbage, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 25.0,
+   "203": 1.28,
+   "204": 0.1,
+   "205": 5.8,
+   "291": 2.5,
+   "269": 3.2,
+   "301": 40.0,
+   "303": 0.47,
+   "304": 12.0,
+   "305": 26.0,
+   "306": 170.0,
+   "307": 18.0,
+   "401": 36.6,
+   "404": 0.061,
+   "405": 0.04,
+   "406": 0.234,
+   "415": 0.124,
+   "432": 43.0,
+   "435": 43.0,
+   "418": 0.0,
+   "320": 5.0,
+   "323": 0.15,
+   "328": 0.0,
+   "430": 76.0,
+   "606": 0.034,
+   "645": 0.017,
+   "646": 0.017,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 33.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf, large"
+   },
+   {
+    "gram_weight": 908.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "head, medium (about 5-3/4\" dia)"
+   },
+   {
+    "gram_weight": 89.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, chopped"
+   },
+   {
+    "gram_weight": 70.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, shredded"
+   },
+   {
+    "gram_weight": 23.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf, medium"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf"
+   },
+   {
+    "gram_weight": 1248.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "head, large (about 7\" dia)"
+   },
+   {
+    "gram_weight": 714.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "head, small (about 4-1/2\" dia)"
+   }
+  ]
+ },
+ "169979": {
+  "fdc_id": 169979,
+  "description": "Cabbage, chinese (pe-tsai), raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 16.0,
+   "203": 1.2,
+   "204": 0.2,
+   "205": 3.23,
+   "291": 1.2,
+   "269": 1.41,
+   "301": 77.0,
+   "303": 0.31,
+   "304": 13.0,
+   "305": 29.0,
+   "306": 238.0,
+   "307": 9.0,
+   "401": 27.0,
+   "404": 0.04,
+   "405": 0.05,
+   "406": 0.4,
+   "415": 0.232,
+   "432": 79.0,
+   "435": 79.0,
+   "418": 0.0,
+   "320": 16.0,
+   "323": 0.12,
+   "328": 0.0,
+   "430": 42.9,
+   "606": 0.043,
+   "645": 0.023,
+   "646": 0.072,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 76.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, shredded"
+   }
+  ]
+ },
+ "169988": {
+  "fdc_id": 169988,
+  "description": "Celery, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 14.0,
+   "203": 0.69,
+   "204": 0.17,
+   "205": 2.97,
+   "291": 1.6,
+   "269": 1.34,
+   "301": 40.0,
+   "303": 0.2,
+   "304": 11.0,
+   "305": 24.0,
+   "306": 260.0,
+   "307": 80.0,
+   "401": 3.1,
+   "404": 0.021,
+   "405": 0.057,
+   "406": 0.32,
+   "415": 0.074,
+   "432": 36.0,
+   "435": 36.0,
+   "418": 0.0,
+   "320": 22.0,
+   "323": 0.27,
+   "328": 0.0,
+   "430": 29.3,
+   "606": 0.042,
+   "645": 0.032,
+   "646": 0.079,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 7.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 40.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "stalk, medium (7-1/2\" - 8\" long)"
+   },
+   {
+    "gram_weight": 17.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "stalk, small (5\" long)"
+   },
+   {
+    "gram_weight": 101.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup chopped"
+   },
+   {
+    "gram_weight": 4.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "strip (4\" long)"
+   },
+   {
+    "gram_weight": 110.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "NLEA serving"
+   },
+   {
+    "gram_weight": 64.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "stalk, large (11\"-12\" long)"
+   }
+  ]
+ },
+ "170182": {
+  "fdc_id": 170182,
+  "description": "Nuts, pecans",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 691.0,
+   "203": 9.17,
+   "204": 71.97,
+   "205": 13.86,
+   "291": 9.6,
+   "269": 3.97,
+   "301": 70.0,
+   "303": 2.53,
+   "304": 121.0,
+   "305": 277.0,
+   "306": 410.0,
+   "307": 0.0,
+   "401": 1.1,
+   "404": 0.66,
+   "405": 0.13,
+   "406": 1.167,
+   "415": 0.21,
+   "432": 22.0,
+   "435": 22.0,
+   "418": 0.0,
+   "320": 3.0,
+   "323": 1.4,
+   "328": 0.0,
+   "430": 3.5,
+   "606": 6.18,
+   "645": 40.801,
+   "646": 21.614,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz (19 halves)"
+   },
+   {
+    "gram_weight": 109.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, chopped"
+   },
+   {
+    "gram_weight": 99.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, halves"
+   }
+  ]
+ },
+ "170393": {
+  "fdc_id": 170393,
+  "description": "Carrots, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 41.0,
+   "203": 0.93,
+   "204": 0.24,
+   "205": 9.58,
+   "291": 2.8,
+   "269": 4.74,
+   "301": 33.0,
+   "303": 0.3,
+   "304": 12.0,
+   "305": 35.0,
+   "306": 320.0,
+   "307": 69.0,
+   "401": 5.9,
+   "404": 0.066,
+   "405": 0.058,
+   "406": 0.983,
+   "415": 0.138,
+   "432": 19.0,
+   "435": 19.0,
+   "418": 0.0,
+   "320": 835.0,
+   "323": 0.66,
+   "328": 0.0,
+   "430": 13.2,
+   "606": 0.032,
+   "645": 0.012,
+   "646": 0.102,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 110.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup grated"
+   },
+   {
+    "gram_weight": 3.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice"
+   },
+   {
+    "gram_weight": 7.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "strip large (3\" long)"
+   },
+   {
+    "gram_weight": 50.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small (5-1/2\" long)"
+   },
+   {
+    "gram_weight": 61.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium"
+   },
+   {
+    "gram_weight": 72.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large (7-1/4\" to 8-/1/2\" long)"
+   },
+   {
+    "gram_weight": 128.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup chopped"
+   },
+   {
+    "gram_weight": 4.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "strip medium"
+   },
+   {
+    "gram_weight": 122.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup strips or slices"
+   }
+  ]
+ },
+ "170066": {
+  "fdc_id": 170066,
+  "description": "Waterchestnuts, chinese, (matai), raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 97.0,
+   "203": 1.4,
+   "204": 0.1,
+   "205": 23.94,
+   "291": 3.0,
+   "269": 4.8,
+   "301": 11.0,
+   "303": 0.06,
+   "304": 22.0,
+   "305": 63.0,
+   "306": 584.0,
+   "307": 14.0,
+   "401": 4.0,
+   "404": 0.14,
+   "405": 0.2,
+   "406": 1.0,
+   "415": 0.328,
+   "432": 16.0,
+   "435": 16.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 1.2,
+   "328": 0.0,
+   "430": 0.3,
+   "606": 0.026,
+   "645": 0.002,
+   "646": 0.043,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 36.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "waterchestnuts"
+   },
+   {
+    "gram_weight": 62.0,
+    "amount": 0.5,
+    "unit": null,
+    "description": "cup slices"
+   }
+  ]
+ },
+ "171274": {
+  "fdc_id": 171274,
+  "description": "Milk, buttermilk, dried",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 387.0,
+   "203": 34.3,
+   "204": 5.78,
+   "205": 49.0,
+   "291": 0.0,
+   "269": 49.0,
+   "301": 1184.0,
+   "303": 0.3,
+   "304": 110.0,
+   "305": 933.0,
+   "306": 1592.0,
+   "307": 517.0,
+   "401": 5.7,
+   "404": 0.392,
+   "405": 1.579,
+   "406": 0.876,
+   "415": 0.338,
+   "432": 47.0,
+   "435": 47.0,
+   "418": 3.82,
+   "320": 49.0,
+   "323": 0.1,
+   "328": 0.5,
+   "430": 0.4,
+   "606": 3.598,
+   "645": 1.669,
+   "646": 0.215,
+   "601": 69.0
+  },
+  "portions": [
+   {
+    "gram_weight": 120.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": 0.25,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 6.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "172195": {
+  "fdc_id": 172195,
+  "description": "Milk, dry, nonfat, regular, with added vitamin A and vitamin D",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 362.0,
+   "203": 36.16,
+   "204": 0.77,
+   "205": 51.98,
+   "291": 0.0,
+   "269": 51.98,
+   "301": 1257.0,
+   "303": 0.32,
+   "304": 110.0,
+   "305": 968.0,
+   "306": 1794.0,
+   "307": 535.0,
+   "401": 6.8,
+   "404": 0.415,
+   "405": 1.55,
+   "406": 0.951,
+   "415": 0.361,
+   "432": 50.0,
+   "435": 50.0,
+   "418": 4.03,
+   "320": 653.0,
+   "323": 0.0,
+   "328": 11.0,
+   "430": 0.1,
+   "606": 0.499,
+   "645": 0.2,
+   "646": 0.03,
+   "601": 20.0
+  },
+  "portions": [
+   {
+    "gram_weight": 120.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": 0.25,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "2710289": {
+  "fdc_id": 2710289,
+  "description": "Chocolate hazelnut spread",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 5.41,
+   "204": 29.7,
+   "205": 62.4,
+   "208": 539.0,
+   "269": 54.0,
+   "291": 5.4,
+   "301": 108.0,
+   "303": 4.38,
+   "304": 64.0,
+   "305": 152.0,
+   "306": 407.0,
+   "307": 41.0,
+   "320": 1.0,
+   "323": 4.96,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.085,
+   "405": 0.17,
+   "406": 0.427,
+   "415": 0.082,
+   "418": 0.27,
+   "430": 1.9,
+   "432": 14.0,
+   "435": 14.0,
+   "601": 0.0,
+   "606": 28.4,
+   "645": 0.0,
+   "646": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 40.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 20.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 40.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per sandwich"
+   },
+   {
+    "gram_weight": 20.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per slice of bread/roll"
+   }
+  ]
+ },
+ "169717": {
+  "fdc_id": 169717,
+  "description": "Tapioca, pearl, dry",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 358.0,
+   "203": 0.19,
+   "204": 0.02,
+   "205": 88.69,
+   "291": 0.9,
+   "269": 3.35,
+   "301": 20.0,
+   "303": 1.58,
+   "304": 1.0,
+   "305": 7.0,
+   "306": 11.0,
+   "307": 1.0,
+   "401": 0.0,
+   "404": 0.004,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.008,
+   "432": 4.0,
+   "435": 4.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.005,
+   "645": 0.005,
+   "646": 0.003,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 152.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "167853": {
+  "fdc_id": 167853,
+  "description": "Pork, fresh, spareribs, separable lean and fat, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 277.0,
+   "203": 15.47,
+   "204": 23.4,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 15.0,
+   "303": 0.91,
+   "304": 16.0,
+   "305": 141.0,
+   "306": 242.0,
+   "307": 81.0,
+   "401": 0.0,
+   "404": 0.319,
+   "405": 0.251,
+   "406": 4.662,
+   "415": 0.574,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.38,
+   "320": 0.0,
+   "323": 0.37,
+   "328": 2.3,
+   "430": 0.0,
+   "606": 7.529,
+   "645": 8.542,
+   "646": 3.953,
+   "605": 0.222,
+   "601": 80.0
+  },
+  "portions": [
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
  }
 }
