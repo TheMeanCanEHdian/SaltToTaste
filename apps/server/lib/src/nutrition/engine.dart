@@ -83,14 +83,16 @@ enum DiscardedMedium {
   /// meat keeps.
   brine,
 
-  /// Brine sugar ("for brining", or ¼ cup or more a step brines in): always
-  /// review — how much a brine's sugar leaves on the meat nothing says
-  /// (audit 3: 16 lines, 2,400 g; 22 with the brines whose salt is not a
-  /// counted line).
+  /// Brine sugar ("for brining", or ¼ cup or more a step brines in, or a
+  /// co-solute of a submerge brine): zeroed like the brine's salt under the
+  /// policy — the user's ruling R3, 2026-09-28 (it was always review: 22
+  /// held lines, every one in a brine the food is lifted out of).
   brineSugar,
 
   /// ¼ cup or more of salt no step brines in or rubs on: a salt bed, an ice
-  /// bath, a dunk (Salt-Baked Potatoes, a gelato's ice bath). Always review.
+  /// bath, a dunk (Salt-Baked Potatoes, a gelato's ice bath); and salt
+  /// tossed with a vegetable and rinsed off ([_rinsedSalt], R2). Always
+  /// review.
   saltBath,
 
   /// A soak: "for soaking", or 4+ cups of buttermilk a step brines or soaks
@@ -98,7 +100,8 @@ enum DiscardedMedium {
   soak,
 
   /// Milk made into cheese (4+ cups, a whey or curds step): only the curds
-  /// are eaten, in an amount nothing on the line says — always review.
+  /// are eaten, in an amount nothing on the line says — always review; so
+  /// are the salt, acid and buttermilk put in it ([_intoCheeseMilk], R2).
   cheeseMilk,
 
   /// Salt or baking soda a step puts in boiling water that is then drained
@@ -106,12 +109,17 @@ enum DiscardedMedium {
   /// baking-soda skinning bath (11,287 mg sodium a serving counted,
   /// checkpoint 6). How much the food keeps nothing says — always review,
   /// like a salt bath. Water the food absorbs, and a pot no step drains,
-  /// count in full.
+  /// count in full. A skimmer or slotted spoon empties a pot too — of its
+  /// sugar as well (New York Bagels, 0810) — a divided line's WRITTEN share
+  /// is held with the rest as its grams, and a brine the food then poaches
+  /// in holds its co-solutes ([_brineCoSolute]) — the user's ruling R2,
+  /// 2026-09-28.
   cookingWater;
 
   /// Whether [discardedMediaPolicy] decides how it counts; the others are
   /// always held for a person.
-  bool get followsPolicy => this == fryingOil || this == brine || this == soak;
+  bool get followsPolicy =>
+      this == fryingOil || this == brine || this == brineSugar || this == soak;
 }
 
 /// How a discarded medium counts.
@@ -244,8 +252,23 @@ DiscardedMedium? discardedMediumOf(
             _dissolvedInWater(recipe, line, steps))) {
       return DiscardedMedium.brine;
     }
-    if (head == 'salt' && bySentence && _drainedWater(recipe, line, steps)) {
+    // Sugar in the pot too: New York Bagels (0810) boils its bagels in "4
+    // quarts water, sugar, and baking soda" and lifts them out with a wire
+    // skimmer — the sugar leaves with the water, like the soda (R2).
+    if (bySentence && _drainedWater(recipe, line, steps)) {
       return DiscardedMedium.cookingWater;
+    }
+    if (head == 'salt' && bySentence && _rinsedSalt(recipe, line, steps)) {
+      return DiscardedMedium.saltBath;
+    }
+    if (bySentence && _intoCheeseMilk(recipe, line, head!, steps)) {
+      return DiscardedMedium.cheeseMilk;
+    }
+    if (head == 'sugar' && bySentence) {
+      final coSolute = _brineCoSolute(recipe, line, head!, steps);
+      if (coSolute != null) {
+        return coSolute;
+      }
     }
     // A rub the meat keeps, like a dry brine: pork shoulder's overnight
     // salt-sugar rub, gravlax, a salted turkey.
@@ -273,11 +296,216 @@ DiscardedMedium? discardedMediumOf(
   if (head == 'soda' && bySentence && _drainedWater(recipe, line, steps)) {
     return DiscardedMedium.cookingWater;
   }
+  if (!bySentence) {
+    return null;
+  }
+  if (head == null) {
+    // "8 whole cloves" names no head noun — 'cloves' is how garlic is
+    // counted — yet Oven-Roasted Pork Chops (0202) adds "the garlic, bay
+    // leaves, cloves, and peppercorns" to its brine: the item's last word
+    // is the food there ([_names] never reads it in "garlic cloves").
+    return _brineCoSolute(recipe, line, normalized.split(' ').last, steps);
+  }
+  if (_intoCheeseMilk(recipe, line, head, steps)) {
+    return DiscardedMedium.cheeseMilk;
+  }
+  return _brineCoSolute(recipe, line, head, steps);
+}
+
+/// The fraction of [line] its [_drainedMention]'s written pot share is
+/// (1½ of 2 teaspoons: 0.75), or null when the whole line goes in the pot.
+double? _potShareOf(Recipe recipe, IngredientLine line) {
+  final share = _drainedMention(recipe, line, _stepsOf(recipe))?.share;
+  final own = volumeMlOf(line.amounts);
+  final part = share == null
+      ? null
+      : volumeMlOf(parseIngredientLine('$share salt').amounts);
+  return own == null || part == null ? null : part / own;
+}
+
+/// The first line of [recipe] whose head noun is [head] — a recipe lists a
+/// food where it is first used, so a second line of it ("1 cup buttermilk"
+/// for Saag Paneer's sauce, after the cheese's 3 cups) is used later.
+bool _firstOfItsHead(Recipe recipe, IngredientLine line, String head) =>
+    identical(
+      nutritionLines(recipe).firstWhere(
+        (other) => headNounOf(normalizeItem(lineItemOf(other))) == head,
+        orElse: () => line,
+      ),
+      line,
+    );
+
+/// Whether [head] (a key-form noun) is written in [text] as a word.
+/// A head in -y is written -ies ("allspice berries", Home-Corned Beef,
+/// 0091), and "garlic cloves" never names the spice 'clove'.
+bool _names(String text, String head) {
+  final word = RegExp.escape(head);
+  final stem = RegExp.escape(head.substring(0, head.length - 1));
+  final plural = head.endsWith('y') ? '(?:$word|${stem}ies)' : '$word(?:s|es)?';
+  return RegExp('(?<!garlic )\\b$plural\\b').hasMatch(text);
+}
+
+/// A co-solute of a brine the food is submerged in and lifted out of — the
+/// user's ruling R3, 2026-09-28: sugar and aromatics go to zero like the
+/// brine's salt. The line's head is named, before the step's "submerg", in
+/// a sentence naming the salt or opening "add": "Dissolve salt and sugar in
+/// 1 quart cold water … Submerge shrimp in brine" (Ultimate Shrimp Scampi,
+/// 0428); "Dissolve the salt, sugar, and paprika in the buttermilk … Add the
+/// garlic and bay leaves, submerge the chicken in the brine" (Crispy Fried
+/// Chicken, 0148); "Add the garlic, bay leaves, and crushed peppercorns"
+/// (Roast Fresh Ham, 0249) — whether or not the brine's salt is a line of
+/// its own ("Dissolve sugar and 1 tablespoon salt in 1 quart cold water",
+/// Garlicky Shrimp, Tomato, and White Bean Stew, 0429, salts from "Salt and
+/// pepper"). The submerged food is never one, nor what the submerge's own
+/// sentence adds TO the brine ("Add cremini mushrooms and shiitake mushrooms
+/// to brine, cover with plate or bowl to submerge", Roasted Mushrooms, 0688),
+/// nor a second
+/// line of the same food (the rub's garlic). A brine the food then POACHES
+/// in is a cooking liquid ([DiscardedMedium.cookingWater], held — R2: Perfect
+/// Poached Chicken Breasts, 0112, whisks soy sauce, sugar and garlic into
+/// it). A dunk that leaves the liquid on the food (Grilled Cauliflower,
+/// 0656: "dunk … do not dry") submerges nothing, and stays as it was.
+DiscardedMedium? _brineCoSolute(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+  List<String> steps,
+) => _brineCoSoluteMention(recipe, line, head, steps)?.medium;
+
+/// The [_brineCoSolute] of [line] and the sentence naming it. Weighing the
+/// food down submerges it too: Home-Corned Beef (0091) dissolves its salt,
+/// sugar and curing salt in 4 quarts water, then "Add brisket, 3 garlic
+/// cloves, 4 bay leaves, allspice berries, 1 tablespoon peppercorns, and
+/// coriander seeds to brine. Weigh brisket down with plate" and later
+/// removes it from the brine — what a sentence adds to the brine BEFORE the
+/// submerge's own sentence is in it; the food is what is weighed down.
+({DiscardedMedium medium, String sentence})? _brineCoSoluteMention(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+  List<String> steps,
+) {
+  if (!_firstOfItsHead(recipe, line, head)) {
+    return null;
+  }
+  final marker = RegExp(r'submerg|\bweigh\w*\s+\w+\s+down\b');
+  for (final step in steps) {
+    final text = step.toLowerCase();
+    final submerge = marker.firstMatch(text);
+    if (submerge == null || !RegExp(r'\bbrine\b').hasMatch(text)) {
+      continue;
+    }
+    final object = _sentenceAt(text, submerge.start);
+    if (_names(object.substring(object.indexOf(submerge[0]!)), head)) {
+      return null;
+    }
+    final sentences = text
+        .substring(0, submerge.start)
+        .split(RegExp(r'(?<=\.)\s+'));
+    for (final (i, sentence) in sentences.indexed) {
+      if (!_names(sentence, head) ||
+          (i == sentences.length - 1 &&
+              sentence.contains(RegExp(r'\bto (the )?brine\b'))) ||
+          !(sentence.contains(RegExp(r'\bsalt\b')) ||
+              sentence.trimLeft().startsWith('add'))) {
+        continue;
+      }
+      final poached = RegExp(r'\bpoach').hasMatch(recipe.title.toLowerCase());
+      return (
+        medium: poached
+            ? DiscardedMedium.cookingWater
+            : head == 'sugar'
+            ? DiscardedMedium.brineSugar
+            : DiscardedMedium.brine,
+        sentence: sentence,
+      );
+    }
+  }
   return null;
 }
 
-/// The mentions of [line]'s own salt or baking soda in [steps]: each step
-/// and the offset of a mention that is THIS line's — its amount written
+/// The fraction of [line] a [_brineCoSoluteMention] writes as the brine's
+/// share — "3 garlic cloves" of "6 garlic cloves, peeled", "1 tablespoon
+/// peppercorns" of "2 tablespoons peppercorns" (0091: the rest go in the
+/// pot with the brisket) — or null when the whole line goes in.
+double? _brineShareOf(Recipe recipe, IngredientLine line, String? head) {
+  if (head == null) {
+    return null;
+  }
+  final sentence = _brineCoSoluteMention(
+    recipe,
+    line,
+    head,
+    _stepsOf(recipe),
+  )?.sentence;
+  final written = sentence == null
+      ? null
+      : RegExp(
+          '([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]*\\s+'
+          '(?:[a-z]+\\s+)?)${RegExp.escape(head)}',
+        ).firstMatch(sentence)?[1];
+  if (written == null) {
+    return null;
+  }
+  final part = parseIngredientLine('$written${lineItemOf(line)}').amounts;
+  final volume = volumeMlOf(line.amounts) != null;
+  final own = volume ? volumeMlOf(line.amounts) : countOf(line.amounts);
+  final share = volume ? volumeMlOf(part) : countOf(part);
+  // Never more than the line: its grams are never negative.
+  return own == null || share == null || share >= own ? null : share / own;
+}
+
+/// Whether [line] goes into the milk of a [DiscardedMedium.cheeseMilk] line
+/// of [recipe] — its salt, its acid, its buttermilk: named in the step that
+/// first names the milk, whose whey drains (the user's ruling R2: Saag
+/// Paneer, 0563, "Whisk in buttermilk and salt … let curds drain"; Homemade
+/// Ricotta, 0380, "Heat milk and salt", its lemon juice and vinegar). Held
+/// with it: how much the curds keep nothing says.
+bool _intoCheeseMilk(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+  List<String> steps,
+) {
+  if (!_firstOfItsHead(recipe, line, head)) {
+    return false;
+  }
+  final cheese = nutritionLines(recipe).any((other) {
+    final item = normalizeItem(lineItemOf(other));
+    return headNounOf(item) == 'milk' &&
+        discardedMediumOf(recipe, other, item, bySentence: false) ==
+            DiscardedMedium.cheeseMilk;
+  });
+  if (!cheese) {
+    return false;
+  }
+  final step = steps
+      .map((s) => s.toLowerCase())
+      .firstWhere((s) => RegExp(r'\bmilk\b').hasMatch(s), orElse: () => '');
+  return _names(step, head);
+}
+
+/// Whether a step tosses [line]'s salt with a vegetable in a colander and
+/// a rinse in that step washes it off (the user's ruling R2: Sesame-Lemon
+/// Cucumber Salad, 0052, "Toss the cucumbers with the salt in a colander …
+/// drain for 1 to 3 hours. Rinse and pat dry"). (A bowl, a rinse in the
+/// next step, "do not rinse", requiring the word "toss" and requiring the
+/// rinse AFTER the salt changed no line of the library: Bread-and-Butter
+/// Pickles, 0664, tosses in a bowl and does not rinse.)
+bool _rinsedSalt(Recipe recipe, IngredientLine line, List<String> steps) {
+  for (final (:step, :at, share: _) in _ownMentions(recipe, line, steps)) {
+    final text = steps[step].toLowerCase();
+    final sentence = _sentenceAt(text, at);
+    if (sentence.contains(RegExp(r'\bcolander\b')) &&
+        RegExp(r'\brins').hasMatch(text)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// The mentions of [line]'s own salt, baking soda or sugar in [steps]: each
+/// step and the offset of a mention that is THIS line's — its amount written
 /// before it ("Add pasta and 1 tablespoon salt" for "1 tablespoon salt"),
 /// or a bare "salt" when no other line of [recipe] is salt ("Add the
 /// noodles and salt") — or, for [drained] water, when the line is the one
@@ -292,7 +520,7 @@ DiscardedMedium? discardedMediumOf(
 /// line in full. ("plus more", a kind of salt or a cup before the mention,
 /// and requiring the other salt lines to be measured changed no line of the
 /// library: removed, refix round 2.)
-Iterable<({int step, int at})> _ownMentions(
+Iterable<({int step, int at, String? share})> _ownMentions(
   Recipe recipe,
   IngredientLine line,
   List<String> steps, {
@@ -302,13 +530,16 @@ Iterable<({int step, int at})> _ownMentions(
   if (RegExp(r'\bplus salt\b').hasMatch(raw)) {
     return;
   }
-  final soda = headNounOf(normalizeItem(lineItemOf(line))) == 'soda';
-  final word = RegExp(soda ? r'\bbaking soda\b' : r'\bsalt\b(?!\s+pork)');
+  final own = headNounOf(normalizeItem(lineItemOf(line)));
+  final kind = own == 'soda' || own == 'sugar' ? own! : 'salt';
+  final word = RegExp(switch (kind) {
+    'soda' => r'\bbaking soda\b',
+    'sugar' => r'\bsugar\b',
+    _ => r'\bsalt\b(?!\s+pork)',
+  });
   final salts = [
     for (final other in nutritionLines(recipe))
-      if (headNounOf(normalizeItem(lineItemOf(other))) ==
-          (soda ? 'soda' : 'salt'))
-        other,
+      if (headNounOf(normalizeItem(lineItemOf(other))) == kind) other,
   ];
   final amount = RegExp(
     '([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]*'
@@ -353,11 +584,45 @@ Iterable<({int step, int at})> _ownMentions(
   final ownsBare = salts.length == 1
       ? identical(salts.single, line)
       : drained && bare.length == 1 && identical(bare.single, line);
-  for (final (:step, :at, :written) in mentions) {
-    if (written != null ? raw.startsWith(written) : ownsBare) {
-      yield (step: step, at: at);
+  // Several bare lines and as many bare mentions: a recipe lists a salt
+  // where it is first used, so the nth mention is the nth line's (Biang
+  // Biang Mian, 0376: "Whisk flour and salt" is the dough's ¾ teaspoon,
+  // "bring water and salt to boil" the pot's tablespoon — the user's
+  // ruling R2).
+  final bareMentions = [
+    for (final (i, m) in mentions.indexed)
+      if (m.written == null) i,
+  ];
+  final nth = bare.indexWhere((other) => identical(other, line));
+  final paired = drained && bareMentions.length == bare.length && nth >= 0
+      ? bareMentions[nth]
+      : null;
+  for (final (i, (:step, :at, :written)) in mentions.indexed) {
+    if (written != null ? raw.startsWith(written) : ownsBare || i == paired) {
+      yield (step: step, at: at, share: null);
+    } else if (drained && written != null && _isShare(line, written, salts)) {
+      // The WRITTEN pot share of a divided line (the user's ruling R2,
+      // 2026-09-28): "Add the remaining 1½ teaspoons salt and the macaroni
+      // … Drain" (Stovetop Macaroni and Cheese, 0301, of "2 teaspoons table
+      // salt"), "1 teaspoon of the salt" (Cincinnati Chili, 0303), "½
+      // teaspoon salt" of "1¼ teaspoons table salt, divided" (Broccoli
+      // Salad with Creamy Avocado Dressing, 1073).
+      yield (step: step, at: at, share: written);
     }
   }
+}
+
+/// Whether [written] (an amount a step writes before its salt) is a smaller
+/// share of [line] that no other of [salts] starts with. (Requiring the
+/// line marked divided or the step's "of the" / "remaining" changed no line
+/// of the library: removed, v13 refix.)
+bool _isShare(IngredientLine line, String written, List<IngredientLine> salts) {
+  final own = volumeMlOf(line.amounts);
+  final part = volumeMlOf(parseIngredientLine('$written salt').amounts);
+  if (own == null || part == null || part >= own) {
+    return false;
+  }
+  return !salts.any((other) => other.raw.toLowerCase().startsWith(written));
 }
 
 /// The sentence of [text] holding offset [at].
@@ -377,10 +642,42 @@ String _sentenceAt(String text, int at) {
 /// a drain follows it, AFTER the mention in that step
 /// or in the next ("Drain the noodles"; not "do not drain"): the water
 /// leaves with its salt ([DiscardedMedium.cookingWater]).
-bool _drainedWater(Recipe recipe, IngredientLine line, List<String> steps) {
+bool _drainedWater(Recipe recipe, IngredientLine line, List<String> steps) =>
+    _drainedMention(recipe, line, steps) != null;
+
+/// The [_drainedWater] mention of [line]: its written pot share ([_isShare],
+/// null when the line's whole amount goes in the pot), or null for none.
+({String? share})? _drainedMention(
+  Recipe recipe,
+  IngredientLine line,
+  List<String> steps,
+) {
   final water = RegExp(r'\bwater\b');
   final drain = RegExp(r'(?<!not )\bdrain');
-  for (final (:step, :at) in _ownMentions(
+  // Sugar only in a pot a skimmer empties (New York Bagels, 0810): a drain
+  // after it keeps the liquid (Austrian-Style Potato Salad, 0056, "reserving
+  // the cooking liquid"), drains a jar (Bread-and-Butter Pickles, 0664) or
+  // another pot (Brown Rice Bowls, 0104, whose sugar is a dressing's).
+  final sugar = headNounOf(normalizeItem(lineItemOf(line))) == 'sugar';
+  // A pot emptied with a skimmer or a slotted spoon leaves its water behind
+  // like a drain (the user's ruling R2: Thick-Cut Sweet Potato Fries, 0318)
+  // — in the next step only when its sentence or the one before it names
+  // the water (Biang Biang Mian, 0376, "Add half of noodles to water and
+  // cook … Using wire skimmer, transfer noodles"): Vegetable Bibimbap's
+  // (0512) next step lifts carrots from a skillet with one, while its salt
+  // boils in the rice's own water.
+  final skimmer = RegExp(r'\b(skimmer|slotted spoon)\b');
+  bool lifted(String text) => skimmer.allMatches(text).any((m) {
+    final start = text.lastIndexOf(RegExp(r'\.\s'), m.start);
+    final previous = start < 0
+        ? 0
+        : text.lastIndexOf(RegExp(r'\.\s'), start - 1) + 1;
+    final end = text.indexOf(RegExp(r'\.(\s|$)'), m.start);
+    return water.hasMatch(
+      text.substring(previous, end < 0 ? text.length : end),
+    );
+  });
+  for (final (:step, :at, :share) in _ownMentions(
     recipe,
     line,
     steps,
@@ -398,11 +695,14 @@ bool _drainedWater(Recipe recipe, IngredientLine line, List<String> steps) {
       continue;
     }
     final next = step + 1 < steps.length ? steps[step + 1].toLowerCase() : '';
-    if (drain.hasMatch(text.substring(at)) || drain.hasMatch(next)) {
-      return true;
+    if ((!sugar &&
+            (drain.hasMatch(text.substring(at)) || drain.hasMatch(next))) ||
+        skimmer.hasMatch(text.substring(at)) ||
+        lifted(next)) {
+      return (share: share);
     }
   }
-  return false;
+  return null;
 }
 
 /// Whether a step dissolves [line]'s salt ([_ownMentions]) in a measured
@@ -431,7 +731,7 @@ bool _dissolvedInWater(
   // and salt in 8-cup liquid measuring cup", Popovers 1109).
   final verb = RegExp(r'\bdissolv\w*\b');
   final into = RegExp('\\bin [\\d$vulgarFractionChars]');
-  for (final (:step, :at) in _ownMentions(recipe, line, steps)) {
+  for (final (:step, :at, share: _) in _ownMentions(recipe, line, steps)) {
     final text = steps[step].toLowerCase();
     if (!text.contains('submerg')) {
       continue;
@@ -525,13 +825,28 @@ bool _dissolvedWithBrineSalt(
   final plus = medium == null
       ? null
       : _eatenPlusPart(recipe, line, headNounOf(normalized));
-  final kept = plus == null
+  // A divided line's written pot or brine share: the rest of the line is
+  // eaten.
+  final share = plus != null
       ? null
-      : resolveGrams(
+      : medium == DiscardedMedium.cookingWater
+      ? _potShareOf(recipe, line)
+      : medium == DiscardedMedium.brine || medium == DiscardedMedium.brineSugar
+      ? _brineShareOf(recipe, line, headNounOf(normalized))
+      : null;
+  final kept = plus != null
+      ? resolveGrams(
           amounts: [plus.amount],
           food: food,
           normalizedItem: normalized,
-        );
+        )
+      : share != null && resolved != null
+      ? GramResolution(
+          grams: resolved.grams * (1 - share),
+          source: GramSource.discarded,
+          basis: resolved.basis,
+        )
+      : null;
   if (medium != null &&
       medium.followsPolicy &&
       discardedMediaPolicy == DiscardedMediaPolicy.zero) {
@@ -615,6 +930,69 @@ bool _dissolvedWithBrineSalt(
     hold: hold,
   );
 }
+
+/// The note a [isSubRecipeReference] line is stored under.
+const String subRecipeNote =
+    'Sub-recipe — made from its own recipe, not counted in these totals';
+
+/// Whether the line [raw] names a sub-recipe the recipe makes apart — "1
+/// recipe Simple Tomato Sauce (recipe follows)" (Lighter Chicken Parmesan,
+/// 0416), "10 cups Vanilla Frosting (recipe follows)" (Rainbow Cake, 1201),
+/// "1 recipe Buttery Croutons (this page)": such a line is never counted on
+/// a food (the user's ruling, 2026-09-27; v12 counted 8 of them, the
+/// frosting at 2,082 g of a ready-to-eat one). The mark is "recipe(s)
+/// follow(s)" in the line's first alternative, or "(… this page)" before
+/// its first comma — "shrimp, peeled and deveined (see this page)" points
+/// at a technique, not a recipe — or either anywhere on a line that opens
+/// "<n> recipe" ("1 recipe flavored butter or vinaigrette (recipes
+/// follow)"). A food offered first stays that food: "½ teaspoon table salt
+/// or 1 recipe topping (recipes follow)" is the salt.
+bool isSubRecipeReference(String raw) {
+  final text = raw.toLowerCase();
+  final follows = RegExp(r'\brecipes? follows?\b');
+  final page = RegExp(r'\([^)]*\bthis page\b');
+  if (RegExp(
+    '^\\s*[\\d$vulgarFractionChars/ .-]+\\s*recipes?\\b',
+  ).hasMatch(text)) {
+    return follows.hasMatch(text) || page.hasMatch(text);
+  }
+  final first = text.split(RegExp(r'\s+or\s+')).first;
+  return follows.hasMatch(first) || page.hasMatch(first.split(',').first);
+}
+
+/// Whether the [isSubRecipeReference] line [line] is a number of a food the
+/// recipe prepares by the referenced technique rather than a batch of
+/// something it makes: every amount a bare count, with no unit. "3
+/// hard-cooked eggs (recipe follows)" (Wilted Spinach Salad, 0040), "4
+/// Easy-Peel Hard-Cooked Eggs (this page)" (Gado-Gado, 1192) — v13 zeroed
+/// 150 to 200 g of eggs each — not "1 recipe Easy-Peel Hard-Cooked Eggs"
+/// (the unit `recipe`), "4 cups Cream Cheese Frosting", "4 ounces Simple
+/// Syrup". Such a line is matched like any other (a pick below the gate is
+/// held for review like any other); one its pick gives no grams stays the
+/// 0 g sub-recipe — "8 Home-Fried Taco Shells (recipe follows)" (Ground
+/// Beef Tacos, 0478) on "Taco shells, baked".
+bool subRecipeCountsItsFood(IngredientLine line) =>
+    line.amounts.isNotEmpty && line.amounts.every((a) => a.unit == null);
+
+/// The row a sub-recipe line is stored under: on no food, 0 g unmeasured.
+IngredientMatchRow _subRecipeRow(
+  Recipe recipe,
+  int position,
+  IngredientLine line,
+  String key,
+) => IngredientMatchRow(
+  recipeId: recipe.id,
+  position: position,
+  raw: line.raw,
+  itemKey: key,
+  fdcId: null,
+  description: subRecipeNote,
+  dataType: null,
+  confidence: 1,
+  grams: 0,
+  gramSource: GramSource.unmeasured.name,
+  status: 'confirmed',
+);
 
 /// Whether the line [raw] names a second food the first food's record does
 /// not cover ("2 large eggs plus 6 large yolks", "zest plus 2 tablespoons
@@ -1274,6 +1652,16 @@ Future<void> matchAndCompute(
     }
     final seasoning = line.amounts.isEmpty && isSeasoningToTaste(normalized);
     final equipment = isNonFood(normalized);
+    // A sub-recipe the recipe makes apart stays out of the totals, on no
+    // food, 0 g unmeasured (the user's ruling, 2026-09-27) — unless it is a
+    // count of the food itself ([subRecipeCountsItsFood]).
+    final subRecipe = isSubRecipeReference(line.raw);
+    if (subRecipe && !subRecipeCountsItsFood(line)) {
+      db.upsertIngredientMatchIfUndecided(
+        _subRecipeRow(recipe, position, line, key),
+      );
+      continue;
+    }
     if (normalized.isEmpty ||
         isWaterLike(normalized) ||
         seasoning ||
@@ -1456,6 +1844,14 @@ Future<void> matchAndCompute(
       );
       continue;
     }
+    // A pick below the review gate fetches no detail, so an uncached one
+    // has no portions: a lower record of the same food whose detail IS
+    // cached and sizes the line takes the row instead ([belowGateSizedTwin]).
+    final twin = belowGateSizedTwin(db, line, search.query, ranked, best);
+    if (twin != null) {
+      best = twin.candidate;
+      food = twin.food;
+    }
     // A pick below the review gate is likely a wrong food: no detail is
     // fetched for its grams until a person confirms it.
     final (gramsFood, resolution) = await gramsFor(
@@ -1476,6 +1872,13 @@ Future<void> matchAndCompute(
       picked: true,
       confidence: best.confidence,
     );
+    // A count of the food the engine cannot weigh is the sub-recipe still.
+    if (subRecipe && outcome.grams == null) {
+      db.upsertIngredientMatchIfUndecided(
+        _subRecipeRow(recipe, position, line, key),
+      );
+      continue;
+    }
     db.upsertIngredientMatchIfUndecided(
       IngredientMatchRow(
         recipeId: recipe.id,
@@ -1504,6 +1907,47 @@ Future<void> matchAndCompute(
     freshMatch: true,
     standIns: standIns,
   );
+}
+
+/// A record ranked just below [best] — the same food in another form
+/// ([sameFoodAsTop]) — to take a below-gate pick's row when [best]'s detail
+/// is uncached and gives [line] no grams while the twin's cached detail
+/// does. "½ cup pomegranate seeds" (Barley Salad with Pomegranate, 0718)
+/// and "1 cup pomegranate seeds" (Braised Brisket with Pomegranate, 0224):
+/// v12's stem lifted SR "Pomegranates, raw" (169134, 0.495, never fetched)
+/// over FNDDS "Pomegranate, raw" (2709267, 0.485, cup portion cached), and
+/// both lines lost their 87.5 g and 175 g (v12 review, Opus). Both stay
+/// below the gate, in `check`. Null when nothing qualifies.
+({RankedCandidate candidate, FdcFood food})? belowGateSizedTwin(
+  SaltDatabase db,
+  IngredientLine line,
+  String query,
+  List<RankedCandidate> ranked,
+  RankedCandidate best,
+) {
+  if (!belowConfidenceGate(best.confidence) ||
+      _foodFromCache(db, best.candidate.fdcId) != null ||
+      lineGrams(db, line, best.candidate.toFood()) != null) {
+    return null;
+  }
+  // (Only the top three changed no line of the library: removed, v13 refix.)
+  for (final candidate in ranked) {
+    if (identical(candidate, best) ||
+        !sameFoodAsTop(
+          query,
+          best.candidate.description,
+          candidate.candidate.description,
+        )) {
+      continue;
+    }
+    final cached = _foodFromCache(db, candidate.candidate.fdcId);
+    if (cached != null &&
+        _macroComplete(cached) &&
+        lineGrams(db, line, cached) != null) {
+      return (candidate: candidate, food: cached);
+    }
+  }
+  return null;
 }
 
 /// The engine row of [line] (position [position] of [recipe]) when its
@@ -1959,9 +2403,16 @@ String? gramBasisFor(
   }
   if (row.gramSource == GramSource.discarded.name) {
     final plus = plusPartOf(line.raw);
-    return row.grams! > 0 && plus != null
+    return row.grams! <= 0
+        ? 'discarded in cooking — counted as 0 g'
+        : plus != null
         ? 'discarded in cooking — only "plus ${plus.text}" counted'
-        : 'discarded in cooking — counted as 0 g';
+        : 'discarded in cooking — only the part the recipe keeps counted';
+  }
+  if (row.gramSource == GramSource.unmeasured.name &&
+      row.fdcId == null &&
+      isSubRecipeReference(line.raw)) {
+    return 'a sub-recipe — counted as 0 g';
   }
   if (row.gramSource == GramSource.unmeasured.name && line.amounts.isEmpty) {
     return 'no amount on the line — counted as 0 g';

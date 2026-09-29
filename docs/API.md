@@ -380,7 +380,7 @@ someone already decided is a group of one — an amount problem for that line,
 never part of an ingredient's reach, since `apply_to_all` cannot touch it —
 and it still reports its own `item_key`. So is a line a LINE hold holds
 (`second_food`, `discarded_medium`, `in_shell`): no decision on its key
-clears it, so each brine sugar is a group of one, never one "sugar · N lines" group, and
+clears it, so each rinsed or cooking-water salt is a group of one, never one "table salt · N lines" group, and
 such a group's `decided` is always false.
 
 `groups` — at the top level and on every `buckets[]` entry — is reported in
@@ -662,17 +662,30 @@ Per-line match transparency: the stored decision (`fdc_id`,
 `weight` (direct) | `portion` | `density` (estimate) | `piece` (estimate)
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
-buttermilk soak — stored as
-`grams: 0`: resolved, adds nothing; a "plus" line whose second part a step
+buttermilk soak, a brine's sugar and the aromatics a step adds to a brine
+the food is submerged (or weighed down) in and lifted out of before the
+submerge — "Dissolve the salt, sugar, and paprika in the buttermilk … Add
+the garlic and bay leaves, submerge the chicken in the brine"; "Add
+brisket, 3 garlic cloves, 4 bay leaves, allspice berries, 1 tablespoon
+peppercorns, and coriander seeds to brine. Weigh brisket down with plate";
+"8 whole cloves" too, read by its last word (the user's ruling, 2026-09-28;
+never the submerged or weighed-down food, nor what the submerge's own
+sentence adds to the brine, nor a second line of the same food) — stored as
+`grams: 0`: resolved, adds nothing; an aromatic whose smaller share the
+step WRITES ("3 garlic cloves" of "6 garlic cloves, peeled", the rest going
+in the pot) stores the rest's grams and counts them; a "plus" line whose second part a step
 eats — "1 cup plus 2 teaspoons table salt" with "remaining 2 teaspoons salt"
 in the rub — stores that part's grams and counts them; a HELD medium's eaten
 "plus" part is its grams too, held with it — "1 tablespoon plus 1 teaspoon
 table salt" with 1 tablespoon in the drained pasta water and the "remaining 1
 teaspoon salt" in the roux stores 6 g, `hold: discarded_medium`, and a
-confirm counts those 6 g) | `unmeasured` (a
+confirm counts those 6 g; so is the rest of a divided salt line whose WRITTEN
+share goes in drained cooking water — "the remaining 1½ teaspoons salt and
+the macaroni … Drain" of "2 teaspoons table salt" stores the other ½
+teaspoon, 3 g, held) | `unmeasured` (a
 matched line with no amount at all — "Lemon wedges, for serving" — or a sprig
 the record gives no portion for, stored as `grams: 0`, its food kept, so it
-leaves the review queue), `gram_basis`: a short human string of
+leaves the review queue — or a sub-recipe line, below), `gram_basis`: a short human string of
 what the grams were computed against — e.g. `"½ cup ≈ 118 mL"`, `"8¾
 ounces"`, `"entered by hand"`, `"… × 0.57 edible (USDA refuse)"` for a
 bone-in cut whose record publishes its raw refuse — or, for a WHOLE bird
@@ -709,7 +722,13 @@ eggs-plus-parts line counted on the whole-egg record,
 `"… · drained (USDA can portion)"` for a drained can or jar (its printed
 weight × the drained share of the record's own can portion), `"discarded in
 cooking — counted as 0 g"`, `"discarded in cooking — only \"plus 2 teaspoons
-table salt\" counted"`, `"no amount on the line — counted as 0 g"`, `"4
+table salt\" counted"`, `"discarded in cooking — only the part the recipe
+keeps counted"` (a divided salt's written pot share, a divided aromatic's
+written brine share), `"2/3 cup ≈ 16 crackers · USDA cracker portion"` for
+crushed saltines (24 a cup, the corpus's own "⅔ cup crushed saltines (about
+16)", on the record's one-cracker portion), `"18 × 13 g each (31 to 40 per
+pound)"` for a bare count that prints its own count per pound, `"a sub-recipe —
+counted as 0 g"`, `"no amount on the line — counted as 0 g"`, `"4
 sprigs — a sprig is not measured, counted as 0 g"` — for
 sanity-checking an estimate (null when there is no
 amount; re-derived cache-only, never spends FDC budget), `status`: `auto |
@@ -720,13 +739,29 @@ missing protein, fat or carbohydrate, so counting it would add its grams at
 0 kcal or a fraction of its energy; a record whose published macros already
 make up 90 g per 100 g, such as an oil, is not held), `discarded_medium`
 (frying oil, a brine or soak set to review, or milk curdled into cheese
-whose whey is drained; brine sugar, ¼ cup or more of salt no step
-brines in or rubs on — a salt bed, an ice bath — and salt or baking soda a
+whose whey is drained — and the salt, acid (lemon juice, vinegar) or
+buttermilk the step that first names that milk puts in it; ¼ cup or more of
+salt no step brines in or rubs on — a salt bed, an ice bath, a dunk that
+leaves the liquid on the food — salt tossed with a vegetable in a colander
+and rinsed off in that step, the soy sauce, sugar
+or garlic of a brine the food then POACHES in (the recipe's title says
+poach), and salt or baking soda a
 step puts in boiling water (named earlier in that step or in the salt's
 sentence) that a drain then follows — pasta water, a
-blanching pot, a skinning bath; the line's own amount written in the step, or
+blanching pot, a skinning bath, or a pot a skimmer or slotted spoon empties
+(in the same step, or in the next when its sentence or the one before names
+the water) — and sugar in a pot a skimmer or slotted spoon empties ("Bring
+4 quarts water, sugar, and baking soda to boil … Using wire skimmer …,
+transfer bagels to prepared wire rack"; a drain after a sugar keeps it: a
+reserved cooking liquid, a jar); never a salt seasoned "to taste"; the
+line's own amount written in the step, a WRITTEN smaller share of the line
+that no other salt line starts with ("1 teaspoon of the salt", "the
+remaining 1½ teaspoons salt", "½ teaspoon salt" of "1¼ teaspoons table
+salt, divided" — the rest of the line is the row's grams), or
 a bare "salt" when it is the recipe's only salt line — or, among several, the
-one no step names with its amount and no volume makes a brine ("Add the
+one no step names with its amount and no volume makes a brine — or, with as
+many such lines as bare mentions, the one in the same order ("Whisk flour
+and salt" is the dough's, "bring water and salt to boil" the pot's) ("Add the
 pasta and salt" is the 2 tablespoons' when the sauce names "1½ teaspoons
 salt"); not a line that measures its salt apart, "plus salt for cooking …" —
 are always held; salt a step dissolves in a written amount, the salt the
@@ -766,9 +801,13 @@ part of it),
 continuation of the line above such as "lengthwise, seeded, and sliced thin
 on bias", or "2 tablespoons juice" of no named fruit, with or without an
 amount),
-`dried_for_fresh` (the line asks for a fresh herb — "1 tablespoon minced
-fresh oregano" — and the engine's pick is a dried or ground spice record;
-off when the server's dried-for-fresh switch accepts them),
+`dried_for_fresh` (the line asks for a fresh food — "1 teaspoon minced
+fresh thyme" — and the engine's pick is a dried or ground spice or other
+dried record; off when the server's dried-for-fresh switch accepts them;
+never a fresh oregano, sage, tarragon, marjoram or chervil line — FDC has
+no fresh record of them, so it counts on "Spices, <herb>, dried" (sage:
+"…, ground"), a flagged approximation (below), a line offering the dried
+form too),
 `cured_for_fresh` (the line asks for a fresh meat — "bone-in fresh half
 ham" — and the engine's pick is a cured, preserved record; the same
 switch), `borderline`
@@ -800,7 +839,15 @@ when the line has nothing searchable; a few rewrites are APPROXIMATIONS, flagged
 the server's rewrite table, for foods FDC has no record of: pancetta counts
 as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
-lime peel, and its answer for `lime peel raw` ties lemon and orange peel; the
+lime peel, and its answer for `lime peel raw` ties lemon and orange peel —
+chen pi (dried tangerine peel) as `orange peel` ("Orange peel, raw", 169103:
+a raw-peel record, so the dried peel is counted about 3× short per gram — not
+yet ruled on), pepperoncini as `pickled hot cherry peppers` ("Peppers, hot,
+pickled", 2710095; FDC has no pepperoncini), and a FRESH oregano, sage,
+tarragon, marjoram or chervil line on its dried spice record (the dried leaf
+is several times as dense per gram; the fresh line's teaspoons and
+tablespoons are sized by the record's own portions, a sprig is 0 g and a
+leaf count has no grams); the
 ranker breaks two kinds of exact score tie toward the plainer record: the
 "separable lean and fat" record over "lean only" (the default for an
 unqualified cut), and the record naming fewer cookings — "Kielbasa, fully
@@ -839,6 +886,22 @@ where it is. Candidates come
 from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
+
+A sub-recipe line — "recipe(s) follow(s)" in its first alternative, a "(…
+this page)" before its first comma ("1 recipe Buttery Croutons (this
+page)", not "shrimp, peeled and deveined (see this page)"), or either
+anywhere on a line opening "<n> recipe" — is not counted on a food (the
+user's ruling: sub-recipes stay out of the main totals): it is stored
+`confirmed` with no food, `grams: 0`, `gram_source: unmeasured`, the
+description "Sub-recipe — made from its own recipe, not counted in these
+totals", and resolved like a water line. A food offered first stays that
+food: "½ teaspoon table salt or 1 recipe topping (recipes follow)" is the
+salt. A bare count of the food itself — every amount unit-less, "3
+hard-cooked eggs (recipe follows)", not "1 recipe Easy-Peel Hard-Cooked
+Eggs", "4 cups Cream Cheese Frosting" or an amount-less line — is matched
+like any other line and counted on its food; it stays the 0 g sub-recipe
+only when its pick gives no grams ("8 Home-Fried Taco Shells (recipe
+follows)").
 
 A line with no amount whose item is seasoning to taste — salt, pepper,
 "salt and pepper" and their common spellings — is confirmed as a deliberate

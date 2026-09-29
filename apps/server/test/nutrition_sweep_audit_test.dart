@@ -914,9 +914,20 @@ void main() {
     // pickled hot peppers (2710095), avocado (2710824), egg white (747997)
     // and navel oranges (746771) from snapshot 10, and the foods its
     // repointed Indian Curry pin (0567) reads (172231, 2685581, 2707427):
-    // seven more compared, four of them differ in some digit.
-    expect(compared, 183);
-    expect(differ, 135);
+    // seven more compared, four of them differ in some digit. Its review
+    // (matcher v13) recorded "Prune, dried" (2709211) and "Pomegranate,
+    // raw" (2709267) from snapshot 11, hits in 'prunes' and 'pomegranate
+    // seeds', and the fresh ham's pork record (168367) its cured_for_fresh
+    // pin reads, and the marjoram, tarragon and chervil spices (170928,
+    // 170937, 171318) the R4 herbs now count on: all six differ in some
+    // digit. Its second refix recorded "Crackers, whole-wheat" (172749)
+    // from snapshot 11 for the Berry Fool pin, a hit in 'whole cloves': it
+    // differs too. The sub-recipe refinement recorded "Egg, whole, cooked,
+    // hard-boiled" (173424) and "Taco shells, baked" (172800) from snapshot
+    // 11, hits in 'hard-cooked eggs' and 'home-fried taco shells': both
+    // differ in some digit.
+    expect(compared, 192);
+    expect(differ, 144);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

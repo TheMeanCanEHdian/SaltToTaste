@@ -112,11 +112,16 @@ void main() {
   const heldZest = '4 teaspoons grated lemon zest plus ¼ cup juice (2 lemons)';
   // Avgolemono (0005): the egg rule counts it on the whole egg.
   const eggsYolks = '2 large eggs plus 2 large yolks';
-  // Crisp-Skin High-Roast Butterflied Turkey (0165): its brine.
-  const turkeyBrine =
-      'Dissolve the salt and sugar in 2 gallons cold water in a large '
-      'container. Submerge the turkey in the brine and refrigerate or store '
-      'in a very cool spot (40 degrees or less) for 4 to 6 hours.';
+  // A LINE-held medium keyed like a plain line (brine sugars went to zero
+  // under the user's ruling R3, 2026-09-28): Sesame-Lemon Cucumber Salad's
+  // (0052) salt, rinsed off the cucumbers (R2), beside Wheat Berry Salad's
+  // (1073) plain "½ teaspoon table salt" — both keyed 'table salt'.
+  const rinsedSalt = '1 tablespoon table salt';
+  const cucumberSteps =
+      'Toss the cucumbers with the salt in a colander set over a large '
+      'bowl. Weight the cucumbers with a gallon-sized zipper-lock bag filled '
+      'with water; drain for 1 to 3 hours. Rinse and pat dry.';
+  const plainSalt = '½ teaspoon table salt';
 
   group('M1/M12: the offer and the apply reach the same rows', () {
     test("a confirm on 0142's held zest line offers 0 and applies 0: the "
@@ -198,24 +203,24 @@ void main() {
       expect((row.status, row.fdcId, row.hold), ('unmatched', null, null));
     });
 
-    test('M12: an unmatched brine sugar (no-hit state seeded: negative path) '
-        'is neither offered nor written by a Sugar confirm', () async {
+    test('M12: an unmatched rinsed salt (no-hit state seeded: negative path) '
+        'is neither offered nor written by a table salt confirm', () async {
       final db = tempDb();
-      final meatballs = recipeOf(db, 'meatballs', ['Sugar']);
+      final meatballs = recipeOf(db, 'meatballs', [plainSalt]);
       final turkey = recipeOf(
         db,
         'turkey',
-        ['1 cup table salt', '1 cup sugar'],
-        steps: [turkeyBrine],
+        [rinsedSalt],
+        steps: [cucumberSteps],
       );
       for (final r in [meatballs, turkey]) {
         await matchAndCompute(db, provider, r);
       }
-      final brine = db.ingredientMatchesFor('turkey')[1];
+      final brine = db.ingredientMatchesFor('turkey')[0];
       db.upsertIngredientMatch(
         IngredientMatchRow(
           recipeId: 'turkey',
-          position: 1,
+          position: 0,
           raw: brine.raw,
           itemKey: brine.itemKey,
           fdcId: null,
@@ -233,7 +238,7 @@ void main() {
         'apply_to_all': true,
       });
       expect(applied!.lines, 0);
-      expect(db.ingredientMatchesFor('turkey')[1].status, 'unmatched');
+      expect(db.ingredientMatchesFor('turkey')[0].status, 'unmatched');
     });
   });
 
@@ -270,29 +275,25 @@ void main() {
   });
 
   group('M2: a line-held row is a group of one', () {
-    test('two brine sugars and two held zest lines: four groups of one, '
+    test('two rinsed salts and two held zest lines: four groups of one, '
         'never badged decided', () async {
       final db = tempDb();
       final turkeys = [
         for (final id in ['t1', 't2'])
-          recipeOf(
-            db,
-            id,
-            ['1 cup table salt', '1 cup sugar'],
-            steps: [turkeyBrine],
-          ),
+          recipeOf(db, id, [rinsedSalt], steps: [cucumberSteps]),
       ];
       final zests = [
         recipeOf(db, 'z1', [heldZest]),
         recipeOf(db, 'z2', [heldZest]),
       ];
-      final meatballs = recipeOf(db, 'meatballs', ['Sugar']);
+      final meatballs = recipeOf(db, 'meatballs', [plainSalt]);
       for (final r in [...turkeys, ...zests, meatballs]) {
         await matchAndCompute(db, provider, r);
       }
-      // A decision on 'sugar' exists: it clears none of the brine sugars.
+      // A decision on 'table salt' exists: it clears none of the rinsed
+      // salts.
       await applyMatchOverride(db, provider, meatballs, 0, {'confirmed': true});
-      expect(db.decisionFor('sugar'), isNotNull);
+      expect(db.decisionFor('table salt'), isNotNull);
       final groups = db.nutritionReviewGroups(limit: 100, offset: 0);
       final held = [
         for (final g in groups)
@@ -304,7 +305,7 @@ void main() {
       expect(held.every((g) => g.$2 == 1 && g.$3 == 1 && !g.$4), isTrue);
       expect(
         {for (final g in held) g.$1},
-        {'sugar', 'lemon zest plus juice'},
+        {'table salt', 'lemon zest plus juice'},
         reason: 'each still reports its own key',
       );
     });

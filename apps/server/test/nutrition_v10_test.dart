@@ -609,7 +609,8 @@ void main() {
       );
       expect(mediumOf(yuca, 0), DiscardedMedium.cookingWater);
       // ... but it must be WATER: Saag Paneer's (0563) curds drain from a
-      // boiled pot, and its salt went in the milk the cheese keeps.
+      // boiled pot, and its salt went in the milk — no cooking water; the
+      // user's ruling R2 (2026-09-28) holds it with the cheese milk.
       final saag = recipeOf(
         db,
         'saag',
@@ -622,7 +623,7 @@ void main() {
               'drain for 15 minutes.',
         ],
       );
-      expect(mediumOf(saag, 1), isNull);
+      expect(mediumOf(saag, 1), DiscardedMedium.cheeseMilk);
       // "do not drain" keeps the water (Black Bean Soup, 0474).
       final soup = recipeOf(
         db,
@@ -709,8 +710,9 @@ void main() {
       );
       expect(mediumOf(congee, 2), isNull);
       // "1 teaspoon of the salt" is a written amount, not a bare salt: the
-      // blanching water takes part of the line, which counts in full
-      // (Cincinnati Chili, 0303).
+      // blanching water takes part of the line (Cincinnati Chili, 0303) —
+      // counted in full until the user's ruling R2 (2026-09-28) held that
+      // written pot share with the rest as its grams (nutrition_v13_test).
       final chili = recipeOf(
         db,
         'chili',
@@ -724,7 +726,7 @@ void main() {
               'strainer and set it aside.',
         ],
       );
-      expect(mediumOf(chili, 0), isNull);
+      expect(mediumOf(chili, 0), DiscardedMedium.cookingWater);
     });
   });
 

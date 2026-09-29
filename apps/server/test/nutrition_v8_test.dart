@@ -111,10 +111,16 @@ void main() {
   // Duchess Potato Casserole (0447).
   const duchess = '1 large egg, separated, plus 2 large yolks';
   // Crisp-Skin High-Roast Butterflied Turkey (0165): its brine.
-  const turkeyBrine =
-      'Dissolve the salt and sugar in 2 gallons cold water in a large '
-      'container. Submerge the turkey in the brine and refrigerate or store '
-      'in a very cool spot (40 degrees or less) for 4 to 6 hours.';
+  // A LINE-held medium keyed like a plain line (brine sugars went to zero
+  // under the user's ruling R3, 2026-09-28): Sesame-Lemon Cucumber Salad's
+  // (0052) salt, rinsed off the cucumbers (R2), beside Wheat Berry Salad's
+  // (1073) plain "½ teaspoon table salt" — both keyed 'table salt'.
+  const rinsedSalt = '1 tablespoon table salt';
+  const cucumberSteps =
+      'Toss the cucumbers with the salt in a colander set over a large '
+      'bowl. Weight the cucumbers with a gallon-sized zipper-lock bag filled '
+      'with water; drain for 1 to 3 hours. Rinse and pat dry.';
+  const plainSalt = '½ teaspoon table salt';
 
   group('M1: a line hold never clears by key', () {
     test(
@@ -151,47 +157,46 @@ void main() {
       },
     );
 
-    test("confirming 'Sugar' reports 0 applied brine sugars, and they stay "
-        'held', () async {
+    test('confirming a plain table salt reports 0 applied rinsed salts, and '
+        'they stay held', () async {
       final db = tempDb();
-      // Italian-Style Turkey Meatballs (0000) seasons with 'Sugar'.
-      final meatballs = recipeOf(db, 'meatballs', ['Sugar']);
-      final turkey = recipeOf(
+      final plain = recipeOf(db, 'plain', [plainSalt]);
+      final cucumbers = recipeOf(
         db,
-        'turkey',
-        [
-          '1 cup table salt',
-          '1 cup sugar',
-        ],
-        steps: [turkeyBrine],
+        'cucumbers',
+        [rinsedSalt],
+        steps: [cucumberSteps],
       );
-      for (final r in [meatballs, turkey]) {
+      for (final r in [plain, cucumbers]) {
         await matchAndCompute(db, provider, r);
       }
-      final brine = db.ingredientMatchesFor('turkey')[1];
-      expect(brine.hold, 'discarded_medium');
-      final item = await matchOf(db, meatballs, 0);
+      final rinsed = db.ingredientMatchesFor('cucumbers').single;
+      expect(rinsed.hold, 'discarded_medium');
+      final item = await matchOf(db, plain, 0);
       expect(item['others'], 0);
-      final applied = await applyMatchOverride(db, provider, meatballs, 0, {
+      final applied = await applyMatchOverride(db, provider, plain, 0, {
         'confirmed': true,
         'apply_to_all': true,
       });
       expect(applied!.lines, 0);
-      final after = db.ingredientMatchesFor('turkey')[1];
-      expect((after.hold, after.grams), ('discarded_medium', brine.grams));
+      final after = db.ingredientMatchesFor('cucumbers').single;
+      expect((after.hold, after.grams), ('discarded_medium', rinsed.grams));
       expect(bucketOf(after), MatchBucket.check);
     });
 
-    test('a dried_for_fresh sibling is still reached and released', () async {
+    test('a cured_for_fresh sibling is still reached and released', () async {
       final db = tempDb();
-      // Ciambotta (0405).
-      const oregano = '⅓ cup fresh oregano leaves';
-      final a = recipeOf(db, 'ra', [oregano]);
-      final b = recipeOf(db, 'rb', [oregano]);
+      // Roast Fresh Ham (0249). (Fresh oregano, this pin's line until v13,
+      // counts on the dried spice now: the user's ruling R4.)
+      const ham =
+          '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably '
+          'shank end, rinsed';
+      final a = recipeOf(db, 'ra', [ham]);
+      final b = recipeOf(db, 'rb', [ham]);
       for (final r in [a, b]) {
         await matchAndCompute(db, provider, r);
       }
-      expect(db.ingredientMatchesFor('rb').single.hold, 'dried_for_fresh');
+      expect(db.ingredientMatchesFor('rb').single.hold, 'cured_for_fresh');
       expect((await matchOf(db, a, 0))['others'], 1);
       final applied = await applyMatchOverride(db, provider, a, 0, {
         'confirmed': true,
@@ -265,42 +270,42 @@ void main() {
     test('P4: applied counts the rows whose bucket changed — a row re-held '
         'by a line hold is written but not applied', () async {
       final db = tempDb();
-      final meatballs = recipeOf(db, 'meatballs', ['Sugar']);
-      // An older build's rows, below the gate and unheld: the brine sugar
-      // (0165) and a plain sugar line (0134).
-      recipeOf(db, 'turkey', ['1 cup sugar'], steps: [turkeyBrine]);
-      recipeOf(db, 'plain', ['½ cup sugar']);
-      for (final id in ['turkey', 'plain']) {
+      final plain = recipeOf(db, 'plain', [plainSalt]);
+      // An older build's rows, below the gate and unheld: the rinsed salt
+      // (0052) and a plain salt line (1073).
+      recipeOf(db, 'turkey', [rinsedSalt], steps: [cucumberSteps]);
+      recipeOf(db, 'other', [plainSalt]);
+      for (final id in ['turkey', 'other']) {
         db.upsertIngredientMatchIfUndecided(
           IngredientMatchRow(
             recipeId: id,
             position: 0,
-            raw: id == 'turkey' ? '1 cup sugar' : '½ cup sugar',
-            itemKey: 'sugar',
-            fdcId: 746784,
-            description: 'Sugars, granulated',
-            dataType: 'Foundation',
+            raw: id == 'turkey' ? rinsedSalt : plainSalt,
+            itemKey: 'table salt',
+            fdcId: 173468,
+            description: 'Salt, table',
+            dataType: 'SR Legacy',
             confidence: 0.3,
-            grams: 100,
+            grams: 10,
             gramSource: 'density',
             status: 'auto',
           ),
         );
       }
-      await matchAndCompute(db, provider, meatballs);
+      await matchAndCompute(db, provider, plain);
       final applied = await applyDecisionToOthers(
         db,
         provider,
-        itemKey: 'sugar',
-        decided: await food(746784),
-        excluding: (recipeId: meatballs.id, position: 0),
+        itemKey: 'table salt',
+        decided: await food(173468),
+        excluding: (recipeId: plain.id, position: 0),
       );
       expect((applied.recipes, applied.lines), (1, 1));
       final reheld = db.ingredientMatchesFor('turkey').single;
       expect((reheld.hold, reheld.confidence), ('discarded_medium', 1));
       expect(bucketOf(reheld), MatchBucket.check);
       expect(
-        bucketOf(db.ingredientMatchesFor('plain').single),
+        bucketOf(db.ingredientMatchesFor('other').single),
         MatchBucket.counted,
       );
     });
@@ -353,8 +358,8 @@ void main() {
       '2 teaspoons pink curing salt #1',
     ];
 
-    test('the three brine lines: salt and curing salt 0 g, brown sugar '
-        'held', () async {
+    test('the three brine lines at 0 g: salt, curing salt and — the '
+        "user's ruling R3, 2026-09-28 — the brown sugar", () async {
       final db = tempDb();
       final r = recipeOf(db, 'corned', raws, steps: [step]);
       DiscardedMedium? of(int i, {bool bySentence = true}) {
@@ -383,7 +388,7 @@ void main() {
         [for (final row in rows) (row.grams, row.gramSource, row.hold)],
         [
           (0, 'discarded', null),
-          (rows[1].grams, 'density', 'discarded_medium'),
+          (0, 'discarded', null),
           (0, 'discarded', null),
         ],
       );
@@ -948,9 +953,9 @@ void main() {
       );
     });
 
-    test('a cured record for a fresh meat is held as cured_for_fresh, a '
-        'dried herb as dried_for_fresh (Roast Fresh Ham 0249; Ciambotta '
-        '0405)', () {
+    test('a cured record for a fresh meat is held as cured_for_fresh; a '
+        "fresh oregano line counts on the dried spice (the user's ruling "
+        'R4, 2026-09-28) (Roast Fresh Ham 0249; Ciambotta 0405)', () {
       expect(
         freshHoldOf(
           '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably '
@@ -961,7 +966,7 @@ void main() {
       );
       expect(
         freshHoldOf('⅓ cup fresh oregano leaves', 'Spices, oregano, dried'),
-        'dried_for_fresh',
+        isNull,
       );
       expect(
         freshHoldOf('1 teaspoon dried oregano', 'Spices, oregano, dried'),

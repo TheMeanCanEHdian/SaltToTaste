@@ -1722,6 +1722,48 @@ snapshot 10: counted 12,542 → 12,594, check 818 → 773, no grams
 206 → 208, no match 49 → 40, complete 552 → 573 (20 gained, 0 lost); the
 next live sweep would ask about five answers (the halibut search, "ripe
 avocado", "ripe bananas", the prune and oyster details).
+(Live replay of v12: only two of those were asked — the halibut search,
+which put all three halibut lines on the raw record at 0.98, and the
+prune detail; the avocado and banana lines resolved from cache; the
+oysters line stayed on the mushroom record because the dock described in
+the v12 commit message had never been written — see Run 044.)
+
+### Review fixes and the 2026-09-28 rulings (matcher v13)
+
+Run 044 (both fleets on `0697d8d`) found that the "host-record dock for
+oyster mushrooms" in the v12 commit message did not exist: the fixer had
+reported it, the workflow's verifier had signed it off, and the commit was
+written from the report. It exists now (`_varietyHosts`: a record that
+files the head only after a different food noun is docked when another
+record in the answer files the head first; "oysters" ranks "Oysters, raw"),
+and every batch is now committed only after the orchestrator greps the
+tree for each named symbol and runs its pin and a mutant; the verifier
+confirms mechanisms by symbol grep and diff, never from the report. Also
+from the fleets: the stem strips "-es" after x too ("cake mixes"; a "-zes"
+word loses only its "s") and the connector cut drops a trailing "or";
+"center-cut skin-on salmon fillets" takes the salmon rewrite; the prune
+detail is recorded; the "dozen" branch applies to the amount the leading
+number belongs to; a below-gate pick that moved to an uncached twin keeps
+the grams path; "⅔ cup crushed saltines" reads the line's own count; API.md
+names chen pi (dried peel on a raw-peel record, about 3× short per gram —
+a ruling item) and pepperoncini. From the Opus critic: "(recipe follows)"
+and "(this page)" reference lines are never counted on a food — 119 such
+lines were, up to 2,082 g of frosting — except a bare COUNT of the food
+itself (four hard-cooked-egg lines count their eggs; taco shells whose
+pick has no weight stay at 0 g). The user's rulings of 2026-09-28:
+poured-away media the rules could not see (a poaching liquid's soy, salt
+rinsed off in a colander, salt or acid in a cheese milk, a pot emptied
+with a skimmer, the written pot share of a divided salt line) are held
+with the eaten part as grams (17 lines in 12 recipes); sugar and aromatics
+dissolved in a dissolve-and-submerge brine go to zero like the salt (a
+dunk that leaves liquid on the food stays held); fresh herbs with no fresh
+FDC record count on "Spices, X, dried" as a flagged approximation and a
+line offering the dried form is never held (the 57 dried-for-fresh holds
+are gone; cured-for-fresh meat stays held). matcherVersion 13. Cache-only
+replay on snapshot 11 (the v12 live replay): counted 12,596 → 12,755
+(93.7%), check 772 → 654, no grams 207 → 169, no match 40 → 37, complete
+573 → 660; the next live sweep needs two approved details (oysters, white
+chocolate).
 
 ## Decision log (deviations & clarifications)
 

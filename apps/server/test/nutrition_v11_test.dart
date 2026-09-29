@@ -233,15 +233,16 @@ void main() {
     });
 
     test('a fresh engine match holds an amount-less line and a counted line '
-        'in the shell, never 0 g counted: Paella (0105), Roasted Oysters '
-        '(1184)', () async {
+        'in the shell, never 0 g counted: Paella (0105)', () async {
       final db = tempDb();
       // No corpus line buys shellfish without an amount: synthesized (a
-      // stated exception) from Paella on the Grill's clams.
+      // stated exception) from Paella on the Grill's clams. (Roasted
+      // Oysters' line (1184) left this pin in v13: its pick is "Oysters,
+      // raw" (2706351), whose detail no snapshot holds — pending one live
+      // fetch; its ranking is pinned in nutrition_v13_test.)
       final r = recipeOf(db, 'r1', [
         'littleneck clams, scrubbed',
         '1 dozen mussels, scrubbed and debearded',
-        '24 oysters, 2½ to 3 inches long, well scrubbed',
       ]);
       await matchAndCompute(db, provider, r);
       for (final row in db.ingredientMatchesFor('r1')) {

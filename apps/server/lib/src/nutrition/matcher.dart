@@ -200,8 +200,16 @@ const Map<String, String> _synonyms = {
 /// segments before the food in "medium, firm, ripe tomatoes" read past,
 /// 'firm' dropped; rewrites for the shrimp size words, skin-on salmon,
 /// pepperoncini, juice oranges, ripe avocado and bananas, chen pi (a flagged
-/// approximation) and the halibut lines (pending one live search).
-const int matcherVersion = 12;
+/// approximation) and the halibut lines (pending one live search);
+/// 13 = the checkpoint-7 review and the user's rulings of 2026-09-28: the
+/// oyster-mushroom dock written ([_varietyHosts]), "-es" off after x and z
+/// too, a dangling "or" cut like "and", a coated record a composite, fresh
+/// oregano, sage, tarragon, marjoram and chervil counted on their dried
+/// spice (a flagged approximation), and rewrites for center-cut skin-on
+/// salmon and white chocolate chips; with it the engine's sub-recipe lines
+/// (0 g, no food), the R2 held and R3 zeroed media and the below-gate sized
+/// twin re-resolve every computed recipe.
+const int matcherVersion = 13;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -303,7 +311,8 @@ String normalizeItem(String item) {
   // A line the corpus split mid-phrase keeps its dangling connector: "1
   // teaspoon grated fresh lime zest and" (Sweet and Saucy Glazed Salmon)
   // keyed 'lime zest and' and missed the lime-zest rewrite (checkpoint 7).
-  if (out.lastOrNull == 'and') {
+  // A dangling "or" is the same artifact (v13; no corpus line ends in one).
+  if (out.lastOrNull == 'and' || out.lastOrNull == 'or') {
     out.removeLast();
   }
   return out.join(' ');
@@ -909,6 +918,9 @@ const Map<String, String> _queryRewrites = {
   // fillet's ranks "Fish, salmon, raw" first — the skin changes little.
   'skin-on salmon fillet': 'skinless salmon fillet',
   'skin-on salmon fillets': 'skinless salmon fillet',
+  // "6 (6- to 8-ounce) center-cut skin-on salmon fillets" (Grill-Smoked
+  // Salmon, 0646) kept its cut word and missed the entry above (v12 review).
+  'center-cut skin-on salmon fillets': 'skinless salmon fillet',
   // FDC has no pepperoncini (its answer is []): a pickled hot pepper, whose
   // generic record "Peppers, hot, pickled" (2710095) leads this answer.
   'pepperoncini': 'pickled hot cherry peppers',
@@ -917,12 +929,19 @@ const Map<String, String> _queryRewrites = {
   'juice oranges': 'oranges',
   // An APPROXIMATION (like pancetta above): FDC has no dried tangerine peel;
   // its answer for 'chen pi' is all cookies and pies at 0 — counted as
-  // "Orange peel, raw".
+  // "Orange peel, raw". Dried peel counted on a RAW-peel record is about 3×
+  // short per gram (the water it lost): flagged in docs/API.md, and a ruling
+  // the user has not made yet.
   'chen pi': 'orange peel',
   // "1 medium, ripe avocado, diced medium" (0487) and "2 large, firm, ripe
   // bananas" (0959) searched nothing until v12 read past their size
   // segment; the recorded plural and 'very ripe' answers rank "Avocado,
   // Hass, peeled, raw" and "Bananas, ripe and slightly ripe, raw" first.
+  // "Cookie, chocolate chip" counted for white chocolate chips (Low-Fat
+  // Chocolate Mousse, 0933; Blondies): once coated records are composites
+  // the cached 'white chocolate' answer ranks "Candies, white chocolate"
+  // (167571) first (v13, Opus critic).
+  'white chocolate chips': 'white chocolate',
   'ripe avocado': 'ripe avocados',
   'ripe bananas': 'very ripe bananas',
   // The raw halibut record 174200 leads no recorded answer: the cooked FNDDS
@@ -1015,17 +1034,18 @@ class RankedCandidate {
 }
 
 /// The ranker's stem of [word] — both the query's and every record's words
-/// go through it. "-es" comes off only after s, ch, sh or o (peaches,
-/// radishes, tomatoes; 'cheeses' stems 'chees', which keeps "Classic Grilled
-/// Cheese Sandwiches" off a seven-layer salad); any other plural loses its
-/// "s" alone: the
+/// go through it. "-es" comes off only after s, x, ch, sh or o (peaches,
+/// radishes, tomatoes, mixes; 'cheeses' stems 'chees', which keeps "Classic
+/// Grilled Cheese Sandwiches" off a seven-layer salad); any other plural
+/// loses its "s" alone — a z too: 'glazes' is 'glaze', not 'glaz' (v13
+/// refix 2: no corpus line has a "-zes" plural to earn the strip); the
 /// "-es" rule stemmed 'whites' to 'whit' against the record's 'white', and
 /// 26 "egg whites" lines sat at 0.415 on the right record (checkpoint 7).
 String _singular(String word) {
   if (word.length > 3 && word.endsWith('ies')) {
     return '${word.substring(0, word.length - 3)}y';
   }
-  if (word.length > 3 && RegExp(r'(s|ch|sh|o)es$').hasMatch(word)) {
+  if (word.length > 3 && RegExp(r'(s|x|ch|sh|o)es$').hasMatch(word)) {
     return word.substring(0, word.length - 2);
   }
   if (word.length > 2 && word.endsWith('s')) {
@@ -1647,6 +1667,12 @@ const Set<String> _compositeMarkers = {
   // "Olive tapenade" took 4 niçoise olive lines from "Olives, black" once
   // 'olives' stemmed to 'olive' (v12).
   'tapenade',
+  // A food coated in the line's food is a product of it: "Pretzels, hard,
+  // white chocolate coated" ranked 0.87 over "Candies, white chocolate" for
+  // '6 ounces white chocolate' (Triple-Chocolate Mousse Cake), and a
+  // chocolate-coated granola bar 0.87 for milk chocolate chips (v13; no
+  // other cached top pick moves).
+  'coated',
 };
 
 /// FDC's class first segments ([rankCandidates]): a filing, not the food.
@@ -1757,11 +1783,41 @@ String? freshHoldOf(String raw, String description) {
   if (record.contains(RegExp(r'\bcured\b'))) {
     return 'cured_for_fresh';
   }
+  if (freshHerbOnSpiceRecord(description)) {
+    return null;
+  }
   return record.contains(RegExp(r'\bdried\b')) ||
           (record.startsWith('spices,') &&
               record.contains(RegExp(r'\bground\b')))
       ? 'dried_for_fresh'
       : null;
+}
+
+/// Fresh herbs FDC has no fresh record of — no cached answer holds one
+/// (snapshot 11: every answer for oregano, sage, tarragon, marjoram and
+/// chervil, 'leaves' or not, holds only the "Spices," record).
+const Set<String> _herbsWithoutFreshRecord = {
+  'oregano',
+  'sage',
+  'tarragon',
+  'marjoram',
+  'chervil',
+};
+
+/// Whether [description] is the "Spices, X, dried" (or ground) record of a
+/// herb in [_herbsWithoutFreshRecord] — the only records any cached answer
+/// files such a herb second in (so reading the class and the form changed
+/// no line of the library: removed, v13 refix). A fresh line of one COUNTS
+/// on it: a flagged APPROXIMATION the user ruled on 2026-09-28 (docs/API.md)
+/// — the dried leaf is several times as nutrient-dense per gram as the
+/// fresh one, and the fresh volume is sized by the dried record's own
+/// portions (a sprig 0 g, a leaf count no grams). A line offering the dried
+/// form ("1 tablespoon minced fresh oregano or 1 teaspoon dried",
+/// albóndigas) is never held either. v12 held 57 such rows `dried_for_fresh`.
+bool freshHerbOnSpiceRecord(String description) {
+  final segments = description.toLowerCase().split(',');
+  return segments.length > 1 &&
+      _herbsWithoutFreshRecord.contains(segments[1].trim());
 }
 
 /// The query tokens a candidate is scored against: [tokens] less its count
@@ -1984,16 +2040,27 @@ List<RankedCandidate> rankCandidates(
       if (!_tokens(candidate.description).contains('imported'))
         ..._segments(candidate.description),
   };
+  // Whether some record files the head in its FIRST segment ("Oysters,
+  // raw"): then a [_varietyHosts] record naming it only later is a variety
+  // of the host food, not the food.
+  final headFiledFirst =
+      head != null &&
+      candidates.any(
+        (c) => _keyTokens(c.description.split(',').first).contains(head),
+      );
   final ranked = <RankedCandidate>[];
   for (final candidate in candidates) {
     final descriptionTokens = tokensOf(candidate.description);
     if (descriptionTokens.isEmpty) {
       continue;
     }
+    // A fresh herb FDC has no fresh record of counts on its dried spice
+    // ([freshHerbOnSpiceRecord]): its count noun goes, as for any record.
     final queryTokens =
         !allowDriedForFresh &&
             descriptionTokens.contains('dried') &&
-            !allTokens.contains('dried')
+            !allTokens.contains('dried') &&
+            !freshHerbOnSpiceRecord(candidate.description)
         ? allTokens
         : countedTokens;
     // A negated word covers nothing the query names: "…dried (desiccated),
@@ -2228,7 +2295,8 @@ List<RankedCandidate> rankCandidates(
     // the sheet still shows the top one, held in `check`.
     if (head != null &&
         (!_carriesHead(candidate.description, head) ||
-            _leavesOf(candidate.description, head, queryLower))) {
+            _leavesOf(candidate.description, head, queryLower) ||
+            _hostVariety(candidate.description, head, headFiledFirst))) {
       score -= 0.30;
       docked = true;
     }
@@ -2274,6 +2342,26 @@ List<RankedCandidate> rankCandidates(
     return byScore != 0 ? byScore : tieRank(a).compareTo(tieRank(b));
   });
   return ranked;
+}
+
+/// Foods FDC files varieties of under a food noun of their own: "Mushroom,
+/// oyster" and "Mushroom, king oyster" are mushrooms. '24 oysters …' (1184,
+/// Roasted Oysters on the Half Shell) ranked "Mushroom, oyster" 0.95 over
+/// "Oysters, raw" 0.91 (v12 review, both fleets: the v12 entry claimed this
+/// dock but never wrote it). A general rule — any record whose first
+/// segment is another noun — moved other cached top picks; this set moves
+/// only the oysters answer's (measured on the 1,859 answers of snapshot 11).
+const Set<String> _varietyHosts = {'mushroom'};
+
+/// Whether [description] is a [_varietyHosts] record ("Mushroom, oyster")
+/// naming [head] only past its first segment while another record of the
+/// answer files [head] first ([headFiledFirst]).
+bool _hostVariety(String description, String head, bool headFiledFirst) {
+  if (!headFiledFirst) {
+    return false;
+  }
+  final first = _keyTokens(description.split(',').first);
+  return first.any(_varietyHosts.contains) && !first.contains(head);
 }
 
 /// Words a macro-complete record lower in the ranking may add to the top

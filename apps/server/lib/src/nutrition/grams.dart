@@ -48,6 +48,15 @@ const Map<String, double> _weightUnitGrams = {
   'lb': 453.592,
 };
 
+/// "crushed saltines" ([_resolveGrams]: sized by the cracker).
+final RegExp _crushedSaltines = RegExp(
+  r'\bcrushed saltines?\b',
+  caseSensitive: false,
+);
+
+/// "(31 to 40 per pound)": a bare count's own size ([_resolveGrams]).
+final RegExp _perPound = RegExp(r'\((\d+) to (\d+) per pound\)');
+
 /// Milliliters per unit of volume.
 const Map<String, double> _volumeUnitMl = {
   'teaspoon': 4.92892,
@@ -1451,12 +1460,17 @@ Amount? _parsedUnit(Amount amount, String raw) {
   ).firstMatch(raw);
   final quantity = _quantityValue(amount.quantity);
   // "1 dozen mussels" (Paella, 0105) parsed as a count of 1: a dozen is 12,
-  // as the yield parser reads it ([parseYieldCount]).
+  // as the yield parser reads it ([parseYieldCount]) — for the amount the
+  // raw's LEADING number is, as below: a second bare count on the line is
+  // no dozen. No corpus line has a second count or a later "dozen", so both
+  // guards are pinned on synthesized lines (stated exceptions, v13).
   final dozen = RegExp(
-    '^\\s*[\\d$vulgarFractionChars/ .-]+?\\s*dozen\\b',
+    '^\\s*([\\d$vulgarFractionChars/ .-]+?)\\s*dozen\\b',
     caseSensitive: false,
-  ).hasMatch(raw);
-  if (dozen && quantity != null) {
+  ).firstMatch(raw);
+  if (dozen != null &&
+      quantity != null &&
+      _quantityValue(dozen.group(1)!.trim()) == quantity) {
     final n = quantity * 12;
     return Amount(
       measure: Measure.count,
@@ -1601,6 +1615,25 @@ GramResolution? _resolveGrams({
     if (quantity == null || ml == null) {
       continue;
     }
+    // Crushed saltines by the corpus's own count — "⅔ cup crushed saltines
+    // (about 16)" (Meatloaf with Brown Sugar-Ketchup Glaze, 0306): 24 a cup
+    // on the record's "1 cracker" portion. Its "1 cup, NFS" is whole
+    // crackers: Glazed All-Beef Meatloaf's (0305) ⅔ cup read 33 g, the
+    // count 48 g (v12 review, Opus).
+    final cracker =
+        food != null && raw != null && _crushedSaltines.hasMatch(raw)
+        ? _namedPortionGrams(food, 'cracker')
+        : null;
+    if (cracker != null) {
+      final crackers = quantity * ml / _volumeUnitMl['cup']! * 24;
+      return GramResolution(
+        grams: crackers * cracker,
+        source: GramSource.portion,
+        basis:
+            '${_amountText(amount)} ≈ ${crackers.round()} crackers · USDA '
+            'cracker portion',
+      );
+    }
     if (food != null) {
       final perUnit = _portionGramsPerUnit(food, unit);
       if (perUnit != null) {
@@ -1676,6 +1709,24 @@ GramResolution? _resolveGrams({
         basis:
             '${_amountText(amount)} — a sprig is not measured, counted as '
             '0 g',
+      );
+    }
+
+    // A bare count the line sizes itself: "18 medium-large shrimp (31 to 40
+    // per pound)" (Vietnamese Summer Rolls, 0510) is 18 at 35.5 a pound,
+    // 230 g — the shrimp record's only portion is 3 ounces (v12 review, Opus
+    // critic).
+    final perPound = raw == null ? null : _perPound.firstMatch(raw);
+    if (perPound != null) {
+      final each =
+          _weightUnitGrams['pound']! /
+          ((int.parse(perPound[1]!) + int.parse(perPound[2]!)) / 2);
+      return GramResolution(
+        grams: quantity * each,
+        source: GramSource.piece,
+        basis:
+            '${_amountText(amount)} × ${each.round()} g each '
+            '(${perPound[1]} to ${perPound[2]} per pound)',
       );
     }
 

@@ -1091,42 +1091,43 @@ void main() {
       expect(alone('6 cups buttermilk, for soaking'), DiscardedMedium.soak);
     });
 
-    test('the engine writes second_food, dried_for_fresh and '
-        'discarded_medium', () async {
+    test('the engine writes second_food and discarded_medium; a fresh '
+        "oregano line counts on the dried spice (the user's ruling R4, "
+        '2026-09-28)', () async {
       final db = tempDb();
       final r = recipeOf(
         db,
         'r1',
         [
           // Tinga de Pollo (0482; the lemon zest line held here until
-          // matcher v8 counts it by rule); Ciambotta (0405); 0134.
+          // matcher v8 counts it by rule); Ciambotta (0405); Grilled
+          // Cauliflower (0656).
           // ignore: no_adjacent_strings_in_list
           '2 tablespoons minced canned chipotle chile in adobo sauce plus 2 '
               'teaspoons adobo sauce',
           '⅓ cup fresh oregano leaves',
-          '½ cup sugar',
+          '¼ cup salt',
         ],
         steps: [
           // ignore: no_adjacent_strings_in_list
-          'Dissolve the salt and sugar in 2 quarts cold water in a large '
-              'container. Submerge the chicken in the brine, cover, and '
-              'refrigerate for 1 hour.',
+          'Whisk 2 cups water, salt, and sugar in medium bowl until salt and '
+              'sugar dissolve. Holding wedges by core, gently dunk in '
+              'salt-sugar mixture until evenly moistened (do not dry—residual '
+              'water will help cauliflower steam).',
         ],
       );
       await matchAndCompute(db, provider, r);
       final rows = db.ingredientMatchesFor('r1');
       expect(
         [for (final row in rows) row.hold],
-        [
-          'second_food',
-          'dried_for_fresh',
-          'discarded_medium',
-        ],
+        ['second_food', null, 'discarded_medium'],
       );
+      expect(rows[1].description, 'Spices, oregano, dried');
+      expect(rows[1].grams, closeTo(16, 0.01));
+      expect(bucketOf(rows[1]), MatchBucket.counted);
       expect(rows[2].grams, greaterThan(40), reason: 'grams kept');
-      for (final row in rows) {
-        expect(bucketOf(row), MatchBucket.check);
-      }
+      expect(bucketOf(rows[0]), MatchBucket.check);
+      expect(bucketOf(rows[2]), MatchBucket.check);
     });
   });
 

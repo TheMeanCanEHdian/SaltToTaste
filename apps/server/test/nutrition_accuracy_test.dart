@@ -473,17 +473,23 @@ void main() {
     });
 
     test(
-      'dried-for-fresh herbs stay off until user answer #5; bone-in '
-      'chicken pieces, "Chicken skin" under the count-noun cap, are the '
-      'whole bird (audit 4)',
+      'dried-for-fresh stays off but for the herbs FDC has no fresh record '
+      "of (the user's ruling R4, 2026-09-28); bone-in chicken pieces, "
+      '"Chicken skin" under the count-noun cap, are the whole bird '
+      '(audit 4)',
       () async {
         expect(allowDriedForFresh, isFalse);
-        // The count noun stays in the query for a dried record the line does
-        // not ask for: 'oregano leaves' does not lift "Spices, oregano, dried"
-        // over the gate.
+        // The count noun leaves the query for such a herb's dried spice:
+        // 'oregano leaves' lifts "Spices, oregano, dried" over the gate (it
+        // sat at 0.38 until v13) …
         final oregano = await rank('oregano leaves');
         expect(oregano.first.candidate.description, 'Spices, oregano, dried');
-        expect(oregano.first.confidence, lessThan(lowConfidence));
+        expect(oregano.first.confidence, closeTo(0.807, 0.001));
+        // … while any other dried record the line does not ask for keeps it
+        // ("1 tablespoon minced Thai chiles", 0642: v12's pin).
+        final chiles = (await rank('thai chiles')).first;
+        expect(chiles.candidate.description, 'Peppers, hot chile, sun-dried');
+        expect(chiles.confidence, lessThan(lowConfidence));
         // The cap's known cost crossed the gate at exactly 0.50 (4 lines,
         // 6,577 g): under its own words the piece line still ranks "Chicken
         // skin" first, so the line searches the whole bird instead.
@@ -497,32 +503,40 @@ void main() {
       },
     );
 
-    test('a fresh herb line on a dried or ground spice record is '
-        'dried-for-fresh, and so is a line offering the dried form; '
-        'fresh-grated nutmeg is not', () {
-      // Real corpus lines (audit 3: 49 lines, 180 g counted in the batch).
+    test('a fresh herb FDC has a fresh record of is held on its dried spice; '
+        'oregano, sage and the others it has none of count (a flagged '
+        "approximation, the user's ruling R4), and so does a line offering "
+        'the dried form; fresh-grated nutmeg is not held', () {
+      // Real corpus lines; the records are real answers' (thyme's answer
+      // holds "Thyme, fresh" beside the dried spice).
+      expect(
+        driedForFresh(
+          '1 teaspoon minced fresh thyme',
+          'Spices, thyme, dried',
+        ),
+        isTrue,
+      );
       expect(
         driedForFresh(
           '1 tablespoon minced fresh oregano',
           'Spices, oregano, dried',
         ),
-        isTrue,
+        isFalse,
       );
       expect(
         driedForFresh(
           '1 tablespoon minced fresh sage leaves',
           'Spices, sage, ground',
         ),
-        isTrue,
+        isFalse,
       );
-      // Counting the FRESH tablespoon on the dried record sized it three
-      // times over (albóndigas en chipotle) — held like the others.
+      // Albóndigas en Chipotle: the line itself offers the dried form.
       expect(
         driedForFresh(
           '1 tablespoon minced fresh oregano or 1 teaspoon dried',
           'Spices, oregano, dried',
         ),
-        isTrue,
+        isFalse,
       );
       expect(
         driedForFresh(
@@ -1446,10 +1460,16 @@ void main() {
       expect(db.nutritionFor(recipes['schnitzel']!.id), isNotNull);
     });
 
-    test('brine sugar, a salt bath and cheese-making milk go to review with '
-        "their grams; a cake's oil and a rub's salt count", () {
+    test('a salt bath and cheese-making milk go to review with their grams; '
+        "brine sugar is zeroed (the user's ruling R3, 2026-09-28); a cake's "
+        "oil and a rub's salt count", () {
+      final (_, sugar, sugarRow) = lineOf('roast', '½ cup sugar');
+      expect(sugar, DiscardedMedium.brineSugar);
+      expect(
+        (sugarRow.grams, sugarRow.gramSource, sugarRow.hold),
+        (0, 'discarded', null),
+      );
       for (final (recipe, raw, kind) in [
-        ('roast', '½ cup sugar', DiscardedMedium.brineSugar),
         (
           'potatoes',
           '2½ cups plus ⅛ teaspoon salt',
@@ -1524,11 +1544,12 @@ void main() {
       expect(discardedMediumOf(recipe, line, item, grams: 399), isNull);
     });
 
-    test('a fresh herb line on the dried spice record is held (user answer '
-        '#5 off)', () {
+    test('a fresh oregano line counts on the dried spice record, a flagged '
+        "approximation (the user's ruling R4, 2026-09-28)", () {
       final (_, _, row) = lineOf('ciambotta', '⅓ cup fresh oregano leaves');
       expect(row.description, 'Spices, oregano, dried');
-      expect(row.hold, 'dried_for_fresh');
+      expect(row.hold, isNull);
+      expect(row.grams, closeTo(16, 0.01));
     });
 
     test('a matched line with no amount is a resolved 0 g, its food kept '
