@@ -2,10 +2,10 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 /// The corpus text the corpus-free nutrition pins transcribe as string
-/// literals (nutrition_v14a, v14b, v15 and v16: ingredient lines and step
-/// texts), each with the corpus file it comes from. nutrition_v15_test's P7 guard
-/// proves each still exists there, so a pin never passes on text the
-/// corpus no longer has (Run 047 critic). Collected from the four files'
+/// literals (nutrition_v14a, v14b, v15, v16 and v17: ingredient lines and
+/// step texts), each with the corpus file it comes from. nutrition_v15_test's
+/// P7 guard proves each still exists there, so a pin never passes on text the
+/// corpus no longer has (Run 047 critic). Collected from the five files'
 /// literals that match a corpus `raw` or `text` exactly; a literal that
 /// matches none is a stated synthesized input or a fragment.
 const List<(String, String)> pinnedCorpusText = [
@@ -428,4 +428,108 @@ const List<(String, String)> pinnedCorpusText = [
     '0809-multigrain-bread.yaml',
     '1 envelope (2¼ teaspoons) instant or rapid-rise yeast',
   ),
+  // nutrition_v17_test.dart
+  (
+    '0053-crispy-thai-eggplant-salad.yaml',
+    '½ red Thai chile, seeded and sliced thin',
+  ),
+  (
+    '0172-braised-turkey.yaml',
+    '1 (5- to 7-pound) whole bone-in, skin-on turkey breast, trimmed',
+  ),
+  (
+    '0173-turkey-breast-en-cocotte-with-pan-gravy.yaml',
+    '1 (6- to 7-pound) whole bone-in turkey breast',
+  ),
+  (
+    '0198-sauteed-pork-cutlets-with-mustard-cider-sauce.yaml',
+    '1½ pounds boneless country-style pork spareribs, trimmed',
+  ),
+  ('0292-new-england-lobster-roll.yaml', '2 tablespoons minced celery'),
+  (
+    '0345-orecchiette-with-broccoli-rabe-and-sausage.yaml',
+    '1 bunch broccoli rabe (about 1 pound), washed, trimmed, and cut into 1½-inch pieces',
+  ),
+  (
+    '0401-cheesy-garlic-bread.yaml',
+    '1 (18- to 20-inch) baguette, sliced in half horizontally',
+  ),
+  ('0458-slow-cooker-beef-burgundy.yaml', '3 tablespoons Minute tapioca'),
+  (
+    '0504-pai-huang-gua-smashed-cucumbers.yaml',
+    '1 teaspoon garlic, minced to paste',
+  ),
+  (
+    '0520-yakisoba-japanese-stir-fried-noodles-with-beef.yaml',
+    '6 cups napa cabbage, sliced crosswise into ½-inch strips',
+  ),
+  ('0542-mu-shu-pork.yaml', '3 cups thinly sliced green cabbage'),
+  ('0603-grilled-stuffed-pork-tenderloin.yaml', '1 cup baby spinach'),
+  (
+    '0613-kansas-city-sticky-ribs.yaml',
+    '2 (2½- to 3-pound) full racks pork spareribs, trimmed of any large pieces of fat and membrane removed',
+  ),
+  (
+    '0614-memphis-style-barbecued-spareribs.yaml',
+    '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed',
+  ),
+  (
+    '0708-best-summer-tomato-gratin.yaml',
+    '6 ounces crusty baguette, cut into ¾-inch cubes (4 cups)',
+  ),
+  ('0719-spiced-pecans-with-rum-glaze.yaml', '2 cups raw pecan halves'),
+  ('0868-carrot-layer-cake.yaml', '2⅔ cups shredded carrots (4 carrots)'),
+  ('0986-strawberry-rhubarb-pie.yaml', '3 tablespoons instant tapioca'),
+  (
+    '1114-browned-butter-blondies.yaml',
+    '½ cup (3 ounces) milk chocolate chips',
+  ),
+  (
+    '1142-grilled-chicken-with-adobo-and-sazon.yaml',
+    '4 teaspoons granulated garlic',
+  ),
+  (
+    '1168-milk-chocolate-cremeux-tart.yaml',
+    '12 ounces milk chocolate, chopped fine',
+  ),
+  (
+    '1185-spicy-fried-chicken-sandwiches.yaml',
+    '2 cups shredded iceberg lettuce',
+  ),
+  // nutrition_v17_test.dart (the seven searches, the liquid FORM, the
+  // named whole-item portion)
+  (
+    '0270-pan-seared-swordfish-steaks.yaml',
+    '2 pounds skinless swordfish steaks, ¾ to 1 inch thick',
+  ),
+  (
+    '0271-pan-seared-sesame-crusted-tuna-steaks.yaml',
+    '4 (8-ounce) tuna steaks, preferably yellowfin, about 1 inch thick',
+  ),
+  (
+    '0432-classic-french-onion-soup.yaml',
+    '1 small baguette, cut on the bias into ½-inch slices',
+  ),
+  ('0450-chicken-bouillabaisse.yaml', '1 baguette'),
+  (
+    '0467-pan-bagnat-provencal-tuna-sandwich.yaml',
+    '1 large baguette, halved horizontally',
+  ),
+  (
+    '0513-sung-choy-bao-chicken-lettuce-wraps.yaml',
+    '½ cup water chestnuts, cut into ¼-inch pieces',
+  ),
+  (
+    '0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml',
+    '2 teaspoons nonfat dry milk powder',
+  ),
+  ('0750-easy-buttermilk-waffles.yaml', '½ cup dried buttermilk powder'),
+  ('0784-pumpkin-bread.yaml', '1 (15-ounce) can unsweetened pumpkin puree'),
+  ('0868-carrot-layer-cake.yaml', '⅓ cup buttermilk powder'),
+  ('0915-spiced-pumpkin-cheesecake.yaml', '1 (15-ounce) can pumpkin puree'),
+  (
+    '1129-beef-wellington.yaml',
+    '1 center-cut beef tenderloin roast, 3 pounds trimmed weight, 12 to 13 inches long and 4 to 4½ inches in diameter',
+  ),
+  ('1207-nutella-tart.yaml', '1¼ cups Nutella'),
 ];

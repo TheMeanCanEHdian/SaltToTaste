@@ -19,7 +19,7 @@ import 'support/fdc_fixtures.dart';
 
 /// The recorded provider, recording what it is asked.
 class _Recording implements NutritionProvider {
-  final FixtureProvider inner = FixtureProvider();
+  final FixtureProvider inner = FixtureProvider(pendingFoods: pendingFoods);
   final List<String> searched = [];
   final List<int> fetched = [];
 
@@ -941,9 +941,16 @@ void main() {
     // punch" (2710675) from snapshot 12 for the paren-volume pin, a hit in
     // 'champagne': equal in every digit. Its leftovers recorded "Hot pepper
     // sauce" (2710093) from snapshot 12 for the unit-only line_amount pin,
-    // a hit in 'pepper': equal in every digit.
-    expect(compared, 200);
-    expect(differ, 149);
+    // a hit in 'pepper': equal in every digit. Matcher v17 recorded garlic
+    // powder (171325), the fresh hot pepper (2709798), green cabbage
+    // (2346407), baby spinach (1999632) and iceberg (2346388) from snapshot
+    // 12: four are hits ('garlic', 'pepper', 'green cabbage', 'spinach'),
+    // all four differ in some digit. Its second batch recorded the
+    // tenderloin roast (171748) for the capped "roast" pin, a hit in 'beef
+    // tenderloin': it differs too (the French bread, 2707610, is a hit in
+    // no recorded answer).
+    expect(compared, 205);
+    expect(differ, 154);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

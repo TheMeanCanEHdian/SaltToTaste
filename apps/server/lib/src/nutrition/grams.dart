@@ -277,10 +277,11 @@ const List<(String, double)> _pieceWeights = [
 double? pieceWeightOf(String key) => _tableLookup(_pieceWeights, key);
 
 /// SR records whose volume portions size a volume line on a record that
-/// publishes none — each sibling's detail is cached, so this costs no
-/// request (checkpoint 5: 96 of 121 volume no_grams lines sat on
-/// portion-less Foundation records). The food and its nutrients stay the
-/// line's; only the grams per volume come from the sibling.
+/// publishes none — a sibling's detail is read from the cache, or fetched
+/// once when none holds it (engine.dart gramsFor) (checkpoint 5: 96 of 121
+/// volume no_grams lines sat on portion-less Foundation records). The food
+/// and its nutrients stay the line's; only the grams per volume come from
+/// the sibling.
 const Map<int, int> volumeSiblings = {
   // Onions, yellow / red, raw (Foundation: an edible onion and racc only) →
   // Onions, raw: "cup, chopped" 160 g, "tbsp chopped" 10 g.
@@ -301,6 +302,20 @@ const Map<int, int> volumeSiblings = {
   // almonds": "cup, whole" 143 g ('1¼ cups whole almonds', Almond Biscotti;
   // checkpoint 8).
   2346393: 170567,
+  // Matcher v17 (checkpoint 8): Foundation records that publish a racc
+  // portion only → their SR record's volume portions. Each sibling's detail
+  // is fetched once, by the first volume line that needs it (the approved
+  // requests).
+  2346395: 170182, // Nuts, pecans, halves, raw → Nuts, pecans
+  1104647: 169230, // Garlic, raw → Garlic, raw (SR)
+  2346407: 169975, // Cabbage, green, raw → Cabbage, raw
+  2258586: 170393, // Carrots, mature, raw → Carrots, raw
+  2346405: 169988, // Celery, raw → Celery, raw (SR)
+  1999632: 168462, // Spinach, baby → Spinach, raw
+  2346388: 169248, // Lettuce, iceberg, raw → …iceberg (includes crisphead)
+  // Cabbage, napa, leaf, destemmed, raw → Cabbage, chinese (pe-tsai), raw —
+  // already its nutrient sibling (engine.dart nutrientSiblings).
+  2727583: 169979,
 };
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
@@ -681,12 +696,16 @@ double? _wholeItemPortionGrams(
   String? raw,
 }) {
   final itemWords = normalizedItem.split(RegExp('[^a-z]+')).map(keyWordOf);
+  final lineSmall = RegExp(r'\bsmall\b').hasMatch((raw ?? '').toLowerCase());
   double? best;
   var bestRank = -1;
   for (final portion in food.portions) {
     final description = (portion.description ?? '').toLowerCase().trim();
+    // "1 mini baguette (about 9\" long)" names the baguette, a small one.
     final match =
-        RegExp(r'^([\d][\d./\s]*)\s*([a-z]+)').firstMatch(description) ??
+        RegExp(
+          r'^([\d][\d./\s]*)\s*(?:mini\s+)?([a-z]+)',
+        ).firstMatch(description) ??
         (portion.amount == 1
             ? RegExp('^()([a-z]+)').firstMatch(description)
             : null);
@@ -704,20 +723,27 @@ double? _wholeItemPortionGrams(
     if (_portionServingWords.contains(match.group(2))) {
       continue;
     }
+    final noun = match.group(2)!;
     // A single countable item a recipe writes as a BARE count is well under
     // 250 g (bigger ones — squash, cabbage — carry a unit or a printed
     // weight); a heavier "1 X" is a prepared-dish serving on a wrong-food
-    // match ("1 piece" of "Lasagna, meatless" = 256 g), not one item.
-    if (portion.gramWeight > 250) {
+    // match ("1 piece" of "Lasagna, meatless" = 256 g), not one item —
+    // unless a numbered portion's noun IS the item's own noun: "1 baguette
+    // (about 22\" long)" 324 g on "Bread, French or Vienna" (v17). An SR
+    // bare noun stays capped: "roast" 625 g sized "1 center-cut beef
+    // tenderloin roast, 3 pounds trimmed weight" (Beef Wellington) 2x under.
+    if (portion.gramWeight > 250 &&
+        !(match.group(1)!.isNotEmpty && itemWords.contains(keyWordOf(noun)))) {
       continue;
     }
-    final noun = match.group(2)!;
-    final size =
-        description.contains('regular') || description.contains('medium')
+    final small = description.contains('small') || description.contains('mini');
+    // A line that says small takes the record's small one ("1 small
+    // baguette": the "1 mini baguette" 152 g), else the medium/regular.
+    final size = lineSmall && small
+        ? 3
+        : description.contains('regular') || description.contains('medium')
         ? 2
-        : (description.contains('large') || description.contains('small')
-              ? 0
-              : 1);
+        : (description.contains('large') || small ? 0 : 1);
     // ponytail: 168570 "Peppers, hot chile, sun-dried" weighs its "pepper" at
     // 0.5 g — a bird chile. A dried New Mexican or guajillo pod is ~7 g by the
     // corpus's own parens ("3 medium New Mexican pods (about ¾ ounce)"), so a

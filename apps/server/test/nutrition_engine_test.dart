@@ -1864,8 +1864,14 @@ void main() {
               isTrue,
               reason: '$key → $target',
             );
+            // Ranked as the engine ranks the key's line: a bone-in bird cut
+            // is skin-on ('whole bone-in turkey breast', matcher v17).
             expect(
-              rankCandidates(target, answer).first.confidence,
+              rankCandidates(
+                target,
+                answer,
+                skinOn: impliesSkinOn(key, key),
+              ).first.confidence,
               greaterThanOrEqualTo(0.5),
               reason: '$key → $target',
             );

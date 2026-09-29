@@ -241,8 +241,15 @@ const Map<String, String> _synonyms = {
 /// salt (plain and fine sea salt as table salt again), a volume paren
 /// saying "each" is per item, and the guards other libraries' lines need
 /// are back (a portion must lead with its unit, "do not drain" drains
-/// nothing, an in-item ounce weight, a litre paren).
-const int matcherVersion = 16;
+/// nothing, an in-item ounce weight, a litre paren); 17 = checkpoint 8's
+/// approved requests: rewrites of names FDC spells another way (baguette,
+/// broccoli rabe, quick tapioca, St. Louis spareribs, pomegranate seeds,
+/// milk chocolate, swordfish and tuna steaks, nonfat dry milk, pumpkin
+/// purée, Nutella, water chestnuts, buttermilk powder) and of keys whose
+/// record leads a cached answer, an unasked 'liquid' FORM segment docked as
+/// a modified form, eight SR volume siblings, and a named whole item's
+/// portion past the 250 g bare-count cap (grams.dart).
+const int matcherVersion = 17;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -1017,6 +1024,65 @@ const Map<String, String> _queryRewrites = {
   'baby back or loin back ribs': 'pork backribs raw',
   'ripe but firm bosc pears': 'bosc pear',
   'white baking chips': 'white chocolate',
+  // Matcher v17 (checkpoint 8, approved live searches): names FDC spells
+  // another way, whose right record sat under the gate in every cached
+  // answer. Each target is PENDING one live search (pendingSearches).
+  // FDC has no 'baguette': "Bread, French or Vienna" (2707610) scored 0.
+  'baguette': 'french bread',
+  'crusty baguette': 'french bread',
+  // FDC spells it 'raab' ("Broccoli raab, raw", 170381, at 0.16).
+  'broccoli rabe': 'broccoli raab',
+  // Quick-cooking tapioca is the dry pearl (169717, at 0.44 ahead of the
+  // puddings).
+  'instant tapioca': 'tapioca pearl dry',
+  'minute tapioca': 'tapioca pearl dry',
+  // "Pork, fresh, spareribs, separable lean and fat, raw" (167853, 0.26).
+  'st louis style spareribs': 'pork spareribs raw',
+  'full racks pork spareribs': 'pork spareribs raw',
+  // The arils are the fruit ("Pomegranates, raw" / "Pomegranate, raw").
+  'pomegranate seeds': 'pomegranate raw',
+  // The candy, never FNDDS "Chocolate milk, whole" (2705467, the DRINK, 83
+  // kcal / 100 g) — "Candies, milk chocolate" (167587) ranked 20th under
+  // 'milk chocolate'. ('milk chocolate chip' is deliberately NOT mapped to
+  // 'milk chocolate', which lands on the drink.)
+  'milk chocolate': 'milk chocolate candy',
+  'milk chocolate chips': 'milk chocolate candy',
+  // A fish steak, never "Pepper steak" (2706747, 0.47, 'steak' as the head
+  // noun): "Fish, swordfish, raw" (173703) / "Fish, tuna, raw" (2706308).
+  'skinless swordfish steaks': 'swordfish raw',
+  'tuna steaks': 'tuna raw',
+  // The dry powder (172195 / 170877 "Milk, dry, nonfat, regular, …"), not
+  // cocoa (0.48); 'nonfat dry milk' would rank the RECONSTITUTED liquid.
+  'nonfat dry milk powder': 'milk dry nonfat regular',
+  // "Pumpkin, canned, without salt" (168450), not "Prune puree" (0.48);
+  // 'canned pumpkin' ties the salted record.
+  'pumpkin puree': 'pumpkin canned without salt',
+  'unsweetened pumpkin puree': 'pumpkin canned without salt',
+  // The spread, not "Nutella sandwich on wheat bread" (0.43).
+  'nutella': 'chocolate hazelnut spread',
+  // FDC spells it 'Waterchestnuts' (170066); the cached answer held only
+  // "Jai, Monk's Food".
+  'water chestnuts': 'waterchestnuts chinese raw',
+  // "Milk, buttermilk, dried" (171274), not dried egg white or baobab.
+  'dried buttermilk powder': 'milk buttermilk dried',
+  'buttermilk powder': 'milk buttermilk dried',
+  // Rewrites to answers already cached (no request). Boneless country-style
+  // "spareribs" are the loin's country-style ribs (167895 first at 0.52),
+  // not the sparerib record they sat on at 0.39.
+  'boneless country-style pork spareribs':
+      'pork spareribs or country-style ribs or beef short ribs',
+  // 'whole' and 'skin-on' only lowered 171093 "Turkey, all classes, breast,
+  // meat and skin, raw" (0.48, 0.43); the cached answer ranks it at 0.55.
+  'whole bone-in turkey breast': 'bone-in turkey breast',
+  'whole bone-in skin-on turkey breast': 'bone-in turkey breast',
+  // A fresh red Thai chile, not the sun-dried 168570: the other Thai chile
+  // keys' answer ranks "Peppers, hot, raw" (2709798) first. ('thai red
+  // chile' is NOT mapped: the piece table's 'thai chile' misses it, so its
+  // count would read the record's 15 g whole pepper.)
+  'red thai chile': 'jarred hot cherry peppers',
+  // Granulated garlic is the dried powder, not "Garlic, raw" (1104647,
+  // 0.55): the cached answer holds "Spices, garlic powder" (171325) alone.
+  'granulated garlic': 'garlic powder',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -2293,6 +2359,18 @@ List<RankedCandidate> rankCandidates(
           (token != 'white' || descriptionTokens.contains('egg'))) {
         score -= 0.06;
       }
+    }
+    // An unasked 'liquid' docks as a modified form only as the record's own
+    // FORM, a description segment of its own: "Baking chocolate,
+    // unsweetened, liquid" (472 kcal) tied the squares (642) at 0.90 under
+    // 'unsweetened chocolate' and won (10 lines, v17). Never FDC's canned
+    // wording, "solids and liquids" or "(liquid expressed …)".
+    if (!queryTokens.contains('liquid') &&
+        candidate.description
+            .toLowerCase()
+            .split(',')
+            .any((segment) => segment.trim() == 'liquid')) {
+      score -= 0.06;
     }
     // Reconstitutable-concentrate penalty (substring, query-gated). One dock is
     // enough — "bouillon cubes" is a single concept, not two errors.

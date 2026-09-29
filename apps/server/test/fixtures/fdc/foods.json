@@ -10293,5 +10293,379 @@
     "description": "fl oz assumed specific gravity of honey"
    }
   ]
+ },
+ "171325": {
+  "fdc_id": 171325,
+  "description": "Spices, garlic powder",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 331.0,
+   "203": 16.55,
+   "204": 0.73,
+   "205": 72.73,
+   "291": 9.0,
+   "269": 2.43,
+   "301": 79.0,
+   "303": 5.65,
+   "304": 77.0,
+   "305": 414.0,
+   "306": 1193.0,
+   "307": 60.0,
+   "401": 1.2,
+   "404": 0.435,
+   "405": 0.141,
+   "406": 0.796,
+   "415": 1.654,
+   "432": 47.0,
+   "435": 47.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.67,
+   "328": 0.0,
+   "430": 0.4,
+   "606": 0.249,
+   "645": 0.115,
+   "646": 0.178,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 9.7,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 3.1,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "2709798": {
+  "fdc_id": 2709798,
+  "description": "Peppers, hot, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 1.39,
+   "204": 0.4,
+   "205": 7.66,
+   "208": 34.0,
+   "269": 4.71,
+   "291": 2.2,
+   "301": 13.0,
+   "303": 0.64,
+   "304": 19.0,
+   "305": 34.0,
+   "306": 285.0,
+   "307": 6.0,
+   "320": 51.0,
+   "323": 2.13,
+   "328": 0.0,
+   "401": 131.0,
+   "404": 0.056,
+   "405": 0.078,
+   "406": 1.26,
+   "415": 0.463,
+   "418": 0.0,
+   "430": 16.2,
+   "432": 25.0,
+   "435": 25.0,
+   "601": 0.0,
+   "606": 0.067,
+   "645": 0.027,
+   "646": 0.176
+  },
+  "portions": [
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 whole"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 150.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 piece"
+   }
+  ]
+ },
+ "2346407": {
+  "fdc_id": 2346407,
+  "description": "Cabbage, green, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 31.4275,
+   "958": 27.8695,
+   "203": 0.96125,
+   "204": 0.2275,
+   "205": 6.38375,
+   "301": 41.84,
+   "303": 0.06625,
+   "304": 13.86,
+   "305": 26.93,
+   "306": 207.1,
+   "307": 16.1,
+   "401": 40.34,
+   "415": 0.1384,
+   "430": 59.4
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "1999632": {
+  "fdc_id": 1999632,
+  "description": "Spinach, baby",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 26.602,
+   "958": 20.72851125,
+   "203": 2.851875,
+   "204": 0.6188,
+   "205": 2.406325,
+   "291": 1.558,
+   "301": 68.35,
+   "303": 1.261,
+   "304": 92.86,
+   "305": 39.05,
+   "306": 581.8,
+   "307": 111.4,
+   "401": 26.52,
+   "404": 0.07688,
+   "405": 0.1935,
+   "406": 0.5506,
+   "415": 0.1946,
+   "320": 283.0
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2346388": {
+  "fdc_id": 2346388,
+  "description": "Lettuce, iceberg, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 17.10875,
+   "958": 14.455425,
+   "203": 0.7425,
+   "204": 0.07375,
+   "205": 3.36875,
+   "301": 14.24,
+   "303": 0.03325,
+   "304": 6.311,
+   "305": 19.18,
+   "306": 139.3,
+   "307": 16.11,
+   "404": 0.05638,
+   "406": 0.2175,
+   "415": 0.04013,
+   "430": 20.5
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2707610": {
+  "fdc_id": 2707610,
+  "description": "Bread, French or Vienna",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 10.8,
+   "204": 2.42,
+   "205": 51.9,
+   "208": 272.0,
+   "269": 4.62,
+   "291": 2.2,
+   "301": 52.0,
+   "303": 3.91,
+   "304": 32.0,
+   "305": 105.0,
+   "306": 117.0,
+   "307": 602.0,
+   "320": 0.0,
+   "323": 0.21,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.71,
+   "405": 0.427,
+   "406": 4.82,
+   "415": 0.107,
+   "418": 0.0,
+   "430": 0.7,
+   "432": 28.0,
+   "435": 189.0,
+   "601": 0.0,
+   "606": 0.529,
+   "645": 0.362,
+   "646": 0.855
+  },
+  "portions": [
+   {
+    "gram_weight": 10.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice, snack-size"
+   },
+   {
+    "gram_weight": 152.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 mini baguette (about 9\" long)"
+   },
+   {
+    "gram_weight": 64.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 medium or regular slice"
+   },
+   {
+    "gram_weight": 324.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 baguette (about 22\" long)"
+   },
+   {
+    "gram_weight": 82.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 individual loaf"
+   },
+   {
+    "gram_weight": 32.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small or thin/very thin slice"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice, crust not eaten"
+   },
+   {
+    "gram_weight": 470.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 loaf (14\" long)"
+   },
+   {
+    "gram_weight": 64.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 96.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large or thick slice"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice, Vienna bread"
+   },
+   {
+    "gram_weight": 3.7,
+    "amount": null,
+    "unit": null,
+    "description": "1 cubic inch"
+   },
+   {
+    "gram_weight": 45.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup, NFS"
+   }
+  ]
+ },
+ "171748": {
+  "fdc_id": 171748,
+  "description": "Beef, loin, tenderloin roast, boneless, separable lean and fat, trimmed to 0\" fat, choice, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 153.0,
+   "203": 21.5,
+   "204": 7.4,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 14.0,
+   "303": 2.52,
+   "304": 12.0,
+   "305": 208.0,
+   "306": 279.0,
+   "307": 44.0,
+   "401": 0.0,
+   "404": 0.05,
+   "405": 0.3,
+   "406": 4.461,
+   "415": 0.601,
+   "432": 3.0,
+   "435": 3.0,
+   "418": 3.34,
+   "320": 3.0,
+   "323": 0.19,
+   "328": 0.1,
+   "430": 1.5,
+   "606": 2.687,
+   "645": 2.956,
+   "646": 0.496,
+   "605": 0.378,
+   "601": 61.0
+  },
+  "portions": [
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 625.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "roast"
+   }
+  ]
  }
 }

@@ -15,17 +15,20 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// [pendingSearches]).
 class FixtureProvider implements NutritionProvider {
   /// Loads the recorded fixtures from disk.
-  FixtureProvider({this.pending = const {}, this.superseded = const {}})
-    : _searches =
-          jsonDecode(
-                File('test/fixtures/fdc/searches.json').readAsStringSync(),
-              )
-              as Map<String, dynamic>,
-      _foods =
-          jsonDecode(
-                File('test/fixtures/fdc/foods.json').readAsStringSync(),
-              )
-              as Map<String, dynamic>;
+  FixtureProvider({
+    this.pending = const {},
+    this.superseded = const {},
+    this.pendingFoods = const {},
+  }) : _searches =
+           jsonDecode(
+                 File('test/fixtures/fdc/searches.json').readAsStringSync(),
+               )
+               as Map<String, dynamic>,
+       _foods =
+           jsonDecode(
+                 File('test/fixtures/fdc/foods.json').readAsStringSync(),
+               )
+               as Map<String, dynamic>;
 
   final Map<String, dynamic> _searches;
   final Map<String, dynamic> _foods;
@@ -38,6 +41,11 @@ class FixtureProvider implements NutritionProvider {
   /// Foods a test declares superseded — FDC's detail 404s for them — though
   /// no fixture records the 404: a test naming the path it pins.
   final Set<int> superseded;
+
+  /// Food details no fixture records that a test names, answered as FDC's
+  /// 404 (no detail): each is one no sweep snapshot holds ([pendingFoods]
+  /// at the top level), so the line keeps the grams it had without it.
+  final Set<int> pendingFoods;
 
   /// How many searches were served — cache-behavior assertions.
   int searchCalls = 0;
@@ -79,7 +87,7 @@ class FixtureProvider implements NutritionProvider {
   @override
   Future<FdcFood?> food(int fdcId) async {
     foodCalls += 1;
-    if (superseded.contains(fdcId)) {
+    if (superseded.contains(fdcId) || pendingFoods.contains(fdcId)) {
       return null;
     }
     if (!_foods.containsKey('$fdcId')) {
@@ -107,6 +115,37 @@ const Set<String> pendingSearches = {
   // Checkpoint 7: the raw halibut query (Braised Halibut 0273, Cioppino
   // 0108, Pan-Roasted Halibut Steaks) — no snapshot 1–10 holds it.
   'halibut atlantic and pacific raw',
+  // Matcher v17 (checkpoint 8's approved searches): the rewrite targets of
+  // names FDC spells another way — no snapshot 1–12 holds them.
+  'french bread',
+  'broccoli raab',
+  'tapioca pearl dry',
+  'pork spareribs raw',
+  'pomegranate raw',
+  'milk chocolate candy',
+  'swordfish raw',
+  'tuna raw',
+  'milk dry nonfat regular',
+  'pumpkin canned without salt',
+  'chocolate hazelnut spread',
+  'waterchestnuts chinese raw',
+  'milk buttermilk dried',
+};
+
+/// Food details the suites ask that NO sweep snapshot's cache holds:
+/// matcher v17's SR volume siblings (grams.dart volumeSiblings), each
+/// pending ONE approved live fetch — answered as a 404 by a test that names
+/// them, so a volume line on the Foundation record keeps no grams, as it
+/// did before v17.
+const Set<int> pendingFoods = {
+  170182, // Nuts, pecans
+  169230, // Garlic, raw
+  169975, // Cabbage, raw
+  170393, // Carrots, raw
+  169988, // Celery, raw
+  168462, // Spinach, raw
+  169248, // Lettuce, iceberg (includes crisphead types), raw
+  169979, // Cabbage, chinese (pe-tsai), raw
 };
 
 /// A fixture miss: the test asked FDC something no fixture recorded. A

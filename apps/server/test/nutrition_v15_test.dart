@@ -1195,7 +1195,7 @@ void main() {
     });
   });
   test('P7: every corpus line and step the corpus-free pins transcribe '
-      '(v14a, v14b, v15, v16) still reads so in its corpus file', () {
+      '(v14a, v14b, v15, v16, v17) still reads so in its corpus file', () {
     final texts = <String, Set<String>>{};
     Set<String> textOf(String file) => texts.putIfAbsent(file, () {
       final r = loadCorpusRecipe(file);

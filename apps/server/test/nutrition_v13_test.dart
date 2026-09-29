@@ -250,32 +250,20 @@ void main() {
       '(belowGateSizedTwin)', () {
     const seeds = '½ cup pomegranate seeds';
 
-    test(
-      '"½ cup pomegranate seeds" (Barley Salad with Pomegranate, 0718) '
-      'keeps 87.5 g on FNDDS "Pomegranate, raw" (2709267) when its detail '
-      'is cached, as in the library; still below the gate, in check',
-      () async {
-        final food = (await provider.food(2709267))!;
-        final db = tempDb()
-          ..fdcFoodCachePut(2709267, jsonEncode(food.toJson()));
-        final r = recipeOf(db: db, [seeds]);
-        await matchAndCompute(db, provider, r);
-        final row = db.ingredientMatchesFor('r').single;
-        expect(row.fdcId, 2709267);
-        expect(row.grams, closeTo(87.5, 0.01));
-        expect(bucketOf(row), MatchBucket.check);
-      },
-    );
-
-    test('with no cached twin the stemmed top pick stands, no grams and no '
-        'fetch: SR "Pomegranates, raw" (169134) at 0.495', () async {
+    test('since matcher v17 "½ cup pomegranate seeds" (Barley Salad with '
+        'Pomegranate, 0718) searches `pomegranate raw` — pending that one '
+        'live search the line is unmatched, '
+        'and no detail is fetched; the twin rule stays pinned by the guards '
+        'below on the recorded answer', () async {
       final db = tempDb();
-      final fixtures = FixtureProvider();
+      final fixtures = FixtureProvider(pending: pendingSearches);
       final r = recipeOf(db: db, [seeds]);
       await matchAndCompute(db, fixtures, r);
       final row = db.ingredientMatchesFor('r').single;
-      expect((row.fdcId, row.grams), (169134, null));
+      expect((row.fdcId, row.grams), (null, null));
+      expect(fixtures.searchCalls, 1);
       expect(fixtures.foodCalls, 0);
+      expect(db.fdcSearchCacheGet('pomegranate raw'), '[]');
     });
   });
 

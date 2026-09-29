@@ -1970,6 +1970,36 @@ Eight surviving mutants are argued equivalent in comments at their sites.
 The user ruled on 2026-09-30 that the Lines view keeps the finishes order,
 and approved any further live requests the analyzer work needs.
 
+### The live-request batch, built dry (matcher v17)
+
+The user approved the requests the analyzer needs (2026-09-30). A planner
+measured every candidate on the v16 replay and kept only requests that
+move lines: 13 searches — the eight stalled rewrite keys that sit on
+their right record below the gate (baguette → "french bread", broccoli
+rabe → "broccoli raab", instant/minute tapioca → "tapioca pearl dry", St.
+Louis and full-rack spareribs → "pork spareribs raw", pomegranate seeds →
+"pomegranate raw"), milk chocolate → "milk chocolate candy" (off the
+chocolate-MILK drink), and seven new ones (swordfish, tuna, nonfat dry
+milk, pumpkin purée, Nutella, water chestnuts, dried buttermilk) — plus
+eight SR sibling details for portion-less Foundation records (pecans,
+garlic, cabbage, carrots, celery, spinach, iceberg, napa). It dropped the
+Thai chile repoint and the fresh-ham detail (they move no line), farro
+(no volume sibling exists), the chocolate details (weight lines need
+none) and the four no-match details (36 of 37 no-match rows have empty
+cached answers). Zero-request additions reuse cached answers: the whole
+bone-in turkey breasts, the boneless country-style spareribs, granulated
+garlic on garlic powder, and a "liquid" dock scoped to a record whose own
+form is liquid (the unsweetened chocolate moves to the solid squares; the
+canned "solids and liquids" wording is untouched). A bare count of an
+item whose record NAMES it in a numbered portion over 250 g now takes it
+("1 baguette (about 22 in. long)" 324 g, where it had counted a 64 g
+slice); an unnamed heavy portion stays capped. The proof is a dry run:
+the cache-only replay of snapshot 12 asks the provider for exactly the 21
+planned calls and nothing else (a first build had missed seven searches
+because the plan was cut when handed on — a process lesson recorded).
+matcherVersion 17; the live spend follows, the answers are recorded into
+the fixtures from the resulting snapshot, and the pins move off pending.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

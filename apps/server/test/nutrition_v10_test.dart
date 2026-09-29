@@ -96,6 +96,9 @@ void main() {
         'recipe partial: "½ cup pecan halves" (Cranberry-Pecan Muffins, '
         '0765) on Foundation 2346395, racc only', () async {
       final db = tempDb();
+      // Its SR volume sibling (170182, matcher v17) is pending its one
+      // approved fetch: answered as a 404, the line still has no grams.
+      final provider = FixtureProvider(pendingFoods: pendingFoods);
       final r = recipeOf(db, 'r1', ['½ cup pecan halves']);
       await matchAndCompute(db, provider, r);
       final before = db.ingredientMatchesFor('r1').single;

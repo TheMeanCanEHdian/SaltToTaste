@@ -764,7 +764,13 @@ lack, nor that the record has none) — `"4 × 336 g (USDA
 edible bird portion)"` for counted birds ("4 Cornish game hens") sized by the
 record's own edible bird rather than the printed weight, `"½ cup · USDA
 portion of \"Onions, raw\""` for a volume on a record with no volume portion
-of its own, read from a cached sibling's (the food stays the line's; "1 cup
+of its own, read from its SR sibling's — cached, or fetched once by the
+first volume line that needs it (since matcher v17: Foundation pecans,
+garlic, green cabbage, carrots, celery, baby spinach, iceberg and napa
+cabbage read SR "Nuts, pecans", "Garlic, raw", "Cabbage, raw", "Carrots,
+raw", "Celery, raw", "Spinach, raw", "Lettuce, iceberg (includes crisphead
+types), raw" and "Cabbage, chinese (pe-tsai), raw") (the food stays the
+line's; "1 cup
 fresh or frozen blueberries" on Foundation "Blueberries, raw" reads
 "Blueberries, frozen"'s cup, "1¼ cups whole almonds" on Foundation "Nuts,
 almonds, whole, raw" SR "Nuts, almonds"' `cup, whole`), `"8 · USDA
@@ -775,7 +781,12 @@ pear — a sub-gram "pepper", 168570's 0.5 g, weighs only a small DRIED
 chile: an arbol or bird chile, or one the line calls small and dried; a
 fresh Thai chile, or any other pepper line, on it has no grams), and of
 several portions the item names the medium one ("4 leaves Bibb lettuce" on
-"leaf, medium") — `"2 cup · USDA portion"` for a bare count whose
+"leaf, medium"), or the small one when the line says small ("1 small
+baguette" on "1 mini baguette", 152 g); a portion over 250 g is a
+prepared-dish serving, never one item, unless it is a numbered portion
+naming the item's own noun (since matcher v17: "1 baguette" on "Bread,
+French or Vienna"'s "1 baguette (about 22" long)", 324 g; an SR bare noun
+such as "roast" 625 g stays capped) — `"2 cup · USDA portion"` for a bare count whose
 parenthetical prints its volume, which wins as a printed weight does ("4–6
 Swiss chard leaves, ribs removed, torn into 1-inch pieces (about 2 cups;
 optional)" is 72 g, not five whole leaves; "(½ cup plus 3 tablespoons)"
@@ -859,7 +870,7 @@ a rinsed one (Eggplant Parmesan's degorging salt, the user's ruling Q3); a
 skimmer or slotted spoon empties nothing when the pot simmered dry
 before it ("until water evaporates") or the step keeps the liquid after it
 (reserved, ladled over); food lifted out of a discarded marinade leaves the
-marinade counted; and (since matcher v14, checkpoint 8; v16 today) baking soda a food sits
+marinade counted; and (since matcher v14, checkpoint 8; v17 today) baking soda a food sits
 in and is rinsed of in that step or the next (a velveting soak, "Rinse pork
 in cold water"), soda or salt in boiling water a LATER step drains the
 boiled food of ("Combine chickpeas, baking soda, and 6 cups water … bring
@@ -969,7 +980,7 @@ longer B stays one, list or not: "chicken or beef or vegetable broth" is
 never a whole chicken), or the singular
 `pork tenderloin` whose cached answer a "pork tenderloins" line reads (a
 line the rewrites changed never reads its singular form's answer); null
-when the line has nothing searchable; since matcher v14 (checkpoint 8; v16
+when the line has nothing searchable; since matcher v14 (checkpoint 8; v17
 today) it rewrites,
 each to a cached answer whose top record is the named one: `thick-cut
 bacon` → `pork cured bacon unprepared`; `cilantro leaves and stems` and
@@ -990,7 +1001,30 @@ mignon` and `center-cut filets mignons` → `beef tenderloin`; `kale or
 collard greens` → `kale`; `broccoli florets` → `broccoli`; `stone-ground
 cornmeal` → `cornmeal`; `baby back or loin back ribs` → `pork backribs
 raw`; `ripe but firm bosc pears` → `bosc pear`; `white baking chips` →
-`white chocolate`; a few rewrites are APPROXIMATIONS, flagged in
+`white chocolate`; since matcher v17, `boneless country-style pork
+spareribs` → `pork spareribs or country-style ribs or beef short ribs`
+("Pork, fresh, loin, country-style ribs, …, raw", 167895 — never the
+sparerib record); `whole bone-in turkey breast` and `whole bone-in skin-on
+turkey breast` → `bone-in turkey breast` ("Turkey, all classes, breast,
+meat and skin, raw", 171093); `red thai chile` → `jarred hot cherry
+peppers` (`thai red chile` is deliberately not rewritten); `granulated
+garlic` → `garlic powder` ("Spices, garlic powder", 171325, never "Garlic,
+raw"); and, each to a query FDC answers only by one live search (until it
+is asked the line is unmatched, never kept on the old food), `baguette` and
+`crusty baguette` → `french bread` ("Bread, French or Vienna"); `broccoli
+rabe` → `broccoli raab`; `instant tapioca` and `minute tapioca` →
+`tapioca pearl dry`; `st louis style spareribs` and `full racks pork
+spareribs` → `pork spareribs raw`; `pomegranate seeds` → `pomegranate raw`;
+`milk chocolate` and `milk chocolate chips` → `milk chocolate candy`
+("Candies, milk chocolate", never the chocolate-milk DRINK; `milk chocolate
+chip` is deliberately not rewritten to `milk chocolate`); `skinless
+swordfish steaks` → `swordfish raw` and `tuna steaks` → `tuna raw` (the
+fish, never "Pepper steak"); `nonfat dry milk powder` → `milk dry nonfat
+regular` (the dry powder, never the reconstituted liquid or cocoa);
+`pumpkin puree` and `unsweetened pumpkin puree` → `pumpkin canned without
+salt`; `nutella` → `chocolate hazelnut spread`; `water chestnuts` →
+`waterchestnuts chinese raw` (FDC spells it as one word); `dried
+buttermilk powder` and `buttermilk powder` → `milk buttermilk dried`; a few rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
 as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
@@ -1024,7 +1058,13 @@ ranker breaks two kinds of exact score tie toward the plainer record: the
 "separable lean and fat" record over "lean only" (the default for an
 unqualified cut), and the record naming fewer cookings — "Kielbasa, fully
 cooked, unheated" over "…, grilled"; any other exact tie still goes to the
-record FDC lists first) and
+record FDC lists first; a description word marking a modified form the
+query does not ask for docks the record — since matcher v17 `liquid` too,
+but only as the record's own form, a comma-separated description segment of
+its own, so "unsweetened chocolate" is "Baking chocolate, unsweetened,
+squares", never the tied "…, liquid", while FDC's canned wording ("solids
+and liquids", "(liquid expressed …)") docks nothing and `clam juice`'s
+query asks for the canned liquid and keeps it) and
 `line_amount` (the line's first amount that names a unit, as written — `"4
 stick"`, `"1 piece"`, or the unit alone when the line writes no number,
 `"dash"` for `"Dash of hot sauce"` — else its bare count, `"8"` for `"8 large sea
@@ -1100,7 +1140,7 @@ follows)", not "4 cups Cream Cheese Frosting" or an amount-less line — is
 matched like any other line and counted on its food ("8 Home-Fried Taco
 Shells (recipe follows)" is 8 × the 12.9 g "shell" of "Taco shells, baked",
 103.2 g); it stays the 0 g sub-recipe only when its FOOD gives no grams (no
-corpus line since matcher v14; v16 today) — a pick below the review gate whose detail
+corpus line since matcher v14; v17 today) — a pick below the review gate whose detail
 was never fetched stays that held pick in `check` instead (one whose detail
 IS cached and gives no grams is the sub-recipe). "1 recipe X" whose
 subsection X is one counted food is that food's yield on the line's own
