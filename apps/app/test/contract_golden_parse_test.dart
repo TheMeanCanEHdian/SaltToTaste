@@ -586,6 +586,11 @@ void main() {
 
       expect(report.items, hasLength(items.length));
       expect(report.items, isNotEmpty, reason: 'the golden flags a line');
+      expect(
+        report.items.map((line) => line.finishes),
+        contains(1),
+        reason: 'the golden holds a last open line',
+      );
       for (final (index, line) in report.items.indexed) {
         final row = items[index];
         final recipe = row['recipe']! as Map<String, dynamic>;
@@ -596,6 +601,8 @@ void main() {
         expect(line.recipe.slug, recipe['slug']);
         expect(line.recipe.title, recipe['title']);
         expect(line.key, '${recipe['slug']}#${row['position']}');
+        // A line item's `finishes`: 1 on its recipe's last open line.
+        expect(line.finishes, row['finishes']);
         final match = row['match']! as Map<String, dynamic>;
         expect(line.match, isNotNull);
         expect(line.match!.fdcId, match['fdc_id']);
@@ -605,6 +612,7 @@ void main() {
         expect(line.match!.grams, match['grams']);
         expect(line.match!.gramSource, match['gram_source']);
         expect(line.match!.status, match['status']);
+        expect(line.match!.hold, match['hold']);
       }
     });
 
@@ -654,7 +662,107 @@ void main() {
         expect(group.gramsMin, grams['min']);
         expect(group.gramsMax, grams['max']);
         expect(group.gramsMissing, grams['missing']);
+        expect(group.finishes, row['finishes']);
+        expect(group.lastOpen, row['last_open']);
+        expect([
+          for (final r in group.finishesRecipes) {'id': r.id, 'title': r.title},
+        ], row['finishes_recipes']);
       }
+      // The whole-library banner.
+      expect(report.finishable, raw['finishable']);
+      expect(report.openRecipes, raw['open_recipes']);
+      expect(report.finishable, greaterThan(0));
+      expect(
+        report.items.any((group) => group.finishes > 0),
+        isTrue,
+        reason: 'the golden carries a group that finishes a recipe',
+      );
+
+      // The order rides as `sort`, and only in grouped mode.
+      final sorted = goldenDio(raw);
+      await RecipeRepository(
+        dio: sorted,
+      ).getNutritionReview(page: 1, grouped: true, sort: 'worst');
+      expect(
+        (sorted.httpClientAdapter as GoldenAdapter)
+            .requests
+            .single
+            .queryParameters['sort'],
+        'worst',
+      );
+    });
+
+    test(
+      'C1: the confirm-with-amount receipt parses applied.completed',
+      () async {
+        final raw = golden('nutrition_confirm_applied');
+        final applied = raw['applied']! as Map<String, dynamic>;
+        expect(applied.keys, containsAll(['recipes', 'lines', 'failed']));
+        expect(applied, contains('completed'));
+        final dio = goldenDio(raw);
+        final result = await NutritionRepository(dio).overrideMatch(
+          'nutrition-rules-sample',
+          12,
+          confirmed: true,
+          grams: 452,
+          applyToAll: true,
+        );
+        expect(result.applied!.completed, applied['completed']);
+        expect(result.applied!.completedRecipes, applied['completed_recipes']);
+        expect(result.applied!.recipes, applied['recipes']);
+        // The butter line took its amount with the confirm.
+        final butter = result.matches.singleWhere((m) => m.position == 12);
+        expect(butter.status, 'confirmed');
+        expect(butter.grams, 452);
+        expect((dio.httpClientAdapter as GoldenAdapter).requests.single.data, {
+          'grams': 452.0,
+          'confirmed': true,
+          'apply_to_all': true,
+        });
+      },
+    );
+
+    test('C1: line_amount, portions (with fill) and the approximation basis '
+        'parse from the rules golden', () async {
+      final raw = golden('nutrition_matches_rules');
+      final items = (raw['items']! as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final parsed = await NutritionRepository(
+        goldenDio(raw),
+      ).matches('nutrition-rules-sample');
+      for (final (index, line) in parsed.indexed) {
+        final row = items[index];
+        expect(line.lineAmount, row['line_amount']);
+        expect(line.kcalPer100g, row['kcal_per_100g']);
+        final portions = (row['portions']! as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        expect(line.portions, hasLength(portions.length));
+        for (final (i, portion) in line.portions.indexed) {
+          expect(portion.grams, portions[i]['grams']);
+          expect(portion.amount, portions[i]['amount']);
+          expect(portion.unit, portions[i]['unit']);
+          expect(portion.description, portions[i]['description']);
+          expect(portion.fill, portions[i]['fill']);
+        }
+      }
+      final butter = parsed.singleWhere((m) => m.position == 12);
+      expect(butter.lineAmount, '4 stick');
+      // "Butter, without salt" (173430): its energy, 717 kcal per 100 g.
+      expect(butter.kcalPer100g, 717);
+      expect(
+        [
+          for (final p in butter.portions)
+            if (p.fill != null) (p.description, p.fill),
+        ],
+        [('stick', 452.0)],
+      );
+      final pancetta = parsed.singleWhere((m) => m.position == 11);
+      expect(
+        pancetta.gramBasis,
+        endsWith(
+          ' · approximation (counted as Pork, cured, bacon, unprepared)',
+        ),
+      );
     });
   });
 }

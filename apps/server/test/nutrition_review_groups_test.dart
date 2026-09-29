@@ -232,6 +232,9 @@ void main() {
       limit: limit,
       bucket: bucket,
       group: grouped ? 'item' : null,
+      // These pin the worst-first order (the finishes default is pinned in
+      // nutrition_c1_test.dart).
+      sort: 'worst',
     );
 
     List<Map<String, Object?>> itemsOf(Map<String, Object?> body) => [
@@ -650,6 +653,7 @@ void main() {
       limit: limit,
       bucket: bucket,
       group: 'item',
+      sort: 'worst',
     );
 
     List<Map<String, Object?>> itemsOf(Map<String, Object?> body) => [
@@ -742,13 +746,17 @@ void main() {
         // rest on a plan property nothing documents — so pin the text.
         db.nutritionReviewGroups(limit: 1, offset: 0);
         final sql = db.preparedSqlTexts.singleWhere(
-          (text) => text.contains('ROW_NUMBER() OVER (PARTITION BY gkey'),
+          // The page query, not the banner's (they share the CTE chain).
+          (text) =>
+              text.contains('ROW_NUMBER() OVER (PARTITION BY gkey') &&
+              text.contains('LIMIT ? OFFSET ?'),
           orElse: () => fail('the grouped query was not prepared'),
         );
         expect(
           sql,
           contains(
-            'ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey '
+            "CASE WHEN ? = 'worst' THEN a.worst ELSE 0 END, "
+            'a.lines DESC, a.worst, a.recipes DESC, a.gkey '
             'LIMIT ? OFFSET ?',
           ),
         );

@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nutrition Review C1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- C1 mockup: synthesis of the "trust" and "throughput" designs (scratchpad mock2/), judged and corrected.
+     Visual language: docs/mockups/b1-grouped-queue.html (approved). Data: snap8.db (key-stripped sweep snapshot,
+     read-only) with the bucket rule audit5/bucket7.sql and the group views in scratchpad mock2h.sql.
+     Shipped code is quoted at commit 26e57e2. Every example row carries its source in data-src. -->
+<style>
+:root{--maroon:#960000;--rose:#8c4242;--chip:#f6e4e4;--chip-text:#7d1420;--ink:#23201f;--muted:#6d6763;--line:#e7e2de;--bg:#faf7f4;--panel:#fdfbf9;--sel:#f7ecec;--ok-bg:#e8f3e4;--ok-ink:#2c5a1e;--warn-bg:#fdf1e2;--warn-ink:#8a5a12;--err-bg:#fbe9e9;--err-ink:#8a1212;--info-bg:#e2efec;--info-ink:#1f5c52;--neutral-bg:#efecea}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;padding-bottom:80px}
+.wrap{max-width:1200px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;color:var(--maroon)}
+.lede{color:var(--muted);font-size:14px;max-width:920px;margin-top:6px}.lede b{color:var(--ink)}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:700;margin:44px 0 12px}
+.note{font-size:13px;color:var(--muted);margin:-4px 0 16px;max-width:920px}.note b{color:var(--ink)}
+ul.note{margin:0 0 0 18px}ul.note li{margin-bottom:6px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#f4efe9;border-radius:5px;padding:1px 5px;word-break:break-word}
+svg.i{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-2px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 14px;font:600 13.5px 'Open Sans',system-ui,sans-serif;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn.primary{background:var(--maroon);color:#fff;border-color:var(--maroon)}
+.btn.neutral{background:var(--neutral-bg);border-color:var(--neutral-bg)}
+.btn.ghost{color:var(--muted);border-color:transparent;background:transparent}
+.btn.small{padding:6px 11px;font-size:12.5px}
+.btn[disabled]{opacity:.5;cursor:default}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px}
+.cap{font-size:12px;font-weight:700;color:var(--rose);margin:0 0 8px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}
+.cols2>*,.cols3>*{min-width:0}
+@media (max-width:980px){.cols3{grid-template-columns:1fr}}
+@media (max-width:820px){.cols2{grid-template-columns:1fr}}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:12px;padding:2px 9px;white-space:nowrap;background:var(--neutral-bg);color:var(--muted)}
+.badge.err{background:var(--err-bg);color:var(--err-ink)}.badge.warn{background:var(--warn-bg);color:var(--warn-ink)}.badge.info{background:var(--info-bg);color:var(--info-ink)}.badge.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.reach{font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--chip);color:var(--chip-text);white-space:nowrap}
+/* NEW: the finishes pill. Green: it names an outcome, not a problem */
+.promise{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--ok-bg);color:var(--ok-ink);white-space:nowrap}
+.promise svg.i{width:11px;height:11px}
+.promise.soft{background:transparent;color:var(--muted);font-weight:600;padding:0;white-space:normal}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.statchip{display:inline-flex;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px}
+.statchip .n{font-weight:700}.statchip.sel{background:var(--chip);border-color:#e7c9c9;color:var(--chip-text)}
+.qhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.qhead .t{color:var(--ink);font-weight:700}.qhead .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;flex:none}
+.seg span{font-size:11.5px;font-weight:600;padding:3px 9px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+.seg span.on{background:var(--neutral-bg);color:var(--ink)}
+.seg svg.i{width:12px;height:12px}
+.subhead{padding:7px 14px;font-size:11.5px;color:var(--muted);background:var(--panel);border-bottom:1px solid var(--line)}
+.subhead b{color:var(--ink)}
+.oneaway{display:flex;gap:7px;align-items:flex-start;padding:8px 14px;font-size:12px;background:var(--ok-bg);color:var(--ok-ink);border-bottom:1px solid var(--line)}
+.qrow{display:flex;gap:10px;align-items:center;padding:11px 14px 11px 13px;border-left:3px solid var(--muted);border-bottom:1px solid var(--line)}
+.qrow.check{border-left-color:var(--warn-ink)}.qrow.nomatch{border-left-color:var(--err-ink)}.qrow.nogram{border-left-color:var(--info-ink)}
+.qrow.sel{background:var(--sel)}
+.qrow .main{flex:1;min-width:0}
+.qrow .meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.qrow .meta .item{color:var(--ink);font-weight:700}
+.qrow .raw{font-size:13.5px;font-weight:700;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qrow .raw .eg{font-weight:400;color:var(--muted);font-size:12px}
+.qrow .food{font-size:12px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qrow .food .ar{color:var(--muted)}.qrow .food.bad{color:var(--err-ink)}
+.qrow .amt{font-size:11px;color:var(--muted);margin-top:3px}
+.qrow .amt.warn{color:var(--warn-ink)}
+.qrow .one{font-size:11px;font-style:italic;color:var(--muted);margin-top:3px}
+.qrow .right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.conf{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.pane{padding:16px 18px 18px;background:var(--panel)}
+.p-where{font-size:11.5px;color:var(--muted)}
+.p-raw{font-size:15px;font-weight:700;margin-top:3px}
+.p-why{font-size:12px;font-weight:600;margin-top:8px}
+.p-why.warn{color:var(--warn-ink)}.p-why.info{color:var(--info-ink)}.p-why.muted{color:var(--muted)}
+.cur{font-size:12.5px;color:var(--muted);margin-top:4px}.cur b{color:var(--ink);font-weight:600}
+.dt-chip{display:inline-block;font-size:10px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-left:5px;color:var(--muted)}
+.fixbox{border:1px solid var(--line);background:#fff;border-radius:10px;margin-top:12px}
+.fcap{font-size:11.5px;font-weight:700;color:var(--muted);padding:9px 12px}
+.cand{display:flex;gap:8px;align-items:center;padding:7px 12px;border-top:1px solid var(--line);font-size:12.5px}
+.cand .nm{flex:1;min-width:0}.cand .c{color:var(--muted);font-size:11px;flex:none}
+.cand.guess .nm{color:var(--muted);text-decoration:line-through;text-decoration-color:#c9c2bd}
+.amtblk{padding:10px 12px 12px;border-top:1px solid var(--line)}
+.amtrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:7px}
+.field{border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:6px 10px;font-size:12.5px;color:var(--muted);width:120px}
+.field.focus{border-color:var(--maroon)}.field.filled{color:var(--ink);font-weight:700}
+.unit{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.unit span{font-size:12.5px;font-weight:600;padding:5px 10px;color:var(--muted)}.unit span.on{background:var(--maroon);color:#fff}
+.says{font-size:12px;margin-top:3px}
+.ports{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.port{font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:2px 8px;color:var(--muted);background:#fff}
+.port.tap{border-color:var(--maroon);color:var(--maroon);font-weight:700;cursor:pointer}
+.consequence{font-size:11.5px;color:var(--muted);margin-top:8px}.consequence svg.i{margin-right:5px}
+.consequence.ok{color:var(--ok-ink)}
+.panefoot{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.step{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--rose);border-radius:5px;padding:1px 6px;margin-right:6px}
+.offer{border:1.5px solid #ecc9c9;border-radius:12px;background:#fff;overflow:hidden;margin-top:12px}
+.offer .o-body{display:flex;align-items:center;gap:12px;padding:11px 14px;flex-wrap:wrap}
+.offer .o-body>svg.i{width:17px;height:17px;color:var(--maroon)}
+.offer .o-text{flex:1;min-width:200px;font-size:13px}
+.offer .o-foot{padding:8px 14px 10px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);background:var(--panel)}
+.offer.done{border-color:#cfe3c7}.offer.done .o-body>svg.i{color:var(--ok-ink)}
+.next{font-size:12px;color:var(--muted);margin-top:10px;display:flex;gap:6px;align-items:flex-start}
+.sheet{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sh-head{padding:14px 18px 10px}.sh-head h3{font-size:16px}.sh-head .s{font-size:12px;color:var(--muted)}
+.grp{display:flex;align-items:center;gap:8px;padding:8px 18px;background:var(--panel);border-top:1px solid var(--line);font-size:12.5px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok-ink)}
+.mrow{padding:11px 18px;border-top:1px solid var(--line)}
+.mrow .top{display:flex;gap:10px;align-items:flex-start}.mrow .top .r{flex:1;font-size:13.5px;font-weight:700}
+.zero{font-size:12.5px;color:var(--muted);margin-top:3px}.zero b{color:var(--ink);font-weight:600}
+details.guess{margin-top:4px;font-size:11.5px;color:var(--muted)}
+details.guess summary{cursor:pointer}
+details.guess .gbody{margin:4px 0 0 14px;padding:6px 9px;border-left:2px solid var(--line)}
+.bad-old{color:var(--err-ink)}
+.before{opacity:.8}
+.tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:5px;padding:1px 6px;margin-right:6px;vertical-align:1px}
+.tag.was{background:var(--neutral-bg);color:var(--muted)}.tag.now{background:var(--chip);color:var(--chip-text)}
+/* FDA label (nutrition_label.dart, black on white by design) */
+.nf{background:#fff;border:1.5px solid #000;padding:10px 12px 12px;max-width:320px;font-family:Arimo,Arial,sans-serif;color:#000}
+.nf h4{font-size:26px;font-weight:900;line-height:1.05}
+.nf .ps{font-size:12.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.nf .row{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700}
+.nf .rule8{height:8px;background:#000;margin:4px 0}
+.nf .cal{display:flex;justify-content:space-between;align-items:flex-end;font-weight:800}
+.nf .cal .k{font-size:22px}.nf .cal .v{font-size:30px;line-height:1}
+.nf .batch{font-size:10.5px;font-weight:700;border:1.2px solid #000;border-radius:4px;padding:0 5px;line-height:1.5}
+.nf .why{font-size:11px;color:#333;margin:2px 0 3px}
+table.spec{border-collapse:collapse;font-size:13px;width:100%}
+table.spec td,table.spec th{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+table.spec th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+table.spec td.n{font-weight:700;white-space:nowrap}
+.tblwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+ol.q{font-size:13px;color:var(--muted);max-width:920px;margin:8px 0 0 20px}ol.q li{margin-bottom:10px}ol.q b{color:var(--ink)}
+.rec{display:block;margin-top:3px;color:var(--ok-ink)}
+.facts td{font-size:12px}.facts td:nth-child(3){color:var(--muted);width:40%}
+.ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.ledger .cell{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.ledger .n{font-size:22px;font-weight:800}.ledger .l{font-size:12px;color:var(--muted)}
+@media (max-width:560px){.pane{padding:14px}.wrap{padding:24px 16px}}
+</style>
+</head>
+<body>
+<!-- Lucide glyphs (the set forui bundles as FLucideIcons) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+ <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+ <symbol id="i-copycheck" viewBox="0 0 24 24"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+ <symbol id="i-cc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+ <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+ <symbol id="i-sort" viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></symbol>
+ <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+ <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+ <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></symbol>
+ <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+ <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+ <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+</svg>
+<div class="wrap">
+<h1>Nutrition review C1: zeros, order, grams on confirm, per batch</h1>
+<p class="lede">Four changes to the shipped review surfaces (<code>26e57e2</code>): <b>(A)</b> a zero-gram row below the gate stops naming a wrong food; <b>(B)</b> the queue opens on the groups whose decision <b>finishes the most recipes</b>; <b>(C)</b> a line with no grams is confirmed <b>with its amount in the same step</b>; <b>(D)</b> a MAKES-yield recipe says its serving is the batch. This combines the "trust" and "throughput" drafts, following the judges, with each factual slip corrected. Every line, food, gram and count is a real row of the sweep snapshot <code>snap8.db</code>, cited in <code>data-src</code> and in the Facts table at the end. Sub-recipe routing is out of scope. <b>Variation calories are not added to any total shown here (your call on #9).</b></p>
+
+<div class="eyebrow">The library right now (snap8, bucket rule bucket7.sql)</div>
+<div class="ledger" data-src="F1, F2, F4, F6">
+ <div class="cell"><div class="n">540</div><div class="l">recipes complete: every line counted</div></div>
+ <div class="cell"><div class="n">658</div><div class="l">recipes partial: each has at least one open line (1,102 lines in 633 groups)</div></div>
+ <div class="cell"><div class="n">328</div><div class="l">of those are one group decision from complete (251 groups can promise at least one)</div></div>
+ <div class="cell"><div class="n">28</div><div class="l">zero-gram rows below 50% that name a food today (item A)</div></div>
+</div>
+
+<!-- ================= A ================= -->
+<div class="eyebrow">A · A zero is a zero, not a food</div>
+<p class="note">An engine 0 g row (<code>gram_source</code> <code>unmeasured</code> or <code>discarded</code>, <code>grams = 0</code>) is already <b>counted</b> by the bucket rule and adds nothing, so it never reaches the queue. It only shows up in the per-recipe review sheet's "Counted — looks good" list, which <b>everyone can read</b> (<code>review_sheet.dart:12-14</code>). Below 50% the food named there is often a wrong guess.<span data-src="snap8: b WHERE grams=0 AND gram_source IN ('discarded','unmeasured') AND fdc_id IS NOT NULL AND bucket='counted' AND confidence&lt;0.5: 28 rows; some name the right food (Olive oil 0.457 Chicken Francese pos 8, Vinegar 0.457 Chinese Pork Dumplings pos 13, Peppers, jalapenos 0.465 Tacos Dorados pos 3, Salt, table 0.436 Orecchiette pos 5, Basil, raw 0.377 Vietnamese Beef Pho pos 16)"></span> A cook who reads "Gel food dye → Fast foods, coleslaw" stops trusting every other line. <b>Decision:</b> below 0.5 the row says <b>"Counts as zero (no amount)"</b>, or <b>"(discarded in cooking)"</b> for the one discarded row, a new short wording. It is not <code>gramSourceLabel</code>'s text: for <code>unmeasured</code> that returns "no amount on the line" (its bare "no amount" is only the fallback for a null or unknown source); "discarded in cooking" does match (<code>match_fix_panel.dart:43-52</code>). The food name is hidden and the badge is a grey <b>counts as zero</b> in place of the green "counted". The guess is not deleted. Admins can open it from a collapsed <b>Engine guess — not used</b> disclosure, and it appears in the fix sheet as a struck-through candidate that is not selected. Members never see it. This touches 28 rows: 27 unmeasured, 1 discarded.</p>
+<div class="cols2">
+ <div>
+  <div class="cap"><span class="tag was">today</span>Rainbow Cake · review sheet (member view, no actions)</div>
+  <div class="sheet before" data-src="snap8: atk-tv-2023-1201-rainbow-cake, recipe_nutrition partial 9/10; review_sheet.dart:322, 835-856 (summary adds computed_at 2026-09-27T19:07:54Z); match_fix_panel.dart:43-52 gramSourceLabel, :157-230 CurrentMatch (matched-to text :201)">
+   <div class="sh-head"><h3>Ingredient matches</h3><div class="s">10 lines · 9 counting (1 to review) · computed 2026-09-27</div></div>
+   <div class="grp" data-src="review_sheet.dart:304-316 @26e57e2: attention group first, initiallyExpanded"><span style="color:var(--muted)">▾</span><span class="dot" style="background:var(--warn-ink)"></span>Needs your attention <span class="conf">1</span></div>
+   <div class="mrow" data-src="snap8: Rainbow Cake pos 1, fdc 747997 Foundation, conf 0.415, 396 g piece, auto, bucket check; WhyLine match_fix_panel.dart:122-128 (round(41.5) = 42); basis grams.dart:187-188 piece table egg white 33 g, :1646-1652">
+    <div class="top"><div class="r">12 large egg whites, room temperature, divided</div><span class="badge warn">check match</span></div>
+    <div class="p-why warn" style="font-size:12px;font-weight:600;margin-top:4px">Match looks off — 42% name confidence, held out of the totals until you confirm it</div>
+    <div class="cur">matched to <b>Eggs, Grade A, Large, egg white</b><span class="dt-chip">Foundation</span> · 396 g · typical size</div>
+    <div class="cur" style="font-size:11.5px;font-style:italic;margin-top:2px">amount: 12 × 33 g each</div>
+   </div>
+   <div class="grp" data-src="review_sheet.dart:320-326 @26e57e2: initiallyExpanded: attention.isEmpty, so collapsed here"><span style="color:var(--muted)">▸</span><span class="dot"></span>Counted — looks good <span class="conf">9</span></div>
+   <div class="zero" style="padding:8px 18px 4px;font-style:italic">Tapped open, it lists 9 rows; two of them read:</div>
+   <div class="mrow" data-src="snap8: Rainbow Cake pos 8, fdc 170300 SR Legacy, conf 0.033, grams 0, unmeasured, auto, bucket counted">
+    <div class="top"><div class="r">Gel food dye (red, orange, yellow, green, blue, and purple)</div><span class="badge ok">counted</span></div>
+    <div class="cur">matched to <b class="bad-old">Fast foods, coleslaw</b><span class="dt-chip">SR Legacy</span> · 0.0 g · no amount on the line</div>
+    <div class="cur" style="font-size:11.5px;font-style:italic;margin-top:2px" data-src="engine.dart:1677-1678 gramBasisFor @26e57e2 (unmeasured, amounts [])">amount: no amount on the line — counted as 0 g</div>
+   </div>
+   <div class="mrow" data-src="snap8: Rainbow Cake pos 0, Milk, whole, Survey (FNDDS), conf 1.0, 488 g, portion">
+    <div class="top"><div class="r">2 cups whole milk, room temperature, divided</div><span class="badge ok">counted</span></div>
+    <div class="cur">matched to <b>Milk, whole</b><span class="dt-chip">Survey (FNDDS)</span> · 488 g · USDA household portion</div>
+    <div class="cur" style="font-size:11.5px;font-style:italic;margin-top:2px" data-src="gramBasisFor → grams.dart:1540 @26e57e2, amounts [volume 2 cup]: '${_amountText} · USDA portion'">amount: 2 cup · USDA portion</div>
+   </div>
+  </div>
+ </div>
+ <div>
+  <div class="cap"><span class="tag now">proposed</span>Same rows · admin view (Counted group opened)</div>
+  <div class="sheet" data-src="same rows as left">
+   <div class="sh-head"><h3>Ingredient matches</h3><div class="s">10 lines · 9 counting, <b style="color:var(--ink)">1 of them as zero</b> (1 to review) · computed 2026-09-27</div></div>
+   <div class="grp"><span class="dot"></span>Counted — looks good <span class="conf">9</span></div>
+   <div class="mrow">
+    <div class="top"><div class="r">Gel food dye (red, orange, yellow, green, blue, and purple)</div><span class="badge">counts as zero</span></div>
+    <div class="zero"><b>Counts as zero (no amount)</b>: the line gives no amount, so it adds nothing to the label.</div>
+    <details class="guess"><summary>Engine guess — not used</summary>
+     <div class="gbody">Fast foods, coleslaw · 3% name. Too weak to show as this line's food, and it adds 0 g either way.</div></details>
+   </div>
+   <div class="mrow">
+    <div class="top"><div class="r">2 cups whole milk, room temperature, divided</div><span class="badge ok">counted</span></div>
+    <div class="cur">matched to <b>Milk, whole</b><span class="dt-chip">Survey (FNDDS)</span> · 488 g · USDA household portion</div>
+    <div class="cur" style="font-size:11.5px;font-style:italic;margin-top:2px" data-src="gramBasisFor → grams.dart:1540 @26e57e2, amounts [volume 2 cup]: '${_amountText} · USDA portion'">amount: 2 cup · USDA portion</div>
+   </div>
+  </div>
+  <p class="note" style="margin-top:8px"><b>Member view:</b> the same, without the disclosure. <b>The one discarded row</b> reads the same way: <i>⅓ cup extra-virgin olive oil for frying</i> in Chicken Francese shows <b>Counts as zero (discarded in cooking)</b><span data-src="snap8: atk-tv-2023-1133-chicken-francese pos 8 (the auto row; the other Chicken Francese, atk-tv-2023-0420, has a confirmed pos 8), fdc 2710186 Olive oil, Survey (FNDDS), conf 0.457, grams 0, discarded"></span>. <b>At 0.5 and above</b> the food stays, because it is probably right. <i>Lemon wedges, for serving</i> reads <b>Lemon, raw · counts as zero (no amount)</b><span data-src="snap8: Skillet Chicken and Rice with Peas and Scallions pos 14, Lemon, raw, conf 0.91, unmeasured 0 g"></span>. The grey badge fits those rows too. Whether to extend it to all 388 counted engine zeros is open question 4. The hidden guess is sometimes right (Olive oil above, Salt, table 44%, Basil, raw 38%). The disclosure is there so an admin can recover it without opening the fix sheet.</p>
+ </div>
+</div>
+<div class="cols2" style="margin-top:18px">
+ <div>
+  <div class="cap"><span class="tag now">proposed</span>Fix sheet for a zero row (Adjust…)</div>
+  <div class="card pane" data-src="snap8: atk-tv-2023-0054-green-bean-salad-with-cherry-tomatoes-and-feta pos 1, raw '1- to 2-inch lengths', fdc 174655 SR Legacy, conf 0.0, grams 0, unmeasured; recipe_ingredients pos 0 '1½ pounds green beans, trimmed and cut into'; pos 1 amounts []; a pick stores grams = resolution?.grams, null for an amount-less line (nutrition_handlers.dart:327-355, grams.dart 1472-1675 @26e57e2) → overridden + grams NULL = bucket no_grams (match_bucket.dart:62-63)">
+   <div class="p-where">Green Bean Salad with Cherry Tomatoes and Feta · ingredient line 1</div>
+   <div class="p-raw">1- to 2-inch lengths</div>
+   <div class="p-why muted">Counts as zero: the line gives no amount, so it adds nothing.</div>
+   <div class="fixbox">
+    <div class="fcap">Give it a food and an amount to count it</div>
+    <div class="cand guess"><span style="width:20px"></span><span class="nm">Cereals, CREAM OF WHEAT, 2 1/2 minute cook time, dry</span><span class="c">engine guess · 0% · not used</span></div>
+    <div class="cand" style="color:var(--muted)"><svg class="i"><use href="#i-search"/></svg><span class="nm">Search USDA for a better match…</span><span class="btn small neutral">Search</span></div>
+    <div class="amtblk">
+     <div class="fcap" style="padding:0">Amount</div>
+     <div class="says">The line gives no amount.</div>
+     <div class="amtrow"><span class="field">e.g. 250</span><span class="unit"><span class="on">g</span><span>oz</span><span>lb</span></span></div>
+     <div class="panefoot"><button class="btn primary small" disabled>Save match &amp; amount</button><button class="btn ghost small"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+     <div class="consequence"><svg class="i"><use href="#i-info"/></svg>Enabled once a food is picked <b>and</b> an amount is typed. A pick alone re-derives grams from the line, and this line has no amount, so it would resolve to <b>no grams</b>: the row turns No grams and Green Bean Salad drops from complete to partial. That is why the sheet asks for an amount.</div>
+    </div>
+   </div>
+  </div>
+ </div>
+ <div>
+  <div class="cap">What changes in the fix sheet, and what stays</div>
+  <ul class="note">
+   <li><b>No CurrentMatch line.</b> The sheet never repeats the wrong name above the fold, and the WhyLine says what the row contributes.</li>
+   <li><b>No Confirm as-is.</b> There is nothing to confirm: the guess is not the food, and 0 g needs no approval. This matches today's gate, which offers Confirm only on a Check line with grams (<code>nutrition_review_queue.dart:815</code>, <code>review_sheet.dart:622</code>).</li>
+   <li><b>The guess is not pre-selected.</b> Today the current match heads the candidates, checked (<code>match_fix_panel.dart:877</code> "current · N%"). Here it is struck through and marked "not used", so one careless Save can't approve Cream of Wheat.</li>
+   <li><b>Skip stays.</b> This line is the tail of line 0 (<i>"1½ pounds green beans, trimmed and cut into"</i>), not an ingredient. Skip records that on purpose. The label does not move (it is still 0 g).</li>
+   <li><b>No totals change anywhere in A.</b> Green Bean Salad is <b>complete</b> today (10/10, 239 kcal per serving, basis 4). Hiding a wrong name changes how far the reader trusts the sheet, not the numbers.</li>
+  </ul>
+ </div>
+</div>
+
+<!-- ================= B ================= -->
+<div class="eyebrow">B · Sort by what a decision finishes</div>
+<p class="note">Today the grouped queue sorts worst confidence first (API.md:372-373). The group whose decision finishes the most recipes, <b>large egg whites</b>, sits at <b>#274 of 633</b>, behind 273 groups with a lower worst match: only 62 of them sit at zero confidence (33 of those have no match at all), and the rest run up to 41%.<span data-src="snap8 with the grouped-queue SQL of 26e57e2 (salt_database.dart _reviewFlaggedCte, ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey): first 273 groups, sum(worst=0)=62, of which 33 worst_bucket no_match; max(worst)=0.4125"></span> <b>Decision:</b> a new <b>Finishes recipes</b> sort becomes the <b>default</b>. The order is the finishes count, then lines, then worst confidence, so groups that finish nothing follow in that same order. <b>Worst match</b> stays one tap away, in a neutral grey segment beside Ingredients | Lines (it changes the view, it is not an action). The header sentence ends with the active order, as the shipped "worst first" does. Each group carries a green <b>finishes N recipes</b> pill.</p>
+<p class="note"><b>What the count means:</b> the recipes this group's decision completes <b>when it is applied to the group</b>. A recipe counts when every open line it has sits in this group, and each of those lines either has grams already or is the example line on screen, whose grams C takes in the same confirm. If a group finishes nothing it gets no pill (a "0" reads as a failure). The pane splits the count by path, because confirming only the example line can finish fewer.</p>
+<div class="chips" data-src="bucket7.sql: check 841, no_grams 210, no_match 51, skipped 0; labels and order 26e57e2 nutrition_review.dart:10-15 (check =&gt; Low confidence), :18-22 (no_match, no_grams, check); nutrition_review_queue.dart:152-185; counts print raw, no thousands separator (core/widgets/stat_chip.dart:67 '$count')">
+ <span class="statchip sel"><span>Need attention</span><span class="n">1102</span></span>
+ <span class="statchip"><span>No match</span><span class="n">51</span></span>
+ <span class="statchip"><span>No grams</span><span class="n">210</span></span>
+ <span class="statchip"><span>Low confidence</span><span class="n">841</span></span>
+ <span class="statchip" style="opacity:.45"><span>Skipped</span><span class="n">0</span></span>
+</div>
+<div class="cols2">
+ <div>
+  <div class="cap"><span class="tag was">today</span>worst first, top of the list</div>
+  <div class="card before" style="overflow:hidden">
+   <div class="qhead" data-src="nutrition_review_queue.dart:261-263 @26e57e2: ' · ${groupsTotal} ingredients, ${linesTotal} lines · worst first', raw ints"><span>Showing <span class="t">all flagged</span> · 633 ingredients, 1102 lines · worst first</span><span class="sp"></span><span class="seg"><span class="on"><svg class="i"><use href="#i-layers"/></svg>Ingredients</span><span><svg class="i"><use href="#i-list"/></svg>Lines</span></span></div>
+   <div class="qrow check" data-src="snap8 k:baguette: 7 lines, 7 recipes, minconf 0.0, grams 64-64, 1 missing; example Cheesy Garlic Bread pos 5; fin 2">
+    <div class="main"><div class="meta"><span class="item">baguette</span><span class="reach">7 lines · 7 recipes</span></div>
+     <div class="raw"><span class="eg">e.g. </span>1 (18- to 20-inch) baguette, sliced in half horizontally</div>
+     <div class="food bad"><span class="ar">→ </span>Bread, French or Vienna</div>
+     <div class="amt">amounts 64–64 g · 1 of 7 lines have no amount</div></div>
+    <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div></div>
+   <div class="qrow check" data-src="snap8 k:elbow macaroni: 5/5, minconf 0.0, grams 226.796-453.592; example Classic Macaroni and Cheese pos 3; fin 5">
+    <div class="main"><div class="meta"><span class="item">elbow macaroni</span><span class="reach">5 lines · 5 recipes</span></div>
+     <div class="raw"><span class="eg">e.g. </span>1 pound elbow macaroni</div>
+     <div class="food bad"><span class="ar">→ </span>Pasta, whole-wheat, dry (Includes foods for USDA's Food Distribution Program)</div>
+     <div class="amt">amounts 227–454 g, one per line</div></div>
+    <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div></div>
+   <div class="qrow nomatch" data-src="snap8 k:mirin: 4/4, no_match; example Chilled Soba Noodles with Cucumber, Snow Peas, and Radishes; fin 0">
+    <div class="main"><div class="meta"><span class="item">mirin</span><span class="reach">4 lines · 4 recipes</span></div>
+     <div class="raw"><span class="eg">e.g. </span>3 tablespoons mirin</div>
+     <div class="food bad"><span class="ar">→ </span>no food matched</div>
+     <div class="amt">no amount on any of the 4 lines</div></div>
+    <div class="right"><span class="badge err">no match</span></div></div>
+   <div class="subhead">… 270 more groups … then <b>large egg whites</b> at #274.</div>
+  </div>
+  <p class="note" style="margin-top:8px">None of these rows says what fixing it buys. Baguette tops the list, but one decision on it finishes only 2 recipes, and mirin finishes none.</p>
+ </div>
+ <div>
+  <div class="cap"><span class="tag now">proposed</span>finishes recipes, the default</div>
+  <div class="card" style="overflow:hidden">
+   <div class="qhead"><span>Showing <span class="t">all flagged</span> · 633 ingredients, 1102 lines · <span class="t">most recipes finished first</span></span><span class="sp"></span>
+    <span class="seg" title="Sort"><span class="on"><svg class="i"><use href="#i-flag"/></svg>Finishes recipes</span><span><svg class="i"><use href="#i-sort"/></svg>Worst match</span></span>
+    <span class="seg"><span class="on"><svg class="i"><use href="#i-layers"/></svg>Ingredients</span><span><svg class="i"><use href="#i-list"/></svg>Lines</span></span></div>
+   <div class="oneaway" data-src="mock2h.sql g2: sum(fin)=328 over 251 groups; recipe_nutrition partial 658"><svg class="i"><use href="#i-flag"/></svg><span><b>328</b> of the <b>658</b> partial recipes are one group decision away from complete. A count assumes the decision is applied to its whole group.</span></div>
+   <div class="qrow check sel" data-src="snap8 k:egg white: 26 lines, 25 recipes, fin 14, minconf 0.415, grams 66-396, none missing; example Angel Food Cake pos 2, item 'large egg whites'">
+    <div class="main"><div class="meta"><span class="item">large egg whites</span><span class="reach">26 lines · 25 recipes</span><span class="promise"><svg class="i"><use href="#i-flag"/></svg>finishes 14 recipes</span></div>
+     <div class="raw"><span class="eg">e.g. </span>12 large egg whites, at room temperature</div>
+     <div class="food bad"><span class="ar">→ </span>Eggs, Grade A, Large, egg white</div>
+     <div class="amt">amounts 66–396 g, one per line</div></div>
+    <div class="right"><span class="badge warn">check match</span><span class="conf">42% name</span></div></div>
+   <div class="qrow check" data-src="snap8 k:thick-cut bacon: 7/7, fin 5, minconf 0.357, grams 48-283.495; example Coq au Vin pos 0">
+    <div class="main"><div class="meta"><span class="item">thick-cut bacon</span><span class="reach">7 lines · 7 recipes</span><span class="promise"><svg class="i"><use href="#i-flag"/></svg>finishes 5 recipes</span></div>
+     <div class="raw"><span class="eg">e.g. </span>6 ounces thick-cut bacon (about 5 slices), chopped medium</div>
+     <div class="food bad"><span class="ar">→ </span>Bacon bits</div>
+     <div class="amt">amounts 48–283 g, one per line</div></div>
+    <div class="right"><span class="badge warn">check match</span><span class="conf">36% name</span></div></div>
+   <div class="qrow check" data-src="snap8 k:tarragon: 7/7, fin 5, minconf 0.807, hold dried_for_fresh, grams 0.3-7.2; example Broccoli Salad with Creamy Avocado Dressing pos 11">
+    <div class="main"><div class="meta"><span class="item">minced fresh tarragon</span><span class="reach">7 lines · 7 recipes</span><span class="promise"><svg class="i"><use href="#i-flag"/></svg>finishes 5 recipes</span></div>
+     <div class="raw"><span class="eg">e.g. </span>1 tablespoon minced fresh tarragon</div>
+     <div class="food bad"><span class="ar">→ </span>Spices, tarragon, dried</div>
+     <div class="amt">amounts 0.3–7.2 g, one per line</div></div>
+    <div class="right"><span class="badge warn">check match</span><span class="conf">81% name</span></div></div>
+   <div class="qrow check" data-src="snap8 k:elbow macaroni: 5/5, fin 5, minconf 0.0">
+    <div class="main"><div class="meta"><span class="item">elbow macaroni</span><span class="reach">5 lines · 5 recipes</span><span class="promise"><svg class="i"><use href="#i-flag"/></svg>finishes 5 recipes</span></div>
+     <div class="raw"><span class="eg">e.g. </span>1 pound elbow macaroni</div>
+     <div class="food bad"><span class="ar">→ </span>Pasta, whole-wheat, dry (Includes foods for USDA's Food Distribution Program)</div>
+     <div class="amt">amounts 227–454 g, one per line</div></div>
+    <div class="right"><span class="badge warn">check match</span><span class="conf">0% name</span></div></div>
+   <div class="subhead" data-src="g2 fin tiers: 14x1, 5x4, 4x4, 3x8, 2x20, 1x214, 0x382">… vanilla bean (5), then 4 groups that finish 4 (kalamata olives first), 8 that finish 3, 20 that finish 2, and <b>214</b> that finish 1, like these two:</div>
+   <div class="qrow check" data-src="snap8: Perfect Roast Chicken pos 1 '½ cup sugar', Sugars, granulated, conf 0.95, 94 g portion, hold discarded_medium; its only open line (recipe_nutrition partial 5/6); 17 flagged lines key 'sugar'; PUT …/matches/{pos} rejects grams &lt;= 0 with 422 (nutrition_handlers.dart:379-383 @26e57e2)">
+    <div class="main"><div class="meta"><span>Perfect Roast Chicken · line 1</span><span class="promise"><svg class="i"><use href="#i-flag"/></svg>finishes this recipe</span></div>
+     <div class="raw">½ cup sugar</div>
+     <div class="food bad"><span class="ar">→ </span>Sugars, granulated</div>
+     <div class="one">line hold (discarded medium): decided one line at a time, never offers apply-to-all. Any decision finishes it: Confirm counts all 94 g, Skip says the brine is poured off, or a typed positive amount counts that much. There is no 0 g decision: the API rejects grams of 0.</div></div>
+    <div class="right"><span class="badge warn">check match</span><span class="conf">95% name</span></div></div>
+   <div class="qrow nogram" data-src="snap8 k:pecan: 8 lines, 8 recipes, all grams NULL, fin 1 (example Best Baked Apples pos 3 is its recipe's only open line), last open line in 6 recipes in total, Best Baked Apples included, so 5 beyond the pill; Nuts, pecans, halves, raw 0.92">
+    <div class="main"><div class="meta"><span class="item">coarsely chopped pecans</span><span class="reach">8 lines · 8 recipes</span><span class="promise"><svg class="i"><use href="#i-flag"/></svg>finishes 1 recipe</span></div>
+     <div class="raw"><span class="eg">e.g. </span>⅓ cup coarsely chopped pecans, toasted</div>
+     <div class="food"><span class="ar">→ </span>Nuts, pecans, halves, raw</div>
+     <div class="amt">no amount on any of the 8 lines · <span class="promise soft">last open line in 6 recipes (this one included) · each needs its own amount</span></div></div>
+    <div class="right"><span class="badge info">no grams</span><span class="conf">92% name</span></div></div>
+   <div class="subhead">Then the <b>382</b> groups that finish nothing, with no pill, ordered by lines and then worst match: ginger (14 lines, see C) first, then garlic (11).</div>
+  </div>
+  <p class="note" style="margin-top:8px"><b>Line-held groups stay groups of one</b> (API.md:374-380). <i>½ cup sugar</i> is a brine sugar. It has no reach pill and never gets an offer, although 16 other flagged lines share its key <code>sugar</code>. Its pill counts only its own recipe. For a <b>No grams</b> group the pill counts only the example's recipe. That is exact for a <b>confirm</b> here, because pecans (0.92) and ginger (0.887) have every sibling on the same food at or above 0.5, so the apply has no targets. A <b>pick of a different food</b> would reach every undecided sibling whatever its score, each with grams from its own amounts (API.md:755-756, 823-838), and this count does not include those siblings' recipes, so the pill undercounts for a pick. The soft note says in how many recipes, in total and including the example's, the group holds the last open line.</p>
+ </div>
+</div>
+<div class="cols2" style="margin-top:18px">
+ <div class="card" style="padding:14px 16px">
+  <div class="cap">What the default buys (same snapshot)</div>
+  <div class="tblwrap" style="border:0"><table class="spec" data-src="mock2i.sql: ORDER BY fin DESC, lines DESC, minconf vs ORDER BY minconf, lines DESC, recipes DESC, gkey">
+   <tr><th>Recipes completed by working the first N groups</th><th>Top 10</th><th>Top 25</th></tr>
+   <tr><td>Finishes recipes (new default)</td><td class="n">53 (98 lines)</td><td class="n">96</td></tr>
+   <tr><td>Worst match (today)</td><td class="n">12 (35 lines)</td><td class="n">18</td></tr>
+  </table></div>
+ </div>
+ <div class="card" style="padding:14px 16px">
+  <div class="cap">Same queue, "Worst match"</div>
+  <p class="note" style="margin:0">The header then ends "… · 633 ingredients, 1102 lines · <b>worst match first</b>", and the order is today's (baguette, elbow macaroni, mirin, no-boil lasagna noodle, flake sea salt). The finishes pill still shows there, so the payoff is visible in both orders. In the <b>Lines</b> view, a line's pill reads "finishes <i>Recipe</i>" only when it is its recipe's last open line and would count after the confirm (see open question 5).</p>
+ </div>
+</div>
+<div class="cap" style="margin-top:22px"><span class="tag now">proposed</span>the promise at the moment of decision: three successive states of one pane, never on screen together</div>
+<div class="cols3">
+ <div class="card pane" data-src="snap8: Angel Food Cake pos 2 (fdc 747997 Foundation, conf 0.415, 396 g, piece, auto); its other open line pos 7 '½ teaspoon almond extract' (k:almond extract); recipe_nutrition partial 6/8">
+  <div class="cap"><span class="step">1</span>before the decision</div>
+  <div class="p-where">Angel Food Cake · ingredient line 2</div>
+  <div class="p-raw">12 large egg whites, at room temperature</div>
+  <div class="p-why warn">Match looks off — 42% name confidence, held out of the totals until you confirm it</div>
+  <div class="cur">matched to <b>Eggs, Grade A, Large, egg white</b><span class="dt-chip">Foundation</span> · 396 g · typical size</div>
+  <div class="panefoot"><button class="btn small"><svg class="i"><use href="#i-check"/></svg>Confirm as-is</button><button class="btn ghost small"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+  <div class="fixbox" style="padding:8px 12px">
+   <div style="font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:4px">What this decision finishes</div>
+   <div style="font-size:12.5px"><b>This line only:</b> 0 recipes. Angel Food Cake still waits on <i>½ teaspoon almond extract</i>.</div>
+   <div style="font-size:12.5px;margin-top:5px"><b>Then Apply to the other 25 lines:</b> <span class="promise"><svg class="i"><use href="#i-flag"/></svg>14 recipes complete</span><span class="conf" style="display:block;white-space:normal">Rainbow Cake, Meringue Cookies, Financiers, Low-Fat Chocolate Mousse … +10</span></div>
+  </div>
+  <div class="next"><svg class="i"><use href="#i-info"/></svg><span>Confirm and Skip sit <b>above</b> the fix panel, which stays as shipped (candidates, live search, amount) behind "Change the match &amp; set the amount".</span></div>
+ </div>
+ <div class="card pane" data-src="nutrition_cubit.dart:338-362: the offer is built only after a pick or confirm lands, with row.others > 0; others 24 recipes / 25 lines (undecided item_key 'egg white', Lemon Layer Cake with Fluffy White Icing holds two)">
+  <div class="cap"><span class="step">2</span>after Confirm lands</div>
+  <div class="p-where">Angel Food Cake · ingredient line 2</div>
+  <div class="p-raw">12 large egg whites, at room temperature</div>
+  <div class="cur">matched to <b>Eggs, Grade A, Large, egg white</b><span class="dt-chip">Foundation</span> · 396 g · typical size</div>
+  <div class="offer">
+   <div class="o-body"><svg class="i"><use href="#i-copycheck"/></svg><div class="o-text"><b>25 other lines</b> of <b>large egg whites</b>, in 24 recipes, are still waiting on this decision. <b style="color:var(--ok-ink)">Applying finishes 14 recipes.</b></div>
+    <button class="btn primary small"><svg class="i"><use href="#i-copycheck"/></svg>Apply to 25 lines</button><button class="btn ghost small">Not now</button></div>
+   <div class="o-foot">Sets this food on their unreviewed large egg whites lines, each with its own amount, and recomputes their labels. Lines someone already decided are left alone. Reversible: pick a different food here and apply again.</div>
+  </div>
+  <div class="next"><svg class="i"><use href="#i-info"/></svg><span>The line is now counted, so the WhyLine and Confirm as-is are gone.</span></div>
+ </div>
+ <div class="card pane" data-src="projection from F16/F17, not a stored result; the receipt's completed count needs a new applied.completed">
+  <div class="cap"><span class="step">3</span>the receipt</div>
+  <div class="offer done" style="margin-top:0">
+   <div class="o-body"><svg class="i"><use href="#i-cc"/></svg><div class="o-text">Applied to <b>24 recipes</b> (25 lines). Their labels are recomputed. <b style="color:var(--ok-ink)">14 recipes are now complete</b>, as promised.</div><button class="btn ghost small"><svg class="i"><use href="#i-x"/></svg>Dismiss</button></div>
+  </div>
+  <div class="next"><svg class="i"><use href="#i-info"/></svg><span>If fewer complete than promised, the receipt names the shortfall recipes. Today's receipt reports recipes, lines and failed only (<code>apply_to_all_strip.dart:58-78</code>), so this needs a new server count, <code>applied.completed</code>.</span></div>
+  <div class="next"><svg class="i"><use href="#i-arrow"/></svg><span>After Apply or Not now, the pane moves to the next group: <b style="color:var(--ink)">thick-cut bacon</b> (finishes 5).</span></div>
+ </div>
+</div>
+<p class="note" style="margin-top:10px">The promise is exact for a <b>confirm-as-is</b> then Apply, because the reached lines keep their food and their grams. After a <b>pick</b> of a different food, the apply recomputes each reached line's grams from its own amounts on the new food (API.md:823-838), so the number is a projection there. The receipt says what actually happened.</p>
+
+<!-- ================= C ================= -->
+<div class="eyebrow">C · Grams belong to the confirm</div>
+<p class="note">Under the new rule, a confirm with no grams keeps the line in <b>No grams</b> and the recipe <b>partial</b>. A "Confirm" that leaves the label unchanged is a second trip waiting to happen, so here <b>Confirm carries its amount</b>. When the food is right and only the amount is missing, the amount block comes first. It shows what the line says, the record's real USDA portions, and why the engine could not convert. The primary button follows the number ("Confirm · 452 g"). Until a number is in, it reads "Confirm with amount" and stays disabled. When the line's unit names one of the record's portions, that portion is a <b>tap-to-fill</b> chip (4 × stick = 452 g), so the whole gesture is two taps. Portions that don't match the line's unit are listed for reference only and can't be tapped. Tapping "5 slices = 11 g" into a field for "1 piece" would write the wrong quantity.</p>
+<div class="cols3">
+ <div>
+  <div class="cap"><span class="tag was">today</span>No grams line</div>
+  <div class="card pane before" data-src="snap8: Chana Masala pos 2, Ginger root, raw fdc 169231 SR Legacy, conf 0.887, grams NULL, bucket no_grams; the k:ginger group's example (lowest confidence, then has grams, then title)">
+   <div class="p-where">Chana Masala · ingredient line 2</div>
+   <div class="p-raw">1 (1½-inch) piece ginger, peeled and chopped coarse</div>
+   <div class="p-why info">Matched, but no amount found — not counted yet</div>
+   <div class="cur">matched to <b>Ginger root, raw</b><span class="dt-chip">SR Legacy</span> · no amount</div>
+   <div class="fixbox"><div class="fcap">Change the match &amp; set the amount</div>
+    <div class="cand"><span style="width:20px;color:var(--maroon)"><svg class="i"><use href="#i-check"/></svg></span><span class="nm">Ginger root, raw</span><span class="c">current · 89%</span></div>
+    <div class="amtblk"><div class="fcap" style="padding:0">Amount</div>
+     <div class="amtrow"><span class="field">e.g. 250</span><span class="unit"><span class="on">g</span><span>oz</span><span>lb</span></span></div>
+     <div class="panefoot"><button class="btn primary small" disabled>Save match &amp; amount</button></div></div>
+   </div>
+   <div class="panefoot" data-src="nutrition_review_queue.dart:828-836 @26e57e2: Skip always renders under the FixPanel; Confirm as-is only for check + grams (:815)"><button class="btn ghost small"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+  </div>
+  <p class="note" style="margin-top:8px">It gives no hint what "1 piece" weighs, its button says "match" when the match is fine, and there is no Confirm, because Confirm is gated to Check lines that have grams (<code>nutrition_review_queue.dart:815</code>).</p>
+ </div>
+ <div>
+  <div class="cap"><span class="tag now">proposed</span>no portion fits: type, then Enter</div>
+  <div class="card pane" data-src="fdc_food_cache 169231 portions: 5 slices (1in dia) 11 g, 0.25 cup slices (1in dia) 24 g, 1 tsp 2 g; nutrients 208 = 80 kcal/100 g; recipe_ingredients pos 2 amounts [count 1 piece]; pos 12 garam masala still open; k:ginger 14 lines 14 recipes all NULL grams, all 0.887">
+   <div class="p-where">Chana Masala · ingredient line 2</div>
+   <div class="p-raw">1 (1½-inch) piece ginger, peeled and chopped coarse</div>
+   <div class="p-why info">Matched, but no amount found — not counted yet</div>
+   <div class="cur">matched to <b>Ginger root, raw</b><span class="dt-chip">SR Legacy</span> · 80 kcal per 100 g</div>
+   <div class="fixbox"><div class="amtblk" style="border-top:0">
+    <div class="fcap" style="padding:0">How much is it?</div>
+    <div class="says">The line says <b>1 piece</b> (1½-inch). USDA's portions for this food don't include a piece, so the engine could not convert:</div>
+    <div class="ports"><span class="port">5 slices (1" dia) · 11 g</span><span class="port">¼ cup slices (1" dia) · 24 g</span><span class="port">1 tsp · 2 g</span></div>
+    <div class="amtrow"><span class="field focus">grams for 1 piece</span><span class="unit"><span class="on">g</span><span>oz</span><span>lb</span></span></div>
+    <div class="panefoot"><button class="btn primary small" disabled><svg class="i"><use href="#i-check"/></svg>Confirm with amount</button><button class="btn ghost small"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+    <div class="consequence"><svg class="i"><use href="#i-info"/></svg>Chana Masala still waits on 1 more line after this: <i>1½ teaspoons garam masala</i>.</div>
+    <div class="consequence"><svg class="i"><use href="#i-info"/></svg>No apply-to-all offer. The 13 other ginger lines are already on this food at 89%, so they are not targets, and a typed amount never travels.</div>
+    <div class="consequence"><svg class="i"><use href="#i-arrow"/></svg>After the confirm the pane stays on <b>ginger</b> and opens its next line (13 left), because each line needs its own amount.</div>
+   </div>
+   <div class="cand" style="color:var(--muted)"><svg class="i"><use href="#i-search"/></svg><span class="nm">Wrong food? Change the match…</span></div></div>
+  </div>
+ </div>
+ <div>
+  <div class="cap"><span class="tag now">proposed</span>a portion fits: tap it, then Confirm</div>
+  <div class="card pane" data-src="snap8: atk-tv-2023-0884-classic-yellow-layer-cake-with-vanilla-buttercream pos 13, fdc 173430 SR Legacy 'Butter, without salt', auto, conf 1.0, grams NULL, gram_source NULL, bucket no_grams; amounts [count 4 stick]; fdc_food_cache 173430 portions pat 5 g, tbsp 14.2 g, stick 113 g, cup 227 g, nutrients 208 = 717; the recipe's only open line (partial 13/14)">
+   <div class="p-where">Classic Yellow Layer Cake with Vanilla Buttercream · ingredient line 13</div>
+   <div class="p-raw">4 sticks unsalted butter, cut into chunks and softened</div>
+   <div class="p-why info">Matched, but no amount found — not counted yet</div>
+   <div class="cur">matched to <b>Butter, without salt</b><span class="dt-chip">SR Legacy</span> · 717 kcal per 100 g</div>
+   <div class="fixbox"><div class="amtblk" style="border-top:0">
+    <div class="fcap" style="padding:0">How much is it?</div>
+    <div class="says">The line says <b>4 stick</b>.</div>
+    <div class="ports"><span class="port tap">4 × stick 113 g = 452 g</span><span class="port">tbsp · 14.2 g</span><span class="port">cup · 227 g</span><span class="port">pat (1" sq, 1/3" high) · 5 g</span></div>
+    <div class="amtrow"><span class="field focus filled">452</span><span class="unit"><span class="on">g</span><span>oz</span><span>lb</span></span></div>
+    <div class="panefoot"><button class="btn primary small"><svg class="i"><use href="#i-check"/></svg>Confirm · 452 g</button><button class="btn ghost small"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+    <div class="consequence ok"><svg class="i"><use href="#i-flag"/></svg>This is the recipe's only open line, so this confirm <b>finishes Classic Yellow Layer Cake with Vanilla Buttercream</b>.</div>
+   </div></div>
+  </div>
+  <p class="note" style="margin-top:8px"><b>Probably an engine gap, not a UI case.</b> Only 2 lines in the library parse with the unit "stick", and neither has grams. This one is an <code>auto</code> row at confidence 1.0 with no <code>gram_source</code>, and its cached record has "stick = 113 g" (open question 2). Once the engine converts it, the chip is rarely needed. It stays as a cheap, visible fallback, and it is never prefilled silently.</p>
+ </div>
+</div>
+<div class="cols2" style="margin-top:14px">
+ <div class="card" style="padding:14px 16px">
+  <div class="cap" data-src="snap8 + bucket7.sql: b WHERE bucket='check' AND grams IS NULL AND fdc_id IS NOT NULL = 172, of them confidence&lt;0.5 = 166 (the other 6 are held lines at 0.5+)">Check lines below 0.5 with no grams (166 in the snapshot)</div>
+  <p class="note" style="margin:0">An engine pick below 0.5 is stored <b>without</b> fetching the food's detail, and <code>{confirmed: true}</code> fetches it once and converts the line's own amount (API.md, PUT matches). So on these lines the amount field is <b>optional</b>. With it empty, the button reads "Confirm" and the server converts. If that still leaves no grams, the line lands in No grams and the pane stays on it with the field focused, which is one extra step only when USDA can't convert. The group row's warning "— Confirm as-is is unavailable" (<code>nutrition_review_queue.dart:630</code>) becomes <b>"— confirm asks for the amount"</b>. When the food is wrong as well, the shipped "Save match &amp; amount" already takes both in one save.</p>
+ </div>
+ <div class="card" style="padding:14px 16px">
+  <div class="cap">New wire data C needs</div>
+  <p class="note" style="margin:0">The portion list and kcal per 100 g come from <code>fdc_food_cache</code>, <b>cache-only</b>, as a new <code>portions</code> field on the matches body. Reading the matches never spends FDC budget (API.md). When the detail was never fetched, the list is absent and the block says "USDA portions load after the first confirm". This new field goes into API.md in the same commit (open question 1).</p>
+ </div>
+</div>
+
+<!-- ================= D ================= -->
+<div class="eyebrow">D · Per batch, said out loud (the rule is being built now; the outlined tag is a proposal)</div>
+<p class="note">When a MAKES-style yield sets a serving basis of 1, the label reads "Per serving · serves 1" over 2,336 kcal, which looks like an error. <b>As being built</b> (working tree, not shipped, so it may still change): <code>basisKindOf</code> marks <b>any</b> recipe with a basis of 2 or less and no serves as per batch, whatever its yield text, and the header prints it as plain text, "Per serving · serves 1 · per batch"<span data-src="working tree engine.dart basisKindOf: basis &lt;= 2 &amp;&amp; recipe.serves == null; nutrition_label.dart header 'Per serving · serves $basis' + ' · per batch'; snap8: serving_basis&lt;=2 AND serves_min IS NULL = 57 (28 at basis 1, 29 at basis 2; 56 MAKES, plus Latin Flan with no servings_text)"></span>. That is 57 recipes in the snapshot: 28 at basis 1 and 29 at basis 2, all MAKES yields except Latin Flan, which has no servings text. <b>New proposal on top of the build:</b> a small outlined black <b>per batch</b> tag beside the header (<code>nutrition_label.dart:389</code>), inside the label so it reads as part of the panel and not as app chrome, with one line under it naming the yield it came from (Latin Flan has none to name, so it would get the tag alone). The mock draws the basis-1 case. <b>Proposed change, not yet agreed</b> (open question 3): with basis 2 (Ciabatta "MAKES 2 LOAVES", Sourdough Starter "MAKES ABOUT 2 CUPS") a serving is half the batch, and "per batch" would mislabel it (API.md:613-618). Yields that are a single portion ("MAKES 1 OMELET", "MAKES 1 COCKTAIL", "MAKES 1 TO 16 EGGS") would be left out, so 24 of the 27 basis-1 MAKES recipes would get the tag.</p>
+<div class="cols2">
+ <div>
+  <div class="cap"><span class="tag was">today</span>Challah</div>
+  <div class="nf before" data-src="snap8: atk-tv-2023-1110-challah servings_text 'MAKES 1 LOAF', serves_min NULL, serving_basis 1, calories_per_serving 2335.81, total_grams 681.8, complete 13/13, variation_count 0; nutrition_label.dart:388-405">
+   <h4>Nutrition Facts</h4>
+   <div class="ps">Per serving · serves 1</div>
+   <div class="row"><span>Serving size</span><span>682g</span></div>
+   <div class="rule8"></div>
+   <div style="font-size:10.5px;font-weight:700">Amount per serving</div>
+   <div class="cal"><span class="k">Calories</span><span class="v">2336</span></div>
+  </div>
+ </div>
+ <div>
+  <div class="cap"><span class="tag now">proposed</span>Challah (the build prints "Per serving · serves 1 · per batch" as plain header text instead)</div>
+  <div class="nf" data-src="proposal: outlined tag + yield line are not in the build; working tree nutrition_label.dart appends ' · per batch' to the header text">
+   <h4>Nutrition Facts</h4>
+   <div class="ps">Per serving · serves 1 <span class="batch">per batch</span></div>
+   <div class="why">The recipe says "MAKES 1 LOAF", so one serving is the whole loaf.</div>
+   <div class="row"><span>Serving size</span><span>682g</span></div>
+   <div class="rule8"></div>
+   <div style="font-size:10.5px;font-weight:700">Amount per serving</div>
+   <div class="cal"><span class="k">Calories</span><span class="v">2336</span></div>
+  </div>
+  <p class="note" style="margin-top:8px">Only the main recipe's calories are shown, and <b>variations are never added</b> (your decision on #9; revisit later). Challah has none (<code>variation_count</code> 0).</p>
+ </div>
+</div>
+
+<!-- ================= decisions ================= -->
+<div class="eyebrow">Decisions in this mockup</div>
+<div class="tblwrap"><table class="spec">
+<tr><th>Item</th><th>Decision</th></tr>
+<tr><td class="n">A · the row</td><td>A counted engine 0 g row below 0.5 reads "Counts as zero (no amount)" or "(discarded in cooking)", with no food name and a grey "counts as zero" badge. At 0.5 and above the food stays.</td></tr>
+<tr><td class="n">A · the guess</td><td>Kept, for admins only: a collapsed "Engine guess — not used" disclosure on the sheet row, and a struck-through candidate in the fix sheet that is not selected. Members never see it.</td></tr>
+<tr><td class="n">A · fix sheet</td><td>No CurrentMatch line and no Confirm as-is. "Save match &amp; amount" needs a food <b>and</b> an amount. Skip stays, for fragments such as "1- to 2-inch lengths".</td></tr>
+<tr><td class="n">B · order</td><td>Default <b>Finishes recipes</b>: the count, then lines, then worst confidence. It sits in a neutral segment "Finishes recipes | Worst match" beside Ingredients | Lines. The header ends "most recipes finished first" or "worst match first".</td></tr>
+<tr><td class="n">B · the count</td><td>Recipes whose every open line is in the group, each with grams already or being the example line (C supplies its grams), assuming the decision is applied to the group. There is no pill at 0. A No grams group also gets a soft note, "last open line in N recipes · each needs its own amount".</td></tr>
+<tr><td class="n">B · the pane</td><td>Splits the count into "this line only" and "then Apply". The offer strip adds "Applying finishes N recipes". The receipt reconciles against the promise (new <code>applied.completed</code>). The offer, the receipt and the pre-decision state are successive, never on screen together. Confirm and Skip sit above the fix panel. No keyboard shortcuts are drawn: neither the queue nor the fix panel has any at <code>26e57e2</code>.</td></tr>
+<tr><td class="n">B · line holds</td><td><code>second_food</code> / <code>discarded_medium</code> stay groups of one: no reach pill and no offer, and the pill counts only their own recipe. The row says that any decision (Confirm, Skip, or a positive amount) finishes it. A 0 g entry is not a choice: <code>PUT …/matches/{pos}</code> rejects grams &lt;= 0 (<code>nutrition_handlers.dart:379-383</code>).</td></tr>
+<tr><td class="n">C</td><td>No grams plus a plausible food: the amount block comes first, with the line's unit, the record's USDA portions (cache-only) and the reason the engine could not convert. The button follows the number and is disabled while empty. A portion matching the line's unit is tap-to-fill, the others are for reference only, and nothing is prefilled silently. A No grams group keeps the pane on the same ingredient.</td></tr>
+<tr><td class="n">C · Check, no grams</td><td>The amount is optional, because the confirm fetches the food detail and converts. The row warning becomes "— confirm asks for the amount". A wrong food keeps "Save match &amp; amount".</td></tr>
+<tr><td class="n">C · rule</td><td>At <code>26e57e2</code> a <code>confirmed</code> line is always counted (<code>match_bucket.dart:15-17, 65-66</code>). "Confirmed without grams stays in No grams" (a confirmed <b>no-match</b>, such as water or seasoning to taste, stays resolved) must land in <code>matchBucketFor</code> and the queue SQL together, under their parity test.</td></tr>
+<tr><td class="n">D</td><td>As being built: every recipe with basis 1–2 and no serves (57, including Latin Flan, which has no yield text) is per batch, printed as plain header text "Per serving · serves 1 · per batch". Proposed on top: an outlined black "per batch" tag beside the header with one line naming the yield text. Narrowing to basis 1 and excluding single portions is a proposal only (open question 3).</td></tr>
+<tr><td class="n">#9</td><td>No variation calories are added to any total. Deferred, as you asked.</td></tr>
+</table></div>
+
+<div class="eyebrow">Open questions (with a recommendation each)</div>
+<ol class="q">
+ <li><b>New wire fields.</b> B needs a per-group <code>finishes</code> count and <code>sort=finishes</code> on <code>GET /admin/nutrition_review</code>, plus <code>applied.completed</code> on the apply receipt. C needs a cache-only <code>portions</code> list (and kcal per 100 g) on the matches body. <span class="rec">Recommend: ship all three with this UI, with API.md updated in the same commit. None of them spends FDC budget.</span></li>
+ <li><b>The butter "stick" gap.</b> "4 sticks unsalted butter" parses as 4 × stick, and its record has "stick = 113 g", yet no grams were stored (the only other "stick" line, a cinnamon stick, has none either). <span class="rec">Recommend: investigate it in the engine before building C, so the tap-to-fill chip does not hide it.</span></li>
+ <li><b>Per-batch scope (a change to D as being built, which covers every recipe at basis 1–2 with no serves, whatever the yield text: 57, Latin Flan included).</b> Basis 2 yields (29 recipes, e.g. Ciabatta "MAKES 2 LOAVES") are per loaf or per cup, not per batch. Single-portion yields (omelet, cocktail, eggs) are real servings. <span class="rec">Recommend: tag basis 1 only, and exclude single portions with a short noun list (omelet, cocktail, egg). A "per loaf" wording for basis 2 can come later.</span></li>
+ <li><b>The grey "counts as zero" badge.</b> Put it on only the 28 rows below the gate, or on all 388 counted engine zeros (the 389th sits in Check under an <code>unnamed_food</code> hold)? <span class="rec">Recommend: all 388, as one rule (a counted row at 0 g). The food name is still hidden only below 0.5.</span></li>
+ <li><b>Lines view default.</b> <span class="rec">Recommend: the same "Finishes recipes" default. There a line's pill means "last open line of its recipe, and it would count after the confirm".</span></li>
+ <li><b>"line 0".</b> The shipped row and pane print the stored 0-based <code>position</code> ("Coq au Vin · line 0", <code>nutrition_review_queue.dart:418, 768</code>). This mock copies that as is. <span class="rec">Recommend: show position + 1 everywhere, as a separate small fix.</span></li>
+ <li><b>Right food, red text.</b> The queue paints every Check food red (<code>nutrition_review_queue.dart:384-387</code>), including the plausible egg white at 42%. <span class="rec">Recommend: leave it for this change and revisit with the ranker work.</span></li>
+</ol>
+
+<div class="eyebrow">Facts: every claim and its source</div>
+<p class="note">All SQL runs on <code>snap8.db</code> (read-only) after <code>.read audit5/bucket7.sql</code>, which defines view <b>b</b>. The group views are in <code>scratchpad/mock2h.sql</code>. View <b>o</b> holds the open lines (<code>bucket IN ('no_match','check','no_grams')</code>), keyed <code>'k:'||item_key</code> when the status is <code>auto</code>/<code>unmatched</code>, the key is non-empty and there is no line hold, and otherwise keyed one group per line (API.md:374-380). View <b>ex</b> holds each group's example: lowest confidence, then has grams, then title, then position (API.md:370-372). <b>g2.fin</b> counts the recipes whose open lines all share one key, where each line has grams or is that key's example. Code is cited at <code>26e57e2</code>.</p>
+<div class="tblwrap"><table class="spec facts">
+<tr><th>#</th><th>Claim</th><th>Source</th></tr>
+<tr><td>F1</td><td>540 recipes complete, 658 partial; every partial recipe has an open line</td><td><code>SELECT status,count(*) FROM recipe_nutrition GROUP BY 1</code>; <code>count(DISTINCT recipe_id) FROM o</code> = 658</td></tr>
+<tr><td>F2</td><td>Open lines: check 841, no_grams 210, no_match 51, skipped 0 (1,102). The shipped chip and queue header print it raw: "1102"</td><td><code>SELECT bucket,count(*) FROM b GROUP BY 1</code>; <code>stat_chip.dart:67</code>, <code>nutrition_review_queue.dart:261-263</code> @26e57e2</td></tr>
+<tr><td>F3</td><td>633 groups; egg whites rank #274 in today's worst-first order; of the 273 ahead, 62 have worst confidence 0 (33 of them no-match groups, which print no "% name"), the rest run up to 0.4125</td><td><code>SELECT count(*) FROM g2</code>; <code>row_number() OVER (ORDER BY minconf, lines DESC, recipes DESC, gkey)</code> = order at <code>salt_database.dart:1311</code></td></tr>
+<tr><td>F4</td><td>328 recipes finishable by one group decision, across 251 groups; tiers 14×1, 5×4, 4×4, 3×8, 2×20, 1×214, 0×382</td><td><code>SELECT sum(fin), sum(fin&gt;0) FROM g2</code>; <code>SELECT fin,count(*) FROM g2 GROUP BY 1</code></td></tr>
+<tr><td>F5</td><td>First 10 groups finish 53 recipes (98 lines) in finishes order and 12 (35 lines) in worst order; first 25: 96 against 18 (cumulative — 6 of those recipes need two groups that both sit in the top 25; the pills alone sum to 90)</td><td><code>mock2i.sql</code>: <code>ORDER BY fin DESC, lines DESC, minconf</code> against <code>ORDER BY minconf, lines DESC, recipes DESC, gkey</code></td></tr>
+<tr><td>F6</td><td>389 engine zeros with a food: 388 counted (67 + 1 discarded, 293 + 27 unmeasured), 1 in Check (<code>atk-tv-2023-0661-mechouia-tunisian-style-grilled-vegetables</code> pos 11 "2 tablespoons juice", hold <code>unnamed_food</code>). 28 counted ones are below 0.5 (27 unmeasured, 1 discarded); most name a wrong food, some the right one (Olive oil 0.457, Vinegar 0.457, Peppers, jalapenos 0.465, Salt, table 0.436, Basil, raw 0.377)</td><td><code>b WHERE grams=0 AND gram_source IN ('discarded','unmeasured') AND fdc_id IS NOT NULL GROUP BY gram_source, bucket, confidence&lt;0.5</code></td></tr>
+<tr><td>F7</td><td>Rainbow Cake pos 8 "Gel food dye …" → Fast foods, coleslaw (SR Legacy) 0.033, 0 g unmeasured, counted; pos 0 whole milk → Milk, whole (Survey (FNDDS)) 1.0, 488 g portion; partial 9/10, its only open line is pos 1 egg whites (Eggs, Grade A, Large, egg white, Foundation, 0.415, 396 g piece, check). The shipped sheet lists "Needs your attention · 1" first and starts "Counted — looks good · 9" collapsed; each row with grams adds an italic "amount: …" basis line (dye: "no amount on the line — counted as 0 g"; milk: "2 cup · USDA portion"; egg whites: "12 × 33 g each")</td><td><code>b</code> for recipe <code>atk-tv-2023-1201-rainbow-cake</code>; <code>recipe_nutrition</code>; <code>review_sheet.dart:304-326</code>, <code>match_fix_panel.dart:223-234</code>, <code>engine.dart:1660-1714</code>, <code>grams.dart:187-188, 1540, 1646-1652</code> @26e57e2</td></tr>
+<tr><td>F8</td><td>Chicken Francese <code>atk-tv-2023-1133</code> pos 8 "⅓ cup extra-virgin olive oil for frying" → Olive oil (2710186, Survey (FNDDS)) 0.457, 0 g discarded. The other Chicken Francese (<code>atk-tv-2023-0420</code>) has a confirmed pos 8, "Table salt and ground black pepper"</td><td><code>ingredient_matches</code> by recipe_id</td></tr>
+<tr><td>F9</td><td>Hidden guesses that are right: Salt, table 0.436 (Orecchiette pos 5), Basil, raw 0.377 (Vietnamese Beef Pho pos 16), Olive oil 0.457 (F8); "Lemon wedges, for serving" → Lemon, raw 0.91, 0 g unmeasured (Skillet Chicken and Rice with Peas and Scallions pos 14)</td><td>F6 query, listed by confidence</td></tr>
+<tr><td>F10</td><td>Green Bean Salad with Cherry Tomatoes and Feta pos 1 "1- to 2-inch lengths" → Cereals, CREAM OF WHEAT, 2 1/2 minute cook time, dry (174655, SR Legacy) 0.0, 0 g unmeasured; pos 0 "1½ pounds green beans, trimmed and cut into"; complete 10/10, 238.8 kcal, basis 4. Pos 1 has amounts <code>[]</code>, so a food pick alone stores grams NULL (status overridden, bucket no_grams) and the recipe drops to partial</td><td><code>b</code>, <code>recipe_ingredients</code>, <code>recipe_nutrition</code>; <code>nutrition_handlers.dart:327-355</code>, <code>match_bucket.dart:62-63</code>, <code>engine.dart:1473-1475</code> @26e57e2</td></tr>
+<tr><td>F11</td><td>Everyone can read the review sheet; only admins get actions. Counted rows are listed under "Counted — looks good"</td><td><code>review_sheet.dart:12-14, 322</code></td></tr>
+<tr><td>F12</td><td>Today's zero-row text "matched to X · 0.0 g · no amount on the line"; labels "discarded in cooking", "no amount on the line"; <code>fmtAmount(0)</code> = "0.0"</td><td><code>match_fix_panel.dart:40-52, 157-186</code></td></tr>
+<tr><td>F13</td><td>Confirm as-is only on a Check line with grams; the current match heads candidates as "current · N%"</td><td><code>nutrition_review_queue.dart:815</code>; <code>review_sheet.dart:622</code>; <code>match_fix_panel.dart:877</code></td></tr>
+<tr><td>F14</td><td>Worst-first top 5: baguette (7/7, 0.0, 64–64 g, 1 missing, fin 2, example Cheesy Garlic Bread pos 5), elbow macaroni (5/5, 0.0, fin 5), mirin (4/4, no match, fin 0), no-boil lasagna noodle (fin 1), flake sea salt (fin 2)</td><td><code>g2 JOIN ex ORDER BY minconf, lines DESC, recipes DESC, gkey</code></td></tr>
+<tr><td>F15</td><td>Finishes-first rows: egg white 26/25, 0.415, 66–396 g, fin 14; thick-cut bacon 7/7, 0.357, Bacon bits, 48–283.495 g, fin 5 (example Coq au Vin pos 0); tarragon 7/7, 0.807, <code>dried_for_fresh</code>, 0.3–7.2 g, fin 5; elbow macaroni 5/5, 227–454 g, fin 5; vanilla bean 5/5, 0.465, Soup, bean, fin 5; kalamata olive 13/13, fin 4</td><td><code>g2 JOIN ex ORDER BY fin DESC, lines DESC, minconf</code>; min/max grams from <code>o</code></td></tr>
+<tr><td>F16</td><td>Egg-white group: all Eggs, Grade A, Large, egg white (747997, Foundation) at 0.415, none missing. Finishes 14: Rainbow Cake, Meringue Cookies, Financiers (Almond–Browned Butter Cakes), Low-Fat Chocolate Mousse and 10 more (two same-titled Caramel-Espresso Yule Logs among them). Example Angel Food Cake pos 2, 396 g piece, item "large egg whites". Offer: 25 other lines in 24 recipes</td><td><code>o GROUP BY recipe_id HAVING count(DISTINCT gkey)=1 AND min(gkey)='k:egg white' AND sum(grams IS NULL)=0</code>; undecided <code>item_key='egg white'</code> rows</td></tr>
+<tr><td>F17</td><td>Angel Food Cake also has pos 7 "½ teaspoon almond extract" open (k:almond extract), so confirming only its egg-white line finishes 0; partial 6/8</td><td><code>o WHERE title='Angel Food Cake'</code></td></tr>
+<tr><td>F18</td><td>Perfect Roast Chicken pos 1 "½ cup sugar" → Sugars, granulated 0.95, 94 g portion, hold <code>discarded_medium</code>, its only open line (partial 5/6); its doc mentions a brine; 17 flagged lines have key "sugar". Its decisions: Confirm (94 g counted), Skip, or a positive amount; the API rejects grams &lt;= 0 with 422</td><td><code>b</code>; <code>instr(lower(doc),'brine')</code>; <code>o WHERE item_key='sugar'</code>; <code>nutrition_handlers.dart:379-383</code> @26e57e2</td></tr>
+<tr><td>F19</td><td>Pecans: 8 lines, 8 recipes, Nuts, pecans, halves, raw 0.92, all without grams; fin 1 (example Best Baked Apples pos 3, item "coarsely chopped pecans"); last open line in 6 recipes, Best Baked Apples included (5 beyond the pill). Ginger: 14 lines, 14 recipes, all 0.887 and without grams, fin 0, last open line in 2. The finish-0 order starts ginger (14 lines), then garlic (11)</td><td><code>o</code>, <code>ex</code>, <code>g2 WHERE fin=0 ORDER BY lines DESC, minconf</code></td></tr>
+<tr><td>F20</td><td>Chana Masala pos 2 → Ginger root, raw (169231, SR Legacy) 0.887, grams NULL, amounts [count 1 piece]; ginger group's example; pos 12 "1½ teaspoons garam masala" still open (SMART SOUP, Indian Bean Masala 0.015). Cached portions: 5 slices (1" dia) 11 g, 0.25 cup slices (1" dia) 24 g, 1 tsp 2 g; energy (208) 80 kcal/100 g. The shipped fix pane always renders Skip under the panel, and every queue row always shows its bucket badge, plus "N% name" whenever the row has a match (a no-match row sends <code>match: null</code> and shows the badge alone), at phone width too</td><td><code>o</code>, <code>recipe_ingredients</code>, <code>fdc_food_cache</code> 169231; <code>nutrition_review_queue.dart:505-524 (if (match != null) at :513), 828-836</code>; <code>nutrition_review.dart</code> _lineJson <code>'match'</code> :157 @26e57e2</td></tr>
+<tr><td>F21</td><td>Classic Yellow Layer Cake with Vanilla Buttercream pos 13 → Butter, without salt (173430, SR Legacy), auto, 1.0, grams NULL, gram_source NULL, no_grams, its only open line (partial 13/14); amounts [count 4 stick]; portions pat 5 g, tbsp 14.2 g, stick 113 g, cup 227 g; 717 kcal/100 g. Only 2 lines parse with unit "stick" and both lack grams (the other: Sous Vide Cochinita Pibil pos 4 cinnamon stick)</td><td><code>b</code>, <code>recipe_ingredients.amounts LIKE '%"unit":"stick"%'</code>, <code>fdc_food_cache</code> 173430</td></tr>
+<tr><td>F22</td><td>166 Check lines below 0.5 have a food but no grams (172 at any confidence; the other 6 are held lines at 0.5+); below 0.5 the detail is not fetched, and <code>{confirmed: true}</code> resolves them with at most one fetch</td><td><code>b WHERE bucket='check' AND confidence&lt;0.5 AND grams IS NULL AND fdc_id IS NOT NULL</code>; API.md:817-819</td></tr>
+<tr><td>F23</td><td>The apply reaches a different-food line at any score, and a same-food line only below 0.5 or under a food hold. It never reaches line holds. Each reached line gets grams from its own amounts. <code>others</code> counts exactly those rows</td><td>API.md:755-766, 823-838</td></tr>
+<tr><td>F24</td><td>The offer is built only after a pick or confirm lands, with <code>others &gt; 0</code>; a typed amount rides with this line's resend</td><td><code>nutrition_cubit.dart:338-362</code></td></tr>
+<tr><td>F25</td><td>Strip text "… still waiting on this decision.", footer "Sets this food on their unreviewed …", receipt "Applied to N recipes (M lines). Their labels are recomputed." (no completed count)</td><td><code>apply_to_all_strip.dart:58-78, 113-123, 151-154</code>; <code>applied: {recipes, lines, failed}</code> API.md:843</td></tr>
+<tr><td>F26</td><td>Header "· N ingredients, M lines · worst first"; reach pill "N lines · M recipes"; "N% name"; Check food in <code>errInk</code>; amount line and "— Confirm as-is is unavailable"; row and pane print the stored position</td><td><code>nutrition_review_queue.dart:261-264, 565-566, 516, 384-387, 596-630, 418, 768</code></td></tr>
+<tr><td>F27</td><td>WhyLine copy for Check, No grams and holds</td><td><code>match_fix_panel.dart:83-97, 110-137</code></td></tr>
+<tr><td>F28</td><td>At 26e57e2 a confirmed line is always counted (even a no-match such as water); an overridden line with no grams is No grams</td><td><code>match_bucket.dart:12-17, 62-66</code></td></tr>
+<tr><td>F29</td><td>Label header "Per serving · serves $basis"; the basis is the first of: the stored basis, the parsed serves minimum, the parsed yield count, then 1</td><td><code>nutrition_label.dart:389</code>; API.md:613-618; <code>engine.dart:1446-1451</code> @26e57e2</td></tr>
+<tr><td>F30</td><td>Challah "MAKES 1 LOAF", basis 1, 2,335.81 kcal, 681.8 g, 13/13, 0 variations. MAKES recipes with no serves: 27 at basis 1 (incl. MAKES 1 OMELET 389.5 kcal, MAKES 1 COCKTAIL, MAKES 1 TO 16 EGGS) and 29 at basis 2 (Ciabatta MAKES 2 LOAVES; Sourdough Starter MAKES ABOUT 2 CUPS, 2,595 kcal). The rule being built (<code>basisKindOf</code>: basis &lt;= 2 and no serves) ignores the yield text: 57 recipes, 28 at basis 1 (the 27 MAKES plus Latin Flan, no servings_text) and 29 at basis 2</td><td><code>recipes JOIN recipe_nutrition WHERE serving_basis IN (1,2) AND serves_min IS NULL AND upper(servings_text) LIKE 'MAKES%'</code>; without the LIKE: 57; working tree <code>engine.dart</code> <code>basisKindOf</code></td></tr>
+<tr><td>H1</td><td><b>Projection, not data:</b> the step-3 receipt ("14 recipes are now complete") is what F16/F17 predict, not a stored result</td><td>derived from F16, F17</td></tr>
+</table></div>
+</div>
+</body>
+</html>

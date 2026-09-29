@@ -50,6 +50,7 @@ const List<String> corpusFreeContractGoldenNames = [
   // Matcher v8's bases and holds on real corpus lines, over the recorded
   // FDC answers.
   'nutrition_matches_rules',
+  'nutrition_confirm_applied',
 ];
 
 /// Goldens that genuinely need the ATK corpus: a real v1 import source (with

@@ -13,6 +13,7 @@ import 'package:salt_server/src/services/import_service.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
+import 'support/applied.dart';
 import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
@@ -1048,14 +1049,17 @@ void main() {
       } finally {
         provider.down = false;
       }
-      expect(failedRun, (recipes: 0, lines: 0, failed: 1));
+      expect(
+        failedRun,
+        appliedIs(recipes: 0, lines: 0, failed: 1, completed: 0),
+      );
       expect(rowIn(db, soup, spoons).$2.fdcId, target.fdcId);
 
       final applied = await applyMatchOverride(db, provider, bundt, position, {
         'fdc_id': pick,
         'apply_to_all': true,
       });
-      expect(applied, (recipes: 1, lines: 1, failed: 0));
+      expect(applied, appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0));
       expect(rowIn(db, soup, spoons).$2.fdcId, pick);
       expect(provider.fetched, contains(pick));
       expect(db.fdcFoodCacheGet(pick), isNotNull);

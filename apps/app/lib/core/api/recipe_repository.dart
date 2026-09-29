@@ -181,12 +181,16 @@ class NutritionReviewReport {
     required this.items,
     required this.page,
     required this.limit,
+    this.finishable = 0,
+    this.openRecipes = 0,
   });
 
   factory NutritionReviewReport.fromJson(Map<String, dynamic> json) =>
       NutritionReviewReport(
         total: (json['total'] as num?)?.toInt() ?? 0,
         groups: (json['groups'] as num?)?.toInt() ?? 0,
+        finishable: (json['finishable'] as num?)?.toInt() ?? 0,
+        openRecipes: (json['open_recipes'] as num?)?.toInt() ?? 0,
         buckets: [
           if (json['buckets'] is List)
             for (final b in json['buckets'] as List<dynamic>)
@@ -212,8 +216,14 @@ class NutritionReviewReport {
   /// Every triage bucket with its whole-library count, in display order.
   final List<NutritionReviewBucket> buckets;
 
-  /// The flagged lines on this page (narrowed by the `bucket` filter),
-  /// worst-confidence first.
+  /// The grouped queue's payoff (whole-library, 0 in the line mode): the
+  /// recipes one group decision completes, of the [openRecipes] that wait
+  /// on at least one open line.
+  final int finishable;
+  final int openRecipes;
+
+  /// The flagged lines on this page (narrowed by the `bucket` filter), in
+  /// the requested `sort` order.
   final List<NutritionReviewLine> items;
 
   /// 1-based page index over [items].
@@ -267,6 +277,9 @@ class NutritionReviewLine {
     this.gramsMin,
     this.gramsMax,
     this.gramsMissing = 0,
+    this.finishes = 0,
+    this.finishesRecipes = const [],
+    this.lastOpen = 0,
   });
 
   factory NutritionReviewLine.fromJson(Map<String, dynamic> json) {
@@ -290,6 +303,16 @@ class NutritionReviewLine {
       gramsMin: (grams?['min'] as num?)?.toDouble(),
       gramsMax: (grams?['max'] as num?)?.toDouble(),
       gramsMissing: (grams?['missing'] as num?)?.toInt() ?? 0,
+      finishes: (json['finishes'] as num?)?.toInt() ?? 0,
+      finishesRecipes: [
+        if (json['finishes_recipes'] is List)
+          for (final r in json['finishes_recipes'] as List<dynamic>)
+            (
+              id: (r as Map<String, dynamic>)['id'] as String? ?? '',
+              title: r['title'] as String? ?? '',
+            ),
+      ],
+      lastOpen: (json['last_open'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -332,6 +355,17 @@ class NutritionReviewLine {
   final double? gramsMax;
   final int gramsMissing;
 
+  /// How many recipes one decision on this group completes (the server's
+  /// `finishes`); 0 on a line item and for a group that finishes none.
+  final int finishes;
+
+  /// The recipes [finishes] counts, by title.
+  final List<({String id, String title})> finishesRecipes;
+
+  /// Recipes whose open lines all sit in this group, grams or not: a No
+  /// grams group holds their last open line, each needing its own amount.
+  final int lastOpen;
+
   /// A stable id for selection (a recipe slug + line position is unique).
   /// In grouped mode this is the group's EXAMPLE line, which is what the fix
   /// pane opens on.
@@ -370,6 +404,7 @@ class NutritionReviewMatch {
     this.dataType,
     this.grams,
     this.gramSource,
+    this.hold,
   });
 
   factory NutritionReviewMatch.fromJson(Map<String, dynamic> json) =>
@@ -381,6 +416,7 @@ class NutritionReviewMatch {
         dataType: json['data_type'] as String?,
         grams: (json['grams'] as num?)?.toDouble(),
         gramSource: json['gram_source'] as String?,
+        hold: json['hold'] as String?,
       );
 
   final int fdcId;
@@ -390,6 +426,10 @@ class NutritionReviewMatch {
   final String? dataType;
   final double? grams;
   final String? gramSource;
+
+  /// Why the engine holds the line (`discarded_medium`, `in_shell`, …):
+  /// the queue row says a line hold is decided one line at a time.
+  final String? hold;
 }
 
 /// Read access to the recipe API.
@@ -482,11 +522,13 @@ class RecipeRepository {
   /// (`GET /api/v1/admin/nutrition_review`). [bucket] narrows the item list
   /// (and its pagination) to one triage bucket; [page]/[limit] page it. The
   /// bucket counts and [NutritionReviewReport.total] stay whole-library.
+  /// [sort] orders the groups, or the lines when not [grouped].
   Future<NutritionReviewReport> getNutritionReview({
     required int page,
     int limit = 50,
     String? bucket,
     bool grouped = false,
+    String? sort,
   }) {
     return _request('nutrition-review', () async {
       final data = await _getMap(
@@ -497,6 +539,9 @@ class RecipeRepository {
           if (bucket != null && bucket.isNotEmpty) 'bucket': bucket,
           // Grouped mode pages over ingredient groups, not lines.
           if (grouped) 'group': 'item',
+          // The order (`finishes` | `worst`), of groups or of lines; the
+          // server defaults to finishes.
+          if (sort != null) 'sort': sort,
         },
       );
       return NutritionReviewReport.fromJson(data);

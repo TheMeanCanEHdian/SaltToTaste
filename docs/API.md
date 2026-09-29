@@ -321,14 +321,19 @@ flagged), `incomplete_nutrition` (nutrition `partial`), `no_nutrition`
 (never computed), `extraction_warnings`, `no_servings`. The set is an open
 registry, so categories can be added without an API shape change.
 
-### `GET /api/v1/admin/nutrition_review?group=&bucket=&page=&limit=` (admin)
+### `GET /api/v1/admin/nutrition_review?group=&sort=&bucket=&page=&limit=` (admin)
 
-The cross-recipe queue of ingredient-match lines that still need a look, worst
-(lowest name-confidence) first: `{total, groups, buckets: [{id, label, count,
+The cross-recipe queue of ingredient-match lines that still need a look, in
+the `sort` order (below): `{total, groups, buckets: [{id, label, count,
 groups}], items:
-[{recipe: {id, slug, title}, position, raw, bucket, match: {fdc_id, description,
-data_type, confidence, grams, gram_source, status, hold} | null}], page, limit}`
-(`hold` as in the per-recipe matches body below).
+[{recipe: {id, slug, title}, position, raw, bucket, finishes, match: {fdc_id,
+description, data_type, confidence, grams, gram_source, status, hold} |
+null}], page, limit}` (`hold` as in the per-recipe matches body below).
+A line item's `finishes` is 1 when the line is its recipe's LAST open line
+(the only one in `no_match` / `check` / `no_grams`, whatever the filter) —
+any decision on it, a confirm taking its amount included, completes the
+recipe — else 0 (always 0 on a `skipped` line). A group item overrides it
+with the group's count (below).
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
 below 50% name confidence — compared with a 1e-9 tolerance, so a score that
 lands exactly on 0.5 counts whatever its float rounding — probably the wrong
@@ -368,13 +373,38 @@ reports as unmatched; the app labels a group by `item_key` instead when the
 key names a second food, `… plus …`, since the item names only its first
 food), `lines` and `recipes` (its reach), `decided` (an
 ingredient decision already exists for the key) and `grams: {min, max,
-missing}` over the members' amounts. Members are the lines that pass the
+missing}` over the members' amounts, and `finishes`: how many recipes one
+decision on the group completes when it is applied to the group — a recipe
+counts when EVERY flagged line it has (in any bucket, whatever the filter)
+sits in this group and each of them already has grams or is the group's
+example (a confirm on the example takes its grams in the same step); a group
+of one (a line hold, a decided line) counts its own recipe when that line is
+the recipe's last open one. A pick of a different food recomputes every
+reached line's grams from its own amounts, so it can finish more than the
+count says (accepted: the count may undercount, never promises a confirm
+more). `finishes_recipes: [{id, title}]` names those recipes, by title, and
+`last_open` counts every recipe whose flagged lines all sit in the group,
+grams or not — a No grams group holds the last open line of `last_open`
+recipes, each needing its own amount. The grouped body also carries the
+whole-library payoff at the top level, whatever the filter: `finishable`,
+the recipes ONE group decision completes (every group's `finishes`, summed —
+a recipe sits in at most one group's count), and `open_recipes`, the
+recipes with at least one flagged line ("328 of the 658 partial recipes are
+one group decision away from complete"); the line mode has neither. Members
+are the lines that pass the
 current filter, so every count is counted inside it; a group's `bucket` is its
 WORST member's (`no_match` > `check` > `no_grams` > `skipped`) and the example
 is its lowest-confidence line — among ties one that has grams, then the recipe
 title, then the position — so `match.confidence` is the group's minimum.
-Groups are ordered worst confidence first, then `lines`, `recipes`, then the
-key; `page`/`limit` count GROUPS and a group is never split across a page.
+`sort` orders the groups: `finishes` (the default, absent or empty) by
+`finishes`, then `lines`, then worst confidence, then `recipes` and the key —
+the groups whose decision completes the most recipes first; `worst` by worst
+confidence first, then `lines`, `recipes`, then the key. Any other value is a
+422, in either mode. In the line mode `sort` orders the lines: `finishes`
+(the default) puts the lines with `finishes` 1 first, then worst (lowest
+name-confidence) first; `worst` is worst first. Either order breaks ties on
+the ingredient key, the recipe title, then the position. Grouped,
+`page`/`limit` count GROUPS and a group is never split across a page.
 Only UNDECIDED lines (`auto` / `unmatched`) join an ingredient's group: a line
 someone already decided is a group of one — an amount problem for that line,
 never part of an ingredient's reach, since `apply_to_all` cannot touch it —
@@ -598,11 +628,22 @@ first compute, else:
 
 `basis_kind` says what `serving_basis` divides by: `per_batch` when the basis
 is 1 — the whole batch: "MAKES 1 LOAF", no servings at all, or an admin's
-1 — else `per_serving`. A larger basis
+1 — unless the recipe's yield (its servings text up to the first comma or
+semicolon: "MAKES ABOUT 2 CUPS, ENOUGH FOR 4 SANDWICHES" is cups) is ONE
+single portion: its count is 1 (or "one"; "MAKES 1 TO 16 EGGS" starts at
+one) and its head noun, the yield's last word, is on the ruling's list —
+omelet, cocktail, sandwich, egg or drink, singular or plural ("MAKES 1
+OMELET", "MAKES 1 COCKTAIL", "MAKES 1 TO 16 EGGS"; never "MAKES 12
+SANDWICHES", a batch, or "MAKES 32 SANDWICH COOKIES", cookies) — the only
+such nouns among the corpus's MAKES-1 yields; the rest
+are loaves, quarts, pies, tarts, crusts, a square and a quarter cup of
+dressing), whose one is a real serving (the user's ruling, 2026-09-28) —
+else `per_serving`. A larger basis
 divides the batch by a serves count or by a MAKES yield count, where one
 "serving" is one of the yield ("MAKES TWO 9-INCH PIZZAS": one pizza), not the
 batch. The app marks a per-batch label "per batch" beside its per-serving
-header.
+header, over a line naming the recipe's MAKES yield when it has one ("The
+recipe says "MAKES 1 LOAF", so one serving is the whole loaf.").
 
 `low_confidence` counts the lines in the `check` bucket: auto-matched lines
 below 0.5 confidence, or held for a `hold` reason (see the matches body),
@@ -847,12 +888,31 @@ pickled", 2710095; FDC has no pepperoncini), and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram; the fresh line's teaspoons and
 tablespoons are sized by the record's own portions, a sprig is 0 g and a
-leaf count has no grams); the
+leaf count has no grams) — a row on one of these records through one of
+these rewrites (or a fresh herb line on its dried record) ends its
+`gram_basis` with `" · approximation (counted as <record description>)"`,
+e.g. `"from 2 ounce · approximation (counted as Pork, cured, bacon,
+unprepared)"`; never "pancetta or bacon" (which reads the whole phrase), the
+food's own line, or a person's pick of another record; the
 ranker breaks two kinds of exact score tie toward the plainer record: the
 "separable lean and fat" record over "lean only" (the default for an
 unqualified cut), and the record naming fewer cookings — "Kielbasa, fully
 cooked, unheated" over "…, grilled"; any other exact tie still goes to the
 record FDC lists first) and
+`line_amount` (the line's first amount that names a unit, as written — `"4
+stick"`, `"1 piece"` — null when none does), `kcal_per_100g` (the picked
+record's calories per 100 g as the totals count them — its energy, else
+4/9/4 from protein, fat and carbohydrate — from the same caches ALONE, never
+a fetch; null when nothing is picked or the record is uncached), `portions` (the picked record's
+USDA household portions from the food-detail cache ALONE — reading them never
+fetches; empty when the detail was never fetched or nothing is picked — each
+`{amount, unit, description, grams, fill}`: `grams` the whole portion's
+weight, `fill` the grams the line's `line_amount` weighs on it when the
+portion NAMES that unit — its unit, or the first word of its description after
+any count, `tbsp` for a tablespoon — e.g. `"4 sticks unsalted butter"` on
+"Butter, without salt" (173430) fills its `stick` (113 g) with 452; null for a
+portion of another unit. The app prefills a confirm's amount only when exactly
+one portion fills, and lists the rest for reference),
 `candidates_name_ingredient` (false when FDC's WHOLE cached answer — not
 just the candidates shown — holds no record naming the ingredient, or the
 answer was empty: the list is hopeless, not mis-ranked; null when FDC was
@@ -947,7 +1007,9 @@ gets grams from the line's own first amount (the zest's teaspoon, the
 whole eggs) like any pick. An engine pick below
 0.5 is stored without fetching FDC's food detail, so a volume or count line
 may have no grams yet; `{confirmed: true}` resolves them (at most one food
-detail fetch). `422` for `{grams}`
+detail fetch). `{confirmed: true, grams}` confirms the food WITH its amount
+in one write (the queue's grams-on-confirm): the line is `confirmed` with
+`gram_source: override`. `422` for `{grams}`
 on a line with no matched food (there is nothing to scale — pick a food
 first).
 
@@ -973,7 +1035,13 @@ like inheritance — not as a human status, so a wrong pick applied
 library-wide is corrected the same way, by a second `apply_to_all` with
 the right food. A line a person already decided is left alone, as is one
 whose text changed since its compute. The response carries `applied:
-{recipes, lines, failed}`: `lines` counts the lines the decision moved —
+{recipes, lines, failed, completed, completed_recipes}`: `completed` counts
+the reached recipes whose stored status turned `complete` with this apply
+(the line's own recipe is not among them, nor a reached recipe that was
+complete already — a different-food pick reaches counted lines) — what the
+queue's `finishes` promised, so the receipt can say whether it came true —
+and `completed_recipes` lists their ids, so a shortfall can be named;
+`lines` counts the lines the decision moved —
 whose review bucket changed, or that took the decided food (a line left
 short of an amount on it too, which stays `no_grams`) — every line `others`
 counted, less one a person decided meanwhile, one whose text changed since its compute, or one whose recipe failed —

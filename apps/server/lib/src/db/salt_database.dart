@@ -1192,10 +1192,15 @@ class SaltDatabase {
     return {for (final row in rows) row['bucket'] as String: row['n'] as int};
   }
 
-  /// One page of flagged match lines across ALL recipes, worst-confidence
-  /// first, each carrying its recipe's slug + title. [bucket] narrows to a
-  /// single triage bucket; null returns every flagged bucket
-  /// (no_match / no_grams / check), never `skipped` or `counted`.
+  /// One page of flagged match lines across ALL recipes, each carrying its
+  /// recipe's slug + title. [bucket] narrows to a single triage bucket;
+  /// null returns every flagged bucket (no_match / no_grams / check), never
+  /// `skipped` or `counted`.
+  ///
+  /// [sort] `worst` (the default here) is worst-confidence first;
+  /// `finishes` first puts the lines that finish their recipe (`finishes`
+  /// 1: its last open line), then worst first — the grouped queue's order
+  /// ([nutritionReviewGroups]) at line grain.
   ///
   /// Ties break on the ingredient key before the recipe title, so one
   /// ingredient's lines sit together: this list is the member view of the
@@ -1205,28 +1210,36 @@ class SaltDatabase {
     required int limit,
     required int offset,
     String? bucket,
+    String sort = 'worst',
   }) {
-    // The bucket filter is BOUND (twice — null takes the flagged-set branch,
-    // a value takes the equality one), never concatenated. It used to be a
+    // The bucket filter (twice — null takes the flagged-set branch, a
+    // value takes the equality one) and the sort are BOUND, never
+    // concatenated. It used to be a
     // local named `where`, which is also the name of one of searchCards'
     // shape-pinned locals, so the class-wide "every cached SQL text is
     // constant" guard whitelisted it while nothing counted what this method
     // could emit — request input was one edit from the never-evicted
     // statement cache (review S6). A single constant text cannot go wrong
     // that way.
+    // `open_lines` is windowed over EVERY row of the recipe before the
+    // filter: a line is its recipe's last open line whatever the chip.
     final rows = _prepared(
-      'SELECT * FROM ( '
+      'SELECT * FROM (SELECT *, '
+      "SUM(bucket IN ('no_match', 'no_grams', 'check')) "
+      'OVER (PARTITION BY recipe_id) AS open_lines FROM ( '
       'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
       'im.data_type, im.confidence, im.grams, im.gram_source, im.status, '
       'im.updated_at, im.item_key, im.hold, r.slug AS review_slug, '
       'r.title AS review_title, '
       '$_reviewBucketCase AS bucket '
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
-      ") WHERE (? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
+      ")) WHERE (? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
       'OR bucket = ? '
-      'ORDER BY confidence ASC, item_key, review_title, position '
+      "ORDER BY CASE WHEN ? = 'finishes' THEN "
+      "(bucket <> 'skipped' AND open_lines = 1) ELSE 0 END DESC, "
+      'confidence ASC, item_key, review_title, position '
       'LIMIT ? OFFSET ?',
-    ).select([bucket, bucket, limit, offset]);
+    ).select([bucket, bucket, sort, limit, offset]);
     return [
       for (final row in rows)
         (
@@ -1234,6 +1247,9 @@ class SaltDatabase {
           slug: row['review_slug'] as String,
           title: row['review_title'] as String,
           bucket: row['bucket'] as String,
+          finishes: row['bucket'] != 'skipped' && row['open_lines'] == 1
+              ? 1
+              : 0,
         ),
     ];
   }
@@ -1265,6 +1281,64 @@ class SaltDatabase {
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
 
+  /// The chain [nutritionReviewGroups] and [nutritionReviewFinishable]
+  /// share (binds: the bucket filter, twice): the filtered `members`, each
+  /// group's `example` (lowest confidence, then one with grams, then title,
+  /// then position), and `solo` — every recipe whose flagged lines (in any
+  /// bucket, whatever the filter) all sit in ONE group, so that group holds
+  /// its last open lines, with `short` counting those of them that have no
+  /// grams and are not the group's example. A recipe with none short is one
+  /// the group's decision finishes: the confirm on screen supplies the
+  /// example's grams.
+  static const String _reviewFinishCte =
+      '$_reviewFlaggedCte, '
+      'members AS (SELECT * FROM flagged WHERE '
+      "(? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
+      'OR bucket = ?), '
+      'example AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY gkey '
+      'ORDER BY confidence, (grams IS NULL), review_title, position) AS rn '
+      'FROM members), '
+      'solo AS (SELECT o.recipe_id, MIN(o.gkey) AS gkey, '
+      'SUM(o.grams IS NULL AND x.rn IS NULL) AS short FROM flagged o '
+      'LEFT JOIN example x ON x.rn = 1 AND x.recipe_id = o.recipe_id '
+      'AND x.position = o.position '
+      "WHERE o.bucket IN ('no_match', 'no_grams', 'check') "
+      'GROUP BY o.recipe_id HAVING COUNT(DISTINCT o.gkey) = 1)';
+
+  /// Whole-library payoff of the grouped queue (its banner): how many
+  /// recipes are ONE group decision from complete (each group's `finishes`,
+  /// summed — a recipe sits in at most one group's count), and how many
+  /// recipes wait on at least one open line.
+  ({int finishable, int open}) nutritionReviewFinishable() {
+    final row = _prepared(
+      '$_reviewFinishCte '
+      'SELECT (SELECT COUNT(*) FROM solo WHERE short = 0) AS finishable, '
+      '(SELECT COUNT(DISTINCT recipe_id) FROM flagged '
+      "WHERE bucket IN ('no_match', 'no_grams', 'check')) AS open",
+    ).select([null, null]).first;
+    return (
+      finishable: row['finishable'] as int,
+      open: row['open'] as int,
+    );
+  }
+
+  /// A group's finished recipes as `{id, title}`, by title (SQLite's
+  /// `json_group_array` promises no order).
+  static List<({String id, String title})> _finishesRecipes(String? json) {
+    final list =
+        [
+          for (final entry in (jsonDecode(json ?? '[]') as List<dynamic>))
+            (
+              id: (entry as Map<String, dynamic>)['id'] as String,
+              title: entry['title'] as String,
+            ),
+        ]..sort((a, b) {
+          final byTitle = a.title.compareTo(b.title);
+          return byTitle != 0 ? byTitle : a.id.compareTo(b.id);
+        });
+    return list;
+  }
+
   /// The triage buckets by severity, worst first — the rank
   /// [nutritionReviewGroups] aggregates over (a group is as bad as its worst
   /// member) and the order this index decodes.
@@ -1282,22 +1356,34 @@ class SaltDatabase {
   ///
   /// Members are the lines that pass the same filter as [nutritionReviewLines]
   /// — [bucket] null means the three flagged buckets — so every count here is
-  /// counted inside the current filter. Groups are ordered worst-confidence
-  /// first, then by reach, then by key: a stable page boundary, and a group is
-  /// never split across pages.
+  /// counted inside the current filter.
+  ///
+  /// Each group carries `finishes`: the recipes one decision applied to the
+  /// group completes — a recipe whose every flagged line (whatever the
+  /// filter) sits in this group, each one with grams already or being the
+  /// group's example (the confirm on screen supplies the example's grams).
+  /// A pick of a different food can finish more (it recomputes the reached
+  /// lines' grams): the count may undercount, never over-promise a confirm.
+  /// `finishesRecipes` names those recipes, and `lastOpen` counts every
+  /// recipe whose open lines all sit in the group, grams or not (a No grams
+  /// group's "last open line in N recipes": each needs its own amount).
+  ///
+  /// [sort] `finishes` (the default) orders by that count, then lines, then
+  /// worst confidence; `worst` orders worst-confidence first, then by reach.
+  /// Both end on the key: a stable page boundary, and a group is never split
+  /// across pages.
   List<NutritionReviewGroupRow> nutritionReviewGroups({
     required int limit,
     required int offset,
     String? bucket,
+    String sort = 'finishes',
   }) {
     // Bound, never concatenated — the same rule (and the same reason) as
-    // nutritionReviewLines: one constant text for every bucket state. A
-    // line-held example is decided by nothing on its key: never badged.
+    // nutritionReviewLines: one constant text for every bucket and sort
+    // state. A line-held example is decided by nothing on its key: never
+    // badged.
     final rows = _prepared(
-      '$_reviewFlaggedCte, '
-      'members AS (SELECT * FROM flagged WHERE '
-      "(? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
-      'OR bucket = ?), '
+      '$_reviewFinishCte, '
       'agg AS (SELECT gkey, COUNT(*) AS lines, '
       'COUNT(DISTINCT recipe_id) AS recipes, MIN(confidence) AS worst, '
       'MIN(grams) AS gmin, MAX(grams) AS gmax, '
@@ -1305,18 +1391,25 @@ class SaltDatabase {
       "MIN(CASE bucket WHEN 'no_match' THEN 0 WHEN 'check' THEN 1 "
       "WHEN 'no_grams' THEN 2 ELSE 3 END) AS worst_bucket "
       'FROM members GROUP BY gkey), '
-      'example AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY gkey '
-      'ORDER BY confidence, (grams IS NULL), review_title, position) AS rn '
-      'FROM members) '
+      'fin AS (SELECT s.gkey, COUNT(*) AS last_open, '
+      'COUNT(*) FILTER (WHERE s.short = 0) AS n, '
+      "json_group_array(json_object('id', r.id, 'title', r.title)) "
+      'FILTER (WHERE s.short = 0) AS names '
+      'FROM solo s JOIN recipes r ON r.id = s.recipe_id GROUP BY s.gkey) '
       'SELECT e.*, a.lines AS group_lines, a.recipes AS group_recipes, '
       'a.gmin, a.gmax, a.gmissing, a.worst_bucket, '
+      'COALESCE(f.n, 0) AS finishes, COALESCE(f.last_open, 0) AS last_open, '
+      'f.names AS finishes_names, '
       "(d.item_key IS NOT NULL AND COALESCE(e.hold, '') NOT IN "
       "('second_food', 'discarded_medium', 'in_shell')) AS decided "
       'FROM agg a JOIN example e ON e.gkey = a.gkey AND e.rn = 1 '
+      'LEFT JOIN fin f ON f.gkey = a.gkey '
       'LEFT JOIN ingredient_decisions d ON d.item_key = e.item_key '
-      'ORDER BY a.worst, a.lines DESC, a.recipes DESC, a.gkey '
+      "ORDER BY CASE WHEN ? = 'worst' THEN 0 ELSE COALESCE(f.n, 0) END DESC, "
+      "CASE WHEN ? = 'worst' THEN a.worst ELSE 0 END, "
+      'a.lines DESC, a.worst, a.recipes DESC, a.gkey '
       'LIMIT ? OFFSET ?',
-    ).select([bucket, bucket, limit, offset]);
+    ).select([bucket, bucket, sort, sort, limit, offset]);
     return [
       for (final row in rows)
         (
@@ -1333,6 +1426,9 @@ class SaltDatabase {
           gramsMin: (row['gmin'] as num?)?.toDouble(),
           gramsMax: (row['gmax'] as num?)?.toDouble(),
           gramsMissing: row['gmissing'] as int,
+          finishes: row['finishes'] as int,
+          lastOpen: row['last_open'] as int,
+          finishesRecipes: _finishesRecipes(row['finishes_names'] as String?),
         ),
     ];
   }
@@ -2331,12 +2427,15 @@ class ApiTokenRow {
 }
 
 /// A flagged match line for the cross-recipe nutrition-review queue: the match
-/// row plus the recipe context (slug/title) and its computed triage bucket.
+/// row plus the recipe context (slug/title) and its computed triage bucket,
+/// and `finishes`: 1 when it is its recipe's only open line (any decision on
+/// it completes the recipe), else 0.
 typedef NutritionReviewLineRow = ({
   IngredientMatchRow match,
   String slug,
   String title,
   String bucket,
+  int finishes,
 });
 
 /// One ingredient GROUP of the review queue: its EXAMPLE line (the same shape
@@ -2358,6 +2457,9 @@ typedef NutritionReviewGroupRow = ({
   double? gramsMin,
   double? gramsMax,
   int gramsMissing,
+  int finishes,
+  int lastOpen,
+  List<({String id, String title})> finishesRecipes,
 });
 
 /// [time] in UTC as ISO-8601 with a FIXED six-digit fraction

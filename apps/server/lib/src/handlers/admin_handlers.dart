@@ -40,14 +40,22 @@ Map<String, Object?> recipeReviewHandler(
 /// [group] chooses the unit of the item list: absent or empty means lines
 /// (today's response), `item` means one row per ingredient. Any other value is
 /// a 422, for the same reason an unknown bucket is — a typo must not be served
-/// as "the default view".
+/// as "the default view". So is an unknown [sort] (`finishes`, the default
+/// when absent or empty, or `worst`).
 Map<String, Object?> nutritionReviewHandler(
   SaltDatabase db, {
   required int page,
   required int limit,
   String? bucket,
   String? group,
+  String? sort,
 }) {
+  final order = (sort == null || sort.isEmpty)
+      ? nutritionReviewDefaultSort
+      : sort;
+  if (!nutritionReviewSorts.contains(order)) {
+    throw ValidationException('Unknown sort: $order');
+  }
   final filter = (bucket == null || bucket.isEmpty) ? null : bucket;
   if (filter != null && !nutritionReviewBucketLabels.containsKey(filter)) {
     throw ValidationException('Unknown bucket filter: $filter');
@@ -62,6 +70,7 @@ Map<String, Object?> nutritionReviewHandler(
     page: page,
     limit: limit,
     grouped: grouping != null,
+    sort: order,
   );
 }
 

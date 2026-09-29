@@ -1,6 +1,8 @@
 {
   "total": 1,
   "groups": 1,
+  "finishable": 1,
+  "open_recipes": 1,
   "buckets": [
     {
       "id": "no_match",
@@ -37,6 +39,7 @@
       "position": 12,
       "raw": "Confectioners’ sugar, for dusting",
       "bucket": "no_grams",
+      "finishes": 1,
       "match": {
         "fdc_id": 169656,
         "description": "Sugars, powdered",
@@ -52,6 +55,13 @@
       "lines": 1,
       "recipes": 1,
       "decided": true,
+      "finishes_recipes": [
+        {
+          "id": "atk-tv-2023-0857-rich-chocolate-bundt-cake",
+          "title": "Rich Chocolate Bundt Cake"
+        }
+      ],
+      "last_open": 1,
       "grams": {
         "min": null,
         "max": null,

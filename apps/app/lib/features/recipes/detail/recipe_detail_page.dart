@@ -151,6 +151,7 @@ class _DetailBody extends StatelessWidget {
                       isAdmin: isAdmin,
                       badgeFirst: true,
                       startExpanded: detail.heroImageUrl == null,
+                      yieldText: recipe.servings,
                     ),
                   ],
                 ],
@@ -235,7 +236,11 @@ class _Header extends StatelessWidget {
               // The right rail (approved P6 design): the FDA label lives
               // under the hero, match badge below it. A recipe with a hero
               // opens the label collapsed so they don't compete for height.
-              NutritionPanel(isAdmin: isAdmin, startExpanded: hero == null),
+              NutritionPanel(
+                isAdmin: isAdmin,
+                startExpanded: hero == null,
+                yieldText: detail.recipe.servings,
+              ),
             ],
           ),
         ),

@@ -195,6 +195,26 @@ const List<Map<String, Object?>> _rulesLines = [
     ],
     'item': 'plus 1 teaspoon table salt',
   },
+  // C1 (2026-09-28): pancetta, a flagged approximation counted as bacon
+  // (Pasta e Ceci, 0340: its basis ends "· approximation (counted as …)"),
+  // and the butter "stick" no grams resolves (Classic Yellow Layer Cake,
+  // 0884), whose cached portions carry the tap-to-fill 4 × 113 g.
+  {
+    'raw': '2 ounces pancetta, cut into ½-inch pieces',
+    'amounts': [
+      {'measure': 'weight', 'quantity': '2', 'unit': 'ounce', 'primary': true},
+    ],
+    'item': 'pancetta',
+    'prep': 'cut into 1/2-inch pieces',
+  },
+  {
+    'raw': '4 sticks unsalted butter, cut into chunks and softened',
+    'amounts': [
+      {'measure': 'count', 'quantity': '4', 'unit': 'stick', 'primary': true},
+    ],
+    'item': 'unsalted butter',
+    'prep': 'cut into chunks and softened',
+  },
 ];
 
 /// Classic Macaroni and Cheese's (0300) salt steps, verbatim (the second
@@ -466,6 +486,112 @@ void main() {
         '/api/v1/recipes/$rulesSlug/nutrition/matches',
         headers: harness.auth(adminSession),
       );
+      // The butter line confirmed WITH its amount (grams-on-confirm, C1) and
+      // offered to the ingredient: the receipt carries `applied.completed`.
+      await harness.capture(
+        'nutrition_confirm_applied',
+        'PUT',
+        '/api/v1/recipes/$rulesSlug/nutrition/matches/12',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {'confirmed': true, 'grams': 452, 'apply_to_all': true},
+      );
+
+      // The receipt's `completed` over the route (C1): a pick that reaches
+      // a recipe which was ALREADY complete does not count it. Hearty Lentil
+      // Soup's (0024) and Boston Baked Beans' (0679) bacon lines, each its
+      // recipe's only line, both counted on the cured-bacon record; a pick
+      // of "Bacon bits" on the soup's line reaches the beans' line (another
+      // food) — rewritten, recomputed, still complete, so completed is 0.
+      Future<String> baconRecipe(
+        String title,
+        Map<String, Object?> line,
+      ) async {
+        final (status, body) = await harness.send(
+          'POST',
+          '/api/v1/recipes',
+          headers: harness.auth(adminSession, csrf: true),
+          jsonBody: {
+            'recipe': {
+              'title': title,
+              'ingredients': [
+                {
+                  'items': [line],
+                },
+              ],
+            },
+          },
+        );
+        expect(status, HttpStatus.created, reason: body);
+        final slug =
+            ((jsonDecode(body) as Map<String, dynamic>)['recipe']!
+                    as Map<String, dynamic>)['slug']!
+                as String;
+        final (queued, queuedBody) = await harness.send(
+          'POST',
+          '/api/v1/recipes/$slug/nutrition/compute',
+          headers: harness.auth(adminSession, csrf: true),
+        );
+        expect(queued, HttpStatus.accepted, reason: queuedBody);
+        await harness.awaitJob(
+          '/api/v1/nutrition/jobs/'
+          '${(jsonDecode(queuedBody) as Map<String, dynamic>)['job_id']}',
+          harness.auth(adminSession),
+        );
+        return slug;
+      }
+
+      Future<String> statusOf(String slug) async {
+        final (status, body) = await harness.send(
+          'GET',
+          '/api/v1/recipes/$slug/nutrition',
+          headers: harness.auth(adminSession),
+        );
+        expect(status, HttpStatus.ok, reason: body);
+        return (jsonDecode(body) as Map<String, dynamic>)['status']! as String;
+      }
+
+      final soup = await baconRecipe('Hearty Lentil Soup', {
+        'raw': '3 ounces (3 slices) bacon, cut into ¼-inch pieces',
+        'amounts': [
+          {
+            'measure': 'weight',
+            'quantity': '3',
+            'unit': 'ounce',
+            'primary': true,
+          },
+        ],
+        'item': '(3 slices) bacon',
+        'prep': 'cut into 1/4-inch pieces',
+      });
+      final beans = await baconRecipe('Boston Baked Beans', {
+        'raw': '2 ounces (about 2 slices) bacon, cut into ¼-inch pieces',
+        'amounts': [
+          {
+            'measure': 'weight',
+            'quantity': '2',
+            'unit': 'ounce',
+            'primary': true,
+          },
+        ],
+        'item': '(about 2 slices) bacon',
+        'prep': 'cut into 1/4-inch pieces',
+      });
+      expect(await statusOf(beans), 'complete');
+      final (picked, pickedBody) = await harness.send(
+        'PUT',
+        '/api/v1/recipes/$soup/nutrition/matches/0',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {'fdc_id': 2707466, 'apply_to_all': true},
+      );
+      expect(picked, HttpStatus.ok, reason: pickedBody);
+      expect((jsonDecode(pickedBody) as Map<String, dynamic>)['applied'], {
+        'recipes': 1,
+        'lines': 1,
+        'failed': 0,
+        'completed': 0,
+        'completed_recipes': <String>[],
+      });
+      expect(await statusOf(beans), 'complete');
     });
 
     tearDownAll(harness.stop);

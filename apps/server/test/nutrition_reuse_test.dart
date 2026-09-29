@@ -15,6 +15,7 @@ import 'package:salt_server/src/services/item_key_backfill.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart' show sqlite3;
 import 'package:test/test.dart';
+import 'support/applied.dart';
 import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
@@ -402,7 +403,10 @@ void main() {
           'fdc_id': eggsAlt,
           'apply_to_all': true,
         });
-        expect(applied, (recipes: 1, lines: 1, failed: 0));
+        expect(
+          applied,
+          appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0),
+        );
 
         final caramelEggs = rowOf(caramel, 'eggs');
         expect(caramelEggs.fdcId, eggsAlt);
@@ -440,7 +444,10 @@ void main() {
           'fdc_id': right,
           'apply_to_all': true,
         });
-        expect(applied, (recipes: 1, lines: 1, failed: 0));
+        expect(
+          applied,
+          appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0),
+        );
         expect(rowOf(caramel, 'eggs').fdcId, right);
 
         // A sweep over the caramel cake keeps the correction (most recent).
@@ -547,7 +554,7 @@ void main() {
         'fdc_id': food,
         'apply_to_all': true,
       });
-      expect(applied, (recipes: 0, lines: 0, failed: 0));
+      expect(applied, appliedIs(recipes: 0, lines: 0, failed: 0, completed: 0));
       expect(rowAt(caramel, caramelEggs).fdcId, isNull, reason: 'stale text');
 
       // Restore: a compute rewrites the rows from the real lines.
@@ -592,7 +599,7 @@ void main() {
       // Only the caramel cake is a target: the pancakes' eggs line already
       // carries this food at confidence 1 (a decision that reached it), so
       // the reach skips it and only the cake's recompute fails.
-      expect(applied, (recipes: 0, lines: 0, failed: 1));
+      expect(applied, appliedIs(recipes: 0, lines: 0, failed: 1, completed: 0));
       expect(rowOf(bundt, 'eggs').fdcId, food, reason: 'the source stayed');
       // The line itself landed before its recipe's totals failed.
       expect(rowAt(caramel, caramelEggs).fdcId, food);
@@ -642,7 +649,7 @@ void main() {
       gated.release.complete();
       final applied = await sweep;
 
-      expect(applied, (recipes: 1, lines: 1, failed: 0));
+      expect(applied, appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0));
       final decided = rowAt(second, secondEggs);
       expect(decided.status, 'confirmed');
       expect(decided.fdcId, isNull, reason: 'the guard held the write off');
@@ -707,7 +714,7 @@ void main() {
         'confirmed': true,
         'apply_to_all': true,
       });
-      expect(applied, (recipes: 1, lines: 2, failed: 0));
+      expect(applied, appliedIs(recipes: 1, lines: 2, failed: 0, completed: 0));
       for (final position in salts) {
         final row = rowAt(caramel, position);
         expect(row.fdcId, food);
@@ -726,7 +733,7 @@ void main() {
         'fdc_id': other,
         'apply_to_all': true,
       });
-      expect(again, (recipes: 0, lines: 0, failed: 0));
+      expect(again, appliedIs(recipes: 0, lines: 0, failed: 0, completed: 0));
       expect(rowAt(caramel, salts[0]).status, 'skipped');
       expect(rowAt(caramel, salts[1]).status, 'overridden');
       expect(rowAt(caramel, salts[1]).fdcId, other);
@@ -780,7 +787,7 @@ void main() {
         'confirmed': true,
         'apply_to_all': true,
       });
-      expect(applied, (recipes: 1, lines: 1, failed: 0));
+      expect(applied, appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0));
       final counted = rowAt(caramel, salts[0]);
       expect(counted.confidence, 0.92, reason: 'its score was not rewritten');
       expect(counted.grams, 5);
@@ -793,7 +800,7 @@ void main() {
       expect((item[bundtSalt] as Map)['others_lines'], 1);
       expect(
         await put(bundt, bundtSalt, {'confirmed': true, 'apply_to_all': true}),
-        (recipes: 1, lines: 1, failed: 0),
+        appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0),
       );
       expect(rowAt(caramel, salts[0]).fdcId, food);
       await matchAndCompute(db, provider, caramel);

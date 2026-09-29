@@ -135,6 +135,8 @@ class _ApplyCubit extends _SeededCubit {
           recipes: offer.others,
           lines: offer.others + 3,
           failed: 0,
+          completed: 0,
+          completedRecipes: const [],
         ),
       ),
     );

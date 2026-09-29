@@ -372,7 +372,10 @@ void main() {
   ) async {
     final adapter = await pumpQueue(tester, reviewBody: groupedBody());
     expect(
-      find.text('Showing all flagged · 2 ingredients, 6 lines · worst first'),
+      find.text(
+        'Showing all flagged · 2 ingredients, 6 lines · '
+        'most recipes finished first',
+      ),
       findsOneWidget,
     );
     expect(find.text('Ingredients'), findsOneWidget);
@@ -383,15 +386,15 @@ void main() {
     await tester.pumpAndSettle();
     // Switching the unit refetches page 1 — the unit of paging changed.
     expect(adapter.reviewFetches, before + 1);
-    // Today's sentence, verbatim, in the lines view.
+    // The lines view ends on the same order words (C1 open question 5).
     expect(
-      find.text('Showing all flagged · 6 lines, worst first'),
+      find.text('Showing all flagged · 6 lines · most recipes finished first'),
       findsOneWidget,
     );
   });
 
   testWidgets('a decided group says so, and a weak group with no amounts '
-      'warns that Confirm as-is is unavailable', (tester) async {
+      'warns that the confirm asks for the amount', (tester) async {
     // herbes de Provence: two lines, neither with an amount, on a food that
     // is plainly wrong — the pane the admin is heading for has no Confirm.
     await pumpQueue(
@@ -422,7 +425,7 @@ void main() {
     expect(find.text('2 lines · 2 recipes'), findsOneWidget);
     expect(find.text('decided'), findsOneWidget);
     expect(
-      find.text('no amount on either line — Confirm as-is is unavailable'),
+      find.text('no amount on either line — confirm asks for the amount'),
       findsOneWidget,
     );
   });
@@ -564,7 +567,7 @@ void main() {
     expect(
       warned.text,
       'amounts 170–170 g · 1 of 2 lines have no amount — '
-      'Confirm as-is is unavailable',
+      'confirm asks for the amount',
     );
     expect(warned.warn, isTrue);
 

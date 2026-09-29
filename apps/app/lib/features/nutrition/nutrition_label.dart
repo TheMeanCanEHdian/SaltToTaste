@@ -18,9 +18,14 @@ class NutritionPanel extends StatelessWidget {
     required this.isAdmin,
     this.badgeFirst = false,
     this.startExpanded = true,
+    this.yieldText,
   });
 
   final bool isAdmin;
+
+  /// The recipe's servings text ("MAKES 1 LOAF"): a per-batch label names
+  /// the yield it came from ([perBatchYieldLine]).
+  final String? yieldText;
 
   /// Mobile layout: the match badge renders ABOVE the label so the
   /// transparency cue is seen before the numbers (approved P6 design);
@@ -61,6 +66,7 @@ class NutritionPanel extends StatelessWidget {
           child: _FdaLabel(
             nutrition: nutrition,
             initiallyExpanded: startExpanded,
+            yieldText: yieldText,
           ),
         ),
         const SizedBox(height: 10),
@@ -262,9 +268,16 @@ class _MatchBadge extends StatelessWidget {
 /// in-label toggle bar so the panel can shrink to "calories and above". It
 /// starts expanded and the choice is per-view only (not persisted).
 class _FdaLabel extends StatefulWidget {
-  const _FdaLabel({required this.nutrition, this.initiallyExpanded = true});
+  const _FdaLabel({
+    required this.nutrition,
+    this.initiallyExpanded = true,
+    this.yieldText,
+  });
 
   final RecipeNutrition nutrition;
+
+  /// The recipe's servings text, for the per-batch line.
+  final String? yieldText;
 
   /// Whether the fold starts open. Driven by the caller (collapsed when the
   /// recipe has a hero image).
@@ -386,11 +399,44 @@ class _FdaLabelState extends State<_FdaLabel>
               ),
             ),
             if (basis != null)
-              Text(
-                'Per serving · serves $basis'
-                '${nutrition.perBatch ? ' · per batch' : ''}',
-                style: _base,
+              Wrap(
+                spacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text('Per serving · serves $basis', style: _base),
+                  // D: the whole batch is the serving — said inside the
+                  // label, as an outlined black tag beside the header.
+                  if (nutrition.perBatch)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 1.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'per batch',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                ],
               ),
+            if (basis != null && nutrition.perBatch)
+              if (perBatchYieldLine(widget.yieldText) case final why?)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 3),
+                  child: Text(
+                    why,
+                    style: const TextStyle(
+                      color: Color(0xFF333333),
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
             if (servingGrams != null)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -692,4 +738,23 @@ class _Rule extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4),
     );
   }
+}
+
+/// The line under a per-batch label naming the yield it came from (D): 'The
+/// recipe says "MAKES 1 LOAF", so one serving is the whole loaf.' — the
+/// yield up to its first comma or semicolon; a yield of exactly one thing
+/// names that thing, any other says "the whole batch". Null when the
+/// servings text is no MAKES yield (none at all, as Latin Flan, or an
+/// admin's basis of 1 on a serves count): the tag then stands alone.
+String? perBatchYieldLine(String? servings) {
+  final yieldText = (servings ?? '').split(RegExp('[,;]')).first.trim();
+  if (!yieldText.toUpperCase().startsWith('MAKES ')) {
+    return null;
+  }
+  final one = RegExp(
+    r'^MAKES (?:1|ONE) (.+)$',
+    caseSensitive: false,
+  ).firstMatch(yieldText);
+  final whole = one == null ? 'batch' : one.group(1)!.toLowerCase();
+  return 'The recipe says "$yieldText", so one serving is the whole $whole.';
 }

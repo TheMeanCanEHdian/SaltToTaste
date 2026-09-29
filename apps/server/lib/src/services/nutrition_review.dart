@@ -22,6 +22,13 @@ const List<String> nutritionReviewFlaggedBuckets = [
   'check',
 ];
 
+/// The queue's orders, grouped or by line: what one decision finishes
+/// first (the default), or the worst match first.
+const List<String> nutritionReviewSorts = ['finishes', 'worst'];
+
+/// The order a request without `sort` gets.
+const String nutritionReviewDefaultSort = 'finishes';
+
 /// Builds the report body for `GET /api/v1/admin/nutrition_review`. [bucket],
 /// when set, narrows the item list (and its pagination) to one triage bucket;
 /// the bucket counts and the overall total stay whole-library so the chips are
@@ -34,12 +41,19 @@ const List<String> nutritionReviewFlaggedBuckets = [
 /// `buckets[].count` are lines in both modes, and `groups` — top level and
 /// per bucket — is reported in both, so a header can say "81 ingredients,
 /// 118 lines" without a second request.
+///
+/// [sort] orders the groups (`finishes` | `worst`, see
+/// [SaltDatabase.nutritionReviewGroups]) and, at line grain, the lines
+/// ([SaltDatabase.nutritionReviewLines]). A grouped body also carries the
+/// whole-library payoff, `finishable` of `open_recipes`
+/// ([SaltDatabase.nutritionReviewFinishable]).
 Map<String, Object?> buildNutritionReview(
   SaltDatabase db, {
   required int page,
   required int limit,
   String? bucket,
   bool grouped = false,
+  String sort = nutritionReviewDefaultSort,
 }) {
   final counts = db.nutritionReviewCounts();
   final groupCounts = db.nutritionReviewGroupCounts();
@@ -55,6 +69,7 @@ Map<String, Object?> buildNutritionReview(
             bucket: bucket,
             limit: limit,
             offset: offset,
+            sort: sort,
           ),
         )
       : [
@@ -62,12 +77,19 @@ Map<String, Object?> buildNutritionReview(
             bucket: bucket,
             limit: limit,
             offset: offset,
+            sort: sort,
           ))
             _lineJson(line),
         ];
+  // The grouped queue's banner: whole-library, whatever the filter.
+  final payoff = grouped ? db.nutritionReviewFinishable() : null;
   return {
     'total': total,
     'groups': groupCounts.flagged,
+    if (payoff != null) ...{
+      'finishable': payoff.finishable,
+      'open_recipes': payoff.open,
+    },
     'buckets': [
       for (final b in [...nutritionReviewFlaggedBuckets, 'skipped'])
         {
@@ -101,12 +123,19 @@ List<Map<String, Object?>> _groupItems(
           slug: group.slug,
           title: group.title,
           bucket: group.bucket,
+          finishes: group.finishes,
         )),
         'item_key': group.itemKey,
         'item': _exampleItem(db, byRecipe, group.match),
         'lines': group.lines,
         'recipes': group.recipes,
         'decided': group.decided,
+        'finishes': group.finishes,
+        'finishes_recipes': [
+          for (final recipe in group.finishesRecipes)
+            {'id': recipe.id, 'title': recipe.title},
+        ],
+        'last_open': group.lastOpen,
         'grams': {
           'min': group.gramsMin,
           'max': group.gramsMax,
@@ -152,6 +181,9 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
     'position': match.position,
     'raw': match.raw,
     'bucket': line.bucket,
+    // A line item: 1 when it is its recipe's last open line (any decision
+    // finishes the recipe), else 0. A group overrides it with its own count.
+    'finishes': line.finishes,
     // The stored match for the row display; candidates are fetched lazily from
     // the per-recipe matches endpoint when a row is opened.
     'match': match.fdcId == null

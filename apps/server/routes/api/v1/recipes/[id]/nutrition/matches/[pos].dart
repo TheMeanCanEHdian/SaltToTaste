@@ -48,12 +48,7 @@ Future<Response> onRequest(
   return Response.json(
     body: {
       ...await matchesBody(db, provider, found.recipe),
-      if (applied != null)
-        'applied': {
-          'recipes': applied.recipes,
-          'lines': applied.lines,
-          'failed': applied.failed,
-        },
+      if (applied != null) 'applied': appliedJson(applied),
     },
   );
 }

@@ -23,8 +23,17 @@ typedef ApplyOffer = ({
   int lines,
 });
 
-/// The receipt of an apply-to-all, shown in place of the offer.
-typedef ApplyReceipt = ({int position, int recipes, int lines, int failed});
+/// The receipt of an apply-to-all, shown in place of the offer: what it
+/// reached, what failed, and how many reached recipes it completed (and
+/// which: the queue's receipt names a shortfall against its promise).
+typedef ApplyReceipt = ({
+  int position,
+  int recipes,
+  int lines,
+  int failed,
+  int completed,
+  List<String> completedRecipes,
+});
 
 /// The parsed ingredient item as a person would name it: parentheticals
 /// dropped ("(1 1/2 sticks) unsalted butter" → "unsalted butter"), trimmed;
@@ -438,6 +447,8 @@ class NutritionCubit extends Cubit<NutritionState> {
                 recipes: applied.recipes,
                 lines: applied.lines,
                 failed: applied.failed,
+                completed: applied.completed,
+                completedRecipes: applied.completedRecipes,
               ),
       ),
     );

@@ -411,17 +411,18 @@ void main() {
     });
 
     test('resolves a relative DATA_DIR against the working directory', () {
-      final dir = Directory.systemTemp.createTempSync('salt_cfg_rel_');
-      final previous = Directory.current;
-      Directory.current = dir;
+      // Relative to the REAL working directory, never a changed one: the
+      // working directory is process-wide, and the other test files running
+      // alongside read their fixtures by relative path.
+      final rel = '.dart_tool/salt_cfg_rel_$pid';
       addTearDown(() {
-        Directory.current = previous;
-        dir.deleteSync(recursive: true);
+        final dir = Directory(rel);
+        if (dir.existsSync()) {
+          dir.deleteSync(recursive: true);
+        }
       });
-      final cfg = ServerConfig.fromEnvironment(
-        environment: {'DATA_DIR': 'rel-data'},
-      );
-      expect(cfg.dataDir, '${Directory.current.path}/rel-data');
+      final cfg = ServerConfig.fromEnvironment(environment: {'DATA_DIR': rel});
+      expect(cfg.dataDir, '${Directory.current.path}/$rel');
       expect(Directory(cfg.libraryDir).existsSync(), isTrue);
     });
 

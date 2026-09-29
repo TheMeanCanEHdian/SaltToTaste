@@ -4,6 +4,38 @@
       "position": 0,
       "raw": "12 tablespoons (1½ sticks) unsalted butter, softened, plus 1 tablespoon, melted, for the pan",
       "item": "(1 1/2 sticks) unsalted butter",
+      "line_amount": "12 tablespoon",
+      "kcal_per_100g": 717.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "pat (1\" sq, 1/3\" high)",
+          "grams": 5.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 14.2,
+          "fill": 170.39999999999998
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "stick",
+          "grams": 113.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 227.0,
+          "fill": null
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "without salt butter",
@@ -75,6 +107,24 @@
       "position": 1,
       "raw": "¾ cup natural cocoa powder, plus 1 tablespoon for the pan",
       "item": "natural cocoa powder",
+      "line_amount": "3/4 cup",
+      "kcal_per_100g": 228.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 5.4,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 86.0,
+          "fill": 64.5
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "natural cocoa powder",
@@ -146,6 +196,9 @@
       "position": 2,
       "raw": "6 ounces bittersweet chocolate, chopped coarse",
       "item": "bittersweet chocolate",
+      "line_amount": "6 ounce",
+      "kcal_per_100g": 546.0,
+      "portions": [],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "dark chocolate",
@@ -217,6 +270,24 @@
       "position": 3,
       "raw": "1 teaspoon instant espresso powder (optional)",
       "item": "instant espresso powder (optional)",
+      "line_amount": "1 teaspoon",
+      "kcal_per_100g": 353.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "packet",
+          "grams": 2.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 1.0,
+          "fill": 1.0
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "instant espresso powder",
@@ -288,6 +359,9 @@
       "position": 4,
       "raw": "¾ cup boiling water",
       "item": "boiling water",
+      "line_amount": "3/4 cup",
+      "kcal_per_100g": null,
+      "portions": [],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "boiling water",
@@ -310,6 +384,17 @@
       "position": 5,
       "raw": "1 cup sour cream, at room temperature",
       "item": "sour cream",
+      "line_amount": "1 cup",
+      "kcal_per_100g": 196.4148,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 30.0,
+          "fill": null
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "sour cream",
@@ -381,6 +466,17 @@
       "position": 6,
       "raw": "1¾ cups (8¾ ounces) unbleached all-purpose flour",
       "item": "unbleached all-purpose flour",
+      "line_amount": "1 3/4 cup",
+      "kcal_per_100g": 366.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 30.0,
+          "fill": null
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "all-purpose flour",
@@ -452,6 +548,38 @@
       "position": 7,
       "raw": "1 teaspoon table salt",
       "item": "table salt",
+      "line_amount": "1 teaspoon",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 292.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 6.0,
+          "fill": 6.0
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 18.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.4,
+          "fill": null
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "table salt",
@@ -487,6 +615,24 @@
       "position": 8,
       "raw": "1 teaspoon baking soda",
       "item": "baking soda",
+      "line_amount": "1 teaspoon",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 0.5,
+          "unit": null,
+          "description": "tsp",
+          "grams": 2.3,
+          "fill": 4.6
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 4.6,
+          "fill": 4.6
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "baking soda",
@@ -516,6 +662,45 @@
       "position": 9,
       "raw": "2 cups packed (14 ounces) light brown sugar",
       "item": "packed light brown sugar",
+      "line_amount": "2 cup",
+      "kcal_per_100g": 380.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup packed",
+          "grams": 220.0,
+          "fill": 440.0
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp packed",
+          "grams": 4.6,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup unpacked",
+          "grams": 145.0,
+          "fill": 290.0
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp unpacked",
+          "grams": 3.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp brownulated",
+          "grams": 3.2,
+          "fill": null
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "light brown sugar",
@@ -587,6 +772,31 @@
       "position": 10,
       "raw": "1 tablespoon vanilla extract",
       "item": "vanilla extract",
+      "line_amount": "1 tablespoon",
+      "kcal_per_100g": 288.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 4.2,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 208.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 13.0,
+          "fill": 13.0
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "vanilla extract",
@@ -628,6 +838,9 @@
       "position": 11,
       "raw": "5 large eggs, at room temperature",
       "item": "large eggs",
+      "line_amount": null,
+      "kcal_per_100g": 148.0,
+      "portions": [],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "eggs",
@@ -699,6 +912,38 @@
       "position": 12,
       "raw": "Confectioners’ sugar, for dusting",
       "item": "Confectioners’ sugar",
+      "line_amount": null,
+      "kcal_per_100g": 389.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup sifted",
+          "grams": 100.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 2.5,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp unsifted",
+          "grams": 8.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup unsifted",
+          "grams": 120.0,
+          "fill": null
+        }
+      ],
       "others": 0,
       "others_lines": 0,
       "candidates_query": "powdered sugar",

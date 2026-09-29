@@ -2239,23 +2239,14 @@ Future<void> recomputeTotals(
       }
     }
     // A record without any published energy still contributes calories
-    // via the standard Atwater 4/9/4 factors — FDC's own computed-energy
-    // fields do the same math.
-    final hasEnergy =
-        food.nutrientsPer100g.containsKey('208') ||
-        food.nutrientsPer100g.containsKey('957') ||
-        food.nutrientsPer100g.containsKey('958');
+    // via the standard Atwater 4/9/4 factors ([kcalPer100g]) — FDC's own
+    // computed-energy fields do the same math.
+    final hasEnergy = nutrientDefs.first.fdcNumbers.any(
+      food.nutrientsPer100g.containsKey,
+    );
     if (!hasEnergy) {
-      final protein = food.nutrientsPer100g['203'] ?? 0;
-      // Fat as the nutrient sum reads it (nutrients.dart: 204, else NLEA
-      // 298): Foundation "Oil, olive, extra virgin" (748608) publishes its fat
-      // only as 298 and no energy, and counted 0 kcal on 144 sweep lines.
-      final fat =
-          food.nutrientsPer100g['204'] ?? food.nutrientsPer100g['298'] ?? 0;
-      final carbs = food.nutrientsPer100g['205'] ?? 0;
       totals['energy'] =
-          (totals['energy'] ?? 0) +
-          (4 * protein + 9 * fat + 4 * carbs) * grams / 100;
+          (totals['energy'] ?? 0) + kcalPer100g(food) * grams / 100;
     }
   }
 
@@ -2304,13 +2295,52 @@ Future<void> recomputeTotals(
 }
 
 /// What [basis] divides a recipe's totals by: `per_batch` when it is 1 —
-/// the whole batch ("MAKES 1 LOAF", no servings at all, or an admin's 1).
+/// the whole batch ("MAKES 1 LOAF", no servings at all, or an admin's 1) —
+/// unless the recipe's [servings] yield is ONE single portion
+/// ([singlePortionYields]: "MAKES 1 OMELET", "MAKES 1 COCKTAIL", "MAKES 1 TO
+/// 16 EGGS"; never "MAKES 12 SANDWICHES"), whose one is a real serving
+/// (the user's ruling, 2026-09-28).
 /// Any larger basis divides the batch: by a serves count, or by a MAKES
 /// yield count ([recomputeTotals]), where a "serving" is one of the yield —
 /// one of "MAKES TWO 9-INCH PIZZAS", not the batch (refix round 1: the first
 /// rule, basis 2 or less with no serves count, labelled 29 such basis-2
 /// recipes per batch). `per_serving` otherwise.
-String basisKindOf(int basis) => basis == 1 ? 'per_batch' : 'per_serving';
+String basisKindOf(int basis, {String? servings}) =>
+    basis == 1 && !_singlePortionYield(servings) ? 'per_batch' : 'per_serving';
+
+/// Yield nouns that are one portion, not a batch: the ruling's list, which
+/// covers every single-portion noun the corpus's MAKES-1 yields show
+/// (snapshot 11, 28 recipes at a basis of 1: COCKTAIL, OMELET and "1 TO 16
+/// EGGS"; the rest are loaves, quarts, pies, tarts, crusts, a square and a
+/// quarter cup of dressing — batches).
+const Set<String> singlePortionYields = {
+  'omelet',
+  'cocktail',
+  'sandwich',
+  'egg',
+  'drink',
+};
+
+/// Whether the yield of [servings] — up to its first comma or semicolon, so
+/// "MAKES ABOUT 2 CUPS, ENOUGH FOR 4 SANDWICHES" is cups — is ONE portion:
+/// its count is 1 ("1", "one"; "MAKES 1 TO 16 EGGS" starts at one) and its
+/// head noun, the clause's last word, is a [singlePortionYields] noun,
+/// singular or plural. "MAKES 12 SANDWICHES" is a batch of twelve (an
+/// admin's 1 then divides by nothing), and "MAKES 32 SANDWICH COOKIES" is
+/// cookies (refix round 2).
+bool _singlePortionYield(String? servings) {
+  final clause = (servings ?? '').split(RegExp('[,;]')).first.toLowerCase();
+  final count = RegExp(r'\d+|\bone\b').firstMatch(clause)?[0];
+  final head = RegExp('[a-z]+').allMatches(clause).lastOrNull?[0];
+  if ((count != '1' && count != 'one') || head == null) {
+    return false;
+  }
+  return singlePortionYields.contains(head) ||
+      (head.endsWith('s') &&
+          singlePortionYields.contains(head.substring(0, head.length - 1))) ||
+      (head.endsWith('es') &&
+          singlePortionYields.contains(head.substring(0, head.length - 2)));
+}
 
 /// Re-ranked candidates for one line. With [cacheOnly] (the GET path —
 /// any authenticated user) the search cache is the sole source: a read
@@ -2382,7 +2412,30 @@ Future<List<RankedCandidate>> searchCandidates(
 /// so it is safe on the member-callable matches GET. Null when the line has no
 /// amount, or when the grams were entered by hand. Re-derived rather than
 /// stored; deterministic, so it matches the stored grams for the common case.
+///
+/// A food that is a flagged approximation ([isApproximation]) says so after
+/// the basis: "4 ounces · approximation (counted as Pork, cured, bacon,
+/// unprepared)".
 String? gramBasisFor(
+  SaltDatabase db,
+  IngredientLine line,
+  IngredientMatchRow row,
+) {
+  final basis = _gramBasis(db, line, row);
+  final approximation =
+      basis != null &&
+      isApproximation(
+        item: normalizeItem(lineItemOf(line)),
+        raw: line.raw,
+        fdcId: row.fdcId,
+        description: row.description,
+      );
+  return approximation
+      ? '$basis · approximation (counted as ${row.description})'
+      : basis;
+}
+
+String? _gramBasis(
   SaltDatabase db,
   IngredientLine line,
   IngredientMatchRow row,
@@ -2571,6 +2624,27 @@ FdcFood? _foodFromCache(SaltDatabase db, int fdcId) {
       : FdcFood.fromJson(jsonDecode(cached) as Map<String, dynamic>);
 }
 
+/// The calories 100 g of [food] counts, as the totals count them: its first
+/// published energy (208, then the Atwater 957/958), else 4/9/4 from its
+/// protein, fat and carbohydrate — what the fix sheet shows beside a match
+/// with no amount yet ("80 kcal per 100 g"), and what the totals add for a
+/// record with no energy. Fat as the nutrient sum reads it (nutrients.dart:
+/// 204, else NLEA 298): Foundation "Oil, olive, extra virgin" (748608)
+/// publishes its fat only as 298 and no energy, and counted 0 kcal on 144
+/// sweep lines.
+double kcalPer100g(FdcFood food) {
+  final n = food.nutrientsPer100g;
+  for (final number in nutrientDefs.first.fdcNumbers) {
+    final kcal = n[number];
+    if (kcal != null) {
+      return kcal;
+    }
+  }
+  return 4 * (n['203'] ?? 0) +
+      9 * (n['204'] ?? n['298'] ?? 0) +
+      4 * (n['205'] ?? 0);
+}
+
 /// A food with NO provider call: the detail in fdc_food_cache, else the
 /// search hit a lazy compute stood in with (or FDC's only record of a
 /// superseded, 404 food) — read from [line]'s cached answer when given, and
@@ -2739,9 +2813,22 @@ bool _heldMediumOnceMatched(SaltDatabase db, IngredientMatchRow row) {
 /// `failed`, and does not stop the rest; what was already written stays,
 /// and the counts say exactly what landed: `lines` counts the rows whose
 /// review bucket changed or that took the decided food — the rows
-/// [decisionReach] offered, less those skipped or guarded out — and
-/// `recipes` the recipes holding one.
-Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
+/// [decisionReach] offered, less those skipped or guarded out — `recipes`
+/// the recipes holding one, and `completed` those of them whose stored
+/// status turned `complete` with this apply (what the queue's `finishes`
+/// promised; the receipt reconciles against it), `completedRecipes` their
+/// ids. A reached recipe that was complete already (a different-food pick
+/// reaches counted lines) is not counted: it was finished before.
+Future<
+  ({
+    int recipes,
+    int lines,
+    int failed,
+    int completed,
+    List<String> completedRecipes,
+  })
+>
+applyDecisionToOthers(
   SaltDatabase db,
   NutritionProvider provider, {
   required String itemKey,
@@ -2761,6 +2848,7 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
   var recipes = 0;
   var lines = 0;
   var failed = 0;
+  final completed = <String>[];
   for (final entry in byRecipe.entries) {
     try {
       final found = db.recipeByIdOrSlug(entry.key);
@@ -2818,9 +2906,14 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
       if (applied == 0) {
         continue;
       }
+      final before = db.nutritionFor(found.recipe.id)?.status;
       await recomputeTotals(db, provider, found.recipe);
       recipes += 1;
       lines += applied;
+      if (before != 'complete' &&
+          db.nutritionFor(found.recipe.id)?.status == 'complete') {
+        completed.add(found.recipe.id);
+      }
       // A recipe that will not decode, or whose totals cannot recompute
       // (the provider failed), must not stop the rest — and must be counted.
       // ignore: avoid_catches_without_on_clauses
@@ -2829,5 +2922,11 @@ Future<({int recipes, int lines, int failed})> applyDecisionToOthers(
       _log.warning('apply-to-all failed for ${entry.key}: $error');
     }
   }
-  return (recipes: recipes, lines: lines, failed: failed);
+  return (
+    recipes: recipes,
+    lines: lines,
+    failed: failed,
+    completed: completed.length,
+    completedRecipes: completed,
+  );
 }

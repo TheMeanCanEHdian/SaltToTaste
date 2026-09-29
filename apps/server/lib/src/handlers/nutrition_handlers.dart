@@ -54,7 +54,10 @@ Map<String, Object?> nutritionBody(
   return {
     'status': stale ? 'stale' : row.status,
     'serving_basis': row.servingBasis,
-    'basis_kind': basisKindOf(row.servingBasis ?? 1),
+    'basis_kind': basisKindOf(
+      row.servingBasis ?? 1,
+      servings: recipe.servings,
+    ),
     'calories_per_serving': row.caloriesPerServing,
     'per_serving': jsonDecode(row.nutrientsJson),
     'total_grams': row.totalGrams,
@@ -146,6 +149,11 @@ Future<Map<String, Object?>> matchesBody(
         ? null
         : lineSearchFor(db, normalizeItem(lineItemOf(line)), itemKey);
     final query = search?.answer;
+    // The picked record's USDA portions, from the cache alone (a search hit
+    // stand-in has none): what the fix sheet's amount block offers.
+    final food = row?.fdcId == null
+        ? null
+        : knownFood(db, row!.fdcId!, line: line);
     items.add({
       'position': position,
       'raw': line.raw,
@@ -153,6 +161,25 @@ Future<Map<String, Object?>> matchesBody(
       // has none — what an apply-to-all offer names, since `others` is
       // counted by item, not by line.
       'item': line.item,
+      // The line's first unit amount as written ("4 stick"), null when none.
+      'line_amount': lineAmountText(line.amounts),
+      // The picked record's calories per 100 g, from the same cache: the
+      // fix sheet says it where a line has no amount yet.
+      'kcal_per_100g': food == null ? null : kcalPer100g(food),
+      // The picked record's cached portions, each with `fill`: the grams
+      // the line's unit amount weighs on it when the portion names that
+      // unit (4 × stick 113 g = 452), else null. Empty when the record's
+      // detail was never fetched, or nothing is picked. Never a fetch.
+      'portions': [
+        for (final portion in food?.portions ?? const <FdcPortion>[])
+          {
+            'amount': portion.amount,
+            'unit': portion.unit,
+            'description': portion.description,
+            'grams': portion.gramWeight,
+            'fill': portionFill(portion, line.amounts),
+          },
+      ],
       // How many OTHER recipes hold an undecided line with this item — what
       // an apply-to-all from here would reach — and how many lines that is.
       'others': {for (final other in reach) other.recipeId}.length,
@@ -202,9 +229,25 @@ Future<Map<String, Object?>> matchesBody(
   return {'items': items};
 }
 
-/// What an `apply_to_all` reached: recipes and lines changed, and recipes
-/// that failed part-way (logged; their earlier lines stay as written).
-typedef AppliedToOthers = ({int recipes, int lines, int failed});
+/// What an `apply_to_all` reached: recipes and lines changed, recipes that
+/// failed part-way (logged; their earlier lines stay as written), and the
+/// reached recipes the apply completed (and their ids).
+typedef AppliedToOthers = ({
+  int recipes,
+  int lines,
+  int failed,
+  int completed,
+  List<String> completedRecipes,
+});
+
+/// The receipt's wire shape (`applied` on the `PUT …/matches/{pos}` body).
+Map<String, Object?> appliedJson(AppliedToOthers applied) => {
+  'recipes': applied.recipes,
+  'lines': applied.lines,
+  'failed': applied.failed,
+  'completed': applied.completed,
+  'completed_recipes': applied.completedRecipes,
+};
 
 /// Applies a `PUT .../nutrition/matches/<pos>` override [body] and
 /// recomputes the stored totals (no FDC searches; at most one cached food

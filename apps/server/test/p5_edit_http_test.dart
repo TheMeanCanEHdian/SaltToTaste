@@ -1205,7 +1205,13 @@ void main() {
         );
         expect(applied.statusCode, HttpStatus.ok, reason: appliedBody);
         final body = jsonOf(appliedBody);
-        expect(body['applied'], {'recipes': 0, 'lines': 0, 'failed': 0});
+        expect(body['applied'], {
+          'recipes': 0,
+          'lines': 0,
+          'failed': 0,
+          'completed': 0,
+          'completed_recipes': <String>[],
+        });
         expect(body['items'], isA<List<dynamic>>());
         final (plain, plainBody) = await send(
           'PUT',

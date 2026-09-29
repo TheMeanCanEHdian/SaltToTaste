@@ -1808,3 +1808,69 @@ Iterable<Amount> _byPreference(List<Amount> amounts) sync* {
     }
   }
 }
+
+/// The line's first amount that names a unit, as written ("4 stick", "1
+/// piece") — what the fix sheet's "The line says …" quotes and what
+/// [portionFill] sizes; null when no amount names one.
+Amount? unitAmountOf(List<Amount> amounts) {
+  for (final amount in amounts) {
+    if ((amount.unit ?? '').trim().isNotEmpty) {
+      return amount;
+    }
+  }
+  return null;
+}
+
+/// [unitAmountOf] as text ("4 stick"), or null.
+String? lineAmountText(List<Amount> amounts) {
+  final amount = unitAmountOf(amounts);
+  return amount == null ? null : _amountText(amount);
+}
+
+/// A unit or portion word in one spelling: a volume alias's unit
+/// ("tbsp" → "tablespoon"), else the word less a plural "s".
+String _unitWord(String word) {
+  final lower = word.toLowerCase().trim();
+  final alias = _volumeAliases[lower];
+  if (alias != null) {
+    return alias;
+  }
+  return lower.length > 3 && lower.endsWith('s')
+      ? lower.substring(0, lower.length - 1)
+      : lower;
+}
+
+/// The grams the line's unit amount ([unitAmountOf] of [amounts]) weighs on
+/// [portion] when the portion NAMES that unit — its structured unit, or the
+/// first word of its description after any count ("stick", "tbsp" for a
+/// tablespoon, "slices (1\" dia)" for a slice): "4 stick" on "stick" 113 g
+/// is 452 g. Null when the portion names another unit, or the line has no
+/// unit amount. The fix sheet's tap-to-fill chips (never a stored gram:
+/// a person taps it).
+double? portionFill(FdcPortion portion, List<Amount> amounts) {
+  final amount = unitAmountOf(amounts);
+  final quantity = amount == null ? null : _quantityValue(amount.quantity);
+  if (amount == null || quantity == null || quantity <= 0) {
+    return null;
+  }
+  final description = (portion.description ?? '').toLowerCase().trim();
+  final leading = RegExp(r'^([\d][\d./\s]*)').firstMatch(description);
+  final unit = (portion.unit ?? '').toLowerCase();
+  final word = unit.isNotEmpty && unit != 'undetermined'
+      ? unit
+      : RegExp('[a-z]+')
+                .firstMatch(
+                  leading == null
+                      ? description
+                      : description.substring(leading.end),
+                )
+                ?.group(0) ??
+            '';
+  if (word.isEmpty || _unitWord(word) != _unitWord(amount.unit!)) {
+    return null;
+  }
+  final per = leading == null
+      ? (portion.amount ?? 1)
+      : (_quantityValue(leading.group(1)!.trim()) ?? 0);
+  return per <= 0 ? null : quantity * portion.gramWeight / per;
+}

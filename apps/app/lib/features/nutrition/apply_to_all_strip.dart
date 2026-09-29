@@ -19,6 +19,7 @@ class ApplyToAllStrip extends StatelessWidget {
     required this.applying,
     required this.onApply,
     required this.onDismiss,
+    this.promised,
     super.key,
   });
 
@@ -33,8 +34,44 @@ class ApplyToAllStrip extends StatelessWidget {
   final VoidCallback onApply;
   final VoidCallback onDismiss;
 
+  /// The OTHER recipes the queue's `finishes` promised this apply completes
+  /// (the decided line's own recipe left out), or null off the queue: the
+  /// offer says the count, and the receipt reconciles against it — "as
+  /// promised", or naming the ones that still wait.
+  final List<({String id, String title})>? promised;
+
   static String _recipes(int n) => n == 1 ? '1 recipe' : '$n recipes';
   static String _lines(int n) => n == 1 ? '1 line' : '$n lines';
+
+  /// The receipt's reconciliation with [promised]: ", as promised." when
+  /// every promised recipe completed, else the ones that still wait, by
+  /// name; a plain "." without a promise.
+  List<TextSpan> _reconcile(ApplyReceipt receipt) {
+    final promise = promised ?? const [];
+    final done = receipt.completedRecipes.toSet();
+    final short = [
+      for (final r in promise)
+        if (!done.contains(r.id)) r.title,
+    ];
+    if (promise.isEmpty) {
+      return [if (receipt.completed > 0) const TextSpan(text: '.')];
+    }
+    if (short.isEmpty) {
+      return const [TextSpan(text: ', as promised.')];
+    }
+    final names = short.length == 1
+        ? short.single
+        : '${short.sublist(0, short.length - 1).join(', ')} and ${short.last}';
+    return [
+      TextSpan(
+        text:
+            '${receipt.completed > 0 ? ',' : ' No recipe is complete yet:'}'
+            ' short of the promise — $names '
+            '${short.length == 1 ? 'still waits' : 'still wait'} on another '
+            'line.',
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +109,18 @@ class ApplyToAllStrip extends StatelessWidget {
                     'the server log.',
               ),
             ],
+            // What the queue's "finishes" promised, as it came true.
+            if (receipt.completed > 0)
+              TextSpan(
+                text:
+                    ' ${receipt.completed == 1 ? '1 recipe is' : '${receipt.completed} recipes are'} '
+                    'now complete',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: SaltColors.okInk,
+                ),
+              ),
+            ..._reconcile(receipt),
           ],
         ),
         style: const TextStyle(fontSize: 13),
@@ -121,6 +170,14 @@ class ApplyToAllStrip extends StatelessWidget {
                   TextSpan(text: ', in ${_recipes(o.others)}, '),
                   TextSpan(text: o.lines == 1 ? 'is' : 'are'),
                   const TextSpan(text: ' still waiting on this decision.'),
+                  if (promised?.isNotEmpty ?? false)
+                    TextSpan(
+                      text: ' Applying finishes ${_recipes(promised!.length)}.',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: SaltColors.okInk,
+                      ),
+                    ),
                 ],
               ),
               style: const TextStyle(fontSize: 13),

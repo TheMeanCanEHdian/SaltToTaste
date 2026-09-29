@@ -57,7 +57,16 @@ class _ReviewSheet extends StatefulWidget {
 
 class _ReviewSheetState extends State<_ReviewSheet>
     with TickerProviderStateMixin {
-  late final FTabController _tabs = FTabController(length: 2, vsync: this);
+  // Created up front, not lazily: a sheet with nothing to review never
+  // reads it, and a lazy one was first built in dispose(), where looking up
+  // the TickerMode of a deactivated element throws.
+  late final FTabController _tabs;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = FTabController(length: 2, vsync: this);
+  }
 
   @override
   void dispose() {
@@ -467,11 +476,34 @@ class _MatchRow extends StatefulWidget {
 class _MatchRowState extends State<_MatchRow> {
   bool _fixOpen = false;
 
+  /// The fix panel's amount field — where "Enter edible grams" lands.
+  final FocusNode _amountFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _amountFocus.dispose();
+    super.dispose();
+  }
+
+  /// Opens the fix panel on its amount (ruling 5's "Enter edible grams").
+  void _enterGrams() {
+    final opening = !_fixOpen;
+    setState(() => _fixOpen = opening);
+    if (opening) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _amountFocus.requestFocus();
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final m = widget.match;
     final b = matchBucketOf(m);
     final skipped = b == MatchBucket.skipped;
+    final zero = zeroGuessOf(m);
     return Container(
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: SaltColors.hairline)),
@@ -495,12 +527,19 @@ class _MatchRowState extends State<_MatchRow> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                _statusBadge(b),
+                if (zero)
+                  const SaltBadge('counts as zero', tone: SaltBadgeTone.neutral)
+                else
+                  _statusBadge(b),
               ],
             ),
             const SizedBox(height: 4),
-            WhyLine(match: m, bucket: b),
-            CurrentMatch(match: m, bucket: b),
+            if (zero)
+              ZeroRow(match: m, isAdmin: widget.isAdmin)
+            else ...[
+              WhyLine(match: m, bucket: b),
+              CurrentMatch(match: m, bucket: b),
+            ],
             if (widget.isAdmin) ...[
               const SizedBox(height: 8),
               _actions(context, b),
@@ -550,6 +589,7 @@ class _MatchRowState extends State<_MatchRow> {
                     match: m,
                     busy: widget.busy,
                     onDone: () => setState(() => _fixOpen = false),
+                    amountFocus: _amountFocus,
                   ),
                 ),
               ],
@@ -600,6 +640,33 @@ class _MatchRowState extends State<_MatchRow> {
         ),
       ]);
     }
+    // Ruling 5: a held medium or shell line leads with its two ways out;
+    // Confirm only where the row carries an eaten "plus" part.
+    if (b == MatchBucket.check && isHeldLine(widget.match)) {
+      return _ActionBar([
+        _Action(
+          icon: _fixOpen ? FLucideIcons.x : FLucideIcons.scale,
+          label: _fixOpen ? 'Close' : 'Enter edible grams',
+          primary: !_fixOpen,
+          onPressed: busy ? null : _enterGrams,
+        ),
+        if (hasEatenPlusPart(widget.match))
+          _Action(
+            icon: FLucideIcons.check,
+            label: 'Confirm',
+            onPressed: busy
+                ? null
+                : () => cubit.override(widget.match.position, confirmed: true),
+          ),
+        _Action(
+          icon: FLucideIcons.ban,
+          label: heldSkipLabel,
+          onPressed: busy
+              ? null
+              : () => cubit.override(widget.match.position, skipped: true),
+        ),
+      ]);
+    }
     final primaryLabel = _fixOpen
         ? 'Close'
         : switch (b) {
@@ -619,6 +686,16 @@ class _MatchRowState extends State<_MatchRow> {
       // Blessing a weak match makes it count; with no amount it would count
       // nothing and merely vanish from the queue, so the line needs a pick
       // and an amount instead.
+      // C: with no grams the confirm needs no amount — the server fetches
+      // the food's detail and converts the line.
+      if (confirmsWithoutAmount(widget.match))
+        _Action(
+          icon: FLucideIcons.check,
+          label: 'Confirm',
+          onPressed: busy
+              ? null
+              : () => cubit.override(widget.match.position, confirmed: true),
+        ),
       if (b == MatchBucket.check && widget.match.grams != null)
         _Action(
           icon: FLucideIcons.check,
@@ -838,9 +915,12 @@ String? _summaryLine(NutritionState state) {
   if (nutrition == null || !nutrition.exists) {
     return null;
   }
+  // Ruling 9: the counted zeros below the gate are said, not hidden.
+  final zeros = state.matches?.where(zeroGuessOf).length ?? 0;
   final parts = <String>[
     '${nutrition.totalCount} lines',
     '${nutrition.matchedCount} counting'
+        '${zeros > 0 ? ', $zeros of them as zero' : ''}'
         '${nutrition.lowConfidence > 0 ? ' (${nutrition.lowConfidence} to review)' : ''}',
   ];
   final skipped =

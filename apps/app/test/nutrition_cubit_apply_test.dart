@@ -85,7 +85,15 @@ class _Adapter implements HttpClientAdapter {
         jsonEncode({
           ..._matches(),
           if (sent['apply_to_all'] == true)
-            'applied': {'recipes': others, 'lines': others + 3, 'failed': 0},
+            'applied': {
+              'recipes': others,
+              'lines': others + 3,
+              'failed': 0,
+              'completed': others ~/ 3,
+              'completed_recipes': [
+                for (var i = 0; i < others ~/ 3; i++) 'recipe-$i',
+              ],
+            },
         }),
         200,
         headers: headers,
@@ -183,12 +191,21 @@ void main() {
       {'fdc_id': 123456, 'apply_to_all': true},
     ]);
     expect(cubit.state.offer, isNull);
-    expect(cubit.state.applied, (
-      position: line.position,
-      recipes: 41,
-      lines: 44,
-      failed: 0,
-    ));
+    final applied = cubit.state.applied!;
+    expect(
+      (
+        applied.position,
+        applied.recipes,
+        applied.lines,
+        applied.failed,
+        applied.completed,
+      ),
+      // The server's `applied.completed` reaches the receipt.
+      (line.position, 41, 44, 0, 13),
+    );
+    // …and which recipes: the queue names a shortfall against its promise.
+    expect(applied.completedRecipes, hasLength(13));
+    expect(applied.completedRecipes.first, 'recipe-0');
     expect(cubit.state.applying, isFalse);
 
     cubit.dismissApply();

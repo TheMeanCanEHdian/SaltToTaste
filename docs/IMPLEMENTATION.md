@@ -1769,6 +1769,45 @@ replay on snapshot 11 (the v12 live replay): counted 12,596 → 12,755
 573 → 660; the next live sweep needs two approved details (oysters, white
 chocolate).
 
+### The review-UI build (the checkpoint-8 mockup, 2026-09-28)
+
+The approved mockup `docs/mockups/c1-review-ui.html` (artifact
+DZk4sNM5XLCtt4Ft1vB6hN; the user's 2026-09-28 rulings 5-9 with my
+recommendations) built as six units, matcherVersion unchanged at 13. U1:
+a zero-gram row below the gate hides the food ("Counts as zero (no
+amount)"; the engine's guess sits in a collapsed admin-only disclosure and
+the fix sheet offers no confirm-as-is). U2: "Finishes recipes" is the
+queue's default order (`sort=finishes`), every group carrying how many
+recipes one decision on it completes (`finishes`, `finishes_recipes`,
+`last_open`; the body's `finishable` / `open_recipes`), and the apply
+receipt carries `applied.completed` / `completed_recipes` so the strip can
+say "N recipes are now complete, as promised" or name the shortfall (a
+pick of another food may finish MORE than promised - accepted). Measured
+on snapshot 11: the finishes order completes 46 recipes in its first 10
+groups against 12 worst-first (85 against 17 in the first 25); the
+mockup's 53 / 96 reproduce exactly on snapshot 8. U3: grams on confirm -
+the matches body carries `line_amount`, `kcal_per_100g` and a cache-only
+`portions` list (each with the grams the line's amount weighs on it, never
+a fetch); the sheet prefills the amount when the line's unit names exactly
+one USDA portion and offers the others as tap-to-fill chips. U4: the
+review card on a held medium or an in-shell row defaults to "Skip, poured
+away" / "Enter edible grams", Confirm only where an eaten "plus" part
+exists. U5: a flagged-approximation row's basis ends with " · approximation
+(counted as <record>)". U6: `basis_kind` - a serving basis of 1 is
+`per_batch` ("per loaf", from the MAKES yield) unless the yield's head noun
+is a single portion (omelet, cocktail, sandwich, egg, drink - the only such
+nouns among the corpus's MAKES-1 yields). A no-grams group keeps the pane
+on the same ingredient. Closing the build's own review: the seven mutants
+its verifier could not kill are pinned (the queue's promise to the strip on
+a real snapshot-11 group; the in-shell row never offering Confirm; the
+route's receipt over HTTP; the yield head noun, the first-clause split and
+the 4-kcal carbohydrate factor on synthesized inputs stated as exceptions),
+the totals' duplicated 4/9/4 now calls `kcalPer100g`, and the Lines view
+also defaults to the finishes order (finishes-1 lines first, then worst) -
+the mockup's open question 5 as recommended, built but NOT yet ruled on; a
+consumer that relied on worst-first lines passes `sort=worst`. Wire changes
+in API.md.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

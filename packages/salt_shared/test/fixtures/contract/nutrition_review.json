@@ -37,6 +37,7 @@
       "position": 12,
       "raw": "Confectioners’ sugar, for dusting",
       "bucket": "no_grams",
+      "finishes": 1,
       "match": {
         "fdc_id": 169656,
         "description": "Sugars, powdered",

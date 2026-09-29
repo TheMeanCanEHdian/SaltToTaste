@@ -260,16 +260,51 @@ class _QueueList extends StatelessWidget {
                 TextSpan(
                   text: state.grouped
                       ? ' · ${state.groupsTotal} ingredients, '
-                            '${state.linesTotal} lines · worst first'
-                      : ' · ${state.linesTotal} lines, worst first',
+                            '${state.linesTotal} lines · '
+                      : ' · ${state.linesTotal} lines · ',
+                ),
+                // The active order, as the sentence's last words (B).
+                TextSpan(
+                  text: state.sort == 'worst'
+                      ? 'worst match first'
+                      : 'most recipes finished first',
+                  style: const TextStyle(
+                    color: SaltColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
           ),
-          // A skip is per line and never travels, so there is no ingredient
-          // view of that bucket to offer — hidden beats a dead control.
-          if (state.bucket != 'skipped')
-            _ViewToggle(grouped: state.grouped, onChanged: cubit.setGrouped),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              // The order changes the view, it is no action: neutral grey,
+              // one tap away — in either unit (a line finishes its recipe
+              // when it is the last open one).
+              _Segmented<String>(
+                value: state.sort,
+                onChanged: cubit.setSort,
+                cells: const [
+                  ('Finishes recipes', FLucideIcons.flag, 'finishes'),
+                  ('Worst match', FLucideIcons.arrowDownWideNarrow, 'worst'),
+                ],
+              ),
+              // A skip is per line and never travels, so there is no
+              // ingredient view of that bucket to offer — hidden beats a
+              // dead control.
+              if (state.bucket != 'skipped')
+                _Segmented<bool>(
+                  value: state.grouped,
+                  onChanged: cubit.setGrouped,
+                  cells: const [
+                    ('Ingredients', FLucideIcons.layers, true),
+                    ('Lines', FLucideIcons.list, false),
+                  ],
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -278,6 +313,9 @@ class _QueueList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         header,
+        // The payoff of the whole queue (B), whole-library in either order.
+        if (state.grouped && state.finishable > 0)
+          _OneAway(finishable: state.finishable, open: state.openRecipes),
         if (bounded)
           Expanded(
             child: ListView(padding: EdgeInsets.zero, children: rows),
@@ -298,14 +336,69 @@ class _QueueList extends StatelessWidget {
   }
 }
 
-/// The Ingredients | Lines segment at the right end of the queue header: it
-/// sets the UNIT of the list and nothing else. Neutral grey — switching a view
-/// is not a primary action, so it is never maroon.
-class _ViewToggle extends StatelessWidget {
-  const _ViewToggle({required this.grouped, required this.onChanged});
+/// The banner under the grouped queue's header: how many of the recipes
+/// still waiting are one group decision from complete.
+class _OneAway extends StatelessWidget {
+  const _OneAway({required this.finishable, required this.open});
 
-  final bool grouped;
-  final ValueChanged<bool> onChanged;
+  final int finishable;
+  final int open;
+
+  @override
+  Widget build(BuildContext context) {
+    const bold = TextStyle(fontWeight: FontWeight.w700);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      decoration: const BoxDecoration(
+        color: SaltColors.okBg,
+        border: Border(bottom: BorderSide(color: SaltColors.hairline)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2, right: 7),
+            child: Icon(FLucideIcons.flag, size: 13, color: SaltColors.okInk),
+          ),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: '$finishable', style: bold),
+                  const TextSpan(text: ' of the '),
+                  TextSpan(text: '$open', style: bold),
+                  TextSpan(
+                    text:
+                        ' partial ${open == 1 ? 'recipe' : 'recipes'} '
+                        '${finishable == 1 ? 'is' : 'are'} one group '
+                        'decision away from complete. A count assumes the '
+                        'decision is applied to its whole group.',
+                  ),
+                ],
+              ),
+              style: const TextStyle(fontSize: 12, color: SaltColors.okInk),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A segment at the right end of the queue header — Finishes recipes |
+/// Worst match (the order) and Ingredients | Lines (the unit): it changes
+/// the view and nothing else. Neutral grey — switching a view is not a
+/// primary action, so it is never maroon.
+class _Segmented<T> extends StatelessWidget {
+  const _Segmented({
+    required this.value,
+    required this.onChanged,
+    required this.cells,
+  });
+
+  final T value;
+  final ValueChanged<T> onChanged;
+  final List<(String, IconData, T)> cells;
 
   @override
   Widget build(BuildContext context) {
@@ -318,8 +411,8 @@ class _ViewToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _cell('Ingredients', FLucideIcons.layers, on: grouped, value: true),
-          _cell('Lines', FLucideIcons.list, on: !grouped, value: false),
+          for (final (label, icon, cell) in cells)
+            _cell(label, icon, on: cell == value, value: cell),
         ],
       ),
     );
@@ -329,7 +422,7 @@ class _ViewToggle extends StatelessWidget {
     String label,
     IconData icon, {
     required bool on,
-    required bool value,
+    required T value,
   }) {
     final color = on ? SaltColors.ink : SaltColors.muted;
     return FTappable(
@@ -389,6 +482,8 @@ class _QueueRow extends StatelessWidget {
     // which is what makes grouping free on the majority of rows.
     final group = line.lines > 1;
     final amount = groupAmountLine(line);
+    final soft = group ? lastOpenNote(line) : null;
+    final hold = group ? null : lineHoldNote(line);
     return FTappable(
       onPress: onTap,
       child: DecoratedBox(
@@ -414,14 +509,23 @@ class _QueueRow extends StatelessWidget {
                     if (group)
                       _GroupMeta(line: line)
                     else
-                      Text(
-                        '${line.recipe.title} · line ${line.position}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: SaltColors.muted,
-                        ),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '${line.recipe.title} · line ${line.position}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: SaltColors.muted,
+                            ),
+                          ),
+                          if (line.finishes > 0)
+                            const FinishesPill('finishes this recipe'),
+                        ],
                       ),
                     const SizedBox(height: 2),
                     Text.rich(
@@ -483,9 +587,23 @@ class _QueueRow extends StatelessWidget {
                           ),
                           const SizedBox(width: 5),
                           Expanded(
-                            child: Text(
-                              amount.text,
-                              maxLines: 2,
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(text: amount.text),
+                                  // The soft note: how many recipes this
+                                  // group holds the last open line of (B).
+                                  if (soft != null)
+                                    TextSpan(
+                                      text: ' · $soft',
+                                      style: const TextStyle(
+                                        color: SaltColors.muted,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 11,
@@ -496,6 +614,17 @@ class _QueueRow extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ],
+                    if (hold != null) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        hold,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: SaltColors.muted,
+                        ),
                       ),
                     ],
                   ],
@@ -572,8 +701,51 @@ class _GroupMeta extends StatelessWidget {
             ),
           ),
         ),
+        // What one decision on the group completes (B); no pill at 0.
+        if (line.finishes > 0)
+          FinishesPill(
+            line.finishes == 1
+                ? 'finishes 1 recipe'
+                : 'finishes ${line.finishes} recipes',
+          ),
         if (line.decided) const SaltBadge('decided', tone: SaltBadgeTone.ok),
       ],
+    );
+  }
+}
+
+/// The green pill naming what a decision completes: an outcome, not a
+/// problem.
+class FinishesPill extends StatelessWidget {
+  const FinishesPill(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: SaltColors.okBg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(FLucideIcons.flag, size: 11, color: SaltColors.okInk),
+            const SizedBox(width: 4),
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: SaltColors.okInk,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -622,14 +794,54 @@ String groupLabel(NutritionReviewLine line) {
           '$missing of $n lines have no amount';
     }
   }
-  // Confirm as-is is offered on the EXAMPLE line and gated on ITS grams, so
-  // the warning follows that line, not the aggregate: a group where only the
-  // example is amount-less still loses the button. Say so before the click,
-  // not after the pane opens without it.
+  // The confirm is offered on the EXAMPLE line and, with no grams, asks for
+  // the amount (C) — so the warning follows that line, not the aggregate: a
+  // group where only the example is amount-less still asks. Say so before
+  // the click, not after the pane opens.
   if (line.bucket == 'check' && line.match?.grams == null) {
-    return (text: '$text — Confirm as-is is unavailable', warn: true);
+    return (text: '$text — confirm asks for the amount', warn: true);
   }
   return (text: text, warn: false);
+}
+
+/// A No grams group's soft note (B): in how many recipes it holds the last
+/// open line, each needing its own amount — "(this one included)" when the
+/// example's recipe is one, which is exactly when the group finishes a
+/// recipe (none of its lines has grams, so only the example's can). Null
+/// for any other group, or none.
+String? lastOpenNote(NutritionReviewLine line) {
+  final n = line.lastOpen;
+  if (line.bucket != 'no_grams' || n < 1) {
+    return null;
+  }
+  return 'last open line in ${n == 1 ? '1 recipe' : '$n recipes'}'
+      '${line.finishes > 0 ? ' (this one included)' : ''} · '
+      '${n == 1 ? 'it needs' : 'each needs'} its own amount';
+}
+
+/// The italic sub-line of a line-held row (B, ruling 5): a line hold is
+/// decided one line at a time and never offers apply-to-all; how it
+/// finishes. Null for a row with no line hold.
+String? lineHoldNote(NutritionReviewLine line) {
+  final match = line.match;
+  const head =
+      'decided one line at a time, never offers apply-to-all. Any decision '
+      'finishes it: ';
+  const noZero = '. There is no 0 g decision: the API rejects grams of 0.';
+  return switch (match?.hold) {
+    'discarded_medium' =>
+      'line hold (discarded medium): $head'
+          '${match!.gramSource == 'discarded' && (match.grams ?? 0) > 0 ? 'Confirm counts only the eaten part (${fmtAmount(match.grams!)} g), ' : ''}'
+          'Skip says it is poured away, or a typed positive amount counts '
+          'that much$noZero',
+    'in_shell' =>
+      'line hold (in shell): ${head}Skip, or the typed edible grams (the '
+          'shells are not eaten)$noZero',
+    'second_food' =>
+      'line hold (second food): ${head}Confirm, Skip, or a typed positive '
+          'amount$noZero',
+    _ => null,
+  };
 }
 
 String _rowBadgeLabel(String bucket) => switch (bucket) {
@@ -685,6 +897,31 @@ bool queueShouldAdvance(NutritionState previous, NutritionState current) {
   return (fixLanded && settled) || offerClosed;
 }
 
+/// Whether the fix on the line at [position] took it from Check to waiting
+/// on an amount (No grams on a food): a plain Confirm USDA could not
+/// convert. The queue then keeps the pane on that line — it is not done.
+bool leftWaitingOnAmount(
+  NutritionState previous,
+  NutritionState current,
+  int position,
+) {
+  IngredientMatch? at(List<IngredientMatch>? matches) {
+    for (final m in matches ?? const <IngredientMatch>[]) {
+      if (m.position == position) {
+        return m;
+      }
+    }
+    return null;
+  }
+
+  final before = at(previous.matches);
+  final after = at(current.matches);
+  return before != null &&
+      after != null &&
+      matchBucketOf(before) == MatchBucket.check &&
+      confirmsWithAmount(after);
+}
+
 class _FixPaneBody extends StatelessWidget {
   const _FixPaneBody({required this.line});
 
@@ -702,7 +939,11 @@ class _FixPaneBody extends StatelessWidget {
       // …unless the fix raised an apply-to-all offer: then the pane stays
       // on this line until the admin applies or declines (and the receipt
       // is dismissed), and advances at that moment instead.
-      listenWhen: queueShouldAdvance,
+      // …and unless a plain Confirm (or a pick) left the line waiting on an
+      // amount: the pane stays on it, the field focused (C).
+      listenWhen: (previous, current) =>
+          queueShouldAdvance(previous, current) &&
+          !leftWaitingOnAmount(previous, current, line.position),
       listener: (context, _) =>
           context.read<NutritionReviewCubit>().completeFix(),
       child: BlocBuilder<NutritionCubit, NutritionState>(
@@ -743,7 +984,7 @@ class _FixPaneBody extends StatelessWidget {
   }
 }
 
-class _FixContent extends StatelessWidget {
+class _FixContent extends StatefulWidget {
   const _FixContent({
     required this.line,
     required this.match,
@@ -755,10 +996,43 @@ class _FixContent extends StatelessWidget {
   final NutritionState state;
 
   @override
+  State<_FixContent> createState() => _FixContentState();
+}
+
+class _FixContentState extends State<_FixContent> {
+  /// The fix panel's amount field — where "Enter edible grams" lands.
+  final FocusNode _amountFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _amountFocus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final line = widget.line;
+    final match = widget.match;
+    final state = widget.state;
     final cubit = context.read<NutritionCubit>();
+    final held = isHeldLine(match);
     final busy = state.overridingPosition != null || state.applying;
     final bucket = matchBucketOf(match);
+    final amountFirst = confirmsWithAmount(match);
+    void confirm() => cubit.override(match.position, confirmed: true);
+    void skip() => cubit.override(match.position, skipped: true);
+    final waiting = openLinesBesides(state.matches ?? const [], match.position);
+    // The split shows only BEFORE the decision, on a group that promises.
+    final split =
+        line.lines > 1 &&
+        line.finishes > 0 &&
+        state.offer == null &&
+        state.applied == null &&
+        const {
+          MatchBucket.check,
+          MatchBucket.noAmount,
+          MatchBucket.noMatch,
+        }.contains(bucket);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       child: Column(
@@ -790,8 +1064,72 @@ class _FixContent extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
-          FixPanel(match: match, busy: busy, onDone: () {}, showCancel: false),
+          // Confirm and Skip sit above the fix panel (B) — except where the
+          // amount block leads (C): its Confirm carries the amount, and its
+          // Skip sits beside it.
+          if (!amountFirst) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // Ruling 5: a held medium or shell line leads with its two
+                // ways out — the edible grams, or a skip — and offers a
+                // confirm only for an eaten "plus" part, never a shell
+                // weight.
+                if (held)
+                  FButton(
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: busy ? null : _amountFocus.requestFocus,
+                    prefix: const Icon(FLucideIcons.scale, size: 14),
+                    child: const Text('Enter edible grams'),
+                  ),
+                if (held && hasEatenPlusPart(match))
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: busy ? null : confirm,
+                    prefix: const Icon(FLucideIcons.check, size: 14),
+                    child: const Text('Confirm'),
+                  ),
+                // Only a weak match WITH an amount can be blessed as-is;
+                // without one, confirming resolves a line that contributes
+                // nothing.
+                if (!held && bucket == MatchBucket.check && match.grams != null)
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: busy ? null : confirm,
+                    prefix: const Icon(FLucideIcons.check, size: 14),
+                    child: const Text('Confirm as-is'),
+                  ),
+                // C: a Check line with no grams confirms without an amount —
+                // the server fetches the food's detail and converts the
+                // line; one it cannot convert lands in No grams, and the
+                // pane stays on it asking for the amount.
+                if (confirmsWithoutAmount(match))
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: busy ? null : confirm,
+                    prefix: const Icon(FLucideIcons.check, size: 14),
+                    child: const Text('Confirm'),
+                  ),
+                FButton(
+                  variant: FButtonVariant.ghost,
+                  mainAxisSize: MainAxisSize.min,
+                  onPress: busy ? null : skip,
+                  prefix: const Icon(FLucideIcons.ban, size: 14),
+                  child: Text(held ? heldSkipLabel : 'Skip'),
+                ),
+              ],
+            ),
+          ],
+          // Before the decision: what it finishes, by path (B).
+          if (split) ...[
+            const SizedBox(height: 12),
+            FinishesSplit(line: line, waiting: waiting),
+          ],
           if (state.offer?.position == match.position ||
               state.applied?.position == match.position) ...[
             const SizedBox(height: 12),
@@ -805,37 +1143,131 @@ class _FixContent extends StatelessWidget {
               applying: state.applying,
               onApply: cubit.applyToAll,
               onDismiss: cubit.dismissApply,
+              promised: line.lines > 1 ? othersPromised(line) : null,
             ),
           ],
           const SizedBox(height: 12),
-          Row(
-            children: [
-              // Only a weak match WITH an amount can be blessed as-is; without
-              // one, confirming resolves a line that contributes nothing.
-              if (bucket == MatchBucket.check && match.grams != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FButton(
-                    variant: FButtonVariant.outline,
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: busy
-                        ? null
-                        : () => cubit.override(match.position, confirmed: true),
-                    prefix: const Icon(FLucideIcons.check, size: 14),
-                    child: const Text('Confirm as-is'),
-                  ),
-                ),
-              FButton(
-                variant: FButtonVariant.ghost,
-                mainAxisSize: MainAxisSize.min,
-                onPress: busy
-                    ? null
-                    : () => cubit.override(match.position, skipped: true),
-                prefix: const Icon(FLucideIcons.ban, size: 14),
-                child: const Text('Skip'),
-              ),
-            ],
+          FixPanel(
+            match: match,
+            busy: busy,
+            onDone: () {},
+            showCancel: false,
+            amountFocus: _amountFocus,
+            recipeTitle: line.recipe.title,
+            onSkip: skip,
+            group: line.lines > 1
+                ? (
+                    item: groupLabel(line),
+                    others: line.lines - 1,
+                    staysOn: staysOnIngredient(line),
+                  )
+                : null,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The recipes the group's `finishes` promises the APPLY completes, less
+/// the decided line's own (its own confirm finishes that one, not the
+/// apply). The pane's split, the offer and the receipt all hold to this one
+/// list, so the pane never says one number and the strip another. (A
+/// recipe with a second open line in the same group would finish by the
+/// apply and go unnamed — an undercount; snapshot 11 has none.)
+List<({String id, String title})> othersPromised(NutritionReviewLine line) => [
+  for (final r in line.finishesRecipes)
+    if (r.id != line.recipe.id) r,
+];
+
+/// The pane's "What this decision finishes" (B), before the decision: this
+/// line alone — its recipe finishes only when it is the recipe's last open
+/// line — and then the apply to the rest of the group, with the recipes it
+/// completes by name.
+class FinishesSplit extends StatelessWidget {
+  const FinishesSplit({super.key, required this.line, required this.waiting});
+
+  final NutritionReviewLine line;
+
+  /// The example recipe's other open lines.
+  final List<IngredientMatch> waiting;
+
+  @override
+  Widget build(BuildContext context) {
+    const bold = TextStyle(fontWeight: FontWeight.w700);
+    const body = TextStyle(fontSize: 12.5, color: SaltColors.ink);
+    final alone = waiting.isEmpty ? 1 : 0;
+    final names = [for (final r in othersPromised(line)) r.title];
+    final others = line.lines - 1;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: SaltColors.hairline),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'What this decision finishes',
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: SaltColors.muted,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: 'This line only: ', style: bold),
+                TextSpan(text: alone == 1 ? '1 recipe.' : '0 recipes.'),
+                if (waiting.isNotEmpty) ...[
+                  TextSpan(text: ' ${line.recipe.title} still waits on '),
+                  TextSpan(
+                    text: waiting.length == 1
+                        ? waiting.single.raw
+                        : '${waiting.length} more lines',
+                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                  const TextSpan(text: '.'),
+                ],
+              ],
+            ),
+            style: body,
+          ),
+          // An apply that completes nothing more is not promised (a No
+          // grams group finishes only the example's own recipe).
+          if (names.isNotEmpty) ...[
+            const SizedBox(height: 5),
+            Wrap(
+              spacing: 6,
+              runSpacing: 3,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'Then Apply to the other '
+                  '${others == 1 ? '1 line' : '$others lines'}:',
+                  style: body.merge(bold),
+                ),
+                FinishesPill(
+                  names.length == 1
+                      ? '1 recipe complete'
+                      : '${names.length} recipes complete',
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                names.length > 4
+                    ? '${names.take(4).join(', ')} … +${names.length - 4}'
+                    : names.join(', '),
+                style: const TextStyle(fontSize: 11.5, color: SaltColors.muted),
+              ),
+            ),
+          ],
         ],
       ),
     );

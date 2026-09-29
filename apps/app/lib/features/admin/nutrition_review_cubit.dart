@@ -28,6 +28,9 @@ final class NutritionReviewLoaded extends NutritionReviewState {
     required this.selectedKey,
     required this.loadingMore,
     required this.exhausted,
+    this.sort = NutritionReviewCubit.defaultSort,
+    this.finishable = 0,
+    this.openRecipes = 0,
   });
 
   /// Whole-library count of flagged lines (stable across the bucket filter).
@@ -52,6 +55,15 @@ final class NutritionReviewLoaded extends NutritionReviewState {
   final String? selectedKey;
   final bool loadingMore;
   final bool exhausted;
+
+  /// The queue order, of groups or lines: `finishes` (what one decision
+  /// completes, the default) or `worst` (the worst match first).
+  final String sort;
+
+  /// The grouped queue's banner (whole-library): recipes one group
+  /// decision completes, of those still waiting on an open line.
+  final int finishable;
+  final int openRecipes;
 
   /// The selected line, resolved from [items] (null if it is gone — e.g. just
   /// fixed, before the reload completes).
@@ -111,6 +123,9 @@ final class NutritionReviewLoaded extends NutritionReviewState {
     selectedKey: clearSelection ? null : (selectedKey ?? this.selectedKey),
     loadingMore: loadingMore ?? this.loadingMore,
     exhausted: exhausted,
+    sort: sort,
+    finishable: finishable,
+    openRecipes: openRecipes,
   );
 }
 
@@ -122,8 +137,15 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
 
   static const int pageSize = 50;
 
+  /// The queue opens on what one decision finishes: the groups that finish
+  /// the most recipes, or the lines that finish theirs (C1, B).
+  static const String defaultSort = 'finishes';
+
   final RecipeRepository _repository;
   int _nextPage = 1;
+
+  /// The order for this session, in either view (`finishes` | `worst`).
+  String _sort = defaultSort;
 
   /// Which view each bucket was last left in, for this session — flipping the
   /// toggle under one chip must survive a trip through the others.
@@ -164,6 +186,22 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
     }
   }
 
+  /// Switches the order (`finishes` | `worst`) and reloads from page 1.
+  /// A failed fetch puts the order back and leaves the view as it was.
+  Future<void> setSort(String sort) async {
+    final current = state;
+    if (current is! NutritionReviewLoaded || current.sort == sort) {
+      return;
+    }
+    final previous = _sort;
+    _sort = sort;
+    try {
+      await _reload(current.bucket, selectIndex: 0);
+    } on RepositoryException {
+      _sort = previous;
+    }
+  }
+
   /// One page-1 fetch in the current view, replacing the list. Throws
   /// [RepositoryException] — each caller decides what a failure looks like.
   ///
@@ -171,18 +209,33 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   /// the fetch, a failure would leave the cubit asking for page 1 again while
   /// the state still holds page N, and every row of that reply would be
   /// dropped by loadMore's dedupe — "load more" stuck for good.
-  Future<void> _reload(String? bucket, {required int selectIndex}) async {
+  ///
+  /// [stayOn], when that ingredient key is still on the new page, selects it
+  /// in place of the row at [selectIndex].
+  Future<void> _reload(
+    String? bucket, {
+    required int selectIndex,
+    String? stayOn,
+  }) async {
     final report = await _repository.getNutritionReview(
       page: 1,
       limit: pageSize,
       bucket: bucket,
       grouped: groupedFor(bucket),
+      sort: _sort,
     );
     if (isClosed) {
       return;
     }
     _nextPage = 2;
-    emit(_loadedFrom(report, bucket: bucket, selectIndex: selectIndex));
+    emit(
+      _loadedFrom(
+        report,
+        bucket: bucket,
+        selectIndex: selectIndex,
+        stayOn: stayOn,
+      ),
+    );
   }
 
   /// (Re)loads from the first page under the [bucket] filter (null = all
@@ -232,6 +285,7 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
         limit: pageSize,
         bucket: current.bucket,
         grouped: current.grouped,
+        sort: _sort,
       );
       if (isClosed) {
         return;
@@ -253,6 +307,9 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
           selectedKey: current.selectedKey,
           loadingMore: false,
           exhausted: report.items.length < pageSize,
+          sort: _sort,
+          finishable: current.finishable,
+          openRecipes: current.openRecipes,
         ),
       );
     } on RepositoryException {
@@ -294,10 +351,16 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
         break;
       }
     }
+    // A No grams GROUP keeps the pane on its ingredient (C): each line needs
+    // its own amount, so its next line is the next piece of work.
+    final fixed = current.selected;
+    final stayOn = fixed != null && current.grouped && staysOnIngredient(fixed)
+        ? fixed.itemKey
+        : null;
     try {
       // _loadedFrom clamps: an emptied queue clears the selection, and a
       // shorter one lands on its new last row.
-      await _reload(current.bucket, selectIndex: index);
+      await _reload(current.bucket, selectIndex: index, stayOn: stayOn);
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
@@ -310,9 +373,17 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
     NutritionReviewReport report, {
     required String? bucket,
     required int selectIndex,
+    String? stayOn,
   }) {
     final items = report.items;
-    final key = (selectIndex < 0 || items.isEmpty)
+    String? key;
+    for (final line in items) {
+      if (stayOn != null && line.itemKey == stayOn) {
+        key = line.key;
+        break;
+      }
+    }
+    key ??= (selectIndex < 0 || items.isEmpty)
         ? null
         : items[selectIndex.clamp(0, items.length - 1)].key;
     return NutritionReviewLoaded(
@@ -325,6 +396,18 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       selectedKey: key,
       loadingMore: false,
       exhausted: items.length < pageSize,
+      sort: _sort,
+      finishable: report.finishable,
+      openRecipes: report.openRecipes,
     );
   }
 }
+
+/// Whether a fix on [line], a grouped row, keeps the pane on its ingredient
+/// and opens its next line (C): a No grams group of more than one line —
+/// each line needs its own amount, so the next one is the next piece of
+/// work, and a typed amount never travels.
+bool staysOnIngredient(NutritionReviewLine line) =>
+    line.bucket == 'no_grams' &&
+    line.lines > 1 &&
+    (line.itemKey ?? '').isNotEmpty;

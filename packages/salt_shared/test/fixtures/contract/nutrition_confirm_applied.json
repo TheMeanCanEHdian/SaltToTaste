@@ -731,10 +731,10 @@
         "description": "Butter, without salt",
         "data_type": "SR Legacy",
         "confidence": 1.0,
-        "grams": null,
-        "gram_source": null,
-        "gram_basis": null,
-        "status": "auto",
+        "grams": 452.0,
+        "gram_source": "override",
+        "gram_basis": "entered by hand",
+        "status": "confirmed",
         "hold": null
       },
       "candidates": [
@@ -788,5 +788,12 @@
         }
       ]
     }
-  ]
+  ],
+  "applied": {
+    "recipes": 0,
+    "lines": 0,
+    "failed": 0,
+    "completed": 0,
+    "completed_recipes": []
+  }
 }

@@ -119,10 +119,16 @@ typedef FoodSearch = ({
 DateTime? _timestamp(Object? value) =>
     value is String ? DateTime.tryParse(value) : null;
 
-/// What an `apply_to_all` reached: recipes and lines written, and recipes
-/// that failed part-way (their lines are set; their labels wait for the
-/// next compute).
-typedef MatchApplied = ({int recipes, int lines, int failed});
+/// What an `apply_to_all` reached: recipes and lines written, recipes that
+/// failed part-way (their lines are set; their labels wait for the next
+/// compute), and the reached recipes it completed (and their ids).
+typedef MatchApplied = ({
+  int recipes,
+  int lines,
+  int failed,
+  int completed,
+  List<String> completedRecipes,
+});
 
 /// A match override's answer: the refreshed match list, and the apply-to-all
 /// receipt when one was asked for.
@@ -151,6 +157,9 @@ class IngredientMatch {
     this.status = 'unmatched',
     this.hold,
     this.candidates = const [],
+    this.lineAmount,
+    this.portions = const [],
+    this.kcalPer100g,
   });
 
   factory IngredientMatch.fromJson(Map<String, dynamic> json) {
@@ -159,6 +168,13 @@ class IngredientMatch {
       if (json['candidates'] is List)
         for (final raw in json['candidates'] as List<dynamic>)
           MatchCandidate.fromJson(raw as Map<String, dynamic>),
+    ];
+    final lineAmount = json['line_amount'] as String?;
+    final kcalPer100g = (json['kcal_per_100g'] as num?)?.toDouble();
+    final portions = <FoodPortion>[
+      if (json['portions'] is List)
+        for (final raw in json['portions'] as List<dynamic>)
+          FoodPortion.fromJson(raw as Map<String, dynamic>),
     ];
     if (match is! Map<String, dynamic>) {
       return IngredientMatch(
@@ -171,6 +187,9 @@ class IngredientMatch {
         candidatesNameIngredient: json['candidates_name_ingredient'] as bool?,
         candidatesCachedAt: _timestamp(json['candidates_cached_at']),
         candidates: candidates,
+        lineAmount: lineAmount,
+        portions: portions,
+        kcalPer100g: kcalPer100g,
       );
     }
     return IngredientMatch(
@@ -192,6 +211,9 @@ class IngredientMatch {
       status: match['status'] as String? ?? 'unmatched',
       hold: match['hold'] as String?,
       candidates: candidates,
+      lineAmount: lineAmount,
+      portions: portions,
+      kcalPer100g: kcalPer100g,
     );
   }
 
@@ -248,6 +270,46 @@ class IngredientMatch {
   /// `borderline`; null when nothing holds it.
   final String? hold;
   final List<MatchCandidate> candidates;
+
+  /// The line's first unit amount as written ("4 stick"), null when none.
+  final String? lineAmount;
+
+  /// The picked record's cached USDA portions (empty when never fetched).
+  final List<FoodPortion> portions;
+
+  /// The picked record's calories per 100 g, from the cache (null when
+  /// uncached): said where the line has no amount yet.
+  final double? kcalPer100g;
+}
+
+/// One USDA household portion of a line's record, and the grams the line's
+/// own amount weighs on it when the portion names the line's unit.
+class FoodPortion {
+  const FoodPortion({
+    required this.grams,
+    this.amount,
+    this.unit,
+    this.description,
+    this.fill,
+  });
+
+  factory FoodPortion.fromJson(Map<String, dynamic> json) => FoodPortion(
+    grams: (json['grams'] as num?)?.toDouble() ?? 0,
+    amount: (json['amount'] as num?)?.toDouble(),
+    unit: json['unit'] as String?,
+    description: json['description'] as String?,
+    fill: (json['fill'] as num?)?.toDouble(),
+  );
+
+  /// The whole portion's weight.
+  final double grams;
+  final double? amount;
+  final String? unit;
+  final String? description;
+
+  /// The line's amount on this portion (4 × stick 113 g = 452), or null when
+  /// the portion is another unit — then it is for reference only.
+  final double? fill;
 }
 
 /// A re-pick option on the review sheet.
@@ -480,6 +542,12 @@ class NutritionRepository {
                 recipes: (applied['recipes'] as num?)?.toInt() ?? 0,
                 lines: (applied['lines'] as num?)?.toInt() ?? 0,
                 failed: (applied['failed'] as num?)?.toInt() ?? 0,
+                completed: (applied['completed'] as num?)?.toInt() ?? 0,
+                completedRecipes: [
+                  if (applied['completed_recipes'] is List)
+                    for (final id in applied['completed_recipes'] as List)
+                      '$id',
+                ],
               )
             : null,
       );

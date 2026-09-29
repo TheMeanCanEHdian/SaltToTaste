@@ -1775,9 +1775,8 @@ bool driedForFresh(String raw, String description) =>
 /// for a dried or ground one; null when the line is not fresh or the record
 /// is (checkpoint 5: the ham was held under the herb's label).
 String? freshHoldOf(String raw, String description) {
-  final line = raw.toLowerCase();
   final record = description.toLowerCase();
-  if (!RegExp(r'\bfresh\b(?!\s+(grated|ground))').hasMatch(line)) {
+  if (!_asksFresh(raw)) {
     return null;
   }
   if (record.contains(RegExp(r'\bcured\b'))) {
@@ -1792,6 +1791,45 @@ String? freshHoldOf(String raw, String description) {
       ? 'dried_for_fresh'
       : null;
 }
+
+/// Whether [raw] asks for a fresh food: "fresh", not "fresh grated" or
+/// "fresh ground" (there the ground spice is the food).
+bool _asksFresh(String raw) =>
+    RegExp(r'\bfresh\b(?!\s+(grated|ground))').hasMatch(raw.toLowerCase());
+
+/// The flagged APPROXIMATIONS the user accepted (docs/API.md): each
+/// approximation rewrite's normalized item ([_queryRewrites]) → the record
+/// that rewrite's answer leads to (snapshot 11, every such line): pancetta
+/// counted as bacon, Asiago as Parmesan, whole allspice berries as ground
+/// allspice, lime zest as lemon peel, chen pi as orange peel, pepperoncini
+/// as "Peppers, hot, pickled". A line on another record (a person's own
+/// pick, "pancetta or bacon", which reads the whole phrase) is not one.
+const Map<String, int> approximationRecords = {
+  'pancetta': 168277,
+  'asiago cheese': 325036,
+  'allspice berries': 171315,
+  'whole allspice berries': 171315,
+  'lime zest': 167749,
+  'chen pi': 169103,
+  'pepperoncini': 2710095,
+};
+
+/// Whether the food [fdcId] ([description]) on the line [raw], whose
+/// normalized item is [item], is a flagged approximation: the record an
+/// approximation rewrite led to ([approximationRecords]), or a fresh herb
+/// line on its dried spice record ([freshHerbOnSpiceRecord]). What the
+/// matches body's `gram_basis` says as "· approximation (counted as …)".
+bool isApproximation({
+  required String item,
+  required String raw,
+  required int? fdcId,
+  required String? description,
+}) =>
+    fdcId != null &&
+    (approximationRecords[item] == fdcId ||
+        (description != null &&
+            _asksFresh(raw) &&
+            freshHerbOnSpiceRecord(description)));
 
 /// Fresh herbs FDC has no fresh record of — no cached answer holds one
 /// (snapshot 11: every answer for oregano, sage, tarragon, marjoram and

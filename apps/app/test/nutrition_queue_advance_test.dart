@@ -17,7 +17,14 @@ void main() {
     others: 2,
     lines: 2,
   );
-  const receipt = (position: 3, recipes: 2, lines: 2, failed: 0);
+  const receipt = (
+    position: 3,
+    recipes: 2,
+    lines: 2,
+    failed: 0,
+    completed: 0,
+    completedRecipes: <String>[],
+  );
   final inFlight = idle.copyWith(overridingPosition: 3);
 
   test('a fix with no offer advances at once', () {

@@ -56,6 +56,7 @@ void main() {
     RecipeNutrition? nutrition,
     bool isAdmin = false,
     bool startExpanded = true,
+    String? yieldText,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: buildMaterialTheme(buildForuiTheme()),
@@ -73,6 +74,7 @@ void main() {
               child: NutritionPanel(
                 isAdmin: isAdmin,
                 startExpanded: startExpanded,
+                yieldText: yieldText,
               ),
             ),
           ),
@@ -121,7 +123,79 @@ void main() {
         'per_serving': jsonDecode(_perServingJson),
       }),
     );
-    expect(find.text('Per serving · serves 1 · per batch'), findsOneWidget);
+    // D: an outlined tag beside the header, not header text.
+    expect(find.text('Per serving · serves 1'), findsOneWidget);
+    final tag = find.text('per batch');
+    expect(tag, findsOneWidget);
+    final box = tester.widget<Container>(
+      find.ancestor(of: tag, matching: find.byType(Container)).first,
+    );
+    expect((box.decoration! as BoxDecoration).border, Border.all(width: 1.2));
+    // No yield to name (Latin Flan has none): the tag stands alone.
+    expect(find.textContaining('so one serving is'), findsNothing);
+  });
+
+  testWidgets('under the tag, one line names the yield it came from '
+      '(Challah, "MAKES 1 LOAF")', (tester) async {
+    RecipeNutrition batch(String kind) => RecipeNutrition.fromJson({
+      'status': 'complete',
+      'serving_basis': 1,
+      'basis_kind': kind,
+      'total_grams': 1066.9,
+      'matched_count': 8,
+      'total_count': 8,
+      'per_serving': jsonDecode(_perServingJson),
+    });
+    await pumpPanel(
+      tester,
+      nutrition: batch('per_batch'),
+      yieldText: 'MAKES 1 LOAF',
+    );
+    expect(
+      find.text(
+        'The recipe says "MAKES 1 LOAF", so one serving is the whole loaf.',
+      ),
+      findsOneWidget,
+    );
+    // A per-serving basis of 1 (MAKES 1 OMELET) says nothing of the sort.
+    await pumpPanel(
+      tester,
+      nutrition: batch('per_serving'),
+      yieldText: 'MAKES 1 OMELET',
+    );
+    expect(find.textContaining('so one serving is'), findsNothing);
+  });
+
+  test('perBatchYieldLine on the corpus MAKES-1 yields of snapshot 11', () {
+    for (final (servings, line) in [
+      (
+        'MAKES 1 LOAF',
+        'The recipe says "MAKES 1 LOAF", so one serving is the whole loaf.',
+      ),
+      (
+        'MAKES ONE 9-INCH LOAF',
+        'The recipe says "MAKES ONE 9-INCH LOAF", so one serving is the '
+            'whole 9-inch loaf.',
+      ),
+      // Only the yield, up to its first comma; no count of one names no
+      // thing, so the batch is the whole.
+      (
+        'MAKES ABOUT ¼ CUP, ENOUGH TO DRESS 8 TO 10 CUPS LIGHTLY PACKED '
+            'GREENS',
+        'The recipe says "MAKES ABOUT ¼ CUP", so one serving is the whole '
+            'batch.',
+      ),
+      (
+        'MAKES ENOUGH FOR ONE 9-INCH PIE',
+        'The recipe says "MAKES ENOUGH FOR ONE 9-INCH PIE", so one serving '
+            'is the whole batch.',
+      ),
+      // No yield (Latin Flan), or a serves count at an admin's basis of 1.
+      (null, null),
+      ('SERVES 4', null),
+    ]) {
+      expect(perBatchYieldLine(servings), line, reason: servings);
+    }
   });
 
   testWidgets('collapsing folds the detail region shut', (tester) async {
