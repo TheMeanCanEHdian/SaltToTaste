@@ -9692,5 +9692,441 @@
     "description": "taco"
    }
   ]
+ },
+ "168429": {
+  "fdc_id": 168429,
+  "description": "Lettuce, butterhead (includes boston and bibb types), raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 13.0,
+   "203": 1.35,
+   "204": 0.22,
+   "205": 2.23,
+   "291": 1.1,
+   "269": 0.94,
+   "301": 35.0,
+   "303": 1.24,
+   "304": 13.0,
+   "305": 33.0,
+   "306": 238.0,
+   "307": 5.0,
+   "401": 3.7,
+   "404": 0.057,
+   "405": 0.062,
+   "406": 0.357,
+   "415": 0.082,
+   "432": 73.0,
+   "435": 73.0,
+   "418": 0.0,
+   "320": 166.0,
+   "323": 0.18,
+   "328": 0.0,
+   "430": 102.3,
+   "606": 0.029,
+   "645": 0.008,
+   "646": 0.117,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 55.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, shredded or chopped"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf, large"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf"
+   },
+   {
+    "gram_weight": 7.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf, medium"
+   },
+   {
+    "gram_weight": 163.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "head (5\" dia)"
+   }
+  ]
+ },
+ "169991": {
+  "fdc_id": 169991,
+  "description": "Chard, swiss, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 19.0,
+   "203": 1.8,
+   "204": 0.2,
+   "205": 3.74,
+   "291": 1.6,
+   "269": 1.1,
+   "301": 51.0,
+   "303": 1.8,
+   "304": 81.0,
+   "305": 46.0,
+   "306": 379.0,
+   "307": 213.0,
+   "401": 30.0,
+   "404": 0.04,
+   "405": 0.09,
+   "406": 0.4,
+   "415": 0.099,
+   "432": 14.0,
+   "435": 14.0,
+   "418": 0.0,
+   "320": 306.0,
+   "323": 1.89,
+   "328": 0.0,
+   "430": 830.0,
+   "606": 0.03,
+   "645": 0.04,
+   "646": 0.07,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 48.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "leaf"
+   },
+   {
+    "gram_weight": 36.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "174835": {
+  "fdc_id": 174835,
+  "description": "Alcoholic Beverage, wine, table, red, Pinot Noir",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 82.0,
+   "203": 0.07,
+   "204": 0.0,
+   "205": 2.31,
+   "605": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 29.4,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fl oz"
+   },
+   {
+    "gram_weight": 147.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "serving (5 fl oz)"
+   }
+  ]
+ },
+ "167849": {
+  "fdc_id": 167849,
+  "description": "Pork, fresh, shoulder, (Boston butt), blade (steaks), separable lean and fat, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 186.0,
+   "203": 17.42,
+   "204": 12.36,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 16.0,
+   "303": 1.12,
+   "304": 20.0,
+   "305": 190.0,
+   "306": 318.0,
+   "307": 61.0,
+   "401": 0.0,
+   "404": 0.52,
+   "405": 0.353,
+   "406": 4.239,
+   "415": 0.486,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.91,
+   "320": 2.0,
+   "323": 0.22,
+   "328": 0.7,
+   "430": 0.0,
+   "606": 4.348,
+   "645": 5.206,
+   "646": 1.597,
+   "605": 0.115,
+   "601": 62.0
+  },
+  "portions": [
+   {
+    "gram_weight": 453.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "lb"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 288.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "steak without refuse (Yield from 1 raw steak, with refuse, weighing 380g)"
+   }
+  ]
+ },
+ "2346393": {
+  "fdc_id": 2346393,
+  "description": "Nuts, almonds, whole, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 625.75,
+   "958": 583.597022,
+   "203": 21.45038,
+   "204": 51.09,
+   "205": 20.03462,
+   "291": 10.78,
+   "301": 253.6,
+   "303": 3.741,
+   "304": 257.6,
+   "305": 502.9,
+   "306": 732.8,
+   "307": 0.0,
+   "404": 0.1605,
+   "406": 3.77,
+   "415": 0.1008,
+   "430": 0.0,
+   "606": 3.785,
+   "645": 31.314,
+   "646": 11.18
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "169396": {
+  "fdc_id": 169396,
+  "description": "Peppers, ancho, dried",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 281.0,
+   "203": 11.86,
+   "204": 8.2,
+   "205": 51.42,
+   "291": 21.6,
+   "301": 61.0,
+   "303": 10.93,
+   "304": 113.0,
+   "305": 201.0,
+   "306": 2411.0,
+   "307": 43.0,
+   "401": 2.0,
+   "404": 0.179,
+   "405": 2.255,
+   "406": 6.403,
+   "415": 3.535,
+   "432": 69.0,
+   "435": 69.0,
+   "418": 0.0,
+   "320": 1022.0,
+   "328": 0.0,
+   "606": 0.82,
+   "645": 0.492,
+   "646": 4.511,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 17.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "pepper"
+   }
+  ]
+ },
+ "168570": {
+  "fdc_id": 168570,
+  "description": "Peppers, hot chile, sun-dried",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 324.0,
+   "203": 10.58,
+   "204": 5.81,
+   "205": 69.86,
+   "291": 28.7,
+   "269": 41.06,
+   "301": 45.0,
+   "303": 6.04,
+   "304": 88.0,
+   "305": 159.0,
+   "306": 1870.0,
+   "307": 91.0,
+   "401": 31.4,
+   "404": 0.081,
+   "405": 1.205,
+   "406": 8.669,
+   "415": 0.81,
+   "432": 51.0,
+   "435": 51.0,
+   "418": 0.0,
+   "320": 1324.0,
+   "323": 3.14,
+   "328": 0.0,
+   "430": 108.2,
+   "606": 0.813,
+   "645": 0.468,
+   "646": 3.079,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 37.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 0.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "pepper"
+   }
+  ]
+ },
+ "167778": {
+  "fdc_id": 167778,
+  "description": "Pears, raw, bosc (Includes foods for USDA's Food Distribution Program)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 67.0,
+   "203": 0.36,
+   "204": 0.09,
+   "205": 16.1,
+   "291": 3.1,
+   "269": 10.23,
+   "301": 10.0,
+   "303": 0.15,
+   "304": 7.0,
+   "305": 14.0,
+   "306": 122.0,
+   "307": 1.0,
+   "401": 2.8,
+   "404": 0.012,
+   "405": 0.023,
+   "406": 0.152,
+   "415": 0.021,
+   "432": 7.0,
+   "320": 1.0,
+   "323": 0.12,
+   "430": 5.2,
+   "605": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 219.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large"
+   },
+   {
+    "gram_weight": 140.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, sliced"
+   },
+   {
+    "gram_weight": 159.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small"
+   },
+   {
+    "gram_weight": 179.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium"
+   }
+  ]
+ },
+ "169949": {
+  "fdc_id": 169949,
+  "description": "Plums, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 46.0,
+   "203": 0.7,
+   "204": 0.28,
+   "205": 11.42,
+   "291": 1.4,
+   "269": 9.92,
+   "301": 6.0,
+   "303": 0.17,
+   "304": 7.0,
+   "305": 16.0,
+   "306": 157.0,
+   "307": 0.0,
+   "401": 9.5,
+   "404": 0.028,
+   "405": 0.026,
+   "406": 0.417,
+   "415": 0.029,
+   "432": 5.0,
+   "435": 5.0,
+   "418": 0.0,
+   "320": 17.0,
+   "323": 0.26,
+   "328": 0.0,
+   "430": 6.4,
+   "606": 0.017,
+   "645": 0.134,
+   "646": 0.044,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 151.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "NLEA serving"
+   },
+   {
+    "gram_weight": 165.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, sliced"
+   },
+   {
+    "gram_weight": 66.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "fruit (2-1/8\" dia)"
+   }
+  ]
  }
 }

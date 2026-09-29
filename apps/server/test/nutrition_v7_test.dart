@@ -1123,9 +1123,11 @@ void main() {
         ['second_food', null, 'discarded_medium'],
       );
       expect(rows[1].description, 'Spices, oregano, dried');
-      expect(rows[1].grams, closeTo(16, 0.01));
+      // A fresh volume at one third on the dried record (v14, Q2).
+      expect(rows[1].grams, closeTo(16 / 3, 0.01));
       expect(bucketOf(rows[1]), MatchBucket.counted);
-      expect(rows[2].grams, greaterThan(40), reason: 'grams kept');
+      // Held with no eaten part: no grams stored (v14, B6).
+      expect(rows[2].grams, isNull);
       expect(bucketOf(rows[0]), MatchBucket.check);
       expect(bucketOf(rows[2]), MatchBucket.check);
     });

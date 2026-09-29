@@ -227,7 +227,7 @@
       "raw": "1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed",
       "item": "(6- to 8-pound) bone-in fresh half ham with skin",
       "line_amount": null,
-      "kcal_per_100g": 176.0,
+      "kcal_per_100g": 193.0,
       "portions": [],
       "others": 0,
       "others_lines": 0,
@@ -235,15 +235,15 @@
       "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
-        "fdc_id": 168367,
-        "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, unheated",
+        "fdc_id": 168226,
+        "description": "Pork, fresh, leg (ham), shank half, separable lean and fat, raw",
         "data_type": "SR Legacy",
-        "confidence": 0.5,
+        "confidence": 0.22,
         "grams": 3628.736,
         "gram_source": "weight",
         "gram_basis": "from the printed weight · no edible yield read",
         "status": "auto",
-        "hold": "cured_for_fresh"
+        "hold": null
       },
       "candidates": [
         {
@@ -731,9 +731,9 @@
         "description": "Butter, without salt",
         "data_type": "SR Legacy",
         "confidence": 1.0,
-        "grams": null,
-        "gram_source": null,
-        "gram_basis": null,
+        "grams": 452.0,
+        "gram_source": "piece",
+        "gram_basis": "4 stick · USDA portion",
         "status": "auto",
         "hold": null
       },

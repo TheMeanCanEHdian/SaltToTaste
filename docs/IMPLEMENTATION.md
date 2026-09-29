@@ -1808,6 +1808,71 @@ the mockup's open question 5 as recommended, built but NOT yet ruled on; a
 consumer that relied on worst-first lines passes `sort=worst`. Wire changes
 in API.md.
 
+### The v14 engine batch: Run 045's union, checkpoint 8's fixes and the rulings (matcher v14)
+
+Zero live requests. From Run 045 (both fleets): the sub-recipe rule now
+gates EVERY write path (the fresh match, the orphan re-attach and the
+prior-decision reuse — an edited marked line no longer keeps its stale
+eggs at 408 g), a marked bare count whose pick sits below the gate is held
+in check rather than confirmed as a 0 g sub-recipe, 0091's cheesecloth
+bundle is not eaten (the v13 pin was wrong), the skimmer rule needs the
+liquid left behind (water that evaporates or a served broth no longer
+holds its salt), 0306's crushed saltines read their own count (48 g on
+"Crackers, saltine", not 192 g of bread crumbs), the "-es"-after-z
+docstring matches the code, a pick or un-skip landing on an unsearchable
+line in a brining recipe no longer crashes (an empty head reaches
+`_names`), and the docs stop calling brine sugar held. From checkpoint 8:
+the engine may rewrite its OWN rule rows (`engineRuleNotes` /
+`isEngineRuleRow`: a confirmed row with no food and one of the engine's
+four notes — sub-recipe, seasoning, equipment, water — is the engine's,
+not a person's), which unblocked everything that follows; the unread SR
+portions (an amount-1 bare noun such as "shell" or "leaf", the "medium"
+of several, a bare "stick", a "(750-ml)" volume, a "5-pound" weight in
+the item, the chile as FDC's "pepper") lift 0478's taco shells to 103.2 g
+and 23 no_grams lines; the poured-away detectors cover the 13 rows the
+rulings could not see (soda rinsed off a velveted meat, a later "Drain
+chickpeas", a court-bouillon, a milk-salt dip, a drained pickle, a poach
+before a brine, a dunk sugar) and one the brief did not name (0063's
+drained broth, garlic and bay); a fresh herb on its dried record counts
+ONE THIRD of the fresh volume, the written "or 1 teaspoon dried" amount
+when offered, and leaf counts 0 g, with the basis "· approximate (dried
+herb record for a fresh herb)"; held media rows store only the eaten part
+(51 rows now carry no grams, 7 an eaten "plus" part — none the whole
+poured-away line) and a Confirm on such a row writes 0 g "poured away"
+unless grams are typed; 0711 counts its 3 tablespoons of reserved oil,
+"1 recipe … pie dough" lines are references, and 0249's fresh half ham
+moves off the cured rump (`freshOverCured`). The rulings: 0731's "1
+recipe Easy-Peel Hard-Cooked Eggs" counts the subsection's six eggs (300
+g) — the only single-food subsection in the corpus; 0407's wiped-off
+degorging salt is held; a marinade's food stays counted; a store-bought
+alternative stays 0 g. The cached-rewrite batch took 22 of checkpoint 8's
+first 30 keys (thick-cut bacon, whole-grain mustard off Buckwheat, Thai
+chiles, elbow macaroni, no-boil lasagna noodles, 80% chuck off bison,
+Shaoxing off dessert wine, filet mignon and chateaubriand off pork chops
+and Denver cut, kale, baby back ribs off beef, sea salt off wheat flakes,
+white baking chips off potato chips …) — 72 counted rows changed food,
+each judged against its head noun; the other 8 keys (baguette, broccoli
+rabe, instant/minute tapioca, St. Louis spareribs, whole farro, bone-in
+turkey breast, pomegranate seeds) sit on their right record BELOW the gate
+in every cached answer and need one search each (not spent — approval
+pending), so the batch's own gate of 744 complete was not met. The
+verifier's replay caught one wrong-mass crossing: the chile-as-pepper
+rule sized New Mexican, guajillo and chipotle chiles by 168570's 0.5 g
+"pepper" (a bird chile; a pod is ~7 g by the corpus's own parens), three
+recipes completing on 1–5 g of chiles — a sub-gram pepper portion now
+weighs only a chile the line calls small (arbol, Thai, japonés), the rest
+wait for a dried-chile piece table. Cache-only replay on snapshot 12 (the
+v13 live replay): counted 12,755 → 12,860 (94.5%), check 654 → 563, no
+grams 169 → 155, no match 37, complete 660 → 712 (+56, −4 by the rulings:
+shrimp salad, eggplant Parmesan, hummus, calamari); holds discarded_medium
+41 → 58, cured_for_fresh 1 → 0. matcherVersion 14. Known limits: the 4
+no-boil lasagna lines are on the right food with no per-noodle weight;
+0286's whole peppercorns are still counted (head "pepper" does not match
+"peppercorns"); Shaoxing sits exactly at the 0.50 gate; "thai chile"
+resolves through the cached "jarred hot cherry peppers" answer; 0711's
+plus-line substitution lives in the compute path only (a later pick
+re-derives from "1 recipe" and stores no grams).
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

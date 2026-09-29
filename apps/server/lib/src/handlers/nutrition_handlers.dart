@@ -380,11 +380,21 @@ Future<AppliedToOthers?> applyMatchOverride(
       decided: true,
     );
     // So does a second food picked onto its rule's record: the juice
-    // amount, or the egg parts' sum, not the first part's grams.
+    // amount, or the egg parts' sum, not the first part's grams. A HELD
+    // medium with no eaten part is poured away, as a confirm writes it
+    // (B6, below).
+    final poured =
+        outcome.hold == 'discarded_medium' &&
+        outcome.source != GramSource.discarded.name;
     final byEngine =
+        poured ||
         outcome.source == GramSource.discarded.name ||
         secondFoodRuleOf(line)?.fdcId == food.fdcId;
-    final pickedGrams = byEngine ? outcome.grams : resolution?.grams;
+    final pickedGrams = poured
+        ? 0.0
+        : byEngine
+        ? outcome.grams
+        : resolution?.grams;
     row = row.copyWith(
       fdcId: food.fdcId,
       description: food.description,
@@ -392,7 +402,11 @@ Future<AppliedToOthers?> applyMatchOverride(
       confidence: 1,
       grams: pickedGrams,
       clearGrams: pickedGrams == null,
-      gramSource: byEngine ? outcome.source : resolution?.source.name,
+      gramSource: poured
+          ? GramSource.discarded.name
+          : byEngine
+          ? outcome.source
+          : resolution?.source.name,
       clearGramSource: pickedGrams == null,
       status: 'overridden',
     );
@@ -400,9 +414,15 @@ Future<AppliedToOthers?> applyMatchOverride(
   } else if (confirmed == true) {
     row = row.copyWith(status: 'confirmed');
     decidedFood = row.fdcId != null;
-    // An engine pick below the review gate was stored without the detail
-    // fetch its grams may need (engine.gramsFor): a confirm resolves them.
+    // A held medium with no eaten part (B6, checkpoint 8: its row stores
+    // no grams — or, written before v14, the whole poured-away line): a
+    // confirm says it is poured away, 0 g — typed grams (below) count
+    // that much instead. One with an eaten part keeps it.
     if (row.fdcId != null &&
+        row.hold == 'discarded_medium' &&
+        row.gramSource != GramSource.discarded.name) {
+      row = row.copyWith(grams: 0, gramSource: GramSource.discarded.name);
+    } else if (row.fdcId != null &&
         row.grams == null &&
         row.gramSource != GramSource.override.name) {
       final onRow =

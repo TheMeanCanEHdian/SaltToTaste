@@ -49,11 +49,31 @@ class _Recording extends NutritionCubit {
 /// The nutrition-rules golden's lines (real corpus lines computed over the
 /// recorded FDC answers): the mussels held in the shell (6), the pasta
 /// water's salt with its eaten "plus" part (10), pancetta counted as bacon
-/// (11) and the butter sticks with no grams (12).
+/// (11) and the butter sticks (12, counted by matcher v14: [butterNoGrams]).
 IngredientMatch rulesLine(int position) => [
   for (final item in golden('nutrition_matches_rules')['items'] as List)
     IngredientMatch.fromJson(item as Map<String, dynamic>),
 ].singleWhere((m) => m.position == position);
+
+/// The butter sticks (12) as matcher v13 stored them — Classic Yellow
+/// Layer Cake (0884) pos 13 in sweep snapshot 12: grams null, its "stick"
+/// portion unread. Matcher v14 reads the portion, so the rules golden
+/// counts them at 452 g; the amount-first block below is what a person
+/// sees on any such no-grams row, pinned on the golden's own portions.
+IngredientMatch butterNoGrams() {
+  final item = Map<String, dynamic>.of(
+    (golden('nutrition_matches_rules')['items'] as List)
+        .cast<Map<String, dynamic>>()
+        .singleWhere((m) => m['position'] == 12),
+  );
+  item['match'] = {
+    ...item['match'] as Map<String, dynamic>,
+    'grams': null,
+    'gram_source': null,
+    'gram_basis': null,
+  };
+  return IngredientMatch.fromJson(item);
+}
 
 /// Real sweep-snapshot-11 rows (nutrition is DB-only, never in the corpus).
 // Rainbow Cake pos 8: an amount-less line the engine counts at 0 g on a 3%
@@ -370,7 +390,7 @@ void main() {
   group('U3: grams belong to the confirm (the amount-first block)', () {
     testWidgets('"4 sticks unsalted butter": the one stick portion prefills '
         '452 and the button follows the number', (tester) async {
-      final cubit = await pumpPanel(tester, rulesLine(12));
+      final cubit = await pumpPanel(tester, butterNoGrams());
       expect(find.text('How much is it?'), findsOneWidget);
       expect(
         find.textContaining('The line says 4 stick.', findRichText: true),
@@ -398,7 +418,7 @@ void main() {
 
     testWidgets('a typed amount is replaced by a tap on the fitting portion; '
         'the reference portions do not fill', (tester) async {
-      await pumpPanel(tester, rulesLine(12));
+      await pumpPanel(tester, butterNoGrams());
       await tester.enterText(find.byType(EditableText).first, '100');
       await tester.pumpAndSettle();
       expect(find.text('Confirm · 100 g'), findsOneWidget);
@@ -448,7 +468,7 @@ void main() {
 
     testWidgets('"Wrong food?" opens the candidates and saves the pick with '
         'the amount above', (tester) async {
-      await pumpPanel(tester, rulesLine(12));
+      await pumpPanel(tester, butterNoGrams());
       await tester.tap(find.text('Wrong food? Change the match…'));
       await tester.pumpAndSettle();
       expect(find.text('Save match & amount'), findsOneWidget);
@@ -765,7 +785,7 @@ void main() {
         'finishes it', (tester) async {
       await pumpPanel(
         tester,
-        rulesLine(12),
+        butterNoGrams(),
         recipeTitle: 'Classic Yellow Layer Cake with Vanilla Buttercream',
       );
       expect(

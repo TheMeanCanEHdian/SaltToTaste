@@ -1460,7 +1460,8 @@ void main() {
       expect(db.nutritionFor(recipes['schnitzel']!.id), isNotNull);
     });
 
-    test('a salt bath and cheese-making milk go to review with their grams; '
+    test('a salt bath and cheese-making milk go to review with only their '
+        'eaten part as grams (v14, B6); '
         "brine sugar is zeroed (the user's ruling R3, 2026-09-28); a cake's "
         "oil and a rub's salt count", () {
       final (_, sugar, sugarRow) = lineOf('roast', '½ cup sugar');
@@ -1492,7 +1493,8 @@ void main() {
           expect(row.gramSource, 'discarded', reason: raw);
           expect(row.grams, inInclusiveRange(0.5, 2), reason: raw);
         } else {
-          expect(row.grams, greaterThan(40), reason: 'grams kept: $raw');
+          // No eaten part: no grams, never the poured-away line (v14, B6).
+          expect((row.grams, row.gramSource), (null, null), reason: raw);
         }
       }
       expect(
@@ -1527,7 +1529,9 @@ void main() {
       );
       expect(milk, DiscardedMedium.cheeseMilk);
       expect(milkRow.hold, 'discarded_medium');
-      expect(milkRow.grams, greaterThan(3000), reason: 'grams kept');
+      // The curds' weight nothing says: no grams until a person types
+      // them (v14, B6) — never the gallon.
+      expect(milkRow.grams, isNull);
     });
 
     test('400 g or more of oil is frying oil whatever the steps say (audit '
@@ -1549,7 +1553,8 @@ void main() {
       final (_, _, row) = lineOf('ciambotta', '⅓ cup fresh oregano leaves');
       expect(row.description, 'Spices, oregano, dried');
       expect(row.hold, isNull);
-      expect(row.grams, closeTo(16, 0.01));
+      // A fresh volume at one third on the dried record: 16 g ⅓ (v14, Q2).
+      expect(row.grams, closeTo(16 / 3, 0.01));
     });
 
     test('a matched line with no amount is a resolved 0 g, its food kept '

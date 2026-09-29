@@ -749,7 +749,19 @@ record's own edible bird rather than the printed weight, `"½ cup · USDA
 portion of \"Onions, raw\""` for a volume on a record with no volume portion
 of its own, read from a cached sibling's (the food stays the line's; "1 cup
 fresh or frozen blueberries" on Foundation "Blueberries, raw" reads
-"Blueberries, frozen"'s cup), `"… · nutrients of \"Cabbage, chinese
+"Blueberries, frozen"'s cup, "1¼ cups whole almonds" on Foundation "Nuts,
+almonds, whole, raw" SR "Nuts, almonds"' `cup, whole`), `"8 · USDA
+per-item weight"` for a bare count on the record's one-item portion — SR
+Legacy's amount-1 bare noun counts as one ("shell" 12.9 g of "Taco shells,
+baked", "leaf" of Swiss chard, "pepper" of a dried chile, "medium" of a
+pear), and of several portions the item names the medium one ("4 leaves
+Bibb lettuce" on "leaf, medium") — `"4 stick · USDA portion"` for a count
+unit an SR bare noun names ("4 sticks unsalted butter" on `stick` 113 g),
+`"750 ml · USDA portion"` for a count unit sized by the volume printed
+before it ("1 (750-ml) bottle red Burgundy or Pinot Noir") when the unit
+itself finds no grams, `"from the printed weight"` for a per-unit weight
+written in the item without a parenthesis too ("1 5-pound boneless pork
+butt roast"), `"… · nutrients of \"Cabbage, chinese
 (pe-tsai), raw\""` for a line on a record that publishes no energy whose
 totals read a sibling record's nutrients (Foundation napa cabbage, 2727583,
 reads SR 169979; the food and grams stay the line's, and it is not held
@@ -762,7 +774,8 @@ record, `"2 × 50 g egg + 2 × 17 g yolk, summed on the whole egg"` for an
 eggs-plus-parts line counted on the whole-egg record,
 `"… · drained (USDA can portion)"` for a drained can or jar (its printed
 weight × the drained share of the record's own can portion), `"discarded in
-cooking — counted as 0 g"`, `"discarded in cooking — only \"plus 2 teaspoons
+cooking — counted as 0 g"`, `"poured away — counted as 0 g"` (a person's
+confirm of a held medium), `"discarded in cooking — only \"plus 2 teaspoons
 table salt\" counted"`, `"discarded in cooking — only the part the recipe
 keeps counted"` (a divided salt's written pot share, a divided aromatic's
 written brine share), `"2/3 cup ≈ 16 crackers · USDA cracker portion"` for
@@ -810,7 +823,38 @@ verb's object ("Dissolve salt in 2½ quarts water", not "dissolve sugar in 2
 cups water, then whisk in the salt"), in a step that submerges the food, is
 a brine at any volume, zeroed like one — a dough's salt dissolved in a little
 water is eaten; these rules read the recipe's own steps only, never a
-subsection's: a variation's pot never makes a main line a medium),
+subsection's: a variation's pot never makes a main line a medium; salt
+tossed with a vegetable in a colander whose excess is wiped off is held like
+a rinsed one (Eggplant Parmesan's degorging salt, the user's ruling Q3); a
+skimmer or slotted spoon empties nothing when the pot simmered dry
+before it ("until water evaporates") or the step keeps the liquid after it
+(reserved, ladled over); food lifted out of a discarded marinade leaves the
+marinade counted; and (matcher v14, checkpoint 8) baking soda a food sits
+in and is rinsed of in that step or the next (a velveting soak, "Rinse pork
+in cold water"), soda or salt in boiling water a LATER step drains the
+boiled food of ("Combine chickpeas, baking soda, and 6 cups water … bring
+to boil", two steps on "Drain chickpeas"), the salt of a brine the food
+poaches in (like its co-solutes above), the sugar a salt-bath salt's own
+sentence names ("Whisk 2 cups water, salt, and sugar … gently dunk"), and a
+line a sentence combines, whisks or dissolves ("Whisk milk and salt
+together"; a salt, sugar or soda as its own mention reads it, another food
+by the nth line of its head at the nth mention) when later in that step
+the mixture it names drips back off the food ("allowing excess milk
+mixture to drip back into bowl") or anything drains after an "add … toss"
+("Add cabbage … toss to combine … Drain slaw"), or when, in that step or
+the next, a food that sentence names drains and something is discarded
+("Drain the shrimp into a colander and discard the lemon halves, herbs, and
+spices" — a court-bouillon's juice and sugar; the drained food itself and a
+sprig line, 0 g already, are never held) — held as cooking water when a
+later sentence cooks it, else as a salt bath. A held medium stores only its EATEN part as `grams` — a
+"plus" part a step eats, the rest of a written share — and, with none
+written, no grams at all (`grams: null`), never the whole poured-away line;
+`confirmed: true` on such a row writes `grams: 0`, `gram_source:
+discarded` (basis "poured away — counted as 0 g") unless `grams` are typed
+in the same request, and a pick of a food on it does the same; a
+brine aromatic whose rest is tied into cheesecloth — "Place remaining 3
+garlic cloves … in center of cheesecloth and tie into bundle" — is zero
+whole, not just its written brine share),
 `in_shell` (shellfish bought in the shell — clams, mussels or oysters
 scrubbed, live lobsters, shell-on shrimp — "shell-on shrimp …, peeled,
 deveined …, shells reserved" too: its weight includes the shells the cook
@@ -876,7 +920,24 @@ pepper black` for a pepper line, `brandy` for "brandy or dry sherry" (an
 empty one, like `pancetta`'s, keeps the whole phrase), or the singular
 `pork tenderloin` whose cached answer a "pork tenderloins" line reads (a
 line the rewrites changed never reads its singular form's answer); null
-when the line has nothing searchable; a few rewrites are APPROXIMATIONS, flagged in
+when the line has nothing searchable; matcher v14 (checkpoint 8) rewrites,
+each to a cached answer whose top record is the named one: `thick-cut
+bacon` → `pork cured bacon unprepared`; `cilantro leaves and stems` and
+`… and tender stems` → `cilantro`; `thai chile`, `thai chiles` and `green
+or red thai chiles` → `jarred hot cherry peppers` ("Peppers, hot, raw",
+2709798 — never the sun-dried record); `elbow macaroni` and `no-boil
+lasagna noodles` → `pasta dry enriched`; `80 percent lean ground chuck` →
+`80 percent lean ground beef`; `light or mild molasses` → `molasses`;
+`oyster-flavored sauce` → `oyster sauce`; `shaoxing wine or dry sherry` →
+`dry sherry or chinese rice wine` ("Wine, rice", 2710691); `dried new
+mexican chiles` → `mild dried chile`; `flake sea salt` and `sea salt` →
+`salt table`; `whole grain mustard` and `whole-grain mustard` → `mustard
+prepared`; `beef tenderloin center-cut chateaubriand`, `center-cut filet
+mignon` and `center-cut filets mignons` → `beef tenderloin`; `kale or
+collard greens` → `kale`; `broccoli florets` → `broccoli`; `stone-ground
+cornmeal` → `cornmeal`; `baby back or loin back ribs` → `pork backribs
+raw`; `ripe but firm bosc pears` → `bosc pear`; `white baking chips` →
+`white chocolate`; a few rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
 as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
@@ -886,11 +947,19 @@ a raw-peel record, so the dried peel is counted about 3× short per gram — not
 yet ruled on), pepperoncini as `pickled hot cherry peppers` ("Peppers, hot,
 pickled", 2710095; FDC has no pepperoncini), and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
-is several times as dense per gram; the fresh line's teaspoons and
-tablespoons are sized by the record's own portions, a sprig is 0 g and a
-leaf count has no grams) — a row on one of these records through one of
-these rewrites (or a fresh herb line on its dried record) ends its
-`gram_basis` with `" · approximation (counted as <record description>)"`,
+is several times as dense per gram, so — the user's ruling of 2026-09-28 —
+the dried amount the line offers wins, "1 tablespoon minced fresh oregano
+or 1 teaspoon dried" is the teaspoon on the record, 1 g; else a fresh
+VOLUME is sized at ONE THIRD of that volume on the record's own portions,
+the corpus's own fresh-to-dried ratio, "1 tablespoon minced fresh oregano"
+1 g of the tablespoon's 3 g; a sprig and a count of fresh leaves ("12
+whole fresh sage leaves") are 0 g unmeasured; a printed weight stays as
+written; such a row's `gram_basis` ends `" · approximate (dried herb
+record for a fresh herb)"` instead, e.g. `"1 tablespoon · USDA portion × ⅓
+(a fresh volume on the dried record) · approximate (dried herb record for
+a fresh herb)"`) — a row on one of these records through one of these
+rewrites ends its `gram_basis` with `" · approximation (counted as
+<record description>)"`,
 e.g. `"from 2 ounce · approximation (counted as Pork, cured, bacon,
 unprepared)"`; never "pancetta or bacon" (which reads the whole phrase), the
 food's own line, or a person's pick of another record; the
@@ -936,7 +1005,9 @@ out of the `check` bucket. A sibling held by a line hold (`second_food`,
 decision on the key releases it — nor is a sibling whose line names a
 second food (one the second-food rule counts on its own record, or one not
 matched yet, which the decision's food would hold `second_food`), nor an
-unmatched discarded medium the engine holds (a brine sugar), nor a line of
+unmatched discarded medium the engine holds (a salt bath, drained cooking
+water — a brine, its sugar and its aromatics are zeroed, not held, and are
+reached like any line), nor a line of
 shellfish bought in the shell (held `in_shell` on any food). These are
 exactly the rows `apply_to_all` writes. One on this food at or above that threshold and unheld is already
 counted (or short only an amount) and is neither counted here nor
@@ -947,21 +1018,35 @@ from the compute-time search cache only — reading this never spends the
 FDC request budget. A stored decision whose line text changed since the
 compute is reported as unmatched (`match: null`).
 
-A sub-recipe line — "recipe(s) follow(s)" in its first alternative, a "(…
-this page)" before its first comma ("1 recipe Buttery Croutons (this
-page)", not "shrimp, peeled and deveined (see this page)"), or either
-anywhere on a line opening "<n> recipe" — is not counted on a food (the
-user's ruling: sub-recipes stay out of the main totals): it is stored
-`confirmed` with no food, `grams: 0`, `gram_source: unmeasured`, the
-description "Sub-recipe — made from its own recipe, not counted in these
-totals", and resolved like a water line. A food offered first stays that
-food: "½ teaspoon table salt or 1 recipe topping (recipes follow)" is the
-salt. A bare count of the food itself — every amount unit-less, "3
-hard-cooked eggs (recipe follows)", not "1 recipe Easy-Peel Hard-Cooked
-Eggs", "4 cups Cream Cheese Frosting" or an amount-less line — is matched
-like any other line and counted on its food; it stays the 0 g sub-recipe
-only when its pick gives no grams ("8 Home-Fried Taco Shells (recipe
-follows)").
+A sub-recipe line — "recipe(s) follow(s)" in its first alternative, "this
+page" before its first comma ("1 recipe Buttery Croutons (this page)", not
+"shrimp, peeled and deveined (see this page)"), or any line opening "<n>
+recipe" ("1 recipe double-crust pie dough", "1 recipe Perfect Poached
+Eggs") — is not counted on a food (the user's ruling: sub-recipes stay out
+of the main totals): it is stored `confirmed` with no food, `grams: 0`,
+`gram_source: unmeasured`, the description "Sub-recipe — made from its own
+recipe, not counted in these totals", and resolved like a water line. A
+food offered first stays that food: "½ teaspoon table salt or 1 recipe
+topping (recipes follow)" is the salt; a store-bought alternative offered
+after it does not count ("1 recipe Green Curry Paste (recipe follows) or 2
+tablespoons store-bought green curry paste" stays 0 g). A bare count of the
+food itself — every amount unit-less, "3 hard-cooked eggs (recipe
+follows)", not "4 cups Cream Cheese Frosting" or an amount-less line — is
+matched like any other line and counted on its food; it stays the 0 g
+sub-recipe only when its FOOD gives no grams ("8 Home-Fried Taco Shells
+(recipe follows)") — a pick below the review gate, whose detail was never
+fetched, stays that held pick in `check` instead. "1 recipe X" whose
+subsection X is one counted food is that food's yield on the line's own
+pick (the user's ruling Q1, 2026-09-28: "1 recipe Easy-Peel Hard-Cooked
+Eggs" is the subsection's "6 large eggs", 300 g); every other "1 recipe X"
+stays 0 g. A measured "plus" part of another food is eaten and counted as
+the line, the row keeping the line's text: "1 recipe Crispy Onions, plus 3
+tablespoons reserved oil (recipe follows)" is 3 tablespoons of the
+subsection's vegetable oil. The rule holds on every write: a fresh match,
+a decision reused from another recipe, and an amount edit's re-attached
+decision alike. The engine's own rows — a sub-recipe's, a seasoning's, an
+equipment or water line's — are rewritten whenever the rule changes (a
+person's confirm of a food, or a skip, is never).
 
 A line with no amount whose item is seasoning to taste — salt, pepper,
 "salt and pepper" and their common spellings — is confirmed as a deliberate

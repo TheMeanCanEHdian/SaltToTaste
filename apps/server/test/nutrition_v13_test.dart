@@ -387,6 +387,10 @@ void main() {
             'follows)',
         'Sweet and Tangy Tartar Sauce (this page), Creamy Chipotle Chile '
             'Sauce (recipe follows), or lemon wedges',
+        // v14 (checkpoint 8, B7): a line that opens "<n> recipe" is one
+        // with no mark (Salade Lyonnaise, 0434; the pie-dough lines).
+        '1 recipe double-crust pie dough',
+        '1 recipe Perfect Poached Eggs',
       ]) {
         expect(isSubRecipeReference(raw), isTrue, reason: raw);
       }
@@ -402,8 +406,6 @@ void main() {
             'inch thick (see this page)',
         '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed '
             'and reserved for gravy (see this page)',
-        // A "1 recipe" line with no mark is not ruled on: left as it was.
-        '1 recipe double-crust pie dough',
       ]) {
         expect(isSubRecipeReference(raw), isFalse, reason: raw);
       }
@@ -476,9 +478,10 @@ void main() {
       }
     });
 
-    test('a count its pick cannot weigh stays the sub-recipe: "8 Home-Fried '
-        'Taco Shells (recipe follows)" (Ground Beef Tacos, 0478) picks "Taco '
-        'shells, baked" with no grams', () async {
+    test('a count its pick weighs counts: "8 Home-Fried Taco Shells (recipe '
+        'follows)" (Ground Beef Tacos, 0478) on "Taco shells, baked", whose '
+        '"shell" portion v14 reads (B3; v13 stored the sub-recipe row for '
+        'want of grams)', () async {
       final db = tempDb();
       final fixtures = FixtureProvider();
       const raw = '8 Home-Fried Taco Shells (recipe follows)';
@@ -486,8 +489,8 @@ void main() {
       await matchAndCompute(db, fixtures, recipeOf(db: db, [raw]));
       final row = db.ingredientMatchesFor('r').single;
       expect(
-        (row.fdcId, row.grams, row.gramSource, row.status, row.description),
-        (null, 0, 'unmeasured', 'confirmed', subRecipeNote),
+        (row.fdcId, row.grams, row.gramSource, row.status),
+        (172800, 103.2, 'piece', 'auto'),
       );
       expect(fixtures.searchCalls, 1);
     });
@@ -695,7 +698,8 @@ void main() {
     });
 
     test('a dunk that leaves the liquid on the food is no submerge brine: '
-        "Grilled Cauliflower's (0656) sugar stays counted, its salt held", () {
+        "Grilled Cauliflower's (0656) salt held — and its sugar with it "
+        'since v14 (checkpoint 8), never zeroed as brine sugar', () {
       final r = recipeOf(
         ['¼ cup salt', '2 tablespoons sugar'],
         steps: [
@@ -707,15 +711,15 @@ void main() {
       );
       expect(
         [mediumOf(r, 0), mediumOf(r, 1)],
-        [DiscardedMedium.saltBath, null],
+        [DiscardedMedium.saltBath, DiscardedMedium.saltBath],
       );
     });
   });
 
   group('R2: poured-away media the rules could not see are held', () {
     test('a brine the food then poaches in holds its soy sauce, sugar and '
-        'garlic (Perfect Poached Chicken Breasts, 0112); its salt stays '
-        'brine', () {
+        'garlic (Perfect Poached Chicken Breasts, 0112) — and its salt '
+        'since v14 (checkpoint 8: v13 zeroed it as brine)', () {
       final r = recipeOf(
         [
           '4 (6- to 8-ounce) boneless, skinless chicken breasts, trimmed',
@@ -742,7 +746,7 @@ void main() {
         [
           null,
           DiscardedMedium.cookingWater,
-          DiscardedMedium.brine,
+          DiscardedMedium.cookingWater,
           DiscardedMedium.cookingWater,
           DiscardedMedium.cookingWater,
         ],
@@ -750,8 +754,9 @@ void main() {
     });
 
     test('salt tossed with a vegetable in a colander and rinsed off is held '
-        '(Sesame-Lemon Cucumber Salad, 0052); tossed in a bowl and not '
-        'rinsed it stays (Bread-and-Butter Pickles, 0664)', () {
+        '(Sesame-Lemon Cucumber Salad, 0052), and so is one wiped off '
+        '(Eggplant Parmesan, 0407); tossed in a bowl and not rinsed it stays '
+        '(Bread-and-Butter Pickles, 0664)', () {
       final cucumbers = recipeOf(
         ['1 tablespoon table salt'],
         steps: [
@@ -770,8 +775,9 @@ void main() {
         ],
       );
       expect(mediumOf(pickles, 0), isNull);
-      // Salted in a colander, pressed and wiped — not rinsed: Eggplant
-      // Parmesan (0407) keeps its salt counted.
+      // Salted in a colander, pressed and the excess salt wiped off:
+      // Eggplant Parmesan's (0407) degorging salt is held too (the user's
+      // ruling Q3, 2026-09-28; v13 counted it).
       final eggplant = recipeOf(
         ['1 tablespoon kosher salt (see note)'],
         steps: [
@@ -787,7 +793,7 @@ void main() {
               'the excess salt.',
         ],
       );
-      expect(mediumOf(eggplant, 0), isNull);
+      expect(mediumOf(eggplant, 0), DiscardedMedium.saltBath);
     });
 
     test('a salt in no colander is no rinsed salt: Skillet-Charred Green '
@@ -1205,8 +1211,8 @@ void main() {
     });
 
     test("New York Bagels' (0810) pot sugar leaves with the water the "
-        'skimmer lifts the bagels from: held with its soda, grams kept '
-        '(R2)', () async {
+        'skimmer lifts the bagels from: held with its soda (R2), storing no '
+        'grams — none of it is eaten (v14, B6)', () async {
       final r = recipeOf(
         [
           '2 teaspoons salt',
@@ -1235,8 +1241,7 @@ void main() {
         [null, DiscardedMedium.cookingWater, DiscardedMedium.cookingWater],
       );
       final (grams, source, hold, _) = await storedOf(r, 1, 746784);
-      expect(grams, closeTo(49.61, 0.01));
-      expect((source, hold), ('weight', 'discarded_medium'));
+      expect((grams, source, hold), (null, null, 'discarded_medium'));
     });
 
     test('a drain after a pot sugar keeps it: Austrian-Style Potato Salad '
@@ -1342,8 +1347,10 @@ void main() {
 
     test(
       'a brisket weighed down in its brine is submerged: the aromatics '
-      'added to the brine before are zero, their written brine share only '
-      '— the rest go in the pot (Home-Corned Beef with Vegetables, 0091)',
+      'added to the brine before are zero — and the rest of each goes in a '
+      'cheesecloth bundle, lifted out too (v14, Run 045: v13 counted the '
+      'rest), so the whole lines are zero (Home-Corned Beef with '
+      'Vegetables, 0091)',
       () async {
         expect(
           [
@@ -1361,22 +1368,11 @@ void main() {
           ])
             await storedOf(corned, i, id),
         ];
-        // 3 of 6 cloves, 4 of 6 leaves, 1 of 2 tablespoons: the rest kept.
-        expect(
-          [for (final k in kept) k.$1],
-          [
-            closeTo(9, 0.01),
-            closeTo(0.4, 0.01),
-            0,
-            closeTo(8.72, 0.01),
-            0,
-          ],
-        );
+        // 3 of 6 cloves, 4 of 6 leaves, 1 of 2 tablespoons in the brine;
+        // the rest tied into cheesecloth.
+        expect([for (final k in kept) k.$1], [0, 0, 0, 0, 0]);
         expect({for (final k in kept) (k.$2, k.$3)}, {('discarded', null)});
-        expect(
-          kept.first.$4,
-          'discarded in cooking — only the part the recipe keeps counted',
-        );
+        expect(kept.first.$4, 'discarded in cooking — counted as 0 g');
       },
     );
 

@@ -294,6 +294,10 @@ const Map<int, int> volumeSiblings = {
   // frozen blueberries" (0745) onto the raw record and Blueberry Pancakes
   // lost complete (checkpoint 6).
   2346411: 2709277,
+  // Nuts, almonds, whole, raw (Foundation, no volume portion) → SR "Nuts,
+  // almonds": "cup, whole" 143 g ('1¼ cups whole almonds', Almond Biscotti;
+  // checkpoint 8).
+  2346393: 170567,
 };
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
@@ -493,7 +497,20 @@ double? _countQty(List<Amount> amounts) {
         !RegExp('[a-z]', caseSensitive: false).hasMatch(before);
     return (grams: quantity * gramsPer, perUnit: perUnit);
   }
-  return null;
+  // The per-unit weight written in the item with no parenthesis: "1
+  // 5-pound boneless pork butt roast" (Indoor Pulled Pork with Sweet and
+  // Tangy Barbecue Sauce; checkpoint 8).
+  final inItem = RegExp(
+    '^\\s*[\\d$vulgarFractionChars/.]+\\s+([\\d$vulgarFractionChars/.]+)-'
+    r'(ounces?|pounds?)\b',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  final quantity = inItem == null ? null : _quantityValue(inItem[1]!);
+  if (quantity == null) {
+    return null;
+  }
+  final unit = inItem![2]!.toLowerCase().replaceAll(RegExp(r's$'), '');
+  return (grams: quantity * _weightUnitGrams[unit]!, perUnit: true);
 }
 
 /// The piece weight for [normalizedItem]: a key matches on WHOLE words
@@ -613,19 +630,57 @@ const Set<String> _portionServingWords = {
 /// description is empty), which are a serving weight, not a whole item.
 ///
 /// A portion whose noun the item itself names wins over any size rank:
-/// "1 cracker" for 'saltine crackers', whatever FDC lists first.
-double? _wholeItemPortionGrams(FdcFood food, String normalizedItem) {
+/// "1 cracker" for 'saltine crackers', whatever FDC lists first; of several
+/// it names, the medium one ("leaf, medium" for '4 leaves Bibb lettuce').
+///
+/// SR Legacy writes a single item as amount 1 and a bare noun — "shell"
+/// 12.9 g of "Taco shells, baked", "leaf" of Swiss chard, "medium" of a
+/// Bosc pear, "pepper" of a dried chile — read as "1 shell" (checkpoint 8:
+/// 23 no_grams lines on a cached portion the finder never read).
+/// The nouns an SR bare-noun portion names one item by whatever the item.
+const Set<String> _oneItemNouns = {
+  'small',
+  'medium',
+  'large',
+  'extra',
+  'jumbo',
+  'regular',
+  'miniature',
+  'fruit',
+  'whole',
+};
+
+/// A chile, whose SR record counts it as a "pepper" ("2 dried ancho
+/// chiles" on "Peppers, ancho, dried": 17 g a pepper).
+final RegExp _chile = RegExp(r'\bchil(e|es|i|ies)\b');
+
+/// A chile the line calls small, or names by a small variety: the only dried
+/// chiles a sub-gram "pepper" portion can weigh.
+final RegExp _smallChile = RegExp(
+  r'\b(small|arbol|árbol|thai|japon[eé]s|pequin|bird)\b',
+);
+
+double? _wholeItemPortionGrams(
+  FdcFood food,
+  String normalizedItem, {
+  String? raw,
+}) {
+  final itemWords = normalizedItem.split(RegExp('[^a-z]+')).map(keyWordOf);
   double? best;
   var bestRank = -1;
   for (final portion in food.portions) {
     final description = (portion.description ?? '').toLowerCase().trim();
-    final match = RegExp(
-      r'^([\d][\d./\s]*)\s*([a-z]+)',
-    ).firstMatch(description);
+    final match =
+        RegExp(r'^([\d][\d./\s]*)\s*([a-z]+)').firstMatch(description) ??
+        (portion.amount == 1
+            ? RegExp('^()([a-z]+)').firstMatch(description)
+            : null);
     if (match == null) {
       continue;
     }
-    final count = _quantityValue(match.group(1)!.trim());
+    final count = match.group(1)!.isEmpty
+        ? 1
+        : _quantityValue(match.group(1)!.trim());
     // Exactly one: "1 whole"/"1 medium" is a single item; "10 sprigs"/"4 large"
     // /"1/2 breast" is a multi-unit or partial serving, not one countable item.
     if (count != 1) {
@@ -641,13 +696,35 @@ double? _wholeItemPortionGrams(FdcFood food, String normalizedItem) {
     if (portion.gramWeight > 250) {
       continue;
     }
-    final rank = normalizedItem.contains(match.group(2)!)
-        ? 3
-        : description.contains('regular') || description.contains('medium')
+    final noun = match.group(2)!;
+    final size =
+        description.contains('regular') || description.contains('medium')
         ? 2
         : (description.contains('large') || description.contains('small')
               ? 0
               : 1);
+    // ponytail: 168570 "Peppers, hot chile, sun-dried" weighs its "pepper" at
+    // 0.5 g — a bird chile. A dried New Mexican or guajillo pod is ~7 g by the
+    // corpus's own parens ("3 medium New Mexican pods (about ¾ ounce)"), so a
+    // sub-gram pepper portion sizes only a chile the line calls small (or
+    // arbol, Thai, japonés); the rest stay unweighed until a dried-chile
+    // piece table exists (Run 047 verifier: 14× under, 3 false completes).
+    final chile =
+        noun == 'pepper' &&
+        _chile.hasMatch(normalizedItem) &&
+        (portion.gramWeight >= 1 ||
+            _smallChile.hasMatch('${raw ?? ''} $normalizedItem'.toLowerCase()));
+    final named =
+        normalizedItem.contains(noun) ||
+        itemWords.contains(keyWordOf(noun)) ||
+        chile;
+    // A bare noun is one item only when it is the item's own noun, a size
+    // or a whole fruit: "drumstick" 88 g is no "whole chicken leg", "dash"
+    // no peppercorn, "NLEA serving" no plum (checkpoint 8 replay).
+    if (match.group(1)!.isEmpty && !named && !_oneItemNouns.contains(noun)) {
+      continue;
+    }
+    final rank = named ? 10 + size : size;
     if (rank > bestRank) {
       // count is 1 here, so the portion weight IS the per-item weight.
       bestRank = rank;
@@ -719,7 +796,11 @@ double? _legacyPiecePortion(FdcFood food) {
 }
 
 /// Grams-per-single-[unit] from the food's own portions, when one matches.
-double? _portionGramsPerUnit(FdcFood food, String unit) {
+///
+/// [bare] also reads SR Legacy's bare noun with no unit of its own for a
+/// count unit ([_resolveGrams] asks after the piece table, whose hand-tuned
+/// slice of bread or bacon it must not override).
+double? _portionGramsPerUnit(FdcFood food, String unit, {bool bare = false}) {
   final wanted = unit.toLowerCase();
   for (final portion in food.portions) {
     final portionUnit = portion.unit ?? '';
@@ -736,10 +817,17 @@ double? _portionGramsPerUnit(FdcFood food, String unit) {
       final parsed = leading == null
           ? null
           : _quantityValue(leading.group(1)!.trim());
-      if (parsed == null) {
+      // SR Legacy's bare noun with no unit of its own: "stick" 113 g of
+      // "Butter, without salt" is one stick ('4 sticks unsalted butter',
+      // Classic Yellow Layer Cake, 0884; checkpoint 8).
+      final named =
+          bare &&
+          parsed == null &&
+          description.split(RegExp('[^a-z]+')).first == wanted;
+      if (parsed == null && !named) {
         continue;
       }
-      amount = parsed;
+      amount = parsed ?? portion.amount ?? 1;
     } else {
       continue;
     }
@@ -1330,6 +1418,9 @@ GramResolution? resolveGrams({
     normalizedItem: normalizedItem,
     raw: raw,
   );
+  first ??= raw == null
+      ? null
+      : _parenVolumeGrams(parsed, food, normalizedItem, raw);
   final bird =
       wholeBirdYield &&
           first?.source == GramSource.weight &&
@@ -1424,6 +1515,41 @@ GramResolution? resolveGrams({
         ? second.source
         : first.source,
     basis: '${first.basis ?? ''} + ${plus.text}',
+  );
+}
+
+/// A count unit sized by the volume printed before it, when the count
+/// finds no grams: "1 (750-ml) bottle red Burgundy or Pinot Noir" (Modern
+/// Beef Burgundy) is 750 mL on the wine's own portions (checkpoint 8).
+GramResolution? _parenVolumeGrams(
+  List<Amount> amounts,
+  FdcFood? food,
+  String normalizedItem,
+  String raw,
+) {
+  final printed = RegExp(
+    r'\((\d[\d.]*)[-\s]?(ml|milliliters?|liters?)\)',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  final count = _countQty(amounts);
+  if (printed == null || count == null) {
+    return null;
+  }
+  final ml =
+      count *
+      double.parse(printed[1]!) *
+      (printed[2]!.toLowerCase().startsWith('l') ? 1000 : 1);
+  return _resolveGrams(
+    amounts: [
+      Amount(
+        measure: Measure.volume,
+        quantity: ml == ml.roundToDouble() ? '${ml.toInt()}' : '$ml',
+        unit: 'ml',
+        primary: true,
+      ),
+    ],
+    food: food,
+    normalizedItem: normalizedItem,
   );
 }
 
@@ -1773,6 +1899,18 @@ GramResolution? _resolveGrams({
       );
     }
 
+    // 3b.5 The unit an SR bare noun names ("stick" of butter).
+    final bareUnit = food == null || amountUnit.isEmpty
+        ? null
+        : _portionGramsPerUnit(food, amountUnit, bare: true);
+    if (bareUnit != null) {
+      return GramResolution(
+        grams: quantity * bareUnit,
+        source: GramSource.piece,
+        basis: '${_amountText(amount)} · USDA portion',
+      );
+    }
+
     // 3c. A BARE count on an uncovered item: the food's own whole-item weight,
     //     then the legacy generic-piece portion. Last, because it is the
     //     fuzziest — a wrong-food match can carry a large "1 serving" portion.
@@ -1781,7 +1919,7 @@ GramResolution? _resolveGrams({
     //     than leaving the line for review.
     if (food != null && amountUnit.isEmpty) {
       final perUnit =
-          _wholeItemPortionGrams(food, normalizedItem) ??
+          _wholeItemPortionGrams(food, normalizedItem, raw: raw) ??
           _legacyPiecePortion(food);
       if (perUnit != null) {
         return GramResolution(

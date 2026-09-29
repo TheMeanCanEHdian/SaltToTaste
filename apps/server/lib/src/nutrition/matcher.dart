@@ -202,14 +202,29 @@ const Map<String, String> _synonyms = {
 /// pepperoncini, juice oranges, ripe avocado and bananas, chen pi (a flagged
 /// approximation) and the halibut lines (pending one live search);
 /// 13 = the checkpoint-7 review and the user's rulings of 2026-09-28: the
-/// oyster-mushroom dock written ([_varietyHosts]), "-es" off after x and z
-/// too, a dangling "or" cut like "and", a coated record a composite, fresh
+/// oyster-mushroom dock written ([_varietyHosts]), "-es" off after x too (a
+/// z loses its "s" alone — this entry said "and z", corrected in v14), a
+/// dangling "or" cut like "and", a coated record a composite, fresh
 /// oregano, sage, tarragon, marjoram and chervil counted on their dried
 /// spice (a flagged approximation), and rewrites for center-cut skin-on
 /// salmon and white chocolate chips; with it the engine's sub-recipe lines
 /// (0 g, no food), the R2 held and R3 zeroed media and the below-gate sized
-/// twin re-resolve every computed recipe.
-const int matcherVersion = 13;
+/// twin re-resolve every computed recipe;
+/// 14 = the Run 045 review, checkpoint 8 and the user's rulings Q1–Q4 of
+/// 2026-09-28: a second "or" makes a list of foods ("crushed saltines … or
+/// quick oatmeal or … bread crumbs" is the saltines); with it the engine
+/// rewrites its own rule rows, gates every write path by the sub-recipe
+/// rule (a "1 recipe" line is one whatever its mark; a single-food "1
+/// recipe X" counts its yield; a sub-recipe's eaten "plus" part counts), a
+/// cheesecloth-bundled brine aromatic is zero, a skimmer leaves no liquid
+/// the pot simmered dry or keeps, and a held medium stores only its eaten
+/// part as grams; a fresh herb on its dried record counts a third of its
+/// volume (its written dried amount; a leaf count 0 g); SR bare-noun
+/// portions, an in-item weight and a bottle's printed volume are read; soda
+/// rinsed off, a later drain, a court-bouillon, a dip, a drained pickle, a
+/// poaching brine's salt and a dunk's sugar are held; and 26 rewrites of
+/// checkpoint 8's cached-answer keys (thick-cut bacon … white baking chips).
+const int matcherVersion = 14;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -950,6 +965,40 @@ const Map<String, String> _queryRewrites = {
   'skinless halibut fillet': 'halibut atlantic and pacific raw',
   'skinless halibut fillets': 'halibut atlantic and pacific raw',
   'halibut steaks': 'halibut atlantic and pacific raw',
+  // Checkpoint 8 (B2): keys in check whose right record leads a cached
+  // answer — each target's answer is in snapshot 12's search cache and
+  // ranks the named record first over the gate (pinned).
+  'thick-cut bacon': 'pork cured bacon unprepared',
+  'cilantro leaves and stems': 'cilantro',
+  'cilantro leaves and tender stems': 'cilantro',
+  // Fresh Thai chiles took the SUN-DRIED record; FDC's raw hot pepper
+  // "Peppers, hot, raw" (2709798) leads only this cached answer (0.52).
+  'thai chile': 'jarred hot cherry peppers',
+  'thai chiles': 'jarred hot cherry peppers',
+  'green or red thai chiles': 'jarred hot cherry peppers',
+  'elbow macaroni': 'pasta dry enriched',
+  'no-boil lasagna noodles': 'pasta dry enriched',
+  '80 percent lean ground chuck': '80 percent lean ground beef',
+  'light or mild molasses': 'molasses',
+  'oyster-flavored sauce': 'oyster sauce',
+  // Shaoxing is a Chinese rice wine: "Wine, rice" (2710691).
+  'shaoxing wine or dry sherry': 'dry sherry or chinese rice wine',
+  // A mild dried chile, on "Peppers, hot chile, sun-dried" (168570).
+  'dried new mexican chiles': 'mild dried chile',
+  'flake sea salt': 'salt table',
+  'sea salt': 'salt table',
+  'whole grain mustard': 'mustard prepared',
+  'whole-grain mustard': 'mustard prepared',
+  // The tenderloin by its cut names: "Beef, tenderloin steak, raw".
+  'beef tenderloin center-cut chateaubriand': 'beef tenderloin',
+  'center-cut filet mignon': 'beef tenderloin',
+  'center-cut filets mignons': 'beef tenderloin',
+  'kale or collard greens': 'kale',
+  'broccoli florets': 'broccoli',
+  'stone-ground cornmeal': 'cornmeal',
+  'baby back or loin back ribs': 'pork backribs raw',
+  'ripe but firm bosc pears': 'bosc pear',
+  'white baking chips': 'white chocolate',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -995,8 +1044,13 @@ String? leftAlternative(
   // longer B it is the adjective: "chicken or vegetable broth"; so are
   // 'dill' ("dill or sweet pickles") and 'dark' ("dark or light brown
   // sugar", "bittersweet or semisweet chocolate").
+  // A second "or" makes a list of foods, never an adjective: "crushed
+  // saltines (about 16) or quick oatmeal or 1⅓ cups fresh bread crumbs"
+  // (Meatloaf with Brown Sugar-Ketchup Glaze, 0306) is the saltines, which
+  // read 192 g of dry bread crumbs by the salt density (Run 045).
   if (or == 1 &&
       words.length - or - 1 > 1 &&
+      !words.skip(or + 1).contains('or') &&
       (!rewrite || _animals.contains(left) || _adjectiveKeys.contains(left))) {
     return null;
   }
@@ -1827,9 +1881,14 @@ bool isApproximation({
 }) =>
     fdcId != null &&
     (approximationRecords[item] == fdcId ||
-        (description != null &&
-            _asksFresh(raw) &&
-            freshHerbOnSpiceRecord(description)));
+        (description != null && freshHerbLine(raw, description)));
+
+/// Whether the line [raw] asks for a fresh herb and [description] is that
+/// herb's dried spice record ([freshHerbOnSpiceRecord]): the engine sizes
+/// the line as the user ruled on 2026-09-28 (Q2) and its basis says "·
+/// approximate (dried herb record for a fresh herb)".
+bool freshHerbLine(String raw, String description) =>
+    _asksFresh(raw) && freshHerbOnSpiceRecord(description);
 
 /// Fresh herbs FDC has no fresh record of — no cached answer holds one
 /// (snapshot 11: every answer for oregano, sage, tarragon, marjoram and

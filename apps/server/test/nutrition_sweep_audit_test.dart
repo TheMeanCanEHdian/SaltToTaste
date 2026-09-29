@@ -729,18 +729,23 @@ void main() {
     });
 
     test("the line's own cached answer beats its key-form sibling's", () async {
-      // '1 tablespoon minced Thai chiles' (0642): its own words searched,
-      // and the key form holding a different (empty) answer.
+      // '3 jalapeño chiles, stemmed, seeded, and minced' (Roasted Bone-In
+      // Chicken Breasts, 0120): its own words searched, and the key form
+      // holding a different (empty) answer. (Thai chiles were the pin until
+      // matcher v14 rewrote them.)
       db
-        ..fdcSearchCachePut('thai chiles', await recorded('thai chiles'))
-        ..fdcSearchCachePut('thai chile', '[]');
+        ..fdcSearchCachePut(
+          'jalapeno chiles',
+          await recorded('jalapeno chiles'),
+        )
+        ..fdcSearchCachePut('jalapeno chile', '[]');
       expect(
-        lineSearchFor(db, 'thai chiles', 'thai chile'),
-        (query: 'thai chiles', answer: 'thai chiles'),
+        lineSearchFor(db, 'jalapeno chiles', 'jalapeno chile'),
+        (query: 'jalapeno chiles', answer: 'jalapeno chiles'),
       );
       const line = IngredientLine(
-        raw: '1 tablespoon minced Thai chiles',
-        item: 'minced Thai chiles',
+        raw: '3 jalapeño chiles, stemmed, seeded, and minced',
+        item: 'jalapeño chiles',
       );
       final ranked = await candidatesForLine(
         db,
@@ -926,9 +931,15 @@ void main() {
     // differs too. The sub-recipe refinement recorded "Egg, whole, cooked,
     // hard-boiled" (173424) and "Taco shells, baked" (172800) from snapshot
     // 11, hits in 'hard-cooked eggs' and 'home-fried taco shells': both
-    // differ in some digit.
-    expect(compared, 192);
-    expect(differ, 144);
+    // differ in some digit. Matcher v14 (checkpoint 8's portion fixes)
+    // recorded the Pinot Noir, Boston butt, ancho and sun-dried chile
+    // records (174835, 167849, 169396, 168570) from snapshot 12, hits in
+    // 'red wine', 'pork boston butt lean and fat', 'pepper' and 'thai
+    // chiles', and the plums (169949), a hit in 'red plums'; and its
+    // rewrites' recorded 'bosc pear' answer holds the Bosc pear (167778):
+    // five of the six differ in some digit.
+    expect(compared, 198);
+    expect(differ, 149);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

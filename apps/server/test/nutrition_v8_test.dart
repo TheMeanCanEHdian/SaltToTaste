@@ -187,16 +187,35 @@ void main() {
     test('a cured_for_fresh sibling is still reached and released', () async {
       final db = tempDb();
       // Roast Fresh Ham (0249). (Fresh oregano, this pin's line until v13,
-      // counts on the dried spice now: the user's ruling R4.)
+      // counts on the dried spice now: the user's ruling R4.) v14 takes the
+      // fresh shank half for it (checkpoint 8, B7), whose detail no snapshot
+      // holds, so both rows are written as snapshot 12 stores them — the
+      // state a live library holds until its next compute.
       const ham =
           '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably '
           'shank end, rinsed';
       final a = recipeOf(db, 'ra', [ham]);
-      final b = recipeOf(db, 'rb', [ham]);
-      for (final r in [a, b]) {
-        await matchAndCompute(db, provider, r);
+      recipeOf(db, 'rb', [ham]);
+      for (final id in ['ra', 'rb']) {
+        db.upsertIngredientMatch(
+          IngredientMatchRow(
+            recipeId: id,
+            position: 0,
+            raw: ham,
+            itemKey: 'bone-in half ham with skin',
+            fdcId: 168367,
+            description:
+                'Pork, cured, ham, rump, bone-in, separable lean and fat, '
+                'unheated',
+            dataType: 'SR Legacy',
+            confidence: 0.5,
+            grams: 3628.736,
+            gramSource: 'weight',
+            status: 'auto',
+            hold: 'cured_for_fresh',
+          ),
+        );
       }
-      expect(db.ingredientMatchesFor('rb').single.hold, 'cured_for_fresh');
       expect((await matchOf(db, a, 0))['others'], 1);
       final applied = await applyMatchOverride(db, provider, a, 0, {
         'confirmed': true,

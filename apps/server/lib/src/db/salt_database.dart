@@ -1503,8 +1503,12 @@ class SaltDatabase {
   /// the engine's own "FDC had nothing", not a person's call), or when its
   /// raw text differs (a decision about old text does not apply to new text —
   /// the same rule the entry snapshot uses). A decided row with the same raw
-  /// is left exactly as it is. Returns whether the row was written — the
-  /// guard is in the statement, so this is the only way a caller can know.
+  /// is left exactly as it is — except the engine's OWN rule rows
+  /// ([isEngineRuleRow]: 'confirmed', no food, one of [engineRuleNotes]),
+  /// which the engine rewrites when its rule changes (a sub-recipe row that
+  /// now counts its food, matcher v14). Returns whether the row was written
+  /// — the guard is in the statement, so this is the only way a caller can
+  /// know.
   bool upsertIngredientMatchIfUndecided(IngredientMatchRow row) {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
@@ -1518,7 +1522,10 @@ class SaltDatabase {
       'status = excluded.status, item_key = excluded.item_key, '
       'hold = excluded.hold, updated_at = excluded.updated_at '
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
-      'OR ingredient_matches.raw != excluded.raw',
+      'OR ingredient_matches.raw != excluded.raw '
+      "OR (ingredient_matches.status = 'confirmed' "
+      'AND ingredient_matches.fdc_id IS NULL '
+      'AND ingredient_matches.description IN (?, ?, ?, ?))',
     ).execute([
       row.recipeId,
       row.position,
@@ -1533,6 +1540,7 @@ class SaltDatabase {
       row.itemKey,
       row.hold,
       _utcNowIso(),
+      ...engineRuleNotes,
     ]);
     return _db.updatedRows > 0;
   }
@@ -2520,6 +2528,26 @@ class IngredientDecisionRow {
   /// When, UTC ISO.
   final String decidedAt;
 }
+
+/// The notes the nutrition engine stores on its OWN 'confirmed' rows that
+/// carry no food (engine.dart writes them): a sub-recipe reference, a
+/// seasoning to taste, equipment, water. Such a row is the engine's rule,
+/// never a person's call, so the engine may rewrite it
+/// ([SaltDatabase.upsertIngredientMatchIfUndecided], [isEngineRuleRow]).
+const List<String> engineRuleNotes = [
+  'Sub-recipe — made from its own recipe, not counted in these totals',
+  'Seasoning to taste — no measurable amount',
+  'Equipment — not food, counts as zero',
+  'Water/ice — counts as zero',
+];
+
+/// Whether [row] is one of the engine's own rule rows ([engineRuleNotes]):
+/// 'confirmed' on no food under one of its notes. A person's confirm of a
+/// food, or of any other note, is not.
+bool isEngineRuleRow(IngredientMatchRow row) =>
+    row.status == 'confirmed' &&
+    row.fdcId == null &&
+    engineRuleNotes.contains(row.description);
 
 /// One row of `ingredient_matches`: a recipe line's food, grams, status
 /// and decision key.

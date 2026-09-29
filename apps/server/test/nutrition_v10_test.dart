@@ -364,8 +364,8 @@ void main() {
         'then toss them with the sesame oil.';
 
     test('the hazelnut skinning bath (0778) and the noodle water (0519) '
-        "are held for review with their grams; the spread's own salt "
-        'counts', () async {
+        "are held for review, storing no grams (v14, B6); the spread's own "
+        'salt counts', () async {
       final db = tempDb();
       final spread = recipeOf(
         db,
@@ -389,7 +389,7 @@ void main() {
       expect(mediumOf(noodles, 0), DiscardedMedium.cookingWater);
       await matchAndCompute(db, provider, noodles);
       final row = db.ingredientMatchesFor('noodles').single;
-      expect((row.hold, row.grams! > 17), ('discarded_medium', true));
+      expect((row.hold, row.grams), ('discarded_medium', null));
       expect(bucketOf(row), MatchBucket.check);
     });
 
@@ -527,7 +527,8 @@ void main() {
     test('each clause of the rule, on its own corpus recipe', () {
       final db = tempDb();
       // The water must BOIL: a velveting soak is no pot (Sichuan Stir-Fried
-      // Pork in Garlic Sauce, 0540).
+      // Pork in Garlic Sauce, 0540) — its rinsed-off soda is held a salt
+      // bath instead since v14 (checkpoint 8).
       final velvet = recipeOf(
         db,
         'velvet',
@@ -541,7 +542,7 @@ void main() {
               'pork and toss to coat.',
         ],
       );
-      expect(mediumOf(velvet, 0), isNull);
+      expect(mediumOf(velvet, 0), DiscardedMedium.saltBath);
       // The drain may come in the NEXT step (Boiled Potatoes with Black
       // Olive Tapenade, 0703; Shrimp Cocktail, 0285).
       final potatoes = recipeOf(
