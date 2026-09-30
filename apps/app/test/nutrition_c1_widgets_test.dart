@@ -16,6 +16,15 @@ import 'package:salt_app/features/nutrition/review_sheet.dart';
 
 import 'support/contract_goldens.dart';
 
+/// Every override names the line it was made on: `raw` is the text of the
+/// row shown at [position], so the server can refuse a write whose line
+/// moved (409 line_moved). Dropping `raw` at any call site fails here.
+void expectRawSent(NutritionState state, int position, String? raw) => expect(
+  raw,
+  state.matches!.singleWhere((m) => m.position == position).raw,
+  reason: 'override($position) must send the raw it was made on',
+);
+
 /// Seeds match state, never touches the network, and records every write.
 class _Recording extends NutritionCubit {
   _Recording(NutritionState s) : super(NutritionRepository(Dio()), 'slug') {
@@ -31,11 +40,13 @@ class _Recording extends NutritionCubit {
 
   Future<void> override(
     int position, {
+    String? raw,
     int? fdcId,
     double? grams,
     bool? confirmed,
     bool? skipped,
   }) async {
+    expectRawSent(state, position, raw);
     writes.add((
       position: position,
       fdcId: fdcId,

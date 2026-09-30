@@ -12109,5 +12109,495 @@
    "401": 6.458
   },
   "portions": []
+ },
+ "175041": {
+  "fdc_id": 175041,
+  "description": "Leavening agents, cream of tartar",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 258.0,
+   "203": 0.0,
+   "204": 0.0,
+   "205": 61.5,
+   "291": 0.2,
+   "269": 0.0,
+   "301": 8.0,
+   "303": 3.72,
+   "304": 2.0,
+   "305": 5.0,
+   "306": 16500.0,
+   "307": 52.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "430": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 3.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   },
+   {
+    "gram_weight": 1.5,
+    "amount": 0.5,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "168816": {
+  "fdc_id": 168816,
+  "description": "Fruit butters, apple",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 173.0,
+   "203": 0.39,
+   "204": 0.3,
+   "205": 42.47,
+   "291": 1.5,
+   "269": 35.3,
+   "301": 14.0,
+   "303": 0.31,
+   "304": 4.0,
+   "305": 8.0,
+   "306": 91.0,
+   "307": 15.0,
+   "401": 0.6,
+   "404": 0.009,
+   "405": 0.019,
+   "406": 0.076,
+   "415": 0.037,
+   "432": 1.0,
+   "435": 1.0,
+   "418": 0.0,
+   "320": 1.0,
+   "323": 0.05,
+   "328": 0.0,
+   "430": 0.9,
+   "606": 0.053,
+   "645": 0.016,
+   "646": 0.084,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 282.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 17.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "serving"
+   },
+   {
+    "gram_weight": 17.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
+ },
+ "2707533": {
+  "fdc_id": 2707533,
+  "description": "Almond butter",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 20.7,
+   "204": 52.7,
+   "205": 21.1,
+   "208": 641.0,
+   "269": 4.4,
+   "291": 9.6,
+   "301": 263.0,
+   "303": 4.08,
+   "304": 266.0,
+   "305": 504.0,
+   "306": 741.0,
+   "307": 232.0,
+   "320": 0.0,
+   "323": 16.6,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.094,
+   "405": 0.933,
+   "406": 3.89,
+   "415": 0.083,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 42.0,
+   "435": 42.0,
+   "601": 0.0,
+   "606": 4.22,
+   "645": 34.5,
+   "646": 12.5
+  },
+  "portions": [
+   {
+    "gram_weight": 32.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per sandwich"
+   },
+   {
+    "gram_weight": 16.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount per slice of bread/roll"
+   },
+   {
+    "gram_weight": 32.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 16.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   }
+  ]
+ },
+ "2707571": {
+  "fdc_id": 2707571,
+  "description": "Coconut cream, canned, sweetened",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 1.17,
+   "204": 16.3,
+   "205": 53.2,
+   "208": 357.0,
+   "269": 51.5,
+   "291": 0.2,
+   "301": 4.0,
+   "303": 0.13,
+   "304": 17.0,
+   "305": 22.0,
+   "306": 101.0,
+   "307": 36.0,
+   "320": 0.0,
+   "323": 0.13,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.022,
+   "405": 0.04,
+   "406": 0.038,
+   "415": 0.029,
+   "418": 0.0,
+   "430": 0.1,
+   "432": 14.0,
+   "435": 14.0,
+   "601": 0.0,
+   "606": 15.5,
+   "645": 0.679,
+   "646": 0.159
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (NFS)"
+   },
+   {
+    "gram_weight": 37.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 23.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (with ice)"
+   }
+  ]
+ },
+ "2707517": {
+  "fdc_id": 2707517,
+  "description": "Peanuts, dry roasted, salted",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 24.4,
+   "204": 49.7,
+   "205": 21.3,
+   "208": 587.0,
+   "269": 4.9,
+   "291": 8.4,
+   "301": 58.0,
+   "303": 1.58,
+   "304": 178.0,
+   "305": 363.0,
+   "306": 634.0,
+   "307": 410.0,
+   "320": 0.0,
+   "323": 4.93,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.152,
+   "405": 0.197,
+   "406": 14.4,
+   "415": 0.466,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 97.0,
+   "435": 97.0,
+   "601": 0.0,
+   "606": 7.72,
+   "645": 26.2,
+   "646": 9.77
+  },
+  "portions": [
+   {
+    "gram_weight": 146.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup, without shell, NS as to form"
+   },
+   {
+    "gram_weight": 2.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 peanut in shell, yields"
+   },
+   {
+    "gram_weight": 1.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 peanut, NFS"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": null,
+    "unit": null,
+    "description": "1 oz, without shell, NS as to form"
+   },
+   {
+    "gram_weight": 51.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup, in shell, yields"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": null,
+    "unit": null,
+    "description": "1 oz, NFS"
+   },
+   {
+    "gram_weight": 50.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 package"
+   },
+   {
+    "gram_weight": 1.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 peanut, without shell"
+   },
+   {
+    "gram_weight": 146.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup, NFS"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 21.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 oz, in shell, yields"
+   }
+  ]
+ },
+ "2707502": {
+  "fdc_id": 2707502,
+  "description": "Hazelnuts",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 15.0,
+   "204": 60.8,
+   "205": 16.7,
+   "208": 628.0,
+   "269": 4.34,
+   "291": 9.7,
+   "301": 114.0,
+   "303": 4.7,
+   "304": 163.0,
+   "305": 290.0,
+   "306": 680.0,
+   "307": 0.0,
+   "320": 1.0,
+   "323": 15.0,
+   "328": 0.0,
+   "401": 6.3,
+   "404": 0.643,
+   "405": 0.113,
+   "406": 1.8,
+   "415": 0.563,
+   "418": 0.0,
+   "430": 14.2,
+   "432": 113.0,
+   "435": 113.0,
+   "601": 0.0,
+   "606": 4.46,
+   "645": 45.7,
+   "646": 7.92
+  },
+  "portions": [
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 135.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 1.5,
+    "amount": null,
+    "unit": null,
+    "description": "1 nut"
+   },
+   {
+    "gram_weight": 50.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 package"
+   }
+  ]
+ },
+ "2707616": {
+  "fdc_id": 2707616,
+  "description": "Bread, pita",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 9.1,
+   "204": 1.2,
+   "205": 55.7,
+   "208": 275.0,
+   "269": 1.3,
+   "291": 2.2,
+   "301": 86.0,
+   "303": 2.62,
+   "304": 26.0,
+   "305": 97.0,
+   "306": 120.0,
+   "307": 536.0,
+   "320": 0.0,
+   "323": 0.3,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.599,
+   "405": 0.327,
+   "406": 4.63,
+   "415": 0.034,
+   "418": 0.0,
+   "430": 0.2,
+   "432": 24.0,
+   "435": 165.0,
+   "601": 0.0,
+   "606": 0.166,
+   "645": 0.105,
+   "646": 0.535
+  },
+  "portions": [
+   {
+    "gram_weight": 57.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 57.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 medium pita"
+   },
+   {
+    "gram_weight": 2.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 surface inch"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small pita"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large pita"
+   },
+   {
+    "gram_weight": 114.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 extra large pita"
+   }
+  ]
+ },
+ "2515374": {
+  "fdc_id": 2515374,
+  "description": "Nuts, cashew nuts, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 564.664,
+   "958": 533.47799,
+   "203": 17.4423,
+   "204": 38.86,
+   "205": 36.2887,
+   "291": 4.104,
+   "301": 41.95,
+   "303": 5.988,
+   "304": 250.6,
+   "305": 532.2,
+   "306": 638.3,
+   "307": 4.759
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
  }
 }

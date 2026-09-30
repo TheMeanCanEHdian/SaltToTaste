@@ -97,6 +97,9 @@ Future<T> apiGuard<T>(
         'validation' when envelope.message != null => envelope.message!,
         'forbidden' when envelope.message != null => envelope.message!,
         'conflict' when envelope.message != null => envelope.message!,
+        'line_moved' =>
+          'This line moved since the list was loaded (the recipe was '
+              'edited). The list is refreshed: check the line and try again.',
         _ => 'Something went wrong on the server. Please try again.',
       };
       throw RepositoryException(

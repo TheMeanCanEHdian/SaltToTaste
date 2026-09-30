@@ -711,13 +711,10 @@ void main() {
           closeTo(4 * 1.5 * 453.592, 0.1),
         );
         expect(gramsOf('6 scallions, sliced thin')!.grams, 90);
-        // FDC's only mustard seed record is GROUND (170929): whole seeds
-        // are not sized at its density; they keep 'mustard' (1.05) until a
-        // whole-seed density is sourced.
-        expect(
-          gramsOf('1 tablespoon mustard seeds')!.grams,
-          closeTo(14.7868 * 1.05, 0.001),
-        );
+        // FDC's only mustard seed record is GROUND (170929): prepared
+        // 'mustard' (1.05) no longer sizes the seeds (Run 050, v19) — only
+        // their record's own portion does (nutrition_v19_test.dart G1).
+        expect(gramsOf('1 tablespoon mustard seeds'), isNull);
         // A bunch is not a scallion: every piece entry is per piece.
         expect(
           gramsOf(

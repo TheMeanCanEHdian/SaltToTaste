@@ -508,10 +508,12 @@ class NutritionRepository {
 
   /// Overrides one line (re-pick / set grams / confirm / skip) and returns
   /// the refreshed match list — plus, when [applyToAll] was asked for, what
-  /// the apply reached.
+  /// the apply reached. [raw] is the line's text as shown: a save since
+  /// then that moved it fails with code `line_moved` (nothing written).
   Future<MatchOverrideResult> overrideMatch(
     String idOrSlug,
     int position, {
+    String? raw,
     int? fdcId,
     double? grams,
     bool? confirmed,
@@ -522,6 +524,7 @@ class NutritionRepository {
       final response = await _dio.put<dynamic>(
         '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/matches/$position',
         data: {
+          if (raw != null) 'raw': raw,
           if (fdcId != null) 'fdc_id': fdcId,
           if (grams != null) 'grams': grams,
           if (confirmed != null) 'confirmed': confirmed,

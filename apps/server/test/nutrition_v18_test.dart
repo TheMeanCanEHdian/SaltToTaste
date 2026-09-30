@@ -83,8 +83,10 @@ void main() {
   // row the density guard moved in the cache-only replay of snapshot 13 —
   // 28 counted (checkpoint 9's 27 and 1174's salted peanuts) and 3 in
   // `check` — at the grams the record's own portion gives ('ice cream'
-  // 0.558 is 168809's "cup (4 fl oz)" 66 g a half cup; peanuts land on the
-  // table's 'nuts' 0.55, as the library's other peanut lines do).
+  // 0.558 is 168809's "cup (4 fl oz)" 66 g a half cup). v19 (Run 050):
+  // the peanuts on 173806's own 'cup' 146 g, not 'nuts' 0.55 (1174's
+  // 174262 has no volume portion: 'nuts' still), and the malted milk
+  // powder on no portion of 174867's made-up drink (no grams).
   const moved = <(String, String, int, double?, String?)>[
     (
       '0368-baked-manicotti.yaml',
@@ -153,8 +155,8 @@ void main() {
       '1150-deluxe-blueberry-pancakes.yaml',
       '3 tablespoons malted milk powder',
       174867,
-      49.69,
-      'portion',
+      null,
+      null,
     ),
     (
       '0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml',
@@ -244,36 +246,36 @@ void main() {
       '0545-kung-pao-shrimp.yaml',
       '½ cup unsalted roasted peanuts',
       173806,
-      65.06,
-      'density',
+      73.00,
+      'portion',
     ),
     (
       '0553-pad-thai.yaml',
       '½ cup unsalted roasted peanuts, chopped coarse',
       173806,
-      65.06,
-      'density',
+      73.00,
+      'portion',
     ),
     (
       '0551-panang-beef-curry.yaml',
       '⅓ cup unsalted dry-roasted peanuts, chopped fine',
       173806,
-      43.37,
-      'density',
+      48.67,
+      'portion',
     ),
     (
       '0552-stir-fried-thai-style-beef-with-chiles-and-shallots.yaml',
       '⅓ cup unsalted roasted peanuts, chopped coarse',
       173806,
-      43.37,
-      'density',
+      48.67,
+      'portion',
     ),
     (
       '0554-shrimp-pad-thai.yaml',
       '¼ cup roasted unsalted peanuts, chopped coarse',
       173806,
-      32.53,
-      'density',
+      36.50,
+      'portion',
     ),
     (
       '1174-lao-hu-cai-tiger-salad.yaml',

@@ -177,6 +177,175 @@ void main() {
       skip: skipIfNoCorpus,
     );
 
+    // P1 (Run 050): several edits in one save, then the compute. The rows
+    // each decided line ends on: 'position:raw:status:grams'.
+    List<String> decided(String id) => [
+      for (final r in db.ingredientMatchesFor(id))
+        if (r.status == 'skipped' || r.status == 'overridden')
+          '${r.position}:${r.raw}:${r.status}:${r.grams}',
+    ];
+    const onion = '1 large onion, chopped coarse';
+    const celery = '2 celery ribs, chopped coarse';
+
+    test('Case A (Sonnet): the ½ cup oil deleted and the picked ¼ cup moved '
+        'up in one save — the pick and its typed 5 g stay on it', () async {
+      final v0 = version([oilHalf, sp, oilQuarter]);
+      save(v0);
+      await matchAndCompute(db, provider, v0);
+      await applyMatchOverride(db, provider, v0, 2, {
+        'fdc_id': 173468,
+        'grams': 5,
+      });
+      final v1 = version([oilQuarter, sp]);
+      save(v1);
+      await matchAndCompute(db, provider, v1);
+      expect(decided(v1.id), ['0:$oilQuarter:overridden:5.0']);
+    }, skip: skipIfNoCorpus);
+
+    test('Case B (Sonnet): the ¼ cup oil moved up and the ½ cup amount '
+        'edited to "1 cup" in one save — the untouched line keeps its 9 g, '
+        'the edited one its pick', () async {
+      final v0 = version([onion, oilHalf, celery, oilQuarter]);
+      save(v0);
+      await matchAndCompute(db, provider, v0);
+      for (final (at, g) in [(1, 3), (3, 9)]) {
+        await applyMatchOverride(db, provider, v0, at, {
+          'fdc_id': 173468,
+          'grams': g,
+        });
+      }
+      final oilOne = amountEdit(
+        byRaw[oilHalf]!,
+        '1 cup extra-virgin olive oil',
+      );
+      final v1 = acqua.copyWith(
+        ingredients: [
+          IngredientGroup(
+            group: acqua.ingredients.first.group,
+            items: [byRaw[onion]!, byRaw[oilQuarter]!, oilOne, byRaw[celery]!],
+          ),
+        ],
+      );
+      save(v1);
+      await matchAndCompute(db, provider, v1);
+      final rows = decided(v1.id);
+      expect(rows, hasLength(2));
+      expect(rows.first, '1:$oilQuarter:overridden:9.0');
+      expect(rows.last, startsWith('2:${oilOne.raw}:overridden:'));
+    }, skip: skipIfNoCorpus);
+
+    test('the swap (Opus): the onion deleted, ½ → ¾ and ¼ → 1 cup, lemon '
+        'appended in one save — the skip and the pick stay on their own '
+        'oils', () async {
+      const lemon = 'Lemon wedges';
+      final v0 = version([onion, oilHalf, oilQuarter]);
+      save(v0);
+      await matchAndCompute(db, provider, v0);
+      await applyMatchOverride(db, provider, v0, 1, {'skipped': true});
+      await applyMatchOverride(db, provider, v0, 2, {
+        'fdc_id': 173468,
+        'grams': 3,
+      });
+      final threeQ = amountEdit(
+        byRaw[oilHalf]!,
+        '¾ cup extra-virgin olive oil',
+      );
+      final one = amountEdit(
+        byRaw[oilQuarter]!,
+        '1 cup extra-virgin olive oil',
+      );
+      final v1 = acqua.copyWith(
+        ingredients: [
+          IngredientGroup(
+            group: acqua.ingredients.first.group,
+            items: [threeQ, one, byRaw[lemon]!],
+          ),
+        ],
+      );
+      save(v1);
+      await matchAndCompute(db, provider, v1);
+      final rows = decided(v1.id);
+      expect(rows.first, startsWith('0:${threeQ.raw}:skipped:'));
+      expect(rows.last, startsWith('1:${one.raw}:overridden:'));
+      expect(rows, hasLength(2));
+    }, skip: skipIfNoCorpus);
+
+    // P2 (Run 050): the gate reads the nutrition inputs (ingredientsHashOf),
+    // not the whole document; a tripped gate never stamps the totals fresh.
+    bool stale(Recipe r) =>
+        db.nutritionFor(r.id)!.ingredientsHash != ingredientsHashOf(r);
+
+    test('a tags-only save during the first compute blocks nothing: every '
+        'line gets its row and the totals are fresh', () async {
+      final v0 = version([oilHalf, sp, oilQuarter]);
+      save(v0);
+      final tagged = v0.copyWith(tags: [...v0.tags, 'weeknight']);
+      provider.onCall = () => save(tagged);
+      await matchAndCompute(db, provider, v0);
+      expect(db.recipeByIdOrSlug(v0.id)!.recipe.tags, contains('weeknight'));
+      expect(db.ingredientMatchesFor(v0.id), hasLength(3));
+      expect(stale(tagged), isFalse);
+    }, skip: skipIfNoCorpus);
+
+    test('a lines save during a compute stops its writes and leaves the '
+        'totals stale — even when a second save puts the lines back', () async {
+      final v0 = acqua;
+      final [soup, ...rest] = acqua.ingredients;
+      final v1 = acqua.copyWith(
+        ingredients: [
+          soup.copyWith(items: soup.items.skip(1).toList()),
+          ...rest,
+        ],
+      );
+      save(v0);
+      // The revert lands a few provider calls later, after a write.
+      void Function() later(int calls, void Function() then) =>
+          () => calls == 0 ? then() : provider.onCall = later(calls - 1, then);
+      provider.onCall = () {
+        save(v1);
+        provider.onCall = later(3, () => save(v0));
+      };
+      await matchAndCompute(db, provider, v0);
+      expect(db.recipeByIdOrSlug(v0.id)!.recipe, v0);
+      expect(
+        db.ingredientMatchesFor(v0.id).length,
+        lessThan(nutritionLines(v0).length),
+      );
+      expect(stale(v0), isTrue);
+    }, skip: skipIfNoCorpus);
+
+    test("P5 (Run 050): the matches GET's apply-to-all offer counts the "
+        "recipe's own rows as the layout places them — 0405 with a line "
+        'inserted at the top, before the next compute, offers every line '
+        'what it offered before the save', () async {
+      save(acqua);
+      await matchAndCompute(db, provider, acqua);
+      Future<Map<String, Object?>> offers(Recipe r) async => {
+        for (final i
+            in ((await matchesBody(db, provider, r))['items']! as List)
+                .cast<Map<String, Object?>>())
+          i['raw']! as String: (i['others'], i['others_lines']),
+      };
+      final before = await offers(acqua);
+      final [soup, ...rest] = acqua.ingredients;
+      final v1 = acqua.copyWith(
+        ingredients: [
+          soup.copyWith(items: [threeQuarter(), ...soup.items]),
+          ...rest,
+        ],
+      );
+      save(v1);
+      final after = await offers(v1);
+      expect(after.remove(threeQuarter().raw), isNotNull);
+      expect(after, before);
+      // The critic's line: its only same-ingredient row is its own, never
+      // an "other" (before the save or after it).
+      expect(before['10 (½-inch-thick) slices thick-crusted country bread'], (
+        0,
+        0,
+      ));
+    }, skip: skipIfNoCorpus);
+
     test('the matches GET shows each line its own row before the next '
         'compute', () async {
       final v0 = version([oilHalf, sp]);
@@ -188,7 +357,23 @@ void main() {
       });
       final v1 = version([oilQuarter, oilHalf, sp]);
       save(v1);
+      // The GET pairs in memory and writes nothing (Run 050): the stored
+      // rows are the same rows, at the same positions, after it.
+      List<String> stored() => [
+        for (final r in db.ingredientMatchesFor(v1.id))
+          [
+            r.position,
+            r.raw,
+            r.fdcId,
+            r.grams,
+            r.gramSource,
+            r.status,
+            r.itemKey,
+          ].join('|'),
+      ];
+      final before = stored();
       final items = (await matchesBody(db, provider, v1))['items']! as List;
+      expect(stored(), before);
       final status = [
         for (final i in items.cast<Map<String, Object?>>())
           (i['match'] as Map<String, Object?>?)?['status'],

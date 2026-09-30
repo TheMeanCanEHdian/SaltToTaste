@@ -311,9 +311,13 @@ class NutritionCubit extends Cubit<NutritionState> {
     }
   }
 
-  /// Applies one row override, then refreshes the label totals.
+  /// Applies one row override, then refreshes the label totals. [raw] is
+  /// the line's text as shown: when a save since moved that line, the
+  /// server refuses (`line_moved`, nothing written) and the rows are
+  /// reloaded, so the screen finds the line where it is now.
   Future<void> override(
     int position, {
+    String? raw,
     int? fdcId,
     double? grams,
     bool? confirmed,
@@ -328,6 +332,7 @@ class NutritionCubit extends Cubit<NutritionState> {
       result = await _repository.overrideMatch(
         idOrSlug,
         position,
+        raw: raw,
         fdcId: fdcId,
         grams: grams,
         confirmed: confirmed,
@@ -338,6 +343,9 @@ class NutritionCubit extends Cubit<NutritionState> {
         return;
       }
       emit(state.copyWith(clearOverriding: true, error: exception.message));
+      if (exception.code == 'line_moved') {
+        await _reloadMatchesKeepingError();
+      }
       return;
     }
     if (isClosed) {
@@ -402,6 +410,19 @@ class NutritionCubit extends Cubit<NutritionState> {
     }
   }
 
+  /// Refetches the rows after a `line_moved` refusal; the refusal's message
+  /// stays up (a failed refetch leaves the rows as they were).
+  Future<void> _reloadMatchesKeepingError() async {
+    try {
+      final matches = await _repository.matches(idOrSlug);
+      if (!isClosed) {
+        emit(state.copyWith(matches: matches));
+      }
+    } on RepositoryException {
+      // The refusal already says to refresh; nothing more to add.
+    }
+  }
+
   /// Sends the pending offer's decision again with `apply_to_all`, and shows
   /// the server's receipt in its place. The offer stays on failure, so the
   /// admin can retry or dismiss it.
@@ -416,6 +437,11 @@ class NutritionCubit extends Cubit<NutritionState> {
       result = await _repository.overrideMatch(
         idOrSlug,
         offer.position,
+        // The offered line as the screen shows it (a save since: 409).
+        raw: [
+          for (final m in state.matches ?? const <IngredientMatch>[])
+            if (m.position == offer.position) m.raw,
+        ].firstOrNull,
         fdcId: offer.fdcId,
         grams: offer.grams,
         confirmed: offer.confirmed ? true : null,
@@ -426,6 +452,9 @@ class NutritionCubit extends Cubit<NutritionState> {
         return;
       }
       emit(state.copyWith(applying: false, error: exception.message));
+      if (exception.code == 'line_moved') {
+        await _reloadMatchesKeepingError();
+      }
       return;
     }
     if (isClosed) {

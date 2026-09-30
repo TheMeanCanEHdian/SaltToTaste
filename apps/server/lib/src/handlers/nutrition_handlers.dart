@@ -114,6 +114,12 @@ Future<Map<String, Object?>> matchesBody(
   // nothing), so an edit since the last compute never shows a line
   // another line's row.
   final matches = pairRowsToLines(db.ingredientMatchesFor(recipe.id), lines);
+  // The line each of this recipe's stored rows is paired to (by stored
+  // position): the offer below counts this recipe's rows as laid out.
+  final pairedTo = {
+    for (final (at, row) in matches.indexed)
+      if (row != null) row.position: at,
+  };
   final items = <Map<String, Object?>>[];
   for (final (position, line) in lines.indexed) {
     var row = matches[position];
@@ -137,15 +143,23 @@ Future<Map<String, Object?>> matchesBody(
     // food at any score, a sibling on THIS food only while it is still a
     // flagged guess (below `lowConfidence`); one already counted waits on
     // nothing this decision can give it, and neither does a line-held row or
-    // a line naming a second food. The same rows the apply writes.
+    // a line naming a second food. The same rows the apply writes — this
+    // recipe's own as the layout places them: never the row this line takes
+    // (wherever it is stored), nor a row the layout would delete (Run 050:
+    // after a save shifting the lines, a line was offered its own row).
     final reach = itemKey.isEmpty
         ? const <IngredientMatchRow>[]
-        : decisionReach(
-            db,
-            itemKey,
-            excluding: (recipeId: recipe.id, position: position),
-            fdcId: row?.fdcId,
-          );
+        : [
+            for (final other in decisionReach(
+              db,
+              itemKey,
+              excluding: (recipeId: recipe.id, position: -1),
+              fdcId: row?.fdcId,
+            ))
+              if (other.recipeId != recipe.id ||
+                  (pairedTo[other.position] ?? position) != position)
+                other,
+          ];
     // The KEY (singular) joins decisions; the QUERY keeps the line's words —
     // reported as the words whose cached answer the line reads (a same-key
     // sibling's, or an "A or B" line's A), so a live search lands there.
@@ -284,12 +298,29 @@ Map<String, Object?> appliedJson(AppliedToOthers applied) => {
 Future<AppliedToOthers?> applyMatchOverride(
   SaltDatabase db,
   NutritionProvider provider,
-  Recipe recipe,
+  Recipe given,
   int position,
   Map<String, Object?> body, {
   int? decidedBy,
 }) async {
+  // The STORED recipe, never the caller's copy: a save since the caller
+  // read it (the route's body read, a client's stale screen) would lay the
+  // rows out on lines that are no longer the recipe's.
+  var recipe = db.recipeByIdOrSlug(given.id)?.recipe ?? given;
+  final version = db.contentHashOf(recipe.id);
   final lines = nutritionLines(recipe);
+  // `raw`: the line text the client saw at [position]. A save since then
+  // moved it: 409 line_moved, naming where it is now; nothing is written.
+  final seen = body['raw'];
+  if (seen != null && seen is! String) {
+    throw const ValidationException("'raw' must be a string.");
+  }
+  if (seen is String &&
+      (position < 0 ||
+          position >= lines.length ||
+          lines[position].raw != seen)) {
+    throw LineMovedException(nearestLineOf(lines, seen, position));
+  }
   if (position < 0 || position >= lines.length) {
     throw NotFoundException('No ingredient line at position $position.');
   }
@@ -302,13 +333,11 @@ Future<AppliedToOthers?> applyMatchOverride(
   // lines stood: lay them out on the new lines first ([layoutMatchRows]),
   // so this write reads and replaces THIS line's row, never the row (or a
   // person's decision) another line left at this position.
-  // Known limits (pairing panel): the layout runs before the body is
+  // Known limit (pairing panel): the layout runs before the body is
   // validated, so a refused request (a 422, the zero-row confirm) can still
   // move or drop rows as the next compute would — no decision's content
-  // changes. And the write below is at THIS version's position: a save plus
-  // another layout during this request's own awaits (cachedFood, gramsFor)
-  // lands it on the old line's slot (unpinned; a 409 on a changed content
-  // hash would close it, a wire change).
+  // changes. A save during this request's own awaits (cachedFood,
+  // gramsFor) is read again before the write (below).
   layoutMatchRows(db, recipe);
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
@@ -548,6 +577,17 @@ Future<AppliedToOthers?> applyMatchOverride(
   // lines borrowed it from this row and lost it with it). A grams-only edit
   // decides the amount, not the food, and writes nothing; neither does a
   // skip. The same gate apply_to_all uses.
+  // A save during the awaits above: the rows are laid out on the stored
+  // lines again, and the write lands only while this line still stands at
+  // [position] (else 409 line_moved; nothing written).
+  if (db.contentHashOf(recipe.id) != version) {
+    recipe = db.recipeByIdOrSlug(recipe.id)?.recipe ?? recipe;
+    final now = nutritionLines(recipe);
+    if (position >= now.length || now[position].raw != line.raw) {
+      throw LineMovedException(nearestLineOf(now, line.raw, position));
+    }
+    layoutMatchRows(db, recipe);
+  }
   if (decidedFood && itemKey.isNotEmpty) {
     db.putDecision(
       itemKey: itemKey,
@@ -595,6 +635,19 @@ Future<AppliedToOthers?> applyMatchOverride(
     decided: food,
     excluding: (recipeId: recipe.id, position: position),
   );
+}
+
+/// The position of the line of [lines] reading [raw] nearest [position]
+/// (the earlier on a tie), or null when none does.
+int? nearestLineOf(List<IngredientLine> lines, String raw, int position) {
+  int? best;
+  for (final (at, line) in lines.indexed) {
+    if (line.raw == raw &&
+        (best == null || (at - position).abs() < (best - position).abs())) {
+      best = at;
+    }
+  }
+  return best;
 }
 
 /// Whether FDC's WHOLE cached answer (the row under [answerQuery]) names

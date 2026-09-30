@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:math' show max;
+import 'dart:math' show max, min;
 
 import 'package:crypto/crypto.dart';
 import 'package:logging/logging.dart';
@@ -1898,16 +1898,30 @@ Future<void> matchAndCompute(
   // leaves the laid-out decisions where they are, and a person's write
   // during an await stands.
   final paired = layoutMatchRows(db, recipe);
-  // Every write lands only while the stored recipe is still the one read
-  // here: a save during an await makes these lines stale, and the next
-  // layout (a person's write, the next compute) moves the rows out from
-  // under their positions — so from then on this compute writes no row
-  // (known limit, intended: its totals are stored stale; the next compute
-  // reads the edit).
-  final version = db.contentHashOf(recipe.id);
+  // Every write lands only while the stored recipe's nutrition inputs
+  // ([ingredientsHashOf]: its lines, steps, title) are still the ones read
+  // here: a save changing them during an await makes these lines stale, and
+  // the next layout (a person's write, the next compute) moves the rows out
+  // from under their positions — so from then on this compute writes no
+  // row, and its totals are NOT stamped fresh (the recipe reads stale, so
+  // the next sweep revisits it). A save changing nothing it reads (tags,
+  // notes) blocks nothing. The stored recipe is re-read only when its
+  // content hash moved.
+  final inputs = ingredientsHashOf(recipe);
+  var version = db.contentHashOf(recipe.id);
+  var current = true;
+  bool fresh() {
+    final now = db.contentHashOf(recipe.id);
+    if (current && now != version) {
+      version = now;
+      final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
+      current = stored != null && ingredientsHashOf(stored) == inputs;
+    }
+    return current;
+  }
+
   bool write(IngredientMatchRow row) =>
-      db.contentHashOf(recipe.id) == version &&
-      db.upsertIngredientMatchIfUndecided(row);
+      fresh() && db.upsertIngredientMatchIfUndecided(row);
   final decidedAt = <int, IngredientMatchRow>{};
   final orphanAt = <int, IngredientMatchRow>{};
   for (final (position, row) in paired.indexed) {
@@ -1971,8 +1985,37 @@ Future<void> matchAndCompute(
         continue;
       }
       if (edited.status == 'skipped') {
+        // Grams for the old amount no longer apply, typed or derived: the
+        // row carries the grams re-derived for the new amount (or none), so
+        // an un-skip never counts the old weight (Run 050: "1 onion" typed
+        // at 40 g, skipped, edited to "4 onions", un-skipped: 40 g,
+        // counted; v19 verifier: "½ cup" of oil edited to "1 cup" came back
+        // at the ½ cup's 108.83 g). Kept as they are: a discarded medium's
+        // typed grams, the person's resolution of it, which no amount edit
+        // changes (held or zeroed by the policy), and a row on no food.
+        final kept = edited.gramSource == GramSource.override.name
+            ? discardedMediumOf(recipe, eaten, normalized) != null
+            : edited.fdcId == null;
+        final food = kept || edited.fdcId == null
+            ? null
+            : knownFood(db, edited.fdcId!, line: eaten);
+        final redone = food == null ? null : lineGrams(db, eaten, food);
         write(
-          edited.copyWith(position: position, raw: line.raw, itemKey: key),
+          !kept
+              ? edited.copyWith(
+                  position: position,
+                  raw: line.raw,
+                  itemKey: key,
+                  grams: redone?.grams,
+                  clearGrams: redone == null,
+                  gramSource: redone?.source.name,
+                  clearGramSource: redone == null,
+                )
+              : edited.copyWith(
+                  position: position,
+                  raw: line.raw,
+                  itemKey: key,
+                ),
         );
         continue;
       }
@@ -2014,7 +2057,12 @@ Future<void> matchAndCompute(
           // confirm writes it. A person's look at the line answers every
           // other hold.
           final medium = outcome.hold == 'discarded_medium';
-          final typed = medium && edited.gramSource == GramSource.override.name;
+          // Typed grams stay on ANY discarded medium, held or zeroed by the
+          // policy (Run 050: "2 cups vegetable oil for frying" typed at 20
+          // g lost them to the policy's 0 g on an amount edit).
+          final typed =
+              discardedMediumOf(recipe, eaten, normalized) != null &&
+              edited.gramSource == GramSource.override.name;
           final grams = typed
               ? edited.grams
               : medium
@@ -2307,6 +2355,7 @@ Future<void> matchAndCompute(
     provider,
     recipe,
     freshMatch: true,
+    superseded: !fresh(),
     standIns: standIns,
   );
 }
@@ -2347,56 +2396,187 @@ List<IngredientMatchRow?> layoutMatchRows(SaltDatabase db, Recipe recipe) {
   return paired;
 }
 
-/// The stored row each of [lines] takes, or null: a line diff of the rows'
-/// texts (in position order) against the lines' texts.
-///  1. An in-order alignment that keeps, by priority: the most rows on a
-///     line of their exact text (a line nothing touched keeps its row,
-///     whatever moved around it); then the most rows facing a changed line
-///     in their slot (an edit of one line is ONE substitution, never a
-///     delete and an insert, so a line edited into a copy of its neighbour
-///     never takes the neighbour's row); then the most of a person's
-///     decisions kept (of two identical adjacent lines, the one deleted is
-///     the one without a decision); then the most rows at their own
-///     positions (so rows already laid out stay put, even around a line a
-///     failed compute left with no row). A row facing a changed line keeps
-///     it only when the ingredient ([lineKeyOf]) is the same — an amount
-///     edit; otherwise both are left over.
-///  2. A left-over line takes a left-over row of its exact text (a line
-///     moved), then one of its ingredient (moved and amount-edited): a
-///     person's decision first, then the row at the line's own position.
+/// The most layouts [pairRowsToLines] expands before it settles for the
+/// best found so far.
+const pairingBudget = 10000;
+
+/// The stored row each of [lines] takes, or null: the cheapest reading of
+/// the save as an EDIT SCRIPT of the rows' texts (in position order) into
+/// the lines' texts (matcher v19), the pairing oracle's semantics: a
+/// delete, an insert, a same-ingredient substitution (an amount edit: the
+/// row, and its decision, stay with the line) and a move of one line cost
+/// one each; a substitution to ANOTHER ingredient costs two (it carries
+/// nothing — its row is dropped, the line re-derived). Of the cheapest
+/// readings, the fewest edits as written (an edit in place is one
+/// substitution, never a delete and an insert); then the fewest of a
+/// person's decisions dropped; then the fewest rows off their own
+/// positions (a layout is its own next layout). [_layoutCost] scores a
+/// layout in that order.
 ///
-/// Known limits (pairing panel): text-only — where identical lines make an
-/// edit ambiguous, this is the fewest-edit reading keeping the most
-/// decisions, which may not be what the person did (which twin they
-/// deleted); over several saves between computes, step 2's key pass can
-/// hand a deleted line's decision to a newly added line of the same
-/// ingredient. The oracle explains each edit as ONE op: multi-edit saves are
-/// pinned only by nutrition_pairing_test.dart's three corpus tests, and the
-/// substitution level (b * b) is killed only by the oracle's fuzz (the
-/// traceback's diagonal tie-break decides the two-edit S5 pin).
+/// EXACT, by a depth-first branch and bound over the lines: each line takes
+/// an unused row of its exact text or its ingredient ([lineKeyOf]), or
+/// none, and a branch is cut when a lower bound on its cost (the texts
+/// still pairable exactly, the longest in-order chain still possible) is
+/// no better than the best layout found. The search
+/// starts from the in-order alignment ([_alignRows]), which wins ties, and
+/// an unedited list (cost 0) is that alignment alone. It expands at most
+/// [budget] layouts, then returns the best found so far — never a row
+/// twice, nor a row on a line of another text and ingredient.
+///
+/// Proven by the multi-op pairing oracle (1..3 edits per save,
+/// pairing_oracle_test.dart) and its named scenarios; the oracle's saves
+/// take at most ~2,500 expansions. Known limits: text-only — where
+/// identical lines make an edit ambiguous, this is the cheapest reading
+/// keeping the most decisions, which may not be what the person did (which
+/// twin they deleted); a save far past a few edits may stop at the budget
+/// (measured worst, JIT: 9 ms at 20 lines, 27 ms at 40, 80 ms at 60 — the
+/// edit service's cap — for ten texts shuffled whole with a quarter
+/// rewritten, each stopping there).
 List<IngredientMatchRow?> pairRowsToLines(
   List<IngredientMatchRow> rows,
-  List<IngredientLine> lines,
-) {
+  List<IngredientLine> lines, {
+  int budget = pairingBudget,
+}) {
   final old = [...rows]..sort((a, b) => a.position.compareTo(b.position));
   final keys = [for (final line in lines) lineKeyOf(line)];
+  var best = _alignRows(old, lines, keys);
+  var bestCost = _layoutCost(old, lines, best);
   final n = old.length;
   final m = lines.length;
-  bool sameText(IngredientMatchRow row, int at) => row.raw == lines[at].raw;
-  bool sameKey(IngredientMatchRow row, int at) =>
-      keys[at].isNotEmpty && row.itemKey == keys[at];
-  // A pair's worth: the four priorities packed in base [b] (every count is
-  // below it, so sums compare in priority order).
   final b = n + m + 1;
-  int worth(int i, int at) {
-    final row = old[i];
-    final kept = sameText(row, at) || sameKey(row, at);
-    return (sameText(row, at) ? b * b * b : b * b) +
-        (kept && _isDecided(row) ? b : 0) +
-        (kept && row.position == at ? 1 : 0);
+  final texts = <String, int>{};
+  final lineText = [
+    for (final line in lines) texts.putIfAbsent(line.raw, () => texts.length),
+  ];
+  final rowText = [
+    for (final row in old) texts.putIfAbsent(row.raw, () => texts.length),
+  ];
+  // The rows each line may take: of its exact text or its ingredient.
+  final fits = [
+    for (var at = 0; at < m; at++)
+      [
+        for (var i = 0; i < n; i++)
+          if (rowText[i] == lineText[at] ||
+              (keys[at].isNotEmpty && old[i].itemKey == keys[at]))
+            i,
+      ],
+  ];
+  final rowAt = List<int?>.filled(m, null);
+  final used = List.filled(n, false);
+  final want = List.filled(texts.length, 0);
+  final have = List.filled(texts.length, 0);
+  final tails = <int>[];
+  // Patience: [row] extends the in-order chains [tails] holds.
+  void extend(int row) {
+    var lo = 0;
+    var hi = tails.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (tails[mid] < row) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    if (lo == tails.length) {
+      tails.add(row);
+    } else {
+      tails[lo] = row;
+    }
   }
 
-  // best[i][j]: the best alignment of old[i..] with lines[j..].
+  // A lower bound on [_layoutCost]'s leading term (the script's cost) for
+  // every layout the lines before [at] begin: the rows on a line of their
+  // text (each text's rows left against its lines left), and the longest
+  // in-order chain — each line before [at] its row, each line left any
+  // unused row it fits (patience, largest first: a line adds at most one).
+  int bound(int at) {
+    var exact = 0;
+    for (var j = 0; j < at; j++) {
+      if (rowAt[j] case final i? when rowText[i] == lineText[j]) {
+        exact++;
+      }
+    }
+    want.fillRange(0, want.length, 0);
+    have.fillRange(0, have.length, 0);
+    for (var k = at; k < m; k++) {
+      want[lineText[k]]++;
+    }
+    for (var i = 0; i < n; i++) {
+      if (!used[i]) {
+        have[rowText[i]]++;
+      }
+    }
+    for (var t = 0; t < want.length; t++) {
+      exact += min(want[t], have[t]);
+    }
+    tails.clear();
+    for (var k = 0; k < m; k++) {
+      if (k < at) {
+        if (rowAt[k] case final i?) {
+          extend(i);
+        }
+      } else {
+        for (final i in fits[k].reversed) {
+          if (!used[i]) {
+            extend(i);
+          }
+        }
+      }
+    }
+    return n + m - exact - tails.length;
+  }
+
+  var nodes = 0;
+  void search(int at) {
+    if (nodes++ >= budget) {
+      return;
+    }
+    if (at == m) {
+      final paired = [for (final i in rowAt) i == null ? null : old[i]];
+      final cost = _layoutCost(old, lines, paired);
+      if (cost < bestCost) {
+        best = paired;
+        bestCost = cost;
+      }
+      return;
+    }
+    if (bound(at) * b * b * b >= bestCost) {
+      return;
+    }
+    for (final i in fits[at]) {
+      if (!used[i]) {
+        used[i] = true;
+        rowAt[at] = i;
+        search(at + 1);
+        used[i] = false;
+      }
+    }
+    rowAt[at] = null;
+    search(at + 1);
+  }
+
+  search(0);
+  return best;
+}
+
+/// [pairRowsToLines]' seed: the longest in-order alignment of [old] (in
+/// position order) to [lines], each row on a line of its exact text or its
+/// ingredient ([lineKeyOf]).
+List<IngredientMatchRow?> _alignRows(
+  List<IngredientMatchRow> old,
+  List<IngredientLine> lines,
+  List<String> keys,
+) {
+  final n = old.length;
+  final m = lines.length;
+  int worth(int i, int at) =>
+      old[i].raw == lines[at].raw ||
+          (keys[at].isNotEmpty && old[i].itemKey == keys[at])
+      ? 1
+      : 0;
+
+  // best[i][j]: old[i..] against lines[j..].
   final best = List.generate(n + 1, (_) => List.filled(m + 1, 0));
   for (var i = n - 1; i >= 0; i--) {
     for (var j = m - 1; j >= 0; j--) {
@@ -2407,45 +2587,76 @@ List<IngredientMatchRow?> pairRowsToLines(
     }
   }
   final paired = List<IngredientMatchRow?>.filled(m, null);
-  final left = <IngredientMatchRow>[];
   var i = 0;
   var j = 0;
   while (i < n && j < m) {
-    if (best[i][j] == best[i + 1][j + 1] + worth(i, j)) {
-      if (sameText(old[i], j) || sameKey(old[i], j)) {
-        paired[j] = old[i];
-      } else {
-        left.add(old[i]);
-      }
-      i++;
-      j++;
+    final w = worth(i, j);
+    if (w > 0 && best[i][j] == best[i + 1][j + 1] + w) {
+      paired[j++] = old[i++];
     } else if (best[i][j] == best[i + 1][j]) {
-      left.add(old[i++]);
+      i++;
     } else {
       j++;
     }
   }
-  left.addAll(old.skip(i));
-  int rank(IngredientMatchRow row, int at) =>
-      (_isDecided(row) ? 2 : 0) + (row.position == at ? 1 : 0);
-  for (final fits in [sameText, sameKey]) {
-    for (var at = 0; at < m; at++) {
-      if (paired[at] != null) {
-        continue;
-      }
-      IngredientMatchRow? pick;
-      for (final row in left) {
-        if (fits(row, at) && (pick == null || rank(row, at) > rank(pick, at))) {
-          pick = row;
-        }
-      }
-      if (pick != null) {
-        paired[at] = pick;
-        left.remove(pick);
-      }
+  return paired;
+}
+
+/// [paired] (the row each of [lines] took) read as an edit script of [old]
+/// (in position order): its cost, then its edits, then the decisions it
+/// drops (the pairing oracle's semantics), then the rows off their own
+/// positions, packed so the smaller is the better. A kept row on a line of
+/// its text is free in order and one move out of it; of its ingredient, one
+/// substitution (plus the move); a
+/// dropped row and an empty line in order are one substitution of another
+/// ingredient (costing a delete and an insert); every other row is a
+/// delete, every other line an insert.
+int _layoutCost(
+  List<IngredientMatchRow> old,
+  List<IngredientLine> lines,
+  List<IngredientMatchRow?> paired,
+) {
+  final n = old.length;
+  final m = lines.length;
+  final b = n + m + 1;
+  final index = {for (final (i, row) in old.indexed) row.position: i};
+  final rowAt = [for (final row in paired) index[row?.position]];
+  final used = {...rowAt.nonNulls};
+  var exact = 0;
+  for (var at = 0; at < m; at++) {
+    if (paired[at]?.raw == lines[at].raw) {
+      exact++;
     }
   }
-  return paired;
+  final lost = [
+    for (var i = 0; i < n; i++)
+      if (!used.contains(i) && _isDecided(old[i])) i,
+  ].length;
+  // chain[i][j]: the longest in-order chain over old[i..] and lines[j..],
+  // a kept pair worth [b], a dropped row on an empty line 1.
+  final chain = List.generate(n + 1, (_) => List.filled(m + 1, 0));
+  for (var i = n - 1; i >= 0; i--) {
+    for (var j = m - 1; j >= 0; j--) {
+      final w = rowAt[j] == i
+          ? b
+          : (rowAt[j] == null && !used.contains(i) ? 1 : 0);
+      chain[i][j] = max(
+        w == 0 ? 0 : chain[i + 1][j + 1] + w,
+        max(chain[i + 1][j], chain[i][j + 1]),
+      );
+    }
+  }
+  final cost = n + m - exact - chain[0][0] ~/ b;
+  final edits = cost - chain[0][0] % b;
+  // Last, the rows off their own positions: rows already laid out stay
+  // put (a layout is its own next layout).
+  var moved = 0;
+  for (var at = 0; at < m; at++) {
+    if (paired[at] case final row? when row.position != at) {
+      moved++;
+    }
+  }
+  return ((cost * b + edits) * b + lost) * b + moved;
 }
 
 /// [ranked] with, when its top record is a cured one for a line asking for
@@ -2788,6 +2999,7 @@ Future<void> recomputeTotals(
   Recipe recipe, {
   int? servingBasis,
   bool freshMatch = false,
+  bool superseded = false,
   Map<int, FdcFood> standIns = const {},
 }) async {
   final lines = nutritionLines(recipe);
@@ -2923,8 +3135,13 @@ Future<void> recomputeTotals(
   final status = accounted >= lines.length ? 'complete' : 'partial';
   // Only a full re-match may stamp the current recipe's hash — a plain
   // recompute (serving basis, match override) after an ingredient edit
-  // must keep reporting `stale` until the admin recomputes for real.
-  final hash = freshMatch
+  // must keep reporting `stale` until the admin recomputes for real. A
+  // re-match [superseded] by a save of the recipe's inputs mid-compute
+  // (its row writes stopped there) stamps no hash at all: stale, whatever
+  // the stored recipe now reads, so the next sweep revisits it.
+  final hash = superseded
+      ? ''
+      : freshMatch
       ? ingredientsHashOf(recipe)
       : (stored?.ingredientsHash ?? ingredientsHashOf(recipe));
   db.upsertRecipeNutrition(
@@ -3498,10 +3715,11 @@ bool heldMediumLine(Recipe recipe, IngredientLine line) {
 /// the engine's grams back too — none, or its eaten part — never a
 /// person's 0 g poured away, which would read resolved with nobody's
 /// decision (Run 047 critic: 0112's soy sauce). Grams a person typed come
-/// back as the person's row, counted (Run 049). An engine row whose line
-/// the second-food rule counts moves to the rule's record with the rule's
-/// grams (checkpoint 5 review: an un-skip left a rule line held on the peel
-/// for good).
+/// back as the person's row, counted, before any gate: neither the
+/// sub-recipe rule nor the second-food rule replaces them (Run 049, 050).
+/// An engine row whose line the second-food rule counts moves to the rule's
+/// record with the rule's grams (checkpoint 5 review: an un-skip left a
+/// rule line held on the peel for good).
 Future<IngredientMatchRow> unskippedRow(
   SaltDatabase db,
   NutritionProvider provider,
@@ -3509,6 +3727,17 @@ Future<IngredientMatchRow> unskippedRow(
   int position,
   IngredientMatchRow row,
 ) async {
+  // Grams a person typed are their row: an un-skip gives it back counted,
+  // with no hold — `overridden`, as a grams edit makes an `auto` row (Run
+  // 049: a held medium's typed grams came back on an `auto` row, held out
+  // of the totals, that the next compute re-derived). First, as the
+  // compute keeps a decided row and a confirm or pick keeps typed grams:
+  // neither the sub-recipe gate nor the second-food rule replaces them
+  // (Run 050: an un-skip turned a made-apart sub-recipe's pick and typed
+  // 50 g into the 0 g sub-recipe row).
+  if (row.fdcId != null && row.gramSource == GramSource.override.name) {
+    return row.copyWith(status: 'overridden', clearHold: true);
+  }
   final line = nutritionLines(recipe)[position];
   final uncounted = subRecipeRowFor(recipe, position, line);
   if (uncounted != null) {
@@ -3527,13 +3756,6 @@ Future<IngredientMatchRow> unskippedRow(
       : await ruleRowFor(db, provider, recipe, position, line);
   if (byRule != null) {
     return byRule.row;
-  }
-  // Grams a person typed are their row: an un-skip gives it back counted,
-  // with no hold — `overridden`, as a grams edit makes an `auto` row (Run
-  // 049: a held medium's typed grams came back on an `auto` row, held out
-  // of the totals, that the next compute re-derived).
-  if (out.fdcId != null && out.gramSource == GramSource.override.name) {
-    return out.copyWith(status: 'overridden');
   }
   final onRow = out.fdcId == null
       ? null

@@ -959,9 +959,12 @@ void main() {
     // are hits ('ice cream' 167575 and 168809, 'oil-packed tuna' 169384,
     // 'radishes' 170122, 'ricotta cheese' 171248, 'cream cheese' 173418,
     // 'seedless raspberry jam' 2747675) and all but the radish differ in
-    // some digit.
-    expect(compared, 226);
-    expect(differ, 170);
+    // some digit. Matcher v19 (Run 050's grams) recorded the eight records
+    // its pins read from snapshot 13: five are hits ('salt' 2707517,
+    // 'sweetened coconut' 2707571, 'butter' 2707533, 'mcintosh apples'
+    // 168816, 'hazelnuts' 2707502), all five differ in some digit.
+    expect(compared, 231);
+    expect(differ, 175);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

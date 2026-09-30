@@ -740,6 +740,7 @@ class _FixPanelState extends State<FixPanel> {
               (pickChanged || (!confirmMode && _amountDirty && grams != null));
     void save() => cubit.override(
       m.position,
+      raw: m.raw,
       fdcId: pickChanged ? _stagedFdcId : null,
       // A zero row always sends the field: the line has no amount of its own
       // to recompute from. (Equivalent today, Run 048: a zero row's field
@@ -1070,9 +1071,9 @@ class _FixPanelState extends State<FixPanel> {
     }
     final staged = _stagedFdcId;
     if (staged != null && staged != m.fdcId) {
-      cubit.override(m.position, fdcId: staged, grams: grams);
+      cubit.override(m.position, raw: m.raw, fdcId: staged, grams: grams);
     } else {
-      cubit.override(m.position, confirmed: true, grams: grams);
+      cubit.override(m.position, raw: m.raw, confirmed: true, grams: grams);
     }
   }
 

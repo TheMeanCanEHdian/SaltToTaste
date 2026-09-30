@@ -129,6 +129,7 @@ temporary password with `must_change_password`: until the user calls
   | `locked` | 429 | Login lockout; message says when to retry |
   | `rate_limited` | 429 | Too many text searches; retry after the `Retry-After` header |
   | `zero_row` | 422 | A bare confirm of a below-gate zero row (its food is a hidden guess): pick a food or skip it |
+  | `line_moved` | 409 | A match write whose `raw` names a line no longer at its position (a save since); the envelope adds `position`, where that line is now (or null) |
   | `internal` | 500 | Unhandled server error (details only in server logs) |
 
 - Timestamps are UTC ISO-8601 strings with a `Z` suffix. Keys are
@@ -368,7 +369,14 @@ shared verbatim with the per-recipe review sheet (salt_shared
 counts are whole-library (stable across filters); `bucket` narrows `items` (and
 their pagination) to one bucket — an unknown id is a 422. Fix a line with the
 existing `PUT /api/v1/recipes/{id}/nutrition/matches/{position}` (candidates for
-its fix panel come from that recipe's `…/nutrition/matches`).
+its fix panel come from that recipe's `…/nutrition/matches`). An item's
+`position` is its row's STORED position: after a save and before the next
+compute, that line may sit elsewhere in the recipe (the per-recipe GET shows
+each line its row where it is now). Send the item's `raw` with the PUT: a line
+no longer at that position is refused with `409 line_moved` naming where it
+is now, never written onto another line (the app finds the line by its text
+in the recipe's matches, sends that line's position and text, and reloads on
+a 409).
 
 `group=item` changes the UNIT of `items` to one row per ingredient — a wrong
 food is an ingredient-level problem, and the decision it takes reaches the whole
@@ -727,7 +735,17 @@ milk powder, buttermilk powder, water chestnuts, ricotta, cream cheese and
 oil-packed sun-dried tomatoes, which a key names but which are not its
 food, weigh on their record's own volume portion instead ("½ cup plus ⅓
 cup nonfat dry milk powder" is 100 g, not 203 g; a record's "whipped"
-portion sizes only a whipped line)) | `piece` (estimate)
+portion sizes only a whipped line); since matcher v19 so do almond and
+apple butter, and any item where a key only modifies a compound — the
+key followed by "of" or "seed(s)": "2 teaspoons cream of tartar" is its
+record's `tsp` 6.0 g, not 'cream' 1.01's 10.0 g, "¼ cup mustard seeds"
+the ground seed's 24.6 g, not prepared 'mustard' 1.05's 62.1 g; a nut the
+item names weighs on its record's own volume portion ahead of the
+generic 'nuts' 0.55 ("½ cup unsalted roasted peanuts" is 173806's `cup`
+146 g a cup, 73 g); and a powder on a record of the drink made from it
+("…, powder, prepared with whole milk") reads only its `dry` portions —
+none: no grams, never the made-up drink's `cup (8 fl oz)` 265 g) |
+`piece` (estimate)
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
 buttermilk soak, a brine's sugar and the aromatics a step adds to a brine
@@ -780,7 +798,10 @@ garlic, green cabbage, carrots, celery, baby spinach, iceberg and napa
 cabbage read SR "Nuts, pecans", "Garlic, raw", "Cabbage, raw", "Carrots,
 raw", "Celery, raw", "Spinach, raw", "Lettuce, iceberg (includes crisphead
 types), raw" and "Cabbage, chinese (pe-tsai), raw") (the food stays the
-line's; "1 cup
+line's; since matcher v19 a shredded, grated or thinly sliced line with no
+portion of its own words reads a `shredded` or `grated` portion before the
+median: "3 cups thinly sliced green cabbage" is `cup, shredded` 210 g,
+"2⅔ cups shredded carrots" `cup grated` 293 g; "1 cup
 fresh or frozen blueberries" on Foundation "Blueberries, raw" reads
 "Blueberries, frozen"'s cup, "1¼ cups whole almonds" on Foundation "Nuts,
 almonds, whole, raw" SR "Nuts, almonds"' `cup, whole`), `"8 · USDA
@@ -792,7 +813,9 @@ chile: an arbol or bird chile, or one the line calls small and dried; a
 fresh Thai chile, or any other pepper line, on it has no grams), and of
 several portions the item names the medium one ("4 leaves Bibb lettuce" on
 "leaf, medium"), or the small one when the line says small ("1 small
-baguette" on "1 mini baguette", 152 g); a portion over 250 g is a
+baguette" on "1 mini baguette", 152 g) — since matcher v19 read from the
+item's own words, before its prep: "1 baguette, cut into small cubes" is
+324 g, "2 large pita breads, cut into small wedges" two regular pitas; a portion over 250 g is a
 prepared-dish serving, never one item, unless it is a numbered portion
 naming the item's own noun (since matcher v17: "1 baguette" on "Bread,
 French or Vienna"'s "1 baguette (about 22" long)", 324 g; an SR bare noun
@@ -1013,7 +1036,10 @@ plain and fine sea salt weigh as table salt, 6.0 g a teaspoon, matcher v16;
 since matcher v18 only when that salt is the line's own food, nothing but
 its amounts before it, so "3 tablespoons unsalted butter, melted, plus
 flaky sea salt" weighs the butter at its own density, and the plus part of
-"1 tablespoon plus 1 teaspoon coarse sea salt" is kosher too, 14.2 g); `whole grain mustard` and `whole-grain mustard` → `mustard
+"1 tablespoon plus 1 teaspoon coarse sea salt" is kosher too, 14.2 g;
+since matcher v19 a quantity word in its amount — heaping, heaped, scant,
+rounded, generous, level, about — is still its amount's: "1 heaping
+tablespoon flaky sea salt"); `whole grain mustard` and `whole-grain mustard` → `mustard
 prepared`; `beef tenderloin center-cut chateaubriand`, `center-cut filet
 mignon` and `center-cut filets mignons` → `beef tenderloin`; `kale or
 collard greens` → `kale`; `broccoli florets` → `broccoli`; `stone-ground
@@ -1209,29 +1235,60 @@ accent-folded. A decided line also follows its text: an ingredient inserted,
 deleted or reordered above it moves the line, and its decision moves with it;
 an amount edit on a decided line keeps the food and the status and re-derives
 the grams (a hand-typed weight for the old amount is dropped — except on a
-held medium, above). Lines find their rows by text, in order (a line
-diff): the stored rows' texts are aligned with the lines', keeping first the
-most rows on a line of their exact text (a line nothing moved keeps its row,
-decided or not, and a run an insert or a delete shifted keeps its rows too),
-then an edit of one line as ONE substitution (its row stays with it when the
-ingredient is the same — an amount edit — so a line edited into a copy of its
-neighbour never takes the neighbour's row), then the most decisions kept (of
-two identical adjacent lines, the one deleted is the one without a
-decision), then each row at its own position. Lines and rows left over are
-re-paired by exact text (a line moved), then by ingredient (moved and
-amount-edited) — a decision first, then the row at the line's own position.
-A decision on the second "Salt and pepper" of Acquacotta stays on it
-whatever happens to the first (edited or deleted), two decided copies with a
-line inserted or deleted above both move with their lines, and an engine row
-(a rule row, `auto` or `unmatched`) moves with its line and is re-derived
-there, never given another copy's decision; a row no line takes is deleted.
-The whole layout is written in one transaction before the compute asks FDC
-anything — and before this PUT reads its row, so a decision made after a
-save and before the next compute lands on its line — and a decision is only
-ever moved (or dropped with its deleted line), never rewritten. A compute
-whose recipe is saved over while it waits on FDC writes no further rows (the
-next compute reads the edit). `GET …/nutrition/matches` shows each line the
-row this layout gives it, without writing.
+discarded medium, held or zeroed by the policy, above). Lines find their rows
+by text (a line diff with moves, matcher v19). The save is read as the cheapest
+EDIT SCRIPT of the stored rows' texts (in position order) into the lines'
+texts: a delete, an insert, a same-ingredient substitution (an amount edit:
+the row, and its decision, stay with the line) and a move of one line cost
+one each; a substitution to another ingredient costs two and carries nothing
+(its row is dropped and the line re-derived). Of the cheapest readings: the
+fewest edits as written (an edit of one line is ONE substitution, never a
+delete and an insert, so a line edited into a copy of its neighbour never
+takes the neighbour's row), then the fewest decisions dropped, then the most
+rows at their own positions (a layout is its own next layout). The pairing
+finds that reading EXACTLY: a branch-and-bound search over the lines, each
+line taking a row of its exact text or its ingredient (or none), each row
+at most once, starting from the in-order alignment (which wins ties; an
+unedited list is that alignment alone) and cutting every branch whose lower
+bound is no better than the best layout found. It expands at most 10,000
+layouts (`pairingBudget`) and then keeps the best found so far — reached
+only far past a few edits (a 60-line list shuffled whole with a quarter
+rewritten in one save), never on a save of up to three edits the pairing
+oracle draws. A row only ever sits on a line of its exact text or its
+ingredient. So a save making several edits keeps each decision on its line: Run 050's
+"½ cup" oil deleted and the picked "¼ cup" moved up in one save keeps the
+pick; a move plus an amount edit of the other oil keeps both lines' typed
+grams; the onion deleted, both oils amount-edited and lemon appended keeps
+the skip and the pick each on its own oil. A decision on the second "Salt
+and pepper" of Acquacotta stays on it whatever happens to the first (edited
+or deleted), two decided copies with a line inserted or deleted above both
+move with their lines, and an engine row (a rule row, `auto` or `unmatched`)
+moves with its line and is re-derived there, never given another copy's
+decision; a row no line takes is deleted. Known limit: text-only — where
+identical lines make an edit ambiguous, this is the cheapest reading keeping
+the most decisions, which may not be what the person did (which twin they
+deleted). The whole layout is written in one transaction before the compute
+asks FDC anything — and before this PUT reads its row — and a decision is
+only ever moved (or dropped with its deleted line), never rewritten. A
+compute whose recipe's nutrition inputs (its lines, steps and title: what
+the staleness hash reads) change while it waits on FDC writes no further rows
+and stamps its totals STALE, never fresh, so the next sweep revisits it; a
+save changing nothing it reads (tags, notes, times) blocks nothing.
+`GET …/nutrition/matches` shows each line the row this layout gives it,
+without writing, and each line's apply-to-all offer (`others`,
+`others_lines`) counts this recipe's own rows as that layout places them —
+never its own row for the line, nor a row the layout would delete.
+
+This PUT reads its body first and then the STORED recipe (never a copy read
+before a save), lays the rows out on its lines, and reads it again after its
+own awaits (a food fetch): a save meanwhile that moved the line refuses the
+write. Optional `raw`: the line's text as the client saw it at `{pos}`. When
+the line at `{pos}` reads otherwise (a save since), `409 line_moved` with
+`{error: {code: "line_moved", message, request_id, position}}` — `position`
+is the line with that text nearest `{pos}` now, or null when none — and
+nothing is written. A non-string `raw` is a 422. The app sends it from the
+review sheet, the fix pane, the queue and the apply-to-all resend, and on a
+409 reloads the rows so the screen finds the line where it is now.
 
 Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
@@ -1243,9 +1300,15 @@ seasoning's, water or equipment — is that `confirmed` rule row again, never
 an `auto` row on no food) — except a row whose grams a person typed
 (`gram_source: override`), which comes back as a grams edit leaves an
 `auto` row: `overridden`, their grams, no hold, counted — never an `auto`
-row the next compute re-derives (matcher
-v18; a row on the record the second-food rule counts the line on is not
-re-derived by the rule either). Totals recompute instantly. A re-pick of a line
+row the next compute re-derives (matcher v18) — and before any gate: neither
+the sub-recipe rule (a sub-recipe the recipe makes apart) nor the second-food
+rule replaces a person's pick and typed grams (matcher v19). A skipped line
+whose amount is edited keeps its skip, but not the grams of the old
+amount, typed or derived: the compute re-derives its grams for the new
+amount on the skipped row (none when it cannot), so an un-skip counts the
+new amount — except on a discarded medium, held or zeroed by the policy,
+where typed grams are the person's resolution and stay (as they stay on a
+decided medium's amount edit). Totals recompute instantly. A re-pick of a line
 the engine discarded as a cooking medium keeps it discarded (0 g) whatever
 food is picked — `{grams}` is how a person counts it. A re-pick of the
 record the second-food rule counts a line on (the fruit's juice record for

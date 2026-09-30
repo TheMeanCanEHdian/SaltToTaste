@@ -873,6 +873,104 @@ void main() {
       await cubit.close();
     });
 
+    test('Run 050 A1: a completeFix reload overtaken by a sort tap that '
+        'then FAILS still goes up — the fixed line leaves the list', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      final fixedKey = (cubit.state as NutritionReviewLoaded).selectedKey;
+      adapter.hold = true;
+      final fix = cubit.completeFix();
+      await waitFor(adapter, 1);
+      final sort = cubit.setSort('worst');
+      await waitFor(adapter, 2);
+      adapter.lines = adapter.lines.sublist(1);
+      adapter.held[0].complete();
+      await fix;
+      adapter.failNext = true;
+      adapter.held[1].complete();
+      await sort;
+      final shown = cubit.state as NutritionReviewLoaded;
+      expect(shown.items.map((e) => e.key), isNot(contains(fixedKey)));
+      // The order is the one the list on screen was fetched with.
+      expect(shown.sort, 'finishes');
+      adapter.hold = false;
+      await cubit.completeFix();
+      expect(adapter.queries.last['sort'], 'finishes');
+      await cubit.close();
+    });
+
+    test('Run 050 A1: an overtaken reply landing AFTER the newer request '
+        'failed goes up too', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      final fixedKey = (cubit.state as NutritionReviewLoaded).selectedKey;
+      adapter.hold = true;
+      final fix = cubit.completeFix();
+      await waitFor(adapter, 1);
+      final sort = cubit.setSort('worst');
+      await waitFor(adapter, 2);
+      adapter.failNext = true;
+      adapter.held[1].complete();
+      await sort;
+      adapter.lines = adapter.lines.sublist(1);
+      adapter.held[0].complete();
+      await fix;
+      final shown = cubit.state as NutritionReviewLoaded;
+      expect(shown.items.map((e) => e.key), isNot(contains(fixedKey)));
+      await cubit.close();
+    });
+
+    test('Run 050 A1: an overtaken reply OLDER than the screen never goes up '
+        'when a later request fails', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final fix = cubit.completeFix();
+      await waitFor(adapter, 1);
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 2);
+      adapter.held[1].complete();
+      await worst;
+      adapter.held[0].complete();
+      await fix;
+      final back = cubit.setSort('finishes');
+      await waitFor(adapter, 3);
+      adapter.failNext = true;
+      adapter.held[2].complete();
+      await back;
+      expect((cubit.state as NutritionReviewLoaded).sort, 'worst');
+      await cubit.close();
+    });
+
+    test('Run 050 A2: when BOTH fail across two buckets, the grouping goes '
+        'back under the bucket SHOWN, never the one requested', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final lines = cubit.setGrouped(false);
+      await waitFor(adapter, 1);
+      final chip = cubit.filter('no_match');
+      await waitFor(adapter, 2);
+      adapter.failNext = true;
+      adapter.held[0].complete();
+      await lines;
+      adapter.failNext = true;
+      adapter.held[1].complete();
+      await chip;
+      adapter.hold = false;
+      final shown = cubit.state as NutritionReviewLoaded;
+      expect(shown.bucket, isNull);
+      expect(shown.grouped, isTrue);
+      // The shown bucket's next reload keeps the unit on screen.
+      await cubit.completeFix();
+      expect(adapter.queries.last['group'], 'item');
+      await cubit.close();
+    });
+
     test('Run 048 A2: a superseded completeFix reload that FAILS never '
         'replaces the newer list with the error screen', () async {
       final adapter = _FakeAdapter(seed());

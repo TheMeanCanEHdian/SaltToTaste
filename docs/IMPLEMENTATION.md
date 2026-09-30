@@ -2049,6 +2049,55 @@ shows; the finishes paragraph rewritten. matcherVersion 18. Known limits
 (marked in code): apply-to-all into another recipe during that recipe's
 save, and a PUT whose own waits span a save, predate this batch.
 
+### Run 050's fixes: the multi-edit oracle and the exact pairing (matcher v19)
+
+Run 050 (both fleets on v18) showed the panel's pairing held on every
+single edit and broke on a save that combines edits: its "fewest edits"
+level credited a substitution across ingredients above keeping a person's
+decision, so a move plus a delete or an amount edit in one save lost a
+pick or swapped typed grams between two same-ingredient lines. The oracle
+had generated single edits only. So the oracle came first: each fuzz save
+now applies one to three edits, its explanation enumerator computes the
+fewest-op scripts over insert / delete / substitute / move with a
+cross-ingredient substitution costing a delete plus an insert (a flat cost
+would have endorsed half the swap), and on v18 it found 83 violations in
+1,000 seeds, every one on a multi-edit save. The pairing then went through
+a heuristic search (candidate alignments and a local climb over the
+engine's own layout cost) that reached zero but left thirteen of its pieces
+unkillable and two seeds broken — and was replaced by the principled form:
+`pairRowsToLines` is now an exact depth-first branch-and-bound that
+minimises `_layoutCost` (the script's cost, then its edits, then the
+decisions it drops, then the rows off their positions — the oracle's own
+ranking), each line taking an unused row of its exact text or its
+ingredient or none, with an admissible bound and a 10,000-expansion budget
+that falls back to the best layout found from the plain alignment. It is
+smaller than what it replaced (engine.dart −220 lines), every cost term
+and the bound, budget and fallback die under a named seed or scenario,
+and the oracle finds zero violations on more than 11,000 fresh multi-edit
+seeds including the two residual ones. A 60-line list shuffled whole with
+a quarter rewritten pairs in 76 ms (1.35 s before); an unedited library
+pairs in one alignment and writes nothing. Also in v19: the compute's
+version gate compares the ingredient-lines hash (a tags-only save no
+longer blocks a compute) and a tripped compute stamps its totals stale;
+the match PUT reads its body before loading the recipe, lays out the
+STORED recipe, re-reads it after its own waits, and accepts the line's
+text (`raw`) — a moved line answers 409 `line_moved` and writes nothing;
+the sheet, the fix panel and the queue send it and refresh on 409; the
+review GET's apply-to-all offer reads the paired rows; a skipped line
+whose amount was edited re-derives its grams (typed or derived) so an
+un-skip never counts the old weight; un-skip keeps a person's food and
+typed grams on a sub-recipe line; a re-attach keeps typed grams on any
+discarded medium. Grams: the density compound guard is general ("cream of
+tartar", "cream of coconut", "mustard/cumin/coriander/cardamom seeds",
+almond and apple butter fall through to the record's own portion), a named
+nut takes its record's cup over the generic "nuts" density, a powder never
+takes a "prepared with" record's drink cup, "small" is read only from the
+item's own words, quantity words may precede a flake salt, and a shredded
+or grated line takes the record's shredded/grated cup. Replay on snapshot
+13: 58 rows re-massed (all judged right), one recipe complete → partial
+(malted milk powder with no honest portion left): counted 12,956 / check
+512 / no grams 110 / no match 37 / complete 760.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

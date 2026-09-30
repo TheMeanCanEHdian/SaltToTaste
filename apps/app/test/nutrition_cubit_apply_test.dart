@@ -26,6 +26,13 @@ class _Adapter implements HttpClientAdapter {
   /// When set, the next PUT fails with a 500 envelope.
   bool failNextPut = false;
 
+  /// When set, the next PUT is refused as the server refuses a line a save
+  /// moved: 409 `line_moved`, naming where the line is now.
+  bool lineMovedNextPut = false;
+
+  /// How many times the rows were fetched (`GET …/nutrition/matches`).
+  int matchGets = 0;
+
   /// When set, an apply_to_all PUT waits here before answering — a sweep
   /// held open so a test can act while it runs.
   Completer<void>? gate;
@@ -67,6 +74,21 @@ class _Adapter implements HttpClientAdapter {
       if (sent['apply_to_all'] == true && gate != null) {
         await gate!.future;
       }
+      if (lineMovedNextPut) {
+        lineMovedNextPut = false;
+        return ResponseBody.fromString(
+          jsonEncode({
+            'error': {
+              'code': 'line_moved',
+              'message': 'That line has moved since it was read.',
+              'request_id': 'req-test',
+              'position': null,
+            },
+          }),
+          409,
+          headers: headers,
+        );
+      }
       if (failNextPut) {
         failNextPut = false;
         return ResponseBody.fromString(
@@ -100,6 +122,7 @@ class _Adapter implements HttpClientAdapter {
       );
     }
     if (path.endsWith('/nutrition/matches')) {
+      matchGets++;
       return ResponseBody.fromString(
         jsonEncode(_matches()),
         200,
@@ -188,7 +211,7 @@ void main() {
     await pumpEventQueue();
 
     expect(adapter.puts, [
-      {'fdc_id': 123456, 'apply_to_all': true},
+      {'raw': line.raw, 'fdc_id': 123456, 'apply_to_all': true},
     ]);
     expect(cubit.state.offer, isNull);
     final applied = cubit.state.applied!;
@@ -223,7 +246,7 @@ void main() {
     await cubit.applyToAll();
     await pumpEventQueue();
     expect(adapter.puts, [
-      {'confirmed': true, 'apply_to_all': true},
+      {'raw': line.raw, 'confirmed': true, 'apply_to_all': true},
     ]);
   });
 
@@ -267,7 +290,7 @@ void main() {
     await cubit.applyToAll();
     await pumpEventQueue();
     expect(adapter.puts, [
-      {'fdc_id': 123456, 'grams': 250, 'apply_to_all': true},
+      {'raw': line.raw, 'fdc_id': 123456, 'grams': 250, 'apply_to_all': true},
     ]);
   });
 
@@ -351,5 +374,33 @@ void main() {
     expect(cubit.state.applying, isFalse);
     // The app words a 500 for people; the point is that it is SAID.
     expect(cubit.state.error, isNotEmpty);
+  });
+
+  // Run 050 P4: the line's text travels with every write; a save since
+  // that moved the line is refused (409 line_moved) and the rows reload.
+  test('a write sends the line text it was made on', () async {
+    await boot(others: 41);
+    final line = flour();
+    await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+    await pumpEventQueue();
+    expect(adapter.puts.single, containsPair('raw', line.raw));
+    await cubit.applyToAll();
+    await pumpEventQueue();
+    expect(adapter.puts.last, containsPair('raw', line.raw));
+    expect(adapter.puts.last, containsPair('apply_to_all', true));
+  });
+
+  test('a line_moved refusal says so, writes nothing and reloads the rows '
+      'so the screen finds the line where it is now', () async {
+    await boot(others: 41);
+    final line = flour();
+    final gets = adapter.matchGets;
+    adapter.lineMovedNextPut = true;
+    await cubit.override(line.position, raw: line.raw, skipped: true);
+    await pumpEventQueue();
+    expect(adapter.matchGets, gets + 1);
+    expect(cubit.state.error, contains('moved'));
+    expect(cubit.state.overridingPosition, isNull);
+    expect(cubit.state.offer, isNull);
   });
 }

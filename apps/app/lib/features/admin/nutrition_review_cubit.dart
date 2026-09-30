@@ -153,6 +153,16 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   /// replacing) the new list (A3).
   int _shown = 0;
 
+  /// The ticket of the page-1 list on screen, and the newest superseded
+  /// reply that landed (its list, already built): when the request that
+  /// superseded it fails, that reply is newer than the screen and goes up
+  /// in its place, as does one landing after it failed ([_failed]) (Run
+  /// 050: a completeFix reload overtaken by a failing sort tap left the
+  /// fixed line listed and selected).
+  int _shownTicket = 0;
+  int _failed = 0;
+  ({int ticket, NutritionReviewLoaded list})? _overtaken;
+
   /// The order for this session, in either view (`finishes` | `worst`).
   String _sort = defaultSort;
 
@@ -253,34 +263,68 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       if (ticket != _requested) {
         return;
       }
+      _failed = ticket;
+      // An overtaken reply newer than the screen goes up in its place.
+      final overtaken = _overtaken;
+      _overtaken = null;
+      if (overtaken != null) {
+        _showOvertaken(overtaken.ticket, overtaken.list);
+      }
       // The latest request failed: the memory goes back to what the screen
       // shows — a superseded request's change too, whose own caller never
       // rewinds it (Run 049: setSort then filter both failing left `worst`
       // remembered under a `finishes` list, and the next tap sent nothing).
-      final shown = state;
-      if (shown is NutritionReviewLoaded) {
-        _sort = shown.sort;
-        if (groupedFor(shown.bucket) != shown.grouped) {
-          _groupedByBucket[shown.bucket] = shown.grouped;
-        }
-      }
+      _rewind();
       rethrow;
     }
-    if (isClosed || ticket != _requested) {
+    if (isClosed) {
       return;
     }
+    final list = _loadedFrom(
+      report,
+      bucket: bucket,
+      grouped: grouped,
+      sort: sort,
+      selectIndex: selectIndex,
+      stayOn: stayOn,
+    );
+    if (ticket != _requested) {
+      if (_failed == _requested) {
+        // The request that overtook it has already failed.
+        _showOvertaken(ticket, list);
+        _rewind();
+      } else if (ticket > (_overtaken?.ticket ?? 0)) {
+        _overtaken = (ticket: ticket, list: list);
+      }
+      return;
+    }
+    _overtaken = null;
+    _show(ticket, list);
+  }
+
+  /// Puts up an overtaken reply when it is newer than the screen.
+  void _showOvertaken(int ticket, NutritionReviewLoaded list) {
+    if (!isClosed && ticket > _shownTicket && state is NutritionReviewLoaded) {
+      _show(ticket, list);
+    }
+  }
+
+  /// The order and the grouping memory back to what the screen shows.
+  void _rewind() {
+    final shown = state;
+    if (shown is NutritionReviewLoaded) {
+      _sort = shown.sort;
+      if (groupedFor(shown.bucket) != shown.grouped) {
+        _groupedByBucket[shown.bucket] = shown.grouped;
+      }
+    }
+  }
+
+  void _show(int ticket, NutritionReviewLoaded list) {
     _nextPage = 2;
     _shown += 1;
-    emit(
-      _loadedFrom(
-        report,
-        bucket: bucket,
-        grouped: grouped,
-        sort: sort,
-        selectIndex: selectIndex,
-        stayOn: stayOn,
-      ),
-    );
+    _shownTicket = ticket;
+    emit(list);
   }
 
   /// (Re)loads from the first page under the [bucket] filter (null = all

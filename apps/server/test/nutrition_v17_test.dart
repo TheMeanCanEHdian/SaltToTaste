@@ -402,12 +402,14 @@ void main() {
   );
 
   // (Foundation record, SR sibling, a corpus volume line on it, its grams
-  // in snapshot 13 — the live run that fetched each sibling once).
+  // in snapshot 13 — the live run that fetched each sibling once; v19, Run
+  // 050: a shred on the sibling's 'cup, shredded' 70 g / 'cup grated' 110 g,
+  // not the medians' 79.5 g / 122 g).
   const siblings = <(int, int, String, double)>[
     (2346395, 170182, '2 cups raw pecan halves', 198), // 0719
     (1104647, 169230, '1 teaspoon garlic, minced to paste', 2.8), // 0504
-    (2346407, 169975, '3 cups thinly sliced green cabbage', 238.5), // 0542
-    (2258586, 170393, '2⅔ cups shredded carrots (4 carrots)', 325.33), // 0868
+    (2346407, 169975, '3 cups thinly sliced green cabbage', 210), // 0542
+    (2258586, 170393, '2⅔ cups shredded carrots (4 carrots)', 293.33), // 0868
     (2346405, 169988, '2 tablespoons minced celery', 15), // 0292
     (1999632, 168462, '1 cup baby spinach', 30), // 0603
     (2346388, 169248, '2 cups shredded iceberg lettuce', 144), // 1185

@@ -1,21 +1,25 @@
 // The pairing oracle: every recipe edit, then a compute, checked against
 // hidden line identities. Run
 //   SALT_CORPUS_DIR="…" dart test test/pairing_oracle_test.dart
-// Env: ORACLE_SEEDS (default 200), ORACLE_STEPS (edits per seed, default
-// 12), ORACLE_SEED (run that one seed only), ORACLE_SEED_BASE (the first
-// seed, default 0: a fresh range), ORACLE_SHOW (violations printed,
-// default 12).
+// Env: ORACLE_SEEDS (default 200), ORACLE_STEPS (saves per seed, default
+// 12), ORACLE_OPS_MAX (edits per save, 1..this many, default 3; 1 is the
+// single-op oracle, replaying its seeds exactly), ORACLE_SEED (run that
+// one seed only), ORACLE_SEED_BASE (the first seed, default 0: a fresh
+// range), ORACLE_SHOW (violations printed, default 12).
 //
 // SEMANTICS (what "correct" means here).
 //  * Every line carries a hidden identity; a person's decision (a skip, or a
 //    pick of 173468 with DISTINCT typed grams, so each pick is one token)
 //    belongs to an identity. The engine only ever sees texts: the stored
 //    rows' raws (old) and the lines' raws (new).
-//  * An edit's TEXT VIEW is the pair (old texts, new texts). Its
-//    explanations are the fewest-op scripts of {no-op, insert, delete,
-//    substitute one line's text, move one line} that turn the old texts
-//    into the new ones (a substitution is one op, never a delete + insert;
-//    an unchanged list is the no-op, never a swap of twins). Each
+//  * A save's TEXT VIEW is the pair (old texts, new texts); a save may
+//    carry several edits. Its explanations are the fewest-op scripts of
+//    {insert, delete, substitute one line's text, move one line} that turn
+//    the old texts into the new ones, where a substitution to ANOTHER
+//    ingredient counts two (it carries nothing: it is a delete + an
+//    insert), ties going to the fewest ops as written (an edit in place is
+//    one substitution, never a delete + insert; an unchanged list is the
+//    no-op, never a swap of twins) — see [_explanations]. Each
 //    explanation maps identities exactly: a shifted line keeps its decision,
 //    a deleted line's decision is dropped, a substituted line keeps it only
 //    when lineKeyOf is unchanged (an amount edit: a pick's typed grams may
@@ -75,6 +79,17 @@ const _others = {
 const _sp = 'Salt and pepper';
 const _oilHalf = '½ cup extra-virgin olive oil';
 const _oilQuarter = '¼ cup extra-virgin olive oil';
+
+/// Seeds outside the default range whose saves broke an earlier v19
+/// pairing (Run 050's fix batch, found at ORACLE_SEED_BASE 100000 to
+/// 800000): every run replays them. The last two broke the heuristic v19
+/// pairing (a re-layout after an FDC failure that was not a fixpoint; a
+/// local search stuck on a plateau) and pass under the exact search.
+const _regressionSeeds = [
+  100019, 100053, 100138, 100234, 100247, 100286, 101428, 101430, 101584, //
+  101912, 200035, 201411, 201570, 201839, 500644, 501143, 501571, 501663,
+  600490, 800027, 800136, 800321, 801056, 600340, 602070,
+];
 
 int _envInt(String name, int fallback) =>
     int.tryParse(Platform.environment[name] ?? '') ?? fallback;
@@ -167,66 +182,181 @@ bool _tokMatch(String want, String got) => want.startsWith('P~')
     : want == got;
 
 /// One explanation of an edit's text view: old index → new index (null:
-/// deleted) and the substituted old index, if any.
-typedef _Script = ({String name, List<int?> to, int? sub});
+/// deleted) and the old indices whose text it substitutes.
+typedef _Script = ({String name, List<int?> to, Set<int> subs, int cost});
 
-/// The fewest-op explanations turning texts [o] into [n] (see SEMANTICS).
-List<_Script> _explanations(List<String> o, List<String> n) {
-  bool same(List<String> a) {
-    if (a.length != n.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != n[i]) return false;
-    }
-    return true;
-  }
+/// The most ops one save may take: ORACLE_OPS_MAX (default 3; 1 is the
+/// single-op oracle: every save one edit, explained by one op).
+var _opsMax = _envInt('ORACLE_OPS_MAX', 3);
 
-  List<int> ids(int length) => [for (var k = 0; k < length; k++) k];
-  if (same(o)) return [(name: 'no-op', to: ids(o.length), sub: null)];
-  final out = <_Script>[];
-  if (o.length == n.length) {
-    final diff = [
-      for (var i = 0; i < o.length; i++)
-        if (o[i] != n[i]) i,
-    ];
-    if (diff.length == 1) {
-      out.add((name: 'sub ${diff[0]}', to: ids(o.length), sub: diff[0]));
-    }
-    for (var i = 0; i < o.length; i++) {
-      for (var j = 0; j < o.length; j++) {
-        if (i == j) continue;
-        final order = ids(o.length)
-          ..removeAt(i)
-          ..insert(j, i);
-        if (!same([for (final k in order) o[k]])) continue;
-        final to = List<int?>.filled(o.length, null);
-        for (final (p, k) in order.indexed) {
-          to[k] = p;
-        }
-        out.add((name: 'move $i→$j', to: to, sub: null));
+/// Time spent enumerating explanations (the fuzz reports its slowest seed).
+final _explainClock = Stopwatch();
+
+/// The length of the longest increasing run in [seq] (patience tails).
+int _lis(List<int> seq) {
+  final tails = <int>[];
+  for (final x in seq) {
+    var lo = 0;
+    var hi = tails.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (tails[mid] < x) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
       }
     }
-  } else if (n.length == o.length - 1) {
-    for (var i = 0; i < o.length; i++) {
-      if (!same([...o]..removeAt(i))) continue;
-      out.add((
-        name: 'delete $i',
-        to: [
-          for (var k = 0; k < o.length; k++)
-            k < i ? k : (k == i ? null : k - 1),
-        ],
-        sub: null,
-      ));
-    }
-  } else if (n.length == o.length + 1) {
-    for (var j = 0; j < n.length; j++) {
-      if (!same([...o]..insert(j, n[j]))) continue;
-      out.add((
-        name: 'insert $j',
-        to: [for (var k = 0; k < o.length; k++) k < j ? k : k + 1],
-        sub: null,
-      ));
+    if (lo == tails.length) {
+      tails.add(x);
+    } else {
+      tails[lo] = x;
     }
   }
+  return tails.length;
+}
+
+/// The fewest-op explanations turning texts [o] into [n] (see SEMANTICS);
+/// empty when none costs at most 2 × [_opsMax].
+///
+/// A script is an injective partial map old → new. It costs its deletes
+/// (unmapped old) + inserts (unmapped new) + substitutions (a mapped line
+/// whose text differs: one op for the same ingredient — an amount edit —
+/// two for another, which carries nothing, like the delete + insert it
+/// is) + moves, where moves = mapped − the longest run of mapped lines
+/// already in order (the fewest single-line moves; exact). A moved and
+/// edited line is a move and a substitution. Of the cheapest scripts, the
+/// ones with the fewest ops as written (every substitution one) are kept,
+/// so an edit in place is one substitution, never a delete + an insert.
+/// Search: depth first over the old lines (map to an unused new line, same
+/// text first, or delete), pruned by cost so far + the moves already
+/// forced (mapped − LIS so far never falls) + max(excess, missing) of the
+/// texts still unassigned (one op fixes at most one of each), iterative
+/// deepening on the cost. Bound: ORACLE_OPS_MAX (3) edits per save over ≤
+/// ~25 lines, so a cost ≤ 6; the fuzz reports its slowest seed.
+List<_Script> _explanations(List<String> o, List<String> n) {
+  for (var k = 0; k <= 2 * _opsMax; k++) {
+    final out = _scriptsWithin(o, n, k);
+    if (out.isEmpty) continue;
+    final ops = out.map(_opsOf).reduce(min);
+    return [
+      for (final s in out)
+        if (_opsOf(s) == ops) s,
+    ];
+  }
+  return const [];
+}
+
+/// A script's ops as written (a substitution one op, whatever it edits).
+int _opsOf(_Script s) => s.name == 'no-op' ? 0 : s.name.split(', ').length;
+
+/// Every script turning [o] into [n] at a cost of at most [k]
+/// ([_explanations]).
+List<_Script> _scriptsWithin(List<String> o, List<String> n, int k) {
+  final keyOf = {
+    for (final t in {...o, ...n}) t: lineKeyOf(_line(t)),
+  };
+  final out = <_Script>[];
+  final to = List<int?>.filled(o.length, null);
+  final used = List.filled(n.length, false);
+  final seq = <int>[]; // the mapped new indices, in old order
+  final restOld = <String, int>{}; // texts of old lines not yet assigned
+  final unused = <String, int>{}; // texts of new lines not yet taken
+  for (final t in o) {
+    restOld[t] = (restOld[t] ?? 0) + 1;
+  }
+  for (final t in n) {
+    unused[t] = (unused[t] ?? 0) + 1;
+  }
+  int textBound() {
+    var excess = 0;
+    var missing = 0;
+    for (final t in {...restOld.keys, ...unused.keys}) {
+      final d = (restOld[t] ?? 0) - (unused[t] ?? 0);
+      if (d > 0) excess += d;
+      if (d < 0) missing -= d;
+    }
+    return max(excess, missing);
+  }
+
+  void emit(int cost) {
+    final subs = {
+      for (final (i, j) in to.indexed)
+        if (j != null && o[i] != n[j]) i,
+    };
+    // Name the moves by one longest in-order run (display only).
+    final pairs = [
+      for (final (i, j) in to.indexed)
+        if (j != null) (i, j),
+    ];
+    final keep = <int>{};
+    final len = List.filled(pairs.length, 1);
+    final prev = List<int?>.filled(pairs.length, null);
+    for (var a = 0; a < pairs.length; a++) {
+      for (var c = 0; c < a; c++) {
+        if (pairs[c].$2 < pairs[a].$2 && len[c] + 1 > len[a]) {
+          len[a] = len[c] + 1;
+          prev[a] = c;
+        }
+      }
+    }
+    var at = pairs.isEmpty ? null : 0;
+    for (var a = 1; a < pairs.length; a++) {
+      if (len[a] > len[at!]) at = a;
+    }
+    for (; at != null; at = prev[at]) {
+      keep.add(pairs[at].$1);
+    }
+    final ops = [
+      for (final (i, j) in to.indexed)
+        if (j == null) 'delete $i',
+      for (final (i, j) in pairs)
+        if (!keep.contains(i)) 'move $i→$j',
+      for (final i in subs) 'sub $i',
+      for (var j = 0; j < n.length; j++)
+        if (!used[j]) 'insert $j',
+    ];
+    out.add((
+      name: ops.isEmpty ? 'no-op' : ops.join(', '),
+      to: [...to],
+      subs: subs,
+      cost: cost,
+    ));
+  }
+
+  // [cost]: the deletes and substitutions so far (another ingredient's
+  // counting two).
+  void walk(int i, int cost) {
+    final bound = cost + seq.length - _lis(seq) + textBound();
+    if (bound > k) return;
+    if (i == o.length) {
+      emit(bound); // now exact: inserts = the texts left unused
+      return;
+    }
+    final t = o[i];
+    restOld[t] = restOld[t]! - 1;
+    // Same text first, then a substitution, then a delete.
+    for (final same in [true, false]) {
+      for (var j = 0; j < n.length; j++) {
+        if (used[j] || (n[j] == t) != same) continue;
+        used[j] = true;
+        unused[n[j]] = unused[n[j]]! - 1;
+        seq.add(j);
+        to[i] = j;
+        walk(
+          i + 1,
+          same ? cost : cost + (keyOf[t] == keyOf[n[j]] ? 1 : 2),
+        );
+        to[i] = null;
+        seq.removeLast();
+        unused[n[j]] = unused[n[j]]! + 1;
+        used[j] = false;
+      }
+    }
+    walk(i + 1, cost + 1);
+    restOld[t] = restOld[t]! + 1;
+  }
+
+  walk(0, 0);
   return out;
 }
 
@@ -241,17 +371,25 @@ bool _isDecision(String t) => t != '-';
 
 /// The acceptable layouts after [before] → [after] with decisions
 /// [tokens] (fewest lost among the fewest-op explanations), and the
-/// explanations they come from.
+/// explanations they come from. With [slack] (a diagnostic), every layout
+/// of every script costing at most [slack] more, however many it loses.
 (List<List<String>>, List<String>) _acceptable(
   List<_Ln> before,
   List<_Ln> after,
-  Map<int, String> tokens,
-) {
-  final scripts = _explanations(
-    [for (final l in before) l.line.raw],
-    [for (final l in after) l.line.raw],
-  );
-  if (scripts.isEmpty) throw StateError('oracle: no single edit explains it');
+  Map<int, String> tokens, {
+  int? slack,
+}) {
+  final o = [for (final l in before) l.line.raw];
+  final n = [for (final l in after) l.line.raw];
+  _explainClock.start();
+  var scripts = _explanations(o, n);
+  if (slack != null && scripts.isNotEmpty) {
+    scripts = _scriptsWithin(o, n, scripts.first.cost + slack);
+  }
+  _explainClock.stop();
+  if (scripts.isEmpty) {
+    throw StateError('oracle: no script of ≤ $_opsMax op(s) explains it');
+  }
   final byLost = <int, Map<String, (List<String>, List<String>)>>{};
   for (final s in scripts) {
     final lay = List.filled(after.length, '-');
@@ -260,17 +398,20 @@ bool _isDecision(String t) => t != '-';
       final t = tokens[l.id];
       if (t == null) continue;
       final at = s.to[k];
+      final sub = s.subs.contains(k);
       if (at == null ||
-          (s.sub == k && lineKeyOf(l.line) != lineKeyOf(after[at].line))) {
+          (sub && lineKeyOf(l.line) != lineKeyOf(after[at].line))) {
         lost++;
         continue;
       }
-      lay[at] = s.sub == k && t.startsWith('P:') ? 'P~${t.substring(2)}' : t;
+      lay[at] = sub && t.startsWith('P:') ? 'P~${t.substring(2)}' : t;
     }
     final entry = (byLost[lost] ??= {})[lay.join('|')] ??= (lay, <String>[]);
     entry.$2.add(s.name);
   }
-  final fewest = byLost[byLost.keys.reduce(min)]!.values;
+  final fewest = slack != null
+      ? [for (final m in byLost.values) ...m.values]
+      : byLost[byLost.keys.reduce(min)]!.values;
   return (
     [for (final e in fewest) e.$1],
     [for (final e in fewest) e.$2.join('/')],
@@ -456,9 +597,29 @@ class _Sim {
     int at = 0,
     bool skip = true,
     int failAfter = 0,
-  }) async {
+  }) {
     final before = flat;
     mutate();
+    return saved(
+      name,
+      before,
+      mode: mode,
+      at: at,
+      skip: skip,
+      failAfter: failAfter,
+    );
+  }
+
+  /// [edit] for lines already edited (one or several ops) from [before]:
+  /// saved once, computed under [mode], checked.
+  Future<String> saved(
+    String name,
+    List<_Ln> before, {
+    String mode = 'plain',
+    int at = 0,
+    bool skip = true,
+    int failAfter = 0,
+  }) async {
     final after = flat;
     final line = at % after.length;
     final pre = Map.of(tokens);
@@ -604,6 +765,22 @@ class _Sim {
         }
       }
       if (kinds.isEmpty) kinds.add('MOVED');
+      // Not the semantics, a tag: what was stored IS the layout of a
+      // cheapest script losing more (MORE_LOST), or of a script costing one
+      // more (COSTLIER; e.g. an exact-text reading over two substitutions).
+      bool storedAt(int slack) =>
+          before.isNotEmpty &&
+          _acceptable(before, after, pre, slack: slack).$1.any(
+            (lay) => [
+              for (final (p, g) in got.indexed)
+                _tokMatch(overlays[p] ?? lay[p], g),
+            ].every((ok) => ok),
+          );
+      if (storedAt(0)) {
+        kinds.add('MORE_LOST');
+      } else if (storedAt(1)) {
+        kinds.add('COSTLIER');
+      }
       final b = StringBuffer(
         '${kinds.join('+')}: $what\n'
         '  ${want.length} acceptable layout(s), the nearest shown; old line '
@@ -1090,10 +1267,211 @@ void main() {
       await sim.edit('delete line 0', () => sim.deleteAt(0));
       verdict(sim);
     });
+
+    // Multi-edit saves (Run 050): several ops, ONE save, then the compute.
+    const onion = '1 large onion, chopped coarse';
+    const celery = '2 celery ribs, chopped coarse';
+    const oilOne = '1 cup extra-virgin olive oil'; // an amount variant
+    test("Case A (Run 050, Sonnet): [½ cup oil, 'Salt and pepper', ¼ cup "
+        'oil (pick 5 g)]; one save deletes the ½ cup line and moves the ¼ '
+        'cup line up — the untouched ¼ cup line keeps its pick', () async {
+      final sim = sim0()
+        ..start([
+          [_oilHalf, _sp, _oilQuarter],
+        ]);
+      await sim.first();
+      await sim.decide(2, g: 5);
+      final before = sim.flat;
+      sim
+        ..deleteAt(0)
+        ..moveTo(1, 0, 0);
+      await sim.saved('delete line 0 + move the ¼ cup oil to 0', before);
+      verdict(sim);
+    });
+
+    test(
+      'Case B (Run 050, Sonnet): [onion, ½ cup oil (pick 3 g), celery, '
+      '¼ cup oil (pick 9 g)]; one save moves the ¼ cup line up and edits '
+      'the ½ cup line to 1 cup — the untouched ¼ cup line keeps its 9 g',
+      () async {
+        final sim = sim0()
+          ..start([
+            [onion, _oilHalf, celery, _oilQuarter],
+          ]);
+        await sim.first();
+        await sim.decide(1, g: 3);
+        await sim.decide(3, g: 9);
+        final before = sim.flat;
+        sim
+          ..moveTo(3, 0, 1)
+          ..setText(2, oilOne);
+        await sim.saved('move ¼ cup oil to 1 + amount-edit ½ → 1 cup', before);
+        verdict(sim);
+      },
+    );
+
+    test('swap (Run 050, Opus; four ops): [onion, ½ cup oil (skip), ¼ cup '
+        'oil (pick 3 g)]; one save deletes the onion, edits ½ → ¾ and ¼ → '
+        '1 cup, appends "Lemon wedges" — the skip and the pick stay on '
+        'their own lines', () async {
+      final was = _opsMax;
+      _opsMax = 4;
+      addTearDown(() => _opsMax = was);
+      final sim = sim0()
+        ..start([
+          [onion, _oilHalf, _oilQuarter],
+        ]);
+      await sim.first();
+      await sim.decide(1, skip: true);
+      await sim.decide(2, g: 3);
+      final before = sim.flat;
+      sim
+        ..deleteAt(0)
+        ..setText(0, '¾ cup extra-virgin olive oil')
+        ..setText(1, oilOne)
+        ..insertAt(2, 'Lemon wedges');
+      await sim.saved('delete onion + ½ → ¾ + ¼ → 1 cup + Lemon', before);
+      verdict(sim);
+    });
+
+    test("S11 (O2 pin, the multi-op fuzz's seed 218): the traceback's "
+        'diagonal-first tie-break — a save deletes the celery and the '
+        '"2 teaspoons salt" and moves the last "Salt" (pick) up beside its '
+        'twin: the pick stays on a "Salt" line', () async {
+      // Three ops in one save, whatever ORACLE_OPS_MAX the run sets.
+      final was = _opsMax;
+      _opsMax = max(_opsMax, 3);
+      addTearDown(() => _opsMax = was);
+      final sim = sim0()
+        ..start([
+          [
+            _sp, '8 cups chicken broth', _oilHalf, _oilHalf, celery, //
+            '2 teaspoons salt', 'Salt', _oilHalf, 'Lemon wedges', 'Salt',
+          ],
+        ]);
+      await sim.first();
+      await sim.decide(1, skip: true);
+      await sim.decide(4, skip: true);
+      await sim.decide(9, g: 5);
+      final before = sim.flat;
+      sim
+        ..deleteAt(4)
+        ..moveTo(8, 0, 5)
+        ..deleteAt(4);
+      await sim.saved(
+        'delete celery + move the last Salt to 5 + delete '
+        '"2 teaspoons salt"',
+        before,
+      );
+      verdict(sim);
+    });
+
+    test(
+      "S12 (O2 pin, the multi-op fuzz's seed 633): the leftover pass's "
+      "rank, a person's decision first — [¾ cup oil, Pepper, garlic, ¼ cup "
+      'oil (pick), ¾ cup oil ×3 (skips), "2 teaspoons salt"]; a save swaps '
+      'the first two and deletes one skipped copy: every skip survives',
+      () async {
+        const oil = '¾ cup extra-virgin olive oil';
+        final sim = sim0()
+          ..start([
+            [
+              oil, 'Pepper', '4 garlic cloves, peeled', _oilQuarter, //
+              oil, oil, oil, '2 teaspoons salt',
+            ],
+          ]);
+        await sim.first();
+        await sim.decide(3, g: 5);
+        for (final p in [4, 5, 6]) {
+          await sim.decide(p, skip: true);
+        }
+        final before = sim.flat;
+        sim
+          ..swap(0, 0)
+          ..deleteAt(6);
+        await sim.saved('swap lines 0,1 + delete line 6', before);
+        verdict(sim);
+      },
+    );
+
+    test("S13 (O2 pin, the multi-op fuzz's seed 288): the leftover pass's "
+        'exact text before the ingredient — ["2 teaspoons salt", ¾ cup oil '
+        '(pick), Pecorino, salt (pick), ½ cup oil, salt, salt (pick)]; a '
+        'save edits the ¾ cup oil to "2 teaspoons salt" and swaps the ½ cup '
+        'oil down: the moved ½ cup oil keeps its own (engine) row', () async {
+      const salt = '2 teaspoons salt';
+      // Three ops in one save, whatever ORACLE_OPS_MAX the run sets.
+      final was = _opsMax;
+      _opsMax = max(_opsMax, 3);
+      addTearDown(() => _opsMax = was);
+      final sim = sim0()
+        ..start([
+          [
+            salt, '¾ cup extra-virgin olive oil', //
+            'Grated Pecorino Romano cheese', salt, _oilHalf, salt, salt,
+          ],
+        ]);
+      await sim.first();
+      for (final p in [1, 3, 6]) {
+        await sim.decide(p, g: 5 + p);
+      }
+      final before = sim.flat;
+      sim
+        ..setText(1, salt)
+        ..swap(0, 4);
+      await sim.saved('¾ cup oil → "2 teaspoons salt" + swap 4,5', before);
+      verdict(sim);
+    });
+
+    test('budget: 60 corpus lines shuffled whole with a quarter rewritten '
+        'in one save (a synthesized edit, far past the oracle) — the search '
+        'stops at pairingBudget with the best layout it found: never a row '
+        'twice, a row only on a line of its text or ingredient, and more '
+        'rows on a line of their text than the alignment it starts from', () {
+      final rng = Random(7);
+      final was = [for (var i = 0; i < 60; i++) pool[rng.nextInt(pool.length)]];
+      final rows = [
+        for (final (i, raw) in was.indexed)
+          IngredientMatchRow(
+            recipeId: 'r',
+            position: i,
+            raw: raw,
+            fdcId: null,
+            description: null,
+            dataType: null,
+            confidence: 0,
+            grams: null,
+            gramSource: null,
+            status: i % 3 == 0 ? 'skipped' : 'auto',
+            itemKey: lineKeyOf(_line(raw)),
+          ),
+      ];
+      final now = [...was]..shuffle(rng);
+      for (var k = 0; k < 15; k++) {
+        now[rng.nextInt(60)] = pool[rng.nextInt(pool.length)];
+      }
+      final lines = [for (final raw in now) _line(raw)];
+      int exact(List<IngredientMatchRow?> paired) => [
+        for (final (at, row) in paired.indexed)
+          if (row?.raw == lines[at].raw) at,
+      ].length;
+      final paired = pairRowsToLines(rows, lines);
+      final seed = pairRowsToLines(rows, lines, budget: 0);
+      final taken = [for (final row in paired) ?row?.position];
+      expect(taken.toSet(), hasLength(taken.length));
+      for (final (at, row) in paired.indexed) {
+        if (row != null && row.raw != lines[at].raw) {
+          expect(row.itemKey, lineKeyOf(lines[at]));
+          expect(row.itemKey, isNotEmpty);
+        }
+      }
+      expect(exact(paired), greaterThan(exact(seed)));
+    });
   }, skip: skipIfNoCorpus);
 
   test(
-    'fuzz: seeded edit scripts (0405 whole, or dense lists of repeated '
+    'fuzz: seeded saves of 1..ORACLE_OPS_MAX edits each (0405 whole, or '
+    'dense lists of repeated '
     'and same-ingredient corpus lines) with random decisions, the stale '
     'window, a write mid-compute and FDC failing mid-compute',
     () async {
@@ -1117,9 +1495,18 @@ void main() {
       const newQueryBag = ['plain', 'stale', 'mid', 'mid', 'fail', 'fail'];
       final found = <(int, _Violation)>[];
       final ran = <String, int>{};
+      final mixOf = <_Violation, String>{};
+      var slowest = (seed: -1, ms: -1, explainMs: -1);
       for (final seed
-          in one != null ? [one] : [for (var s = 0; s < seeds; s++) base + s]) {
+          in one != null
+              ? [one]
+              : [
+                  for (var s = 0; s < seeds; s++) base + s,
+                  ..._regressionSeeds,
+                ]) {
         final rng = Random(seed);
+        final clock = Stopwatch()..start();
+        _explainClock.reset();
         final (sim, close) = open();
         try {
           if (rng.nextInt(5) < 2) {
@@ -1147,28 +1534,55 @@ void main() {
 
           await decideSome(3);
           for (var s = 0; s < steps; s++) {
-            final (name, mutate) = sim.randomEdit(rng, pool, variants);
-            final kind = name.split(' ').first;
+            // One save of 1..ORACLE_OPS_MAX edits (the single-op mode
+            // draws no count, so its seeds replay the one-edit fuzz).
+            final before = sim.flat;
+            final names = <String>[];
+            final kinds = <String>[];
+            for (
+              var k = _opsMax == 1 ? 1 : 1 + rng.nextInt(_opsMax);
+              k > 0;
+              k--
+            ) {
+              final (name, mutate) = sim.randomEdit(rng, pool, variants);
+              mutate();
+              names.add(name);
+              kinds.add(name.split(' ').first);
+            }
+            final mix = (kinds..sort()).join('+');
             // A compute asks FDC only for a query it never asked, so the
             // edits that bring one carry the interleavings more often.
-            final bag = kind == 'insert' || kind == 'ingredient-edit'
+            final bag =
+                kinds.any((k) => k == 'insert' || k == 'ingredient-edit')
                 ? newQueryBag
                 : modeBag;
-            final mode = await sim.edit(
-              'seed $seed step $s: $name',
-              mutate,
+            final seen = sim.violations.length;
+            final mode = await sim.saved(
+              'seed $seed step $s: ${names.join(' + ')}',
+              before,
               mode: bag[rng.nextInt(bag.length)],
               at: rng.nextInt(1 << 20),
               skip: rng.nextBool(),
               failAfter: rng.nextInt(2),
             );
-            ran['$kind/$mode'] = (ran['$kind/$mode'] ?? 0) + 1;
+            ran['$mix/$mode'] = (ran['$mix/$mode'] ?? 0) + 1;
+            for (final v in sim.violations.skip(seen)) {
+              mixOf[v] = '$mix/$mode';
+            }
             await decideSome(2);
           }
         } finally {
           close();
         }
         found.addAll([for (final v in sim.violations) (seed, v)]);
+        final explainMs = _explainClock.elapsedMilliseconds;
+        if (explainMs > slowest.explainMs) {
+          slowest = (
+            seed: seed,
+            ms: clock.elapsedMilliseconds,
+            explainMs: explainMs,
+          );
+        }
       }
       final byKind = <String, int>{};
       final byOp = <String, int>{};
@@ -1176,17 +1590,29 @@ void main() {
         for (final k in v.kinds) {
           byKind[k] = (byKind[k] ?? 0) + 1;
         }
-        final op = RegExp(r'step \d+: (\S+).*\[(\w+);').firstMatch(v.text);
-        final tag = op == null ? 'first compute' : '${op[1]}/${op[2]}';
+        final tag = mixOf[v] ?? 'first compute';
         byOp[tag] = (byOp[tag] ?? 0) + 1;
       }
-      final runs = [for (final k in ran.keys.toList()..sort()) '$k=${ran[k]}'];
+      // One op: each kind/mode; several: saves by op count/mode.
+      final runsBy = <String, int>{};
+      for (final MapEntry(key: k, value: c) in ran.entries) {
+        final tag = _opsMax == 1
+            ? k
+            : '${k.split('/').first.split('+').length} op(s)/'
+                  '${k.split('/').last}';
+        runsBy[tag] = (runsBy[tag] ?? 0) + c;
+      }
+      final runs = [
+        for (final k in runsBy.keys.toList()..sort()) '$k=${runsBy[k]}',
+      ];
       final hitSeeds = {for (final (s, _) in found) s};
       print(
-        'pairing oracle fuzz: ${one ?? seeds} seed(s) x $steps edits; '
-        'edits run (kind/mode): ${runs.join(' ')}\n'
+        'pairing oracle fuzz: ${one ?? seeds} seed(s) x $steps saves of '
+        '1..$_opsMax edit(s); saves run: ${runs.join(' ')}\n'
         'violations: ${found.length} in ${hitSeeds.length} seed(s); '
-        'by kind $byKind; by edit/mode $byOp',
+        'by kind $byKind; by edit mix/mode $byOp\n'
+        'slowest enumeration: seed ${slowest.seed}, '
+        '${slowest.explainMs} ms of ${slowest.ms} ms',
       );
       for (final (seed, v) in found.take(show)) {
         print('--- seed $seed (rerun: ORACLE_SEED=$seed)\n${v.text}');

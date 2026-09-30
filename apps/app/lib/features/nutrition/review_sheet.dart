@@ -632,7 +632,11 @@ class _MatchRowState extends State<_MatchRow> {
           // admin queue as resolved (review B7).
           onPressed: busy
               ? null
-              : () => cubit.override(widget.match.position, skipped: false),
+              : () => cubit.override(
+                  widget.match.position,
+                  raw: widget.match.raw,
+                  skipped: false,
+                ),
         ),
         _Action(
           icon: FLucideIcons.slidersHorizontal,
@@ -657,14 +661,22 @@ class _MatchRowState extends State<_MatchRow> {
             label: 'Confirm',
             onPressed: busy
                 ? null
-                : () => cubit.override(widget.match.position, confirmed: true),
+                : () => cubit.override(
+                    widget.match.position,
+                    raw: widget.match.raw,
+                    confirmed: true,
+                  ),
           ),
         _Action(
           icon: FLucideIcons.ban,
           label: heldSkipLabel,
           onPressed: busy
               ? null
-              : () => cubit.override(widget.match.position, skipped: true),
+              : () => cubit.override(
+                  widget.match.position,
+                  raw: widget.match.raw,
+                  skipped: true,
+                ),
         ),
       ]);
     }
@@ -695,7 +707,11 @@ class _MatchRowState extends State<_MatchRow> {
           label: 'Confirm',
           onPressed: busy
               ? null
-              : () => cubit.override(widget.match.position, confirmed: true),
+              : () => cubit.override(
+                  widget.match.position,
+                  raw: widget.match.raw,
+                  confirmed: true,
+                ),
         ),
       if (b == MatchBucket.check && widget.match.grams != null)
         _Action(
@@ -703,14 +719,22 @@ class _MatchRowState extends State<_MatchRow> {
           label: 'Confirm as-is',
           onPressed: busy
               ? null
-              : () => cubit.override(widget.match.position, confirmed: true),
+              : () => cubit.override(
+                  widget.match.position,
+                  raw: widget.match.raw,
+                  confirmed: true,
+                ),
         ),
       _Action(
         icon: FLucideIcons.ban,
         label: 'Skip',
         onPressed: busy
             ? null
-            : () => cubit.override(widget.match.position, skipped: true),
+            : () => cubit.override(
+                widget.match.position,
+                raw: widget.match.raw,
+                skipped: true,
+              ),
       ),
     ]);
   }
@@ -813,7 +837,11 @@ class _GuidedFlowState extends State<_GuidedFlow> {
                   // failure the line stays and the error strip explains.
                   onPress: widget.busy
                       ? null
-                      : () => cubit.override(m.position, skipped: true),
+                      : () => cubit.override(
+                          m.position,
+                          raw: m.raw,
+                          skipped: true,
+                        ),
                   child: const Text('Skip line'),
                 ),
               const SizedBox(width: 8),

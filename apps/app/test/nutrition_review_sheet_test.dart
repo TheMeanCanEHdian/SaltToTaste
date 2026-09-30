@@ -13,6 +13,15 @@ import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 import 'package:salt_app/features/nutrition/review_sheet.dart';
 
+/// Every override names the line it was made on: `raw` is the text of the
+/// row shown at [position], so the server can refuse a write whose line
+/// moved (409 line_moved). Dropping `raw` at any call site fails here.
+void expectRawSent(NutritionState state, int position, String? raw) => expect(
+  raw,
+  state.matches!.singleWhere((m) => m.position == position).raw,
+  reason: 'override($position) must send the raw it was made on',
+);
+
 /// Seeds match state and never touches the network.
 class _SeededCubit extends NutritionCubit {
   _SeededCubit(NutritionState s) : super(NutritionRepository(Dio()), 'slug') {
@@ -26,11 +35,13 @@ class _SeededCubit extends NutritionCubit {
 
   Future<void> override(
     int position, {
+    String? raw,
     int? fdcId,
     double? grams,
     bool? confirmed,
     bool? skipped,
   }) async {
+    expectRawSent(state, position, raw);
     overrides.add((position: position, fdcId: fdcId, grams: grams));
   }
 }
@@ -46,11 +57,13 @@ class _FlowCubit extends _SeededCubit {
 
   Future<void> override(
     int position, {
+    String? raw,
     int? fdcId,
     double? grams,
     bool? confirmed,
     bool? skipped,
   }) async {
+    expectRawSent(state, position, raw);
     overrides.add((position: position, fdcId: fdcId, grams: grams));
     emit(state.copyWith(overridingPosition: position, clearError: true));
     final error = failWith;
@@ -551,6 +564,22 @@ void main() {
     expect(find.text('Change the match & set the amount'), findsOneWidget);
     expect(find.textContaining('cached 3 wk ago'), findsOneWidget);
     expect(find.text('Search live'), findsOneWidget);
+  });
+
+  testWidgets('every action on a row sends the raw it was made on: Confirm '
+      'as-is, Skip and Include again (the fake asserts it)', (tester) async {
+    final cubit = await open(tester);
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Skip').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Skipped'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Include again'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Include again'));
+    await tester.pumpAndSettle();
+    expect(cubit.overrides, hasLength(3));
   });
 
   testWidgets('"Confirm as-is" is offered only for a weak match that has an '

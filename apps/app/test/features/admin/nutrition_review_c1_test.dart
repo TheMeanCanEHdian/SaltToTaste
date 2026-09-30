@@ -902,7 +902,10 @@ void main() {
       await tester.tap(find.text('Confirm'));
       await tester.pumpAndSettle();
       expect(adapter.puts.single.$1, endsWith('/matches/2'));
-      expect(adapter.puts.single.$2, {'confirmed': true});
+      expect(adapter.puts.single.$2, {
+        'raw': _macSalt['raw'],
+        'confirmed': true,
+      });
     });
 
     testWidgets('the oysters in the shell, no grams: never a plain Confirm', (
@@ -1177,7 +1180,10 @@ void main() {
       ]);
       await tester.tap(find.text('Confirm as-is'));
       await tester.pumpAndSettle();
-      expect(adapter.puts.single.$2, {'confirmed': true});
+      expect(adapter.puts.single.$2, {
+        'raw': _baguette['raw'],
+        'confirmed': true,
+      });
       // Not 3: Cheesy Garlic Bread is finished by the confirm itself.
       expect(
         find.textContaining(
@@ -1188,7 +1194,11 @@ void main() {
       );
       await tester.tap(find.text('Apply to 6 lines'));
       await tester.pumpAndSettle();
-      expect(adapter.puts.last.$2, {'confirmed': true, 'apply_to_all': true});
+      expect(adapter.puts.last.$2, {
+        'raw': _baguette['raw'],
+        'confirmed': true,
+        'apply_to_all': true,
+      });
       expect(
         find.textContaining(
           '2 recipes are now complete, as promised.',
@@ -1313,7 +1323,10 @@ void main() {
         adapter.puts.single.$1,
         '/api/v1/recipes/chana-masala/nutrition/matches/2',
       );
-      expect(adapter.puts.single.$2, {'skipped': true});
+      expect(adapter.puts.single.$2, {
+        'raw': _ginger()['raw'],
+        'skipped': true,
+      });
     });
 
     testWidgets('a plain Confirm that leaves the line in No grams keeps the '
@@ -1324,7 +1337,7 @@ void main() {
       expect(adapter.queries, hasLength(1));
       await tester.tap(find.text('Confirm'));
       await tester.pumpAndSettle();
-      expect(adapter.puts.single.$2, {'confirmed': true});
+      expect(adapter.puts.single.$2, {'raw': _satay['raw'], 'confirmed': true});
       expect(adapter.queries, hasLength(1), reason: 'the queue did not move');
       expect(find.text('Confirm with amount'), findsOneWidget);
     });

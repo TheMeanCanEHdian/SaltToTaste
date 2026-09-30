@@ -253,8 +253,13 @@ const Map<String, String> _synonyms = {
 /// powders, water chestnuts, ricotta, cream cheese and oil-packed tomatoes
 /// on their record's own portion) and Run 049: flake and coarse sea salt
 /// only as the line's own food (and its plus part, and more spellings), a
-/// per-item volume paren the parse kept.
-const int matcherVersion = 18;
+/// per-item volume paren the parse kept; 19 = Run 050's grams: a density
+/// key that only modifies a compound ('cream of tartar', 'mustard seeds',
+/// almond and apple butter) and a named nut ('nuts') on their record's
+/// own portion, no drink's portion for its powder, a shredded or grated
+/// portion for a shred, 'small' read from the item's own words, and
+/// quantity words before a flake salt.
+const int matcherVersion = 19;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

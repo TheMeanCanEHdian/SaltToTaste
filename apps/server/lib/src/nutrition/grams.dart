@@ -184,9 +184,10 @@ const List<(String, double)> _densities = [
   ('dried rosemary', 0.24),
   // Whole peppercorns (sweep accuracy batch): 'black pepper' (ground) sized
   // them. FDC 170931 "Spices, pepper, black" 'tsp, whole' = 2.9 g. No whole
-  // MUSTARD seed entry: FDC's only record is ground (170929, tsp = 2.0 g),
-  // which sized whole seeds at about half; they stay on 'mustard' (1.05)
-  // until a whole-seed density is sourced (refix round 2).
+  // MUSTARD seed entry: FDC's only record is ground (170929, tsp = 2.0 g).
+  // Prepared 'mustard' (1.05) weighed them at 2.5x that record (Run 050),
+  // so a seed takes its record's own portion ([_densityOf]) until a
+  // whole-seed density is sourced.
   ('peppercorn', 0.59),
   ('black peppercorn', 0.59), // beats 'black pepper' (ground) by length
 ];
@@ -583,21 +584,26 @@ double? _tableLookup(
   List<(String, double)> table,
   String normalizedItem, {
   bool words = false,
+}) => _tableEntry(table, normalizedItem, words: words)?.$2;
+
+(String, double)? _tableEntry(
+  List<(String, double)> table,
+  String normalizedItem, {
+  bool words = false,
 }) {
   // Longest matching key wins, so "sour cream" beats "cream" regardless of
   // table order.
-  String? bestKey;
-  double? bestValue;
-  for (final (key, value) in table) {
+  (String, double)? best;
+  for (final entry in table) {
+    final key = entry.$1;
     if ((words
             ? _keyAsWord(key).hasMatch(normalizedItem)
             : normalizedItem.contains(key)) &&
-        (bestKey == null || key.length > bestKey.length)) {
-      bestKey = key;
-      bestValue = value;
+        (best == null || key.length > best.$1.length)) {
+      best = entry;
     }
   }
-  return bestValue;
+  return best;
 }
 
 /// The density of [normalizedItem] ([_densities]): a key matches as a word
@@ -608,15 +614,23 @@ double? _tableLookup(
 /// 144 g ('nuts' 0.55: 65 g). An item that is a compound of a key but not
 /// the key's food ([_notTheKeysFood]) has none: its record's own volume
 /// portion sizes it (checkpoint 9: 27 counted lines at up to twice their
-/// mass).
-double? _densityOf(String normalizedItem) =>
-    _notTheKeysFood.hasMatch(normalizedItem)
-    ? null
-    : _tableLookup(
-        _densities,
-        normalizedItem.replaceAll(_saltState, ' '),
-        words: true,
-      );
+/// mass), as has a key that only modifies a longer compound: "cream of
+/// tartar" ('cream' 1.01 for its record's 'tsp' 3.0 g), "mustard seeds"
+/// (prepared 'mustard' 1.05 for the seed's 'tbsp' 6.3 g; Run 050).
+(String, double)? _densityOf(String normalizedItem) {
+  final item = normalizedItem.replaceAll(_saltState, ' ');
+  if (_notTheKeysFood.hasMatch(item)) {
+    return null;
+  }
+  final entry = _tableEntry(_densities, item, words: true);
+  if (entry == null ||
+      RegExp(
+        '(?<![a-z])${RegExp.escape(entry.$1)}(?:e?s)?\\s+(?:of|seeds?)(?![a-z])',
+      ).hasMatch(item)) {
+    return null;
+  }
+  return entry;
+}
 
 final RegExp _saltState = RegExp(r'\bwith(?:out)? salt\b');
 
@@ -635,11 +649,31 @@ RegExp _keyAsWord(String key) => _keyWords.putIfAbsent(
 /// powder" at 203 g, its record's cup 120 g), water chestnuts ('water'
 /// 1.0; 'nuts' 0.55), ricotta and cream cheese ('cheese' 0.47 is grated
 /// cheese: "3 cups part-skim ricotta cheese" at 334 g, its record's 741 g)
-/// and oil-packed sun-dried tomatoes ('oil' 0.92).
+/// oil-packed sun-dried tomatoes ('oil' 0.92), and almond and apple butter
+/// ('butter' 0.959 for their records' 1.08 and 1.15; Run 050).
 final RegExp _notTheKeysFood = RegExp(
   r'\b(dry milk|milk powder|buttermilk powder|water chestnut|ricotta|'
-  'cream cheese|oil-packed)',
+  'cream cheese|oil-packed|almond butter|apple butter)',
 );
+
+/// Whether [normalizedItem] names [food]'s own food by a word beyond the
+/// generic 'nut' and a salt state: "without salt roasted peanuts" on
+/// "Peanuts, all types, dry-roasted, without salt", not "nuts" on cashews.
+bool _namesTheRecord(String normalizedItem, FdcFood food) {
+  const generic = {'nut', 'with', 'without', 'salt'};
+  final record = food.description
+      .toLowerCase()
+      .split(RegExp('[^a-z]+'))
+      .map(keyWordOf)
+      .toSet();
+  return normalizedItem
+      .split(RegExp('[^a-z]+'))
+      .map(keyWordOf)
+      .any(
+        (word) =>
+            word.length > 2 && !generic.contains(word) && record.contains(word),
+      );
+}
 
 /// Whether [raw]'s food is a flake or coarse sea salt, which packs like
 /// kosher salt, not like table salt (1.22 counted "2 tablespoons flake sea
@@ -651,7 +685,8 @@ final RegExp _notTheKeysFood = RegExp(
 /// line's OWN food: nothing but its amounts before it, parentheticals
 /// aside (Run 049: "3 tablespoons unsalted butter, melted, plus flaky sea
 /// salt" weighed the butter at 0.72, as "1 teaspoon table salt (or 2
-/// teaspoons flaky sea salt)" did the table salt).
+/// teaspoons flaky sea salt)" did the table salt) and quantity words
+/// ([_quantityWords]).
 bool packsLikeKosherSalt(String raw) {
   final text = raw.toLowerCase().replaceAll(RegExp(r'\(.*?\)'), ' ');
   final salt = _packsLikeKosher.firstMatch(text);
@@ -663,10 +698,23 @@ bool packsLikeKosherSalt(String raw) {
             (word) =>
                 word.isEmpty ||
                 word == 'plus' ||
+                _quantityWords.contains(word) ||
                 _volumeUnitMl.containsKey(word.replaceAll(RegExp(r's$'), '')) ||
                 RegExp('^[\\d$vulgarFractionChars/.\u2013-]+\$').hasMatch(word),
           );
 }
+
+/// Quantity words a salt's amount may carry ("1 heaping tablespoon flaky
+/// sea salt", "scant ½ teaspoon", Run 050): the amount's, not a food's.
+const Set<String> _quantityWords = {
+  'heaping',
+  'heaped',
+  'scant',
+  'rounded',
+  'generous',
+  'level',
+  'about',
+};
 
 /// Flake, flaky, flaked, coarse(-grind) and Maldon sea salt, and sea salt
 /// flakes, in the salt's own words (Run 049: "flaky Maldon sea salt", "sea
@@ -764,13 +812,26 @@ bool _smallDriedChile(String text) =>
     (RegExp(r'\bsmall\b').hasMatch(text) &&
         RegExp(r'\bdried\b').hasMatch(text));
 
+/// The words of [raw] that size its item: those before its prep (after a
+/// comma, or a cut written without one). "1 baguette, cut into small
+/// cubes" and "2 large pita breads, cut into small wedges" are no small
+/// ones (Run 050: the mini baguette's 152 g for 324 g); "1 small
+/// baguette" is.
+String _itemSizeWords(String? raw) {
+  final text = (raw ?? '').toLowerCase().split(',').first;
+  final prep = RegExp(
+    r'\b(cut|torn|broken|sliced|chopped|diced|into)\b',
+  ).firstMatch(text);
+  return prep == null ? text : text.substring(0, prep.start);
+}
+
 double? _wholeItemPortionGrams(
   FdcFood food,
   String normalizedItem, {
   String? raw,
 }) {
   final itemWords = normalizedItem.split(RegExp('[^a-z]+')).map(keyWordOf);
-  final lineSmall = RegExp(r'\bsmall\b').hasMatch((raw ?? '').toLowerCase());
+  final lineSmall = RegExp(r'\bsmall\b').hasMatch(_itemSizeWords(raw));
   double? best;
   var bestRank = -1;
   for (final portion in food.portions) {
@@ -1058,6 +1119,17 @@ double? _foodGramsPerMl(
       if (portion.unit == lineUnit) portion,
   ];
   final pool = sameUnit.isEmpty ? perMl : sameUnit;
+  // A shred no portion names reads the shredded or grated one: "2⅔ cups
+  // shredded carrots" is 170393's 'cup grated' 110 g, "3 cups thinly sliced
+  // green cabbage" 169975's 'cup, shredded' 70 g, not the medians' 122 g
+  // and 79.5 g (Run 050).
+  if (_shredCut.hasMatch(lineText.toLowerCase())) {
+    for (final portion in pool) {
+      if (_shredPortion.hasMatch(portion.description)) {
+        return portion.value;
+      }
+    }
+  }
   // A fine cut no portion names reads the chopped one: "¼ cup grated
   // onion" is 170000's 'cup, chopped' (160 g) as "4 tablespoons grated
   // onion" is its 'tbsp chopped' — the mean with 'cup, sliced' made a cup
@@ -1084,6 +1156,14 @@ double? _foodGramsPerMl(
       ? values[mid]
       : (values[mid - 1] + values[mid]) / 2;
 }
+
+/// A line's shred ([_foodGramsPerMl]) and a portion of one. A thin slice
+/// is a shred; a plain slice is not ("sliced carrots" are 170393's 'cup
+/// strips or slices' 122 g, never its 'cup grated' 110 g).
+final RegExp _shredCut = RegExp(
+  r'\b(shredded|grated|thinly sliced|sliced (?:very )?thin)\b',
+);
+final RegExp _shredPortion = RegExp(r'\b(shredded|grated)\b');
 
 /// A line's fine cut ([_foodGramsPerMl]).
 final RegExp _fineCut = RegExp(r'\b(chopped|minced|diced|grated)\b');
@@ -1983,8 +2063,30 @@ GramResolution? _resolveGrams({
             'cracker portion',
       );
     }
-    if (food != null) {
-      final perUnit = _portionGramsPerUnit(food, unit);
+    // A powder on a record of the drink made from it reads only its dry
+    // portions: 174867 "..., powder, prepared with whole milk" weighed "3
+    // tablespoons malted milk powder" on its 'cup (8 fl oz)' 265 g of the
+    // drink (Run 050); 171874's 'cup dry mix' 98 g sizes its powder.
+    final volumeFood =
+        food != null &&
+            food.description.toLowerCase().contains('prepared with') &&
+            RegExp(r'\bpowder\b').hasMatch(normalizedItem)
+        ? FdcFood(
+            fdcId: food.fdcId,
+            description: food.description,
+            dataType: food.dataType,
+            nutrientsPer100g: food.nutrientsPer100g,
+            portions: [
+              for (final portion in food.portions)
+                if (RegExp(
+                  r'\bdry\b',
+                ).hasMatch((portion.description ?? '').toLowerCase()))
+                  portion,
+            ],
+          )
+        : food;
+    if (volumeFood != null) {
+      final perUnit = _portionGramsPerUnit(volumeFood, unit);
       if (perUnit != null) {
         return GramResolution(
           grams: quantity * perUnit,
@@ -1993,7 +2095,25 @@ GramResolution? _resolveGrams({
         );
       }
     }
-    final density = kosher ? _kosherSaltDensity : _densityOf(normalizedItem);
+    final ownVolume = volumeFood == null
+        ? null
+        : _foodGramsPerMl(
+            volumeFood,
+            raw ?? normalizedItem,
+            null,
+            _volumeAliases[unit],
+          );
+    final entry = kosher ? null : _densityOf(normalizedItem);
+    // 'nuts' is any nut: a record of the nut the item names weighs it by its
+    // own cup ("½ cup unsalted roasted peanuts" on 173806 'cup' 146 g, not
+    // 0.55's 65 g; Run 050).
+    final density = kosher
+        ? _kosherSaltDensity
+        : entry?.$1 == 'nuts' &&
+              ownVolume != null &&
+              _namesTheRecord(normalizedItem, volumeFood!)
+        ? null
+        : entry?.$2;
     if (density != null) {
       return GramResolution(
         grams: quantity * ml * density,
@@ -2001,14 +2121,7 @@ GramResolution? _resolveGrams({
         basis: '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL',
       );
     }
-    final perMl = food == null
-        ? null
-        : _foodGramsPerMl(
-            food,
-            raw ?? normalizedItem,
-            null,
-            _volumeAliases[unit],
-          );
+    final perMl = ownVolume;
     if (perMl != null) {
       return GramResolution(
         grams: quantity * ml * perMl,

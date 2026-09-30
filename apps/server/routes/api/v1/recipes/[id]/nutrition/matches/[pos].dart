@@ -12,6 +12,8 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// scope) — override one line's match: `{fdc_id}` re-picks the food,
 /// `{grams}` sets the amount by hand, `{confirmed: true}` blesses the auto
 /// match, `{skipped: true}` excludes the line. Totals recompute instantly.
+/// An optional `raw` (the line's text as the client saw it) guards against
+/// a save since: 409 `line_moved` when the line at <pos> reads otherwise.
 Future<Response> onRequest(
   RequestContext context,
   String rawId,
@@ -27,6 +29,9 @@ Future<Response> onRequest(
     throw const ValidationException('Position must be a non-negative index.');
   }
   final db = context.read<SaltDatabase>();
+  // The body first: the recipe is read after it, so a save landing while
+  // the body streams in is the version this write lays out against.
+  final body = await readJsonBody(context.request);
   final found = db.recipeByIdOrSlug(id);
   if (found == null) {
     throw NotFoundException('recipe not found: $id');
@@ -39,15 +44,16 @@ Future<Response> onRequest(
       provider,
       found.recipe,
       position,
-      await readJsonBody(context.request),
+      body,
       decidedBy: user.id,
     );
   } on NutritionProviderException catch (exception) {
     throw ValidationException(exception.message);
   }
+  final recipe = db.recipeByIdOrSlug(found.recipe.id)?.recipe ?? found.recipe;
   return Response.json(
     body: {
-      ...await matchesBody(db, provider, found.recipe),
+      ...await matchesBody(db, provider, recipe),
       if (applied != null) 'applied': appliedJson(applied),
     },
   );

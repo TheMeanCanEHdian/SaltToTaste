@@ -882,6 +882,31 @@ class _FixPane extends StatelessWidget {
   }
 }
 
+/// The row of the queue's [line] in its recipe's [matches]. The queue
+/// lists a row at its STORED position, which a save since the last compute
+/// can leave behind its line: the row at that position when it reads the
+/// line's text, else the row reading it nearest there (the line moved),
+/// else the row at the position.
+IngredientMatch? queueMatchOf(
+  List<IngredientMatch> matches,
+  NutritionReviewLine line,
+) {
+  IngredientMatch? at;
+  IngredientMatch? moved;
+  for (final m in matches) {
+    if (m.position == line.position) {
+      at = m;
+    }
+    if (m.raw == line.raw &&
+        (moved == null ||
+            (m.position - line.position).abs() <
+                (moved.position - line.position).abs())) {
+      moved = m;
+    }
+  }
+  return at != null && at.raw == line.raw ? at : moved ?? at;
+}
+
 /// Whether a [NutritionState] transition means the selected line is done
 /// and the queue should drop it and move on: a fix landed with no
 /// apply-to-all offer pending, or the offer (or its receipt) was just
@@ -947,8 +972,12 @@ class _FixPaneBody extends StatelessWidget {
       // is dismissed), and advances at that moment instead.
       // …and unless a plain Confirm (or a pick) left the line waiting on an
       // amount: the pane stays on it, the field focused (C).
-      listenWhen: (previous, current) =>
-          paneAdvances(previous, current, line.position),
+      listenWhen: (previous, current) => paneAdvances(
+        previous,
+        current,
+        queueMatchOf(current.matches ?? const [], line)?.position ??
+            line.position,
+      ),
       listener: (context, _) =>
           context.read<NutritionReviewCubit>().completeFix(),
       child: BlocBuilder<NutritionCubit, NutritionState>(
@@ -967,13 +996,7 @@ class _FixPaneBody extends StatelessWidget {
               child: CircularProgressIndicator(color: SaltColors.maroon),
             );
           }
-          IngredientMatch? match;
-          for (final m in matches) {
-            if (m.position == line.position) {
-              match = m;
-              break;
-            }
-          }
+          final match = queueMatchOf(matches, line);
           if (match == null) {
             // The line the queue pointed at is gone from the recipe (e.g. it
             // was just resolved and the refresh is landing) — a transient blank.
@@ -1024,8 +1047,10 @@ class _FixContentState extends State<_FixContent> {
     final busy = state.overridingPosition != null || state.applying;
     final bucket = matchBucketOf(match);
     final amountFirst = confirmsWithAmount(match);
-    void confirm() => cubit.override(match.position, confirmed: true);
-    void skip() => cubit.override(match.position, skipped: true);
+    void confirm() =>
+        cubit.override(match.position, raw: match.raw, confirmed: true);
+    void skip() =>
+        cubit.override(match.position, raw: match.raw, skipped: true);
     final waiting = openLinesBesides(state.matches ?? const [], match.position);
     // The split shows only BEFORE the decision, on a group that promises.
     final split =

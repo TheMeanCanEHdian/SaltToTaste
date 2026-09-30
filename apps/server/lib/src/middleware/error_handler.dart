@@ -61,6 +61,7 @@ Middleware errorHandler() {
           code: exception.code,
           message: exception.message,
           requestId: requestId,
+          extra: exception.extra,
         );
       } catch (error, stackTrace) {
         // Same two rules as the request logger, because the same attacker
@@ -89,18 +90,21 @@ Middleware errorHandler() {
 }
 
 /// Builds an error-envelope JSON response from the shared [ApiError] DTO,
-/// optionally with extra [headers].
+/// optionally with extra [headers] and [extra] keys of the `error` object.
 Response errorResponse({
   required int statusCode,
   required String code,
   required String message,
   String? requestId,
   Map<String, String> headers = const {},
+  Map<String, Object?> extra = const {},
 }) {
   final error = ApiError(code: code, message: message, requestId: requestId);
   return Response.json(
     statusCode: statusCode,
-    body: {'error': error.toMap()},
+    body: {
+      'error': {...error.toMap(), ...extra},
+    },
     headers: headers,
   );
 }

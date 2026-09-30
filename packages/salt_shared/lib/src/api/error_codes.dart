@@ -48,4 +48,9 @@ abstract final class ApiErrorCodes {
   /// so confirming it would decide that food library-wide (HTTP 422). Pick
   /// a food, or skip the line.
   static const String zeroRow = 'zero_row';
+
+  /// A nutrition match write naming (`raw`) a line that is no longer at its
+  /// position: the recipe was saved since the client read it (HTTP 409).
+  /// The envelope carries `position`, where that line is now (or null).
+  static const String lineMoved = 'line_moved';
 }

@@ -178,9 +178,10 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
   final match = line.match;
   return {
     'recipe': {'id': match.recipeId, 'slug': line.slug, 'title': line.title},
-    // Known limit: the STORED position. After a save and before the next
-    // compute, a PUT here lands on the new recipe's line at that position
-    // (laid out first), which may not be the line shown.
+    // The STORED position: after a save and before the next compute the
+    // line may sit elsewhere. A PUT carrying this `raw` is refused (409
+    // line_moved, naming where the line is now) rather than written onto
+    // another line; the app finds the line by its text (Run 050 P4).
     'position': match.position,
     'raw': match.raw,
     'bucket': line.bucket,

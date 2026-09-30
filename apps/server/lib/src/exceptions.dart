@@ -20,6 +20,10 @@ abstract base class AppException implements Exception {
   /// trace and never secret material.
   final String message;
 
+  /// Extra keys of the error envelope's `error` object, beside `code`,
+  /// `message` and `request_id` (none by default).
+  Map<String, Object?> get extra => const {};
+
   @override
   String toString() => 'AppException($statusCode $code): $message';
 }
@@ -46,6 +50,25 @@ final class ZeroRowException extends AppException {
   /// Creates a zero-row exception with the client-facing [message].
   const ZeroRowException(String message)
     : super(422, ApiErrorCodes.zeroRow, message);
+}
+
+/// A match write whose `raw` names a line no longer at its position (HTTP
+/// 409, code `line_moved`): the recipe was saved since the client read it.
+/// [position] is where that line is now, or null when it is gone.
+final class LineMovedException extends AppException {
+  /// Creates the exception for a line now at [position] (or gone).
+  const LineMovedException(this.position)
+    : super(
+        409,
+        ApiErrorCodes.lineMoved,
+        'That line has moved since it was read: refresh and try again.',
+      );
+
+  /// Where the line is now, or null when no line has its text.
+  final int? position;
+
+  @override
+  Map<String, Object?> get extra => {'position': position};
 }
 
 /// The route exists but the HTTP method is not supported (HTTP 405, code

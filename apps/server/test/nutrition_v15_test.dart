@@ -720,8 +720,11 @@ void main() {
       },
     );
 
-    test('E11: a food a person typed grams for on a sub-recipe the recipe '
-        'makes apart, skipped and un-skipped, is the 0 g sub-recipe again — '
+    // Run 050 U2 overturned v15's E11 (the 0 g sub-recipe again): typed
+    // grams are the person's row before any gate, as the compute keeps a
+    // decided row and a confirm or pick keeps typed grams on this line.
+    test('E11 (Run 050 U2): a food a person typed grams for on a sub-recipe '
+        'the recipe makes apart, skipped and un-skipped, is their row again — '
         '"1 recipe Simple Tomato Sauce (recipe follows), warmed (see note)" '
         '(Lighter Chicken Parmesan, 0416; the pick synthesized: a stated '
         'exception)', () async {
@@ -738,7 +741,10 @@ void main() {
       await applyMatchOverride(db, provider, r, 0, {'skipped': true});
       await applyMatchOverride(db, provider, r, 0, {'skipped': false});
       final row = rowAt(db, 0);
-      expect((row.fdcId, row.grams, row.description), (null, 0, subRecipeNote));
+      expect(
+        (row.status, row.fdcId, row.grams, row.gramSource),
+        ('overridden', 173468, 100, 'override'),
+      );
     });
 
     test('E9: an apply-to-all never counts a sub-recipe the recipe makes '

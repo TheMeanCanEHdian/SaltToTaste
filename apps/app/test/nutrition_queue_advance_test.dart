@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
+import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/features/admin/nutrition_review_queue.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 
@@ -133,6 +134,36 @@ void main() {
         paneAdvances(before, idle.copyWith(matches: [picked]), 12),
         isFalse,
       );
+    });
+  });
+
+  // Run 050 P4: the queue lists a row at its STORED position; after a save
+  // (before the next compute) the recipe's rows sit on the moved lines. The
+  // pane finds the queue's line by its text, nearest its stored position.
+  group('queueMatchOf', () {
+    final line = NutritionReviewLine.fromJson(
+      (golden('nutrition_review')['items'] as List).first
+          as Map<String, dynamic>,
+    );
+    List<IngredientMatch> rows(Map<int, int> moved) => [
+      for (final item
+          in (golden('nutrition_matches')['items'] as List)
+              .cast<Map<String, dynamic>>())
+        IngredientMatch.fromJson({
+          ...item,
+          'position': moved[item['position'] as int] ?? item['position'] as int,
+        }),
+    ];
+
+    test('the row at the stored position when it reads the line', () {
+      expect(line.position, 12);
+      final match = queueMatchOf(rows(const {}), line)!;
+      expect((match.position, match.raw), (12, line.raw));
+    });
+
+    test('the line moved up one by a save: its row where it is now', () {
+      final match = queueMatchOf(rows(const {12: 11, 11: 12}), line)!;
+      expect((match.position, match.raw), (11, line.raw));
     });
   });
 }
