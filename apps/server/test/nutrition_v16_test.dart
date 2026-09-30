@@ -506,7 +506,10 @@ void main() {
     );
 
     test(
-      'H0: typed eaten grams (2 g) survive a skip and an un-skip (0052)',
+      'H0: typed eaten grams (2 g) survive a skip and an un-skip (0052) — '
+      "as the person's counted row since matcher v18 (Run 049: an `auto` "
+      'row, held, that the next compute re-derived; '
+      'nutrition_v18_test H2 pins the recompute)',
       () async {
         final (db, provider, r) = await cucumber();
         await applyMatchOverride(db, provider, r, 0, {
@@ -518,12 +521,7 @@ void main() {
         final row = rowAt(db, 0);
         expect(
           (row.status, row.grams, row.gramSource, row.hold),
-          (
-            'auto',
-            2,
-            'override',
-            'discarded_medium',
-          ),
+          ('overridden', 2, 'override', null),
         );
       },
     );

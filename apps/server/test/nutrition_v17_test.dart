@@ -753,8 +753,8 @@ void main() {
   // 'buttermilk' 1.03 g/mL, 'water' 1.0 — which resolveGrams reads BEFORE
   // the record's own "cup" portions (120 g, "cup slices" 124 g/cup): ½ cup
   // (1½ ounces) of the same powder weighs 42.5 g in 0778, the table 122 g.
-  // A defect reported with this batch, not fixed here: only the food is
-  // pinned.
+  // A defect reported with this batch, fixed by matcher v18's density guard
+  // (their grams: nutrition_v18_test D1): now the record's own portion.
   const densityRead = <(String, String, int)>[
     (
       '0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml',
@@ -785,11 +785,12 @@ void main() {
   ];
 
   test('C4: the dry-milk, buttermilk-powder and water-chestnut volume lines '
-      'land on their records (their grams: see densityRead)', () async {
+      "land on their records, weighed on the record's own portion "
+      '(matcher v18; see densityRead)', () async {
     for (final (_, raw, fdcId) in densityRead) {
       final row = await computeLine(raw);
       expect(row.fdcId, fdcId, reason: raw);
-      expect(row.gramSource, 'density', reason: raw);
+      expect(row.gramSource, 'portion', reason: raw);
     }
   });
 

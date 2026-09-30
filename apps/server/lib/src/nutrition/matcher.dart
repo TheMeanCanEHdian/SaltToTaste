@@ -248,8 +248,13 @@ const Map<String, String> _synonyms = {
 /// purée, Nutella, water chestnuts, buttermilk powder) and of keys whose
 /// record leads a cached answer, an unasked 'liquid' FORM segment docked as
 /// a modified form, eight SR volume siblings, and a named whole item's
-/// portion past the 250 g bare-count cap (grams.dart).
-const int matcherVersion = 17;
+/// portion past the 250 g bare-count cap (grams.dart); 18 = checkpoint 9's
+/// density guard (a density key matches as a word, 'ice cream' 0.558, dairy
+/// powders, water chestnuts, ricotta, cream cheese and oil-packed tomatoes
+/// on their record's own portion) and Run 049: flake and coarse sea salt
+/// only as the line's own food (and its plus part, and more spellings), a
+/// per-item volume paren the parse kept.
+const int matcherVersion = 18;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

@@ -1,0 +1,1203 @@
+// The pairing oracle: every recipe edit, then a compute, checked against
+// hidden line identities. Run
+//   SALT_CORPUS_DIR="…" dart test test/pairing_oracle_test.dart
+// Env: ORACLE_SEEDS (default 200), ORACLE_STEPS (edits per seed, default
+// 12), ORACLE_SEED (run that one seed only), ORACLE_SEED_BASE (the first
+// seed, default 0: a fresh range), ORACLE_SHOW (violations printed,
+// default 12).
+//
+// SEMANTICS (what "correct" means here).
+//  * Every line carries a hidden identity; a person's decision (a skip, or a
+//    pick of 173468 with DISTINCT typed grams, so each pick is one token)
+//    belongs to an identity. The engine only ever sees texts: the stored
+//    rows' raws (old) and the lines' raws (new).
+//  * An edit's TEXT VIEW is the pair (old texts, new texts). Its
+//    explanations are the fewest-op scripts of {no-op, insert, delete,
+//    substitute one line's text, move one line} that turn the old texts
+//    into the new ones (a substitution is one op, never a delete + insert;
+//    an unchanged list is the no-op, never a swap of twins). Each
+//    explanation maps identities exactly: a shifted line keeps its decision,
+//    a deleted line's decision is dropped, a substituted line keeps it only
+//    when lineKeyOf is unchanged (an amount edit: a pick's typed grams may
+//    then be re-derived — token P~g accepts P:g or a re-derived pick).
+//  * Of those explanations, only the ones that LOSE THE FEWEST decisions
+//    are acceptable (invariant 2: keep a decision whenever the text allows).
+//    The result must equal one acceptable explanation's layout EXACTLY —
+//    position by position, every line without a decision on an engine row
+//    (auto, unmatched, rule row), every decided row carrying its line's raw,
+//    one row per line, none beyond. When the text view is unambiguous this
+//    is exact identity preservation; when identical texts make it
+//    ambiguous it implies the bounded rule (none lost when avoidable, none
+//    duplicated, none on another ingredient, an untouched line keeps its
+//    row). "Prefers each row's own position" is NOT enforced (a tiebreak).
+//  * A person's write in the stale window (after the save, before the
+//    compute) or during the compute's awaits lands on the line at its
+//    position in the NEW recipe: it overlays that position.
+//  * A provider failure mid-compute: the stored decided tokens must equal
+//    an acceptable layout's as a multiset (none lost, none duplicated); the
+//    next healthy compute must then land the layout exactly.
+//  * After every check the model re-syncs to what the engine stored, so one
+//    break is reported once and the fuzz goes on.
+// Real data: 0405 Acquacotta (steps, groups, lines) and six other corpus
+// lines (file named, proven at load). SYNTHESIZED (a stated exception):
+// the edit scripts themselves, amount variants (leading quantity changed,
+// lineKeyOf proven equal, e.g. "3 teaspoons salt"), and the interleavings.
+// Answers: FixtureProvider(pending: pendingSearches), never the network.
+// ignore_for_file: avoid_print
+
+import 'dart:async';
+import 'dart:io';
+import 'dart:math';
+
+import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/handlers/nutrition_handlers.dart';
+import 'package:salt_server/src/nutrition/engine.dart';
+import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_shared/salt_shared.dart';
+import 'package:test/test.dart';
+
+import 'support/corpus.dart';
+import 'support/fdc_fixtures.dart';
+
+const _acquacotta = '0405-acquacotta-tuscan-white-bean-and-escarole-soup.yaml';
+const _pickId = 173468; // "Salt, table": recorded; every pick is this food.
+
+/// Corpus lines from other recipes (the file each is read from).
+const _others = {
+  '2 teaspoons salt': '0176-grillroasted-boneless-turkey-breast.yaml',
+  '1 teaspoon salt': '0070-skillet-chicken-fajitas.yaml',
+  '¾ cup extra-virgin olive oil': '0856-olive-oil-cake.yaml',
+  '1 tablespoon table salt': '0052-sesame-lemon-cucumber-salad.yaml',
+  'Salt': '0007-tuscan-style-beef-stew.yaml',
+  'Pepper': '0125-oven-roasted-chicken-thighs.yaml',
+};
+
+const _sp = 'Salt and pepper';
+const _oilHalf = '½ cup extra-virgin olive oil';
+const _oilQuarter = '¼ cup extra-virgin olive oil';
+
+int _envInt(String name, int fallback) =>
+    int.tryParse(Platform.environment[name] ?? '') ?? fallback;
+
+String _fmt(num g) => g == g.roundToDouble() ? '${g.toInt()}' : '$g';
+
+IngredientLine _parsed(String raw) {
+  final p = parseIngredientLine(raw);
+  return IngredientLine(raw: raw, item: p.item, amounts: p.amounts);
+}
+
+/// One line per raw text: the corpus parse when the corpus has the line,
+/// else the editor's parse (a synthesized edit).
+final Map<String, IngredientLine> _canon = {};
+IngredientLine _line(String raw) => _canon[raw] ??= _parsed(raw);
+
+/// The line [raw] as corpus recipe [file] stores it (proof it is real).
+IngredientLine _corpusLine(String file, String raw) {
+  final r = loadCorpusRecipe(file);
+  return [
+    for (final g in r.ingredients) ...g.items,
+    for (final s in r.subsections)
+      for (final g in s.ingredients ?? const <IngredientGroup>[]) ...g.items,
+  ].firstWhere((l) => l.raw == raw);
+}
+
+/// [FixtureProvider] with two interleavings a test arms: [onCall] runs
+/// once, at the next provider call (a person's write during one of the
+/// compute's awaits), and [failAfter] throws at the provider call after
+/// that many more (FDC failing mid-compute).
+class _Provider implements NutritionProvider {
+  _Provider(this.inner);
+  final FixtureProvider inner;
+  void Function()? onCall;
+  int? failAfter;
+
+  void _before() {
+    final hook = onCall;
+    onCall = null;
+    hook?.call();
+    final n = failAfter;
+    if (n != null) {
+      if (n <= 0) {
+        failAfter = null;
+        throw const NutritionProviderException('oracle: FDC down');
+      }
+      failAfter = n - 1;
+    }
+  }
+
+  @override
+  Future<List<FdcCandidate>> search(String query) async {
+    _before();
+    return inner.search(query);
+  }
+
+  @override
+  Future<FdcFood?> food(int fdcId) async {
+    _before();
+    return inner.food(fdcId);
+  }
+}
+
+/// A stored row as the oracle reads it: `S` a skip, `P:g` a pick with its
+/// typed grams, `P*` a pick the engine re-weighed, `-` an engine row
+/// (auto, unmatched, rule row), `?…` anything else. With [raw], a decided
+/// row carrying another text is marked `!`.
+String _tokenOf(IngredientMatchRow row, {String? raw}) {
+  final String t;
+  if (row.status == 'skipped') {
+    t = 'S';
+  } else if (row.status == 'overridden' && row.fdcId == _pickId) {
+    t = row.gramSource == 'override' && row.grams != null
+        ? 'P:${_fmt(row.grams!)}'
+        : 'P*';
+  } else if (row.status == 'auto' ||
+      row.status == 'unmatched' ||
+      isEngineRuleRow(row)) {
+    return '-';
+  } else {
+    t = '?${row.status}/${row.fdcId}/${row.grams}';
+  }
+  return raw != null && row.raw != raw ? '!$t<"${row.raw}">' : t;
+}
+
+/// Whether a stored token [got] is the decision [want] (`P~g`: a pick
+/// whose line's amount was edited — typed grams kept or re-derived).
+bool _tokMatch(String want, String got) => want.startsWith('P~')
+    ? got == 'P*' || got == 'P:${want.substring(2)}'
+    : want == got;
+
+/// One explanation of an edit's text view: old index → new index (null:
+/// deleted) and the substituted old index, if any.
+typedef _Script = ({String name, List<int?> to, int? sub});
+
+/// The fewest-op explanations turning texts [o] into [n] (see SEMANTICS).
+List<_Script> _explanations(List<String> o, List<String> n) {
+  bool same(List<String> a) {
+    if (a.length != n.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != n[i]) return false;
+    }
+    return true;
+  }
+
+  List<int> ids(int length) => [for (var k = 0; k < length; k++) k];
+  if (same(o)) return [(name: 'no-op', to: ids(o.length), sub: null)];
+  final out = <_Script>[];
+  if (o.length == n.length) {
+    final diff = [
+      for (var i = 0; i < o.length; i++)
+        if (o[i] != n[i]) i,
+    ];
+    if (diff.length == 1) {
+      out.add((name: 'sub ${diff[0]}', to: ids(o.length), sub: diff[0]));
+    }
+    for (var i = 0; i < o.length; i++) {
+      for (var j = 0; j < o.length; j++) {
+        if (i == j) continue;
+        final order = ids(o.length)
+          ..removeAt(i)
+          ..insert(j, i);
+        if (!same([for (final k in order) o[k]])) continue;
+        final to = List<int?>.filled(o.length, null);
+        for (final (p, k) in order.indexed) {
+          to[k] = p;
+        }
+        out.add((name: 'move $i→$j', to: to, sub: null));
+      }
+    }
+  } else if (n.length == o.length - 1) {
+    for (var i = 0; i < o.length; i++) {
+      if (!same([...o]..removeAt(i))) continue;
+      out.add((
+        name: 'delete $i',
+        to: [
+          for (var k = 0; k < o.length; k++)
+            k < i ? k : (k == i ? null : k - 1),
+        ],
+        sub: null,
+      ));
+    }
+  } else if (n.length == o.length + 1) {
+    for (var j = 0; j < n.length; j++) {
+      if (!same([...o]..insert(j, n[j]))) continue;
+      out.add((
+        name: 'insert $j',
+        to: [for (var k = 0; k < o.length; k++) k < j ? k : k + 1],
+        sub: null,
+      ));
+    }
+  }
+  return out;
+}
+
+/// A line and its hidden identity.
+class _Ln {
+  _Ln(this.id, this.line);
+  final int id;
+  final IngredientLine line;
+}
+
+bool _isDecision(String t) => t != '-';
+
+/// The acceptable layouts after [before] → [after] with decisions
+/// [tokens] (fewest lost among the fewest-op explanations), and the
+/// explanations they come from.
+(List<List<String>>, List<String>) _acceptable(
+  List<_Ln> before,
+  List<_Ln> after,
+  Map<int, String> tokens,
+) {
+  final scripts = _explanations(
+    [for (final l in before) l.line.raw],
+    [for (final l in after) l.line.raw],
+  );
+  if (scripts.isEmpty) throw StateError('oracle: no single edit explains it');
+  final byLost = <int, Map<String, (List<String>, List<String>)>>{};
+  for (final s in scripts) {
+    final lay = List.filled(after.length, '-');
+    var lost = 0;
+    for (final (k, l) in before.indexed) {
+      final t = tokens[l.id];
+      if (t == null) continue;
+      final at = s.to[k];
+      if (at == null ||
+          (s.sub == k && lineKeyOf(l.line) != lineKeyOf(after[at].line))) {
+        lost++;
+        continue;
+      }
+      lay[at] = s.sub == k && t.startsWith('P:') ? 'P~${t.substring(2)}' : t;
+    }
+    final entry = (byLost[lost] ??= {})[lay.join('|')] ??= (lay, <String>[]);
+    entry.$2.add(s.name);
+  }
+  final fewest = byLost[byLost.keys.reduce(min)]!.values;
+  return (
+    [for (final e in fewest) e.$1],
+    [for (final e in fewest) e.$2.join('/')],
+  );
+}
+
+/// The decisions [want] no stored token matches, and the stored tokens
+/// [got] no wanted decision takes (a copy, or a decision from nowhere).
+(List<String>, List<String>) _unmatched(List<String> want, List<String> got) {
+  final left = [...got];
+  final missing = <String>[];
+  for (final w in [
+    ...want.where((t) => !t.startsWith('P~')),
+    ...want.where((t) => t.startsWith('P~')),
+  ]) {
+    var i = left.indexWhere(
+      (g) => w.startsWith('P~') ? g == 'P:${w.substring(2)}' : g == w,
+    );
+    if (i < 0 && w.startsWith('P~')) i = left.indexOf('P*');
+    if (i < 0) {
+      missing.add(w);
+    } else {
+      left.removeAt(i);
+    }
+  }
+  return (missing, left);
+}
+
+List<String> _closest(List<List<String>> want, List<String> got) {
+  int miss(List<String> lay) => [
+    for (var p = 0; p < got.length; p++)
+      if (!_tokMatch(lay[p], got[p])) p,
+  ].length;
+  return want.reduce((a, b) => miss(b) < miss(a) ? b : a);
+}
+
+String _short(String raw) =>
+    raw.length <= 30 ? raw.padRight(30) : '${raw.substring(0, 29)}…';
+
+typedef _Violation = ({Set<String> kinds, String text});
+
+/// One recipe under edit: 0405's steps and group names, the lines a test
+/// or the fuzzer lays out, a fresh database.
+class _Sim {
+  _Sim(this.base, this.provider, this.db);
+  final Recipe base;
+  final _Provider provider;
+  final SaltDatabase db;
+  List<List<_Ln>> groups = [];
+
+  /// identity → its decision: `S`, `P:g`, or `P~g` (see [_tokMatch]).
+  final tokens = <int, String>{};
+  final violations = <_Violation>[];
+  var _nextId = 0;
+  int grams = 1000;
+  Recipe? _recipe;
+
+  List<_Ln> get flat => [for (final g in groups) ...g];
+
+  Recipe get recipe => _recipe ??= base.copyWith(
+    ingredients: [
+      for (final (i, g) in groups.indexed)
+        IngredientGroup(
+          group: i < base.ingredients.length
+              ? base.ingredients[i].group
+              : 'GROUP ${i + 1}',
+          items: [for (final l in g) l.line],
+        ),
+    ],
+  );
+
+  _Ln fresh(String raw) => _Ln(_nextId++, _line(raw));
+
+  void start(List<List<String>> raws) {
+    groups = [
+      for (final g in raws) [for (final r in g) fresh(r)],
+    ];
+    _recipe = null;
+  }
+
+  /// The save every edit path funnels through (recipe_edit_service's
+  /// _store → upsertRecipe). A design that lays rows out at save time
+  /// must do it under this call, or this helper must call it.
+  void save() => db.upsertRecipe(
+    recipe,
+    sourceSlug: 'src',
+    contentHash: contentHashOf(recipe),
+  );
+
+  (int, int) locate(int p) {
+    var at = p;
+    for (final (g, lines) in groups.indexed) {
+      if (at < lines.length) return (g, at);
+      at -= lines.length;
+    }
+    return (groups.length - 1, groups.last.length);
+  }
+
+  // Edits (each keeps every other line's identity).
+  void insertAt(int p, String raw) {
+    final (g, i) = locate(p);
+    groups[g].insert(i, fresh(raw));
+    _recipe = null;
+  }
+
+  void insertIn(int g, int i, String raw) {
+    groups[g].insert(i, fresh(raw));
+    _recipe = null;
+  }
+
+  void deleteAt(int p) {
+    final (g, i) = locate(p);
+    groups[g].removeAt(i);
+    _recipe = null;
+  }
+
+  void setText(int p, String raw) {
+    final (g, i) = locate(p);
+    groups[g][i] = _Ln(groups[g][i].id, _line(raw));
+    _recipe = null;
+  }
+
+  void moveTo(int p, int g, int i) {
+    final (from, at) = locate(p);
+    final l = groups[from].removeAt(at);
+    groups[g].insert(min(i, groups[g].length), l);
+    _recipe = null;
+  }
+
+  Map<String, Object?> body({required bool skip, int? g}) =>
+      skip ? {'skipped': true} : {'fdc_id': _pickId, 'grams': g ?? ++grams};
+
+  String tokenOfBody(Map<String, Object?> b) =>
+      b['skipped'] == true ? 'S' : 'P:${b['grams']}';
+
+  /// A person's decision on line [p] at a quiet moment (computed rows).
+  Future<void> decide(int p, {bool skip = false, int? g}) async {
+    final b = body(skip: skip, g: g);
+    await applyMatchOverride(db, provider, recipe, p, b);
+    tokens[flat[p].id] = tokenOfBody(b);
+  }
+
+  /// matchAndCompute; the provider failure it raised, or null.
+  Future<NutritionProviderException?> compute() async {
+    try {
+      await matchAndCompute(db, provider, recipe);
+      return null;
+    } on UnrecordedAnswer {
+      rethrow;
+    } on NutritionProviderException catch (e) {
+      return e;
+    }
+  }
+
+  /// The first compute of the lines: no decision yet, every row an engine
+  /// row.
+  Future<void> first() async {
+    save();
+    final failure = await compute();
+    if (failure != null) throw StateError('first compute failed: $failure');
+    _check(
+      'first compute',
+      const [],
+      flat,
+      [List.filled(flat.length, '-')],
+      const {},
+      const {},
+    );
+  }
+
+  /// [name]: the edit [mutate] makes, saved, then computed under [mode] —
+  /// `plain`; `stale` (a person's decision on line [at] (mod the line
+  /// count) of the NEW recipe
+  /// between the save and the compute: the stale window); `mid` (that
+  /// decision written at the compute's first provider call); `fail` (FDC
+  /// throws at the provider call after [failAfter] more, then a healthy
+  /// compute) — and checked. Returns the mode exercised (`mid` and `fail`
+  /// are `plain` when the compute asked FDC nothing).
+  Future<String> edit(
+    String name,
+    void Function() mutate, {
+    String mode = 'plain',
+    int at = 0,
+    bool skip = true,
+    int failAfter = 0,
+  }) async {
+    final before = flat;
+    mutate();
+    final after = flat;
+    final line = at % after.length;
+    final pre = Map.of(tokens);
+    final (accept, why) = _acceptable(before, after, pre);
+    save();
+    final overlays = <int, String>{};
+    final pending = <Future<void>>[];
+    var ran = mode == 'stale' ? mode : 'plain';
+    Future<void> person() {
+      final b = body(skip: skip);
+      overlays[line] = tokenOfBody(b);
+      return applyMatchOverride(db, provider, recipe, line, b).then<void>(
+        (_) {},
+        onError: (Object e) {
+          overlays.remove(line);
+          violations.add((kinds: {'HARNESS'}, text: '$name: write threw $e'));
+        },
+      );
+    }
+
+    if (mode == 'stale') await person();
+    if (mode == 'mid') {
+      provider.onCall = () {
+        ran = 'mid';
+        pending.add(person());
+      };
+    }
+    if (mode == 'fail') provider.failAfter = failAfter;
+    final failure = await compute();
+    provider
+      ..onCall = null
+      ..failAfter = null;
+    await Future.wait(pending);
+    final want = [
+      for (final lay in accept)
+        [for (final (p, t) in lay.indexed) overlays[p] ?? t],
+    ];
+    if (failure != null) ran = 'fail';
+    final label = '$name [$ran; explained by ${why.join(' | ')}]';
+    if (failure != null) {
+      _checkAfterFailure(label, want);
+      final again = await compute();
+      if (again != null) throw StateError('recovery compute failed: $again');
+    }
+    _check(label, before, after, want, pre, overlays);
+    return ran;
+  }
+
+  void _checkAfterFailure(String what, List<List<String>> want) {
+    final rows = db.ingredientMatchesFor(recipe.id);
+    final got = [
+      for (final r in rows)
+        if (_isDecision(_tokenOf(r))) _tokenOf(r),
+    ];
+    final parked = [
+      for (final r in rows)
+        if (r.position < 0) r.position,
+    ];
+    for (final lay in want) {
+      final (lost, extra) = _unmatched(lay.where(_isDecision).toList(), got);
+      if (lost.isEmpty && extra.isEmpty && parked.isEmpty) return;
+    }
+    final (lost, extra) = _unmatched(
+      want.first.where(_isDecision).toList(),
+      got,
+    );
+    violations.add((
+      kinds: {
+        'AFTER_FAILURE',
+        if (lost.isNotEmpty) 'LOST',
+        if (extra.isNotEmpty) 'DUPLICATED',
+        if (parked.isNotEmpty) 'ROWS',
+      },
+      text:
+          '$what\n  right after the failure: stored decisions $got, wanted '
+          'one of $want (missing $lost, extra $extra, parked $parked)',
+    ));
+  }
+
+  /// The stored layout against [want]; a violation when none matches. Then
+  /// the model re-syncs to what is stored.
+  void _check(
+    String what,
+    List<_Ln> before,
+    List<_Ln> after,
+    List<List<String>> want,
+    Map<int, String> pre,
+    Map<int, String> overlays,
+  ) {
+    final rows = db.ingredientMatchesFor(recipe.id);
+    final byPos = {for (final r in rows) r.position: r};
+    final got = [
+      for (final (p, l) in after.indexed)
+        byPos[p] == null ? '?missing' : _tokenOf(byPos[p]!, raw: l.line.raw),
+    ];
+    final stray = [
+      for (final r in rows)
+        if (r.position < 0 || r.position >= after.length)
+          '${r.position}:${_tokenOf(r)}',
+    ];
+    List<String>? hit;
+    for (final lay in stray.isEmpty ? want : const <List<String>>[]) {
+      if ([for (final (p, g) in got.indexed) _tokMatch(lay[p], g)].every(
+        (ok) => ok,
+      )) {
+        hit = lay;
+        break;
+      }
+    }
+    final best = hit ?? _closest(want, got);
+    if (hit == null) {
+      final keyOf = {for (final l in before) l.id: lineKeyOf(l.line)};
+      final owners = [
+        for (final MapEntry(key: id, value: t) in pre.entries) ...[
+          (t, keyOf[id]),
+          if (t.startsWith('P:')) ('P~${t.substring(2)}', keyOf[id]),
+        ],
+        for (final MapEntry(key: p, value: t) in overlays.entries)
+          (t, lineKeyOf(after[p].line)),
+      ];
+      final kinds = <String>{
+        if (stray.isNotEmpty ||
+            got.any((g) => g.startsWith('?') || g.startsWith('!')))
+          'ROWS',
+      };
+      final (lost, extra) = _unmatched(
+        best.where(_isDecision).toList(),
+        got.where(_isDecision).toList(),
+      );
+      if (lost.isNotEmpty) kinds.add('LOST');
+      for (final e in extra) {
+        kinds.add(best.any((w) => _tokMatch(w, e)) ? 'DUPLICATED' : 'EXTRA');
+      }
+      for (final (p, g) in got.indexed) {
+        final keys = {
+          for (final (t, k) in owners)
+            if (t == g || _tokMatch(t, g)) k,
+        };
+        if (_isDecision(g) &&
+            keys.isNotEmpty &&
+            !keys.contains(lineKeyOf(after[p].line))) {
+          kinds.add('WRONG_INGREDIENT');
+        }
+      }
+      if (kinds.isEmpty) kinds.add('MOVED');
+      final b = StringBuffer(
+        '${kinds.join('+')}: $what\n'
+        '  ${want.length} acceptable layout(s), the nearest shown; old line '
+        '#identity decision → new line #identity want got\n'
+        '${overlays.isEmpty ? '' : "  a person's write (stale window or "
+                  'mid-compute) on new line(s): $overlays\n'}',
+      );
+      for (var i = 0; i < max(before.length, after.length); i++) {
+        final o = i < before.length
+            ? '${_short(before[i].line.raw)} #${before[i].id} '
+                  '${pre[before[i].id] ?? '-'}'
+            : '';
+        final n = i < after.length
+            ? '${_short(after[i].line.raw)} #${after[i].id} want ${best[i]} '
+                  'got ${got[i]}${_tokMatch(best[i], got[i]) ? '' : '   <<'}'
+            : '';
+        b.writeln('  ${'$i'.padLeft(2)} ${o.padRight(44)} | $n');
+      }
+      if (stray.isNotEmpty) b.writeln('  stray rows: $stray');
+      violations.add((kinds: kinds, text: b.toString()));
+    }
+    for (final (p, l) in after.indexed) {
+      final g = got[p];
+      final w = best[p];
+      if (g == 'S' || g.startsWith('P:')) {
+        tokens[l.id] = w.startsWith('P~') && _tokMatch(w, g) ? w : g;
+      } else if (g == 'P*') {
+        tokens[l.id] = w.startsWith('P~') ? w : 'P~?${_nextId++}';
+      } else {
+        tokens.remove(l.id);
+      }
+    }
+    final alive = {for (final l in after) l.id};
+    tokens.removeWhere((id, _) => !alive.contains(id));
+  }
+
+  void swap(int g, int i) {
+    final l = groups[g][i];
+    groups[g][i] = groups[g][i + 1];
+    groups[g][i + 1] = l;
+    _recipe = null;
+  }
+
+  /// One random edit, tagged by its kind: the name and the mutation.
+  (String, void Function()) randomEdit(
+    Random rng,
+    List<String> pool,
+    Map<String, List<String>> variants,
+  ) {
+    final all = flat;
+    final n = all.length;
+    String raw(int p) => all[p].line.raw;
+    const bag = [0, 0, 1, 2, 2, 3, 3, 4, 5, 5, 6, 7, 8];
+    while (true) {
+      final g = rng.nextInt(groups.length);
+      final i = rng.nextInt(groups[g].length + 1);
+      final p = rng.nextInt(n);
+      switch (bag[rng.nextInt(bag.length)]) {
+        case 0:
+          final src = raw(rng.nextInt(n));
+          return (
+            'copy-insert "$src" in group $g at $i',
+            () => insertIn(g, i, src),
+          );
+        case 1:
+          final src = pool[rng.nextInt(pool.length)];
+          return ('insert "$src" in group $g at $i', () => insertIn(g, i, src));
+        case 2:
+          if (n <= 2 || groups[locate(p).$1].length < 2) continue;
+          return ('delete line $p "${raw(p)}"', () => deleteAt(p));
+        case 3:
+          final at = [
+            for (var q = 0; q < n; q++)
+              if (variants[raw(q)]?.isNotEmpty ?? false) q,
+          ];
+          if (at.isEmpty) continue;
+          final q = at[rng.nextInt(at.length)];
+          final to = variants[raw(q)]![rng.nextInt(variants[raw(q)]!.length)];
+          return (
+            'amount-edit line $q "${raw(q)}" → "$to"',
+            () => setText(q, to),
+          );
+        case 4:
+          final key = lineKeyOf(all[p].line);
+          final to = [
+            for (final c in pool)
+              if (lineKeyOf(_line(c)) != key) c,
+          ];
+          final c = to[rng.nextInt(to.length)];
+          return (
+            'ingredient-edit line $p "${raw(p)}" → "$c"',
+            () => setText(p, c),
+          );
+        case 5:
+          final q = rng.nextInt(n);
+          if (raw(q) == raw(p)) continue;
+          final c = raw(q);
+          return (
+            'edit-to-equal line $p "${raw(p)}" → line $q\'s "$c"',
+            () => setText(p, c),
+          );
+        case 6:
+          if (groups[g].length < 2) continue;
+          final k = rng.nextInt(groups[g].length - 1);
+          return ('swap group $g lines $k,${k + 1}', () => swap(g, k));
+        case 7:
+          final (from, _) = locate(p);
+          if (groups.length < 2 || groups[from].length < 2) continue;
+          final to =
+              (from + 1 + rng.nextInt(groups.length - 1)) % groups.length;
+          final k = rng.nextInt(groups[to].length + 1);
+          return (
+            'cross-group-move line $p "${raw(p)}" to group $to at $k',
+            () => moveTo(p, to, k),
+          );
+        default:
+          return ('recompute (no edit)', () {});
+      }
+    }
+  }
+}
+
+/// [raw] with its leading quantity changed, the ingredient unchanged
+/// (synthesized amount edits; lineKeyOf proven equal).
+List<String> _variantsOf(String raw) {
+  final m = RegExp('^([0-9]+|[¼½¾⅛⅓⅔]) ').firstMatch(raw);
+  if (m == null) return const [];
+  final key = lineKeyOf(_line(raw));
+  return [
+    for (final q in const ['1', '2', '3', '¼', '½', '¾'])
+      if (q != m[1]) '$q${raw.substring(m[1]!.length)}',
+  ].where((v) => lineKeyOf(_line(v)) == key).toList();
+}
+
+void main() {
+  late Recipe acqua;
+  late FixtureProvider fixtures;
+  late List<List<String>> acquaRaws;
+  final pool = <String>[];
+  final variants = <String, List<String>>{};
+
+  setUpAll(() async {
+    if (!corpusAvailable) return;
+    acqua = loadCorpusRecipe(_acquacotta);
+    acquaRaws = [
+      for (final g in acqua.ingredients) [for (final l in g.items) l.raw],
+    ];
+    for (final g in acqua.ingredients) {
+      for (final l in g.items) {
+        _canon[l.raw] ??= l;
+      }
+    }
+    for (final MapEntry(key: raw, value: file) in _others.entries) {
+      _canon[raw] ??= _corpusLine(file, raw);
+    }
+    fixtures = FixtureProvider(pending: pendingSearches);
+    // Every line and variant the fuzz may write must have its FDC answers
+    // recorded: each is computed alone once (0405's steps around it).
+    final dir = Directory.systemTemp.createTempSync('oracle-probe');
+    final db = SaltDatabase.open('${dir.path}/salt.db')
+      ..upsertSource(slug: 'src', name: 'Test', type: 'book');
+    Future<bool> recorded(String raw) async {
+      final r = acqua.copyWith(
+        id: 'probe-${raw.hashCode}',
+        slug: 'probe-${raw.hashCode}',
+        ingredients: [
+          IngredientGroup(items: [_line(raw)]),
+        ],
+      );
+      db.upsertRecipe(r, sourceSlug: 'src', contentHash: contentHashOf(r));
+      try {
+        await matchAndCompute(db, fixtures, r);
+        return true;
+      } on NutritionProviderException {
+        return false;
+      }
+    }
+
+    final dropped = <String>[];
+    for (final raw in [..._canon.keys]) {
+      if (!await recorded(raw)) {
+        dropped.add(raw);
+        continue;
+      }
+      pool.add(raw);
+      final ok = <String>[];
+      for (final v in _variantsOf(raw)) {
+        (await recorded(v) ? ok : dropped).add(v);
+      }
+      if (ok.isNotEmpty) variants[raw] = ok;
+    }
+    db.dispose();
+    dir.deleteSync(recursive: true);
+    print(
+      'oracle pool: ${pool.length} corpus lines, '
+      '${variants.values.expand((v) => v).length} amount variants; '
+      'unrecorded, left out: $dropped',
+    );
+  });
+
+  (_Sim, void Function()) open() {
+    final dir = Directory.systemTemp.createTempSync('oracle');
+    final db = SaltDatabase.open('${dir.path}/salt.db')
+      ..upsertSource(slug: 'src', name: 'Test', type: 'book');
+    return (
+      _Sim(acqua, _Provider(fixtures), db),
+      () {
+        db.dispose();
+        dir.deleteSync(recursive: true);
+      },
+    );
+  }
+
+  _Sim sim0() {
+    final (sim, close) = open();
+    addTearDown(close);
+    return sim;
+  }
+
+  void verdict(_Sim sim) {
+    for (final v in sim.violations) {
+      print(v.text);
+    }
+    expect(
+      [for (final v in sim.violations) v.kinds.join('+')],
+      isEmpty,
+      reason: sim.violations.map((v) => v.text).join('\n'),
+    );
+  }
+
+  // 0405's flat lines: 4 "½ cup extra-virgin olive oil", 5 "Salt and
+  // pepper" (SOUP); 16 bread, 17 "¼ cup extra-virgin olive oil", 18 "Salt
+  // and pepper" (TOAST). Every edit below is synthesized (a stated
+  // exception); every line is a corpus line unless named a variant.
+  group('scenarios', () {
+    test(
+      'S1 (v14): a plain recompute of 0405 with a pick on the second '
+      '"Salt and pepper" — the first copy\'s rule row never takes it',
+      () async {
+        final sim = sim0()..start(acquaRaws);
+        await sim.first();
+        await sim.decide(18, g: 5);
+        await sim.edit('recompute', () {});
+        verdict(sim);
+      },
+    );
+
+    for (final (verb, to) in [
+      ('edited to "Salt"', 'Salt'),
+      ('deleted', null),
+    ]) {
+      test('S2 (v15): 0405, the pick on line 18; the FIRST copy (5) $verb — '
+          'the second copy keeps its pick', () async {
+        final sim = sim0()..start(acquaRaws);
+        await sim.first();
+        await sim.decide(18, g: 5);
+        await sim.edit(
+          'line 5 $verb',
+          () => to == null ? sim.deleteAt(5) : sim.setText(5, to),
+        );
+        verdict(sim);
+      });
+    }
+
+    for (final skip in [false, true]) {
+      test(
+        'S3 (v15): two decided twins (a pick 3 g, ${skip ? 'a skip' : 'a '
+                  'pick 7 g'}) and a line inserted above: both move down one',
+        () async {
+          final sim = sim0()
+            ..start([
+              [_sp, _sp],
+            ]);
+          await sim.first();
+          await sim.decide(0, g: 3);
+          await sim.decide(1, skip: skip, g: 7);
+          await sim.edit(
+            'insert ½ cup oil at 0',
+            () => sim.insertAt(0, _oilHalf),
+          );
+          verdict(sim);
+        },
+      );
+    }
+
+    test(
+      "S4a (v15): a person's skip of the engine copy (line 2) written at "
+      "the compute's first FDC call (the inserted line's search) stands — "
+      'the engine re-derives line 2 after it — and the pick moves to line 1',
+      () async {
+        final sim = sim0()
+          ..start([
+            [_sp, _sp],
+          ]);
+        await sim.first();
+        await sim.decide(0, g: 3);
+        final ran = await sim.edit(
+          'insert ½ cup oil at 0; skip line 2 mid-compute',
+          () => sim.insertAt(0, _oilHalf),
+          mode: 'mid',
+          at: 2,
+        );
+        expect(ran, 'mid', reason: 'the hook never fired');
+        verdict(sim);
+      },
+    );
+
+    test('S4b (v15): FDC failing at the inserted line leaves both decided '
+        'twins intact, and the next compute lands them', () async {
+      final sim = sim0()
+        ..start([
+          [_sp, _sp],
+        ]);
+      await sim.first();
+      await sim.decide(0, g: 3);
+      await sim.decide(1, skip: true);
+      final ran = await sim.edit(
+        'insert ½ cup oil at 0; FDC down',
+        () => sim.insertAt(0, _oilHalf),
+        mode: 'fail',
+      );
+      expect(ran, 'fail', reason: 'the failure never fired');
+      verdict(sim);
+    });
+
+    test('S5 (v16 HIGH): 0405, pick 5 g on line 18; line 17 (¼ cup oil) '
+        'edited to "Salt and pepper", then back — the untouched line 18 '
+        'keeps its pick throughout', () async {
+      final sim = sim0()..start(acquaRaws);
+      await sim.first();
+      await sim.decide(18, g: 5);
+      await sim.edit('line 17 → "$_sp"', () => sim.setText(17, _sp));
+      await sim.edit('line 17 back', () => sim.setText(17, _oilQuarter));
+      final end = [
+        for (final r in sim.db.ingredientMatchesFor(sim.recipe.id))
+          '${r.position}:${_tokenOf(r)}',
+      ].where((t) => !t.endsWith(':-')).toList();
+      if (end.join() != '18:P:5') {
+        sim.violations.add((
+          kinds: {'LOST'},
+          text: 'S5 end state: decided rows $end, wanted [18:P:5]',
+        ));
+      }
+      verdict(sim);
+    });
+
+    test('S6 (v16): [½ cup oil, "Salt and pepper" ×2], a pick on the second '
+        'copy; the first (engine) copy deleted — the pick stays', () async {
+      final sim = sim0()
+        ..start([
+          [_oilHalf, _sp, _sp],
+        ]);
+      await sim.first();
+      await sim.decide(2, g: 7);
+      await sim.edit('delete line 1', () => sim.deleteAt(1));
+      verdict(sim);
+    });
+
+    test('S7 (v16, since v15): ["½ cup extra-virgin olive oil" ×2], picks '
+        '3 g and 7 g; the first amount-edited to "¾ cup" (0856\'s line) — '
+        'both picks stay, each on its line', () async {
+      final sim = sim0()
+        ..start([
+          [_oilHalf, _oilHalf],
+        ]);
+      await sim.first();
+      await sim.decide(0, g: 3);
+      await sim.decide(1, g: 7);
+      await sim.edit(
+        'line 0 → "¾ cup extra-virgin olive oil"',
+        () => sim.setText(0, '¾ cup extra-virgin olive oil'),
+      );
+      verdict(sim);
+    });
+
+    test('S8 (v16): ["2 teaspoons salt", "1 teaspoon salt"], skip line 1, '
+        'line 1 amount-edited to "3 teaspoons salt" (a variant) — the skip '
+        'stays on line 1, never on the untouched line 0', () async {
+      final sim = sim0()
+        ..start([
+          ['2 teaspoons salt', '1 teaspoon salt'],
+        ]);
+      await sim.first();
+      await sim.decide(1, skip: true);
+      await sim.edit(
+        'line 1 → "3 teaspoons salt"',
+        () => sim.setText(1, '3 teaspoons salt'),
+      );
+      verdict(sim);
+    });
+
+    for (final skip in [true, false]) {
+      test('S9 (v16 critic): the stale window — 0405, pick 5 g on line 18; '
+          '"2 teaspoons salt" inserted at 0 and saved; before any compute a '
+          'person ${skip ? 'skips' : 'picks'} line 18 (the ¼ cup oil, '
+          'shifted) — it lands there and line 19 keeps the 5 g pick', () async {
+        final sim = sim0()..start(acquaRaws);
+        await sim.first();
+        await sim.decide(18, g: 5);
+        await sim.edit(
+          'insert "2 teaspoons salt" at 0; line 18 decided in the stale window',
+          () => sim.insertAt(0, '2 teaspoons salt'),
+          mode: 'stale',
+          at: 18,
+          skip: skip,
+        );
+        verdict(sim);
+      });
+    }
+
+    test('swap: 0405 lines 4 (½ cup oil, skipped) and 5 ("Salt and pepper", '
+        'pick 3 g) swapped — each decision follows its line', () async {
+      final sim = sim0()..start(acquaRaws);
+      await sim.first();
+      await sim.decide(4, skip: true);
+      await sim.decide(5, g: 3);
+      await sim.edit('swap lines 4,5', () => sim.swap(0, 4));
+      verdict(sim);
+    });
+
+    test("cross-group: 0405's TOAST \"Salt and pepper\" (pick 5 g) moved to "
+        'the top of SOUP, the bread (skipped) shifting down', () async {
+      final sim = sim0()..start(acquaRaws);
+      await sim.first();
+      await sim.decide(18, g: 5);
+      await sim.decide(16, skip: true);
+      await sim.edit('move line 18 to SOUP 0', () => sim.moveTo(18, 0, 0));
+      await sim.edit(
+        'move line 6 (the SOUP "Salt and pepper") to the end of TOAST',
+        () => sim.moveTo(6, 1, 3),
+      );
+      verdict(sim);
+    });
+
+    test('three copies (engine, pick 3 g, skip): the oil inserted between '
+        'copies 0 and 1, then copy 0 deleted', () async {
+      final sim = sim0()
+        ..start([
+          [_sp, _sp, _sp],
+        ]);
+      await sim.first();
+      await sim.decide(1, g: 3);
+      await sim.decide(2, skip: true);
+      await sim.edit('insert oil at 1', () => sim.insertAt(1, _oilHalf));
+      await sim.edit('delete line 0', () => sim.deleteAt(0));
+      await sim.edit('delete line 0 (the oil)', () => sim.deleteAt(0));
+      verdict(sim);
+    });
+
+    test('S10 (found by this fuzz, seed 112): three copies (pick 3 g, '
+        'engine, pick 7 g), FDC failing at the oil inserted above; the next '
+        'healthy compute must not close the gap the failure left (the '
+        "engine copy's row) by sliding the 7 g pick onto it", () async {
+      final sim = sim0()
+        ..start([
+          [_sp, _sp, _sp],
+        ]);
+      await sim.first();
+      await sim.decide(0, g: 3);
+      await sim.decide(2, g: 7);
+      final ran = await sim.edit(
+        'insert ½ cup oil at 0; FDC down at its search',
+        () => sim.insertAt(0, _oilHalf),
+        mode: 'fail',
+      );
+      expect(ran, 'fail', reason: 'the failure never fired');
+      verdict(sim);
+    });
+
+    test('four copies (pick 3 g, engine, skip, pick 7 g): a fifth copy '
+        'inserted at 2, line 1 deleted, the oil inserted at 2, line 0 '
+        'deleted', () async {
+      final sim = sim0()
+        ..start([
+          [_sp, _sp, _sp, _sp],
+        ]);
+      await sim.first();
+      await sim.decide(0, g: 3);
+      await sim.decide(2, skip: true);
+      await sim.decide(3, g: 7);
+      await sim.edit('insert a copy at 2', () => sim.insertAt(2, _sp));
+      await sim.edit('delete line 1', () => sim.deleteAt(1));
+      await sim.edit('insert oil at 2', () => sim.insertAt(2, _oilHalf));
+      await sim.edit('delete line 0', () => sim.deleteAt(0));
+      verdict(sim);
+    });
+  }, skip: skipIfNoCorpus);
+
+  test(
+    'fuzz: seeded edit scripts (0405 whole, or dense lists of repeated '
+    'and same-ingredient corpus lines) with random decisions, the stale '
+    'window, a write mid-compute and FDC failing mid-compute',
+    () async {
+      final seeds = _envInt('ORACLE_SEEDS', 200);
+      final base = _envInt('ORACLE_SEED_BASE', 0);
+      final steps = _envInt('ORACLE_STEPS', 12);
+      final show = _envInt('ORACLE_SHOW', 12);
+      final one = int.tryParse(Platform.environment['ORACLE_SEED'] ?? '');
+      const dense = [
+        _sp,
+        _sp,
+        _oilHalf,
+        _oilQuarter,
+        '¾ cup extra-virgin olive oil',
+        '2 teaspoons salt',
+        '1 teaspoon salt',
+        'Salt',
+        'Pepper',
+      ];
+      const modeBag = ['plain', 'plain', 'stale', 'mid', 'fail'];
+      const newQueryBag = ['plain', 'stale', 'mid', 'mid', 'fail', 'fail'];
+      final found = <(int, _Violation)>[];
+      final ran = <String, int>{};
+      for (final seed
+          in one != null ? [one] : [for (var s = 0; s < seeds; s++) base + s]) {
+        final rng = Random(seed);
+        final (sim, close) = open();
+        try {
+          if (rng.nextInt(5) < 2) {
+            sim.start(acquaRaws);
+          } else {
+            sim.start([
+              for (var g = 1 + rng.nextInt(3); g > 0; g--)
+                [
+                  for (var i = 1 + rng.nextInt(4); i > 0; i--)
+                    rng.nextInt(10) < 6
+                        ? dense[rng.nextInt(dense.length)]
+                        : pool[rng.nextInt(pool.length)],
+                ],
+            ]);
+          }
+          await sim.first();
+          Future<void> decideSome(int most) async {
+            for (var k = rng.nextInt(most + 1); k > 0; k--) {
+              await sim.decide(
+                rng.nextInt(sim.flat.length),
+                skip: rng.nextInt(5) < 2,
+              );
+            }
+          }
+
+          await decideSome(3);
+          for (var s = 0; s < steps; s++) {
+            final (name, mutate) = sim.randomEdit(rng, pool, variants);
+            final kind = name.split(' ').first;
+            // A compute asks FDC only for a query it never asked, so the
+            // edits that bring one carry the interleavings more often.
+            final bag = kind == 'insert' || kind == 'ingredient-edit'
+                ? newQueryBag
+                : modeBag;
+            final mode = await sim.edit(
+              'seed $seed step $s: $name',
+              mutate,
+              mode: bag[rng.nextInt(bag.length)],
+              at: rng.nextInt(1 << 20),
+              skip: rng.nextBool(),
+              failAfter: rng.nextInt(2),
+            );
+            ran['$kind/$mode'] = (ran['$kind/$mode'] ?? 0) + 1;
+            await decideSome(2);
+          }
+        } finally {
+          close();
+        }
+        found.addAll([for (final v in sim.violations) (seed, v)]);
+      }
+      final byKind = <String, int>{};
+      final byOp = <String, int>{};
+      for (final (_, v) in found) {
+        for (final k in v.kinds) {
+          byKind[k] = (byKind[k] ?? 0) + 1;
+        }
+        final op = RegExp(r'step \d+: (\S+).*\[(\w+);').firstMatch(v.text);
+        final tag = op == null ? 'first compute' : '${op[1]}/${op[2]}';
+        byOp[tag] = (byOp[tag] ?? 0) + 1;
+      }
+      final runs = [for (final k in ran.keys.toList()..sort()) '$k=${ran[k]}'];
+      final hitSeeds = {for (final (s, _) in found) s};
+      print(
+        'pairing oracle fuzz: ${one ?? seeds} seed(s) x $steps edits; '
+        'edits run (kind/mode): ${runs.join(' ')}\n'
+        'violations: ${found.length} in ${hitSeeds.length} seed(s); '
+        'by kind $byKind; by edit/mode $byOp',
+      );
+      for (final (seed, v) in found.take(show)) {
+        print('--- seed $seed (rerun: ORACLE_SEED=$seed)\n${v.text}');
+      }
+      expect(
+        found.length,
+        0,
+        reason: 'invariant breaks; the first $show printed above',
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 30)),
+    skip: skipIfNoCorpus,
+  );
+}

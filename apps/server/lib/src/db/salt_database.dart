@@ -1303,10 +1303,8 @@ class SaltDatabase {
   /// the group's decision finishes: the amount-first confirm supplies a No
   /// grams example's grams. A Check or No match example with no grams is
   /// short: a plain Confirm promises no grams. The count may under-promise
-  /// a Check example whose cached record does convert (Run 048: 4 of
-  /// snapshot 12's 28 such examples convert on a cache-only Confirm under
-  /// v15) — the accepted direction: never promise what a confirm may not
-  /// count.
+  /// a Check example whose cached record does convert — the accepted
+  /// direction: never promise what a confirm may not count.
   static const String _reviewFinishCte =
       '$_reviewFlaggedCte, '
       'members AS (SELECT * FROM flagged WHERE '
@@ -1573,8 +1571,9 @@ class SaltDatabase {
   }
 
   /// Lays a recipe's match rows out anew in ONE transaction, before the
-  /// engine awaits anything (matchAndCompute's pairing): every row at a
-  /// position in [drop] is deleted (its line is gone), and each entry of
+  /// caller awaits anything (the engine's `layoutMatchRows`, run by a compute
+  /// and by a person's write): every row at a position in [drop] is deleted
+  /// (its line is gone, or is another ingredient now), and each entry of
   /// [moves] takes the row at its key (the old position) to `to`, with
   /// `itemKey`. A row is moved, never rewritten — its status, food and
   /// grams stay as a person left them. The movers are parked at negative

@@ -110,9 +110,10 @@ Future<Map<String, Object?>> matchesBody(
   Recipe recipe,
 ) async {
   final lines = nutritionLines(recipe);
-  final matches = {
-    for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
-  };
+  // Each line's row as the next layout pairs it (in memory: a GET writes
+  // nothing), so an edit since the last compute never shows a line
+  // another line's row.
+  final matches = pairRowsToLines(db.ingredientMatchesFor(recipe.id), lines);
   final items = <Map<String, Object?>>[];
   for (final (position, line) in lines.indexed) {
     var row = matches[position];
@@ -148,9 +149,10 @@ Future<Map<String, Object?>> matchesBody(
     // The KEY (singular) joins decisions; the QUERY keeps the line's words —
     // reported as the words whose cached answer the line reads (a same-key
     // sibling's, or an "A or B" line's A), so a live search lands there.
-    // (The weighed line's key, Run 048 P9: equivalent to the line's own on
-    // every line — a plus line's own key, "crispy onion plus reserved oil",
-    // is words nothing searches, so its sibling answer is never cached.)
+    // The weighed line's key, as the compute reads it: a plus line's own
+    // key ("crispy onion") would miss the answer its eaten plural item
+    // reads through the sibling key ('onion' for "reserved onions") and
+    // report "onions", uncached (Run 049).
     final search = itemKey.isEmpty
         ? null
         : lineSearchFor(
@@ -296,6 +298,18 @@ Future<AppliedToOthers?> applyMatchOverride(
   // (0711's oil), as the compute weighs it.
   final weighed = weighedLine(recipe, line);
   final itemKey = lineKeyOf(line);
+  // A recipe saved since its last compute still has its rows where its old
+  // lines stood: lay them out on the new lines first ([layoutMatchRows]),
+  // so this write reads and replaces THIS line's row, never the row (or a
+  // person's decision) another line left at this position.
+  // Known limits (pairing panel): the layout runs before the body is
+  // validated, so a refused request (a 422, the zero-row confirm) can still
+  // move or drop rows as the next compute would — no decision's content
+  // changes. And the write below is at THIS version's position: a save plus
+  // another layout during this request's own awaits (cachedFood, gramsFor)
+  // lands it on the old line's slot (unpinned; a 409 on a changed content
+  // hash would close it, a wire change).
+  layoutMatchRows(db, recipe);
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
   };
@@ -345,7 +359,8 @@ Future<AppliedToOthers?> applyMatchOverride(
     // Un-skip returns the line to automatic triage, as a compute writes it
     // ([unskippedRow]). It must NOT set 'confirmed': blessing whatever
     // low-confidence match the line had would hide it from the review queue
-    // as resolved (review B7).
+    // as resolved (review B7) — only grams a person typed come back as
+    // their counted row.
     row = await unskippedRow(db, provider, recipe, position, row);
   } else if (fdcId != null) {
     if (fdcId is! num || fdcId <= 0) {
@@ -441,11 +456,8 @@ Future<AppliedToOthers?> applyMatchOverride(
     // confirm says it is poured away, 0 g — typed grams (below) count
     // that much instead. One with an eaten part keeps it. Held by the
     // engine's own detector, not only the stored hold (Run 047: a row an
-    // amount edit had left with no hold counted the whole line). (The
-    // stored-hold term is equivalent to the detector for every row this
-    // engine writes — the hold IS the detector's, and the one medium its
-    // grams decide, frying oil by mass, is zeroed, never held; it stands
-    // for a row an older matcher held, Run 048 P9.) Grams a
+    // amount edit had left with no hold counted the whole line), or by the
+    // stored hold — a row an older matcher held. Grams a
     // person typed for the eaten part stand (Run 048: a bare re-confirm
     // zeroed them).
     if (row.fdcId != null &&
@@ -498,7 +510,8 @@ Future<AppliedToOthers?> applyMatchOverride(
     );
   }
   // Everything apply_to_all needs is checked BEFORE the line is written, so
-  // a refused request changes nothing — not the line, not the totals.
+  // a refused request changes nothing — not the line, not the totals (the
+  // layout above may still have moved rows; no decision's content changes).
   FdcFood? food;
   if (applyToAll == true) {
     // The decision must be made IN THIS REQUEST — a pick (`fdc_id`) or a

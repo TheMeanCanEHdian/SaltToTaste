@@ -179,27 +179,23 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       return;
     }
     // The memory has to be set before the fetch (_reload reads it), so a
-    // failed fetch has to put it back: otherwise the toggle silently flips
-    // the memory and the NEXT reload (completeFix) switches the unit by
-    // itself. Failure is silent, as in filter() — nothing changed.
-    final previous = _groupedByBucket[current.bucket];
+    // failed fetch has to put it back — [_reload] does: otherwise the
+    // toggle silently flips the memory and the NEXT reload (completeFix)
+    // switches the unit by itself. Failure is silent, as in filter() —
+    // nothing changed.
     _groupedByBucket[current.bucket] = grouped;
     try {
       await _reload(current.bucket, selectIndex: 0);
     } on RepositoryException {
-      if (previous == null) {
-        _groupedByBucket.remove(current.bucket);
-      } else {
-        _groupedByBucket[current.bucket] = previous;
-      }
+      return;
     }
   }
 
   /// Switches the order (`finishes` | `worst`) and reloads from page 1.
   /// Compared with the REQUESTED order, so a second tap while the first is
-  /// in flight wins (A3). A failed fetch puts the order back to the one on
-  /// screen and leaves the view as it was — unless a later request
-  /// superseded it ([_reload] drops that failure).
+  /// in flight wins (A3). A failed fetch leaves the view as it was, and
+  /// [_reload] puts the order back to the one on screen — unless a later
+  /// request superseded it (that failure is dropped).
   Future<void> setSort(String sort) async {
     final current = state;
     if (current is! NutritionReviewLoaded || _sort == sort) {
@@ -209,10 +205,7 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
     try {
       await _reload(current.bucket, selectIndex: 0);
     } on RepositoryException {
-      final shown = state;
-      if (shown is NutritionReviewLoaded) {
-        _sort = shown.sort;
-      }
+      // [_reload] put the order back to the one on screen.
     }
   }
 
@@ -233,6 +226,8 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
   /// A reply superseded by a later reload is dropped (A3), and so is a
   /// superseded FAILURE: it returns silently, so no caller's catch rewinds
   /// the order or the grouping, or shows an error, under the newer request.
+  /// The LATEST request's failure puts the order and the screen's grouping
+  /// memory back to what the screen shows, then throws.
   /// The list is stamped with the order and view it was fetched with (with
   /// the failure drop that equals `_sort` at emit time — a current reply's
   /// order cannot have moved since it was sent — so the stamp is the
@@ -257,6 +252,17 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
     } on RepositoryException {
       if (ticket != _requested) {
         return;
+      }
+      // The latest request failed: the memory goes back to what the screen
+      // shows — a superseded request's change too, whose own caller never
+      // rewinds it (Run 049: setSort then filter both failing left `worst`
+      // remembered under a `finishes` list, and the next tap sent nothing).
+      final shown = state;
+      if (shown is NutritionReviewLoaded) {
+        _sort = shown.sort;
+        if (groupedFor(shown.bucket) != shown.grouped) {
+          _groupedByBucket[shown.bucket] = shown.grouped;
+        }
       }
       rethrow;
     }

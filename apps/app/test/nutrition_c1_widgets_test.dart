@@ -912,6 +912,23 @@ void main() {
     });
     expect(isHeldLine(rulesLine(10)), isTrue);
     expect(isHeldLine(confirmedSalt), isTrue);
+    // Whatever the status (Run 049 A2): a pick on it (an amount edit
+    // re-attaches a picked held medium held, matcher v16) and a skip.
+    for (final status in ['overridden', 'skipped']) {
+      final decided = IngredientMatch.fromJson({
+        'position': 10,
+        'raw': '1 tablespoon plus 1 teaspoon table salt',
+        'match': {
+          ...(golden('nutrition_matches_rules')['items'] as List)
+                  .cast<Map<String, dynamic>>()
+                  .singleWhere((m) => m['position'] == 10)['match']
+              as Map<String, dynamic>,
+          'status': status,
+        },
+      });
+      expect(decided.status, status);
+      expect(isHeldLine(decided), isTrue, reason: status);
+    }
   });
 
   group('Run 046 A5/A7: zero rows', () {
@@ -1547,6 +1564,29 @@ void main() {
         match.value = _brownSugar();
         await tester.pumpAndSettle();
         expect(find.text('Confirm · 145 g'), findsOneWidget);
+      });
+
+      testWidgets('Run 049 A2: portions arriving after a person re-picks '
+          "the STORED food prefill its fill, as with nothing staged", (
+        tester,
+      ) async {
+        // Stated exception (synthesized), as the Run 048 A1 repro: the
+        // person stages peanut butter, then the stored butter again.
+        final cubit = _Recording(_state([butterNoGrams()]));
+        final match = await pumpLive(
+          tester,
+          butterNoGrams(uncached: true, confidence: 0.3),
+          cubit,
+        );
+        await tester.tap(
+          find.text('Peanut butter, smooth style, without salt'),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Butter, without salt'));
+        await tester.pumpAndSettle();
+        match.value = butterNoGrams();
+        await tester.pumpAndSettle();
+        expect(find.text('Confirm · 452 g'), findsOneWidget);
       });
 
       testWidgets('Run 048 A1: portions arriving while ANOTHER food is '

@@ -954,9 +954,14 @@ void main() {
     // compared — 12 newly recorded foods and two recorded before that are
     // hits in the new answers ('french bread' 2707610, 'iceberg lettuce'
     // 2346388); all but celery, carrots, napa and iceberg (169988, 170393,
-    // 169979, 169248) differ in some digit.
-    expect(compared, 219);
-    expect(differ, 164);
+    // 169979, 169248) differ in some digit. Matcher v18 (the density
+    // guard) recorded the 12 records its pins read from snapshot 13: seven
+    // are hits ('ice cream' 167575 and 168809, 'oil-packed tuna' 169384,
+    // 'radishes' 170122, 'ricotta cheese' 171248, 'cream cheese' 173418,
+    // 'seedless raspberry jam' 2747675) and all but the radish differ in
+    // some digit.
+    expect(compared, 226);
+    expect(differ, 170);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

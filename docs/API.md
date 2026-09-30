@@ -333,12 +333,12 @@ null}], page, limit}` (`hold` as in the per-recipe matches body below).
 A line item's `finishes` is 1 when the line is its recipe's LAST open line
 (the only one in `no_match` / `check` / `no_grams`, whatever the filter)
 AND a confirm can count it: a `check` line that has grams, or a `no_grams`
-line (its confirm takes the amount) — else 0. A `no_match` line (no food to
-confirm) and a `check` line with no grams (a plain confirm converts it only
-if USDA can; when it cannot, the line lands in `no_grams` and the recipe
-stays partial) are 0 — so the count may under-promise a `check` line whose
-cached record does convert (4 of 28 such examples on the v15 replay): it
-never promises what a confirm may not count, as is a `skipped` or `counted` line. A group item
+line (its confirm takes the amount) — else 0. A `skipped` or `counted`
+line is 0, and so are a `no_match` line (no food to confirm) and a `check`
+line with no grams (a plain confirm converts it only if USDA can; when it
+cannot, the line lands in `no_grams` and the recipe stays partial). The
+count may therefore under-promise a `check` line whose cached record does
+convert, but it never promises what a confirm may not count. A group item
 overrides it with the group's count (below). Every `finishes` count (both
 modes, and `finishable`) reads the STORED match rows: for a recipe edited
 since its last compute (`stale` on its nutrition — derived, never stored) a
@@ -717,7 +717,17 @@ fetched.
 
 Per-line match transparency: the stored decision (`fdc_id`,
 `description`, `data_type`, `confidence` 0–1, `grams`, `gram_source`:
-`weight` (direct) | `portion` | `density` (estimate) | `piece` (estimate)
+`weight` (direct) | `portion` | `density` (estimate: a kitchen-figure
+table for pantry staples, read before a record's own volume portions; since
+matcher v18 its key matches the line's item as a word — 'salt' never sizes
+"unsalted peanuts" (the normalizer's "without salt" is the food's state)
+nor 'water' "watermelon", though 'nuts' still sizes "walnuts" — ice cream
+is 0.558 g/mL (168809's "cup (4 fl oz)" 66 g a half cup), and dry milk,
+milk powder, buttermilk powder, water chestnuts, ricotta, cream cheese and
+oil-packed sun-dried tomatoes, which a key names but which are not its
+food, weigh on their record's own volume portion instead ("½ cup plus ⅓
+cup nonfat dry milk powder" is 100 g, not 203 g; a record's "whipped"
+portion sizes only a whipped line)) | `piece` (estimate)
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
 buttermilk soak, a brine's sugar and the aromatics a step adds to a brine
@@ -793,7 +803,9 @@ optional)" is 72 g, not five whole leaves; "(½ cup plus 3 tablespoons)"
 is both parts, in mL; a paren that says "each", or an adjectival one with
 nothing but the count before it, prints ONE item's volume, as for a
 printed weight: "8 Swiss chard leaves, torn (about 1 cup each)" is 8 cups,
-288 g) — `"4 stick · USDA portion"` for a count
+288 g; since matcher v18 also when the parse keeps it as the line's volume
+amount: "2 (about 1 cup) ripe pears, sliced" is 2 cups, while "2 ripe
+pears, sliced (about 1 cup)" is 1) — `"4 stick · USDA portion"` for a count
 unit an SR bare noun names ("4 sticks unsalted butter" on `stick` 113 g;
 the noun must LEAD the description — "cup, sliced" is a cup, so "2 slices
 plums" finds no grams there, never two cups),
@@ -899,10 +911,12 @@ eaten part keeps that part: Shrimp Salad's "¼ cup plus 1 tablespoon juice"
 picked on "Lemon juice, raw" is its tablespoon, 15.2 g); an amount edit on a
 confirmed or picked held medium keeps its hold AND the person's resolution
 (matcher v16): 0 g poured away — or its eaten part — and grams a person
-typed stay as typed, never `grams: null`; a bare re-confirm never replaces
+typed stay as typed, never `grams: null` (an edit that makes the line no
+medium clears the hold, matcher v18); a bare re-confirm never replaces
 typed grams; and an un-skip gives it back the engine's grams — none, or its
 eaten part — and its hold, never a person's 0 g (which would read resolved
-with nobody's decision), except grams a person typed, which stay; a
+with nobody's decision), except grams a person typed, which come back as
+the person's counted row (below); a
 brine aromatic whose rest is tied into cheesecloth — "Place remaining 3
 garlic cloves … in center of cheesecloth and tie into bundle" — is zero
 whole, not just its written brine share),
@@ -992,10 +1006,14 @@ lasagna noodles` → `pasta dry enriched`; `80 percent lean ground chuck` →
 `oyster-flavored sauce` → `oyster sauce`; `shaoxing wine or dry sherry` →
 `dry sherry or chinese rice wine` ("Wine, rice", 2710691); `dried new
 mexican chiles` → `mild dried chile`; `flake sea salt` and `sea salt` →
-`salt table` (flake, flaky and coarse sea salt — read on the raw line —
-weigh like kosher salt, 0.72 g/mL, never table salt's 1.22: "2 tablespoons
-flake sea salt" is 21.3 g; plain and fine sea salt weigh as table salt, 6.0
-g a teaspoon, matcher v16); `whole grain mustard` and `whole-grain mustard` → `mustard
+`salt table` (flake, flaky, flaked, coarse(-grind) and Maldon sea salt,
+and sea salt flakes — read on the raw line — weigh like kosher salt, 0.72
+g/mL, never table salt's 1.22: "2 tablespoons flake sea salt" is 21.3 g;
+plain and fine sea salt weigh as table salt, 6.0 g a teaspoon, matcher v16;
+since matcher v18 only when that salt is the line's own food, nothing but
+its amounts before it, so "3 tablespoons unsalted butter, melted, plus
+flaky sea salt" weighs the butter at its own density, and the plus part of
+"1 tablespoon plus 1 teaspoon coarse sea salt" is kosher too, 14.2 g); `whole grain mustard` and `whole-grain mustard` → `mustard
 prepared`; `beef tenderloin center-cut chateaubriand`, `center-cut filet
 mignon` and `center-cut filets mignons` → `beef tenderloin`; `kale or
 collard greens` → `kale`; `broccoli florets` → `broccoli`; `stone-ground
@@ -1191,19 +1209,29 @@ accent-folded. A decided line also follows its text: an ingredient inserted,
 deleted or reordered above it moves the line, and its decision moves with it;
 an amount edit on a decided line keeps the food and the status and re-derives
 the grams (a hand-typed weight for the old amount is dropped — except on a
-held medium, above). Lines find their rows by text, in order (matcher v16):
-the stored rows' texts are aligned with the lines' (their longest common
-subsequence), so a line nothing moved keeps its row, decided or not, and a
-run an insert or a delete shifted keeps its rows too; only the lines and
-rows left over are re-paired — a row at its line's own position first, then
-by nth order of the same text (a reorder). A decision on the second "Salt
-and pepper" of Acquacotta stays on it whatever happens to the first (edited
-or deleted), two decided copies with a line inserted or deleted above both
-move with their lines, and an engine row (a rule row, `auto` or
-`unmatched`) is re-derived where its line stands, never given another
-copy's decision. The whole layout is written in one transaction before the
-compute asks FDC anything, and a decision is only ever moved (or dropped
-with its deleted line), never rewritten.
+held medium, above). Lines find their rows by text, in order (a line
+diff): the stored rows' texts are aligned with the lines', keeping first the
+most rows on a line of their exact text (a line nothing moved keeps its row,
+decided or not, and a run an insert or a delete shifted keeps its rows too),
+then an edit of one line as ONE substitution (its row stays with it when the
+ingredient is the same — an amount edit — so a line edited into a copy of its
+neighbour never takes the neighbour's row), then the most decisions kept (of
+two identical adjacent lines, the one deleted is the one without a
+decision), then each row at its own position. Lines and rows left over are
+re-paired by exact text (a line moved), then by ingredient (moved and
+amount-edited) — a decision first, then the row at the line's own position.
+A decision on the second "Salt and pepper" of Acquacotta stays on it
+whatever happens to the first (edited or deleted), two decided copies with a
+line inserted or deleted above both move with their lines, and an engine row
+(a rule row, `auto` or `unmatched`) moves with its line and is re-derived
+there, never given another copy's decision; a row no line takes is deleted.
+The whole layout is written in one transaction before the compute asks FDC
+anything — and before this PUT reads its row, so a decision made after a
+save and before the next compute lands on its line — and a decision is only
+ever moved (or dropped with its deleted line), never rewritten. A compute
+whose recipe is saved over while it waits on FDC writes no further rows (the
+next compute reads the edit). `GET …/nutrition/matches` shows each line the
+row this layout gives it, without writing.
 
 Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
@@ -1212,7 +1240,12 @@ triage (`auto`), deliberately NOT `confirmed`, so a low-confidence match
 is not silently blessed; the row is what a compute writes, weighed and
 gated by the sub-recipe rule (a skipped rule row — a sub-recipe's, a
 seasoning's, water or equipment — is that `confirmed` rule row again, never
-an `auto` row on no food). Totals recompute instantly. A re-pick of a line
+an `auto` row on no food) — except a row whose grams a person typed
+(`gram_source: override`), which comes back as a grams edit leaves an
+`auto` row: `overridden`, their grams, no hold, counted — never an `auto`
+row the next compute re-derives (matcher
+v18; a row on the record the second-food rule counts the line on is not
+re-derived by the rule either). Totals recompute instantly. A re-pick of a line
 the engine discarded as a cooking medium keeps it discarded (0 g) whatever
 food is picked — `{grams}` is how a person counts it. A re-pick of the
 record the second-food rule counts a line on (the fruit's juice record for

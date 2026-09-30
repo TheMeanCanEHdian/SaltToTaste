@@ -2000,6 +2000,55 @@ because the plan was cut when handed on — a process lesson recorded).
 matcherVersion 17; the live spend follows, the answers are recorded into
 the fixtures from the resulting snapshot, and the pins move off pending.
 
+### The live spend, checkpoint 9, the pairing design panel (matcher v18)
+
+The v17 live run spent 25 requests (the 13 planned searches and 12
+details: the 8 SR siblings and four follow-ons) and delivered the plan's
+upper bound exactly: counted 12,860 → 12,957, check 563 → 512, no grams
+155 → 109, complete 712 → 761; all 112 changed rows were planned lines, no
+person's row moved, and a cache-only replay of the live snapshot
+reproduces it row for row (the answers are recorded as fixtures, c7bad9d).
+Checkpoint 9 found one miss: the density table matched keys as bare
+substrings before a record's own volume portion, so "milk", "buttermilk"
+and "water" weighed dry milk, buttermilk powder and water chestnuts as
+liquids — three of the 25 details were fetched for portions the engine
+never read, and 27 counted lines library-wide were mis-sized.
+
+The row-to-line pairing had failed review in v14, v15 and v16, so it went
+to a design panel instead of a fourth point fix. An oracle agent wrote an
+identity-tracking fuzz (random edits over real corpus line lists — insert,
+delete, amount edit, text edit, edit-to-equal, swap, cross-group move —
+with a person's skips and picks carried by hidden identities, a write in
+the stale window between a save and the next compute, and FoodData Central
+failing mid-compute), proven on v16: 1,781 violations in 1,180 of 2,000
+fresh seeds. Three designers in isolated worktrees (a weighted alignment, a
+line diff, edit-time line identity carried from the editor) each reached
+zero violations on 24,000 fresh edits. The judge chose the line diff:
+`pairRowsToLines` is an order-preserving alignment scored, in strict
+priority, by same text, then a pair at all (the fewest edits: a changed
+line is one substitution, never a delete plus an insert), then a person's
+decision kept, then a row at its own position; leftover rows then pair by
+text and by ingredient key. `layoutMatchRows` writes that layout in one
+transaction before any wait, at the top of the compute AND of a person's
+match PUT (closing the stale window); a compute stops writing once the
+recipe has been saved over (`contentHashOf` checked on every write); the
+review sheet pairs in memory and writes nothing. Server only — no wire or
+app change; the engine has no unguarded write left. Also in v18 (the rest
+of Run 049 and checkpoint 9's fix 1): the density guard (short keys as
+whole words or plurals, "with(out) salt" stripped, "ice cream" at 0.558,
+dry milk / milk powder / buttermilk powder / water chestnut / ricotta /
+cream cheese / oil-packed fall through to the record's own portion — 31
+rows re-massed, all right, no bucket moved); the flake/coarse sea-salt
+density only when that salt is the line's own food, the same decision for
+its "plus" part and a held medium's eaten part, and the common spellings;
+the per-item "each" volume paren when the parser kept it; a re-attach clears
+a stale medium hold; an un-skip restores a person's typed grams as their
+row; the approximation label and the held-medium filter read the weighed
+line; the queue's failure tickets restore the order and grouping the screen
+shows; the finishes paragraph rewritten. matcherVersion 18. Known limits
+(marked in code): apply-to-all into another recipe during that recipe's
+save, and a PUT whose own waits span a save, predate this batch.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

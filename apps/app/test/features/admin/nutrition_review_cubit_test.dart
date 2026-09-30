@@ -821,6 +821,58 @@ void main() {
       await cubit.close();
     });
 
+    test('Run 049 A1: when BOTH overlapping requests fail, the order the '
+        'older one set goes back to the one on screen', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 1);
+      final check = cubit.filter('check');
+      await waitFor(adapter, 2);
+      adapter.failNext = true;
+      adapter.held[0].complete();
+      await worst;
+      adapter.failNext = true;
+      adapter.held[1].complete();
+      await check;
+      adapter.hold = false;
+      expect((cubit.state as NutritionReviewLoaded).sort, 'finishes');
+      // The order control is live: tapping 'Worst match' sends a fetch.
+      final sent = adapter.queries.length;
+      await cubit.setSort('worst');
+      expect(adapter.queries.length, sent + 1);
+      expect(adapter.queries.last['sort'], 'worst');
+      await cubit.close();
+    });
+
+    test('Run 049 A1: when BOTH overlapping requests fail, the grouping the '
+        'older one set goes back to the one on screen', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final lines = cubit.setGrouped(false);
+      await waitFor(adapter, 1);
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 2);
+      adapter.failNext = true;
+      adapter.held[0].complete();
+      await lines;
+      adapter.failNext = true;
+      adapter.held[1].complete();
+      await worst;
+      adapter.hold = false;
+      expect((cubit.state as NutritionReviewLoaded).grouped, isTrue);
+      // The next reload keeps the unit on screen, and the order.
+      await cubit.completeFix();
+      expect(adapter.queries.last['group'], 'item');
+      expect(adapter.queries.last['sort'], 'finishes');
+      expect((cubit.state as NutritionReviewLoaded).grouped, isTrue);
+      await cubit.close();
+    });
+
     test('Run 048 A2: a superseded completeFix reload that FAILS never '
         'replaces the newer list with the error screen', () async {
       final adapter = _FakeAdapter(seed());

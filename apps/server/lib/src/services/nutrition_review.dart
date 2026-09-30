@@ -178,6 +178,9 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
   final match = line.match;
   return {
     'recipe': {'id': match.recipeId, 'slug': line.slug, 'title': line.title},
+    // Known limit: the STORED position. After a save and before the next
+    // compute, a PUT here lands on the new recipe's line at that position
+    // (laid out first), which may not be the line shown.
     'position': match.position,
     'raw': match.raw,
     'bucket': line.bucket,
