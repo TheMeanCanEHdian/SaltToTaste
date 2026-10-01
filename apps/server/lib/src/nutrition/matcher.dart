@@ -272,8 +272,16 @@ const Map<String, String> _synonyms = {
 /// 'fruit'/own-noun whole-item portion up to 350 g); 22 = the checkpoint 9
 /// rulings: a starter's feeding flour, a fried food's dredge and a braise
 /// kept only in part held (`starter_discard`, `coating`,
-/// `partial_pour_away`), a rinsed dry cure 0 g discarded.
-const int matcherVersion = 22;
+/// `partial_pour_away`), a rinsed dry cure 0 g discarded; 23 = Run 053's
+/// rules and grams: grated Parmesan and Pecorino at the corpus's printed
+/// 0.24 g/mL, a dredge held when the DIRECTIONS fry it (not by the oil's
+/// mass), a divided dredge's or braise's part used outside it eaten, a pick
+/// keeping an eaten-in-part hold, `_asPrepared` only on a popcorn line, the
+/// oil a held dredge fries in discarded by the same directions (not its
+/// mass; a smaller first part a step names stays eaten), shredded Parmesan
+/// at the corpus's printed 0.36 g/mL, and a "plus" part's printed weight
+/// used over the density.
+const int matcherVersion = 23;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

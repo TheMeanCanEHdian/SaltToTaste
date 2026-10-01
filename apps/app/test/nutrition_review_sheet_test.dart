@@ -10,6 +10,7 @@ import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
 import 'package:salt_app/features/nutrition/review_sheet.dart';
 
@@ -596,7 +597,54 @@ void main() {
     expect(
       find.textContaining('Applied to', findRichText: true),
       findsOneWidget,
+    ); // Anchored: no "has since changed" note.
+    expect(
+      find.textContaining(ApplyToAllStrip.lineChangedNote, findRichText: true),
+      findsNothing,
     );
+  });
+
+  // Run 053 O17: a receipt whose line a save since edited or removed
+  // (position null — receiptOnReload keeps it) stands under no row; the
+  // sheet shows it ONCE, above the list, saying why, and its Dismiss clears
+  // it. The raw is the real escarole line; the vanished line is the
+  // synthesized part (a stated exception).
+  testWidgets('O17: an unanchored receipt shows once, above the rows, with '
+      'its counts and why it is not under its line', (tester) async {
+    final cubit = _ApplyCubit(
+      _state().copyWith(
+        applied: (
+          position: null,
+          raw: '1 small head escarole (10 oz), cut up',
+          recipes: 41,
+          lines: 44,
+          failed: 0,
+          completed: 0,
+          completedRecipes: const [],
+          moved: 2,
+          decided: 0,
+          gone: 0,
+          failedLines: 0,
+        ),
+      ),
+    );
+    await open(tester, seeded: cubit);
+    expect(
+      find.textContaining('Applied to 41 recipes', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(ApplyToAllStrip.lineChangedNote, findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('2 lines changed meanwhile', findRichText: true),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(cubit.dismissals, 1);
+    expect(find.textContaining('Applied to', findRichText: true), findsNothing);
   });
 
   testWidgets('the fix panel says how old its candidates are and offers a '

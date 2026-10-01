@@ -221,6 +221,23 @@ const Map<String, String> _approximateDensities = {
   'aleppo pepper': 'paprika',
 };
 
+/// Grated and shredded Parmesan and Pecorino Romano weigh what the corpus
+/// prints for them — the user's Q6 ruling (a weight ATK prints wins):
+/// "1 ounce Parmesan cheese, grated (½ cup)" and every other grated pair
+/// (20 Pecorino lines, every Parmesan one) is 28.35 g in 118.29 mL, 0.24
+/// g/mL — the table's 0.42 overweighed every "¼ cup grated" line by 75%
+/// (Run 053 O2/S1) — and every shredded pair is 3 ounces a cup, 0.36 g/mL
+/// ("3 ounces Parmesan, shredded (1 cup)", "1½ ounces Parmesan cheese,
+/// shredded (½ cup)", "2 ounces Parmesan cheese, shredded (⅔ cup)"). Only
+/// a line that says which: a bare one keeps its key's figure. 'pecorino'
+/// covers "Pecorino Romano"; no corpus line names Romano alone.
+const Map<String, (double, String)> _printedHardCheese = {
+  'grated': (28.35 / 118.29, '1 ounce = ½ cup'),
+  'shredded': (3 * 28.35 / 236.59, '3 ounces = 1 cup'),
+};
+const Set<String> _printedHardCheeseKeys = {'parmesan', 'pecorino'};
+final RegExp _hardCheeseForm = RegExp(r'\b(grated|shredded)\b');
+
 /// Piece weights (grams each) for common counted items, keyed by tokens.
 /// A key's weight is PER counted unit as the recipe counts it — for items
 /// always counted a particular way that means per slice (bread, bacon), per
@@ -1699,7 +1716,9 @@ GramResolution? resolveGrams({
   bool wholeBirdYield = wholeBirdYieldOn,
   bool kosherSalt = false,
 }) {
-  final parsed = raw == null ? amounts : _withParsedUnits(amounts, raw);
+  final parsed = raw == null
+      ? amounts
+      : _plusRestated(_withParsedUnits(amounts, raw), raw);
   // Read once on the raw line: the plus part is weighed without it (Run
   // 049: "1 tablespoon plus 1 teaspoon coarse sea salt" put the teaspoon
   // at table salt's 1.22).
@@ -1813,29 +1832,74 @@ GramResolution? resolveGrams({
   );
 }
 
-/// [food] without the portions that measure what it is made FROM, unless
-/// [line] measures that too: 2708216 Popcorn's "1 cup, unpopped, yields"
-/// 193 g is what a cup of kernels makes, and sized "1 cup lightly salted
-/// popcorn" (Red Snapper Ceviche) 13.8x over its "1 cup, popped" 14 g (v21
-/// closer). FNDDS writes such a measure as "yields" ("1 cup, dry, yields"
-/// oatmeal), "unpopped" or "makes"; the refuse portions' singular "yield
-/// from 1 raw ..." are not one. A line saying unpopped, dry or uncooked
-/// ("dry-roasted" is not) keeps them.
-FdcFood? _asPrepared(FdcFood? food, String line) {
-  if (food == null ||
+/// [amounts] without an amount the parse took from a parenthesis after
+/// "plus" (never the line's primary) when that "plus" part prints its own
+/// weight: the parenthesis restates the part, which weighs what it prints
+/// — "1 Parmesan cheese rind, plus 3 ounces Parmesan, shredded (1 cup)"
+/// (0403) is the 3 ounces, 85.05 g, never 1 cup by a density (99.37 g). A
+/// part of another food stands in for it (the line's grams are the
+/// part's, as they were); one of the same food is added after
+/// ([resolveGrams]), so the restatement goes.
+List<Amount> _plusRestated(List<Amount> amounts, String raw) {
+  final plus = plusPartOf(raw);
+  final at =
       RegExp(
-        r'\b(?:unpopped|dry|uncooked)\b(?!-)',
+        '\\bplus\\s+(?=[\\d$vulgarFractionChars])',
         caseSensitive: false,
-      ).hasMatch(line)) {
+      ).firstMatch(
+        raw.replaceAllMapped(RegExp(r'\([^)]*\)'), (p) => ' ' * p[0]!.length),
+      );
+  if (plus == null || plus.amount.measure != Measure.weight || at == null) {
+    return amounts;
+  }
+  final restated = [
+    // "(about 2 cups; see note)" restates 2 cups.
+    for (final paren in RegExp(
+      r'\((?:about\s+)?([^);]*)',
+    ).allMatches(raw, at.end))
+      ...parseIngredientLine(paren[1]!).amounts,
+  ];
+  return [
+    for (final amount in amounts)
+      if (amount.primary ||
+          !restated.any(
+            (r) => r.quantity == amount.quantity && r.unit == amount.unit,
+          ))
+        amount
+      else if (!plus.sameFood)
+        plus.amount,
+  ];
+}
+
+/// [food] without the portion that measures what it is made FROM, on a
+/// line that names the PREPARED form: 2708216 Popcorn's "1 cup, unpopped,
+/// yields" 193 g is what a cup of kernels makes, and sized "1 cup lightly
+/// salted popcorn" (Red Snapper Ceviche) 13.8x over its "1 cup, popped"
+/// 14 g (v21 closer). Only a popcorn line, and only on a record with a
+/// popped portion to read instead (v23, Run 053 O3): a line measuring the
+/// kernels ("½ cup popcorn kernels", "unpopped") keeps the yields portion
+/// — the popped mass those kernels make, which this record's nutrients are
+/// for — and so does every other food's own yields portion (a gelatin
+/// package's 540 g, a coconut's 206 g), which v22 stripped for any line.
+FdcFood? _asPrepared(FdcFood? food, String line) {
+  final text = line.toLowerCase();
+  if (food == null ||
+      !RegExp(r'\bpop(?:corn|ped)\b').hasMatch(text) ||
+      RegExp(r'\b(?:unpopped|kernel)').hasMatch(text)) {
     return food;
   }
-  final unprepared = RegExp(r'\b(?:unpopped|yields|makes)\b');
+  final unpopped = RegExp(r'\bunpopped\b');
   final kept = [
     for (final portion in food.portions)
-      if (!unprepared.hasMatch((portion.description ?? '').toLowerCase()))
+      if (!unpopped.hasMatch((portion.description ?? '').toLowerCase()))
         portion,
   ];
-  return kept.length == food.portions.length
+  return kept.length == food.portions.length ||
+          !kept.any(
+            (p) => RegExp(
+              r'\bpopped\b',
+            ).hasMatch((p.description ?? '').toLowerCase()),
+          )
       ? food
       : FdcFood(
           fdcId: food.fdcId,
@@ -2222,8 +2286,16 @@ GramResolution? _resolveGrams({
     // 'nuts' is any nut: a record of the nut the item names weighs it by its
     // own cup ("½ cup unsalted roasted peanuts" on 173806 'cup' 146 g, not
     // 0.55's 65 g; Run 050).
+    final form = entry != null && _printedHardCheeseKeys.contains(entry.$1)
+        ? _hardCheeseForm
+              .firstMatch((raw ?? normalizedItem).toLowerCase())
+              ?.group(1)
+        : null;
+    final printed = form == null ? null : _printedHardCheese[form];
     final density = kosher
         ? _kosherSaltDensity
+        : printed != null
+        ? printed.$1
         : entry != null &&
               ownVolume != null &&
               (entry.$1 == 'nuts'
@@ -2236,12 +2308,22 @@ GramResolution? _resolveGrams({
         ? null
         : entry?.$2;
     if (density != null) {
-      final standIn = kosher ? null : _approximateDensities[entry?.$1];
+      // The corpus prints shredded Parmesan only: shredded Pecorino weighs
+      // on it, flagged.
+      final standIn = kosher
+          ? null
+          : form == 'shredded' && entry?.$1 == 'pecorino'
+          ? 'shredded Parmesan'
+          : printed != null
+          ? null
+          : _approximateDensities[entry?.$1];
       return GramResolution(
         grams: quantity * ml * density,
         source: GramSource.density,
         basis:
             '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL'
+            '${printed == null ? '' : " · $form, at ATK's printed "}'
+            '${printed?.$2 ?? ''}'
             '${standIn == null ? '' : ' · approximate ($standIn density)'}',
       );
     }

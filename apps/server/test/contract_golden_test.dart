@@ -10,6 +10,8 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/search/search_service.dart';
+import 'package:salt_shared/salt_shared.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
 import '../routes/api/v1/admin/nutrition_review.dart' as review_route;
@@ -577,6 +579,69 @@ void main() {
         'prep': 'cut into 1/4-inch pieces',
       });
       expect(await statusOf(beans), 'complete');
+      // The receipt's other reasons over the route, each non-zero (Run 053
+      // O12/S8): a recipe of the beans' line that a save made another
+      // ingredient (0405's onion; not yet computed, so its row still bears
+      // the bacon key) is `gone`; one whose stored doc will not decode (a
+      // synthesized negative-path input, restored after) is `failed`, its
+      // line in `failed_lines`. (`decided` needs a person's write during
+      // the apply's await: pinned in-process, nutrition_v23_writepath_test.)
+      final editedAway = await baconRecipe('Boston Baked Beans, edited', {
+        'raw': '2 ounces (about 2 slices) bacon, cut into ¼-inch pieces',
+        'amounts': [
+          {
+            'measure': 'weight',
+            'quantity': '2',
+            'unit': 'ounce',
+            'primary': true,
+          },
+        ],
+        'item': '(about 2 slices) bacon',
+        'prep': 'cut into 1/4-inch pieces',
+      });
+      final stored = harness.db.recipeByIdOrSlug(editedAway)!;
+      const onion = '1 large onion, chopped coarse';
+      final parsed = parseIngredientLine(onion);
+      harness.db.upsertRecipe(
+        stored.recipe.copyWith(
+          ingredients: [
+            IngredientGroup(
+              items: [
+                IngredientLine(
+                  raw: onion,
+                  item: parsed.item,
+                  amounts: parsed.amounts,
+                ),
+              ],
+            ),
+          ],
+        ),
+        sourceSlug: stored.sourceSlug,
+        contentHash: 'edited-away',
+      );
+      final undecodable = await baconRecipe(
+        'Boston Baked Beans, undecodable',
+        {
+          'raw': '2 ounces (about 2 slices) bacon, cut into ¼-inch pieces',
+          'amounts': [
+            {
+              'measure': 'weight',
+              'quantity': '2',
+              'unit': 'ounce',
+              'primary': true,
+            },
+          ],
+          'item': '(about 2 slices) bacon',
+          'prep': 'cut into 1/4-inch pieces',
+        },
+      );
+      final raw = sqlite3.open(harness.config.dbPath);
+      final doc =
+          raw.select('SELECT doc FROM recipes WHERE slug = ?', [
+                undecodable,
+              ]).single['doc']
+              as String;
+      raw.execute("UPDATE recipes SET doc = '{' WHERE slug = ?", [undecodable]);
       final (picked, pickedBody) = await harness.send(
         'PUT',
         '/api/v1/recipes/$soup/nutrition/matches/0',
@@ -587,14 +652,20 @@ void main() {
       expect((jsonDecode(pickedBody) as Map<String, dynamic>)['applied'], {
         'recipes': 1,
         'lines': 1,
-        'failed': 0,
+        'failed': 1,
         'completed': 0,
         'completed_recipes': <String>[],
         'moved': 0,
         'decided': 0,
-        'gone': 0,
-        'failed_lines': 0,
+        'gone': 1,
+        'failed_lines': 1,
       });
+      raw
+        ..execute('UPDATE recipes SET doc = ? WHERE slug = ?', [
+          doc,
+          undecodable,
+        ])
+        ..dispose();
       expect(await statusOf(beans), 'complete');
     });
 

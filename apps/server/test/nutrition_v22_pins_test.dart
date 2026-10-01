@@ -221,7 +221,8 @@ void main() {
 
   test(
     'the compute re-run stops at maxComputePasses (Run 052 S13): a '
-    'save during every pass leaves it stale, and the loop ends at 3',
+    'save during every pass leaves it stale, and the loop ends at 3 — '
+    'failing, never returning as if done (Run 053)',
     () async {
       final db = wp.tempDb();
       final inner = FixtureProvider(pending: <String>{});
@@ -236,7 +237,16 @@ void main() {
       });
       final v0 = wp.saveLines(db, ['½ teaspoon table salt', '1 cup zqa']);
       inner.pending.add('zqa');
-      expect(await computeUntilFresh(db, provider, v0), maxComputePasses);
+      await expectLater(
+        computeUntilFresh(db, provider, v0),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            'still stale after $maxComputePasses compute passes',
+          ),
+        ),
+      );
       expect(maxComputePasses, 3);
       expect(nutritionIsFresh(db, db.recipeByIdOrSlug('r')!.recipe), isFalse);
     },

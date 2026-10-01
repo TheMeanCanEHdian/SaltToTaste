@@ -173,7 +173,8 @@ Widget sourceChip(String? dataType) {
 /// The plain-language reason the engine holds a line (the matches body's
 /// `hold`), or null for none. A code this app does not know yet (a newer
 /// server's hold) reads verbatim, so no hold ever renders blank. [note] is
-/// the server's `hold_note` (a partial pour-away's kept part).
+/// the server's `hold_note` (a partial pour-away's kept part, and a divided
+/// line's part eaten outside the dredge or braise).
 String? holdReason(String? hold, {String? note}) => switch (hold) {
   'no_nutrients' => 'USDA publishes no calories or macros for this food',
   'discarded_medium' =>
@@ -184,7 +185,7 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
         'rest each time, so how much of this line is eaten is not written',
   'coating' =>
     'Dredging for a fried food: most of it is shaken off or left in the '
-        'dish, and no coating share is set',
+        'dish, and no coating share is set${note == null ? '' : ' ($note)'}',
   'partial_pour_away' =>
     'Only part of the strained cooking liquid is kept'
         '${note == null ? '' : ' ($note)'}; the rest is poured away',

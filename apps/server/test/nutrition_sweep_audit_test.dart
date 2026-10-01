@@ -979,8 +979,12 @@ void main() {
     // records its 198 moved rows read (and the apricot preserves, 170645,
     // and the Duchess casserole's half-and-half and nutmeg answers, and
     // the black olives, 2710090, for the below-gate marked-count pins):
-    // 68 more compared, 48 of them differ in some digit.
-    expect(compared, 301);
+    // 68 more compared, 48 of them differ in some digit. Matcher v23
+    // recorded the gelatin dessert (2710310) and the coconut water (2707572)
+    // for the _asPrepared keep-side pins: the coconut water is a hit (in
+    // 'unsweetened' and 'unsweetened desiccated coconut'), equal in every
+    // digit.
+    expect(compared, 302);
     expect(differ, 224);
   });
 

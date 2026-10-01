@@ -40,7 +40,10 @@ typedef ApplyOffer = ({
 /// is the offer's line text: the receipt stands under the row that reads it,
 /// as the offer did ([receiptIsFor]).
 typedef ApplyReceipt = ({
-  int position,
+  // Null once a save since has edited or removed the line the person acted
+  // on: the receipt still stands (what the apply wrote across the library
+  // is not undone by it), shown unanchored ([receiptOnReload]).
+  int? position,
   String raw,
   int recipes,
   int lines,
@@ -189,17 +192,21 @@ IngredientMatch? rowReading(
 }
 
 /// [receipt] on freshly reloaded [matches], placed by its line's text as
-/// [offerOnReload] places an offer; null when its line cannot be placed.
-ApplyReceipt? receiptOnReload(
+/// [offerOnReload] places an offer. One whose line cannot be placed (a save
+/// since edited or removed it, or twins none of which stands where it was)
+/// is KEPT, unanchored (position null): the apply wrote across the library
+/// all the same, and its counts must reach the person (Run 053 O17).
+ApplyReceipt receiptOnReload(
   ApplyReceipt receipt,
   List<IngredientMatch> matches,
 ) {
-  final at = rowReading(matches, receipt.raw, receipt.position);
-  if (at == null) {
-    return null;
+  final last = receipt.position;
+  final at = last == null ? null : rowReading(matches, receipt.raw, last);
+  if (at?.position == last) {
+    return receipt;
   }
   return (
-    position: at.position,
+    position: at?.position,
     raw: receipt.raw,
     recipes: receipt.recipes,
     lines: receipt.lines,
@@ -520,7 +527,7 @@ class NutritionCubit extends Cubit<NutritionState> {
     final moved = offer == null ? null : offerOnReload(offer, matches);
     final withdrawn = offer != null && moved == null;
     // A shown receipt follows its line the same way; one whose line is gone
-    // just goes (it reports what happened, nothing is left to act on).
+    // stays, unanchored ([receiptOnReload]).
     final receipt = state.applied;
     final placed = receipt == null ? null : receiptOnReload(receipt, matches);
     emit(

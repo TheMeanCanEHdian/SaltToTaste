@@ -997,12 +997,32 @@ class _FixPaneBody extends StatelessWidget {
           final match = queueMatchOf(matches, line);
           if (match == null) {
             // No line of the recipe reads the queued text: a save since the
-            // last compute edited or removed it. Nothing here is this line.
-            return const _FixMessage(
+            // last compute edited or removed it. Nothing here is this line —
+            // but an apply made from it still shows its receipt (O17).
+            const gone = _FixMessage(
               text:
                   'This line was edited or removed since the queue was '
                   "built. Recompute the recipe's nutrition to refresh it.",
               isError: false,
+            );
+            final receipt = state.applied;
+            if (receipt == null) {
+              return gone;
+            }
+            final cubit = context.read<NutritionCubit>();
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              children: [
+                ApplyToAllStrip(
+                  offer: null,
+                  applied: receipt,
+                  applying: state.applying,
+                  onApply: cubit.applyToAll,
+                  onDismiss: cubit.dismissApply,
+                  promised: line.lines > 1 ? othersPromised(line) : null,
+                ),
+                gone,
+              ],
             );
           }
           return _FixContent(line: line, match: match, state: state);
@@ -1051,6 +1071,10 @@ class _FixContentState extends State<_FixContent> {
         cubit.override(match.position, raw: line.raw, confirmed: true);
     void skip() => cubit.override(match.position, raw: line.raw, skipped: true);
     final waiting = openLinesBesides(state.matches ?? const [], match.position);
+    final receipt =
+        receiptIsFor(state.applied, match) || state.applied?.position == null
+        ? state.applied
+        : null;
     // The split shows only BEFORE the decision, on a group that promises.
     final split =
         line.lines > 1 &&
@@ -1159,14 +1183,13 @@ class _FixContentState extends State<_FixContent> {
             const SizedBox(height: 12),
             FinishesSplit(line: line, match: match, waiting: waiting),
           ],
-          if (offerIsFor(state.offer, match) ||
-              receiptIsFor(state.applied, match)) ...[
+          // An unanchored receipt (its line changed since: O17) is this
+          // pane's apply all the same — the pane holds one line.
+          if (offerIsFor(state.offer, match) || receipt != null) ...[
             const SizedBox(height: 12),
             ApplyToAllStrip(
               offer: offerIsFor(state.offer, match) ? state.offer : null,
-              applied: receiptIsFor(state.applied, match)
-                  ? state.applied
-                  : null,
+              applied: receipt,
               applying: state.applying,
               onApply: cubit.applyToAll,
               onDismiss: cubit.dismissApply,

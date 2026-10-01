@@ -212,8 +212,17 @@ void main() {
       );
     });
 
-    test('the dredge lines of the library, exactly', () {
+    test('the dredge lines of the library, exactly (v23: read from the '
+        'directions — 0042, 0114, 0149, 0198 and 0288 fry too)', () {
       expect(libraryLinesOf({DiscardedMedium.coating}), {
+        // v23 (Run 053 O7/S5): the oil discarded after the fry (0042 ½ cup
+        // panko, 0114 ¾ cup flour, 0198 ⅔ cup cornstarch), the oil heated
+        // to 375 degrees (0149 2 cups flour), "pan-fry" (0288 ¼ cup flour).
+        '0042-almond-crusted-chicken-with-wilted-spinach-salad#3',
+        '0114-breaded-chicken-cutlets#3',
+        '0149-easier-fried-chicken#8',
+        '0198-crispy-pan-fried-pork-chops#0',
+        '0288-maryland-crab-cakes#8',
         '0116-chicken-schnitzel#0',
         '0116-chicken-schnitzel#3',
         '0148-crispy-fried-chicken#8',
@@ -288,14 +297,18 @@ void main() {
       return (db, provider, r);
     }
 
-    test('a pick on it is poured away, 0 g (the PUT pick site)', () async {
+    test('a pick on it keeps the hold, no grams (the PUT pick site; v23, '
+        'Run 053 O8 — every kind: nutrition_v23_rules_test G6)', () async {
       final (db, provider, r) = await computed();
       await applyMatchOverride(db, provider, r, 8, {
         'raw': flour,
         'fdc_id': 789890,
       });
       final row = db.ingredientMatchesFor(r.id)[8];
-      expect((row.grams, row.gramSource), (0, 'discarded'));
+      expect(
+        (row.grams, row.hold, row.status),
+        (null, 'coating', 'overridden'),
+      );
     }, skip: skipIfNoCorpus);
 
     test('a confirm on a row its STORED hold holds is poured away though '

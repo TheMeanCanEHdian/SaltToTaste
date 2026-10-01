@@ -145,11 +145,20 @@ void main() {
   test('M2: no v21 rewrite key is one word — "chianti", "lemongrass" and '
       '"vermicelli" are rank-as, reading their old targets\' answers under '
       'the same words (their table rows land unchanged)', () {
-    expect(
-      queryRewriteKeys,
-      isNot(anyOf(contains('chianti'), contains('lemongrass'))),
-    );
-    expect(queryRewriteKeys, isNot(contains('vermicelli')));
+    // Every key, not three names (Run 053 critic): the one-word keys are
+    // exactly the ones that predate v21, so a new one-word rewrite key — a
+    // leftAlternative food noun, the 'thai' class — fails here.
+    expect(queryRewriteKeys.where((k) => !k.contains(' ')).toSet(), const {
+      'pepper', 'peppercorns', 'cayenne', 'cointreau', 'amaretto', 'kahlua', //
+      'calvados', 'cognac', 'armagnac', 'bourbon', 'scotch', 'whisky',
+      'cinnamon', 'bacon', 'shrimp', 'sherry', 'vermouth', 'lager', 'penne',
+      'campanelle', 'spaghettini', 'linguine', 'rigatoni', 'orecchiette',
+      'farfalle', 'ziti', 'fusilli', 'gemelli', 'cavatappi', 'bucatini',
+      'tagliatelle', 'fettuccine', 'pappardelle', 'orzo', 'ditalini',
+      'spaghetti', 'turkey', 'chicken', 'short', 'dark', 'dill', 'mint',
+      'butter', 'gelatin', 'peas', 'pancetta', 'panko', 'stout', 'tubetti',
+      'madeira', 'pepperoncini', 'baguette', 'nutella',
+    });
     for (final (key, answer) in const [
       ('chianti', 'red wine'),
       ('lemongrass', 'lemon grass stalks'),
@@ -229,9 +238,13 @@ void main() {
           '2 tablespoons ground dried Aleppo pepper',
           '2 tablespoon ≈ 30 mL · approximate (paprika density)',
         ),
+        // Grated Pecorino weighs its own printed figure now (v23 G4), and
+        // shredded Pecorino the corpus's printed shredded PARMESAN pair, a
+        // stand-in (v23 closer; 0669 line 4).
         (
-          '¼ cup grated Pecorino Romano cheese',
-          '1/4 cup ≈ 59 mL · approximate (grated Parmesan density)',
+          '¼ cup shredded Pecorino Romano cheese',
+          "1/4 cup ≈ 59 mL · shredded, at ATK's printed 3 ounces = 1 cup · "
+              'approximate (shredded Parmesan density)',
         ),
         ('¼ cup ghee, melted', '1/4 cup ≈ 59 mL · approximate (oil density)'),
         (
@@ -865,7 +878,7 @@ _moved = [
     null,
     'pecorino romano cheese',
     171249,
-    '33.12',
+    '18.90',
     'G6b',
     'counted',
     true,
@@ -877,7 +890,7 @@ _moved = [
     null,
     'pecorino romano',
     171249,
-    '24.84',
+    '14.18',
     'G6b',
     'counted',
     true,
@@ -949,7 +962,7 @@ _moved = [
     null,
     'pecorino romano cheese',
     171249,
-    '24.84',
+    '14.18',
     'G6b',
     'counted',
     true,
@@ -973,7 +986,7 @@ _moved = [
     null,
     'pecorino romano cheese',
     171249,
-    '24.84',
+    '14.18',
     'G6b',
     'counted',
     true,
@@ -1788,7 +1801,8 @@ _moved = [
     null,
     'pecorino romano cheese',
     171249,
-    '24.84',
+    // v23 closer: shredded at the corpus's printed 3 ounces a cup.
+    '21.26',
     'G6b',
     'counted',
     true,
@@ -2388,7 +2402,7 @@ _moved = [
     null,
     'pecorino romano cheese',
     171249,
-    '33.12',
+    '18.90',
     'G6b',
     'counted',
     true,
@@ -2628,7 +2642,7 @@ _moved = [
     null,
     'pecorino romano cheese',
     171249,
-    '24.84',
+    '14.18',
     'G6b',
     'counted',
     true,

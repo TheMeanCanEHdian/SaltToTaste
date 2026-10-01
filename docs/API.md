@@ -699,7 +699,21 @@ computes it. No stamp is fresh with a line that has no row. Every reader
 of freshness — this body, the `stale` bulk scope, the job's re-run — reads
 both halves. The layout sequence is one global counter (migration 013), so
 a recipe deleted and re-created under its id never repeats a sequence a
-writer read before the delete. The ~30-nutrient
+writer read before the delete. Migration 013 stamps each existing
+computation with its recipe's layout sequence (0 for a recipe never laid
+out — every recipe computed before migration 012), and the first layout of
+such a recipe whose rows already stand on its lines (each row's text is its
+line's) and that moves and drops none records the lines and KEEPS that
+sequence, so an unedited recipe stays fresh through its first person's
+write or apply-to-all after the upgrade (v23, Run 053 S2/S18); one that
+moves, drops or re-texts a row, or a recipe with no rows yet, draws a new
+sequence. A recompute that re-matches nothing (a person's write, an
+apply-to-all reaching the recipe, the serving-basis change below) carries
+the stored stamp, and computes its totals on the STORED recipe and its
+rows in the same step that writes them — after every food detail it
+needed was fetched — never on a recipe or rows read before an await, so a
+newer compute's fresh stamp never sits over older totals (v23, Run 053
+O4). The ~30-nutrient
 key set and FDA Daily Values match the legacy app's panel.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition` (admin, full scope)
@@ -725,7 +739,10 @@ poll `GET /api/v1/nutrition/jobs/{id}` for progress (`status`: `running |
 done | failed`) and re-fetch `…/nutrition` when it finishes. Single-flight
 per recipe — a second call while one runs re-attaches to the same job, and
 when a save cut that job's compute off (its totals stamped stale) the job
-computes the stored recipe again before it ends (at most three passes; a
+computes the stored recipe again before it ends (at most three passes —
+a recipe still stale after the third is logged and counted failed: the
+job ends `failed`, a bulk sweep counts it in `failed` and its log names it,
+v23; a
 `stale` or other bulk sweep computing the recipe is the job a call
 re-attaches to, and it runs the same step — v22, Run 052 S5/O5) — and
 the recipe's `…/nutrition` body carries `computing_job_id` (admins only)
@@ -759,10 +776,13 @@ oil-packed sun-dried tomatoes, which a key names but which are not its
 food, weigh on their record's own volume portion instead ("½ cup plus ⅓
 cup nonfat dry milk powder" is 100 g, not 203 g; a record's "whipped"
 portion sizes only a whipped line, and since matcher v21 a portion that
-measures what the food is made from — FDC's "yields", "unpopped" or
-"makes", as 2708216 Popcorn's "1 cup, unpopped, yields" 193 g — sizes no
-line unless the line says unpopped, dry or uncooked: "1 cup lightly
-salted popcorn" is its "1 cup, popped" 14 g); since matcher v19 so do almond and
+measures what the food is made from — 2708216 Popcorn's "1 cup, unpopped,
+yields" 193 g — sizes no line that names the popped food: "1 cup lightly
+salted popcorn" is its "1 cup, popped" 14 g; since matcher v23 only a
+line saying popcorn or popped, on a record with a popped portion, and
+never one measuring the kernels ("½ cup popcorn kernels", "unpopped"
+— 96.5 g, the popped mass they make) — every other food keeps its own
+"yields" portion, as a gelatin package's 540 g or a coconut's 206 g); since matcher v19 so do almond and
 apple butter, and any item where a key only modifies a compound — the
 key followed by "of" or "seed(s)": "2 teaspoons cream of tartar" is its
 record's `tsp` 6.0 g, not 'cream' 1.01's 10.0 g, "¼ cup mustard seeds"
@@ -784,9 +804,25 @@ matcher v21 apple, currant and jalapeño jelly weigh 1.42 g/mL (169642
 its record's cup), and three stand-in figures the user approved as flagged
 approximations, whose `gram_basis` ends `" · approximate (<stand-in>
 density)"`: ground Aleppo pepper on paprika's 0.47 (FDC has no Aleppo
-record), grated Pecorino Romano on grated Parmesan's 0.42, ghee on oil's
+record), Pecorino Romano that says neither grated nor shredded on the
+table's Parmesan 0.42 (since matcher v23 no corpus line), ghee on oil's
 0.92 (its record publishes no portion) — e.g. `"2 tablespoon ≈ 30 mL ·
-approximate (paprika density)"`; and a powder on a record of the drink made from it
+approximate (paprika density)"`; since matcher v23 a line that says
+grated Parmesan or Pecorino weighs the corpus's own printed conversion,
+0.24 g/mL ("1 ounce Parmesan cheese, grated (½ cup)" and every grated
+pair; the user's ruling Q6: a weight ATK prints wins) — "¼ cup grated
+Pecorino Romano cheese" is 14.18 g, not 0.42's 24.84 g — whatever the
+record, with `gram_basis` `"1/4 cup ≈ 59 mL · grated, at ATK's printed 1
+ounce = ½ cup"`, and a line that says shredded weighs the corpus's
+printed shredded pair, 3 ounces a cup, 0.36 g/mL ("1½ ounces Parmesan
+cheese, shredded (½ cup)" and every other shredded pair), basis `"… ·
+shredded, at ATK's printed 3 ounces = 1 cup"` — shredded Pecorino, which
+the corpus never prints, on it and flagged `"· approximate (shredded
+Parmesan density)"`: "¼ cup shredded Pecorino Romano cheese" is 21.26 g;
+a "plus" part that prints its own weight weighs it, the parenthesis after
+it a restatement — "1 Parmesan cheese rind, plus 3 ounces Parmesan,
+shredded (1 cup)" is 85.05 g `"from 3 ounce"`, never its "(1 cup)" by a
+density; and a powder on a record of the drink made from it
 ("…, powder, prepared with whole milk") reads only its `dry` portions —
 none: no grams, never the made-up drink's `cup (8 fl oz)` 265 g) |
 `piece` (estimate; since matcher v21 the piece table reads "green
@@ -794,7 +830,12 @@ pepper", "Fuji" and "yolk" by its bell pepper 119 g, apple 182 g and egg
 yolk 17 g: "1 small green pepper", "3 Fuji, Gala, or Golden Delicious
 apples", "2 large yolks")
 | `override` | `discarded` (a cooking medium the recipe throws away —
-deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
+deep-frying oil ("for frying", or 400 g or more of oil — or, since
+matcher v23, ¼ cup or more of oil, its "plus" part included, in a recipe
+whose dredge is held `coating` by its directions: the oil a dredged food
+fries in, 0149's "1¾ cups vegetable oil" heated to 375 degrees, 0198's "⅔
+cup" whose step discards it, 0042, 0114, 0288; a sautéing tablespoon
+stays counted), a brine's salt, a
 buttermilk soak, a brine's sugar and the aromatics a step adds to a brine
 the food is submerged (or weighed down) in and lifted out of before the
 submerge — "Dissolve the salt, sugar, and paprika in the buttermilk … Add
@@ -814,7 +855,11 @@ Salted Turkey) nor a rub no step rinses (a barbecue rub) — stored as
 step WRITES ("3 garlic cloves" of "6 garlic cloves, peeled", the rest going
 in the pot) stores the rest's grams and counts them; a "plus" line whose second part a step
 eats — "1 cup plus 2 teaspoons table salt" with "remaining 2 teaspoons salt"
-in the rub — stores that part's grams and counts them; a HELD medium's eaten
+in the rub — stores that part's grams and counts them (the FIRST part,
+when the second is not named and a step names the smaller first: 0114's
+"1 tablespoon plus ¾ cup vegetable oil" beats "1 tablespoon of the oil"
+into the eggs, `gram_basis` `"discarded in cooking — only \"1
+tablespoon\" counted"`, since matcher v23); a HELD medium's eaten
 "plus" part is its grams too, held with it — "1 tablespoon plus 1 teaspoon
 table salt" with 1 tablespoon in the drained pasta water and the "remaining 1
 teaspoon salt" in the roux stores 6 g, `hold: discarded_medium`, and a
@@ -992,12 +1037,16 @@ written, no grams at all (`grams: null`), never the whole poured-away line;
 `confirmed: true` on such a row writes `grams: 0`, `gram_source:
 discarded` (basis "poured away — counted as 0 g") unless `grams` are typed
 in the same request — on any line the engine's own detector holds, whatever
-hold the row stores — and a pick of a food on it does the same (one with an
+hold the row stores — and a pick of a food on it does the same (since
+matcher v23 a pick alone on a `starter_discard`, `coating` or
+`partial_pour_away` line keeps the hold instead, below; one with an
 eaten part keeps that part: Shrimp Salad's "¼ cup plus 1 tablespoon juice"
 picked on "Lemon juice, raw" is its tablespoon, 15.2 g); an amount edit on a
 confirmed or picked held medium keeps its hold AND the person's resolution
-(matcher v16): 0 g poured away — or its eaten part — and grams a person
-typed stay as typed, never `grams: null` (an edit that makes the line no
+(matcher v16): 0 g poured away — or its eaten part — except a pick alone
+on a `starter_discard`, `coating` or `partial_pour_away` line, which keeps
+what a pick on the edited line writes (since matcher v23): no grams but
+the eaten part, still held — and grams a person typed stay as typed, never `grams: null` (an edit that makes the line no
 medium clears the hold, matcher v18); a bare re-confirm never replaces
 typed grams; and an un-skip gives it back the engine's grams — none, or its
 eaten part — and its hold, never a person's 0 g (which would read resolved
@@ -1014,25 +1063,38 @@ meat and clam juice name none of these: no record FDC answers publishes an edibl
 is not counted as meat; a LINE hold, like `second_food`),
 `starter_discard` (since matcher v22, the user's ruling Q1: every non-water
 line of a sourdough starter whose feeding step keeps a little starter and
-discards the rest — "discard remaining starter" / "discard all but …
-starter"; how much of the flour ends in the kept starter nothing says),
+discards the rest — "discard remaining starter"; how much of the flour ends in the kept starter nothing says),
 `coating` (since v22, Q2: ¼ cup or more of flour, starch or crumbs in a
-recipe that fries — a line of oil, shortening or lard "for frying" or of
-400 g or more — that a step names in a dredge: "dredge … in the flour",
+recipe that fries — read from its directions since matcher v23, never the
+oil's mass: a step that says fry ("pan-fry"), heats the oil to a frying
+temperature ("to 375 degrees") or discards the oil the food cooked in, or
+a line "for frying"; 0149 Easier Fried Chicken, 0198 Crispy Pan-Fried Pork
+Chops, 0114, 0042 and 0288 joined, 16 lines in all; a sauté that keeps
+its fat and a baked dredge stay counted, the user's pending question —
+that a step names in a dredge: "dredge … in the flour",
 "shake off excess flour", or set out in a shallow dish; or a line that says "for dredging" / "for coating". A batter the food
 is folded into is eaten whole and is none, nor is a sauce's thickener under
 ¼ cup, nor a dredge in a recipe that does not fry. Held until the server's
 `coatingFraction` switch — null, no figure set — gives the share a fried
 food keeps), `partial_pour_away` (since v22, Q4: a line of a braising
-liquid — the sentence before the strain that names it and opens "whisk",
-"bring", "combine" or "stir", the food added in the next sentence — that
+liquid — the sentence before the strain that names it and opens "whisk"
+or "bring", the food added ("add", "arrange") in the next sentence — that
 is strained after cooking ("cooking liquid through … strainer") and of
 which a later step keeps only a written part ("Pour 1 cup defatted
 cooking liquid", "½ cup reserved defatted liquid"), no step using the
 "remaining" liquid; the kept part is `match.hold_note`). These three are
 medium holds like `discarded_medium`: a LINE hold, no grams stored unless a
-"plus" part is eaten, a confirm writes 0 g poured away unless a person
-types the eaten grams,
+"plus" part is eaten — or, since matcher v23, a divided line's part a step
+uses outside the medium: 1133 Francese's "¾ cup all-purpose flour,
+divided" stores its "1 teaspoon flour" tossed with the sauce's butter,
+0129 Indoor Pulled Chicken's liquid smoke the "remaining 1 teaspoon"
+added after the strain, 0279's cornstarch the 3 tablespoons tossed onto
+the shrimp (a step with a dredge sentence is the dredge's, all of it) —
+a confirm writes 0 g poured away (or that eaten part) unless a person
+types the eaten grams, and since v23 a pick ALONE keeps the hold (the
+picked food, `overridden`, no grams but the eaten part): 0 g would drop
+the part that is eaten with no flag — a skip or typed grams answers it
+(`discarded_medium`, wholly poured away, still writes 0 g on a pick),
 `second_food` (the line names a second ingredient —
 "egg whites plus 1 large egg", "chipotle chile in adobo sauce plus 2
 teaspoons adobo sauce" — that the match does not cover; a counted fruit cut
@@ -1076,10 +1138,16 @@ it first the same way; the same switch), `borderline`
 (only when the server's borderline-band switch is on, off by default: an
 engine pick scored from 0.52 up to 0.54); `hold_note` (since v22): the
 hold in words where the code alone does not say it — a
-`partial_pour_away`'s kept part ("1 cup defatted cooking liquid"), else
+`partial_pour_away`'s kept part ("1 cup defatted cooking liquid"), and
+since matcher v23 a divided `coating` or `partial_pour_away` line's part
+eaten outside the medium, as written — "1 teaspoon flour is used outside
+the dredge, eaten" (1133 Francese), "½ cup reserved defatted liquid; 1
+teaspoon liquid smoke is used outside the braise, eaten" (0129 Indoor
+Pulled Chicken): its grams, held until a confirm counts them — else
 `null`. Such a held line sits in the `check` bucket until a person confirms,
 re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
-a skip, a grams edit), and an un-skip re-derives it for the food now on the
+a skip, a grams edit; since matcher v23 a pick with no grams keeps a
+`starter_discard`, `coating` or `partial_pour_away` hold), and an un-skip re-derives it for the food now on the
 line, so a person's food is never held for the engine's old reason (a
 person's food — confidence 1, a pick or a decision, inherited or not — is
 held again only by a LINE hold: `discarded_medium`, `starter_discard`,
@@ -1630,9 +1698,14 @@ guess — how confirming one line clears an ingredient's whole group. A line
 already on that food at or above 0.5 and unheld is left as it is, as is a
 line a line hold holds (`second_food`, `discarded_medium`,
 `starter_discard`, `coating`, `partial_pour_away`, `in_shell`, whatever its food or score), a line that names a second food (counted by the
-second-food rule, or unmatched), shellfish bought in the shell and an
-unmatched discarded medium the engine holds — the same
-rows `others` leaves out, so the offer and the apply agree.
+second-food rule, or unmatched), shellfish bought in the shell and a line
+the engine's medium rules hold, matched or not — read from the recipe as
+stored, never from the row's stored hold, so on a stale recipe (a steps
+edit, a matcher bump not yet swept) a line its steps now make a dredge or
+a poured-away medium is not offered (v23, Run 053 Opus critic 3) — the same
+rows `others` leaves out, so the offer and the apply agree; a line its
+recipe's steps made held between the offer and its recipe's turn is not
+written and counts in `moved`.
 The rows land
 as `auto` at confidence 1, machine propagation of a human decision exactly
 like inheritance — not as a human status, so a wrong pick applied
@@ -1651,9 +1724,13 @@ for its next compute: no row of it is written over what the layout put
 there. The response carries `applied: {recipes, lines, failed, completed,
 completed_recipes, moved, decided, gone, failed_lines}`, which accounts
 for every line `others_lines` offered: each is in exactly one of `lines`
-(written; see below), `decided` (a person decided it meanwhile), `gone`
+(written; see below), `decided` (a person decided it meanwhile — read as
+a decided row of its text the recipe holds that it did not at the offer,
+so a decision on one of two twin lines is `decided`, never `moved`: v23,
+Run 053 O5/S3), `gone`
 (its line is gone or another ingredient now, or its recipe was deleted —
-during the apply's awaits too, Run 052 O6), `moved` (its recipe was laid
+during the apply's awaits too, Run 052 O6, or by a layout that ran before
+its recipe's turn, v23), `moved` (its recipe was laid
 out anew during the apply's awaits, or the row was rewritten since the
 offer: left for its next compute) and `failed_lines` (its recipe failed;
 `failed` counts those recipes): `completed` counts
@@ -1671,8 +1748,9 @@ and `completed_recipes` lists their ids, so a shortfall can be named;
 `lines` counts the lines the decision moved —
 whose review bucket changed, or that took the decided food (a line left
 short of an amount on it too, which stays `no_grams`) — every line `others`
-counted, less those in `decided`, `gone`, `moved` and `failed_lines` (a
-written line whose bucket and food did not change is in none) —
+counted, less those in `decided`, `gone`, `moved` and `failed_lines`:
+every written line (v23: a line on the decided food that stayed in its
+bucket was counted in none, Run 053 Opus critic 3) —
 `recipes` the recipes holding one, and `failed` how many recipes
 failed part-way (their document would not decode, or the provider failed
 while fetching a food detail one of their lines' grams read — household

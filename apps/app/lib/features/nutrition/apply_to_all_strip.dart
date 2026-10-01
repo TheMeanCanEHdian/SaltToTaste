@@ -39,6 +39,12 @@ class ApplyToAllStrip extends StatelessWidget {
   /// offer says the count, and the receipt reconciles against it by id.
   final List<({String id, String title})>? promised;
 
+  /// What an unanchored receipt (position null) adds: why it no longer
+  /// stands under its line.
+  static const lineChangedNote =
+      '(The line you acted on has since changed, so this is no longer shown '
+      'under it.)';
+
   static String _recipes(int n) => n == 1 ? '1 recipe' : '$n recipes';
   static String _lines(int n) => n == 1 ? '1 line' : '$n lines';
 
@@ -156,6 +162,10 @@ class ApplyToAllStrip extends StatelessWidget {
             ..._reconcile(receipt),
             if (shortfallNote(receipt) case final note?)
               TextSpan(text: ' $note'),
+            // Unanchored (Run 053 O17): a save since edited or removed the
+            // line the apply was made from; what it wrote stands.
+            if (receipt.position == null)
+              const TextSpan(text: ' $lineChangedNote'),
           ],
         ),
         style: const TextStyle(fontSize: 13),

@@ -58,6 +58,12 @@ class _Adapter implements HttpClientAdapter {
     failedLines: 0,
   );
 
+  /// When set, an apply_to_all PUT answers WITHOUT its `applied` block, as
+  /// the server does when the decision had no food to apply (the route
+  /// omits the key for a null `AppliedToOthers`). Synthesized — a stated
+  /// exception: the fake cannot stage the server's reason.
+  bool noApplied = false;
+
   /// When set, an apply_to_all PUT waits here before answering — a sweep
   /// held open so a test can act while it runs.
   Completer<void>? gate;
@@ -141,7 +147,7 @@ class _Adapter implements HttpClientAdapter {
       return ResponseBody.fromString(
         jsonEncode({
           ..._matches(),
-          if (sent['apply_to_all'] == true)
+          if (sent['apply_to_all'] == true && !noApplied)
             'applied': {
               'recipes': others,
               'lines': others + 3,
@@ -421,6 +427,37 @@ void main() {
     expect(cubit.state.error, contains('withdrawn'));
   });
 
+  // Run 053 S16: a newer offer stands beside the first apply's receipt; an
+  // apply of it whose answer has no `applied` must clear that OLD receipt —
+  // left up, it would read as this apply's.
+  test('S16: an apply answered without a receipt clears the receipt '
+      'still shown from the apply before', () async {
+    await boot(others: 41);
+    final a = flour();
+    final b = cubit.state.matches!.firstWhere(
+      (m) => m.position != a.position && m.fdcId != null,
+    );
+    await cubit.override(a.position, raw: a.raw, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.gate = Completer<void>();
+    final sweep = cubit.applyToAll();
+    await pumpEventQueue();
+    await cubit.override(b.position, raw: b.raw, confirmed: true);
+    await pumpEventQueue();
+    adapter.gate!.complete();
+    adapter.gate = null;
+    await sweep;
+    await pumpEventQueue();
+    expect(cubit.state.applied?.raw, a.raw);
+    expect(cubit.state.offer?.raw, b.raw);
+    adapter.noApplied = true;
+    await cubit.applyToAll();
+    await pumpEventQueue();
+    expect(adapter.puts.last['apply_to_all'], isTrue);
+    expect(cubit.state.applied, isNull);
+    expect(cubit.state.offer, isNull);
+  });
+
   test("F7: the receipt carries the server's moved, decided, gone and "
       'failed_lines counts', () async {
     await boot(others: 41);
@@ -669,14 +706,89 @@ void main() {
       await cubit.loadMatches(force: true);
       await pumpEventQueue();
       expect(cubit.state.applied?.position, line.position);
-      // Removed: the receipt goes with it.
+      // Removed (a synthesized deletion of the golden's own line — the
+      // stated exception): the receipt STAYS, unanchored, its counts whole
+      // (Run 053 O17: it reports what the apply wrote library-wide).
+      final shown = cubit.state.applied!;
       adapter.layout = [
         for (final m in cubit.state.matches!)
           if (m.position != line.position) m.raw,
       ];
       await cubit.loadMatches(force: true);
       await pumpEventQueue();
+      expect(cubit.state.applied?.position, isNull);
+      expect(cubit.state.applied?.raw, line.raw);
+      expect(
+        (cubit.state.applied?.recipes, cubit.state.applied?.lines),
+        (shown.recipes, shown.lines),
+      );
+      // The line back: an unanchored receipt stays unanchored (which twin or
+      // position it was is no longer known); a dismiss clears it.
+      adapter.layout = null;
+      await cubit.loadMatches(force: true);
+      await pumpEventQueue();
+      expect(cubit.state.applied?.position, isNull);
+      cubit.dismissApply();
       expect(cubit.state.applied, isNull);
+    });
+
+    // Run 053 O17 (the digest's repro): a save removes the acted-on line
+    // while the apply runs — the answer has no row reading it. The receipt
+    // and every reason count still reach the person, unanchored, and no
+    // error claims the apply failed.
+    test('O17: the receipt of an apply whose line a save removed meanwhile '
+        'is kept, unanchored, with every count', () async {
+      await boot(others: 41);
+      final line = flour();
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      adapter
+        ..moved = 2
+        ..reasons = (decided: 3, gone: 4, failedLines: 5);
+      adapter.gate = Completer<void>();
+      final apply = cubit.applyToAll();
+      await pumpEventQueue();
+      adapter.layout = [
+        for (final m in cubit.state.matches!)
+          if (m.position != line.position) m.raw,
+      ];
+      adapter.gate!.complete();
+      await apply;
+      await pumpEventQueue();
+      final a = cubit.state.applied;
+      expect(a, isNotNull);
+      expect(a!.position, isNull);
+      expect(a.raw, line.raw);
+      expect(
+        (a.recipes, a.lines, a.moved, a.decided, a.gone, a.failedLines),
+        (41, 44, 2, 3, 4, 5),
+      );
+      expect(cubit.state.offer, isNull);
+      expect(cubit.state.applying, isFalse);
+      expect(cubit.state.error, isNull);
+    });
+
+    // The same window for a pending OFFER: a reload that no longer has its
+    // line withdraws it, and the message names why — the line is no longer
+    // in the recipe as it was.
+    test('O17: an offer whose line a reload no longer has is withdrawn, and '
+        'the message names the line and why', () async {
+      await boot(others: 41);
+      final line = flour();
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      adapter.layout = [
+        for (final m in cubit.state.matches!)
+          if (m.position != line.position) m.raw,
+      ];
+      await cubit.loadMatches(force: true);
+      await pumpEventQueue();
+      expect(cubit.state.offer, isNull);
+      expect(
+        cubit.state.error,
+        'The apply-to-all offer for "${line.raw}" was withdrawn: that line '
+        'is no longer in the recipe as it was.',
+      );
     });
 
     test('offerOnReload keeps, moves, or withdraws by text alone', () {
@@ -724,9 +836,20 @@ void main() {
         failedLines: 0,
       );
       expect(
-        receiptOnReload(receipt, [row(6, salt), row(7, offer.raw)])?.position,
+        receiptOnReload(receipt, [row(6, salt), row(7, offer.raw)]).position,
         7,
       );
+      // O17: unplaceable — gone, or twins neither at its position — it is
+      // kept unanchored (position null), counts whole, and is under no row.
+      for (final rows in [
+        [row(6, salt)],
+        [row(5, offer.raw), row(7, offer.raw)],
+      ]) {
+        final kept = receiptOnReload(receipt, rows);
+        expect(kept.position, isNull);
+        expect((kept.raw, kept.recipes, kept.lines), (offer.raw, 1, 1));
+        expect(rows.any((m) => receiptIsFor(kept, m)), isFalse);
+      }
       expect(receiptIsFor(receipt, row(6, offer.raw)), isTrue);
       expect(receiptIsFor(receipt, row(6, salt)), isFalse);
       expect(receiptIsFor(receipt, row(7, offer.raw)), isFalse);

@@ -837,6 +837,10 @@ void main() {
             IngredientGroup(items: items.sublist(0, items.length - 1)),
           ],
         );
+        // Saved as the editor saves it: a recompute computes on the STORED
+        // recipe (v23, Run 053 O4), never on a Recipe its caller holds.
+        final source = db.recipeByIdOrSlug(bundt.id)!.sourceSlug;
+        db.upsertRecipe(edited, sourceSlug: source, contentHash: 'edited');
         await recomputeTotals(db, provider, edited, servingBasis: 12);
         final after = db.nutritionFor(bundt.id)!;
         expect(after.totalCount, items.length - 1);

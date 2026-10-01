@@ -1121,6 +1121,78 @@ void main() {
       }
     });
 
+    // Run 053 S16: ZeroRow stands in for WhyLine, so a counted-zero row
+    // with a partial pour-away hold reads the kept part as the check row
+    // does. The real line, record and score: 0129 Indoor Pulled Chicken's
+    // liquid smoke (Pectin, liquid at 0.175, held partial_pour_away; its
+    // kept part is keptLiquidOf's for that recipe). The 0 g 'discarded'
+    // beside the hold is synthesized — a stated exception: the v22 engine
+    // stores the held row without grams; this is the shape the sheet's
+    // zero rule admits.
+    testWidgets('S16: a zero row with a partial pour-away hold names the '
+        'kept part', (tester) async {
+      const smoke = IngredientMatch(
+        position: 3,
+        raw: '1 tablespoon liquid smoke, divided',
+        item: 'liquid smoke',
+        lineAmount: '1 tablespoon',
+        fdcId: 167682,
+        description: 'Pectin, liquid',
+        confidence: 0.175,
+        grams: 0,
+        gramSource: 'discarded',
+        status: 'auto',
+        hold: 'partial_pour_away',
+        holdNote: '½ cup reserved defatted liquid',
+      );
+      expect(zeroGuessOf(smoke), isTrue);
+      await openSheet(tester, [smoke], isAdmin: false);
+      expect(find.byType(ZeroRow), findsOneWidget);
+      expect(
+        find.textContaining(
+          '(½ cup reserved defatted liquid); the rest is poured away',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    // v23 (Run 053 O9, closer D5): a divided line's part eaten outside the
+    // dredge stays HELD with its grams — as a held medium's eaten "plus"
+    // part does — and the row says which part, and that it waits on a
+    // confirm. The real row: 1133 Chicken Francese's "¾ cup all-purpose
+    // flour, divided", as the v23 engine stores it (2.51 g discarded,
+    // coating) and the GET's hold_note (holdNoteOf).
+    testWidgets('v23: a divided dredge names its eaten part and waits on a '
+        'confirm', (tester) async {
+      const flour = IngredientMatch(
+        position: 5,
+        raw: '¾ cup all-purpose flour, divided',
+        item: 'all-purpose flour',
+        lineAmount: '¾ cup',
+        fdcId: 789890,
+        description: 'Flour, wheat, all-purpose, enriched, bleached',
+        dataType: 'Foundation',
+        confidence: 0.95,
+        grams: 2.51,
+        gramSource: 'discarded',
+        status: 'auto',
+        hold: 'coating',
+        holdNote: '1 teaspoon flour is used outside the dredge, eaten',
+      );
+      expect(hasEatenPlusPart(flour), isTrue);
+      await openSheet(tester, [flour], isAdmin: false);
+      expect(
+        find.textContaining(
+          'no coating share is set (1 teaspoon flour is used outside the '
+          'dredge, eaten) — held out of the totals: Confirm counts only the '
+          'eaten part',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('A7: the fix panel says what the line writes', (tester) async {
       await pumpPanel(tester, epazote);
       expect(

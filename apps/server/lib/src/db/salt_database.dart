@@ -20,6 +20,14 @@ const List<String> mediumHolds = [
   'partial_pour_away',
 ];
 
+/// The [mediumHolds] part of whose line is eaten (Q1, Q2, Q4): a pick alone
+/// keeps the hold (v23, Run 053 O8) — a skip or typed grams answers it.
+const List<String> eatenInPartHolds = [
+  'starter_discard',
+  'coating',
+  'partial_pour_away',
+];
+
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
 enum UpsertOutcome {
   /// No row existed for the recipe id; a new one was inserted.
@@ -625,6 +633,12 @@ class SaltDatabase {
     return result;
   }
 
+  /// [mediumHolds] as an SQL list (a const, for the cached queries; pinned
+  /// equal to the list).
+  @visibleForTesting
+  static const String mediumHoldsSql =
+      "'discarded_medium', 'starter_discard', 'coating', 'partial_pour_away'";
+
   /// The four conditions a collapsed calories range can emit.
   ///
   /// Any number of ANDed `calories:` terms reduces to at most one lower and
@@ -636,12 +650,6 @@ class SaltDatabase {
   /// comparison against the indexed column, so SQLite still range-scans
   /// `idx_recipe_nutrition_calories` (migration 005) — a `(? IS NULL OR ...)`
   /// slot per operator would be constant too, but is not sargable.
-  /// [mediumHolds] as an SQL list (a const, for the cached queries; pinned
-  /// equal to the list).
-  @visibleForTesting
-  static const String mediumHoldsSql =
-      "'discarded_medium', 'starter_discard', 'coating', 'partial_pour_away'";
-
   static const String _caloriesGt = 'n.calories_per_serving > ?';
   static const String _caloriesGte = 'n.calories_per_serving >= ?';
   static const String _caloriesLt = 'n.calories_per_serving < ?';
@@ -1665,6 +1673,27 @@ class SaltDatabase {
     if (drop.isEmpty && moves.isEmpty && layout.texts == texts) {
       return;
     }
+    // The first layout of a recipe never laid out (no layout row: every
+    // recipe stamped before migration 012, which 013 backfilled to seq 0)
+    // whose rows already stand on these lines — each row's text is its
+    // line's — and that moves and drops none changes nothing a writer read:
+    // it records the texts and keeps the seq, so the backfilled stamp stays
+    // fresh (Run 053 S2/S18). A recipe with no rows still draws a new seq: a
+    // recipe deleted and re-created under its id starts with none.
+    if (layout.texts == null && drop.isEmpty && moves.isEmpty) {
+      final rows = ingredientMatchesFor(recipeId);
+      if (rows.isNotEmpty &&
+          rows.every(
+            (row) =>
+                row.position < lines.length && row.raw == lines[row.position],
+          )) {
+        _prepared(
+          'INSERT INTO recipe_layout (recipe_id, seq, lines) '
+          'SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM recipes WHERE id = ?)',
+        ).execute([recipeId, layout.seq, texts, recipeId]);
+        return;
+      }
+    }
     final delete = _prepared(
       'DELETE FROM ingredient_matches WHERE recipe_id = ? AND position = ?',
     );
@@ -1711,7 +1740,8 @@ class SaltDatabase {
   /// A recipe's match-row layout (migration 012): `seq` changes with every
   /// layout that moved or dropped its rows or changed the lines they stand
   /// on, drawn from one global counter so it never repeats for a recipe id
-  /// (migration 013; 0: never laid out), `texts` is the JSON array of those
+  /// (migration 013; 0: never laid out, or first laid out moving nothing
+  /// — [relayoutIngredientMatches]), `texts` is the JSON array of those
   /// lines' texts and `lines` decodes it (both null: never laid out).
   ({int seq, String? texts, List<String>? lines}) layoutOf(String recipeId) {
     final rows = _prepared(

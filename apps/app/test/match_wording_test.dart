@@ -63,6 +63,12 @@ void main() {
       ),
       findsOneWidget,
     );
+    // Run 053 S16: a counted row has no why-text of its own — only the
+    // carried note shows, never an empty Text above it.
+    expect(
+      find.descendant(of: find.byType(WhyLine), matching: find.text('')),
+      findsNothing,
+    );
     // A carried skip weighs nothing: no grams to speak of.
     await pump(
       tester,

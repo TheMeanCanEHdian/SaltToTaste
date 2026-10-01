@@ -534,12 +534,14 @@ void main() {
     // M14 (the restated-parenthetical guard) is not shipped: with M5 the
     // Parmesan line (0403) names a second food, so its plus part is never
     // added, and no other library line reached the guard (replay: 0 lines).
+    // Since v23 (closer) its "(1 cup)" restates the plus part, which
+    // prints its own weight: the 3 ounces, never 1 cup by a density.
     test('M5 keeps the Parmesan line (0403) from summing its restatement', () {
       final parm = gramsOf(
         '1 Parmesan cheese rind, plus 3 ounces Parmesan, shredded (1 cup)',
       )!;
-      expect(parm.grams, closeTo(236.588 * 0.42, 0.01));
-      expect(parm.basis, isNot(contains('+')));
+      expect(parm.grams, closeTo(3 * 28.3495, 0.01));
+      expect(parm.basis, 'from 3 ounce');
     });
 
     test('M5: wedges for serving are no second food; an eaten counted extra '

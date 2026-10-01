@@ -119,8 +119,9 @@ void main() {
         '"1 teaspoon whole black peppercorns plus ground black pepper" '
         "(Shrimp Salad, 0286) on ground pepper is 'peppercorn' 0.59; a "
         'record with no volume portion keeps the key\'s too: "¼ cup grated '
-        'Parmesan cheese" (Philly Cheesesteaks, 0309) on 325036 \'parmesan\' '
-        '0.42; and the key that IS the head keeps its figure: "¼ cup '
+        'Parmesan cheese" (Philly Cheesesteaks, 0309) on 325036 reads the '
+        "grated figure the corpus prints (0.24, v23 G4; 'parmesan' 0.42 "
+        'before); and the key that IS the head keeps its figure: "¼ cup '
         'molasses" (Indoor Pulled Chicken, 0129) \'molasses\' 1.41, 83.4 g, '
         "on 168820, not its cup's 84.25 g", () async {
       expect(await g('½ cup panko bread crumbs', 174928), closeTo(29.57, 0.01));
@@ -133,7 +134,7 @@ void main() {
       );
       expect(
         await g('¼ cup grated Parmesan cheese', 325036),
-        closeTo(24.84, 0.01),
+        closeTo(14.18, 0.01),
       );
       expect(await g('¼ cup molasses', 168820), closeTo(83.40, 0.01));
     });

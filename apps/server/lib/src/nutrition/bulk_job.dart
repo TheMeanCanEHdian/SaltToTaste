@@ -87,7 +87,10 @@ Future<void> _runOne(
 /// computed again from the stored recipe — at most [maxComputePasses]
 /// passes, until the stamp is fresh ([nutritionIsFresh]; Run 051 B5: the
 /// request was dropped and the job ended 'done' with no rows). A recipe
-/// deleted meanwhile stops cleanly. Returns the passes run.
+/// deleted meanwhile stops cleanly. Returns the passes run; still stale
+/// after the last pass throws a [StateError] — both loops log it and count
+/// the recipe failed (Run 053: the pass count was dropped, so a recipe
+/// left stale read 'done').
 Future<int> computeUntilFresh(
   SaltDatabase db,
   NutritionProvider provider,
@@ -97,10 +100,11 @@ Future<int> computeUntilFresh(
   for (var pass = 1; ; pass++) {
     await matchAndCompute(db, provider, current);
     final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
-    if (stored == null ||
-        pass == maxComputePasses ||
-        nutritionIsFresh(db, stored)) {
+    if (stored == null || nutritionIsFresh(db, stored)) {
       return pass;
+    }
+    if (pass == maxComputePasses) {
+      throw StateError('still stale after $pass compute passes');
     }
     current = stored;
   }

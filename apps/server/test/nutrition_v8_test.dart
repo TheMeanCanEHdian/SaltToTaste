@@ -286,8 +286,10 @@ void main() {
       );
     });
 
-    test('P4: applied counts the rows whose bucket changed — a row re-held '
-        'by a line hold is written but not applied', () async {
+    test('P4: a row its line hold would re-hold is neither reached nor '
+        'written — the rinsed salt, unheld below the gate from an older '
+        'build, is held by its recipe as stored now (v23, Run 053 Opus '
+        'critic 3: it was written and counted in no bucket)', () async {
       final db = tempDb();
       final plain = recipeOf(db, 'plain', [plainSalt]);
       // An older build's rows, below the gate and unheld: the rinsed salt
@@ -320,9 +322,12 @@ void main() {
         excluding: (recipeId: plain.id, position: 0),
       );
       expect((applied.recipes, applied.lines), (1, 1));
-      final reheld = db.ingredientMatchesFor('turkey').single;
-      expect((reheld.hold, reheld.confidence), ('discarded_medium', 1));
-      expect(bucketOf(reheld), MatchBucket.check);
+      expect(
+        (applied.moved, applied.decided, applied.gone, applied.failedLines),
+        (0, 0, 0, 0),
+      );
+      final unreached = db.ingredientMatchesFor('turkey').single;
+      expect((unreached.hold, unreached.confidence), (null, 0.3));
       expect(
         bucketOf(db.ingredientMatchesFor('other').single),
         MatchBucket.counted,

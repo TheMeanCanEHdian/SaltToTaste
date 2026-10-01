@@ -12,12 +12,23 @@ import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/admin/nutrition_review_cubit.dart';
 import 'package:salt_app/features/admin/nutrition_review_queue.dart';
+import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 
 /// Serves both endpoints the queue needs: the cross-recipe review list, and one
 /// recipe's per-line matches (fetched when a row is selected, so the fix panel
 /// gets candidates).
 class _Adapter implements HttpClientAdapter {
-  _Adapter({this.failOverride = false, this.reviewBody});
+  _Adapter({this.failOverride = false, this.reviewBody, this.others = 0});
+
+  /// The `others`/`others_lines` the selected recipe's rows carry: above 0,
+  /// a decision raises the apply-to-all offer, and an `apply_to_all` PUT
+  /// answers with an `applied` receipt sized by it.
+  final int others;
+
+  /// Where the Grand Marnier line stands in the rows answered from now on.
+  /// Set to model a save meanwhile — synthesized, the stated exception: []
+  /// removed it; two positions, neither 5, made twins of it.
+  List<int> positions = const [5];
 
   /// A prepared review body, for the row/header cases — the default below is
   /// the two-line queue the fix-flow tests work against.
@@ -112,31 +123,55 @@ class _Adapter implements HttpClientAdapter {
             'limit': 50,
           };
     } else if (path.contains('/nutrition/matches')) {
+      var applyToAll = false;
+      if (options.method == 'PUT') {
+        final bytes = <int>[];
+        await for (final chunk in requestStream!) {
+          bytes.addAll(chunk);
+        }
+        final sent = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+        applyToAll = sent['apply_to_all'] == true;
+      }
       // The selected recipe's full match list (with a real alternative so the
       // fix panel can offer a re-pick).
       body = {
-        'items': [
-          {
-            'position': 5,
-            'raw': '2 tablespoons Grand Marnier',
-            'match': {
-              'fdc_id': 100,
-              'description': 'Candies, NESTLE, 100 GRAND Bar',
-              'data_type': 'SR Legacy',
-              'confidence': 0.41,
-              'grams': 28,
-              'gram_source': 'density',
-              'status': 'auto',
-            },
-            'candidates': [
-              {
-                'fdc_id': 200,
-                'description': 'Alcoholic beverage, liqueur, coffee',
-                'data_type': 'SR Legacy',
-                'confidence': 0.58,
-              },
-            ],
+        if (applyToAll)
+          'applied': {
+            'recipes': others,
+            'lines': others,
+            'failed': 0,
+            'completed': 0,
+            'completed_recipes': <String>[],
+            'moved': 0,
+            'decided': 0,
+            'gone': 0,
+            'failed_lines': 0,
           },
+        'items': [
+          for (final at in positions)
+            {
+              'others': others,
+              'others_lines': others,
+              'position': at,
+              'raw': '2 tablespoons Grand Marnier',
+              'match': {
+                'fdc_id': 100,
+                'description': 'Candies, NESTLE, 100 GRAND Bar',
+                'data_type': 'SR Legacy',
+                'confidence': 0.41,
+                'grams': 28,
+                'gram_source': 'density',
+                'status': 'auto',
+              },
+              'candidates': [
+                {
+                  'fdc_id': 200,
+                  'description': 'Alcoholic beverage, liqueur, coffee',
+                  'data_type': 'SR Legacy',
+                  'confidence': 0.58,
+                },
+              ],
+            },
         ],
       };
     } else {
@@ -160,6 +195,7 @@ void main() {
     WidgetTester tester, {
     bool failOverride = false,
     Map<String, dynamic>? reviewBody,
+    int others = 0,
   }) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
@@ -169,6 +205,7 @@ void main() {
     final adapter = _Adapter(
       failOverride: failOverride,
       reviewBody: reviewBody,
+      others: others,
     );
     final dio = Dio(BaseOptions(baseUrl: 'http://test'))
       ..httpClientAdapter = adapter;
@@ -298,6 +335,62 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(adapter.reviewFetches, fetchesBefore + 1);
+  });
+
+  // Run 053 O17: a save removes the acted-on line while the apply runs, so
+  // the answer has no row reading it — the pane has no line to show, but
+  // the receipt still stands there with its counts and why, and its Dismiss
+  // advances the queue as any receipt's does.
+  testWidgets('O17: the receipt of an apply whose line a save removed shows '
+      'in the pane, with the line-gone message, and Dismiss advances', (
+    tester,
+  ) async {
+    final adapter = await pumpQueue(tester, others: 3);
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apply to 3 lines'), findsOneWidget);
+    final fetchesBefore = adapter.reviewFetches;
+    adapter.positions = const [];
+    await tester.tap(find.text('Apply to 3 lines'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Applied to 3 recipes', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(ApplyToAllStrip.lineChangedNote, findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('edited or removed since the queue was built'),
+      findsOneWidget,
+    );
+    expect(adapter.reviewFetches, fetchesBefore, reason: 'not yet advanced');
+    await tester.tap(find.text('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(adapter.reviewFetches, fetchesBefore + 1);
+  });
+
+  // O17's other way to lose the line: the answer has it twice, neither at
+  // the position acted on — which twin it was is unknowable, so the receipt
+  // stands unanchored, and the pane (on the nearest twin) still shows it.
+  testWidgets('O17: a receipt whose line became twins neither at its '
+      'position still shows in the pane, unanchored', (tester) async {
+    final adapter = await pumpQueue(tester, others: 3);
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    adapter.positions = const [3, 4];
+    await tester.tap(find.text('Apply to 3 lines'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Applied to 3 recipes', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(ApplyToAllStrip.lineChangedNote, findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.text('Change the match & set the amount'), findsOneWidget);
   });
 
   /// The Low-confidence bucket, grouped: the jalapeño group the mockup's

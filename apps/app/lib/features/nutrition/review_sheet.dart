@@ -180,6 +180,20 @@ class _ReviewSheetState extends State<_ReviewSheet>
                   ),
                 ),
               ),
+            // A receipt whose line a save has since edited or removed stands
+            // under no row; it is shown here, above the list, until
+            // dismissed — never dropped (Run 053 O17).
+            if (state.applied case final receipt? when receipt.position == null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                child: ApplyToAllStrip(
+                  offer: null,
+                  applied: receipt,
+                  applying: state.applying,
+                  onApply: () {},
+                  onDismiss: context.read<NutritionCubit>().dismissApply,
+                ),
+              ),
             Expanded(child: content),
           ],
         ),

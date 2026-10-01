@@ -2264,11 +2264,61 @@ Verdes awaits the user's word), and a rinsed dry cure at 0 g discarded
 were). Also: "1 sugar cube" off the beef-steak record onto granulated
 sugar (no cube portion, so no grams); one density path per record for the
 head-noun rule. Replay on snapshot 13: calls 0; 26 rows differ from v21,
-every one a named hold, the cure, the sugar cube or the coffee row; eight
-fried recipes and the starter go from complete to review, as the rulings
-intend: counted 13,077, check 396, no grams 105, no match 37, complete
-831, partial 367. The oracle: 0 violations in 1,000 plain and 1,000 gap
-seeds. matcherVersion 22.
+every one a named hold, the cure, the sugar cube or the coffee row; eight recipes go from complete to review (seven fried ones — 1133,
+0304, 0116, 0148, 0527, 0525, 0233 — and the starter 0799; Run 053
+corrected this sentence's first wording), as the rulings intend: counted
+13,077, check 396, no grams 105, no match 37, complete 831, partial 367.
+The oracle: 0 violations in 1,000 plain and 1,000 gap seeds.
+matcherVersion 22.
+
+### Run 053's fixes: proxies replaced by signals, the backfill matched to the first write, the stamp from one read (matcher v23)
+
+Run 053 (both fleets on v21+v22, 2026-10-01; no HIGH) found three kinds
+of slip: a rule keyed on a proxy instead of the signal (R2's "fries" read
+the oil's mass, ≥ 400 g, so Easier Fried Chicken at 381 g and Pan-Fried
+Pork Chops escaped the hold while Francese, with less oil, was held;
+`_asPrepared` read the literal word 'unpopped' for "measured unpopped"; the
+grated-cheese density came from a table while ATK prints its own pair —
+"1 ounce … grated (½ cup)" — on twenty lines); a backfill that did not
+behave like the first real write (migration 013 stamped pre-012 recipes at
+layout 0 while the first layout bumped the counter with nothing moved, so
+an unedited recipe read stale after its first PUT or apply-to-all turn —
+masked in the v22 deploy only by the matcher bump); and a stamp taken from
+one read with the totals from another (a plain recompute built totals from
+a stale `Recipe` object and stamped a newer compute's fresh hash). v23
+(2026-10-01): a first layout that moves nothing writes its texts without
+bumping the sequence; a plain recompute computes on the STORED recipe at
+stamp time; R2 and the frying-oil rule read the same signal — a dredged
+food fried by the directions, deep, shallow or pan — so the five recipes
+newly recognised as fried (0042, 0114, 0149, 0198, 0288) hold their dredge
+AND discard their oil (a smaller first part a step names — 0114's egg-wash
+tablespoon — stays eaten; 0116's tablespoon and a sauté's four stay
+counted; 400 g or "for frying" remains the fallback with no dredge); grated
+Parmesan, Pecorino and Romano weigh at the corpus's printed 0.24 g/mL (24
+counted rows, a ¼ cup 24.8 → 14.2 g) and shredded at its printed 0.36; a
+"plus" part that prints its own weight uses it; a pick that kept an
+eaten-in-part hold keeps it through an amount edit on the compute path as
+on the PUT; the divided lines (1133's teaspoon of flour, Indoor Pulled
+Chicken's teaspoon of liquid smoke, the shrimp's cornstarch toss) carry
+their eaten part in the hold note and count it on a confirm, as the
+existing plus-part design does for any held medium; `_asPrepared` applies
+only to a line naming the prepared form; the apply-to-all's reach excludes
+line-held targets by re-running the detector, its receipt files a decided
+twin as decided and a changed ingredient as gone, and both job loops log
+and count a recipe still stale after the three-pass cap; the app keeps an
+apply-to-all receipt whose line a concurrent save removed, unanchored with
+a note; the one-word-key test asserts over every rewrite key. Pins and
+mutants for every mechanism the two pin-vacuity lenses named, including
+the stamp-time re-check the v22 verifier had called equivalent. Replay on
+snapshot 13: calls 0; 39 rows differ from v22 (24 grated cheese, 5 dredges,
+5 frying oils, 3 divided parts, the shredded row, the plus part), two more
+fried recipes to review (0042, 0114): counted 13,072, check 401, no grams
+105, no match 37, complete 829, partial 369; 0 person rows touched. The
+oracle: 0 violations in 1,000 plain and 1,000 gap seeds. matcherVersion
+23. Left pending: the singular "portobello mushroom cap" needs one FDC
+detail (the live step); 0042's eaten two tablespoons of oil (~28 g) and
+0288's quarter cup of pan-fry oil are the user's call alongside the open
+sautéed/baked question.
 
 ## Decision log (deviations & clarifications)
 
@@ -2610,7 +2660,8 @@ seeds. matcherVersion 22.
   on red potato raw, ghee at oil density, Aleppo at paprika density,
   pecorino at the grated-hard-cheese 0.42, tapioca starch on the tapioca
   pearl cup). Q1 the sourdough starter's flour lines (0799) are HELD as a
-  poured-away medium; Q2 dredging flour and crumbs (8 lines) are HELD until
+  poured-away medium; Q2 dredging flour and crumbs (the 8 lines counted at
+  checkpoint 9; 11 held when built, 16 after Run 053) are HELD until
   a coating fraction is set; Q3 a rinsed dry cure (0090) is 0 g discarded —
   the brine / degorging ruling extended; Q4 the soy braise (0129) is HELD
   under poured-away media; Q5 range amounts stay as they are (upper bound in

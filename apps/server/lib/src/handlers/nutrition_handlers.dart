@@ -288,10 +288,10 @@ Future<Map<String, Object?>> matchesBody(
               'hold': row.hold,
               // What a reviewer needs to judge the hold, in words: for a
               // `partial_pour_away` the part of the strained liquid a step
-              // keeps ("1 cup defatted cooking liquid"); null otherwise.
-              'hold_note': row.hold == 'partial_pour_away'
-                  ? keptLiquidOf(recipe, line)
-                  : null,
+              // keeps ("1 cup defatted cooking liquid"), and a divided
+              // line's part eaten outside the dredge or braise ([holdNoteOf]);
+              // null otherwise.
+              'hold_note': holdNoteOf(recipe, line, row.hold),
               // The line's previous text when this is a decision an amount
               // edit carried, not yet written for this line (its grams are
               // re-derived for this line until the next compute writes it);
@@ -447,6 +447,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   }
   // Set only by the branches that PUT a food on the row in this request.
   var decidedFood = false;
+  var keptHold = false;
   if (skipped == true) {
     row = row.copyWith(status: 'skipped');
   } else if (skipped == false) {
@@ -488,12 +489,18 @@ Future<AppliedToOthers?> applyMatchOverride(
     );
     // So does a second food picked onto its rule's record: the juice
     // amount, or the egg parts' sum, not the first part's grams. A HELD
-    // medium with no eaten part is poured away, as a confirm writes it
-    // (B6, below).
+    // discarded medium with no eaten part is poured away, as a confirm
+    // writes it (B6, below). A medium part of which is eaten — a dredge, a
+    // braise kept in part, a starter's feeding — keeps its hold on a pick
+    // alone (v23, Run 053 O8): 0 g would drop the eaten part with no flag;
+    // a skip or typed grams answers it, as the panel says.
+    keptHold = grams == null && eatenInPartHolds.contains(outcome.hold);
     final poured =
+        !keptHold &&
         mediumHolds.contains(outcome.hold) &&
         outcome.source != GramSource.discarded.name;
     final byEngine =
+        keptHold ||
         poured ||
         outcome.source == GramSource.discarded.name ||
         // (The weighed line, Run 048 P9: equivalent — a rule reads "zest
@@ -518,6 +525,7 @@ Future<AppliedToOthers?> applyMatchOverride(
           ? outcome.source
           : resolution?.source.name,
       clearGramSource: pickedGrams == null,
+      hold: keptHold ? outcome.hold : null,
       status: 'overridden',
     );
     decidedFood = true;
@@ -701,7 +709,10 @@ Future<AppliedToOthers?> applyMatchOverride(
             row
       : row;
   if (!db.upsertIngredientMatch(
-    stored.copyWith(itemKey: itemKey, clearHold: skipped != false),
+    stored.copyWith(
+      itemKey: itemKey,
+      clearHold: skipped != false && !keptHold,
+    ),
     layoutSeq: seq,
   )) {
     throw LineMovedException(position);
