@@ -2,12 +2,19 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
-    show RepositoryException;
+    show RepositoryException, apiGuard;
+import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/features/auth/auth_card.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_app/features/auth/login_page.dart';
+import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 
 import 'support/contract_goldens.dart';
 
@@ -561,6 +568,75 @@ void main() {
 
       expect(seen, [isA<AuthSignedOut>()]);
       expect(cubit.state, isA<AuthSignedOut>());
+    });
+  });
+
+  // Run 052 S15: each call site reads the SHARED code, not a literal of its
+  // own — error_codes_test pins the values, these pin that the sites use them.
+  group('ApiErrorCodes call sites', () {
+    test('a 401 with no envelope (an auth proxy) is unauthorized', () async {
+      // Synthesized (a stated exception): a stripped 401 body cannot come
+      // from the real server, which always sends the envelope.
+      adapter.routes[_login] = (401, <String, Object?>{});
+      await expectLater(
+        cubit.login(username: _adminUsername, password: 'x', remember: false),
+        throwsA(
+          isA<RepositoryException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCodes.unauthorized,
+          ),
+        ),
+      );
+    });
+
+    test("apiGuard surfaces a conflict's own message", () async {
+      // The server's own message for a second bulk job (bulk/index.dart).
+      const message = 'A bulk nutrition job is already running.';
+      final options = RequestOptions(path: '/api/v1/nutrition/bulk');
+      await expectLater(
+        apiGuard<void>(
+          () => throw DioException(
+            requestOptions: options,
+            response: Response<dynamic>(
+              requestOptions: options,
+              statusCode: 409,
+              data: {
+                'error': {
+                  'code': 'conflict',
+                  'message': message,
+                  'request_id': 'req-test',
+                },
+              },
+            ),
+          ),
+        ),
+        throwsA(
+          isA<RepositoryException>().having((e) => e.message, 'm', message),
+        ),
+      );
+    });
+
+    testWidgets('a locked sign-in shows the warning banner', (tester) async {
+      adapter.fail(_login, 429, 'locked', 'Too many attempts. Try later.');
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildMaterialTheme(buildForuiTheme()),
+          builder: (context, child) =>
+              FTheme(data: buildForuiTheme(), child: child!),
+          home: BlocProvider<AuthCubit>.value(
+            value: cubit,
+            child: const Scaffold(body: LoginPage()),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(EditableText).first, 'admin');
+      await tester.tap(find.text('Sign in'));
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pumpAndSettle();
+      final banner = tester.widget<AuthBanner>(find.byType(AuthBanner));
+      expect(banner.message, 'Too many attempts. Try later.');
+      expect(banner.warning, isTrue);
     });
   });
 }

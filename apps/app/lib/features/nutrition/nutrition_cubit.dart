@@ -32,15 +32,25 @@ typedef ApplyOffer = ({
 });
 
 /// The receipt of an apply-to-all, shown in place of the offer: what it
-/// reached, what failed, and how many reached recipes it completed (and
-/// which: the queue's receipt names a shortfall against its promise).
+/// reached, what failed, how many reached recipes it completed (and which:
+/// the queue's receipt names a shortfall against its promise), and how many
+/// targets it left because their recipe changed meanwhile ([moved]), was
+/// decided meanwhile ([decided]), is another ingredient now or gone
+/// ([gone]), or sat in a recipe that failed ([failedLines]). [raw]
+/// is the offer's line text: the receipt stands under the row that reads it,
+/// as the offer did ([receiptIsFor]).
 typedef ApplyReceipt = ({
   int position,
+  String raw,
   int recipes,
   int lines,
   int failed,
   int completed,
   List<String> completedRecipes,
+  int moved,
+  int decided,
+  int gone,
+  int failedLines,
 });
 
 /// The parsed ingredient item as a person would name it: parentheticals
@@ -136,18 +146,15 @@ final class NutritionState {
 /// a save shifted the line, and null — withdrawn — when no row, or more than
 /// one (twin lines: which one it was is unknowable), reads it.
 ApplyOffer? offerOnReload(ApplyOffer offer, List<IngredientMatch> matches) {
-  final reading = [
-    for (final m in matches)
-      if (m.raw == offer.raw) m.position,
-  ];
-  if (reading.contains(offer.position)) {
-    return offer;
-  }
-  if (reading.length != 1) {
+  final at = rowReading(matches, offer.raw, offer.position);
+  if (at == null) {
     return null;
   }
+  if (at.position == offer.position) {
+    return offer;
+  }
   return (
-    position: reading.single,
+    position: at.position,
     raw: offer.raw,
     label: offer.label,
     fdcId: offer.fdcId,
@@ -157,6 +164,58 @@ ApplyOffer? offerOnReload(ApplyOffer offer, List<IngredientMatch> matches) {
     lines: offer.lines,
   );
 }
+
+/// The row of [matches] that is the line reading [raw] last seen at
+/// [position]: the row at [position] when it still reads [raw], else the one
+/// row that does (a save shifted the line), else null — no row, or twins
+/// none of which stands at [position] (which one it was is unknowable).
+/// Every place the app names "the line the person acted on" goes through
+/// here, never through a position alone (Run 052 O7/S6).
+IngredientMatch? rowReading(
+  List<IngredientMatch> matches,
+  String raw,
+  int position,
+) {
+  final reading = [
+    for (final m in matches)
+      if (m.raw == raw) m,
+  ];
+  for (final m in reading) {
+    if (m.position == position) {
+      return m;
+    }
+  }
+  return reading.length == 1 ? reading.single : null;
+}
+
+/// [receipt] on freshly reloaded [matches], placed by its line's text as
+/// [offerOnReload] places an offer; null when its line cannot be placed.
+ApplyReceipt? receiptOnReload(
+  ApplyReceipt receipt,
+  List<IngredientMatch> matches,
+) {
+  final at = rowReading(matches, receipt.raw, receipt.position);
+  if (at == null) {
+    return null;
+  }
+  return (
+    position: at.position,
+    raw: receipt.raw,
+    recipes: receipt.recipes,
+    lines: receipt.lines,
+    failed: receipt.failed,
+    completed: receipt.completed,
+    completedRecipes: receipt.completedRecipes,
+    moved: receipt.moved,
+    decided: receipt.decided,
+    gone: receipt.gone,
+    failedLines: receipt.failedLines,
+  );
+}
+
+/// Whether [receipt] belongs under row [m]: as [offerIsFor].
+bool receiptIsFor(ApplyReceipt? receipt, IngredientMatch m) =>
+    receipt != null && receipt.position == m.position && receipt.raw == m.raw;
 
 /// Whether [offer] belongs under row [m]: the row at its position that
 /// still reads the text it was raised on (position alone showed the strip
@@ -356,10 +415,11 @@ class NutritionCubit extends Cubit<NutritionState> {
   /// Applies one row override, then refreshes the label totals. [raw] is
   /// the line's text as shown: when a save since moved that line, the
   /// server refuses (`line_moved`, nothing written) and the rows are
-  /// reloaded, so the screen finds the line where it is now.
+  /// reloaded, so the screen finds the line where it is now. It is also the
+  /// offer's text — the line the person acted on and the server guarded on.
   Future<void> override(
     int position, {
-    String? raw,
+    required String raw,
     int? fdcId,
     double? grams,
     bool? confirmed,
@@ -399,18 +459,16 @@ class NutritionCubit extends Cubit<NutritionState> {
     // push the decision out. The count is the server's, fresh after the
     // write, which is why the offer can only appear once it has landed.
     // A skip or a grams-only change is not a decision to broadcast.
+    // The row is the one reading the SENT text, never the row the response
+    // has at [position]: the response is read after the server's awaits, and
+    // a save in them can stand another line there (Run 052 O7/S6) — then the
+    // offer follows the text, or, unplaceable, is not raised.
     final decided = fdcId != null || confirmed == true;
-    IngredientMatch? row;
-    for (final m in matches) {
-      if (m.position == position) {
-        row = m;
-        break;
-      }
-    }
+    final row = rowReading(matches, raw, position);
     final offer = decided && row != null && row.others > 0
         ? (
-            position: position,
-            raw: row.raw,
+            position: row.position,
+            raw: raw,
             label: itemLabel(row.item) ?? row.raw,
             fdcId: fdcId,
             confirmed: confirmed == true,
@@ -461,20 +519,27 @@ class NutritionCubit extends Cubit<NutritionState> {
     final offer = state.offer;
     final moved = offer == null ? null : offerOnReload(offer, matches);
     final withdrawn = offer != null && moved == null;
+    // A shown receipt follows its line the same way; one whose line is gone
+    // just goes (it reports what happened, nothing is left to act on).
+    final receipt = state.applied;
+    final placed = receipt == null ? null : receiptOnReload(receipt, matches);
     emit(
       state.copyWith(
         matches: matches,
         offer: moved,
         clearOffer: withdrawn,
+        applied: placed,
+        clearApplied: placed == null,
         error: withdrawn
-            ? '${state.error ?? ''} The apply-to-all offer for '
-                      '"${offer.raw}" was withdrawn: that line is no '
-                      'longer in the recipe as it was.'
-                  .trim()
+            ? '${state.error ?? ''} ${_withdrawn(offer)}'.trim()
             : null,
       ),
     );
   }
+
+  static String _withdrawn(ApplyOffer offer) =>
+      'The apply-to-all offer for "${offer.raw}" was withdrawn: that line is '
+      'no longer in the recipe as it was.';
 
   /// Refetches the rows after a `line_moved` refusal; the refusal's message
   /// stays up (a failed refetch leaves the rows as they were).
@@ -526,24 +591,37 @@ class NutritionCubit extends Cubit<NutritionState> {
       return;
     }
     final applied = result.applied;
+    final matches = result.matches;
     // A decision landed on ANOTHER row while this apply was in flight raises
-    // its own offer; that newer offer stands — only this one is retired.
-    final stillCurrent = state.offer == offer;
+    // its own offer; that newer offer stands — only this one is retired. The
+    // newer offer and the receipt are both placed by their line's TEXT on
+    // the answer's rows, never by a position alone (Run 052 O7/S6).
+    final newer = state.offer == offer ? null : state.offer;
+    final kept = newer == null ? null : offerOnReload(newer, matches);
+    final receipt = applied == null
+        ? null
+        : receiptOnReload((
+            position: offer.position,
+            raw: offer.raw,
+            recipes: applied.recipes,
+            lines: applied.lines,
+            failed: applied.failed,
+            completed: applied.completed,
+            completedRecipes: applied.completedRecipes,
+            moved: applied.moved,
+            decided: applied.decided,
+            gone: applied.gone,
+            failedLines: applied.failedLines,
+          ), matches);
     emit(
       state.copyWith(
-        matches: result.matches,
+        matches: matches,
         applying: false,
-        clearOffer: stillCurrent,
-        applied: applied == null
-            ? null
-            : (
-                position: offer.position,
-                recipes: applied.recipes,
-                lines: applied.lines,
-                failed: applied.failed,
-                completed: applied.completed,
-                completedRecipes: applied.completedRecipes,
-              ),
+        offer: kept,
+        clearOffer: kept == null,
+        applied: receipt,
+        clearApplied: receipt == null,
+        error: newer != null && kept == null ? _withdrawn(newer) : null,
       ),
     );
   }

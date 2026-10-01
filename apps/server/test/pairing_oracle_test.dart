@@ -1818,12 +1818,13 @@ void main() {
       expect(paired, [null]);
     });
 
-    test('D6 (Opus critic 1 #2): a row keys from its own text too — a '
-        'skipped "½ cup" oil row stored under a key an older matcher wrote '
-        '(synthesized, a stated exception) still carries to its "¾ cup" '
-        'amount edit', () {
+    test('D6 (Opus critic 1 #2): a row keys from its own text too when '
+        'its stored key names the same food by another wording (the same '
+        'head noun, Run 052 F5) — a skipped "½ cup" oil row stored under '
+        "'olive oil', a key an older matcher wrote (synthesized, a stated "
+        'exception) still carries to its "¾ cup" amount edit', () {
       final paired = pairRowsToLines(
-        [_row(0, _oilHalf, status: 'skipped', key: 'oil, olive (v8)')],
+        [_row(0, _oilHalf, status: 'skipped', key: 'olive oil')],
         [
           _corpusLine(
             '0856-olive-oil-cake.yaml',

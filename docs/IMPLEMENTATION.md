@@ -2142,8 +2142,10 @@ on drift; a row's ingredient key is its stored key OR its own text's key
 under the current matcher; a "gaps" oracle mode (two saves with the rows
 left incomplete between them: a person's stale-window write, a save at the
 compute's first provider call, a failed compute) found 224 violations per
-1,000 seeds — the pairing now reads a row-less position as a line of unknown
-text (→ 120) and, with the laid-out texts from `recipe_layout`, 0 in 1,000
+1,000 seeds on the batch's pre-fix tree (Run 052 noted that figure was
+measured on an unshipped intermediate, not on the committed v19) — the
+pairing now reads a row-less position as a line of unknown text (→ 120)
+and, with the laid-out texts from `recipe_layout`, 0 in 1,000
 (22 seeds added to the regression list; the mode runs 60 seeds by default);
 `pairingExpansions` pins the budget's magnitude. (E) grams: the sub-gram
 dried-chile guard reads 'small' from the item's own words; the density table
@@ -2212,6 +2214,61 @@ snack bar, coleslaw mix to cabbage, a banana leaf to 0 g): counted 12,956 →
 touched. matcherVersion 21. Left for the live step, under the user's
 standing approval of needed requests: 7 details + 3 searches the plan
 named (+12 counted / +7 complete) — built dry first, as v17 was.
+
+### The checkpoint 9 rulings and Run 052's fixes, each as the whole class (matcher v22)
+
+Run 052 (both fleets on v20, 2026-10-01; no HIGH, six MED each) found that
+v20 had fixed one SITE of each class rather than the class: the row writes
+had left hash equality but the freshness stamp had not (a save, a person's
+PUT that drops a deleted line's row, and a revert left a recipe fresh and
+complete with a line that had no row); the offer's provenance had moved
+one hop (the response's row at the position) instead of to the `raw` the
+person sent; the compute re-run lived in one of two job loops; the
+apply-to-all's acceptance had widened without narrowing its write (a
+decided twin the layout carried onto the reached position was overwritten,
+a sibling a save only shifted was skipped and the receipt could not say
+why); `sameAmount` read the parser's first amount, so an edit of a line's
+eaten "plus" part kept the old typed grams; and the key union let a pick
+follow a line rewritten to another ingredient when the editor's parse gave
+a generic key. v22 (2026-10-01) closes each at every site: migration 013
+adds `recipe_nutrition.layout_seq` and a global `layout_counter`; a stamp
+names the layout it was computed on and `nutritionIsFresh` — the one
+predicate behind the body, the bulk stale scope and the job re-run —
+requires the hash AND the layout to match, and a layout with a row-less
+line never stamps fresh; the guarded upsert can no longer replace a decided
+row on a raw difference, the compute's orphan row goes through
+`replaceIngredientMatchIfUnchanged`, and the apply-to-all finds each target
+by row identity (`sameMatchRow`, shared with the PUT) after the layout and
+writes only an undecided row, its receipt now counting every offered line
+as written, decided meanwhile, gone, moved or failed (the app parses and
+shows all of it); the offer is built from the sent `raw` and the row that
+reads it, and the app's `rowReading` is the one way it names the line a
+person acted on; `computeUntilFresh` (three passes) serves both job loops;
+the stored key is the key, the own-text key only when the stored key is
+absent or shares its head noun (51 corpus lines parse differently, 15
+without the head noun); `sameAmount` compares the weighed line's amounts
+including the plus part; a decision an amount edit carried is shown with
+its status, the new line's cache-only grams and `carried_from`, labelled in
+the app; a deleted target counts as gone; the sequence survives a delete
+and re-create. The user's checkpoint 9 rulings (decision log 2026-10-01)
+land as three new discard kinds with their own hold codes, listed once
+(`mediumHolds`) and used at every server and app site: `starter_discard`
+(0799's two flour lines), `coating` (eleven dredging lines in ten fried
+recipes — 0116, 0148, 0233, 0255, 0279, 0304, 0525, 0527, 1084, 1133 — with
+a null `coatingFraction` hook for a future user-set share; a batter stays
+counted; Chicken Kiev, which bakes, and the sautéed dredges await the
+user's word), `partial_pour_away` (0129's braise and its sister Indoor
+Pulled Chicken, the kept amount in the GET's `hold_note`; Enchiladas
+Verdes awaits the user's word), and a rinsed dry cure at 0 g discarded
+(0090; 0091, a rub only partly rinsed and a barbecue rub stay as they
+were). Also: "1 sugar cube" off the beef-steak record onto granulated
+sugar (no cube portion, so no grams); one density path per record for the
+head-noun rule. Replay on snapshot 13: calls 0; 26 rows differ from v21,
+every one a named hold, the cure, the sugar cube or the coffee row; eight
+fried recipes and the starter go from complete to review, as the rulings
+intend: counted 13,077, check 396, no grams 105, no match 37, complete
+831, partial 367. The oracle: 0 violations in 1,000 plain and 1,000 gap
+seeds. matcherVersion 22.
 
 ## Decision log (deviations & clarifications)
 

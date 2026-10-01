@@ -90,14 +90,24 @@ String zeroReason(IngredientMatch m) => m.gramSource == 'discarded'
 /// whatever the status: a person's decision on a held line keeps the hold
 /// (matcher v16), and the line is still poured away or in the shell.
 bool isHeldLine(IngredientMatch m) =>
-    m.hold == 'discarded_medium' || m.hold == 'in_shell';
+    mediumHolds.contains(m.hold) || m.hold == 'in_shell';
+
+/// The holds of a medium the recipe pours away (the server's `mediumHolds`):
+/// a discarded medium, a starter's feeding discard, a fried food's dredge,
+/// a braise kept only in part (the rulings Q1, Q2, Q4, 2026-10-01).
+const Set<String> mediumHolds = {
+  'discarded_medium',
+  'starter_discard',
+  'coating',
+  'partial_pour_away',
+};
 
 /// Whether a held medium carries an eaten part: its engine grams are only
 /// what is eaten ("… only \"plus 1 teaspoon table salt\" counted" — every
 /// such row of snapshot 11 is a "plus" part), so a confirm counts that.
 /// Never an in-shell line.
 bool hasEatenPlusPart(IngredientMatch m) =>
-    m.hold == 'discarded_medium' &&
+    mediumHolds.contains(m.hold) &&
     m.gramSource == 'discarded' &&
     (m.grams ?? 0) > 0;
 
@@ -161,12 +171,23 @@ Widget sourceChip(String? dataType) {
 }
 
 /// The plain-language reason the engine holds a line (the matches body's
-/// `hold`), or null for none / an unknown code.
-String? holdReason(String? hold) => switch (hold) {
+/// `hold`), or null for none. A code this app does not know yet (a newer
+/// server's hold) reads verbatim, so no hold ever renders blank. [note] is
+/// the server's `hold_note` (a partial pour-away's kept part).
+String? holdReason(String? hold, {String? note}) => switch (hold) {
   'no_nutrients' => 'USDA publishes no calories or macros for this food',
   'discarded_medium' =>
     'Looks like a cooking medium the recipe discards (frying oil, a brine, '
         'a soak, cheese-making milk, drained cooking water)',
+  'starter_discard' =>
+    'A starter feeding: the method keeps a little starter and discards the '
+        'rest each time, so how much of this line is eaten is not written',
+  'coating' =>
+    'Dredging for a fried food: most of it is shaken off or left in the '
+        'dish, and no coating share is set',
+  'partial_pour_away' =>
+    'Only part of the strained cooking liquid is kept'
+        '${note == null ? '' : ' ($note)'}; the rest is poured away',
   'in_shell' =>
     'Bought in the shell — USDA has no edible share for this record',
   'second_food' =>
@@ -180,7 +201,8 @@ String? holdReason(String? hold) => switch (hold) {
     'This is a preserved record for a fresh ingredient: the line asks for '
         'fresh meat, the match is cured',
   'borderline' => 'The match score is borderline; please confirm the food',
-  _ => null,
+  null || '' => null,
+  final other => 'Held by the engine: ${other.replaceAll('_', ' ')}',
 };
 
 /// The plain-language reason a line is where it is.
@@ -192,7 +214,9 @@ class WhyLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final held = bucket == MatchBucket.check ? holdReason(match.hold) : null;
+    final held = bucket == MatchBucket.check
+        ? holdReason(match.hold, note: match.holdNote)
+        : null;
     final (text, color) = switch (bucket) {
       // Ruling 5: a held medium or shell line says which way out it takes.
       MatchBucket.check when held != null && match.hold == 'in_shell' => (
@@ -235,22 +259,51 @@ class WhyLine extends StatelessWidget {
       MatchBucket.counted => ('', SaltColors.muted),
       MatchBucket.skipped => ('Excluded from the totals', SaltColors.muted),
     };
-    if (text.isEmpty) {
+    // A decision an amount edit carried: what it counts was weighed on
+    // the line's previous text until the next compute writes it (a skip
+    // weighs nothing).
+    final carried = bucket == MatchBucket.skipped
+        ? null
+        : carriedNote(match.carriedFrom);
+    if (text.isEmpty && carried == null) {
       return const SizedBox.shrink();
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (text.isNotEmpty)
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          if (carried != null)
+            Text(
+              carried,
+              style: const TextStyle(
+                fontSize: 12,
+                color: SaltColors.infoInk,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
       ),
     );
   }
 }
+
+/// A carried decision's label: its grams in the totals come from the line's
+/// previous amount ([IngredientMatch.carriedFrom]) until a recompute
+/// re-weighs it; null when the row was not carried.
+String? carriedNote(String? carriedFrom) => carriedFrom == null
+    ? null
+    : 'Decided on the line\'s previous amount ("$carriedFrom") — its grams '
+          'in the totals come from that amount; recompute to re-weigh';
 
 /// A held line's skip, as ruling 5 words it for a held medium AND an
 /// in-shell row alike.
@@ -295,7 +348,7 @@ class _ZeroRowState extends State<ZeroRow> {
           style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
         ),
         // ZeroRow stands in for WhyLine, so it carries the engine's hold.
-        if (holdReason(m.hold) case final held?)
+        if (holdReason(m.hold, note: m.holdNote) case final held?)
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(

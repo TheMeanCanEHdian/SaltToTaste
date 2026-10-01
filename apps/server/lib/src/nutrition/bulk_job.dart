@@ -55,24 +55,7 @@ Future<void> _runOne(
   Recipe recipe,
 ) async {
   try {
-    // Single-flight: a request while this runs re-attaches here, so a save
-    // that cut this compute's writes off (its gate tripped, the totals
-    // stamped stale) is computed again from the stored recipe — at most
-    // three passes, until the stamp is fresh (Run 051 B5: the request was
-    // dropped and the job ended 'done' with no rows). A recipe deleted
-    // meanwhile stops cleanly.
-    var current = recipe;
-    for (var pass = 1; ; pass++) {
-      await matchAndCompute(db, provider, current);
-      final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
-      if (stored == null ||
-          pass == 3 ||
-          db.nutritionFor(recipe.id)?.ingredientsHash ==
-              ingredientsHashOf(stored)) {
-        break;
-      }
-      current = stored;
-    }
+    await computeUntilFresh(db, provider, recipe);
     db.updateNutritionJob(jobId, done: 1, failed: 0, status: 'done');
   } on NutritionProviderException catch (error) {
     // No key / bad key / hard rate failure — surface the reason in the log.
@@ -96,6 +79,35 @@ Future<void> _runOne(
     _recipeJobs.remove(recipe.id);
   }
 }
+
+/// One recipe's compute, the step BOTH job loops run (the per-recipe job
+/// and the bulk sweep, Run 052 S5/O5): single-flight, a request while it
+/// runs re-attaches to it ([startRecipeComputeJob]), so a save that cut
+/// the compute's writes off (its gate tripped, the totals stamped stale) is
+/// computed again from the stored recipe — at most [maxComputePasses]
+/// passes, until the stamp is fresh ([nutritionIsFresh]; Run 051 B5: the
+/// request was dropped and the job ended 'done' with no rows). A recipe
+/// deleted meanwhile stops cleanly. Returns the passes run.
+Future<int> computeUntilFresh(
+  SaltDatabase db,
+  NutritionProvider provider,
+  Recipe recipe,
+) async {
+  var current = recipe;
+  for (var pass = 1; ; pass++) {
+    await matchAndCompute(db, provider, current);
+    final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
+    if (stored == null ||
+        pass == maxComputePasses ||
+        nutritionIsFresh(db, stored)) {
+      return pass;
+    }
+    current = stored;
+  }
+}
+
+/// The most passes [computeUntilFresh] runs for one recipe.
+const int maxComputePasses = 3;
 
 /// The FDC client a BULK job uses, as a context-provided value.
 ///
@@ -144,7 +156,9 @@ enum BulkScope {
 /// Recipe ids [scope] selects.
 ///
 /// `stale` is the only one that cannot be a query: the staleness test is a
-/// Dart-side hash, so every recipe with nutrition is decoded and compared
+/// Dart-side hash (with the stamp's layout, [nutritionIsFresh]: a recipe
+/// whose layout moved since its stamp is stale whatever its hash), so every
+/// recipe with nutrition is decoded and compared
 /// (see [SaltDatabase.recipesWithNutrition] for why there is no timestamp
 /// shortcut). Measured at ~110-190 ms for the whole 1,198-recipe library,
 /// synchronously on the serving isolate, on admin-only endpoints (the sweep
@@ -162,7 +176,8 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
         final recipe = RecipeMapper.fromMap(
           jsonDecode(candidate.doc) as Map<String, dynamic>,
         );
-        if (ingredientsHashOf(recipe) != candidate.ingredientsHash) {
+        if (!candidate.layoutCurrent ||
+            ingredientsHashOf(recipe) != candidate.ingredientsHash) {
           ids.add(candidate.id);
         }
       }
@@ -236,7 +251,7 @@ Future<void> _run(
       }
       _recipeJobs[id] = jobId;
       try {
-        await matchAndCompute(db, provider, found.recipe);
+        await computeUntilFresh(db, provider, found.recipe);
       } on NutritionProviderException catch (error) {
         // No key / bad key / hard rate failure: every remaining recipe
         // would fail identically — stop and say why.

@@ -45,6 +45,19 @@ class _Adapter implements HttpClientAdapter {
   /// the line now at the position is refused 409 `line_moved`.
   bool guard = false;
 
+  /// The receipt's `moved` (targets left because their recipe was laid out
+  /// anew meanwhile). Synthesized — a stated exception: the race that sets
+  /// it cannot be staged against a fake; the field is the server's own.
+  int moved = 0;
+
+  /// The receipt's other reasons (`decided`, `gone`, `failed_lines`) —
+  /// synthesized for the same reason as [moved].
+  ({int decided, int gone, int failedLines}) reasons = (
+    decided: 0,
+    gone: 0,
+    failedLines: 0,
+  );
+
   /// When set, an apply_to_all PUT waits here before answering — a sweep
   /// held open so a test can act while it runs.
   Completer<void>? gate;
@@ -137,6 +150,10 @@ class _Adapter implements HttpClientAdapter {
               'completed_recipes': [
                 for (var i = 0; i < others ~/ 3; i++) 'recipe-$i',
               ],
+              'moved': moved,
+              'decided': reasons.decided,
+              'gone': reasons.gone,
+              'failed_lines': reasons.failedLines,
             },
         }),
         200,
@@ -186,10 +203,17 @@ void main() {
   IngredientMatch flour() =>
       cubit.state.matches!.firstWhere((m) => (m.item ?? '').contains('flour'));
 
+  /// The golden's lines as a save left them: the last line moved to the
+  /// top, every other line one down.
+  List<String> lastLineMovedToTop() {
+    final raws = [for (final m in cubit.state.matches!) m.raw];
+    return [raws.last, ...raws.take(raws.length - 1)];
+  }
+
   test('a pick raises the offer, sized and named by the server', () async {
     await boot(others: 41);
     final line = flour();
-    await cubit.override(line.position, fdcId: 123456);
+    await cubit.override(line.position, raw: line.raw, fdcId: 123456);
     await pumpEventQueue();
     expect(cubit.state.offer, (
       position: line.position,
@@ -207,7 +231,7 @@ void main() {
   test('a confirm carries the same two counts: lines and recipes', () async {
     await boot(others: 41);
     final line = flour();
-    await cubit.override(line.position, confirmed: true);
+    await cubit.override(line.position, raw: line.raw, confirmed: true);
     await pumpEventQueue();
     expect(cubit.state.offer!.lines, 44);
     expect(cubit.state.offer!.others, 41);
@@ -216,7 +240,7 @@ void main() {
   test('re-picking the food the line already had still offers', () async {
     await boot(others: 41);
     final line = flour();
-    await cubit.override(line.position, fdcId: line.fdcId);
+    await cubit.override(line.position, raw: line.raw, fdcId: line.fdcId);
     await pumpEventQueue();
     expect(line.fdcId, isNotNull, reason: 'the golden line is matched');
     expect(cubit.state.offer!.lines, 44);
@@ -226,7 +250,7 @@ void main() {
       "server's receipt in the offer's place", () async {
     await boot(others: 41);
     final line = flour();
-    await cubit.override(line.position, fdcId: 123456);
+    await cubit.override(line.position, raw: line.raw, fdcId: 123456);
     await pumpEventQueue();
     adapter.puts.clear();
 
@@ -261,7 +285,7 @@ void main() {
   test('a confirm resends confirmed, not a food id', () async {
     await boot(others: 7);
     final line = flour();
-    await cubit.override(line.position, confirmed: true);
+    await cubit.override(line.position, raw: line.raw, confirmed: true);
     await pumpEventQueue();
     expect(cubit.state.offer?.confirmed, isTrue);
     expect(cubit.state.offer?.fdcId, isNull);
@@ -277,15 +301,15 @@ void main() {
       'change', () async {
     await boot(others: 41);
     final line = flour();
-    await cubit.override(line.position, skipped: true);
+    await cubit.override(line.position, raw: line.raw, skipped: true);
     await pumpEventQueue();
     expect(cubit.state.offer, isNull, reason: 'a skip is not a decision');
-    await cubit.override(line.position, grams: 12);
+    await cubit.override(line.position, raw: line.raw, grams: 12);
     await pumpEventQueue();
     expect(cubit.state.offer, isNull, reason: 'grams alone pick nothing');
 
     await boot(others: 0);
-    await cubit.override(flour().position, fdcId: 123456);
+    await cubit.override(flour().position, raw: flour().raw, fdcId: 123456);
     await pumpEventQueue();
     expect(cubit.state.offer, isNull, reason: 'every other line is on it');
   });
@@ -306,7 +330,12 @@ void main() {
     // estimate and the typed amount is gone.
     await boot(others: 41);
     final line = flour();
-    await cubit.override(line.position, fdcId: 123456, grams: 250);
+    await cubit.override(
+      line.position,
+      raw: line.raw,
+      fdcId: 123456,
+      grams: 250,
+    );
     await pumpEventQueue();
     expect(cubit.state.offer?.grams, 250);
     adapter.puts.clear();
@@ -324,14 +353,14 @@ void main() {
     final b = cubit.state.matches!.firstWhere(
       (m) => m.position != a.position && m.fdcId != null,
     );
-    await cubit.override(a.position, fdcId: 123456);
+    await cubit.override(a.position, raw: a.raw, fdcId: 123456);
     await pumpEventQueue();
     adapter.gate = Completer<void>();
     final sweep = cubit.applyToAll();
     await pumpEventQueue();
     expect(cubit.state.applying, isTrue);
 
-    await cubit.override(b.position, confirmed: true);
+    await cubit.override(b.position, raw: b.raw, confirmed: true);
     await pumpEventQueue();
     expect(cubit.state.offer?.position, b.position);
 
@@ -342,9 +371,74 @@ void main() {
     expect(cubit.state.applied?.position, a.position);
   });
 
+  test("Run 052 O7/S6: the newer offer is placed by its text on the apply's "
+      'answer, as the receipt is', () async {
+    await boot(others: 41);
+    final a = flour();
+    final b = cubit.state.matches!.firstWhere(
+      (m) => m.position != a.position && m.fdcId != null,
+    );
+    await cubit.override(a.position, raw: a.raw, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.gate = Completer<void>();
+    final sweep = cubit.applyToAll();
+    await pumpEventQueue();
+    await cubit.override(b.position, raw: b.raw, confirmed: true);
+    await pumpEventQueue();
+    // A save lands before the apply answers: every line one down.
+    adapter.layout = lastLineMovedToTop();
+    adapter.gate!.complete();
+    await sweep;
+    await pumpEventQueue();
+    expect(cubit.state.offer?.position, b.position + 1);
+    expect(cubit.state.offer?.raw, b.raw);
+    expect(cubit.state.applied?.position, a.position + 1);
+  });
+
+  test('Run 052 O7/S6: a newer offer whose line the apply\'s answer no '
+      'longer has is withdrawn, and the message says so', () async {
+    await boot(others: 41);
+    final a = flour();
+    final b = cubit.state.matches!.firstWhere(
+      (m) => m.position != a.position && m.fdcId != null,
+    );
+    await cubit.override(a.position, raw: a.raw, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.gate = Completer<void>();
+    final sweep = cubit.applyToAll();
+    await pumpEventQueue();
+    await cubit.override(b.position, raw: b.raw, confirmed: true);
+    await pumpEventQueue();
+    // A save removes b's line before the apply answers.
+    adapter.layout = [
+      for (final m in cubit.state.matches!)
+        if (m.position != b.position) m.raw,
+    ];
+    adapter.gate!.complete();
+    await sweep;
+    await pumpEventQueue();
+    expect(cubit.state.offer, isNull);
+    expect(cubit.state.error, contains('withdrawn'));
+  });
+
+  test("F7: the receipt carries the server's moved, decided, gone and "
+      'failed_lines counts', () async {
+    await boot(others: 41);
+    final line = flour();
+    await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+    await pumpEventQueue();
+    adapter
+      ..moved = 2
+      ..reasons = (decided: 3, gone: 4, failedLines: 5);
+    await cubit.applyToAll();
+    await pumpEventQueue();
+    final a = cubit.state.applied;
+    expect((a?.moved, a?.decided, a?.gone, a?.failedLines), (2, 3, 4, 5));
+  });
+
   test('a second tap while applying is a no-op', () async {
     await boot(others: 41);
-    await cubit.override(flour().position, fdcId: 123456);
+    await cubit.override(flour().position, raw: flour().raw, fdcId: 123456);
     await pumpEventQueue();
     adapter.puts.clear();
     adapter.gate = Completer<void>();
@@ -360,20 +454,20 @@ void main() {
   test('the next decision clears a shown receipt', () async {
     await boot(others: 41);
     final a = flour();
-    await cubit.override(a.position, fdcId: 123456);
+    await cubit.override(a.position, raw: a.raw, fdcId: 123456);
     await pumpEventQueue();
     await cubit.applyToAll();
     await pumpEventQueue();
     expect(cubit.state.applied, isNotNull);
     final b = cubit.state.matches!.firstWhere((m) => m.position != a.position);
-    await cubit.override(b.position, skipped: true);
+    await cubit.override(b.position, raw: b.raw, skipped: true);
     await pumpEventQueue();
     expect(cubit.state.applied, isNull);
   });
 
   test('dismissing a failed apply clears its error too', () async {
     await boot(others: 41);
-    await cubit.override(flour().position, fdcId: 123456);
+    await cubit.override(flour().position, raw: flour().raw, fdcId: 123456);
     await pumpEventQueue();
     adapter.failNextPut = true;
     await cubit.applyToAll();
@@ -387,7 +481,7 @@ void main() {
   test('a failed apply keeps the offer and says why', () async {
     await boot(others: 41);
     final line = flour();
-    await cubit.override(line.position, fdcId: 123456);
+    await cubit.override(line.position, raw: line.raw, fdcId: 123456);
     await pumpEventQueue();
     adapter.failNextPut = true;
     await cubit.applyToAll();
@@ -433,13 +527,6 @@ void main() {
   // put at the offer's old position (the food then landed on another
   // ingredient library-wide).
   group('A1: the offer follows its own line', () {
-    /// The golden's lines as a save left them: the last line moved to the
-    /// top, every other line one down.
-    List<String> lastLineMovedToTop() {
-      final raws = [for (final m in cubit.state.matches!) m.raw];
-      return [raws.last, ...raws.take(raws.length - 1)];
-    }
-
     test('the retry after line_moved sends the offer line text at the '
         'position that line moved to, and lands', () async {
       await boot(others: 41);
@@ -527,6 +614,71 @@ void main() {
       expect(cubit.state.applied?.position, line.position + 1);
     });
 
+    // Run 052 O7/S6: the response to a PUT is read after the server's
+    // awaits, so a save in them can stand another line at the position.
+    test('the offer is raised on the line the person SENT, found by its '
+        'text in the answer, and the apply sends that text', () async {
+      await boot(others: 41);
+      final line = flour();
+      adapter.layout = lastLineMovedToTop();
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      expect(cubit.state.offer?.raw, line.raw);
+      expect(cubit.state.offer?.position, line.position + 1);
+      adapter
+        ..guard = true
+        ..puts.clear();
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(adapter.puts.single['raw'], line.raw);
+      expect(adapter.putPaths.last, endsWith('/${line.position + 1}'));
+      expect(cubit.state.error, isNull);
+      expect(cubit.state.applied?.raw, line.raw);
+    });
+
+    test('no offer when no row of the answer reads the sent text', () async {
+      await boot(others: 41);
+      final line = flour();
+      adapter.layout = [
+        for (final m in cubit.state.matches!)
+          if (m.position != line.position) m.raw,
+      ];
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      expect(cubit.state.offer, isNull);
+    });
+
+    test("the receipt stands where the apply's answer has its line, and a "
+        'reload moves it by text', () async {
+      await boot(others: 41);
+      final line = flour();
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      // The save lands while the apply runs: its answer has the line one
+      // down (unguarded: the apply's own write was guarded before it).
+      adapter.layout = lastLineMovedToTop();
+      adapter.gate = Completer<void>();
+      final apply = cubit.applyToAll();
+      await pumpEventQueue();
+      adapter.gate!.complete();
+      await apply;
+      expect(cubit.state.applied?.position, line.position + 1);
+      expect(cubit.state.applied?.raw, line.raw);
+      // A further save puts it back; the reload follows it.
+      adapter.layout = null;
+      await cubit.loadMatches(force: true);
+      await pumpEventQueue();
+      expect(cubit.state.applied?.position, line.position);
+      // Removed: the receipt goes with it.
+      adapter.layout = [
+        for (final m in cubit.state.matches!)
+          if (m.position != line.position) m.raw,
+      ];
+      await cubit.loadMatches(force: true);
+      await pumpEventQueue();
+      expect(cubit.state.applied, isNull);
+    });
+
     test('offerOnReload keeps, moves, or withdraws by text alone', () {
       const offer = (
         position: 6,
@@ -542,6 +694,42 @@ void main() {
           IngredientMatch(position: position, raw: raw);
       const salt = '1 teaspoon table salt';
       expect(offerOnReload(offer, [row(6, offer.raw)]), offer);
+      // S15: twins, one AT the position — the offer stays where it stands
+      // (which twin it was is known), never withdrawn.
+      expect(
+        offerOnReload(offer, [row(5, offer.raw), row(6, offer.raw)]),
+        offer,
+      );
+      expect(
+        rowReading(
+          [row(6, offer.raw), row(7, offer.raw)],
+          offer.raw,
+          7,
+        )?.position,
+        7,
+      );
+      // The receipt is placed by the same rule, and shown only under the row
+      // at its position that reads its text.
+      final receipt = (
+        position: 6,
+        raw: offer.raw,
+        recipes: 1,
+        lines: 1,
+        failed: 0,
+        completed: 0,
+        completedRecipes: const <String>[],
+        moved: 0,
+        decided: 0,
+        gone: 0,
+        failedLines: 0,
+      );
+      expect(
+        receiptOnReload(receipt, [row(6, salt), row(7, offer.raw)])?.position,
+        7,
+      );
+      expect(receiptIsFor(receipt, row(6, offer.raw)), isTrue);
+      expect(receiptIsFor(receipt, row(6, salt)), isFalse);
+      expect(receiptIsFor(receipt, row(7, offer.raw)), isFalse);
       expect(
         offerOnReload(offer, [row(6, salt), row(7, offer.raw)])?.position,
         7,

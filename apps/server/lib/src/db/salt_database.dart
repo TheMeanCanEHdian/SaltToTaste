@@ -10,6 +10,16 @@ import 'package:sqlite3/sqlite3.dart';
 
 final Logger _log = Logger('db');
 
+/// The `hold`s of a medium the recipe pours away, all of them LINE holds:
+/// a discarded medium, a starter's feeding discard, a fried food's dredge,
+/// a braise kept only in part (the user's rulings Q1, Q2, Q4, 2026-10-01).
+const List<String> mediumHolds = [
+  'discarded_medium',
+  'starter_discard',
+  'coating',
+  'partial_pour_away',
+];
+
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
 enum UpsertOutcome {
   /// No row existed for the recipe id; a new one was inserted.
@@ -626,6 +636,12 @@ class SaltDatabase {
   /// comparison against the indexed column, so SQLite still range-scans
   /// `idx_recipe_nutrition_calories` (migration 005) — a `(? IS NULL OR ...)`
   /// slot per operator would be constant too, but is not sargable.
+  /// [mediumHolds] as an SQL list (a const, for the cached queries; pinned
+  /// equal to the list).
+  @visibleForTesting
+  static const String mediumHoldsSql =
+      "'discarded_medium', 'starter_discard', 'coating', 'partial_pour_away'";
+
   static const String _caloriesGt = 'n.calories_per_serving > ?';
   static const String _caloriesGte = 'n.calories_per_serving >= ?';
   static const String _caloriesLt = 'n.calories_per_serving < ?';
@@ -1108,7 +1124,7 @@ class SaltDatabase {
           'FROM ingredient_matches WHERE item_key = ? '
           'AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
-          "AND COALESCE(hold, '') NOT IN ('second_food', 'discarded_medium') "
+          "AND COALESCE(hold, '') NOT IN ('second_food', $mediumHoldsSql) "
           'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR ((confidence < ? '
           "OR hold IS NOT NULL) AND NOT (COALESCE(gram_source, '') IN "
           "('discarded', 'unmeasured') AND COALESCE(grams, -1) = 0 "
@@ -1288,7 +1304,7 @@ class SaltDatabase {
       'r.title AS review_title, $_reviewBucketCase AS bucket, '
       "CASE WHEN im.item_key IS NULL OR im.item_key = '' "
       "OR im.status NOT IN ('auto', 'unmatched') "
-      "OR COALESCE(im.hold, '') IN ('second_food', 'discarded_medium', "
+      "OR COALESCE(im.hold, '') IN ('second_food', $mediumHoldsSql, "
       "'in_shell') "
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
@@ -1418,7 +1434,7 @@ class SaltDatabase {
       'COALESCE(f.n, 0) AS finishes, COALESCE(f.last_open, 0) AS last_open, '
       'f.names AS finishes_names, '
       "(d.item_key IS NOT NULL AND COALESCE(e.hold, '') NOT IN "
-      "('second_food', 'discarded_medium', 'in_shell')) AS decided "
+      "('second_food', $mediumHoldsSql, 'in_shell')) AS decided "
       'FROM agg a JOIN example e ON e.gkey = a.gkey AND e.rn = 1 '
       'LEFT JOIN fin f ON f.gkey = a.gkey '
       'LEFT JOIN ingredient_decisions d ON d.item_key = e.item_key '
@@ -1541,10 +1557,13 @@ class SaltDatabase {
   /// against the row as it is at WRITE time, not as it was at entry.
   ///
   /// Overwrites when the existing row is undecided (`auto`, or `unmatched` —
-  /// the engine's own "FDC had nothing", not a person's call), or when its
-  /// raw text differs (a decision about old text does not apply to new text —
-  /// the same rule the entry snapshot uses). A decided row with the same raw
-  /// is left exactly as it is — except the engine's OWN rule rows
+  /// the engine's own "FDC had nothing", not a person's call). A decided row
+  /// is left exactly as it is, whatever its text (Run 052 S1/Opus critic 3:
+  /// a clause replacing any row of another text let an apply-to-all write
+  /// over a person's skip the layout had carried onto the reached position;
+  /// the one engine write over a decided row — an amount edit's re-derived
+  /// row — is [replaceIngredientMatchIfUnchanged]) — except the engine's OWN
+  /// rule rows
   /// ([isEngineRuleRow]: 'confirmed', no food, one of [engineRuleNotes]),
   /// which the engine rewrites when its rule changes (a sub-recipe row that
   /// now counts its food, matcher v14). Returns whether the row was written
@@ -1569,7 +1588,6 @@ class SaltDatabase {
       'status = excluded.status, item_key = excluded.item_key, '
       'hold = excluded.hold, updated_at = excluded.updated_at '
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
-      'OR ingredient_matches.raw != excluded.raw '
       "OR (ingredient_matches.status = 'confirmed' "
       'AND ingredient_matches.fdc_id IS NULL '
       'AND ingredient_matches.description IN (?, ?, ?, ?))',
@@ -1591,6 +1609,27 @@ class SaltDatabase {
     ]);
     return _db.updatedRows > 0;
   }
+
+  /// Replaces the row at [row]'s position only while it still reads [over]
+  /// ([sameMatchRow]) and the recipe's layout is still [layoutSeq], both
+  /// checked in the write's own transaction; returns whether it was
+  /// written. The compute's write of an amount-edited decided row
+  /// (`editedDecisionRow`) over the row it laid out: a person's write on
+  /// that line since (an un-skip: Run 052 O3) is not that row, and stands.
+  bool replaceIngredientMatchIfUnchanged(
+    IngredientMatchRow row, {
+    required IngredientMatchRow over,
+    required int layoutSeq,
+  }) => _atLayout(row.recipeId, layoutSeq, () {
+    final now = ingredientMatchesFor(
+      row.recipeId,
+    ).where((stored) => stored.position == row.position).firstOrNull;
+    if (!sameMatchRow(now, over)) {
+      return false;
+    }
+    _upsertMatch(row);
+    return true;
+  });
 
   /// Drops match rows at or beyond [fromPosition] (an edit shortened the
   /// ingredient list).
@@ -1655,20 +1694,25 @@ class SaltDatabase {
           -1 - i,
         ]);
       }
-      // (A recipe deleted meanwhile has no layout to keep.)
+      // (A recipe deleted meanwhile has no layout to keep.) The seq is the
+      // GLOBAL counter's next (migration 013): a recipe deleted and
+      // re-created under its id never repeats a seq a writer read before.
+      _prepared('UPDATE layout_counter SET seq = seq + 1').execute();
       _prepared(
         'INSERT INTO recipe_layout (recipe_id, seq, lines) '
-        'SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM recipes WHERE id = ?) '
+        'SELECT ?, (SELECT seq FROM layout_counter), ? '
+        'WHERE EXISTS (SELECT 1 FROM recipes WHERE id = ?) '
         'ON CONFLICT(recipe_id) DO UPDATE SET seq = excluded.seq, '
         'lines = excluded.lines',
-      ).execute([recipeId, layout.seq + 1, texts, recipeId]);
+      ).execute([recipeId, texts, recipeId]);
     });
   }
 
-  /// A recipe's match-row layout (migration 012): `seq` counts the layouts
-  /// that moved or dropped its rows or changed the lines they stand on (0:
-  /// never laid out), `texts` is the JSON array of those lines' texts and
-  /// `lines` decodes it (both null: never laid out).
+  /// A recipe's match-row layout (migration 012): `seq` changes with every
+  /// layout that moved or dropped its rows or changed the lines they stand
+  /// on, drawn from one global counter so it never repeats for a recipe id
+  /// (migration 013; 0: never laid out), `texts` is the JSON array of those
+  /// lines' texts and `lines` decodes it (both null: never laid out).
   ({int seq, String? texts, List<String>? lines}) layoutOf(String recipeId) {
     final rows = _prepared(
       'SELECT seq, lines FROM recipe_layout WHERE recipe_id = ?',
@@ -1689,7 +1733,7 @@ class SaltDatabase {
     final rows = _prepared(
       'SELECT recipe_id, serving_basis, calories_per_serving, nutrients, '
       'total_grams, matched_count, total_count, status, ingredients_hash, '
-      'computed_at FROM recipe_nutrition WHERE recipe_id = ?',
+      'computed_at, layout_seq FROM recipe_nutrition WHERE recipe_id = ?',
     ).select([recipeId]);
     return rows.isEmpty ? null : RecipeNutritionRow.fromRow(rows.first);
   }
@@ -1705,12 +1749,13 @@ class SaltDatabase {
     required int totalCount,
     required String status,
     required String ingredientsHash,
+    int? layoutSeq,
   }) {
     _prepared(
       'INSERT INTO recipe_nutrition (recipe_id, serving_basis, '
       'calories_per_serving, nutrients, total_grams, matched_count, '
-      'total_count, status, ingredients_hash, computed_at) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'total_count, status, ingredients_hash, computed_at, layout_seq) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id) DO UPDATE SET '
       'serving_basis = excluded.serving_basis, '
       'calories_per_serving = excluded.calories_per_serving, '
@@ -1719,7 +1764,7 @@ class SaltDatabase {
       'matched_count = excluded.matched_count, '
       'total_count = excluded.total_count, status = excluded.status, '
       'ingredients_hash = excluded.ingredients_hash, '
-      'computed_at = excluded.computed_at',
+      'computed_at = excluded.computed_at, layout_seq = excluded.layout_seq',
     ).execute([
       recipeId,
       servingBasis,
@@ -1731,6 +1776,7 @@ class SaltDatabase {
       status,
       ingredientsHash,
       _utcNowIso(),
+      layoutSeq,
     ]);
   }
 
@@ -1772,11 +1818,16 @@ class SaltDatabase {
   /// the prefilter dropped a recipe the UI itself labels stale. Hashing every
   /// row is correct by definition and was measured at ~110 ms for the whole
   /// 1,198-recipe library — cheaper than a third trap.
-  List<({String id, String doc, String ingredientsHash})>
+  ///
+  /// `layoutCurrent` is the other half of freshness (migration 013): the
+  /// stamp's layout sequence is still the recipe's ([layoutOf]).
+  List<({String id, String doc, String ingredientsHash, bool layoutCurrent})>
   recipesWithNutrition() {
     final rows = _db.select(
-      'SELECT r.id AS id, r.doc AS doc, n.ingredients_hash AS h '
+      'SELECT r.id AS id, r.doc AS doc, n.ingredients_hash AS h, '
+      'n.layout_seq IS COALESCE(l.seq, 0) AS lc '
       'FROM recipes r JOIN recipe_nutrition n ON n.recipe_id = r.id '
+      'LEFT JOIN recipe_layout l ON l.recipe_id = r.id '
       'ORDER BY r.id',
     );
     return [
@@ -1785,6 +1836,7 @@ class SaltDatabase {
           id: row['id'] as String,
           doc: row['doc'] as String,
           ingredientsHash: row['h'] as String,
+          layoutCurrent: row['lc'] == 1,
         ),
     ];
   }
@@ -2811,6 +2863,7 @@ class RecipeNutritionRow {
     required this.status,
     required this.ingredientsHash,
     required this.computedAt,
+    this.layoutSeq,
   });
 
   /// Decodes a database row.
@@ -2825,6 +2878,7 @@ class RecipeNutritionRow {
     status: row['status'] as String,
     ingredientsHash: row['ingredients_hash'] as String,
     computedAt: row['computed_at'] as String?,
+    layoutSeq: row['layout_seq'] as int?,
   );
 
   /// Recipe the totals belong to.
@@ -2849,7 +2903,8 @@ class RecipeNutritionRow {
   final int totalCount;
 
   /// `complete` | `partial` (staleness is derived at read time by
-  /// comparing [ingredientsHash] to the current recipe).
+  /// comparing [ingredientsHash] to the current recipe and [layoutSeq] to
+  /// its current layout: `nutritionIsFresh` in the engine).
   final String status;
 
   /// Hash of the ingredient lines the totals were computed from.
@@ -2857,6 +2912,10 @@ class RecipeNutritionRow {
 
   /// Compute time (UTC ISO-8601).
   final String? computedAt;
+
+  /// The recipe's layout sequence ([SaltDatabase.layoutOf]) the totals were
+  /// computed on (migration 013); null on a stamp that names none.
+  final int? layoutSeq;
 }
 
 /// One tag with its recipe count and chip style.
@@ -2885,3 +2944,18 @@ class TagInfoRow {
   /// Background `#RRGGBB`, when styled.
   final String? bgColor;
 }
+
+/// Whether [a] and [b] are the same stored row (its text, decision and
+/// grams; not its position, key or write time), both absent included.
+bool sameMatchRow(IngredientMatchRow? a, IngredientMatchRow? b) =>
+    (a == null && b == null) ||
+    (a != null &&
+        b != null &&
+        a.raw == b.raw &&
+        a.status == b.status &&
+        a.fdcId == b.fdcId &&
+        a.confidence == b.confidence &&
+        a.grams == b.grams &&
+        a.gramSource == b.gramSource &&
+        a.hold == b.hold &&
+        a.description == b.description);

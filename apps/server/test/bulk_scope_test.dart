@@ -66,8 +66,9 @@ void main() {
       );
     }
 
-    /// Writes a nutrition row whose stored hash matches [recipe] as it is
-    /// now — i.e. a fresh, non-stale compute.
+    /// Writes a nutrition row whose stored hash and layout match [recipe]
+    /// as it is now — i.e. a fresh, non-stale compute (migration 013: the
+    /// stamp names the layout it was computed on).
     void markComputed(Recipe recipe) {
       db.upsertRecipeNutrition(
         recipeId: recipe.id,
@@ -79,6 +80,7 @@ void main() {
         totalCount: 1,
         status: 'complete',
         ingredientsHash: ingredientsHashOf(recipe),
+        layoutSeq: db.layoutOf(recipe.id).seq,
       );
     }
 

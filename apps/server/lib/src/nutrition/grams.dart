@@ -113,6 +113,12 @@ const List<(String, double)> _densities = [
   ('espresso powder', 0.43),
   ('instant coffee', 0.43),
   ('coffee powder', 0.43),
+  // One path per record (Run 052 O8/S7): 'instant coffee' only modifies
+  // "instant coffee powder"'s head, so the head-noun rule weighed that one
+  // line by 171893's loose 'tsp' 1.0 g while its 14 instant-espresso
+  // siblings on the same record keep the table's fine-powder 0.43 (2.12
+  // g/tsp): the powder's own key keeps it on the table too.
+  ('instant coffee powder', 0.43),
   ('brewed coffee', 1.0),
   ('coffee', 1.0),
   ('cornstarch', 0.54),

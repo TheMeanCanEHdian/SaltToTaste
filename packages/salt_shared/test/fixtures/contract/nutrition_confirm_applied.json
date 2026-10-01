@@ -50,7 +50,9 @@
         "gram_source": "density",
         "gram_basis": "2 tablespoon ≈ 30 mL · juice only (the zest is dropped)",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": []
     },
@@ -75,7 +77,9 @@
         "gram_source": "piece",
         "gram_basis": "1 × 50 g egg + 2 × 17 g yolk, summed on the whole egg",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": []
     },
@@ -115,7 +119,9 @@
         "gram_source": "piece",
         "gram_basis": "pinch ≈ 1/16 tsp (USDA tsp portion)",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -169,7 +175,9 @@
         "gram_source": "weight",
         "gram_basis": "from 3 1/2 pound · approximate (gross weight, no USDA refuse portion)",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -243,7 +251,9 @@
         "gram_source": "weight",
         "gram_basis": "from the printed weight · no edible yield read",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -339,7 +349,9 @@
         "gram_source": "weight",
         "gram_basis": "from the printed weight × 0.61 edible (USDA ready-to-cook yield)",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -413,7 +425,9 @@
         "gram_source": "weight",
         "gram_basis": "from 1 pound · approximate (gross weight, no USDA refuse portion)",
         "status": "auto",
-        "hold": "in_shell"
+        "hold": "in_shell",
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -457,7 +471,9 @@
         "gram_source": "density",
         "gram_basis": "4 teaspoon ≈ 20 mL",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -531,7 +547,9 @@
         "gram_source": "weight",
         "gram_basis": "from 12 ounce · nutrients of \"Cabbage, chinese (pe-tsai), raw\"",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -569,7 +587,9 @@
         "gram_source": "override",
         "gram_basis": "entered by hand · nutrients of \"Cabbage, chinese (pe-tsai), raw\"",
         "status": "overridden",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -636,7 +656,9 @@
         "gram_source": "discarded",
         "gram_basis": "discarded in cooking — only \"plus 1 teaspoon table salt\" counted",
         "status": "auto",
-        "hold": "discarded_medium"
+        "hold": "discarded_medium",
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -674,7 +696,9 @@
         "gram_source": "weight",
         "gram_basis": "from 2 ounce · approximation (counted as Pork, cured, bacon, unprepared)",
         "status": "auto",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -735,7 +759,9 @@
         "gram_source": "override",
         "gram_basis": "entered by hand",
         "status": "confirmed",
-        "hold": null
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
       },
       "candidates": [
         {
@@ -795,6 +821,9 @@
     "failed": 0,
     "completed": 0,
     "completed_recipes": [],
-    "moved": 0
+    "moved": 0,
+    "decided": 0,
+    "gone": 0,
+    "failed_lines": 0
   }
 }

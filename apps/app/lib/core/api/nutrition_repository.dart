@@ -121,13 +121,22 @@ DateTime? _timestamp(Object? value) =>
 
 /// What an `apply_to_all` reached: recipes and lines written, recipes that
 /// failed part-way (their lines are set; their labels wait for the next
-/// compute), and the reached recipes it completed (and their ids).
+/// compute), the reached recipes it completed (and their ids), and the
+/// targets it left because their recipe was laid out anew while it waited
+/// (`moved`: left for their next compute). The rest of the offered lines:
+/// `decided` (a person decided it meanwhile), `gone` (another ingredient
+/// now, or its line or recipe is gone) and `failedLines` (its recipe failed)
+/// — with `lines` and `moved`, every line the offer counted.
 typedef MatchApplied = ({
   int recipes,
   int lines,
   int failed,
   int completed,
   List<String> completedRecipes,
+  int moved,
+  int decided,
+  int gone,
+  int failedLines,
 });
 
 /// A match override's answer: the refreshed match list, and the apply-to-all
@@ -156,10 +165,12 @@ class IngredientMatch {
     this.gramBasis,
     this.status = 'unmatched',
     this.hold,
+    this.holdNote,
     this.candidates = const [],
     this.lineAmount,
     this.portions = const [],
     this.kcalPer100g,
+    this.carriedFrom,
   });
 
   factory IngredientMatch.fromJson(Map<String, dynamic> json) {
@@ -210,6 +221,8 @@ class IngredientMatch {
       gramBasis: match['gram_basis'] as String?,
       status: match['status'] as String? ?? 'unmatched',
       hold: match['hold'] as String?,
+      holdNote: match['hold_note'] as String?,
+      carriedFrom: match['carried_from'] as String?,
       candidates: candidates,
       lineAmount: lineAmount,
       portions: portions,
@@ -267,8 +280,18 @@ class IngredientMatch {
   /// Why the engine holds an `auto` line out of the totals although its name
   /// confidence passes: `no_nutrients` | `discarded_medium` | `second_food`
   /// | `in_shell` | `unnamed_food` | `dried_for_fresh` | `cured_for_fresh` |
-  /// `borderline`; null when nothing holds it.
+  /// `borderline` | `starter_discard` | `coating` | `partial_pour_away`;
+  /// null when nothing holds it.
   final String? hold;
+
+  /// The hold in the server's words where the code alone does not say it:
+  /// a `partial_pour_away`'s kept part ("1 cup defatted cooking liquid").
+  final String? holdNote;
+
+  /// The line's previous text when this is a person's decision an amount
+  /// edit carried onto the line, not yet written for it: the totals still
+  /// weigh the previous amount until the next compute. Null otherwise.
+  final String? carriedFrom;
   final List<MatchCandidate> candidates;
 
   /// The line's first unit amount as written ("4 stick"), null when none.
@@ -551,6 +574,10 @@ class NutritionRepository {
                     for (final id in applied['completed_recipes'] as List)
                       '$id',
                 ],
+                moved: (applied['moved'] as num?)?.toInt() ?? 0,
+                decided: (applied['decided'] as num?)?.toInt() ?? 0,
+                gone: (applied['gone'] as num?)?.toInt() ?? 0,
+                failedLines: (applied['failed_lines'] as num?)?.toInt() ?? 0,
               )
             : null,
       );

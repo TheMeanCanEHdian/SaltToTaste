@@ -988,6 +988,139 @@ void main() {
       expect(find.textContaining('oregano, dried'), findsNothing);
     });
 
+    testWidgets('a hold this app does not know reads its code verbatim — no '
+        'hold renders blank', (tester) async {
+      // 0799's real flour line; the hold code is synthesized (a stated
+      // exception): an app older than a server's hold must still say the
+      // line is held and by what.
+      const flour = IngredientMatch(
+        position: 0,
+        raw: '4½ cups (24¾ ounces) whole-wheat flour',
+        item: 'whole-wheat flour',
+        lineAmount: '4½ cups',
+        fdcId: 168944,
+        description: 'Flour, whole wheat, unenriched',
+        dataType: 'SR Legacy',
+        confidence: 0.9,
+        status: 'auto',
+        hold: 'some_later_hold',
+      );
+      expect(
+        holdReason('some_later_hold'),
+        'Held by the engine: some later hold',
+      );
+      expect(holdReason(null), isNull);
+      await openSheet(tester, [flour], isAdmin: false);
+      expect(
+        find.textContaining(
+          'Held by the engine: some later hold',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    // v22 (the rulings Q1, Q2, Q4): the three new medium holds read in
+    // words, the partial pour-away with the kept part the server sends
+    // (`hold_note`); each is a LINE hold (isHeldLine) and the queue's
+    // line-hold note names it. Real lines: 0799's flour, 0148's dredge,
+    // 0129's soy sauce, as the v22 engine holds them (grams null).
+    testWidgets('v22: starter_discard, coating and partial_pour_away read in '
+        'words, the kept part included', (tester) async {
+      const starter = IngredientMatch(
+        position: 0,
+        raw: '4½ cups (24¾ ounces) whole-wheat flour',
+        item: 'whole-wheat flour',
+        lineAmount: '4½ cups',
+        fdcId: 790085,
+        description: 'Flour, whole wheat, unenriched',
+        dataType: 'Foundation',
+        confidence: 1,
+        status: 'auto',
+        hold: 'starter_discard',
+      );
+      const dredge = IngredientMatch(
+        position: 8,
+        raw: '4 cups (20 ounces) unbleached all-purpose flour',
+        item: 'unbleached all-purpose flour',
+        lineAmount: '4 cups',
+        fdcId: 789890,
+        description: 'Flour, wheat, all-purpose, enriched, bleached',
+        dataType: 'Foundation',
+        confidence: 0.95,
+        status: 'auto',
+        hold: 'coating',
+      );
+      const soy = IngredientMatch(
+        position: 1,
+        raw: '1 cup soy sauce',
+        item: 'soy sauce',
+        lineAmount: '1 cup',
+        fdcId: 2707442,
+        description: 'Soy sauce',
+        dataType: 'Survey (FNDDS)',
+        confidence: 0.99,
+        status: 'auto',
+        hold: 'partial_pour_away',
+        holdNote: '1 cup defatted cooking liquid',
+      );
+      // The wire: the server's matches body for 0129's soy line (v22
+      // GET, nutrition_v22_rulings_test.dart) parses its kept part.
+      final parsed = IngredientMatch.fromJson({
+        'position': 1,
+        'raw': '1 cup soy sauce',
+        'match': {
+          'fdc_id': 2707442,
+          'description': 'Soy sauce',
+          'data_type': 'Survey (FNDDS)',
+          'confidence': 0.99,
+          'grams': null,
+          'gram_source': null,
+          'status': 'auto',
+          'hold': 'partial_pour_away',
+          'hold_note': '1 cup defatted cooking liquid',
+        },
+      });
+      expect(parsed.holdNote, soy.holdNote);
+      // A medium hold's eaten "plus" part is its grams whatever the medium
+      // (the server's _eatenPlusPart; no held library line has one yet, so
+      // the 6 g is synthesized — a stated exception).
+      expect(
+        hasEatenPlusPart(
+          IngredientMatch(
+            position: dredge.position,
+            raw: dredge.raw,
+            fdcId: dredge.fdcId,
+            grams: 6,
+            gramSource: 'discarded',
+            hold: 'coating',
+          ),
+        ),
+        isTrue,
+      );
+      for (final m in [starter, dredge, soy]) {
+        expect(isHeldLine(m), isTrue, reason: m.hold);
+        expect(holdReason(m.hold), isNot(startsWith('Held by the engine')));
+      }
+      expect(
+        holdReason('partial_pour_away', note: soy.holdNote),
+        'Only part of the strained cooking liquid is kept (1 cup defatted '
+        'cooking liquid); the rest is poured away',
+      );
+      await openSheet(tester, [starter, dredge, soy], isAdmin: false);
+      for (final text in [
+        'A starter feeding',
+        'Dredging for a fried food',
+        '(1 cup defatted cooking liquid); the rest is poured away',
+      ]) {
+        expect(
+          find.textContaining(text, findRichText: true),
+          findsOneWidget,
+          reason: text,
+        );
+      }
+    });
+
     testWidgets('A7: the fix panel says what the line writes', (tester) async {
       await pumpPanel(tester, epazote);
       expect(
@@ -1250,7 +1383,90 @@ void main() {
       failed: 0,
       completed: completed.length,
       completedRecipes: completed,
+      raw: 'the decided line',
+      moved: 0,
+      decided: 0,
+      gone: 0,
+      failedLines: 0,
     );
+
+    testWidgets("F7: the receipt says how many lines changed meanwhile and "
+        'were left for their next compute — in the queue and the sheet', (
+      tester,
+    ) async {
+      ApplyReceipt movedReceipt(
+        int moved, {
+        int decided = 0,
+        int gone = 0,
+        int failedLines = 0,
+      }) => (
+        position: 7,
+        raw: 'the decided line',
+        recipes: 8,
+        lines: 6,
+        failed: failedLines > 0 ? 1 : 0,
+        completed: 0,
+        completedRecipes: const [],
+        moved: moved,
+        decided: decided,
+        gone: gone,
+        failedLines: failedLines,
+      );
+      for (final promise in [promised, null]) {
+        await pumpStrip(tester, applied: movedReceipt(2), promise: promise);
+        expect(
+          find.textContaining(
+            '2 lines changed meanwhile and were left for their next compute.',
+            findRichText: true,
+          ),
+          findsOneWidget,
+        );
+        await pumpStrip(tester, applied: movedReceipt(1), promise: promise);
+        expect(
+          find.textContaining(
+            '1 line changed meanwhile and was left for its next compute.',
+            findRichText: true,
+          ),
+          findsOneWidget,
+        );
+        await pumpStrip(tester, applied: movedReceipt(0), promise: promise);
+        expect(
+          find.textContaining('changed meanwhile', findRichText: true),
+          findsNothing,
+        );
+        // Every other reason the server accounts for is said too, so the
+        // receipt covers every offered line (Run 052's F7 class).
+        await pumpStrip(
+          tester,
+          applied: movedReceipt(1, decided: 2, gone: 1, failedLines: 3),
+          promise: promise,
+        );
+        expect(
+          find.textContaining(
+            '2 lines decided meanwhile; 1 line now another ingredient or '
+            'gone; 3 lines failed. 1 line changed meanwhile',
+            findRichText: true,
+          ),
+          findsOneWidget,
+        );
+        await pumpStrip(
+          tester,
+          applied: movedReceipt(0, gone: 2),
+          promise: promise,
+        );
+        expect(
+          find.textContaining(
+            '2 lines now another ingredient or gone.',
+            findRichText: true,
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('decided meanwhile', findRichText: true),
+          findsNothing,
+        );
+      }
+    });
 
     testWidgets('the offer says what applying finishes', (tester) async {
       const offer = (
@@ -1639,6 +1855,37 @@ void main() {
         await tester.tap(find.text('Save match & amount'));
         await tester.pumpAndSettle();
         expect(cubit.writes, isEmpty);
+      });
+
+      testWidgets('S15: another line under the panel resets the unit to g '
+          'and the typed flag, not only the staged pick and the text', (
+        tester,
+      ) async {
+        // The rules golden's real ham (4) and chicken pieces (3) rows; the
+        // ham panel then standing on the chicken line is the A3 reload.
+        final ham = rulesLine(4);
+        final chicken = rulesLine(3);
+        final cubit = _Recording(_state([chicken]));
+        final match = await pumpLive(tester, ham, cubit);
+        await tester.tap(find.text('oz'));
+        await tester.pumpAndSettle();
+        expect(find.text('128'), findsOneWidget);
+        await tester.enterText(find.byType(EditableText).last, '100');
+        await tester.pumpAndSettle();
+        match.value = chicken;
+        await tester.pumpAndSettle();
+        // The unit: the chicken's 1,587.572 g in grams, never in ounces (56).
+        expect(find.text('1588'), findsOneWidget);
+        // The typed flag: a pick on the chicken line now lets the server
+        // weigh it — the reset field is no hand-typed amount to send.
+        await tester.tap(
+          find.text('Chicken, broilers or fryers, thigh, meat and skin, raw'),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.textContaining('Save match'));
+        await tester.pumpAndSettle();
+        expect(cubit.writes.single.fdcId, 172385);
+        expect(cubit.writes.single.grams, isNull);
       });
 
       testWidgets('Run 048 A1: portions arriving while ANOTHER food is '

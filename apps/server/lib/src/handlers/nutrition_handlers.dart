@@ -30,7 +30,7 @@ Map<String, Object?> nutritionBody(
       if (computingJobId != null) 'computing_job_id': computingJobId,
     };
   }
-  final stale = row.ingredientsHash != ingredientsHashOf(recipe);
+  final stale = !nutritionIsFresh(db, recipe, row);
   // Unreviewed low-confidence or held matches — the `check` bucket: the
   // UI's badge only turns green once every line is matched AND none of these
   // remain (a human confirm/override clears one).
@@ -127,11 +127,38 @@ Future<Map<String, Object?>> matchesBody(
   final items = <Map<String, Object?>>[];
   for (final (position, line) in lines.indexed) {
     var row = matches[position];
-    // A stored decision whose raw text no longer matches the line belongs
-    // to a PREVIOUS ingredient list (edit/insert since the last compute) —
-    // showing it against the new text would be a lie.
+    // A row of another text the layout gives this line: an engine row is
+    // the next compute's to re-derive (none shown). A person's decision an
+    // amount edit carried (Run 052, Opus critic 2: shown as no match while
+    // the totals and the PUT acted on it) shows as what the next compute
+    // and a person's write make of it ([editedDecisionRow]: its status and
+    // food, the new line's grams — from the cache alone, a GET never
+    // fetches), with `carried_from`: the line's previous text.
+    String? carriedFrom;
     if (row != null && row.raw != line.raw) {
-      row = null;
+      if (isDecidedRow(row)) {
+        carriedFrom = row.raw;
+        final carried = row;
+        try {
+          row = (await editedDecisionRow(
+            db,
+            const _CacheOnly(),
+            recipe,
+            position,
+            line,
+            carried,
+          )).row;
+        } on NutritionProviderException {
+          // Its grams need a fetch: none shown until the compute weighs it.
+          row = carried.copyWith(
+            raw: line.raw,
+            clearGrams: true,
+            clearGramSource: true,
+          );
+        }
+      } else {
+        row = null;
+      }
     }
     // What the line weighs, matches and queries: a sub-recipe's eaten
     // "plus" part (0711's oil), as every write path reads it.
@@ -259,6 +286,17 @@ Future<Map<String, Object?>> matchesBody(
               // score passes (`no_nutrients` | `discarded_medium` |
               // `second_food`); null when nothing holds it.
               'hold': row.hold,
+              // What a reviewer needs to judge the hold, in words: for a
+              // `partial_pour_away` the part of the strained liquid a step
+              // keeps ("1 cup defatted cooking liquid"); null otherwise.
+              'hold_note': row.hold == 'partial_pour_away'
+                  ? keptLiquidOf(recipe, line)
+                  : null,
+              // The line's previous text when this is a decision an amount
+              // edit carried, not yet written for this line (its grams are
+              // re-derived for this line until the next compute writes it);
+              // null otherwise.
+              'carried_from': carriedFrom,
             },
       'candidates': [
         for (final ranked in candidates)
@@ -284,6 +322,9 @@ typedef AppliedToOthers = ({
   int completed,
   List<String> completedRecipes,
   int moved,
+  int decided,
+  int gone,
+  int failedLines,
 });
 
 /// The receipt's wire shape (`applied` on the `PUT …/matches/{pos}` body).
@@ -294,6 +335,9 @@ Map<String, Object?> appliedJson(AppliedToOthers applied) => {
   'completed': applied.completed,
   'completed_recipes': applied.completedRecipes,
   'moved': applied.moved,
+  'decided': applied.decided,
+  'gone': applied.gone,
+  'failed_lines': applied.failedLines,
 };
 
 /// Applies a `PUT .../nutrition/matches/<pos>` override [body] and
@@ -447,7 +491,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     // medium with no eaten part is poured away, as a confirm writes it
     // (B6, below).
     final poured =
-        outcome.hold == 'discarded_medium' &&
+        mediumHolds.contains(outcome.hold) &&
         outcome.source != GramSource.discarded.name;
     final byEngine =
         poured ||
@@ -511,7 +555,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     // person typed for the eaten part stand (Run 048: a bare re-confirm
     // zeroed them).
     if (row.fdcId != null &&
-        (row.hold == 'discarded_medium' || heldMediumLine(recipe, weighed)) &&
+        (mediumHolds.contains(row.hold) || heldMediumLine(recipe, weighed)) &&
         row.gramSource != GramSource.discarded.name &&
         row.gramSource != GramSource.override.name) {
       row = row.copyWith(grams: 0, gramSource: GramSource.discarded.name);
@@ -619,7 +663,7 @@ Future<AppliedToOthers?> applyMatchOverride(
         .ingredientMatchesFor(recipe.id)
         .where((row) => row.position == position)
         .firstOrNull;
-    if (!_sameRow(laid, read)) {
+    if (!sameMatchRow(laid, read)) {
       throw LineMovedException(position);
     }
     seq = db.layoutOf(recipe.id).seq;
@@ -676,21 +720,6 @@ Future<AppliedToOthers?> applyMatchOverride(
   );
 }
 
-/// Whether [a] and [b] are the same stored row (its text, decision and
-/// grams; not its position or write time), both absent included.
-bool _sameRow(IngredientMatchRow? a, IngredientMatchRow? b) =>
-    (a == null && b == null) ||
-    (a != null &&
-        b != null &&
-        a.raw == b.raw &&
-        a.status == b.status &&
-        a.fdcId == b.fdcId &&
-        a.confidence == b.confidence &&
-        a.grams == b.grams &&
-        a.gramSource == b.gramSource &&
-        a.hold == b.hold &&
-        a.description == b.description);
-
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.
 int? nearestLineOf(List<IngredientLine> lines, String raw, int position) {
@@ -722,6 +751,20 @@ bool? _answerNamesIngredient(
       FdcCandidate.fromJson(entry as Map<String, dynamic>),
   ];
   return answer.isNotEmpty && candidatesNameIngredient(query, answer);
+}
+
+/// A provider that never fetches (it throws, so nothing caches a miss):
+/// the cache-only reads of a GET.
+class _CacheOnly implements NutritionProvider {
+  const _CacheOnly();
+
+  @override
+  Future<List<FdcCandidate>> search(String query) =>
+      throw NutritionProviderException('cache only: search "$query"');
+
+  @override
+  Future<FdcFood?> food(int fdcId) =>
+      throw NutritionProviderException('cache only: food $fdcId');
 }
 
 /// Masks a stored API key for display: last four characters only.

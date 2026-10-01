@@ -71,6 +71,10 @@ const Map<int, String> _capabilityByVersion = {
   12:
       'recipe_layout: the layout sequence and laid-out line texts per recipe '
       '(no row until a layout runs)',
+  13:
+      'recipe_nutrition.layout_seq: the layout a stamp was computed on '
+      '(backfilled from recipe_layout, 0 with none) + layout_counter: the '
+      'global layout sequence',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -79,6 +83,10 @@ const int _itemKeyVersion = 9;
 
 /// Mirror of migration 011: the same for `hold`.
 const int _holdVersion = 11;
+
+/// Mirror of migration 013: `recipe_nutrition.layout_seq`, backfilled from
+/// `recipe_layout` (which the seed never holds: 0).
+const int _layoutSeqVersion = 13;
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
 /// start version is below this gets its FTS rows re-derived in Dart on open.
@@ -579,7 +587,9 @@ _Seed _seed(
     for (final table in _nutritionTables.keys) {
       _replay(raw, table, [
         for (final row in nutritionRows[table]!)
-          if (table == 'ingredient_matches' && version < _holdVersion)
+          if (table == 'recipe_nutrition' && version < _layoutSeqVersion)
+            {...row}..remove('layout_seq')
+          else if (table == 'ingredient_matches' && version < _holdVersion)
             {
               for (final entry in row.entries)
                 if (entry.key != 'hold' &&
@@ -1238,6 +1248,18 @@ void main() {
                     for (final column in row.keys)
                       column: row[column] as Object?,
                   };
+                  if (entry.key == 'recipe_nutrition' &&
+                      startVersion < _layoutSeqVersion) {
+                    expect(
+                      actual.remove('layout_seq'),
+                      0,
+                      reason:
+                          '013 backfills the stamp layout from '
+                          'recipe_layout: none seeded, 0',
+                    );
+                    expect(actual, {...expected[index]}..remove('layout_seq'));
+                    continue;
+                  }
                   if (entry.key == 'ingredient_matches' && !keysExpected) {
                     expect(
                       actual.remove('item_key'),

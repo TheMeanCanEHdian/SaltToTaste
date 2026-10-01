@@ -591,6 +591,9 @@ void main() {
         'completed': 0,
         'completed_recipes': <String>[],
         'moved': 0,
+        'decided': 0,
+        'gone': 0,
+        'failed_lines': 0,
       });
       expect(await statusOf(beans), 'complete');
     });

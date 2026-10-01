@@ -528,6 +528,38 @@ void main() {
     expect(groupAmountLine(amountGroup(lines: 1, missing: 1)), isNull);
   });
 
+  test('v22: the new medium holds are line holds in the queue, each named '
+      "(0148's dredge flour, 0799's starter flour, 0129's soy sauce)", () {
+    for (final (hold, raw, fdcId) in const [
+      ('coating', '4 cups (20 ounces) unbleached all-purpose flour', 789890),
+      ('starter_discard', '4½ cups (24¾ ounces) whole-wheat flour', 790085),
+      ('partial_pour_away', '1 cup soy sauce', 2707442),
+    ]) {
+      final note = lineHoldNote(
+        NutritionReviewLine(
+          recipe: const NutritionReviewRecipe(id: 'x', slug: 'x', title: 'X'),
+          position: 0,
+          raw: raw,
+          bucket: 'check',
+          match: NutritionReviewMatch(
+            fdcId: fdcId,
+            confidence: 0.95,
+            status: 'auto',
+            hold: hold,
+          ),
+        ),
+      );
+      expect(
+        note,
+        startsWith(
+          'line hold (${hold.replaceAll('_', ' ')}): decided one '
+          'line at a time',
+        ),
+        reason: hold,
+      );
+    }
+  });
+
   test('a second-food group is labelled by its key, not the first food', () {
     NutritionReviewLine group(String key, String item) => NutritionReviewLine(
       recipe: const NutritionReviewRecipe(id: 'x', slug: 'x', title: 'X'),

@@ -269,8 +269,11 @@ const Map<String, String> _synonyms = {
 /// rewrites onto cached answers, 51 rank-as items ([_rankAs]), filtered
 /// water, banana leaf, and the grams rules (scoped jelly densities, flagged
 /// stand-in densities, piece aliases, pint and quart parens, the bare
-/// 'fruit'/own-noun whole-item portion up to 350 g).
-const int matcherVersion = 21;
+/// 'fruit'/own-noun whole-item portion up to 350 g); 22 = the checkpoint 9
+/// rulings: a starter's feeding flour, a fried food's dredge and a braise
+/// kept only in part held (`starter_discard`, `coating`,
+/// `partial_pour_away`), a rinsed dry cure 0 g discarded.
+const int matcherVersion = 22;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -1329,6 +1332,10 @@ const Map<String, (String, String)> _rankAs = {
   'dried beans': ('navy beans', 'beans navy mature seeds raw'),
   'dried pinto beans': ('navy beans', 'beans navy mature seeds raw'),
   'coleslaw mix': ('red or green cabbage', 'cabbage raw'),
+  // v22 (F10): "1 sugar cube" (Champagne Cocktail) led its own answer with
+  // "Beef, steak, cube" at 160 g; it is granulated sugar. The record
+  // publishes no cube portion, so the line stays in review with no grams.
+  'sugar cube': ('sugar', 'sugars granulated'),
 };
 
 /// The (rank words, cached answer) a rank-as item reads ([_rankAs]), in

@@ -750,6 +750,9 @@ void main() {
         expect(result.applied!.completed, applied['completed']);
         expect(result.applied!.completedRecipes, applied['completed_recipes']);
         expect(result.applied!.recipes, applied['recipes']);
+        expect(applied, contains('moved'));
+        expect(result.applied!.moved, applied['moved']);
+        expect(applied.keys, containsAll(['decided', 'gone', 'failed_lines']));
         // The butter line took its amount with the confirm.
         final butter = result.matches.singleWhere((m) => m.position == 12);
         expect(butter.status, 'confirmed');
@@ -761,6 +764,23 @@ void main() {
         });
       },
     );
+
+    test("the receipt's decided, gone and failed_lines parse (the golden's "
+        'keys, non-zero counts so a default 0 cannot pass)', () async {
+      final raw = golden('nutrition_confirm_applied');
+      final applied = Map<String, dynamic>.of(
+        raw['applied']! as Map<String, dynamic>,
+      );
+      for (final key in ['moved', 'decided', 'gone', 'failed_lines']) {
+        expect(applied, contains(key));
+      }
+      applied.addAll({'moved': 1, 'decided': 2, 'gone': 3, 'failed_lines': 4});
+      final result = await NutritionRepository(
+        goldenDio({...raw, 'applied': applied}),
+      ).overrideMatch('nutrition-rules-sample', 12, applyToAll: true);
+      final got = result.applied!;
+      expect((got.moved, got.decided, got.gone, got.failedLines), (1, 2, 3, 4));
+    });
 
     test('C1: line_amount, portions (with fill) and the approximation basis '
         'parse from the rules golden', () async {

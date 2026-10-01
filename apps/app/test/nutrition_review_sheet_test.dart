@@ -150,6 +150,11 @@ class _ApplyCubit extends _SeededCubit {
           failed: 0,
           completed: 0,
           completedRecipes: const [],
+          raw: offer.raw,
+          moved: 0,
+          decided: 0,
+          gone: 0,
+          failedLines: 0,
         ),
       ),
     );
@@ -556,6 +561,42 @@ void main() {
     expect(find.text('8 cups chicken broth'), findsOneWidget);
     expect(find.text('1 small head escarole (10 oz), cut up'), findsOneWidget);
     expect(find.text('Apply to 41 lines'), findsNothing);
+  });
+
+  testWidgets('Run 052 O7/S6: a receipt shows under no row when the row at '
+      'its position reads another text; under its own row it shows', (
+    tester,
+  ) async {
+    // Synthesized pairing of two real lines (a stated exception), as above.
+    ApplyReceipt receipt(String raw) => (
+      position: 7,
+      raw: raw,
+      recipes: 41,
+      lines: 44,
+      failed: 0,
+      completed: 0,
+      completedRecipes: const [],
+      moved: 0,
+      decided: 0,
+      gone: 0,
+      failedLines: 0,
+    );
+    final elsewhere = _ApplyCubit(
+      _state().copyWith(
+        applied: receipt('1 small head escarole (10 oz), cut up'),
+      ),
+    );
+    await open(tester, seeded: elsewhere);
+    expect(find.textContaining('Applied to', findRichText: true), findsNothing);
+    final own = _state().matches!.singleWhere((m) => m.position == 7).raw;
+    final here = _ApplyCubit(_state().copyWith(applied: receipt(own)));
+    // An identical tree never remounts: dispose the first sheet.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await open(tester, seeded: here);
+    expect(
+      find.textContaining('Applied to', findRichText: true),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the fix panel says how old its candidates are and offers a '

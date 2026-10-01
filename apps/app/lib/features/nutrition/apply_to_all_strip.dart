@@ -42,6 +42,29 @@ class ApplyToAllStrip extends StatelessWidget {
   static String _recipes(int n) => n == 1 ? '1 recipe' : '$n recipes';
   static String _lines(int n) => n == 1 ? '1 line' : '$n lines';
 
+  /// The receipt's account of the offered lines it did not write, by
+  /// reason — decided meanwhile, another ingredient now or gone, in a recipe
+  /// that failed, and changed meanwhile (`moved`: left for its next compute)
+  /// — or null for none: why the count can fall short of the offer, in the
+  /// sheet's strip and the queue's alike.
+  static String? shortfallNote(ApplyReceipt receipt) {
+    final reasons = [
+      if (receipt.decided > 0) '${_lines(receipt.decided)} decided meanwhile',
+      if (receipt.gone > 0)
+        '${_lines(receipt.gone)} now another ingredient or gone',
+      if (receipt.failedLines > 0) '${_lines(receipt.failedLines)} failed',
+    ];
+    final n = receipt.moved;
+    final notes = [
+      if (reasons.isNotEmpty) '${reasons.join('; ')}.',
+      if (n == 1)
+        '1 line changed meanwhile and was left for its next compute.'
+      else if (n > 1)
+        '$n lines changed meanwhile and were left for their next compute.',
+    ];
+    return notes.isEmpty ? null : notes.join(' ');
+  }
+
   /// The receipt's reconciliation with [promised], by recipe id: ", as
   /// promised." when exactly the promised recipes completed; a completed
   /// recipe outside the promise (the decided line's own recipe can be one)
@@ -131,6 +154,8 @@ class ApplyToAllStrip extends StatelessWidget {
                 ),
               ),
             ..._reconcile(receipt),
+            if (shortfallNote(receipt) case final note?)
+              TextSpan(text: ' $note'),
           ],
         ),
         style: const TextStyle(fontSize: 13),

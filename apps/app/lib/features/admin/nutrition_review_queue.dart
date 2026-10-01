@@ -831,8 +831,8 @@ String? lineHoldNote(NutritionReviewLine line) {
       'finishes it: ';
   const noZero = '. There is no 0 g decision: the API rejects grams of 0.';
   return switch (match?.hold) {
-    'discarded_medium' =>
-      'line hold (discarded medium): $head'
+    final hold? when mediumHolds.contains(hold) =>
+      'line hold (${hold.replaceAll('_', ' ')}): $head'
           '${match!.gramSource == 'discarded' && (match.grams ?? 0) > 0 ? 'Confirm counts only the eaten part (${fmtAmount(match.grams!)} g), ' : ''}'
           'Skip says it is poured away, or a typed positive amount counts '
           'that much$noZero',
@@ -1160,11 +1160,11 @@ class _FixContentState extends State<_FixContent> {
             FinishesSplit(line: line, match: match, waiting: waiting),
           ],
           if (offerIsFor(state.offer, match) ||
-              state.applied?.position == match.position) ...[
+              receiptIsFor(state.applied, match)) ...[
             const SizedBox(height: 12),
             ApplyToAllStrip(
               offer: offerIsFor(state.offer, match) ? state.offer : null,
-              applied: state.applied?.position == match.position
+              applied: receiptIsFor(state.applied, match)
                   ? state.applied
                   : null,
               applying: state.applying,

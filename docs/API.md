@@ -431,7 +431,8 @@ Only UNDECIDED lines (`auto` / `unmatched`) join an ingredient's group: a line
 someone already decided is a group of one — an amount problem for that line,
 never part of an ingredient's reach, since `apply_to_all` cannot touch it —
 and it still reports its own `item_key`. So is a line a LINE hold holds
-(`second_food`, `discarded_medium`, `in_shell`): no decision on its key
+(`second_food`, `discarded_medium`, `starter_discard`, `coating`,
+`partial_pour_away`, `in_shell`): no decision on its key
 clears it, so each rinsed or cooking-water salt is a group of one, never one "table salt · N lines" group, and
 such a group's `decided` is always false.
 
@@ -687,7 +688,18 @@ body unless a first compute is currently running.
 `stale` means the ingredients — or the recipe's own steps or its title,
 which the discarded-media rules read (a drain added or removed changes what
 counts) — changed since the compute; matcher v11 made every computed recipe
-stale once for that. The ~30-nutrient
+stale once for that. It also means the recipe's match rows were laid out
+anew since (v22, Run 052 O1/S2): the stamp records the layout sequence it
+was computed on (`recipe_nutrition.layout_seq`, migration 013), and the
+recipe is fresh only while its inputs hash AND its layout are still those —
+a save deleting a line, a person's write laying the rows out for it (the
+line's row dropped) and a save restoring the line hash as before, but the
+restored line has no row, so the recipe reads `stale` and the `stale` sweep
+computes it. No stamp is fresh with a line that has no row. Every reader
+of freshness — this body, the `stale` bulk scope, the job's re-run — reads
+both halves. The layout sequence is one global counter (migration 013), so
+a recipe deleted and re-created under its id never repeats a sequence a
+writer read before the delete. The ~30-nutrient
 key set and FDA Daily Values match the legacy app's panel.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition` (admin, full scope)
@@ -713,7 +725,9 @@ poll `GET /api/v1/nutrition/jobs/{id}` for progress (`status`: `running |
 done | failed`) and re-fetch `…/nutrition` when it finishes. Single-flight
 per recipe — a second call while one runs re-attaches to the same job, and
 when a save cut that job's compute off (its totals stamped stale) the job
-computes the stored recipe again before it ends (at most three passes) — and
+computes the stored recipe again before it ends (at most three passes; a
+`stale` or other bulk sweep computing the recipe is the job a call
+re-attaches to, and it runs the same step — v22, Run 052 S5/O5) — and
 the recipe's `…/nutrition` body carries `computing_job_id` (admins only)
 while a compute is in flight so a reopened page can re-attach. Cached and rate-limited
 (~900 requests/hour shared budget); user decisions on unchanged lines
@@ -789,7 +803,13 @@ brisket, 3 garlic cloves, 4 bay leaves, allspice berries, 1 tablespoon
 peppercorns, and coriander seeds to brine. Weigh brisket down with plate";
 "8 whole cloves" too, read by its last word (the user's ruling, 2026-09-28;
 never the submerged or weighed-down food, nor what the submerge's own
-sentence adds to the brine, nor a second line of the same food) — stored as
+sentence adds to the brine, nor a second line of the same food); since
+matcher v22 also a dry cure's salt or sugar a step rubs on and a later
+sentence rinses off the food — "Rub each side evenly with salt mixture …
+Refrigerate for 5 to 7 days … Rinse brisket and pat it dry" (New
+England–Style Home-Corned Beef, the user's ruling Q3, 2026-10-01), never a
+dry brine whose EXCESS is rinsed off ("Rinse off any excess salt", Roast
+Salted Turkey) nor a rub no step rinses (a barbecue rub) — stored as
 `grams: 0`: resolved, adds nothing; an aromatic whose smaller share the
 step WRITES ("3 garlic cloves" of "6 garlic cloves, peeled", the rest going
 in the pot) stores the rest's grams and counts them; a "plus" line whose second part a step
@@ -992,6 +1012,27 @@ deveined …, shells reserved" too: its weight includes the shells the cook
 peels off), with or without an amount (never 0 g counted); shucked shellfish, lobster
 meat and clam juice name none of these: no record FDC answers publishes an edible share, so the gross weight
 is not counted as meat; a LINE hold, like `second_food`),
+`starter_discard` (since matcher v22, the user's ruling Q1: every non-water
+line of a sourdough starter whose feeding step keeps a little starter and
+discards the rest — "discard remaining starter" / "discard all but …
+starter"; how much of the flour ends in the kept starter nothing says),
+`coating` (since v22, Q2: ¼ cup or more of flour, starch or crumbs in a
+recipe that fries — a line of oil, shortening or lard "for frying" or of
+400 g or more — that a step names in a dredge: "dredge … in the flour",
+"shake off excess flour", or set out in a shallow dish; or a line that says "for dredging" / "for coating". A batter the food
+is folded into is eaten whole and is none, nor is a sauce's thickener under
+¼ cup, nor a dredge in a recipe that does not fry. Held until the server's
+`coatingFraction` switch — null, no figure set — gives the share a fried
+food keeps), `partial_pour_away` (since v22, Q4: a line of a braising
+liquid — the sentence before the strain that names it and opens "whisk",
+"bring", "combine" or "stir", the food added in the next sentence — that
+is strained after cooking ("cooking liquid through … strainer") and of
+which a later step keeps only a written part ("Pour 1 cup defatted
+cooking liquid", "½ cup reserved defatted liquid"), no step using the
+"remaining" liquid; the kept part is `match.hold_note`). These three are
+medium holds like `discarded_medium`: a LINE hold, no grams stored unless a
+"plus" part is eaten, a confirm writes 0 g poured away unless a person
+types the eaten grams,
 `second_food` (the line names a second ingredient —
 "egg whites plus 1 large egg", "chipotle chile in adobo sauce plus 2
 teaspoons adobo sauce" — that the match does not cover; a counted fruit cut
@@ -1033,19 +1074,23 @@ leg (ham), shank half, separable lean and fat, raw" (168226), unheld and
 still below the gate for a person, and the matches GET's `candidates` rank
 it first the same way; the same switch), `borderline`
 (only when the server's borderline-band switch is on, off by default: an
-engine pick scored from 0.52 up to 0.54); such a line sits in the `check` bucket until a person confirms,
+engine pick scored from 0.52 up to 0.54); `hold_note` (since v22): the
+hold in words where the code alone does not say it — a
+`partial_pour_away`'s kept part ("1 cup defatted cooking liquid"), else
+`null`. Such a held line sits in the `check` bucket until a person confirms,
 re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
 a skip, a grams edit), and an un-skip re-derives it for the food now on the
 line, so a person's food is never held for the engine's old reason (a
 person's food — confidence 1, a pick or a decision, inherited or not — is
-held again only by a LINE hold: `discarded_medium`, `second_food`,
-`in_shell`; an un-skip is no confirm, and only a confirm or a pick on the
+held again only by a LINE hold: `discarded_medium`, `starter_discard`,
+`coating`, `partial_pour_away`, `second_food`, `in_shell`; an un-skip is no confirm, and only a confirm or a pick on the
 line clears one), and an engine row whose line the
 second-food rule counts moves to the rule's record with the rule's grams,
 as a compute writes it. A
 decision reaching the line by `apply_to_all` or inheritance clears a FOOD
 hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`, `borderline`,
-`unnamed_food`) too, never a LINE hold (`discarded_medium`, `second_food`,
+`unnamed_food`) too, never a LINE hold (`discarded_medium`,
+`starter_discard`, `coating`, `partial_pour_away`, `second_food`,
 `in_shell`): a decision on the key names one food and cannot count the
 line's other part, say what a discarded medium leaves or how much of a shell
 is eaten) plus ranked `candidates`
@@ -1170,7 +1215,7 @@ Since matcher v21 a few items are RANK-AS items: the line reads an answer
 FDC already gave (its own, or the named query's) ranked as if the
 record's own name had been searched. An answer already cached sends
 nothing; an answer not yet cached is searched once, under its own words,
-as any line's is (in this library all 51 answers are cached). A rank-as
+as any line's is (in this library all 52 answers are cached). A rank-as
 item is never a rewrite key or target (those are "A or B" food nouns:
 the fragment `thai`, from "2 Thai, serrano, or jalapeño chiles", is
 rank-as so "Thai or Italian basil leaves" is not read as hot peppers — it
@@ -1208,7 +1253,9 @@ italian sausage` → `sausage italian pork raw`; `dried black beans` (reads
 beans`, `dried pinto beans` (read `navy beans`) → `beans navy mature
 seeds raw` (raw dry legumes, never "from dried, fat added"); `coleslaw
 mix` (reads `red or green cabbage`) → `cabbage raw` (never dressed
-coleslaw); `thai` (reads `jarred hot cherry peppers`) → the same words
+coleslaw); since matcher v22, `sugar cube` (reads `sugar`) → `sugars
+granulated` (the record publishes no cube portion: the line stays in
+review with no grams); `thai` (reads `jarred hot cherry peppers`) → the same words
 ("Peppers, hot, raw", 15 g a pepper); and the one-word items, kept off
 the "A or B" food nouns, read their old rewrite target's answer under its
 own words: `chianti` → `red wine`, `lemongrass` → `lemon grass stalks`,
@@ -1304,7 +1351,8 @@ counts only while it is still a flagged guess (confidence below 0.5) or held
 by a food hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`,
 `borderline`, `unnamed_food`): blessing it at confidence 1 is what moves it
 out of the `check` bucket. A sibling held by a line hold (`second_food`,
-`discarded_medium`, `in_shell`) is never counted, whatever its food or score: no
+`discarded_medium`, `starter_discard`, `coating`, `partial_pour_away`,
+`in_shell`) is never counted, whatever its food or score: no
 decision on the key releases it — nor is a sibling whose line names a
 second food (one the second-food rule counts on its own record, or one not
 matched yet, which the decision's food would hold `second_food`), nor an
@@ -1318,8 +1366,16 @@ rewritten, nor is one on this food the engine counts at 0 g whatever its
 score or food hold (an amount-less line, a sprig) — a confirm would leave it
 where it is. Candidates come
 from the compute-time search cache only — reading this never spends the
-FDC request budget. A stored decision whose line text changed since the
-compute is reported as unmatched (`match: null`).
+FDC request budget. An engine row whose line text changed since the
+compute is reported as unmatched (`match: null`: the next compute
+re-derives it). A person's decision an amount edit carried (the layout
+pairs it to the edited line, same ingredient) is shown as what the next
+compute and a person's write make of it (v22, Run 052 Opus critic 2; it
+was `match: null` while the totals counted it): its status and food, the
+grams re-derived for the NEW line from the caches alone (null when that
+needs a fetch), and `match.carried_from`: the line's previous text — the
+decision is from the line's previous amount until the next compute writes
+it (null on every other row). `others` reads that food.
 
 A sub-recipe line — "recipe(s) follow(s)" in its first alternative, "this
 page" before its first comma ("1 recipe Buttery Croutons (this page)", not
@@ -1391,7 +1447,11 @@ an amount edit on a decided line keeps the food and the status (a skip stays
 a skip) and re-derives the grams as a compute weighs the new line — the
 discard policy included, so a poured-away medium stays at 0 g and an
 un-skip never counts it. A hand-typed weight stays when the amount did not
-change (a prep-only rewrite, "chopped fine" to "chopped") or the line is a
+change (a prep-only rewrite, "chopped fine" to "chopped"; every amount the
+line writes counts, its "plus" part's too since matcher v22: "1 recipe
+Crispy Onions, plus 3 tablespoons reserved oil" edited to 6 tablespoons, or
+"2 large eggs plus 6 large yolks" to 8 yolks, is an amount change, as is
+the same edit on a row whose food no cache holds) or the line is a
 discarded medium, held or zeroed by the policy, read with its grams ("3
 quarts peanut oil" is frying oil with no "for frying" in it); otherwise it
 is dropped, and none derivable means none (an un-skip never revives the old
@@ -1410,9 +1470,16 @@ one each; a substitution to another ingredient IS a delete and an insert
 (two ops; it carries nothing: its row is dropped and the line re-derived —
 matcher v20; v19 counted it one op as written and so read a move + an
 amount edit + a delete as a delete + a cross-ingredient edit, dropping the
-moved line's decision). A row is of an ingredient by its stored key or its
-own text's key under the current matcher (so a key a matcher upgrade
-changed still carries an amount-edited row). A position with no row (a
+moved line's decision). A row is of an ingredient by its STORED key — the
+key of the line it was written for, the corpus's curated item included (on
+51 corpus lines the editor's parse of the text gives another key, and an
+amount edit in the editor keeps the curated item) — and by its own text's
+key under the current matcher only where the stored key is absent or names
+the same food by another wording, the same head noun (so a key a matcher
+upgrade changed still carries an amount-edited row). A rewrite whose head
+noun changes never carries (v22, Run 052 O4: 0132's chicken-breast line,
+whose text alone keys 'whole bone-in', retyped as a turkey-breast line the
+editor keys 'whole bone-in', dropped the pick; v20 carried it). A position with no row (a
 person's decision in the window before the compute, or a compute that a
 save cut off or FDC failed) is a line of unknown text: it fits any line and
 carries nothing, so the line it became is not read as an insert another
@@ -1466,7 +1533,14 @@ person's write laid out anew meanwhile, even when a later save put the
 lines back as they were (a save and its revert hash the same, Run 051 C1) —
 writes no further rows and stamps its totals STALE, never fresh, so the
 next sweep revisits it; a save changing nothing it reads (tags, notes,
-times) blocks nothing, nor does a person's write on unchanged lines.
+times) blocks nothing, nor does a person's write on unchanged lines. The
+compute's stamp is read after its own totals' awaits, with none between the
+check and the write. The engine's writes never replace a person's decision
+(the guarded write replaces only an undecided row — v20's clause replacing
+any row of another text is gone, Run 052 S1/Opus critic 3), and the one
+write over a decided row — the compute's amount-edited row — lands only
+while the row is still the one it laid out: a person's write on that line
+during the compute's awaits (an un-skip) stands (Run 052 O3).
 `GET …/nutrition/matches` shows each line the row this layout gives it,
 without writing, and each line's apply-to-all offer (`others`,
 `others_lines`) counts this recipe's own rows as that layout places them —
@@ -1493,7 +1567,14 @@ the queue pane the queued line's text (a queued line no row reads any more
 shows as edited or removed and is not acted on). On a 409 it reloads the
 rows so the screen finds the line where it is now; on every reload of the
 rows a pending apply-to-all offer follows its line by text, or is withdrawn
-(and the message says so) when no single row reads it.
+(and the message says so) when no single row reads it. The offer itself is
+raised on the text the PUT sent, placed on the response's rows by that text
+(the row at `{pos}` when it still reads it, else the one row that does) —
+never the row the response has at `{pos}`, which is read after the server's
+awaits and can be another line a save put there — and not raised when no
+single row reads it; the apply-to-all receipt stands under its line the same
+way, and shows a non-zero `moved` ("N lines changed meanwhile and were left
+for their next compute").
 
 Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
@@ -1547,8 +1628,8 @@ counted at an engine 0 g (an amount-less line, a sprig), where
 rewriting it as `auto` at confidence 1 with its hold cleared stops it being a
 guess — how confirming one line clears an ingredient's whole group. A line
 already on that food at or above 0.5 and unheld is left as it is, as is a
-line a line hold holds (`second_food`, `discarded_medium`, `in_shell`,
-whatever its food or score), a line that names a second food (counted by the
+line a line hold holds (`second_food`, `discarded_medium`,
+`starter_discard`, `coating`, `partial_pour_away`, `in_shell`, whatever its food or score), a line that names a second food (counted by the
 second-food rule, or unmatched), shellfish bought in the shell and an
 unmatched discarded medium the engine holds — the same
 rows `others` leaves out, so the offer and the apply agree.
@@ -1558,12 +1639,24 @@ like inheritance — not as a human status, so a wrong pick applied
 library-wide is corrected the same way, by a second `apply_to_all` with
 the right food. A line a person already decided is left alone, as is one
 that is now another ingredient or gone (each recipe's rows are laid out on
-its current lines first; a line only amount-edited since its compute is
-reached under its new text). A recipe whose rows are laid out anew while
+its current lines first, and each reached row is found WHERE THAT LAYOUT
+PUT IT — by the row itself, not its stored position, so a line a save only
+shifted is reached at its new position, v22 Run 052 O14; a line only
+amount-edited since its compute is reached under its new text, while a
+line whose key now names another decision is not). Only an undecided row is
+written: a person's skip or pick the layout carried onto a reached
+position stands (Run 052 S1). A recipe whose rows are laid out anew while
 the apply waits on FDC (a save and a person's write or a compute) is left
 for its next compute: no row of it is written over what the layout put
 there. The response carries `applied: {recipes, lines, failed, completed,
-completed_recipes, moved}` (`moved`: the targets left for that reason): `completed` counts
+completed_recipes, moved, decided, gone, failed_lines}`, which accounts
+for every line `others_lines` offered: each is in exactly one of `lines`
+(written; see below), `decided` (a person decided it meanwhile), `gone`
+(its line is gone or another ingredient now, or its recipe was deleted —
+during the apply's awaits too, Run 052 O6), `moved` (its recipe was laid
+out anew during the apply's awaits, or the row was rewritten since the
+offer: left for its next compute) and `failed_lines` (its recipe failed;
+`failed` counts those recipes): `completed` counts
 the reached recipes whose stored status turned `complete` with this apply
 (not a reached recipe that was complete already — a different-food pick
 reaches counted lines). The decided line's OWN recipe can be among them:
@@ -1578,7 +1671,8 @@ and `completed_recipes` lists their ids, so a shortfall can be named;
 `lines` counts the lines the decision moved —
 whose review bucket changed, or that took the decided food (a line left
 short of an amount on it too, which stays `no_grams`) — every line `others`
-counted, less one a person decided meanwhile, one now another ingredient or gone, one counted in `moved`, or one whose recipe failed —
+counted, less those in `decided`, `gone`, `moved` and `failed_lines` (a
+written line whose bucket and food did not change is in none) —
 `recipes` the recipes holding one, and `failed` how many recipes
 failed part-way (their document would not decode, or the provider failed
 while fetching a food detail one of their lines' grams read — household
@@ -1662,7 +1756,9 @@ content-type is refused, never silently treated as `missing`.
 Note `stale` is derived, not stored: `recipe_nutrition.status` accepts the
 value in its CHECK constraint but nothing ever writes it, so staleness is a
 comparison between the stored `ingredients_hash` and one recomputed from the
-recipe.
+recipe — and, since v22 (migration 013), between the stamp's `layout_seq`
+and the recipe's current layout sequence: a recipe laid out anew since its
+stamp is in the `stale` scope whatever its hash (Run 052 O1/S2).
 
 ### `GET /api/v1/nutrition/bulk/counts` (admin)
 

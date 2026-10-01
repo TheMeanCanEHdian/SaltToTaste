@@ -41,6 +41,11 @@ void main() {
     failed: 0,
     completed: 0,
     completedRecipes: <String>[],
+    raw: '2 large eggs',
+    moved: 0,
+    decided: 0,
+    gone: 0,
+    failedLines: 0,
   );
   final inFlight = idle.copyWith(overridingPosition: 3);
 

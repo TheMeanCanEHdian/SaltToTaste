@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 
+import 'support/contract_goldens.dart';
+
 /// What the review sheet SAYS about a row — the two review fleets found the
 /// engine's own explanation never reaching the screen, and a weak match
 /// being told it "is counting now" when the totals hold it out.
@@ -22,6 +24,59 @@ void main() {
       ),
     );
   }
+
+  testWidgets("a decision an amount edit carried says its grams in the "
+      "totals come from the line's previous amount (match.carried_from, "
+      'the matches GET golden) — in the sheet and the queue alike, both '
+      'WhyLine', (tester) async {
+    final items = [
+      for (final item in golden('nutrition_matches')['items']! as List)
+        item as Map<String, dynamic>,
+    ];
+    // The golden's rows carry nothing: no label on any of them.
+    for (final item in items) {
+      expect(item['match'], containsPair('carried_from', null));
+      final m = IngredientMatch.fromJson(item);
+      expect(m.carriedFrom, isNull);
+      await pump(tester, m);
+      expect(find.textContaining('previous amount'), findsNothing);
+    }
+    // The chocolate line, as the GET sends a person's confirm the layout
+    // carried from its previous amount (the edit is synthesized: an amount
+    // edit is never in the corpus).
+    final chocolate = items.singleWhere((i) => i['position'] == 2);
+    const before = '4 ounces bittersweet chocolate, chopped coarse';
+    final m = IngredientMatch.fromJson({
+      ...chocolate,
+      'match': {
+        ...chocolate['match']! as Map<String, dynamic>,
+        'status': 'confirmed',
+        'carried_from': before,
+      },
+    });
+    expect(m.carriedFrom, before);
+    await pump(tester, m);
+    expect(
+      find.text(
+        'Decided on the line\'s previous amount ("$before") — its grams in '
+        'the totals come from that amount; recompute to re-weigh',
+      ),
+      findsOneWidget,
+    );
+    // A carried skip weighs nothing: no grams to speak of.
+    await pump(
+      tester,
+      IngredientMatch.fromJson({
+        ...chocolate,
+        'match': {
+          ...chocolate['match']! as Map<String, dynamic>,
+          'status': 'skipped',
+          'carried_from': before,
+        },
+      }),
+    );
+    expect(find.textContaining('previous amount'), findsNothing);
+  });
 
   test('the sheet buckets an engine 0 g by its gram source, as the queue '
       'does', () {

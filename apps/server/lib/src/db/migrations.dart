@@ -354,4 +354,32 @@ CREATE TABLE recipe_layout (
 ) WITHOUT ROWID
 ''',
   ],
+
+  // 013 — Run 052 (O1/S2, Opus critic 1): the freshness stamp records the
+  // layout it was computed on, and the layout sequence is GLOBAL.
+  // `recipe_nutrition.layout_seq` is the `recipe_layout.seq` the stamped
+  // totals were computed on: a recipe is fresh only while its hash AND its
+  // layout are still those (a save, a person's write laying the rows out
+  // for it and a revert hash the same, but bump the layout). Existing stamps
+  // take their recipe's current seq (0: never laid out). `layout_counter`
+  // is the one counter every layout draws its next seq from, so a recipe
+  // deleted and re-created under the same id (its recipe_layout row
+  // cascades away) never repeats a seq a writer read before the delete.
+  [
+    'ALTER TABLE recipe_nutrition ADD COLUMN layout_seq INTEGER',
+    '''
+UPDATE recipe_nutrition SET layout_seq = COALESCE((SELECT seq FROM
+  recipe_layout l WHERE l.recipe_id = recipe_nutrition.recipe_id), 0)
+''',
+    '''
+CREATE TABLE layout_counter (
+  id INTEGER PRIMARY KEY CHECK (id = 0),
+  seq INTEGER NOT NULL
+)
+''',
+    '''
+INSERT INTO layout_counter (id, seq)
+  SELECT 0, COALESCE(MAX(seq), 0) FROM recipe_layout
+''',
+  ],
 ];
