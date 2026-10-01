@@ -3486,12 +3486,18 @@ Future<List<FdcCandidate>> _cachedSearch(
 /// stored under its KEY's words ("pork tenderloins" reads "pork tenderloin":
 /// 56 of 56 such cached pairs ranked the same top food, sweep audit
 /// 2026-09-26), still ranked under its own words. An "A or B" line whose A is
-/// a known query searches A alone ([leftAlternative]).
+/// a known query searches A alone ([leftAlternative]). A rank-as item
+/// ([rankAsFor]) reads its named cached answer under the record's words,
+/// before any of that.
 ({String query, String answer}) lineSearchFor(
   SaltDatabase db,
   String normalized,
   String key,
 ) {
+  final rankAs = rankAsFor(normalized);
+  if (rankAs != null) {
+    return rankAs;
+  }
   // An EMPTY stored answer is FDC saying it has no food for A ("pancetta"):
   // not a known query — the whole phrase still gets searched. (A test that
   // A's answer names A was here too; with the relative guard below it

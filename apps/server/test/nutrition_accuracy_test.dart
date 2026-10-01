@@ -395,8 +395,8 @@ void main() {
 
   group('A10: "A or B" splits only on an answer naming A', () {
     test(
-      '"champagne vinegar or white wine vinegar": the answer for '
-      "'champagne vinegar' names no vinegar, so the phrase is searched",
+      '"champagne vinegar or white wine vinegar" reads vinegar (both are '
+      'rewrite keys since v21); "dry vermouth or dry white wine" is the wine',
       () async {
         final dir = Directory.systemTemp.createTempSync('salt-or');
         addTearDown(() => dir.deleteSync(recursive: true));
@@ -412,8 +412,11 @@ void main() {
             jsonEncode([for (final c in await provider.search(q)) c.toJson()]),
           );
         }
+        // Since matcher v21 both the phrase and its A are rewrite keys
+        // (→ 'vinegar', "Vinegar" 2709351): the line reads vinegar, whatever
+        // the answer for 'champagne vinegar' holds.
         const item = 'champagne vinegar or white wine vinegar';
-        expect(lineSearchFor(db, item, itemKeyFor(item)).query, item);
+        expect(lineSearchFor(db, item, itemKeyFor(item)).query, 'vinegar');
         // Vermouth has no FDC record: alone it is the sherry target, but
         // "vermouth or white wine" is the white wine FDC knows (B).
         expect(searchQueryFor('dry vermouth'), 'wine dessert dry');
@@ -442,21 +445,27 @@ void main() {
           q,
           jsonEncode([for (final c in await provider.search(q)) c.toJson()]),
         );
+        // "2 teaspoons Chinese black vinegar or balsamic vinegar" (Dan Dan
+        // Mian). (The pin until matcher v21, "snow peas or sugar snap
+        // peas", is a rank-as item now: it reads 'snow peas' ranked as
+        // edible-podded peas, ahead of any split.)
         const peas = 'snow peas or sugar snap peas';
-        await store('snow peas');
-        // 'snow peas' names A but tops out below the gate (0.49): the
-        // phrase nobody has searched yet is searched, not A.
-        final a = (await rank('snow peas')).first.confidence;
-        expect(a, allOf(greaterThan(0.45), lessThan(lowConfidence)));
-        expect(lineSearchFor(db, peas, itemKeyFor(peas)).query, peas);
-        // Once the phrase's own answer is stored and ranks lower (0.30), A
-        // is the better answer and splits.
-        await store(peas);
-        expect((await rank(peas)).first.confidence, lessThan(a));
         expect(
           lineSearchFor(db, peas, itemKeyFor(peas)).query,
-          'snow peas',
+          'peas edible-podded raw',
         );
+        const vinegar = 'chinese black vinegar or balsamic vinegar';
+        await store('chinese black vinegar');
+        // A tops out far below the gate: the phrase nobody has searched yet
+        // is searched, not A.
+        final a = (await rank('chinese black vinegar')).first.confidence;
+        expect(a, lessThan(lowConfidence));
+        expect(lineSearchFor(db, vinegar, itemKeyFor(vinegar)).query, vinegar);
+        // Once the phrase's own answer is stored and ranks better ("Vinegar,
+        // balsamic"), the phrase stands.
+        await store(vinegar);
+        expect((await rank(vinegar)).first.confidence, greaterThan(a));
+        expect(lineSearchFor(db, vinegar, itemKeyFor(vinegar)).query, vinegar);
         // An A at the gate or above splits with no phrase answer stored.
         await store('thyme');
         const thyme = 'thyme or dried';

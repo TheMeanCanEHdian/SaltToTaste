@@ -98,6 +98,9 @@ const Set<String> waterLikeItems = {
   'tap water',
   'ice',
   'ice cubes',
+  // v21: "3½ cups filtered water" (cold-brew coffee concentrate) counted
+  // 385 g of "Water, tap" in check.
+  'filtered water',
 };
 
 /// Kitchen-name → FDC-vocabulary synonyms applied word-by-word.
@@ -262,8 +265,12 @@ const Map<String, String> _synonyms = {
 /// that only modifies the item's head weighs on a record of the key's own
 /// food by that record's volume portion (vanilla extract, cayenne pepper,
 /// cocoa powder), sugar snap peas are no sugar, and a dried chile is small
-/// by its item's own words.
-const int matcherVersion = 20;
+/// by its item's own words; 21 = the v21 plan's zero-request rules: 82
+/// rewrites onto cached answers, 51 rank-as items ([_rankAs]), filtered
+/// water, banana leaf, and the grams rules (scoped jelly densities, flagged
+/// stand-in densities, piece aliases, pint and quart parens, the bare
+/// 'fruit'/own-noun whole-item portion up to 350 g).
+const int matcherVersion = 21;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -634,7 +641,11 @@ bool isNonFood(String normalizedItem) =>
     normalizedItem.contains('oven bag') ||
     // "lollipop or popsicle sticks" counted 120 g of "Popsicle" at the gate
     // (checkpoint 5).
-    normalizedItem.contains('popsicle stick');
+    normalizedItem.contains('popsicle stick') ||
+    // "8 ounces banana leaf, cut into long strips" wraps the cochinita pibil
+    // and is not eaten: it counted 193 kcal of banana (v21 plan §3).
+    normalizedItem.contains('banana leaf') ||
+    normalizedItem.contains('banana leaves');
 
 /// Seasoning a recipe adds "to taste": with no amount on the line it
 /// contributes nothing measurable, and FDC's search for it returns bell
@@ -1098,6 +1109,101 @@ const Map<String, String> _queryRewrites = {
   // Granulated garlic is the dried powder, not "Garlic, raw" (1104647,
   // 0.55): the cached answer holds "Spices, garlic powder" (171325) alone.
   'granulated garlic': 'garlic powder',
+  // v21 (the v21 plan §2–§3, every target an answer snapshot 13 holds,
+  // ranked under the target's own words onto the named record; pinned in
+  // test/nutrition_v21_test.dart). Queue tier a — the right food ranked
+  // under the line's extra words ("firm tart apples", "ancho pods",
+  // "king arthur bread flour"), or a wrong record in check ("pickling
+  // cucumbers" on dill pickles, "fingerling potatoes" on potato bread,
+  // "calasparra or bomba rice" on rice crackers). Flagged approximations
+  // ([approximationRecords]): fingerling → red potato, spicy greens →
+  // arugula, tapioca starch → tapioca pearl.
+  '1 4-inch-thick deli ham': 'deli ham',
+  '100 percent agave tequila': 'tequila',
+  'cold vodka or tequila': 'vodka',
+  'ancho or other mild chili powder': 'chili powder',
+  'ancho pods': 'dried ancho chiles',
+  'animal crackers': 'nabisco barnum s animal crackers or social tea biscuits',
+  'commercial sazon': 'sazon',
+  'bacon drippings or vegetable oil': 'vegetable oil',
+  'bone-in skin-on split chicken breasts or 4 bone-in':
+      'bone-in skin-on chicken breast halves',
+  'bone-in split chicken breasts and or leg quarters':
+      'bone-in chicken breasts',
+  'broccoli crowns': 'broccoli',
+  'calasparra or bomba rice': 'medium-grain rice',
+  'cardamom seeds': 'ground cardamom',
+  'green cardamom pods': 'cardamom pods',
+  'inexpensive fruity medium-bodied red wine': 'red wine',
+  'chinese sesame paste or tahini': 'tahini',
+  'coarse-ground cornmeal': 'cornmeal',
+  'cold milk': 'milk',
+  'ditalini pasta': 'pasta dry enriched',
+  'dried shiitake mushroom caps': 'dried shiitake mushrooms',
+  'fire-roasted diced tomatoes': 'diced tomatoes',
+  'fire-roasted tomatoes': 'crushed tomatoes',
+  'firm mcintosh apples': 'mcintosh apples',
+  'firm sweet apples': 'apples',
+  'firm tart apples': 'apples',
+  'sweet and tart apples': 'apples',
+  'flat-leaf parsley leaves': 'parsley',
+  'globe or italian eggplants': 'eggplant',
+  'green or brown lentils': 'lentils',
+  'israeli couscous': 'couscous',
+  'king arthur bread flour': 'bread flour',
+  'light or dark molasses': 'molasses',
+  'mild or light molasses': 'molasses',
+  'mexican oregano': 'dried oregano',
+  'phyllo sheets': 'phyllo',
+  'pickled jalapenos': 'pickled jalapeno chiles',
+  'jarred jalapenos': 'pickled jalapeno chiles',
+  'prewashed white quinoa': 'prewashed quinoa',
+  'quick-cooking oats': 'quick oats',
+  'red miso paste': 'white miso',
+  'white miso paste': 'white miso',
+  'red pepper fakes': 'spices pepper red cayenne',
+  'red plums': 'plums',
+  'ripe but firm peaches': 'peaches',
+  'skin-on haddock fillets': 'skinless haddock fillets',
+  'strong coffee': 'brewed coffee',
+  'tabasco or other hot sauce': 'hot pepper sauce',
+  'thick-sliced soppressata or salami': 'salami',
+  'toasted slivered almonds': 'slivered almonds',
+  'vine-ripened tomato': 'ripe tomatoes',
+  'white american cheese': 'american cheese',
+  'whole pecans or walnuts': 'pecans',
+  'whole rosemary leaves': 'rosemary',
+  'fingerling potatoes': 'red potatoes',
+  'pickling cucumbers': 'cucumbers',
+  'lemongrass stalks': 'lemon grass stalks',
+  'kettle-cooked potato chips': 'plain potato chips',
+  'canela cinnamon': 'ground cinnamon',
+  'chinese rice wine or dry sherry': 'dry sherry or chinese rice wine',
+  'chinese rice cooking wine or dry sherry': 'dry sherry or chinese rice wine',
+  'rice wine or dry sherry': 'dry sherry or chinese rice wine',
+  'bird chiles': 'dried arbol chiles',
+  'arbol chiles': 'dried arbol chiles',
+  'whole dried red chiles': 'dried arbol chiles',
+  'whole dried arbol chiles': 'dried arbol chiles',
+  'dried de arbol chiles': 'dried arbol chiles',
+  'basmati rice': 'long-grain white rice',
+  'parsley leaves and tender stems': 'parsley',
+  'parsley leaves and stems': 'parsley',
+  'champagne vinegar': 'vinegar',
+  'champagne vinegar or white wine vinegar': 'vinegar',
+  'sake or dry vermouth': 'sake',
+  'cauliflower florets': 'cauliflower',
+  'mixed berries': 'berries',
+  'spicy greens': 'arugula',
+  'tamarind juice concentrate': 'tamarind paste',
+  'curly-edged lasagna noodles': 'pasta dry enriched',
+  'chinese noodles': 'pasta fresh-refrigerated plain as purchased',
+  'chinese wheat noodles': 'pasta fresh-refrigerated plain as purchased',
+  'white rice': 'long-grain white rice',
+  'brown lentils': 'lentils',
+  // The tapioca-pearl cup (169717, 152 g) for tapioca starch: the same
+  // 358 kcal/100 g, a denser cup (J5, approved flagged).
+  'tapioca starch': 'tapioca pearl dry',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -1106,6 +1212,134 @@ const Map<String, String> _queryRewrites = {
 /// cache key — changes.
 String searchQueryFor(String normalizedItem) =>
     _queryRewrites[normalizedItem] ?? normalizedItem;
+
+/// Rank-as items (v21): normalized item → (the CACHED answer the line reads,
+/// the record's own words that rank it). For a right record that leads no
+/// cached answer under any cached query's own words (crab lump, collards,
+/// raw dry legumes, raw pork tenderloin…): the line reads an answer FDC
+/// already gave — its own or another query's — ranked as if the record's
+/// name had been searched. An answer already cached sends nothing; one not
+/// yet stored is searched once under its own words, as any line's is (all
+/// of them are cached in snapshot 13's library). Never a [_queryRewrites]
+/// key or target: those are [leftAlternative] food nouns, and a fragment
+/// key there ('thai') split "Thai or Italian basil leaves" into 225 g of
+/// hot peppers (v21 plan). Each landing is pinned in
+/// test/nutrition_v21_test.dart.
+const Map<String, (String, String)> _rankAs = {
+  // The "2 Thai, serrano, or jalapeño chiles" fragment: the record's whole
+  // hot pepper (15 g each; a Thai chile is ~2 g — accepted, J6).
+  'thai': ('jarred hot cherry peppers', 'jarred hot cherry peppers'),
+  // One-word items the v21 plan wrote as rewrites, kept off the
+  // [leftAlternative] food nouns: each reads its old target's answer under
+  // the same words, so its line lands where the rewrite put it.
+  'chianti': ('red wine', 'red wine'),
+  'lemongrass': ('lemon grass stalks', 'lemon grass stalks'),
+  'vermicelli': ('pasta dry enriched', 'pasta dry enriched'),
+  // The v21 plan §2–§3 (each landing pinned): wrappers, crab lump,
+  // collards, gai lan, raw snapper, the jams and jellies ('apple jelly'
+  // reads the 'jalapeno jelly' answer: its own holds no jelly record), and
+  // the counted wrong-food classes — dried legumes on FNDDS "from dried, fat
+  // added", raw pork tenderloin, raw ground meats and livers, coleslaw mix
+  // on dressed coleslaw. Flagged approximations ([approximationRecords]):
+  // pinto and other dried beans → navy beans, All-Bran → bran flakes,
+  // seven-grain hot cereal → whole wheat hot cereal.
+  'round rice paper wrappers': ('round rice paper wrappers', 'rice paper'),
+  'gyoza wrappers': (
+    'gyoza wrappers',
+    'wonton wrappers includes egg roll wrappers',
+  ),
+  'square lumpia wrappers or spring roll wrappers': (
+    'square lumpia wrappers or spring roll wrappers',
+    'wonton wrappers includes egg roll wrappers',
+  ),
+  'new england style hot dog buns': (
+    'new england style hot dog buns',
+    'roll white hot dog bun',
+  ),
+  'portobello mushroom caps': ('portobello mushrooms', 'mushroom portabella'),
+  'dried mint': ('dried mint', 'spearmint dried'),
+  'snow peas': ('snow peas', 'peas edible-podded raw'),
+  'sugar snap peas': ('sugar snap peas', 'peas edible-podded raw'),
+  'snow peas or sugar snap peas': ('snow peas', 'peas edible-podded raw'),
+  'cherry preserves': ('cherry preserves', 'jams and preserves'),
+  'raspberry preserves': ('raspberry preserves', 'jams and preserves'),
+  'red currant jelly': ('red currant jelly', 'jellies'),
+  'jalapeno jelly': ('jalapeno jelly', 'jellies'),
+  'red currant or apple jelly': ('red currant or apple jelly', 'jellies'),
+  'apple jelly': ('jalapeno jelly', 'jellies'),
+  'bone-in turkey thigh': (
+    'bone-in turkey thigh',
+    'turkey thigh meat only raw',
+  ),
+  'mexican-style chorizo sausage': (
+    'mexican-style chorizo sausage',
+    'sausage pork chorizo raw',
+  ),
+  'lump crabmeat': ('lump crabmeat', 'crab lump'),
+  'jumbo lump crabmeat': ('jumbo lump crabmeat', 'crab lump'),
+  'lump or backfin atlantic blue crabmeat': (
+    'lump or backfin atlantic blue crabmeat',
+    'crab lump',
+  ),
+  'collard greens': ('collard greens', 'collards raw'),
+  'gai lan': ('gai lan', 'broccoli chinese raw'),
+  'skinless red snapper fillets': (
+    'skinless red snapper fillets',
+    'snapper raw',
+  ),
+  'skin-on red snapper fillets': ('skin-on red snapper fillets', 'snapper raw'),
+  '1-pound whole boneless shell sirloin steaks or whole flap meat steaks': (
+    '1-pound whole boneless shell sirloin steaks or whole flap meat steaks',
+    'beef top sirloin steak raw',
+  ),
+  'dried ladyfingers': ('dried ladyfingers', 'cookie ladyfinger'),
+  'meaty smoked ham shank or 2 3 smoked ham hocks': (
+    'meaty smoked ham shank or 2 3 smoked ham hocks',
+    'pork ham hocks',
+  ),
+  'lightly with salt popcorn': ('lightly with salt popcorn', 'popcorn'),
+  'frozen pea-carrot medley': (
+    'frozen pea-carrot medley',
+    'peas and carrots frozen',
+  ),
+  'medium-large onions': ('medium-large onions', 'onions'),
+  'seven-grain hot cereal mix': ('seven-grain hot cereal mix', 'cereal'),
+  'all-bran original cereal': ('all-bran original cereal', 'cereal bran'),
+  'seltzer water': ('seltzer water', 'water carbonated'),
+  'unflavored seltzer water or club soda': (
+    'unflavored seltzer water or club soda',
+    'water carbonated',
+  ),
+  'whole farro': ('whole farro', 'farro dry'),
+  'pork tenderloin': (
+    'pork tenderloin',
+    'pork fresh loin tenderloin separable lean and fat raw',
+  ),
+  'pork tenderloins': (
+    'pork tenderloins',
+    'pork fresh loin tenderloin separable lean and fat raw',
+  ),
+  'chicken livers': ('chicken livers', 'chicken liver all classes raw'),
+  'ground chicken': ('ground chicken', 'chicken ground raw'),
+  'ground veal': ('ground veal', 'veal ground raw'),
+  'hot italian sausage': ('hot italian sausage', 'sausage italian pork raw'),
+  'dried black beans': ('black beans', 'beans black mature seeds raw'),
+  'dried chickpeas': ('chickpeas', 'chickpeas mature seeds raw'),
+  'dried white beans': ('navy beans', 'beans navy mature seeds raw'),
+  'dried beans': ('navy beans', 'beans navy mature seeds raw'),
+  'dried pinto beans': ('navy beans', 'beans navy mature seeds raw'),
+  'coleslaw mix': ('red or green cabbage', 'cabbage raw'),
+};
+
+/// The (rank words, cached answer) a rank-as item reads ([_rankAs]), in
+/// `lineSearchFor`'s shape; null for any other item.
+({String query, String answer})? rankAsFor(String normalizedItem) {
+  final entry = _rankAs[normalizedItem];
+  return entry == null ? null : (query: entry.$2, answer: entry.$1);
+}
+
+/// The rank-as items ([_rankAs]), for the tests.
+Iterable<String> get rankAsKeys => _rankAs.keys;
 
 /// The first alternative of an "A or B" item (the second when A is a
 /// [_standIns] substitute), searched alone in place of the whole phrase —
@@ -1954,7 +2188,8 @@ bool _asksFresh(String raw) =>
     RegExp(r'\bfresh\b(?!\s+(grated|ground))').hasMatch(raw.toLowerCase());
 
 /// The flagged APPROXIMATIONS the user accepted (docs/API.md): each
-/// approximation rewrite's normalized item ([_queryRewrites]) → the record
+/// approximation rewrite's or rank-as item's normalized item
+/// ([_queryRewrites], [_rankAs]) → the record
 /// that rewrite's answer leads to (snapshot 11, every such line): pancetta
 /// counted as bacon, Asiago as Parmesan, whole allspice berries as ground
 /// allspice, lime zest as lemon peel, chen pi as orange peel, pepperoncini
@@ -1970,6 +2205,19 @@ const Map<String, int> approximationRecords = {
   'lime zest': 167749,
   'chen pi': 169103,
   'pepperoncini': 2710095,
+  // v21 (J2/J5, approved as a group — each line is one veto): pinto, small
+  // white and unnamed dried beans as navy beans, spicy greens as arugula
+  // (the first green the line names), All-Bran as bran flakes, seven-grain
+  // hot cereal as whole wheat hot cereal, fingerlings as red potatoes,
+  // tapioca starch on the tapioca-pearl cup.
+  'dried pinto beans': 173745,
+  'dried beans': 173745,
+  'dried white beans': 173745,
+  'spicy greens': 169387,
+  'all-bran original cereal': 2708456,
+  'seven-grain hot cereal mix': 171667,
+  'fingerling potatoes': 2346402,
+  'tapioca starch': 169717,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

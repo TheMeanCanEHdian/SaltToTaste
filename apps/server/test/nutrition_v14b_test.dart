@@ -227,8 +227,9 @@ void main() {
     test('a bare noun that is neither the item nor a size or a whole fruit '
         'is no item: "2 red plums" (Sweet Cherry Pie) read 2 × "fruit" '
         '66 g, never "NLEA serving" 151 g; "4 whole chicken legs" (Oven-Fried '
-        'Chicken) no "drumstick"; "8 whole black peppercorns" (Indian '
-        'Curry) no "dash"', () async {
+        'Chicken) no "drumstick" (since matcher v21 its own noun\'s "leg, '
+        'bone and skin removed" 265 g: 1,060 g); "8 whole black '
+        'peppercorns" (Indian Curry) no "dash"', () async {
       final (plums, _) = await on('2 red plums, halved and pitted', 169949);
       expect(plums, closeTo(132, 0.001));
       final (legs, _) = await on(
@@ -236,7 +237,7 @@ void main() {
         'removed',
         173619,
       );
-      expect(legs, isNull);
+      expect(legs, closeTo(1060, 0.001));
       final (peppercorns, _) = await on('8 whole black peppercorns', 170931);
       expect(peppercorns, isNull);
     });

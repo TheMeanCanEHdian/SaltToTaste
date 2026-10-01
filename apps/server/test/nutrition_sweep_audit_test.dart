@@ -176,7 +176,11 @@ void main() {
       // 'brandy' is a rewrite target: a food noun, cached or not.
       expect(leftAlternative('brandy or dry sherry', never), 'brandy');
       expect(leftAlternative('pecans or walnuts', always), 'pecans');
-      expect(leftAlternative('pecans or walnuts', never), isNull);
+      // 'pecans' is a rewrite target since matcher v21 ('whole pecans or
+      // walnuts'): a food noun, cached or not, as 'brandy' is. An A that
+      // is neither cached nor in the rewrite table is no known query.
+      expect(leftAlternative('pecans or walnuts', never), 'pecans');
+      expect(leftAlternative('pistachios or almonds', never), isNull);
       // A one-word A before a longer B shares B's noun — even when that
       // word is itself a cached query (the snapshot held 'chicken', 'dark',
       // 'light' and 'sweetened').
@@ -364,7 +368,7 @@ void main() {
     });
 
     test('"brandy or dry sherry" searches brandy; "green or brown lentils" '
-        'stays whole', () async {
+        'never splits on its adjective', () async {
       final (_, brandy) = rowOf('tomato', '2 tablespoons brandy or dry sherry');
       final top = rankCandidates(
         'brandy',
@@ -383,7 +387,11 @@ void main() {
       expect(item['candidates_query'], 'brandy');
       expect(item['candidates_cached_at'], isNotNull);
 
-      expect(provider.searched, contains('green or brown lentils'));
+      // Since matcher v21 the phrase is rewritten to its noun, 'lentils';
+      // the adjective guard still never searches 'green' (leftAlternative
+      // above).
+      expect(provider.searched, contains('lentils'));
+      expect(provider.searched, isNot(contains('green or brown lentils')));
       expect(provider.searched, isNot(contains('green')));
     });
 
@@ -758,22 +766,25 @@ void main() {
 
     test("a sibling answer is ranked under the line's own words", () async {
       // Thai chiles (the pin until matcher v8, whose chile credit ranks
-      // 'chil' and 'chile' alike) gave way to prunes, and prunes (until v12
-      // stemmed 'prunes' as 'prune') to cardamom pods: the count noun leaves
-      // the plural's tokens, not the singular key's.
-      final answer = await fixtures.search('green cardamom pods');
-      db.fdcSearchCachePut(
-        'green cardamom pod',
-        await recorded('green cardamom pods'),
-      );
+      // 'chil' and 'chile' alike) gave way to prunes, prunes (until v12
+      // stemmed 'prunes' as 'prune') to cardamom pods, and cardamom pods
+      // (rewritten to 'cardamom pods' in v21: a rewritten line never reads
+      // its key's answer) to the egg of an egg-plus-yolks line, keyed
+      // 'egg plus yolk': under its own word the answer leads with the whole
+      // egg, under the key's with the yolk.
+      final answer = await fixtures.search('egg');
+      db.fdcSearchCachePut('egg plus yolk', await recorded('egg'));
       String top(String query) =>
           rankCandidates(query, answer).first.candidate.description;
-      expect(top('green cardamom pods'), isNot(top('green cardamom pod')));
-      // Indian Curry (0567).
+      expect(top('egg'), isNot(top('egg plus yolk')));
+      // Duchess Potato Casserole (0447), as its file stores it.
       const line = IngredientLine(
-        raw: '4 green cardamom pods',
-        item: 'green cardamom pods',
+        raw: '1 large egg, separated, plus 2 large yolks',
+        item: 'large egg',
+        prep: 'separated, plus 2 large yolks',
+        amounts: [Amount(measure: Measure.count, quantity: '1', primary: true)],
       );
+      expect(lineKeyOf(line), 'egg plus yolk');
       for (final cacheOnly in [true, false]) {
         final ranked = await candidatesForLine(
           db,
@@ -784,10 +795,7 @@ void main() {
         expect(
           [for (final c in ranked) (c.candidate.fdcId, c.confidence)],
           [
-            for (final c in rankCandidates(
-              'green cardamom pods',
-              answer,
-            ).take(8))
+            for (final c in rankCandidates('egg', answer).take(8))
               (c.candidate.fdcId, c.confidence),
           ],
           reason: 'cacheOnly: $cacheOnly',
@@ -967,8 +975,13 @@ void main() {
     // read from snapshot 13: two are hits ('dutch-processed cocoa powder'
     // 169594, 'snow peas' 170010; mustard greens 169256 is in no recorded
     // answer): the cocoa differs in some digit, the peas are equal.
-    expect(compared, 233);
-    expect(differ, 176);
+    // Matcher v21 recorded from snapshot 13 the answers and the cached
+    // records its 198 moved rows read (and the apricot preserves, 170645,
+    // and the Duchess casserole's half-and-half and nutmeg answers, and
+    // the black olives, 2710090, for the below-gate marked-count pins):
+    // 68 more compared, 48 of them differ in some digit.
+    expect(compared, 301);
+    expect(differ, 224);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
@@ -1246,37 +1259,36 @@ void main() {
 
     test("a sibling answer is ranked under the line's own words when the "
         'engine matches it', () async {
-      // Cardamom pods, not Thai chiles (matcher v8 ranks 'chil' and 'chile'
-      // alike) nor prunes (v12 stems 'prunes' as 'prune'): 'green cardamom
-      // pods' and 'green cardamom pod' rank apart.
-      const file = '0567-indian-curry.yaml';
+      // The egg of Duchess Potato Casserole's egg-plus-yolks line, keyed
+      // 'egg plus yolk' (cardamom pods until v21 rewrote them): 'egg' and
+      // 'egg plus yolk' rank apart.
+      const file = '0447-duchess-potato-casserole.yaml';
       final (db, recipes) = await library([file]);
       final provider = _Recording();
-      final answer = await provider.inner.search('green cardamom pods');
+      final answer = await provider.inner.search('egg');
       db.fdcSearchCachePut(
-        'green cardamom pod',
+        'egg plus yolk',
         jsonEncode([for (final hit in answer) hit.toJson()]),
       );
-      final curry = recipes.values.single;
-      await matchAndCompute(db, provider, curry);
-      final (_, row, _) = rowIn(db, curry, '4 green cardamom pods');
-      expect(provider.searched, isNot(contains('green cardamom pods')));
+      final casserole = recipes.values.single;
+      await matchAndCompute(db, provider, casserole);
+      final (_, row, _) = rowIn(
+        db,
+        casserole,
+        '1 large egg, separated, plus 2 large yolks',
+      );
+      expect(provider.searched, isNot(contains('egg')));
       expect(row.fdcId, isNotNull);
       expect(
         [
-          for (final c in rankCandidates(
-            'green cardamom pods',
-            answer,
-          ).take(3))
+          for (final c in rankCandidates('egg', answer).take(3))
             (c.candidate.fdcId, c.confidence),
         ],
         contains((row.fdcId, row.confidence)),
       );
       expect(
         row.fdcId,
-        isNot(
-          rankCandidates('green cardamom pod', answer).first.candidate.fdcId,
-        ),
+        isNot(rankCandidates('egg plus yolk', answer).first.candidate.fdcId),
       );
     });
   });

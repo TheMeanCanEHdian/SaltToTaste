@@ -2160,6 +2160,59 @@ rows above. matcherVersion 20. The verifier's one defect (the DB's own
 stale-sequence refusal had no direct pin) was closed by hand before the
 commit.
 
+### Checkpoint 9's zero-request items: right picks, wrong-food rewrites, portions and aliases (matcher v21)
+
+Checkpoint 9 had ranked, after the density guard, three zero-request fixes:
+the right records already cached but ranked below the gate or under the
+wrong query (#2), the wrong foods still counted (#3) and the unread
+portions and aliases (#4). A read-only planner (2026-10-01) turned them
+into an exact plan: for every line the rule, the cached target record and
+the expected grams, dry-run through the real engine on a snapshot-13 copy
+with zero calls, every moved row attributed. It also found that six of the
+checkpoint's "right picks" were wrong (quick oats on the cooked record,
+pickling cucumbers on dill pickles, fingerlings on potato bread, Calasparra
+on rice crackers, white American cheese on a cheese sandwich, firm tart
+apples on a candied apple) and left them alone. v21 builds the plan: 82
+`_queryRewrites` entries to cached queries; a new mechanism, `_rankAs`
+(51 entries) — a line reads a CACHED answer re-ranked under the record's
+own words, consulted first in `lineSearchFor`, because 31 right records led
+no cached answer under any query's own words (crab lump, collards, gai lan,
+raw snapper, the raw dry legumes, raw pork tenderloin); a one-word item key
+is always a rank-as entry and never a rewrite key, since a rewrite key is
+also a `leftAlternative` food noun (the planner's 'thai' sent "Thai or
+Italian basil leaves" to 225 g of hot peppers before it was moved);
+'filtered water' water-like and 'banana leaf' a non-food; grams: jelly
+densities scoped to the exact compound (apple / currant / jalapeño jelly
+from 169642's 21 g tablespoon — a bare 'jelly' key reached "apricot
+preserves or hot pepper jelly"), piece aliases (green pepper, fuji, yolk),
+approximate densities (Aleppo on paprika, pecorino 0.42, ghee on oil) and
+the other stand-ins the user approved as flagged approximations (dried
+pinto / unspecified / small white beans on navy raw, spicy greens on
+arugula, All-Bran on bran flakes, seven-grain on whole-wheat hot cereal,
+fingerling on red potato, tapioca starch on the tapioca-pearl cup), pints
+and quarts in a parenthesised volume, and the whole-item cap exemption for a
+bare 'fruit' portion or the item's own noun up to 350 g (a mango 672 g,
+chicken legs 1,060 g; the 625 g roast still capped). The build's verifier
+caught two things the plan had carried faithfully: the pins asserted only
+the record and the grams, so the 94 rows that move by confidence alone
+pinned nothing (the table now carries each row's bucket and gate class, and
+every rule's own-query answer is recorded from the snapshot so a dropped
+rule fails by assertion, not by the unrecorded-fixture guard — 170 answers
+added, each deep-equal to the snapshot); and "1 cup lightly salted
+popcorn" counted at 193 g, the record's "1 cup, unpopped, yields" portion
+— a portion whose description says yields, unpopped or makes now never
+sizes a line unless the line itself says unpopped, dry or uncooked (14 g).
+Replay on snapshot 13: calls 0; 198 rows moved on top of v20's 272 (the
+plan's 197 + tapioca), 0 regressions among the 41 counted-to-counted
+corrections (dried legumes to raw records, fresh Chinese noodles off the
+fried record, pork tenderloin to the raw SR record, mixed berries off the
+snack bar, coleslaw mix to cabbage, a banana leaf to 0 g): counted 12,956 →
+13,099, check 512 → 375, no grams 110 → 104, no match 37, complete 760 →
+839, partial 438 → 359; 0 recipes complete → partial; 0 person rows
+touched. matcherVersion 21. Left for the live step, under the user's
+standing approval of needed requests: 7 details + 3 searches the plan
+named (+12 counted / +7 complete) — built dry first, as v17 was.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
@@ -2493,3 +2546,22 @@ commit.
   label = the example line's parsed item via `itemLabel`, key as fallback;
   (3) no group-scoped Skip; (4) no inline members this pass; (5) toggle
   remembered per bucket for the session; (6) chips always count lines.
+- 2026-10-01 — Checkpoint 9 rulings (user: "go with your recommendations"):
+  the v21 stand-ins are approved as flagged approximations (dried pinto /
+  unspecified / small white beans on navy raw, spicy greens on arugula,
+  All-Bran on bran flakes, seven-grain on whole-wheat hot cereal, fingerling
+  on red potato raw, ghee at oil density, Aleppo at paprika density,
+  pecorino at the grated-hard-cheese 0.42, tapioca starch on the tapioca
+  pearl cup). Q1 the sourdough starter's flour lines (0799) are HELD as a
+  poured-away medium; Q2 dredging flour and crumbs (8 lines) are HELD until
+  a coating fraction is set; Q3 a rinsed dry cure (0090) is 0 g discarded —
+  the brine / degorging ruling extended; Q4 the soy braise (0129) is HELD
+  under poured-away media; Q5 range amounts stay as they are (upper bound in
+  parentheses, midpoint bare); Q6 piece figures FDC lacks (ginger per inch,
+  counted whole spices, chile pods, zest strips, lasagna noodles, lemongrass)
+  use a weight ATK prints in the corpus where one exists and otherwise a
+  user-set figure flagged approximate (a figure table drafted from the
+  corpus's printed weights awaits approval); Q7 the 151-line stand-in list
+  is approved group by group once each group's target record is listed
+  (bone-in parts are already covered by the meats-and-birds ruling); Q8
+  water chestnuts keep the raw record.

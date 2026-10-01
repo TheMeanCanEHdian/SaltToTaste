@@ -58,10 +58,10 @@ void main() {
 
   test('the staleness hash carries the matcher version, so a bump makes '
       'every computed recipe stale (update the literal with the bump)', () {
-    expect(matcherVersion, 20);
+    expect(matcherVersion, 21);
     expect(
       ingredientsHashOf(recipe),
-      '0c49f1a775940838980c907dc9e7ac50a6fd97d447dbf81f1be68e617b22ff91',
+      '9723fcc04e57629e12f53d3b2194e6ee33ac0fd4aee0f48615885db6cdd33be3',
     );
   });
 

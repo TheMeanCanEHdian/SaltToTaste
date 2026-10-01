@@ -717,7 +717,9 @@ computes the stored recipe again before it ends (at most three passes) — and
 the recipe's `…/nutrition` body carries `computing_job_id` (admins only)
 while a compute is in flight so a reopened page can re-attach. Cached and rate-limited
 (~900 requests/hour shared budget); user decisions on unchanged lines
-survive recomputes. Water/ice lines are matched locally for free. The job
+survive recomputes. Water/ice lines (since matcher v21 "filtered water"
+too) are matched locally for free, as are equipment lines (since v21 a
+banana leaf: the cochinita pibil's wrapper, not eaten). The job
 fails (with the reason in its log) when no API key is configured, or when
 FDC fails a request the compute needs — a search, or a food detail its
 grams read (household portions, a bone-in cut's edible yield, a drained
@@ -742,7 +744,11 @@ milk powder, buttermilk powder, water chestnuts, ricotta, cream cheese and
 oil-packed sun-dried tomatoes, which a key names but which are not its
 food, weigh on their record's own volume portion instead ("½ cup plus ⅓
 cup nonfat dry milk powder" is 100 g, not 203 g; a record's "whipped"
-portion sizes only a whipped line); since matcher v19 so do almond and
+portion sizes only a whipped line, and since matcher v21 a portion that
+measures what the food is made from — FDC's "yields", "unpopped" or
+"makes", as 2708216 Popcorn's "1 cup, unpopped, yields" 193 g — sizes no
+line unless the line says unpopped, dry or uncooked: "1 cup lightly
+salted popcorn" is its "1 cup, popped" 14 g); since matcher v19 so do almond and
 apple butter, and any item where a key only modifies a compound — the
 key followed by "of" or "seed(s)": "2 teaspoons cream of tartar" is its
 record's `tsp` 6.0 g, not 'cream' 1.01's 10.0 g, "¼ cup mustard seeds"
@@ -757,10 +763,22 @@ powder" is 169594's `cup` 64.5 g — the corpus's "1 cup (3 ounces)" — not
 `tsp`), while a key the record does not name keeps its figure ("panko bread
 crumbs" on plain dry crumbs stay 'panko' 0.25), as does any key on a
 record with no volume portion; sugar snap peas are no 'sugar' ("2 cups
-sugar snap peas" is 170010's `cup, whole` 126 g, not 402 g); and a powder on a record of the drink made from it
+sugar snap peas" is 170010's `cup, whole` 126 g, not 402 g); since
+matcher v21 apple, currant and jalapeño jelly weigh 1.42 g/mL (169642
+"Jellies"' `serving 1 tbsp` 21 g: "3 tablespoons apple jelly" is 62.99 g
+— scoped to those names, so "apricot preserves or hot pepper jelly" keeps
+its record's cup), and three stand-in figures the user approved as flagged
+approximations, whose `gram_basis` ends `" · approximate (<stand-in>
+density)"`: ground Aleppo pepper on paprika's 0.47 (FDC has no Aleppo
+record), grated Pecorino Romano on grated Parmesan's 0.42, ghee on oil's
+0.92 (its record publishes no portion) — e.g. `"2 tablespoon ≈ 30 mL ·
+approximate (paprika density)"`; and a powder on a record of the drink made from it
 ("…, powder, prepared with whole milk") reads only its `dry` portions —
 none: no grams, never the made-up drink's `cup (8 fl oz)` 265 g) |
-`piece` (estimate)
+`piece` (estimate; since matcher v21 the piece table reads "green
+pepper", "Fuji" and "yolk" by its bell pepper 119 g, apple 182 g and egg
+yolk 17 g: "1 small green pepper", "3 Fuji, Gala, or Golden Delicious
+apples", "2 large yolks")
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying", or 400 g or more of oil), a brine's salt, a
 buttermilk soak, a brine's sugar and the aromatics a step adds to a brine
@@ -837,11 +855,18 @@ item's own words, before its prep: "1 baguette, cut into small cubes" is
 prepared-dish serving, never one item, unless it is a numbered portion
 naming the item's own noun (since matcher v17: "1 baguette" on "Bread,
 French or Vienna"'s "1 baguette (about 22" long)", 324 g; an SR bare noun
-such as "roast" 625 g stays capped) — `"2 cup · USDA portion"` for a bare count whose
+such as "roast" 625 g stays capped; since matcher v21 a bare `fruit`
+portion, or a bare one naming the item's own noun, up to 350 g is one
+item: "2 mangos, peeled, pitted, and cut into ½-inch dice" is 169910's
+`fruit without refuse` 336 g twice, 672 g, "4 whole chicken legs, …
+skin removed" 173619's `leg, bone and skin removed` 265 g four times,
+1,060 g, while the 625 g "roast" stays capped) — `"2 cup · USDA portion"` for a bare count whose
 parenthetical prints its volume, which wins as a printed weight does ("4–6
 Swiss chard leaves, ribs removed, torn into 1-inch pieces (about 2 cups;
 optional)" is 72 g, not five whole leaves; "(½ cup plus 3 tablespoons)"
-is both parts, in mL; a paren that says "each", or an adjectival one with
+is both parts, in mL; since matcher v21 pints and quarts too, hyphenated
+as a container's size: "2 (1-pint) containers coffee ice cream" is 2
+pints at ice cream's 0.558 g/mL, 527.87 g; a paren that says "each", or an adjectival one with
 nothing but the count before it, prints ONE item's volume, as for a
 printed weight: "8 Swiss chard leaves, torn (about 1 cup each)" is 8 cups,
 288 g; since matcher v18 also when the parse keeps it as the line's volume
@@ -1086,7 +1111,108 @@ regular` (the dry powder, never the reconstituted liquid or cocoa);
 `pumpkin puree` and `unsweetened pumpkin puree` → `pumpkin canned without
 salt`; `nutella` → `chocolate hazelnut spread`; `water chestnuts` →
 `waterchestnuts chinese raw` (FDC spells it as one word); `dried
-buttermilk powder` and `buttermilk powder` → `milk buttermilk dried`; a few rewrites are APPROXIMATIONS, flagged in
+buttermilk powder` and `buttermilk powder` → `milk buttermilk dried`;
+since matcher v21 (zero requests: each target's answer is already cached,
+and ranks the named record first under the target's words), the line's
+own food under fewer words — `firm tart apples`, `firm sweet apples`,
+`sweet and tart apples` → `apples`; `firm mcintosh apples` → `mcintosh
+apples`; `ripe but firm peaches` → `peaches`; `red plums` → `plums`;
+`vine-ripened tomato` → `ripe tomatoes`; `fire-roasted tomatoes` →
+`crushed tomatoes`; `fire-roasted diced tomatoes` → `diced tomatoes`;
+`globe or italian eggplants` → `eggplant`; `broccoli crowns` →
+`broccoli`; `cauliflower florets` → `cauliflower`; `pickling cucumbers` →
+`cucumbers` (never dill pickles); `fingerling potatoes` → `red potatoes`;
+`flat-leaf parsley leaves`, `parsley leaves and stems` and `… and tender
+stems` → `parsley`; `whole rosemary leaves` → `rosemary`; `mexican
+oregano` → `dried oregano`; `lemongrass stalks` → `lemon grass
+stalks`; `cardamom seeds` → `ground cardamom`; `green
+cardamom pods` → `cardamom pods`; `canela cinnamon` → `ground cinnamon`;
+`ancho or other mild chili powder` → `chili powder`; `ancho pods` →
+`dried ancho chiles`; `bird chiles`, `arbol chiles`, `whole dried red
+chiles`, `whole dried arbol chiles` and `dried de arbol chiles` → `dried
+arbol chiles` (168570 "Peppers, hot chile, sun-dried"); `red pepper
+fakes` (the corpus's typo) → `spices pepper red cayenne`; `pickled
+jalapenos` and `jarred jalapenos` → `pickled jalapeno chiles`;
+`commercial sazon` → `sazon`; `red miso paste` and `white miso paste` →
+`white miso`; `chinese sesame paste or tahini` → `tahini`; `tabasco or
+other hot sauce` → `hot pepper sauce`; `champagne vinegar` and
+`champagne vinegar or white wine vinegar` → `vinegar`; `light or dark
+molasses` and `mild or light molasses` → `molasses`; `bacon drippings or
+vegetable oil` → `vegetable oil`; `chinese rice wine or dry sherry`,
+`chinese rice cooking wine or dry sherry` and `rice wine or dry sherry` →
+`dry sherry or chinese rice wine` ("Wine, rice" at exactly the 0.5 gate);
+`sake or dry vermouth` → `sake`; `inexpensive fruity medium-bodied red
+wine` → `red wine`; `100 percent agave tequila` →
+`tequila`; `cold vodka or tequila` → `vodka`; `cold milk` → `milk`;
+`strong coffee` → `brewed coffee`; `basmati rice` and `white rice` →
+`long-grain white rice` (the raw grain, never cooked rice or "Beans and
+white rice"); `calasparra or bomba rice` → `medium-grain rice`;
+`quick-cooking oats` → `quick oats` (dry, never cooked); `prewashed white
+quinoa` → `prewashed quinoa`; `israeli couscous` → `couscous`;
+`coarse-ground cornmeal` → `cornmeal`; `king arthur bread flour` → `bread
+flour`; `ditalini pasta` and `curly-edged lasagna noodles` → `pasta
+dry enriched`; `chinese noodles` and `chinese wheat noodles` →
+`pasta fresh-refrigerated plain as purchased` (never fried chow mein);
+`phyllo sheets` → `phyllo`; `animal crackers` → `nabisco barnum s animal
+crackers or social tea biscuits`; `kettle-cooked potato chips` → `plain
+potato chips`; `green or brown lentils` and `brown lentils` → `lentils`;
+`mixed berries` → `berries`; `toasted slivered almonds` → `slivered
+almonds`; `whole pecans or walnuts` → `pecans`; `dried shiitake mushroom
+caps` → `dried shiitake mushrooms`; `1 4-inch-thick deli ham` → `deli
+ham`; `thick-sliced soppressata or salami` → `salami`; `white american
+cheese` → `american cheese`; `bone-in skin-on split chicken breasts or 4
+bone-in` → `bone-in skin-on chicken breast halves` and `bone-in split
+chicken breasts and or leg quarters` → `bone-in chicken breasts`;
+`skin-on haddock fillets` → `skinless haddock fillets`; `tamarind juice
+concentrate` → `tamarind paste`; and two flagged approximations below,
+`spicy greens` → `arugula` and `tapioca starch` → `tapioca pearl dry`.
+Since matcher v21 a few items are RANK-AS items: the line reads an answer
+FDC already gave (its own, or the named query's) ranked as if the
+record's own name had been searched. An answer already cached sends
+nothing; an answer not yet cached is searched once, under its own words,
+as any line's is (in this library all 51 answers are cached). A rank-as
+item is never a rewrite key or target (those are "A or B" food nouns:
+the fragment `thai`, from "2 Thai, serrano, or jalapeño chiles", is
+rank-as so "Thai or Italian basil leaves" is not read as hot peppers — it
+keeps its own search, which in this library still lands in review on a
+wrong record until the Thai-basil stand-in is approved). Each item →
+(answer it reads; words that rank it): `snow peas`, `sugar snap peas`,
+`snow peas or sugar snap peas` (reads `snow peas`) → `peas edible-podded
+raw`; `dried mint` → `spearmint dried`; `collard greens` → `collards
+raw`; `gai lan` → `broccoli chinese raw`; `lump crabmeat`, `jumbo lump
+crabmeat`, `lump or backfin atlantic blue crabmeat` → `crab lump`;
+`skinless red snapper fillets`, `skin-on red snapper fillets` → `snapper
+raw`; `cherry preserves`, `raspberry preserves` → `jams and preserves`;
+`red currant jelly`, `jalapeno jelly`, `red currant or apple jelly`,
+`apple jelly` (reads `jalapeno jelly`) → `jellies`; `round rice paper
+wrappers` → `rice paper`; `gyoza wrappers`, `square lumpia wrappers or
+spring roll wrappers` → `wonton wrappers includes egg roll wrappers`;
+`new england style hot dog buns` → `roll white hot dog bun`; `portobello
+mushroom caps` (reads `portobello mushrooms`) → `mushroom portabella`;
+`bone-in turkey thigh` → `turkey thigh meat only raw`; `mexican-style
+chorizo sausage` → `sausage pork chorizo raw`; `1-pound whole boneless
+shell sirloin steaks or whole flap meat steaks` → `beef top sirloin steak
+raw`; `meaty smoked ham shank or 2 3 smoked ham hocks` → `pork ham
+hocks`; `dried ladyfingers` → `cookie ladyfinger`; `lightly with salt
+popcorn` → `popcorn`; `frozen pea-carrot medley` → `peas and carrots
+frozen`; `medium-large onions` → `onions`; `all-bran original cereal` →
+`cereal bran`; `seven-grain hot cereal mix` → `cereal`; `seltzer water`,
+`unflavored seltzer water or club soda` → `water carbonated`; `whole
+farro` → `farro dry`; `pork tenderloin`, `pork tenderloins` → `pork
+fresh loin tenderloin separable lean and fat raw` (raw, never FNDDS
+cooked); `chicken livers` → `chicken liver all classes raw`; `ground
+chicken` → `chicken ground raw`; `ground veal` → `veal ground raw`; `hot
+italian sausage` → `sausage italian pork raw`; `dried black beans` (reads
+`black beans`) → `beans black mature seeds raw`; `dried chickpeas` (reads
+`chickpeas`) → `chickpeas mature seeds raw`; `dried white beans`, `dried
+beans`, `dried pinto beans` (read `navy beans`) → `beans navy mature
+seeds raw` (raw dry legumes, never "from dried, fat added"); `coleslaw
+mix` (reads `red or green cabbage`) → `cabbage raw` (never dressed
+coleslaw); `thai` (reads `jarred hot cherry peppers`) → the same words
+("Peppers, hot, raw", 15 g a pepper); and the one-word items, kept off
+the "A or B" food nouns, read their old rewrite target's answer under its
+own words: `chianti` → `red wine`, `lemongrass` → `lemon grass stalks`,
+`vermicelli` → `pasta dry enriched`. A few rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
 as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
@@ -1094,7 +1220,13 @@ lime peel, and its answer for `lime peel raw` ties lemon and orange peel —
 chen pi (dried tangerine peel) as `orange peel` ("Orange peel, raw", 169103:
 a raw-peel record, so the dried peel is counted about 3× short per gram — not
 yet ruled on), pepperoncini as `pickled hot cherry peppers` ("Peppers, hot,
-pickled", 2710095; FDC has no pepperoncini), and a FRESH oregano, sage,
+pickled", 2710095; FDC has no pepperoncini), since matcher v21 (the
+user's J2/J5, approved as a group) dried pinto beans and unnamed dried
+beans as navy beans (173745) — the small white beans too —, spicy greens as arugula (169387), All-Bran
+as bran flakes (2708456), seven-grain hot cereal as whole wheat hot
+cereal (171667), fingerling potatoes as red potatoes (2346402) and
+tapioca starch on the tapioca-pearl cup (169717: "3 cups tapioca starch"
+is 456 g), and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram, so — the user's ruling of 2026-09-28 —
 the dried amount the line offers wins, "1 tablespoon minced fresh oregano

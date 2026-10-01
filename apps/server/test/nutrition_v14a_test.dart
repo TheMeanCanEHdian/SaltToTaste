@@ -384,16 +384,17 @@ void main() {
 
     test('A5: a marked count whose pick is below the gate was never fetched, '
         'so it is HELD in check on the pick, never zeroed as a confirmed '
-        'sub-recipe ("6 red plums (see this page)" on "Plums, raw" at 0.4999: '
-        'no corpus marked count picks below the gate — a synthesized line, a '
-        'stated exception)', () async {
+        'sub-recipe ("12 nicoise olives (see this page)" on "Olives, black" '
+        'at 0.465 — "6 red plums" until matcher v21 rewrote them onto '
+        '"Plums, raw" over the gate: no corpus marked count picks below the '
+        'gate — a synthesized line, a stated exception)', () async {
       final db = tempDb();
-      const raw = '6 red plums (see this page)';
+      const raw = '12 nicoise olives (see this page)';
       expect(isSubRecipeReference(raw), isTrue);
       final fixtures = FixtureProvider();
       await matchAndCompute(db, fixtures, recipeOf(db: db, [raw]));
       final row = db.ingredientMatchesFor('r').single;
-      expect(row.description, 'Plums, raw');
+      expect(row.description, 'Olives, black');
       expect((row.grams, row.status), (null, 'auto'));
       expect(belowConfidenceGate(row.confidence), isTrue);
       expect(bucketOf(row), MatchBucket.check);

@@ -141,9 +141,20 @@ const List<(String, double)> _densities = [
   ('lime juice', 1.03),
   ('sherry', 0.99),
   ('jam', 1.35),
+  // FDC 169642 "Jellies" 'serving 1 tbsp' 21 g (÷ 14.787 mL), its only
+  // portion the readers cannot use. Scoped to the corpus's jellies: a bare
+  // 'jelly' reached "apricot preserves or hot pepper jelly" (v21 plan).
+  ('apple jelly', 1.42),
+  ('currant jelly', 1.42),
+  ('jalapeno jelly', 1.42),
   ('breadcrumbs', 0.45),
   ('panko', 0.25),
   ('parmesan', 0.42),
+  // APPROXIMATE ([_approximateDensities]): grated Pecorino Romano on the
+  // grated-Parmesan figure (its records' cup is 'cheese' 0.47's), and ghee
+  // on oil's (FDC 171314's detail publishes no portion).
+  ('pecorino', 0.42),
+  ('ghee', 0.92),
   ('cheese', 0.47),
   ('nuts', 0.55),
   ('chocolate chips', 0.72),
@@ -160,6 +171,9 @@ const List<(String, double)> _densities = [
   ('white pepper', 0.49),
   ('cayenne', 0.37),
   ('paprika', 0.47),
+  // APPROXIMATE ([_approximateDensities]): ground Aleppo pepper on
+  // paprika's figure (FDC has no Aleppo record; its line counts ancho).
+  ('aleppo pepper', 0.47),
   ('cumin', 0.43),
   ('cinnamon', 0.53),
   ('coriander', 0.37),
@@ -191,6 +205,15 @@ const List<(String, double)> _densities = [
   ('peppercorn', 0.59),
   ('black peppercorn', 0.59), // beats 'black pepper' (ground) by length
 ];
+
+/// The [_densities] keys that weigh on a stand-in's figure — flagged
+/// approximations the user approved (v21, J2): a line sized by one says so
+/// in its basis ("· approximate (paprika density)").
+const Map<String, String> _approximateDensities = {
+  'pecorino': 'grated Parmesan',
+  'ghee': 'oil',
+  'aleppo pepper': 'paprika',
+};
 
 /// Piece weights (grams each) for common counted items, keyed by tokens.
 /// A key's weight is PER counted unit as the recipe counts it — for items
@@ -237,6 +260,12 @@ const List<(String, double)> _pieceWeights = [
   ('cherry tomato', 17),
   ('garlic head', 50),
   ('bell pepper', 119),
+  // v21: the table's own bell pepper, apple and egg yolk figures under the
+  // names the corpus counts them by ("1 small green pepper", "3 Fuji, Gala,
+  // or Golden Delicious apples", "2 large yolks").
+  ('green pepper', 119),
+  ('fuji', 182),
+  ('yolk', 17),
   ('jalapeno', 14),
   ('cinnamon stick', 3),
   // Whole vegetables/fruit FDC gives no usable per-item portion for (its
@@ -905,8 +934,14 @@ double? _wholeItemPortionGrams(
     // (about 22\" long)" 324 g on "Bread, French or Vienna" (v17). An SR
     // bare noun stays capped: "roast" 625 g sized "1 center-cut beef
     // tenderloin roast, 3 pounds trimmed weight" (Beef Wellington) 2x under.
+    // A bare 'fruit' or own-noun portion up to 350 g is the item (v21 plan
+    // G2/G3): 169910 Mangos 'fruit without refuse' 336 g ("2 mangos"),
+    // 173619's 'leg, bone and skin removed' 265 g ("4 whole chicken legs").
+    final ownNoun = itemWords.contains(keyWordOf(noun));
+    final bare = match.group(1)!.isEmpty;
     if (portion.gramWeight > 250 &&
-        !(match.group(1)!.isNotEmpty && itemWords.contains(keyWordOf(noun)))) {
+        !(ownNoun && !bare) &&
+        !(bare && (noun == 'fruit' || ownNoun) && portion.gramWeight <= 350)) {
       continue;
     }
     final small = description.contains('small') || description.contains('mini');
@@ -1663,16 +1698,17 @@ GramResolution? resolveGrams({
   // 049: "1 tablespoon plus 1 teaspoon coarse sea salt" put the teaspoon
   // at table salt's 1.22).
   final kosher = kosherSalt || (raw != null && packsLikeKosherSalt(raw));
+  final measured = _asPrepared(food, raw ?? normalizedItem);
   var first = _resolveGrams(
     amounts: parsed,
-    food: food,
+    food: measured,
     normalizedItem: normalizedItem,
     raw: raw,
     kosher: kosher,
   );
   first ??= raw == null
       ? null
-      : _parenVolumeGrams(parsed, food, normalizedItem, raw);
+      : _parenVolumeGrams(parsed, measured, normalizedItem, raw);
   final bird =
       wholeBirdYield &&
           first?.source == GramSource.weight &&
@@ -1753,7 +1789,7 @@ GramResolution? resolveGrams({
   }
   final second = _resolveGrams(
     amounts: [plus.amount],
-    food: food,
+    food: measured,
     normalizedItem: normalizedItem,
     kosher: kosher,
   );
@@ -1769,6 +1805,39 @@ GramResolution? resolveGrams({
         : first.source,
     basis: '${first.basis ?? ''} + ${plus.text}',
   );
+}
+
+/// [food] without the portions that measure what it is made FROM, unless
+/// [line] measures that too: 2708216 Popcorn's "1 cup, unpopped, yields"
+/// 193 g is what a cup of kernels makes, and sized "1 cup lightly salted
+/// popcorn" (Red Snapper Ceviche) 13.8x over its "1 cup, popped" 14 g (v21
+/// closer). FNDDS writes such a measure as "yields" ("1 cup, dry, yields"
+/// oatmeal), "unpopped" or "makes"; the refuse portions' singular "yield
+/// from 1 raw ..." are not one. A line saying unpopped, dry or uncooked
+/// ("dry-roasted" is not) keeps them.
+FdcFood? _asPrepared(FdcFood? food, String line) {
+  if (food == null ||
+      RegExp(
+        r'\b(?:unpopped|dry|uncooked)\b(?!-)',
+        caseSensitive: false,
+      ).hasMatch(line)) {
+    return food;
+  }
+  final unprepared = RegExp(r'\b(?:unpopped|yields|makes)\b');
+  final kept = [
+    for (final portion in food.portions)
+      if (!unprepared.hasMatch((portion.description ?? '').toLowerCase()))
+        portion,
+  ];
+  return kept.length == food.portions.length
+      ? food
+      : FdcFood(
+          fdcId: food.fdcId,
+          description: food.description,
+          dataType: food.dataType,
+          nutrientsPer100g: food.nutrientsPer100g,
+          portions: kept,
+        );
 }
 
 /// A count unit sized by the volume printed before it, when the count
@@ -1816,10 +1885,12 @@ GramResolution? _parenVolumeGrams(
 /// (nothing but the count before it), prints ONE item's volume, as
 /// [_parenWeight] reads a weight: "2 ripe pears, sliced (about 1 cup each)"
 /// is [count] cups (Run 048; no corpus line prints one — kept for other
-/// libraries), null with no count. [perItemOnly]: null for a total.
+/// libraries), null with no count. [perItemOnly]: null for a total. Pints
+/// and quarts too, hyphenated as a container's size: "2 (1-pint) containers
+/// coffee ice cream" is 2 pints (Baked Alaska; v21 plan G4).
 Amount? _parenVolume(String raw, double? count, {bool perItemOnly = false}) {
   final q = '([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ .]*?)';
-  const u = r'\s*(cups?|tablespoons?|teaspoons?)\b';
+  const u = r'[\s-]*(cups?|tablespoons?|teaspoons?|pints?|quarts?)\b';
   final match = RegExp(
     '\\((?:about\\s+)?$q$u(?:\\s+plus\\s+$q$u)?',
     caseSensitive: false,
@@ -2159,10 +2230,13 @@ GramResolution? _resolveGrams({
         ? null
         : entry?.$2;
     if (density != null) {
+      final standIn = kosher ? null : _approximateDensities[entry?.$1];
       return GramResolution(
         grams: quantity * ml * density,
         source: GramSource.density,
-        basis: '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL',
+        basis:
+            '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL'
+            '${standIn == null ? '' : ' · approximate ($standIn density)'}',
       );
     }
     final perMl = ownVolume;

@@ -625,15 +625,18 @@ void main() {
       );
     });
 
-    test('whole dried red chiles are never counted (Orange-Flavored Chicken, '
-        '0525)', () async {
+    test('whole dried red chiles count only as the sun-dried chile '
+        '(Orange-Flavored Chicken, 0525): since matcher v21 they read the '
+        "'dried arbol chiles' answer, 168570 at 8 × 0.5 g", () async {
       final db = tempDb();
       final r = recipeOf(db, 'r1', [
         '8 small whole dried red chiles (optional)',
       ]);
       await matchAndCompute(db, provider, r);
       final row = db.ingredientMatchesFor('r1').single;
-      expect(bucketOf(row), isNot(MatchBucket.counted));
+      expect(row.fdcId, 168570);
+      expect(row.grams, 4);
+      expect(bucketOf(row), MatchBucket.counted);
     });
   });
 
@@ -1233,25 +1236,29 @@ void main() {
       },
     );
 
-    test('a sweet pepper is no chile: whole dried red chiles (Orange-Flavored '
-        'Chicken, 0525) stay in check below the gate', () async {
-      final db = tempDb();
-      final r = recipeOf(db, 'r1', [
-        '8 small whole dried red chiles (optional)',
-      ]);
-      await matchAndCompute(db, provider, r);
-      final row = db.ingredientMatchesFor('r1').single;
-      expect(row.confidence, lessThan(lowConfidence));
-      expect(bucketOf(row), MatchBucket.check);
-      final sweet =
-          rankCandidates(
-            'whole dried red chile',
-            await provider.search('whole dried red chiles'),
-          ).firstWhere(
-            (c) => c.candidate.description.contains('sweet'),
-          );
-      expect(sweet.confidence, lessThan(lowConfidence));
-    });
+    test(
+      'a sweet pepper is no chile: whole dried red chiles (Orange-Flavored '
+      'Chicken, 0525) never rank a sweet pepper over the gate (since '
+      "matcher v21 the line reads 'dried arbol chiles': 168570, 0.563)",
+      () async {
+        final db = tempDb();
+        final r = recipeOf(db, 'r1', [
+          '8 small whole dried red chiles (optional)',
+        ]);
+        await matchAndCompute(db, provider, r);
+        final row = db.ingredientMatchesFor('r1').single;
+        expect(row.fdcId, 168570);
+        expect(row.confidence, closeTo(0.563, 0.001));
+        final sweet =
+            rankCandidates(
+              'whole dried red chile',
+              await provider.search('whole dried red chiles'),
+            ).firstWhere(
+              (c) => c.candidate.description.contains('sweet'),
+            );
+        expect(sweet.confidence, lessThan(lowConfidence));
+      },
+    );
 
     test('a pinned sentence rule needs a dissolve and a brine salt beside '
         'it (negative paths, synthesized: no library recipe has either)', () {
