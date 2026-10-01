@@ -527,8 +527,11 @@ void main() {
       }
     });
 
-    test('a target whose line text changed, or which is past the end, '
-        'is skipped — counted by `others`, not by `applied`', () async {
+    test('a target past the end is skipped — counted by `others`, not by '
+        "`applied`; one whose text changed to the same ingredient's (an "
+        'edit not yet computed: the layout pairs it with its line) is '
+        "applied under the line's text, as `others` counted it (Run 051 "
+        'E3)', () async {
       final eggsPos = positionOf(bundt, 'eggs');
       final caramelEggs = positionOf(caramel, 'eggs');
       final pancakesEggs = positionOf(pancakes, 'eggs');
@@ -554,8 +557,12 @@ void main() {
         'fdc_id': food,
         'apply_to_all': true,
       });
-      expect(applied, appliedIs(recipes: 0, lines: 0, failed: 0, completed: 0));
-      expect(rowAt(caramel, caramelEggs).fdcId, isNull, reason: 'stale text');
+      expect(applied, appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0));
+      final edited = rowAt(caramel, caramelEggs);
+      expect(
+        (edited.raw, edited.fdcId),
+        (nutritionLines(caramel)[caramelEggs].raw, food),
+      );
 
       // Restore: a compute rewrites the rows from the real lines.
       sqlite3.open(config.dbPath)

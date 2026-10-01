@@ -26,6 +26,7 @@ void main() {
   const idle = NutritionState(loading: false);
   const offer = (
     position: 3,
+    raw: '2 large eggs',
     label: 'eggs',
     fdcId: 1,
     confirmed: false,
@@ -164,6 +165,37 @@ void main() {
     test('the line moved up one by a save: its row where it is now', () {
       final match = queueMatchOf(rows(const {12: 11, 11: 12}), line)!;
       expect((match.position, match.raw), (11, line.raw));
+    });
+
+    // Run 051 A2. Synthesized row lists (a stated exception): the golden's
+    // real rows with the queued line removed, shifted or repeated — the
+    // layouts a save can leave before the next compute; no new text.
+    List<IngredientMatch> without(List<IngredientMatch> all) => [
+      for (final m in all)
+        if (m.raw != line.raw) m,
+    ];
+    IngredientMatch twin(int position) =>
+        IngredientMatch(position: position, raw: line.raw, item: line.item);
+
+    test('no row reads the line (edited or deleted): null — never the '
+        'row a save put at its position', () {
+      // A line inserted above moved every line down one, and the queued
+      // line's amount was edited: the eggs now sit at its position.
+      final shifted = without(rows({for (var p = 0; p < 12; p++) p: p + 1}));
+      expect(shifted.any((m) => m.position == line.position), isTrue);
+      expect(queueMatchOf(shifted, line), isNull);
+    });
+
+    test('twins: the one nearest the stored position', () {
+      final rest = without(rows(const {}));
+      final match = queueMatchOf([twin(9), ...rest, twin(14)], line)!;
+      expect(match.position, 14);
+    });
+
+    test('twins equally near: the lower one', () {
+      final rest = without(rows(const {}));
+      final match = queueMatchOf([twin(11), ...rest, twin(13)], line)!;
+      expect(match.position, 11);
     });
   });
 }

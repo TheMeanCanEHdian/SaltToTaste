@@ -634,6 +634,35 @@ double? _tableLookup(
 
 final RegExp _saltState = RegExp(r'\bwith(?:out)? salt\b');
 
+/// Whether the density [key] only modifies [normalizedItem]'s head noun
+/// while [food] — the record — names the key's food: "vanilla extract",
+/// "cayenne pepper", "cocoa powder", "mustard greens" on records of those
+/// foods weigh by the record's own volume portion, not the key's figure
+/// ('cocoa' 0.52 counted "¾ cup cocoa powder" at 92 g; its record's cup,
+/// 86 g, is the corpus's own "1 cup (3 ounces)"; Run 051 E2). A key the
+/// record does not name keeps its figure: "panko bread crumbs" on "Bread,
+/// crumbs, dry, grated, plain" (0.25, not plain crumbs' 108 g a cup), "whole
+/// black peppercorns" on a record of ground pepper.
+bool _keyModifiesTheRecordsFood(
+  String key,
+  String normalizedItem,
+  FdcFood food,
+) {
+  final keyHead = headNounOf(key);
+  for (final alternative in normalizedItem.split(' or ')) {
+    final head = headNounOf(alternative);
+    if (head == null || head == keyHead) {
+      return false;
+    }
+  }
+  final record = food.description
+      .toLowerCase()
+      .split(RegExp('[^a-z]+'))
+      .map(keyWordOf)
+      .toSet();
+  return key.split(' ').map(keyWordOf).every(record.contains);
+}
+
 final Map<String, RegExp> _keyWords = {};
 RegExp _keyAsWord(String key) => _keyWords.putIfAbsent(
   key,
@@ -650,10 +679,13 @@ RegExp _keyAsWord(String key) => _keyWords.putIfAbsent(
 /// 1.0; 'nuts' 0.55), ricotta and cream cheese ('cheese' 0.47 is grated
 /// cheese: "3 cups part-skim ricotta cheese" at 334 g, its record's 741 g)
 /// oil-packed sun-dried tomatoes ('oil' 0.92), and almond and apple butter
-/// ('butter' 0.959 for their records' 1.08 and 1.15; Run 050).
+/// ('butter' 0.959 for their records' 1.08 and 1.15; Run 050), and sugar
+/// snap peas ('sugar' 0.85 counted "2 cups sugar snap peas" at 402 g, its
+/// record's "cup, whole" 126 g; Run 051 O7 — "Peas, edible-podded" names
+/// no sugar, so [_keyModifiesTheRecordsFood] cannot tell).
 final RegExp _notTheKeysFood = RegExp(
   r'\b(dry milk|milk powder|buttermilk powder|water chestnut|ricotta|'
-  'cream cheese|oil-packed|almond butter|apple butter)',
+  'cream cheese|oil-packed|almond butter|apple butter|sugar snap)',
 );
 
 /// Whether [normalizedItem] names [food]'s own food by a word beyond the
@@ -807,9 +839,15 @@ final RegExp _chile = RegExp(r'\bchil(e|es|i|ies)\b');
 /// read 0.5 g for a ~2 g chile (Run 047); japonés and pequin name no corpus
 /// chile of their own, and "árbol" is read as the normalized item's
 /// "arbol" (a word boundary never falls before "á").
+///
+/// "Small" is read from the item's own words ([_itemSizeWords], as the
+/// whole-item portion reads it), and "large" excludes it: "2 dried New
+/// Mexican chiles, … flesh torn into small pieces" is no small chile
+/// (Run 051 O6: 0.5 g a ~7 g pod).
 bool _smallDriedChile(String text) =>
     RegExp(r'\b(arbol|bird)\b').hasMatch(text) ||
     (RegExp(r'\bsmall\b').hasMatch(text) &&
+        !RegExp(r'\blarge\b').hasMatch(text) &&
         RegExp(r'\bdried\b').hasMatch(text));
 
 /// The words of [raw] that size its item: those before its prep (after a
@@ -889,7 +927,7 @@ double? _wholeItemPortionGrams(
     // "bell pepper" item names the noun itself (Run 047 critic).
     if (noun == 'pepper' &&
         portion.gramWeight < 1 &&
-        !_smallDriedChile('${raw ?? ''} $normalizedItem'.toLowerCase())) {
+        !_smallDriedChile('${_itemSizeWords(raw)} $normalizedItem')) {
       continue;
     }
     final chile = noun == 'pepper' && _chile.hasMatch(normalizedItem);
@@ -2109,9 +2147,15 @@ GramResolution? _resolveGrams({
     // 0.55's 65 g; Run 050).
     final density = kosher
         ? _kosherSaltDensity
-        : entry?.$1 == 'nuts' &&
+        : entry != null &&
               ownVolume != null &&
-              _namesTheRecord(normalizedItem, volumeFood!)
+              (entry.$1 == 'nuts'
+                  ? _namesTheRecord(normalizedItem, volumeFood!)
+                  : _keyModifiesTheRecordsFood(
+                      entry.$1,
+                      normalizedItem,
+                      volumeFood!,
+                    ))
         ? null
         : entry?.$2;
     if (density != null) {

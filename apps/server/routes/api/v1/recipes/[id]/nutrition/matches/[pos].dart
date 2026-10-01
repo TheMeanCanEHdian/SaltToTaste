@@ -29,8 +29,9 @@ Future<Response> onRequest(
     throw const ValidationException('Position must be a non-negative index.');
   }
   final db = context.read<SaltDatabase>();
-  // The body first: the recipe is read after it, so a save landing while
-  // the body streams in is the version this write lays out against.
+  // This lookup resolves the slug and answers 404; the write itself reads
+  // the STORED recipe (applyMatchOverride), so a save landing while the
+  // body streams in is the version it lays out against either way.
   final body = await readJsonBody(context.request);
   final found = db.recipeByIdOrSlug(id);
   if (found == null) {

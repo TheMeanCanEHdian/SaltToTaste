@@ -68,6 +68,9 @@ const Map<int, String> _capabilityByVersion = {
   11:
       'ingredient_matches.hold: why an auto row is held out of the totals '
       '(NULL on every existing row; the next compute sets it)',
+  12:
+      'recipe_layout: the layout sequence and laid-out line texts per recipe '
+      '(no row until a layout runs)',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry

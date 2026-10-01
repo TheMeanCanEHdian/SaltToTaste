@@ -552,9 +552,7 @@ class _MatchRowState extends State<_MatchRow> {
                     previous.applied != current.applied ||
                     previous.applying != current.applying,
                 builder: (context, state) {
-                  final offer = state.offer?.position == m.position
-                      ? state.offer
-                      : null;
+                  final offer = offerIsFor(state.offer, m) ? state.offer : null;
                   final receipt = state.applied?.position == m.position
                       ? state.applied
                       : null;

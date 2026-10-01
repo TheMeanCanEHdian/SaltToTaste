@@ -590,6 +590,7 @@ void main() {
         'failed': 0,
         'completed': 0,
         'completed_recipes': <String>[],
+        'moved': 0,
       });
       expect(await statusOf(beans), 'complete');
     });

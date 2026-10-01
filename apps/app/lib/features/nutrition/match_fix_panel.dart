@@ -615,9 +615,12 @@ class _FixPanelState extends State<FixPanel> {
   void didUpdateWidget(FixPanel old) {
     super.didUpdateWidget(old);
     // A save landed and the server sent back the recomputed line — show its
-    // amount and drop the staged pick, which is now the stored match.
+    // amount and drop the staged pick, which is now the stored match. Or
+    // the panel now stands on ANOTHER line (a reload after a save moved the
+    // lines, Run 051 A3): what was staged and typed was for the old one.
     if (old.match.grams != widget.match.grams ||
-        old.match.fdcId != widget.match.fdcId) {
+        old.match.fdcId != widget.match.fdcId ||
+        old.match.raw != widget.match.raw) {
       _unit = 'g';
       _stagedFdcId = null;
       _amountDirty = false;

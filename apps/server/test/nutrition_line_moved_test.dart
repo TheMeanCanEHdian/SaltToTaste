@@ -1,7 +1,8 @@
-// Run 050 P3/P4: a person's write addresses the STORED recipe. The PUT
-// route reads its body before the recipe, applyMatchOverride lays the rows
-// out against the stored recipe (never the caller's copy) and reads it
-// again after its own awaits, the response reloads it after the write,
+// Run 050 P3/P4: a person's write addresses the STORED recipe:
+// applyMatchOverride lays the rows out against the stored recipe (never the
+// caller's copy — so the route's order of reading the body and the recipe
+// does not matter; Run 051 C2 deleted the test that claimed it did) and
+// reads it again after its own awaits, the response reloads it after the write,
 // and an optional `raw` (the line text the client saw) refuses a write
 // whose line moved: 409 line_moved, nothing written. Real data: 0405
 // Acquacotta's own lines; the saves (reorders, inserts) and their
@@ -68,18 +69,14 @@ void main() {
   };
 
   /// PUTs [body] to line [pos] through the real route and error handler,
-  /// as a signed-in admin; the status and the decoded body. With
-  /// [whileReading], the first byte of the body is sent, then — once the
-  /// handler has started — [whileReading] runs, then the rest is sent.
+  /// as a signed-in admin; the status and the decoded body.
   Future<(int, Map<String, dynamic>)> put(
     int pos,
-    Map<String, Object?> body, {
-    Future<void> Function()? whileReading,
-  }) async {
+    Map<String, Object?> body,
+  ) async {
     final adminId =
         db.userByUsername('admin')?.id ??
         db.createUser(username: 'admin', passwordHash: 'unused', role: 'admin');
-    final started = Completer<void>();
     Future<frog.Response> handler(frog.RequestContext context) =>
         match_route.onRequest(context, acqua.id, '$pos');
     final pipeline = handler
@@ -96,14 +93,7 @@ void main() {
           ),
         )
         .use(frog.provider<NutritionProvider>((_) => provider))
-        .use(
-          frog.provider<SaltDatabase>((_) {
-            if (!started.isCompleted) {
-              started.complete();
-            }
-            return db;
-          }),
-        )
+        .use(frog.provider<SaltDatabase>((_) => db))
         .use(errorHandler())
         .use(requestIdProvider());
     final server = await frog.serve(pipeline, InternetAddress.loopbackIPv4, 0);
@@ -115,13 +105,7 @@ void main() {
         ..contentType = ContentType.json
         ..contentLength = bytes.length
         ..set('X-Requested-With', csrfHeaderValue);
-      request.add(bytes.sublist(0, 1));
-      await request.flush();
-      if (whileReading != null) {
-        await started.future;
-        await whileReading();
-      }
-      request.add(bytes.sublist(1));
+      request.add(bytes);
       final response = await request.close();
       final text = await utf8.decoder.bind(response).join();
       return (response.statusCode, jsonDecode(text) as Map<String, dynamic>);
@@ -143,29 +127,6 @@ void main() {
     await matchAndCompute(db, provider, v1);
     await applyMatchOverride(db, provider, v1, 0, {'skipped': true});
     await applyMatchOverride(db, provider, readEarlier, 1, {'skipped': true});
-    expect(statusByRaw(), {
-      _oilHalf: 'skipped',
-      _onion: 'skipped',
-      _celery: isNot('skipped'),
-    });
-  }, skip: skipIfNoCorpus);
-
-  test('P3: a save landing while the PUT body is read — the route reads the '
-      'recipe after the body, so the new first line keeps its skip', () async {
-    final v0 = version([_onion, _celery]);
-    save(v0);
-    await matchAndCompute(db, provider, v0);
-    final v1 = version([_oilHalf, _onion, _celery]);
-    final (code, json) = await put(
-      1,
-      {'skipped': true},
-      whileReading: () async {
-        save(v1);
-        await matchAndCompute(db, provider, v1);
-        await applyMatchOverride(db, provider, v1, 0, {'skipped': true});
-      },
-    );
-    expect(code, HttpStatus.ok, reason: '$json');
     expect(statusByRaw(), {
       _oilHalf: 'skipped',
       _onion: 'skipped',

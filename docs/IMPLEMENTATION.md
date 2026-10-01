@@ -2060,8 +2060,9 @@ had generated single edits only. So the oracle came first: each fuzz save
 now applies one to three edits, its explanation enumerator computes the
 fewest-op scripts over insert / delete / substitute / move with a
 cross-ingredient substitution costing a delete plus an insert (a flat cost
-would have endorsed half the swap), and on v18 it found 83 violations in
-1,000 seeds, every one on a multi-edit save. The pairing then went through
+would have endorsed half the swap), and on v18 the shipped oracle finds
+103 violations in 90 of 1,000 seeds (the "83" first written here was an
+intermediate oracle's count — Run 051), every one on a multi-edit save. The pairing then went through
 a heuristic search (candidate alignments and a local climb over the
 engine's own layout cost) that reached zero but left thirteen of its pieces
 unkillable and two seeds broken — and was replaced by the principled form:
@@ -2071,7 +2072,10 @@ decisions it drops, then the rows off their positions — the oracle's own
 ranking), each line taking an unused row of its exact text or its
 ingredient or none, with an admissible bound and a 10,000-expansion budget
 that falls back to the best layout found from the plain alignment. It is
-smaller than what it replaced (engine.dart −220 lines), every cost term
+smaller than the heuristic search it replaced (that intermediate never
+shipped; against the committed v18 the pairing section grew from 133 to 295
+lines and engine.dart by 222 — Run 051 corrected the "−220" first written
+here), every cost term
 and the bound, budget and fallback die under a named seed or scenario,
 and the oracle finds zero violations on more than 11,000 fresh multi-edit
 seeds including the two residual ones. A 60-line list shuffled whole with
@@ -2097,6 +2101,64 @@ or grated line takes the record's shredded/grated cup. Replay on snapshot
 13: 58 rows re-massed (all judged right), one recipe complete → partial
 (malted milk powder with no honest portion left): counted 12,956 / check
 512 / no grams 110 / no match 37 / complete 760.
+
+### Run 051's fixes: guards fed from the right place, the layout sequence, the gap mode (matcher v20)
+
+Run 051 (both fleets on v19, 2026-09-30) found that v19's guards were sound
+and fed from the wrong place: the apply-to-all RETRY after a 409 re-read the
+line's text from whatever row now sat at the offer's position, so the raw
+guard passed and the food was written — and broadcast library-wide — onto
+another ingredient (HIGH, both fleets); the review queue sent a fallback row's
+text; the sheet's fix panel was keyed by position. The gate compared hashes
+for EQUALITY, which a save-and-revert (ABA) around a compute's or a PUT's
+awaits defeats. And v19's skipped-orphan re-derive had re-implemented half
+of the compute's outcome without the discard policy, so an un-skip counted a
+frying oil's poured-away 672 g (Opus only; a regression from v18). v20, built
+2026-10-01 after a usage-limit kill and a relaunch: (A) the app — an offer
+carries the text of the line it was raised on and every send uses it; every
+reload relocates the offer by that text or withdraws it and says why; the
+queue sends the line's own text (no fallback row); the panel drops its
+staged pick when the row's text changes; the app matches `ApiErrorCodes`,
+never string literals. (B) one function, `editedDecisionRow`, decides what a
+decided row becomes when its line is edited to the same ingredient — used by
+the compute's orphan branches AND the PUT: it runs the compute's real outcome
+(the discard policy, with grams), keeps typed grams when the amount is
+unchanged or the line is a medium by that outcome, re-derives otherwise, and
+keeps the status; a skip or a pick stands ahead of the sub-recipe rule; a
+never-computed recipe written by a PUT is stamped `''` (stale) instead of
+fresh; a compute whose gate tripped re-runs on the stored recipe (the
+single-flight job no longer swallows a request); a recipe deleted during a
+compute stops cleanly and during a PUT answers 404; the serving basis is read
+from the stored recipe at stamp time. (C) migration 012 adds `recipe_layout`
+(a per-recipe sequence bumped inside every relayout's transaction, and the
+texts of the lines the rows were laid out on); the compute's writes, the
+PUT's post-await write and each apply-to-all target write check the sequence
+INSIDE their own transaction — equality of hashes is no longer the question.
+(D) the oracle's op model: a cross-ingredient substitution is a delete plus
+an insert (two ops), in the oracle and in `_layoutCost` alike — the "edits"
+term became redundant and went; the LIS cost replaced a per-leaf n·m table
+(400 lines: 730 ms → 95 ms, so the budget is not scaled); a last tie-break
+on drift; a row's ingredient key is its stored key OR its own text's key
+under the current matcher; a "gaps" oracle mode (two saves with the rows
+left incomplete between them: a person's stale-window write, a save at the
+compute's first provider call, a failed compute) found 224 violations per
+1,000 seeds — the pairing now reads a row-less position as a line of unknown
+text (→ 120) and, with the laid-out texts from `recipe_layout`, 0 in 1,000
+(22 seeds added to the regression list; the mode runs 60 seeds by default);
+`pairingExpansions` pins the budget's magnitude. (E) grams: the sub-gram
+dried-chile guard reads 'small' from the item's own words; the density table
+yields to the record's own volume portion when the key is not the item's
+head noun ("vanilla extract", "cayenne pepper", "cocoa powder": 272 counted
+rows re-weighed on snapshot 13, every one judged by the record's portions,
+cocoa 7.69 → 5.40 g per tablespoon; a variant that also moved Parmesan and
+panko was measured and rejected); the apply-to-all writes an undecided row
+the layout paired by ingredient key, so the offer equals the receipt; the
+reach into other recipes is documented as an upper bound. Pins and mutants
+for every term named by the two pin-vacuity lenses. Replay on snapshot 13:
+calls 0, buckets unchanged (12,956 / 512 / 110 / 37, complete 760), the 272
+rows above. matcherVersion 20. The verifier's one defect (the DB's own
+stale-sequence refusal had no direct pin) was closed by hand before the
+commit.
 
 ## Decision log (deviations & clarifications)
 

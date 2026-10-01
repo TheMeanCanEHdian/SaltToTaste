@@ -27,7 +27,8 @@ int? recipeComputeJobId(String recipeId) => _recipeJobs[recipeId];
 
 /// Starts (or re-attaches to) a background compute for a single [recipe] and
 /// returns the job id. Single-flight per recipe: a second request while one
-/// is running returns the same job rather than double-spending FDC budget.
+/// is running returns the same job rather than double-spending FDC budget —
+/// and that job computes the stored recipe again when a save cut it off.
 ///
 /// Runs on the event loop (I/O-bound, provider-throttled) so the POST returns
 /// immediately with a job id the client polls — no synchronous request left
@@ -54,7 +55,24 @@ Future<void> _runOne(
   Recipe recipe,
 ) async {
   try {
-    await matchAndCompute(db, provider, recipe);
+    // Single-flight: a request while this runs re-attaches here, so a save
+    // that cut this compute's writes off (its gate tripped, the totals
+    // stamped stale) is computed again from the stored recipe — at most
+    // three passes, until the stamp is fresh (Run 051 B5: the request was
+    // dropped and the job ended 'done' with no rows). A recipe deleted
+    // meanwhile stops cleanly.
+    var current = recipe;
+    for (var pass = 1; ; pass++) {
+      await matchAndCompute(db, provider, current);
+      final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
+      if (stored == null ||
+          pass == 3 ||
+          db.nutritionFor(recipe.id)?.ingredientsHash ==
+              ingredientsHashOf(stored)) {
+        break;
+      }
+      current = stored;
+    }
     db.updateNutritionJob(jobId, done: 1, failed: 0, status: 'done');
   } on NutritionProviderException catch (error) {
     // No key / bad key / hard rate failure — surface the reason in the log.

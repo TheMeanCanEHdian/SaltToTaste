@@ -699,14 +699,21 @@ the stored basis, the parsed `serves` minimum, the parsed **yield** count
 then 1. A yield is not a serving count — it never reaches `serves` — but it
 is a better starting divisor than the batch, and this endpoint is how an
 admin overrides it. A basis change never clears `stale` — only a full
-`…/nutrition/compute` re-match does. `422` before the first compute.
+`…/nutrition/compute` re-match does. `422` before the first compute. The
+basis is read when the totals are stamped, after the compute's awaits, so a
+save of `serves` during a first compute is the basis it stamps under. A
+person's match write on a recipe never computed (or whose first compute
+failed part-way) stores totals that read `stale`, never fresh, so the
+`stale` sweep computes it.
 
 ### `POST /api/v1/recipes/{idOrSlug}/nutrition/compute` (admin, full scope)
 
 Starts a background match+compute and returns `202 {job_id}` immediately;
 poll `GET /api/v1/nutrition/jobs/{id}` for progress (`status`: `running |
 done | failed`) and re-fetch `…/nutrition` when it finishes. Single-flight
-per recipe — a second call while one runs re-attaches to the same job — and
+per recipe — a second call while one runs re-attaches to the same job, and
+when a save cut that job's compute off (its totals stamped stale) the job
+computes the stored recipe again before it ends (at most three passes) — and
 the recipe's `…/nutrition` body carries `computing_job_id` (admins only)
 while a compute is in flight so a reopened page can re-attach. Cached and rate-limited
 (~900 requests/hour shared budget); user decisions on unchanged lines
@@ -742,7 +749,15 @@ record's `tsp` 6.0 g, not 'cream' 1.01's 10.0 g, "¼ cup mustard seeds"
 the ground seed's 24.6 g, not prepared 'mustard' 1.05's 62.1 g; a nut the
 item names weighs on its record's own volume portion ahead of the
 generic 'nuts' 0.55 ("½ cup unsalted roasted peanuts" is 173806's `cup`
-146 g a cup, 73 g); and a powder on a record of the drink made from it
+146 g a cup, 73 g); since matcher v20 a key that only modifies the
+item's head noun, on a record that names the key's food and has its own
+volume portion, weighs by that portion ("¾ cup Dutch-processed cocoa
+powder" is 169594's `cup` 64.5 g — the corpus's "1 cup (3 ounces)" — not
+'cocoa' 0.52's 92 g; vanilla extract and cayenne pepper by their records'
+`tsp`), while a key the record does not name keeps its figure ("panko bread
+crumbs" on plain dry crumbs stay 'panko' 0.25), as does any key on a
+record with no volume portion; sugar snap peas are no 'sugar' ("2 cups
+sugar snap peas" is 170010's `cup, whole` 126 g, not 402 g); and a powder on a record of the drink made from it
 ("…, powder, prepared with whole milk") reads only its `dry` portions —
 none: no grams, never the made-up drink's `cup (8 fl oz)` 265 g) |
 `piece` (estimate)
@@ -809,7 +824,10 @@ per-item weight"` for a bare count on the record's one-item portion — SR
 Legacy's amount-1 bare noun counts as one ("shell" 12.9 g of "Taco shells,
 baked", "leaf" of Swiss chard, "pepper" of a dried chile, "medium" of a
 pear — a sub-gram "pepper", 168570's 0.5 g, weighs only a small DRIED
-chile: an arbol or bird chile, or one the line calls small and dried; a
+chile: an arbol or bird chile, or one the line calls small and dried —
+since matcher v20 small in the item's own words, never its prep, and not
+large ("2 dried New Mexican chiles, … torn into small pieces" has no
+grams); a
 fresh Thai chile, or any other pepper line, on it has no grams), and of
 several portions the item names the medium one ("4 leaves Bibb lettuce" on
 "leaf, medium"), or the small one when the line says small ("1 small
@@ -1142,8 +1160,12 @@ wanting a bare name strips parentheticals, as the app does; null when the
 line has none), `others`: how many recipes hold an undecided line
 with the same ingredient (keys are singular and accent-folded, so "onion"
 and "onions" are one; the same recipe's other lines count) — at most what
-`apply_to_all` (below) would reach, since a row whose line text changed since
-its compute is counted here but skipped there — and `others_lines`: the same
+`apply_to_all` (below) would reach — an upper bound for OTHER recipes: their
+stored rows are counted as stored, and the apply lays each recipe's rows out
+on its current lines first, so a row whose line is now another ingredient,
+or gone, is counted here but skipped there (one whose line was only
+amount-edited is reached, written under the line's text with its grams,
+Run 051 E3) — and `others_lines`: the same
 rows counted as lines. A sibling on a DIFFERENT food counts whatever its
 score — the decision changes its food. A sibling already on this line's food
 counts only while it is still a flagged guess (confidence below 0.5) or held
@@ -1233,62 +1255,113 @@ ingredient decision; neither does `skipped`. The newest decision wins.
 Ingredient keys are singular ("onion" and "onions" are one ingredient) and
 accent-folded. A decided line also follows its text: an ingredient inserted,
 deleted or reordered above it moves the line, and its decision moves with it;
-an amount edit on a decided line keeps the food and the status and re-derives
-the grams (a hand-typed weight for the old amount is dropped — except on a
-discarded medium, held or zeroed by the policy, above). Lines find their rows
+an amount edit on a decided line keeps the food and the status (a skip stays
+a skip) and re-derives the grams as a compute weighs the new line — the
+discard policy included, so a poured-away medium stays at 0 g and an
+un-skip never counts it. A hand-typed weight stays when the amount did not
+change (a prep-only rewrite, "chopped fine" to "chopped") or the line is a
+discarded medium, held or zeroed by the policy, read with its grams ("3
+quarts peanut oil" is frying oil with no "for frying" in it); otherwise it
+is dropped, and none derivable means none (an un-skip never revives the old
+amount's weight). A skip, and a row a person typed grams on, stand ahead of
+the sub-recipe rule (a pick at a typed weight on "10 cups Vanilla Frosting
+(recipe follows)" keeps its food through "12 cups"); any other decided row
+on such a line is gated by it as a confirm is. It is ONE outcome whether
+the compute runs first or a person acts on the edited line before it (this
+PUT starts from the same re-derived row, so a skip and an un-skip in that
+window never carry the old amount's typed grams, Run 051 B1/B2). Lines find their rows
 by text (a line diff with moves, matcher v19). The save is read as the cheapest
 EDIT SCRIPT of the stored rows' texts (in position order) into the lines'
 texts: a delete, an insert, a same-ingredient substitution (an amount edit:
 the row, and its decision, stay with the line) and a move of one line cost
-one each; a substitution to another ingredient costs two and carries nothing
-(its row is dropped and the line re-derived). Of the cheapest readings: the
-fewest edits as written (an edit of one line is ONE substitution, never a
-delete and an insert, so a line edited into a copy of its neighbour never
-takes the neighbour's row), then the fewest decisions dropped, then the most
-rows at their own positions (a layout is its own next layout). The pairing
-finds that reading EXACTLY: a branch-and-bound search over the lines, each
-line taking a row of its exact text or its ingredient (or none), each row
-at most once, starting from the in-order alignment (which wins ties; an
-unedited list is that alignment alone) and cutting every branch whose lower
-bound is no better than the best layout found. It expands at most 10,000
-layouts (`pairingBudget`) and then keeps the best found so far — reached
-only far past a few edits (a 60-line list shuffled whole with a quarter
+one each; a substitution to another ingredient IS a delete and an insert
+(two ops; it carries nothing: its row is dropped and the line re-derived —
+matcher v20; v19 counted it one op as written and so read a move + an
+amount edit + a delete as a delete + a cross-ingredient edit, dropping the
+moved line's decision). A row is of an ingredient by its stored key or its
+own text's key under the current matcher (so a key a matcher upgrade
+changed still carries an amount-edited row). A position with no row (a
+person's decision in the window before the compute, or a compute that a
+save cut off or FDC failed) is a line of unknown text: it fits any line and
+carries nothing, so the line it became is not read as an insert another
+row slides onto. Of the cheapest readings: the fewest decisions dropped,
+then the most rows at their own positions (a layout is its own next
+layout), then the least distance moved (of identical lines, the nearest).
+The pairing finds that reading EXACTLY: a branch-and-bound search over the
+lines, each line taking a row of its exact text or its ingredient, a gap,
+or none, each row at most once, starting from the in-order alignment (which
+wins ties; an unedited list is that alignment alone) and cutting every
+branch whose lower bound is no better than the best layout found. It runs
+synchronously on every compute, PUT and matches GET, so it expands at most
+10,000 layouts (`pairingBudget`) and then keeps the best found so far:
+reached only far past a few edits (a list shuffled whole with a quarter
 rewritten in one save), never on a save of up to three edits the pairing
-oracle draws. A row only ever sits on a line of its exact text or its
+oracle draws. Measured (JIT, real corpus lines): an unedited list is one
+expansion; at the edit service's cap of 400 lines a three-edit save takes
+~50 ms and a save that stops at the budget ~100 ms (~120 ms cold), at 60
+lines ~12 ms. A row only ever sits on a line of its exact text or its
 ingredient. So a save making several edits keeps each decision on its line: Run 050's
 "½ cup" oil deleted and the picked "¼ cup" moved up in one save keeps the
-pick; a move plus an amount edit of the other oil keeps both lines' typed
-grams; the onion deleted, both oils amount-edited and lemon appended keeps
-the skip and the pick each on its own oil. A decision on the second "Salt
-and pepper" of Acquacotta stays on it whatever happens to the first (edited
-or deleted), two decided copies with a line inserted or deleted above both
-move with their lines, and an engine row (a rule row, `auto` or `unmatched`)
-moves with its line and is re-derived there, never given another copy's
-decision; a row no line takes is deleted. Known limit: text-only — where
-identical lines make an edit ambiguous, this is the cheapest reading keeping
-the most decisions, which may not be what the person did (which twin they
-deleted). The whole layout is written in one transaction before the compute
+pick; a move plus an amount edit of the other oil keeps the moved line's
+typed grams and the edited line's food (its grams re-derived for the new
+amount, as above); the onion deleted, both oils amount-edited and lemon
+appended keeps the skip and the pick each on its own oil. A decision on the
+second "Salt and pepper" of Acquacotta stays on it whatever happens to the
+first (edited or deleted), two decided copies with a line inserted or
+deleted above both move with their lines, and an engine row (a rule row,
+`auto` or `unmatched`) moves with its line and is re-derived there, never
+given another copy's decision; a row no line takes is deleted. Every
+layout keeps the texts of the lines it laid the rows on (`recipe_layout`,
+migration 012), and the next pairing reads the version before the save from
+them, not from the rows: a line with no row (a decision made in the window
+before the compute, a compute cut off or failed) is still its line, and a
+row still carrying an amount edit's old text reads as its line's. A recipe
+not laid out since that migration has no texts: its first layout reads the
+rows, a row-less position as a line of unknown text. Known limit:
+text-only — where identical lines make an edit ambiguous, this is the
+cheapest reading keeping the most decisions, which may not be what the
+person did (which twin they deleted).
+The whole layout is written in one transaction before the compute
 asks FDC anything — and before this PUT reads its row — and a decision is
 only ever moved (or dropped with its deleted line), never rewritten. A
-compute whose recipe's nutrition inputs (its lines, steps and title: what
-the staleness hash reads) change while it waits on FDC writes no further rows
-and stamps its totals STALE, never fresh, so the next sweep revisits it; a
-save changing nothing it reads (tags, notes, times) blocks nothing.
+layout that moves or drops a row, or lays the rows on other lines, bumps
+the recipe's layout sequence in that transaction, and every row write — the
+compute's, this PUT's, each apply-to-all target's — checks in its own
+transaction that the sequence is still the one it read its rows under. So
+a compute whose recipe's nutrition inputs (its lines, steps and title: what
+the staleness hash reads) change while it waits on FDC — or whose rows a
+person's write laid out anew meanwhile, even when a later save put the
+lines back as they were (a save and its revert hash the same, Run 051 C1) —
+writes no further rows and stamps its totals STALE, never fresh, so the
+next sweep revisits it; a save changing nothing it reads (tags, notes,
+times) blocks nothing, nor does a person's write on unchanged lines.
 `GET …/nutrition/matches` shows each line the row this layout gives it,
 without writing, and each line's apply-to-all offer (`others`,
 `others_lines`) counts this recipe's own rows as that layout places them —
 never its own row for the line, nor a row the layout would delete.
 
-This PUT reads its body first and then the STORED recipe (never a copy read
-before a save), lays the rows out on its lines, and reads it again after its
-own awaits (a food fetch): a save meanwhile that moved the line refuses the
-write. Optional `raw`: the line's text as the client saw it at `{pos}`. When
+This PUT reads the STORED recipe (never a copy read before a save), lays the
+rows out on its lines — that layout is written even when the request is then
+refused (a 422, a 409 after the awaits): it moves rows only as the next
+compute would, and changes no decision's content — and reads the line's row.
+After its own awaits (a food fetch), when the recipe was saved or its rows
+laid out anew meanwhile, it re-reads the stored recipe (deleted: `404`),
+answers `409 line_moved` when the line no longer stands at `{pos}`, lays the
+rows out again, and writes only when the row that layout gives the line is
+the one it read (else `409 line_moved`, `position` = `{pos}`): the decision
+lands on the line the person acted on, or not at all. Optional `raw`: the line's text as the client saw it at `{pos}`. When
 the line at `{pos}` reads otherwise (a save since), `409 line_moved` with
 `{error: {code: "line_moved", message, request_id, position}}` — `position`
 is the line with that text nearest `{pos}` now, or null when none — and
 nothing is written. A non-string `raw` is a 422. The app sends it from the
-review sheet, the fix pane, the queue and the apply-to-all resend, and on a
-409 reloads the rows so the screen finds the line where it is now.
+review sheet, the fix pane, the queue and the apply-to-all resend — always
+the text of the line the person acted on, never re-read from whatever row
+now sits at `{pos}`: the resend names the line the offer was raised on, and
+the queue pane the queued line's text (a queued line no row reads any more
+shows as edited or removed and is not acted on). On a 409 it reloads the
+rows so the screen finds the line where it is now; on every reload of the
+rows a pending apply-to-all offer follows its line by text, or is withdrawn
+(and the message says so) when no single row reads it.
 
 Override one line: `{fdc_id}` re-picks the food, `{grams}` hand-sets the
 amount, `{confirmed: true}` blesses the auto match, `{skipped: true}`
@@ -1352,8 +1425,13 @@ as `auto` at confidence 1, machine propagation of a human decision exactly
 like inheritance — not as a human status, so a wrong pick applied
 library-wide is corrected the same way, by a second `apply_to_all` with
 the right food. A line a person already decided is left alone, as is one
-whose text changed since its compute. The response carries `applied:
-{recipes, lines, failed, completed, completed_recipes}`: `completed` counts
+that is now another ingredient or gone (each recipe's rows are laid out on
+its current lines first; a line only amount-edited since its compute is
+reached under its new text). A recipe whose rows are laid out anew while
+the apply waits on FDC (a save and a person's write or a compute) is left
+for its next compute: no row of it is written over what the layout put
+there. The response carries `applied: {recipes, lines, failed, completed,
+completed_recipes, moved}` (`moved`: the targets left for that reason): `completed` counts
 the reached recipes whose stored status turned `complete` with this apply
 (not a reached recipe that was complete already — a different-food pick
 reaches counted lines). The decided line's OWN recipe can be among them:
@@ -1368,7 +1446,7 @@ and `completed_recipes` lists their ids, so a shortfall can be named;
 `lines` counts the lines the decision moved —
 whose review bucket changed, or that took the decided food (a line left
 short of an amount on it too, which stays `no_grams`) — every line `others`
-counted, less one a person decided meanwhile, one whose text changed since its compute, or one whose recipe failed —
+counted, less one a person decided meanwhile, one now another ingredient or gone, one counted in `moved`, or one whose recipe failed —
 `recipes` the recipes holding one, and `failed` how many recipes
 failed part-way (their document would not decode, or the provider failed
 while fetching a food detail one of their lines' grams read — household

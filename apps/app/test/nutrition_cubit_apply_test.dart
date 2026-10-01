@@ -33,22 +33,37 @@ class _Adapter implements HttpClientAdapter {
   /// How many times the rows were fetched (`GET …/nutrition/matches`).
   int matchGets = 0;
 
+  /// Every PUT's path, in order (its last segment is the position).
+  final List<String> putPaths = [];
+
+  /// A save since the rows were read, as the recipe's line texts by position
+  /// (null: the golden's own). Synthesized — a stated exception: only ever a
+  /// reordering or a deletion of the golden's own real lines, no new text.
+  List<String>? layout;
+
+  /// When set, a PUT is guarded as the server guards it: a `raw` that is not
+  /// the line now at the position is refused 409 `line_moved`.
+  bool guard = false;
+
   /// When set, an apply_to_all PUT waits here before answering — a sweep
   /// held open so a test can act while it runs.
   Completer<void>? gate;
 
   Map<String, dynamic> _matches() {
     final body = golden('nutrition_matches');
+    final raws = layout;
     return {
       'items': [
-        for (final item in body['items'] as List)
-          {
-            ...item as Map<String, dynamic>,
-            'others': others,
-            // Distinct from `others` on purpose: two lines of one ingredient
-            // in one recipe are 1 recipe but 2 lines.
-            'others_lines': others == 0 ? 0 : others + 3,
-          },
+        for (final (at, item) in (body['items'] as List).indexed)
+          if (raws == null || at < raws.length)
+            {
+              ...item as Map<String, dynamic>,
+              if (raws != null) 'raw': raws[at],
+              'others': others,
+              // Distinct from `others` on purpose: two lines of one ingredient
+              // in one recipe are 1 recipe but 2 lines.
+              'others_lines': others == 0 ? 0 : others + 3,
+            },
       ],
     };
   }
@@ -71,10 +86,17 @@ class _Adapter implements HttpClientAdapter {
       }
       final sent = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
       puts.add(sent);
+      putPaths.add(path);
       if (sent['apply_to_all'] == true && gate != null) {
         await gate!.future;
       }
-      if (lineMovedNextPut) {
+      final at = int.parse(path.split('/').last);
+      final now = [
+        for (final item in _matches()['items'] as List)
+          if ((item as Map)['position'] == at) item['raw'],
+      ];
+      if (lineMovedNextPut ||
+          (guard && (now.isEmpty || sent['raw'] != now.single))) {
         lineMovedNextPut = false;
         return ResponseBody.fromString(
           jsonEncode({
@@ -171,6 +193,7 @@ void main() {
     await pumpEventQueue();
     expect(cubit.state.offer, (
       position: line.position,
+      raw: line.raw,
       label: itemLabel(line.item)!,
       fdcId: 123456,
       confirmed: false,
@@ -402,5 +425,141 @@ void main() {
     expect(cubit.state.error, contains('moved'));
     expect(cubit.state.overridingPosition, isNull);
     expect(cubit.state.offer, isNull);
+  });
+
+  // Run 051 A1: the offer carries the text of the line it was raised on.
+  // A save between the offer and the Apply tap refuses the first send; the
+  // retry must name the SAME line, where it is now — never the line a save
+  // put at the offer's old position (the food then landed on another
+  // ingredient library-wide).
+  group('A1: the offer follows its own line', () {
+    /// The golden's lines as a save left them: the last line moved to the
+    /// top, every other line one down.
+    List<String> lastLineMovedToTop() {
+      final raws = [for (final m in cubit.state.matches!) m.raw];
+      return [raws.last, ...raws.take(raws.length - 1)];
+    }
+
+    test('the retry after line_moved sends the offer line text at the '
+        'position that line moved to, and lands', () async {
+      await boot(others: 41);
+      final line = flour();
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      expect(cubit.state.offer?.raw, line.raw);
+      adapter
+        ..layout = lastLineMovedToTop()
+        ..guard = true;
+      adapter.puts.clear();
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(cubit.state.error, contains('moved'));
+      // Re-located by its text, one down.
+      expect(cubit.state.offer?.position, line.position + 1);
+      expect(cubit.state.offer?.raw, line.raw);
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(adapter.puts.last['raw'], line.raw);
+      expect(adapter.putPaths.last, endsWith('/${line.position + 1}'));
+      expect(adapter.puts.last['fdc_id'], 123456);
+      expect(cubit.state.applied?.position, line.position + 1);
+      expect(cubit.state.offer, isNull);
+    });
+
+    test('an offer whose line a save removed is withdrawn, and the message '
+        'says why; nothing more is sent', () async {
+      await boot(others: 41);
+      final line = flour();
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      adapter
+        ..layout = [
+          for (final m in cubit.state.matches!)
+            if (m.position != line.position) m.raw,
+        ]
+        ..guard = true;
+      adapter.puts.clear();
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(adapter.puts.single['raw'], line.raw);
+      expect(cubit.state.offer, isNull);
+      expect(cubit.state.error, contains('withdrawn'));
+      expect(cubit.state.error, contains('moved'));
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(adapter.puts, hasLength(1));
+    });
+
+    test(
+      "an override's line_moved reload re-locates a pending offer too",
+      () async {
+        await boot(others: 41);
+        final line = flour();
+        await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+        await pumpEventQueue();
+        final other = cubit.state.matches!.first;
+        adapter
+          ..layout = lastLineMovedToTop()
+          ..guard = true;
+        await cubit.override(other.position, raw: other.raw, skipped: true);
+        await pumpEventQueue();
+        expect(cubit.state.offer?.position, line.position + 1);
+      },
+    );
+
+    test('a retry reload of the rows (the Retry button) re-locates the '
+        'offer too, so the apply lands on its line in one send', () async {
+      await boot(others: 41);
+      final line = flour();
+      await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+      await pumpEventQueue();
+      adapter
+        ..layout = lastLineMovedToTop()
+        ..guard = true;
+      adapter.puts.clear();
+      await cubit.loadMatches(force: true);
+      await pumpEventQueue();
+      expect(cubit.state.offer?.position, line.position + 1);
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(adapter.puts.single['raw'], line.raw);
+      expect(adapter.putPaths.last, endsWith('/${line.position + 1}'));
+      expect(cubit.state.applied?.position, line.position + 1);
+    });
+
+    test('offerOnReload keeps, moves, or withdraws by text alone', () {
+      const offer = (
+        position: 6,
+        raw: '1¾ cups (8¾ ounces) unbleached all-purpose flour',
+        label: 'unbleached all-purpose flour',
+        fdcId: 123456,
+        confirmed: false,
+        grams: null,
+        others: 41,
+        lines: 44,
+      );
+      IngredientMatch row(int position, String raw) =>
+          IngredientMatch(position: position, raw: raw);
+      const salt = '1 teaspoon table salt';
+      expect(offerOnReload(offer, [row(6, offer.raw)]), offer);
+      expect(
+        offerOnReload(offer, [row(6, salt), row(7, offer.raw)])?.position,
+        7,
+      );
+      expect(offerOnReload(offer, [row(6, salt)]), isNull);
+      // Twins, neither at the position: which one it was is unknowable.
+      expect(
+        offerOnReload(offer, [
+          row(5, offer.raw),
+          row(6, salt),
+          row(7, offer.raw),
+        ]),
+        isNull,
+      );
+      // The banner: the row at the position that still reads the text.
+      expect(offerIsFor(offer, row(6, offer.raw)), isTrue);
+      expect(offerIsFor(offer, row(6, salt)), isFalse);
+      expect(offerIsFor(offer, row(7, offer.raw)), isFalse);
+    });
   });
 }

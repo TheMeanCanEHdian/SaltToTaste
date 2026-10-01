@@ -71,7 +71,11 @@ IngredientMatch rulesLine(int position) => [
 /// portion unread. Matcher v14 reads the portion, so the rules golden
 /// counts them at 452 g; the amount-first block below is what a person
 /// sees on any such no-grams row, pinned on the golden's own portions.
-IngredientMatch butterNoGrams({bool uncached = false, double? confidence}) {
+IngredientMatch butterNoGrams({
+  bool uncached = false,
+  double? confidence,
+  String? raw,
+}) {
   final item = Map<String, dynamic>.of(
     (golden('nutrition_matches_rules')['items'] as List)
         .cast<Map<String, dynamic>>()
@@ -79,6 +83,9 @@ IngredientMatch butterNoGrams({bool uncached = false, double? confidence}) {
   );
   if (uncached) {
     item['portions'] = <Object?>[];
+  }
+  if (raw != null) {
+    item['raw'] = raw;
   }
   item['match'] = {
     ...item['match'] as Map<String, dynamic>,
@@ -1248,6 +1255,7 @@ void main() {
     testWidgets('the offer says what applying finishes', (tester) async {
       const offer = (
         position: 7,
+        raw: '1½ teaspoons almond extract',
         label: 'almond extract',
         fdcId: null,
         confirmed: true,
@@ -1598,6 +1606,39 @@ void main() {
         match.value = butterNoGrams();
         await tester.pumpAndSettle();
         expect(find.text('Confirm · 452 g'), findsOneWidget);
+      });
+
+      testWidgets('Run 051 A3: a reload that puts ANOTHER line under the '
+          'panel drops what was typed and staged for the old one', (
+        tester,
+      ) async {
+        // Stated exception (synthesized, the S14 repro): after a 409 reload
+        // the row at position 12 is another real line of the golden (the
+        // pancetta's text) on the same food and grams, so only its text
+        // tells the panel it now stands on a different line.
+        final other = butterNoGrams(confidence: 0.3, raw: rulesLine(11).raw);
+        final cubit = _Recording(_state([other]));
+        final match = await pumpLive(
+          tester,
+          butterNoGrams(confidence: 0.3),
+          cubit,
+        );
+        await tester.tap(
+          find.text('Peanut butter, smooth style, without salt'),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(EditableText).last, '100');
+        await tester.pumpAndSettle();
+        expect(find.text('100'), findsOneWidget);
+        match.value = other;
+        await tester.pumpAndSettle();
+        // Nothing of the butter line's is left to save onto the pancetta
+        // text: the typed 100 is gone and the staged peanut butter (172470)
+        // with it, so Save has nothing to send.
+        expect(find.text('100'), findsNothing);
+        await tester.tap(find.text('Save match & amount'));
+        await tester.pumpAndSettle();
+        expect(cubit.writes, isEmpty);
       });
 
       testWidgets('Run 048 A1: portions arriving while ANOTHER food is '

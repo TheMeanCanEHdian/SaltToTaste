@@ -93,11 +93,14 @@ Future<T> apiGuard<T>(
     final envelope = decodeErrorEnvelope(exception.response?.data);
     if (envelope != null) {
       final message = switch (envelope.code) {
-        'not_found' => notFoundMessage,
-        'validation' when envelope.message != null => envelope.message!,
-        'forbidden' when envelope.message != null => envelope.message!,
-        'conflict' when envelope.message != null => envelope.message!,
-        'line_moved' =>
+        ApiErrorCodes.notFound => notFoundMessage,
+        ApiErrorCodes.validation when envelope.message != null =>
+          envelope.message!,
+        ApiErrorCodes.forbidden when envelope.message != null =>
+          envelope.message!,
+        ApiErrorCodes.conflict when envelope.message != null =>
+          envelope.message!,
+        ApiErrorCodes.lineMoved =>
           'This line moved since the list was loaded (the recipe was '
               'edited). The list is refreshed: check the line and try again.',
         _ => 'Something went wrong on the server. Please try again.',

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException, decodeErrorEnvelope;
+import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 
 /// The signed-in account as reported by `/auth/me` and `/auth/login`.
 class AuthUserInfo {
@@ -161,7 +162,7 @@ class AuthRepository {
         );
       });
     } on RepositoryException catch (exception) {
-      if (exception.code == 'unauthorized') {
+      if (exception.code == ApiErrorCodes.unauthorized) {
         return null;
       }
       rethrow;
@@ -394,7 +395,7 @@ class AuthRepository {
         // means the credential is gone.
         throw const RepositoryException(
           'Sign in to continue.',
-          code: 'unauthorized',
+          code: ApiErrorCodes.unauthorized,
         );
       }
       throw const RepositoryException(

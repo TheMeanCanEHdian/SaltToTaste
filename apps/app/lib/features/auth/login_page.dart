@@ -7,6 +7,7 @@ import 'package:salt_app/core/api/recipe_repository.dart'
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/auth/auth_card.dart';
 import 'package:salt_app/features/auth/auth_cubit.dart';
+import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 
 /// Sign-in card (approved P3 design) with error and lockout banners.
 class LoginPage extends StatefulWidget {
@@ -50,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
     } on RepositoryException catch (exception) {
       setState(() {
         _error = exception.message;
-        _locked = exception.code == 'locked';
+        _locked = exception.code == ApiErrorCodes.locked;
       });
     } finally {
       if (mounted) {

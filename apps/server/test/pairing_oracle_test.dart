@@ -5,7 +5,9 @@
 // 12), ORACLE_OPS_MAX (edits per save, 1..this many, default 3; 1 is the
 // single-op oracle, replaying its seeds exactly), ORACLE_SEED (run that
 // one seed only), ORACLE_SEED_BASE (the first seed, default 0: a fresh
-// range), ORACLE_SHOW (violations printed, default 12).
+// range), ORACLE_SHOW (violations printed, default 12), ORACLE_GAP_SEEDS
+// (the gap mode's fresh seeds, default 0: its regression seeds only — see
+// the gap fuzz test for why).
 //
 // SEMANTICS (what "correct" means here).
 //  * Every line carries a hidden identity; a person's decision (a skip, or a
@@ -16,10 +18,9 @@
 //    carry several edits. Its explanations are the fewest-op scripts of
 //    {insert, delete, substitute one line's text, move one line} that turn
 //    the old texts into the new ones, where a substitution to ANOTHER
-//    ingredient counts two (it carries nothing: it is a delete + an
-//    insert), ties going to the fewest ops as written (an edit in place is
-//    one substitution, never a delete + insert; an unchanged list is the
-//    no-op, never a swap of twins) — see [_explanations]. Each
+//    ingredient IS a delete + an insert (two ops: it carries nothing) and
+//    an unchanged list is the no-op (never a swap of twins, which costs a
+//    move) — see [_explanations]. Each
 //    explanation maps identities exactly: a shifted line keeps its decision,
 //    a deleted line's decision is dropped, a substituted line keeps it only
 //    when lineKeyOf is unchanged (an amount edit: a pick's typed grams may
@@ -91,6 +92,20 @@ const _regressionSeeds = [
   600490, 800027, 800136, 800321, 801056, 600340, 602070,
 ];
 
+/// Seeds of the gap fuzz ([_Sim.savedTwice]) that broke a pairing: every
+/// gap run replays them. The first eight broke v20's pairing while it read
+/// a position with no row as no line at all (224 violations in 191 of 1,000
+/// seeds) and pass since a gap counts as a line of unknown text; the rest
+/// broke it while it read the rows alone (120 in 112 of 1,000: a row-less
+/// line after the last row, a row still carrying an amount edit's old
+/// text) and pass since every layout keeps its lines' texts
+/// (`recipe_layout`) and the pairing reads them as `laidOut`.
+const _gapRegressionSeeds = [
+  1, 5, 16, 41, 43, 44, 49, 56, //
+  24, 46, 53, 60, 64, 68, 71, 81, 128, 130, 132, 135, 141, 145, 147, 152,
+  153, 168, 173, 175, 194, 196,
+];
+
 int _envInt(String name, int fallback) =>
     int.tryParse(Platform.environment[name] ?? '') ?? fallback;
 
@@ -115,6 +130,26 @@ IngredientLine _corpusLine(String file, String raw) {
       for (final g in s.ingredients ?? const <IngredientGroup>[]) ...g.items,
   ].firstWhere((l) => l.raw == raw);
 }
+
+/// A stored match row of [raw] at [position] (a pure pairing input).
+IngredientMatchRow _row(
+  int position,
+  String raw, {
+  String status = 'auto',
+  String? key,
+}) => IngredientMatchRow(
+  recipeId: 'r',
+  position: position,
+  raw: raw,
+  fdcId: null,
+  description: null,
+  dataType: null,
+  confidence: 0,
+  grams: null,
+  gramSource: null,
+  status: status,
+  itemKey: key ?? lineKeyOf(_line(raw)),
+);
 
 /// [FixtureProvider] with two interleavings a test arms: [onCall] runs
 /// once, at the next provider call (a person's write during one of the
@@ -225,8 +260,11 @@ int _lis(List<int> seq) {
 /// is) + moves, where moves = mapped − the longest run of mapped lines
 /// already in order (the fewest single-line moves; exact). A moved and
 /// edited line is a move and a substitution. Of the cheapest scripts, the
-/// ones with the fewest ops as written (every substitution one) are kept,
-/// so an edit in place is one substitution, never a delete + an insert.
+/// ones losing the fewest decisions are acceptable ([_acceptable]) — no
+/// "fewest ops as written" filter (v19 had one: it counted a substitution
+/// to another ingredient one op and so preferred it to a delete + insert of
+/// the same cost that kept a decision — Run 051 O2/S3). Every op now costs
+/// one and a cross-ingredient substitution is the delete + insert it is.
 /// Search: depth first over the old lines (map to an unused new line, same
 /// text first, or delete), pruned by cost so far + the moves already
 /// forced (mapped − LIS so far never falls) + max(excess, missing) of the
@@ -236,18 +274,10 @@ int _lis(List<int> seq) {
 List<_Script> _explanations(List<String> o, List<String> n) {
   for (var k = 0; k <= 2 * _opsMax; k++) {
     final out = _scriptsWithin(o, n, k);
-    if (out.isEmpty) continue;
-    final ops = out.map(_opsOf).reduce(min);
-    return [
-      for (final s in out)
-        if (_opsOf(s) == ops) s,
-    ];
+    if (out.isNotEmpty) return out;
   }
   return const [];
 }
-
-/// A script's ops as written (a substitution one op, whatever it edits).
-int _opsOf(_Script s) => s.name == 'no-op' ? 0 : s.name.split(', ').length;
 
 /// Every script turning [o] into [n] at a cost of at most [k]
 /// ([_explanations]).
@@ -668,6 +698,94 @@ class _Sim {
     return ran;
   }
 
+  /// Two saves with the rows left INCOMPLETE between them (Run 051 S4):
+  /// the edits already made from [before] are saved; then, by [gap],
+  /// `stale` a person's decision on line [at] (mod the count) of that
+  /// recipe in the stale window, no compute; `mid` a compute during whose
+  /// first provider call [second] is made and saved (its gate trips, rows
+  /// unwritten); `fail` a compute FDC fails at the provider call after
+  /// [failAfter] more — then [second]'s edits are made and saved (unless
+  /// `mid` already did), one healthy compute follows, and the result is
+  /// checked against the expectation CHAINED over both saves (each first
+  /// save's acceptable layout, the person's write overlaid, carried through
+  /// the second save's explanations). Returns the gap exercised (`mid` and
+  /// `fail` fall back to `plain`: a full compute between the saves).
+  Future<String> savedTwice(
+    String name,
+    List<_Ln> before,
+    void Function() second, {
+    String gap = 'stale',
+    int at = 0,
+    bool skip = true,
+    int failAfter = 0,
+  }) async {
+    final mid = flat;
+    final pre = Map.of(tokens);
+    final (accept1, why1) = _acceptable(before, mid, pre);
+    save();
+    final overlays = <int, String>{};
+    var ran = gap == 'stale' ? gap : 'plain';
+    var edited = false;
+    void edit2() {
+      if (edited) return;
+      edited = true;
+      second();
+      save();
+    }
+
+    if (gap == 'stale') {
+      final line = at % mid.length;
+      final b = body(skip: skip);
+      overlays[line] = tokenOfBody(b);
+      try {
+        await applyMatchOverride(db, provider, recipe, line, b);
+      } on Object catch (e) {
+        overlays.remove(line);
+        violations.add((kinds: {'HARNESS'}, text: '$name: write threw $e'));
+      }
+    } else {
+      if (gap == 'mid') {
+        provider.onCall = () {
+          ran = 'mid';
+          edit2();
+        };
+      }
+      if (gap == 'fail') provider.failAfter = failAfter;
+      final failure = await compute();
+      provider
+        ..onCall = null
+        ..failAfter = null;
+      if (failure != null) ran = 'fail';
+    }
+    edit2();
+    final after = flat;
+    final want = <String, List<String>>{};
+    final why = <String>{};
+    for (final (k, lay1) in accept1.indexed) {
+      final tokens1 = <int, String>{
+        for (final (p, t) in lay1.indexed)
+          if (_isDecision(overlays[p] ?? t)) mid[p].id: overlays[p] ?? t,
+      };
+      final (accept2, why2) = _acceptable(mid, after, tokens1);
+      for (final lay in accept2) {
+        want[lay.join('|')] = lay;
+      }
+      why.add('${why1[k]} ⇒ ${why2.join(' | ')}');
+    }
+    final failure = await compute();
+    if (failure != null) throw StateError('healthy compute failed: $failure');
+    _check(
+      '$name [gap $ran; explained by ${why.join(' ‖ ')}]',
+      before,
+      after,
+      [...want.values],
+      pre,
+      const {},
+      chained: true,
+    );
+    return ran;
+  }
+
   void _checkAfterFailure(String what, List<List<String>> want) {
     final rows = db.ingredientMatchesFor(recipe.id);
     final got = [
@@ -707,8 +825,9 @@ class _Sim {
     List<_Ln> after,
     List<List<String>> want,
     Map<int, String> pre,
-    Map<int, String> overlays,
-  ) {
+    Map<int, String> overlays, {
+    bool chained = false,
+  }) {
     final rows = db.ingredientMatchesFor(recipe.id);
     final byPos = {for (final r in rows) r.position: r};
     final got = [
@@ -768,7 +887,9 @@ class _Sim {
       // Not the semantics, a tag: what was stored IS the layout of a
       // cheapest script losing more (MORE_LOST), or of a script costing one
       // more (COSTLIER; e.g. an exact-text reading over two substitutions).
+      // (Not for a chained check: before → after may take two saves' ops.)
       bool storedAt(int slack) =>
+          !chained &&
           before.isNotEmpty &&
           _acceptable(before, after, pre, slack: slack).$1.any(
             (lay) => [
@@ -822,6 +943,25 @@ class _Sim {
     groups[g][i] = groups[g][i + 1];
     groups[g][i + 1] = l;
     _recipe = null;
+  }
+
+  /// One save's 1..[_opsMax] random edits, made: their names and kinds
+  /// (the single-op mode draws no count, so its seeds replay the one-edit
+  /// fuzz).
+  (List<String>, List<String>) randomEdits(
+    Random rng,
+    List<String> pool,
+    Map<String, List<String>> variants,
+  ) {
+    final names = <String>[];
+    final kinds = <String>[];
+    for (var k = _opsMax == 1 ? 1 : 1 + rng.nextInt(_opsMax); k > 0; k--) {
+      final (name, mutate) = randomEdit(rng, pool, variants);
+      mutate();
+      names.add(name);
+      kinds.add(name.split(' ').first);
+    }
+    return (names, kinds);
   }
 
   /// One random edit, tagged by its kind: the name and the mutation.
@@ -998,6 +1138,43 @@ void main() {
     final (sim, close) = open();
     addTearDown(close);
     return sim;
+  }
+
+  /// A fuzz seed's lines: 0405 whole, or a dense list of repeated and
+  /// same-ingredient corpus lines; then the first compute.
+  Future<void> startRandom(_Sim sim, Random rng) async {
+    const dense = [
+      _sp,
+      _sp,
+      _oilHalf,
+      _oilQuarter,
+      '¾ cup extra-virgin olive oil',
+      '2 teaspoons salt',
+      '1 teaspoon salt',
+      'Salt',
+      'Pepper',
+    ];
+    if (rng.nextInt(5) < 2) {
+      sim.start(acquaRaws);
+    } else {
+      sim.start([
+        for (var g = 1 + rng.nextInt(3); g > 0; g--)
+          [
+            for (var i = 1 + rng.nextInt(4); i > 0; i--)
+              rng.nextInt(10) < 6
+                  ? dense[rng.nextInt(dense.length)]
+                  : pool[rng.nextInt(pool.length)],
+          ],
+      ]);
+    }
+    await sim.first();
+  }
+
+  /// Up to [most] random decisions at a quiet moment.
+  Future<void> decideRandom(_Sim sim, Random rng, int most) async {
+    for (var k = rng.nextInt(most + 1); k > 0; k--) {
+      await sim.decide(rng.nextInt(sim.flat.length), skip: rng.nextInt(5) < 2);
+    }
   }
 
   void verdict(_Sim sim) {
@@ -1423,6 +1600,102 @@ void main() {
       verdict(sim);
     });
 
+    for (final skip in [true, false]) {
+      test(
+        'O2 (Run 051, v20 op model): [½ cup oil '
+        '(${skip ? 'skip' : 'pick 5 g'}), onion, "2 teaspoons salt"]; one '
+        'save moves the oil below '
+        'the onion, edits it to ¾ cup and deletes the salt — the '
+        'decision stays on the oil (a cross-ingredient substitution is a '
+        'delete + an insert, two ops, never one)',
+        () async {
+          final was = _opsMax;
+          _opsMax = max(_opsMax, 3);
+          addTearDown(() => _opsMax = was);
+          final sim = sim0()
+            ..start([
+              [_oilHalf, onion, '2 teaspoons salt'],
+            ]);
+          await sim.first();
+          await sim.decide(0, skip: skip, g: 5);
+          final before = sim.flat;
+          sim
+            ..moveTo(0, 0, 1)
+            ..setText(1, '¾ cup extra-virgin olive oil')
+            ..deleteAt(2);
+          await sim.saved('move oil below onion + ½ → ¾ + delete salt', before);
+          // The pick keeps its food; its typed 5 g was for ½ cup, so the
+          // amount edit may re-weigh it (P~5: 'P:5' or 'P*').
+          final got = [
+            for (final r in sim.db.ingredientMatchesFor(sim.recipe.id))
+              '${r.position}:${_tokenOf(r)}',
+          ];
+          expect(got, hasLength(2));
+          expect(got.first, '0:-');
+          expect(
+            _tokMatch(skip ? 'S' : 'P~5', got.last.substring(2)),
+            isTrue,
+            reason: '$got',
+          );
+          verdict(sim);
+        },
+      );
+    }
+
+    test('S3 (Run 051): [½ cup oil, ½ cup oil (skip)]; one save deletes the '
+        'first and appends "Pepper" — the skip stays on the surviving oil '
+        '(a delete + an insert keeps it; the substitution reading drops it '
+        'at the same cost)', () async {
+      final sim = sim0()
+        ..start([
+          [_oilHalf, _oilHalf],
+        ]);
+      await sim.first();
+      await sim.decide(1, skip: true);
+      final before = sim.flat;
+      sim
+        ..deleteAt(0)
+        ..insertAt(1, 'Pepper');
+      await sim.saved('delete line 0 + append Pepper', before);
+      final rows = sim.db.ingredientMatchesFor(sim.recipe.id);
+      expect(
+        [for (final r in rows) '${r.position}:${_tokenOf(r)}'],
+        [
+          '0:S',
+          '1:-',
+        ],
+      );
+      verdict(sim);
+    });
+
+    test('S4 (Run 051): ["2 teaspoons salt", ½ cup oil (skip), ½ cup oil]; '
+        'save 1 inserts "Pepper" at 1, a person picks line 0 in the stale '
+        'window (no row for Pepper yet), save 2 deletes the last oil (the '
+        'undecided twin) — the skip stays', () async {
+      final sim = sim0()
+        ..start([
+          ['2 teaspoons salt', _oilHalf, _oilHalf],
+        ]);
+      await sim.first();
+      await sim.decide(1, skip: true);
+      final before = sim.flat;
+      sim.insertAt(1, 'Pepper');
+      final ran = await sim.savedTwice(
+        'insert Pepper at 1; pick line 0; delete line 3',
+        before,
+        () => sim.deleteAt(3),
+        skip: false,
+      );
+      expect(ran, 'stale');
+      expect(
+        sim.db
+            .ingredientMatchesFor(sim.recipe.id)
+            .any((r) => r.status == 'skipped'),
+        isTrue,
+      );
+      verdict(sim);
+    });
+
     test('budget: 60 corpus lines shuffled whole with a quarter rewritten '
         'in one save (a synthesized edit, far past the oracle) — the search '
         'stops at pairingBudget with the best layout it found: never a row '
@@ -1456,6 +1729,8 @@ void main() {
           if (row?.raw == lines[at].raw) at,
       ].length;
       final paired = pairRowsToLines(rows, lines);
+      // It stopped AT the budget (D3: the magnitude is pinned below).
+      expect(pairingExpansions, pairingBudget);
       final seed = pairRowsToLines(rows, lines, budget: 0);
       final taken = [for (final row in paired) ?row?.position];
       expect(taken.toSet(), hasLength(taken.length));
@@ -1466,6 +1741,130 @@ void main() {
         }
       }
       expect(exact(paired), greaterThan(exact(seed)));
+    });
+
+    test('budget (Run 051 S17): pairingBudget is 10,000 — the search runs '
+        'synchronously in every compute, PUT and GET, ~36 ms at 60 lines '
+        'when it stops there (1e6 measured 5 s: a raise freezes the '
+        'isolate) — and a normal multi-edit save of 40 lines settles far '
+        "below it (0901's 30 lines then 0405's, the list and its edits — a "
+        'move, ½ → ¾ cup oil, a delete, in one save — synthesized, a '
+        'stated exception)', () {
+      expect(pairingBudget, 10000);
+      final was = [
+        ...nutritionLines(
+          loadCorpusRecipe(
+            '0901-caramel-espresso-yule-log-with-meringue-bracket-style-'
+            'mushrooms-and-chocolate-cr.yaml',
+          ),
+        ),
+        ...nutritionLines(loadCorpusRecipe(_acquacotta)),
+      ].take(40).toList();
+      expect(was[34].raw, _oilHalf);
+      final rows = [
+        for (final (i, line) in was.indexed)
+          IngredientMatchRow(
+            recipeId: 'r',
+            position: i,
+            raw: line.raw,
+            fdcId: null,
+            description: null,
+            dataType: null,
+            confidence: 0,
+            grams: null,
+            gramSource: null,
+            status: i.isEven ? 'skipped' : 'auto',
+            itemKey: lineKeyOf(line),
+          ),
+      ];
+      final now = [...was]
+        ..insert(30, was[3])
+        ..removeAt(3)
+        ..[34] = _line('¾ cup extra-virgin olive oil')
+        ..removeAt(12);
+      final paired = pairRowsToLines(rows, now);
+      expect(pairingExpansions, lessThan(2500));
+      expect(paired[28]?.position, 3);
+      expect(paired[33]?.position, 34);
+    });
+
+    // pairRowsToLines alone, on stored rows ([_row]) — Run 051 D4/D6/D2.
+    test('D4 (S21): over the budget, the in-order alignment is the fallback '
+        '— 0405 with line 0 deleted at budget 0 keeps every other row on '
+        'its line', () {
+      final lines = nutritionLines(loadCorpusRecipe(_acquacotta));
+      final rows = [for (final (i, l) in lines.indexed) _row(i, l.raw)];
+      final paired = pairRowsToLines(rows, lines.sublist(1), budget: 0);
+      expect(
+        [for (final r in paired) r?.position],
+        [
+          for (var i = 1; i < lines.length; i++) i,
+        ],
+      );
+    });
+
+    test("D4 (S21): an empty key names no ingredient — 0028's \"(about ¾ "
+        'cup)" (the corpus\'s one keyless line, skipped) edited to "(about '
+        '1 cup)" (synthesized, a stated exception) carries nothing', () {
+      final keyless = _corpusLine(
+        '0028-hearty-minestrone.yaml',
+        '(about ¾ cup)',
+      );
+      expect(lineKeyOf(keyless), isEmpty);
+      final paired = pairRowsToLines(
+        [_row(0, keyless.raw, status: 'skipped', key: '')],
+        [_line('(about 1 cup)')],
+      );
+      expect(paired, [null]);
+    });
+
+    test('D6 (Opus critic 1 #2): a row keys from its own text too — a '
+        'skipped "½ cup" oil row stored under a key an older matcher wrote '
+        '(synthesized, a stated exception) still carries to its "¾ cup" '
+        'amount edit', () {
+      final paired = pairRowsToLines(
+        [_row(0, _oilHalf, status: 'skipped', key: 'oil, olive (v8)')],
+        [
+          _corpusLine(
+            '0856-olive-oil-cake.yaml',
+            '¾ cup extra-virgin olive oil',
+          ),
+        ],
+      );
+      expect(paired.single?.position, 0);
+    });
+
+    test('D2 (Run 051 S4, the gap fuzz): a position with no row is a line '
+        "of unknown text — [½ cup oil (pick), (no row: a person's write "
+        'left the ¼ cup line row-less), "Salt and pepper"]; a save deletes '
+        'the ½ cup line: the pick goes, never onto the ¼ cup line', () {
+      final paired = pairRowsToLines(
+        [_row(0, _oilHalf, status: 'overridden'), _row(2, _sp)],
+        [_line(_oilQuarter), _line(_sp)],
+      );
+      expect([for (final r in paired) r?.position], [null, 2]);
+    });
+
+    test("D2 (the gap fuzz's seed 60): a row carrying an amount edit's OLD "
+        'text, and a row-less line after the last row, mislead a pairing '
+        'from the rows alone — laid out on [¾ cup oil (pick), ½ cup oil, ½ '
+        'cup oil (the ¾ cup row carried onto it, unrecomputed)], a save '
+        'deletes line 0: with the laid-out texts the pick goes; from the '
+        'rows alone it rides onto a ½ cup line (every layout keeps the '
+        'texts: recipe_layout)', () {
+      const oil = '¾ cup extra-virgin olive oil';
+      final rows = [
+        _row(0, oil, status: 'overridden'),
+        _row(1, _oilHalf),
+        _row(2, oil),
+      ];
+      final lines = [_line(_oilHalf), _line(_oilHalf)];
+      final laid = pairRowsToLines(
+        rows,
+        lines,
+        laidOut: [oil, _oilHalf, _oilHalf],
+      );
+      expect([for (final r in laid) r?.position], [1, 2]);
     });
   }, skip: skipIfNoCorpus);
 
@@ -1480,17 +1879,6 @@ void main() {
       final steps = _envInt('ORACLE_STEPS', 12);
       final show = _envInt('ORACLE_SHOW', 12);
       final one = int.tryParse(Platform.environment['ORACLE_SEED'] ?? '');
-      const dense = [
-        _sp,
-        _sp,
-        _oilHalf,
-        _oilQuarter,
-        '¾ cup extra-virgin olive oil',
-        '2 teaspoons salt',
-        '1 teaspoon salt',
-        'Salt',
-        'Pepper',
-      ];
       const modeBag = ['plain', 'plain', 'stale', 'mid', 'fail'];
       const newQueryBag = ['plain', 'stale', 'mid', 'mid', 'fail', 'fail'];
       final found = <(int, _Violation)>[];
@@ -1509,46 +1897,14 @@ void main() {
         _explainClock.reset();
         final (sim, close) = open();
         try {
-          if (rng.nextInt(5) < 2) {
-            sim.start(acquaRaws);
-          } else {
-            sim.start([
-              for (var g = 1 + rng.nextInt(3); g > 0; g--)
-                [
-                  for (var i = 1 + rng.nextInt(4); i > 0; i--)
-                    rng.nextInt(10) < 6
-                        ? dense[rng.nextInt(dense.length)]
-                        : pool[rng.nextInt(pool.length)],
-                ],
-            ]);
-          }
-          await sim.first();
-          Future<void> decideSome(int most) async {
-            for (var k = rng.nextInt(most + 1); k > 0; k--) {
-              await sim.decide(
-                rng.nextInt(sim.flat.length),
-                skip: rng.nextInt(5) < 2,
-              );
-            }
-          }
+          await startRandom(sim, rng);
+          Future<void> decideSome(int most) => decideRandom(sim, rng, most);
 
           await decideSome(3);
           for (var s = 0; s < steps; s++) {
-            // One save of 1..ORACLE_OPS_MAX edits (the single-op mode
-            // draws no count, so its seeds replay the one-edit fuzz).
+            // One save of 1..ORACLE_OPS_MAX edits.
             final before = sim.flat;
-            final names = <String>[];
-            final kinds = <String>[];
-            for (
-              var k = _opsMax == 1 ? 1 : 1 + rng.nextInt(_opsMax);
-              k > 0;
-              k--
-            ) {
-              final (name, mutate) = sim.randomEdit(rng, pool, variants);
-              mutate();
-              names.add(name);
-              kinds.add(name.split(' ').first);
-            }
+            final (names, kinds) = sim.randomEdits(rng, pool, variants);
             final mix = (kinds..sort()).join('+');
             // A compute asks FDC only for a query it never asked, so the
             // edits that bring one carry the interleavings more often.
@@ -1624,6 +1980,82 @@ void main() {
       );
     },
     timeout: const Timeout(Duration(minutes: 30)),
+    skip: skipIfNoCorpus,
+  );
+
+  test(
+    'fuzz (gaps): two saves with the rows left incomplete between them — '
+    "a person's write in the stale window, a save at the compute's first "
+    'provider call, a failed compute — checked against the expectation '
+    'chained over both saves',
+    () async {
+      // Every layout keeps the texts of the lines it laid the rows on
+      // (`recipe_layout`) and the pairing reads them (`laidOut`), so the
+      // rows need not show a row-less line after the last row or a row
+      // still carrying an amount edit's old text. A sweep is
+      // ORACLE_GAP_SEEDS=N; the default runs 60 fresh seeds and the
+      // regression seeds.
+      final seeds = _envInt('ORACLE_GAP_SEEDS', 60);
+      final base = _envInt('ORACLE_SEED_BASE', 0);
+      final steps = _envInt('ORACLE_STEPS', 12);
+      final show = _envInt('ORACLE_SHOW', 12);
+      final one = int.tryParse(Platform.environment['ORACLE_SEED'] ?? '');
+      const gapBag = ['stale', 'stale', 'mid', 'mid', 'fail'];
+      final found = <(int, _Violation)>[];
+      final ran = <String, int>{};
+      for (final seed
+          in one != null
+              ? [one]
+              : [
+                  for (var s = 0; s < seeds; s++) base + s,
+                  ..._gapRegressionSeeds,
+                ]) {
+        final rng = Random(seed);
+        final (sim, close) = open();
+        try {
+          await startRandom(sim, rng);
+          await decideRandom(sim, rng, 3);
+          for (var s = 0; s < steps; s++) {
+            final before = sim.flat;
+            final (first, _) = sim.randomEdits(rng, pool, variants);
+            var second = const <String>[];
+            final seen = sim.violations.length;
+            final gap = await sim.savedTwice(
+              'seed $seed step $s: ${first.join(' + ')}',
+              before,
+              () => (second, _) = sim.randomEdits(rng, pool, variants),
+              gap: gapBag[rng.nextInt(gapBag.length)],
+              at: rng.nextInt(1 << 20),
+              skip: rng.nextBool(),
+              failAfter: rng.nextInt(2),
+            );
+            for (var k = seen; k < sim.violations.length; k++) {
+              final v = sim.violations[k];
+              sim.violations[k] = (
+                kinds: v.kinds,
+                text: '${v.text}  then: ${second.join(' + ')}\n',
+              );
+            }
+            ran[gap] = (ran[gap] ?? 0) + 1;
+            await decideRandom(sim, rng, 2);
+          }
+        } finally {
+          close();
+        }
+        found.addAll([for (final v in sim.violations) (seed, v)]);
+      }
+      final hitSeeds = {for (final (s, _) in found) s};
+      print(
+        'pairing oracle gaps: ${one ?? seeds} seed(s) x $steps double saves; '
+        'gaps run: $ran\nviolations: ${found.length} in ${hitSeeds.length} '
+        'seed(s): ${hitSeeds.toList()..sort()}',
+      );
+      for (final (seed, v) in found.take(show)) {
+        print('--- seed $seed (rerun: ORACLE_SEED=$seed)\n${v.text}');
+      }
+      expect(found.length, 0, reason: 'invariant breaks; printed above');
+    },
+    timeout: const Timeout(Duration(minutes: 60)),
     skip: skipIfNoCorpus,
   );
 }

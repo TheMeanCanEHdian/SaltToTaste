@@ -414,7 +414,13 @@ Map<String, dynamic> _body(List<Map<String, dynamic>> items) => {
 /// Serves the queue from [bodies] in turn (the last repeats) and records
 /// every query it was asked; any other path answers an empty match list.
 class _Adapter implements HttpClientAdapter {
-  _Adapter(this.bodies, {this.failing = const {}});
+  _Adapter(this.bodies, {this.failing = const {}, this.garamMovedUp = false});
+
+  /// Chana Masala as a save since the last compute left it (Run 051 A2): a
+  /// line above the garam masala deleted, so the queue's stored position 12
+  /// holds no line and the garam masala sits at 11. Synthesized — a stated
+  /// exception: a deletion of a real line, no new text.
+  final bool garamMovedUp;
 
   final List<Map<String, dynamic>> bodies;
   final List<Map<String, dynamic>> queries = [];
@@ -474,6 +480,26 @@ class _Adapter implements HttpClientAdapter {
               },
             },
           },
+        ],
+      };
+    } else if (garamMovedUp &&
+        options.path.contains('/chana-masala/nutrition/matches')) {
+      final sent = options.method == 'PUT' ? options.data as Map? : null;
+      final garam = sent?['confirmed'] == true
+          ? _garamConfirmedLine
+          : sent?['skipped'] == true
+          ? {
+              ..._garamLine,
+              'match': {
+                ...(_garamLine['match']! as Map<String, dynamic>),
+                'status': 'skipped',
+              },
+            }
+          : _garamLine;
+      body = {
+        'items': [
+          _gingerLine,
+          {...garam, 'position': 11},
         ],
       };
     } else if (options.path.contains('/chana-masala/nutrition/matches')) {
@@ -618,13 +644,14 @@ final _rowPills = find.byWidgetPredicate(
 void main() {
   Future<_Adapter> pumpQueue(
     WidgetTester tester,
-    List<Map<String, dynamic>> bodies,
-  ) async {
+    List<Map<String, dynamic>> bodies, {
+    bool garamMovedUp = false,
+  }) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final adapter = _Adapter(bodies);
+    final adapter = _Adapter(bodies, garamMovedUp: garamMovedUp);
     final dio = Dio(BaseOptions(baseUrl: 'http://test'))
       ..httpClientAdapter = adapter;
     final recipeRepo = RecipeRepository(dio: dio);
@@ -926,6 +953,47 @@ void main() {
         ),
         isFalse,
       );
+    });
+  });
+
+  // Run 051 A2: a save since the last compute deleted a line above the
+  // garam masala (the adapter's garamMovedUp — a stated exception), so the
+  // queue's stored position 12 holds no line and the garam masala sits at
+  // 11. The pane finds the line by its text where it is now, sends ITS text
+  // (the bold heading), and judges the advance on the row it acted on.
+  group('Run 051 A2: a line a save moved', () {
+    testWidgets('a Confirm that leaves the moved line in No grams keeps the '
+        'pane on it', (tester) async {
+      final adapter = await pumpQueue(tester, [
+        _body([_garam, _almond]),
+        _body([_almond]),
+      ], garamMovedUp: true);
+      await tester.tap(find.text('Confirm'));
+      await tester.pumpAndSettle();
+      expect(
+        adapter.puts.single.$1,
+        endsWith('/chana-masala/nutrition/matches/11'),
+      );
+      expect(adapter.puts.single.$2, {'raw': _garam['raw'], 'confirmed': true});
+      expect(adapter.queries, hasLength(1), reason: 'the queue did not move');
+      expect(find.text('Confirm with amount'), findsOneWidget);
+    });
+
+    testWidgets('a Skip of the moved line lands on it and advances the pane', (
+      tester,
+    ) async {
+      final adapter = await pumpQueue(tester, [
+        _body([_garam, _almond]),
+        _body([_almond]),
+      ], garamMovedUp: true);
+      await tester.tap(find.text('Skip'));
+      await tester.pumpAndSettle();
+      expect(
+        adapter.puts.single.$1,
+        endsWith('/chana-masala/nutrition/matches/11'),
+      );
+      expect(adapter.puts.single.$2, {'raw': _garam['raw'], 'skipped': true});
+      expect(adapter.queries, hasLength(2), reason: 'the queue moved on');
     });
   });
 

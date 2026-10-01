@@ -963,8 +963,12 @@ void main() {
     // its pins read from snapshot 13: five are hits ('salt' 2707517,
     // 'sweetened coconut' 2707571, 'butter' 2707533, 'mcintosh apples'
     // 168816, 'hazelnuts' 2707502), all five differ in some digit.
-    expect(compared, 231);
-    expect(differ, 175);
+    // Matcher v20 (Run 051's grams) recorded the three records its pins
+    // read from snapshot 13: two are hits ('dutch-processed cocoa powder'
+    // 169594, 'snow peas' 170010; mustard greens 169256 is in no recorded
+    // answer): the cocoa differs in some digit, the peas are equal.
+    expect(compared, 233);
+    expect(differ, 176);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

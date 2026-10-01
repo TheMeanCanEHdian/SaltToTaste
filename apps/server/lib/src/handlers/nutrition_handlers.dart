@@ -113,7 +113,11 @@ Future<Map<String, Object?>> matchesBody(
   // Each line's row as the next layout pairs it (in memory: a GET writes
   // nothing), so an edit since the last compute never shows a line
   // another line's row.
-  final matches = pairRowsToLines(db.ingredientMatchesFor(recipe.id), lines);
+  final matches = pairRowsToLines(
+    db.ingredientMatchesFor(recipe.id),
+    lines,
+    laidOut: db.layoutOf(recipe.id).lines,
+  );
   // The line each of this recipe's stored rows is paired to (by stored
   // position): the offer below counts this recipe's rows as laid out.
   final pairedTo = {
@@ -279,6 +283,7 @@ typedef AppliedToOthers = ({
   int failed,
   int completed,
   List<String> completedRecipes,
+  int moved,
 });
 
 /// The receipt's wire shape (`applied` on the `PUT …/matches/{pos}` body).
@@ -288,6 +293,7 @@ Map<String, Object?> appliedJson(AppliedToOthers applied) => {
   'failed': applied.failed,
   'completed': applied.completed,
   'completed_recipes': applied.completedRecipes,
+  'moved': applied.moved,
 };
 
 /// Applies a `PUT .../nutrition/matches/<pos>` override [body] and
@@ -339,28 +345,43 @@ Future<AppliedToOthers?> applyMatchOverride(
   // changes. A save during this request's own awaits (cachedFood,
   // gramsFor) is read again before the write (below).
   layoutMatchRows(db, recipe);
+  // The layout this request reads its row under ([SaltDatabase.layoutOf]).
+  var seq = db.layoutOf(recipe.id).seq;
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
   };
-  var row = existing[position];
-  // A decision always applies to the line's CURRENT text: rows carrying a
-  // pre-edit raw would be silently reverted by the next compute (and
-  // grams applied under old text would mislead). Start fresh in that case.
-  if (row == null || row.raw != line.raw) {
-    row = IngredientMatchRow(
-      recipeId: recipe.id,
-      position: position,
-      raw: line.raw,
-      fdcId: row?.fdcId,
-      description: row?.description,
-      dataType: row?.dataType,
-      confidence: row?.confidence ?? 0,
-      grams: row?.grams,
-      gramSource: row?.gramSource,
-      status: row?.status ?? 'unmatched',
-      itemKey: itemKey,
-    );
+  final read = existing[position];
+  var row = read;
+  // A row the layout carried here from its line's old text (the same
+  // ingredient, edited — the compute has not run since the save) is first
+  // what that compute makes of it ([editedDecisionRow]: its food and
+  // status, the grams for the NEW amount), so a skip, confirm or un-skip
+  // here never stamps the old amount's grams under the new text (Run 051
+  // B2: a skip then an un-skip in that window counted 3 g typed for "½
+  // cup" on "1 cup" of oil). With no row, start fresh.
+  if (row != null && row.raw != line.raw) {
+    row = (await editedDecisionRow(
+      db,
+      provider,
+      recipe,
+      position,
+      line,
+      row,
+    )).row;
   }
+  row ??= IngredientMatchRow(
+    recipeId: recipe.id,
+    position: position,
+    raw: line.raw,
+    fdcId: null,
+    description: null,
+    dataType: null,
+    confidence: 0,
+    grams: null,
+    gramSource: null,
+    status: 'unmatched',
+    itemKey: itemKey,
+  );
 
   final applyToAll = body['apply_to_all'];
   if (applyToAll != null && applyToAll is! bool) {
@@ -577,16 +598,31 @@ Future<AppliedToOthers?> applyMatchOverride(
   // lines borrowed it from this row and lost it with it). A grams-only edit
   // decides the amount, not the food, and writes nothing; neither does a
   // skip. The same gate apply_to_all uses.
-  // A save during the awaits above: the rows are laid out on the stored
-  // lines again, and the write lands only while this line still stands at
-  // [position] (else 409 line_moved; nothing written).
-  if (db.contentHashOf(recipe.id) != version) {
-    recipe = db.recipeByIdOrSlug(recipe.id)?.recipe ?? recipe;
+  // A save, or a layout, during the awaits above (Run 051 C1: a save and
+  // its revert hash the same, so the content hash alone cannot tell — the
+  // layout sequence can): the rows are laid out on the stored lines again,
+  // and the write lands only while this line still stands at [position]
+  // and the row the layout gives it is the one this request read (else 409
+  // line_moved; this line's row is left as it was). A recipe deleted
+  // meanwhile is a 404.
+  if (db.contentHashOf(recipe.id) != version ||
+      db.layoutOf(recipe.id).seq != seq) {
+    recipe =
+        db.recipeByIdOrSlug(recipe.id)?.recipe ??
+        (throw const NotFoundException('Recipe not found.'));
     final now = nutritionLines(recipe);
     if (position >= now.length || now[position].raw != line.raw) {
       throw LineMovedException(nearestLineOf(now, line.raw, position));
     }
     layoutMatchRows(db, recipe);
+    final laid = db
+        .ingredientMatchesFor(recipe.id)
+        .where((row) => row.position == position)
+        .firstOrNull;
+    if (!_sameRow(laid, read)) {
+      throw LineMovedException(position);
+    }
+    seq = db.layoutOf(recipe.id).seq;
   }
   if (decidedFood && itemKey.isNotEmpty) {
     db.putDecision(
@@ -620,9 +656,12 @@ Future<AppliedToOthers?> applyMatchOverride(
             ) ??
             row
       : row;
-  db.upsertIngredientMatch(
+  if (!db.upsertIngredientMatch(
     stored.copyWith(itemKey: itemKey, clearHold: skipped != false),
-  );
+    layoutSeq: seq,
+  )) {
+    throw LineMovedException(position);
+  }
   await recomputeTotals(db, provider, recipe);
 
   if (food == null) {
@@ -636,6 +675,21 @@ Future<AppliedToOthers?> applyMatchOverride(
     excluding: (recipeId: recipe.id, position: position),
   );
 }
+
+/// Whether [a] and [b] are the same stored row (its text, decision and
+/// grams; not its position or write time), both absent included.
+bool _sameRow(IngredientMatchRow? a, IngredientMatchRow? b) =>
+    (a == null && b == null) ||
+    (a != null &&
+        b != null &&
+        a.raw == b.raw &&
+        a.status == b.status &&
+        a.fdcId == b.fdcId &&
+        a.confidence == b.confidence &&
+        a.grams == b.grams &&
+        a.gramSource == b.gramSource &&
+        a.hold == b.hold &&
+        a.description == b.description);
 
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.

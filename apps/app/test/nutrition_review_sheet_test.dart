@@ -474,6 +474,7 @@ void main() {
       _state().copyWith(
         offer: (
           position: 10,
+          raw: '1 small head escarole (10 oz), cut up',
           label: 'escarole',
           fdcId: 99,
           confirmed: false,
@@ -515,6 +516,7 @@ void main() {
       _state().copyWith(
         offer: (
           position: 7,
+          raw: '8 cups chicken broth',
           label: 'chicken broth',
           fdcId: 4,
           confirmed: true,
@@ -527,6 +529,33 @@ void main() {
     );
     await open(tester, seeded: cubit);
     expect(find.text('Apply to 4 lines'), findsOneWidget);
+  });
+
+  testWidgets('A1: the strip shows under no row when the row at its '
+      'position reads another text (a save moved the lines)', (tester) async {
+    // The offer was raised on the escarole line; the row now at its
+    // position is the chicken broth. Neither row is the offer's: by position
+    // alone the strip sat under the broth, by text alone under the escarole
+    // row at another position. (Synthesized pairing of two real lines — a
+    // stated exception: the state a stale offer would leave.)
+    final cubit = _ApplyCubit(
+      _state().copyWith(
+        offer: (
+          position: 7,
+          raw: '1 small head escarole (10 oz), cut up',
+          label: 'escarole',
+          fdcId: 99,
+          confirmed: false,
+          grams: null,
+          others: 41,
+          lines: 41,
+        ),
+      ),
+    );
+    await open(tester, seeded: cubit);
+    expect(find.text('8 cups chicken broth'), findsOneWidget);
+    expect(find.text('1 small head escarole (10 oz), cut up'), findsOneWidget);
+    expect(find.text('Apply to 41 lines'), findsNothing);
   });
 
   testWidgets('the fix panel says how old its candidates are and offers a '
@@ -808,6 +837,7 @@ void main() {
         _state().copyWith(
           offer: (
             position: 10,
+            raw: '1 small head escarole (10 oz), cut up',
             label: 'escarole',
             fdcId: 99,
             confirmed: false,

@@ -335,4 +335,23 @@ CREATE TABLE ingredient_decisions (
   // sheet explains; it only holds an `auto` row — a person's decision on the
   // row always counts. NULL on every existing row: the next compute sets it.
   ['ALTER TABLE ingredient_matches ADD COLUMN hold TEXT'],
+
+  // 012 — a recipe's match-row LAYOUT (Run 051 C1, D2): `seq` counts the
+  // layouts that changed where its rows stand or the lines they stand on
+  // (SaltDatabase.relayoutIngredientMatches), so a writer that read the
+  // rows before an await writes only while no layout came between — the
+  // content hash cannot tell, a save and its revert hash the same (ABA).
+  // `lines` holds the texts (a JSON array) of the lines the rows were last
+  // laid out on, the old side the next pairing reads. Its own table: a
+  // recipe may have rows and no recipe_nutrition row (a person's write
+  // before any compute). No row = never laid out (seq 0, texts unknown).
+  [
+    '''
+CREATE TABLE recipe_layout (
+  recipe_id TEXT PRIMARY KEY REFERENCES recipes(id) ON DELETE CASCADE,
+  seq INTEGER NOT NULL,
+  lines TEXT NOT NULL
+) WITHOUT ROWID
+''',
+  ],
 ];

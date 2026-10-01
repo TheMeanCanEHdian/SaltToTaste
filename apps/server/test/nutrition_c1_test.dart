@@ -1009,6 +1009,7 @@ void main() {
         'failed': 0,
         'completed': 1,
         'completed_recipes': [byTitle['Easy Holiday Sugar Cookies']!.id],
+        'moved': 0,
       });
       expect(
         db.nutritionFor(byTitle['Easy Holiday Sugar Cookies']!.id)!.status,

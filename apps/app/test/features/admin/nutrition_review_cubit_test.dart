@@ -945,6 +945,68 @@ void main() {
       await cubit.close();
     });
 
+    test('Run 051 A5: of two overtaken replies landing out of order, the '
+        'NEWER goes up when the request past both fails', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 1);
+      final lines = cubit.setGrouped(false);
+      await waitFor(adapter, 2);
+      final check = cubit.filter('check');
+      await waitFor(adapter, 3);
+      // The newer overtaken reply (lines) lands first, the older (grouped)
+      // after it; then the request past both fails.
+      adapter.held[1].complete();
+      await lines;
+      adapter.held[0].complete();
+      await worst;
+      adapter.failNext = true;
+      adapter.held[2].complete();
+      await check;
+      final shown = cubit.state as NutritionReviewLoaded;
+      expect((shown.sort, shown.grouped), ('worst', false));
+      await cubit.close();
+    });
+
+    test('Run 051 A5: an overtaken reply that goes up after the newer '
+        'request failed brings the order memory with it', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final worst = cubit.setSort('worst');
+      await waitFor(adapter, 1);
+      final check = cubit.filter('check');
+      await waitFor(adapter, 2);
+      adapter.failNext = true;
+      adapter.held[1].complete();
+      await check;
+      adapter.held[0].complete();
+      await worst;
+      expect((cubit.state as NutritionReviewLoaded).sort, 'worst');
+      // The memory matches the screen: the next reload asks the same order.
+      adapter.hold = false;
+      await cubit.completeFix();
+      expect(adapter.queries.last['sort'], 'worst');
+      await cubit.close();
+    });
+
+    test('Run 051 A5: a reply landing after the page closed is dropped '
+        'without an emit', () async {
+      final adapter = _FakeAdapter(seed());
+      final cubit = cubitWith(adapter);
+      await cubit.load();
+      adapter.hold = true;
+      final fix = cubit.completeFix();
+      await waitFor(adapter, 1);
+      await cubit.close();
+      adapter.held[0].complete();
+      await expectLater(fix, completes);
+    });
+
     test('Run 050 A2: when BOTH fail across two buckets, the grouping goes '
         'back under the bucket SHOWN, never the one requested', () async {
       final adapter = _FakeAdapter(seed());

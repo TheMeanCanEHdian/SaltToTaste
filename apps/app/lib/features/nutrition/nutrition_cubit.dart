@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
+import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 
 /// An offer to push a decision just made on one line out to every other
 /// undecided line of the same ingredient item: what to resend (the pick, or
@@ -13,8 +14,15 @@ import 'package:salt_app/core/api/recipe_repository.dart'
 /// The reach is food-agnostic: the others are the undecided lines of this
 /// ingredient, whatever food they happen to sit on — so the strip tells one
 /// sentence, about lines waiting on this decision.
+///
+/// [raw] is the text of the line the offer was raised on, captured with the
+/// offer and never re-read: every resend names that line, and a reload that
+/// moves the lines moves (or withdraws) the offer by it (Run 051 A1 — a
+/// retry that re-read the row at [position] wrote the food onto whatever
+/// line a save had put there).
 typedef ApplyOffer = ({
   int position,
+  String raw,
   String label,
   int? fdcId,
   bool confirmed,
@@ -122,6 +130,40 @@ final class NutritionState {
     error: clearError ? null : (error ?? this.error),
   );
 }
+
+/// [offer] on freshly reloaded [matches]: kept while the row at its
+/// position still reads its line's text, moved to the one row that does when
+/// a save shifted the line, and null — withdrawn — when no row, or more than
+/// one (twin lines: which one it was is unknowable), reads it.
+ApplyOffer? offerOnReload(ApplyOffer offer, List<IngredientMatch> matches) {
+  final reading = [
+    for (final m in matches)
+      if (m.raw == offer.raw) m.position,
+  ];
+  if (reading.contains(offer.position)) {
+    return offer;
+  }
+  if (reading.length != 1) {
+    return null;
+  }
+  return (
+    position: reading.single,
+    raw: offer.raw,
+    label: offer.label,
+    fdcId: offer.fdcId,
+    confirmed: offer.confirmed,
+    grams: offer.grams,
+    others: offer.others,
+    lines: offer.lines,
+  );
+}
+
+/// Whether [offer] belongs under row [m]: the row at its position that
+/// still reads the text it was raised on (position alone showed the strip
+/// under whatever line a save had moved there; text alone doubles it on
+/// twin lines).
+bool offerIsFor(ApplyOffer? offer, IngredientMatch m) =>
+    offer != null && offer.position == m.position && offer.raw == m.raw;
 
 /// Drives one recipe's label: load, compute, serving basis, and the review
 /// sheet's match overrides.
@@ -302,7 +344,7 @@ class NutritionCubit extends Cubit<NutritionState> {
       if (isClosed) {
         return;
       }
-      emit(state.copyWith(matches: matches));
+      _emitRows(matches);
     } on RepositoryException catch (exception) {
       if (isClosed) {
         return;
@@ -343,7 +385,7 @@ class NutritionCubit extends Cubit<NutritionState> {
         return;
       }
       emit(state.copyWith(clearOverriding: true, error: exception.message));
-      if (exception.code == 'line_moved') {
+      if (exception.code == ApiErrorCodes.lineMoved) {
         await _reloadMatchesKeepingError();
       }
       return;
@@ -368,6 +410,7 @@ class NutritionCubit extends Cubit<NutritionState> {
     final offer = decided && row != null && row.others > 0
         ? (
             position: position,
+            raw: row.raw,
             label: itemLabel(row.item) ?? row.raw,
             fdcId: fdcId,
             confirmed: confirmed == true,
@@ -410,14 +453,38 @@ class NutritionCubit extends Cubit<NutritionState> {
     }
   }
 
+  /// Shows freshly fetched [matches]. Every reload of the rows goes through
+  /// here, so a pending offer always follows its line by text
+  /// ([offerOnReload]); one whose line it cannot place is withdrawn, and the
+  /// message (after any already up) says so.
+  void _emitRows(List<IngredientMatch> matches) {
+    final offer = state.offer;
+    final moved = offer == null ? null : offerOnReload(offer, matches);
+    final withdrawn = offer != null && moved == null;
+    emit(
+      state.copyWith(
+        matches: matches,
+        offer: moved,
+        clearOffer: withdrawn,
+        error: withdrawn
+            ? '${state.error ?? ''} The apply-to-all offer for '
+                      '"${offer.raw}" was withdrawn: that line is no '
+                      'longer in the recipe as it was.'
+                  .trim()
+            : null,
+      ),
+    );
+  }
+
   /// Refetches the rows after a `line_moved` refusal; the refusal's message
   /// stays up (a failed refetch leaves the rows as they were).
   Future<void> _reloadMatchesKeepingError() async {
     try {
       final matches = await _repository.matches(idOrSlug);
-      if (!isClosed) {
-        emit(state.copyWith(matches: matches));
+      if (isClosed) {
+        return;
       }
+      _emitRows(matches);
     } on RepositoryException {
       // The refusal already says to refresh; nothing more to add.
     }
@@ -437,11 +504,9 @@ class NutritionCubit extends Cubit<NutritionState> {
       result = await _repository.overrideMatch(
         idOrSlug,
         offer.position,
-        // The offered line as the screen shows it (a save since: 409).
-        raw: [
-          for (final m in state.matches ?? const <IngredientMatch>[])
-            if (m.position == offer.position) m.raw,
-        ].firstOrNull,
+        // The line the offer was raised on — never the row now at its
+        // position (a save since: 409, and the reload re-locates it).
+        raw: offer.raw,
         fdcId: offer.fdcId,
         grams: offer.grams,
         confirmed: offer.confirmed ? true : null,
@@ -452,7 +517,7 @@ class NutritionCubit extends Cubit<NutritionState> {
         return;
       }
       emit(state.copyWith(applying: false, error: exception.message));
-      if (exception.code == 'line_moved') {
+      if (exception.code == ApiErrorCodes.lineMoved) {
         await _reloadMatchesKeepingError();
       }
       return;

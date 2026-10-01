@@ -1475,8 +1475,32 @@ class SaltDatabase {
     return (flagged: flagged, byBucket: byBucket);
   }
 
-  /// Creates or replaces one match row.
-  void upsertIngredientMatch(IngredientMatchRow row) {
+  /// Creates or replaces one match row. With [layoutSeq], only while the
+  /// recipe's layout is still that one ([layoutOf]), checked in the write's
+  /// own transaction; returns whether the row was written.
+  bool upsertIngredientMatch(IngredientMatchRow row, {int? layoutSeq}) =>
+      _atLayout(row.recipeId, layoutSeq, () {
+        _upsertMatch(row);
+        return true;
+      });
+
+  /// Runs [write] — alone, or with [layoutSeq] inside one transaction that
+  /// first checks the recipe's layout sequence is still [layoutSeq] (a
+  /// relayout since the caller read the rows: nothing is written, false).
+  bool _atLayout(String recipeId, int? layoutSeq, bool Function() write) {
+    if (layoutSeq == null) {
+      return write();
+    }
+    var written = false;
+    _inTransaction(() {
+      if (layoutOf(recipeId).seq == layoutSeq) {
+        written = write();
+      }
+    });
+    return written;
+  }
+
+  void _upsertMatch(IngredientMatchRow row) {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
@@ -1525,8 +1549,14 @@ class SaltDatabase {
   /// which the engine rewrites when its rule changes (a sub-recipe row that
   /// now counts its food, matcher v14). Returns whether the row was written
   /// — the guard is in the statement, so this is the only way a caller can
-  /// know.
-  bool upsertIngredientMatchIfUndecided(IngredientMatchRow row) {
+  /// know. With [layoutSeq], the write lands only while the recipe's layout
+  /// is still that one, as [upsertIngredientMatch] checks it.
+  bool upsertIngredientMatchIfUndecided(
+    IngredientMatchRow row, {
+    int? layoutSeq,
+  }) => _atLayout(row.recipeId, layoutSeq, () => _upsertIfUndecided(row));
+
+  bool _upsertIfUndecided(IngredientMatchRow row) {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
@@ -1580,13 +1610,20 @@ class SaltDatabase {
   /// positions first, so a swap or a shift never meets the primary key, and
   /// whatever still sits at a destination (the engine's row of that line,
   /// re-derived after) is deleted; a destination is never another mover's
-  /// or a kept row's position, by the pairing's construction.
+  /// or a kept row's position, by the pairing's construction. [lines] are
+  /// the texts of the lines the rows are laid out on: a layout that moves or
+  /// drops a row or lays them on other lines bumps the recipe's layout
+  /// sequence and keeps the texts ([layoutOf]) in the same transaction; one
+  /// that changes nothing writes nothing.
   void relayoutIngredientMatches(
     String recipeId, {
     required Set<int> drop,
     required Map<int, ({int to, String? itemKey})> moves,
+    required List<String> lines,
   }) {
-    if (drop.isEmpty && moves.isEmpty) {
+    final texts = jsonEncode(lines);
+    final layout = layoutOf(recipeId);
+    if (drop.isEmpty && moves.isEmpty && layout.texts == texts) {
       return;
     }
     final delete = _prepared(
@@ -1618,7 +1655,33 @@ class SaltDatabase {
           -1 - i,
         ]);
       }
+      // (A recipe deleted meanwhile has no layout to keep.)
+      _prepared(
+        'INSERT INTO recipe_layout (recipe_id, seq, lines) '
+        'SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM recipes WHERE id = ?) '
+        'ON CONFLICT(recipe_id) DO UPDATE SET seq = excluded.seq, '
+        'lines = excluded.lines',
+      ).execute([recipeId, layout.seq + 1, texts, recipeId]);
     });
+  }
+
+  /// A recipe's match-row layout (migration 012): `seq` counts the layouts
+  /// that moved or dropped its rows or changed the lines they stand on (0:
+  /// never laid out), `texts` is the JSON array of those lines' texts and
+  /// `lines` decodes it (both null: never laid out).
+  ({int seq, String? texts, List<String>? lines}) layoutOf(String recipeId) {
+    final rows = _prepared(
+      'SELECT seq, lines FROM recipe_layout WHERE recipe_id = ?',
+    ).select([recipeId]);
+    if (rows.isEmpty) {
+      return (seq: 0, texts: null, lines: null);
+    }
+    final texts = rows.first['lines'] as String;
+    return (
+      seq: rows.first['seq'] as int,
+      texts: texts,
+      lines: (jsonDecode(texts) as List).cast<String>(),
+    );
   }
 
   /// The computed nutrition row for a recipe, or null.

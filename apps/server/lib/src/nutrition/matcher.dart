@@ -258,8 +258,12 @@ const Map<String, String> _synonyms = {
 /// almond and apple butter) and a named nut ('nuts') on their record's
 /// own portion, no drink's portion for its powder, a shredded or grated
 /// portion for a shred, 'small' read from the item's own words, and
-/// quantity words before a flake salt.
-const int matcherVersion = 19;
+/// quantity words before a flake salt; 20 = Run 051's grams: a density key
+/// that only modifies the item's head weighs on a record of the key's own
+/// food by that record's volume portion (vanilla extract, cayenne pepper,
+/// cocoa powder), sugar snap peas are no sugar, and a dried chile is small
+/// by its item's own words.
+const int matcherVersion = 20;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

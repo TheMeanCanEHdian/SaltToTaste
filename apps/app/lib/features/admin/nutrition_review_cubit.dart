@@ -298,7 +298,9 @@ class NutritionReviewCubit extends Cubit<NutritionReviewState> {
       }
       return;
     }
-    _overtaken = null;
+    // A stored overtaken reply is left as is: its ticket is below this one,
+    // so it can never go up (_showOvertaken wants a ticket newer than the
+    // screen) nor block a newer one from being stored (Run 051 A5).
     _show(ticket, list);
   }
 

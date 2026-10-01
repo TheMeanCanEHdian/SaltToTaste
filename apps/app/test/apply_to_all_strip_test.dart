@@ -33,6 +33,7 @@ void main() {
 
   const offer = (
     position: 0,
+    raw: '4 sticks unsalted butter',
     label: 'unsalted butter',
     fdcId: 1,
     confirmed: false,
@@ -62,6 +63,7 @@ void main() {
             child: ApplyToAllStrip(
               offer: (
                 position: offer.position,
+                raw: offer.raw,
                 label: offer.label,
                 fdcId: offer.fdcId,
                 confirmed: offer.confirmed,
@@ -111,6 +113,7 @@ void main() {
             child: ApplyToAllStrip(
               offer: (
                 position: 2,
+                raw: '2 large jalapeño chiles, sliced thin (about ¼ cup)',
                 label: 'jalapeno chile',
                 fdcId: null,
                 confirmed: true,

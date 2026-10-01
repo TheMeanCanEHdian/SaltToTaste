@@ -1,12 +1,17 @@
-// The pairing's same-ingredient carries (pairRowsToLines) under edits of
-// MORE than one line in one save — the pairing oracle
-// (pairing_oracle_test.dart) explains every edit as ONE op, so it never
-// reaches them. Real data: 0405 Acquacotta's lines and 0856's "¾ cup
-// extra-virgin olive oil"; the edits (two changes in one save, and "1 cup
-// extra-virgin olive oil", 0405's "¼ cup" line with its amount changed) are
-// synthesized, a stated exception. Also what the oracle cannot interleave: a
-// save and a person's write while a compute of the PREVIOUS version awaits
-// FDC, and the matches GET between a save and the next compute.
+// Named pins of the pairing's same-ingredient carries (pairRowsToLines)
+// under saves editing MORE than one line, beside the multi-op pairing oracle
+// (pairing_oracle_test.dart: 1..3 random edits per save, and its gap mode),
+// which checks them against hidden identities but pins no single case. Real
+// data: 0405 Acquacotta's lines and 0856's "¾ cup extra-virgin olive oil".
+// Synthesized, stated exceptions: the edits themselves (two or more changes
+// in one save; "1 cup extra-virgin olive oil" and the "¾ cup" amount edits
+// of 0405's oil lines), and the P2 saves made while a compute awaits FDC (a
+// tags-only "weeknight" save of a three-line list of 0405's own lines, the
+// first line deleted, a save reverted to the version the compute started
+// from), and the S19 offer pins' two-oil list with its ½ cup picked onto
+// 173468. Also what the oracle cannot interleave: a save and a person's
+// write while a compute of the PREVIOUS version awaits FDC, and the matches
+// GET between a save and the next compute.
 import 'dart:io';
 
 import 'package:salt_server/src/db/salt_database.dart';
@@ -344,6 +349,59 @@ void main() {
         0,
         0,
       ));
+    }, skip: skipIfNoCorpus);
+
+    // Run 051 S19: the offer's two exclusion terms. 0405's two olive oil
+    // lines (one ingredient key), the ½ cup picked onto another record
+    // (173468, synthesized: a stated exception) so the ¼ cup's auto row is
+    // the ½ cup's apply-to-all reach.
+    Future<int?> othersOf(Recipe r, String raw) async {
+      for (final i
+          in ((await matchesBody(db, provider, r))['items']! as List)
+              .cast<Map<String, Object?>>()) {
+        if (i['raw'] == raw) {
+          return i['others'] as int?;
+        }
+      }
+      return null;
+    }
+
+    Future<Recipe> picked() async {
+      final v0 = version([oilHalf, oilQuarter]);
+      save(v0);
+      await matchAndCompute(db, provider, v0);
+      await applyMatchOverride(db, provider, v0, 0, {
+        'fdc_id': 173468,
+        'grams': 5,
+      });
+      expect(await othersOf(v0, oilHalf), 1);
+      return v0;
+    }
+
+    test('S19 (Run 051): a save deleting the ¼ cup line, before the next '
+        'compute, leaves its row stored — the layout would delete it, so the '
+        "½ cup's offer counts it no more (the line list is synthesized: a "
+        'stated exception)', () async {
+      await picked();
+      final v1 = version([oilHalf]);
+      save(v1);
+      expect(db.ingredientMatchesFor(v1.id).length, 2);
+      expect(await othersOf(v1, oilHalf), 0);
+    }, skip: skipIfNoCorpus);
+
+    test('S19 (Run 051): a line inserted above both, before the next compute, '
+        "puts the ¼ cup's row at the ½ cup's new position — the offer still "
+        'counts it (the stored position is no line identity; the inserted '
+        '"Salt and pepper" and the list are synthesized: a stated '
+        'exception)', () async {
+      await picked();
+      final v1 = version([sp, oilHalf, oilQuarter]);
+      save(v1);
+      expect(
+        db.ingredientMatchesFor(v1.id).map((r) => r.raw).elementAt(1),
+        oilQuarter,
+      );
+      expect(await othersOf(v1, oilHalf), 1);
     }, skip: skipIfNoCorpus);
 
     test('the matches GET shows each line its own row before the next '

@@ -884,27 +884,25 @@ class _FixPane extends StatelessWidget {
 
 /// The row of the queue's [line] in its recipe's [matches]. The queue
 /// lists a row at its STORED position, which a save since the last compute
-/// can leave behind its line: the row at that position when it reads the
-/// line's text, else the row reading it nearest there (the line moved),
-/// else the row at the position.
+/// can leave behind its line: the row reading the line's text nearest that
+/// position (itself when the line did not move; the lower of two twins
+/// equally near), and null when no row reads it — the line was edited or
+/// removed. Never the row that now sits at the position: that is another
+/// line, and acting on it wrote this line's fix onto it (Run 051 A2).
 IngredientMatch? queueMatchOf(
   List<IngredientMatch> matches,
   NutritionReviewLine line,
 ) {
-  IngredientMatch? at;
-  IngredientMatch? moved;
+  IngredientMatch? nearest;
   for (final m in matches) {
-    if (m.position == line.position) {
-      at = m;
-    }
     if (m.raw == line.raw &&
-        (moved == null ||
+        (nearest == null ||
             (m.position - line.position).abs() <
-                (moved.position - line.position).abs())) {
-      moved = m;
+                (nearest.position - line.position).abs())) {
+      nearest = m;
     }
   }
-  return at != null && at.raw == line.raw ? at : moved ?? at;
+  return nearest;
 }
 
 /// Whether a [NutritionState] transition means the selected line is done
@@ -998,10 +996,12 @@ class _FixPaneBody extends StatelessWidget {
           }
           final match = queueMatchOf(matches, line);
           if (match == null) {
-            // The line the queue pointed at is gone from the recipe (e.g. it
-            // was just resolved and the refresh is landing) — a transient blank.
+            // No line of the recipe reads the queued text: a save since the
+            // last compute edited or removed it. Nothing here is this line.
             return const _FixMessage(
-              text: 'This line has been resolved.',
+              text:
+                  'This line was edited or removed since the queue was '
+                  "built. Recompute the recipe's nutrition to refresh it.",
               isError: false,
             );
           }
@@ -1048,9 +1048,8 @@ class _FixContentState extends State<_FixContent> {
     final bucket = matchBucketOf(match);
     final amountFirst = confirmsWithAmount(match);
     void confirm() =>
-        cubit.override(match.position, raw: match.raw, confirmed: true);
-    void skip() =>
-        cubit.override(match.position, raw: match.raw, skipped: true);
+        cubit.override(match.position, raw: line.raw, confirmed: true);
+    void skip() => cubit.override(match.position, raw: line.raw, skipped: true);
     final waiting = openLinesBesides(state.matches ?? const [], match.position);
     // The split shows only BEFORE the decision, on a group that promises.
     final split =
@@ -1160,13 +1159,11 @@ class _FixContentState extends State<_FixContent> {
             const SizedBox(height: 12),
             FinishesSplit(line: line, match: match, waiting: waiting),
           ],
-          if (state.offer?.position == match.position ||
+          if (offerIsFor(state.offer, match) ||
               state.applied?.position == match.position) ...[
             const SizedBox(height: 12),
             ApplyToAllStrip(
-              offer: state.offer?.position == match.position
-                  ? state.offer
-                  : null,
+              offer: offerIsFor(state.offer, match) ? state.offer : null,
               applied: state.applied?.position == match.position
                   ? state.applied
                   : null,
