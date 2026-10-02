@@ -429,21 +429,22 @@ class EditorCubit extends Cubit<EditorState> {
   /// Whether the parser fully explains this stored line — if not, the
   /// structured fields were curated by a human (the corpus review queue)
   /// and must not be silently replaced by re-parsing on the next keystroke.
-  /// The stored fields are read as the parser reads a line
-  /// ([normalizeLineWhitespace]): a line saved before the parser collapsed
-  /// whitespace runs ("Salt  and pepper") is still the parser's.
+  /// The WHOLE stored line is read as the parser reads a line — its item,
+  /// prep and every amount's quantity and unit through the one normaliser
+  /// the parser runs over a raw ([normalizeLineFields]): a line saved
+  /// before the parser collapsed whitespace runs ("Salt  and pepper", a
+  /// quantity "1  1/2") is still the parser's (Run 056 O12/S26).
   static bool _parserExplains(IngredientLine line) {
     final parsed = parseIngredientLine(line.raw);
-    String? same(String? text) =>
-        text == null ? null : normalizeLineWhitespace(text);
-    if (parsed.item != same(line.item) || parsed.prep != same(line.prep)) {
+    final stored = normalizeLineFields(line);
+    if (parsed.item != stored.item || parsed.prep != stored.prep) {
       return false;
     }
-    if (parsed.amounts.length != line.amounts.length) {
+    if (parsed.amounts.length != stored.amounts.length) {
       return false;
     }
     for (var i = 0; i < parsed.amounts.length; i += 1) {
-      if (parsed.amounts[i] != line.amounts[i]) {
+      if (parsed.amounts[i] != stored.amounts[i]) {
         return false;
       }
     }

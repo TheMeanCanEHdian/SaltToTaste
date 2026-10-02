@@ -713,31 +713,36 @@ void main() {
                 as Map<String, Object?>)['match']
             as Map<String, Object?>?;
 
-    test("a confirmed '½ cup oil' edited to ¼ cup, the caches emptied (its "
-        "grams need a fetch a GET never makes): shown as the person's "
-        'confirm with NO grams, carried from the old text', () async {
-      final (db, path) = fileDb();
-      addTearDown(db.dispose);
-      final provider = FixtureProvider(pending: pendingSearches);
-      final r = wp.saveLines(db, [wp.oil]);
-      await matchAndCompute(db, provider, r);
-      await applyMatchOverride(db, provider, r, 0, {
-        'raw': wp.oil,
-        'confirmed': true,
-      });
-      expect(wp.row(db).grams, isNotNull);
-      final edited = wp.saveLines(db, [quarter]);
-      sqlite3.open(path)
-        ..execute('DELETE FROM fdc_food_cache')
-        ..execute('DELETE FROM fdc_search_cache')
-        ..dispose();
-      final match = matchOf(await matchesBody(db, provider, edited), 0)!;
-      expect(match['status'], 'confirmed');
-      expect(match['fdc_id'], wp.row(db).fdcId);
-      expect(match['grams'], isNull);
-      expect(match['gram_source'], isNull);
-      expect(match['carried_from'], wp.oil);
-    });
+    test(
+      "a confirmed '½ cup oil' edited to ¼ cup, the caches emptied (its "
+      "grams need a fetch a GET never makes): shown as the person's "
+      "confirm AS STORED — RULE A's one unhappy outcome (v26, Run 056 "
+      'I2: the derived fields the last derivation left, what the totals '
+      'count; v23-v25 showed no grams) — carried from the old text',
+      () async {
+        final (db, path) = fileDb();
+        addTearDown(db.dispose);
+        final provider = FixtureProvider(pending: pendingSearches);
+        final r = wp.saveLines(db, [wp.oil]);
+        await matchAndCompute(db, provider, r);
+        await applyMatchOverride(db, provider, r, 0, {
+          'raw': wp.oil,
+          'confirmed': true,
+        });
+        expect(wp.row(db).grams, isNotNull);
+        final edited = wp.saveLines(db, [quarter]);
+        sqlite3.open(path)
+          ..execute('DELETE FROM fdc_food_cache')
+          ..execute('DELETE FROM fdc_search_cache')
+          ..dispose();
+        final match = matchOf(await matchesBody(db, provider, edited), 0)!;
+        expect(match['status'], 'confirmed');
+        expect(match['fdc_id'], wp.row(db).fdcId);
+        expect(match['grams'], wp.row(db).grams);
+        expect(match['gram_source'], wp.row(db).gramSource);
+        expect(match['carried_from'], wp.oil);
+      },
+    );
 
     test("an engine row of another text (the '½ cup oil' auto row, the line "
         'edited to ¼ cup, not computed) is shown as no match', () async {

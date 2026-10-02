@@ -104,6 +104,39 @@ const Set<String> mediumHolds = {
   'ambiguous_medium',
 };
 
+/// The [mediumHolds] a pick alone KEEPS when no eaten part is known (the
+/// server's `eatenInPartHolds`, RULE A): part of the line is eaten, or — an
+/// ambiguous oil — all of it or none, which nothing says.
+const Set<String> eatenInPartHolds = {
+  'starter_discard',
+  'coating',
+  'partial_pour_away',
+  'ambiguous_medium',
+};
+
+/// Which decisions finish a held medium line, by hold kind (RULE A; Run 056
+/// Sonnet critic 3 / Opus critic 3: every hold read "Skip, poured away" and
+/// the queue "Any decision finishes it", but a pick keeps an eaten-in-part
+/// hold): Skip and a typed positive amount always finish it; Confirm —
+/// offered when the line writes an eaten part, [eatenPart] its grams —
+/// counts only that part; a pick of another food finishes a wholly
+/// discarded medium (0 g, poured away) or a line whose eaten part is known,
+/// and KEEPS any other [eatenInPartHolds] hold. An ambiguous oil asks its
+/// own question first.
+String heldFinishes(String hold, {double? eatenPart}) {
+  final ambiguous = hold == 'ambiguous_medium';
+  final keeps = eatenInPartHolds.contains(hold) && eatenPart == null;
+  return '${ambiguous ? 'Two lines could be the frying medium — which? ' : ''}'
+      '${eatenPart == null ? '' : 'Confirm counts only the eaten part (${fmtAmount(eatenPart)} g), '}'
+      '${ambiguous ? 'Skip if this line is the frying oil (poured away)' : 'Skip if it is poured away'}'
+      ', or enter the grams that are eaten'
+      '${keeps ? '; picking another food keeps it held' : '; picking another food also finishes it'}';
+}
+
+/// The eaten part a held medium's Confirm counts ([hasEatenPlusPart]), or
+/// null.
+double? eatenPartOf(IngredientMatch m) => hasEatenPlusPart(m) ? m.grams : null;
+
 /// Whether a held medium carries an eaten part: its engine grams are only
 /// what is eaten ("… only \"plus 1 teaspoon table salt\" counted" — every
 /// such row of snapshot 11 is a "plus" part), so a confirm counts that.
@@ -239,15 +272,10 @@ class WhyLine extends StatelessWidget {
             'are not eaten), or skip it',
         SaltColors.warnInk,
       ),
-      MatchBucket.check when held != null && hasEatenPlusPart(match) => (
-        '$held — held out of the totals: Confirm counts only the eaten '
-            'part, or skip it if it is all poured away',
-        SaltColors.warnInk,
-      ),
       MatchBucket.check ||
       MatchBucket.noAmount when held != null && isHeldLine(match) => (
-        '$held — held out of the totals: skip it if it is poured away, or '
-            'enter the grams that are eaten',
+        '$held — held out of the totals. '
+            '${heldFinishes(match.hold!, eatenPart: eatenPartOf(match))}',
         SaltColors.warnInk,
       ),
       // A held line passes on its name: the reason is the engine's, not the
@@ -329,6 +357,11 @@ String? carriedNote(String? carriedFrom) => carriedFrom == null
 /// A held line's skip, as ruling 5 words it for a held medium AND an
 /// in-shell row alike.
 const String heldSkipLabel = 'Skip, poured away';
+
+/// [heldSkipLabel] for [hold]: an ambiguous oil's skip answers its own
+/// question ([heldFinishes]).
+String heldSkipLabelFor(String? hold) =>
+    hold == 'ambiguous_medium' ? 'Skip, this is the frying oil' : heldSkipLabel;
 
 /// A counted zero below the gate on the review sheet (ruling 9): what it
 /// adds — nothing — with its weak food hidden. An admin can open the

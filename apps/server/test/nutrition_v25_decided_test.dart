@@ -68,6 +68,30 @@ Recipe unstrained0129(Recipe r) => ed(
   '',
 );
 
+/// [r] with the corpus's own "1 cup water" line inserted first (v26, Run
+/// 056 S1: every row moves down one; a water line is an engine rule row,
+/// no search).
+Recipe withWaterFirst(Recipe r) {
+  const water = '1 cup water';
+  final parsed = parseIngredientLine(water);
+  final first = r.ingredients.first;
+  return r.copyWith(
+    ingredients: [
+      first.copyWith(
+        items: [
+          IngredientLine(
+            raw: water,
+            item: parsed.item,
+            amounts: parsed.amounts,
+          ),
+          ...first.items,
+        ],
+      ),
+      ...r.ingredients.skip(1),
+    ],
+  );
+}
+
 const flour0148 = '4 cups (20 ounces) unbleached all-purpose flour';
 const flour1133 = '¾ cup all-purpose flour, divided';
 const smoke0129 = '1 tablespoon liquid smoke, divided';
@@ -678,46 +702,55 @@ void main() {
       ('0148-crispy-fried-chicken.yaml', undredged0148),
       ('0129-indoor-pulled-chicken.yaml', unstrained0129),
     ]) {
-      test('$file: every line with a food confirmed, a step edited and the '
+      // v26 (Run 056 S1): and with a line inserted before every confirmed
+      // row in the same save, so each derived write lands at its row's NEW
+      // position.
+      for (final shift in [0, 1]) {
+        test(
+          '$file: every line with a food confirmed, a step edited${shift == 1 ? ' and a line inserted first' : ''} and the '
           'recipe recomputed — every decision stands and every derived '
-          'field is what a confirm on the edited recipe writes', () async {
-        final (db, provider, r) = await computed(file);
-        final confirmed = <int>[];
-        for (final m in db.ingredientMatchesFor(r.id)) {
-          if (m.fdcId == null || m.status != 'auto') {
-            continue;
-          }
-          try {
-            await applyMatchOverride(db, provider, r, m.position, {
-              'raw': m.raw,
-              'confirmed': true,
-            });
-            confirmed.add(m.position);
-          } on ZeroRowException {
-            // A below-gate zero row: no confirm (Run 046).
-          }
-        }
-        expect(confirmed.length, greaterThan(3));
-        final edited = edit(r);
-        await editAndCompute(db, provider, edited);
-        expect(nutritionIsFresh(db, edited), isTrue);
-        for (final position in confirmed) {
-          final now = rowOf(db, r, position);
-          final fresh = await freshWrite(edited, position, {
-            'confirmed': true,
-          });
-          expect(shape(now), shape(fresh), reason: '$file #$position');
-          expect((now.status, now.fdcId), ('confirmed', fresh.fdcId));
-        }
-        // Re-deriving an unchanged recipe writes no decided row.
-        final stamps = [
-          for (final position in confirmed) rowOf(db, r, position).updatedAt,
-        ];
-        await matchAndCompute(db, provider, edited);
-        expect([
-          for (final position in confirmed) rowOf(db, r, position).updatedAt,
-        ], stamps);
-      });
+          'field is what a confirm on the edited recipe writes',
+          () async {
+            final (db, provider, r) = await computed(file);
+            final confirmed = <int>[];
+            for (final m in db.ingredientMatchesFor(r.id)) {
+              if (m.fdcId == null || m.status != 'auto') {
+                continue;
+              }
+              try {
+                await applyMatchOverride(db, provider, r, m.position, {
+                  'raw': m.raw,
+                  'confirmed': true,
+                });
+                confirmed.add(m.position);
+              } on ZeroRowException {
+                // A below-gate zero row: no confirm (Run 046).
+              }
+            }
+            expect(confirmed.length, greaterThan(3));
+            final edited = shift == 1 ? withWaterFirst(edit(r)) : edit(r);
+            await editAndCompute(db, provider, edited);
+            expect(nutritionIsFresh(db, edited), isTrue);
+            for (final old in confirmed) {
+              final position = old + shift;
+              final now = rowOf(db, r, position);
+              final fresh = await freshWrite(edited, position, {
+                'confirmed': true,
+              });
+              expect(shape(now), shape(fresh), reason: '$file #$position');
+              expect((now.status, now.fdcId), ('confirmed', fresh.fdcId));
+            }
+            // Re-deriving an unchanged recipe writes no decided row.
+            final stamps = [
+              for (final old in confirmed) rowOf(db, r, old + shift).updatedAt,
+            ];
+            await matchAndCompute(db, provider, edited);
+            expect([
+              for (final old in confirmed) rowOf(db, r, old + shift).updatedAt,
+            ], stamps);
+          },
+        );
+      }
     }
   }, skip: skipIfNoCorpus);
 }

@@ -881,9 +881,10 @@ void main() {
           .ingredientMatchesFor('r1')
           .where((row) => bucketOf(row) == MatchBucket.counted);
       expect(counted, isEmpty);
-      // A person's pick of the cached hit needs the same detail: the PUT
-      // fails (the route's 422) with nothing written — v8 stored it
-      // overridden at 1,361 g.
+      // A person's pick of the cached hit needs the same detail: RULE A's
+      // one unhappy outcome (v26, Run 056 I2/S29; v9-v25 failed the PUT,
+      // the route's 422): the pick is stored with NO grams — never the
+      // 1,361 g v8 stored — and the totals stamped stale.
       final line = nutritionLines(r).single;
       expect(knownFood(db, 168242, line: line), isNotNull);
       final unmatched = IngredientMatchRow(
@@ -900,15 +901,13 @@ void main() {
         status: 'unmatched',
       );
       db.upsertIngredientMatch(unmatched);
-      await expectLater(
-        applyMatchOverride(db, failing, r, 0, {'fdc_id': 168242}),
-        throwsA(isA<NutritionProviderException>()),
-      );
+      await applyMatchOverride(db, failing, r, 0, {'fdc_id': 168242});
       final after = db.ingredientMatchesFor('r1').single;
       expect(
         (after.status, after.fdcId, after.grams),
-        ('unmatched', null, null),
+        ('overridden', 168242, null),
       );
+      expect(nutritionIsFresh(db, r), isFalse);
     });
 
     // Classic Guacamole's (0471) juice range, once held here, is counted

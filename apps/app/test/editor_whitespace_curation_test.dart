@@ -58,4 +58,67 @@ void main() {
       'Salt and pepper',
     );
   });
+
+  test('the WHOLE stored line is read as the parser reads it (Run 056 '
+      'O12/S26): a pre-v24 quantity run "1  1/2" and a prep run "chopped  '
+      'fine" are the parser\'s — an edit re-parses them; a curated '
+      'quantity stays locked', () async {
+    const recipe = Recipe(
+      id: 'r1',
+      title: 'Flour',
+      slug: 'flour',
+      source: RecipeSource(name: 'ATK', type: 'manual'),
+      ingredients: [
+        IngredientGroup(
+          items: [
+            IngredientLine(
+              raw: '1  1/2 cups flour',
+              amounts: [
+                Amount(
+                  measure: Measure.volume,
+                  quantity: '1  1/2',
+                  unit: 'cup',
+                  primary: true,
+                ),
+              ],
+              item: 'flour',
+            ),
+            IngredientLine(
+              raw: '1 onion, chopped  fine',
+              amounts: [
+                Amount(measure: Measure.count, quantity: '1', primary: true),
+              ],
+              item: 'onion',
+              prep: 'chopped  fine',
+            ),
+            IngredientLine(
+              raw: '1 1/2 cups flour',
+              amounts: [
+                Amount(
+                  measure: Measure.volume,
+                  quantity: '2',
+                  unit: 'cup',
+                  primary: true,
+                ),
+              ],
+              item: 'flour',
+            ),
+          ],
+        ),
+      ],
+      steps: [RecipeStep(number: 1, text: 'Mix.')],
+    );
+    final cubit = EditorCubit(
+      _Repo(const RecipeDetail(recipe: recipe, sourceSlug: 'flour')),
+    );
+    await cubit.load('flour');
+    final lines = cubit.state.entries.whereType<EditorLine>().toList();
+    expect([for (final l in lines) l.manuallyEdited], [false, false, true]);
+    cubit
+      ..setLineRaw(lines[0].key, '2 cups sugar')
+      ..applyAutoParse(lines[0].key);
+    final edited = cubit.state.entries.whereType<EditorLine>().first;
+    expect(edited.item, 'sugar');
+    expect([for (final a in edited.amounts) a.quantity], ['2']);
+  });
 }

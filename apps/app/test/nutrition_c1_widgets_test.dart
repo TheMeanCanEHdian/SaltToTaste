@@ -1189,8 +1189,9 @@ void main() {
       expect(
         find.textContaining(
           'Dredging for a fried food: most of it is shaken off or left in '
-          'the dish, and no coating share is set — held out of the totals: '
-          'skip it if it is poured away, or enter the grams that are eaten',
+          'the dish, and no coating share is set — held out of the totals. '
+          'Skip if it is poured away, or enter the grams that are eaten; '
+          'picking another food keeps it held',
         ),
         findsOneWidget,
       );
@@ -1205,6 +1206,51 @@ void main() {
       expect(find.text('Enter edible grams'), findsNWidgets(2));
       expect(find.text(heldSkipLabel), findsNWidgets(2));
       expect(find.text('Add amount'), findsNothing);
+    });
+
+    // Run 056 Sonnet critic 3 / Opus critic 3: the copy says, per hold kind,
+    // which decisions finish it — an ambiguous oil asks its own question,
+    // and a pick keeps an eaten-in-part hold (0690's sauce oil typed as an
+    // aioli: synthesized, a stated exception).
+    testWidgets('an ambiguous oil asks "two lines could be the frying medium '
+        '— which?" in the sheet and its skip answers it; a pick keeps the '
+        'hold', (tester) async {
+      const aioli = IngredientMatch(
+        position: 0,
+        raw: '½ cup extra-virgin olive oil',
+        item: 'extra-virgin olive oil',
+        lineAmount: '½ cup',
+        fdcId: 2710180,
+        description: 'Oil, olive, extra virgin',
+        dataType: 'Foundation',
+        confidence: 1,
+        status: 'overridden',
+        hold: 'ambiguous_medium',
+      );
+      expect(matchBucketOf(aioli), MatchBucket.noAmount);
+      expect(
+        heldSkipLabelFor('ambiguous_medium'),
+        'Skip, this is the frying oil',
+      );
+      expect(heldSkipLabelFor('coating'), heldSkipLabel);
+      await openSheet(tester, [aioli]);
+      expect(
+        find.textContaining(
+          '— held out of the totals. Two lines could be the frying medium — '
+          'which? Skip if this line is the frying oil (poured away), or '
+          'enter the grams that are eaten; picking another food keeps it '
+          'held',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Skip, this is the frying oil'), findsOneWidget);
+      expect(find.text(heldSkipLabel), findsNothing);
+      // A wholly discarded medium: a pick finishes it (0 g poured away).
+      expect(
+        heldFinishes('discarded_medium'),
+        'Skip if it is poured away, or enter the grams that are eaten; '
+        'picking another food also finishes it',
+      );
     });
 
     // Run 054 H5(a): a pick on a DIVIDED held line counts its eaten part and
@@ -1309,8 +1355,9 @@ void main() {
       expect(
         find.textContaining(
           'no coating share is set (1 teaspoon flour is used outside the '
-          'dredge, eaten) — held out of the totals: Confirm counts only the '
-          'eaten part',
+          'dredge, eaten) — held out of the totals. Confirm counts only the '
+          'eaten part (2.5 g), Skip if it is poured away, or enter the grams '
+          'that are eaten; picking another food also finishes it',
           findRichText: true,
         ),
         findsOneWidget,
@@ -1393,7 +1440,7 @@ void main() {
       expect(find.text('Confirm as-is'), findsNothing);
       expect(
         find.textContaining(
-          'skip it if it is poured away, or enter the '
+          'Skip if it is poured away, or enter the '
           'grams that are eaten',
         ),
         findsOneWidget,

@@ -826,22 +826,20 @@ String? lastOpenNote(NutritionReviewLine line) {
 /// finishes. Null for a row with no line hold.
 String? lineHoldNote(NutritionReviewLine line) {
   final match = line.match;
-  const head =
-      'decided one line at a time, never offers apply-to-all. Any decision '
-      'finishes it: ';
+  const head = 'decided one line at a time, never offers apply-to-all. ';
   const noZero = '. There is no 0 g decision: the API rejects grams of 0.';
   return switch (match?.hold) {
+    // Which decisions finish it, by hold kind ([heldFinishes]: a pick keeps
+    // an eaten-in-part hold; Run 056 Sonnet critic 3 / Opus critic 3).
     final hold? when mediumHolds.contains(hold) =>
       'line hold (${hold.replaceAll('_', ' ')}): $head'
-          '${match!.gramSource == 'discarded' && (match.grams ?? 0) > 0 ? 'Confirm counts only the eaten part (${fmtAmount(match.grams!)} g), ' : ''}'
-          'Skip says it is poured away, or a typed positive amount counts '
-          'that much$noZero',
+          '${heldFinishes(hold, eatenPart: match!.gramSource == 'discarded' && (match.grams ?? 0) > 0 ? match.grams : null)}$noZero',
     'in_shell' =>
-      'line hold (in shell): ${head}Skip, or the typed edible grams (the '
-          'shells are not eaten)$noZero',
+      'line hold (in shell): ${head}Any decision finishes it: Skip, or the '
+          'typed edible grams (the shells are not eaten)$noZero',
     'second_food' =>
-      'line hold (second food): ${head}Confirm, Skip, or a typed positive '
-          'amount$noZero',
+      'line hold (second food): ${head}Any decision finishes it: Confirm, '
+          'Skip, or a typed positive amount$noZero',
     _ => null,
   };
 }
@@ -1185,7 +1183,7 @@ class _FixContentState extends State<_FixContent> {
                   mainAxisSize: MainAxisSize.min,
                   onPress: busy ? null : skip,
                   prefix: const Icon(FLucideIcons.ban, size: 14),
-                  child: Text(held ? heldSkipLabel : 'Skip'),
+                  child: Text(held ? heldSkipLabelFor(match.hold) : 'Skip'),
                 ),
               ],
             ),

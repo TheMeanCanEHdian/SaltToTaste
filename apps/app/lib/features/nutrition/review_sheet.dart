@@ -688,7 +688,7 @@ class _MatchRowState extends State<_MatchRow> {
           ),
         _Action(
           icon: FLucideIcons.ban,
-          label: heldSkipLabel,
+          label: heldSkipLabelFor(widget.match.hold),
           onPressed: busy
               ? null
               : () => cubit.override(

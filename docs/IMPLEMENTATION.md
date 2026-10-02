@@ -2445,6 +2445,96 @@ plain and 1,000 gap seeds. matcherVersion 25. Left to the user: whether
 "shimmering/smoking" counts as frying heat (it would zero 81 counted
 quarter-cup oil lines — not adopted), the fritters' shallow oil, air-fry.
 
+### Run 056's fixes: the three rules at the granularity the review measured (matcher v26)
+
+Run 056 (both fleets on v25, 2026-10-02; no HIGH) found each v25 design
+rule met at the granularity its proof had measured rather than the one the
+invariant stated. RULE C's step index made every sentence O(1) to reach,
+but the per-line loops around it still walked the recipe's text — a legal
+400-line dredge recipe cost about two minutes per member matches GET
+(`_eatenOutsideMedium` parsing every written mention per line and
+rescanning the lines for each), 400 salt lines about 25 s (`_ownMentionsOf`
+iterating every mention per line), and `layoutOf` decoded the whole layout
+JSON on every row write. RULE A's decided branch wrote the re-derived
+fields at the row's PRE-layout position, so a decided row that a save moved
+kept stale grams while the recipe was stamped fresh (Sonnet alone), and its
+failure arms each stored a different partial state: a confirm during an FDC
+outage stored with null grams and no hold, the compute throwing for a row
+whose detail it fetched but never used, the PUT no longer answering the 422
+API.md promised, a decided food FDC could no longer resolve clearing a
+confirm's grams (0857's flour, 248 g from its own written weight). RULE B
+had been scoped to the one noun it was written for: shortening or lard
+heated to a frying temperature no longer counted as frying fat (a v25
+regression, Opus alone), an amount two oil lines shared bound both (both
+zeroed, never held), a frying oil written by weight was never a candidate,
+and the oven exclusion read only the words between the noun and the
+temperature. So v26 (2026-10-02) restates each rule where Run 056 measured
+it. RULE A: the decided and orphan branches derive and write at the row's
+CURRENT position (S1's 0129 confirm: 4.73 g stale → 14.2 g `portion`,
+fresh); a derivation that cannot run — the provider failing, or a food in
+no cache that FDC answers null for, through the existing superseded-food
+path — is ONE outcome on every path: the decision is stored, the derived
+fields stay as the last successful derivation left them, the recipe is left
+stale so the next sweep retries, the compute never throws for one row (the
+totals' own fetch given the same outcome), and a food is read only where a
+path needs it (typed grams or a skip on the line's own amount read none);
+an amount-less line derives no weight on a pick, a resolved medium is
+always `discarded`, and "eaten part counted" is said only when a part was
+(0318's "Kosher salt": "poured away after your pick"). RULE B: one `_Fat`
+mechanism per frying head (oil, shortening, lard), each signal reading its
+own noun; a binding key two candidates share binds neither and lines are
+counted by position (two identical raws are two candidates); a candidate is
+any line the mass rule could zero — a quarter cup by volume or 400 g by
+written weight (0690's 24 ounces: the aioli held); frying heat is positive
+evidence from the whole sentence (the fat as the object of heat/bring/warm
+… to/until/registers a 300–399 °F or 160–200 °C temperature in every
+spelling — "350°F", "350 °F", "350F", "180°C") with any oven, bake, roast,
+broil, grill, air-fryer, smoker, slow-cooker, pizza-stone, toaster or
+convection word anywhere in the sentence ruling it out; every corpus oil,
+dredge and fries row byte-identical, the 67 corpus oil-with-temperature
+sentences still frying. RULE C at the loop level: mentions grouped by
+owning line once per recipe (`_sharesOf`/`_firstOwn`), written parts
+parsed once per head and the amount-writers map built once
+(`_amountWritersOf`), per-head memos for the dredge, cure, brine and
+dissolve readers (the last a site the digests had not named: >120 s →
+144 ms), the oil owners' unbound sentences attached once and the kept oil
+memoised per line, `layoutSeqOf` reading only the sequence on a row write,
+`laterOf` keyed by step and offset (0572's soda keeps `cookingWater` with a
+prepended step), the window notice logged once per recipe and content;
+every memo family counted through `stepIndexCounts` and pinned by COUNT at
+the editor's caps (400 lines × 120 steps × 10,000 characters) on the
+compute, the matches GET, the PUT and the apply-to-all, so deleting any of
+the eighteen steps-only memos fails a count, not a clock; every clock-only
+pin in the suite now carries a count pin with a generous backstop (the v24
+pins had timed an already-warm index). Measured at the caps, before →
+after: a salt-written recipe's compute 21.5 s → 0.69 s and its member GET
+24.5 s → 0.51 s; the dredge-written compute 114 s → 0.65 s; the dissolve
+shape 274 s → 0.62 s; every path at or under about one second. The
+verifier's first pass then found RULE B's new whole-sentence heat check
+itself running unfiltered on every sentence naming the fat — a cap-sized
+frying recipe's member GET 0.74 s → 1.2 s, a regression — closed by a
+cheap prefilter (a sentence with no digit run that could be a temperature
+is never frying heat) with its own count pin; what remains on that shape
+is 30–75 ms over v25 on paths of 0.1–0.8 s, the constant cost of building
+the loop-level index for a recipe whose loops never fired before, accepted
+against the 159 s → 0.6 s it bounds. Also: a plus part's cheese
+form read after its comma ("plus 2 cups, shredded": 128 → 184 g); a popcorn
+paren of one word qualifies the head and a longer one is a note ("(unpopped
+kernels discarded)" no longer restores the kernel cup); one
+`normalizeLineFields` normaliser over the whole stored line for the editor's
+hand-curated check (a quantity's double space no longer locks a line; a
+pre-v24 paren the old parser read differently still does, by design — the
+re-parse button); the app's hold copy per kind says which decisions finish
+it and that a pick keeps an eaten-in-part hold, and the ambiguous hold
+asks its own question ("Two lines could be the frying medium — which?").
+Replay on snapshot 13: calls 0; zero rows differ from v25; counted 13,073,
+check 401, no grams 104, no match 37, complete 830, partial 368; every
+hold note identical. The oracle: 0 violations in 1,000 plain and 1,000 gap
+seeds. matcherVersion 26. Noted for the user: a superseded food that no
+cache holds leaves its recipe stale for good, one retry request per sweep;
+a pick during an outage records the person's food library-wide, as a
+successful pick does.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

@@ -2,6 +2,7 @@
 /// ranking with a 0–1 confidence score.
 library;
 
+import 'package:meta/meta.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 
 /// Words that describe handling/quality, not identity — dropped from the
@@ -281,12 +282,39 @@ const Map<String, String> _synonyms = {
 /// mass; a smaller first part a step names stays eaten), shredded Parmesan
 /// at the corpus's printed 0.36 g/mL, and a "plus" part's printed weight
 /// used over the density. 24 (Run 054): the step and line regexes linear on
-/// hostile text (a sentence over 1,000 characters is read as none), a
+/// hostile text (a sentence over 1,000 characters read as none — since
+/// 25 its first 1,000 are read), a
 /// decided row's hold re-derived on every compute, and the oil, dredge,
-/// _asPrepared and plus-part cheese rules of that run. 25 (Run 055): RULE A
-/// — a decided row's every derived field (hold, grams unless typed, their
-/// source) re-derived from the recipe on every compute.
-const int matcherVersion = 25;
+/// _asPrepared and plus-part cheese rules of that run (v24's "a sentence
+/// over 1,000 characters read as none" is superseded by 25's window). 25
+/// (Run 055): RULE A — a decided row's every derived field (hold, grams
+/// unless typed, their source) re-derived from the recipe on every
+/// compute, PUT and GET; RULE B — a sentence belongs to the line that owns
+/// it (a frying sentence binds by the oil's own amount or kind word with
+/// its noun phrase following directly, oven heat is never frying heat, two
+/// candidates held `ambiguous_medium`); RULE C — a detector costs O(text)
+/// per recipe (a per-recipe step index, the first 1,000 characters of an
+/// over-long sentence read, the matches GET memoised per key and raw); and
+/// the grams change: `_asPrepared` on the measured head, a plus part's own
+/// grated/shredded form. 26 (Run 056): RULE A — the derived write at the
+/// row's current position, ONE "derivation unavailable" outcome on every
+/// path, the totals' food fetch included (decision stored, derived fields
+/// as last derived, the recipe stale, never a throw for one row), and an
+/// amount-less decided line deriving no weight (a confirmed held one 0 g
+/// `discarded`); RULE B for every frying fat (oil, shortening, lard, each
+/// by its own noun), a binding key two lines share binding neither, lines
+/// counted by position, every line the mass rule could zero a candidate
+/// (a written weight of 400 g or more too; an amount-less "for
+/// (pan-)frying" line), and frying heat as positive evidence from the
+/// whole sentence in every temperature spelling; RULE C at the loop
+/// level — what a rule derives per recipe or per food (mention owners,
+/// amount writers, the sentences naming a food, the frying-oil owners)
+/// derived once and shared, a line costing its own mentions, the
+/// over-long-sentence notice logged once per recipe and content; the
+/// grams change: a plus part's form read after its comma, and only a
+/// one-word paren (or comma part) a modifier of the measured head (the v25
+/// replay byte-identical).
+const int matcherVersion = 26;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -329,6 +357,7 @@ String _withoutParens(String text) {
   // passed: each character is read once.
   var broken = -1;
   while (open >= 0) {
+    normalizeSteps++;
     final close = text.indexOf(')', open);
     if (close < 0) {
       break;
@@ -350,6 +379,13 @@ String _withoutParens(String text) {
   }
   return (out..write(text.substring(from))).toString();
 }
+
+/// The steps [normalizeItem]'s one-pass forms took since reset — each
+/// "(" [_withoutParens] closes or skips, each number word
+/// [_withoutAmounts] reads — what the tests pin their linearity by beside
+/// a clock (Run 056 O20/S20: a 5 ms clock alone).
+@visibleForTesting
+int normalizeSteps = 0;
 
 /// What `.` never matches: a line break.
 final RegExp _lineBreak = RegExp('[\n\r  ]');
@@ -543,6 +579,7 @@ List<String> _withoutAmounts(List<String> words, {int lead = 0}) {
   while (i < words.length) {
     var j = i;
     while (j < words.length && digits.hasMatch(words[j])) {
+      normalizeSteps++;
       j++;
     }
     // One word may stand between the number and its measure: "plus 2

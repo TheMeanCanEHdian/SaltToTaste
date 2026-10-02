@@ -575,8 +575,10 @@ void main() {
       await matchAndCompute(db, provider, pancakes);
     });
 
-    test('a provider failure part-way through a sweep is counted, not '
-        'reported as a refusal; what landed stays', () async {
+    test("a provider failure in a target's TOTALS is RULE A's one "
+        '"derivation unavailable" outcome (v26): the line lands and counts, '
+        'the totals leave the food out and read stale — never a refusal, '
+        'never a failed recipe', () async {
       // Recompute of the caramel cake's totals needs its OTHER lines' foods;
       // evict one from the caches (its detail, and the search answers that
       // hold its hit) and make the provider fail on it.
@@ -605,10 +607,12 @@ void main() {
       );
       // Only the caramel cake is a target: the pancakes' eggs line already
       // carries this food at confidence 1 (a decision that reached it), so
-      // the reach skips it and only the cake's recompute fails.
-      expect(applied, appliedIs(recipes: 0, lines: 0, failed: 1, completed: 0));
+      // the reach skips it. The cake's totals cannot fetch the victim: since
+      // v26 that is no failure (it was `failed: 1` before) — stale instead.
+      expect(applied, appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0));
+      expect(nutritionIsFresh(db, caramel), isFalse);
       expect(rowOf(bundt, 'eggs').fdcId, food, reason: 'the source stayed');
-      // The line itself landed before its recipe's totals failed.
+      // The line itself landed.
       expect(rowAt(caramel, caramelEggs).fdcId, food);
       // Heal the cache for later tests.
       await matchAndCompute(db, provider, caramel);

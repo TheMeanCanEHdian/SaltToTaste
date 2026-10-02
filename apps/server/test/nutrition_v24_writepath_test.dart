@@ -6,6 +6,7 @@
 // text the H1 pins append (a negative-path input no corpus recipe holds).
 // ignore_for_file: lines_longer_than_80_chars
 import 'dart:io';
+import 'dart:math' show min;
 
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
@@ -24,6 +25,7 @@ import 'nutrition_v23_writepath_test.dart'
     show applyOil, downgrade, fileDb, quarter, standIn;
 import 'nutrition_writepath_test.dart' as wp;
 import 'support/corpus.dart';
+import 'support/cost_bounds.dart';
 import 'support/fdc_fixtures.dart';
 
 /// [recipe] with [text] appended to step [at] (the last when null).
@@ -49,6 +51,27 @@ int msOf(void Function() read) {
   return best;
 }
 
+/// The cold milliseconds of [read] on a fresh copy of [r] (the per-recipe
+/// index cold, as a first compute or GET meets it), the best of three,
+/// after a COUNT pin: every family one cold [read] derives within its bound
+/// ([expectBounded]; Run 056 O20 — these pins were a clock alone, and a
+/// clock alone fails on load alone).
+int cheap(Recipe r, void Function(Recipe) read) {
+  Recipe fresh() => r.copyWith(steps: [...r.steps]);
+  final first = fresh();
+  stepIndexCounts.clear();
+  read(first);
+  expectBounded(first, Map.of(stepIndexCounts), r.id);
+  var best = 1 << 30;
+  for (var i = 0; i < 3; i++) {
+    final copy = fresh();
+    final sw = Stopwatch()..start();
+    read(copy);
+    best = min(best, sw.elapsedMilliseconds);
+  }
+  return best;
+}
+
 void main() {
   group('H1 (Run 054 Sonnet critic 1): the hold detectors are linear on a '
       'hostile step', () {
@@ -68,9 +91,12 @@ void main() {
       return (r, nutritionLines(r)[1]);
     }
 
-    test("n = 8,000: a period-free '1 1 1 …' step (16 KB) reads in under "
-        '50 ms for both detectors, and the notes are unchanged', () {
-      final hostile = '1 ' * 8000;
+    test("n = 80,000: a period-free '1 1 1 …' step (160 KB) reads within "
+        'its count bounds and a 1,000 ms backstop for both detectors, and '
+        'the notes are unchanged', () {
+      // Ten times the 16 KB of v24 (Run 056 O20: a backstop far from both
+      // the linear read and a quadratic one; a stated synthesized input).
+      final hostile = '1 ' * 80000;
       final (fr, fl) = flour();
       final (br, bl) = braise();
       final fNote = holdNoteOf(fr, fl, 'coating');
@@ -78,9 +104,12 @@ void main() {
       expect(fNote, isNotNull);
       final f2 = appended(fr, hostile, at: 0);
       final b2 = appended(br, hostile);
-      expect(msOf(() => holdNoteOf(f2, fl, 'coating')), lessThan(50));
-      expect(msOf(() => holdNoteOf(b2, bl, 'partial_pour_away')), lessThan(50));
-      expect(msOf(() => keptLiquidOf(b2, bl)), lessThan(50));
+      final times = [
+        cheap(f2, (r) => holdNoteOf(r, fl, 'coating')),
+        cheap(b2, (r) => holdNoteOf(r, bl, 'partial_pour_away')),
+        cheap(b2, (r) => keptLiquidOf(r, bl)),
+      ];
+      expect(times, everyElement(lessThan(1000)));
       expect(holdNoteOf(f2, fl, 'coating'), fNote);
       expect(holdNoteOf(b2, bl, 'partial_pour_away'), bNote);
     });
@@ -92,15 +121,21 @@ void main() {
       // bound skips none and only the regex shape keeps this fast.
       final sentence = '${'1 ' * 449}1.';
       expect(sentence.length, lessThan(maxScannedSentence));
-      final hostile = List.filled(40, sentence).join(' ');
+      // 400 sentences (ten times v24's 40; Run 056 O20, as above).
+      final hostile = List.filled(400, sentence).join(' ');
       final (fr, fl) = flour();
       final (br, bl) = braise();
       final f2 = appended(fr, hostile, at: 0);
       final b2 = appended(br, hostile);
-      // Measured: 13 ms linear, 385 ms with the overlap restored — the bound
-      // sits ~5x from each.
-      expect(msOf(() => holdNoteOf(f2, fl, 'coating')), lessThan(70));
-      expect(msOf(() => keptLiquidOf(b2, bl)), lessThan(70));
+      // Measured at 40 sentences (v24): 13 ms linear, 385 ms with the overlap
+      // restored; at 400 the tree reads 12 ms cold (Run 056), the overlap
+      // ~3.9 s — the backstop sits ~100x and ~2.5x from each, the counts
+      // beside it.
+      final times = [
+        cheap(f2, (r) => holdNoteOf(r, fl, 'coating')),
+        cheap(b2, (r) => keptLiquidOf(r, bl)),
+      ];
+      expect(times, everyElement(lessThan(1500)));
     });
 
     test('a sentence longer than maxScannedSentence (1,000) is read for its '
@@ -128,12 +163,14 @@ void main() {
     test("a step of 'cooking liquid through …' (the strain's [^.]* run, "
         're-scanned from every start over a whole step at v23)', () {
       final r = loadCorpusRecipe('0129-mahogany-chicken-thighs.yaml');
-      final r2 = appended(r, 'cooking liquid through ' * 700, at: 0);
+      final r2 = appended(r, 'cooking liquid through ' * 7000, at: 0);
       // Every line's read, as one compute reads them.
-      expect(
-        msOf(() => nutritionLines(r2).forEach((l) => keptLiquidOf(r2, l))),
-        lessThan(50),
-      );
+      final ms = cheap(r2, (r) {
+        for (final l in nutritionLines(r)) {
+          keptLiquidOf(r, l);
+        }
+      });
+      expect(ms, lessThan(1000));
     });
 
     test("salt mentions after a long number run (the mention's written "
@@ -141,24 +178,27 @@ void main() {
       final r = loadCorpusRecipe(
         '0461-simplified-cassoulet-with-pork-and-kielbasa.yaml',
       );
-      final r2 = appended(r, '${'1 ' * 2000}salt ' * 4, at: 0);
-      expect(
-        msOf(() {
-          for (final line in nutritionLines(r2)) {
-            discardedMediumOf(r2, line, normalizeItem(lineItemOf(line)));
-          }
-        }),
-        lessThan(50),
-      );
+      final r2 = appended(r, '${'1 ' * 2000}salt ' * 40, at: 0);
+      final ms = cheap(r2, (r) {
+        for (final line in nutritionLines(r)) {
+          discardedMediumOf(r, line, normalizeItem(lineItemOf(line)));
+        }
+      });
+      expect(ms, lessThan(1000));
     });
 
     test('a 1,000-character line raw (the cap) led by spaces or a number '
         'run: the sub-recipe test, the lost unit, the dozen, the sprig '
         "and the fresh herb's dried amount", () async {
-      final spaces = '${' ' * 990}1 x';
-      final ones = '1${' 1' * 495}x';
+      // Ten times the cap (Run 056 O20: a clock pin must not fail on load
+      // alone — a regex has no count to pin, so the input is grown until a
+      // quadratic run costs seconds while the linear one stays under 5 ms,
+      // and the bound sits ~100x from each; a stated synthesized input of
+      // a function-level pin).
+      final spaces = '${' ' * 9900}1 x';
+      final ones = '1${' 1' * 4950}x';
       for (final raw in [spaces, ones]) {
-        expect(msOf(() => isSubRecipeReference(raw)), lessThan(50));
+        expect(msOf(() => isSubRecipeReference(raw)), lessThan(500));
         expect(
           msOf(
             () => resolveGrams(
@@ -170,12 +210,12 @@ void main() {
               raw: raw,
             ),
           ),
-          lessThan(50),
+          lessThan(500),
         );
       }
       final db = wp.tempDb();
       final oregano = (await FixtureProvider().food(171328))!;
-      for (final tail in [' ' * 950, '1 ' * 475]) {
+      for (final tail in [' ' * 9500, '1 ' * 4750]) {
         final line = IngredientLine(
           raw: '1 tablespoon minced fresh oregano or ${tail}x',
           amounts: const [
@@ -188,7 +228,7 @@ void main() {
           ],
           item: 'fresh oregano',
         );
-        expect(msOf(() => lineGrams(db, line, oregano)), lessThan(50));
+        expect(msOf(() => lineGrams(db, line, oregano)), lessThan(500));
       }
     });
 
@@ -206,8 +246,9 @@ void main() {
         normalizedItem: 'x',
         raw: raw,
       );
-      for (final raw in ['${' ' * 998}1!', '${' ' * 999}!']) {
-        expect(msOf(() => grams(raw)), lessThan(20));
+      // Ten times the cap, as above (Run 056 O20).
+      for (final raw in ['${' ' * 9980}1!', '${' ' * 9990}!']) {
+        expect(msOf(() => grams(raw)), lessThan(500));
         // The regex itself, on a raw no entry normalized.
         expect(
           msOf(
@@ -216,14 +257,17 @@ void main() {
               raw,
             ),
           ),
-          lessThan(20),
+          lessThan(500),
         );
       }
-      expect(msOf(() => grams('(1${' ' * 997}x')), lessThan(5));
+      expect(msOf(() => grams('(1${' ' * 9970}x')), lessThan(500));
       // The engine's line regexes that open on a whitespace run (the
       // sub-recipe test's " or " split: 20 ms on 999 spaces at v24) start
       // only at a run's first space.
-      expect(msOf(() => isSubRecipeReference('${' ' * 999}!')), lessThan(5));
+      expect(
+        msOf(() => isSubRecipeReference('${' ' * 9990}!')),
+        lessThan(500),
+      );
     });
   }, skip: skipIfNoCorpus);
 

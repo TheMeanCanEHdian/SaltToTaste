@@ -150,9 +150,18 @@ void main() {
       return db.ingredientMatchesFor('r').single;
     }
 
-    test('an amount edit clears the typed grams', () async {
+    // v26 (Run 056 I2, Sonnet critic 1): a food no cache and no FDC
+    // answer holds is RULE A's one unhappy outcome — the row is left as
+    // stored, ON ITS OLD TEXT (so the edited amount is still read as edited
+    // and typed grams are never revived as the new amount's), and the
+    // recipe stale for the next sweep; v22-v25 cleared the grams.
+    test('an amount edit leaves the row on its old text, typed grams and '
+        'all, the recipe stale', () async {
       final row = await afterEdit('¾ teaspoon table salt');
-      expect((row.fdcId, row.grams, row.gramSource), (173468, null, null));
+      expect(
+        (row.raw, row.fdcId, row.grams, row.gramSource),
+        ('½ teaspoon table salt', 173468, 5, 'override'),
+      );
     });
 
     test('a prep-only rewrite keeps them', () async {
@@ -160,12 +169,16 @@ void main() {
       expect((row.grams, row.gramSource), (5, 'override'));
     });
 
-    test('untyped grams are never kept, even on the same amount', () async {
+    test('untyped grams are never cleared: the row as the last derivation '
+        'left it, on its old text', () async {
       final row = await afterEdit(
         '½ teaspoon table salt, divided',
         typed: false,
       );
-      expect((row.grams, row.gramSource), (null, null));
+      expect(
+        (row.raw, row.grams, row.gramSource),
+        ('½ teaspoon table salt', 3.0, 'density'),
+      );
     });
   });
 

@@ -319,6 +319,29 @@ final RegExp _whitespaceRe = RegExp(r'\s+');
 String normalizeLineWhitespace(String text) =>
     text.trim().replaceAll(_whitespaceRe, ' ');
 
+/// [line]'s every text — its raw, item, prep and each amount's quantity
+/// and unit — through the ONE normaliser [parseIngredientLine] runs over a
+/// raw before it parses ([normalizeLineWhitespace]): a stored line as the
+/// parser would have written it from its raw (Run 056 O12: the editor
+/// normalised the item and prep only, so a line stored before the parser
+/// collapsed runs — quantity "1  1/2" — was still locked as hand-curated).
+IngredientLine normalizeLineFields(IngredientLine line) {
+  String? norm(String? text) =>
+      text == null ? null : normalizeLineWhitespace(text);
+  return IngredientLine(
+    raw: normalizeLineWhitespace(line.raw),
+    amounts: [
+      for (final a in line.amounts)
+        a.copyWith(
+          quantity: normalizeLineWhitespace(a.quantity),
+          unit: norm(a.unit),
+        ),
+    ],
+    item: norm(line.item),
+    prep: norm(line.prep),
+  );
+}
+
 /// Case-sensitive on purpose (ports the extractor): `or` mid-item flags the
 /// line, a capitalized `Or` would not.
 final RegExp _orWordRe = RegExp(r'\bor\b');

@@ -539,8 +539,9 @@ void main() {
       );
       expect(
         find.textContaining(
-          '${holdReason(row.hold)!} — held out of the totals: skip it if it '
-          'is poured away, or enter the grams that are eaten',
+          '${holdReason(row.hold)!} — held out of the totals. Skip if it is '
+          'poured away, or enter the grams that are eaten; picking another '
+          'food keeps it held',
         ),
         findsOneWidget,
       );

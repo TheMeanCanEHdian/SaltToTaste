@@ -608,6 +608,22 @@ class _Adapter implements HttpClientAdapter {
           },
         ],
       };
+    } else if (options.path.contains('/patatas-bravas/nutrition/matches')) {
+      // The ambiguous oil's own line, as the queue served its group.
+      final line = [
+        for (final b in bodies) ...(b['items'] as List).cast<Map>(),
+      ].firstWhere((g) => (g['recipe'] as Map)['slug'] == 'patatas-bravas');
+      body = {
+        'items': [
+          {
+            'position': line['position'],
+            'raw': line['raw'],
+            'item': line['item'],
+            'match': line['match'],
+            'candidates': <Object>[],
+          },
+        ],
+      };
     } else if (options.path.contains('/admin/nutrition_review')) {
       queries.add(options.queryParameters);
       if (failing.contains(queries.length - 1)) {
@@ -869,12 +885,56 @@ void main() {
     expect(
       find.text(
         'line hold (discarded medium): decided one line at a time, never '
-        'offers apply-to-all. Any decision finishes it: Skip says it is '
-        'poured away, or a typed positive amount counts that much. There is '
+        'offers apply-to-all. Skip if it is poured away, or enter the grams '
+        'that are eaten; picking another food also finishes it. There is '
         'no 0 g decision: the API rejects grams of 0.',
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('an ambiguous oil asks its own question and says a pick keeps '
+      'it held (Run 056 Sonnet critic 3 / Opus critic 3; 0690 Patatas '
+      "Bravas' sauce oil typed as an aioli: synthesized, a stated "
+      'exception)', (tester) async {
+    final aioli = _group(
+      id: 'atk-tv-2023-0690-patatas-bravas',
+      slug: 'patatas-bravas',
+      title: 'Patatas Bravas',
+      position: 7,
+      raw: '½ cup extra-virgin olive oil',
+      bucket: 'check',
+      itemKey: 'extra virgin olive oil',
+      item: 'extra-virgin olive oil',
+      lines: 1,
+      finishes: 0,
+      fdcId: 2710180,
+      description: 'Oil, olive, extra virgin',
+      confidence: 0.95,
+      grams: 108,
+      gramSource: 'density',
+      hold: 'ambiguous_medium',
+      lastOpen: 0,
+      finishesRecipes: const [],
+    );
+    await pumpQueue(tester, [
+      _body([aioli]),
+    ]);
+    expect(
+      find.text(
+        'line hold (ambiguous medium): decided one line at a time, never '
+        'offers apply-to-all. Two lines could be the frying medium — which? '
+        'Skip if this line is the frying oil (poured away), or enter the '
+        'grams that are eaten; picking another food keeps it held. There is '
+        'no 0 g decision: the API rejects grams of 0.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Any decision finishes it'), findsNothing);
+    // Its skip answers its own question (the v26 verifier's U5: the pane's
+    // button back to the plain held label left the suite green).
+    expect(find.text('Skip, this is the frying oil'), findsOneWidget);
+    expect(find.text(heldSkipLabel), findsNothing);
   });
 
   testWidgets('before the decision the pane splits what it finishes: this '

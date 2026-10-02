@@ -1523,7 +1523,7 @@ class SaltDatabase {
     }
     var written = false;
     _inTransaction(() {
-      if (layoutOf(recipeId).seq == layoutSeq) {
+      if (layoutSeqOf(recipeId) == layoutSeq) {
         written = write();
       }
     });
@@ -1677,8 +1677,7 @@ class SaltDatabase {
     required List<String> lines,
   }) {
     final texts = jsonEncode(lines);
-    final layout = layoutOf(recipeId);
-    if (drop.isEmpty && moves.isEmpty && layout.texts == texts) {
+    if (drop.isEmpty && moves.isEmpty && _layoutTextsOf(recipeId) == texts) {
       return;
     }
     final delete = _prepared(
@@ -1747,7 +1746,7 @@ class SaltDatabase {
   bool seedLayout(String recipeId, List<String> lines) {
     var seeded = false;
     _inTransaction(() {
-      if (layoutOf(recipeId).texts != null ||
+      if (_layoutTextsOf(recipeId) != null ||
           _prepared(
             'SELECT 1 FROM recipes WHERE id = ?',
           ).select([recipeId]).isEmpty) {
@@ -1774,6 +1773,11 @@ class SaltDatabase {
   /// (migration 013; 0: never laid out — a recipe computed before 012 is
   /// seeded one at boot, [seedLayout]), `texts` is the JSON array of those
   /// lines' texts and `lines` decodes it (both null: never laid out).
+  /// Decodes the texts: a reader of the lines only (the engine's
+  /// `layoutMatchRows`, once per compute or write). A gate reads
+  /// [layoutSeqOf] and a comparison [_layoutTextsOf] (RULE C, v26, Run 056 O9/S10: every row write decoded
+  /// the whole layout twice — 400 legal 1,000-character lines, ~800 decodes
+  /// of a 400 KB JSON per compute).
   ({int seq, String? texts, List<String>? lines}) layoutOf(String recipeId) {
     final rows = _prepared(
       'SELECT seq, lines FROM recipe_layout WHERE recipe_id = ?',
@@ -1782,12 +1786,32 @@ class SaltDatabase {
       return (seq: 0, texts: null, lines: null);
     }
     final texts = rows.first['lines'] as String;
+    layoutDecodes++;
     return (
       seq: rows.first['seq'] as int,
       texts: texts,
       lines: (jsonDecode(texts) as List).cast<String>(),
     );
   }
+
+  /// How many layouts [layoutOf] decoded — the cost pins' count.
+  @visibleForTesting
+  int layoutDecodes = 0;
+
+  /// [layoutOf]'s `seq` alone: the column, never the texts.
+  int layoutSeqOf(String recipeId) =>
+      _prepared(
+            'SELECT seq FROM recipe_layout WHERE recipe_id = ?',
+          ).select([recipeId]).firstOrNull?['seq']
+          as int? ??
+      0;
+
+  /// [layoutOf]'s `texts` as stored, never decoded.
+  String? _layoutTextsOf(String recipeId) =>
+      _prepared(
+            'SELECT lines FROM recipe_layout WHERE recipe_id = ?',
+          ).select([recipeId]).firstOrNull?['lines']
+          as String?;
 
   /// The computed nutrition row for a recipe, or null.
   RecipeNutritionRow? nutritionFor(String recipeId) {

@@ -26,6 +26,7 @@ import 'nutrition_v23_writepath_test.dart' as v23 show downgrade, fileDb;
 import 'nutrition_writepath_test.dart' as wp;
 
 import 'support/corpus.dart';
+import 'support/cost_bounds.dart';
 import 'support/fdc_fixtures.dart';
 
 /// [r] with the line [raw] retyped [to], parsed as the editor does.
@@ -796,6 +797,7 @@ void _ruleBCost() {
       late List<DiscardedMedium?> media;
       for (var run = 0; run < 3; run++) {
         final r = make(named: named);
+        stepIndexCounts.clear();
         final sw = Stopwatch()..start();
         media = [
           for (final l in nutritionLines(r))
@@ -805,16 +807,19 @@ void _ruleBCost() {
           holdNoteOf(r, l, 'ambiguous_medium');
         }
         best = min(best, sw.elapsedMilliseconds);
+        // A COUNT pin beside the clock (Run 056 O20).
+        expectBounded(r, Map.of(stepIndexCounts), 'named: $named');
       }
       expect(
         media.where((m) => m == DiscardedMedium.ambiguousMedium),
         hasLength(named ? 0 : 41),
         reason: '$named',
       );
-      expect(best, lessThan(200), reason: 'named: $named');
+      expect(best, lessThan(2000), reason: 'named: $named');
     }
     // The 41 held lines' note is one sentence of one step, split once (Run
-    // 055 C15: the memo could be deleted with every test green).
+    // 055 C15): the note is attached once per owners derivation (v26 O8),
+    // so the split needs no memo of its own.
     final r = make(named: false);
     stepIndexCounts.clear();
     for (final l in nutritionLines(r)) {

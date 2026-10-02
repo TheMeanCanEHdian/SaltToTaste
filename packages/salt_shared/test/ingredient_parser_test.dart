@@ -409,4 +409,61 @@ void main() {
       reason: 'the entry normalization (trim + collapse) must run first',
     );
   });
+
+  group('ONE whitespace normaliser for the parser and the editor (Run 056 '
+      'O12/S26/S27; typed runs: a stated exception — no corpus line prints '
+      'one)', () {
+    test('the parser reads a raw through normalizeLineWhitespace — every '
+        'run of any whitespace (tab, newline, no-break space) is one space, '
+        'as the editor reads a stored line', () {
+      for (final raw in const [
+        'Salt\nand pepper',
+        'Salt\tand  pepper',
+        'Salt\u00a0and pepper',
+        ' Salt and\r\npepper ',
+      ]) {
+        expect(
+          parseIngredientLine(raw).item,
+          parseIngredientLine(normalizeLineWhitespace(raw)).item,
+          reason: raw,
+        );
+        expect(parseIngredientLine(raw).item, 'Salt and pepper', reason: raw);
+      }
+      // The quantity run too: "1  1/2" reads as "1 1/2".
+      expect(parseIngredientLine('1 \t 1/2 cups flour').amounts, [
+        const Amount(
+          measure: Measure.volume,
+          quantity: '1 1/2',
+          unit: 'cup',
+          primary: true,
+        ),
+      ]);
+    });
+
+    test('normalizeLineFields reads the WHOLE stored line so: a pre-v24 '
+        'line ("1  1/2 cups flour, sifted  twice" with its runs stored) '
+        'equals its parse', () {
+      const raw = '1  1/2 cups flour, sifted  twice';
+      const stored = IngredientLine(
+        raw: raw,
+        amounts: [
+          Amount(
+            measure: Measure.volume,
+            quantity: '1  1/2',
+            unit: 'cup',
+            primary: true,
+          ),
+        ],
+        item: 'flour',
+        prep: 'sifted  twice',
+      );
+      final parsed = parseIngredientLine(raw);
+      final line = normalizeLineFields(stored);
+      expect(
+        (line.raw, line.item, line.prep),
+        (normalizeLineWhitespace(raw), parsed.item, parsed.prep),
+      );
+      expect(line.amounts, parsed.amounts);
+    });
+  });
 }

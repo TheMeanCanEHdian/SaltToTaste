@@ -21,6 +21,7 @@ import 'package:test/test.dart';
 
 import 'nutrition_writepath_test.dart' as wp;
 import 'support/corpus.dart';
+import 'support/cost_bounds.dart';
 import 'support/fdc_fixtures.dart';
 
 /// Every detector a compute and a matches GET read, over every line of [r]
@@ -61,6 +62,17 @@ Recipe withSteps(Recipe recipe, List<String> texts) => recipe.copyWith(
 /// [unit] repeated to at most [n] characters.
 String fill(String unit, int n) => unit * (n ~/ unit.length);
 
+/// A COUNT pin — every family [readAll] derives on a fresh [make] within
+/// its bound ([expectBounded]) — beside a generous clock backstop (Run 056
+/// O20: these pins were a 200 ms clock alone, and failed on load alone).
+void expectCheap(Recipe Function() make) {
+  final r = make();
+  stepIndexCounts.clear();
+  readAll(r);
+  expectBounded(r, Map.of(stepIndexCounts), r.id);
+  expect(msCold(make), lessThan(2000));
+}
+
 /// The counts of one [readAll] of a fresh [make].
 Map<String, int> countsOf(Recipe Function() make) {
   final r = make();
@@ -84,13 +96,28 @@ void main() {
     test('normalizeItem is linear: a 2,000-character number run and 2,000 '
         "unclosed '(' (S6: the run re-walked from each of its words, 28 ms; "
         'the lazy paren run re-read from each "(", 23 ms at v24)', () {
-      for (final item in ['1 ' * 1000, '(' * 2000, '1/2 ' * 500]) {
+      // A COUNT pin (each "(" and each number word read once), and a
+      // clock backstop on 20,000 unclosed "(" — past the 1,000-character
+      // line cap, a stated synthesized input of a function-level pin: the
+      // lazy run is ~2 s there, the one pass under 10 ms (Run 056 O20: the
+      // 5 ms clock alone 'killed' unrelated mutants under load).
+      for (final item in [
+        '1 ' * 1000,
+        '(' * 2000,
+        '1/2 ' * 500,
+        '(x) ' * 500,
+        '(' * 20000,
+      ]) {
+        normalizeSteps = 0;
         normalizeItem(item);
+        expect(
+          normalizeSteps,
+          lessThanOrEqualTo(item.length + 2),
+          reason: item.substring(0, 8),
+        );
         final sw = Stopwatch()..start();
-        for (var i = 0; i < 5; i++) {
-          normalizeItem(item);
-        }
-        expect(sw.elapsedMicroseconds / 5, lessThan(5000), reason: item);
+        normalizeItem(item);
+        expect(sw.elapsedMilliseconds, lessThan(500), reason: item);
       }
     });
   });
@@ -99,7 +126,7 @@ void main() {
       'a hostile recipe', () {
     test("a salt line on 40 legal 10,000-character steps of 'Rub … with salt "
         "and sugar' after a rinse (S4: 39 s at v24 — the later steps re-split "
-        'per rub sentence): under 200 ms, no cure; the steps indexed and the mentions '
+        'per rub sentence): each family within its count bound, no cure; the steps indexed and the mentions '
         'located once for the whole recipe', () {
       final base = loadCorpusRecipe(potatoes);
       final rub = fill('Rub the potatoes with salt and sugar. ', 10000);
@@ -111,7 +138,7 @@ void main() {
         discardedMediumOf(r, salt, normalizeItem(lineItemOf(salt))),
         isNull,
       );
-      expect(msCold(make), lessThan(200));
+      expectCheap(make);
       final counts = countsOf(make);
       final texts = make().steps.map((s) => s.text);
       expect(counts['indexes'], 1);
@@ -126,7 +153,7 @@ void main() {
 
     test('10 legal steps of ten 997-character sentences naming water, a '
         'boil, a whisk, a submerge, a colander and 189 salts each (1,890 '
-        'mentions a step, inside the window): under 200 ms — a mention finds its '
+        'mentions a step, inside the window): each family within its count bound — a mention finds its '
         'sentence and every match after it by binary search (O2/O9/S18: two '
         'regex scans of the step, a lower-casing and a re-split per mention, '
         '3.7 s on ONE such step at v24)', () {
@@ -138,27 +165,30 @@ void main() {
       expect(step.length, lessThanOrEqualTo(10000));
       // 18,900 mentions: linear, ~1 µs a mention a detector pass.
       Recipe make() => withSteps(base, List.filled(10, step));
-      expect(msCold(make), lessThan(200));
+      expectCheap(make);
       final counts = countsOf(make);
       expect(counts['indexes'], 1);
       expect(counts['mentions'], saltMentions(make().steps.map((s) => s.text)));
       expect(counts['mentions'], greaterThanOrEqualTo(10 * 1890));
     });
 
-    test('a salt mention in each of 450 sentences before 8 legal steps of '
-        "'Drain the xyz.' (O3: every later step re-scanned per mention, "
-        '1.5 s at v24): under 200 ms; the later drains read once', () {
-      final base = loadCorpusRecipe(potatoes);
-      Recipe make() => withSteps(base, [
-        'Bring 4 quarts water to boil. ${'Add 2 teaspoons salt. ' * 450}',
-        'Stir.',
-        ...List.filled(8, 'Drain the xyz. ' * 660),
-      ]);
-      expect(msCold(make), lessThan(200));
-      final counts = countsOf(make);
-      expect(counts['drained'], 1);
-      expect(counts['indexes'], 1);
-    });
+    test(
+      'a salt mention in each of 450 sentences before 8 legal steps of '
+      "'Drain the xyz.' (O3: every later step re-scanned per mention, "
+      '1.5 s at v24): each family within its count bound; the later drains read once',
+      () {
+        final base = loadCorpusRecipe(potatoes);
+        Recipe make() => withSteps(base, [
+          'Bring 4 quarts water to boil. ${'Add 2 teaspoons salt. ' * 450}',
+          'Stir.',
+          ...List.filled(8, 'Drain the xyz. ' * 660),
+        ]);
+        expectCheap(make);
+        final counts = countsOf(make);
+        expect(counts['drained'], 1);
+        expect(counts['indexes'], 1);
+      },
+    );
 
     test('450 salt mentions in cooking water before a step lifting the food '
         'out with a slotted spoon: whether that step lifts from the water is '
@@ -176,7 +206,7 @@ void main() {
 
     test(
       "10 legal steps of 600 short 'Whisk the salt.' sentences (6,000 "
-      'mixing mentions, each its own sentence): under 200 ms — what each '
+      'mixing mentions, each its own sentence): each family within its count bound — what each '
       'later sentence does is read once per step, never re-read per '
       'mention (S4/O9: the rest of the step re-split per mention at v24)',
       () {
@@ -184,14 +214,14 @@ void main() {
         final step = 'Whisk the salt. ' * 600;
         expect(step.length, lessThanOrEqualTo(10000));
         Recipe make() => withSteps(base, List.filled(10, step));
-        expect(msCold(make), lessThan(200));
+        expectCheap(make);
         expect(countsOf(make)['mentions'], greaterThanOrEqualTo(6000));
       },
     );
 
     test('a period-free 10,000-character step with 2,000 salt mentions (S4 '
         'shape B, S18: 3–6 s at v24) is read for its first 1,000 characters '
-        '— the rest ignored, and a log line says so: under 200 ms, and only '
+        '— the rest ignored, and a log line says so: each family within its count bound, and only '
         "the window's mentions located", () {
       final base = loadCorpusRecipe(potatoes);
       final step = 'salt ' * 2000;
@@ -201,7 +231,7 @@ void main() {
       Logger.root.level = Level.ALL;
       final sub = Logger.root.onRecord.listen((r) => logs.add(r.message));
       addTearDown(sub.cancel);
-      expect(msCold(make), lessThan(200));
+      expectCheap(make);
       final counts = countsOf(make);
       expect(
         counts['mentions'],
@@ -263,13 +293,15 @@ void main() {
       );
       expect(keptLiquidOf(r, line), '1 cup defatted cooking liquid');
       expect(keptLiquidOf(make(), line), '1 cup defatted cooking liquid');
-      expect(msCold(make), lessThan(200));
+      expectCheap(make);
     });
 
     test('40 oil lines of a cup in 0491 on 40 legal steps of frying '
         'sentences naming the oil (S5: every oil line re-split and re-read '
-        'every step at v24): under 200 ms, each copy of its ¾ cup still '
-        'frying oil', () {
+        'every step at v24): each family within its count bound, each copy of its ¾ cup HELD '
+        '`ambiguous_medium` (v26, Run 056 S3: 41 identical raws are 41 '
+        'candidates — the unbound "Heat the oil" could be any one\'s; v25 '
+        'zeroed every copy)', () {
       final base = loadCorpusRecipe(
         '0491-spicy-mexican-shredded-pork-tostadas.yaml',
       );
@@ -294,11 +326,11 @@ void main() {
         nutritionLines(r).where(
           (l) =>
               discardedMediumOf(r, l, normalizeItem(lineItemOf(l))) ==
-              DiscardedMedium.fryingOil,
+              DiscardedMedium.ambiguousMedium,
         ),
         hasLength(41),
       );
-      expect(msCold(make), lessThan(200));
+      expectCheap(make);
     });
 
     test('a second read of the same recipe derives nothing again: the step '
@@ -410,8 +442,15 @@ void main() {
           // GET only: the reach caches holds by content hash).
           expect(stepIndexCounts['indexes'], 1 + reachDecodes);
           expect(reachDecodes, i == 0 ? 1 : 0);
+          expectBounded(
+            fresh,
+            Map.of(stepIndexCounts),
+            'GET $i',
+            copies: 1 + reachDecodes,
+          );
         }
-        expect(best, lessThan(200));
+        // A backstop beside the counts (Run 056 O20).
+        expect(best, lessThan(2000));
       },
     );
 
@@ -419,7 +458,7 @@ void main() {
         'Garlic-Studded Roast Pork Loin plus 160 identical legal '
         '1,000-character lines (16 s before: each line re-read every '
         "same-key row's text), naming a second food or not, and 40 distinct "
-        "ones: under 500 ms, each text read and keyed once, each key's "
+        "ones: a 2,000 ms backstop, each text read and keyed once, each key's "
         'reach read once, and every line reaching each OTHER same-key '
         'line', () async {
       final base = loadCorpusRecipe('0241-garlic-studded-roast-pork-loin.yaml');
@@ -489,7 +528,8 @@ void main() {
             reason: shape,
           );
         }
-        expect(ms, lessThan(500), reason: shape);
+        // A backstop beside the counts (Run 056 O20).
+        expect(ms, lessThan(2000), reason: shape);
       }
     });
   }, skip: skipIfNoCorpus);

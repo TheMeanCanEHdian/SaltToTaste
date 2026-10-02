@@ -145,29 +145,21 @@ Future<Map<String, Object?>> matchesBody(
       final decided = row;
       final carried = decided.raw != line.raw;
       carriedFrom = carried ? decided.raw : null;
-      try {
-        final d = await derivedFor(
-          db,
-          const _CacheOnly(),
-          recipe,
-          position,
-          line,
-          decided,
-        );
-        row = carried ? d.row : withDerived(decided, d.row);
-        note = d.note;
-        derived = true;
-      } on NutritionProviderException {
-        // Its grams need a fetch: none shown for a carried row until the
-        // compute weighs it; a row on its line as stored.
-        row = carried
-            ? decided.copyWith(
-                raw: line.raw,
-                clearGrams: true,
-                clearGramSource: true,
-              )
-            : decided;
-      }
+      // A derivation that needs what no cache holds is RULE A's one
+      // unhappy outcome ([derivedFor]'s `unavailable`): the stored row
+      // shown as is — its derived fields as the last derivation left them,
+      // what the totals count — carried rows under the line's text.
+      final d = await derivedFor(
+        db,
+        const _CacheOnly(),
+        recipe,
+        position,
+        line,
+        decided,
+      );
+      row = carried ? d.row : withDerived(decided, d.row);
+      note = d.note;
+      derived = true;
     } else if (row != null && row.raw != line.raw) {
       row = null;
     }
@@ -404,7 +396,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   // gramsFor) is read again before the write (below).
   layoutMatchRows(db, recipe);
   // The layout this request reads its row under ([SaltDatabase.layoutOf]).
-  var seq = db.layoutOf(recipe.id).seq;
+  var seq = db.layoutSeqOf(recipe.id);
   final existing = {
     for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
   };
@@ -417,15 +409,14 @@ Future<AppliedToOthers?> applyMatchOverride(
   // here never stamps the old amount's grams under the new text (Run 051
   // B2: a skip then an un-skip in that window counted 3 g typed for "½
   // cup" on "1 cup" of oil). With no row, start fresh.
+  // A derivation that cannot run ([derivedFor]'s `unavailable`, RULE A's
+  // one unhappy outcome) here or below: the decision is stored with the
+  // derived fields as they were, and the totals stamped stale.
+  var unavailable = false;
   if (row != null && row.raw != line.raw) {
-    row = (await derivedFor(
-      db,
-      provider,
-      recipe,
-      position,
-      line,
-      row,
-    )).row;
+    final d = await derivedFor(db, provider, recipe, position, line, row);
+    row = d.row;
+    unavailable = d.unavailable;
   }
   row ??= IngredientMatchRow(
     recipeId: recipe.id,
@@ -495,7 +486,6 @@ Future<AppliedToOthers?> applyMatchOverride(
       confidence: 1,
       clearGrams: true,
       clearGramSource: true,
-      clearHold: true,
       status: 'overridden',
     );
     decidedFood = true;
@@ -541,7 +531,12 @@ Future<AppliedToOthers?> applyMatchOverride(
         'Pick a matching food first, then set the grams.',
       );
     }
+    // Typed for the line as it reads NOW: a decision an amount edit
+    // carried whose derivation could not run still has its old text
+    // ([derivedFor]'s `unavailable`), and these grams are not the old
+    // amount's.
     row = row.copyWith(
+      raw: line.raw,
       grams: grams.toDouble(),
       gramSource: GramSource.override.name,
       status: row.status == 'auto' ? 'overridden' : row.status,
@@ -557,27 +552,20 @@ Future<AppliedToOthers?> applyMatchOverride(
   // stores what it derives on the recipe as it is ([derivedFor] — the hold,
   // the grams unless typed, their source; the sub-recipe rule's gate), the
   // one rule every compute and the matches GET apply. An un-skip is the
-  // engine's row again ([unskippedRow]). A skip, a confirm or a grams edit
-  // lands while FDC is out of budget: a derivation that needs a fetch
-  // leaves the row's grams as they were, no hold, until the next compute
-  // derives them (a pick needed its food above, as it always did).
+  // engine's row again ([unskippedRow]). A derivation that cannot run
+  // (FDC out of budget or down for a detail it needs, a food no cache and
+  // no FDC answer holds) is RULE A's one unhappy outcome, as at every
+  // compute (v26, Run 056 S2/S29): the decision is stored (200), its
+  // derived fields as the last derivation left them — the hold kept, a
+  // pick's grams none (it clears the old food's) — and the totals stamped
+  // stale, so the next sweep derives them. (v25 dropped the hold and kept
+  // the stamp fresh: 0129's held liquid smoke confirmed in an outage sat
+  // in `no_grams` for good.) A pick still needs its food above.
   var stored = row;
   if (skipped != false) {
-    try {
-      stored = (await derivedFor(
-        db,
-        provider,
-        recipe,
-        position,
-        line,
-        row,
-      )).row;
-    } on NutritionProviderException {
-      if (fdcId != null) {
-        rethrow;
-      }
-      stored = row.copyWith(clearHold: true);
-    }
+    final d = await derivedFor(db, provider, recipe, position, line, row);
+    stored = d.row;
+    unavailable = unavailable || d.unavailable;
   }
   // Everything apply_to_all needs is checked BEFORE the line is written, so
   // a refused request changes nothing — not the line, not the totals (the
@@ -626,7 +614,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   // line_moved; this line's row is left as it was). A recipe deleted
   // meanwhile is a 404.
   if (db.contentHashOf(recipe.id) != version ||
-      db.layoutOf(recipe.id).seq != seq) {
+      db.layoutSeqOf(recipe.id) != seq) {
     recipe =
         db.recipeByIdOrSlug(recipe.id)?.recipe ??
         (throw const NotFoundException('Recipe not found.'));
@@ -642,7 +630,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     if (!sameMatchRow(laid, read)) {
       throw LineMovedException(position);
     }
-    seq = db.layoutOf(recipe.id).seq;
+    seq = db.layoutSeqOf(recipe.id);
   }
   if (decidedFood && itemKey.isNotEmpty) {
     db.putDecision(
@@ -660,7 +648,13 @@ Future<AppliedToOthers?> applyMatchOverride(
   )) {
     throw LineMovedException(position);
   }
-  await recomputeTotals(db, provider, recipe);
+  await recomputeTotals(
+    db,
+    provider,
+    recipe,
+    // Stamped stale: a re-match gate that reads false ([recomputeTotals]).
+    freshMatch: unavailable ? (layoutSeq: seq, current: () => false) : null,
+  );
 
   if (food == null) {
     return null;

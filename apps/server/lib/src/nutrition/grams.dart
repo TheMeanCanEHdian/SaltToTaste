@@ -508,6 +508,21 @@ double? volumeMlOf(List<Amount> amounts) {
   return null;
 }
 
+/// The line's weight in grams — its first weight amount — or null (as
+/// [volumeMlOf] reads a volume).
+double? weightGramsOf(List<Amount> amounts) {
+  for (final amount in _byPreference(amounts)) {
+    final perUnit = _weightUnitGrams[(amount.unit ?? '').toLowerCase()];
+    final quantity = _quantityValue(amount.quantity);
+    if (amount.measure == Measure.weight &&
+        perUnit != null &&
+        quantity != null) {
+      return quantity * perUnit;
+    }
+  }
+  return null;
+}
+
 /// The FIRST count amount's numeric value ("2 cans" -> 2), or null.
 double? countOf(List<Amount> amounts) => _countQty(amounts);
 
@@ -1321,13 +1336,20 @@ class PlusPart {
     required this.text,
     required this.sameFood,
     this.weighsTotal = false,
-  });
+    String? form,
+  }) : form = form ?? text;
 
   /// The second amount as parsed.
   final Amount amount;
 
   /// The second part as written ("2 tablespoons juice").
   final String text;
+
+  /// The second part's own words through its end, its comma included —
+  /// "2 cups, shredded" (the corpus's own spelling: "¼ cup grated Parmesan
+  /// cheese plus 6 ounces, shredded", 0419) — where [text] stops at the
+  /// comma: the form the part is in ([resolveGrams]; Run 056 O11/S12).
+  final String form;
 
   /// Whether the second part names no food beyond the first part's (or the
   /// first part names none: "¼ cup plus 2 teaspoons olive oil").
@@ -1564,7 +1586,7 @@ const Set<String> _plusFiller = {
 /// key, reach and rule — a matches GET of 160 such lines spent 1.5 s here).
 PlusPart? plusPartOf(String raw) {
   // ponytail: whole-map clear past the cap; an LRU if a library outgrows it.
-  if (_plusParts.length >= 20000) {
+  if (_plusParts.length >= (memoCapForTest ?? 20000)) {
     _plusParts.clear();
   }
   return _plusParts.putIfAbsent(raw, () {
@@ -1574,6 +1596,13 @@ PlusPart? plusPartOf(String raw) {
 }
 
 final Map<String, PlusPart?> _plusParts = {};
+
+/// The cap of every bounded process-wide memo (the plus parts here; in
+/// engine.dart the step windows logged, the decision keys by line and by
+/// text, the reach's holds by version, the compiled head patterns) in a
+/// test: the pins fill one past it and read the first key again (Run 056
+/// S21/O19: deleting any clear survived every test). Null in production.
+int? memoCapForTest;
 
 /// How many texts [plusPartOf] parsed since reset — what the tests pin its
 /// memo by, never a clock.
@@ -1647,6 +1676,7 @@ PlusPart? _plusPartOf(String raw) {
         (firstWords.length == secondWords.length &&
             firstWords.containsAll(secondWords)) ||
         _qualifiesSame(firstItem, second.item),
+    form: rest.replaceAll(RegExp(r'\s+'), ' ').trim(),
     // "½ cup (3½ ounces) plus 2 tablespoons sugar" weighs only the first.
     weighsTotal:
         raw.substring(plus.end, plus.end + span).contains('(') &&
@@ -1875,13 +1905,14 @@ GramResolution? _resolveLine({
   // (Run 054 O10/S6: 0.42, read with no words) — unless the part names its
   // own: "¼ cup grated Parmesan cheese plus 2 cups shredded" weighs its 2
   // cups shredded, 0.36 (Run 055 O7: the line's first form, grated, read
-  // them 57 g under).
+  // them 57 g under) — after its comma too: "plus 2 cups, shredded" (Run
+  // 056 O11/S12: the part's words stopped at the comma, 127.6 g for 184.3).
   final second = _resolveGrams(
     amounts: [plus.amount],
     food: measured,
     normalizedItem: normalizedItem,
     kosher: kosher,
-    words: _hardCheeseForm.hasMatch(plus.text.toLowerCase()) ? plus.text : raw,
+    words: _hardCheeseForm.hasMatch(plus.form.toLowerCase()) ? plus.form : raw,
   );
   if (second == null) {
     return first;
@@ -2007,10 +2038,17 @@ FdcFood? _asPrepared(FdcFood? food, String line) {
 /// so "6 cups (1 bag) popped popcorn" lost its "popped" and weighed 1,158 g
 /// for 84, and "½ cup popcorn (unpopped)" lost its "unpopped", 7 g for
 /// 96.5): a paren that sizes or sources the amount — one with a number or
-/// a "from" ("(1 bag)", "(from ⅓ cup kernels)") — is dropped, any other
-/// is read as a modifier ("(unpopped)", "(kernels)", "(about)"), an
-/// unclosed one is dropped to the end, and the line is cut at a "from"
-/// outside a paren ("popped popcorn from ⅓ cup kernels"). One pass.
+/// a "from" ("(1 bag)", "(from ⅓ cup kernels)") — is dropped; a paren that
+/// is ONE word qualifies the head and is read as a modifier ("(unpopped)",
+/// "(kernels)", "(about)"); a paren of more words is a note on the line —
+/// a part removed, discarded or reserved ("(unpopped kernels discarded)",
+/// "(old maids and kernels removed)", Run 056 O10: read as a modifier, its
+/// "unpopped" restored the 193 g kernel cup to a popped line, 13.8×) — and
+/// is dropped — and a comma part the same way (", unpopped" qualifies, ",
+/// unpopped kernels discarded" is a note); an unclosed paren is dropped to
+/// the end, and the line is cut
+/// at a "from" outside a paren ("popped popcorn from ⅓ cup kernels"). One
+/// pass.
 String _measuredHead(String text) {
   final out = StringBuffer();
   var open = -1;
@@ -2020,7 +2058,7 @@ String _measuredHead(String text) {
       open = i;
     } else if (open >= 0 && c == ')') {
       final inner = text.substring(open + 1, i);
-      if (!_sizesOrSources.hasMatch(inner)) {
+      if (!_sizesOrSources.hasMatch(inner) && !_twoWords.hasMatch(inner)) {
         out.write(' $inner ');
       }
       open = -1;
@@ -2028,10 +2066,20 @@ String _measuredHead(String text) {
       out.write(c);
     }
   }
-  final head = out.toString();
+  // A comma part is read by the same rule: ", unpopped" qualifies, ",
+  // unpopped kernels discarded" is a note.
+  final parts = out.toString().split(',');
+  final head = [
+    parts.first,
+    for (final part in parts.skip(1))
+      if (!_twoWords.hasMatch(part)) part,
+  ].join(',');
   final from = RegExp(r'\bfrom\b').firstMatch(head);
   return from == null ? head : head.substring(0, from.start);
 }
+
+/// A paren of more than one word ([_measuredHead]).
+final RegExp _twoWords = RegExp(r'\S\s+\S');
 
 /// A paren's number or "from" ([_measuredHead]).
 final RegExp _sizesOrSources = RegExp('[\\d$vulgarFractionChars]|\\bfrom\\b');
