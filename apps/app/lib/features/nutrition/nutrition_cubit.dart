@@ -36,7 +36,8 @@ typedef ApplyOffer = ({
 /// the queue's receipt names a shortfall against its promise), and how many
 /// targets it left because their recipe changed meanwhile ([moved]), was
 /// decided meanwhile ([decided]), is another ingredient now or gone
-/// ([gone]), or sat in a recipe that failed ([failedLines]). [raw]
+/// ([gone]), sat in a recipe that failed ([failedLines]), or could not be
+/// weighed while USDA was unavailable ([unavailable]). [raw]
 /// is the offer's line text: the receipt stands under the row that reads it,
 /// as the offer did ([receiptIsFor]).
 typedef ApplyReceipt = ({
@@ -54,6 +55,7 @@ typedef ApplyReceipt = ({
   int decided,
   int gone,
   int failedLines,
+  int unavailable,
 });
 
 /// The parsed ingredient item as a person would name it: parentheticals
@@ -217,6 +219,7 @@ ApplyReceipt receiptOnReload(
     decided: receipt.decided,
     gone: receipt.gone,
     failedLines: receipt.failedLines,
+    unavailable: receipt.unavailable,
   );
 }
 
@@ -619,6 +622,7 @@ class NutritionCubit extends Cubit<NutritionState> {
             decided: applied.decided,
             gone: applied.gone,
             failedLines: applied.failedLines,
+            unavailable: applied.unavailable,
           ), matches);
     emit(
       state.copyWith(

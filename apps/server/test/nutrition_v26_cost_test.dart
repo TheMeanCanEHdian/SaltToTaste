@@ -8,7 +8,7 @@
 // (`eatenParses`), each layout decoded ([SaltDatabase.layoutDecodes]).
 // Every family the pins meet must have a bound here (an unknown family
 // fails), so a memo deleted or keyed loosely fails a count, never only a
-// clock; each time bound (2,000 ms) is a generous backstop.
+// clock; each time bound ([backstopMs]) is a generous backstop.
 //
 // Real corpus recipes (0241 Garlic-Studded Roast Pork Loin, 0148 Crispy
 // Fried Chicken) with recorded FDC answers (FixtureProvider), never the
@@ -265,12 +265,12 @@ void main() {
     // cheese 2.5 s, water 1.2 s; the tree 0.04–1.2 s.
     for (final shape in shapes.keys) {
       test('$shape: every family counted once per recipe, head, step, '
-          'sentence or mention, within a 2,000 ms backstop', () {
+          'sentence or mention, within the backstop', () {
         final (counts, ms, r) = readCounts(shape);
         expectBounded(r, counts, shape);
         expect(counts['indexes'], 1);
         expect(counts['lower'], 1);
-        expect(ms, lessThan(2000), reason: '$shape: $counts');
+        expect(ms, lessThan(backstopMs), reason: '$shape: $counts');
       });
     }
 
@@ -311,7 +311,10 @@ void main() {
           'memo:parted',
           'memo:sugarBeside',
           'memo:brinedByVolume',
-          'memo:dissolvingWith',
+          'memo:dissolveIndex',
+          'memo:dissolveItems',
+          'memo:dissolvedWith',
+          'occurrenceScans',
           'memo:firstOwn',
           'mentionVisits',
           'eatenParses',
@@ -384,7 +387,7 @@ void main() {
       'sugar',
     ]) {
       test('$shape: every path counted within its bounds, the layout '
-          'decoded at most once, each under a 2,000 ms backstop', () async {
+          'decoded at most once, each under the backstop', () async {
         final r = shapes[shape]!();
         final db = wp.tempDb();
         final provider = _NoHits();
@@ -417,7 +420,7 @@ void main() {
             lessThanOrEqualTo(name == 'apply-to-all' ? 2 : 1),
             reason: '$name layouts',
           );
-          expect(ms, lessThan(2000), reason: '$shape $name: $counts');
+          expect(ms, lessThan(backstopMs), reason: '$shape $name: $counts');
         }
 
         Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;

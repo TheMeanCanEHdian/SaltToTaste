@@ -465,5 +465,23 @@ void main() {
       );
       expect(line.amounts, parsed.amounts);
     });
+
+    test('normalizeLineFields normalises each amount\'s UNIT too (Run 057 '
+        'S11: a stored unit with a whitespace run — synthesized, a '
+        'malformed stored line — stays locked as hand-curated otherwise)', () {
+      const stored = IngredientLine(
+        raw: '2 fluid ounces milk',
+        amounts: [
+          Amount(
+            measure: Measure.volume,
+            quantity: '2',
+            unit: ' fluid   ounces ',
+            primary: true,
+          ),
+        ],
+        item: 'milk',
+      );
+      expect(normalizeLineFields(stored).amounts.single.unit, 'fluid ounces');
+    });
   });
 }

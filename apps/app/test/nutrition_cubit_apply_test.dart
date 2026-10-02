@@ -959,6 +959,7 @@ void main() {
         decided: 0,
         gone: 0,
         failedLines: 0,
+        unavailable: 0,
       );
       expect(
         receiptOnReload(receipt, [row(6, salt), row(7, offer.raw)]).position,

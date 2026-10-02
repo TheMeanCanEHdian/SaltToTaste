@@ -89,7 +89,7 @@ void main() {
     await matchAndCompute(db, provider, r);
     expect(nutritionIsFresh(db, r), isTrue);
     db.deleteIngredientMatchesFrom('r', 2);
-    await recomputeTotals(db, provider, r);
+    recomputeTotals(db, r);
     expect(nutritionIsFresh(db, r), isFalse);
   });
 

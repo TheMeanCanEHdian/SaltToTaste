@@ -762,6 +762,7 @@ void main() {
         'decided': 0,
         'gone': 1,
         'failed_lines': 1,
+        'unavailable': 0,
       });
       raw
         ..execute('UPDATE recipes SET doc = ? WHERE slug = ?', [

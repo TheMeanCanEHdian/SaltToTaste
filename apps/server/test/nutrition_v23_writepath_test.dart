@@ -46,9 +46,22 @@ const quarter = '¼ cup extra-virgin olive oil';
 
 /// Puts the closed database at [path] back to schema [version] (11: before
 /// migration 012 — no layout table; 12: before 013 — no stamp layout, no
-/// global counter), with [seqs] as recipe_layout's per-recipe seqs at 12.
+/// global counter; 13: before 014 — no row `derived_seq`, no backfill
+/// marker; every version: before 015 — no stored totals), with [seqs] as
+/// recipe_layout's per-recipe seqs at 12.
 void downgrade(String path, int version, {Map<String, int> seqs = const {}}) {
-  final raw = sqlite3.open(path);
+  final raw = sqlite3.open(path)
+    ..execute('ALTER TABLE recipe_nutrition DROP COLUMN totals')
+    ..execute('ALTER TABLE ingredient_matches DROP COLUMN derived_seq')
+    ..execute(
+      "DELETE FROM settings WHERE key = 'nutrition.derived_seq_backfill'",
+    );
+  if (version == 13) {
+    raw
+      ..execute('PRAGMA user_version = 13')
+      ..dispose();
+    return;
+  }
   if (version == 11) {
     raw.execute('DROP TABLE recipe_layout');
   }
@@ -89,6 +102,7 @@ Future<
     int decided,
     int gone,
     int failedLines,
+    int unavailable,
   })
 >
 applyOil(SaltDatabase db, NutritionProvider provider, [FdcFood? food]) async =>
@@ -274,35 +288,39 @@ void main() {
       final b2 = wp.saveLines(db, [lb, wp.onion, wp.celery], id: 'b');
       await matchAndCompute(db, provider, b2);
       final kcal = db.nutritionFor('b')!.caloriesPerServing!;
-      await recomputeTotals(db, provider, b1, servingBasis: 2);
+      recomputeTotals(db, b1, servingBasis: 2);
       expect(nutritionIsFresh(db, b2), isTrue);
       expect(db.nutritionFor('b')!.totalCount, 3);
       expect(db.nutritionFor('b')!.caloriesPerServing, closeTo(kcal / 2, 0.01));
     });
 
-    test('its own await: the food cache emptied, a save and a compute land '
-        "during the recompute's fetch — the rows it re-reads after, never "
-        'those it read before', () async {
-      final (db, path) = fileDb();
-      addTearDown(db.dispose);
-      final inner = FixtureProvider(pending: pendingSearches);
-      final b1 = wp.saveLines(db, [lb, wp.onion], id: 'b');
-      await matchAndCompute(db, inner, b1);
-      sqlite3.open(path)
-        ..execute('DELETE FROM fdc_food_cache')
-        ..execute('DELETE FROM fdc_search_cache')
-        ..dispose();
-      final provider = wp.Gated(inner);
-      late Recipe b2;
-      provider.onCall = () async {
-        b2 = wp.saveLines(db, [lb, wp.onion, wp.celery], id: 'b');
-        await matchAndCompute(db, inner, b2);
-      };
-      await recomputeTotals(db, provider, b1);
-      expect(nutritionIsFresh(db, b2), isTrue);
-      expect(db.nutritionFor('b')!.totalCount, 3);
-      expect(db.nutritionFor('b')!.status, 'complete');
-    });
+    // v27 (RULE A): the totals are cache-only and synchronous — no await of
+    // their own for a save to land in (the v23 pin of that await is moot).
+    // What a food in no cache does instead: the row is left out and, an
+    // engine row's, its recipe stamped stale for the next compute.
+    test(
+      'caches emptied: a recompute fetches nothing — the engine rows '
+      'whose food no cache holds are left out and the recipe is stale',
+      () async {
+        final (db, path) = fileDb();
+        addTearDown(db.dispose);
+        final b1 = wp.saveLines(db, [lb, wp.onion], id: 'b');
+        await matchAndCompute(
+          db,
+          FixtureProvider(pending: pendingSearches),
+          b1,
+        );
+        expect(nutritionIsFresh(db, b1), isTrue);
+        sqlite3.open(path)
+          ..execute('DELETE FROM fdc_food_cache')
+          ..execute('DELETE FROM fdc_search_cache')
+          ..dispose();
+        recomputeTotals(db, b1);
+        expect(nutritionIsFresh(db, b1), isFalse);
+        expect(db.nutritionFor('b')!.status, 'partial');
+        expect(db.nutritionFor('b')!.matchedCount, 0);
+      },
+    );
   });
 
   test('O10/S6: the stamp-time re-check — 0148 Crispy Fried Chicken first '
@@ -381,6 +399,7 @@ void main() {
           'decided': 1,
           'gone': 0,
           'failed_lines': 0,
+          'unavailable': 0,
         });
       },
     );
@@ -499,11 +518,17 @@ void main() {
     expect((res.lines, res.decided, res.moved), (1, 1, 1));
   });
 
+  // v27 (RULE A, Run 057 Opus critic 1): the totals are cache-only, so a
+  // food no cache holds no longer fails a target recipe after its rows are
+  // written — c's line 1 is written, its totals recomputed with celery
+  // left out and stamped stale (an engine row's food missing: the next
+  // compute re-matches it). Nothing fails; `failed_lines` now arises only
+  // from a recipe that will not decode (pinned in contract_golden_test).
   test(
-    'failed_lines counts only the lines not settled before the failure: '
     "c [¼ cup oil, ¼ cup oil, celery], line 0 skipped during b's fetch "
-    "(decided), and c's totals cannot recompute (celery's detail gone "
-    'from the cache, FDC failing) — failed 1, failed_lines 1, decided 1',
+    "(decided), celery's detail gone from every cache and FDC failing — "
+    "line 1 written, c's totals recomputed without celery and stale, "
+    'nothing failed',
     () async {
       final (db, path) = fileDb();
       addTearDown(db.dispose);
@@ -526,8 +551,11 @@ void main() {
       final res = await applyOil(db, provider);
       expect(
         (res.lines, res.decided, res.failed, res.failedLines),
-        (1, 1, 1, 1),
+        (2, 1, 0, 0),
       );
+      final stored = db.recipeByIdOrSlug('c')!.recipe;
+      expect(nutritionIsFresh(db, stored), isFalse);
+      expect(db.nutritionFor('c')!.status, 'partial');
     },
   );
 

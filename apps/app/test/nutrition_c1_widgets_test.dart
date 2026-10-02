@@ -1634,6 +1634,7 @@ void main() {
       decided: 0,
       gone: 0,
       failedLines: 0,
+      unavailable: 0,
     );
 
     // Run 054 S8: the receipt's Dismiss is the receipt's own callback — a
@@ -1698,6 +1699,7 @@ void main() {
         decided: decided,
         gone: gone,
         failedLines: failedLines,
+        unavailable: 0,
       );
       for (final promise in [promised, null]) {
         await pumpStrip(tester, applied: movedReceipt(2), promise: promise);

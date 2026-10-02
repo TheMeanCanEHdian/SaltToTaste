@@ -996,7 +996,7 @@ void main() {
             )!
             .recipe;
         byTitle[title] = recipe;
-        await recomputeTotals(db, provider, recipe);
+        recomputeTotals(db, recipe);
         expect(db.nutritionFor(recipe.id)!.status, 'partial', reason: title);
       }
       // Over the route itself: the wire receipt names the completed recipe
@@ -1017,6 +1017,7 @@ void main() {
         'decided': 0,
         'gone': 0,
         'failed_lines': 0,
+        'unavailable': 0,
       });
       expect(
         db.nutritionFor(byTitle['Easy Holiday Sugar Cookies']!.id)!.status,
@@ -1034,7 +1035,13 @@ void main() {
     'of Bacon bits on the bacon of Hearty Lentil Soup reaches the counted '
     'bacon line of Boston Baked Beans (another food), which stays complete',
     () async {
-      final db = tempDb();
+      // The seeded rows' food in the cache, as the compute that wrote such
+      // rows leaves it (v27, RULE A: the totals never fetch).
+      final db = tempDb()
+        ..fdcFoodCachePut(
+          168277,
+          jsonEncode((await FixtureProvider().food(168277))!.toJson()),
+        );
       final byTitle = <String, Recipe>{};
       for (final (title, raw, grams) in [
         (
@@ -1059,7 +1066,7 @@ void main() {
           gramSource: 'weight',
           description: 'Pork, cured, bacon, unprepared',
         );
-        await recomputeTotals(db, provider, recipe);
+        recomputeTotals(db, recipe);
         expect(db.nutritionFor(recipe.id)!.status, 'complete', reason: title);
         byTitle[title] = recipe;
       }
@@ -1594,7 +1601,7 @@ void main() {
         final recipe = recipeOf(db, servings, [
           '¼ teaspoon ground allspice',
         ], servings: servings);
-        await recomputeTotals(db, provider, recipe);
+        recomputeTotals(db, recipe);
         final body = nutritionBody(db, recipe, forAdmin: false);
         expect(body['serving_basis'], 1, reason: servings);
         expect(body['basis_kind'], kind, reason: servings);
@@ -1618,7 +1625,7 @@ void main() {
       ]) {
         final recipe = loadCorpusRecipe(file);
         db.upsertRecipe(recipe, sourceSlug: 'src', contentHash: file);
-        await recomputeTotals(db, provider, recipe);
+        recomputeTotals(db, recipe);
         expect(
           nutritionBody(db, recipe, forAdmin: false)['basis_kind'],
           kind,

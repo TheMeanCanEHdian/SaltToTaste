@@ -265,7 +265,7 @@ void main() {
       db
         ..upsertIngredientMatch(zero(0, frying, 'discarded'))
         ..upsertIngredientMatch(zero(1, 'Chili oil', 'unmeasured'));
-      await recomputeTotals(db, provider, r);
+      recomputeTotals(db, r);
       expect(db.nutritionFor('r1')!.status, 'complete');
       for (final row in db.ingredientMatchesFor('r1')) {
         expect(bucketOf(row), MatchBucket.counted);
@@ -1064,7 +1064,6 @@ void main() {
           r,
           line,
           normalizeItem(lineItemOf(line)),
-          grams: 600,
         );
       }
 

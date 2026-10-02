@@ -149,7 +149,7 @@ void main() {
       await matchAndCompute(db, provider, r);
       final row = db.ingredientMatchesFor('r1').single;
       db.upsertIngredientMatch(row.copyWith(confidence: 0.5 - 1e-12));
-      await recomputeTotals(db, provider, r);
+      recomputeTotals(db, r);
       expect(db.nutritionFor('r1')!.status, 'complete');
       expect(db.nutritionReviewCounts()['counted'], 1);
     });
@@ -1101,7 +1101,7 @@ void main() {
       );
       // An admin's basis of 1 on a serves count is the batch too.
       final serves = recipeOf(db, 'r3', [salt], servings: 'SERVES 6 TO 8');
-      await recomputeTotals(db, provider, serves, servingBasis: 1);
+      recomputeTotals(db, serves, servingBasis: 1);
       expect(
         nutritionBody(db, serves, forAdmin: false)['basis_kind'],
         'per_batch',

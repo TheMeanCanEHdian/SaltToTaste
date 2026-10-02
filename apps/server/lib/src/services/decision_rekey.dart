@@ -209,4 +209,12 @@ void rekeyAfterMatcherChange(SaltDatabase db) {
   } catch (error, stackTrace) {
     _log.severe('Layout backfill failed', error, stackTrace);
   }
+  // After the layouts: a stamp's layout is seeded first, so a fresh
+  // recipe reads current. Once (its marker), never at every boot.
+  try {
+    backfillDerivedSeq(db);
+    // ignore: avoid_catches_without_on_clauses
+  } catch (error, stackTrace) {
+    _log.severe('derived_seq backfill failed', error, stackTrace);
+  }
 }

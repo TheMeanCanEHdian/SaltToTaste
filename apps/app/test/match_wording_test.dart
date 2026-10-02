@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
+import 'package:salt_app/core/api/recipe_repository.dart';
+import 'package:salt_app/features/admin/nutrition_review_queue.dart';
+import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 
 import 'support/contract_goldens.dart';
@@ -189,6 +192,76 @@ void main() {
     expect(find.textContaining('name confidence'), findsNothing);
   });
 
+  testWidgets("a person's food USDA no longer serves (hold `food_gone`, "
+      'server RULE A v27): its reason, and that a pick or a skip — not a '
+      'confirm or typed grams — finishes it, in the sheet and the queue', (
+    tester,
+  ) async {
+    // 0857's confirmed flour with 250 g typed, as the server derives it
+    // when FDC answers "no such food" (the 404 is synthesized: Run 057
+    // Opus critic 2's shape).
+    const m = IngredientMatch(
+      position: 1,
+      raw: '1¾ cups (8¾ ounces) unbleached all-purpose flour',
+      item: 'unbleached all-purpose flour',
+      fdcId: 789890,
+      description: 'Flour, wheat, all-purpose, unenriched, unbleached',
+      confidence: 1,
+      grams: 250,
+      gramSource: 'override',
+      status: 'confirmed',
+      hold: 'food_gone',
+    );
+    expect(matchBucketOf(m), MatchBucket.check);
+    await pump(tester, m);
+    expect(
+      find.textContaining('USDA no longer serves this food — pick again'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Pick another food, or skip the line'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('until you confirm it'), findsNothing);
+    final note = lineHoldNote(
+      NutritionReviewLine.fromJson({
+        'recipe': {'id': 'r', 'slug': 'r', 'title': 'Rich Chocolate Bundt'},
+        'position': 1,
+        'raw': m.raw,
+        'bucket': 'check',
+        'match': {
+          'status': 'confirmed',
+          'fdc_id': 789890,
+          'grams': 250,
+          'hold': 'food_gone',
+        },
+      }),
+    );
+    expect(note, contains('Pick another food, or skip the line'));
+  });
+
+  test("an apply's receipt names the targets USDA could not weigh "
+      '(`unavailable`, server RULE A v27: left for the next compute)', () {
+    final note = ApplyToAllStrip.shortfallNote((
+      position: 1,
+      raw: '¼ cup extra-virgin olive oil',
+      recipes: 1,
+      lines: 1,
+      failed: 0,
+      completed: 0,
+      completedRecipes: const [],
+      moved: 0,
+      decided: 0,
+      gone: 0,
+      failedLines: 0,
+      unavailable: 2,
+    ));
+    expect(
+      note,
+      '2 lines not weighed (USDA unavailable; left for the next compute).',
+    );
+  });
+
   testWidgets('a line that names no food says so (hold `unnamed_food`)', (
     tester,
   ) async {
@@ -333,5 +406,79 @@ void main() {
     );
     await pump(tester, skipped);
     expect(find.text('Excluded from the totals'), findsOneWidget);
+  });
+
+  // Run 057 S11/O11: the queue's line-hold copy and the app's keep-held set,
+  // each pinned by its exact words (real rows of the v26 replay: New
+  // England Clam Chowder's clams, Italian Pasta Salad's pepperoncini, Indoor
+  // Pulled Chicken's broth, Breaded Chicken Cutlets' flour dredge; the eaten
+  // part's grams are synthesized).
+  NutritionReviewLine held(String raw, Map<String, Object?> match) =>
+      NutritionReviewLine.fromJson({
+        'recipe': {'id': 'r', 'slug': 'r', 'title': 'r'},
+        'position': 0,
+        'raw': raw,
+        'bucket': 'check',
+        'match': {'status': 'auto', 'fdc_id': 1, ...match},
+      });
+  const head = 'decided one line at a time, never offers apply-to-all. ';
+  const noZero = '. There is no 0 g decision: the API rejects grams of 0.';
+
+  test('the queue: in_shell and second_food — any decision finishes them '
+      '(exact copy)', () {
+    expect(
+      lineHoldNote(
+        held(
+          '7 pounds medium-size hard-shell clams, such as cherrystones, '
+          'washed and scrubbed clean',
+          {'hold': 'in_shell'},
+        ),
+      ),
+      'line hold (in shell): ${head}Any decision finishes it: Skip, or the '
+      'typed edible grams (the shells are not eaten)$noZero',
+    );
+    expect(
+      lineHoldNote(
+        held(
+          '1 cup pepperoncini, stemmed, plus 2 tablespoons reserved '
+          'liquid',
+          {'hold': 'second_food'},
+        ),
+      ),
+      'line hold (second food): ${head}Any decision finishes it: Confirm, '
+      'Skip, or a typed positive amount$noZero',
+    );
+  });
+
+  test("the queue: a held medium's known eaten part — Confirm counts only "
+      'it and a pick finishes it; with none, a pick keeps it held', () {
+    const raw = '¾ cup unbleached all-purpose flour';
+    expect(
+      lineHoldNote(
+        held(raw, {'hold': 'coating', 'gram_source': 'discarded', 'grams': 30}),
+      ),
+      'line hold (coating): ${head}Confirm counts only the eaten part (30 g), '
+      'Skip if it is poured away, or enter the grams that are eaten; picking '
+      'another food also finishes it$noZero',
+    );
+    expect(
+      lineHoldNote(held(raw, {'hold': 'coating'})),
+      'line hold (coating): ${head}Skip if it is poured away, or enter the '
+      'grams that are eaten; picking another food keeps it held$noZero',
+    );
+  });
+
+  test("a partial_pour_away (Indoor Pulled Chicken's broth) is kept held by "
+      "a pick, as the server's eatenInPartHolds keeps it", () {
+    expect(eatenInPartHolds, contains('partial_pour_away'));
+    expect(
+      heldFinishes('partial_pour_away'),
+      'Skip if it is poured away, or enter the grams that are eaten; picking '
+      'another food keeps it held',
+    );
+    expect(
+      lineHoldNote(held('1 cup chicken broth', {'hold': 'partial_pour_away'})),
+      contains('picking another food keeps it held'),
+    );
   });
 }

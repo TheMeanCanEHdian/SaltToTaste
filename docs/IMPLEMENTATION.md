@@ -2535,6 +2535,117 @@ cache holds leaves its recipe stale for good, one retry request per sweep;
 a pick during an outage records the person's food library-wide, as a
 successful pick does.
 
+### Run 057's fixes: the state as a row fact, the evidence as one reading, the index paid by its amortiser (matcher v27)
+
+Run 057 (both fleets on v26, 2026-10-02; no HIGH) found the opposite of
+Run 056's lesson: v26 had stated RULE A's "derivation unavailable" outcome
+for ONE function, and five other writers and readers of the same state
+kept their old semantics — an in-flight compute re-stamped a recipe fresh
+over a PUT's underived decision (the sweep never retried it); the old
+`computeUntilFresh` loop, built for a concurrent save, re-ran such a
+recipe three passes per sweep (six requests per row, a StateError masking
+the provider's reason, the bad-key stop lost); the apply-to-all wrote its
+earlier targets then threw (old totals under a fresh stamp); FDC's 404
+null arm left `recomputeTotals`' flag false (a typed decision dropped
+under a fresh stamp); the serving-basis route's catch could no longer fire
+(a divisor change dropped a food and turned a fresh stamp stale). RULE B
+had regressed v25 (an exclusion word anywhere in the sentence with no
+boundary — "drain on a baking sheet" — vetoed a real fry; the closed lead
+list missed "to between 350 and 375"); candidacy read parsed amounts
+while the mass rule read resolved grams; every medium rule was gated on
+volume, so "8 ounces vegetable oil" bypassed them all. RULE C still had
+one quadratic site (`_dissolvedWithBrineSalt`, 100 s per member GET at the
+caps) and the new whole-recipe naming inversion was paid by every ONE-LINE
+reader (a cold GET over a 20-recipe reach 2 s → 14 s). So v27 (2026-10-02)
+restates each rule as the fact every reader reads. RULE A: "derived" is a
+fact on the row — migration 014 adds `derived_seq` (the layout sequence
+and ingredients hash the row's derived fields were computed for), a
+one-shot boot backfill marks the decided rows of every current recipe and
+leaves a stale one's null, and ONE SQL predicate (`underivedSql`) behind
+`nutritionIsFresh`, the stale scope and the recipe page says a recipe is
+fresh only when its stamp is current AND no decided row is underived — the
+compute's own snapshot (`derivedAll`) is deleted, so no writer can stamp
+over a row it never saw. A food FDC answers 404 for that no cache holds
+becomes a `food_gone` hold the person revisits in the queue (a pick or
+skip finishes it; the row counts as derived), never a forever-stale
+recipe; an outage leaves the row underived and costs the sweep ONE request
+per underived row per pass (0148's thirteen decided rows: 13 requests in
+one pass, not 42 in three), and both job loops stop on a provider-class
+failure with FDC's own message. `recomputeTotals` is cache-only and
+synchronous (its provider parameter deleted; the compute prefetches the
+one nutrient sibling the totals read); migration 015 stores the unrounded
+per-recipe totals, so the serving-basis route (`rebaseNutrition`) is pure
+arithmetic over them — it reads and touches no row, no food, no
+`derived_seq` and no stamp (the closer's fix after the verifier re-ran
+Opus's critic: the first cut still recomputed from rows and caches) — and
+its dead catch is gone; an un-skip whose derivation cannot run keeps no
+grams of an edited-away amount; the apply-to-all weighs each target inside
+the same outcome (a target it
+cannot weigh is not written and is counted under a new receipt key,
+`unavailable`, never `failed`); the unavailable arm keeps line holds only;
+the test fixture's `UnrecordedAnswer` is an Error again, not a provider
+exception, so a missing fixture fails loudly (its first run exposed one
+test that had passed only because a fixture miss read as an outage). The
+pairing oracle gained an outage mode (ORACLE_OUTAGE=1) and an UNDERIVED
+invariant on every save. RULE B: one heat reading in `_Fat.heatsToFry` —
+the lead is read in the 72 characters before the temperature's digits; the
+sentence fries when "<fat> temperature" precedes it, or the fat's noun
+precedes a lead (to, until, reaches, registers, reads, is, at, a
+temperature of, between … and, NNN–NNN, NNN to NNN, each with
+about/around/approximately/roughly) opened by a heat or fry verb in the
+lead's own verb phrase; an appliance or method word excludes only the
+temperature it GOVERNS (its own clause, bounded by ; , — ( ) or a heat
+verb — "baking sheet/powder/soda/dish/pan", "roasted peppers" never
+exclude); every spelling reads (° º ˚, deg, degree, F, Fahrenheit, C,
+Celsius 160–200); pinned on the 67 corpus sentences AND every typed
+positive Run 057 listed, every v26 negative still false. One quantity reading,
+`_mediumMl` (the written volume, else the written or paren weight at the
+ingredient's table density; a fat without an entry at oil's 0.92), under
+both the candidacy `_couldZero(line)` (a "for (pan-/deep-)frying" label
+with any amount, or a quarter cup) and the mass rule `_massZeroes` (the
+label, or 400 g of the line's own amount read with no food) — the owner
+accepted the two predicates over one reading in place of the brief's
+single function, since every line the mass rule zeroes is a candidate by
+containment (the next review is asked to pin that) — and the same
+`_mediumMl` makes every medium threshold both-family (the dredge's quarter
+cup, the brine salt's 44 mL, the four-cup soak): "8 ounces vegetable oil"
+fries like "1 cup", "20 ounces flour" is held like "4 cups", "1 (48-ounce)
+bottle vegetable oil" is zeroed and never held. A method word followed by
+a vessel noun (sheet, dish, pan, rack, tray) never governs a temperature
+and the words-after scan stops at a heat verb — "heat 1 inch of oil in a
+roasting pan to 350 degrees" fries; a "broiler pan" or "grill pan" still
+does not (pre-existing, left for the next round). Grams: a popcorn paren or comma
+part is a qualifier when every word is in the qualifier vocabulary
+(unpopped, popped, air-popped, kernel(s), raw, dry, plain, yellow, white)
+— "(unpopped kernels)" keeps the kernel cup, "(unpopped kernels
+discarded)" is a note. RULE C: the naming inversion (`namingAll`) is built
+only when a SECOND distinct word head is asked, so a one-line reader — the
+reach's `heldMediumLine`, a single-line PUT — pays O(its head) (the
+20-recipe reach GET 7.1 s → 1.8 s, its apply-to-all 13.9 s → 3.0 s); one
+inverted name → sentence index (`_occurrences`, Aho–Corasick, O(text +
+patterns + pairs)) serves `_dissolvedWithBrineSalt` (the pair loop gone:
+the 200 × 199 shape 70 s → 0.39 s) and the plus-part scan (a shape with
+real plus parts 1.6 s → 0.85 s); every record-keyed memo carries a "Key:"
+comment enumerating its coordinates, and a `memoOffForTest` oracle plus a
+drop-one-coordinate mutant per memo pins them. The first verifier measured
+the oil-shape PUTs 25 % slower than v26; the closer isolated it to RULE B's
+new heat reading (7.3 µs per frying sentence against 3.4 at v26 — the
+heat-verb alternation, the lead regex and the clause read to the sentence
+end) and to the plus index built eagerly for a one-line read with the
+recipe hashed twice per PUT; with a word scan and a set lookup, one
+lookbehind at the digits, the clause read only up to the temperature, the
+plus index built on the second distinct line and the hash reused only
+while the stored recipe still equals the one hashed (a racing-save pin
+caught the first version of that reuse), every oil-shape path now runs
+below v26 (the PUT pick 387 → 257 ms, the shortening compute 626 → 518). Replay on snapshot 13:
+calls 0; zero rows differ from v26; counted 13,073, check 401, no grams
+104, no match 37, complete 830, partial 368; every hold note identical.
+The oracle: 0 violations in 1,000 plain seeds and 300 outage seeds; the
+gap mode found ONE pre-existing violation (seed 41487: a copied Pecorino
+line inserted, a salt line deleted and a cross-group move in one save —
+fails identically on v26; a pairing defect briefed separately, not a v27
+regression). matcherVersion 27.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

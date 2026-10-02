@@ -2,14 +2,17 @@ import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:test/test.dart';
 
 /// An apply-to-all receipt with these counts, whose `completedRecipes`
-/// names exactly [completed] recipes ([completedRecipes] when given).
+/// names exactly [completed] recipes ([completedRecipes] when given), and
+/// [unavailable] targets FDC could not weigh (v27, RULE A).
 Matcher appliedIs({
   required int recipes,
   required int lines,
   required int failed,
   required int completed,
   List<String>? completedRecipes,
+  int unavailable = 0,
 }) => isA<AppliedToOthers>()
+    .having((a) => a.unavailable, 'unavailable', unavailable)
     .having((a) => a.recipes, 'recipes', recipes)
     .having((a) => a.lines, 'lines', lines)
     .having((a) => a.failed, 'failed', failed)

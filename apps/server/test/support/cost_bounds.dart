@@ -6,6 +6,12 @@ import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
+/// Every RULE C clock: a backstop, never the kill (count pins kill) — at
+/// least 5× the slowest path the tree measures (797 ms quiet, v26
+/// long-lines; Run 057 O12: brine measured 1,554 ms loaded, and a 2,000 ms
+/// bound failed on machine load alone at 2,013 and 2,702 ms).
+const backstopMs = 10000;
+
 /// The most each counted family may derive on [r]: once per recipe, per
 /// head, per step, per sentence, per line, per mention. An unknown family
 /// fails ([expectBounded]).
@@ -53,6 +59,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:dissolving',
       'memo:brinedByVolume',
       'memo:dredged',
+      'memo:dissolveIndex',
+      'memo:dissolveItems',
+      'memo:plusIndex',
     ])
       once: 1,
     for (final perHead in [
@@ -71,6 +80,7 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'names',
       'memo:dissolvingWith',
       'memo:dissolvedWith',
+      'memo:plusSteps',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,
@@ -95,6 +105,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     'memo:firstOwn': 6 * 3 * (mentions + 1),
     'mentionVisits': 6 * mentions + 2 * lines,
     'eatenParses': 2 * sentences,
+    // The inverted name indexes (v27): each text read once per index — the
+    // dissolving sentences once, the steps once.
+    'occurrenceScans': sentences + steps,
     'windowLogs': steps,
   };
 }

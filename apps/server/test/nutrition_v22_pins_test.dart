@@ -150,17 +150,18 @@ void main() {
       return db.ingredientMatchesFor('r').single;
     }
 
-    // v26 (Run 056 I2, Sonnet critic 1): a food no cache and no FDC
-    // answer holds is RULE A's one unhappy outcome — the row is left as
-    // stored, ON ITS OLD TEXT (so the edited amount is still read as edited
-    // and typed grams are never revived as the new amount's), and the
-    // recipe stale for the next sweep; v22-v25 cleared the grams.
-    test('an amount edit leaves the row on its old text, typed grams and '
-        'all, the recipe stale', () async {
+    // v27 (RULE A, Run 057 Opus critic 2): FDC answering "no such food"
+    // with no cache holding it is NOT an outage — the decision is derived,
+    // on the line as it reads now, to the `food_gone` hold (out of the
+    // totals, in `check`): the old amount's typed grams are not the new
+    // amount's (none derived), and the food stays the person's.
+    // (v26 left the row underived on its old text; v22-v25 cleared it.)
+    test('an amount edit derives the food_gone hold on the new text, the old '
+        "amount's typed grams dropped", () async {
       final row = await afterEdit('¾ teaspoon table salt');
       expect(
-        (row.raw, row.fdcId, row.grams, row.gramSource),
-        ('½ teaspoon table salt', 173468, 5, 'override'),
+        (row.raw, row.fdcId, row.grams, row.gramSource, row.hold),
+        ('¾ teaspoon table salt', 173468, null, null, 'food_gone'),
       );
     });
 
@@ -169,15 +170,15 @@ void main() {
       expect((row.grams, row.gramSource), (5, 'override'));
     });
 
-    test('untyped grams are never cleared: the row as the last derivation '
-        'left it, on its old text', () async {
+    test('untyped grams: none derivable on a food USDA no longer serves — '
+        'the food_gone hold, on the new text', () async {
       final row = await afterEdit(
         '½ teaspoon table salt, divided',
         typed: false,
       );
       expect(
-        (row.raw, row.grams, row.gramSource),
-        ('½ teaspoon table salt', 3.0, 'density'),
+        (row.raw, row.grams, row.gramSource, row.hold),
+        ('½ teaspoon table salt, divided', null, null, 'food_gone'),
       );
     });
   });
@@ -228,7 +229,7 @@ void main() {
     final r = loadCorpusRecipe('0816-molasses-spice-cookies.yaml');
     expect((r.serves, parseYieldCount(r.servings)?.min), (null, 22));
     wp.saveRecipe(db, r.copyWith(servings: 'MAKES ABOUT 44 COOKIES'));
-    await recomputeTotals(db, FixtureProvider(), r);
+    recomputeTotals(db, r);
     expect(db.nutritionFor(r.id)!.servingBasis, 44);
   }, skip: skipIfNoCorpus);
 
@@ -290,6 +291,7 @@ void main() {
         decided: 0,
         gone: 0,
         failedLines: 0,
+        unavailable: 0,
       ));
       expect(json['moved'], 2);
     });

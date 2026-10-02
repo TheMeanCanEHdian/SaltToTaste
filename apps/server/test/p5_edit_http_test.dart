@@ -1215,6 +1215,7 @@ void main() {
           'decided': 0,
           'gone': 0,
           'failed_lines': 0,
+          'unavailable': 0,
         });
         expect(body['items'], isA<List<dynamic>>());
         final (plain, plainBody) = await send(

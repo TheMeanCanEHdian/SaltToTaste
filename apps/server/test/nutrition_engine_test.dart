@@ -635,7 +635,7 @@ void main() {
               status: 'overridden',
             ),
           );
-          await recomputeTotals(db, provider, bundt);
+          recomputeTotals(db, bundt);
           row = db.nutritionFor(bundt.id)!;
           expect(row.status, 'complete');
           expect(row.matchedCount, 12);
@@ -720,14 +720,14 @@ void main() {
 
       test('serving basis change recomputes instantly and rescales', () async {
         final before = db.nutritionFor(bundt.id)!;
-        await recomputeTotals(db, provider, bundt, servingBasis: 6);
+        recomputeTotals(db, bundt, servingBasis: 6);
         final after = db.nutritionFor(bundt.id)!;
         expect(after.servingBasis, 6);
         expect(
           after.caloriesPerServing,
           closeTo(before.caloriesPerServing! * 2, 1),
         );
-        await recomputeTotals(db, provider, bundt, servingBasis: 12);
+        recomputeTotals(db, bundt, servingBasis: 12);
       });
 
       test(
@@ -841,7 +841,7 @@ void main() {
         // recipe (v23, Run 053 O4), never on a Recipe its caller holds.
         final source = db.recipeByIdOrSlug(bundt.id)!.sourceSlug;
         db.upsertRecipe(edited, sourceSlug: source, contentHash: 'edited');
-        await recomputeTotals(db, provider, edited, servingBasis: 12);
+        recomputeTotals(db, edited, servingBasis: 12);
         final after = db.nutritionFor(bundt.id)!;
         expect(after.totalCount, items.length - 1);
         expect(
@@ -1438,7 +1438,6 @@ void main() {
   group('recomputeTotals holds low-confidence auto matches', () {
     late Directory tempDir;
     late SaltDatabase db;
-    late FixtureProvider provider;
 
     Recipe recipe() => const Recipe(
       id: 'r1',
@@ -1469,14 +1468,11 @@ void main() {
           status: status,
         );
 
-    Future<void> recompute() =>
-        recomputeTotals(db, provider, recipe(), servingBasis: 1);
+    void recompute() => recomputeTotals(db, recipe(), servingBasis: 1);
 
     setUp(() {
       tempDir = Directory.systemTemp.createTempSync('salt-gate-test');
-      db = SaltDatabase.open('${tempDir.path}/salt.db');
-      provider = FixtureProvider();
-      db
+      db = SaltDatabase.open('${tempDir.path}/salt.db')
         ..upsertSource(slug: 'src', name: 'Test', type: 'book')
         ..upsertRecipe(recipe(), sourceSlug: 'src', contentHash: 'h');
       // A cached food so the recompute never calls the provider.
@@ -1499,7 +1495,7 @@ void main() {
       db
         ..upsertIngredientMatch(match(0, 0.4, 'auto')) // held
         ..upsertIngredientMatch(match(1, 0.8, 'auto')); // counts
-      await recompute();
+      recompute();
       var row = db.nutritionFor('r1')!;
       expect(row.matchedCount, 1, reason: 'the 0.4 auto line is held out');
       expect(row.totalGrams, 100);
@@ -1507,7 +1503,7 @@ void main() {
 
       // Confirming it (status leaves 'auto') opts it back into the totals.
       db.upsertIngredientMatch(match(0, 0.4, 'confirmed'));
-      await recompute();
+      recompute();
       row = db.nutritionFor('r1')!;
       expect(row.matchedCount, 2);
       expect(row.totalGrams, 200);

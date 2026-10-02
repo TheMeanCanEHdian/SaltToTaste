@@ -70,7 +70,7 @@ void expectCheap(Recipe Function() make) {
   stepIndexCounts.clear();
   readAll(r);
   expectBounded(r, Map.of(stepIndexCounts), r.id);
-  expect(msCold(make), lessThan(2000));
+  expect(msCold(make), lessThan(backstopMs));
 }
 
 /// The counts of one [readAll] of a fresh [make].
@@ -359,7 +359,7 @@ void main() {
   group('RULE C through the full compute and the matches GET', () {
     test('ten legal 1,000-character lines through the full compute (S6: ~140 '
         'ms a pass per line at v24, ~10 passes): the steps indexed and split '
-        'once, the line keyed once (a 2,000 ms backstop beside the '
+        'once, the line keyed once (a backstop beside the '
         "recipe's own compute)", () async {
       final base = loadCorpusRecipe(potatoes);
       final raw = '1 cup flour plus ${'1 ' * 491}';
@@ -414,7 +414,7 @@ void main() {
       expect(keys, lessThanOrEqualTo(1), reason: 'one new text, keyed once');
       expect(
         ms - plain,
-        lessThan(2000),
+        lessThan(backstopMs),
         reason: 'plain $plain ms, hostile $ms ms',
       );
     });
@@ -450,7 +450,7 @@ void main() {
           );
         }
         // A backstop beside the counts (Run 056 O20).
-        expect(best, lessThan(2000));
+        expect(best, lessThan(backstopMs));
       },
     );
 
@@ -458,7 +458,7 @@ void main() {
         'Garlic-Studded Roast Pork Loin plus 160 identical legal '
         '1,000-character lines (16 s before: each line re-read every '
         "same-key row's text), naming a second food or not, and 40 distinct "
-        "ones: a 2,000 ms backstop, each text read and keyed once, each key's "
+        "ones: a backstop, each text read and keyed once, each key's "
         'reach read once, and every line reaching each OTHER same-key '
         'line', () async {
       final base = loadCorpusRecipe('0241-garlic-studded-roast-pork-loin.yaml');
@@ -529,7 +529,7 @@ void main() {
           );
         }
         // A backstop beside the counts (Run 056 O20).
-        expect(ms, lessThan(2000), reason: shape);
+        expect(ms, lessThan(backstopMs), reason: shape);
       }
     });
   }, skip: skipIfNoCorpus);

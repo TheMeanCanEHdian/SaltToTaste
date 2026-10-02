@@ -156,6 +156,7 @@ class _ApplyCubit extends _SeededCubit {
           decided: 0,
           gone: 0,
           failedLines: 0,
+          unavailable: 0,
         ),
       ),
     );
@@ -608,6 +609,7 @@ void main() {
       decided: 0,
       gone: 0,
       failedLines: 0,
+      unavailable: 0,
     );
     final elsewhere = _ApplyCubit(
       _state().copyWith(
@@ -652,6 +654,7 @@ void main() {
           decided: 0,
           gone: 0,
           failedLines: 0,
+          unavailable: 0,
         ),
       ),
     );

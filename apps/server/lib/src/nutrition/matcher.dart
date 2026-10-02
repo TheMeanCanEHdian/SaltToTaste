@@ -313,8 +313,30 @@ const Map<String, String> _synonyms = {
 /// over-long-sentence notice logged once per recipe and content; the
 /// grams change: a plus part's form read after its comma, and only a
 /// one-word paren (or comma part) a modifier of the measured head (the v25
-/// replay byte-identical).
-const int matcherVersion = 26;
+/// replay byte-identical). 27 (Run 057): RULE A as a ROW fact — each
+/// decided row's `derived_seq` (migration 014) names the layout and inputs
+/// its derived fields were computed for, and freshness is the stamp AND no
+/// decided row underived (one SQL predicate every reader reads); a food FDC
+/// no longer serves is the `food_gone` hold, derived; an outage leaves the
+/// row underived (one request per row per pass, the job stopping with the
+/// provider's reason); the totals cache-only; an apply-to-all target FDC
+/// cannot weigh counted `unavailable`. RULE B — an appliance or method
+/// word excludes only the temperature its own clause governs (never a
+/// vessel — "baking sheet", "roasting pan" —, "roasted peppers", an oven
+/// past a ";" or past a heat verb), the leads and heat verbs open (at, is,
+/// reads, a temperature of, between … and, a range; maintain, keep, hold,
+/// fry …) and every degree spelling (º, ˚, deg, Fahrenheit); the mass rule
+/// read with no food (a written volume at its density, a written or
+/// printed weight: the 48-ounce bottle zeroed on every path, the GET's
+/// `held` and the compute one answer) and the candidacy on the same
+/// reading (a printed-weight bottle, a "for (pan-)frying" line with any
+/// amount); every medium
+/// threshold in both unit families (a weight-written oil, dredge, brine salt
+/// or soak at its density). RULE C — the naming index built on the second
+/// head asked, inverted name and amount indexes for the dissolve and plus
+/// readers. The grams change: a paren or comma part qualifies the popcorn
+/// head when every word is a qualifier ("(unpopped kernels)" 96.5 g).
+const int matcherVersion = 27;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

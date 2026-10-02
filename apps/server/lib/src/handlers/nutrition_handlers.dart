@@ -331,6 +331,7 @@ typedef AppliedToOthers = ({
   int decided,
   int gone,
   int failedLines,
+  int unavailable,
 });
 
 /// The receipt's wire shape (`applied` on the `PUT …/matches/{pos}` body).
@@ -344,6 +345,7 @@ Map<String, Object?> appliedJson(AppliedToOthers applied) => {
   'decided': applied.decided,
   'gone': applied.gone,
   'failed_lines': applied.failedLines,
+  'unavailable': applied.unavailable,
 };
 
 /// Applies a `PUT .../nutrition/matches/<pos>` override [body] and
@@ -364,6 +366,12 @@ Future<AppliedToOthers?> applyMatchOverride(
   // rows out on lines that are no longer the recipe's.
   var recipe = db.recipeByIdOrSlug(given.id)?.recipe ?? given;
   final version = db.contentHashOf(recipe.id);
+  // The inputs every derivation below reads (a save during the awaits is
+  // refused below unless this line still stands; its derivation is then
+  // of these inputs, and a stamp of the new ones reads it underived).
+  final derivedOn = ingredientsHashOf(recipe);
+  // The recipe [derivedOn] hashes ([recipe] is re-read below after a save).
+  final hashedRecipe = recipe;
   final lines = nutritionLines(recipe);
   // `raw`: the line text the client saw at [position]. A save since then
   // moved it: 409 line_moved, naming where it is now; nothing is written.
@@ -411,12 +419,14 @@ Future<AppliedToOthers?> applyMatchOverride(
   // cup" on "1 cup" of oil). With no row, start fresh.
   // A derivation that cannot run ([derivedFor]'s `unavailable`, RULE A's
   // one unhappy outcome) here or below: the decision is stored with the
-  // derived fields as they were, and the totals stamped stale.
+  // derived fields as they were and NO `derived_seq` — underived, so the
+  // recipe reads stale until a compute derives it (v27: the row's own
+  // fact, which no concurrent compute's stamp can overwrite).
   var unavailable = false;
   if (row != null && row.raw != line.raw) {
     final d = await derivedFor(db, provider, recipe, position, line, row);
     row = d.row;
-    unavailable = d.unavailable;
+    unavailable = d.unavailable != null;
   }
   row ??= IngredientMatchRow(
     recipeId: recipe.id,
@@ -487,6 +497,8 @@ Future<AppliedToOthers?> applyMatchOverride(
       clearGrams: true,
       clearGramSource: true,
       status: 'overridden',
+      // The old food's `food_gone` is answered by picking another (v27).
+      clearHold: row.hold == foodGoneHold,
     );
     decidedFood = true;
   } else if (confirmed == true) {
@@ -565,7 +577,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   if (skipped != false) {
     final d = await derivedFor(db, provider, recipe, position, line, row);
     stored = d.row;
-    unavailable = unavailable || d.unavailable;
+    unavailable = unavailable || d.unavailable != null;
   }
   // Everything apply_to_all needs is checked BEFORE the line is written, so
   // a refused request changes nothing — not the line, not the totals (the
@@ -642,18 +654,24 @@ Future<AppliedToOthers?> applyMatchOverride(
       decidedBy: decidedBy,
     );
   }
+  // Derived FOR the layout this write lands under and the inputs the
+  // derivation read ([derivedKeyOf]); none when it could not run.
   if (!db.upsertIngredientMatch(
-    stored.copyWith(itemKey: itemKey),
+    stored.copyWith(
+      itemKey: itemKey,
+      derivedSeq: derivedKeyOf(seq, derivedOn),
+      clearDerivedSeq: unavailable,
+    ),
     layoutSeq: seq,
   )) {
     throw LineMovedException(position);
   }
-  await recomputeTotals(
+  // A plain recompute: the stamp stays what it was; freshness reads the
+  // row ([nutritionIsFresh]).
+  recomputeTotals(
     db,
-    provider,
     recipe,
-    // Stamped stale: a re-match gate that reads false ([recomputeTotals]).
-    freshMatch: unavailable ? (layoutSeq: seq, current: () => false) : null,
+    hashed: (recipe: hashedRecipe, hash: derivedOn),
   );
 
   if (food == null) {

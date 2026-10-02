@@ -85,12 +85,21 @@ Future<void> _runOne(
 /// runs re-attaches to it ([startRecipeComputeJob]), so a save that cut
 /// the compute's writes off (its gate tripped, the totals stamped stale) is
 /// computed again from the stored recipe — at most [maxComputePasses]
-/// passes, until the stamp is fresh ([nutritionIsFresh]; Run 051 B5: the
-/// request was dropped and the job ended 'done' with no rows). A recipe
-/// deleted meanwhile stops cleanly. Returns the passes run; still stale
-/// after the last pass throws a [StateError] — both loops log it and count
-/// the recipe failed (Run 053: the pass count was dropped, so a recipe
-/// left stale read 'done').
+/// passes, until the STAMP is current ([nutritionStampCurrent]; Run 051
+/// B5: the request was dropped and the job ended 'done' with no rows). A
+/// recipe deleted meanwhile stops cleanly. Returns the passes run; still
+/// stale after the last pass throws a [StateError] — both loops log it and
+/// count the recipe failed (Run 053: the pass count was dropped, so a
+/// recipe left stale read 'done').
+///
+/// Only a moved layout or hash is a reason for another pass (RULE A, v27):
+/// a decided row whose derivation could not run is underived — the
+/// recipe reads stale ([nutritionIsFresh]) and the next sweep derives it —
+/// and a second pass would only ask FDC the same thing again (Run 057
+/// S5/S16/O2/O16: 3 passes, 42 requests for 0148's 13 rows, and a
+/// StateError masking the provider's reason). Its provider failure is
+/// rethrown once the pass is written, so both loops stop on a bad key or
+/// an outage and say why.
 Future<int> computeUntilFresh(
   SaltDatabase db,
   NutritionProvider provider,
@@ -98,9 +107,12 @@ Future<int> computeUntilFresh(
 ) async {
   var current = recipe;
   for (var pass = 1; ; pass++) {
-    await matchAndCompute(db, provider, current);
+    final failure = await matchAndCompute(db, provider, current);
+    if (failure != null) {
+      throw failure;
+    }
     final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
-    if (stored == null || nutritionIsFresh(db, stored)) {
+    if (stored == null || nutritionStampCurrent(db, stored)) {
       return pass;
     }
     if (pass == maxComputePasses) {
@@ -161,7 +173,9 @@ enum BulkScope {
 ///
 /// `stale` is the only one that cannot be a query: the staleness test is a
 /// Dart-side hash (with the stamp's layout, [nutritionIsFresh]: a recipe
-/// whose layout moved since its stamp is stale whatever its hash), so every
+/// whose layout moved since its stamp is stale whatever its hash, and so is
+/// one with an underived decided row — [SaltDatabase.underivedSql], RULE
+/// A, the same predicate the recipe page reads), so every
 /// recipe with nutrition is decoded and compared
 /// (see [SaltDatabase.recipesWithNutrition] for why there is no timestamp
 /// shortcut). Measured at ~110-190 ms for the whole 1,198-recipe library,
@@ -181,6 +195,7 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
           jsonDecode(candidate.doc) as Map<String, dynamic>,
         );
         if (!candidate.layoutCurrent ||
+            candidate.underived ||
             ingredientsHashOf(recipe) != candidate.ingredientsHash) {
           ids.add(candidate.id);
         }

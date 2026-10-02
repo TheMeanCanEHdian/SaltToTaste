@@ -166,10 +166,10 @@ void main() {
       );
       // A held row (any reason) stays out of the totals whatever its score.
       db.upsertIngredientMatch(row(hold: 'second_food'));
-      await recomputeTotals(db, provider, recipe, servingBasis: 1);
+      recomputeTotals(db, recipe, servingBasis: 1);
       expect(db.nutritionFor('r1')!.caloriesPerServing ?? 0, 0);
       db.upsertIngredientMatch(row());
-      await recomputeTotals(db, provider, recipe, servingBasis: 1);
+      recomputeTotals(db, recipe, servingBasis: 1);
       expect(
         db.nutritionFor('r1')!.caloriesPerServing,
         closeTo(9 * evoo.nutrientsPer100g['298']!, 0.01),
@@ -1547,19 +1547,18 @@ void main() {
       expect(row.gramSource, 'discarded');
       final recipe = recipes['orange']!;
       final item = normalizeItem(line.item!);
-      // The mass rule alone (bySentence: false): since matcher v24 the
-      // directions zero it at any mass too — 0536 heats the oil to a frying
-      // temperature, its own sentence (Run 054 O1/S1).
+      // The mass rule alone (bySentence: false) reads the line's own
+      // grams with no food (v27 closer, D3: 3 cups = 653 g of oil); the
+      // 400 g boundary is pinned food-free in nutrition_v27_rule_b_test.
+      // Since matcher v24 the directions zero it at any mass too — 0536
+      // heats the oil to a frying temperature, its own sentence (Run 054
+      // O1/S1).
       expect(
-        discardedMediumOf(recipe, line, item, grams: 400, bySentence: false),
+        discardedMediumOf(recipe, line, item, bySentence: false),
         DiscardedMedium.fryingOil,
       );
       expect(
-        discardedMediumOf(recipe, line, item, grams: 399, bySentence: false),
-        isNull,
-      );
-      expect(
-        discardedMediumOf(recipe, line, item, grams: 399),
+        discardedMediumOf(recipe, line, item),
         DiscardedMedium.fryingOil,
       );
     });

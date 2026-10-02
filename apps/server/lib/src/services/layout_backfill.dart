@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:logging/logging.dart';
 
 import 'package:salt_server/src/db/salt_database.dart';
@@ -57,4 +59,44 @@ int backfillLayouts(SaltDatabase db) {
     _log.info('layout backfill: seeded $seeded recipe layout(s)');
   }
   return seeded;
+}
+
+/// Migration 014's backfill (RULE A, v27), once — while its marker
+/// ([SaltDatabase.derivedSeqBackfillSetting]) is set: a recipe whose stamp
+/// is current ([nutritionStampCurrent], after [backfillLayouts] seeded its
+/// layout) has its decided rows marked derived for that stamp
+/// ([derivedKeyOf]) — the derivation that stamp was computed with — so it
+/// stays fresh; a stale recipe's stay null (underived) and the next stale
+/// sweep derives them. A recipe whose document does not decode is left
+/// underived (stale, the safe side). Returns the recipes marked, or null
+/// when nothing was owed.
+int? backfillDerivedSeq(SaltDatabase db) {
+  if (db.getSetting(SaltDatabase.derivedSeqBackfillSetting) == null) {
+    return null;
+  }
+  final keys = <String, String>{};
+  for (final candidate in db.recipesWithNutrition()) {
+    final Recipe recipe;
+    try {
+      recipe = RecipeMapper.fromMap(
+        jsonDecode(candidate.doc) as Map<String, dynamic>,
+      );
+      // ignore: avoid_catches_without_on_clauses
+    } catch (error) {
+      _log.warning(
+        'derived_seq backfill left ${candidate.id} underived: its stored '
+        'document does not decode ($error).',
+      );
+      continue;
+    }
+    if (nutritionStampCurrent(db, recipe)) {
+      keys[candidate.id] = derivedKeyOf(
+        db.layoutSeqOf(candidate.id),
+        candidate.ingredientsHash,
+      );
+    }
+  }
+  db.finishDerivedSeqBackfill(keys);
+  _log.info('derived_seq backfill: ${keys.length} fresh recipe(s) marked');
+  return keys.length;
 }

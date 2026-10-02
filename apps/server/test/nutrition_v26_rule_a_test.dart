@@ -394,14 +394,17 @@ void main() {
       );
     });
 
-    test("O1/O18: 0279's peppercorns CONFIRMED with their detail unrecorded "
-        '(the confirm needs it): stored as the PUT left it, stale; a compute '
+    // v27 (Run 057 O17): the outage is the real NutritionProviderException
+    // ([Outage]) — a fixture miss is an Error now, never an outage.
+    test("O1/O18: 0279's peppercorns CONFIRMED during an outage "
+        '(the confirm needs the detail): stored as the PUT left it, stale; a compute '
         'never throws and leaves it; its amount edited ("3 teaspoons", '
         'synthesized), the GET shows the carried row AS STORED and the '
         'compute leaves it on its old text, stale', () async {
-      final (db, provider, r) = await d.computed(
+      final (db, fixture, r) = await d.computed(
         '0279-crispy-salt-and-pepper-shrimp.yaml',
       );
+      final provider = Outage(fixture)..down = true;
       final i = d.at(r, peppercorns0279);
       final auto = d.rowOf(db, r, i);
       expect(auto.gramSource, GramSource.density.name);
@@ -454,38 +457,47 @@ void main() {
       expect(d.shape(d.rowOf(db, edited, i)), d.shape(typed));
     });
 
-    test("typed grams of the OLD amount are never revived: 0279's "
-        'peppercorns typed 77 g, the amount edited ("3 teaspoons", '
-        'synthesized), then confirmed while the detail it needs is '
-        'unrecorded — the row stays on its old text, and the next compute '
-        'still reads the amount as edited', () async {
-      final (db, provider, r) = await d.computed(
-        '0279-crispy-salt-and-pepper-shrimp.yaml',
-      );
-      final i = d.at(r, peppercorns0279);
-      await applyMatchOverride(db, provider, r, i, {
-        'raw': peppercorns0279,
-        'grams': 77,
-      });
-      const three = '3 teaspoons Sichuan peppercorns';
-      final edited = rewritten(r, peppercorns0279, three);
-      wp.saveRecipe(db, edited);
-      await applyMatchOverride(db, provider, edited, i, {
-        'raw': three,
-        'confirmed': true,
-      });
-      final row = d.rowOf(db, edited, i);
-      expect(
-        (row.raw, row.status, row.grams),
-        (peppercorns0279, 'confirmed', 77),
-      );
-      expect(nutritionIsFresh(db, edited), isFalse);
-    });
+    test(
+      "typed grams of the OLD amount are never revived: 0279's "
+      'peppercorns typed 77 g, the amount edited ("3 teaspoons", '
+      'synthesized), then confirmed during an outage (the detail it '
+      'needs, Run 057 O17: the real exception) — the row stays on its old '
+      'text, and the next compute still reads the amount as edited',
+      () async {
+        final (db, fixture, r) = await d.computed(
+          '0279-crispy-salt-and-pepper-shrimp.yaml',
+        );
+        final provider = Outage(fixture);
+        final i = d.at(r, peppercorns0279);
+        await applyMatchOverride(db, provider, r, i, {
+          'raw': peppercorns0279,
+          'grams': 77,
+        });
+        const three = '3 teaspoons Sichuan peppercorns';
+        final edited = rewritten(r, peppercorns0279, three);
+        wp.saveRecipe(db, edited);
+        provider.down = true;
+        await applyMatchOverride(db, provider, edited, i, {
+          'raw': three,
+          'confirmed': true,
+        });
+        final row = d.rowOf(db, edited, i);
+        expect(
+          (row.raw, row.status, row.grams),
+          (peppercorns0279, 'confirmed', 77),
+        );
+        expect(nutritionIsFresh(db, edited), isFalse);
+      },
+    );
 
+    // v27 (RULE A, Opus critic 2): "no such food" with no cache holding it
+    // is not an outage — the decision is derived to the `food_gone` hold
+    // (out of the totals, in `check`; no grams derived), and the recipe is
+    // fresh-and-held (partial), never left stale for a sweep to ask again.
     test(
       "Sonnet critic 1: 0857's confirmed \"1¾ cups (8¾ ounces)\" flour "
       '(248 g by its own weight), its food then in no cache and FDC '
-      'answering no such food — the 248 g stands, the recipe stale',
+      'answering no such food — the food_gone hold, the recipe held',
       () async {
         final (db, path) = pathDb();
         final r = loadCorpusRecipe('0857-rich-chocolate-bundt-cake.yaml');
@@ -522,12 +534,16 @@ void main() {
         await matchAndCompute(db, gone, r);
         final now = d.rowOf(db, r, i);
         expect(knownFood(db, id), isNull, reason: 'still in no cache');
-        expect(d.shape(now), d.shape(confirmed));
-        expect(nutritionIsFresh(db, r), isFalse);
+        expect(
+          (now.status, now.fdcId, now.grams, now.gramSource, now.hold),
+          ('confirmed', id, null, null, 'food_gone'),
+        );
+        expect(nutritionIsFresh(db, r), isTrue);
+        expect(db.nutritionFor(r.id)!.status, 'partial');
         final shown = await getMatch(db, r, i);
         expect(
-          (shown['status'], shown['grams'], shown['gram_source']),
-          ('confirmed', confirmed.grams, GramSource.weight.name),
+          (shown['status'], shown['grams'], shown['hold']),
+          ('confirmed', null, 'food_gone'),
         );
       },
     );
@@ -867,8 +883,12 @@ void main() {
     });
   }, skip: skipIfNoCorpus);
 
-  group('I2: the TOTALS fetch is the same "derivation unavailable" outcome '
-      "(the RULE A fixer's pending item, taken over)", () {
+  // v27 (RULE A): the totals are CACHE-ONLY — they never fetch, so a PUT
+  // asks FDC nothing for them; a decided row whose food no cache holds is
+  // left out and UNDERIVED (its `derived_seq` cleared): the recipe reads
+  // stale, and the next compute derives it (one request while FDC is down).
+  group('I2: the TOTALS read of a food no cache holds — the row underived '
+      '(v27: cache-only totals)', () {
     test("0857's confirmed flour (248 g) on a food in NO cache, FDC DOWN: the "
         'compute and a PUT on another line never throw — the row stays as '
         'derived, its food left out of the totals, the recipe stale — and '
@@ -910,12 +930,17 @@ void main() {
         'raw': salt,
         'grams': 6,
       });
-      expect(outage.failed, greaterThan(0), reason: 'the totals asked FDC');
+      expect(outage.failed, 0, reason: 'the totals never ask FDC (v27)');
+      expect(d.rowOf(db, r, i).derivedSeq, isNull, reason: 'underived');
       expect(d.rowOf(db, r, d.at(r, salt)).grams, 6);
       expect(nutritionIsFresh(db, r), isFalse);
       expect(db.nutritionFor(r.id)!.status, 'partial');
-      // The compute during the outage: no throw, the row as derived.
-      await matchAndCompute(db, outage, r);
+      // The compute during the outage: no throw — the failure returned for
+      // the job loops — ONE request for the underived row, the row as
+      // derived.
+      final failure = await matchAndCompute(db, outage, r);
+      expect(failure, isA<NutritionProviderException>());
+      expect(outage.failed, 1);
       expect(d.shape(d.rowOf(db, r, i)), d.shape(confirmed));
       expect(nutritionIsFresh(db, r), isFalse);
       expect(db.nutritionFor(r.id)!.status, 'partial');

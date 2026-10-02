@@ -124,6 +124,12 @@ const Set<String> eatenInPartHolds = {
 /// and KEEPS any other [eatenInPartHolds] hold. An ambiguous oil asks its
 /// own question first.
 String heldFinishes(String hold, {double? eatenPart}) {
+  // A food USDA no longer serves (the server's `food_gone`, RULE A v27):
+  // nothing can count it — a pick of another food or a skip finishes it.
+  if (hold == 'food_gone') {
+    return 'Pick another food, or skip the line — a confirm or typed grams '
+        'cannot count a food USDA no longer serves';
+  }
   final ambiguous = hold == 'ambiguous_medium';
   final keeps = eatenInPartHolds.contains(hold) && eatenPart == null;
   return '${ambiguous ? 'Two lines could be the frying medium — which? ' : ''}'
@@ -247,6 +253,7 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
     'This is a preserved record for a fresh ingredient: the line asks for '
         'fresh meat, the match is cured',
   'borderline' => 'The match score is borderline; please confirm the food',
+  'food_gone' => 'USDA no longer serves this food — pick again',
   null || '' => null,
   final other => 'Held by the engine: ${other.replaceAll('_', ' ')}',
 };
@@ -276,6 +283,11 @@ class WhyLine extends StatelessWidget {
       MatchBucket.noAmount when held != null && isHeldLine(match) => (
         '$held — held out of the totals. '
             '${heldFinishes(match.hold!, eatenPart: eatenPartOf(match))}',
+        SaltColors.warnInk,
+      ),
+      // A person's food USDA no longer serves: how it finishes.
+      MatchBucket.check when held != null && match.hold == 'food_gone' => (
+        '$held — held out of the totals. ${heldFinishes(match.hold!)}',
         SaltColors.warnInk,
       ),
       // A held line passes on its name: the reason is the engine's, not the

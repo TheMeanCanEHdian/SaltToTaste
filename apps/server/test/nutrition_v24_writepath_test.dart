@@ -385,6 +385,7 @@ void main() {
         int decided,
         int gone,
         int failedLines,
+        int unavailable,
       })
     >
     applyQuarter(SaltDatabase db, Future<void> Function() during) async {
@@ -480,14 +481,14 @@ void main() {
           wp.saveLines(db, [wp.oil, wp.onion, wp.celery]),
         );
         final edited = wp.saveLines(db, [wp.oil, wp.onion]);
-        await recomputeTotals(db, provider, edited, servingBasis: 1);
+        recomputeTotals(db, edited, servingBasis: 1);
         expect(db.nutritionFor('r')!.ingredientsHash, '');
         final reverted = wp.saveLines(db, [wp.oil, wp.onion, wp.celery]);
         expect(nutritionIsFresh(db, reverted), isFalse);
         expect(nutritionBody(db, reverted, forAdmin: true)['status'], 'stale');
         // On the inputs it was stamped on, a plain recompute keeps the stamp.
         await matchAndCompute(db, provider, reverted);
-        await recomputeTotals(db, provider, reverted, servingBasis: 2);
+        recomputeTotals(db, reverted, servingBasis: 2);
         expect(nutritionIsFresh(db, reverted), isTrue);
       },
     );
@@ -634,10 +635,10 @@ void main() {
       final r = wp.saveLines(db, [wp.oil, wp.onion], serves: 4);
       await matchAndCompute(db, provider, r);
       expect(db.nutritionFor('r')!.servingBasis, 4);
-      await recomputeTotals(db, provider, r, servingBasis: 7);
+      recomputeTotals(db, r, servingBasis: 7);
       await matchAndCompute(db, provider, r);
       expect(db.nutritionFor('r')!.servingBasis, 7);
-      await recomputeTotals(db, provider, r);
+      recomputeTotals(db, r);
       expect(db.nutritionFor('r')!.servingBasis, 7);
     });
 
@@ -685,10 +686,13 @@ void main() {
       expect((res.lines, res.gone, res.moved), (1, 2, 0));
     });
 
+    // v27 (RULE A, Run 057 Opus critic 1): the totals are cache-only — c's
+    // totals recompute with celery (in no cache) left out, stale; nothing
+    // fails after the rows are written.
     test('S11(c): c [¼ cup oil, ¼ cup oil, celery], line 0 saved at ½ cup '
-        "and computed during b's fetch (moved), then c's totals cannot "
-        'recompute (celery gone from the cache, FDC failing) — failed_lines '
-        'counts only the unsettled line', () async {
+        "and computed during b's fetch (moved), celery gone from every cache "
+        "and FDC failing — c's line 1 written, its totals recomputed "
+        'without celery and stale, nothing failed', () async {
       final (db, path) = v23.fileDb();
       addTearDown(db.dispose);
       final inner = FixtureProvider(pending: pendingSearches);
@@ -719,8 +723,11 @@ void main() {
       final res = await v23.applyOil(db, provider);
       expect(
         (res.lines, res.moved, res.failed, res.failedLines),
-        (1, 1, 1, 1),
+        (2, 1, 0, 0),
       );
+      final stored = db.recipeByIdOrSlug('c')!.recipe;
+      expect(nutritionIsFresh(db, stored), isFalse);
+      expect(db.nutritionFor('c')!.status, 'partial');
     });
   }, skip: skipIfNoCorpus);
 

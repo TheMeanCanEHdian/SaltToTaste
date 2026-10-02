@@ -689,6 +689,11 @@ double? _tableLookup(
 /// mass), as has a key that only modifies a longer compound: "cream of
 /// tartar" ('cream' 1.01 for its record's 'tsp' 3.0 g), "mustard seeds"
 /// (prepared 'mustard' 1.05 for the seed's 'tbsp' 6.3 g; Run 050).
+/// The g/mL [normalizedItem] weighs at by the table ([_densityOf]) — the
+/// density a medium threshold's mass figure comes from (engine RULE B, v27:
+/// "¼ cup" of oil is 54.4 g at 0.92), or null.
+double? densityOf(String normalizedItem) => _densityOf(normalizedItem)?.$2;
+
 (String, double)? _densityOf(String normalizedItem) {
   final item = normalizedItem.replaceAll(_saltState, ' ');
   if (_notTheKeysFood.hasMatch(item)) {
@@ -2037,18 +2042,17 @@ FdcFood? _asPrepared(FdcFood? food, String line) {
 /// item's noun phrase (Run 055 O6/S9: v24 cut the line at its FIRST paren,
 /// so "6 cups (1 bag) popped popcorn" lost its "popped" and weighed 1,158 g
 /// for 84, and "½ cup popcorn (unpopped)" lost its "unpopped", 7 g for
-/// 96.5): a paren that sizes or sources the amount — one with a number or
-/// a "from" ("(1 bag)", "(from ⅓ cup kernels)") — is dropped; a paren that
-/// is ONE word qualifies the head and is read as a modifier ("(unpopped)",
-/// "(kernels)", "(about)"); a paren of more words is a note on the line —
-/// a part removed, discarded or reserved ("(unpopped kernels discarded)",
-/// "(old maids and kernels removed)", Run 056 O10: read as a modifier, its
-/// "unpopped" restored the 193 g kernel cup to a popped line, 13.8×) — and
-/// is dropped — and a comma part the same way (", unpopped" qualifies, ",
-/// unpopped kernels discarded" is a note); an unclosed paren is dropped to
-/// the end, and the line is cut
-/// at a "from" outside a paren ("popped popcorn from ⅓ cup kernels"). One
-/// pass.
+/// 96.5): a paren — and a comma part after the first — QUALIFIES the head
+/// and is read as a modifier when every word of it is a qualifier
+/// ([_qualifies]: "(unpopped)", "(unpopped kernels)", "(raw kernels)",
+/// "(dry, unpopped)", ", unpopped kernels"); any other is a note on the
+/// line and is dropped — one that sizes or sources the amount ("(1 bag)",
+/// "(from ⅓ cup kernels)", "(about)") or a part removed, discarded or
+/// reserved ("(unpopped kernels discarded)", "(old maids and kernels
+/// removed)", Run 056 O10: read as a modifier, its "unpopped" restored the
+/// 193 g kernel cup to a popped line, 13.8×). An unclosed paren is dropped
+/// to the end, and the line is cut at a "from" outside a paren ("popped
+/// popcorn from ⅓ cup kernels"). One pass.
 String _measuredHead(String text) {
   final out = StringBuffer();
   var open = -1;
@@ -2058,7 +2062,7 @@ String _measuredHead(String text) {
       open = i;
     } else if (open >= 0 && c == ')') {
       final inner = text.substring(open + 1, i);
-      if (!_sizesOrSources.hasMatch(inner) && !_twoWords.hasMatch(inner)) {
+      if (_qualifies(inner)) {
         out.write(' $inner ');
       }
       open = -1;
@@ -2066,23 +2070,50 @@ String _measuredHead(String text) {
       out.write(c);
     }
   }
-  // A comma part is read by the same rule: ", unpopped" qualifies, ",
-  // unpopped kernels discarded" is a note.
+  // A comma part is read by the same rule: ", unpopped kernels" qualifies,
+  // ", unpopped kernels discarded" is a note.
   final parts = out.toString().split(',');
   final head = [
     parts.first,
     for (final part in parts.skip(1))
-      if (!_twoWords.hasMatch(part)) part,
+      if (_qualifies(part)) part,
   ].join(',');
   final from = RegExp(r'\bfrom\b').firstMatch(head);
   return from == null ? head : head.substring(0, from.start);
 }
 
-/// A paren of more than one word ([_measuredHead]).
-final RegExp _twoWords = RegExp(r'\S\s+\S');
+/// Whether a paren or comma [part] qualifies the measured head
+/// ([_measuredHead]): every word of it is a qualifier of what the
+/// amount measures ([_qualifierWords]) — by vocabulary, not by count (Run
+/// 057 S6/O8/O13: v26 read any part of two or more words as a note, so "½
+/// cup popcorn (unpopped kernels)" weighed as popped, 96.5 g → 7.0 g). A
+/// number, a "from", or a removal or reservation verb ("discarded",
+/// "removed", "reserved", "for another use") is never a qualifier: such a
+/// part is a note.
+bool _qualifies(String part) {
+  final words = _partWord.allMatches(part).map((m) => m[0]!).toList();
+  return words.every(_qualifierWords.contains);
+}
 
-/// A paren's number or "from" ([_measuredHead]).
-final RegExp _sizesOrSources = RegExp('[\\d$vulgarFractionChars]|\\bfrom\\b');
+/// The words that say what a popcorn amount measures ([_qualifies]).
+const Set<String> _qualifierWords = {
+  'unpopped',
+  'popped',
+  'air-popped',
+  'kernel',
+  'kernels',
+  'raw',
+  'dry',
+  'plain',
+  'yellow',
+  'white',
+};
+
+/// A word of a paren or comma part, hyphens kept ("air-popped"), a number
+/// or a fraction a word of its own ([_qualifies]).
+final RegExp _partWord = RegExp(
+  '[a-z]+(?:-[a-z]+)*|[\\d$vulgarFractionChars]+',
+);
 
 /// A count unit sized by the volume printed before it, when the count
 /// finds no grams: "1 (750-ml) bottle red Burgundy or Pinot Noir" (Modern

@@ -711,7 +711,7 @@ write or apply-to-all after the upgrade, and every later layout, the first
 included, draws a new sequence (v23's keep-0 first layout is gone: it let
 a delete and re-create repeat 0, and recorded edited lines under the
 stamp's 0). A recompute that re-matches nothing (a person's write, an
-apply-to-all reaching the recipe, the serving-basis change below) carries
+apply-to-all reaching the recipe) carries
 the stored stamp only while the stored recipe still hashes to it (v24, Run
 054 O3: an edit, this recompute and a revert otherwise read fresh over the
 edited recipe's totals; it stamps no hash, `stale`), and computes its totals on the STORED recipe and its
@@ -723,8 +723,20 @@ key set and FDA Daily Values match the legacy app's panel.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition` (admin, full scope)
 
-`{serving_basis}` (1–1000) — change the per-serving divisor and recompute
-instantly from stored matches (no FDC calls). The default is the first of:
+`{serving_basis}` (1–1000) — change the per-serving divisor: PURE
+ARITHMETIC over the stored per-recipe totals (v27, RULE A; migration 015
+stores them unrounded beside the per-serving label, which is those totals
+divided by the basis when written). No row, food or cache is read and no
+FDC call is made, so the change touches no row, no `derived_seq`, no
+stamp, status, counts or `total_grams`: an outage or a food gone from
+every cache can neither fail it with `422` nor make it drop a food and
+read `partial` or `stale` (Run 057 Opus critic 3; the v27 closer, the
+verifier's D1: the v27 first cut re-read the rows against the caches and
+dropped 0857's 248 g of flour once its stand-in left the search cache).
+A row stored before migration 015 has no totals: its per-serving amounts
+times its stored basis stand in (each rounded to 0.01, so at most 0.005 ×
+the basis off) until the next compute stores them. The default is the
+first of:
 the stored basis, the parsed `serves` minimum, the parsed **yield** count
 (so `MAKES ABOUT 16 LARGE COOKIES` divides by 16, not by the whole batch),
 then 1. A yield is not a serving count — it never reaches `serves` — but it
@@ -747,7 +759,12 @@ when a save cut that job's compute off (its totals stamped stale) the job
 computes the stored recipe again before it ends (at most three passes;
 since v23 a recipe still stale after the third is logged and counted
 failed: the job ends `failed`, a bulk sweep counts it in `failed` and its
-log names it). A `stale` or other bulk sweep computing the recipe is the
+log names it). Only a moved layout or content hash is a reason for
+another pass (v27, RULE A): a decided row whose derivation could not run
+is UNDERIVED — the recipe reads `stale`, the next sweep derives it — and
+is asked for ONCE per pass (Run 057 S5/S16/O16: 0148's 13 such rows cost
+42 requests in 3 passes and ended in "still stale after 3 compute passes";
+now 13 in one). A `stale` or other bulk sweep computing the recipe is the
 job a call re-attaches to, and it runs the same step (v22, Run 052
 S5/O5). The
 recipe's `…/nutrition` body carries `computing_job_id` (admins only)
@@ -756,13 +773,16 @@ while a compute is in flight so a reopened page can re-attach. Cached and rate-l
 survive recomputes. Water/ice lines (since matcher v21 "filtered water"
 too) are matched locally for free, as are equipment lines (since v21 a
 banana leaf: the cochinita pibil's wrapper, not eaten). The job
-fails (with the reason in its log) when no API key is configured, or when
-FDC fails a request the compute needs — a search, or a food detail its
-grams read (household portions, a bone-in cut's edible yield, a drained
-can's share, a rule's record) or its totals read (a record's nutrient
-sibling, when no cache holds it): its totals are not recomputed (lines
-matched before the failure keep their new rows) and it stays `stale`, so
-the next compute or `stale` sweep retries it. A line is
+fails (with FDC's own reason in its log — a bulk sweep stops there, "stopped
+at <id>: <reason>") when no API key is configured, or when FDC fails a
+request the compute needs — a search, or a food detail its grams read
+(household portions, a bone-in cut's edible yield, a drained can's share, a
+rule's record, a record's nutrient sibling the totals read): a failed
+search stops the compute (its totals not recomputed; lines matched before
+it keep their new rows), and a failed food a decided row's derivation
+needs leaves that row underived while the compute writes the rest and its
+totals (v27) — either way the recipe stays `stale`, so the next compute or
+`stale` sweep retries it. A line is
 never stored counted at the printed weight because a yield could not be
 fetched.
 
@@ -800,7 +820,15 @@ qualifies the head: a paren of more words is a note on the line, read as
 no modifier — "8 cups popped popcorn (unpopped kernels discarded)" and
 "(old maids and kernels removed)" are 112 g, not 1,544 — and a comma part
 reads by the same rule: ", unpopped" keeps 96.5 g, ", unpopped kernels
-discarded" is a note) — every other food keeps its own
+discarded" is a note; since matcher v27 a paren or comma part qualifies by
+VOCABULARY, not word count (Run 057: v26's rule weighed "½ cup popcorn
+(unpopped kernels)" as popped, 7.0 g): it qualifies when every word is a
+qualifier of what the amount measures — unpopped, popped, air-popped,
+kernel(s), raw, dry, plain, yellow, white — so "(unpopped kernels)", "(raw
+kernels)", "(dry, unpopped)" and ", unpopped kernels" keep 96.5 g; a number,
+a "from" or a removal or reservation word ("discarded", "removed",
+"reserved", "for another use", "(about)") makes it a note — "8 cups popped
+popcorn (unpopped kernels discarded)" stays 112 g) — every other food keeps its own
 "yields" portion, as a gelatin package's 540 g or a coconut's 206 g); since matcher v19 so do almond and
 apple butter, and any item where a key only modifies a compound — the
 key followed by "of" or "seed(s)": "2 teaspoons cream of tartar" is its
@@ -885,27 +913,62 @@ sentence belongs to a LINE, never to the word "oil" — and since v26 to
 every frying FAT the mass rule knows: oil, shortening and lard, each read
 by its OWN noun ("Heat the shortening in a Dutch oven to 375 degrees"
 fries a shortening line; v25 read only "oil"). Frying heat is POSITIVE
-evidence read from the WHOLE sentence (v26): the fat's noun and a heating
-verb (heat, reheat, bring, warm, return, reach, register) before a frying
-temperature led by "to", "until it registers / reaches" or a paren ("Heat
-oil in large Dutch oven … to 375 degrees", "Return oil to 350 degrees",
-"until it registers 375 degrees", "when the oil reaches 385 degrees",
-"until shimmering but not smoking (350 degrees)"), or "<fat> temperature"
-before one ("maintain oil temperature between 350 and 375 degrees") — and
-NO oven, bake, roast, broil, grill, air fryer, smoker, slow cooker, pizza
-stone, toaster or convection word ANYWHERE in the sentence (a Dutch oven,
-skillet, pot, saucepan, wok or fryer is a fry vessel): "Brush the pitas
-with the oil and bake at 375 degrees", "… cook them at 375 degrees in the
-oven", "toast at 350 degrees" (a temperature "at" is a setting) heat
-nothing — and never "until shimmering" or "smoking" with no temperature
-(a sauté's or a sear's: 81 counted ¼-cup oil lines of the library sit
-beside one). A frying temperature is 300–399 °F written "350 degrees"
-(so "350 degrees F"), "350°F", "350 °F", "350°" or "350F", or the Celsius
-frying range 160–200 written "180°C", "180 °C", "180 degrees C" or
-"180C"; never a number with a letter or another digit next to it ("350
-for", "1350 degrees"). Each of the library's 67 sentences naming oil with
-a 3xx-degree temperature reads as frying heat. A sentence binds to the
-line whose own written amount it names ("Heat 1 cup oil") or a word of
+evidence (v26), its exclusion SCOPED since v27 (Run 057: v26 excluded a
+temperature for an oven or bake word ANYWHERE in the sentence, so "drain
+on a baking sheet", "the baking soda rub" or "roasted peanut" beside a real
+fry counted the oil whole): a temperature is the fat's when "<fat>
+temperature" comes before it ("maintain oil temperature between 350 and 375
+degrees"), or when the fat's noun comes before it, a LEAD introduces it —
+"to", "until", "registers/registered", "reaches/reached", "reads/read",
+"is", "at", "a temperature of", "(", "between 350 and", a range's first end
+("350–375", "350-375"; "350 to 375" is "to"), each with "about", "around",
+"approximately", "approx(.)" or "roughly" between — and a heat verb (heat,
+reheat, bring, warm, return, reach, register, read, maintain, keep, hold,
+fry, deep-fry, pan-fry, in every form; never an air fry, an oven-fry or a
+stir-fry) starts at or before the lead in its OWN verb phrase (after the
+last "and"/"then" that opens a new one, not before an article: "Heat the
+oil and cook the pitas at 375 degrees" is the pitas' heat; "Heat the oil and
+the butter to 350 degrees" fries) — "Heat oil in large Dutch oven … to 375
+degrees", "Return oil to 350 degrees", "when the oil reaches 385 degrees",
+"until shimmering but not smoking (350 degrees)", "Fry the potatoes in oil
+at 350 degrees", "Maintain the temperature of the oil at 350 degrees",
+"Heat the oil to between 350 and 375 degrees", "until a deep-fry thermometer
+reads 350 degrees". It is NOT the fat's when an appliance or a method
+GOVERNS it: its clause — from the last "; , — ( )" or heat verb before it —
+names an appliance before it (an oven — never a Dutch oven or an
+"oven-safe" pan —, a broiler, a grill, an air fryer, a smoker, a slow
+cooker, a pizza stone, a toaster, a convection setting) or a method verb
+leading it ("bake/bakes/baking", "roast/roasts/roasting",
+"broil/broils/broiling" … then "at", "to" or "in"; "baked/roasted/broiled/
+grilled at|to|in" — never an adjective, "roasted peppers", nor a method word
+naming a VESSEL, "baking/roasting/broiling" before "sheet", "dish", "pan",
+"rack" or "tray" (v27 closer, the verifier's D8: "Heat the oil in a large
+roasting pan over two burners to 350 degrees" fries), nor "baking
+powder/soda"), or the words right after it do ("375 degrees in the oven",
+"on the grill", "under the broiler", "in a hot oven" — three words at most
+between, inside the temperature's clause: none of them a heat verb, so
+"Heat oil to 375 degrees in pot and reheat oven" fries —, "a 350 degree
+oven", "… and bake", "then roast", "and keep baking"). So "Heat the oil in a Dutch oven to 350 degrees; meanwhile
+heat the oven to 200 degrees" fries, and "Brush the pitas with the oil and
+heat them in the oven to 375 degrees", "… to 375 degrees and bake", "toast at
+350 degrees" (no heat verb) heat nothing — nor "until shimmering" or
+"smoking" with no temperature (a sauté's or a sear's: 81 counted ¼-cup oil
+lines of the library sit beside one). A frying temperature is 300–399 °F
+written "350 degrees", "350 degree", "350 deg", "350 deg.", "350 degrees F",
+"350 Fahrenheit", "350°F", "350° F", "350 °F", "350°" or "350F" (the degree
+sign typed °, º or ˚), or the Celsius frying range 160–200 written "180°C",
+"180° C", "180 °C", "180 degrees C", "180 degrees Celsius", "180 deg C",
+"180 Celsius" or "180C"; never a number with a letter or another digit next
+to it ("350 for", "180 cups", "1350 degrees"). Each of the library's 67
+sentences naming oil with a 3xx-degree temperature reads as frying heat,
+and v27's scoped rule changes no line of the library (all 13,615 replayed
+rows and every oil and dredge line identical). The lead is ONE lookbehind
+tried at the temperature's digits, the heat verbs one word scan with a set
+lookup, the clause read only up to the temperature: linear in the
+sentence (the v27 closer, the verifier's D11: the first cut's alternation
+scans cost ~7 µs a frying sentence, +100 ms on a PUT over 36,361 frying
+sentences at the caps; that PUT is now under 4a1c58e's, 387 -> 258 ms).
+A sentence binds to the line whose own written amount it names ("Heat 1 cup oil") or a word of
 whose kind it names ("vegetable", "olive", "peanut", "sesame") — only
 when the fat's noun phrase FOLLOWS that amount or word directly, with
 nothing between but "of", "the", "a" and the recipe's own kind words of
@@ -918,17 +981,44 @@ kind word two lines share binds NEITHER (v26: "Heat ¾ cup oil" beside a
 count by position: two identical lines are two lines. One that names no
 line belongs to the recipe's one frying CANDIDATE (or the one candidate
 another sentence named), as does a fried food's held dredge. A candidate
-is every line the mass rule could zero — ¼ cup or more (its same-food
-"plus" part included) or a written weight of 400 g or more (v26: "24
-ounces vegetable oil") — and an AMOUNT-LESS line "for (pan-)frying"
-("Vegetable oil, for pan-frying"; a line with an amount is a candidate
-by its mass only). With two or more candidates, each such ¼-cup-or-heavier
+is every line the mass rule could zero — ONE reading the mass rule
+shares (v27, Run 057: v26 read candidacy from parsed amounts while the rule
+read resolved grams, so "1 (48-ounce) bottle vegetable oil" or "3
+tablespoons vegetable oil, for frying" was zeroed but no candidate and the
+aioli beside it was zeroed alone): the mass rule itself — "for (deep)
+frying", or 400 g or more of the fat read with NO food (its written volume
+at the table density, 435 mL of oil, else its written or printed weight —
+"1 (48-ounce) bottle" 1,361 g, "24 ounces" 680 g; the line's own amount,
+not its "plus" part), the one reading the compute, the matches GET's
+`held`, the apply-to-all's reach and an un-skip all read (the v27 closer,
+the verifier's D3: the rule read the caller's resolved grams, so a reader
+with none held the 48-ounce bottle while the compute zeroed it) —, a "for
+(pan-/deep-)frying" label with any
+amount, or ¼ cup or more in EITHER unit family — a written volume (its
+same-food "plus" part included), or the line's grams resolved as the gram
+rule resolves them (a written weight, a printed paren weight by its count)
+at its food's table density: ¼ cup is 59.1 mL, 54.4 g of oil at 0.92 g/mL
+(a fat the table does not list, shortening or lard, at oil's), so "8
+ounces vegetable oil" fries like "1 cup" and every line the 400 g rule
+zeroes is one. An amount-less line weighs nothing and is never zeroed or
+held by a sentence. With two or more candidates, each such ¼-cup-or-heavier
 line is held `ambiguous_medium` for a person, its `hold_note` the
 sentence, never zeroed: 0690 Patatas Bravas' sauce oil typed as "½ cup
 extra-virgin olive oil" beside its 3 cups — or the 3 cups written "24
 ounces" — "Heat oil … to 375 degrees" is held, the 3 cups still frying
-oil by their mass. A smaller line a sentence names keeps only that
-sentence. No library line moves), a brine's salt, a
+oil by their mass; since v27 so is it beside a "1 (48-ounce) bottle
+vegetable oil", "1 bottle vegetable oil, for frying" or "3 tablespoons
+vegetable oil, for frying" (each zeroed by the mass rule). A smaller line a sentence names keeps only that sentence. Since
+matcher v27 EVERY medium threshold reads both unit families (Run 057: each
+read `volumeMlOf` only, so a line written by weight skipped them all): a
+line's written volume, else its grams at its food's table density — ¼ cup
+of oil 54.4 g (0.92 g/mL), of flour 30.2 g (0.51), of panko 14.8 g (0.25),
+of sugar 50.3 g (0.85); the brine salt's 3 tablespoons (44 mL) 53.7 g of
+table salt (1.22) or 31.7 g of kosher (0.72); a buttermilk soak's or a cheese
+milk's 4 cups (946 mL) 974 g (1.03): "20 ounces flour" is a dredge like "4
+cups", "4 ounces table salt" a brine salt like "½ cup". A line whose food
+the table has no density for keeps its volume reading. No library line
+moves), a brine's salt, a
 buttermilk soak, a brine's sugar and the aromatics a step adds to a brine
 the food is submerged (or weighed down) in and lifted out of before the
 submerge — "Dissolve the salt, sugar, and paprika in the buttermilk … Add
@@ -1139,24 +1229,51 @@ writes). The derived write is addressed by the row's CURRENT position: a
 save that moves a decided row (a line deleted or inserted above it) and
 changes what it derives is written at the line's new place (v26, Run 056
 S1: 0129's confirmed liquid smoke, a line above it deleted and its strain
-step taken out, is 14.2 g `portion` at its new position, fresh). A
-derivation that cannot run — FDC failing a fetch it needs (the food detail
-for household portions or an edible yield, or the food itself when no
-cache holds it: the hourly budget spent, no key, an outage) or answering
-no such food when no cache holds its stand-in — is ONE outcome on every
-path (v26, Run 056 I2): the decision is stored (a PUT answers `200`), the
-derived fields stay exactly as the last successful derivation left them
-(never cleared, no hold dropped; a decision an amount edit carried keeps
-its old text until a derivation reads the new amount), the recipe's totals
-are stamped stale (the recipe reads `stale`, so the next sweep derives
-them), and a compute goes on past the row — it never fails the recipe for
-one decided row. The totals' own read of a food is the same outcome: a
-recompute (after a compute, a PUT, a serving-basis change) that cannot
-fetch a food no cache holds leaves that row out of the totals (the recipe
-`partial`), stamps them stale and never fails. Only the derivations that read a food fetch one: a skip,
-or grams a person typed, on the line's own amount reads none (0279's typed
-"2 teaspoons Sichuan peppercorns": no FDC request at the PUT or at any
-compute); a confirm or a pick reads its food and, for a volume or count
+step taken out, is 14.2 g `portion` at its new position, fresh).
+"Derived" is a fact ON THE ROW (v27, migration 014, Run 057): each decided
+row's `derived_seq` names what its derived fields were computed for — the
+layout seq and content hash its derivation read, `<seq>:<hash>`, the two
+halves the freshness stamp names — written by every successful derivation
+(a compute, a PUT) and, once, by the migration's boot backfill (a fresh
+recipe's decided rows take its key). A recipe reads fresh only while
+its stamp is current AND no decided row is underived (its `derived_seq`
+is not the stamp's): ONE SQL predicate, read by the recipe page's
+`status`, the `stale` sweep's scope and the job loops over the rows as
+they are when read — so no writer's stamp can claim a derivation it did
+not make (Run 057 S15/O1: a compute awaiting FDC stamped fresh over a
+PUT's underived write). A derivation that cannot run because FDC fails a
+fetch it needs (the food detail for household portions or an edible
+yield, or the food itself when no cache holds it: the hourly budget spent,
+no key, an outage) is ONE outcome on every path: the decision is stored (a
+PUT answers `200`) with no `derived_seq` — UNDERIVED — its derived fields
+exactly as the last successful derivation left them (never cleared; its
+LINE hold kept, never a FOOD hold the engine row carried — Run 057 O3; a
+decision an amount edit carried keeps its old text until a derivation
+reads the new amount; a SKIP an amount edit carried keeps NO grams of the
+old amount — a skip counts nothing, so they are only what an un-skip would
+revive — unless typed on a discarded medium, which a successful derivation
+keeps too: the v27 closer, the verifier's D2, 0279's peppercorns typed 77 g
+for "2 teaspoons", skipped, edited to "3 teaspoons" and un-skipped during an
+outage came back counted at 77 g), the recipe reads `stale` and the next
+compute asks
+FDC again — once per underived row per pass — and a compute goes on past
+the row: it writes the rest and its totals, and only then reports the
+failure (the job stops with FDC's reason). FDC answering "no such food"
+when no cache holds the food is NOT an outage (v27, Opus critic 2): the
+decision is derived — to the `food_gone` hold (above), typed grams kept
+as typed, none derived — the row counts as derived (the recipe held, not
+stale) and is not asked again until a pick, a skip or an edit moves it.
+The totals are CACHE-ONLY (v27): no recompute — after a compute, a PUT,
+an apply-to-all — asks FDC anything (a serving-basis change recomputes
+nothing: arithmetic over the stored totals); a decided row
+whose food no cache holds is left out and its `derived_seq` cleared
+(underived: the next compute fetches it), an engine row's leaves the
+recipe stamped stale (the next compute re-matches it), and a `food_gone`
+row is held. Only the derivations that read a food fetch one: a skip
+on the line's own amount reads none, and grams a person typed read the
+food from the caches (0279's typed "2 teaspoons Sichuan peppercorns": no
+FDC request at the PUT or at any compute) — and ask FDC only for a food no
+cache holds; a confirm or a pick reads its food and, for a volume or count
 amount or an edible yield, its detail. By hold kind: `confirmed: true` — "this food, at the engine's
 current weight" — on a held medium counts its eaten part when the engine
 knows one (a divided line's, an eaten "plus" part, the rest of a written
@@ -1207,7 +1324,8 @@ is not counted as meat; a LINE hold, like `second_food`),
 `starter_discard` (since matcher v22, the user's ruling Q1: every non-water
 line of a sourdough starter whose feeding step keeps a little starter and
 discards the rest — "discard remaining starter"; how much of the flour ends in the kept starter nothing says),
-`coating` (since v22, Q2: ¼ cup or more of flour, starch or crumbs that
+`coating` (since v22, Q2: ¼ cup or more of flour, starch or crumbs — since
+v27 by weight too, 30.2 g of flour — that
 a step names in a dredge — "dredge … in the flour", "shake off excess
 flour", or set out in a shallow dish — in a recipe that fries; or a line
 that says "for dredging" / "for coating". Since matcher v23 the fry is
@@ -1220,8 +1338,8 @@ thermometer" — an optional note that opens its sentence — "To pan-fry,
 increase water" — a negation — "should not actively fry" — bacon or
 prosciutto fried in its own fat, or rice toasted for a pilaf), heats
 a frying fat to a frying temperature ("to 375 degrees"; since v25 never an
-oven's "bake at 375 degrees"; since v26 the whole-sentence rule above,
-for oil, shortening and lard alike) or
+oven's "bake at 375 degrees"; since v26 the positive-evidence rule above,
+for oil, shortening and lard alike, its exclusion scoped since v27) or
 discards the fat the food cooked in, or a line "for frying" (since v24
 "for deep frying" / "for deep-frying" too, the oil's own signal); 0149
 Easier Fried Chicken, 0198 Crispy Pan-Fried Pork Chops, 0114, 0042 and
@@ -1298,7 +1416,11 @@ leg (ham), shank half, separable lean and fat, raw" (168226), unheld and
 still below the gate for a person, and the matches GET's `candidates` rank
 it first the same way; the same switch), `borderline`
 (only when the server's borderline-band switch is on, off by default: an
-engine pick scored from 0.52 up to 0.54); `hold_note` (since v22): the
+engine pick scored from 0.52 up to 0.54), and since matcher v27 one hold
+of a person's decision, `food_gone` (FDC answers "no such food" for the
+decided food and no cache holds it: out of the totals, in `check`; a pick
+of another food or a skip finishes it — a confirm or typed grams cannot
+count a food with no record; RULE A below); `hold_note` (since v22): the
 hold in words where the code alone does not say it — a
 `partial_pour_away`'s kept part ("1 cup defatted cooking liquid"), and
 since matcher v25 an `ambiguous_medium` line's sentence, quoted — `"Heat oil in
@@ -1760,9 +1882,24 @@ every frying temperature starts with; the layout decoded at most once,
 twice on an apply-to-all) at the editor's caps (400 lines, 120 steps of
 10,000 characters, 1,000 characters per line, each asserted by the shapes;
 the server test
-`nutrition_v26_cost_test.dart`, "RULE C end to end at the caps"): Run 056
-measured 100–159 s per pass at v25 on such recipes,
-under 1.2 s now;
+`nutrition_v26_cost_test.dart`, "RULE C end to end at the caps"): at v25
+Run 056 measured a salt-written recipe at ~24–27 s per compute or member
+matches GET and a dredge-written one at ~123 s per compute (159 s was the
+v26 fixer's own one-readAll measurement of the salt shape, not Run 056's
+figure), under 1.2 s now;
+since v27 each per-recipe index is paid by the caller that amortises it:
+the inversion of the sentences naming every food is built on the SECOND
+distinct food a request asks for, so a one-line read (the reach's held
+check on each reached recipe, a single-line PUT) scans for its one food,
+and the substring readers (a small salt dissolved beside a brine salt, a
+"plus" line's amount named in a step) read ONE inverted name → sentence
+index per recipe, never a scan per name or per pair of names — Run 057:
+a 20-recipe reach at the caps 7.1 s → 1.9 s per cold GET and 13.9 s →
+3.0 s per apply-to-all, 200 distinct dissolved salts beside 199 brine
+salts 31 s → 0.3 s per pass; every memo key names every coordinate its
+derivation reads, pinned by an oracle comparing every answer with the
+memos on (both line orders) and off (`nutrition_v27_cost_test.dart`,
+`nutrition_v27_memo_keys_test.dart`);
 the matches GET reads each line's text, key and same-key reach once per
 request, not once per line — Run 055 V1: 160 identical 1,000-character
 lines took 16 s, ~0.3 s now),
@@ -1929,7 +2066,7 @@ position stands (Run 052 S1). A recipe whose rows are laid out anew while
 the apply waits on FDC (a save and a person's write or a compute) is left
 for its next compute: no row of it is written over what the layout put
 there. The response carries `applied: {recipes, lines, failed, completed,
-completed_recipes, moved, decided, gone, failed_lines}`, which accounts
+completed_recipes, moved, decided, gone, failed_lines, unavailable}`, which accounts
 for every line `others_lines` offered: each is in exactly one of `lines`
 (written; see below), `decided` (a person decided it meanwhile — read as
 a decided row of its text the recipe holds that it did not at the offer,
@@ -1941,7 +2078,11 @@ its recipe's turn, v23 — and, since v24, a recipe laid out anew during
 the awaits that no longer holds a line of that text or ingredient, deleted
 and re-created or saved without it: Run 054 S3), `moved` (its recipe was laid
 out anew during the apply's awaits, or the row was rewritten since the
-offer: left for its next compute) and `failed_lines` (its recipe failed;
+offer: left for its next compute), `unavailable` (since v27: FDC could not
+serve the portions its weighing needs — RULE A's one outcome, Run 057 Opus
+critic 1: not written, its recipe's totals recomputed over what was
+written and stamped stale, so the `stale` sweep inherits the decision
+there) and `failed_lines` (its recipe failed;
 `failed` counts those recipes): `completed` counts
 the reached recipes whose stored status turned `complete` with this apply
 (not a reached recipe that was complete already — a different-food pick
@@ -1957,16 +2098,14 @@ and `completed_recipes` lists their ids, so a shortfall can be named;
 `lines` counts the lines the decision moved —
 whose review bucket changed, or that took the decided food (a line left
 short of an amount on it too, which stays `no_grams`) — every line `others`
-counted, less those in `decided`, `gone`, `moved` and `failed_lines`:
+counted, less those in `decided`, `gone`, `moved`, `unavailable` and
+`failed_lines`:
 every written line (v23: a line on the decided food that stayed in its
 bucket was counted in none, Run 053 Opus critic 3) —
 `recipes` the recipes holding one, and `failed` how many recipes
-failed part-way (their document would not decode, or the provider failed
-while fetching a food detail one of their lines' grams read — household
-portions, an edible yield, a drained can — logged; what was written
-before the failure stays; since v26 a totals recompute that cannot fetch
-another line's food is no failure: RULE A's one outcome — the line counts
-in `lines`, the recipe's totals leave that food out and read `stale`).
+failed part-way (their document would not decode — logged; what was
+written before the failure stays; since v27 a target FDC cannot weigh is
+`unavailable`, never `failed`, and the totals, cache-only, never fail).
 The decision itself needs no FDC call when the food is in a cached search
 answer and its grams need no food detail no cache holds, so it lands with no
 key set or the hourly budget spent. Grams that need one — a volume or count

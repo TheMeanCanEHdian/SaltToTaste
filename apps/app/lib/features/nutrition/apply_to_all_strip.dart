@@ -57,7 +57,8 @@ class ApplyToAllStrip extends StatelessWidget {
 
   /// The receipt's account of the offered lines it did not write, by
   /// reason — decided meanwhile, another ingredient now or gone, in a recipe
-  /// that failed, and changed meanwhile (`moved`: left for its next compute)
+  /// that failed, USDA unavailable for its weighing (left as it was), and
+  /// changed meanwhile (`moved`: left for its next compute)
   /// — or null for none: why the count can fall short of the offer, in the
   /// sheet's strip and the queue's alike.
   static String? shortfallNote(ApplyReceipt receipt) {
@@ -66,6 +67,9 @@ class ApplyToAllStrip extends StatelessWidget {
       if (receipt.gone > 0)
         '${_lines(receipt.gone)} now another ingredient or gone',
       if (receipt.failedLines > 0) '${_lines(receipt.failedLines)} failed',
+      if (receipt.unavailable > 0)
+        '${_lines(receipt.unavailable)} not weighed (USDA unavailable; '
+            'left for the next compute)',
     ];
     final n = receipt.moved;
     final notes = [

@@ -462,9 +462,8 @@ void main() {
       final calls = provider.fetched.length + provider.searched.length;
       provider.down = true;
       try {
-        await recomputeTotals(
+        recomputeTotals(
           db,
-          provider,
           bundt,
           servingBasis: lazy.servingBasis! * 2,
         );
@@ -481,9 +480,8 @@ void main() {
       for (final row in weighed) {
         expect(db.fdcFoodCacheGet(row.fdcId!), isNull, reason: row.raw);
       }
-      await recomputeTotals(
+      recomputeTotals(
         db,
-        provider,
         bundt,
         servingBasis: lazy.servingBasis,
       );
@@ -559,7 +557,7 @@ void main() {
           await applyMatchOverride(db, provider, bundt, position, {
             'fdc_id': pick.candidate.fdcId,
           });
-          await recomputeTotals(db, provider, bundt, servingBasis: 8);
+          recomputeTotals(db, bundt, servingBasis: 8);
         } finally {
           provider.down = false;
         }
@@ -664,7 +662,7 @@ void main() {
       await matchAndCompute(db, provider, bundt);
       final fresh = db.nutritionFor(bundt.id)!;
 
-      await recomputeTotals(db, provider, bundt);
+      recomputeTotals(db, bundt);
       final later = db.nutritionFor(bundt.id)!;
       expect(later.matchedCount, fresh.matchedCount);
       expect(later.caloriesPerServing, fresh.caloriesPerServing);
@@ -991,9 +989,16 @@ void main() {
     // the RULE C matches-GET pin ('ground chipotle powder', 'corn
     // tortillas', 'queso fresco or feta cheese', 'avocado', 'lime wedges';
     // 'Tortilla, corn' 2707823): the tortilla is a hit, differing in some
-    // digit.
-    expect(compared, 304);
-    expect(differ, 225);
+    // digit. Matcher v27 recorded 'Tomato, roma' (1999634) for c1's zero_row
+    // route pin (its confirm derives on the food; the v26 fixture miss had
+    // passed silently as an outage, Run 057 O17): a hit, differing in some
+    // digit; and the peppercorn pork tenderloin (168317) a v27 O3 pin picks
+    // from 0279's peppercorn candidates (a hit too, differing in a digit).
+    // The v27 closer recorded the Sichuan peppercorns' own record (168093)
+    // for FDC's answer once an outage ends (its D2/D7 pins): a hit in
+    // 'sichuan peppercorns', differing in some digit.
+    expect(compared, 307);
+    expect(differ, 228);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
@@ -1080,8 +1085,11 @@ void main() {
       expect(provider.fetched.where((id) => id == row.fdcId), hasLength(1));
     });
 
+    // v27 (RULE A, Run 057 Opus critic 1): a target whose portion fetch
+    // fails is weighed inside the one outcome — not written, counted
+    // `unavailable`, never `failed` (no recipe failed).
     test('apply_to_all fetches the portions a target needs, and counts a '
-        'failed fetch in `failed`', () async {
+        'failed fetch in `unavailable`', () async {
       final (db, recipes) = await library([
         '0013-ultimate-cream-of-tomato-soup.yaml',
         '0857-rich-chocolate-bundt-cake.yaml',
@@ -1116,7 +1124,13 @@ void main() {
       }
       expect(
         failedRun,
-        appliedIs(recipes: 0, lines: 0, failed: 1, completed: 0),
+        appliedIs(
+          recipes: 0,
+          lines: 0,
+          failed: 0,
+          completed: 0,
+          unavailable: 1,
+        ),
       );
       expect(rowIn(db, soup, spoons).$2.fdcId, target.fdcId);
 

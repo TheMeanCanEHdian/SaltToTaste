@@ -111,15 +111,22 @@ const Set<String> pendingSearches = {
   'halibut atlantic and pacific raw',
 };
 
-/// A fixture miss: the test asked FDC something no fixture recorded. A
-/// [NutritionProviderException] (the engine treats it as FDC failing, never
-/// as an answer) with its own type, so a test can tell a miss from a real
-/// failure it staged with [FixtureProvider.failWith].
-class UnrecordedAnswer extends NutritionProviderException {
+/// A fixture miss: the test asked FDC something no fixture recorded — a
+/// tripwire, never an answer and never FDC failing. An [Error], NOT a
+/// [NutritionProviderException] (v27, Run 057 O17): the engine's RULE A
+/// arms catch provider failures as "derivation unavailable", and a miss
+/// caught there passed silently as an outage. A test staging an outage
+/// throws the real exception ([FixtureProvider.failWith], an outage
+/// wrapper); a miss always fails the test that made it.
+class UnrecordedAnswer extends Error {
   /// Names the unrecorded [what] ('search "…"', 'food 123').
-  const UnrecordedAnswer(String what)
-    : super(
-        'unrecorded fixture: $what — record it from a snapshot with '
-        'tool/record_fdc_fixtures.dart --from-db',
-      );
+  UnrecordedAnswer(this.what);
+
+  /// What was asked.
+  final String what;
+
+  @override
+  String toString() =>
+      'unrecorded fixture: $what — record it from a snapshot with '
+      'tool/record_fdc_fixtures.dart --from-db';
 }

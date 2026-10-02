@@ -382,4 +382,33 @@ INSERT INTO layout_counter (id, seq)
   SELECT 0, COALESCE(MAX(seq), 0) FROM recipe_layout
 ''',
   ],
+
+  // 014 — Run 057 (RULE A, v27): "derived" is a fact ON THE ROW. A decided
+  // row's `derived_seq` names what its derived fields (hold, grams unless
+  // typed, their source) were computed for: '<layout seq>:<ingredients
+  // hash>' — the recipe's layout and inputs, the two halves its freshness
+  // stamp names, as one value ([derivedKeyOf]). A successful derivation
+  // writes it; one that cannot run leaves it (or the PUT stores null), so
+  // a decided row no derivation has reached for the stamped inputs is
+  // UNDERIVED and the recipe is not fresh, whoever wrote the stamp
+  // ([SaltDatabase.underivedSql]). Backfilled at boot, not here: whether a
+  // stamp is current needs the Dart-side hash — the marker below asks the
+  // boot pass once (`backfillDerivedSeq`: a fresh recipe's decided rows
+  // take its current key, a stale one's stay null).
+  [
+    'ALTER TABLE ingredient_matches ADD COLUMN derived_seq TEXT',
+    '''
+INSERT OR REPLACE INTO settings (key, value)
+  VALUES ('nutrition.derived_seq_backfill', 'pending')
+''',
+  ],
+
+  // 015 — v27 closer (RULE A, the verifier's D1): the per-RECIPE totals
+  // the per-serving label was divided from, unrounded (JSON: nutrient key
+  // -> total), so a serving-basis change is arithmetic over what is stored
+  // ([rebaseNutrition]) — never a re-read of the rows against the caches,
+  // which dropped a food no cache held and turned the recipe stale. Null
+  // on a row written before it (the per-serving amounts times the stored
+  // basis stand in until the next compute writes it).
+  ['ALTER TABLE recipe_nutrition ADD COLUMN totals TEXT'],
 ];

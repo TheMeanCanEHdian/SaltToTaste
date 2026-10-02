@@ -65,13 +65,12 @@ Recipe _steps(Recipe r, String Function(String) edit) => r.copyWith(
 IngredientLine _line(Recipe r, String raw) =>
     nutritionLines(r).firstWhere((l) => l.raw == raw);
 
-DiscardedMedium? _medium(Recipe r, String raw, {double? grams}) {
+DiscardedMedium? _medium(Recipe r, String raw) {
   final line = _line(r, raw);
   return discardedMediumOf(
     r,
     line,
     normalizeItem(lineItemOf(line)),
-    grams: grams,
   );
 }
 
@@ -203,7 +202,7 @@ void main() {
       final asWritten = loadCorpusRecipe(_bravas);
       expect(_medium(asWritten, '1 tablespoon vegetable oil'), isNull);
       expect(
-        _medium(asWritten, '3 cups vegetable oil', grams: 654),
+        _medium(asWritten, '3 cups vegetable oil'),
         DiscardedMedium.fryingOil,
       );
     }, skip: skipIfNoCorpus);
@@ -468,7 +467,7 @@ void main() {
           '4 tablespoons extra-virgin olive oil',
           to,
         );
-        expect(_medium(r, to, grams: 218), DiscardedMedium.fryingOil);
+        expect(_medium(r, to), DiscardedMedium.fryingOil);
         final o = _out(r, to, oil);
         expect((o.grams, o.source), (0.0, 'discarded'), reason: to);
       }

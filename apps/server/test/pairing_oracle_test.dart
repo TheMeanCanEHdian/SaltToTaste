@@ -1,8 +1,10 @@
 // The pairing oracle: every recipe edit, then a compute, checked against
 // hidden line identities. Run
 //   SALT_CORPUS_DIR="…" dart test test/pairing_oracle_test.dart
-// Env: ORACLE_SEEDS (default 200), ORACLE_STEPS (saves per seed, default
-// 12), ORACLE_OPS_MAX (edits per save, 1..this many, default 3; 1 is the
+// Env: ORACLE_OUTAGE=1 (RULE A's outage mode: FDC out for the decided
+// food, its caches emptied — v27), ORACLE_SEEDS (default 200),
+// ORACLE_STEPS (saves per seed, default 12), ORACLE_OPS_MAX (edits per
+// save, 1..this many, default 3; 1 is the
 // single-op oracle, replaying its seeds exactly), ORACLE_SEED (run that
 // one seed only), ORACLE_SEED_BASE (the first seed, default 0: a fresh
 // range), ORACLE_SHOW (violations printed, default 12), ORACLE_GAP_SEEDS
@@ -59,6 +61,7 @@ import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
+import 'package:sqlite3/sqlite3.dart' as raw;
 import 'package:test/test.dart';
 
 import 'support/corpus.dart';
@@ -161,6 +164,9 @@ class _Provider implements NutritionProvider {
   void Function()? onCall;
   int? failAfter;
 
+  /// Foods FDC fails for (an outage on chosen rows: RULE A, v27).
+  Set<int> failFoods = {};
+
   void _before() {
     final hook = onCall;
     onCall = null;
@@ -184,6 +190,9 @@ class _Provider implements NutritionProvider {
   @override
   Future<FdcFood?> food(int fdcId) async {
     _before();
+    if (failFoods.contains(fdcId)) {
+      throw NutritionProviderException('oracle: food $fdcId down');
+    }
     return inner.food(fdcId);
   }
 }
@@ -490,6 +499,9 @@ class _Sim {
   final Recipe base;
   final _Provider provider;
   final SaltDatabase db;
+
+  /// The database file (the `outage` mode empties its caches of the pick).
+  String? dbPath;
   List<List<_Ln>> groups = [];
 
   /// identity → its decision: `S`, `P:g`, or `P~g` (see [_tokMatch]).
@@ -584,13 +596,12 @@ class _Sim {
     tokens[flat[p].id] = tokenOfBody(b);
   }
 
-  /// matchAndCompute; the provider failure it raised, or null.
+  /// matchAndCompute; the provider failure it raised or returned (a
+  /// decided row's derivation, RULE A), or null. A fixture miss
+  /// ([UnrecordedAnswer], an Error) fails the run.
   Future<NutritionProviderException?> compute() async {
     try {
-      await matchAndCompute(db, provider, recipe);
-      return null;
-    } on UnrecordedAnswer {
-      rethrow;
+      return await matchAndCompute(db, provider, recipe);
     } on NutritionProviderException catch (e) {
       return e;
     }
@@ -678,16 +689,32 @@ class _Sim {
       };
     }
     if (mode == 'fail') provider.failAfter = failAfter;
+    if (mode == 'outage') {
+      // RULE A (v27): FDC out for the decided food, which no cache holds,
+      // so every decision's derivation on it needs FDC: those rows are
+      // left underived (never lost or moved), the compute returns the
+      // failure, and the healthy compute after derives every one.
+      raw.sqlite3.open(dbPath!)
+        ..execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [_pickId])
+        ..execute(
+          'DELETE FROM fdc_search_cache '
+          "WHERE response LIKE '%\"fdc_id\":' || ? || ',%'",
+          [_pickId],
+        )
+        ..dispose();
+      provider.failFoods = {_pickId};
+    }
     final failure = await compute();
     provider
       ..onCall = null
-      ..failAfter = null;
+      ..failAfter = null
+      ..failFoods = {};
     await Future.wait(pending);
     final want = [
       for (final lay in accept)
         [for (final (p, t) in lay.indexed) overlays[p] ?? t],
     ];
-    if (failure != null) ran = 'fail';
+    if (failure != null) ran = mode == 'outage' ? 'outage' : 'fail';
     final label = '$name [$ran; explained by ${why.join(' | ')}]';
     if (failure != null) {
       _checkAfterFailure(label, want);
@@ -695,6 +722,13 @@ class _Sim {
       if (again != null) throw StateError('recovery compute failed: $again');
     }
     _check(label, before, after, want, pre, overlays);
+    // Every decided row derived once FDC is back (RULE A, v27).
+    if (db.hasUnderivedRows(recipe.id)) {
+      violations.add((
+        kinds: {'UNDERIVED'},
+        text: '$label\n  a decided row is underived after a healthy compute',
+      ));
+    }
     return ran;
   }
 
@@ -1126,7 +1160,7 @@ void main() {
     final db = SaltDatabase.open('${dir.path}/salt.db')
       ..upsertSource(slug: 'src', name: 'Test', type: 'book');
     return (
-      _Sim(acqua, _Provider(fixtures), db),
+      _Sim(acqua, _Provider(fixtures), db)..dbPath = '${dir.path}/salt.db',
       () {
         db.dispose();
         dir.deleteSync(recursive: true);
@@ -1880,8 +1914,26 @@ void main() {
       final steps = _envInt('ORACLE_STEPS', 12);
       final show = _envInt('ORACLE_SHOW', 12);
       final one = int.tryParse(Platform.environment['ORACLE_SEED'] ?? '');
-      const modeBag = ['plain', 'plain', 'stale', 'mid', 'fail'];
-      const newQueryBag = ['plain', 'stale', 'mid', 'mid', 'fail', 'fail'];
+      // ORACLE_OUTAGE=1 adds RULE A's outage on the decided food (v27):
+      // off by default, so every other seed replays as before.
+      final outage = Platform.environment['ORACLE_OUTAGE'] == '1';
+      final modeBag = [
+        'plain',
+        'plain',
+        'stale',
+        'mid',
+        'fail',
+        if (outage) ...['outage', 'outage'],
+      ];
+      final newQueryBag = [
+        'plain',
+        'stale',
+        'mid',
+        'mid',
+        'fail',
+        'fail',
+        if (outage) ...['outage', 'outage'],
+      ];
       final found = <(int, _Violation)>[];
       final ran = <String, int>{};
       final mixOf = <_Violation, String>{};

@@ -33,6 +33,18 @@ const List<String> eatenInPartHolds = [
   'ambiguous_medium',
 ];
 
+/// Every LINE hold — what the line says about its medium, its shell or a
+/// second food, whatever food it is matched on ([mediumHolds],
+/// `in_shell`, `second_food`). The other holds are FOOD holds (the
+/// engine's on its own pick; a decision answers them) and [foodGoneHold].
+const List<String> lineHolds = [...mediumHolds, 'in_shell', 'second_food'];
+
+/// The hold of a decided row whose food FDC no longer serves and no cache
+/// holds (v27, RULE A): derived to it — out of the totals, in `check`, for
+/// a person to pick another food or skip; a confirm or typed grams cannot
+/// count a food with no record.
+const String foodGoneHold = 'food_gone';
+
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
 enum UpsertOutcome {
   /// No row existed for the recipe id; a new one was inserted.
@@ -1069,7 +1081,8 @@ class SaltDatabase {
   List<IngredientMatchRow> matchesForItemKey(String itemKey, {int? fdcId}) {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
-      'confidence, grams, gram_source, status, updated_at, item_key, hold '
+      'confidence, grams, gram_source, status, updated_at, item_key, hold, '
+      'derived_seq '
       'FROM ingredient_matches WHERE item_key = ? '
       "ORDER BY (status IN ('confirmed', 'overridden') AND fdc_id IS ?) DESC, "
       'recipe_id, position',
@@ -1134,7 +1147,8 @@ class SaltDatabase {
     final rows =
         _prepared(
           'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
-          'confidence, grams, gram_source, status, updated_at, item_key, hold '
+          'confidence, grams, gram_source, status, updated_at, item_key, hold, '
+          'derived_seq '
           'FROM ingredient_matches WHERE item_key = ? '
           'AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
@@ -1177,7 +1191,8 @@ class SaltDatabase {
   List<IngredientMatchRow> ingredientMatchesFor(String recipeId) {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
-      'confidence, grams, gram_source, status, updated_at, item_key, hold '
+      'confidence, grams, gram_source, status, updated_at, item_key, hold, '
+      'derived_seq '
       'FROM ingredient_matches WHERE recipe_id = ? ORDER BY position',
     ).select([recipeId]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
@@ -1200,6 +1215,7 @@ class SaltDatabase {
   static const String _reviewBucketCase = '''
     CASE
       WHEN im.status = 'skipped' THEN 'skipped'
+      WHEN im.hold = 'food_gone' THEN 'check'
       WHEN im.status = 'overridden' AND im.grams IS NULL THEN 'no_grams'
       WHEN im.status = 'confirmed' AND im.fdc_id IS NOT NULL
         AND im.grams IS NULL THEN 'no_grams'
@@ -1534,14 +1550,15 @@ class SaltDatabase {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
-      'item_key, hold, updated_at) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'item_key, hold, updated_at, derived_seq) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
       'grams = excluded.grams, gram_source = excluded.gram_source, '
       'status = excluded.status, item_key = excluded.item_key, '
-      'hold = excluded.hold, updated_at = excluded.updated_at',
+      'hold = excluded.hold, updated_at = excluded.updated_at, '
+      'derived_seq = excluded.derived_seq',
     ).execute([
       row.recipeId,
       row.position,
@@ -1556,6 +1573,7 @@ class SaltDatabase {
       row.itemKey,
       row.hold,
       _utcNowIso(),
+      row.derivedSeq,
     ]);
   }
 
@@ -1593,14 +1611,15 @@ class SaltDatabase {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
-      'item_key, hold, updated_at) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'item_key, hold, updated_at, derived_seq) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
       'grams = excluded.grams, gram_source = excluded.gram_source, '
       'status = excluded.status, item_key = excluded.item_key, '
-      'hold = excluded.hold, updated_at = excluded.updated_at '
+      'hold = excluded.hold, updated_at = excluded.updated_at, '
+      'derived_seq = excluded.derived_seq '
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
       "OR (ingredient_matches.status = 'confirmed' "
       'AND ingredient_matches.fdc_id IS NULL '
@@ -1619,6 +1638,7 @@ class SaltDatabase {
       row.itemKey,
       row.hold,
       _utcNowIso(),
+      row.derivedSeq,
       ...engineRuleNotes,
     ]);
     return _db.updatedRows > 0;
@@ -1642,6 +1662,29 @@ class SaltDatabase {
       return false;
     }
     _upsertMatch(row);
+    return true;
+  });
+
+  /// Records that the row [over] — unchanged, checked in the write's own
+  /// transaction as [replaceIngredientMatchIfUnchanged] checks it — was
+  /// derived for [derivedSeq] (RULE A): its derived fields came out as
+  /// stored, so only `derived_seq` is written (its `updated_at`, the last
+  /// change of what it holds, stays). Returns whether it was written.
+  bool markDerivedIfUnchanged(
+    IngredientMatchRow over, {
+    required String derivedSeq,
+    required int layoutSeq,
+  }) => _atLayout(over.recipeId, layoutSeq, () {
+    final now = ingredientMatchesFor(
+      over.recipeId,
+    ).where((stored) => stored.position == over.position).firstOrNull;
+    if (!sameMatchRow(now, over)) {
+      return false;
+    }
+    _prepared(
+      'UPDATE ingredient_matches SET derived_seq = ? '
+      'WHERE recipe_id = ? AND position = ?',
+    ).execute([derivedSeq, over.recipeId, over.position]);
     return true;
   });
 
@@ -1818,9 +1861,84 @@ class SaltDatabase {
     final rows = _prepared(
       'SELECT recipe_id, serving_basis, calories_per_serving, nutrients, '
       'total_grams, matched_count, total_count, status, ingredients_hash, '
-      'computed_at, layout_seq FROM recipe_nutrition WHERE recipe_id = ?',
+      'computed_at, layout_seq, totals FROM recipe_nutrition '
+      'WHERE recipe_id = ?',
     ).select([recipeId]);
     return rows.isEmpty ? null : RecipeNutritionRow.fromRow(rows.first);
+  }
+
+  /// RULE A's ONE predicate (v27, migration 014): whether the stamp `n`
+  /// (a `recipe_nutrition` row) has a decided row (`isDecidedRow`: a
+  /// person's confirm, pick, typed grams or skip — never the engine's rule
+  /// rows) whose `derived_seq` is not the stamp's own key ([derivedKeyOf]):
+  /// a decision no derivation has reached for the inputs and layout the
+  /// totals were stamped on. Read by every freshness reader — the engine's
+  /// `nutritionIsFresh` ([hasUnderivedRows]: the recipe page, the job
+  /// loops' stop, the compute's own read after its stamp) and the stale
+  /// sweep's scope ([recipesWithNutrition]) — at the time each reads, over
+  /// the rows as stored: a writer that stamps never decides it (Run 057
+  /// S15/O1: a compute's snapshot stamped fresh over a PUT's underived
+  /// row).
+  static const String underivedSql =
+      'EXISTS (SELECT 1 FROM ingredient_matches m '
+      'WHERE m.recipe_id = n.recipe_id '
+      "AND m.status IN ('confirmed', 'overridden', 'skipped') "
+      "AND NOT (m.status = 'confirmed' AND m.fdc_id IS NULL "
+      'AND m.description IN ($engineRuleNotesSql)) '
+      "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash))";
+
+  /// [engineRuleNotes] as an SQL list (a const, for the cached queries;
+  /// pinned equal to the list).
+  @visibleForTesting
+  static const String engineRuleNotesSql =
+      "'Sub-recipe — made from its own recipe, not counted in these totals', "
+      "'Seasoning to taste — no measurable amount', "
+      "'Equipment — not food, counts as zero', "
+      "'Water/ice — counts as zero'";
+
+  /// [underivedSql] for [recipeId]'s stamp; false with no stamp.
+  bool hasUnderivedRows(String recipeId) =>
+      _prepared(
+        'SELECT $underivedSql AS u FROM recipe_nutrition n '
+        'WHERE n.recipe_id = ?',
+      ).select([recipeId]).firstOrNull?['u'] ==
+      1;
+
+  /// Clears `derived_seq` on [recipeId]'s rows at [positions]: their
+  /// derived fields are no longer what the totals can count (the totals
+  /// found no cached food for them, RULE A), so the next compute derives
+  /// them again.
+  void clearDerivedSeq(String recipeId, Iterable<int> positions) {
+    final clear = _prepared(
+      'UPDATE ingredient_matches SET derived_seq = NULL '
+      'WHERE recipe_id = ? AND position = ?',
+    );
+    for (final position in positions) {
+      clear.execute([recipeId, position]);
+    }
+  }
+
+  /// The settings key migration 014 sets: its `derived_seq` backfill is
+  /// owed ([finishDerivedSeqBackfill] clears it).
+  static const String derivedSeqBackfillSetting =
+      'nutrition.derived_seq_backfill';
+
+  /// Migration 014's one-shot backfill, in ONE transaction with the
+  /// marker's removal: every decided row of each recipe in [keys] (the
+  /// recipes whose stamp is current) takes that recipe's key; every other
+  /// stays null (underived). Run once: a later boot finds no marker, so an
+  /// underived write is never "healed" by a restart.
+  void finishDerivedSeqBackfill(Map<String, String> keys) {
+    final mark = _prepared(
+      'UPDATE ingredient_matches SET derived_seq = ? WHERE recipe_id = ? '
+      "AND status IN ('confirmed', 'overridden', 'skipped')",
+    );
+    _inTransaction(() {
+      for (final MapEntry(key: recipeId, value: key) in keys.entries) {
+        mark.execute([key, recipeId]);
+      }
+      deleteSetting(derivedSeqBackfillSetting);
+    });
   }
 
   /// Creates or replaces the computed nutrition for a recipe.
@@ -1835,12 +1953,14 @@ class SaltDatabase {
     required String status,
     required String ingredientsHash,
     int? layoutSeq,
+    String? totalsJson,
   }) {
     _prepared(
       'INSERT INTO recipe_nutrition (recipe_id, serving_basis, '
       'calories_per_serving, nutrients, total_grams, matched_count, '
-      'total_count, status, ingredients_hash, computed_at, layout_seq) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'total_count, status, ingredients_hash, computed_at, layout_seq, '
+      'totals) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id) DO UPDATE SET '
       'serving_basis = excluded.serving_basis, '
       'calories_per_serving = excluded.calories_per_serving, '
@@ -1849,7 +1969,8 @@ class SaltDatabase {
       'matched_count = excluded.matched_count, '
       'total_count = excluded.total_count, status = excluded.status, '
       'ingredients_hash = excluded.ingredients_hash, '
-      'computed_at = excluded.computed_at, layout_seq = excluded.layout_seq',
+      'computed_at = excluded.computed_at, layout_seq = excluded.layout_seq, '
+      'totals = excluded.totals',
     ).execute([
       recipeId,
       servingBasis,
@@ -1862,6 +1983,33 @@ class SaltDatabase {
       ingredientsHash,
       _utcNowIso(),
       layoutSeq,
+      totalsJson,
+    ]);
+  }
+
+  /// A serving-basis change (`rebaseNutrition`): the divisor, the label
+  /// divided by it and the totals it was divided from — never the status,
+  /// the counts, the grams or the stamp (`ingredients_hash`, `layout_seq`).
+  /// `computed_at` moves, as on every nutrition write
+  /// ([recipeReviewFingerprint]).
+  void rebaseRecipeNutrition({
+    required String recipeId,
+    required int servingBasis,
+    required double? caloriesPerServing,
+    required String nutrientsJson,
+    required String totalsJson,
+  }) {
+    _prepared(
+      'UPDATE recipe_nutrition SET serving_basis = ?, '
+      'calories_per_serving = ?, nutrients = ?, totals = ?, '
+      'computed_at = ? WHERE recipe_id = ?',
+    ).execute([
+      servingBasis,
+      caloriesPerServing,
+      nutrientsJson,
+      totalsJson,
+      _utcNowIso(),
+      recipeId,
     ]);
   }
 
@@ -1906,11 +2054,21 @@ class SaltDatabase {
   ///
   /// `layoutCurrent` is the other half of freshness (migration 013): the
   /// stamp's layout sequence is still the recipe's ([layoutOf]).
-  List<({String id, String doc, String ingredientsHash, bool layoutCurrent})>
+  /// `underived` is RULE A's half ([underivedSql]): a decided row no
+  /// derivation reached for the stamp.
+  List<
+    ({
+      String id,
+      String doc,
+      String ingredientsHash,
+      bool layoutCurrent,
+      bool underived,
+    })
+  >
   recipesWithNutrition() {
     final rows = _db.select(
       'SELECT r.id AS id, r.doc AS doc, n.ingredients_hash AS h, '
-      'n.layout_seq IS COALESCE(l.seq, 0) AS lc '
+      'n.layout_seq IS COALESCE(l.seq, 0) AS lc, $underivedSql AS ud '
       'FROM recipes r JOIN recipe_nutrition n ON n.recipe_id = r.id '
       'LEFT JOIN recipe_layout l ON l.recipe_id = r.id '
       'ORDER BY r.id',
@@ -1922,6 +2080,7 @@ class SaltDatabase {
           doc: row['doc'] as String,
           ingredientsHash: row['h'] as String,
           layoutCurrent: row['lc'] == 1,
+          underived: row['ud'] == 1,
         ),
     ];
   }
@@ -2835,6 +2994,7 @@ class IngredientMatchRow {
     this.updatedAt,
     this.itemKey,
     this.hold,
+    this.derivedSeq,
   });
 
   /// Decodes a database row.
@@ -2852,6 +3012,7 @@ class IngredientMatchRow {
     updatedAt: row['updated_at'] as String?,
     itemKey: row['item_key'] as String?,
     hold: row['hold'] as String?,
+    derivedSeq: row['derived_seq'] as String?,
   );
 
   /// Recipe the line belongs to.
@@ -2901,6 +3062,12 @@ class IngredientMatchRow {
   /// re-derives it for the food on the row.
   final String? hold;
 
+  /// What a decided row's derived fields were computed for (migration 014,
+  /// RULE A): the [derivedKeyOf] its last successful derivation wrote, or
+  /// null — none for the inputs it stands on. Not part of the row's identity
+  /// ([sameMatchRow]): a compute re-deriving it changes no decision.
+  final String? derivedSeq;
+
   /// Copy with changed fields (explicit clears for the nullables).
   IngredientMatchRow copyWith({
     int? position,
@@ -2918,6 +3085,8 @@ class IngredientMatchRow {
     String? itemKey,
     String? hold,
     bool clearHold = false,
+    String? derivedSeq,
+    bool clearDerivedSeq = false,
   }) => IngredientMatchRow(
     recipeId: recipeId,
     position: position ?? this.position,
@@ -2931,8 +3100,15 @@ class IngredientMatchRow {
     status: status ?? this.status,
     itemKey: itemKey ?? this.itemKey,
     hold: clearHold ? null : (hold ?? this.hold),
+    derivedSeq: clearDerivedSeq ? null : (derivedSeq ?? this.derivedSeq),
   );
 }
+
+/// The one value a decided row's `derived_seq` and its recipe's stamp are
+/// compared by (RULE A, migration 014): the layout [layoutSeq] and the
+/// nutrition inputs' hash [ingredientsHash] a derivation read.
+String derivedKeyOf(int layoutSeq, String ingredientsHash) =>
+    '$layoutSeq:$ingredientsHash';
 
 /// One row of `recipe_nutrition`.
 class RecipeNutritionRow {
@@ -2949,6 +3125,7 @@ class RecipeNutritionRow {
     required this.ingredientsHash,
     required this.computedAt,
     this.layoutSeq,
+    this.totalsJson,
   });
 
   /// Decodes a database row.
@@ -2964,6 +3141,7 @@ class RecipeNutritionRow {
     ingredientsHash: row['ingredients_hash'] as String,
     computedAt: row['computed_at'] as String?,
     layoutSeq: row['layout_seq'] as int?,
+    totalsJson: row['totals'] as String?,
   );
 
   /// Recipe the totals belong to.
@@ -3001,6 +3179,10 @@ class RecipeNutritionRow {
   /// The recipe's layout sequence ([SaltDatabase.layoutOf]) the totals were
   /// computed on (migration 013); null on a stamp that names none.
   final int? layoutSeq;
+
+  /// JSON: nutrient key -> the per-recipe total [nutrientsJson] divides by
+  /// [servingBasis], unrounded (migration 015); null on a row written before.
+  final String? totalsJson;
 }
 
 /// One tag with its recipe count and chip style.

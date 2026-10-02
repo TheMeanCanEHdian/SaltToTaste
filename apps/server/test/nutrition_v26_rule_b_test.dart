@@ -68,13 +68,12 @@ Recipe _stepSays(Recipe r, String from, String to) => r.copyWith(
   ],
 );
 
-DiscardedMedium? _medium(Recipe r, String raw, {double? grams}) {
+DiscardedMedium? _medium(Recipe r, String raw) {
   final line = nutritionLines(r).firstWhere((l) => l.raw == raw);
   return discardedMediumOf(
     r,
     line,
     normalizeItem(lineItemOf(line)),
-    grams: grams,
   );
 }
 
@@ -262,29 +261,32 @@ void main() {
         weightGramsOf(parseIngredientLine('24 ounces vegetable oil').amounts),
         closeTo(680.4, 0.1),
       );
-      expect(_medium(r, '24 ounces vegetable oil', grams: 680.4), _fry);
+      expect(_medium(r, '24 ounces vegetable oil'), _fry);
       final frying = _out(r, '24 ounces vegetable oil', oil);
       expect((frying.grams, frying.source), (0.0, 'discarded'));
-      // Under the frying mass, a weight is no candidate: 12 ounces (340 g)
-      // leaves the aioli the one candidate — the v25 shape, by volume.
+      // v27 (RULE B, Sonnet critic 1 of Run 057): a weight is a candidate
+      // in BOTH unit families — 12 ounces (340 g) is ¼ cup or more at oil's
+      // 0.92 g/mL, so the aioli beside it is held too (v26 zeroed it alone).
       final light = _retyped(r, '24 ounces vegetable oil', '12 ounces oil');
-      expect(_medium(light, '½ cup extra-virgin olive oil'), _fry);
+      expect(_medium(light, '½ cup extra-virgin olive oil'), _amb);
     }, skip: skipIfNoCorpus);
 
-    test('Opus critic 2 GAP 2: a line "for pan-frying" is a candidate only '
-        'with NO amount (the comment and API.md stand; a line with an '
-        'amount is one by its mass) — 0491 with "Heat the oil in an 8-inch '
-        '…": "2 tablespoons peanut oil, for pan-frying" leaves the ¾ cup '
-        'the one candidate; "Peanut oil, for pan-frying" holds it', () {
+    test('Opus critic 2 GAP 2 (v27: a line "for pan-frying" is a candidate '
+        'with any amount) — 0491 with "Heat the oil in an 8-inch …": "2 '
+        'tablespoons peanut oil, for pan-frying" and "Peanut oil, for '
+        'pan-frying" each hold the ¾ cup', () {
       final r = _stepSays(
         loadCorpusRecipe(_tostadas),
         'Heat the vegetable oil in an 8-inch',
         'Heat the oil in an 8-inch',
       );
       expect(_medium(r, '¾ cup vegetable oil'), _fry);
+      // v27 (RULE B, Run 057 Sonnet critic 2): a "for (pan-)frying" line is a
+      // candidate with ANY amount — the ¾ cup and the 2 tablespoons share
+      // the unnamed frying sentence, both held (v26 zeroed the ¾ cup alone).
       final small = _added(r, '2 tablespoons peanut oil, for pan-frying');
-      expect(_medium(small, '¾ cup vegetable oil'), _fry);
-      expect(_medium(small, '2 tablespoons peanut oil, for pan-frying'), null);
+      expect(_medium(small, '¾ cup vegetable oil'), _amb);
+      expect(_medium(small, '2 tablespoons peanut oil, for pan-frying'), _amb);
       final bare = _added(r, 'Peanut oil, for pan-frying');
       expect(_medium(bare, '¾ cup vegetable oil'), _amb);
     }, skip: skipIfNoCorpus);
@@ -348,8 +350,9 @@ void main() {
           'degrees.',
       'Brush the pitas with the oil and heat them on the convection setting '
           'to 375 degrees.',
-      'Brush the pitas with the oil and bake them; meanwhile heat the oil in '
-          'a skillet to 375 degrees.',
+      // v27 (Run 057 S2/O4): "… bake them; meanwhile heat the oil in a
+      // skillet to 375 degrees" moved to nutrition_v27_rule_b_test — the bake
+      // is outside the 375's clause (the ";"), so it is a fry (RULE B v27).
     ];
     // O4/S4's own sentences: no heating verb or no "to" — a setting.
     const settings = [
@@ -369,7 +372,7 @@ void main() {
     ];
     test("O4/S4/S16/O17: an oven's, a grill's, an air fryer's, a smoker's, a "
         "slow cooker's, a pizza stone's, a toaster's or a convection heat "
-        'ANYWHERE in the sentence, or a temperature "at" (a setting), is not '
+        'governing the temperature, or a temperature "at" (a setting), is not '
         "the oil's — 0806's ¼ cup olive oil stays counted and the recipe "
         'fries nothing', () {
       final pita = loadCorpusRecipe(_pita);

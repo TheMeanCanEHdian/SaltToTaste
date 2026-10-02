@@ -125,8 +125,10 @@ DateTime? _timestamp(Object? value) =>
 /// targets it left because their recipe was laid out anew while it waited
 /// (`moved`: left for their next compute). The rest of the offered lines:
 /// `decided` (a person decided it meanwhile), `gone` (another ingredient
-/// now, or its line or recipe is gone) and `failedLines` (its recipe failed)
-/// — with `lines` and `moved`, every line the offer counted.
+/// now, or its line or recipe is gone), `failedLines` (its recipe failed)
+/// and `unavailable` (USDA could not serve what weighing it needs: left as
+/// it was, for its recipe's next compute — server RULE A, v27) — with
+/// `lines` and `moved`, every line the offer counted.
 typedef MatchApplied = ({
   int recipes,
   int lines,
@@ -137,6 +139,7 @@ typedef MatchApplied = ({
   int decided,
   int gone,
   int failedLines,
+  int unavailable,
 });
 
 /// A match override's answer: the refreshed match list, and the apply-to-all
@@ -579,6 +582,7 @@ class NutritionRepository {
                 decided: (applied['decided'] as num?)?.toInt() ?? 0,
                 gone: (applied['gone'] as num?)?.toInt() ?? 0,
                 failedLines: (applied['failed_lines'] as num?)?.toInt() ?? 0,
+                unavailable: (applied['unavailable'] as num?)?.toInt() ?? 0,
               )
             : null,
       );

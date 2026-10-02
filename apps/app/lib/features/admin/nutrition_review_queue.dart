@@ -823,7 +823,8 @@ String? lastOpenNote(NutritionReviewLine line) {
 
 /// The italic sub-line of a line-held row (B, ruling 5): a line hold is
 /// decided one line at a time and never offers apply-to-all; how it
-/// finishes. Null for a row with no line hold.
+/// finishes — and so for a `food_gone` row (a pick or skip finishes it;
+/// server RULE A, v27). Null for any other row.
 String? lineHoldNote(NutritionReviewLine line) {
   final match = line.match;
   const head = 'decided one line at a time, never offers apply-to-all. ';
@@ -840,6 +841,11 @@ String? lineHoldNote(NutritionReviewLine line) {
     'second_food' =>
       'line hold (second food): ${head}Any decision finishes it: Confirm, '
           'Skip, or a typed positive amount$noZero',
+    // Not a line hold — the person's food is gone from USDA — but decided
+    // one line at a time all the same (a decided row is its own group).
+    'food_gone' =>
+      'food gone: decided one line at a time. '
+          '${heldFinishes('food_gone')}.',
     _ => null,
   };
 }

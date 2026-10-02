@@ -75,6 +75,13 @@ const Map<int, String> _capabilityByVersion = {
       'recipe_nutrition.layout_seq: the layout a stamp was computed on '
       '(backfilled from recipe_layout, 0 with none) + layout_counter: the '
       'global layout sequence',
+  14:
+      'ingredient_matches.derived_seq: what a decided row was derived for '
+      '(NULL at open; a fresh recipe’s decided rows marked once at boot by '
+      'backfillDerivedSeq under the nutrition.derived_seq_backfill marker)',
+  15:
+      'recipe_nutrition.totals: the unrounded per-recipe totals the label '
+      'divides by its basis (NULL at open; the next compute writes it)',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -87,6 +94,15 @@ const int _holdVersion = 11;
 /// Mirror of migration 013: `recipe_nutrition.layout_seq`, backfilled from
 /// `recipe_layout` (which the seed never holds: 0).
 const int _layoutSeqVersion = 13;
+
+/// Mirror of migration 014: `ingredient_matches.derived_seq` (NULL on every
+/// existing row at open; the boot's one-shot backfill marks a fresh
+/// recipe's decided rows — the seed's captured rows hold no decision).
+const int _derivedSeqVersion = 14;
+
+/// Mirror of migration 015: `recipe_nutrition.totals` (NULL on every
+/// existing row at open; the next compute writes it).
+const int _totalsVersion = 15;
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
 /// start version is below this gets its FTS rows re-derived in Dart on open.
@@ -587,15 +603,24 @@ _Seed _seed(
     for (final table in _nutritionTables.keys) {
       _replay(raw, table, [
         for (final row in nutritionRows[table]!)
-          if (table == 'recipe_nutrition' && version < _layoutSeqVersion)
-            {...row}..remove('layout_seq')
+          if (table == 'recipe_nutrition' && version < _totalsVersion)
+            {
+              for (final entry in row.entries)
+                if (entry.key != 'totals' &&
+                    (entry.key != 'layout_seq' || version >= _layoutSeqVersion))
+                  entry.key: entry.value,
+            }
           else if (table == 'ingredient_matches' && version < _holdVersion)
             {
               for (final entry in row.entries)
                 if (entry.key != 'hold' &&
+                    entry.key != 'derived_seq' &&
                     (entry.key != 'item_key' || version >= _itemKeyVersion))
                   entry.key: entry.value,
             }
+          else if (table == 'ingredient_matches' &&
+              version < _derivedSeqVersion)
+            {...row}..remove('derived_seq')
           else
             row,
       ]);
@@ -1249,6 +1274,19 @@ void main() {
                       column: row[column] as Object?,
                   };
                   if (entry.key == 'recipe_nutrition' &&
+                      startVersion < _totalsVersion) {
+                    expect(
+                      actual.remove('totals'),
+                      isNull,
+                      reason: 'nothing at open fills the totals 015 adds',
+                    );
+                  }
+                  final want =
+                      entry.key == 'recipe_nutrition' &&
+                          startVersion < _totalsVersion
+                      ? ({...expected[index]}..remove('totals'))
+                      : expected[index];
+                  if (entry.key == 'recipe_nutrition' &&
                       startVersion < _layoutSeqVersion) {
                     expect(
                       actual.remove('layout_seq'),
@@ -1257,7 +1295,7 @@ void main() {
                           '013 backfills the stamp layout from '
                           'recipe_layout: none seeded, 0',
                     );
-                    expect(actual, {...expected[index]}..remove('layout_seq'));
+                    expect(actual, {...want}..remove('layout_seq'));
                     continue;
                   }
                   if (entry.key == 'ingredient_matches' && !keysExpected) {
@@ -1272,7 +1310,7 @@ void main() {
                   }
                   expect(
                     actual,
-                    expected[index],
+                    want,
                     reason: '${entry.key} row $index must come back unchanged',
                   );
                 }

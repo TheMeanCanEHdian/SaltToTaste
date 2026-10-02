@@ -34,30 +34,6 @@ import 'support/fdc_fixtures.dart';
 /// guards, the `others` count, a food-less decision, a provider failure
 /// part-way through a sweep, the guarded write's truthfulness, and the
 /// fixed-width timestamp that "most recent" relies on.
-/// Parks one food lookup on a gate, so a test can act while a sweep waits.
-class _GatedFoodProvider implements NutritionProvider {
-  _GatedFoodProvider(this._inner, this.gateFor);
-
-  final NutritionProvider _inner;
-  final int gateFor;
-  final Completer<void> reached = Completer<void>();
-  final Completer<void> release = Completer<void>();
-
-  @override
-  Future<List<FdcCandidate>> search(String query) => _inner.search(query);
-
-  @override
-  Future<FdcFood?> food(int fdcId) async {
-    if (fdcId == gateFor) {
-      if (!reached.isCompleted) {
-        reached.complete();
-      }
-      await release.future;
-    }
-    return _inner.food(fdcId);
-  }
-}
-
 class _FailingFoodProvider implements NutritionProvider {
   _FailingFoodProvider(this._inner, this.failFor);
 
@@ -618,55 +594,13 @@ void main() {
       await matchAndCompute(db, provider, caramel);
     });
 
-    test('a target decided WHILE the sweep runs is left alone and not '
-        'counted', () async {
-      // The sweep awaits each recipe's recompute; a person can decide a
-      // later target line in that gap. The SQL guard stops the write, and
-      // the counts must say so — the query result is stale by then.
-      final eggsPos = positionOf(bundt, 'eggs');
-      final targets = [pancakes, caramel]
-        ..sort((a, b) => a.id.compareTo(b.id)); // the sweep's order
-      final first = targets[0];
-      final second = targets[1];
-      final firstEggs = positionOf(first, 'eggs');
-      final secondEggs = positionOf(second, 'eggs');
-      sqlite3.open(config.dbPath)
-        ..execute(
-          "UPDATE ingredient_matches SET status = 'auto', fdc_id = NULL "
-          'WHERE (recipe_id = ? AND position = ?) '
-          'OR (recipe_id = ? AND position = ?)',
-          [first.id, firstEggs, second.id, secondEggs],
-        )
-        ..dispose();
-      // Park the first recipe's recompute on one of its OTHER foods, held
-      // by no local record (a recompute reads a cached search hit first).
-      final parkOn = db
-          .ingredientMatchesFor(first.id)
-          .firstWhere((r) => r.fdcId != null && r.position != firstEggs)
-          .fdcId!;
-      sqlite3.open(config.dbPath)
-        ..execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [parkOn])
-        ..execute(_deleteSearchesHolding, [parkOn])
-        ..dispose();
-      final gated = _GatedFoodProvider(provider, parkOn);
-      final food = rowOf(bundt, 'eggs').fdcId!;
-      final sweep = applyMatchOverride(db, gated, bundt, eggsPos, {
-        'fdc_id': food,
-        'apply_to_all': true,
-      });
-      await gated.reached.future;
-      // While the sweep waits: a person confirms the second target's line.
-      await put(second, secondEggs, {'confirmed': true});
-      gated.release.complete();
-      final applied = await sweep;
-
-      expect(applied, appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0));
-      final decided = rowAt(second, secondEggs);
-      expect(decided.status, 'confirmed');
-      expect(decided.fdcId, isNull, reason: 'the guard held the write off');
-      await matchAndCompute(db, provider, first); // heal the cache
-    });
-
+    // v27 (RULE A): "a target decided WHILE the sweep runs" parked the
+    // sweep on a target recipe's TOTALS fetch — the totals are cache-only
+    // now, so that await is gone. The guard it pinned (a person's decision
+    // during the apply's await stands, uncounted) is pinned on the await
+    // that remains, a target's portion fetch: nutrition_v23_writepath_test
+    // "S3/O5 case 1" (a person skips c's line 0 during b's portion fetch —
+    // `decided`, never written over).
     test('the guarded write says whether it wrote', () async {
       final position = positionOf(pancakes, 'baking soda');
       await put(pancakes, position, {'confirmed': true});
