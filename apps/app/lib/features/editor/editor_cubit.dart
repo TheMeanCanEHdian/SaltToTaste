@@ -429,9 +429,14 @@ class EditorCubit extends Cubit<EditorState> {
   /// Whether the parser fully explains this stored line — if not, the
   /// structured fields were curated by a human (the corpus review queue)
   /// and must not be silently replaced by re-parsing on the next keystroke.
+  /// The stored fields are read as the parser reads a line
+  /// ([normalizeLineWhitespace]): a line saved before the parser collapsed
+  /// whitespace runs ("Salt  and pepper") is still the parser's.
   static bool _parserExplains(IngredientLine line) {
     final parsed = parseIngredientLine(line.raw);
-    if (parsed.item != line.item || parsed.prep != line.prep) {
+    String? same(String? text) =>
+        text == null ? null : normalizeLineWhitespace(text);
+    if (parsed.item != same(line.item) || parsed.prep != same(line.prep)) {
       return false;
     }
     if (parsed.amounts.length != line.amounts.length) {

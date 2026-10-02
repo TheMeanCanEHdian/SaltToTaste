@@ -987,8 +987,13 @@ void main() {
     // and 0129 Indoor Pulled Chicken: 'sichuan peppercorns', 'liquid
     // smoke', 'boneless skinless chicken thighs', 'hot sauce'): one more
     // recorded food is a hit in them, equal in every digit (differ stays).
-    expect(compared, 303);
-    expect(differ, 224);
+    // Matcher v25 recorded 0491 Tostadas' five searches and one record for
+    // the RULE C matches-GET pin ('ground chipotle powder', 'corn
+    // tortillas', 'queso fresco or feta cheese', 'avocado', 'lime wedges';
+    // 'Tortilla, corn' 2707823): the tortilla is a hit, differing in some
+    // digit.
+    expect(compared, 304);
+    expect(differ, 225);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

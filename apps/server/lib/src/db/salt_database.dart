@@ -12,20 +12,25 @@ final Logger _log = Logger('db');
 
 /// The `hold`s of a medium the recipe pours away, all of them LINE holds:
 /// a discarded medium, a starter's feeding discard, a fried food's dredge,
-/// a braise kept only in part (the user's rulings Q1, Q2, Q4, 2026-10-01).
+/// a braise kept only in part (the user's rulings Q1, Q2, Q4, 2026-10-01),
+/// an oil a frying sentence could be about beside another (RULE B, v25).
 const List<String> mediumHolds = [
   'discarded_medium',
   'starter_discard',
   'coating',
   'partial_pour_away',
+  'ambiguous_medium',
 ];
 
-/// The [mediumHolds] part of whose line is eaten (Q1, Q2, Q4): a pick alone
-/// keeps the hold (v23, Run 053 O8) — a skip or typed grams answers it.
+/// The [mediumHolds] part of whose line is eaten (Q1, Q2, Q4) — or, for
+/// `ambiguous_medium`, all of it or none, which nothing says: a pick alone
+/// on such a line with no eaten part known keeps the hold (`derivedFor`,
+/// RULE A) — a skip or typed grams answers it.
 const List<String> eatenInPartHolds = [
   'starter_discard',
   'coating',
   'partial_pour_away',
+  'ambiguous_medium',
 ];
 
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
@@ -637,7 +642,8 @@ class SaltDatabase {
   /// equal to the list).
   @visibleForTesting
   static const String mediumHoldsSql =
-      "'discarded_medium', 'starter_discard', 'coating', 'partial_pour_away'";
+      "'discarded_medium', 'starter_discard', 'coating', 'partial_pour_away', "
+      "'ambiguous_medium'";
 
   /// The four conditions a collapsed calories range can emit.
   ///
@@ -1622,7 +1628,7 @@ class SaltDatabase {
   /// ([sameMatchRow]) and the recipe's layout is still [layoutSeq], both
   /// checked in the write's own transaction; returns whether it was
   /// written. The compute's write of an amount-edited decided row
-  /// (`editedDecisionRow`) over the row it laid out: a person's write on
+  /// (`derivedFor`) over the row it laid out: a person's write on
   /// that line since (an un-skip: Run 052 O3) is not that row, and stands.
   bool replaceIngredientMatchIfUnchanged(
     IngredientMatchRow row, {

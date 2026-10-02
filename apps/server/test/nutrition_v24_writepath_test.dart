@@ -103,8 +103,9 @@ void main() {
       expect(msOf(() => keptLiquidOf(b2, bl)), lessThan(70));
     });
 
-    test('a sentence longer than maxScannedSentence (1,000) reads as no '
-        'sentence: the eaten part it would name is not read', () {
+    test('a sentence longer than maxScannedSentence (1,000) is read for its '
+        'first 1,000 characters (v25, Run 055 S7: the window): an eaten part '
+        'named past them is not read', () {
       final (fr, fl) = flour();
       const mention = 'Sprinkle with 1 teaspoon flour.';
       // Francese's own eaten part named again past the bound: the note is

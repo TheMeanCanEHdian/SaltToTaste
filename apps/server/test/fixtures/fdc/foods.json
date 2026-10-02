@@ -16032,5 +16032,72 @@
     "description": "1 fl oz (NFS)"
    }
   ]
+ },
+ "2707823": {
+  "fdc_id": 2707823,
+  "description": "Tortilla, corn",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 5.7,
+   "204": 2.85,
+   "205": 44.6,
+   "208": 218.0,
+   "269": 0.88,
+   "291": 6.3,
+   "301": 81.0,
+   "303": 1.23,
+   "304": 72.0,
+   "305": 314.0,
+   "306": 186.0,
+   "307": 45.0,
+   "320": 0.0,
+   "323": 0.28,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.094,
+   "405": 0.065,
+   "406": 1.5,
+   "415": 0.219,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 5.0,
+   "435": 5.0,
+   "601": 0.0,
+   "606": 0.453,
+   "645": 0.692,
+   "646": 1.42
+  },
+  "portions": [
+   {
+    "gram_weight": 44.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large"
+   },
+   {
+    "gram_weight": 18.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small"
+   },
+   {
+    "gram_weight": 77.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 medium"
+   },
+   {
+    "gram_weight": 65.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 extra large"
+   }
+  ]
  }
 }

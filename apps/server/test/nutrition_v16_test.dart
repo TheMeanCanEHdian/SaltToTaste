@@ -452,32 +452,34 @@ void main() {
       ('a pick', {'fdc_id': 173468}, (0, 'discarded')),
       ('typed grams', {'confirmed': true, 'grams': 2}, (2, 'override')),
     ]) {
-      test('H1: 0052 — $verb, then the amount edited: the row keeps its '
-          'grams ${want.$1} (${want.$2}) and its hold, counted; the sheet '
-          'fills no portion from the poured-away amount', () async {
-        final (db, provider, r) = await cucumber();
-        await applyMatchOverride(db, provider, r, 0, body);
-        final e = editedOf(db);
-        await matchAndCompute(db, provider, e);
-        final row = rowAt(db, 0);
-        expect(
-          (row.grams, row.gramSource, row.hold),
-          (
-            want.$1,
-            want.$2,
-            'discarded_medium',
-          ),
-        );
-        expect(bucketOf(row), MatchBucket.counted);
-        final item =
-            ((await matchesBody(db, provider, e))['items']! as List).single
-                as Map;
-        final portions = item['portions'] as List;
-        expect(portions, isNotEmpty);
-        expect([
-          for (final x in portions) (x as Map)['fill'],
-        ], everyElement(isNull));
-      });
+      test(
+        'H1: 0052 — $verb, then the amount edited: the row keeps its '
+        'grams ${want.$1} (${want.$2}), its hold resolved (RULE A), '
+        'counted; the sheet fills no portion from the poured-away amount',
+        () async {
+          final (db, provider, r) = await cucumber();
+          await applyMatchOverride(db, provider, r, 0, body);
+          final e = editedOf(db);
+          await matchAndCompute(db, provider, e);
+          final row = rowAt(db, 0);
+          // RULE A (v25, Run 055 I1): the decision resolves the hold — a
+          // confirm or a pick on a wholly poured-away line is 0 g with no
+          // hold, typed grams answer it — at the PUT and every compute.
+          expect(
+            (row.grams, row.gramSource, row.hold),
+            (want.$1, want.$2, null),
+          );
+          expect(bucketOf(row), MatchBucket.counted);
+          final item =
+              ((await matchesBody(db, provider, e))['items']! as List).single
+                  as Map;
+          final portions = item['portions'] as List;
+          expect(portions, isNotEmpty);
+          expect([
+            for (final x in portions) (x as Map)['fill'],
+          ], everyElement(isNull));
+        },
+      );
     }
 
     test('H1: the sheet fills no portion on a held line the engine holds, '

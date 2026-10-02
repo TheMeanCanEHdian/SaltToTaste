@@ -231,9 +231,11 @@ void main() {
       );
       await matchAndCompute(db, provider, edited);
       row = rowAt(db, 0);
+      // RULE A (v25, Run 055 I1): the confirm resolves the hold — 0 g
+      // poured away, no hold — at the PUT and at every compute alike.
       expect(
         (row.status, row.fdcId, row.grams, row.hold),
-        ('confirmed', 173468, 0, 'discarded_medium'),
+        ('confirmed', 173468, 0, null),
       );
       await applyMatchOverride(db, provider, edited, 0, {'confirmed': true});
       row = rowAt(db, 0);

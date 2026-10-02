@@ -1108,6 +1108,26 @@ void main() {
         'Only part of the strained cooking liquid is kept (1 cup defatted '
         'cooking liquid); the rest is poured away',
       );
+      // v25 (RULE B): an oil a frying sentence could be about beside another
+      // is a LINE hold read in words, its sentence the server's note (0690's
+      // sauce oil retyped as an aioli: synthesized, a stated exception).
+      const aioli = IngredientMatch(
+        position: 0,
+        raw: '½ cup extra-virgin olive oil',
+        fdcId: 2710180,
+        status: 'auto',
+        hold: 'ambiguous_medium',
+      );
+      expect(isHeldLine(aioli), isTrue);
+      expect(
+        holdReason(
+          'ambiguous_medium',
+          note: '"Heat oil in large Dutch oven over high heat to 375 degrees."',
+        ),
+        'A frying, discard or pour-off step could be about this oil or '
+        'another oil line, and the recipe does not say which ("Heat oil in '
+        'large Dutch oven over high heat to 375 degrees.")',
+      );
       await openSheet(tester, [starter, dredge, soy], isAdmin: false);
       for (final text in [
         'A starter feeding',

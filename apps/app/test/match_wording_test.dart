@@ -259,4 +259,79 @@ void main() {
     expect(find.textContaining('cured'), findsWidgets);
     expect(find.textContaining('fresh herb'), findsNothing);
   });
+  // Run 055 S14/O10: WhyLine's hold arms outside Check, each on its own
+  // bucket. The rows are the goldens' real lines; the decided states (a
+  // pick whose food sizes no grams, a confirm that counts) are synthesized,
+  // a stated exception — no golden row is in them.
+  testWidgets('S14: a picked in-shell line with no grams (No grams) says '
+      'enter the edible grams; a held reason rides the plain No grams text '
+      'and a counted row; a skip says only that it is excluded', (
+    tester,
+  ) async {
+    final mussels = IngredientMatch.fromJson({
+      ...[
+        for (final i in golden('nutrition_matches_rules')['items']! as List)
+          i as Map<String, dynamic>,
+      ].singleWhere((i) => i['position'] == 6),
+    });
+    expect(mussels.hold, 'in_shell');
+    final picked = IngredientMatch(
+      position: mussels.position,
+      raw: mussels.raw,
+      fdcId: mussels.fdcId,
+      description: mussels.description,
+      confidence: mussels.confidence,
+      status: 'overridden',
+      hold: 'in_shell',
+    );
+    expect(matchBucketOf(picked), MatchBucket.noAmount);
+    await pump(tester, picked);
+    expect(
+      find.textContaining('enter the edible grams (the shells are not eaten)'),
+      findsOneWidget,
+    );
+    const zest = IngredientMatch(
+      position: 0,
+      raw: '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+      item: 'grated lemon zest plus',
+      fdcId: 2709168,
+      description: 'Lemon, raw',
+      confidence: 0.9,
+      status: 'overridden',
+      hold: 'second_food',
+    );
+    expect(matchBucketOf(zest), MatchBucket.noAmount);
+    await pump(tester, zest);
+    expect(
+      find.text(
+        'Matched, but no amount found — not counted yet. '
+        '${holdReason('second_food')}',
+      ),
+      findsOneWidget,
+    );
+    const counted = IngredientMatch(
+      position: 0,
+      raw: '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+      item: 'grated lemon zest plus',
+      fdcId: 2709168,
+      description: 'Lemon, raw',
+      confidence: 0.9,
+      grams: 4.2,
+      gramSource: 'portion',
+      status: 'confirmed',
+      hold: 'second_food',
+    );
+    expect(matchBucketOf(counted), MatchBucket.counted);
+    await pump(tester, counted);
+    expect(find.text(holdReason('second_food')!), findsOneWidget);
+    const skipped = IngredientMatch(
+      position: 0,
+      raw: '1 teaspoon grated lemon zest plus 2 tablespoons juice',
+      fdcId: 2709168,
+      confidence: 0.9,
+      status: 'skipped',
+    );
+    await pump(tester, skipped);
+    expect(find.text('Excluded from the totals'), findsOneWidget);
+  });
 }

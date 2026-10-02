@@ -280,12 +280,13 @@ class IngredientMatch {
   /// Why the engine holds an `auto` line out of the totals although its name
   /// confidence passes: `no_nutrients` | `discarded_medium` | `second_food`
   /// | `in_shell` | `unnamed_food` | `dried_for_fresh` | `cured_for_fresh` |
-  /// `borderline` | `starter_discard` | `coating` | `partial_pour_away`;
-  /// null when nothing holds it.
+  /// `borderline` | `starter_discard` | `coating` | `partial_pour_away` |
+  /// `ambiguous_medium`; null when nothing holds it.
   final String? hold;
 
   /// The hold in the server's words where the code alone does not say it:
-  /// a `partial_pour_away`'s kept part ("1 cup defatted cooking liquid").
+  /// a `partial_pour_away`'s kept part ("1 cup defatted cooking liquid"),
+  /// an `ambiguous_medium`'s sentence.
   final String? holdNote;
 
   /// The line's previous text when this is a person's decision an amount

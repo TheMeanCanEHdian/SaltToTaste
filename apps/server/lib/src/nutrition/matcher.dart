@@ -283,8 +283,10 @@ const Map<String, String> _synonyms = {
 /// used over the density. 24 (Run 054): the step and line regexes linear on
 /// hostile text (a sentence over 1,000 characters is read as none), a
 /// decided row's hold re-derived on every compute, and the oil, dredge,
-/// _asPrepared and plus-part cheese rules of that run.
-const int matcherVersion = 24;
+/// _asPrepared and plus-part cheese rules of that run. 25 (Run 055): RULE A
+/// — a decided row's every derived field (hold, grams unless typed, their
+/// source) re-derived from the recipe on every compute.
+const int matcherVersion = 25;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -315,6 +317,46 @@ const Map<String, String> _folded = {
   'ç': 'c',
 };
 
+/// [text] with each "(…)" replaced by a space, as `\(.*?\)` replaces them
+/// (a paren never spans a line break) — in one pass: the lazy run re-read
+/// the rest of the text from every unclosed "(" (Run 055 S6: 5 ms for
+/// 1,000 of them, 23 ms for 2,000, per call).
+String _withoutParens(String text) {
+  final out = StringBuffer();
+  var from = 0;
+  var open = text.indexOf('(');
+  // The next line break at or after [open], looked up again only once
+  // passed: each character is read once.
+  var broken = -1;
+  while (open >= 0) {
+    final close = text.indexOf(')', open);
+    if (close < 0) {
+      break;
+    }
+    if (broken < open) {
+      broken = text.indexOf(_lineBreak, open);
+      broken = broken < 0 ? text.length : broken;
+    }
+    if (broken < close) {
+      // Every "(" before the break meets it before this ")".
+      open = text.indexOf('(', broken);
+      continue;
+    }
+    out
+      ..write(text.substring(from, open))
+      ..write(' ');
+    from = close + 1;
+    open = text.indexOf('(', from);
+  }
+  return (out..write(text.substring(from))).toString();
+}
+
+/// What `.` never matches: a line break.
+final RegExp _lineBreak = RegExp('[\n\r  ]');
+
+/// A character [_folded] folds, compiled once.
+final RegExp _foldedChar = RegExp('[${_folded.keys.join()}]');
+
 /// Prep words that name the PRODUCT when they precede these foods: a can of
 /// crushed or diced tomatoes is a different food from a fresh one (FDC files
 /// them apart), and stripping the word folded 51 canned lines into the
@@ -326,11 +368,8 @@ const Set<String> _formPhrases = {'crushed tomatoes', 'diced tomatoes'};
 /// collapsed. Empty when nothing searchable remains.
 String normalizeItem(String item) {
   var text = item.toLowerCase();
-  text = text.replaceAllMapped(
-    RegExp('[${_folded.keys.join()}]'),
-    (m) => _folded[m[0]]!,
-  );
-  text = text.replaceAll(RegExp(r'\(.*?\)'), ' ');
+  text = text.replaceAllMapped(_foldedChar, (m) => _folded[m[0]]!);
+  text = _withoutParens(text);
   // The grade of a curing salt is not an amount: "pink curing salt #1"
   // searched and keyed 'pink curing salt 1' (audit 3, A11).
   text = text.replaceAll(RegExp(r'(?<=curing salt)\s*#\s*\d+'), ' ');
@@ -402,19 +441,23 @@ String normalizeItem(String item) {
 /// 'pinches' and a doubled "or" were here too: none changed a key of the
 /// library, refix round 1.)
 void _dropLeadingLeaks(List<String> words) {
-  while (words.length > 1) {
-    final first = words.first;
+  // Counted first and removed once: a removeAt(0) per word is quadratic in
+  // a run of them (Run 055 S6).
+  var k = 0;
+  while (words.length - k > 1) {
+    final first = words[k];
     if (first == 'or' || first == 'and') {
-      words.removeAt(0);
-      if (words.length > 1 && _formWords.contains(words.first)) {
-        words.removeAt(0);
+      k++;
+      if (words.length - k > 1 && _formWords.contains(words[k])) {
+        k++;
       }
     } else if (_leadingMeasures.contains(first)) {
-      words.removeAt(0);
+      k++;
     } else {
-      return;
+      break;
     }
   }
+  words.removeRange(0, k);
 }
 
 /// A measure the parse left at the front of the item, with its "of".
@@ -513,8 +556,13 @@ List<String> _withoutAmounts(List<String> words, {int lead = 0}) {
       }
       break;
     }
-    out.add(words[i]);
-    i++;
+    // A number run with no measure after it stays whole: every later word
+    // of the run ends at the same word, so none is a measure's either —
+    // never re-walked from each of its words (Run 055 S6: quadratic, 140 ms
+    // a pass over a legal 1,000-character line).
+    final end = j > i ? j : i + 1;
+    out.addAll(words.sublist(i, end));
+    i = end;
   }
   while (dropped &&
       out.isNotEmpty &&

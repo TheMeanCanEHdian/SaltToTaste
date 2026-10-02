@@ -1559,8 +1559,28 @@ const Set<String> _plusFiller = {
 /// The [PlusPart] of [raw], or null: only a NUMBER right after "plus" is a
 /// second amount ("plus extra for serving" is not), and a part that says
 /// what it is for ("plus 2 Thai chiles, sliced thin, for serving") is an
-/// optional extra, never part of the line.
+/// optional extra, never part of the line. Memoised by text (Run 055 V1:
+/// ~1 ms on a 1,000-character line, read several times per line by every
+/// key, reach and rule — a matches GET of 160 such lines spent 1.5 s here).
 PlusPart? plusPartOf(String raw) {
+  // ponytail: whole-map clear past the cap; an LRU if a library outgrows it.
+  if (_plusParts.length >= 20000) {
+    _plusParts.clear();
+  }
+  return _plusParts.putIfAbsent(raw, () {
+    plusPartReads++;
+    return _plusPartOf(raw);
+  });
+}
+
+final Map<String, PlusPart?> _plusParts = {};
+
+/// How many texts [plusPartOf] parsed since reset — what the tests pin its
+/// memo by, never a clock.
+@visibleForTesting
+int plusPartReads = 0;
+
+PlusPart? _plusPartOf(String raw) {
   // "(about 2 tablespoons plus 2 teaspoons)" restates the first amount. The
   // blanking keeps every position, so [raw] still shows where a paren was.
   final text = raw.replaceAllMapped(
@@ -1852,13 +1872,16 @@ GramResolution? _resolveLine({
   }
   // The part is the line's form too: "1 ounce Parmesan cheese, grated
   // (½ cup), plus 2 tablespoons" weighs its 2 tablespoons grated, 0.24
-  // (Run 054 O10/S6: 0.42, read with no words).
+  // (Run 054 O10/S6: 0.42, read with no words) — unless the part names its
+  // own: "¼ cup grated Parmesan cheese plus 2 cups shredded" weighs its 2
+  // cups shredded, 0.36 (Run 055 O7: the line's first form, grated, read
+  // them 57 g under).
   final second = _resolveGrams(
     amounts: [plus.amount],
     food: measured,
     normalizedItem: normalizedItem,
     kosher: kosher,
-    words: raw,
+    words: _hardCheeseForm.hasMatch(plus.text.toLowerCase()) ? plus.text : raw,
   );
   if (second == null) {
     return first;
@@ -1946,14 +1969,10 @@ List<Amount> _plusRestated(List<Amount> amounts, String raw) {
 ///
 /// The MEASURED head decides (Run 054 O8: any "kernel" in the line kept
 /// the yields cup for "8 cups popped popcorn (from ⅓ cup kernels)", 1,544
-/// g for 112): the line before a paren or a "from" — what the amount
-/// measures, never where it came from. Kettle and caramel corn are popped.
+/// g for 112): what the amount measures, never where it came from
+/// ([_measuredHead]). Kettle and caramel corn are popped.
 FdcFood? _asPrepared(FdcFood? food, String line) {
-  final text = line.toLowerCase();
-  final head = text.substring(
-    0,
-    RegExp(r'\(|\bfrom\b').firstMatch(text)?.start ?? text.length,
-  );
+  final head = _measuredHead(line.toLowerCase());
   if (food == null ||
       !RegExp(
         r'\bpop(?:corn|ped)\b|\b(?:kettle|caramel) corn\b',
@@ -1982,6 +2001,40 @@ FdcFood? _asPrepared(FdcFood? food, String line) {
           portions: kept,
         );
 }
+
+/// The words of [text] (a lower-cased line) its amount measures — the
+/// item's noun phrase (Run 055 O6/S9: v24 cut the line at its FIRST paren,
+/// so "6 cups (1 bag) popped popcorn" lost its "popped" and weighed 1,158 g
+/// for 84, and "½ cup popcorn (unpopped)" lost its "unpopped", 7 g for
+/// 96.5): a paren that sizes or sources the amount — one with a number or
+/// a "from" ("(1 bag)", "(from ⅓ cup kernels)") — is dropped, any other
+/// is read as a modifier ("(unpopped)", "(kernels)", "(about)"), an
+/// unclosed one is dropped to the end, and the line is cut at a "from"
+/// outside a paren ("popped popcorn from ⅓ cup kernels"). One pass.
+String _measuredHead(String text) {
+  final out = StringBuffer();
+  var open = -1;
+  for (var i = 0; i < text.length; i++) {
+    final c = text[i];
+    if (open < 0 && c == '(') {
+      open = i;
+    } else if (open >= 0 && c == ')') {
+      final inner = text.substring(open + 1, i);
+      if (!_sizesOrSources.hasMatch(inner)) {
+        out.write(' $inner ');
+      }
+      open = -1;
+    } else if (open < 0) {
+      out.write(c);
+    }
+  }
+  final head = out.toString();
+  final from = RegExp(r'\bfrom\b').firstMatch(head);
+  return from == null ? head : head.substring(0, from.start);
+}
+
+/// A paren's number or "from" ([_measuredHead]).
+final RegExp _sizesOrSources = RegExp('[\\d$vulgarFractionChars]|\\bfrom\\b');
 
 /// A count unit sized by the volume printed before it, when the count
 /// finds no grams: "1 (750-ml) bottle red Burgundy or Pinot Noir" (Modern

@@ -514,7 +514,9 @@ void main() {
       await applyMatchOverride(db, provider, r, 0, {'confirmed': true});
       r = recipeOf(db, ['⅓ cup kosher salt']);
       await matchAndCompute(db, provider, r);
-      expect(rowAt(db).hold, 'discarded_medium');
+      // RULE A (v25, Run 055 I1): the confirm resolves the medium — 0 g
+      // poured away, no hold — through the edit too.
+      expect((rowAt(db).grams, rowAt(db).hold), (0, null));
       r = recipeOf(db, ['1 tablespoon kosher salt']);
       await matchAndCompute(db, provider, r);
       var row = rowAt(db);

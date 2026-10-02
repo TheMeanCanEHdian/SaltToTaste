@@ -513,6 +513,33 @@ void main() {
     expect(find.textContaining('Applied to '), findsNothing);
   });
 
+  // Run 055 S13: the sheet row's "Not now" is the OFFER's (dismissOffer),
+  // never the receipt's.
+  testWidgets('S13: "Not now" under a sheet row drops the offer only', (
+    tester,
+  ) async {
+    final cubit = _ApplyCubit(
+      _state().copyWith(
+        offer: (
+          position: 10,
+          raw: '1 small head escarole (10 oz), cut up',
+          label: 'escarole',
+          fdcId: 99,
+          confirmed: false,
+          grams: null,
+          others: 41,
+          lines: 41,
+        ),
+      ),
+    );
+    await open(tester, seeded: cubit);
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect(cubit.state.offer, isNull);
+    expect(cubit.dismissals, 0);
+    expect(find.text('Apply to 41 lines'), findsNothing);
+  });
+
   testWidgets('the strip is on screen even when its row just moved into the '
       'collapsed Counted group', (tester) async {
     // Position 7 (chicken broth) is counted; with attention lines present

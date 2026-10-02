@@ -130,38 +130,46 @@ Future<Map<String, Object?>> matchesBody(
   final reads = ReachMemo();
   for (final (position, line) in lines.indexed) {
     var row = matches[position];
-    // A row of another text the layout gives this line: an engine row is
-    // the next compute's to re-derive (none shown). A person's decision an
-    // amount edit carried (Run 052, Opus critic 2: shown as no match while
-    // the totals and the PUT acted on it) shows as what the next compute
-    // and a person's write make of it ([editedDecisionRow]: its status and
-    // food, the new line's grams — from the cache alone, a GET never
-    // fetches), with `carried_from`: the line's previous text.
+    // A person's decision shows what it derives on the recipe as it is now
+    // (RULE A, [derivedFor] — from the cache alone, a GET never fetches):
+    // on its own line, its status and food with the hold, grams and note
+    // the next compute writes ([withDerived]); carried by an amount edit
+    // (Run 052, Opus critic 2: shown as no match while the totals and the
+    // PUT acted on it), what that compute and a person's write make of it,
+    // with `carried_from`: the line's previous text. A row of another text
+    // that is the engine's is the next compute's to re-derive (none shown).
     String? carriedFrom;
-    if (row != null && row.raw != line.raw) {
-      if (isDecidedRow(row)) {
-        carriedFrom = row.raw;
-        final carried = row;
-        try {
-          row = (await editedDecisionRow(
-            db,
-            const _CacheOnly(),
-            recipe,
-            position,
-            line,
-            carried,
-          )).row;
-        } on NutritionProviderException {
-          // Its grams need a fetch: none shown until the compute weighs it.
-          row = carried.copyWith(
-            raw: line.raw,
-            clearGrams: true,
-            clearGramSource: true,
-          );
-        }
-      } else {
-        row = null;
+    String? note;
+    var derived = false;
+    if (row != null && isDecidedRow(row)) {
+      final decided = row;
+      final carried = decided.raw != line.raw;
+      carriedFrom = carried ? decided.raw : null;
+      try {
+        final d = await derivedFor(
+          db,
+          const _CacheOnly(),
+          recipe,
+          position,
+          line,
+          decided,
+        );
+        row = carried ? d.row : withDerived(decided, d.row);
+        note = d.note;
+        derived = true;
+      } on NutritionProviderException {
+        // Its grams need a fetch: none shown for a carried row until the
+        // compute weighs it; a row on its line as stored.
+        row = carried
+            ? decided.copyWith(
+                raw: line.raw,
+                clearGrams: true,
+                clearGramSource: true,
+              )
+            : decided;
       }
+    } else if (row != null && row.raw != line.raw) {
+      row = null;
     }
     // What the line weighs, matches and queries: a sub-recipe's eaten
     // "plus" part (0711's oil), as every write path reads it.
@@ -294,11 +302,10 @@ Future<Map<String, Object?>> matchesBody(
               // `partial_pour_away` the part of the strained liquid a step
               // keeps ("1 cup defatted cooking liquid"), and a divided
               // line's part eaten outside the dredge or braise ([holdNoteOf]);
-              // a divided line's hold a pick resolved, "eaten part counted
-              // after your pick" ([pickedEatenNoteOf]); null otherwise.
-              'hold_note':
-                  holdNoteOf(recipe, line, row.hold) ??
-                  pickedEatenNoteOf(recipe, line, row),
+              // on a person's decision, what it resolved ("eaten part
+              // counted after your pick", "poured away after your confirm")
+              // or the hold a pick keeps ([derivedFor]); null otherwise.
+              'hold_note': derived ? note : holdNoteOf(recipe, line, row.hold),
               // The line's previous text when this is a decision an amount
               // edit carried, not yet written for this line (its grams are
               // re-derived for this line until the next compute writes it);
@@ -405,13 +412,13 @@ Future<AppliedToOthers?> applyMatchOverride(
   var row = read;
   // A row the layout carried here from its line's old text (the same
   // ingredient, edited — the compute has not run since the save) is first
-  // what that compute makes of it ([editedDecisionRow]: its food and
+  // what that compute makes of it ([derivedFor]: its food and
   // status, the grams for the NEW amount), so a skip, confirm or un-skip
   // here never stamps the old amount's grams under the new text (Run 051
   // B2: a skip then an un-skip in that window counted 3 g typed for "½
   // cup" on "1 cup" of oil). With no row, start fresh.
   if (row != null && row.raw != line.raw) {
-    row = (await editedDecisionRow(
+    row = (await derivedFor(
       db,
       provider,
       recipe,
@@ -454,7 +461,6 @@ Future<AppliedToOthers?> applyMatchOverride(
   }
   // Set only by the branches that PUT a food on the row in this request.
   var decidedFood = false;
-  var keptHold = false;
   if (skipped == true) {
     row = row.copyWith(status: 'skipped');
   } else if (skipped == false) {
@@ -480,62 +486,16 @@ Future<AppliedToOthers?> applyMatchOverride(
         'FoodData Central has no food with that id.',
       );
     }
-    final (food, resolution) = await gramsFor(db, provider, picked, weighed);
-    // A discarded medium stays discarded whatever food a person picks for
-    // it — frying oil re-picked as "Oil, peanut" is still thrown away (a
-    // grams edit is how a person counts it). Read on the weighed line, as
-    // the compute reads it (Run 048: a plus line whose eaten part is a
-    // medium — 0711's reserve at 2 cups — counted the oil the compute
-    // zeroes).
-    final outcome = engineOutcome(
-      recipe,
-      weighed,
-      food,
-      resolution,
-      decided: true,
-    );
-    // So does a second food picked onto its rule's record: the juice
-    // amount, or the egg parts' sum, not the first part's grams. A HELD
-    // discarded medium with no eaten part is poured away, as a confirm
-    // writes it (B6, below). A medium part of which is eaten — a dredge, a
-    // braise kept in part, a starter's feeding — is the pick rule's
-    // ([pickResolvesHold], Run 054 H5(a)): a divided line counts its eaten
-    // part, the hold resolved; any other keeps its hold with no grams (0 g
-    // would drop the eaten part with no flag; a skip or typed grams
-    // answers it, as the panel says).
-    final pick = grams == null ? pickResolvesHold(outcome) : null;
-    keptHold = pick == false;
-    final poured =
-        pick == null &&
-        mediumHolds.contains(outcome.hold) &&
-        outcome.source != GramSource.discarded.name;
-    final byEngine =
-        pick != null ||
-        poured ||
-        outcome.source == GramSource.discarded.name ||
-        // (The weighed line, Run 048 P9: equivalent — a rule reads "zest
-        // plus juice" or "eggs plus yolks", and neither a "1 recipe X, plus
-        // …" line nor its single eaten part is one.)
-        secondFoodRuleOf(weighed)?.fdcId == food.fdcId;
-    final pickedGrams = poured
-        ? 0.0
-        : byEngine
-        ? outcome.grams
-        : resolution?.grams;
+    // The decision: this food, by a person. What it weighs and holds is
+    // derived below ([derivedFor], RULE A — the compute's rule).
     row = row.copyWith(
-      fdcId: food.fdcId,
-      description: food.description,
-      dataType: food.dataType,
+      fdcId: picked.fdcId,
+      description: picked.description,
+      dataType: picked.dataType,
       confidence: 1,
-      grams: pickedGrams,
-      clearGrams: pickedGrams == null,
-      gramSource: poured
-          ? GramSource.discarded.name
-          : byEngine
-          ? outcome.source
-          : resolution?.source.name,
-      clearGramSource: pickedGrams == null,
-      hold: keptHold ? outcome.hold : null,
+      clearGrams: true,
+      clearGramSource: true,
+      clearHold: true,
       status: 'overridden',
     );
     decidedFood = true;
@@ -563,37 +523,9 @@ Future<AppliedToOthers?> applyMatchOverride(
     }
     row = row.copyWith(status: 'confirmed');
     decidedFood = row.fdcId != null;
-    // A held medium with no eaten part (B6, checkpoint 8: its row stores
-    // no grams — or, written before v14, the whole poured-away line): a
-    // confirm says it is poured away, 0 g — typed grams (below) count
-    // that much instead. One with an eaten part keeps it. Held by the
-    // engine's own detector, not only the stored hold (Run 047: a row an
-    // amount edit had left with no hold counted the whole line), or by the
-    // stored hold — a row an older matcher held. Grams a
-    // person typed for the eaten part stand (Run 048: a bare re-confirm
-    // zeroed them).
-    if (row.fdcId != null &&
-        (mediumHolds.contains(row.hold) || heldMediumLine(recipe, weighed)) &&
-        row.gramSource != GramSource.discarded.name &&
-        row.gramSource != GramSource.override.name) {
-      row = row.copyWith(grams: 0, gramSource: GramSource.discarded.name);
-    } else if (row.fdcId != null &&
-        row.grams == null &&
-        row.gramSource != GramSource.override.name) {
-      // (`line:` orders the answers scanned — equivalent, Run 048 P9.)
-      final onRow =
-          knownFood(db, row.fdcId!, line: weighed) ??
-          await cachedFood(db, provider, row.fdcId!);
-      if (onRow != null) {
-        final (_, resolution) = await gramsFor(db, provider, onRow, weighed);
-        if (resolution != null) {
-          row = row.copyWith(
-            grams: resolution.grams,
-            gramSource: resolution.source.name,
-          );
-        }
-      }
-    }
+    // Its grams and hold are derived below ([derivedFor]): the engine's
+    // current weight on this food — a held medium's eaten part, else 0 g
+    // poured away (B6, checkpoint 8) — and no hold.
   }
 
   if (grams != null) {
@@ -620,6 +552,32 @@ Future<AppliedToOthers?> applyMatchOverride(
     throw const ValidationException(
       "Provide at least one of 'fdc_id', 'grams', 'confirmed', 'skipped'.",
     );
+  }
+  // RULE A: the decision set above (status, food, typed grams); the row
+  // stores what it derives on the recipe as it is ([derivedFor] — the hold,
+  // the grams unless typed, their source; the sub-recipe rule's gate), the
+  // one rule every compute and the matches GET apply. An un-skip is the
+  // engine's row again ([unskippedRow]). A skip, a confirm or a grams edit
+  // lands while FDC is out of budget: a derivation that needs a fetch
+  // leaves the row's grams as they were, no hold, until the next compute
+  // derives them (a pick needed its food above, as it always did).
+  var stored = row;
+  if (skipped != false) {
+    try {
+      stored = (await derivedFor(
+        db,
+        provider,
+        recipe,
+        position,
+        line,
+        row,
+      )).row;
+    } on NutritionProviderException {
+      if (fdcId != null) {
+        rethrow;
+      }
+      stored = row.copyWith(clearHold: true);
+    }
   }
   // Everything apply_to_all needs is checked BEFORE the line is written, so
   // a refused request changes nothing — not the line, not the totals (the
@@ -696,33 +654,8 @@ Future<AppliedToOthers?> applyMatchOverride(
       decidedBy: decidedBy,
     );
   }
-  // A person's decision supersedes the engine's reason to hold the row (an
-  // un-skip re-derived its own above). The sub-recipe rule gates a confirm
-  // and a pick as it gates the compute ([subRecipeRowFor]): a marked line
-  // whose food gives no grams, and a sub-recipe the recipe makes apart, are
-  // the 0 g sub-recipe unless a person types the grams — in this request
-  // or before it (Run 048: a bare confirm replaced typed grams on a
-  // made-apart line with the 0 g row). The decision on the food stands
-  // (above).
-  final stored =
-      skipped == null &&
-          grams == null &&
-          row.gramSource != GramSource.override.name
-      ? subRecipeRowFor(recipe, position, line) ??
-            subRecipeRowFor(
-              recipe,
-              position,
-              line,
-              onFood: true,
-              grams: row.grams,
-            ) ??
-            row
-      : row;
   if (!db.upsertIngredientMatch(
-    stored.copyWith(
-      itemKey: itemKey,
-      clearHold: skipped != false && !keptHold,
-    ),
+    stored.copyWith(itemKey: itemKey),
     layoutSeq: seq,
   )) {
     throw LineMovedException(position);

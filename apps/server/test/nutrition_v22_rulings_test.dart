@@ -311,9 +311,9 @@ void main() {
       );
     }, skip: skipIfNoCorpus);
 
-    test('a confirm on a row its STORED hold holds is poured away though '
-        "today's steps no longer dredge (a steps-only edit, synthesized: "
-        'the confirm site reads the stored hold too)', () async {
+    test('RULE A (v25, Run 055 O5; was "the confirm site reads the stored '
+        'hold too"): a confirm on a row whose stored hold the steps no longer '
+        'give (a steps-only edit, synthesized) weighs the flour', () async {
       final (db, provider, r) = await computed();
       final steps = [
         for (final step in r.steps)
@@ -340,8 +340,11 @@ void main() {
         'raw': flour,
         'confirmed': true,
       });
+      // RULE A (v25, Run 055 O5): the hold is derived from the recipe as it
+      // is — the stored hold no longer decides: the flour no step dredges
+      // any more is weighed, the confirm is this food at its weight now.
       final row = db.ingredientMatchesFor(r.id)[8];
-      expect((row.grams, row.gramSource), (0, 'discarded'));
+      expect((row.grams, row.gramSource, row.hold), (566.99, 'weight', null));
     }, skip: skipIfNoCorpus);
 
     test('a skip on it carried through an amount edit (4 → 5 cups, '
@@ -381,8 +384,8 @@ void main() {
     }, skip: skipIfNoCorpus);
 
     test('a confirmed row whose amount is edited (4 → 5 cups, synthesized) '
-        'stays poured away, 0 g, still held (the compute site, '
-        'editedDecisionRow)', () async {
+        'stays poured away, 0 g, its hold resolved (the compute site, '
+        'derivedFor; RULE A, v25)', () async {
       final (db, provider, r) = await computed();
       await applyMatchOverride(db, provider, r, 8, {
         'raw': flour,
@@ -414,9 +417,11 @@ void main() {
       await matchAndCompute(db, provider, edited);
       final row = db.ingredientMatchesFor(r.id)[8];
       expect(row.raw, startsWith('5 cups'));
+      // RULE A (v25, Run 055 I1): the confirm resolves the hold — still
+      // poured away, 0 g, no hold.
       expect(
         (row.status, row.grams, row.gramSource, row.hold),
-        ('confirmed', 0, 'discarded', 'coating'),
+        ('confirmed', 0, 'discarded', null),
       );
     }, skip: skipIfNoCorpus);
   });

@@ -365,6 +365,22 @@ void main() {
   // the answer has no row reading it — the pane has no line to show, but
   // the receipt still stands there with its counts and why, and its Dismiss
   // advances the queue as any receipt's does.
+  // Run 055 S13: the pane's "Not now" is the OFFER's (dismissOffer) — wired
+  // to dismissReceipt it would do nothing here (no receipt is open).
+  testWidgets('S13: "Not now" in the queue pane drops the offer and advances', (
+    tester,
+  ) async {
+    final adapter = await pumpQueue(tester, others: 3);
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apply to 3 lines'), findsOneWidget);
+    final fetchesBefore = adapter.reviewFetches;
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apply to 3 lines'), findsNothing);
+    expect(adapter.reviewFetches, fetchesBefore + 1);
+  });
+
   testWidgets('O17: the receipt of an apply whose line a save removed shows '
       'in the pane, with the line-gone message, and Dismiss advances', (
     tester,
@@ -818,6 +834,9 @@ void main() {
       ('coating', '4 cups (20 ounces) unbleached all-purpose flour', 789890),
       ('starter_discard', '4½ cups (24¾ ounces) whole-wheat flour', 790085),
       ('partial_pour_away', '1 cup soy sauce', 2707442),
+      // v25 (RULE B): 0690's sauce oil retyped as an aioli beside its frying
+      // oil — synthesized, a stated exception (no corpus line is held so).
+      ('ambiguous_medium', '½ cup extra-virgin olive oil', 2710180),
     ]) {
       final note = lineHoldNote(
         NutritionReviewLine(

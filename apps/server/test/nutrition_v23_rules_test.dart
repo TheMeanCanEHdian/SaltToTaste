@@ -593,35 +593,43 @@ void main() {
       skip: skipIfNoCorpus,
     );
 
-    test('a confirm is poured away, 0 g (the confirm site), and stays so '
-        'through an amount edit, still held (editedDecisionRow) — the edit '
-        'synthesized (a stated exception): the first amount halved', () async {
-      for (final (file, i, hold) in kinds) {
-        final (db, provider, r) = await computed(file);
-        final held = db.ingredientMatchesFor(r.id)[i];
-        await applyMatchOverride(db, provider, r, i, {
-          'raw': held.raw,
-          'confirmed': true,
-        });
-        var row = db.ingredientMatchesFor(r.id)[i];
-        expect((row.grams, row.gramSource), (0, 'discarded'), reason: file);
-        final edited = editedLine(r, held.raw);
-        wp.saveRecipe(db, edited);
-        await matchAndCompute(db, provider, edited);
-        row = db.ingredientMatchesFor(r.id)[i];
-        expect(row.raw, isNot(held.raw), reason: file);
-        expect(
-          (row.status, row.grams, row.gramSource, row.hold),
-          ('confirmed', 0, 'discarded', hold),
-          reason: file,
-        );
-      }
-    }, skip: skipIfNoCorpus);
+    test(
+      'a confirm is poured away, 0 g (the confirm site), and stays so '
+      'through an amount edit, the hold resolved (derivedFor, RULE A) — '
+      'the edit synthesized (a stated exception): the first amount halved',
+      () async {
+        for (final (file, i, hold) in kinds) {
+          final (db, provider, r) = await computed(file);
+          final held = db.ingredientMatchesFor(r.id)[i];
+          await applyMatchOverride(db, provider, r, i, {
+            'raw': held.raw,
+            'confirmed': true,
+          });
+          var row = db.ingredientMatchesFor(r.id)[i];
+          expect((row.grams, row.gramSource), (0, 'discarded'), reason: file);
+          final edited = editedLine(r, held.raw);
+          wp.saveRecipe(db, edited);
+          await matchAndCompute(db, provider, edited);
+          row = db.ingredientMatchesFor(r.id)[i];
+          expect(row.raw, isNot(held.raw), reason: file);
+          // RULE A (v25, Run 055 I1): the confirm resolves the hold at the
+          // PUT and at every compute alike — 0 g poured away, no hold.
+          expect(
+            (row.status, row.grams, row.gramSource, row.hold),
+            ('confirmed', 0, 'discarded', null),
+            reason: '$file $hold',
+          );
+        }
+      },
+      skip: skipIfNoCorpus,
+    );
 
-    test('a confirm reads the STORED hold too: 0799 and 0129 Mahogany with '
-        "steps edited so today's detector no longer holds (synthesized, a "
-        'stated exception: the feeding\'s "discard" and the strainer '
-        'reworded) are still poured away, 0 g', () async {
+    test('RULE A (v25, Run 055 O5; was "a confirm reads the STORED hold '
+        "too\"): 0799 and 0129 Mahogany with steps edited so today's detector "
+        "no longer holds (synthesized, a stated exception: the feeding's "
+        '"discard" and the strainer reworded) — a confirm is the food at its '
+        'weight now, never 0 g poured away for a hold the recipe no longer '
+        'has', () async {
       for (final (file, i, _) in kinds.take(2)) {
         final (db, provider, r) = await computed(file);
         final held = db.ingredientMatchesFor(r.id)[i];
@@ -647,7 +655,9 @@ void main() {
           'confirmed': true,
         });
         final row = db.ingredientMatchesFor(r.id)[i];
-        expect((row.grams, row.gramSource), (0, 'discarded'), reason: file);
+        expect(row.grams, greaterThan(0), reason: file);
+        expect(row.gramSource, isNot('discarded'), reason: file);
+        expect(row.hold, isNull, reason: file);
       }
     }, skip: skipIfNoCorpus);
   });

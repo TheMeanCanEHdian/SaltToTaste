@@ -2279,7 +2279,9 @@ the oil's mass, ≥ 400 g, so Easier Fried Chicken at 381 g and Pan-Fried
 Pork Chops escaped the hold while Francese, with less oil, was held;
 `_asPrepared` read the literal word 'unpopped' for "measured unpopped"; the
 grated-cheese density came from a table while ATK prints its own pair —
-"1 ounce … grated (½ cup)" — on twenty lines); a backfill that did not
+"1 ounce … grated (½ cup)" — the verbatim form on 32 corpus lines, 5 of
+them Pecorino; the "twenty" first written here was Run 053's count of the
+Pecorino-only pairs by a narrower regex); a backfill that did not
 behave like the first real write (migration 013 stamped pre-012 recipes at
 layout 0 while the first layout bumped the counter with nothing moved, so
 an unedited recipe read stale after its first PUT or apply-to-all turn —
@@ -2295,9 +2297,10 @@ AND discard their oil (a smaller first part a step names — 0114's egg-wash
 tablespoon — stays eaten; 0116's tablespoon and a sauté's four stay
 counted; 400 g or "for frying" remains the fallback with no dredge); grated
 Parmesan and Pecorino Romano weigh at the corpus's printed 0.24 g/mL — ATK
-prints the ounce-to-cup pair for both; "Romano" alone has no printed pair
-and takes the same figure as a flagged stand-in (Run 054 corrected this
-sentence's first wording) — 24 counted rows, a ¼ cup 24.8 → 14.2 g, and
+prints the ounce-to-cup pair for both; a bare "Romano" line is NOT covered
+and still weighs at the generic cheese 0.47 with no flag (Runs 054 and 055
+corrected this sentence twice: the first wording claimed Romano, the second
+claimed a flagged stand-in) — 24 counted rows, a ¼ cup 24.8 → 14.2 g, and
 shredded at its printed 0.36; a
 "plus" part that prints its own weight uses it; a pick that kept an
 eaten-in-part hold keeps it through an amount edit on the compute path as
@@ -2382,6 +2385,65 @@ in 1,000 plain and 1,000 gap seeds. matcherVersion 24. Left to the user:
 the fritters' shallow oil (0674/0675), whether "air-fry" is a frying verb,
 and the plus-part cheese sentence in API.md (true for a typed line; no
 corpus line reaches it — kept).
+
+### Run 055's fixes as three design rules (matcher v25)
+
+Run 055 (both fleets on v24, 2026-10-02; no HIGH) found the SAME classes
+as Run 054 in new places — a fix applied to one field of a class (the hold
+on a decided row re-derived, its grams not; a pick rule covering three
+holds of four), "linear" proven per regex while the detectors stayed
+quadratic per mention (a salt line on forty legal steps: 39 s), and an oil
+rule keyed on the noun "oil" rather than on the line that owns the
+sentence (a typed "brush with the oil and bake at 375 degrees" zeroed a
+quarter cup of olive oil; a second oil line was zeroed and given the kept
+part). So v25 (2026-10-02) was briefed as three design rules, each one
+mechanism proven at every site by diff. RULE A — a decided row stores only
+the decision: `derivedFor(recipe, line, decision)` returns every derived
+field (hold, grams unless typed, gram source, note) from the CURRENT
+recipe, and the compute, the PUT and the GET all read it; the compute
+writes only those fields through the guarded write and never a status, a
+food or typed grams; a confirm means "this food, the engine's current
+weight" and counts a known eaten part on both paths (0129's liquid smoke
+4.73 g, no longer undone by the next compute); a pick resolves a hold by
+one rule per kind (divided → the eaten part counted and said; wholly
+poured away → 0 g and said; other eaten-in-part → the hold kept, no
+grams). RULE B — a sentence belongs to a line, not a noun: `_oilOwnersOf`
+binds a frying, discard or pour-off sentence to the oil line whose own
+amount or distinguishing kind word it names, the oil noun phrase following
+directly (only "of", "the" and the recipe's own kind words between — the
+verifier's "2 tablespoons butter to the oil" and "lime juice into the oil"
+bind nothing; the owner closed that last gap by hand and the window mutant
+dies); frying heat is the oil heated to a temperature, never an oven's
+"bake/roast at"; with two or more quarter-cup candidates and no binding
+word each is HELD under a new `ambiguous_medium` reason with the sentence
+as its note, never zeroed; `_fryVerb` excludes the unhyphened and negated
+forms (stir fry, air fry, dry fry, don't fry). RULE C — a detector costs
+O(text) per recipe, measured end to end: a per-recipe `_StepIndex` (steps
+windowed, sentences split once, sentence ends indexed for binary search,
+each pattern's matches located once, per-line mentions memoised) that every
+detector reads; the per-mention rescans in `_sentenceAt`'s five callers,
+`_drainedMention`'s later-steps scan, the oil lines' step re-split and
+`normalizeItem`'s digit-run rescan are gone; the 1,000-character cap is a
+scan window that logs the step it truncates instead of silently disabling
+a rule; the matches GET memoises its reach per key and its text reads per
+raw (160 identical legal lines: 16 s → 0.2 s). Measured: a salt line on
+forty legal 10,000-character steps 38 s → 44 ms; a 10,000-character
+period-free step 3 s → 1 ms; the library's matches GETs 13.6 s → 11.8 s.
+Also: `_asPrepared` parses the measured head (a leading count-paren
+dropped, a qualifying paren read as a modifier); a plus part's cheese form
+read from its own words; one shared whitespace normaliser for the parser
+and the editor's hand-curated check (a stored quantity-less line with a
+double space no longer reads as hand-edited); the dead Skipped-arm label
+deleted; the apply strip's "Not now" wired; corpus-free pins un-gated so
+CI runs them; the time pins carry count pins beside them. Replay on
+snapshot 13: calls 0; one row differs from v24 — a person's pick of
+"Bread, Italian" for ten slices of country bread had its grams frozen at
+null before the rustic-bread rule existed and now reads 500 g under RULE A
+(the decision itself untouched); counted 13,073, check 401, no grams 104,
+no match 37, complete 830, partial 368. The oracle: 0 violations in 1,000
+plain and 1,000 gap seeds. matcherVersion 25. Left to the user: whether
+"shimmering/smoking" counts as frying heat (it would zero 81 counted
+quarter-cup oil lines — not adopted), the fritters' shallow oil, air-fry.
 
 ## Decision log (deviations & clarifications)
 

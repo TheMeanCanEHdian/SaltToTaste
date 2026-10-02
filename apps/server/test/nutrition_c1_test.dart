@@ -712,7 +712,11 @@ void main() {
       expect(code, HttpStatus.ok, reason: '$body');
       final row = db.ingredientMatchesFor(pork.id).single;
       expect(row.status, 'confirmed');
-      expect(row.grams, closeTo(9.4667, 1e-4));
+      // RULE A (v25, Run 055 I1): a confirm's grams are derived from the
+      // recipe as stored, never the seeded row's — this stand-in recipe has
+      // no steps, so no pour-away: the whole line, 3 tablespoons plus 2
+      // teaspoons (the guard's term is what this pins).
+      expect(row.grams, closeTo(52.07, 0.01));
     });
 
     test('Chicken Francese (1133) pos 8, snapshot 12: below the gate '

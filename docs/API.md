@@ -432,7 +432,7 @@ someone already decided is a group of one — an amount problem for that line,
 never part of an ingredient's reach, since `apply_to_all` cannot touch it —
 and it still reports its own `item_key`. So is a line a LINE hold holds
 (`second_food`, `discarded_medium`, `starter_discard`, `coating`,
-`partial_pour_away`, `in_shell`): no decision on its key
+`partial_pour_away`, `ambiguous_medium`, `in_shell`): no decision on its key
 clears it, so each rinsed or cooking-water salt is a group of one, never one "table salt · N lines" group, and
 such a group's `decided` is always false.
 
@@ -790,7 +790,12 @@ never one measuring the kernels ("½ cup popcorn kernels", "unpopped"
 amount MEASURES, the line before a paren or a "from": "8 cups popped
 popcorn (from ⅓ cup kernels)" is 112 g, not the yields cup's 1,544 g,
 kettle and caramel corn are popped, and "½ cup popcorn kernels (about 8
-cups popped)" keeps 96.5 g) — every other food keeps its own
+cups popped)" keeps 96.5 g; since matcher v25 that is the item's noun
+phrase, not the line cut at its first paren: a paren with a number or a
+"from" sizes or sources the amount and is dropped — "6 cups (1 bag)
+popped popcorn" is 84 g, "8 cups popped popcorn (⅓ cup kernels)" 112 g
+— and any other is read as a modifier — "½ cup popcorn (unpopped)" and
+"(kernels)" keep 96.5 g) — every other food keeps its own
 "yields" portion, as a gelatin package's 540 g or a coconut's 206 g); since matcher v19 so do almond and
 apple butter, and any item where a key only modifies a compound — the
 key followed by "of" or "seed(s)": "2 teaspoons cream of tartar" is its
@@ -841,7 +846,11 @@ density; since matcher v24 a part of ANOTHER food stands in for the line
 only when the line's own primary, read on its text before the "plus",
 weighs nothing (the rind) — "¼ cup grated Parmesan cheese plus 1 ounce
 Pecorino, grated (½ cup)" is the quarter cup's 14.18 g, never the
-Pecorino's 28.35; and a powder on a record of the drink made from it
+Pecorino's 28.35; since matcher v25 a same-food "plus" part of a grated
+or shredded hard cheese is weighed in the form its OWN words name, else
+the line's — "¼ cup grated Parmesan cheese plus 2 cups shredded" is
+184.28 g (the shredded cups at 0.36), as the corpus's "… plus 6 ounces,
+shredded (about 2 cups; see note)" weighs; and a powder on a record of the drink made from it
 ("…, powder, prepared with whole milk") reads only its `dry` portions —
 none: no grams, never the made-up drink's `cup (8 fl oz)` 265 g) |
 `piece` (estimate; since matcher v21 the piece table reads "green
@@ -855,14 +864,38 @@ same-food "plus" part included, in a recipe whose dredge is held `coating`
 by its directions: the oil a dredged food fries in, 0149's "1¾ cups
 vegetable oil" heated to 375 degrees, 0198's "⅔ cup" whose step discards
 it, 0042, 0114, 0288; a sautéing tablespoon stays counted — or, since
-matcher v24, with or without a dredge, ¼ cup or more of oil a sentence
-naming it heats to a frying temperature, discards ("Discard the oil") or
-pours off: 0491 Tostadas' "¾ cup vegetable oil" heated "to 350 degrees",
-0 g; a part a sentence keeps, "pour off all but 2 tablespoons oil" (1193
-Crispy Tempeh's cup), is counted — 28 g of the 224 —, the rest discarded;
-0040's dressing oil, 0500's rice oil, 0672's coconut oil and the fritter
-oils of 0674/0675, which no sentence heats to a temperature or discards,
-stay counted), a brine's salt, a
+matcher v24, with or without a dredge, ¼ cup or more of oil whose OWN
+sentence heats it to a frying temperature, discards it ("Discard the
+oil") or pours off all but a written part of it ("pour off all but N
+oil" — only that form: 0523 Nasi Goreng's "Pour off the oil and reserve"
+keeps it, counted): 0491 Tostadas' "¾ cup vegetable oil" heated "to 350
+degrees", 0 g; a part its sentence keeps, "pour off all but 2 tablespoons
+oil" (1193 Crispy Tempeh's cup), is counted — 28 g of the 224 —, the
+rest discarded; 0040's dressing oil, 0500's rice oil, 0672's coconut oil
+and the fritter oils of 0674/0675, which no sentence heats to a
+temperature or discards, stay counted. Since matcher v25 (RULE B) a
+sentence belongs to a LINE, never to the word "oil": frying heat is a
+3xx-degree temperature the oil reaches ("Heat oil in large Dutch oven …
+to 375 degrees", "Return oil to 350 degrees", "maintain oil temperature
+between 350 and 375 degrees"), with no oven, bake, roast, broil, grill
+or air fryer between the oil and the temperature — "Brush the pitas with
+the oil and bake at 375 degrees" heats nothing — and never "until
+shimmering" or "smoking" (a sauté's or a sear's: 81 counted ¼-cup oil
+lines of the library sit beside one). A sentence binds to the line whose
+own written amount it names ("Heat 1 cup oil") or a word of whose kind
+no other oil line has ("vegetable", "olive", "peanut", "sesame") — the
+amount or the word followed by "oil" within 30 characters, so "Stir 2
+tablespoons lime juice into the salsa, then heat the oil" names no line
+(a "pour off all but N" names the kept part, not a line); one that names
+no line belongs to the recipe's one oil line of ¼ cup or more (or the
+one such line another sentence named), as does a fried food's held
+dredge. With two or more lines it could belong to — ¼ cup or more, or an
+amount-less line "for (pan-)frying" — each such ¼-cup line is held
+`ambiguous_medium` for a person, its `hold_note` the sentence, never
+zeroed: 0690 Patatas Bravas' sauce oil typed as "½ cup extra-virgin
+olive oil" beside its 3 cups "Heat oil … to 375 degrees" is held, the 3
+cups still frying oil by their mass. A smaller line a sentence names
+keeps only that sentence. No library line moves), a brine's salt, a
 buttermilk soak, a brine's sugar and the aromatics a step adds to a brine
 the food is submerged (or weighed down) in and lifted out of before the
 submerge — "Dissolve the salt, sugar, and paprika in the buttermilk … Add
@@ -1061,26 +1094,41 @@ sprig line, 0 g already, are never held) — held as cooking water when a
 later sentence cooks it, else as a salt bath. A held medium stores only its EATEN part as `grams` — a
 "plus" part a step eats, the rest of a written share — and, with none
 written, no grams at all (`grams: null`), never the whole poured-away line;
-`confirmed: true` on such a row writes `grams: 0`, `gram_source:
-discarded` (basis "poured away — counted as 0 g") unless `grams` are typed
-in the same request — on any line the engine's own detector holds, whatever
-hold the row stores — and a pick of a food on it does the same (since
-matcher v23 a pick alone on a `starter_discard`, `coating` or
-`partial_pour_away` line keeps the hold instead, below; one with an
-eaten part keeps that part: Shrimp Salad's "¼ cup plus 1 tablespoon juice"
-picked on "Lemon juice, raw" is its tablespoon, 15.2 g); an amount edit on a
-confirmed or picked held medium keeps its hold AND the person's resolution
-(matcher v16): 0 g poured away — or its eaten part — except a pick alone
-on a `starter_discard`, `coating` or `partial_pour_away` line, which keeps
-what a pick on the edited line writes (since matcher v23): no grams but
-the eaten part, still held — and grams a person typed stay as typed, never `grams: null` (an edit that makes the line no
-medium clears the hold, matcher v18; since matcher v24 so does a steps or
-title edit: every compute re-reads a confirmed or picked row's hold from
-the recipe as it is and, when it changed, rewrites the row as a person's
-write on the line would now — its food and status kept, grams the person
-typed never touched — so 0148's dredge flour picked with its hold kept, then
-its dredge taken out of the directions, reads unheld and weighed, and a
-later confirm counts it: Run 054 Opus critic 1); a bare re-confirm never replaces
+a person's decision on such a row follows RULE A (since matcher v25, Run
+055): the row stores ONLY the decision — its status, its food, grams a
+person typed — and the hold, the grams unless typed, their `gram_source`
+and `match.hold_note` are derived from the recipe AS IT IS NOW, by one
+rule, at the PUT, at every compute (a steps, title or amount edit, a
+matcher bump: the compute rewrites only those derived fields, never the
+status, the food or typed grams) and at every matches GET (cache-only, so
+a recipe saved since its compute already shows what the next compute
+writes). By hold kind: `confirmed: true` — "this food, at the engine's
+current weight" — on a held medium counts its eaten part when the engine
+knows one (a divided line's, an eaten "plus" part, the rest of a written
+share; 0129 Indoor Pulled Chicken's liquid smoke, its "remaining 1
+teaspoon", 4.73 g) and otherwise writes `grams: 0`, `gram_source:
+discarded` (basis "poured away — counted as 0 g"), `hold` null, `hold_note`
+"eaten part counted after your confirm" or "poured away after your
+confirm"; a pick ALONE (a food, no grams) on a DIVIDED line (an eaten part
+the engine knows, whatever the hold) counts that part and resolves the
+hold (`gram_source` `discarded`, `hold` null, `hold_note` "eaten part
+counted after your pick": Shrimp Salad's "¼ cup plus 1 tablespoon juice"
+picked on "Lemon juice, raw" is its tablespoon, 15.2 g), on a line wholly
+poured away (`discarded_medium`, no eaten part) writes 0 g, `hold` null,
+`hold_note` "poured away after your pick", and on any other line held as a
+medium part of which is eaten (`starter_discard`, `coating`,
+`partial_pour_away` with no eaten part known, and since v25 an
+`ambiguous_medium` oil, all or none of which is eaten: 0148's dredge flour, a
+starter feeding) keeps the hold with `grams: null` — 0 g would drop the
+eaten part with no flag — and `hold_note` the hold's own words, until a
+skip or typed grams answers it; grams a person typed answer every hold
+(`hold` null) and stay as typed through any edit but an amount edit of a
+line that is no medium (then they are re-derived); a skip stores no hold.
+A line that stops being held is weighed (0148's flour confirmed or picked,
+then its dredge taken out of the directions: 566.99 g, whether or not a
+compute ran between), and a line that becomes held is resolved or held by
+the same rule. A pick on an amount-less line stays with no grams (in
+`no_grams`, for a person to weigh); a bare re-confirm never replaces
 typed grams; and an un-skip gives it back the engine's grams — none, or its
 eaten part — and its hold, never a person's 0 g (which would read resolved
 with nobody's decision), except grams a person typed, which come back as
@@ -1104,11 +1152,13 @@ that says "for dredging" / "for coating". Since matcher v23 the fry is
 read from the directions, never the oil's mass: a step that says fry as a
 verb ("pan-fry", "deep-fry", "shallow-fry", "continue to fry"; since
 matcher v24 never a stir-fry or an oven-fry — another word hyphened
-before "fry" — a noun — "each fry" of oven fries, a "deep-fry
+before "fry", and since v25 "stir fry", "air fry", "oven fry", "dry fry"
+spelled with a space, and "do not" / "don't" / "never fry" — a noun — "each fry" of oven fries, a "deep-fry
 thermometer" — an optional note that opens its sentence — "To pan-fry,
 increase water" — a negation — "should not actively fry" — bacon or
 prosciutto fried in its own fat, or rice toasted for a pilaf), heats
-the oil to a frying temperature ("to 375 degrees") or
+the oil to a frying temperature ("to 375 degrees"; since v25 never an
+oven's "bake at 375 degrees") or
 discards the oil the food cooked in, or a line "for frying" (since v24
 "for deep frying" / "for deep-frying" too, the oil's own signal); 0149
 Easier Fried Chicken, 0198 Crispy Pan-Fried Pork Chops, 0114, 0042 and
@@ -1123,7 +1173,12 @@ or "bring", the food added ("add", "arrange") in the next sentence — that
 is strained after cooking ("cooking liquid through … strainer") and of
 which a later step keeps only a written part ("Pour 1 cup defatted
 cooking liquid", "½ cup reserved defatted liquid"), no step using the
-"remaining" liquid; the kept part is `match.hold_note`). These three are
+"remaining" liquid; the kept part is `match.hold_note`),
+`ambiguous_medium` (since v25, RULE B: an oil of ¼ cup or more that a
+frying, discard or pour-off sentence — or a fried food's dredge — could
+be about while another oil line could too, no word of the sentence
+naming which; see `discarded` above; the sentence is `match.hold_note`).
+These four are
 medium holds like `discarded_medium`: a LINE hold, no grams stored unless a
 "plus" part is eaten — or, since matcher v23, a divided line's part a step
 uses outside the medium: 1133 Francese's "¾ cup all-purpose flour,
@@ -1135,17 +1190,10 @@ a confirm writes 0 g poured away (or that eaten part) unless a person
 types the eaten grams. Since matcher v24 a divided line's eaten part is a
 mention no OTHER line of its ingredient writes as its own amount (1133's
 line split into "¾ cup" and "1 teaspoon" flour lines leaves the teaspoon
-to its own line: never counted twice). A pick ALONE (a food, no grams)
-follows one rule, at the PUT and at every compute: on a DIVIDED line —
-one whose eaten part the engine knows (the three above, or an eaten
-"plus" part) — the pick counts that part and RESOLVES the hold (the
-picked food, `overridden`, the eaten part's grams, `gram_source`
-`discarded`, `hold` null, `match.hold_note` "eaten part counted after
-your pick"); on any other held line (0148's dredge, a starter feeding,
-0129 Mahogany's soy sauce) it keeps the hold with no grams — 0 g would
-drop the part that is eaten with no flag — and the line stays in review
-until a skip or typed grams answers it (`discarded_medium`, wholly poured
-away, still writes 0 g on a pick),
+to its own line: never counted twice). A person's decision on such a line
+is RULE A's (above: a confirm counts the eaten part or pours the line
+away, a pick on a divided line counts its eaten part, any other keeps the
+hold with no grams — at the PUT, every compute and every GET),
 `second_food` (the line names a second ingredient —
 "egg whites plus 1 large egg", "chipotle chile in adobo sauce plus 2
 teaspoons adobo sauce" — that the match does not cover; a counted fruit cut
@@ -1190,26 +1238,35 @@ it first the same way; the same switch), `borderline`
 engine pick scored from 0.52 up to 0.54); `hold_note` (since v22): the
 hold in words where the code alone does not say it — a
 `partial_pour_away`'s kept part ("1 cup defatted cooking liquid"), and
+since matcher v25 an `ambiguous_medium` line's sentence, quoted — `"Heat oil in
+large Dutch oven over high heat to 375 degrees."` — or "a fried food is
+dredged in a step", and
 since matcher v23 a divided `coating` or `partial_pour_away` line's part
 eaten outside the medium, as written — "1 teaspoon flour is used outside
 the dredge, eaten" (1133 Francese), "½ cup reserved defatted liquid; 1
 teaspoon liquid smoke is used outside the braise, eaten" (0129 Indoor
-Pulled Chicken): its grams, held until a confirm counts them — else
-`null`. Such a held line sits in the `check` bucket until a person confirms,
-re-picks or skips it — a person's decision clears the hold (a pick, a confirm,
-a skip, a grams edit; since matcher v23 a pick with no grams keeps a
-`starter_discard`, `coating` or `partial_pour_away` hold), and an un-skip re-derives it for the food now on the
+Pulled Chicken): its grams, held until a confirm counts them; and since
+matcher v25, on a person's decision, what RULE A derived for it from the
+recipe as it is: "eaten part counted after your pick" / "… after your
+confirm", "poured away after your pick" / "… after your confirm" (a held
+medium the decision resolved: `hold` null), or the kept hold's own words
+on a pick that keeps it — else `null` (no hold, no decision that resolved
+one). Such a held line sits in the `check` bucket until a person confirms,
+re-picks or skips it — a person's decision resolves the hold by RULE A (a
+confirm, a skip, a grams edit always; a pick on a divided or wholly
+poured-away line, never on any other line held as a medium part of which
+is eaten: that pick keeps the hold, `grams: null`), and an un-skip re-derives it for the food now on the
 line, so a person's food is never held for the engine's old reason (a
 person's food — confidence 1, a pick or a decision, inherited or not — is
 held again only by a LINE hold: `discarded_medium`, `starter_discard`,
-`coating`, `partial_pour_away`, `second_food`, `in_shell`; an un-skip is no confirm, and only a confirm or a pick on the
+`coating`, `partial_pour_away`, `ambiguous_medium`, `second_food`, `in_shell`; an un-skip is no confirm, and only a confirm or a pick on the
 line clears one), and an engine row whose line the
 second-food rule counts moves to the rule's record with the rule's grams,
 as a compute writes it. A
 decision reaching the line by `apply_to_all` or inheritance clears a FOOD
 hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`, `borderline`,
 `unnamed_food`) too, never a LINE hold (`discarded_medium`,
-`starter_discard`, `coating`, `partial_pour_away`, `second_food`,
+`starter_discard`, `coating`, `partial_pour_away`, `ambiguous_medium`, `second_food`,
 `in_shell`): a decision on the key names one food and cannot count the
 line's other part, say what a discarded medium leaves or how much of a shell
 is eaten) plus ranked `candidates`
@@ -1478,7 +1535,7 @@ by a food hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`,
 `borderline`, `unnamed_food`): blessing it at confidence 1 is what moves it
 out of the `check` bucket. A sibling held by a line hold (`second_food`,
 `discarded_medium`, `starter_discard`, `coating`, `partial_pour_away`,
-`in_shell`) is never counted, whatever its food or score: no
+`ambiguous_medium`, `in_shell`) is never counted, whatever its food or score: no
 decision on the key releases it — nor is a sibling whose line names a
 second food (one the second-food rule counts on its own record, or one not
 matched yet, which the decision's food would hold `second_food`), nor an
@@ -1618,10 +1675,17 @@ or none, each row at most once, starting from the in-order alignment (which
 wins ties; an unedited list is that alignment alone) and cutting every
 branch whose lower bound is no better than the best layout found. It runs
 synchronously on every compute, PUT and matches GET (as do the discarded-
-media rules, which read the directions by sentence: since matcher v24 a
-sentence over 1,000 characters is read as none and every amount run they
-match is bounded, so member-supplied step text costs linear time — Run 054
-Sonnet critic 1: a 16 KB "1 1 1 …" step took 3.3 s), so it expands at most
+media rules, which read the directions by sentence: since matcher v25 a
+sentence over 1,000 characters is read for its first 1,000 and the rest
+ignored — the server logs which step — and the steps are indexed once per
+recipe (sentence breaks, each pattern's matches, each salt's mentions), so
+a mention's sentence and every match after it are found by binary search
+and the rules' cost is linear in the recipe's step text, end to end — Run
+055 S4/O2/O3: a salt line on 40 legal steps took 39 s at v24, under 100 ms now;
+the matches GET reads each line's text, key and same-key reach once per
+request, not once per line — Run 055 V1: 160 identical 1,000-character
+lines took 16 s, ~0.3 s now),
+so it expands at most
 10,000 layouts (`pairingBudget`) and then keeps the best found so far:
 reached only far past a few edits (a list shuffled whole with a quarter
 rewritten in one save), never on a save of up to three edits the pairing
@@ -1759,7 +1823,7 @@ rewriting it as `auto` at confidence 1 with its hold cleared stops it being a
 guess — how confirming one line clears an ingredient's whole group. A line
 already on that food at or above 0.5 and unheld is left as it is, as is a
 line a line hold holds (`second_food`, `discarded_medium`,
-`starter_discard`, `coating`, `partial_pour_away`, `in_shell`, whatever its food or score), a line that names a second food (counted by the
+`starter_discard`, `coating`, `partial_pour_away`, `ambiguous_medium`, `in_shell`, whatever its food or score), a line that names a second food (counted by the
 second-food rule, or unmatched), shellfish bought in the shell and a line
 the engine's medium rules hold, matched or not — read from the recipe as
 stored, never from the row's stored hold, so on a stale recipe (a steps

@@ -501,6 +501,54 @@ void main() {
     },
   );
 
+  // Run 055 S13: the two dismiss halves, each on the state where its
+  // mutant shows — a receipt A beside an open offer B.
+  Future<void> receiptBesideOffer() async {
+    await boot(others: 41);
+    final a = flour();
+    final b = cubit.state.matches!.firstWhere(
+      (m) => m.position != a.position && m.fdcId != null,
+    );
+    await cubit.override(a.position, raw: a.raw, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.gate = Completer<void>();
+    final sweep = cubit.applyToAll();
+    await pumpEventQueue();
+    await cubit.override(b.position, raw: b.raw, confirmed: true);
+    await pumpEventQueue();
+    adapter.gate!.complete();
+    adapter.gate = null;
+    await sweep;
+    await pumpEventQueue();
+    expect(cubit.state.applied, isNotNull);
+    expect(cubit.state.offer?.raw, b.raw);
+  }
+
+  test('S13: "Not now" on offer B keeps receipt A', () async {
+    await receiptBesideOffer();
+    final receipt = cubit.state.applied;
+    cubit.dismissOffer();
+    expect(cubit.state.offer, isNull);
+    expect(cubit.state.applied, receipt);
+  });
+
+  test(
+    "S13: dismissing receipt A keeps offer B's failed-apply error",
+    () async {
+      await receiptBesideOffer();
+      adapter.failNextPut = true;
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(cubit.state.offer, isNotNull);
+      expect(cubit.state.applied, isNotNull);
+      final error = cubit.state.error;
+      expect(error, isNotNull);
+      cubit.dismissReceipt();
+      expect(cubit.state.applied, isNull);
+      expect(cubit.state.error, error);
+    },
+  );
+
   // S8's other arm: offer B's line is gone from the answer too, so B is
   // withdrawn and its message stands beside A's receipt with no offer
   // open. Dismissing the receipt clears that message — nothing open owns

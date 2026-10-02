@@ -100,7 +100,7 @@ ParsedIngredient parseIngredientLine(String line) {
   // any regex reads the line: a 1,000-character line of spaces made the
   // lazy-with-space runs below (`_parenMeasureRe`, `_fracCls`) super-linear
   // (Run 055 D1). The corpus prints no run, so no parse changes.
-  final raw = line.trim().replaceAll(_whitespaceRe, ' ');
+  final raw = normalizeLineWhitespace(line);
   // 1. Leading quantity (the publisher's number span, recovered from text).
   String? quantity;
   var rest = raw.trim();
@@ -311,6 +311,13 @@ final RegExp _quantityRe = RegExp(
 
 final RegExp _leadingParenRe = RegExp(r'^\(([^)]*)\)\s*(.*)$');
 final RegExp _whitespaceRe = RegExp(r'\s+');
+
+/// [text] trimmed, each whitespace run one space — what
+/// [parseIngredientLine] reads, and what a caller comparing its output with
+/// a stored line normalises that line by (Run 055 Opus critic 3: the
+/// editor read a stored "Salt  and pepper" as hand-curated).
+String normalizeLineWhitespace(String text) =>
+    text.trim().replaceAll(_whitespaceRe, ' ');
 
 /// Case-sensitive on purpose (ports the extractor): `or` mid-item flags the
 /// line, a capitalized `Or` would not.

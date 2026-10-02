@@ -94,12 +94,14 @@ bool isHeldLine(IngredientMatch m) =>
 
 /// The holds of a medium the recipe pours away (the server's `mediumHolds`):
 /// a discarded medium, a starter's feeding discard, a fried food's dredge,
-/// a braise kept only in part (the rulings Q1, Q2, Q4, 2026-10-01).
+/// a braise kept only in part (the rulings Q1, Q2, Q4, 2026-10-01), an oil
+/// a frying sentence could be about beside another (v25).
 const Set<String> mediumHolds = {
   'discarded_medium',
   'starter_discard',
   'coating',
   'partial_pour_away',
+  'ambiguous_medium',
 };
 
 /// Whether a held medium carries an eaten part: its engine grams are only
@@ -178,8 +180,9 @@ Widget sourceChip(String? dataType) {
 /// The plain-language reason the engine holds a line (the matches body's
 /// `hold`), or null for none. A code this app does not know yet (a newer
 /// server's hold) reads verbatim, so no hold ever renders blank. [note] is
-/// the server's `hold_note` (a partial pour-away's kept part, and a divided
-/// line's part eaten outside the dredge or braise).
+/// the server's `hold_note` (a partial pour-away's kept part, a divided
+/// line's part eaten outside the dredge or braise, and the sentence an
+/// ambiguous oil shares).
 String? holdReason(String? hold, {String? note}) => switch (hold) {
   'no_nutrients' => 'USDA publishes no calories or macros for this food',
   'discarded_medium' =>
@@ -194,6 +197,10 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
   'partial_pour_away' =>
     'Only part of the strained cooking liquid is kept'
         '${note == null ? '' : ' ($note)'}; the rest is poured away',
+  'ambiguous_medium' =>
+    'A frying, discard or pour-off step could be about this oil or another '
+        'oil line, and the recipe does not say which'
+        '${note == null ? '' : ' ($note)'}',
   'in_shell' =>
     'Bought in the shell — USDA has no edible share for this record',
   'second_food' =>
@@ -269,10 +276,9 @@ class WhyLine extends StatelessWidget {
       // A divided line's hold a pick resolved says so ("eaten part counted
       // after your pick", the server's hold_note with no hold; Run 054 H5a).
       MatchBucket.counted => (held ?? match.holdNote ?? '', SaltColors.muted),
-      MatchBucket.skipped => (
-        'Excluded from the totals${held == null ? '' : '. $held'}',
-        SaltColors.muted,
-      ),
+      // No hold: a skip stores none (the server's derivedFor, RULE A) — the
+      // v24 '. $held' suffix here was dead (Run 055 S14/O10).
+      MatchBucket.skipped => ('Excluded from the totals', SaltColors.muted),
     };
     // A decision an amount edit carried: what it counts was weighed on
     // the line's previous text until the next compute writes it (a skip
