@@ -161,9 +161,9 @@ class _ApplyCubit extends _SeededCubit {
     );
   }
 
-  void dismissApply() {
+  void dismissReceipt() {
     dismissals += 1;
-    emit(state.copyWith(clearOffer: true, clearApplied: true));
+    emit(state.copyWith(clearApplied: true));
   }
 }
 

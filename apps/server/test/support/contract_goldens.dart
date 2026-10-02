@@ -51,6 +51,8 @@ const List<String> corpusFreeContractGoldenNames = [
   // FDC answers.
   'nutrition_matches_rules',
   'nutrition_confirm_applied',
+  // A pick alone on a held starter feeding: No grams, the hold kept.
+  'nutrition_matches_held_pick',
 ];
 
 /// Goldens that genuinely need the ATK corpus: a real v1 import source (with

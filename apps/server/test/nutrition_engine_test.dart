@@ -849,9 +849,16 @@ void main() {
           lessThanOrEqualTo(after.totalCount),
           reason: 'the orphaned row must not count (no "13/12 matched")',
         );
+        // It keeps no hash it did not compute on (v24, Run 054 O3): '' —
+        // stale, and never fresh again after a revert.
+        expect(
+          storedBefore.ingredientsHash,
+          isNot(''),
+          reason: 'the bundt was computed fresh',
+        );
         expect(
           after.ingredientsHash,
-          storedBefore.ingredientsHash,
+          '',
           reason: 'only a full re-match may clear staleness',
         );
         expect(after.ingredientsHash, isNot(ingredientsHashOf(edited)));

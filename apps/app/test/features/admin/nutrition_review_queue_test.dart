@@ -30,6 +30,14 @@ class _Adapter implements HttpClientAdapter {
   /// removed it; two positions, neither 5, made twins of it.
   List<int> positions = const [5];
 
+  /// Other lines of the recipe in the rows answered from now on — a save
+  /// meanwhile moved them (the same stated exception).
+  List<Map<String, dynamic>> extraRows = const [];
+
+  /// When true, the next apply-to-all PUT is refused 409 `line_moved` (a
+  /// save meanwhile), as the server answers a moved line.
+  bool moveOnApply = false;
+
   /// A prepared review body, for the row/header cases — the default below is
   /// the two-line queue the fix-flow tests work against.
   final Map<String, dynamic>? reviewBody;
@@ -131,6 +139,21 @@ class _Adapter implements HttpClientAdapter {
         }
         final sent = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
         applyToAll = sent['apply_to_all'] == true;
+        if (applyToAll && moveOnApply) {
+          moveOnApply = false;
+          return ResponseBody.fromString(
+            jsonEncode({
+              'error': {
+                'code': 'line_moved',
+                'message': 'The line has changed since; refresh and retry.',
+              },
+            }),
+            409,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        }
       }
       // The selected recipe's full match list (with a real alternative so the
       // fix panel can offer a re-pick).
@@ -172,6 +195,7 @@ class _Adapter implements HttpClientAdapter {
                 },
               ],
             },
+          ...extraRows,
         ],
       };
     } else {
@@ -391,6 +415,173 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Change the match & set the amount'), findsOneWidget);
+  });
+
+  // Run 054 S9/O11: the save that removed the line moved Tarte Tatin's
+  // cream line (a No grams row: food, no grams) into its old position 5.
+  // The gone line waits on nothing — Dismiss advances; the row now at 5 is
+  // another line and never vetoes it (Run 051 A2's rule, in the advance).
+  testWidgets('S9: Dismiss on a gone line advances although a No grams line '
+      'now sits at its old position', (tester) async {
+    final adapter = await pumpQueue(tester, others: 3);
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    final fetchesBefore = adapter.reviewFetches;
+    adapter.positions = const [];
+    adapter.extraRows = [
+      {
+        'others': 0,
+        'others_lines': 0,
+        'position': 5,
+        'raw': '¼ cup heavy cream',
+        'match': {
+          'fdc_id': 170859,
+          'description': 'Cream, fluid, heavy whipping',
+          'data_type': 'SR Legacy',
+          'confidence': 0.9,
+          'grams': null,
+          'gram_source': null,
+          'status': 'auto',
+        },
+        'candidates': <Object>[],
+      },
+    ];
+    await tester.tap(find.text('Apply to 3 lines'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('edited or removed since the queue was built'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(adapter.reviewFetches, fetchesBefore + 1, reason: 'advanced');
+  });
+
+  // Run 054 O12: the Confirm's answer has the line moved to 7 (the offer
+  // stands there); a second save adds its twin at the queued 5, so the
+  // apply's receipt anchors at 7 while the pane shows twin 5. The pane's
+  // cubit holds this one line's decisions: the receipt shows, and its
+  // Dismiss advances.
+  testWidgets('O12: a receipt anchored on the other twin shows in the pane '
+      'and its Dismiss advances', (tester) async {
+    final adapter = await pumpQueue(tester, others: 3);
+    adapter.positions = const [7];
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apply to 3 lines'), findsOneWidget);
+    final fetchesBefore = adapter.reviewFetches;
+    adapter.positions = const [5, 7];
+    await tester.tap(find.text('Apply to 3 lines'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Applied to 3 recipes', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(ApplyToAllStrip.lineChangedNote, findRichText: true),
+      findsNothing,
+      reason: 'anchored, at 7',
+    );
+    expect(adapter.reviewFetches, fetchesBefore);
+    await tester.tap(find.text('Dismiss'));
+    await tester.pumpAndSettle();
+    expect(adapter.reviewFetches, fetchesBefore + 1);
+  });
+
+  // O12's class on the offer: a refused apply (line_moved) reloads the
+  // rows, and a twin added at the queued 5 meanwhile leaves the offer at 7
+  // while the pane shows twin 5 — the offer still shows, so the pane can
+  // retry or decline it (hidden, it held the pane with nothing to act on).
+  testWidgets('O12: an offer re-located onto the other twin still shows in '
+      'the pane', (tester) async {
+    final adapter = await pumpQueue(tester, others: 3);
+    adapter.positions = const [7];
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    adapter
+      ..positions = const [5, 7]
+      ..moveOnApply = true;
+    await tester.tap(find.text('Apply to 3 lines'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('This line moved since'), findsOneWidget);
+    expect(find.text('Apply to 3 lines'), findsOneWidget);
+  });
+
+  // Run 054 S14: a group's receipt under the line-gone message still
+  // reconciles against the group's promise by recipe id. Two real Grand
+  // Marnier recipes stand in the promise; the adapter's receipt completes
+  // none of them.
+  testWidgets('S14: the gone-line receipt of a group reconciles against its '
+      'promise', (tester) async {
+    final line = {
+      'recipe': {'id': 'tatin', 'slug': 'tatin', 'title': 'Tarte Tatin'},
+      'position': 5,
+      'raw': '2 tablespoons Grand Marnier',
+      'bucket': 'check',
+      'match': {
+        'fdc_id': 100,
+        'description': 'Candies, NESTLE, 100 GRAND Bar',
+        'data_type': 'SR Legacy',
+        'confidence': 0.41,
+        'grams': 28,
+        'gram_source': 'density',
+        'status': 'auto',
+      },
+      'item_key': 'grand marnier',
+      'item': 'Grand Marnier',
+      'lines': 3,
+      'recipes': 3,
+      'decided': false,
+      'grams': {'min': 9, 'max': 28, 'missing': 0},
+      'finishes': 2,
+      'finishes_recipes': [
+        {
+          'id':
+              'atk-tv-2023-0905-chocolate-volcano-cakes-with-espresso-ice-'
+              'cream',
+          'title': 'Chocolate Volcano Cakes with Espresso Ice Cream',
+        },
+        {
+          'id': 'atk-tv-2023-0936-grand-marnier-souffle',
+          'title': 'Grand Marnier Soufflé',
+        },
+      ],
+      'last_open': 0,
+    };
+    final adapter = await pumpQueue(
+      tester,
+      others: 3,
+      reviewBody: {
+        'total': 3,
+        'groups': 1,
+        'buckets': [
+          {'id': 'no_match', 'label': 'No match', 'count': 0, 'groups': 0},
+          {'id': 'no_grams', 'label': 'No grams', 'count': 0, 'groups': 0},
+          {'id': 'check', 'label': 'Low confidence', 'count': 3, 'groups': 1},
+          {'id': 'skipped', 'label': 'Skipped', 'count': 0, 'groups': 0},
+        ],
+        'items': [line],
+        'page': 1,
+        'limit': 50,
+      },
+    );
+    await tester.tap(find.text('Confirm as-is'));
+    await tester.pumpAndSettle();
+    adapter.positions = const [];
+    await tester.tap(find.textContaining('Apply to '));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('edited or removed since the queue was built'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Chocolate Volcano Cakes with Espresso Ice Cream and Grand Marnier '
+        'Soufflé were not completed by this apply',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
   });
 
   /// The Low-confidence bucket, grouped: the jalapeño group the mockup's

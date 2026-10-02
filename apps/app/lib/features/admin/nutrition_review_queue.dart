@@ -926,8 +926,13 @@ bool queueShouldAdvance(NutritionState previous, NutritionState current) {
 /// amount (No grams on a food): a plain Confirm USDA could not convert, a
 /// pick from any bucket (No match, No grams) that ended without grams, or an
 /// apply-to-all offer or receipt closing over such a line. The queue then
-/// keeps the pane on that line — it is not done (A4).
-bool leftWaitingOnAmount(NutritionState current, int position) {
+/// keeps the pane on that line — it is not done (A4). A null [position] is
+/// a line no row reads any more (edited or removed): nothing of it waits,
+/// whatever line now sits at its old position (Run 054 S9/O11).
+bool leftWaitingOnAmount(NutritionState current, int? position) {
+  if (position == null) {
+    return false;
+  }
   IngredientMatch? at(List<IngredientMatch>? matches) {
     for (final m in matches ?? const <IngredientMatch>[]) {
       if (m.position == position) {
@@ -937,8 +942,12 @@ bool leftWaitingOnAmount(NutritionState current, int position) {
     return null;
   }
 
+  // Any No grams row on a food — a held line too, whose pick alone kept
+  // its hold with no grams: it still waits on its edible grams or a skip.
   final after = at(current.matches);
-  return after != null && confirmsWithAmount(after);
+  return after != null &&
+      after.fdcId != null &&
+      matchBucketOf(after) == MatchBucket.noAmount;
 }
 
 /// The pane's advance rule: [queueShouldAdvance], unless the line at
@@ -946,7 +955,7 @@ bool leftWaitingOnAmount(NutritionState current, int position) {
 bool paneAdvances(
   NutritionState previous,
   NutritionState current,
-  int position,
+  int? position,
 ) =>
     queueShouldAdvance(previous, current) &&
     !leftWaitingOnAmount(current, position);
@@ -973,8 +982,7 @@ class _FixPaneBody extends StatelessWidget {
       listenWhen: (previous, current) => paneAdvances(
         previous,
         current,
-        queueMatchOf(current.matches ?? const [], line)?.position ??
-            line.position,
+        queueMatchOf(current.matches ?? const [], line)?.position,
       ),
       listener: (context, _) =>
           context.read<NutritionReviewCubit>().completeFix(),
@@ -1017,8 +1025,9 @@ class _FixPaneBody extends StatelessWidget {
                   offer: null,
                   applied: receipt,
                   applying: state.applying,
-                  onApply: cubit.applyToAll,
-                  onDismiss: cubit.dismissApply,
+                  onApply: () {},
+                  onDismiss: () {},
+                  onDismissReceipt: cubit.dismissReceipt,
                   promised: line.lines > 1 ? othersPromised(line) : null,
                 ),
                 gone,
@@ -1071,10 +1080,13 @@ class _FixContentState extends State<_FixContent> {
         cubit.override(match.position, raw: line.raw, confirmed: true);
     void skip() => cubit.override(match.position, raw: line.raw, skipped: true);
     final waiting = openLinesBesides(state.matches ?? const [], match.position);
-    final receipt =
-        receiptIsFor(state.applied, match) || state.applied?.position == null
-        ? state.applied
-        : null;
+    // The pane's cubit is keyed by this one queue line (_FixPane), so every
+    // offer and receipt it holds is this line's own decision — shown
+    // wherever its anchor landed: on another twin of the line than
+    // [match] (Run 054 O12), or unanchored (O17). Filtering them by the
+    // row hid them and stuck the pane, which waits for them to close.
+    final offer = state.offer;
+    final receipt = state.applied;
     // The split shows only BEFORE the decision, on a group that promises.
     final split =
         line.lines > 1 &&
@@ -1183,16 +1195,15 @@ class _FixContentState extends State<_FixContent> {
             const SizedBox(height: 12),
             FinishesSplit(line: line, match: match, waiting: waiting),
           ],
-          // An unanchored receipt (its line changed since: O17) is this
-          // pane's apply all the same — the pane holds one line.
-          if (offerIsFor(state.offer, match) || receipt != null) ...[
+          if (offer != null || receipt != null) ...[
             const SizedBox(height: 12),
             ApplyToAllStrip(
-              offer: offerIsFor(state.offer, match) ? state.offer : null,
+              offer: offer,
               applied: receipt,
               applying: state.applying,
               onApply: cubit.applyToAll,
-              onDismiss: cubit.dismissApply,
+              onDismiss: cubit.dismissOffer,
+              onDismissReceipt: cubit.dismissReceipt,
               promised: line.lines > 1 ? othersPromised(line) : null,
             ),
           ],

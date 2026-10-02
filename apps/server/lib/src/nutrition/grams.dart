@@ -4,6 +4,7 @@
 /// portions or a piece-weight table.
 library;
 
+import 'package:meta/meta.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
@@ -156,9 +157,11 @@ const List<(String, double)> _densities = [
   ('breadcrumbs', 0.45),
   ('panko', 0.25),
   ('parmesan', 0.42),
-  // APPROXIMATE ([_approximateDensities]): grated Pecorino Romano on the
-  // grated-Parmesan figure (its records' cup is 'cheese' 0.47's), and ghee
-  // on oil's (FDC 171314's detail publishes no portion).
+  // APPROXIMATE ([_approximateDensities]): Pecorino Romano that says
+  // neither grated nor shredded on the Parmesan figure above (its records'
+  // cup is 'cheese' 0.47's; a grated or shredded line weighs the printed
+  // [_printedHardCheese]), and ghee on oil's (FDC 171314's detail
+  // publishes no portion).
   ('pecorino', 0.42),
   ('ghee', 0.92),
   ('cheese', 0.47),
@@ -216,7 +219,9 @@ const List<(String, double)> _densities = [
 /// approximations the user approved (v21, J2): a line sized by one says so
 /// in its basis ("· approximate (paprika density)").
 const Map<String, String> _approximateDensities = {
-  'pecorino': 'grated Parmesan',
+  // The label names the figure used: 'parmesan' 0.42, since v23 no longer
+  // grated Parmesan's (0.24) — Run 054 O16.
+  'pecorino': 'Parmesan',
   'ghee': 'oil',
   'aleppo pepper': 'paprika',
 };
@@ -1708,6 +1713,11 @@ double? _namedPortionGrams(FdcFood food, String wanted) {
 /// matched [food] (may be null), and the normalized item (for the fallback
 /// tables). Null when nothing resolvable exists. A same-food second amount
 /// ([plusPartOf]) is added: "¾ cup plus 2 tablespoons oil" is both.
+///
+/// [raw] is trimmed and its whitespace runs collapsed to one space HERE,
+/// once, before any regex reads it: a person's line may be 1,000 characters
+/// of spaces, and every read below sees the same normalized text (Run 055
+/// D1: `_parsedUnit`'s lead was cubic in leading whitespace, 2 s a line).
 GramResolution? resolveGrams({
   required List<Amount> amounts,
   required FdcFood? food,
@@ -1715,6 +1725,22 @@ GramResolution? resolveGrams({
   String? raw,
   bool wholeBirdYield = wholeBirdYieldOn,
   bool kosherSalt = false,
+}) => _resolveLine(
+  amounts: amounts,
+  food: food,
+  normalizedItem: normalizedItem,
+  raw: raw?.trim().replaceAll(_whitespaceRun, ' '),
+  wholeBirdYield: wholeBirdYield,
+  kosherSalt: kosherSalt,
+);
+
+GramResolution? _resolveLine({
+  required List<Amount> amounts,
+  required FdcFood? food,
+  required String normalizedItem,
+  required String? raw,
+  required bool wholeBirdYield,
+  required bool kosherSalt,
 }) {
   final parsed = raw == null
       ? amounts
@@ -1724,16 +1750,28 @@ GramResolution? resolveGrams({
   // at table salt's 1.22).
   final kosher = kosherSalt || (raw != null && packsLikeKosherSalt(raw));
   final measured = _asPrepared(food, raw ?? normalizedItem);
+  // The primary of a line with another food's weighed part is read on its
+  // own text; it weighs nothing, the part's printed weight stands in.
+  final other = raw == null ? null : _otherFoodPart(raw);
+  final own = other?.own ?? raw;
   var first = _resolveGrams(
     amounts: parsed,
     food: measured,
     normalizedItem: normalizedItem,
-    raw: raw,
+    raw: own,
     kosher: kosher,
   );
-  first ??= raw == null
+  first ??= own == null
       ? null
-      : _parenVolumeGrams(parsed, measured, normalizedItem, raw);
+      : _parenVolumeGrams(parsed, measured, normalizedItem, own);
+  if (first == null && other != null) {
+    first = _resolveGrams(
+      amounts: [other.part],
+      food: measured,
+      normalizedItem: normalizedItem,
+      kosher: kosher,
+    );
+  }
   final bird =
       wholeBirdYield &&
           first?.source == GramSource.weight &&
@@ -1812,11 +1850,15 @@ GramResolution? resolveGrams({
       (plus.weighsTotal && first!.source == GramSource.weight)) {
     return first;
   }
+  // The part is the line's form too: "1 ounce Parmesan cheese, grated
+  // (½ cup), plus 2 tablespoons" weighs its 2 tablespoons grated, 0.24
+  // (Run 054 O10/S6: 0.42, read with no words).
   final second = _resolveGrams(
     amounts: [plus.amount],
     food: measured,
     normalizedItem: normalizedItem,
     kosher: kosher,
+    words: raw,
   );
   if (second == null) {
     return first;
@@ -1837,9 +1879,12 @@ GramResolution? resolveGrams({
 /// weight: the parenthesis restates the part, which weighs what it prints
 /// — "1 Parmesan cheese rind, plus 3 ounces Parmesan, shredded (1 cup)"
 /// (0403) is the 3 ounces, 85.05 g, never 1 cup by a density (99.37 g). A
-/// part of another food stands in for it (the line's grams are the
-/// part's, as they were); one of the same food is added after
-/// ([resolveGrams]), so the restatement goes.
+/// part of the same food is added after ([resolveGrams]). A part of
+/// ANOTHER food is that food's restatement only: the line weighs its own
+/// primary, and the part's printed weight stands in only when the primary
+/// resolves to nothing (0403's rind) — Run 054 O9/S7: "2 tablespoons pine
+/// nuts plus 1 ounce Parmesan, grated (½ cup)" weighed the pine-nut line
+/// at the Parmesan's 28.35 g ([_otherFoodPart]).
 List<Amount> _plusRestated(List<Amount> amounts, String raw) {
   final plus = plusPartOf(raw);
   final at =
@@ -1853,10 +1898,13 @@ List<Amount> _plusRestated(List<Amount> amounts, String raw) {
     return amounts;
   }
   final restated = [
-    // "(about 2 cups; see note)" restates 2 cups.
+    // "(about 2 cups; see note)" restates 2 cups. Every paren is read: one
+    // before the "plus" parses as the primary's own amount, which
+    // `amount.primary` keeps (Run 054 S13: the scope to after the "plus"
+    // moved none of 13,615 corpus lines — deleted).
     for (final paren in RegExp(
       r'\((?:about\s+)?([^);]*)',
-    ).allMatches(raw, at.end))
+    ).allMatches(raw))
       ...parseIngredientLine(paren[1]!).amounts,
   ];
   return [
@@ -1865,10 +1913,24 @@ List<Amount> _plusRestated(List<Amount> amounts, String raw) {
           !restated.any(
             (r) => r.quantity == amount.quantity && r.unit == amount.unit,
           ))
-        amount
-      else if (!plus.sameFood)
-        plus.amount,
+        amount,
   ];
+}
+
+/// A "plus" part of ANOTHER food that prints its weight and whose
+/// parenthesis restates it ([_plusRestated]): the part, and the line's own
+/// text before the "plus" — what the primary is weighed on, so the part's
+/// parenthesis never sizes it (step 1c read 0403's "(1 cup)" for the rind);
+/// else null.
+({Amount part, String own})? _otherFoodPart(String raw) {
+  final plus = plusPartOf(raw);
+  final at = RegExp(r'\bplus\b[^(]*\(', caseSensitive: false).firstMatch(raw);
+  return plus == null ||
+          plus.sameFood ||
+          plus.amount.measure != Measure.weight ||
+          at == null
+      ? null
+      : (part: plus.amount, own: raw.substring(0, at.start));
 }
 
 /// [food] without the portion that measures what it is made FROM, on a
@@ -1881,11 +1943,22 @@ List<Amount> _plusRestated(List<Amount> amounts, String raw) {
 /// — the popped mass those kernels make, which this record's nutrients are
 /// for — and so does every other food's own yields portion (a gelatin
 /// package's 540 g, a coconut's 206 g), which v22 stripped for any line.
+///
+/// The MEASURED head decides (Run 054 O8: any "kernel" in the line kept
+/// the yields cup for "8 cups popped popcorn (from ⅓ cup kernels)", 1,544
+/// g for 112): the line before a paren or a "from" — what the amount
+/// measures, never where it came from. Kettle and caramel corn are popped.
 FdcFood? _asPrepared(FdcFood? food, String line) {
   final text = line.toLowerCase();
+  final head = text.substring(
+    0,
+    RegExp(r'\(|\bfrom\b').firstMatch(text)?.start ?? text.length,
+  );
   if (food == null ||
-      !RegExp(r'\bpop(?:corn|ped)\b').hasMatch(text) ||
-      RegExp(r'\b(?:unpopped|kernel)').hasMatch(text)) {
+      !RegExp(
+        r'\bpop(?:corn|ped)\b|\b(?:kettle|caramel) corn\b',
+      ).hasMatch(head) ||
+      RegExp(r'\b(?:unpopped|kernel)').hasMatch(head)) {
     return food;
   }
   final unpopped = RegExp(r'\bunpopped\b');
@@ -2009,7 +2082,8 @@ Amount? _parenVolume(String raw, double? count, {bool perItemOnly = false}) {
 
 /// A line that opens with a quantity and a volume unit.
 final RegExp _lostVolumeUnit = RegExp(
-  '^\\s*[\\d$vulgarFractionChars/ .-]+\\s*(cups?|tablespoons?|teaspoons?)\\b',
+  '^\\s*[\\d$vulgarFractionChars/.-][\\d$vulgarFractionChars/ .-]*'
+  r'(cups?|tablespoons?|teaspoons?)\b',
   caseSensitive: false,
 );
 
@@ -2017,7 +2091,8 @@ final RegExp _lostVolumeUnit = RegExp(
 /// fresh rosemary" parsed as the bare count 2 (checkpoint 5: 5 no_grams
 /// lines).
 final RegExp _sizedSprig = RegExp(
-  '^\\s*[\\d$vulgarFractionChars/ .-]+\\s*(small|medium|large)\\s+sprigs?\\b',
+  '^\\s*[\\d$vulgarFractionChars/.-][\\d$vulgarFractionChars/ .-]*'
+  r'(small|medium|large)\s+sprigs?\b',
   caseSensitive: false,
 );
 
@@ -2033,9 +2108,20 @@ List<Amount> _withParsedUnits(List<Amount> amounts, String raw) => [
       _parsedUnit(amount, raw) ?? amount,
 ];
 
+final _whitespaceRun = RegExp(r'\s+');
+
+/// [_parsedUnit] on a raw no entry normalized (the regex's own pin).
+@visibleForTesting
+Amount? parsedUnitForTest(Amount amount, String raw) =>
+    _parsedUnit(amount, raw);
+
 Amount? _parsedUnit(Amount amount, String raw) {
+  // The number run's class has no space and its words are joined by
+  // " +": nothing in it overlaps the anchors' \s* (the lazy run with a space
+  // in its class was cubic in leading whitespace — Run 055 D1).
   final lead = RegExp(
-    '^\\s*([\\d$vulgarFractionChars/ .-]+?)\\s*[a-z]',
+    '^\\s*([\\d$vulgarFractionChars/.-]+(?: +[\\d$vulgarFractionChars/.-]+)*)'
+    r'\s*[a-z]',
     caseSensitive: false,
   ).firstMatch(raw);
   final quantity = _quantityValue(amount.quantity);
@@ -2045,7 +2131,8 @@ Amount? _parsedUnit(Amount amount, String raw) {
   // no dozen. No corpus line has a second count or a later "dozen", so both
   // guards are pinned on synthesized lines (stated exceptions, v13).
   final dozen = RegExp(
-    '^\\s*([\\d$vulgarFractionChars/ .-]+?)\\s*dozen\\b',
+    '^\\s*([\\d$vulgarFractionChars/.-]+(?: +[\\d$vulgarFractionChars/.-]+)*)'
+    r'\s*dozen\b',
     caseSensitive: false,
   ).firstMatch(raw);
   if (dozen != null &&
@@ -2139,6 +2226,7 @@ GramResolution? _resolveGrams({
   required String normalizedItem,
   String? raw,
   bool kosher = false,
+  String? words,
 }) {
   // 1. Any weight amount converts directly — including the secondary of a
   //    dual "1¾ cups (8¾ ounces)" pair, which is exactly why ATK prints it.
@@ -2264,7 +2352,18 @@ GramResolution? _resolveGrams({
             ],
           )
         : food;
-    if (volumeFood != null) {
+    final entry = kosher ? null : _densityOf(normalizedItem);
+    // Grated or shredded hard cheese weighs the corpus's printed figure
+    // WHATEVER the record — before the record's own cup (Run 054 Sonnet
+    // critic 2: an FNDDS-style '1 cup' portion read "¼ cup grated Parmesan"
+    // at 25 g).
+    final form = entry != null && _printedHardCheeseKeys.contains(entry.$1)
+        ? _hardCheeseForm
+              .firstMatch((words ?? raw ?? normalizedItem).toLowerCase())
+              ?.group(1)
+        : null;
+    final printed = form == null ? null : _printedHardCheese[form];
+    if (volumeFood != null && printed == null) {
       final perUnit = _portionGramsPerUnit(volumeFood, unit);
       if (perUnit != null) {
         return GramResolution(
@@ -2282,16 +2381,9 @@ GramResolution? _resolveGrams({
             null,
             _volumeAliases[unit],
           );
-    final entry = kosher ? null : _densityOf(normalizedItem);
     // 'nuts' is any nut: a record of the nut the item names weighs it by its
     // own cup ("½ cup unsalted roasted peanuts" on 173806 'cup' 146 g, not
     // 0.55's 65 g; Run 050).
-    final form = entry != null && _printedHardCheeseKeys.contains(entry.$1)
-        ? _hardCheeseForm
-              .firstMatch((raw ?? normalizedItem).toLowerCase())
-              ?.group(1)
-        : null;
-    final printed = form == null ? null : _printedHardCheese[form];
     final density = kosher
         ? _kosherSaltDensity
         : printed != null

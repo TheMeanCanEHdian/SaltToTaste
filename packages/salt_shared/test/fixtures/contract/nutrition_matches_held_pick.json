@@ -1,0 +1,153 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "4½ cups (24¾ ounces) whole-wheat flour",
+      "item": "whole-wheat flour",
+      "line_amount": "4 1/2 cup",
+      "kcal_per_100g": 370.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "whole-wheat flour",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 790085,
+        "description": "Flour, whole wheat, unenriched",
+        "data_type": "Foundation",
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "overridden",
+        "hold": "starter_discard",
+        "hold_note": null,
+        "carried_from": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 790085,
+          "description": "Flour, whole wheat, unenriched",
+          "data_type": "Foundation",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 168944,
+          "description": "Wheat flour, whole-grain, soft wheat",
+          "data_type": "SR Legacy",
+          "confidence": 0.9400000000000001
+        },
+        {
+          "fdc_id": 168893,
+          "description": "Wheat flour, whole-grain (Includes foods for USDA's Food Distribution Program)",
+          "data_type": "SR Legacy",
+          "confidence": 0.88
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "raw": "5 cups (25 ounces) all-purpose flour, plus extra for maintaining starter",
+      "item": "all-purpose flour",
+      "line_amount": "5 cup",
+      "kcal_per_100g": 366.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "all-purpose flour",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 789890,
+        "description": "Flour, wheat, all-purpose, enriched, bleached",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "auto",
+        "hold": "starter_discard",
+        "hold_note": null,
+        "carried_from": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 789890,
+          "description": "Flour, wheat, all-purpose, enriched, bleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 789951,
+          "description": "Flour, wheat, all-purpose, enriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 790018,
+          "description": "Flour, wheat, all-purpose, unenriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 169761,
+          "description": "Wheat flour, white, all-purpose, unenriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 168894,
+          "description": "Wheat flour, white, all-purpose, enriched, bleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8557142857142858
+        },
+        {
+          "fdc_id": 168936,
+          "description": "Wheat flour, white, all-purpose, enriched, unbleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8557142857142858
+        },
+        {
+          "fdc_id": 169754,
+          "description": "Wheat flour, white, all-purpose, enriched, calcium-fortified",
+          "data_type": "SR Legacy",
+          "confidence": 0.8450000000000001
+        },
+        {
+          "fdc_id": 168895,
+          "description": "Wheat flour, white, all-purpose, self-rising, enriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.8450000000000001
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "Water, room temperature",
+      "item": "Water",
+      "line_amount": null,
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "water",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Water/ice — counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null
+      },
+      "candidates": []
+    }
+  ]
+}

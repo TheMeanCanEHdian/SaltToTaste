@@ -484,7 +484,8 @@ void main() {
       test('S7: an apply-to-all of "Oil, olive" awaits a target\'s portions; '
           'meanwhile a save of that recipe drops its oil and a layout moves the '
           "onion skip onto the oil's position — the write is refused, counted "
-          'in `moved`, and the skip stands', () async {
+          '`gone` (the oil line is gone from the recipe as stored: v24, Run '
+          '054 S3 — `moved` before), and the skip stands', () async {
         final db = tempDb();
         final provider = Gated(FixtureProvider(pending: pendingSearches));
         Recipe b(List<String> raws) => acquacotta(raws).copyWith(id: 'b');
@@ -513,7 +514,7 @@ void main() {
           decided: standIn,
           excluding: (recipeId: 'a', position: 0),
         );
-        expect((applied.lines, applied.moved), (0, 1));
+        expect((applied.lines, applied.moved, applied.gone), (0, 0, 1));
         final rows = db.ingredientMatchesFor('b');
         expect(
           [for (final r in rows) (r.raw, r.status)],

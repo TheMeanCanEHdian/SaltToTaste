@@ -9,6 +9,7 @@ import 'package:forui/forui.dart';
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
+import 'package:salt_app/features/admin/nutrition_review_queue.dart';
 import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
@@ -1121,6 +1122,109 @@ void main() {
       }
     });
 
+    // Run 054 S5/O6: a pick alone on a held line that is not divided keeps
+    // its hold with no grams (the server's PUT: status overridden, grams
+    // null, hold kept — nutrition_v23_rules_test G6 on these real lines),
+    // which buckets No grams. The reason still shows, with the held ways
+    // out — never "no amount found" alone, and never the amount-first
+    // confirm, whose prefill would count the whole dredge.
+    testWidgets('S5/O6: a picked held line in No grams says why it is held '
+        'and leads with the held ways out', (tester) async {
+      const dredge = IngredientMatch(
+        position: 8,
+        raw: '4 cups (20 ounces) unbleached all-purpose flour',
+        item: 'unbleached all-purpose flour',
+        lineAmount: '4 cups',
+        fdcId: 789890,
+        description: 'Flour, wheat, all-purpose, enriched, bleached',
+        dataType: 'Foundation',
+        confidence: 1,
+        status: 'overridden',
+        hold: 'coating',
+      );
+      const soy = IngredientMatch(
+        position: 1,
+        raw: '1 cup soy sauce',
+        item: 'soy sauce',
+        lineAmount: '1 cup',
+        fdcId: 2707442,
+        description: 'Soy sauce',
+        dataType: 'Survey (FNDDS)',
+        confidence: 1,
+        status: 'overridden',
+        hold: 'partial_pour_away',
+        holdNote: '1 cup defatted cooking liquid',
+      );
+      for (final m in [dredge, soy]) {
+        expect(matchBucketOf(m), MatchBucket.noAmount, reason: m.raw);
+        expect(confirmsWithAmount(m), isFalse, reason: m.raw);
+        // The queue pane still waits on it: a skip or the edible grams.
+        expect(
+          leftWaitingOnAmount(NutritionState(matches: [m]), m.position),
+          isTrue,
+          reason: m.raw,
+        );
+      }
+      await openSheet(tester, [dredge, soy]);
+      expect(
+        find.textContaining(
+          'Dredging for a fried food: most of it is shaken off or left in '
+          'the dish, and no coating share is set — held out of the totals: '
+          'skip it if it is poured away, or enter the grams that are eaten',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          '(1 cup defatted cooking liquid); the rest is poured away — held '
+          'out of the totals',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('no amount found'), findsNothing);
+      expect(find.text('Enter edible grams'), findsNWidgets(2));
+      expect(find.text(heldSkipLabel), findsNWidgets(2));
+      expect(find.text('Add amount'), findsNothing);
+    });
+
+    // Run 054 H5(a): a pick on a DIVIDED held line counts its eaten part and
+    // resolves the hold — the server's row (nutrition_v24_rules_test H5(a),
+    // 1133 Francese #5): overridden, the teaspoon's grams, discarded, no
+    // hold, hold_note "eaten part counted after your pick". It counts, and
+    // the counted row says why.
+    testWidgets('H5(a): a pick that resolved a divided hold says its eaten '
+        'part is counted after the pick', (tester) async {
+      const flour = IngredientMatch(
+        position: 5,
+        raw: '¾ cup all-purpose flour, divided',
+        item: 'all-purpose flour',
+        lineAmount: '¾ cup',
+        fdcId: 789890,
+        description: 'Flour, wheat, all-purpose, enriched, bleached',
+        dataType: 'Foundation',
+        confidence: 1,
+        grams: 2.51,
+        gramSource: 'discarded',
+        status: 'overridden',
+        holdNote: 'eaten part counted after your pick',
+      );
+      expect(matchBucketOf(flour), MatchBucket.counted);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildMaterialTheme(buildForuiTheme()),
+          builder: (context, child) =>
+              FTheme(data: buildForuiTheme(), child: child!),
+          home: const Scaffold(
+            body: WhyLine(match: flour, bucket: MatchBucket.counted),
+          ),
+        ),
+      );
+      expect(
+        find.textContaining('eaten part counted after your pick'),
+        findsOneWidget,
+      );
+    });
+
     // Run 053 S16: ZeroRow stands in for WhyLine, so a counted-zero row
     // with a partial pour-away hold reads the kept part as the check row
     // does. The real line, record and score: 0129 Indoor Pulled Chicken's
@@ -1427,6 +1531,8 @@ void main() {
       ApplyOffer? offer,
       ApplyReceipt? applied,
       List<({String id, String title})>? promise,
+      VoidCallback? onDismiss,
+      VoidCallback? onDismissReceipt,
     }) async {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(
@@ -1440,7 +1546,8 @@ void main() {
               applied: applied,
               applying: false,
               onApply: () {},
-              onDismiss: () {},
+              onDismiss: onDismiss ?? () {},
+              onDismissReceipt: onDismissReceipt ?? () {},
               promised: promise,
             ),
           ),
@@ -1461,6 +1568,47 @@ void main() {
       gone: 0,
       failedLines: 0,
     );
+
+    // Run 054 S8: the receipt's Dismiss is the receipt's own callback — a
+    // strip handed a receipt and an offer (the cubit keeps both when a
+    // decision lands on another line during an apply) never drops the
+    // offer with it; "Not now" on an offer is the offer's.
+    testWidgets("S8: the receipt's Dismiss calls only onDismissReceipt", (
+      tester,
+    ) async {
+      var offers = 0;
+      var receipts = 0;
+      // Almond Biscotti's line, as the offer below states it.
+      const offer = (
+        position: 7,
+        raw: '1½ teaspoons almond extract',
+        label: 'almond extract',
+        fdcId: null,
+        confirmed: true,
+        grams: null,
+        others: 8,
+        lines: 8,
+      );
+      await pumpStrip(
+        tester,
+        offer: offer,
+        applied: receipt(const []),
+        onDismiss: () => offers++,
+        onDismissReceipt: () => receipts++,
+      );
+      await tester.tap(find.text('Dismiss'));
+      await tester.pumpAndSettle();
+      expect((offers, receipts), (0, 1));
+      await pumpStrip(
+        tester,
+        offer: offer,
+        onDismiss: () => offers++,
+        onDismissReceipt: () => receipts++,
+      );
+      await tester.tap(find.text('Not now'));
+      await tester.pumpAndSettle();
+      expect((offers, receipts), (1, 1));
+    });
 
     testWidgets("F7: the receipt says how many lines changed meanwhile and "
         'were left for their next compute — in the queue and the sheet', (

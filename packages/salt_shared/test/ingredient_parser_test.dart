@@ -389,4 +389,24 @@ void main() {
       );
     });
   });
+  // Run 054 (v24 close): the parser normalizes whitespace ONCE at its entry,
+  // before any regex reads the line. Without it, `_parenMeasureRe`'s
+  // lazy-with-space run was super-linear on a 1,000-character run of spaces
+  // (105 ms on this input; 0.03 ms normalized). The input is a synthesized
+  // negative-path line (the corpus prints no whitespace run) — a stated
+  // exception to the real-data rule. A generous bound, so the pin never
+  // flakes; the mutant dropping the normalization measures 100+ ms.
+  test('whitespace is normalized before any regex: a hostile 1,000-char '
+      'paren line parses in bounded time (synthesized)', () {
+    final hostile = '(1${' ' * 997}x';
+    parseIngredientLine('1 cup flour'); // warm the JIT
+    final watch = Stopwatch()..start();
+    parseIngredientLine(hostile);
+    watch.stop();
+    expect(
+      watch.elapsedMilliseconds,
+      lessThan(40),
+      reason: 'the entry normalization (trim + collapse) must run first',
+    );
+  });
 }

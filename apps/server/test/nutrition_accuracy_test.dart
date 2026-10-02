@@ -1547,11 +1547,21 @@ void main() {
       expect(row.gramSource, 'discarded');
       final recipe = recipes['orange']!;
       final item = normalizeItem(line.item!);
+      // The mass rule alone (bySentence: false): since matcher v24 the
+      // directions zero it at any mass too — 0536 heats the oil to a frying
+      // temperature, its own sentence (Run 054 O1/S1).
       expect(
-        discardedMediumOf(recipe, line, item, grams: 400),
+        discardedMediumOf(recipe, line, item, grams: 400, bySentence: false),
         DiscardedMedium.fryingOil,
       );
-      expect(discardedMediumOf(recipe, line, item, grams: 399), isNull);
+      expect(
+        discardedMediumOf(recipe, line, item, grams: 399, bySentence: false),
+        isNull,
+      );
+      expect(
+        discardedMediumOf(recipe, line, item, grams: 399),
+        DiscardedMedium.fryingOil,
+      );
     });
 
     test('a fresh oregano line counts on the dried spice record, a flagged '

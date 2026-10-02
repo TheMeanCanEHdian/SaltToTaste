@@ -49,7 +49,10 @@ void main() {
         'skipped': true,
       });
       wp.saveRecipe(db, x);
-      expect(db.nutritionFor(x.id)!.ingredientsHash, ingredientsHashOf(x));
+      // The skip's plain recompute ran on y, not on the stamp's inputs: it
+      // keeps no hash (v24, Run 054 O3), so this reads stale by its hash as
+      // well as by its layout.
+      expect(db.nutritionFor(x.id)!.ingredientsHash, '');
       expect(nutritionIsFresh(db, x), isFalse);
       expect(nutritionBody(db, x, forAdmin: true)['status'], 'stale');
       expect(bulkScopeIds(db, BulkScope.stale), [x.id]);

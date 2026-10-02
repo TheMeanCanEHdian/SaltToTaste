@@ -21,6 +21,7 @@ import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/services/layout_backfill.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
@@ -120,7 +121,15 @@ void main() {
       final r = db.recipeByIdOrSlug('r')!.recipe;
       expect(db.nutritionFor('r')!.layoutSeq, 0);
       expect(db.layoutOf('r').texts, isNull);
+      // v24 (Run 054 H4): the boot's layout backfill seeds a real layout
+      // (a counter seq, the recipe's lines) and moves the stamp onto it.
+      expect(backfillLayouts(db), 1);
+      final seeded = db.layoutOf('r').seq;
+      expect(seeded, greaterThan(0));
+      expect(db.nutritionFor('r')!.layoutSeq, seeded);
+      expect(db.layoutOf('r').lines, [wp.oil, wp.onion, wp.celery]);
       expect(nutritionIsFresh(db, r), isTrue);
+      expect(backfillLayouts(db), 0);
 
       final o = wp.saveLines(db, [wp.oil], id: 'o');
       await matchAndCompute(db, provider, o);
@@ -131,8 +140,8 @@ void main() {
       });
       expect(applied!.lines, 1);
       expect(db.ingredientMatchesFor('r').first.fdcId, 173468);
-      // The first layout recorded the texts and kept the seq: nothing moved.
-      expect(db.layoutOf('r').seq, 0);
+      // The layout found the seeded texts: nothing moved, nothing bumped.
+      expect(db.layoutOf('r').seq, seeded);
       expect(db.layoutOf('r').lines, [wp.oil, wp.onion, wp.celery]);
       expect(nutritionIsFresh(db, r), isTrue);
 

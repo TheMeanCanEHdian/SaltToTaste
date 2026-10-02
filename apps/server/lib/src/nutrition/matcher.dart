@@ -280,8 +280,11 @@ const Map<String, String> _synonyms = {
 /// oil a held dredge fries in discarded by the same directions (not its
 /// mass; a smaller first part a step names stays eaten), shredded Parmesan
 /// at the corpus's printed 0.36 g/mL, and a "plus" part's printed weight
-/// used over the density.
-const int matcherVersion = 23;
+/// used over the density. 24 (Run 054): the step and line regexes linear on
+/// hostile text (a sentence over 1,000 characters is read as none), a
+/// decided row's hold re-derived on every compute, and the oil, dredge,
+/// _asPrepared and plus-part cheese rules of that run.
+const int matcherVersion = 24;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

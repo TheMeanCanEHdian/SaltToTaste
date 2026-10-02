@@ -191,7 +191,10 @@ class _ReviewSheetState extends State<_ReviewSheet>
                   applied: receipt,
                   applying: state.applying,
                   onApply: () {},
-                  onDismiss: context.read<NutritionCubit>().dismissApply,
+                  onDismiss: () {},
+                  onDismissReceipt: context
+                      .read<NutritionCubit>()
+                      .dismissReceipt,
                 ),
               ),
             Expanded(child: content),
@@ -581,7 +584,8 @@ class _MatchRowState extends State<_MatchRow> {
                       applied: receipt,
                       applying: state.applying,
                       onApply: cubit.applyToAll,
-                      onDismiss: cubit.dismissApply,
+                      onDismiss: cubit.dismissOffer,
+                      onDismissReceipt: cubit.dismissReceipt,
                     ),
                   );
                 },
@@ -659,7 +663,10 @@ class _MatchRowState extends State<_MatchRow> {
     }
     // Ruling 5: a held medium or shell line leads with its two ways out;
     // Confirm only where the row carries an eaten "plus" part.
-    if (b == MatchBucket.check && isHeldLine(widget.match)) {
+    // A held line in No grams (a pick alone kept its hold) leads the same
+    // way (Run 054 S5/O6).
+    if ((b == MatchBucket.check || b == MatchBucket.noAmount) &&
+        isHeldLine(widget.match)) {
       return _ActionBar([
         _Action(
           icon: _fixOpen ? FLucideIcons.x : FLucideIcons.scale,

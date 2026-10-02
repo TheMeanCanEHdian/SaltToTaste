@@ -3,6 +3,7 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/services/item_key_backfill.dart';
+import 'package:salt_server/src/services/layout_backfill.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 final Logger _log = Logger('backfill');
@@ -199,5 +200,13 @@ void rekeyAfterMatcherChange(SaltDatabase db) {
     // ignore: avoid_catches_without_on_clauses
   } catch (error, stackTrace) {
     _log.severe('Item-key backfill failed', error, stackTrace);
+  }
+  // Every boot, not only after a matcher change: a database upgraded from
+  // before migration 012 is seeded once, then finds nothing.
+  try {
+    backfillLayouts(db);
+    // ignore: avoid_catches_without_on_clauses
+  } catch (error, stackTrace) {
+    _log.severe('Layout backfill failed', error, stackTrace);
   }
 }

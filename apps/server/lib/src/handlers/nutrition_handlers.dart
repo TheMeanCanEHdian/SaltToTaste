@@ -125,6 +125,9 @@ Future<Map<String, Object?>> matchesBody(
       if (row != null) row.position: at,
   };
   final items = <Map<String, Object?>>[];
+  // Every line's reach reads the same rows: each reached recipe and line
+  // once for the whole body (Run 054 S4: once per line, 1.1 s on 0491).
+  final reads = ReachMemo();
   for (final (position, line) in lines.indexed) {
     var row = matches[position];
     // A row of another text the layout gives this line: an engine row is
@@ -186,6 +189,7 @@ Future<Map<String, Object?>> matchesBody(
               itemKey,
               excluding: (recipeId: recipe.id, position: -1),
               fdcId: row?.fdcId,
+              memo: reads,
             ))
               if (other.recipeId != recipe.id ||
                   (pairedTo[other.position] ?? position) != position)
@@ -290,8 +294,11 @@ Future<Map<String, Object?>> matchesBody(
               // `partial_pour_away` the part of the strained liquid a step
               // keeps ("1 cup defatted cooking liquid"), and a divided
               // line's part eaten outside the dredge or braise ([holdNoteOf]);
-              // null otherwise.
-              'hold_note': holdNoteOf(recipe, line, row.hold),
+              // a divided line's hold a pick resolved, "eaten part counted
+              // after your pick" ([pickedEatenNoteOf]); null otherwise.
+              'hold_note':
+                  holdNoteOf(recipe, line, row.hold) ??
+                  pickedEatenNoteOf(recipe, line, row),
               // The line's previous text when this is a decision an amount
               // edit carried, not yet written for this line (its grams are
               // re-derived for this line until the next compute writes it);
@@ -491,16 +498,19 @@ Future<AppliedToOthers?> applyMatchOverride(
     // amount, or the egg parts' sum, not the first part's grams. A HELD
     // discarded medium with no eaten part is poured away, as a confirm
     // writes it (B6, below). A medium part of which is eaten — a dredge, a
-    // braise kept in part, a starter's feeding — keeps its hold on a pick
-    // alone (v23, Run 053 O8): 0 g would drop the eaten part with no flag;
-    // a skip or typed grams answers it, as the panel says.
-    keptHold = grams == null && eatenInPartHolds.contains(outcome.hold);
+    // braise kept in part, a starter's feeding — is the pick rule's
+    // ([pickResolvesHold], Run 054 H5(a)): a divided line counts its eaten
+    // part, the hold resolved; any other keeps its hold with no grams (0 g
+    // would drop the eaten part with no flag; a skip or typed grams
+    // answers it, as the panel says).
+    final pick = grams == null ? pickResolvesHold(outcome) : null;
+    keptHold = pick == false;
     final poured =
-        !keptHold &&
+        pick == null &&
         mediumHolds.contains(outcome.hold) &&
         outcome.source != GramSource.discarded.name;
     final byEngine =
-        keptHold ||
+        pick != null ||
         poured ||
         outcome.source == GramSource.discarded.name ||
         // (The weighed line, Run 048 P9: equivalent — a rule reads "zest

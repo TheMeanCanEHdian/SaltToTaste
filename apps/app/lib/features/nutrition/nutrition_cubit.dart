@@ -633,15 +633,24 @@ class NutritionCubit extends Cubit<NutritionState> {
     );
   }
 
-  /// Drops the pending offer or the shown receipt.
-  void dismissApply() {
-    if (state.offer == null && state.applied == null) {
+  /// Drops the pending offer. A failed apply's error goes with the offer it
+  /// belonged to; leaving it would hold the admin queue on a line that is in
+  /// fact resolved. A receipt shown elsewhere stays.
+  void dismissOffer() {
+    if (state.offer == null) {
       return;
     }
-    // A failed apply's error goes with the offer it belonged to; leaving it
-    // would hold the admin queue on a line that is in fact resolved.
-    emit(
-      state.copyWith(clearOffer: true, clearApplied: true, clearError: true),
-    );
+    emit(state.copyWith(clearOffer: true, clearError: true));
+  }
+
+  /// Drops the shown receipt — never a newer offer for another line, nor
+  /// the error that offer's failed apply carries (Run 054 S8). With no
+  /// offer open, an error left up (a withdrawn offer's message) belongs to
+  /// nothing still open and goes too: kept, it would hold the admin queue.
+  void dismissReceipt() {
+    if (state.applied == null) {
+      return;
+    }
+    emit(state.copyWith(clearApplied: true, clearError: state.offer == null));
   }
 }

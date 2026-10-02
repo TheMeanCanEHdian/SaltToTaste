@@ -73,7 +73,7 @@ void main() {
     final failed = raised.copyWith(error: 'the server fell over');
     expect(queueShouldAdvance(raised, failed), isFalse);
     expect(queueShouldAdvance(failed, failed), isFalse);
-    // dismissApply clears offer AND error in one emit.
+    // dismissOffer clears offer AND error in one emit.
     expect(queueShouldAdvance(failed, idle), isTrue);
     // A failed override (no offer involved) never advances either.
     expect(queueShouldAdvance(inFlight, idle.copyWith(error: 'no')), isFalse);

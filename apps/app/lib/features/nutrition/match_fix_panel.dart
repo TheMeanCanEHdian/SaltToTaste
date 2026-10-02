@@ -114,9 +114,14 @@ bool hasEatenPlusPart(IngredientMatch m) =>
 /// Whether the fix panel leads with the amount (C): a No grams line on a
 /// plausible food, confirmed WITH its amount in one step. (A Check line with
 /// no grams keeps the candidates first — its food is probably wrong — and
-/// gets a plain Confirm whose server-side conversion needs no amount.)
+/// gets a plain Confirm whose server-side conversion needs no amount.) Not
+/// a held line: a pick alone keeps a dredge's, a starter's or a braise's
+/// hold with no grams (v23), and leading with the line's amount would
+/// count the whole medium — it takes the held line's ways out instead.
 bool confirmsWithAmount(IngredientMatch m) =>
-    m.fdcId != null && matchBucketOf(m) == MatchBucket.noAmount;
+    m.fdcId != null &&
+    !isHeldLine(m) &&
+    matchBucketOf(m) == MatchBucket.noAmount;
 
 /// Whether a line gets the plain "Confirm" (C · Check, no grams): an engine
 /// pick below the gate stored without its food's detail, which the confirm
@@ -215,12 +220,14 @@ class WhyLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final held = bucket == MatchBucket.check
-        ? holdReason(match.hold, note: match.holdNote)
-        : null;
+    // Whatever the bucket: a pick alone on a held line keeps the hold with
+    // no grams (No grams), and a person's decision can carry one too — the
+    // reason always shows (Run 054 S5/O6).
+    final held = holdReason(match.hold, note: match.holdNote);
     final (text, color) = switch (bucket) {
       // Ruling 5: a held medium or shell line says which way out it takes.
-      MatchBucket.check when held != null && match.hold == 'in_shell' => (
+      MatchBucket.check ||
+      MatchBucket.noAmount when held != null && match.hold == 'in_shell' => (
         '$held — held out of the totals: enter the edible grams (the shells '
             'are not eaten), or skip it',
         SaltColors.warnInk,
@@ -230,7 +237,8 @@ class WhyLine extends StatelessWidget {
             'part, or skip it if it is all poured away',
         SaltColors.warnInk,
       ),
-      MatchBucket.check when held != null && isHeldLine(match) => (
+      MatchBucket.check ||
+      MatchBucket.noAmount when held != null && isHeldLine(match) => (
         '$held — held out of the totals: skip it if it is poured away, or '
             'enter the grams that are eaten',
         SaltColors.warnInk,
@@ -250,15 +258,21 @@ class WhyLine extends StatelessWidget {
         SaltColors.warnInk,
       ),
       MatchBucket.noAmount => (
-        'Matched, but no amount found — not counted yet',
+        'Matched, but no amount found — not counted yet'
+            '${held == null ? '' : '. $held'}',
         SaltColors.infoInk,
       ),
       MatchBucket.noMatch => (
         'No USDA match found — not counted',
         SaltColors.errInk,
       ),
-      MatchBucket.counted => ('', SaltColors.muted),
-      MatchBucket.skipped => ('Excluded from the totals', SaltColors.muted),
+      // A divided line's hold a pick resolved says so ("eaten part counted
+      // after your pick", the server's hold_note with no hold; Run 054 H5a).
+      MatchBucket.counted => (held ?? match.holdNote ?? '', SaltColors.muted),
+      MatchBucket.skipped => (
+        'Excluded from the totals${held == null ? '' : '. $held'}',
+        SaltColors.muted,
+      ),
     };
     // A decision an amount edit carried: what it counts was weighed on
     // the line's previous text until the next compute writes it (a skip

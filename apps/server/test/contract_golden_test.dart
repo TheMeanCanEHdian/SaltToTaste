@@ -219,6 +219,109 @@ const List<Map<String, Object?>> _rulesLines = [
   },
 ];
 
+/// 0799 Sourdough Starter's lines and method, as the corpus stores them:
+/// the whole-wheat flour is a starter feeding (`starter_discard`).
+const List<Map<String, Object?>> _starterLines = [
+  {
+    'raw': '4½ cups (24¾ ounces) whole-wheat flour',
+    'amounts': [
+      {
+        'measure': 'volume',
+        'quantity': '4 1/2',
+        'unit': 'cup',
+        'primary': true,
+      },
+      {
+        'measure': 'weight',
+        'quantity': '24 3/4',
+        'unit': 'ounce',
+        'primary': false,
+      },
+    ],
+    'item': 'whole-wheat flour',
+  },
+  {
+    'raw':
+        '5 cups (25 ounces) all-purpose flour, plus extra for maintaining '
+        'starter',
+    'amounts': [
+      {'measure': 'volume', 'quantity': '5', 'unit': 'cup', 'primary': true},
+      {
+        'measure': 'weight',
+        'quantity': '25',
+        'unit': 'ounce',
+        'primary': false,
+      },
+    ],
+    'item': 'all-purpose flour',
+    'prep': 'plus extra for maintaining starter',
+  },
+  {
+    'raw': 'Water, room temperature',
+    'amounts': [],
+    'item': 'Water',
+    'prep': 'room temperature',
+  },
+];
+
+const List<Map<String, Object?>> _starterSteps = [
+  {
+    'number': 1,
+    'text':
+        'Combine whole-wheat flour and all-purpose flour in large '
+        'container. Using wooden spoon, mix 1 cup (5 ounces) flour mixture '
+        'and ⅔ cup (5⅓ ounces) room-temperature water in glass bowl until '
+        'no dry flour remains (reserve remaining flour mixture). Cover with'
+        ' plastic wrap and let sit at room temperature until bubbly and '
+        'fragrant, 48 to 72 hours.',
+  },
+  {
+    'number': 2,
+    'label': 'FEED STARTER',
+    'text':
+        'Measure out ¼ cup (2 ounces) starter and transfer to clean bowl or'
+        ' jar; discard remaining starter. Stir ½ cup (2½ ounces) flour '
+        'mixture and ¼ cup (2 ounces) water into starter until no dry flour'
+        ' remains. Cover with plastic wrap and let sit at room temperature '
+        'for 24 hours.',
+  },
+  {
+    'number': 3,
+    'text':
+        'Repeat step 2 every 24 hours until starter is pleasantly aromatic '
+        'and doubles in size 8 to 12 hours after being refreshed, about 10 '
+        'to 14 days. At this point starter is mature and ready to be baked '
+        'with, or it can be moved to storage. (If baking, use starter once '
+        'it has doubled in size during 8- to 12-hour window. Use starter '
+        'within 1 hour after it starts to deflate once reaching its peak.)',
+  },
+  {
+    'number': 4,
+    'text':
+        'Measure out ¼ cup (2 ounces) starter and transfer to clean bowl; '
+        'discard remaining starter. Stir ½ cup (2½ ounces) all-purpose '
+        'flour and ¼ cup (2 ounces) room-temperature water into starter '
+        'until no dry flour remains. Transfer to clean container that can '
+        'be loosely covered (plastic container or mason jar with its lid '
+        'inverted) and let sit at room temperature for 5 hours. Cover and '
+        'transfer to refrigerator. If not baking regularly, repeat process '
+        'weekly.',
+  },
+  {
+    'number': 5,
+    'text':
+        'Eighteen to 24 hours before baking, measure out ½ cup (4 ounces) '
+        'starter and transfer to clean bowl; discard remaining starter. '
+        'Stir 1 cup (5 ounces) all-purpose flour and ½ cup (4 ounces) '
+        'room-temperature water into starter until no dry flour remains. '
+        'Cover and let sit at room temperature for 5 hours. Measure out '
+        'amount of starter called for in bread recipe and transfer to '
+        'second bowl. Cover and transfer to refrigerator for at least 12 '
+        'hours or up to 18 hours. Remaining starter should be refrigerated '
+        'and maintained as directed.',
+  },
+];
+
 /// Classic Macaroni and Cheese's (0300) salt steps, verbatim (the second
 /// cut after its whisking sentence).
 const List<Map<String, Object?>> _rulesSteps = [
@@ -667,6 +770,54 @@ void main() {
         ])
         ..dispose();
       expect(await statusOf(beans), 'complete');
+
+      // A pick alone on a held line that is not divided (Run 054 S5/O6):
+      // 0799's whole-wheat flour, a starter feeding, picked on its own
+      // food — the row stays held with no grams (status overridden, the
+      // hold kept), the No grams row the app must still explain.
+      final (starter, starterBody) = await harness.send(
+        'POST',
+        '/api/v1/recipes',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {
+            'title': 'Sourdough Starter',
+            'ingredients': [
+              {'items': _starterLines},
+            ],
+            'steps': _starterSteps,
+          },
+        },
+      );
+      expect(starter, HttpStatus.created, reason: starterBody);
+      final starterSlug =
+          ((jsonDecode(starterBody) as Map<String, dynamic>)['recipe']!
+                  as Map<String, dynamic>)['slug']!
+              as String;
+      final (started, startBody) = await harness.send(
+        'POST',
+        '/api/v1/recipes/$starterSlug/nutrition/compute',
+        headers: harness.auth(adminSession, csrf: true),
+      );
+      expect(started, HttpStatus.accepted, reason: startBody);
+      await harness.awaitJob(
+        '/api/v1/nutrition/jobs/'
+        '${(jsonDecode(startBody) as Map<String, dynamic>)['job_id']}',
+        harness.auth(adminSession),
+      );
+      final (pickedStarter, pickBody) = await harness.send(
+        'PUT',
+        '/api/v1/recipes/$starterSlug/nutrition/matches/0',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {'raw': _starterLines.first['raw'], 'fdc_id': 790085},
+      );
+      expect(pickedStarter, HttpStatus.ok, reason: pickBody);
+      await harness.capture(
+        'nutrition_matches_held_pick',
+        'GET',
+        '/api/v1/recipes/$starterSlug/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
     });
 
     tearDownAll(harness.stop);

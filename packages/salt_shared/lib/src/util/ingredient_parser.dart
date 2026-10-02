@@ -95,7 +95,12 @@ class ParsedIngredient {
 ///   alternatives, missing item) or the token after the quantity looks
 ///   unit-like but isn't in the vocabulary (`2 T sugar` must not silently
 ///   read as two of something); [ParseConfidence.parsed] otherwise.
-ParsedIngredient parseIngredientLine(String raw) {
+ParsedIngredient parseIngredientLine(String line) {
+  // Whitespace trimmed and its runs collapsed to one space HERE, once, before
+  // any regex reads the line: a 1,000-character line of spaces made the
+  // lazy-with-space runs below (`_parenMeasureRe`, `_fracCls`) super-linear
+  // (Run 055 D1). The corpus prints no run, so no parse changes.
+  final raw = line.trim().replaceAll(_whitespaceRe, ' ');
   // 1. Leading quantity (the publisher's number span, recovered from text).
   String? quantity;
   var rest = raw.trim();

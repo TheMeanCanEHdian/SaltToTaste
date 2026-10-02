@@ -2294,8 +2294,11 @@ newly recognised as fried (0042, 0114, 0149, 0198, 0288) hold their dredge
 AND discard their oil (a smaller first part a step names — 0114's egg-wash
 tablespoon — stays eaten; 0116's tablespoon and a sauté's four stay
 counted; 400 g or "for frying" remains the fallback with no dredge); grated
-Parmesan, Pecorino and Romano weigh at the corpus's printed 0.24 g/mL (24
-counted rows, a ¼ cup 24.8 → 14.2 g) and shredded at its printed 0.36; a
+Parmesan and Pecorino Romano weigh at the corpus's printed 0.24 g/mL — ATK
+prints the ounce-to-cup pair for both; "Romano" alone has no printed pair
+and takes the same figure as a flagged stand-in (Run 054 corrected this
+sentence's first wording) — 24 counted rows, a ¼ cup 24.8 → 14.2 g, and
+shredded at its printed 0.36; a
 "plus" part that prints its own weight uses it; a pick that kept an
 eaten-in-part hold keeps it through an amount edit on the compute path as
 on the PUT; the divided lines (1133's teaspoon of flour, Indoor Pulled
@@ -2319,6 +2322,66 @@ oracle: 0 violations in 1,000 plain and 1,000 gap seeds. matcherVersion
 detail (the live step); 0042's eaten two tablespoons of oil (~28 g) and
 0288's quarter cup of pan-fry oil are the user's call alongside the open
 sautéed/baked question.
+
+### Run 054's fixes: the oil signal on both sides, a real backfill, the detector memoised, linear regexes (matcher v24)
+
+Run 054 (both fleets on v23, 2026-10-02; no HIGH) found five shapes: a
+class fixed on one side of a conjunction (the frying-oil signal was wired
+only for recipes that also had a dredge, so Crispy Tempeh's cup of oil,
+heated to 375° and poured off, still counted 224 g and the Tostadas' ¾ cup
+168 g; and v23 had narrowed `_fries` so "for deep frying" passed the oil
+rule but no longer the dredge rule); a special case standing in for a
+backfill (v23's first layout "staying at seq 0" re-opened the delete-and-
+re-create ABA the global counter existed to close, and recorded an edited
+line list under the stamp's sequence so a pick plus a revert read fresh
+with a reverted line's food in the totals); the right computation in the
+wrong place (the hold detector ran per matched row per GET line — the
+matches GET on the busiest recipe 1.1 s, the library 4× slower, every PUT
+and apply response too); derived state stored on a person's decision (a
+pick's engine hold stayed frozen across a steps edit that stopped the
+frying; a pick alone on a divided line counted its eaten part at once so
+the hold it kept did nothing); and — from Sonnet's critic — an unbounded
+regex over member-supplied text: the new divided-line reader and its v22
+sibling backtracked quadratically on a period-free run of "1 1 1 …",
+reachable by any member through the matches GET on an internet-facing
+server (the 2 MB request cap would have meant hours). v24 (2026-10-02): the
+oil rule reads the oil's OWN sentence — heated to a frying temperature, or
+discarded / poured off — with or without a dredge, and "pour off all but 2
+tablespoons" is a partial pour-away with the kept part counted (Crispy
+Tempeh 224 → 28 g, Tostadas 168 → 0 g; the fritters' shallow oil stays
+counted and is noted for the user); `_fries` matches frying verbs only
+(not stir-fry, bacon, oven fries, a thermometer) and "for (deep) frying"
+serves both rules; the no-bump branch is deleted and a Dart-side boot
+backfill seeds a real layout row — counter sequence plus the recipe's
+current line texts — for every stamped recipe (1,198 on the snapshot; no
+stamp at 0, none off its layout; idempotent), so every layout bumps and a
+stamp always names a layout whose texts are known; a plain recompute keeps
+the stored hash only while the stored recipe still hashes to it; a target
+deleted during the apply's await files as gone; one hold-state memo per
+request plus a process-wide cache keyed by content hash (the busiest GET
+0.8 s → 30 ms warm, ~0.4 s cold; the library 64 s → 12 s, under v22's 16 s;
+pinned by detector-run and decode counts, never a clock); every regex over
+step or line text made linear — the amount run bounded, the whitespace
+collapsed once at the parser's and the gram resolver's entry, scanned
+sentences capped at 1,000 characters, 186 regex sites audited on twelve
+hostile shapes (worst 0.36 ms; the old `_parsedUnit` lead was 4.1 s) and
+the parser's own normalisation pinned by hand; a decided row's hold is
+re-derived on every compute through the guarded write; a pick on a divided
+line counts the eaten part and resolves the hold ("eaten part counted after
+your pick"), a pick on a non-divided held line keeps the hold with no
+grams; the app shows a hold's reason in every bucket; `_asPrepared` reads
+the measured head (popped popcorn with a "kernels" paren gets the popped
+portion); the plus-part restatement only for the plus part's own food; a
+divided line's eaten part read only from a step naming its ingredient; the
+app's Dismiss no longer drops a pending offer, the queue advances past a
+gone line, an anchored receipt on a different twin is shown. Replay on
+snapshot 13: calls 0; exactly two rows differ from v23 (the two oils);
+buckets unchanged — counted 13,072, check 401, no grams 105, no match 37,
+complete 829, partial 369; 0 person rows touched. The oracle: 0 violations
+in 1,000 plain and 1,000 gap seeds. matcherVersion 24. Left to the user:
+the fritters' shallow oil (0674/0675), whether "air-fry" is a frying verb,
+and the plus-part cheese sentence in API.md (true for a typed line; no
+corpus line reaches it — kept).
 
 ## Decision log (deviations & clarifications)
 

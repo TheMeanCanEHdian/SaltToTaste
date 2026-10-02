@@ -19,6 +19,7 @@ class ApplyToAllStrip extends StatelessWidget {
     required this.applying,
     required this.onApply,
     required this.onDismiss,
+    required this.onDismissReceipt,
     this.promised,
     super.key,
   });
@@ -32,7 +33,13 @@ class ApplyToAllStrip extends StatelessWidget {
   /// An apply is in flight (the button turns into the verb).
   final bool applying;
   final VoidCallback onApply;
+
+  /// "Not now" on the offer.
   final VoidCallback onDismiss;
+
+  /// "Dismiss" on the receipt: its own callback, so dismissing a receipt
+  /// never drops a pending offer for another line (Run 054 S8).
+  final VoidCallback onDismissReceipt;
 
   /// The OTHER recipes the queue's `finishes` promised this apply completes
   /// (the decided line's own recipe left out), or null off the queue: the
@@ -174,7 +181,7 @@ class ApplyToAllStrip extends StatelessWidget {
         FButton(
           variant: FButtonVariant.ghost,
           mainAxisSize: MainAxisSize.min,
-          onPress: onDismiss,
+          onPress: onDismissReceipt,
           prefix: const Icon(FLucideIcons.x, size: 14),
           child: const Text('Dismiss'),
         ),

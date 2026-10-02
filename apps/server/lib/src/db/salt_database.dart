@@ -1661,7 +1661,9 @@ class SaltDatabase {
   /// the texts of the lines the rows are laid out on: a layout that moves or
   /// drops a row or lays them on other lines bumps the recipe's layout
   /// sequence and keeps the texts ([layoutOf]) in the same transaction; one
-  /// that changes nothing writes nothing.
+  /// that changes nothing writes nothing. A first layout always draws a seq
+  /// (v24, Run 054 H4: the seq-0 no-bump branch is gone — every recipe laid
+  /// out before 012 is seeded at boot instead, [seedLayout]).
   void relayoutIngredientMatches(
     String recipeId, {
     required Set<int> drop,
@@ -1672,27 +1674,6 @@ class SaltDatabase {
     final layout = layoutOf(recipeId);
     if (drop.isEmpty && moves.isEmpty && layout.texts == texts) {
       return;
-    }
-    // The first layout of a recipe never laid out (no layout row: every
-    // recipe stamped before migration 012, which 013 backfilled to seq 0)
-    // whose rows already stand on these lines — each row's text is its
-    // line's — and that moves and drops none changes nothing a writer read:
-    // it records the texts and keeps the seq, so the backfilled stamp stays
-    // fresh (Run 053 S2/S18). A recipe with no rows still draws a new seq: a
-    // recipe deleted and re-created under its id starts with none.
-    if (layout.texts == null && drop.isEmpty && moves.isEmpty) {
-      final rows = ingredientMatchesFor(recipeId);
-      if (rows.isNotEmpty &&
-          rows.every(
-            (row) =>
-                row.position < lines.length && row.raw == lines[row.position],
-          )) {
-        _prepared(
-          'INSERT INTO recipe_layout (recipe_id, seq, lines) '
-          'SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM recipes WHERE id = ?)',
-        ).execute([recipeId, layout.seq, texts, recipeId]);
-        return;
-      }
     }
     final delete = _prepared(
       'DELETE FROM ingredient_matches WHERE recipe_id = ? AND position = ?',
@@ -1737,11 +1718,55 @@ class SaltDatabase {
     });
   }
 
+  /// The recipes with match rows or a nutrition stamp and no layout row —
+  /// every one computed before migration 012 ([seedLayout]).
+  List<String> recipesWithoutLayout() => [
+    for (final row in _prepared(
+      'SELECT id FROM recipes r WHERE NOT EXISTS '
+      '(SELECT 1 FROM recipe_layout l WHERE l.recipe_id = r.id) AND '
+      '(EXISTS (SELECT 1 FROM recipe_nutrition n WHERE n.recipe_id = r.id) '
+      'OR EXISTS (SELECT 1 FROM ingredient_matches m '
+      'WHERE m.recipe_id = r.id))',
+    ).select())
+      row['id'] as String,
+  ];
+
+  /// Seeds [recipeId]'s first layout (Run 054 H4: the boot backfill,
+  /// services/layout_backfill.dart): a seq drawn from the global counter,
+  /// [lines] as its texts, and its stamp's layout 0 (migration 013's "never
+  /// laid out") moved to that seq — in ONE transaction, so a stamp always
+  /// names a real layout and no seq is ever repeated for an id. Nothing when
+  /// the recipe has a layout row already, or is gone. Returns whether it
+  /// seeded.
+  bool seedLayout(String recipeId, List<String> lines) {
+    var seeded = false;
+    _inTransaction(() {
+      if (layoutOf(recipeId).texts != null ||
+          _prepared(
+            'SELECT 1 FROM recipes WHERE id = ?',
+          ).select([recipeId]).isEmpty) {
+        return;
+      }
+      _prepared('UPDATE layout_counter SET seq = seq + 1').execute();
+      _prepared(
+        'INSERT INTO recipe_layout (recipe_id, seq, lines) '
+        'SELECT ?, seq, ? FROM layout_counter',
+      ).execute([recipeId, jsonEncode(lines)]);
+      _prepared(
+        'UPDATE recipe_nutrition SET layout_seq = '
+        '(SELECT seq FROM layout_counter) '
+        'WHERE recipe_id = ? AND layout_seq = 0',
+      ).execute([recipeId]);
+      seeded = true;
+    });
+    return seeded;
+  }
+
   /// A recipe's match-row layout (migration 012): `seq` changes with every
   /// layout that moved or dropped its rows or changed the lines they stand
   /// on, drawn from one global counter so it never repeats for a recipe id
-  /// (migration 013; 0: never laid out, or first laid out moving nothing
-  /// — [relayoutIngredientMatches]), `texts` is the JSON array of those
+  /// (migration 013; 0: never laid out — a recipe computed before 012 is
+  /// seeded one at boot, [seedLayout]), `texts` is the JSON array of those
   /// lines' texts and `lines` decodes it (both null: never laid out).
   ({int seq, String? texts, List<String>? lines}) layoutOf(String recipeId) {
     final rows = _prepared(

@@ -983,8 +983,11 @@ void main() {
     // recorded the gelatin dessert (2710310) and the coconut water (2707572)
     // for the _asPrepared keep-side pins: the coconut water is a hit (in
     // 'unsweetened' and 'unsweetened desiccated coconut'), equal in every
-    // digit.
-    expect(compared, 302);
+    // digit. Matcher v24 recorded four searches for the H5(a) pick pins (0279
+    // and 0129 Indoor Pulled Chicken: 'sichuan peppercorns', 'liquid
+    // smoke', 'boneless skinless chicken thighs', 'hot sauce'): one more
+    // recorded food is a hit in them, equal in every digit (differ stays).
+    expect(compared, 303);
     expect(differ, 224);
   });
 

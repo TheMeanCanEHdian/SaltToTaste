@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:salt_app/core/api/auth_repository.dart';
 import 'package:salt_app/core/api/import_repository.dart';
@@ -510,6 +511,40 @@ void main() {
       expect(holdReason('cured_for_fresh'), contains('a preserved record'));
       expect(held['in_shell'], contains('Bought in the shell'));
       expect(held['discarded_medium'], contains('drained cooking water'));
+    });
+
+    // Run 054 S5/O6: the server's real answer after a pick alone on 0799's
+    // starter feeding — overridden, no grams, the hold kept — buckets No
+    // grams, and the line still says why it is held, with its ways out.
+    testWidgets('a pick alone on a held line reads its hold in No grams', (
+      tester,
+    ) async {
+      final raw = golden('nutrition_matches_held_pick');
+      final parsed = await tester.runAsync(
+        () => NutritionRepository(goldenDio(raw)).matches('sourdough-starter'),
+      );
+      final row = parsed!.first;
+      expect(
+        (row.status, row.grams, row.hold),
+        ('overridden', null, 'starter_discard'),
+      );
+      expect(matchBucketOf(row), MatchBucket.noAmount);
+      expect(confirmsWithAmount(row), isFalse);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WhyLine(match: row, bucket: matchBucketOf(row)),
+          ),
+        ),
+      );
+      expect(
+        find.textContaining(
+          '${holdReason(row.hold)!} — held out of the totals: skip it if it '
+          'is poured away, or enter the grams that are eaten',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('no amount found'), findsNothing);
     });
 
     test('an uncomputed recipe parses as unmatched lines', () async {

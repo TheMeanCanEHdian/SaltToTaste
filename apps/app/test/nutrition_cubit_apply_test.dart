@@ -284,7 +284,7 @@ void main() {
     expect(applied.completedRecipes.first, 'recipe-0');
     expect(cubit.state.applying, isFalse);
 
-    cubit.dismissApply();
+    cubit.dismissReceipt();
     expect(cubit.state.applied, isNull);
   });
 
@@ -458,6 +458,83 @@ void main() {
     expect(cubit.state.offer, isNull);
   });
 
+  // Run 054 S8: a receipt and a newer offer coexist (the `newer` path
+  // above); Dismiss on the receipt — here the unanchored one, whose line a
+  // save removed — drops only the receipt, never offer B.
+  test(
+    'S8: dismissing a receipt keeps a pending offer for another line',
+    () async {
+      await boot(others: 41);
+      final a = flour();
+      final b = cubit.state.matches!.firstWhere(
+        (m) => m.position != a.position && m.fdcId != null,
+      );
+      await cubit.override(a.position, raw: a.raw, fdcId: 123456);
+      await pumpEventQueue();
+      adapter.gate = Completer<void>();
+      final sweep = cubit.applyToAll();
+      await pumpEventQueue();
+      await cubit.override(b.position, raw: b.raw, confirmed: true);
+      await pumpEventQueue();
+      adapter.layout = [
+        for (final m in cubit.state.matches!)
+          if (m.position != a.position) m.raw,
+      ];
+      adapter.gate!.complete();
+      adapter.gate = null;
+      await sweep;
+      await pumpEventQueue();
+      expect(cubit.state.applied, isNotNull);
+      expect(cubit.state.applied!.position, isNull);
+      final offerB = cubit.state.offer;
+      expect(offerB?.raw, b.raw);
+      cubit.dismissReceipt();
+      expect(cubit.state.applied, isNull);
+      expect(
+        cubit.state.offer,
+        offerB,
+        reason: 'offer B survives Dismiss of A',
+      );
+      // …and "Not now" on offer B leaves nothing behind.
+      cubit.dismissOffer();
+      expect(cubit.state.offer, isNull);
+    },
+  );
+
+  // S8's other arm: offer B's line is gone from the answer too, so B is
+  // withdrawn and its message stands beside A's receipt with no offer
+  // open. Dismissing the receipt clears that message — nothing open owns
+  // it, and kept it holds the admin queue (queueShouldAdvance).
+  test('S8: dismissing a receipt with no offer open clears a withdrawn '
+      "offer's message", () async {
+    await boot(others: 41);
+    final a = flour();
+    final b = cubit.state.matches!.firstWhere(
+      (m) => m.position != a.position && m.fdcId != null,
+    );
+    await cubit.override(a.position, raw: a.raw, fdcId: 123456);
+    await pumpEventQueue();
+    adapter.gate = Completer<void>();
+    final sweep = cubit.applyToAll();
+    await pumpEventQueue();
+    await cubit.override(b.position, raw: b.raw, confirmed: true);
+    await pumpEventQueue();
+    adapter.layout = [
+      for (final m in cubit.state.matches!)
+        if (m.position != a.position && m.position != b.position) m.raw,
+    ];
+    adapter.gate!.complete();
+    adapter.gate = null;
+    await sweep;
+    await pumpEventQueue();
+    expect(cubit.state.applied, isNotNull);
+    expect(cubit.state.offer, isNull);
+    expect(cubit.state.error, contains('was withdrawn'));
+    cubit.dismissReceipt();
+    expect(cubit.state.applied, isNull);
+    expect(cubit.state.error, isNull);
+  });
+
   test("F7: the receipt carries the server's moved, decided, gone and "
       'failed_lines counts', () async {
     await boot(others: 41);
@@ -510,7 +587,7 @@ void main() {
     await cubit.applyToAll();
     await pumpEventQueue();
     expect(cubit.state.error, isNotNull);
-    cubit.dismissApply();
+    cubit.dismissOffer();
     expect(cubit.state.error, isNull, reason: 'the queue must not stall');
     expect(cubit.state.offer, isNull);
   });
@@ -728,7 +805,7 @@ void main() {
       await cubit.loadMatches(force: true);
       await pumpEventQueue();
       expect(cubit.state.applied?.position, isNull);
-      cubit.dismissApply();
+      cubit.dismissReceipt();
       expect(cubit.state.applied, isNull);
     });
 
