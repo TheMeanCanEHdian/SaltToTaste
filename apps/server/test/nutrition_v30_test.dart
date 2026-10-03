@@ -56,7 +56,7 @@ void main() {
   }
 
   test('every ruled line lands on its record, grams, bucket and basis; the '
-      'fresh ham (waits on detail 168226), the arbol chile (0.5 g) and the '
+      'fresh ham (counted since v32), the arbol chile (0.5 g) and the '
       'mild dried chile (an inch figure, not ruled) do not move', () async {
     for (final (_, _, raw, fdcId, grams, bucket, basis) in _rows) {
       final line = lineOf(raw);
@@ -93,9 +93,10 @@ void main() {
     }
   }, skip: skipIfNoCorpus);
 
-  test('the Q7 bone-in items are rank-as items; the fresh ham is not yet', () {
+  test('the Q7 bone-in items are rank-as items; the fresh ham too since '
+      'v32', () {
     expect(rankAsKeys, containsAll(_boneInItems));
-    expect(rankAsKeys, isNot(contains('bone-in half ham with skin')));
+    expect(rankAsKeys, contains('bone-in half ham with skin'));
     expect(
       {
         for (final item in _boneInItems)
@@ -331,8 +332,8 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed',
     168226,
     '3628.74',
-    'check',
-    'from the printed weight · no edible yield read',
+    'counted',
+    'from the printed weight · approximate (gross weight, no USDA refuse portion)',
   ),
   (
     '0490-spicy-pork-tacos-al-pastor.yaml',

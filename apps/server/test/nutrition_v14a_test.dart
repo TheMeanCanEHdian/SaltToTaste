@@ -850,8 +850,8 @@ void main() {
     });
 
     test('B7: Roast Fresh Ham (0249) takes the fresh shank half (168226) from '
-        'its own answer over the cured rump — still below the gate, for a '
-        'person', () async {
+        'its own answer over the cured rump — counted since v32 (its rank-as '
+        'item, enabled with the detail the live step fetched)', () async {
       final db = tempDb();
       const raw =
           '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably '
@@ -860,8 +860,8 @@ void main() {
       final row = db.ingredientMatchesFor('r').single;
       expect(row.fdcId, 168226);
       expect(row.hold, isNull);
-      expect(belowConfidenceGate(row.confidence), isTrue);
-      expect(bucketOf(row), MatchBucket.check);
+      expect(belowConfidenceGate(row.confidence), isFalse);
+      expect(bucketOf(row), MatchBucket.counted);
       // A line not asking for fresh keeps the ranker's order.
       final ranked = rankCandidates(
         'bone-in half ham with skin',

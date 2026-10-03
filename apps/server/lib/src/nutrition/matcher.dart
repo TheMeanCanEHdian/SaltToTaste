@@ -443,7 +443,21 @@ const Map<String, String> _synonyms = {
 /// `ambiguous_medium` (0288, 0674, 0675). Replay: 191 rows move (A 49,
 /// B 133, C 9), complete 847 → 939. The light sour cream, the brioche and
 /// the dry-cured chorizo wait for the live step, commented.
-const int matcherVersion = 31;
+/// 32 = the live step's rules, enabled (12 details and 2 searches recorded
+/// 2026-10-03). Each dry entry enabled once its detail was read and its
+/// check held: chicken leg quarters (172378, no refuse yield: gross,
+/// approximate), oil-packed tuna (175157), sweetened cranberry juice
+/// (171903), dried onions (170002), the fresh half ham (168226, no refuse
+/// yield: gross, approximate), cooked wheat berries (169744, flagged),
+/// jarred pimentos (168559), low-fat sour cream (173443), brioche buns
+/// (2707682, sized by a 77 g piece figure from its "1 piece" portion, which
+/// the finder alone reads as a dish serving), and the tamarind and egg
+/// volume siblings (167763 "cup, pulp" 120 g; 171287 cup 243 g). One stays
+/// dry, its check failed: the portobello cap (2003598 publishes a racc
+/// portion only). Spanish-style chorizo moves
+/// to a flagged "Salami, Italian, pork" (174603): FDC has no dry-cured
+/// chorizo (the owner's decision).
+const int matcherVersion = 32;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -1599,12 +1613,14 @@ const Map<String, (String, String)> _rankAs = {
     'chicken broilers or fryers meat and skin raw',
     'chicken broilers or fryers meat and skin raw',
   ),
-  // LIVE STEP (waits on detail 168226, roast-fresh-ham|0: the bone-in
-  // weight reads the record's refuse, a request snapshot 13 never made):
-  // 'bone-in half ham with skin': (
-  //   'meaty smoked ham shank or 2 3 smoked ham hocks',
-  //   'pork fresh leg ham shank half separable lean and fat raw',
-  // ),
+  // v32 (the live step, detail 168226 read 2026-10-03): its portions are
+  // 4 oz 113 g, roast 3,868 g, lb 453.6 g — NO refuse yield, so under the
+  // ruling the bone-in ham counts at its printed gross weight, labelled
+  // approximate (roast-fresh-ham|0, 3,628.74 g).
+  'bone-in half ham with skin': (
+    'meaty smoked ham shank or 2 3 smoked ham hocks',
+    'pork fresh leg ham shank half separable lean and fat raw',
+  ),
   'boneless long-cut beef shanks': (
     'boneless long-cut beef shanks',
     'beef shank crosscuts separable lean only trimmed to 1 4 fat choice raw',
@@ -1642,32 +1658,38 @@ const Map<String, (String, String)> _rankAs = {
     'bone-in turkey thighs',
     'turkey retail parts thigh meat and skin raw',
   ),
-  // LIVE STEP (built dry for v30; each waits on the one request named, its
-  // target ranked first in an answer snapshot 13 holds — uncomment with the
-  // request; scratchpad fix31/live_step.md): leg quarters on the leg record
-  // (detail 172378); oil-packed tuna (detail 175157); sweetened cranberry
-  // juice (detail 171903); dried onions on the dehydrated flakes the cached
-  // 'onions' answer names (detail 170002, in place of the plan's search);
-  // the singular portobello cap (detail 2003598); jarred pimentos (detail
-  // 168559) and cooked wheat berries (detail 169744; a flagged stand-in the
-  // v31 misc ruling keeps out until its detail is read).
-  // 'chicken leg quarters': (
-  //   'chicken leg quarters',
-  //   'chicken leg meat and skin raw',
-  // ),
-  // 'bone-in chicken leg quarters': (
-  //   'bone-in chicken leg quarters',
-  //   'chicken leg meat and skin raw',
-  // ),
-  // 'oil-packed tuna': ('oil-packed tuna', 'tuna white canned in oil drained'),
-  // 'sweetened cranberry juice': (
-  //   'cranberries',
-  //   'cranberry juice cocktail bottled',
-  // ),
-  // 'dried onions': ('onions', 'onions dehydrated flakes'),
+  // v32 (the live step, 2026-10-03): each target ranked first in an answer
+  // snapshot 13 holds, enabled once its detail was read and its check held.
+  // Leg quarters on the leg record (172378: leg with skin 344 g, drumstick
+  // 111 g, thigh 185 g, back 49 g, 4 oz — no refuse yield, so the printed
+  // gross weight, labelled approximate, under the ruling).
+  'chicken leg quarters': (
+    'chicken leg quarters',
+    'chicken leg meat and skin raw',
+  ),
+  'bone-in chicken leg quarters': (
+    'bone-in chicken leg quarters',
+    'chicken leg meat and skin raw',
+  ),
+  // 175157 publishes a drained can (178 g) and 3 oz.
+  'oil-packed tuna': ('oil-packed tuna', 'tuna white canned in oil drained'),
+  // 171903 publishes "cup (8 fl oz)" 253 g.
+  'sweetened cranberry juice': (
+    'cranberries',
+    'cranberry juice cocktail bottled',
+  ),
+  // 170002 (the dehydrated flakes the cached 'onions' answer names)
+  // publishes tbsp 5 g and ¼ cup 14 g.
+  'dried onions': ('onions', 'onions dehydrated flakes'),
+  // NOT enabled: the singular portobello cap (detail 2003598) publishes
+  // only a racc portion (85 g) — no per-cap portion, so "1 large
+  // portobello mushroom cap" would gain no grams; the line stays in review.
   // 'portobello mushroom cap': ('portobello mushrooms', 'mushroom portabella'),
-  // 'jarred pimentos': ('jarred pimentos', 'pimento canned'),
-  // 'cooked wheat berries': ('cooked wheat berries', 'wheat khorasan cooked'),
+  // 168559 publishes cup 192 g, tbsp 12 g, slice, whole pimiento 66 g.
+  'jarred pimentos': ('jarred pimentos', 'pimento canned'),
+  // 169744 publishes cup 172 g; a flagged stand-in (khorasan for wheat
+  // berries, [approximationRecords]).
+  'cooked wheat berries': ('cooked wheat berries', 'wheat khorasan cooked'),
   // v31 (Q7, ruled 2026-10-03): the eight small groups, q7rules.py
   // verbatim (olives, sweet and fortified wines, extracts, chile powders,
   // Thai basil, meatloaf mix, fats, black vinegar) — each target named in an
@@ -1804,21 +1826,26 @@ const Map<String, (String, String)> _rankAs = {
     'pickled jalapeno chiles',
     'sauce hot chile sriracha',
   ),
-  // LIVE STEP (built dry for v31 — uncomment with the request; scratchpad
-  // fix31/live_step.md): low-fat sour cream on 173443 "Sour cream, light"
-  // (detail 173443; the cached 'sour cream' answer ranks it first under
-  // these words); brioche buns on 2707682 "Brioche" (detail 2707682, and
-  // only if it publishes a per-bun portion — otherwise leave it out).
-  // 'low-fat sour cream': ('sour cream', 'sour cream light'),
-  // 'brioche buns': ('brioche buns', 'brioche'),
-  // v31 (Q7 chorizo, ruled): Spanish-style (dry-cured) chorizo counts on
-  // FNDDS "Chorizo" (2706179, a cooked fresh profile, flagged) until the
-  // live step lands SR "Chorizo, pork and beef" — LIVE STEP (one search,
-  // 'chorizo pork and beef'; no cached answer names it): replace these two
-  // with ('chorizo pork and beef', 'chorizo pork and beef') and point their
-  // [approximationRecords] entries at its id. Linguiça on its exact class.
-  'spanish-style chorizo': ('spanish-style chorizo', 'chorizo'),
-  'spanish-style chorizo sausage': ('spanish-style chorizo sausage', 'chorizo'),
+  // v32 (the live step, 2026-10-03): low-fat sour cream on 173443 "Sour
+  // cream, light" (the cached 'sour cream' answer ranks it first under these
+  // words; its detail carries energy, 136 kcal, and tablespoon 12 g, cup
+  // 230 g).
+  'low-fat sour cream': ('sour cream', 'sour cream light'),
+  // v32 (the live step's check M4, met: "a '1 …' piece portion", 4 × it a
+  // plausible bun): brioche buns on 2707682 "Brioche" (ranked 0.99 in the
+  // line's own cached answer), sized by the piece figure 'brioche bun' 77 g
+  // read from that detail's "1 piece" (grams.dart: the finder alone reads
+  // "piece" as a dish serving, so the rule needs the figure).
+  'brioche buns': ('brioche buns', 'brioche'),
+  // v32 (Q7 chorizo, the owner's decision 2026-10-03): FDC has no
+  // dry-cured chorizo — the live step's 'chorizo pork and beef' search
+  // returned two taco salads, and 'chorizo' only FNDDS "Chorizo" (2706179)
+  // and the fresh SR pork links (173859 raw, 746781 cooked). Spanish-style
+  // chorizo counts on the cured Italian pork salami the cached 'salami'
+  // answer names (174603), flagged. Both chorizo answers stay cached,
+  // unused. Linguiça on its exact class.
+  'spanish-style chorizo': ('salami', 'salami italian pork'),
+  'spanish-style chorizo sausage': ('salami', 'salami italian pork'),
   'linguica sausage': ('smoked sausage', 'sausage smoked link sausage pork'),
   // v31 (Q6 (d), ruled 2026-10-03): star anise on anise seed, a flagged
   // approximation — FDC has no star anise record; each line's own cached
@@ -2725,8 +2752,9 @@ const Map<String, int> approximationRecords = {
   'beef flap meat': 2727574,
   'turkey drumsticks and thighs': 171533,
   'turkey leg quarters': 171533,
-  // LIVE STEP (with its rank-as item and detail 169744):
-  // 'cooked wheat berries': 169744,
+  // v32 (the live step: detail 169744 read, cup 172 g): cooked wheat
+  // berries as cooked khorasan wheat.
+  'cooked wheat berries': 169744,
   // v31 (Q7 groups, misc, anchovy paste, chorizo; ruled 2026-10-03).
   'kalamata olives': 2710090,
   'nicoise olives': 2710090,
@@ -2773,8 +2801,8 @@ const Map<String, int> approximationRecords = {
   'preserved lemon': 167749,
   'thai with salt preserved radish': 2710099,
   'asian chili-garlic sauce': 171186,
-  'spanish-style chorizo': 2706179,
-  'spanish-style chorizo sausage': 2706179,
+  'spanish-style chorizo': 174603,
+  'spanish-style chorizo sausage': 174603,
   // v31 (Q6 (d)): star anise counted as anise seed.
   'star anise pods': 171316,
   'star anise pod': 171316,

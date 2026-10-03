@@ -1305,7 +1305,12 @@ first volume line that needs it (since matcher v17: Foundation pecans,
 garlic, green cabbage, carrots, celery, baby spinach, iceberg and napa
 cabbage read SR "Nuts, pecans", "Garlic, raw", "Cabbage, raw", "Carrots,
 raw", "Celery, raw", "Spinach, raw", "Lettuce, iceberg (includes crisphead
-types), raw" and "Cabbage, chinese (pe-tsai), raw") (the food stays the
+types), raw" and "Cabbage, chinese (pe-tsai), raw"; since matcher v32,
+the live step's details read, FNDDS "Tamarind" (2709269) reads SR
+"Tamarinds, raw" (167763, `cup, pulp` 120 g: "2 tablespoons tamarind
+paste" is 15 g) and Foundation "Eggs, Grade A, Large, egg whole" (748967)
+reads SR "Egg, whole, raw, fresh" (171287, `cup (4.86 large eggs)` 243 g:
+"2 tablespoons beaten egg" is 30.38 g)) (the food stays the
 line's; since matcher v19 a shredded, grated or thinly sliced line with no
 portion of its own words reads a `shredded` or `grated` portion before the
 median: "3 cups thinly sliced green cabbage" is `cup, shredded` 210 g,
@@ -1928,8 +1933,36 @@ the same words (171081); `salmon steaks`, `skin-on side of salmon` (read
 needs no detail); `turkey drumsticks and thighs`, `turkey leg quarters`
 (read `bone-in turkey thighs`) → `turkey retail parts thigh meat and skin
 raw` (171533, flagged below). The fresh half ham ("bone-in half ham with
-skin") waits: its record's refuse is read from a detail (168226) no
-snapshot holds. Since matcher v31 (the CP10 rulings, 2026-10-03): star
+skin", reads `meaty smoked ham shank or 2 3 smoked ham hocks`) → `pork
+fresh leg ham shank half separable lean and fat raw` (168226) since
+matcher v32: its detail, read in the live step, publishes no refuse yield
+(4 oz, roast 3,868 g, lb), so "1 (6- to 8-pound) bone-in fresh half ham"
+is its printed 3,628.74 g, labelled approximate. (The live step,
+2026-10-03: 14 requests on a scratch copy — 12 food details and 2
+searches. No v32 rule makes a request; each reads answers already
+cached: a rank-as candidate from a snapshot-13 search (fetched 2026-09-08 or
+2026-09-26), a portion from a live-step detail. The chorizo rule
+reads no live-step answer — 174603 is a hit in the 2026-09-26 `salami`
+answer — and the portobello detail (2003598) and the two chorizo
+searches are read by no rule.) Since matcher
+v32 (the live step) also `chicken leg quarters`, `bone-in chicken leg quarters`
+(each its own answer) → `chicken leg meat and skin raw` (172378: no
+refuse yield published — leg 344 g, drumstick 111 g, thigh 185 g, back
+49 g — so the printed gross weight, labelled approximate); `oil-packed
+tuna` → `tuna white canned in oil drained` (175157; "2 (6½-ounce) jars"
+stays the printed 368.54 g); `sweetened cranberry juice` (reads
+`cranberries`) → `cranberry juice cocktail bottled` (171903, `cup (8 fl
+oz)` 253 g); `dried onions` (reads `onions`) → `onions dehydrated flakes`
+(170002, tbsp 5 g); `jarred pimentos` → `pimento canned` (168559, cup
+192 g); `cooked wheat berries` → `wheat khorasan cooked` (169744, cup 172
+g, flagged below); `brioche buns` → `brioche` (2707682): its detail
+weighs a bun only as "1 piece" 77 g, a portion the whole-item finder
+reads as a dish serving, so a `brioche bun` piece figure of 77 g carries
+it, flagged approximate because the piece is read as one bun ("4 brioche
+buns" = `"4 × 77 g each · approximate (FDC's 1-piece portion read as one
+bun)"`). Not enabled, its check failed: `portobello
+mushroom cap` (2003598 publishes a racc portion only — no per-cap
+weight). Since matcher v31 (the CP10 rulings, 2026-10-03): star
 anise (`star anise pods`, `star anise pod`, each its own answer) →
 `spices anise seed` (171316, flagged); Q7's eight small groups —
 `kalamata olives`, `nicoise olives` → `olives black` (2710090); `ruby
@@ -1990,13 +2023,17 @@ with their greens` (reads `radishes`) → `radish` (2709803, exact); `sweet
 onion or 2 shallots` → `shallots raw` (170499, exact); `thai with salt
 preserved radish` (reads `dill or sweet pickles`) → `radishes pickled`
 (2710099); Spanish chorizo — `spanish-style chorizo`, `spanish-style
-chorizo sausage` → `chorizo` (2706179 "Chorizo", flagged: a cooked fresh
-profile, ~25% below a dry-cured one, until the live step's search lands
-SR "Chorizo, pork and beef") — and `linguica sausage` (reads `smoked
-sausage`) → `sausage smoked link sausage pork` (174584, exact). Waiting
-for the live step, commented: `low-fat sour cream` → `sour cream light`
-(detail 173443) and `brioche buns` → `brioche` (detail 2707682, only with
-a per-bun portion). A few rewrites are APPROXIMATIONS, flagged in
+chorizo sausage` (read `salami`) → `salami italian pork` (174603
+"Salami, Italian, pork", flagged; matcher v31 read FNDDS "Chorizo",
+2706179, a cooked fresh profile; FDC has no dry-cured chorizo — the live
+step's `chorizo pork and beef` search returned two taco salads and
+`chorizo` only 2706179 and the fresh SR links, both answers cached and
+unused: the owner's decision of 2026-10-03) — and `linguica sausage`
+(reads `smoked sausage`) → `sausage smoked link sausage pork` (174584,
+exact). Since matcher v32 `low-fat sour cream` (reads `sour cream`) →
+`sour cream light` (173443, not flagged; the 2 tablespoons are 28.69 g by
+the sour-cream density, the record's own cup 230 g agreeing). A few
+rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
 as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
@@ -2035,7 +2072,11 @@ as artichoke (2709766), Lyle's golden syrup as light corn syrup (168837),
 Montasio or aged Asiago as Parmesan (325036), New Mexican pods as dried
 ancho (169396), palm sugar as brown sugar (2710260), preserved lemon as
 lemon peel (167749), Thai salted radish as pickled radishes (2710099) and
-Spanish chorizo as FNDDS "Chorizo" (2706179) — and a FRESH oregano, sage,
+Spanish chorizo as FNDDS "Chorizo" (2706179), since matcher v32 as
+"Salami, Italian, pork" (174603), and since matcher v32 cooked wheat
+berries as cooked khorasan wheat (169744: "2¾ cups cooked wheat berries"
+is `"2 3/4 cup · USDA portion · approximation (counted as Wheat,
+khorasan, cooked)"`, 473 g) — and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram, so — the user's ruling of 2026-09-28 —
 the dried amount the line offers wins, "1 tablespoon minced fresh oregano

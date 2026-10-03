@@ -552,36 +552,64 @@ void main() {
 
     // Matcher v30 moved the first pins (Barbecued Pulled Pork's Boston butt
     // now reads its record's refuse, Braised Turkey's drumsticks an SR
-    // record): the fresh ham (0249) is the SR hit no compute fetches until
-    // the live step asks for 168226, and Hearty Chicken Noodle Soup's
-    // breast halves (0002) a Foundation hit.
-    test('an SR hit never fetched says no yield was read — Roast Fresh Ham '
-        '(0249); a Foundation or FNDDS hit with no portions is approximate — '
-        'Hearty Chicken Noodle Soup (0002)', () async {
-      final db = tempDb();
-      final r = recipeOf(db, 'r1', [
-        '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank '
-            'end, rinsed',
-        '2 (12-ounce) bone-in, skin-on chicken breast halves, cut in half '
-            'crosswise',
-      ]);
-      await matchAndCompute(db, provider, r);
-      final lines = nutritionLines(r);
-      final ham = rowOf(db, 'r1');
-      expect((ham.fdcId, ham.dataType), (168226, 'SR Legacy'));
-      expect(db.fdcFoodCacheGet(168226), isNull);
-      expect(
-        gramBasisFor(db, lines[0], ham),
-        'from the printed weight · no edible yield read',
-      );
-      final breast = rowOf(db, 'r1', 1);
-      expect((breast.fdcId, breast.dataType), (2727569, 'Foundation'));
-      expect(db.fdcFoodCacheGet(2727569), isNull);
-      expect(
-        gramBasisFor(db, lines[1], breast),
-        '2 × 340 g (printed weight) $approximate',
-      );
-    });
+    // record); v32 moved the fresh ham (0249) onto its rank-as item, whose
+    // compute fetches 168226 (no refuse yield: approximate). No corpus line
+    // of the v32 replay is an SR hit left unfetched, so the "no yield read"
+    // label is pinned on the ham's own search hit (168226 with no portions,
+    // as a compute holds it before its detail is fetched); Hearty Chicken
+    // Noodle Soup's breast halves (0002) stay a Foundation hit.
+    test(
+      'an SR hit never fetched says no yield was read — Roast Fresh Ham '
+      "(0249)'s search hit; its fetched detail publishes none, so the "
+      'compute says approximate; a Foundation or FNDDS hit with no '
+      'portions is approximate — Hearty Chicken Noodle Soup (0002)',
+      () async {
+        const hamLine =
+            '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably '
+            'shank end, rinsed';
+        final hit = (await provider.search(
+          'bone-in half ham with skin',
+        )).firstWhere((c) => c.fdcId == 168226);
+        final parsed = parseIngredientLine(hamLine);
+        expect(
+          resolveGrams(
+            amounts: parsed.amounts,
+            food: FdcFood(
+              fdcId: hit.fdcId,
+              description: hit.description,
+              dataType: hit.dataType,
+              nutrientsPer100g: hit.nutrientsPer100g!,
+              portions: const [],
+            ),
+            normalizedItem: normalizeItem(parsed.item ?? hamLine),
+            raw: hamLine,
+          )?.basis,
+          'from the printed weight · no edible yield read',
+        );
+        final db = tempDb();
+        final r = recipeOf(db, 'r1', [
+          hamLine,
+          '2 (12-ounce) bone-in, skin-on chicken breast halves, cut in half '
+              'crosswise',
+        ]);
+        await matchAndCompute(db, provider, r);
+        final lines = nutritionLines(r);
+        final ham = rowOf(db, 'r1');
+        expect((ham.fdcId, ham.dataType), (168226, 'SR Legacy'));
+        expect(db.fdcFoodCacheGet(168226), isNotNull);
+        expect(
+          gramBasisFor(db, lines[0], ham),
+          'from the printed weight $approximate',
+        );
+        final breast = rowOf(db, 'r1', 1);
+        expect((breast.fdcId, breast.dataType), (2727569, 'Foundation'));
+        expect(db.fdcFoodCacheGet(2727569), isNull);
+        expect(
+          gramBasisFor(db, lines[1], breast),
+          '2 × 340 g (printed weight) $approximate',
+        );
+      },
+    );
 
     test("a person's confirm counts a line in the shell at its gross weight: "
         'labelled approximate (Cioppino, 0108)', () async {

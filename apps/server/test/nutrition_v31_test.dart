@@ -168,13 +168,16 @@ void main() {
   });
 
   group('B (Q7 groups, misc, anchovy paste, chorizo; the crumb coat)', () {
-    test('every Q7 line lands on its record, grams, bucket and flagged '
-        'basis — the confit duck fat discarded (0 g), the roasting duck '
-        'fat counted (76.80 g), "10 cornichons" 32 g not 800 g, the '
-        'chili-garlic sauce on sriracha; the light sour cream and the '
-        'brioche buns wait for the live step', () async {
-      await expectRows(_rowsB);
-    });
+    test(
+      'every Q7 line lands on its record, grams, bucket and flagged '
+      'basis — the confit duck fat discarded (0 g), the roasting duck '
+      'fat counted (76.80 g), "10 cornichons" 32 g not 800 g, the '
+      'chili-garlic sauce on sriracha; the light sour cream counted on '
+      'its record and Spanish chorizo on the Italian salami since v32',
+      () async {
+        await expectRows(_rowsB);
+      },
+    );
 
     test('every row is a real corpus line at its position', () {
       expectCorpus(_rowsB);
@@ -189,10 +192,10 @@ void main() {
     );
 
     test('the rank-as items and their flags are exactly the ruled ones; the '
-        'two live-step rules are not built', () {
+        'light sour cream and the brioche buns are built since v32', () {
       expect(rankAsKeys, containsAll(_q7Items));
-      expect(rankAsKeys, isNot(contains('low-fat sour cream')));
-      expect(rankAsKeys, isNot(contains('brioche buns')));
+      expect(rankAsKeys, contains('low-fat sour cream'));
+      expect(rankAsKeys, contains('brioche buns'));
       expect({
         for (final item in _q7Items)
           if (approximationRecords.containsKey(item))
@@ -910,10 +913,10 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     '0007-alcatra-portuguese-style-beef-stew.yaml',
     9,
     '8 ounces Spanish-style chorizo sausage, cut into ¼-inch-thick rounds',
-    2706179,
+    174603,
     '226.80',
     'counted',
-    'from 8 ounce · approximation (counted as Chorizo)',
+    'from 8 ounce · approximation (counted as Salami, Italian, pork)',
   ),
   (
     '0007-tuscan-style-beef-stew.yaml',
@@ -937,10 +940,10 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     '0025-hearty-spanish-style-lentil-and-chorizo-soup.yaml',
     4,
     '1½ pounds Spanish-style chorizo sausage, pricked with fork several times',
-    2706179,
+    174603,
     '680.39',
     'counted',
-    'from 1 1/2 pound · approximation (counted as Chorizo)',
+    'from 1 1/2 pound · approximation (counted as Salami, Italian, pork)',
   ),
   (
     '0031-classic-gazpacho.yaml',
@@ -964,10 +967,10 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     '0033-caldo-verde.yaml',
     1,
     '12 ounces Spanish-style chorizo sausage, cut into ½-inch pieces',
-    2706179,
+    174603,
     '340.19',
     'counted',
-    'from 12 ounce · approximation (counted as Chorizo)',
+    'from 12 ounce · approximation (counted as Salami, Italian, pork)',
   ),
   (
     '0044-mediterranean-chopped-salad.yaml',
@@ -1081,10 +1084,10 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     '0106-paella-on-the-grill.yaml',
     15,
     '1 pound Spanish-style chorizo, cut into ½-inch pieces',
-    2706179,
+    174603,
     '453.59',
     'counted',
-    'from 1 pound · approximation (counted as Chorizo)',
+    'from 1 pound · approximation (counted as Salami, Italian, pork)',
   ),
   (
     '0127-coq-au-riesling.yaml',
@@ -1900,10 +1903,10 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     '1099-spanish-migas-with-fried-eggs.yaml',
     6,
     '6 ounces Spanish-style chorizo sausage, halved lengthwise and sliced ¼ inch thick',
-    2706179,
+    174603,
     '170.10',
     'counted',
-    'from 6 ounce · approximation (counted as Chorizo)',
+    'from 6 ounce · approximation (counted as Salami, Italian, pork)',
   ),
   (
     '1099-spanish-migas-with-fried-eggs.yaml',
@@ -2067,13 +2070,14 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     'counted',
     '1 1/2 cup · USDA portion · approximation (counted as Basil, raw)',
   ),
+  // v32 (the live step): on 173443 "Sour cream, light", counted.
   (
     '0846-fudgy-low-fat-brownies.yaml',
     7,
     '2 tablespoons low-fat sour cream',
-    2706806,
+    173443,
     '28.69',
-    'check',
+    'counted',
     '2 tablespoon ≈ 30 mL',
   ),
   (
@@ -2213,8 +2217,8 @@ const Map<String, int> _q7Flagged = {
   'kashmiri chile powder': 171329,
   'pul biber or ground dried aleppo pepper': 171329,
   'aji amarillo chile paste': 171186,
-  'spanish-style chorizo': 2706179,
-  'spanish-style chorizo sausage': 2706179,
+  'spanish-style chorizo': 174603,
+  'spanish-style chorizo sausage': 174603,
   'thai basil leaves': 2709780,
   'thai or italian basil leaves': 2709780,
   'meatloaf mix': 2514744,

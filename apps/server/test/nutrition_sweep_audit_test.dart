@@ -1019,9 +1019,11 @@ void main() {
     // compared, 19 of them differ in some digit. Its round-3 closer
     // recorded the whole orange (2709171) and ground ginger (170926) for
     // the per-inch record-gate pin: two more compared, both differing in
-    // some digit.
-    expect(compared, 336);
-    expect(differ, 252);
+    // some digit. Matcher v32 recorded the live step's 12 details from its
+    // scratch copy: 11 are hits in a recorded answer (the egg, 171287, is
+    // in none), 9 of them differing in some digit.
+    expect(compared, 347);
+    expect(differ, 261);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

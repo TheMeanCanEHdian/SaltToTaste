@@ -370,6 +370,11 @@ const List<(String, double)> _pieceWeights = [
   // plain" gives its roll as 'roll 1 serving' = 44 g, a portion no step
   // reads (checkpoint 6: 208 g on a multigrain bun went to no grams).
   ('hamburger roll', 44),
+  // v32 (the live step's check M4, met): "4 brioche buns" (crispy-fish-
+  // sandwiches) on FNDDS 2707682 "Brioche", whose detail weighs a bun only
+  // as "1 piece" 77 g — a portion [_portionServingWords] reads as a dish
+  // serving, never one item (4 × 77 = 308 g; the check's 50–80 g a bun).
+  ('brioche bun', 77),
   // "6 burger buns" matched the right roll and had no grams (audit 4).
   ('burger bun', 52),
   ('english muffin', 60),
@@ -417,6 +422,9 @@ const Map<String, String> _approximatePieces = {
   'cornichon': 'ATK: 6 cornichons ≈ 2 tablespoons minced',
   // eggs-piperade: "3 cubanelle peppers (3 to 4 ounces each)".
   'cubanelle pepper': 'ATK: a Cubanelle pepper ≈ 3 to 4 ounces',
+  // v32: FNDDS 2707682 publishes '1 piece' 77 g and no bun portion; the
+  // piece is read as one bun — an assumption, so the basis says so.
+  'brioche bun': "FDC's 1-piece portion read as one bun",
 };
 
 /// v31 (Q6, ruled 2026-10-03): pieces FDC weighs by no length, sized by
@@ -542,15 +550,14 @@ const Map<int, int> volumeSiblings = {
   // Cabbage, napa, leaf, destemmed, raw → Cabbage, chinese (pe-tsai), raw —
   // already its nutrient sibling (engine.dart nutrientSiblings).
   2727583: 169979,
-  // LIVE STEP (built dry for v30; uncomment with the detail, after reading
-  // its portions — neither detail is in any snapshot, so the volume portion
-  // the rule depends on is unchecked): Tamarind (FNDDS, '1 tamarind' 2 g
-  // only) → Tamarinds, raw (detail 167763: tamarind paste ×2, tamarind
-  // juice concentrate); Eggs, Grade A, Large, egg whole (Foundation, no
-  // portion) → Egg, whole, raw, fresh (detail 171287: "2 tablespoons
-  // beaten egg").
-  // 2709269: 167763,
-  // 748967: 171287,
+  // v32 (the live step, 2026-10-03 — each detail read and its volume
+  // portion checked): Tamarind (FNDDS, '1 tamarind' 2 g only) → Tamarinds,
+  // raw, "cup, pulp" 120 g (tamarind paste ×2, tamarind juice
+  // concentrate); Eggs, Grade A, Large, egg whole (Foundation, no portion)
+  // → Egg, whole, raw, fresh, "cup (4.86 large eggs)" 243 g ("2
+  // tablespoons beaten egg").
+  2709269: 167763,
+  748967: 171287,
 };
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —

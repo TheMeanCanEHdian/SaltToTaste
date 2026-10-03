@@ -236,20 +236,42 @@
       "item": "(6- to 8-pound) bone-in fresh half ham with skin",
       "line_amount": "1",
       "kcal_per_100g": 193.0,
-      "portions": [],
+      "portions": [
+        {
+          "amount": 4.0,
+          "unit": null,
+          "description": "oz",
+          "grams": 113.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "roast",
+          "grams": 3868.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "lb",
+          "grams": 453.6,
+          "fill": null
+        }
+      ],
       "others": 0,
       "others_lines": 0,
-      "candidates_query": "bone-in half ham with skin",
+      "candidates_query": "meaty smoked ham shank or 2 3 smoked ham hocks",
       "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
         "fdc_id": 168226,
         "description": "Pork, fresh, leg (ham), shank half, separable lean and fat, raw",
         "data_type": "SR Legacy",
-        "confidence": 0.22,
+        "confidence": 1.0,
         "grams": 3628.736,
         "gram_source": "weight",
-        "gram_basis": "from the printed weight · no edible yield read",
+        "gram_basis": "from the printed weight · approximate (gross weight, no USDA refuse portion)",
         "status": "auto",
         "hold": null,
         "hold_note": null,
@@ -260,49 +282,49 @@
           "fdc_id": 168226,
           "description": "Pork, fresh, leg (ham), shank half, separable lean and fat, raw",
           "data_type": "SR Legacy",
-          "confidence": 0.22
-        },
-        {
-          "fdc_id": 168367,
-          "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, unheated",
-          "data_type": "SR Legacy",
-          "confidence": 0.5
+          "confidence": 1.0
         },
         {
           "fdc_id": 168358,
           "description": "Pork, cured, ham, shank, bone-in, separable lean and fat, unheated",
           "data_type": "SR Legacy",
-          "confidence": 0.5
+          "confidence": 0.6033333333333334
         },
         {
-          "fdc_id": 169177,
-          "description": "Pork, cured, ham, slice, bone-in, separable lean and fat, unheated",
+          "fdc_id": 168347,
+          "description": "Pork, cured, ham -- water added, shank, bone-in, separable lean and fat, unheated",
           "data_type": "SR Legacy",
-          "confidence": 0.5
+          "confidence": 0.5833333333333334
         },
         {
-          "fdc_id": 169174,
-          "description": "Pork, cured, ham, rump, bone-in, separable lean only, unheated",
+          "fdc_id": 169162,
+          "description": "Pork, cured, ham and water product, shank, bone-in, separable lean and fat, unheated",
           "data_type": "SR Legacy",
-          "confidence": 0.5
+          "confidence": 0.5833333333333334
+        },
+        {
+          "fdc_id": 168227,
+          "description": "Pork, fresh, leg (ham), shank half, separable lean and fat, cooked, roasted",
+          "data_type": "SR Legacy",
+          "confidence": 0.5532323232323232
+        },
+        {
+          "fdc_id": 168228,
+          "description": "Pork, fresh, leg (ham), shank half, separable lean only, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.5077777777777779
+        },
+        {
+          "fdc_id": 168357,
+          "description": "Pork, cured, ham, shank, bone-in, separable lean and fat, heated, roasted",
+          "data_type": "SR Legacy",
+          "confidence": 0.4324242424242425
         },
         {
           "fdc_id": 169176,
           "description": "Pork, cured, ham, shank, bone-in, separable lean only, unheated",
           "data_type": "SR Legacy",
-          "confidence": 0.5
-        },
-        {
-          "fdc_id": 168360,
-          "description": "Pork, cured, ham, slice, bone-in, separable lean only, unheated",
-          "data_type": "SR Legacy",
-          "confidence": 0.5
-        },
-        {
-          "fdc_id": 168356,
-          "description": "Pork, cured, ham, rump, bone-in, separable lean and fat, heated, roasted",
-          "data_type": "SR Legacy",
-          "confidence": 0.3345454545454546
+          "confidence": 0.2111111111111112
         }
       ]
     },

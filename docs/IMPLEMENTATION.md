@@ -2876,7 +2876,7 @@ fixer's, the server suite with the corpus 1,958 green. matcherVersion 30.
 ### The accuracy track, part 2: the checkpoint 10 rulings, built (matcher v31)
 
 The owner's rulings of 2026-10-03 (the decision log's entry of that date)
-are built as v31 (2026-10-04), from the planners' tables and four read-only
+are built as v31 (2026-10-03, afternoon), from the planners' tables and four read-only
 preparation reports (the lasagna figures sourced from manufacturers' box
 specifications, the chorizo record check, the forty misc mappings read one
 by one, the dredge-reach survey). Q6: every approved piece figure, each
@@ -2926,6 +2926,46 @@ fresh-copy replay identical to the verifier's, the server suite with the
 corpus and the shared suite green. The live step after v31: 12 food details
 and one search (`scratchpad/fix31/live_step.md` archived under
 `.claude/diag/2026-10-01/fix31/`). matcherVersion 31.
+
+### The accuracy track, part 3: the live step, spent and enabled (matcher v32)
+
+The live step was spent on 2026-10-03 by the owner on a scratch copy of
+snapshot 13 with the deployment's key attached read-only for the run and
+deleted after: 14 requests, every one named in advance by the dry rules
+v30 and v31 had built — 12 food details (the chicken leg quarters, the
+oil-packed tuna, tamarinds, the whole egg, cranberry juice cocktail,
+dehydrated onions, the fresh ham, khorasan wheat, canned pimento, the
+portobello, light sour cream, brioche) and two searches for the Spanish
+chorizo. The searches showed that FoodData Central has no dry-cured
+Spanish chorizo record at all (its SR chorizo is the fresh Mexican link at
+296 kcal), so the five Spanish-chorizo lines count on "Salami, Italian,
+pork" (174603, 425 kcal; sodium about half high against a Spanish label)
+as a flagged approximation at no further cost — the preparation report's
+recommendation. v32 (2026-10-03) then enabled each dry rule only after
+its stated check against the real record: nine checks passed (the
+tamarind and egg volume siblings publish a cup portion, the juice, onions
+and pimento a cup or tablespoon, the tuna its can, the leg quarters and
+the fresh ham no refuse yield — so the gross weight, labelled approximate,
+under the meats ruling); the portobello stays dry (its record publishes a
+serving, no per-cap portion); the brioche enables through a `brioche bun`
+piece figure of 77 g read from the record's own "1 piece" portion and
+flagged approximate because the piece is read as one bun. Replay on the
+fetched copy: calls 0; 20 rows differ from v31, every one attributed to an
+enabled item, none a person's row; counted 13,260 → 13,275, check 269 →
+258, no grams 54 → 50; complete 939 → 949. Fixtures: the 12 details and 4
+searches added as byte-equal copies of the fetched copy's rows; the
+superseded pins (the fresh ham "waits for its detail", the leg quarters
+below the gate, the tamarind lines at no grams) re-pinned; the contract
+goldens changed on the ham entry only. Four verifier rounds (two close
+rounds; the last pass with observations only). The owner's gate: the
+fixtures checked against the fetched copy, the re-pins read, two
+code-anchored mutants (the tamarind sibling removed; the chorizo flag
+removed) killed and restored, the replay re-run on a fresh copy, the
+suites green; the owner added the brioche flag the verifier observed was
+missing. The fetched copy, key-stripped, is snapshot 14 — the replay
+reference from here on (`.claude/diag/2026-10-01/snap14.db`). The
+portobello singular (2003598) remains the one live-step item not enabled.
+matcherVersion 32.
 
 ## Decision log (deviations & clarifications)
 

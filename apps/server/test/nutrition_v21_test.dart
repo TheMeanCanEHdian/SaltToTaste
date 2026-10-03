@@ -1621,9 +1621,10 @@ _moved = [
     null,
     'tamarind juice concentrate',
     2709269,
-    null,
+    // v32: sized by its volume sibling "Tamarinds, raw" (cup, pulp 120 g).
+    '22.50',
     'M1',
-    'no_grams',
+    'counted',
     true,
   ),
   (
