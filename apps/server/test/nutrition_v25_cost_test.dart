@@ -438,10 +438,12 @@ void main() {
           await matchesBody(db, provider, fresh);
           best = sw.elapsedMilliseconds < best ? sw.elapsedMilliseconds : best;
           // Its own steps once, and once more for each recipe the reach
-          // decodes (0491 itself, read back from the database, on the first
-          // GET only: the reach caches holds by content hash).
+          // decodes. Since matcher v31 every 0491 row counts (Q7: its
+          // "ground chipotle powder" was the one row below the gate, whose
+          // reach decoded 0491 itself on the first GET), so no row offers a
+          // reach and nothing is decoded.
           expect(stepIndexCounts['indexes'], 1 + reachDecodes);
-          expect(reachDecodes, i == 0 ? 1 : 0);
+          expect(reachDecodes, 0);
           expectBounded(
             fresh,
             Map.of(stepIndexCounts),

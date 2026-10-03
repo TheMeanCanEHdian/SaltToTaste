@@ -212,7 +212,16 @@ void main() {
         'pieces (scant tablespoon)',
         168570,
       );
-      expect(chipotle, isNull);
+      // Since matcher v31 (Q6) the chipotle's corpus-printed 4.6 g pod; the
+      // mild dried chile (Spanish-Style Garlic Shrimp, 0281) has no figure
+      // and no grams.
+      expect(chipotle, closeTo(2.3, 0.001));
+      final (mild, _) = await on(
+        '1 (2-inch) piece mild dried chile, such as New Mexico, roughly '
+        'broken, seeds included',
+        168570,
+      );
+      expect(mild, isNull);
       final (arbol, _) = await on(
         '10 dried arbol chiles, stemmed, halved lengthwise, and seeds reserved',
         168570,
@@ -239,8 +248,10 @@ void main() {
         173619,
       );
       expect(legs, closeTo(1060, 0.001));
+      // Never a "dash": since matcher v31 (Q6) the piece table's reference
+      // 0.05 g peppercorn, flagged.
       final (peppercorns, _) = await on('8 whole black peppercorns', 170931);
-      expect(peppercorns, isNull);
+      expect(peppercorns, closeTo(0.4, 0.001));
     });
 
     test('a unit named by a bare SR noun: "4 sticks unsalted butter" '

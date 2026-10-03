@@ -971,7 +971,15 @@ table's Parmesan 0.42 (since matcher v23 no corpus line; since v24
 labelled `"· approximate (Parmesan density)"`, the figure it weighs on —
 grated Parmesan is 0.24), ghee on oil's
 0.92 (its record publishes no portion) — e.g. `"2 tablespoon ≈ 30 mL ·
-approximate (paprika density)"`; since matcher v23 a line that says
+approximate (paprika density)"`; since matcher v31 anchovy paste at 6.7 g
+a teaspoon (1.36 g/mL), the mean of ATK's two printed equivalences ("Two
+minced anchovy fillets can be used in place of the anchovy paste", Modern
+Beef Burgundy, 2 × 2706232's 4 g fillet; "substitute 1½ teaspoons of
+anchovy paste for the fillets", Pan-Seared Thick-Cut Boneless Pork Chops,
+5.3 g a teaspoon), labelled `"1 teaspoon ≈ 5 mL · approximate (ATK: 2
+anchovy fillets ≈ 1 to 1½ teaspoons paste)"`, and "instant espresso"
+(171893) at its 13 "instant espresso powder" siblings' 0.43, never the
+record's loose `tsp` 1.0 g; since matcher v23 a line that says
 grated Parmesan or Pecorino weighs the corpus's own printed conversion,
 0.24 g/mL ("1 ounce Parmesan cheese, grated (½ cup)" and every grated
 pair; the user's ruling Q6: a weight ATK prints wins) — "¼ cup grated
@@ -1010,18 +1018,48 @@ apples", "2 large yolks"; since matcher v30 (the user's Q6 ruling: a
 weight ATK prints in the corpus where one exists) a dried New Mexican
 and a dried guajillo chile 7.1 g each — ATK's "3 medium New Mexican pods
 (about ¾ ounce)" (Chili con Carne) and "4 large dried guajillo chiles …
-(about 1 ounce)" (Goan Pork Vindaloo) — flagged approximate: `"2 × 7 g
+(about 1 ounce)" (Goan Pork Vindaloo) — flagged approximate: `"2 × 7.1 g
 each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)"`, `"10 ×
-7 g each · approximate (ATK: 4 large dried guajillo chiles ≈ 1 ounce)"`;
+7.1 g each · approximate (ATK: 4 large dried guajillo chiles ≈ 1 ounce)"`;
 keyed on the DRIED item, so a fresh chile, a chipotle in adobo and the
-"(2-inch) piece mild dried chile" never reach them)
+"(2-inch) piece mild dried chile" never reach them; since matcher v31 (the
+CP10 rulings, each flagged with its source in the basis): a dried
+chipotle 4.6 g (ATK's "½ dried chipotle chile … (scant tablespoon)" on
+168570's cup, Pollo en Mole); fresh ginger and citrus zest strips by the
+length the line prints — "(4-inch)", "(1½-inch piece)", "about 3 inches
+long" — at 8 g an inch of ginger root (ATK's "1 (1-inch) piece fresh
+ginger, grated (about 1 tablespoon)", Roast Fresh Ham, at the ginger
+density) and 0.8 g an inch of orange or lemon peel strip (ATK's "10
+(3-inch) strips orange peel … (¼ cup)", Crispy Orange Beef; lemon "the
+orange-peel strip figure, extended to lemon"), only on the ginger-root or
+peel record and only for a piece or strip count: `"1 piece × 4 inch × 8 g
+per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1
+tablespoon)"`; whole spices by a reference figure — a peppercorn 0.05 g,
+a whole clove 0.1, an allspice berry 0.1, a cardamom pod 0.2, a coriander
+seed 0.01, a star anise pod 0.5 (a flagged figure prints its decimals —
+a sub-gram one all of them, `"15 × 0.05 g each · approximate (reference
+figure: a whole peppercorn)"`, one under 10 g one decimal, `"10 × 3.2 g
+each"`; one of 10 g or more its rounded grams); a lemongrass stalk 10 g
+(reference: trimmed to its bottom 5–6 inches; "N stalks lemongrass" or
+"N lemon grass stalks"); a no-boil lasagna sheet 17 g (Barilla
+Oven-Ready: 9 oz, "at least 15 sheets", label 3 sheets = 51 g) and a
+curly-edged lasagna noodle 25 g (Ronzoni No. 80: label 2 pieces = 50
+g), the longer key winning for no-boil; a bunch
+of scallions 7 × FDC's 15 g scallion (`"2 bunch × 7 × 15 g each ·
+approximate (reference figure: 7 scallions a bunch)"`; any other bunch
+keeps no grams); a cornichon 3.2 g (ATK's "6 cornichons, minced (about 2
+tablespoons)" on 2710078's cup, Austrian-Style Potato Salad) and a
+Cubanelle pepper 99 g (ATK's "3 cubanelle peppers (3 to 4 ounces each)",
+Eggs Piperade). Not built (ruled no grams): dried jujubes and the mild
+dried chile by the inch; an ancho keeps FDC's 17 g)
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying" — since matcher v24 "for deep frying" too —
 or 400 g or more of oil — or, since matcher v23, ¼ cup or more of oil, its
 same-food "plus" part included, in a recipe whose dredge is held `coating`
 by its directions: the oil a dredged food fries in, 0149's "1¾ cups
 vegetable oil" heated to 375 degrees, 0198's "⅔ cup" whose step discards
-it, 0042, 0114, 0288; a sautéing tablespoon stays counted — or, since
+it, 0042, 0114 (0288 since matcher v31 held `ambiguous_medium`, below); a
+sautéing tablespoon stays counted — or, since
 matcher v24, with or without a dredge, ¼ cup or more of oil whose OWN
 sentence heats it to a frying temperature, discards it ("Discard the
 oil") or pours off all but a written part of it ("pour off all but N
@@ -1029,9 +1067,17 @@ oil" — only that form: 0523 Nasi Goreng's "Pour off the oil and reserve"
 keeps it, counted): 0491 Tostadas' "¾ cup vegetable oil" heated "to 350
 degrees", 0 g; a part its sentence keeps, "pour off all but 2 tablespoons
 oil" (1193 Crispy Tempeh's cup), is counted — 28 g of the 224 —, the
-rest discarded; 0040's dressing oil, 0500's rice oil, 0672's coconut oil
-and the fritter oils of 0674/0675, which no sentence heats to a
-temperature or discards, stay counted. Since matcher v25 (RULE B) a
+rest discarded; 0040's dressing oil, 0500's rice oil and 0672's coconut
+oil, which no sentence heats to a temperature or discards, stay counted
+(the fritter oils of 0674/0675 too until matcher v31, which holds them
+`ambiguous_medium`). Since matcher v31 a same-food "plus" part the steps
+eat in pieces after the fat's LAST discard sentence is the eaten part
+when those pieces total it — 0042 Almond-Crusted Chicken's "¾ cup plus 2
+tablespoons vegetable oil": "Discard the oil …", then "Heat 1 tablespoon
+more oil" and "add the remaining 1 tablespoon oil" (the dressing), 28 g
+counted, the ¾ cup discarded — and a small FIRST part a step names is
+the eaten one even when the steps name the large part too (0675's "1
+teaspoon plus ½ cup"). Since matcher v25 (RULE B) a
 sentence belongs to a LINE, never to the word "oil" — and since v26 to
 every frying FAT the mass rule knows: oil, shortening and lard, each read
 by its OWN noun ("Heat the shortening in a Dutch oven to 375 degrees"
@@ -1547,7 +1593,14 @@ clause cut only at a mark since v28) or
 discards the fat the food cooked in, or a line "for frying" (since v24
 "for deep frying" / "for deep-frying" too, the oil's own signal); 0149
 Easier Fried Chicken, 0198 Crispy Pan-Fried Pork Chops, 0114, 0042 and
-0288 joined, 16 lines in all. A sauté that keeps its fat and a baked
+0288 joined, 16 lines in all. Since matcher v31 (B4, under that ruling
+only) the bread a held breading processes into its crumbs is held with
+its flour: a line whose head is bread, in a recipe that holds a dredge,
+where a step processes the bread ("Process the dry bread in a food
+processor to very fine crumbs") and a dredge sentence sets out the crumbs
+("Transfer the bread crumbs to a shallow dish") — 0233 Pork Schnitzel's 7
+slices (140 g) and 0114 Breaded Chicken Cutlets' 3 slices (84 g); a
+sautéed or baked breading's bread stays counted. A sauté that keeps its fat and a baked
 dredge stay counted — the user's pending question. A batter the food
 is folded into is eaten whole and is none, nor is a sauce's thickener under
 ¼ cup, nor a dredge in a recipe that does not fry. Held until the server's
@@ -1558,11 +1611,30 @@ or "bring", the food added ("add", "arrange") in the next sentence — that
 is strained after cooking ("cooking liquid through … strainer") and of
 which a later step keeps only a written part ("Pour 1 cup defatted
 cooking liquid", "½ cup reserved defatted liquid"), no step using the
-"remaining" liquid; the kept part is `match.hold_note`),
+"remaining" liquid; since matcher v31 also a poach whose liquid is poured
+away but a measured part — "Remove ¼ cup liquid from the saucepan and set
+aside; discard the remaining liquid" (0488 Enchiladas Verdes): every line,
+first of its head, that the sentences of that step before it name (the
+oil, onion, garlic, cumin and broth simmered with the chicken; the
+chicken lifted out is not named), unless a later sentence uses a
+"remaining" liquid, the parts written after that step eaten ("the
+remaining 2 teaspoons oil", 9.07 g; "the remaining 1 teaspoon garlic" —
+no grams: 1104647 publishes no volume portion); the kept part is
+`match.hold_note`, `"¼ cup liquid; 2 teaspoons oil is used outside the
+braise, eaten"`),
 `ambiguous_medium` (since v25, RULE B: an oil of ¼ cup or more that a
 frying, discard or pour-off sentence — or a fried food's dredge — could
 be about while another oil line could too, no word of the sentence
-naming which; see `discarded` above; the sentence is `match.hold_note`).
+naming which; see `discarded` above; since matcher v31 also every frying
+candidate of a fat no sentence of its own fries — none names it with a
+frying heat, a discard or a pour-off — in a recipe whose evidence is the
+fry VERB, when no line of the fat is zeroed by the mass rule (the owner's
+R4 ruling: 0288 Maryland Crab Cakes' ¼ cup, "pan-fry until the outsides
+are crisp", no longer zeroed by its dredge; 0674 Corn Fritters' ¼ cup and
+0675 Southern Corn Fritters' "1 teaspoon plus ½ cup", "Fry until golden
+brown", no longer counted whole — the teaspoon that sautés the corn is
+the eaten part, 4.53 g held; 0672's sauce coconut oil stays counted, its
+fryer oil zeroed by mass); the sentence is `match.hold_note`).
 These four are
 medium holds like `discarded_medium`: a LINE hold, no grams stored unless a
 "plus" part is eaten — or, since matcher v23, a divided line's part a step
@@ -1783,7 +1855,7 @@ Since matcher v21 a few items are RANK-AS items: the line reads an answer
 FDC already gave (its own, or the named query's) ranked as if the
 record's own name had been searched. An answer already cached sends
 nothing; an answer not yet cached is searched once, under its own words,
-as any line's is (in this library all 70 answers are cached). A rank-as
+as any line's is (in this library all 142 answers are cached). A rank-as
 item is never a rewrite key or target (those are "A or B" food nouns:
 the fragment `thai`, from "2 Thai, serrano, or jalapeño chiles", is
 rank-as so "Thai or Italian basil leaves" is not read as hot peppers — it
@@ -1857,7 +1929,74 @@ needs no detail); `turkey drumsticks and thighs`, `turkey leg quarters`
 (read `bone-in turkey thighs`) → `turkey retail parts thigh meat and skin
 raw` (171533, flagged below). The fresh half ham ("bone-in half ham with
 skin") waits: its record's refuse is read from a detail (168226) no
-snapshot holds. A few rewrites are APPROXIMATIONS, flagged in
+snapshot holds. Since matcher v31 (the CP10 rulings, 2026-10-03): star
+anise (`star anise pods`, `star anise pod`, each its own answer) →
+`spices anise seed` (171316, flagged); Q7's eight small groups —
+`kalamata olives`, `nicoise olives` → `olives black` (2710090); `ruby
+port`, `cream sherry`, `sweet marsala`, `mirin or sweet sherry` (read
+`sherry`) → `wine dessert sweet` (2710692); `dry marsala` → `wine dessert
+dry` (175112); `dry riesling` → `wine table white riesling` (173200,
+exact); `barolo wine` (reads `chianti`) → `wine red` (2710688, exact);
+`fluid ounces champagne` (reads `dry white wine`) → `wine white`
+(2710689); `kirsch` (reads `brandy`) → `brandy` (2710699); `peach
+schnapps` (reads `kirsch`) → `liqueur` (2710623); `almond extract`,
+`coconut extract` → `vanilla extract` (173471); `ancho chile powder`,
+`kashmiri chile powder`, `pul biber or ground dried aleppo pepper` (read
+`paprika`) → `spices paprika` (171329); `chipotle chile powder`, `ground
+chipotle powder` (read `spices pepper red cayenne`) → `spices pepper red
+or cayenne` (170932); `aji amarillo chile paste` (reads `pickled jalapeno
+chiles`) → `sauce hot chile sriracha` (171186); `thai basil leaves`,
+`thai or italian basil leaves` (read `basil leaves`) → `basil raw`
+(2709780); `meatloaf mix` (reads `93 percent lean ground turkey`) → `beef
+ground 80 lean meat 20 fat raw` (2514744); `duck fat` → `fat goose`
+(173572; "6 cups duck fat, chicken fat, or vegetable oil for confit" is a
+frying medium, 0 g discarded — the `fat` head joined the frying fats —
+while "6 tablespoons duck fat" roasting potatoes counts 76.80 g); `chili
+oil` and `vegetable oil more for cooking grate` (read `vegetable oil`) →
+`vegetable oil nfs` (2710180; the grate line exact); `chinese black
+vinegar` (reads `balsamic vinegar`) → `vinegar balsamic` (172241);
+`anchovy paste` → `fish anchovy` (2706232, weighed above); the misc
+mappings (each read from its prep30 review): `anaheim chiles`,
+`cubanelle peppers`, `cubanelle pepper` (read `cubanelle peppers`) →
+`pepper banana` (169394); `angel hair pasta`, `dried pappardelle`, `penne
+rigate` → `pasta dry enriched` (169736, exact); `asian chili-garlic
+paste` and `asian chili-garlic sauce` (read `pickled jalapeno chiles`) →
+`sauce hot chile sriracha` (171186; the sauce read "Garlic sauce", 683
+kcal); `broccolini` (reads `broccoli`) → `broccoli` (747447); `candied
+yams` → `yam raw` (170071); `chicory or escarole` (reads `escarole`) →
+`escarole cooked boiled drained no salt added` (168413); `ciabatta`,
+`ciabatta bread`, `crusty bread`, `rustic crusty bread` (read `sprigs
+thai or italian basil`) → `bread italian grecian armenian` (2707614,
+exact); `cornichons` (reads `spicy pickled radishes`) → `pickles dill`
+(2710078); `dried red beans` (reads `red kidney beans`) → `beans kidney
+red mature seeds raw` (173744); `frank s redhot original sauce` (reads
+`tabasco or other hot sauce`) → `hot pepper sauce` (2710093, exact);
+`fresno chiles`, `habanero chiles`, `habanero chile`, `thai red chile`
+(read `serrano or jalapeno chiles`) → `peppers hot raw` (2709798,
+exact); `gai choy` (reads `dry mustard`) → `mustard greens` (169256,
+exact); `instant espresso` (reads `instant espresso powder`) →
+`beverages coffee instant regular powder` (171893, exact); `italian sub
+rolls` → `roll multigrain` (2707782); `jarred whole artichoke hearts in
+water` → `artichoke` (2709766); `ketchup or chili sauce` (reads
+`ketchup`) → `ketchup` (2709733, exact); `lyle s golden syrup` (reads
+`light corn syrup`) → `syrups corn light` (168837); `mexican lager`,
+`mild-flavored lager` (read `beer`) → `beer` (2710616, exact); `montasio
+or aged asiago cheese` (reads `parmesan cheese`) → `parmesan cheese`
+(325036); `new mexican pods` (reads `ancho pods`) → `peppers ancho dried`
+(169396); `ouzo`, `pastis or pernod` (read `brandy`) → `brandy`
+(2710699); `palm sugar` → `sugar brown` (2710260); `preserved lemon`
+(reads `lemon or lime wedges`) → `lemon peel raw` (167749); `radishes
+with their greens` (reads `radishes`) → `radish` (2709803, exact); `sweet
+onion or 2 shallots` → `shallots raw` (170499, exact); `thai with salt
+preserved radish` (reads `dill or sweet pickles`) → `radishes pickled`
+(2710099); Spanish chorizo — `spanish-style chorizo`, `spanish-style
+chorizo sausage` → `chorizo` (2706179 "Chorizo", flagged: a cooked fresh
+profile, ~25% below a dry-cured one, until the live step's search lands
+SR "Chorizo, pork and beef") — and `linguica sausage` (reads `smoked
+sausage`) → `sausage smoked link sausage pork` (174584, exact). Waiting
+for the live step, commented: `low-fat sour cream` → `sour cream light`
+(detail 173443) and `brioche buns` → `brioche` (detail 2707682, only with
+a per-bun portion). A few rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
 as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
@@ -1876,7 +2015,27 @@ sirloin (2727574: "1½ pounds beef flap meat, trimmed" is `"from 1 1/2
 pound · approximation (counted as Beef, top sirloin steak, raw)"`) and
 turkey drumsticks and thighs, and turkey leg quarters, as turkey thigh
 meat and skin (171533; FDC's leg record 171493 has no cached detail —
-their weight is the gross weight, labelled approximate too), and a FRESH oregano, sage,
+their weight is the gross weight, labelled approximate too), since
+matcher v31 (the CP10 rulings) star anise as anise seed (171316), and
+every Q7 stand-in above not marked exact — the brined olives as black
+olives (2710090), the sweet and fortified wines as dessert wines (2710692,
+175112), champagne as white wine (2710689), kirsch, ouzo and pastis as
+brandy (2710699), peach schnapps as liqueur (2710623), almond and coconut
+extract as vanilla extract (173471), the single-chile powders as paprika
+(171329) or cayenne (170932), ají amarillo and chili-garlic paste or
+sauce as sriracha (171186), Thai basil as basil (2709780), meatloaf mix as
+80/20 ground beef (2514744), duck fat as goose fat (173572), chili oil as
+vegetable oil (2710180), black vinegar as balsamic (172241), anchovy
+paste as fish anchovy (2706232), Anaheim and Cubanelle as banana pepper
+(169394), broccolini as broccoli (747447), candied yams as raw yam
+(170071), chicory or escarole as boiled escarole (168413), cornichons as
+dill pickles (2710078), dried small red beans as kidney beans (173744),
+Italian sub rolls as multigrain rolls (2707782), jarred artichoke hearts
+as artichoke (2709766), Lyle's golden syrup as light corn syrup (168837),
+Montasio or aged Asiago as Parmesan (325036), New Mexican pods as dried
+ancho (169396), palm sugar as brown sugar (2710260), preserved lemon as
+lemon peel (167749), Thai salted radish as pickled radishes (2710099) and
+Spanish chorizo as FNDDS "Chorizo" (2706179) — and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram, so — the user's ruling of 2026-09-28 —
 the dried amount the line offers wins, "1 tablespoon minced fresh oregano

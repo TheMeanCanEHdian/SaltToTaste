@@ -180,19 +180,24 @@ void main() {
       }
     });
 
-    test("M12: 0218's unmatched cornichon-plus-brine line in two recipes "
-        '(real line, duplicated): a pick on one neither offers nor writes '
-        'the other', () async {
+    test("M12: 0218's cornichon-plus-brine line in two recipes (real line, "
+        'duplicated): a pick on one neither offers nor writes the other — '
+        'unmatched until matcher v31, since then on "Pickles, dill" '
+        '(2710078, Q7 misc) held `second_food`: a line hold no decision on '
+        'the key moves', () async {
       final db = tempDb();
-      // Beef Tenderloin with Smoky Potatoes and Persillade Relish (0218):
-      // FDC's recorded answer for 'cornichons' is empty.
+      // Beef Tenderloin with Smoky Potatoes and Persillade Relish (0218).
       const cornichon = '6 tablespoons minced cornichons plus 1 teaspoon brine';
       final a = recipeOf(db, 'ra', [cornichon]);
       final b = recipeOf(db, 'rb', [cornichon]);
       for (final r in [a, b]) {
         await matchAndCompute(db, provider, r);
       }
-      expect(db.ingredientMatchesFor('rb').single.status, 'unmatched');
+      final before = db.ingredientMatchesFor('rb').single;
+      expect(
+        (before.status, before.fdcId, before.hold),
+        ('auto', 2710078, 'second_food'),
+      );
       final applied = await applyMatchOverride(db, provider, a, 0, {
         'fdc_id': 2710078, // Pickles, dill
         'apply_to_all': true,
@@ -200,7 +205,10 @@ void main() {
       expect((applied!.recipes, applied.lines), (0, 0));
       expect((await matchOf(db, a, 0))['others'], 0);
       final row = db.ingredientMatchesFor('rb').single;
-      expect((row.status, row.fdcId, row.hold), ('unmatched', null, null));
+      expect(
+        (row.status, row.fdcId, row.hold),
+        ('auto', 2710078, 'second_food'),
+      );
     });
 
     test('M12: an unmatched rinsed salt (no-hit state seeded: negative path) '
@@ -243,32 +251,37 @@ void main() {
   });
 
   group('the reach leaves out what a confirm cannot move', () {
-    test("Chinese Pork Dumplings' (0506) amount-less 'Chili oil' is counted "
-        "at 0 g below the gate: a confirm of Pork and Cabbage Dumplings' "
-        "(also 0506) teaspoon offers and applies only Hot and Sour Soup's "
-        '(0518) two teaspoons', () async {
+    test("Tartiflette's (1134) amount-less 'Crème fraîche (optional)' is "
+        'counted at 0 g below the gate: a confirm of the Mushroom and Leek '
+        "Galette's (0442) 2 tablespoons offers and applies only Coq au "
+        "Riesling's (0127) ¼ cup — the chili oil lines were the example "
+        'until matcher v31 ranked them over the gate (Q7 fats)', () async {
       final db = tempDb();
-      final teaspoon = recipeOf(db, 'cabbage', [
-        '1 teaspoon chili oil (optional)',
+      final tablespoons = recipeOf(db, 'galette', [
+        '2 tablespoons crème fraîche',
       ]);
-      final amountless = recipeOf(db, 'dumplings', ['Chili oil']);
-      final soup = recipeOf(db, 'soup', ['2 teaspoons chili oil']);
-      for (final r in [teaspoon, amountless, soup]) {
+      final amountless = recipeOf(db, 'tartiflette', [
+        'Crème fraîche (optional)',
+      ]);
+      final quarter = recipeOf(db, 'coq', ['¼ cup crème fraîche']);
+      for (final r in [tablespoons, amountless, quarter]) {
         await matchAndCompute(db, provider, r);
       }
-      final zero = db.ingredientMatchesFor('dumplings').single;
+      final zero = db.ingredientMatchesFor('tartiflette').single;
       expect(zero.confidence, lessThan(lowConfidence));
       expect(bucketOf(zero), MatchBucket.counted);
-      await applyMatchOverride(db, provider, teaspoon, 0, {'confirmed': true});
-      final item = await matchOf(db, teaspoon, 0);
+      await applyMatchOverride(db, provider, tablespoons, 0, {
+        'confirmed': true,
+      });
+      final item = await matchOf(db, tablespoons, 0);
       expect((item['others'], item['others_lines']), (1, 1));
-      final applied = await applyMatchOverride(db, provider, teaspoon, 0, {
+      final applied = await applyMatchOverride(db, provider, tablespoons, 0, {
         'confirmed': true,
         'apply_to_all': true,
       });
       expect((applied!.recipes, applied.lines), (1, 1));
       expect(
-        db.ingredientMatchesFor('dumplings').single.confidence,
+        db.ingredientMatchesFor('tartiflette').single.confidence,
         zero.confidence,
       );
     });
@@ -949,15 +962,15 @@ void main() {
 
     test(
       'P2(f): a sibling that takes the decided food but stays no_grams is '
-      'offered and applied — the decision reached it: 2 bunches of '
-      'scallions (Pork Lo Mein, 0540)',
+      'offered and applied — the decision reached it: 8 dried jujubes '
+      '(Multicooker Hawaiian Oxtail Soup; "Jujube, Chinese, fresh, dried" '
+      'publishes no portion; 2 bunches of scallions until matcher v31 '
+      'weighed a bunch)',
       () async {
         final db = tempDb();
-        const scallions =
-            '2 bunches scallions, whites sliced thin, greens cut into 1-inch '
-            'pieces';
-        final a = recipeOf(db, 'ra', [scallions]);
-        final b = recipeOf(db, 'rb', [scallions]);
+        const jujubes = '8 dried jujubes';
+        final a = recipeOf(db, 'ra', [jujubes]);
+        final b = recipeOf(db, 'rb', [jujubes]);
         for (final r in [a, b]) {
           await matchAndCompute(db, provider, r);
         }
@@ -978,15 +991,15 @@ void main() {
           MatchBucket.noAmount,
         );
         await applyMatchOverride(db, provider, a, 0, {
-          'fdc_id': 2709794, // Onions, green, raw
+          'fdc_id': 168152, // Jujube, Chinese, fresh, dried
         });
         expect((await matchOf(db, a, 0))['others_lines'], 1);
         final applied = await applyMatchOverride(db, provider, a, 0, {
-          'fdc_id': 2709794,
+          'fdc_id': 168152,
           'apply_to_all': true,
         });
         final after = db.ingredientMatchesFor('rb').single;
-        expect((after.fdcId, bucketOf(after)), (2709794, MatchBucket.noAmount));
+        expect((after.fdcId, bucketOf(after)), (168152, MatchBucket.noAmount));
         expect(applied!.lines, 1);
       },
     );

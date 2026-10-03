@@ -234,6 +234,10 @@ void main() {
         '0527-karaage-japanese-fried-chicken-thighs#7',
         '1084-rhode-islandstyle-fried-calamari#2',
         '1133-chicken-francese#5',
+        // v31 (B4, the CP10 rulings): the bread a held breading processes
+        // into its crumbs, held with its flour.
+        '0114-breaded-chicken-cutlets#2',
+        '0233-pork-schnitzel-breaded-pork-cutlets#0',
       });
     }, skip: skipIfNoCorpus);
   });
@@ -570,12 +574,14 @@ void main() {
 
     test('the poured-away braise lines of the library, exactly: 0129 '
         'Mahogany and 0129 Indoor Pulled Chicken ("½ cup reserved defatted '
-        'liquid"); 0491 (pork, onion and water brought to a simmer '
-        'together), 0488 (broth, not a whisked braise), 0087/0209/0538 '
-        '(the whole liquid reduced) are not', () {
+        'liquid"), and since matcher v31 (the owner\'s R4 ruling) 0488\'s '
+        'poach ("Remove ¼ cup liquid … discard the remaining liquid"); 0491 '
+        '(pork, onion and water brought to a simmer together), '
+        '0087/0209/0538 (the whole liquid reduced) are not', () {
       expect(libraryLinesOf({DiscardedMedium.partialPourAway}), {
         for (final i in [1, 2, 3, 4, 5]) '0129-mahogany-chicken-thighs#$i',
         for (final i in [0, 1, 2, 3, 4]) '0129-indoor-pulled-chicken#$i',
+        for (final i in [0, 1, 2, 3, 4]) '0488-enchiladas-verdes#$i',
       });
     }, skip: skipIfNoCorpus);
   });

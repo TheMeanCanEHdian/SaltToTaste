@@ -724,13 +724,17 @@ void main() {
         // 'mustard' (1.05) no longer sizes the seeds (Run 050, v19) — only
         // their record's own portion does (nutrition_v19_test.dart G1).
         expect(gramsOf('1 tablespoon mustard seeds'), isNull);
-        // A bunch is not a scallion: every piece entry is per piece.
+        // A bunch is not a scallion: every piece entry is per piece — since
+        // matcher v31 (Q6, ruled) a bunch of scallions is 7 of them, flagged.
+        final bunch = gramsOf(
+          '2 bunches scallions, whites sliced thin, greens cut into '
+          '1-inch pieces',
+        )!;
+        expect(bunch.grams, 210);
         expect(
-          gramsOf(
-            '2 bunches scallions, whites sliced thin, greens cut into '
-            '1-inch pieces',
-          ),
-          isNull,
+          bunch.basis,
+          '2 bunch × 7 × 15 g each · approximate (reference figure: 7 '
+          'scallions a bunch)',
         );
         expect(
           gramsOf('1 tablespoon cracked black peppercorns')!.grams,

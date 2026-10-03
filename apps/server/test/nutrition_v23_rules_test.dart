@@ -312,7 +312,8 @@ void main() {
     test('the oil a held dredge fries in is frying oil by the same '
         'directions (closer D2), whatever it weighs: 0149 "1¾ cups vegetable '
         'oil" (381 g, "to 375 degrees"), 0198 "⅔ cup vegetable oil" '
-        '("Discard the oil"), 0042, 0288 (pan-fry) — 0 g discarded; 0114 '
+        '("Discard the oil") — 0 g discarded; 0042\'s dressing tablespoons '
+        'counted and 0288 held (v31); 0114 '
         'keeps the tablespoon beaten into the eggs; 0116 unchanged ("2 cups '
         '… for frying" zero, its egg-wash tablespoon counted); a sauté\'s '
         '¼ cup (0418 piccata, no fry) counted', () async {
@@ -333,11 +334,6 @@ void main() {
       for (final (file, raw) in const [
         ('0149-easier-fried-chicken.yaml', '1¾ cups vegetable oil'),
         ('0198-crispy-pan-fried-pork-chops.yaml', '⅔ cup vegetable oil'),
-        (
-          '0042-almond-crusted-chicken-with-wilted-spinach-salad.yaml',
-          '¾ cup plus 2 tablespoons vegetable oil',
-        ),
-        ('0288-maryland-crab-cakes.yaml', '¼ cup vegetable oil'),
         ('0116-chicken-schnitzel.yaml', '2 cups vegetable oil for frying'),
       ]) {
         expect(
@@ -347,6 +343,33 @@ void main() {
         );
         expect(gramsOf(file, raw), 0, reason: file);
       }
+      // Since matcher v31 (the owner's R4 rulings): 0042's ¾ cup fries and
+      // is discarded, its 2 tablespoons the dressing eats count ("1
+      // tablespoon more oil", "the remaining 1 tablespoon oil" after the
+      // last discard); 0288's pan-fry oil, fried by the verb alone, is
+      // held for a person (ambiguous_medium), no longer zeroed.
+      const almond =
+          '0042-almond-crusted-chicken-with-wilted-spinach-salad.yaml';
+      const almondOil = '¾ cup plus 2 tablespoons vegetable oil';
+      expect(
+        mediumOf(loadCorpusRecipe(almond), almondOil),
+        DiscardedMedium.fryingOil,
+      );
+      expect(
+        gramsOf(almond, almondOil),
+        resolveGrams(
+          amounts: parseIngredientLine('2 tablespoons vegetable oil').amounts,
+          food: oil,
+          normalizedItem: 'vegetable oil',
+        )!.grams,
+      );
+      expect(
+        mediumOf(
+          loadCorpusRecipe('0288-maryland-crab-cakes.yaml'),
+          '¼ cup vegetable oil',
+        ),
+        DiscardedMedium.ambiguousMedium,
+      );
       const cutlets = '0114-breaded-chicken-cutlets.yaml';
       const both = '1 tablespoon plus ¾ cup vegetable oil';
       expect(

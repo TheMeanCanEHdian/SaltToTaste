@@ -659,16 +659,17 @@ void main() {
     test(
       'P1, P8: a pick BELOW the gate whose detail IS cached and gives no '
       'grams is the sub-recipe too — its grams say something about the '
-      'food ("12 nicoise olives (see this page)" on "Olives, black" at '
-      "0.465, v14a A5's synthesized line — red plums until matcher v21 "
-      'rewrote them over the gate — the detail cached portion-less)',
+      'food ("15 curry leaves (see this page)" on "Beef curry" at 0.465, '
+      "v14a A5's synthesized line — red plums until matcher v21 and "
+      'niçoise olives until v31 rose over the gate — the detail cached '
+      'portion-less)',
       () async {
-        final db = tempDb()..fdcFoodCachePut(2710090, await stripped(2710090));
+        final db = tempDb()..fdcFoodCachePut(2706388, await stripped(2706388));
         await matchAndCompute(
           db,
           FixtureProvider(),
           recipeOf(db: db, [
-            ['12 nicoise olives (see this page)'],
+            ['15 curry leaves (see this page)'],
           ]),
         );
         expect(rowAt(db, 0).description, subRecipeNote);
@@ -700,14 +701,14 @@ void main() {
 
     test(
       'E11: an un-skip gates a marked count on its food as the compute '
-      'does — the below-gate olives pick (A5; plums until matcher v21) '
-      'comes back held while its '
+      'does — the below-gate curry-leaves pick (A5; plums until matcher '
+      'v21, olives until v31) comes back held while its '
       'detail is uncached, and the 0 g sub-recipe once a cached detail '
       'gives it no grams (cached portion-less: a stated exception)',
       () async {
         final db = tempDb();
         final r = recipeOf(db: db, [
-          ['12 nicoise olives (see this page)'],
+          ['15 curry leaves (see this page)'],
         ]);
         await matchAndCompute(db, FixtureProvider(), r);
         Future<IngredientMatchRow> skipAndBack() async {
@@ -717,8 +718,8 @@ void main() {
         }
 
         var row = await skipAndBack();
-        expect((row.status, row.fdcId, row.grams), ('auto', 2710090, null));
-        db.fdcFoodCachePut(2710090, await stripped(2710090));
+        expect((row.status, row.fdcId, row.grams), ('auto', 2706388, null));
+        db.fdcFoodCachePut(2706388, await stripped(2706388));
         row = await skipAndBack();
         expect((row.status, row.description), ('confirmed', subRecipeNote));
       },

@@ -120,8 +120,9 @@ void main() {
     test("O1's exhaustive list of the counted ≥ ¼-cup oils of a frying "
         'recipe stays counted: 0040 (1 tablespoon fries the prosciutto, the '
         'rest dresses), 0500 (the rice toasted, then simmered), 0672 (the '
-        "sauce's coconut oil), 0674 and 0675 (shallow-fried fritters, no "
-        'temperature or discard sentence — ambiguous, left for the user)', () {
+        "sauce's coconut oil); 0674 and 0675 (shallow-fried fritters, no "
+        'temperature or discard sentence — left for the user) are held '
+        'ambiguous_medium since matcher v31 (the R4 ruling of the owner)', () {
       for (final (file, raw) in const [
         (
           '0040-arugula-salad-with-figs-prosciutto-walnuts-and-parmesan.yaml',
@@ -129,13 +130,21 @@ void main() {
         ),
         ('0500-mexican-rice.yaml', '⅓ cup vegetable oil'),
         ('0672-buffalo-cauliflower-bites.yaml', '¼ cup coconut oil'),
+      ]) {
+        expect(_mediumOf(loadCorpusRecipe(file), raw), isNull, reason: file);
+      }
+      for (final (file, raw) in const [
         ('0674-corn-fritters.yaml', '¼ cup vegetable oil, plus more as needed'),
         (
           '0675-southern-corn-fritters.yaml',
           '1 teaspoon plus ½ cup vegetable oil',
         ),
       ]) {
-        expect(_mediumOf(loadCorpusRecipe(file), raw), isNull, reason: file);
+        expect(
+          _mediumOf(loadCorpusRecipe(file), raw),
+          DiscardedMedium.ambiguousMedium,
+          reason: file,
+        );
       }
     }, skip: skipIfNoCorpus);
 

@@ -427,7 +427,23 @@ const Map<String, String> _synonyms = {
 /// flagged). Replay: 24 rows move (20 bone-in, 4 chile), 17 recipes
 /// complete. The fresh ham, the live step's details and searches wait,
 /// commented where they will go.
-const int matcherVersion = 30;
+/// 31 = the CP10 rulings (2026-10-03), table entries plus the narrowest rule
+/// each named recipe needed. Q6: fresh ginger and citrus zest strips by
+/// their printed length (8 and 0.8 g an inch), the dried chipotle (4.6 g),
+/// whole spices, lemongrass, lasagna sheets (Barilla 17 g, Ronzoni 25 g)
+/// and a scallion bunch (7 × 15 g), each flagged with its source; star
+/// anise on anise seed, flagged. Q7: the eight small groups, anchovy paste
+/// (6.7 g a teaspoon), the misc mappings (Cubanelle 99 g, cornichon 3.2 g,
+/// instant espresso at its siblings' 0.43), Spanish chorizo on 2706179 and
+/// linguiça on the smoked pork link; a confit's duck fat is a frying medium;
+/// a held breading's bread is held with its flour. The held-media rulings:
+/// a poach whose liquid is poured away but a measured part is held
+/// `partial_pour_away` (0488), a plus part eaten after the fat's last
+/// discard counts (0042), and a fat fried by the verb alone is held
+/// `ambiguous_medium` (0288, 0674, 0675). Replay: 191 rows move (A 49,
+/// B 133, C 9), complete 847 → 939. The light sour cream, the brioche and
+/// the dry-cured chorizo wait for the live step, commented.
+const int matcherVersion = 31;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -1628,13 +1644,13 @@ const Map<String, (String, String)> _rankAs = {
   ),
   // LIVE STEP (built dry for v30; each waits on the one request named, its
   // target ranked first in an answer snapshot 13 holds — uncomment with the
-  // request; scratchpad fix30/live_step.md): leg quarters on the leg record
+  // request; scratchpad fix31/live_step.md): leg quarters on the leg record
   // (detail 172378); oil-packed tuna (detail 175157); sweetened cranberry
   // juice (detail 171903); dried onions on the dehydrated flakes the cached
   // 'onions' answer names (detail 170002, in place of the plan's search);
   // the singular portobello cap (detail 2003598); jarred pimentos (detail
-  // 168559) and cooked wheat berries (detail 169744; a stand-in: Q7's misc
-  // group is not yet ruled).
+  // 168559) and cooked wheat berries (detail 169744; a flagged stand-in the
+  // v31 misc ruling keeps out until its detail is read).
   // 'chicken leg quarters': (
   //   'chicken leg quarters',
   //   'chicken leg meat and skin raw',
@@ -1652,6 +1668,164 @@ const Map<String, (String, String)> _rankAs = {
   // 'portobello mushroom cap': ('portobello mushrooms', 'mushroom portabella'),
   // 'jarred pimentos': ('jarred pimentos', 'pimento canned'),
   // 'cooked wheat berries': ('cooked wheat berries', 'wheat khorasan cooked'),
+  // v31 (Q7, ruled 2026-10-03): the eight small groups, q7rules.py
+  // verbatim (olives, sweet and fortified wines, extracts, chile powders,
+  // Thai basil, meatloaf mix, fats, black vinegar) — each target named in an
+  // answer snapshot 13 holds; a stand-in is flagged ([approximationRecords]).
+  // Duck fat's confit line is a frying medium (engine.dart's
+  // discardedMediumOf reads a `fat` head), never 1,230 g of it eaten.
+  // olive
+  'kalamata olives': ('oil-cured black olives', 'olives black'),
+  'nicoise olives': ('oil-cured black olives', 'olives black'),
+  // wine
+  'ruby port': ('sherry', 'wine dessert sweet'),
+  'cream sherry': ('sherry', 'wine dessert sweet'),
+  'sweet marsala': ('sherry', 'wine dessert sweet'),
+  'mirin or sweet sherry': ('sherry', 'wine dessert sweet'),
+  'dry marsala': ('wine dessert dry', 'wine dessert dry'),
+  'dry riesling': ('dry riesling', 'wine table white riesling'),
+  'barolo wine': ('chianti', 'wine red'),
+  'fluid ounces champagne': ('dry white wine', 'wine white'),
+  'kirsch': ('brandy', 'brandy'),
+  'peach schnapps': ('kirsch', 'liqueur'),
+  // extract
+  'almond extract': ('almond extract', 'vanilla extract'),
+  'coconut extract': ('coconut extract', 'vanilla extract'),
+  // chile
+  'ancho chile powder': ('paprika', 'spices paprika'),
+  'chipotle chile powder': (
+    'spices pepper red cayenne',
+    'spices pepper red or cayenne',
+  ),
+  'ground chipotle powder': (
+    'spices pepper red cayenne',
+    'spices pepper red or cayenne',
+  ),
+  'kashmiri chile powder': ('paprika', 'spices paprika'),
+  'pul biber or ground dried aleppo pepper': ('paprika', 'spices paprika'),
+  'aji amarillo chile paste': (
+    'pickled jalapeno chiles',
+    'sauce hot chile sriracha',
+  ),
+  // basil
+  'thai basil leaves': ('basil leaves', 'basil raw'),
+  'thai or italian basil leaves': ('basil leaves', 'basil raw'),
+  // meatloaf
+  'meatloaf mix': (
+    '93 percent lean ground turkey',
+    'beef ground 80 lean meat 20 fat raw',
+  ),
+  // fat
+  'duck fat': ('duck fat', 'fat goose'),
+  'chili oil': ('vegetable oil', 'vegetable oil nfs'),
+  'vegetable oil more for cooking grate': (
+    'vegetable oil',
+    'vegetable oil nfs',
+  ),
+  // vinegar
+  'chinese black vinegar': ('balsamic vinegar', 'vinegar balsamic'),
+  // v31 (Q7): anchovy paste on its own line's record (2706232 "Fish,
+  // anchovy"), weighed by ATK's printed equivalence (grams.dart, flagged).
+  'anchovy paste': ('anchovy paste', 'fish anchovy'),
+  // v31 (Q7 misc, ruled after every mapping was read, prep30/misc.md): the
+  // planner's mappings; Cubanelle and the cornichon weigh their corpus
+  // figure (grams.dart), instant espresso its siblings' 0.43 g/mL.
+  'anaheim chiles': ('cubanelle peppers', 'pepper banana'),
+  'angel hair pasta': ('pasta dry enriched', 'pasta dry enriched'),
+  'asian chili-garlic paste': (
+    'pickled jalapeno chiles',
+    'sauce hot chile sriracha',
+  ),
+  'broccolini': ('broccoli', 'broccoli'),
+  'candied yams': ('candied yams', 'yam raw'),
+  'chicory or escarole': (
+    'escarole',
+    'escarole cooked boiled drained no salt added',
+  ),
+  'ciabatta': (
+    'sprigs thai or italian basil',
+    'bread italian grecian armenian',
+  ),
+  'ciabatta bread': (
+    'sprigs thai or italian basil',
+    'bread italian grecian armenian',
+  ),
+  'cornichons': ('spicy pickled radishes', 'pickles dill'),
+  'crusty bread': (
+    'sprigs thai or italian basil',
+    'bread italian grecian armenian',
+  ),
+  'rustic crusty bread': (
+    'sprigs thai or italian basil',
+    'bread italian grecian armenian',
+  ),
+  'cubanelle peppers': ('cubanelle peppers', 'pepper banana'),
+  'cubanelle pepper': ('cubanelle peppers', 'pepper banana'),
+  'dried pappardelle': ('pasta dry enriched', 'pasta dry enriched'),
+  'dried red beans': ('red kidney beans', 'beans kidney red mature seeds raw'),
+  'frank s redhot original sauce': (
+    'tabasco or other hot sauce',
+    'hot pepper sauce',
+  ),
+  'fresno chiles': ('serrano or jalapeno chiles', 'peppers hot raw'),
+  'gai choy': ('dry mustard', 'mustard greens'),
+  'habanero chiles': ('serrano or jalapeno chiles', 'peppers hot raw'),
+  'habanero chile': ('serrano or jalapeno chiles', 'peppers hot raw'),
+  'instant espresso': (
+    'instant espresso powder',
+    'beverages coffee instant regular powder',
+  ),
+  'italian sub rolls': ('italian sub rolls', 'roll multigrain'),
+  'jarred whole artichoke hearts in water': (
+    'jarred whole artichoke hearts in water',
+    'artichoke',
+  ),
+  'ketchup or chili sauce': ('ketchup', 'ketchup'),
+  'lyle s golden syrup': ('light corn syrup', 'syrups corn light'),
+  'mexican lager': ('beer', 'beer'),
+  'mild-flavored lager': ('beer', 'beer'),
+  'montasio or aged asiago cheese': ('parmesan cheese', 'parmesan cheese'),
+  'new mexican pods': ('ancho pods', 'peppers ancho dried'),
+  'ouzo': ('brandy', 'brandy'),
+  'pastis or pernod': ('brandy', 'brandy'),
+  'palm sugar': ('palm sugar', 'sugar brown'),
+  'penne rigate': ('pasta dry enriched', 'pasta dry enriched'),
+  'preserved lemon': ('lemon or lime wedges', 'lemon peel raw'),
+  'radishes with their greens': ('radishes', 'radish'),
+  'sweet onion or 2 shallots': ('sweet onion or 2 shallots', 'shallots raw'),
+  'thai red chile': ('serrano or jalapeno chiles', 'peppers hot raw'),
+  'thai with salt preserved radish': (
+    'dill or sweet pickles',
+    'radishes pickled',
+  ),
+  // The chili-garlic SAUCE read "Garlic sauce" (683 kcal); it reads the
+  // paste's sriracha (171186, the cached 'pickled jalapeno chiles' answer).
+  'asian chili-garlic sauce': (
+    'pickled jalapeno chiles',
+    'sauce hot chile sriracha',
+  ),
+  // LIVE STEP (built dry for v31 — uncomment with the request; scratchpad
+  // fix31/live_step.md): low-fat sour cream on 173443 "Sour cream, light"
+  // (detail 173443; the cached 'sour cream' answer ranks it first under
+  // these words); brioche buns on 2707682 "Brioche" (detail 2707682, and
+  // only if it publishes a per-bun portion — otherwise leave it out).
+  // 'low-fat sour cream': ('sour cream', 'sour cream light'),
+  // 'brioche buns': ('brioche buns', 'brioche'),
+  // v31 (Q7 chorizo, ruled): Spanish-style (dry-cured) chorizo counts on
+  // FNDDS "Chorizo" (2706179, a cooked fresh profile, flagged) until the
+  // live step lands SR "Chorizo, pork and beef" — LIVE STEP (one search,
+  // 'chorizo pork and beef'; no cached answer names it): replace these two
+  // with ('chorizo pork and beef', 'chorizo pork and beef') and point their
+  // [approximationRecords] entries at its id. Linguiça on its exact class.
+  'spanish-style chorizo': ('spanish-style chorizo', 'chorizo'),
+  'spanish-style chorizo sausage': ('spanish-style chorizo sausage', 'chorizo'),
+  'linguica sausage': ('smoked sausage', 'sausage smoked link sausage pork'),
+  // v31 (Q6 (d), ruled 2026-10-03): star anise on anise seed, a flagged
+  // approximation — FDC has no star anise record; each line's own cached
+  // answer names 171316 (q6 §2). The pod's weight is the piece table's
+  // reference 0.5 g.
+  'star anise pods': ('star anise pods', 'spices anise seed'),
+  'star anise pod': ('star anise pod', 'spices anise seed'),
   // v22 (F10): "1 sugar cube" (Champagne Cocktail) led its own answer with
   // "Beef, steak, cube" at 160 g; it is granulated sugar. The record
   // publishes no cube portion, so the line stays in review with no grams.
@@ -2551,8 +2725,59 @@ const Map<String, int> approximationRecords = {
   'beef flap meat': 2727574,
   'turkey drumsticks and thighs': 171533,
   'turkey leg quarters': 171533,
-  // LIVE STEP (with its rank-as item and detail 169744, once Q7's misc
-  // group is ruled): 'cooked wheat berries': 169744,
+  // LIVE STEP (with its rank-as item and detail 169744):
+  // 'cooked wheat berries': 169744,
+  // v31 (Q7 groups, misc, anchovy paste, chorizo; ruled 2026-10-03).
+  'kalamata olives': 2710090,
+  'nicoise olives': 2710090,
+  'ruby port': 2710692,
+  'cream sherry': 2710692,
+  'sweet marsala': 2710692,
+  'mirin or sweet sherry': 2710692,
+  'dry marsala': 175112,
+  'fluid ounces champagne': 2710689,
+  'kirsch': 2710699,
+  'peach schnapps': 2710623,
+  'almond extract': 173471,
+  'coconut extract': 173471,
+  'ancho chile powder': 171329,
+  'chipotle chile powder': 170932,
+  'ground chipotle powder': 170932,
+  'kashmiri chile powder': 171329,
+  'pul biber or ground dried aleppo pepper': 171329,
+  'aji amarillo chile paste': 171186,
+  'thai basil leaves': 2709780,
+  'thai or italian basil leaves': 2709780,
+  'meatloaf mix': 2514744,
+  'duck fat': 173572,
+  'chili oil': 2710180,
+  'chinese black vinegar': 172241,
+  'anchovy paste': 2706232,
+  'anaheim chiles': 169394,
+  'asian chili-garlic paste': 171186,
+  'broccolini': 747447,
+  'candied yams': 170071,
+  'chicory or escarole': 168413,
+  'cornichons': 2710078,
+  'cubanelle peppers': 169394,
+  'cubanelle pepper': 169394,
+  'dried red beans': 173744,
+  'italian sub rolls': 2707782,
+  'jarred whole artichoke hearts in water': 2709766,
+  'lyle s golden syrup': 168837,
+  'montasio or aged asiago cheese': 325036,
+  'new mexican pods': 169396,
+  'ouzo': 2710699,
+  'pastis or pernod': 2710699,
+  'palm sugar': 2710260,
+  'preserved lemon': 167749,
+  'thai with salt preserved radish': 2710099,
+  'asian chili-garlic sauce': 171186,
+  'spanish-style chorizo': 2706179,
+  'spanish-style chorizo sausage': 2706179,
+  // v31 (Q6 (d)): star anise counted as anise seed.
+  'star anise pods': 171316,
+  'star anise pod': 171316,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

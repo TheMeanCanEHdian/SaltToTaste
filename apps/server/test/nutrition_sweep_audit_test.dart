@@ -692,9 +692,21 @@ void main() {
       // '2 tablespoons mirin or sweet sherry' (0524 Chicken Teriyaki). FDC
       // has no mirin record: the sweep cached 'mirin' -> [].
       db.fdcSearchCachePut('mirin', '[]');
+      // The empty answer names no A, read as the line's search reads it
+      // (engine.dart lineSearchFor's isCached)...
+      expect(
+        leftAlternative('mirin or sweet sherry', (query) {
+          final answer = db.fdcSearchCacheGet(query);
+          return answer != null && answer != '[]';
+        }),
+        isNull,
+      );
+      // ...and since matcher v31 (Q7 sweet wines, ruled) the line is a
+      // rank-as item, read ahead of any alternative: the cached 'sherry'
+      // answer under 'wine dessert sweet', flagged.
       expect(
         lineSearchFor(db, 'mirin or sweet sherry', 'mirin or sweet sherry'),
-        (query: 'mirin or sweet sherry', answer: 'mirin or sweet sherry'),
+        (query: 'wine dessert sweet', answer: 'sherry'),
       );
       // '6 ounces pancetta or bacon, sliced …' (0332): pancetta (whose
       // answer is [] too) is a rewrite key since matcher v8, so A is searched
@@ -1001,9 +1013,15 @@ void main() {
     // 'sichuan peppercorns', differing in some digit. Matcher v30 recorded
     // the three bone-in records its Q7 pins read from snapshot 13 (the rib
     // roast 168675, the back ribs 173405, the turkey thigh 171533): each a
-    // hit in a recorded answer, each differing in some digit.
-    expect(compared, 310);
-    expect(differ, 231);
+    // hit in a recorded answer, each differing in some digit. Matcher v31
+    // recorded from snapshot 13 the answers and records its A, B and C pins
+    // read (and the records its re-pinned older pins moved to): 24 more
+    // compared, 19 of them differ in some digit. Its round-3 closer
+    // recorded the whole orange (2709171) and ground ginger (170926) for
+    // the per-inch record-gate pin: two more compared, both differing in
+    // some digit.
+    expect(compared, 336);
+    expect(differ, 252);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

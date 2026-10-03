@@ -2873,6 +2873,60 @@ code-anchored mutants (the guajillo figure 7.1 → 7.0; the rib-slab refuse
 term removed) killed and restored, the fresh-copy replay identical to the
 fixer's, the server suite with the corpus 1,958 green. matcherVersion 30.
 
+### The accuracy track, part 2: the checkpoint 10 rulings, built (matcher v31)
+
+The owner's rulings of 2026-10-03 (the decision log's entry of that date)
+are built as v31 (2026-10-04), from the planners' tables and four read-only
+preparation reports (the lasagna figures sourced from manufacturers' box
+specifications, the chorizo record check, the forty misc mappings read one
+by one, the dredge-reach survey). Q6: every approved piece figure, each
+flagged approximate with its source in the basis text — ginger 8 g an inch
+of a "(N-inch) piece", a dried chipotle 4.6 g, orange and lemon zest strips
+0.8 g an inch, the six whole spices per piece (reference figures), star
+anise lines on the anise-seed record, a no-boil lasagna sheet 17 g
+(Barilla's 9 oz box of at least 15 sheets; the label's 3 sheets = 51 g
+agrees), a curly-edged noodle 25 g (Ronzoni's label), a lemongrass stalk
+10 g, a bunch of scallions 7 × FDC's 15 g; dried jujubes and the per-inch
+mild chile stay at no grams as ruled. Q7: the eight small groups exactly as
+the planner wrote them (72 rank-as items, 49 flagged approximations),
+anchovy paste at 6.7 g a teaspoon, the misc group's 35 kept mappings with
+the prep report's modifications (a Cubanelle pepper 99 g by ATK's "3 to 4
+ounces each", instant espresso at its siblings' 0.43 density) and its two
+companions (the one-word fat head in the frying-medium test, so the
+confit's 1,230 g of duck fat is discarded; a cornichon 3.2 g by ATK's "6
+cornichons (about 2 tablespoons)"); Spanish chorizo stays on the cached
+record until the live step fetches the real dry-cured one (the cached
+2706179 is fresh Mexican chorizo); the light sour cream and brioche
+rules are built dry for the live step. The dredge rule's one unambiguous
+gap: the bread a held breading processes into its crumbs is held with its
+flour (0114, 0233); the sautéed and baked classes wait for the owner's
+ruling on the survey. The held-media rulings, each the narrowest reading
+pinned on its recipe with the corpus's non-trips listed: 0488's poach
+("remove ¼ cup liquid … discard the remaining liquid") holds its broth,
+oil, onion, garlic and cumin as a part-kept medium; 0042's two tablespoons
+of dressing oil count (the fat's amounts written after its last discard);
+0288's pan-fry oil and the two fritters' oil are held ambiguous (a frying
+verb with no heat, discard or pour-off sentence and no line of the fat
+zeroed by the mass rule — the guard that keeps 0672's eaten coconut oil
+counted). A flagged piece figure under 10 g prints one decimal ("3.2 g
+each", "4.6 g each", "7.1 g each"). Replay on snapshot 13: calls 0; 191
+rows differ from v30, every one traced to a ruling, none a person's row;
+counted 13,097 → 13,260, check 381 → 269, no grams 100 → 54, no match 37 →
+32; complete 847 → 939 (95 recipes complete, 3 go to review by the rulings:
+0488 and the two fritter recipes). Twenty-two existing pins the rulings
+superseded moved to the ruled value or to another real corpus line; the
+contract goldens changed on their black-vinegar line only (now balsamic
+with its portions). Four close rounds in all: the verifier's two unpinned
+guards (the per-inch record gate; where the eaten parts start after the
+pour-away step) pinned on corpus lines with stated-exception edits. The
+owner's gate: every one of the 73 fixture additions byte-equal to a snapshot
+cache row, the re-pins read and judged, two code-anchored mutants (the
+lasagna figure 17 → 16; the fat companion dropped) killed and restored, the
+fresh-copy replay identical to the verifier's, the server suite with the
+corpus and the shared suite green. The live step after v31: 12 food details
+and one search (`scratchpad/fix31/live_step.md` archived under
+`.claude/diag/2026-10-01/fix31/`). matcherVersion 31.
+
 ## Decision log (deviations & clarifications)
 
 - **2026-10-03 — after Run 060 (the exit review): the engine loop STOPS at v29;

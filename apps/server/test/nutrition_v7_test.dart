@@ -101,18 +101,41 @@ void main() {
   // moisture)" publishes protein and fat, no energy and no carbohydrate —
   // held `no_nutrients`. (Napa cabbage was the example here until matcher
   // v10 read its nutrients from a sibling record: nutrition_v10_test.)
+  // Since matcher v31 (Q7 misc, ruled) the line is a rank-as item on
+  // "Beans, kidney, red, mature seeds, raw" (173744) and no longer held:
+  // the decision pins below start from the row matcher v30 stored for it,
+  // and the engine's own hold is read on Watermelon Salad's (0721) line,
+  // the one library line v31 holds `no_nutrients` above the gate (2747675
+  // "Watermelon, seedless, flesh only, raw", 0.63).
   const redBeans =
       '1 pound (about 2 cups) dried small red beans, picked over and rinsed';
+  const watermelon = '6 cups 1½-inch seedless watermelon pieces';
+  // The row matcher v30 stored for [redBeans] (the v30 replay of snapshot
+  // 13: red-beans-and-rice|1).
+  IngredientMatchRow v30RedBeans(String recipeId) => IngredientMatchRow(
+    recipeId: recipeId,
+    position: 0,
+    raw: redBeans,
+    fdcId: 747431,
+    description: 'Beans, Dry, Red (0% moisture)',
+    dataType: 'Foundation',
+    confidence: 0.613333,
+    grams: 453.59,
+    gramSource: 'weight',
+    status: 'auto',
+    hold: 'no_nutrients',
+    itemKey: lineKeyOf(lineOf(redBeans)),
+  );
 
   group('M1: apply-to-all reaches a held sibling on the same food', () {
     test('dried red beans: others counts the held sibling, the confirm lands '
         'on it and clears the hold', () async {
       final db = tempDb();
       final a = recipeOf(db, 'ra', [redBeans]);
-      final b = recipeOf(db, 'rb', [redBeans]);
-      for (final r in [a, b]) {
-        await matchAndCompute(db, provider, r);
-      }
+      recipeOf(db, 'rb', [redBeans]);
+      db
+        ..upsertIngredientMatch(v30RedBeans('ra'))
+        ..upsertIngredientMatch(v30RedBeans('rb'));
       final before = db.ingredientMatchesFor('rb').single;
       expect(
         (before.hold, before.confidence >= lowConfidence),
@@ -185,7 +208,7 @@ void main() {
         "engine's old reason; un-skip re-derives the engine's own", () async {
       final db = tempDb();
       final b = recipeOf(db, 'rb', [redBeans]);
-      await matchAndCompute(db, provider, b);
+      db.upsertIngredientMatch(v30RedBeans('rb'));
       IngredientMatchRow row() => db.ingredientMatchesFor('rb').single;
       // "Beans, kidney, red, mature seeds, raw" (173744) publishes energy.
       await applyMatchOverride(db, provider, b, 0, {'fdc_id': 173744});
@@ -200,8 +223,9 @@ void main() {
       // The engine's own food (a library with no decision on the key):
       // skipped and back, its reason is re-derived.
       final fresh = tempDb();
-      final c = recipeOf(fresh, 'rc', [redBeans]);
+      final c = recipeOf(fresh, 'rc', [watermelon]);
       await matchAndCompute(fresh, provider, c);
+      expect(fresh.ingredientMatchesFor('rc').single.hold, 'no_nutrients');
       await applyMatchOverride(fresh, provider, c, 0, {'skipped': true});
       expect(fresh.ingredientMatchesFor('rc').single.hold, isNull);
       await applyMatchOverride(fresh, provider, c, 0, {'skipped': false});
@@ -864,7 +888,7 @@ void main() {
         'ways', () async {
       final db = tempDb();
       const evoo = '¼ cup extra-virgin olive oil';
-      final r = recipeOf(db, 'r1', [evoo, redBeans]);
+      final r = recipeOf(db, 'r1', [evoo, watermelon]);
       IngredientMatchRow stale(int position, String raw, String? hold) =>
           IngredientMatchRow(
             recipeId: 'r1',
@@ -882,7 +906,7 @@ void main() {
           );
       db
         ..upsertIngredientMatch(stale(0, evoo, 'second_food'))
-        ..upsertIngredientMatch(stale(1, redBeans, null));
+        ..upsertIngredientMatch(stale(1, watermelon, null));
       await matchAndCompute(db, provider, r);
       final rows = db.ingredientMatchesFor('r1');
       expect([for (final row in rows) row.hold], [null, 'no_nutrients']);
@@ -980,7 +1004,7 @@ void main() {
 
       final db = tempDb();
       final r = recipeOf(db, 'r1', [
-        redBeans,
+        watermelon,
         '2 cups vegetable oil for frying',
         'Lemon wedges',
       ]);

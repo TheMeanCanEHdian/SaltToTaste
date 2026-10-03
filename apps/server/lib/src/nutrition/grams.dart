@@ -120,6 +120,10 @@ const List<(String, double)> _densities = [
   // siblings on the same record keep the table's fine-powder 0.43 (2.12
   // g/tsp): the powder's own key keeps it on the table too.
   ('instant coffee powder', 0.43),
+  // v31 (Q7 misc M2): "instant espresso" on the same record (171893) keeps
+  // its 13 "instant espresso powder" siblings' figure, not the record's
+  // loose 'tsp' 1.0 g.
+  ('instant espresso', 0.43),
   ('brewed coffee', 1.0),
   ('coffee', 1.0),
   ('cornstarch', 0.54),
@@ -213,17 +217,27 @@ const List<(String, double)> _densities = [
   // whole-seed density is sourced.
   ('peppercorn', 0.59),
   ('black peppercorn', 0.59), // beats 'black pepper' (ground) by length
+  // v31 (Q7, ruled 2026-10-03): anchovy paste at 6.7 g a teaspoon, the
+  // mean of ATK's two printed equivalences — "Two minced anchovy fillets
+  // can be used in place of the anchovy paste" (1 tsp, Modern Beef
+  // Burgundy: 2 × 4 g) and "substitute 1½ teaspoons of anchovy paste for
+  // the fillets" (2 fillets, Pan-Seared Thick-Cut Boneless Pork Chops:
+  // 5.3 g/tsp) — on 2706232's '1 anchovy' 4 g; flagged
+  // ([_approximateDensities]).
+  ('anchovy paste', 6.7 / 4.92892),
 ];
 
 /// The [_densities] keys that weigh on a stand-in's figure — flagged
 /// approximations the user approved (v21, J2): a line sized by one says so
-/// in its basis ("· approximate (paprika density)").
+/// in its basis ("· approximate (paprika density)") — or a figure ATK
+/// prints, named with its source (v31).
 const Map<String, String> _approximateDensities = {
   // The label names the figure used: 'parmesan' 0.42, since v23 no longer
   // grated Parmesan's (0.24) — Run 054 O16.
-  'pecorino': 'Parmesan',
-  'ghee': 'oil',
-  'aleppo pepper': 'paprika',
+  'pecorino': 'Parmesan density',
+  'ghee': 'oil density',
+  'aleppo pepper': 'paprika density',
+  'anchovy paste': 'ATK: 2 anchovy fillets ≈ 1 to 1½ teaspoons paste',
 };
 
 /// Grated and shredded Parmesan and Pecorino Romano weigh what the corpus
@@ -318,6 +332,33 @@ const List<(String, double)> _pieceWeights = [
   // "chipotle chile in adobo" never reach them.
   ('dried new mexican chile', 7.1),
   ('dried guajillo chile', 7.1),
+  // v31 (Q6, ruled 2026-10-03; each flagged, [_approximatePieces]): the
+  // dried chipotle by its corpus-printed volume; whole spices, lemongrass
+  // and lasagna sheets by a reference or manufacturer figure. Every key is
+  // the whole item phrase, so "chipotle chile in adobo", a garlic clove
+  // ('whole clove' is never garlic) and lemongrass paste never reach one.
+  ('dried chipotle chile', 4.6),
+  ('peppercorn', 0.05),
+  ('whole clove', 0.1),
+  ('allspice berry', 0.1),
+  // 'pods' is a count word to the head noun ("cardamom pods" is cardamom)
+  // while a lone "pod" is the head: each spelling keys its own.
+  ('cardamom pods', 0.2),
+  ('cardamom pod', 0.2),
+  ('coriander seed', 0.01),
+  ('star anise pods', 0.5),
+  ('star anise pod', 0.5),
+  ('lemongrass', 10),
+  ('lemongrass stalk', 10),
+  ('lemon grass stalk', 10),
+  // The longer key wins: a no-boil sheet is thinner than a curly one.
+  ('no-boil lasagna noodle', 17),
+  ('lasagna noodle', 25),
+  // v31 (Q7 misc, ruled): a cornichon by its corpus-printed volume, a
+  // Cubanelle by its corpus-printed weight (the Q7 stand-in record, 169394
+  // "Pepper, banana", weighs a medium one 46 g).
+  ('cornichon', 3.2),
+  ('cubanelle pepper', 99),
   ('eggplant', 300), // longer key than "egg", so it wins the substring match
   // Counted-in-slices/sheets staples (per counted unit).
   ('sandwich bread', 28),
@@ -347,7 +388,115 @@ const Map<String, String> _approximatePieces = {
   'dried new mexican chile': 'ATK: 3 medium New Mexican pods ≈ ¾ ounce',
   // goan-pork-vindaloo: "4 large dried guajillo chiles … (about 1 ounce)".
   'dried guajillo chile': 'ATK: 4 large dried guajillo chiles ≈ 1 ounce',
+  // pollo-en-mole-poblano: "½ dried chipotle chile … (scant tablespoon)" on
+  // 168570's cup (37 g).
+  'dried chipotle chile': 'ATK: ½ dried chipotle chile ≈ a scant tablespoon',
+  // Reference figures for one whole dried piece (q6 §2).
+  'peppercorn': 'reference figure: a whole peppercorn',
+  'whole clove': 'reference figure: a whole clove',
+  'allspice berry': 'reference figure: a whole allspice berry',
+  'cardamom pods': 'reference figure: a green cardamom pod',
+  'cardamom pod': 'reference figure: a green cardamom pod',
+  'coriander seed': 'reference figure: a coriander seed',
+  'star anise pods': 'reference figure: a whole star anise',
+  'star anise pod': 'reference figure: a whole star anise',
+  // "1 stalk ≈ 2 tablespoons minced" × 168573's tbsp 4.8 g (q6 §6).
+  'lemongrass': 'reference figure: a stalk trimmed to its bottom 5–6 inches',
+  'lemongrass stalk':
+      'reference figure: a stalk trimmed to its bottom 5–6 inches',
+  'lemon grass stalk':
+      'reference figure: a stalk trimmed to its bottom 5–6 inches',
+  // Barilla Oven-Ready Lasagne, the brand the corpus prefers: 9 oz (255 g),
+  // "at least 15 sheets" (barilla.com no-boil FAQ); label 3 sheets = 51 g.
+  'no-boil lasagna noodle':
+      'Barilla: a 9-ounce box of at least 15 sheets; 3 sheets = 51 g',
+  // Ronzoni No. 80 Lasagna (1 lb): label 2 pieces = 50 g (ronzoni.com).
+  'lasagna noodle': 'Ronzoni: 2 pieces = 50 g dry',
+  // austrian-style-potato-salad: "6 cornichons, minced (about 2
+  // tablespoons)" on 2710078's cup (155 g).
+  'cornichon': 'ATK: 6 cornichons ≈ 2 tablespoons minced',
+  // eggs-piperade: "3 cubanelle peppers (3 to 4 ounces each)".
+  'cubanelle pepper': 'ATK: a Cubanelle pepper ≈ 3 to 4 ounces',
 };
+
+/// v31 (Q6, ruled 2026-10-03): pieces FDC weighs by no length, sized by
+/// the "(N-inch)" or "about N inches long" the line prints × a per-inch
+/// figure ([_perInchGrams]), flagged with its source. Item word → (the
+/// units it is counted in, g per inch, the record it must be on, label).
+const Map<String, (Set<String>, double, String, String)> _perInch = {
+  // "1 (1-inch) piece fresh ginger, grated (about 1 tablespoon)" (Roast
+  // Fresh Ham; Strawberries and Grapes agrees): the table's ginger 0.54
+  // g/mL × 1 tablespoon. Fresh root only: ground and crystallized ginger
+  // sit on other records.
+  'ginger': (
+    {'', 'piece'},
+    8,
+    'ginger root',
+    'ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon',
+  ),
+  // "10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup)"
+  // (Crispy Orange Beef) on 169103's tbsp (6 g): 2.4 g a 3-inch strip.
+  'orange zest': (
+    {'strip'},
+    0.8,
+    'orange peel',
+    'ATK: 10 (3-inch) strips orange peel ≈ ¼ cup',
+  ),
+  // The orange figure extended: 167749 lemon peel's portions equal it.
+  'lemon zest': (
+    {'strip'},
+    0.8,
+    'lemon peel',
+    'the orange-peel strip figure, extended to lemon',
+  ),
+};
+
+/// "(4-inch)", "(1½-inch piece)", "about 3 inches long" — the printed
+/// length [_perInch] scales by.
+final RegExp _printedLength = RegExp(
+  '\\(([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]*)-inch\\b|'
+  '\\babout ([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]*) '
+  r'inch(?:es)? long\b',
+);
+
+/// The grams of ONE counted piece of [normalizedItem] by its printed
+/// length ([_perInch]) and its label, or null: the item names the key, the
+/// line counts in one of its units, [food] is its record and [raw] prints
+/// a length.
+({double grams, double inches, double perInch, String label})? _perInchGrams(
+  String normalizedItem,
+  String? raw,
+  String unit,
+  FdcFood? food,
+) {
+  if (raw == null || food == null) {
+    return null;
+  }
+  for (final MapEntry(:key, value: (units, perInch, record, label))
+      in _perInch.entries) {
+    if (!units.contains(unit) ||
+        !RegExp('\\b$key\\b').hasMatch(normalizedItem) ||
+        !food.description.toLowerCase().startsWith(record)) {
+      continue;
+    }
+    final m = _printedLength.firstMatch(raw);
+    final inches = m == null ? null : _quantityValue((m[1] ?? m[2]!).trim());
+    return inches == null
+        ? null
+        : (
+            grams: inches * perInch,
+            inches: inches,
+            perInch: perInch,
+            label: label,
+          );
+  }
+  return null;
+}
+
+/// v31 (Q6, ruled): scallions in a bunch — a reference count of 7 × the
+/// piece table's FDC scallion (2709794 '1 whole' 15 g). Any other bunch
+/// (herbs) keeps its skip.
+const Map<String, int> _perBunch = {'green onion': 7, 'scallion': 7};
 
 /// The grams of one counted [key] in the piece table ('egg' 50, 'egg yolk'
 /// 17, 'egg white' 33), or null.
@@ -471,6 +620,11 @@ class GramResolution {
   /// nothing to show. Not stored; re-derived for display.
   final String? basis;
 }
+
+/// A figure as written: "8", "0.8", "1.5" (v31's per-inch and sub-gram
+/// piece bases).
+String _figure(double v) =>
+    v == v.roundToDouble() ? '${v.round()}' : v.toString();
 
 /// The amount as written, for a [GramResolution.basis] label ("½ cup", "2",
 /// "pinch" — a quantity-less pinch wrote ' pinch', checkpoint 5).
@@ -2595,7 +2749,7 @@ GramResolution? _resolveGrams({
       final standIn = kosher
           ? null
           : form == 'shredded' && entry?.$1 == 'pecorino'
-          ? 'shredded Parmesan'
+          ? 'shredded Parmesan density'
           : printed != null
           ? null
           : _approximateDensities[entry?.$1];
@@ -2606,7 +2760,7 @@ GramResolution? _resolveGrams({
             '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL'
             '${printed == null ? '' : " · $form, at ATK's printed "}'
             '${printed?.$2 ?? ''}'
-            '${standIn == null ? '' : ' · approximate ($standIn density)'}',
+            '${standIn == null ? '' : ' · approximate ($standIn)'}',
       );
     }
     final perMl = ownVolume;
@@ -2705,23 +2859,65 @@ GramResolution? _resolveGrams({
       );
     }
 
+    // 3a.6 A piece by its printed length ([_perInch], v31): a "(4-inch)
+    //      piece ginger", "2 (2-inch) strips lemon zest" — a strip is a
+    //      container unit to the piece table below (never the whole fruit).
+    final inch = _perInchGrams(normalizedItem, raw, amountUnit, food);
+    if (inch != null) {
+      return GramResolution(
+        grams: quantity * inch.grams,
+        source: GramSource.piece,
+        basis:
+            '${_amountText(amount)} × ${_figure(inch.inches)} inch × '
+            '${_figure(inch.perInch)} g per inch · approximate '
+            '(${inch.label})',
+      );
+    }
+
     // 3b. The curated piece table — hand-tuned to ATK's meaning, so it beats a
     //     fuzzy whole-item portion (a "graham cracker" is the 14 g rectangle,
     //     not FDC's ambiguous per-cracker serving). Skipped for a container
     //     count with no printed size — a whole-item weight is not a can.
     //     Skipped too for a bunch: every entry is per piece, and '2 bunches
-    //     scallions' read as 2 scallions (30 g).
-    final piece = _containerUnits.contains(amountUnit) || amountUnit == 'bunch'
+    //     scallions' read as 2 scallions (30 g) — a bunch of scallions is
+    //     [_perBunch] of them (v31).
+    final bunch = amountUnit == 'bunch'
+        ? _tableEntry([
+            for (final MapEntry(:key, :value) in _perBunch.entries)
+              (key, value.toDouble()),
+          ], normalizedItem)
+        : null;
+    final piece = bunch != null
+        ? _pieceLookup(bunch.$1, null, '')
+        : _containerUnits.contains(amountUnit) || amountUnit == 'bunch'
         ? null
         : _pieceLookup(normalizedItem, raw, amountUnit);
+    if (piece != null && bunch != null) {
+      final each = bunch.$2.round();
+      return GramResolution(
+        grams: quantity * each * piece.$2,
+        source: GramSource.piece,
+        basis:
+            '${_amountText(amount)} × $each × ${piece.$2.round()} g each · '
+            'approximate (reference figure: $each scallions a bunch)',
+      );
+    }
     if (piece != null) {
       final (key, pieceWeight) = piece;
       final printed = _approximatePieces[key];
+      // A flagged figure says its decimals — a sub-gram one all of them, one
+      // under 10 g one ("3.2", "7.1"); every other piece (the bay leaf's
+      // "0 g") its rounded grams, as before.
+      final each = printed == null || pieceWeight >= 10
+          ? '${pieceWeight.round()}'
+          : pieceWeight < 1
+          ? _figure(pieceWeight)
+          : pieceWeight.toStringAsFixed(1);
       return GramResolution(
         grams: quantity * pieceWeight,
         source: GramSource.piece,
         basis:
-            '${_amountText(amount)} × ${pieceWeight.round()} g each'
+            '${_amountText(amount)} × $each g each'
             '${printed == null ? '' : ' · approximate ($printed)'}',
       );
     }

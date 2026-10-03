@@ -67,6 +67,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:dissolveIndex',
       'memo:dissolveItems',
       'memo:plusIndex',
+      // v31: the poured-away poach, the first frying verb, the crumb coat.
+      'memo:pourAway',
+      'memo:fryVerbAt',
+      'memo:crumbsForTheCoat',
     ])
       once: 1,
     for (final perHead in [
@@ -87,6 +91,8 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:dissolvingWith',
       'memo:dissolvedWith',
       'memo:plusSteps',
+      // v31: a fat's pieces after its last discard.
+      'memo:eatenAfterDiscard',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,

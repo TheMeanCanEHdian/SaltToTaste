@@ -896,8 +896,15 @@ void main() {
       final energy =
           (jsonDecode(db.nutritionFor('r1')!.nutrientsJson) as Map)['energy']
               as Map;
-      // 16 kcal per 100 g of 169979; the vinegar line is held in check.
-      expect(energy['amount'], closeTo(napa.grams! * 16 / 100, 0.01));
+      // 16 kcal per 100 g of 169979; since matcher v31 (Q7, ruled) the
+      // vinegar line counts too, on "Vinegar, balsamic" (172241, 88 kcal),
+      // flagged — until v30 it was held in check.
+      final vinegar = db.ingredientMatchesFor('r1').first;
+      expect(vinegar.fdcId, 172241);
+      expect(
+        energy['amount'],
+        closeTo(napa.grams! * 16 / 100 + vinegar.grams! * 88 / 100, 0.01),
+      );
     });
   });
 

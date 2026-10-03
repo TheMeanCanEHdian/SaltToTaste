@@ -382,24 +382,28 @@ void main() {
       expect((row.fdcId, row.grams, row.description), (null, 0, subRecipeNote));
     });
 
-    test('A5: a marked count whose pick is below the gate was never fetched, '
-        'so it is HELD in check on the pick, never zeroed as a confirmed '
-        'sub-recipe ("12 nicoise olives (see this page)" on "Olives, black" '
-        'at 0.465 — "6 red plums" until matcher v21 rewrote them onto '
-        '"Plums, raw" over the gate: no corpus marked count picks below the '
-        'gate — a synthesized line, a stated exception)', () async {
-      final db = tempDb();
-      const raw = '12 nicoise olives (see this page)';
-      expect(isSubRecipeReference(raw), isTrue);
-      final fixtures = FixtureProvider();
-      await matchAndCompute(db, fixtures, recipeOf(db: db, [raw]));
-      final row = db.ingredientMatchesFor('r').single;
-      expect(row.description, 'Olives, black');
-      expect((row.grams, row.status), (null, 'auto'));
-      expect(belowConfidenceGate(row.confidence), isTrue);
-      expect(bucketOf(row), MatchBucket.check);
-      expect(fixtures.foodCalls, 0);
-    });
+    test(
+      'A5: a marked count whose pick is below the gate was never fetched, '
+      'so it is HELD in check on the pick, never zeroed as a confirmed '
+      'sub-recipe ("15 curry leaves (see this page)" on "Beef curry" at '
+      '0.465 — "6 red plums" until matcher v21 rewrote them onto "Plums, '
+      'raw" over the gate, and "12 nicoise olives" until v31 ranked the '
+      'olives over it (Q7): no corpus marked count picks below the gate — '
+      'a synthesized line from the Palak Dal line, a stated exception)',
+      () async {
+        final db = tempDb();
+        const raw = '15 curry leaves (see this page)';
+        expect(isSubRecipeReference(raw), isTrue);
+        final fixtures = FixtureProvider();
+        await matchAndCompute(db, fixtures, recipeOf(db: db, [raw]));
+        final row = db.ingredientMatchesFor('r').single;
+        expect(row.description, 'Beef curry');
+        expect((row.grams, row.status), (null, 'auto'));
+        expect(belowConfidenceGate(row.confidence), isTrue);
+        expect(bucketOf(row), MatchBucket.check);
+        expect(fixtures.foodCalls, 0);
+      },
+    );
 
     test('A4: "every amount unit-less" — a count with a weight is no count of '
         'the food (no corpus reference line pairs a count with a weight: '

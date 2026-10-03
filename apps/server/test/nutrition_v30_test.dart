@@ -341,7 +341,7 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     168570,
     '71.00',
     'counted',
-    '10 × 7 g each · approximate (ATK: 4 large dried guajillo chiles ≈ 1 ounce)',
+    '10 × 7.1 g each · approximate (ATK: 4 large dried guajillo chiles ≈ 1 ounce)',
   ),
   (
     '0498-best-vegetarian-chili.yaml',
@@ -350,7 +350,7 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     168570,
     '14.20',
     'counted',
-    '2 × 7 g each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)',
+    '2 × 7.1 g each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)',
   ),
   (
     '0550-thai-chicken-curry-with-potatoes-and-peanuts.yaml',
@@ -359,7 +359,7 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     168570,
     '42.60',
     'counted',
-    '6 × 7 g each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)',
+    '6 × 7.1 g each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)',
   ),
   (
     '0587-grilled-steak-with-new-mexican-chile-rub.yaml',
@@ -368,7 +368,7 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     168570,
     '14.20',
     'counted',
-    '2 × 7 g each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)',
+    '2 × 7.1 g each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)',
   ),
   (
     '1095-goan-pork-vindaloo.yaml',

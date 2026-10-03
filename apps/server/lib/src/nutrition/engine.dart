@@ -906,18 +906,62 @@ PlusPart? _eatenPlusPart(Recipe recipe, IngredientLine line, String? head) {
         }
         return false;
       });
-  if (named(_plusLead(plus.text))) {
-    return plus;
-  }
   final first = line.amounts.firstOrNull;
   final written = _plusLead(line.raw);
   // Two volumes compared, never a default for a missing one (Run 054 S13:
   // the `?? infinity` / `?? 0` arms were unpinnable values).
   final firstMl = first == null ? null : volumeMlOf([first]);
   final plusMl = volumeMlOf([plus.amount]);
-  return firstMl != null && plusMl != null && firstMl < plusMl && named(written)
-      ? PlusPart(amount: first!, text: written!, sameFood: true)
-      : null;
+  final smallFirst = firstMl != null && plusMl != null && firstMl < plusMl;
+  // A small first part a step names is the eaten one even when the steps
+  // name the large part too (v31: 0675's "1 teaspoon plus ½ cup vegetable
+  // oil" sautés the corn in the teaspoon and fries in "the remaining ½
+  // cup").
+  if (smallFirst && named(written)) {
+    return PlusPart(amount: first!, text: written!, sameFood: true);
+  }
+  if (named(_plusLead(plus.text))) {
+    return plus;
+  }
+  // v31 (the owner's R4 ruling on 0042): a plus part the steps eat in
+  // pieces after the fat's last discard — "Discard the oil …" then "Heat 1
+  // tablespoon more oil … add the remaining 1 tablespoon oil" (¾ cup plus
+  // 2 tablespoons vegetable oil): the pieces total the plus part.
+  final after = plusMl == null ? null : _eatenAfterDiscard(recipe, head);
+  return after != null && (after - plusMl!).abs() < 0.5 ? plus : null;
+}
+
+/// The volume (mL) of [head] fat [recipe]'s sentences add after its LAST
+/// discard ("1 tablespoon more oil", "the remaining 1 tablespoon oil") —
+/// [_eatenPlusPart] — or null when no sentence discards it or none adds
+/// any after. Once per recipe and head.
+double? _eatenAfterDiscard(Recipe recipe, String head) {
+  final fat = _fats[head];
+  if (fat == null) {
+    return null;
+  }
+  final index = _stepIndexOf(recipe);
+  // Key: head — the fat discarded and added.
+  return index.memo(('eatenAfterDiscard', head), () {
+    final all = index.allSentences;
+    final last = all.lastIndexWhere(fat.discards.hasMatch);
+    if (last < 0) {
+      return null;
+    }
+    final adds = RegExp(
+      '($_amountRun)\\s*(teaspoons?|tablespoons?|cups?)\\s+(?:more\\s+)?'
+      '${RegExp.escape(head)}\\b',
+    );
+    var ml = 0.0;
+    for (final s in all.skip(last + 1)) {
+      for (final m in adds.allMatches(s)) {
+        ml +=
+            volumeMlOf(parseIngredientLine('${m[1]}${m[2]} $head').amounts) ??
+            0;
+      }
+    }
+    return ml > 0 ? ml : null;
+  });
 }
 
 /// A plus line part's written amount as [_eatenPlusPart] looks for it in
@@ -1041,6 +1085,20 @@ bool _fries(Recipe recipe) => _stepIndexOf(recipe).memo(
             ),
       ),
 );
+
+/// Where [recipe]'s first frying-VERB sentence is ([_fryVerb]) — (step,
+/// sentence) — or null, once per recipe ([_oilOwnersOf], v31).
+(int, int)? _fryVerbAt(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#fryVerbAt, () {
+      for (final (i, sentences) in _stepIndexOf(recipe).sentences.indexed) {
+        for (final (j, s) in sentences.indexed) {
+          if (_fryVerb.hasMatch(s)) {
+            return (i, j);
+          }
+        }
+      }
+      return null;
+    });
 
 /// [_fries] for the tests (Run 054 O2/S2: the 13 corpus recipes that say
 /// "fry" and do not fry in oil).
@@ -1946,7 +2004,20 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
         }
       }
     }
-    if (_fries(recipe) && _dredgedIn(recipe)) {
+    // v31 (the owner's R4 ruling, 2026-10-03): a fat no sentence of its
+    // own fries — none names it with a frying heat, a discard or a pour-off
+    // — in a recipe whose evidence is the fry VERB ("pan-fry until the
+    // outsides are crisp", 0288; "Fry until golden brown", 0674, 0675) is a
+    // shallow fry the food soaks some of up: each candidate is held for a
+    // person, the verb's sentence its note — never zeroed by a dredge
+    // (0288's flour) nor counted whole. Not when the mass rule already
+    // zeroes a line of the fat: the verb is that oil's (0672 Buffalo
+    // Cauliflower Bites fries in "1–2 quarts peanut or vegetable oil"; its
+    // "¼ cup coconut oil" is the sauce, eaten).
+    final verb = order == 0 && !lines.any(_massZeroes)
+        ? _fryVerbAt(recipe)
+        : null;
+    if (verb == null && _fries(recipe) && _dredgedIn(recipe)) {
       unbound.add((null, false));
     }
     // Who could own a sentence that names no line: the frying candidates
@@ -1969,7 +2040,12 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
     ];
     final could = named.isNotEmpty ? named : candidates;
     final ambiguous = <int, String>{};
-    if (could.length == 1) {
+    if (verb != null) {
+      final note = '"${_rawSentence(index, verb)}"';
+      for (final i in candidates) {
+        ambiguous[i] = note;
+      }
+    } else if (could.length == 1) {
       // The one candidate owns them all, after its bound sentences: its
       // first pour-off stands, else the first of theirs.
       final single = could.single;
@@ -2112,6 +2188,27 @@ final RegExp _labelledFrying = RegExp(
   r'\bfor (?:pan-|shallow-|deep[- ]?)?fry',
   caseSensitive: false,
 );
+
+/// Whether [recipe]'s bread lines are the crumbs of its held breading
+/// (v31, B4 — under the existing dredge ruling only): the recipe holds a
+/// dredge ([_dredgedIn]: it fries), a step processes the bread ("Process
+/// the dry bread in a food processor to very fine crumbs", 0233 Pork
+/// Schnitzel; 0114 Breaded Chicken Cutlets) and a dredge sentence sets out
+/// the crumbs ("Transfer the bread crumbs to a shallow dish"). The flour
+/// was held while the crumbs of the same coat counted (140 g, 84 g). A
+/// sautéed or baked breading does not fry, so it holds nothing (Kiev,
+/// crunchy baked pork chops) until the owner rules on it. Once per recipe.
+bool _crumbsForTheCoat(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#crumbsForTheCoat, () {
+      final sentences = _stepIndexOf(recipe).allSentences;
+      return _dredgedIn(recipe) &&
+          sentences.any(_processesBread.hasMatch) &&
+          sentences.any(
+            (s) => s.contains('crumbs') && _dredgeSentence.hasMatch(s),
+          );
+    });
+
+final RegExp _processesBread = RegExp(r'\bprocess (?:the )?(?:dry )?bread\b');
 
 /// Whether [recipe] holds a dredge ([_dredge]) — once per recipe.
 bool _dredgedIn(Recipe recipe) => _stepIndexOf(recipe).memo(#dredged, () {
@@ -2296,7 +2393,7 @@ String? keptLiquidOf(Recipe recipe, IngredientLine line) {
       final index = _stepIndexOf(recipe);
       final strain = _strainOf(recipe);
       if (strain < 0) {
-        return null;
+        return _pourAwayOf(recipe);
       }
       // Both readers need the word: a substring test first.
       final after = index.sentences
@@ -2326,6 +2423,55 @@ String? keptLiquidOf(Recipe recipe, IngredientLine line) {
         ],
       );
     });
+
+/// A poach whose liquid is poured away but a measured part (v31, the
+/// owner's R4 ruling on 0488 Enchiladas Verdes): "Remove ¼ cup liquid from
+/// the saucepan and set aside; discard the remaining liquid." The kept part
+/// as written, and the sentences of that step before it — what simmers in
+/// the liquid ("Heat 2 teaspoons of the oil …; add the onion", "Add 2
+/// teaspoons of the garlic and the cumin", "stir in the broth"); the food
+/// lifted out ("Transfer the chicken") is named by none of its lines'
+/// heads. Null when no sentence pours one away, or a later one uses a
+/// "remaining" liquid. Once per recipe ([_braiseOf]).
+({String kept, List<String> openers})? _pourAwayOf(Recipe recipe) {
+  final at = _pourAwayAt(recipe);
+  if (at == null) {
+    return null;
+  }
+  final index = _stepIndexOf(recipe);
+  final sentences = index.sentences[at.$1];
+  final remaining = RegExp(r'\bremaining (?:\w+ )?(?:cooking )?liquid\b');
+  final later = [
+    ...sentences.skip(at.$2 + 1),
+    ...index.sentences.skip(at.$1 + 1).expand((s) => s),
+  ];
+  return later.any(remaining.hasMatch)
+      ? null
+      : (
+          kept: _poursAway.firstMatch(sentences[at.$2])![1]!,
+          openers: sentences.take(at.$2).toList(),
+        );
+}
+
+/// Where [_pourAwayOf]'s sentence is — (step, sentence) — or null, once
+/// per recipe.
+(int, int)? _pourAwayAt(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#pourAway, () {
+      final index = _stepIndexOf(recipe);
+      for (final (i, sentences) in index.sentences.indexed) {
+        for (final (j, s) in sentences.indexed) {
+          if (s.contains('discard') && _poursAway.hasMatch(s)) {
+            return (i, j);
+          }
+        }
+      }
+      return null;
+    });
+
+final RegExp _poursAway = RegExp(
+  '\\bremove ($_amountRun\\s*cups? (?:cooking )?liquid)\\b[^.]*'
+  r'\bdiscard (?:the )?remaining (?:cooking )?liquid\b',
+);
 
 /// The first step of [recipe] that strains a braise's liquid
 /// ([keptLiquidOf]), or -1 — read by windowed sentence (Run 054: the
@@ -2365,9 +2511,16 @@ final RegExp _strainsLiquid = RegExp(
     return null;
   }
   final index = _stepIndexOf(recipe);
-  final from = medium == DiscardedMedium.partialPourAway
+  // A poured-away poach's medium is its step ([_pourAwayOf]): the parts
+  // eaten are written after it.
+  final pourAway = medium == DiscardedMedium.partialPourAway
+      ? _pourAwayAt(recipe)
+      : null;
+  final from = medium != DiscardedMedium.partialPourAway
+      ? 0
+      : _strainOf(recipe) >= 0 || pourAway == null
       ? _strainOf(recipe)
-      : 0;
+      : pourAway.$1 + 1;
   // The amounts written before the head outside the medium, once per
   // head and medium: each line of the head reads the list, never the steps.
   // Key: head — the mention pattern; medium — the first step read (the strain)
@@ -2580,7 +2733,8 @@ DiscardedMedium? discardedMediumOf(
     if (index.memo(#starter, () => _feedsStarter(steps))) {
       return DiscardedMedium.starterDiscard;
     }
-    if (_dredge(recipe, raw, head, () => ml, steps)) {
+    if (_dredge(recipe, raw, head, () => ml, steps) ||
+        (head == 'bread' && _crumbsForTheCoat(recipe))) {
       return DiscardedMedium.coating;
     }
     if (keptLiquidOf(recipe, line) != null) {
@@ -2591,7 +2745,13 @@ DiscardedMedium? discardedMediumOf(
   // exclusion change no line of the library (audit 4 P9) but classify lines
   // typed through the API: a dry brine's salt stays on the meat, and the
   // brine rule below would read "dry-brine" as a brine.
-  if (head == 'oil' || head == 'shortening' || head == 'lard') {
+  // v31 (Q7 fats, ruled): a 'fat' line too — "6 cups duck fat, chicken
+  // fat, or vegetable oil for confit" (0451) is the confit's medium, not
+  // 1,230 g eaten; a smaller fat line no sentence fries stays counted.
+  if (head == 'oil' ||
+      head == 'shortening' ||
+      head == 'lard' ||
+      head == 'fat') {
     if (_massZeroes(line, normalized)) {
       return DiscardedMedium.fryingOil;
     }

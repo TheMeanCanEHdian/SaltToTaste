@@ -238,8 +238,9 @@ void main() {
 
     test('S15: "1 teaspoon grated lemon zest" (six recipes) typed at 3 g, '
         'skipped, edited to "2 (2-inch) strips lemon zest" (another real '
-        'line) — "Lemon peel, raw" weighs no strip: the row stores no grams '
-        'and no source, and the un-skip never revives the 3 g', () async {
+        'line) — since matcher v31 (Q6) a strip weighs 0.8 g an inch, so the '
+        'row stores the edited line its own 3.20 g (until v31: no grams, no '
+        'source), and the un-skip never revives the typed 3 g', () async {
       final db = tempDb();
       final provider = FixtureProvider();
       const grated = '1 teaspoon grated lemon zest';
@@ -255,12 +256,15 @@ void main() {
       final edited = save(db, strips);
       await matchAndCompute(db, provider, edited);
       expect(
-        (row(db).status, row(db).grams, row(db).gramSource),
-        ('skipped', null, null),
+        (row(db).status, row(db).grams?.toStringAsFixed(2), row(db).gramSource),
+        ('skipped', '3.20', 'piece'),
       );
       await applyMatchOverride(db, provider, edited, 0, {'skipped': false});
-      expect((row(db).grams, row(db).gramSource), (null, null));
-      expect(db.nutritionFor('r')!.totalGrams, 0);
+      expect(
+        (row(db).grams?.toStringAsFixed(2), row(db).gramSource),
+        ('3.20', 'piece'),
+      );
+      expect(db.nutritionFor('r')!.totalGrams, closeTo(3.2, 1e-9));
     });
 
     for (final skip in [true, false]) {
