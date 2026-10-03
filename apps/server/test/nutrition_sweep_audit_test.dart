@@ -998,9 +998,12 @@ void main() {
     // from 0279's peppercorn candidates (a hit too, differing in a digit).
     // The v27 closer recorded the Sichuan peppercorns' own record (168093)
     // for FDC's answer once an outage ends (its D2/D7 pins): a hit in
-    // 'sichuan peppercorns', differing in some digit.
-    expect(compared, 307);
-    expect(differ, 228);
+    // 'sichuan peppercorns', differing in some digit. Matcher v30 recorded
+    // the three bone-in records its Q7 pins read from snapshot 13 (the rib
+    // roast 168675, the back ribs 173405, the turkey thigh 171533): each a
+    // hit in a recorded answer, each differing in some digit.
+    expect(compared, 310);
+    expect(differ, 231);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -550,26 +550,37 @@ void main() {
       );
     });
 
-    test('an SR hit never fetched says no yield was read — Barbecued Pulled '
-        'Pork (0609); a Foundation or FNDDS hit with no portions is '
-        'approximate — Braised Turkey (0172)', () async {
+    // Matcher v30 moved the first pins (Barbecued Pulled Pork's Boston butt
+    // now reads its record's refuse, Braised Turkey's drumsticks an SR
+    // record): the fresh ham (0249) is the SR hit no compute fetches until
+    // the live step asks for 168226, and Hearty Chicken Noodle Soup's
+    // breast halves (0002) a Foundation hit.
+    test('an SR hit never fetched says no yield was read — Roast Fresh Ham '
+        '(0249); a Foundation or FNDDS hit with no portions is approximate — '
+        'Hearty Chicken Noodle Soup (0002)', () async {
       final db = tempDb();
       final r = recipeOf(db, 'r1', [
-        '1 (6- to 8-pound) bone-in Boston butt roast',
-        '4 pounds turkey drumsticks and thighs, trimmed',
+        '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank '
+            'end, rinsed',
+        '2 (12-ounce) bone-in, skin-on chicken breast halves, cut in half '
+            'crosswise',
       ]);
       await matchAndCompute(db, provider, r);
       final lines = nutritionLines(r);
-      final butt = rowOf(db, 'r1');
-      expect((butt.fdcId, butt.dataType), (167836, 'SR Legacy'));
-      expect(db.fdcFoodCacheGet(167836), isNull);
+      final ham = rowOf(db, 'r1');
+      expect((ham.fdcId, ham.dataType), (168226, 'SR Legacy'));
+      expect(db.fdcFoodCacheGet(168226), isNull);
       expect(
-        gramBasisFor(db, lines[0], butt),
+        gramBasisFor(db, lines[0], ham),
         'from the printed weight · no edible yield read',
       );
-      final turkey = rowOf(db, 'r1', 1);
-      expect((turkey.fdcId, turkey.dataType), (2706125, 'Survey (FNDDS)'));
-      expect(gramBasisFor(db, lines[1], turkey), 'from 4 pound $approximate');
+      final breast = rowOf(db, 'r1', 1);
+      expect((breast.fdcId, breast.dataType), (2727569, 'Foundation'));
+      expect(db.fdcFoodCacheGet(2727569), isNull);
+      expect(
+        gramBasisFor(db, lines[1], breast),
+        '2 × 340 g (printed weight) $approximate',
+      );
     });
 
     test("a person's confirm counts a line in the shell at its gross weight: "

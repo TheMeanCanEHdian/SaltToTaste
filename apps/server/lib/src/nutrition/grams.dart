@@ -312,6 +312,12 @@ const List<(String, double)> _pieceWeights = [
   ('poblano', 45),
   ('serrano', 6),
   ('thai chile', 2),
+  // v30 (Q6, ruled: a weight ATK prints in the corpus where one exists): a
+  // dried pod FDC weighs only as 168570's 0.5 g bird chile, flagged
+  // ([_approximatePieces]). Keyed on the DRIED item, so a fresh chile and
+  // "chipotle chile in adobo" never reach them.
+  ('dried new mexican chile', 7.1),
+  ('dried guajillo chile', 7.1),
   ('eggplant', 300), // longer key than "egg", so it wins the substring match
   // Counted-in-slices/sheets staples (per counted unit).
   ('sandwich bread', 28),
@@ -333,6 +339,15 @@ const List<(String, double)> _pieceWeights = [
   ('puff pastry', 245), // per sheet (a standard frozen sheet)
   ('vanilla bean', 4),
 ];
+
+/// The [_pieceWeights] keys whose figure is ATK's printed weight, not
+/// FDC's: a line sized by one says so in its basis ("· approximate (ATK: …)").
+const Map<String, String> _approximatePieces = {
+  // chili-con-carne: "3 medium New Mexican pods (about ¾ ounce)".
+  'dried new mexican chile': 'ATK: 3 medium New Mexican pods ≈ ¾ ounce',
+  // goan-pork-vindaloo: "4 large dried guajillo chiles … (about 1 ounce)".
+  'dried guajillo chile': 'ATK: 4 large dried guajillo chiles ≈ 1 ounce',
+};
 
 /// The grams of one counted [key] in the piece table ('egg' 50, 'egg yolk'
 /// 17, 'egg white' 33), or null.
@@ -378,6 +393,15 @@ const Map<int, int> volumeSiblings = {
   // Cabbage, napa, leaf, destemmed, raw → Cabbage, chinese (pe-tsai), raw —
   // already its nutrient sibling (engine.dart nutrientSiblings).
   2727583: 169979,
+  // LIVE STEP (built dry for v30; uncomment with the detail, after reading
+  // its portions — neither detail is in any snapshot, so the volume portion
+  // the rule depends on is unchecked): Tamarind (FNDDS, '1 tamarind' 2 g
+  // only) → Tamarinds, raw (detail 167763: tamarind paste ×2, tamarind
+  // juice concentrate); Eggs, Grade A, Large, egg whole (Foundation, no
+  // portion) → Egg, whole, raw, fresh (detail 171287: "2 tablespoons
+  // beaten egg").
+  // 2709269: 167763,
+  // 748967: 171287,
 };
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
@@ -615,7 +639,11 @@ double? _countQty(List<Amount> amounts) {
 /// not in 'pineapple', and 'garlic' is not the food of 'mustard-garlic
 /// butter'. The size and 'head' words normalizing strips are read back from
 /// [raw] and the amount's [unit] ("1 garlic head", "1 small cucumber").
-double? _pieceLookup(String normalizedItem, String? raw, String unit) {
+(String, double)? _pieceLookup(
+  String normalizedItem,
+  String? raw,
+  String unit,
+) {
   final alternatives = normalizedItem.split(' or ');
   final heads = {for (final item in alternatives) headNounOf(item)};
   final rawWords = (raw ?? '').toLowerCase().split(RegExp('[^a-z-]+'));
@@ -635,8 +663,7 @@ double? _pieceLookup(String normalizedItem, String? raw, String unit) {
         if (head) 'head',
       ].join(' ')} ',
   ];
-  String? bestKey;
-  double? bestValue;
+  (String, double)? best;
   for (final (key, value) in _pieceWeights) {
     final keyHead = headNounOf(key);
     // A chile is FDC's pepper: 'jalapeno chiles' is the jalapeno.
@@ -644,12 +671,11 @@ double? _pieceLookup(String normalizedItem, String? raw, String unit) {
     final run = ' ${key.split(' ').map(keyWordOf).join(' ')} ';
     if (anchored &&
         runs.any((words) => words.contains(run)) &&
-        (bestKey == null || key.length > bestKey.length)) {
-      bestKey = key;
-      bestValue = value;
+        (best == null || key.length > best.$1.length)) {
+      best = (key, value);
     }
   }
-  return bestValue;
+  return best;
 }
 
 double? _tableLookup(
@@ -1033,8 +1059,9 @@ double? _wholeItemPortionGrams(
     // 0.5 g — a bird chile. A dried New Mexican or guajillo pod is ~7 g by the
     // corpus's own parens ("3 medium New Mexican pods (about ¾ ounce)"), so a
     // sub-gram pepper portion sizes only a small dried chile
-    // ([_smallDriedChile]); the rest stay unweighed until a dried-chile
-    // piece table exists (Run 047 verifier: 14× under, 3 false completes).
+    // ([_smallDriedChile]); the rest stay unweighed unless the piece table
+    // sizes them first (v30: New Mexican and guajillo at ATK's printed 7.1 g)
+    // (Run 047 verifier: 14× under, 3 false completes).
     // The guard holds for the whole "pepper" portion, whatever names it — a
     // "bell pepper" item names the noun itself (Run 047 critic).
     if (noun == 'pepper' &&
@@ -1450,6 +1477,8 @@ bool buysRefuse(String raw) {
     r'giblets|whole chicken|whole turkey\b|\) turkey\b|\bturkey \(|'
     'shoulder chops?|with or without bone|'
     'bone-in|standing rib|oxtails?|shanks?|racks? of|short ribs|spareribs|'
+    // v30 (Q7): "3–4 beef rib slabs (… about 5 pounds total)" buys bone.
+    'rib slabs?|'
     r'baby back|drumsticks?|wings?\b|leg quarters?|'
     r'clams|mussels|oysters|lobsters?|shell-on|in the shell|crabs?\b',
   ).hasMatch(line);
@@ -2682,15 +2711,18 @@ GramResolution? _resolveGrams({
     //     count with no printed size — a whole-item weight is not a can.
     //     Skipped too for a bunch: every entry is per piece, and '2 bunches
     //     scallions' read as 2 scallions (30 g).
-    final pieceWeight =
-        _containerUnits.contains(amountUnit) || amountUnit == 'bunch'
+    final piece = _containerUnits.contains(amountUnit) || amountUnit == 'bunch'
         ? null
         : _pieceLookup(normalizedItem, raw, amountUnit);
-    if (pieceWeight != null) {
+    if (piece != null) {
+      final (key, pieceWeight) = piece;
+      final printed = _approximatePieces[key];
       return GramResolution(
         grams: quantity * pieceWeight,
         source: GramSource.piece,
-        basis: '${_amountText(amount)} × ${pieceWeight.round()} g each',
+        basis:
+            '${_amountText(amount)} × ${pieceWeight.round()} g each'
+            '${printed == null ? '' : ' · approximate ($printed)'}',
       );
     }
 

@@ -419,7 +419,15 @@ const Map<String, String> _synonyms = {
 /// keeps its decisions first, its surplus dropped where the fewest rows
 /// move (ties from the end), laid in position order (400 twins, one edit:
 /// 10,000 layouts → ~800). Replay: no row moves.
-const int matcherVersion = 29;
+/// 30 = the rulings already made, built as table entries only: Q7's bone-in
+/// parts (18 rank-as items onto their raw records at the printed gross
+/// weight, labelled approximate; flap meat, turkey drumsticks/thighs and
+/// leg quarters flagged approximations; "rib slabs" buys bone) and Q6's
+/// corpus-printed pods (dried New Mexican and guajillo chiles 7.1 g each,
+/// flagged). Replay: 24 rows move (20 bone-in, 4 chile), 17 recipes
+/// complete. The fresh ham, the live step's details and searches wait,
+/// commented where they will go.
+const int matcherVersion = 30;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -1533,6 +1541,117 @@ const Map<String, (String, String)> _rankAs = {
   'dried beans': ('navy beans', 'beans navy mature seeds raw'),
   'dried pinto beans': ('navy beans', 'beans navy mature seeds raw'),
   'coleslaw mix': ('red or green cabbage', 'cabbage raw'),
+  // v30 (Q7, ruled 2026-10-01: meats and birds at gross weight, labelled
+  // approximate): bone-in and whole cuts on their raw record, each the
+  // named record of an answer snapshot 13 holds (q7_records.md
+  // §AX_bone_in_parts). The weight stays the printed gross weight;
+  // `buysRefuse` reads a published refuse yield (the Boston butt × 0.76) or
+  // labels it approximate. Flagged approximations ([approximationRecords]):
+  // flap meat → top sirloin, turkey drumsticks/thighs and leg quarters →
+  // turkey thigh meat and skin.
+  '7-pound first-cut beef standing rib roast': (
+    'beef rib whole raw',
+    'beef rib whole ribs 6-12 separable lean and fat trimmed to 1 8 fat '
+        'choice raw',
+  ),
+  'first-cut beef standing rib roast': (
+    'beef rib whole raw',
+    'beef rib whole ribs 6-12 separable lean and fat trimmed to 1 8 fat '
+        'choice raw',
+  ),
+  'beef flap meat': (
+    'sirloin steak tips or boneless beef short ribs',
+    'beef top sirloin steak raw',
+  ),
+  'beef rib slabs': (
+    'baby back ribs',
+    'beef rib back ribs bone-in separable lean and fat choice raw',
+  ),
+  'bone-in boston butt roast': (
+    'boneless pork butt roast',
+    'pork fresh shoulder boston butt blade steaks separable lean and fat raw',
+  ),
+  'boneless pork butt roast with at least 1 4-inch-thick fat cap': (
+    'boneless pork butt roast',
+    'pork fresh shoulder boston butt blade steaks separable lean and fat raw',
+  ),
+  'bone-in chicken parts': (
+    'chicken broilers or fryers meat and skin raw',
+    'chicken broilers or fryers meat and skin raw',
+  ),
+  'bone-in skin-on chicken parts': (
+    'chicken broilers or fryers meat and skin raw',
+    'chicken broilers or fryers meat and skin raw',
+  ),
+  // LIVE STEP (waits on detail 168226, roast-fresh-ham|0: the bone-in
+  // weight reads the record's refuse, a request snapshot 13 never made):
+  // 'bone-in half ham with skin': (
+  //   'meaty smoked ham shank or 2 3 smoked ham hocks',
+  //   'pork fresh leg ham shank half separable lean and fat raw',
+  // ),
+  'boneless long-cut beef shanks': (
+    'boneless long-cut beef shanks',
+    'beef shank crosscuts separable lean only trimmed to 1 4 fat choice raw',
+  ),
+  'butterflied leg of lamb': (
+    'shank end boneless leg of lamb',
+    'lamb leg shank half separable lean and fat trimmed to 1 4 fat choice raw',
+  ),
+  'shank end boneless leg of lamb': (
+    'shank end boneless leg of lamb',
+    'lamb leg shank half separable lean and fat trimmed to 1 4 fat choice raw',
+  ),
+  'cod or other thick whitefish fillets': (
+    'cod',
+    'fish cod atlantic wild caught raw',
+  ),
+  'flat-iron steaks': (
+    'flat-iron steaks',
+    'beef chuck shoulder clod top blade steak separable lean and fat '
+        'trimmed to 0 fat choice raw',
+  ),
+  'frozen butterball or kosher turkey': (
+    'turkey whole meat and skin raw',
+    'turkey whole meat and skin raw',
+  ),
+  // A search hit with no cached detail (the 14 other salmon lines count on
+  // it): a weight line needs none.
+  'salmon steaks': ('salmon steaks', 'fish salmon raw'),
+  'skin-on side of salmon': ('salmon steaks', 'fish salmon raw'),
+  'turkey drumsticks and thighs': (
+    'bone-in turkey thighs',
+    'turkey retail parts thigh meat and skin raw',
+  ),
+  'turkey leg quarters': (
+    'bone-in turkey thighs',
+    'turkey retail parts thigh meat and skin raw',
+  ),
+  // LIVE STEP (built dry for v30; each waits on the one request named, its
+  // target ranked first in an answer snapshot 13 holds — uncomment with the
+  // request; scratchpad fix30/live_step.md): leg quarters on the leg record
+  // (detail 172378); oil-packed tuna (detail 175157); sweetened cranberry
+  // juice (detail 171903); dried onions on the dehydrated flakes the cached
+  // 'onions' answer names (detail 170002, in place of the plan's search);
+  // the singular portobello cap (detail 2003598); jarred pimentos (detail
+  // 168559) and cooked wheat berries (detail 169744; a stand-in: Q7's misc
+  // group is not yet ruled).
+  // 'chicken leg quarters': (
+  //   'chicken leg quarters',
+  //   'chicken leg meat and skin raw',
+  // ),
+  // 'bone-in chicken leg quarters': (
+  //   'bone-in chicken leg quarters',
+  //   'chicken leg meat and skin raw',
+  // ),
+  // 'oil-packed tuna': ('oil-packed tuna', 'tuna white canned in oil drained'),
+  // 'sweetened cranberry juice': (
+  //   'cranberries',
+  //   'cranberry juice cocktail bottled',
+  // ),
+  // 'dried onions': ('onions', 'onions dehydrated flakes'),
+  // 'portobello mushroom cap': ('portobello mushrooms', 'mushroom portabella'),
+  // 'jarred pimentos': ('jarred pimentos', 'pimento canned'),
+  // 'cooked wheat berries': ('cooked wheat berries', 'wheat khorasan cooked'),
   // v22 (F10): "1 sugar cube" (Champagne Cocktail) led its own answer with
   // "Beef, steak, cube" at 160 g; it is granulated sugar. The record
   // publishes no cube portion, so the line stays in review with no grams.
@@ -2426,6 +2545,14 @@ const Map<String, int> approximationRecords = {
   'seven-grain hot cereal mix': 171667,
   'fingerling potatoes': 2346402,
   'tapioca starch': 169717,
+  // v30 (Q7 bone-in parts, ruled): flap meat (bottom sirloin) as top
+  // sirloin; turkey drumsticks and thighs, and leg quarters, as turkey thigh
+  // meat and skin (the leg record 171493 has no cached detail).
+  'beef flap meat': 2727574,
+  'turkey drumsticks and thighs': 171533,
+  'turkey leg quarters': 171533,
+  // LIVE STEP (with its rank-as item and detail 169744, once Q7's misc
+  // group is ruled): 'cooked wheat berries': 169744,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

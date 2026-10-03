@@ -201,11 +201,12 @@ void main() {
 
     test('a sub-gram "pepper" portion weighs only a small chile: on 168570 '
         '"Peppers, hot chile, sun-dried" (0.5 g a pepper) "2 dried New '
-        'Mexican chiles" (Best Vegetarian Chili) has no grams — a pod is ~7 g '
-        'by the corpus\'s own "(about ¾ ounce)" for 3 — while "10 dried '
-        'arbol chiles" (Tacos al Pastor) reads 10 × 0.5 g', () async {
+        'Mexican chiles" (Best Vegetarian Chili) is never 2 × 0.5 g — a pod '
+        'is ~7 g by the corpus\'s own "(about ¾ ounce)" for 3, the piece '
+        "table's 7.1 g since matcher v30 (Q6) — while \"10 dried arbol "
+        'chiles" (Tacos al Pastor) reads 10 × 0.5 g', () async {
       final (newMexican, _) = await on('2 dried New Mexican chiles', 168570);
-      expect(newMexican, isNull);
+      expect(newMexican, closeTo(14.2, 0.001));
       final (chipotle, _) = await on(
         '½ dried chipotle chile, stemmed, seeded, and torn into ½-inch '
         'pieces (scant tablespoon)',

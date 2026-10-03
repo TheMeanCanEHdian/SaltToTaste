@@ -1006,7 +1006,15 @@ none: no grams, never the made-up drink's `cup (8 fl oz)` 265 g) |
 `piece` (estimate; since matcher v21 the piece table reads "green
 pepper", "Fuji" and "yolk" by its bell pepper 119 g, apple 182 g and egg
 yolk 17 g: "1 small green pepper", "3 Fuji, Gala, or Golden Delicious
-apples", "2 large yolks")
+apples", "2 large yolks"; since matcher v30 (the user's Q6 ruling: a
+weight ATK prints in the corpus where one exists) a dried New Mexican
+and a dried guajillo chile 7.1 g each — ATK's "3 medium New Mexican pods
+(about ¾ ounce)" (Chili con Carne) and "4 large dried guajillo chiles …
+(about 1 ounce)" (Goan Pork Vindaloo) — flagged approximate: `"2 × 7 g
+each · approximate (ATK: 3 medium New Mexican pods ≈ ¾ ounce)"`, `"10 ×
+7 g each · approximate (ATK: 4 large dried guajillo chiles ≈ 1 ounce)"`;
+keyed on the DRIED item, so a fresh chile, a chipotle in adobo and the
+"(2-inch) piece mild dried chile" never reach them)
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying" — since matcher v24 "for deep frying" too —
 or 400 g or more of oil — or, since matcher v23, ¼ cup or more of oil, its
@@ -1235,7 +1243,8 @@ bone-in, whole-bird or other refuse-bought line whose record publishes no
 refuse portion (a whole turkey, a Foundation chicken part, a lamb chop, bird
 pieces on the whole-bird record, whose yield is the whole bird's): counted at
 the printed weight, bone included — no factor is borrowed (FDC gives no
-turkey share) — and labelled, shellfish bought in the shell too (held
+turkey share) — and labelled (since matcher v30 "beef rib slabs" too),
+shellfish bought in the shell too (held
 `in_shell`, below, and counted so once a person confirms it); the label is
 the line's, read on the food's cached detail or else its cached search hit,
 never lost for want of a detail no compute fetches (a Foundation or FNDDS
@@ -1264,8 +1273,8 @@ baked", "leaf" of Swiss chard, "pepper" of a dried chile, "medium" of a
 pear — a sub-gram "pepper", 168570's 0.5 g, weighs only a small DRIED
 chile: an arbol or bird chile, or one the line calls small and dried —
 since matcher v20 small in the item's own words, never its prep, and not
-large ("2 dried New Mexican chiles, … torn into small pieces" has no
-grams); a
+large ("2 dried New Mexican chiles, … torn into small pieces" is no
+small chile — since matcher v30 the piece table's 7.1 g pod, 14.2 g); a
 fresh Thai chile, or any other pepper line, on it has no grams), and of
 several portions the item names the medium one ("4 leaves Bibb lettuce" on
 "leaf, medium"), or the small one when the line says small ("1 small
@@ -1774,7 +1783,7 @@ Since matcher v21 a few items are RANK-AS items: the line reads an answer
 FDC already gave (its own, or the named query's) ranked as if the
 record's own name had been searched. An answer already cached sends
 nothing; an answer not yet cached is searched once, under its own words,
-as any line's is (in this library all 52 answers are cached). A rank-as
+as any line's is (in this library all 70 answers are cached). A rank-as
 item is never a rewrite key or target (those are "A or B" food nouns:
 the fragment `thai`, from "2 Thai, serrano, or jalapeño chiles", is
 rank-as so "Thai or Italian basil leaves" is not read as hot peppers — it
@@ -1818,7 +1827,37 @@ review with no grams); `thai` (reads `jarred hot cherry peppers`) → the same w
 ("Peppers, hot, raw", 15 g a pepper); and the one-word items, kept off
 the "A or B" food nouns, read their old rewrite target's answer under its
 own words: `chianti` → `red wine`, `lemongrass` → `lemon grass stalks`,
-`vermicelli` → `pasta dry enriched`. A few rewrites are APPROXIMATIONS, flagged in
+`vermicelli` → `pasta dry enriched`. Since matcher v30 (the user's Q7
+ruling of 2026-10-01: meats and birds at the printed GROSS weight,
+labelled approximate, unless the record publishes a refuse yield) the
+bone-in and whole cuts read their raw record: `7-pound first-cut beef
+standing rib roast`, `first-cut beef standing rib roast` (read `beef rib
+whole raw`) → `beef rib whole ribs 6-12 separable lean and fat trimmed
+to 1 8 fat choice raw` (168675); `beef flap meat` (reads `sirloin steak
+tips or boneless beef short ribs`) → `beef top sirloin steak raw`
+(2727574, flagged below); `beef rib slabs` (reads `baby back ribs`) →
+`beef rib back ribs bone-in separable lean and fat choice raw` (173405);
+`bone-in boston butt roast`, `boneless pork butt roast with at least 1
+4-inch-thick fat cap` (read `boneless pork butt roast`) → `pork fresh
+shoulder boston butt blade steaks separable lean and fat raw` (167849:
+the bone-in roast reads its USDA refuse, × 0.76); `bone-in chicken
+parts`, `bone-in skin-on chicken parts` → `chicken broilers or fryers
+meat and skin raw` (171447); `boneless long-cut beef shanks` → `beef
+shank crosscuts separable lean only trimmed to 1 4 fat choice raw`
+(169441); `butterflied leg of lamb`, `shank end boneless leg of lamb`
+(read `shank end boneless leg of lamb`) → `lamb leg shank half separable
+lean and fat trimmed to 1 4 fat choice raw` (174315); `cod or other thick
+whitefish fillets` (reads `cod`) → `fish cod atlantic wild caught raw`
+(2684444); `flat-iron steaks` → `beef chuck shoulder clod top blade steak
+separable lean and fat trimmed to 0 fat choice raw` (172125); `frozen
+butterball or kosher turkey` (reads `turkey whole meat and skin raw`) →
+the same words (171081); `salmon steaks`, `skin-on side of salmon` (read
+`salmon steaks`) → `fish salmon raw` (2706284, a search hit: a weight line
+needs no detail); `turkey drumsticks and thighs`, `turkey leg quarters`
+(read `bone-in turkey thighs`) → `turkey retail parts thigh meat and skin
+raw` (171533, flagged below). The fresh half ham ("bone-in half ham with
+skin") waits: its record's refuse is read from a detail (168226) no
+snapshot holds. A few rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
 as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
@@ -1832,7 +1871,12 @@ beans as navy beans (173745) — the small white beans too —, spicy greens as 
 as bran flakes (2708456), seven-grain hot cereal as whole wheat hot
 cereal (171667), fingerling potatoes as red potatoes (2346402) and
 tapioca starch on the tapioca-pearl cup (169717: "3 cups tapioca starch"
-is 456 g), and a FRESH oregano, sage,
+is 456 g), since matcher v30 (Q7) beef flap meat (bottom sirloin) as top
+sirloin (2727574: "1½ pounds beef flap meat, trimmed" is `"from 1 1/2
+pound · approximation (counted as Beef, top sirloin steak, raw)"`) and
+turkey drumsticks and thighs, and turkey leg quarters, as turkey thigh
+meat and skin (171533; FDC's leg record 171493 has no cached detail —
+their weight is the gross weight, labelled approximate too), and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram, so — the user's ruling of 2026-09-28 —
 the dried amount the line offers wins, "1 tablespoon minced fresh oregano

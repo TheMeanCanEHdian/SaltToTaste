@@ -37,31 +37,43 @@ void main() {
   group('E1 (Run 051 O6/S11): a dried chile is small by its own words', () {
     test('on 168570 "Peppers, hot chile, sun-dried" (0.5 g a pepper), '
         '"2 dried New Mexican chiles, stemmed, seeded, and flesh torn into '
-        '½-inch pieces" (Grilled Steak with New Mexican Chile Rub, 0587) has '
-        'no grams, and so does the same line torn into SMALL pieces (a '
+        '½-inch pieces" (Grilled Steak with New Mexican Chile Rub, 0587) is '
+        'never 2 × 0.5 g, and nor is the same line torn into SMALL pieces (a '
         'synthesized prep, a stated exception: no corpus chile line says '
         'it) — "small" in the prep sizes the pieces, not the pod; "4 large '
         'dried guajillo chiles, … torn into small pieces" (Goan Pork '
-        'Vindaloo 1095\'s line with "small" for "1-inch", synthesized) too; '
-        '"10 dried arbol chiles" (Guay Tiew Tom Yum Goong, 0011) stays '
-        '10 × 0.5 g', () async {
+        'Vindaloo 1095\'s line with "small" for "1-inch", synthesized) too '
+        "— since matcher v30 (Q6) the piece table's printed 7.1 g pod weighs "
+        'them; a dried chipotle (no piece figure) torn into small pieces has '
+        'no grams; "10 dried arbol chiles" (Guay Tiew Tom Yum Goong, 0011) '
+        'stays 10 × 0.5 g', () async {
       expect(
-        await gramsOn(
+        (await gramsOn(
           '2 dried New Mexican chiles, stemmed, seeded, and flesh torn into ½-inch pieces',
           168570,
-        ),
-        isNull,
+        ))?.grams,
+        closeTo(14.2, 0.001),
       );
       expect(
-        await gramsOn(
+        (await gramsOn(
           '2 dried New Mexican chiles, stemmed, seeded, and flesh torn into small pieces',
           168570,
-        ),
-        isNull,
+        ))?.grams,
+        closeTo(14.2, 0.001),
       );
       expect(
-        await gramsOn(
+        (await gramsOn(
           '4 large dried guajillo chiles, wiped clean, stemmed, seeded, and torn into small pieces',
+          168570,
+        ))?.grams,
+        closeTo(28.4, 0.001),
+      );
+      // The guard itself, on a chile the piece table does not size: Pollo
+      // en Mole Poblano's (0141) dried chipotle with "small" in its prep
+      // (synthesized, a stated exception).
+      expect(
+        await gramsOn(
+          '½ dried chipotle chile, stemmed, seeded, and torn into small pieces',
           168570,
         ),
         isNull,
@@ -74,9 +86,10 @@ void main() {
         closeTo(5, 0.001),
       );
       // "large" excludes small: the item calls the pod large (synthesized
-      // "small large", a stated exception — it pins the large term alone).
+      // "small large", a stated exception — it pins the large term alone;
+      // since v30 on the chipotle, which no piece figure sizes).
       expect(
-        await gramsOn('4 small large dried guajillo chiles', 168570),
+        await gramsOn('4 small large dried chipotle chiles', 168570),
         isNull,
       );
       expect(

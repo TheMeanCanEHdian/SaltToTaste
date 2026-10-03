@@ -2836,7 +2836,70 @@ the next stale sweep; a held engine row (no food on it) is re-asked only
 by an `all` sweep; a skip carried by an amount edit can be held
 `food_unavailable` on its old text.
 
+### The accuracy track, part 1: the rulings already made, built (matcher v30)
+
+After Run 060 (the exit review of the engine loop, 2026-10-03) the owner
+chose to stop the engine loop at v29 and spend the effort on accuracy, which
+is gated on the open rulings. While mapping those rulings it turned out
+that nothing from checkpoint 9's Q6 and Q7 had ever shipped: v22 built the
+four hold rulings only, and the bone-in group that was marked "build now"
+was never built. So v30 (2026-10-03) builds exactly what was already ruled
+and needed no new answer. Q7's bone-in parts: 18 rank-as items read their
+raw record under the meats-and-birds ruling (gross weight, labelled
+approximate, unless the record publishes a refuse yield — the Boston butt
+reads USDA's 0.76), three of them flagged approximations (flap meat on top
+sirloin; turkey drumsticks-and-thighs and leg quarters on the thigh record),
+and "rib slabs" buys bone; the fresh ham waits for its detail in the live
+step. Q6's two chile figures printed BY WEIGHT in the corpus — a dried New
+Mexican and a dried guajillo pod at 7.1 g (ATK's "3 medium New Mexican pods
+(about ¾ ounce)", "4 large dried guajillo chiles … (about 1 ounce)") —
+join the piece table keyed on the dried item, flagged approximate with the
+source in the label (a new `_approximatePieces` label map; `_pieceLookup`
+returns its key); the volume-printed and proposed figures wait for the
+rulings the owner gave the same evening (part 2). The live step's rules are
+built dry: every entry commented with the detail it waits on, and an
+enable experiment asked exactly ten details and no search (the plan's pear
+item is already landed, its weight-in-text item is a mechanism and is
+dropped, item 10 is a detail not a search). Replay on snapshot 13: calls 0;
+24 rows differ from v29 — the 20 bone-in rows check → counted and the 4
+chile rows no grams → counted, every other row byte-identical; counted
+13,073 → 13,097, check 401 → 381, no grams 104 → 100; complete 830 → 847
+(fish-and-chips, which the planner counted, is now blocked by the v22
+coating hold on its flour). Six older pins the ruling superseded moved to
+other real corpus lines (0249, 0002, 0651) or were strengthened from "no
+grams" to the printed 7.1 g pod. The owner's gate: every fixture addition
+byte-equal to a snapshot cache row, the re-pins read and judged, two
+code-anchored mutants (the guajillo figure 7.1 → 7.0; the rib-slab refuse
+term removed) killed and restored, the fresh-copy replay identical to the
+fixer's, the server suite with the corpus 1,958 green. matcherVersion 30.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-03 — after Run 060 (the exit review): the engine loop STOPS at v29;
+  the effort moves to accuracy.** Run 060's engine findings are deferred (none is
+  reached by the corpus or a healthy sweep). The same evening the owner ruled the
+  open accuracy questions ("go with your recommendations, including the sourced
+  lasagna figures"): Q6 (a) a corpus-printed VOLUME counts as a printed weight
+  (ginger 8 g/inch, chipotle 4.6 g/pod, orange zest strip 0.8 g/inch, flagged);
+  (b) ginger 8 g not 6; (c) counted whole spices get per-piece reference figures
+  flagged approximate; (d) star anise on anise seed, flagged; (e) ancho stays on
+  FDC's 17 g; lemon zest strips 0.8 g/inch; lasagna figures SOURCED from
+  manufacturers' box specs (17 g a no-boil sheet, 25 g a curly noodle); a
+  scallion bunch 7 × 15 g; lemongrass 10 g a stalk (reference); dried jujubes
+  and the per-inch mild chile stay at no grams. Q7: the bone-in group built now
+  (v30); the eight small groups and the anchovy-paste figure approved; Spanish
+  chorizo only on the real dry-cured record (one live request — the cached
+  record is fresh Mexican chorizo); the misc group after a full read (35 keep,
+  5 small modifications, 0 reject). R2: dredges stay held, no blanket fraction.
+  The dredge REACH (sautéed, baked) is NOT ruled: a zero-request survey per
+  class first, then the owner rules per class. R4: 0488's poaching set is held
+  as a part-kept medium like 0129. 0042's two eaten tablespoons of oil count;
+  0288's quarter cup of pan-fry oil and 0674/0675's fritter oil are held
+  ambiguous. Air-fry stays a non-frying verb; shimmering/smoking stays
+  non-evidence. The live step is spent by the owner on a scratch copy under the
+  2026-09-30 standing approval, every request counted. Constraint recorded: the
+  owner cannot weigh ingredients — figures come from manufacturer specs, FDC
+  portions or the corpus, or the line stays at no grams.
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):
   already covered by P7 single-container design; noted ARM multi-arch as a
