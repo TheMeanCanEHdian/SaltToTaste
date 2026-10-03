@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/fdc_provider.dart';
+import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:test/test.dart';
 
 /// The FDC request tally (sweep audit 2026-09-26: the spend split of a 900
@@ -201,6 +202,83 @@ void main() {
     expect(waits.single, contains('search_strict 1, search_loose 0'));
     expect(records.join(), isNot(contains('fixture-key-not-real')));
   });
+
+  // RULE A's two failure classes (v28, Run 058 Opus critic 1 / S27): the
+  // provider says which. Negative paths the recordings cannot supply (the
+  // statuses are synthesized; the bodies are none).
+  test("a failure is FOOD-scoped only for one food's detail (a 4xx, an "
+      'unreadable answer, a 5xx after the retries); a key, the budget, a '
+      'search or the network are GLOBAL', () async {
+    Future<FailureScope> scopeOf(
+      Future<Object?> Function(UsdaFdcProvider p) call,
+      (int, String) Function(Uri uri) respond, {
+      int capacity = 10,
+    }) async {
+      final provider = UsdaFdcProvider(
+        apiKey: () => 'fixture-key-not-real',
+        bucket: TokenBucket(capacity: capacity),
+        maxRateWait: Duration.zero,
+      );
+      try {
+        await HttpOverrides.runZoned(
+          () => call(provider),
+          createHttpClient: (_) => _FakeClient((m, uri, b) => respond(uri)),
+        );
+      } on NutritionProviderException catch (error) {
+        return error.scope;
+      }
+      fail('no failure');
+    }
+
+    Future<Object?> detail(UsdaFdcProvider p) => p.food(1);
+    Future<Object?> search(UsdaFdcProvider p) => p.search('sour cream');
+    expect(await scopeOf(detail, (_) => (400, '')), FailureScope.food);
+    expect(await scopeOf(detail, (_) => (200, '[]')), FailureScope.food);
+    expect(await scopeOf(detail, (_) => (401, '')), FailureScope.global);
+    expect(await scopeOf(detail, (_) => (403, '')), FailureScope.global);
+    expect(await scopeOf(search, (_) => (400, '')), FailureScope.global);
+    expect(await scopeOf(search, (_) => (200, '[]')), FailureScope.global);
+    expect(
+      await scopeOf(
+        (p) async {
+          // Strict and loose: both grants spent; the detail finds none.
+          await p.search('sour cream');
+          return p.food(1);
+        },
+        (uri) => (200, '{"foods": []}'),
+        capacity: 2,
+      ),
+      FailureScope.global,
+      reason: 'the budget spent',
+    );
+    expect(
+      await scopeOf(
+        (_) => UsdaFdcProvider(apiKey: () => null).food(1),
+        (_) => (200, '{}'),
+      ),
+      FailureScope.global,
+      reason: 'no key',
+    );
+    // A 5xx after the four attempts (3 + 6 + 9 s of backoff).
+    expect(await scopeOf(detail, (_) => (503, '')), FailureScope.food);
+    // A 429 after the four attempts is the KEY's rate limit: GLOBAL even on
+    // a detail (the v28 closer's D6, A19). Its 15 + 60 + 135 s of backoff
+    // run on zero-length timers (every other timer as asked).
+    const backoff = {15, 60, 135};
+    expect(
+      await runZoned(
+        () => scopeOf(detail, (_) => (429, '')),
+        zoneSpecification: ZoneSpecification(
+          createTimer: (self, parent, zone, d, f) => parent.createTimer(
+            zone,
+            backoff.contains(d.inSeconds) ? Duration.zero : d,
+            f,
+          ),
+        ),
+      ),
+      FailureScope.global,
+    );
+  }, timeout: const Timeout(Duration(seconds: 60)));
 }
 
 bool _ended(String message) => message.contains('ended; FDC requests');

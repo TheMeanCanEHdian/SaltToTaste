@@ -5,6 +5,9 @@ import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/features/admin/nutrition_review_queue.dart';
 import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
+import 'package:salt_app/features/nutrition/nutrition_label.dart'
+    show staleBannerText;
+import 'package:salt_shared/salt_shared.dart' show HoldDecision, holdActionsOf;
 
 import 'support/contract_goldens.dart';
 
@@ -240,27 +243,59 @@ void main() {
     expect(note, contains('Pick another food, or skip the line'));
   });
 
-  test("an apply's receipt names the targets USDA could not weigh "
-      '(`unavailable`, server RULE A v27: left for the next compute)', () {
-    final note = ApplyToAllStrip.shortfallNote((
-      position: 1,
-      raw: '¼ cup extra-virgin olive oil',
-      recipes: 1,
-      lines: 1,
-      failed: 0,
-      completed: 0,
-      completedRecipes: const [],
-      moved: 0,
-      decided: 0,
-      gone: 0,
-      failedLines: 0,
-      unavailable: 2,
-    ));
+  test('the stale banner names its cause (v28, Run 058 S15): a decision '
+      'waiting on USDA is not an ingredients change', () {
+    String? reasonOf(String reason) => RecipeNutrition.fromJson({
+      'status': 'stale',
+      'stale_reason': reason,
+    }).staleReason;
     expect(
-      note,
-      '2 lines not weighed (USDA unavailable; left for the next compute).',
+      staleBannerText(reasonOf('underived')),
+      'A decision is waiting on USDA: these totals do not include it yet.',
+    );
+    expect(
+      staleBannerText(reasonOf('inputs')),
+      'Ingredients changed since this was computed.',
+    );
+    // An older server sends no reason: the banner it always showed.
+    expect(
+      staleBannerText(
+        RecipeNutrition.fromJson({'status': 'stale'}).staleReason,
+      ),
+      'Ingredients changed since this was computed.',
     );
   });
+
+  test(
+    "an apply's receipt names the targets USDA could not weigh "
+    '(`unavailable`, server RULE A v27: left for the next compute) — from '
+    'ONE such line (v28, Run 058 S18: a `> 1` boundary hid a single one)',
+    () {
+      String? noteFor(int unavailable) => ApplyToAllStrip.shortfallNote((
+        position: 1,
+        raw: '¼ cup extra-virgin olive oil',
+        recipes: 1,
+        lines: 1,
+        failed: 0,
+        completed: 0,
+        completedRecipes: const [],
+        moved: 0,
+        decided: 0,
+        gone: 0,
+        failedLines: 0,
+        unavailable: unavailable,
+      ));
+      expect(noteFor(0), isNull);
+      expect(
+        noteFor(1),
+        '1 line not weighed (USDA unavailable; left for the next compute).',
+      );
+      expect(
+        noteFor(2),
+        '2 lines not weighed (USDA unavailable; left for the next compute).',
+      );
+    },
+  );
 
   testWidgets('a line that names no food says so (hold `unnamed_food`)', (
     tester,
@@ -469,8 +504,11 @@ void main() {
   });
 
   test("a partial_pour_away (Indoor Pulled Chicken's broth) is kept held by "
-      "a pick, as the server's eatenInPartHolds keeps it", () {
-    expect(eatenInPartHolds, contains('partial_pour_away'));
+      "a pick, as the shared action table says (holdActions)", () {
+    expect(
+      holdActionsOf('partial_pour_away').finishes,
+      isNot(contains(HoldDecision.pick)),
+    );
     expect(
       heldFinishes('partial_pour_away'),
       'Skip if it is poured away, or enter the grams that are eaten; picking '

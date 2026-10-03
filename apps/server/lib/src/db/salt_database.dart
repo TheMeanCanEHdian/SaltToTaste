@@ -22,28 +22,15 @@ const List<String> mediumHolds = [
   'ambiguous_medium',
 ];
 
-/// The [mediumHolds] part of whose line is eaten (Q1, Q2, Q4) — or, for
-/// `ambiguous_medium`, all of it or none, which nothing says: a pick alone
-/// on such a line with no eaten part known keeps the hold (`derivedFor`,
-/// RULE A) — a skip or typed grams answers it.
-const List<String> eatenInPartHolds = [
-  'starter_discard',
-  'coating',
-  'partial_pour_away',
-  'ambiguous_medium',
-];
-
 /// Every LINE hold — what the line says about its medium, its shell or a
 /// second food, whatever food it is matched on ([mediumHolds],
 /// `in_shell`, `second_food`). The other holds are FOOD holds (the
 /// engine's on its own pick; a decision answers them) and [foodGoneHold].
 const List<String> lineHolds = [...mediumHolds, 'in_shell', 'second_food'];
 
-/// The hold of a decided row whose food FDC no longer serves and no cache
-/// holds (v27, RULE A): derived to it — out of the totals, in `check`, for
-/// a person to pick another food or skip; a confirm or typed grams cannot
-/// count a food with no record.
-const String foodGoneHold = 'food_gone';
+// `foodGoneHold` and `foodUnavailableHold` — the holds of a person's
+// decision on a food with no record — live in salt_shared beside the ONE
+// action table every consumer reads (`holdActions`, RULE A v28).
 
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
 enum UpsertOutcome {
@@ -657,6 +644,15 @@ class SaltDatabase {
       "'discarded_medium', 'starter_discard', 'coating', 'partial_pour_away', "
       "'ambiguous_medium'";
 
+  /// The holds no confirm and no typed grams finish
+  /// ([holdsAConfirmCannotFinish] of salt_shared's ONE action table,
+  /// `holdActions`; a const for the cached queries, pinned equal to the
+  /// table): the queue's bucket,
+  /// `finishes` and `finishable` read them (Run 058 O8, Sonnet critics 1
+  /// and 3: a `food_gone` row with typed grams was promised a finish).
+  @visibleForTesting
+  static const String noRecordHoldsSql = "'food_gone', 'food_unavailable'";
+
   /// The four conditions a collapsed calories range can emit.
   ///
   /// Any number of ANDed `calories:` terms reduces to at most one lower and
@@ -985,13 +981,16 @@ class SaltDatabase {
     );
   }
 
-  /// Every cached search response that lists [fdcId] as a hit. The hits are
-  /// stored as `jsonEncode` of FdcCandidate.toJson, whose first key is
-  /// `fdc_id`, so the needle cannot match anything but a hit's id.
+  /// Every cached search response that lists [fdcId] as a hit, in the
+  /// cache's own order — an INDEXED lookup (migration 016's
+  /// `fdc_search_cache_foods`, kept by triggers on every write of the
+  /// cache), never a scan of every answer (Run 058 O5/S10).
   List<String> fdcSearchCacheHolding(int fdcId) => [
     for (final row in _prepared(
-      'SELECT response FROM fdc_search_cache WHERE instr(response, ?) > 0',
-    ).select(['{"fdc_id":$fdcId,']))
+      'SELECT c.response FROM fdc_search_cache_foods f '
+      'JOIN fdc_search_cache c ON c.query = f.query '
+      'WHERE f.fdc_id = ? ORDER BY c.rowid',
+    ).select([fdcId]))
       row['response'] as String,
   ];
 
@@ -1212,10 +1211,11 @@ class SaltDatabase {
   /// whatever its score or hold but `unnamed_food`; a low-confidence auto
   /// match is `check` whether or not it has grams — a wrong food is the
   /// larger problem, and "no amount" read as calm.
-  static const String _reviewBucketCase = '''
+  static const String _reviewBucketCase =
+      '''
     CASE
       WHEN im.status = 'skipped' THEN 'skipped'
-      WHEN im.hold = 'food_gone' THEN 'check'
+      WHEN im.hold IN ($noRecordHoldsSql) THEN 'check'
       WHEN im.status = 'overridden' AND im.grams IS NULL THEN 'no_grams'
       WHEN im.status = 'confirmed' AND im.fdc_id IS NOT NULL
         AND im.grams IS NULL THEN 'no_grams'
@@ -1274,9 +1274,12 @@ class SaltDatabase {
     // Run 046): the last open line AND grams to count — a Check line with
     // grams, or a No grams line (the amount-first confirm supplies them).
     // A No match line (no food) or a Check line with no grams (a plain
-    // Confirm leaves it without grams when USDA cannot convert) is 0.
+    // Confirm leaves it without grams when USDA cannot convert) is 0 — and
+    // so is a line held for a food with no record ([noRecordHoldsSql], the
+    // action table: only a pick or a skip finishes it, v28).
     final rows = _prepared(
-      "SELECT *, (open_lines = 1 AND (bucket = 'no_grams' "
+      "SELECT *, (open_lines = 1 AND COALESCE(hold, '') NOT IN "
+      "($noRecordHoldsSql) AND (bucket = 'no_grams' "
       "OR (bucket = 'check' AND grams IS NOT NULL))) AS finishes "
       'FROM (SELECT *, '
       "SUM(bucket IN ('no_match', 'no_grams', 'check')) "
@@ -1348,7 +1351,9 @@ class SaltDatabase {
   /// grams and are not a No grams example. A recipe with none short is one
   /// the group's decision finishes: the amount-first confirm supplies a No
   /// grams example's grams. A Check or No match example with no grams is
-  /// short: a plain Confirm promises no grams. The count may under-promise
+  /// short: a plain Confirm promises no grams — and so is a line held for a
+  /// food with no record ([noRecordHoldsSql]: no confirm and no typed grams
+  /// count it, v28). The count may under-promise
   /// a Check example whose cached record does convert — the accepted
   /// direction: never promise what a confirm may not count.
   static const String _reviewFinishCte =
@@ -1360,7 +1365,8 @@ class SaltDatabase {
       'ORDER BY confidence, (grams IS NULL), review_title, position) AS rn '
       'FROM members), '
       'solo AS (SELECT o.recipe_id, MIN(o.gkey) AS gkey, '
-      "SUM(o.grams IS NULL AND (x.rn IS NULL OR o.bucket <> 'no_grams')) "
+      "SUM((o.grams IS NULL AND (x.rn IS NULL OR o.bucket <> 'no_grams')) "
+      "OR COALESCE(o.hold, '') IN ($noRecordHoldsSql)) "
       'AS short FROM flagged o '
       'LEFT JOIN example x ON x.rn = 1 AND x.recipe_id = o.recipe_id '
       'AND x.position = o.position '
@@ -1558,7 +1564,7 @@ class SaltDatabase {
       'grams = excluded.grams, gram_source = excluded.gram_source, '
       'status = excluded.status, item_key = excluded.item_key, '
       'hold = excluded.hold, updated_at = excluded.updated_at, '
-      'derived_seq = excluded.derived_seq',
+      'derived_seq = excluded.derived_seq, retry_count = 0',
     ).execute([
       row.recipeId,
       row.position,
@@ -1619,7 +1625,7 @@ class SaltDatabase {
       'grams = excluded.grams, gram_source = excluded.gram_source, '
       'status = excluded.status, item_key = excluded.item_key, '
       'hold = excluded.hold, updated_at = excluded.updated_at, '
-      'derived_seq = excluded.derived_seq '
+      'derived_seq = excluded.derived_seq, retry_count = 0 '
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
       "OR (ingredient_matches.status = 'confirmed' "
       'AND ingredient_matches.fdc_id IS NULL '
@@ -1655,15 +1661,45 @@ class SaltDatabase {
     required IngredientMatchRow over,
     required int layoutSeq,
   }) => _atLayout(row.recipeId, layoutSeq, () {
-    final now = ingredientMatchesFor(
-      row.recipeId,
-    ).where((stored) => stored.position == row.position).firstOrNull;
-    if (!sameMatchRow(now, over)) {
+    if (!sameMatchRow(_matchAt(row.recipeId, row.position), over)) {
       return false;
     }
     _upsertMatch(row);
     return true;
   });
+
+  /// The row at [position] of [recipeId] — ONE row read (Run 058 S12: the
+  /// guards read the whole recipe per decided row, O(decided x rows)).
+  IngredientMatchRow? _matchAt(String recipeId, int position) {
+    final rows = _prepared(
+      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
+      'confidence, grams, gram_source, status, updated_at, item_key, hold, '
+      'derived_seq FROM ingredient_matches '
+      'WHERE recipe_id = ? AND position = ?',
+    ).select([recipeId, position]);
+    return rows.isEmpty ? null : IngredientMatchRow.fromRow(rows.first);
+  }
+
+  /// [sameMatchRow] as an SQL guard over the row at `recipe_id = ? AND
+  /// position = ?`, its binds [_sameRowBinds] — ONE statement checks and
+  /// writes, so nothing can come between.
+  static const String _sameRowSql =
+      'WHERE recipe_id = ? AND position = ? AND raw IS ? AND status IS ? '
+      'AND fdc_id IS ? AND confidence IS ? AND grams IS ? '
+      'AND gram_source IS ? AND hold IS ? AND description IS ?';
+
+  static List<Object?> _sameRowBinds(IngredientMatchRow over) => [
+    over.recipeId,
+    over.position,
+    over.raw,
+    over.status,
+    over.fdcId,
+    over.confidence,
+    over.grams,
+    over.gramSource,
+    over.hold,
+    over.description,
+  ];
 
   /// Records that the row [over] — unchanged, checked in the write's own
   /// transaction as [replaceIngredientMatchIfUnchanged] checks it — was
@@ -1675,18 +1711,35 @@ class SaltDatabase {
     required String derivedSeq,
     required int layoutSeq,
   }) => _atLayout(over.recipeId, layoutSeq, () {
-    final now = ingredientMatchesFor(
-      over.recipeId,
-    ).where((stored) => stored.position == over.position).firstOrNull;
-    if (!sameMatchRow(now, over)) {
-      return false;
-    }
+    // ONE guarded single-row UPDATE (Run 058 S12): written only while the
+    // row is still [over] ([sameMatchRow]'s fields, in the statement).
     _prepared(
-      'UPDATE ingredient_matches SET derived_seq = ? '
-      'WHERE recipe_id = ? AND position = ?',
-    ).execute([derivedSeq, over.recipeId, over.position]);
-    return true;
+      'UPDATE ingredient_matches SET derived_seq = ?, retry_count = 0 '
+      '$_sameRowSql',
+    ).execute([derivedSeq, ..._sameRowBinds(over)]);
+    return _db.updatedRows > 0;
   });
+
+  /// RULE A's FOOD failure (v28): counts one more compute that could not
+  /// derive the row [over] — unchanged, guarded as [markDerivedIfUnchanged]
+  /// guards — because FDC failed its food alone; returns the count now, or
+  /// null when the row changed (or the layout moved) and nothing was
+  /// counted. Any other write of the row resets it (migration 016).
+  int? countFoodFailureIfUnchanged(
+    IngredientMatchRow over, {
+    required int layoutSeq,
+  }) {
+    int? count;
+    _atLayout(over.recipeId, layoutSeq, () {
+      final rows = _prepared(
+        'UPDATE ingredient_matches SET retry_count = retry_count + 1 '
+        '$_sameRowSql RETURNING retry_count',
+      ).select(_sameRowBinds(over));
+      count = rows.isEmpty ? null : rows.first['retry_count'] as int;
+      return count != null;
+    });
+    return count;
+  }
 
   /// Drops match rows at or beyond [fromPosition] (an edit shortened the
   /// ingredient list).

@@ -858,6 +858,9 @@ class _FailFood implements NutritionProvider {
   Future<List<FdcCandidate>> search(String query) => inner.search(query);
 
   @override
-  Future<FdcFood?> food(int fdcId) =>
-      fdcId == failing ? throw StateError('FDC failing') : inner.food(fdcId);
+  Future<FdcFood?> food(int fdcId) => fdcId == failing
+      // FDC's own failure class (v28: a plain recompute resolves a food no
+      // cache holds and reads a NutritionProviderException as "not now").
+      ? throw const NutritionProviderException('FDC failing')
+      : inner.food(fdcId);
 }

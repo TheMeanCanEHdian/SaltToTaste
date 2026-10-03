@@ -150,13 +150,36 @@ class FdcFood {
   };
 }
 
-/// Thrown when FDC cannot be used at all (no key configured, invalid key).
+/// Which requests a provider failure stands for (RULE A, v28; Run 058 Opus
+/// critic 1 / S27: one failure class where there are two stopped every
+/// stale sweep at the first recipe holding one bad food).
+enum FailureScope {
+  /// Every request would fail alike — no key, a rejected key, the hourly
+  /// budget spent, the network down or timing out, a SEARCH failing after
+  /// the retries: the job stops and says why.
+  global,
+
+  /// One food's DETAIL fails (a 4xx other than 404, a 5xx after the
+  /// retries, an unreadable answer) — that row's state, never the job's:
+  /// the row is left underived and counted, held `food_unavailable` after
+  /// `foodUnavailableAfter` computes, and the sweep moves on.
+  food,
+}
+
+/// Thrown when FDC cannot answer a request (no key configured, invalid key,
+/// budget spent, unreachable — or one food's detail failing, [scope]).
 class NutritionProviderException implements Exception {
   /// Creates the exception with its user-facing [message].
-  const NutritionProviderException(this.message);
+  const NutritionProviderException(
+    this.message, {
+    this.scope = FailureScope.global,
+  });
 
   /// User-facing explanation (no key material, ever).
   final String message;
+
+  /// Whether the failure is every request's or one food's ([FailureScope]).
+  final FailureScope scope;
 
   @override
   String toString() => message;

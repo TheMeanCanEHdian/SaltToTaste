@@ -1,3 +1,5 @@
+import 'hold_actions.dart';
+
 /// The triage bucket of one nutrition ingredient-match row.
 ///
 /// ONE rule, defined once. The per-recipe review sheet (app) buckets rows
@@ -55,8 +57,9 @@ bool belowConfidenceGate(double confidence) => confidence < confidenceGateFloor;
 /// looked at it). [hold] is the engine's reason for holding an `auto` row
 /// out of the totals although its name score passes (`no_nutrients`,
 /// `discarded_medium`, `second_food`): such a row is `check` too — and so is
-/// a decided row held `food_gone` (its food is no longer served by USDA:
-/// it counts nothing until a person picks again or skips it).
+/// a decided row held `food_gone` (its food is no longer served by USDA)
+/// or `food_unavailable` (USDA kept failing on it, v28): it counts nothing
+/// until a person picks again or skips it ([holdActions]).
 ///
 /// [gramSource] `discarded` (a cooking medium the recipe throws away) or
 /// `unmeasured` (a line with no amount, a sprig) at 0 g is the engine's
@@ -78,9 +81,10 @@ MatchBucket matchBucketFor({
   if (status == 'skipped') {
     return MatchBucket.skipped;
   }
-  // A person's food FDC no longer serves (`food_gone`, server RULE A, v27):
-  // out of the totals whatever its grams, waiting on a pick or a skip.
-  if (hold == 'food_gone') {
+  // A person's food FDC no longer serves (`food_gone`, server RULE A, v27)
+  // or keeps failing on (`food_unavailable`, v28): out of the totals
+  // whatever its grams, waiting on a pick or a skip ([holdActions]).
+  if (hold == foodGoneHold || hold == foodUnavailableHold) {
     return MatchBucket.check;
   }
   if ((status == 'overridden' && grams == null) ||

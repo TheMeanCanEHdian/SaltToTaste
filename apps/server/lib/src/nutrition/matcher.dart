@@ -336,7 +336,50 @@ const Map<String, String> _synonyms = {
 /// head asked, inverted name and amount indexes for the dissolve and plus
 /// readers. The grams change: a paren or comma part qualifies the popcorn
 /// head when every word is a qualifier ("(unpopped kernels)" 96.5 g).
-const int matcherVersion = 27;
+/// 28 (Run 058): RULE B — a scope boundary is a clause MARK, never the
+/// evidence's own word: a frying temperature's clause runs from the last
+/// "; , — ( )" (a mark directly before a heat verb's participle opens
+/// none: "in the smoker, holding it at 300"), so an appliance governs the
+/// temperature its own verb heats ("an oven heated to 375", "until the
+/// oven thermometer registers 375"); the governing words located once per
+/// sentence, each temperature answered by a forward pointer (linear per
+/// clause, `heatClauseChars`); a vessel never excludes (Dutch/French oven,
+/// oven-safe/-proof, broiler/grill pan, broiler-/grill-safe); the fry range
+/// kept at 300–399 °F, judged on the library's 400-degree sentences; the
+/// medium thresholds read food-free densities for bread crumbs, a starch,
+/// shortening and lard (0.87, FDC 173584/171401) — never a line's grams —
+/// a same-food plus part in both unit families, and four cups exactly.
+/// RULE A — "derived for" names every input a derivation reads: a
+/// `food_gone` row re-read from the caches on every compute (no request;
+/// derived again once a cache holds the food); the nutrient sibling
+/// resolved where its food is (a 404'd sibling is the row's `food_gone`,
+/// an engine candidate passed over; the separate prefetch deleted); a plain
+/// recompute resolves a food no cache holds before it reads the totals;
+/// two failure classes (`FailureScope`: GLOBAL stops the job, FOOD is the
+/// row's — underived, counted, held `food_unavailable` at the third
+/// compute); a pass that throws leaves no row marked derived; one action
+/// table per hold (salt_shared `holdActions`) read by the PUT's gate and
+/// the queue's SQL; migration 016 (`retry_count`, the search-cache food
+/// index). Replay: no row moves (RULE A changes no landing).
+/// RULE C — the naming inversion built by MEASURED amortisation (each food
+/// scanned for alone — a pass per step for where its word starts, the
+/// sentences of only the steps that have it — until the scans paid on the
+/// recipe's index reach the inversion's measured cost: the reach and the
+/// apply-to-all build none, the compute and matches GET of a cap recipe
+/// build it once), the inversion linear per sentence (each word confirmed
+/// at the word), the matches GET resolving each row's food once, one FDC
+/// request per food per pass
+/// (`onePass`: asked ids, 404s and failures remembered). Pairing: a run of
+/// identical lines laid out in its own order (never branched on; exact
+/// for the script's cost and the decisions kept). The app reads the same
+/// action table (`holdActions`) for its buttons and copy, and the stale
+/// banner names its cause (`stale_reason`). The closer: a detail outage
+/// (FOOD failures on 3 distinct foods in a row within a pass) escalates to
+/// GLOBAL, counting and holding none; the PUT's gate reads the stored hold
+/// before a carried row's derivation; which holds a pick keeps is the
+/// action table's. Replay: no row moves (RULE C and the pairing change no
+/// landing).
+const int matcherVersion = 28;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

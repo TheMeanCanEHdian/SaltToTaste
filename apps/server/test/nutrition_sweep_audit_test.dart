@@ -801,8 +801,9 @@ void main() {
       }
     });
 
-    test("knownFood reads the line's own answer first: the whole-cache scan "
-        'runs only when that answer lacks the food', () async {
+    test("knownFood reads the line's own answer first: the other answers' "
+        'lookup (an indexed one since migration 016) runs only when that '
+        'answer lacks the food', () async {
       // '5 medium garlic cloves, minced …' (0000).
       db.fdcSearchCachePut('garlic cloves', await recorded('garlic cloves'));
       const line = IngredientLine(
@@ -812,8 +813,9 @@ void main() {
         item: 'medium garlic cloves',
       );
       final id = (await fixtures.search('garlic cloves')).first.fdcId;
-      bool scanned() =>
-          db.preparedSqlTexts.any((sql) => sql.contains('instr(response'));
+      bool scanned() => db.preparedSqlTexts.any(
+        (sql) => sql.contains('FROM fdc_search_cache_foods'),
+      );
       expect(knownFood(db, id, line: line)?.fdcId, id);
       expect(scanned(), isFalse);
       // No line: the scan is the only way to find it (the seam works).

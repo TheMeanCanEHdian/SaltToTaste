@@ -36,6 +36,7 @@ Map<String, dynamic> _group({
   double? grams,
   String? gramSource,
   String? hold,
+  String status = 'auto',
   int missing = 0,
   int lastOpen = 0,
   List<List<String>> finishesRecipes = const [],
@@ -51,7 +52,7 @@ Map<String, dynamic> _group({
     'confidence': confidence,
     'grams': grams,
     'gram_source': gramSource,
-    'status': 'auto',
+    'status': status,
     'hold': hold,
   },
   'item_key': itemKey,
@@ -608,11 +609,16 @@ class _Adapter implements HttpClientAdapter {
           },
         ],
       };
-    } else if (options.path.contains('/patatas-bravas/nutrition/matches')) {
-      // The ambiguous oil's own line, as the queue served its group.
-      final line = [
-        for (final b in bodies) ...(b['items'] as List).cast<Map>(),
-      ].firstWhere((g) => (g['recipe'] as Map)['slug'] == 'patatas-bravas');
+    } else if (const [
+      'patatas-bravas',
+      'rich-chocolate-bundt-cake',
+    ].any((slug) => options.path.contains('/$slug/nutrition/matches'))) {
+      // The line's own row, as the queue served its group (the ambiguous
+      // oil; 0857's flour).
+      final line = [for (final b in bodies) ...(b['items'] as List).cast<Map>()]
+          .firstWhere(
+            (g) => options.path.contains('/${(g['recipe'] as Map)['slug']}/'),
+          );
       body = {
         'items': [
           {
@@ -892,6 +898,43 @@ void main() {
       findsOneWidget,
     );
   });
+
+  // The v28 closer's D7 (Run 058 O7 named "the sheet AND the queue"): the
+  // queue pane's "Confirm as-is" reads the action table. 0857's flour line
+  // and record 789890 (Rich Chocolate Bundt), 250 g typed; the hold set on
+  // it (food_gone, or none on the engine's weak pick) is synthesized — a
+  // stated exception: the corpus has no food_gone row.
+  for (final (hold, offered) in [(null, true), ('food_gone', false)]) {
+    testWidgets('the queue pane offers "Confirm as-is" on a Check line with '
+        "grams only where $hold's table row offers a confirm", (tester) async {
+      final flour = _group(
+        id: 'atk-tv-2023-0857-rich-chocolate-bundt-cake',
+        slug: 'rich-chocolate-bundt-cake',
+        title: 'Rich Chocolate Bundt Cake',
+        position: 1,
+        raw: '1¾ cups (8¾ ounces) unbleached all-purpose flour',
+        bucket: 'check',
+        itemKey: 'unbleached all purpose flour',
+        item: 'unbleached all-purpose flour',
+        lines: 1,
+        finishes: offered ? 1 : 0,
+        fdcId: 789890,
+        description: 'Flour, wheat, all-purpose, unenriched, unbleached',
+        confidence: hold == null ? 0.3 : 1,
+        grams: 250,
+        gramSource: hold == null ? 'volume' : 'override',
+        hold: hold,
+        status: hold == null ? 'auto' : 'confirmed',
+      );
+      await pumpQueue(tester, [
+        _body([flour]),
+      ]);
+      expect(
+        find.text('Confirm as-is'),
+        offered ? findsOneWidget : findsNothing,
+      );
+    });
+  }
 
   testWidgets('an ambiguous oil asks its own question and says a pick keeps '
       'it held (Run 056 Sonnet critic 3 / Opus critic 3; 0690 Patatas '

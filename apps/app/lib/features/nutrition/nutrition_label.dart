@@ -169,6 +169,13 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+/// The stale banner's words, by the server's `stale_reason` (v28, Run 058
+/// S15): a decision waiting on USDA is not an ingredients change, and a
+/// Recompute retries the request rather than re-reading the lines.
+String staleBannerText(String? reason) => reason == 'underived'
+    ? 'A decision is waiting on USDA: these totals do not include it yet.'
+    : 'Ingredients changed since this was computed.';
+
 class _StaleBanner extends StatelessWidget {
   const _StaleBanner({required this.state, required this.isAdmin});
 
@@ -192,10 +199,10 @@ class _StaleBanner extends StatelessWidget {
             color: SaltColors.warnInk,
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Ingredients changed since this was computed.',
-              style: TextStyle(
+              staleBannerText(state.nutrition?.staleReason),
+              style: const TextStyle(
                 fontSize: 12.5,
                 color: SaltColors.warnInk,
                 fontWeight: FontWeight.w600,

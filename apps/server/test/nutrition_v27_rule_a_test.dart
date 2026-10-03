@@ -20,7 +20,12 @@
 // id (999000111 — Run 057 S5's hostile cost shape: no real row can name
 // it), an engine row's `no_nutrients` hold on 0279's peppercorns (O3:
 // the hold as the engine writes it on other foods), a title edit (stale),
-// and the pre-014 database (the column dropped, user_version 13).
+// and the pre-014 database (the column dropped, user_version 13). Also
+// stated (v28, Run 058 S26): the b/c apply-to-all recipes assembled from
+// real corpus lines (wp.saveLines), the typed grams a person enters (250 g,
+// 77 g — any positive amount; the corpus has no person's grams), and
+// 0279's "2 teaspoons" edited to "3 teaspoons Sichuan peppercorns" (an
+// amount edit as the editor makes one; `threeTsp`).
 // ignore_for_file: lines_longer_than_80_chars
 import 'dart:convert';
 import 'dart:io';
@@ -181,7 +186,9 @@ void main() {
     skip: skipIfNoCorpus,
   );
 
-  group('S5/S16/O2/O16: one request per underived row per pass; the job '
+  // v28 (RULE C, Run 058 O6/S11: [onePass]): the 13 rows share ONE food,
+  // so a pass asks for it ONCE (v27: once per row, 13).
+  group('S5/S16/O2/O16: one request per underived FOOD per pass; the job '
       "stops with the provider's reason", () {
     /// 0148 computed with nothing matched, then its 13 lines decided on one
     /// retired food (999000111, Run 057 S5's shape), underived.
@@ -214,13 +221,13 @@ void main() {
       return (db, r);
     }
 
-    test('FDC answers "no such food": ONE pass, 13 requests (not 42), every '
+    test('FDC answers "no such food": ONE pass, 1 request (not 42), every '
         'row derived to food_gone, the recipe held — fresh, partial, out of '
         'the stale scope — and a second compute asks nothing', () async {
       final (db, r) = await retired();
       final gone = Retired();
       expect(await computeUntilFresh(db, gone, r), 1);
-      expect(gone.foodCalls, 13);
+      expect(gone.foodCalls, 1);
       for (final row in db.ingredientMatchesFor(r.id)) {
         expect(
           (row.hold, row.grams, row.derivedSeq),
@@ -235,10 +242,10 @@ void main() {
       expect(db.nutritionFor(r.id)!.status, 'partial');
       expect(bulkScopeIds(db, BulkScope.stale), isNot(contains(r.id)));
       await computeUntilFresh(db, gone, r);
-      expect(gone.foodCalls, 13, reason: 'derived to the hold: not re-asked');
+      expect(gone.foodCalls, 1, reason: 'derived to the hold: not re-asked');
     });
 
-    test('an outage: ONE pass, 13 requests, the provider failure thrown with '
+    test('an outage: ONE pass, 1 request, the provider failure thrown with '
         'its own message (no StateError), the rows underived and the recipe '
         'in the stale scope; FDC back, one pass derives them', () async {
       final (db, r) = await retired();
@@ -253,7 +260,7 @@ void main() {
           ),
         ),
       );
-      expect(down.foodCalls, 13);
+      expect(down.foodCalls, 1);
       expect(
         db.ingredientMatchesFor(r.id).map((row) => row.derivedSeq).toSet(),
         {null},
@@ -261,13 +268,13 @@ void main() {
       expect(bulkScopeIds(db, BulkScope.stale), contains(r.id));
       final back = Retired();
       expect(await computeUntilFresh(db, back, r), 1);
-      expect(back.foodCalls, 13);
+      expect(back.foodCalls, 1);
       expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
     });
 
     test(
       "both job loops stop on a bad key with ITS message (_run's arm), "
-      'having asked once per underived row; a 404 sweep then converges '
+      'having asked once per underived food; a 404 sweep then converges '
       '(done, the stale scope empty, the next sweep selects nothing)',
       () async {
         final (db, r) = await retired();
@@ -278,18 +285,18 @@ void main() {
         final row = db.nutritionJob(job)!;
         expect(row['status'], 'failed');
         expect(row['log'], contains('stopped at ${r.id}: $reason'));
-        expect(bad.foodCalls, 13);
+        expect(bad.foodCalls, 1);
         final one = startRecipeComputeJob(db, bad, r);
         await settle(recipeId: r.id);
         expect(db.nutritionJob(one)!['status'], 'failed');
         expect(db.nutritionJob(one)!['log'], ['${r.id}: $reason']);
-        expect(bad.foodCalls, 26);
+        expect(bad.foodCalls, 2);
         final gone = Retired();
         final sweep = startBulkJob(db, gone, scope: BulkScope.stale)!;
         await settle();
         expect(db.nutritionJob(sweep)!['status'], 'done');
         expect(db.nutritionJob(sweep)!['failed'], 0);
-        expect(gone.foodCalls, 13);
+        expect(gone.foodCalls, 1);
         expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
       },
     );

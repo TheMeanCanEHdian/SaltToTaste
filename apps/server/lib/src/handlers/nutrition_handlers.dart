@@ -53,6 +53,14 @@ Map<String, Object?> nutritionBody(
       .length;
   return {
     'status': stale ? 'stale' : row.status,
+    // Why (v28, Run 058 S15 / Opus critic 1 #3): `inputs` — the recipe's
+    // inputs or layout moved since the totals were stamped; `underived` —
+    // the stamp is current but a person's decision is waiting on USDA (a
+    // derivation that could not run). The page names the cause.
+    if (stale)
+      'stale_reason': nutritionStampCurrent(db, recipe, row)
+          ? 'underived'
+          : 'inputs',
     'serving_basis': row.servingBasis,
     'basis_kind': basisKindOf(
       row.servingBasis ?? 1,
@@ -141,6 +149,16 @@ Future<Map<String, Object?>> matchesBody(
     String? carriedFrom;
     String? note;
     var derived = false;
+    // What the line weighs, matches and queries: a sub-recipe's eaten
+    // "plus" part (0711's oil), as every write path reads it.
+    final weighed = weighedLine(recipe, line);
+    // The row's food from the caches, resolved ONCE per row and request
+    // (RULE C v28, Run 058 O5/S10: the derivation and this body each
+    // resolved it — two or three reads per typed row): [derivedFor] reads
+    // it, and the portions and nutrient record below show it.
+    final onRow = row?.fdcId == null
+        ? null
+        : (food: knownFood(db, row!.fdcId!, line: weighed), id: row.fdcId);
     if (row != null && isDecidedRow(row)) {
       final decided = row;
       final carried = decided.raw != line.raw;
@@ -156,6 +174,7 @@ Future<Map<String, Object?>> matchesBody(
         position,
         line,
         decided,
+        resolved: (food: onRow?.food),
       );
       row = carried ? d.row : withDerived(decided, d.row);
       note = d.note;
@@ -163,9 +182,6 @@ Future<Map<String, Object?>> matchesBody(
     } else if (row != null && row.raw != line.raw) {
       row = null;
     }
-    // What the line weighs, matches and queries: a sub-recipe's eaten
-    // "plus" part (0711's oil), as every write path reads it.
-    final weighed = weighedLine(recipe, line);
     // Cache-only: a GET must never spend FDC budget or block on the rate
     // limiter (members can call this).
     final candidates = row == null
@@ -216,7 +232,9 @@ Future<Map<String, Object?>> matchesBody(
     // same hit either way, Run 048 P9; weighed like every path.)
     final food = row?.fdcId == null
         ? null
-        : knownFood(db, row!.fdcId!, line: weighed);
+        : row!.fdcId == onRow?.id
+        ? onRow!.food
+        : knownFood(db, row.fdcId!, line: weighed);
     // What the totals count for [food]: its [nutrientSiblings] record when
     // it has one (null while that is uncached — a GET never fetches).
     final sibling = food == null ? null : nutrientSiblings[food.fdcId];
@@ -355,12 +373,14 @@ Map<String, Object?> appliedJson(AppliedToOthers applied) => {
 /// what that reached; null otherwise.
 Future<AppliedToOthers?> applyMatchOverride(
   SaltDatabase db,
-  NutritionProvider provider,
+  NutritionProvider fdc,
   Recipe given,
   int position,
   Map<String, Object?> body, {
   int? decidedBy,
 }) async {
+  // One request per FOOD for the write and its apply-to-all ([onePass]).
+  final provider = onePass(fdc);
   // The STORED recipe, never the caller's copy: a save since the caller
   // read it (the route's body read, a client's stale screen) would lay the
   // rows out on lines that are no longer the recipe's.
@@ -423,6 +443,38 @@ Future<AppliedToOthers?> applyMatchOverride(
   // recipe reads stale until a compute derives it (v27: the row's own
   // fact, which no concurrent compute's stamp can overwrite).
   var unavailable = false;
+  final skipped = body['skipped'];
+  final confirmed = body['confirmed'];
+  final fdcId = body['fdc_id'];
+  final grams = body['grams'];
+  // The hold's ONE action table (RULE A v28, salt_shared `holdActions`;
+  // Run 058 O7/S13, Opus critic 2): a decision the line's hold does not
+  // accept is refused before anything is written — a confirm or typed
+  // grams on a food with no record (`food_gone`, `food_unavailable`)
+  // cannot count it, and must never reach the library-wide decision. The
+  // table needs only the hold: the STORED row's is read first, so a
+  // carried row (its line edited, not yet computed) is refused before its
+  // derivation asks FDC anything (the v28 closer's D3); the derived row's
+  // is read again below.
+  final decision = skipped == true
+      ? HoldDecision.skip
+      : fdcId != null
+      ? HoldDecision.pick
+      : confirmed == true
+      ? HoldDecision.confirm
+      : grams != null
+      ? HoldDecision.typed
+      : null;
+  void gate(IngredientMatchRow row) {
+    if (decision != null &&
+        !holdActionsOf(row.hold).accepts.contains(decision)) {
+      throw const ValidationException(noRecordMessage);
+    }
+  }
+
+  if (row != null) {
+    gate(row);
+  }
   if (row != null && row.raw != line.raw) {
     final d = await derivedFor(db, provider, recipe, position, line, row);
     row = d.row;
@@ -446,10 +498,6 @@ Future<AppliedToOthers?> applyMatchOverride(
   if (applyToAll != null && applyToAll is! bool) {
     throw const ValidationException("'apply_to_all' must be true or false.");
   }
-  final skipped = body['skipped'];
-  final confirmed = body['confirmed'];
-  final fdcId = body['fdc_id'];
-  final grams = body['grams'];
 
   // One verb at a time: `skipped` together with a food verb would let the
   // status chain drop the food (skip wins) while the decision below still
@@ -460,6 +508,8 @@ Future<AppliedToOthers?> applyMatchOverride(
       "'skipped' cannot be combined with 'fdc_id' or 'confirmed'.",
     );
   }
+  // The action table again, on the row as derived (a carried row's).
+  gate(row);
   // Set only by the branches that PUT a food on the row in this request.
   var decidedFood = false;
   if (skipped == true) {
@@ -497,8 +547,9 @@ Future<AppliedToOthers?> applyMatchOverride(
       clearGrams: true,
       clearGramSource: true,
       status: 'overridden',
-      // The old food's `food_gone` is answered by picking another (v27).
-      clearHold: row.hold == foodGoneHold,
+      // The old food's `food_gone` / `food_unavailable` is answered by
+      // picking another (v27, v28).
+      clearHold: row.hold == foodGoneHold || row.hold == foodUnavailableHold,
     );
     decidedFood = true;
   } else if (confirmed == true) {
@@ -569,8 +620,10 @@ Future<AppliedToOthers?> applyMatchOverride(
   // no FDC answer holds) is RULE A's one unhappy outcome, as at every
   // compute (v26, Run 056 S2/S29): the decision is stored (200), its
   // derived fields as the last derivation left them — the hold kept, a
-  // pick's grams none (it clears the old food's) — and the totals stamped
-  // stale, so the next sweep derives them. (v25 dropped the hold and kept
+  // pick's grams none (it clears the old food's) — and the row left
+  // UNDERIVED (no `derived_seq`; the totals' stamp stays current), so the
+  // recipe reads stale (`stale_reason: underived`) and the next sweep
+  // derives it (v27/v28). (v25 dropped the hold and kept
   // the stamp fresh: 0129's held liquid smoke confirmed in an outage sat
   // in `no_grams` for good.) A pick still needs its food above.
   var stored = row;
@@ -578,6 +631,16 @@ Future<AppliedToOthers?> applyMatchOverride(
     final d = await derivedFor(db, provider, recipe, position, line, row);
     stored = d.row;
     unavailable = unavailable || d.unavailable != null;
+  }
+  // A food this derivation found has no record (a confirm of a food FDC
+  // no longer serves): the decision stands on the line, held, but is never
+  // the ingredient's decision library-wide (Run 058 Opus critic 2: 0148's
+  // confirm replaced the key's decision 173468 with the gone food).
+  if (!holdActionsOf(stored.hold).decidesLibraryWide) {
+    if (applyToAll == true) {
+      throw const ValidationException(noRecordMessage);
+    }
+    decidedFood = false;
   }
   // Everything apply_to_all needs is checked BEFORE the line is written, so
   // a refused request changes nothing — not the line, not the totals (the
@@ -667,9 +730,11 @@ Future<AppliedToOthers?> applyMatchOverride(
     throw LineMovedException(position);
   }
   // A plain recompute: the stamp stays what it was; freshness reads the
-  // row ([nutritionIsFresh]).
-  recomputeTotals(
+  // row ([nutritionIsFresh]). A food another row reads that no cache holds
+  // is resolved first (v28, Run 058 S2), never dropped.
+  await recomputeTotalsResolving(
     db,
+    provider,
     recipe,
     hashed: (recipe: hashedRecipe, hash: derivedOn),
   );
@@ -685,6 +750,13 @@ Future<AppliedToOthers?> applyMatchOverride(
     excluding: (recipeId: recipe.id, position: position),
   );
 }
+
+/// The 422 for a decision a held line's action table refuses
+/// ([holdActions]): only another food or a skip answers a food with no
+/// USDA record.
+const String noRecordMessage =
+    'USDA has no record of this food to count — pick another food or skip '
+    'the line.';
 
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.

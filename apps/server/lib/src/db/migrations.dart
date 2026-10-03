@@ -411,4 +411,68 @@ INSERT OR REPLACE INTO settings (key, value)
   // on a row written before it (the per-serving amounts times the stored
   // basis stand in until the next compute writes it).
   ['ALTER TABLE recipe_nutrition ADD COLUMN totals TEXT'],
+
+  // 016 — Run 058 (v28). RULE A: `retry_count` counts the computes in a
+  // row that met a FOOD failure ([FailureScope.food]: FDC failing one
+  // food's detail, not a 404) on a decided row — the row is left underived
+  // and the sweep moves on; at `foodUnavailableAfter` the row is held
+  // `food_unavailable` for a person. Every other write of the row resets
+  // it to 0. RULE C: `fdc_search_cache_foods` indexes which cached search
+  // answers list which food (`knownFood`'s fallback was an unindexed scan
+  // of every answer per typed row per GET, Run 058 O5/S10), kept by
+  // TRIGGERS on every write of `fdc_search_cache` — whoever writes it —
+  // and backfilled once here from the answers already cached (SQL's own
+  // JSON reader: no boot pass needed).
+  [
+    '''
+ALTER TABLE ingredient_matches ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0
+''',
+    '''
+CREATE TABLE fdc_search_cache_foods (
+  fdc_id INTEGER NOT NULL,
+  query TEXT NOT NULL,
+  PRIMARY KEY (fdc_id, query)
+) WITHOUT ROWID
+''',
+    '''
+CREATE INDEX fdc_search_cache_foods_query ON fdc_search_cache_foods (query)
+''',
+    '''
+CREATE TRIGGER fdc_search_cache_foods_insert
+AFTER INSERT ON fdc_search_cache BEGIN
+  DELETE FROM fdc_search_cache_foods WHERE query = NEW.query;
+  $_indexAnswer
+END
+''',
+    '''
+CREATE TRIGGER fdc_search_cache_foods_update
+AFTER UPDATE OF response ON fdc_search_cache BEGIN
+  DELETE FROM fdc_search_cache_foods WHERE query = NEW.query;
+  $_indexAnswer
+END
+''',
+    '''
+CREATE TRIGGER fdc_search_cache_foods_delete
+AFTER DELETE ON fdc_search_cache BEGIN
+  DELETE FROM fdc_search_cache_foods WHERE query = OLD.query;
+END
+''',
+    r'''
+INSERT OR IGNORE INTO fdc_search_cache_foods (fdc_id, query)
+  SELECT json_extract(j.value, '$.fdc_id'), c.query
+  FROM fdc_search_cache c, json_each(CASE WHEN json_valid(c.response)
+    THEN c.response ELSE '[]' END) j
+  WHERE j.type = 'object' AND json_extract(j.value, '$.fdc_id') IS NOT NULL
+''',
+  ],
 ];
+
+/// Lists the foods a cached search answer (`NEW.response`: a JSON array of
+/// `FdcCandidate.toJson`) holds in `fdc_search_cache_foods` (migration 016).
+const String _indexAnswer = r'''
+INSERT OR IGNORE INTO fdc_search_cache_foods (fdc_id, query)
+  SELECT json_extract(j.value, '$.fdc_id'), NEW.query
+  FROM json_each(CASE WHEN json_valid(NEW.response)
+    THEN NEW.response ELSE '[]' END) j
+  WHERE j.type = 'object' AND json_extract(j.value, '$.fdc_id') IS NOT NULL;
+''';

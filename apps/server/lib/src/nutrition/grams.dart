@@ -692,14 +692,43 @@ double? _tableLookup(
 /// The g/mL [normalizedItem] weighs at by the table ([_densityOf]) — the
 /// density a medium threshold's mass figure comes from (engine RULE B, v27:
 /// "¼ cup" of oil is 54.4 g at 0.92), or null.
-double? densityOf(String normalizedItem) => _densityOf(normalizedItem)?.$2;
+/// A head the table does not size falls to [_foodFreeDensities].
+double? densityOf(String normalizedItem) =>
+    (_densityOf(normalizedItem) ??
+            _densityOf(normalizedItem, _foodFreeDensities))
+        ?.$2;
 
-(String, double)? _densityOf(String normalizedItem) {
+/// The densities a reader with NO food reads ([densityOf]: the engine's
+/// medium thresholds, RULE B) for the medium heads [_densities] does not
+/// size — never a line's grams, which read its record's own portion
+/// (RULE B, v28, Run 058 S6/S20: the corpus's "bread crumbs" and a starch
+/// had no key, so "8 ounces plain dried bread crumbs" read 0 mL and was no
+/// dredge, and shortening and lard read oil's 0.92). In [_densities] these
+/// keys would preempt the records' own portions: replayed, 10 corpus rows
+/// moved off their USDA portion — the shortening and lard lines onto a
+/// rounded figure, "3 cups tapioca starch" 456 g → 383 g on cornstarch's.
+/// Each figure is a record's: FDC 174928 "Bread, crumbs, dry, grated,
+/// plain" 'cup' 108 g (0.46; 'breadcrumbs' 0.45 above), 173584
+/// "Shortening, vegetable, household, composite" and 171401 "Lard" each
+/// 'cup' 205 g (0.87), and any other starch (tapioca, potato) on 169698
+/// "Cornstarch" 'cup' 128 g (0.54) — no starch record of its own is
+/// cached.
+const List<(String, double)> _foodFreeDensities = [
+  ('bread crumbs', 0.45),
+  ('starch', 0.54),
+  ('shortening', 0.87),
+  ('lard', 0.87),
+];
+
+(String, double)? _densityOf(
+  String normalizedItem, [
+  List<(String, double)> table = _densities,
+]) {
   final item = normalizedItem.replaceAll(_saltState, ' ');
   if (_notTheKeysFood.hasMatch(item)) {
     return null;
   }
-  final entry = _tableEntry(_densities, item, words: true);
+  final entry = _tableEntry(table, item, words: true);
   if (entry == null ||
       RegExp(
         '(?<![a-z])${RegExp.escape(entry.$1)}(?:e?s)?\\s+(?:of|seeds?)(?![a-z])',

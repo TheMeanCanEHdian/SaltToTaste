@@ -47,10 +47,16 @@ const quarter = '¼ cup extra-virgin olive oil';
 /// Puts the closed database at [path] back to schema [version] (11: before
 /// migration 012 — no layout table; 12: before 013 — no stamp layout, no
 /// global counter; 13: before 014 — no row `derived_seq`, no backfill
-/// marker; every version: before 015 — no stored totals), with [seqs] as
-/// recipe_layout's per-recipe seqs at 12.
+/// marker; every version: before 015 — no stored totals — and 016 — no
+/// row retry count, no search-cache food index or its triggers), with
+/// [seqs] as recipe_layout's per-recipe seqs at 12.
 void downgrade(String path, int version, {Map<String, int> seqs = const {}}) {
   final raw = sqlite3.open(path)
+    ..execute('DROP TRIGGER fdc_search_cache_foods_insert')
+    ..execute('DROP TRIGGER fdc_search_cache_foods_update')
+    ..execute('DROP TRIGGER fdc_search_cache_foods_delete')
+    ..execute('DROP TABLE fdc_search_cache_foods')
+    ..execute('ALTER TABLE ingredient_matches DROP COLUMN retry_count')
     ..execute('ALTER TABLE recipe_nutrition DROP COLUMN totals')
     ..execute('ALTER TABLE ingredient_matches DROP COLUMN derived_seq')
     ..execute(
@@ -906,8 +912,11 @@ class _FailFood implements NutritionProvider {
   Future<List<FdcCandidate>> search(String query) => inner.search(query);
 
   @override
-  Future<FdcFood?> food(int fdcId) =>
-      fdcId == failing ? throw StateError('FDC failing') : inner.food(fdcId);
+  Future<FdcFood?> food(int fdcId) => fdcId == failing
+      // FDC's own failure class (v28: a plain recompute resolves a food no
+      // cache holds and reads a NutritionProviderException as "not now").
+      ? throw const NutritionProviderException('FDC failing')
+      : inner.food(fdcId);
 }
 
 /// A provider that runs [onSearch] before each search.

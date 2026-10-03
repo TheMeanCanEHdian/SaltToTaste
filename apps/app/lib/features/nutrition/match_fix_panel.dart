@@ -3,7 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
 
 import 'package:salt_shared/salt_shared.dart'
-    show MatchBucket, belowConfidenceGate, matchBucketFor, vulgarFractionChars;
+    show
+        HoldDecision,
+        MatchBucket,
+        belowConfidenceGate,
+        holdActionsOf,
+        matchBucketFor,
+        vulgarFractionChars;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
@@ -89,6 +95,24 @@ String zeroReason(IngredientMatch m) => m.gramSource == 'discarded'
 /// grams", never a plain confirm of the whole weight. Keyed on the hold
 /// whatever the status: a person's decision on a held line keeps the hold
 /// (matcher v16), and the line is still poured away or in the shell.
+/// Whether the review sheet and the queue OFFER [decision] on [m]'s line —
+/// salt_shared's ONE action table per hold family (`holdActions`, RULE A
+/// v28; Run 058 O7/S13: the sheet offered Confirm and Confirm as-is on a
+/// `food_gone` row the server then refused). Every button below reads it,
+/// as the server's PUT gate and the queue's `finishes` SQL do.
+bool offers(IngredientMatch m, HoldDecision decision) =>
+    holdActionsOf(m.hold).offers.contains(decision);
+
+/// Whether nothing on a line held [hold] can count its food — a food USDA
+/// no longer serves or will not serve now (`food_gone`,
+/// `food_unavailable`): the action table offers no Confirm and no typed
+/// grams.
+bool noRecordHold(String? hold) {
+  final offered = holdActionsOf(hold).offers;
+  return !offered.contains(HoldDecision.confirm) &&
+      !offered.contains(HoldDecision.typed);
+}
+
 bool isHeldLine(IngredientMatch m) =>
     mediumHolds.contains(m.hold) || m.hold == 'in_shell';
 
@@ -104,16 +128,6 @@ const Set<String> mediumHolds = {
   'ambiguous_medium',
 };
 
-/// The [mediumHolds] a pick alone KEEPS when no eaten part is known (the
-/// server's `eatenInPartHolds`, RULE A): part of the line is eaten, or — an
-/// ambiguous oil — all of it or none, which nothing says.
-const Set<String> eatenInPartHolds = {
-  'starter_discard',
-  'coating',
-  'partial_pour_away',
-  'ambiguous_medium',
-};
-
 /// Which decisions finish a held medium line, by hold kind (RULE A; Run 056
 /// Sonnet critic 3 / Opus critic 3: every hold read "Skip, poured away" and
 /// the queue "Any decision finishes it", but a pick keeps an eaten-in-part
@@ -121,17 +135,24 @@ const Set<String> eatenInPartHolds = {
 /// offered when the line writes an eaten part, [eatenPart] its grams —
 /// counts only that part; a pick of another food finishes a wholly
 /// discarded medium (0 g, poured away) or a line whose eaten part is known,
-/// and KEEPS any other [eatenInPartHolds] hold. An ambiguous oil asks its
+/// and KEEPS any other hold whose table row a pick does not finish
+/// (salt_shared `holdActions`, which the server's derivation reads too;
+/// v28 deleted the app's and the server's own lists). An ambiguous oil asks its
 /// own question first.
 String heldFinishes(String hold, {double? eatenPart}) {
-  // A food USDA no longer serves (the server's `food_gone`, RULE A v27):
-  // nothing can count it — a pick of another food or a skip finishes it.
-  if (hold == 'food_gone') {
+  final actions = holdActionsOf(hold);
+  // A food with no record (`food_gone`, `food_unavailable`; RULE A): the
+  // table finishes it by a pick or a skip only.
+  if (!actions.finishes.contains(HoldDecision.confirm) &&
+      !actions.finishes.contains(HoldDecision.typed)) {
     return 'Pick another food, or skip the line — a confirm or typed grams '
-        'cannot count a food USDA no longer serves';
+        'cannot count a food USDA ${hold == 'food_gone' ? 'no longer serves' : 'cannot serve now'}';
   }
   final ambiguous = hold == 'ambiguous_medium';
-  final keeps = eatenInPartHolds.contains(hold) && eatenPart == null;
+  // A pick keeps the hold unless the table says it finishes it, or the
+  // engine knows the eaten part (then the pick counts that part).
+  final keeps =
+      !actions.finishes.contains(HoldDecision.pick) && eatenPart == null;
   return '${ambiguous ? 'Two lines could be the frying medium — which? ' : ''}'
       '${eatenPart == null ? '' : 'Confirm counts only the eaten part (${fmtAmount(eatenPart)} g), '}'
       '${ambiguous ? 'Skip if this line is the frying oil (poured away)' : 'Skip if it is poured away'}'
@@ -162,6 +183,8 @@ bool hasEatenPlusPart(IngredientMatch m) =>
 bool confirmsWithAmount(IngredientMatch m) =>
     m.fdcId != null &&
     !isHeldLine(m) &&
+    offers(m, HoldDecision.confirm) &&
+    offers(m, HoldDecision.typed) &&
     matchBucketOf(m) == MatchBucket.noAmount;
 
 /// Whether a line gets the plain "Confirm" (C · Check, no grams): an engine
@@ -171,6 +194,7 @@ bool confirmsWithoutAmount(IngredientMatch m) =>
     m.fdcId != null &&
     m.grams == null &&
     !isHeldLine(m) &&
+    offers(m, HoldDecision.confirm) &&
     matchBucketOf(m) == MatchBucket.check;
 
 const Map<String, double> unitToGrams = {'g': 1, 'oz': 28.3495, 'lb': 453.592};
@@ -254,6 +278,9 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
         'fresh meat, the match is cured',
   'borderline' => 'The match score is borderline; please confirm the food',
   'food_gone' => 'USDA no longer serves this food — pick again',
+  'food_unavailable' =>
+    'USDA kept failing to send this food (several syncs in a row) — pick '
+        'again, or skip the line',
   null || '' => null,
   final other => 'Held by the engine: ${other.replaceAll('_', ' ')}',
 };
@@ -285,8 +312,9 @@ class WhyLine extends StatelessWidget {
             '${heldFinishes(match.hold!, eatenPart: eatenPartOf(match))}',
         SaltColors.warnInk,
       ),
-      // A person's food USDA no longer serves: how it finishes.
-      MatchBucket.check when held != null && match.hold == 'food_gone' => (
+      // A person's food with no record (`food_gone`, `food_unavailable`):
+      // how it finishes, from the action table.
+      MatchBucket.check when held != null && noRecordHold(match.hold) => (
         '$held — held out of the totals. ${heldFinishes(match.hold!)}',
         SaltColors.warnInk,
       ),
@@ -859,7 +887,14 @@ class _FixPanelState extends State<FixPanel> {
     final canSave = zero
         ? !busy && pickChanged && grams != null
         : !busy &&
-              (pickChanged || (!confirmMode && _amountDirty && grams != null));
+              (pickChanged ||
+                  (!confirmMode &&
+                      _amountDirty &&
+                      grams != null &&
+                      // Typed grams on the line's own food: only where the
+                      // action table offers them (never on a food with no
+                      // record — the PUT refuses them, RULE A).
+                      offers(m, HoldDecision.typed)));
     void save() => cubit.override(
       m.position,
       raw: m.raw,

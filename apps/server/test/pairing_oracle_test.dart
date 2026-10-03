@@ -107,6 +107,10 @@ const _gapRegressionSeeds = [
   1, 5, 16, 41, 43, 44, 49, 56, //
   24, 46, 53, 60, 64, 68, 71, 81, 128, 130, 132, 135, 141, 145, 147, 152,
   153, 168, 173, 175, 194, 196,
+  // v28 (Run 058 O18/S28): eleven identical lines in a 14-line save of three
+  // edits stopped the pairing at its budget (a pick moved to a twin); the
+  // twin runs laid out in their own order end it in 4,916 expansions.
+  41487,
 ];
 
 int _envInt(String name, int fallback) =>

@@ -883,10 +883,12 @@ void main() {
     });
   }, skip: skipIfNoCorpus);
 
-  // v27 (RULE A): the totals are CACHE-ONLY — they never fetch, so a PUT
-  // asks FDC nothing for them; a decided row whose food no cache holds is
-  // left out and UNDERIVED (its `derived_seq` cleared): the recipe reads
-  // stale, and the next compute derives it (one request while FDC is down).
+  // v27 (RULE A): the totals are CACHE-ONLY — they never fetch; v28 (Run
+  // 058 S2): a PUT's plain recompute that meets a food no cache holds
+  // resolves it first (one request), so with FDC up nothing is dropped;
+  // with FDC down the decided row is left out and UNDERIVED (its
+  // `derived_seq` cleared): the recipe reads stale, and the next compute
+  // derives it (one request while FDC is down).
   group('I2: the TOTALS read of a food no cache holds — the row underived '
       '(v27: cache-only totals)', () {
     test("0857's confirmed flour (248 g) on a food in NO cache, FDC DOWN: the "
@@ -921,16 +923,20 @@ void main() {
       final outage = Outage(FixtureProvider(pending: pendingSearches))
         ..down = true;
       // A PUT first (a plain recompute that would keep the fresh stamp):
-      // typed grams on the salt read no food; the totals' fetch of the
-      // flour's food fails — the decision stored, the flour left out, the
-      // recipe stale.
+      // typed grams on the salt read no food; the resolve of the flour's
+      // food the totals need fails (one request, v28) — the decision
+      // stored, the flour left out, the recipe stale.
       const salt = '1 teaspoon table salt';
       final saltBefore = d.rowOf(db, r, d.at(r, salt)).grams!;
       await applyMatchOverride(db, outage, r, d.at(r, salt), {
         'raw': salt,
         'grams': 6,
       });
-      expect(outage.failed, 0, reason: 'the totals never ask FDC (v27)');
+      expect(
+        outage.failed,
+        1,
+        reason: 'the PUT resolves the food the totals read: one request (v28)',
+      );
       expect(d.rowOf(db, r, i).derivedSeq, isNull, reason: 'underived');
       expect(d.rowOf(db, r, d.at(r, salt)).grams, 6);
       expect(nutritionIsFresh(db, r), isFalse);
@@ -940,7 +946,7 @@ void main() {
       // derived.
       final failure = await matchAndCompute(db, outage, r);
       expect(failure, isA<NutritionProviderException>());
-      expect(outage.failed, 1);
+      expect(outage.failed, 2);
       expect(d.shape(d.rowOf(db, r, i)), d.shape(confirmed));
       expect(nutritionIsFresh(db, r), isFalse);
       expect(db.nutritionFor(r.id)!.status, 'partial');

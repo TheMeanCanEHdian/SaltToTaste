@@ -37,6 +37,7 @@ class RecipeNutrition {
     this.lowConfidence = 0,
     this.computedAt,
     this.computingJobId,
+    this.staleReason,
   });
 
   factory RecipeNutrition.fromJson(Map<String, dynamic> json) {
@@ -68,8 +69,16 @@ class RecipeNutrition {
       lowConfidence: (json['low_confidence'] as num?)?.toInt() ?? 0,
       computedAt: json['computed_at'] as String?,
       computingJobId: (json['computing_job_id'] as num?)?.toInt(),
+      staleReason: json['stale_reason'] as String?,
     );
   }
+
+  /// Why a `stale` body is stale (v28, Run 058 S15): `inputs` — the
+  /// ingredients or their layout changed since the totals were computed;
+  /// `underived` — they did not, but a person's decision is waiting on USDA
+  /// (a derivation that could not run). Null when not stale (or from an
+  /// older server).
+  final String? staleReason;
 
   /// `none` | `complete` | `partial` | `stale`.
   final String status;

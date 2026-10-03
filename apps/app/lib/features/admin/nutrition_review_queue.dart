@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
+import 'package:salt_shared/salt_shared.dart' show HoldDecision;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -841,11 +842,12 @@ String? lineHoldNote(NutritionReviewLine line) {
     'second_food' =>
       'line hold (second food): ${head}Any decision finishes it: Confirm, '
           'Skip, or a typed positive amount$noZero',
-    // Not a line hold — the person's food is gone from USDA — but decided
-    // one line at a time all the same (a decided row is its own group).
-    'food_gone' =>
-      'food gone: decided one line at a time. '
-          '${heldFinishes('food_gone')}.',
+    // Not a line hold — the person's food has no record (gone from USDA,
+    // or failing) — but decided one line at a time all the same (a decided
+    // row is its own group); how it finishes is the action table's.
+    final hold? when noRecordHold(hold) =>
+      '${hold.replaceAll('_', ' ')}: decided one line at a time. '
+          '${heldFinishes(hold)}.',
     _ => null,
   };
 }
@@ -1153,7 +1155,9 @@ class _FixContentState extends State<_FixContent> {
                     prefix: const Icon(FLucideIcons.scale, size: 14),
                     child: const Text('Enter edible grams'),
                   ),
-                if (held && hasEatenPlusPart(match))
+                if (held &&
+                    hasEatenPlusPart(match) &&
+                    offers(match, HoldDecision.confirm))
                   FButton(
                     variant: FButtonVariant.outline,
                     mainAxisSize: MainAxisSize.min,
@@ -1164,7 +1168,10 @@ class _FixContentState extends State<_FixContent> {
                 // Only a weak match WITH an amount can be blessed as-is;
                 // without one, confirming resolves a line that contributes
                 // nothing.
-                if (!held && bucket == MatchBucket.check && match.grams != null)
+                if (!held &&
+                    bucket == MatchBucket.check &&
+                    match.grams != null &&
+                    offers(match, HoldDecision.confirm))
                   FButton(
                     variant: FButtonVariant.outline,
                     mainAxisSize: MainAxisSize.min,

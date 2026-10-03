@@ -55,8 +55,20 @@ Future<void> _runOne(
   Recipe recipe,
 ) async {
   try {
-    await computeUntilFresh(db, provider, recipe);
-    db.updateNutritionJob(jobId, done: 1, failed: 0, status: 'done');
+    final notes = <String>[];
+    await computeUntilFresh(
+      db,
+      provider,
+      recipe,
+      onFoodFailure: (error) => notes.add('${recipe.id}: $error'),
+    );
+    db.updateNutritionJob(
+      jobId,
+      done: 1,
+      failed: 0,
+      status: 'done',
+      logJson: notes.isEmpty ? null : jsonEncode(notes),
+    );
   } on NutritionProviderException catch (error) {
     // No key / bad key / hard rate failure — surface the reason in the log.
     db.updateNutritionJob(
@@ -97,19 +109,26 @@ Future<void> _runOne(
 /// recipe reads stale ([nutritionIsFresh]) and the next sweep derives it —
 /// and a second pass would only ask FDC the same thing again (Run 057
 /// S5/S16/O2/O16: 3 passes, 42 requests for 0148's 13 rows, and a
-/// StateError masking the provider's reason). Its provider failure is
-/// rethrown once the pass is written, so both loops stop on a bad key or
-/// an outage and say why.
+/// StateError masking the provider's reason). Its GLOBAL provider failure
+/// ([FailureScope.global]: a bad key, the budget, an outage) is rethrown
+/// once the pass is written, so both loops stop and say why; a FOOD one
+/// (FDC failing one decided row's food, v28 — Run 058 Opus critic 1 /
+/// S27: it stopped every sweep at that recipe) is that row's state, told
+/// to [onFoodFailure] for the job's log, and the recipe is done.
 Future<int> computeUntilFresh(
   SaltDatabase db,
   NutritionProvider provider,
-  Recipe recipe,
-) async {
+  Recipe recipe, {
+  void Function(NutritionProviderException failure)? onFoodFailure,
+}) async {
   var current = recipe;
   for (var pass = 1; ; pass++) {
     final failure = await matchAndCompute(db, provider, current);
     if (failure != null) {
-      throw failure;
+      if (failure.scope == FailureScope.global) {
+        throw failure;
+      }
+      onFoodFailure?.call(failure);
     }
     final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
     if (stored == null || nutritionStampCurrent(db, stored)) {
@@ -270,19 +289,34 @@ Future<void> _run(
       }
       _recipeJobs[id] = jobId;
       try {
-        await computeUntilFresh(db, provider, found.recipe);
-      } on NutritionProviderException catch (error) {
-        // No key / bad key / hard rate failure: every remaining recipe
-        // would fail identically — stop and say why.
-        log.add('stopped at $id: $error');
-        db.updateNutritionJob(
-          jobId,
-          done: done,
-          failed: failed + 1,
-          status: 'failed',
-          logJson: jsonEncode(log),
+        await computeUntilFresh(
+          db,
+          provider,
+          found.recipe,
+          // One food FDC fails on: that row's state (underived, held
+          // `food_unavailable` after `foodUnavailableAfter` computes) — the
+          // sweep moves on and the log says which.
+          onFoodFailure: (error) => log.add('$id: $error'),
         );
-        return;
+      } on NutritionProviderException catch (error) {
+        if (error.scope == FailureScope.food) {
+          // A FOOD failure an engine line's fetch threw is that recipe's:
+          // counted failed, and the sweep moves on (v28).
+          failed += 1;
+          log.add('$id: $error');
+        } else {
+          // No key / bad key / hard rate failure: every remaining recipe
+          // would fail identically — stop and say why.
+          log.add('stopped at $id: $error');
+          db.updateNutritionJob(
+            jobId,
+            done: done,
+            failed: failed + 1,
+            status: 'failed',
+            logJson: jsonEncode(log),
+          );
+          return;
+        }
         // One bad recipe must not sink the batch; the log carries it.
         // ignore: avoid_catches_without_on_clauses
       } catch (error) {

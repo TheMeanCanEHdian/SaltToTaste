@@ -274,6 +274,11 @@ class UsdaFdcProvider implements NutritionProvider {
       );
     }
     final uri = Uri.https(_host, path, query.isEmpty ? null : query);
+    // RULE A's two failure classes ([FailureScope], v28): an answer FDC
+    // fails for ONE food's detail is that food's (the row's state; the
+    // sweep moves on), everything else — the key, the budget, the network,
+    // a rate limit, a search — every request's (the job stops).
+    final scope = kind == 'food' ? FailureScope.food : FailureScope.global;
     var attempt = 0;
     while (true) {
       attempt += 1;
@@ -306,8 +311,9 @@ class UsdaFdcProvider implements NutritionProvider {
           case 200:
             final decoded = jsonDecode(text);
             if (decoded is! Map<String, dynamic>) {
-              throw const NutritionProviderException(
+              throw NutritionProviderException(
                 'FoodData Central returned an unexpected response.',
+                scope: scope,
               );
             }
             return decoded;
@@ -327,9 +333,11 @@ class UsdaFdcProvider implements NutritionProvider {
           case 503:
           case 504:
             if (attempt >= 4) {
+              // A rate limit is the key's, whatever the request.
               throw NutritionProviderException(
                 'FoodData Central is unavailable (HTTP '
                 '${response.statusCode}); try again later.',
+                scope: response.statusCode == 429 ? FailureScope.global : scope,
               );
             }
             final delay = response.statusCode == 429
@@ -344,6 +352,7 @@ class UsdaFdcProvider implements NutritionProvider {
           default:
             throw NutritionProviderException(
               'FoodData Central error ${response.statusCode}.',
+              scope: scope,
             );
         }
       } on NutritionProviderException {

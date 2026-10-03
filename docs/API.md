@@ -339,7 +339,11 @@ line is 0, and so are a `no_match` line (no food to confirm) and a `check`
 line with no grams (a plain confirm converts it only if USDA can; when it
 cannot, the line lands in `no_grams` and the recipe stays partial). The
 count may therefore under-promise a `check` line whose cached record does
-convert, but it never promises what a confirm may not count. A group item
+convert, but it never promises what a confirm may not count — so a line
+held for a food with no record (`food_gone`, `food_unavailable`: only a
+pick or a skip finishes it, by the hold's action table, below) is 0 even
+with grams typed, and counts as short in its group and in `finishable`
+(v28, Run 058 O8, Sonnet critics 1 and 3). A group item
 overrides it with the group's count (below). Every `finishes` count (both
 modes, and `finishable`) reads the STORED match rows: for a recipe edited
 since its last compute (`stale` on its nutrition — derived, never stored) a
@@ -673,7 +677,9 @@ recipe says "MAKES 1 LOAF", so one serving is the whole loaf.").
 
 `low_confidence` counts the lines in the `check` bucket: auto-matched lines
 below 0.5 confidence, or held for a `hold` reason (see the matches body),
-that no one has reviewed yet (confirm/override/skip clears one) — never an
+that no one has reviewed yet (confirm/override/skip clears one — except
+on a food with no record, `food_gone` or `food_unavailable`, which only a
+pick of another food or a skip clears: its action table, below) — never an
 engine 0 g (`discarded` / `unmeasured` at `grams: 0`) unless it is held
 `unnamed_food`.
 
@@ -696,10 +702,21 @@ a save deleting a line, a person's write laying the rows out for it (the
 line's row dropped) and a save restoring the line hash as before, but the
 restored line has no row, so the recipe reads `stale` and the `stale` sweep
 computes it. No stamp is fresh with a line that has no row. Every reader
-of freshness — this body, the `stale` bulk scope, the job's re-run — reads
-both halves. The layout sequence is one global counter (migration 013), so
+of the stamp — this body, the `stale` bulk scope, the job's re-run — reads
+both its halves; the body and the `stale` scope also read the THIRD half
+below (no decided row underived), and the job's re-run does not (a second
+pass would only ask USDA again for what it could not serve). The layout sequence is one global counter (migration 013), so
 a recipe deleted and re-created under its id never repeats a sequence a
-writer read before the delete. Migration 013 stamps each existing
+writer read before the delete. It also means (v27, RULE A) a person's
+decision is UNDERIVED — its derivation could not run (FDC failing a fetch
+it needs) — so the stamp is current but the totals do not count what the
+decision derives. Since v28 a stale body says which with `stale_reason`
+(present only when `status` is `stale`): `inputs` (the ingredients, steps,
+title or layout changed since the compute: "ingredients changed") or
+`underived` (the inputs are those the totals were stamped on; a decision
+is waiting on USDA). The app's stale banner says which: "A decision is
+waiting on USDA: these totals do not include it yet." or "Ingredients
+changed since this was computed." (no `stale_reason`: the latter). Migration 013 stamps each existing
 computation with its recipe's layout sequence (0 for a recipe never laid
 out — every recipe computed before migration 012), and at every boot (v24,
 Run 054 H4) each recipe with a stamp or match rows and no layout is seeded
@@ -774,15 +791,37 @@ survive recomputes. Water/ice lines (since matcher v21 "filtered water"
 too) are matched locally for free, as are equipment lines (since v21 a
 banana leaf: the cochinita pibil's wrapper, not eaten). The job
 fails (with FDC's own reason in its log — a bulk sweep stops there, "stopped
-at <id>: <reason>") when no API key is configured, or when FDC fails a
-request the compute needs — a search, or a food detail its grams read
-(household portions, a bone-in cut's edible yield, a drained can's share, a
-rule's record, a record's nutrient sibling the totals read): a failed
-search stops the compute (its totals not recomputed; lines matched before
-it keep their new rows), and a failed food a decided row's derivation
-needs leaves that row underived while the compute writes the rest and its
-totals (v27) — either way the recipe stays `stale`, so the next compute or
-`stale` sweep retries it. A line is
+at <id>: <reason>") when FDC fails in a way every request would: no API key
+configured, the key rejected, the hourly budget spent, a rate limit, the
+network down or timing out, or a SEARCH failing after its retries (a
+GLOBAL failure, v28). A failure tied to ONE food — FDC failing that food's
+DETAIL (a 4xx other than 404, an unreadable answer, a 5xx after the
+retries) — is a FOOD failure (v28, Run 058 Opus critic 1 / S27: v27 stopped
+every stale sweep at the first recipe holding one such food, so no recipe
+after it was ever computed): on a decided row it leaves that row underived
+and counts it (`ingredient_matches.retry_count`, migration 016; any other
+write of the row resets it), the compute writes the rest and its totals,
+the job's log names it ("<id>: <reason>") and the job goes on — `done`, the
+per-recipe job too; after 3 computes in a row the row is held
+`food_unavailable` (a pick of another food or a skip finishes it, below)
+and FDC is not asked again until a cache holds the food's detail, a pick,
+a skip or an edit. An engine line's food detail failing that way fails
+that recipe (counted `failed`, the sweep goes on). A DETAIL outage is not
+a food's (v28 closer, the owner's ruling on the verifier's D8): within one
+compute pass, FOOD failures on 3 DISTINCT foods in a row — no detail
+answered between them — are GLOBAL with FDC's own reason: the pass asks
+for no further detail, none of its FOOD failures is counted (no
+`retry_count`, nothing held `food_unavailable`), and the job stops as
+above (5 decided rows whose details all 503: 3 requests, 0 rows held,
+"stopped at <id>"); one or two foods failing among answered details stay
+FOOD failures, those rows alone. A pass that meets a GLOBAL failure counts
+none of its FOOD failures. A failed search stops
+the compute; a compute pass that throws leaves NO row marked derived by it
+(v28, Run 058 Opus critic 3: the rows it derived before the throw read
+underived again — 0129's confirmed liquid smoke, derived before a later
+engine line's search failed, read fresh on totals that never counted it),
+so the recipe stays `stale` and the next compute or `stale` sweep retries
+it. A line is
 never stored counted at the printed weight because a yield could not be
 fetched.
 
@@ -934,10 +973,19 @@ degrees", "Return oil to 350 degrees", "when the oil reaches 385 degrees",
 at 350 degrees", "Maintain the temperature of the oil at 350 degrees",
 "Heat the oil to between 350 and 375 degrees", "until a deep-fry thermometer
 reads 350 degrees". It is NOT the fat's when an appliance or a method
-GOVERNS it: its clause — from the last "; , — ( )" or heat verb before it —
-names an appliance before it (an oven — never a Dutch oven or an
-"oven-safe" pan —, a broiler, a grill, an air fryer, a smoker, a slow
-cooker, a pizza stone, a toaster, a convection setting) or a method verb
+GOVERNS it: its clause — from the last "; , — ( )" before it (since
+matcher v28 never a heat verb, the evidence's own word — Run 058: v27 cut
+there too, so "bake them in an oven heated to 375 degrees", "heat grill
+until lid thermometer registers 350 degrees" read as frying heat; a mark
+directly followed by a heat verb's participle, "in the smoker, holding it
+at 300 degrees", "on the grill, keeping the temperature at 350", "the oil,
+heated to 350 degrees, is ready", opens no clause) — names anywhere before
+it an appliance (an oven, a broiler, a grill, an air fryer, a smoker, a
+slow cooker, a pizza stone, a toaster, a convection setting — never a
+VESSEL a fat fries in, since v28 every spelling: a Dutch or French oven
+("Dutch-oven" too), an oven-safe, oven safe, oven-proof or oven proof pan,
+a broiler or grill pan, a broiler-, grill-safe or -proof pan; "ovenproof",
+a sheet pan and a pizza pan name no appliance) or a method verb
 leading it ("bake/bakes/baking", "roast/roasts/roasting",
 "broil/broils/broiling" … then "at", "to" or "in"; "baked/roasted/broiled/
 grilled at|to|in" — never an adjective, "roasted peppers", nor a method word
@@ -953,7 +1001,14 @@ heat the oven to 200 degrees" fries, and "Brush the pitas with the oil and
 heat them in the oven to 375 degrees", "… to 375 degrees and bake", "toast at
 350 degrees" (no heat verb) heat nothing — nor "until shimmering" or
 "smoking" with no temperature (a sauté's or a sear's: 81 counted ¼-cup oil
-lines of the library sit beside one). A frying temperature is 300–399 °F
+lines of the library sit beside one). Within one clause a method verb
+or an appliance before the heat verb governs ("Set the pitas in the oven
+and heat the oil to 375 degrees", "Bake the croutons and heat the oil to
+350 degrees" heat nothing; v26 read the same). A frying temperature is
+300–399 °F (judged at v28 on the library's six sentences naming a fat with
+400–450 °F: 300–450 would read 0511's and 0672's 400-degree fries as
+frying heat — their oils already zeroed by the mass rule — but would hold
+0672's eaten "¼ cup coconut oil", its buffalo sauce, as ambiguous_medium)
 written "350 degrees", "350 degree", "350 deg", "350 deg.", "350 degrees F",
 "350 Fahrenheit", "350°F", "350° F", "350 °F", "350°" or "350F" (the degree
 sign typed °, º or ˚), or the Celsius frying range 160–200 written "180°C",
@@ -962,12 +1017,17 @@ sign typed °, º or ˚), or the Celsius frying range 160–200 written "180°C"
 to it ("350 for", "180 cups", "1350 degrees"). Each of the library's 67
 sentences naming oil with a 3xx-degree temperature reads as frying heat,
 and v27's scoped rule changes no line of the library (all 13,615 replayed
-rows and every oil and dredge line identical). The lead is ONE lookbehind
+rows and every oil and dredge line identical; v28's clause marks, vessels,
+densities and thresholds change none either). The lead is ONE lookbehind
 tried at the temperature's digits, the heat verbs one word scan with a set
 lookup, the clause read only up to the temperature: linear in the
 sentence (the v27 closer, the verifier's D11: the first cut's alternation
 scans cost ~7 µs a frying sentence, +100 ms on a PUT over 36,361 frying
-sentences at the caps; that PUT is now under 4a1c58e's, 387 -> 258 ms).
+sentences at the caps; that PUT is now under 4a1c58e's, 387 -> 258 ms);
+since v28 the words that can govern are located ONCE per sentence and each
+temperature answered by a forward pointer (Run 058 S5/S9: v27 re-read the
+clause per temperature — a 1,000-character sentence of 124 temperatures
+1.19 ms, now 0.14, 4a1c58e 0.15).
 A sentence binds to the line whose own written amount it names ("Heat 1 cup oil") or a word of
 whose kind it names ("vegetable", "olive", "peanut", "sesame") — only
 when the fat's noun phrase FOLLOWS that amount or word directly, with
@@ -995,10 +1055,12 @@ the verifier's D3: the rule read the caller's resolved grams, so a reader
 with none held the 48-ounce bottle while the compute zeroed it) —, a "for
 (pan-/deep-)frying" label with any
 amount, or ¼ cup or more in EITHER unit family — a written volume (its
-same-food "plus" part included), or the line's grams resolved as the gram
+same-food "plus" part included, since v28 in both families: "2
+tablespoons plus 8 ounces vegetable oil" is one), or the line's grams resolved as the gram
 rule resolves them (a written weight, a printed paren weight by its count)
 at its food's table density: ¼ cup is 59.1 mL, 54.4 g of oil at 0.92 g/mL
-(a fat the table does not list, shortening or lard, at oil's), so "8
+(shortening and lard at 0.87 since v28, their FDC records' 205 g a cup;
+a fat item the table refuses at oil's), so "8
 ounces vegetable oil" fries like "1 cup" and every line the 400 g rule
 zeroes is one. An amount-less line weighs nothing and is never zeroed or
 held by a sentence. With two or more candidates, each such ¼-cup-or-heavier
@@ -1013,9 +1075,14 @@ matcher v27 EVERY medium threshold reads both unit families (Run 057: each
 read `volumeMlOf` only, so a line written by weight skipped them all): a
 line's written volume, else its grams at its food's table density — ¼ cup
 of oil 54.4 g (0.92 g/mL), of flour 30.2 g (0.51), of panko 14.8 g (0.25),
-of sugar 50.3 g (0.85); the brine salt's 3 tablespoons (44 mL) 53.7 g of
+of bread crumbs 26.6 g (0.45) and of a starch 31.9 g (0.54) since v28
+(Run 058 S6: the corpus's "bread crumbs" and a tapioca or potato starch had
+no figure, so "8 ounces plain dried bread crumbs" was no dredge — figures a
+reader with no food reads, never a line's grams, which keep the record's
+own portion), of sugar 50.3 g (0.85); the brine salt's 3 tablespoons (44 mL) 53.7 g of
 table salt (1.22) or 31.7 g of kosher (0.72); a buttermilk soak's or a cheese
-milk's 4 cups (946 mL) 974 g (1.03): "20 ounces flour" is a dredge like "4
+milk's 4 cups (exactly a written "4 cups", 946.35 mL, since v28) 974.7 g
+(1.03): "20 ounces flour" is a dredge like "4
 cups", "4 ounces table salt" a brine salt like "½ cup". A line whose food
 the table has no density for keeps its volume reading. No library line
 moves), a brine's salt, a
@@ -1262,14 +1329,32 @@ failure (the job stops with FDC's reason). FDC answering "no such food"
 when no cache holds the food is NOT an outage (v27, Opus critic 2): the
 decision is derived — to the `food_gone` hold (above), typed grams kept
 as typed, none derived — the row counts as derived (the recipe held, not
-stale) and is not asked again until a pick, a skip or an edit moves it.
-The totals are CACHE-ONLY (v27): no recompute — after a compute, a PUT,
-an apply-to-all — asks FDC anything (a serving-basis change recomputes
-nothing: arithmetic over the stored totals); a decided row
-whose food no cache holds is left out and its `derived_seq` cleared
-(underived: the next compute fetches it), an engine row's leaves the
-recipe stamped stale (the next compute re-matches it), and a `food_gone`
-row is held. Only the derivations that read a food fetch one: a skip
+stale) and is not asked again until a pick, a skip or an edit moves it —
+or a cache holds the food again: "derived for" names EVERY input a
+derivation reads (v28, RULE A; Run 058 O1/S1), the recipe's inputs AND the
+food caches, so every compute re-reads a `food_gone` row's food from the
+caches (no request) and derives it again the moment one holds it (a search
+answer listing it again: 0857's flour counts its 248 g, the matches GET and
+the row agreeing). A record whose nutrients the totals read from a sibling
+record (napa cabbage 2727583 reads 169979) has that sibling resolved WHERE
+its food is — by the decided row's derivation (compute, PUT), by the
+engine's candidate or the key's prior decision, by an apply-to-all's
+weigh — never by a separate prefetch the totals depended on (v28, Sonnet
+critic 2 / S3): a sibling FDC answers "no such food" for makes the decided
+row `food_gone`, passes the engine's candidate over (the line matched by
+the next candidate) and leaves an apply-to-all target `unavailable`; a
+sibling FDC cannot serve now leaves the decided row underived.
+The totals never fetch (v27): `recomputeTotals` reads the caches only (a
+serving-basis change recomputes nothing: arithmetic over the stored
+totals). A PLAIN recompute — a PUT, an apply-to-all target — whose totals
+would meet a food (or a sibling record) no cache holds resolves it first,
+one request per food (v28, Run 058 S2: a confirm of 0857's baking soda,
+the flour's food gone from every cache, dropped the flour's 248 g and
+turned the recipe stale with no request made): only a food FDC answers
+"no such food" for or cannot serve now stays missing — a decided row
+underived (the next compute derives it: `food_gone`, or the food counted),
+an engine row's recipe stamped stale (the next compute re-matches it) —
+and a `food_gone` or `food_unavailable` row is held. Only the derivations that read a food fetch one: a skip
 on the line's own amount reads none, and grams a person typed read the
 food from the caches (0279's typed "2 teaspoons Sichuan peppercorns": no
 FDC request at the PUT or at any compute) — and ask FDC only for a food no
@@ -1339,7 +1424,8 @@ increase water" — a negation — "should not actively fry" — bacon or
 prosciutto fried in its own fat, or rice toasted for a pilaf), heats
 a frying fat to a frying temperature ("to 375 degrees"; since v25 never an
 oven's "bake at 375 degrees"; since v26 the positive-evidence rule above,
-for oil, shortening and lard alike, its exclusion scoped since v27) or
+for oil, shortening and lard alike, its exclusion scoped since v27, its
+clause cut only at a mark since v28) or
 discards the fat the food cooked in, or a line "for frying" (since v24
 "for deep frying" / "for deep-frying" too, the oil's own signal); 0149
 Easier Fried Chicken, 0198 Crispy Pan-Fried Pork Chops, 0114, 0042 and
@@ -1418,9 +1504,12 @@ it first the same way; the same switch), `borderline`
 (only when the server's borderline-band switch is on, off by default: an
 engine pick scored from 0.52 up to 0.54), and since matcher v27 one hold
 of a person's decision, `food_gone` (FDC answers "no such food" for the
-decided food and no cache holds it: out of the totals, in `check`; a pick
-of another food or a skip finishes it — a confirm or typed grams cannot
-count a food with no record; RULE A below); `hold_note` (since v22): the
+decided food — or for its nutrient record — and no cache holds it: out of
+the totals, in `check`; a pick of another food or a skip finishes it — a
+confirm or typed grams cannot count a food with no record; RULE A below),
+and since v28 `food_unavailable` (FDC failed that food's detail — not a
+404 — in 3 computes in a row: held the same way, re-read once the food's
+detail is cached); `hold_note` (since v22): the
 hold in words where the code alone does not say it — a
 `partial_pour_away`'s kept part ("1 cup defatted cooking liquid"), and
 since matcher v25 an `ambiguous_medium` line's sentence, quoted — `"Heat oil in
@@ -1887,11 +1976,45 @@ Run 056 measured a salt-written recipe at ~24–27 s per compute or member
 matches GET and a dredge-written one at ~123 s per compute (159 s was the
 v26 fixer's own one-readAll measurement of the salt shape, not Run 056's
 figure), under 1.2 s now;
-since v27 each per-recipe index is paid by the caller that amortises it:
-the inversion of the sentences naming every food is built on the SECOND
-distinct food a request asks for, so a one-line read (the reach's held
-check on each reached recipe, a single-line PUT) scans for its one food,
-and the substring readers (a small salt dissolved beside a brine salt, a
+since v27 each per-recipe index is paid by the caller that amortises it,
+and since v28 by MEASURED amortisation (the v28 closer; v27's "the second
+food asked builds it" and the first v28 cut's one-line declaration were
+proxies — Run 058 O4: an oil line in a recipe that dredges and fries asks
+two foods, and each recipe the matches GET reached for 0149's ten shared
+lines built the inversion, 22 per GET): a food named in the directions is
+scanned for alone — one pass per step for where its word starts, and the
+sentences of only the steps that have it — until the scans a recipe's
+index has paid reach the cost of the inversion of the sentences naming
+every food (measured, JIT, 3 rounds: the inversion 29–44 ns per character
+of the steps, a step pass 0.08–1.1, a sentence read 2.4–4.8 — in one unit,
+a sentence character 3 and the inversion 30 per step character); then the
+inversion is built, once. So no reader pays more than about twice the
+cheaper choice: a reach that asks a cap recipe 8 foods never builds it, a
+compute or matches GET of the cap recipe itself (400 foods) builds it
+within its first dozen; the inversion is linear per sentence (each word
+confirmed at the word, never a rescan per food found). Run 058's O4 shape
+(21 cap recipes, 0149's lines; interleaved 3 rounds, fd34433 → now): the
+oil reach GET 6.3–6.4 s → ~1.5 s with 2 inversions (the viewed recipe's
+own rows and the reach's copy of it, read for its 400 keys; v28's first
+cut 22, 2.1 s), the garlic-line GET 1.7 s → ~1.4 s, the oil apply-to-all
+6.4 s → 1.5 s with none. The oil GET stays 4–6 % over the garlic GET: each
+reached recipe is asked 8 foods, not 1 (one step pass each). The price
+of measuring, at the caps: a recipe's own matches GET pays its scans
+before the build, 20–60 ms over v28's first cut (brine, cheese and
+long-lines shapes), and a compute that asks few foods never builds it,
+~40 ms under. Accepted
+(the owner, v28 closer): the frying-heat reading at the caps (three fats ×
+1,200 sentences of ~990 characters, each a linear clause reading) stays at
+1.0–1.3 s per compute, GET or write — v26's level, from 3.9–6.0 s at
+fd34433. The matches GET resolves
+each row's food from the caches ONCE (the derivation reads what the body
+shows — v27 read it two or three times per typed row: 400 typed rows,
+3.3 s → 70 ms against v26), and a compute, or a person's write with its
+apply-to-all, asks FoodData Central ONCE per food per pass — every id
+asked and every "no such food" or failure is remembered for the pass (400
+typed rows on one retired food: 400 requests at v27, 1 now; 100 napa rows
+whose nutrient record is uncached: 1 request).
+The substring readers (a small salt dissolved beside a brine salt, a
 "plus" line's amount named in a step) read ONE inverted name → sentence
 index per recipe, never a scan per name or per pair of names — Run 057:
 a 20-recipe reach at the caps 7.1 s → 1.9 s per cold GET and 13.9 s →
@@ -1905,9 +2028,19 @@ request, not once per line — Run 055 V1: 160 identical 1,000-character
 lines took 16 s, ~0.3 s now),
 so it expands at most
 10,000 layouts (`pairingBudget`) and then keeps the best found so far:
-reached only far past a few edits (a list shuffled whole with a quarter
-rewritten in one save), never on a save of up to three edits the pairing
-oracle draws. Measured (JIT, real corpus lines): an unedited list is one
+reached far past a few edits (a list shuffled whole with a quarter
+rewritten in one save), and — rarely — on a save of many identical lines.
+Since v28 a RUN of identical lines (consecutive rows of one text and
+ingredient) is one group laid out in its own order: the search never
+branches on a permutation of them, which changes neither the reading's
+cost nor the decisions it keeps (a crossed pair of twins uncrossed is an
+in-order chain at least as long); then a twin standing off its own line
+swaps with the twin of its run on it whenever that lowers the layout's
+tie-breaks (a layout is its own next layout, as before). Twins apart (another line between) are
+still distinct rows: a fuzz of 2,000 twin-heavy saves (12–15 lines of
+three texts, one to three edits) reached the budget once (v27: four
+times); the gap oracle's seed 41487 (eleven twins, three edits) took
+39,789 layouts and now 4,916. Measured (JIT, real corpus lines): an unedited list is one
 expansion; at the edit service's cap of 400 lines a three-edit save takes
 ~50 ms and a save that stops at the budget ~100 ms (~120 ms cold), at 60
 lines ~12 ms. A row only ever sits on a line of its exact text or its
@@ -2027,6 +2160,40 @@ first). `422 zero_row` for a bare `{confirmed: true}` (no `fdc_id`, no
 hidden guess the app never shows, and a confirm would decide it
 library-wide. Pick a food (with an amount), type grams, or skip it.
 
+Every hold has ONE action table (v28, RULE A; salt_shared `holdActions`,
+read by this PUT's gate, the review queue's `finishes`/`finishable` and the
+app's sheet and queue): which decisions finish the held line, which the
+sheet offers, which this PUT accepts, and whether a pick or confirm on it
+may become the ingredient's decision library-wide. A FOOD hold of the
+engine's pick (`no_nutrients`, `unnamed_food`, `dried_for_fresh`,
+`cured_for_fresh`, `borderline`) and the LINE holds `discarded_medium`,
+`in_shell`, `second_food`: any decision finishes it. A medium a part of
+whose line is eaten (`starter_discard`, `coating`, `partial_pour_away`,
+`ambiguous_medium`): a skip, a confirm or typed grams finish it; a pick
+alone is no promise (it keeps the hold unless the eaten part is known). A
+food with no record (`food_gone`, `food_unavailable`): only a pick of
+another food or a skip — `{confirmed: true}` or `{grams}` (with or without
+`apply_to_all`) is `422` "USDA has no record of this food to count — pick
+another food or skip the line." with nothing written and no FDC request
+(Run 058 O7/S13: the sheet's Confirm re-asked FDC and kept the row held) —
+the table needs only the hold, so the STORED row's is read before
+anything else, a row carried to an edited line too (its line's amount
+edited, not yet recomputed: v28 derived it first, one FDC request before
+the `422`; the v28 closer reads the stored hold first, then the derived
+row's again),
+and a confirm whose own derivation finds its food gone stores the decision
+held but NEVER as the ingredient's library-wide decision (Run 058 Opus
+critic 2: a confirm of 0148's `food_gone` line replaced the key's decision
+173468 with the gone food in every recipe); with `apply_to_all` it is the
+same `422`. The app reads the same table: it offers Confirm and Confirm
+as-is only where the table offers a confirm, saves typed grams on the
+line's own food only where it offers typed grams, and says how a held line
+finishes from the table ("picking another food keeps it held" exactly
+where a pick does not finish it; "a confirm or typed grams cannot count a
+food USDA no longer serves / cannot serve now" for the two no-record
+holds) — pinned hold by hold against the table
+(`apps/app/test/hold_actions_parity_test.dart`).
+
 Add `apply_to_all: true` — together with `fdc_id` or `confirmed: true`,
 the decision being broadcast — to land the same food on every other
 undecided (`auto` / `unmatched`) line with the same ingredient item (other
@@ -2113,8 +2280,9 @@ amount (household portions), or a weight an SR Legacy record's edible yield,
 drained can or game hen scales (a bone-in chop, a drained can) — fetch it;
 when FDC fails that fetch the decision is stored with RULE A's one unhappy
 outcome (above: `200`, the derived fields as the last derivation left
-them — a pick's grams none, the hold kept — and the totals stamped stale;
-never a row stored at the printed weight); only a pick of a food neither
+them — a pick's grams none, the hold kept — and the row UNDERIVED, no
+`derived_seq`, so the recipe reads `stale` with `stale_reason:
+underived` whatever the stamp; never a row stored at the printed weight); only a pick of a food neither
 a cached answer nor FDC can give answers `422` with nothing written (v26,
 Run 056 S29: v9-v25 answered `422`). `422`, with nothing written, when the request carries no food
 decision (`grams` alone or `skipped`), or the line has nothing searchable
@@ -2139,7 +2307,13 @@ SPENDS the FDC request budget (the per-line `matches` read stays
 cache-only so members never can) — which also makes it a
 [side-effectful GET](#cross-site-gets): a cookie session with neither
 `X-Requested-With` nor a same-origin `Sec-Fetch-Site` gets `403 csrf`.
-Repeat terms are served from the same search cache the matcher uses. The term is normalized like an ingredient
+Repeat terms are served from the same search cache the matcher uses.
+Which cached answers list which food is an index (migration 016,
+`fdc_search_cache_foods`, kept by triggers on every write of the cache and
+backfilled from the answers already cached when the migration runs), so a
+food read from "any cached answer that holds it" — a typed row's food, a
+decided food's stand-in — is an indexed lookup, never a scan of every
+cached answer (Run 058 O5/S10). The term is normalized like an ingredient
 line, so it shares those cache keys and ranking — including the matcher's
 rewrites of phrases FDC files elsewhere (pepper as a spice: `pepper`,
 `black pepper`, `red pepper flakes` search FDC's `Spices, pepper, …`

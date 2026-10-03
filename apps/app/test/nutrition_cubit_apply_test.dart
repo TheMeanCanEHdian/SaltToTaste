@@ -50,12 +50,13 @@ class _Adapter implements HttpClientAdapter {
   /// it cannot be staged against a fake; the field is the server's own.
   int moved = 0;
 
-  /// The receipt's other reasons (`decided`, `gone`, `failed_lines`) —
-  /// synthesized for the same reason as [moved].
-  ({int decided, int gone, int failedLines}) reasons = (
+  /// The receipt's other reasons (`decided`, `gone`, `failed_lines`,
+  /// `unavailable`) — synthesized for the same reason as [moved].
+  ({int decided, int gone, int failedLines, int unavailable}) reasons = (
     decided: 0,
     gone: 0,
     failedLines: 0,
+    unavailable: 0,
   );
 
   /// When set, an apply_to_all PUT answers WITHOUT its `applied` block, as
@@ -160,6 +161,7 @@ class _Adapter implements HttpClientAdapter {
               'decided': reasons.decided,
               'gone': reasons.gone,
               'failed_lines': reasons.failedLines,
+              'unavailable': reasons.unavailable,
             },
         }),
         200,
@@ -583,19 +585,24 @@ void main() {
     expect(cubit.state.error, isNull);
   });
 
-  test("F7: the receipt carries the server's moved, decided, gone and "
-      'failed_lines counts', () async {
+  test("F7: the receipt carries the server's moved, decided, gone, "
+      'failed_lines and unavailable counts (v28, Run 058 S18: the cubit '
+      'built it with every count the server sent — `unavailable` at 1, '
+      'the smallest a person must still be told)', () async {
     await boot(others: 41);
     final line = flour();
     await cubit.override(line.position, raw: line.raw, fdcId: 123456);
     await pumpEventQueue();
     adapter
       ..moved = 2
-      ..reasons = (decided: 3, gone: 4, failedLines: 5);
+      ..reasons = (decided: 3, gone: 4, failedLines: 5, unavailable: 1);
     await cubit.applyToAll();
     await pumpEventQueue();
     final a = cubit.state.applied;
-    expect((a?.moved, a?.decided, a?.gone, a?.failedLines), (2, 3, 4, 5));
+    expect(
+      (a?.moved, a?.decided, a?.gone, a?.failedLines, a?.unavailable),
+      (2, 3, 4, 5, 1),
+    );
   });
 
   test('a second tap while applying is a no-op', () async {
@@ -869,7 +876,7 @@ void main() {
       await pumpEventQueue();
       adapter
         ..moved = 2
-        ..reasons = (decided: 3, gone: 4, failedLines: 5);
+        ..reasons = (decided: 3, gone: 4, failedLines: 5, unavailable: 0);
       adapter.gate = Completer<void>();
       final apply = cubit.applyToAll();
       await pumpEventQueue();
@@ -955,16 +962,23 @@ void main() {
         failed: 0,
         completed: 0,
         completedRecipes: const <String>[],
-        moved: 0,
-        decided: 0,
-        gone: 0,
-        failedLines: 0,
-        unavailable: 0,
+        moved: 2,
+        decided: 3,
+        gone: 4,
+        failedLines: 5,
+        unavailable: 1,
       );
-      expect(
-        receiptOnReload(receipt, [row(6, salt), row(7, offer.raw)]).position,
-        7,
-      );
+      // Re-placed or kept unanchored, the receipt keeps every reason the
+      // server gave (v28, Run 058 O16/S18: `unavailable` reset to 0 on a
+      // reload survived every test).
+      (int, int, int, int, int) reasonsOf(ApplyReceipt r) =>
+          (r.moved, r.decided, r.gone, r.failedLines, r.unavailable);
+      final placed = receiptOnReload(receipt, [
+        row(6, salt),
+        row(7, offer.raw),
+      ]);
+      expect(placed.position, 7);
+      expect(reasonsOf(placed), (2, 3, 4, 5, 1));
       // O17: unplaceable — gone, or twins neither at its position — it is
       // kept unanchored (position null), counts whole, and is under no row.
       for (final rows in [
@@ -973,6 +987,7 @@ void main() {
       ]) {
         final kept = receiptOnReload(receipt, rows);
         expect(kept.position, isNull);
+        expect(reasonsOf(kept), (2, 3, 4, 5, 1));
         expect((kept.raw, kept.recipes, kept.lines), (offer.raw, 1, 1));
         expect(rows.any((m) => receiptIsFor(kept, m)), isFalse);
       }

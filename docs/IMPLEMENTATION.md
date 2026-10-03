@@ -2646,6 +2646,98 @@ line inserted, a salt line deleted and a cross-group move in one save —
 fails identically on v26; a pairing defect briefed separately, not a v27
 regression). matcherVersion 27.
 
+### Run 058's fixes: every input named, one action table, boundaries at marks, readers that declare their reach (matcher v28)
+
+Run 058 (both fleets on v27, 2026-10-02; no HIGH) found each v27 rule
+right but stopped one entity short. The `food_gone` shortcut was keyed on
+the recipe's inputs while the derivation also read the caches, so once a
+cache held the food again the GET showed the line counted, the row and
+totals said gone, and the recipe read fresh with nothing to heal it. A
+persistent per-food provider error on one decided row stopped every stale
+sweep at that recipe (a liveness regression: recipes after it were never
+computed). The new hold had reached the buckets but not the action table —
+the sheet and queue still offered Confirm, the queue's `finishes` SQL
+promised it, and a confirm wrote the gone food as the ingredient's
+library-wide decision. The 404-versus-outage distinction covered a row's
+own food but not its nutrient sibling (a retired sibling never converged),
+and an engine-line throw after a decided row was derived left the recipe
+fresh with totals computed before that derivation. RULE B's clause began
+at the lead's own heat verb, which cut the governing appliance out ("heat
+grill until lid thermometer registers 350" fried), and the heat reading
+rescanned the clause once per temperature (quadratic per sentence, hidden
+behind a count pin that counted checks, not their size). The second-head
+gate did not cover an oil line in a dredge-fry recipe, and v27's typed-row
+read doubled the whole-search-cache scan per typed row on the member GET.
+Both fleets also characterised the pre-existing gap-oracle violation (seed
+41487): the pairing's 10,000-expansion budget exhausted by eleven
+identical-text rows in a three-edit save, a decision moved between twins
+and never lost. So v28 (2026-10-02) states each rule with its consumers
+enumerated by grep before any code. RULE A: "derived for" names every
+input — a `food_gone` or `food_unavailable` row is re-read from the caches
+on every compute (no request) and re-derived the moment a cache holds its
+food; the nutrient sibling is resolved where the food is, on every path
+(a 404'd sibling is the row's own `food_gone`, an outage leaves it
+underived, and the totals never meet a missing sibling — a plain
+recompute resolves before it reads); a provider failure has two classes
+set by the provider (`FailureScope.global` — a rejected key, a spent
+budget, a failed search — stops the job with its reason; `.food` — a
+detail failing for one id — is that row's state: underived with a
+`retry_count`, held `food_unavailable` for the person after three
+computes, and the sweep moves on, so no recipe ever blocks the ones after
+it; three consecutive food failures on distinct ids within one pass
+escalate to global, so a detail-wide outage stops the pass with the
+provider's reason instead of counting against every row — per pass only,
+so a library-wide outage can still hold a recipe's one or two uncached
+decisions after three sweeps, noted); a pass that throws clears the keys it marked before rethrowing;
+`markDerivedIfUnchanged` is one guarded single-row UPDATE. One action
+table (`holdActions` in salt_shared) says for every hold family which
+decisions finish it, which buttons are offered, which the PUT accepts and
+whether the decision may go library-wide — read by the server's PUT gates
+(a confirm on `food_gone` is a 422 before any request and never reaches
+`putDecision`), by the queue's `finishes` SQL, and by the app's sheet,
+queue and copy, with a parity pin on each side; the nutrition body names
+why it is stale (`stale_reason`: inputs changed, or a decision waiting on
+USDA). Migration 016 adds `retry_count` and an `fdc_search_cache_foods`
+index kept by triggers, so the search-cache lookup is indexed (a member
+GET of 400 typed rows 3.3 s → under 0.1 s); the matches GET resolves each
+row's food once; one FDC request per food per pass (100 napa rows with a
+missing sibling: 401 requests and 3.2 s → 1 request and 50 ms). RULE B: a
+frying temperature's clause starts at the last clause mark, never at a
+heat verb (a mark followed directly by a heat participle opens no clause —
+"in the smoker, holding it at 300" stays an oven's heat); the governing
+words are located once per sentence and each temperature answered by
+forward pointers, with a `heatClauseChars` pin bounding the characters
+scanned (the quadratic shapes 2.5 s → 0.37 s, below v26); vessel compounds
+(Dutch and French ovens, oven-safe and -proof in every spelling, broiler
+and grill pans and -safe vessels) never exclude; the fry range stays
+300–399 °F — exactly six corpus sentences name a fat at 400–450 °F, and
+widening would have held 0672's eaten quarter cup of coconut oil as an
+ambiguous medium; a food-free density table serves the threshold readers
+only (bread crumbs 0.45, starch 0.54, shortening and lard 0.87 from the
+FDC records — putting the keys in the shared table would have moved ten
+replay rows). RULE C: the naming inversion is gated by
+measured cost, not by a proxy — the first cut declared a one-line reader
+and built the inversion on a second declared line, which the verifier
+found still built 22 inversions on the oil-reach GET (the viewed recipe
+shares ten keys with each reached recipe); the closer deleted the proxy
+and `_naming` now scans one head at a time, counting the step characters
+each scan reads (`namingPaid`), and builds the inversion only when the
+scans already paid would have paid for it (30 × the step characters, the
+constants measured), so the reach builds none, the GET exactly two (its
+own recipe and the reach's copy of it), the apply-to-all none (the
+21-recipe oil reach GET 6.3 s → 1.5 s, its apply-to-all 6.4 s → 1.5 s; the
+oil GET stays 4–6 % over a garlic-line GET because each reached recipe is
+asked about eight foods, accepted); `_wordsOf` confirms each word where
+it stands instead of rescanning the sentence per head; the pairing lays out a run of identical-text rows in its
+own order and swaps twins back onto their own lines afterwards, so seed
+41487's save pairs in 4,916 expansions (39,789 before) and the gap oracle
+runs 1,000 seeds clean — twins separated by other lines can still exhaust
+the budget (once in 2,000 twin-heavy saves; grouping them would change the
+cost model and is left for a decision). Replay on snapshot 13: calls 0;
+zero rows differ from v27; counted 13,073, check 401, no grams 104, no
+match 37, complete 830, partial 368. The oracle: 0 violations in 1,000
+plain, 1,000 gap and 300 outage seeds. matcherVersion 28.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

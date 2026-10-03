@@ -82,6 +82,11 @@ const Map<int, String> _capabilityByVersion = {
   15:
       'recipe_nutrition.totals: the unrounded per-recipe totals the label '
       'divides by its basis (NULL at open; the next compute writes it)',
+  16:
+      'ingredient_matches.retry_count: the computes in a row a decided '
+      'row’s food failed (0 at open) + fdc_search_cache_foods: which '
+      'cached search answers list which food, kept by triggers and '
+      'backfilled from the cached answers by the migration itself',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -103,6 +108,10 @@ const int _derivedSeqVersion = 14;
 /// Mirror of migration 015: `recipe_nutrition.totals` (NULL on every
 /// existing row at open; the next compute writes it).
 const int _totalsVersion = 15;
+
+/// Mirror of migration 016: `ingredient_matches.retry_count` (0 on every
+/// existing row at open).
+const int _retryVersion = 16;
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
 /// start version is below this gets its FTS rows re-derived in Dart on open.
@@ -615,12 +624,17 @@ _Seed _seed(
               for (final entry in row.entries)
                 if (entry.key != 'hold' &&
                     entry.key != 'derived_seq' &&
+                    entry.key != 'retry_count' &&
                     (entry.key != 'item_key' || version >= _itemKeyVersion))
                   entry.key: entry.value,
             }
           else if (table == 'ingredient_matches' &&
               version < _derivedSeqVersion)
-            {...row}..remove('derived_seq')
+            {...row}
+              ..remove('derived_seq')
+              ..remove('retry_count')
+          else if (table == 'ingredient_matches' && version < _retryVersion)
+            {...row}..remove('retry_count')
           else
             row,
       ]);

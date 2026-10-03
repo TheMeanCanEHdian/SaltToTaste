@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
+import 'package:salt_shared/salt_shared.dart' show HoldDecision;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
@@ -674,7 +675,8 @@ class _MatchRowState extends State<_MatchRow> {
           primary: !_fixOpen,
           onPressed: busy ? null : _enterGrams,
         ),
-        if (hasEatenPlusPart(widget.match))
+        if (hasEatenPlusPart(widget.match) &&
+            offers(widget.match, HoldDecision.confirm))
           _Action(
             icon: FLucideIcons.check,
             label: 'Confirm',
@@ -732,7 +734,9 @@ class _MatchRowState extends State<_MatchRow> {
                   confirmed: true,
                 ),
         ),
-      if (b == MatchBucket.check && widget.match.grams != null)
+      if (b == MatchBucket.check &&
+          widget.match.grams != null &&
+          offers(widget.match, HoldDecision.confirm))
         _Action(
           icon: FLucideIcons.check,
           label: 'Confirm as-is',

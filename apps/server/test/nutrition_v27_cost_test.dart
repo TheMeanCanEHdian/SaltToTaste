@@ -321,16 +321,24 @@ void main() {
         },
       );
 
-      test('a one-line reader scans for its one head; the SECOND distinct '
-          'head asked builds the inversion', () {
+      test('a one-line reader scans for its one head; the inversion is '
+          'built once the per-head scans paid reach its cost (v28 closer: '
+          'measured, not the second head)', () {
         final r = reachShape(0);
         stepIndexCounts.clear();
         heldMediumLine(r, weighedLine(r, nutritionLines(r).first));
         expect(stepIndexCounts['memo:namingAll'] ?? 0, 0);
         expect(stepIndexCounts['memo:naming'], 1);
         heldMediumLine(r, weighedLine(r, nutritionLines(r)[1]));
+        expect(stepIndexCounts['memo:namingAll'] ?? 0, 0);
+        expect(stepIndexCounts['memo:naming'], 2);
+        for (final line in nutritionLines(r)) {
+          heldMediumLine(r, weighedLine(r, line));
+        }
         expect(stepIndexCounts['memo:namingAll'], 1);
-        expect(stepIndexCounts['memo:naming'], 1);
+        // Each filler head is in every step, so each scan reads the text
+        // and its sentences: built within the first few dozen heads.
+        expect(stepIndexCounts['memo:naming'], lessThan(40));
       });
 
       test('the matches GET over a reach of 3 cap recipes, and the '

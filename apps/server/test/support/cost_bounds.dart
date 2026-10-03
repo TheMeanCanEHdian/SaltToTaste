@@ -32,6 +32,11 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
   final runs = [
     for (final step in r.steps) ...step.text.split(RegExp(r'(?<=\.)\s+')),
   ].where(RegExp(r'\d\d\d').hasMatch).length;
+  // Their characters: each check's governing reading is linear (v28, Run 058
+  // S5/S9) — at most twice its sentence.
+  final runChars = [
+    for (final step in r.steps) ...step.text.split(RegExp(r'(?<=\.)\s+')),
+  ].where(RegExp(r'\d\d\d').hasMatch).fold(0, (n, s) => n + s.length);
   return {
     for (final once in [
       'indexes',
@@ -95,9 +100,13 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     'lifted': steps,
     'hits': 20 * steps,
     'sentences': sentences,
+    // The sentences a per-head scan reads one by one: only a step its
+    // head's pattern finds (v28 closer), once per head.
+    'namingReads': 3 * heads * sentences,
     // Per such sentence: the fries check's three fats, then each head's
     // owners once.
     'heatChecks': 6 * runs,
+    'heatClauseChars': 6 * 2 * runChars,
     'memo:drainedLater': sentences,
     'memo:parted': 2 * sentences,
     'memo:sugarBeside': sentences,

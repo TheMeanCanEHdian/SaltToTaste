@@ -297,14 +297,14 @@ void main() {
     });
 
     test('an appliance excludes only a temperature in its own clause (; , — '
-        '( ) or a heat verb cut it): each cut, and each appliance', () {
+        '( ) cut it — v28: never a heat verb, nutrition_v28_rule_b_test): '
+        'each cut, and each appliance', () {
       for (final s in [
         'Heat the oil beside the oven; at 350 degrees, add the fish.',
         'Heat the oil beside the oven, to 350 degrees.',
         'Heat the oil beside the oven — to 350 degrees.',
         'Heat the oil beside the oven (350 degrees).',
         'Heat the oil (not the oven) to 350 degrees.',
-        'Set the pitas in the oven and heat the oil to 375 degrees.',
         'Heat the oil in an oven-safe skillet to 350 degrees.',
         'Heat the oil in a Dutch oven to 350 degrees.',
         // An appliance AFTER the temperature governs only the words right
@@ -616,8 +616,8 @@ void main() {
       }
     }, skip: skipIfNoCorpus);
 
-    test('a fat the density table does not list (shortening) is read at '
-        "oil's 0.92: 0690 frying 12 ounces of shortening; an amount-less "
+    test('shortening (v28: its FDC 0.87, nutrition_v28_rule_b_test): 0690 '
+        'frying 12 ounces of shortening; an amount-less '
         '"for pan-frying" line weighs nothing and is never zeroed or held', () {
       final r = _stepSays(
         _retyped(
