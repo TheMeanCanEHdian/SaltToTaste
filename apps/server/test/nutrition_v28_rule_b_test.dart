@@ -135,6 +135,7 @@ void main() {
         'maintaining it',
       ]) {
         for (final mark in [',', ', ', ',  ', ';', ' (', ' —']) {
+          // v29: any non-fry heat verb (the participle term deleted).
           final s =
               'Brush the pork with the oil and cook it in the smoker$mark$p '
               'at 300 degrees.';
@@ -167,15 +168,16 @@ void main() {
             'Set the pitas beside the oven${cut}heat the oil to 375 degrees.';
         expect(_heat(s), isTrue, reason: s);
       }
+      // v29 (Run 059 S9): the fat's own mention and a new verb phrase are
+      // boundaries too, so the oven's or the method's clause ends before
+      // the oil's temperature (nutrition_v29_rule_b_test).
       for (final s in [
         'Set the pitas in the oven and heat the oil to 375 degrees.',
         'Set the pitas in the oven then heat the oil to 375 degrees.',
         'Grill the pitas and fry them in the oil at 375 degrees.',
-        // A method verb before the heat verb in one clause governs (v26 read
-        // the same; no corpus sentence with a fat says it).
         'Bake the croutons and heat the oil to 350 degrees.',
       ]) {
-        expect(_heat(s), isFalse, reason: s);
+        expect(_heat(s), isTrue, reason: s);
       }
     });
 
@@ -395,9 +397,12 @@ void main() {
           stepIndexCounts.clear();
           _heat(s, fat);
           expect(stepIndexCounts['heatChecks'], 1, reason: s);
+          // v29 (Run 059 Sonnet critic 2): EVERY pass counted — the
+          // temperatures, the heat verbs, the boundaries, the governing
+          // words, the fat's mentions — and every pointer step.
           expect(
             stepIndexCounts['heatClauseChars'],
-            inInclusiveRange(s.length, 2 * s.length),
+            inInclusiveRange(s.length, 6 * s.length),
             reason: '$fat: $s',
           );
         }
@@ -657,11 +662,12 @@ void main() {
         // A lead ending a longer word leads nothing ("that", "into").
         'Heat the oil, stir in salt that 350 degrees.',
         'Heat the oil into 350 degrees.',
-        // "baking" then "in" leads (v27 read the same: S23's sentence).
-        'Fry the baking potatoes in oil at 350 degrees.',
       ]) {
         expect(_heat(s), isFalse, reason: s);
       }
+      // v29 (Run 059 O7/S9): the fat's own mention ends the method's
+      // clause — a fry in oil at 350 (nutrition_v29_rule_b_test).
+      expect(_heat('Fry the baking potatoes in oil at 350 degrees.'), isTrue);
     });
   });
 }

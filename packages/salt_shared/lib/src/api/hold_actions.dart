@@ -39,15 +39,38 @@ const String foodUnavailableHold = 'food_unavailable';
 /// failure) before the row is held [foodUnavailableHold].
 const int foodUnavailableAfter = 3;
 
+/// What a hold says about its line — its FAMILY (v29, RULE A, Run 059
+/// S8): the one place a hold's membership is stated; every list of a
+/// family ([mediumHolds], [lineHolds], [noRecordHolds]) and every SQL list
+/// of one is read from [holdActions], never copied by hand.
+enum HoldKind {
+  /// A FOOD hold of the engine's own pick (a decision answers it).
+  food,
+
+  /// A LINE hold: a medium the recipe pours away, wholly or in part.
+  medium,
+
+  /// A LINE hold that is no medium: a shell, a second food.
+  line,
+
+  /// A person's decision on a food with no record (`food_gone`,
+  /// `food_unavailable`).
+  noRecord,
+}
+
 /// What a person may do on a line held for one hold kind.
 class HoldActions {
   /// Builds a table entry.
   const HoldActions({
+    required this.kind,
     required this.finishes,
     required this.offers,
     required this.accepts,
     required this.decidesLibraryWide,
   });
+
+  /// The hold's family.
+  final HoldKind kind;
 
   /// The decisions that always answer the hold (the line leaves `check`).
   final Set<HoldDecision> finishes;
@@ -72,6 +95,25 @@ const Set<HoldDecision> _every = {
 
 /// A FOOD hold of the engine's own pick: any decision answers it.
 const HoldActions _foodHold = HoldActions(
+  kind: HoldKind.food,
+  finishes: _every,
+  offers: _every,
+  accepts: _every,
+  decidesLibraryWide: true,
+);
+
+/// A wholly poured-away medium: a pick is 0 g, resolved.
+const HoldActions _pouredAway = HoldActions(
+  kind: HoldKind.medium,
+  finishes: _every,
+  offers: _every,
+  accepts: _every,
+  decidesLibraryWide: true,
+);
+
+/// A shell or a second food on the line: any decision answers it.
+const HoldActions _lineFood = HoldActions(
+  kind: HoldKind.line,
   finishes: _every,
   offers: _every,
   accepts: _every,
@@ -81,6 +123,7 @@ const HoldActions _foodHold = HoldActions(
 /// A medium a part of whose line is eaten: a pick alone keeps the hold
 /// unless the engine knows the eaten part (so it is no promise).
 const HoldActions _eatenInPart = HoldActions(
+  kind: HoldKind.medium,
   finishes: {HoldDecision.skip, HoldDecision.confirm, HoldDecision.typed},
   offers: _every,
   accepts: _every,
@@ -91,6 +134,7 @@ const HoldActions _eatenInPart = HoldActions(
 /// a skip finishes it; a confirm or typed grams cannot count it, and it is
 /// never recorded library-wide.
 const HoldActions _noRecord = HoldActions(
+  kind: HoldKind.noRecord,
   finishes: {HoldDecision.skip, HoldDecision.pick},
   offers: {HoldDecision.skip, HoldDecision.pick},
   accepts: {HoldDecision.skip, HoldDecision.pick},
@@ -107,13 +151,13 @@ const Map<String, HoldActions> holdActions = {
   'cured_for_fresh': _foodHold,
   'borderline': _foodHold,
   // LINE holds: a wholly poured-away medium — a pick is 0 g, resolved.
-  'discarded_medium': _foodHold,
+  'discarded_medium': _pouredAway,
   'starter_discard': _eatenInPart,
   'coating': _eatenInPart,
   'partial_pour_away': _eatenInPart,
   'ambiguous_medium': _eatenInPart,
-  'in_shell': _foodHold,
-  'second_food': _foodHold,
+  'in_shell': _lineFood,
+  'second_food': _lineFood,
   // A person's decision on a food with no record.
   foodGoneHold: _noRecord,
   foodUnavailableHold: _noRecord,
@@ -124,6 +168,22 @@ const HoldActions unheldActions = _foodHold;
 
 /// [holdActions] for [hold] (null: [unheldActions]).
 HoldActions holdActionsOf(String? hold) => holdActions[hold] ?? unheldActions;
+
+/// The holds of [kinds], in table order.
+List<String> holdsOf(Set<HoldKind> kinds) => [
+  for (final MapEntry(:key, :value) in holdActions.entries)
+    if (kinds.contains(value.kind)) key,
+];
+
+/// The holds of a medium the recipe pours away ([HoldKind.medium]).
+final List<String> mediumHolds = holdsOf({HoldKind.medium});
+
+/// Every LINE hold — what the line says about its medium, its shell or a
+/// second food, whatever food it is matched on.
+final List<String> lineHolds = holdsOf({HoldKind.medium, HoldKind.line});
+
+/// The holds of a person's decision on a food with no record.
+final List<String> noRecordHolds = holdsOf({HoldKind.noRecord});
 
 /// The holds a confirm (or typed grams) cannot finish — the queue's
 /// `finishes` never promises them a finish by a confirm.

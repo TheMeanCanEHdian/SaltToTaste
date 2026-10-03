@@ -37,6 +37,13 @@
 //    ambiguous it implies the bounded rule (none lost when avoidable, none
 //    duplicated, none on another ingredient, an untouched line keeps its
 //    row). "Prefers each row's own position" is NOT enforced (a tiebreak).
+//  * TWINS (v29, Run 059 O12/S12/S14): the engine reads a run of identical
+//    consecutive rows as ONE ordered multiset — it never crosses two twins
+//    and keeps a run's decided rows first. The model is left STRICT (a
+//    move among twins still costs a move here): every layout the engine
+//    can return is then the layout of an explanation the model already
+//    counts cheapest, and a twin swap on an unchanged save — which a model
+//    reading twin moves as free would accept — stays a violation.
 //  * A person's write in the stale window (after the save, before the
 //    compute) or during the compute's awaits lands on the line at its
 //    position in the NEW recipe: it overlays that position.

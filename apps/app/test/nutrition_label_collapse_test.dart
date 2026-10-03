@@ -87,6 +87,30 @@ void main() {
   double foldValue(WidgetTester tester) =>
       tester.widget<FCollapsible>(find.byType(FCollapsible)).value;
 
+  // v29 (Run 059 O20/S25): the banner reads the server's `stale_reason`
+  // — the widget's wiring, not only the words.
+  for (final (reason, words) in [
+    ('underived', 'A decision is waiting on USDA'),
+    ('interrupted', 'A compute is in progress or was interrupted'),
+    ('inputs', 'Ingredients changed since this was computed.'),
+  ]) {
+    testWidgets('a stale label\'s banner says why: $reason', (tester) async {
+      await pumpPanel(
+        tester,
+        nutrition: RecipeNutrition.fromJson({
+          'status': 'stale',
+          'stale_reason': reason,
+          'serving_basis': 15,
+          'total_grams': 1066.9,
+          'matched_count': 8,
+          'total_count': 8,
+          'per_serving': jsonDecode(_perServingJson),
+        }),
+      );
+      expect(find.textContaining(words), findsOneWidget);
+    });
+  }
+
   testWidgets('label starts expanded: fold open, Hide toggle', (tester) async {
     await pumpPanel(tester);
 

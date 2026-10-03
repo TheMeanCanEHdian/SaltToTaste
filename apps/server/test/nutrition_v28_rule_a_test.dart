@@ -442,7 +442,8 @@ void main() {
   });
 
   group(
-    'I1(d) Opus critic 3: a pass that throws leaves no row marked derived',
+    'I1(d) Opus critic 3: a pass that throws leaves the recipe stale (v29: '
+    'its in-progress marker)',
     () {
       test("0129: the confirmed smoke derived, a later engine line's search "
           'failing — not fresh, in the stale scope; FDC back → fresh, the '
@@ -486,10 +487,14 @@ void main() {
           computeUntilFresh(db, searchDown, r),
           throwsA(isA<NutritionProviderException>()),
         );
+        // v29 (Run 059 Opus critic 1): ONE mechanism — the thrown pass
+        // releases its own in-progress mark and clears the stamp, so the
+        // recipe reads stale whatever the pass marked derived.
+        expect(d.rowOf(db, r, i).derivedSeq, isNotNull, reason: 'marked');
+        expect(db.nutritionFor(r.id)!.computing, 0);
         expect(
-          d.rowOf(db, r, i).derivedSeq,
-          isNull,
-          reason: 'its mark cleared',
+          db.nutritionFor(r.id)!.ingredientsHash,
+          startsWith(SaltDatabase.interruptedStamp),
         );
         expect(nutritionIsFresh(db, r), isFalse);
         expect(bulkScopeIds(db, BulkScope.stale), contains(r.id));
@@ -742,15 +747,16 @@ void main() {
           wp.saveLines(db, [v23.quarter, v23.quarter], id: 'c'),
         );
         dropFood(path, 173468);
-        // Synthesized (stated): an outage, then an unexpected error (not a
-        // provider failure) on the next request.
+        // Synthesized (stated): an outage, then an unexpected exception
+        // (not a provider failure) on the next request. (An Error is never
+        // counted `failed` since v29 — it propagates, Run 059 S29.)
         var calls = 0;
         final provider = _OnFood((id) {
           calls += 1;
           if (calls == 1) {
             throw const NutritionProviderException('outage');
           }
-          throw StateError('unexpected');
+          throw const FormatException('unexpected');
         }, fixture);
         final res = await v23.applyOil(db, provider);
         expect(
@@ -834,9 +840,12 @@ void main() {
         // Malformed JSON never fails a write (it indexes nothing).
         db.fdcSearchCachePut('broken', '{not json');
         same();
-        // The upgrade: 016's objects dropped, back to 15, reopened.
+        // The upgrade: 016's (and 017's) objects dropped, back to 15,
+        // reopened.
         db.dispose();
         raw
+          ..execute('DROP INDEX ingredient_matches_no_record')
+          ..execute('ALTER TABLE recipe_nutrition DROP COLUMN computing')
           ..execute('DROP TRIGGER fdc_search_cache_foods_insert')
           ..execute('DROP TRIGGER fdc_search_cache_foods_update')
           ..execute('DROP TRIGGER fdc_search_cache_foods_delete')
@@ -856,9 +865,11 @@ void main() {
     'I1(b) more paths: a plain recompute, the prior decision, apply-to-all',
     () {
       test(
-        "S2: 0857's flour leaves every cache, FDC up: a PUT on the unrelated "
-        'baking soda resolves it — the label keeps its 248 g, complete and '
-        'fresh',
+        "S2 → v29 S13: 0857's flour leaves every cache, FDC up: a PUT on "
+        'the unrelated baking soda asks FDC NOTHING for it (a PUT resolves '
+        'its own line only) — the flour underived, the recipe stale as '
+        'waiting on USDA; the next compute derives it (one request): 248 g, '
+        'complete and fresh',
         () async {
           final (db, path) = a.pathDb();
           final fixture = FixtureProvider(pending: pendingSearches);
@@ -872,16 +883,27 @@ void main() {
           await matchAndCompute(db, fixture, r);
           final before = db.nutritionFor(r.id)!;
           expect(before.status, 'complete');
-          dropFood(path, d.rowOf(db, r, i).fdcId!);
+          final flour = d.rowOf(db, r, i).fdcId!;
+          dropFood(path, flour);
+          final asked = <int>[];
+          final counting = _OnFood(asked.add, fixture);
           const soda = '1 teaspoon baking soda';
-          await applyMatchOverride(db, fixture, r, d.at(r, soda), {
+          await applyMatchOverride(db, counting, r, d.at(r, soda), {
             'raw': soda,
             'confirmed': true,
           });
+          expect(asked, isNot(contains(flour)));
+          expect(d.rowOf(db, r, i).derivedSeq, isNull);
+          expect(nutritionIsFresh(db, r), isFalse);
+          expect(
+            nutritionBody(db, r, forAdmin: true)['stale_reason'],
+            'underived',
+          );
+          await matchAndCompute(db, counting, r);
+          expect(asked.where((id) => id == flour), hasLength(1));
           final after = db.nutritionFor(r.id)!;
           expect(after.status, 'complete');
           expect(after.totalGrams, closeTo(before.totalGrams!, 0.2));
-          expect(d.rowOf(db, r, i).derivedSeq, isNotNull);
           expect(nutritionIsFresh(db, r), isTrue);
         },
       );
@@ -953,8 +975,9 @@ void main() {
     () {
       test(
         "0857's flour held food_gone, then the title edited: the next compute "
-        'derives it again for the new key (one request) — fresh, never stale '
-        'forever',
+        're-reads the hold from the caches for the new key (v29, Run 059 '
+        'S2: NO request — a held row is not re-asked after an edit) — fresh, '
+        'held, never stale forever',
         () async {
           final (db, path) = a.pathDb();
           final fixture = FixtureProvider(pending: pendingSearches);
@@ -978,7 +1001,8 @@ void main() {
           expect(nutritionIsFresh(db, edited), isFalse);
           final calls = gone.foodCalls;
           expect(await computeUntilFresh(db, gone, edited), 1);
-          expect(gone.foodCalls - calls, 1);
+          expect(gone.foodCalls - calls, 0);
+          expect(d.rowOf(db, edited, i).hold, foodGoneHold);
           expect(d.rowOf(db, edited, i).derivedSeq, ra.keyOf(db, edited));
           expect(nutritionIsFresh(db, edited), isTrue);
         },
@@ -1144,9 +1168,10 @@ void main() {
         expect(siblingAsks, 1, reason: 'cached now');
       });
 
-      test("A12: an ENGINE line whose candidate's nutrient record fails FOOD "
-          'fails that recipe alone — the sweep counts it failed, logs it and '
-          'computes the next (never "stopped at")', () async {
+      test("A12 → v29: an ENGINE line whose candidate's nutrient record fails "
+          "FOOD is that LINE's state (a row, counted) — the recipe computed "
+          'and its failure logged, the sweep computing the next (never '
+          '"stopped at", never `failed`)', () async {
         final (db, path) = a.pathDb();
         final fixture = FixtureProvider(pending: pendingSearches);
         final ra0 = wp.saveLines(db, [napa], id: 'a');
@@ -1169,10 +1194,19 @@ void main() {
         await ra.settle();
         final row = db.nutritionJob(job)!;
         expect(row['status'], 'done');
-        expect(row['failed'], 1);
+        expect(row['failed'], 0);
         expect(row['log'], contains('a: FoodData Central error 400.'));
         expect(nutritionIsFresh(db, rb1), isTrue);
         expect(p.asked, 1);
+        final a0 = d.rowOf(db, ra0, 0);
+        expect(
+          (a0.status, a0.description, a0.hold),
+          (
+            'unmatched',
+            engineUnavailableNote,
+            null,
+          ),
+        );
       });
 
       test('A29: stale_reason says why — `underived` (a decision waiting on '
@@ -1310,7 +1344,8 @@ void main() {
   );
 
   group(
-    'the v28 closer (D8): a DETAIL outage escalates to GLOBAL within a pass',
+    "the v28 closer (D8), as the owner ruled on Run 059 O11: one recipe's "
+    'detail failures never escalate, and every one is counted',
     () {
       /// [ids.length] lines of a, each decided on its own retired id
       /// (synthesized, the 999000111 family), typed 10 g; b one plain line.
@@ -1392,31 +1427,34 @@ void main() {
         scope: FailureScope.food,
       );
 
-      test('5 decided rows whose details all 503: the third distinct failure '
-          'stops the pass (3 asked, never the 4th and 5th), the job stops '
-          "with the provider's reason, NO retry_count counted, nothing held "
-          '— every sweep alike', () async {
+      test('5 decided rows of ONE recipe whose details all 503: an outage '
+          'spans two recipes, so none escalates — and the PASS suspends its '
+          "details at the third failure in a row (the owner's ruling on Run "
+          '059 O10): sweeps 1-3 ask and count the first three (held at the '
+          'third), lines 4-5 left underived and uncounted; sweeps 4-6 ask '
+          'the last two (the held three re-read from the caches, no request), '
+          'held at the sixth (a fresh); the seventh asks nothing. b computed every '
+          'sweep', () async {
         final (db, path, ra0, rb0) = await outage(failing);
         final p = down(FixtureProvider(pending: pendingSearches));
-        for (var n = 1; n <= 4; n++) {
+        for (var n = 1; n <= 6; n++) {
           final job = await sweep(db, p);
-          expect(job['status'], 'failed', reason: 'sweep $n');
-          expect(
-            job['log'],
-            contains(
-              'stopped at a: FoodData Central is unavailable (HTTP 503); '
-              'try again later.',
-            ),
-          );
-          expect(p.asked, 3 * n, reason: 'sweep $n');
-          expect(retries(path), 0);
+          expect(job['status'], 'done', reason: 'sweep $n');
+          expect('${job['log']}', isNot(contains('stopped at')));
+          final asked = n <= 3 ? 3 * n : 9 + 2 * (n - 3);
+          expect(p.asked, asked, reason: 'sweep $n');
+          expect(retries(path), asked, reason: 'sweep $n');
           expect(
             db.ingredientMatchesFor('a').where((m) => m.hold != null),
-            isEmpty,
+            hasLength(n < 3 ? 0 : (n < 6 ? 3 : 5)),
+            reason: 'sweep $n',
           );
-          expect(nutritionIsFresh(db, rb0), isFalse, reason: 'stopped at a');
+          expect(nutritionIsFresh(db, ra0), n == 6, reason: 'sweep $n');
+          expect(nutritionIsFresh(db, rb0), isTrue, reason: 'sweep $n');
         }
-        expect(ra0.id, 'a');
+        await sweep(db, p);
+        expect(p.asked, 15);
+        expect(nutritionIsFresh(db, ra0), isTrue);
       });
 
       test('TWO distinct failures in a row stay FOOD (counted, the sweep goes '

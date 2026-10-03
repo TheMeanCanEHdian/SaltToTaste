@@ -279,6 +279,138 @@ void main() {
       FailureScope.global,
     );
   }, timeout: const Timeout(Duration(seconds: 60)));
+
+  // RULE B's classification TABLE (v29, Run 059 O22/O5/S5/S28/O14/S22):
+  // every arm of fdc_provider.dart's `_request` pinned on its own, the
+  // backoffs run on zero-length timers. Negative paths the recordings
+  // cannot supply, synthesized (a stated exception): the statuses, the
+  // unreadable bodies, and the dead network (a request that throws).
+  test(
+    'the classification TABLE, arm by arm: on a DETAIL 404 is null; '
+    'another 4xx, a 5xx after the retries, an unreadable 200 are FOOD; '
+    'a 429, a rejected key, the network and any SEARCH failure GLOBAL',
+    () async {
+      final calls = <int>[];
+      Future<Object?> run(
+        Future<Object?> Function(UsdaFdcProvider p) call,
+        (int, String) Function(Uri uri) respond,
+      ) {
+        final provider = UsdaFdcProvider(
+          apiKey: () => 'fixture-key-not-real',
+          bucket: TokenBucket(capacity: 10),
+          maxRateWait: Duration.zero,
+        );
+        var n = 0;
+        return runZoned(
+          () => HttpOverrides.runZoned(
+            () async {
+              try {
+                return await call(provider);
+              } on NutritionProviderException catch (error) {
+                return error;
+              } finally {
+                calls.add(n);
+              }
+            },
+            createHttpClient: (_) => _FakeClient((m, uri, b) {
+              n++;
+              return respond(uri);
+            }),
+          ),
+          zoneSpecification: ZoneSpecification(
+            createTimer: (self, parent, zone, d, f) => parent.createTimer(
+              zone,
+              // Every backoff (2, 4; 3, 6, 9; 15, 60, 135 s), never the 30 s
+              // request timeouts.
+              d == const Duration(seconds: 30) ? d : Duration.zero,
+              f,
+            ),
+          ),
+        );
+      }
+
+      Future<Object?> detail(UsdaFdcProvider p) => p.food(1);
+      Future<Object?> search(UsdaFdcProvider p) => p.search('sour cream');
+      Future<FailureScope?> scope(
+        Future<Object?> Function(UsdaFdcProvider p) call,
+        (int, String) Function(Uri uri) respond,
+      ) async => switch (await run(call, respond)) {
+        final NutritionProviderException e => e.scope,
+        _ => null,
+      };
+      const food = FailureScope.food;
+      const global = FailureScope.global;
+
+      // A detail 404: no record, one request.
+      calls.clear();
+      expect(await run(detail, (_) => (404, '')), isNull);
+      expect(calls, [1]);
+      for (final (status, want) in [
+        (400, food),
+        (410, food),
+        (422, food),
+        (500, food),
+        (503, food),
+        (401, global),
+        (403, global),
+        (429, global),
+      ]) {
+        expect(
+          await scope(detail, (_) => (status, '')),
+          want,
+          reason: '$status',
+        );
+      }
+      // Unreadable 200s on a detail: retried with the network's ladder, then
+      // the food's.
+      for (final body in [
+        '{"fdcId": 1, "descr',
+        '<html>bad gateway</html>',
+        '',
+        '[]',
+        // A JSON object of the wrong shape (Run 059 Opus critic 2 #2: a
+        // TypeError escaped the pass): read defensively, the food's.
+        '{"foodNutrients":[null]}',
+        '{"description":5}',
+        '{"foodPortions":["x"]}',
+      ]) {
+        calls.clear();
+        expect(await scope(detail, (_) => (200, body)), food, reason: body);
+      }
+      // The network: GLOBAL even on a detail (a connect failure, a timeout,
+      // a stream cut mid-body name no food), three attempts.
+      for (final error in <Exception>[
+        const SocketException('network is down'),
+        TimeoutException('connect'),
+        const HttpException('Connection closed while receiving data'),
+      ]) {
+        calls.clear();
+        expect(
+          await scope(detail, (_) => throw error),
+          global,
+          reason: '$error',
+        );
+        expect(calls, [3], reason: '$error');
+        expect(
+          await scope(search, (_) => throw error),
+          global,
+          reason: '$error',
+        );
+      }
+      // Any SEARCH failure: GLOBAL.
+      for (final status in [400, 404, 410, 500, 503, 429, 401]) {
+        expect(
+          await scope(search, (_) => (status, '')),
+          global,
+          reason: 'search $status',
+        );
+      }
+      for (final body in ['{"foods": [', '<html>bad gateway</html>', '[]']) {
+        expect(await scope(search, (_) => (200, body)), global, reason: body);
+      }
+    },
+    timeout: const Timeout(Duration(seconds: 60)),
+  );
 }
 
 bool _ended(String message) => message.contains('ended; FDC requests');

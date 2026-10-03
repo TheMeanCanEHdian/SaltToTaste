@@ -71,6 +71,7 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       once: 1,
     for (final perHead in [
       'memo:naming',
+      'memo:named',
       'memo:dredgeNamed',
       'memo:rinsedCure',
       'memo:amountWriters',
@@ -100,13 +101,20 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     'lifted': steps,
     'hits': 20 * steps,
     'sentences': sentences,
-    // The sentences a per-head scan reads one by one: only a step its
-    // head's pattern finds (v28 closer), once per head.
+    // The sentences a per-head scan reads one by one: only a head opening
+    // on no word character's (v29: every other head visits the words).
     'namingReads': 3 * heads * sentences,
+    // The steps' words, indexed once per step (v29, Run 059 O9): at most
+    // one per character.
+    'words': r.steps.fold(0, (n, s) => n + s.text.length),
     // Per such sentence: the fries check's three fats, then each head's
     // owners once.
     'heatChecks': 6 * runs,
-    'heatClauseChars': 6 * 2 * runChars,
+    // Its reading built once, whichever fats and callers read it (v29, Run
+    // 059 S15): four whole-sentence passes, two per fat (three fats), and
+    // each of six checks' pointer steps at most once per list entry.
+    'memo:heatReading': runs,
+    'heatClauseChars': (4 + 2 * 3 + 6) * runChars,
     'memo:drainedLater': sentences,
     'memo:parted': 2 * sentences,
     'memo:sugarBeside': sentences,

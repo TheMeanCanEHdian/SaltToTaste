@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart'
     show RepositoryException;
-import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
+import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes, holdActionsOf;
 
 /// An offer to push a decision just made on one line out to every other
 /// undecided line of the same ingredient item: what to resend (the pick, or
@@ -473,9 +473,17 @@ class NutritionCubit extends Cubit<NutritionState> {
     // has at [position]: the response is read after the server's awaits, and
     // a save in them can stand another line there (Run 052 O7/S6) — then the
     // offer follows the text, or, unplaceable, is not raised.
+    // A decision the server derived to a hold that never decides library-
+    // wide (a food with no record, `food_gone` / `food_unavailable`: the
+    // action table's `decidesLibraryWide`) raises no offer — its apply is
+    // a certain 422 (v29, Run 059 S7).
     final decided = fdcId != null || confirmed == true;
     final row = rowReading(matches, raw, position);
-    final offer = decided && row != null && row.others > 0
+    final offer =
+        decided &&
+            row != null &&
+            row.others > 0 &&
+            holdActionsOf(row.hold).decidesLibraryWide
         ? (
             position: row.position,
             raw: raw,

@@ -2738,6 +2738,104 @@ zero rows differ from v27; counted 13,073, check 401, no grams 104, no
 match 37, complete 830, partial 368. The oracle: 0 violations in 1,000
 plain, 1,000 gap and 300 outage seeds. matcherVersion 28.
 
+### Run 059's fixes: a hold re-read before it is enforced, every line kind, the job's units, a boundary moved not removed, a cost that is the cost (matcher v29)
+
+Run 059 (both fleets on v28, 2026-10-03; no HIGH) found each v28 rule
+right where it was applied and wrong one step over. The `food_unavailable`
+shortcut read only `fdc_food_cache` and the PUT's gate read the stored
+hold, while the GET derived from every cache — so a recovered row stayed
+held forever with the GET showing it counted and a confirm refused with a
+false "USDA has no record". The engine's own lines had no food-failure
+handling: a failure on an undecided line threw the pass, dropped the
+recipe's counts and was never held, so a detail outage never escalated
+(the sweep ground all 1,198 recipes at four requests and 18 s each and
+ended "done", where v27 stopped after one), while three broken records in
+one recipe tripped the per-pass escalation into a permanent stop. RULE B's
+mark-only clause had removed the heat-verb boundary without replacing it,
+so an earlier oven in the same clause governed the fat's own temperature
+("Heat the oven to 200 degrees and heat the oil to 350" zeroed nothing).
+The amortiser charged characters while the regex charged pattern-dependent
+work (a crafted step 10–20× under-counted); consecutive twins with one
+edit still exhausted the pairing budget; a PUT made one sequential request
+per uncached food with no stop on a global failure. The critics added a
+pass that dies mid-await keeping its marks (fresh with uncounted totals)
+and `{skipped: true, grams}` carrying typed grams past the no-record gate.
+So v29 (2026-10-03) states each rule with its unit and its consumers. RULE
+A: a hold is re-read before it is enforced — one cache-only derivation
+(`cacheOnly` → `derivedFor` → `knownFood`, the detail cache then the search
+index) is the only reader for the compute's shortcut, the PUT's gate and
+the GET, and a cache write that regains a food re-opens the rows held on
+it (`unholdOn`, migration 017's partial index) so the next sweep re-reads
+them; an engine line whose candidate, prior decision or sibling fails gets
+its own row, counted by the same closure as a decided row and held
+`food_unavailable` after three failures while the pass goes on; the
+escalation is counted across the job (`_JobWatch`: consecutive food
+failures on distinct ids, reset by any answered detail; a food that
+failed once is not asked again in that job) under three rulings the two
+close rounds settled — every food failure is always counted on its row,
+including the one that tips an outage; the run must span two recipes, so
+three broken records in one recipe are that recipe's held rows and never
+an outage; and within one pass, three consecutive distinct failures
+suspend that recipe's remaining details (its failed rows counted, the
+rest left underived) so a detail outage costs at most four requests per
+sweep whatever the recipe size, where v28 spent one per recipe over the
+whole library; a pass is visible as in progress until its totals are
+written (migration 017's `computing`, an owned count each writer takes
+before its first row write and releases with its own totals in one
+transaction — a pass that throws or dies leaves the recipe stale, the
+boot clears the stamp of every recipe still counted as computing and the
+banner says a compute is in progress or was interrupted); the
+PUT gate reads every verb in the body (`skipped` with anything else is a
+422 "one decision per request"); a PUT resolves only its own line's food
+and sibling (at most two requests, stopping on the first global failure —
+400 underived rows: one request and 54 ms where v28 made four hundred);
+the held write keeps its retry count and only an `all`-scope sweep re-asks
+a held row, once; every hold family's membership lives on its `holdActions`
+entry (`HoldKind`) and the hand-copied lists are gone. RULE B: a
+temperature's clause starts at the latest of a clause mark, an "and/then"
+opener or the fat's own mention, and never at the evidence verb (a mark
+or opener whose phrase opens on a non-fry heat verb — "holding it", "heat
+it" — is no cut, which keeps "in the smoker, holding it at 300" the
+smoker's); the participle exception is deleted (the fat's mention inside
+the participle phrase is the boundary that keeps the oven out); the
+hyphenated vessels never exclude; the heat reading is built once per
+sentence per index (`_HeatReading`, every pass lazy and counted — the
+heat shapes 35–45 % below v27); the failure classification is a table
+pinned arm by arm (a malformed, empty or wrong-shaped 200 on a detail is a
+food failure — the detail is parsed defensively, where v28 threw a type
+error — a search failure of any kind global, a connect error or timeout
+global — argued: nothing in it names a food). RULE C: the per-head scan is an
+exact-cost lookup over a per-step word index (`_Words`, every word's start
+and key in one pass), the head confirmed at the word, `namingPaid`
+counting words visited and the inversion built at twelve lookups per word
+measured on those units — the `\b<lead>` regex pass, whose cost per
+character varied seventy-fold with the text, is gone (the crafted-step
+read 430 → 78 ms); the first verifier measured the PUT paths 8–15 % over
+v28 and the closer profiled it to a one-time JIT compile on the first
+call plus a twin table copied when there were no twins and the word
+index built in growable lists — both fixed, and under the production AOT
+build every PUT path is at v28 within noise, the cold oil reach 2 % over
+(the exact-cost index, stated); the pairing treats a run of identical-text rows as one
+item (the search branches per run, the bound reads a run's untaken rows
+as one block, a surplus settled once by a DP — fewest decisions lost, then
+fewest rows moved, ties from the end): 400 twins with one edit 10,000 →
+~800 expansions and 1–4 s → 20–44 ms. Replay on snapshot 13: calls 0;
+zero rows differ from v28; counted 13,073, check 401, no grams 104, no
+match 37, complete 830, partial 368. The oracle: 0 violations in 1,000
+plain, 1,000 gap, 300 outage and 2,000 twin-fuzz seeds. The owner's
+gate on the final tree: every named symbol grepped present or deleted,
+the server suite with the corpus (1,954) and the nutrition suite without
+it (717) green, and two mutants anchored on code and restored from a
+snapshot copy — the two-recipe span rule weakened to one recipe
+(`_run.values.toSet().length > 0`) fails the O11 one-recipe pin, and the
+freshness predicate without its `computing > 0` term fails the
+interrupted-pass pin. matcherVersion 29.
+Deferred, stated: twins separated by other lines (one budget hit in 30,000
+two-text saves); the queue's SQL reads the stored row and catches up at
+the next stale sweep; a held engine row (no food on it) is re-asked only
+by an `all` sweep; a skip carried by an amount edit can be held
+`food_unavailable` on its old text.
+
 ## Decision log (deviations & clarifications)
 
 - 2026-07-14 — Backend must be deployable as a Docker container (user):

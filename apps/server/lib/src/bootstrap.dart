@@ -261,6 +261,12 @@ ServerConfig initServer() {
   if (orphaned > 0) {
     _log.warning('Marked $orphaned interrupted job(s) as failed');
   }
+  // Likewise a nutrition writer's in-progress mark (migration 017): its
+  // recipe's totals never counted what it wrote — stale, the count reset.
+  final interrupted = saltDatabase.resetInterruptedComputes();
+  if (interrupted > 0) {
+    _log.warning('Marked $interrupted interrupted nutrition compute(s) stale');
+  }
   try {
     scanLibrary(db: saltDatabase, config: config);
     // Boot must survive a broken library directory; the scan logs details.

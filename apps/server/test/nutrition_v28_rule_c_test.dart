@@ -164,11 +164,10 @@ void main() {
       for (final h in ['buttermilk', 'hot', 'pepper', 'powder', 'paprika']) {
         namingByScanForTest(scan, h);
       }
-      // Each found only in 0149's own two steps: their sentences alone.
-      final own = loadCorpusRecipe(
-        _fried,
-      ).steps.expand((s) => s.text.split(RegExp(r'(?<=\.)\s+'))).length;
-      expect(stepIndexCounts['namingReads'], lessThanOrEqualTo(5 * own));
+      // v29 (Run 059 O9): the scan reads no sentence at all — each head
+      // visits the steps' words once (an int compare), what it pays.
+      expect(stepIndexCounts['namingReads'] ?? 0, 0);
+      expect(stepIndexCounts['words'], wordCountForTest(scan));
       final built = friedAtCaps(0);
       stepIndexCounts.clear();
       for (final h in [
@@ -188,20 +187,20 @@ void main() {
         namingForTest(built, h);
       }
       expect(stepIndexCounts['memo:namingAll'], 1);
-      // The build comes when the scans paid reach 30 × the text: 0149's 8
-      // heads cost a step pass each (~1 × the text: found in its own two
-      // steps only), a filler head ~4 × (in every step: the pass and 3 per
-      // sentence character) — 7 more scans, then the inversion (a COUNT pin
-      // of the measured rule: a sentence weighed 1 scans 11 more).
-      expect(stepIndexCounts['memo:naming'], 15);
-      // reachShape: 'garlic' in no step (1 ×), then 8 fillers (4 × each).
+      // v29 (Run 059 O9, the unit exact): the build comes when the scans
+      // paid reach 12 × the words — each scan pays every word once, plus
+      // its confirms' characters (0149's 8 heads ~0.0003 × the words, a
+      // filler named in every step ~0.1 ×): 12 scans, then the inversion.
+      expect(stepIndexCounts['memo:naming'], 12);
+      // reachShape: 'garlic' in no step (the words exactly), then fillers
+      // (the words and ~0.1 × in confirms): 12 scans.
       final reach = reachShape(0);
       stepIndexCounts.clear();
       for (final h in wordHeadsForTest(reach)) {
         namingForTest(reach, h);
       }
       expect(stepIndexCounts['memo:namingAll'], 1);
-      expect(stepIndexCounts['memo:naming'], 9);
+      expect(stepIndexCounts['memo:naming'], 12);
       for (final h in heads) {
         expect(
           namingForTest(built, h),
@@ -211,9 +210,9 @@ void main() {
       }
     });
 
-    test('every corpus recipe: the per-head scan (its step pass) finds '
-        'exactly the sentences `_names` finds, for every head of the '
-        'recipe', () {
+    test('every corpus recipe: the per-head lookup (v29, Run 059 O9: the '
+        "word index's scan, and the word index inverted) finds exactly the "
+        'sentences `_names` finds, for every head of the recipe', () {
       var heads = 0;
       for (final f in Directory(corpusRecipesDir).listSync()) {
         if (!f.path.endsWith('.yaml')) continue;
@@ -224,14 +223,23 @@ void main() {
         ];
         for (final h in {
           ...wordHeadsForTest(r),
-          for (final l in nutritionLines(r)) normalizeItem(lineItemOf(l)),
+          for (final l in nutritionLines(r)) ...[
+            normalizeItem(lineItemOf(l)),
+            ?headNounOf(normalizeItem(lineItemOf(l))),
+          ],
         }) {
           heads++;
-          expect(namingByScanForTest(r, h), [
+          final expected = [
             for (final (i, step) in sentences.indexed)
               for (final (j, s) in step.indexed)
                 if (namesForTest(s, h)) (i, j),
-          ], reason: '${r.id}: $h');
+          ];
+          expect(namingByScanForTest(r, h), expected, reason: '${r.id}: $h');
+          expect(
+            namingByInversionForTest(r, h),
+            h.isNotEmpty && RegExp(r'^\w').hasMatch(h) ? expected : isEmpty,
+            reason: '${r.id}: $h (inverted)',
+          );
         }
       }
       expect(heads, greaterThan(10000));
@@ -888,8 +896,9 @@ void main() {
       ].map(parsed).toList();
       final got = pairRowsToLines(rows, after, laidOut: laid);
       // The count, not only the cap (measured 4,916: each half of the
-      // twin rule — the run order and the bound that reads it — is needed).
-      expect(pairingExpansions, lessThanOrEqualTo(5000));
+      // twin rule — the run order and the bound that reads it — is needed;
+      // v29, a run ONE item: 2,760).
+      expect(pairingExpansions, lessThanOrEqualTo(3000));
       expect(
         [for (final r in got) r?.position],
         [0, null, 9, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12, 13],

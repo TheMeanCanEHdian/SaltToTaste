@@ -631,8 +631,19 @@ void bounds() {
               () => keyReads,
               () => keyReads = 0,
             ),
+            // v29 (Run 059 O9): the naming scan compiles no pattern (it
+            // visits the steps' words), so the patterns are read directly
+            // for every line's head of the recipe.
             '_namesOf': (
-              () => readAll(loadCorpusRecipe(chicken)),
+              () {
+                final r = loadCorpusRecipe(chicken);
+                for (final l in nutritionLines(r)) {
+                  namesForTest(
+                    r.steps.first.text,
+                    normalizeItem(lineItemOf(l)),
+                  );
+                }
+              },
               () => stepIndexCounts['names'] ?? 0,
               stepIndexCounts.clear,
             ),

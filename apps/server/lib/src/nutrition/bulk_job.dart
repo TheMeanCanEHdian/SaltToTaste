@@ -58,7 +58,8 @@ Future<void> _runOne(
     final notes = <String>[];
     await computeUntilFresh(
       db,
-      provider,
+      // The job's outage watch, across its passes ([jobProvider]).
+      jobProvider(provider),
       recipe,
       onFoodFailure: (error) => notes.add('${recipe.id}: $error'),
     );
@@ -120,15 +121,24 @@ Future<int> computeUntilFresh(
   NutritionProvider provider,
   Recipe recipe, {
   void Function(NutritionProviderException failure)? onFoodFailure,
+  bool retryUnavailable = false,
 }) async {
   var current = recipe;
   for (var pass = 1; ; pass++) {
-    final failure = await matchAndCompute(db, provider, current);
+    final failure = await matchAndCompute(
+      db,
+      provider,
+      current,
+      retryUnavailable: retryUnavailable && pass == 1,
+    );
     if (failure != null) {
       if (failure.scope == FailureScope.global) {
         throw failure;
       }
       onFoodFailure?.call(failure);
+      if (failure is DetailsSuspended) {
+        return pass; // Another pass would only ask FDC again ([onePass]).
+      }
     }
     final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
     if (stored == null || nutritionStampCurrent(db, stored)) {
@@ -248,16 +258,31 @@ int? startBulkJob(
   final ids = bulkScopeIds(db, scope);
   final jobId = db.createNutritionJob(ids.length);
   _bulkRunning = true;
-  unawaited(_run(db, provider, jobId, ids));
+  unawaited(
+    _run(db, provider, jobId, ids, retryUnavailable: scope == BulkScope.all),
+  );
   return jobId;
 }
 
+/// [retryUnavailable]: the `all` scope asks FDC again, once per recipe,
+/// for every row held `food_unavailable` (v29 RULE A, Run 059 S3 — a
+/// healthy food held by transient failures recovers with no person); the
+/// `stale` and `missing` scopes never do (the hold is re-read from the
+/// caches only).
 Future<void> _run(
   SaltDatabase db,
   NutritionProvider provider,
   int jobId,
-  List<String> ids,
-) async {
+  List<String> ids, {
+  bool retryUnavailable = false,
+}) async {
+  // ONE outage watch for the whole job (v29 RULE A, Run 059 O4/O10/S4):
+  // its FOOD failures are counted across recipes ([jobProvider]), and each
+  // pass suspends its details after `detailOutageAfter` failing in a row
+  // ([onePass]) — so a detail outage stops the sweep after at most
+  // `detailOutageAfter` + 1 requests (3 in the first recipe, 1 in the
+  // next), whatever the recipes' sizes.
+  final watched = jobProvider(provider);
   var done = 0;
   var failed = 0;
   final log = <String>[];
@@ -291,32 +316,29 @@ Future<void> _run(
       try {
         await computeUntilFresh(
           db,
-          provider,
+          watched,
           found.recipe,
+          retryUnavailable: retryUnavailable,
           // One food FDC fails on: that row's state (underived, held
           // `food_unavailable` after `foodUnavailableAfter` computes) — the
           // sweep moves on and the log says which.
           onFoodFailure: (error) => log.add('$id: $error'),
         );
       } on NutritionProviderException catch (error) {
-        if (error.scope == FailureScope.food) {
-          // A FOOD failure an engine line's fetch threw is that recipe's:
-          // counted failed, and the sweep moves on (v28).
-          failed += 1;
-          log.add('$id: $error');
-        } else {
-          // No key / bad key / hard rate failure: every remaining recipe
-          // would fail identically — stop and say why.
-          log.add('stopped at $id: $error');
-          db.updateNutritionJob(
-            jobId,
-            done: done,
-            failed: failed + 1,
-            status: 'failed',
-            logJson: jsonEncode(log),
-          );
-          return;
-        }
+        // GLOBAL — no key / bad key / the budget / an outage, a detail
+        // outage escalated by the job's watch included: every remaining
+        // recipe would fail identically — stop and say why. (A FOOD failure
+        // never leaves a pass since v29: an engine line's is its row's
+        // state like a decided row's, Run 059 Sonnet critic 1 / O3.)
+        log.add('stopped at $id: $error');
+        db.updateNutritionJob(
+          jobId,
+          done: done,
+          failed: failed + 1,
+          status: 'failed',
+          logJson: jsonEncode(log),
+        );
+        return;
         // One bad recipe must not sink the batch; the log carries it.
         // ignore: avoid_catches_without_on_clauses
       } catch (error) {

@@ -7,7 +7,8 @@ import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_label.dart'
     show staleBannerText;
-import 'package:salt_shared/salt_shared.dart' show HoldDecision, holdActionsOf;
+import 'package:salt_shared/salt_shared.dart'
+    show HoldDecision, foodGoneHold, foodUnavailableHold, holdActionsOf;
 
 import 'support/contract_goldens.dart';
 
@@ -517,6 +518,20 @@ void main() {
     expect(
       lineHoldNote(held('1 cup chicken broth', {'hold': 'partial_pour_away'})),
       contains('picking another food keeps it held'),
+    );
+  });
+
+  test('v29 (Run 059 S25): a food with no record says WHICH — no longer '
+      'served (food_gone) or not served now (food_unavailable)', () {
+    expect(heldFinishes(foodGoneHold), contains('USDA no longer serves'));
+    expect(heldFinishes(foodGoneHold), isNot(contains('cannot serve now')));
+    expect(
+      heldFinishes(foodUnavailableHold),
+      contains('USDA cannot serve now'),
+    );
+    expect(
+      heldFinishes(foodUnavailableHold),
+      isNot(contains('no longer serves')),
     );
   });
 }

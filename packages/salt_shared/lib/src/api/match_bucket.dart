@@ -84,7 +84,7 @@ MatchBucket matchBucketFor({
   // A person's food FDC no longer serves (`food_gone`, server RULE A, v27)
   // or keeps failing on (`food_unavailable`, v28): out of the totals
   // whatever its grams, waiting on a pick or a skip ([holdActions]).
-  if (hold == foodGoneHold || hold == foodUnavailableHold) {
+  if (noRecordHolds.contains(hold)) {
     return MatchBucket.check;
   }
   if ((status == 'overridden' && grams == null) ||

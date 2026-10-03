@@ -171,10 +171,18 @@ class _EmptyState extends StatelessWidget {
 
 /// The stale banner's words, by the server's `stale_reason` (v28, Run 058
 /// S15): a decision waiting on USDA is not an ingredients change, and a
-/// Recompute retries the request rather than re-reading the lines.
-String staleBannerText(String? reason) => reason == 'underived'
-    ? 'A decision is waiting on USDA: these totals do not include it yet.'
-    : 'Ingredients changed since this was computed.';
+/// Recompute retries the request rather than re-reading the lines; a
+/// compute that has not reached its totals (v29, `interrupted`: one still
+/// running, or a restart mid-compute — the server reads both as one) is
+/// neither.
+String staleBannerText(String? reason) => switch (reason) {
+  'underived' =>
+    'A decision is waiting on USDA: these totals do not include it yet.',
+  'interrupted' =>
+    'A compute is in progress or was interrupted: these totals may not '
+        'count every line.',
+  _ => 'Ingredients changed since this was computed.',
+};
 
 class _StaleBanner extends StatelessWidget {
   const _StaleBanner({required this.state, required this.isAdmin});

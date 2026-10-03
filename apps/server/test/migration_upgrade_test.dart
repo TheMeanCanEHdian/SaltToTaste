@@ -87,6 +87,10 @@ const Map<int, String> _capabilityByVersion = {
       'row’s food failed (0 at open) + fdc_search_cache_foods: which '
       'cached search answers list which food, kept by triggers and '
       'backfilled from the cached answers by the migration itself',
+  17:
+      'recipe_nutrition.computing: how many writers have a pass in '
+      'progress (0 at open) + a partial index of the rows '
+      'held for a food with no record, by food',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -112,6 +116,10 @@ const int _totalsVersion = 15;
 /// Mirror of migration 016: `ingredient_matches.retry_count` (0 on every
 /// existing row at open).
 const int _retryVersion = 16;
+
+/// Mirror of migration 017: `recipe_nutrition.computing` (0 on every
+/// existing row at open).
+const int _markerVersion = 17;
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
 /// start version is below this gets its FTS rows re-derived in Dart on open.
@@ -616,9 +624,12 @@ _Seed _seed(
             {
               for (final entry in row.entries)
                 if (entry.key != 'totals' &&
+                    entry.key != 'computing' &&
                     (entry.key != 'layout_seq' || version >= _layoutSeqVersion))
                   entry.key: entry.value,
             }
+          else if (table == 'recipe_nutrition' && version < _markerVersion)
+            {...row}..remove('computing')
           else if (table == 'ingredient_matches' && version < _holdVersion)
             {
               for (final entry in row.entries)

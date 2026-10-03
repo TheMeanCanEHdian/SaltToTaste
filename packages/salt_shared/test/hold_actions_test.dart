@@ -45,4 +45,28 @@ void main() {
       'v28 closer: the documented number pinned)', () {
     expect(foodUnavailableAfter, 3);
   });
+
+  test('v29 (Run 059 S8): every hold has ONE family, on its table entry — '
+      'the family lists are read from the table, never copied', () {
+    expect(mediumHolds, [
+      'discarded_medium',
+      'starter_discard',
+      'coating',
+      'partial_pour_away',
+      'ambiguous_medium',
+    ]);
+    expect(lineHolds, [...mediumHolds, 'in_shell', 'second_food']);
+    expect(noRecordHolds, [foodGoneHold, foodUnavailableHold]);
+    expect(holdsOf({HoldKind.food}), [
+      'no_nutrients',
+      'unnamed_food',
+      'dried_for_fresh',
+      'cured_for_fresh',
+      'borderline',
+    ]);
+    expect(
+      HoldKind.values.expand((k) => holdsOf({k})).toSet(),
+      holdActions.keys.toSet(),
+    );
+  });
 }

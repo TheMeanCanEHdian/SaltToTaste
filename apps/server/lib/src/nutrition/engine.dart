@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' show max, min;
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:logging/logging.dart';
@@ -332,13 +333,18 @@ class _StepIndex {
   final Map<(RegExp, int), List<Match>> _hits = {};
   final Map<Object, Object?> _memo = {};
 
-  /// What this index's per-head scans ([naming]) have paid, in step-pass
-  /// characters ([_inversionCost]) — the naming inversion's amortiser
-  /// ([_naming]).
+  /// What this index's per-head scans ([naming]) have paid, in words
+  /// visited (a confirm's characters each one more) — the naming
+  /// inversion's amortiser ([_naming], [_inversionCost]).
   int namingPaid = 0;
 
-  /// The characters of [lower].
-  late final int chars = lower.fold(0, (n, step) => n + step.length);
+  /// Each step's words ([_Words]), read once per step.
+  late final List<_Words> words = [
+    for (final (i, step) in lower.indexed) _Words(step, sentences[i]),
+  ]..forEach((w) => _count('words', w.keys.length));
+
+  /// How many words [words] holds: one per-head scan's cost.
+  late final int wordCount = words.fold(0, (n, w) => n + w.keys.length);
 
   /// The first plus line [_eatenPlusPart] was asked about: its names read
   /// by their own scans; the second distinct line builds the inverted
@@ -405,30 +411,55 @@ class _StepIndex {
   }
 
   /// Where a sentence names [head] ([_names]) — (step, sentence) — once
-  /// per head, whichever lines share it. A step in which the head's word
-  /// never starts ([_namesLead]) is read once, whole, and its sentences
-  /// never (exact: every match of [_names] starts a word with the head, or
-  /// a -y head's stem, and a sentence is a substring of its step). What it
-  /// reads is
-  /// [namingPaid]; the sentences it reads one by one are counted
-  /// (`namingReads`).
+  /// per head, whichever lines share it. An EXACT-COST lookup (RULE C v29,
+  /// Run 059 O9: v28's `\b<lead>` regex pass ran 0.1 ns a character over
+  /// corpus steps and 9 over words sharing the head's prefix, while the
+  /// amortiser charged both alike): every word of every step ([words]) is
+  /// visited once and its key compared with the keys of the head's lead
+  /// words ([_leadsOf]) — an int compare, whatever the words spell — and a
+  /// key that agrees is confirmed AT the word ([_namedFrom]). What it pays
+  /// is [namingPaid]: each word visited, and each confirm the characters
+  /// of the forms it compares. A head opening on no word character (no
+  /// lead word) reads each sentence with [_names] (`namingReads`).
   // Key: head — the food each sentence is searched for.
   List<(int, int)> naming(String head) => memo(('naming', head), () {
     if (head.isEmpty) {
       return const [];
     }
-    final lead = _namesLead(head);
     final at = <(int, int)>[];
-    for (final (i, step) in sentences.indexed) {
-      namingPaid += lower[i].length;
-      if (!lead.hasMatch(lower[i])) {
-        continue;
+    final leads = _leadsOf(head);
+    if (leads.isEmpty) {
+      for (final (i, step) in sentences.indexed) {
+        _count('namingReads', step.length);
+        for (final (j, s) in step.indexed) {
+          namingPaid += s.length;
+          if (_names(s, head)) {
+            at.add((i, j));
+          }
+        }
       }
-      _count('namingReads', step.length);
-      for (final (j, s) in step.indexed) {
-        namingPaid += _sentenceReadCost * s.length;
-        if (_names(s, head)) {
-          at.add((i, j));
+      return at;
+    }
+    // At most three lead words; an absent one keyed -1, no word's key.
+    final k0 = _keyOf(leads[0]);
+    final k1 = leads.length > 1 ? _keyOf(leads[1]) : -1;
+    final k2 = leads.length > 2 ? _keyOf(leads[2]) : -1;
+    final forms = _formsOf(head);
+    final confirm = forms.fold(0, (n, f) => n + f.length);
+    for (final (i, w) in words.indexed) {
+      final keys = w.keys;
+      namingPaid += keys.length;
+      for (var k = 0; k < keys.length; k++) {
+        final key = keys[k];
+        if (key != k0 && key != k1 && key != k2) {
+          continue;
+        }
+        namingPaid += confirm;
+        final j = _namedFrom(w, w.starts[k], forms);
+        if (j >= 0) {
+          if (at.isEmpty || at.last != (i, j)) {
+            at.add((i, j));
+          }
         }
       }
     }
@@ -447,59 +478,94 @@ class _StepIndex {
 
 /// Where a sentence of [recipe] names [head] ([_names]) — (step,
 /// sentence), in order. RULE C (v26, Run 056 S9: a recipe of 400 distinct
-/// foods scanned every sentence once per head, 2.5–11 s at the caps): ONE
-/// pass over the sentences finds every head of the recipe a sentence names
-/// ([_wordsOf], a lookup per word, linear per sentence) — a head of other
-/// characters, or none of the recipe's, is scanned for alone
-/// ([_StepIndex.naming], once per head).
+/// foods scanned every sentence once per head, 2.5–11 s at the caps): the
+/// steps' words are indexed once ([_StepIndex.words], O(text)); a head is
+/// looked up by its own scan over them ([_StepIndex.naming], a word
+/// visited is an int compare) or, once built, by the word index inverted
+/// ([_namedByInversion], its own words only). A head opening on no word
+/// character is read by sentence ([_names]).
 ///
 /// The inversion is built by MEASURED amortisation (v28 closer, Run 058
-/// O4/S8 — replacing v27's second-head gate and the one-line reader's
-/// declaration, both proxies): a head is scanned for alone until the
-/// costs this index's per-head scans have paid ([_StepIndex.namingPaid])
-/// reach the inversion's own, [_inversionCost] per character of the steps
-/// (the costs measured, in one unit); then the inversion is built, once,
-/// and every later head read from it. So the scans a reader pays before
-/// the build exceed the build by at most one scan (whoever reads, within
-/// about twice the cheaper choice, times the measurement's spread): a
-/// reach that asks a cap recipe 8 heads (0149's ten shared lines) never
-/// builds it; a compute or matches GET of the cap recipe itself (400
-/// heads) builds it within its first dozen heads.
+/// O4/S8; its unit EXACT in v29, Run 059 O9): a head is scanned for alone
+/// until what this index's per-head scans have paid
+/// ([_StepIndex.namingPaid], words visited and confirm characters) reaches
+/// the inversion's own, [_inversionCost] per word of the steps; then the
+/// inversion is built, once, and every later head read from it. The
+/// boundary: the scan whose paid units reach exactly
+/// `_inversionCost × words` is the last one (`<`: the next head builds —
+/// pinned by a run of heads no step names, each paying exactly the words).
+/// So the scans a reader pays before the build exceed the build by at most
+/// one scan (within about twice the cheaper choice, times the
+/// measurement's spread): a reach that asks a cap recipe 8 heads (0149's
+/// ten shared lines) never builds it; a compute or matches GET of the cap
+/// recipe itself (400 heads) builds it within its first dozen heads.
 List<(int, int)> _naming(Recipe recipe, String head) {
   final index = _stepIndexOf(recipe);
-  final wanted = _wordHeadsOf(recipe);
-  if (!wanted.contains(head) ||
+  final leads = _leadsOf(head);
+  if (leads.isEmpty ||
       !index._memo.containsKey(#namingAll) &&
-          index.namingPaid < _inversionCost * index.chars) {
+          index.namingPaid < _inversionCost * index.wordCount) {
     return index.naming(head);
   }
-  return index.memo(#namingAll, () {
-        final all = <String, List<(int, int)>>{};
-        for (final (i, step) in index.sentences.indexed) {
-          for (final (j, s) in step.indexed) {
-            for (final h in _wordsOf(s, wanted.contains)) {
-              (all[h] ??= []).add((i, j));
-            }
-          }
-        }
-        return all;
-      })[head] ??
-      const [];
+  return _namedByInversion(index, head, leads);
 }
 
-/// The naming inversion's cost per character of the steps, and a
-/// sentence read by [_names] per character, in step-pass characters (a
-/// per-head scan's [_namesLead] pass over a step, [_StepIndex.naming]).
-/// Measured (JIT, 3 rounds each, every word head the inversion reads;
-/// close28/m7): the step pass 1.1 ns per character over the whole corpus
-/// (1,198 recipes; short steps) and 0.08–0.5 at the caps; a sentence read
-/// 2.4–3.1 over the corpus and 4.6–4.8 at the caps; the inversion 41–44 over
-/// the corpus and 29–31 at the caps. In step-pass units of ~1 ns: a
-/// sentence 3, the inversion 30 (its cap figure, the lower) — each within
-/// 1.6× of every measurement, so the build comes within a small factor of
-/// the moment it pays.
-const int _inversionCost = 30;
-const int _sentenceReadCost = 3;
+/// Where a sentence of [index] names [head] by the word index inverted
+/// (`#namingAll`, built once): its [leads]' words looked up, each confirmed
+/// at the word ([_namedFrom]) — what the per-head scan finds
+/// ([_StepIndex.naming]), at the cost of the head's own words.
+List<(int, int)> _namedByInversion(
+  _StepIndex index,
+  String head,
+  List<String> leads,
+) {
+  // The word index inverted: each key's words, (step << 20 | word) in
+  // order — every word read once, whatever the heads.
+  final inverted = index.memo(#namingAll, () {
+    final all = <int, List<int>>{};
+    for (final (i, w) in index.words.indexed) {
+      final keys = w.keys;
+      for (var k = 0; k < keys.length; k++) {
+        (all[keys[k]] ??= []).add(i << 20 | k);
+      }
+    }
+    return all;
+  });
+  // Key: head — the food each sentence is searched for.
+  return index.memo(('named', head), () {
+    final words = [
+      for (final lead in leads) ...?inverted[_keyOf(lead)],
+    ]..sort();
+    final forms = _formsOf(head);
+    final at = <(int, int)>[];
+    for (final p in words) {
+      final i = p >> 20;
+      final w = index.words[i];
+      final start = w.starts[p & 0xFFFFF];
+      final j = _namedFrom(w, start, forms);
+      if (j >= 0) {
+        if (at.isEmpty || at.last != (i, j)) {
+          at.add((i, j));
+        }
+      }
+    }
+    return at;
+  });
+}
+
+/// The naming inversion's cost — the word index inverted, every word read
+/// once ([_naming]) — in per-head scan units: one word visited
+/// ([_StepIndex.naming]). Measured (v29, JIT, 3 rounds each;
+/// fix29/rulec): a word visited 0.95–1.0 ns at the caps and 2.1 over the
+/// whole corpus (1,198 recipes, 335,066 words); the inversion 7.1–8.9 ns a
+/// word at the caps (0149's fillers, the reach shape, Run 059 O9's 40- and
+/// 900-character prefix words alike) and 29–31 over the corpus (small
+/// recipes: a list per distinct word). In scans: 7.5–9.4 at the caps, 14–15
+/// over the corpus; 12 lies within 1.6× of every measurement, so the build
+/// comes within a small factor of the moment it pays — whatever the words
+/// spell (v28's unit, a step-pass character, cost 0.1 ns over corpus text
+/// and 9 over words sharing a head's prefix).
+const int _inversionCost = 12;
 
 /// Where each of [patterns] FIRST occurs in each of [texts] — (text,
 /// start), in text order; a pattern found in no text is absent. The
@@ -620,6 +686,25 @@ List<(int, int)> namingForTest(Recipe recipe, String head) =>
 List<(int, int)> namingByScanForTest(Recipe recipe, String head) =>
     _stepIndexOf(recipe).naming(head);
 
+/// [_namedByInversion] — the inversion, never the per-head scan — for the
+/// pins.
+@visibleForTesting
+List<(int, int)> namingByInversionForTest(Recipe recipe, String head) {
+  final leads = _leadsOf(head);
+  return leads.isEmpty
+      ? const []
+      : _namedByInversion(_stepIndexOf(recipe), head, leads);
+}
+
+/// The words of [recipe]'s steps ([_StepIndex.wordCount]), for the pins.
+@visibleForTesting
+int wordCountForTest(Recipe recipe) => _stepIndexOf(recipe).wordCount;
+
+/// What [recipe]'s per-head scans have paid ([_StepIndex.namingPaid]), for
+/// the pins.
+@visibleForTesting
+int namingPaidForTest(Recipe recipe) => _stepIndexOf(recipe).namingPaid;
+
 /// [_wordHeadsOf], for the pins.
 @visibleForTesting
 Set<String> wordHeadsForTest(Recipe recipe) => _wordHeadsOf(recipe);
@@ -631,7 +716,7 @@ Map<String, List<(int, int)>> occurrencesForTest(
   Iterable<String> patterns,
 ) => _occurrences(texts, patterns);
 
-/// The heads of [recipe] a sentence is searched for by word ([_naming]):
+/// The heads of [recipe] a sentence is searched for by word ([_wordsOf]):
 /// each line's head noun — or its item's last word when it has none, as
 /// [discardedMediumOf] reads "8 whole cloves" — written in word characters
 /// only, the words [_wordsOf] finds (its `\w+` words are [_names]' `\b`).
@@ -950,7 +1035,9 @@ bool _fries(Recipe recipe) => _stepIndexOf(recipe).memo(
         (s) =>
             _fryVerb.hasMatch(s) ||
             _fats.values.any(
-              (fat) => fat.heatsToFry(s) || fat.discards.hasMatch(s),
+              (fat) =>
+                  fat.heatsToFry(s, () => _heatReading(recipe, s)) ||
+                  fat.discards.hasMatch(s),
             ),
       ),
 );
@@ -1036,9 +1123,11 @@ class _Fat {
   /// closed lead list missed "reads 350", "at 350", "between 350 and 375",
   /// "350–375"). A temperature ([_fryingTemperature]) is excluded only when
   /// an appliance or method GOVERNS it:
-  /// - its CLAUSE — from the last clause mark before it ([_clauseStarts]:
-  ///   ; , — ( ), never a heat verb (RULE B, v28: the scope boundary is a
-  ///   mark, never the evidence's own word) — names, anywhere before it
+  /// - its CLAUSE — from the LATEST boundary at or before it (RULE B, v29:
+  ///   a clause mark ; , — ( ), an "and"/"then" opening a new verb phrase,
+  ///   or the fat's own mention ([_HeatReading.boundaries], [_HeatReading.
+  ///   fatOf]); never the evidence's own heat verb, v28) — names, anywhere
+  ///   before it
   ///   ([_Governing]), an appliance ([_appliances]: an oven, a broiler, a
   ///   grill, an air fryer, a smoker, a slow cooker, a pizza stone, a
   ///   toaster, convection — never a vessel: a Dutch or French oven, an
@@ -1083,91 +1172,106 @@ class _Fat {
   /// (`heatChecks`; the verifier's D2, v26: 32,250 "Stir 3 teaspoons oil
   /// into the sauce." sentences paid ~7 µs each, +300 ms on a member's
   /// matches GET at the caps).
-  bool heatsToFry(String s) {
+  bool heatsToFry(String s, [_HeatReading Function()? reading]) {
     if (!_temperatureDigits.hasMatch(s)) {
       return false;
     }
     _count('heatChecks');
-    final fat = _wordIndex(s, head);
-    if (fat < 0) {
+    // Every whole-sentence pass is the sentence's, read once per index and
+    // shared by every fat and caller ([_HeatReading]); a check reads it with
+    // one forward pointer per list (a temperature's clause start only moves
+    // forward), each pass only as far as the check needs.
+    final r = reading == null ? _HeatReading(s) : reading();
+    final (:mentions, :own) = r.fatOf(this);
+    if (!mentions.has(0)) {
       return false;
     }
-    // A plain `contains` first: the regex costs a scan of every sentence.
-    final own = s.contains(_temperatureWords) ? s.indexOf(temperature) : -1;
-    // Every position list is built once per sentence and read in text order
-    // with one moving pointer per list (a temperature's clause start only
-    // moves forward), so a sentence costs one pass per pattern however many
-    // temperatures it holds (RULE B, v28, Run 058 S5/S9: v27 rescanned the
-    // clause once per temperature); the lists are built only once a
-    // temperature could be the fat's.
-    List<(int, int)>? verbs;
-    List<int>? cuts;
-    List<int>? joins;
-    _Governing? governing;
+    final fat = mentions.items.first;
+    _GoverningCursor? governing;
     var verb = 0;
+    var bound = 0;
+    var said = 0;
     var cut = 0;
     var join = 0;
-    for (final d in _fryingTemperature.allMatches(s)) {
-      final lead = _leadStart(s, d.start);
-      final digits = d.start;
+    var read = 0;
+    for (var i = 0; r.temperatures.has(i); i++) {
+      final (lead, digits, end) = r.temperatures.items[i];
       // Where the temperature, its lead included, starts.
       final at = lead < 0 ? digits : lead;
       final ownBefore = own >= 0 && own < at;
       if (!ownBefore && (lead < 0 || fat >= at)) {
         continue;
       }
-      verbs ??= _heatVerbsIn(s);
-      cuts ??= _clauseStarts(s, verbs);
-      governing ??= _Governing(s);
+      final verbs = r.verbs.upTo(digits);
       while (verb < verbs.length && verbs[verb].$2 <= digits) {
         verb++;
+        read++;
       }
-      while (cut < cuts.length && cuts[cut] <= digits) {
-        cut++;
+      // The clause holding the temperature starts at the LATEST boundary at
+      // or before its lead ([_HeatReading.boundaries]: a clause mark or an
+      // "and"/"then" opening a new verb phrase, never one opening on the
+      // evidence's own heat verb) or the fat's own mention (RULE B, v29,
+      // Run 059 O7/S9: v28 cut only at a mark, so "Place a rack in the oven
+      // and heat the oil to 350" or "…oven, heating the oil to 350" gave
+      // the oven the fat's own temperature; the participle exception is
+      // deleted — a phrase opening on any non-fry heat verb continues its
+      // clause, and the fat's mention inside it is the boundary). A lead's
+      // own "(" opens the clause ("beside the oven (350 degrees)"); a
+      // boundary inside a lead ("between 350 and 375") none. An appliance
+      // or a method governs it only from inside, before it (after it is
+      // [_governedAfter]'s).
+      final bounds = r.boundaries.upTo(at);
+      while (bound < bounds.length && bounds[bound].$1 <= at) {
+        final (p, isCut, opener) = bounds[bound++];
+        cut = isCut ? p : cut;
+        join = opener ? p : join;
+        read++;
       }
-      // The clause holding the temperature runs from the last clause start
-      // before it ([_clauseStarts]: a mark, never a heat verb — Run 058
-      // O2/S4: v27 also cut at a heat verb, so "an oven heated to 375"
-      // left the oven outside its own temperature's clause), read up to
-      // the temperature: an appliance or a method governs it only from
-      // before it (after it is [_governedAfter]'s).
-      if (governing.governs(cut == 0 ? 0 : cuts[cut - 1], digits) ||
-          _governedAfter.matchAsPrefix(s, d.end) != null) {
+      final named = mentions.upTo(at);
+      while (said < named.length && named[said] + head.length <= at) {
+        said++;
+        read++;
+      }
+      final start = s.codeUnitAt(at) == 0x28
+          ? at + 1
+          : max(cut, said == 0 ? 0 : named[said - 1] + head.length);
+      governing ??= _GoverningCursor(r.governingFrom(start));
+      if (governing.governs(start, digits) ||
+          _governedAfter.matchAsPrefix(s, end) != null) {
         continue;
       }
       if (ownBefore) {
+        _count('heatClauseChars', read);
         return true;
-      }
-      joins ??= [for (final m in _newVerbPhrase.allMatches(s)) m.end];
-      while (join < joins.length && joins[join] <= at) {
-        join++;
       }
       // The last heat verb starting at or before the lead (it may be the
       // lead itself: "when the oil reaches 385"), in the lead's verb phrase.
       var last = verb;
       while (last > 0 && verbs[last - 1].$1 > at) {
         last--;
+        read++;
       }
-      if (last > 0 && verbs[last - 1].$1 >= (join == 0 ? 0 : joins[join - 1])) {
+      if (last > 0 && verbs[last - 1].$1 >= join) {
+        _count('heatClauseChars', read);
         return true;
       }
     }
+    _count('heatClauseChars', read);
     return false;
   }
 }
 
-/// Where the whole word [w] first stands in [s] (`\bw\b`), or -1 — a
-/// plain search with a boundary check (the regex's scan cost a sentence
-/// ~0.5 µs more: the verifier's D11, v27).
-int _wordIndex(String s, String w) {
+/// Where the whole word [w] starts in [s] (`\bw\b`), each — a plain
+/// search with a boundary check (the regex's scan cost a sentence ~0.5 µs
+/// more: the verifier's D11, v27).
+Iterable<int> _wordStarts(String s, String w) sync* {
   for (var i = s.indexOf(w); i >= 0; i = s.indexOf(w, i + 1)) {
     final end = i + w.length;
     if ((i == 0 || !_isWordUnit(s.codeUnitAt(i - 1))) &&
         (end == s.length || !_isWordUnit(s.codeUnitAt(end)))) {
-      return i;
+      yield i;
     }
   }
-  return -1;
 }
 
 /// A regex `\w` code unit: a-z, A-Z, 0-9, _.
@@ -1234,7 +1338,7 @@ final RegExp _temperatureDigits = RegExp(r'\d\d\d');
 
 /// A verb heating the fat ([_Fat.heatsToFry]); "heat" the noun ("over
 /// medium heat to 375 degrees") reads the same way. A fry is one unless an
-/// air fryer, a stir-fry or an oven-fry ([_heatVerbsIn]).
+/// air fryer, a stir-fry or an oven-fry ([_HeatVerbs]).
 const Set<String> _heatVerbWords = {
   'heat',
   'heats',
@@ -1285,29 +1389,50 @@ const Set<String> _heatVerbWords = {
   'frying',
 };
 
-/// The [_heatVerbWords] in [s] (lower case) as (start, end) — whole words
-/// (`\b…\b`), a fry not one after "air", "stir" or "oven" and one space or
-/// hyphen. A word scan with a set lookup (v27 closer, the verifier's D11:
-/// the 14-way alternation scanned ~65 ns a character, ~2 µs of every
-/// frying sentence).
-List<(int, int)> _heatVerbsIn(String s) {
-  final out = <(int, int)>[];
-  var i = 0;
-  while (i < s.length) {
-    if (!_isWordUnit(s.codeUnitAt(i))) {
-      i++;
-      continue;
+/// The [_heatVerbWords] of a sentence (lower case) as (start, end), read
+/// LAZILY ([upTo]) — whole words (`\b…\b`), a fry not one after "air",
+/// "stir" or "oven" and one space or hyphen. A word scan with a set lookup
+/// (v27 closer, the verifier's D11: the 14-way alternation scanned ~65 ns
+/// a character, ~2 µs of every frying sentence), a word whose first letter
+/// starts no heat verb never cut out.
+class _HeatVerbs {
+  _HeatVerbs(this.s);
+
+  final String s;
+  final List<(int, int)> items = [];
+  var _i = 0;
+
+  /// [items], holding every heat verb starting at or before [p]; the
+  /// characters scanned counted (`heatClauseChars`).
+  List<(int, int)> upTo(int p) {
+    final from = _i;
+    while (_i < s.length && _i <= p) {
+      _i = _word(_i);
     }
-    final start = i;
+    if (_i > from) {
+      _count('heatClauseChars', _i - from);
+    }
+    return items;
+  }
+
+  /// Reads the word (or the one other character) at [start]; returns
+  /// where the next starts.
+  int _word(int start) {
+    if (!_isWordUnit(s.codeUnitAt(start))) {
+      return start + 1;
+    }
+    var i = start;
     while (i < s.length && _isWordUnit(s.codeUnitAt(i))) {
       i++;
     }
-    if (i - start < 3 || i - start > 11) {
-      continue;
+    if (i - start < 3 ||
+        i - start > 11 ||
+        !_heatVerbInitials.contains(s.codeUnitAt(start))) {
+      return i;
     }
     final word = s.substring(start, i);
     if (!_heatVerbWords.contains(word)) {
-      continue;
+      return i;
     }
     if (word.startsWith('fr') && start >= 2) {
       final sep = s.codeUnitAt(start - 1);
@@ -1317,55 +1442,172 @@ List<(int, int)> _heatVerbsIn(String s) {
       }
       if ((sep == 0x20 || sep == 0x2d) &&
           const {'air', 'stir', 'oven'}.contains(s.substring(p, start - 1))) {
-        continue;
+        return i;
       }
     }
-    out.add((start, i));
+    items.add((start, i));
+    return i;
   }
-  return out;
 }
 
-/// A clause mark ([_clauseStarts]).
-final RegExp _clauseMark = RegExp('[;,—()]');
+/// The first letters of [_heatVerbWords].
+final Set<int> _heatVerbInitials = {
+  for (final w in _heatVerbWords) w.codeUnitAt(0),
+};
 
-/// Where each clause of [s] starts ([_Fat.heatsToFry]): right after a
-/// clause mark (; , — ( )) — the ONE scope boundary of the frying heat
-/// (RULE B, v28, Run 058 O2/S4): never a heat verb, the evidence's own
-/// word ("an oven heated to 375", "until the oven thermometer registers
-/// 375": the verb is evidence inside the oven's clause). A mark directly
-/// followed by a heat verb's participle ([_heatParticiple]: "in the smoker,
-/// holding it at 300", "on the grill, keeping the temperature at 350",
-/// "the oil, heated to 350 degrees, is ready") opens no clause: the
-/// participle's phrase belongs to the clause before it. [verbs] is
-/// [_heatVerbsIn]'s list for [s]. One pass over the marks, one pointer
-/// over [verbs].
-List<int> _clauseStarts(String s, List<(int, int)> verbs) {
-  final out = <int>[];
-  var v = 0;
-  for (final m in _clauseMark.allMatches(s)) {
-    var p = m.end;
-    while (p < s.length && s.codeUnitAt(p) == 0x20) {
-      p++;
+/// One whole-sentence pass of a [_HeatReading], read LAZILY: its items are
+/// fetched only as far as a check asks, once per sentence whatever the
+/// fats and callers, and the characters it has reached are counted
+/// (`heatClauseChars`) — a sentence that answers at its first temperature
+/// pays its prefix (v27 read a lead window and one clause; v28 read the
+/// whole sentence four times per fat per caller: Run 059 S15).
+class _Pass<T> {
+  _Pass(this._length, Iterable<T> items, this._endOf) : _it = items.iterator;
+
+  final int _length;
+  final Iterator<T> _it;
+  final int Function(T) _endOf;
+  final List<T> items = [];
+  var _reached = 0;
+  var _done = false;
+
+  /// [items], holding every item that ends at or before [p].
+  List<T> upTo(int p) {
+    while (!_done && _reached <= p) {
+      _next();
     }
-    while (v < verbs.length && verbs[v].$1 < p) {
-      v++;
-    }
-    if (v < verbs.length &&
-        verbs[v].$1 == p &&
-        _heatParticiple(s.substring(verbs[v].$1, verbs[v].$2))) {
-      continue;
-    }
-    out.add(m.end);
+    return items;
   }
-  return out;
+
+  /// Whether item [i] exists, fetching up to it.
+  bool has(int i) {
+    while (!_done && items.length <= i) {
+      _next();
+    }
+    return i < items.length;
+  }
+
+  void _next() {
+    final more = _it.moveNext();
+    if (more) {
+      items.add(_it.current);
+    } else {
+      _done = true;
+    }
+    final to = more ? _endOf(_it.current) : _length;
+    if (to > _reached) {
+      _count('heatClauseChars', to - _reached);
+      _reached = to;
+    }
+  }
 }
 
-/// A heat verb's participle ([_heatVerbWords]): "heating", "heated",
-/// "held", "kept", "brought" — never "bring", its own imperative.
-bool _heatParticiple(String verb) =>
-    (verb.endsWith('ing') && verb != 'bring') ||
-    verb.endsWith('ed') ||
-    const {'held', 'kept', 'brought'}.contains(verb);
+/// One sentence's heat reading — every whole-sentence pass of
+/// [_Fat.heatsToFry], ONE per sentence per [_StepIndex], shared by every
+/// fat and every caller (RULE B, v29, Run 059 S15 / Sonnet critic 2: v28
+/// rebuilt its four lists per fat per caller, 2–4× v27 on a long sentence
+/// of one temperature). Each pass is a [_Pass], read as far as a check
+/// needs; the governing words are read from the clause's start
+/// ([governingFrom]).
+class _HeatReading {
+  _HeatReading(this.s);
+
+  final String s;
+
+  /// Each frying temperature ([_fryingTemperature]): its lead's start
+  /// ([_leadStart], -1 for none), its digits, its end.
+  late final _Pass<(int, int, int)> temperatures = _Pass(
+    s.length,
+    _fryingTemperature
+        .allMatches(s)
+        .map((d) => (_leadStart(s, d.start), d.start, d.end)),
+    (t) => t.$3,
+  );
+
+  /// The heat verbs ([_HeatVerbs]).
+  late final _HeatVerbs verbs = _HeatVerbs(s);
+
+  /// Where a clause may start, in order: (offset, a cut, an opener).
+  /// After a clause mark or a new verb phrase's "and"/"then"
+  /// ([_clauseBoundary]); a CUT unless the phrase opening there starts with
+  /// a heat verb other than a fry (after an "and" or "then"), the
+  /// evidence's own word, its object unnamed: "in the smoker, holding it at
+  /// 300", "on the pizza stone and heat it at 350" stay the appliance's
+  /// clause, while "warm in the oven and fry the rest at 350" is the
+  /// fat's. The fat's own mention is the other boundary ([fatOf]): ",
+  /// heating the oil to 350" is the oil's. An opener also starts the
+  /// evidence's verb phrase ([_newVerbPhrase]).
+  late final _Pass<(int, bool, bool)> boundaries = _Pass(
+    s.length,
+    _boundariesIn(),
+    (b) => b.$1,
+  );
+
+  Iterable<(int, bool, bool)> _boundariesIn() sync* {
+    var v = 0;
+    for (final m in _clauseBoundary.allMatches(s)) {
+      final opener = m[1] != null;
+      var p = m.end;
+      while (p < s.length && s.codeUnitAt(p) == 0x20) {
+        p++;
+      }
+      if (!opener) {
+        final next = _newVerbPhrase.matchAsPrefix(s, p);
+        if (next != null) {
+          p = next.end;
+        }
+      }
+      final heat = verbs.upTo(p);
+      while (v < heat.length && heat[v].$1 < p) {
+        v++;
+        _count('heatClauseChars');
+      }
+      // A fry verb's phrase is the fat's own (nothing else fries: the
+      // air-, oven- and stir-fry are no fry, [_HeatVerbs]).
+      final cut = v >= heat.length || heat[v].$1 != p || s.startsWith('fr', p);
+      yield (m.end, cut, opener);
+    }
+  }
+
+  _Governing? _governing;
+
+  /// The governing words from [start] on — the earliest clause start a
+  /// check has asked for: a later start reads the same scan, an earlier one
+  /// (another fat's clause) rescans from it (at most once per fat).
+  _Governing governingFrom(int start) {
+    final g = _governing;
+    if (g != null && g.from <= start) {
+      return g;
+    }
+    return _governing = _Governing(s, start);
+  }
+
+  final Map<String, ({_Pass<int> mentions, int own})> _fats = {};
+
+  /// Where [fat]'s noun starts, each whole word ([_Fat.word]), and its
+  /// "<fat> temperature" ([_Fat.temperature], -1 for none).
+  ({_Pass<int> mentions, int own}) fatOf(_Fat fat) => _fats[fat.head] ??= (
+    mentions: _Pass(
+      s.length,
+      _wordStarts(s, fat.head),
+      (at) => at + fat.head.length,
+    ),
+    // A plain `contains` first: the regex costs a scan of the sentence.
+    own: s.contains(_temperatureWords) ? _ownAt(s, fat) : -1,
+  );
+}
+
+/// Where [fat]'s "<fat> temperature" starts in [s] (counted).
+int _ownAt(String s, _Fat fat) {
+  _count('heatClauseChars', s.length);
+  return s.indexOf(fat.temperature);
+}
+
+/// A clause mark ([_HeatReading.boundaries]: ; , — ( )) or, group 1, an
+/// "and" or "then" opening a new verb phrase ([_newVerbPhrase]) — one pass.
+final RegExp _clauseBoundary = RegExp(
+  '[;,—()]|(${_newVerbPhrase.pattern})',
+);
 
 /// An "and" or "then" opening a new verb phrase ([_Fat.heatsToFry]): not
 /// before an article ("the oil and the butter"). The "and" of "between 350
@@ -1386,8 +1628,8 @@ final RegExp _newVerbPhrase = RegExp(
 /// Each starts with `\b` ([_governingWord] factors it out).
 const List<String> _applianceWords = [
   r'\boven\b(?<!(?:dutch|french)[- ]oven)(?![- ]?(?:safe|proof)\b)',
-  r'\bbroiler\b(?![- ]?(?:safe|proof)\b|\s+pans?\b)',
-  r'\bgrill\b(?![- ]?(?:safe|proof)\b|\s+pans?\b)',
+  r'\bbroiler\b(?![- ]?(?:safe|proof)\b|(?:\s+|-)pans?\b)',
+  r'\bgrill\b(?![- ]?(?:safe|proof)\b|(?:\s+|-)pans?\b)',
   r'\bair[- ]?fr',
   r'\bsmoker\b',
   r'\bslow[- ]cooker\b',
@@ -1403,7 +1645,7 @@ final String _appliances = _applianceWords.join('|');
 /// D8, v27) — nor "baking powder/soda".
 const String _methodVerbs =
     r'\b(?:bak(?:e|es|ing)|roast(?:s|ing)?|broil(?:s|ing)?)\b'
-    r'(?!\s+(?:sheet|powder|soda|dish|pan|rack|tray)s?\b)';
+    r'(?!(?:\s+|-)(?:sheet|powder|soda|dish|pan|rack|tray)s?\b)';
 
 /// Every word that can govern a temperature, in ONE pattern ([_Governing]):
 /// group 1 an appliance ([_appliances]), group 2 a method's past participle
@@ -1424,29 +1666,63 @@ final RegExp _governingWord = RegExp(
 /// ([_governingWord]), located ONCE (RULE B, v28, Run 058 S5/S9: v27 read
 /// the clause's text again for each temperature, quadratic in a sentence of
 /// many temperatures — "to 350° to 350° …" 1.2 ms where v26 took 0.15).
-/// [governs] answers each temperature from the lists with one forward
-/// pointer per list (a clause's start and end only move forward), so a
-/// sentence's governing reading costs its length once plus each list
-/// entry once (`heatClauseChars`, pinned ≤ 2 × the sentence's length).
+/// [_GoverningCursor.governs] answers each temperature from the lists with
+/// one forward pointer per list (a clause's start and end only move
+/// forward). Read lazily from [from] (v29, Run 059 S15: the earliest clause
+/// start asked, as v27 read only the clause) up to the temperature, the
+/// characters reached counted (`heatClauseChars`).
 class _Governing {
-  _Governing(String s) {
-    _count('heatClauseChars', s.length);
-    for (final m in _governingWord.allMatches(s)) {
-      (m[1] != null
-              ? _appliance
-              : m[2] != null
-              ? _past
-              : m[3] != null
-              ? _method
-              : _lead)
-          .add((m.start, m.end));
-    }
-  }
+  _Governing(this.s, this.from)
+    : _it = _governingWord.allMatches(s, from).iterator,
+      _reached = from;
 
+  final String s;
+
+  /// Where the scan starts: the clause start it was asked for.
+  final int from;
+  final Iterator<Match> _it;
+  int _reached;
+  var _done = false;
   final _appliance = <(int, int)>[];
   final _past = <(int, int)>[];
   final _method = <(int, int)>[];
   final _lead = <(int, int)>[];
+
+  /// Reads the words ending at or before [p] (and the next), counting the
+  /// characters reached (`heatClauseChars`).
+  void upTo(int p) {
+    while (!_done && _reached <= p) {
+      final more = _it.moveNext();
+      var to = s.length;
+      if (more) {
+        final m = _it.current;
+        (m[1] != null
+                ? _appliance
+                : m[2] != null
+                ? _past
+                : m[3] != null
+                ? _method
+                : _lead)
+            .add((m.start, m.end));
+        to = m.end;
+      } else {
+        _done = true;
+      }
+      if (to > _reached) {
+        _count('heatClauseChars', to - _reached);
+        _reached = to;
+      }
+    }
+  }
+}
+
+/// One check's forward pointers over a sentence's [_Governing] lists — the
+/// lists are the sentence's, shared ([_HeatReading]); the pointers the
+/// check's.
+class _GoverningCursor {
+  _GoverningCursor(this._g);
+
+  final _Governing _g;
   var _a = 0;
   var _p = 0;
   var _m = 0;
@@ -1457,6 +1733,8 @@ class _Governing {
   /// verb its lead follows ("bake … at"). [start] and [end] never decrease
   /// from one call to the next.
   bool governs(int start, int end) {
+    _g.upTo(end);
+    final _Governing(:_appliance, :_past, :_method, :_lead) = _g;
     var read = 0;
     while (_a < _appliance.length && _appliance[_a].$1 < start) {
       _a++;
@@ -1509,6 +1787,20 @@ final RegExp _governedAfter = RegExp(
 @visibleForTesting
 bool heatsFatToFryForTest(String sentence, String head) =>
     _fats[head]?.heatsToFry(sentence.toLowerCase()) ?? false;
+
+/// [_Fat.heatsToFry] of each of [heads] on ONE shared reading of
+/// [sentence], in order — the per-sentence memo's sharing, for the tests.
+@visibleForTesting
+List<bool> heatsFatsToFryForTest(String sentence, List<String> heads) {
+  final s = sentence.toLowerCase();
+  final r = _HeatReading(s);
+  return [for (final h in heads) _fats[h]!.heatsToFry(s, () => r)];
+}
+
+/// The heat reading of sentence [s] of [recipe]'s steps, once per index
+/// ([_HeatReading]).
+_HeatReading _heatReading(Recipe recipe, String s) =>
+    _stepIndexOf(recipe).memo(('heatReading', s), () => _HeatReading(s));
 
 /// What the frying sentences of a recipe say of each of its oil lines
 /// ([_oilOwnersOf]): the sentences a line owns, or the sentence it shares
@@ -1597,7 +1889,9 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
     for (final at in _naming(recipe, head)) {
       final s = index.sentence(at);
       final pourOff = fat.pourOffAllBut.hasMatch(s);
-      if (!pourOff && !fat.heatsToFry(s) && !fat.discards.hasMatch(s)) {
+      if (!pourOff &&
+          !fat.heatsToFry(s, () => _heatReading(recipe, s)) &&
+          !fat.discards.hasMatch(s)) {
         continue;
       }
       // A pour-off's kept part names no line's amount ("all but 2
@@ -2472,20 +2766,128 @@ RegExp _namesPattern(String head) {
 
 final Map<String, RegExp> _namesOf = {};
 
-/// What every [_names] match of a non-empty [head] starts with: a word
-/// opening with the head, or a -y head's stem — the per-head scan's step
-/// pass ([_StepIndex.naming]), ~40% cheaper per character than the whole
-/// pattern (measured at the caps, 0149's eight heads: 0.53–0.84 ms per
-/// head against 0.95–1.37). Cleared past 4,096 heads, as [_namesOf].
-RegExp _namesLead(String head) {
-  if (_namesLeadOf.length > _cap(4096)) {
-    _namesLeadOf.clear();
+/// The forms [_names] reads as [head]: the head, its "s" or "es" plural —
+/// or, for a head ending in "y", its "-ies" one ([_namesPattern]).
+List<String> _formsOf(String head) => head.endsWith('y')
+    ? [head, '${head.substring(0, head.length - 1)}ies']
+    : [head, '${head}s', '${head}es'];
+
+/// The words a [_names] match of [head] starts with, as [_Words] reads
+/// them: a word-only head's forms ([_formsOf]) are whole words; a head
+/// with another character in it ("half-and-half") starts with its leading
+/// word run, a whole word too (the character after it is no word
+/// character, in the head and so in the text). Empty for a head opening
+/// on no word character.
+List<String> _leadsOf(String head) {
+  var n = 0;
+  while (n < head.length && _isWordUnit(head.codeUnitAt(n))) {
+    n++;
   }
-  final lead = head.endsWith('y') ? head.substring(0, head.length - 1) : head;
-  return _namesLeadOf[head] ??= RegExp('\\b${RegExp.escape(lead)}');
+  return n == head.length ? _formsOf(head) : [if (n > 0) head.substring(0, n)];
 }
 
-final Map<String, RegExp> _namesLeadOf = {};
+/// The sentence of [w] naming a head ([_names]) by a match starting at the
+/// word start [start], or -1: one of the head's [forms] ([_formsOf])
+/// written there, ending at a word boundary (`\b` past the text's end: after
+/// a word character only), within one sentence, not after "garlic " (a
+/// sentence break never ends in "garlic ": it follows a period).
+int _namedFrom(_Words w, int start, List<String> forms) {
+  final text = w.text;
+  if (start >= 7 && text.startsWith('garlic ', start - 7)) {
+    return -1;
+  }
+  for (final f in forms) {
+    final end = start + f.length;
+    if (text.startsWith(f, start) &&
+        _isWordUnit(text.codeUnitAt(end - 1)) !=
+            (end < text.length && _isWordUnit(text.codeUnitAt(end)))) {
+      final j = w.sentenceOf(start);
+      if (w.sentenceOf(end - 1) == j) {
+        return j;
+      }
+    }
+  }
+  return -1;
+}
+
+/// A word's key: a hash of its code units — equal words, equal keys; a key
+/// that agrees is confirmed at the word ([_namedFrom]).
+int _keyOf(String word) {
+  var key = 0;
+  for (var i = 0; i < word.length; i++) {
+    key = (key * 31 + word.codeUnitAt(i)) & 0x3FFFFFFF;
+  }
+  return key;
+}
+
+/// A step's words — every maximal `\w` run, [_names]' `\b…\b` word — each
+/// one's start and key ([_keyOf]), and where its sentences (the step
+/// split at [_sentenceBreak]) start: one pass over the step, O(text),
+/// whatever it spells.
+final class _Words {
+  _Words(this.text, List<String> sentences) {
+    // A sentence after a break opens on its first character past the
+    // break's whitespace (the break is greedy, so that character is none
+    // of it); the last one, after a final break, may be empty.
+    var at = 0;
+    for (final (j, s) in sentences.indexed) {
+      if (j > 0) {
+        if (s.isEmpty) {
+          at = text.length;
+        } else {
+          final first = s.codeUnitAt(0);
+          while (text.codeUnitAt(at) != first) {
+            at++;
+          }
+        }
+        breaks.add(at);
+      }
+      at += s.length;
+    }
+    // Into the shared scratch buffers, then copied to size (v29 closer,
+    // the verifier's D8: growable lists cost 2.6 ms over the capped steps,
+    // the scratch 1.3 — a PUT's one-head read paid the difference).
+    final len = text.length;
+    if (_scratchKeys.length <= len >> 1) {
+      _scratchKeys = Int32List((len >> 1) + 1);
+      _scratchStarts = Int32List((len >> 1) + 1);
+    }
+    final keys = _scratchKeys;
+    final starts = _scratchStarts;
+    var n = 0;
+    for (var i = 0; i < len;) {
+      var c = text.codeUnitAt(i);
+      if (!_isWordUnit(c)) {
+        i++;
+        continue;
+      }
+      starts[n] = i;
+      var key = 0;
+      do {
+        key = (key * 31 + c) & 0x3FFFFFFF;
+      } while (++i < len && _isWordUnit(c = text.codeUnitAt(i)));
+      keys[n++] = key;
+    }
+    this.keys = keys.sublist(0, n);
+    this.starts = starts.sublist(0, n);
+  }
+
+  /// [_Words]' scratch (a word is at least one character and a separator
+  /// follows each but the last: at most half the text, rounded up).
+  static Int32List _scratchKeys = Int32List(0);
+  static Int32List _scratchStarts = Int32List(0);
+
+  final String text;
+
+  /// Where each sentence after the first starts.
+  final List<int> breaks = [];
+  late final Int32List keys;
+  late final Int32List starts;
+
+  /// The index of the sentence holding offset [at] (a word's, never a
+  /// break's): the breaks ending at or before it.
+  int sentenceOf(int at) => _firstAfter(breaks, at, (e) => e, strict: true);
+}
 
 /// How many [_names] scans ran since reset — what the tests pin the
 /// inversion's per-word reading by (RULE C v28: no rescan per word found).
@@ -4558,13 +4960,55 @@ bool nutritionStampCurrent(
 /// computed and stamped), or null — so the job loops stop on a bad key or
 /// an outage with the provider's own reason (Run 057 S16/O16), while a
 /// caller that only computes reads the row fact ([nutritionIsFresh]).
+///
+/// [retryUnavailable] (the `all` scope's sweep, v29 RULE A — Run 059 S3):
+/// a row held [foodUnavailableHold] is asked again, once in the pass (a
+/// healthy food held by transient failures recovers with no person); every
+/// other pass re-reads such a hold from the caches only.
 Future<NutritionProviderException?> matchAndCompute(
   SaltDatabase db,
   NutritionProvider fdc,
-  Recipe recipe,
-) async {
-  // One request per FOOD per pass ([onePass]).
-  final provider = onePass(fdc);
+  Recipe recipe, {
+  bool retryUnavailable = false,
+}) async {
+  // IN PROGRESS until the totals are written (v29, migration 017; Run 059
+  // Opus critic 1) — an OWNED mark, taken before the pass's first row
+  // write (the layout's) and released with its totals: a pass that never
+  // gets there — a restart, an await never answered — leaves the recipe
+  // stale whatever it marked derived; one that throws releases its mark
+  // and clears the stamp (stale, `interrupted`) — the next compute repairs
+  // it, and no other writer's mark is touched.
+  final marked = db.markComputing(recipe.id);
+  var ended = false;
+  try {
+    final failure = await _computePass(
+      db,
+      fdc,
+      recipe,
+      retryUnavailable: retryUnavailable,
+      marked: marked,
+    );
+    ended = true;
+    return failure;
+  } finally {
+    if (!ended) {
+      db.releaseComputing(recipe.id, owned: marked, stale: true);
+    }
+  }
+}
+
+/// [matchAndCompute]'s pass under its mark ([marked]: whether it took one,
+/// released by its totals).
+Future<NutritionProviderException?> _computePass(
+  SaltDatabase db,
+  NutritionProvider fdc,
+  Recipe recipe, {
+  required bool retryUnavailable,
+  required bool marked,
+}) async {
+  // One request per FOOD per pass ([onePass]), suspended after
+  // [detailOutageAfter] failing in a row.
+  final provider = onePass(fdc, recipe: recipe.id) as _OnePass;
   final lines = nutritionLines(recipe);
   // Rows are keyed by POSITION, so an edit (insert, delete, reorder, a
   // changed text) moves lines out from under their rows. The layout
@@ -4652,13 +5096,11 @@ Future<NutritionProviderException?> matchAndCompute(
   // held [foodUnavailableHold] at the [foodUnavailableAfter]th — never the
   // job's: returned only when no GLOBAL failure is, and the job loops go on.
   NutritionProviderException? foodFailure;
-  // The rows THIS pass marked derived (Run 058 Opus critic 3): a throw
-  // before the totals clears their keys, so no row reads derived for totals
-  // that never counted it.
-  final marked = <int>[];
-  // The FOOD failures of this pass, counted once the line loop ends — and
-  // only when the pass met no GLOBAL failure (the v28 closer's D8: a detail
-  // outage escalated by [onePass] counts and holds none of them).
+  // The FOOD failures of this pass, counted once the line loop ends —
+  // ALWAYS (the owner's ruling on Run 059 O11, superseding the v28
+  // closer's D8: a GLOBAL failure stops further requests and the job, it
+  // never discards the counts already taken), the request that tipped a
+  // detail outage included ([_Escalated]).
   final foodFailed =
       <
         ({
@@ -4674,11 +5116,16 @@ Future<NutritionProviderException?> matchAndCompute(
     IngredientMatchRow row,
     NutritionProviderException error,
   ) {
+    if (error is DetailsSuspended) {
+      return; // Never asked: underived, uncounted ([onePass]).
+    }
+    final food = error is _Escalated ? error.food : error;
     if (error.scope == FailureScope.global) {
       failure ??= error;
-      return;
     }
-    foodFailed.add((position: position, over: over, row: row, error: error));
+    if (food.scope == FailureScope.food) {
+      foodFailed.add((position: position, over: over, row: row, error: food));
+    }
   }
 
   void countFoodFailure(
@@ -4691,209 +5138,276 @@ Future<NutritionProviderException?> matchAndCompute(
     final count = fresh()
         ? db.countFoodFailureIfUnchanged(over, layoutSeq: seq)
         : null;
-    if (count == null || count < foodUnavailableAfter) {
+    // A row already held (asked again by the `all` scope) is held again at
+    // once: its count runs on, kept by the held write (v29, Run 059 S2).
+    if (count == null ||
+        (count < foodUnavailableAfter && over.hold != foodUnavailableHold)) {
       return;
     }
     // Held for a person (pick or skip, [holdActions]): out of the totals,
     // typed grams kept as the decision, derived grams none.
     final typed = row.gramSource == GramSource.override.name;
-    if (fresh() &&
-        db.replaceIngredientMatchIfUnchanged(
-          row.copyWith(
-            hold: foodUnavailableHold,
-            clearGrams: !typed,
-            clearGramSource: !typed,
-            derivedSeq: derivedKey,
-          ),
-          over: over,
-          layoutSeq: seq,
-        )) {
-      marked.add(position);
+    if (fresh()) {
+      db.replaceIngredientMatchIfUnchanged(
+        row.copyWith(
+          hold: foodUnavailableHold,
+          clearGrams: !typed,
+          clearGramSource: !typed,
+          derivedSeq: derivedKey,
+        ),
+        over: over,
+        layoutSeq: seq,
+        keepRetryCount: true,
+      );
     }
+  }
+
+  void countFoodFailures() {
+    for (final f in foodFailed) {
+      countFoodFailure(f.position, f.over, f.row, f.error);
+    }
+    foodFailed.clear();
+  }
+
+  // RULE A for EVERY line kind (v29, Run 059 Sonnet critic 1 / O3 / Opus
+  // critic 3): an ENGINE line whose candidate, prior decision or nutrient
+  // record FDC fails (FOOD) gets a row of its own — `unmatched`, no food,
+  // [engineUnavailableNote] — counted like a decided row (the same
+  // [countFoodFailure]: its `retry_count`, held [foodUnavailableHold] at
+  // the [foodUnavailableAfter]th), and the pass goes on to the next line.
+  // Until held the row is underived ([SaltDatabase.underivedSql]): the
+  // recipe reads stale and the sweep asks again, once per pass.
+  void engineUnavailable(
+    int position,
+    IngredientLine line,
+    IngredientMatchRow? laid,
+    NutritionProviderException error,
+  ) {
+    var over = laid;
+    if (over == null) {
+      over = IngredientMatchRow(
+        recipeId: recipe.id,
+        position: position,
+        raw: line.raw,
+        itemKey: lineKeyOf(line),
+        fdcId: null,
+        description: engineUnavailableNote,
+        dataType: null,
+        confidence: 0,
+        grams: null,
+        gramSource: null,
+        status: 'unmatched',
+      );
+      if (!write(over)) {
+        return;
+      }
+    }
+    unavailableRow(position, over, over, error);
   }
 
   // Foods built from a search hit this compute (see the candidate loop):
   // the totals read them here, since they are not in fdc_food_cache.
   final standIns = <int, FdcFood>{};
 
-  try {
-    for (final (position, line) in lines.indexed) {
-      // The query keeps the line's own words; the KEY a decision is stored and
-      // reused under is the singular form, so "onion" and "onions" are one.
-      final key = lineKeyOf(line);
+  // No catch (v29): a pass that throws leaves the recipe stale whatever
+  // rows it marked derived ([matchAndCompute] clears the stamp as it
+  // releases the mark; one that never returns keeps its mark) — Run 058
+  // Opus critic 3's cleared keys, Run 059 Opus critic 1's interrupted
+  // pass: ONE mechanism; the next compute repairs it.
+  for (final (position, line) in lines.indexed) {
+    // The query keeps the line's own words; the KEY a decision is stored and
+    // reused under is the singular form, so "onion" and "onions" are one.
+    final key = lineKeyOf(line);
 
-      // A human decided this row; their call stands, placed at this line by
-      // the layout above. `unmatched` is NOT a decision — it is the engine's
-      // own "FDC had nothing", and a sweep exists precisely to retry those
-      // once FDC gains data or the matcher improves. (A cached empty search
-      // answer still short-circuits it, so the retry is free but only helps
-      // once the normalised query or the cache changes.)
-      final decided = decidedAt[position];
-      // A decision derived to a food with no record (`food_gone`, or
-      // `food_unavailable`) for these very inputs: not asked again (one
-      // request per such row until a pick, a skip or an edit moves it; Run
-      // 057 S5/S16: the sweep re-asked every pass) — while no cache holds the
-      // food and its nutrient record. A derivation reads the caches as well
-      // as the key (RULE A v28, Run 058 O1/S1): the moment a cache holds them
-      // again (a search answer lists the food), the row is derived again,
-      // cache-only — no request. A `food_unavailable` row's failing request
-      // was a DETAIL: it is derived again once fdc_food_cache holds one.
-      if (decided != null &&
-          (decided.hold == foodGoneHold ||
-              decided.hold == foodUnavailableHold) &&
-          decided.derivedSeq == derivedKey &&
-          (decided.fdcId == null ||
-              (decided.hold == foodGoneHold
-                      ? knownFood(db, decided.fdcId!)
-                      : _foodFromCache(db, decided.fdcId!)) ==
-                  null ||
-              !_siblingCached(db, decided.fdcId!))) {
-        continue;
-      }
-      if (decided != null) {
-        // RULE A ([derivedFor]): the person's decision (status, food, typed
-        // grams) stands; what it derives — the hold, the grams unless typed,
-        // their source — is read from the recipe as it is now and written,
-        // ONLY those fields, over the row as laid out when they changed
-        // (Run 055 S8/O4/O5, Sonnet critics 1-2: a confirm's hold came back,
-        // a pick's eaten part and a confirmed frying oil's grams froze).
-        final (:row, :food, note: _, :unavailable) = await derivedFor(
-          db,
-          provider,
-          recipe,
-          position,
-          line,
-          decided,
-        );
-        if (unavailable != null) {
+    // A human decided this row; their call stands, placed at this line by
+    // the layout above. `unmatched` is NOT a decision — it is the engine's
+    // own "FDC had nothing", and a sweep exists precisely to retry those
+    // once FDC gains data or the matcher improves. (A cached empty search
+    // answer still short-circuits it, so the retry is free but only helps
+    // once the normalised query or the cache changes.)
+    final decided = decidedAt[position];
+    // A decision held for a food with no record (`food_gone`,
+    // `food_unavailable`) is RE-READ before it is enforced (RULE A v29,
+    // Run 059 O1/S1/S6/S27): derived from the caches alone ([cacheOnly]:
+    // [knownFood], fdc_food_cache then the search-cache index — the one
+    // reader the GET and the PUT's gate read too), never asked of FDC
+    // (Run 057 S5/S16: the sweep re-asked every pass). A cache that holds
+    // the food and its nutrient record again derives it (no request); one
+    // that does not leaves the hold standing, derived for these inputs —
+    // an edit neither re-asks nor re-stales a held row (Run 059 S2). Only
+    // the `all` scope asks again for a `food_unavailable` row, once per
+    // pass ([retryUnavailable], S3).
+    if (decided != null) {
+      final reread =
+          noRecordHolds.contains(decided.hold) &&
+          !(retryUnavailable && decided.hold == foodUnavailableHold);
+      final (:row, :food, note: _, :unavailable) = await derivedFor(
+        db,
+        reread ? cacheOnly : provider,
+        recipe,
+        position,
+        line,
+        decided,
+      );
+      if (unavailable != null) {
+        if (!reread) {
           unavailableRow(position, decided, row, unavailable);
-          continue;
-        }
-        if (food != null && _foodFromCache(db, food.fdcId) == null) {
-          standIns[food.fdcId] = food;
-        }
-        final derived = withDerived(
-          decided,
-          row,
-        ).copyWith(derivedSeq: derivedKey);
-        if (!sameMatchRow(derived, decided)) {
-          if (fresh() &&
-              db.replaceIngredientMatchIfUnchanged(
-                derived,
-                over: decided,
-                layoutSeq: seq,
-              )) {
-            marked.add(position);
-          }
-        } else if (decided.derivedSeq != derivedKey) {
-          if (fresh() &&
-              db.markDerivedIfUnchanged(
-                decided,
-                derivedSeq: derivedKey,
-                layoutSeq: seq,
-              )) {
-            marked.add(position);
-          }
+        } else if (decided.derivedSeq != derivedKey && fresh()) {
+          db.markDerivedIfUnchanged(
+            decided,
+            derivedSeq: derivedKey,
+            layoutSeq: seq,
+            keepRetryCount: true,
+          );
         }
         continue;
       }
-
-      // The sub-recipe rule ([subRecipeRowFor]) gates EVERY write below — the
-      // re-attach of an edited line, a decision reused from another recipe, a
-      // fresh match (Run 045: an amount edit re-attached a stale confirmed
-      // food to a marked line, 408 g of eggs; a shared key's decision made a
-      // marked count a plain no-grams row). A sub-recipe the recipe makes
-      // apart stays out of the totals, on no food, 0 g unmeasured (the user's
-      // ruling, 2026-09-27) — unless it is a count of the food itself
-      // ([subRecipeCountsItsFood]) or carries an eaten "plus" part, which is
-      // the line the engine then matches and weighs ([weighedLine]); the row
-      // keeps the line's own text and key. A count whose food gives no grams
-      // is the sub-recipe still.
-      final eaten = weighedLine(recipe, line);
-      final uncounted = subRecipeRowFor(recipe, position, line);
-      IngredientMatchRow? subRecipeOn(double? grams, {bool sized = true}) =>
-          subRecipeRowFor(
-            recipe,
-            position,
-            line,
-            onFood: true,
-            grams: grams,
-            sized: sized,
+      if (food != null && _foodFromCache(db, food.fdcId) == null) {
+        standIns[food.fdcId] = food;
+      }
+      final derived = withDerived(
+        decided,
+        row,
+      ).copyWith(derivedSeq: derivedKey);
+      if (!sameMatchRow(derived, decided)) {
+        if (fresh()) {
+          db.replaceIngredientMatchIfUnchanged(
+            derived,
+            over: decided,
+            layoutSeq: seq,
           );
-      final normalized = normalizeItem(lineItemOf(eaten));
+        }
+      } else if (decided.derivedSeq != derivedKey) {
+        if (fresh()) {
+          db.markDerivedIfUnchanged(
+            decided,
+            derivedSeq: derivedKey,
+            layoutSeq: seq,
+          );
+        }
+      }
+      continue;
+    }
 
-      // A decided line edited to the same ingredient (and possibly moved):
-      // the layout carried its row here, its old text still on it. What it
-      // becomes is [derivedFor]'s, the one outcome a person's write in
-      // the stale window gives it too — ahead of the sub-recipe rule (B3).
-      final edited = orphanAt[position];
-      if (edited != null) {
-        final (:row, :food, note: _, :unavailable) = await derivedFor(
-          db,
-          provider,
+    // The sub-recipe rule ([subRecipeRowFor]) gates EVERY write below — the
+    // re-attach of an edited line, a decision reused from another recipe, a
+    // fresh match (Run 045: an amount edit re-attached a stale confirmed
+    // food to a marked line, 408 g of eggs; a shared key's decision made a
+    // marked count a plain no-grams row). A sub-recipe the recipe makes
+    // apart stays out of the totals, on no food, 0 g unmeasured (the user's
+    // ruling, 2026-09-27) — unless it is a count of the food itself
+    // ([subRecipeCountsItsFood]) or carries an eaten "plus" part, which is
+    // the line the engine then matches and weighs ([weighedLine]); the row
+    // keeps the line's own text and key. A count whose food gives no grams
+    // is the sub-recipe still.
+    final eaten = weighedLine(recipe, line);
+    final uncounted = subRecipeRowFor(recipe, position, line);
+    IngredientMatchRow? subRecipeOn(double? grams, {bool sized = true}) =>
+        subRecipeRowFor(
           recipe,
           position,
           line,
-          edited,
+          onFood: true,
+          grams: grams,
+          sized: sized,
         );
-        if (unavailable != null) {
-          unavailableRow(position, edited, row, unavailable);
-          continue;
-        }
-        if (food != null && _foodFromCache(db, food.fdcId) == null) {
-          standIns[food.fdcId] = food;
-        }
-        // Over the row it laid out, and only while it is still that row: a
-        // person's write on this line during the awaits (an un-skip, under
-        // the line's own text) stands (Run 052 O3).
-        if (fresh() &&
-            db.replaceIngredientMatchIfUnchanged(
-              row.copyWith(derivedSeq: derivedKey),
-              over: edited,
-              layoutSeq: seq,
-            )) {
-          marked.add(position);
-        }
-        continue;
-      }
-      final seasoning = eaten.amounts.isEmpty && isSeasoningToTaste(normalized);
-      final equipment = isNonFood(normalized);
-      if (uncounted != null) {
-        write(uncounted);
-        continue;
-      }
-      if (normalized.isEmpty ||
-          isWaterLike(normalized) ||
-          seasoning ||
-          equipment) {
-        write(
-          IngredientMatchRow(
-            recipeId: recipe.id,
-            position: position,
-            raw: line.raw,
-            itemKey: key,
-            fdcId: null,
-            description: normalized.isEmpty
-                ? 'Nothing searchable in this line'
-                : seasoning
-                ? engineRuleNotes[1]
-                : equipment
-                ? engineRuleNotes[2]
-                : engineRuleNotes[3],
-            dataType: null,
-            confidence: 1,
-            grams: null,
-            gramSource: null,
-            status: normalized.isEmpty ? 'unmatched' : 'confirmed',
-          ),
-        );
-        continue;
-      }
+    final normalized = normalizeItem(lineItemOf(eaten));
 
+    // A decided line edited to the same ingredient (and possibly moved):
+    // the layout carried its row here, its old text still on it. What it
+    // becomes is [derivedFor]'s, the one outcome a person's write in
+    // the stale window gives it too — ahead of the sub-recipe rule (B3).
+    final edited = orphanAt[position];
+    if (edited != null) {
+      final (:row, :food, note: _, :unavailable) = await derivedFor(
+        db,
+        provider,
+        recipe,
+        position,
+        line,
+        edited,
+      );
+      if (unavailable != null) {
+        unavailableRow(position, edited, row, unavailable);
+        continue;
+      }
+      if (food != null && _foodFromCache(db, food.fdcId) == null) {
+        standIns[food.fdcId] = food;
+      }
+      // Over the row it laid out, and only while it is still that row: a
+      // person's write on this line during the awaits (an un-skip, under
+      // the line's own text) stands (Run 052 O3).
+      if (fresh()) {
+        db.replaceIngredientMatchIfUnchanged(
+          row.copyWith(derivedSeq: derivedKey),
+          over: edited,
+          layoutSeq: seq,
+        );
+      }
+      continue;
+    }
+    final seasoning = eaten.amounts.isEmpty && isSeasoningToTaste(normalized);
+    final equipment = isNonFood(normalized);
+    if (uncounted != null) {
+      write(uncounted);
+      continue;
+    }
+    if (normalized.isEmpty ||
+        isWaterLike(normalized) ||
+        seasoning ||
+        equipment) {
+      write(
+        IngredientMatchRow(
+          recipeId: recipe.id,
+          position: position,
+          raw: line.raw,
+          itemKey: key,
+          fdcId: null,
+          description: normalized.isEmpty
+              ? 'Nothing searchable in this line'
+              : seasoning
+              ? engineRuleNotes[1]
+              : equipment
+              ? engineRuleNotes[2]
+              : engineRuleNotes[3],
+          dataType: null,
+          confidence: 1,
+          grams: null,
+          gramSource: null,
+          status: normalized.isEmpty ? 'unmatched' : 'confirmed',
+        ),
+      );
+      continue;
+    }
+
+    // An engine row of this line whose food FDC failed (RULE A v29):
+    // until held, asked again (once per pass); held, RE-READ from the
+    // caches alone ([cacheOnly]) like a decided row's hold — a cache
+    // holding the food again matches the line with no request — and
+    // asked of FDC again only by the `all` scope ([retryUnavailable]).
+    final laid = paired[position];
+    final failed =
+        laid != null &&
+            laid.status == 'unmatched' &&
+            laid.description == engineUnavailableNote &&
+            laid.raw == line.raw
+        ? laid.copyWith(position: position, itemKey: key)
+        : null;
+    final lineProvider =
+        failed?.hold == foodUnavailableHold && !retryUnavailable
+        ? cacheOnly
+        : provider;
+    try {
       // A second food the engine counts by rule ([secondFoodRuleOf]): the
       // line's own record, ahead of any key decision — a decision names the
       // first food only.
-      final byRule = await ruleRowFor(db, provider, recipe, position, line);
+      final byRule = await ruleRowFor(
+        db,
+        lineProvider,
+        recipe,
+        position,
+        line,
+      );
       if (byRule != null) {
         if (_foodFromCache(db, byRule.food.fdcId) == null) {
           standIns[byRule.food.fdcId] = byRule.food;
@@ -4909,11 +5423,22 @@ Future<NutritionProviderException?> matchAndCompute(
       // says a person chose it.
       final prior = db.decisionFor(key);
       if (prior != null && prior.fdcId != null) {
-        final known = await _decidedFood(db, provider, prior.fdcId!, eaten);
+        final known = await _decidedFood(
+          db,
+          lineProvider,
+          prior.fdcId!,
+          eaten,
+        );
         // Its nutrient record resolved with it (v28): one FDC no longer
         // serves leaves the decision unusable here — the line is matched.
-        if (known != null && !await _siblingGone(db, provider, known.fdcId)) {
-          final (food, resolution) = await gramsFor(db, provider, known, eaten);
+        if (known != null &&
+            !await _siblingGone(db, lineProvider, known.fdcId)) {
+          final (food, resolution) = await gramsFor(
+            db,
+            lineProvider,
+            known,
+            eaten,
+          );
           if (_foodFromCache(db, food.fdcId) == null) {
             standIns[food.fdcId] = food;
           }
@@ -4950,7 +5475,7 @@ Future<NutritionProviderException?> matchAndCompute(
       }
 
       final search = lineSearchFor(db, normalized, lineKeyOf(eaten));
-      final candidates = await _cachedSearch(db, provider, search.answer);
+      final candidates = await _cachedSearch(db, lineProvider, search.answer);
       final ranked = freshOverCured(
         eaten.raw,
         rankCandidates(
@@ -5020,11 +5545,11 @@ Future<NutritionProviderException?> matchAndCompute(
             _foodFromCache(db, id) ??
             (hasNutrients
                 ? candidate.candidate.toFood()
-                : await _cachedFood(db, provider, id));
+                : await _cachedFood(db, lineProvider, id));
         // A candidate whose nutrient record FDC no longer serves cannot be
         // counted (v28, Sonnet critic 2: it left the recipe stale for 3
         // passes): passed over like one with no record — the line re-matched.
-        if (resolved == null || await _siblingGone(db, provider, id)) {
+        if (resolved == null || await _siblingGone(db, lineProvider, id)) {
           continue;
         }
         if (_macroComplete(resolved)) {
@@ -5070,7 +5595,7 @@ Future<NutritionProviderException?> matchAndCompute(
       final fetch = !belowConfidenceGate(best.confidence);
       final (gramsFood, resolution) = await gramsFor(
         db,
-        provider,
+        lineProvider,
         food!,
         eaten,
         fetch: fetch,
@@ -5115,39 +5640,47 @@ Future<NutritionProviderException?> matchAndCompute(
           hold: outcome.hold,
         ),
       );
-    }
-
-    if (failure == null) {
-      for (final f in foodFailed) {
-        countFoodFailure(f.position, f.over, f.row, f.error);
+    } on NutritionProviderException catch (error) {
+      if (identical(lineProvider, cacheOnly)) {
+        continue; // No cache holds it yet: the hold stands, no request.
       }
+      if (error is DetailsSuspended) {
+        continue; // Never asked: the line's row stands, uncounted.
+      }
+      if (error is _Escalated) {
+        engineUnavailable(position, line, failed, error);
+      }
+      if (error.scope == FailureScope.global) {
+        countFoodFailures();
+        rethrow;
+      }
+      engineUnavailable(position, line, failed, error);
     }
-
-    // The totals never fetch (RULE A): every food they read — its nutrient
-    // record ([nutrientSiblings]) included — was resolved by the derivation
-    // that wrote its row (v28: the separate sibling prefetch is gone; a
-    // derivation resolves the sibling where it resolves the food).
-    // The stamp names the inputs and layout the totals were computed on —
-    // never whether the decided rows are derived: that is each row's own
-    // fact, read by [nutritionIsFresh] over the rows as they are when it is
-    // read (Run 057 S15/O1/O15: `derivedAll`, this compute's snapshot,
-    // stamped fresh over a person's underived write during an await).
-    recomputeTotals(
-      db,
-      recipe,
-      freshMatch: (layoutSeq: seq, current: fresh),
-      standIns: standIns,
-    );
-  } catch (_) {
-    // No row stays marked derived by a pass whose totals never ran (Run
-    // 058 Opus critic 3: 0129's confirmed smoke derived, a later engine
-    // line's search failing — the stale sweep's own target read fresh on
-    // totals that never counted it). Cleared, they read underived: the
-    // recipe is stale and the sweep revisits it.
-    db.clearDerivedSeq(recipe.id, marked);
-    rethrow;
   }
-  return failure ?? foodFailure;
+
+  countFoodFailures();
+
+  // The totals never fetch (RULE A): every food they read — its nutrient
+  // record ([nutrientSiblings]) included — was resolved by the derivation
+  // that wrote its row (v28: the separate sibling prefetch is gone; a
+  // derivation resolves the sibling where it resolves the food).
+  // The stamp names the inputs and layout the totals were computed on —
+  // never whether the decided rows are derived: that is each row's own
+  // fact, read by [nutritionIsFresh] over the rows as they are when it is
+  // read (Run 057 S15/O1/O15: `derivedAll`, this compute's snapshot,
+  // stamped fresh over a person's underived write during an await).
+  recomputeTotals(
+    db,
+    recipe,
+    freshMatch: (layoutSeq: seq, current: fresh),
+    standIns: standIns,
+    // A line the suspension left unasked: stale, waiting on USDA.
+    unavailable: provider.skipped,
+    ending: marked,
+  );
+  return failure ??
+      (provider.skipped ? provider.suspended : null) ??
+      foodFailure;
 }
 
 /// Lays [recipe]'s match rows out on its lines ([pairRowsToLines]) in ONE
@@ -5241,15 +5774,19 @@ int pairingExpansions = 0;
 /// few edits stops there (measured, JIT, real corpus lines shuffled whole
 /// with a quarter rewritten: ~12 ms at 60 lines, ~100 ms (120 ms cold) at
 /// 400, the edit service's line cap; a three-edit save of 400 lines ~50 ms
-/// in ~3,800 expansions) — and so may a save of many identical lines: a
-/// RUN of twins (consecutive rows of one text) is laid out in its own order
-/// and never branched on (v28, Run 058 O18/S28: seed 41487's 14-line save
-/// with eleven twins took 39,789 expansions, now 4,916), but twins apart
-/// (another line between them) are still distinct rows to the search — a
-/// twin-heavy fuzz of 2,000 saves of 12–15 lines over three texts reached
-/// the budget once (v27: four times). What it then returns is the best
-/// layout found: never a row twice nor a decision on another ingredient;
-/// at worst a decision kept on another twin of its line.
+/// in ~3,800 expansions). A RUN of twins (consecutive rows of one text and
+/// keys) is ONE item, an ordered multiset: the search decides how many of
+/// its rows the lines take and where, never which twin (v29, Run 059
+/// O12/S12/S14: v28 still chose a twin per line, and one edit before 50 or
+/// more twins spent the whole budget — 400 twins 1.0–4.3 s; now ~800
+/// expansions, 20–45 ms; seed 41487's save 4,916 → 2,760); the rows a run
+/// gives are its decided ones first, the surplus dropped where the fewest
+/// rows leave their own positions (ties: from the end), laid in position
+/// order. Twins apart (another line between them) are still distinct rows
+/// to the search: 30,000 saves of 11–16 lines over two texts reach the
+/// budget once (v28: twice). What it then returns is the best layout
+/// found: never a row twice nor a decision on another ingredient; at worst
+/// a decision kept on another twin of its line.
 List<IngredientMatchRow?> pairRowsToLines(
   List<IngredientMatchRow> rows,
   List<IngredientLine> lines, {
@@ -5334,17 +5871,21 @@ List<IngredientMatchRow?> pairRowsToLines(
           if (fit(i, at)) i,
       ],
   ];
-  // TWINS (v28, Run 058 O18/S28): a run of consecutive old rows with the
-  // same text and keys is ONE group — any line one of them fits, the other
-  // fits — and is laid out in its own order (the k-th row taken lies below
-  // the (k+1)-th), so the search never branches on a permutation of twins.
-  // Exact for the script's cost and the decisions kept: a crossed pair of
-  // twins uncrossed (adjacent indices first; no other row lies between) is
-  // a chain at least as long, the same rows on lines of the same texts —
-  // only the moved/drift tiebreaks may read it otherwise, which the
-  // pairing oracle does not enforce (no explanation prefers a twin's
-  // identity). `runOf[i]`: the first row of i's run; `lastIn[r]`: the run
-  // r's row taken last on this branch.
+  // TWINS (v29, Run 059 O12/S12/S14 — v28 laid a run in its own order but
+  // still chose WHICH twin each line took: one edit before 50 twins spent
+  // the whole budget): a run of consecutive old rows with the same text and
+  // keys is ONE item — any line one of them fits, the other fits — an
+  // ordered multiset. The search decides only how many of a run's rows the
+  // lines take and on which lines (a line takes the run's next row in
+  // position order, never a chosen twin; the bound reads a run's untaken
+  // rows as one block, [extendBlock]); a layout then takes, of the run's
+  // rows, its decided ones first and lays them on those lines in position
+  // order ([takenOf]; the final layout's surplus is re-chosen where the
+  // fewest rows leave their own positions, below). Exact for the script's
+  // cost (the rows' texts and keys are the run's; a crossed pair of twins
+  // uncrossed is a chain at least as long) and for the decisions lost (the
+  // fewest a run giving that many rows can lose), so the search never
+  // branches on twins. `runOf[i]`: the first row of i's run.
   final runOf = List<int>.filled(n, 0);
   for (var i = 0; i < n; i++) {
     runOf[i] =
@@ -5357,9 +5898,51 @@ List<IngredientMatchRow?> pairRowsToLines(
         ? runOf[i - 1]
         : i;
   }
-  final lastIn = List<int>.filled(n, -1);
+  // Each run's rows, by its first row; and the rows of a run's lines,
+  // given how many lines take it: its decided rows first, then the rest,
+  // the surplus dropped from the end, in position order (a leaf's; the
+  // best layout's surplus is settled below).
+  final members = <int, List<int>>{};
+  for (var i = 0; i < n; i++) {
+    (members[runOf[i]] ??= []).add(i);
+  }
+  // Each run's first row and its size (by first row), for the bound.
+  final runs = [...members.keys];
+  final sizeOf = List<int>.filled(n, 0);
+  for (final r in runs) {
+    sizeOf[r] = members[r]!.length;
+  }
+  List<int> takenOf(int run, int k) {
+    final rows = members[run]!;
+    if (k == rows.length) {
+      return rows;
+    }
+    final decided = rows.where((i) => _isDecided(old[i])).length;
+    var decidedLeft = min(k, decided);
+    var otherLeft = k - decidedLeft;
+    return [
+      for (final i in rows)
+        if (_isDecided(old[i]) ? decidedLeft-- > 0 : otherLeft-- > 0) i,
+    ];
+  }
+
+  // The runs each line fits, each once (first rows ascending) — [fits]
+  // itself when no run has twins (v29 closer, the verifier's D8: the copy
+  // cost 1.4 ms a layout on 400 lines one key fits, every PUT).
+  final fitRuns = runs.length == n
+      ? fits
+      : [
+          for (final f in fits)
+            [
+              for (var k = 0; k < f.length; k++)
+                if (k == 0 || runOf[f[k - 1]] != runOf[f[k]]) runOf[f[k]],
+            ],
+        ];
+  // The rows each run has given on this branch.
+  final taken = List<int>.filled(n, 0);
+  // The row each line took on this branch (its run's next, in position
+  // order), or null.
   final rowAt = List<int?>.filled(m, null);
-  final used = List.filled(n, false);
   final want = List.filled(texts.length, 0);
   final have = List.filled(texts.length, 0);
   final tails = <int>[];
@@ -5382,6 +5965,40 @@ List<IngredientMatchRow?> pairRowsToLines(
     }
   }
 
+  // Patience over the rows [a]..[b] (a run's untaken twins) in decreasing
+  // order, as [extend] row by row — in one step: the first chain ending at
+  // or past a now ends at a, and each later one up to the first ending at
+  // or past b ends one past its predecessor's old end.
+  int below(int x) {
+    var lo = 0;
+    var hi = tails.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (tails[mid] < x) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo;
+  }
+
+  void extendBlock(int a, int b) {
+    if (a == b) {
+      extend(a); // One row: one search (the D8 closer: half the bound's).
+      return;
+    }
+    final i0 = below(a);
+    final i1 = below(b);
+    if (i1 == tails.length) {
+      tails.add(0);
+    }
+    for (var j = i1; j > i0; j--) {
+      tails[j] = tails[j - 1] + 1;
+    }
+    tails[i0] = a;
+  }
+
   // A lower bound on [_layoutCost]'s leading term (the script's cost) for
   // every layout the lines before [at] begin: the rows on a line of their
   // text (each text's rows left against its lines left), and the longest
@@ -5400,11 +6017,9 @@ List<IngredientMatchRow?> pairRowsToLines(
       want[lineText[k]]++;
     }
     var gaps = 0;
-    for (var i = 0; i < n; i++) {
-      // A twin below its run's last taken row is never taken (TWINS).
-      if (!used[i] && i > lastIn[runOf[i]]) {
-        gap[i] ? gaps++ : have[rowText[i]]++;
-      }
+    for (final r in runs) {
+      final left = sizeOf[r] - taken[r];
+      gap[r] ? gaps += left : have[rowText[r]] += left;
     }
     var left = 0;
     for (var t = 0; t < want.length; t++) {
@@ -5418,9 +6033,13 @@ List<IngredientMatchRow?> pairRowsToLines(
           extend(i);
         }
       } else {
-        for (final i in fits[k].reversed) {
-          if (!used[i]) {
-            extend(i);
+        // A run's rows are taken in position order on a branch: the ones
+        // past those it has given, one block of rows per run.
+        final f = fitRuns[k];
+        for (var x = f.length - 1; x >= 0; x--) {
+          final r = f[x];
+          if (taken[r] < sizeOf[r]) {
+            extendBlock(r + taken[r], r + sizeOf[r] - 1);
           }
         }
       }
@@ -5435,7 +6054,18 @@ List<IngredientMatchRow?> pairRowsToLines(
     }
     nodes++;
     if (at == m) {
-      final paired = [for (final i in rowAt) i == null ? null : old[i]];
+      final count = <int, int>{};
+      for (final i in rowAt.nonNulls) {
+        count[runOf[i]] = (count[runOf[i]] ?? 0) + 1;
+      }
+      final rowsOf = {
+        for (final MapEntry(key: r, value: k) in count.entries)
+          r: takenOf(r, k).iterator,
+      };
+      final paired = [
+        for (final i in rowAt)
+          i == null ? null : old[(rowsOf[runOf[i]]!..moveNext()).current],
+      ];
       final cost = _layoutCost(old, gap, lines, paired);
       if (cost < bestCost) {
         best = paired;
@@ -5446,16 +6076,11 @@ List<IngredientMatchRow?> pairRowsToLines(
     if (bound(at) * b * b * b * b >= bestCost) {
       return;
     }
-    for (final i in fits[at]) {
-      final run = runOf[i];
-      if (!used[i] && i > lastIn[run]) {
-        final was = lastIn[run];
-        used[i] = true;
-        rowAt[at] = i;
-        lastIn[run] = i;
+    for (final r in fitRuns[at]) {
+      if (taken[r] < sizeOf[r]) {
+        rowAt[at] = r + taken[r]++;
         search(at + 1);
-        lastIn[run] = was;
-        used[i] = false;
+        taken[r]--;
       }
     }
     rowAt[at] = null;
@@ -5464,6 +6089,63 @@ List<IngredientMatchRow?> pairRowsToLines(
 
   search(0);
   pairingExpansions = nodes;
+  // Which of a run's rows the best layout keeps where its lines are fewer
+  // than its rows: of the in-order choices losing the fewest decisions,
+  // the one moving the fewest rows off their own positions, then the
+  // least distance (rows stay put — a layout is its own next layout); a
+  // tie keeps the earlier rows (the surplus dropped from the end). One
+  // dynamic program per such run over its rows × its lines, once per call.
+  final linesOf = <int, List<int>>{};
+  for (var at = 0; at < m; at++) {
+    if (best[at]?.position case final i?) {
+      (linesOf[runOf[i]] ??= []).add(at);
+    }
+  }
+  final settled = [...best];
+  for (final MapEntry(key: r, value: ls) in linesOf.entries) {
+    final rows = members[r]!;
+    final c = rows.length;
+    final k = ls.length;
+    if (k == c || gap[r]) {
+      continue;
+    }
+    // f[i * (k + 1) + j]: the least (lost, moved, drift), packed, laying
+    // rows[i..] on ls[j..].
+    const lost = 1 << 40;
+    const moved = 1 << 20;
+    final f = List<int>.filled((c + 1) * (k + 1), 0);
+    for (var i = c; i >= 0; i--) {
+      for (var j = k; j >= 0; j--) {
+        if (c - i < k - j) {
+          f[i * (k + 1) + j] = 1 << 62;
+        } else if (i < c) {
+          final row = rows[i];
+          final skip = c - i > k - j
+              ? f[(i + 1) * (k + 1) + j] + (_isDecided(old[row]) ? lost : 0)
+              : 1 << 62;
+          final take = j < k
+              ? f[(i + 1) * (k + 1) + j + 1] +
+                    (row == ls[j] ? 0 : moved + (row - ls[j]).abs())
+              : 1 << 62;
+          f[i * (k + 1) + j] = take <= skip ? take : skip;
+        }
+      }
+    }
+    for (var i = 0, j = 0; j < k; i++) {
+      final row = rows[i];
+      final take =
+          f[(i + 1) * (k + 1) + j + 1] +
+          (row == ls[j] ? 0 : moved + (row - ls[j]).abs());
+      if (take == f[i * (k + 1) + j]) {
+        settled[ls[j++]] = old[row];
+      }
+    }
+  }
+  if (_layoutCost(old, gap, lines, settled) case final cost
+      when cost < bestCost) {
+    best = settled;
+    bestCost = cost;
+  }
   // A run's twins taken in their own order can stand off their own lines
   // where a crossed pair would not (the moved tiebreak: "a layout is its
   // own next layout", Run 052 S12/O12): each twin whose own line holds a
@@ -5843,6 +6525,7 @@ Future<(FdcFood, GramResolution?)> gramsFor(
   final detail = await _cachedFood(db, provider, food.fdcId);
   if (detail == null) {
     db.fdcFoodCachePut(food.fdcId, jsonEncode(food.toJson()));
+    _unholdOn(db, [food.fdcId]);
     return (food, resolution);
   }
   final withDetail = resolve(detail);
@@ -5995,6 +6678,8 @@ bool recomputeTotals(
   Map<int, FdcFood> standIns = const {},
   ({Recipe recipe, String hash})? hashed,
   Set<int>? missing,
+  bool unavailable = false,
+  bool ending = false,
 }) {
   // The totals and the stamp are read in ONE synchronous pass over the
   // STORED recipe and its rows (Run 053 O4): a plain recompute carries the
@@ -6071,7 +6756,7 @@ bool recomputeTotals(
       }
       continue;
     }
-    if (row.hold == foodGoneHold || row.hold == foodUnavailableHold) {
+    if (noRecordHolds.contains(row.hold)) {
       continue; // Held: FDC serves no such food (derived to the hold).
     }
     final own = food(row.fdcId!, line: lines[row.position]);
@@ -6157,8 +6842,15 @@ bool recomputeTotals(
         for (final row in matches) row.position,
       }.length <
       lines.length;
-  final (hash, layoutSeq) = switch (freshMatch) {
-    _ when rowless || engineMissing => ('', null),
+  // The current inputs' hash, once ([hashed] when it is still the stored
+  // recipe's).
+  late final currentHash = hashed != null && hashed.recipe == now
+      ? hashed.hash
+      : ingredientsHashOf(now);
+  final (stampHash, stampSeq) = switch (freshMatch) {
+    // A re-match whose suspension ([onePass]) left a line with no row
+    // stamps it waiting on USDA (below), never as changed inputs.
+    _ when rowless && !(unavailable && freshMatch != null) => ('', null),
     // A plain recompute keeps the stamp only on the inputs it was
     // stamped on (Run 054 O3: totals of an edited recipe under the old
     // stamp read fresh again after a revert).
@@ -6168,30 +6860,39 @@ bool recomputeTotals(
     // D11: plus-real's PUT paid ~8 ms for the second).
     null
         when stored != null &&
-            stored.ingredientsHash ==
-                (hashed != null && hashed.recipe == now
-                    ? hashed.hash
-                    : ingredientsHashOf(now)) =>
+            (stored.ingredientsHash == currentHash ||
+                stored.ingredientsHash == unavailableStampOf(currentHash)) =>
       (stored.ingredientsHash, stored.layoutSeq),
     null => ('', null),
     (:final layoutSeq, :final current) =>
       current() ? (ingredientsHashOf(recipe), layoutSeq) : ('', null),
   };
-  db
-    ..clearDerivedSeq(recipe.id, underived)
-    ..upsertRecipeNutrition(
-      recipeId: recipe.id,
-      servingBasis: basis,
-      caloriesPerServing: calories,
-      nutrientsJson: jsonEncode(perServing),
-      totalGrams: double.parse(totalGrams.toStringAsFixed(1)),
-      matchedCount: contributing > lines.length ? lines.length : contributing,
-      totalCount: lines.length,
-      status: status,
-      ingredientsHash: hash,
-      layoutSeq: layoutSeq,
-      totalsJson: jsonEncode(totals),
-    );
+  // A food these totals could not count (an engine row's no cache holds,
+  // [unavailable]: an apply-to-all target FDC could not weigh) stamps the
+  // inputs STALE as waiting on USDA, never as changed (v29, Run 059 O23):
+  // [unavailableStampOf] the hash — no current hash equals it, and the
+  // page's `stale_reason` reads `underived`.
+  final (hash, layoutSeq) =
+      (engineMissing || unavailable) &&
+          stampHash.isNotEmpty &&
+          !stampHash.startsWith(_unavailableStamp)
+      ? (unavailableStampOf(stampHash), null)
+      : (stampHash, stampSeq);
+  db.upsertRecipeNutrition(
+    recipeId: recipe.id,
+    servingBasis: basis,
+    caloriesPerServing: calories,
+    nutrientsJson: jsonEncode(perServing),
+    totalGrams: double.parse(totalGrams.toStringAsFixed(1)),
+    matchedCount: contributing > lines.length ? lines.length : contributing,
+    totalCount: lines.length,
+    status: status,
+    ingredientsHash: hash,
+    layoutSeq: layoutSeq,
+    totalsJson: jsonEncode(totals),
+    underived: underived,
+    ending: ending,
+  );
   _log.info(
     'Nutrition for ${recipe.id}: $status, '
     '$contributing/${lines.length} lines, '
@@ -6200,22 +6901,35 @@ bool recomputeTotals(
   return true;
 }
 
+/// The stamp of totals that could not count a food FDC cannot serve now,
+/// on inputs hashed [hash] ([recomputeTotals]): stale, and read as waiting
+/// on USDA (`stale_reason: underived`) while the inputs are still [hash].
+String unavailableStampOf(String hash) => '$_unavailableStamp$hash';
+
+const String _unavailableStamp = 'unavailable:';
+
 /// A PLAIN recompute ([recomputeTotals]: a person's PUT, an apply-to-all
-/// target) whose totals would meet a food — or a nutrient record
-/// ([nutrientSiblings]) — no cache holds resolves it first, one request per
-/// food, then computes (RULE A v28, Run 058 S2/S3: an unrelated row's food
-/// a cache had lost was dropped from the totals and the recipe turned
-/// stale on a PUT that fetched nothing). The totals read only what a
-/// derivation resolved: a food FDC answers "no such food" for, or cannot
-/// serve now, stays missing — a decided row underived, an engine row's
-/// recipe stale — for the next compute to derive (`food_gone`) or re-match.
-/// Nothing is asked when every food is cached.
+/// target) whose totals would meet the WRITTEN line's food — or its
+/// nutrient record ([nutrientSiblings]) — no cache holds resolves it first
+/// (RULE A v28, Run 058 S2/S3), and ONLY it (v29, Run 059 S13: [only], the
+/// line's food and its sibling — at most two requests through the pass's
+/// memo, the first GLOBAL failure stopping them; v28 asked once per
+/// uncached food in the recipe, 400 requests for one PUT). Every other row
+/// whose food no cache holds stays out of the totals, UNDERIVED (a decided
+/// row's `derived_seq` cleared, an engine row's recipe stamped waiting on
+/// USDA): the recipe reads stale and the sweep derives them. [unavailable]:
+/// the caller left a food unweighed ([recomputeTotals]). [ending]: the
+/// caller's in-progress mark, released by the totals' write
+/// ([SaltDatabase.markComputing]).
 Future<void> recomputeTotalsResolving(
   SaltDatabase db,
   NutritionProvider provider,
   Recipe recipe, {
+  required Set<int> only,
   ({int layoutSeq, bool Function() current})? freshMatch,
   ({Recipe recipe, String hash})? hashed,
+  bool unavailable = false,
+  bool ending = false,
 }) async {
   final missing = <int>{};
   if (recomputeTotals(
@@ -6224,18 +6938,38 @@ Future<void> recomputeTotalsResolving(
     freshMatch: freshMatch,
     hashed: hashed,
     missing: missing,
+    unavailable: unavailable,
+    ending: ending,
   )) {
     return;
   }
-  for (final fdcId in missing) {
+  for (final fdcId in missing.intersection(only)) {
     try {
       await _cachedFood(db, provider, fdcId);
     } on NutritionProviderException catch (error) {
       _log.info('totals of ${recipe.id}: food $fdcId unavailable: $error');
+      if (error.scope == FailureScope.global) {
+        break;
+      }
     }
   }
-  recomputeTotals(db, recipe, freshMatch: freshMatch, hashed: hashed);
+  recomputeTotals(
+    db,
+    recipe,
+    freshMatch: freshMatch,
+    hashed: hashed,
+    unavailable: unavailable,
+    ending: ending,
+  );
 }
+
+/// The foods a row on [fdcId] reads: the food and its nutrient record
+/// ([nutrientSiblings]) — what a person's write may resolve
+/// ([recomputeTotalsResolving]'s `only`).
+Set<int> foodsOf(int? fdcId) => {
+  ?fdcId,
+  if (nutrientSiblings[fdcId] case final sibling?) sibling,
+};
 
 /// The per-serving label of the per-recipe [totals] (nutrient key -> total)
 /// divided by [basis]: each amount to 2 places, its %DV to 1.
@@ -6599,6 +7333,7 @@ Future<List<FdcCandidate>> _cachedSearch(
     query,
     jsonEncode([for (final candidate in results) candidate.toJson()]),
   );
+  _unholdOn(db, [for (final candidate in results) candidate.fdcId]);
   return results;
 }
 
@@ -6802,25 +7537,46 @@ bool _siblingCached(SaltDatabase db, int fdcId) {
 /// `food(id)` asks FDC, and every later ask for that id in the pass is
 /// answered by the same answer — a record (cached by [_cachedFood] anyway),
 /// "no such food" (a 404 is cached nowhere: 400 typed rows on one retired
-/// food asked 400 times, Run 058 O6), or the same failure (a FOOD-scoped
-/// error is that id's for the pass). Every path that fetches a food —
-/// a decided row, its nutrient sibling ([_siblingGone]), an engine
-/// candidate, the prior decision, an apply target — goes through
+/// food asked 400 times, Run 058 O6), or the same failure. Every path that
+/// fetches a food — a decided row, its nutrient sibling ([_siblingGone]),
+/// an engine candidate, the prior decision, an apply target — goes through
 /// [_cachedFood], so none asks twice. Searches are not memoised here: an
 /// answer is cached by its query, a failure is GLOBAL (the pass stops).
-NutritionProvider onePass(NutritionProvider provider) =>
-    provider is _OnePass ? provider : _OnePass(provider);
+/// Underneath, the JOB's outage watch ([jobProvider]): a provider not yet
+/// watched is a job of one pass.
+/// [recipe]: the recipe the pass is for — the watch's unit of escalation
+/// (a person's write and its apply-to-all are one: never escalated).
+/// The PASS's own suspension (the owner's ruling on Run 059 O10): FOOD
+/// failures on [detailOutageAfter] distinct ids REQUESTED in this pass in
+/// a row, no detail answered between (a failure the job already holds
+/// answers with no request and is not counted), and the pass asks FDC for
+/// no more details: every later uncached detail throws [DetailsSuspended]
+/// with no request — a decided row it reaches is left underived, an
+/// engine line keeps the row it had, both uncounted, and the totals stamp
+/// the recipe stale ([recomputeTotals]' `unavailable`). Not an escalation:
+/// the job goes on, and its watch escalates at the next recipe's first
+/// failure — so an outage costs at most [detailOutageAfter] + 1 detail
+/// requests per sweep, whatever the recipe's size.
+NutritionProvider onePass(NutritionProvider provider, {String? recipe}) =>
+    provider is _OnePass
+    ? provider
+    : _OnePass(
+        provider is _JobWatch ? provider : _JobWatch(provider),
+        recipe,
+      );
 
 class _OnePass implements NutritionProvider {
-  _OnePass(this._inner);
-  final NutritionProvider _inner;
+  _OnePass(this._inner, this._recipe);
+  final _JobWatch _inner;
+  final String? _recipe;
   final Map<int, Future<FdcFood?>> _asked = {};
 
-  /// The ids whose detail failed FOOD since FDC last answered one.
-  final Set<int> _failing = {};
+  /// Requested details that failed FOOD since the pass's last answer.
+  var _failedRun = 0;
 
-  /// The escalated failure: every later detail of the pass throws it.
-  NutritionProviderException? _down;
+  /// Set at the suspension; [skipped]: a detail was refused under it.
+  DetailsSuspended? suspended;
+  bool skipped = false;
 
   @override
   Future<List<FdcCandidate>> search(String query) => _inner.search(query);
@@ -6828,36 +7584,142 @@ class _OnePass implements NutritionProvider {
   @override
   Future<FdcFood?> food(int fdcId) => _asked[fdcId] ??= _ask(fdcId);
 
-  /// RULE A's escalation (the v28 closer, D8 — the owner's ruling): FOOD
-  /// failures on [detailOutageAfter] DISTINCT ids in a row, no detail
-  /// answered between them, are an outage of the detail endpoint, not
-  /// those foods' — GLOBAL, with the provider's reason; the pass asks
-  /// nothing more ([matchAndCompute] counts none of its FOOD failures and
-  /// holds nothing; the job stops). One id failing among answered ones
-  /// stays that row's FOOD failure.
   Future<FdcFood?> _ask(int fdcId) async {
-    final down = _down;
-    if (down != null) {
+    if (suspended case final down?) {
+      skipped = true;
       throw down;
     }
+    final replay = _inner._down != null || _inner._failed.containsKey(fdcId);
     try {
-      final food = await _inner.food(fdcId);
-      _failing.clear();
+      final food = await _inner.foodFor(fdcId, _recipe);
+      _failedRun = 0;
       return food;
     } on NutritionProviderException catch (error) {
-      if (error.scope == FailureScope.food &&
-          (_failing..add(fdcId)).length >= detailOutageAfter) {
-        throw _down = NutritionProviderException(error.message);
+      if (!replay &&
+          error.scope == FailureScope.food &&
+          ++_failedRun >= detailOutageAfter) {
+        suspended = DetailsSuspended(error);
       }
       rethrow;
     }
   }
 }
 
-/// How many FOOD failures on distinct foods in a row, within one pass,
-/// are a detail outage ([_OnePass]): 3 — two retired or broken records
-/// side by side are plausible, a third is FDC.
+/// A pass's suspension ([onePass]): FOOD — never the job's stop — and what
+/// a suspended pass returns, so `computeUntilFresh` runs no second pass
+/// (it would only ask FDC again; the next sweep does).
+class DetailsSuspended extends NutritionProviderException {
+  /// After [food], the failure that tipped it.
+  DetailsSuspended(NutritionProviderException food)
+    : super(
+        '${food.message} (no more food details asked for this recipe '
+        'in this pass)',
+        scope: FailureScope.food,
+      );
+}
+
+/// RULE A's escalation, counted in the JOB's units (v29, Run 059
+/// O4/O10/S4/O11): a job — a bulk sweep, a recipe's compute job, a
+/// person's write — reads FDC through ONE of these for all its passes.
+/// FOOD failures on [detailOutageAfter] DISTINCT ids in a row, no detail
+/// answered between them (a record or a 404 — any answer resets the run),
+/// SPANNING AT LEAST TWO RECIPES (the owner's ruling on Run 059 O11: an
+/// outage is a property of the job; one recipe's failures, however many,
+/// are its rows' state), are an outage of the detail endpoint: GLOBAL with
+/// the provider's reason ([_Escalated], carrying the tipping request's own
+/// FOOD failure — still counted on its row), and every later detail of the
+/// job throws it with no request. With the pass's own suspension
+/// ([onePass]: one recipe asks at most [detailOutageAfter] failing details
+/// in a row) a detail outage stops a sweep after at most
+/// [detailOutageAfter] + 1 requests, whatever the recipes' sizes: 3 in
+/// the first failing recipe, 1 in the next. A food that
+/// failed FOOD once in the job is not asked again in it: the same failure
+/// answers (one broken record shared by many recipes is one request and
+/// one id, never an outage). Escalation never discards a count: every FOOD
+/// failure is counted on its row ([matchAndCompute]), so broken records
+/// are held after three sweeps whatever else the sweep meets.
+NutritionProvider jobProvider(NutritionProvider provider) =>
+    provider is _JobWatch ? provider : _JobWatch(provider);
+
+class _JobWatch implements NutritionProvider {
+  _JobWatch(this._inner);
+  final NutritionProvider _inner;
+
+  /// Each id whose detail failed FOOD in this job, and its failure.
+  final Map<int, NutritionProviderException> _failed = {};
+
+  /// The ids whose detail failed FOOD since FDC last answered one, each
+  /// with the recipe it was asked for.
+  final Map<int, String?> _run = {};
+
+  /// The escalated failure: every later detail of the job throws it.
+  NutritionProviderException? _down;
+
+  @override
+  Future<List<FdcCandidate>> search(String query) => _inner.search(query);
+
+  @override
+  Future<FdcFood?> food(int fdcId) => foodFor(fdcId, null);
+
+  /// [food] for a pass of [recipe] ([onePass]).
+  Future<FdcFood?> foodFor(int fdcId, String? recipe) async {
+    final down = _down ?? _failed[fdcId];
+    if (down != null) {
+      throw down;
+    }
+    try {
+      final food = await _inner.food(fdcId);
+      _run.clear();
+      return food;
+    } on NutritionProviderException catch (error) {
+      if (error.scope == FailureScope.food) {
+        _failed[fdcId] = error;
+        _run[fdcId] = recipe;
+        if (_run.length >= detailOutageAfter &&
+            _run.values.toSet().length > 1) {
+          _down = NutritionProviderException(error.message);
+          throw _Escalated(error);
+        }
+      }
+      rethrow;
+    }
+  }
+}
+
+/// The request that tipped a job's detail outage ([jobProvider]): GLOBAL
+/// (the job stops), and [food] — its own FOOD failure, counted on the row
+/// that asked (the owner's ruling on O11: escalation never discards a
+/// count).
+class _Escalated extends NutritionProviderException {
+  _Escalated(this.food) : super(food.message);
+
+  /// The row's own failure.
+  final NutritionProviderException food;
+}
+
+/// How many FOOD failures on distinct foods in a row, across one job, are
+/// a detail outage ([jobProvider]): 3 — two retired or broken records side
+/// by side are plausible, a third with nothing answered between is FDC.
 const int detailOutageAfter = 3;
+
+/// The provider of a re-read (RULE A v29): it never fetches — it throws,
+/// so nothing caches a miss and a derivation needing FDC reads
+/// `unavailable` — the matches GET, the PUT's gate, and a compute's re-read
+/// of a hold for having no record ([derivedFor] through it reads only
+/// [knownFood], fdc_food_cache then the search-cache index).
+const NutritionProvider cacheOnly = _CacheOnly();
+
+class _CacheOnly implements NutritionProvider {
+  const _CacheOnly();
+
+  @override
+  Future<List<FdcCandidate>> search(String query) =>
+      throw NutritionProviderException('cache only: search "$query"');
+
+  @override
+  Future<FdcFood?> food(int fdcId) =>
+      throw NutritionProviderException('cache only: food $fdcId');
+}
 
 /// Food detail through the cache; null when FDC has no such id.
 Future<FdcFood?> _cachedFood(
@@ -6872,9 +7734,21 @@ Future<FdcFood?> _cachedFood(
   final food = await provider.food(fdcId);
   if (food != null) {
     db.fdcFoodCachePut(fdcId, jsonEncode(food.toJson()));
+    _unholdOn(db, [fdcId]);
   }
   return food;
 }
+
+/// RULE A (v29, Run 059 O1/S1): a cache just gained [fdcIds] — the rows
+/// held for having no record of one of them, or of its nutrient record
+/// ([nutrientSiblings]), are re-opened ([SaltDatabase.unholdOn]): their
+/// recipes read stale, and the next compute re-reads each hold from the
+/// caches, no request. Schedules the re-read the GET already shows.
+void _unholdOn(SaltDatabase db, List<int> fdcIds) => db.unholdOn([
+  ...fdcIds,
+  for (final MapEntry(:key, :value) in nutrientSiblings.entries)
+    if (fdcIds.contains(value)) key,
+]);
 
 /// Public cache-aware food lookup (the match-override endpoint needs it).
 Future<FdcFood?> cachedFood(
@@ -7346,9 +8220,7 @@ derivedFor(
         position: position,
         clearHold:
             skipped ||
-            !(lineHolds.contains(hold) ||
-                hold == foodGoneHold ||
-                hold == foodUnavailableHold),
+            !(lineHolds.contains(hold) || noRecordHolds.contains(hold)),
         clearGrams: dropGrams,
         clearGramSource: dropGrams,
       ),
@@ -7592,6 +8464,12 @@ applyDecisionToOthers(
     // the engine's row, RULE A — v27), or `failedLines` (its recipe failed:
     // its document will not decode) — Run 052 O14/S1.
     final settledBefore = decidedMeanwhile + gone + moved + unavailable;
+    // This target's in-progress mark ([SaltDatabase.markComputing], v29
+    // migration 017): taken before its first row write, released by its
+    // totals — or below, stale when a row was written and no totals were.
+    String? marked;
+    var owned = false;
+    var wrote = false;
     try {
       final found = db.recipeByIdOrSlug(entry.key);
       if (found == null) {
@@ -7762,12 +8640,20 @@ applyDecisionToOthers(
           }
           continue;
         }
+        // In progress until its totals are written below (v29, migration
+        // 017), marked BEFORE the row: a restart between them never leaves
+        // a row the totals miss under a fresh stamp.
+        if (marked == null) {
+          marked = found.recipe.id;
+          owned = db.markComputing(marked);
+        }
         // Guarded at the statement: only an undecided row is replaced (a
         // person's decision during the awaits stands).
         if (!db.upsertIngredientMatchIfUndecided(row, layoutSeq: seq)) {
           decidedMeanwhile += 1;
           continue;
         }
+        wrote = true;
         // Applied: every written row — its bucket changed or it took the
         // decided food, a line left short of an amount on it too ("2
         // (2-inch) strips lemon zest" stays no_grams on "Lemon, raw"): the
@@ -7786,8 +8672,11 @@ applyDecisionToOthers(
         db,
         provider,
         found.recipe,
-        freshMatch: unweighed ? (layoutSeq: seq, current: () => false) : null,
+        only: foodsOf(food.fdcId),
+        unavailable: unweighed,
+        ending: owned,
       );
+      marked = null; // Released by the totals.
       if (applied == 0) {
         continue;
       }
@@ -7798,16 +8687,21 @@ applyDecisionToOthers(
         completed.add(found.recipe.id);
       }
       // A recipe that will not decode must not stop the rest — and must be
-      // counted. (The totals are cache-only since v27 and never fail on
-      // FDC; a target's weigh is the `unavailable` arm above — Run 057
-      // O14: this said a totals failure counted `failed`.)
-      // ignore: avoid_catches_without_on_clauses
-    } catch (error) {
+      // counted. An EXCEPTION only (v29, Run 059 S29): the totals may ask
+      // FDC for the target's own food ([recomputeTotalsResolving]), and a
+      // programming Error (a fixture's UnrecordedAnswer, a StateError) must
+      // propagate, never be counted `failed`. A target's weigh FDC cannot
+      // serve is the `unavailable` arm above (Run 057 O14).
+    } on Exception catch (error) {
       failed += 1;
       failedLines +=
           entry.value.length -
           (decidedMeanwhile + gone + moved + unavailable - settledBefore);
       _log.warning('apply-to-all failed for ${entry.key}: $error');
+    } finally {
+      if (marked != null) {
+        db.releaseComputing(marked, owned: owned, stale: wrote);
+      }
     }
   }
   return (

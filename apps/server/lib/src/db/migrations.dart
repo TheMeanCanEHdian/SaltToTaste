@@ -465,6 +465,27 @@ INSERT OR IGNORE INTO fdc_search_cache_foods (fdc_id, query)
   WHERE j.type = 'object' AND json_extract(j.value, '$.fdc_id') IS NOT NULL
 ''',
   ],
+
+  // 017 — Run 059 (v29, RULE A). `computing`: how many writers have a pass
+  // IN PROGRESS — an OWNED count, each compute pass, person's write and
+  // apply-to-all target adding one before its first row write and taking
+  // its own one away with its totals (one transaction), so no writer
+  // clears another's; read as stale by every freshness reader
+  // (`underivedSql`): a pass that never reaches its totals (a restart, an
+  // OOM, an await never answered) leaves the recipe stale (Run 059 Opus
+  // critic 1 — its marks stayed committed and the recipe read fresh on
+  // totals that never counted the row). The boot clears the stamp of every
+  // recipe still counted (`interrupted:`, stale) and resets the count; the
+  // next compute repairs them. The partial index serves `unholdOn`: a
+  // cache gaining a food re-opens the rows held for having none (`food_gone`,
+  // `food_unavailable` on that food) — one indexed UPDATE per cache write.
+  [
+    'ALTER TABLE recipe_nutrition ADD COLUMN computing INT NOT NULL DEFAULT 0',
+    '''
+CREATE INDEX ingredient_matches_no_record ON ingredient_matches (fdc_id)
+  WHERE hold IN ('food_gone', 'food_unavailable')
+''',
+  ],
 ];
 
 /// Lists the foods a cached search answer (`NEW.response`: a JSON array of

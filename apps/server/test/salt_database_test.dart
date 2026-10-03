@@ -489,6 +489,33 @@ void _preparedSqlIsAlwaysConstant() {
       ).allMatches(source))
         m.group(1)!,
     };
+    // A `static final` built once from salt_shared's hold families
+    // (`_sqlList(mediumHolds)`, v29 — Run 059 S8: membership is read from
+    // the ONE action table, never copied) or composed of such and string
+    // literals is as constant: its text never varies at run time.
+    final finals = {
+      for (final m in RegExp(
+        r'static final String (\w+)\s*=([^;]*);',
+      ).allMatches(source))
+        m.group(1)!: m.group(2)!,
+    };
+    for (var grew = true; grew;) {
+      grew = false;
+      for (final MapEntry(key: name, value: init) in finals.entries) {
+        final rest = init
+            .replaceAll(RegExp(r'_sqlList\(\w+\)'), '')
+            .replaceAll(RegExp(r"'''[\s\S]*?'''"), '')
+            .replaceAll(RegExp(literal), '');
+        if (!constants.contains(name) &&
+            rest.trim().isEmpty &&
+            RegExp(
+              r'\$\{?(\w+)',
+            ).allMatches(init).every((m) => constants.contains(m.group(1)))) {
+          constants.add(name);
+          grew = true;
+        }
+      }
+    }
     final interpolated = {
       for (final call in literalCalls)
         for (final name in RegExp(r'\$(\w+)').allMatches(call.group(1)!))

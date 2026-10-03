@@ -335,6 +335,15 @@ void main() {
       expect(nutritionIsFresh(db, c), isFalse);
       expect(nutritionIsFresh(db, b), isFalse);
       expect(bulkScopeIds(db, BulkScope.stale), containsAll(['b', 'c']));
+      // v29 (Run 059 O23): nothing changed — a decision is waiting on USDA,
+      // never "Ingredients changed".
+      for (final r in [b, c]) {
+        expect(
+          nutritionBody(db, r, forAdmin: true)['stale_reason'],
+          'underived',
+          reason: r.id,
+        );
+      }
     });
 
     test("critic 2: 0857's flour confirmed with 250 g typed, its food then "

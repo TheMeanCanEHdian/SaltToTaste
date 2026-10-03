@@ -57,8 +57,21 @@ Map<String, Object?> nutritionBody(
     // inputs or layout moved since the totals were stamped; `underived` —
     // the stamp is current but a person's decision is waiting on USDA (a
     // derivation that could not run). The page names the cause.
+    // v29: `interrupted` — a pass is IN PROGRESS or never wrote its totals
+    // (migration 017's owned count above zero — a live compute, PUT or
+    // apply target, or one a hung await holds — or a stamp the boot or a
+    // throw cleared); `underived` also when the stamp
+    // says the last totals could not count a food USDA could not serve
+    // ([unavailableStampOf] the current inputs) — never `inputs` when
+    // nothing changed (Run 059 O23).
     if (stale)
-      'stale_reason': nutritionStampCurrent(db, recipe, row)
+      'stale_reason':
+          row.computing > 0 ||
+              row.ingredientsHash.startsWith(SaltDatabase.interruptedStamp)
+          ? 'interrupted'
+          : nutritionStampCurrent(db, recipe, row) ||
+                row.ingredientsHash ==
+                    unavailableStampOf(ingredientsHashOf(recipe))
           ? 'underived'
           : 'inputs',
     'serving_basis': row.servingBasis,
@@ -169,7 +182,7 @@ Future<Map<String, Object?>> matchesBody(
       // what the totals count — carried rows under the line's text.
       final d = await derivedFor(
         db,
-        const _CacheOnly(),
+        cacheOnly,
         recipe,
         position,
         line,
@@ -380,7 +393,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   int? decidedBy,
 }) async {
   // One request per FOOD for the write and its apply-to-all ([onePass]).
-  final provider = onePass(fdc);
+  final provider = onePass(fdc, recipe: given.id);
   // The STORED recipe, never the caller's copy: a save since the caller
   // read it (the route's body read, a client's stale screen) would lay the
   // rows out on lines that are no longer the recipe's.
@@ -456,24 +469,55 @@ Future<AppliedToOthers?> applyMatchOverride(
   // carried row (its line edited, not yet computed) is refused before its
   // derivation asks FDC anything (the v28 closer's D3); the derived row's
   // is read again below.
-  final decision = skipped == true
-      ? HoldDecision.skip
-      : fdcId != null
-      ? HoldDecision.pick
-      : confirmed == true
-      ? HoldDecision.confirm
-      : grams != null
-      ? HoldDecision.typed
-      : null;
+  // EVERY verb the body carries is judged (v29, Run 059 Opus critics 2/3:
+  // `{skipped: true, grams}` passed as a skip and wrote typed grams on a
+  // food with no record). A pick puts another food on the line, so the
+  // confirm or grams with it are that food's, not the held one's.
+  final verbs = {
+    if (skipped == true) HoldDecision.skip,
+    if (fdcId != null) HoldDecision.pick,
+    if (confirmed == true) HoldDecision.confirm,
+    if (grams != null) HoldDecision.typed,
+  };
+  final judged = verbs.contains(HoldDecision.pick)
+      ? const {HoldDecision.pick}
+      : verbs;
+  // One verb at a time with a skip: `skipped` together with a food verb
+  // would let the status chain drop the food (skip wins) while the
+  // decision below still fired on the request — recording the engine's own
+  // guess as a person's decision, library-wide (review, 2026-09-07); with
+  // typed grams, it wrote them on a held food's row (v29). Refused before
+  // anything is read or written.
+  if (skipped != null &&
+      (fdcId != null || confirmed != null || grams != null)) {
+    throw const ValidationException(oneDecisionMessage);
+  }
+  bool refuses(IngredientMatchRow row) =>
+      !judged.every(holdActionsOf(row.hold).accepts.contains);
   void gate(IngredientMatchRow row) {
-    if (decision != null &&
-        !holdActionsOf(row.hold).accepts.contains(decision)) {
-      throw const ValidationException(noRecordMessage);
+    if (refuses(row)) {
+      throw ValidationException(refusalOf(row.hold));
     }
   }
 
-  if (row != null) {
-    gate(row);
+  // A stored hold is RE-READ before it is enforced (RULE A v29, Run 059
+  // O6/S1/S6/S27): derived from the caches alone ([cacheOnly] — the GET's
+  // reading, [knownFood]; no request), and the DERIVED hold judged: a cache
+  // that holds the food again lets the confirm through, as the GET shows.
+  // The re-read row is the row the decision lands on (its own line's).
+  if (row != null && refuses(row)) {
+    final reread = (await derivedFor(
+      db,
+      cacheOnly,
+      recipe,
+      position,
+      line,
+      row,
+    )).row;
+    gate(reread);
+    if (row.raw == line.raw) {
+      row = reread;
+    }
   }
   if (row != null && row.raw != line.raw) {
     final d = await derivedFor(db, provider, recipe, position, line, row);
@@ -499,15 +543,6 @@ Future<AppliedToOthers?> applyMatchOverride(
     throw const ValidationException("'apply_to_all' must be true or false.");
   }
 
-  // One verb at a time: `skipped` together with a food verb would let the
-  // status chain drop the food (skip wins) while the decision below still
-  // fired on the request — recording the engine's own guess as a person's
-  // decision, library-wide. Refuse rather than guess (review, 2026-09-07).
-  if (skipped != null && (fdcId != null || confirmed != null)) {
-    throw const ValidationException(
-      "'skipped' cannot be combined with 'fdc_id' or 'confirmed'.",
-    );
-  }
   // The action table again, on the row as derived (a carried row's).
   gate(row);
   // Set only by the branches that PUT a food on the row in this request.
@@ -549,7 +584,7 @@ Future<AppliedToOthers?> applyMatchOverride(
       status: 'overridden',
       // The old food's `food_gone` / `food_unavailable` is answered by
       // picking another (v27, v28).
-      clearHold: row.hold == foodGoneHold || row.hold == foodUnavailableHold,
+      clearHold: noRecordHolds.contains(row.hold),
     );
     decidedFood = true;
   } else if (confirmed == true) {
@@ -627,7 +662,10 @@ Future<AppliedToOthers?> applyMatchOverride(
   // the stamp fresh: 0129's held liquid smoke confirmed in an outage sat
   // in `no_grams` for good.) A pick still needs its food above.
   var stored = row;
-  if (skipped != false) {
+  // An un-skip that gives typed grams back (`overridden`, [unskippedRow])
+  // is a decision again: derived like any (v29, Opus critic 3 — a row
+  // typed before its food went is held, never counted unheld).
+  if (skipped != false || isDecidedRow(row)) {
     final d = await derivedFor(db, provider, recipe, position, line, row);
     stored = d.row;
     unavailable = unavailable || d.unavailable != null;
@@ -638,7 +676,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   // confirm replaced the key's decision 173468 with the gone food).
   if (!holdActionsOf(stored.hold).decidesLibraryWide) {
     if (applyToAll == true) {
-      throw const ValidationException(noRecordMessage);
+      throw ValidationException(refusalOf(stored.hold));
     }
     decidedFood = false;
   }
@@ -717,27 +755,48 @@ Future<AppliedToOthers?> applyMatchOverride(
       decidedBy: decidedBy,
     );
   }
-  // Derived FOR the layout this write lands under and the inputs the
-  // derivation read ([derivedKeyOf]); none when it could not run.
-  if (!db.upsertIngredientMatch(
-    stored.copyWith(
-      itemKey: itemKey,
-      derivedSeq: derivedKeyOf(seq, derivedOn),
-      clearDerivedSeq: unavailable,
-    ),
-    layoutSeq: seq,
-  )) {
-    throw LineMovedException(position);
+  // In progress until the totals below are written (v29, migration 017),
+  // marked BEFORE the row: a restart between them, or during the totals'
+  // await, leaves the recipe stale, never this decision marked derived
+  // under totals that miss it (Opus critic 1). The mark is this write's
+  // own ([SaltDatabase.markComputing]): its totals release it, never a
+  // concurrent pass's.
+  final marked = db.markComputing(recipe.id);
+  var wrote = false;
+  var ended = false;
+  try {
+    // Derived FOR the layout this write lands under and the inputs the
+    // derivation read ([derivedKeyOf]); none when it could not run.
+    wrote = db.upsertIngredientMatch(
+      stored.copyWith(
+        itemKey: itemKey,
+        derivedSeq: derivedKeyOf(seq, derivedOn),
+        clearDerivedSeq: unavailable,
+      ),
+      layoutSeq: seq,
+    );
+    if (!wrote) {
+      throw LineMovedException(position);
+    }
+    // A plain recompute: the stamp stays what it was; freshness reads the
+    // row ([nutritionIsFresh]). Only THIS line's food and its nutrient
+    // record are resolved if no cache holds them (v29, Run 059 S13: at
+    // most two requests); another row whose food no cache holds stays
+    // underived.
+    await recomputeTotalsResolving(
+      db,
+      provider,
+      recipe,
+      only: foodsOf(stored.fdcId),
+      hashed: (recipe: hashedRecipe, hash: derivedOn),
+      ending: marked,
+    );
+    ended = true;
+  } finally {
+    if (!ended) {
+      db.releaseComputing(recipe.id, owned: marked, stale: wrote);
+    }
   }
-  // A plain recompute: the stamp stays what it was; freshness reads the
-  // row ([nutritionIsFresh]). A food another row reads that no cache holds
-  // is resolved first (v28, Run 058 S2), never dropped.
-  await recomputeTotalsResolving(
-    db,
-    provider,
-    recipe,
-    hashed: (recipe: hashedRecipe, hash: derivedOn),
-  );
 
   if (food == null) {
     return null;
@@ -757,6 +816,21 @@ Future<AppliedToOthers?> applyMatchOverride(
 const String noRecordMessage =
     'USDA has no record of this food to count — pick another food or skip '
     'the line.';
+
+/// The 422 for a confirm or typed grams on a food USDA keeps failing on
+/// (`food_unavailable`, v29 — Run 059 S3: it said "no record" of a food
+/// USDA serves when it is up).
+const String unavailableMessage =
+    'USDA could not serve this food — pick another food or skip the line.';
+
+/// The 422 for a skip carried with another verb.
+const String oneDecisionMessage =
+    "'skipped' cannot be combined with 'fdc_id', 'confirmed' or 'grams' — "
+    'one decision per request.';
+
+/// The 422 a held line's action table refuses with, by [hold].
+String refusalOf(String? hold) =>
+    hold == foodUnavailableHold ? unavailableMessage : noRecordMessage;
 
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.
@@ -789,20 +863,6 @@ bool? _answerNamesIngredient(
       FdcCandidate.fromJson(entry as Map<String, dynamic>),
   ];
   return answer.isNotEmpty && candidatesNameIngredient(query, answer);
-}
-
-/// A provider that never fetches (it throws, so nothing caches a miss):
-/// the cache-only reads of a GET.
-class _CacheOnly implements NutritionProvider {
-  const _CacheOnly();
-
-  @override
-  Future<List<FdcCandidate>> search(String query) =>
-      throw NutritionProviderException('cache only: search "$query"');
-
-  @override
-  Future<FdcFood?> food(int fdcId) =>
-      throw NutritionProviderException('cache only: food $fdcId');
 }
 
 /// Masks a stored API key for display: last four characters only.

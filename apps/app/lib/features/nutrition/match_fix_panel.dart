@@ -7,8 +7,10 @@ import 'package:salt_shared/salt_shared.dart'
         HoldDecision,
         MatchBucket,
         belowConfidenceGate,
+        foodGoneHold,
         holdActionsOf,
         matchBucketFor,
+        mediumHolds,
         vulgarFractionChars;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
@@ -90,11 +92,6 @@ String zeroReason(IngredientMatch m) => m.gramSource == 'discarded'
     ? ': the line gives no amount, so it adds nothing to the label.'
     : ': ${m.lineAmount} — not measured, counts as 0 g.';
 
-/// A line held as a poured-away medium or as shellfish bought in the shell
-/// (ruling 5): its card leads with "Skip, poured away" / "Enter edible
-/// grams", never a plain confirm of the whole weight. Keyed on the hold
-/// whatever the status: a person's decision on a held line keeps the hold
-/// (matcher v16), and the line is still poured away or in the shell.
 /// Whether the review sheet and the queue OFFER [decision] on [m]'s line —
 /// salt_shared's ONE action table per hold family (`holdActions`, RULE A
 /// v28; Run 058 O7/S13: the sheet offered Confirm and Confirm as-is on a
@@ -113,20 +110,15 @@ bool noRecordHold(String? hold) {
       !offered.contains(HoldDecision.typed);
 }
 
+/// A line held as a poured-away medium or as shellfish bought in the shell
+/// (ruling 5): its card leads with "Skip, poured away" / "Enter edible
+/// grams", never a plain confirm of the whole weight. Keyed on the hold
+/// whatever the status: a person's decision on a held line keeps the hold
+/// (matcher v16), and the line is still poured away or in the shell.
+/// The medium holds are salt_shared's `mediumHolds`, read from the ONE
+/// action table (v29, Run 059 S8: the app's own copy is deleted).
 bool isHeldLine(IngredientMatch m) =>
     mediumHolds.contains(m.hold) || m.hold == 'in_shell';
-
-/// The holds of a medium the recipe pours away (the server's `mediumHolds`):
-/// a discarded medium, a starter's feeding discard, a fried food's dredge,
-/// a braise kept only in part (the rulings Q1, Q2, Q4, 2026-10-01), an oil
-/// a frying sentence could be about beside another (v25).
-const Set<String> mediumHolds = {
-  'discarded_medium',
-  'starter_discard',
-  'coating',
-  'partial_pour_away',
-  'ambiguous_medium',
-};
 
 /// Which decisions finish a held medium line, by hold kind (RULE A; Run 056
 /// Sonnet critic 3 / Opus critic 3: every hold read "Skip, poured away" and
@@ -146,7 +138,7 @@ String heldFinishes(String hold, {double? eatenPart}) {
   if (!actions.finishes.contains(HoldDecision.confirm) &&
       !actions.finishes.contains(HoldDecision.typed)) {
     return 'Pick another food, or skip the line — a confirm or typed grams '
-        'cannot count a food USDA ${hold == 'food_gone' ? 'no longer serves' : 'cannot serve now'}';
+        'cannot count a food USDA ${hold == foodGoneHold ? 'no longer serves' : 'cannot serve now'}';
   }
   final ambiguous = hold == 'ambiguous_medium';
   // A pick keeps the hold unless the table says it finishes it, or the

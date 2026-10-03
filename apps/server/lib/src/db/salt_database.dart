@@ -10,27 +10,13 @@ import 'package:sqlite3/sqlite3.dart';
 
 final Logger _log = Logger('db');
 
-/// The `hold`s of a medium the recipe pours away, all of them LINE holds:
-/// a discarded medium, a starter's feeding discard, a fried food's dredge,
-/// a braise kept only in part (the user's rulings Q1, Q2, Q4, 2026-10-01),
-/// an oil a frying sentence could be about beside another (RULE B, v25).
-const List<String> mediumHolds = [
-  'discarded_medium',
-  'starter_discard',
-  'coating',
-  'partial_pour_away',
-  'ambiguous_medium',
-];
+// The hold families — `mediumHolds`, `lineHolds`, `noRecordHolds` — and
+// `foodGoneHold` / `foodUnavailableHold` live in salt_shared, read from the
+// ONE action table every consumer reads (`holdActions`, RULE A v28; each
+// entry's `kind`, v29 — Run 059 S8: no list is copied by hand).
 
-/// Every LINE hold — what the line says about its medium, its shell or a
-/// second food, whatever food it is matched on ([mediumHolds],
-/// `in_shell`, `second_food`). The other holds are FOOD holds (the
-/// engine's on its own pick; a decision answers them) and [foodGoneHold].
-const List<String> lineHolds = [...mediumHolds, 'in_shell', 'second_food'];
-
-// `foodGoneHold` and `foodUnavailableHold` — the holds of a person's
-// decision on a food with no record — live in salt_shared beside the ONE
-// action table every consumer reads (`holdActions`, RULE A v28).
+/// [holds] as an SQL list of string literals.
+String _sqlList(Iterable<String> holds) => holds.map((h) => "'$h'").join(', ');
 
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
 enum UpsertOutcome {
@@ -637,12 +623,12 @@ class SaltDatabase {
     return result;
   }
 
-  /// [mediumHolds] as an SQL list (a const, for the cached queries; pinned
-  /// equal to the list).
+  /// [mediumHolds] as an SQL list (read from the action table, v29).
   @visibleForTesting
-  static const String mediumHoldsSql =
-      "'discarded_medium', 'starter_discard', 'coating', 'partial_pour_away', "
-      "'ambiguous_medium'";
+  static final String mediumHoldsSql = _sqlList(mediumHolds);
+
+  /// [lineHolds] as an SQL list (read from the action table, v29).
+  static final String lineHoldsSql = _sqlList(lineHolds);
 
   /// The holds no confirm and no typed grams finish
   /// ([holdsAConfirmCannotFinish] of salt_shared's ONE action table,
@@ -651,7 +637,7 @@ class SaltDatabase {
   /// `finishes` and `finishable` read them (Run 058 O8, Sonnet critics 1
   /// and 3: a `food_gone` row with typed grams was promised a finish).
   @visibleForTesting
-  static const String noRecordHoldsSql = "'food_gone', 'food_unavailable'";
+  static final String noRecordHoldsSql = _sqlList(noRecordHolds);
 
   /// The four conditions a collapsed calories range can emit.
   ///
@@ -1211,7 +1197,7 @@ class SaltDatabase {
   /// whatever its score or hold but `unnamed_food`; a low-confidence auto
   /// match is `check` whether or not it has grams — a wrong food is the
   /// larger problem, and "no amount" read as calm.
-  static const String _reviewBucketCase =
+  static final String _reviewBucketCase =
       '''
     CASE
       WHEN im.status = 'skipped' THEN 'skipped'
@@ -1332,13 +1318,12 @@ class SaltDatabase {
   /// grains) and `finishable` are an upper bound for it — the apply skips a
   /// reworded line and the recompute cannot account an added one. No SQL
   /// filter here: staleness needs the recipe hashed, and it is never stored.
-  static const String _reviewFlaggedCte =
+  static final String _reviewFlaggedCte =
       'WITH flagged AS (SELECT im.*, r.slug AS review_slug, '
       'r.title AS review_title, $_reviewBucketCase AS bucket, '
       "CASE WHEN im.item_key IS NULL OR im.item_key = '' "
       "OR im.status NOT IN ('auto', 'unmatched') "
-      "OR COALESCE(im.hold, '') IN ('second_food', $mediumHoldsSql, "
-      "'in_shell') "
+      "OR COALESCE(im.hold, '') IN ($lineHoldsSql) "
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
 
@@ -1356,7 +1341,7 @@ class SaltDatabase {
   /// count it, v28). The count may under-promise
   /// a Check example whose cached record does convert — the accepted
   /// direction: never promise what a confirm may not count.
-  static const String _reviewFinishCte =
+  static final String _reviewFinishCte =
       '$_reviewFlaggedCte, '
       'members AS (SELECT * FROM flagged WHERE '
       "(? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
@@ -1470,7 +1455,7 @@ class SaltDatabase {
       'COALESCE(f.n, 0) AS finishes, COALESCE(f.last_open, 0) AS last_open, '
       'f.names AS finishes_names, '
       "(d.item_key IS NOT NULL AND COALESCE(e.hold, '') NOT IN "
-      "('second_food', $mediumHoldsSql, 'in_shell')) AS decided "
+      '($lineHoldsSql)) AS decided '
       'FROM agg a JOIN example e ON e.gkey = a.gkey AND e.rn = 1 '
       'LEFT JOIN fin f ON f.gkey = a.gkey '
       'LEFT JOIN ingredient_decisions d ON d.item_key = e.item_key '
@@ -1552,7 +1537,7 @@ class SaltDatabase {
     return written;
   }
 
-  void _upsertMatch(IngredientMatchRow row) {
+  void _upsertMatch(IngredientMatchRow row, {bool keepRetryCount = false}) {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
@@ -1564,7 +1549,8 @@ class SaltDatabase {
       'grams = excluded.grams, gram_source = excluded.gram_source, '
       'status = excluded.status, item_key = excluded.item_key, '
       'hold = excluded.hold, updated_at = excluded.updated_at, '
-      'derived_seq = excluded.derived_seq, retry_count = 0',
+      'derived_seq = excluded.derived_seq, '
+      'retry_count = CASE WHEN ? THEN retry_count ELSE 0 END',
     ).execute([
       row.recipeId,
       row.position,
@@ -1580,6 +1566,7 @@ class SaltDatabase {
       row.hold,
       _utcNowIso(),
       row.derivedSeq,
+      if (keepRetryCount) 1 else 0,
     ]);
   }
 
@@ -1656,15 +1643,20 @@ class SaltDatabase {
   /// written. The compute's write of an amount-edited decided row
   /// (`derivedFor`) over the row it laid out: a person's write on
   /// that line since (an un-skip: Run 052 O3) is not that row, and stands.
+  ///
+  /// [keepRetryCount]: the held write of a FOOD failure (v29, Run 059 S2)
+  /// keeps the row's `retry_count` — a held row is not re-asked, and an
+  /// edit never restarts its count.
   bool replaceIngredientMatchIfUnchanged(
     IngredientMatchRow row, {
     required IngredientMatchRow over,
     required int layoutSeq,
+    bool keepRetryCount = false,
   }) => _atLayout(row.recipeId, layoutSeq, () {
     if (!sameMatchRow(_matchAt(row.recipeId, row.position), over)) {
       return false;
     }
-    _upsertMatch(row);
+    _upsertMatch(row, keepRetryCount: keepRetryCount);
     return true;
   });
 
@@ -1706,17 +1698,26 @@ class SaltDatabase {
   /// derived for [derivedSeq] (RULE A): its derived fields came out as
   /// stored, so only `derived_seq` is written (its `updated_at`, the last
   /// change of what it holds, stays). Returns whether it was written.
+  ///
+  /// [keepRetryCount]: a held row re-read from the caches and still held
+  /// (v29, Run 059 S2) keeps its `retry_count`; a derivation resets it.
   bool markDerivedIfUnchanged(
     IngredientMatchRow over, {
     required String derivedSeq,
     required int layoutSeq,
+    bool keepRetryCount = false,
   }) => _atLayout(over.recipeId, layoutSeq, () {
     // ONE guarded single-row UPDATE (Run 058 S12): written only while the
     // row is still [over] ([sameMatchRow]'s fields, in the statement).
     _prepared(
-      'UPDATE ingredient_matches SET derived_seq = ?, retry_count = 0 '
+      'UPDATE ingredient_matches SET derived_seq = ?, '
+      'retry_count = CASE WHEN ? THEN retry_count ELSE 0 END '
       '$_sameRowSql',
-    ).execute([derivedSeq, ..._sameRowBinds(over)]);
+    ).execute([
+      derivedSeq,
+      if (keepRetryCount) 1 else 0,
+      ..._sameRowBinds(over),
+    ]);
     return _db.updatedRows > 0;
   });
 
@@ -1914,7 +1915,7 @@ class SaltDatabase {
     final rows = _prepared(
       'SELECT recipe_id, serving_basis, calories_per_serving, nutrients, '
       'total_grams, matched_count, total_count, status, ingredients_hash, '
-      'computed_at, layout_seq, totals FROM recipe_nutrition '
+      'computed_at, layout_seq, totals, computing FROM recipe_nutrition '
       'WHERE recipe_id = ?',
     ).select([recipeId]);
     return rows.isEmpty ? null : RecipeNutritionRow.fromRow(rows.first);
@@ -1932,13 +1933,21 @@ class SaltDatabase {
   /// the rows as stored: a writer that stamps never decides it (Run 057
   /// S15/O1: a compute's snapshot stamped fresh over a PUT's underived
   /// row).
+  ///
+  /// v29 (RULE A, Run 059): also a pass IN PROGRESS (`computing` > 0,
+  /// migration 017 — a pass that has not reached its totals, Opus critic 1)
+  /// and an ENGINE line whose food FDC failed (FOOD) and is not held yet
+  /// (`unmatched` with a `retry_count`, `engineUnavailableNote`: the sweep
+  /// asks again, once per pass, until [foodUnavailableAfter] holds it).
   static const String underivedSql =
-      'EXISTS (SELECT 1 FROM ingredient_matches m '
-      'WHERE m.recipe_id = n.recipe_id '
-      "AND m.status IN ('confirmed', 'overridden', 'skipped') "
+      '(n.computing > 0 OR EXISTS (SELECT 1 FROM '
+      'ingredient_matches m WHERE m.recipe_id = n.recipe_id AND '
+      "((m.status IN ('confirmed', 'overridden', 'skipped') "
       "AND NOT (m.status = 'confirmed' AND m.fdc_id IS NULL "
       'AND m.description IN ($engineRuleNotesSql)) '
-      "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash))";
+      "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash)) "
+      "OR (m.status = 'unmatched' AND m.retry_count > 0 "
+      'AND m.hold IS NULL))))';
 
   /// [engineRuleNotes] as an SQL list (a const, for the cached queries;
   /// pinned equal to the list).
@@ -2007,7 +2016,15 @@ class SaltDatabase {
     required String ingredientsHash,
     int? layoutSeq,
     String? totalsJson,
-  }) {
+    Iterable<int> underived = const [],
+    bool ending = false,
+  }) => _inTransaction(() {
+    // The rows the totals found no cached food for lose their derivation
+    // and, [ending], the writer's own in-progress mark ([markComputing],
+    // migration 017) is released — with the totals, in ONE transaction
+    // (v29, RULE A); a writer that marked nothing leaves every other
+    // writer's mark standing.
+    clearDerivedSeq(recipeId, underived);
     _prepared(
       'INSERT INTO recipe_nutrition (recipe_id, serving_basis, '
       'calories_per_serving, nutrients, total_grams, matched_count, '
@@ -2023,7 +2040,8 @@ class SaltDatabase {
       'total_count = excluded.total_count, status = excluded.status, '
       'ingredients_hash = excluded.ingredients_hash, '
       'computed_at = excluded.computed_at, layout_seq = excluded.layout_seq, '
-      'totals = excluded.totals',
+      'totals = excluded.totals, '
+      'computing = CASE WHEN ? THEN MAX(computing - 1, 0) ELSE computing END',
     ).execute([
       recipeId,
       servingBasis,
@@ -2037,7 +2055,76 @@ class SaltDatabase {
       _utcNowIso(),
       layoutSeq,
       totalsJson,
+      ending,
     ]);
+  });
+
+  /// Marks [recipeId]'s stamp IN PROGRESS (migration 017): a writer — a
+  /// compute pass, a person's write, an apply-to-all target — is about to
+  /// write rows whose totals are not written yet. An OWNED count: each
+  /// writer adds one before its first row write and takes its own one away
+  /// with its totals ([upsertRecipeNutrition]'s `ending`, one transaction)
+  /// or [releaseComputing] — never another writer's. While it is above
+  /// zero every freshness reader ([underivedSql]) reads the recipe stale.
+  /// Returns whether a mark was taken: no stamp, nothing to mark (a recipe
+  /// never computed is not fresh anyway), and nothing to release.
+  bool markComputing(String recipeId) {
+    _prepared(
+      'UPDATE recipe_nutrition SET computing = computing + 1 '
+      'WHERE recipe_id = ?',
+    ).execute([recipeId]);
+    return _db.updatedRows > 0;
+  }
+
+  /// The stamp prefix of totals a writer never finished ([releaseComputing]
+  /// with `stale`, [resetInterruptedComputes]): no current hash equals it,
+  /// and the page's `stale_reason` reads `interrupted`.
+  static const String interruptedStamp = 'interrupted:';
+
+  /// Ends a writer's mark ([markComputing]) on a path that writes no totals
+  /// — taking its own one away when [owned], and when [stale] (it wrote
+  /// rows the totals never counted: a throw) clearing the stamp, so the
+  /// recipe reads stale (`interrupted`) until a compute stamps it again.
+  void releaseComputing(
+    String recipeId, {
+    required bool owned,
+    required bool stale,
+  }) => _prepared(
+    'UPDATE recipe_nutrition SET computing = MAX(computing - ?, 0), '
+    'ingredients_hash = CASE WHEN ? AND ingredients_hash NOT LIKE '
+    "'$interruptedStamp%' THEN '$interruptedStamp' || ingredients_hash "
+    'ELSE ingredients_hash END WHERE recipe_id = ?',
+  ).execute([if (owned) 1 else 0, stale, recipeId]);
+
+  /// The boot's reconciliation (migration 017): a mark still held belongs
+  /// to a writer of the process that died — its stamp is cleared (stale,
+  /// `interrupted`) and the count reset. Returns how many recipes.
+  int resetInterruptedComputes() {
+    _prepared(
+      'UPDATE recipe_nutrition SET computing = 0, ingredients_hash = CASE '
+      "WHEN ingredients_hash LIKE '$interruptedStamp%' THEN ingredients_hash "
+      "ELSE '$interruptedStamp' || ingredients_hash END WHERE computing > 0",
+    ).execute([]);
+    return _db.updatedRows;
+  }
+
+  /// RULE A (v29, Run 059 O1/S1/S6): a cache now holds [fdcIds] — every row
+  /// held for having no record of one of them (`food_gone`,
+  /// `food_unavailable`: [noRecordHolds]) loses its derivation, so its
+  /// recipe reads stale and the next compute re-reads the hold from the
+  /// caches (no request). One indexed UPDATE (migration 017's partial
+  /// index) per cache write; nothing changes when no such row exists.
+  void unholdOn(Iterable<int> fdcIds) {
+    final ids = fdcIds.toSet();
+    if (ids.isEmpty) {
+      return;
+    }
+    _db.execute(
+      'UPDATE ingredient_matches SET derived_seq = NULL '
+      'WHERE hold IN ($noRecordHoldsSql) AND derived_seq IS NOT NULL '
+      'AND fdc_id IN (${List.filled(ids.length, '?').join(', ')})',
+      ids.toList(),
+    );
   }
 
   /// A serving-basis change (`rebaseNutrition`): the divisor, the label
@@ -3021,6 +3108,12 @@ const List<String> engineRuleNotes = [
   'Water/ice — counts as zero',
 ];
 
+/// The note of an ENGINE line's row whose food FDC failed (a FOOD failure,
+/// v29 RULE A): `unmatched`, no food, counted by `retry_count` and held
+/// `food_unavailable` after `foodUnavailableAfter` computes.
+const String engineUnavailableNote =
+    'FoodData Central could not serve this food';
+
 /// Whether [row] is one of the engine's own rule rows ([engineRuleNotes]):
 /// 'confirmed' on no food under one of its notes. A person's confirm of a
 /// food, or of any other note, is not.
@@ -3179,6 +3272,7 @@ class RecipeNutritionRow {
     required this.computedAt,
     this.layoutSeq,
     this.totalsJson,
+    this.computing = 0,
   });
 
   /// Decodes a database row.
@@ -3195,7 +3289,13 @@ class RecipeNutritionRow {
     computedAt: row['computed_at'] as String?,
     layoutSeq: row['layout_seq'] as int?,
     totalsJson: row['totals'] as String?,
+    computing: row['computing'] as int,
   );
+
+  /// How many writers hold an in-progress mark ([SaltDatabase
+  /// .markComputing], migration 017): above zero, the stamp is stale
+  /// (`stale_reason: interrupted`).
+  final int computing;
 
   /// Recipe the totals belong to.
   final String recipeId;

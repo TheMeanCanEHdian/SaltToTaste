@@ -923,9 +923,10 @@ void main() {
       final outage = Outage(FixtureProvider(pending: pendingSearches))
         ..down = true;
       // A PUT first (a plain recompute that would keep the fresh stamp):
-      // typed grams on the salt read no food; the resolve of the flour's
-      // food the totals need fails (one request, v28) — the decision
-      // stored, the flour left out, the recipe stale.
+      // typed grams on the salt read no food; the flour's food is not the
+      // PUT's own line's (v29, Run 059 S13: a PUT resolves its own line
+      // only — no request) — the decision stored, the flour left out, the
+      // recipe stale.
       const salt = '1 teaspoon table salt';
       final saltBefore = d.rowOf(db, r, d.at(r, salt)).grams!;
       await applyMatchOverride(db, outage, r, d.at(r, salt), {
@@ -934,8 +935,8 @@ void main() {
       });
       expect(
         outage.failed,
-        1,
-        reason: 'the PUT resolves the food the totals read: one request (v28)',
+        0,
+        reason: 'the PUT resolves its own line only (v29)',
       );
       expect(d.rowOf(db, r, i).derivedSeq, isNull, reason: 'underived');
       expect(d.rowOf(db, r, d.at(r, salt)).grams, 6);
@@ -946,7 +947,7 @@ void main() {
       // derived.
       final failure = await matchAndCompute(db, outage, r);
       expect(failure, isA<NutritionProviderException>());
-      expect(outage.failed, 2);
+      expect(outage.failed, 1);
       expect(d.shape(d.rowOf(db, r, i)), d.shape(confirmed));
       expect(nutritionIsFresh(db, r), isFalse);
       expect(db.nutritionFor(r.id)!.status, 'partial');

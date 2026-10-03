@@ -65,6 +65,10 @@ class _Adapter implements HttpClientAdapter {
   /// exception: the fake cannot stage the server's reason.
   bool noApplied = false;
 
+  /// The line whose match the server answers held `food_gone` (a decision
+  /// derived to a food USDA no longer serves).
+  int? goneAt;
+
   /// When set, an apply_to_all PUT waits here before answering — a sweep
   /// held open so a test can act while it runs.
   Completer<void>? gate;
@@ -79,6 +83,11 @@ class _Adapter implements HttpClientAdapter {
             {
               ...item as Map<String, dynamic>,
               if (raws != null) 'raw': raws[at],
+              if (goneAt == item['position'])
+                'match': {
+                  ...item['match'] as Map<String, dynamic>,
+                  'hold': 'food_gone',
+                },
               'others': others,
               // Distinct from `others` on purpose: two lines of one ingredient
               // in one recipe are 1 recipe but 2 lines.
@@ -320,6 +329,17 @@ void main() {
     await cubit.override(flour().position, raw: flour().raw, fdcId: 123456);
     await pumpEventQueue();
     expect(cubit.state.offer, isNull, reason: 'every other line is on it');
+  });
+
+  test('v29 (Run 059 S7): no offer after a decision the server derived to '
+      'a food with no record — the action table never decides it '
+      'library-wide, so its apply is a certain 422', () async {
+    await boot(others: 41);
+    final line = flour();
+    adapter.goneAt = line.position;
+    await cubit.override(line.position, raw: line.raw, fdcId: 123456);
+    await pumpEventQueue();
+    expect(cubit.state.offer, isNull);
   });
 
   test('the offer names the item as a person would', () {

@@ -200,10 +200,13 @@ class UsdaFdcProvider implements NutritionProvider {
       return null;
     }
     // Detail nutrients arrive as {nutrient: {number, ...}, amount} per 100g.
+    // Read defensively (v29, Run 059 Opus critic 2 #2): a JSON object of the
+    // wrong shape is that food's unreadable answer — FOOD, like a body
+    // that is not JSON — never a TypeError escaping the pass.
     final nutrients = <String, double>{};
     final rawNutrients = json['foodNutrients'];
     if (rawNutrients is List) {
-      for (final entry in rawNutrients.cast<Map<String, dynamic>>()) {
+      for (final entry in rawNutrients.map(_shaped<Map<String, dynamic>>)) {
         final nutrient = entry['nutrient'];
         final amount = entry['amount'];
         if (nutrient is Map<String, dynamic> && amount is num) {
@@ -217,7 +220,7 @@ class UsdaFdcProvider implements NutritionProvider {
     final portions = <FdcPortion>[];
     final rawPortions = json['foodPortions'];
     if (rawPortions is List) {
-      for (final entry in rawPortions.cast<Map<String, dynamic>>()) {
+      for (final entry in rawPortions.map(_shaped<Map<String, dynamic>>)) {
         final gramWeight = entry['gramWeight'];
         if (gramWeight is! num || gramWeight <= 0) {
           continue;
@@ -229,25 +232,33 @@ class UsdaFdcProvider implements NutritionProvider {
         portions.add(
           FdcPortion(
             gramWeight: gramWeight.toDouble(),
-            amount: (entry['amount'] as num?)?.toDouble(),
+            amount: _shaped<num?>(entry['amount'])?.toDouble(),
             unit: (unitName == null || unitName == 'undetermined')
                 ? null
                 : unitName,
             description:
-                entry['portionDescription'] as String? ??
-                entry['modifier'] as String?,
+                _shaped<String?>(entry['portionDescription']) ??
+                _shaped<String?>(entry['modifier']),
           ),
         );
       }
     }
     return FdcFood(
       fdcId: fdcId,
-      description: json['description'] as String? ?? 'FDC food $fdcId',
-      dataType: json['dataType'] as String? ?? '',
+      description: _shaped<String?>(json['description']) ?? 'FDC food $fdcId',
+      dataType: _shaped<String?>(json['dataType']) ?? '',
       nutrientsPer100g: nutrients,
       portions: portions,
     );
   }
+
+  /// [value] as a [T], or the detail's unreadable answer (FOOD).
+  static T _shaped<T>(Object? value) => value is T
+      ? value
+      : throw const NutritionProviderException(
+          'FoodData Central returned an unreadable answer.',
+          scope: FailureScope.food,
+        );
 
   Future<Map<String, dynamic>> _get(String path, Map<String, String> query) =>
       _request('GET', path, kind: 'food', query: query);
@@ -274,10 +285,14 @@ class UsdaFdcProvider implements NutritionProvider {
       );
     }
     final uri = Uri.https(_host, path, query.isEmpty ? null : query);
-    // RULE A's two failure classes ([FailureScope], v28): an answer FDC
-    // fails for ONE food's detail is that food's (the row's state; the
-    // sweep moves on), everything else — the key, the budget, the network,
-    // a rate limit, a search — every request's (the job stops).
+    // RULE A's two failure classes ([FailureScope], v28) — the ONE table
+    // (v29, pinned arm by arm in fdc_request_tally_test.dart): on a food's
+    // DETAIL, a 404 is no record (null); another 4xx, a 5xx after the
+    // retries, an unreadable 200 (not JSON, not UTF-8, not an object) are
+    // that food's (the row's state; the sweep moves on). Everything else —
+    // no key, a rejected key (401/403), the budget, a 429 after the
+    // retries, the network (connect, timeout, a cut stream), any SEARCH
+    // failure — is every request's (the job stops).
     final scope = kind == 'food' ? FailureScope.food : FailureScope.global;
     var attempt = 0;
     while (true) {
@@ -317,7 +332,10 @@ class UsdaFdcProvider implements NutritionProvider {
               );
             }
             return decoded;
-          case 404:
+          // A detail's 404 is no record ([food] answers null); a search's is
+          // FDC failing every request (the default arm: GLOBAL — v28 let a
+          // private _NotFound escape the provider).
+          case 404 when kind == 'food':
             throw const _NotFound();
           case 401:
           case 403:
@@ -363,6 +381,21 @@ class UsdaFdcProvider implements NutritionProvider {
         if (attempt >= 3) {
           // The message never includes the URI (it carries no secret, but
           // uniformity keeps log grepping simple) nor the key.
+          if (error is FormatException) {
+            // A complete answer that is not JSON (or not UTF-8) — an HTML
+            // error page, a truncated record — is the request's: a
+            // detail's is that food's (RULE B, v29, Run 059 O22/O5/S5/S28:
+            // v28 read it as the network, GLOBAL, and every sweep stopped
+            // at that recipe), a search's every request's.
+            throw NutritionProviderException(
+              'FoodData Central returned an unreadable answer.',
+              scope: scope,
+            );
+          }
+          // A connect failure, a timeout, a stream cut mid-body: the
+          // network's, GLOBAL even on a detail — nothing in it names one
+          // food, and reading an outage as per-food failures would hold
+          // healthy rows food_unavailable.
           throw NutritionProviderException(
             'Could not reach FoodData Central: '
             "${error.runtimeType}. Check the server's connectivity.",

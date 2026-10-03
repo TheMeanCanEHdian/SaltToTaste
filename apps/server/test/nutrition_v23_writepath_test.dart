@@ -48,10 +48,13 @@ const quarter = '¼ cup extra-virgin olive oil';
 /// migration 012 — no layout table; 12: before 013 — no stamp layout, no
 /// global counter; 13: before 014 — no row `derived_seq`, no backfill
 /// marker; every version: before 015 — no stored totals — and 016 — no
-/// row retry count, no search-cache food index or its triggers), with
-/// [seqs] as recipe_layout's per-recipe seqs at 12.
+/// row retry count, no search-cache food index or its triggers — and 017 —
+/// no in-progress marker, no no-record index), with [seqs] as
+/// recipe_layout's per-recipe seqs at 12.
 void downgrade(String path, int version, {Map<String, int> seqs = const {}}) {
   final raw = sqlite3.open(path)
+    ..execute('DROP INDEX ingredient_matches_no_record')
+    ..execute('ALTER TABLE recipe_nutrition DROP COLUMN computing')
     ..execute('DROP TRIGGER fdc_search_cache_foods_insert')
     ..execute('DROP TRIGGER fdc_search_cache_foods_update')
     ..execute('DROP TRIGGER fdc_search_cache_foods_delete')

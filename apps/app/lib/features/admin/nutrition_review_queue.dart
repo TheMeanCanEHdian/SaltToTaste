@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
-import 'package:salt_shared/salt_shared.dart' show HoldDecision;
+import 'package:salt_shared/salt_shared.dart' show HoldDecision, mediumHolds;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';

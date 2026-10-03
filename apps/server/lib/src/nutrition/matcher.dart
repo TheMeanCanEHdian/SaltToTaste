@@ -379,7 +379,47 @@ const Map<String, String> _synonyms = {
 /// before a carried row's derivation; which holds a pick keeps is the
 /// action table's. Replay: no row moves (RULE C and the pairing change no
 /// landing).
-const int matcherVersion = 28;
+/// 29 (Run 059): RULE B — a frying temperature's clause starts at the
+/// LATEST boundary at or before its lead: a clause mark, an "and"/"then"
+/// opening a new verb phrase, or the fat's own mention; a mark or opener
+/// whose phrase opens on a non-fry heat verb (its object unnamed: "in the
+/// smoker, holding it at 300", "on the pizza stone and heat it at 350") is
+/// none — the v28 participle exception deleted, so "…oven, heating the oil
+/// to 350" and "Place a rack in the oven and heat the oil to 350" are the
+/// oil's heat again; a lead's own "(" opens the clause, a boundary inside
+/// a lead none. The hyphenated vessels (grill-pan, broiler-pan,
+/// roasting-pan, baking-sheet/-dish) never exclude. The heat reading's
+/// whole-sentence passes built once per sentence per index, shared by
+/// every fat and caller, each read only as far as a check needs and the
+/// governing words from the clause's start (`memo:heatReading`,
+/// `heatClauseChars` counting every pass and pointer step). FDC's failure
+/// table: an unreadable 200 on a detail is the food's (FOOD), a search 404
+/// GLOBAL (no private exception escapes the provider), the network GLOBAL
+/// even on a detail. Replay: no library row moves (the boundary changes
+/// only typed sentences; the 78 corpus fat-and-temperature sentences and
+/// all 13,615 oil/dredge readings identical to v28).
+/// RULE A (the same release): a hold is RE-READ before it is enforced —
+/// a cache-only derivation through `knownFood` at every compute, at the
+/// PUT's gate and at the GET (a cache write that gains the food re-opens
+/// the held rows); an ENGINE line's FOOD failure is its row's state
+/// (counted, held `food_unavailable` at the third), never the pass's; the
+/// outage escalation is counted across the JOB, spans two recipes and
+/// never discards a row's count; a pass is in progress until its totals
+/// are written (migration 017's owned count); the PUT judges every verb
+/// and resolves only its own line's foods; the held write keeps its count
+/// and the `all` scope asks a held food once; the hold families live in
+/// the action table. Replay: no row moves (RULE A changes no landing).
+/// RULE C (the same release): a cost unit IS the cost — a food named in
+/// the steps is looked up over ONE word index per step (each word's start
+/// and hash, built once), a lookup paying exactly the words it visits and
+/// its confirms' characters (`namingPaid`), the inversion the word index
+/// inverted, built at 12 × the words (Run 059 O9: v28's regex step pass
+/// cost 0.1–9 ns a character as the words spelled). Pairing: a run of
+/// twins is ONE ordered multiset — the search never chooses a twin, a run
+/// keeps its decisions first, its surplus dropped where the fewest rows
+/// move (ties from the end), laid in position order (400 twins, one edit:
+/// 10,000 layouts → ~800). Replay: no row moves.
+const int matcherVersion = 29;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
