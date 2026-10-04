@@ -101,9 +101,10 @@ void main() {
   });
 
   test('each check gates its rule: a sibling sizes the volume only through '
-      'its published volume portion; the portobello cap stays dry — its '
-      'detail publishes no per-item portion — and the brioche buns count '
-      'by the piece figure read from their "1 piece"', () async {
+      "its published volume portion; the portobello cap's Foundation "
+      'detail publishes no per-item portion (v35 sizes it on 169255) — and '
+      'the brioche buns count by the piece figure read from their '
+      '"1 piece"', () async {
     Future<GramResolution?> on(String raw, int fdcId) async {
       final parsed = parseIngredientLine(raw);
       return resolveGrams(
@@ -125,15 +126,16 @@ void main() {
       (await on('2 tablespoons beaten egg', 171287))?.grams,
       closeTo(30.375, 1e-3),
     );
-    // 2003598 publishes a racc portion only; 2707682 "1 piece" 77 g and
+    // 2003598 publishes a racc portion only (v35: the cap ranks as 169255
+    // and its '1 piece whole' piece figure); 2707682 "1 piece" 77 g and
     // "Quantity not specified" 70 g — the finder reads neither as one bun,
     // so the bun is the 'brioche bun' piece figure (77 g).
     expect(
-      await on(
-        '1 large portobello mushroom cap, cut into ½-inch pieces',
-        2003598,
-      ),
-      isNull,
+      [
+        for (final p in (await FixtureProvider().food(2003598))!.portions)
+          (p.unit, p.description, p.gramWeight),
+      ],
+      [('racc', null, 85.0)],
     );
     final buns = await on('4 brioche buns, toasted', 2707682);
     expect(buns?.grams, closeTo(308, 1e-9));
@@ -141,7 +143,6 @@ void main() {
       buns?.basis,
       "4 × 77 g each · approximate (FDC's 1-piece portion read as one bun)",
     );
-    expect(rankAsKeys, isNot(contains('portobello mushroom cap')));
   });
 }
 

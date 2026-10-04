@@ -375,6 +375,12 @@ const List<(String, double)> _pieceWeights = [
   // as "1 piece" 77 g — a portion [_portionServingWords] reads as a dish
   // serving, never one item (4 × 77 = 308 g; the check's 50–80 g a bun).
   ('brioche bun', 77),
+  // v35: SR 169255 "Mushrooms, portabella, raw" weighs one as '1 piece
+  // whole' 84 g — a portion [_portionServingWords] reads as a dish serving
+  // (and its unit is null). Two keys: [_pieceLookup] anchors on the head
+  // noun ("1 large portobello mushroom cap", "6–8 portobello mushrooms").
+  ('portobello mushroom', 84),
+  ('portobello mushroom cap', 84),
   // "6 burger buns" matched the right roll and had no grams (audit 4).
   ('burger bun', 52),
   ('english muffin', 60),
@@ -425,6 +431,10 @@ const Map<String, String> _approximatePieces = {
   // v32: FNDDS 2707682 publishes '1 piece' 77 g and no bun portion; the
   // piece is read as one bun — an assumption, so the basis says so.
   'brioche bun': "FDC's 1-piece portion read as one bun",
+  // v35: a whole portobello's portion, read as one stemmed cap whatever its
+  // printed size.
+  'portobello mushroom': "FDC's 'piece whole' portion read as one portobello",
+  'portobello mushroom cap': "FDC's 'piece whole' portion read as one cap",
 };
 
 /// v31 (Q6, ruled 2026-10-03): pieces FDC weighs by no length, sized by

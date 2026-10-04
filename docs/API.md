@@ -1998,14 +1998,15 @@ skin", reads `meaty smoked ham shank or 2 3 smoked ham hocks`) → `pork
 fresh leg ham shank half separable lean and fat raw` (168226) since
 matcher v32: its detail, read in the live step, publishes no refuse yield
 (4 oz, roast 3,868 g, lb), so "1 (6- to 8-pound) bone-in fresh half ham"
-is its printed 3,628.74 g, labelled approximate. (The live step,
-2026-10-03: 14 requests on a scratch copy — 12 food details and 2
-searches. No v32 rule makes a request; each reads answers already
+is its printed 3,628.74 g, labelled approximate. (The live step: 16
+requests on scratch copies — 2026-10-03, 12 food details and 2 searches;
+2026-10-04, the search `mushrooms portabella raw` and the detail of
+169255. No v32 or v35 rule makes a request; each reads answers already
 cached: a rank-as candidate from a snapshot-13 search (fetched 2026-09-08 or
-2026-09-26), a portion from a live-step detail. The chorizo rule
-reads no live-step answer — 174603 is a hit in the 2026-09-26 `salami`
-answer — and the portobello detail (2003598) and the two chorizo
-searches are read by no rule.) Since matcher
+2026-09-26) or the 2026-10-04 search, a portion from a live-step detail.
+The chorizo rule reads no live-step answer — 174603 is a hit in the
+2026-09-26 `salami` answer — and the Foundation portobello detail
+(2003598) and the two chorizo searches are read by no rule.) Since matcher
 v32 (the live step) also `chicken leg quarters`, `bone-in chicken leg quarters`
 (each its own answer) → `chicken leg meat and skin raw` (172378: no
 refuse yield published — leg 344 g, drumstick 111 g, thigh 185 g, back
@@ -2021,9 +2022,19 @@ weighs a bun only as "1 piece" 77 g, a portion the whole-item finder
 reads as a dish serving, so a `brioche bun` piece figure of 77 g carries
 it, flagged approximate because the piece is read as one bun ("4 brioche
 buns" = `"4 × 77 g each · approximate (FDC's 1-piece portion read as one
-bun)"`). Not enabled, its check failed: `portobello
-mushroom cap` (2003598 publishes a racc portion only — no per-cap
-weight). Since matcher v31 (the CP10 rulings, 2026-10-03): star
+bun)"`). Since matcher v35 (the owner's two requests, 2026-10-04):
+`portobello mushroom cap`, `portobello mushrooms` (each reads `mushrooms
+portabella raw`) → `mushrooms portabella raw` (169255; the Foundation
+2003598 the v32 check read publishes a racc portion only, so the cap
+stayed dry until then): the detail's `piece whole` 84 g — a portion the
+whole-item finder reads as a dish serving — carries them as
+`portobello mushroom` and `portobello mushroom cap` piece figures of 84 g,
+flagged approximate because a whole mushroom's portion is read as one
+stemmed cap ("1 large portobello mushroom cap" = `"1 × 84 g each ·
+approximate (FDC's 'piece whole' portion read as one cap)"` — "large" is
+no piece-table size; "6–8 portobello mushrooms (each 4 to 6 inches)"
+reads the bare range's midpoint, 7 × 84 = 588 g). The weighed
+`portobello mushroom caps` line keeps 2003598. Since matcher v31 (the CP10 rulings, 2026-10-03): star
 anise (`star anise pods`, `star anise pod`, each its own answer) →
 `spices anise seed` (171316, flagged); Q7's eight small groups —
 `kalamata olives`, `nicoise olives` → `olives black` (2710090); `ruby

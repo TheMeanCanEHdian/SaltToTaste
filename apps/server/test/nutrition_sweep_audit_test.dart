@@ -1021,9 +1021,11 @@ void main() {
     // the per-inch record-gate pin: two more compared, both differing in
     // some digit. Matcher v32 recorded the live step's 12 details from its
     // scratch copy: 11 are hits in a recorded answer (the egg, 171287, is
-    // in none), 9 of them differing in some digit.
-    expect(compared, 347);
-    expect(differ, 261);
+    // in none), 9 of them differing in some digit. Matcher v35 recorded
+    // the portabella (169255) from the 2026-10-04 live copy: a hit in
+    // 'mushrooms portabella raw', differing in some digit (niacin).
+    expect(compared, 348);
+    expect(differ, 262);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

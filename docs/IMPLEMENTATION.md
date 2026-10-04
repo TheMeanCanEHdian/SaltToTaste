@@ -3050,7 +3050,45 @@ mutants (the held-dredge-or-excess condition dropped; the almond head
 dropped) killed and restored, the fresh-copy replay identical to that
 verifier's, the analyzers and the suites green. matcherVersion 34.
 
+### The accuracy track, part 6: the portobello caps (matcher v35)
+
+The one live-step item v32 could not enable — the portobello cap, whose
+Foundation record publishes a serving marker and no per-piece weight — went
+to the owner, who chose to spend two more requests for FoodData Central's
+own figure (2026-10-04). The search "mushrooms portabella raw" returned the
+SR Legacy record 169255 "Mushrooms, portabella, raw", and its detail
+publishes "1 piece whole" 84 g and "cup diced" 86 g. v35 (2026-10-04) points
+both count lines at it — the stew's "1 large portobello mushroom cap",
+which had sat on a pork leg steak at low confidence, and the stir-fry's
+"6 to 8 portobello mushrooms", which had sat on crimini with no grams —
+through rank-as items reading that answer, and sizes them by an 84 g piece
+figure read from the record (the engine's whole-item reader skips a
+"piece" portion with no unit, so the figure is a table entry), flagged
+approximate because a whole mushroom's weight is read for a stemmed cap.
+"Large" is not a size word, so the cap reads 84 g; the bare range reads its
+midpoint, 7 × 84 = 588 g. The ragu's weight line stays on the Foundation
+record, pinned. Replay on the fetched copy (snapshot 15): calls 0; exactly 2
+rows differ from v34, both engine rows, no person row; counted 13,242 →
+13,244, check 291 → 290, no grams 50 → 49; complete 931 → 932 (the stir-fry;
+the stew still waits on four parsnips with no weight). Fixtures: the search
+and the detail copied byte for byte from the fetched copy. Live requests on
+the accuracy track: 16. One verifier round, no defects; the owner's gate:
+the fixtures checked, the re-pins read, one code-anchored mutant (84 → 80)
+killed and restored, the fresh-copy replay identical to the verifier's, the
+suite green. The fetched copy, key-stripped, is snapshot 15 — the replay
+reference from here on. matcherVersion 35.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-04 — the portobello cap (the owner, "go with option 1"):** spend two live
+  requests for FDC's own per-cap figure rather than a reference figure or no
+  grams. Spent the same day (the SR raw portabella record and its detail: 84 g a
+  piece); built as v35. Also 2026-10-04 (the owner): there is NO production host
+  and never has been — every run so far was local development on this machine;
+  the first real run uses the swept snapshot as its database, locally, with the
+  one exit-review finding an ordinary sweep reaches (an engine line's good match
+  overwritten by one transient failure) fixed first; the other exit-review
+  findings stay deferred.
 
 - **2026-10-03 (night) — v33's two follow-ups (the owner: "the narrow version for
   both lists"):** (1) the four fried dredges the survey reads with no excess

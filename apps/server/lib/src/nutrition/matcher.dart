@@ -479,7 +479,12 @@ const Map<String, String> _synonyms = {
 /// 0150's Melba toast). A row with no food gets no hold (0198's cornflakes
 /// stay no match). The four fried dredges with no excess sentence stay held
 /// by the frying ruling (no change).
-const int matcherVersion = 34;
+/// 35 = the portobello caps (the owner spent two requests, 2026-10-04: the
+/// search 'mushrooms portabella raw' and the detail of 169255): "1 large
+/// portobello mushroom cap" and "6–8 portobello mushrooms" rank as SR
+/// 169255 "Mushrooms, portabella, raw" and count by its '1 piece whole'
+/// 84 g, flagged approximate (a whole mushroom read as one stemmed cap).
+const int matcherVersion = 35;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -1703,10 +1708,20 @@ const Map<String, (String, String)> _rankAs = {
   // 170002 (the dehydrated flakes the cached 'onions' answer names)
   // publishes tbsp 5 g and ¼ cup 14 g.
   'dried onions': ('onions', 'onions dehydrated flakes'),
-  // NOT enabled: the singular portobello cap (detail 2003598) publishes
-  // only a racc portion (85 g) — no per-cap portion, so "1 large
-  // portobello mushroom cap" would gain no grams; the line stays in review.
-  // 'portobello mushroom cap': ('portobello mushrooms', 'mushroom portabella'),
+  // v35 (the owner's two requests, 2026-10-04): the counted portobellos on
+  // SR 169255 "Mushrooms, portabella, raw", the first hit of the
+  // 'mushrooms portabella raw' answer (2003598, the Foundation record the
+  // v32 check read, publishes a racc portion only). Its '1 piece whole'
+  // 84 g sizes them through the piece table (grams.dart). The weighed
+  // 'portobello mushroom caps' line above keeps its record.
+  'portobello mushroom cap': (
+    'mushrooms portabella raw',
+    'mushrooms portabella raw',
+  ),
+  'portobello mushrooms': (
+    'mushrooms portabella raw',
+    'mushrooms portabella raw',
+  ),
   // 168559 publishes cup 192 g, tbsp 12 g, slice, whole pimiento 66 g.
   'jarred pimentos': ('jarred pimentos', 'pimento canned'),
   // 169744 publishes cup 172 g; a flagged stand-in (khorasan for wheat
