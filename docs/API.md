@@ -828,9 +828,22 @@ after it was ever computed). It is that LINE's state, for EVERY line kind
 (v29, Run 059 Sonnet critic 1 / O3 / Opus critic 3 — v28 handled decided
 rows only, and an engine line's failure threw the whole pass away): on a
 decided row it leaves that row underived; on an ENGINE line (its candidate,
-the key's prior decision or a nutrient record failing) the line gets a row
-of its own — `unmatched`, no food, `description` "FoodData Central could
-not serve this food" — underived until held (`stale_reason: underived`).
+the key's prior decision or a nutrient record failing) whose row already
+carries a food (an `auto` row of an earlier compute) the row is KEPT as a
+decided row is (v36, Run 060 S4: v29 overwrote it, so one flaky detail on an
+`all` sweep dropped a correct match from the totals) — its food, grams and
+status untouched, underived until held `food_unavailable`
+(`stale_reason: underived` — a row carrying its own hold, `coating`,
+`partial_pour_away` and the like, included: its derivation failed all the
+same; its food or nutrient record no cache holds leaves it out of the
+totals as a decided row's does), and the held write keeps its food (the
+reviewer sees what it was) while `food_unavailable` replaces the line's
+own hold until the line derives again, which re-derives that hold; only
+a line with NO row carrying a food (a first compute, or its own unmatched
+row) gets a row of its own — `unmatched`, no food,
+`description` "FoodData Central could not serve this food" — underived
+until held. Either way FDC serving the food again derives the line anew
+(one request; the `all` scope's once-per-sweep re-ask below for a held one).
 Either is counted (`ingredient_matches.retry_count`, migration 016), the
 pass goes on to the next line, the compute writes the rest and its totals,
 the job's log names it ("<id>: <reason>") and the job goes on — `done`, the

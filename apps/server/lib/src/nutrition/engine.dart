@@ -5544,6 +5544,16 @@ Future<NutritionProviderException?> _computePass(
   // the [foodUnavailableAfter]th), and the pass goes on to the next line.
   // Until held the row is underived ([SaltDatabase.underivedSql]): the
   // recipe reads stale and the sweep asks again, once per pass.
+  // v36 (Run 060 S4): a line whose row already CARRIES A FOOD ([laid], an
+  // `auto` row of an earlier pass) keeps it — food, grams, status — and
+  // is counted and held exactly as a decided row is (the held write keeps
+  // the food); the unmatched row is built only for a line with none.
+  // The lines whose row was KEPT so (v36): their food or nutrient record
+  // no cache holds leaves the row out of the totals as a decided row's
+  // does — the stamp current, the recipe stale by the row itself
+  // ([SaltDatabase.underivedSql]) — so a job's next pass
+  // ([computeUntilFresh]) never counts the same failure again.
+  final kept = <int>{};
   void engineUnavailable(
     int position,
     IngredientLine line,
@@ -5568,6 +5578,8 @@ Future<NutritionProviderException?> _computePass(
       if (!write(over)) {
         return;
       }
+    } else if (over.fdcId != null) {
+      kept.add(position);
     }
     unavailableRow(position, over, over, error);
   }
@@ -5752,12 +5764,16 @@ Future<NutritionProviderException?> _computePass(
     // caches alone ([cacheOnly]) like a decided row's hold — a cache
     // holding the food again matches the line with no request — and
     // asked of FDC again only by the `all` scope ([retryUnavailable]).
+    // v36 (Run 060 S4): an engine row CARRYING A FOOD (`auto`, from an
+    // earlier pass) is such a row too — a FOOD failure keeps it as a
+    // decided row is kept ([engineUnavailable]), never overwritten.
     final laid = paired[position];
     final failed =
         laid != null &&
-            laid.status == 'unmatched' &&
-            laid.description == engineUnavailableNote &&
-            laid.raw == line.raw
+            ((laid.status == 'unmatched' &&
+                    laid.description == engineUnavailableNote &&
+                    laid.raw == line.raw) ||
+                (laid.status == 'auto' && laid.fdcId != null))
         ? laid.copyWith(position: position, itemKey: key)
         : null;
     final lineProvider =
@@ -6009,7 +6025,19 @@ Future<NutritionProviderException?> _computePass(
       );
     } on NutritionProviderException catch (error) {
       if (identical(lineProvider, cacheOnly)) {
-        continue; // No cache holds it yet: the hold stands, no request.
+        // No cache holds it yet: the hold stands, no request — derived for
+        // these inputs as a decided row's re-read hold is (v36, verifier
+        // D2: a held kept row is keyed by `derived_seq`, so an edit never
+        // leaves it underived and a cache gain re-opens it).
+        if (failed!.derivedSeq != derivedKey && fresh()) {
+          db.markDerivedIfUnchanged(
+            failed,
+            derivedSeq: derivedKey,
+            layoutSeq: seq,
+            keepRetryCount: true,
+          );
+        }
+        continue;
       }
       if (error is DetailsSuspended) {
         continue; // Never asked: the line's row stands, uncounted.
@@ -6043,6 +6071,7 @@ Future<NutritionProviderException?> _computePass(
     standIns: standIns,
     // A line the suspension left unasked: stale, waiting on USDA.
     unavailable: provider.skipped,
+    kept: kept,
     ending: marked,
   );
   return failure ??
@@ -7033,7 +7062,10 @@ bool _isDecided(IngredientMatchRow row) =>
 /// Opus critics 2 and 3: the 404 arm stamped fresh, the outage arm made a
 /// serving-basis change drop a food and turn the recipe stale). A decided
 /// row held `food_gone` or `food_unavailable` is held: left out, nothing to
-/// derive. With [missing], a food no cache holds is added to it and NOTHING
+/// derive. [kept]: the compute's engine rows kept through a FOOD failure
+/// (v36) — left out as a decided row is, never stamping the recipe waiting
+/// on USDA (their `retry_count` reads it stale). With [missing], a food no
+/// cache holds is added to it and NOTHING
 /// is written (false): a plain recompute's caller resolves them first
 /// ([recomputeTotalsResolving], v28) — the totals read only what a
 /// derivation resolved. True when written (or the recipe is gone).
@@ -7046,6 +7078,7 @@ bool recomputeTotals(
   ({Recipe recipe, String hash})? hashed,
   Set<int>? missing,
   bool unavailable = false,
+  Set<int> kept = const {},
   bool ending = false,
 }) {
   // The totals and the stamp are read in ONE synchronous pass over the
@@ -7133,7 +7166,7 @@ bool recomputeTotals(
       missing?.add(own == null ? row.fdcId! : sibling!);
       if (_isDecided(row)) {
         underived.add(row.position);
-      } else {
+      } else if (!kept.contains(row.position)) {
         engineMissing = true;
       }
       continue;

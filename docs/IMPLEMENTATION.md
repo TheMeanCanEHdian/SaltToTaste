@@ -3078,6 +3078,43 @@ killed and restored, the fresh-copy replay identical to the verifier's, the
 suite green. The fetched copy, key-stripped, is snapshot 15 — the replay
 reference from here on. matcherVersion 35.
 
+### Before the first run: an engine line keeps what it had (v36, matcher version unchanged)
+
+Of the exit review's deferred findings, one was reachable on an ordinary
+admin sweep and the owner chose to fix it before the first real run
+(2026-10-04): v29's engine-line failure handling built a fresh unmatched
+row whenever an undecided line's food failed and the line had no
+already-unavailable row, and wrote it over the line's current engine row —
+so one transient failure on an `all` or stale sweep destroyed a previously
+correct auto match (0857 complete 13/13 at 464.8 kcal → one 500 on the
+butter's detail → "unmatched / FoodData Central could not serve this
+food", 12/13 at 363 kcal, until a later sweep). v36 completes RULE A's
+"every line kind" with "keep what was there": an engine line that already
+has an auto row with a food is treated on a food failure exactly like a
+decided row — the row kept with its food, description, grams and status,
+left underived with its retry count incremented, the recipe stale
+(`stale_reason` underived), the pass continuing; held `food_unavailable`
+after three failures with the food kept so a reviewer sees what it was;
+re-read from the caches only on a stale sweep and asked of FDC once per
+`all` sweep like any held row; a kept row whose food is not cached is left
+out of the totals the way a decided row is (the first cut set the
+`unavailable:` stamp and ran three passes in one sweep, counting the row
+three times — caught by the v29 O4-shape pin and fixed). The unmatched
+note row is written only when the line has no row with a food (v29's
+behaviour there, pinned). The freshness predicate's engine half now also
+reads an auto or unmatched row with a retry count and no hold as underived.
+The job watch, the per-pass suspension and the GLOBAL classes are untouched
+and their suites green; the oracle's outage mode clean. The matcher version
+stays 35: failure-path handling only, and a cache-only replay of snapshot
+15 moves no row. Pins on 0857 end to end (fail once → kept and stale;
+recover → one request, 464.8 kcal; fail three times → held with the food;
+the `all` re-ask recovers), the no-prior-row case, and a job-driven shape;
+v28's A12 re-pinned (its last assertion had pinned the overwrite itself).
+Three verifier rounds (two close rounds). The owner's gate: the re-pin
+read, one code-anchored mutant (the kept-row arm made unreachable) killed
+and restored, the fresh-copy replay with zero rows differing, the suites
+and the outage oracle green.
+
 ## Decision log (deviations & clarifications)
 
 - **2026-10-04 — the portobello cap (the owner, "go with option 1"):** spend two live

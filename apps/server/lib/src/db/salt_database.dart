@@ -1938,7 +1938,15 @@ class SaltDatabase {
   /// migration 017 — a pass that has not reached its totals, Opus critic 1)
   /// and an ENGINE line whose food FDC failed (FOOD) and is not held yet
   /// (`unmatched` with a `retry_count`, `engineUnavailableNote`: the sweep
-  /// asks again, once per pass, until [foodUnavailableAfter] holds it).
+  /// asks again, once per pass, until [foodUnavailableAfter] holds it);
+  /// v36 (Run 060 S4): also an `auto` row KEPT with its food through such a
+  /// failure (a `retry_count`, not held [foodUnavailableHold] yet) — the
+  /// row's OWN hold (`coating`, `partial_pour_away`, ...) is no such hold:
+  /// its derivation failed all the same (verifier D1). Once HELD, such a
+  /// kept row is keyed by `derived_seq` as a decided row is (the held
+  /// write stamps it, every later compute re-stamps it, [unholdOn] clears
+  /// it when a cache gains its food): a cache gain re-opens it with no
+  /// request (verifier D2).
   static const String underivedSql =
       '(n.computing > 0 OR EXISTS (SELECT 1 FROM '
       'ingredient_matches m WHERE m.recipe_id = n.recipe_id AND '
@@ -1946,8 +1954,10 @@ class SaltDatabase {
       "AND NOT (m.status = 'confirmed' AND m.fdc_id IS NULL "
       'AND m.description IN ($engineRuleNotesSql)) '
       "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash)) "
-      "OR (m.status = 'unmatched' AND m.retry_count > 0 "
-      'AND m.hold IS NULL))))';
+      "OR (m.status = 'auto' AND m.hold = '$foodUnavailableHold' "
+      "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash)) "
+      "OR (m.status IN ('unmatched', 'auto') AND m.retry_count > 0 "
+      "AND m.hold IS NOT '$foodUnavailableHold'))))";
 
   /// [engineRuleNotes] as an SQL list (a const, for the cached queries;
   /// pinned equal to the list).

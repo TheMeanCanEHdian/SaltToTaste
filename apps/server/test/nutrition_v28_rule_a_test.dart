@@ -1198,15 +1198,12 @@ void main() {
         expect(row['log'], contains('a: FoodData Central error 400.'));
         expect(nutritionIsFresh(db, rb1), isTrue);
         expect(p.asked, 1);
+        // v36 (Run 060 S4): the line's auto row carries a food, so it is
+        // KEPT (counted, underived) — never overwritten by the unmatched
+        // row ([engineUnavailableNote] only for a line with no food).
         final a0 = d.rowOf(db, ra0, 0);
-        expect(
-          (a0.status, a0.description, a0.hold),
-          (
-            'unmatched',
-            engineUnavailableNote,
-            null,
-          ),
-        );
+        expect((a0.status, a0.fdcId, a0.hold), ('auto', napaId, null));
+        expect(nutritionIsFresh(db, d.retitled(ra0)), isFalse);
       });
 
       test('A29: stale_reason says why — `underived` (a decision waiting on '
