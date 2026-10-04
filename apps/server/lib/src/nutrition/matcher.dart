@@ -469,7 +469,17 @@ const Map<String, String> _synonyms = {
 /// and so is a crumb or panko line (¼ cup or more) of a recipe that holds a
 /// dredge when a sentence coats the food with crumbs (0416, 0117: the steps
 /// name the panko as "the bread crumbs", "the panko mixture").
-const int matcherVersion = 33;
+/// 34 = the coat's other layers (the owner, 2026-10-03, "the narrow
+/// version"): a nut, cheese, cracker, chip, cornflake or Melba toast line
+/// (a quarter cup or more, or a count; the first line of its head) named in
+/// a sentence that sets the coat out in its dish or names it with the
+/// coat's crumbs is held `coating` with the dredge of a recipe that holds
+/// one (L1: 0042, 0117, 0315 ×2, 0407, 0416, 0419), or of a recipe whose
+/// directions leave an excess of the coat with no dredge line to hold (L2:
+/// 0150's Melba toast). A row with no food gets no hold (0198's cornflakes
+/// stay no match). The four fried dredges with no excess sentence stay held
+/// by the frying ruling (no change).
+const int matcherVersion = 34;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

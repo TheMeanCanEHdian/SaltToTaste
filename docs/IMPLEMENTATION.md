@@ -3012,7 +3012,56 @@ gate; the "pat" verb dropped from the signal) killed and restored, the
 fresh-copy replay identical to the verifier's, the three analyzers and the
 suites green. matcherVersion 33.
 
+### The accuracy track, part 5: the coat's other layers (matcher v34)
+
+v33 left two questions for the owner, who ruled on both (2026-10-03,
+night: "the narrow version for both lists"). The four fried dredges the
+survey reads as leaving no excess sentence (crab cakes, easier fried
+chicken, orange chicken, almond-crusted chicken) stay held by the frying
+ruling — no change. The coat layers outside the flour and crumb head set
+are held only narrowly, and v34 (2026-10-04) builds that: a line whose head
+is a nut, cheese, cracker, chip, cornflake or Melba toast, sized above the
+quarter-cup guard and the first of its head in the recipe, is held
+`coating` when the steps name it in the sentence that sets the coat out in
+its shallow dish or mixes it with the crumbs, and the recipe either holds a
+dredge already (the v33 gate as it stands) or leaves an excess of the coat
+(the Melba toast of oven-fried chicken, whose coat has no flour line).
+Cheese in a filling or a sauce, nuts in a strudel, chips on the side and
+a crust no step leaves an excess of stay counted, each pinned as a
+non-trip; a row with no food gets no hold (the cornflakes stay no match).
+The rule reached eight rows, not the six the brief enumerated: the
+Parmesan stirred into the already held crumbs of eggplant parmesan and
+lighter chicken parmesan is a layer mixed evenly through a held coat, left
+in the dish in the same share, and the two verifier rounds and the owner
+agreed the enumeration was short, not the rule wide. Replay on snapshot
+14: calls 0; 8 rows differ from v33 — the almonds of two recipes, the
+saltines and potato chips of the onion rings, three Parmesan lines and the
+Melba toast — every one an unheld auto row now held `coating`, no person's
+row, no held row un-held, no no-match row touched; counted 13,250 →
+13,242, check 283 → 291; complete 932 → 931 (oven-fried chicken alone
+enters the review queue; the others were already there). The review
+screen's wording now reads "part of a coating whose excess is discarded"
+so a nut or cheese layer reads true. Two verifier rounds found the
+enumeration question only; the third verifier's agent wrote its report
+and stalled on its return (the app analyzer took fifteen minutes on this
+machine), so the owner's gate stood in for its verdict: the two search
+fixtures byte-equal to snapshot rows, the re-pins read, two code-anchored
+mutants (the held-dredge-or-excess condition dropped; the almond head
+dropped) killed and restored, the fresh-copy replay identical to that
+verifier's, the analyzers and the suites green. matcherVersion 34.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-03 (night) — v33's two follow-ups (the owner: "the narrow version for
+  both lists"):** (1) the four fried dredges the survey reads with no excess
+  sentence (0288, 0149, 0525, 0042's panko) STAY HELD by the frying ruling — no
+  change. (2) A coat layer outside the head set (nuts, cheese, crackers, chips,
+  Melba toast) is held only when the same recipe already holds a dredge (or its
+  directions leave an excess of the coat) AND the coating step names the layer
+  in the coat's dish or with its crumbs; cheese in a filling or a sauce, nuts in
+  a filling, chips on the side and a crust with no excess stay counted; a row
+  with no food gets no hold. Built as v34 (eight rows: the brief's six plus the
+  Parmesan stirred into the held crumbs of 0407 and 0416, judged within the rule).
 
 - **2026-10-03 (evening) — the dredge-reach ruling (the owner, on the survey's
   option 1):** a reachable coating line (flour, starch, crumbs or panko at a

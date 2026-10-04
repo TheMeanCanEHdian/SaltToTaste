@@ -2270,8 +2270,8 @@ final RegExp _labelledFrying = RegExp(
 /// them ("Coat all sides of the chop with the bread-crumb mixture", 0206,
 /// 0254, 0407, 0122). The flour was held while the crumbs of the same coat
 /// counted (140 g, 84 g). A coat part that is not bread or a dredge head —
-/// nuts, cheese, Melba toast, saltines, potato chips, cornflakes — stays
-/// counted (the owner's follow-up). The step tests once per recipe.
+/// nuts, cheese, Melba toast, saltines, potato chips, cornflakes — is
+/// [_coatLayer]'s (v34). The step tests once per recipe.
 bool _crumbsForTheCoat(Recipe recipe, String raw) {
   final index = _stepIndexOf(recipe);
   return _dredgedIn(recipe) &&
@@ -2323,6 +2323,96 @@ bool _crumbLineOfTheCoat(
       index.memo(#coatsWithCrumbs, () {
         return index.allSentences.any(_coatsWithCrumbs.hasMatch);
       });
+}
+
+/// Whether [line] is another LAYER of [recipe]'s coat — nuts, cheese,
+/// crackers, chips, cornflakes, Melba toast beside the flour and crumbs
+/// (v34, the owner's ruling 2026-10-03 on v33's follow-up, "the narrow
+/// version"): a head of [_coatLayerHeads] the guard sizes as more than a
+/// pinch ([_layerSized]), named — by its head, or by the kind word its item
+/// carries ("parmesan", "saltine": the steps never say "cheese" or
+/// "crackers" there) — in a sentence that sets the coat out in its shallow
+/// dish or names it with the crumbs ([_layerOfTheCoat]): "Pulse the
+/// saltines and chips together …; place in a separate shallow baking dish"
+/// (0315), "Whisk ¼ cup of the flour and the ¼ cup grated Parmesan together
+/// in a shallow dish" (0419), "add the bread crumbs and ground almonds and
+/// cook" (0117), "Process the almonds in a food processor to fine crumbs"
+/// (0042), "Transfer the crumbs to a pie plate and stir in the Parmesan"
+/// (0407), "Drizzle the oil over the Melba toast crumbs in a pie plate or
+/// shallow dish" (0150). L1: the recipe holds a dredge ([_dredgedIn],
+/// v33's gate as it stands). L2: or its directions leave an excess of the
+/// coat ([_leavesExcess]) — 0150's Melba coat has no flour line to hold,
+/// and "Gently shake off the excess" leaves part of it in the dish. Only
+/// the first line of its head: the steps name a second one the same way,
+/// and a recipe lists a food where it is first used (0407's "1 ounce
+/// Parmesan" topping after the coat's 2 ounces, [_firstOfItsHead]). A
+/// cheese in a filling no coat sentence names (0118, which holds a dredge),
+/// a binder (0000 meatballs) or a sauce (0300), nuts in a filling (0957
+/// strudel), chips on the side (0820), a crust no step leaves
+/// an excess of (0415, 0041, 0258) stay counted. A row with no food gets no
+/// hold — only [engineOutcome] writes one, on a row with a food: 0198's
+/// cornflakes, which this reading reaches, stay no match.
+bool _coatLayer(
+  Recipe recipe,
+  IngredientLine line,
+  String? head,
+  double Function() ml,
+  String normalized,
+) {
+  if (!_coatLayerHeads.contains(head) ||
+      !_layerSized(line, ml) ||
+      !_firstOfItsHead(recipe, line, head!)) {
+    return false;
+  }
+  final index = _stepIndexOf(recipe);
+  return [
+        head,
+        for (final kind in const ['parmesan', 'saltine'])
+          if (normalized.contains(kind)) kind,
+      ].any(
+        (word) => _naming(
+          recipe,
+          word,
+        ).any((at) => _layerOfTheCoat.hasMatch(index.sentence(at))),
+      ) &&
+      (_dredgedIn(recipe) || _leavesExcess(recipe));
+}
+
+/// The coat's parts outside [_dredgeHeads] ([_coatLayer]).
+const Set<String> _coatLayerHeads = {
+  'almond',
+  'pecan',
+  'walnut',
+  'pistachio',
+  'hazelnut',
+  'cashew',
+  'peanut',
+  'macadamia',
+  'nut',
+  'cheese',
+  'cracker',
+  'chip',
+  'cornflake',
+  'toast',
+};
+
+/// A sentence that sets the coat out in its dish or names the layer with
+/// the coat's crumbs ([_coatLayer]).
+final RegExp _layerOfTheCoat = RegExp(
+  r'\bshallow (?:baking )?dish\b|\bcrumbs\b',
+);
+
+/// Whether [line] is more than a pinch of a coat layer ([_coatLayer]): a
+/// quarter cup or more by volume — or by weight where the density table
+/// reads one ([_mediumMl]) — or, with neither, a count ("30 saltine
+/// crackers", "1 box (about 5 ounces) plain Melba toast"). A tablespoon or
+/// two of Parmesan tossed with the crumbs (0206) is not reached.
+bool _layerSized(IngredientLine line, double Function() ml) {
+  if (line.amounts.isEmpty) {
+    return false;
+  }
+  final v = ml();
+  return v >= _quarterCupMl || (v == 0 && volumeMlOf(line.amounts) == null);
 }
 
 /// Whether [recipe] holds a dredge ([_dredge]) — once per recipe.
@@ -2850,7 +2940,8 @@ DiscardedMedium? discardedMediumOf(
     }
     if (_dredge(recipe, raw, head, () => ml, steps) ||
         (head == 'bread' && _crumbsForTheCoat(recipe, raw)) ||
-        _crumbLineOfTheCoat(recipe, head, () => ml)) {
+        _crumbLineOfTheCoat(recipe, head, () => ml) ||
+        _coatLayer(recipe, line, head, () => ml, normalized)) {
       return DiscardedMedium.coating;
     }
     if (keptLiquidOf(recipe, line) != null) {

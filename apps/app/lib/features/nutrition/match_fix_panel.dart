@@ -247,8 +247,8 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
     'A starter feeding: the method keeps a little starter and discards the '
         'rest each time, so how much of this line is eaten is not written',
   'coating' =>
-    'A dredge whose excess is discarded: part of the coating is shaken off '
-        'or left in the dish, and how much the food keeps is not written'
+    'Part of a coating whose excess is discarded: some of the coat is shaken '
+        'off or left in the dish, and how much the food keeps is not written'
         '${note == null ? '' : ' ($note)'}',
   'partial_pour_away' =>
     'Only part of the strained cooking liquid is kept'

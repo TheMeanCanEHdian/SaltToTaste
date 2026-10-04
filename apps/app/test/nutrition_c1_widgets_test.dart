@@ -1131,7 +1131,7 @@ void main() {
       await openSheet(tester, [starter, dredge, soy], isAdmin: false);
       for (final text in [
         'A starter feeding',
-        'A dredge whose excess is discarded',
+        'Part of a coating whose excess is discarded',
         '(1 cup defatted cooking liquid); the rest is poured away',
       ]) {
         expect(
@@ -1188,8 +1188,8 @@ void main() {
       await openSheet(tester, [dredge, soy]);
       expect(
         find.textContaining(
-          'A dredge whose excess is discarded: part of the coating is shaken '
-          'off or left in the dish, and how much the food keeps is not '
+          'Part of a coating whose excess is discarded: some of the coat is '
+          'shaken off or left in the dish, and how much the food keeps is not '
           'written — held out of the totals. '
           'Skip if it is poured away, or enter the grams that are eaten; '
           'picking another food keeps it held',

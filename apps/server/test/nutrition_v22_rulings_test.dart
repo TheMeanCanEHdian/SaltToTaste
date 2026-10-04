@@ -268,6 +268,19 @@ void main() {
         '0420-chicken-francese#9',
         '0421-chicken-saltimbocca#1',
         '0466-fish-meuniere-with-browned-butter-and-lemon#0',
+        // v34 (the coat's other layers): a nut, cheese, cracker, chip,
+        // cornflake or Melba toast line of the coat, held with the dredge
+        // (L1) or by the excess alone (L2, 0150). 0198#4 is the line's
+        // reading; its row has no food and stays no match.
+        '0042-almond-crusted-chicken-with-wilted-spinach-salad#2',
+        '0117-nut-crusted-chicken-breasts-with-lemon-and-thyme#2',
+        '0150-oven-fried-chicken#8',
+        '0198-crispy-pan-fried-pork-chops#4',
+        '0315-oven-fried-onion-rings#6',
+        '0315-oven-fried-onion-rings#7',
+        '0407-eggplant-parmesan#3',
+        '0416-lighter-chicken-parmesan#2',
+        '0419-parmesan-crusted-chicken-cutlets#3',
       });
     }, skip: skipIfNoCorpus);
   });

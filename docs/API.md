@@ -1613,10 +1613,11 @@ fry", "air fry", "oven fry", "dry fry" spelled with a space, "do not" /
 optional note that opens its sentence, a negation, bacon or prosciutto
 fried in its own fat, or rice toasted for a pilaf — heats a frying fat to a
 frying temperature, discards the fat the food cooked in, or a line "for
-(deep) frying"). Four such standing holds have no excess sentence and are
-the owner's open question: 0288 Maryland crab cakes' flour ("Lightly
-dredge"), 0149 Easier Fried Chicken's 2 cups, 0525 Orange-Flavored
-Chicken's cornstarch, 0042 Almond-Crusted Chicken's panko. v33 moved 25
+(deep) frying"). Four such standing holds have no excess sentence — 0288
+Maryland crab cakes' flour ("Lightly dredge"), 0149 Easier Fried Chicken's
+2 cups, 0525 Orange-Flavored Chicken's cornstarch, 0042 Almond-Crusted
+Chicken's panko — and stay held by the frying ruling (the owner's
+decision, 2026-10-03: no change). v33 moved 25
 lines, 17 recipes complete → partial: 18 dredges (0077, 0117, 0118, 0122,
 0206, 0235, 0254, 0257, 0315, 0407, 0415, 0416, 0418 ×2, 0419, 0420,
 0421, 0466) and 7 crumb lines (below). Since matcher v31 (B4; every held dredge since v33) the bread a
@@ -1634,9 +1635,38 @@ call these crumbs by another name than the line's head, so the dredge's
 own detection never reaches them: 0416's "1½ cups panko" ("coat both sides
 of the chicken with the bread crumbs"), 0117's "1 cup panko bread crumbs"
 ("Coat all sides of the breast with the panko mixture, pressing gently so
-that the crumbs adhere"). A coat part that
-is neither bread nor a dredge head — nuts, cheese, Melba toast, saltines,
-potato chips, cornflakes — stays counted (the owner's follow-up). A divided
+that the crumbs adhere"). Since matcher v34 (the owner's
+ruling, 2026-10-03, "the narrow version") the coat's OTHER LAYERS are held
+with it: a nut, cheese, cracker, chip, cornflake or Melba toast line — a
+quarter cup or more by volume (or by weight where the density table reads
+one), or a count ("30 saltine crackers", "1 box … Melba toast"); never a
+line with no amount; only the first line of its head, since the steps name
+a second one the same way (0407's Parmesan topping stays counted) — that a
+step names, by its head or by the kind its item carries ("Parmesan",
+"saltines"), in a sentence that sets the coat out in its shallow dish or
+names it with the crumbs ("Pulse the saltines and chips together …; place
+in a separate shallow baking dish", 0315; "Whisk ¼ cup of the flour and
+the ¼ cup grated Parmesan together in a shallow dish", 0419; "add the bread
+crumbs and ground almonds", 0117; "Transfer the crumbs to a pie plate and
+stir in the Parmesan", 0407) — (L1) in a recipe that holds a dredge (0042,
+0117, 0315 ×2, 0407, 0416, 0419), or (L2) in a recipe whose directions
+leave an excess of the coat with no dredge line to hold: 0150 Oven-Fried
+Chicken's Melba toast ("Gently shake off the excess"). A layer in a recipe
+with neither stays counted — a crust set out with no excess sentence (0415
+best chicken Parmesan, 0041's Melba-crusted goat cheese, 0258's chip
+crust), a cheese binder (0000), nuts in a filling (0957), chips for garnish
+(0820), the cheeses of a sauce (0300 classic macaroni and cheese) — and so
+does a line no coat sentence names, even in a recipe that holds a dredge:
+0118's cream cheese and cheddar, a filling beside its held flour and
+crumbs. So do 2 tablespoons of Parmesan tossed with the crumbs (0206:
+under the quarter cup). 0407's and 0416's Parmesan are 0117's shape — the
+cheese stirred into the coat's crumbs ("when cool, stir in the Parmesan",
+0416) in a recipe whose flour is shaken of its excess — so both hold: the
+crumbs they are stirred into already hold since v33 (0407's bread, 0416's
+panko), and a layer mixed evenly through a held coat is left in the dish
+in the same share. The hold is written only on a row with a food: 0198's cornflakes, a layer of a held coat with no FDC match,
+stay `no_match` (a person's pick then reads the line held `coating`, like
+any line hold). A divided
 line's part set out in the coat's dish is the dredge's: 0206's "¼ cup plus
 6 tablespoons" flour holds with its 6 tablespoons whisked into the egg
 whites as the eaten part. Held until the server's `coatingFraction` switch
