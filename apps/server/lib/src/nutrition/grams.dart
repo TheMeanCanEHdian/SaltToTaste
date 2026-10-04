@@ -466,6 +466,14 @@ const List<(String, double)> _pieceWeights = [
   // noun ("1 large portobello mushroom cap", "6–8 portobello mushrooms").
   ('portobello mushroom', 84),
   ('portobello mushroom cap', 84),
+  // v38 (the live step's checks, met on the records' real portions; the
+  // whole-item finder reads neither): SR 168434 "Mushrooms, brown, italian,
+  // or crimini, raw" weighs one as 'piece whole' 20 g — 'piece' is a dish
+  // serving word ("24 cremini mushrooms, trimmed"); SR 172718 "Cookies,
+  // chocolate sandwich, with creme filling, regular" weighs '3 cookie' 36 g
+  // — a count of three, never one item ("16 Oreo cookies"): 12 g a cookie.
+  ('cremini mushroom', 20),
+  ('oreo cookies', 12),
   // "6 burger buns" matched the right roll and had no grams (audit 4).
   ('burger bun', 52),
   ('english muffin', 60),
@@ -532,6 +540,8 @@ const Map<String, String> _approximatePieces = {
   // printed size.
   'portobello mushroom': "FDC's 'piece whole' portion read as one portobello",
   'portobello mushroom cap': "FDC's 'piece whole' portion read as one cap",
+  // v38.
+  'cremini mushroom': "FDC's 'piece whole' portion read as one cremini",
   // v37.
   'sugar cube': 'ATK: ¾ cup sugar makes 64 cubes',
   'sea scallop': 'ATK: 1½ pounds large sea scallops ≈ 16 to 24',
@@ -701,18 +711,17 @@ const Map<int, int> volumeSiblings = {
   // jalapenos" '1 cup' 150 g. Both details cached.
   332791: 2710089,
   2747661: 2710096,
-  // LIVE STEP (v37 R09, built dry — uncomment with the detail, after its
-  // check: a cup portion; the request table is in docs/API.md): Radicchio
-  // (Foundation) →
-  // SR "Radicchio, raw" (detail 168564); Cauliflower (Foundation) → SR
-  // (detail 169986); canned chickpeas, sodium added (2644288, no cup)
-  // → SR "…canned, drained, rinsed in tap water" (detail 173801); raw
-  // cashews (Foundation) → SR "Nuts, cashew nuts, raw" (detail 170162; the
-  // zero-request fallback, 2707498 honey-roasted cup 130 g, flagged, if
-  // the request is declined).
-  // 2747664: 168564,
-  // 2685573: 169986,
-  // 2644288: 173801,
+  // v38 (the owner's live step, 2026-10-04 — each detail read and its cup
+  // portion checked): Radicchio (Foundation) → SR "Radicchio, raw" 'cup,
+  // shredded' 40 g; Cauliflower (Foundation) → SR "Cauliflower, raw" 'cup
+  // chopped (1/2" pieces)' 107 g; canned chickpeas, sodium added (2644288,
+  // no cup) → SR "…canned, drained, rinsed in tap water" 'cup drained,
+  // rinsed' 152 g. Raw cashews STAY DRY: SR 170162 "Nuts, cashew nuts, raw"
+  // publishes 'oz' 28.35 g only — no cup (the zero-request fallback,
+  // 2707498 honey-roasted cup 130 g, flagged, is the owner's call).
+  2747664: 168564,
+  2685573: 169986,
+  2644288: 173801,
   // 2515374: 170162,
 };
 

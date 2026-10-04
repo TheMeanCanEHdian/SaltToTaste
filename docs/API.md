@@ -1383,13 +1383,20 @@ types), raw" and "Cabbage, chinese (pe-tsai), raw"; since matcher v32,
 the live step's details read, FNDDS "Tamarind" (2709269) reads SR
 "Tamarinds, raw" (167763, `cup, pulp` 120 g: "2 tablespoons tamarind
 paste" is 15 g) and Foundation "Eggs, Grade A, Large, egg whole" (748967)
-reads SR "Egg, whole, raw, fresh" (171287, `cup (4.86 large eggs)` 243 g;
+reads SR "Egg, whole, raw, fresh" (171287, `cup (4.86 large eggs)` 243 g:
+"2 tablespoons beaten egg" is 30.38 g);
 since matcher v37 Foundation "Olives, green, Manzanilla, stuffed with
 pimiento" (332791) reads FNDDS "Olives, green" (2710089, `1 cup` 135 g:
 "½ cup pimento-stuffed green olives" is 67.5 g) and Foundation "Peppers,
 jalapeno, seeded, raw" (2747661) FNDDS "Peppers, jalapenos" (2710096, `1
-cup` 150 g), both details cached:
-"2 tablespoons beaten egg" is 30.38 g)) (the food stays the
+cup` 150 g), both details cached; since matcher v38, the owner's live
+step's details read, Foundation "Radicchio" (2747664) reads SR "Radicchio,
+raw" (168564, `cup, shredded` 40 g), Foundation "Cauliflower" (2685573)
+SR "Cauliflower, raw" (169986, `cup chopped (1/2" pieces)` 107 g:
+"2 cups (1-inch) cauliflower florets" is 214 g) and the sodium-added
+canned chickpeas (2644288) SR "Chickpeas …, canned, drained, rinsed in
+tap water" (173801, `cup drained, rinsed` 152 g); raw cashews stay dry —
+SR 170162 publishes an ounce only) (the food stays the
 line's; since matcher v19 a shredded, grated or thinly sliced line with no
 portion of its own words reads a `shredded` or `grated` portion before the
 median: "3 cups thinly sliced green cabbage" is `cup, shredded` 210 g,
@@ -2182,6 +2189,52 @@ radicchio, cauliflower, canned chickpea and raw cashew volume siblings
 `mushrooms brown italian crimini raw`), ya cai 169891 (flagged), candied
 ginger (search `candied ginger`), freekeh (search `freekeh`) and whole
 farro (search `farro`, or the owner's label figure).
+Since matcher v38 (the owner's live step, 2026-10-04 on a scratch copy:
+26 requests — 21 food details and 5 searches; the accuracy track's live
+requests now total 42 with v32's and v35's 16; each check made on the
+record's REAL portions, a rule enabled only where it passed):
+`medium-grind bulgur`, `medium-grain bulgur`, `fine-grind bulgur` →
+`bulgur dry` (170688, `cup` 140 g); `diastatic malt powder` → `barley
+malt flour` (169740, `cup` 162 g: "1 teaspoon" is 3.38 g); `roasted with
+salt pepitas` → `seeds pumpkin and squash seed kernels roasted with salt
+added` (169415, `cup` 118 g); `oreo cookies` (reads `creme fraiche`) →
+`cookies chocolate sandwich with creme filling regular` (172718: `3
+cookie` 36 g — a count of three the whole-item finder never reads as one
+item, so an `oreo cookies` piece figure of 12 g carries it: "16 Oreo
+cookies" = `"16 × 12 g each"`, 192 g); `turnip` → `turnips raw` (FNDDS
+2709809 "Turnip, raw", which ties SR 170465 and leads: `1 whole` 120 g;
+the library's `turnips` weight lines are another item and keep 2747674);
+`romaine lettuce leaves` → `lettuce cos or romaine raw` (169247: the
+finder reads its first leaf portion, `leaf inner` 6 g — "5 romaine
+lettuce leaves" is 30 g; `leaf outer` is 28 g); `frisee` (reads `endive
+raw`) → `endive raw` (168412, the search's only candidate: `cup, chopped`
+½ cup 25 g — "1 cup frisée" is 50 g; "1 head frisée (6 ounces)" its
+printed 170.10 g); `cremini mushrooms` (reads `mushrooms brown italian
+crimini raw`) → the same words (168434, SR, leading FDC's two-record
+answer: `piece whole` 20 g — a portion the finder reads as a dish serving,
+so a `cremini mushroom` piece figure of 20 g carries "24 cremini
+mushrooms", 480 g, flagged approximate (`FDC's 'piece whole' portion read
+as one cremini`); the library's 18 weighed cremini lines move to the same
+food and keep their grams); `ya cai` (reads `salt`) → `cabbage mustard
+salted` (169891, `cup` 128 g, flagged below); and the radicchio,
+cauliflower and canned-chickpea volume siblings (above). Left DRY, with
+the portions FDC published: powdered pectin (168821: `package (1.75 oz)`
+50 g only), fennel fronds (FNDDS 2709779: `1 fennel bulb` 235 g, `Quantity
+not specified` 25 g), sour cherries (167769 publishes `cup` 168 g, but no
+reader yet skips the "(24-ounce)" jar weight read first), seed gums
+(169045: `oz` only), parsnips (170417: `cup slices` 133 g, no piece),
+kiwis (FNDDS 2709239: `1 fruit` 75 g, no `large`), malted milk powder
+(173220: `serving (3 heaping tsp or 1 envelope)` 21 g, no level
+tablespoon — the line stays on the prepared drink 174867), seaweed (FNDDS
+2709988: `1 cup` 15 g, `1 strip` 0.5 g, no sheet), raw cashews (170162:
+`oz` only), and red leaf lettuce (168431, not fetched: no rank-as reaches
+it). FDC has no record of three foods, whose lines stay a person's: the
+`candied ginger` search answers tea, pickled, raw and ground ginger,
+ginger ale and candies — no candied or crystallized ginger (never the
+raw root); `freekeh` answers nothing; `farro` answers only 2710828
+"Farro, pearled, dry, raw" (a 45 g racc, no cup), not whole farro, so
+`whole farro` keeps its v21 words (the owner's label figure is the way
+on).
 Since matcher v31 (the CP10 rulings, 2026-10-03): star
 anise (`star anise pods`, `star anise pod`, each its own answer) →
 `spices anise seed` (171316, flagged); Q7's eight small groups —
@@ -2311,7 +2364,10 @@ black pepper (170931), canned chipotle chile in adobo as sriracha
 (171186; the count line "1 chipotle chile in adobo sauce" gets the food
 only, no grams), skinless white fish fillets as Atlantic cod (2684444)
 and mixed fresh herbs as fresh parsley (170416), and crème fraîche as
-heavy cream (2346386) — and a FRESH oregano, sage,
+heavy cream (2346386), since matcher v38 ya cai as salted mustard cabbage
+(169891, "Cabbage, mustard, salted": "⅓ cup ya cai" is `"1/3 cup · USDA
+portion · approximation (counted as Cabbage, mustard, salted)"`, 42.67 g)
+— and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram, so — the user's ruling of 2026-09-28 —
 the dried amount the line offers wins, "1 tablespoon minced fresh oregano

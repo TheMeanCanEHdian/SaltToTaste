@@ -505,7 +505,17 @@ const Map<String, String> _synonyms = {
 /// zero-nutrient flavouring items count 0 g on no food (engine;
 /// [isZeroNutrientFlavouring]), yielding to a held medium. The request
 /// groups built dry (LIVE STEP comments; 30 requests).
-const int matcherVersion = 37;
+///
+/// v38: the v37 request groups after the owner's live step (2026-10-04, 21
+/// details and 5 searches), each enabled only where its check passed on the
+/// record's real portions: bulgur, diastatic malt, roasted salted pepitas,
+/// Oreos, turnip, romaine leaves, frisée on endive, cremini, ya cai
+/// (flagged), and the radicchio, cauliflower and canned-chickpea volume
+/// siblings. Dry with the portions FDC published: pectin, fennel fronds,
+/// Morello cherries, xanthan gum, parsnips, kiwis, malted milk powder,
+/// nori/gim, raw cashews; FDC has no record of candied ginger, freekeh or
+/// whole farro (a person's lines).
+const int matcherVersion = 38;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -2084,18 +2094,18 @@ const Map<String, (String, String)> _rankAs = {
   // answer holds crème brûlée and filled cookies), weighed at heavy cream's
   // 1.01 g/mL (grams.dart).
   'creme fraiche': ('heavy cream', 'cream heavy'),
-  // LIVE STEP (built dry for v37 — the planners' request groups; each entry
-  // waits on the one request named, its target ranked first under these
-  // words in the answer named (snapshot 15) or in the searched answer —
-  // uncomment with the request, after the check; the request table is in
-  // docs/API.md). R01 bulgur (detail 170688 "Bulgur, dry"; check: a
-  // cup portion — 2710820 publishes a 45 g racc only):
-  // 'medium-grind bulgur': ('medium-grind bulgur', 'bulgur dry'),
-  // 'medium-grain bulgur': ('medium-grain bulgur', 'bulgur dry'),
-  // 'fine-grind bulgur': ('fine-grind bulgur', 'bulgur dry'),
-  // R02 powdered pectin (detail 168821 "Pectin, unsweetened, dry mix";
-  // check: a tsp/tbsp or cup portion — without one the item's 'sugar'
-  // density key would weigh the powder; leave these out):
+  // v38 — the v37 request groups after the owner's live step (2026-10-04:
+  // 21 details and 5 searches; the request table is in docs/API.md). Each
+  // check was applied to the record's REAL portions; a rule is enabled only
+  // where it passed, a failed one stays dry with the portions FDC published.
+  // R01 bulgur on "Bulgur, dry" (170688 SR; check passed: 'cup' 140 g —
+  // 2710820 publishes a 45 g racc only):
+  'medium-grind bulgur': ('medium-grind bulgur', 'bulgur dry'),
+  'medium-grain bulgur': ('medium-grain bulgur', 'bulgur dry'),
+  'fine-grind bulgur': ('fine-grind bulgur', 'bulgur dry'),
+  // R02 powdered pectin STAYS DRY: 168821 "Pectin, unsweetened, dry mix"
+  // publishes only 'package (1.75 oz)' 50 g — no tsp/tbsp/cup, so the
+  // item's 'sugar' density key would weigh the powder:
   // 'low- or no-sugar-needed fruit pectin': (
   //   'low- or no-sugar-needed fruit pectin',
   //   'pectin unsweetened dry mix',
@@ -2108,90 +2118,84 @@ const Map<String, (String, String)> _rankAs = {
   //   'low- or no-sugar-needed fruit pectin',
   //   'pectin unsweetened dry mix',
   // ),
-  // R03 (detail 169740 "Barley malt flour" — diastatic malt powder IS malted
-  // barley flour; check: a tsp/cup portion):
-  // 'diastatic malt powder': ('diastatic malt powder', 'barley malt flour'),
-  // R04 fennel fronds on the bulb, FLAGGED (FDC has no frond record). Under
-  // every word set FNDDS 2709779 "Fennel bulb, raw" ties SR 169385 and
-  // leads the answer, so the request is detail 2709779 (not 169385, the
-  // planners' id); check: a tbsp/cup portion:
+  // R03 diastatic malt powder IS malted barley flour (169740 SR "Barley
+  // malt flour"; check passed: 'cup' 162 g):
+  'diastatic malt powder': ('diastatic malt powder', 'barley malt flour'),
+  // R04 fennel fronds STAY DRY: 2709779 FNDDS "Fennel bulb, raw" publishes
+  // '1 fennel bulb' 235 g and 'Quantity not specified' 25 g — no tbsp/cup:
   // 'fennel fronds': ('fennel fronds', 'fennel bulb raw'),
-  // R05 jarred Morellos, FLAGGED (light syrup vs water pack; detail 167769
-  // "Cherries, sour, canned, water pack, drained"; check: a cup portion —
-  // AND the line's "(24-ounce)" jar is read first as ONE jar, 680.39 g, for
-  // four jars drained: the cup route needs that reader to skip a container
-  // weight before this can count right):
+  // R05 jarred Morellos STAY DRY: 167769 publishes 'cup' 168 g, but the
+  // line's "(24-ounce)" jar is still read first as ONE jar (680.39 g for
+  // four jars drained) — no reader skips a container weight yet:
   // 'jarred morello cherries': (
   //   'dried sour cherries',
   //   'cherries sour canned water pack drained',
   // ),
-  // R06 xanthan gum, FLAGGED (another hydrocolloid; detail 169045; check: a
-  // tsp/tbsp portion):
+  // R06 xanthan gum STAYS DRY: 169045 "Gums, seed gums" publishes 'oz'
+  // 28.35 g only — no tsp/tbsp:
   // 'xanthan gum': ('xanthan gum', 'gums seed gums includes locust bean guar'),
-  // R07 (detail 169415, ranked 0.70; check: a tbsp/cup portion):
-  // 'roasted with salt pepitas': (
-  //   'without salt pumpkin seeds or sunflower seeds',
-  //   'seeds pumpkin and squash seed kernels roasted with salt added',
-  // ),
-  // R08 Oreos (detail 172718, ranked 0.72 in the cached 'creme fraiche'
-  // answer; check: a per-cookie portion):
-  // 'oreo cookies': (
-  //   'creme fraiche',
-  //   'cookies chocolate sandwich with creme filling regular',
-  // ),
+  // R07 (169415 SR, ranked 0.70; check passed: 'cup' 118 g):
+  'roasted with salt pepitas': (
+    'without salt pumpkin seeds or sunflower seeds',
+    'seeds pumpkin and squash seed kernels roasted with salt added',
+  ),
+  // R08 Oreos (172718 SR, ranked 0.72 in the cached 'creme fraiche' answer;
+  // check passed: '3 cookie' 36 g, 12 g a cookie — read through the piece
+  // table's 'oreo cookies', grams.dart, as the finder reads one item only):
+  'oreo cookies': (
+    'creme fraiche',
+    'cookies chocolate sandwich with creme filling regular',
+  ),
   // R09 count lines on their SR/FNDDS record for its piece/leaf portion
-  // (check: the portion the line needs; each key moves EVERY line of that
-  // item — the parsnip and turnip weight lines keep their grams, the food
-  // becomes the same food's other record): parsnips (detail 170417);
-  // turnip (detail 2709809 FNDDS "Turnip, raw": it ties SR 170465 and leads
-  // the answer — not the planners' 170465); romaine leaves (detail 169247);
-  // kiwis (detail 2709239, a 'large' portion). "12 leaves red or green leaf
-  // lettuce" is NOT reachable by words (SR 168431 ranks 0.97 behind
-  // Foundation 2346390's 1.0 under every set): detail 168431 serves it only
-  // through a count-line sibling reader (lineGrams reads [volumeSiblings]
-  // for VOLUME lines only) — the owner's call before that request.
+  // (each key moves every line whose normalized item it is — 'turnip' is
+  // the one count line; the library's "turnips" weight lines normalize to
+  // 'turnips' and stay on 2747674, measured on snapshot 16). Turnip
+  // (2709809 FNDDS "Turnip, raw" — it ties SR 170465 and leads the answer;
+  // check passed: '1 whole' 120 g); romaine leaves (169247 SR; check
+  // passed: 'leaf inner' 6 g, 'leaf outer' 28 g). STAY DRY: parsnips
+  // (170417 publishes 'cup slices' 133 g only — no piece) and kiwis
+  // (2709239 publishes '1 fruit' 75 g, '1 cup', '1 slice' — no 'large' for
+  // "2 large kiwis"). "12 leaves red or green leaf lettuce" stays unwired
+  // (168431 ranks 0.97 behind 2346390 under every set and was not fetched).
   // 'parsnips': ('parsnips', 'parsnips raw'),
-  // 'turnip': ('turnip', 'turnips raw'),
-  // 'romaine lettuce leaves': (
-  //   'romaine lettuce leaves',
-  //   'lettuce cos or romaine raw',
-  // ),
+  'turnip': ('turnip', 'turnips raw'),
+  'romaine lettuce leaves': (
+    'romaine lettuce leaves',
+    'lettuce cos or romaine raw',
+  ),
   // 'kiwis': ('kiwis', 'kiwi fruit raw'),
-  // R10 malted milk powder — today the PREPARED drink 174867, a wrong food
-  // above the gate (detail 173220, the powder; check: a tbsp portion):
+  // R10 malted milk powder STAYS DRY (today the PREPARED drink 174867):
+  // 173220 publishes 'serving (3 heaping tsp or 1 envelope)' 21 g only — a
+  // heaping measure, no level tbsp:
   // 'malted milk powder': (
   //   'diastatic malt powder',
   //   'beverages malted drink mix natural powder dairy based',
   // ),
-  // R11 nori / gim (detail 2709988 "Seaweed, dried"; check: a sheet
-  // portion — else no grams, no remembered sheet weight):
+  // R11 nori / gim STAY DRY: 2709988 FNDDS "Seaweed, dried" publishes '1
+  // cup' 15 g, '1 strip' 0.5 g, 'Quantity not specified' 5 g — no sheet:
   // 'nori': ('dried ancho chiles', 'seaweed dried'),
   // 'gim': ('dried ancho chiles', 'seaweed dried'),
-  // R12 frisée (search "endive raw" + the detail of the record it leads
-  // with; check: SR "Endive, raw" leads the answer under these words — set
-  // the words to its description if not — and its detail publishes a cup;
-  // the head line reads its printed 6 ounces):
-  // 'frisee': ('endive raw', 'endive raw'),
-  // R13 cremini (search "mushrooms brown italian crimini raw" + its leading
-  // record's detail; check: a whole-mushroom portion; the key moves all 19
-  // cremini lines of the library — 18 weight lines keep their grams):
-  // 'cremini mushrooms': (
-  //   'mushrooms brown italian crimini raw',
-  //   'mushrooms brown italian crimini raw',
-  // ),
-  // R14 ya cai, FLAGGED (sweetened; detail 169891 "Cabbage, mustard,
-  // salted"; check: a cup portion):
-  // 'ya cai': ('salt', 'cabbage mustard salted'),
-  // M1–M3, speculative searches (each + the detail of the record it leads
-  // with; an EMPTY or wrong answer sends the lines to a person — never a
-  // stand-in; set the words to the record's description): candied ginger
-  // (search "candied ginger"; never the raw root), freekeh (search
-  // "freekeh"), whole farro (search "farro"; check: a WHOLE farro record
-  // with a cup portion — not 2710828 pearled, today's — else the owner's
-  // label figure, Bob's Red Mill):
-  // 'crystallized ginger': ('candied ginger', 'candied ginger'),
-  // 'cracked freekeh': ('freekeh', 'freekeh'),
-  // and the v21 'whole farro' entry above becomes ('farro', 'farro').
+  // R12 frisée on SR "Endive, raw" (search "endive raw" → 168412, its only
+  // candidate; check passed: '½ cup, chopped' 25 g; the head line reads its
+  // printed 6 ounces):
+  'frisee': ('endive raw', 'endive raw'),
+  // R13 cremini (search "mushrooms brown italian crimini raw" → 168434 SR
+  // leads; check passed: 'piece whole' 20 g, read through the piece table's
+  // 'cremini mushroom', grams.dart; the key moves all 19 cremini lines of
+  // the library — 18 weight lines keep their grams):
+  'cremini mushrooms': (
+    'mushrooms brown italian crimini raw',
+    'mushrooms brown italian crimini raw',
+  ),
+  // R14 ya cai, FLAGGED (sweetened; 169891 SR "Cabbage, mustard, salted";
+  // check passed: 'cup' 128 g):
+  'ya cai': ('salt', 'cabbage mustard salted'),
+  // M1–M3 STAY WITH A PERSON — FDC has no record: "candied ginger" answered
+  // tea, pickled and raw ginger, ground ginger, ginger ale (no candied or
+  // crystallized ginger; never the raw root); "freekeh" answered nothing;
+  // "farro" answered only 2710828 "Farro, pearled, dry, raw" (a 45 g racc,
+  // no cup) — not WHOLE farro, so the v21 'whole farro' entry above is
+  // unchanged (the owner's label figure, Bob's Red Mill, is the way on).
 };
 
 /// The (rank words, cached answer) a rank-as item reads ([_rankAs]), in
@@ -3166,13 +3170,12 @@ const Map<String, int> approximationRecords = {
   'herb': 170416,
   'herbs': 170416,
   'creme fraiche': 2346386,
-  // LIVE STEP (with their rank-as items; the request table is in
-  // docs/API.md): the flagged
-  // request stand-ins.
+  // v38: ya cai on salted mustard cabbage (its check passed; the request
+  // table is in docs/API.md). Dry with their rank-as items (checks failed):
   // 'fennel fronds': 2709779,
   // 'jarred morello cherries': 167769,
   // 'xanthan gum': 169045,
-  // 'ya cai': 169891,
+  'ya cai': 169891,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

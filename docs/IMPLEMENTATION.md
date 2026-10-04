@@ -3168,6 +3168,40 @@ class; the lentil density changed) killed and restored, the fresh-copy
 replay identical to the verifier's, the suite green; three engine comments
 that pointed at a scratch file repointed at API.md. matcherVersion 37.
 
+### The queue sweep, part 2: the request groups, enabled (matcher v38)
+
+The owner spent v37's live step on 2026-10-04: 26 requests on a scratch
+copy of snapshot 15 (21 details and 5 searches; one detail skipped because
+its rule could not rank the record first, one already cached), the key
+attached read-only for the run and deleted after, the result snapshot 16.
+Two searches found no food at all — FoodData Central has no freekeh and no
+candied ginger (the 25 candidates for "candied ginger" are teas, pickled
+root, ginger ale and candy bars) — so those lines stay a person's, as the
+plan said they would; the farro search found only pearled farro with a
+serving marker, so the whole-farro line stays as it was. v38 (2026-10-04)
+enabled twelve groups whose stated check passed on the real portions —
+bulgur (cup 140 g), diastatic malt (cup 162 g), roasted pepitas, Oreos (a
+12 g cookie read from FDC's "3 cookie" 36 g), turnip (one whole 120 g),
+romaine (the inner leaf 6 g; the outer is 28 g — the owner's call if a
+recipe means whole outer leaves), frisée on the endive record, cremini (a
+20 g whole mushroom, flagged), ya cai on salted mustard cabbage (flagged),
+and three volume siblings (radicchio, cauliflower, canned chickpeas) — and
+left nine dry with the portions FDC actually published (pectin by the
+package only, fennel bulb only, Morello cherries with no reader for the
+jar weight, xanthan by the ounce, parsnips by the cup of slices, no large
+kiwi, malted milk powder by the heaping teaspoon only, no nori sheet,
+cashews by the ounce). Replay on snapshot 16: calls 0; 36 rows differ from
+v37, every one attributed to an enabled item (eighteen cremini rows change
+food only), no person's row, no hold changed; counted 13,343 → 13,361,
+check 232 → 223, no grams 23 → 17, no match 17 → 14; complete 1,004 →
+1,016. Fixtures: 22 details and 13 searches byte-equal to snapshot 16.
+Two verifier rounds (one close round). The owner's gate: the fixtures
+checked, the re-pins read, two code-anchored mutants (the Oreo figure; the
+frisée item removed) killed and restored, the fresh-copy replay identical
+to the verifier's, the suite green; a misplaced colon in API.md that v37
+had introduced put right. The accuracy track's live requests: 42 in all.
+matcherVersion 38.
+
 ## Decision log (deviations & clarifications)
 
 - **2026-10-04 — the review queue (the owner: "option two — make as many things

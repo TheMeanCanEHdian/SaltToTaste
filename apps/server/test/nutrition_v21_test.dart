@@ -2455,9 +2455,10 @@ _moved = [
     null,
     'cauliflower florets',
     2685573,
-    null,
+    // v38: weighed by its SR sibling's cup (169986, 107 g).
+    '214.00',
     'M1',
-    'no_grams',
+    'counted',
     true,
   ),
   (

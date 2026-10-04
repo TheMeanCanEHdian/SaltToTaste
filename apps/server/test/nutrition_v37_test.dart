@@ -248,30 +248,20 @@ void main() {
     skip: skipIfNoCorpus,
   );
 
-  test('the request groups stay dry: no LIVE STEP entry is live', () {
+  test('the request groups whose check failed on the live step stay dry '
+      '(v38 enabled the rest: nutrition_v38_test.dart)', () {
     const dryRankAs = [
-      'medium-grind bulgur',
-      'medium-grain bulgur',
-      'fine-grind bulgur',
       'low- or no-sugar-needed fruit pectin',
       'sure-jell for low-sugar recipes',
       'sure-jell for less or no sugar needed recipes',
-      'diastatic malt powder',
       'fennel fronds',
       'jarred morello cherries',
       'xanthan gum',
-      'roasted with salt pepitas',
-      'oreo cookies',
       'parsnips',
-      'turnip',
-      'romaine lettuce leaves',
       'kiwis',
       'malted milk powder',
       'nori',
       'gim',
-      'frisee',
-      'cremini mushrooms',
-      'ya cai',
       'crystallized ginger',
       'cracked freekeh',
     ];
@@ -284,9 +274,7 @@ void main() {
       query: 'farro dry',
       answer: 'whole farro',
     ));
-    for (final record in [2747664, 2685573, 2644288, 2515374]) {
-      expect(volumeSiblings[record], isNull, reason: '$record');
-    }
+    expect(volumeSiblings[2515374], isNull);
   });
 
   test('the narrow readers reach only the lines they were built for '

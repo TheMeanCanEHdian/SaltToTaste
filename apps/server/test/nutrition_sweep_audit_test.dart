@@ -1029,9 +1029,12 @@ void main() {
     // S-group pins three more (pumpkin pie spice 171332, curry powder
     // 170924, fresh parsley 170416), all three differing in some digit,
     // and the Old Bay's poultry seasoning (171331) its re-pinned v7/v26/v27
-    // vehicle reads, differing in some digit.
-    expect(compared, 365);
-    expect(differ, 276);
+    // vehicle reads, differing in some digit. Matcher v38 recorded from
+    // snapshot 16 (the owner's 2026-10-04 live step) the 22 records and 13
+    // searches its pins read: 21 more compared, 15 of them differ in some
+    // digit.
+    expect(compared, 386);
+    expect(differ, 291);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
