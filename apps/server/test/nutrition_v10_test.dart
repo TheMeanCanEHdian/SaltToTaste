@@ -93,23 +93,24 @@ void main() {
 
   group('B1/B11: the bucket rule', () {
     test('a confirm on a line with no grams keeps it in no_grams and its '
-        'recipe partial: "1½ cups frozen pearl onions, thawed" (Best Beef '
-        'Stew, 0005) on "Onions, frozen, whole, unprepared" (170412), whose '
-        'only portions are packages', () async {
+        'recipe partial: "1 lemon twist" (Champagne Cocktail, 1155) on '
+        '"Lemon peel, raw" (167749), which weighs no twist', () async {
       // Was "½ cup pecan halves" on 2346395 until matcher v17 fetched its SR
-      // volume sibling (170182, "1 cup, halves" 99 g): it counts now.
+      // volume sibling (170182, "1 cup, halves" 99 g): it counts now; then
+      // "1½ cups frozen pearl onions, thawed" (0005) on 170412 until matcher
+      // v37 sized it by ATK's printed 8 ounces ≈ 2 cups.
       final db = tempDb();
-      final r = recipeOf(db, 'r1', ['1½ cups frozen pearl onions, thawed']);
+      final r = recipeOf(db, 'r1', ['1 lemon twist']);
       await matchAndCompute(db, provider, r);
       final before = db.ingredientMatchesFor('r1').single;
-      expect((before.fdcId, before.grams), (170412, null));
+      expect((before.fdcId, before.grams), (167749, null));
       expect(bucketOf(before), MatchBucket.noAmount);
       final totals = db.nutritionFor('r1')!;
       await applyMatchOverride(db, provider, r, 0, {'confirmed': true});
       final after = db.ingredientMatchesFor('r1').single;
       expect(
         (after.status, after.fdcId, after.grams),
-        ('confirmed', 170412, null),
+        ('confirmed', 167749, null),
       );
       expect(bucketOf(after), MatchBucket.noAmount);
       expect(db.nutritionReviewCounts()['no_grams'], 1);

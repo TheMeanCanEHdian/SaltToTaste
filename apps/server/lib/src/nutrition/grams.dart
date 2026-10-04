@@ -55,6 +55,28 @@ final RegExp _crushedSaltines = RegExp(
   caseSensitive: false,
 );
 
+/// v37 (Z2, Z7): a weight printed in a comma clause — "1 whole side salmon
+/// fillet, about 3½ pounds, white belly fat trimmed" (Broiled Salmon with
+/// Mustard and Crisp Dilled Crust), "1 center-cut beef tenderloin roast, 3
+/// pounds trimmed weight, 12 to 13 inches long …" (Beef Wellington): the
+/// only two corpus lines it reads (census of the 13,615 rows, 2026-10-04).
+final RegExp _clauseWeight = RegExp(
+  ',\\s*(?:about\\s+)?([\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]*)'
+  r'\s+(pounds?|ounces?)(?:\s+trimmed weight)?\s*(?:,|$)',
+  caseSensitive: false,
+);
+
+/// v37 (Z7): a volume line's own count of its item — "4 teaspoons minced
+/// anchovy fillets (about 8 fillets)" (Spaghetti Puttanesca, the corpus's
+/// only volume line whose "(about N noun)" counts its own item) — read when
+/// nothing else sizes the line ([_resolveLine]).
+final RegExp _parenCount = RegExp(r'\(about (\d+) ([a-z]+)\)');
+
+/// v37 (Z7): an envelope of yeast is 2¼ teaspoons — "1 envelope (2¼
+/// teaspoons) instant or rapid-rise yeast" (Multigrain Bread; Sticky Buns
+/// and Chicago-Style Deep-Dish Pizza print the same pair).
+const double _yeastEnvelopeTeaspoons = 2.25;
+
 /// "(31 to 40 per pound)": a bare count's own size ([_resolveGrams]).
 final RegExp _perPound = RegExp(r'\((\d+) to (\d+) per pound\)');
 
@@ -225,6 +247,41 @@ const List<(String, double)> _densities = [
   // 5.3 g/tsp) — on 2706232's '1 anchovy' 4 g; flagged
   // ([_approximateDensities]).
   ('anchovy paste', 6.7 / 4.92892),
+  // v37 (the queue sweep, Z5): weights per volume ATK prints, each labelled
+  // with its line ([_approximateDensities]). Frozen pearl onions, 113.4 g a
+  // cup: "8 ounces (about 2 cups) frozen pearl onions" (Coq au Vin,
+  // Slow-Cooker Beef Burgundy) and "7 ounces (about 1¾ cups)" (Beef
+  // Burgundy) agree.
+  ('pearl onion', 8 * 28.3495 / (2 * 236.588)),
+  // "1 cup (7 ounces) lentils, rinsed and picked over" (Hearty Lentil
+  // Soup). Red lentils sit on 174284, whose own cup portion sizes them.
+  ('lentil', 7 * 28.3495 / 236.588),
+  // "8 cups (40 ounces) strawberries, hulled" (Strawberry Shortcakes; "4
+  // cups (20 ounces)" and "6 cups (30 ounces)" agree). The plural only: a
+  // 'strawberry' key would outrank 'jam' in "strawberry jam".
+  ('strawberries', 40 * 28.3495 / (8 * 236.588)),
+  // "12 ounces cherry or grape tomatoes (about 2½ cups)" (Pasta with Pesto
+  // alla Trapanese).
+  ('grape tomato', 12 * 28.3495 / (2.5 * 236.588)),
+  // Z6, flagged: "6 ounces cooked chicken, torn into 1-inch pieces (1
+  // cup)" — the corpus's only cooked-poultry cup; a ¼-inch dice packs
+  // denser. Keyed on the one line it sizes.
+  ('cooked boneless turkey or chicken meat', 6 * 28.3495 / 236.588),
+  // "1½ pounds Granny Smith apples, peeled, cored, and shredded (3 cups)"
+  // (Cider-Glazed Apple Bundt Cake): a purchase weight, peel and core in.
+  ('granny smith apple', 1.5 * 453.592 / (3 * 236.588)),
+  // Z11, flagged: jarred roasted red peppers on FDC 168559 "Pimento,
+  // canned" 'cup' 192 g — item-keyed, as 2258590 carries fresh peppers too.
+  ('roasted red pepper', 192 / 236.588),
+  // Z15, flagged: crushed tomatoes by volume on FDC 170054 "Tomato
+  // products, canned, sauce" 'cup' 245 g (chili con carne's own "or plain
+  // tomato sauce"); the record 2685581 publishes no volume portion.
+  ('crushed tomato', 245 / 236.588),
+  // v37 (S14, the owner's answer 2026-10-04): crème fraîche counts on FDC
+  // 2346386 "Cream, heavy" (flagged, matcher.dart approximationRecords),
+  // weighed at the table's 'heavy cream' figure above — the record
+  // publishes no volume portion and 'cream' is not a word of the item.
+  ('creme fraiche', 1.01),
 ];
 
 /// The [_densities] keys that weigh on a stand-in's figure — flagged
@@ -238,6 +295,34 @@ const Map<String, String> _approximateDensities = {
   'ghee': 'oil density',
   'aleppo pepper': 'paprika density',
   'anchovy paste': 'ATK: 2 anchovy fillets ≈ 1 to 1½ teaspoons paste',
+  // v37 (Z5, Z6, Z11, Z15).
+  'pearl onion': 'ATK: 8 ounces frozen pearl onions ≈ 2 cups',
+  'lentil': 'ATK: 1 cup lentils = 7 ounces',
+  'strawberries': 'ATK: 8 cups strawberries = 40 ounces',
+  'grape tomato': 'ATK: 12 ounces cherry or grape tomatoes ≈ 2½ cups',
+  'cooked boneless turkey or chicken meat':
+      'ATK: 6 ounces cooked chicken, torn = 1 cup',
+  'granny smith apple':
+      'ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups',
+  'roasted red pepper': 'pimento density, FDC 168559 cup 192 g',
+  'crushed tomato': 'tomato sauce density, FDC 170054 cup 245 g',
+  // v37 (S14): crème fraîche at heavy cream's table figure.
+  'creme fraiche': 'heavy cream density',
+};
+
+/// v37: the [_densities] keys that size a line only when its record has no
+/// volume figure of its own — a printed figure for a portion-less record,
+/// never over a record's portion: 'lentil' read "1 cup dried red lentils"
+/// at 198 g over 174284's own cup, 192 g (the replay).
+const Set<String> _recordFirstDensities = {
+  'pearl onion',
+  'lentil',
+  'strawberries',
+  'grape tomato',
+  'cooked boneless turkey or chicken meat',
+  'granny smith apple',
+  'roasted red pepper',
+  'crushed tomato',
 };
 
 /// Grated and shredded Parmesan and Pecorino Romano weigh what the corpus
@@ -390,6 +475,18 @@ const List<(String, double)> _pieceWeights = [
   ('phyllo sheet', 19), // 'sheet' is the head of "phyllo sheets"
   ('puff pastry', 245), // per sheet (a standard frozen sheet)
   ('vanilla bean', 4),
+  // v37 (Z8): ATK's own DIY bitters sugar cubes in Champagne Cocktail — "¾
+  // cup sugar" MAKES 64 CUBES — on 746784's 'cup' 188 g (2.2 g a cube).
+  ('sugar cube', 2.2),
+  // v37 (Z9, the owner's ruling 2026-10-04): "1½ pounds large sea scallops
+  // (16 to 24 scallops)" (Pan-Seared Scallops with Wilted Spinach) — 680 g
+  // over 20. The corpus also prints 30.2 g ("sold 10 to 20 per pound") and
+  // 42.5 g ("1½ pounds … (about 16)").
+  ('sea scallop', 34.0),
+  // v37 (Z13): FDC 172802's own 'wrapper, wonton (3-1/2" square)' 8 g —
+  // ATK: "gyoza-style wrappers and wonton wrappers both made terrific
+  // potstickers" (Pork and Cabbage Dumplings); a round disc is smaller.
+  ('gyoza wrapper', 8),
 ];
 
 /// The [_pieceWeights] keys whose figure is ATK's printed weight, not
@@ -435,6 +532,10 @@ const Map<String, String> _approximatePieces = {
   // printed size.
   'portobello mushroom': "FDC's 'piece whole' portion read as one portobello",
   'portobello mushroom cap': "FDC's 'piece whole' portion read as one cap",
+  // v37.
+  'sugar cube': 'ATK: ¾ cup sugar makes 64 cubes',
+  'sea scallop': 'ATK: 1½ pounds large sea scallops ≈ 16 to 24',
+  'gyoza wrapper': "FDC's 3½-inch square wonton wrapper, ATK's substitute",
 };
 
 /// v31 (Q6, ruled 2026-10-03): pieces FDC weighs by no length, sized by
@@ -467,6 +568,25 @@ const Map<String, (Set<String>, double, String, String)> _perInch = {
     'lemon peel',
     'the orange-peel strip figure, extended to lemon',
   ),
+  // v37 (Z10): FDC 2707610's own '1 baguette (about 22" long)' 324 g, 14.73
+  // g an inch ("1 (3-inch) piece baguette", Garlicky Shrimp with Buttered
+  // Bread Crumbs).
+  'baguette': (
+    {'piece'},
+    14.73, // 324 g ÷ 22 inches
+    'bread, french',
+    'FDC: 1 baguette (about 22" long) = 324 g',
+  ),
+  // v37 (S4, flagged — the line sits on ginger root by its rank-as item):
+  // galangal at fresh ginger's figure above, ATK's own substitute ("If
+  // galangal is unavailable, substitute fresh ginger", Guay Tiew Tom Yum
+  // Goong).
+  'galangal': (
+    {'', 'piece'},
+    8,
+    'ginger root',
+    "ginger's figure (ATK's substitute for galangal)",
+  ),
 };
 
 /// "(4-inch)", "(1½-inch piece)", "about 3 inches long" — the printed
@@ -490,9 +610,16 @@ final RegExp _printedLength = RegExp(
   if (raw == null || food == null) {
     return null;
   }
+  // v37 (Z3): a strip the corpus kept in the item ("3 (2-inch) strips
+  // orange zest", Monkfish Tagine: the count 3, no unit) is counted in
+  // strips all the same.
+  final counted =
+      unit.isEmpty && RegExp(r'\bstrips?\b').hasMatch(normalizedItem)
+      ? 'strip'
+      : unit;
   for (final MapEntry(:key, value: (units, perInch, record, label))
       in _perInch.entries) {
-    if (!units.contains(unit) ||
+    if (!units.contains(counted) ||
         !RegExp('\\b$key\\b').hasMatch(normalizedItem) ||
         !food.description.toLowerCase().startsWith(record)) {
       continue;
@@ -568,6 +695,25 @@ const Map<int, int> volumeSiblings = {
   // tablespoons beaten egg").
   2709269: 167763,
   748967: 171287,
+  // v37 (Z10): Olives, green, Manzanilla, stuffed with pimiento (Foundation,
+  // olive and racc portions only) → FNDDS "Olives, green" '1 cup' 135 g;
+  // Peppers, jalapeno, seeded, raw (Foundation) → FNDDS "Peppers,
+  // jalapenos" '1 cup' 150 g. Both details cached.
+  332791: 2710089,
+  2747661: 2710096,
+  // LIVE STEP (v37 R09, built dry — uncomment with the detail, after its
+  // check: a cup portion; the request table is in docs/API.md): Radicchio
+  // (Foundation) →
+  // SR "Radicchio, raw" (detail 168564); Cauliflower (Foundation) → SR
+  // (detail 169986); canned chickpeas, sodium added (2644288, no cup)
+  // → SR "…canned, drained, rinsed in tap water" (detail 173801); raw
+  // cashews (Foundation) → SR "Nuts, cashew nuts, raw" (detail 170162; the
+  // zero-request fallback, 2707498 honey-roasted cup 130 g, flagged, if
+  // the request is declined).
+  // 2747664: 168564,
+  // 2685573: 169986,
+  // 2644288: 173801,
+  // 2515374: 170162,
 };
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
@@ -1964,12 +2110,18 @@ const double _pinchPerTeaspoon = 1 / 16;
   if (wanted != 'dash') {
     return null;
   }
-  final perMl = _foodGramsPerMl(food, '', 'teaspoon');
+  // v37 (Z12): a record with no teaspoon portion reads its tablespoon's
+  // (FNDDS 2710093 "Hot pepper sauce" '1 tablespoon' 16 g: "Dash of hot
+  // sauce", Easier Fried Chicken).
+  final perTsp = _foodGramsPerMl(food, '', 'teaspoon');
+  final perMl = perTsp ?? _foodGramsPerMl(food, '', 'tablespoon');
   return perMl == null
       ? null
       : (
           grams: perMl * _volumeUnitMl['teaspoon']! * _pinchPerTeaspoon,
-          basis: '${_amountText(amount)} ≈ 1/16 tsp (USDA tsp portion)',
+          basis:
+              '${_amountText(amount)} ≈ 1/16 tsp (USDA '
+              '${perTsp == null ? 'tbsp' : 'tsp'} portion)',
         );
 }
 
@@ -2055,6 +2207,32 @@ GramResolution? _resolveLine({
       normalizedItem: normalizedItem,
       kosher: kosher,
     );
+  }
+  // v37 (Z7): a volume line nothing sized, by its own "(about N noun)"
+  // count of the item ([_parenCount]).
+  final counted = first != null || own == null
+      ? null
+      : _parenCount.firstMatch(own);
+  if (counted != null &&
+      parsed.any((a) => a.measure == Measure.volume) &&
+      normalizedItem
+          .split(' ')
+          .map(keyWordOf)
+          .contains(keyWordOf(counted[2]!))) {
+    final each = _resolveGrams(
+      amounts: [
+        Amount(measure: Measure.count, quantity: counted[1]!, primary: true),
+      ],
+      food: measured,
+      normalizedItem: normalizedItem,
+    );
+    if (each != null) {
+      first = GramResolution(
+        grams: each.grams,
+        source: each.source,
+        basis: '${counted[0]} · ${each.basis}',
+      );
+    }
   }
   final bird =
       wholeBirdYield &&
@@ -2450,10 +2628,11 @@ final RegExp _lostVolumeUnit = RegExp(
 
 /// A line that opens with a quantity, a size and a sprig: "2 small sprigs
 /// fresh rosemary" parsed as the bare count 2 (checkpoint 5: 5 no_grams
-/// lines).
+/// lines) — or a pinch (v37, Z12: "1 small pinch saffron", Espinacas con
+/// Garbanzos, the corpus's only one, is one pinch).
 final RegExp _sizedSprig = RegExp(
   '^\\s*[\\d$vulgarFractionChars/.-][\\d$vulgarFractionChars/ .-]*'
-  r'(small|medium|large)\s+sprigs?\b',
+  r'(small|medium|large)\s+(sprig|pinch)(?:s|es)?\b',
   caseSensitive: false,
 );
 
@@ -2516,9 +2695,7 @@ Amount? _parsedUnit(Amount amount, String raw) {
   final unit = volume != null
       ? _volumeAliases[volume.toLowerCase()] ??
             volume.toLowerCase().replaceAll(RegExp(r's$'), '')
-      : _sizedSprig.hasMatch(raw)
-      ? 'sprig'
-      : null;
+      : _sizedSprig.firstMatch(raw)?.group(2)?.toLowerCase();
   return unit == null
       ? null
       : Amount(
@@ -2630,6 +2807,26 @@ GramResolution? _resolveGrams({
         basis: scaled
             ? '$countLabel × ${paren.grams.round()} g (printed weight)'
             : 'from the printed weight',
+      );
+    }
+    // 1b'. v37 (Z2, Z7): ONE item whose weight the line prints in a comma
+    //      clause, not a paren ([_clauseWeight]).
+    final clause = _clauseWeight.firstMatch(raw);
+    final perUnit = clause == null
+        ? null
+        : _weightUnitGrams[clause[2]!.toLowerCase().replaceAll(
+            RegExp(r's$'),
+            '',
+          )];
+    final weight = clause == null ? null : _quantityValue(clause[1]!.trim());
+    if (perUnit != null &&
+        weight != null &&
+        _countQty(amounts) == 1 &&
+        amounts.every((a) => (a.unit ?? '').isEmpty)) {
+      return GramResolution(
+        grams: weight * perUnit,
+        source: GramSource.weight,
+        basis: 'from the printed weight',
       );
     }
   }
@@ -2751,13 +2948,14 @@ GramResolution? _resolveGrams({
         ? printed.$1
         : entry != null &&
               ownVolume != null &&
-              (entry.$1 == 'nuts'
-                  ? _namesTheRecord(normalizedItem, volumeFood!)
-                  : _keyModifiesTheRecordsFood(
-                      entry.$1,
-                      normalizedItem,
-                      volumeFood!,
-                    ))
+              (_recordFirstDensities.contains(entry.$1) ||
+                  (entry.$1 == 'nuts'
+                      ? _namesTheRecord(normalizedItem, volumeFood!)
+                      : _keyModifiesTheRecordsFood(
+                          entry.$1,
+                          normalizedItem,
+                          volumeFood!,
+                        )))
         ? null
         : entry?.$2;
     if (density != null) {
@@ -2849,6 +3047,33 @@ GramResolution? _resolveGrams({
             '${_amountText(amount)} × ${each.round()} g each '
             '(${perPound[1]} to ${perPound[2]} per pound)',
       );
+    }
+
+    // v37 (Z7): an envelope of yeast, weighed as its 2¼ teaspoons.
+    if ((amountUnit == 'envelope' || amountUnit == 'envelopes') &&
+        RegExp(r'\byeast\b').hasMatch(normalizedItem)) {
+      final teaspoons = quantity * _yeastEnvelopeTeaspoons;
+      final volume = _resolveGrams(
+        amounts: [
+          Amount(
+            measure: Measure.volume,
+            quantity: '$teaspoons',
+            unit: 'teaspoon',
+            primary: true,
+          ),
+        ],
+        food: food,
+        normalizedItem: normalizedItem,
+      );
+      if (volume != null) {
+        return GramResolution(
+          grams: volume.grams,
+          source: volume.source,
+          basis:
+              '${_amountText(amount)} ≈ ${_figure(teaspoons)} teaspoon '
+              '(ATK: 1 envelope = 2¼ teaspoons) · ${volume.basis}',
+        );
+      }
     }
 
     // 3a. The amount's OWN unit against the food's portions — "6 ears corn",

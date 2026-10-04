@@ -484,7 +484,28 @@ const Map<String, String> _synonyms = {
 /// portobello mushroom cap" and "6–8 portobello mushrooms" rank as SR
 /// 169255 "Mushrooms, portabella, raw" and count by its '1 piece whole'
 /// 84 g, flagged approximate (a whole mushroom read as one stemmed cap).
-const int matcherVersion = 35;
+/// (No 36: v36 changed the engine's failure path only.)
+/// 37 = the queue sweep, part 1 (the planners' zero-request rows, the
+/// owner's "go with your recommendations", 2026-10-04). Rank-as lifts onto
+/// right cached records (pears, salmon, raisins, cheddar, orange juice and
+/// zest, canning salt counted, nine 0 g lines' foods, a lemon twist's);
+/// figures ATK prints (pearl onions, lentils, strawberries, grape tomatoes,
+/// cooked chicken, shredded apple, a yeast envelope, a sugar cube, a sea
+/// scallop) or FDC publishes (a gyoza wrapper on the wonton's, a baguette's
+/// inch, the green-olive and jalapeño cups, roasted peppers on pimento's,
+/// crushed tomatoes on tomato sauce's), each labelled with its source; a
+/// comma-clause printed weight ("about 3½ pounds", "3 pounds trimmed
+/// weight"), a volume line's own "(about 8 fillets)", "1 small pinch", a
+/// dash on a record's tablespoon, an unparenthesised zest strip; a
+/// continuation fragment is the line above's (engine). The S groups: foods
+/// FDC has no record of on flagged stand-ins (mirin, gochujang, doenjang,
+/// galangal, culantro, alcaparrado, nonpareils, five-spice, garam masala,
+/// Sichuan and pink peppercorns, chipotle in adobo, white fish, mixed
+/// herbs, crème fraîche at heavy cream's density). The class ruling: six
+/// zero-nutrient flavouring items count 0 g on no food (engine;
+/// [isZeroNutrientFlavouring]), yielding to a held medium. The request
+/// groups built dry (LIVE STEP comments; 30 requests).
+const int matcherVersion = 37;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -880,6 +901,51 @@ String _keyWord(String word) {
 /// Whether the normalized item is water/ice (skip FDC, contribute zeros).
 bool isWaterLike(String normalizedItem) =>
     waterLikeItems.contains(normalizedItem);
+
+/// v37 (the class ruling, 2026-10-04 — the owner's "go with your
+/// recommendations" on the planners' §3): whether [normalizedItem] is one
+/// of the zero-nutrient flavourings the engine counts 0 g on no food. An
+/// EXPLICIT item list, exact normalized items — the narrowest honest rule:
+/// it reaches the 14 library lines the planners listed (liquid smoke ×5 —
+/// one more, Indoor Pulled Chicken's, is held as a poured-away medium and
+/// stays held — red and green food coloring, Ball Pickle Crisp, Angostura
+/// bitters, vanilla bean ×5) and nothing else (census, snapshot 15). FDC
+/// has no record of any of them; each sat on a wrong one ("Pectin,
+/// liquid", "Soup, bean", "Cheese ball").
+bool isZeroNutrientFlavouring(String normalizedItem) =>
+    _zeroNutrientFlavourings.contains(normalizedItem);
+
+const Set<String> _zeroNutrientFlavourings = {
+  'liquid smoke',
+  'red food coloring',
+  'green food coloring',
+  'ball pickle crisp',
+  'angostura bitters',
+  'vanilla bean',
+};
+
+/// v37 (Z14): whether [raw] is the tail of the line above that the corpus
+/// split off — a line wholly in parentheses with nothing searchable ("(about
+/// ¾ cup)", Hearty Minestrone: the celery's), or one with no amount that
+/// opens on a cutting direction ([_continuingWords]: "lengthwise, seeded,
+/// and sliced thin on bias", Bun Cha: the cucumber's). The only two of the
+/// 13,615 library rows (census, 2026-10-04). Any lowercase amount-less
+/// opening was too wide: "littleneck clams, scrubbed" is a food.
+bool isContinuationFragment(
+  String raw, {
+  required bool hasAmounts,
+  required String normalizedItem,
+}) {
+  final text = raw.trim();
+  return (text.startsWith('(') &&
+          text.endsWith(')') &&
+          normalizedItem.isEmpty) ||
+      (!hasAmounts && _continuingWords.contains(text.split(',').first));
+}
+
+/// The words a split line's tail opens on ([isContinuationFragment]): a
+/// cutting direction no food is named by.
+const Set<String> _continuingWords = {'lengthwise', 'crosswise'};
 
 /// Equipment the corpus lists among the ingredients ("Wooden skewers", "2 cups
 /// wood chips", "1 36-inch square cheesecloth", "disposable aluminum roasting
@@ -1892,8 +1958,240 @@ const Map<String, (String, String)> _rankAs = {
   'star anise pod': ('star anise pod', 'spices anise seed'),
   // v22 (F10): "1 sugar cube" (Champagne Cocktail) led its own answer with
   // "Beef, steak, cube" at 160 g; it is granulated sugar. The record
-  // publishes no cube portion, so the line stays in review with no grams.
+  // publishes no cube portion: since v37 a 'sugar cube' piece figure sizes
+  // it (grams.dart, ATK's own cubes in the same recipe, flagged).
   'sugar cube': ('sugar', 'sugars granulated'),
+  // v37 (the queue sweep, part 1 — the planners' zero-request rows, the
+  // owner's "go with your recommendations", 2026-10-04). Z1: today's right
+  // record, lifted: SR 169118 "Pears, raw" (its 'medium' 178 g). Under the
+  // words 'pears raw' FNDDS 2709254 "Pear, raw" ties it at 1.0 ahead in the
+  // answer's order — and has no cached detail; under 'pears' 169118 leads.
+  'ripe firm pears': ('ripe firm pears', 'pears'),
+  // Z2: the line's own answer names FNDDS 2706284 "Fish, salmon, raw", the
+  // record all 15 other salmon-fillet lines count on; the printed "about 3½
+  // pounds" is its weight (grams.dart's comma-clause reader).
+  'whole side salmon fillet': ('whole side salmon fillet', 'fish salmon raw'),
+  // Z3: the first-named food of each line on the record the library counts
+  // it by — raisins (FNDDS 2709212, '1 cup' 160 g); mild cheddar on
+  // Foundation 328637 "Cheese, cheddar" (the record of the library's other
+  // cheddar lines; the line is weighed, 3 ounces); the orange's juice on SR
+  // 169098 (the citrus juice-only ruling); orange zest strips on SR 169103
+  // "Orange peel, raw", sized by the v31 strip figure.
+  'raisins or other dried fruit': ('raisins', 'raisins'),
+  'cheese or a combination of cheeses': ('cheddar cheese', 'cheese cheddar'),
+  'orange juice and 3 strips zest': ('orange juice raw', 'orange juice raw'),
+  'strips orange zest': ('orange peel', 'orange peel raw'),
+  // Z4 (the owner's answer, 2026-10-04): canning and pickling salt is table
+  // salt, COUNTED — the standing ruling zeroes only a rinsed or wiped salt,
+  // and the pickles are drained "(do not rinse)".
+  'canning and pickling salt': ('table salt', 'salt table'),
+  // C: lines already accounted at 0 g (no amount, or a frying fat), each
+  // moved onto its right record — the count does not change.
+  'table alt and pepper': ('table alt and pepper', 'salt table'),
+  'table salt for cooking broccoli rabe and pasta': (
+    'table salt for cooking broccoli rabe and pasta',
+    'salt table',
+  ),
+  'table salt and cayenne pepper': (
+    'table salt and cayenne pepper',
+    'salt table',
+  ),
+  // The line's own answer also holds FNDDS 2710186 "Olive oil", which takes
+  // the row from 748608 (fat only, not macro-complete) as the same food;
+  // the 'extra-virgin olive oil' answer — every other extra-virgin line's —
+  // holds 748608 alone.
+  'extra-virgin olive oil for frying': (
+    'extra-virgin olive oil',
+    'extra-virgin olive oil',
+  ),
+  'sprigs thai or italian basil': ('sprigs thai or italian basil', 'basil raw'),
+  'white or red onion': ('white onion', 'onions white raw'),
+  'whole sage leaves': ('whole sage leaves', 'spices sage ground'),
+  'pickled jalapeno slices': ('jarred jalapenos', 'peppers jalapenos'),
+  'mexican crema': ('sour cream', 'cream sour full fat'),
+  // A lemon twist is the peel (SR 167749); no printed size, so it stays in
+  // review with no grams — the food shown is right.
+  'lemon twist': ('candied lemon peel', 'lemon peel raw'),
+  // v37 S groups (the owner's "go with your recommendations", 2026-10-04):
+  // foods FDC has no record of, each counted on a cached record as a
+  // FLAGGED stand-in ([approximationRecords]; every target's detail cached
+  // in snapshot 15, each landing ranked first under these words).
+  // S1: mirin on the sweet dessert wine the owner approved for "mirin or
+  // sweet sherry" (the same words); mirin is sweeter, energy under-read.
+  'mirin': ('sherry', 'wine dessert sweet'),
+  // S2: gochujang on sriracha — ATK's own substitute ("an equal amount of
+  // sriracha can be substituted", Vegetable Bibimbap; Dakgangjeong;
+  // Bulgogi); the paste line is the same food.
+  'gochujang': ('pickled jalapeno chiles', 'sauce hot chile sriracha'),
+  'gochujang paste': ('pickled jalapeno chiles', 'sauce hot chile sriracha'),
+  // S3: doenjang on SR 172442 "Miso" — ATK: "substitute red or white miso
+  // for the doenjang" (Bulgogi). Under these words SR ranks 1.0 ahead of
+  // FNDDS 2707439 "Miso" (0.99, no cached detail), as the white-miso lines.
+  'doenjang': ('white miso', 'miso'),
+  // S4: galangal on fresh ginger root, ATK's substitute (Guay Tiew Tom Yum
+  // Goong), sized by ginger's per-inch figure (grams.dart _perInch).
+  'galangal': ('piece ginger', 'ginger root raw'),
+  // S5: culantro on cilantro leaves — ATK: "If culantro (also called recao)
+  // is unavailable, increase the cilantro" (Pastelón).
+  'culantro': ('cilantro leaves', 'coriander cilantro leaves raw'),
+  // S6: alcaparrado (manzanilla olives, pimiento, capers) on FNDDS
+  // "Olives, green" ('1 cup' 135 g).
+  'alcaparrado': ('green olives', 'olives green'),
+  // S7 (the owner's answer): nonpareils on granulated sugar, weighed by
+  // sugar's own portions — the beads' density is unsourced.
+  'multicolored nonpareils': ('granulated sugar', 'sugars granulated'),
+  // S8: five-spice powder on pumpkin pie spice (both cinnamon-led ground
+  // blends; 'tsp' 1.7 g).
+  'five-spice powder': ('five-spice powder', 'spices pumpkin pie spice'),
+  'chinese five-spice powder': (
+    'five-spice powder',
+    'spices pumpkin pie spice',
+  ),
+  // S9: garam masala on curry powder (the coriander/cumin/pepper blends;
+  // 'tsp' 2.0 g).
+  'garam masala': ('curry powder', 'spices curry powder'),
+  // S10: Sichuan and pink peppercorns on black pepper (the black-pepper
+  // rewrite's own answer) — neither is a true pepper.
+  'sichuan peppercorns': ('spices pepper black', 'spices pepper black'),
+  'pink peppercorns': ('spices pepper black', 'spices pepper black'),
+  // S11: canned chipotle in adobo on sriracha (the aji-amarillo and
+  // chili-garlic precedent; 'tsp' 6.5 g). The count line ("1 chipotle
+  // chile in adobo sauce") gets the food only: no sourced chile weight. A
+  // rank-as item reaches every line of its key, held or not, as v31's
+  // 'cornichons' reaches 0218's held "cornichons plus 1 teaspoon brine": the
+  // held `second_food` lines whose first food is this item (0582 Tacos al
+  // Carbon, 0482 Tinga de Pollo) take the stand-in for the dish they sat on
+  // and stay held — no line-level exception keeps a wrong record on them.
+  'canned chipotle chile in adobo sauce': (
+    'canned chipotle chile in adobo sauce',
+    'sauce hot chile sriracha',
+  ),
+  'chipotle chile in adobo sauce': (
+    'canned chipotle chile in adobo sauce',
+    'sauce hot chile sriracha',
+  ),
+  // S12: white fish fillets on Atlantic cod (the record 'cod or other thick
+  // whitefish fillets' reads; both recipes' notes name cod — 0265's first,
+  // 0274's second after halibut) — never the "Fish, sucker" record they sat
+  // on below the gate.
+  'skinless white fish fillets': ('cod', 'fish cod atlantic wild caught raw'),
+  // S13: mixed fresh herbs on fresh parsley ('tbsp' 3.8 g), not the brewed
+  // chamomile tea they sat on.
+  'herb': ('parsley', 'parsley fresh'),
+  'herbs': ('parsley', 'parsley fresh'),
+  // S14 (the owner's answer): crème fraîche on Foundation 2346386 "Cream,
+  // heavy" (the closer fat level; FDC has no crème fraîche — the cached
+  // answer holds crème brûlée and filled cookies), weighed at heavy cream's
+  // 1.01 g/mL (grams.dart).
+  'creme fraiche': ('heavy cream', 'cream heavy'),
+  // LIVE STEP (built dry for v37 — the planners' request groups; each entry
+  // waits on the one request named, its target ranked first under these
+  // words in the answer named (snapshot 15) or in the searched answer —
+  // uncomment with the request, after the check; the request table is in
+  // docs/API.md). R01 bulgur (detail 170688 "Bulgur, dry"; check: a
+  // cup portion — 2710820 publishes a 45 g racc only):
+  // 'medium-grind bulgur': ('medium-grind bulgur', 'bulgur dry'),
+  // 'medium-grain bulgur': ('medium-grain bulgur', 'bulgur dry'),
+  // 'fine-grind bulgur': ('fine-grind bulgur', 'bulgur dry'),
+  // R02 powdered pectin (detail 168821 "Pectin, unsweetened, dry mix";
+  // check: a tsp/tbsp or cup portion — without one the item's 'sugar'
+  // density key would weigh the powder; leave these out):
+  // 'low- or no-sugar-needed fruit pectin': (
+  //   'low- or no-sugar-needed fruit pectin',
+  //   'pectin unsweetened dry mix',
+  // ),
+  // 'sure-jell for low-sugar recipes': (
+  //   'low- or no-sugar-needed fruit pectin',
+  //   'pectin unsweetened dry mix',
+  // ),
+  // 'sure-jell for less or no sugar needed recipes': (
+  //   'low- or no-sugar-needed fruit pectin',
+  //   'pectin unsweetened dry mix',
+  // ),
+  // R03 (detail 169740 "Barley malt flour" — diastatic malt powder IS malted
+  // barley flour; check: a tsp/cup portion):
+  // 'diastatic malt powder': ('diastatic malt powder', 'barley malt flour'),
+  // R04 fennel fronds on the bulb, FLAGGED (FDC has no frond record). Under
+  // every word set FNDDS 2709779 "Fennel bulb, raw" ties SR 169385 and
+  // leads the answer, so the request is detail 2709779 (not 169385, the
+  // planners' id); check: a tbsp/cup portion:
+  // 'fennel fronds': ('fennel fronds', 'fennel bulb raw'),
+  // R05 jarred Morellos, FLAGGED (light syrup vs water pack; detail 167769
+  // "Cherries, sour, canned, water pack, drained"; check: a cup portion —
+  // AND the line's "(24-ounce)" jar is read first as ONE jar, 680.39 g, for
+  // four jars drained: the cup route needs that reader to skip a container
+  // weight before this can count right):
+  // 'jarred morello cherries': (
+  //   'dried sour cherries',
+  //   'cherries sour canned water pack drained',
+  // ),
+  // R06 xanthan gum, FLAGGED (another hydrocolloid; detail 169045; check: a
+  // tsp/tbsp portion):
+  // 'xanthan gum': ('xanthan gum', 'gums seed gums includes locust bean guar'),
+  // R07 (detail 169415, ranked 0.70; check: a tbsp/cup portion):
+  // 'roasted with salt pepitas': (
+  //   'without salt pumpkin seeds or sunflower seeds',
+  //   'seeds pumpkin and squash seed kernels roasted with salt added',
+  // ),
+  // R08 Oreos (detail 172718, ranked 0.72 in the cached 'creme fraiche'
+  // answer; check: a per-cookie portion):
+  // 'oreo cookies': (
+  //   'creme fraiche',
+  //   'cookies chocolate sandwich with creme filling regular',
+  // ),
+  // R09 count lines on their SR/FNDDS record for its piece/leaf portion
+  // (check: the portion the line needs; each key moves EVERY line of that
+  // item — the parsnip and turnip weight lines keep their grams, the food
+  // becomes the same food's other record): parsnips (detail 170417);
+  // turnip (detail 2709809 FNDDS "Turnip, raw": it ties SR 170465 and leads
+  // the answer — not the planners' 170465); romaine leaves (detail 169247);
+  // kiwis (detail 2709239, a 'large' portion). "12 leaves red or green leaf
+  // lettuce" is NOT reachable by words (SR 168431 ranks 0.97 behind
+  // Foundation 2346390's 1.0 under every set): detail 168431 serves it only
+  // through a count-line sibling reader (lineGrams reads [volumeSiblings]
+  // for VOLUME lines only) — the owner's call before that request.
+  // 'parsnips': ('parsnips', 'parsnips raw'),
+  // 'turnip': ('turnip', 'turnips raw'),
+  // 'romaine lettuce leaves': (
+  //   'romaine lettuce leaves',
+  //   'lettuce cos or romaine raw',
+  // ),
+  // 'kiwis': ('kiwis', 'kiwi fruit raw'),
+  // R10 malted milk powder — today the PREPARED drink 174867, a wrong food
+  // above the gate (detail 173220, the powder; check: a tbsp portion):
+  // 'malted milk powder': (
+  //   'diastatic malt powder',
+  //   'beverages malted drink mix natural powder dairy based',
+  // ),
+  // R11 nori / gim (detail 2709988 "Seaweed, dried"; check: a sheet
+  // portion — else no grams, no remembered sheet weight):
+  // 'nori': ('dried ancho chiles', 'seaweed dried'),
+  // 'gim': ('dried ancho chiles', 'seaweed dried'),
+  // R12 frisée (search "endive raw" + the detail of the record it leads
+  // with; check: SR "Endive, raw" leads the answer under these words — set
+  // the words to its description if not — and its detail publishes a cup;
+  // the head line reads its printed 6 ounces):
+  // 'frisee': ('endive raw', 'endive raw'),
+  // R13 cremini (search "mushrooms brown italian crimini raw" + its leading
+  // record's detail; check: a whole-mushroom portion; the key moves all 19
+  // cremini lines of the library — 18 weight lines keep their grams):
+  // 'cremini mushrooms': (
+  //   'mushrooms brown italian crimini raw',
+  //   'mushrooms brown italian crimini raw',
+  // ),
+  // R14 ya cai, FLAGGED (sweetened; detail 169891 "Cabbage, mustard,
+  // salted"; check: a cup portion):
+  // 'ya cai': ('salt', 'cabbage mustard salted'),
+  // M1–M3, speculative searches (each + the detail of the record it leads
+  // with; an EMPTY or wrong answer sends the lines to a person — never a
+  // stand-in; set the words to the record's description): candied ginger
+  // (search "candied ginger"; never the raw root), freekeh (search
+  // "freekeh"), whole farro (search "farro"; check: a WHOLE farro record
+  // with a cup portion — not 2710828 pearled, today's — else the owner's
+  // label figure, Bob's Red Mill):
+  // 'crystallized ginger': ('candied ginger', 'candied ginger'),
+  // 'cracked freekeh': ('freekeh', 'freekeh'),
+  // and the v21 'whole farro' entry above becomes ('farro', 'farro').
 };
 
 /// The (rank words, cached answer) a rank-as item reads ([_rankAs]), in
@@ -2843,6 +3141,38 @@ const Map<String, int> approximationRecords = {
   // v31 (Q6 (d)): star anise counted as anise seed.
   'star anise pods': 171316,
   'star anise pod': 171316,
+  // v37 (C): Thai basil on basil, as 'thai or italian basil leaves'; Mexican
+  // crema on full-fat sour cream (the 'crema mexicana or sour cream'
+  // landing). Both lines are 0 g (no amount).
+  'sprigs thai or italian basil': 2709780,
+  'mexican crema': 2346387,
+  // v37 S groups: the flagged stand-ins ([_rankAs]).
+  'mirin': 2710692,
+  'gochujang': 171186,
+  'gochujang paste': 171186,
+  'doenjang': 172442,
+  'galangal': 169231,
+  'culantro': 169997,
+  'alcaparrado': 2710089,
+  'multicolored nonpareils': 746784,
+  'five-spice powder': 171332,
+  'chinese five-spice powder': 171332,
+  'garam masala': 170924,
+  'sichuan peppercorns': 170931,
+  'pink peppercorns': 170931,
+  'canned chipotle chile in adobo sauce': 171186,
+  'chipotle chile in adobo sauce': 171186,
+  'skinless white fish fillets': 2684444,
+  'herb': 170416,
+  'herbs': 170416,
+  'creme fraiche': 2346386,
+  // LIVE STEP (with their rank-as items; the request table is in
+  // docs/API.md): the flagged
+  // request stand-ins.
+  // 'fennel fronds': 2709779,
+  // 'jarred morello cherries': 167769,
+  // 'xanthan gum': 169045,
+  // 'ya cai': 169891,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

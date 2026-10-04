@@ -1024,8 +1024,14 @@ void main() {
     // in none), 9 of them differing in some digit. Matcher v35 recorded
     // the portabella (169255) from the 2026-10-04 live copy: a hit in
     // 'mushrooms portabella raw', differing in some digit (niacin).
-    expect(compared, 348);
-    expect(differ, 262);
+    // Matcher v37 recorded from snapshot 15 the 13 records its queue-sweep
+    // pins read: 13 more compared, 10 of them differ in some digit; its
+    // S-group pins three more (pumpkin pie spice 171332, curry powder
+    // 170924, fresh parsley 170416), all three differing in some digit,
+    // and the Old Bay's poultry seasoning (171331) its re-pinned v7/v26/v27
+    // vehicle reads, differing in some digit.
+    expect(compared, 365);
+    expect(differ, 276);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

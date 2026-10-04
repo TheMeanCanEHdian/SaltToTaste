@@ -1616,7 +1616,7 @@ class SaltDatabase {
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
       "OR (ingredient_matches.status = 'confirmed' "
       'AND ingredient_matches.fdc_id IS NULL '
-      'AND ingredient_matches.description IN (?, ?, ?, ?))',
+      'AND ingredient_matches.description IN (?, ?, ?, ?, ?, ?))',
     ).execute([
       row.recipeId,
       row.position,
@@ -1966,7 +1966,9 @@ class SaltDatabase {
       "'Sub-recipe — made from its own recipe, not counted in these totals', "
       "'Seasoning to taste — no measurable amount', "
       "'Equipment — not food, counts as zero', "
-      "'Water/ice — counts as zero'";
+      "'Water/ice — counts as zero', "
+      "'Continues the line above — counted with it', "
+      "'Flavouring — no nutrients, counts as zero'";
 
   /// [underivedSql] for [recipeId]'s stamp; false with no stamp.
   bool hasUnderivedRows(String recipeId) =>
@@ -3108,14 +3110,20 @@ class IngredientDecisionRow {
 
 /// The notes the nutrition engine stores on its OWN 'confirmed' rows that
 /// carry no food (engine.dart writes them): a sub-recipe reference, a
-/// seasoning to taste, equipment, water. Such a row is the engine's rule,
-/// never a person's call, so the engine may rewrite it
+/// seasoning to taste, equipment, water, a split line's tail (v37), a
+/// zero-nutrient flavouring (v37). Such a
+/// row is the engine's rule, never a person's call, so the engine may
+/// rewrite it
 /// ([SaltDatabase.upsertIngredientMatchIfUndecided], [isEngineRuleRow]).
 const List<String> engineRuleNotes = [
   'Sub-recipe — made from its own recipe, not counted in these totals',
   'Seasoning to taste — no measurable amount',
   'Equipment — not food, counts as zero',
   'Water/ice — counts as zero',
+  // v37 (Z14): the corpus split a line's tail onto its own line.
+  'Continues the line above — counted with it',
+  // v37 (the class ruling): a zero-nutrient flavouring, 0 g on no food.
+  'Flavouring — no nutrients, counts as zero',
 ];
 
 /// The note of an ENGINE line's row whose food FDC failed (a FOOD failure,

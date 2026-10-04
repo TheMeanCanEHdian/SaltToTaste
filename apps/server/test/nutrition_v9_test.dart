@@ -251,37 +251,38 @@ void main() {
   });
 
   group('the reach leaves out what a confirm cannot move', () {
-    test("Tartiflette's (1134) amount-less 'Crème fraîche (optional)' is "
-        'counted at 0 g below the gate: a confirm of the Mushroom and Leek '
-        "Galette's (0442) 2 tablespoons offers and applies only Coq au "
-        "Riesling's (0127) ¼ cup — the chili oil lines were the example "
-        'until matcher v31 ranked them over the gate (Q7 fats)', () async {
+    test("an amount-less 'Old Bay seasoning' (synthesized: no corpus Old "
+        'Bay line is amount-less) is counted at 0 g below the gate: a '
+        "confirm of Maryland Crab Cakes' (0288) 1½ teaspoons offers and "
+        "applies only Best Crab Cakes' (0289) ½ teaspoon — Tartiflette's "
+        '(1134) amount-less crème fraîche was the example until matcher v37 '
+        'counted crème fraîche as heavy cream over the gate (S14), and the '
+        'chili oil lines until matcher v31 (Q7 fats)', () async {
       final db = tempDb();
-      final tablespoons = recipeOf(db, 'galette', [
-        '2 tablespoons crème fraîche',
+      final teaspoons = recipeOf(db, 'maryland', [
+        '1½ teaspoons Old Bay seasoning',
       ]);
-      final amountless = recipeOf(db, 'tartiflette', [
-        'Crème fraîche (optional)',
-      ]);
-      final quarter = recipeOf(db, 'coq', ['¼ cup crème fraîche']);
-      for (final r in [tablespoons, amountless, quarter]) {
+      final amountless = recipeOf(db, 'amountless', ['Old Bay seasoning']);
+      final half = recipeOf(db, 'best', ['½ teaspoon Old Bay seasoning']);
+      for (final r in [teaspoons, amountless, half]) {
         await matchAndCompute(db, provider, r);
       }
-      final zero = db.ingredientMatchesFor('tartiflette').single;
+      final zero = db.ingredientMatchesFor('amountless').single;
       expect(zero.confidence, lessThan(lowConfidence));
+      expect((zero.grams, zero.gramSource), (0, 'unmeasured'));
       expect(bucketOf(zero), MatchBucket.counted);
-      await applyMatchOverride(db, provider, tablespoons, 0, {
+      await applyMatchOverride(db, provider, teaspoons, 0, {
         'confirmed': true,
       });
-      final item = await matchOf(db, tablespoons, 0);
+      final item = await matchOf(db, teaspoons, 0);
       expect((item['others'], item['others_lines']), (1, 1));
-      final applied = await applyMatchOverride(db, provider, tablespoons, 0, {
+      final applied = await applyMatchOverride(db, provider, teaspoons, 0, {
         'confirmed': true,
         'apply_to_all': true,
       });
       expect((applied!.recipes, applied.lines), (1, 1));
       expect(
-        db.ingredientMatchesFor('tartiflette').single.confidence,
+        db.ingredientMatchesFor('amountless').single.confidence,
         zero.confidence,
       );
     });

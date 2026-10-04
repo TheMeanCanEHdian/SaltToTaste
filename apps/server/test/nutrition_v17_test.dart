@@ -364,7 +364,11 @@ void main() {
           '13 inches long and 4 to 4½ inches in diameter';
       final roast = (await provider.food(171748))!;
       expect(roast.portions.map((p) => p.gramWeight), contains(625.0));
-      expect(lineGrams(db, lineOf(wellington), roast), isNull);
+      // The 625 g 'roast' stays capped; since matcher v37 the line reads
+      // the weight it prints in its comma clause instead (3 pounds).
+      final printed = lineGrams(db, lineOf(wellington), roast)!;
+      expect(printed.source, GramSource.weight);
+      expect(printed.grams, closeTo(3 * 453.592, 1e-9));
     },
   );
 
@@ -539,7 +543,9 @@ void main() {
       '0279-garlicky-shrimp-with-buttered-bread-crumbs.yaml',
       '1 (3-inch) piece baguette, cut into small pieces',
       2707610,
-      null,
+      // Since matcher v37 by its printed length at 2707610's own 14.73 g
+      // an inch (no grams until then).
+      44.19,
     ),
     (
       '0708-best-summer-tomato-gratin.yaml',
@@ -737,7 +743,7 @@ void main() {
 
   test('C3: every line the 13 live searches moved counts on its record, '
       'over the gate, at the grams snapshot 13 stored (the small piece of '
-      'baguette has none on the bread)', () async {
+      'baguette, none on the bread then, by its length since v37)', () async {
     for (final (_, raw, fdcId, grams) in moved) {
       final row = await computeLine(raw);
       expect(row.fdcId, fdcId, reason: raw);

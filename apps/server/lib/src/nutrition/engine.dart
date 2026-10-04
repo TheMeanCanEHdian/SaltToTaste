@@ -5727,11 +5727,42 @@ Future<NutritionProviderException?> _computePass(
     }
     final seasoning = eaten.amounts.isEmpty && isSeasoningToTaste(normalized);
     final equipment = isNonFood(normalized);
+    // v37 (Z14): a split line's tail is counted with the line above.
+    final continuation = isContinuationFragment(
+      line.raw,
+      hasAmounts: line.amounts.isNotEmpty,
+      normalizedItem: normalized,
+    );
     if (uncounted != null) {
       write(uncounted);
       continue;
     }
-    if (normalized.isEmpty ||
+    // v37 (the class ruling, 2026-10-04): a zero-nutrient flavouring
+    // ([isZeroNutrientFlavouring]) counts 0 g on no food — never the wrong
+    // record it would rank onto ("Pectin, liquid" for liquid smoke). A
+    // person's row stands (the paths above); a line held as a discarded
+    // medium stays held for its person ([heldMediumLine]).
+    if (isZeroNutrientFlavouring(normalized) &&
+        !heldMediumLine(recipe, eaten)) {
+      write(
+        IngredientMatchRow(
+          recipeId: recipe.id,
+          position: position,
+          raw: line.raw,
+          itemKey: key,
+          fdcId: null,
+          description: engineRuleNotes[5],
+          dataType: null,
+          confidence: 1,
+          grams: 0,
+          gramSource: GramSource.unmeasured.name,
+          status: 'confirmed',
+        ),
+      );
+      continue;
+    }
+    if (continuation ||
+        normalized.isEmpty ||
         isWaterLike(normalized) ||
         seasoning ||
         equipment) {
@@ -5742,7 +5773,9 @@ Future<NutritionProviderException?> _computePass(
           raw: line.raw,
           itemKey: key,
           fdcId: null,
-          description: normalized.isEmpty
+          description: continuation
+              ? engineRuleNotes[4]
+              : normalized.isEmpty
               ? 'Nothing searchable in this line'
               : seasoning
               ? engineRuleNotes[1]
@@ -5753,7 +5786,9 @@ Future<NutritionProviderException?> _computePass(
           confidence: 1,
           grams: null,
           gramSource: null,
-          status: normalized.isEmpty ? 'unmatched' : 'confirmed',
+          status: normalized.isEmpty && !continuation
+              ? 'unmatched'
+              : 'confirmed',
         ),
       );
       continue;
@@ -7653,6 +7688,11 @@ String? _gramBasis(
       row.fdcId == null &&
       isSubRecipeReference(line.raw)) {
     return 'a sub-recipe — counted as 0 g';
+  }
+  if (row.gramSource == GramSource.unmeasured.name &&
+      row.fdcId == null &&
+      row.description == engineRuleNotes[5]) {
+    return 'flavouring, no nutrients — counted as 0 g';
   }
   if (row.gramSource == GramSource.unmeasured.name && line.amounts.isEmpty) {
     return 'no amount on the line — counted as 0 g';

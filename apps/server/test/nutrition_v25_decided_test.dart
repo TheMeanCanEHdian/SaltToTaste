@@ -136,6 +136,28 @@ Future<IngredientMatchRow> freshWrite(
   return rowOf(db, recipe, position);
 }
 
+/// What a fresh database gives the SAME decision as a person's confirm of
+/// [fdcId] on line [position] of [recipe]: a confirm there ([freshWrite]),
+/// except on a zero-nutrient flavouring line — since matcher v37 a fresh
+/// compute writes that line (0129's liquid smoke, once its strain is gone
+/// and nothing holds it) as the class rule row on no food, so the same
+/// decision there is a pick of [fdcId], its status the person's confirm.
+Future<IngredientMatchRow> freshConfirm(
+  Recipe recipe,
+  int position,
+  int? fdcId,
+) async {
+  final line = nutritionLines(recipe)[position];
+  if (fdcId == null ||
+      !isZeroNutrientFlavouring(
+        normalizeItem(lineItemOf(weighedLine(recipe, line))),
+      )) {
+    return freshWrite(recipe, position, {'confirmed': true});
+  }
+  final picked = await freshWrite(recipe, position, {'fdc_id': fdcId});
+  return picked.copyWith(status: 'confirmed');
+}
+
 /// [file]'s corpus recipe with its ingredients cut to the one line [raw]
 /// (its real steps kept; the fixtures record no other line of it).
 Recipe oneLine(String file, String raw) {
@@ -205,7 +227,7 @@ void main() {
       expect(nutritionIsFresh(db, titled), isTrue);
       final edited = unstrained0129(titled);
       expect(heldMediumLine(edited, nutritionLines(edited)[i]), isFalse);
-      final fresh = await freshWrite(edited, i, {'confirmed': true});
+      final fresh = await freshConfirm(edited, i, confirmed.fdcId);
       // Saved, not yet computed: the matches GET already reads the decision
       // on the recipe as it is (the same derivation, from the cache).
       wp.saveRecipe(db, edited);
@@ -734,9 +756,7 @@ void main() {
             for (final old in confirmed) {
               final position = old + shift;
               final now = rowOf(db, r, position);
-              final fresh = await freshWrite(edited, position, {
-                'confirmed': true,
-              });
+              final fresh = await freshConfirm(edited, position, now.fdcId);
               expect(shape(now), shape(fresh), reason: '$file #$position');
               expect((now.status, now.fdcId), ('confirmed', fresh.fdcId));
             }

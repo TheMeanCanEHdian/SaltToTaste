@@ -226,7 +226,9 @@ void main() {
         '13 inches long and 4 to 4½ inches in diameter';
     final roast = (await provider.food(171748))!;
     expect(roast.portions.map((p) => p.gramWeight), contains(625.0));
-    expect(lineGrams(db, lineOf(wellington), roast), isNull);
+    // The 625 g "roast" stays capped; since matcher v37 the line reads the
+    // weight it prints in its comma clause (3 pounds).
+    expect(lineGrams(db, lineOf(wellington), roast)?.grams, 3 * 453.592);
   });
 
   test(
@@ -398,9 +400,10 @@ _moved = [
     null,
     'brown lentils',
     2644283,
-    null,
+    // Since matcher v37 by ATK's printed 1 cup = 7 ounces.
+    '198.45',
     'M1',
-    'no_grams',
+    'counted',
     true,
   ),
   (
@@ -1299,9 +1302,10 @@ _moved = [
     null,
     'gyoza wrappers',
     172802,
-    null,
+    // Since matcher v37 by the wonton wrapper's 8 g, flagged.
+    '192.00',
     'M2',
-    'no_grams',
+    'counted',
     true,
   ),
   (
@@ -2619,9 +2623,10 @@ _moved = [
     null,
     'brown lentils',
     2644283,
-    null,
+    // Since matcher v37 by ATK's printed 1 cup = 7 ounces.
+    '148.83',
     'M1',
-    'no_grams',
+    'counted',
     true,
   ),
   (

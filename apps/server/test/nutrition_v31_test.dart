@@ -114,8 +114,8 @@ void main() {
     }, skip: skipIfNoCorpus);
 
     test('the lines the corpus stores as a bare count ("1 (½-inch) piece '
-        'ginger") read the same figure; the monkfish strips stay on the '
-        'whole orange (no ruling)', () async {
+        'ginger") read the same figure; the monkfish strips, on the whole '
+        'orange until v37, count on the peel by the strip', () async {
       await expectRows(_storedRowsA, stored: true);
     }, skip: skipIfNoCorpus);
 
@@ -920,10 +920,12 @@ _storedRowsA = [
     '1184-monkfish-tagine.yaml',
     0,
     '3 (2-inch) strips orange zest, divided',
-    2709171,
-    '393.00',
-    'check',
-    '3 × 131 g each',
+    // Since matcher v37 (the queue sweep, Z3) on the peel, a strip count:
+    // until then the whole orange, 393 g (no ruling).
+    169103,
+    '4.80',
+    'counted',
+    '3 × 2 inch × 0.8 g per inch · approximate (ATK: 10 (3-inch) strips orange peel ≈ ¼ cup)',
   ),
 ];
 

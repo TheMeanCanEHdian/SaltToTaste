@@ -11,21 +11,23 @@
 //
 // Real corpus recipes (0129 Indoor Pulled Chicken, 0148 Crispy Fried
 // Chicken, 0857 Rich Chocolate Bundt Cake, 0279 Crispy Salt-and-Pepper
-// Shrimp) and recorded FDC answers (FixtureProvider), never the network.
+// Shrimp, 0288 Maryland Crab Cakes) and recorded FDC answers (FixtureProvider), never the network.
 // Synthesized, each a stated exception: the interleavings (a person's PUT
 // run inside a compute's first search, as a provider wrapper), the outage
 // (a provider that throws NutritionProviderException, the bad key's
 // message), FDC's "no such food" (FixtureProvider.superseded with the
 // food's cache rows deleted), 0148's 13 decided rows on one retired food
 // id (999000111 — Run 057 S5's hostile cost shape: no real row can name
-// it), an engine row's `no_nutrients` hold on 0279's peppercorns (O3:
+// it), an engine row's `no_nutrients` hold on 0288's Old Bay (O3:
 // the hold as the engine writes it on other foods), a title edit (stale),
 // and the pre-014 database (the column dropped, user_version 13). Also
 // stated (v28, Run 058 S26): the b/c apply-to-all recipes assembled from
 // real corpus lines (wp.saveLines), the typed grams a person enters (250 g,
 // 77 g — any positive amount; the corpus has no person's grams), and
-// 0279's "2 teaspoons" edited to "3 teaspoons Sichuan peppercorns" (an
-// amount edit as the editor makes one; `threeTsp`).
+// 0288's "1½ teaspoons" edited to "2 teaspoons Old Bay seasoning" (an
+// amount edit as the editor makes one; `threeTsp`). Since matcher v37 the
+// below-gate vehicle is 0288's Old Bay (no FDC record; its pick's detail
+// never fetched): 0279's Sichuan peppercorns count as black pepper.
 // ignore_for_file: lines_longer_than_80_chars
 import 'dart:convert';
 import 'dart:io';
@@ -125,8 +127,11 @@ Future<void> settle({String? recipeId}) async {
   }
 }
 
-/// 0279's peppercorns with their amount edited (the closer's D2/D7).
-const threeTsp = '3 teaspoons Sichuan peppercorns';
+/// 0279's Sichuan peppercorns (D11's pick of 168317 from their answer).
+const peppercorns0279 = '2 teaspoons Sichuan peppercorns';
+
+/// 0288's Old Bay with its amount edited (the closer's D2/D7).
+const threeTsp = a.twoTspOldBay;
 
 /// [r]'s current key ([derivedKeyOf]).
 String keyOf(SaltDatabase db, Recipe r) =>
@@ -442,27 +447,29 @@ void main() {
       expect(nutritionIsFresh(db, r), isTrue);
     });
 
-    test("O3: a pick during an outage on 0279's peppercorns, an engine "
+    test("O3: a pick during an outage on 0288's Old Bay, an engine "
         '`no_nutrients` hold on the old row — the pick stores no food hold '
         '(LINE holds only), underived; FDC back, derived', () async {
       final (db, fixture, r) = await d.computed(
-        '0279-crispy-salt-and-pepper-shrimp.yaml',
+        '0288-maryland-crab-cakes.yaml',
       );
-      final i = d.at(r, a.peppercorns0279);
+      final i = d.at(r, a.oldBay0288);
       db.upsertIngredientMatch(
         d.rowOf(db, r, i).copyWith(hold: 'no_nutrients'),
       );
       final outage = a.Outage(fixture)..down = true;
+      // "Spices, bay leaf" (170917), a hit in the line's own answer whose
+      // detail no line of the recipe fetched.
       await applyMatchOverride(db, outage, r, i, {
-        'raw': a.peppercorns0279,
-        'fdc_id': 168317,
+        'raw': a.oldBay0288,
+        'fdc_id': 170917,
       });
       final stored = d.rowOf(db, r, i);
       expect(
         (stored.status, stored.fdcId, stored.hold),
         (
           'overridden',
-          168317,
+          170917,
           null,
         ),
       );
@@ -475,23 +482,23 @@ void main() {
     });
 
     test('a pick of another food during an outage finishes `food_gone`: '
-        "0279's peppercorns confirmed and held food_gone (synthesized, as "
-        'a 404 derives it), then 168317 picked while FDC is out — stored '
+        "0288's Old Bay confirmed and held food_gone (synthesized, as "
+        'a 404 derives it), then 170917 picked while FDC is out — stored '
         'with no hold, underived', () async {
       final (db, fixture, r) = await d.computed(
-        '0279-crispy-salt-and-pepper-shrimp.yaml',
+        '0288-maryland-crab-cakes.yaml',
       );
-      final i = d.at(r, a.peppercorns0279);
+      final i = d.at(r, a.oldBay0288);
       db.upsertIngredientMatch(
         d.rowOf(db, r, i).copyWith(status: 'confirmed', hold: 'food_gone'),
       );
       final outage = a.Outage(fixture)..down = true;
       await applyMatchOverride(db, outage, r, i, {
-        'raw': a.peppercorns0279,
-        'fdc_id': 168317,
+        'raw': a.oldBay0288,
+        'fdc_id': 170917,
       });
       final stored = d.rowOf(db, r, i);
-      expect((stored.fdcId, stored.hold), (168317, null));
+      expect((stored.fdcId, stored.hold), (170917, null));
       expect(stored.derivedSeq, isNull);
     });
   }, skip: skipIfNoCorpus);
@@ -784,27 +791,27 @@ void main() {
       expect(outage.failed, 0);
     });
 
-    /// 0279's peppercorns typed 77 g, skipped, the line's amount edited
-    /// and saved, its food's detail in no cache (the search hit kept), FDC
-    /// out. (168093's detail recorded from the snap13 cache for FDC's
+    /// 0288's Old Bay typed 77 g, skipped, the line's amount edited and
+    /// saved, its food's detail in no cache (the search hit kept), FDC
+    /// out. (171331's detail recorded from the snapshot-15 cache for FDC's
     /// answer once it is back.)
     Future<(SaltDatabase, a.Outage, Recipe, int, double?)> skipEdited() async {
       final (db, path) = a.pathDb();
       final fixture = FixtureProvider(pending: pendingSearches);
-      final r = loadCorpusRecipe('0279-crispy-salt-and-pepper-shrimp.yaml');
+      final r = loadCorpusRecipe('0288-maryland-crab-cakes.yaml');
       await d.editAndCompute(db, fixture, r);
-      final i = d.at(r, a.peppercorns0279);
+      final i = d.at(r, a.oldBay0288);
       await applyMatchOverride(db, fixture, r, i, {
-        'raw': a.peppercorns0279,
+        'raw': a.oldBay0288,
         'grams': 77,
       });
       await applyMatchOverride(db, fixture, r, i, {
-        'raw': a.peppercorns0279,
+        'raw': a.oldBay0288,
         'skipped': true,
       });
       await matchAndCompute(db, fixture, r);
       final skippedTotal = db.nutritionFor(r.id)!.totalGrams;
-      final e = a.rewritten(r, a.peppercorns0279, threeTsp);
+      final e = a.rewritten(r, a.oldBay0288, threeTsp);
       wp.saveRecipe(db, e);
       final id = d.rowOf(db, e, i).fdcId!;
       sqlite3.open(path)
@@ -813,8 +820,8 @@ void main() {
       return (db, a.Outage(fixture)..down = true, e, i, skippedTotal);
     }
 
-    test("D2 / Opus critic 2 #2 (zz_c2b): an un-skip of 0279's amount-edited "
-        'peppercorns (typed 77 g for "2 teaspoons", now "3 '
+    test("D2 / Opus critic 2 #2 (zz_c2b): an un-skip of 0288's amount-edited "
+        'Old Bay (typed 77 g for "1½ teaspoons", now "2 '
         'teaspoons") during an outage keeps NO grams — never the old '
         "amount's 77 g under the new text, never counted; FDC back, the "
         'new amount is derived', () async {
@@ -849,7 +856,7 @@ void main() {
         expect(failure, isNotNull);
         final row = d.rowOf(db, e, i);
         expect(row.status, 'skipped');
-        expect(row.raw, a.peppercorns0279, reason: 'not re-texted');
+        expect(row.raw, a.oldBay0288, reason: 'not re-texted');
         expect(nutritionStampCurrent(db, e), isTrue);
         expect(nutritionIsFresh(db, e), isFalse);
         expect(bulkScopeIds(db, BulkScope.stale), contains(e.id));
@@ -899,13 +906,13 @@ void main() {
           '0279-crispy-salt-and-pepper-shrimp.yaml',
         );
         expect(nutritionIsFresh(db, r), isTrue);
-        final i = d.at(r, a.peppercorns0279);
+        final i = d.at(r, peppercorns0279);
         final racing = SaveOnFirstFood(
           fixture,
           () => wp.saveRecipe(db, d.retitled(r)),
         );
         await applyMatchOverride(db, racing, r, i, {
-          'raw': a.peppercorns0279,
+          'raw': peppercorns0279,
           'fdc_id': 168317,
         });
         expect(racing.save, isNull, reason: 'the save raced the PUT');

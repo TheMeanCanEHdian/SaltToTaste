@@ -193,7 +193,9 @@ void main() {
       addTearDown(() => dir.deleteSync(recursive: true));
       final db = SaltDatabase.open('${dir.path}/salt.db');
       addTearDown(db.dispose);
-      // Two real corpus lines (pasta e fagioli; grilled scallops).
+      // Two real corpus lines (pasta e fagioli; streamlined Bolognese —
+      // since matcher v37 grilled scallops' pink peppercorns, the pin
+      // before, count as black pepper).
       final recipe = Recipe(
         id: 'r2',
         title: 'Lines',
@@ -204,7 +206,7 @@ void main() {
             items: [
               for (final raw in [
                 _pastaLine,
-                '2 teaspoons pink peppercorns, crushed',
+                '1 pound pasta',
               ])
                 IngredientLine(
                   raw: raw,
@@ -222,11 +224,11 @@ void main() {
       final rows = db.ingredientMatchesFor('r2');
       expect(rows[0].fdcId, 2758998);
       expect(rows[0].hold, 'no_nutrients');
-      // "Fish, salmon, pink, raw" (no peppercorn) is complete but another
-      // food; the energy-less "Beans, Dry, Pink (0% moisture)" top pick is
-      // stood in for by its own raw form, which adds only form words.
-      expect(rows[1].description, isNot('Fish, salmon, pink, raw'));
-      expect(rows[1].description, 'Beans, pink, mature seeds, raw');
+      // "Flavored pasta" ranks second and is complete but another food;
+      // the macro-less "Pasta, dry, enriched, spaghetti" top pick is stood
+      // in for by "Pasta, dry, enriched", the same food.
+      expect(rows[1].description, isNot('Flavored pasta'));
+      expect(rows[1].description, 'Pasta, dry, enriched');
     });
 
     test("bare 'spaghetti' searches the enriched dry pasta", () async {

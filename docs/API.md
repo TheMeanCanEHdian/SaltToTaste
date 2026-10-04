@@ -801,7 +801,25 @@ while a compute is in flight so a reopened page can re-attach. Cached and rate-l
 (~900 requests/hour shared budget); user decisions on unchanged lines
 survive recomputes. Water/ice lines (since matcher v21 "filtered water"
 too) are matched locally for free, as are equipment lines (since v21 a
-banana leaf: the cochinita pibil's wrapper, not eaten). The job
+banana leaf: the cochinita pibil's wrapper, not eaten) and, since matcher
+v37, a line the corpus split off the one above ("(about ¾ cup)", Hearty
+Minestrone; "lengthwise, seeded, and sliced thin on bias", Bun Cha — a
+line wholly in parentheses with nothing searchable, or one with no amount
+opening on a cutting direction, "lengthwise" or "crosswise": the
+library's only two), confirmed on no
+food as "Continues the line above — counted with it" (an engine rule
+row, rewritten when its rule changes), and, since matcher v37 (the class
+ruling, 2026-10-04), a zero-nutrient flavouring — an EXPLICIT list of
+exact items, `liquid smoke`, `red food coloring`, `green food coloring`,
+`ball pickle crisp`, `angostura bitters`, `vanilla bean`, the library's
+14 such lines (liquid smoke ×5, red and green food coloring, Ball Pickle
+Crisp, Angostura bitters, vanilla bean ×5; FDC has no record of any, and
+each sat on a wrong one: "Pectin, liquid", "Soup, bean", "Cheese ball")
+— confirmed on no food as "Flavouring — no nutrients, counts as zero", 0
+g unmeasured, basis `"flavouring, no nutrients — counted as 0 g"` (an
+engine rule row). A person's row on such a line stands, and a line held
+as a discarded medium stays held: "1 tablespoon liquid smoke, divided"
+(Indoor Pulled Chicken) keeps its `partial_pour_away` hold. The job
 fails (with FDC's own reason in its log — a bulk sweep stops there, "stopped
 at <id>: <reason>") when FDC fails in a way every request would: no API key
 configured, the key rejected, the hourly budget spent, a rate limit, the
@@ -992,7 +1010,29 @@ anchovy paste for the fillets", Pan-Seared Thick-Cut Boneless Pork Chops,
 5.3 g a teaspoon), labelled `"1 teaspoon ≈ 5 mL · approximate (ATK: 2
 anchovy fillets ≈ 1 to 1½ teaspoons paste)"`, and "instant espresso"
 (171893) at its 13 "instant espresso powder" siblings' 0.43, never the
-record's loose `tsp` 1.0 g; since matcher v23 a line that says
+record's loose `tsp` 1.0 g; since matcher v37 (the queue sweep, Z5/Z6/Z11/
+Z15) eight figures for a record that publishes NO volume figure of its own
+(never over one: "¾ cup dried red lentils" keeps 174284's cup), each
+labelled with its source — ATK's printed pairs: frozen pearl onions 113.4
+g a cup ("8 ounces (about 2 cups) frozen pearl onions"; `"1 1/2 cup ≈ 355
+mL · approximate (ATK: 8 ounces frozen pearl onions ≈ 2 cups)"`), lentils
+7 ounces a cup ("1 cup (7 ounces) lentils"), strawberries 5 ounces a cup
+("8 cups (40 ounces) strawberries"; the plural only, so "strawberry jam"
+keeps 'jam'), grape tomatoes 0.575 g/mL ("12 ounces cherry or grape
+tomatoes (about 2½ cups)"; "1 pint grape tomatoes" is 272.16 g), and,
+flagged as approximate by nature, cooked poultry 6 ounces a cup ("6 ounces
+cooked chicken, torn into 1-inch pieces (1 cup)", keyed on Turkey
+Tetrazzini's one line, 680.39 g) and shredded Granny Smith 8 ounces a cup
+("1½ pounds Granny Smith apples, peeled, cored, and shredded (3 cups)", a
+purchase weight); FDC's figures on stand-in records: jarred roasted red
+peppers on 168559 "Pimento, canned" `cup` 192 g (item-keyed; the record
+2258590 carries fresh peppers too: `"… · approximate (pimento density,
+FDC 168559 cup 192 g)"`) and crushed tomatoes on 170054 "Tomato products,
+canned, sauce" `cup` 245 g (`"… · approximate (tomato sauce density, FDC
+170054 cup 245 g)"`) — and crème fraîche at heavy cream's 1.01 g/mL on
+2346386 "Cream, heavy" (flagged below; `"1/4 cup ≈ 59 mL · approximate
+(heavy cream density) · approximation (counted as Cream, heavy)"`, 59.74
+g); since matcher v23 a line that says
 grated Parmesan or Pecorino weighs the corpus's own printed conversion,
 0.24 g/mL ("1 ounce Parmesan cheese, grated (½ cup)" and every grated
 pair; the user's ruling Q6: a weight ATK prints wins) — "¼ cup grated
@@ -1047,7 +1087,12 @@ density) and 0.8 g an inch of orange or lemon peel strip (ATK's "10
 orange-peel strip figure, extended to lemon"), only on the ginger-root or
 peel record and only for a piece or strip count: `"1 piece × 4 inch × 8 g
 per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1
-tablespoon)"`; whole spices by a reference figure — a peppercorn 0.05 g,
+tablespoon)"`; since matcher v37 galangal by the same figure, ATK's own
+substitute ("If galangal is unavailable, substitute fresh ginger", Guay
+Tiew Tom Yum Goong), on the ginger-root record it ranks as (flagged
+below): `"1 piece × 2 inch × 8 g per inch · approximate (ginger's figure
+(ATK's substitute for galangal)) · approximation (counted as Ginger root,
+raw)"`, 16 g; whole spices by a reference figure — a peppercorn 0.05 g,
 a whole clove 0.1, an allspice berry 0.1, a cardamom pod 0.2, a coriander
 seed 0.01, a star anise pod 0.5 (a flagged figure prints its decimals —
 a sub-gram one all of them, `"15 × 0.05 g each · approximate (reference
@@ -1063,7 +1108,23 @@ approximate (reference figure: 7 scallions a bunch)"`; any other bunch
 keeps no grams); a cornichon 3.2 g (ATK's "6 cornichons, minced (about 2
 tablespoons)" on 2710078's cup, Austrian-Style Potato Salad) and a
 Cubanelle pepper 99 g (ATK's "3 cubanelle peppers (3 to 4 ounces each)",
-Eggs Piperade). Not built (ruled no grams): dried jujubes and the mild
+Eggs Piperade); since matcher v37 (the queue sweep) a sugar cube 2.2 g
+(ATK's own cubes in Champagne Cocktail, "¾ cup sugar" makes 64, on
+746784's cup 188 g), a large sea scallop 34.0 g (the owner's pick of the
+three figures the corpus prints: "1½ pounds large sea scallops (16 to 24
+scallops)"; `"24 × 34 g each · approximate (ATK: 1½ pounds large sea
+scallops ≈ 16 to 24)"`) and a gyoza wrapper 8 g (172802's own 3½-inch
+square wonton wrapper, ATK's named substitute: `"24 round × 8.0 g each ·
+approximate (FDC's 3½-inch square wonton wrapper, ATK's substitute)"`),
+each flagged; a baguette by the length the line prints at 14.73 g an inch
+(2707610's own `1 baguette (about 22" long)` 324 g; a piece count only:
+`"1 piece × 3 inch × 14.73 g per inch · approximate (FDC: 1 baguette
+(about 22" long) = 324 g)"`); a zest strip the corpus left in the item
+("3 (2-inch) strips orange zest", no unit) is a strip count all the same;
+an envelope of yeast is ATK's printed 2¼ teaspoons ("1 envelope (2¼
+teaspoons) instant or rapid-rise yeast"), weighed at the yeast density:
+`"1 envelope ≈ 2.25 teaspoon (ATK: 1 envelope = 2¼ teaspoons) · 2.25
+teaspoon ≈ 11 mL"` (7.10 g). Not built (ruled no grams): dried jujubes and the mild
 dried chile by the inch; an ancho keeps FDC's 17 g)
 | `override` | `discarded` (a cooking medium the recipe throws away —
 deep-frying oil ("for frying" — since matcher v24 "for deep frying" too —
@@ -1322,7 +1383,12 @@ types), raw" and "Cabbage, chinese (pe-tsai), raw"; since matcher v32,
 the live step's details read, FNDDS "Tamarind" (2709269) reads SR
 "Tamarinds, raw" (167763, `cup, pulp` 120 g: "2 tablespoons tamarind
 paste" is 15 g) and Foundation "Eggs, Grade A, Large, egg whole" (748967)
-reads SR "Egg, whole, raw, fresh" (171287, `cup (4.86 large eggs)` 243 g:
+reads SR "Egg, whole, raw, fresh" (171287, `cup (4.86 large eggs)` 243 g;
+since matcher v37 Foundation "Olives, green, Manzanilla, stuffed with
+pimiento" (332791) reads FNDDS "Olives, green" (2710089, `1 cup` 135 g:
+"½ cup pimento-stuffed green olives" is 67.5 g) and Foundation "Peppers,
+jalapeno, seeded, raw" (2747661) FNDDS "Peppers, jalapenos" (2710096, `1
+cup` 150 g), both details cached:
 "2 tablespoons beaten egg" is 30.38 g)) (the food stays the
 line's; since matcher v19 a shredded, grated or thinly sliced line with no
 portion of its own words reads a `shredded` or `grated` portion before the
@@ -1372,14 +1438,25 @@ plums" finds no grams there, never two cups),
 before it ("1 (750-ml) bottle red Burgundy or Pinot Noir") when the unit
 itself finds no grams, `"from the printed weight"` for a per-unit weight
 written in the item without a parenthesis too ("1 5-pound boneless pork
-butt roast", "1 15-ounce can chickpeas"; a "(1-liter)" paren is 1,000 mL), `"… · nutrients of \"Cabbage, chinese
+butt roast", "1 15-ounce can chickpeas"; a "(1-liter)" paren is 1,000 mL;
+since matcher v37 ONE item's weight printed in a comma clause — "1 whole
+side salmon fillet, about 3½ pounds, white belly fat trimmed" is 1,587.57
+g, "1 center-cut beef tenderloin roast, 3 pounds trimmed weight, …" is
+1,360.78 g: the corpus's only two), `"(about 8 fillets) · 8 · USDA
+per-item weight"` (since matcher v37) for a volume line nothing else
+sizes, by its own "(about N noun)" count of the item ("4 teaspoons minced
+anchovy fillets (about 8 fillets)", on 2706232's `1 anchovy` 4 g: 32 g —
+the corpus's only such line), `"… · nutrients of \"Cabbage, chinese
 (pe-tsai), raw\""` for a line on a record that publishes no energy whose
 totals read a sibling record's nutrients (Foundation napa cabbage, 2727583,
 reads SR 169979; the food and grams stay the line's, and it is not held
 `no_nutrients`; hand-entered grams say so too: `"entered by hand · nutrients
 of \"Cabbage, chinese (pe-tsai), raw\""`),
 `"pinch ≈ 1/16 tsp (USDA tsp portion)"` for a pinch or dash on a record with
-no dash portion (a teaspoon ÷ 16), `"2 tablespoon ≈ 30 mL · juice only (the
+no dash portion (a teaspoon ÷ 16; since matcher v37 a record with no
+teaspoon portion reads its tablespoon's, `"dash ≈ 1/16 tsp (USDA tbsp
+portion)"` — "Dash of hot sauce" is 0.33 g — and "1 small pinch saffron"
+is one pinch, 0.04 g), `"2 tablespoon ≈ 30 mL · juice only (the
 zest is dropped)"` for a zest-plus-juice line counted on the fruit's juice
 record, `"2 × 50 g egg + 2 × 17 g yolk, summed on the whole egg"` for an
 eggs-plus-parts line counted on the whole-egg record,
@@ -2047,7 +2124,65 @@ stemmed cap ("1 large portobello mushroom cap" = `"1 × 84 g each ·
 approximate (FDC's 'piece whole' portion read as one cap)"` — "large" is
 no piece-table size; "6–8 portobello mushrooms (each 4 to 6 inches)"
 reads the bare range's midpoint, 7 × 84 = 588 g). The weighed
-`portobello mushroom caps` line keeps 2003598. Since matcher v31 (the CP10 rulings, 2026-10-03): star
+`portobello mushroom caps` line keeps 2003598. Since matcher v37 (the
+queue sweep, part 1 — the planners' zero-request rows, the owner's "go
+with your recommendations", 2026-10-04; every answer and detail already
+cached in snapshot 15): `ripe firm pears` → `pears` (169118 "Pears, raw";
+under `pears raw` FNDDS 2709254, whose detail is not cached, ties it
+ahead); `whole side salmon fillet` → `fish salmon raw` (2706284, the
+comma-clause weight above); `raisins or other dried fruit` (reads
+`raisins`) → `raisins` (2709212, `1 cup` 160 g); `cheese or a combination
+of cheeses` (reads `cheddar cheese`) → `cheese cheddar` (328637, the
+library's cheddar record; the line is weighed); `orange juice and 3 strips
+zest` (reads `orange juice raw`) → `orange juice raw` (169098, juice only);
+`strips orange zest` (reads `orange peel`) → `orange peel raw` (169103, the
+v31 strip figure: 4.8 g); `canning and pickling salt` (reads `table salt`)
+→ `salt table` (173468), COUNTED (the owner's answer: the standing ruling
+zeroes only a rinsed or wiped salt; 36.08 g); and food-only fixes on
+lines already counted at 0 g — `table alt and pepper`, `table salt for
+cooking broccoli rabe and pasta`, `table salt and cayenne pepper` →
+`salt table` (173468); `extra-virgin olive oil for frying` (reads
+`extra-virgin olive oil`, whose answer holds 748608 alone) → 748608;
+`sprigs thai or italian basil` → `basil raw` (2709780, flagged below);
+`white or red onion` (reads `white onion`) → `onions white raw`
+(1104962); `whole sage leaves` → `spices sage ground` (170935);
+`pickled jalapeno slices` (reads `jarred jalapenos`) → `peppers
+jalapenos` (2710096); `mexican crema` (reads `sour cream`) → `cream sour
+full fat` (2346387, flagged below) — and `lemon twist` (reads `candied
+lemon peel`) → `lemon peel raw` (167749), no grams (no printed size).
+The S groups (flagged stand-ins, below): `mirin` (reads `sherry`) → `wine
+dessert sweet`; `gochujang`, `gochujang paste` (read `pickled jalapeno
+chiles`) → `sauce hot chile sriracha`; `doenjang` (reads `white miso`) →
+`miso` (SR 172442 ranks 1.0 ahead of FNDDS 2707439, which has no cached
+detail); `galangal` (reads `piece ginger`) → `ginger root raw`;
+`culantro` (reads `cilantro leaves`) → `coriander cilantro leaves raw`;
+`alcaparrado` (reads `green olives`) → `olives green`; `multicolored
+nonpareils` (reads `granulated sugar`) → `sugars granulated`; `five-spice
+powder`, `chinese five-spice powder` (read `five-spice powder`) → `spices
+pumpkin pie spice`; `garam masala` (reads `curry powder`) → `spices curry
+powder`; `sichuan peppercorns`, `pink peppercorns` → `spices pepper
+black`; `canned chipotle chile in adobo sauce`, `chipotle chile in adobo
+sauce` → `sauce hot chile sriracha` (the held `second_food` lines whose
+first food is this item — Tacos al Carbon, Tinga de Pollo — move with it
+and stay held); `skinless white fish fillets` (reads `cod`) → `fish cod
+atlantic wild caught raw`; `herb`, `herbs` (read `parsley`) → `parsley
+fresh`; `creme fraiche` (reads `heavy cream`) → `cream heavy`. Built DRY
+(commented LIVE STEP entries, each naming its request and the check to
+make on the answer; 30 requests: 19 food details, 2 searches and the 2
+details they name, the ya cai detail, and three speculative searches with
+their details): bulgur 170688, powdered pectin 168821, barley malt flour
+169740, fennel fronds on FNDDS 2709779 (flagged), sour cherries 167769
+(flagged; the jar-weight reader first), seed gums 169045 (flagged),
+salted pepitas 169415, Oreos 172718, parsnips 170417, turnip FNDDS
+2709809, romaine 169247, red leaf lettuce 168431 (not reachable by a
+rank-as: it needs a count-line sibling reader), kiwi 2709239, the
+radicchio, cauliflower, canned chickpea and raw cashew volume siblings
+(168564, 169986, 173801, 170162), malted milk powder 173220, seaweed
+2709988 (nori, gim), frisée (search `endive raw`), cremini (search
+`mushrooms brown italian crimini raw`), ya cai 169891 (flagged), candied
+ginger (search `candied ginger`), freekeh (search `freekeh`) and whole
+farro (search `farro`, or the owner's label figure).
+Since matcher v31 (the CP10 rulings, 2026-10-03): star
 anise (`star anise pods`, `star anise pod`, each its own answer) →
 `spices anise seed` (171316, flagged); Q7's eight small groups —
 `kalamata olives`, `nicoise olives` → `olives black` (2710090); `ruby
@@ -2161,7 +2296,22 @@ Spanish chorizo as FNDDS "Chorizo" (2706179), since matcher v32 as
 "Salami, Italian, pork" (174603), and since matcher v32 cooked wheat
 berries as cooked khorasan wheat (169744: "2¾ cups cooked wheat berries"
 is `"2 3/4 cup · USDA portion · approximation (counted as Wheat,
-khorasan, cooked)"`, 473 g) — and a FRESH oregano, sage,
+khorasan, cooked)"`, 473 g), since matcher v37 "Sprigs fresh Thai or
+Italian basil" as basil (2709780) and Mexican crema as full-fat sour
+cream (2346387), both 0 g lines, since matcher v37 (the S groups, every
+one a food FDC has no record of) mirin as the sweet dessert wine
+(2710692), gochujang and gochujang paste as sriracha (171186, ATK's own
+"equal amount of sriracha"), doenjang as SR miso (172442, ATK's
+"substitute red or white miso"), galangal as ginger root (169231),
+culantro as cilantro leaves (169997), alcaparrado as green olives
+(2710089), multicolored nonpareils as granulated sugar (746784, by
+sugar's own portions), five-spice powder as pumpkin pie spice (171332),
+garam masala as curry powder (170924), Sichuan and pink peppercorns as
+black pepper (170931), canned chipotle chile in adobo as sriracha
+(171186; the count line "1 chipotle chile in adobo sauce" gets the food
+only, no grams), skinless white fish fillets as Atlantic cod (2684444)
+and mixed fresh herbs as fresh parsley (170416), and crème fraîche as
+heavy cream (2346386) — and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram, so — the user's ruling of 2026-09-28 —
 the dried amount the line offers wins, "1 tablespoon minced fresh oregano

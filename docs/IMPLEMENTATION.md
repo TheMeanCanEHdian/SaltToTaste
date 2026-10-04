@@ -3115,7 +3115,72 @@ read, one code-anchored mutant (the kept-row arm made unreachable) killed
 and restored, the fresh-copy replay with zero rows differing, the suites
 and the outage oracle green.
 
+### The queue sweep, part 1: every zero-request group the owner approved (matcher v37)
+
+With the engine loop closed and the first run live, the owner's third
+decision (2026-10-04) was to work the review queue's engine side rather
+than leave 393 lines for a person: a read-only planning pass over the 131
+lines below the confidence gate, the 49 matched lines with no weight and
+the 32 lines with no match produced an approval table (every proposal a
+named record or a sourced figure; a sample audit of the ten largest
+proposals found no wrong food), and the owner approved it with my
+recommendations on the six judgment calls. v37 (2026-10-04) builds every
+zero-request group: right records that cached answers already named
+(pears, a whole side of salmon by ATK's printed "about 3½ pounds", raisins,
+cheddar, orange juice, raw cashews …), density keys from weights ATK prints
+in the corpus (pearl onions, lentils, strawberries, grape tomatoes, cooked
+chicken, shredded apple), ATK's own equivalences (a yeast envelope, "about
+8 fillets", a trimmed weight, a sugar cube from the recipe's own yield),
+FDC's own portions for olives, jalapeños and a baguette by the inch, two
+parse fixes; flagged stand-ins on precedents the owner had set (mirin on
+the sweet-wine record, gochujang and chipotle in adobo on sriracha,
+doenjang on miso, galangal on ginger, culantro on cilantro, alcaparrado on
+green olives, five-spice on pumpkin pie spice, garam masala on curry
+powder, Sichuan and pink peppercorns on black pepper, white fish on cod,
+mixed herbs on parsley, roasted red pepper at the pimento density, gyoza
+wrappers at the wonton figure, crème fraîche on heavy cream at a 1.01
+density, nonpareils at sugar's density); the owner's answers (canning salt
+counted on table salt, a sea scallop 34 g flagged); food-only fixes on
+lines already accounted as zero; and a class rule for zero-nutrient
+flavourings (an explicit list — liquid smoke, red and green food
+colouring, a pickling crisp, bitters, a vanilla bean — each counting 0 g
+on no food with the basis "flavouring, no nutrients", reaching exactly its
+14 library lines). The request groups (30 requests: bulgur, pectin, barley
+malt, canned sour cherries, a per-cookie portion, nine same-food records
+for portions, nori, frisée, cremini, ya cai, and three speculative
+searches) are built dry for the live step. Deviations from the planners,
+each pinned: the pear's rank words tie an FNDDS record ahead of the SR one
+and were replaced; the cheddar line lands on the record the library's
+other eight cheddar lines use; the francese olive oil reads the
+extra-virgin answer; a density figure applies only where the record has
+no volume figure of its own; the fragment rule is narrowed to parenthesised
+or continuation lines; two held second-food chipotle lines gain the
+sriracha food while staying held. Replay on snapshot 15: calls 0; 113 rows
+differ from v36, every one attributed to the planners' row table or the
+flavourings list, none a person's row, no hold changed; counted 13,244 →
+13,343, check 290 → 232, no grams 49 → 23, no match 32 → 17; complete 932 →
+1,004 (72 recipes complete, none back). Fixtures: 17 details and 20
+searches copied byte for byte from snapshot 15. Sixteen older pins moved
+to other real lines (the Sichuan peppercorns they used now lift). Two
+verifier rounds (one close round). The owner's gate: the fixtures checked,
+the re-pins read, two code-anchored mutants (a flavouring dropped from the
+class; the lentil density changed) killed and restored, the fresh-copy
+replay identical to the verifier's, the suite green; three engine comments
+that pointed at a scratch file repointed at API.md. matcherVersion 37.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-04 — the review queue (the owner: "option two — make as many things
+  accurately auto mapped as possible", then "go with your recommendations" on the
+  approval table):** the engine-side queue lines are swept by the engine where a
+  cached answer names the right food or a sourced figure exists; the held lines
+  stay a person's call. Approved: 24 right-record lines; 53 flagged stand-ins
+  and figures on existing precedents; the six asks (canning salt counted on
+  table salt; a sea scallop 34 g flagged; nonpareils at sugar's density flagged;
+  crème fraîche on heavy cream flagged; ya cai on salted mustard cabbage
+  flagged; farro searched before a label); all 30 requests; a class rule
+  counting 14 zero-nutrient flavourings as 0 g. Left for a person: 49 lines
+  (foods FDC lacks, discarded infusions) and two corpus typos to edit by hand.
 
 - **2026-10-04 — the portobello cap (the owner, "go with option 1"):** spend two live
   requests for FDC's own per-cap figure rather than a reference figure or no

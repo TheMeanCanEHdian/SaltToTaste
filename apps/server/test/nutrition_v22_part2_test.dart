@@ -198,13 +198,13 @@ void main() {
 
   test(
     'F10: "1 sugar cube" (1155 Champagne Cocktail) is granulated sugar, never '
-    '"Beef, steak, cube" — in review with no grams (the record publishes '
-    'no cube portion)',
+    '"Beef, steak, cube" — the record publishes no cube portion: in review '
+    'with no grams until matcher v37, 2.2 g by ATK’s own cubes since',
     () async {
       final row = await computeAlone('1 sugar cube');
       expect(row.fdcId, 746784);
       expect(row.description, 'Sugars, granulated');
-      expect(row.grams, isNull);
+      expect(row.grams, 2.2);
       expect(
         matchBucketFor(
           status: row.status,
@@ -214,7 +214,7 @@ void main() {
           hold: row.hold,
           gramSource: row.gramSource,
         ),
-        MatchBucket.noAmount,
+        MatchBucket.counted,
       );
     },
   );

@@ -17,9 +17,11 @@ import 'support/fdc_fixtures.dart';
 /// names this ingredient" while the answer did. (Matcher v8's chile credit
 /// lifts it into the eight; the flap meat of Crispy Orange Beef, 0536, was
 /// the pin until matcher v30 made it a rank-as item; the pink peppercorns
-/// of Grilled Scallops with Fennel and Orange Salad for Two, 0651, are the
-/// pin now — the one corpus line whose answer names its food only below
-/// the eight shown.)
+/// of Grilled Scallops with Fennel and Orange Salad for Two, 0651, until
+/// matcher v37 counted them as black pepper; the sugar stars of Meringue
+/// Christmas Trees, 1198, are the pin now — the one food line of the corpus
+/// whose cached answer, snapshot 15, names its food only below the eight
+/// shown.)
 void main() {
   test(
     'the matches body judges the WHOLE cached answer, not the eight it shows',
@@ -36,7 +38,7 @@ void main() {
       );
       addTearDown(db.dispose);
       final recipe = loadCorpusRecipe(
-        '0651-grilled-scallops-with-fennel-and-orange-salad-for-two.yaml',
+        '1198-meringue-christmas-trees.yaml',
       );
       // The recorded answer, stored the way a compute stores it. No compute
       // ran: the line has no match row and nothing to show.
@@ -44,26 +46,26 @@ void main() {
           (jsonDecode(
                     File('test/fixtures/fdc/searches.json').readAsStringSync(),
                   )
-                  as Map<String, dynamic>)['pink peppercorns']
+                  as Map<String, dynamic>)['sugar stars']
               as List<dynamic>;
-      db.fdcSearchCachePut('pink peppercorns', jsonEncode(recorded));
+      db.fdcSearchCachePut('sugar stars', jsonEncode(recorded));
       final provider = FixtureProvider();
-      final answer = await provider.search('pink peppercorns');
+      final answer = await provider.search('sugar stars');
       final shown = rankCandidates(
-        'pink peppercorns',
+        'sugar stars',
         answer,
       ).take(8).map((c) => c.candidate).toList();
-      expect(candidatesNameIngredient('pink peppercorns', shown), isFalse);
-      expect(candidatesNameIngredient('pink peppercorns', answer), isTrue);
+      expect(candidatesNameIngredient('sugar stars', shown), isFalse);
+      expect(candidatesNameIngredient('sugar stars', answer), isTrue);
 
       final searchesBefore = provider.searchCalls;
       final body = await matchesBody(db, provider, recipe);
       final line = (body['items']! as List)
           .cast<Map<String, Object?>>()
           .firstWhere(
-            (item) => item['candidates_query'] == 'pink peppercorns',
+            (item) => item['candidates_query'] == 'sugar stars',
           );
-      expect(line['raw'], '2 teaspoons pink peppercorns, crushed');
+      expect(line['raw'], 'Sugar stars');
       expect(line['candidates_name_ingredient'], isTrue);
       expect(line['candidates'], isEmpty, reason: 'no compute ran');
       expect(
