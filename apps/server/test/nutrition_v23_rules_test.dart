@@ -279,27 +279,14 @@ void main() {
       }
     }, skip: skipIfNoCorpus);
 
-    test('NOT held: a baked dredge (0122 Kiev, 0206 crunchy baked chops, 0254 '
-        'oven-fried fish) and a sauté that keeps its fat (0418 piccata, 0420 '
-        'Francese, 0466 meunière) — the pending question — nor 0115 katsu, '
-        'pan-fried by its title only (no step fries, heats the oil to a '
-        'temperature or discards it)', () {
+    test('NOT held: 0115 katsu, pan-fried by its title only (no step fries, '
+        'heats the oil to a temperature or discards it) and no excess '
+        'sentence; nor 0414 Marsala, a sauté whose coat no step shakes off. '
+        'Since v33 (the dredge-reach ruling) a baked or sautéed dredge that '
+        'leaves an excess — 0122 Kiev, 0206, 0254, 0418 piccata, 0420, '
+        '0466 — is held (nutrition_v33_test.dart)', () {
       for (final (file, raw) in const [
-        ('0122-chicken-kiev.yaml', '1 cup unbleached all-purpose flour'),
-        (
-          '0206-crunchy-baked-pork-chops.yaml',
-          '¼ cup plus 6 tablespoons unbleached all-purpose flour',
-        ),
-        (
-          '0254-crunchy-oven-fried-fish.yaml',
-          '¼ cup plus 5 tablespoons unbleached all-purpose flour',
-        ),
-        ('0418-chicken-piccata.yaml', '½ cup unbleached all-purpose flour'),
-        ('0420-chicken-francese.yaml', '1 cup unbleached all-purpose flour'),
-        (
-          '0466-fish-meuniere-with-browned-butter-and-lemon.yaml',
-          '½ cup unbleached all-purpose flour',
-        ),
+        ('0414-chicken-marsala.yaml', '1 cup unbleached all-purpose flour'),
         (
           '0115-chicken-katsu-crispy-pan-fried-chicken-cutlets.yaml',
           '2 cups panko bread crumbs',
@@ -480,9 +467,10 @@ void main() {
       expect((out.grams, out.source), (0, 'discarded'));
     }, skip: skipIfNoCorpus);
 
-    test('1133 Francese has two signals, each enough alone — its oils "for '
-        'frying" and "Discard oil." (synthesized edits, a stated exception: '
-        'each removes the other signal)', () {
+    test('1133 Francese has two fry signals, each enough alone — its oils '
+        '"for frying" and "Discard oil." — and since v33 a third, its excess '
+        'sentence (synthesized edits, a stated exception: each removes the '
+        'others)', () {
       final francese = loadCorpusRecipe('1133-chicken-francese.yaml');
       const flour = '¾ cup all-purpose flour, divided';
       final noDiscard = francese.copyWith(
@@ -505,7 +493,22 @@ void main() {
       );
       expect(mediumOf(noForFrying, flour), DiscardedMedium.coating);
       final neither = noForFrying.copyWith(steps: noDiscard.steps);
-      expect(mediumOf(neither, flour), isNull);
+      // v33: with neither fry signal its excess sentence holds it ("dredge
+      // cutlets in flour, shaking gently to remove excess"); without that
+      // too, nothing does.
+      expect(mediumOf(neither, flour), DiscardedMedium.coating);
+      final noExcess = neither.copyWith(
+        steps: [
+          for (final step in neither.steps)
+            step.copyWith(
+              text: step.text.replaceAll(
+                ', shaking gently to remove excess',
+                '',
+              ),
+            ),
+        ],
+      );
+      expect(mediumOf(noExcess, flour), isNull);
     }, skip: skipIfNoCorpus);
   });
 

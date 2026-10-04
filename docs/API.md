@@ -1581,35 +1581,66 @@ discards the rest — "discard remaining starter"; how much of the flour ends in
 `coating` (since v22, Q2: ¼ cup or more of flour, starch or crumbs — since
 v27 by weight too, 30.2 g of flour — that
 a step names in a dredge — "dredge … in the flour", "shake off excess
-flour", or set out in a shallow dish — in a recipe that fries; or a line
-that says "for dredging" / "for coating". Since matcher v23 the fry is
-read from the directions, never the oil's mass: a step that says fry as a
-verb ("pan-fry", "deep-fry", "shallow-fry", "continue to fry"; since
-matcher v24 never a stir-fry or an oven-fry — another word hyphened
-before "fry", and since v25 "stir fry", "air fry", "oven fry", "dry fry"
-spelled with a space, and "do not" / "don't" / "never fry" — a noun — "each fry" of oven fries, a "deep-fry
-thermometer" — an optional note that opens its sentence — "To pan-fry,
-increase water" — a negation — "should not actively fry" — bacon or
-prosciutto fried in its own fat, or rice toasted for a pilaf), heats
-a frying fat to a frying temperature ("to 375 degrees"; since v25 never an
-oven's "bake at 375 degrees"; since v26 the positive-evidence rule above,
-for oil, shortening and lard alike, its exclusion scoped since v27, its
-clause cut only at a mark since v28) or
-discards the fat the food cooked in, or a line "for frying" (since v24
-"for deep frying" / "for deep-frying" too, the oil's own signal); 0149
-Easier Fried Chicken, 0198 Crispy Pan-Fried Pork Chops, 0114, 0042 and
-0288 joined, 16 lines in all. Since matcher v31 (B4, under that ruling
-only) the bread a held breading processes into its crumbs is held with
-its flour: a line whose head is bread, in a recipe that holds a dredge,
-where a step processes the bread ("Process the dry bread in a food
-processor to very fine crumbs") and a dredge sentence sets out the crumbs
-("Transfer the bread crumbs to a shallow dish") — 0233 Pork Schnitzel's 7
-slices (140 g) and 0114 Breaded Chicken Cutlets' 3 slices (84 g); a
-sautéed or baked breading's bread stays counted. A sauté that keeps its fat and a baked
-dredge stay counted — the user's pending question. A batter the food
-is folded into is eaten whole and is none, nor is a sauce's thickener under
-¼ cup, nor a dredge in a recipe that does not fry. Held until the server's
-`coatingFraction` switch — null, no figure set — gives the share a fried
+flour", or set out in a shallow dish — or a line that says "for dredging" /
+"for coating". Since matcher v33 (the owner's dredge-reach ruling,
+2026-10-03, on the dredge survey of the 47 corpus recipes that coat a food
+in a dry coat) such a line is held in ANY cooking class — sautéed, baked,
+shallow- or deep-fried — whose directions LEAVE AN EXCESS of the coat: part
+of a dredge stays in the dish and is thrown out whatever the cooking
+method, so a person enters the grams eaten or confirms as is (no coating
+fraction: none is sourced). The signal is a sentence that removes the
+excess — a removal verb (shake, remove, pat), then "excess" naming the coat
+or nothing: "dredge … in the flour, shaking off the excess" (0148, 0122
+Kiev), "Shake excess flour from each steak" (0304), "coat with flour and
+shake to remove excess" (0418 piccata), "shaking gently to remove excess"
+(0415, 1133), "Using pastry brush, remove excess cornstarch" (0257),
+"Thoroughly pat off the excess cornstarch mixture" (0235) — never a
+liquid's excess ("allowing the excess to drip off", "blot the excess oil",
+"wipe off the excess salt") and never in a step that shapes a dough (0792's
+rolls and 0806's pita dusted with flour are no dredge). It reproduces the
+survey's reading on all 47 recipes. A coat WHOLLY EATEN stays counted: a
+toss (0536 orange beef, 0464 steak frites), a binder (0289 best crab
+cakes), a crust pressed on with no excess sentence — a coat set out in a
+shallow dish alone is no excess (0115 katsu, 0415 best chicken Parmesan,
+0287 salmon cakes, 0414 Marsala, 1093 tacos, 1185's air-fried panko) — and
+a batter the food is folded into (0672). The CP9 ruling stands as a
+SUFFICIENT condition: a recipe that fries holds its dredge with or without
+an excess sentence (the fry read from the directions since v23: a step
+that says fry as a verb — "pan-fry", "deep-fry", "shallow-fry", "continue
+to fry"; since v24 never a stir-fry or an oven-fry, and since v25 "stir
+fry", "air fry", "oven fry", "dry fry" spelled with a space, "do not" /
+"don't" / "never fry", a noun — "each fry", a "deep-fry thermometer" — an
+optional note that opens its sentence, a negation, bacon or prosciutto
+fried in its own fat, or rice toasted for a pilaf — heats a frying fat to a
+frying temperature, discards the fat the food cooked in, or a line "for
+(deep) frying"). Four such standing holds have no excess sentence and are
+the owner's open question: 0288 Maryland crab cakes' flour ("Lightly
+dredge"), 0149 Easier Fried Chicken's 2 cups, 0525 Orange-Flavored
+Chicken's cornstarch, 0042 Almond-Crusted Chicken's panko. v33 moved 25
+lines, 17 recipes complete → partial: 18 dredges (0077, 0117, 0118, 0122,
+0206, 0235, 0254, 0257, 0315, 0407, 0415, 0416, 0418 ×2, 0419, 0420,
+0421, 0466) and 7 crumb lines (below). Since matcher v31 (B4; every held dredge since v33) the bread a
+held breading processes into its crumbs is held with its flour: a line
+whose head is bread, in a recipe that holds a dredge, where a step puts the
+bread through the processor ("Process the dry bread in a food processor to
+very fine crumbs", 0233; "pulse the bread … to coarse crumbs", 0206) or the
+line says so ("pulsed in a food processor to coarse crumbs", 0118), and a
+sentence sets the crumbs out in a dredge or coats the food with them ("Coat
+all sides of the chop with the bread-crumb mixture") — 0233's 7 slices,
+0114's 3, and since v33 0118, 0122, 0206, 0254 and 0407. Since v33 a
+crumb or panko line of at least a quarter cup is held too, in a recipe that
+holds a dredge, when a sentence coats the food with crumbs — the steps
+call these crumbs by another name than the line's head, so the dredge's
+own detection never reaches them: 0416's "1½ cups panko" ("coat both sides
+of the chicken with the bread crumbs"), 0117's "1 cup panko bread crumbs"
+("Coat all sides of the breast with the panko mixture, pressing gently so
+that the crumbs adhere"). A coat part that
+is neither bread nor a dredge head — nuts, cheese, Melba toast, saltines,
+potato chips, cornflakes — stays counted (the owner's follow-up). A divided
+line's part set out in the coat's dish is the dredge's: 0206's "¼ cup plus
+6 tablespoons" flour holds with its 6 tablespoons whisked into the egg
+whites as the eaten part. Held until the server's `coatingFraction` switch
+— null, no figure set — gives the share a dredged
 food keeps), `partial_pour_away` (since v22, Q4: a line of a braising
 liquid — the sentence before the strain that names it and opens "whisk"
 or "bring", the food added ("add", "arrange") in the next sentence — that

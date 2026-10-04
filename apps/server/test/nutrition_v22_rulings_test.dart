@@ -121,14 +121,15 @@ void main() {
         'florets — counted; and so are a sauce thickener (0304 gravy flour, '
         "0525's 1 tablespoon plus 2 teaspoons), a fried dish's cornstarch "
         'tossed on whole (0536), and a dredge in a recipe that does not fry '
-        '(0122 Kiev, 0418 piccata)', () {
+        'and leaves no excess (0414 Marsala; since v33 a sautéed or baked '
+        'dredge that does — 0122 Kiev, 0418 piccata — is held, '
+        'nutrition_v33_test.dart)', () {
       for (final (file, i, raw) in [
         ('0672-buffalo-cauliflower-bites.yaml', 5, '¾ cup cornstarch'),
         ('0304-chicken-fried-steaks.yaml', 12, '3 tablespoons unbleached'),
         ('0525-orange-flavored-chicken.yaml', 10, '2 teaspoons cornstarch'),
         ('0536-crispy-orange-beef.yaml', 2, '6 tablespoons cornstarch'),
-        ('0122-chicken-kiev.yaml', 11, '1 cup unbleached'),
-        ('0418-chicken-piccata.yaml', 3, '½ cup unbleached'),
+        ('0414-chicken-marsala.yaml', 1, '1 cup unbleached'),
       ]) {
         final r = loadCorpusRecipe(file);
         expect(nutritionLines(r)[i].raw, contains(raw));
@@ -238,6 +239,35 @@ void main() {
         // into its crumbs, held with its flour.
         '0114-breaded-chicken-cutlets#2',
         '0233-pork-schnitzel-breaded-pork-cutlets#0',
+        // v33 (the dredge-reach ruling): a sautéed, baked or shallow dredge
+        // whose directions leave an excess, and the bread its breading
+        // crumbs (0118#13, 0122#7, 0206#2, 0254#0, 0407#2), and the crumb
+        // or panko line its steps call by another name (0416#0, 0117#5).
+        '0077-skillet-chicken-and-rice-with-peas-and-scallions#2',
+        '0117-nut-crusted-chicken-breasts-with-lemon-and-thyme#5',
+        '0117-nut-crusted-chicken-breasts-with-lemon-and-thyme#9',
+        '0118-stuffed-chicken-cutlets-with-ham-and-cheddar#10',
+        '0118-stuffed-chicken-cutlets-with-ham-and-cheddar#13',
+        '0122-chicken-kiev#11',
+        '0122-chicken-kiev#7',
+        '0206-crunchy-baked-pork-chops#10',
+        '0206-crunchy-baked-pork-chops#2',
+        '0235-maple-glazed-pork-tenderloin#6',
+        '0254-crunchy-oven-fried-fish#0',
+        '0254-crunchy-oven-fried-fish#5',
+        '0257-pan-seared-salmon-steaks#2',
+        '0315-oven-fried-onion-rings#0',
+        '0407-eggplant-parmesan#2',
+        '0407-eggplant-parmesan#5',
+        '0415-better-chicken-marsala#6',
+        '0416-lighter-chicken-parmesan#0',
+        '0416-lighter-chicken-parmesan#3',
+        '0418-chicken-piccata#3',
+        '0418-next-level-chicken-piccata#3',
+        '0419-parmesan-crusted-chicken-cutlets#2',
+        '0420-chicken-francese#9',
+        '0421-chicken-saltimbocca#1',
+        '0466-fish-meuniere-with-browned-butter-and-lemon#0',
       });
     }, skip: skipIfNoCorpus);
   });

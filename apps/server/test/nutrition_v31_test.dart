@@ -205,8 +205,8 @@ void main() {
 
     test(
       'the bread of a held breading is held with its flour (B4): the bread a '
-      'frying recipe processes into the crumbs of its coat; a sauteed or '
-      'baked breading keeps its bread counted',
+      'frying recipe processes into the crumbs of its coat; since v33 a '
+      'sauteed or baked breading that leaves an excess too',
       () {
         DiscardedMedium? mediumOf(String file, int position) {
           final recipe = loadCorpusRecipe(file);
@@ -258,37 +258,57 @@ void main() {
         }
         // The frying term on its own (0114 edited, the same stated
         // exception): with its one frying sentence gone ("Discard the oil
-        // in the skillet", [_fries]) the recipe sautés, so its flour is no
-        // held dredge, and the bread it still processes into the crumbs it
-        // sets out is not held either — the brief's "do NOT widen the hold
-        // to sauteed or baked dredges".
+        // in the skillet", [_fries]) the recipe sautés. Since v33 (the
+        // dredge-reach ruling) its flour stays held by its excess sentence
+        // ("dredge each cutlet in the flour, shaking off the excess") and
+        // the bread with it; with that sentence gone too, neither is.
         const fryCut =
             'Discard the oil in the skillet and wipe the skillet clean with '
             'paper towels. ';
-        final sauteed = cutlets.copyWith(
+        const excessCut = ', shaking off the excess';
+        Recipe cutting(List<String> cuts) => cutlets.copyWith(
           steps: [
             for (final step in cutlets.steps)
-              step.copyWith(text: step.text.replaceAll(fryCut, '')),
+              step.copyWith(
+                text: cuts.fold<String>(
+                  step.text,
+                  (t, cut) => t.replaceAll(cut, ''),
+                ),
+              ),
           ],
         );
-        final sauteedText = sauteed.steps.map((s) => s.text).join();
-        expect(sauteedText, isNot(contains(fryCut)));
-        expect(sauteedText, contains(process));
-        expect(sauteedText, contains('Transfer the crumbs to a pie plate'));
-        for (final position in const [3, 2]) {
-          final line = nutritionLines(sauteed)[position];
-          expect(
-            discardedMediumOf(sauteed, line, normalizeItem(lineItemOf(line))),
-            isNull,
-            reason: 'sauteed 0114, line $position',
-          );
+        for (final (cuts, held) in [
+          ([fryCut], DiscardedMedium.coating),
+          ([fryCut, excessCut], null),
+        ]) {
+          final sauteed = cutting(cuts);
+          final sauteedText = sauteed.steps.map((s) => s.text).join();
+          for (final cut in cuts) {
+            expect(sauteedText, isNot(contains(cut)));
+          }
+          expect(sauteedText, contains(process));
+          expect(sauteedText, contains('Transfer the crumbs to a pie plate'));
+          for (final position in const [3, 2]) {
+            final line = nutritionLines(sauteed)[position];
+            expect(
+              discardedMediumOf(sauteed, line, normalizeItem(lineItemOf(line))),
+              held,
+              reason: 'sauteed 0114 $cuts, line $position',
+            );
+          }
         }
+        // v33 (D2): a baked or sautéed breading that leaves an excess holds
+        // its bread with its flour.
         for (final (file, position) in const [
           ('0122-chicken-kiev.yaml', 7),
           ('0206-crunchy-baked-pork-chops.yaml', 2),
           ('0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml', 13),
         ]) {
-          expect(mediumOf(file, position), isNull, reason: file);
+          expect(
+            mediumOf(file, position),
+            DiscardedMedium.coating,
+            reason: file,
+          );
         }
       },
       skip: skipIfNoCorpus,

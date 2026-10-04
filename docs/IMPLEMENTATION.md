@@ -2967,7 +2967,63 @@ reference from here on (`.claude/diag/2026-10-01/snap14.db`). The
 portobello singular (2003598) remains the one live-step item not enabled.
 matcherVersion 32.
 
+### The accuracy track, part 4: the dredge-reach ruling (matcher v33)
+
+The owner ruled on the dredge survey (2026-10-03, evening): a reachable
+coating line is held whenever the directions leave an excess of the coat
+behind, in every cooking class, and counted whenever the coat is wholly
+eaten; a blanket coating fraction stays ruled out. v33 (2026-10-03) builds
+it as the narrowest text signal the survey's deciding sentences support:
+a step sentence in which a removal verb (shake, remove, pat) reaches the
+word "excess" followed by the coat, a conjunction, punctuation or the end
+("dredge in the flour, shaking off the excess", "using a pastry brush,
+remove excess cornstarch", "thoroughly pat off the excess cornstarch
+mixture"), never a liquid's excess and never in a step that names a dough
+(rustic dinner rolls and pita are dusted and shaken off and are not
+dredges). A coat set out in a shallow dish is not a signal on its own: that
+reading would have held katsu, chicken parmesan, the salmon cakes, the crab
+cakes and chicken marsala against the survey. The frying ruling of
+checkpoint 9 stands as a sufficient condition, so no held dredge is
+un-held; the bread a newly held breading processes into its crumbs, and a
+crumb or panko line the steps call by another name, are held with the
+flour of the same coat; a divided "plus" line whose first part is set out
+in a pie plate for the dredge keeps its eaten part counted. The engine's
+reading reproduces the survey's judgment on all 47 coating recipes (32
+leave an excess, 15 do not). The review screen's wording for the hold no
+longer says "fried": a dredge whose excess is discarded, and how much the
+food keeps is not written. Replay on snapshot 14: calls 0; 25 rows differ
+from v32 — 18 flour or cornstarch lines in the sautéed, baked and shallow
+classes, 5 bread lines and 2 crumb lines of the same coats — every one an
+auto row with no hold that is now held `coating`, no person's row, no held
+row un-held; counted 13,275 → 13,250, check 258 → 283; complete 949 → 932
+(17 recipes to review: the two piccatas, chicken francese, saltimbocca,
+meunière, skillet chicken and rice, better chicken marsala, parmesan-
+crusted cutlets, pan-seared salmon steaks, maple-glazed pork tenderloin,
+Kiev, nut-crusted chicken, crunchy baked pork chops, crunchy oven-fried
+fish, lighter chicken parmesan, oven-fried onion rings, stuffed chicken
+cutlets). Follow-up questions recorded for the owner, not decided: the
+four fried dredges the survey reads as leaving no excess but the frying
+ruling holds (0288, 0149, 0525, 0042); the coat components outside the head
+set that stay counted (0117's almonds, 0150's Melba toast, 0315's saltines
+and potato chips, 0419's Parmesan). Two verifier rounds (one close round
+added the crumb-by-another-name arm). The owner's gate: the re-pins read,
+two code-anchored mutants (the excess condition dropped from the dredge
+gate; the "pat" verb dropped from the signal) killed and restored, the
+fresh-copy replay identical to the verifier's, the three analyzers and the
+suites green. matcherVersion 33.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-03 (evening) — the dredge-reach ruling (the owner, on the survey's
+  option 1):** a reachable coating line (flour, starch, crumbs or panko at a
+  quarter cup or more, plus the bread or crumbs of the same coat) is HELD
+  whenever the directions leave an excess of the coat, in every cooking class
+  (sautéed and baked included); a coat wholly eaten (a toss, a binder, a
+  pressed-on crust with no excess sentence, a batter) is counted; no blanket
+  coating fraction. The checkpoint 9 frying ruling stands as a sufficient
+  condition (no held dredge is un-held). Left for the owner: the four fried
+  dredges the survey reads as leaving no excess; the coat components outside
+  the head set (nuts, cheese, Melba toast, saltines, chips). Built as v33.
 
 - **2026-10-03 — after Run 060 (the exit review): the engine loop STOPS at v29;
   the effort moves to accuracy.** Run 060's engine findings are deferred (none is

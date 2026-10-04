@@ -540,9 +540,18 @@ void main() {
               'for 10 minutes.',
         ],
       );
+      // v33 (the dredge-reach ruling): the flour is held `coating` by its
+      // own excess sentence ("Gently shake off excess flour"), in this
+      // excerpt that keeps no frying step as in 1084 itself.
       expect(
         [for (var i = 0; i < 5; i++) mediumOf(r, i)],
-        [DiscardedMedium.saltBath, DiscardedMedium.saltBath, null, null, null],
+        [
+          DiscardedMedium.saltBath,
+          DiscardedMedium.saltBath,
+          DiscardedMedium.coating,
+          null,
+          null,
+        ],
       );
     });
 

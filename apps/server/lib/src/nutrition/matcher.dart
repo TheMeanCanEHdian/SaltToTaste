@@ -457,7 +457,19 @@ const Map<String, String> _synonyms = {
 /// portion only). Spanish-style chorizo moves
 /// to a flagged "Salami, Italian, pork" (174603): FDC has no dry-cured
 /// chorizo (the owner's decision).
-const int matcherVersion = 32;
+/// 33 = the dredge-reach ruling (2026-10-03): a reachable dredge (flour,
+/// starch, crumbs, panko, ¼ cup or more, named in a dredge sentence) is
+/// held `coating` in ANY cooking class whose directions leave an excess of
+/// the coat — a sentence that shakes, removes or pats off the excess, never
+/// a liquid's, never in a dough step — and still whenever the recipe fries
+/// (the CP9 ruling, sufficient). A coat wholly eaten (a toss, a binder, a
+/// crust pressed on with no excess sentence) stays counted. The bread a
+/// held breading puts through the processor (a step, or the line itself)
+/// is held with its flour when a sentence coats the food with the crumbs,
+/// and so is a crumb or panko line (¼ cup or more) of a recipe that holds a
+/// dredge when a sentence coats the food with crumbs (0416, 0117: the steps
+/// name the panko as "the bread crumbs", "the panko mixture").
+const int matcherVersion = 33;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

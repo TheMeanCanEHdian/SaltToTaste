@@ -1131,7 +1131,7 @@ void main() {
       await openSheet(tester, [starter, dredge, soy], isAdmin: false);
       for (final text in [
         'A starter feeding',
-        'Dredging for a fried food',
+        'A dredge whose excess is discarded',
         '(1 cup defatted cooking liquid); the rest is poured away',
       ]) {
         expect(
@@ -1188,8 +1188,9 @@ void main() {
       await openSheet(tester, [dredge, soy]);
       expect(
         find.textContaining(
-          'Dredging for a fried food: most of it is shaken off or left in '
-          'the dish, and no coating share is set — held out of the totals. '
+          'A dredge whose excess is discarded: part of the coating is shaken '
+          'off or left in the dish, and how much the food keeps is not '
+          'written — held out of the totals. '
           'Skip if it is poured away, or enter the grams that are eaten; '
           'picking another food keeps it held',
         ),
@@ -1354,7 +1355,8 @@ void main() {
       await openSheet(tester, [flour], isAdmin: false);
       expect(
         find.textContaining(
-          'no coating share is set (1 teaspoon flour is used outside the '
+          'how much the food keeps is not written (1 teaspoon flour is used '
+          'outside the '
           'dredge, eaten) — held out of the totals. Confirm counts only the '
           'eaten part (2.5 g), Skip if it is poured away, or enter the grams '
           'that are eaten; picking another food also finishes it',

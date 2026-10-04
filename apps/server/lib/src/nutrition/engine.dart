@@ -133,11 +133,12 @@ enum DiscardedMedium {
   /// (`starter_discard`).
   starterDiscard,
 
-  /// Flour, starch or crumbs a FRIED food is dredged in, the excess shaken
-  /// off or left in the dish (the user's ruling Q2, 2026-10-01: Crispy Fried
-  /// Chicken, 0148, counted 567 g of flour) — [_dredge]. A batter the food
-  /// is folded into is eaten whole and is not one. Held (`coating`) until
-  /// [coatingFraction] is set.
+  /// Flour, starch or crumbs a food is dredged in, the excess shaken off or
+  /// left in the dish (the user's ruling Q2, 2026-10-01: Crispy Fried
+  /// Chicken, 0148, counted 567 g of flour; since v33, the dredge-reach
+  /// ruling, in any cooking class whose directions leave an excess) —
+  /// [_dredge]. A batter the food is folded into is eaten whole and is not
+  /// one. Held (`coating`) until [coatingFraction] is set.
   coating,
 
   /// A line of a cooking liquid strained after the braise of which a step
@@ -170,7 +171,7 @@ enum DiscardedMedium {
 }
 
 /// USER SWITCH (the ruling Q2, 2026-10-01): the share of a
-/// [DiscardedMedium.coating] line a fried food keeps. Null (no source
+/// [DiscardedMedium.coating] line a dredged food keeps. Null (no source
 /// publishes an adherence figure and the user has set none) holds every
 /// such line for a person; a fraction would count that share of the
 /// line's grams instead, never a figure the user did not set.
@@ -917,8 +918,11 @@ PlusPart? _eatenPlusPart(Recipe recipe, IngredientLine line, String? head) {
   // name the large part too (v31: 0675's "1 teaspoon plus ½ cup vegetable
   // oil" sautés the corn in the teaspoon and fries in "the remaining ½
   // cup").
-  if (smallFirst && named(written)) {
-    return PlusPart(amount: first!, text: written!, sameFood: true);
+  // Not when the sentence naming it sets a dredge's coat out in its dish
+  // (v33: 0206's "Place ¼ cup of the flour in a pie plate" is the dredge;
+  // "the remaining 6 tablespoons flour" whisked into the egg is eaten).
+  if (smallFirst && named(written) && !_setsOut(recipe, written!, head)) {
+    return PlusPart(amount: first!, text: written, sameFood: true);
   }
   if (named(_plusLead(plus.text))) {
     return plus;
@@ -930,6 +934,25 @@ PlusPart? _eatenPlusPart(Recipe recipe, IngredientLine line, String? head) {
   final after = plusMl == null ? null : _eatenAfterDiscard(recipe, head);
   return after != null && (after - plusMl!).abs() < 0.5 ? plus : null;
 }
+
+/// Whether a sentence of [recipe] sets [amount] of [head] out as a dredge's
+/// coat ([_setsOutTheCoat], [_eatenPlusPart]). Once per amount and head.
+bool _setsOut(Recipe recipe, String amount, String head) =>
+    // Key: amount and head — the two names the sentence must hold.
+    _stepIndexOf(recipe).memo(('setsOut', amount, head), () {
+      return _stepIndexOf(recipe).allSentences.any(
+        (s) =>
+            s.contains(amount) &&
+            s.contains(head) &&
+            _setsOutTheCoat.hasMatch(s),
+      );
+    });
+
+/// A sentence setting a dredge's coat out in its dish ([_setsOut]): "in a
+/// pie plate" (0206, 0254), a shallow (baking) dish.
+final RegExp _setsOutTheCoat = RegExp(
+  r'\b(?:pie plate|shallow (?:baking )?dish)\b',
+);
 
 /// The volume (mL) of [head] fat [recipe]'s sentences add after its LAST
 /// discard ("1 tablespoon more oil", "the remaining 1 tablespoon oil") —
@@ -1012,18 +1035,21 @@ const Set<String> _dredgeHeads = {
 };
 
 /// Whether a line ([raw]) is a [DiscardedMedium.coating] (Q2): its text
-/// says "for dredging" / "for coating", or — in a recipe that FRIES ([_fries]) — ¼
-/// cup or more of flour, starch or crumbs (either unit family, [_mediumMl]:
-/// 30.2 g of flour) a step names in a dredge: "dredge
-/// … in the flour", "shake off excess flour", or set out in a shallow dish
-/// for the food to be coated in (Crispy Fried
-/// Chicken, 0148; Chicken Schnitzel, 0116, its flour and its crumbs). A
-/// batter is eaten whole and is none: Buffalo Cauliflower Bites (0672)
-/// sprinkle the cornstarch over the wet florets and fold until coated. The
-/// quarter cup keeps a sauce's thickener off (0304's 3 tablespoons of gravy
-/// flour, 0525's 1 tablespoon plus 2 teaspoons of cornstarch). A dredge in a
-/// recipe that does not fry (sautéed piccata, a baked Kiev) is outside the
-/// ruling and stays counted.
+/// says "for dredging" / "for coating", or ¼ cup or more of flour, starch
+/// or crumbs (either unit family, [_mediumMl]: 30.2 g of flour) a step
+/// names in a dredge — "dredge … in the flour", "shake off excess flour",
+/// or set out in a shallow dish for the food to be coated in (Crispy Fried
+/// Chicken, 0148; Chicken Schnitzel, 0116, its flour and its crumbs) — in
+/// a recipe that FRIES ([_fries]; the CP9 ruling, kept as a sufficient
+/// condition) or whose directions LEAVE AN EXCESS of the coat
+/// ([_leavesExcess]; the owner's dredge-reach ruling, 2026-10-03, v33: a
+/// sautéed piccata, a baked Kiev). A batter is eaten whole and is none:
+/// Buffalo Cauliflower Bites (0672) sprinkle the cornstarch over the wet
+/// florets and fold until coated. The quarter cup keeps a sauce's
+/// thickener off (0304's 3 tablespoons of gravy flour, 0525's 1 tablespoon
+/// plus 2 teaspoons of cornstarch). A coat wholly eaten — a toss, a binder,
+/// a crust pressed on with no excess sentence — in a recipe that does not
+/// fry stays counted (0414 Chicken Marsala, 0115 Katsu, 0287 Salmon Cakes).
 bool _dredge(
   Recipe recipe,
   String raw,
@@ -1037,7 +1063,7 @@ bool _dredge(
   if (RegExp(r'\bfor (dredging|coating)\b').hasMatch(raw)) {
     return true;
   }
-  if (ml() < _quarterCupMl || !_fries(recipe)) {
+  if (ml() < _quarterCupMl || !(_fries(recipe) || _leavesExcess(recipe))) {
     return false;
   }
   // Once per head (RULE C, v26, Run 056 O6/S9: re-scanned per line, 380
@@ -1051,6 +1077,48 @@ bool _dredge(
     ).any((at) => _dredgeSentence.hasMatch(index.sentence(at)));
   });
 }
+
+/// Whether [recipe]'s directions leave an EXCESS of a dry coat behind
+/// ([_dredge], v33; the owner's ruling 2026-10-03 on the dredge survey,
+/// `.claude/diag/2026-10-01/prep30/dredge.md`): a sentence that shakes,
+/// removes or pats off the excess — "dredge in the flour, shaking off the
+/// excess" (0148, 0122), "Shake excess flour from each steak" (0304),
+/// "shaking gently to remove excess" (0415, 1133), "Using pastry brush,
+/// remove excess cornstarch" (0257), "Thoroughly pat off the excess
+/// cornstarch mixture" (0235) — the excess the coat or nothing, never a
+/// liquid ("allowing the excess to drip off": no removal verb; "blot the
+/// excess oil", "wipe off the excess salt": not the coat). Not in a step
+/// that shapes a DOUGH ("roll it in your palms to coat with flour, shaking
+/// off the excess", 0792 Rustic Dinner Rolls; "brush … each dough round …
+/// to remove any excess flour", 0806 Pita): a dusting, not a dredge. A coat
+/// set out in a shallow dish alone is no excess: 0115 Katsu, 0415 Best
+/// Chicken Parmesan, 0287 Salmon Cakes, 0289 Best Crab Cakes and 0414
+/// Chicken Marsala set theirs out and the survey reads each wholly eaten.
+/// Reproduces the survey's Y/N on all 47 in-scope recipes. Once per recipe.
+bool _leavesExcess(Recipe recipe) => _stepIndexOf(recipe).memo(
+  #leavesExcess,
+  () {
+    final index = _stepIndexOf(recipe);
+    return index.sentences.indexed.any(
+      (e) =>
+          e.$2.any(_excessOfTheCoat.hasMatch) &&
+          !_dough.hasMatch(index.lower[e.$1]),
+    );
+  },
+);
+
+/// [_leavesExcess] for the tests (the survey's 47-recipe reproduction).
+@visibleForTesting
+bool leavesExcessForTest(Recipe recipe) => _leavesExcess(recipe);
+
+/// A removal verb, then the excess of the coat or of nothing named
+/// ([_leavesExcess]).
+final RegExp _excessOfTheCoat = RegExp(
+  r'\b(?:shak|remov|pat)\w*\b[^.]*?\bexcess\b(?=$|[^\w\s]|\s+(?:and|then|'
+  r'flour|cornstarch|starch|bread|crumbs?|panko|coating)\b)',
+);
+
+final RegExp _dough = RegExp(r'\bdough');
 
 /// A sentence that dredges a food in a line ([_dredge]).
 final RegExp _dredgeSentence = RegExp(
@@ -2189,26 +2257,73 @@ final RegExp _labelledFrying = RegExp(
   caseSensitive: false,
 );
 
-/// Whether [recipe]'s bread lines are the crumbs of its held breading
-/// (v31, B4 — under the existing dredge ruling only): the recipe holds a
-/// dredge ([_dredgedIn]: it fries), a step processes the bread ("Process
-/// the dry bread in a food processor to very fine crumbs", 0233 Pork
-/// Schnitzel; 0114 Breaded Chicken Cutlets) and a dredge sentence sets out
-/// the crumbs ("Transfer the bread crumbs to a shallow dish"). The flour
-/// was held while the crumbs of the same coat counted (140 g, 84 g). A
-/// sautéed or baked breading does not fry, so it holds nothing (Kiev,
-/// crunchy baked pork chops) until the owner rules on it. Once per recipe.
-bool _crumbsForTheCoat(Recipe recipe) =>
-    _stepIndexOf(recipe).memo(#crumbsForTheCoat, () {
-      final sentences = _stepIndexOf(recipe).allSentences;
-      return _dredgedIn(recipe) &&
-          sentences.any(_processesBread.hasMatch) &&
-          sentences.any(
-            (s) => s.contains('crumbs') && _dredgeSentence.hasMatch(s),
-          );
-    });
+/// Whether [recipe]'s bread line [raw] is the crumbs of its held breading
+/// (v31, B4; every held dredge since v33, D2): the recipe holds a dredge
+/// ([_dredgedIn]), the bread is processed — a step puts it through the
+/// processor ("Process the dry bread in a food processor to very fine
+/// crumbs", 0233 Pork Schnitzel; "pulse the bread in a food processor to
+/// coarse crumbs", 0206; "Add half of the bread to a food processor and
+/// pulse", 0122 Kiev) or the line itself says so ("4 slices … bread,
+/// pulsed in a food processor to coarse crumbs and dried", 0118) — and
+/// the crumbs form the coat: a dredge sentence sets them out ("Transfer
+/// the bread crumbs to a shallow dish") or a sentence coats the food with
+/// them ("Coat all sides of the chop with the bread-crumb mixture", 0206,
+/// 0254, 0407, 0122). The flour was held while the crumbs of the same coat
+/// counted (140 g, 84 g). A coat part that is not bread or a dredge head —
+/// nuts, cheese, Melba toast, saltines, potato chips, cornflakes — stays
+/// counted (the owner's follow-up). The step tests once per recipe.
+bool _crumbsForTheCoat(Recipe recipe, String raw) {
+  final index = _stepIndexOf(recipe);
+  return _dredgedIn(recipe) &&
+      index.memo(#crumbsForTheCoat, () {
+        return index.allSentences.any(
+          (s) =>
+              (s.contains('crumbs') && _dredgeSentence.hasMatch(s)) ||
+              _coatsWithCrumbs.hasMatch(s),
+        );
+      }) &&
+      (_processesBread(raw) ||
+          index.memo(#processesBread, () {
+            return index.allSentences.any(_processesBread);
+          }));
+}
 
-final RegExp _processesBread = RegExp(r'\bprocess (?:the )?(?:dry )?bread\b');
+/// A text naming bread and the food processor ([_crumbsForTheCoat]).
+bool _processesBread(String text) =>
+    text.contains('bread') && _processor.hasMatch(text);
+
+final RegExp _processor = RegExp(r'\bprocess');
+
+/// A sentence coating a food with crumbs ([_crumbsForTheCoat],
+/// [_crumbLineOfTheCoat]).
+final RegExp _coatsWithCrumbs = RegExp(r'\bcoat\w*\b[^.]*\bcrumb');
+
+/// Whether a crumb or panko line ([head]; the dredge heads, at the same
+/// quarter cup) is the crumbs of [recipe]'s held breading (D2, v33 closer):
+/// the recipe holds a dredge ([_dredgedIn]) and a sentence coats the food
+/// with crumbs. [_dredge] finds a line only through a sentence naming its
+/// own head, and the steps call these crumbs by another name — "1½ cups
+/// panko" coated as "the bread crumbs" (0416 Lighter Chicken Parmesan:
+/// "Lightly dredge the cutlets in the flour, shaking off the excess …
+/// Finally, coat both sides of the chicken with the bread crumbs"), "1 cup
+/// panko bread crumbs" set out as "the panko mixture" (0117 Nut-Crusted:
+/// "Coat all sides of the breast with the panko mixture, pressing gently so
+/// that the crumbs adhere") — so the flour was held while the panko of the
+/// same coat counted. Once per recipe.
+bool _crumbLineOfTheCoat(
+  Recipe recipe,
+  String? head,
+  double Function() ml,
+) {
+  if ((head != 'crumb' && head != 'panko') || ml() < _quarterCupMl) {
+    return false;
+  }
+  final index = _stepIndexOf(recipe);
+  return _dredgedIn(recipe) &&
+      index.memo(#coatsWithCrumbs, () {
+        return index.allSentences.any(_coatsWithCrumbs.hasMatch);
+      });
+}
 
 /// Whether [recipe] holds a dredge ([_dredge]) — once per recipe.
 bool _dredgedIn(Recipe recipe) => _stepIndexOf(recipe).memo(#dredged, () {
@@ -2734,7 +2849,8 @@ DiscardedMedium? discardedMediumOf(
       return DiscardedMedium.starterDiscard;
     }
     if (_dredge(recipe, raw, head, () => ml, steps) ||
-        (head == 'bread' && _crumbsForTheCoat(recipe))) {
+        (head == 'bread' && _crumbsForTheCoat(recipe, raw)) ||
+        _crumbLineOfTheCoat(recipe, head, () => ml)) {
       return DiscardedMedium.coating;
     }
     if (keptLiquidOf(recipe, line) != null) {
