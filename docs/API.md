@@ -1691,10 +1691,18 @@ oysters' 24, 360 g) and a live lobster's count × the record's own "1
 lobster" 200 g, flagged (`flambeed-pan-roasted-lobster` and the indoor
 clambake's two lobsters, 400 g each), and shrimp the recipe's prep note
 says are "eaten shell and all" (crispy salt-and-pepper shrimp, 680 g at
-the gross weight, flagged); the 13 lines bought by weight — 6 clam, 5
-mussel, 2 shell-on shrimp whose shells are peeled off — stay held, no
-cached record publishing a shell yield (the live step asks 174214 and
-174216), and the peeled-and-deveined shrimp lines stay counted),
+the gross weight, flagged); since matcher v40 (the live step, 2026-10-05)
+the 6 clam lines bought by weight are counted too: they rank as SR 174214
+"Mollusks, clam, mixed species, raw", whose detail publishes "lb (with
+shell), yield after shell removed" 68 g, read ONLY in that shape (68 /
+453.59 = 0.15 of the weight bought), unflagged — `"from 7 pound × 0.15
+edible (USDA yield after shell removed)"`, New England clam chowder's 7
+pounds 3,175.14 → 476 g; a line whose grams carry that yield is no longer
+held; the 7 others bought by weight stay held — 5 mussel (SR 174216
+"Mollusks, mussel, blue, raw" publishes only small 10 g, medium 16 g,
+large 20 g, oz, 3 oz and cup 150 g: no with-shell portion) and 2 shell-on
+shrimp whose shells are peeled off (no request was planned) — and the
+peeled-and-deveined shrimp lines stay counted),
 `starter_discard` (since matcher v22, the user's ruling Q1: every non-water
 line of a sourdough starter whose feeding step keeps a little starter and
 discards the rest — "discard remaining starter"; how much of the flour ends in the kept starter nothing says),
@@ -2274,7 +2282,7 @@ an FDC portion, flagged `approximate (yield of <class> from FDC <id>)`:
 | a bone-in roast (the pork butt figure) | 168675 standing rib | 0.758 | cross-species: no beef refuse is cached |
 | chicken parts | 171447 (pieces), 2727566–69, 172378, and the meat-only 2646171, 173619 | 0.608 | 171447 "yield from 1 lb ready-to-cook chicken" 276 g; the Cornish hen's 336 of 567 g (0.593) corroborates |
 | turkey parts (the chicken figure) | 171093, 171533, 171497, 174518 | 0.608 | no turkey part figure exists |
-| a whole turkey (interim: the chicken figure) | 171081 | 0.608 | until the live step reads the turkey family's part shares (they replace it if they sum to a bird's yield) |
+| a whole turkey (interim: the chicken figure) | 171081 | 0.608 | the live step (2026-10-05) found no bird yield: per ready-to-cook pound the breast 171093 is 146 g, the leg 171493 105 g, the wing 171495 33 g, but FDC has no raw "meat and skin" back or neck — 171096 back and 171086 neck are meat only and publish no share — so the parts (284 g = 0.626) are a partial sum and the interim stays (12 lines) |
 | bony beef, lamb and veal | 173405, 170827, 169441, 172641, 172513, 174875, 172648 | 0.657 | the median of the four above, (128/196 + 133/201) / 2 |
 | oxtails | 2705843 | 0.564 | the record's own FNDDS "1 oz yields 16 g" (raw with bone → this cooked food) |
 
@@ -2300,11 +2308,36 @@ record whose line trips (a Confirm of a moved row, or a pick of the
 meat-only record there) records the SKIN-ON record bought, so the key's
 other lines move only where their own recipe discards the skin: Chicken
 Provençal's thighs confirmed leave Chicken Teriyaki's (skin eaten) on
-2727567 at 828 g. The breast (5 lines)
-and whole-bird (5) shares are provisional and stay DRY until the live
-step: the detail of 171077 (breast, meat only) against 171474's "0.5
-breast, bone removed" 145 g, and the search `chicken broilers or fryers
-meat only raw` with its record's detail. **Shellfish**: the `in_shell`
+2727567 at 828 g. Since matcher v40 (the live step, 2026-10-05) a whole
+bird or pieces on 171447 moves the same way to SR 171052 "Chicken,
+broilers or fryers, meat only, raw" (the search `chicken broilers or
+fryers meat only raw` ranks it first; its detail publishes "unit (yield
+from 1 lb ready-to-cook chicken)" 197 g against 171447's 276 g, and "0.5
+chicken, bone and skin removed" 329 g), read at that yield and never a
+class figure (171052 is in neither table): a WHOLE bird by the
+ready-to-cook reader 171447's whole chicken uses, unflagged where the
+whole skin goes — `"from the printed weight × 0.43 edible (USDA
+ready-to-cook yield)"`, Moroccan chicken's 4 pounds 1,104 → 788 g — and PIECES at the same per-pound
+figure, flagged `"… × 0.43 edible (USDA ready-to-cook yield) ·
+approximate (skin discarded; the whole bird's meat-only yield)"` (tandoori
+chicken's 3 pounds 828 → 591 g); a decision from a moved row records
+171447. The signal moves five lines (pressure-cooker chicken noodle soup,
+Moroccan chicken, grilled lemon chicken, pollo en mole poblano, tandoori
+chicken). A whole bird whose tripping skin-off sentence also leaves part
+of the skin on ("leaving skin on <part>" / "leave the skin on <part>") is
+flagged with that part, the grams unchanged: grilled lemon chicken (recipe
+0637, "peel skin off chicken, leaving skin on wings") reads `"from the
+printed weight × 0.43 edible (USDA ready-to-cook yield) · approximate (skin
+discarded except the wings; the bird's meat-only yield)"` at 788 g. A step
+that takes the skin "from the <part>" (breast, thigh,
+leg, wing, drumstick) trips only a line whose item names that part:
+classic chicken noodle soup's whole bird, whose step discards "the skin
+and bones from the breast pieces" only, stays on 171447 at 1,104 g;
+Chicken Provençal's "from the chicken thighs" still trips. The breast is NOT
+enabled: 171077 "Chicken, broiler or fryers, breast, skinless, boneless,
+meat only, raw" publishes only "oz" 113 g, "package" 926 g and "piece"
+272 g — no half breast to set against 171474's "0.5 breast, bone removed"
+145 g — so the 5 breast lines stay at the bone yield with no skin step. **Shellfish**: the `in_shell`
 paragraph above. **Canned coconut milk** (Q8): `coconut milk`,
 `unsweetened coconut milk` and `regular or light coconut milk` (read as
 regular: no light canned record is cached) read the cached `canned coconut
@@ -2349,7 +2382,20 @@ drained, 3 cups juice reserved" by SR's juice cup: 28 lines (hearty lentil
 soup 411.07 → 221.98 g), 0 recipes by more than 10 %; the 16 lines that
 reserve juice put it back later and are untouched. Every other prep word
 (peeled or cored produce, leek greens, scallion parts, deveined shrimp,
-drained beans) has no figure and no rule.
+drained beans) has no figure and no rule. Canned beans after the live step
+(2026-10-05): SR 173800 chickpeas "drained solids" publishes "can drained"
+253 g and SR 175206 "solids and liquids" "can (total can contents)" 448 g
+and "cup" 240 g, neither naming its can size, so the plan's condition
+(both members size the same can) is undetermined: the other pairs were not
+fetched and no bean line changes — an open question for the owner (253 /
+448 = 0.565 drained ÷ whole, if the same-can reading is accepted).
+Since matcher v40 (edible yields, part 2 — the owner's live step,
+2026-10-05 on a scratch copy of snapshot 16: 13 requests, 3 searches and
+10 food details, the result snapshot 17; the accuracy track's live
+requests now total 55 with the 42 above): the whole bird and pieces skin
+move to 171052 and the clams' shell yield on 174214 (both above); not
+enabled, with FDC's answers above: the breast share, the whole-turkey
+yield, mussels, canned beans.
 Since matcher v31 (the CP10 rulings, 2026-10-03): star
 anise (`star anise pods`, `star anise pod`, each its own answer) →
 `spices anise seed` (171316, flagged); Q7's eight small groups —

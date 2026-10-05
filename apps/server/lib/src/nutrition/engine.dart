@@ -4545,10 +4545,13 @@ String _ownSalt(String normalized) {
 /// count reads the record's own "1 lobster" 200 g (flagged) — or shrimp
 /// the recipe says are "eaten shell and all" (crispy salt-and-pepper
 /// shrimp's prep note: the gross weight is what is eaten, flagged
-/// approximate). A clam, mussel or shrimp line bought by weight stays held:
-/// no record publishes a shell yield.
+/// approximate). v40 (E2): a clam line bought by weight whose grams carry
+/// FDC's shell yield ([shellYieldLabel]: 174214's "lb (with shell)" 68 g).
+/// A mussel or shrimp line bought by weight stays held: no record publishes
+/// a shell yield.
 bool shellCounted(Recipe recipe, GramResolution? resolution) =>
     resolution?.source == GramSource.piece ||
+    (resolution?.basis?.contains('($shellYieldLabel)') ?? false) ||
     RegExp(
       r'\beaten shells? and all\b',
     ).hasMatch((recipe.prepNotes ?? '').toLowerCase());
@@ -4556,9 +4559,15 @@ bool shellCounted(Recipe recipe, GramResolution? resolution) =>
 /// v39 (Y3, the owner's ruling 2026-10-05 on plan Q4 (b)): the meat-only
 /// record a skin-discarded thigh or leg row moves to ([skinDiscarded]),
 /// grams × FDC's meat share there ([skinShares]), stacked on the bone yield
-/// ([boneInClassYields]). The breast and whole-bird pairs wait on the live
-/// step (the LIVE STEP comment at [skinShares]).
-const Map<int, int> skinlessRecords = {2727567: 2646171, 172378: 173619};
+/// ([boneInClassYields]). v40 (E1, the live step): a whole bird or pieces
+/// on 171447 moves to SR 171052 ([meatOnlyBroiler]), read at its own
+/// ready-to-cook yield — never a class figure. The breast stays (the LIVE
+/// STEP record at [skinShares]).
+const Map<int, int> skinlessRecords = {
+  2727567: 2646171,
+  172378: 173619,
+  171447: meatOnlyBroiler,
+};
 
 /// [eaten]'s food and grams once the skin is off: an auto row on a
 /// skin-on record of [skinlessRecords] — the engine's pick, or a person's
@@ -4613,19 +4622,57 @@ int? decisionRecordOf(Recipe recipe, IngredientLine line, int? fdcId) {
 /// skin off") and no sentence of the recipe naming the skin reserves it,
 /// sets it aside, lays it back, stretches it, takes it "if desired" or
 /// from the "tapered" pieces only (plan Q4: the skin is eaten, or only
-/// partly gone).
+/// partly gone). v40: a sentence that takes the skin "from the <part>" —
+/// a breast, thigh, leg, wing or drumstick — counts only for a line whose
+/// item names that part: Classic Chicken Noodle Soup (0002) discards "the
+/// skin and bones from the breast pieces" of its whole bird, the rest of
+/// the bird strained out with the stock (prep39/skin_render.md: outside
+/// the narrow signal); Chicken Provençal's "from the chicken thighs" and
+/// Barbecued Pulled Chicken's "from chicken legs" still trip their lines.
 bool skinDiscarded(Recipe recipe, IngredientLine line) {
   if (RegExp(
     r'\bskin removed\b|\bskinned\b',
   ).hasMatch(line.raw.toLowerCase())) {
     return true;
   }
+  final item = (line.item ?? line.raw).toLowerCase();
   final skin = [
     for (final sentence in _stepIndexOf(recipe).allSentences)
       if (RegExp(r'\bskin\b').hasMatch(sentence)) sentence,
   ];
-  return !skin.any(_skinKept.hasMatch) && skin.any(_skinOff.hasMatch);
+  return !skin.any(_skinKept.hasMatch) &&
+      skin.any((sentence) => _skinOffFor(item, sentence));
 }
+
+bool _skinOffFor(String item, String sentence) {
+  final part = _skinPart.firstMatch(sentence)?.group(1);
+  return _skinOff.hasMatch(sentence) && (part == null || item.contains(part));
+}
+
+/// v40: the part a tripping skin-off sentence of [recipe] keeps its skin on
+/// — "peel skin off chicken, leaving skin on wings" (Grilled Lemon Chicken
+/// with Rosemary, 0637) → "wings" — or null (the whole skin removed, or no
+/// trip). The grams path flags the meat-only whole bird with it
+/// (prep39/plan.md: "keeps its wing skin, which the flag names").
+String? skinKeptPart(Recipe recipe, IngredientLine line) {
+  if (!skinDiscarded(recipe, line)) return null;
+  final item = (line.item ?? line.raw).toLowerCase();
+  for (final sentence in _stepIndexOf(recipe).allSentences) {
+    if (!_skinOffFor(item, sentence)) continue;
+    final part = _skinLeftOn.firstMatch(sentence)?.group(1);
+    if (part != null) return part;
+  }
+  return null;
+}
+
+final RegExp _skinLeftOn = RegExp(
+  r'\blea(?:ve|ving)\s+(?:the\s+)?skin\s+on\s+(?:the\s+)?([a-z]+)',
+);
+
+final RegExp _skinPart = RegExp(
+  r'\bskin\b.*?\bfrom\s+(?:the\s+)?(?:[a-z-]+\s+){0,2}?'
+  '(breast|thigh|leg|wing|drumstick)',
+);
 
 final RegExp _skinOff = RegExp(
   r'\b(?:remove|discard|discarding)\s+(?:and\s+discard\s+)?(?:the\s+)?'
@@ -7123,12 +7170,14 @@ GramResolution? lineGrams(
   // v39 (Y3): the meat share reads the recipe's skin trip, never the
   // record alone — with no recipe, none.
   final skinOff = recipe != null && skinDiscarded(recipe, line);
+  final skinKept = skinOff ? skinKeptPart(recipe, line) : null;
   GramResolution? on(FdcFood? record) => resolveGrams(
     amounts: line.amounts,
     food: record,
     normalizedItem: normalized,
     raw: line.raw,
     skinOff: skinOff,
+    skinKept: skinKept,
   );
   if (food != null && freshHerbLine(line.raw, food.description)) {
     return _freshHerbGrams(line, food, normalized, on(food));

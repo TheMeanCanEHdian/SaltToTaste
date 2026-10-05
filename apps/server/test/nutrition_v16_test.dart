@@ -834,13 +834,14 @@ void main() {
     });
 
     test('P5: an amount edit of a confirmed line keeps no LINE hold but a '
-        "medium's — Cioppino's (0108) \"1 pound littleneck clams, "
-        'scrubbed", confirmed, then "2 pounds" (synthesized: a stated '
-        'exception): confirmed, no in_shell hold', () async {
+        "medium's — Cioppino's (0108) \"1 pound mussels, scrubbed and "
+        'debearded", confirmed, then "2 pounds" (synthesized: a stated '
+        'exception): confirmed, no in_shell hold (the clams before v40, '
+        'counted since on their shell yield)', () async {
       final db = tempDb();
       final provider = FixtureProvider();
       final r = recipeOf(db: db, [
-        ['1 pound littleneck clams, scrubbed'],
+        ['1 pound mussels, scrubbed and debearded'],
       ]);
       await matchAndCompute(db, provider, r);
       expect(rowAt(db, 0).hold, 'in_shell');
@@ -849,11 +850,11 @@ void main() {
         db,
         provider,
         recipeOf(db: db, [
-          ['2 pounds littleneck clams, scrubbed'],
+          ['2 pounds mussels, scrubbed and debearded'],
         ]),
       );
       final row = rowAt(db, 0);
-      expect((row.status, row.fdcId, row.hold), ('confirmed', 2706338, null));
+      expect((row.status, row.fdcId, row.hold), ('confirmed', 2706350, null));
       expect(row.grams, closeTo(907.18, 0.01));
     });
   });

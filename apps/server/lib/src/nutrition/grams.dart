@@ -1871,8 +1871,12 @@ boneInClassYields = {
   2727569: _chicken, 172378: _chicken, 2646171: _chicken, 173619: _chicken,
   // No turkey part figure exists: the chicken's.
   171093: _turkey, 171533: _turkey, 171497: _turkey, 174518: _turkey,
-  // INTERIM (Q1b): the chicken's, until the live step reads the turkey
-  // family's part shares (plan §3 requests 4–9).
+  // INTERIM (Q1b): the chicken's. The live step (plan §3 requests 4–9,
+  // 2026-10-05) found no turkey yield: per ready-to-cook pound the breast
+  // 171093 is 146 g, the leg 171493 105 g, the wing 171495 33 g, but FDC
+  // has no raw "meat and skin" back or neck — 171096 back and 171086 neck
+  // are meat only with no share — so the parts (284 g = 0.626) are a
+  // partial sum, not a bird's yield.
   171081: (
     yieldOf: 'a whole turkey (interim: the chicken figure)',
     from: '171447',
@@ -1916,18 +1920,28 @@ const _bony = (
 /// and skin removed" 147 g of 172378's "thigh with skin" 185 g (0.795), and
 /// its "leg, bone and skin removed" 265 g of 172378's "leg, with skin" 344 g
 /// (0.770).
-// LIVE STEP (plan §3 requests 1–3; NOT enabled — the shares are
-// provisional): breast 2727569 → 2646170 at 171077's own portion against
-// 171474's "0.5 breast, bone removed" 145 g (request 1: hearty-chicken-
-// noodle-soup|9, old-fashioned-slow-cooker-chicken-noodle-soup|12,
-// french-style-chicken-and-stuffing-in-a-pot|15, tortilla-soup|3,
-// white-chicken-chili|0); whole bird and pieces 171447 → the SR meat-only
-// broiler record and its ready-to-cook yield (requests 2–3, the search
-// "chicken broilers or fryers meat only raw" and its detail:
-// pressure-cooker-chicken-noodle-soup|8, moroccan-chicken-with-olives-and-
-// lemon|8, grilled-lemon-chicken-with-rosemary|0, pollo-en-mole-poblano-
-// chicken-in-puebla-style-mole|15, tandoori-chicken|9).
+// LIVE STEP (plan §3 requests 1–3, spent by the owner 2026-10-05; the
+// record): the whole bird and pieces ENABLED in v40 — the search "chicken
+// broilers or fryers meat only raw" ranked SR 171052 first, whose detail
+// publishes "unit (yield from 1 lb ready-to-cook chicken)" 197 g
+// ([meatOnlyBroiler]; engine `skinlessRecords` 171447 → 171052: pressure-
+// cooker-chicken-noodle-soup|8, moroccan-chicken-with-olives-and-lemon|8,
+// grilled-lemon-chicken-with-rosemary|0 whole; pollo-en-mole-poblano-
+// chicken-in-puebla-style-mole|15, tandoori-chicken|9 pieces, flagged).
+// The breast NOT enabled: 171077 (request 1) publishes "oz" 113 g,
+// "package" 926 g and "piece" 272 g — no half breast to set against
+// 171474's "0.5 breast, bone removed" 145 g, so no share is formed and the
+// five breast lines (hearty-chicken-noodle-soup|9, old-fashioned-slow-
+// cooker-chicken-noodle-soup|12, french-style-chicken-and-stuffing-in-a-
+// pot|15, tortilla-soup|3, white-chicken-chili|0) stay at the bone yield.
 const Map<int, double> skinShares = {2646171: 147 / 185, 173619: 265 / 344};
+
+/// v40 (E1): SR 171052 "Chicken, broilers or fryers, meat only, raw", where
+/// a skin-discarded whole bird or pieces on 171447 moves (engine
+/// `skinlessRecords`): its "unit (yield from 1 lb ready-to-cook chicken)"
+/// 197 g is the meat of a ready-to-cook pound (0.43; 171447's meat and skin
+/// 276 g).
+const int meatOnlyBroiler = 171052;
 
 /// Whether [raw] buys shellfish IN THE SHELL: clams, mussels or oysters
 /// scrubbed, live lobsters, shell-on shrimp. Shucked
@@ -1999,6 +2013,30 @@ double? _readyToCookYield(FdcFood food) {
   return null;
 }
 
+/// v40 (E2, plan Y2b — the live step's request 10): the basis label of a
+/// shell yield ([_shellYield]); a line whose grams carry it is counted, not
+/// held `in_shell` (engine `shellCounted`).
+const String shellYieldLabel = 'USDA yield after shell removed';
+
+/// The share of a weight bought in the shell that is meat: SR 174214
+/// "Mollusks, clam, mixed species, raw" publishes "lb (with shell), yield
+/// after shell removed" 68 g (0.15 of a pound). That ONE shape, read by
+/// equality — never the "with refuse, weighing N g" reader widened; the
+/// mussel detail (174216) publishes none, so its lines stay held. Or null.
+double? _shellYield(FdcFood food) {
+  for (final portion in food.portions) {
+    if ((portion.description ?? '').toLowerCase() ==
+        'lb (with shell), yield after shell removed') {
+      final share =
+          portion.gramWeight /
+          (portion.amount ?? 1) /
+          _weightUnitGrams['pound']!;
+      return share > 0 && share < 1 ? share : null;
+    }
+  }
+  return null;
+}
+
 /// Whether [raw] counts Cornish game hens: a bird sold at one size, so the
 /// record's average "bird" is the line's bird. A turkey is not: "Turkey,
 /// whole, meat and skin, raw" (171081) has a 5,002 g "bird", and 12- to
@@ -2043,15 +2081,15 @@ String _countLabel(double count) => count == count.roundToDouble()
 
 /// The edible share of [food] as bought: FDC's own raw refuse portion
 /// ("…excluding refuse (yield from 1 raw chop, with refuse, weighing 151
-/// g)" = 86 g → 0.57), or null when the record publishes none. Under
-/// [wholeBird], a whole-bird line ([raw]) on a whole-bird record also reads
-/// its ready-to-cook yield.
+/// g)" = 86 g → 0.57), or its shell yield ([_shellYield], v40), or null
+/// when the record publishes none. Under [wholeBird], a whole-bird line
+/// ([raw]) on a whole-bird record also reads its ready-to-cook yield.
 double? edibleYieldOf(
   FdcFood food, {
   String? raw,
   bool wholeBird = wholeBirdYieldOn,
 }) {
-  final share = _wholeBirdShare(food, raw, wholeBird);
+  final share = _wholeBirdShare(food, raw, wholeBird) ?? _shellYield(food);
   if (share != null) {
     return share;
   }
@@ -2299,6 +2337,7 @@ GramResolution? resolveGrams({
   bool wholeBirdYield = wholeBirdYieldOn,
   bool kosherSalt = false,
   bool skinOff = false,
+  String? skinKept,
 }) => _resolveLine(
   amounts: amounts,
   food: food,
@@ -2307,6 +2346,7 @@ GramResolution? resolveGrams({
   wholeBirdYield: wholeBirdYield,
   kosherSalt: kosherSalt,
   skinOff: skinOff,
+  skinKept: skinKept,
 );
 
 GramResolution? _resolveLine({
@@ -2317,6 +2357,7 @@ GramResolution? _resolveLine({
   required bool wholeBirdYield,
   required bool kosherSalt,
   required bool skinOff,
+  required String? skinKept,
 }) {
   final parsed = raw == null
       ? amounts
@@ -2440,12 +2481,47 @@ GramResolution? _resolveLine({
     // A whole bird's share is the record's ready-to-cook yield, not a refuse
     // portion (checkpoint 6: the basis said "USDA refuse" for both).
     final readyToCook = _wholeBirdShare(food!, raw, wholeBirdYield) != null;
+    // v40: a meat-only bird whose recipe keeps part of the skin (0637
+    // "leaving skin on wings", the caller's `skinKeptPart`) — the plan's
+    // flag names the part.
+    final keptFlag =
+        readyToCook &&
+            skinOff &&
+            skinKept != null &&
+            food.fdcId == meatOnlyBroiler
+        ? ' · approximate (skin discarded except the $skinKept; '
+              "the bird's meat-only yield)"
+        : '';
     first = GramResolution(
       grams: first!.grams * yieldFactor,
       source: first.source,
       basis:
           '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
-          '(${readyToCook ? 'USDA ready-to-cook yield' : 'USDA refuse'})',
+          '(${readyToCook
+              ? 'USDA ready-to-cook yield'
+              : _shellYield(food) != null
+              ? shellYieldLabel
+              : 'USDA refuse'})$keptFlag',
+    );
+  } else if (refuse &&
+      skinOff &&
+      food.fdcId == meatOnlyBroiler &&
+      _readyToCookYield(food) != null) {
+    // v40 (E1, plan Y3b — the live step's requests 2–3): pieces of a bird
+    // bought with its skin, moved to the meat-only broiler because the
+    // recipe discards the skin (engine `skinOffFood`), read the whole
+    // bird's meat-only ready-to-cook yield per pound — 171052's 197 g of a
+    // pound — flagged: a share of the whole bird, not of these pieces.
+    // Never the class table on top (171052 is in neither it nor
+    // [skinShares]).
+    final meatOnly = _readyToCookYield(food)!;
+    first = GramResolution(
+      grams: first!.grams * meatOnly,
+      source: first.source,
+      basis:
+          '${first.basis} × ${meatOnly.toStringAsFixed(2)} edible (USDA '
+          'ready-to-cook yield) · approximate (skin discarded; the whole '
+          "bird's meat-only yield)",
     );
   } else if (refuse) {
     // The record publishes no refuse portion: the bone (a whole turkey's,

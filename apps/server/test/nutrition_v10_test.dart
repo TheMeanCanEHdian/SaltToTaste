@@ -777,25 +777,30 @@ void main() {
         isTrue,
       );
       final db = tempDb();
-      final a = recipeOf(db, 'ra', [clams]);
-      final b = recipeOf(db, 'rb', [clams, mussels]);
+      // Since v40 (E2) the clams are counted on SR 174214's shell yield,
+      // so the held line here is the mussels' (174216 publishes none).
+      final a = recipeOf(db, 'ra', [mussels]);
+      final b = recipeOf(db, 'rb', [mussels, clams]);
       for (final r in [a, b]) {
         await matchAndCompute(db, provider, r);
       }
       for (final row in [
         ...db.ingredientMatchesFor('ra'),
-        ...db.ingredientMatchesFor('rb'),
+        db.ingredientMatchesFor('rb').first,
       ]) {
         expect(row.hold, 'in_shell');
         expect(row.grams, closeTo(453.6, 0.1));
         expect(bucketOf(row), MatchBucket.check);
       }
+      final shucked = db.ingredientMatchesFor('rb').last;
+      expect((shucked.fdcId, shucked.hold, shucked.grams), (174214, null, 68));
+      expect(bucketOf(shucked), MatchBucket.counted);
       // A LINE hold: each held line is a group of one in the queue, a
       // decision on the key reaches no other in-shell line, and a decision
       // that lands keeps the hold.
       final groups = db
           .nutritionReviewGroups(limit: 50, offset: 0)
-          .where((group) => group.itemKey == 'littleneck clam')
+          .where((group) => group.itemKey == 'mussel')
           .toList();
       expect([for (final group in groups) group.lines], [1, 1]);
       final offer = await matchesBody(db, provider, a);
@@ -805,8 +810,8 @@ void main() {
       final decided = engineOutcome(
         a,
         line,
-        await food(2706338),
-        gramsOf(clams, null),
+        await food(2706350),
+        gramsOf(mussels, null),
         decided: true,
       );
       expect(decided.hold, 'in_shell');
@@ -815,10 +820,10 @@ void main() {
       await applyMatchOverride(db, provider, a, 0, {'confirmed': true});
       expect(db.ingredientMatchesFor('ra').single.hold, isNull);
       expect(db.ingredientMatchesFor('rb').first.hold, 'in_shell');
-      expect(db.decisionFor('littleneck clam'), isNotNull);
+      expect(db.decisionFor('mussel'), isNotNull);
       final held = db
           .nutritionReviewGroups(limit: 50, offset: 0)
-          .singleWhere((group) => group.itemKey == 'littleneck clam');
+          .singleWhere((group) => group.itemKey == 'mussel');
       expect((held.match.recipeId, held.decided), ('rb', false));
     });
   });

@@ -102,8 +102,13 @@ void main() {
   group('M1: an un-skip never clears a LINE hold', () {
     // Paella on the Grill (0106), Cioppino (0108), Linguine allo Scoglio
     // (0348); Cioppino's mussels.
-    const clams = '1 pound littleneck clams, scrubbed';
+    // Since v40 (E2) the clams are counted on SR 174214's shell yield: the
+    // held lines are the mussels and Garlicky Shrimp, Tomato, and White
+    // Bean Stew's (0429) shell-on shrimp.
     const mussels = '1 pound mussels, scrubbed and debearded';
+    const shrimp =
+        '1 pound large shell-on shrimp (26 to 30 per pound), peeled, '
+        'deveined (see this page), and tails removed, shells reserved';
     // Skillet-Roasted Chicken in Lemon Sauce (0142): 4 teaspoons of zest,
     // over the citrus rule's tablespoon — held second_food.
     const heldZest =
@@ -121,9 +126,9 @@ void main() {
       "0294); an engine row too; the person's own confirm clears it",
       () async {
         final db = tempDb();
-        final a = recipeOf(db, 'ra', [clams]);
-        final b = recipeOf(db, 'rb', [clams]);
-        final c = recipeOf(db, 'rc', [mussels]);
+        final a = recipeOf(db, 'ra', [mussels]);
+        final b = recipeOf(db, 'rb', [mussels]);
+        final c = recipeOf(db, 'rc', [shrimp]);
         for (final r in [a, b, c]) {
           await matchAndCompute(db, provider, r);
         }

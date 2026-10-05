@@ -533,7 +533,19 @@ const Map<String, String> _synonyms = {
 /// — a counted banana by its record's "Peeled" portion (2 lines) and a
 /// drained canned tomato whose juice is not reserved × ATK's 0.54, flagged
 /// (28 lines).
-const int matcherVersion = 39;
+///
+/// v40: edible yields, part 2 — the live step's answers (the owner's 13
+/// requests, 2026-10-05; snapshot 17), each enabled only on the plan's own
+/// condition. A whole bird or pieces on 171447 whose recipe discards the
+/// skin moves to SR 171052 (`skinlessRecords`), read at its own
+/// ready-to-cook yield 197 g a pound — the whole bird unflagged, pieces
+/// flagged (grams: 5 lines). Clams bought in the shell by weight rank as SR
+/// 174214 and read its "lb (with shell)" shell yield, counted, no longer
+/// held `in_shell` (6 lines). Not enabled, with the answer FDC gave
+/// (docs/API.md): the breast share (171077 publishes no half breast), the
+/// whole-turkey yield (no raw back or neck meat-and-skin record), mussels
+/// (174216 publishes no shell portion), canned beans (no can size).
+const int matcherVersion = 40;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -2225,6 +2237,25 @@ const Map<String, (String, String)> _rankAs = {
   'regular or light coconut milk': (
     'canned coconut milk',
     'nuts coconut milk canned liquid expressed from grated meat and water',
+  ),
+  // v40 (E2, plan Y2b — the live step's request 10): clams bought in the
+  // shell by weight on SR 174214 "Mollusks, clam, mixed species, raw", the
+  // record that publishes their shell yield ("lb (with shell), yield after
+  // shell removed" 68 g; grams.dart `_shellYield`) — never FNDDS 2706338
+  // "Clams, raw" (no shell portion), where all six sat held `in_shell`.
+  // 174214 is a candidate of the cached 'littleneck clams' answer.
+  'littleneck clams': ('littleneck clams', 'mollusks clam mixed species raw'),
+  'littleneck or cherrystone clams': (
+    'littleneck clams',
+    'mollusks clam mixed species raw',
+  ),
+  'littleneck or manila clams': (
+    'littleneck clams',
+    'mollusks clam mixed species raw',
+  ),
+  'medium-size hard-shell clams': (
+    'littleneck clams',
+    'mollusks clam mixed species raw',
   ),
   // M1–M3 STAY WITH A PERSON — FDC has no record: "candied ginger" answered
   // tea, pickled and raw ginger, ground ginger, ginger ale (no candied or

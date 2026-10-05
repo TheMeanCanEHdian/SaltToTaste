@@ -3269,7 +3269,78 @@ the "small" term of the size read) killed and restored, a fresh-copy
 replay byte-identical to the verifier's, the analyzer and the full suite
 green. matcherVersion 39.
 
+### Edible yields, part 2: the live step, spent and enabled (matcher v40)
+
+The owner spent the plan's live step on 2026-10-05: 13 requests (3
+searches, 10 details) on a scratch copy of snapshot 16, the key attached
+read-only for each stage and deleted after it, the result snapshot 17
+(`.claude/diag/2026-10-05/snap17.db`; the log `live39_record.log`). The
+plan's own conditions decided every item from what FDC answered. Enabled
+as v40 (2026-10-05): a whole bird or pieces on 171447 whose recipe
+discards the skin moves, by v39's move semantics, to SR 171052 "Chicken,
+broilers or fryers, meat only, raw" — the search's first record, whose
+own portion gives 197 g of meat a ready-to-cook pound against 171447's
+276 g of meat and skin — a whole bird read by the existing ready-to-cook
+reader, unflagged where the whole skin goes and flagged where the
+recipe keeps part of it (Grilled Lemon Chicken's "leaving skin on wings",
+which the plan said the flag must name — a second closer round added it),
+pieces at the same per-pound figure flagged (the whole bird's part mix
+assumed); and the six clam lines bought by weight rank as SR
+174214, whose detail publishes "lb (with shell), yield after shell
+removed" 68 g, read by a reader for that one portion shape, so they count
+at 0.15 of the weight bought and the `in_shell` hold lifts. Not enabled,
+each recorded in API.md with FDC's answer: the breast share (the skinless
+breast record publishes no half-breast portion; its "piece" is 272 g
+against a 145 g half), the whole-turkey yield (no raw meat-and-skin back
+or neck record exists and the meat-only ones publish no share, so the
+three parts' 0.626 is a partial sum and the interim 0.608 stays), the
+mussels (no with-shell portion; five lines stay held), the canned beans
+(the chickpea pair names no can size, so the same-can condition is
+undetermined and the other pairs were not fetched — the owner's open
+question). The verifier's first round found that v39's skin signal, inert
+for a whole bird until now, tripped Classic Chicken Noodle Soup's bird on
+a step that discards the skin "from the breast pieces" only; the closer
+narrowed the shared predicate at its root — a skin-off sentence that
+names a part trips only a line whose item names that part — which moves
+no v39 row and changes only that recipe, and pinned the pieces arm's trip
+gate. Replay on snapshot 17: calls 0; 11 rows differ from v39, every one
+attributed (E1 5, E2 6), no person's row, no status change, the only hold
+changes the six clam un-holds; counted 13,366 → 13,372, check 218 → 212,
+no grams 17, no match 14; complete 1,019 → 1,022 (cataplana, New England
+clam chowder and paella on the grill finish). Fixtures: 3 details and 1
+search, each equal to its snapshot-17 row. Re-pins: v7, v10, v11, v16, the
+v39 meat suite's two clam rows, the sweep audit 401/301, the seasoning
+hash. The accuracy track's planned live requests now total 55 (API.md's
+record); the v38 server sweep's 14 requests, spent before its caches were
+seeded and equal to snapshot 16's answers, bring the requests actually
+sent to 69. matcherVersion 40. The composite-row batch the approved mockup
+calls v40 ships as matcher v41.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-05 — the edible-yields live step, spent (13 requests on a scratch
+  copy of snapshot 16, the key attached read-only and deleted after; the
+  result snapshot 17):** the plan's conditions decided every item. The
+  search for a meat-only broiler ranks SR 171052 first, whose own
+  ready-to-cook yield is 197 g a pound (171447's meat-and-skin figure is
+  276 g), so the whole-bird and pieces skin lines can move to it; the SR clam
+  record publishes "lb (with shell), yield after shell removed" 68 g, so the
+  six clam lines bought by weight can count. Not enabled, by FDC's own
+  answers: the skinless breast record publishes no half-breast portion
+  comparable to the skin-on half (its "piece" is 272 g against a 145 g half
+  breast), so the breast lines stay at the bone yield; the turkey leg and
+  wing publish ready-to-cook shares (105 g, 33 g; the cached breast 146 g)
+  but FDC has no raw meat-and-skin back or neck record and the meat-only
+  ones publish no share, so no bird yield can be summed (the three parts
+  alone are 0.626) and the interim 0.608 stays; the mussel record publishes
+  no with-shell portion, so the five mussel lines stay held; the chickpea
+  pair (253 g "can drained"; 448 g "can (total can contents)") names no can
+  size, so the plan's same-can condition is undetermined, the other bean
+  pairs were not fetched and no bean line changes — an open question for
+  the owner (0.565 drained ÷ whole if the same-can reading is accepted on
+  manufacturers' drained weights). Version naming: the enable batch is
+  matcher v40; the composite-row batch the mockup calls v40 ships as
+  matcher v41.
 
 - **2026-10-05 — the v40 composite-row mockup (the owner: "go with the
   recommendations"):** all five open questions as recommended. The

@@ -20850,5 +20850,207 @@
     "description": null
    }
   ]
+ },
+ "171052": {
+  "fdc_id": 171052,
+  "description": "Chicken, broilers or fryers, meat only, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 119.0,
+   "203": 21.39,
+   "204": 3.08,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 12.0,
+   "303": 0.89,
+   "304": 25.0,
+   "305": 173.0,
+   "306": 229.0,
+   "307": 77.0,
+   "401": 2.3,
+   "404": 0.073,
+   "405": 0.142,
+   "406": 8.239,
+   "415": 0.43,
+   "432": 7.0,
+   "435": 7.0,
+   "418": 0.37,
+   "320": 16.0,
+   "323": 0.21,
+   "328": 0.1,
+   "430": 1.8,
+   "606": 0.79,
+   "645": 0.9,
+   "646": 0.75,
+   "601": 70.0
+  },
+  "portions": [
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 197.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "unit (yield from 1 lb ready-to-cook chicken)"
+   },
+   {
+    "gram_weight": 329.0,
+    "amount": 0.5,
+    "unit": null,
+    "description": "chicken, bone and skin removed"
+   }
+  ]
+ },
+ "174214": {
+  "fdc_id": 174214,
+  "description": "Mollusks, clam, mixed species, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 86.0,
+   "203": 14.67,
+   "204": 0.96,
+   "205": 3.57,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 39.0,
+   "303": 1.62,
+   "304": 19.0,
+   "305": 198.0,
+   "306": 46.0,
+   "307": 601.0,
+   "401": 0.0,
+   "404": 0.015,
+   "405": 0.04,
+   "406": 0.35,
+   "415": 0.01,
+   "432": 5.0,
+   "435": 5.0,
+   "418": 11.28,
+   "320": 90.0,
+   "323": 0.68,
+   "328": 0.0,
+   "430": 0.2,
+   "606": 0.187,
+   "645": 0.12,
+   "646": 0.192,
+   "605": 0.015,
+   "601": 30.0
+  },
+  "portions": [
+   {
+    "gram_weight": 9.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small"
+   },
+   {
+    "gram_weight": 14.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium"
+   },
+   {
+    "gram_weight": 68.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "lb (with shell), yield after shell removed"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": 3.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 227.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup (with liquid and clams)"
+   },
+   {
+    "gram_weight": 20.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large"
+   }
+  ]
+ },
+ "174216": {
+  "fdc_id": 174216,
+  "description": "Mollusks, mussel, blue, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 86.0,
+   "203": 11.9,
+   "204": 2.24,
+   "205": 3.69,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 26.0,
+   "303": 3.95,
+   "304": 34.0,
+   "305": 197.0,
+   "306": 320.0,
+   "307": 286.0,
+   "401": 8.0,
+   "404": 0.16,
+   "405": 0.21,
+   "406": 1.6,
+   "415": 0.05,
+   "432": 42.0,
+   "435": 42.0,
+   "418": 12.0,
+   "320": 48.0,
+   "323": 0.55,
+   "328": 0.0,
+   "430": 0.1,
+   "606": 0.425,
+   "645": 0.507,
+   "646": 0.606,
+   "601": 28.0
+  },
+  "portions": [
+   {
+    "gram_weight": 10.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "small"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 20.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "large"
+   },
+   {
+    "gram_weight": 150.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": 3.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 16.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "medium"
+   }
+  ]
  }
 }

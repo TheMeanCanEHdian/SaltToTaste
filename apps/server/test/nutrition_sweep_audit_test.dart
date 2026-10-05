@@ -1037,9 +1037,12 @@ void main() {
     // compared, 7 of them differ in some digit. Its produce half recorded
     // the banana (1105314), the FNDDS tomato (2709719) and the beet
     // (2685576) its pins and the A3 detail read: 3 more compared, 1 of
-    // them differing in some digit.
-    expect(compared, 398);
-    expect(differ, 299);
+    // them differing in some digit. Matcher v40 recorded from snapshot 17
+    // (the owner's 2026-10-05 live step) the meat-only broiler (171052),
+    // the clam (174214) and the mussel (174216) its pins read: 3 more
+    // compared, 2 of them differing in some digit.
+    expect(compared, 401);
+    expect(differ, 301);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -475,14 +475,16 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     'counted',
     "2 × 200 g · approximate (FDC's 1-lobster portion)",
   ),
+  // v40 (E2): the clams bought by weight count on SR 174214's shell
+  // yield (nutrition_v40_test.dart); held here through v39.
   (
     '0034-new-england-clam-chowder.yaml',
     0,
     '7 pounds medium-size hard-shell clams, such as cherrystones, washed and scrubbed clean',
-    2706338,
-    '3175.14',
-    'check',
-    'from 7 pound · approximate (gross weight, no USDA refuse portion)',
+    174214,
+    '476.00',
+    'counted',
+    'from 7 pound × 0.15 edible (USDA yield after shell removed)',
   ),
   (
     '0294-oven-steamed-mussels.yaml',
@@ -506,10 +508,10 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     '0295-indoor-clambake.yaml',
     0,
     '2 pounds small littleneck or cherrystone clams, scrubbed',
-    2706338,
-    '907.18',
-    'check',
-    'from 2 pound · approximate (gross weight, no USDA refuse portion)',
+    174214,
+    '136.00',
+    'counted',
+    'from 2 pound × 0.15 edible (USDA yield after shell removed)',
   ),
   (
     '0295-indoor-clambake.yaml',
