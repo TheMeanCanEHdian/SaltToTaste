@@ -488,6 +488,9 @@ void main() {
           grams: null,
           others: 41,
           lines: 41,
+          child: null,
+          share: null,
+          recipe: false,
         ),
       ),
     );
@@ -498,6 +501,17 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Not now'), findsOneWidget);
+    // A food offer keeps the food footer (v41 O6: only a recipe offer
+    // reads the recipe wording).
+    expect(
+      find.text(
+        'Sets this food on their unreviewed escarole lines, each with its '
+        'own amount, and recomputes their labels. Lines someone already '
+        'decided are left alone. Reversible: pick a different food here and '
+        'apply again.',
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Apply to 41 lines'));
     await tester.pumpAndSettle();
@@ -530,6 +544,9 @@ void main() {
           grams: null,
           others: 41,
           lines: 41,
+          child: null,
+          share: null,
+          recipe: false,
         ),
       ),
     );
@@ -558,6 +575,9 @@ void main() {
           others: 3,
           // A recipe can hold several lines of one ingredient.
           lines: 4,
+          child: null,
+          share: null,
+          recipe: false,
         ),
       ),
     );
@@ -583,6 +603,9 @@ void main() {
           grams: null,
           others: 41,
           lines: 41,
+          child: null,
+          share: null,
+          recipe: false,
         ),
       ),
     );
@@ -963,6 +986,9 @@ void main() {
             grams: null,
             others: 41,
             lines: 41,
+            child: null,
+            share: null,
+            recipe: false,
           ),
         ),
       ),

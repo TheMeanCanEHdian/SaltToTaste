@@ -129,9 +129,13 @@ void main() {
         if (confirmsWithAmount(m)) {
           expect(offered, contains(HoldDecision.typed), reason: '$hold');
         }
+        // A food hold's family by its table row; a reference line's
+        // recipe holds (v41) take no food at all, so they are no
+        // "food with no record" whatever they offer.
         expect(
           noRecordHold(hold),
-          !offered.contains(HoldDecision.confirm) &&
+          holdActionsOf(hold).kind != HoldKind.recipe &&
+              !offered.contains(HoldDecision.confirm) &&
               !offered.contains(HoldDecision.typed),
           reason: '$hold',
         );

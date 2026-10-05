@@ -839,6 +839,122 @@ void main() {
       },
     );
 
+    test('v41: child, parts, flag, includes, partial and the slim queue '
+        'child parse from the new goldens (non-default)', () async {
+      final subrecipe = await NutritionRepository(
+        goldenDio(golden('nutrition_matches_subrecipe')),
+      ).matches('blueberry-pie');
+      final dough = subrecipe.first;
+      final child = dough.child!;
+      expect(
+        (child.state, child.slug, child.title, child.shareText, child.why),
+        (
+          'routed',
+          'all-butter-double-crust-pie-dough',
+          'All-Butter Double-Crust Pie Dough',
+          '1',
+          'default',
+        ),
+      );
+      expect(child.isDefault, isTrue);
+      expect(child.name, 'double-crust pie dough');
+      expect(child.yieldText, 'MAKES ENOUGH FOR ONE 9-INCH PIE');
+      expect(child.yieldUnits, [(unit: 'recipe', perRecipe: 1.0)]);
+      expect(
+        (child.grams, child.kcal, child.kcalPerServing),
+        (642.9, 3056.69, 382.09),
+      );
+      expect((child.kind, child.parentKind), ('dough', 'pie'));
+      expect(
+        [for (final c in child.candidates) c.group],
+        [
+          'note_named',
+          'note_named',
+          'note_named',
+          'similar',
+          'other_section',
+          'other_section',
+          'other_section',
+        ],
+      );
+      final first = child.candidates.first;
+      expect(
+        (first.note, first.current, first.isDefault, first.pickable),
+        ('named first', true, true, true),
+      );
+      final section = child.candidates.last;
+      expect(
+        (section.slug, section.pickable, section.hostTitle),
+        (null, false, 'Foolproof All-Butter Dough for Double-Crust Pie'),
+      );
+      expect(dough.flag, startsWith('approximation (the first dough'));
+      expect(subrecipe[2].child, isNull);
+      expect(subrecipe[2].parts, isEmpty);
+
+      final held = (await NutritionRepository(
+        goldenDio(golden('nutrition_matches_choose_recipe')),
+      ).matches('free-form-apple-tart')).last;
+      expect(
+        (held.hold, held.child!.state, held.child!.reason),
+        ('choose_recipe', 'held', 'missing'),
+      );
+      expect(matchBucketOf(held), MatchBucket.chooseRecipe);
+
+      final rules = await NutritionRepository(
+        goldenDio(golden('nutrition_matches_rules')),
+      ).matches('nutrition-rules-sample');
+      final bacon = rules.singleWhere((m) => m.position == 13);
+      expect(
+        [for (final p in bacon.parts) (p.fdcId, p.grams, p.role)],
+        [(168322, 114.25, 'cooked'), (172345, 38.7, 'kept_fat')],
+      );
+      expect(bacon.parts.last.description, 'Animal fat, bacon grease');
+      expect(bacon.parts.last.dataType, 'SR Legacy');
+      expect(
+        bacon.flag,
+        'approximate (rendered and drained; yield from FDC protein)',
+      );
+
+      final label = await NutritionRepository(
+        goldenDio(golden('nutrition_subrecipe')),
+      ).nutrition('blueberry-pie');
+      expect(label.includes, [
+        (
+          slug: 'all-butter-double-crust-pie-dough',
+          title: 'All-Butter Double-Crust Pie Dough',
+          flag: 'approximation',
+        ),
+      ]);
+      expect(label.partial, isEmpty);
+      final partial = await NutritionRepository(
+        goldenDio(golden('nutrition_choose_recipe')),
+      ).nutrition('free-form-apple-tart');
+      expect(partial.partial, [
+        (
+          position: 5,
+          kind: 'held',
+          name: 'Rustic Tart Dough',
+          title: null,
+          matched: null,
+          total: null,
+          reason: 'missing',
+        ),
+      ]);
+
+      final queue = await RecipeRepository(
+        dio: goldenDio(golden('nutrition_review_choose_recipe')),
+      ).getNutritionReview(page: 1);
+      expect([
+        for (final b in queue.buckets) b.label,
+      ], contains('Choose recipe'));
+      final slim = queue.items.single.match!.child!;
+      expect(
+        (slim.state, slim.reason, slim.name, slim.shareText, slim.why),
+        ('held', 'missing', 'Rustic Tart Dough', '1', 'none'),
+      );
+      expect(slim.candidates, isEmpty);
+    });
+
     test('C1: line_amount, portions (with fill) and the approximation basis '
         'parse from the rules golden', () async {
       final raw = golden('nutrition_matches_rules');

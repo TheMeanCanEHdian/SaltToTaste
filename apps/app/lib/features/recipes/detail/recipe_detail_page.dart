@@ -152,6 +152,10 @@ class _DetailBody extends StatelessWidget {
                       badgeFirst: true,
                       startExpanded: detail.heroImageUrl == null,
                       yieldText: recipe.servings,
+                      parent: (
+                        title: recipe.title,
+                        hasSections: recipe.subsections.isNotEmpty,
+                      ),
                     ),
                   ],
                 ],
@@ -240,6 +244,10 @@ class _Header extends StatelessWidget {
                 isAdmin: isAdmin,
                 startExpanded: hero == null,
                 yieldText: detail.recipe.servings,
+                parent: (
+                  title: detail.recipe.title,
+                  hasSections: detail.recipe.subsections.isNotEmpty,
+                ),
               ),
             ],
           ),

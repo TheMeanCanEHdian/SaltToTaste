@@ -241,6 +241,9 @@ void main() {
       grams: null,
       others: 41,
       lines: 44,
+      child: null,
+      share: null,
+      recipe: false,
     ));
     expect(cubit.state.applied, isNull);
   });
@@ -953,6 +956,9 @@ void main() {
         grams: null,
         others: 41,
         lines: 44,
+        child: null,
+        share: null,
+        recipe: false,
       );
       IngredientMatch row(int position, String raw) =>
           IngredientMatch(position: position, raw: raw);

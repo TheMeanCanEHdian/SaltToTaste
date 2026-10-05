@@ -33,6 +33,9 @@ void main() {
     grams: null,
     others: 2,
     lines: 2,
+    child: null,
+    share: null,
+    recipe: false,
   );
   const receipt = (
     position: 3,

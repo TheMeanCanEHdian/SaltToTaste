@@ -38,6 +38,8 @@ class RecipeNutrition {
     this.computedAt,
     this.computingJobId,
     this.staleReason,
+    this.includes = const [],
+    this.partial = const [],
   });
 
   factory RecipeNutrition.fromJson(Map<String, dynamic> json) {
@@ -70,8 +72,48 @@ class RecipeNutrition {
       computedAt: json['computed_at'] as String?,
       computingJobId: (json['computing_job_id'] as num?)?.toInt(),
       staleReason: json['stale_reason'] as String?,
+      includes: [
+        for (final raw in _list(json['includes']))
+          (
+            slug: raw['slug'] as String?,
+            title: raw['title'] as String? ?? '',
+            flag: raw['flag'] as String?,
+          ),
+      ],
+      partial: [
+        for (final raw in _list(json['partial']))
+          (
+            position: (raw['position'] as num?)?.toInt() ?? 0,
+            kind: raw['kind'] as String? ?? '',
+            name: raw['name'] as String?,
+            title: raw['title'] as String?,
+            matched: (raw['matched'] as num?)?.toInt(),
+            total: (raw['total'] as num?)?.toInt(),
+            reason: raw['reason'] as String?,
+          ),
+      ],
     );
   }
+
+  /// The child recipes the totals count (v41): their titles and a flag
+  /// ("approximation") when the row carries one. Shown to members too.
+  final List<({String? slug, String title, String? flag})> includes;
+
+  /// The reference lines that make the label partial (v41): `kind` `held` |
+  /// `child_partial` | `not_routed`, with the line's reference [name], the
+  /// child's [title] and its matched/total lines, and a not-routed `reason`.
+  final List<
+    ({
+      int position,
+      String kind,
+      String? name,
+      String? title,
+      int? matched,
+      int? total,
+      String? reason,
+    })
+  >
+  partial;
 
   /// Why a `stale` body is stale (v28, Run 058 S15): `inputs` — the
   /// ingredients or their layout changed since the totals were computed;
@@ -183,6 +225,9 @@ class IngredientMatch {
     this.portions = const [],
     this.kcalPer100g,
     this.carriedFrom,
+    this.child,
+    this.parts = const [],
+    this.flag,
   });
 
   factory IngredientMatch.fromJson(Map<String, dynamic> json) {
@@ -235,6 +280,11 @@ class IngredientMatch {
       hold: match['hold'] as String?,
       holdNote: match['hold_note'] as String?,
       carriedFrom: match['carried_from'] as String?,
+      child: match['child'] is Map<String, dynamic>
+          ? RecipeRef.fromJson(match['child'] as Map<String, dynamic>)
+          : null,
+      parts: [for (final raw in _list(match['parts'])) MatchPart.fromJson(raw)],
+      flag: match['flag'] as String?,
       candidates: candidates,
       lineAmount: lineAmount,
       portions: portions,
@@ -316,6 +366,190 @@ class IngredientMatch {
   /// The picked record's calories per 100 g, from the cache (null when
   /// uncached): said where the line has no amount yet.
   final double? kcalPer100g;
+
+  /// What a sub-recipe reference line is made from (v41), or null when the
+  /// line is no reference (or stands on a food).
+  final RecipeRef? child;
+
+  /// A rendered row's two records (v41, R2): the cooked bacon, then the fat
+  /// kept in the pan; empty on every other row.
+  final List<MatchPart> parts;
+
+  /// The engine's flag on the row ("approximation (…)", "approximate
+  /// (rendered and drained; …)"), or null.
+  final String? flag;
+}
+
+/// The JSON objects of [value] when it is a list, else none.
+List<Map<String, dynamic>> _list(Object? value) => [
+  if (value is List)
+    for (final item in value)
+      if (item is Map<String, dynamic>) item,
+];
+
+/// The child recipe of a reference line (v41, the matches GET's `child`;
+/// the review queue carries a SLIM one: state, reason, name, slug, title,
+/// share_text, default, why).
+class RecipeRef {
+  const RecipeRef({
+    required this.state,
+    this.reason,
+    this.name,
+    this.slug,
+    this.title,
+    this.shareText,
+    this.isDefault = false,
+    this.why,
+    this.yieldText,
+    this.share,
+    this.yieldUnits = const [],
+    this.grams,
+    this.kcal,
+    this.kcalPerServing,
+    this.kind,
+    this.parentKind,
+    this.candidates = const [],
+  });
+
+  factory RecipeRef.fromJson(Map<String, dynamic> json) => RecipeRef(
+    state: json['state'] as String? ?? '',
+    reason: json['reason'] as String?,
+    name: json['name'] as String?,
+    slug: json['slug'] as String?,
+    title: json['title'] as String?,
+    shareText: json['share_text'] as String?,
+    isDefault: json['default'] == true,
+    why: json['why'] as String?,
+    yieldText: json['yield_text'] as String?,
+    share: (json['share'] as num?)?.toDouble(),
+    yieldUnits: [
+      for (final raw in _list(json['yield_units']))
+        (
+          unit: raw['unit'] as String? ?? '',
+          perRecipe: (raw['per_recipe'] as num?)?.toDouble() ?? 1,
+        ),
+    ],
+    grams: (json['grams'] as num?)?.toDouble(),
+    kcal: (json['kcal'] as num?)?.toDouble(),
+    kcalPerServing: (json['kcal_per_serving'] as num?)?.toDouble(),
+    kind: json['kind'] as String?,
+    parentKind: json['parent_kind'] as String?,
+    candidates: [
+      for (final raw in _list(json['candidates']))
+        RecipeCandidate.fromJson(raw),
+    ],
+  );
+
+  /// `routed` (counted from [slug]) | `held` | `not_routed`.
+  final String state;
+
+  /// held: `missing` | `generic` | `nested` | `marinade`; not_routed:
+  /// `section` | `served_with` | `no_amount` | `no_share`; routed: null.
+  final String? reason;
+
+  /// The line's reference as written ("double-crust pie dough").
+  final String? name;
+  final String? slug;
+  final String? title;
+
+  /// The share as a number only ("1", "⅔").
+  final String? shareText;
+
+  /// The engine's flagged default (the note's first title).
+  final bool isDefault;
+
+  /// The fix sheet's why line: `default` | `none`.
+  final String? why;
+
+  /// The child's servings text ("MAKES ENOUGH FOR ONE 9-INCH PIE").
+  final String? yieldText;
+  final double? share;
+
+  /// The units the share field offers: `recipe`, and the MAKES measure.
+  final List<({String unit, double perRecipe})> yieldUnits;
+  final double? grams;
+  final double? kcal;
+  final double? kcalPerServing;
+
+  /// The item's last word ("dough") and the parent's dish word (pie, tart,
+  /// quiche, else recipe).
+  final String? kind;
+  final String? parentKind;
+  final List<RecipeCandidate> candidates;
+}
+
+/// One recipe the fix sheet offers for a reference line (v41).
+class RecipeCandidate {
+  const RecipeCandidate({
+    required this.group,
+    required this.title,
+    this.slug,
+    this.note,
+    this.yieldText,
+    this.kcal,
+    this.kcalPerServing,
+    this.current = false,
+    this.isDefault = false,
+    this.pickable = false,
+    this.hostTitle,
+  });
+
+  factory RecipeCandidate.fromJson(Map<String, dynamic> json) =>
+      RecipeCandidate(
+        group: json['group'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        slug: json['slug'] as String?,
+        note: json['note'] as String?,
+        yieldText: json['yield_text'] as String?,
+        kcal: (json['kcal'] as num?)?.toDouble(),
+        kcalPerServing: (json['kcal_per_serving'] as num?)?.toDouble(),
+        current: json['current'] == true,
+        isDefault: json['default'] == true,
+        pickable: json['pickable'] == true,
+        hostTitle: json['host_title'] as String?,
+      );
+
+  /// `own_section` | `note_named` | `library` | `similar` | `other_section`.
+  final String group;
+  final String title;
+
+  /// Null on a section (phase 2: listed, never picked).
+  final String? slug;
+  final String? note;
+  final String? yieldText;
+  final double? kcal;
+  final double? kcalPerServing;
+  final bool current;
+  final bool isDefault;
+  final bool pickable;
+  final String? hostTitle;
+}
+
+/// One record of a rendered row (v41, R2).
+class MatchPart {
+  const MatchPart({
+    required this.fdcId,
+    required this.grams,
+    this.description,
+    this.dataType,
+    this.role,
+  });
+
+  factory MatchPart.fromJson(Map<String, dynamic> json) => MatchPart(
+    fdcId: (json['fdc_id'] as num?)?.toInt() ?? 0,
+    grams: (json['grams'] as num?)?.toDouble() ?? 0,
+    description: json['description'] as String?,
+    dataType: json['data_type'] as String?,
+    role: json['role'] as String?,
+  );
+
+  final int fdcId;
+  final double grams;
+  final String? description;
+  final String? dataType;
+
+  /// `cooked` | `kept_fat`.
+  final String? role;
 }
 
 /// One USDA household portion of a line's record, and the grams the line's
@@ -555,6 +789,8 @@ class NutritionRepository {
     bool? confirmed,
     bool? skipped,
     bool? applyToAll,
+    String? child,
+    double? share,
   }) {
     return apiGuard(() async {
       final response = await _dio.put<dynamic>(
@@ -565,6 +801,8 @@ class NutritionRepository {
           if (grams != null) 'grams': grams,
           if (confirmed != null) 'confirmed': confirmed,
           if (skipped != null) 'skipped': skipped,
+          if (child != null) 'child': child,
+          if (share != null) 'share': share,
           if (applyToAll != null) 'apply_to_all': applyToAll,
         },
       );

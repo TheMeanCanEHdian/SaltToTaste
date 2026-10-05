@@ -3316,6 +3316,84 @@ seeded and equal to snapshot 16's answers, bring the requests actually
 sent to 69. matcherVersion 40. The composite-row batch the approved mockup
 calls v40 ships as matcher v41.
 
+### The composite row: sub-recipe routing phase 1, the rendered-bacon row, the partial-label rule (matcher v41)
+
+The owner approved the composite-row mockup on 2026-10-05 ("go with the
+recommendations" on its five open questions) and, after a read-only
+design pass — four planners, a synthesis, a completeness critic whose
+three HIGH findings and twelve others were folded into a second and third
+draft, each rechecked — ruled on the design's ten questions as recommended
+(the decision-log entry). v41 (2026-10-05) builds it in two commits. The
+SERVER commit: migration 018 adds four nullable columns to the matches
+table (the child recipe, its share, the child's stamp, the parts JSON) —
+still one row per line, nothing in YAML. A reference line ("1 recipe X",
+"(this page)", "(recipes follow)") resolves, first hit wins: no amount →
+a marinade (held `discarded_recipe`, poured away) → one own section (the
+0 g rule row until phase 2) → the first library title the prep note names
+(flagged as a default when it names two or more) → the exact library title
+(unless the parent is made FOR it — Herb Sauce's steaks) → other recipes'
+sections listed, never routed → held `choose_recipe`. A routed row counts
+the child's stored totals at the line's share (a written "½ recipe", "N
+recipe", or the amount over the child's MAKES measure), its grams live,
+accounted only while the child is complete; a child's recompute, rebase or
+delete turns its parents stale and the sweep recomputes them parents last.
+Rule B1 reads a bacon row whose recipe fries the bacon out and pours the
+fat down to N tablespoons as cooked bacon at FDC's protein retention
+(0.403) plus the kept fat as bacon grease, one row, flagged. R3: every
+reference line not routed leaves the label partial and the matched count,
+out of the queue. A recipe pick never enters the item-key decisions; it
+travels only by an explicit apply-to-all, whose targets become the
+person's own rows. The three recipe holds are line holds. The verifier's
+rounds found: a share-less recipe pick stored as a counted 0 g row (now a
+422 asking for the share) and two pin gaps; the fixers' own deviations,
+kept: a food pick WITH typed grams on a reference line stays accepted as
+shipped since Run 051 (only the bare pick is refused), and the appended
+pour-off step renders the sample's pancetta row in the rules golden.
+Replay on snapshot 17 through the new harness (rp41: the engine's own
+sweep order, parents last; staleAfter 0; 1,198 fresh): calls 0; exactly 64
+rows differ from v40 — 13 routed (the four double-crust pies on All-Butter,
+flagged; peach tarte tatin unflagged; the three graham-crust pies; the
+three tart-dough parents; the chocolate cream pie; the nachos' guacamole),
+35 held `choose_recipe`, 3 marinades, 13 bacon rows — every one
+attributed, no person's row; counted 13,372 → 13,334, check 212 → 215,
+no grams 17, no match 14, choose_recipe 35; complete 1,022 → 935 (the 87
+exactly the design's list; 51 of them with nothing to review until phase
+2); R1 +25,702 kcal per batch (Blueberry Pie 189 → 571 kcal a serving),
+R2 −891 (Wilted Spinach Salad 360 → 302). Two deviations from the approved
+plan, each a ruling: 13 routes not 16 (the un-noted single-crust pies name
+a section) and 87 recipes partial not "about 60" (the plan read stale
+stored labels). Fixtures: 10 details and 23 searches, each equal to its
+snapshot-17 row; the contract goldens regenerated and five new corpus-free
+goldens through the real routes. The owner's gate: the replay reproduced
+row for row, the two reserved mutants (the default = the first named
+title; the kept-fat minimum) killed, analyzers clean, salt_shared 214 and
+the server 2,088 green; deployed locally — migration 018 on the live
+database after a key-stripped backup, the stale sweep at zero requests,
+the live buckets equal to the replay. matcherVersion 41.
+The APP commit, per the approved mockup (now
+`docs/mockups/v41-composite-rows.html`, renamed to the matcher version that
+ships it): the review sheet's row grows a routed branch (the Recipe chip,
+the share and the "from the recipe" basis, the flag on its own line, Change
+and "Open the recipe's matches" — members see the link only), a held
+branch (the "choose recipe" badge, Choose a recipe or Skip), a two-part
+branch (one row, two records with their grams, "kept in the pan", Change
+as the undo) and a "not counted" badge for the rule rows R3 leaves; a
+recipe fix panel with the five candidate groups in resolution order,
+sections listed but not pickable, the library search, a share field
+offering only the child's yield units and one following primary button;
+the label's "Includes N recipe" and Partial lines, shown to members too;
+the queue's fifth chip "Choose recipe" with its slots and line-hold notes;
+the apply strip's recipe footer. Every string is the copy sheet's, four
+disclosed where the sheet was silent. Five verifier rounds: the first
+three closed string and pin gaps, the fourth pinned four rules a mutant
+had shown unpinned (one named mutant equivalent — a redundant argument on
+a shared table lookup), the fifth the apply footer the mockup draws but
+the copy sheet omitted. flutter analyze clean, the app suite green;
+theme_test untouched, no package added. Two notes left for the owner: a
+"served with" reference row carries only the "not counted" badge, its
+words appearing in the label's Partial line; and the queue's headers now
+read in lower case throughout, as the mockup draws them.
+
 ## Decision log (deviations & clarifications)
 
 - **2026-10-05 — the composite-row design (matcher v41; the owner: "go with your
@@ -3377,7 +3455,7 @@ calls v40 ships as matcher v41.
   bacon lines (oven-fried bacon, quiche Lorraine, carbonara — typed grams
   correct them); section candidates are listed but not pickable until phase
   2; the label's "Includes N recipe" line is shown to members too. The
-  mockup (`docs/mockups/v40-composite-rows.html`) is the specification for
+  mockup (`docs/mockups/v41-composite-rows.html`) is the specification for
   the v40 build.
 
 - **2026-10-05 — the edible-yields plan (the owner: "go with your

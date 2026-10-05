@@ -20,6 +20,12 @@ import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes, holdActionsOf;
 /// moves the lines moves (or withdraws) the offer by it (Run 051 A1 — a
 /// retry that re-read the row at [position] wrote the food onto whatever
 /// line a save had put there).
+///
+/// [child] and [share] are a recipe pick on a reference line (v41): the
+/// resend carries them as the pick did. [recipe] is a recipe decision — a
+/// pick with [child], or a Confirm on a routed row (whose resend carries no
+/// child: the server picks the recipe twin by the row) — so the strip reads
+/// the recipe wording.
 typedef ApplyOffer = ({
   int position,
   String raw,
@@ -29,6 +35,9 @@ typedef ApplyOffer = ({
   double? grams,
   int others,
   int lines,
+  String? child,
+  double? share,
+  bool recipe,
 });
 
 /// The receipt of an apply-to-all, shown in place of the offer: what it
@@ -167,6 +176,9 @@ ApplyOffer? offerOnReload(ApplyOffer offer, List<IngredientMatch> matches) {
     grams: offer.grams,
     others: offer.others,
     lines: offer.lines,
+    child: offer.child,
+    share: offer.share,
+    recipe: offer.recipe,
   );
 }
 
@@ -434,6 +446,33 @@ class NutritionCubit extends Cubit<NutritionState> {
     double? grams,
     bool? confirmed,
     bool? skipped,
+  }) => _decide(
+    position,
+    raw: raw,
+    fdcId: fdcId,
+    grams: grams,
+    confirmed: confirmed,
+    skipped: skipped,
+  );
+
+  /// Puts library recipe [child] on a reference line (v41), at [share] when
+  /// one was typed (else the line's own share of it).
+  Future<void> pickRecipe(
+    int position, {
+    required String raw,
+    required String child,
+    double? share,
+  }) => _decide(position, raw: raw, child: child, share: share);
+
+  Future<void> _decide(
+    int position, {
+    required String raw,
+    int? fdcId,
+    double? grams,
+    bool? confirmed,
+    bool? skipped,
+    String? child,
+    double? share,
   }) async {
     if (state.overridingPosition != null) {
       return;
@@ -449,6 +488,8 @@ class NutritionCubit extends Cubit<NutritionState> {
         grams: grams,
         confirmed: confirmed,
         skipped: skipped,
+        child: child,
+        share: share,
       );
     } on RepositoryException catch (exception) {
       if (isClosed) {
@@ -477,13 +518,18 @@ class NutritionCubit extends Cubit<NutritionState> {
     // wide (a food with no record, `food_gone` / `food_unavailable`: the
     // action table's `decidesLibraryWide`) raises no offer — its apply is
     // a certain 422 (v29, Run 059 S7).
-    final decided = fdcId != null || confirmed == true;
+    // A recipe pick or a confirm on a routed reference row travels too
+    // (v41: `routedActions.decidesLibraryWide`; a held recipe line never).
+    final decided = fdcId != null || confirmed == true || child != null;
     final row = rowReading(matches, raw, position);
     final offer =
         decided &&
             row != null &&
             row.others > 0 &&
-            holdActionsOf(row.hold).decidesLibraryWide
+            holdActionsOf(
+              row.hold,
+              routed: row.child?.state == 'routed',
+            ).decidesLibraryWide
         ? (
             position: row.position,
             raw: raw,
@@ -495,6 +541,9 @@ class NutritionCubit extends Cubit<NutritionState> {
             grams: grams,
             others: row.others,
             lines: row.othersLines,
+            child: child,
+            share: share,
+            recipe: child != null || row.child?.state == 'routed',
           )
         : null;
     // The PUT persisted: show its fresh match list even if the label
@@ -593,6 +642,8 @@ class NutritionCubit extends Cubit<NutritionState> {
         fdcId: offer.fdcId,
         grams: offer.grams,
         confirmed: offer.confirmed ? true : null,
+        child: offer.child,
+        share: offer.share,
         applyToAll: true,
       );
     } on RepositoryException catch (exception) {

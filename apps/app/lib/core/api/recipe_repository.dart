@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:salt_shared/salt_shared.dart';
 
+import 'package:salt_app/core/api/nutrition_repository.dart' show RecipeRef;
+
 /// A favorite mark the caller changed: the recipe id or slug they acted on,
 /// and where it landed. Carries whichever identifier the caller used, so a
 /// listener must match on both (a grid holds ids; a detail page routes on
@@ -414,6 +416,7 @@ class NutritionReviewMatch {
     this.grams,
     this.gramSource,
     this.hold,
+    this.child,
   });
 
   factory NutritionReviewMatch.fromJson(Map<String, dynamic> json) =>
@@ -426,6 +429,9 @@ class NutritionReviewMatch {
         grams: (json['grams'] as num?)?.toDouble(),
         gramSource: json['gram_source'] as String?,
         hold: json['hold'] as String?,
+        child: json['child'] is Map<String, dynamic>
+            ? RecipeRef.fromJson(json['child'] as Map<String, dynamic>)
+            : null,
       );
 
   final int fdcId;
@@ -439,6 +445,10 @@ class NutritionReviewMatch {
   /// Why the engine holds the line (`discarded_medium`, `in_shell`, …):
   /// the queue row says a line hold is decided one line at a time.
   final String? hold;
+
+  /// A reference line's SLIM child (v41): state, reason, name, slug, title,
+  /// share text, default, why — never candidates.
+  final RecipeRef? child;
 }
 
 /// Read access to the recipe API.

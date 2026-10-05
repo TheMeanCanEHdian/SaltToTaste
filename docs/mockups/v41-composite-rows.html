@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Composite Rows V40</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- v40 mockup: the composite row (sub-recipe routing phase 1 + the two-part rendered-bacon row).
+     Visual language copied from docs/mockups/c1-review-ui.html (approved). Design: .claude/diag/2026-10-05/prep39/plan.md
+     §1 Q5, Q7, §2 v40; subrecipe.md §C, §D, §F; skin_render.md rule B1. Raw lines, titles, servings and prep notes are the
+     ATK corpus files named in data-src. Every figure carries its source; a figure no source gives is drawn as a dashed slot. -->
+<style>
+:root{--maroon:#960000;--rose:#8c4242;--chip:#f6e4e4;--chip-text:#7d1420;--ink:#23201f;--muted:#6d6763;--line:#e7e2de;--bg:#faf7f4;--panel:#fdfbf9;--sel:#f7ecec;--ok-bg:#e8f3e4;--ok-ink:#2c5a1e;--warn-bg:#fdf1e2;--warn-ink:#8a5a12;--err-bg:#fbe9e9;--err-ink:#8a1212;--info-bg:#e2efec;--info-ink:#1f5c52;--neutral-bg:#efecea}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;padding-bottom:80px}
+.wrap{max-width:1200px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;color:var(--maroon)}
+.lede{color:var(--muted);font-size:14px;max-width:920px;margin-top:6px}.lede b{color:var(--ink)}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:700;margin:44px 0 12px}
+.note{font-size:13px;color:var(--muted);margin:-4px 0 16px;max-width:920px}.note b{color:var(--ink)}
+ul.note{margin:0 0 0 18px}ul.note li{margin-bottom:6px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#f4efe9;border-radius:5px;padding:1px 5px;word-break:break-word}
+svg.i{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-2px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 14px;font:600 13.5px 'Open Sans',system-ui,sans-serif;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn.primary{background:var(--maroon);color:#fff;border-color:var(--maroon)}
+.btn.neutral{background:var(--neutral-bg);border-color:var(--neutral-bg)}
+.btn.ghost{color:var(--muted);border-color:transparent;background:transparent}
+.btn.small{padding:6px 11px;font-size:12.5px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px}
+.cap{font-size:12px;font-weight:700;color:var(--rose);margin:0 0 8px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.cols2>*{min-width:0}
+@media (max-width:820px){.cols2{grid-template-columns:1fr}}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:12px;padding:2px 9px;white-space:nowrap;background:var(--neutral-bg);color:var(--muted)}
+.badge.err{background:var(--err-bg);color:var(--err-ink)}.badge.warn{background:var(--warn-bg);color:var(--warn-ink)}.badge.info{background:var(--info-bg);color:var(--info-ink)}.badge.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.reach{font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;background:var(--chip);color:var(--chip-text);white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.statchip{display:inline-flex;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px}
+.statchip .n{font-weight:700}.statchip.sel{background:var(--chip);border-color:#e7c9c9;color:var(--chip-text)}
+.qhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.qhead .t{color:var(--ink);font-weight:700}
+.qrow{display:flex;gap:10px;align-items:center;padding:11px 14px 11px 13px;border-left:3px solid var(--muted);border-bottom:1px solid var(--line)}
+.qrow.check{border-left-color:var(--warn-ink)}
+.qrow .main{flex:1;min-width:0}
+.qrow .meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.qrow .meta .item{color:var(--ink);font-weight:700}
+.qrow .raw{font-size:13.5px;font-weight:700;margin-top:2px}
+.qrow .food{font-size:12px;margin-top:3px}
+.qrow .food .ar{color:var(--muted)}.qrow .food.bad{color:var(--err-ink)}
+.qrow .amt{font-size:11px;color:var(--muted);margin-top:3px}
+.qrow .one{font-size:11px;font-style:italic;color:var(--muted);margin-top:3px}
+.qrow .right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.conf{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.pane{padding:16px 18px 18px;background:var(--panel)}
+.p-where{font-size:11.5px;color:var(--muted)}
+.p-raw{font-size:15px;font-weight:700;margin-top:3px}
+.p-why{font-size:12px;font-weight:600;margin-top:8px}
+.p-why.warn{color:var(--warn-ink)}.p-why.muted{color:var(--muted)}
+.cur{font-size:12.5px;color:var(--muted);margin-top:4px}.cur b{color:var(--ink);font-weight:600}
+.basis{font-size:11.5px;font-style:italic;color:var(--muted);margin-top:2px}
+.dt-chip{display:inline-block;font-size:10px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-left:5px;color:var(--muted)}
+.dt-chip.rc{border-color:#e7c9c9;color:var(--chip-text);background:var(--chip)}
+.flagline{display:flex;gap:6px;align-items:flex-start;font-size:11.5px;color:var(--warn-ink);margin-top:5px}
+.ph{display:inline-block;border:1.5px dashed #c9c2bd;border-radius:5px;padding:0 5px;color:var(--muted);font-weight:600;font-style:normal}
+.fixbox{border:1px solid var(--line);background:#fff;border-radius:10px;margin-top:12px}
+.fcap{font-size:11.5px;font-weight:700;color:var(--muted);padding:9px 12px}
+.gcap{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--rose);padding:8px 12px 4px;border-top:1px solid var(--line);background:var(--panel)}
+.cand{display:flex;gap:8px;align-items:center;padding:7px 12px;border-top:1px solid var(--line);font-size:12.5px}
+.cand .nm{flex:1;min-width:0}.cand .nm small{display:block;color:var(--muted);font-size:11px}
+.cand .c{color:var(--muted);font-size:11px;flex:none;text-align:right}
+.cand.sel{background:var(--sel)}
+.cand.off{color:var(--muted)}.cand.off .nm{opacity:.75}
+.cand .tick{width:20px;color:var(--maroon);flex:none}
+.empty{padding:6px 12px 8px;font-size:12px;color:var(--muted);font-style:italic}
+.amtblk{padding:10px 12px 12px;border-top:1px solid var(--line)}
+.amtrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:7px}
+.field{border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:6px 10px;font-size:12.5px;color:var(--muted);width:90px}
+.field.filled{color:var(--ink);font-weight:700}
+.unit{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.unit span{font-size:12.5px;font-weight:600;padding:5px 10px;color:var(--muted)}.unit span.on{background:var(--maroon);color:#fff}
+.says{font-size:12px;margin-top:3px}
+.consequence{font-size:11.5px;color:var(--muted);margin-top:8px}.consequence svg.i{margin-right:5px}
+.panefoot{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.next{font-size:12px;color:var(--muted);margin-top:10px;display:flex;gap:6px;align-items:flex-start}
+.sheet{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sh-head{padding:14px 18px 10px}.sh-head h3{font-size:16px}.sh-head .s{font-size:12px;color:var(--muted)}
+.grp{display:flex;align-items:center;gap:8px;padding:8px 18px;background:var(--panel);border-top:1px solid var(--line);font-size:12.5px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok-ink)}
+.mrow{padding:11px 18px;border-top:1px solid var(--line)}
+.mrow .top{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.mrow .top .r{flex:1;min-width:180px;font-size:13.5px;font-weight:700}
+.mrow.hl{background:var(--sel)}
+.rowact{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.parts{margin:6px 0 0;border-left:2px solid var(--line);padding-left:10px}
+.parts div{font-size:12.5px;color:var(--muted)}.parts b{color:var(--ink);font-weight:600}
+.parts .g{font-weight:700;color:var(--ink)}
+.before{opacity:.8}
+.tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:5px;padding:1px 6px;margin-right:6px;vertical-align:1px}
+.tag.was{background:var(--neutral-bg);color:var(--muted)}.tag.now{background:var(--chip);color:var(--chip-text)}
+.mbadge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;border-radius:999px;padding:4px 12px;margin-bottom:10px}
+.mbadge.ok{background:var(--ok-bg);color:var(--ok-ink)}.mbadge.warn{background:var(--warn-bg);color:var(--warn-ink)}
+/* FDA label (nutrition_label.dart, black on white by design) */
+.nf{background:#fff;border:1.5px solid #000;padding:10px 12px 12px;max-width:320px;font-family:Arimo,Arial,sans-serif;color:#000}
+.nf h4{font-size:26px;font-weight:900;line-height:1.05}
+.nf .ps{font-size:12.5px}
+.nf .rule8{height:8px;background:#000;margin:4px 0}
+.nf .cal{display:flex;justify-content:space-between;align-items:flex-end;font-weight:800}
+.nf .cal .k{font-size:22px}.nf .cal .v{font-size:30px;line-height:1}
+.nf .partial{font-size:11px;color:#333;margin-top:6px;border-top:1px solid #000;padding-top:4px}
+.prov{font-size:11px;color:var(--muted);margin-top:6px;max-width:320px}
+table.spec{border-collapse:collapse;font-size:13px;width:100%}
+table.spec td,table.spec th{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+table.spec th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+table.spec td.n{font-weight:700;white-space:nowrap}
+table.spec td.s{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink)}
+.tblwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+ol.q{font-size:13px;color:var(--muted);max-width:920px;margin:8px 0 0 20px}ol.q li{margin-bottom:10px}ol.q b{color:var(--ink)}
+.rec{display:block;margin-top:3px;color:var(--ok-ink)}
+@media (max-width:560px){.pane{padding:14px}.wrap{padding:24px 16px}}
+</style>
+</head>
+<body>
+<!-- Lucide glyphs (the set forui bundles as FLucideIcons) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+ <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+ <symbol id="i-cc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+ <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+ <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+ <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+ <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+ <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+ <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+ <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+ <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+ <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></symbol>
+</svg>
+<div class="wrap">
+<h1>Nutrition review v40: composite rows</h1>
+<p class="lede">v40 adds one new row type, the <b>composite row</b>: one ingredient line whose nutrients are not a single USDA record. It has two uses. <b>(1) Sub-recipe routing, phase 1</b> (plan.md Q7): a line such as "1 recipe double-crust pie dough" counts the child recipe's stored totals × a share, with no FDC id and <code>gram_source recipe</code>. <b>(2) Rendered bacon</b> (plan.md Q5 a): one line counts as cooked bacon <b>plus</b> the fat kept in the pan. Every figure here comes from <code>plan.md</code> or <code>subrecipe.md</code>. Raw lines, titles and servings come from the ATK corpus files named in <code>data-src</code>. A figure neither file gives is drawn as a <span class="ph">dashed slot</span>, never guessed.</p>
+
+<!-- ================= 1 ================= -->
+<div class="eyebrow">1 · The parent's label and its routed row</div>
+<p class="note">Blueberry Pie line 0, <i>1 recipe double-crust pie dough</i>, is generic. The prep note names three doughs: All-Butter, Basic and Foolproof Double-Crust. Under plan.md Q7's answer to P4 §F Q2, the line routes to <b>the first dough the note names</b> and is flagged, so a person can change it. Today the line is a 0 g sub-recipe row, and the pie reads <b>complete at 189 kcal per serving</b> with its dough missing. Routed, it gains <b>+382 kcal per serving</b> (All-Butter, 3,057 kcal per batch, share 1).</p>
+<div class="cols2">
+ <div>
+  <div class="cap"><span class="tag was">today</span> → <span class="tag now">v40</span>Blueberry Pie · recipe page</div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+   <div>
+    <div class="mbadge ok" data-src="nutrition_label.dart _MatchBadge: '${matched}/${total} ingredients matched', ok tone + circleCheck when complete; 10 = the main lines of 0979-blueberry-pie.yaml; complete per subrecipe.md §A"><svg class="i"><use href="#i-cc"/></svg>10/10 ingredients matched</div>
+    <div class="nf" data-src="0979-blueberry-pie.yaml servings 'SERVES 8'; plan.md §2 R17: 189.4 → 571 after v40 (All-Butter, +382)">
+     <h4>Nutrition Facts</h4>
+     <div class="ps">Per serving · serves 8</div>
+     <div class="rule8"></div>
+     <div style="font-size:10.5px;font-weight:700">Amount per serving</div>
+     <div class="cal"><span class="k">Calories</span><span class="v">571</span></div>
+     <div class="partial">Today: 189 — the dough was not counted.</div>
+    </div>
+    <div class="prov">Computed from USDA FoodData Central<br><b style="color:var(--ink)">Includes 1 recipe:</b> All-Butter Double-Crust Pie Dough (approximation)</div>
+   </div>
+  </div>
+  <p class="note" style="margin-top:10px">The "Today" line is for this mockup only. The label shows 571. The new provenance line names every child recipe the totals read, with its flag, so a cook can see what the pie's calories include without opening the review.</p>
+ </div>
+ <div>
+  <div class="cap"><span class="tag now">v40</span>Same recipe · review sheet (admin view, Counted opened)</div>
+  <div class="sheet" data-src="review_sheet.dart:235 'Ingredient matches', :349 'Counted — looks good', _summaryLine '${total} lines · ${matched} counting'">
+   <div class="sh-head"><h3>Ingredient matches</h3><div class="s">10 lines · 10 counting, <b style="color:var(--ink)">1 of them from a recipe</b></div></div>
+   <div class="grp"><span class="dot"></span>Counted — looks good <span class="conf">10</span></div>
+   <div class="mrow hl" data-src="0979-blueberry-pie.yaml line 0; subrecipe.md §B pick-lib, §C(3) gram_basis pattern 'from the recipe Graham Cracker Crust: 221 g, 1,135 kcal', §D All-Butter 3,057 kcal; plan.md Q7 default + flag; grams = child total_grams × share, a figure neither file gives">
+    <div class="top"><div class="r">1 recipe double-crust pie dough</div><span class="badge ok">counted</span></div>
+    <div class="cur">made from the recipe <b>All-Butter Double-Crust Pie Dough</b><span class="dt-chip rc">Recipe</span> · 1 recipe · <span class="ph">‹g›</span> g · 3,057 kcal</div>
+    <div class="basis">amount: from the recipe All-Butter Double-Crust Pie Dough: <span class="ph">‹g›</span> g, 3,057 kcal · +382 kcal per serving</div>
+    <div class="flagline"><svg class="i"><use href="#i-flag"/></svg><span>approximation (the first dough the note names: All-Butter Double-Crust Pie Dough)</span></div>
+    <div class="rowact"><button class="btn small neutral"><svg class="i"><use href="#i-pencil"/></svg>Change</button><button class="btn small ghost"><svg class="i"><use href="#i-book"/></svg>Open the recipe's matches<svg class="i"><use href="#i-chev"/></svg></button></div>
+   </div>
+   <div class="zero" style="padding:8px 18px 10px;font-size:12px;color:var(--muted);font-style:italic">… and the 9 food rows, unchanged.</div>
+  </div>
+  <ul class="note" style="margin-top:10px">
+   <li><b>No food, no FDC chip.</b> The row names the child recipe, and its data-type chip reads <b>Recipe</b> in the brand tint. The engine writes no USDA description, because there is no record.</li>
+   <li><b>The share always shows</b>, even at 1. At ⅔ the row reads "⅔ of Quick Tomato Sauce for Pizza (1 cup of about 1½ cups)" (subrecipe.md §C3).</li>
+   <li><b>The flag sits on its own line</b>, so the dough's name is not cut off. It appears only when the child was a default picked from several (or when the child is partial).</li>
+   <li><b>Change</b> is for admins. Members see the row, the flag and the link. "Open the recipe's matches" opens the child recipe's own review sheet, because the child's lines are where its numbers come from.</li>
+   <li><span class="ph">‹g›</span> is the dough's stored <code>total_grams</code> × 1. Neither source file prints it, so the build fills it in.</li>
+  </ul>
+ </div>
+</div>
+
+<!-- ================= 2 ================= -->
+<div class="eyebrow">2 · The fix sheet for a composite row (Change…)</div>
+<p class="note">The panel looks like the food fix panel, but it chooses a <b>recipe</b>, not a food. Candidates come in the resolution order (plan.md Q7): <b>the parent's own section</b>, then <b>library recipes the note names or whose title matches exactly</b>, then <b>another recipe's section</b>, labelled with the recipe that holds it. A fuzzy title is never chosen automatically, but a person may pick one. There is no "Search USDA" row and no food candidate.</p>
+<div class="cols2">
+ <div>
+  <div class="card pane" data-src="0979-blueberry-pie.yaml line 0 + prep_notes; p4_resolved.tsv blueberry-pie|0 lib-fuzzy candidates basic / all-butter / foolproof-double-crust / foolproof-all-butter-dough-for-double-crust-pie; subrecipe.md §D 3,057 / 3,520 / 3,649 kcal, +382 / +440 / +456 per serving; §B sub: Basic Single-Crust Pie Dough in basic-double-crust-pie-dough">
+   <div class="p-where">Blueberry Pie · ingredient line 0</div>
+   <div class="p-raw">1 recipe double-crust pie dough</div>
+   <div class="p-why muted">Made from a recipe: counted with the first dough the note names. Change it if the pie uses another.</div>
+   <div class="cur">made from the recipe <b>All-Butter Double-Crust Pie Dough</b><span class="dt-chip rc">Recipe</span> · 1 recipe · 3,057 kcal</div>
+   <div class="fixbox">
+    <div class="fcap">Choose the recipe &amp; set the share</div>
+    <div class="gcap">This recipe's sections</div>
+    <div class="empty">Blueberry Pie has no section named "double-crust pie dough".</div>
+    <div class="gcap">Library recipes the note names</div>
+    <div class="cand sel"><span class="tick"><svg class="i"><use href="#i-check"/></svg></span><span class="nm">All-Butter Double-Crust Pie Dough<small>named first · makes enough for one 9-inch pie</small></span><span class="c">current · default<br>3,057 kcal · +382 / serving</span></div>
+    <div class="cand"><span class="tick"></span><span class="nm">Basic Double-Crust Pie Dough<small>named second</small></span><span class="c">3,520 kcal · +440 / serving</span></div>
+    <div class="cand"><span class="tick"></span><span class="nm">Foolproof Double-Crust Pie Dough<small>named third</small></span><span class="c">3,649 kcal · +456 / serving</span></div>
+    <div class="gcap">Other library recipes with a similar title</div>
+    <div class="cand"><span class="tick"></span><span class="nm">Foolproof All-Butter Dough for Double-Crust Pie<small>not named in the note · makes one 9-inch double crust</small></span><span class="c"><span class="ph">‹kcal›</span></span></div>
+    <div class="gcap">Another recipe's section</div>
+    <div class="cand off"><span class="tick"></span><span class="nm">Basic Single-Crust Pie Dough<small>a section of Basic Double-Crust Pie Dough</small></span><span class="c">phase 2 · no totals yet</span></div>
+    <div class="cand" style="color:var(--muted)"><svg class="i"><use href="#i-search"/></svg><span class="nm">Search the library for another recipe…</span><span class="btn small neutral">Search</span></div>
+    <div class="amtblk">
+     <div class="fcap" style="padding:0">Share</div>
+     <div class="says">The line says "1 recipe". The dough makes enough for one 9-inch pie, so the share is 1.</div>
+     <div class="amtrow"><span class="field filled">1</span><span class="unit"><span class="on">recipe</span></span></div>
+     <div class="panefoot"><button class="btn primary small"><svg class="i"><use href="#i-check"/></svg>Confirm · All-Butter, 1 recipe</button><button class="btn ghost small"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+    </div>
+   </div>
+  </div>
+ </div>
+ <div>
+  <div class="cap">The four actions a composite row offers</div>
+  <div class="tblwrap"><table class="spec">
+   <tr><th>Action</th><th>Primary button reads</th><th>What it stores</th></tr>
+   <tr><td class="n">Pick a recipe</td><td>Use this recipe · 1 recipe</td><td>A person's pick (<code>PUT …/matches/{pos}</code> with <code>{child: slug}</code>, subrecipe.md §E). The share is kept. The flag is cleared.</td></tr>
+   <tr><td class="n">Change the share</td><td>Save share · ½ recipe</td><td>The same child at the typed share. Grams and kcal scale with it.</td></tr>
+   <tr><td class="n">Confirm</td><td>Confirm · All-Butter, 1 recipe</td><td>The default as a person's decision. The flag is cleared (open question 2).</td></tr>
+   <tr><td class="n">Skip</td><td>Skip (ghost, as today)</td><td>"Excluded from the totals", as for any line: the cook made the pie without this recipe. The label stays complete.</td></tr>
+  </table></div>
+  <p class="note" style="margin-top:10px">Only one button is primary at a time, following the selection and the field, as the C1 amount block does. <b>The share field only offers units the child's yield can read.</b> All-Butter "MAKES ENOUGH FOR ONE 9-INCH PIE" gives no measure, so only <i>recipe</i> is offered. A child that makes "ABOUT 1½ CUPS" also offers <i>cup</i>, and 1 cup then reads ⅔ of the recipe.</p>
+  <div class="cap" style="margin-top:14px">After a pick lands: the apply-to-all offer, as today</div>
+  <div class="card" style="border:1.5px solid #ecc9c9;overflow:hidden" data-src="subrecipe.md §B '1 recipe double-crust pie dough ×4', §C(1) 'one apply-to-all covers the 4 double-crust pies'; §D parents classic-apple-pie, deep-dish-apple-pie, blueberry-pie, sweet-cherry-pie">
+   <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;flex-wrap:wrap">
+    <svg class="i" style="width:17px;height:17px;color:var(--maroon)"><use href="#i-layers"/></svg>
+    <div style="flex:1;min-width:200px;font-size:13px"><b>3 other lines</b> of <b>double-crust pie dough</b>, in Classic Apple Pie, Deep-Dish Apple Pie and Sweet Cherry Pie, are still waiting on this decision.</div>
+    <button class="btn primary small">Apply to 3 lines</button><button class="btn ghost small">Not now</button>
+   </div>
+   <div style="padding:8px 14px 10px;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);background:var(--panel)">Sets this recipe on their undecided "double-crust pie dough" lines, each keeping its own share, and recomputes their labels. Lines someone already decided are left alone.</div>
+  </div>
+  <p class="note" style="margin-top:8px">Each of the four pies defaults to the first dough <b>its own</b> note names, so the default is not always the same. The offer counts the lines a person has not decided yet.</p>
+ </div>
+</div>
+
+<!-- ================= 3 ================= -->
+<div class="eyebrow">3 · Held: the reference names no recipe the library has (choose_recipe)</div>
+<p class="note">Free-Form Apple Tart line 5 asks for <i>Rustic Tart Dough (this page)</i>. The library has no recipe and no section with that title (subrecipe.md §B, "missing"). Under plan.md Q7, step 4, the line is held as <code>choose_recipe</code> at 0 g, and (R3) a reference that is not routed makes the label <b>partial</b>. The tart stops reading complete while its dough is missing.</p>
+<div class="cols2">
+ <div>
+  <div class="cap"><span class="tag now">v40</span>Free-Form Apple Tart · recipe page and review sheet</div>
+  <div class="mbadge warn" data-src="nutrition_label.dart _MatchBadge '— review', warn tone + triangleAlert; 6 = the lines of 1005-free-form-apple-tart.yaml; 5 assumes its other lines count (not checked on snapshot 16)"><svg class="i"><use href="#i-alert"/></svg>5/6 ingredients matched — review</div>
+  <div class="nf" data-src="1005-free-form-apple-tart.yaml 'SERVES 6'; calories not in plan.md or subrecipe.md">
+   <h4>Nutrition Facts</h4>
+   <div class="ps">Per serving · serves 6</div>
+   <div class="rule8"></div>
+   <div style="font-size:10.5px;font-weight:700">Amount per serving</div>
+   <div class="cal"><span class="k">Calories</span><span class="v"><span class="ph" style="font-size:20px">‹n›</span></span></div>
+   <div class="partial"><b>Partial:</b> Rustic Tart Dough is not counted (no recipe chosen).</div>
+  </div>
+  <div class="sheet" style="margin-top:14px">
+   <div class="sh-head"><h3>Ingredient matches</h3><div class="s">6 lines · 5 counting (1 to review)</div></div>
+   <div class="grp"><span class="dot" style="background:var(--warn-ink)"></span>Needs your attention <span class="conf">1</span></div>
+   <div class="mrow" data-src="1005-free-form-apple-tart.yaml line 5; p4_resolved.tsv free-form-apple-tart|5 missing">
+    <div class="top"><div class="r">1 recipe Rustic Tart Dough (this page), rolled into a 12-inch circle and chilled</div><span class="badge warn">choose recipe</span></div>
+    <div class="p-why warn" style="margin-top:4px">Made from another recipe: no library recipe is titled "Rustic Tart Dough" — held out of the totals. Pick the recipe it means, or skip the line</div>
+    <div class="cur">no recipe chosen · 1 recipe · 0 g</div>
+    <div class="rowact"><button class="btn small neutral"><svg class="i"><use href="#i-book"/></svg>Choose a recipe</button><button class="btn small ghost"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+   </div>
+  </div>
+  <p class="note" style="margin-top:8px">The <span class="ph">‹n›</span> calories are the five counted lines only. The partial line under the calories says which part is missing, so the number is not read as the whole tart.</p>
+ </div>
+ <div>
+  <div class="cap"><span class="tag now">v40</span>Admin queue · the new bucket</div>
+  <div class="chips" data-src="nutrition_review_queue.dart:170 'Need attention'; bucket labels nutrition_review.dart; the new chip per subrecipe.md §E 'GET /admin/nutrition_review: the choose_recipe bucket'; counts are not in either source">
+   <span class="statchip"><span>Need attention</span><span class="n ph">‹n›</span></span>
+   <span class="statchip"><span>No match</span><span class="n ph">‹n›</span></span>
+   <span class="statchip"><span>No grams</span><span class="n ph">‹n›</span></span>
+   <span class="statchip"><span>Low confidence</span><span class="n ph">‹n›</span></span>
+   <span class="statchip sel"><span>Choose recipe</span><span class="n ph">‹n›</span></span>
+  </div>
+  <div class="card" style="overflow:hidden">
+   <div class="qhead"><span>Showing <span class="t">choose recipe</span> · <span class="ph">‹n›</span> ingredients, <span class="ph">‹n›</span> lines · <span class="t">most recipes finished first</span></span></div>
+   <div class="qrow check" style="background:var(--sel)">
+    <div class="main"><div class="meta"><span class="item">rustic tart dough</span><span class="reach">1 line · 1 recipe</span></div>
+     <div class="raw"><span style="font-weight:400;color:var(--muted);font-size:12px">e.g. </span>1 recipe Rustic Tart Dough (this page), rolled into a 12-inch circle and chilled</div>
+     <div class="food bad"><span class="ar">→ </span>no recipe chosen</div>
+     <div class="amt">1 recipe · counts 0 g until a recipe is chosen</div>
+     <div class="one">line hold (choose recipe): no library recipe has this title. Any decision finishes it: Choose a recipe, or Skip if the tart is made without it.</div></div>
+    <div class="right"><span class="badge warn">choose recipe</span></div></div>
+  </div>
+  <div class="cap" style="margin-top:16px">Its fix sheet: nothing resolves, so the search leads</div>
+  <div class="card pane" data-src="subrecipe.md §D Classic Tart Dough 1,870 kcal; 0994-classic-tart-dough.yaml 'MAKES ENOUGH FOR ONE 9-INCH TART'">
+   <div class="p-where">Free-Form Apple Tart · ingredient line 5</div>
+   <div class="p-raw">1 recipe Rustic Tart Dough (this page), rolled into a 12-inch circle and chilled</div>
+   <div class="fixbox">
+    <div class="fcap">Choose the recipe &amp; set the share</div>
+    <div class="gcap">This recipe's sections</div><div class="empty">None is titled "Rustic Tart Dough".</div>
+    <div class="gcap">Library recipes</div><div class="empty">No recipe is titled "Rustic Tart Dough".</div>
+    <div class="gcap">Another recipe's section</div><div class="empty">No section is titled "Rustic Tart Dough".</div>
+    <div class="cand"><svg class="i" style="color:var(--muted)"><use href="#i-search"/></svg><span class="nm"><span class="field filled" style="width:auto;display:inline-block">tart dough</span></span><span class="btn small neutral">Search</span></div>
+    <div class="cand"><span class="tick"></span><span class="nm">Classic Tart Dough<small>search result · makes enough for one 9-inch tart</small></span><span class="c">1,870 kcal</span></div>
+    <div class="amtblk">
+     <div class="fcap" style="padding:0">Share</div>
+     <div class="amtrow"><span class="field filled">1</span><span class="unit"><span class="on">recipe</span></span></div>
+     <div class="panefoot"><button class="btn primary small" disabled style="opacity:.5">Use this recipe</button><button class="btn ghost small"><svg class="i"><use href="#i-ban"/></svg>Skip</button></div>
+     <div class="consequence"><svg class="i"><use href="#i-info"/></svg>Enabled once a recipe is picked. A search result is only ever picked by a person: a fuzzy title never routes on its own (plan.md Q7). The picked recipe is flagged neither approximate nor default.</div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+<p class="note" style="margin-top:10px"><b>The other reason, same hold.</b> A generic reference with several candidates and no note naming one (for example <i>1 recipe fruit topping (recipes follow)</i> in Pavlova with Fruit and Whipped Cream, whose candidates are its own sections) reads <i>Made from another recipe: the line names no single recipe ("fruit topping") — held out of the totals. Pick the recipe it means, or skip the line</i>. Its candidates are sections, so they are phase 2. In v40 they are listed but cannot be picked, as in section 2.</p>
+
+<!-- ================= 4 ================= -->
+<div class="eyebrow">4 · The two-part row: rendered bacon (one line, two records)</div>
+<p class="note">Wilted Spinach Salad line 5 fries the bacon, lifts it out, and "pour[s] off all but 3 tablespoons of the bacon fat". Rule B1 (plan.md Q5 a) reads it as <b>cooked bacon at the raw weight × 0.403</b> (FDC protein retention, flagged) <b>plus the kept fat as bacon grease</b>, on <b>one row with one basis text</b>. 284 g raw becomes 114 g cooked + 39 g grease. The salad moves −16.1 %, and it is the only one of the 13 lines over 10 %. No hold: the row is counted and flagged.</p>
+<div class="cols2">
+ <div>
+  <div class="cap"><span class="tag was">today</span>one record at the raw weight</div>
+  <div class="sheet before" data-src="0040-wilted-spinach-salad-with-warm-bacon-dressing.yaml line 5; skin_render.md B1: trips rows on 168277; fixtures/fdc/foods.json 168277 'Pork, cured, bacon, unprepared'">
+   <div class="grp"><span class="dot"></span>Counted — looks good</div>
+   <div class="mrow">
+    <div class="top"><div class="r">10 ounces (about 8 slices) thick-cut bacon, cut into ½-inch pieces</div><span class="badge ok">counted</span></div>
+    <div class="cur">matched to <b>Pork, cured, bacon, unprepared</b><span class="dt-chip">SR Legacy</span> · 284 g</div>
+   </div>
+  </div>
+  <div class="cap" style="margin-top:16px"><span class="tag now">v40</span>the same line, counted as two parts</div>
+  <div class="sheet" data-src="plan.md Q5 / §2 R2: 284 g raw → 114 g cooked + 39 g grease; skin_render.md B1: 168322 × 0.403 + min(kept, rendered) of 172345, flag text verbatim; foods.json 172345 'Animal fat, bacon grease'; skin_render.md:92 168322 'Pork, cured, bacon, pre-sliced, cooked, pan-fried'; recipe step 1 'Pour off all but 3 tablespoons of the bacon fat'">
+   <div class="grp"><span class="dot"></span>Counted — looks good</div>
+   <div class="mrow hl">
+    <div class="top"><div class="r">10 ounces (about 8 slices) thick-cut bacon, cut into ½-inch pieces</div><span class="badge ok">counted</span></div>
+    <div class="cur">matched to two records, cooked and drained:</div>
+    <div class="parts">
+     <div><span class="g">114 g</span> · <b>Pork, cured, bacon, pre-sliced, cooked, pan-fried</b><span class="dt-chip">SR Legacy</span></div>
+     <div><span class="g">+ 39 g</span> · <b>Animal fat, bacon grease</b><span class="dt-chip">SR Legacy</span> · kept in the pan</div>
+    </div>
+    <div class="basis">amount: 284 g raw → 114 g cooked bacon + 39 g bacon grease kept in the pan</div>
+    <div class="flagline"><svg class="i"><use href="#i-flag"/></svg><span>approximate (rendered and drained; yield from FDC protein)</span></div>
+    <div class="rowact"><button class="btn small neutral"><svg class="i"><use href="#i-pencil"/></svg>Change</button></div>
+   </div>
+  </div>
+ </div>
+ <div>
+  <div class="cap">How the row reads, and what it offers</div>
+  <ul class="note">
+   <li><b>One line, one row, one badge.</b> The two records are listed under the line, each with its own grams and FDC chip. The grams of the two parts add up to what the row counts (153 g), not to the 284 g on the line. The basis line says why.</li>
+   <li><b>No hold, no queue.</b> The row is counted and flagged, like any approximate row. It reaches the review queue only through the queue's existing rules.</li>
+   <li><b>Change</b> opens the usual food fix panel. Picking a single food replaces <b>both</b> parts with that food at the line's own grams. This is how a person undoes the rule on a line. Confirm keeps both parts. Skip excludes the line, as today.</li>
+   <li><b>The wider lines</b> (oven-fried bacon, quiche Lorraine, carbonara; plan.md Q5 c) are left to a person. v40 draws no button for them. See open question 3.</li>
+   <li>The brief quoted the line as "10 slices bacon, chopped". The corpus line (0040, line 5) is the one shown here.</li>
+  </ul>
+ </div>
+</div>
+
+<!-- ================= 5 ================= -->
+<div class="eyebrow">5 · Copy sheet: every new string, verbatim</div>
+<p class="note"><code>{braces}</code> mark the values filled in at runtime. Strings that already ship (Counted — looks good, Needs your attention, Skip, counted, "— held out of the totals") are not repeated here. Hold reasons follow the shipped pattern <code>&lt;reason&gt;: &lt;mechanism&gt; — held out of the totals. &lt;way out&gt;</code> (<code>match_fix_panel.dart</code> WhyLine).</p>
+<div class="tblwrap"><table class="spec">
+<tr><th>Where</th><th>String</th></tr>
+<tr><td class="n">Row · current</td><td class="s">made from the recipe {title}</td></tr>
+<tr><td class="n">Row · type chip</td><td class="s">Recipe</td></tr>
+<tr><td class="n">Row · share, whole</td><td class="s">{n} recipe</td></tr>
+<tr><td class="n">Row · share, fraction</td><td class="s">{share} of {title} ({line amount} of {yield amount})</td></tr>
+<tr><td class="n">Row · basis</td><td class="s">amount: from the recipe {title}: {g} g, {kcal} kcal</td></tr>
+<tr><td class="n">Row · basis suffix (sheet)</td><td class="s"> · +{kcal} kcal per serving</td></tr>
+<tr><td class="n">Row · flag, default pick</td><td class="s">approximation (the first {kind} the note names: {title})</td></tr>
+<tr><td class="n">Row · flag, partial child</td><td class="s">approximation ({title} is partial: {m} of {n} lines)</td></tr>
+<tr><td class="n">Row · buttons</td><td class="s">Change<br>Open the recipe's matches<br>Choose a recipe</td></tr>
+<tr><td class="n">Row · held, current</td><td class="s">no recipe chosen · {n} recipe · 0 g</td></tr>
+<tr><td class="n">Sheet summary suffix</td><td class="s">, {n} of them from a recipe</td></tr>
+<tr><td class="n">Badge (warn)</td><td class="s">choose recipe</td></tr>
+<tr><td class="n">Hold · choose_recipe, missing</td><td class="s">Made from another recipe: no library recipe is titled "{item}" — held out of the totals. Pick the recipe it means, or skip the line</td></tr>
+<tr><td class="n">Hold · choose_recipe, generic</td><td class="s">Made from another recipe: the line names no single recipe ("{item}") — held out of the totals. Pick the recipe it means, or skip the line</td></tr>
+<tr><td class="n">Hold · nested_recipe</td><td class="s">Made from a recipe that is itself made from another recipe: only one level is read — held out of the totals. Pick another recipe, or skip the line</td></tr>
+<tr><td class="n">Not routed · no share</td><td class="s">Made from {title}, but there is no share the yield can read — not counted</td></tr>
+<tr><td class="n">Label · provenance</td><td class="s">Includes {n} recipe: {title} ({flag})<br>Includes {n} recipes: {title}, {title}</td></tr>
+<tr><td class="n">Label · partial, held</td><td class="s">Partial: {item} is not counted (no recipe chosen).</td></tr>
+<tr><td class="n">Label · partial, child partial</td><td class="s">Partial: {title} is partial ({m} of {n} lines).</td></tr>
+<tr><td class="n">Label · partial, not routed</td><td class="s">Partial: {item} is not counted ({reason}).</td></tr>
+<tr><td class="n">Queue · chip</td><td class="s">Choose recipe</td></tr>
+<tr><td class="n">Queue · header filter</td><td class="s">choose recipe</td></tr>
+<tr><td class="n">Queue · food slot</td><td class="s">no recipe chosen</td></tr>
+<tr><td class="n">Queue · amount slot</td><td class="s">{n} recipe · counts 0 g until a recipe is chosen</td></tr>
+<tr><td class="n">Queue · line-hold note</td><td class="s">line hold (choose recipe): no library recipe has this title. Any decision finishes it: Choose a recipe, or Skip if the recipe is made without it.</td></tr>
+<tr><td class="n">Fix sheet · WhyLine (default)</td><td class="s">Made from a recipe: counted with the first {kind} the note names. Change it if the {parent kind} uses another.</td></tr>
+<tr><td class="n">Fix sheet · caption</td><td class="s">Choose the recipe &amp; set the share</td></tr>
+<tr><td class="n">Fix sheet · groups</td><td class="s">This recipe's sections<br>Library recipes the note names<br>Library recipes<br>Other library recipes with a similar title<br>Another recipe's section</td></tr>
+<tr><td class="n">Fix sheet · empty groups</td><td class="s">{parent} has no section named "{item}".<br>None is titled "{item}".<br>No recipe is titled "{item}".<br>No section is titled "{item}".</td></tr>
+<tr><td class="n">Fix sheet · candidate notes</td><td class="s">named first · named second · named third<br>not named in the note<br>a section of {host title}<br>search result<br>current · default<br>{kcal} kcal · +{kcal} / serving<br>phase 2 · no totals yet</td></tr>
+<tr><td class="n">Fix sheet · search row</td><td class="s">Search the library for another recipe…</td></tr>
+<tr><td class="n">Fix sheet · share</td><td class="s">Share<br>The line says "{share text}". {title} {yield, lowercased}, so the share is {n}.</td></tr>
+<tr><td class="n">Fix sheet · primary button</td><td class="s">Use this recipe · {share}<br>Save share · {share}<br>Confirm · {short title}, {share}</td></tr>
+<tr><td class="n">Fix sheet · disabled hint</td><td class="s">Enabled once a recipe is picked.</td></tr>
+<tr><td class="n">Offer (after a pick)</td><td class="s">{n} other lines of {item}, in {recipes}, are still waiting on this decision.<br>Apply to {n} lines</td></tr>
+<tr><td class="n">Bacon · current</td><td class="s">matched to two records, cooked and drained:</td></tr>
+<tr><td class="n">Bacon · part suffix</td><td class="s"> · kept in the pan</td></tr>
+<tr><td class="n">Bacon · basis</td><td class="s">amount: {raw} g raw → {cooked} g cooked bacon + {fat} g bacon grease kept in the pan</td></tr>
+<tr><td class="n">Bacon · flag (engine's)</td><td class="s">approximate (rendered and drained; yield from FDC protein)</td></tr>
+</table></div>
+
+<!-- ================= edges ================= -->
+<div class="eyebrow">Edge cases the build must render (subrecipe.md §C4, §F; plan.md Q7)</div>
+<div class="tblwrap"><table class="spec">
+<tr><th>Case</th><th>Row reads</th><th>Label</th></tr>
+<tr><td class="n">Child is partial</td><td>Counted, with the partial-child flag. "Open the recipe's matches" leads to the gap.</td><td>Partial, naming the child (all 18 library children are complete today)</td></tr>
+<tr><td class="n">Child is itself a parent</td><td>Held <code>nested_recipe</code> at 0 g (depth 1; no library case today)</td><td>Partial</td></tr>
+<tr><td class="n">No share the yield can read</td><td>0 g, the "no share" note</td><td>Partial (R3)</td></tr>
+<tr><td class="n">No amount on the line (8)</td><td>0 g, today's note</td><td>Partial (R3)</td></tr>
+<tr><td class="n">Herb Sauce's "1 recipe Pan-Seared Steaks"</td><td>Not routed (the owner's answer, +578/serving into a sauce). 0 g with a "served with" note</td><td>Partial (R3)</td></tr>
+<tr><td class="n">Marinade child (3 lines)</td><td>Held <code>discarded_medium</code>, as shipped: Skip, or the eaten grams</td><td>Partial until decided</td></tr>
+<tr><td class="n">Reference inside a variation (25)</td><td>Never routed, unchanged</td><td>Unchanged</td></tr>
+<tr><td class="n">Technique pointer "(see this page)", bare counts, food offered first</td><td>Non-trips: counted on their food, as today</td><td>Unchanged</td></tr>
+<tr><td class="n">Child edited or recomputed</td><td>The parent turns stale (<code>underived</code>, the <code>child_stamp</code> arm) and recomputes cache-only. No new UI: the shipped stale banner covers it</td><td>Stale banner</td></tr>
+</table></div>
+
+<!-- ================= questions ================= -->
+<div class="eyebrow">Open questions for the owner</div>
+<ol class="q">
+ <li><b>The choose_recipe bucket.</b> Should it get its own chip, or sit inside No match? <span class="rec">Recommend its own chip. The fix is a recipe, not a USDA food, and No match's panel offers a food search.</span></li>
+ <li><b>Confirm on a defaulted dough.</b> Does a person's Confirm of the note's first dough clear the approximation flag? <span class="rec">Recommend yes. A person chose it, just as a confirmed food row loses its confidence warning.</span></li>
+ <li><b>The wider bacon lines</b> (plan.md Q5 c: oven-fried bacon, quiche Lorraine, carbonara). Should a person get a "count as rendered" action with a kept-fat field? <span class="rec">Recommend not in v40. Typed grams already let a person correct those lines, and the action can follow if the queue shows a need.</span></li>
+ <li><b>Section candidates</b> (phase 2, no totals yet). Listed but not pickable, or hidden until v41? <span class="rec">Recommend listed and not pickable, so a person sees why a "recipes follow" line is held.</span></li>
+ <li><b>The label's "Includes N recipe" line</b> is shown to members too. <span class="rec">Recommend yes. A cook should see that the pie's calories include a dough the note only suggests.</span></li>
+</ol>
+<p class="note" style="margin-top:14px">Not drawn: the child recipe's own review sheet (it is the shipped sheet), the stale banner (shipped), and the 0 g sub-recipe row before v40 (shipped).</p>
+</div>
+</body>
+</html>

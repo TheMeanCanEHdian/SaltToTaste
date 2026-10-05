@@ -972,7 +972,7 @@ fetched.
 
 **Matcher v41, the composite row** (the owner's 2026-10-05 rulings A1–A10,
 "go with your recommendations"; design_v3, the approved mockup
-`docs/mockups/v40-composite-rows.html`; migration 018). Still one row per
+`docs/mockups/v41-composite-rows.html`; migration 018). Still one row per
 line; every `match` gains three keys, emitted on every row:
 
 - `child` — null unless the line is a sub-recipe reference the engine reads

@@ -9,12 +9,21 @@ import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
+import 'package:salt_app/features/nutrition/recipe_fix_panel.dart';
 
 /// Opens the ingredient match review sheet (approved A+C hybrid redesign).
 /// Everyone can read it; only admins get the change-match / set-amount / skip
 /// actions. Wide screens get a centered dialog; phones a full-height sheet.
-Future<void> showReviewSheet(BuildContext context, {required bool isAdmin}) {
-  final cubit = context.read<NutritionCubit>()..loadMatches();
+/// [cubit] is another recipe's (a child recipe's sheet, v41) — the caller
+/// owns it — else the one in [context]; [parent] names the recipe for the
+/// recipe fix panel.
+Future<void> showReviewSheet(
+  BuildContext context, {
+  required bool isAdmin,
+  NutritionCubit? cubit,
+  ReviewParent? parent,
+}) {
+  final sheetCubit = (cubit ?? context.read<NutritionCubit>())..loadMatches();
   final wide = MediaQuery.sizeOf(context).width >= Breakpoints.detailTwoColumn;
   if (!wide) {
     return showFSheet<void>(
@@ -23,7 +32,7 @@ Future<void> showReviewSheet(BuildContext context, {required bool isAdmin}) {
       useSafeArea: true,
       mainAxisMaxRatio: null,
       builder: (context) => BlocProvider.value(
-        value: cubit,
+        value: sheetCubit,
         child: FractionallySizedBox(
           heightFactor: 0.92,
           child: DecoratedBox(
@@ -31,7 +40,7 @@ Future<void> showReviewSheet(BuildContext context, {required bool isAdmin}) {
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
             ),
-            child: _ReviewSheet(isAdmin: isAdmin),
+            child: _ReviewSheet(isAdmin: isAdmin, parent: parent),
           ),
         ),
       ),
@@ -40,17 +49,22 @@ Future<void> showReviewSheet(BuildContext context, {required bool isAdmin}) {
   return showFDialog<void>(
     context: context,
     builder: (context, _, animation) => BlocProvider.value(
-      value: cubit,
-      child: _ReviewSheet(isAdmin: isAdmin, animation: animation),
+      value: sheetCubit,
+      child: _ReviewSheet(
+        isAdmin: isAdmin,
+        animation: animation,
+        parent: parent,
+      ),
     ),
   );
 }
 
 class _ReviewSheet extends StatefulWidget {
-  const _ReviewSheet({required this.isAdmin, this.animation});
+  const _ReviewSheet({required this.isAdmin, this.animation, this.parent});
 
   final bool isAdmin;
   final Animation<double>? animation;
+  final ReviewParent? parent;
 
   @override
   State<_ReviewSheet> createState() => _ReviewSheetState();
@@ -106,6 +120,7 @@ class _ReviewSheetState extends State<_ReviewSheet>
 
     final listView = _ListView(
       isAdmin: widget.isAdmin,
+      parent: widget.parent,
       busy: busy,
       spotlight: spotlight,
       attention: attention,
@@ -136,6 +151,7 @@ class _ReviewSheetState extends State<_ReviewSheet>
             ),
             child: _GuidedFlow(
               isAdmin: widget.isAdmin,
+              parent: widget.parent,
               busy: busy,
               attention: attention,
               onExit: () => _tabs.animateTo(0),
@@ -306,6 +322,7 @@ class _LoadingOrError extends StatelessWidget {
 class _ListView extends StatelessWidget {
   const _ListView({
     required this.isAdmin,
+    required this.parent,
     required this.busy,
     required this.spotlight,
     required this.attention,
@@ -314,6 +331,7 @@ class _ListView extends StatelessWidget {
   });
 
   final bool isAdmin;
+  final ReviewParent? parent;
   final bool busy;
   final List<IngredientMatch> attention;
   final List<IngredientMatch> counted;
@@ -341,6 +359,7 @@ class _ListView extends StatelessWidget {
                   key: ValueKey('att-${m.position}'),
                   match: m,
                   isAdmin: isAdmin,
+                  parent: parent,
                   busy: busy,
                 ),
             ],
@@ -357,6 +376,7 @@ class _ListView extends StatelessWidget {
                 key: ValueKey('ok-${m.position}'),
                 match: m,
                 isAdmin: isAdmin,
+                parent: parent,
                 busy: busy,
               ),
           ],
@@ -374,6 +394,7 @@ class _ListView extends StatelessWidget {
                   key: ValueKey('sk-${m.position}'),
                   match: m,
                   isAdmin: isAdmin,
+                  parent: parent,
                   busy: busy,
                 ),
             ],
@@ -481,11 +502,13 @@ class _MatchRow extends StatefulWidget {
     required this.match,
     required this.isAdmin,
     required this.busy,
+    this.parent,
   });
 
   final IngredientMatch match;
   final bool isAdmin;
   final bool busy;
+  final ReviewParent? parent;
 
   @override
   State<_MatchRow> createState() => _MatchRowState();
@@ -548,6 +571,10 @@ class _MatchRowState extends State<_MatchRow> {
                 // A skipped zero keeps its hidden guess but reads skipped.
                 if (zero && !skipped)
                   const SaltBadge('counts as zero', tone: SaltBadgeTone.neutral)
+                // A reference the engine does not route counts nothing and
+                // makes the label partial (v41, A3 a).
+                else if (!skipped && m.child?.state == 'not_routed')
+                  const SaltBadge('not counted', tone: SaltBadgeTone.neutral)
                 else
                   _statusBadge(b),
               ],
@@ -558,6 +585,11 @@ class _MatchRowState extends State<_MatchRow> {
             else ...[
               WhyLine(match: m, bucket: b),
               CurrentMatch(match: m, bucket: b),
+            ],
+            // Members see where a routed row's numbers come from, not Change.
+            if (!widget.isAdmin && _routedChild(m) != null) ...[
+              const SizedBox(height: 8),
+              _ActionBar([_openChild(context, _routedChild(m)!)]),
             ],
             if (widget.isAdmin) ...[
               const SizedBox(height: 8),
@@ -603,12 +635,23 @@ class _MatchRowState extends State<_MatchRow> {
                       current.overridingPosition == null &&
                       current.error == null,
                   listener: (context, _) => setState(() => _fixOpen = false),
-                  child: FixPanel(
-                    match: m,
-                    busy: widget.busy,
-                    onDone: () => setState(() => _fixOpen = false),
-                    amountFocus: _amountFocus,
-                  ),
+                  child: m.child != null
+                      ? RecipeFixPanel(
+                          match: m,
+                          busy: widget.busy,
+                          parent: widget.parent,
+                          onSkip: () => context.read<NutritionCubit>().override(
+                            m.position,
+                            raw: m.raw,
+                            skipped: true,
+                          ),
+                        )
+                      : FixPanel(
+                          match: m,
+                          busy: widget.busy,
+                          onDone: () => setState(() => _fixOpen = false),
+                          amountFocus: _amountFocus,
+                        ),
                 ),
               ],
             ],
@@ -633,12 +676,97 @@ class _MatchRowState extends State<_MatchRow> {
       'skipped',
       tone: SaltBadgeTone.neutral,
     ),
+    MatchBucket.chooseRecipe => const SaltBadge(
+      'choose recipe',
+      tone: SaltBadgeTone.warn,
+    ),
   };
+
+  /// The routed child of [m] that has a sheet of its own, or null.
+  RecipeRef? _routedChild(IngredientMatch m) {
+    final child = m.child;
+    return child != null && child.state == 'routed' && child.slug != null
+        ? child
+        : null;
+  }
+
+  /// "Open the recipe's matches" (v41): the child recipe's own review
+  /// sheet, on a cubit of its own that closes with the sheet — the child's
+  /// lines are where its numbers come from.
+  Widget _openChild(BuildContext context, RecipeRef child) => FButton(
+    variant: FButtonVariant.ghost,
+    mainAxisSize: MainAxisSize.min,
+    onPress: () {
+      final cubit = NutritionCubit(
+        context.read<NutritionRepository>(),
+        child.slug!,
+      )..load();
+      showReviewSheet(
+        context,
+        isAdmin: widget.isAdmin,
+        cubit: cubit,
+        parent: (title: child.title ?? child.slug!, hasSections: null),
+      ).whenComplete(cubit.close);
+    },
+    prefix: const Icon(FLucideIcons.book, size: 14),
+    suffix: const Icon(FLucideIcons.chevronRight, size: 14),
+    child: const Text("Open the recipe's matches"),
+  );
+
+  /// A reference line's own bar (v41), from the action table: a routed row
+  /// offers Change (the recipe panel) and its child's sheet; a held one
+  /// Choose a recipe and Skip — and a poured-away marinade its Confirm (the
+  /// open panel carries both, so the bar drops them); a
+  /// reference the engine does not route, Skip alone (A3 a).
+  Widget _referenceActions(BuildContext context, RecipeRef child) {
+    final cubit = context.read<NutritionCubit>();
+    final m = widget.match;
+    final busy = widget.busy;
+    final routed = child.state == 'routed';
+    return _ActionBar([
+      if (offers(m, HoldDecision.recipe))
+        _Action(
+          icon: _fixOpen
+              ? FLucideIcons.x
+              : routed
+              ? FLucideIcons.pencil
+              : FLucideIcons.book,
+          label: _fixOpen
+              ? 'Close'
+              : routed
+              ? 'Change'
+              : 'Choose a recipe',
+          primary: !routed && !_fixOpen,
+          onPressed: busy ? null : () => setState(() => _fixOpen = !_fixOpen),
+        ),
+      if (!routed && !_fixOpen && offers(m, HoldDecision.confirm))
+        _Action(
+          icon: FLucideIcons.check,
+          label: 'Confirm (poured away)',
+          onPressed: busy
+              ? null
+              : () => cubit.override(m.position, raw: m.raw, confirmed: true),
+        ),
+      if (!routed && !_fixOpen && offers(m, HoldDecision.skip))
+        _Action(
+          icon: FLucideIcons.ban,
+          label: 'Skip',
+          onPressed: busy
+              ? null
+              : () => cubit.override(m.position, raw: m.raw, skipped: true),
+        ),
+      if (_routedChild(m) case final routedChild?)
+        _openChild(context, routedChild),
+    ]);
+  }
 
   Widget _actions(BuildContext context, MatchBucket b) {
     final cubit = context.read<NutritionCubit>();
     final busy = widget.busy;
     final toggleFix = busy ? null : () => setState(() => _fixOpen = !_fixOpen);
+    if (widget.match.child case final child? when b != MatchBucket.skipped) {
+      return _referenceActions(context, child);
+    }
     if (b == MatchBucket.skipped) {
       return _ActionBar([
         _Action(
@@ -704,11 +832,14 @@ class _MatchRowState extends State<_MatchRow> {
     final primaryLabel = _fixOpen
         ? 'Close'
         : switch (b) {
+            // A rendered two-part row (v41): Change undoes the rule.
+            MatchBucket.counted when widget.match.parts.isNotEmpty => 'Change',
             MatchBucket.counted => 'Adjust…',
             MatchBucket.check => 'Fix match & amount',
             MatchBucket.noAmount => 'Add amount',
             MatchBucket.noMatch => 'Find a match',
             MatchBucket.skipped => 'Fix…',
+            MatchBucket.chooseRecipe => 'Choose a recipe',
           };
     return _ActionBar([
       _Action(
@@ -767,12 +898,14 @@ class _MatchRowState extends State<_MatchRow> {
 class _GuidedFlow extends StatefulWidget {
   const _GuidedFlow({
     required this.isAdmin,
+    required this.parent,
     required this.busy,
     required this.attention,
     required this.onExit,
   });
 
   final bool isAdmin;
+  final ReviewParent? parent;
   final bool busy;
   final List<IngredientMatch> attention;
   final VoidCallback onExit;
@@ -832,12 +965,20 @@ class _GuidedFlowState extends State<_GuidedFlow> {
             // SAVED line leaves the attention list on the refresh, which
             // advances the flow by itself — incrementing here too skipped
             // the next flagged line on every fix (review B6).
-            FixPanel(
-              key: ValueKey('guided-${m.position}'),
-              match: m,
-              busy: widget.busy,
-              onDone: _next,
-            ),
+            if (m.child != null)
+              RecipeFixPanel(
+                key: ValueKey('guided-${m.position}'),
+                match: m,
+                busy: widget.busy,
+                parent: widget.parent,
+              )
+            else
+              FixPanel(
+                key: ValueKey('guided-${m.position}'),
+                match: m,
+                busy: widget.busy,
+                onDone: _next,
+              ),
           ],
           const SizedBox(height: 18),
           Row(
@@ -974,10 +1115,20 @@ String? _summaryLine(NutritionState state) {
           ?.where((match) => zeroGuessOf(match) && match.status == 'auto')
           .length ??
       0;
+  // v41: how many of the counting lines are counted from a child recipe.
+  final routed =
+      state.matches
+          ?.where(
+            (match) =>
+                match.child?.state == 'routed' && match.status != 'skipped',
+          )
+          .length ??
+      0;
   final parts = <String>[
     '${nutrition.totalCount} lines',
     '${nutrition.matchedCount} counting'
         '${zeros > 0 ? ', $zeros of them as zero' : ''}'
+        '${routed > 0 ? ', $routed of them from a recipe' : ''}'
         '${nutrition.lowConfidence > 0 ? ' (${nutrition.lowConfidence} to review)' : ''}',
   ];
   final skipped =

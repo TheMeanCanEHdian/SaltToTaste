@@ -6,6 +6,7 @@ import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/widgets/salt_badge.dart';
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
+import 'package:salt_app/features/nutrition/recipe_fix_panel.dart';
 import 'package:salt_app/features/nutrition/review_sheet.dart';
 
 /// The nutrition panel for a recipe detail page (approved P6 design): a
@@ -19,9 +20,13 @@ class NutritionPanel extends StatelessWidget {
     this.badgeFirst = false,
     this.startExpanded = true,
     this.yieldText,
+    this.parent,
   });
 
   final bool isAdmin;
+
+  /// The recipe, as its review sheet's recipe fix panel names it (v41).
+  final ReviewParent? parent;
 
   /// The recipe's servings text ("MAKES 1 LOAF"): a per-batch label names
   /// the yield it came from ([perBatchYieldLine]).
@@ -54,6 +59,7 @@ class NutritionPanel extends StatelessWidget {
       nutrition: nutrition,
       isAdmin: isAdmin,
       fullWidth: badgeFirst,
+      parent: parent,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,6 +81,12 @@ class NutritionPanel extends StatelessWidget {
           'Computed from USDA FoodData Central',
           style: TextStyle(fontSize: 11.5, color: SaltColors.muted),
         ),
+        // The child recipes the totals read (v41), for members too.
+        if (includesLine(nutrition) case final includes?)
+          Text(
+            includes,
+            style: const TextStyle(fontSize: 11, color: SaltColors.muted),
+          ),
         if (state.error != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -232,15 +244,52 @@ class _StaleBanner extends StatelessWidget {
   }
 }
 
+/// The label's provenance line (v41, the copy sheet): every child recipe
+/// the totals read, with its flag; null when none.
+String? includesLine(RecipeNutrition nutrition) {
+  final includes = nutrition.includes;
+  if (includes.isEmpty) {
+    return null;
+  }
+  final n = includes.length;
+  final titles = [
+    for (final child in includes)
+      child.flag == null ? child.title : '${child.title} (${child.flag})',
+  ].join(', ');
+  return 'Includes $n ${n == 1 ? 'recipe' : 'recipes'}: $titles';
+}
+
+/// The label's partial lines (v41, the copy sheet; A4's reasons): each
+/// reference line that keeps the totals from being whole, and why.
+List<String> partialLines(RecipeNutrition nutrition) => [
+  for (final line in nutrition.partial)
+    switch (line.kind) {
+      'child_partial' =>
+        'Partial: ${line.title} is partial (${line.matched} of '
+            '${line.total} lines).',
+      'not_routed' =>
+        'Partial: ${line.name} is not counted (${switch (line.reason) {
+          'section' => 'its section has no totals yet',
+          'served_with' => 'served with it, not made from it',
+          'no_amount' => 'no amount on the line',
+          'no_share' => 'no share the yield can read',
+          final other => other ?? 'not counted',
+        }}).',
+      _ => 'Partial: ${line.name} is not counted (no recipe chosen).',
+    },
+];
+
 class _MatchBadge extends StatelessWidget {
   const _MatchBadge({
     required this.nutrition,
     required this.isAdmin,
     this.fullWidth = false,
+    this.parent,
   });
 
   final RecipeNutrition nutrition;
   final bool isAdmin;
+  final ReviewParent? parent;
 
   /// Mobile: the badge stretches with the chevron pushed to the far edge
   /// (approved design); the rail keeps it intrinsic.
@@ -262,7 +311,7 @@ class _MatchBadge extends StatelessWidget {
       label,
       tone: complete ? SaltBadgeTone.ok : SaltBadgeTone.warn,
       icon: complete ? FLucideIcons.circleCheck : FLucideIcons.triangleAlert,
-      onTap: () => showReviewSheet(context, isAdmin: isAdmin),
+      onTap: () => showReviewSheet(context, isAdmin: isAdmin, parent: parent),
       semanticHint: 'Opens ingredient review',
       expand: fullWidth,
     );
@@ -513,6 +562,20 @@ class _FdaLabelState extends State<_FdaLabel>
                 ),
               ],
             ),
+            // Which part the number leaves out (v41), above the fold so a
+            // collapsed label still says it.
+            for (final line in partialLines(widget.nutrition))
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 3),
+                decoration: const BoxDecoration(
+                  border: Border(top: BorderSide(color: Colors.black)),
+                ),
+                child: Text(
+                  line,
+                  style: const TextStyle(color: Colors.black, fontSize: 11),
+                ),
+              ),
             if (_hasDetails) ...[
               // FCollapsible clips the detail region as its value lerps 0→1;
               // at 0 it also drops the hidden rows from semantics and focus.

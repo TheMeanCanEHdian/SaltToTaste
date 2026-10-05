@@ -11,6 +11,7 @@ import 'package:salt_shared/salt_shared.dart'
         holdActionsOf,
         matchBucketFor,
         mediumHolds,
+        noRecordHolds,
         vulgarFractionChars;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
@@ -19,6 +20,7 @@ import 'package:salt_app/core/api/recipe_repository.dart'
 import 'package:salt_app/core/theme/salt_theme.dart';
 import 'package:salt_app/core/util/relative_age.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
+import 'package:salt_app/features/settings/nutrition_tab.dart' show thousands;
 
 export 'package:salt_shared/salt_shared.dart' show MatchBucket;
 
@@ -98,17 +100,22 @@ String zeroReason(IngredientMatch m) => m.gramSource == 'discarded'
 /// `food_gone` row the server then refused). Every button below reads it,
 /// as the server's PUT gate and the queue's `finishes` SQL do.
 bool offers(IngredientMatch m, HoldDecision decision) =>
-    holdActionsOf(m.hold).offers.contains(decision);
+    offeredOn(m).contains(decision);
+
+/// The decisions offered on [m]'s line: its hold's table row — a routed
+/// reference row's is [routedActions] (v41: confirm, another recipe, skip)
+/// — and on a reference line the engine does not route, a skip alone (A3
+/// a: the PUT refuses a food or a recipe on it).
+Set<HoldDecision> offeredOn(IngredientMatch m) => switch (m.child?.state) {
+  'not_routed' => const {HoldDecision.skip},
+  final state => holdActionsOf(m.hold, routed: state == 'routed').offers,
+};
 
 /// Whether nothing on a line held [hold] can count its food — a food USDA
 /// no longer serves or will not serve now (`food_gone`,
-/// `food_unavailable`): the action table offers no Confirm and no typed
-/// grams.
-bool noRecordHold(String? hold) {
-  final offered = holdActionsOf(hold).offers;
-  return !offered.contains(HoldDecision.confirm) &&
-      !offered.contains(HoldDecision.typed);
-}
+/// `food_unavailable`): the table's no-record family (`noRecordHolds`),
+/// never a reference line's recipe hold, which takes no food at all (v41).
+bool noRecordHold(String? hold) => noRecordHolds.contains(hold);
 
 /// A line held as a poured-away medium or as shellfish bought in the shell
 /// (ruling 5): its card leads with "Skip, poured away" / "Enter edible
@@ -194,6 +201,30 @@ const Map<String, double> unitToGrams = {'g': 1, 'oz': 28.3495, 'lb': 453.592};
 String fmtAmount(double v) =>
     v < 10 ? v.toStringAsFixed(1) : v.round().toString();
 
+/// Calories with a thousands comma ("3,057").
+String kcalText(double v) => thousands(v.round());
+
+/// A reference row's share (v41, the copy sheet): "{n} recipe" when the line
+/// counts in recipes, else "{share} of {title} ({line amount} of {yield
+/// amount})"; null when no share is read.
+String? shareLabel(IngredientMatch m) {
+  final c = m.child;
+  final n = c?.shareText;
+  if (c == null || n == null) {
+    return null;
+  }
+  final amount = m.lineAmount;
+  final yieldText = c.yieldText;
+  if (amount == null ||
+      amount.endsWith('recipe') ||
+      c.title == null ||
+      yieldText == null) {
+    return '$n recipe';
+  }
+  final made = yieldText.toLowerCase().replaceFirst(RegExp('^makes '), '');
+  return '$n of ${c.title} ($amount of $made)';
+}
+
 String gramSourceLabel(String? source) => switch (source) {
   'weight' => 'from the weight you gave',
   'portion' => 'USDA household portion',
@@ -208,6 +239,24 @@ String gramSourceLabel(String? source) => switch (source) {
 Widget sourceChip(String? dataType) {
   if (dataType == null || dataType.isEmpty) {
     return const SizedBox.shrink();
+  }
+  // A row counted from a child recipe (v41): no USDA record, the brand tint.
+  if (dataType == 'Recipe') {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: SaltColors.chip,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Text(
+        'Recipe',
+        style: TextStyle(
+          fontSize: 11,
+          color: SaltColors.chipInk,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
   final foundation = dataType == 'Foundation';
   return Tooltip(
@@ -240,7 +289,8 @@ Widget sourceChip(String? dataType) {
 /// ambiguous oil shares).
 String? holdReason(String? hold, {String? note}) => switch (hold) {
   'no_nutrients' => 'USDA publishes no calories or macros for this food',
-  'discarded_medium' =>
+  // A reference marinade, poured away (v41, A5 a): the medium's words.
+  'discarded_medium' || 'discarded_recipe' =>
     'Looks like a cooking medium the recipe discards (frying oil, a brine, '
         'a soak, cheese-making milk, drained cooking water)',
   'starter_discard' =>
@@ -274,6 +324,15 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
   'food_unavailable' =>
     'USDA kept failing to send this food (several syncs in a row) — pick '
         'again, or skip the line',
+  // A reference line no recipe counts (v41): the sheet's own clauses — the
+  // generic one for choose_recipe (its reason is the child's, not the
+  // hold's), the nested one verbatim; the WhyLine words both whole
+  // ([chooseRecipeWhy]).
+  'choose_recipe' =>
+    'Made from another recipe: the line names no single recipe',
+  'nested_recipe' =>
+    'Made from a recipe that is itself made from another recipe: only one '
+        'level is read',
   null || '' => null,
   final other => 'Held by the engine: ${other.replaceAll('_', ' ')}',
 };
@@ -334,6 +393,20 @@ class WhyLine extends StatelessWidget {
         'No USDA match found — not counted',
         SaltColors.errInk,
       ),
+      // A reference line no recipe counts yet (v41, the copy sheet).
+      MatchBucket.chooseRecipe => (
+        chooseRecipeWhy(match.child?.reason, match.child?.name ?? ''),
+        SaltColors.warnInk,
+      ),
+      // A reference the yield gives no share of: counted as 0 g (R3).
+      MatchBucket.counted
+          when match.child?.state == 'not_routed' &&
+              match.child?.reason == 'no_share' =>
+        (
+          'Made from ${match.child?.title ?? match.child?.name}, but there '
+              'is no share the yield can read — not counted',
+          SaltColors.muted,
+        ),
       // A divided line's hold a pick resolved says so ("eaten part counted
       // after your pick", the server's hold_note with no hold; Run 054 H5a).
       MatchBucket.counted => (held ?? match.holdNote ?? '', SaltColors.muted),
@@ -378,6 +451,20 @@ class WhyLine extends StatelessWidget {
     );
   }
 }
+
+/// Why a reference line is held for a recipe (v41, the copy sheet), by the
+/// child's `reason`: no library recipe has its title, it names no single
+/// recipe, or its child is itself made from another recipe.
+String chooseRecipeWhy(String? reason, String item) => reason == 'nested'
+    ? 'Made from a recipe that is itself made from another recipe: only one '
+          'level is read — held out of the totals. Pick another recipe, or '
+          'skip the line'
+    : reason == 'generic'
+    ? 'Made from another recipe: the line names no single recipe ("$item") '
+          '— held out of the totals. Pick the recipe it means, or skip the '
+          'line'
+    : 'Made from another recipe: no library recipe is titled "$item" — held '
+          'out of the totals. Pick the recipe it means, or skip the line';
 
 /// A carried decision's label: its grams in the totals come from the line's
 /// previous amount ([IngredientMatch.carriedFrom]) until a recompute
@@ -497,6 +584,27 @@ class CurrentMatch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final description = match.description;
+    final child = match.child;
+    if (child != null && child.state == 'routed') {
+      return _routed(match, child);
+    }
+    if (child != null && child.state == 'held') {
+      return Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Text(
+          [
+            'no recipe chosen',
+            ?shareLabel(match),
+            // Held out of the totals: always 0 g (the copy sheet's "0 g").
+            '0 g',
+          ].join(' · '),
+          style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
+        ),
+      );
+    }
+    if (match.parts.isNotEmpty) {
+      return _twoParts(match);
+    }
     if (match.fdcId == null) {
       // A deliberate no-match the engine explains — water, seasoning to
       // taste — says so; the badge alone read as "looks fine" for no reason.
@@ -576,6 +684,161 @@ class CurrentMatch extends StatelessWidget {
     );
   }
 }
+
+const _muted = TextStyle(fontSize: 12.5, color: SaltColors.muted);
+const _basis = TextStyle(
+  fontSize: 11.5,
+  color: SaltColors.muted,
+  fontStyle: FontStyle.italic,
+);
+
+/// A row counted from a child recipe (v41): the recipe, its Recipe chip,
+/// the share, grams and calories; the basis with the per-serving gain;
+/// the flag on its own line.
+Widget _routed(IngredientMatch match, RecipeRef child) {
+  final kcal = child.kcal;
+  final perServing = child.kcalPerServing;
+  return Padding(
+    padding: const EdgeInsets.only(top: 2),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: 'made from the recipe ', style: _muted),
+                  TextSpan(
+                    text: child.title ?? child.slug ?? '',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            sourceChip('Recipe'),
+            Text(
+              [
+                '',
+                ?shareLabel(match),
+                '${fmtAmount(match.grams ?? 0)} g',
+                if (kcal != null) '${kcalText(kcal)} kcal',
+              ].join(' · ').trim(),
+              style: const TextStyle(fontSize: 12, color: SaltColors.muted),
+            ),
+          ],
+        ),
+        if (match.gramBasis != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              'amount: ${match.gramBasis}'
+              '${perServing == null ? '' : ' · +${perServing.round()} kcal per serving'}',
+              style: _basis,
+            ),
+          ),
+        ?_flagLine(match.flag),
+      ],
+    ),
+  );
+}
+
+/// A rendered row (v41, R2): one line, two records — each with its grams
+/// and FDC chip — the basis, and the engine's flag.
+Widget _twoParts(IngredientMatch match) {
+  final parts = match.parts;
+  return Padding(
+    padding: const EdgeInsets.only(top: 2),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'matched to two records, cooked and drained:',
+          style: _muted,
+        ),
+        for (final (i, part) in parts.indexed)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, left: 10),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text:
+                            '${i == 0 ? '' : '+ '}'
+                            '${fmtAmount(part.grams)} g · ',
+                        style: _muted,
+                      ),
+                      TextSpan(
+                        text: part.description ?? '${part.fdcId}',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                sourceChip(part.dataType),
+                if (i > 0)
+                  const Text(
+                    '· kept in the pan',
+                    style: TextStyle(fontSize: 12, color: SaltColors.muted),
+                  ),
+              ],
+            ),
+          ),
+        if (match.gramBasis != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text('amount: ${match.gramBasis}', style: _basis),
+          ),
+        ?_flagLine(match.flag),
+      ],
+    ),
+  );
+}
+
+/// The engine's flag on its own line (v41), so the name before it is never
+/// cut off; null when the row carries none.
+Widget? _flagLine(String? flag) => flag == null
+    ? null
+    : Padding(
+        padding: const EdgeInsets.only(top: 3),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1, right: 5),
+              child: Icon(
+                FLucideIcons.flag,
+                size: 12,
+                color: SaltColors.warnInk,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                flag,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: SaltColors.warnInk,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 
 /// The combined "change the match AND set the amount" panel. Picking a
 /// candidate recomputes grams on the server (showing the real recommended
@@ -1494,7 +1757,8 @@ List<IngredientMatch> openLinesBesides(
         switch (matchBucketOf(m)) {
           MatchBucket.noMatch ||
           MatchBucket.check ||
-          MatchBucket.noAmount => true,
+          MatchBucket.noAmount ||
+          MatchBucket.chooseRecipe => true,
           MatchBucket.counted || MatchBucket.skipped => false,
         })
       m,
@@ -1657,8 +1921,11 @@ class SearchRow extends StatelessWidget {
     required this.controller,
     required this.searching,
     required this.onSearch,
+    this.hint = 'Search USDA for a better match…',
   });
 
+  /// The field's placeholder (the recipe panel searches the library).
+  final String hint;
   final TextEditingController controller;
   final bool searching;
   final VoidCallback? onSearch;
@@ -1678,7 +1945,7 @@ class SearchRow extends StatelessWidget {
             Expanded(
               child: FTextField(
                 control: FTextFieldControl.managed(controller: controller),
-                hint: 'Search USDA for a better match…',
+                hint: hint,
                 onSubmit: (_) => onSearch?.call(),
               ),
             ),
@@ -1789,8 +2056,15 @@ class CandidateRow extends StatelessWidget {
 }
 
 class UnitToggle extends StatelessWidget {
-  const UnitToggle({super.key, required this.unit, required this.onChanged});
+  const UnitToggle({
+    super.key,
+    required this.unit,
+    required this.onChanged,
+    this.units = const ['g', 'oz', 'lb'],
+  });
 
+  /// The segments, in order (a share offers the child's yield units).
+  final List<String> units;
   final String unit;
   final ValueChanged<String> onChanged;
 
@@ -1824,7 +2098,7 @@ class UnitToggle extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [seg('g'), seg('oz'), seg('lb')],
+          children: [for (final u in units) seg(u)],
         ),
       ),
     );

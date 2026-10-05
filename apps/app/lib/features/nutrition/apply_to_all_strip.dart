@@ -260,11 +260,16 @@ class ApplyToAllStrip extends StatelessWidget {
             child: const Text('Not now'),
           ),
       ];
-      footer =
-          'Sets this food on their unreviewed ${o.label} lines, each with '
-          'its own amount, and recomputes their labels. Lines someone already '
-          'decided are left alone. Reversible: pick a different food here and '
-          'apply again.';
+      // A recipe decision (v41: a pick or a Confirm on a routed row) reads
+      // the mockup's recipe wording.
+      footer = o.recipe
+          ? 'Sets this recipe on their undecided "${o.label}" lines, each '
+                'keeping its own share, and recomputes their labels. Lines '
+                'someone already decided are left alone.'
+          : 'Sets this food on their unreviewed ${o.label} lines, each with '
+                'its own amount, and recomputes their labels. Lines someone '
+                'already decided are left alone. Reversible: pick a different '
+                'food here and apply again.';
     }
     final actions = Wrap(spacing: 6, runSpacing: 6, children: buttons);
     return Container(

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forui/forui.dart';
-import 'package:salt_shared/salt_shared.dart' show HoldDecision, mediumHolds;
+import 'package:salt_shared/salt_shared.dart'
+    show HoldDecision, mediumHolds, recipeChoiceHolds;
 
 import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
@@ -13,6 +14,7 @@ import 'package:salt_app/features/admin/nutrition_review_cubit.dart';
 import 'package:salt_app/features/nutrition/apply_to_all_strip.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
 import 'package:salt_app/features/nutrition/nutrition_cubit.dart';
+import 'package:salt_app/features/nutrition/recipe_fix_panel.dart';
 
 /// The cross-recipe nutrition-match review queue (Layout A, master-detail): a
 /// list of flagged ingredient lines (or groups) on the left, in the chosen
@@ -45,7 +47,7 @@ class NutritionReviewQueue extends StatelessWidget {
 SaltBadgeTone _bucketTone(String id) => switch (id) {
   'no_match' => SaltBadgeTone.err,
   'no_grams' => SaltBadgeTone.info,
-  'check' => SaltBadgeTone.warn,
+  'check' || 'choose_recipe' => SaltBadgeTone.warn,
   'skipped' => SaltBadgeTone.neutral,
   _ => SaltBadgeTone.neutral,
 };
@@ -53,7 +55,7 @@ SaltBadgeTone _bucketTone(String id) => switch (id) {
 Color _bucketStripe(String id) => switch (id) {
   'no_match' => SaltColors.errInk,
   'no_grams' => SaltColors.infoInk,
-  'check' => SaltColors.warnInk,
+  'check' || 'choose_recipe' => SaltColors.warnInk,
   _ => SaltColors.muted,
 };
 
@@ -330,9 +332,10 @@ class _QueueList extends StatelessWidget {
   }
 
   String _bucketLabel(NutritionReviewLoaded state) {
+    // Lower-cased in the sentence ("Showing choose recipe · …").
     for (final b in state.buckets) {
       if (b.id == state.bucket) {
-        return b.label;
+        return b.label.toLowerCase();
       }
     }
     return state.bucket ?? '';
@@ -476,7 +479,11 @@ class _QueueRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final match = line.match;
-    final food = match?.description ?? 'no food matched';
+    // A reference line held for a recipe (v41) has no food on purpose.
+    final heldRecipe = match?.child?.state == 'held';
+    final food = heldRecipe
+        ? 'no recipe chosen'
+        : match?.description ?? 'no food matched';
     final foodColor = switch (line.bucket) {
       'no_match' || 'check' => SaltColors.errInk,
       _ => SaltColors.bodyText,
@@ -484,7 +491,18 @@ class _QueueRow extends StatelessWidget {
     // A group of one IS today's row — no pill, no "e.g.", no amount slot —
     // which is what makes grouping free on the majority of rows.
     final group = line.lines > 1;
-    final amount = groupAmountLine(line);
+    final share = match?.child?.shareText;
+    // Out of the totals until a recipe is chosen: the recipe-choice holds
+    // only — a poured-away marinade is finished by a Confirm (A5 a).
+    final awaitsRecipe = heldRecipe && recipeChoiceHolds.contains(match?.hold);
+    final amount = awaitsRecipe
+        ? (
+            text:
+                '${share == null ? '' : '$share recipe · '}counts 0 g until a '
+                'recipe is chosen',
+            warn: false,
+          )
+        : groupAmountLine(line);
     final soft = group ? lastOpenNote(line) : null;
     final hold = group ? null : lineHoldNote(line);
     return FTappable(
@@ -642,7 +660,8 @@ class _QueueRow extends StatelessWidget {
                     _rowBadgeLabel(line.bucket),
                     tone: _bucketTone(line.bucket),
                   ),
-                  if (match != null) ...[
+                  // A reference row's confidence names no food.
+                  if (match != null && match.child == null) ...[
                     const SizedBox(height: 5),
                     Text(
                       '${(match.confidence * 100).round()}% name',
@@ -842,6 +861,15 @@ String? lineHoldNote(NutritionReviewLine line) {
     'second_food' =>
       'line hold (second food): ${head}Any decision finishes it: Confirm, '
           'Skip, or a typed positive amount$noZero',
+    // A reference line no recipe counts (v41; A4's generic wording).
+    'choose_recipe' || 'nested_recipe' =>
+      'line hold (choose recipe): ${match?.child?.reason == 'missing' ? 'no library recipe has this title' : 'the line names no single recipe'}. '
+          'Any decision finishes it: Choose a recipe, or Skip if the recipe '
+          'is made without it.',
+    // A reference marinade, poured away (A5 a): no food, no grams.
+    'discarded_recipe' =>
+      'line hold (discarded recipe): ${head}Any decision finishes it: Skip, '
+          'Confirm (poured away) or Choose a recipe.',
     // Not a line hold — the person's food has no record (gone from USDA,
     // or failing) — but decided one line at a time all the same (a decided
     // row is its own group); how it finishes is the action table's.
@@ -856,6 +884,7 @@ String _rowBadgeLabel(String bucket) => switch (bucket) {
   'no_match' => 'no match',
   'no_grams' => 'no grams',
   'check' => 'check match',
+  'choose_recipe' => 'choose recipe',
   'skipped' => 'skipped',
   _ => bucket,
 };
@@ -1138,7 +1167,8 @@ class _FixContentState extends State<_FixContent> {
           // Confirm and Skip sit above the fix panel (B) — except where the
           // amount block leads (C): its Confirm carries the amount, and its
           // Skip sits beside it.
-          if (!amountFirst) ...[
+          // A reference line's decisions are its recipe panel's (v41).
+          if (!amountFirst && match.child == null) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -1219,22 +1249,30 @@ class _FixContentState extends State<_FixContent> {
             ),
           ],
           const SizedBox(height: 12),
-          FixPanel(
-            match: match,
-            busy: busy,
-            onDone: () {},
-            showCancel: false,
-            amountFocus: _amountFocus,
-            recipeTitle: line.recipe.title,
-            onSkip: skip,
-            group: line.lines > 1
-                ? (
-                    item: groupLabel(line),
-                    others: line.lines - 1,
-                    staysOn: staysOnIngredient(line),
-                  )
-                : null,
-          ),
+          if (match.child != null)
+            RecipeFixPanel(
+              match: match,
+              busy: busy,
+              parent: (title: line.recipe.title, hasSections: null),
+              onSkip: skip,
+            )
+          else
+            FixPanel(
+              match: match,
+              busy: busy,
+              onDone: () {},
+              showCancel: false,
+              amountFocus: _amountFocus,
+              recipeTitle: line.recipe.title,
+              onSkip: skip,
+              group: line.lines > 1
+                  ? (
+                      item: groupLabel(line),
+                      others: line.lines - 1,
+                      staysOn: staysOnIngredient(line),
+                    )
+                  : null,
+            ),
         ],
       ),
     );

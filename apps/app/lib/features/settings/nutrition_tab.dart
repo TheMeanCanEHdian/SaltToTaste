@@ -571,7 +571,7 @@ class _NutritionTabState extends State<NutritionTab> {
   /// "Compute 1,190 missing" / "Recompute 3 stale" / "Recompute all 1,198";
   /// without a count yet, the bare verb form.
   String _buttonLabel(int? count) {
-    final n = count == null ? null : _thousands(count);
+    final n = count == null ? null : thousands(count);
     return switch (_scope) {
       BulkScope.missing => n == null ? 'Compute missing' : 'Compute $n missing',
       BulkScope.stale => n == null ? 'Recompute stale' : 'Recompute $n stale',
@@ -668,8 +668,8 @@ class _NutritionTabState extends State<NutritionTab> {
           ),
           const SizedBox(height: 6),
           Text(
-            '${_thousands(job.done)} / ${_thousands(job.total)} computed'
-            '${job.failed > 0 ? ' · ${_thousands(job.failed)} failed' : ''}',
+            '${thousands(job.done)} / ${thousands(job.total)} computed'
+            '${job.failed > 0 ? ' · ${thousands(job.failed)} failed' : ''}',
             style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
           ),
         ],
@@ -685,14 +685,14 @@ class _NutritionTabState extends State<NutritionTab> {
     final String text;
     if (failedJob) {
       text =
-          'Bulk compute failed after ${_thousands(job.done)} of '
-          '${_thousands(job.total)} —';
+          'Bulk compute failed after ${thousands(job.done)} of '
+          '${thousands(job.total)} —';
     } else if (job.failed > 0) {
       text =
-          '${_thousands(job.done)} computed, '
-          '${_thousands(job.failed)} failed —';
+          '${thousands(job.done)} computed, '
+          '${thousands(job.failed)} failed —';
     } else {
-      final n = _thousands(job.total);
+      final n = thousands(job.total);
       text = switch (_jobScope) {
         BulkScope.stale => 'All $n stale recipes recomputed.',
         BulkScope.all => 'All $n recipes recomputed.',
@@ -952,7 +952,7 @@ class _Segment extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    _thousands(count),
+                    thousands(count),
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
@@ -1006,7 +1006,7 @@ class _OkBanner extends StatelessWidget {
 }
 
 /// "1198" -> "1,198".
-String _thousands(int n) {
+String thousands(int n) {
   final digits = n.toString();
   final buffer = StringBuffer();
   for (var i = 0; i < digits.length; i++) {

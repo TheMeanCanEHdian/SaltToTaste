@@ -1575,8 +1575,10 @@ void main() {
       await openSheet(tester, [rulesLine(11)]);
       expect(
         find.text(
-          'amount: from 2 ounce · approximation (counted as Pork, cured, '
-          'bacon, unprepared)',
+          // v41's rendered row (R2): the two parts, then the shipped flag.
+          'amount: 57 g raw → 23 g cooked bacon + 13 g bacon grease kept in '
+          'the pan · approximation (counted as Pork, cured, bacon, '
+          'unprepared)',
         ),
         findsOneWidget,
       );
@@ -1658,6 +1660,9 @@ void main() {
         grams: null,
         others: 8,
         lines: 8,
+        child: null,
+        share: null,
+        recipe: false,
       );
       await pumpStrip(
         tester,
@@ -1769,6 +1774,9 @@ void main() {
         grams: null,
         others: 8,
         lines: 8,
+        child: null,
+        share: null,
+        recipe: false,
       );
       await pumpStrip(tester, offer: offer, promise: promised);
       expect(
@@ -2160,13 +2168,15 @@ void main() {
         final match = await pumpLive(tester, ham, cubit);
         await tester.tap(find.text('oz'));
         await tester.pumpAndSettle();
-        expect(find.text('128'), findsOneWidget);
+        // The ham's 2,750.2 g (v39's bone-in yield) in ounces.
+        expect(find.text('97'), findsOneWidget);
         await tester.enterText(find.byType(EditableText).last, '100');
         await tester.pumpAndSettle();
         match.value = chicken;
         await tester.pumpAndSettle();
-        // The unit: the chicken's 1,587.572 g in grams, never in ounces (56).
-        expect(find.text('1588'), findsOneWidget);
+        // The unit: the chicken's 966.0 g (v39) in grams, never in ounces
+        // (34).
+        expect(find.text('966'), findsOneWidget);
         // The typed flag: a pick on the chicken line now lets the server
         // weigh it — the reset field is no hand-typed amount to send.
         await tester.tap(

@@ -40,6 +40,9 @@ void main() {
     grams: null,
     others: 41,
     lines: 41,
+    child: null,
+    share: null,
+    recipe: false,
   );
 
   Future<void> pumpAt(
@@ -70,6 +73,9 @@ void main() {
                 grams: offer.grams,
                 others: others,
                 lines: others,
+                child: null,
+                share: null,
+                recipe: false,
               ),
               applied: null,
               applying: false,
@@ -121,6 +127,9 @@ void main() {
                 grams: null,
                 others: others,
                 lines: lines,
+                child: null,
+                share: null,
+                recipe: false,
               ),
               applied: null,
               applying: applying,
