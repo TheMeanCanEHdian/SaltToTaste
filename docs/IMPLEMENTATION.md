@@ -3394,6 +3394,22 @@ theme_test untouched, no package added. Two notes left for the owner: a
 words appearing in the label's Partial line; and the queue's headers now
 read in lower case throughout, as the mockup draws them.
 
+The blind re-calibration after v39–v41 (the audit's 25 recipes; the
+hand figures reused, being independent of the engine;
+`.claude/diag/2026-10-05/recal_v41.md`): mean absolute error 11.3 % →
+5.8 %, median 4.4 % → 4.0 %, the engine-high bias +3.4 % → +0.8 %; Blueberry
+Pie +0.2 % (the dough routed), the buffalo wings −18.2 % against a hand
+figure that counts the dressing the engine holds for a recipe choice, the
+known person's lines unchanged. At line level, counted lines within 15 %
+of the auditors' grams rose from 161 to 171 of 197 (within 25 %: 166 →
+180) and the engine's gram total over the auditors' fell from 1.20 to
+1.01; every bone-in line is inside 25 % but the beef back ribs (1.19×, as
+the plan said). Two ceilings stand: a whole bird that keeps its wing skin
+now reads 13 % under (the meat-only yield removes all skin; flagged), and
+the SR meat-only thigh share runs about 17 % under the auditors' estimate
+on two recipes. The remaining outliers are a person's lines, small herb
+and aromatic amounts, and produce yields for a later batch.
+
 ## Decision log (deviations & clarifications)
 
 - **2026-10-05 — the composite-row design (matcher v41; the owner: "go with your
