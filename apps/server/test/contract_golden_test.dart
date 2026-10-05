@@ -217,6 +217,17 @@ const List<Map<String, Object?>> _rulesLines = [
     'item': 'unsalted butter',
     'prep': 'cut into chunks and softened',
   },
+  // Matcher v41 (R2), APPENDED (the PUTs below address positions 9 and
+  // 12): Wilted Spinach Salad's (0040) bacon, rendered by its pour-off step
+  // ([_rulesSteps]' last) — one row, two records (`parts`), flagged.
+  {
+    'raw': '10 ounces (about 8 slices) thick-cut bacon, cut into ½-inch pieces',
+    'amounts': [
+      {'measure': 'weight', 'quantity': '10', 'unit': 'ounce', 'primary': true},
+    ],
+    'item': '(about 8 slices) thick-cut bacon',
+    'prep': 'cut into 1/2-inch pieces',
+  },
 ];
 
 /// 0799 Sourdough Starter's lines and method, as the corpus stores them:
@@ -340,6 +351,23 @@ const List<Map<String, Object?>> _rulesSteps = [
         'flour, mustard, cayenne (if using), and remaining 1 teaspoon salt '
         'and whisk well to combine. Continue whisking until the mixture '
         'becomes fragrant and deepens in color, about 1 minute.',
+  },
+  // Wilted Spinach Salad's (0040) step 2, verbatim (matcher v41, R2).
+  {
+    'number': 3,
+    'text':
+        'Fry the bacon in a medium skillet over medium-high heat, stirring '
+        'occasionally, until crisp, about 10 minutes. Using a slotted spoon, '
+        'transfer the bacon to a paper towel–lined plate. Pour off all but 3 '
+        'tablespoons of the bacon fat left in the pan. Add the onion to the '
+        'skillet and cook over medium heat, stirring frequently, until '
+        'softened, about 3 minutes. Stir in the garlic and cook until '
+        'fragrant, about 15 seconds. Add the vinegar mixture, then remove the '
+        'skillet from the heat. Working quickly, scrape the bottom of the '
+        'skillet with a wooden spoon to loosen the browned bits. Pour the hot '
+        'dressing over the spinach, add the bacon, and toss gently until the '
+        'spinach is slightly wilted. Divide the salad among individual plates, '
+        'arrange the egg quarters over each, and serve.',
   },
 ];
 
@@ -548,6 +576,62 @@ void main() {
       // over the recorded FDC answers: the citrus-juice and egg-sum second
       // foods, a pinch sized from the teaspoon, bird pieces on the
       // whole-bird record, and a fresh ham held off the cured record.
+      // Rule B1 (v41) counts the cooked bacon on SR 168322, which the FDC
+      // fixtures hold only as a hit of the "thin-sliced cooked deli ham"
+      // answer (snapshot 17 has no detail of it): Stuffed Chicken Cutlets
+      // with Ham and Cheddar's (0118) ham line, computed first, caches that
+      // answer as a library does — the appended bacon line reads it there.
+      final (hamPosted, hamBody) = await harness.send(
+        'POST',
+        '/api/v1/recipes',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {
+          'recipe': {
+            'title': 'Stuffed Chicken Cutlets with Ham and Cheddar',
+            'ingredients': [
+              {
+                'items': [
+                  {
+                    'raw':
+                        '4 slices (about 4 ounces) thin-sliced cooked deli ham',
+                    'amounts': [
+                      {
+                        'measure': 'count',
+                        'quantity': '4',
+                        'unit': 'slice',
+                        'primary': true,
+                      },
+                      {
+                        'measure': 'weight',
+                        'quantity': '4',
+                        'unit': 'ounce',
+                        'approximate': true,
+                        'primary': false,
+                      },
+                    ],
+                    'item': 'thin-sliced cooked deli ham',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      );
+      expect(hamPosted, HttpStatus.created, reason: hamBody);
+      final hamSlug =
+          ((jsonDecode(hamBody) as Map<String, dynamic>)['recipe']!
+              as Map<String, dynamic>)['slug'];
+      final (hamQueued, hamQueuedBody) = await harness.send(
+        'POST',
+        '/api/v1/recipes/$hamSlug/nutrition/compute',
+        headers: harness.auth(adminSession, csrf: true),
+      );
+      expect(hamQueued, HttpStatus.accepted, reason: hamQueuedBody);
+      await harness.awaitJob(
+        '/api/v1/nutrition/jobs/'
+        '${(jsonDecode(hamQueuedBody) as Map<String, dynamic>)['job_id']}',
+        harness.auth(adminSession),
+      );
       final (created, createdBody) = await harness.send(
         'POST',
         '/api/v1/recipes',
@@ -817,6 +901,96 @@ void main() {
         'nutrition_matches_held_pick',
         'GET',
         '/api/v1/recipes/$starterSlug/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+
+      // --- matcher v41: the composite row, corpus-free ---
+      // Six real corpus recipes (test/fixtures/contract-recipes/v41.json:
+      // their titles, yields, prep notes, ingredient lines and section
+      // titles, copied from the corpus) POSTed through the real route and
+      // computed over the recorded FDC answers, children first: Blueberry
+      // Pie's dough routes to the first of the three doughs its note names
+      // (flagged default; Foolproof All-Butter … for Double-Crust Pie listed
+      // as similar, never computed), and Free-Form Apple Tart's "Rustic Tart
+      // Dough" is held `choose_recipe` (missing).
+      final v41 = {
+        for (final entry
+            in jsonDecode(
+                  File(
+                    'test/fixtures/contract-recipes/v41.json',
+                  ).readAsStringSync(),
+                )
+                as List<dynamic>)
+          (entry as Map<String, dynamic>)['corpus_file'] as String:
+              entry['recipe'] as Map<String, dynamic>,
+      };
+      Future<String> post(String file, {bool compute = true}) async {
+        final (status, body) = await harness.send(
+          'POST',
+          '/api/v1/recipes',
+          headers: harness.auth(adminSession, csrf: true),
+          jsonBody: {'recipe': v41[file]},
+        );
+        expect(status, HttpStatus.created, reason: body);
+        final slug =
+            ((jsonDecode(body) as Map<String, dynamic>)['recipe']!
+                    as Map<String, dynamic>)['slug']!
+                as String;
+        if (compute) {
+          final (queued, queuedBody) = await harness.send(
+            'POST',
+            '/api/v1/recipes/$slug/nutrition/compute',
+            headers: harness.auth(adminSession, csrf: true),
+          );
+          expect(queued, HttpStatus.accepted, reason: queuedBody);
+          await harness.awaitJob(
+            '/api/v1/nutrition/jobs/'
+            '${(jsonDecode(queuedBody) as Map<String, dynamic>)['job_id']}',
+            harness.auth(adminSession),
+          );
+        }
+        return slug;
+      }
+
+      await post('0973-all-butter-double-crust-pie-dough.yaml');
+      await post('0972-basic-double-crust-pie-dough.yaml');
+      await post('0974-foolproof-double-crust-pie-dough.yaml');
+      await post(
+        '0976-foolproof-all-butter-dough-for-double-crust-pie.yaml',
+        compute: false,
+      );
+      final pie = await post('0979-blueberry-pie.yaml');
+      await harness.capture(
+        'nutrition_matches_subrecipe',
+        'GET',
+        '/api/v1/recipes/$pie/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_subrecipe',
+        'GET',
+        '/api/v1/recipes/$pie/nutrition',
+        headers: harness.auth(adminSession),
+      );
+      final tart = await post('1005-free-form-apple-tart.yaml');
+      await harness.capture(
+        'nutrition_matches_choose_recipe',
+        'GET',
+        '/api/v1/recipes/$tart/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_choose_recipe',
+        'GET',
+        '/api/v1/recipes/$tart/nutrition',
+        headers: harness.auth(adminSession),
+      );
+      // The queue's new chip, grouped as the admin app reads it: the tart's
+      // held line, its SLIM `child`, `finishes` 0.
+      await harness.capture(
+        'nutrition_review_choose_recipe',
+        'GET',
+        '/api/v1/admin/nutrition_review?group=item&bucket=choose_recipe',
         headers: harness.auth(adminSession),
       );
     });

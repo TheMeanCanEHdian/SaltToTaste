@@ -136,4 +136,17 @@ void main() {
       expect(failures, isEmpty);
     });
   });
+
+  // v41: a child recipe's share as the copy writes it (the matches GET's
+  // `child.share_text`), on the shares real reference lines read.
+  test('shareText: whole bare, a vulgar fraction, else two places', () {
+    expect(shareText(1), '1');
+    expect(shareText(2), '2');
+    expect(shareText(2 / 3), '⅔');
+    expect(shareText(0.5), '½');
+    expect(shareText(1 / 8), '⅛');
+    expect(shareText(1.5), '1½');
+    expect(shareText(16 / 42), '0.38');
+    expect(shareText(0.9999), '1');
+  });
 }

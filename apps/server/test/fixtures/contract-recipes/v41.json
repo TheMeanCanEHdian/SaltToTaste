@@ -1,0 +1,696 @@
+[
+  {
+    "corpus_file": "0973-all-butter-double-crust-pie-dough.yaml",
+    "recipe": {
+      "title": "All-Butter Double-Crust Pie Dough",
+      "servings": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+      "prep_notes": "Freezing the butter for 10 to 15 minutes is crucial to the flaky texture of this crust. If preparing the dough in a very warm kitchen, refrigerate all of the ingredients before making the dough. The dough, wrapped tightly in plastic wrap, can be refrigerated for up to 2 days or frozen for up to 1 month. If frozen, let the dough thaw completely on the counter before rolling it out.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "⅓ cup ice water, plus extra as needed",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/3",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ice water",
+              "prep": "plus extra as needed"
+            },
+            {
+              "raw": "3 tablespoons sour cream",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sour cream"
+            },
+            {
+              "raw": "2½ cups (12½ ounces) unbleached all-purpose flour, plus extra for the work surface",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2 1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "12 1/2",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "unbleached all-purpose flour",
+              "prep": "plus extra for the work surface"
+            },
+            {
+              "raw": "1 tablespoon sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "1 teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "16 tablespoons (2 sticks) unsalted butter, cut into ¼-inch pieces and frozen for 10 to 15 minutes",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "16",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(2 sticks) unsalted butter",
+              "prep": "cut into 1/4-inch pieces and frozen for 10 to 15 minutes"
+            }
+          ]
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Hand Mixed All-Butter Double-Crust Pie Dough"
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0972-basic-double-crust-pie-dough.yaml",
+    "recipe": {
+      "title": "Basic Double-Crust Pie Dough",
+      "servings": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+      "prep_notes": "The dough, wrapped tightly in plastic wrap, can be refrigerated for up to 2 days or frozen for up to 1 month. If frozen, let the dough thaw completely on the counter before rolling it out.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "2½ cups (12½ ounces) unbleached all-purpose flour, plus extra for the work surface",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2 1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "12 1/2",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "unbleached all-purpose flour",
+              "prep": "plus extra for the work surface"
+            },
+            {
+              "raw": "2 tablespoons sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "1 teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "½ cup vegetable shortening, cut into ½-inch pieces and chilled",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "vegetable shortening",
+              "prep": "cut into 1/2-inch pieces and chilled"
+            },
+            {
+              "raw": "12 tablespoons (1½ sticks) unsalted butter, cut into ¼-inch pieces and chilled",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "12",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(1 1/2 sticks) unsalted butter",
+              "prep": "cut into 1/4-inch pieces and chilled"
+            },
+            {
+              "raw": "6–8 tablespoons ice water",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "6–8",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ice water"
+            }
+          ]
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Hand Mixed Basic Double-Crust Pie Dough"
+        },
+        {
+          "title": "Basic Single-Crust Pie Dough",
+          "servings": "MAKES ENOUGH FOR ONE 9-INCH PIE"
+        },
+        {
+          "title": "Hand Mixed Basic Single-Crust Pie Dough"
+        },
+        {
+          "title": "Single-Crust Pie Dough for Custard Pies"
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0974-foolproof-double-crust-pie-dough.yaml",
+    "recipe": {
+      "title": "Foolproof Double-Crust Pie Dough",
+      "servings": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+      "prep_notes": "Vodka is essential to the tender texture of this crust and imparts no flavor—do not substitute water. This dough is moister than most standard pie doughs and will require lots of flour to roll out (up to ¼ cup). The dough, wrapped tightly in plastic wrap, can be refrigerated for up to 2 days or frozen for up to 1 month. If frozen, let the dough thaw completely on the counter before rolling it out.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "2½ cups (12½ ounces) unbleached all-purpose flour, plus extra for the work surface",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2 1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "12 1/2",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "unbleached all-purpose flour",
+              "prep": "plus extra for the work surface"
+            },
+            {
+              "raw": "2 tablespoons sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "1 teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "12 tablespoons (1½ sticks) unsalted butter, cut into ¼-inch pieces and chilled",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "12",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(1 1/2 sticks) unsalted butter",
+              "prep": "cut into 1/4-inch pieces and chilled"
+            },
+            {
+              "raw": "½ cup vegetable shortening, cut into 4 pieces and chilled",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "vegetable shortening",
+              "prep": "cut into 4 pieces and chilled"
+            },
+            {
+              "raw": "¼ cup vodka, chilled",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "vodka",
+              "prep": "chilled"
+            },
+            {
+              "raw": "¼ cup ice water",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ice water"
+            }
+          ]
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Foolproof Single-Crust Pie Dough",
+          "servings": "MAKES ENOUGH FOR ONE 9-INCH PIE"
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0976-foolproof-all-butter-dough-for-double-crust-pie.yaml",
+    "recipe": {
+      "title": "Foolproof All-Butter Dough for Double-Crust Pie",
+      "servings": "MAKES ONE 9-INCH DOUBLE CRUST",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "20 tablespoons (2½ sticks) unsalted butter, chilled, divided",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "20",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(2 1/2 sticks) unsalted butter",
+              "prep": "chilled, divided"
+            },
+            {
+              "raw": "2½ cups (12½ ounces) all-purpose flour, divided",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2 1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "12 1/2",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "all-purpose flour",
+              "prep": "divided"
+            },
+            {
+              "raw": "2 tablespoons sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "1 teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "½ cup ice water, divided",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ice water",
+              "prep": "divided"
+            }
+          ]
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Foolproof Whole-Wheat Dough for Double-Crust Pie"
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0979-blueberry-pie.yaml",
+    "recipe": {
+      "title": "Blueberry Pie",
+      "servings": "SERVES 8",
+      "prep_notes": "You can use All-Butter Double-Crust Pie Dough (this page), Basic Double-Crust Pie Dough (this page), or Foolproof Double-Crust Pie Dough (this page) for this pie. This recipe was developed using fresh blueberries, but unthawed frozen blueberries (our favorite brands are Wyman’s and Cascadian Farm) will work as well. In step 3, cook half the frozen berries over medium-high heat, without mashing, until reduced to 1¼ cups, 12 to 15 minutes. Grind the tapioca to a powder in a spice grinder or mini food processor. If using pearl tapioca, reduce the amount to 5 teaspoons. Serve with vanilla ice cream or lightly sweetened whipped cream.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 recipe double-crust pie dough",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "recipe",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "double-crust pie dough"
+            },
+            {
+              "raw": "Unbleached all-purpose flour, for the work surface",
+              "amounts": [],
+              "item": "Unbleached all-purpose flour",
+              "prep": "for the work surface"
+            },
+            {
+              "raw": "6 cups (30 ounces) fresh blueberries",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "6",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "30",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "fresh blueberries"
+            },
+            {
+              "raw": "1 Granny Smith apple, peeled, cored, and shredded on the large holes of a box grater",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "Granny Smith apple",
+              "prep": "peeled, cored, and shredded on the large holes of a box grater"
+            },
+            {
+              "raw": "¾ cup (5¼ ounces) sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3/4",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "5 1/4",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "2 tablespoons instant tapioca, ground",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "instant tapioca",
+              "prep": "ground"
+            },
+            {
+              "raw": "2 teaspoons grated zest plus 2 teaspoons juice from 1 lemon",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "grated zest plus 2 teaspoons juice from 1 lemon"
+            },
+            {
+              "raw": "Pinch table salt",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "unit": "pinch",
+                  "approximate": false,
+                  "primary": true,
+                  "quantity": ""
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "2 tablespoons unsalted butter, cut into ¼-inch pieces",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "unsalted butter",
+              "prep": "cut into 1/4-inch pieces"
+            },
+            {
+              "raw": "1 large egg white, lightly beaten",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "large egg white",
+              "prep": "lightly beaten"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "1005-free-form-apple-tart.yaml",
+    "recipe": {
+      "title": "Free-Form Apple Tart",
+      "servings": "SERVES 6",
+      "prep_notes": "Serve with vanilla ice cream or lightly sweetened whipped cream.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 pound Granny Smith apples (about 2 large), peeled, cored, and sliced ¼ inch thick",
+              "amounts": [
+                {
+                  "measure": "weight",
+                  "quantity": "1",
+                  "unit": "pound",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "Granny Smith apples (about 2 large)",
+              "prep": "peeled, cored, and sliced 1/4 inch thick"
+            },
+            {
+              "raw": "1 pound McIntosh apples (about 2 large), peeled, cored, and sliced ¼ inch thick",
+              "amounts": [
+                {
+                  "measure": "weight",
+                  "quantity": "1",
+                  "unit": "pound",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "McIntosh apples (about 2 large)",
+              "prep": "peeled, cored, and sliced 1/4 inch thick"
+            },
+            {
+              "raw": "½ cup (3½ ounces) plus 1 tablespoon sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "3 1/2",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "plus 1 tablespoon sugar"
+            },
+            {
+              "raw": "1 tablespoon juice from 1 lemon",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "juice from 1 lemon"
+            },
+            {
+              "raw": "⅛ teaspoon ground cinnamon",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/8",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ground cinnamon"
+            },
+            {
+              "raw": "1 recipe Rustic Tart Dough (this page), rolled into a 12-inch circle and chilled",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "recipe",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "Rustic Tart Dough (this page)",
+              "prep": "rolled into a 12-inch circle and chilled"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

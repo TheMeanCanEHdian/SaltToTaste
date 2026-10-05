@@ -103,6 +103,7 @@ Recipe saveLines(
   List<String> raws, {
   String id = 'r',
   int? serves,
+  List<Subsection> subsections = const [],
 }) {
   final recipe = Recipe(
     id: id,
@@ -110,6 +111,7 @@ Recipe saveLines(
     slug: id,
     source: const RecipeSource(name: 'Test', type: 'book'),
     serves: serves == null ? null : Serves(min: serves, max: serves),
+    subsections: subsections,
     ingredients: [
       IngredientGroup(items: [for (final raw in raws) lineOf(raw)]),
     ],
@@ -275,7 +277,12 @@ void main() {
           "sub-recipe row; the grams are the 12 cups' own", () async {
         final db = tempDb();
         final provider = FixtureProvider();
-        final cake = save(db, '10 cups Vanilla Frosting (recipe follows)');
+        // v41: with 1201's own section — a section rule row, which takes a
+        // food pick (a held reference line does not).
+        const frosting = [Subsection(title: 'Vanilla Frosting')];
+        final cake = saveLines(db, [
+          '10 cups Vanilla Frosting (recipe follows)',
+        ], subsections: frosting);
         await matchAndCompute(db, provider, cake);
         await applyMatchOverride(db, provider, cake, 0, {
           'fdc_id': 173430,
@@ -284,7 +291,9 @@ void main() {
         if (skip) {
           await applyMatchOverride(db, provider, cake, 0, {'skipped': true});
         }
-        final twelve = save(db, '12 cups Vanilla Frosting (recipe follows)');
+        final twelve = saveLines(db, [
+          '12 cups Vanilla Frosting (recipe follows)',
+        ], subsections: frosting);
         await matchAndCompute(db, provider, twelve);
         final got = row(db);
         expect(

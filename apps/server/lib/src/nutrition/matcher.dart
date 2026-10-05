@@ -545,7 +545,26 @@ const Map<String, String> _synonyms = {
 /// (docs/API.md): the breast share (171077 publishes no half breast), the
 /// whole-turkey yield (no raw back or neck meat-and-skin record), mussels
 /// (174216 publishes no shell portion), canned beans (no can size).
-const int matcherVersion = 40;
+///
+/// v41: the composite row (migration 018; the owner's 2026-10-05 rulings on
+/// prep41/design_v3.md). (R1) a sub-recipe reference line routes to the
+/// library recipe the parent's note names first (flagged a default when it
+/// names several) or whose title it is exactly, counting the child's totals
+/// × the line's share (`gram_source` recipe, no food; 13 lines); a reference
+/// no library title answers is held `choose_recipe` (35), a reference
+/// marinade `discarded_recipe` (3), a child itself made from a recipe
+/// `nested_recipe`; sections, served-with, no-amount and no-share references
+/// stay the 0 g rule row. (R2) rendered bacon, rule B1: a 168277 line whose
+/// recipe lifts the meat out and pours off all but N of the fat counts as
+/// cooked bacon 168322 × 0.403 plus the kept fat on 172345, one row with two
+/// parts (13 lines). (R3) a reference rule row is neither accounted nor
+/// contributing: its recipe reads partial (87 recipes leave complete).
+const int matcherVersion = 41;
+
+/// [text] (lowercased) with each accented letter folded as [normalizeItem]
+/// folds it (v41: the sub-recipe resolver's titles).
+String foldAccents(String text) =>
+    text.replaceAllMapped(_foldedChar, (m) => _folded[m[0]]!);
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.

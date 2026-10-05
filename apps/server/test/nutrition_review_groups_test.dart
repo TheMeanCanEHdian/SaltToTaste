@@ -370,6 +370,8 @@ void main() {
             'no_match': [1, 1],
             'check': [8, 4],
             'no_grams': [3, 3],
+            // v41: no reference line here.
+            'choose_recipe': [0, 0],
             'skipped': [0, 0],
           },
           reason:

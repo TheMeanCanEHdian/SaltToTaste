@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/grams.dart';
@@ -537,18 +538,34 @@ void main() {
     Future<(SaltDatabase, FixtureProvider, Recipe)> cake() async {
       final db = tempDb();
       final provider = FixtureProvider();
-      final r = recipeOf(db: db, [
-        [frosting],
-      ]);
+      // v41: with 1201's own section — the section rule row.
+      final r = recipeOf(
+        db: db,
+        [
+          [frosting],
+        ],
+        subsections: const [Subsection(title: 'Vanilla Frosting')],
+      );
       await matchAndCompute(db, provider, r);
       expect(rowAt(db, 0).description, subRecipeNote);
       return (db, provider, r);
     }
 
     test('P11: a pick of "Butter, without salt" (173430) with no grams is '
-        'the 0 g sub-recipe, never 2,082 g of butter (1201)', () async {
+        'refused (v41 S14: it would derive to the 0 g sub-recipe, a silent '
+        'no-op), the line left the 0 g sub-recipe, never 2,082 g of butter '
+        '(1201)', () async {
       final (db, provider, r) = await cake();
-      await applyMatchOverride(db, provider, r, 0, {'fdc_id': 173430});
+      await expectLater(
+        applyMatchOverride(db, provider, r, 0, {'fdc_id': 173430}),
+        throwsA(
+          isA<ValidationException>().having(
+            (e) => e.message,
+            'message',
+            notRoutedMessage,
+          ),
+        ),
+      );
       final row = rowAt(db, 0);
       expect((row.fdcId, row.grams, row.description), (null, 0, subRecipeNote));
     });

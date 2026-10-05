@@ -310,4 +310,17 @@ void main() {
       );
     }, skip: skipIfNoCorpus);
   });
+
+  // v41: the units a share of a child may be written in besides `recipe`.
+  test('yieldMeasureOf: a MAKES measure, else none', () {
+    expect(yieldMeasureOf('MAKES ENOUGH FOR ONE 9-INCH PIE'), isNull);
+    expect(yieldMeasureOf('SERVES 8'), isNull);
+    expect(yieldMeasureOf(null), isNull);
+    expect(yieldMeasureOf('MAKES ABOUT 1½ CUPS'), (quantity: 1.5, unit: 'cup'));
+    expect(yieldMeasureOf('MAKES ½ CUP'), (quantity: 0.5, unit: 'cup'));
+    expect(yieldMeasureOf('MAKES ABOUT 8 OUNCES'), (
+      quantity: 8.0,
+      unit: 'ounce',
+    ));
+  });
 }

@@ -4,6 +4,7 @@ library;
 
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
+import 'package:salt_server/src/services/nutrition_composite.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 /// Human labels for the triage buckets (the filter chips + row badges).
@@ -11,16 +12,16 @@ const Map<String, String> nutritionReviewBucketLabels = {
   'no_match': 'No match',
   'no_grams': 'No grams',
   'check': 'Low confidence',
+  // v41: a reference line no recipe counts yet — the mockup's chip text.
+  'choose_recipe': 'Choose recipe',
   'skipped': 'Skipped',
 };
 
-/// The buckets that count as "needs attention" (the queue's default view).
-/// `skipped` is browsable but excluded from the total and the default list.
-const List<String> nutritionReviewFlaggedBuckets = [
-  'no_match',
-  'no_grams',
-  'check',
-];
+/// The buckets that count as "needs attention" (the queue's default view):
+/// salt_shared's ONE list ([flaggedBuckets]), which every queue query reads
+/// too. `skipped` is browsable but excluded from the total and the default
+/// list.
+const List<String> nutritionReviewFlaggedBuckets = flaggedBuckets;
 
 /// The queue's orders, grouped or by line: what one decision finishes
 /// first (the default), or the worst match first.
@@ -62,9 +63,13 @@ Map<String, Object?> buildNutritionReview(
     (sum, b) => sum + (counts[b] ?? 0),
   );
   final offset = (page - 1) * limit;
+  // One page's reads (F14): the library index at most once, each recipe
+  // decoded at most once — never per line.
+  final reads = _PageReads(db);
   final items = grouped
       ? _groupItems(
           db,
+          reads,
           db.nutritionReviewGroups(
             bucket: bucket,
             limit: limit,
@@ -79,7 +84,7 @@ Map<String, Object?> buildNutritionReview(
             offset: offset,
             sort: sort,
           ))
-            _lineJson(line),
+            _lineJson(line, reads),
         ];
   // The grouped queue's banner: whole-library, whatever the filter.
   final payoff = grouped ? db.nutritionReviewFinishable() : null;
@@ -112,9 +117,9 @@ Map<String, Object?> buildNutritionReview(
 /// decoded for it, memoised per recipe: at most one decode per row on a page.
 List<Map<String, Object?>> _groupItems(
   SaltDatabase db,
+  _PageReads reads,
   List<NutritionReviewGroupRow> groups,
 ) {
-  final byRecipe = <String, List<IngredientLine>?>{};
   return [
     for (final group in groups)
       {
@@ -124,9 +129,9 @@ List<Map<String, Object?>> _groupItems(
           title: group.title,
           bucket: group.bucket,
           finishes: group.finishes,
-        )),
+        ), reads),
         'item_key': group.itemKey,
-        'item': _exampleItem(db, byRecipe, group.match),
+        'item': _exampleItem(reads, group.match),
         'lines': group.lines,
         'recipes': group.recipes,
         'decided': group.decided,
@@ -150,32 +155,59 @@ List<Map<String, Object?>> _groupItems(
 /// decode, the position is past its end, or the line's text has changed since
 /// the row was written (the row then describes a line that no longer exists,
 /// and naming it after the new text would be a lie).
-String? _exampleItem(
-  SaltDatabase db,
-  Map<String, List<IngredientLine>?> byRecipe,
-  IngredientMatchRow match,
-) {
-  final lines = byRecipe.putIfAbsent(match.recipeId, () {
-    try {
-      final found = db.recipeByIdOrSlug(match.recipeId);
-      return found == null ? null : nutritionLines(found.recipe);
-      // recipeByIdOrSlug DECODES: one recipe whose stored document no longer
-      // parses must cost this row its label, not the whole queue a 500 (the
-      // line mode decodes nothing and cannot fail that way).
-      // ignore: avoid_catches_without_on_clauses
-    } catch (_) {
+String? _exampleItem(_PageReads reads, IngredientMatchRow match) =>
+    reads.lineOf(match)?.line.item;
+
+/// One queue page's reads: each recipe decoded at most once, and the
+/// library's title index at most once ([ResolverMemo], F14).
+class _PageReads {
+  _PageReads(this.db) : memo = ResolverMemo(db);
+
+  final SaltDatabase db;
+  final ResolverMemo memo;
+  final Map<String, Recipe?> _recipes = {};
+
+  /// [match]'s recipe and its line, while the line still reads the row's
+  /// text; null when the recipe will not decode, the position is past its
+  /// end, or the line changed since the row was written.
+  ({Recipe recipe, IngredientLine line})? lineOf(IngredientMatchRow match) {
+    final recipe = _recipes.putIfAbsent(match.recipeId, () {
+      try {
+        return db.recipeByIdOrSlug(match.recipeId)?.recipe;
+        // recipeByIdOrSlug DECODES: one recipe whose stored document no
+        // longer parses must cost this row its label, not the whole queue
+        // a 500.
+        // ignore: avoid_catches_without_on_clauses
+      } catch (_) {
+        return null;
+      }
+    });
+    final lines = recipe == null ? null : nutritionLines(recipe);
+    if (lines == null || match.position >= lines.length) {
       return null;
     }
-  });
-  if (lines == null || match.position >= lines.length) {
-    return null;
+    final line = lines[match.position];
+    return line.raw == match.raw ? (recipe: recipe!, line: line) : null;
   }
-  final line = lines[match.position];
-  return line.raw == match.raw ? line.item : null;
 }
 
-Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
+Map<String, Object?> _lineJson(NutritionReviewLineRow line, _PageReads reads) {
   final match = line.match;
+  // A reference line (v41): its SLIM child ([referenceChildJson]) — never
+  // the candidates (the sheet fetches the matches GET when opened).
+  final composite = match.gramSource == SaltDatabase.recipeGramSource;
+  final at = composite ? reads.lineOf(match) : null;
+  final child = at == null
+      ? null
+      : referenceChildJson(
+          reads.db,
+          at.recipe,
+          match.position,
+          at.line,
+          match,
+          reads.memo,
+          slim: true,
+        );
   return {
     'recipe': {'id': match.recipeId, 'slug': line.slug, 'title': line.title},
     // The STORED position: after a save and before the next compute the
@@ -191,7 +223,9 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
     'finishes': line.finishes,
     // The stored match for the row display; candidates are fetched lazily from
     // the per-recipe matches endpoint when a row is opened.
-    'match': match.fdcId == null
+    // A row with no food is null — but a reference line's (v41: its
+    // `gram_source` is `recipe`), which carries its hold and `child`.
+    'match': match.fdcId == null && !composite
         ? null
         : {
             'fdc_id': match.fdcId,
@@ -202,6 +236,7 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line) {
             'gram_source': match.gramSource,
             'status': match.status,
             'hold': match.hold,
+            'child': child,
           },
   };
 }

@@ -1,0 +1,85 @@
+{
+  "total": 5,
+  "groups": 5,
+  "finishable": 0,
+  "open_recipes": 3,
+  "buckets": [
+    {
+      "id": "no_match",
+      "label": "No match",
+      "count": 0,
+      "groups": 0
+    },
+    {
+      "id": "no_grams",
+      "label": "No grams",
+      "count": 1,
+      "groups": 1
+    },
+    {
+      "id": "check",
+      "label": "Low confidence",
+      "count": 3,
+      "groups": 3
+    },
+    {
+      "id": "choose_recipe",
+      "label": "Choose recipe",
+      "count": 1,
+      "groups": 1
+    },
+    {
+      "id": "skipped",
+      "label": "Skipped",
+      "count": 0,
+      "groups": 0
+    }
+  ],
+  "items": [
+    {
+      "recipe": {
+        "id": "manual-<date>-free-form-apple-tart",
+        "slug": "free-form-apple-tart",
+        "title": "Free-Form Apple Tart"
+      },
+      "position": 5,
+      "raw": "1 recipe Rustic Tart Dough (this page), rolled into a 12-inch circle and chilled",
+      "bucket": "choose_recipe",
+      "finishes": 0,
+      "match": {
+        "fdc_id": null,
+        "description": null,
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 0.0,
+        "gram_source": "recipe",
+        "status": "auto",
+        "hold": "choose_recipe",
+        "child": {
+          "state": "held",
+          "reason": "missing",
+          "name": "Rustic Tart Dough",
+          "slug": null,
+          "title": null,
+          "share_text": "1",
+          "default": false,
+          "why": "none"
+        }
+      },
+      "item_key": "rustic tart dough",
+      "item": "Rustic Tart Dough (this page)",
+      "lines": 1,
+      "recipes": 1,
+      "decided": false,
+      "finishes_recipes": [],
+      "last_open": 1,
+      "grams": {
+        "min": 0.0,
+        "max": 0.0,
+        "missing": 0
+      }
+    }
+  ],
+  "page": 1,
+  "limit": 24
+}

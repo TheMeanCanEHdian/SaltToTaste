@@ -75,3 +75,24 @@ double? parseQuantity(String text) {
   if (_decimal.hasMatch(trimmed)) return double.parse(trimmed);
   return null;
 }
+
+/// A share of a child recipe as the copy writes it (v41): whole numbers
+/// bare ("1", "2"), a fraction by its vulgar character, mixed or not ("⅔",
+/// "1½") when one lies within 1e-3, else two decimals ("0.38"). One rule for
+/// the server's `share_text` and any client echo.
+String shareText(double share) {
+  final whole = share.floor();
+  final rest = share - whole;
+  if (rest < 1e-3) {
+    return '$whole';
+  }
+  if (1 - rest < 1e-3) {
+    return '${whole + 1}';
+  }
+  for (final MapEntry(key: char, value: value) in _vulgarFractions.entries) {
+    if ((rest - value).abs() < 1e-3) {
+      return whole == 0 ? char : '$whole$char';
+    }
+  }
+  return share.toStringAsFixed(2);
+}

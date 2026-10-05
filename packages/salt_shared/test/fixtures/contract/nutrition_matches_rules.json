@@ -52,7 +52,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": []
     },
@@ -79,7 +82,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": []
     },
@@ -121,7 +127,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -177,7 +186,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -275,7 +287,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -373,7 +388,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -449,7 +467,10 @@
         "status": "auto",
         "hold": "in_shell",
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -517,7 +538,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -593,7 +617,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -633,7 +660,10 @@
         "status": "overridden",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -702,7 +732,10 @@
         "status": "auto",
         "hold": "discarded_medium",
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -736,13 +769,31 @@
         "description": "Pork, cured, bacon, unprepared",
         "data_type": "SR Legacy",
         "confidence": 1.0,
-        "grams": 56.699,
+        "grams": 35.89,
         "gram_source": "weight",
-        "gram_basis": "from 2 ounce · approximation (counted as Pork, cured, bacon, unprepared)",
+        "gram_basis": "57 g raw → 23 g cooked bacon + 13 g bacon grease kept in the pan · approximation (counted as Pork, cured, bacon, unprepared)",
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [
+          {
+            "fdc_id": 168322,
+            "description": "Pork, cured, bacon, pre-sliced, cooked, pan-fried",
+            "data_type": "SR Legacy",
+            "grams": 22.85,
+            "role": "cooked"
+          },
+          {
+            "fdc_id": 172345,
+            "description": "Animal fat, bacon grease",
+            "data_type": "SR Legacy",
+            "grams": 13.04,
+            "role": "kept_fat"
+          }
+        ],
+        "flag": "approximate (rendered and drained; yield from FDC protein)"
       },
       "candidates": [
         {
@@ -805,7 +856,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -855,6 +909,58 @@
           "description": "Butter, light, stick, without salt",
           "data_type": "SR Legacy",
           "confidence": 0.8600000000000001
+        }
+      ]
+    },
+    {
+      "position": 13,
+      "raw": "10 ounces (about 8 slices) thick-cut bacon, cut into ½-inch pieces",
+      "item": "(about 8 slices) thick-cut bacon",
+      "line_amount": "10 ounce",
+      "kcal_per_100g": 393.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "pork cured bacon unprepared",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 168277,
+        "description": "Pork, cured, bacon, unprepared",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 152.95,
+        "gram_source": "weight",
+        "gram_basis": "284 g raw → 114 g cooked bacon + 39 g bacon grease kept in the pan",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [
+          {
+            "fdc_id": 168322,
+            "description": "Pork, cured, bacon, pre-sliced, cooked, pan-fried",
+            "data_type": "SR Legacy",
+            "grams": 114.25,
+            "role": "cooked"
+          },
+          {
+            "fdc_id": 172345,
+            "description": "Animal fat, bacon grease",
+            "data_type": "SR Legacy",
+            "grams": 38.7,
+            "role": "kept_fat"
+          }
+        ],
+        "flag": "approximate (rendered and drained; yield from FDC protein)"
+      },
+      "candidates": [
+        {
+          "fdc_id": 168277,
+          "description": "Pork, cured, bacon, unprepared",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
         }
       ]
     }

@@ -100,6 +100,8 @@ void main() {
         'no_match': 2,
         'no_grams': 2,
         'check': 1,
+        // v41: the reference lines no recipe counts yet (none here).
+        'choose_recipe': 0,
         'skipped': 1,
       });
     });
@@ -244,7 +246,8 @@ void main() {
       expect(body['total'], 0);
       expect(body['items'], isEmpty);
       // All buckets present at count 0 so the chips render.
-      expect(body['buckets']! as List, hasLength(4));
+      // (v41: `choose_recipe` is the fifth.)
+      expect(body['buckets']! as List, hasLength(5));
     });
   });
 }

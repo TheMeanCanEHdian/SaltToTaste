@@ -26,7 +26,11 @@ enum MatchBucket {
   check('check'),
   noAmount('no_grams'),
   noMatch('no_match'),
-  skipped('skipped');
+  skipped('skipped'),
+
+  /// A reference line no recipe counts yet (v41: held `choose_recipe` or
+  /// `nested_recipe`, [recipeChoiceHolds]) — any status.
+  chooseRecipe('choose_recipe');
 
   const MatchBucket(this.wire);
 
@@ -36,6 +40,17 @@ enum MatchBucket {
   static MatchBucket fromWire(String value) =>
       values.firstWhere((bucket) => bucket.wire == value);
 }
+
+/// The buckets that need a person ("needs attention", the queue's default
+/// view), in chip order — ONE list for the app, the queue's labels and every
+/// query of the server's queue (v41: `choose_recipe` joins them). `counted`
+/// and `skipped` are never flagged.
+const List<String> flaggedBuckets = [
+  'no_match',
+  'no_grams',
+  'check',
+  'choose_recipe',
+];
 
 /// The name-confidence gate: an `auto` match scored below it is flagged
 /// `check`. Scores are sums of fixed fractions, so a line can land exactly on
@@ -87,6 +102,11 @@ MatchBucket matchBucketFor({
   if (noRecordHolds.contains(hold)) {
     return MatchBucket.check;
   }
+  // A reference line no recipe counts (v41), whoever decided it: a person's
+  // nested pick, a decided row whose child is gone.
+  if (recipeChoiceHolds.contains(hold)) {
+    return MatchBucket.chooseRecipe;
+  }
   if ((status == 'overridden' && grams == null) ||
       (status == 'confirmed' && fdcId != null && grams == null)) {
     return MatchBucket.noAmount;
@@ -94,7 +114,9 @@ MatchBucket matchBucketFor({
   if (status == 'confirmed' || status == 'overridden') {
     return MatchBucket.counted;
   }
-  if (fdcId == null) {
+  // A composite reference row (`gram_source` recipe, v41) has no food on
+  // purpose: routed it is counted, a held marinade is `check` (below).
+  if (fdcId == null && gramSource != 'recipe') {
     return MatchBucket.noMatch;
   }
   if ((gramSource == 'discarded' || gramSource == 'unmeasured') &&

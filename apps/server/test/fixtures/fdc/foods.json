@@ -21052,5 +21052,556 @@
     "description": "medium"
    }
   ]
+ },
+ "2710703": {
+  "fdc_id": 2710703,
+  "description": "Rum",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.0,
+   "204": 0.0,
+   "205": 0.0,
+   "208": 231.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 0.0,
+   "303": 0.04,
+   "304": 0.0,
+   "305": 4.0,
+   "306": 2.0,
+   "307": 1.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.006,
+   "405": 0.004,
+   "406": 0.013,
+   "415": 0.001,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 shot"
+   },
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   },
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 jigger"
+   },
+   {
+    "gram_weight": 63.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 drink"
+   }
+  ]
+ },
+ "174924": {
+  "fdc_id": 174924,
+  "description": "Bread, white, commercially prepared (includes soft bread crumbs)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 266.0,
+   "203": 8.85,
+   "204": 3.33,
+   "205": 49.42,
+   "291": 2.7,
+   "269": 5.67,
+   "301": 144.0,
+   "303": 3.61,
+   "304": 23.0,
+   "305": 98.0,
+   "306": 126.0,
+   "307": 490.0,
+   "401": 0.0,
+   "404": 0.533,
+   "405": 0.243,
+   "406": 4.78,
+   "415": 0.087,
+   "432": 25.0,
+   "435": 171.0,
+   "418": 0.0,
+   "320": 0.0,
+   "323": 0.22,
+   "328": 0.0,
+   "430": 0.2,
+   "606": 0.698,
+   "645": 0.599,
+   "646": 1.602,
+   "605": 0.027,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 29.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice"
+   },
+   {
+    "gram_weight": 12.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice crust not eaten"
+   },
+   {
+    "gram_weight": 35.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, cubes"
+   },
+   {
+    "gram_weight": 45.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup, crumbs"
+   },
+   {
+    "gram_weight": 20.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, thin"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, very thin"
+   },
+   {
+    "gram_weight": 25.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice"
+   },
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice, large"
+   },
+   {
+    "gram_weight": 9.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "slice thin, crust not eaten"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "2706457": {
+  "fdc_id": 2706457,
+  "description": "Fish sauce",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 5.06,
+   "204": 0.01,
+   "205": 3.64,
+   "208": 35.0,
+   "269": 3.64,
+   "291": 0.0,
+   "301": 43.0,
+   "303": 0.78,
+   "304": 175.0,
+   "305": 7.0,
+   "306": 288.0,
+   "307": 7850.0,
+   "320": 4.0,
+   "323": 0.0,
+   "328": 0.0,
+   "401": 0.5,
+   "404": 0.012,
+   "405": 0.057,
+   "406": 2.31,
+   "415": 0.396,
+   "418": 0.48,
+   "430": 0.0,
+   "432": 51.0,
+   "435": 51.0,
+   "601": 0.0,
+   "606": 0.003,
+   "645": 0.002,
+   "646": 0.003
+  },
+  "portions": [
+   {
+    "gram_weight": 16.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "173475": {
+  "fdc_id": 173475,
+  "description": "Spearmint, fresh",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 44.0,
+   "203": 3.29,
+   "204": 0.73,
+   "205": 8.41,
+   "291": 6.8,
+   "301": 199.0,
+   "303": 11.87,
+   "304": 63.0,
+   "305": 60.0,
+   "306": 458.0,
+   "307": 30.0,
+   "401": 13.3,
+   "404": 0.078,
+   "405": 0.175,
+   "406": 0.948,
+   "415": 0.158,
+   "432": 105.0,
+   "435": 105.0,
+   "418": 0.0,
+   "320": 203.0,
+   "328": 0.0,
+   "606": 0.191,
+   "645": 0.025,
+   "646": 0.394,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 11.4,
+    "amount": 2.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 0.3,
+    "amount": 2.0,
+    "unit": null,
+    "description": "leaves"
+   }
+  ]
+ },
+ "172240": {
+  "fdc_id": 172240,
+  "description": "Vinegar, red wine",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 19.0,
+   "203": 0.04,
+   "204": 0.0,
+   "205": 0.27,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 6.0,
+   "303": 0.45,
+   "304": 4.0,
+   "305": 8.0,
+   "306": 39.0,
+   "307": 8.0,
+   "401": 0.5,
+   "320": 0.0,
+   "606": 0.0,
+   "605": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 14.9,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 239.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp"
+   }
+  ]
+ },
+ "2710831": {
+  "fdc_id": 2710831,
+  "description": "Kiwifruit (kiwi), green, peeled, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 65.0648,
+   "958": 58.48917,
+   "203": 1.008125,
+   "204": 0.64,
+   "205": 13.818075,
+   "291": 2.129,
+   "301": 24.38,
+   "303": 0.03663,
+   "304": 14.79,
+   "305": 27.61,
+   "306": 301.5,
+   "307": 2.275,
+   "401": 58.78
+  },
+  "portions": [
+   {
+    "gram_weight": 140.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2710700": {
+  "fdc_id": 2710700,
+  "description": "Whiskey",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.0,
+   "204": 0.0,
+   "205": 0.0,
+   "208": 231.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 0.0,
+   "303": 0.04,
+   "304": 0.0,
+   "305": 4.0,
+   "306": 2.0,
+   "307": 1.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.006,
+   "405": 0.004,
+   "406": 0.013,
+   "415": 0.001,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 63.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 drink"
+   },
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 jigger"
+   },
+   {
+    "gram_weight": 42.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 shot"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   }
+  ]
+ },
+ "170933": {
+  "fdc_id": 170933,
+  "description": "Spices, pepper, white",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 296.0,
+   "203": 10.4,
+   "204": 2.12,
+   "205": 68.61,
+   "291": 26.2,
+   "301": 265.0,
+   "303": 14.31,
+   "304": 90.0,
+   "305": 176.0,
+   "306": 73.0,
+   "307": 5.0,
+   "401": 21.0,
+   "404": 0.022,
+   "405": 0.126,
+   "406": 0.212,
+   "415": 0.1,
+   "432": 10.0,
+   "435": 10.0,
+   "418": 0.0,
+   "320": 0.0,
+   "328": 0.0,
+   "606": 0.626,
+   "645": 0.789,
+   "646": 0.616,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 7.1,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp, ground"
+   },
+   {
+    "gram_weight": 2.4,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, ground"
+   }
+  ]
+ },
+ "174523": {
+  "fdc_id": 174523,
+  "description": "Sauce, barbecue",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 172.0,
+   "203": 0.82,
+   "204": 0.63,
+   "205": 40.77,
+   "291": 0.9,
+   "269": 33.24,
+   "301": 33.0,
+   "303": 0.64,
+   "304": 13.0,
+   "305": 20.0,
+   "306": 232.0,
+   "307": 1027.0,
+   "401": 0.6,
+   "404": 0.023,
+   "405": 0.056,
+   "406": 0.597,
+   "415": 0.075,
+   "432": 2.0,
+   "435": 2.0,
+   "418": 0.0,
+   "320": 11.0,
+   "323": 0.8,
+   "328": 0.0,
+   "430": 1.8,
+   "606": 0.045,
+   "645": 0.082,
+   "646": 0.101,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 17.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   },
+   {
+    "gram_weight": 279.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 143.0,
+    "amount": 0.5,
+    "unit": null,
+    "description": "cup"
+   }
+  ]
+ },
+ "171610": {
+  "fdc_id": 171610,
+  "description": "Sauce, worcestershire",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 77.0,
+   "203": 0.0,
+   "204": 0.0,
+   "205": 19.17,
+   "291": 0.0,
+   "269": 10.03,
+   "301": 107.0,
+   "303": 5.3,
+   "304": 13.0,
+   "305": 60.0,
+   "306": 800.0,
+   "307": 1300.0,
+   "401": 13.0,
+   "404": 0.07,
+   "405": 0.13,
+   "406": 0.7,
+   "415": 0.0,
+   "432": 8.0,
+   "435": 8.0,
+   "418": 0.0,
+   "320": 5.0,
+   "323": 0.08,
+   "328": 0.0,
+   "430": 1.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 275.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup"
+   },
+   {
+    "gram_weight": 17.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp"
+   }
+  ]
  }
 }

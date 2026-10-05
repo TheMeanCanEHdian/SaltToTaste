@@ -221,3 +221,93 @@ int _count(double value) {
   final rounded = value.round();
   return rounded < 1 ? 1 : rounded;
 }
+
+/// mL per volume unit and g per weight unit — the server's unit tables
+/// (grams.dart), for [parseShare]'s one-family division.
+const Map<String, double> _shareMl = {
+  'teaspoon': 4.92892,
+  'tablespoon': 14.7868,
+  'fluid ounce': 29.5735,
+  'cup': 236.588,
+  'pint': 473.176,
+  'quart': 946.353,
+  'gallon': 3785.41,
+  'milliliter': 1,
+  'liter': 1000,
+};
+const Map<String, double> _shareG = {
+  'ounce': 28.3495,
+  'pound': 453.592,
+  'gram': 1,
+  'kilogram': 1000,
+};
+
+/// A yield's measure: `MAKES [ABOUT] q [TO q] UNIT` (the upper bound of a
+/// range — the standing range ruling). Unrounded, unlike [parseYieldCount].
+final RegExp _yieldMeasure = RegExp(
+  '\\bMAKES\\s+(?:ABOUT\\s+)?($_num)(?:\\s+TO\\s+($_num))?\\s+'
+  '(TEASPOONS?|TABLESPOONS?|CUPS?|PINTS?|QUARTS?|GALLONS?|OUNCES?|POUNDS?|'
+  'GRAMS?)\\b',
+);
+
+/// A yield's measure ([_yieldMeasure]): the quantity (a range's upper
+/// bound) and the unit, singular ("MAKES ABOUT 1½ CUPS" → 1.5 cup); null
+/// when the yield names none ("MAKES ENOUGH FOR ONE 9-INCH PIE") — the
+/// units a share of the child may be written in besides `recipe` (v41).
+({double quantity, String unit})? yieldMeasureOf(String? servings) {
+  final match = _yieldMeasure.firstMatch(servings?.toUpperCase() ?? '');
+  final quantity = match == null
+      ? null
+      : parseQuantity(match.group(2) ?? match.group(1)!);
+  return quantity == null
+      ? null
+      : (
+          quantity: quantity,
+          unit: match!.group(3)!.toLowerCase().replaceFirst(RegExp(r's$'), ''),
+        );
+}
+
+/// "(½ recipe" on a reference line: the share it writes itself.
+final RegExp _recipeShare = RegExp('\\(\\s*($_num)\\s+recipes?\\b');
+
+/// The share of a child recipe a reference line counts (v41, sub-recipe
+/// routing): its own "(½ recipe" wins ("¼ cup Sauce Base (½ recipe; recipe
+/// follows)"); an amount in the unit `recipe` is its quantity ("1 recipe" =
+/// 1); else the line's first amount over the child's MAKES measure
+/// ([childServings]) in one unit family — "1 cup" of "MAKES ABOUT 1½ CUPS"
+/// is ⅔, "4 ounces" of "MAKES ABOUT 8 OUNCES" ½. Null when no share reads
+/// ("1 cup" of "MAKES ENOUGH FOR 4 PIZZAS", a count of "SERVES 4").
+double? parseShare(String raw, List<Amount> amounts, String? childServings) {
+  final written = _recipeShare.firstMatch(raw);
+  if (written != null) {
+    return parseQuantity(written.group(1)!);
+  }
+  for (final amount in amounts) {
+    if (amount.unit == 'recipe' || amount.unit == 'recipes') {
+      return parseQuantity(amount.quantity);
+    }
+  }
+  final yieldMatch = _yieldMeasure.firstMatch(
+    childServings?.toUpperCase() ?? '',
+  );
+  if (yieldMatch == null) {
+    return null;
+  }
+  final yieldQuantity = parseQuantity(
+    yieldMatch.group(2) ?? yieldMatch.group(1)!,
+  );
+  final yieldUnit = yieldMatch
+      .group(3)!
+      .toLowerCase()
+      .replaceFirst(RegExp(r's$'), '');
+  final table = _shareMl.containsKey(yieldUnit) ? _shareMl : _shareG;
+  for (final amount in amounts) {
+    final unit = table[amount.unit?.toLowerCase()];
+    final quantity = parseQuantity(amount.quantity);
+    if (unit != null && quantity != null && yieldQuantity != null) {
+      final share = quantity * unit / (yieldQuantity * table[yieldUnit]!);
+      return share > 0 ? share : null;
+    }
+  }
+  return null;
+}

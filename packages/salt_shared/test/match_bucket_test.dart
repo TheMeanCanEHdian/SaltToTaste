@@ -126,4 +126,13 @@ void main() {
       expect(MatchBucket.noAmount.wire, 'no_grams');
     });
   });
+
+  // v41: ONE flagged list, in chip order, `choose_recipe` last.
+  test('flaggedBuckets', () {
+    expect(flaggedBuckets, ['no_match', 'no_grams', 'check', 'choose_recipe']);
+    expect(
+      flaggedBuckets.map(MatchBucket.fromWire),
+      isNot(contains(MatchBucket.counted)),
+    );
+  });
 }

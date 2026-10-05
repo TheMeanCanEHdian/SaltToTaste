@@ -29,12 +29,17 @@ void main() {
   }
 
   /// Recipe 'r' of one line [raw], saved (over any earlier version).
-  Recipe save(SaltDatabase db, String raw) {
+  Recipe save(
+    SaltDatabase db,
+    String raw, {
+    List<Subsection> subsections = const [],
+  }) {
     final recipe = Recipe(
       id: 'r',
       title: 'r',
       slug: 'r',
       source: const RecipeSource(name: 'Test', type: 'book'),
+      subsections: subsections,
       ingredients: [
         IngredientGroup(items: [lineOf(raw)]),
       ],
@@ -102,7 +107,12 @@ void main() {
       'exception) — survives a skip and an un-skip', () async {
     final db = tempDb();
     final provider = FixtureProvider();
-    final cake = save(db, '10 cups Vanilla Frosting (recipe follows)');
+    // v41: with 1201's own section — the section rule row.
+    final cake = save(
+      db,
+      '10 cups Vanilla Frosting (recipe follows)',
+      subsections: const [Subsection(title: 'Vanilla Frosting')],
+    );
     await matchAndCompute(db, provider, cake);
     expect(row(db).description, subRecipeNote);
     await applyMatchOverride(db, provider, cake, 0, {

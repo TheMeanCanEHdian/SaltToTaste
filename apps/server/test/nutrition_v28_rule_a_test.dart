@@ -556,13 +556,24 @@ void main() {
       "matchBucketFor's and `finishes` (per line, per group, finishable) "
       'equals "a confirm finishes it" — a food with no record never',
       () async {
+        // v41: the queue's finishes read the confirm-cannot-finish list,
+        // which now holds the reference lines no recipe counts beside the
+        // food with no record (noRecordHoldsSql keeps the `check` arm).
         expect(
-          SaltDatabase.noRecordHoldsSql,
+          SaltDatabase.noConfirmHoldsSql,
           [for (final h in holdsAConfirmCannotFinish) "'$h'"].join(', '),
         );
         final db = wp.tempDb();
         final fixture = FixtureProvider(pending: pendingSearches);
-        final holds = [null, ...holdActions.keys];
+        // v41: the reference holds (HoldKind.recipe) sit on no-food rows of
+        // their own bucket, `choose_recipe` — step 3's queue pins read them;
+        // every FOOD-row hold is judged here as before.
+        final holds = [
+          null,
+          ...holdActions.keys.where(
+            (h) => holdActionsOf(h).kind != HoldKind.recipe,
+          ),
+        ];
         final expected = <String, bool>{};
         for (final (n, hold) in holds.indexed) {
           final r = wp.saveLines(db, [v23.quarter], id: 'h$n');
@@ -840,10 +851,16 @@ void main() {
         // Malformed JSON never fails a write (it indexes nothing).
         db.fdcSearchCachePut('broken', '{not json');
         same();
-        // The upgrade: 016's (and 017's) objects dropped, back to 15,
+        // The upgrade: 016's (and 017's, 018's) objects dropped, back to 15,
         // reopened.
         db.dispose();
         raw
+          ..execute('ALTER TABLE ingredient_matches DROP COLUMN parts')
+          ..execute('ALTER TABLE ingredient_matches DROP COLUMN child_stamp')
+          ..execute('ALTER TABLE ingredient_matches DROP COLUMN child_share')
+          ..execute(
+            'ALTER TABLE ingredient_matches DROP COLUMN child_recipe_id',
+          )
           ..execute('DROP INDEX ingredient_matches_no_record')
           ..execute('ALTER TABLE recipe_nutrition DROP COLUMN computing')
           ..execute('DROP TRIGGER fdc_search_cache_foods_insert')

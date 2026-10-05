@@ -329,8 +329,8 @@ The cross-recipe queue of ingredient-match lines that still need a look, in
 the `sort` order (below): `{total, groups, buckets: [{id, label, count,
 groups}], items:
 [{recipe: {id, slug, title}, position, raw, bucket, finishes, match: {fdc_id,
-description, data_type, confidence, grams, gram_source, status, hold} |
-null}], page, limit}` (`hold` as in the per-recipe matches body below).
+description, data_type, confidence, grams, gram_source, status, hold,
+child} | null}], page, limit}` (`hold` as in the per-recipe matches body below).
 A line item's `finishes` is 1 when the line is its recipe's LAST open line
 (the only one in `no_match` / `check` / `no_grams`, whatever the filter)
 AND a confirm can count it: a `check` line that has grams, or a `no_grams`
@@ -350,6 +350,22 @@ since its last compute (`stale` on its nutrition — derived, never stored) a
 reworded or added line has no row of its own, so the count is an upper
 bound for that recipe (the apply skips a reworded line; the recompute
 cannot account an added one).
+Since matcher v41 a fifth flagged bucket, `choose_recipe` (label "Choose
+recipe", chip order `no_match`, `no_grams`, `check`, `choose_recipe`, then
+`skipped`): a reference line held `choose_recipe` or `nested_recipe`,
+whatever its status (a person's nested pick, a decided row whose child is
+gone) — out of the totals until a recipe is chosen or the line skipped. It
+counts in `total`, `open_lines` and every flagged count (ONE list, salt_shared
+`flaggedBuckets`, read by every query); a group's worst bucket ranks
+`no_match`, `choose_recipe`, `check`, `no_grams`, `skipped`. Such a line is
+never promised to a confirm (`finishes` 0, short in its group: salt_shared
+`holdsAConfirmCannotFinish`); the `discarded_recipe` marinade stays in
+`check` and a Confirm finishes it. An item's `match` is non-null on a
+reference line's row too (`gram_source` `recipe`, no food) and carries
+`child`, null on every other line: the SLIM child `{state, reason, name,
+slug, title, share_text, default, why}` of the matches body (never its
+`candidates` — the fix sheet fetches the recipe's matches when opened; one
+library index read per page).
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
 below 50% name confidence — compared with a 1e-9 tolerance, so a score that
 lands exactly on 0.5 counts whatever its float rounding — probably the wrong
@@ -649,10 +665,30 @@ first compute, else:
   "matched_count": 12,
   "total_count": 13,
   "low_confidence": 0,
+  "includes": [{"slug": "…", "title": "…", "flag": "approximation"}],
+  "partial": [{"position": 5, "kind": "held", "name": "Rustic Tart Dough",
+               "title": null, "matched": null, "total": null,
+               "reason": "missing"}],
   "computed_at": "…",
   "computing_job_id": 7
 }
 ```
+
+Since matcher v41 (the composite row): `includes` names every child recipe
+the totals count (a routed reference row, below, not skipped, whose child
+has stored totals), in line order: `{slug, title, flag}`, `flag`
+`"approximation"` when the row carries a `flag` (a default pick, a partial
+child), else null — the label's "Includes {n} recipe: {title} ({flag})",
+shown to members too. `partial` names every reference line that makes the
+label partial, in line order: `kind` `held` (a `choose_recipe` /
+`nested_recipe` hold, or the engine's `discarded_recipe` marinade not yet
+decided; `reason` as `child.reason` below), `child_partial` (a counted child
+whose own label is partial: `title`, `matched`, `total` its counts) or
+`not_routed` (R3's 0 g rule row: `reason` `section` | `served_with` |
+`no_amount` | `no_share`); `name` is the reference as the line writes it.
+Both are `[]` on a recipe with none and absent from the `{"status":
+"none"}` body. Read from the stored rows (no request); one library index
+read per request at most.
 
 `basis_kind` says what `serving_basis` divides by: `per_batch` when the basis
 is 1 — the whole batch: "MAKES 1 LOAF", no servings at all, or an admin's
@@ -933,6 +969,116 @@ never stored counted at the printed weight because a yield could not be
 fetched.
 
 ### `GET /api/v1/recipes/{idOrSlug}/nutrition/matches`
+
+**Matcher v41, the composite row** (the owner's 2026-10-05 rulings A1–A10,
+"go with your recommendations"; design_v3, the approved mockup
+`docs/mockups/v40-composite-rows.html`; migration 018). Still one row per
+line; every `match` gains three keys, emitted on every row:
+
+- `child` — null unless the line is a sub-recipe reference the engine reads
+  as one and its row stands on no food. `{state, reason, name, slug, title,
+  share_text, default, why, yield_text, share, yield_units, grams, kcal,
+  kcal_per_serving, status, matched_count, total_count, kind, parent_kind,
+  candidates}`: `state` `routed` (counted from a library recipe) | `held`
+  (`reason` `missing` — no library recipe or section has the title, or a
+  decided row's child was deleted — | `generic` — the line names no single
+  recipe — | `nested` — the child is itself made from a recipe, depth 1 —
+  | `marinade`) | `not_routed` (the shipped 0 g rule row: `reason`
+  `section` | `served_with` | `no_amount` | `no_share`); `name` the
+  reference as the line writes it ("Rustic Tart Dough"); `slug`/`title`/
+  `yield_text` the child's (the no-share child's too); `share` the share of
+  the child the line counts, `share_text` its copy ("1", "⅔", "1½", else
+  two places); `yield_units` the units a share may be typed in (`[{unit:
+  "recipe", per_recipe: 1}]`, plus the child's MAKES measure, e.g. `{unit:
+  "cup", per_recipe: 1.5}`); `kcal` the child's batch energy × the share
+  (routed only), `kcal_per_serving` that ÷ the parent's serving basis;
+  `status`/`matched_count`/`total_count` the child's own label; `default`
+  true on the engine's route to the first of two or more titles the
+  parent's note names, `why` `default` there, else `none` (an exact or
+  note-named route has no why line); `kind` the item's last word
+  ("dough"), `parent_kind` the parent title's last word when it is pie,
+  tart or quiche, else `recipe`. `candidates` (the fix sheet's groups, in
+  the resolution order): `{group, slug, title, note, yield_text, kcal,
+  kcal_per_serving, current, default, pickable, host_title}`, `group`
+  `own_section` | `note_named` (`note` "named first" / "named second" / …)
+  | `library` (the title equal to the item) | `similar` (library titles
+  holding every word of the item, fewest extra words first, at most 5;
+  `note` "not named in the note" when the note names titles) |
+  `other_section` (other recipes' sections holding every word, at most 5;
+  `note` "a section of {host title}"); sections are phase 2 — `pickable`
+  false, `kcal` null; a library candidate is `pickable` when it has stored
+  totals (`kcal` = its batch energy, `kcal_per_serving` × the line's share
+  of it ÷ the basis). An empty group is omitted (the app draws its empty
+  text). The library's title and section index is read at most once per
+  request.
+- `parts` — a rendered row's two records (R2), `[{fdc_id, description,
+  data_type, grams, role}]`, `role` `cooked` then `kept_fat`; `[]` on every
+  other row.
+- `flag` — the composite row's flag on its own line, null elsewhere (the
+  older flags stay `gram_basis` suffixes): "approximation (the first {kind}
+  the note names: {title})" on an engine default (a person's Confirm or pick
+  clears it), "approximation ({title} is partial: {m} of {n} lines)" on a
+  counted partial child, "approximate (rendered and drained; yield from FDC
+  protein)" on a rendered row — the last two name a fact and stay on a
+  Confirm (A6); several join with " · ".
+
+New `gram_source` `recipe` (a reference row: no `fdc_id`, no
+`description`); new holds `choose_recipe`, `nested_recipe` (bucket
+`choose_recipe`, below) and `discarded_recipe` (bucket `check`; a Confirm
+is poured away, counted) — LINE holds (A2), each a queue group of one,
+never reached by a key decision or an apply-to-all. A routed row's
+`gram_basis` is "from the recipe {title}: {g} g, {kcal} kcal"; a held one
+keeps "a sub-recipe — counted as 0 g"; a rendered row "{raw} g raw →
+{cooked} g cooked bacon + {fat} g bacon grease kept in the pan". On a
+routed row `others` / `others_lines` count the RECIPE reach: the key's
+undecided routed rows (`auto`, `gram_source` `recipe`, a child, no hold) on
+another child, or on the same child by a flagged default — an unflagged
+row on the same child waits on nothing — whose line's share of the child
+reads; on a held or not-routed reference line, 0. The food reach never
+takes a reference row and the recipe reach never a food row (S18: the real
+"barbecue sauce" key holds brisket's food line and two held references).
+
+The rules (replay of snapshot 17, cache-only, 0 requests): **R1** —
+sub-recipe routing, phase 1: a reference line resolves (first hit wins) no
+amount → a marinade → ONE own section → the first library title the
+parent's note names ("(this page)"; flagged when it names two or more) →
+the library title equal to the item (unless the parent is made FOR it:
+"… for Pan-Seared Steaks" is served with it, D7) → another recipe's
+section → held; first " or " alternative only (D11); self never; a child
+holding a reference row is `nested_recipe`; the share is a written "(½
+recipe", else "N recipe", else the line's amount over the child's MAKES
+measure in one unit family (a range's upper bound), else none (the 0 g
+rule row, `no_share`). A routed row counts the child's stored batch totals
+× the share (its grams live: the child's total grams × the share),
+accounted only while the child is complete; a child recomputed, rebased or
+deleted turns its parents stale (`child_stamp`, `stale_reason` `underived`)
+and a sweep recomputes them parents last. 13 lines route in 13 parents
+(the four double-crust pies flagged on their note's first dough; peach
+tarte tatin unflagged, D2), +25,702.4 kcal per batch. **R2** — rule B1,
+rendered bacon: a row on SR 168277 (`auto` or `confirmed`, grams > 0, not
+"divided", never typed grams) whose recipe has ONE step that both moves
+the bacon out and pours the fat down to N counts cooked SR 168322 at the
+raw weight × 0.403 plus the kept fat on SR 172345, min(N × the unit's mL ×
+0.8724 g/mL, raw × 0.2299); the row keeps 168277 (a Confirm decides it
+library-wide; each carried line re-runs B1 on its own steps); a person's
+single-food pick or typed grams clear the parts (D12). 13 lines,
+−891.0 kcal per batch. **R3** — every reference line not routed makes its
+label partial (A3 a: the 68 rule rows leave the totals' accounted and
+contributing counts, bucket `counted`): 87 recipes leave `complete` (1,022
+→ 935). The owner's rulings: A1 (b) a recipe decision is never written to
+`ingredient_decisions` — it travels only by an explicit apply-to-all, the
+targets written `overridden`; A5 (a) the three reference marinades held
+`discarded_recipe` (Skip / Confirm poured away / Choose a recipe); A7 (a)
+the three un-noted single-crust lines held `choose_recipe` (R1 = 13, not
+plan.md's 16); A8 (a) buffalo-wings|13 held `choose_recipe` (missing); A9
+(a) the three unmarked own-section references unchanged; A10 (a) a food
+pick accepted on a reference line whose top-level " or " alternative
+carries an amount, weighed there and keyed on the row's own item key.
+Deviations from the approved plan (decision log): A7's three lines held,
+A8's line held, the marinade hold code `discarded_recipe` (Q7's
+`discarded_medium` meaning kept), the counts 13 routes / 87 leave
+complete (plan.md: 16 / "about 60"), A10's narrowed S14. No live request
+(the accuracy track's live requests stay 55).
 
 Per-line match transparency: the stored decision (`fdc_id`,
 `description`, `data_type`, `confidence` 0–1, `grams`, `gram_source`:
@@ -2649,7 +2795,12 @@ recipe" ("1 recipe double-crust pie dough", "1 recipe Perfect Poached
 Eggs") — is not counted on a food (the user's ruling: sub-recipes stay out
 of the main totals): it is stored `confirmed` with no food, `grams: 0`,
 `gram_source: unmeasured`, the description "Sub-recipe — made from its own
-recipe, not counted in these totals", and resolved like a water line. A
+recipe, not counted in these totals". Until matcher v41 it was resolved
+like a water line; since v41 such a line is first READ as a reference to a
+recipe (the matches GET's v41 block: routed to a library recipe and counted
+at its share, R1; held `choose_recipe` / `discarded_recipe`; or, not routed,
+this 0 g rule row) and the rule row is NOT accounted — its recipe reads
+partial (R3, the owner's A3 a). A
 food offered first stays that food: "½ teaspoon table salt or 1 recipe
 topping (recipes follow)" is the salt; a store-bought alternative offered
 after it does not count ("1 recipe Green Curry Paste (recipe follows) or 2
@@ -2665,7 +2816,8 @@ IS cached and gives no grams is the sub-recipe). "1 recipe X" whose
 subsection X is one counted food is that food's yield on the line's own
 pick (the user's ruling Q1, 2026-09-28: "1 recipe Easy-Peel Hard-Cooked
 Eggs" is the subsection's "6 large eggs", 300 g); every other "1 recipe X"
-stays 0 g. A measured "plus" part of another food is eaten and counted as
+is a reference line (v41: routed, held, or the 0 g rule row above). A
+measured "plus" part of another food is eaten and counted as
 the line, the row keeping the line's text: "1 recipe Crispy Onions, plus 3
 tablespoons reserved oil (recipe follows)" is 3 tablespoons of the
 subsection's vegetable oil — the line every path weighs and shows: a
@@ -2677,8 +2829,12 @@ holds on every write: a fresh match, a decision reused from another recipe,
 an amount edit's re-attached decision, an `apply_to_all` landing on the
 line, an un-skip, and a person's pick or confirm with no grams typed — in
 that request or before it: grams a person typed stay through a later bare
-confirm (matcher v16) — (a marked line its food gives no grams is stored as
-the 0 g sub-recipe; the ingredient's decision is still recorded). The engine's own rows — a sub-recipe's, a seasoning's, an
+confirm (matcher v16) — (a bare count of the food, "3 hard-cooked eggs (recipe
+follows)", its food giving no grams, is stored as the 0 g sub-recipe; the
+ingredient's decision is still recorded. On any other reference line a pick
+with no grams typed is refused since v41 — 422, the PUT's v41 table — unless
+the line's alternative after its first top-level " or " carries an amount,
+A10 a). The engine's own rows — a sub-recipe's, a seasoning's, an
 equipment or water line's — are rewritten whenever the rule changes (a
 person's confirm of a food, or a skip, is never).
 
@@ -2697,6 +2853,68 @@ the line itself still wins). `skipped` does not travel: it is a call about
 one recipe's line, not about the item.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition/matches/{pos}` (admin, full scope)
+
+**Matcher v41: a recipe for a reference line.** Two body keys beside
+`fdc_id` / `grams`: `child` (a library recipe's slug or id) and `share`
+(a number, 0 < share ≤ 100; optional — absent, the line's own share of the
+child, as the compute reads it; required when that share cannot be read). The actions on a composite row: Pick a
+recipe `{raw, child}` (stored `overridden`, the child at the share,
+derived at once: grams = the child's total grams × the share; the default
+flag cleared); Save share `{raw, child: <current>, share}` (the same child,
+a confirmed row stays `confirmed`); Confirm `{raw, confirmed: true}`
+(`confirmed`, the child kept; on a `discarded_recipe` marinade: poured
+away — the row keeps its hold and stores NO grams, `grams` and
+`gram_source` null, and the totals count it as an accounted zero, the
+recipe complete when nothing else is open); Skip `{raw, skipped: true}`. A child that is itself
+made from a recipe is ACCEPTED and stored held `nested_recipe` (0 g). A
+recipe decision is NEVER written to `ingredient_decisions` (A1 b): it
+reaches other recipes only by `apply_to_all`. The action table decides what
+a row accepts: a ROUTED row (it carries a child, no hold) reads
+`routedActions` — skip, confirm, recipe; may be applied to others — a held
+reference `choose_recipe` / `nested_recipe` skip or recipe, the marinade
+`discarded_recipe` skip, confirm or recipe. A NOT-ROUTED reference row (the
+0 g rule row, R3) takes no recipe and no bare food pick (S14); it reads the
+unheld table, so as shipped before v41 it also accepts a confirm — which
+changes nothing counted: the row stays the engine's rule row (stored with no
+grams until the next compute rewrites it at 0 g), the recipe partial — and a
+food pick WITH grams typed (`{raw, fdc_id, grams}`), which answers the line
+on that food at those grams ahead of the sub-recipe rule (Run 051 B3; the
+design's S14 refused every food pick there — kept as shipped, the owner's
+call): stored `overridden`, accounted, so the recipe can read complete
+(pumpkin-pie's "1 recipe Basic Single-Crust Pie Dough (this page), …" as
+100 g of a food: 13/13).
+The 422s, each before anything is written:
+
+| request | message |
+|---|---|
+| `child` with `skipped` | `'skipped' cannot be combined with 'fdc_id', 'confirmed', 'grams' or 'child' — one decision per request.` |
+| `child` with `fdc_id`, `confirmed` or `grams` | `'child' cannot be combined with 'fdc_id', 'confirmed' or 'grams' — one decision per request.` |
+| `child` not a string, or no such recipe | `No recipe with that id.` |
+| `child` = the recipe itself | `A recipe cannot be made from itself.` |
+| `child` on a line that is no reference | `This line is not made from a recipe.` |
+| `child` with no stored totals | `That recipe has no totals yet — compute it first.` |
+| `share` not a number, ≤ 0 or > 100 | `'share' must be a positive number (at most 100).` |
+| `share` without `child` | `Pick a recipe first, then set the share.` |
+| `child` with no `share`, on a line whose share of that recipe its yield cannot read | `No share the yield can read — set the share.` |
+| a food, a confirm or grams refused on a routed row | `This line is made from a recipe — confirm it, choose another recipe, or skip the line.` |
+| a confirm, a food or grams on `choose_recipe` / `nested_recipe` | `This line is made from a recipe — choose a recipe, or skip the line.` |
+| a food or grams on `discarded_recipe` | `This marinade is poured away — confirm it, choose a recipe, or skip the line.` |
+| a food pick with no grams typed, or a recipe, on a not-routed reference line (S14; A10 a's amount-bearing alternative excepted) | `This line is made from a recipe that is not counted yet — skip the line if the recipe is made without it.` |
+| `apply_to_all` on a held reference line (a LINE hold) | `A held recipe line is decided in this recipe only.` |
+| `apply_to_all` on a routed row with no recipe decision in the request | `'apply_to_all' needs a recipe decision in this request — choose a recipe (child) or confirm the current one.` |
+
+(The not-routed and the needs-a-recipe-decision texts are new beside the
+design's list; the owner may reword any.) `apply_to_all` on a ROUTED row —
+chosen by the row, so a Confirm and a pick alike — runs the recipe twin:
+every row of the recipe reach (the matches body's `others_lines`) is
+written `overridden` on the decided child at ITS OWN line's share, its
+default flag cleared, derived with no request, and its recipe's totals
+recomputed; a row a person decided meanwhile stands (`decided`); the
+receipt is the same `applied` object. A food pick on a routed or held
+reference row is refused (the table above); on a not-routed one, a pick
+with no grams typed is refused unless its alternative after the first
+top-level " or " carries an amount (A10 a: weighed on it, an ingredient
+decision as any pick).
 
 A food decided here — a pick (`fdc_id`), or `confirmed: true` on a line that
 has a food — becomes the INGREDIENT's decision, library-wide: it is stored in

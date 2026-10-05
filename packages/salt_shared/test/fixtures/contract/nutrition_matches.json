@@ -52,7 +52,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -143,7 +146,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -219,7 +225,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -310,7 +319,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -386,7 +398,10 @@
         "status": "confirmed",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": []
     },
@@ -421,7 +436,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -505,7 +523,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -610,7 +631,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -665,7 +689,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -735,7 +762,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -833,7 +863,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -879,7 +912,10 @@
         "status": "auto",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -984,7 +1020,10 @@
         "status": "overridden",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {

@@ -91,6 +91,11 @@ const Map<int, String> _capabilityByVersion = {
       'recipe_nutrition.computing: how many writers have a pass in '
       'progress (0 at open) + a partial index of the rows '
       'held for a food with no record, by food',
+  18:
+      'ingredient_matches.child_recipe_id / child_share / child_stamp / '
+      'parts: the composite row (matcher v41) — NULL on every existing row '
+      '(not composite), CHECKed: a share above 0, parts a JSON array never '
+      'beside a child',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -120,6 +125,18 @@ const int _retryVersion = 16;
 /// Mirror of migration 017: `recipe_nutrition.computing` (0 on every
 /// existing row at open).
 const int _markerVersion = 17;
+
+/// Mirror of migration 018: the composite row's four columns (NULL on every
+/// existing row at open).
+const int _compositeVersion = 18;
+
+/// The columns migration 018 adds to `ingredient_matches`.
+const Set<String> _compositeColumns = {
+  'child_recipe_id',
+  'child_share',
+  'child_stamp',
+  'parts',
+};
 
 /// Mirror of the private `SaltDatabase._ftsWideningVersion`: a database whose
 /// start version is below this gets its FTS rows re-derived in Dart on open.
@@ -633,7 +650,8 @@ _Seed _seed(
           else if (table == 'ingredient_matches' && version < _holdVersion)
             {
               for (final entry in row.entries)
-                if (entry.key != 'hold' &&
+                if (!_compositeColumns.contains(entry.key) &&
+                    entry.key != 'hold' &&
                     entry.key != 'derived_seq' &&
                     entry.key != 'retry_count' &&
                     (entry.key != 'item_key' || version >= _itemKeyVersion))
@@ -644,8 +662,13 @@ _Seed _seed(
             {...row}
               ..remove('derived_seq')
               ..remove('retry_count')
+              ..removeWhere((key, _) => _compositeColumns.contains(key))
           else if (table == 'ingredient_matches' && version < _retryVersion)
-            {...row}..remove('retry_count')
+            {...row}
+              ..remove('retry_count')
+              ..removeWhere((key, _) => _compositeColumns.contains(key))
+          else if (table == 'ingredient_matches' && version < _compositeVersion)
+            {...row}..removeWhere((key, _) => _compositeColumns.contains(key))
           else
             row,
       ]);
@@ -723,6 +746,43 @@ void main() {
       } finally {
         dir.deleteSync(recursive: true);
       }
+    }
+  });
+
+  test('migration 018 refuses a malformed composite row', () {
+    // Synthesized negative inputs (the corpus cannot supply a malformed
+    // row): each write breaks one CHECK of the four columns 018 adds. The
+    // well-formed shapes are written too, so the refusals are the CHECKs.
+    final dir = Directory.systemTemp.createTempSync('salt_migr_018');
+    try {
+      SaltDatabase.open('${dir.path}/salt.db').dispose();
+      final raw = sqlite3.open('${dir.path}/salt.db');
+      var position = 0;
+      void write(String columns, List<Object?> values) => raw.execute(
+        'INSERT INTO ingredient_matches (recipe_id, position, raw, '
+        'confidence, status, $columns) VALUES (?, ?, ?, ?, ?, '
+        '${List.filled(values.length, '?').join(', ')})',
+        ['r', position++, 'line', 1, 'auto', ...values],
+      );
+      expect(raw.select('PRAGMA user_version').first.columnAt(0), 18);
+      write('child_recipe_id, child_share', ['c', 0.5]);
+      write('parts', ['[{"fdc_id":1,"grams":2}]']);
+      for (final (columns, values) in [
+        ('child_recipe_id, child_share', ['c', 0]),
+        ('child_recipe_id, child_share', ['c', -1]),
+        ('parts', ['{"fdc_id":1}']),
+        ('parts', ['not json']),
+        ('child_recipe_id, parts', ['c', '[]']),
+      ]) {
+        expect(
+          () => write(columns, values),
+          throwsA(isA<SqliteException>()),
+          reason: '$columns = $values must be refused',
+        );
+      }
+      raw.dispose();
+    } finally {
+      dir.deleteSync(recursive: true);
     }
   });
 

@@ -4791,13 +4791,16 @@ IngredientLine? subRecipePlusLine(Recipe recipe, IngredientLine line) {
 
 /// The line every path matches, weighs and queries for [line] of [recipe]:
 /// a sub-recipe reference's eaten "plus" part ([subRecipePlusLine]) when it
-/// has one, else [line] itself — the compute, a person's confirm, pick and
+/// has one, else the food alternative after its " or " when that carries an
+/// amount ([foodAlternativeOf], v41 A10 a: a person's food pick on such a
+/// line is weighed there), else [line] itself — the compute, a person's
+/// confirm, pick and
 /// un-skip, the matches GET's candidates, amount and portions, and the
 /// stale hash and an apply-to-all alike (Run 047: a re-pick on Mujaddara's
 /// plus line, 0711, weighed "1 recipe Crispy Onions" as one onion — 110 g
 /// of oil for 42 — and an un-skip held it `second_food`).
 IngredientLine weighedLine(Recipe recipe, IngredientLine line) =>
-    subRecipePlusLine(recipe, line) ?? line;
+    subRecipePlusLine(recipe, line) ?? foodAlternativeOf(line) ?? line;
 
 /// The sub-recipe rule, the one gate every writer calls: the 0 g row
 /// [line] (position [position] of [recipe]) is stored as, or null when the
@@ -4861,6 +4864,606 @@ IngredientMatchRow _subRecipeRow(
   gramSource: GramSource.unmeasured.name,
   status: 'confirmed',
 );
+// ---------------------------------------------------------------------------
+// v41: the composite row (design_v3 §2.2; the owner's 2026-10-05 rulings).
+// ---------------------------------------------------------------------------
+
+/// What a sub-recipe reference line resolves to ([resolveReference]).
+enum ReferenceKind {
+  /// Counted from a library recipe ([ReferenceResolution.childId]).
+  routed,
+
+  /// The library recipe is itself made from a recipe (depth 1): held
+  /// `nested_recipe`.
+  nested,
+
+  /// No library recipe answers it: held `choose_recipe`.
+  held,
+
+  /// A marinade (the item's words): held `discarded_recipe`, poured away.
+  marinade,
+
+  /// A section of this recipe or another (phase 2): the 0 g rule row.
+  section,
+
+  /// The parent is made FOR the child (D7, "… for Pan-Seared Steaks"):
+  /// served with it, not made from it — the 0 g rule row.
+  servedWith,
+
+  /// The line has no amount: the 0 g rule row.
+  noAmount,
+
+  /// A library recipe answers it but no share reads from its yield: the 0 g
+  /// rule row.
+  noShare,
+}
+
+/// A library recipe as the resolver's title index lists it.
+typedef LibraryTitle = ({String id, String slug, String title});
+
+/// [resolveReference]'s answer.
+class ReferenceResolution {
+  /// Builds one.
+  const ReferenceResolution(
+    this.kind, {
+    this.childId,
+    this.share,
+    this.named = 0,
+    this.missing = false,
+    this.similar = const [],
+    this.section,
+  });
+
+  /// What the line resolves to.
+  final ReferenceKind kind;
+
+  /// The child recipe (routed, nested, no share).
+  final String? childId;
+
+  /// The share of the child the line counts (routed).
+  final double? share;
+
+  /// How many library titles the parent's note names (a routed default is
+  /// flagged when it names two or more).
+  final int named;
+
+  /// A held line's reason: no candidate at all (`missing`) rather than
+  /// several (`generic`) — the GET's copy variant.
+  final bool missing;
+
+  /// Library titles holding every word of the item, listed for a person
+  /// (never routed; F12): fewest extra words first, at most 5.
+  final List<LibraryTitle> similar;
+
+  /// The section a section reference names (its host's id and title).
+  final ({String host, String title})? section;
+}
+
+/// How many times a [ResolverMemo] read the library's title or section
+/// index (the cost pin, F14: at most two per request or compute).
+@visibleForTesting
+int resolverIndexReads = 0;
+
+/// How many times a [ResolverMemo] read a child recipe's `recipe_nutrition`
+/// row (the cost pin, F14: one per composite row per compute).
+@visibleForTesting
+int childNutritionReads = 0;
+
+/// The library's titles and sections, read ONCE per request or compute
+/// (F14, the [ReachMemo] precedent): two statements, never a decode of
+/// every document.
+class ResolverMemo {
+  /// A memo over [db].
+  ResolverMemo(this.db);
+
+  /// The database the indexes are read from.
+  final SaltDatabase db;
+
+  /// Library titles by normalised title, in id order.
+  late final Map<String, List<LibraryTitle>> titles = () {
+    resolverIndexReads++;
+    final out = <String, List<LibraryTitle>>{};
+    for (final entry in db.recipeTitleIndex()) {
+      (out[_refNorm(entry.title)] ??= []).add(entry);
+    }
+    return out;
+  }();
+
+  /// Every recipe's subsection titles, by normalised title.
+  late final Map<String, List<({String host, String title})>> sections = () {
+    resolverIndexReads++;
+    final out = <String, List<({String host, String title})>>{};
+    for (final entry in db.subsectionTitleIndex()) {
+      (out[_refNorm(entry.title)] ??= []).add(entry);
+    }
+    return out;
+  }();
+
+  final Map<String, RecipeNutritionRow?> _children = {};
+
+  /// The child recipe [id]'s stored totals, read ONCE per request or
+  /// compute (F14): the row the compute writes and the totals it counts
+  /// read the same child (no write to it can land between them in one
+  /// compute: a recipe is never its own child).
+  RecipeNutritionRow? childNutrition(String id) =>
+      _children.putIfAbsent(id, () {
+        childNutritionReads++;
+        return db.nutritionFor(id);
+      });
+}
+
+/// A title or item as the resolver compares them: accents folded,
+/// punctuation a space, lowercase ("double-crust" is two words).
+String _refNorm(String text) => foldAccents(
+  text.toLowerCase(),
+).replaceAll(RegExp('[^a-z0-9]+'), ' ').trim();
+
+Set<String> _refWords(String normalized) =>
+    normalized.isEmpty ? const {} : normalized.split(' ').toSet();
+
+/// The item a reference line names: its parsed item with every
+/// parenthetical (an unclosed one too), the tail after its first comma, the
+/// reference marks and a leading "1 recipe" removed, normalised.
+String referenceItemOf(IngredientLine line) => _refNorm(_referenceText(line));
+
+/// The reference a line names as the line writes it (v41, the matches GET's
+/// `child.name`): [referenceItemOf]'s cuts, the case and punctuation kept,
+/// the spaces collapsed ("Rustic Tart Dough", "double-crust pie dough").
+String referenceNameOf(IngredientLine line) =>
+    _referenceText(line).replaceAll(RegExp(r'\s+'), ' ').trim();
+
+String _referenceText(IngredientLine line) => (line.item ?? line.raw)
+    .replaceAll(RegExp(r'\([^()]*\)?'), '')
+    .replaceAll(RegExp(r'\(.*$'), '')
+    .split(',')
+    .first
+    .replaceFirst(RegExp(r'^\s*\d+\s+recipes?\s+'), '')
+    .replaceAll(
+      RegExp(
+        r'\bsee this page\b|\bthis page\b|\brecipes? follows?\b',
+        caseSensitive: false,
+      ),
+      '',
+    );
+
+/// "Thai Chili Jam (Nam Prik Pao)" ← "Nam Prik Pao (Thai Chili Jam)".
+final RegExp _trailingParen = RegExp(r'^(.*?)\s*\((.*)\)\s*$');
+
+/// Whether this recipe's section [title] is the one the reference [item]
+/// names: equal, the item starts with it (the shipped rule), it starts with
+/// the item and a space ("Fried Shallots and Fried Shallot Oil"), or its
+/// trailing parenthetical is the item (reversed: "Nam Prik Pao (Thai Chili
+/// Jam)").
+bool _ownSectionNames(String title, String item) {
+  final normalized = _refNorm(title);
+  if (normalized.isEmpty) {
+    return false;
+  }
+  final reversed = _trailingParen.firstMatch(title);
+  return normalized == item ||
+      item.startsWith(normalized) ||
+      normalized.startsWith('$item ') ||
+      (reversed != null && _refNorm(reversed[2]!) == item);
+}
+
+/// Resolves the sub-recipe reference [line] of [recipe] (design_v3 §2.2
+/// item 2, the ruled order; first hit wins): no amount → a marinade → ONE
+/// own section (its title equals the item, the item starts with it, its
+/// parenthetical equals the item, or it starts with the item and a space;
+/// D11: under "recipes follow" too) → the first library title the parent's
+/// note names ("(this page)" in the note; titles of two or more words
+/// holding every word of the item, by position, the longest of a span) →
+/// the library title equal to the item (unless the parent is made FOR it,
+/// D7) → another recipe's section → held. Self is never a candidate. A
+/// child made from a recipe itself is `nested` (depth 1); one whose yield
+/// reads no share is `noShare`.
+ReferenceResolution resolveReference(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  ResolverMemo memo,
+) {
+  if (line.amounts.isEmpty) {
+    return const ReferenceResolution(ReferenceKind.noAmount);
+  }
+  final item = referenceItemOf(line);
+  final itemWords = _refWords(item);
+  if (itemWords.contains('marinade')) {
+    return const ReferenceResolution(ReferenceKind.marinade);
+  }
+  final own = [
+    for (final sub in recipe.subsections)
+      if (sub.title case final title? when _ownSectionNames(title, item)) title,
+  ];
+  if (own.length == 1) {
+    return ReferenceResolution(
+      ReferenceKind.section,
+      section: (host: recipe.id, title: own.single),
+    );
+  }
+  final titles = memo.titles;
+  final named = noteNamedTitles(recipe, item, memo);
+  final exact = [
+    for (final e in titles[item] ?? const <LibraryTitle>[])
+      if (e.id != recipe.id) e,
+  ];
+  final LibraryTitle child;
+  if (named.isNotEmpty) {
+    child = named.first;
+  } else if (exact.isNotEmpty) {
+    if (' ${_refNorm(recipe.title)}'.contains(' for $item')) {
+      return const ReferenceResolution(ReferenceKind.servedWith);
+    }
+    child = exact.first;
+  } else {
+    final plural = RegExp(r'\brecipes follow\b').hasMatch(
+      line.raw.toLowerCase(),
+    );
+    final other = [
+      for (final s
+          in memo.sections[item] ?? const <({String host, String title})>[])
+        if (s.host != recipe.id) s,
+    ];
+    if (other.isNotEmpty && !plural) {
+      return ReferenceResolution(ReferenceKind.section, section: other.first);
+    }
+    final similar = similarTitles(recipe, item, memo);
+    final sectionsAlike = [
+      for (final MapEntry(key: normalized, value: entries)
+          in memo.sections.entries)
+        if (itemWords.isNotEmpty &&
+            itemWords.every(_refWords(normalized).contains))
+          for (final s in entries)
+            if (s.host != recipe.id) s,
+    ];
+    final last = item.split(' ').last;
+    final ownAlike = [
+      for (final sub in recipe.subsections)
+        if (_refWords(_refNorm(sub.title ?? '')) case final words
+            when words.any(itemWords.contains) && words.contains(last))
+          sub,
+    ];
+    final libraryAlike = [
+      for (final MapEntry(key: normalized, value: entries) in titles.entries)
+        if (itemWords.isNotEmpty &&
+            normalized != item &&
+            itemWords.every(_refWords(normalized).contains))
+          for (final e in entries)
+            if (e.id != recipe.id) e,
+    ];
+    final candidates =
+        ownAlike.length + libraryAlike.length + sectionsAlike.length;
+    return ReferenceResolution(
+      ReferenceKind.held,
+      missing: !plural && candidates < 2 && own.length <= 1,
+      similar: similar,
+    );
+  }
+  final found = db.recipeByIdOrSlug(child.id)?.recipe;
+  if (found == null) {
+    return const ReferenceResolution(ReferenceKind.held, missing: true);
+  }
+  if (nutritionLines(found).any((l) => isSubRecipeReference(l.raw))) {
+    return ReferenceResolution(ReferenceKind.nested, childId: found.id);
+  }
+  final share = parseShare(line.raw, line.amounts, found.servings);
+  return ReferenceResolution(
+    share == null ? ReferenceKind.noShare : ReferenceKind.routed,
+    childId: found.id,
+    share: share,
+    named: named.length,
+  );
+}
+
+/// The library titles [recipe]'s prep note names for the reference [item],
+/// in the note's order (design_v3 §2.2 item 2): only a note that says
+/// "this page"; a title of two or more words, never [recipe] itself,
+/// holding every word of the item; a title inside a longer one at the same
+/// span is the longer one's. The first is the route; two or more flag it.
+List<LibraryTitle> noteNamedTitles(
+  Recipe recipe,
+  String item,
+  ResolverMemo memo,
+) {
+  final note = _refNorm(recipe.prepNotes ?? '');
+  if (!note.contains('this page')) {
+    return const [];
+  }
+  final itemWords = _refWords(item);
+  final hits = <(int, String, LibraryTitle)>[];
+  for (final MapEntry(key: normalized, value: entries) in memo.titles.entries) {
+    final self = entries.every((e) => e.id == recipe.id);
+    if (self || normalized.split(' ').length < 2) {
+      continue;
+    }
+    final at = note.indexOf(normalized);
+    if (at >= 0 && itemWords.every(_refWords(normalized).contains)) {
+      hits.add((at, normalized, entries.firstWhere((e) => e.id != recipe.id)));
+    }
+  }
+  hits.sort(
+    (a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2),
+  );
+  return [
+    for (final h in hits)
+      if (!hits.any(
+        (g) =>
+            !identical(g, h) &&
+            g.$1 <= h.$1 &&
+            h.$1 + h.$2.length <= g.$1 + g.$2.length &&
+            g.$2.length > h.$2.length,
+      ))
+        h.$3,
+  ];
+}
+
+/// Library titles holding every word of [item] (never a section, never
+/// [recipe] itself, never a title its note names or that equals the item),
+/// fewest extra words first, then by normalised title; at most 5 (F12).
+List<LibraryTitle> similarTitles(
+  Recipe recipe,
+  String item,
+  ResolverMemo memo,
+) {
+  final itemWords = _refWords(item);
+  final note = _refNorm(recipe.prepNotes ?? '');
+  final out = <(int, String, LibraryTitle)>[];
+  for (final MapEntry(key: normalized, value: entries) in memo.titles.entries) {
+    final words = _refWords(normalized);
+    if (itemWords.isEmpty ||
+        normalized == item ||
+        !itemWords.every(words.contains) ||
+        (note.contains('this page') &&
+            normalized.split(' ').length >= 2 &&
+            note.contains(normalized))) {
+      continue;
+    }
+    for (final e in entries) {
+      if (e.id != recipe.id) {
+        out.add((words.length - itemWords.length, normalized, e));
+      }
+    }
+  }
+  out.sort(
+    (a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2),
+  );
+  return [for (final e in out.take(5)) e.$3];
+}
+
+/// The row a sub-recipe reference [line] (position [position] of [recipe])
+/// is stored under (design_v3 §2.2 item 3): routed — `auto`, no food, no
+/// description, confidence 1, `gram_source` recipe, the child's total grams
+/// × the share and the child, its share and its stamp (`computed_at`);
+/// held (`choose_recipe`, `nested_recipe` — which keeps its child and stamp
+/// — `discarded_recipe`) — `auto`, 0 g, recipe, the hold; any other —
+/// today's 0 g rule row ([subRecipeNote], S13).
+IngredientMatchRow referenceRowFor(
+  SaltDatabase db,
+  Recipe recipe,
+  int position,
+  IngredientLine line,
+  ResolverMemo memo,
+) {
+  final found = resolveReference(db, recipe, line, memo);
+  final child = found.childId == null
+      ? null
+      : memo.childNutrition(found.childId!);
+  IngredientMatchRow row(String? hold, {double? grams}) => IngredientMatchRow(
+    recipeId: recipe.id,
+    position: position,
+    raw: line.raw,
+    itemKey: lineKeyOf(line),
+    fdcId: null,
+    description: null,
+    dataType: null,
+    confidence: 1,
+    grams: grams,
+    gramSource: GramSource.recipe.name,
+    status: 'auto',
+    hold: hold,
+    childRecipeId: hold == null || hold == nestedRecipeHold
+        ? found.childId
+        : null,
+    childShare: hold == null ? found.share : null,
+    childStamp: hold == null || hold == nestedRecipeHold
+        ? child?.computedAt
+        : null,
+  );
+  return switch (found.kind) {
+    ReferenceKind.routed => row(
+      null,
+      grams: child?.totalGrams == null
+          ? null
+          : child!.totalGrams! * found.share!,
+    ),
+    ReferenceKind.nested => row(nestedRecipeHold, grams: 0),
+    ReferenceKind.held => row(chooseRecipeHold, grams: 0),
+    ReferenceKind.marinade => row(discardedRecipeHold, grams: 0),
+    _ => _subRecipeRow(recipe, position, line, lineKeyOf(line)),
+  };
+}
+
+/// The v41 hold codes of a reference line ([holdActions]).
+const String chooseRecipeHold = 'choose_recipe';
+
+/// A child recipe itself made from a recipe (depth 1).
+const String nestedRecipeHold = 'nested_recipe';
+
+/// A reference marinade, poured away (A5 a).
+const String discardedRecipeHold = 'discarded_recipe';
+
+/// The food alternative a reference line offers after its first " or " —
+/// the split [isSubRecipeReference] reads — when it carries an AMOUNT
+/// (A10 a): "1 recipe Basic Spice Rub for Pork Chops (recipe follows) or 2
+/// teaspoons pepper" is 2 teaspoons of pepper; "… or lemon wedges, for
+/// serving" is none. A person's food pick on the line is weighed on it.
+IngredientLine? foodAlternativeOf(IngredientLine line) {
+  if (!isSubRecipeReference(line.raw)) {
+    return null;
+  }
+  final split = RegExp(
+    r'(?<!\s)\s+or\s+',
+    caseSensitive: false,
+  ).firstMatch(line.raw);
+  if (split == null) {
+    return null;
+  }
+  final text = line.raw.substring(split.end);
+  final parsed = parseIngredientLine(text);
+  return parsed.amounts.isEmpty
+      ? null
+      : IngredientLine(
+          raw: text,
+          item: parsed.item,
+          prep: parsed.prep,
+          amounts: parsed.amounts,
+        );
+}
+
+/// Rule B1 (v41, R2): rendered bacon. The record bought, SR 168277 "Pork,
+/// cured, bacon, unprepared".
+const int rawBaconFdcId = 168277;
+
+/// SR 168322 "Pork, cured, bacon, pre-sliced, cooked, pan-fried" — the
+/// cooked part (a cached search hit, "thin-sliced cooked deli ham").
+const int cookedBaconFdcId = 168322;
+
+/// SR 172345 "Animal fat, bacon grease" — the fat kept in the pan.
+const int baconGreaseFdcId = 172345;
+
+/// Cooked bacon per gram raw: protein is not rendered, so 13.66 g of
+/// 168277's protein sit in 13.66 / 33.9 g of 168322 (0.40295).
+const double baconCookedYield = 0.403;
+
+/// Fat rendered per gram raw: 0.3713 − 0.40295 × 0.351 (168277's fat less
+/// the cooked bacon's).
+const double baconRenderedPerGram = 0.2299;
+
+/// 172345's own portion, "tsp" 4.3 g over 4.92892 mL.
+const double baconGreaseGramsPerMl = 0.8724;
+
+/// B1's (a): the meat lifted out of its fat.
+final RegExp _baconOut = RegExp(
+  'slotted spoon|transfer (the )?(remaining )?(bacon|pancetta)|'
+  'paper towel.lined plate|transfer (the )?(bacon|pancetta) to (a )?bowl|'
+  'leaving (the )?(bacon|pancetta) in',
+);
+
+/// A number B1's fat terms read: digits, a vulgar fraction, a word.
+final String _baconN = '[\\d$vulgarFractionChars]+|one|two|three|four';
+
+/// B1's (b): the fat poured off down to a stated amount ...
+final RegExp _baconKeep = RegExp(
+  r'(?:pour off|pour|discard|remove and discard)\s+(?:all\s+)?but\s+'
+  '(?:about\\s+)?($_baconN)\\s+(tablespoons?|teaspoons?|cups?)',
+);
+
+/// ... or measured out and the rest discarded ...
+final RegExp _baconReserve = RegExp(
+  'measure out and reserve\\s+($_baconN)\\s+(cups?|tablespoons?)\\s+fat;'
+  r'\s*discard',
+);
+
+/// ... or a range kept and the extra discarded (its upper bound).
+final RegExp _baconExtra = RegExp(
+  '($_baconN)\\s+to\\s+($_baconN)\\s+(cups?)\\s+fat;\\s*discard any extra',
+);
+
+/// The poured fat kept and reused (within 60 characters of the pour-off):
+/// no rendering is lost.
+final RegExp _baconVeto = RegExp(
+  'into a (small )?bowl|set aside|pour off and reserve|reserve remaining fat',
+);
+
+/// The mL of fat [recipe]'s steps keep in the pan, or null when no ONE step
+/// lifts the meat out AND cuts the fat to a stated amount (B1's signal).
+double? _baconKeptMl(Recipe recipe) {
+  double? ml(String quantity, String unit) => volumeMlOf([
+    Amount(
+      measure: Measure.volume,
+      quantity:
+          const {'one': '1', 'two': '2', 'three': '3', 'four': '4'}[quantity] ??
+          quantity,
+      unit: unit.replaceFirst(RegExp(r's$'), ''),
+    ),
+  ]);
+  for (final step in recipe.steps) {
+    final text = step.text.toLowerCase();
+    if (!_baconOut.hasMatch(text)) {
+      continue;
+    }
+    if (_baconKeep.firstMatch(text) case final keep?) {
+      final after = text.substring(
+        keep.start,
+        min(text.length, keep.end + 60),
+      );
+      if (_baconVeto.hasMatch(after)) {
+        continue;
+      }
+      return ml(keep[1]!, keep[2]!);
+    }
+    if (_baconReserve.firstMatch(text) case final reserve?) {
+      return ml(reserve[1]!, reserve[2]!);
+    }
+    if (_baconExtra.firstMatch(text) case final extra?) {
+      return ml(extra[2]!, extra[3]!);
+    }
+  }
+  return null;
+}
+
+/// [row] as rule B1 counts it (v41, R2): an `auto` or `confirmed` row on
+/// [rawBaconFdcId], unheld, weighed at [raw] grams (> 0; default: its own
+/// grams) on a line not "divided" — never grams a person typed (D12, F2) —
+/// whose [recipe] renders and drains the bacon ([_baconKeptMl]) is ONE row
+/// on the record bought with two parts: the cooked bacon (raw × 0.403 on
+/// [cookedBaconFdcId]) and the fat kept in the pan (the stated amount, at
+/// most what renders, on [baconGreaseFdcId]); its grams their sum. Any other
+/// row carries no parts.
+IngredientMatchRow withRenderedBacon(
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row, {
+  double? raw,
+}) {
+  final grams = raw ?? row.grams;
+  final keptMl =
+      row.fdcId == rawBaconFdcId &&
+          (row.status == 'auto' || row.status == 'confirmed') &&
+          row.hold == null &&
+          row.gramSource != GramSource.override.name &&
+          grams != null &&
+          grams > 0 &&
+          !line.raw.toLowerCase().contains('divided')
+      ? _baconKeptMl(recipe)
+      : null;
+  if (keptMl == null) {
+    return row.parts == null ? row : row.copyWith(clearParts: true);
+  }
+  double round2(double v) => double.parse(v.toStringAsFixed(2));
+  final cooked = round2(grams! * baconCookedYield);
+  final kept = round2(
+    min(keptMl * baconGreaseGramsPerMl, grams * baconRenderedPerGram),
+  );
+  return row.copyWith(
+    grams: round2(cooked + kept),
+    parts: jsonEncode([
+      {'fdc_id': cookedBaconFdcId, 'grams': cooked},
+      {'fdc_id': baconGreaseFdcId, 'grams': kept},
+    ]),
+  );
+}
+
+/// The parts a two-part row stores: `[{"fdc_id": …, "grams": …}, …]`.
+List<({int fdcId, double grams})> partsOf(String? parts) => parts == null
+    ? const []
+    : [
+        for (final part in jsonDecode(parts) as List<dynamic>)
+          (
+            fdcId: (part as Map<String, dynamic>)['fdc_id'] as int,
+            grams: (part['grams'] as num).toDouble(),
+          ),
+      ];
 
 /// Whether the line [raw] names a second food the first food's record does
 /// not cover ("2 large eggs plus 6 large yolks", "zest plus 2 tablespoons
@@ -5404,12 +6007,20 @@ String ingredientsHashOf(Recipe recipe) {
   // recipe's own steps and its title, which the discarded-media rules read
   // ([discardedMediumOf]): a steps-only edit adding or removing a drain
   // left the hold and the totals frozen, never stale (v11, Opus critic).
+  final lines = nutritionLines(recipe);
   final payload = jsonEncode({
     'matcher': matcherVersion,
     'title': recipe.title,
     'steps': [for (final step in recipe.steps) step.text],
+    // v41 (S12): what the sub-recipe resolver reads beside the line — the
+    // note naming a dough, the sections a reference names — for a recipe
+    // holding a reference line ([resolveReference]).
+    if (lines.any((line) => isSubRecipeReference(line.raw))) ...{
+      'prep_notes': recipe.prepNotes,
+      'sections': [for (final sub in recipe.subsections) sub.title],
+    },
     'lines': [
-      for (final line in nutritionLines(recipe))
+      for (final line in lines)
         {
           'raw': line.raw,
           'item': line.item,
@@ -5734,6 +6345,9 @@ Future<NutritionProviderException?> _computePass(
   // Foods built from a search hit this compute (see the candidate loop):
   // the totals read them here, since they are not in fdc_food_cache.
   final standIns = <int, FdcFood>{};
+  // The library's titles and sections, read at most once in this compute
+  // and only for a reference line (v41, F14).
+  final references = ResolverMemo(db);
 
   // No catch (v29): a pass that throws leaves the recipe stale whatever
   // rows it marked derived ([matchAndCompute] clears the stamp as it
@@ -5774,6 +6388,7 @@ Future<NutritionProviderException?> _computePass(
         position,
         line,
         decided,
+        references: references,
       );
       if (unavailable != null) {
         if (!reread) {
@@ -5852,6 +6467,7 @@ Future<NutritionProviderException?> _computePass(
         position,
         line,
         edited,
+        references: references,
       );
       if (unavailable != null) {
         unavailableRow(position, edited, row, unavailable);
@@ -5880,8 +6496,18 @@ Future<NutritionProviderException?> _computePass(
       hasAmounts: line.amounts.isNotEmpty,
       normalizedItem: normalized,
     );
-    if (uncounted != null) {
-      write(uncounted);
+    // v41: a reference line is the composite row its resolution gives
+    // ([referenceRowFor]: routed, held, or the 0 g rule row) — unless it
+    // offers a food with an amount ([foodAlternativeOf], A10 a) and a
+    // person's decision on its key is CARRIED (gate 2: the parent deleted
+    // and re-imported), which is weighed there below. A fresh engine match
+    // never lands on such a line.
+    final carried =
+        uncounted != null &&
+        foodAlternativeOf(line) != null &&
+        db.decisionFor(key)?.fdcId != null;
+    if (uncounted != null && !carried) {
+      write(referenceRowFor(db, recipe, position, line, references));
       continue;
     }
     // v37 (the class ruling, 2026-10-04): a zero-nutrient flavouring
@@ -6030,7 +6656,9 @@ Future<NutritionProviderException?> _computePass(
             write(sub);
             continue;
           }
-          write(
+          final carriedRow = withRenderedBacon(
+            recipe,
+            eaten,
             IngredientMatchRow(
               recipeId: recipe.id,
               position: position,
@@ -6046,8 +6674,15 @@ Future<NutritionProviderException?> _computePass(
               hold: outcome.hold,
             ),
           );
+          await _resolveParts(db, lineProvider, carriedRow);
+          write(carriedRow);
           continue;
         }
+      }
+      if (uncounted != null) {
+        // A carried decision this line could not use: the reference row.
+        write(referenceRowFor(db, recipe, position, line, references));
+        continue;
       }
 
       final search = lineSearchFor(db, normalized, lineKeyOf(eaten));
@@ -6212,7 +6847,9 @@ Future<NutritionProviderException?> _computePass(
         write(sub);
         continue;
       }
-      write(
+      final picked = withRenderedBacon(
+        recipe,
+        eaten,
         IngredientMatchRow(
           recipeId: recipe.id,
           position: position,
@@ -6228,6 +6865,8 @@ Future<NutritionProviderException?> _computePass(
           hold: outcome.hold,
         ),
       );
+      await _resolveParts(db, lineProvider, picked);
+      write(picked);
     } on NutritionProviderException catch (error) {
       if (identical(lineProvider, cacheOnly)) {
         // No cache holds it yet: the hold stands, no request — derived for
@@ -6278,6 +6917,7 @@ Future<NutritionProviderException?> _computePass(
     unavailable: provider.skipped,
     kept: kept,
     ending: marked,
+    references: references,
   );
   return failure ??
       (provider.skipped ? provider.suspended : null) ??
@@ -7304,6 +7944,7 @@ bool recomputeTotals(
   bool unavailable = false,
   Set<int> kept = const {},
   bool ending = false,
+  ResolverMemo? references,
 }) {
   // The totals and the stamp are read in ONE synchronous pass over the
   // STORED recipe and its rows (Run 053 O4): a plain recompute carries the
@@ -7314,6 +7955,7 @@ bool recomputeTotals(
   if (now == null) {
     return true; // Deleted meanwhile: its rows cascaded away (Run 051 B6).
   }
+  final children = references ?? ResolverMemo(db);
   FdcFood? food(int fdcId, {IngredientLine? line}) =>
       standIns[fdcId] ?? knownFood(db, fdcId, line: line);
   // Rows whose food no cache holds (RULE A): a decided row's position,
@@ -7333,14 +7975,77 @@ bool recomputeTotals(
   var totalGrams = 0.0;
   var contributing = 0;
   var accounted = 0;
+  void add(FdcFood record, double grams) {
+    for (final def in nutrientDefs) {
+      for (final number in def.fdcNumbers) {
+        final per100 = record.nutrientsPer100g[number];
+        if (per100 != null) {
+          totals[def.key] = (totals[def.key] ?? 0) + per100 * grams / 100;
+          break;
+        }
+      }
+    }
+    // A record without any published energy still contributes calories
+    // via the standard Atwater 4/9/4 factors ([kcalPer100g]) — FDC's own
+    // computed-energy fields do the same math.
+    final hasEnergy = nutrientDefs.first.fdcNumbers.any(
+      record.nutrientsPer100g.containsKey,
+    );
+    if (!hasEnergy) {
+      totals['energy'] =
+          (totals['energy'] ?? 0) + kcalPer100g(record) * grams / 100;
+    }
+  }
+
   for (final row in matches) {
     if (row.status == 'skipped') {
       accounted += 1;
       continue;
     }
+    // v41 (F5, N3): a reference line no recipe counts — held
+    // `choose_recipe` or `nested_recipe`, whatever its status (a person's
+    // nested pick, a decided row whose child is gone): neither accounted
+    // nor contributing, as the bucket reads it ([recipeChoiceHolds]). A
+    // confirmed marinade (`discarded_recipe`) is poured away: below.
+    if (recipeChoiceHolds.contains(row.hold)) {
+      continue;
+    }
+    // v41 (R1): a routed row counts its child's batch totals × its share,
+    // its grams LIVE (the child's total grams × the share, F10 — never the
+    // stored display grams); accounted only when the child is complete. A
+    // child with no nutrition row (or gone): a decided row is underived, an
+    // engine row's recipe stale — never FDC's [missing] (F6).
+    if (row.childRecipeId case final childId?) {
+      // The compute's memo: its child read once with the row it wrote (F14).
+      final child = children.childNutrition(childId);
+      final share = row.childShare;
+      if (child == null) {
+        if (_isDecided(row)) {
+          underived.add(row.position);
+        } else {
+          engineMissing = true;
+        }
+        continue;
+      }
+      if (share == null) {
+        continue;
+      }
+      for (final MapEntry(:key, :value) in batchTotalsOf(child).entries) {
+        totals[key] = (totals[key] ?? 0) + value * share;
+      }
+      totalGrams += (child.totalGrams ?? 0) * share;
+      contributing += 1;
+      if (child.status == 'complete') {
+        accounted += 1;
+      }
+      continue;
+    }
     if (row.fdcId == null) {
-      // Water-like confirmed rows count as fully accounted zeros.
-      if (row.status == 'confirmed') {
+      // Water-like confirmed rows count as fully accounted zeros. A
+      // sub-recipe the engine did not route (v41 R3, A3 a: a section, a
+      // dish served with, no amount, no share) is not: its recipe reads
+      // partial.
+      if (row.status == 'confirmed' && row.description != subRecipeNote) {
         accounted += 1;
         contributing += 1;
       }
@@ -7383,6 +8088,42 @@ bool recomputeTotals(
     if (noRecordHolds.contains(row.hold)) {
       continue; // Held: FDC serves no such food (derived to the hold).
     }
+    // v41 (R2, rule B1): a rendered row counts its parts, each on its own
+    // record ([withRenderedBacon]) — never under grams a person typed.
+    if (row.parts != null && row.gramSource != GramSource.override.name) {
+      final parts = [
+        for (final part in partsOf(row.parts))
+          (
+            part: part,
+            record: switch (food(part.fdcId, line: lines[row.position])) {
+              null => null,
+              final own => switch (nutrientSiblings[part.fdcId]) {
+                null => own,
+                final sibling => food(sibling),
+              },
+            },
+          ),
+      ];
+      final gone = parts.where((p) => p.record == null).toList();
+      if (gone.isNotEmpty) {
+        for (final p in gone) {
+          missing?.add(p.part.fdcId);
+        }
+        if (_isDecided(row)) {
+          underived.add(row.position);
+        } else if (!kept.contains(row.position)) {
+          engineMissing = true;
+        }
+        continue;
+      }
+      accounted += 1;
+      contributing += 1;
+      totalGrams += grams;
+      for (final p in parts) {
+        add(p.record!, p.part.grams);
+      }
+      continue;
+    }
     final own = food(row.fdcId!, line: lines[row.position]);
     final sibling = nutrientSiblings[row.fdcId];
     final record = sibling == null || own == null ? own : food(sibling);
@@ -7398,25 +8139,7 @@ bool recomputeTotals(
     accounted += 1;
     contributing += 1;
     totalGrams += grams;
-    for (final def in nutrientDefs) {
-      for (final number in def.fdcNumbers) {
-        final per100 = record.nutrientsPer100g[number];
-        if (per100 != null) {
-          totals[def.key] = (totals[def.key] ?? 0) + per100 * grams / 100;
-          break;
-        }
-      }
-    }
-    // A record without any published energy still contributes calories
-    // via the standard Atwater 4/9/4 factors ([kcalPer100g]) — FDC's own
-    // computed-energy fields do the same math.
-    final hasEnergy = nutrientDefs.first.fdcNumbers.any(
-      record.nutrientsPer100g.containsKey,
-    );
-    if (!hasEnergy) {
-      totals['energy'] =
-          (totals['energy'] ?? 0) + kcalPer100g(record) * grams / 100;
-    }
+    add(record, grams);
   }
 
   // Read in the same pass (Run 051 B7): a save of its serves meanwhile is
@@ -7630,21 +8353,7 @@ void rebaseNutrition(SaltDatabase db, String recipeId, int servingBasis) {
   if (stored == null) {
     return;
   }
-  final Map<String, double> totals;
-  if (stored.totalsJson case final json?) {
-    totals = {
-      for (final MapEntry(:key, :value)
-          in (jsonDecode(json) as Map<String, dynamic>).entries)
-        key: (value as num).toDouble(),
-    };
-  } else {
-    final was = stored.servingBasis ?? 1;
-    totals = {
-      for (final MapEntry(:key, :value)
-          in (jsonDecode(stored.nutrientsJson) as Map<String, dynamic>).entries)
-        key: ((value as Map<String, dynamic>)['amount'] as num) * was * 1.0,
-    };
-  }
+  final totals = batchTotalsOf(stored);
   final perServing = _perServingOf(totals, servingBasis);
   db.rebaseRecipeNutrition(
     recipeId: recipeId,
@@ -7653,6 +8362,28 @@ void rebaseNutrition(SaltDatabase db, String recipeId, int servingBasis) {
     nutrientsJson: jsonEncode(perServing),
     totalsJson: jsonEncode(totals),
   );
+}
+
+/// A recipe's per-batch totals (nutrient key -> amount) from its stored
+/// nutrition row: the stored totals (migration 015), else its per-serving
+/// amounts × its basis (a row written before them; ponytail: a drift of at
+/// most 0.005 × basis until the next compute stores the totals). What the
+/// serving-basis route divides anew ([rebaseNutrition]) and what a parent's
+/// routed row counts of its child (v41, [recomputeTotals]).
+Map<String, double> batchTotalsOf(RecipeNutritionRow stored) {
+  if (stored.totalsJson case final json?) {
+    return {
+      for (final MapEntry(:key, :value)
+          in (jsonDecode(json) as Map<String, dynamic>).entries)
+        key: (value as num).toDouble(),
+    };
+  }
+  final was = stored.servingBasis ?? 1;
+  return {
+    for (final MapEntry(:key, :value)
+        in (jsonDecode(stored.nutrientsJson) as Map<String, dynamic>).entries)
+      key: ((value as Map<String, dynamic>)['amount'] as num) * was * 1.0,
+  };
 }
 
 /// What [basis] divides a recipe's totals by: `per_batch` when it is 1 —
@@ -7851,6 +8582,37 @@ String? _gramBasis(
   if (row.gramSource == 'override') {
     return 'entered by hand$nutrientsOf';
   }
+  // v41: a routed reference row reads its child (the copy sheet's "from the
+  // recipe {title}: {g} g, {kcal} kcal"); a held one counts 0 g, as the
+  // rule row it was says.
+  if (row.gramSource == GramSource.recipe.name) {
+    final childId = row.childRecipeId;
+    if (childId == null || row.hold != null) {
+      return 'a sub-recipe — counted as 0 g';
+    }
+    final title = db.recipeByIdOrSlug(childId)?.recipe.title ?? childId;
+    final child = db.nutritionFor(childId);
+    final kcal = child == null || row.childShare == null
+        ? null
+        : (batchTotalsOf(child)['energy'] ?? 0) * row.childShare!;
+    return 'from the recipe $title: ${_fmtAmount(row.grams!)} g'
+        '${kcal == null ? '' : ', ${_fmtKcal(kcal)} kcal'}';
+  }
+  // v41 (R2): a rendered row says what rule B1 made of the raw weight.
+  if (row.parts != null && fdcId != null) {
+    final parts = partsOf(row.parts);
+    final raw = lineGrams(
+      db,
+      line,
+      knownFood(db, fdcId, line: line),
+      recipe: recipe,
+    )?.grams;
+    if (raw != null && parts.length == 2) {
+      return '${_fmtAmount(raw)} g raw → ${_fmtAmount(parts[0].grams)} g '
+          'cooked bacon + ${_fmtAmount(parts[1].grams)} g bacon grease kept '
+          'in the pan';
+    }
+  }
   if (row.gramSource == GramSource.discarded.name) {
     final plus = plusPartOf(line.raw);
     // An eaten FIRST part names itself (0114's "1 tablespoon").
@@ -7929,6 +8691,377 @@ String? _gramBasis(
     }
   }
   return now?.basis;
+}
+
+/// Grams as the app writes them (`fmtAmount`, A4: one rule for the
+/// server's basis text and the app's line): one decimal under 10, else
+/// whole ("643", not "642.9").
+/// Read at the 2 places every row's grams are shown at (10 ounces, 283.495
+/// g, reads 284).
+String _fmtAmount(double v) {
+  final shown = double.parse(v.toStringAsFixed(2));
+  return shown < 10 ? shown.toStringAsFixed(1) : shown.round().toString();
+}
+
+/// Whole kcal with thousands separators ("3,057").
+String _fmtKcal(double v) => v.round().toString().replaceAllMapped(
+  RegExp(r'\B(?=(\d{3})+(?!\d))'),
+  (_) => ',',
+);
+
+/// The flag a composite row carries at GET (v41, S8: its own line, never a
+/// `gram_basis` suffix), or null: a routed `auto` row on the first of
+/// several titles its parent's note names — "approximation (the first
+/// {kind} the note names: {title})", cleared by a person's decision (D6);
+/// a counted child that is partial — "approximation ({title} is partial:
+/// {m} of {n} lines)"; a rendered row — "approximate (rendered and
+/// drained; yield from FDC protein)". The last two name a fact and stay on
+/// a Confirm (A6). Several join with " · ".
+String? compositeFlagOf(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row,
+  ResolverMemo memo,
+) {
+  if (row.status == 'skipped') {
+    return null;
+  }
+  final flags = <String>[];
+  if (row.childRecipeId case final childId? when row.hold == null) {
+    final title = db.recipeByIdOrSlug(childId)?.recipe.title ?? childId;
+    if (isDefaultRoute(db, recipe, line, row, memo)) {
+      // {kind}: the item's last word ("double-crust pie dough": dough).
+      final kind = referenceItemOf(line).split(' ').last;
+      flags.add(
+        'approximation (the first $kind the note '
+        'names: $title)',
+      );
+    }
+    final child = db.nutritionFor(childId);
+    if (child != null && child.status != 'complete') {
+      flags.add(
+        'approximation ($title is partial: ${child.matchedCount} '
+        'of ${child.totalCount} lines)',
+      );
+    }
+  }
+  if (row.parts != null && row.gramSource != GramSource.override.name) {
+    flags.add('approximate (rendered and drained; yield from FDC protein)');
+  }
+  return flags.isEmpty ? null : flags.join(' · ');
+}
+
+/// Whether [row] — [line]'s row in [recipe] — is the ENGINE's route on the
+/// first of two or more library titles its parent's note names (the
+/// default flag, D6): routed, `auto`, on the child the resolver picks now
+/// with `named` ≥ 2. A person's Confirm or pick is never a default.
+bool isDefaultRoute(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row,
+  ResolverMemo memo,
+) {
+  if (row.childRecipeId == null || row.hold != null || row.status != 'auto') {
+    return false;
+  }
+  final found = resolveReference(db, recipe, line, memo);
+  return found.childId == row.childRecipeId && found.named >= 2;
+}
+
+/// One candidate of a reference line's fix sheet ([referenceCandidates]):
+/// its group (`own_section`, `note_named`, `library`, `similar`,
+/// `other_section`), the library recipe (`recipe`; null for a section),
+/// a section's `section` title and its host, and a note-named title's
+/// `rank` (0 = named first).
+typedef ReferenceCandidate = ({
+  String group,
+  LibraryTitle? recipe,
+  String? section,
+  String? hostId,
+  String? hostTitle,
+  int? rank,
+});
+
+/// The fix sheet's candidates for the reference [line] of [recipe] (v41,
+/// api_app §1d), in the resolution order: this recipe's sections (phase 2,
+/// listed, never picked), the library titles its note names (in the note's
+/// order), the library title equal to the item, library titles holding
+/// every word of the item ([similarTitles], at most 5), and other recipes'
+/// sections holding every word of it (at most 5). [recipe] itself is never
+/// one; a title in an earlier group is not repeated. Reads [memo] only.
+List<ReferenceCandidate> referenceCandidates(
+  Recipe recipe,
+  IngredientLine line,
+  ResolverMemo memo,
+) {
+  final item = referenceItemOf(line);
+  final itemWords = _refWords(item);
+  final hostTitles = {
+    for (final entries in memo.titles.values)
+      for (final e in entries) e.id: e.title,
+  };
+  final named = noteNamedTitles(recipe, item, memo);
+  final seen = {for (final t in named) t.id};
+  final exact = [
+    for (final e in memo.titles[item] ?? const <LibraryTitle>[])
+      if (e.id != recipe.id && seen.add(e.id)) e,
+  ];
+  return [
+    for (final sub in recipe.subsections)
+      if (sub.title case final title? when _ownSectionNames(title, item))
+        (
+          group: 'own_section',
+          recipe: null,
+          section: title,
+          hostId: recipe.id,
+          hostTitle: recipe.title,
+          rank: null,
+        ),
+    for (final (rank, t) in named.indexed)
+      (
+        group: 'note_named',
+        recipe: t,
+        section: null,
+        hostId: null,
+        hostTitle: null,
+        rank: rank,
+      ),
+    for (final t in exact)
+      (
+        group: 'library',
+        recipe: t,
+        section: null,
+        hostId: null,
+        hostTitle: null,
+        rank: null,
+      ),
+    for (final t in similarTitles(recipe, item, memo))
+      if (seen.add(t.id))
+        (
+          group: 'similar',
+          recipe: t,
+          section: null,
+          hostId: null,
+          hostTitle: null,
+          rank: null,
+        ),
+    for (final s in [
+      for (final MapEntry(key: normalized, value: entries)
+          in memo.sections.entries)
+        if (itemWords.isNotEmpty &&
+            itemWords.every(_refWords(normalized).contains))
+          for (final s in entries)
+            if (s.host != recipe.id) s,
+    ].take(5))
+      (
+        group: 'other_section',
+        recipe: null,
+        section: s.title,
+        hostId: s.host,
+        hostTitle: hostTitles[s.host],
+        rank: null,
+      ),
+  ];
+}
+
+/// The rows a RECIPE decision on [itemKey] — [childId], made on the line
+/// [excluding] — lands on (v41, design_v3 §2.3 b, the composite twin of
+/// [decisionReach]): the key's undecided routed rows
+/// ([SaltDatabase.undecidedRoutedMatchesForItemKey]) on ANOTHER child, or
+/// on [childId] by a flagged default ([isDefaultRoute]); an unflagged row
+/// on the same child waits on nothing. Only a line whose share of [childId]
+/// reads ([parseShare]) — each target keeps its OWN share. What `others` /
+/// `others_lines` count on a routed row and exactly what
+/// [applyRecipeToOthers] writes. Never a food row (S18), never a held
+/// reference line (a LINE hold, A2).
+List<IngredientMatchRow> recipeReach(
+  SaltDatabase db,
+  String itemKey, {
+  required String childId,
+  required ({String recipeId, int position}) excluding,
+  required ResolverMemo memo,
+}) {
+  final child = db.recipeByIdOrSlug(childId)?.recipe;
+  if (child == null) {
+    return const [];
+  }
+  final recipes = <String, Recipe?>{};
+  return [
+    for (final row in db.undecidedRoutedMatchesForItemKey(
+      itemKey,
+      excluding: excluding,
+    ))
+      if (recipes.putIfAbsent(
+            row.recipeId,
+            () => db.recipeByIdOrSlug(row.recipeId)?.recipe,
+          )
+          case final recipe?)
+        if (nutritionLines(recipe).elementAtOrNull(row.position)
+            case final line?
+            when line.raw == row.raw &&
+                parseShare(line.raw, line.amounts, child.servings) != null &&
+                (row.childRecipeId != childId ||
+                    isDefaultRoute(db, recipe, line, row, memo)))
+          row,
+  ];
+}
+
+/// Lands a person's RECIPE decision — [childId] on [itemKey], made on the
+/// line [excluding] — on every row [recipeReach] reaches (v41, A1 b: the
+/// apply-to-all is how a recipe pick travels; nothing is written to
+/// `ingredient_decisions`). Each target is written as a person's decision
+/// (`overridden`: an `auto` target would be re-resolved back to its own
+/// note's default at its next compute), on [childId] at its OWN line's
+/// share, derived as every decided composite row is ([derivedFor]'s child
+/// arm, no FDC request), its default flag cleared; guarded at the statement
+/// (a person's decision meanwhile stands, counted `decided`), each recipe
+/// laid out first and its totals recomputed. The receipt is
+/// [applyDecisionToOthers]'s.
+Future<
+  ({
+    int recipes,
+    int lines,
+    int failed,
+    int completed,
+    List<String> completedRecipes,
+    int moved,
+    int decided,
+    int gone,
+    int failedLines,
+    int unavailable,
+  })
+>
+applyRecipeToOthers(
+  SaltDatabase db,
+  NutritionProvider provider, {
+  required String itemKey,
+  required String childId,
+  required ({String recipeId, int position}) excluding,
+}) async {
+  final byRecipe = <String, List<IngredientMatchRow>>{};
+  for (final target in recipeReach(
+    db,
+    itemKey,
+    childId: childId,
+    excluding: excluding,
+    memo: ResolverMemo(db),
+  )) {
+    byRecipe.putIfAbsent(target.recipeId, () => []).add(target);
+  }
+  final child = db.recipeByIdOrSlug(childId)?.recipe;
+  var recipes = 0;
+  var lines = 0;
+  var failed = 0;
+  var failedLines = 0;
+  var moved = 0;
+  var decided = 0;
+  var gone = 0;
+  final completed = <String>[];
+  for (final MapEntry(key: id, value: targets) in byRecipe.entries) {
+    var owned = false;
+    var marked = false;
+    var wrote = false;
+    try {
+      final recipe = db.recipeByIdOrSlug(id)?.recipe;
+      if (recipe == null) {
+        gone += targets.length;
+        continue;
+      }
+      final before = {
+        for (final row in db.ingredientMatchesFor(id)) row.position: row,
+      };
+      final paired = layoutMatchRows(db, recipe);
+      final seq = db.layoutSeqOf(id);
+      final placed = {
+        for (final (at, row) in paired.indexed)
+          if (row != null) row.position: at,
+      };
+      final recipeLines = nutritionLines(recipe);
+      final hash = ingredientsHashOf(recipe);
+      var applied = 0;
+      for (final target in targets) {
+        final at = sameMatchRow(before[target.position], target)
+            ? placed[target.position]
+            : null;
+        final line = at == null ? null : recipeLines[at];
+        if (line == null || line.raw != target.raw) {
+          // A save or a compute since the reach: left for its compute.
+          moved += 1;
+          continue;
+        }
+        final row = (await derivedFor(
+          db,
+          cacheOnly,
+          recipe,
+          at!,
+          line,
+          target.copyWith(
+            position: at,
+            status: 'overridden',
+            childRecipeId: childId,
+            // Its OWN line's share of the child (never the old child's).
+            childShare: parseShare(line.raw, line.amounts, child!.servings),
+            clearChildStamp: true,
+            clearHold: true,
+            clearParts: true,
+          ),
+        )).row;
+        if (!marked) {
+          marked = true;
+          owned = db.markComputing(id);
+        }
+        if (!db.upsertIngredientMatchIfUndecided(
+          row.copyWith(derivedSeq: derivedKeyOf(seq, hash)),
+          layoutSeq: seq,
+        )) {
+          decided += 1;
+          continue;
+        }
+        wrote = true;
+        applied += 1;
+      }
+      if (applied == 0) {
+        continue;
+      }
+      final statusBefore = db.nutritionFor(id)?.status;
+      await recomputeTotalsResolving(
+        db,
+        provider,
+        recipe,
+        only: const {},
+        ending: owned,
+      );
+      marked = false;
+      recipes += 1;
+      lines += applied;
+      if (statusBefore != 'complete' &&
+          db.nutritionFor(id)?.status == 'complete') {
+        completed.add(id);
+      }
+    } on Exception catch (error) {
+      failed += 1;
+      failedLines += targets.length;
+      _log.warning('recipe apply-to-all failed for $id: $error');
+    } finally {
+      if (marked) {
+        db.releaseComputing(id, owned: owned, stale: wrote);
+      }
+    }
+  }
+  return (
+    recipes: recipes,
+    lines: lines,
+    failed: failed,
+    completed: completed.length,
+    completedRecipes: completed,
+    moved: moved,
+    decided: decided,
+    gone: gone,
+    failedLines: failedLines,
+    unavailable: 0,
+  );
 }
 
 Future<List<FdcCandidate>> _cachedSearch(
@@ -8610,7 +9743,8 @@ Future<IngredientMatchRow> unskippedRow(
   final line = nutritionLines(recipe)[position];
   final uncounted = subRecipeRowFor(recipe, position, line);
   if (uncounted != null) {
-    return uncounted;
+    // v41: the composite row the compute writes ([referenceRowFor]).
+    return referenceRowFor(db, recipe, position, line, ResolverMemo(db));
   }
   final eaten = weighedLine(recipe, line);
   var out = row.copyWith(status: 'auto', clearHold: true);
@@ -8660,6 +9794,15 @@ Future<IngredientMatchRow> unskippedRow(
           hold: outcome.hold,
         )
       : out.copyWith(hold: outcome.hold);
+  // Rule B1 (v41) on the line's raw weight: a skip kept the rendered sum.
+  if (out.fdcId == rawBaconFdcId) {
+    out = withRenderedBacon(
+      recipe,
+      eaten,
+      out,
+      raw: lineGrams(db, eaten, onRow, recipe: recipe)?.grams,
+    );
+  }
   return subRecipeRowFor(
         recipe,
         position,
@@ -8722,6 +9865,7 @@ derivedFor(
   IngredientLine line,
   IngredientMatchRow edited, {
   ({FdcFood? food})? resolved,
+  ResolverMemo? references,
 }) async {
   final eaten = weighedLine(recipe, line);
   final normalized = normalizeItem(lineItemOf(eaten));
@@ -8780,8 +9924,34 @@ derivedFor(
       sameAmount &&
       (skipped || typedOn != null || edited.fdcId == null)) {
     return (
-      row: placed.copyWith(clearHold: true),
+      // v41 (F2): typed grams answer the line on ONE record, and a skip
+      // counts nothing — neither keeps a rendered row's parts; a skip reads
+      // no child, so it keeps no stamp the child's next write would leave
+      // stale for good.
+      row: placed.copyWith(
+        clearHold: true,
+        clearParts: true,
+        clearChildStamp: skipped,
+      ),
       food: typedOn,
+      note: null,
+      unavailable: null,
+    );
+  }
+  // v41 (F1, N1, N6): a person's decision on a composite reference row —
+  // a Confirm or a pick of a child recipe, a saved share — counts the
+  // child, re-read here at every compute, PUT and GET, BEFORE the no-food
+  // branch below (which would clear its grams).
+  if (edited.childRecipeId != null) {
+    return (
+      row: _childRowOf(
+        db,
+        line,
+        placed,
+        sameAmount: sameAmount,
+        children: references ?? ResolverMemo(db),
+      ),
+      food: null,
       note: null,
       unavailable: null,
     );
@@ -8950,18 +10120,26 @@ derivedFor(
       : weight == null
       ? null
       : outcome.source;
-  final row = placed.copyWith(
-    grams: grams,
-    clearGrams: grams == null,
-    gramSource: source,
-    clearGramSource: source == null,
-    hold: outcome.hold,
-    clearHold: !keepsHold,
+  // Rule B1 (v41, D12): a Confirm keeps a rendered row's two parts; a pick
+  // (`overridden`) is one record at the line's raw grams — how a person
+  // undoes the rule.
+  final row = withRenderedBacon(
+    recipe,
+    eaten,
+    placed.copyWith(
+      grams: grams,
+      clearGrams: grams == null,
+      gramSource: source,
+      clearGramSource: source == null,
+      hold: outcome.hold,
+      clearHold: !keepsHold,
+    ),
   );
   // The sub-recipe rule gates the row as a confirm or pick writes it: not a
   // skip, nor a row a person typed grams on (they count the line, whatever
-  // the amount now weighs).
-  final gated = skipped || typed
+  // the amount now weighs), nor a food on a reference line's food
+  // alternative (v41 A10 a, gate 1: weighed there, [weighedLine]).
+  final gated = skipped || typed || foodAlternativeOf(line) != null
       ? null
       : subRecipeRowFor(recipe, position, line) ??
             subRecipeRowFor(recipe, position, line, onFood: true, grams: grams);
@@ -8975,7 +10153,38 @@ derivedFor(
       : keepsHold
       ? holdNoteOf(recipe, line, outcome.hold)
       : null;
+  // Rule B1's part records, resolved as the food is (RULE A: the totals
+  // never fetch) — a failure is this derivation's, as the food's is.
+  if (gated == null) {
+    try {
+      await _resolveParts(db, provider, row);
+    } on NutritionProviderException catch (failure) {
+      return (
+        row: edited.copyWith(position: position),
+        food: null,
+        note: null,
+        unavailable: failure,
+      );
+    }
+  }
   return (row: gated ?? row, food: food, note: note, unavailable: null);
+}
+
+/// Rule B1's part records ([withRenderedBacon]), resolved where the row's
+/// food is (RULE A: the totals never fetch): a part no cache holds
+/// ([knownFood]: the food cache, else a cached search hit — snapshot 17
+/// holds 168322 as a hit of "thin-sliced cooked deli ham", so no request)
+/// is fetched and cached ([_cachedFood]).
+Future<void> _resolveParts(
+  SaltDatabase db,
+  NutritionProvider provider,
+  IngredientMatchRow row,
+) async {
+  for (final part in partsOf(row.parts)) {
+    if (knownFood(db, part.fdcId) == null) {
+      await _cachedFood(db, provider, part.fdcId);
+    }
+  }
 }
 
 /// [decided] with ONLY the fields [derivedFor] derives taken from [row]
@@ -8992,7 +10201,70 @@ IngredientMatchRow withDerived(
   clearGramSource: row.gramSource == null,
   hold: row.hold,
   clearHold: row.hold == null,
+  // v41: a rendered row's parts and a composite row's share and stamp are
+  // derived too (the child itself is the decision).
+  parts: row.parts,
+  clearParts: row.parts == null,
+  childShare: row.childShare,
+  childStamp: row.childStamp,
+  clearChildStamp: row.childStamp == null,
 );
+
+/// [derivedFor]'s child arm (v41, design_v3 §2.2 item 4): a decided row
+/// [placed] on its [line] that names a child recipe, as derived now. The
+/// child GONE: held `choose_recipe` (its status kept, the `food_gone`
+/// precedent), 0 g, the stamp cleared (N6: else the parent reads underived
+/// after every sweep), the child's id kept (a re-import, same id, routes it
+/// again). The child itself made from a recipe: held `nested_recipe`, 0 g,
+/// its stamp kept. The child with no nutrition row: the row as stored (the
+/// totals leave it underived — never FDC's `missing` path, F6). Else
+/// counted: the share a person saved while the line's amount is the one it
+/// was saved on ([sameAmount], as typed grams), else re-read from the line
+/// and the child's yield ([parseShare]); grams = the child's total grams ×
+/// the share; the stamp = the child's `computed_at`; any recipe hold
+/// answered (the child is back).
+IngredientMatchRow _childRowOf(
+  SaltDatabase db,
+  IngredientLine line,
+  IngredientMatchRow placed, {
+  required bool sameAmount,
+  required ResolverMemo children,
+}) {
+  final child = db.recipeByIdOrSlug(placed.childRecipeId!)?.recipe;
+  if (child == null) {
+    return placed.copyWith(
+      hold: chooseRecipeHold,
+      grams: 0,
+      gramSource: GramSource.recipe.name,
+      clearChildStamp: true,
+      clearParts: true,
+    );
+  }
+  final stored = children.childNutrition(child.id);
+  if (nutritionLines(child).any((l) => isSubRecipeReference(l.raw))) {
+    return placed.copyWith(
+      hold: nestedRecipeHold,
+      grams: 0,
+      gramSource: GramSource.recipe.name,
+      childStamp: stored?.computedAt,
+      clearChildStamp: stored == null,
+    );
+  }
+  if (stored == null) {
+    return placed;
+  }
+  final share = sameAmount && placed.childShare != null
+      ? placed.childShare
+      : parseShare(line.raw, line.amounts, child.servings);
+  return placed.copyWith(
+    grams: share == null ? 0 : (stored.totalGrams ?? 0) * share,
+    gramSource: GramSource.recipe.name,
+    childShare: share,
+    childStamp: stored.computedAt,
+    clearHold: true,
+    clearParts: true,
+  );
+}
 
 /// Lands [decided] — a person's decision on [itemKey] made on the line
 /// [excluding] — on every other undecided line with that item (other
@@ -9248,19 +10520,25 @@ applyDecisionToOthers(
               onFood: true,
               grams: outcome.grams,
             ) ??
-            IngredientMatchRow(
-              recipeId: found.recipe.id,
-              position: at,
-              raw: line.raw,
-              itemKey: itemKey,
-              fdcId: onFood.fdcId,
-              description: onFood.description,
-              dataType: onFood.dataType,
-              confidence: 1,
-              grams: outcome.grams,
-              gramSource: outcome.source,
-              status: 'auto',
-              hold: outcome.hold,
+            // Rule B1 (v41, D12): a carried bacon decision re-runs the rule
+            // on the target's own steps.
+            withRenderedBacon(
+              found.recipe,
+              eaten,
+              IngredientMatchRow(
+                recipeId: found.recipe.id,
+                position: at,
+                raw: line.raw,
+                itemKey: itemKey,
+                fdcId: onFood.fdcId,
+                description: onFood.description,
+                dataType: onFood.dataType,
+                confidence: 1,
+                grams: outcome.grams,
+                gramSource: outcome.source,
+                status: 'auto',
+                hold: outcome.hold,
+              ),
             );
         if (row.hold != null) {
           // A LINE hold now (a decided food answers every food hold): the

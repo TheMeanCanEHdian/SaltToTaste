@@ -3318,6 +3318,33 @@ calls v40 ships as matcher v41.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-05 — the composite-row design (matcher v41; the owner: "go with your
+  recommendations" on the ten items of `.claude/diag/2026-10-05/prep41/design_v3.md`
+  §1.1):** a recipe pick never enters the item-key decisions and travels only by
+  the explicit apply-to-all, its targets written as the person's own rows (a
+  re-imported parent falls back to its engine default); `choose_recipe`,
+  `nested_recipe` and `discarded_recipe` are LINE holds (groups of one); a
+  reference row that stays a 0 g rule row until phase 2 drops out of the matched
+  count and the label names it, out of the queue; the copy the mockup leaves open
+  as the design writes it (parent kind pie/tart/quiche else recipe; no why-line
+  on exact-title routes); the three reference marinades keep Q7's poured-away
+  meaning under their own hold code `discarded_recipe` (Skip, Confirm, Choose a
+  recipe — typed grams need a food) rather than the literal `discarded_medium`;
+  a Confirm keeps the flags that state a fact (the bacon rendering, "child is
+  partial") and clears only the default-dough flag; the three un-noted
+  single-crust lines are HELD `choose_recipe`, not routed on Foolproof All-Butter
+  as plan.md §2 counted (the book's own links name a section) — R1 therefore
+  routes 13 lines, not 16; buffalo-wings' blue cheese dressing is held
+  `choose_recipe` (missing) instead of plan.md's silent rule row; the three
+  unmarked own-section references (a cilantro sauce, a tapenade, harissa) wait
+  for phase 2; a food pick is accepted on a reference line whose printed
+  alternative carries an amount, weighed on that alternative and keyed on the
+  row's own item key (three lines), refused where it carries none. Also
+  recorded: R3 (an unrouted reference makes the label partial) moves 87 complete
+  recipes to partial on the v40 replay, not plan.md's "about 60", which read
+  snapshot 16's stale stored labels; 51 of them have nothing to review until
+  phase 2.
+
 - **2026-10-05 — the edible-yields live step, spent (13 requests on a scratch
   copy of snapshot 16, the key attached read-only and deleted after; the
   result snapshot 17):** the plan's conditions decided every item. The

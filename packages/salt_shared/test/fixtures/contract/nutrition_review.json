@@ -21,6 +21,12 @@
       "groups": 0
     },
     {
+      "id": "choose_recipe",
+      "label": "Choose recipe",
+      "count": 0,
+      "groups": 0
+    },
+    {
       "id": "skipped",
       "label": "Skipped",
       "count": 0,
@@ -46,7 +52,8 @@
         "grams": null,
         "gram_source": null,
         "status": "overridden",
-        "hold": null
+        "hold": null,
+        "child": null
       }
     }
   ],

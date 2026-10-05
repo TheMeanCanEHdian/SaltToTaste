@@ -23,7 +23,10 @@
         "status": "overridden",
         "hold": "starter_discard",
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -69,7 +72,10 @@
         "status": "auto",
         "hold": "starter_discard",
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": [
         {
@@ -145,7 +151,10 @@
         "status": "confirmed",
         "hold": null,
         "hold_note": null,
-        "carried_from": null
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
       },
       "candidates": []
     }

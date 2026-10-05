@@ -7,6 +7,7 @@ import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/grams.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
+import 'package:salt_server/src/services/nutrition_composite.dart';
 import 'package:salt_shared/salt_shared.dart';
 
 /// `GET .../nutrition` body: the label data plus match transparency.
@@ -35,8 +36,8 @@ Map<String, Object?> nutritionBody(
   // UI's badge only turns green once every line is matched AND none of these
   // remain (a human confirm/override clears one).
   final lineCount = nutritionLines(recipe).length;
-  final lowConfidence = db
-      .ingredientMatchesFor(recipe.id)
+  final stored = db.ingredientMatchesFor(recipe.id);
+  final lowConfidence = stored
       .where(
         (match) =>
             match.position < lineCount &&
@@ -51,6 +52,7 @@ Map<String, Object?> nutritionBody(
                 MatchBucket.check,
       )
       .length;
+  final summary = referenceSummary(db, recipe, stored);
   return {
     'status': stale ? 'stale' : row.status,
     // Why (v28, Run 058 S15 / Opus critic 1 #3): `inputs` — the recipe's
@@ -85,6 +87,10 @@ Map<String, Object?> nutritionBody(
     'matched_count': row.matchedCount,
     'total_count': row.totalCount,
     'low_confidence': lowConfidence,
+    // v41: the child recipes the totals count, and the reference lines that
+    // make the label partial ([referenceSummary]); `[]` when none.
+    'includes': summary.includes,
+    'partial': summary.partial,
     'computed_at': row.computedAt,
     if (computingJobId != null) 'computing_job_id': computingJobId,
   };
@@ -149,6 +155,9 @@ Future<Map<String, Object?>> matchesBody(
   // Every line's reach reads the same rows: each reached recipe and line
   // once for the whole body (Run 054 S4: once per line, 1.1 s on 0491).
   final reads = ReachMemo();
+  // The library's titles and sections, read at most once for the body
+  // (v41, F14): every reference line's child, flag and candidates.
+  final memo = ResolverMemo(db);
   for (final (position, line) in lines.indexed) {
     var row = matches[position];
     // A person's decision shows what it derives on the recipe as it is now
@@ -210,16 +219,34 @@ Future<Map<String, Object?>> matchesBody(
     // recipe's own as the layout places them: never the row this line takes
     // (wherever it is stored), nor a row the layout would delete (Run 050:
     // after a save shifting the lines, a line was offered its own row).
+    // v41 (F4): a reference line with no food reaches no food row (S18):
+    // a routed one, the key's undecided routed rows a RECIPE decision on
+    // its child lands on ([recipeReach]); any other (held — a LINE hold,
+    // A2 — or not routed), none.
+    final child = row == null
+        ? null
+        : referenceChildJson(db, recipe, position, line, row, memo);
     final reach = itemKey.isEmpty
         ? const <IngredientMatchRow>[]
         : [
-            for (final other in decisionReach(
-              db,
-              itemKey,
-              excluding: (recipeId: recipe.id, position: -1),
-              fdcId: row?.fdcId,
-              memo: reads,
-            ))
+            for (final other
+                in child == null
+                    ? decisionReach(
+                        db,
+                        itemKey,
+                        excluding: (recipeId: recipe.id, position: -1),
+                        fdcId: row?.fdcId,
+                        memo: reads,
+                      )
+                    : child['state'] == 'routed'
+                    ? recipeReach(
+                        db,
+                        itemKey,
+                        childId: row!.childRecipeId!,
+                        excluding: (recipeId: recipe.id, position: -1),
+                        memo: memo,
+                      )
+                    : const <IngredientMatchRow>[])
               if (other.recipeId != recipe.id ||
                   (pairedTo[other.position] ?? position) != position)
                 other,
@@ -334,6 +361,14 @@ Future<Map<String, Object?>> matchesBody(
               // re-derived for this line until the next compute writes it);
               // null otherwise.
               'carried_from': carriedFrom,
+              // v41: what a sub-recipe reference line is made from
+              // ([referenceChildJson]); null on every other line.
+              'child': child,
+              // v41 (R2): a rendered row's two records ([partsJson]).
+              'parts': partsJson(db, row),
+              // v41 (S8): the composite row's flag on its own line
+              // ([compositeFlagOf]); older flags stay `gram_basis` suffixes.
+              'flag': compositeFlagOf(db, recipe, line, row, memo),
             },
       'candidates': [
         for (final ranked in candidates)
@@ -460,6 +495,9 @@ Future<AppliedToOthers?> applyMatchOverride(
   final confirmed = body['confirmed'];
   final fdcId = body['fdc_id'];
   final grams = body['grams'];
+  // v41: a library recipe for a reference line (slug or id), and its share.
+  final child = body['child'];
+  final share = body['share'];
   // The hold's ONE action table (RULE A v28, salt_shared `holdActions`;
   // Run 058 O7/S13, Opus critic 2): a decision the line's hold does not
   // accept is refused before anything is written — a confirm or typed
@@ -478,6 +516,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     if (fdcId != null) HoldDecision.pick,
     if (confirmed == true) HoldDecision.confirm,
     if (grams != null) HoldDecision.typed,
+    if (child != null) HoldDecision.recipe,
   };
   final judged = verbs.contains(HoldDecision.pick)
       ? const {HoldDecision.pick}
@@ -489,14 +528,60 @@ Future<AppliedToOthers?> applyMatchOverride(
   // typed grams, it wrote them on a held food's row (v29). Refused before
   // anything is read or written.
   if (skipped != null &&
-      (fdcId != null || confirmed != null || grams != null)) {
+      (fdcId != null || confirmed != null || grams != null || child != null)) {
     throw const ValidationException(oneDecisionMessage);
   }
-  bool refuses(IngredientMatchRow row) =>
-      !judged.every(holdActionsOf(row.hold).accepts.contains);
+  // v41 (api_app §2, A4): a recipe pick is ONE decision, on a line the
+  // engine reads as made from a recipe ([subRecipeRowFor]), of a library
+  // recipe with totals that is not this recipe; `share` only beside it.
+  final madeFromRecipe = subRecipeRowFor(recipe, position, line) != null;
+  if (child != null && (fdcId != null || confirmed != null || grams != null)) {
+    throw const ValidationException(oneRecipeDecisionMessage);
+  }
+  if (share != null && child == null) {
+    throw const ValidationException(shareWithoutChildMessage);
+  }
+  if (share != null && (share is! num || share <= 0 || share > 100)) {
+    throw const ValidationException(badShareMessage);
+  }
+  final Recipe? childRecipe;
+  if (child != null) {
+    childRecipe = child is String ? db.recipeByIdOrSlug(child)?.recipe : null;
+    if (childRecipe == null) {
+      throw const ValidationException(noSuchRecipeMessage);
+    }
+    if (childRecipe.id == recipe.id) {
+      throw const ValidationException(selfRecipeMessage);
+    }
+    if (!madeFromRecipe) {
+      throw const ValidationException(notAReferenceMessage);
+    }
+    if (db.nutritionFor(childRecipe.id) == null) {
+      throw const ValidationException(childUncomputedMessage);
+    }
+    // A share neither sent nor read from the line and the child's yield
+    // would store a counted row that counts nothing (v41 verify3 D1).
+    if (share == null &&
+        parseShare(line.raw, line.amounts, childRecipe.servings) == null) {
+      throw const ValidationException(noShareMessage);
+    }
+  } else {
+    childRecipe = null;
+  }
+  // The action table: a routed row (it carries a child) reads
+  // [routedActions] (v41, F3), every refusal says what the line accepts.
+  bool refuses(IngredientMatchRow row) => !judged.every(
+    holdActionsOf(row.hold, routed: row.childRecipeId != null).accepts.contains,
+  );
   void gate(IngredientMatchRow row) {
     if (refuses(row)) {
-      throw ValidationException(refusalOf(row.hold));
+      throw ValidationException(
+        refusalOf(
+          row.hold,
+          routed: row.childRecipeId != null,
+          reference: madeFromRecipe,
+        ),
+      );
     }
   }
 
@@ -545,6 +630,9 @@ Future<AppliedToOthers?> applyMatchOverride(
 
   // The action table again, on the row as derived (a carried row's).
   gate(row);
+  // A held reference line is a LINE hold (A2): its decision is never
+  // applied to other recipes.
+  final heldRecipeLine = recipeLineHolds.contains(row.hold);
   // Set only by the branches that PUT a food on the row in this request.
   var decidedFood = false;
   if (skipped == true) {
@@ -556,9 +644,44 @@ Future<AppliedToOthers?> applyMatchOverride(
     // as resolved (review B7) — only grams a person typed come back as
     // their counted row.
     row = await unskippedRow(db, provider, recipe, position, row);
+  } else if (child != null) {
+    // A person's recipe (v41): the child at the share typed, else the
+    // line's own share of it; derived below ([derivedFor]'s child arm).
+    // `overridden` — a "Save share" on a confirmed child keeps `confirmed`
+    // (the typed-grams precedent, N1). Never an ingredient decision (A1 b).
+    final picked = childRecipe!;
+    final keepStatus =
+        row.status == 'confirmed' && row.childRecipeId == picked.id;
+    row = row
+        .copyWith(clearChild: true)
+        .copyWith(
+          status: keepStatus ? 'confirmed' : 'overridden',
+          childRecipeId: picked.id,
+          childShare: share is num
+              ? share.toDouble()
+              : parseShare(line.raw, line.amounts, picked.servings),
+          gramSource: GramSource.recipe.name,
+          confidence: 1,
+          clearHold: true,
+          clearParts: true,
+        );
   } else if (fdcId != null) {
     if (fdcId is! num || fdcId <= 0) {
       throw const ValidationException("'fdc_id' must be a positive number.");
+    }
+    // S14: a line made from a recipe takes no food — the sub-recipe gate
+    // would derive a bare pick to 0 g, a silent no-op — unless its " or "
+    // alternative carries an amount (A10 a: weighed there). Grams a person
+    // types with the pick answer the line and stand ahead of the rule, as
+    // shipped (Run 051 B3): not refused.
+    if (madeFromRecipe && grams == null && foodAlternativeOf(line) == null) {
+      throw ValidationException(
+        refusalOf(
+          row.hold,
+          routed: row.childRecipeId != null,
+          reference: true,
+        ),
+      );
     }
     // A candidate the sheet showed is a cached hit: it stands in until the
     // grams need FDC's portions (gramsFor), so a pick lands with no provider
@@ -641,9 +764,14 @@ Future<AppliedToOthers?> applyMatchOverride(
     );
   }
 
-  if (skipped == null && confirmed == null && fdcId == null && grams == null) {
+  if (skipped == null &&
+      confirmed == null &&
+      fdcId == null &&
+      grams == null &&
+      child == null) {
     throw const ValidationException(
-      "Provide at least one of 'fdc_id', 'grams', 'confirmed', 'skipped'.",
+      "Provide at least one of 'fdc_id', 'grams', 'confirmed', 'skipped', "
+      "'child'.",
     );
   }
   // RULE A: the decision set above (status, food, typed grams); the row
@@ -674,9 +802,16 @@ Future<AppliedToOthers?> applyMatchOverride(
   // no longer serves): the decision stands on the line, held, but is never
   // the ingredient's decision library-wide (Run 058 Opus critic 2: 0148's
   // confirm replaced the key's decision 173468 with the gone food).
-  if (!holdActionsOf(stored.hold).decidesLibraryWide) {
+  // A routed row's decision travels by the RECIPE twin (v41 F4 a: chosen
+  // by the row — a Confirm and a pick alike — never by the request).
+  final routedNow = stored.childRecipeId != null && stored.hold == null;
+  if (applyToAll == true &&
+      (heldRecipeLine || recipeLineHolds.contains(stored.hold))) {
+    throw const ValidationException(lineHoldApplyMessage);
+  }
+  if (!holdActionsOf(stored.hold, routed: routedNow).decidesLibraryWide) {
     if (applyToAll == true) {
-      throw ValidationException(refusalOf(stored.hold));
+      throw ValidationException(refusalOf(stored.hold, routed: routedNow));
     }
     decidedFood = false;
   }
@@ -696,7 +831,18 @@ Future<AppliedToOthers?> applyMatchOverride(
   // a refused request changes nothing — not the line, not the totals (the
   // layout above may still have moved rows; no decision's content changes).
   FdcFood? food;
-  if (applyToAll == true) {
+  final recipeApply = applyToAll == true && routedNow;
+  if (recipeApply) {
+    // A recipe decision IN THIS REQUEST: a pick (`child`) or a confirm.
+    if (child == null && confirmed != true) {
+      throw const ValidationException(needsRecipeDecisionMessage);
+    }
+    if (itemKey.isEmpty) {
+      throw const ValidationException(
+        'Nothing searchable in this line to match other recipes on.',
+      );
+    }
+  } else if (applyToAll == true) {
     // The decision must be made IN THIS REQUEST — a pick (`fdc_id`) or a
     // confirm. A grams-only edit promotes the engine's own guess to
     // `overridden` on this line, and broadcasting that guess as if a person
@@ -811,6 +957,15 @@ Future<AppliedToOthers?> applyMatchOverride(
     }
   }
 
+  if (recipeApply) {
+    return applyRecipeToOthers(
+      db,
+      provider,
+      itemKey: itemKey,
+      childId: stored.childRecipeId!,
+      excluding: (recipeId: recipe.id, position: position),
+    );
+  }
   if (food == null) {
     return null;
   }
@@ -838,12 +993,86 @@ const String unavailableMessage =
 
 /// The 422 for a skip carried with another verb.
 const String oneDecisionMessage =
-    "'skipped' cannot be combined with 'fdc_id', 'confirmed' or 'grams' — "
+    "'skipped' cannot be combined with 'fdc_id', 'confirmed', 'grams' or "
+    "'child' — one decision per request.";
+
+/// The 422 for a recipe pick carried with a food verb (v41).
+const String oneRecipeDecisionMessage =
+    "'child' cannot be combined with 'fdc_id', 'confirmed' or 'grams' — "
     'one decision per request.';
 
-/// The 422 a held line's action table refuses with, by [hold].
-String refusalOf(String? hold) =>
-    hold == foodUnavailableHold ? unavailableMessage : noRecordMessage;
+/// The 422s of a recipe pick (v41, api_app §2 G7; the owner may reword).
+const String noSuchRecipeMessage = 'No recipe with that id.';
+
+/// A recipe picked for one of its own lines.
+const String selfRecipeMessage = 'A recipe cannot be made from itself.';
+
+/// A recipe picked for a line the engine reads as no reference.
+const String notAReferenceMessage = 'This line is not made from a recipe.';
+
+/// A recipe picked that has no stored totals.
+const String childUncomputedMessage =
+    'That recipe has no totals yet — compute it first.';
+
+/// A share that is not a number in (0, 100].
+const String badShareMessage =
+    "'share' must be a positive number (at most 100).";
+
+/// A recipe picked with no share sent, for a line whose share of it the
+/// child's yield cannot read ([parseShare] null): a person sets the share.
+const String noShareMessage = 'No share the yield can read — set the share.';
+
+/// A share sent with no recipe.
+const String shareWithoutChildMessage =
+    'Pick a recipe first, then set the share.';
+
+/// A food, a confirm or typed grams refused on a ROUTED reference row.
+const String routedMessage =
+    'This line is made from a recipe — confirm it, choose another recipe, '
+    'or skip the line.';
+
+/// A decision refused on a `choose_recipe` / `nested_recipe` line.
+const String chooseRecipeMessage =
+    'This line is made from a recipe — choose a recipe, or skip the line.';
+
+/// A decision refused on a `discarded_recipe` line (A5 a).
+const String marinadeMessage =
+    'This marinade is poured away — confirm it, choose a recipe, or skip '
+    'the line.';
+
+/// A food or a recipe refused on a reference line the engine does not
+/// route (R3's 0 g row: a section, a dish served with, no amount, no
+/// share — A3 a: its one action is a skip).
+const String notRoutedMessage =
+    'This line is made from a recipe that is not counted yet — skip the '
+    'line if the recipe is made without it.';
+
+/// An `apply_to_all` on a held reference line (a LINE hold, A2).
+const String lineHoldApplyMessage =
+    'A held recipe line is decided in this recipe only.';
+
+/// An `apply_to_all` on a routed row with no recipe decision in the
+/// request (F4 a: the twin of "needs a food decision").
+const String needsRecipeDecisionMessage =
+    "'apply_to_all' needs a recipe decision in this request — choose a "
+    'recipe (child) or confirm the current one.';
+
+/// The 422 a line's action table refuses with, by [hold]: on a [routed]
+/// row (it carries a child) and on a line made from a recipe the engine
+/// does not route ([reference]), what the line accepts (v41, N2) — never
+/// "no record of this food" on a line that takes no food.
+String refusalOf(
+  String? hold, {
+  bool routed = false,
+  bool reference = false,
+}) => switch (hold) {
+  foodUnavailableHold => unavailableMessage,
+  chooseRecipeHold || nestedRecipeHold => chooseRecipeMessage,
+  discardedRecipeHold => marinadeMessage,
+  null when routed => routedMessage,
+  null when reference => notRoutedMessage,
+  _ => noRecordMessage,
+};
 
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.

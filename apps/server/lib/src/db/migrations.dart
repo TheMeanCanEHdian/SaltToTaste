@@ -486,6 +486,31 @@ CREATE INDEX ingredient_matches_no_record ON ingredient_matches (fdc_id)
   WHERE hold IN ('food_gone', 'food_unavailable')
 ''',
   ],
+
+  // 018 — matcher v41, the composite row (plan.md Q5 a / Q7 phase 1; the
+  // approved mockup docs/mockups/v40-composite-rows.html). One line, one
+  // row, still. A SUB-RECIPE row names its child by `recipes.id` (stable
+  // across slug renames; no FK, so deleting a library recipe is never
+  // blocked — the stamp arm turns its parents stale instead), the share
+  // of the child's batch it counts, and the child's `computed_at` it was
+  // derived from (`child_stamp`, read by `underivedSql`). A TWO-PART row
+  // keeps the record bought on the row and lists the records it COUNTS in
+  // `parts` (rendered bacon: cooked + the fat kept in the pan). NULL on
+  // every existing row = not composite; nothing to backfill — the matcher
+  // bump stales every stamp and the next sweep writes the new rows.
+  [
+    'ALTER TABLE ingredient_matches ADD COLUMN child_recipe_id TEXT',
+    '''
+ALTER TABLE ingredient_matches ADD COLUMN child_share REAL
+  CHECK (child_share IS NULL OR child_share > 0)
+''',
+    'ALTER TABLE ingredient_matches ADD COLUMN child_stamp TEXT',
+    '''
+ALTER TABLE ingredient_matches ADD COLUMN parts TEXT
+  CHECK (parts IS NULL OR (json_valid(parts) AND json_type(parts) = 'array'
+    AND child_recipe_id IS NULL))
+''',
+  ],
 ];
 
 /// Lists the foods a cached search answer (`NEW.response`: a JSON array of

@@ -35,6 +35,11 @@ enum GramSource {
   /// buttermilk soak — counted as 0 g (the engine's discarded-media rule
   /// and its policy switch, engine.dart `discardedMediaPolicy`).
   discarded,
+
+  /// A sub-recipe reference line (v41, the composite row): routed, its grams
+  /// the child recipe's total grams × the line's share; held or a marinade,
+  /// 0 g. Never a food row (`SaltDatabase.recipeGramSource`).
+  recipe,
 }
 
 /// Grams per unit of weight.

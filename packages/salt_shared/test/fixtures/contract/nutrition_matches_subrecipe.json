@@ -1,0 +1,825 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "1 recipe double-crust pie dough",
+      "item": "double-crust pie dough",
+      "line_amount": "1 recipe",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "double-crust pie dough",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": null,
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 642.9,
+        "gram_source": "recipe",
+        "gram_basis": "from the recipe All-Butter Double-Crust Pie Dough: 643 g, 3,057 kcal",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": {
+          "state": "routed",
+          "reason": null,
+          "name": "double-crust pie dough",
+          "slug": "all-butter-double-crust-pie-dough",
+          "title": "All-Butter Double-Crust Pie Dough",
+          "share_text": "1",
+          "default": true,
+          "why": "default",
+          "yield_text": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+          "share": 1.0,
+          "yield_units": [
+            {
+              "unit": "recipe",
+              "per_recipe": 1
+            }
+          ],
+          "grams": 642.9,
+          "kcal": 3056.69,
+          "kcal_per_serving": 382.09,
+          "status": "complete",
+          "matched_count": 6,
+          "total_count": 6,
+          "kind": "dough",
+          "parent_kind": "pie",
+          "candidates": [
+            {
+              "group": "note_named",
+              "slug": "all-butter-double-crust-pie-dough",
+              "title": "All-Butter Double-Crust Pie Dough",
+              "note": "named first",
+              "yield_text": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+              "kcal": 3056.69,
+              "kcal_per_serving": 382.09,
+              "current": true,
+              "default": true,
+              "pickable": true,
+              "host_title": null
+            },
+            {
+              "group": "note_named",
+              "slug": "basic-double-crust-pie-dough",
+              "title": "Basic Double-Crust Pie Dough",
+              "note": "named second",
+              "yield_text": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+              "kcal": 3519.96,
+              "kcal_per_serving": 440.0,
+              "current": false,
+              "default": false,
+              "pickable": true,
+              "host_title": null
+            },
+            {
+              "group": "note_named",
+              "slug": "foolproof-double-crust-pie-dough",
+              "title": "Foolproof Double-Crust Pie Dough",
+              "note": "named third",
+              "yield_text": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+              "kcal": 3649.32,
+              "kcal_per_serving": 456.17,
+              "current": false,
+              "default": false,
+              "pickable": true,
+              "host_title": null
+            },
+            {
+              "group": "similar",
+              "slug": "foolproof-all-butter-dough-for-double-crust-pie",
+              "title": "Foolproof All-Butter Dough for Double-Crust Pie",
+              "note": "not named in the note",
+              "yield_text": "MAKES ONE 9-INCH DOUBLE CRUST",
+              "kcal": null,
+              "kcal_per_serving": null,
+              "current": false,
+              "default": false,
+              "pickable": false,
+              "host_title": null
+            },
+            {
+              "group": "other_section",
+              "slug": null,
+              "title": "Hand Mixed All-Butter Double-Crust Pie Dough",
+              "note": "a section of All-Butter Double-Crust Pie Dough",
+              "yield_text": null,
+              "kcal": null,
+              "kcal_per_serving": null,
+              "current": false,
+              "default": false,
+              "pickable": false,
+              "host_title": "All-Butter Double-Crust Pie Dough"
+            },
+            {
+              "group": "other_section",
+              "slug": null,
+              "title": "Hand Mixed Basic Double-Crust Pie Dough",
+              "note": "a section of Basic Double-Crust Pie Dough",
+              "yield_text": null,
+              "kcal": null,
+              "kcal_per_serving": null,
+              "current": false,
+              "default": false,
+              "pickable": false,
+              "host_title": "Basic Double-Crust Pie Dough"
+            },
+            {
+              "group": "other_section",
+              "slug": null,
+              "title": "Foolproof Whole-Wheat Dough for Double-Crust Pie",
+              "note": "a section of Foolproof All-Butter Dough for Double-Crust Pie",
+              "yield_text": null,
+              "kcal": null,
+              "kcal_per_serving": null,
+              "current": false,
+              "default": false,
+              "pickable": false,
+              "host_title": "Foolproof All-Butter Dough for Double-Crust Pie"
+            }
+          ]
+        },
+        "parts": [],
+        "flag": "approximation (the first dough the note names: All-Butter Double-Crust Pie Dough)"
+      },
+      "candidates": []
+    },
+    {
+      "position": 1,
+      "raw": "Unbleached all-purpose flour, for the work surface",
+      "item": "Unbleached all-purpose flour",
+      "line_amount": null,
+      "kcal_per_100g": 366.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "all-purpose flour",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 789890,
+        "description": "Flour, wheat, all-purpose, enriched, bleached",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 0.0,
+        "gram_source": "unmeasured",
+        "gram_basis": "no amount on the line — counted as 0 g",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 789890,
+          "description": "Flour, wheat, all-purpose, enriched, bleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 789951,
+          "description": "Flour, wheat, all-purpose, enriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 790018,
+          "description": "Flour, wheat, all-purpose, unenriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 169761,
+          "description": "Wheat flour, white, all-purpose, unenriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 168894,
+          "description": "Wheat flour, white, all-purpose, enriched, bleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8557142857142858
+        },
+        {
+          "fdc_id": 168936,
+          "description": "Wheat flour, white, all-purpose, enriched, unbleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8557142857142858
+        },
+        {
+          "fdc_id": 169754,
+          "description": "Wheat flour, white, all-purpose, enriched, calcium-fortified",
+          "data_type": "SR Legacy",
+          "confidence": 0.8450000000000001
+        },
+        {
+          "fdc_id": 168895,
+          "description": "Wheat flour, white, all-purpose, self-rising, enriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.8450000000000001
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "6 cups (30 ounces) fresh blueberries",
+      "item": "fresh blueberries",
+      "line_amount": "6 cup",
+      "kcal_per_100g": 63.9,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "blueberries",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2346411,
+        "description": "Blueberries, raw",
+        "data_type": "Foundation",
+        "confidence": 0.97,
+        "grams": 850.485,
+        "gram_source": "weight",
+        "gram_basis": "from 30 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2346411,
+          "description": "Blueberries, raw",
+          "data_type": "Foundation",
+          "confidence": 0.97
+        },
+        {
+          "fdc_id": 171711,
+          "description": "Blueberries, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 2709275,
+          "description": "Blueberries, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 2707998,
+          "description": "Pie, blueberry",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2709278,
+          "description": "Blueberry pie filling",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 172767,
+          "description": "Muffins, blueberry, toaster-type",
+          "data_type": "SR Legacy",
+          "confidence": 0.8500000000000001
+        },
+        {
+          "fdc_id": 2709277,
+          "description": "Blueberries, frozen",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8300000000000001
+        },
+        {
+          "fdc_id": 2709198,
+          "description": "Blueberries, dried",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8300000000000001
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "1 Granny Smith apple, peeled, cored, and shredded on the large holes of a box grater",
+      "item": "Granny Smith apple",
+      "line_amount": "1",
+      "kcal_per_100g": 58.8719,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 140.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "granny smith apple",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 1750342,
+        "description": "Apples, granny smith, with skin, raw",
+        "data_type": "Foundation",
+        "confidence": 0.97,
+        "grams": 182.0,
+        "gram_source": "piece",
+        "gram_basis": "1 × 182 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 1750342,
+          "description": "Apples, granny smith, with skin, raw",
+          "data_type": "Foundation",
+          "confidence": 0.97
+        },
+        {
+          "fdc_id": 168203,
+          "description": "Apples, raw, granny smith, with skin (Includes foods for USDA's Food Distribution Program)",
+          "data_type": "SR Legacy",
+          "confidence": 0.8700000000000001
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "raw": "¾ cup (5¼ ounces) sugar",
+      "item": "sugar",
+      "line_amount": "3/4 cup",
+      "kcal_per_100g": 385.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "teaspoon",
+          "description": null,
+          "grams": 4.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "cup",
+          "description": null,
+          "grams": 188.0,
+          "fill": 141.0
+        },
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 8.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "sugar",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 746784,
+        "description": "Sugars, granulated",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 148.83487499999998,
+        "gram_source": "weight",
+        "gram_basis": "from 5 1/4 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 746784,
+          "description": "Sugars, granulated",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 170674,
+          "description": "Sugar, turbinado",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169655,
+          "description": "Sugars, granulated",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169658,
+          "description": "Sugars, maple",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2710261,
+          "description": "Sugar, cinnamon",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2710257,
+          "description": "Sugar, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 168833,
+          "description": "Sugars, brown",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710260,
+          "description": "Sugar, brown",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "raw": "2 tablespoons instant tapioca, ground",
+      "item": "instant tapioca",
+      "line_amount": "2 tablespoon",
+      "kcal_per_100g": 358.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 152.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "tapioca pearl dry",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 169717,
+        "description": "Tapioca, pearl, dry",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 19.000064246707353,
+        "gram_source": "portion",
+        "gram_basis": "2 tablespoon · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 169717,
+          "description": "Tapioca, pearl, dry",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "raw": "2 teaspoons grated zest plus 2 teaspoons juice from 1 lemon",
+      "item": "grated zest plus 2 teaspoons juice from 1 lemon",
+      "line_amount": "2 teaspoon",
+      "kcal_per_100g": 22.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "wedge yields",
+          "grams": 5.9,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "lemon yields",
+          "grams": 48.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 244.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "fl oz",
+          "grams": 30.5,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "lemon zest",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": 167747,
+        "description": "Lemon juice, raw",
+        "data_type": "SR Legacy",
+        "confidence": 0.9533333333333334,
+        "grams": 10.1535752,
+        "gram_source": "density",
+        "gram_basis": "2 teaspoon ≈ 10 mL · juice only (the zest is dropped)",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 7,
+      "raw": "Pinch table salt",
+      "item": "table salt",
+      "line_amount": "pinch",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 292.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 6.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 18.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.4,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 0.4,
+        "gram_source": "piece",
+        "gram_basis": "pinch · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "raw": "2 tablespoons unsalted butter, cut into ¼-inch pieces",
+      "item": "unsalted butter",
+      "line_amount": "2 tablespoon",
+      "kcal_per_100g": 717.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "pat (1\" sq, 1/3\" high)",
+          "grams": 5.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 14.2,
+          "fill": 28.4
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "stick",
+          "grams": 113.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 227.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "without salt butter",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173430,
+        "description": "Butter, without salt",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 28.361082399999997,
+        "gram_source": "density",
+        "gram_basis": "2 tablespoon ≈ 30 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173430,
+          "description": "Butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 170155,
+          "description": "Seeds, sunflower seed butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 172469,
+          "description": "Peanut butter, chunk style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 172470,
+          "description": "Peanut butter, smooth style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 168588,
+          "description": "Nuts, almond butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 170163,
+          "description": "Nuts, cashew butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 169052,
+          "description": "Margarine-like, butter-margarine blend, 80% fat, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 172344,
+          "description": "Butter, light, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8600000000000001
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "raw": "1 large egg white, lightly beaten",
+      "item": "large egg white",
+      "line_amount": "1",
+      "kcal_per_100g": 55.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "egg white",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 747997,
+        "description": "Eggs, Grade A, Large, egg white",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 33.0,
+        "gram_source": "piece",
+        "gram_basis": "1 × 33 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 747997,
+          "description": "Eggs, Grade A, Large, egg white",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 323793,
+          "description": "Egg, white, dried",
+          "data_type": "Foundation",
+          "confidence": 0.9233333333333333
+        },
+        {
+          "fdc_id": 172183,
+          "description": "Egg, white, raw, fresh",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 2707168,
+          "description": "Egg, white only, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 323697,
+          "description": "Egg, white, raw, frozen, pasteurized",
+          "data_type": "Foundation",
+          "confidence": 0.8899999999999999
+        },
+        {
+          "fdc_id": 172204,
+          "description": "Egg, white, dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.8733333333333333
+        },
+        {
+          "fdc_id": 172203,
+          "description": "Egg, white, raw, frozen, pasteurized",
+          "data_type": "SR Legacy",
+          "confidence": 0.8400000000000001
+        },
+        {
+          "fdc_id": 170895,
+          "description": "Egg, white, dried, stabilized, glucose reduced",
+          "data_type": "SR Legacy",
+          "confidence": 0.7466666666666666
+        }
+      ]
+    }
+  ]
+}

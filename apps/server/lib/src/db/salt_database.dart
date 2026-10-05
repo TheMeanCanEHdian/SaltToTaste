@@ -639,6 +639,20 @@ class SaltDatabase {
   @visibleForTesting
   static final String noRecordHoldsSql = _sqlList(noRecordHolds);
 
+  /// [holdsAConfirmCannotFinish] as an SQL list — the holds the queue's
+  /// `finishes` and `short` never promise to a confirm (v41: the food with
+  /// no record and, beside it, a reference line no recipe counts).
+  @visibleForTesting
+  static final String noConfirmHoldsSql = _sqlList(holdsAConfirmCannotFinish);
+
+  /// [flaggedBuckets] as an SQL list — the ONE list every queue query's
+  /// "needs attention" set reads (v41: six literal copies before; a missed
+  /// copy would leave a `choose_recipe` line out of `open_lines`).
+  static final String flaggedBucketsSql = _sqlList(flaggedBuckets);
+
+  /// [recipeChoiceHolds] as an SQL list (v41): the `choose_recipe` bucket.
+  static final String recipeChoiceHoldsSql = _sqlList(recipeChoiceHolds);
+
   /// The four conditions a collapsed calories range can emit.
   ///
   /// Any number of ANDed `calories:` terms reduces to at most one lower and
@@ -1067,7 +1081,7 @@ class SaltDatabase {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
       'confidence, grams, gram_source, status, updated_at, item_key, hold, '
-      'derived_seq '
+      'derived_seq, $_compositeColumns '
       'FROM ingredient_matches WHERE item_key = ? '
       "ORDER BY (status IN ('confirmed', 'overridden') AND fdc_id IS ?) DESC, "
       'recipe_id, position',
@@ -1122,7 +1136,9 @@ class SaltDatabase {
   /// sprig): counted whatever its score or food hold, a confirm leaves it
   /// counted (checkpoint 5 review: "Chili oil" was offered and never
   /// applied). With no [fdcId] (the line has no food yet) every other
-  /// undecided row not line-held is one.
+  /// undecided row not line-held is one. A composite reference row
+  /// (`gram_source` [recipeGramSource], v41) is never one: the line takes
+  /// no food (design_v3 S18).
   List<IngredientMatchRow> undecidedMatchesForItemKey(
     String itemKey, {
     required ({String recipeId, int position}) excluding,
@@ -1133,11 +1149,12 @@ class SaltDatabase {
         _prepared(
           'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
           'confidence, grams, gram_source, status, updated_at, item_key, hold, '
-          'derived_seq '
+          'derived_seq, $_compositeColumns '
           'FROM ingredient_matches WHERE item_key = ? '
           'AND NOT (recipe_id = ? AND position = ?) '
           "AND status IN ('auto', 'unmatched') "
           "AND COALESCE(hold, '') NOT IN ('second_food', $mediumHoldsSql) "
+          "AND COALESCE(gram_source, '') != '$recipeGramSource' "
           'AND (? IS NULL OR COALESCE(fdc_id, -1) != ? OR ((confidence < ? '
           "OR hold IS NOT NULL) AND NOT (COALESCE(gram_source, '') IN "
           "('discarded', 'unmeasured') AND COALESCE(grams, -1) = 0 "
@@ -1151,6 +1168,30 @@ class SaltDatabase {
           fdcId,
           belowConfidence,
         ]);
+    return [for (final row in rows) IngredientMatchRow.fromRow(row)];
+  }
+
+  /// Every UNDECIDED routed reference row carrying [itemKey] (v41, design_v3
+  /// §2.3 b) on any line but [excluding]: `auto`, `gram_source` recipe, a
+  /// child, no hold — the rows a RECIPE decision's apply-to-all may land on,
+  /// before the engine keeps those on another child or on the same child by
+  /// a flagged default (`recipeReach`). The complement of the food reach
+  /// ([undecidedMatchesForItemKey], S18); a held reference line is a LINE
+  /// hold and never one.
+  List<IngredientMatchRow> undecidedRoutedMatchesForItemKey(
+    String itemKey, {
+    required ({String recipeId, int position}) excluding,
+  }) {
+    final rows = _prepared(
+      'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
+      'confidence, grams, gram_source, status, updated_at, item_key, hold, '
+      'derived_seq, $_compositeColumns '
+      'FROM ingredient_matches WHERE item_key = ? '
+      'AND NOT (recipe_id = ? AND position = ?) '
+      "AND status = 'auto' AND gram_source = '$recipeGramSource' "
+      'AND child_recipe_id IS NOT NULL AND hold IS NULL '
+      'ORDER BY recipe_id, position',
+    ).select([itemKey, excluding.recipeId, excluding.position]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
   }
 
@@ -1177,7 +1218,7 @@ class SaltDatabase {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
       'confidence, grams, gram_source, status, updated_at, item_key, hold, '
-      'derived_seq '
+      'derived_seq, $_compositeColumns '
       'FROM ingredient_matches WHERE recipe_id = ? ORDER BY position',
     ).select([recipeId]);
     return [for (final row in rows) IngredientMatchRow.fromRow(row)];
@@ -1202,11 +1243,13 @@ class SaltDatabase {
     CASE
       WHEN im.status = 'skipped' THEN 'skipped'
       WHEN im.hold IN ($noRecordHoldsSql) THEN 'check'
+      WHEN im.hold IN ($recipeChoiceHoldsSql) THEN 'choose_recipe'
       WHEN im.status = 'overridden' AND im.grams IS NULL THEN 'no_grams'
       WHEN im.status = 'confirmed' AND im.fdc_id IS NOT NULL
         AND im.grams IS NULL THEN 'no_grams'
       WHEN im.status IN ('confirmed', 'overridden') THEN 'counted'
-      WHEN im.fdc_id IS NULL THEN 'no_match'
+      WHEN im.fdc_id IS NULL AND im.gram_source IS NOT '$recipeGramSource'
+        THEN 'no_match'
       WHEN im.gram_source IN ('discarded', 'unmeasured') AND im.grams = 0
         AND COALESCE(im.hold, '') != 'unnamed_food' THEN 'counted'
       WHEN im.confidence < 0.499999999 OR im.hold IS NOT NULL THEN 'check'
@@ -1226,7 +1269,7 @@ class SaltDatabase {
 
   /// One page of flagged match lines across ALL recipes, each carrying its
   /// recipe's slug + title. [bucket] narrows to a single triage bucket;
-  /// null returns every flagged bucket (no_match / no_grams / check), never
+  /// null returns every flagged bucket ([flaggedBuckets]), never
   /// `skipped` or `counted`.
   ///
   /// [sort] `worst` (the default here) is worst-confidence first;
@@ -1265,18 +1308,19 @@ class SaltDatabase {
     // action table: only a pick or a skip finishes it, v28).
     final rows = _prepared(
       "SELECT *, (open_lines = 1 AND COALESCE(hold, '') NOT IN "
-      "($noRecordHoldsSql) AND (bucket = 'no_grams' "
+      "($noConfirmHoldsSql) AND (bucket = 'no_grams' "
       "OR (bucket = 'check' AND grams IS NOT NULL))) AS finishes "
       'FROM (SELECT *, '
-      "SUM(bucket IN ('no_match', 'no_grams', 'check')) "
+      'SUM(bucket IN ($flaggedBucketsSql)) '
       'OVER (PARTITION BY recipe_id) AS open_lines FROM ( '
       'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
       'im.data_type, im.confidence, im.grams, im.gram_source, im.status, '
-      'im.updated_at, im.item_key, im.hold, r.slug AS review_slug, '
+      'im.updated_at, im.item_key, im.hold, im.child_recipe_id, '
+      'im.child_share, im.child_stamp, im.parts, r.slug AS review_slug, '
       'r.title AS review_title, '
       '$_reviewBucketCase AS bucket '
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
-      ")) WHERE (? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
+      ')) WHERE (? IS NULL AND bucket IN ($flaggedBucketsSql)) '
       'OR bucket = ? '
       "ORDER BY CASE WHEN ? = 'finishes' THEN finishes ELSE 0 END DESC, "
       'confidence ASC, item_key, review_title, position '
@@ -1344,18 +1388,18 @@ class SaltDatabase {
   static final String _reviewFinishCte =
       '$_reviewFlaggedCte, '
       'members AS (SELECT * FROM flagged WHERE '
-      "(? IS NULL AND bucket IN ('no_match', 'no_grams', 'check')) "
+      '(? IS NULL AND bucket IN ($flaggedBucketsSql)) '
       'OR bucket = ?), '
       'example AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY gkey '
       'ORDER BY confidence, (grams IS NULL), review_title, position) AS rn '
       'FROM members), '
       'solo AS (SELECT o.recipe_id, MIN(o.gkey) AS gkey, '
       "SUM((o.grams IS NULL AND (x.rn IS NULL OR o.bucket <> 'no_grams')) "
-      "OR COALESCE(o.hold, '') IN ($noRecordHoldsSql)) "
+      "OR COALESCE(o.hold, '') IN ($noConfirmHoldsSql)) "
       'AS short FROM flagged o '
       'LEFT JOIN example x ON x.rn = 1 AND x.recipe_id = o.recipe_id '
       'AND x.position = o.position '
-      "WHERE o.bucket IN ('no_match', 'no_grams', 'check') "
+      'WHERE o.bucket IN ($flaggedBucketsSql) '
       'GROUP BY o.recipe_id HAVING COUNT(DISTINCT o.gkey) = 1)';
 
   /// Whole-library payoff of the grouped queue (its banner): how many
@@ -1367,7 +1411,7 @@ class SaltDatabase {
       '$_reviewFinishCte '
       'SELECT (SELECT COUNT(*) FROM solo WHERE short = 0) AS finishable, '
       '(SELECT COUNT(DISTINCT recipe_id) FROM flagged '
-      "WHERE bucket IN ('no_match', 'no_grams', 'check')) AS open",
+      'WHERE bucket IN ($flaggedBucketsSql)) AS open',
     ).select([null, null]).first;
     return (
       finishable: row['finishable'] as int,
@@ -1397,6 +1441,7 @@ class SaltDatabase {
   /// member) and the order this index decodes.
   static const List<String> _reviewBucketRanks = [
     'no_match',
+    'choose_recipe',
     'check',
     'no_grams',
     'skipped',
@@ -1408,7 +1453,7 @@ class SaltDatabase {
   /// reload never shuffles the work) plus the group's reach and amount spread.
   ///
   /// Members are the lines that pass the same filter as [nutritionReviewLines]
-  /// — [bucket] null means the three flagged buckets — so every count here is
+  /// — [bucket] null means the flagged buckets — so every count here is
   /// counted inside the current filter.
   ///
   /// Each group carries `finishes`: the recipes one decision applied to the
@@ -1442,8 +1487,8 @@ class SaltDatabase {
       'COUNT(DISTINCT recipe_id) AS recipes, MIN(confidence) AS worst, '
       'MIN(grams) AS gmin, MAX(grams) AS gmax, '
       'COUNT(*) FILTER (WHERE grams IS NULL) AS gmissing, '
-      "MIN(CASE bucket WHEN 'no_match' THEN 0 WHEN 'check' THEN 1 "
-      "WHEN 'no_grams' THEN 2 ELSE 3 END) AS worst_bucket "
+      "MIN(CASE bucket WHEN 'no_match' THEN 0 WHEN 'choose_recipe' THEN 1 "
+      "WHEN 'check' THEN 2 WHEN 'no_grams' THEN 3 ELSE 4 END) AS worst_bucket "
       'FROM members GROUP BY gkey), '
       'fin AS (SELECT s.gkey, COUNT(*) AS last_open, '
       'COUNT(*) FILTER (WHERE s.short = 0) AS n, '
@@ -1488,7 +1533,7 @@ class SaltDatabase {
   }
 
   /// How many distinct ingredient GROUPS the flagged lines make: one count per
-  /// triage bucket, plus `flagged` over the three flagged buckets together (a
+  /// triage bucket, plus `flagged` over the flagged buckets together (a
   /// key whose lines span two buckets counts once there). The line counts stay
   /// [nutritionReviewCounts]' job — the chips never change unit.
   ({int flagged, Map<String, int> byBucket}) nutritionReviewGroupCounts() {
@@ -1497,7 +1542,7 @@ class SaltDatabase {
       'SELECT bucket, COUNT(DISTINCT gkey) AS n FROM flagged GROUP BY bucket '
       'UNION ALL '
       "SELECT '', COUNT(DISTINCT gkey) FROM flagged "
-      "WHERE bucket IN ('no_match', 'no_grams', 'check')",
+      'WHERE bucket IN ($flaggedBucketsSql)',
     ).select();
     final byBucket = <String, int>{};
     var flagged = 0;
@@ -1541,15 +1586,15 @@ class SaltDatabase {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
-      'item_key, hold, updated_at, derived_seq) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'item_key, hold, updated_at, derived_seq, $_compositeColumns) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
       'grams = excluded.grams, gram_source = excluded.gram_source, '
       'status = excluded.status, item_key = excluded.item_key, '
       'hold = excluded.hold, updated_at = excluded.updated_at, '
-      'derived_seq = excluded.derived_seq, '
+      'derived_seq = excluded.derived_seq, $_compositeUpdate, '
       'retry_count = CASE WHEN ? THEN retry_count ELSE 0 END',
     ).execute([
       row.recipeId,
@@ -1566,6 +1611,10 @@ class SaltDatabase {
       row.hold,
       _utcNowIso(),
       row.derivedSeq,
+      row.childRecipeId,
+      row.childShare,
+      row.childStamp,
+      row.parts,
       if (keepRetryCount) 1 else 0,
     ]);
   }
@@ -1604,15 +1653,16 @@ class SaltDatabase {
     _prepared(
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
-      'item_key, hold, updated_at, derived_seq) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'item_key, hold, updated_at, derived_seq, $_compositeColumns) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
       'grams = excluded.grams, gram_source = excluded.gram_source, '
       'status = excluded.status, item_key = excluded.item_key, '
       'hold = excluded.hold, updated_at = excluded.updated_at, '
-      'derived_seq = excluded.derived_seq, retry_count = 0 '
+      'derived_seq = excluded.derived_seq, $_compositeUpdate, '
+      'retry_count = 0 '
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
       "OR (ingredient_matches.status = 'confirmed' "
       'AND ingredient_matches.fdc_id IS NULL '
@@ -1632,6 +1682,10 @@ class SaltDatabase {
       row.hold,
       _utcNowIso(),
       row.derivedSeq,
+      row.childRecipeId,
+      row.childShare,
+      row.childStamp,
+      row.parts,
       ...engineRuleNotes,
     ]);
     return _db.updatedRows > 0;
@@ -1666,11 +1720,22 @@ class SaltDatabase {
     final rows = _prepared(
       'SELECT recipe_id, position, raw, fdc_id, description, data_type, '
       'confidence, grams, gram_source, status, updated_at, item_key, hold, '
-      'derived_seq FROM ingredient_matches '
+      'derived_seq, $_compositeColumns FROM ingredient_matches '
       'WHERE recipe_id = ? AND position = ?',
     ).select([recipeId, position]);
     return rows.isEmpty ? null : IngredientMatchRow.fromRow(rows.first);
   }
+
+  /// The composite row's four columns (migration 018), in the order every
+  /// explicit column list and both upserts bind them.
+  static const String _compositeColumns =
+      'child_recipe_id, child_share, child_stamp, parts';
+
+  /// The upserts' DO UPDATE of [_compositeColumns].
+  static const String _compositeUpdate =
+      'child_recipe_id = excluded.child_recipe_id, '
+      'child_share = excluded.child_share, '
+      'child_stamp = excluded.child_stamp, parts = excluded.parts';
 
   /// [sameMatchRow] as an SQL guard over the row at `recipe_id = ? AND
   /// position = ?`, its binds [_sameRowBinds] — ONE statement checks and
@@ -1678,7 +1743,9 @@ class SaltDatabase {
   static const String _sameRowSql =
       'WHERE recipe_id = ? AND position = ? AND raw IS ? AND status IS ? '
       'AND fdc_id IS ? AND confidence IS ? AND grams IS ? '
-      'AND gram_source IS ? AND hold IS ? AND description IS ?';
+      'AND gram_source IS ? AND hold IS ? AND description IS ? '
+      'AND child_recipe_id IS ? AND child_share IS ? AND child_stamp IS ? '
+      'AND parts IS ?';
 
   static List<Object?> _sameRowBinds(IngredientMatchRow over) => [
     over.recipeId,
@@ -1691,6 +1758,10 @@ class SaltDatabase {
     over.gramSource,
     over.hold,
     over.description,
+    over.childRecipeId,
+    over.childShare,
+    over.childStamp,
+    over.parts,
   ];
 
   /// Records that the row [over] — unchanged, checked in the write's own
@@ -1957,7 +2028,25 @@ class SaltDatabase {
       "OR (m.status = 'auto' AND m.hold = '$foodUnavailableHold' "
       "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash)) "
       "OR (m.status IN ('unmatched', 'auto') AND m.retry_count > 0 "
-      "AND m.hold IS NOT '$foodUnavailableHold'))))";
+      "AND m.hold IS NOT '$foodUnavailableHold') "
+      'OR $childStampUnderivedSql)))';
+
+  /// [underivedSql]'s child arm (v41, migration 018): a composite row
+  /// derived from a stamp of its child (`child_stamp`) that is not the
+  /// child's `computed_at` now — the child was recomputed, rebased, or is
+  /// gone (no `recipe_nutrition` row: the subquery is NULL). Any status: the
+  /// parent's stored totals hold the child either way. Over the row `m`.
+  static const String childStampUnderivedSql =
+      '(m.child_stamp IS NOT NULL AND m.child_stamp IS NOT '
+      '(SELECT c.computed_at FROM recipe_nutrition c '
+      'WHERE c.recipe_id = m.child_recipe_id))';
+
+  /// The `gram_source` of every composite reference row (v41: routed, held
+  /// `choose_recipe` / `nested_recipe`, a marinade's `discarded_recipe`),
+  /// and of no food row: the FOOD reach ([undecidedMatchesForItemKey])
+  /// never takes such a row (the line takes no food); a recipe decision's
+  /// reach takes only them (design_v3 S18).
+  static const String recipeGramSource = 'recipe';
 
   /// [engineRuleNotes] as an SQL list (a const, for the cached queries;
   /// pinned equal to the list).
@@ -2170,6 +2259,51 @@ class SaltDatabase {
     final rows = _db.select('SELECT id FROM recipes ORDER BY id');
     return [for (final row in rows) row['id'] as String];
   }
+
+  /// Every recipe's id and stored doc, ordered by id — the bulk scopes'
+  /// one read of the documents (the parents-last partition, v41).
+  List<({String id, String doc})> recipeDocs() => [
+    for (final row in _db.select('SELECT id, doc FROM recipes ORDER BY id'))
+      (id: row['id'] as String, doc: row['doc'] as String),
+  ];
+
+  /// Every library recipe's id, slug and title, by id — the sub-recipe
+  /// resolver's title index (v41; one statement per resolver memo).
+  List<({String id, String slug, String title})> recipeTitleIndex() => [
+    for (final row in _prepared(
+      'SELECT id, slug, title FROM recipes ORDER BY id',
+    ).select())
+      (
+        id: row['id'] as String,
+        slug: row['slug'] as String,
+        title: row['title'] as String,
+      ),
+  ];
+
+  /// Every titled subsection of every recipe: its host's id and its title,
+  /// in document order — the resolver's section index (v41; one statement,
+  /// never a document decode).
+  List<({String host, String title})> subsectionTitleIndex() => [
+    for (final row in _prepared(
+      r"SELECT r.id AS host, json_extract(s.value, '$.title') AS title "
+      r"FROM recipes r, json_each(r.doc, '$.subsections') s "
+      r"WHERE json_extract(s.value, '$.title') IS NOT NULL "
+      'ORDER BY r.id, s.key',
+    ).select())
+      (host: row['host'] as String, title: row['title'] as String),
+  ];
+
+  /// The recipes holding a composite row whose child is one of [childIds]
+  /// (`child_recipe_id`, migration 018), ordered by id — the parents a
+  /// stale sweep appends after their children (v41, design_v3 F7a).
+  List<String> recipesReadingChildren(Iterable<String> childIds) => [
+    for (final row in _prepared(
+      'SELECT DISTINCT recipe_id FROM ingredient_matches '
+      'WHERE child_recipe_id IN (SELECT value FROM json_each(?)) '
+      'ORDER BY recipe_id',
+    ).select([jsonEncode(childIds.toList())]))
+      row['recipe_id'] as String,
+  ];
 
   /// Recipe ids that have no computed nutrition yet (bulk-job work list).
   List<String> recipeIdsWithoutNutrition() {
@@ -3159,6 +3293,10 @@ class IngredientMatchRow {
     this.itemKey,
     this.hold,
     this.derivedSeq,
+    this.childRecipeId,
+    this.childShare,
+    this.childStamp,
+    this.parts,
   });
 
   /// Decodes a database row.
@@ -3177,6 +3315,10 @@ class IngredientMatchRow {
     itemKey: row['item_key'] as String?,
     hold: row['hold'] as String?,
     derivedSeq: row['derived_seq'] as String?,
+    childRecipeId: row['child_recipe_id'] as String?,
+    childShare: (row['child_share'] as num?)?.toDouble(),
+    childStamp: row['child_stamp'] as String?,
+    parts: row['parts'] as String?,
   );
 
   /// Recipe the line belongs to.
@@ -3232,6 +3374,22 @@ class IngredientMatchRow {
   /// ([sameMatchRow]): a compute re-deriving it changes no decision.
   final String? derivedSeq;
 
+  /// A SUB-RECIPE row's child (migration 018): the `recipes.id` of the
+  /// recipe the line is made from, or null (not a composite row).
+  final String? childRecipeId;
+
+  /// The share of the child's batch the line counts (> 0), or null.
+  final double? childShare;
+
+  /// The child's `recipe_nutrition.computed_at` the row was derived from
+  /// ([SaltDatabase.childStampUnderivedSql] reads it), or null.
+  final String? childStamp;
+
+  /// A TWO-PART row's counted records, as stored: a JSON array (rendered
+  /// bacon: the cooked record and the fat kept in the pan), or null. Never
+  /// with a child (the column's CHECK).
+  final String? parts;
+
   /// Copy with changed fields (explicit clears for the nullables).
   IngredientMatchRow copyWith({
     int? position,
@@ -3251,6 +3409,13 @@ class IngredientMatchRow {
     bool clearHold = false,
     String? derivedSeq,
     bool clearDerivedSeq = false,
+    String? childRecipeId,
+    double? childShare,
+    String? childStamp,
+    bool clearChildStamp = false,
+    bool clearChild = false,
+    String? parts,
+    bool clearParts = false,
   }) => IngredientMatchRow(
     recipeId: recipeId,
     position: position ?? this.position,
@@ -3265,6 +3430,14 @@ class IngredientMatchRow {
     itemKey: itemKey ?? this.itemKey,
     hold: clearHold ? null : (hold ?? this.hold),
     derivedSeq: clearDerivedSeq ? null : (derivedSeq ?? this.derivedSeq),
+    // [clearChild] clears the child's three columns; [clearChildStamp] the
+    // stamp alone (a gone child keeps its id, design_v3 §2.2 item 4).
+    childRecipeId: clearChild ? null : (childRecipeId ?? this.childRecipeId),
+    childShare: clearChild ? null : (childShare ?? this.childShare),
+    childStamp: clearChild || clearChildStamp
+        ? null
+        : (childStamp ?? this.childStamp),
+    parts: clearParts ? null : (parts ?? this.parts),
   );
 }
 
@@ -3396,4 +3569,8 @@ bool sameMatchRow(IngredientMatchRow? a, IngredientMatchRow? b) =>
         a.grams == b.grams &&
         a.gramSource == b.gramSource &&
         a.hold == b.hold &&
-        a.description == b.description);
+        a.description == b.description &&
+        a.childRecipeId == b.childRecipeId &&
+        a.childShare == b.childShare &&
+        a.childStamp == b.childStamp &&
+        a.parts == b.parts);

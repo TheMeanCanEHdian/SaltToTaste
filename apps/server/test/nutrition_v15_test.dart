@@ -734,9 +734,15 @@ void main() {
         '(Lighter Chicken Parmesan, 0416; the pick synthesized: a stated '
         'exception)', () async {
       final db = tempDb();
-      final r = recipeOf(db: db, [
-        ['1 recipe Simple Tomato Sauce (recipe follows), warmed (see note)'],
-      ]);
+      // v41: with 0416's own section — a section rule row, which takes a
+      // food pick (a held reference line does not).
+      final r = recipeOf(
+        db: db,
+        [
+          ['1 recipe Simple Tomato Sauce (recipe follows), warmed (see note)'],
+        ],
+        subsections: const [Subsection(title: 'Simple Tomato Sauce')],
+      );
       await matchAndCompute(db, provider, r);
       await applyMatchOverride(db, provider, r, 0, {
         'fdc_id': 173468,
@@ -758,12 +764,24 @@ void main() {
         'stated exception) lands as the 0 g sub-recipe', () async {
       final db = tempDb();
       const raw = '10 cups Vanilla Frosting (recipe follows)';
-      final a = recipeOf(db: db, id: 'a', [
-        [raw],
-      ]);
-      final b = recipeOf(db: db, id: 'b', [
-        [raw],
-      ]);
+      // v41: with 1201's own section — a section rule row on both.
+      const frosting = [Subsection(title: 'Vanilla Frosting')];
+      final a = recipeOf(
+        db: db,
+        id: 'a',
+        [
+          [raw],
+        ],
+        subsections: frosting,
+      );
+      final b = recipeOf(
+        db: db,
+        id: 'b',
+        [
+          [raw],
+        ],
+        subsections: frosting,
+      );
       await matchAndCompute(db, provider, a);
       await matchAndCompute(db, provider, b);
       db.upsertIngredientMatch(
@@ -777,8 +795,12 @@ void main() {
           status: 'auto',
         ),
       );
+      // v41 (S14): a bare food pick on a reference line is refused; the
+      // pick with the grams a person typed (500 g, the stated synthesized
+      // weight of this group) still decides the key.
       await applyMatchOverride(db, provider, b, 0, {
         'fdc_id': 173430,
+        'grams': 500,
         'apply_to_all': true,
       });
       final row = rowAt(db, 0, id: 'a');

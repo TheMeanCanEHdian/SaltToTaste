@@ -23,6 +23,11 @@ enum HoldDecision {
 
   /// Grams a person typed on the line's food (`grams`).
   typed,
+
+  /// A recipe the line is made from (`child`, v41): offered and accepted
+  /// only on a reference line — a routed row ([routedActions]) or a
+  /// [HoldKind.recipe] hold — never on a food row (not in the unheld set).
+  recipe,
 }
 
 /// A decided row whose food FDC answers "no such food" for (a 404) and no
@@ -56,6 +61,11 @@ enum HoldKind {
   /// A person's decision on a food with no record (`food_gone`,
   /// `food_unavailable`).
   noRecord,
+
+  /// A LINE hold of a sub-recipe reference (v41): no recipe chosen
+  /// (`choose_recipe`), a child that is itself made from a recipe
+  /// (`nested_recipe`), a marinade poured away (`discarded_recipe`).
+  recipe,
 }
 
 /// What a person may do on a line held for one hold kind.
@@ -81,8 +91,9 @@ class HoldActions {
   /// The decisions the match PUT accepts on it (any other is a 422).
   final Set<HoldDecision> accepts;
 
-  /// Whether a pick or confirm on it may become the ingredient's decision
-  /// in every recipe (`ingredient_decisions`).
+  /// Whether the decision may be applied to other recipes
+  /// (`apply_to_all`); a FOOD decision is also recorded in
+  /// `ingredient_decisions` (v41: a recipe decision never is).
   final bool decidesLibraryWide;
 }
 
@@ -141,6 +152,26 @@ const HoldActions _noRecord = HoldActions(
   decidesLibraryWide: false,
 );
 
+/// A reference line no recipe answers yet, or whose child is itself made
+/// from a recipe (depth 1): a recipe or a skip finishes it (v41).
+const HoldActions _chooseRecipe = HoldActions(
+  kind: HoldKind.recipe,
+  finishes: {HoldDecision.skip, HoldDecision.recipe},
+  offers: {HoldDecision.skip, HoldDecision.recipe},
+  accepts: {HoldDecision.skip, HoldDecision.recipe},
+  decidesLibraryWide: false,
+);
+
+/// A reference marinade, poured away (v41, the owner's A5 a): a Confirm
+/// finishes it as poured away; it has no food to pick or weigh.
+const HoldActions _marinade = HoldActions(
+  kind: HoldKind.recipe,
+  finishes: {HoldDecision.skip, HoldDecision.confirm, HoldDecision.recipe},
+  offers: {HoldDecision.skip, HoldDecision.confirm, HoldDecision.recipe},
+  accepts: {HoldDecision.skip, HoldDecision.confirm, HoldDecision.recipe},
+  decidesLibraryWide: false,
+);
+
 /// Every hold the server writes, by kind. A row with no hold reads
 /// [unheldActions] ([holdActionsOf]).
 const Map<String, HoldActions> holdActions = {
@@ -161,13 +192,30 @@ const Map<String, HoldActions> holdActions = {
   // A person's decision on a food with no record.
   foodGoneHold: _noRecord,
   foodUnavailableHold: _noRecord,
+  // LINE holds of a sub-recipe reference (v41).
+  'choose_recipe': _chooseRecipe,
+  'nested_recipe': _chooseRecipe,
+  'discarded_recipe': _marinade,
 };
 
 /// The actions on a line no hold holds.
 const HoldActions unheldActions = _foodHold;
 
-/// [holdActions] for [hold] (null: [unheldActions]).
-HoldActions holdActionsOf(String? hold) => holdActions[hold] ?? unheldActions;
+/// The actions on a routed reference row no hold holds (v41): confirm the
+/// recipe, choose another, or skip; may be applied to others (the mockup's
+/// offer) — never recorded in `ingredient_decisions` (no food).
+const HoldActions routedActions = HoldActions(
+  kind: HoldKind.recipe,
+  finishes: {HoldDecision.skip, HoldDecision.confirm, HoldDecision.recipe},
+  offers: {HoldDecision.skip, HoldDecision.confirm, HoldDecision.recipe},
+  accepts: {HoldDecision.skip, HoldDecision.confirm, HoldDecision.recipe},
+  decidesLibraryWide: true,
+);
+
+/// [holdActions] for [hold] (null: [unheldActions], or [routedActions] on a
+/// [routed] row — one carrying a child recipe).
+HoldActions holdActionsOf(String? hold, {bool routed = false}) =>
+    holdActions[hold] ?? (routed ? routedActions : unheldActions);
 
 /// The holds of [kinds], in table order.
 List<String> holdsOf(Set<HoldKind> kinds) => [
@@ -180,7 +228,16 @@ final List<String> mediumHolds = holdsOf({HoldKind.medium});
 
 /// Every LINE hold — what the line says about its medium, its shell or a
 /// second food, whatever food it is matched on.
-final List<String> lineHolds = holdsOf({HoldKind.medium, HoldKind.line});
+final List<String> lineHolds = holdsOf({
+  HoldKind.medium,
+  HoldKind.line,
+  HoldKind.recipe,
+});
+
+/// The holds of a reference line no recipe counts (v41): out of the totals
+/// whatever its status, in the `choose_recipe` bucket ([matchBucketFor]).
+/// Not `discarded_recipe`: a confirmed marinade is poured away, resolved.
+const Set<String> recipeChoiceHolds = {'choose_recipe', 'nested_recipe'};
 
 /// The holds of a person's decision on a food with no record.
 final List<String> noRecordHolds = holdsOf({HoldKind.noRecord});

@@ -1040,9 +1040,26 @@ void main() {
     // them differing in some digit. Matcher v40 recorded from snapshot 17
     // (the owner's 2026-10-05 live step) the meat-only broiler (171052),
     // the clam (174214) and the mussel (174216) its pins read: 3 more
-    // compared, 2 of them differing in some digit.
-    expect(compared, 401);
-    expect(differ, 301);
+    // compared, 2 of them differing in some digit. Matcher v41 (step 1)
+    // recorded from snapshot 17 the 6 searches and 1 detail its storage
+    // pins' recipes read (the graham crust and its pies, blueberry pie,
+    // the nachos): the detail (2710703) is a hit in the recorded 'rum'
+    // answer, one more compared, differing in no digit. Matcher v41 (step
+    // 2) recorded from snapshot 17 the 13 searches and 5 details its engine
+    // pins' recipes read (the "thin-sliced cooked deli ham" answer that
+    // holds the cooked bacon 168322, the pie and tart doughs, the green
+    // curry, the pork chops, the herb sauce, the fruit tart's kiwis): 7
+    // more compared, 5 of them differing in some digit. Matcher v41 (step
+    // 3) recorded from snapshot 17 the 3 searches and 3 details its API
+    // pins' brisket and sweet cherry pie read (ground oregano, whole beef
+    // brisket, barbecue sauce; 170933, 174523, 2710700): 3 more compared,
+    // 2 of them differing in some digit. Its closer (round 3) recorded
+    // from snapshot 17 the 2 searches and 1 detail the no-share pin's
+    // indoor pulled pork reads (yellow mustard, worcestershire sauce;
+    // 171610, a hit in 'worcestershire sauce'): 1 more compared,
+    // differing in some digit.
+    expect(compared, 413);
+    expect(differ, 309);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

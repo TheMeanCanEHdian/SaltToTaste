@@ -53,6 +53,14 @@ const List<String> corpusFreeContractGoldenNames = [
   'nutrition_confirm_applied',
   // A pick alone on a held starter feeding: No grams, the hold kept.
   'nutrition_matches_held_pick',
+  // Matcher v41, the composite row: a routed dough (flagged default, its
+  // candidate groups) and its pie's label (`includes`); a held reference
+  // (`choose_recipe`) and its label (`partial`); the queue's new chip.
+  'nutrition_matches_subrecipe',
+  'nutrition_subrecipe',
+  'nutrition_matches_choose_recipe',
+  'nutrition_choose_recipe',
+  'nutrition_review_choose_recipe',
 ];
 
 /// Goldens that genuinely need the ATK corpus: a real v1 import source (with
@@ -147,5 +155,13 @@ Object? redactContractVolatiles(Object? value) {
   if (value is List) {
     return [for (final entry in value) redactContractVolatiles(entry)];
   }
+  // A recipe created through the real POST gets a server id stamped with
+  // the day (`manual-<yyyymmdd>-<slug>`): the date is replaced, the slug
+  // part stays pinned.
+  if (value is String) {
+    return value.replaceFirst(_manualIdDate, 'manual-<date>-');
+  }
   return value;
 }
+
+final RegExp _manualIdDate = RegExp(r'^manual-\d{8}-');

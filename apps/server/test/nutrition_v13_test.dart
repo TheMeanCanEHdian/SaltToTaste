@@ -43,10 +43,12 @@ void main() {
     List<String> steps = const [],
     String title = 'r',
     SaltDatabase? db,
+    List<Subsection> subsections = const [],
   }) {
     final recipe = Recipe(
       id: 'r',
       title: title,
+      subsections: subsections,
       slug: 'r',
       source: const RecipeSource(name: 'Test', type: 'book'),
       ingredients: [
@@ -413,7 +415,14 @@ void main() {
       final fixtures = FixtureProvider();
       const raw =
           '1 recipe Simple Tomato Sauce (recipe follows), warmed (see note)';
-      final r = recipeOf(db: db, [raw]);
+      // v41: with the recipe's own section (0416 makes its sauce in one), a
+      // section reference is the 0 g rule row (phase 2 routes sections); a
+      // line no section and no library title answers is held instead.
+      final r = recipeOf(
+        db: db,
+        [raw],
+        subsections: const [Subsection(title: 'Simple Tomato Sauce')],
+      );
       await matchAndCompute(db, fixtures, r);
       final row = db.ingredientMatchesFor('r').single;
       expect(
@@ -449,16 +458,29 @@ void main() {
     test('a batch, a "1 recipe" line or no amount stays 0 g and is never '
         'searched: Rainbow Cake (1201), Curry Deviled Eggs (0731), Rosé '
         'Sangria, Panna Cotta', () async {
-      for (final raw in [
-        '10 cups Vanilla Frosting (recipe follows)',
-        '1 recipe Easy-Peel Hard-Cooked Eggs (recipe follows)',
-        '4 ounces Simple Syrup (recipe follows)',
-        'Raspberry Coulis (recipe follows)',
+      for (final (raw, section) in [
+        ('10 cups Vanilla Frosting (recipe follows)', 'Vanilla Frosting'),
+        (
+          '1 recipe Easy-Peel Hard-Cooked Eggs (recipe follows)',
+          'Easy-Peel Hard-Cooked Eggs',
+        ),
+        ('4 ounces Simple Syrup (recipe follows)', 'Simple Syrup'),
+        ('Raspberry Coulis (recipe follows)', 'Raspberry Coulis'),
       ]) {
         expect(subRecipeCountsItsFood(lineOf(raw)), isFalse, reason: raw);
         final db = tempDb();
         final fixtures = FixtureProvider();
-        await matchAndCompute(db, fixtures, recipeOf(db: db, [raw]));
+        // v41: each with the section its recipe makes it in (a section
+        // reference stays the 0 g rule row until phase 2).
+        await matchAndCompute(
+          db,
+          fixtures,
+          recipeOf(
+            db: db,
+            [raw],
+            subsections: [Subsection(title: section)],
+          ),
+        );
         final row = db.ingredientMatchesFor('r').single;
         expect(
           (row.fdcId, row.grams, row.description),

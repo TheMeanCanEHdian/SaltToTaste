@@ -211,27 +211,75 @@ enum BulkScope {
 /// synchronously on the serving isolate, on admin-only endpoints (the sweep
 /// itself and the `bulk/counts` preview, which is why the preview is
 /// guarded against a cross-site drive).
+///
+/// v41 (design_v3 §2.1, F7): every scope is ordered PARENTS LAST — a recipe
+/// whose main lines hold a sub-recipe reference ([readsSubRecipe]) after
+/// every recipe that holds none, each side by id — keyed on the DOCUMENT, so
+/// the order holds on a fresh import (no stored row names a child yet) and
+/// on the first v41 sweep: a parent's composite row then reads its child's
+/// new totals and stamp in the same job. One partition suffices: depth is 1
+/// by rule (a child holding a reference row is held `nested_recipe`). And
+/// `stale` appends every recipe holding a row whose child it selected
+/// ([SaltDatabase.recipesReadingChildren]): a child stale by its hash (a
+/// save, a reconciled file) moves its `computed_at` only when this sweep
+/// recomputes it, after the scope is fixed — without the append its
+/// parents would wait for a second sweep.
 List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
+  final ids = <String>[];
+  final parents = <String>{};
+  Recipe read(String id, String doc) {
+    final recipe = RecipeMapper.fromMap(
+      jsonDecode(doc) as Map<String, dynamic>,
+    );
+    if (readsSubRecipe(recipe)) {
+      parents.add(id);
+    }
+    return recipe;
+  }
+
   switch (scope) {
     case BulkScope.missing:
-      return db.recipeIdsWithoutNutrition();
     case BulkScope.all:
-      return db.allRecipeIds();
+      final wanted = scope == BulkScope.missing
+          ? db.recipeIdsWithoutNutrition().toSet()
+          : null;
+      for (final (:id, :doc) in db.recipeDocs()) {
+        if (wanted == null || wanted.contains(id)) {
+          ids.add(id);
+          read(id, doc);
+        }
+      }
     case BulkScope.stale:
-      final ids = <String>[];
       for (final candidate in db.recipesWithNutrition()) {
-        final recipe = RecipeMapper.fromMap(
-          jsonDecode(candidate.doc) as Map<String, dynamic>,
-        );
+        final recipe = read(candidate.id, candidate.doc);
         if (!candidate.layoutCurrent ||
             candidate.underived ||
             ingredientsHashOf(recipe) != candidate.ingredientsHash) {
           ids.add(candidate.id);
         }
       }
-      return ids;
+      final selected = ids.toSet();
+      for (final parent in db.recipesReadingChildren(selected)) {
+        if (selected.add(parent)) {
+          ids.add(parent);
+          // It reads a child by its stored row: a parent whatever its doc.
+          parents.add(parent);
+        }
+      }
+      ids.sort();
   }
+  return [
+    ...ids.where((id) => !parents.contains(id)),
+    ...ids.where(parents.contains),
+  ];
 }
+
+/// Whether [recipe]'s main lines (the ones nutrition reads) hold a
+/// sub-recipe reference ([isSubRecipeReference]) — a parent, ordered after
+/// every other recipe by [bulkScopeIds].
+bool readsSubRecipe(Recipe recipe) => recipe.ingredients.any(
+  (group) => group.items.any((line) => isSubRecipeReference(line.raw)),
+);
 
 /// Starts a background bulk compute over the recipes [scope] selects;
 /// returns the job id, or null when one is already running.

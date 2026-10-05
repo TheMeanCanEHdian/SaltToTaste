@@ -251,10 +251,17 @@ void main() {
       await matchAndCompute(
         db,
         fixtures,
-        recipeOf(db: db, [
-          '1 recipe Green Curry Paste (recipe follows) or 2 tablespoons '
-              'store-bought green curry paste',
-        ]),
+        recipeOf(
+          db: db,
+          [
+            '1 recipe Green Curry Paste (recipe follows) or 2 tablespoons '
+                'store-bought green curry paste',
+          ],
+          // v41: 0548 makes its paste in its own section — a section
+          // reference, the 0 g rule row; the engine never weighs the
+          // store-bought alternative (A10 a weighs it on a person's pick).
+          subsections: const [Subsection(title: 'Green Curry Paste')],
+        ),
       );
       final row = db.ingredientMatchesFor('r').single;
       expect((row.fdcId, row.grams, row.description), (null, 0, subRecipeNote));
@@ -294,10 +301,13 @@ void main() {
         '3 tablespoon · USDA portion',
       );
       expect(bucketOf(row), MatchBucket.counted);
-      // With no subsection holding the oil, the line is the sub-recipe.
+      // With no subsection holding the oil, the line is the sub-recipe — v41:
+      // with no section and no library title answering it, held
+      // `choose_recipe` at 0 g.
       final bare = tempDb();
       await matchAndCompute(bare, FixtureProvider(), recipeOf(db: bare, [raw]));
-      expect(bare.ingredientMatchesFor('r').single.description, subRecipeNote);
+      final held = bare.ingredientMatchesFor('r').single;
+      expect((held.fdcId, held.grams, held.hold), (null, 0, 'choose_recipe'));
     });
 
     test('A1: an amount edit never re-attaches a food to a line the rule '
