@@ -515,7 +515,25 @@ const Map<String, String> _synonyms = {
 /// Morello cherries, xanthan gum, parsnips, kiwis, malted milk powder,
 /// nori/gim, raw cashews; FDC has no record of candied ginger, freekeh or
 /// whole farro (a person's lines).
-const int matcherVersion = 38;
+///
+/// v39: edible yields, part 1 (the owner's "go with your recommendations",
+/// 2026-10-05; prep39/plan.md §1–§2; zero requests). Meat (grams/engine):
+/// a bone-in line weighed from a printed weight whose record publishes no
+/// refuse reads its class's FDC yield, flagged (`boneInClassYields`,
+/// revising CP6 #11 and #5: 109 lines); five shellfish lines whose grams
+/// need no shell yield are counted, not held `in_shell` (`shellCounted`:
+/// the per-item mussel and oyster, the live lobster's own "1 lobster", the
+/// shrimp eaten shell and all); a skin-discarded thigh or leg moves to its
+/// meat-only record at FDC's meat share (`skinDiscarded`, `skinShares`: 13
+/// lines; breast and whole bird wait on the live step). Produce: canned
+/// coconut milk on SR 170173 by rank-as (9 lines, unflagged); a small or
+/// large onion, carrot or round tomato on its SR size portion and a plum
+/// tomato at 170457's 62 g (grams: 118 lines); the prep-loss shapes, read
+/// only on a printed weight with the word after the first top-level comma
+/// — a counted banana by its record's "Peeled" portion (2 lines) and a
+/// drained canned tomato whose juice is not reserved × ATK's 0.54, flagged
+/// (28 lines).
+const int matcherVersion = 39;
 
 /// Letters FDC and the corpus both write plainly: 'jalapeño' searched as
 /// 'jalape o' (the split treated ñ as punctuation) on 65 corpus lines.
@@ -2190,6 +2208,24 @@ const Map<String, (String, String)> _rankAs = {
   // R14 ya cai, FLAGGED (sweetened; 169891 SR "Cabbage, mustard, salted";
   // check passed: 'cup' 128 g):
   'ya cai': ('salt', 'cabbage mustard salted'),
+  // v39 (D1, the owner's ruling Q8, 2026-10-05): a can of coconut milk is
+  // the canned cooking product, SR 170173 "Nuts, coconut milk, canned
+  // (liquid expressed from grated meat and water)" (197 kcal; cup 226 g),
+  // never FNDDS 2705413 "Coconut milk", the 31 kcal drink every one of these
+  // lines sat on. 170173 leads the cached 'canned coconut milk' answer.
+  // "regular or light" reads regular (no light canned record is cached).
+  'coconut milk': (
+    'canned coconut milk',
+    'nuts coconut milk canned liquid expressed from grated meat and water',
+  ),
+  'unsweetened coconut milk': (
+    'canned coconut milk',
+    'nuts coconut milk canned liquid expressed from grated meat and water',
+  ),
+  'regular or light coconut milk': (
+    'canned coconut milk',
+    'nuts coconut milk canned liquid expressed from grated meat and water',
+  ),
   // M1–M3 STAY WITH A PERSON — FDC has no record: "candied ginger" answered
   // tea, pickled and raw ginger, ground ginger, ginger ale (no candied or
   // crystallized ginger; never the raw root); "freekeh" answered nothing;

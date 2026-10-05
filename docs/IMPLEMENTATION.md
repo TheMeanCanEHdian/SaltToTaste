@@ -3202,7 +3202,117 @@ to the verifier's, the suite green; a misplaced colon in API.md that v37
 had introduced put right. The accuracy track's live requests: 42 in all.
 matcherVersion 38.
 
+### Edible yields, part 1: the bone-in class yields, skin, shell, size and two prep losses (matcher v39)
+
+The blind accuracy audit (2026-10-05; `.claude/diag/2026-10-05/audit1/`)
+graded 230 blind lines and recomputed 25 recipes by hand: the engine's
+food choice was wrong on one of 200 counted lines, and the mass ran high where
+a line's weight is what was bought rather than what is eaten — bone-in
+cuts at gross weight alone were 83 % of the sample's calorie error. The
+owner ruled on the planners' nine items the same day ("go with your
+recommendations"; the decision-log entry below), and v39 (2026-10-05)
+builds everything that needs no request. Y1, the bone-in class yields,
+REVISES checkpoint 6's #11 and #5: a line that buys refuse, weighed from
+a printed weight, on a record that publishes no refuse portion of its
+own, reads its class figure — every one an FDC portion (pork bone-in
+chops 0.662 from 168242's own refuse; ribs 0.653 from country-style ribs;
+bone-in pork roasts and hams 0.758 from the Boston butt; beef standing rib
+0.758 on the same figure; chicken and turkey parts 0.608 from the whole
+chicken's ready-to-cook yield; a whole turkey 0.608 as an interim; bony
+beef, lamb and veal 0.657, the median; oxtails 0.564 from the record's
+own "1 oz yields 16 g"); the either-bone steaks and ham hocks stay gross;
+a record's own refuse portion and the whole chicken's ready-to-cook yield
+keep precedence. Y2 un-holds five shellfish lines whose grams need no
+shell yield (a dozen mussels and two dozen oysters at FNDDS's 15 g of
+meat; shell-on shrimp the prep note says are eaten whole; two live
+lobsters at the record's own 200 g) and keeps thirteen held. Y3 moves a
+bone-in, skin-on thigh or leg quarter whose recipe discards the skin to
+the cached meat-only record at the bone yield × FDC's meat share (0.795,
+0.770), on a narrow signal (the line's "skin removed", or a step that
+removes or discards the skin with no sentence reserving, laying back,
+stretching or trimming it); the breast and whole-bird shares are built
+dry for the live step. D1 reads canned coconut milk on the SR canned
+record (197 kcal) instead of the FNDDS drink (31 kcal), unflagged. C1 and
+C3 read "small" and "large" on a counted onion, carrot or round tomato
+from the SR records' own size portions, and a plum tomato at 62 g. A3 and
+T1 are the two prep losses with a printed figure: a peeled banana at
+FDC's 115 g "Peeled" portion and drained canned tomatoes at × 0.54 (ATK's
+own "3 cups juice" from two 28-ounce cans), each only when the grams come
+from a printed weight and the word sits in the line's tail after its
+first top-level comma. The first verifier round found the batch's one
+real defect before it shipped: the skin share was keyed on the meat-only
+record, and a routine Confirm of a moved row wrote that record for the
+item key — so Chicken Provençal's thighs, confirmed, would have put the
+share on Chicken Teriyaki's skin-eaten thighs across the library. Closed
+at the root: the share is read only where the line's own recipe trips the
+signal, the move applies to every auto row on the skin-on record (the
+engine's pick or a carried decision) and never to a person's own row, and
+a decision written from a moved row records the skin-on record bought.
+Replay on snapshot 16: calls 0; 271 rows differ from v38, every one
+attributed (Y1 96, Y3 13, Y2 5, D1 9, C1 114, C3 4, A3 2, T1 28), no
+person's row, no status change, the only hold changes Y2's five; counted
+13,361 → 13,366, check 223 → 218, no grams 17, no match 14; complete
+1,016 → 1,019. Recipes moving by more than 10 % a serving: Y1 100 of 103,
+Y3 12, Y2 4, D1 9, the rest none — the plan's counts. Two figures differ
+from the plan's and are kept: the two coconut-milk volume lines read the
+`milk` density (182.76 g, 121.84 g) as the library's three canned lines
+already do, not 170173's cup; C1 reaches 114 rows, not 102, because the
+rule sizes an onion of any colour (eleven small red onions) and reads "1
+small carrot, chopped medium" by its head. Fixtures: 12 details and 9
+searches, each equal to its snapshot-16 row; the two contract goldens
+regenerated (a 3½-pound chicken 1,587.6 → 966.0 g; a bone-in ham 3,628.7
+→ 2,750.2 g). Re-pins: v7–v11, v17, v21, v30, v32, the sweep audit
+398/299, the seasoning hash. The owner's gate: every named mechanism
+grepped, the fixtures compared to the snapshot rows, every re-pinned
+bound read (none widened), two code-anchored mutants (the poultry figure;
+the "small" term of the size read) killed and restored, a fresh-copy
+replay byte-identical to the verifier's, the analyzer and the full suite
+green. matcherVersion 39.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-05 — the v40 composite-row mockup (the owner: "go with the
+  recommendations"):** all five open questions as recommended. The
+  `choose_recipe` hold gets its own queue chip (its fix is a recipe, not a
+  USDA food); a person's Confirm on a defaulted dough clears the
+  approximation flag; no "count as rendered" action in v40 for the wider
+  bacon lines (oven-fried bacon, quiche Lorraine, carbonara — typed grams
+  correct them); section candidates are listed but not pickable until phase
+  2; the label's "Includes N recipe" line is shown to members too. The
+  mockup (`docs/mockups/v40-composite-rows.html`) is the specification for
+  the v40 build.
+
+- **2026-10-05 — the edible-yields plan (the owner: "go with your
+  recommendation on the edible yields batch", then "go with your
+  recommendations" on the plan's nine items):** the blind accuracy audit
+  (`.claude/diag/2026-10-05/audit1/`) found the engine's food choice right
+  and its mass high where a line's weight is what was bought rather than
+  what is eaten; bone-in cuts at gross weight were 83 % of the sample's
+  calorie error. Two earlier rulings are REVERSED by this one: checkpoint 6's
+  #11 and #5 (meats and birds at gross weight, approximate; turkeys gross)
+  become class edible yields from FDC's own refuse portions, flagged; and the
+  2026-09-27 #9 ruling (no sub-recipe routing) becomes phase-1 routing of
+  "1 recipe X" references to library recipes in v40 (variations still never
+  routed). The nine items: Q1 the per-class yield table in full, keyed on
+  the matched record (pork bone-in chops 0.662, pork ribs 0.653, pork
+  bone-in roasts and hams 0.758, beef bone-in rib roast 0.758, chicken and
+  turkey parts 0.608, whole turkey 0.608 interim, bony beef/lamb/veal
+  0.657, oxtails 0.564; either-bone steaks and ham hocks stay gross); Q2 no
+  refuse-sibling map; Q3 five shellfish lines un-held (per-piece mussel and
+  oyster meat, shell-on shrimp eaten whole, two live lobsters at FDC's
+  one-lobster portion), thirteen stay held; Q4 skin removed in the
+  directions → the cached skinless thigh and leg records at the SR meat
+  share (0.795, 0.770) stacked on the bone yield, the breast and whole-bird
+  cases after a three-request live step; Q5 rendered bacon and pancetta as a
+  two-part row in v40 (cooked at 0.403 plus the kept fat as bacon grease),
+  the wider bacon lines a person's; Q6 only the two ATK-printed prep losses
+  (a peeled banana 115 g; drained canned tomatoes × 0.54), a cited USDA
+  yield table acceptable later; Q7 sub-recipe routing phase 1 with a mockup
+  first; Q8 canned coconut milk on the SR record, unflagged; Q9 the SR
+  records' own size portions for small and large onions, carrots and
+  tomatoes, the plum tomato at 62 g, unsized onions later. Build order: v39
+  part 1 at zero requests, then a live step of nine to eighteen requests,
+  then v40.
 
 - **2026-10-04 — the review queue (the owner: "option two — make as many things
   accurately auto mapped as possible", then "go with your recommendations" on the

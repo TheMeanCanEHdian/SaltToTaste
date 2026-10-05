@@ -1360,12 +1360,24 @@ bone-in cut whose record publishes its raw refuse — or, for a WHOLE bird
 ready-to-cook" share (`"… × 0.61 edible (USDA ready-to-cook yield)"` on
 171447) — `"… · approximate (gross weight, no USDA refuse portion)"` for a
 bone-in, whole-bird or other refuse-bought line whose record publishes no
-refuse portion (a whole turkey, a Foundation chicken part, a lamb chop, bird
-pieces on the whole-bird record, whose yield is the whole bird's): counted at
-the printed weight, bone included — no factor is borrowed (FDC gives no
-turkey share) — and labelled (since matcher v30 "beef rib slabs" too),
-shellfish bought in the shell too (held
-`in_shell`, below, and counted so once a person confirms it); the label is
+refuse portion and no class yield (below): counted at the printed weight,
+bone included, and labelled (since matcher v30 "beef rib slabs" too) —
+since matcher v39 only the either-bone steaks (173403: the line allows
+boneless) and the ham hocks (2705900: FDC has no figure), the CP6 rulings
+#11 and #5 (meats, birds and turkeys at gross weight) being REVISED by the
+owner's 2026-10-05 ruling: a bone-in line weighed from a printed weight on
+a record of a class FDC gives a yield for reads it, `"… × 0.61 edible ·
+approximate (yield of chicken parts from FDC 171447)"` (the class table
+under matcher v39, below; the record's own refuse portion and the whole
+chicken's ready-to-cook yield go first) — and, on a meat-only record in a
+recipe that discards the skin of a thigh or leg bought with it (the trip
+below, read on the recipe — never the record alone), then FDC's meat share,
+`"… × 0.79 meat · approximate (skin discarded; USDA meat-only share)"`;
+shellfish
+bought in the shell too (held `in_shell`, below, and counted so once a
+person confirms it); since matcher v39 `"2 × 200 g · approximate (FDC's
+1-lobster portion)"` for live lobsters, counted by the record's own "1
+lobster" rather than the live weight; the label is
 the line's, read on the food's cached detail or else its cached search hit,
 never lost for want of a detail no compute fetches (a Foundation or FNDDS
 weight line); `"… · no edible yield read"` for one on an SR record whose
@@ -1671,7 +1683,18 @@ scrubbed, live lobsters, shell-on shrimp — "shell-on shrimp …, peeled,
 deveined …, shells reserved" too: its weight includes the shells the cook
 peels off), with or without an amount (never 0 g counted); shucked shellfish, lobster
 meat and clam juice name none of these: no record FDC answers publishes an edible share, so the gross weight
-is not counted as meat; a LINE hold, like `second_food`),
+is not counted as meat; a LINE hold, like `second_food`; since matcher v39
+— the owner's ruling 2026-10-05, plan Q3 (b) — a line whose grams need no
+shell yield is counted instead: a per-item read, FNDDS's "1 mussel" and "1
+oyster" 15 g being the meat (paella's "1 dozen mussels" 180 g, the roasted
+oysters' 24, 360 g) and a live lobster's count × the record's own "1
+lobster" 200 g, flagged (`flambeed-pan-roasted-lobster` and the indoor
+clambake's two lobsters, 400 g each), and shrimp the recipe's prep note
+says are "eaten shell and all" (crispy salt-and-pepper shrimp, 680 g at
+the gross weight, flagged); the 13 lines bought by weight — 6 clam, 5
+mussel, 2 shell-on shrimp whose shells are peeled off — stay held, no
+cached record publishing a shell yield (the live step asks 174214 and
+174216), and the peeled-and-deveined shrimp lines stay counted),
 `starter_discard` (since matcher v22, the user's ruling Q1: every non-water
 line of a sourdough starter whose feeding step keeps a little starter and
 discards the rest — "discard remaining starter"; how much of the flour ends in the kept starter nothing says),
@@ -2235,6 +2258,98 @@ raw root); `freekeh` answers nothing; `farro` answers only 2710828
 "Farro, pearled, dry, raw" (a 45 g racc, no cup), not whole farro, so
 `whole farro` keeps its v21 words (the owner's label figure is the way
 on).
+Since matcher v39 (edible yields, part 1 — the owner's "go with your
+recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
+zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line
+that buys refuse, weighed from a printed weight, whose matched record
+publishes no refuse portion of its own (and is no whole chicken, which
+reads its ready-to-cook yield), reads its record's class figure, every one
+an FDC portion, flagged `approximate (yield of <class> from FDC <id>)`:
+
+| class | records | yield | derivation |
+|---|---|---|---|
+| bone-in pork chops | 167822 | 0.662 | 168242's own refuse: 133 g of a 201 g chop, lean+fat (the lean-only 0.570 also refuses the separable fat) |
+| pork ribs | 167853, 168299 | 0.653 | 167895 country-style ribs, 128 of 196 g |
+| a bone-in pork roast | 168226, 169177, 168367 | 0.758 | 167849 Boston butt, 288 of 380 g |
+| a bone-in roast (the pork butt figure) | 168675 standing rib | 0.758 | cross-species: no beef refuse is cached |
+| chicken parts | 171447 (pieces), 2727566–69, 172378, and the meat-only 2646171, 173619 | 0.608 | 171447 "yield from 1 lb ready-to-cook chicken" 276 g; the Cornish hen's 336 of 567 g (0.593) corroborates |
+| turkey parts (the chicken figure) | 171093, 171533, 171497, 174518 | 0.608 | no turkey part figure exists |
+| a whole turkey (interim: the chicken figure) | 171081 | 0.608 | until the live step reads the turkey family's part shares (they replace it if they sum to a bird's yield) |
+| bony beef, lamb and veal | 173405, 170827, 169441, 172641, 172513, 174875, 172648 | 0.657 | the median of the four above, (128/196 + 133/201) / 2 |
+| oxtails | 2705843 | 0.564 | the record's own FNDDS "1 oz yields 16 g" (raw with bone → this cooked food) |
+
+109 lines move (texas-style beef ribs 2,268 → 1,491 g; best prime rib
+3,175 → 2,406 g; a 12- to 14-pound turkey 6,350 → 3,864 g); 103 recipes,
+100 of them by more than 10 % a serving. **Skin discarded**: a bone-in,
+skin-on thigh (2727567) or leg quarter (172378) the engine picked moves to
+the cached meat-only record — 2646171 "Chicken, thigh, boneless,
+skinless, raw", 173619 "…leg, meat only, raw" — at the bone yield × FDC's
+meat share of meat and skin (SR 173619's "thigh bone and skin removed"
+147 g of 172378's "thigh with skin" 185 g, 0.795; its "leg, bone and skin
+removed" 265 g of the "leg, with skin" 344 g, 0.770), flagged, when the
+line says "skin removed" or "skinned", or a step removes or discards the
+skin ("remove and discard the browned chicken skin", "discard skin",
+"peel skin off") and no sentence of the recipe naming the skin reserves
+it, sets it aside, lays it back, stretches it, or takes it "if desired" or
+from the "tapered" pieces only: 13 lines (Chicken Provençal's 8 thighs,
+1,361 → 828 → 658 g). The move applies to every `auto` row on the skin-on
+record — the engine's pick, or a person's decision carried from another
+line or by `apply_to_all` — never to a person's own row on the line, which
+shows the food they chose. A decision written from a row on a meat-only
+record whose line trips (a Confirm of a moved row, or a pick of the
+meat-only record there) records the SKIN-ON record bought, so the key's
+other lines move only where their own recipe discards the skin: Chicken
+Provençal's thighs confirmed leave Chicken Teriyaki's (skin eaten) on
+2727567 at 828 g. The breast (5 lines)
+and whole-bird (5) shares are provisional and stay DRY until the live
+step: the detail of 171077 (breast, meat only) against 171474's "0.5
+breast, bone removed" 145 g, and the search `chicken broilers or fryers
+meat only raw` with its record's detail. **Shellfish**: the `in_shell`
+paragraph above. **Canned coconut milk** (Q8): `coconut milk`,
+`unsweetened coconut milk` and `regular or light coconut milk` (read as
+regular: no light canned record is cached) read the cached `canned coconut
+milk` answer, ranked as SR 170173 "Nuts, coconut milk, canned (liquid
+expressed from grated meat and water)" (197 kcal/100 g), never FNDDS
+2705413 "Coconut milk", the 31 kcal drink: 9 lines, unflagged (it is the
+food); 9 recipes by more than 10 % (Thai green curry +105 %). A can keeps
+its printed weight; the two volume lines read the `milk` density 1.03 as
+the library's three `canned coconut milk` lines on 170173 already do (¾
+cup 182.76 g, ½ cup 121.84 g — not 170173's `cup` 226 g, which would also
+move those three). "¼ cup heavy cream or coconut milk" (its first option)
+and `cream of coconut` (FNDDS 2707571) are other items. **Size words**
+(Q9 (a), one scale): "small" or "large" in the item's own words — before
+the first comma, outside a paren, before a cut ("2 medium onions, cut into
+large pieces" stays medium) — on a count read from the piece table's
+onion (any colour), carrot or round tomato reads the size portion of the
+SR record its medium figure is: onion 170000 `small` 70 g / `large` 150 g,
+carrot 170393 `small (5-1/2" long)` 50 g / `large (7-1/4" to 8-/1/2"
+long)` 72 g, tomato 170457 `small whole` 91 g / `large whole` 182 g;
+unflagged (FDC's own figures; basis `"1 × 150 g each"`). A plum tomato is
+170457's `plum tomato` 62 g, small or not (no small plum is published).
+118 lines (114 sized, 4 plum), 0 recipes by more than 10 %. Untouched:
+"large" eggs (the 50/17/33 g figures are the large egg), "1 small celery
+rib" (40 g — the corpus prints a small rib at 25–50 g, not SR's 17 g),
+"large shrimp (31 to 40 per pound)", "small head", a green onion, the
+cherry and grape tomato; unsized onions stay on SR's 110 g medium (C2, the
+Foundation "Edible" onion, is not built). **Prep loss** (Q6): a prep word
+reduces a line only when its grams are a PRINTED WEIGHT and the word sits
+in the line's tail, after its first top-level comma (outside a paren); a
+head word ("1 (14.5-ounce) can whole peeled tomatoes") names a prepared
+product, and a count or portion read is already edible. Two shapes have a
+figure: a counted item **peeled** on a record publishing a "Peeled"
+portion (only Foundation's bananas, 1105314 115 g and 1105073 110 g) reads
+the count × that portion, unflagged, basis `"6 × 115 g (USDA "Peeled"
+portion)"` (ultimate banana bread 1,020.6 → 690 g; mulligatawny's banana
+141.75 → 115 g; the detail is read for such a line on a Foundation
+record); and a canned tomato (Foundation 333281 diced, 2685578 whole)
+**drained** with no juice "reserved" anywhere in the line counts × 0.54,
+flagged `approximate (ATK: 2 (28-ounce) cans whole tomatoes, drained, give
+3 cups juice)` — ATK's printed "2 (28-ounce) cans whole tomatoes …,
+drained, 3 cups juice reserved" by SR's juice cup: 28 lines (hearty lentil
+soup 411.07 → 221.98 g), 0 recipes by more than 10 %; the 16 lines that
+reserve juice put it back later and are untouched. Every other prep word
+(peeled or cored produce, leek greens, scallion parts, deveined shrimp,
+drained beans) has no figure and no rule.
 Since matcher v31 (the CP10 rulings, 2026-10-03): star
 anise (`star anise pods`, `star anise pod`, each its own answer) →
 `spices anise seed` (171316, flagged); Q7's eight small groups —

@@ -1032,9 +1032,14 @@ void main() {
     // vehicle reads, differing in some digit. Matcher v38 recorded from
     // snapshot 16 (the owner's 2026-10-04 live step) the 22 records and 13
     // searches its pins read: 21 more compared, 15 of them differ in some
-    // digit.
-    expect(compared, 386);
-    expect(differ, 291);
+    // digit. Matcher v39 (the meat half) recorded from snapshot 16 the 9
+    // records and 5 searches its bone, skin and shell pins read: 9 more
+    // compared, 7 of them differ in some digit. Its produce half recorded
+    // the banana (1105314), the FNDDS tomato (2709719) and the beet
+    // (2685576) its pins and the A3 detail read: 3 more compared, 1 of
+    // them differing in some digit.
+    expect(compared, 398);
+    expect(differ, 299);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

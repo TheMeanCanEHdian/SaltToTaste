@@ -20281,5 +20281,574 @@
     "description": "Quantity not specified"
    }
   ]
+ },
+ "167822": {
+  "fdc_id": 167822,
+  "description": "Pork, fresh, loin, blade (chops or roasts), bone-in, separable lean and fat, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 194.0,
+   "203": 19.56,
+   "204": 12.27,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 35.0,
+   "303": 0.66,
+   "304": 17.0,
+   "305": 207.0,
+   "306": 288.0,
+   "307": 69.0,
+   "401": 0.0,
+   "404": 0.499,
+   "405": 0.314,
+   "406": 6.704,
+   "415": 0.427,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.55,
+   "320": 6.0,
+   "323": 0.21,
+   "328": 0.7,
+   "430": 0.0,
+   "606": 4.27,
+   "645": 4.913,
+   "646": 1.941,
+   "605": 0.08,
+   "601": 63.0
+  },
+  "portions": [
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   },
+   {
+    "gram_weight": 263.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "chop"
+   }
+  ]
+ },
+ "168242": {
+  "fdc_id": 168242,
+  "description": "Pork, fresh, loin, center rib (chops or roasts), bone-in, separable lean and fat, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 186.0,
+   "203": 20.28,
+   "204": 11.04,
+   "205": 0.0,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 25.0,
+   "303": 0.59,
+   "304": 23.0,
+   "305": 203.0,
+   "306": 337.0,
+   "307": 56.0,
+   "401": 0.0,
+   "404": 0.456,
+   "405": 0.177,
+   "406": 6.331,
+   "415": 0.682,
+   "432": 0.0,
+   "435": 0.0,
+   "418": 0.54,
+   "320": 2.0,
+   "323": 0.12,
+   "328": 0.7,
+   "430": 0.0,
+   "606": 2.365,
+   "645": 2.756,
+   "646": 0.964,
+   "605": 0.069,
+   "601": 58.0
+  },
+  "portions": [
+   {
+    "gram_weight": 133.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "chop without refuse (Yield from 1 raw chop, with refuse, weighing 201g)"
+   },
+   {
+    "gram_weight": 453.6,
+    "amount": 1.0,
+    "unit": null,
+    "description": "lb"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "169800": {
+  "fdc_id": 169800,
+  "description": "Caribou, bone marrow, raw (Alaska Native)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 786.0,
+   "203": 6.7,
+   "204": 84.4,
+   "205": 0.0,
+   "303": 4.5,
+   "305": 107.0,
+   "404": 0.04,
+   "406": 0.2
+  },
+  "portions": []
+ },
+ "173403": {
+  "fdc_id": 173403,
+  "description": "Beef, rib eye steak, boneless, lip off, separable lean and fat, trimmed to 0\" fat, choice, raw",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 241.0,
+   "203": 18.69,
+   "204": 18.43,
+   "205": 0.2,
+   "291": 0.0,
+   "269": 0.0,
+   "301": 8.0,
+   "303": 1.86,
+   "304": 19.0,
+   "305": 133.0,
+   "306": 231.0,
+   "307": 51.0,
+   "401": 0.0,
+   "404": 0.109,
+   "405": 0.248,
+   "406": 4.704,
+   "415": 0.411,
+   "432": 3.0,
+   "435": 3.0,
+   "418": 1.78,
+   "320": 4.0,
+   "328": 0.1,
+   "430": 1.5,
+   "606": 8.074,
+   "645": 8.611,
+   "646": 0.861,
+   "601": 66.0
+  },
+  "portions": [
+   {
+    "gram_weight": 316.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "steak"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 4.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "2646171": {
+  "fdc_id": 2646171,
+  "description": "Chicken, thigh, boneless, skinless, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 144.07,
+   "958": 149.306475,
+   "203": 18.6125,
+   "204": 7.916,
+   "205": 0.0,
+   "301": 5.65,
+   "303": 0.6018,
+   "304": 21.8,
+   "305": 178.3,
+   "306": 271.8,
+   "307": 62.33,
+   "606": 1.658,
+   "645": 2.239,
+   "646": 1.42,
+   "605": 0.02375,
+   "601": 91.66
+  },
+  "portions": [
+   {
+    "gram_weight": 114.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2705843": {
+  "fdc_id": 2705843,
+  "description": "Beef, oxtails",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 25.9,
+   "204": 16.5,
+   "205": 0.0,
+   "208": 257.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 13.0,
+   "303": 2.18,
+   "304": 20.0,
+   "305": 179.0,
+   "306": 269.0,
+   "307": 357.0,
+   "320": 3.0,
+   "323": 0.31,
+   "328": 0.2,
+   "401": 0.0,
+   "404": 0.067,
+   "405": 0.188,
+   "406": 5.42,
+   "415": 0.474,
+   "418": 1.8,
+   "430": 1.4,
+   "432": 7.0,
+   "435": 7.0,
+   "601": 86.0,
+   "606": 6.73,
+   "645": 7.35,
+   "646": 0.727
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tail bone"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 240.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tail"
+   },
+   {
+    "gram_weight": 16.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 oz yields"
+   },
+   {
+    "gram_weight": 135.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "2706349": {
+  "fdc_id": 2706349,
+  "description": "Lobster",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 20.9,
+   "204": 0.95,
+   "205": 0.0,
+   "208": 97.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 106.0,
+   "303": 0.33,
+   "304": 48.0,
+   "305": 204.0,
+   "306": 253.0,
+   "307": 535.0,
+   "320": 1.0,
+   "323": 1.1,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.022,
+   "405": 0.017,
+   "406": 1.91,
+   "415": 0.118,
+   "418": 1.34,
+   "430": 0.0,
+   "432": 9.0,
+   "435": 9.0,
+   "601": 161.0,
+   "606": 0.229,
+   "645": 0.278,
+   "646": 0.375
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 50.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 claw"
+   },
+   {
+    "gram_weight": 200.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 lobster"
+   },
+   {
+    "gram_weight": 100.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tail"
+   },
+   {
+    "gram_weight": 135.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "2706351": {
+  "fdc_id": 2706351,
+  "description": "Oysters, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 5.71,
+   "204": 1.71,
+   "205": 2.72,
+   "208": 51.0,
+   "269": 0.62,
+   "291": 0.0,
+   "301": 59.0,
+   "303": 4.61,
+   "304": 18.0,
+   "305": 97.0,
+   "306": 156.0,
+   "307": 85.0,
+   "320": 13.0,
+   "323": 0.85,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.018,
+   "405": 0.09,
+   "406": 0.925,
+   "415": 0.031,
+   "418": 8.75,
+   "430": 1.0,
+   "432": 7.0,
+   "435": 7.0,
+   "601": 40.0,
+   "606": 0.474,
+   "645": 0.253,
+   "646": 0.528
+  },
+  "portions": [
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 oyster"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 225.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "2727568": {
+  "fdc_id": 2727568,
+  "description": "Chicken, wing, meat and skin, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 167.55,
+   "958": 172.792125,
+   "203": 18.40625,
+   "204": 10.64,
+   "205": -0.45875,
+   "301": 13.55,
+   "303": 0.5111,
+   "304": 16.53,
+   "305": 132.8,
+   "306": 194.0,
+   "307": 84.14,
+   "601": 98.88
+  },
+  "portions": [
+   {
+    "gram_weight": 114.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "1105314": {
+  "fdc_id": 1105314,
+  "description": "Bananas, ripe and slightly ripe, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 97.0,
+   "203": 0.74,
+   "204": 0.29,
+   "205": 23.0,
+   "291": 1.7,
+   "301": 5.0,
+   "303": 0.0,
+   "304": 28.0,
+   "305": 22.0,
+   "306": 326.0,
+   "307": 0.0,
+   "401": 12.3,
+   "404": 0.056,
+   "405": 0.0,
+   "406": 0.662,
+   "415": 0.209,
+   "320": 1.0,
+   "430": 0.1
+  },
+  "portions": [
+   {
+    "gram_weight": 115.0,
+    "amount": 1.0,
+    "unit": "banana",
+    "description": "Peeled"
+   },
+   {
+    "gram_weight": 140.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2709719": {
+  "fdc_id": 2709719,
+  "description": "Tomatoes, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.82,
+   "204": 0.31,
+   "205": 4.04,
+   "208": 20.0,
+   "269": 2.63,
+   "291": 1.2,
+   "301": 10.0,
+   "303": 0.22,
+   "304": 10.0,
+   "305": 23.0,
+   "306": 226.0,
+   "307": 4.0,
+   "320": 32.0,
+   "323": 0.58,
+   "328": 0.0,
+   "401": 16.3,
+   "404": 0.046,
+   "405": 0.018,
+   "406": 0.597,
+   "415": 0.078,
+   "418": 0.0,
+   "430": 7.5,
+   "432": 13.0,
+   "435": 13.0,
+   "601": 0.0,
+   "606": 0.028,
+   "645": 0.031,
+   "646": 0.083
+  },
+  "portions": [
+   {
+    "gram_weight": 20.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice"
+   },
+   {
+    "gram_weight": 17.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cherry"
+   },
+   {
+    "gram_weight": 125.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 whole"
+   },
+   {
+    "gram_weight": 60.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 plum tomato"
+   },
+   {
+    "gram_weight": 180.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 60.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 Italian tomato"
+   },
+   {
+    "gram_weight": 8.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 grape tomato"
+   }
+  ]
+ },
+ "2685576": {
+  "fdc_id": 2685576,
+  "description": "Beets, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 44.6205,
+   "958": 40.965255,
+   "203": 1.6875,
+   "204": 0.3025,
+   "205": 8.787,
+   "291": 3.119,
+   "301": 13.82,
+   "303": 0.4281,
+   "304": 21.01,
+   "305": 33.65,
+   "306": 341.5,
+   "307": 111.6,
+   "401": 4.6
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
  }
 }

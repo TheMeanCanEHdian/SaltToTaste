@@ -680,6 +680,18 @@ Future<AppliedToOthers?> applyMatchOverride(
     }
     decidedFood = false;
   }
+  // The food the decision names (v39, Y3): a row on a meat-only record
+  // this line's skin trip puts it on decides the skin-on record bought
+  // ([decisionRecordOf]) — the key's other lines move again only where
+  // their own recipe discards the skin. This line's row keeps its food.
+  final skinOnId = decidedFood
+      ? decisionRecordOf(recipe, weighed, row.fdcId)
+      : row.fdcId;
+  final skinOn = skinOnId == null || skinOnId == row.fdcId
+      ? null
+      : knownFood(db, skinOnId, line: weighed) ??
+            await cachedFood(db, provider, skinOnId);
+  final decidedId = skinOn?.fdcId ?? row.fdcId;
   // Everything apply_to_all needs is checked BEFORE the line is written, so
   // a refused request changes nothing — not the line, not the totals (the
   // layout above may still have moved rows; no decision's content changes).
@@ -704,8 +716,9 @@ Future<AppliedToOthers?> applyMatchOverride(
     // cache holds it: a lazy compute's stand-in lives only in a cached
     // search answer, and a decision must land while FDC is out of budget.
     food =
-        knownFood(db, row.fdcId!, line: line) ??
-        await cachedFood(db, provider, row.fdcId!);
+        skinOn ??
+        knownFood(db, decidedId!, line: line) ??
+        await cachedFood(db, provider, decidedId!);
     if (food == null) {
       throw const ValidationException(
         'FoodData Central has no food with that id.',
@@ -749,9 +762,9 @@ Future<AppliedToOthers?> applyMatchOverride(
     db.putDecision(
       itemKey: itemKey,
       item: decisionItemOf(line),
-      fdcId: row.fdcId,
-      description: row.description,
-      dataType: row.dataType,
+      fdcId: decidedId,
+      description: skinOn?.description ?? row.description,
+      dataType: skinOn?.dataType ?? row.dataType,
       decidedBy: decidedBy,
     );
   }

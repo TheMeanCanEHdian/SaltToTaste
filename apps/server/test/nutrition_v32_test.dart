@@ -172,23 +172,26 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     'counted',
     "4 × 77 g each · approximate (FDC's 1-piece portion read as one bun)",
   ),
+  // v39 (Y1): this and 0454's leg quarters read the chicken-parts class
+  // yield here, a line alone; in their recipes the steps discard the skin,
+  // and Y3 moves both to 173619 (nutrition_v39_meat_test).
   (
     '0634-barbecued-pulled-chicken.yaml',
     3,
     '8 (14-ounce) chicken leg quarters, trimmed',
     172378,
-    '3175.14',
+    '1932.00',
     'counted',
-    '8 × 397 g (printed weight) · approximate (gross weight, no USDA refuse portion)',
+    '8 × 397 g (printed weight) × 0.61 edible · approximate (yield of chicken parts from FDC 171447)',
   ),
   (
     '0454-french-style-chicken-and-stuffing-in-a-pot.yaml',
     16,
     '2 (12-ounce) bone-in chicken leg quarters, trimmed',
     172378,
-    '680.39',
+    '414.00',
     'counted',
-    '2 × 340 g (printed weight) · approximate (gross weight, no USDA refuse portion)',
+    '2 × 340 g (printed weight) × 0.61 edible · approximate (yield of chicken parts from FDC 171447)',
   ),
   (
     '0467-pan-bagnat-provencal-tuna-sandwich.yaml',
@@ -240,9 +243,9 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     0,
     '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed',
     168226,
-    '3628.74',
+    '2750.20',
     'counted',
-    'from the printed weight · approximate (gross weight, no USDA refuse portion)',
+    'from the printed weight × 0.76 edible · approximate (yield of a bone-in pork roast from FDC 167849)',
   ),
   (
     '1073-wheat-berry-salad-with-radicchio-dried-cherries-and-pecans.yaml',

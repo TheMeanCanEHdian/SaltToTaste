@@ -836,7 +836,8 @@ void main() {
       await matchAndCompute(db, provider, r);
       final row = db.ingredientMatchesFor('r1').single;
       expect(row.fdcId, 171447);
-      expect(row.grams, closeTo(3 * 453.592, 0.01));
+      // v39 (Y1): the chicken-parts class yield (gross until v38).
+      expect(row.grams, closeTo(3 * 453.592 * 276 / 453.59237, 0.01));
       expect(bucketOf(row), MatchBucket.counted);
     });
 

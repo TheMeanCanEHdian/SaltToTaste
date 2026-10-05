@@ -245,12 +245,17 @@ void main() {
         '1 dozen mussels, scrubbed and debearded',
       ]);
       await matchAndCompute(db, provider, r);
-      for (final row in db.ingredientMatchesFor('r1')) {
-        expect(row.fdcId, isNotNull, reason: row.raw);
-        expect(row.hold, 'in_shell', reason: row.raw);
-        expect(bucketOf(row), MatchBucket.check, reason: row.raw);
-      }
-      expect(rowOf(db, 'r1').grams, isNull);
+      final clams = rowOf(db, 'r1');
+      expect(clams.fdcId, isNotNull);
+      expect(clams.hold, 'in_shell');
+      expect(bucketOf(clams), MatchBucket.check);
+      expect(clams.grams, isNull);
+      // v39 (Y2): the dozen mussels are 12 × FNDDS's "1 mussel" 15 g of
+      // meat — a per-item read needs no shell yield, so it is counted.
+      final mussels = rowOf(db, 'r1', 1);
+      expect((mussels.fdcId, mussels.hold), (2706350, null));
+      expect((mussels.grams, mussels.gramSource), (180, 'piece'));
+      expect(bucketOf(mussels), MatchBucket.counted);
       // The decided path the same: never 0 g.
       final line = nutritionLines(r).first;
       final decided = engineOutcome(
@@ -542,11 +547,14 @@ void main() {
       final row = rowOf(db, 'r1');
       expect((row.fdcId, row.hold), (2705843, null));
       expect(bucketOf(row), MatchBucket.counted);
-      expect(row.grams, closeTo(4 * 453.592, 0.01));
+      // v39 (Y1): the record's own "1 oz yields 16 g", read from the class
+      // table — no detail fetched.
+      expect(row.grams, closeTo(4 * 453.592 * 16 / 28.349523125, 0.01));
       expect(db.fdcFoodCacheGet(2705843), isNull);
       expect(
         gramBasisFor(db, nutritionLines(r).single, row),
-        'from 4 pound $approximate',
+        'from 4 pound × 0.56 edible · approximate (yield of oxtails from FDC '
+        '2705843)',
       );
     });
 
@@ -597,16 +605,19 @@ void main() {
         final ham = rowOf(db, 'r1');
         expect((ham.fdcId, ham.dataType), (168226, 'SR Legacy'));
         expect(db.fdcFoodCacheGet(168226), isNotNull);
+        // v39 (Y1): approximate at its class yield (gross until v38).
         expect(
           gramBasisFor(db, lines[0], ham),
-          'from the printed weight $approximate',
+          'from the printed weight × 0.76 edible · approximate (yield of a '
+          'bone-in pork roast from FDC 167849)',
         );
         final breast = rowOf(db, 'r1', 1);
         expect((breast.fdcId, breast.dataType), (2727569, 'Foundation'));
         expect(db.fdcFoodCacheGet(2727569), isNull);
         expect(
           gramBasisFor(db, lines[1], breast),
-          '2 × 340 g (printed weight) $approximate',
+          '2 × 340 g (printed weight) × 0.61 edible · approximate (yield of '
+          'chicken parts from FDC 171447)',
         );
       },
     );

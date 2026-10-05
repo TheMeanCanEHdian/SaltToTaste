@@ -376,6 +376,10 @@ const List<(String, double)> _pieceWeights = [
   ('bay leaves', 0.2),
   ('bay leaf', 0.2),
   ('tomato', 123),
+  // v39 (C3, the owner's ruling Q9 (a)): SR 170457's own 'plum tomato' (and
+  // 'Italian tomato') 62 g — a plum is no round 123 g tomato, and no small
+  // plum is published ("2 small plum tomatoes" read 62 g each).
+  ('plum tomato', 62),
   ('potato', 213),
   ('apple', 182),
   ('banana', 118),
@@ -1001,8 +1005,34 @@ double? _countQty(List<Amount> amounts) {
       best = (key, value);
     }
   }
+  // v39 (C1, the owner's ruling Q9 (a)): "small" or "large" in the item's
+  // own words (not a paren, not after the first comma: "chopped medium",
+  // "cut into large pieces") sizes an onion of any colour, a carrot or a
+  // round tomato by the size portion of the SR record its medium figure is.
+  final sized = best == null || raw == null ? null : _srSizePieces[best.$1];
+  if (sized != null) {
+    final words = _itemSizeWords(
+      raw!.replaceAll(RegExp(r'\([^)]*\)'), ' '),
+    ).split(RegExp('[^a-z-]+'));
+    for (final MapEntry(key: size, value: grams) in sized.entries) {
+      if (words.contains(size)) {
+        return ('$size ${best!.$1}', grams);
+      }
+    }
+  }
   return best;
 }
+
+/// The SR size portions of the piece table's medium onion (170000: small
+/// 70 g, large 150 g), carrot (170393: small (5½" long) 50 g, large (7¼" to
+/// 8½" long) 72 g) and round tomato (170457: small whole 91 g, large whole
+/// 182 g) — FDC's own figures, so unflagged (v39 C1). Celery stays 40 g:
+/// the corpus prints a small rib at 25–50 g, not SR's 17 g.
+const Map<String, Map<String, double>> _srSizePieces = {
+  'onion': {'small': 70, 'large': 150},
+  'carrot': {'small': 50, 'large': 72},
+  'tomato': {'small': 91, 'large': 182},
+};
 
 double? _tableLookup(
   List<(String, double)> table,
@@ -1810,6 +1840,95 @@ bool buysRefuse(String raw) {
   ).hasMatch(line);
 }
 
+/// v39 (Y1, the owner's ruling 2026-10-05 on plan Q1 (a), revising CP6 #11
+/// "meats and birds at gross weight" and #5 "turkeys gross"): the edible
+/// yield of a bone-in cut whose MATCHED record publishes no refuse portion,
+/// by the record's class, each figure an FDC portion (prep39/bonein.md §3).
+/// Read only for a [buysRefuse] line weighed from a printed weight, after
+/// the record's own refuse portion and the whole bird's ready-to-cook
+/// yield ([edibleYieldOf]), and flagged approximate. Absent, so gross: 173403
+/// (the line allows boneless) and 2705900 ham hocks (no figure).
+const Map<int, ({String yieldOf, String from, double share})>
+boneInClassYields = {
+  // 168242's own refuse portion: 133 g of a 201 g chop, lean+fat (the
+  // lean-only 167833's 0.570 also refuses the separable fat).
+  167822: _porkChop,
+  // 167895 country-style ribs: 128 g of a 196 g piece.
+  167853: _porkRibs, 168299: _porkRibs,
+  // 167849 Boston butt blade steak: 288 g of 380 g.
+  168226: _porkRoast, 169177: _porkRoast, 168367: _porkRoast,
+  // Cross-species: no beef refuse is cached; the bone-in pork roast's.
+  168675: (
+    yieldOf: 'a bone-in roast (the pork butt figure)',
+    from: '167849',
+    share: 288 / 380,
+  ),
+  // 171447 "unit (yield from 1 lb ready-to-cook chicken)" 276 g of a pound
+  // (the Cornish-hen chain, 336 of 567 g, 0.593, corroborates). 2646171
+  // and 173619 are where a skin-discarded thigh or leg row moves (Y3): the
+  // bone comes off first, then the skin share ([skinShares]).
+  171447: _chicken, 2727566: _chicken, 2727567: _chicken, 2727568: _chicken,
+  2727569: _chicken, 172378: _chicken, 2646171: _chicken, 173619: _chicken,
+  // No turkey part figure exists: the chicken's.
+  171093: _turkey, 171533: _turkey, 171497: _turkey, 174518: _turkey,
+  // INTERIM (Q1b): the chicken's, until the live step reads the turkey
+  // family's part shares (plan §3 requests 4–9).
+  171081: (
+    yieldOf: 'a whole turkey (interim: the chicken figure)',
+    from: '171447',
+    share: _poultry,
+  ),
+  // No figure of their species: the median of the four above {0.608,
+  // 0.653, 0.662, 0.758}, (128/196 + 133/201) / 2.
+  173405: _bony, 170827: _bony, 169441: _bony, 172641: _bony,
+  172513: _bony, 174875: _bony, 172648: _bony,
+  // The record's OWN FNDDS "1 oz yields 16 g" (raw with bone → this cooked
+  // food).
+  2705843: (yieldOf: 'oxtails', from: '2705843', share: 16 / 28.349523125),
+};
+
+const double _poultry = 276 / 453.59237;
+const _porkChop = (
+  yieldOf: 'bone-in pork chops',
+  from: '168242',
+  share: 133 / 201,
+);
+const _porkRibs = (yieldOf: 'pork ribs', from: '167895', share: 128 / 196);
+const _porkRoast = (
+  yieldOf: 'a bone-in pork roast',
+  from: '167849',
+  share: 288 / 380,
+);
+const _chicken = (yieldOf: 'chicken parts', from: '171447', share: _poultry);
+const _turkey = (
+  yieldOf: 'turkey parts (the chicken figure)',
+  from: '171447',
+  share: _poultry,
+);
+const _bony = (
+  yieldOf: 'bony beef, lamb and veal',
+  from: '167895 and 168242 (the median)',
+  share: (128 / 196 + 133 / 201) / 2,
+);
+
+/// v39 (Y3, plan Q4 (b)): FDC's meat share of meat and skin on the
+/// meat-only record a skin-discarded row moves to — SR 173619's "thigh bone
+/// and skin removed" 147 g of 172378's "thigh with skin" 185 g (0.795), and
+/// its "leg, bone and skin removed" 265 g of 172378's "leg, with skin" 344 g
+/// (0.770).
+// LIVE STEP (plan §3 requests 1–3; NOT enabled — the shares are
+// provisional): breast 2727569 → 2646170 at 171077's own portion against
+// 171474's "0.5 breast, bone removed" 145 g (request 1: hearty-chicken-
+// noodle-soup|9, old-fashioned-slow-cooker-chicken-noodle-soup|12,
+// french-style-chicken-and-stuffing-in-a-pot|15, tortilla-soup|3,
+// white-chicken-chili|0); whole bird and pieces 171447 → the SR meat-only
+// broiler record and its ready-to-cook yield (requests 2–3, the search
+// "chicken broilers or fryers meat only raw" and its detail:
+// pressure-cooker-chicken-noodle-soup|8, moroccan-chicken-with-olives-and-
+// lemon|8, grilled-lemon-chicken-with-rosemary|0, pollo-en-mole-poblano-
+// chicken-in-puebla-style-mole|15, tandoori-chicken|9).
+const Map<int, double> skinShares = {2646171: 147 / 185, 173619: 265 / 344};
+
 /// Whether [raw] buys shellfish IN THE SHELL: clams, mussels or oysters
 /// scrubbed, live lobsters, shell-on shrimp. Shucked
 /// shellfish, lobster meat and clam juice name none of those words (an
@@ -1888,20 +2007,29 @@ double? _readyToCookYield(FdcFood food) {
 bool countsGameHens(String raw) =>
     RegExp(r'\bgame hens?\b', caseSensitive: false).hasMatch(raw);
 
+/// Whether [raw] buys live lobsters (v39, Y2): counted by the record's own
+/// "1 lobster" portion, never their printed live weight.
+bool buysLiveLobsters(String raw) =>
+    RegExp(r'\blive lobsters?\b', caseSensitive: false).hasMatch(raw);
+
 /// A counted bird on a record with a "bird" portion — only whole-bird
 /// records publish one (171507, 171081) — the count and the edible grams of
-/// one bird, or null.
+/// one bird, or null. [unit] names another counted whole (v39: FNDDS's
+/// "1 lobster").
 ({double count, double grams})? _birdGrams(
   FdcFood? food,
-  List<Amount> amounts,
-) {
+  List<Amount> amounts, [
+  String unit = 'bird',
+]) {
   final count = _countQty(amounts);
   if (food == null || count == null) {
     return null;
   }
   for (final portion in food.portions) {
     final amount = portion.amount ?? 1;
-    if (RegExp(r'^bird\b').hasMatch((portion.description ?? '').trim()) &&
+    if (RegExp('^(?:1 )?(?:$unit)\\b').hasMatch(
+          (portion.description ?? '').trim(),
+        ) &&
         amount > 0) {
       return (count: count, grams: portion.gramWeight / amount);
     }
@@ -2170,6 +2298,7 @@ GramResolution? resolveGrams({
   String? raw,
   bool wholeBirdYield = wholeBirdYieldOn,
   bool kosherSalt = false,
+  bool skinOff = false,
 }) => _resolveLine(
   amounts: amounts,
   food: food,
@@ -2177,6 +2306,7 @@ GramResolution? resolveGrams({
   raw: raw?.trim().replaceAll(_whitespaceRun, ' '),
   wholeBirdYield: wholeBirdYield,
   kosherSalt: kosherSalt,
+  skinOff: skinOff,
 );
 
 GramResolution? _resolveLine({
@@ -2186,6 +2316,7 @@ GramResolution? _resolveLine({
   required String? raw,
   required bool wholeBirdYield,
   required bool kosherSalt,
+  required bool skinOff,
 }) {
   final parsed = raw == null
       ? amounts
@@ -2261,6 +2392,41 @@ GramResolution? _resolveLine({
           '(USDA edible bird portion)',
     );
   }
+  // v39 (Y2, plan Q3 (b)): a counted live lobster is the record's own "1
+  // lobster" (FNDDS 2706349, 200 g, whatever its size), never its printed
+  // live weight: 2 × 200 g, not 2 × 907 g of shell.
+  final lobster =
+      first?.source == GramSource.weight && raw != null && buysLiveLobsters(raw)
+      ? _birdGrams(food, parsed, 'lobster')
+      : null;
+  if (lobster != null) {
+    return GramResolution(
+      grams: lobster.count * lobster.grams,
+      source: GramSource.piece,
+      basis:
+          '${_countLabel(lobster.count)} × ${lobster.grams.round()} g · '
+          "approximate (FDC's 1-lobster portion)",
+    );
+  }
+  // v39 (A3, the owner's ruling Q6): a prep-loss word counts only on a
+  // purchase weight — the printed weight, the word after the item, in the
+  // line's tail ([_tailAfterComma]): "6 large very ripe bananas (about 2¼
+  // pounds), peeled" is 6 × the record's own "Peeled" banana (1105314, 115
+  // g), not 1,020.6 g of fruit and peel. A head word ("whole peeled
+  // tomatoes") names a prepared product; a count read is edible already.
+  final peeled =
+      first?.source == GramSource.weight && raw != null && peeledAfterItem(raw)
+      ? _birdGrams(food, parsed, 'Peeled')
+      : null;
+  if (peeled != null) {
+    return GramResolution(
+      grams: peeled.count * peeled.grams,
+      source: GramSource.piece,
+      basis:
+          '${_countLabel(peeled.count)} × ${peeled.grams.round()} g '
+          '(USDA "Peeled" portion)',
+    );
+  }
   final refuse =
       edibleYieldOn &&
       first?.source == GramSource.weight &&
@@ -2293,13 +2459,48 @@ GramResolution? _resolveLine({
     // shell is labelled the same — held `in_shell`, and approximate once a
     // person's confirm counts it at its gross weight (v11).
     final noRefuse = food.dataType != 'SR Legacy' || food.portions.isNotEmpty;
+    // v39 (Y1, the owner's ruling 2026-10-05, revising CP6 #11 and #5): a
+    // record that publishes none reads its class's FDC figure, flagged —
+    // never a whole bird's with [wholeBirdYield] off, which keeps whole
+    // birds at their printed weight.
+    final byClass =
+        noRefuse && (wholeBirdYield || !_wholeBirdLine.hasMatch(raw))
+        ? boneInClassYields[food.fdcId]
+        : null;
+    first = byClass != null
+        ? GramResolution(
+            grams: first!.grams * byClass.share,
+            source: first.source,
+            basis:
+                '${first.basis} × ${byClass.share.toStringAsFixed(2)} edible '
+                '· approximate (yield of ${byClass.yieldOf} from FDC '
+                '${byClass.from})',
+          )
+        : GramResolution(
+            grams: first!.grams,
+            source: first.source,
+            basis: noRefuse
+                ? '${first.basis} · approximate (gross weight, no USDA refuse '
+                      'portion)'
+                : '${first.basis} · no edible yield read',
+          );
+  }
+  // v39 (Y3): a bone-in cut bought with its skin, read on a meat-only
+  // record in a recipe that discards the skin ([skinOff]: the caller's
+  // `skinDiscarded` on the recipe — the engine moves such a row there),
+  // counts FDC's meat share of meat and skin. Never on the record alone:
+  // a thigh whose skin is eaten, put on 2646171 by a person, keeps it.
+  final meat =
+      refuse && skinOff && !RegExp(r'\bskinless\b').hasMatch(raw.toLowerCase())
+      ? skinShares[food.fdcId]
+      : null;
+  if (meat != null) {
     first = GramResolution(
-      grams: first!.grams,
+      grams: first!.grams * meat,
       source: first.source,
-      basis: noRefuse
-          ? '${first.basis} · approximate (gross weight, no USDA refuse '
-                'portion)'
-          : '${first.basis} · no edible yield read',
+      basis:
+          '${first.basis} × ${meat.toStringAsFixed(2)} meat · approximate '
+          '(skin discarded; USDA meat-only share)',
     );
   }
   final drained = first?.source == GramSource.weight && raw != null
@@ -2310,6 +2511,22 @@ GramResolution? _resolveLine({
       grams: drained,
       source: GramSource.weight,
       basis: '${first!.basis} · drained (USDA can portion)',
+    );
+  }
+  // v39 (T1, the owner's ruling Q6 (a)): a canned tomato drained in the
+  // tail with its juice not kept counts ATK's printed solids share, flagged.
+  // A line that reserves juice puts it back later: untouched.
+  if (first?.source == GramSource.weight &&
+      raw != null &&
+      _cannedTomatoRecords.contains(food?.fdcId) &&
+      RegExp(r'\bdrained\b').hasMatch(_tailAfterComma(raw)) &&
+      !RegExp(r'\breserved?\b', caseSensitive: false).hasMatch(raw)) {
+    first = GramResolution(
+      grams: first!.grams * drainedTomatoShare,
+      source: first.source,
+      basis:
+          '${first.basis} × $drainedTomatoShare drained · approximate (ATK: '
+          '2 (28-ounce) cans whole tomatoes, drained, give 3 cups juice)',
     );
   }
   final plus = raw == null || first == null ? null : plusPartOf(raw);
@@ -2725,6 +2942,40 @@ Amount? _parsedUnit(Amount amount, String raw) {
 /// names its can size changes anything; the canned-bean records are pending
 /// live detail fetches, so until then their net weight stands.
 const bool cannedDrained = true;
+
+/// The solids share of a drained can of tomatoes (v39 T1): ATK prints "2
+/// (28-ounce) cans whole tomatoes …, drained, 3 cups juice reserved"
+/// (Ultimate Cream of Tomato Soup) — 3 cups of juice by SR's juice cup out
+/// of 1,587.6 g leaves 0.54.
+const double drainedTomatoShare = 0.54;
+
+/// The canned-tomato records every drained canned-tomato line sits on
+/// (Foundation 333281 diced, 2685578 whole; neither publishes drained
+/// solids).
+const Set<int> _cannedTomatoRecords = {333281, 2685578};
+
+/// [raw]'s tail after its first top-level comma (one outside a paren),
+/// lower-cased; '' for none. A prep-loss word applies only here (v39 A3,
+/// T1): "6 large very ripe bananas (about 2¼ pounds), peeled".
+String _tailAfterComma(String raw) {
+  var depth = 0;
+  for (var i = 0; i < raw.length; i++) {
+    final c = raw[i];
+    if (c == '(') {
+      depth++;
+    } else if (c == ')' && depth > 0) {
+      depth--;
+    } else if (c == ',' && depth == 0) {
+      return raw.substring(i + 1).toLowerCase();
+    }
+  }
+  return '';
+}
+
+/// Whether [raw] says "peeled" after its item ([_tailAfterComma]) — a
+/// purchase weight's prep loss (v39 A3).
+bool peeledAfterItem(String raw) =>
+    RegExp(r'\bpeeled\b').hasMatch(_tailAfterComma(raw));
 
 /// Whether [raw] drains or rinses a can or jar ([cannedDrained] reads the
 /// food's drained portion for it).

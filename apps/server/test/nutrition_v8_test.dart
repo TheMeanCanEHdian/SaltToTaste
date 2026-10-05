@@ -828,14 +828,18 @@ void main() {
       );
     });
 
-    test('P1: pieces (Stovetop Roast Chicken, 0142) stay at gross weight, '
-        'labelled approximate; off, the plain basis', () async {
+    test('P1: pieces (Stovetop Roast Chicken, 0142) read the chicken-parts '
+        'class yield, labelled approximate (v39 Y1; gross until v38); off, '
+        'the same', () async {
       final bird = await food(171447);
       final on = gramsOf(pieces, bird)!;
-      expect(on.grams, closeTo(3.5 * 453.592, 0.01));
+      expect(on.grams, closeTo(3.5 * 453.592 * 276 / 453.59237, 0.01));
       expect(
         on.basis,
-        endsWith('· approximate (gross weight, no USDA refuse portion)'),
+        endsWith(
+          '× 0.61 edible · approximate (yield of chicken parts from FDC '
+          '171447)',
+        ),
       );
       final off = gramsOf(pieces, bird, false)!;
       expect(off.grams, on.grams);
@@ -849,14 +853,15 @@ void main() {
       expect((on.grams, on.source), (4 * 336, GramSource.piece));
       expect(on.basis, '4 × 336 g (USDA edible bird portion)');
       expect(gramsOf(hens, hen, false)!.grams, closeTo(4 * 1.5 * 453.592, 0.1));
-      // A turkey is no standard bird: Classic Roast Turkey (0154) keeps its
-      // printed weight on 171081, whose "bird" is 5,002 g.
+      // A turkey is no standard bird: Classic Roast Turkey (0154) never
+      // reads 171081's 5,002 g "bird" — since v39 (Y1) its printed weight
+      // × the interim whole-turkey class figure (the chicken's 0.608).
       final turkey = gramsOf(
         '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and '
         'reserved for gravy',
         await food(171081),
       )!;
-      expect(turkey.grams, closeTo(14 * 453.592, 0.01));
+      expect(turkey.grams, closeTo(14 * 453.592 * 276 / 453.59237, 0.01));
     });
 
     test("a part record's ready-to-cook yield is never read: a whole turkey "
@@ -865,10 +870,15 @@ void main() {
         '1 (5- to 7-pound) whole bone-in turkey breast, trimmed',
         await food(171093),
       )!;
-      expect(breast.grams, closeTo(7 * 453.592, 0.01));
+      // v39 (Y1): the turkey-parts class figure (the chicken's 0.608),
+      // never the record's own breast share of the bird (0.322).
+      expect(breast.grams, closeTo(7 * 453.592 * 276 / 453.59237, 0.01));
       expect(
         breast.basis,
-        endsWith('· approximate (gross weight, no USDA refuse portion)'),
+        endsWith(
+          '· approximate (yield of turkey parts (the chicken figure) from '
+          'FDC 171447)',
+        ),
       );
       // Nor for a whole bird matched to the part record (Classic Roast
       // Turkey, 0154, on the breast's 171093): its "yield from 1 lb
@@ -878,7 +888,8 @@ void main() {
         'reserved for gravy',
         await food(171093),
       )!;
-      expect(turkey.grams, closeTo(14 * 453.592, 0.01));
+      // v39 (Y1): the part record's class figure, not its breast share.
+      expect(turkey.grams, closeTo(14 * 453.592 * 276 / 453.59237, 0.01));
     });
 
     test('a yield or drain detail is fetched only for SR Legacy: a '
@@ -1077,11 +1088,11 @@ void main() {
       final db = tempDb();
       final r = recipeOf(db, 'r1', raws);
       await matchAndCompute(db, provider, r);
+      // v39 (Y3): the cassoulet's skin-on thigh the engine picked, its
+      // skin "removed" on the line, is stored on the meat-only 2646171.
       expect(
         [for (final row in db.ingredientMatchesFor('r1')) row.fdcId],
-        [
-          ...picks,
-        ],
+        [173619, 174518, 2646171],
       );
       for (final (i, raw) in raws.indexed) {
         final listed = await candidatesForLine(
@@ -1094,7 +1105,7 @@ void main() {
       }
       expect(
         db.ingredientMatchesFor('r1').last.description,
-        'Chicken, thigh, meat and skin, raw',
+        'Chicken, thigh, boneless, skinless, raw',
       );
     });
 

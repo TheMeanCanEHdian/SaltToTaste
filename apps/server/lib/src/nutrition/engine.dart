@@ -4481,8 +4481,9 @@ String _ownSalt(String normalized) {
     return (grams: resolved?.grams, source: resolved?.source.name, hold: null);
   }
   final secondFood = namesSecondFood(line.raw);
-  // A LINE hold too: no food decision says how much of a shell is eaten.
-  final inShell = boughtInShell(line.raw);
+  // A LINE hold too: no food decision says how much of a shell is eaten —
+  // unless the grams already are what is eaten ([shellCounted], v39 Y2).
+  final inShell = boughtInShell(line.raw) && !shellCounted(recipe, resolution);
   // An amount-less line counts as 0 g — never one bought in the shell: 0 g
   // would read resolved (`counted`) and leave the queue, hold or no hold.
   // No corpus line buys shellfish without an amount, so the guard is pinned
@@ -4536,6 +4537,105 @@ String _ownSalt(String normalized) {
     hold: hold,
   );
 }
+
+/// v39 (Y2, the owner's ruling 2026-10-05 on plan Q3 (b)): a line bought
+/// in the shell ([boughtInShell]) whose grams need no shell yield, counted
+/// rather than held `in_shell`: a per-item read ([GramSource.piece]) — the
+/// FNDDS "1 mussel" and "1 oyster" 15 g are the meat, and a live lobster's
+/// count reads the record's own "1 lobster" 200 g (flagged) — or shrimp
+/// the recipe says are "eaten shell and all" (crispy salt-and-pepper
+/// shrimp's prep note: the gross weight is what is eaten, flagged
+/// approximate). A clam, mussel or shrimp line bought by weight stays held:
+/// no record publishes a shell yield.
+bool shellCounted(Recipe recipe, GramResolution? resolution) =>
+    resolution?.source == GramSource.piece ||
+    RegExp(
+      r'\beaten shells? and all\b',
+    ).hasMatch((recipe.prepNotes ?? '').toLowerCase());
+
+/// v39 (Y3, the owner's ruling 2026-10-05 on plan Q4 (b)): the meat-only
+/// record a skin-discarded thigh or leg row moves to ([skinDiscarded]),
+/// grams × FDC's meat share there ([skinShares]), stacked on the bone yield
+/// ([boneInClassYields]). The breast and whole-bird pairs wait on the live
+/// step (the LIVE STEP comment at [skinShares]).
+const Map<int, int> skinlessRecords = {2727567: 2646171, 172378: 173619};
+
+/// [eaten]'s food and grams once the skin is off: an auto row on a
+/// skin-on record of [skinlessRecords] — the engine's pick, or a person's
+/// decision carried here from another line — whose line, weighed from a
+/// printed weight, buys refuse in a recipe that discards the skin
+/// ([skinDiscarded]) moves to the meat-only record (cached; else its detail
+/// fetched once), weighed there at the meat share. Else [food] and
+/// [resolution] as they are. Never a person's own row on this line: it
+/// shows the food they chose.
+Future<(FdcFood, GramResolution?)> skinOffFood(
+  SaltDatabase db,
+  NutritionProvider provider,
+  Recipe recipe,
+  IngredientLine eaten,
+  FdcFood food,
+  GramResolution? resolution,
+) async {
+  final skinless = skinlessRecords[food.fdcId];
+  final meatOnly =
+      skinless == null ||
+          resolution?.source != GramSource.weight ||
+          !buysRefuse(eaten.raw) ||
+          !skinDiscarded(recipe, eaten)
+      ? null
+      : await _cachedFood(db, provider, skinless);
+  return meatOnly == null
+      ? (food, resolution)
+      : (meatOnly, lineGrams(db, eaten, meatOnly, recipe: recipe));
+}
+
+/// The record a decision on [fdcId] names for [line]'s ingredient: on a
+/// meat-only record of [skinlessRecords] in a recipe that discards the
+/// skin of a cut bought with it, the SKIN-ON record bought — so a Confirm
+/// of a moved row (or apply_to_all) never carries the skinless food, nor
+/// its meat share, to a line whose skin is eaten; each line that discards
+/// it moves again ([skinOffFood]). Else [fdcId].
+int? decisionRecordOf(Recipe recipe, IngredientLine line, int? fdcId) {
+  for (final MapEntry(key: skinOn, value: meatOnly)
+      in skinlessRecords.entries) {
+    if (meatOnly == fdcId &&
+        buysRefuse(line.raw) &&
+        skinDiscarded(recipe, line)) {
+      return skinOn;
+    }
+  }
+  return fdcId;
+}
+
+/// Whether [recipe] discards the skin of [line]'s cut: the line says "skin
+/// removed" or "skinned", or a step sentence removes or discards the skin
+/// ("remove and discard the browned chicken skin", "discard skin", "peel
+/// skin off") and no sentence of the recipe naming the skin reserves it,
+/// sets it aside, lays it back, stretches it, takes it "if desired" or
+/// from the "tapered" pieces only (plan Q4: the skin is eaten, or only
+/// partly gone).
+bool skinDiscarded(Recipe recipe, IngredientLine line) {
+  if (RegExp(
+    r'\bskin removed\b|\bskinned\b',
+  ).hasMatch(line.raw.toLowerCase())) {
+    return true;
+  }
+  final skin = [
+    for (final sentence in _stepIndexOf(recipe).allSentences)
+      if (RegExp(r'\bskin\b').hasMatch(sentence)) sentence,
+  ];
+  return !skin.any(_skinKept.hasMatch) && skin.any(_skinOff.hasMatch);
+}
+
+final RegExp _skinOff = RegExp(
+  r'\b(?:remove|discard|discarding)\s+(?:and\s+discard\s+)?(?:the\s+)?'
+  r'(?:browned\s+)?(?:chicken\s+)?skin\b|\bpeel\s+skin\s+off\b',
+);
+
+final RegExp _skinKept = RegExp(
+  r'\breserve|\bset aside\b|\blay\b.{0,30}\bback\b|\bstretch|'
+  r'\bif desired\b|\btapered\b',
+);
 
 /// The note a [isSubRecipeReference] line is stored under.
 final String subRecipeNote = engineRuleNotes[0];
@@ -5851,11 +5951,22 @@ Future<NutritionProviderException?> _computePass(
         // serves leaves the decision unusable here — the line is matched.
         if (known != null &&
             !await _siblingGone(db, lineProvider, known.fdcId)) {
-          final (food, resolution) = await gramsFor(
+          final (weighedOn, weighed) = await gramsFor(
             db,
             lineProvider,
             known,
             eaten,
+            recipe: recipe,
+          );
+          // v39 (Y3): a carried decision on the skin-on record moves like
+          // the engine's pick.
+          final (food, resolution) = await skinOffFood(
+            db,
+            lineProvider,
+            recipe,
+            eaten,
+            weighedOn,
+            weighed,
           );
           if (_foodFromCache(db, food.fdcId) == null) {
             standIns[food.fdcId] = food;
@@ -6011,13 +6122,25 @@ Future<NutritionProviderException?> _computePass(
       // A pick below the review gate is likely a wrong food: no detail is
       // fetched for its grams until a person confirms it.
       final fetch = !belowConfidenceGate(best.confidence);
-      final (gramsFood, resolution) = await gramsFor(
+      final (weighedOn, weighed) = await gramsFor(
         db,
         lineProvider,
         food!,
         eaten,
         fetch: fetch,
+        recipe: recipe,
       );
+      // v39 (Y3): a skin-discarded bone-in thigh or leg moves to its
+      // meat-only record, weighed there ([skinShares]).
+      final (gramsFood, resolution) = await skinOffFood(
+        db,
+        lineProvider,
+        recipe,
+        eaten,
+        weighedOn,
+        weighed,
+      );
+      final meatOnly = gramsFood.fdcId == weighedOn.fdcId ? null : gramsFood;
       final uncached = _foodFromCache(db, gramsFood.fdcId) == null;
       if (uncached) {
         standIns[gramsFood.fdcId] = gramsFood;
@@ -6048,9 +6171,9 @@ Future<NutritionProviderException?> _computePass(
           position: position,
           raw: line.raw,
           itemKey: key,
-          fdcId: best.candidate.fdcId,
-          description: best.candidate.description,
-          dataType: best.candidate.dataType,
+          fdcId: meatOnly?.fdcId ?? best.candidate.fdcId,
+          description: meatOnly?.description ?? best.candidate.description,
+          dataType: meatOnly?.dataType ?? best.candidate.dataType,
           confidence: best.confidence,
           grams: outcome.grams,
           gramSource: outcome.source,
@@ -6915,12 +7038,21 @@ bool _weightReadsPortions(
   String raw,
   FdcFood food,
   GramResolution? withoutPortions,
+  List<Amount> amounts,
 ) =>
     withoutPortions?.source == GramSource.weight &&
-    food.dataType == 'SR Legacy' &&
-    ((edibleYieldOn && buysRefuse(raw)) ||
-        (cannedDrained && drainsCan(raw)) ||
-        (wholeBirdYieldOn && countsGameHens(raw)));
+    (food.dataType == 'SR Legacy' &&
+            ((edibleYieldOn && buysRefuse(raw)) ||
+                (cannedDrained && drainsCan(raw)) ||
+                (wholeBirdYieldOn && countsGameHens(raw))) ||
+        // v39 (Y2): FNDDS's "1 lobster" portion.
+        buysLiveLobsters(raw) ||
+        // v39 (A3): a counted item peeled after its printed weight, by the
+        // record's own "Peeled" portion — published only by Foundation's
+        // bananas (1105314, 1105073) among the cached details.
+        (food.dataType == 'Foundation' &&
+            countOf(amounts) != null &&
+            peeledAfterItem(raw)));
 
 /// [line]'s grams on [food], and the food they were read from. A search hit
 /// (no fdc_food_cache row) is enough unless the grams may need FDC's
@@ -6945,12 +7077,15 @@ Future<(FdcFood, GramResolution?)> gramsFor(
   FdcFood food,
   IngredientLine line, {
   bool fetch = true,
+  Recipe? recipe,
 }) async {
-  GramResolution? resolve(FdcFood on) => lineGrams(db, line, on);
+  GramResolution? resolve(FdcFood on) =>
+      lineGrams(db, line, on, recipe: recipe);
   final resolution = resolve(food);
   final portions = _needsPortions(line.amounts, resolution);
   if (!fetch ||
-      (!portions && !_weightReadsPortions(line.raw, food, resolution))) {
+      (!portions &&
+          !_weightReadsPortions(line.raw, food, resolution, line.amounts))) {
     return (food, resolution);
   }
   final detail = await _cachedFood(db, provider, food.fdcId);
@@ -6980,15 +7115,20 @@ Future<(FdcFood, GramResolution?)> gramsFor(
 GramResolution? lineGrams(
   SaltDatabase db,
   IngredientLine line,
-  FdcFood? food,
-) {
+  FdcFood? food, {
+  Recipe? recipe,
+}) {
   // The grams tables match on the line's own words, not the key.
   final normalized = normalizeItem(lineItemOf(line));
+  // v39 (Y3): the meat share reads the recipe's skin trip, never the
+  // record alone — with no recipe, none.
+  final skinOff = recipe != null && skinDiscarded(recipe, line);
   GramResolution? on(FdcFood? record) => resolveGrams(
     amounts: line.amounts,
     food: record,
     normalizedItem: normalized,
     raw: line.raw,
+    skinOff: skinOff,
   );
   if (food != null && freshHerbLine(line.raw, food.description)) {
     return _freshHerbGrams(line, food, normalized, on(food));
@@ -7711,7 +7851,7 @@ String? _gramBasis(
     }
   }
   GramResolution? on(FdcFood? food) {
-    final grams = lineGrams(db, line, food);
+    final grams = lineGrams(db, line, food, recipe: recipe);
     return grams == null || nutrientsOf.isEmpty
         ? grams
         : GramResolution(
@@ -8454,7 +8594,7 @@ Future<IngredientMatchRow> unskippedRow(
     eaten,
     onRow,
     medium
-        ? lineGrams(db, eaten, onRow)
+        ? lineGrams(db, eaten, onRow, recipe: recipe)
         : out.grams == null || source == null
         ? null
         : GramResolution(grams: out.grams!, source: source),
@@ -8631,7 +8771,7 @@ derivedFor(
     // as surely as one whose own record is (v28, Sonnet critic 2).
     weighed = known == null || await _siblingGone(db, provider, known.fdcId)
         ? null
-        : await gramsFor(db, provider, known, eaten);
+        : await gramsFor(db, provider, known, eaten, recipe: recipe);
   } on NutritionProviderException catch (failure) {
     // The row as stored, at its current position — on the text it was last
     // derived on: a decision an amount edit carried keeps its old text, so
@@ -8999,9 +9139,17 @@ applyDecisionToOthers(
         // critic: "1 recipe Garlic Oil (recipe follows), plus 2 tablespoons
         // garlic oil" weighed as the whole recipe, 140 g for 28).
         final eaten = weighedLine(found.recipe, line);
+        final FdcFood onFood;
         final GramResolution? resolution;
         try {
-          (food, resolution) = await gramsFor(db, provider, food, eaten);
+          final GramResolution? weighed;
+          (food, weighed) = await gramsFor(
+            db,
+            provider,
+            food,
+            eaten,
+            recipe: found.recipe,
+          );
           // Its nutrient record with it (v28, Sonnet critic 2 / S3): one
           // FDC no longer serves counts nothing — the target left as the
           // engine's row, like a weigh FDC cannot serve.
@@ -9011,6 +9159,16 @@ applyDecisionToOthers(
               scope: FailureScope.food,
             );
           }
+          // v39 (Y3): a target that discards the skin moves as its
+          // compute would; [food] stays the decision for the next target.
+          (onFood, resolution) = await skinOffFood(
+            db,
+            provider,
+            found.recipe,
+            eaten,
+            food,
+            weighed,
+          );
         } on NutritionProviderException catch (error) {
           // The weigh is inside RULE A's one outcome (v27, Run 057 Opus
           // critic 1): a target whose portions FDC cannot serve now is not
@@ -9028,7 +9186,7 @@ applyDecisionToOthers(
         final outcome = engineOutcome(
           found.recipe,
           eaten,
-          food,
+          onFood,
           resolution,
           decided: true,
         );
@@ -9046,9 +9204,9 @@ applyDecisionToOthers(
               position: at,
               raw: line.raw,
               itemKey: itemKey,
-              fdcId: food.fdcId,
-              description: food.description,
-              dataType: food.dataType,
+              fdcId: onFood.fdcId,
+              description: onFood.description,
+              dataType: onFood.dataType,
               confidence: 1,
               grams: outcome.grams,
               gramSource: outcome.source,

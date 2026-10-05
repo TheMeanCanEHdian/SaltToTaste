@@ -481,7 +481,8 @@ void main() {
       [
         (171325, '12.40'),
         (167895, '680.39'),
-        (171093, '3175.14'),
+        // v39 (Y1): the turkey-parts class yield (gross until v38).
+        (171093, '1932.00'),
         (2709798, '1.00'),
       ],
     );
@@ -608,31 +609,31 @@ void main() {
       '0538-chinese-style-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, cut into individual ribs',
       167853,
-      2721.55,
+      1777.34,
     ),
     (
       '0614-memphis-style-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed',
       167853,
-      2721.55,
+      1777.34,
     ),
     (
       '0615-oven-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut in half',
       167853,
-      2721.55,
+      1777.34,
     ),
     (
       '0611-rosticciana-tuscan-grilled-pork-ribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut into 2-rib sections',
       167853,
-      2721.55,
+      1777.34,
     ),
     (
       '0613-kansas-city-sticky-ribs.yaml',
       '2 (2½- to 3-pound) full racks pork spareribs, trimmed of any large pieces of fat and membrane removed',
       167853,
-      2721.55,
+      1777.34,
     ),
     // pomegranate raw
     (
