@@ -524,7 +524,8 @@ void main() {
     test('R1: each routed line counts its child × 1 [7.1]', () {
       for (final (file, position, child, grams, kcal, perServing, status) in [
         (_blueberry, 0, _allButter, 642.9, 3056.69, 571.51, 'complete'),
-        (_deepDish, 0, _allButter, 642.9, 3056.69, 635.17, 'complete'),
+        // v43 (Y8): its two apple lines × 0.78 (AH-102 item 17).
+        (_deepDish, 0, _allButter, 642.9, 3056.69, 597.13, 'complete'),
         (_summerBerry, 7, _graham, 220.6, 1135.14, 273.62, 'complete'),
         (_keyLime, 3, _graham, 220.6, 1135.14, 445.87, 'partial'),
         (_coconut, 9, _graham, 220.6, 1135.14, 598.27, 'complete'),
@@ -637,7 +638,8 @@ void main() {
       expect(bucketOf(held), MatchBucket.chooseRecipe);
       expect(label(tart).status, 'partial');
       expect(label(tart).matchedCount, 5);
-      expect(label(tart).caloriesPerServing, closeTo(163.05, 0.005));
+      // v43 (Y8): its two peeled, cored apple pounds × 0.78 (AH-102 item 17).
+      expect(label(tart).caloriesPerServing, closeTo(143.11, 0.005));
       expect(fresh(tart), isTrue);
 
       final tips = r(_steakTips);

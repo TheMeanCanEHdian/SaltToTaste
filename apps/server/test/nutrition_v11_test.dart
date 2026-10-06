@@ -610,19 +610,23 @@ void main() {
         final ham = rowOf(db, 'r1');
         expect((ham.fdcId, ham.dataType), (168226, 'SR Legacy'));
         expect(db.fdcFoodCacheGet(168226), isNotNull);
-        // v39 (Y1): approximate at its class yield (gross until v38).
+        // v39 (Y1): approximate at its class yield (gross until v38); v43
+        // (Y10): the shank half's derived AH-102 yield.
         expect(
           gramBasisFor(db, lines[0], ham),
-          'from the printed weight × 0.76 edible · approximate (yield of a '
-          'bone-in pork roast from FDC 167849)',
+          'from the printed weight × 0.78 edible · approximate (derived from '
+          'USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so '
+          'lean and fat meat 78 % (the printed row also trims the fat 18: '
+          'lean 60 %))',
         );
         final breast = rowOf(db, 'r1', 1);
         expect((breast.fdcId, breast.dataType), (2727569, 'Foundation'));
         expect(db.fdcFoodCacheGet(2727569), isNull);
         expect(
           gramBasisFor(db, lines[1], breast),
-          '2 × 340 g (printed weight) × 0.61 edible · approximate (yield of '
-          'chicken parts from FDC 171447)',
+          // v43 (Y1): AH-102 item 584, the breast's meat and skin.
+          '2 × 340 g (printed weight) × 0.74 edible · approximate (USDA '
+          'AH-102 item 584: chicken breast, raw → meat and skin 74 % (59–84))',
         );
       },
     );

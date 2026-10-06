@@ -174,24 +174,25 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
   ),
   // v39 (Y1): this and 0454's leg quarters read the chicken-parts class
   // yield here, a line alone; in their recipes the steps discard the skin,
-  // and Y3 moves both to 173619 (nutrition_v39_meat_test).
+  // and Y3 moves both to 173619 (nutrition_v39_meat_test). v43 (Y2): the
+  // derived AH-102 leg, meat and skin (nutrition_v43_poultry_test).
   (
     '0634-barbecued-pulled-chicken.yaml',
     3,
     '8 (14-ounce) chicken leg quarters, trimmed',
     172378,
-    '1932.00',
+    '2117.64',
     'counted',
-    '8 × 397 g (printed weight) × 0.61 edible · approximate (yield of chicken parts from FDC 171447)',
+    "8 × 397 g (printed weight) × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
   ),
   (
     '0454-french-style-chicken-and-stuffing-in-a-pot.yaml',
     16,
     '2 (12-ounce) bone-in chicken leg quarters, trimmed',
     172378,
-    '414.00',
+    '453.78',
     'counted',
-    '2 × 340 g (printed weight) × 0.61 edible · approximate (yield of chicken parts from FDC 171447)',
+    "2 × 340 g (printed weight) × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
   ),
   (
     '0467-pan-bagnat-provencal-tuna-sandwich.yaml',
@@ -243,9 +244,10 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     0,
     '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed',
     168226,
-    '2750.20',
+    // v43 (Y10: fresh ham shank half × 0.78 (derived, AH-102 item 1930)).
+    '2830.41',
     'counted',
-    'from the printed weight × 0.76 edible · approximate (yield of a bone-in pork roast from FDC 167849)',
+    'from the printed weight × 0.78 edible · approximate (derived from USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so lean and fat meat 78 % (the printed row also trims the fat 18: lean 60 %))',
   ),
   (
     '1073-wheat-berry-salad-with-radicchio-dried-cherries-and-pecans.yaml',

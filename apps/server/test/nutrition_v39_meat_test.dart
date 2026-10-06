@@ -9,7 +9,6 @@ import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/grams.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
-import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
@@ -20,11 +19,15 @@ import 'support/fdc_fixtures.dart';
 /// 2026-10-05 on prep39/plan.md Q1, Q3, Q4): Y1 the bone-in class yields
 /// ([boneInClassYields], revising CP6 #11 and #5), Y2 the five shellfish
 /// lines counted rather than held `in_shell` ([shellCounted]), Y3 a
-/// skin-discarded thigh or leg on its meat-only record ([skinDiscarded],
-/// [skinShares]). Each row is a real corpus line at the record, grams,
-/// bucket and basis the cache-only replay of snapshot 16 derives at v39;
-/// the answers are copied from snapshot 16 (tool/record_fdc_fixtures.dart
-/// --from-db).
+/// skin-discarded thigh or leg on its meat-only record ([skinDiscarded]).
+/// Each row is a real corpus line at the record, grams, bucket and basis
+/// the cache-only replay of snapshot 16 derives at v39; the answers are
+/// copied from snapshot 16 (tool/record_fdc_fixtures.dart --from-db).
+/// v43 (re-pinned from the snapshot-19 replay): the bird rows read AH-102's
+/// part figures (nutrition_v43_poultry_test.dart) — Y1 the wing, Y2 the
+/// leg, Y5 the whole turkey, Y12 the skin-off thigh and leg in one step
+/// (the v39 skin-share stack retired), Y13 the record deciding the meat
+/// share.
 void main() {
   SaltDatabase tempDb() {
     final dir = Directory.systemTemp.createTempSync('salt-v39');
@@ -104,7 +107,7 @@ void main() {
 
   group('in their recipes', skip: skipIfNoCorpus, () {
     test('Y2 shrimp eaten shell and all; Y3 the skin discarded on its '
-        'meat-only record, stacked on the bone yield', () async {
+        'meat-only record (v43: its AH-102 meat figure, one step)', () async {
       for (final pin in _inRecipe) {
         final (db, row, line) = await computed(
           pin.$3,
@@ -139,8 +142,8 @@ void main() {
       }
     });
 
-    test('a Confirm of a moved row decides the skin-on record: the skin '
-        'share never reaches a thigh whose skin is eaten', () async {
+    test('a Confirm of a moved row decides the skin-on record: the meat '
+        'record never reaches a thigh whose skin is eaten', () async {
       // The closer's pin for the round-1 verifier's D-1: Chicken
       // Provençal's thighs (skin discarded) confirmed with apply_to_all;
       // Chicken Teriyaki's (the same key, the skin eaten) stays on the
@@ -180,9 +183,9 @@ void main() {
         return '${row.fdcId} ${row.grams?.toStringAsFixed(2)} ${row.status}';
       }
 
-      expect(rowOf(provencal), '2646171 657.92 auto');
-      expect(rowOf(teriyaki), '2727567 828.00 auto');
-      expect(rowOf(jambalaya), '2646171 328.96 auto');
+      expect(rowOf(provencal), '2646171 802.86 auto');
+      expect(rowOf(teriyaki), '2727567 952.54 auto');
+      expect(rowOf(jambalaya), '2646171 401.43 auto');
       final line = nutritionLines(provencal)[0];
       await applyMatchOverride(db, FixtureProvider(), provencal, 0, {
         'raw': line.raw,
@@ -190,12 +193,12 @@ void main() {
         'apply_to_all': true,
       });
       // This line keeps what it showed; the key decides the record bought.
-      expect(rowOf(provencal), '2646171 657.92 confirmed');
+      expect(rowOf(provencal), '2646171 802.86 confirmed');
       expect(db.decisionFor(lineKeyOf(line))!.fdcId, 2727567);
       for (var pass = 0; pass < 2; pass++) {
         // As apply_to_all wrote them, then as their next compute derives.
-        expect(rowOf(teriyaki), '2727567 828.00 auto', reason: '$pass');
-        expect(rowOf(jambalaya), '2646171 328.96 auto', reason: '$pass');
+        expect(rowOf(teriyaki), '2727567 952.54 auto', reason: '$pass');
+        expect(rowOf(jambalaya), '2646171 401.43 auto', reason: '$pass');
         await matchAndCompute(db, FixtureProvider(), teriyaki);
         await matchAndCompute(db, FixtureProvider(), jambalaya);
       }
@@ -211,12 +214,13 @@ void main() {
         isNot(contains('skin discarded')),
       );
       // A person's own pick of the meat-only record on a line whose skin
-      // is eaten: their food, at the bone yield — no skin share.
+      // is eaten: their food, weighed by its composition (v43 Y13: 586's
+      // meat 59 — the v39 text kept meat-and-skin grams on a meat record).
       await applyMatchOverride(db, FixtureProvider(), teriyaki, 0, {
         'raw': nutritionLines(teriyaki)[0].raw,
         'fdc_id': 2646171,
       });
-      expect(rowOf(teriyaki), '2646171 828.00 overridden');
+      expect(rowOf(teriyaki), '2646171 802.86 overridden');
     });
   });
 
@@ -235,30 +239,17 @@ void main() {
       (p) => p.description == '1 oz yields',
     );
     expect(boneInClassYields[2705843]!.share, yields.gramWeight / 28.349523125);
-    final meat = (await provider.food(173619))!;
-    final skin = (await provider.food(172378))!;
-    double grams(FdcFood food, String description) => food.portions
-        .singleWhere((p) => p.description == description)
-        .gramWeight;
-    expect(
-      skinShares[2646171],
-      grams(meat, 'thigh bone and skin removed') /
-          grams(skin, 'thigh with skin'),
-    );
-    expect(
-      skinShares[173619],
-      grams(
-            meat,
-            'leg, bone and skin removed (Sum of drumstick+thigh+back meat only)',
-          ) /
-          grams(skin, 'leg, with skin (Sum of drumstick+thigh+back)'),
-    );
     expect(boneInClassYields[173405]!.share, closeTo(0.6574, 1e-4));
     expect(boneInClassYields[167822]!.share, 133 / 201);
-    expect(boneInClassYields[167853]!.share, 128 / 196);
-    expect(boneInClassYields[168675]!.share, 288 / 380);
-    // A cut BOUGHT skinless takes no meat share on the meat-only record,
-    // only the bone yield. No corpus line is a bone-in skinless cut on
+    // v43 (Y10): the spareribs 167853 and the standing rib 168675 left the
+    // class table for AH-102's named cuts ([ah102Meats]); the baby backs
+    // keep the country-rib figure.
+    expect(boneInClassYields[168299]!.share, 128 / 196);
+    expect(ah102Meats[167853]!.share, 0.58);
+    expect(ah102Meats[168675]!.share, 0.82);
+    // A cut BOUGHT skinless on the meat-only record: v43 (Y13) the record
+    // decides — 586's meat figure from the printed weight, the same as a
+    // skin-discarded thigh. No corpus line is a bone-in skinless cut on
     // 2646171: synthesized (a stated negative-path exception).
     const bought = '1½ pounds bone-in, skinless chicken thighs';
     final parsed = parseIngredientLine(bought);
@@ -269,8 +260,8 @@ void main() {
       normalizedItem: normalizeItem(parsed.item ?? bought),
       raw: bought,
     )!;
-    expect(read.grams, closeTo(1.5 * 276, 0.01));
-    expect(read.basis, isNot(contains('meat-only share')));
+    expect(read.grams, closeTo(1.5 * 453.59237 * 0.59, 0.01));
+    expect(read.basis, 'from 1 1/2 pound $_thighMeat');
     // Stay gross: the line allows boneless; FDC has no ham-hock figure.
     expect(boneInClassYields.containsKey(173403), isFalse);
     expect(boneInClassYields.containsKey(2705900), isFalse);
@@ -322,11 +313,10 @@ const List<(String, int)> _skinNonTrips = [
   // multicooker chicken in a pot).
   ('0127-coq-au-riesling.yaml', 0),
   ('1177-multicooker-chicken-in-a-pot-with-lemon-herb-sauce.yaml', 7),
-  // "remove the skin and bones from the reserved cooked chicken and
-  // discard": the literal signal reads "reserve" in the skin sentence, so
-  // this breast line — one of plan Q4's ten provisional lines (part 2) —
-  // does not trip (reported to the orchestrator; v39 builds no breast swap).
-  ('0002-hearty-chicken-noodle-soup.yaml', 9),
+  // v43 (Y3): Hearty Chicken Noodle Soup's breast line (0002|9, "remove
+  // the skin and bones from the reserved cooked chicken and discard") left
+  // this list: "reserved cooked chicken" names the meat kept, not the skin,
+  // so it trips (nutrition_v43_poultry_test pins the five breast lines).
 ];
 
 /// (corpus file, position, raw, fdc id, grams, bucket, basis).
@@ -354,9 +344,10 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     0,
     '1 (7-pound) first-cut beef standing rib roast (3 bones), meat removed from bones, bones reserved',
     168675,
-    '2406.42',
+    // v43 (Y10: standing rib × 0.82 (AH-102 item 238)).
+    '2603.62',
     'counted',
-    'from the printed weight × 0.76 edible · approximate (yield of a bone-in roast (the pork butt figure) from FDC 167849)',
+    'from the printed weight × 0.82 edible · approximate (USDA AH-102 item 238: beef rib, retail ribs 11–12, raw → lean and fat meat 82 % (78–86; bones 18))',
   ),
   (
     '0209-red-winebraised-pork-chops.yaml',
@@ -381,9 +372,9 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     10,
     '18 chicken wings (about 3 pounds), wings separated into 2 parts at joint and wingtips removed',
     2727568,
-    '828.00',
+    '680.39',
     'counted',
-    'from 3 pound × 0.61 edible · approximate (yield of chicken parts from FDC 171447)',
+    'from 3 pound × 0.50 edible · approximate (USDA AH-102 item 590: chicken wing, raw → meat and skin 50 % (41–60))',
   ),
   (
     '0462-french-style-pork-stew.yaml',
@@ -539,9 +530,9 @@ const List<(String, int, String, int?, String?, String, String?)> _inRecipe = [
     1,
     '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and reserved for gravy',
     171081,
-    '3864.00',
+    '4137.40',
     'counted',
-    'from the printed weight × 0.61 edible · approximate (yield of a whole turkey (interim: the chicken figure) from FDC 171447)',
+    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   (
     '0279-crispy-salt-and-pepper-shrimp.yaml',
@@ -557,35 +548,40 @@ const List<(String, int, String, int?, String?, String, String?)> _inRecipe = [
     0,
     '8 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed',
     2646171,
-    '657.92',
+    '802.86',
     'counted',
-    '8 × 170 g (printed weight) × 0.61 edible · approximate (yield of chicken parts from FDC 171447) × 0.79 meat · approximate (skin discarded; USDA meat-only share)',
+    '8 × 170 g (printed weight) $_thighMeat',
   ),
   (
     '0461-simplified-cassoulet-with-pork-and-kielbasa.yaml',
     2,
     '10 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed and skin removed',
     2646171,
-    '822.40',
+    '1003.57',
     'counted',
-    '10 × 170 g (printed weight) × 0.61 edible · approximate (yield of chicken parts from FDC 171447) × 0.79 meat · approximate (skin discarded; USDA meat-only share)',
+    '10 × 170 g (printed weight) $_thighMeat',
   ),
   (
     '0634-barbecued-pulled-chicken.yaml',
     3,
     '8 (14-ounce) chicken leg quarters, trimmed',
     173619,
-    '1488.31',
+    '1813.36',
     'counted',
-    '8 × 397 g (printed weight) × 0.61 edible · approximate (yield of chicken parts from FDC 171447) × 0.77 meat · approximate (skin discarded; USDA meat-only share)',
+    "8 × 397 g (printed weight) × 0.57 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat 57.1 %; a leg quarter's back portion is not in this figure)",
   ),
   (
     '0125-braised-chicken-with-mustard-and-herbs.yaml',
     2,
     '1½–2 pounds chicken leg quarters, separated into drumsticks and thighs, trimmed',
     172378,
-    '483.00',
+    '529.41',
     'counted',
-    'from 1 1/2–2 pound × 0.61 edible · approximate (yield of chicken parts from FDC 171447)',
+    "from 1 1/2–2 pound × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
   ),
 ];
+
+/// v43 (Y12): 586's meat figure in one step from the printed weight.
+const String _thighMeat =
+    '× 0.59 edible · approximate (USDA AH-102 item 586: chicken thigh, raw '
+    '→ meat 59 % (48–68))';

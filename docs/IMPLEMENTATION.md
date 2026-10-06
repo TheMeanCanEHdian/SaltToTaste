@@ -3482,7 +3482,111 @@ section has no lines). An independent checker re-derived every count.
   portion stays until the part bone share is sourced from the USDA yield
   handbook in phase 2's design pass; the wing flag stands.
 
+### The handbook yields: parts, prep losses and named cuts from USDA Agriculture Handbook 102 (matcher v43)
+
+The question the re-calibration left open — why bone-in thighs read 17 %
+under independent hand estimates — was a bone share, not a skin share: the
+engine applied the whole bird's edible share (0.608) to every part. FDC
+publishes no part yields, so the owner's approved source, USDA Agriculture
+Handbook 102 (Food Yields Summarized by Different Stages of Preparation,
+revised 1975), was fetched as a 139-page scan, rendered page by page with a
+small CoreGraphics program and transcribed into two extracts with an
+item-number index (`.claude/diag/2026-10-06/ah102_poultry.md`,
+`ah102_produce_meat.md`). A design pass (five planners, a synthesis, a
+critic with eighteen findings folded in, a recheck) produced the package
+the owner ruled on the same day: two batches, the yields first (B1), and
+Y1–Y13 as recommended, with Y12 reversing the morning's "keep 0.795" once
+the handbook's own thigh figure was in hand. v43 (2026-10-06) builds the
+yields. Poultry: a bone-in chicken or turkey part weighed from a printed
+weight reads the handbook's raw boning figure for the part the line names,
+the record deciding meat or meat and skin in one step (breast 74 / 65,
+thigh 70 / 59, drumstick 63 / 55, wing 50 / 31; a leg and mixed pieces
+derived from those by the carcass shares and flagged derived, since no
+leg-quarter row exists; turkey thigh 82, leg 75, leg quarter 71, wing 61,
+fryer-roaster class flagged); a whole turkey reads the handbook's "12 lb
+and over" dressing step times its carcass yield (0.652) in place of the
+chicken interim; skin-discarded breasts move to the Foundation skinless
+record at 65; a skin-discarded thigh reads 59 from the printed weight and
+the SR skin stack is retired. Kept: whole chickens at FDC's own 0.608 and
+0.434 (inside the handbook's ranges) and the bone-in turkey breast at
+0.608, deferred because the handbook's breast is a breast without the back
+ATK's carries. Produce: a weight printed in the line's head with the prep
+word in its tail reads the paring yield (potatoes 81, apples 78 or cored
+90, sweet potatoes 80, pears 78, carrots 82, onions 90, leeks 44, savoy by
+head cabbage 93, cauliflower 92, butternut 84, zucchini 93, summer squash
+95, strawberries 94), never a count read, a trailing prepared weight,
+"unpeeled", "peels reserved", or a line that also uses the part the word
+would discard (the verifier's catch on a pasta whose leeks are used whole);
+scallion part words on a piece read (white 37, green 59 derived). Meats
+where the handbook names the cut: spareribs 0.58, standing rib 0.82, fore
+shank 0.61, lamb rack 0.73 (flagged as measured unfrenched), lamb foreshank
+0.70, cured spiral ham 0.70, fresh ham shank half 0.78 derived; FDC's own
+refuse portions stay; bacon keeps 0.403. Replay on snapshot 19: calls 0;
+198 rows differ from v42 (poultry 74, produce 103,
+scallions 6, meats 15), grams and basis only except five breast rows that
+change record; no bucket, status, hold or person row moves. The 25-recipe
+re-calibration: mean error 5.80 → 6.13 %, median 4.00, the signed mean
++0.80 → −0.32 % — the design's predicted figures: the engine now sits a
+little below the hand estimates where it sat above them, and Chicken
+Provençal's thighs read 1.02× the auditors where they read 0.83×. Three
+verifier rounds (a fifth breast line vetoed by its own "reserved cooked
+chicken"; a savoy citation; three printed ranges; then the leek line), the
+owner's gate (replay reproduced, two mutants killed, analyzers and suites
+green). matcherVersion 43.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-06 — the phase-2 package, part 2 (the owner: "go with your
+  recommendations" on S1–S15 of `prep43/design_v2.md`):** a section becomes a
+  recipe keyed `<host id>#<title>` in the same tables (migration 019; a
+  retitle is a new key, the parent's pick then held with the old title
+  named); only REFERENCED sections compute (140), with the live step's option
+  A (at most 22 requests, named in advance, under the 2026-09-30 standing
+  approval), the mascarpone search and the conditional brown-rice-flour
+  search; the 23 zero-request reads and stand-in extensions and the 16
+  normaliser-defect rules adopted; the citrus rule extended to a counted
+  fruit; a "(recipes follow)" line lists the own sections no other reference
+  routes to; a section pick is line-local; the marinade sections become
+  pickable but a pick needs a typed eaten share; a bare count of one on an
+  unmarked reference reads one recipe; section rows enter the review queue
+  keyed to the host, their finishes credited to the parents routed to them;
+  the nine new strings as designed, approved on a mockup delta before the app
+  commit (`docs/mockups/v44-sections-copy.html`, approved the same day:
+  "approved"); other hosts' sections outside the child set are not listed.
+  Build order: v43 (the yields) first, then v44 (server commit, mockup delta,
+  app commit, the live step).
+
+- **2026-10-06 — the phase-2 package, part 1 (the owner: "go with your
+  recommendation" on B1, then "go with your recommendations" on Y1–Y13 of
+  `.claude/diag/2026-10-06/prep43/design_v2.md`):** two batches, the USDA
+  Agriculture Handbook 102 yields first as matcher v43 (server only, zero
+  requests), then sections as children as v44. The yields: chicken parts with
+  the skin kept read the part's own raw yield (breast 74, thigh 70, drumstick
+  63, wing 50 — items 584–586, 590) instead of the whole bird's 0.608; a leg
+  and mixed pieces read figures derived from those by item 583's carcass
+  shares (66.7, 69.8), flagged as derived with the leg-quarter caveat (the
+  handbook has no leg-quarter row); breasts whose skin is discarded move to
+  the Foundation skinless breast record at item 584's meat 65 in one step;
+  whole chickens keep FDC's own 0.608 / 0.434; whole turkeys read 0.652 (the
+  "12 lb and over" neck-and-giblets step 78/85 × the fryer-roaster carcass
+  yield 71, item 2592), turkey parts their own rows (thigh 82, leg 75, leg
+  quarter 71, skinned thigh 77, wings 43); the bone-in turkey breast stays at
+  0.608 (item 2593's "Breast" is a breast without the back ATK's carries);
+  produce prep losses on a printed weight (potatoes 81, apples 78 or cored 90,
+  sweet potatoes 80, pears 78, carrots 82, onions 90, leeks 44, savoy 93,
+  cauliflower 92, butternut 84, zucchini 93, summer squash 95, strawberries
+  94), scallion parts on a piece read (white 37, green 59); bone-in beef, pork
+  and lamb where the handbook names the cut (spareribs 0.58, standing rib
+  0.82, fore shank 0.61, lamb rack 0.73 flagged as unfrenched, lamb foreshank
+  0.70, cured spiral ham 0.70, fresh ham shank half 0.78 derived) with FDC's
+  own refuse portions kept where they exist; bacon keeps 0.403. REVERSED, with
+  the handbook's numbers in hand (the same morning's "keep 0.795" was made
+  conditional on sourcing a part bone share): a skin-discarded thigh or leg
+  reads the handbook's one-step meat figure (thigh 59, item 586; leg 57.1
+  derived) from the printed weight, and the SR skin share is retired for
+  chicken parts — Chicken Provençal's thighs 658 → 803 g against the blind
+  auditors' 790. A person's pick of a meat-only record reads the meat figure
+  (composition over the skin trip), pinned both ways.
 
 - **2026-10-06 — canned beans (the owner: option (b)):** the drained share is
   read per bean from FDC's own can pairs, fetched in a five-request live step

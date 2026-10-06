@@ -545,15 +545,16 @@ void main() {
           '8 (14-ounce) chicken leg quarters, trimmed',
           chicken,
         )!;
-        // v39 (Y1): pieces on the whole-bird record read the chicken-parts
-        // class figure (gross until v38), never a whole bird's yield.
+        // Parts on the whole-bird record read their part's figure, never a
+        // whole bird's yield (v43 Y2: AH-102's derived leg; v39 the
+        // chicken-parts class figure; gross until v38).
         expect(
           quarters.grams,
-          closeTo(8 * 14 * 28.3495 * 276 / 453.59237, 0.1),
+          closeTo(8 * 14 * 28.3495 * (70 * 19 + 63 * 17) / 3600, 0.1),
         );
         expect(
           quarters.basis,
-          endsWith('approximate (yield of chicken parts from FDC 171447)'),
+          endsWith("a leg quarter's back portion is not in this figure)"),
         );
         // "whole" before a part is the part's, not a bird's: the corpus's
         // only such line (0150, "4 whole chicken legs, separated") is a bare
@@ -562,7 +563,8 @@ void main() {
           '1 (2-pound) whole chicken wings, wingtips removed',
           chicken,
         )!;
-        expect(wings.grams, closeTo(2 * 453.592 * 276 / 453.59237, 0.1));
+        // v43 (Y1): AH-102 item 590, the wing's meat and skin.
+        expect(wings.grams, closeTo(2 * 453.592 * 0.50, 0.1));
         expect(wings.basis, isNot(contains('ready-to-cook')));
       },
     );

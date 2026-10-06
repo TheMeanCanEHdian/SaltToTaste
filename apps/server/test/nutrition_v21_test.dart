@@ -593,7 +593,8 @@ _moved = [
     null,
     'bone-in split chicken breasts and or leg quarters',
     2727569,
-    '759.00',
+    // v43 (Y2): AH-102's derived pieces (v39: the 0.608 class figure).
+    '870.99',
     'M1',
     'counted',
     true,
@@ -845,7 +846,8 @@ _moved = [
     null,
     'bone-in turkey thigh',
     174518,
-    '552.00',
+    // v43 (Y6): AH-102 item 2598's meat (v39: the 0.608 class figure).
+    '698.53',
     'M2',
     'counted',
     true,
@@ -1181,8 +1183,10 @@ _moved = [
     '2 bone-in, skin-on split chicken breasts (about 1½ pounds) or 4 bone-in, skin-on chicken thighs (about 1¼ pounds), skin removed and trimmed',
     null,
     'bone-in skin-on split chicken breasts or 4 bone-in',
-    2727569,
-    '414.00',
+    // v43 (Y3): its "skin removed" moves the breast to 2646170 at AH-102
+    // 584's meat (v39: 2727569 at the 0.608 class figure).
+    2646170,
+    '442.25',
     'M1',
     'counted',
     true,
@@ -2203,7 +2207,8 @@ _moved = [
     null,
     'sweet and tart apples',
     2709215,
-    '1133.98',
+    // v43 (Y8: peeled and cored apples × 0.78 (AH-102 item 17)).
+    '884.50',
     'M1',
     'counted',
     true,
@@ -2215,7 +2220,8 @@ _moved = [
     null,
     'firm mcintosh apples',
     2709215,
-    '907.18',
+    // v43 (Y8: peeled and cored apples × 0.78 (AH-102 item 17)).
+    '707.60',
     'M1',
     'counted',
     true,
@@ -2227,7 +2233,8 @@ _moved = [
     null,
     'firm tart apples',
     2709215,
-    '1133.98',
+    // v43 (Y8: peeled and cored apples × 0.78 (AH-102 item 17)).
+    '884.50',
     'M1',
     'counted',
     true,
@@ -2239,7 +2246,8 @@ _moved = [
     null,
     'firm sweet apples',
     2709215,
-    '1133.98',
+    // v43 (Y8: peeled and cored apples × 0.78 (AH-102 item 17)).
+    '884.50',
     'M1',
     'counted',
     true,

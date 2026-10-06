@@ -20,7 +20,11 @@ import 'support/fdc_fixtures.dart';
 /// shell yield, counted. N1–N4: what the live step did not enable. Each row
 /// is a real corpus line at the record, grams, bucket and basis the
 /// cache-only replay of snapshot 17 derives at v40; the answers are copied
-/// from snapshot 17 (tool/record_fdc_fixtures.dart --from-db).
+/// from snapshot 17 (tool/record_fdc_fixtures.dart --from-db). v43
+/// (re-pinned from the snapshot-19 replay): pieces on 171052 read AH-102's
+/// derived pieces meat figure (Y2, Y13 — the record decides, so skin-eaten
+/// pieces put there read it too), the five breast lines' four that discard
+/// the skin move to 2646170 (Y3), the whole turkey 0.6515 (Y5).
 void main() {
   /// [from]'s line at [position], alone in a recipe with [from]'s steps and
   /// prep notes, matched and computed on the fixtures; its one row and line.
@@ -114,28 +118,28 @@ void main() {
       }
     });
 
-    test('E1 pieces: the meat-only yield only where the skin is discarded '
-        '— skin-eaten pieces put on 171052 keep the gross basis', () async {
-      final recipe = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
-      final line = nutritionLines(recipe)[6];
-      expect(
-        line.raw,
-        '4 pounds bone-in, skin-on chicken pieces (split breasts cut in '
-        'half, drumsticks, and/or thighs), trimmed',
-      );
-      expect(skinDiscarded(recipe, line), isFalse);
-      final dir = Directory.systemTemp.createTempSync('salt-v40');
-      addTearDown(() => dir.deleteSync(recursive: true));
-      final db = SaltDatabase.open('${dir.path}/salt.db');
-      addTearDown(db.dispose);
-      final meatOnly = (await FixtureProvider().food(171052))!;
-      final grams = lineGrams(db, line, meatOnly, recipe: recipe);
-      expect(grams?.grams.toStringAsFixed(2), '1814.37');
-      expect(
-        grams?.basis,
-        'from 4 pound · approximate (gross weight, no USDA refuse portion)',
-      );
-    });
+    test(
+      'E1 pieces (v43 Y13): the record decides — skin-eaten pieces put '
+      'on 171052 read the pieces meat figure, as discarded ones do',
+      () async {
+        final recipe = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
+        final line = nutritionLines(recipe)[6];
+        expect(
+          line.raw,
+          '4 pounds bone-in, skin-on chicken pieces (split breasts cut in '
+          'half, drumsticks, and/or thighs), trimmed',
+        );
+        expect(skinDiscarded(recipe, line), isFalse);
+        final dir = Directory.systemTemp.createTempSync('salt-v40');
+        addTearDown(() => dir.deleteSync(recursive: true));
+        final db = SaltDatabase.open('${dir.path}/salt.db');
+        addTearDown(db.dispose);
+        final meatOnly = (await FixtureProvider().food(171052))!;
+        final grams = lineGrams(db, line, meatOnly, recipe: recipe);
+        expect(grams?.grams.toStringAsFixed(2), '1097.55');
+        expect(grams?.basis, 'from 4 pound $_piecesMeat');
+      },
+    );
 
     test('E1 non-trip: a step taking the skin "from the breast pieces" '
         'does not trip a whole-bird line (0002); "from the chicken thighs" '
@@ -227,26 +231,27 @@ _pins = [
     null,
     'from the printed weight × 0.61 edible (USDA ready-to-cook yield)',
   ),
-  // E1 pieces: the same per-pound figure, flagged — never the class table.
+  // E1 pieces: v43 (Y2) AH-102's derived pieces meat figure (v40: the whole
+  // bird's 0.43 per pound).
   (
     '0141-pollo-en-mole-poblano-chicken-in-puebla-style-mole.yaml',
     15,
     '3½ pounds bone-in chicken pieces (split breasts, legs, and/or thighs), skin removed, trimmed',
     171052,
-    '689.50',
+    '960.36',
     'counted',
     null,
-    "from 3 1/2 pound × 0.43 edible (USDA ready-to-cook yield) · approximate (skin discarded; the whole bird's meat-only yield)",
+    'from 3 1/2 pound $_piecesMeat',
   ),
   (
     '0569-tandoori-chicken.yaml',
     9,
     '3 pounds bone-in, skin-on chicken pieces (split breasts cut in half, drumsticks, and/or thighs), trimmed and skin removed',
     171052,
-    '591.00',
+    '823.16',
     'counted',
     null,
-    "from 3 pound × 0.43 edible (USDA ready-to-cook yield) · approximate (skin discarded; the whole bird's meat-only yield)",
+    'from 3 pound $_piecesMeat',
   ),
   // E2: 174214's "lb (with shell), yield after shell removed" 68 g a pound.
   (
@@ -309,28 +314,28 @@ _pins = [
     null,
     'from 3 pound × 0.15 edible (USDA yield after shell removed)',
   ),
-  // N1: a breast line stays at the Y1 bone yield, no skin step (171077
-  // publishes no half breast).
+  // N1: at v40 a breast line stayed at the Y1 bone yield (171077 publishes
+  // no half breast); v43 (Y3) moves it to 2646170 at AH-102 584's meat 65.
   (
     '0496-white-chicken-chili.yaml',
     0,
     '3 pounds bone-in, skin-on chicken breast halves, trimmed',
-    2727569,
-    '828.00',
+    2646170,
+    '884.50',
     'counted',
     null,
-    'from 3 pound × 0.61 edible · approximate (yield of chicken parts from FDC 171447)',
+    'from 3 pound × 0.65 edible · approximate (USDA AH-102 item 584: chicken breast, raw → meat 65 % (50–77))',
   ),
-  // N2: the whole turkey keeps the interim 0.608.
+  // N2: at v40 the whole turkey kept the interim 0.608; v43 (Y5) 0.6515.
   (
     '0154-classic-roast-turkey.yaml',
     1,
     '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and reserved for gravy',
     171081,
-    '3864.00',
+    '4137.40',
     'counted',
     null,
-    'from the printed weight × 0.61 edible · approximate (yield of a whole turkey (interim: the chicken figure) from FDC 171447)',
+    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   // N3: mussels by weight stay on FNDDS 2706350, held.
   (
@@ -356,3 +361,9 @@ _pins = [
     "from the printed weight × 0.565 drained · approximate (drained weight: FDC's canned chickpea pair, 253 g of 448 g)",
   ),
 ];
+
+/// v43 (Y2): pieces on the meat-only 171052, AH-102's derived meat figure.
+const String _piecesMeat =
+    '× 0.60 edible · approximate (derived from USDA AH-102 items 584–586 by '
+    "583's carcass shares: pieces (breast, thigh, drumstick), raw → meat "
+    '60.5 %)';

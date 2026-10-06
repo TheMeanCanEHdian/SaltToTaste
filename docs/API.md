@@ -1515,10 +1515,13 @@ owner's 2026-10-05 ruling: a bone-in line weighed from a printed weight on
 a record of a class FDC gives a yield for reads it, `"… × 0.61 edible ·
 approximate (yield of chicken parts from FDC 171447)"` (the class table
 under matcher v39, below; the record's own refuse portion and the whole
-chicken's ready-to-cook yield go first) — and, on a meat-only record in a
-recipe that discards the skin of a thigh or leg bought with it (the trip
-below, read on the recipe — never the record alone), then FDC's meat share,
-`"… × 0.79 meat · approximate (skin discarded; USDA meat-only share)"`;
+chicken's ready-to-cook yield go first) — since matcher v43 a bone-in
+chicken or turkey PART reads the USDA Agriculture Handbook 102 figure of
+the part the line names, the record deciding meat or meat and skin, in one
+step (`"… × 0.70 edible · approximate (USDA AH-102 item 586: chicken thigh,
+raw → meat and skin 70 % (63–81))"`; the AH-102 poultry table below; the
+v39–v42 second step `"… × 0.79 meat · approximate (skin discarded; USDA
+meat-only share)"` is retired);
 shellfish
 bought in the shell too (held `in_shell`, below, and counted so once a
 person confirms it); since matcher v39 `"2 × 200 g · approximate (FDC's
@@ -2423,13 +2426,13 @@ an FDC portion, flagged `approximate (yield of <class> from FDC <id>)`:
 | class | records | yield | derivation |
 |---|---|---|---|
 | bone-in pork chops | 167822 | 0.662 | 168242's own refuse: 133 g of a 201 g chop, lean+fat (the lean-only 0.570 also refuses the separable fat) |
-| pork ribs | 167853, 168299 | 0.653 | 167895 country-style ribs, 128 of 196 g |
-| a bone-in pork roast | 168226, 169177, 168367 | 0.758 | 167849 Boston butt, 288 of 380 g |
-| a bone-in roast (the pork butt figure) | 168675 standing rib | 0.758 | cross-species: no beef refuse is cached |
-| chicken parts | 171447 (pieces), 2727566–69, 172378, and the meat-only 2646171, 173619 | 0.608 | 171447 "yield from 1 lb ready-to-cook chicken" 276 g; the Cornish hen's 336 of 567 g (0.593) corroborates |
-| turkey parts (the chicken figure) | 171093, 171533, 171497, 174518 | 0.608 | no turkey part figure exists |
-| a whole turkey (interim: the chicken figure) | 171081 | 0.608 | the live step (2026-10-05) found no bird yield: per ready-to-cook pound the breast 171093 is 146 g, the leg 171493 105 g, the wing 171495 33 g, but FDC has no raw "meat and skin" back or neck — 171096 back and 171086 neck are meat only and publish no share — so the parts (284 g = 0.626) are a partial sum and the interim stays (12 lines) |
-| bony beef, lamb and veal | 173405, 170827, 169441, 172641, 172513, 174875, 172648 | 0.657 | the median of the four above, (128/196 + 133/201) / 2 |
+| pork ribs (since v43 the baby backs 168299 only; the spareribs 167853 read AH-102 item 1925, below) | 168299 | 0.653 | 167895 country-style ribs, 128 of 196 g |
+| a bone-in pork roast (since v43 the picnic 168367 only; the hams 168226 and 169177 read AH-102, below) | 168367 | 0.758 | 167849 Boston butt, 288 of 380 g |
+| ~~a bone-in roast (the pork butt figure)~~ — since v43 the standing rib 168675 reads AH-102 item 238, below | — | ~~0.758~~ | cross-species: no beef refuse is cached |
+| chicken parts (since v43 only a part-less, non-whole line: the AH-102 poultry table below) | 171447 (pieces), 2727566–69, 172378, and the meat-only 2646171, 173619 | 0.608 | 171447 "yield from 1 lb ready-to-cook chicken" 276 g; the Cornish hen's 336 of 567 g (0.593) corroborates |
+| turkey parts (the chicken figure; since v43 the bone-in BREAST 171093 only — deferred, below) | 171093, 171533, 171497, 174518 | 0.608 | no turkey part figure exists |
+| a whole turkey (interim: the chicken figure; since v43 0.6515, below) | 171081 | 0.608 | the live step (2026-10-05) found no bird yield: per ready-to-cook pound the breast 171093 is 146 g, the leg 171493 105 g, the wing 171495 33 g, but FDC has no raw "meat and skin" back or neck — 171096 back and 171086 neck are meat only and publish no share — so the parts (284 g = 0.626) are a partial sum and the interim stays (12 lines) |
+| bony beef, lamb and veal (since v43 without the shank 169441, the rack 172641 and the foreshank 172513: AH-102, below) | 173405, 170827, 174875, 172648 | 0.657 | the median of the four above, (128/196 + 133/201) / 2 |
 | oxtails | 2705843 | 0.564 | the record's own FNDDS "1 oz yields 16 g" (raw with bone → this cooked food) |
 
 109 lines move (texas-style beef ribs 2,268 → 1,491 g; best prime rib
@@ -2557,6 +2560,150 @@ butter beans (FNDDS 2709850). The canned-bean live step (2026-10-06, on a
 scratch copy of snapshot 17: 5 food details — 174285, 175195, 174286,
 175201, 175243 — the result snapshot 18) brings the accuracy track's live
 requests to 60.
+**AH-102 poultry yields** (matcher v43, the owner's rulings Y1–Y7, Y12,
+Y13 of 2026-10-06, "go with your recommendations"; zero requests). USDA
+Agriculture Handbook No. 102, *Food Yields Summarized by Different Stages
+of Preparation* (revised 1975), Table 1 raw boning data, replaces the
+whole bird's 0.608 for bone-in chicken and turkey PARTS weighed from a
+printed weight (`ah102Parts`). The part is the one the line names
+(`birdPartOf`): a whole-bird line is whole; "chicken pieces/parts" and
+"breasts and/or leg quarters" are pieces, a turkey's "drumsticks and
+thighs" its leg; else the part named FIRST, parentheses aside ("3 pounds
+split bone-in chicken breast (or thighs or drumsticks)" is breast); else
+the record's own part. The RECORD decides the figure (Y13): a meat-only
+record (2646171, 173619, 171052, 2646170, 174518, 171497) reads the
+part's MEAT figure, a meat-and-skin record (171447, 2727566–69, 172378,
+171081, 171533) meat and skin — whoever put the row there (a person's
+pick of 2646171 for Chicken Teriyaki's skin-eaten thighs reads 59 %, where
+v39 kept meat-and-skin grams on the meat record). A skin-discarded part
+therefore reads its meat figure in ONE step from the printed weight (Y12:
+the owner reversed the morning's "keep 0.795" with the handbook's numbers
+in hand; v39's stack of the bone yield × FDC SR's skin share 0.795 / 0.770
+is retired, `skinShares` deleted). Flag `"… × <share> edible · approximate
+(<source>)"`, the share to two places:
+
+| part | item | meat and skin | meat |
+|---|---|---|---|
+| chicken breast | 584 | 74 % (59–84) | 65 % (50–77) |
+| chicken thigh | 586 | 70 % (63–81) | 59 % (48–68) |
+| chicken drumstick | 585 | 63 % (50–75) | 55 % (44–69) |
+| chicken wing | 590 | 50 % (41–60) | 31 % (13–42) |
+| chicken leg (thigh + drumstick) — DERIVED; also a leg quarter | 585–586 by 583's carcass shares 19/17 | 66.7 % | 57.1 % |
+| chicken pieces (breast, thigh, drumstick) — DERIVED | 584–586 by 27/19/17 | 69.8 % | 60.5 % |
+| turkey thigh | 2598 | 82 % (77–85) | 77 % (76–80) |
+| turkey drumstick | 2597 | 69 % (66–74) | 65 % (62–70) |
+| turkey leg | 2596 | 75 % (70–79) | 71 % (66–74) |
+| turkey leg quarter | 2595 | 71 % (69–73) | 64 % (62–65) |
+| turkey wing | 2602 | 61 % (59–64) | 43 % (42–45) |
+| whole turkey | dressing data, 12 lb and over (78 of 85) × 2592 | 0.6515 = 78/85 × 71 % (67–75) | — |
+
+The derived rows say so (`"derived from USDA AH-102 items 585–586 by
+583's carcass shares: leg (thigh + drumstick), raw → meat and skin
+66.7 %; a leg quarter's back portion is not in this figure"`): the
+handbook prints no chicken leg-quarter row (items 584–591 are breast,
+drumstick, thigh, back, rib back, tail back, wing, neck), and a retail
+leg quarter carries part of the back, so the figure reads high by an
+unprinted amount. The turkey rows are the fryer-roaster class (the only
+class boned; flagged "fryer-roaster class"); the whole turkey takes the
+handbook's dressing ratio for birds of 12 lb and over (ready to cook
+without / with neck and giblets, 78 of 85 — every library turkey is 12–22
+lb and gives up its neck and giblets) × the carcass row 2592:
+`"… × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb
+and over (neck and giblets off 78 of 85); carcass → meat and skin, item
+2592, fryer-roaster class, 71 % (67–75))"` (a 12- to 14-pound turkey
+3,864 → 4,137.40 g). A skin-discarded breast on 2727569 now moves to
+Foundation 2646170 "Chicken, breast, boneless, skinless, raw" (Y3,
+`skinlessRecords`) at 584's meat 65 %; a Confirm records 2727569. All
+five breast lines the v40 live step named trip the skin signal and move
+(hearty chicken noodle soup, old-fashioned slow-cooker chicken noodle soup,
+French-style chicken and stuffing in a pot, tortilla soup, white chicken
+chili 828 → 884.50 g); the signal's "reserve" veto no longer reads
+"reserved (cooked) chicken" — the meat kept, not the skin — so hearty
+chicken noodle soup's "remove the skin and bones from the reserved cooked
+chicken and discard" trips (414 → 442.25 g).
+KEPT: whole chickens read FDC's own ready-to-cook yields (Y4: 171447 0.608,
+171052 0.434, inside the handbook's whole-bird 58 (50–62) / 47 (40–53)),
+with grilled lemon chicken's wing flag; the bone-in turkey BREAST (171093,
+8 lines) keeps the interim 0.608 (Y7, DEFERRED: item 2593's breast, 87 %,
+is a breast without the back ATK's bone-in breast carries, and no
+breast-with-back row exists); the per-item and hen portions. 74 lines move
+(56 chicken, 18 turkey), +17,515 kcal over the library; no bucket, hold or
+status moves; Chicken Provençal's 8 thighs 657.92 → 802.86 g, barbecued
+pulled chicken's leg quarters 1,488.31 → 1,813.36 g, buffalo wings 828 →
+680.39 g. 1975 averages over the birds measured then, the ranges the
+honest width.
+**AH-102 produce and meat yields** (matcher v43, the owner's rulings Y8–Y11
+of 2026-10-06; zero requests). Same handbook, Table 1 paring/trimming and
+boning data, 1975 all-samples averages (no Granny Smith, Yukon Gold or
+other modern cultivar row exists; Russet Burbank's 86 is not "russet").
+**Produce (Y8, `produceYields`)**: a line whose printed weight is in its
+HEAD (before its first top-level comma: "1½ pounds Golden Delicious apples
+(about 3 large), peeled, cored, …", "1 medium butternut squash (about 2
+pounds), peeled, …"), on one of the records below, with the prep word
+word-bounded in its TAIL, counts the yield, flagged
+`"from 1 1/2 pound × 0.78 edible · approximate (USDA AH-102 item 17: apples,
+all cultivars, raw whole → flesh, pared and cored 78 % (60–87))"`. Never a
+count read ("1 Granny Smith apple, peeled, cored, and shredded" is 1 ×
+182 g, already edible), never a trailing prepared weight ("2 carrots,
+peeled … (⅔ cup or 3 ounces)"), never "unpeeled", never a line that keeps
+peels ("¼ of peels reserved"), and never a part clause whose line names
+the other part as used too (a later "green parts", "white parts" or
+"greens"; the scallion rule shares the check): "1½ pounds leeks, white and
+light green parts halved lengthwise, …; 3 cups coarsely chopped dark green
+parts, washed" eats the whole leek and stays `"from 1 1/2 pound"`:
+
+| food (records) | prep word in the tail | item | stage | share |
+|---|---|---|---|---|
+| potatoes (2346401, 2346402, 2346403) | peeled | 2018 | all samples → pared, raw | 81 % (61–94) |
+| apples (1750342, 168202, 2709215) | peeled | 17 | all cultivars → flesh, pared and cored | 78 % (60–87) |
+| apples, same records | cored (not peeled) | 30 | all cultivars → cored only | 90 % (84–94) |
+| sweet potatoes (168482) | peeled | 2496 | raw whole → hand or machine pared | 80 % (69–91) |
+| pears (167778, 746773) | peeled | 1734 | raw whole → pared, cored flesh | 78 % (40–88) |
+| carrots (2258586) | peeled | 481 | without tops → hand-scraped root | 82 % (58–93) |
+| onions (1104962) | peeled | 1568 | mature, all samples → peeled | 90 % (50–99) |
+| leeks (2709935) | white and light green part(s) | 1412 | raw → bulb and lower leaf | 44 % (35–58) |
+| savoy cabbage (170388) — savoy is not printed: head cabbage stands in | cored, trimmed | 440 | whole head, green, red or white → ready to cook, without core | 93 % (91–96) |
+| cauliflower (2685573) | cored, trimmed | 499 | whole head → fully trimmed, head or flowerbud | 92 % (83–100) |
+| butternut squash (2685570) | peeled | 2459 | raw whole → flesh | 84 % (75–88) |
+| zucchini (2685568) | trimmed | 2446 | raw whole → flesh and skin (ends 7) | 93 % (86–98) |
+| yellow summer squash (2685569) | trimmed | 2444 | all samples → flesh and skin | 95 % (84–99) |
+| strawberries (2346409) | hulled, stemmed | 2473 | good quality → flesh | 94 % (86–99) |
+
+**Scallions (Y9, `scallionPartOf`)**: a COUNTED scallion (FNDDS 2709794,
+"1 whole" 15 g) whose tail begins "white parts only" counts × 0.37
+(`"(USDA AH-102 item 1575: white part 37 % (22–50) of the whole scallion
+with rootlets)"`), "green parts only" × 0.59 — DERIVED: 1575's green tops
+and rootlets 63 % (50–78) less 1573's rootlets 4 %. The base is the whole
+scallion WITH its rootlets, as printed (whether FNDDS's "1 whole" carries
+them is not known; 37/96 would be 0.385). Not "white and light green parts
+only" nor "dark green parts only" (no figure is printed for them), not a
+cup of greens, never a carrot or an onion. **Meats (Y10, `ah102Meats`)**:
+where the handbook names the cut, its raw boning figure (lean and fat meat
+as bought) replaces the borrowed class figure above, flagged with the item:
+
+| cut (record) | item | yield | v42 |
+|---|---|---|---|
+| pork spareribs (167853) | 1925 | 58 % (43–71; bones 42) | 0.653 |
+| beef standing rib (168675) | 238, retail ribs 11–12 | 82 % (78–86; bones 18) | 0.758 |
+| beef fore shank (169441) — MISMATCH: lean and fat 61 %, "weighed on a lean-only record" | 228 | 61 % (59–62; bones 39) | 0.657 |
+| lamb rack (172641, "fully frenched") — MISMATCH: "as measured unfrenched; a frenched rack yields less" | 1364, rib loin | 73 % (61–88) | 0.657 |
+| lamb foreshank (172513) | 1339, choice foreleg (limited data) | 70 % (bones 30) | 0.657 |
+| cured spiral-sliced ham (169177) — the figure also removes rind 5 and excess fat 15 a spiral ham may no longer carry | 1937, bone-in rind-on | 70 % (60–78) | 0.758 |
+| fresh ham shank half (168226) — DERIVED: 1 − bones 22 (the printed row also trims the fat 18: lean 60 %) | 1930 | 78 % | 0.758 |
+
+FDC's own refuse classes stay (168242 chops 0.662, 167849 butt 0.758,
+167895 country ribs 0.653, oxtails 0.564), as do the blade chops, baby
+back ribs, short/back ribs, picnic, lamb shoulder chops, veal shank and ham
+hocks (no row). **Bacon (Y11)**: rule B1 keeps 0.403 (FDC's own protein
+balance between the two records the row is counted on); the handbook's
+cooked sliced bacon, items 1981–1985 (all methods 33 % (18–43), broiled 29,
+oven 34, microwave 32, pan fried 29), is the comparison: 0.403 sits inside its
+range (18–43), 7 points above the all-methods average — the 13 B1 rows do
+not move.
+124 lines move (103 produce, −11,947 kcal; 6 scallion, −56; 15 meat,
+−1,083: spareribs −2,754, prime rib +1,905); no bucket, hold or status
+moves; rustic potato-leek soup −34.6 % a serving (its leeks 2,041.16 →
+898.11 g). The bone-in turkey BREAST stays DEFERRED (above).
 Since matcher v40 (edible yields, part 2 — the owner's live step,
 2026-10-05 on a scratch copy of snapshot 16: 13 requests, 3 searches and
 10 food details, the result snapshot 17; the accuracy track's live

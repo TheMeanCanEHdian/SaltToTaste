@@ -568,7 +568,39 @@ const Map<String, String> _synonyms = {
 /// liquid ("undrained", "do not drain", "liquid reserved", "with their
 /// liquid") counts the can whole, "1 can drained, 1 can undrained" half the
 /// cans at the share (grams: 19 lines).
-const int matcherVersion = 42;
+///
+/// v43: the USDA Agriculture Handbook 102 yields (the owner's 2026-10-06
+/// rulings Y1–Y13, "go with your recommendations"; zero requests). Birds
+/// (grams/engine): a bone-in chicken or turkey part reads the AH-102 raw
+/// figure of the part the line names first (`ah102Parts`, `birdPartOf`):
+/// chicken breast 584, thigh 586, drumstick 585, wing 590, the derived leg
+/// (585–586) and pieces (584–586) by 583's carcass shares; turkey thigh
+/// 2598, leg 2596, leg quarter 2595, wings 2602 (fryer-roaster class) and
+/// the whole turkey 78/85 × 2592 = 0.6515; the RECORD decides meat or meat
+/// and skin (`ah102Records`, Y13), so a skin-discarded part reads its meat
+/// figure in one step (Y12 retired the v39 skin-share stack, `skinShares`);
+/// a skin-discarded breast moves to 2646170 (`skinlessRecords`, Y3: the
+/// five lines; "reserved cooked chicken" no longer vetoes the skin). Whole
+/// chickens keep FDC's own ready-to-cook yields (Y4); the bone-in turkey
+/// breast keeps the interim figure (Y7, deferred). Produce (grams, Y8): a
+/// weight printed in the line's head on a `produceYields` record with the
+/// prep word in its tail counts the AH-102 paring/trimming yield (potatoes
+/// peeled 2018 · 81, apples peeled 17 · 78 / cored only 30 · 90, sweet
+/// potatoes 2496 · 80, pears 1734 · 78, carrots 481 · 82, onions 1568 · 90,
+/// leeks' white and light green parts 1412 · 44, savoy by head cabbage
+/// 440 · 93 (savoy is not printed), cauliflower 499 · 92, butternut
+/// 2459 · 84, zucchini 2446 · 93, summer squash 2444 · 95, strawberries
+/// 2473 · 94); never a count read, a
+/// trailing prepared weight or "peels reserved" (104 lines). Scallions
+/// (Y9): a counted scallion's "white parts only" × 0.37 (1575), "green
+/// parts only" × 0.59 (derived, 1573/1575), of the whole scallion with
+/// rootlets (6 lines). Meats (Y10, `ah102Meats`): spareribs 1925 · 58,
+/// standing rib 238 · 82, fore shank 228 · 61 (a lean-only record),
+/// lamb rack 1364 · 73 (measured unfrenched), lamb foreshank 1339 · 70,
+/// cured spiral ham 1937 · 70, fresh ham shank half 0.78 (derived from
+/// 1930) replace the borrowed class figures (15 lines); FDC's own refuse
+/// classes stay. Bacon B1 keeps 0.403 (Y11).
+const int matcherVersion = 43;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

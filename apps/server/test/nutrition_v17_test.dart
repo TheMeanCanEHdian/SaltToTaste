@@ -609,31 +609,36 @@ void main() {
       '0538-chinese-style-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, cut into individual ribs',
       167853,
-      1777.34,
+      // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
+      1578.50,
     ),
     (
       '0614-memphis-style-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed',
       167853,
-      1777.34,
+      // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
+      1578.50,
     ),
     (
       '0615-oven-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut in half',
       167853,
-      1777.34,
+      // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
+      1578.50,
     ),
     (
       '0611-rosticciana-tuscan-grilled-pork-ribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut into 2-rib sections',
       167853,
-      1777.34,
+      // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
+      1578.50,
     ),
     (
       '0613-kansas-city-sticky-ribs.yaml',
       '2 (2½- to 3-pound) full racks pork spareribs, trimmed of any large pieces of fat and membrane removed',
       167853,
-      1777.34,
+      // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
+      1578.50,
     ),
     // pomegranate raw
     (

@@ -837,28 +837,33 @@ void main() {
         'no yield was read', () async {
       const approximate =
           '· approximate (gross weight, no USDA refuse portion)';
-      const poultry = 276 / 453.59237;
       final turkey = gramsOf(
         '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and '
         'reserved for gravy',
         await food(171081),
       )!;
-      expect(turkey.grams, closeTo(14 * 453.592 * poultry, 0.01));
+      // v43 (Y5): AH-102's 12-lb-and-over dressing ratio × item 2592.
+      expect(turkey.grams, closeTo(14 * 453.592 * 78 / 85 * 0.71, 0.01));
       expect(
         turkey.basis,
         endsWith(
-          '· approximate (yield of a whole turkey (interim: the chicken '
-          'figure) from FDC 171447)',
+          '× 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 '
+          'lb and over (neck and giblets off 78 of 85); carcass → meat and '
+          'skin, item 2592, fryer-roaster class, 71 % (67–75))',
         ),
       );
       final thighs = gramsOf(
         '1½–2 pounds bone-in chicken thighs',
         await food(2727567),
       )!;
-      expect(thighs.grams, closeTo(1.75 * 453.592 * poultry, 0.01));
+      // v43 (Y1): AH-102 item 586, the thigh's meat and skin.
+      expect(thighs.grams, closeTo(1.75 * 453.592 * 0.70, 0.01));
       expect(
         thighs.basis,
-        endsWith('· approximate (yield of chicken parts from FDC 171447)'),
+        endsWith(
+          '× 0.70 edible · approximate (USDA AH-102 item 586: chicken thigh, '
+          'raw → meat and skin 70 % (63–81))',
+        ),
       );
       const chops = '4½ pounds lamb shoulder chops, each 1 to 1½ inches thick';
       final lamb = await food(174875);

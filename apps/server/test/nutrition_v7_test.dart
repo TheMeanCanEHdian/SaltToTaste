@@ -836,10 +836,14 @@ void main() {
       await matchAndCompute(db, provider, r);
       final row = db.ingredientMatchesFor('r1').single;
       // v40 (E1): its own "skin removed" moves it to the meat-only bird
-      // 171052 at that record's ready-to-cook yield, 197 g a pound (v39:
-      // 171447 at the chicken-parts class yield; gross until v38).
+      // 171052 (v39: 171447 at the chicken-parts class yield; gross until
+      // v38); v43 (Y2): AH-102's derived pieces meat figure (v40: the
+      // record's ready-to-cook 197 g a pound).
       expect(row.fdcId, 171052);
-      expect(row.grams, closeTo(3 * 453.592 * 197 / 453.59237, 0.01));
+      expect(
+        row.grams,
+        closeTo(3 * 453.592 * (65 * 27 + 59 * 19 + 55 * 17) / 6300, 0.01),
+      );
       expect(bucketOf(row), MatchBucket.counted);
     });
 

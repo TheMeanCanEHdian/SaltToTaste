@@ -4557,16 +4557,17 @@ bool shellCounted(Recipe recipe, GramResolution? resolution) =>
     ).hasMatch((recipe.prepNotes ?? '').toLowerCase());
 
 /// v39 (Y3, the owner's ruling 2026-10-05 on plan Q4 (b)): the meat-only
-/// record a skin-discarded thigh or leg row moves to ([skinDiscarded]),
-/// grams × FDC's meat share there ([skinShares]), stacked on the bone yield
-/// ([boneInClassYields]). v40 (E1, the live step): a whole bird or pieces
-/// on 171447 moves to SR 171052 ([meatOnlyBroiler]), read at its own
-/// ready-to-cook yield — never a class figure. The breast stays (the LIVE
-/// STEP record at [skinShares]).
+/// record a skin-discarded thigh or leg row moves to ([skinDiscarded]).
+/// v40 (E1, the live step): a whole bird or pieces on 171447 moves to SR
+/// 171052 ([meatOnlyBroiler]). v43 (Y3): a breast on 2727569 moves to
+/// Foundation 2646170 (boneless skinless breast, cached). Each is weighed
+/// there by its composition ([ah102Records], Y12/Y13: the part's AH-102
+/// meat figure in one step; a whole bird its ready-to-cook yield).
 const Map<int, int> skinlessRecords = {
   2727567: 2646171,
   172378: 173619,
   171447: meatOnlyBroiler,
+  2727569: 2646170,
 };
 
 /// [eaten]'s food and grams once the skin is off: an auto row on a
@@ -4629,6 +4630,9 @@ int? decisionRecordOf(Recipe recipe, IngredientLine line, int? fdcId) {
 /// the bird strained out with the stock (prep39/skin_render.md: outside
 /// the narrow signal); Chicken Provençal's "from the chicken thighs" and
 /// Barbecued Pulled Chicken's "from chicken legs" still trip their lines.
+/// v43 (Y3): "reserved (cooked) chicken" names the meat kept, not the
+/// skin, so it never vetoes: Hearty Chicken Noodle Soup (0002) "remove the
+/// skin and bones from the reserved cooked chicken and discard" trips.
 bool skinDiscarded(Recipe recipe, IngredientLine line) {
   if (RegExp(
     r'\bskin removed\b|\bskinned\b',
@@ -4680,7 +4684,7 @@ final RegExp _skinOff = RegExp(
 );
 
 final RegExp _skinKept = RegExp(
-  r'\breserve|\bset aside\b|\blay\b.{0,30}\bback\b|\bstretch|'
+  r'\breserve(?!d\s+(?:cooked\s+)?chicken\b)|\bset aside\b|\blay\b.{0,30}\bback\b|\bstretch|'
   r'\bif desired\b|\btapered\b',
 );
 
@@ -6812,8 +6816,8 @@ Future<NutritionProviderException?> _computePass(
         fetch: fetch,
         recipe: recipe,
       );
-      // v39 (Y3): a skin-discarded bone-in thigh or leg moves to its
-      // meat-only record, weighed there ([skinShares]).
+      // v39 (Y3): a skin-discarded bone-in part moves to its meat-only
+      // record, weighed there (v43: the part's AH-102 meat figure).
       final (gramsFood, resolution) = await skinOffFood(
         db,
         lineProvider,
@@ -7807,8 +7811,9 @@ GramResolution? lineGrams(
 }) {
   // The grams tables match on the line's own words, not the key.
   final normalized = normalizeItem(lineItemOf(line));
-  // v39 (Y3): the meat share reads the recipe's skin trip, never the
-  // record alone — with no recipe, none.
+  // v43 (Y13): the RECORD decides the meat share ([ah102Records]); the
+  // recipe's skin trip only names the part a meat-only whole bird keeps
+  // its skin on — with no recipe, none.
   final skinOff = recipe != null && skinDiscarded(recipe, line);
   final skinKept = skinOff ? skinKeptPart(recipe, line) : null;
   GramResolution? on(FdcFood? record) => resolveGrams(

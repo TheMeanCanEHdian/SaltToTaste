@@ -828,17 +828,21 @@ void main() {
       );
     });
 
-    test('P1: pieces (Stovetop Roast Chicken, 0142) read the chicken-parts '
-        'class yield, labelled approximate (v39 Y1; gross until v38); off, '
-        'the same', () async {
+    test('P1: pieces (Stovetop Roast Chicken, 0142) read the pieces '
+        'yield, labelled approximate (v43 Y2: AH-102 derived; v39 the '
+        'chicken-parts class yield; gross until v38); off, the same', () async {
       final bird = await food(171447);
       final on = gramsOf(pieces, bird)!;
-      expect(on.grams, closeTo(3.5 * 453.592 * 276 / 453.59237, 0.01));
+      expect(
+        on.grams,
+        closeTo(3.5 * 453.592 * (74 * 27 + 70 * 19 + 63 * 17) / 6300, 0.01),
+      );
       expect(
         on.basis,
         endsWith(
-          '× 0.61 edible · approximate (yield of chicken parts from FDC '
-          '171447)',
+          '× 0.70 edible · approximate (derived from USDA AH-102 items '
+          "584–586 by 583's carcass shares: pieces (breast, thigh, "
+          'drumstick), raw → meat and skin 69.8 %)',
         ),
       );
       final off = gramsOf(pieces, bird, false)!;
@@ -855,13 +859,13 @@ void main() {
       expect(gramsOf(hens, hen, false)!.grams, closeTo(4 * 1.5 * 453.592, 0.1));
       // A turkey is no standard bird: Classic Roast Turkey (0154) never
       // reads 171081's 5,002 g "bird" — since v39 (Y1) its printed weight
-      // × the interim whole-turkey class figure (the chicken's 0.608).
+      // × the whole-turkey figure (v43 Y5: AH-102's 78/85 × 0.71).
       final turkey = gramsOf(
         '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and '
         'reserved for gravy',
         await food(171081),
       )!;
-      expect(turkey.grams, closeTo(14 * 453.592 * 276 / 453.59237, 0.01));
+      expect(turkey.grams, closeTo(14 * 453.592 * 78 / 85 * 0.71, 0.01));
     });
 
     test("a part record's ready-to-cook yield is never read: a whole turkey "

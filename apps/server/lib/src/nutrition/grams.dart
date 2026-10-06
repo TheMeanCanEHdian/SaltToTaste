@@ -1858,20 +1858,17 @@ boneInClassYields = {
   // 168242's own refuse portion: 133 g of a 201 g chop, lean+fat (the
   // lean-only 167833's 0.570 also refuses the separable fat).
   167822: _porkChop,
-  // 167895 country-style ribs: 128 g of a 196 g piece.
-  167853: _porkRibs, 168299: _porkRibs,
+  // 167895 country-style ribs: 128 g of a 196 g piece. (v43: the
+  // spareribs 167853, the hams 168226 / 169177 and the standing rib 168675
+  // read [ah102Meats].)
+  168299: _porkRibs,
   // 167849 Boston butt blade steak: 288 g of 380 g.
-  168226: _porkRoast, 169177: _porkRoast, 168367: _porkRoast,
-  // Cross-species: no beef refuse is cached; the bone-in pork roast's.
-  168675: (
-    yieldOf: 'a bone-in roast (the pork butt figure)',
-    from: '167849',
-    share: 288 / 380,
-  ),
+  168367: _porkRoast,
   // 171447 "unit (yield from 1 lb ready-to-cook chicken)" 276 g of a pound
-  // (the Cornish-hen chain, 336 of 567 g, 0.593, corroborates). 2646171
-  // and 173619 are where a skin-discarded thigh or leg row moves (Y3): the
-  // bone comes off first, then the skin share ([skinShares]).
+  // (the Cornish-hen chain, 336 of 567 g, 0.593, corroborates). v43: every
+  // bird part of [ah102Records] reads [ah102Parts] first; these entries
+  // remain only for a line the part read gives no figure (a whole chicken
+  // on the class path, Y4).
   171447: _chicken, 2727566: _chicken, 2727567: _chicken, 2727568: _chicken,
   2727569: _chicken, 172378: _chicken, 2646171: _chicken, 173619: _chicken,
   // No turkey part figure exists: the chicken's.
@@ -1888,9 +1885,9 @@ boneInClassYields = {
     share: _poultry,
   ),
   // No figure of their species: the median of the four above {0.608,
-  // 0.653, 0.662, 0.758}, (128/196 + 133/201) / 2.
-  173405: _bony, 170827: _bony, 169441: _bony, 172641: _bony,
-  172513: _bony, 174875: _bony, 172648: _bony,
+  // 0.653, 0.662, 0.758}, (128/196 + 133/201) / 2. (v43: the shank 169441,
+  // the rack 172641 and the foreshank 172513 read [ah102Meats].)
+  173405: _bony, 170827: _bony, 174875: _bony, 172648: _bony,
   // The record's OWN FNDDS "1 oz yields 16 g" (raw with bone → this cooked
   // food).
   2705843: (yieldOf: 'oxtails', from: '2705843', share: 16 / 28.349523125),
@@ -1920,11 +1917,287 @@ const _bony = (
   share: (128 / 196 + 133 / 201) / 2,
 );
 
-/// v39 (Y3, plan Q4 (b)): FDC's meat share of meat and skin on the
-/// meat-only record a skin-discarded row moves to — SR 173619's "thigh bone
-/// and skin removed" 147 g of 172378's "thigh with skin" 185 g (0.795), and
-/// its "leg, bone and skin removed" 265 g of 172378's "leg, with skin" 344 g
-/// (0.770).
+/// v43 (the owner's 2026-10-06 rulings Y1–Y7, Y12, Y13): USDA Agriculture
+/// Handbook 102 (1975), Table 1 raw boning data — a bone-in bird part's
+/// edible yield of its printed weight, by `"<species> <part>"`: the
+/// meat-and-skin figure, and the meat figure read IN ONE STEP when the
+/// record is meat only ([ah102Records]; Y12 retired the v39 stack of the
+/// bone yield × FDC SR's skin share 0.795 / 0.770). Each flag cites the
+/// item and its range. Derived (no printed row; flagged "derived"): the
+/// chicken LEG (thigh + drumstick, 585–586 by 583's carcass shares 19/17 —
+/// no leg-quarter row exists, so a leg quarter's back is not in it) and
+/// mixed PIECES (584–586 by 27/19/17). The turkey rows are the fryer-roaster
+/// class (the only class boned); the whole turkey takes the dressing ratio
+/// for birds of 12 lb and over (ready to cook without / with neck and
+/// giblets, 78 of 85) × the carcass row 2592. Absent: the whole chicken
+/// (Y4: FDC's own ready-to-cook 0.608 / 0.434 stay) and the bone-in turkey
+/// breast (Y7, deferred: 2593's breast carries no back, ATK's does — 171093
+/// keeps the interim class figure).
+const Map<String, Ah102Part> ah102Parts = {
+  'chicken breast': (
+    skin: 0.74,
+    skinFlag:
+        'USDA AH-102 item 584: chicken breast, raw → meat and skin '
+        '74 % (59–84)',
+    meat: 0.65,
+    meatFlag: 'USDA AH-102 item 584: chicken breast, raw → meat 65 % (50–77)',
+  ),
+  'chicken thigh': (
+    skin: 0.70,
+    skinFlag:
+        'USDA AH-102 item 586: chicken thigh, raw → meat and skin '
+        '70 % (63–81)',
+    meat: 0.59,
+    meatFlag: 'USDA AH-102 item 586: chicken thigh, raw → meat 59 % (48–68)',
+  ),
+  'chicken drumstick': (
+    skin: 0.63,
+    skinFlag:
+        'USDA AH-102 item 585: chicken drumstick, raw → meat and skin '
+        '63 % (50–75)',
+    meat: 0.55,
+    meatFlag:
+        'USDA AH-102 item 585: chicken drumstick, raw → meat 55 % '
+        '(44–69)',
+  ),
+  'chicken wing': (
+    skin: 0.50,
+    skinFlag:
+        'USDA AH-102 item 590: chicken wing, raw → meat and skin '
+        '50 % (41–60)',
+    meat: 0.31,
+    meatFlag: 'USDA AH-102 item 590: chicken wing, raw → meat 31 % (13–42)',
+  ),
+  'chicken leg': (
+    skin: (70 * 19 + 63 * 17) / 36 / 100,
+    skinFlag:
+        "derived from USDA AH-102 items 585–586 by 583's carcass "
+        'shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg '
+        "quarter's back portion is not in this figure",
+    meat: (59 * 19 + 55 * 17) / 36 / 100,
+    meatFlag:
+        "derived from USDA AH-102 items 585–586 by 583's carcass "
+        'shares: leg (thigh + drumstick), raw → meat 57.1 %; a leg '
+        "quarter's back portion is not in this figure",
+  ),
+  'chicken pieces': (
+    skin: (74 * 27 + 70 * 19 + 63 * 17) / 63 / 100,
+    skinFlag:
+        "derived from USDA AH-102 items 584–586 by 583's carcass "
+        'shares: pieces (breast, thigh, drumstick), raw → meat and skin '
+        '69.8 %',
+    meat: (65 * 27 + 59 * 19 + 55 * 17) / 63 / 100,
+    meatFlag:
+        "derived from USDA AH-102 items 584–586 by 583's carcass "
+        'shares: pieces (breast, thigh, drumstick), raw → meat 60.5 %',
+  ),
+  'turkey whole': (
+    skin: 78 / 85 * 0.71,
+    skinFlag:
+        'USDA AH-102 turkey dressing data, 12 lb and over (neck and '
+        'giblets off 78 of 85); carcass → meat and skin, item 2592, '
+        'fryer-roaster class, 71 % (67–75)',
+    meat: 78 / 85 * 0.63,
+    meatFlag:
+        'USDA AH-102 turkey dressing data, 12 lb and over (neck and '
+        'giblets off 78 of 85); carcass → meat, item 2592, fryer-roaster '
+        'class, 63 % (59–65)',
+  ),
+  'turkey thigh': (
+    skin: 0.82,
+    skinFlag:
+        'USDA AH-102 item 2598: turkey thigh, raw, fryer-roaster class '
+        '→ meat and skin 82 % (77–85)',
+    meat: 0.77,
+    meatFlag:
+        'USDA AH-102 item 2598: turkey thigh, raw, fryer-roaster class '
+        '→ meat 77 % (76–80)',
+  ),
+  'turkey drumstick': (
+    skin: 0.69,
+    skinFlag:
+        'USDA AH-102 item 2597: turkey drumstick, raw, fryer-roaster '
+        'class → meat and skin 69 % (66–74)',
+    meat: 0.65,
+    meatFlag:
+        'USDA AH-102 item 2597: turkey drumstick, raw, fryer-roaster '
+        'class → meat 65 % (62–70)',
+  ),
+  'turkey leg': (
+    skin: 0.75,
+    skinFlag:
+        'USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class '
+        '→ meat and skin 75 % (70–79)',
+    meat: 0.71,
+    meatFlag:
+        'USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class '
+        '→ meat 71 % (66–74)',
+  ),
+  'turkey leg quarter': (
+    skin: 0.71,
+    skinFlag:
+        'USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster '
+        'class → meat and skin 71 % (69–73)',
+    meat: 0.64,
+    meatFlag:
+        'USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster '
+        'class → meat 64 % (62–65)',
+  ),
+  'turkey wing': (
+    skin: 0.61,
+    skinFlag:
+        'USDA AH-102 item 2602: turkey wing, raw, fryer-roaster class '
+        '→ meat and skin 61 % (59–64)',
+    meat: 0.43,
+    meatFlag:
+        'USDA AH-102 item 2602: turkey wing, raw, fryer-roaster class '
+        '→ meat 43 % (42–45)',
+  ),
+};
+
+/// One [ah102Parts] row: the meat-and-skin share and the meat share of a
+/// part's printed weight, each with its flag.
+typedef Ah102Part = ({
+  double skin,
+  String skinFlag,
+  double meat,
+  String meatFlag,
+});
+
+/// v43: the bird records [ah102Parts] reads, by species and composition —
+/// the RECORD decides (Y13): a meat-only record reads the part's meat
+/// figure, a meat-and-skin record meat and skin, whoever put the row there
+/// (a person's pick of 2646171 for a thigh whose skin is eaten reads meat).
+/// 171093 (the bone-in turkey breast) is not here: Y7 deferred.
+const Map<int, ({String species, bool meatOnly})> ah102Records = {
+  171447: (species: 'chicken', meatOnly: false),
+  2727566: (species: 'chicken', meatOnly: false),
+  2727567: (species: 'chicken', meatOnly: false),
+  2727568: (species: 'chicken', meatOnly: false),
+  2727569: (species: 'chicken', meatOnly: false),
+  172378: (species: 'chicken', meatOnly: false),
+  2646171: (species: 'chicken', meatOnly: true),
+  173619: (species: 'chicken', meatOnly: true),
+  171052: (species: 'chicken', meatOnly: true),
+  2646170: (species: 'chicken', meatOnly: true),
+  171081: (species: 'turkey', meatOnly: false),
+  171533: (species: 'turkey', meatOnly: false),
+  174518: (species: 'turkey', meatOnly: true),
+  171497: (species: 'turkey', meatOnly: true),
+};
+
+/// v43 (P4's part read): the bird part [raw] buys — "whole" (a whole-bird
+/// line), then "pieces" (mixed parts; a turkey's "drumsticks and thighs" is
+/// its "leg"), then the part the line names FIRST, parentheses aside (a
+/// chicken leg quarter is the derived "leg"); a line naming none takes
+/// [food]'s own part, else "whole".
+String birdPartOf(String raw, FdcFood food) {
+  if (_wholeBirdLine.hasMatch(raw)) return 'whole';
+  final line = raw.toLowerCase().replaceAll(RegExp(r'\([^)]*\)'), '');
+  if (RegExp(
+    r'chicken (pieces|parts)\b|breasts? and/or leg quarters?',
+  ).hasMatch(line)) {
+    return 'pieces';
+  }
+  if (RegExp(
+    'turkey (drumsticks? and thighs?|thighs? and drumsticks?)',
+  ).hasMatch(line)) {
+    return 'leg';
+  }
+  final turkey = ah102Records[food.fdcId]?.species == 'turkey';
+  String? firstPart(String text) {
+    (int, String)? first;
+    for (final (part, word) in [
+      (turkey ? 'leg quarter' : 'leg', 'leg quarters?'),
+      ('leg', r'\blegs?\b'),
+      ('breast', 'breasts?'),
+      ('thigh', 'thighs?'),
+      ('drumstick', 'drumsticks?'),
+      ('wing', 'wings?'),
+    ]) {
+      final at = RegExp(word).firstMatch(text)?.start;
+      if (at != null && (first == null || at < first.$1)) first = (at, part);
+    }
+    return first?.$2;
+  }
+
+  return firstPart(line) ??
+      firstPart(food.description.toLowerCase()) ??
+      'whole';
+}
+
+/// [food]'s [ah102Parts] yield for the bird part [raw] buys — the meat
+/// figure on a meat-only record, else meat and skin — or null (not a bird
+/// record of [ah102Records], or a part the handbook gives no figure for).
+({double share, String flag})? ah102YieldOf(FdcFood food, String raw) {
+  final record = ah102Records[food.fdcId];
+  final part = record == null
+      ? null
+      : ah102Parts['${record.species} ${birdPartOf(raw, food)}'];
+  if (part == null) return null;
+  return record!.meatOnly
+      ? (share: part.meat, flag: part.meatFlag)
+      : (share: part.skin, flag: part.skinFlag);
+}
+
+/// v43 (the owner's 2026-10-06 ruling Y10): a bone-in beef, pork or lamb
+/// record whose cut USDA AH-102 (1975) Table 1 names reads the handbook's
+/// raw boning figure (lean and fat meat of the cut as bought) instead of a
+/// borrowed [boneInClassYields] class, flagged with the item and its range.
+/// The rack and the shank name the record the row does not describe; the
+/// shank half is DERIVED (1 − bones; the printed row also trims the fat).
+/// FDC's own refuse portions stay where a record has one of its own class
+/// (168242 chops, 167849 butt, 167895 country ribs, oxtails); blade chops,
+/// baby back ribs, short/back ribs, picnic, lamb shoulder chops, veal shank
+/// and ham hocks have no row and keep theirs.
+const Map<int, ({double share, String flag})> ah102Meats = {
+  167853: (
+    share: 0.58,
+    flag:
+        'USDA AH-102 item 1925: pork spareribs, raw → lean and fat meat '
+        '58 % (43–71; bones 42)',
+  ),
+  168675: (
+    share: 0.82,
+    flag:
+        'USDA AH-102 item 238: beef rib, retail ribs 11–12, raw → lean and '
+        'fat meat 82 % (78–86; bones 18)',
+  ),
+  169441: (
+    share: 0.61,
+    flag:
+        'USDA AH-102 item 228: beef shank, fore, raw → lean and fat meat '
+        '61 % (59–62; bones 39); weighed on a lean-only record',
+  ),
+  172641: (
+    share: 0.73,
+    flag:
+        'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '
+        'and fat meat, slightly trimmed 73 % (61–88), as measured '
+        'unfrenched; a frenched rack yields less',
+  ),
+  172513: (
+    share: 0.70,
+    flag:
+        'USDA AH-102 item 1339: lamb foreleg (shank), choice, raw → lean '
+        'and fat meat 70 % (bones 30; limited data)',
+  ),
+  169177: (
+    share: 0.70,
+    flag:
+        'USDA AH-102 item 1937: cured ham, bone-in, rind-on, raw → lean and '
+        'fat meat 70 % (60–78); the figure also removes rind 5 and excess '
+        'fat 15 a spiral-sliced ham may no longer carry',
+  ),
+  168226: (
+    share: 0.78,
+    flag:
+        'derived from USDA AH-102 item 1930: fresh ham shank half, raw → '
+        'bones 22 %, so lean and fat meat 78 % (the printed row also trims '
+        'the fat 18: lean 60 %)',
+  ),
+};
+
 // LIVE STEP (plan §3 requests 1–3, spent by the owner 2026-10-05; the
 // record): the whole bird and pieces ENABLED in v40 — the search "chicken
 // broilers or fryers meat only raw" ranked SR 171052 first, whose detail
@@ -1938,9 +2211,9 @@ const _bony = (
 // 171474's "0.5 breast, bone removed" 145 g, so no share is formed and the
 // five breast lines (hearty-chicken-noodle-soup|9, old-fashioned-slow-
 // cooker-chicken-noodle-soup|12, french-style-chicken-and-stuffing-in-a-
-// pot|15, tortilla-soup|3, white-chicken-chili|0) stay at the bone yield.
-const Map<int, double> skinShares = {2646171: 147 / 185, 173619: 265 / 344};
-
+// pot|15, tortilla-soup|3, white-chicken-chili|0) stayed at the bone yield
+// until v43 (Y3) moved those that discard the skin to 2646170 at AH-102's
+// breast meat share.
 /// v40 (E1): SR 171052 "Chicken, broilers or fryers, meat only, raw", where
 /// a skin-discarded whole bird or pieces on 171447 moves (engine
 /// `skinlessRecords`): its "unit (yield from 1 lb ready-to-cook chicken)"
@@ -2508,26 +2781,6 @@ GramResolution? _resolveLine({
               ? shellYieldLabel
               : 'USDA refuse'})$keptFlag',
     );
-  } else if (refuse &&
-      skinOff &&
-      food.fdcId == meatOnlyBroiler &&
-      _readyToCookYield(food) != null) {
-    // v40 (E1, plan Y3b — the live step's requests 2–3): pieces of a bird
-    // bought with its skin, moved to the meat-only broiler because the
-    // recipe discards the skin (engine `skinOffFood`), read the whole
-    // bird's meat-only ready-to-cook yield per pound — 171052's 197 g of a
-    // pound — flagged: a share of the whole bird, not of these pieces.
-    // Never the class table on top (171052 is in neither it nor
-    // [skinShares]).
-    final meatOnly = _readyToCookYield(food)!;
-    first = GramResolution(
-      grams: first!.grams * meatOnly,
-      source: first.source,
-      basis:
-          '${first.basis} × ${meatOnly.toStringAsFixed(2)} edible (USDA '
-          'ready-to-cook yield) · approximate (skin discarded; the whole '
-          "bird's meat-only yield)",
-    );
   } else if (refuse) {
     // The record publishes no refuse portion: the bone (a whole turkey's,
     // a Foundation chicken part's, a lamb chop's; pieces on the whole-bird
@@ -2544,11 +2797,27 @@ GramResolution? _resolveLine({
     // record that publishes none reads its class's FDC figure, flagged —
     // never a whole bird's with [wholeBirdYield] off, which keeps whole
     // birds at their printed weight.
-    final byClass =
-        noRefuse && (wholeBirdYield || !_wholeBirdLine.hasMatch(raw))
+    final classed =
+        noRefuse && (wholeBirdYield || !_wholeBirdLine.hasMatch(raw));
+    // v43 (Y1–Y6, Y12, Y13): a bird part reads AH-102's figure for the part
+    // the line buys, in one step, the record deciding meat or meat and skin
+    // ([ah102YieldOf]) — pieces on the meat-only broiler 171052 too (v40's
+    // whole-bird 0.43 retired); the v40 wing flag stays on the whole bird.
+    final part = classed
+        ? ah102YieldOf(food, raw) ?? ah102Meats[food.fdcId]
+        : null;
+    final byClass = classed && part == null
         ? boneInClassYields[food.fdcId]
         : null;
-    first = byClass != null
+    first = part != null
+        ? GramResolution(
+            grams: first!.grams * part.share,
+            source: first.source,
+            basis:
+                '${first.basis} × ${part.share.toStringAsFixed(2)} edible '
+                '· approximate (${part.flag})',
+          )
+        : byClass != null
         ? GramResolution(
             grams: first!.grams * byClass.share,
             source: first.source,
@@ -2566,24 +2835,13 @@ GramResolution? _resolveLine({
                 : '${first.basis} · no edible yield read',
           );
   }
-  // v39 (Y3): a bone-in cut bought with its skin, read on a meat-only
-  // record in a recipe that discards the skin ([skinOff]: the caller's
-  // `skinDiscarded` on the recipe — the engine moves such a row there),
-  // counts FDC's meat share of meat and skin. Never on the record alone:
-  // a thigh whose skin is eaten, put on 2646171 by a person, keeps it.
-  final meat =
-      refuse && skinOff && !RegExp(r'\bskinless\b').hasMatch(raw.toLowerCase())
-      ? skinShares[food.fdcId]
-      : null;
-  if (meat != null) {
-    first = GramResolution(
-      grams: first!.grams * meat,
-      source: first.source,
-      basis:
-          '${first.basis} × ${meat.toStringAsFixed(2)} meat · approximate '
-          '(skin discarded; USDA meat-only share)',
-    );
-  }
+  // v43 (Y12, Y13): the skin is no longer a second step. The record
+  // decides ([ah102Records]): a meat-only record — where the engine moves a
+  // row whose recipe discards the skin (`skinOffFood`), or where a person
+  // put it — reads the part's meat figure from the printed weight; v39's
+  // stack (the bone yield × FDC SR's skin share, 0.795 thigh / 0.770 leg)
+  // is retired. [skinOff] now only names the part a meat-only whole bird
+  // keeps its skin on (the flag above).
   final drained = first?.source == GramSource.weight && raw != null
       ? drainedCanGrams(first!.grams, food, raw)
       : null;
@@ -2631,6 +2889,27 @@ GramResolution? _resolveLine({
             '· approximate (drained weight: ${bean.from})',
       );
     }
+  }
+  // v43 (Y8, the owner's 2026-10-06 ruling): a produce weight printed in
+  // the line's HEAD with a prep word in its tail counts AH-102's prep yield
+  // ([produceYields]); a count, a trailing prepared weight, "unpeeled" and
+  // "¼ of peels reserved" never.
+  final prep = first?.source == GramSource.weight && raw != null
+      ? produceYieldOf(food, raw)
+      : null;
+  // v43 (Y9): a counted scallion's part words ([scallionPartOf]).
+  final scallion = first?.source == GramSource.piece && raw != null
+      ? scallionPartOf(food, raw)
+      : null;
+  final trim = prep ?? scallion;
+  if (trim != null) {
+    first = GramResolution(
+      grams: first!.grams * trim.share,
+      source: first.source,
+      basis:
+          '${first.basis} × ${trim.share.toStringAsFixed(2)} edible · '
+          'approximate (${trim.flag})',
+    );
   }
   final plus = raw == null || first == null ? null : plusPartOf(raw);
   // A counted extra of the same food ("plus 1 lemon, cut into wedges") is
@@ -3095,6 +3374,12 @@ const Set<int> _cannedTomatoRecords = {333281, 2685578};
 /// lower-cased; '' for none. A prep-loss word applies only here (v39 A3,
 /// T1): "6 large very ripe bananas (about 2¼ pounds), peeled".
 String _tailAfterComma(String raw) {
+  final at = _topLevelComma(raw);
+  return at < 0 ? '' : raw.substring(at + 1).toLowerCase();
+}
+
+/// The index of [raw]'s first comma outside a paren, or -1.
+int _topLevelComma(String raw) {
   var depth = 0;
   for (var i = 0; i < raw.length; i++) {
     final c = raw[i];
@@ -3103,10 +3388,219 @@ String _tailAfterComma(String raw) {
     } else if (c == ')' && depth > 0) {
       depth--;
     } else if (c == ',' && depth == 0) {
-      return raw.substring(i + 1).toLowerCase();
+      return i;
     }
   }
-  return '';
+  return -1;
+}
+
+/// v43 (Y8, the owner's 2026-10-06 ruling): USDA AH-102 (1975) Table 1
+/// paring and trimming yields, by the produce record the row sits on: the
+/// tail words that name the prep (word-bounded, first match wins), the
+/// share and its flag (item, the printed stage, the all-samples average and
+/// range — no Granny Smith or Yukon Gold row exists). Read by
+/// [produceYieldOf].
+const Map<int, List<({String words, double share, String flag})>>
+produceYields = {
+  2346401: _potato,
+  2346402: _potato,
+  2346403: _potato,
+  1750342: _apple,
+  168202: _apple,
+  2709215: _apple,
+  168482: [
+    (
+      words: 'peeled',
+      share: 0.80,
+      flag:
+          'USDA AH-102 item 2496: sweetpotatoes, raw whole → hand or machine '
+          'pared 80 % (69–91)',
+    ),
+  ],
+  167778: _pear,
+  746773: _pear,
+  2258586: [
+    (
+      words: 'peeled',
+      share: 0.82,
+      flag:
+          'USDA AH-102 item 481: carrots without tops, raw → hand-scraped '
+          'root 82 % (58–93)',
+    ),
+  ],
+  1104962: [
+    (
+      words: 'peeled',
+      share: 0.90,
+      flag:
+          'USDA AH-102 item 1568: onions, mature, all samples, raw whole → '
+          'peeled 90 % (50–99)',
+    ),
+  ],
+  2709935: [
+    (
+      words: 'white and light green parts?',
+      share: 0.44,
+      flag:
+          'USDA AH-102 item 1412: leeks, raw → bulb and lower leaf 44 % '
+          '(35–58)',
+    ),
+  ],
+  170388: [
+    (
+      words: 'cored|trimmed',
+      share: 0.93,
+      flag:
+          'USDA AH-102 item 440: cabbage, whole head, green, red or white '
+          '(savoy not printed), raw → ready to cook, without core 93 % '
+          '(91–96)',
+    ),
+  ],
+  2685573: [
+    (
+      words: 'cored|trimmed',
+      share: 0.92,
+      flag:
+          'USDA AH-102 item 499: cauliflower, raw whole head → fully '
+          'trimmed, head or flowerbud 92 % (83–100)',
+    ),
+  ],
+  2685570: [
+    (
+      words: 'peeled',
+      share: 0.84,
+      flag:
+          'USDA AH-102 item 2459: butternut squash, raw whole → flesh 84 % '
+          '(75–88)',
+    ),
+  ],
+  2685568: [
+    (
+      words: 'trimmed',
+      share: 0.93,
+      flag:
+          'USDA AH-102 item 2446: zucchini, raw whole → flesh and skin 93 % '
+          '(86–98; ends 7)',
+    ),
+  ],
+  2685569: [
+    (
+      words: 'trimmed',
+      share: 0.95,
+      flag:
+          'USDA AH-102 item 2444: summer squash, all samples, raw whole → '
+          'flesh and skin 95 % (84–99)',
+    ),
+  ],
+  2346409: [
+    (
+      words: 'hulled|stemmed',
+      share: 0.94,
+      flag:
+          'USDA AH-102 item 2473: strawberries, good quality, raw → flesh '
+          '94 % (86–99)',
+    ),
+  ],
+};
+const _potato = [
+  (
+    words: 'peeled',
+    share: 0.81,
+    flag:
+        'USDA AH-102 item 2018: potatoes, raw whole, all samples → pared '
+        '81 % (61–94)',
+  ),
+];
+const _apple = [
+  (
+    words: 'peeled',
+    share: 0.78,
+    flag:
+        'USDA AH-102 item 17: apples, all cultivars, raw whole → flesh, '
+        'pared and cored 78 % (60–87)',
+  ),
+  (
+    words: 'cored',
+    share: 0.90,
+    flag:
+        'USDA AH-102 item 30: apples, all cultivars, raw whole → cored only '
+        '90 % (84–94)',
+  ),
+];
+const _pear = [
+  (
+    words: 'peeled',
+    share: 0.78,
+    flag:
+        'USDA AH-102 item 1734: pears, raw whole → pared, cored flesh 78 % '
+        '(40–88)',
+  ),
+];
+
+/// [food]'s [produceYields] figure for [raw]: only when the line prints a
+/// weight in its HEAD (before its first top-level comma — the complement of
+/// [_tailAfterComma]; "2 carrots, peeled … (3 ounces)" weighs a prepared
+/// cup, not a purchase) and names the prep word in its tail; never when it
+/// keeps peels ("¼ of peels reserved"). Null otherwise.
+({double share, String flag})? produceYieldOf(FdcFood? food, String raw) {
+  final figures = produceYields[food?.fdcId];
+  if (figures == null ||
+      RegExp(r'\bpeels? reserved\b', caseSensitive: false).hasMatch(raw)) {
+    return null;
+  }
+  final at = _topLevelComma(raw);
+  final head = (at < 0 ? raw : raw.substring(0, at)).toLowerCase();
+  final tail = _tailAfterComma(raw);
+  if (!RegExp(r'\b(?:pounds?|ounces?|lbs?|oz)\b').hasMatch(head)) {
+    return null;
+  }
+  for (final figure in figures) {
+    final m = RegExp('\\b(?:${figure.words})\\b').firstMatch(tail);
+    if (m != null) {
+      return m[0]!.contains('part') && _otherPartUsed(tail, m.end)
+          ? null
+          : (share: figure.share, flag: figure.flag);
+    }
+  }
+  return null;
+}
+
+/// Whether [tail], after a part clause ending at [end], names a leek's or
+/// scallion's other part as used too — "1½ pounds leeks, white and light
+/// green parts halved …; 3 cups coarsely chopped dark green parts" eats the
+/// whole leek, so no part yield applies (v43 closer 2). Read after a part
+/// clause only, never after a prep word ("peeled").
+bool _otherPartUsed(String tail, int end) => RegExp(
+  r'\b(?:green|white) parts?\b|\bgreens\b',
+).hasMatch(tail.substring(end));
+
+/// v43 (Y9, the owner's 2026-10-06 ruling): a counted scallion (FNDDS
+/// 2709794, '1 whole' 15 g) whose tail BEGINS "white parts only" or "green
+/// parts only" counts AH-102's part of the WHOLE scallion with its rootlets
+/// (the printed base; 37/96 if FNDDS's whole is trimmed is not known). Not
+/// "white and light green parts only" nor "dark green parts only" (no
+/// figure is printed for them); never a carrot or an onion.
+({double share, String flag})? scallionPartOf(FdcFood? food, String raw) {
+  if (food?.fdcId != 2709794) return null;
+  final tail = _tailAfterComma(raw);
+  final m = RegExp(r'^\s*(white|green) parts? only\b').firstMatch(tail);
+  final part = m == null || _otherPartUsed(tail, m.end) ? null : m[1];
+  return switch (part) {
+    'white' => (
+      share: 0.37,
+      flag:
+          'USDA AH-102 item 1575: white part 37 % (22–50) of the whole '
+          'scallion with rootlets',
+    ),
+    'green' => (
+      share: 0.59,
+      flag:
+          'derived from USDA AH-102 items 1573 and 1575: green tops and '
+          'rootlets 63 % (50–78) less rootlets 4 % = 59 % of the whole '
+          'scallion with rootlets',
+    ),
+    _ => null,
+  };
 }
 
 /// Whether [raw] says "peeled" after its item ([_tailAfterComma]) — a

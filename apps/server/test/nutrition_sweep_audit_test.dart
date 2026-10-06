@@ -1061,9 +1061,22 @@ void main() {
     // seven canned-bean pair details its share pin reads (173800, 175206,
     // 174285, 175195, 174286, 175201, 175243) and the "dark red kidney
     // beans" search its chili pin reads: 7 more compared, 6 of them
-    // differing in some digit.
-    expect(compared, 420);
-    expect(differ, 315);
+    // differing in some digit. Matcher v43 recorded from snapshot 19 the
+    // two bird details its poultry pins read (2646170, a hit already in
+    // 'boneless skinless chicken breasts'; 171497, in 'turkey wings') and
+    // five searches (bone-in skin-on split chicken breast, bone-in split
+    // chicken breasts, chicken drumsticks, split bone-in chicken breast,
+    // turkey wings): 2 more compared, both differing in some digit. Its
+    // produce and meat half recorded from snapshot 19 the eight details
+    // its pins read (2346401 russet, 1104962 white onion, 2685570
+    // butternut, 169177 cured ham, 172641 lamb rack, 172513 lamb
+    // foreshank, 169441 beef shank, 168299 baby backs) and eleven searches
+    // (golden delicious apples, russet potato, leeks, pears, savoy cabbage,
+    // butternut squash, yellow summer squash, dried apples, racks of lamb,
+    // beef shanks, smoked bone-in picnic ham): 8 more compared, 7 of
+    // them differing in some digit.
+    expect(compared, 430);
+    expect(differ, 324);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
