@@ -242,11 +242,19 @@ void main() {
       for (final recipe in [nachos, guacamole, crust]) {
         await matchAndCompute(db, provider, recipe);
       }
-      expect(bulkScopeIds(db, BulkScope.missing), isEmpty);
+      // v44: nachos' line "1 recipe One-Minute Salsa (recipe follows)"
+      // makes its own section a child, keyed and swept FIRST — never
+      // computed here, so `missing` and `stale` both select it.
+      final salsa = '${nachos.id}#One-Minute Salsa';
+      expect(bulkScopeIds(db, BulkScope.missing), [salsa]);
       parentsLast(bulkScopeIds(db, BulkScope.all));
       reorder(nachos, 0, 1);
       reorder(guacamole, 0, 1);
-      expect(bulkScopeIds(db, BulkScope.stale), [guacamole.id, nachos.id]);
+      expect(bulkScopeIds(db, BulkScope.stale), [
+        salsa,
+        guacamole.id,
+        nachos.id,
+      ]);
     },
   );
 

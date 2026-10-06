@@ -9,7 +9,8 @@ import 'package:salt_server/src/nutrition/provider.dart';
 
 /// `GET /api/v1/recipes/<id-or-slug>/nutrition/matches` (any auth) — one
 /// entry per ingredient line: the stored match decision plus ranked
-/// candidates for the review sheet's re-pick list.
+/// candidates for the review sheet's re-pick list. v44: `?section=<title>`
+/// lists that section's lines instead (404 "No section with that title.").
 Future<Response> onRequest(RequestContext context, String rawId) async {
   final id = decodePathParam(rawId);
   requireGet(context);
@@ -23,7 +24,11 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
     body: await matchesBody(
       db,
       context.read<NutritionProvider>(),
-      found.recipe,
+      routeRecipeOf(
+        db,
+        found.recipe,
+        context.request.uri.queryParameters['section'],
+      ),
     ),
   );
 }

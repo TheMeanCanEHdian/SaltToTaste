@@ -913,23 +913,28 @@ void main() {
       // (flagged default; Foolproof All-Butter … for Double-Crust Pie listed
       // as similar, never computed), and Free-Form Apple Tart's "Rustic Tart
       // Dough" is held `choose_recipe` (missing).
-      final v41 = {
+      Map<String, Map<String, dynamic>> recipesOf(String fixture) => {
         for (final entry
             in jsonDecode(
                   File(
-                    'test/fixtures/contract-recipes/v41.json',
+                    'test/fixtures/contract-recipes/$fixture.json',
                   ).readAsStringSync(),
                 )
                 as List<dynamic>)
           (entry as Map<String, dynamic>)['corpus_file'] as String:
               entry['recipe'] as Map<String, dynamic>,
       };
-      Future<String> post(String file, {bool compute = true}) async {
+      final v41 = recipesOf('v41');
+      Future<String> post(
+        String file, {
+        bool compute = true,
+        Map<String, Map<String, dynamic>>? from,
+      }) async {
         final (status, body) = await harness.send(
           'POST',
           '/api/v1/recipes',
           headers: harness.auth(adminSession, csrf: true),
-          jsonBody: {'recipe': v41[file]},
+          jsonBody: {'recipe': (from ?? v41)[file]},
         );
         expect(status, HttpStatus.created, reason: body);
         final slug =
@@ -991,6 +996,147 @@ void main() {
         'nutrition_review_choose_recipe',
         'GET',
         '/api/v1/admin/nutrition_review?group=item&bucket=choose_recipe',
+        headers: harness.auth(adminSession),
+      );
+
+      // --- matcher v44: sections as children, corpus-free ---
+      // Six real corpus recipes (test/fixtures/contract-recipes/v44.json:
+      // each corpus document's title, yield, prep notes, ingredient lines,
+      // steps and subsections — kind, body, yield, notes, lines and steps —
+      // as the corpus has them). Basic Double-Crust Pie Dough is already
+      // here (v41.json, its section titles only): the real recipe PUT gives
+      // it its corpus sections, so ONE host carries "Basic Single-Crust Pie
+      // Dough" (the one-host guard, N8). Each POST's compute computes its
+      // child sections first.
+      final v44 = recipesOf('v44');
+      final (doughStatus, doughBody) = await harness.send(
+        'PUT',
+        '/api/v1/recipes/basic-double-crust-pie-dough',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {'recipe': v44['0972-basic-double-crust-pie-dough.yaml']},
+      );
+      expect(doughStatus, HttpStatus.ok, reason: doughBody);
+      // Chraime's "1 tablespoon tabil (recipe follows)" routes to its OWN
+      // "Tabil" (MAKES ABOUT ½ CUP): share 0.125, no host title.
+      final chraime = await post('1208-chraime.yaml', from: v44);
+      await harness.capture(
+        'nutrition_matches_section_own',
+        'GET',
+        '/api/v1/recipes/$chraime/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_section_own',
+        'GET',
+        '/api/v1/recipes/$chraime/nutrition',
+        headers: harness.auth(adminSession),
+      );
+      // Pumpkin Pie's dough routes to ANOTHER recipe's section: the child
+      // carries `host_title`.
+      final pumpkin = await post('0987-pumpkin-pie.yaml', from: v44);
+      await harness.capture(
+        'nutrition_matches_section_other',
+        'GET',
+        '/api/v1/recipes/$pumpkin/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_section_other',
+        'GET',
+        '/api/v1/recipes/$pumpkin/nutrition',
+        headers: harness.auth(adminSession),
+      );
+      // That section's own lines and totals: `?section=` on the shipped
+      // routes (any authenticated user).
+      const singleCrust = 'Basic%20Single-Crust%20Pie%20Dough';
+      await harness.capture(
+        'nutrition_section_matches',
+        'GET',
+        '/api/v1/recipes/basic-double-crust-pie-dough/nutrition/matches'
+            '?section=$singleCrust',
+        headers: harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_section_label',
+        'GET',
+        '/api/v1/recipes/basic-double-crust-pie-dough/nutrition'
+            '?section=$singleCrust',
+        headers: harness.auth(adminSession),
+      );
+      // Lemon Meringue Pie's dough names a section with no ingredient
+      // lines: not routed, reason `no_ingredients`, its partial line.
+      final lemon = await post('0989-lemon-meringue-pie.yaml', from: v44);
+      await harness.capture(
+        'nutrition_matches_section_prose',
+        'GET',
+        '/api/v1/recipes/$lemon/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_section_prose',
+        'GET',
+        '/api/v1/recipes/$lemon/nutrition',
+        headers: harness.auth(adminSession),
+      );
+      // "1 recipe glaze (recipes follow)": held for a person, its own two
+      // glazes listed (rule PO), computed and pickable.
+      final ham = await post('0251-glazed-spiral-sliced-ham.yaml', from: v44);
+      final pick = await harness.capture(
+        'nutrition_matches_section_pick',
+        'GET',
+        '/api/v1/recipes/$ham/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+      final glaze =
+          (pick['items']! as List<dynamic>)[2]! as Map<String, dynamic>;
+      // The pick: the host's slug and the section's title; line-local.
+      final (glazePut, glazePutBody) = await harness.send(
+        'PUT',
+        '/api/v1/recipes/$ham/nutrition/matches/2',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {
+          'raw': glaze['raw'],
+          'child': ham,
+          'section': 'Cherry-Port Glaze',
+        },
+      );
+      expect(glazePut, HttpStatus.ok, reason: glazePutBody);
+      final routed =
+          ((jsonDecode(glazePutBody) as Map<String, dynamic>)['items']!
+                  as List<dynamic>)[2]!
+              as Map<String, dynamic>;
+      expect(
+        (routed['match']! as Map<String, dynamic>)['child'],
+        allOf(
+          containsPair('state', 'routed'),
+          containsPair('section', 'Cherry-Port Glaze'),
+          containsPair('host_title', null),
+        ),
+      );
+      expect(routed['others'], 0);
+      // A section line in the queue: Satay Glaze's red curry paste (a
+      // low-confidence record with no grams), its row naming the HOST and
+      // the section; Grilled Glazed Pork Tenderloin Roast's own glaze line
+      // picked onto it, so the group's `last_open` counts that parent.
+      final roast = await post(
+        '0601-grilled-glazed-pork-tenderloin-roast.yaml',
+        from: v44,
+      );
+      final (satay, satayBody) = await harness.send(
+        'PUT',
+        '/api/v1/recipes/$roast/nutrition/matches/3',
+        headers: harness.auth(adminSession, csrf: true),
+        jsonBody: {
+          'raw': '1 recipe glaze (recipes follow)',
+          'child': roast,
+          'section': 'Satay Glaze',
+        },
+      );
+      expect(satay, HttpStatus.ok, reason: satayBody);
+      await harness.capture(
+        'nutrition_review_section',
+        'GET',
+        '/api/v1/admin/nutrition_review?group=item&bucket=check',
         headers: harness.auth(adminSession),
       );
     });

@@ -1,0 +1,941 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "1 recipe Single-Crust Pie Dough for Custard Pies (this page), fitted into a 9-inch pie plate and chilled",
+      "item": "Single-Crust Pie Dough for Custard Pies (this page)",
+      "line_amount": "1 recipe",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "single-crust pie dough for custard pies",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Sub-recipe — made from its own recipe, not counted in these totals",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 0.0,
+        "gram_source": "unmeasured",
+        "gram_basis": "a sub-recipe — counted as 0 g",
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": {
+          "state": "not_routed",
+          "reason": "no_ingredients",
+          "name": "Single-Crust Pie Dough for Custard Pies",
+          "slug": "basic-double-crust-pie-dough",
+          "title": "Single-Crust Pie Dough for Custard Pies",
+          "section": "Single-Crust Pie Dough for Custard Pies",
+          "host_title": "Basic Double-Crust Pie Dough",
+          "share_text": "1",
+          "default": false,
+          "why": "none",
+          "yield_text": null,
+          "share": 1.0,
+          "yield_units": [],
+          "grams": 0.0,
+          "kcal": null,
+          "kcal_per_serving": null,
+          "status": null,
+          "matched_count": null,
+          "total_count": null,
+          "kind": "pies",
+          "parent_kind": "pie",
+          "candidates": []
+        },
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 1,
+      "raw": "1½ cups water",
+      "item": "water",
+      "line_amount": "1 1/2 cup",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "water",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Water/ice — counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 2,
+      "raw": "1 cup (7 ounces) sugar",
+      "item": "sugar",
+      "line_amount": "1 cup",
+      "kcal_per_100g": 385.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "teaspoon",
+          "description": null,
+          "grams": 4.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "cup",
+          "description": null,
+          "grams": 188.0,
+          "fill": 188.0
+        },
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 8.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "sugar",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 746784,
+        "description": "Sugars, granulated",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 198.4465,
+        "gram_source": "weight",
+        "gram_basis": "from 7 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 746784,
+          "description": "Sugars, granulated",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 170674,
+          "description": "Sugar, turbinado",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169655,
+          "description": "Sugars, granulated",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169658,
+          "description": "Sugars, maple",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2710261,
+          "description": "Sugar, cinnamon",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2710257,
+          "description": "Sugar, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 168833,
+          "description": "Sugars, brown",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710260,
+          "description": "Sugar, brown",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "¼ cup (1 ounce) cornstarch",
+      "item": "cornstarch",
+      "line_amount": "1/4 cup",
+      "kcal_per_100g": 381.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 128.0,
+          "fill": 32.0
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "cornstarch",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 169698,
+        "description": "Cornstarch",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 28.3495,
+        "gram_source": "weight",
+        "gram_basis": "from 1 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 169698,
+          "description": "Cornstarch",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 174806,
+          "description": "Snacks, Pretzels, gluten- free made with cornstarch and potato flour",
+          "data_type": "SR Legacy",
+          "confidence": 0.2722222222222223
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "raw": "⅛ teaspoon table salt",
+      "item": "table salt",
+      "line_amount": "1/8 teaspoon",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 292.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 6.0,
+          "fill": 0.75
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 18.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.4,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 0.7516603,
+        "gram_source": "density",
+        "gram_basis": "1/8 teaspoon ≈ 1 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "raw": "6 large egg yolks",
+      "item": "large egg yolks",
+      "line_amount": "6",
+      "kcal_per_100g": 334.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "egg yolks",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 748236,
+        "description": "Eggs, Grade A, Large, egg yolk",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 102.0,
+        "gram_source": "piece",
+        "gram_basis": "6 × 17 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 748236,
+          "description": "Eggs, Grade A, Large, egg yolk",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 329716,
+          "description": "Egg, yolk, dried",
+          "data_type": "Foundation",
+          "confidence": 0.9233333333333333
+        },
+        {
+          "fdc_id": 172184,
+          "description": "Egg, yolk, raw, fresh",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 2707172,
+          "description": "Egg, yolk only, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 329596,
+          "description": "Egg, yolk, raw, frozen, pasteurized",
+          "data_type": "Foundation",
+          "confidence": 0.8899999999999999
+        },
+        {
+          "fdc_id": 173428,
+          "description": "Egg, yolk, dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.8733333333333333
+        },
+        {
+          "fdc_id": 173421,
+          "description": "Egg, yolk, raw, frozen, pasteurized",
+          "data_type": "SR Legacy",
+          "confidence": 0.8400000000000001
+        },
+        {
+          "fdc_id": 173436,
+          "description": "Egg, yolk, raw, frozen, salted, pasteurized",
+          "data_type": "SR Legacy",
+          "confidence": 0.8266666666666667
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "raw": "1 tablespoon grated zest plus ½ cup juice from 3 lemons",
+      "item": "grated zest plus 1/2 cup juice from 3 lemons",
+      "line_amount": "1 tablespoon",
+      "kcal_per_100g": 22.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "wedge yields",
+          "grams": 5.9,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "lemon yields",
+          "grams": 48.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 244.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "fl oz",
+          "grams": 30.5,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "lemon zest",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": 167747,
+        "description": "Lemon juice, raw",
+        "data_type": "SR Legacy",
+        "confidence": 0.9533333333333334,
+        "grams": 121.84282,
+        "gram_source": "density",
+        "gram_basis": "1/2 cup ≈ 118 mL · juice only (the zest is dropped)",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 7,
+      "raw": "2 tablespoons unsalted butter, cut into 2 pieces",
+      "item": "unsalted butter",
+      "line_amount": "2 tablespoon",
+      "kcal_per_100g": 717.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "pat (1\" sq, 1/3\" high)",
+          "grams": 5.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 14.2,
+          "fill": 28.4
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "stick",
+          "grams": 113.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 227.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "without salt butter",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173430,
+        "description": "Butter, without salt",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 28.361082399999997,
+        "gram_source": "density",
+        "gram_basis": "2 tablespoon ≈ 30 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173430,
+          "description": "Butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 170155,
+          "description": "Seeds, sunflower seed butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 172469,
+          "description": "Peanut butter, chunk style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 172470,
+          "description": "Peanut butter, smooth style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 168588,
+          "description": "Nuts, almond butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 170163,
+          "description": "Nuts, cashew butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 169052,
+          "description": "Margarine-like, butter-margarine blend, 80% fat, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 172344,
+          "description": "Butter, light, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8600000000000001
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "raw": "⅓ cup water",
+      "item": "water",
+      "line_amount": "1/3 cup",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "water",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Water/ice — counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 9,
+      "raw": "1 tablespoon cornstarch",
+      "item": "cornstarch",
+      "line_amount": "1 tablespoon",
+      "kcal_per_100g": 381.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 128.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "cornstarch",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 169698,
+        "description": "Cornstarch",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 7.984872,
+        "gram_source": "density",
+        "gram_basis": "1 tablespoon ≈ 15 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 169698,
+          "description": "Cornstarch",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 174806,
+          "description": "Snacks, Pretzels, gluten- free made with cornstarch and potato flour",
+          "data_type": "SR Legacy",
+          "confidence": 0.2722222222222223
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "raw": "½ cup (3½ ounces) sugar",
+      "item": "sugar",
+      "line_amount": "1/2 cup",
+      "kcal_per_100g": 385.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "teaspoon",
+          "description": null,
+          "grams": 4.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "cup",
+          "description": null,
+          "grams": 188.0,
+          "fill": 94.0
+        },
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 8.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "sugar",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 746784,
+        "description": "Sugars, granulated",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 99.22325,
+        "gram_source": "weight",
+        "gram_basis": "from 3 1/2 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 746784,
+          "description": "Sugars, granulated",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 170674,
+          "description": "Sugar, turbinado",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169655,
+          "description": "Sugars, granulated",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169658,
+          "description": "Sugars, maple",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2710261,
+          "description": "Sugar, cinnamon",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2710257,
+          "description": "Sugar, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 168833,
+          "description": "Sugars, brown",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710260,
+          "description": "Sugar, brown",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "position": 11,
+      "raw": "¼ teaspoon cream of tartar",
+      "item": "cream of tartar",
+      "line_amount": "1/4 teaspoon",
+      "kcal_per_100g": 258.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 3.0,
+          "fill": 0.75
+        },
+        {
+          "amount": 0.5,
+          "unit": null,
+          "description": "tsp",
+          "grams": 1.5,
+          "fill": 0.75
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "cream of tartar",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 175041,
+        "description": "Leavening agents, cream of tartar",
+        "data_type": "SR Legacy",
+        "confidence": 0.92,
+        "grams": 0.75,
+        "gram_source": "portion",
+        "gram_basis": "1/4 teaspoon · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 175041,
+          "description": "Leavening agents, cream of tartar",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        }
+      ]
+    },
+    {
+      "position": 12,
+      "raw": "4 large egg whites",
+      "item": "large egg whites",
+      "line_amount": "4",
+      "kcal_per_100g": 55.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "egg white",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 747997,
+        "description": "Eggs, Grade A, Large, egg white",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 132.0,
+        "gram_source": "piece",
+        "gram_basis": "4 × 33 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 747997,
+          "description": "Eggs, Grade A, Large, egg white",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 323793,
+          "description": "Egg, white, dried",
+          "data_type": "Foundation",
+          "confidence": 0.9233333333333333
+        },
+        {
+          "fdc_id": 172183,
+          "description": "Egg, white, raw, fresh",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 2707168,
+          "description": "Egg, white only, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 323697,
+          "description": "Egg, white, raw, frozen, pasteurized",
+          "data_type": "Foundation",
+          "confidence": 0.8899999999999999
+        },
+        {
+          "fdc_id": 172204,
+          "description": "Egg, white, dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.8733333333333333
+        },
+        {
+          "fdc_id": 172203,
+          "description": "Egg, white, raw, frozen, pasteurized",
+          "data_type": "SR Legacy",
+          "confidence": 0.8400000000000001
+        },
+        {
+          "fdc_id": 170895,
+          "description": "Egg, white, dried, stabilized, glucose reduced",
+          "data_type": "SR Legacy",
+          "confidence": 0.7466666666666666
+        }
+      ]
+    },
+    {
+      "position": 13,
+      "raw": "½ teaspoon vanilla extract",
+      "item": "vanilla extract",
+      "line_amount": "1/2 teaspoon",
+      "kcal_per_100g": 288.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 4.2,
+          "fill": 2.1
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 208.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 13.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "vanilla extract",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173471,
+        "description": "Vanilla extract",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 2.1,
+        "gram_source": "portion",
+        "gram_basis": "1/2 teaspoon · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173471,
+          "description": "Vanilla extract",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 172235,
+          "description": "Vanilla extract, imitation, alcohol",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 172236,
+          "description": "Vanilla extract, imitation, no alcohol",
+          "data_type": "SR Legacy",
+          "confidence": 0.48
+        }
+      ]
+    }
+  ]
+}

@@ -18,6 +18,20 @@ final Logger _log = Logger('db');
 /// [holds] as an SQL list of string literals.
 String _sqlList(Iterable<String> holds) => holds.map((h) => "'$h'").join(', ');
 
+/// The storage key of [host]'s section titled [title] (matcher v44,
+/// migration 019): `<host id>#<exact title>`. `#` never occurs in a recipe
+/// id (isSafeRecipeId), so the host is everything before the first `#`
+/// ([hostOf]). Storage only: the wire names a section by its host's slug
+/// and its title, never by this key.
+String sectionKeyOf(String host, String title) => '$host#$title';
+
+/// The recipe [id] belongs to: itself, or a section key's host
+/// ([sectionKeyOf]) — what migration 019's `host_id` computes in SQL.
+String hostOf(String id) {
+  final at = id.indexOf('#');
+  return at < 0 ? id : id.substring(0, at);
+}
+
 /// What [SaltDatabase.upsertRecipe] did with the given recipe.
 enum UpsertOutcome {
   /// No row existed for the recipe id; a new one was inserted.
@@ -330,8 +344,38 @@ class SaltDatabase {
       _rebuildIngredients(recipe);
       _rebuildTags(recipe);
       _rebuildFts(recipe, rowid);
+      if (isUpdate) {
+        _dropDeadSections(recipe);
+      }
     });
     return isUpdate ? UpsertOutcome.updated : UpsertOutcome.inserted;
+  }
+
+  /// v44 (S15 (a), R19): the rows, stamps and layouts of [recipe]'s
+  /// section keys whose title its document no longer carries — a retitle
+  /// or a removed section. One-way: a decided row inside the section goes
+  /// with it, and a parent's pick of the old key then reads its child gone
+  /// (the stamp arm of [underivedSql]) and re-resolves.
+  void _dropDeadSections(Recipe recipe) {
+    final live = jsonEncode([
+      for (final sub in recipe.subsections)
+        if (sub.title case final title?) sectionKeyOf(recipe.id, title),
+    ]);
+    _prepared(
+      'DELETE FROM ingredient_matches WHERE host_id = ? '
+      'AND recipe_id <> host_id '
+      'AND recipe_id NOT IN (SELECT value FROM json_each(?))',
+    ).execute([recipe.id, live]);
+    _prepared(
+      'DELETE FROM recipe_nutrition WHERE host_id = ? '
+      'AND recipe_id <> host_id '
+      'AND recipe_id NOT IN (SELECT value FROM json_each(?))',
+    ).execute([recipe.id, live]);
+    _prepared(
+      'DELETE FROM recipe_layout WHERE host_id = ? '
+      'AND recipe_id <> host_id '
+      'AND recipe_id NOT IN (SELECT value FROM json_each(?))',
+    ).execute([recipe.id, live]);
   }
 
   /// Whether a recipe row with exactly this [id] exists.
@@ -1305,9 +1349,13 @@ class SaltDatabase {
     // A No match line (no food) or a Check line with no grams (a plain
     // Confirm leaves it without grams when USDA cannot convert) is 0 — and
     // so is a line held for a food with no record ([noRecordHoldsSql], the
-    // action table: only a pick or a skip finishes it, v28).
+    // action table: only a pick or a skip finishes it, v28). v44: a
+    // SECTION row's is 0 — its last open line finishes the section, and
+    // whether that finishes a parent is the grouped queue's `credit`
+    // (under-promised here, never over).
     final rows = _prepared(
-      "SELECT *, (open_lines = 1 AND COALESCE(hold, '') NOT IN "
+      'SELECT *, (open_lines = 1 AND recipe_id = host_id '
+      "AND COALESCE(hold, '') NOT IN "
       "($noConfirmHoldsSql) AND (bucket = 'no_grams' "
       "OR (bucket = 'check' AND grams IS NOT NULL))) AS finishes "
       'FROM (SELECT *, '
@@ -1316,10 +1364,10 @@ class SaltDatabase {
       'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
       'im.data_type, im.confidence, im.grams, im.gram_source, im.status, '
       'im.updated_at, im.item_key, im.hold, im.child_recipe_id, '
-      'im.child_share, im.child_stamp, im.parts, r.slug AS review_slug, '
-      'r.title AS review_title, '
+      'im.child_share, im.child_stamp, im.parts, im.host_id, '
+      'r.slug AS review_slug, r.title AS review_title, '
       '$_reviewBucketCase AS bucket '
-      'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id '
+      'FROM ingredient_matches im JOIN recipes r ON r.id = im.host_id '
       ')) WHERE (? IS NULL AND bucket IN ($flaggedBucketsSql)) '
       'OR bucket = ? '
       "ORDER BY CASE WHEN ? = 'finishes' THEN finishes ELSE 0 END DESC, "
@@ -1369,7 +1417,7 @@ class SaltDatabase {
       "OR im.status NOT IN ('auto', 'unmatched') "
       "OR COALESCE(im.hold, '') IN ($lineHoldsSql) "
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
-      'FROM ingredient_matches im JOIN recipes r ON r.id = im.recipe_id)';
+      'FROM ingredient_matches im JOIN recipes r ON r.id = im.host_id)';
 
   /// The chain [nutritionReviewGroups] and [nutritionReviewFinishable]
   /// share (binds: the bucket filter, twice): the filtered `members`, each
@@ -1385,6 +1433,23 @@ class SaltDatabase {
   /// count it, v28). The count may under-promise
   /// a Check example whose cached record does convert — the accepted
   /// direction: never promise what a confirm may not count.
+  ///
+  /// v44 (design_v2 S12 a-i, recheck N1): section rows join their HOST
+  /// (`host_id`) and their `solo` key is a section, not a recipe — `credit`
+  /// maps it to the parents it finishes, and the banner's `finishable` and
+  /// `open` read `credit` and `waits` like the groups' `finishes`, so the
+  /// banner equals the sum of the groups' counts. `pend`: every main
+  /// recipe's routed child (no hold, not skipped) that is not complete;
+  /// `waits`: the RECIPES an open line holds open — a main row its own, a
+  /// section row each parent pending on its key; `credit`: what one group
+  /// decision finishes, by RECIPE — a main recipe in `solo` with no `pend`
+  /// child (an incomplete child keeps it partial whatever the group decides;
+  /// one whose child's open lines sit in the same group is under-promised —
+  /// verify44 D2: the GF pizza's psyllium group, its blend partial), or a
+  /// parent with no open line of its own whose every incomplete child is a
+  /// section in `solo` under ONE group (`short` the worst of them). A parent is
+  /// credited once, and never beside itself (it has no flagged row, so it
+  /// is in no `solo`).
   static final String _reviewFinishCte =
       '$_reviewFlaggedCte, '
       'members AS (SELECT * FROM flagged WHERE '
@@ -1393,14 +1458,34 @@ class SaltDatabase {
       'example AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY gkey '
       'ORDER BY confidence, (grams IS NULL), review_title, position) AS rn '
       'FROM members), '
-      'solo AS (SELECT o.recipe_id, MIN(o.gkey) AS gkey, '
+      'solo AS (SELECT o.recipe_id, MIN(o.host_id) AS host_id, '
+      'MIN(o.gkey) AS gkey, '
       "SUM((o.grams IS NULL AND (x.rn IS NULL OR o.bucket <> 'no_grams')) "
       "OR COALESCE(o.hold, '') IN ($noConfirmHoldsSql)) "
       'AS short FROM flagged o '
       'LEFT JOIN example x ON x.rn = 1 AND x.recipe_id = o.recipe_id '
       'AND x.position = o.position '
       'WHERE o.bucket IN ($flaggedBucketsSql) '
-      'GROUP BY o.recipe_id HAVING COUNT(DISTINCT o.gkey) = 1)';
+      'GROUP BY o.recipe_id HAVING COUNT(DISTINCT o.gkey) = 1), '
+      'pend AS (SELECT q.recipe_id AS pid, q.child_recipe_id AS cid '
+      'FROM ingredient_matches q LEFT JOIN recipe_nutrition n '
+      'ON n.recipe_id = q.child_recipe_id '
+      'WHERE q.recipe_id = q.host_id AND q.child_recipe_id IS NOT NULL '
+      "AND q.hold IS NULL AND q.status <> 'skipped' "
+      "AND COALESCE(n.status, '') <> 'complete'), "
+      'waits AS (SELECT recipe_id AS rid FROM flagged '
+      'WHERE bucket IN ($flaggedBucketsSql) AND recipe_id = host_id '
+      'UNION SELECT p.pid FROM pend p JOIN flagged f ON f.recipe_id = p.cid '
+      'WHERE f.bucket IN ($flaggedBucketsSql)), '
+      'credit AS (SELECT recipe_id AS rid, gkey, short FROM solo '
+      'WHERE recipe_id = host_id '
+      'AND recipe_id NOT IN (SELECT pid FROM pend) '
+      'UNION ALL SELECT p.pid, MIN(s.gkey), MAX(s.short) FROM pend p '
+      'LEFT JOIN solo s ON s.recipe_id = p.cid AND s.recipe_id <> s.host_id '
+      'WHERE p.pid NOT IN (SELECT recipe_id FROM flagged '
+      'WHERE bucket IN ($flaggedBucketsSql)) '
+      'GROUP BY p.pid '
+      'HAVING COUNT(s.recipe_id) = COUNT(*) AND COUNT(DISTINCT s.gkey) = 1)';
 
   /// Whole-library payoff of the grouped queue (its banner): how many
   /// recipes are ONE group decision from complete (each group's `finishes`,
@@ -1409,9 +1494,8 @@ class SaltDatabase {
   ({int finishable, int open}) nutritionReviewFinishable() {
     final row = _prepared(
       '$_reviewFinishCte '
-      'SELECT (SELECT COUNT(*) FROM solo WHERE short = 0) AS finishable, '
-      '(SELECT COUNT(DISTINCT recipe_id) FROM flagged '
-      'WHERE bucket IN ($flaggedBucketsSql)) AS open',
+      'SELECT (SELECT COUNT(*) FROM credit WHERE short = 0) AS finishable, '
+      '(SELECT COUNT(DISTINCT rid) FROM waits) AS open',
     ).select([null, null]).first;
     return (
       finishable: row['finishable'] as int,
@@ -1494,7 +1578,7 @@ class SaltDatabase {
       'COUNT(*) FILTER (WHERE s.short = 0) AS n, '
       "json_group_array(json_object('id', r.id, 'title', r.title)) "
       'FILTER (WHERE s.short = 0) AS names '
-      'FROM solo s JOIN recipes r ON r.id = s.recipe_id GROUP BY s.gkey) '
+      'FROM credit s JOIN recipes r ON r.id = s.rid GROUP BY s.gkey) '
       'SELECT e.*, a.lines AS group_lines, a.recipes AS group_recipes, '
       'a.gmin, a.gmax, a.gmissing, a.worst_bucket, '
       'COALESCE(f.n, 0) AS finishes, COALESCE(f.last_open, 0) AS last_open, '
@@ -1666,7 +1750,7 @@ class SaltDatabase {
       "WHERE ingredient_matches.status IN ('auto', 'unmatched') "
       "OR (ingredient_matches.status = 'confirmed' "
       'AND ingredient_matches.fdc_id IS NULL '
-      'AND ingredient_matches.description IN (?, ?, ?, ?, ?, ?))',
+      'AND ingredient_matches.description IN (?, ?, ?, ?, ?, ?, ?, ?))',
     ).execute([
       row.recipeId,
       row.position,
@@ -1881,13 +1965,14 @@ class SaltDatabase {
       // GLOBAL counter's next (migration 013): a recipe deleted and
       // re-created under its id never repeats a seq a writer read before.
       _prepared('UPDATE layout_counter SET seq = seq + 1').execute();
+      // A section key's layout lives while its HOST does (v44, F2).
       _prepared(
         'INSERT INTO recipe_layout (recipe_id, seq, lines) '
         'SELECT ?, (SELECT seq FROM layout_counter), ? '
         'WHERE EXISTS (SELECT 1 FROM recipes WHERE id = ?) '
         'ON CONFLICT(recipe_id) DO UPDATE SET seq = excluded.seq, '
         'lines = excluded.lines',
-      ).execute([recipeId, texts, recipeId]);
+      ).execute([recipeId, texts, hostOf(recipeId)]);
     });
   }
 
@@ -1917,7 +2002,7 @@ class SaltDatabase {
       if (_layoutTextsOf(recipeId) != null ||
           _prepared(
             'SELECT 1 FROM recipes WHERE id = ?',
-          ).select([recipeId]).isEmpty) {
+          ).select([hostOf(recipeId)]).isEmpty) {
         return;
       }
       _prepared('UPDATE layout_counter SET seq = seq + 1').execute();
@@ -2057,7 +2142,11 @@ class SaltDatabase {
       "'Equipment — not food, counts as zero', "
       "'Water/ice — counts as zero', "
       "'Continues the line above — counted with it', "
-      "'Flavouring — no nutrients, counts as zero'";
+      "'Flavouring — no nutrients, counts as zero', "
+      "'Reserved from the main recipe — no amount on the line, counts as "
+      "zero', "
+      "'Reserved from the main recipe — counted in the main recipe’s spice "
+      "rub'";
 
   /// [underivedSql] for [recipeId]'s stamp; false with no stamp.
   bool hasUnderivedRows(String recipeId) =>
@@ -2305,6 +2394,60 @@ class SaltDatabase {
       row['recipe_id'] as String,
   ];
 
+  /// The section keys holding a stamp ([sectionKeyOf]), by key.
+  List<String> sectionKeysWithNutrition() => [
+    for (final row in _prepared(
+      'SELECT recipe_id FROM recipe_nutrition WHERE recipe_id <> host_id '
+      'ORDER BY recipe_id',
+    ).select())
+      row['recipe_id'] as String,
+  ];
+
+  /// v44 garbage collection (design_v2 §2 v44.3, F5, R21): every section
+  /// key outside [children] — the LIBRARY-WIDE child set, never a scope's
+  /// selection — loses its stamp and its ENGINE rows. A decided row (a
+  /// person's grams, skip or pick on a section line — the mirror of the
+  /// engine's `isDecidedRow`: decided status, no engine rule row) is
+  /// never collected: nothing else carries it. A layout goes only with
+  /// the key's last row. Returns the keys collected.
+  List<String> collectSectionGarbage(Set<String> children) {
+    final keys = [
+      for (final row in _prepared(
+        'SELECT recipe_id FROM recipe_nutrition WHERE recipe_id <> host_id '
+        'UNION SELECT recipe_id FROM ingredient_matches '
+        'WHERE recipe_id <> host_id AND NOT $_decidedSql ORDER BY 1',
+      ).select())
+        if (!children.contains(row['recipe_id'] as String))
+          row['recipe_id'] as String,
+    ];
+    if (keys.isEmpty) {
+      return keys;
+    }
+    _inTransaction(() {
+      for (final key in keys) {
+        _prepared(
+          'DELETE FROM recipe_nutrition WHERE recipe_id = ?',
+        ).execute([key]);
+        _prepared(
+          'DELETE FROM ingredient_matches WHERE recipe_id = ? '
+          'AND NOT $_decidedSql',
+        ).execute([key]);
+        _prepared(
+          'DELETE FROM recipe_layout WHERE recipe_id = ? AND NOT EXISTS '
+          '(SELECT 1 FROM ingredient_matches m WHERE m.recipe_id = ?)',
+        ).execute([key, key]);
+      }
+    });
+    return keys;
+  }
+
+  /// A row a PERSON decided (the engine's `isDecidedRow`): a decided
+  /// status that is no engine rule row ([engineRuleNotesSql]).
+  static const String _decidedSql =
+      "(status IN ('confirmed', 'overridden', 'skipped') "
+      "AND NOT (status = 'confirmed' AND fdc_id IS NULL "
+      'AND description IN ($engineRuleNotesSql)))';
+
   /// Recipe ids that have no computed nutrition yet (bulk-job work list).
   List<String> recipeIdsWithoutNutrition() {
     final rows = _db.select(
@@ -2342,6 +2485,10 @@ class SaltDatabase {
   /// stamp's layout sequence is still the recipe's ([layoutOf]).
   /// `underived` is RULE A's half ([underivedSql]): a decided row no
   /// derivation reached for the stamp.
+  ///
+  /// v44: a section's stamp too — its key as `id` with its HOST's `doc`
+  /// (joined on migration 019's `host_id`; the engine's
+  /// `nutritionRecipeFromDoc` reads the section out of it).
   List<
     ({
       String id,
@@ -2353,11 +2500,11 @@ class SaltDatabase {
   >
   recipesWithNutrition() {
     final rows = _db.select(
-      'SELECT r.id AS id, r.doc AS doc, n.ingredients_hash AS h, '
+      'SELECT n.recipe_id AS id, r.doc AS doc, n.ingredients_hash AS h, '
       'n.layout_seq IS COALESCE(l.seq, 0) AS lc, $underivedSql AS ud '
-      'FROM recipes r JOIN recipe_nutrition n ON n.recipe_id = r.id '
-      'LEFT JOIN recipe_layout l ON l.recipe_id = r.id '
-      'ORDER BY r.id',
+      'FROM recipe_nutrition n JOIN recipes r ON r.id = n.host_id '
+      'LEFT JOIN recipe_layout l ON l.recipe_id = n.recipe_id '
+      'ORDER BY n.recipe_id',
     );
     return [
       for (final row in rows)
@@ -3258,6 +3405,11 @@ const List<String> engineRuleNotes = [
   'Continues the line above — counted with it',
   // v37 (the class ruling): a zero-nutrient flavouring, 0 g on no food.
   'Flavouring — no nutrients, counts as zero',
+  // v44 (S6 a): a section line that is its main recipe's own part — an
+  // amount-less reserved part or pan drippings; the main recipe's own
+  // spice rub (engine.dart `mainRecipePartNote`).
+  'Reserved from the main recipe — no amount on the line, counts as zero',
+  'Reserved from the main recipe — counted in the main recipe’s spice rub',
 ];
 
 /// The note of an ENGINE line's row whose food FDC failed (a FOOD failure,

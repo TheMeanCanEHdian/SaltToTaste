@@ -1,0 +1,1105 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "3 tablespoons extra virgin olive oil, plus extra for drizzling",
+      "item": "extra virgin olive oil",
+      "line_amount": "3 tablespoon",
+      "kcal_per_100g": 843.3000000000001,
+      "portions": [
+        {
+          "amount": 100.0,
+          "unit": "milliliter",
+          "description": "",
+          "grams": 90.7,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "virgin olive oil",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 748608,
+        "description": "Oil, olive, extra virgin",
+        "data_type": "Foundation",
+        "confidence": 1.0,
+        "grams": 40.811568,
+        "gram_source": "density",
+        "gram_basis": "3 tablespoon ≈ 44 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 748608,
+          "description": "Oil, olive, extra virgin",
+          "data_type": "Foundation",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "raw": "1 onion, chopped fine",
+      "item": "onion",
+      "line_amount": "1",
+      "kcal_per_100g": 38.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "onion",
+          "description": "Edible",
+          "grams": 143.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 85.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "onion",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 790646,
+        "description": "Onions, yellow, raw",
+        "data_type": "Foundation",
+        "confidence": 0.9366666666666666,
+        "grams": 110.0,
+        "gram_source": "piece",
+        "gram_basis": "1 × 110 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 790646,
+          "description": "Onions, yellow, raw",
+          "data_type": "Foundation",
+          "confidence": 0.9366666666666666
+        },
+        {
+          "fdc_id": 170000,
+          "description": "Onions, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 2709795,
+          "description": "Onions, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 790577,
+          "description": "Onions, red, raw",
+          "data_type": "Foundation",
+          "confidence": 0.9066666666666666
+        },
+        {
+          "fdc_id": 1104962,
+          "description": "Onions, white, raw",
+          "data_type": "Foundation",
+          "confidence": 0.9066666666666666
+        },
+        {
+          "fdc_id": 2707633,
+          "description": "Bread, onion",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 170008,
+          "description": "Onions, sweet, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8866666666666667
+        },
+        {
+          "fdc_id": 170007,
+          "description": "Onions, welsh, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8866666666666667
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "1 red bell pepper, stemmed, seeded, and chopped",
+      "item": "red bell pepper",
+      "line_amount": "1",
+      "kcal_per_100g": 31.3256,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 85.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "red bell pepper",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2258590,
+        "description": "Peppers, bell, red, raw",
+        "data_type": "Foundation",
+        "confidence": 1.0,
+        "grams": 119.0,
+        "gram_source": "piece",
+        "gram_basis": "1 × 119 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2258590,
+          "description": "Peppers, bell, red, raw",
+          "data_type": "Foundation",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "1 jalapeño chile, stemmed, seeded, and minced",
+      "item": "jalapeño chile",
+      "line_amount": "1",
+      "kcal_per_100g": 24.1264,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "jalapeno chile",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2747661,
+        "description": "Peppers, jalapeno, seeded, raw",
+        "data_type": "Foundation",
+        "confidence": 0.92,
+        "grams": 14.0,
+        "gram_source": "piece",
+        "gram_basis": "1 × 14 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2747661,
+          "description": "Peppers, jalapeno, seeded, raw",
+          "data_type": "Foundation",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 2710096,
+          "description": "Peppers, jalapenos",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 168576,
+          "description": "Peppers, jalapeno, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8866666666666667
+        },
+        {
+          "fdc_id": 2710045,
+          "description": "Stuffed jalapeno pepper",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 170080,
+          "description": "Peppers, jalapeno, canned, solids and liquids",
+          "data_type": "SR Legacy",
+          "confidence": 0.78
+        },
+        {
+          "fdc_id": 168570,
+          "description": "Peppers, hot chile, sun-dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.355
+        },
+        {
+          "fdc_id": 2710043,
+          "description": "Chiles rellenos, cheese-filled",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.11499999999999999
+        },
+        {
+          "fdc_id": 2705785,
+          "description": "Cheese dip with chili pepper",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.065
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "raw": "¾ teaspoon table salt",
+      "item": "table salt",
+      "line_amount": "3/4 teaspoon",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 292.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 6.0,
+          "fill": 4.5
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 18.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.4,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 4.509961799999999,
+        "gram_source": "density",
+        "gram_basis": "3/4 teaspoon ≈ 4 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "raw": "¼ cup tomato paste",
+      "item": "tomato paste",
+      "line_amount": "1/4 cup",
+      "kcal_per_100g": 104.2825,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 30.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "tomato paste",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2685580,
+        "description": "Tomato, paste, canned, without salt added",
+        "data_type": "Foundation",
+        "confidence": 0.8566666666666667,
+        "grams": 65.0617,
+        "gram_source": "density",
+        "gram_basis": "1/4 cup ≈ 59 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2685580,
+          "description": "Tomato, paste, canned, without salt added",
+          "data_type": "Foundation",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 170459,
+          "description": "Tomato products, canned, paste, without salt added (Includes foods for USDA's Food Distribution Program)",
+          "data_type": "SR Legacy",
+          "confidence": 0.7707692307692309
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "raw": "6 garlic cloves, minced",
+      "item": "garlic cloves",
+      "line_amount": "6",
+      "kcal_per_100g": 143.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 85.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "garlic cloves",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 1104647,
+        "description": "Garlic, raw",
+        "data_type": "Foundation",
+        "confidence": 0.97,
+        "grams": 18.0,
+        "gram_source": "piece",
+        "gram_basis": "6 × 3 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 1104647,
+          "description": "Garlic, raw",
+          "data_type": "Foundation",
+          "confidence": 0.97
+        },
+        {
+          "fdc_id": 169230,
+          "description": "Garlic, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 2709786,
+          "description": "Garlic, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 171325,
+          "description": "Spices, garlic powder",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 2707626,
+          "description": "Garlic bread, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 2707627,
+          "description": "Garlic bread, from fast food / restaurant",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8233333333333334
+        },
+        {
+          "fdc_id": 2707629,
+          "description": "Garlic bread, with parmesan cheese, from fast food / restaurant",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8122222222222223
+        },
+        {
+          "fdc_id": 2707631,
+          "description": "Garlic bread, with melted cheese, from fast food / restaurant",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8122222222222223
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "raw": "1 tablespoon tabil (recipe follows)",
+      "item": "tabil (recipe follows)",
+      "line_amount": "1 tablespoon",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "tabil",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": null,
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 5.662519147209495,
+        "gram_source": "recipe",
+        "gram_basis": "from the recipe Tabil: 5.7 g, 19 kcal",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": {
+          "state": "routed",
+          "reason": null,
+          "name": "tabil",
+          "slug": "chraime",
+          "title": "Tabil",
+          "section": "Tabil",
+          "host_title": null,
+          "share_text": "⅛",
+          "default": false,
+          "why": "none",
+          "yield_text": "MAKES ABOUT ½ CUP",
+          "share": 0.1250004226757063,
+          "yield_units": [
+            {
+              "unit": "recipe",
+              "per_recipe": 1
+            },
+            {
+              "unit": "cup",
+              "per_recipe": 0.5
+            }
+          ],
+          "grams": 5.662519147209495,
+          "kcal": 18.63,
+          "kcal_per_serving": 4.66,
+          "status": "complete",
+          "matched_count": 3,
+          "total_count": 3,
+          "kind": "tabil",
+          "parent_kind": "recipe",
+          "candidates": [
+            {
+              "group": "own_section",
+              "slug": "chraime",
+              "title": "Tabil",
+              "section": "Tabil",
+              "note": null,
+              "yield_text": "MAKES ABOUT ½ CUP",
+              "kcal": 149.01,
+              "kcal_per_serving": 4.66,
+              "current": true,
+              "default": false,
+              "state": "ready",
+              "pickable": true,
+              "host_title": null
+            }
+          ]
+        },
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 8,
+      "raw": "1 tablespoon ground dried Aleppo pepper",
+      "item": "ground dried Aleppo pepper",
+      "line_amount": "1 tablespoon",
+      "kcal_per_100g": 281.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "pepper",
+          "grams": 17.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "ground dried aleppo pepper",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 169396,
+        "description": "Peppers, ancho, dried",
+        "data_type": "SR Legacy",
+        "confidence": 0.5083333333333334,
+        "grams": 6.949795999999999,
+        "gram_source": "density",
+        "gram_basis": "1 tablespoon ≈ 15 mL · approximate (paprika density)",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 169396,
+          "description": "Peppers, ancho, dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.5083333333333334
+        },
+        {
+          "fdc_id": 168579,
+          "description": "Peppers, pasilla, dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.5083333333333334
+        },
+        {
+          "fdc_id": 168570,
+          "description": "Peppers, hot chile, sun-dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.455
+        },
+        {
+          "fdc_id": 169373,
+          "description": "Peppers, sweet, red, freeze-dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.42500000000000004
+        },
+        {
+          "fdc_id": 2262075,
+          "description": "Flaxseed, ground",
+          "data_type": "Foundation",
+          "confidence": 0.06250000000000006
+        },
+        {
+          "fdc_id": 2705854,
+          "description": "Beef, ground",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.0025000000000000022
+        },
+        {
+          "fdc_id": 2705910,
+          "description": "Veal, ground",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.0025000000000000022
+        },
+        {
+          "fdc_id": 2705881,
+          "description": "Ham, ground",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.0025000000000000022
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "raw": "2 teaspoons paprika",
+      "item": "paprika",
+      "line_amount": "2 teaspoon",
+      "kcal_per_100g": 282.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 6.8,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 2.3,
+          "fill": 4.6
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "paprika",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 171329,
+        "description": "Spices, paprika",
+        "data_type": "SR Legacy",
+        "confidence": 0.9,
+        "grams": 4.6331847999999995,
+        "gram_source": "density",
+        "gram_basis": "2 teaspoon ≈ 10 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 171329,
+          "description": "Spices, paprika",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "raw": "¼ teaspoon pepper",
+      "item": "pepper",
+      "line_amount": "1/4 teaspoon",
+      "kcal_per_100g": 251.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp, ground",
+          "grams": 6.9,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.1,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp, ground",
+          "grams": 2.3,
+          "fill": 0.575
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp, whole",
+          "grams": 2.9,
+          "fill": 0.725
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "spices pepper black",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 170931,
+        "description": "Spices, pepper, black",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 0.575,
+        "gram_source": "portion",
+        "gram_basis": "1/4 teaspoon · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 170931,
+          "description": "Spices, pepper, black",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "position": 11,
+      "raw": "1½ cups water",
+      "item": "water",
+      "line_amount": "1 1/2 cup",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "water",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Water/ice — counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 12,
+      "raw": "1½ pounds skinless haddock fillets, ½ to ¾ inch thick, cut into 3-inch pieces",
+      "item": "skinless haddock fillets",
+      "line_amount": "1 1/2 pound",
+      "kcal_per_100g": 74.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "skinless haddock fillets",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 333374,
+        "description": "Fish, haddock, raw",
+        "data_type": "Foundation",
+        "confidence": 0.9366666666666666,
+        "grams": 680.3879999999999,
+        "gram_source": "weight",
+        "gram_basis": "from 1 1/2 pound",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 333374,
+          "description": "Fish, haddock, raw",
+          "data_type": "Foundation",
+          "confidence": 0.9366666666666666
+        },
+        {
+          "fdc_id": 171964,
+          "description": "Fish, haddock, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8866666666666667
+        },
+        {
+          "fdc_id": 2706254,
+          "description": "Fish, haddock, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 2706258,
+          "description": "Fish, haddock, fried",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 2706256,
+          "description": "Fish, haddock, grilled",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 2706259,
+          "description": "Fish, haddock, steamed",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 174199,
+          "description": "Fish, haddock, smoked",
+          "data_type": "SR Legacy",
+          "confidence": 0.8066666666666666
+        },
+        {
+          "fdc_id": 174198,
+          "description": "Fish, haddock, cooked, dry heat",
+          "data_type": "SR Legacy",
+          "confidence": 0.78
+        }
+      ]
+    },
+    {
+      "position": 13,
+      "raw": "10 ounces cherry tomatoes",
+      "item": "cherry tomatoes",
+      "line_amount": "10 ounce",
+      "kcal_per_100g": 18.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "ripe tomatoes",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 170457,
+        "description": "Tomatoes, red, ripe, raw, year round average",
+        "data_type": "SR Legacy",
+        "confidence": 0.8471428571428572,
+        "grams": 283.495,
+        "gram_source": "weight",
+        "gram_basis": "from 10 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 170457,
+          "description": "Tomatoes, red, ripe, raw, year round average",
+          "data_type": "SR Legacy",
+          "confidence": 0.8471428571428572
+        },
+        {
+          "fdc_id": 333281,
+          "description": "Tomatoes, canned, red, ripe, diced",
+          "data_type": "Foundation",
+          "confidence": 0.8399999999999999
+        },
+        {
+          "fdc_id": 170050,
+          "description": "Tomatoes, red, ripe, cooked",
+          "data_type": "SR Legacy",
+          "confidence": 0.81
+        },
+        {
+          "fdc_id": 170052,
+          "description": "Tomatoes, red, ripe, canned, stewed",
+          "data_type": "SR Legacy",
+          "confidence": 0.79
+        },
+        {
+          "fdc_id": 170089,
+          "description": "Tomatoes, red, ripe, cooked, stewed",
+          "data_type": "SR Legacy",
+          "confidence": 0.79
+        },
+        {
+          "fdc_id": 170137,
+          "description": "Tomatoes, red, ripe, cooked, with salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.7766666666666666
+        },
+        {
+          "fdc_id": 170053,
+          "description": "Tomatoes, red, ripe, canned, with green chilies",
+          "data_type": "SR Legacy",
+          "confidence": 0.7671428571428571
+        },
+        {
+          "fdc_id": 170051,
+          "description": "Tomatoes, red, ripe, canned, packed in tomato juice",
+          "data_type": "SR Legacy",
+          "confidence": 0.5171428571428571
+        }
+      ]
+    },
+    {
+      "position": 14,
+      "raw": "½ cup chopped fresh cilantro",
+      "item": "chopped fresh cilantro",
+      "line_amount": "1/2 cup",
+      "kcal_per_100g": 23.0,
+      "portions": [
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 cup",
+          "grams": 16.0,
+          "fill": 8.0
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 guideline amount per item",
+          "grams": 0.3,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "Quantity not specified",
+          "grams": 1.0,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 sprig",
+          "grams": 1.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "cilantro",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2709782,
+        "description": "Cilantro, raw",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.91,
+        "grams": 8.0,
+        "gram_source": "portion",
+        "gram_basis": "1/2 cup · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2709782,
+          "description": "Cilantro, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 169997,
+          "description": "Coriander (cilantro) leaves, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.5700000000000001
+        },
+        {
+          "fdc_id": 170921,
+          "description": "Spices, coriander leaf, dried",
+          "data_type": "SR Legacy",
+          "confidence": 0.0
+        }
+      ]
+    },
+    {
+      "position": 15,
+      "raw": "Lemon wedges",
+      "item": "Lemon wedges",
+      "line_amount": null,
+      "kcal_per_100g": 29.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "lemon wedges",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2709168,
+        "description": "Lemon, raw",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.91,
+        "grams": 0.0,
+        "gram_source": "unmeasured",
+        "gram_basis": "no amount on the line — counted as 0 g",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2709168,
+          "description": "Lemon, raw",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.91
+        },
+        {
+          "fdc_id": 2708000,
+          "description": "Pie, lemon",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 167749,
+          "description": "Lemon peel, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8866666666666667
+        },
+        {
+          "fdc_id": 168573,
+          "description": "Lemon grass (citronella), raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8700000000000001
+        },
+        {
+          "fdc_id": 167746,
+          "description": "Lemons, raw, without peel",
+          "data_type": "SR Legacy",
+          "confidence": 0.8700000000000001
+        },
+        {
+          "fdc_id": 2708014,
+          "description": "Pie, lemon meringue",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 2707935,
+          "description": "Cookie, lemon bar",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 2709169,
+          "description": "Lemon pie filling",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        }
+      ]
+    }
+  ]
+}

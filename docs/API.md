@@ -328,7 +328,7 @@ registry, so categories can be added without an API shape change.
 The cross-recipe queue of ingredient-match lines that still need a look, in
 the `sort` order (below): `{total, groups, buckets: [{id, label, count,
 groups}], items:
-[{recipe: {id, slug, title}, position, raw, bucket, finishes, match: {fdc_id,
+[{recipe: {id, slug, title}, section, position, raw, bucket, finishes, match: {fdc_id,
 description, data_type, confidence, grams, gram_source, status, hold,
 child} | null}], page, limit}` (`hold` as in the per-recipe matches body below).
 A line item's `finishes` is 1 when the line is its recipe's LAST open line
@@ -363,9 +363,29 @@ never promised to a confirm (`finishes` 0, short in its group: salt_shared
 `check` and a Confirm finishes it. An item's `match` is non-null on a
 reference line's row too (`gram_source` `recipe`, no food) and carries
 `child`, null on every other line: the SLIM child `{state, reason, name,
-slug, title, share_text, default, why}` of the matches body (never its
+slug, title, section, host_title, share_text, default, why}` of the matches body (never its
 `candidates` — the fix sheet fetches the recipe's matches when opened; one
 library index read per page).
+Since matcher v44 (sections as children, S12 (a-i)): a section's lines are
+queue lines too. An item's `recipe` is the section's HOST (`{id, slug,
+title}` — a section key never reaches the wire) and a new `section` key
+carries the section's title (null on a recipe's own line); the queue's
+three reads join the host. A section line's group credits its `finishes`
+to the RECIPES it would finish: a parent routed to the section (no hold,
+not skipped) with no open line of its own, whose every incomplete child is
+a section whose open lines all sit in that ONE group — each such parent
+once, named in `finishes_recipes`; `last_open` counts them whatever the
+grams. The banner's `finishable` and `open_recipes` read the same credit:
+`finishable` is the sum of the groups' `finishes`, and `open_recipes`
+counts recipes — a recipe with an open line of its own, or one routed to a
+section that has one — never a section. A line item's `finishes` is 0 on a
+section's line (its last open line finishes a section; the grouped count
+is the promise). A recipe's OWN open lines credit it only while it has no
+incomplete routed child (no hold, not skipped): that child keeps it partial
+whatever the group decides — the under-promise direction (the gluten-free
+pizza's psyllium line finishes nothing while its flour blend is partial).
+Measured on the v44 replay library: 279 groups, the sum of `finishes` 72 =
+`finishable` 72, no credited recipe with an incomplete child.
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
 below 50% name confidence — compared with a 1e-9 tolerance, so a score that
 lands exactly on 0.5 counts whatever its float rounding — probably the wrong
@@ -690,6 +710,19 @@ Both are `[]` on a recipe with none and absent from the `{"status":
 "none"}` body. Read from the stored rows (no request); one library index
 read per request at most.
 
+Since matcher v44 (sections as children): an `includes` entry also carries
+`section` (the section's title, null for a library recipe) and `host_title`
+(another host's title only; an own section reads its bare title — "Includes
+1 recipe: Tabil" — another host's "{title} (a section of {host title})");
+`partial`'s `not_routed` gains `reason` `no_ingredients` (a reference to a
+section with no ingredient lines). `?section=<title>` (exact title) answers
+that section's own stored totals — per batch (`serving_basis` 1,
+`basis_kind` `per_batch`, `calories_per_serving` the whole section: a
+section has no serving basis of its own, never its host's serves nor its
+yield's count), its own `includes`/`partial` (members too); an unknown or
+empty title is `404 not_found` "No section with that title.". The
+serving-basis PUT takes no section.
+
 `basis_kind` says what `serving_basis` divides by: `per_batch` when the basis
 is 1 — the whole batch: "MAKES 1 LOAF", no servings at all, or an admin's
 1 on a larger yield or serves count — unless the recipe SERVES one (its
@@ -970,6 +1003,132 @@ fetched.
 
 ### `GET /api/v1/recipes/{idOrSlug}/nutrition/matches`
 
+**Matcher v44, sections as children** (the owner's 2026-10-06 rulings S1–S15
+on prep43/design_v2.md, all as recommended — S12 (a-i), S14 (a), S15 (a);
+the approved copy delta `docs/mockups/v44-sections-copy.html`; migration
+019). A recipe's titled subsection is a recipe of its own when a main
+reference line needs it: its own lines, matches, totals and layout,
+computed before the recipes that read it, and a reference line routes to
+it as v41 routes to a library recipe. Storage keys it `<host id>#<exact
+title>` (a `#` never occurs in an id) in the same three tables, their
+`recipe_id` FK moved to a generated `host_id` (deleting the host deletes its
+sections' rows); the KEY never reaches the wire — a section is always its
+host's `slug` plus its `section` title. Superseding v41's text below: a
+section candidate is pickable and carries its totals; `other_section` lists
+child sections only.
+
+- **Which sections are children** (S2 (a), referenced only): a section a
+  main reference line resolves to, one a "(recipes follow)" line lists (rule
+  PO, below), or one an unmarked line names (A9) — 140 on snapshot 19
+  (936 lines). A prose section (no ingredient lines) is never one. The bulk
+  order is [child sections, recipes that read none, parents]; a section
+  edit stales its key and every parent routed to it; a sweep collects a key
+  no main line needs any more (its stamp and engine rows — never a row a
+  person decided).
+- **Resolution** (v41's order; v44 changes): ONE own section whose title the
+  item names routes to it (chraime's "1 tablespoon tabil (recipe follows)"
+  → its Tabil, share ⅛ of "MAKES ABOUT ½ CUP"); another recipe's section
+  routes only when exactly ONE other host carries the title under the
+  resolver's normalised key (else held, listed: N8); the share reads the
+  SECTION's own yield; a section whose lines hold a reference is
+  `nested_recipe` (depth 1); a section with no ingredient lines is the 0 g
+  rule row, `child.reason` **`no_ingredients`** (lemon-meringue-pie's
+  "Single-Crust Pie Dough for Custard Pies"). A9: an UNMARKED line whose
+  item is an own section's title (red-lentil-kibbeh's harissa) is a
+  reference too; S11: such a line's bare count of exactly 1 reads one
+  recipe. A section's rules read the SECTION's own steps (most store none).
+- **Rule PO** (S8 (a)): a "(recipes follow)" line held `choose_recipe`
+  generic or `discarded_recipe` lists, as `own_section` candidates, the
+  recipe's sections WITH lines that no other reference line of the recipe
+  routes to, in document order (glazed-spiral-sliced-ham's "1 recipe glaze"
+  → Maple-Orange Glaze, Cherry-Port Glaze). Listed for a person; the engine
+  never routes them.
+- **`child`** (full and slim, and the queue's): + `section` (the title, read
+  from the stored key — a section gone since still names its OLD title, for
+  the held-missing note "{old title} is no longer a section of {host title}
+  — choose again") and `host_title` (the host's title only when the host is
+  ANOTHER recipe; null for an own section and for a library child). A
+  section child's `slug` is its host's, `title` the section's, `yield_text`/
+  `yield_units`/`status`/`matched_count`/`total_count` the section's own.
+- **`candidates`**: every entry + `section` (null on a library recipe) and
+  `state` (null on a library recipe). A section entry: `slug` its host's,
+  `title` = `section` its title, `yield_text` its yield, `kcal` its stored
+  batch energy, `kcal_per_serving` the line's share of it ÷ the parent's
+  basis, `current` (the row is routed to it), `host_title` (another host
+  only), `state` `ready` (stored totals) | `no_totals` (a child section not
+  computed yet — until its sweep) | `no_ingredients` (a prose section) |
+  `nested` (it holds a reference; a pick is stored held), and `pickable` =
+  lines and stored totals. `other_section` lists only sections that are
+  stored children (S14 (a); N4: read as "a section key with a
+  `recipe_nutrition` row", one statement per request — a variation nobody
+  routes is never offered: broccoli-cheese-soup's "Buttery Croutons" lists
+  Carrot-Ginger Soup's, not Sweet Potato Soup's "Buttery Rye Croutons").
+- **`?section=<title>`** (exact title) on this GET lists that section's own
+  lines (any authenticated user, members too); an unknown or empty title is
+  `404 not_found` "No section with that title.".
+- **Reach** (S9 (a)): a section pick is line-local — a section child
+  reaches nothing and a row routed to a section is never reached, so
+  `others` / `others_lines` are 0 on a section row and no apply offer shows.
+- **Identity across a retitle** (S15 (a), a one-way consequence of the key):
+  a host saved with a section retitled or removed drops that key's rows,
+  stamp and layout; every person's pick of it (stored on the parent) then
+  holds `choose_recipe` missing, naming the old title, and every decision
+  inside the section is gone. A v41 library child keeps its id across a
+  retitle; a section cannot.
+- **The 16 defect queries as rules** (S6 (a), zero requests): a salt line
+  "for <purpose>" with no amount is the seasoning row (it also moves three
+  MAIN rows, 0 g → 0 g: hand-rolled-meat-ravioli|16, orecchiette-with-
+  broccoli-rabe-and-sausage-2|5, gado-gado|12); the typo "back pepper" reads
+  black pepper; "warm tap water" is water; a lone "boneless" item is read on
+  with its prep ("boneless skinless chicken breasts" → 2646170); a leaked
+  "fluid ounce(s)" unit is dropped from the item (orange juice → 169098;
+  orange liqueur → liqueur; peach schnapps → kirsch / liqueur, flagged
+  2710623; sparkling wine → the champagne stand-in 2710689, flagged; the
+  champagne line keeps its key); a SECTION line naming the parent's own
+  reserved part with no amount ("reserved turkey giblets", "… drippings
+  from …") is a 0 g rule row, note "Reserved from the main recipe — no
+  amount on the line, counts as zero"; "reserved <X>" with an amount where
+  the host's own ingredient group is <X> (the short ribs' spice rub) is a
+  0 g rule row, note "Reserved from the main recipe — counted in the main
+  recipe’s spice rub", basis "counted in the main recipe’s spice rub —
+  counted as 0 g"; "green thai" reads the shipped 'thai' rank-as. S7 (a): ≤ 1
+  tablespoon of zest "plus" a bare COUNT of the same fruit counts the fruit
+  by FDC's portion and drops the zest ("½ teaspoon grated orange zest plus 5
+  oranges" → 746771, 655 g, "5 × 131 g each · the fruit only (the zest is
+  dropped)").
+- **The 23 reads** (S5 (a), zero requests; each onto an answer already
+  cached): rewrites — loaf country bread with thick crust (→ Italian bread
+  174913), slices sandwich bread, ground celery seeds, jasmine or
+  long-grain white rice, cilantro stems, espresso powder or instant coffee,
+  navel oranges, sesame oil (→ toasted), ground fennel seeds, rubbed sage
+  (→ sage, flagged 170935), peanut butter (→ creamy);
+  rank-as — shiitake, jalapenos, tawny port and port (→ the ruby-port
+  stand-in, flagged), salt-cured black olives (flagged), pods star anise
+  (flagged), lemon grass, vegan mayonnaise, pepitas, raw sunflower seeds,
+  toasted sesame seeds, white or cremini mushrooms; piece weights 'lemon
+  grass' 10 g and 'pod star anise' 0.5 g.
+- **Replay** (rp43 on a fresh copy of snapshot 19, cache-only): 63 main rows
+  differ from v43's replay — 57 reference rule rows routed to a section, 3
+  A9 food rows routed to their own section, the 3 salt rows above; every
+  other main row byte-equal; main buckets counted 13,336 / check 214 /
+  no_grams 17 / no_match 13 / choose_recipe 35 (A9: counted +2, check −1,
+  no_match −1); recipes complete 935 → 976, partial 263 → 222 (41 move, 40
+  of them among the 51 partial with nothing to review — 51 → 12); +76,418.6
+  kcal per batch on main rows (+74,198.1 into complete sections, +2,220.4
+  into five partial ones, flagged). Sections: 140 computed, 121 complete,
+  19 partial; 13 of them wait on option A below (17 lines, 0 g, "FoodData
+  Central could not serve this food").
+- **Option A — to be spent by the owner** (S2 (a), never by the build: the
+  replay's only calls, each unanswered until then): searches "unsweetened
+  plain coconut milk yogurt", "mascarpone cheese", "potato starch" (ask
+  first), "brown rice flour" (only if potato starch lands), "dairy-free sour
+  cream", "coca-cola", "pineapple juice", "tangerines", "nutritional yeast",
+  "frozen cranberries", "frozen cherries", "frozen pineapple chunks"; and
+  the four read details no snapshot holds (2710205 vegan mayonnaise,
+  2515380 pepitas, 2515381 raw sunflower seeds, 170151 toasted sesame
+  seeds). Each answer is enabled only after its check (prep43/p2_spend.md
+  §4).
+
 **Matcher v41, the composite row** (the owner's 2026-10-05 rulings A1–A10,
 "go with your recommendations"; design_v3, the approved mockup
 `docs/mockups/v41-composite-rows.html`; migration 018). Still one row per
@@ -984,7 +1143,8 @@ line; every `match` gains three keys, emitted on every row:
   decided row's child was deleted — | `generic` — the line names no single
   recipe — | `nested` — the child is itself made from a recipe, depth 1 —
   | `marinade`) | `not_routed` (the shipped 0 g rule row: `reason`
-  `section` | `served_with` | `no_amount` | `no_share`); `name` the
+  `section` | `served_with` | `no_amount` | `no_share`, and since v44
+  `no_ingredients`); `name` the
   reference as the line writes it ("Rustic Tart Dough"); `slug`/`title`/
   `yield_text` the child's (the no-share child's too); `share` the share of
   the child the line counts, `share_text` its copy ("1", "⅔", "1½", else
@@ -1006,7 +1166,9 @@ line; every `match` gains three keys, emitted on every row:
   `note` "not named in the note" when the note names titles) |
   `other_section` (other recipes' sections holding every word, at most 5;
   `note` "a section of {host title}"); sections are phase 2 — `pickable`
-  false, `kcal` null; a library candidate is `pickable` when it has stored
+  false, `kcal` null (v41; since v44 a section candidate carries its totals,
+  `state` and `pickable`, and `other_section` lists child sections only —
+  above); a library candidate is `pickable` when it has stored
   totals (`kcal` = its batch energy, `kcal_per_serving` × the line's share
   of it ÷ the basis). An empty group is omitted (the app draws its empty
   text). The library's title and section index is read at most once per
@@ -3084,6 +3246,32 @@ reference row is refused (the table above); on a not-routed one, a pick
 with no grams typed is refused unless its alternative after the first
 top-level " or " carries an amount (A10 a: weighed on it, an ingredient
 decision as any pick).
+
+**Matcher v44: a section for a reference line.** One more body key beside
+`child`: `section` — the exact title of a section of the `child` recipe
+(`{raw, child: <recipe slug or id>, section: <title>, share?}`); an OWN
+section is picked with `child` = this recipe (glazed-spiral-sliced-ham|2
+`{child: "glazed-spiral-sliced-ham", section: "Cherry-Port Glaze"}`). It is
+accepted on the same lines and holds as a library recipe, stored the same
+way (`overridden`, the share typed else the line's share of the SECTION's
+yield; a section holding a reference stored held `nested_recipe`); never an
+ingredient decision, never applied to others (the reach above). With
+`?section=<title>` the PUT decides a line OF that section (404 "No section
+with that title." for none); the response is that section's matches body.
+The section 422s, before anything is written (texts from the approved copy
+delta §6; the v41 table's rows stand):
+
+| request | message |
+|---|---|
+| `child` on a line of a section (`?section=` on the PUT) | `Only one level is read — a section's line is not made from another recipe.` |
+| `section` without `child` | `Pick a recipe first, then its section.` |
+| `child` holding a `#` (a storage key never travels) | `No recipe with that id.` |
+| `section` not a string, or no section of that recipe has the title | `No section with that title in that recipe.` |
+| `child` = the recipe itself with no `section` | `A recipe cannot be made from itself.` |
+| a `discarded_recipe` marinade picked with no `share` (S10 (a): the share eaten is a person's) | `Set the share that is eaten — the rest is poured away.` |
+| `section` that lists no ingredients | `That section lists no ingredients — it cannot be counted.` |
+| `section` with no stored totals | `That section has no totals yet — compute its recipe first.` |
+| `section` with no `share`, the section's yield gives none | `No share the yield can read — set the share.` |
 
 A food decided here — a pick (`fdc_id`), or `confirmed: true` on a line that
 has a food — becomes the INGREDIENT's decision, library-wide: it is stored in

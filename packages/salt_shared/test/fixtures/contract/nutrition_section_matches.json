@@ -1,0 +1,464 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "1¼ cups (6¼ ounces) unbleached all-purpose flour, plus extra for the work surface",
+      "item": "unbleached all-purpose flour",
+      "line_amount": "1 1/4 cup",
+      "kcal_per_100g": 366.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "all-purpose flour",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 789890,
+        "description": "Flour, wheat, all-purpose, enriched, bleached",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 177.184375,
+        "gram_source": "weight",
+        "gram_basis": "from 6 1/4 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 789890,
+          "description": "Flour, wheat, all-purpose, enriched, bleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 789951,
+          "description": "Flour, wheat, all-purpose, enriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 790018,
+          "description": "Flour, wheat, all-purpose, unenriched, unbleached",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 169761,
+          "description": "Wheat flour, white, all-purpose, unenriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 168894,
+          "description": "Wheat flour, white, all-purpose, enriched, bleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8557142857142858
+        },
+        {
+          "fdc_id": 168936,
+          "description": "Wheat flour, white, all-purpose, enriched, unbleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.8557142857142858
+        },
+        {
+          "fdc_id": 169754,
+          "description": "Wheat flour, white, all-purpose, enriched, calcium-fortified",
+          "data_type": "SR Legacy",
+          "confidence": 0.8450000000000001
+        },
+        {
+          "fdc_id": 168895,
+          "description": "Wheat flour, white, all-purpose, self-rising, enriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.8450000000000001
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "raw": "1 tablespoon sugar",
+      "item": "sugar",
+      "line_amount": "1 tablespoon",
+      "kcal_per_100g": 385.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "teaspoon",
+          "description": null,
+          "grams": 4.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "cup",
+          "description": null,
+          "grams": 188.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 8.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "sugar",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 746784,
+        "description": "Sugars, granulated",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 12.568779999999999,
+        "gram_source": "density",
+        "gram_basis": "1 tablespoon ≈ 15 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 746784,
+          "description": "Sugars, granulated",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 170674,
+          "description": "Sugar, turbinado",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169655,
+          "description": "Sugars, granulated",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169658,
+          "description": "Sugars, maple",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2710261,
+          "description": "Sugar, cinnamon",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2710257,
+          "description": "Sugar, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 168833,
+          "description": "Sugars, brown",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710260,
+          "description": "Sugar, brown",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "½ teaspoon table salt",
+      "item": "table salt",
+      "line_amount": "1/2 teaspoon",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 292.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 6.0,
+          "fill": 3.0
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 18.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.4,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 3.0066412,
+        "gram_source": "density",
+        "gram_basis": "1/2 teaspoon ≈ 2 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "3 tablespoons vegetable shortening, cut into ½-inch pieces and chilled",
+      "item": "vegetable shortening",
+      "line_amount": "3 tablespoon",
+      "kcal_per_100g": 884.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 12.8,
+          "fill": 38.400000000000006
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 205.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "vegetable shortening",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173584,
+        "description": "Shortening, vegetable, household, composite",
+        "data_type": "SR Legacy",
+        "confidence": 0.9,
+        "grams": 38.4,
+        "gram_source": "portion",
+        "gram_basis": "3 tablespoon · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173584,
+          "description": "Shortening, vegetable, household, composite",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2710167,
+          "description": "Shortening, NS as to vegetable or animal",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 173566,
+          "description": "Shortening industrial, lard and vegetable oil",
+          "data_type": "SR Legacy",
+          "confidence": 0.63
+        },
+        {
+          "fdc_id": 172327,
+          "description": "Shortening, household, lard and vegetable oil",
+          "data_type": "SR Legacy",
+          "confidence": 0.63
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "raw": "5 tablespoons unsalted butter, cut into ¼-inch pieces and chilled",
+      "item": "unsalted butter",
+      "line_amount": "5 tablespoon",
+      "kcal_per_100g": 717.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "pat (1\" sq, 1/3\" high)",
+          "grams": 5.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 14.2,
+          "fill": 71.0
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "stick",
+          "grams": 113.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 227.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "without salt butter",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173430,
+        "description": "Butter, without salt",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 70.902706,
+        "gram_source": "density",
+        "gram_basis": "5 tablespoon ≈ 74 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173430,
+          "description": "Butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 170155,
+          "description": "Seeds, sunflower seed butter, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 172469,
+          "description": "Peanut butter, chunk style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 172470,
+          "description": "Peanut butter, smooth style, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 168588,
+          "description": "Nuts, almond butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 170163,
+          "description": "Nuts, cashew butter, plain, without salt added",
+          "data_type": "SR Legacy",
+          "confidence": 0.8857142857142858
+        },
+        {
+          "fdc_id": 169052,
+          "description": "Margarine-like, butter-margarine blend, 80% fat, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 172344,
+          "description": "Butter, light, stick, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.8600000000000001
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "raw": "4–6 tablespoons ice water",
+      "item": "ice water",
+      "line_amount": "4–6 tablespoon",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "ice water",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Water/ice — counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    }
+  ]
+}

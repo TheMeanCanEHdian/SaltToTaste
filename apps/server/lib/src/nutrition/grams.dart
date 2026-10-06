@@ -445,6 +445,11 @@ const List<(String, double)> _pieceWeights = [
   ('lemongrass', 10),
   ('lemongrass stalk', 10),
   ('lemon grass stalk', 10),
+  // v44 (S5 a): "2 stalks lemon grass" (thai-green-curry's Green Curry
+  // Paste) and "4 pods star anise" (the unit leaked into the item,
+  // roast-fresh-ham's glaze) — the same figures under their own words.
+  ('lemon grass', 10),
+  ('pod star anise', 0.5),
   // The longer key wins: a no-boil sheet is thinner than a curly one.
   ('no-boil lasagna noodle', 17),
   ('lasagna noodle', 25),
@@ -531,6 +536,8 @@ const Map<String, String> _approximatePieces = {
       'reference figure: a stalk trimmed to its bottom 5–6 inches',
   'lemon grass stalk':
       'reference figure: a stalk trimmed to its bottom 5–6 inches',
+  'lemon grass': 'reference figure: a stalk trimmed to its bottom 5–6 inches',
+  'pod star anise': 'reference figure: a whole star anise',
   // Barilla Oven-Ready Lasagne, the brand the corpus prefers: 9 oz (255 g),
   // "at least 15 sheets" (barilla.com no-boil FAQ); label 3 sheets = 51 g.
   'no-boil lasagna noodle':

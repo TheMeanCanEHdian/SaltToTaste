@@ -49,7 +49,7 @@ int rekeyDecisions(SaltDatabase db) {
   IngredientLine? lineOf(IngredientMatchRow row) {
     final lines = recipes.putIfAbsent(row.recipeId, () {
       try {
-        final found = db.recipeByIdOrSlug(row.recipeId);
+        final found = nutritionRecipeOf(db, row.recipeId);
         return found == null ? null : nutritionLines(found.recipe);
         // A document that will not decode is no example.
         // ignore: avoid_catches_without_on_clauses

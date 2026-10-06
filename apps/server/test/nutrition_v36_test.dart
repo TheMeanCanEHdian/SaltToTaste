@@ -320,7 +320,11 @@ void main() {
             // read the recipe fresh and never asked).
             final job = startBulkJob(db, fault, scope: BulkScope.stale)!;
             await ra.settle();
-            expect(db.nutritionJob(job)!['done'], 1);
+            // v44: the recipe's child sections with no stamp yet join the
+            // stale scope first (0129's "1 recipe barbecue sauce (recipes
+            // follow)" lists its three sauces, rule PO).
+            final children = sectionChildKeysOf(db, r, ResolverMemo(db));
+            expect(db.nutritionJob(job)!['done'], 1 + children.length);
             expect(fault.asked, 2);
             expect(v29.retryOf(path, r.id, position), 2);
             expect(d.rowOf(db, r, position).hold, hold);

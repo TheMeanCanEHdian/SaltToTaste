@@ -435,8 +435,12 @@ void main() {
       expect(find.text('Change'), findsNothing);
     });
 
-    testWidgets('the fix sheet: groups, notes, calories; a section stages '
-        'nothing', (t) async {
+    // v44 (S14 a): the matches GET lists only CHILD sections under
+    // "Another recipe's section" — the dough's three non-child sections
+    // left the golden, so the group shows its empty text; the
+    // section-stages-nothing pin moves to step 8's section goldens.
+    testWidgets('the fix sheet: groups, notes, calories; an unpickable '
+        'recipe stages nothing', (t) async {
       await _page(
         t,
         matches: 'nutrition_matches_subrecipe',
@@ -453,6 +457,7 @@ void main() {
         'Library recipes the note names',
         'Other library recipes with a similar title',
         "Another recipe's section",
+        'No section is titled "double-crust pie dough".',
         'current · default',
         '3,057 kcal · +382 / serving',
         '3,520 kcal · +440 / serving',
@@ -468,7 +473,6 @@ void main() {
         'named second',
         'named third',
         'not named in the note',
-        'a section of All-Butter Double-Crust Pie Dough',
       ]) {
         expect(
           _inPanel(find.textContaining(note)),
@@ -476,7 +480,7 @@ void main() {
           reason: note,
         );
       }
-      expect(_inPanel(find.text('phase 2 · no totals yet')), findsNWidgets(3));
+      expect(_inPanel(find.text('phase 2 · no totals yet')), findsNothing);
       // The groups in resolution order, top to bottom.
       final tops = [
         for (final caption in [
@@ -498,14 +502,6 @@ void main() {
       );
       // The share offers only the child's yield units: [recipe].
       expect(_toggle(t).units, ['recipe']);
-      await _tap(
-        t,
-        _inPanel(find.text('Hand Mixed Basic Double-Crust Pie Dough')),
-      );
-      expect(
-        _inPanel(find.text('Confirm · All-Butter, 1 recipe')),
-        findsOneWidget,
-      );
       // A library recipe with no totals (pickable false) stages nothing.
       await _tap(
         t,

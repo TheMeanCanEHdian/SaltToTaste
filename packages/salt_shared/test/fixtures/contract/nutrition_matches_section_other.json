@@ -1,0 +1,949 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "1 recipe Basic Single-Crust Pie Dough (this page), fitted into a 9-inch pie plate and chilled",
+      "item": "Basic Single-Crust Pie Dough (this page)",
+      "line_amount": "1 recipe",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "basic single-crust pie dough",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": null,
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 302.1,
+        "gram_source": "recipe",
+        "gram_basis": "from the recipe Basic Single-Crust Pie Dough: 302 g, 1,545 kcal",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": {
+          "state": "routed",
+          "reason": null,
+          "name": "Basic Single-Crust Pie Dough",
+          "slug": "basic-double-crust-pie-dough",
+          "title": "Basic Single-Crust Pie Dough",
+          "section": "Basic Single-Crust Pie Dough",
+          "host_title": "Basic Double-Crust Pie Dough",
+          "share_text": "1",
+          "default": false,
+          "why": "none",
+          "yield_text": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+          "share": 1.0,
+          "yield_units": [
+            {
+              "unit": "recipe",
+              "per_recipe": 1
+            }
+          ],
+          "grams": 302.1,
+          "kcal": 1544.71,
+          "kcal_per_serving": 193.09,
+          "status": "complete",
+          "matched_count": 6,
+          "total_count": 6,
+          "kind": "dough",
+          "parent_kind": "pie",
+          "candidates": [
+            {
+              "group": "other_section",
+              "slug": "basic-double-crust-pie-dough",
+              "title": "Basic Single-Crust Pie Dough",
+              "section": "Basic Single-Crust Pie Dough",
+              "note": "a section of Basic Double-Crust Pie Dough",
+              "yield_text": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+              "kcal": 1544.71,
+              "kcal_per_serving": 193.09,
+              "current": true,
+              "default": false,
+              "state": "ready",
+              "pickable": true,
+              "host_title": "Basic Double-Crust Pie Dough"
+            }
+          ]
+        },
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 1,
+      "raw": "1 cup heavy cream",
+      "item": "heavy cream",
+      "line_amount": "1 cup",
+      "kcal_per_100g": 343.31,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 15.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "heavy cream",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2346386,
+        "description": "Cream, heavy",
+        "data_type": "Foundation",
+        "confidence": 1.0,
+        "grams": 238.95388,
+        "gram_source": "density",
+        "gram_basis": "1 cup ≈ 237 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2346386,
+          "description": "Cream, heavy",
+          "data_type": "Foundation",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 2705597,
+          "description": "Cream, heavy",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9900000000000001
+        },
+        {
+          "fdc_id": 170859,
+          "description": "Cream, fluid, heavy whipping",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2705592,
+          "description": "Cream, NS as to light, heavy, or half and half",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.7871428571428571
+        },
+        {
+          "fdc_id": 2705598,
+          "description": "Cream, whipped",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.465
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "1 cup whole milk",
+      "item": "whole milk",
+      "line_amount": "1 cup",
+      "kcal_per_100g": 61.0,
+      "portions": [
+        {
+          "amount": null,
+          "unit": null,
+          "description": "Guideline amount per fl oz of beverage",
+          "grams": 2.5,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "Quantity not specified",
+          "grams": 244.0,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 individual school container",
+          "grams": 244.0,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 cup",
+          "grams": 244.0,
+          "fill": 244.0
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "Guideline amount per cup of hot cereal",
+          "grams": 61.0,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 fl oz",
+          "grams": 30.5,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "whole milk",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2705385,
+        "description": "Milk, whole",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 1.0,
+        "grams": 244.0,
+        "gram_source": "portion",
+        "gram_basis": "1 cup · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2705385,
+          "description": "Milk, whole",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746766,
+          "description": "Cheese, ricotta, whole milk",
+          "data_type": "Foundation",
+          "confidence": 0.97
+        },
+        {
+          "fdc_id": 2259793,
+          "description": "Yogurt, plain, whole milk",
+          "data_type": "Foundation",
+          "confidence": 0.97
+        },
+        {
+          "fdc_id": 2259796,
+          "description": "Cheese, feta, whole milk, crumbled",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 2259794,
+          "description": "Yogurt, Greek, plain, whole milk",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 2705467,
+          "description": "Chocolate milk, whole",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9433333333333334
+        },
+        {
+          "fdc_id": 2705496,
+          "description": "Strawberry milk, whole",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9433333333333334
+        },
+        {
+          "fdc_id": 170845,
+          "description": "Cheese, mozzarella, whole milk",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "3 large whole eggs plus 2 large egg yolks",
+      "item": "large whole eggs plus 2 large egg yolks",
+      "line_amount": "3",
+      "kcal_per_100g": 148.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "whole eggs 2 egg yolks",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": 748967,
+        "description": "Eggs, Grade A, Large, egg whole",
+        "data_type": "Foundation",
+        "confidence": 0.92,
+        "grams": 184.0,
+        "gram_source": "piece",
+        "gram_basis": "3 × 50 g egg + 2 × 17 g yolk, summed on the whole egg",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 4,
+      "raw": "1 teaspoon vanilla extract",
+      "item": "vanilla extract",
+      "line_amount": "1 teaspoon",
+      "kcal_per_100g": 288.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 4.2,
+          "fill": 4.2
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 208.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 13.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "vanilla extract",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173471,
+        "description": "Vanilla extract",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 4.2,
+        "gram_source": "portion",
+        "gram_basis": "1 teaspoon · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173471,
+          "description": "Vanilla extract",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 172235,
+          "description": "Vanilla extract, imitation, alcohol",
+          "data_type": "SR Legacy",
+          "confidence": 0.5
+        },
+        {
+          "fdc_id": 172236,
+          "description": "Vanilla extract, imitation, no alcohol",
+          "data_type": "SR Legacy",
+          "confidence": 0.48
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "raw": "1 (15-ounce) can pumpkin puree",
+      "item": "(15-ounce) pumpkin puree",
+      "line_amount": "1 can",
+      "kcal_per_100g": 34.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "pumpkin canned without salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 168450,
+        "description": "Pumpkin, canned, without salt",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 425.2425,
+        "gram_source": "weight",
+        "gram_basis": "from the printed weight",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 168450,
+          "description": "Pumpkin, canned, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "raw": "1 cup candied yams, drained",
+      "item": "candied yams",
+      "line_amount": "1 cup",
+      "kcal_per_100g": 118.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup, cubes",
+          "grams": 150.0,
+          "fill": 150.0
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "candied yams",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 170071,
+        "description": "Yam, raw",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 150.0,
+        "gram_source": "portion",
+        "gram_basis": "1 cup · USDA portion · approximation (counted as Yam, raw)",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 170071,
+          "description": "Yam, raw",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 168432,
+          "description": "Mountain yam, hawaii, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        },
+        {
+          "fdc_id": 168552,
+          "description": "Mountain yam, hawaii, cooked, steamed, with salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.3435714285714286
+        },
+        {
+          "fdc_id": 168433,
+          "description": "Mountain yam, hawaii, cooked, steamed, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.3435714285714286
+        },
+        {
+          "fdc_id": 170551,
+          "description": "Yam, cooked, boiled, drained, or baked, with salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.3435714285714286
+        },
+        {
+          "fdc_id": 170072,
+          "description": "Yam, cooked, boiled, drained, or baked, without salt",
+          "data_type": "SR Legacy",
+          "confidence": 0.3435714285714286
+        },
+        {
+          "fdc_id": 167975,
+          "description": "Candies, CARAMELLO Candy Bar",
+          "data_type": "SR Legacy",
+          "confidence": 0.0
+        },
+        {
+          "fdc_id": 168759,
+          "description": "Candies, MOUNDS Candy Bar",
+          "data_type": "SR Legacy",
+          "confidence": 0.0
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "raw": "¾ cup (5¼ ounces) sugar",
+      "item": "sugar",
+      "line_amount": "3/4 cup",
+      "kcal_per_100g": 385.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "teaspoon",
+          "description": null,
+          "grams": 4.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "cup",
+          "description": null,
+          "grams": 188.0,
+          "fill": 141.0
+        },
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 8.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "sugar",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 746784,
+        "description": "Sugars, granulated",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 148.83487499999998,
+        "gram_source": "weight",
+        "gram_basis": "from 5 1/4 ounce",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 746784,
+          "description": "Sugars, granulated",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 170674,
+          "description": "Sugar, turbinado",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169655,
+          "description": "Sugars, granulated",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169658,
+          "description": "Sugars, maple",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2710261,
+          "description": "Sugar, cinnamon",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2710257,
+          "description": "Sugar, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 168833,
+          "description": "Sugars, brown",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710260,
+          "description": "Sugar, brown",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "raw": "¼ cup maple syrup",
+      "item": "maple syrup",
+      "line_amount": "1/4 cup",
+      "kcal_per_100g": 260.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 20.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 315.0,
+          "fill": 78.75
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "serving 1/4 cup",
+          "grams": 83.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "maple syrup",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 169661,
+        "description": "Syrups, maple",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 78.07404,
+        "gram_source": "density",
+        "gram_basis": "1/4 cup ≈ 59 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 169661,
+          "description": "Syrups, maple",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 170276,
+          "description": "Syrup, maple, Canadian",
+          "data_type": "SR Legacy",
+          "confidence": 0.9333333333333333
+        },
+        {
+          "fdc_id": 168838,
+          "description": "Syrups, table blends, pancake, with 2% maple",
+          "data_type": "SR Legacy",
+          "confidence": 0.5571428571428572
+        },
+        {
+          "fdc_id": 170646,
+          "description": "Syrups, table blends, pancake, with 2% maple, with added potassium",
+          "data_type": "SR Legacy",
+          "confidence": 0.5444444444444445
+        }
+      ]
+    },
+    {
+      "position": 9,
+      "raw": "2 teaspoons grated or minced fresh ginger",
+      "item": "fresh ginger",
+      "line_amount": "2 teaspoon",
+      "kcal_per_100g": 80.0,
+      "portions": [
+        {
+          "amount": 5.0,
+          "unit": null,
+          "description": "slices (1\" dia)",
+          "grams": 11.0,
+          "fill": null
+        },
+        {
+          "amount": 0.25,
+          "unit": null,
+          "description": "cup slices (1\" dia)",
+          "grams": 24.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 2.0,
+          "fill": 4.0
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "ginger",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 169231,
+        "description": "Ginger root, raw",
+        "data_type": "SR Legacy",
+        "confidence": 0.8866666666666667,
+        "grams": 5.3232336,
+        "gram_source": "density",
+        "gram_basis": "2 teaspoon ≈ 10 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 169231,
+          "description": "Ginger root, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.8866666666666667
+        },
+        {
+          "fdc_id": 170926,
+          "description": "Spices, ginger, ground",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        },
+        {
+          "fdc_id": 2710082,
+          "description": "Ginger root, pickled",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 2710659,
+          "description": "Whiskey and ginger ale",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 174846,
+          "description": "Beverages, carbonated, ginger ale",
+          "data_type": "SR Legacy",
+          "confidence": 0.8500000000000001
+        },
+        {
+          "fdc_id": 2710555,
+          "description": "Soft drink, ginger ale",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.78
+        },
+        {
+          "fdc_id": 2710556,
+          "description": "Soft drink, ginger ale, diet",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.77
+        },
+        {
+          "fdc_id": 169765,
+          "description": "Ginger root, pickled, canned, with artificial sweetener",
+          "data_type": "SR Legacy",
+          "confidence": 0.7685714285714287
+        }
+      ]
+    },
+    {
+      "position": 10,
+      "raw": "1 teaspoon table salt",
+      "item": "table salt",
+      "line_amount": "1 teaspoon",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 292.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 6.0,
+          "fill": 6.0
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 18.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.4,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 6.0132824,
+        "gram_source": "density",
+        "gram_basis": "1 teaspoon ≈ 5 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
+        }
+      ]
+    },
+    {
+      "position": 11,
+      "raw": "½ teaspoon ground cinnamon",
+      "item": "ground cinnamon",
+      "line_amount": "1/2 teaspoon",
+      "kcal_per_100g": 247.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 2.6,
+          "fill": 1.3
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 7.8,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "ground cinnamon",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 171320,
+        "description": "Spices, cinnamon, ground",
+        "data_type": "SR Legacy",
+        "confidence": 0.9333333333333333,
+        "grams": 1.3061638,
+        "gram_source": "density",
+        "gram_basis": "1/2 teaspoon ≈ 2 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 171320,
+          "description": "Spices, cinnamon, ground",
+          "data_type": "SR Legacy",
+          "confidence": 0.9333333333333333
+        }
+      ]
+    },
+    {
+      "position": 12,
+      "raw": "¼ teaspoon ground nutmeg",
+      "item": "ground nutmeg",
+      "line_amount": "1/4 teaspoon",
+      "kcal_per_100g": 525.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 7.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 2.2,
+          "fill": 0.55
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "ground nutmeg",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 171326,
+        "description": "Spices, nutmeg, ground",
+        "data_type": "SR Legacy",
+        "confidence": 0.9333333333333333,
+        "grams": 0.5545035,
+        "gram_source": "density",
+        "gram_basis": "1/4 teaspoon ≈ 1 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 171326,
+          "description": "Spices, nutmeg, ground",
+          "data_type": "SR Legacy",
+          "confidence": 0.9333333333333333
+        }
+      ]
+    }
+  ]
+}

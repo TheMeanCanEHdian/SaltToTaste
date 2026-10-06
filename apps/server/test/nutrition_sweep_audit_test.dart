@@ -1074,9 +1074,27 @@ void main() {
     // (golden delicious apples, russet potato, leeks, pears, savoy cabbage,
     // butternut squash, yellow summer squash, dried apples, racks of lamb,
     // beef shanks, smoked bone-in picnic ham): 8 more compared, 7 of
-    // them differing in some digit.
-    expect(compared, 430);
-    expect(differ, 324);
+    // them differing in some digit. Matcher v44 recorded from snapshot 19
+    // the caraway detail its Tabil section pins read (170918 "Spices,
+    // caraway seed", a hit in 'caraway seeds') and the searches 'caraway
+    // seeds' and 'virgin olive oil': 1 more compared, differing in some
+    // digit. Its engine step (fix S2) recorded from snapshot 19 the 12
+    // searches and 8 details its section, read and v41 re-pins read
+    // (italian bread, shiitake mushrooms, celery seeds, cremini or white
+    // mushrooms, creamy peanut butter, sesame seeds, roasted with salt
+    // pepitas, white rice flour, green onion, dried cherries, orange
+    // marmalade, dry red wine; 174913, 1999628, 170920, 1999629, 2262072,
+    // 2709199, 168819, 172889): compared 431 -> 441, differ 325 -> 332.
+    // Its API step (fix S3) recorded from snapshot 19 the 16 searches and 5
+    // details the section goldens and the v44 API pins read (maple syrup,
+    // red curry paste, hoisin sauce, cream of tartar, honey, crystallized
+    // ginger, carrot juice, sharp cheddar cheese, gruyere cheese, almond
+    // flour, powdered psyllium husk, vegetable oil spray, red wine vinegar,
+    // whole-milk mozzarella cheese, xanthan gum, dark chocolate chips;
+    // 169661, 2707441, 2710085, 169640, 2709683): compared 441 -> 448,
+    // differ 332 -> 335.
+    expect(compared, 448);
+    expect(differ, 335);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -3536,6 +3536,43 @@ green). matcherVersion 43.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-06 — matcher v44, the server half built (deviations from
+  `prep43/design_v2.md` §2, each disclosed by a fixer or verifier and kept):**
+  (1) a child section not yet swept ROUTES with no stamp (the v41 F6 shape:
+  the row reads its recipe stale and the stale sweep appends the parent)
+  instead of the design's `section` rule row, which would have left the
+  parent fresh at 0 g for good once the section computed (no child id for the
+  readers' query, no stamp to read as underived); the wire reason `section`
+  is therefore unreachable and a section with no ingredient lines answers
+  `no_ingredients`. (2) The replay's `sectionsStale` is 13, not the design's
+  0: the thirteen sections whose lines ask option A's unanswered queries keep
+  a retry row, which RULE A reads as underived — the same rule every recipe
+  obeys; it holds only until the owner spends option A (every parent is
+  fresh, `staleAfter` 0). (3) A section key's stored totals are per batch
+  (serving basis 1): the first build inherited the host's serves (verify
+  round 2's V1), restored to P3 §3.4 at the one compute function. (4) The
+  queue's credit under-promises: a recipe with an incomplete routed child is
+  never credited by its own group (verify round 1's D2 — the gluten-free
+  pizza while its flour blend waits on option A); 279 groups, the sum of
+  `finishes` 72 = `finishable` 72. (5) Two app TEST files are re-pinned in
+  the server commit because S14 (a) removed the three non-child sections from
+  the shared golden the app tests read (the "a section stages nothing" pin
+  moves to the app commit's section goldens); a third app pin, the C1 widget
+  test's ham and chicken-pieces figures, was red since v43's golden move —
+  that gate ran the server and salt_shared suites but not the app suite.
+  Gate rule from here: a server commit that regenerates a shared golden runs
+  the app suite too. (6) The server is NOT deployed to the local :8080 until
+  the app commit: the shipped app gates a pick on `slug == null`, and a v44
+  section candidate carries its host's slug, so an old app would store
+  another host's whole recipe as the child. (7) The FK on the generated
+  `host_id` is accepted by this Mac's SQLite 3.54.0; Debian bookworm's 3.40.1
+  (the Dockerfile) is unverified and the trigger fallback unbuilt — the
+  migration test runs on the deploy image before the first deploy. (8) Two
+  new rule notes ("Reserved from the main recipe — no amount on the line,
+  counts as zero" / "… counted in the main recipe's spice rub") are row text
+  not on the S13 copy sheet; they go on the app mockup delta. The v44
+  section of this document lands with the app commit, as v41's did.
+
 - **2026-10-06 — the phase-2 package, part 2 (the owner: "go with your
   recommendations" on S1–S15 of `prep43/design_v2.md`):** a section becomes a
   recipe keyed `<host id>#<title>` in the same tables (migration 019; a

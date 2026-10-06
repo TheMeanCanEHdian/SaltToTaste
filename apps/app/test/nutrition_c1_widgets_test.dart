@@ -2168,21 +2168,25 @@ void main() {
         final match = await pumpLive(tester, ham, cubit);
         await tester.tap(find.text('oz'));
         await tester.pumpAndSettle();
-        // The ham's 2,750.2 g (v39's bone-in yield) in ounces.
-        expect(find.text('97'), findsOneWidget);
+        // The ham's 2,830.4 g (v43's AH-102 shank-half yield, 0.78) in
+        // ounces: 99.84 → "100".
+        expect(find.text('100'), findsOneWidget);
         await tester.enterText(find.byType(EditableText).last, '100');
         await tester.pumpAndSettle();
         match.value = chicken;
         await tester.pumpAndSettle();
-        // The unit: the chicken's 966.0 g (v39) in grams, never in ounces
-        // (34).
-        expect(find.text('966'), findsOneWidget);
+        // The unit: the chicken pieces' 1,108.5 g (v43's AH-102 mixed-pieces
+        // yield) in grams, never in ounces (39).
+        expect(find.text('1109'), findsOneWidget);
         // The typed flag: a pick on the chicken line now lets the server
         // weigh it — the reset field is no hand-typed amount to send.
         await tester.tap(
           find.text('Chicken, broilers or fryers, thigh, meat and skin, raw'),
         );
         await tester.pumpAndSettle();
+        // v43's handbook flag lengthens the row; the button sits below the
+        // 600 px test surface until scrolled to.
+        await tester.ensureVisible(find.textContaining('Save match'));
         await tester.tap(find.textContaining('Save match'));
         await tester.pumpAndSettle();
         expect(cubit.writes.single.fdcId, 172385);

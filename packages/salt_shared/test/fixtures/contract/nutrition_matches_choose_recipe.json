@@ -421,6 +421,8 @@
           "name": "Rustic Tart Dough",
           "slug": null,
           "title": null,
+          "section": null,
+          "host_title": null,
           "share_text": "1",
           "default": false,
           "why": "none",

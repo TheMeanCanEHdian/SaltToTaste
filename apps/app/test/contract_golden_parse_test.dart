@@ -867,25 +867,18 @@ void main() {
       expect((child.kind, child.parentKind), ('dough', 'pie'));
       expect(
         [for (final c in child.candidates) c.group],
-        [
-          'note_named',
-          'note_named',
-          'note_named',
-          'similar',
-          'other_section',
-          'other_section',
-          'other_section',
-        ],
+        ['note_named', 'note_named', 'note_named', 'similar'],
+        reason: 'v44 S14 a: other_section lists child sections only',
       );
       final first = child.candidates.first;
       expect(
         (first.note, first.current, first.isDefault, first.pickable),
         ('named first', true, true, true),
       );
-      final section = child.candidates.last;
+      final similar = child.candidates.last;
       expect(
-        (section.slug, section.pickable, section.hostTitle),
-        (null, false, 'Foolproof All-Butter Dough for Double-Crust Pie'),
+        (similar.slug, similar.pickable, similar.hostTitle),
+        ('foolproof-all-butter-dough-for-double-crust-pie', false, null),
       );
       expect(dough.flag, startsWith('approximation (the first dough'));
       expect(subrecipe[2].child, isNull);

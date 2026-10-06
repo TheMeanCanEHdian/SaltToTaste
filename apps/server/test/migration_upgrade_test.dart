@@ -96,6 +96,11 @@ const Map<int, String> _capabilityByVersion = {
       'parts: the composite row (matcher v41) — NULL on every existing row '
       '(not composite), CHECKed: a share above 0, parts a JSON array never '
       'beside a child',
+  19:
+      'ingredient_matches / recipe_nutrition / recipe_layout rebuilt with a '
+      'VIRTUAL generated host_id carrying the FK to recipes (cascade): a '
+      'section of a recipe is keyed <host id>#<title> (matcher v44); every '
+      'existing row its own host, byte-equal',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -129,6 +134,10 @@ const int _markerVersion = 17;
 /// Mirror of migration 018: the composite row's four columns (NULL on every
 /// existing row at open).
 const int _compositeVersion = 18;
+
+/// Mirror of migration 019: the three nutrition tables carry a VIRTUAL
+/// generated `host_id` (read back by `SELECT *` at head, never written).
+const int _hostIdVersion = 19;
 
 /// The columns migration 018 adds to `ingredient_matches`.
 const Set<String> _compositeColumns = {
@@ -334,7 +343,9 @@ Future<Map<String, List<Map<String, Object?>>>> _captureNutritionRows(
 /// Writes [rows] back into [table] verbatim, column for column.
 void _replay(Database raw, String table, List<Map<String, Object?>> rows) {
   for (final row in rows) {
-    final columns = row.keys.toList();
+    // Migration 019's `host_id` is generated: SQLite refuses a value for it
+    // (and no version below 19 has the column).
+    final columns = row.keys.where((column) => column != 'host_id').toList();
     raw.execute(
       // `table` is a literal from [_nutritionTables]; the column names come
       // from the schema itself. Neither is external input.
@@ -764,7 +775,10 @@ void main() {
         '${List.filled(values.length, '?').join(', ')})',
         ['r', position++, 'line', 1, 'auto', ...values],
       );
-      expect(raw.select('PRAGMA user_version').first.columnAt(0), 18);
+      expect(
+        raw.select('PRAGMA user_version').first.columnAt(0),
+        migrations.length,
+      );
       write('child_recipe_id, child_share', ['c', 0.5]);
       write('parts', ['[{"fdc_id":1,"grams":2}]']);
       for (final (columns, values) in [
@@ -1403,6 +1417,18 @@ void main() {
             }
 
             expectIdentical(keysExpected: startVersion >= _itemKeyVersion);
+            // 019: every seeded row is its own host (no section key existed
+            // before v44), and the FK on the generated column holds.
+            if (migrations.length >= _hostIdVersion) {
+              expect(
+                _count(
+                  after,
+                  'ingredient_matches WHERE host_id IS NOT recipe_id',
+                ),
+                0,
+              );
+              expect(after.select('PRAGMA foreign_key_check'), isEmpty);
+            }
             if (startVersion < _itemKeyVersion) {
               final booted = SaltDatabase.open(path);
               expect(backfillItemKeys(booted), greaterThan(0));

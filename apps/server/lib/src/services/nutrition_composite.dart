@@ -25,6 +25,14 @@ double _round2(double v) => double.parse(v.toStringAsFixed(2));
 /// `no_share`). [slim] (the review queue, F14): `state`, `reason`, `name`,
 /// `title`, `slug`, `default`, `why`, `share_text` — never `candidates`.
 /// Every library read goes through [memo] (one per request).
+///
+/// v44 (sections as children, P3 §3): a SECTION child keeps `slug` = its
+/// host's slug and `title` = the section's title, and adds `section` (the
+/// title, read from the stored key — a section gone since, S15, still names
+/// its old title) and `host_title` (the host's title only when the host is
+/// ANOTHER recipe; null for an own section and a library child); not
+/// routed for a section with no ingredient lines: `reason`
+/// `no_ingredients`.
 Map<String, Object?>? referenceChildJson(
   SaltDatabase db,
   Recipe recipe,
@@ -61,6 +69,7 @@ Map<String, Object?>? referenceChildJson(
   } else {
     state = 'not_routed';
     reason = switch (found().kind) {
+      ReferenceKind.section when found().noIngredients => 'no_ingredients',
       ReferenceKind.section => 'section',
       ReferenceKind.servedWith => 'served_with',
       ReferenceKind.noAmount => 'no_amount',
@@ -70,7 +79,23 @@ Map<String, Object?>? referenceChildJson(
   }
   final childId =
       row.childRecipeId ?? (state == 'not_routed' ? found().childId : null);
-  final child = childId == null ? null : db.recipeByIdOrSlug(childId)?.recipe;
+  final child = childId == null ? null : nutritionRecipeOf(db, childId)?.recipe;
+  // The section the child is (v44): its stored key, else the prose section
+  // a not-routed row names (no child id: nothing to count).
+  final sectionKey = switch ((childId, state)) {
+    (final id?, _) when hostOf(id) != id => id,
+    (null, 'not_routed') => switch (found().section) {
+      (:final host, :final title) => sectionKeyOf(host, title),
+      null => null,
+    },
+    _ => null,
+  };
+  final sectionHost = sectionKey == null ? null : hostOf(sectionKey);
+  final hostRecipe = sectionHost == null
+      ? null
+      : sectionHost == recipe.id
+      ? recipe
+      : memo.hostRecipe(sectionHost);
   final share =
       row.childShare ?? parseShare(line.raw, line.amounts, child?.servings);
   final isDefault = isDefaultRoute(db, recipe, line, row, memo);
@@ -78,8 +103,12 @@ Map<String, Object?>? referenceChildJson(
     'state': state,
     'reason': reason,
     'name': referenceNameOf(line),
-    'slug': child?.slug,
-    'title': child?.title,
+    'slug': child?.slug ?? hostRecipe?.slug,
+    'title': child?.title ?? sectionKey?.substring(sectionHost!.length + 1),
+    'section': sectionKey?.substring(sectionHost!.length + 1),
+    'host_title': sectionHost == null || sectionHost == hostOf(recipe.id)
+        ? null
+        : hostRecipe?.title,
     'share_text': share == null ? null : shareText(share),
     'default': isDefault,
     // The fix sheet's why line (A4, F12): "(default)" on a flagged default
@@ -106,7 +135,7 @@ Map<String, Object?>? referenceChildJson(
     for (final candidate in referenceCandidates(recipe, line, memo))
       if (candidate.recipe case final library?)
         () {
-          final picked = db.recipeByIdOrSlug(library.id)?.recipe;
+          final picked = nutritionRecipeOf(db, library.id)?.recipe;
           final nutrition = db.nutritionFor(library.id);
           final batch = kcalOf(nutrition);
           final lineShare = parseShare(
@@ -119,6 +148,7 @@ Map<String, Object?>? referenceChildJson(
             'group': candidate.group,
             'slug': library.slug,
             'title': library.title,
+            'section': null,
             'note': switch (candidate.group) {
               'note_named' => 'named ${_ordinal(candidate.rank!)}',
               'similar' when named.isNotEmpty => 'not named in the note',
@@ -131,28 +161,24 @@ Map<String, Object?>? referenceChildJson(
                 : _round2(batch * lineShare / basis),
             'current': current,
             'default': current && isDefault,
+            'state': null,
             // A recipe with stored totals (the PUT refuses one without).
             'pickable': nutrition != null,
             'host_title': null,
           };
         }()
       else
-        {
-          'group': candidate.group,
-          'slug': null,
-          'title': candidate.section,
-          'note': candidate.group == 'other_section'
-              ? 'a section of ${candidate.hostTitle}'
-              : null,
-          'yield_text': null,
-          'kcal': null,
-          'kcal_per_serving': null,
-          'current': false,
-          'default': false,
-          // Sections are phase 2: listed, never picked (D6).
-          'pickable': false,
-          'host_title': candidate.hostTitle,
-        },
+        _sectionCandidateJson(
+          db,
+          recipe,
+          line,
+          row,
+          memo,
+          candidate,
+          basis: basis,
+          held: state == 'held',
+          isDefault: isDefault,
+        ),
   ];
   return {
     ...slimJson,
@@ -177,6 +203,67 @@ Map<String, Object?>? referenceChildJson(
       _ => 'recipe',
     },
     'candidates': candidates,
+  };
+}
+
+/// A section candidate on the wire (v44, P3 §3.1): `slug` its host's,
+/// `title` and `section` its title, its yield, stored batch energy and the
+/// line's share of it like a library candidate's, `host_title` only for
+/// ANOTHER host's section, and `state` — `no_ingredients` (a prose
+/// variation: never counted), `nested` (it holds a reference itself; a
+/// pick is stored held, as a nested library child), `ready` (stored
+/// totals) or `no_totals` (a child section not computed yet — until its
+/// sweep). `pickable`: lines and stored totals, what the PUT accepts.
+Map<String, Object?> _sectionCandidateJson(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row,
+  ResolverMemo memo,
+  ReferenceCandidate candidate, {
+  required int basis,
+  required bool held,
+  required bool isDefault,
+}) {
+  final hostId = candidate.hostId!;
+  final title = candidate.section!;
+  final own = hostId == recipe.id;
+  final host = own ? recipe : memo.hostRecipe(hostId);
+  final key = sectionKeyOf(hostId, title);
+  final section = host == null ? null : sectionOf(host, key);
+  final lines = section == null
+      ? const <IngredientLine>[]
+      : nutritionLines(section);
+  final nutrition = db.nutritionFor(key);
+  final batch = nutrition == null
+      ? null
+      : batchTotalsOf(nutrition)['energy'] ?? 0;
+  final lineShare = parseShare(line.raw, line.amounts, section?.servings);
+  final current = key == row.childRecipeId && !held;
+  return {
+    'group': candidate.group,
+    'slug': host?.slug,
+    'title': title,
+    'section': title,
+    'note': candidate.group == 'other_section'
+        ? 'a section of ${candidate.hostTitle}'
+        : null,
+    'yield_text': section?.servings,
+    'kcal': batch == null ? null : _round2(batch),
+    'kcal_per_serving': batch == null || lineShare == null
+        ? null
+        : _round2(batch * lineShare / basis),
+    'current': current,
+    'default': current && isDefault,
+    'state': lines.isEmpty
+        ? 'no_ingredients'
+        : lines.any((l) => isReferenceIn(section!, l))
+        ? 'nested'
+        : nutrition == null
+        ? 'no_totals'
+        : 'ready',
+    'pickable': lines.isNotEmpty && nutrition != null,
+    'host_title': own ? null : candidate.hostTitle,
   };
 }
 
@@ -263,6 +350,9 @@ referenceSummary(
       includes.add({
         'slug': child?['slug'],
         'title': child?['title'],
+        // v44: a section child's title and its host's (another host only).
+        'section': child?['section'],
+        'host_title': child?['host_title'],
         'flag': compositeFlagOf(db, recipe, line, row, memo) == null
             ? null
             : 'approximation',

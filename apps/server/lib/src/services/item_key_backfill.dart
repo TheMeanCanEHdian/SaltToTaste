@@ -35,7 +35,7 @@ int backfillItemKeys(SaltDatabase db) {
   for (final recipeId in db.recipesWithMatches()) {
     final ({Recipe recipe, String sourceSlug})? found;
     try {
-      found = db.recipeByIdOrSlug(recipeId);
+      found = nutritionRecipeOf(db, recipeId);
       // ignore: avoid_catches_without_on_clauses
     } catch (error) {
       failed += 1;

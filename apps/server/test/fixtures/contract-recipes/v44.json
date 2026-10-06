@@ -1,0 +1,1663 @@
+[
+  {
+    "corpus_file": "0972-basic-double-crust-pie-dough.yaml",
+    "recipe": {
+      "title": "Basic Double-Crust Pie Dough",
+      "servings": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+      "prep_notes": "The dough, wrapped tightly in plastic wrap, can be refrigerated for up to 2 days or frozen for up to 1 month. If frozen, let the dough thaw completely on the counter before rolling it out.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "2½ cups (12½ ounces) unbleached all-purpose flour, plus extra for the work surface",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2 1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "12 1/2",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "unbleached all-purpose flour",
+              "prep": "plus extra for the work surface"
+            },
+            {
+              "raw": "2 tablespoons sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "1 teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "½ cup vegetable shortening, cut into ½-inch pieces and chilled",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "vegetable shortening",
+              "prep": "cut into 1/2-inch pieces and chilled"
+            },
+            {
+              "raw": "12 tablespoons (1½ sticks) unsalted butter, cut into ¼-inch pieces and chilled",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "12",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(1 1/2 sticks) unsalted butter",
+              "prep": "cut into 1/4-inch pieces and chilled"
+            },
+            {
+              "raw": "6–8 tablespoons ice water",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "6–8",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ice water"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Process the flour, sugar, and salt together in a food processor until combined. Scatter the shortening over the top and process until the mixture resembles coarse cornmeal, about 10 seconds. Scatter the butter pieces over the top and pulse the mixture until it resembles coarse crumbs, about 10 pulses. Transfer the mixture to a large bowl."
+        },
+        {
+          "number": 2,
+          "text": "Sprinkle 6 tablespoons of the ice water over the mixture. Stir and press the dough together, using a stiff rubber spatula, until the dough sticks together. If the dough does not come together, stir in the remaining water, 1 tablespoon at a time, until it does."
+        },
+        {
+          "number": 3,
+          "text": "Divide the dough into two even pieces. Turn each piece of dough onto a sheet of plastic wrap and flatten each into a 4-inch disk. Wrap each piece tightly in plastic wrap and refrigerate for 1 hour. Before rolling the dough out, let it sit on the counter to soften slightly, about 10 minutes."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Hand Mixed Basic Double-Crust Pie Dough",
+          "kind": "component",
+          "body": "Freeze the butter in its stick form until very firm. Whisk the flour, sugar, and salt together in a large bowl. Add the chilled shortening and press it into the flour using a fork. Grate the frozen butter on the large holes of a box grater into the flour mixture, then cut the mixture together using two butter or dinner knives, until the mixture resembles coarse crumbs. Follow the recipe for Basic Double-Crust Pie Dough, adding the water as directed."
+        },
+        {
+          "title": "Basic Single-Crust Pie Dough",
+          "kind": "variation",
+          "servings": "MAKES ENOUGH FOR ONE 9-INCH PIE",
+          "prep_notes": "The dough, wrapped tightly in plastic wrap, can be refrigerated for up to 2 days or frozen for up to 1 month. If frozen, let the dough thaw completely on the counter before rolling it out.",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "1¼ cups (6¼ ounces) unbleached all-purpose flour, plus extra for the work surface",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1 1/4",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    },
+                    {
+                      "measure": "weight",
+                      "quantity": "6 1/4",
+                      "unit": "ounce",
+                      "approximate": false,
+                      "primary": false
+                    }
+                  ],
+                  "item": "unbleached all-purpose flour",
+                  "prep": "plus extra for the work surface"
+                },
+                {
+                  "raw": "1 tablespoon sugar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "sugar"
+                },
+                {
+                  "raw": "½ teaspoon table salt",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "table salt"
+                },
+                {
+                  "raw": "3 tablespoons vegetable shortening, cut into ½-inch pieces and chilled",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "3",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "vegetable shortening",
+                  "prep": "cut into 1/2-inch pieces and chilled"
+                },
+                {
+                  "raw": "5 tablespoons unsalted butter, cut into ¼-inch pieces and chilled",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "5",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "unsalted butter",
+                  "prep": "cut into 1/4-inch pieces and chilled"
+                },
+                {
+                  "raw": "4–6 tablespoons ice water",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "4–6",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ice water"
+                }
+              ]
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "text": "Process the flour, sugar, and salt together in a food processor until combined. Scatter the shortening over the top and process until the mixture resembles coarse cornmeal, about 10 seconds. Scatter the butter pieces over the top and pulse the mixture until it resembles coarse crumbs, about 10 pulses. Transfer the mixture to a medium bowl."
+            },
+            {
+              "number": 2,
+              "text": "Sprinkle 4 tablespoons of the ice water over the mixture. Stir and press the dough together, using a stiff rubber spatula, until the dough sticks together. If the dough does not come together, stir in the remaining water, 1 tablespoon at a time, until it does."
+            },
+            {
+              "number": 3,
+              "text": "Turn the dough onto a sheet of plastic wrap and flatten into a 4-inch disk. Wrap the dough tightly in plastic wrap and refrigerate for 1 hour. Before rolling the dough out, let it sit on the counter to soften slightly, about 10 minutes."
+            },
+            {
+              "number": 4,
+              "text": "Following the photos on this page, roll the dough into a 12-inch circle and fit it into a pie plate. Following the photos at right, trim, fold, and crimp the edge of the dough. Wrap the dough-lined pie plate loosely in plastic wrap and place in the freezer until the dough is fully chilled and firm, about 30 minutes, before using."
+            }
+          ]
+        },
+        {
+          "title": "Hand Mixed Basic Single-Crust Pie Dough",
+          "kind": "component",
+          "body": "Freeze the butter in its stick form until very firm. Whisk the flour, sugar, and salt together in a medium bowl. Add the chilled shortening and press it into the flour using a fork. Grate the frozen butter on the large holes of a box grater into the flour mixture, then cut the mixture together using two butter or dinner knives, until the mixture resembles coarse crumbs. Follow the recipe for Basic Single-Crust Pie Dough, adding the water as directed."
+        },
+        {
+          "title": "Single-Crust Pie Dough for Custard Pies",
+          "kind": "variation",
+          "body": "We like rolling our single-crust dough in fresh graham cracker crumbs because it adds flavor and crisp textural appeal to many of our custard pies."
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0987-pumpkin-pie.yaml",
+    "recipe": {
+      "title": "Pumpkin Pie",
+      "servings": "SERVES 8",
+      "prep_notes": "If candied yams are unavailable, regular canned yams can be substituted. When the pie is properly baked, the center 2 inches of the pie should look firm but jiggle slightly. The pie finishes cooking with residual heat; to ensure that the filling sets, cool it at room temperature and not in the refrigerator. The crust and filling must both be warm when the filling is added. Serve with lightly sweetened whipped cream.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 recipe Basic Single-Crust Pie Dough (this page), fitted into a 9-inch pie plate and chilled",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "recipe",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "Basic Single-Crust Pie Dough (this page)",
+              "prep": "fitted into a 9-inch pie plate and chilled"
+            },
+            {
+              "raw": "1 cup heavy cream",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "heavy cream"
+            },
+            {
+              "raw": "1 cup whole milk",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "whole milk"
+            },
+            {
+              "raw": "3 large whole eggs plus 2 large egg yolks",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "3",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "large whole eggs plus 2 large egg yolks"
+            },
+            {
+              "raw": "1 teaspoon vanilla extract",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "vanilla extract"
+            },
+            {
+              "raw": "1 (15-ounce) can pumpkin puree",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "can",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(15-ounce) pumpkin puree"
+            },
+            {
+              "raw": "1 cup candied yams, drained",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "candied yams",
+              "prep": "drained"
+            },
+            {
+              "raw": "¾ cup (5¼ ounces) sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3/4",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "5 1/4",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "¼ cup maple syrup",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "maple syrup"
+            },
+            {
+              "raw": "2 teaspoons grated or minced fresh ginger",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "fresh ginger",
+              "prep": "grated or minced"
+            },
+            {
+              "raw": "1 teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "½ teaspoon ground cinnamon",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ground cinnamon"
+            },
+            {
+              "raw": "¼ teaspoon ground nutmeg",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ground nutmeg"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Adjust an oven rack to the middle position and heat the oven to 375 degrees. Line the chilled pie shell with a double layer of foil and fill with pie weights."
+        },
+        {
+          "number": 2,
+          "text": "Bake until the pie dough looks dry and is light in color, 25 to 30 minutes. Remove the weights and foil and continue to bake the crust until deep golden brown, 10 to 12 minutes longer. Transfer the pie plate to a wire rack. (The crust must still be warm when the filling is added.)"
+        },
+        {
+          "number": 3,
+          "text": "While the pie shell is baking, whisk the cream, milk, whole eggs, egg yolks, and vanilla together in a medium bowl. Bring the pumpkin puree, yams, sugar, maple syrup, ginger, salt, cinnamon, and nutmeg to a simmer in a large saucepan over medium heat and cook, stirring constantly and mashing the yams against the sides of the pot, until thick and shiny, 15 to 20 minutes."
+        },
+        {
+          "number": 4,
+          "text": "Remove the pan from the heat and whisk in the cream mixture until fully incorporated. Strain the mixture through a fine-mesh strainer set over a medium bowl, using the back of a ladle or spatula to press the solids through the strainer. Whisk the mixture, then transfer to the warm prebaked pie crust."
+        },
+        {
+          "number": 5,
+          "text": "Bake the pie on a rimmed baking sheet for 10 minutes. Reduce the oven temperature to 300 degrees and continue to bake until the edges of the pie are set and the center registers 175 degrees on an instant-read thermometer, 25 to 45 minutes longer. Cool the pie on a wire rack to room temperature, 2 to 3 hours, before serving."
+        }
+      ],
+      "subsections": []
+    }
+  },
+  {
+    "corpus_file": "0989-lemon-meringue-pie.yaml",
+    "recipe": {
+      "title": "Lemon Meringue Pie",
+      "servings": "SERVES 8",
+      "prep_notes": "Make the pie crust, let it cool, and then begin work on the filling. As soon as the filling is made, cover it with plastic wrap to keep it hot and then start working on the meringue topping. You want to add hot filling to the pie crust, apply the meringue topping, and then quickly get the pie into the oven.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 recipe Single-Crust Pie Dough for Custard Pies (this page), fitted into a 9-inch pie plate and chilled",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "recipe",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "Single-Crust Pie Dough for Custard Pies (this page)",
+              "prep": "fitted into a 9-inch pie plate and chilled"
+            }
+          ]
+        },
+        {
+          "group": "FILLING",
+          "items": [
+            {
+              "raw": "1½ cups water",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1 1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "water"
+            },
+            {
+              "raw": "1 cup (7 ounces) sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "7",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "¼ cup (1 ounce) cornstarch",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "1",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "cornstarch"
+            },
+            {
+              "raw": "⅛ teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/8",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "6 large egg yolks",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "6",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "large egg yolks"
+            },
+            {
+              "raw": "1 tablespoon grated zest plus ½ cup juice from 3 lemons",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "grated zest plus 1/2 cup juice from 3 lemons"
+            },
+            {
+              "raw": "2 tablespoons unsalted butter, cut into 2 pieces",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "unsalted butter",
+              "prep": "cut into 2 pieces"
+            }
+          ]
+        },
+        {
+          "group": "MERINGUE",
+          "items": [
+            {
+              "raw": "⅓ cup water",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/3",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "water"
+            },
+            {
+              "raw": "1 tablespoon cornstarch",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "cornstarch"
+            },
+            {
+              "raw": "½ cup (3½ ounces) sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                },
+                {
+                  "measure": "weight",
+                  "quantity": "3 1/2",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": false
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "¼ teaspoon cream of tartar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "cream of tartar"
+            },
+            {
+              "raw": "4 large egg whites",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "4",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "large egg whites"
+            },
+            {
+              "raw": "½ teaspoon vanilla extract",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "vanilla extract"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Adjust an oven rack to the middle position and heat the oven to 375 degrees. Line the chilled pie shell with a double layer of foil and fill with pie weights. Bake until the pie dough looks dry and is light in color, 25 to 30 minutes. Remove the weights and foil and continue to bake the crust until deep golden brown, 10 to 12 minutes longer. Cool the crust to room temperature. Reduce the oven temperature to 325 degrees."
+        },
+        {
+          "number": 2,
+          "label": "FOR THE FILLING",
+          "text": "Bring the water, sugar, cornstarch, and salt to a simmer in a large saucepan over medium heat, whisking constantly. When the mixture starts to turn translucent, whisk in the egg yolks, 2 at a time. Whisk in the lemon zest and juice and the butter. Return the mixture to a brief simmer, then remove the pan from the heat. Lay a sheet of plastic wrap directly on the surface of the filling to keep warm and prevent a skin from forming."
+        },
+        {
+          "number": 3,
+          "label": "FOR THE MERINGUE",
+          "text": "Bring the water and cornstarch to a simmer in a small saucepan and cook, whisking occasionally, until thickened and translucent, 1 to 2 minutes. Set aside off the heat to cool slightly."
+        },
+        {
+          "number": 4,
+          "text": "Combine the sugar and cream of tartar in a small bowl. In a large bowl, whip the egg whites and vanilla together with an electric mixer on medium-low speed until foamy, about 1 minute. Increase the mixer speed to medium-high, add the sugar mixture, 1 tablespoon at a time, and whip the whites until shiny and soft peaks form, 1 to 3 minutes. Add the cornstarch mixture, 1 tablespoon at a time, and continue to whip the meringue to stiff peaks, 1 to 3 minutes longer."
+        },
+        {
+          "number": 5,
+          "text": "Meanwhile, remove the plastic wrap from the filling and return to very low heat during the last minute or so of beating the meringue (to ensure the filling is hot)."
+        },
+        {
+          "number": 6,
+          "text": "Pour the warm filling into the pie crust. Using a rubber spatula, immediately distribute the meringue evenly around the edge and then the center of the pie, attaching the meringue to the pie crust to prevent shrinking. Use the back of a spoon to create attractive swirls and peaks in the meringue. Bake until the meringue is golden brown, about 20 minutes. Cool the pie on a wire rack until the filling has set, about 2 hours. Serve."
+        }
+      ],
+      "subsections": []
+    }
+  },
+  {
+    "corpus_file": "1208-chraime.yaml",
+    "recipe": {
+      "title": "Chraime",
+      "servings": "SERVES 4",
+      "prep_notes": "Black sea bass, cod, hake, or pollock can be substituted for the haddock. Thin tail-end fillets can be folded to achieve proper thickness. This dish is typically spicy; for a milder dish, reduce the amount of Aleppo pepper to 1 or 2 teaspoons. Serve with challah, if desired.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "3 tablespoons extra virgin olive oil, plus extra for drizzling",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "extra virgin olive oil",
+              "prep": "plus extra for drizzling"
+            },
+            {
+              "raw": "1 onion, chopped fine",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "onion",
+              "prep": "chopped fine"
+            },
+            {
+              "raw": "1 red bell pepper, stemmed, seeded, and chopped",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "red bell pepper",
+              "prep": "stemmed, seeded, and chopped"
+            },
+            {
+              "raw": "1 jalapeño chile, stemmed, seeded, and minced",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "jalapeño chile",
+              "prep": "stemmed, seeded, and minced"
+            },
+            {
+              "raw": "¾ teaspoon table salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3/4",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "¼ cup tomato paste",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "tomato paste"
+            },
+            {
+              "raw": "6 garlic cloves, minced",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "6",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "garlic cloves",
+              "prep": "minced"
+            },
+            {
+              "raw": "1 tablespoon tabil (recipe follows)",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "tabil (recipe follows)"
+            },
+            {
+              "raw": "1 tablespoon ground dried Aleppo pepper",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "ground dried Aleppo pepper"
+            },
+            {
+              "raw": "2 teaspoons paprika",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "paprika"
+            },
+            {
+              "raw": "¼ teaspoon pepper",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/4",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "pepper"
+            },
+            {
+              "raw": "1½ cups water",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1 1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "water"
+            },
+            {
+              "raw": "1½ pounds skinless haddock fillets, ½ to ¾ inch thick, cut into 3-inch pieces",
+              "amounts": [
+                {
+                  "measure": "weight",
+                  "quantity": "1 1/2",
+                  "unit": "pound",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "skinless haddock fillets",
+              "prep": "1/2 to 3/4 inch thick, cut into 3-inch pieces"
+            },
+            {
+              "raw": "10 ounces cherry tomatoes",
+              "amounts": [
+                {
+                  "measure": "weight",
+                  "quantity": "10",
+                  "unit": "ounce",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "cherry tomatoes"
+            },
+            {
+              "raw": "½ cup chopped fresh cilantro",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1/2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "chopped fresh cilantro"
+            },
+            {
+              "raw": "Lemon wedges",
+              "amounts": [],
+              "item": "Lemon wedges"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Heat oil in 12-inch skillet over medium heat until shimmering. Add onion, bell pepper, jalapeño, and salt and cook until vegetables are softened, 5 to 7 minutes. Stir in tomato paste, garlic, tabil, Aleppo pepper, paprika, and pepper and cook until fragrant, about 30 seconds. Stir in water, scraping up any browned bits, and bring to simmer. Reduce heat to low, cover, and cook until flavors meld, about 15 minutes."
+        },
+        {
+          "number": 2,
+          "text": "Nestle haddock into sauce and spoon some of sauce over fish. Sprinkle tomatoes around haddock and return to simmer. Reduce heat to low, cover, and cook until fish flakes apart when gently prodded with paring knife and registers 135 degrees, 5 to 7 minutes. Season with salt and pepper to taste. Sprinkle with cilantro and drizzle with extra oil. Serve with lemon wedges."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Tabil",
+          "kind": "variation",
+          "servings": "MAKES ABOUT ½ CUP",
+          "prep_notes": "This coriander-forward Tunisian spice blend lends dishes a beautiful, complex aroma.",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "3½ tablespoons coriander seeds",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "3 1/2",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "coriander seeds"
+                },
+                {
+                  "raw": "2 tablespoons plus 2 teaspoons caraway seeds",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "plus 2 teaspoons caraway seeds"
+                },
+                {
+                  "raw": "1 tablespoon plus 2 teaspoons cumin seeds",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "plus 2 teaspoons cumin seeds"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0251-glazed-spiral-sliced-ham.yaml",
+    "recipe": {
+      "title": "Glazed Spiral-Sliced Ham",
+      "servings": "SERVES 12 TO 14",
+      "prep_notes": "You can bypass the 90-minute soaking time, but the heating time will increase to 18 to 20 minutes per pound for a cold ham. If there is a tear or hole in the ham’s inner covering, wrap the ham in several layers of plastic wrap before soaking it in hot water. Instead of using the plastic oven bag, the ham may be placed cut side down in the roasting pan and covered tightly with foil, but you will need to add 3 to 4 minutes per pound to the heating time. If using an oven bag, be sure to cut slits in the bag so it does not burst.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 (7- to 10-pound) spiral-sliced bone-in half ham",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(7- to 10-pound) spiral-sliced bone-in half ham"
+            },
+            {
+              "raw": "1 large plastic oven bag",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "large plastic oven bag"
+            },
+            {
+              "raw": "1 recipe glaze (recipes follow)",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "recipe",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "glaze (recipes follow)"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Leaving the ham’s inner plastic or foil covering intact, place the ham in a large container and cover with hot tap water; set aside for 45 minutes. Drain and cover again with hot tap water; set aside for another 45 minutes."
+        },
+        {
+          "number": 2,
+          "text": "Adjust an oven rack to the lowest position and heat the oven to 250 degrees. Unwrap the ham; remove and discard the plastic disk covering the bone. Place the ham in the oven bag. Gather the top of the bag tightly so the bag fits snugly around the ham, tie the bag, and trim the excess plastic. Set the ham, cut side down, in a large roasting pan and cut four slits in the top of the bag with a paring knife."
+        },
+        {
+          "number": 3,
+          "text": "Bake the ham until the center registers 100 degrees on an instant-read thermometer, 1 to 1½ hours (about 10 minutes per pound)."
+        },
+        {
+          "number": 4,
+          "text": "Remove the ham from the oven and increase the oven temperature to 350 degrees. Cut open the oven bag and roll back the sides to expose the ham. Brush the ham with one-third of the glaze and return to the oven until the glaze becomes sticky, about 10 minutes (if the glaze is too thick to brush, return it to the heat to loosen)."
+        },
+        {
+          "number": 5,
+          "text": "Remove the ham from the oven, transfer it to a carving board, and brush the entire ham with another third of the glaze. Let the ham rest, loosely tented with foil, for 15 minutes. While the ham rests, heat the remaining third of the glaze with 4 to 6 tablespoons of the ham juices until it forms a thick but fluid sauce. Carve and serve the ham, passing the sauce at the table."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Maple-Orange Glaze",
+          "kind": "variation",
+          "servings": "MAKES 1 CUP",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "¾ cup maple syrup",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "3/4",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "maple syrup"
+                },
+                {
+                  "raw": "½ cup orange marmalade",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "orange marmalade"
+                },
+                {
+                  "raw": "2 tablespoons unsalted butter",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "unsalted butter"
+                },
+                {
+                  "raw": "1 tablespoon Dijon mustard",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "Dijon mustard"
+                },
+                {
+                  "raw": "1 teaspoon ground black pepper",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground black pepper"
+                },
+                {
+                  "raw": "¼ teaspoon ground cinnamon",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground cinnamon"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        },
+        {
+          "title": "Cherry-Port Glaze",
+          "kind": "variation",
+          "servings": "MAKES 1 CUP",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "½ cup ruby port",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ruby port"
+                },
+                {
+                  "raw": "½ cup cherry preserves",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "cherry preserves"
+                },
+                {
+                  "raw": "1 cup packed dark brown sugar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "packed dark brown sugar"
+                },
+                {
+                  "raw": "1 teaspoon ground black pepper",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground black pepper"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0601-grilled-glazed-pork-tenderloin-roast.yaml",
+    "recipe": {
+      "title": "Grilled Glazed Pork Tenderloin Roast",
+      "servings": "SERVES 6",
+      "prep_notes": "Since brining is a key step in having the two tenderloins stick together, we don’t recommend using enhanced pork (injected with a salt solution) in this recipe.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "2 (1-pound) pork tenderloins, trimmed",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "2",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(1-pound) pork tenderloins",
+              "prep": "trimmed"
+            },
+            {
+              "raw": "Salt and pepper",
+              "amounts": [],
+              "item": "Salt and pepper"
+            },
+            {
+              "raw": "Vegetable oil",
+              "amounts": [],
+              "item": "Vegetable oil"
+            },
+            {
+              "raw": "1 recipe glaze (recipes follow)",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "recipe",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "glaze (recipes follow)"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Lay tenderloins on cutting board, flat side (side opposite where silverskin was) up. Holding thick end of 1 tenderloin with paper towels and using dinner fork, scrape flat side lengthwise from end to end 5 times, until surface is completely covered with shallow grooves. Repeat with second tenderloin. Dissolve 3 tablespoons salt in 1½ quarts cold water in large container. Submerge tenderloins in brine and let stand at room temperature for 1 hour."
+        },
+        {
+          "number": 2,
+          "text": "Remove tenderloins from brine and pat completely dry with paper towels. Lay 1 tenderloin, scraped side up, on cutting board and lay second tenderloin, scraped side down, on top so that thick end of 1 tenderloin matches up with thin end of other. Spray five 14-inch lengths of kitchen twine thoroughly with vegetable oil spray; evenly space twine underneath tenderloins and tie. Brush roast with vegetable oil and season with pepper. Transfer ⅓ cup glaze to bowl for grilling; reserve remaining glaze for serving."
+        },
+        {
+          "number": 3,
+          "text": "Open bottom vent completely. Light large chimney starter filled with charcoal briquettes (6 quarts). When top coals are partially covered with ash, pour into steeply banked pile against side of grill. Set cooking grate in place, cover, and open lid vent completely. Heat grill until hot, about 5 minutes."
+        },
+        {
+          "number": 4,
+          "text": "Turn all burners to high, cover, and heat grill until hot, about 15 minutes. Leave primary burner on high and turn off other burner(s)."
+        },
+        {
+          "number": 4,
+          "text": "Clean and oil cooking grate. Place roast on cooler side of grill, cover, and cook until meat registers 115 degrees, 22 to 28 minutes, flipping and rotating halfway through cooking."
+        },
+        {
+          "number": 5,
+          "text": "Slide roast to hotter side of grill and cook until lightly browned on all sides, 4 to 6 minutes. Brush top of roast with about 1 tablespoon glaze and grill, glaze side down, until glaze begins to char, 2 to 3 minutes; repeat glazing and grilling with remaining 3 sides of roast, until meat registers 140 degrees."
+        },
+        {
+          "number": 6,
+          "text": "Transfer roast to carving board, tent loosely with aluminum foil, and let rest for 10 minutes. Carefully remove twine and slice roast into ½-inch-thick slices. Serve with remaining glaze."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Miso Glaze",
+          "kind": "variation",
+          "servings": "MAKES ABOUT ¾ CUP",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "3 tablespoons sake",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "3",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "sake"
+                },
+                {
+                  "raw": "3 tablespoons mirin",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "3",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "mirin"
+                },
+                {
+                  "raw": "⅓ cup white miso paste",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/3",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "white miso paste"
+                },
+                {
+                  "raw": "¼ cup sugar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "sugar"
+                },
+                {
+                  "raw": "2 teaspoons Dijon mustard",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "Dijon mustard"
+                },
+                {
+                  "raw": "1 teaspoon rice vinegar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "rice vinegar"
+                },
+                {
+                  "raw": "¼ teaspoon grated fresh ginger",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "grated fresh ginger"
+                },
+                {
+                  "raw": "¼ teaspoon toasted sesame oil",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "toasted sesame oil"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        },
+        {
+          "title": "Sweet and Spicy Hoisin Glaze",
+          "kind": "variation",
+          "servings": "MAKES ABOUT ¾ CUP",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "1 teaspoon vegetable oil",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "vegetable oil"
+                },
+                {
+                  "raw": "3 garlic cloves, minced",
+                  "amounts": [
+                    {
+                      "measure": "count",
+                      "quantity": "3",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "garlic cloves",
+                  "prep": "minced"
+                },
+                {
+                  "raw": "1 teaspoon grated fresh ginger",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "grated fresh ginger"
+                },
+                {
+                  "raw": "½ teaspoon red pepper flakes",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "red pepper flakes"
+                },
+                {
+                  "raw": "½ cup hoisin sauce",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "hoisin sauce"
+                },
+                {
+                  "raw": "2 tablespoons soy sauce",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "soy sauce"
+                },
+                {
+                  "raw": "1 tablespoon rice vinegar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "rice vinegar"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        },
+        {
+          "title": "Satay Glaze",
+          "kind": "variation",
+          "servings": "MAKES ABOUT ¾ CUP",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "1 teaspoon vegetable oil",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "vegetable oil"
+                },
+                {
+                  "raw": "1 tablespoon red curry paste",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "red curry paste"
+                },
+                {
+                  "raw": "2 garlic cloves, minced",
+                  "amounts": [
+                    {
+                      "measure": "count",
+                      "quantity": "2",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "garlic cloves",
+                  "prep": "minced"
+                },
+                {
+                  "raw": "½ teaspoon grated fresh ginger",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "grated fresh ginger"
+                },
+                {
+                  "raw": "½ cup canned coconut milk",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "canned coconut milk"
+                },
+                {
+                  "raw": "¼ cup packed dark brown sugar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "packed dark brown sugar"
+                },
+                {
+                  "raw": "2 tablespoons peanut butter",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "peanut butter"
+                },
+                {
+                  "raw": "1 tablespoon lime juice",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "lime juice"
+                },
+                {
+                  "raw": "2½ teaspoons fish sauce",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2 1/2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "fish sauce"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        }
+      ]
+    }
+  }
+]

@@ -97,6 +97,8 @@ const Set<String> waterLikeItems = {
   'ice water',
   'iced water',
   'tap water',
+  // v44 (S6 a): rose-sangria's Simple Syrup, "5 ounces warm tap water".
+  'warm tap water',
   'ice',
   'ice cubes',
   // v21: "3½ cups filtered water" (cold-brew coffee concentrate) counted
@@ -600,7 +602,24 @@ const Map<String, String> _synonyms = {
 /// cured spiral ham 1937 · 70, fresh ham shank half 0.78 (derived from
 /// 1930) replace the borrowed class figures (15 lines); FDC's own refuse
 /// classes stay. Bacon B1 keeps 0.403 (Y11).
-const int matcherVersion = 43;
+///
+/// v44: sections as children (prep43 design_v2 §2 v44, the owner's
+/// 2026-10-06 rulings S1–S15). A referenced section is a recipe of its own
+/// keyed `<host id>#<exact title>` (migration 019): a reference to ONE own
+/// section, or to another recipe's section exactly ONE host carries (N8),
+/// routes to it at the share the line reads from the SECTION's yield; a
+/// section with no ingredient lines is the `no_ingredients` rule row; an
+/// unmarked line naming its own section (A9) reads one too, a bare 1 as
+/// one recipe (S11); a "(recipes follow)" line held for a person lists its
+/// own sections no other line routes to (rule PO). The section's stale
+/// hash carries its yield. Rules (S6/S7, zero requests): "back pepper" and
+/// an amount-less salt "for <purpose>" are seasoning (3 main rows), "warm
+/// tap water" water, a lone "boneless" reads on to its food, the leaked
+/// "fluid ounce(s)" items read their drink, a section's reserved parts and
+/// pan drippings and its main recipe's reserved spice rub are 0 g rule
+/// rows (two new notes), "green thai" J6's 'thai', a zest plus a COUNT of
+/// oranges the oranges (746771); S5's 23 section reads onto cached answers.
+const int matcherVersion = 44;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -1108,9 +1127,17 @@ const Set<String> seasoningToTasteItems = {
   'kosher salt and ground black pepper',
 };
 
-/// Whether an amount-less line of [normalizedItem] is seasoning to taste.
+/// Whether an amount-less line of [normalizedItem] is seasoning to taste —
+/// v44 (S6 a) also under the corpus typo "back pepper" ("Ground back
+/// pepper", mediterranean-chopped-salad's section) and with a purpose tail
+/// ("Table salt for poaching eggs", "… for cooking pasta"): the seasoning
+/// row, never a search for the purpose's words.
 bool isSeasoningToTaste(String normalizedItem) =>
-    seasoningToTasteItems.contains(normalizedItem);
+    seasoningToTasteItems.contains(
+      normalizedItem
+          .replaceFirst(RegExp(r'\bback pepper$'), 'black pepper')
+          .replaceFirst(RegExp(r' for .+$'), ''),
+    );
 
 /// Phrases FDC's search cannot find under the recipe's words, rewritten to
 /// the words FDC files them under. Keyed by the NORMALIZED item — exactly
@@ -1639,6 +1666,28 @@ const Map<String, String> _queryRewrites = {
   // The tapioca-pearl cup (169717, 152 g) for tapioca starch: the same
   // 358 kcal/100 g, a denser cup (J5, approved flagged).
   'tapioca starch': 'tapioca pearl dry',
+  // v44 (S5 a, prep43 p2_spend §3): SECTION lines' queries rewritten onto
+  // the cached answer the library's own lines already count — zero
+  // requests; no main line normalizes to any of them (each pinned,
+  // nutrition_v44_sections_test.dart).
+  'loaf country bread with thick crust': 'italian bread',
+  'slices sandwich bread': 'bread white commercially prepared',
+  'ground celery seeds': 'celery seeds',
+  'jasmine or long-grain white rice': 'long-grain white rice',
+  'cilantro stems': 'cilantro',
+  'espresso powder or instant coffee': 'instant espresso powder',
+  'navel oranges': 'oranges',
+  'sesame oil': 'toasted sesame oil',
+  'ground fennel seeds': 'fennel seeds',
+  // Rubbed sage is fluffier than ground: the record and its density are
+  // ground sage's (flagged, [approximationRecords]).
+  'rubbed sage': 'sage',
+  'peanut butter': 'creamy peanut butter',
+  // v44 (S6 a): the corpus left the unit "fluid ounce(s)" in the item
+  // (1155 Champagne Cocktail's Mimosa and Bellini); the paren's measure
+  // weighs the line.
+  'fluid ounces orange juice': 'orange juice raw',
+  'fluid ounce orange liqueur': 'liqueur',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -2317,6 +2366,38 @@ const Map<String, (String, String)> _rankAs = {
     'littleneck clams',
     'mollusks clam mixed species raw',
   ),
+  // v44 (S5 a, p2_spend §3): section lines reading a cached answer — the
+  // stand-in extensions of shipped groups under the record's words (port
+  // and tawny port on Q7's ruby port, salt-cured olives on Q7's olives, the
+  // star anise pods whose unit leaked into the item, the "green Thai,
+  // serrano, or jalapeño" fragment on J6's 'thai'; flagged), and "read"
+  // items ranked under their OWN words over a named cached answer.
+  // One-word items read their rewrite target's answer under its words (M2:
+  // a one-word rewrite key is a [leftAlternative] food noun).
+  'shiitake': ('shiitake mushrooms', 'shiitake mushrooms'),
+  'jalapenos': ('jalapeno chiles', 'jalapeno chiles'),
+  'tawny port': ('sherry', 'wine dessert sweet'),
+  'port': ('sherry', 'wine dessert sweet'),
+  'lemon grass': ('lemon grass stalks', 'lemon grass stalks'),
+  'salt-cured black olives': ('oil-cured black olives', 'olives black'),
+  'pods star anise': ('star anise pods', 'spices anise seed'),
+  'green thai': ('jarred hot cherry peppers', 'jarred hot cherry peppers'),
+  'vegan mayonnaise': ('mayonnaise', 'vegan mayonnaise'),
+  'pepitas': ('roasted with salt pepitas', 'pepitas'),
+  'raw sunflower seeds': (
+    'without salt pumpkin seeds or sunflower seeds',
+    'raw sunflower seeds',
+  ),
+  'toasted sesame seeds': ('sesame seeds', 'toasted sesame seeds'),
+  'white or cremini mushrooms': (
+    'cremini or white mushrooms',
+    'white or cremini mushrooms',
+  ),
+  // v44 (S6 a): the leaked "fluid ounce(s)" unit (the v31 champagne
+  // precedent above): the schnapps' shipped rank-as; sparkling wine on the
+  // champagne stand-in (S5 a: Mimosa, Bellini).
+  'fluid ounce peach schnapps': ('kirsch', 'liqueur'),
+  'fluid ounces sparkling wine': ('dry white wine', 'wine white'),
   // M1–M3 STAY WITH A PERSON — FDC has no record: "candied ginger" answered
   // tea, pickled and raw ginger, ground ginger, ginger ale (no candied or
   // crystallized ginger; never the raw root); "freekeh" answered nothing;
@@ -3303,6 +3384,14 @@ const Map<String, int> approximationRecords = {
   // 'jarred morello cherries': 167769,
   // 'xanthan gum': 169045,
   'ya cai': 169891,
+  // v44 (S5 a / S6 a): the section stand-ins.
+  'tawny port': 2710692,
+  'port': 2710692,
+  'salt-cured black olives': 2710090,
+  'pods star anise': 171316,
+  'rubbed sage': 170935,
+  'fluid ounce peach schnapps': 2710623,
+  'fluid ounces sparkling wine': 2710689,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

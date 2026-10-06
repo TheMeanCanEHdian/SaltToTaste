@@ -56,10 +56,33 @@ Future<void> _runOne(
 ) async {
   try {
     final notes = <String>[];
+    // The job's outage watch, across its passes ([jobProvider]).
+    final watched = jobProvider(provider);
+    // v44 (P1 §3.4): the sections this recipe's lines make children, each
+    // not fresh, computed first (0–5 passes) — a section has no compute of
+    // its own — so the recipe's rows read their new totals and stamps.
+    for (final key in sectionChildKeysOf(db, recipe, ResolverMemo(db))) {
+      final section = nutritionRecipeOf(db, key)?.recipe;
+      if (section == null ||
+          _recipeJobs.containsKey(key) ||
+          nutritionIsFresh(db, section)) {
+        continue;
+      }
+      _recipeJobs[key] = jobId;
+      try {
+        await computeUntilFresh(
+          db,
+          watched,
+          section,
+          onFoodFailure: (error) => notes.add('$key: $error'),
+        );
+      } finally {
+        _recipeJobs.remove(key);
+      }
+    }
     await computeUntilFresh(
       db,
-      // The job's outage watch, across its passes ([jobProvider]).
-      jobProvider(provider),
+      watched,
       recipe,
       onFoodFailure: (error) => notes.add('${recipe.id}: $error'),
     );
@@ -140,7 +163,7 @@ Future<int> computeUntilFresh(
         return pass; // Another pass would only ask FDC again ([onePass]).
       }
     }
-    final stored = db.recipeByIdOrSlug(recipe.id)?.recipe;
+    final stored = nutritionRecipeOf(db, recipe.id)?.recipe;
     if (stored == null || nutritionStampCurrent(db, stored)) {
       return pass;
     }
@@ -224,61 +247,110 @@ enum BulkScope {
 /// save, a reconciled file) moves its `computed_at` only when this sweep
 /// recomputes it, after the scope is fixed — without the append its
 /// parents would wait for a second sweep.
-List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) {
-  final ids = <String>[];
-  final parents = <String>{};
-  Recipe read(String id, String doc) {
-    final recipe = RecipeMapper.fromMap(
-      jsonDecode(doc) as Map<String, dynamic>,
-    );
-    if (readsSubRecipe(recipe)) {
-      parents.add(id);
-    }
-    return recipe;
-  }
+List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) =>
+    bulkScope(db, scope).ids;
 
+/// [bulkScopeIds] with the library-wide CHILD SET it was ordered by (v44,
+/// design_v2 §2 v44.3; P1 §3.3): every section key a main line of ANY
+/// recipe makes a child ([sectionChildKeysOf], one [ResolverMemo] for the
+/// whole library) — never the scope's selection (F5: a `stale` sweep of a
+/// few recipes would otherwise collect every other live section). The set
+/// needs the whole library decoded in EVERY scope (N3: `missing` decoded
+/// only its wanted docs, `stale` only the stamped ones): one pass over
+/// [SaltDatabase.recipeDocs], every scope reading its recipes from it.
+///
+/// The order is [child section keys, non-parents, parents]: a section is a
+/// recipe the sweep computes before any parent (a child section is never a
+/// parent — depth 1), so a parent routed to its own or another recipe's
+/// section reads that section's new totals in the same job whatever the
+/// ids' order. `all` takes every child; `missing` the children with no
+/// stamp; `stale` the stale ones AND those with no stamp (a section has no
+/// compute of its own: without them the first v44 stale sweep would route
+/// every parent to a section never computed). A stamped section key
+/// outside the set is not selected — [startBulkJob] collects it.
+({List<String> ids, Set<String> children}) bulkScope(
+  SaltDatabase db,
+  BulkScope scope,
+) {
+  final docs = <String, Recipe>{
+    for (final (:id, :doc) in db.recipeDocs())
+      id: RecipeMapper.fromMap(jsonDecode(doc) as Map<String, dynamic>),
+  };
+  final memo = ResolverMemo(db);
+  final children = <String>{
+    for (final recipe in docs.values)
+      if (readsSubRecipe(recipe)) ...sectionChildKeysOf(db, recipe, memo),
+  };
+  final ids = <String>[];
+  final keys = <String>[];
+  final parents = <String>{
+    for (final MapEntry(:key, :value) in docs.entries)
+      if (readsSubRecipe(value)) key,
+  };
   switch (scope) {
     case BulkScope.missing:
     case BulkScope.all:
       final wanted = scope == BulkScope.missing
           ? db.recipeIdsWithoutNutrition().toSet()
           : null;
-      for (final (:id, :doc) in db.recipeDocs()) {
-        if (wanted == null || wanted.contains(id)) {
-          ids.add(id);
-          read(id, doc);
-        }
-      }
+      final stamped = scope == BulkScope.missing
+          ? db.sectionKeysWithNutrition().toSet()
+          : const <String>{};
+      keys.addAll(children.where((key) => !stamped.contains(key)));
+      ids.addAll(docs.keys.where((id) => wanted?.contains(id) ?? true));
     case BulkScope.stale:
+      final stamped = <String>{};
       for (final candidate in db.recipesWithNutrition()) {
-        final recipe = read(candidate.id, candidate.doc);
+        final key = candidate.id != hostOf(candidate.id);
+        if (key) {
+          stamped.add(candidate.id);
+          if (!children.contains(candidate.id)) {
+            continue;
+          }
+        }
+        final recipe = key
+            ? sectionOf(docs[hostOf(candidate.id)]!, candidate.id)!
+            : docs[candidate.id]!;
         if (!candidate.layoutCurrent ||
             candidate.underived ||
             ingredientsHashOf(recipe) != candidate.ingredientsHash) {
-          ids.add(candidate.id);
+          (key ? keys : ids).add(candidate.id);
         }
       }
-      final selected = ids.toSet();
+      keys.addAll(children.where((key) => !stamped.contains(key)));
+      final selected = {...ids, ...keys};
       for (final parent in db.recipesReadingChildren(selected)) {
-        if (selected.add(parent)) {
+        if (!selected.add(parent)) {
+          continue;
+        }
+        if (parent != hostOf(parent)) {
+          // A section's own (nested) reference row: a child, or collected.
+          if (children.contains(parent)) keys.add(parent);
+        } else {
           ids.add(parent);
           // It reads a child by its stored row: a parent whatever its doc.
           parents.add(parent);
         }
       }
-      ids.sort();
   }
-  return [
-    ...ids.where((id) => !parents.contains(id)),
-    ...ids.where(parents.contains),
-  ];
+  ids.sort();
+  keys.sort();
+  return (
+    ids: [
+      ...keys,
+      ...ids.where((id) => !parents.contains(id)),
+      ...ids.where(parents.contains),
+    ],
+    children: children,
+  );
 }
 
 /// Whether [recipe]'s main lines (the ones nutrition reads) hold a
-/// sub-recipe reference ([isSubRecipeReference]) — a parent, ordered after
-/// every other recipe by [bulkScopeIds].
+/// sub-recipe reference ([isReferenceIn]: a marked one, or v44's A9 line
+/// naming its own section) — a parent, ordered after every other recipe by
+/// [bulkScopeIds].
 bool readsSubRecipe(Recipe recipe) => recipe.ingredients.any(
-  (group) => group.items.any((line) => isSubRecipeReference(line.raw)),
+  (group) => group.items.any((line) => isReferenceIn(recipe, line)),
 );
 
 /// Starts a background bulk compute over the recipes [scope] selects;
@@ -303,7 +375,11 @@ int? startBulkJob(
   if (_bulkRunning) {
     return null;
   }
-  final ids = bulkScopeIds(db, scope);
+  final (:ids, :children) = bulkScope(db, scope);
+  // v44 (F5, R21): stamps and engine rows of the section keys no main line
+  // makes a child any more — never a decided row; here, not in the scope
+  // (the counts preview reads the scope and must write nothing).
+  db.collectSectionGarbage(children);
   final jobId = db.createNutritionJob(ids.length);
   _bulkRunning = true;
   unawaited(
@@ -345,7 +421,7 @@ Future<void> _run(
       // synchronous end-to-end, and a long cached stretch would otherwise
       // starve interactive requests.
       await Future<void>.delayed(Duration.zero);
-      final found = db.recipeByIdOrSlug(id);
+      final found = nutritionRecipeOf(db, id);
       if (found == null) {
         done += 1;
         continue; // Deleted mid-job.

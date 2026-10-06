@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:logging/logging.dart';
 
 import 'package:salt_server/src/db/salt_database.dart';
@@ -32,7 +30,7 @@ int backfillLayouts(SaltDatabase db) {
   for (final recipeId in db.recipesWithoutLayout()) {
     final Recipe? recipe;
     try {
-      recipe = db.recipeByIdOrSlug(recipeId)?.recipe;
+      recipe = nutritionRecipeOf(db, recipeId)?.recipe;
       // ignore: avoid_catches_without_on_clauses
     } catch (error) {
       _log.warning(
@@ -76,11 +74,10 @@ int? backfillDerivedSeq(SaltDatabase db) {
   }
   final keys = <String, String>{};
   for (final candidate in db.recipesWithNutrition()) {
-    final Recipe recipe;
+    final Recipe? recipe;
     try {
-      recipe = RecipeMapper.fromMap(
-        jsonDecode(candidate.doc) as Map<String, dynamic>,
-      );
+      // A section's stamp carries its host's doc (v44).
+      recipe = nutritionRecipeFromDoc(candidate.id, candidate.doc);
       // ignore: avoid_catches_without_on_clauses
     } catch (error) {
       _log.warning(
@@ -89,7 +86,7 @@ int? backfillDerivedSeq(SaltDatabase db) {
       );
       continue;
     }
-    if (nutritionStampCurrent(db, recipe)) {
+    if (recipe != null && nutritionStampCurrent(db, recipe)) {
       keys[candidate.id] = derivedKeyOf(
         db.layoutSeqOf(candidate.id),
         candidate.ingredientsHash,

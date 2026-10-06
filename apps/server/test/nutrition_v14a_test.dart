@@ -220,9 +220,12 @@ void main() {
       expect(nutritionLines(recipe).single.amounts.single.unit, 'recipe');
       await matchAndCompute(db, fixtures, recipe);
       final row = db.ingredientMatchesFor('r').single;
+      // v44 (sections as children): never counted on a food — routed to
+      // its own section at its share, a recipe of its own (not computed
+      // here: no grams, no stamp, so its recipe reads stale until it is).
       expect(
-        (row.fdcId, row.grams, row.status, row.description),
-        (null, 0, 'confirmed', subRecipeNote),
+        (row.fdcId, row.childRecipeId, row.childShare, row.childStamp),
+        (null, 'r#Perfect Poached Eggs', 1, null),
       );
       expect(fixtures.searchCalls, 0);
     });
@@ -230,15 +233,25 @@ void main() {
     test('Q1 needs the subsection: the same line with none stays 0 g, and a '
         '"½ recipe" is no yield of it (a synthesized quantity: a stated '
         'exception — every corpus "recipe" line is "1 recipe")', () async {
-      for (final (raw, subs) in [
-        (deviledLine, const <Subsection>[]),
-        ('½ recipe Easy-Peel Hard-Cooked Eggs (recipe follows)', [easyPeel]),
+      for (final (raw, subs, child, share) in [
+        (deviledLine, const <Subsection>[], null, null),
+        // v44: routed to its own section at the half the line reads.
+        (
+          '½ recipe Easy-Peel Hard-Cooked Eggs (recipe follows)',
+          [easyPeel],
+          'r#Easy-Peel Hard-Cooked Eggs',
+          0.5,
+        ),
       ]) {
         final db = tempDb();
         final recipe = recipeOf(db: db, [raw], subsections: subs);
         await matchAndCompute(db, FixtureProvider(), recipe);
         final row = db.ingredientMatchesFor('r').single;
-        expect((row.fdcId, row.grams), (null, 0), reason: raw);
+        expect(
+          (row.fdcId, row.grams, row.childRecipeId, row.childShare),
+          (null, child == null ? 0 : null, child, share),
+          reason: raw,
+        );
       }
     });
 

@@ -10,6 +10,22 @@ import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/services/nutrition_composite.dart';
 import 'package:salt_shared/salt_shared.dart';
 
+/// The recipe a nutrition route reads (v44, P3 §3.4): [found] itself, or —
+/// with `?section=<title>` — its section of exactly that title, a recipe of
+/// its own ([nutritionRecipeOf] on [sectionKeyOf]; the key never reaches a
+/// URL). An unknown title: 404 [noSectionRouteMessage].
+Recipe routeRecipeOf(SaltDatabase db, Recipe found, String? section) {
+  if (section == null) {
+    return found;
+  }
+  final key = sectionKeyOf(found.id, section);
+  final recipe = section.isEmpty ? null : nutritionRecipeOf(db, key)?.recipe;
+  if (recipe == null) {
+    throw const NotFoundException(noSectionRouteMessage);
+  }
+  return recipe;
+}
+
 /// `GET .../nutrition` body: the label data plus match transparency.
 ///
 /// [forAdmin] gates `computing_job_id`. The id is only useful to a client that
@@ -432,8 +448,8 @@ Future<AppliedToOthers?> applyMatchOverride(
   // The STORED recipe, never the caller's copy: a save since the caller
   // read it (the route's body read, a client's stale screen) would lay the
   // rows out on lines that are no longer the recipe's.
-  var recipe = db.recipeByIdOrSlug(given.id)?.recipe ?? given;
-  final version = db.contentHashOf(recipe.id);
+  var recipe = nutritionRecipeOf(db, given.id)?.recipe ?? given;
+  final version = db.contentHashOf(hostOf(recipe.id));
   // The inputs every derivation below reads (a save during the awaits is
   // refused below unless this line still stands; its derivation is then
   // of these inputs, and a stamp of the new ones reads it underived).
@@ -496,7 +512,9 @@ Future<AppliedToOthers?> applyMatchOverride(
   final fdcId = body['fdc_id'];
   final grams = body['grams'];
   // v41: a library recipe for a reference line (slug or id), and its share.
+  // v44: `section` — a section of that recipe (its exact title).
   final child = body['child'];
+  final section = body['section'];
   final share = body['share'];
   // The hold's ONE action table (RULE A v28, salt_shared `holdActions`;
   // Run 058 O7/S13, Opus critic 2): a decision the line's hold does not
@@ -544,20 +562,56 @@ Future<AppliedToOthers?> applyMatchOverride(
   if (share != null && (share is! num || share <= 0 || share > 100)) {
     throw const ValidationException(badShareMessage);
   }
+  // v44 (P3 §4): one level is read — a section's own line is never made
+  // from another recipe; a section is named only beside its recipe.
+  if (child != null && hostOf(recipe.id) != recipe.id) {
+    throw const ValidationException(sectionLineChildMessage);
+  }
+  if (section != null && child == null) {
+    throw const ValidationException(sectionWithoutChildMessage);
+  }
   final Recipe? childRecipe;
   if (child != null) {
-    childRecipe = child is String ? db.recipeByIdOrSlug(child)?.recipe : null;
-    if (childRecipe == null) {
+    // A section key never travels on the wire: `child` is a recipe's slug
+    // or id, and `section` names its section.
+    final host = child is String && !child.contains('#')
+        ? nutritionRecipeOf(db, child)?.recipe
+        : null;
+    if (host == null) {
       throw const ValidationException(noSuchRecipeMessage);
     }
+    if (section == null) {
+      childRecipe = host;
+    } else {
+      childRecipe = section is String
+          ? nutritionRecipeOf(db, sectionKeyOf(host.id, section))?.recipe
+          : null;
+      if (childRecipe == null) {
+        throw const ValidationException(noSuchSectionMessage);
+      }
+    }
+    // An OWN section is the point of a section pick (its key is not this
+    // recipe's id); only the recipe itself is refused.
     if (childRecipe.id == recipe.id) {
       throw const ValidationException(selfRecipeMessage);
     }
     if (!madeFromRecipe) {
       throw const ValidationException(notAReferenceMessage);
     }
+    // v44 (S10 a): a marinade is poured away — the share eaten is a
+    // person's (no figure exists), never the line's "1 recipe" read whole.
+    if (share == null &&
+        resolveReference(db, recipe, line, ResolverMemo(db)).kind ==
+            ReferenceKind.marinade) {
+      throw const ValidationException(marinadeShareMessage);
+    }
+    if (section != null && nutritionLines(childRecipe).isEmpty) {
+      throw const ValidationException(sectionNoIngredientsMessage);
+    }
     if (db.nutritionFor(childRecipe.id) == null) {
-      throw const ValidationException(childUncomputedMessage);
+      throw ValidationException(
+        section == null ? childUncomputedMessage : sectionUncomputedMessage,
+      );
     }
     // A share neither sent nor read from the line and the child's yield
     // would store a counted row that counts nothing (v41 verify3 D1).
@@ -885,10 +939,10 @@ Future<AppliedToOthers?> applyMatchOverride(
   // and the row the layout gives it is the one this request read (else 409
   // line_moved; this line's row is left as it was). A recipe deleted
   // meanwhile is a 404.
-  if (db.contentHashOf(recipe.id) != version ||
+  if (db.contentHashOf(hostOf(recipe.id)) != version ||
       db.layoutSeqOf(recipe.id) != seq) {
     recipe =
-        db.recipeByIdOrSlug(recipe.id)?.recipe ??
+        nutritionRecipeOf(db, recipe.id)?.recipe ??
         (throw const NotFoundException('Recipe not found.'));
     final now = nutritionLines(recipe);
     if (position >= now.length || now[position].raw != line.raw) {
@@ -1004,6 +1058,32 @@ const String oneRecipeDecisionMessage =
 /// The 422s of a recipe pick (v41, api_app §2 G7; the owner may reword).
 const String noSuchRecipeMessage = 'No recipe with that id.';
 
+/// The 404 of `?section=` naming no section of the recipe (v44, the
+/// approved copy delta §6).
+const String noSectionRouteMessage = 'No section with that title.';
+
+/// The 422s of a section pick (v44, P3 §4; the approved copy delta §6).
+const String sectionWithoutChildMessage =
+    'Pick a recipe first, then its section.';
+
+/// `section` not a string, or no section of `child` has that title.
+const String noSuchSectionMessage =
+    'No section with that title in that recipe.';
+
+/// A section with no ingredient lines (a prose variation).
+const String sectionNoIngredientsMessage =
+    'That section lists no ingredients — it cannot be counted.';
+
+/// A section with no stored totals (a child section not swept yet).
+const String sectionUncomputedMessage =
+    'That section has no totals yet — compute its recipe first.';
+
+/// A recipe picked for a line of a section (`?section=` on the PUT): one
+/// level is read.
+const String sectionLineChildMessage =
+    "Only one level is read — a section's line is not made from another "
+    'recipe.';
+
 /// A recipe picked for one of its own lines.
 const String selfRecipeMessage = 'A recipe cannot be made from itself.';
 
@@ -1021,6 +1101,10 @@ const String badShareMessage =
 /// A recipe picked with no share sent, for a line whose share of it the
 /// child's yield cannot read ([parseShare] null): a person sets the share.
 const String noShareMessage = 'No share the yield can read — set the share.';
+
+/// A recipe picked for a marinade line with no share sent (v44, S10 a).
+const String marinadeShareMessage =
+    'Set the share that is eaten — the rest is poured away.';
 
 /// A share sent with no recipe.
 const String shareWithoutChildMessage =

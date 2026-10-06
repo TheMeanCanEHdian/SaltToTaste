@@ -256,6 +256,9 @@ void main() {
           'name': 'Rustic Tart Dough',
           'slug': null,
           'title': null,
+          // v44: a library child names no section and no host.
+          'section': null,
+          'host_title': null,
           'share_text': '1',
           'default': false,
           'why': 'none',
@@ -726,6 +729,8 @@ void main() {
         {
           'slug': 'all-butter-double-crust-pie-dough',
           'title': 'All-Butter Double-Crust Pie Dough',
+          'section': null,
+          'host_title': null,
           'flag': 'approximation',
         },
       ]);
@@ -750,9 +755,10 @@ void main() {
       ]);
       final herb = (label(_herbSauce)['partial']! as List<Object?>)
           .cast<Map<String, Object?>>();
+      // v44: |3 "¼ cup Sauce Base (½ recipe …)" routes to its own section
+      // (nutrition_v44_sections_test.dart); only the served-with line stays.
       expect(herb.map((p) => (p['position'], p['kind'], p['reason'])), [
         (0, 'not_routed', 'served_with'),
-        (3, 'not_routed', 'section'),
       ]);
       // A person's Confirm clears the default flag, never the include.
       await put(_blueberry, 0, {'confirmed': true});
@@ -794,6 +800,8 @@ void main() {
         {
           'slug': 'classic-tart-dough',
           'title': 'Classic Tart Dough',
+          'section': null,
+          'host_title': null,
           'flag': 'approximation',
         },
       ]);

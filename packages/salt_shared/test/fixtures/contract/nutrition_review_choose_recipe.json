@@ -42,6 +42,7 @@
         "slug": "free-form-apple-tart",
         "title": "Free-Form Apple Tart"
       },
+      "section": null,
       "position": 5,
       "raw": "1 recipe Rustic Tart Dough (this page), rolled into a 12-inch circle and chilled",
       "bucket": "choose_recipe",
@@ -61,6 +62,8 @@
           "name": "Rustic Tart Dough",
           "slug": null,
           "title": null,
+          "section": null,
+          "host_title": null,
           "share_text": "1",
           "default": false,
           "why": "none"

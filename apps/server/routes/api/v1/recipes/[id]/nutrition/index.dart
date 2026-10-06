@@ -12,6 +12,10 @@ import 'package:salt_server/src/nutrition/engine.dart';
 /// per-serving label data (`{"status": "none"}` before the first compute;
 /// `"stale"` when the ingredients changed since).
 ///
+/// v44: `?section=<title>` reads the recipe's section of that exact title
+/// (its stored totals; 404 "No section with that title." for none). The PUT
+/// takes no section: a section has no serving basis to set.
+///
 /// `PUT {serving_basis}` (admin, full scope) — change the per-serving
 /// divisor: the stored per-recipe totals divided anew (no FDC call, no row
 /// or cache read; the stamp, status and counts unchanged).
@@ -26,8 +30,17 @@ Future<Response> onRequest(RequestContext context, String rawId) async {
     if (found == null) {
       throw NotFoundException('recipe not found: $id');
     }
+    // v44: `?section=<title>` reads that section's stored totals.
     return Response.json(
-      body: nutritionBody(db, found.recipe, forAdmin: user.isAdmin),
+      body: nutritionBody(
+        db,
+        routeRecipeOf(
+          db,
+          found.recipe,
+          context.request.uri.queryParameters['section'],
+        ),
+        forAdmin: user.isAdmin,
+      ),
     );
   }
 

@@ -80,3 +80,18 @@ are the ones real recipe data cannot supply: account credentials, one
 personal note (user-authored text, not recipe data), and one deliberately
 malformed YAML document (`zzzz-malformed-document.yaml`) that drives the
 importer's `failed` counter and the library scan's `skipped` entry.
+
+## Matcher v44: sections as children (corpus-free)
+
+Fed by `apps/server/test/fixtures/contract-recipes/v44.json` (six corpus
+documents, sections and steps as the corpus has them), POSTed and computed
+through the real routes:
+
+| Golden | Route |
+| --- | --- |
+| `nutrition_matches_section_own`, `nutrition_section_own` | `GET /recipes/chraime/nutrition/matches`, `…/nutrition` — "tabil" routed to its own section |
+| `nutrition_matches_section_other`, `nutrition_section_other` | the same for `pumpkin-pie` — routed to another recipe's section (`host_title`) |
+| `nutrition_section_matches`, `nutrition_section_label` | `GET /recipes/basic-double-crust-pie-dough/nutrition/matches?section=…`, `…/nutrition?section=…` |
+| `nutrition_matches_section_prose`, `nutrition_section_prose` | `lemon-meringue-pie` — a section with no lines (`no_ingredients`) |
+| `nutrition_matches_section_pick` | `glazed-spiral-sliced-ham` — a pick-own line's own sections, pickable |
+| `nutrition_review_section` | `GET /admin/nutrition_review?group=item&bucket=check` — a section line (`section`) after its parent's pick |

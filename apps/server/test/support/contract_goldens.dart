@@ -61,6 +61,21 @@ const List<String> corpusFreeContractGoldenNames = [
   'nutrition_matches_choose_recipe',
   'nutrition_choose_recipe',
   'nutrition_review_choose_recipe',
+  // Matcher v44, sections as children: an own section routed (chraime's
+  // Tabil), another recipe's (Pumpkin Pie on Basic Double-Crust Pie
+  // Dough's), a section's own lines and totals (`?section=`), a prose
+  // section (`no_ingredients`), a pick-own line's pickable own sections,
+  // and a section line in the queue.
+  'nutrition_matches_section_own',
+  'nutrition_section_own',
+  'nutrition_matches_section_other',
+  'nutrition_section_other',
+  'nutrition_section_matches',
+  'nutrition_section_label',
+  'nutrition_matches_section_prose',
+  'nutrition_section_prose',
+  'nutrition_matches_section_pick',
+  'nutrition_review_section',
 ];
 
 /// Goldens that genuinely need the ATK corpus: a real v1 import source (with

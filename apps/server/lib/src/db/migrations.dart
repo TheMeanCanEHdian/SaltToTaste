@@ -511,7 +511,117 @@ ALTER TABLE ingredient_matches ADD COLUMN parts TEXT
     AND child_recipe_id IS NULL))
 ''',
   ],
+
+  // 019 — matcher v44, SECTIONS AS CHILDREN (prep43 design_v2 S1 (a)). A
+  // referenced section is a recipe of its own in the same three tables,
+  // keyed `<host id>#<exact title>` (`#` never occurs in an id,
+  // isSafeRecipeId). The FK moves from `recipe_id` to a VIRTUAL generated
+  // `host_id` (the id before the first `#`), so a key inserts only while
+  // its host lives and deleting the host cascades its sections' rows,
+  // stamps and layouts with its own. No PK change; every 005–018 column,
+  // CHECK and index carried. FKs stay ON: none of the three is a parent.
+  [
+    '''
+CREATE TABLE ingredient_matches_new (
+  recipe_id TEXT NOT NULL,
+  position INTEGER NOT NULL,
+  raw TEXT NOT NULL,
+  fdc_id INTEGER,
+  description TEXT,
+  data_type TEXT,
+  confidence REAL NOT NULL DEFAULT 0,
+  grams REAL,
+  gram_source TEXT,
+  status TEXT NOT NULL
+    CHECK(status IN ('auto','confirmed','overridden','skipped','unmatched')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  item_key TEXT,
+  hold TEXT,
+  derived_seq TEXT,
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  child_recipe_id TEXT,
+  child_share REAL CHECK (child_share IS NULL OR child_share > 0),
+  child_stamp TEXT,
+  parts TEXT
+    CHECK (parts IS NULL OR (json_valid(parts) AND json_type(parts) = 'array'
+      AND child_recipe_id IS NULL)),
+  $_hostId,
+  PRIMARY KEY (recipe_id, position)
+) WITHOUT ROWID
+''',
+    '''
+INSERT INTO ingredient_matches_new (recipe_id, position, raw, fdc_id,
+  description, data_type, confidence, grams, gram_source, status, updated_at,
+  item_key, hold, derived_seq, retry_count, child_recipe_id, child_share,
+  child_stamp, parts)
+SELECT recipe_id, position, raw, fdc_id, description, data_type, confidence,
+  grams, gram_source, status, updated_at, item_key, hold, derived_seq,
+  retry_count, child_recipe_id, child_share, child_stamp, parts
+FROM ingredient_matches
+''',
+    'DROP TABLE ingredient_matches',
+    'ALTER TABLE ingredient_matches_new RENAME TO ingredient_matches',
+    'CREATE INDEX idx_matches_item_key ON ingredient_matches(item_key)',
+    '''
+CREATE INDEX ingredient_matches_no_record ON ingredient_matches (fdc_id)
+  WHERE hold IN ('food_gone', 'food_unavailable')
+''',
+    '''
+CREATE TABLE recipe_nutrition_new (
+  recipe_id TEXT PRIMARY KEY,
+  serving_basis INTEGER,
+  calories_per_serving REAL,
+  nutrients TEXT NOT NULL,
+  total_grams REAL,
+  matched_count INTEGER NOT NULL,
+  total_count INTEGER NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('complete','partial','stale')),
+  ingredients_hash TEXT NOT NULL,
+  computed_at TEXT NOT NULL DEFAULT (datetime('now')),
+  layout_seq INTEGER,
+  totals TEXT,
+  computing INT NOT NULL DEFAULT 0,
+  $_hostId
+)
+''',
+    '''
+INSERT INTO recipe_nutrition_new (recipe_id, serving_basis,
+  calories_per_serving, nutrients, total_grams, matched_count, total_count,
+  status, ingredients_hash, computed_at, layout_seq, totals, computing)
+SELECT recipe_id, serving_basis, calories_per_serving, nutrients,
+  total_grams, matched_count, total_count, status, ingredients_hash,
+  computed_at, layout_seq, totals, computing
+FROM recipe_nutrition
+''',
+    'DROP TABLE recipe_nutrition',
+    'ALTER TABLE recipe_nutrition_new RENAME TO recipe_nutrition',
+    // ignore: no_adjacent_strings_in_list
+    'CREATE INDEX idx_recipe_nutrition_calories ON '
+        'recipe_nutrition(calories_per_serving)',
+    '''
+CREATE TABLE recipe_layout_new (
+  recipe_id TEXT PRIMARY KEY,
+  seq INTEGER NOT NULL,
+  lines TEXT NOT NULL,
+  $_hostId
+) WITHOUT ROWID
+''',
+    '''
+INSERT INTO recipe_layout_new (recipe_id, seq, lines)
+SELECT recipe_id, seq, lines FROM recipe_layout
+''',
+    'DROP TABLE recipe_layout',
+    'ALTER TABLE recipe_layout_new RENAME TO recipe_layout',
+  ],
 ];
+
+/// Migration 019's `host_id`: the recipe a row's `recipe_id` belongs to —
+/// itself, or the host of a section key (`<host id>#<title>`) — carrying
+/// the FK to `recipes` the column `recipe_id` held before (cascade kept).
+const String _hostId = '''
+host_id TEXT GENERATED ALWAYS AS (CASE WHEN instr(recipe_id, '#') > 0
+    THEN substr(recipe_id, 1, instr(recipe_id, '#') - 1) ELSE recipe_id END)
+    VIRTUAL REFERENCES recipes(id) ON DELETE CASCADE''';
 
 /// Lists the foods a cached search answer (`NEW.response`: a JSON array of
 /// `FdcCandidate.toJson`) holds in `fdc_search_cache_foods` (migration 016).

@@ -1,0 +1,182 @@
+{
+  "total": 6,
+  "groups": 6,
+  "finishable": 0,
+  "open_recipes": 4,
+  "buckets": [
+    {
+      "id": "no_match",
+      "label": "No match",
+      "count": 0,
+      "groups": 0
+    },
+    {
+      "id": "no_grams",
+      "label": "No grams",
+      "count": 1,
+      "groups": 1
+    },
+    {
+      "id": "check",
+      "label": "Low confidence",
+      "count": 4,
+      "groups": 4
+    },
+    {
+      "id": "choose_recipe",
+      "label": "Choose recipe",
+      "count": 1,
+      "groups": 1
+    },
+    {
+      "id": "skipped",
+      "label": "Skipped",
+      "count": 0,
+      "groups": 0
+    }
+  ],
+  "items": [
+    {
+      "recipe": {
+        "id": "manual-<date>-grilled-glazed-pork-tenderloin-roast",
+        "slug": "grilled-glazed-pork-tenderloin-roast",
+        "title": "Grilled Glazed Pork Tenderloin Roast"
+      },
+      "section": "Satay Glaze",
+      "position": 1,
+      "raw": "1 tablespoon red curry paste",
+      "bucket": "check",
+      "finishes": 0,
+      "match": {
+        "fdc_id": 2706388,
+        "description": "Beef curry",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.35666666666666663,
+        "grams": null,
+        "gram_source": null,
+        "status": "auto",
+        "hold": null,
+        "child": null
+      },
+      "item_key": "red curry paste",
+      "item": "red curry paste",
+      "lines": 1,
+      "recipes": 1,
+      "decided": false,
+      "finishes_recipes": [],
+      "last_open": 1,
+      "grams": {
+        "min": null,
+        "max": null,
+        "missing": 1
+      }
+    },
+    {
+      "recipe": {
+        "id": "manual-<date>-sourdough-starter",
+        "slug": "sourdough-starter",
+        "title": "Sourdough Starter"
+      },
+      "section": null,
+      "position": 1,
+      "raw": "5 cups (25 ounces) all-purpose flour, plus extra for maintaining starter",
+      "bucket": "check",
+      "finishes": 0,
+      "match": {
+        "fdc_id": 789890,
+        "description": "Flour, wheat, all-purpose, enriched, bleached",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": null,
+        "gram_source": null,
+        "status": "auto",
+        "hold": "starter_discard",
+        "child": null
+      },
+      "item_key": "all-purpose flour",
+      "item": "all-purpose flour",
+      "lines": 1,
+      "recipes": 1,
+      "decided": false,
+      "finishes_recipes": [],
+      "last_open": 0,
+      "grams": {
+        "min": null,
+        "max": null,
+        "missing": 1
+      }
+    },
+    {
+      "recipe": {
+        "id": "manual-<date>-nutrition-rules-sample",
+        "slug": "nutrition-rules-sample",
+        "title": "Nutrition rules sample"
+      },
+      "section": null,
+      "position": 6,
+      "raw": "1 pound mussels, scrubbed and debearded",
+      "bucket": "check",
+      "finishes": 0,
+      "match": {
+        "fdc_id": 2706350,
+        "description": "Mussels",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.9900000000000001,
+        "grams": 453.592,
+        "gram_source": "weight",
+        "status": "auto",
+        "hold": "in_shell",
+        "child": null
+      },
+      "item_key": "mussel",
+      "item": "mussels",
+      "lines": 1,
+      "recipes": 1,
+      "decided": false,
+      "finishes_recipes": [],
+      "last_open": 0,
+      "grams": {
+        "min": 453.592,
+        "max": 453.592,
+        "missing": 0
+      }
+    },
+    {
+      "recipe": {
+        "id": "manual-<date>-nutrition-rules-sample",
+        "slug": "nutrition-rules-sample",
+        "title": "Nutrition rules sample"
+      },
+      "section": null,
+      "position": 10,
+      "raw": "1 tablespoon plus 1 teaspoon table salt",
+      "bucket": "check",
+      "finishes": 0,
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 6.0132824,
+        "gram_source": "discarded",
+        "status": "auto",
+        "hold": "discarded_medium",
+        "child": null
+      },
+      "item_key": "table salt",
+      "item": "plus 1 teaspoon table salt",
+      "lines": 1,
+      "recipes": 1,
+      "decided": false,
+      "finishes_recipes": [],
+      "last_open": 0,
+      "grams": {
+        "min": 6.0132824,
+        "max": 6.0132824,
+        "missing": 0
+      }
+    }
+  ],
+  "page": 1,
+  "limit": 24
+}

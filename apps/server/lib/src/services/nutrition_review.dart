@@ -173,7 +173,7 @@ class _PageReads {
   ({Recipe recipe, IngredientLine line})? lineOf(IngredientMatchRow match) {
     final recipe = _recipes.putIfAbsent(match.recipeId, () {
       try {
-        return db.recipeByIdOrSlug(match.recipeId)?.recipe;
+        return nutritionRecipeOf(db, match.recipeId)?.recipe;
         // recipeByIdOrSlug DECODES: one recipe whose stored document no
         // longer parses must cost this row its label, not the whole queue
         // a 500.
@@ -208,8 +208,15 @@ Map<String, Object?> _lineJson(NutritionReviewLineRow line, _PageReads reads) {
           reads.memo,
           slim: true,
         );
+  final host = hostOf(match.recipeId);
   return {
-    'recipe': {'id': match.recipeId, 'slug': line.slug, 'title': line.title},
+    // v44: a section's row names its HOST recipe (a section key never
+    // reaches the wire) and the section's title beside it; null for a
+    // recipe's own line.
+    'recipe': {'id': host, 'slug': line.slug, 'title': line.title},
+    'section': host == match.recipeId
+        ? null
+        : match.recipeId.substring(host.length + 1),
     // The STORED position: after a save and before the next compute the
     // line may sit elsewhere. A PUT carrying this `raw` is refused (409
     // line_moved, naming where the line is now) rather than written onto

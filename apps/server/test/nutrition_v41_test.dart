@@ -1,3 +1,7 @@
+// The resolution table keeps each real section title verbatim, one
+// literal per entry (v44).
+// ignore_for_file: lines_longer_than_80_chars
+
 // Matcher v41, step 2 (design_v3 §2.2): the composite row in the ENGINE —
 // sub-recipe routing phase 1 (R1), rule B1's two-part rendered-bacon row
 // (R2), the partial label of every reference line not routed (R3), the
@@ -17,6 +21,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
+import 'package:salt_server/src/exceptions.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
@@ -62,29 +67,41 @@ const _fruitTart = '0997-fresh-fruit-tart-with-pastry-cream.yaml';
 /// applied): what it resolves to.
 const Map<String, String> _resolved = {
   'guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|15':
-      'section',
-  'creamy-mushroom-soup|12': 'section',
-  'broccoli-cheese-soup|13': 'section',
-  'crispy-thai-eggplant-salad|14': 'section',
+      'routed section Nam Prik Pao (Thai Chili Jam)',
+  'creamy-mushroom-soup|12': 'routed section Sautéed Wild Mushrooms',
+  'broccoli-cheese-soup|13':
+      'routed section Buttery Croutons of carrot-ginger-soup',
+  'crispy-thai-eggplant-salad|14':
+      'routed section Fried Shallots and Fried Shallot Oil',
   'skillet-chicken-fajitas|22': 'noAmount',
   'indoor-pulled-chicken|7': 'held generic',
-  'peruvian-roast-chicken-with-garlic-and-lime|12': 'section',
-  'high-roast-butterflied-chicken-with-potatoes|3': 'section',
-  'stuffed-roast-butterflied-chicken|5': 'section',
+  'peruvian-roast-chicken-with-garlic-and-lime|12':
+      'routed section Spicy Mayonnaise',
+  'high-roast-butterflied-chicken-with-potatoes|3':
+      'routed section Mustard-Garlic Butter with Thyme',
+  'stuffed-roast-butterflied-chicken|5':
+      'routed section Mushroom-Leek Bread Stuffing with Herbs',
   'buffalo-wings|13': 'held missing',
-  'classic-roast-turkey|8': 'section',
-  'classic-roast-stuffed-turkey|7': 'section',
-  'classic-roast-stuffed-turkey|10': 'section',
-  'crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing|4': 'section',
+  'classic-roast-turkey|8': 'routed section Giblet Pan Gravy',
+  'classic-roast-stuffed-turkey|7':
+      'routed section Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions',
+  'classic-roast-stuffed-turkey|10':
+      'routed section Giblet Pan Gravy of classic-roast-turkey',
+  'crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing|4':
+      'routed section Golden Cornbread',
   'crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing|17':
-      'section',
+      'routed section Turkey Gravy',
   'restaurant-style-herb-sauce-for-pan-seared-steaks|0': 'servedWith',
-  'restaurant-style-herb-sauce-for-pan-seared-steaks|3': 'section',
-  'flank-steak-and-arugula-sandwiches-with-red-onion|4': 'section',
+  'restaurant-style-herb-sauce-for-pan-seared-steaks|3':
+      'routed section Sauce Base',
+  'flank-steak-and-arugula-sandwiches-with-red-onion|4':
+      'routed section Garlic-Soy Mayonnaise',
   'roast-beef-tenderloin|5': 'held generic',
   'pan-seared-oven-roasted-pork-tenderloin|4': 'held generic',
-  'garlic-studded-roast-pork-loin|6': 'section',
-  'slow-roasted-bone-in-pork-rib-roast|4': 'section',
+  'garlic-studded-roast-pork-loin|6':
+      'routed section Mustard–Shallot Sauce with Thyme',
+  'slow-roasted-bone-in-pork-rib-roast|4':
+      'routed section Port Wine–Cherry Sauce',
   'roast-fresh-ham|12': 'held generic',
   'glazed-spiral-sliced-ham|2': 'held generic',
   'pan-seared-salmon|3': 'noAmount',
@@ -92,25 +109,29 @@ const Map<String, String> _resolved = {
   'oven-roasted-salmon|3': 'held generic',
   'pan-seared-sesame-crusted-tuna-steaks|4': 'held generic',
   'pan-roasted-halibut-steaks|3': 'held generic',
-  'spanish-style-toasted-pasta-with-shrimp|16': 'section',
+  'spanish-style-toasted-pasta-with-shrimp|16': 'routed section Aioli',
   'maryland-crab-cakes|10': 'noAmount',
-  'best-old-fashioned-burgers|8': 'section',
-  'juicy-pub-style-burgers|5': 'section',
+  'best-old-fashioned-burgers|8': 'routed section Classic Burger Sauce',
+  'juicy-pub-style-burgers|5': 'routed section Pub-Style Burger Sauce',
   'fresh-pasta-without-a-machine|4': 'held generic',
-  'crisp-thin-crust-pizza|6': 'section',
-  'the-best-gluten-free-pizza|0': 'section',
-  'pepperoni-pan-pizza|7': 'section',
-  'grilled-tomato-and-cheese-pizza|11': 'section',
-  'lighter-chicken-parmesan|9': 'section',
-  'salade-lyonnaise|7': 'section',
-  'steak-diane|6': 'section',
-  'cheesy-nachos-with-guacamole-and-salsa|5': 'section',
+  'crisp-thin-crust-pizza|6': 'routed section Quick Tomato Sauce for Pizza',
+  'the-best-gluten-free-pizza|0':
+      'routed section The America’s Test Kitchen All-Purpose Gluten-Free Flour Blend',
+  'pepperoni-pan-pizza|7':
+      'routed section Quick Tomato Sauce for Pizza of crisp-thin-crust-pizza',
+  'grilled-tomato-and-cheese-pizza|11': 'routed section Spicy Garlic Oil',
+  'lighter-chicken-parmesan|9': 'routed section Simple Tomato Sauce',
+  'salade-lyonnaise|7': 'routed section Perfect Poached Eggs',
+  'steak-diane|6': 'routed section Sauce Base for Steak Diane',
+  'cheesy-nachos-with-guacamole-and-salsa|5': 'routed section One-Minute Salsa',
   'cheesy-nachos-with-guacamole-and-salsa|6': 'routed chunky-guacamole',
-  'tamales|10': 'section',
+  'tamales|10': 'routed section Red Chile Chicken Filling',
   'shrimp-tempura|8': 'held missing',
-  'beef-satay|8': 'section',
-  'nasi-goreng-indonesian-style-fried-rice|10': 'section',
-  'thai-green-curry-with-chicken-broccoli-and-mushrooms|1': 'section',
+  'beef-satay|8': 'routed section Spicy Peanut Dipping Sauce',
+  'nasi-goreng-indonesian-style-fried-rice|10':
+      'routed section Faux Leftover Rice',
+  'thai-green-curry-with-chicken-broccoli-and-mushrooms|1':
+      'routed section Green Curry Paste',
   'indian-style-curry-with-potatoes-cauliflower-peas-and-chickpeas|16':
       'noAmount',
   'indian-style-curry-with-potatoes-cauliflower-peas-and-chickpeas|17':
@@ -119,35 +140,39 @@ const Map<String, String> _resolved = {
   'grilled-steak-tips|0': 'marinade',
   'grill-roasted-beef-short-ribs|10': 'held generic',
   'easy-grilled-boneless-pork-chops|6': 'held generic',
-  'grilled-pork-chops|3': 'section',
+  'grilled-pork-chops|3': 'routed section Basic Spice Rub for Pork Chops',
   'grilled-glazed-pork-tenderloin-roast|3': 'held generic',
   'grilled-stuffed-pork-tenderloin|3': 'held generic',
-  'grill-roasted-bone-in-pork-rib-roast|4': 'section',
-  'barbecued-pulled-pork|1': 'section',
+  'grill-roasted-bone-in-pork-rib-roast|4':
+      'routed section Orange Salsa with Cuban Flavors',
+  'barbecued-pulled-pork|1': 'routed section Dry Rub for Barbecue',
   'barbecued-pulled-pork|4': 'held generic',
-  'memphis-style-barbecued-spareribs|0': 'section',
+  'memphis-style-barbecued-spareribs|0': 'routed section Spice Rub',
   'grilled-glazed-baby-back-ribs|2': 'held generic',
   'grilled-lamb-kebabs|0': 'marinade',
   'grilled-glazed-boneless-skinless-chicken-breasts|6': 'held generic',
   'grilled-glazed-bone-in-chicken-breasts|3': 'held generic',
   'best-grilled-chicken-thighs|2': 'held generic',
   'grilled-spice-rubbed-chicken-drumsticks|2': 'held generic',
-  'grill-roasted-beer-can-chicken|3': 'section',
+  'grill-roasted-beer-can-chicken|3': 'routed section Spice Rub',
   'grill-roasted-cornish-game-hens|11': 'held generic',
   'grilled-shrimp-skewers|4': 'held generic',
   'grilled-corn-with-flavored-butter|0': 'held generic',
-  'buffalo-cauliflower-bites|11': 'section',
+  'buffalo-cauliflower-bites|11': 'routed section Ranch Dressing',
   'red-beans-and-rice|14': 'noAmount',
   'fluffy-omelets|4': 'held generic',
-  'denver-omelets|6': 'section',
+  'denver-omelets|6': 'routed section Filling for Denver Omelets',
   'spanish-tortilla-with-roasted-red-peppers-and-peas|8': 'noAmount',
-  'quiche-lorraine|0': 'section',
-  'gluten-free-chocolate-chip-cookies|0': 'section',
-  'carrot-cake|12': 'section',
-  'spice-cake|16': 'section',
-  'dark-chocolate-cupcakes|11': 'section',
-  'bittersweet-chocolate-roulade|10': 'section',
-  'bittersweet-chocolate-roulade|11': 'section',
+  'quiche-lorraine|0':
+      'routed section Basic Single-Crust Pie Dough of basic-double-crust-pie-dough',
+  'gluten-free-chocolate-chip-cookies|0':
+      'routed section The America’s Test Kitchen All-Purpose Gluten-Free Flour Blend of the-best-gluten-free-pizza',
+  'carrot-cake|12': 'routed section Cream Cheese Frosting',
+  'spice-cake|16': 'routed section Cream Cheese Frosting of carrot-cake',
+  'dark-chocolate-cupcakes|11': 'routed section Easy Vanilla Bean Buttercream',
+  'bittersweet-chocolate-roulade|10':
+      'routed section Espresso-Mascarpone Cream',
+  'bittersweet-chocolate-roulade|11': 'routed section Dark Chocolate Ganache',
   'panna-cotta|6': 'noAmount',
   'pavlova-with-fruit-and-whipped-cream|7': 'held generic',
   'classic-apple-pie|0': 'routed all-butter-double-crust-pie-dough default',
@@ -155,13 +180,17 @@ const Map<String, String> _resolved = {
   'blueberry-pie|0': 'routed all-butter-double-crust-pie-dough default',
   'summer-berry-pie|7': 'routed graham-cracker-crust',
   'sweet-cherry-pie|0': 'routed all-butter-double-crust-pie-dough default',
-  'fresh-peach-pie|7': 'section',
-  'fresh-plum-ginger-pie-with-whole-wheat-lattice-top-crust|0': 'section',
-  'fresh-strawberry-pie|0': 'section',
-  'pumpkin-pie|0': 'section',
-  'pecan-pie|0': 'section',
+  'fresh-peach-pie|7': 'routed section Pie Dough for Lattice-Top Pie',
+  'fresh-plum-ginger-pie-with-whole-wheat-lattice-top-crust|0':
+      'section no_ingredients',
+  'fresh-strawberry-pie|0':
+      'routed section Foolproof Single-Crust Pie Dough of foolproof-double-crust-pie-dough',
+  'pumpkin-pie|0':
+      'routed section Basic Single-Crust Pie Dough of basic-double-crust-pie-dough',
+  'pecan-pie|0':
+      'routed section Basic Single-Crust Pie Dough of basic-double-crust-pie-dough',
   'key-lime-pie|3': 'routed graham-cracker-crust',
-  'lemon-meringue-pie|0': 'section',
+  'lemon-meringue-pie|0': 'section no_ingredients',
   'coconut-cream-pie|9': 'routed graham-cracker-crust',
   'chocolate-cream-pie-with-all-butter-crust|0':
       'routed foolproof-all-butter-dough-for-single-crust-pie',
@@ -171,21 +200,29 @@ const Map<String, String> _resolved = {
   'peach-tarte-tatin|0':
       'routed foolproof-all-butter-dough-for-single-crust-pie',
   'skillet-roasted-broccoli|0': 'held generic',
-  'pupusas-with-quick-salsa-and-curtido|6': 'section',
-  'pupusas-with-quick-salsa-and-curtido|7': 'section',
-  'fresh-peach-pie-with-all-butter-lattice-top|7': 'section',
-  'rose-sangria|4': 'section',
+  'pupusas-with-quick-salsa-and-curtido|6': 'routed section Quick Salsa',
+  'pupusas-with-quick-salsa-and-curtido|7': 'routed section Curtido',
+  'fresh-peach-pie-with-all-butter-lattice-top|7':
+      'routed section Pie Dough for Lattice-Top Pie',
+  'rose-sangria|4': 'routed section Simple Syrup',
   'roasted-fennel|5': 'held generic',
   'fresh-bulk-sausage|2': 'held generic',
   'fruit-hand-pies|6': 'held generic',
-  'bruschetta-with-artichoke-hearts-and-parmesan|8': 'section',
+  'bruschetta-with-artichoke-hearts-and-parmesan|8':
+      'routed section Toasted Bread for Bruschetta',
   'simple-cheese-quiche|0': 'held generic',
-  'rainbow-cake|9': 'section',
+  'rainbow-cake|9': 'routed section Vanilla Frosting',
   'salted-caramel-apple-pie|0': 'held generic',
-  'triple-berry-slab-pie-with-ginger-lemon-streusel|0': 'section',
+  'triple-berry-slab-pie-with-ginger-lemon-streusel|0':
+      'routed section Slab Pie Dough',
   'chocolate-cherry-pie-pops|1': 'held generic',
   'nutella-tart|0': 'routed classic-tart-dough',
-  'chraime|7': 'section',
+  'chraime|7': 'routed section Tabil',
+  'boiled-potatoes-with-black-olive-tapenade|2':
+      'routed section Black Olive Tapenade',
+  'vegan-baja-style-cauliflower-tacos|14':
+      'routed section Vegan Cilantro Sauce',
+  'red-lentil-kibbeh|4': 'routed section Harissa',
 };
 
 void main() {
@@ -228,6 +265,14 @@ void main() {
     expect(await matchAndCompute(db, provider, stored(recipe)), isNull);
   }
 
+  /// v44: the section [key] computed as the sweep computes a child.
+  Future<void> computeKey(String key) async {
+    expect(
+      await matchAndCompute(db, provider, nutritionRecipeOf(db, key)!.recipe),
+      isNull,
+    );
+  }
+
   IngredientMatchRow rowAt(Recipe recipe, int position) => db
       .ingredientMatchesFor(recipe.id)
       .singleWhere((row) => row.position == position);
@@ -249,10 +294,11 @@ void main() {
   );
 
   /// The bucket parity (one rule, Dart and SQL): every row's
-  /// [matchBucketFor] counted, against the queue's SQL counts.
+  /// [matchBucketFor] counted, against the queue's SQL counts — v44: a
+  /// section's rows too (the counts read every row, keys included).
   void parity() {
     final dart = <String, int>{};
-    for (final id in db.allRecipeIds()) {
+    for (final id in db.recipesWithMatches()) {
       for (final row in db.ingredientMatchesFor(id)) {
         dart.update(bucketOf(row).wire, (n) => n + 1, ifAbsent: () => 1);
       }
@@ -396,9 +442,16 @@ void main() {
           }
           final found = resolveReference(db, recipe, line, memo);
           got['${recipe.slug}|$position'] = switch (found.kind) {
+            // v44: a section routes as a child of its own (the key).
+            ReferenceKind.routed when found.section != null =>
+              'routed section ${found.section!.title}'
+                  '${found.section!.host == recipe.id ? '' : ' of '
+                            '${db.recipeByIdOrSlug(found.section!.host)!.recipe.slug}'}',
             ReferenceKind.routed =>
               'routed ${db.recipeByIdOrSlug(found.childId!)!.recipe.slug}'
                   '${found.named >= 2 ? ' default' : ''}',
+            ReferenceKind.section when found.noIngredients =>
+              'section no_ingredients',
             ReferenceKind.held =>
               'held ${found.missing ? 'missing' : 'generic'}',
             final kind => kind.name,
@@ -406,7 +459,8 @@ void main() {
         }
       }
       expect(got, _resolved);
-      // The library's titles and sections: two statements for 119 lines.
+      // The library's titles and sections: two statements for 122 lines
+      // (v44: the three A9 lines join).
       expect(resolverIndexReads, 2);
     });
 
@@ -516,6 +570,22 @@ void main() {
         _lemonTart,
         _fruitTart,
       ]) {
+        // v44: a recipe's child sections first, as the bulk order runs
+        // them (nachos' One-Minute Salsa, the Green Curry Paste).
+        for (final key in sectionChildKeysOf(
+          db,
+          stored(r(file)),
+          ResolverMemo(db),
+        )) {
+          expect(
+            await matchAndCompute(
+              db,
+              provider,
+              nutritionRecipeOf(db, key)!.recipe,
+            ),
+            isNull,
+          );
+        }
         await compute(r(file));
       }
     });
@@ -529,7 +599,8 @@ void main() {
         (_summerBerry, 7, _graham, 220.6, 1135.14, 273.62, 'complete'),
         (_keyLime, 3, _graham, 220.6, 1135.14, 445.87, 'partial'),
         (_coconut, 9, _graham, 220.6, 1135.14, 598.27, 'complete'),
-        (_nachos, 6, _guacamole, 522.5, 1032.78, 1075.56, 'partial'),
+        // v44: its |5 now routes to its own One-Minute Salsa (+23.00).
+        (_nachos, 6, _guacamole, 522.5, 1032.78, 1098.56, 'complete'),
         (_lemonTart, 0, _tartDough, 401.8, 1870.07, 399.33, 'partial'),
         (_fruitTart, 7, _tartDough, 401.8, 1870.07, 547.59, 'partial'),
       ]) {
@@ -656,12 +727,12 @@ void main() {
 
     test('R3: a reference rule row makes its label partial [7.6, A3]', () {
       for (final (file, position, matched, total, perServing) in [
-        // A section of its own (phase 2).
-        (_thai, 1, 12, 13, 642.74),
-        // Served with, not made from (D7): never routed although exact.
-        (_herbSauce, 0, 8, 10, 51.71),
-        // Nachos' own One-Minute Salsa: complete → partial.
-        (_nachos, 5, 7, 8, 1075.56),
+        // v44: a section of its own routes (thai|1, nachos|5 — pinned in
+        // nutrition_v44_sections_test.dart); served with, not made from
+        // (D7) stays the rule row although exact.
+        // v44: its |3 "¼ cup Sauce Base (½ recipe; recipe follows)" routes
+        // to its own section at ½ (8 → 9 matched; 51.71 → 207.91).
+        (_herbSauce, 0, 9, 10, 207.91),
       ]) {
         final recipe = r(file);
         final row = rowAt(recipe, position);
@@ -1204,10 +1275,29 @@ void main() {
       await compute(thai);
       await compute(chops);
       final curry = lineAt(thai, 1);
-      await applyMatchOverride(db, provider, stored(thai), 1, {
-        'raw': curry.raw,
-        'fdc_id': 170924, // "Spices, curry powder": tbsp 6.3 g, cached
-      });
+      // v44 (sections as children): both lines now ROUTE to their own
+      // sections (Green Curry Paste, Basic Spice Rub for Pork Chops), and a
+      // routed row's action table refuses a food pick (v41 F3) — OPEN for
+      // the owner (fix_s2.md): A10 a's PUT path is unreachable on them.
+      for (final (recipe, position, line) in [
+        (thai, 1, curry),
+        (chops, 3, lineAt(chops, 3)),
+      ]) {
+        expect(rowAt(recipe, position).childRecipeId, contains('#'));
+        await expectLater(
+          applyMatchOverride(db, provider, stored(recipe), position, {
+            'raw': line.raw,
+            'fdc_id': 170924,
+          }),
+          throwsA(
+            isA<ValidationException>().having(
+              (e) => e.message,
+              'message',
+              routedMessage,
+            ),
+          ),
+        );
+      }
       void weighed() {
         final row = rowAt(thai, 1);
         expect(row.fdcId, 170924);
@@ -1215,41 +1305,20 @@ void main() {
         expect(bucketOf(row), MatchBucket.counted);
       }
 
-      weighed();
-      expect(rowAt(thai, 1).status, 'overridden');
-      expect(db.decisionFor('green curry paste')?.fdcId, 170924);
-      await compute(thai);
-      weighed();
-
-      // Gate 2: the decision CARRIED to the line after the recipe is
-      // deleted and re-imported — weighed there, never the 0 g rule row.
-      deleteRecipe(db, config, thai.id);
-      store(_thai);
+      // Gate 2 stands: a person's decision on the line's key CARRIED to
+      // it (as a pick before v44 left it) is weighed on the alternative,
+      // never routed.
+      db.putDecision(
+        itemKey: 'green curry paste',
+        item: 'green curry paste',
+        fdcId: 170924,
+        description: 'Spices, curry powder',
+        dataType: 'SR Legacy',
+        decidedBy: null,
+      );
       await compute(thai);
       weighed();
       expect(rowAt(thai, 1).status, 'auto');
-
-      final pepperRows = {
-        for (final id in db.allRecipeIds())
-          for (final row in db.ingredientMatchesFor(id))
-            if (row.itemKey == 'pepper') '${row.recipeId}|${row.position}': row,
-      };
-      final rub = lineAt(chops, 3);
-      await applyMatchOverride(db, provider, stored(chops), 3, {
-        'raw': rub.raw,
-        'fdc_id': 170931, // "Spices, pepper, black"
-      });
-      final row = rowAt(chops, 3);
-      expect(row.fdcId, 170931);
-      expect(row.grams, greaterThan(0)); // "2 teaspoons"
-      expect(db.decisionFor('basic spice rub for pork chop')?.fdcId, 170931);
-      expect(db.decisionFor('pepper'), isNull);
-      for (final MapEntry(:key, :value) in pepperRows.entries) {
-        final now = db
-            .ingredientMatchesFor(value.recipeId)
-            .singleWhere((r) => r.position == value.position);
-        expect(sameMatchRow(now, value), isTrue, reason: key);
-      }
     });
 
     test('[F10] the totals read the child LIVE, never stored grams', () async {
@@ -1452,9 +1521,12 @@ void main() {
         're-resolves on the sections it has now [S12, item 9]', () async {
       final nachos = store(_nachos);
       final guacamole = store(_guacamole);
+      final salsa = sectionKeyOf(nachos.id, 'One-Minute Salsa');
       await compute(guacamole);
+      await computeKey(salsa);
       await compute(nachos);
-      expect(rowAt(nachos, 5).description, subRecipeNote); // own section
+      // v44: routed to its own section (a child of its own).
+      expect(rowAt(nachos, 5).childRecipeId, salsa);
       expect(rowAt(nachos, 6).childRecipeId, guacamole.id); // the library's
       expect(fresh(nachos), isTrue);
       // Its own section given the title of the line beside it: the salsa
@@ -1472,9 +1544,12 @@ void main() {
         isTrue,
       );
       expect(fresh(nachos), isFalse); // the hash reads the section titles
+      // v44: the renamed section is a new key (S15), computed first as the
+      // per-recipe job computes a recipe's child sections.
+      final renamed0 = sectionKeyOf(nachos.id, 'Chunky Guacamole');
+      await computeKey(renamed0);
       await compute(nachos);
-      expect(rowAt(nachos, 6).childRecipeId, isNull);
-      expect(rowAt(nachos, 6).description, subRecipeNote);
+      expect(rowAt(nachos, 6).childRecipeId, renamed0);
       expect(rowAt(nachos, 5).hold, 'choose_recipe');
       expect(fresh(nachos), isTrue);
     });
@@ -1540,7 +1615,18 @@ void main() {
         expect(row.childStamp, label(guacamole).computedAt);
         expect(fresh(nachos), isTrue);
         expect(fresh(guacamole), isTrue);
-        expect(label(nachos).status, 'partial'); // |5 One-Minute Salsa, R3
+        // v44: |5 routes to its own One-Minute Salsa, computed first in the
+        // same job ([child section keys, non-parents, parents]).
+        final salsa = rowAt(nachos, 5);
+        expect(
+          salsa.childRecipeId,
+          sectionKeyOf(nachos.id, 'One-Minute Salsa'),
+        );
+        expect(
+          salsa.childStamp,
+          db.nutritionFor(salsa.childRecipeId!)!.computedAt,
+        );
+        expect(label(nachos).status, 'complete');
       });
     },
   );
