@@ -55,7 +55,7 @@ class _OfflineNutrition extends NutritionRepository {
   _OfflineNutrition() : super(Dio());
 
   @override
-  Future<RecipeNutrition> nutrition(String idOrSlug) async =>
+  Future<RecipeNutrition> nutrition(String idOrSlug, {String? section}) async =>
       throw const RepositoryException('offline');
 }
 
@@ -79,7 +79,7 @@ class _SodaBreadLabel extends NutritionRepository {
   _SodaBreadLabel() : super(Dio());
 
   @override
-  Future<RecipeNutrition> nutrition(String idOrSlug) async =>
+  Future<RecipeNutrition> nutrition(String idOrSlug, {String? section}) async =>
       RecipeNutrition.fromJson(const {
         'status': 'complete',
         'serving_basis': 1,

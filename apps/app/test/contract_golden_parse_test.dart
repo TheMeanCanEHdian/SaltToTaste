@@ -915,6 +915,8 @@ void main() {
         (
           slug: 'all-butter-double-crust-pie-dough',
           title: 'All-Butter Double-Crust Pie Dough',
+          section: null,
+          hostTitle: null,
           flag: 'approximation',
         ),
       ]);
@@ -946,6 +948,154 @@ void main() {
         ('held', 'missing', 'Rustic Tart Dough', '1', 'none'),
       );
       expect(slim.candidates, isEmpty);
+    });
+
+    test('v44: section, state and host_title parse NON-default from the '
+        'section goldens; the queue item carries its section', () async {
+      Future<IngredientMatch> row(String name, String slug, int at) async =>
+          (await NutritionRepository(
+            goldenDio(golden(name)),
+          ).matches(slug)).singleWhere((m) => m.position == at);
+
+      // Two OWN sections share their host's slug: two keys, both ready.
+      final pick = (await row(
+        'nutrition_matches_section_pick',
+        'glazed-spiral-sliced-ham',
+        2,
+      )).child!;
+      expect(
+        [
+          for (final c in pick.candidates)
+            (c.group, c.slug, c.section, c.state, c.pickable, c.hostTitle),
+        ],
+        [
+          (
+            'own_section',
+            'glazed-spiral-sliced-ham',
+            'Maple-Orange Glaze',
+            'ready',
+            true,
+            null,
+          ),
+          (
+            'own_section',
+            'glazed-spiral-sliced-ham',
+            'Cherry-Port Glaze',
+            'ready',
+            true,
+            null,
+          ),
+        ],
+      );
+      expect({for (final c in pick.candidates) c.key}, hasLength(2));
+
+      final other = (await row(
+        'nutrition_matches_section_other',
+        'pumpkin-pie',
+        0,
+      )).child!;
+      expect(
+        (other.state, other.slug, other.title, other.section, other.hostTitle),
+        (
+          'routed',
+          'basic-double-crust-pie-dough',
+          'Basic Single-Crust Pie Dough',
+          'Basic Single-Crust Pie Dough',
+          'Basic Double-Crust Pie Dough',
+        ),
+      );
+      final sibling = other.candidates.single;
+      expect(
+        (sibling.group, sibling.section, sibling.state, sibling.hostTitle),
+        (
+          'other_section',
+          'Basic Single-Crust Pie Dough',
+          'ready',
+          'Basic Double-Crust Pie Dough',
+        ),
+      );
+
+      final own = (await row(
+        'nutrition_matches_section_own',
+        'chraime',
+        7,
+      )).child!;
+      expect(
+        (own.slug, own.title, own.section, own.hostTitle),
+        ('chraime', 'Tabil', 'Tabil', null),
+      );
+
+      final prose = (await row(
+        'nutrition_matches_section_prose',
+        'lemon-meringue-pie',
+        0,
+      )).child!;
+      expect(
+        (prose.state, prose.reason, prose.section, prose.hostTitle),
+        (
+          'not_routed',
+          'no_ingredients',
+          'Single-Crust Pie Dough for Custard Pies',
+          'Basic Double-Crust Pie Dough',
+        ),
+      );
+
+      // A library candidate keeps both at null.
+      final library = (await row(
+        'nutrition_matches_subrecipe',
+        'blueberry-pie',
+        0,
+      )).child!.candidates.first;
+      expect((library.section, library.state), (null, null));
+
+      Future<RecipeNutrition> label(String name, String slug) =>
+          NutritionRepository(goldenDio(golden(name))).nutrition(slug);
+      expect((await label('nutrition_section_own', 'chraime')).includes, [
+        (
+          slug: 'chraime',
+          title: 'Tabil',
+          section: 'Tabil',
+          hostTitle: null,
+          flag: null,
+        ),
+      ]);
+      expect((await label('nutrition_section_other', 'pumpkin-pie')).includes, [
+        (
+          slug: 'basic-double-crust-pie-dough',
+          title: 'Basic Single-Crust Pie Dough',
+          section: 'Basic Single-Crust Pie Dough',
+          hostTitle: 'Basic Double-Crust Pie Dough',
+          flag: null,
+        ),
+      ]);
+      expect(
+        [
+          for (final p in (await label(
+            'nutrition_section_prose',
+            'lemon-meringue-pie',
+          )).partial)
+            (p.kind, p.reason),
+        ],
+        [('not_routed', 'no_ingredients')],
+      );
+
+      final queue = await RecipeRepository(
+        dio: goldenDio(golden('nutrition_review_section')),
+      ).getNutritionReview(page: 1);
+      final satay = queue.items.first;
+      expect(
+        (satay.recipe.slug, satay.recipe.title, satay.section, satay.position),
+        (
+          'grilled-glazed-pork-tenderloin-roast',
+          'Grilled Glazed Pork Tenderloin Roast',
+          'Satay Glaze',
+          1,
+        ),
+      );
+      expect(
+        [for (final i in queue.items.skip(1)) i.section],
+        [null, null, null],
+      );
     });
 
     test('C1: line_amount, portions (with fill) and the approximation basis '

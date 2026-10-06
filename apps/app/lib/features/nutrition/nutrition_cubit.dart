@@ -249,13 +249,17 @@ bool offerIsFor(ApplyOffer? offer, IngredientMatch m) =>
 /// Drives one recipe's label: load, compute, serving basis, and the review
 /// sheet's match overrides.
 class NutritionCubit extends Cubit<NutritionState> {
-  NutritionCubit(this._repository, this.idOrSlug)
+  NutritionCubit(this._repository, this.idOrSlug, {this.section})
     : super(const NutritionState());
 
   final NutritionRepository _repository;
 
   /// The recipe this cubit serves.
   final String idOrSlug;
+
+  /// The section of [idOrSlug] this cubit serves instead (v44): its own
+  /// lines and per-batch totals; null for the recipe itself.
+  final String? section;
 
   /// The compute job currently being polled, so load()'s re-attach and a
   /// fresh compute() don't spin up two poll loops for the same job.
@@ -264,7 +268,7 @@ class NutritionCubit extends Cubit<NutritionState> {
   Future<void> load() async {
     emit(state.copyWith(loading: true, clearError: true));
     try {
-      final nutrition = await _repository.nutrition(idOrSlug);
+      final nutrition = await _repository.nutrition(idOrSlug, section: section);
       if (isClosed) {
         return;
       }
@@ -366,7 +370,10 @@ class NutritionCubit extends Cubit<NutritionState> {
         // Done: pull the fresh label. Re-matching invalidated the cached
         // review-sheet rows, so drop them.
         try {
-          final nutrition = await _repository.nutrition(idOrSlug);
+          final nutrition = await _repository.nutrition(
+            idOrSlug,
+            section: section,
+          );
           if (isClosed) {
             return;
           }
@@ -421,7 +428,7 @@ class NutritionCubit extends Cubit<NutritionState> {
     // A stale error from an earlier action must not headline the sheet.
     emit(state.copyWith(clearError: true));
     try {
-      final matches = await _repository.matches(idOrSlug);
+      final matches = await _repository.matches(idOrSlug, section: section);
       if (isClosed) {
         return;
       }
@@ -455,14 +462,22 @@ class NutritionCubit extends Cubit<NutritionState> {
     skipped: skipped,
   );
 
-  /// Puts library recipe [child] on a reference line (v41), at [share] when
-  /// one was typed (else the line's own share of it).
+  /// Puts library recipe [child] — or its section [childSection] (v44) —
+  /// on a reference line (v41), at [share] when one was typed (else the
+  /// line's own share of it).
   Future<void> pickRecipe(
     int position, {
     required String raw,
     required String child,
+    String? childSection,
     double? share,
-  }) => _decide(position, raw: raw, child: child, share: share);
+  }) => _decide(
+    position,
+    raw: raw,
+    child: child,
+    childSection: childSection,
+    share: share,
+  );
 
   Future<void> _decide(
     int position, {
@@ -472,6 +487,7 @@ class NutritionCubit extends Cubit<NutritionState> {
     bool? confirmed,
     bool? skipped,
     String? child,
+    String? childSection,
     double? share,
   }) async {
     if (state.overridingPosition != null) {
@@ -489,7 +505,9 @@ class NutritionCubit extends Cubit<NutritionState> {
         confirmed: confirmed,
         skipped: skipped,
         child: child,
+        childSection: childSection,
         share: share,
+        section: section,
       );
     } on RepositoryException catch (exception) {
       if (isClosed) {
@@ -559,7 +577,7 @@ class NutritionCubit extends Cubit<NutritionState> {
       ),
     );
     try {
-      final nutrition = await _repository.nutrition(idOrSlug);
+      final nutrition = await _repository.nutrition(idOrSlug, section: section);
       if (isClosed) {
         return;
       }
@@ -612,7 +630,7 @@ class NutritionCubit extends Cubit<NutritionState> {
   /// stays up (a failed refetch leaves the rows as they were).
   Future<void> _reloadMatchesKeepingError() async {
     try {
-      final matches = await _repository.matches(idOrSlug);
+      final matches = await _repository.matches(idOrSlug, section: section);
       if (isClosed) {
         return;
       }
@@ -645,6 +663,7 @@ class NutritionCubit extends Cubit<NutritionState> {
         child: offer.child,
         share: offer.share,
         applyToAll: true,
+        section: section,
       );
     } on RepositoryException catch (exception) {
       if (isClosed) {

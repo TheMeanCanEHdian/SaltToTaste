@@ -339,10 +339,19 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
 
 /// The plain-language reason a line is where it is.
 class WhyLine extends StatelessWidget {
-  const WhyLine({super.key, required this.match, required this.bucket});
+  const WhyLine({
+    super.key,
+    required this.match,
+    required this.bucket,
+    this.recipeTitle,
+  });
 
   final IngredientMatch match;
   final MatchBucket bucket;
+
+  /// The recipe the line belongs to, when the host knows it: an own
+  /// section's retitle note names it ([retitledNote]).
+  final String? recipeTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -395,7 +404,8 @@ class WhyLine extends StatelessWidget {
       ),
       // A reference line no recipe counts yet (v41, the copy sheet).
       MatchBucket.chooseRecipe => (
-        chooseRecipeWhy(match.child?.reason, match.child?.name ?? ''),
+        retitledNote(match.child, recipeTitle) ??
+            chooseRecipeWhy(match.child?.reason, match.child?.name ?? ''),
         SaltColors.warnInk,
       ),
       // A reference the yield gives no share of: counted as 0 g (R3).
@@ -465,6 +475,21 @@ String chooseRecipeWhy(String? reason, String item) => reason == 'nested'
           'line'
     : 'Made from another recipe: no library recipe is titled "$item" — held '
           'out of the totals. Pick the recipe it means, or skip the line';
+
+/// The held-missing note of a section pick whose section was retitled or
+/// removed since (v44, S15 (a)): the OLD title, and its host — another
+/// host's title, else [recipeTitle] (an own section's child names no
+/// host). Null for any other child, or with no host to name.
+String? retitledNote(RecipeRef? child, String? recipeTitle) {
+  final host = child?.hostTitle ?? recipeTitle;
+  return child != null &&
+          child.reason == 'missing' &&
+          child.section != null &&
+          host != null
+      ? 'Made from another recipe: ${child.title ?? child.section} is no '
+            'longer a section of $host — choose again'
+      : null;
+}
 
 /// A carried decision's label: its grams in the totals come from the line's
 /// previous amount ([IngredientMatch.carriedFrom]) until a recompute
@@ -719,6 +744,10 @@ Widget _routed(IngredientMatch match, RecipeRef child) {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  // Another host's section (v44): the shipped candidate
+                  // note, in a new place; an own section carries none.
+                  if (child.hostTitle case final host?)
+                    TextSpan(text: ' · a section of $host', style: _muted),
                 ],
               ),
             ),

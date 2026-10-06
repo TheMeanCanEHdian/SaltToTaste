@@ -276,6 +276,7 @@ class NutritionReviewLine {
     required this.position,
     required this.raw,
     required this.bucket,
+    this.section,
     this.match,
     this.itemKey,
     this.item,
@@ -300,6 +301,7 @@ class NutritionReviewLine {
       position: (json['position'] as num?)?.toInt() ?? 0,
       raw: json['raw'] as String? ?? '',
       bucket: json['bucket'] as String? ?? '',
+      section: json['section'] as String?,
       match: rawMatch is Map<String, dynamic>
           ? NutritionReviewMatch.fromJson(rawMatch)
           : null,
@@ -324,7 +326,17 @@ class NutritionReviewLine {
     );
   }
 
+  /// The recipe — a section line's HOST (v44).
   final NutritionReviewRecipe recipe;
+
+  /// The section the line belongs to (v44): its title, null on a recipe's
+  /// own line. Its reads and writes carry `?section=`.
+  final String? section;
+
+  /// The recipe slot of the row: "{host title} · {section title}" on a
+  /// section's line (v44), else the recipe's title.
+  String get recipeLabel =>
+      section == null ? recipe.title : '${recipe.title} · $section';
 
   /// The line's index within the recipe — the key for the fix write
   /// (`PUT …/nutrition/matches/{position}`).
@@ -380,7 +392,10 @@ class NutritionReviewLine {
   /// A stable id for selection (a recipe slug + line position is unique).
   /// In grouped mode this is the group's EXAMPLE line, which is what the fix
   /// pane opens on.
-  String get key => '${recipe.slug}#$position';
+  /// A section's line carries its title: the host's own line at the same
+  /// position is another line (v44).
+  String get key =>
+      '${recipe.slug}#$position${section == null ? '' : '#$section'}';
 }
 
 /// The recipe a flagged line belongs to (just enough to label it and open the

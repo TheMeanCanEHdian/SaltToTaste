@@ -77,6 +77,8 @@ class RecipeNutrition {
           (
             slug: raw['slug'] as String?,
             title: raw['title'] as String? ?? '',
+            section: raw['section'] as String?,
+            hostTitle: raw['host_title'] as String?,
             flag: raw['flag'] as String?,
           ),
       ],
@@ -97,7 +99,18 @@ class RecipeNutrition {
 
   /// The child recipes the totals count (v41): their titles and a flag
   /// ("approximation") when the row carries one. Shown to members too.
-  final List<({String? slug, String title, String? flag})> includes;
+  /// A section (v44) carries its [section] title, and [hostTitle] when its
+  /// host is another recipe.
+  final List<
+    ({
+      String? slug,
+      String title,
+      String? section,
+      String? hostTitle,
+      String? flag,
+    })
+  >
+  includes;
 
   /// The reference lines that make the label partial (v41): `kind` `held` |
   /// `child_partial` | `not_routed`, with the line's reference [name], the
@@ -397,6 +410,8 @@ class RecipeRef {
     this.name,
     this.slug,
     this.title,
+    this.section,
+    this.hostTitle,
     this.shareText,
     this.isDefault = false,
     this.why,
@@ -417,6 +432,8 @@ class RecipeRef {
     name: json['name'] as String?,
     slug: json['slug'] as String?,
     title: json['title'] as String?,
+    section: json['section'] as String?,
+    hostTitle: json['host_title'] as String?,
     shareText: json['share_text'] as String?,
     isDefault: json['default'] == true,
     why: json['why'] as String?,
@@ -444,13 +461,27 @@ class RecipeRef {
   final String state;
 
   /// held: `missing` | `generic` | `nested` | `marinade`; not_routed:
-  /// `section` | `served_with` | `no_amount` | `no_share`; routed: null.
+  /// `section` | `served_with` | `no_amount` | `no_share` |
+  /// `no_ingredients` (v44); routed: null.
   final String? reason;
 
   /// The line's reference as written ("double-crust pie dough").
   final String? name;
+
+  /// The child's slug — a section's HOST's (v44).
   final String? slug;
   final String? title;
+
+  /// A section child's title (v44; after a retitle, the OLD title), null
+  /// for a library recipe.
+  final String? section;
+
+  /// The host's title when the section is ANOTHER recipe's (v44).
+  final String? hostTitle;
+
+  /// The selection key: the slug, plus the section for a section (two own
+  /// sections share their host's slug).
+  String? get key => section == null ? slug : '$slug\u0000$section';
 
   /// The share as a number only ("1", "⅔").
   final String? shareText;
@@ -492,6 +523,8 @@ class RecipeCandidate {
     this.isDefault = false,
     this.pickable = false,
     this.hostTitle,
+    this.section,
+    this.state,
   });
 
   factory RecipeCandidate.fromJson(Map<String, dynamic> json) =>
@@ -507,13 +540,15 @@ class RecipeCandidate {
         isDefault: json['default'] == true,
         pickable: json['pickable'] == true,
         hostTitle: json['host_title'] as String?,
+        section: json['section'] as String?,
+        state: json['state'] as String?,
       );
 
   /// `own_section` | `note_named` | `library` | `similar` | `other_section`.
   final String group;
   final String title;
 
-  /// Null on a section (phase 2: listed, never picked).
+  /// A section's HOST's slug (v44).
   final String? slug;
   final String? note;
   final String? yieldText;
@@ -523,6 +558,17 @@ class RecipeCandidate {
   final bool isDefault;
   final bool pickable;
   final String? hostTitle;
+
+  /// A section's title (v44), null on a library recipe.
+  final String? section;
+
+  /// A section's state (v44): `ready` | `no_totals` | `no_ingredients` |
+  /// `nested`; null on a library recipe.
+  final String? state;
+
+  /// The selection key: the slug, plus the section for a section (two own
+  /// sections share their host's slug).
+  String? get key => section == null ? slug : '$slug\u0000$section';
 }
 
 /// One record of a rendered row (v41, R2).
@@ -700,11 +746,12 @@ class NutritionRepository {
 
   final Dio _dio;
 
-  /// The computed label for a recipe (`status: none` before any compute).
-  Future<RecipeNutrition> nutrition(String idOrSlug) {
+  /// The computed label for a recipe (`status: none` before any compute);
+  /// with [section], that section's own totals, per batch (v44).
+  Future<RecipeNutrition> nutrition(String idOrSlug, {String? section}) {
     return apiGuard(() async {
       final response = await _dio.get<dynamic>(
-        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition',
+        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition${_section(section)}',
       );
       return RecipeNutrition.fromJson(_asMap(response.data));
     }, notFoundMessage: 'Recipe not found.');
@@ -735,11 +782,13 @@ class NutritionRepository {
     }, notFoundMessage: 'Recipe not found.');
   }
 
-  /// Per-line match transparency for the review sheet.
-  Future<List<IngredientMatch>> matches(String idOrSlug) {
+  /// Per-line match transparency for the review sheet; with [section],
+  /// that section's own lines (v44).
+  Future<List<IngredientMatch>> matches(String idOrSlug, {String? section}) {
     return apiGuard(() async {
       final response = await _dio.get<dynamic>(
-        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/matches',
+        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/matches'
+        '${_section(section)}',
       );
       final data = _asMap(response.data);
       return [
@@ -780,6 +829,8 @@ class NutritionRepository {
   /// the refreshed match list — plus, when [applyToAll] was asked for, what
   /// the apply reached. [raw] is the line's text as shown: a save since
   /// then that moved it fails with code `line_moved` (nothing written).
+  /// [section] decides a line OF that section; [childSection] picks a
+  /// section of [child] (v44).
   Future<MatchOverrideResult> overrideMatch(
     String idOrSlug,
     int position, {
@@ -790,11 +841,14 @@ class NutritionRepository {
     bool? skipped,
     bool? applyToAll,
     String? child,
+    String? childSection,
     double? share,
+    String? section,
   }) {
     return apiGuard(() async {
       final response = await _dio.put<dynamic>(
-        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/matches/$position',
+        '/api/v1/recipes/${_seg(idOrSlug)}/nutrition/matches/$position'
+        '${_section(section)}',
         data: {
           if (raw != null) 'raw': raw,
           if (fdcId != null) 'fdc_id': fdcId,
@@ -802,6 +856,7 @@ class NutritionRepository {
           if (confirmed != null) 'confirmed': confirmed,
           if (skipped != null) 'skipped': skipped,
           if (child != null) 'child': child,
+          if (childSection != null) 'section': childSection,
           if (share != null) 'share': share,
           if (applyToAll != null) 'apply_to_all': applyToAll,
         },
@@ -902,6 +957,10 @@ class NutritionRepository {
   }
 
   static String _seg(String idOrSlug) => Uri.encodeComponent(idOrSlug);
+
+  /// The `?section=` of a section's own reads and writes (v44), else none.
+  static String _section(String? section) =>
+      section == null ? '' : '?section=${_seg(section)}';
 
   Map<String, dynamic> _asMap(dynamic data) {
     if (data is! Map<String, dynamic>) {

@@ -171,7 +171,10 @@ class _ReviewSheetState extends State<_ReviewSheet>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _Header(state: state),
+            // A section has no serving basis of its own: the basis PUT
+            // takes no section and would set its HOST's (v44).
             if (widget.isAdmin &&
+                context.read<NutritionCubit>().section == null &&
                 state.nutrition != null &&
                 state.nutrition!.servingBasis != null)
               _BasisRow(state: state),
@@ -504,6 +507,7 @@ String? notRoutedNote(String? reason) => switch (reason) {
   'served_with' => 'Served with this recipe, not made from it — not counted',
   'no_amount' => 'No amount on the line — not counted',
   'no_share' => 'No share the yield can read — not counted',
+  'no_ingredients' => 'Its section lists no ingredients — not counted',
   _ => null,
 };
 
@@ -601,7 +605,7 @@ class _MatchRowState extends State<_MatchRow> {
             if (zero)
               ZeroRow(match: m, isAdmin: widget.isAdmin)
             else ...[
-              WhyLine(match: m, bucket: b),
+              WhyLine(match: m, bucket: b, recipeTitle: widget.parent?.title),
               CurrentMatch(match: m, bucket: b),
             ],
             // Members see where a routed row's numbers come from, not Change.
@@ -718,6 +722,8 @@ class _MatchRowState extends State<_MatchRow> {
       final cubit = NutritionCubit(
         context.read<NutritionRepository>(),
         child.slug!,
+        // A section's sheet reads its own lines and totals (v44).
+        section: child.section,
       )..load();
       showReviewSheet(
         context,
@@ -975,7 +981,11 @@ class _GuidedFlowState extends State<_GuidedFlow> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
-          WhyLine(match: m, bucket: matchBucketOf(m)),
+          WhyLine(
+            match: m,
+            bucket: matchBucketOf(m),
+            recipeTitle: widget.parent?.title,
+          ),
           CurrentMatch(match: m, bucket: matchBucketOf(m)),
           if (widget.isAdmin) ...[
             const SizedBox(height: 12),

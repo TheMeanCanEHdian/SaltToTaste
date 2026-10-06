@@ -245,7 +245,8 @@ class _StaleBanner extends StatelessWidget {
 }
 
 /// The label's provenance line (v41, the copy sheet): every child recipe
-/// the totals read, with its flag; null when none.
+/// the totals read, with its flag; null when none. Another host's section
+/// names its host (v44); an own section reads its bare title.
 String? includesLine(RecipeNutrition nutrition) {
   final includes = nutrition.includes;
   if (includes.isEmpty) {
@@ -254,7 +255,13 @@ String? includesLine(RecipeNutrition nutrition) {
   final n = includes.length;
   final titles = [
     for (final child in includes)
-      child.flag == null ? child.title : '${child.title} (${child.flag})',
+      switch ((child.hostTitle, child.flag)) {
+        (null, null) => child.title,
+        (null, final flag?) => '${child.title} ($flag)',
+        (final host?, null) => '${child.title} (a section of $host)',
+        (final host?, final flag?) =>
+          '${child.title} (a section of $host; $flag)',
+      },
   ].join(', ');
   return 'Includes $n ${n == 1 ? 'recipe' : 'recipes'}: $titles';
 }
@@ -273,6 +280,7 @@ List<String> partialLines(RecipeNutrition nutrition) => [
           'served_with' => 'served with it, not made from it',
           'no_amount' => 'no amount on the line',
           'no_share' => 'no share the yield can read',
+          'no_ingredients' => 'its section lists no ingredients',
           final other => other ?? 'not counted',
         }}).',
       _ => 'Partial: ${line.name} is not counted (no recipe chosen).',

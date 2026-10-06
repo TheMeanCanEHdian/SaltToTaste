@@ -3534,6 +3534,78 @@ chicken"; a savoy citation; three printed ranges; then the leek line), the
 owner's gate (replay reproduced, two mutants killed, analyzers and suites
 green). matcherVersion 43.
 
+### Sections as children: a titled subsection is a recipe of its own (matcher v44)
+
+Phase 2 of sub-recipe routing. v41 routed a reference line to a LIBRARY
+recipe; the 51 recipes left partial with nothing to review all referenced a
+section of their own document ("1 tablespoon tabil (recipe follows)") or of
+another's ("1 recipe Basic Single-Crust Pie Dough (this page)"). The owner's
+rulings S1–S15 (2026-10-06, as recommended) make such a section a recipe of
+its own when a main reference line needs it — only the referenced ones (140
+on snapshot 19, 936 lines), never the dry run's 403. Storage (migration 019,
+user_version 18 → 19): the three nutrition tables are rebuilt so `recipe_id`
+may hold a section key `<host id>#<exact title>` and a VIRTUAL generated
+`host_id` carries the FK to `recipes` with its cascade (accepted by this
+Mac's SQLite 3.54.0; Debian bookworm's 3.40.1 is unverified and the trigger
+fallback unbuilt — the migration test runs on the deploy image before the
+first deploy). The key is storage only: on the wire a section is always its
+host's slug plus a `section` title. One resolver (`nutritionRecipeOf`)
+serves every nutrition path — a key loads its host and the section as a
+recipe with the section's own lines, yield and steps — and every per-recipe
+gate (layout, the write race, the held-medium cache) binds the HOST's
+content hash. The bulk order is [child section keys, recipes that read
+none, parents]; a stale key appends its parents; a sweep collects keys no
+main line needs any more (never a person's decided row); a host saved with
+a section retitled or removed drops that key's rows, stamp and layout, and
+a parent's pick of it then holds `choose_recipe` missing, naming the old
+title (S15, one-way). Engine: the own-section and other-host branches build
+the key and share the library tail — the share read on the SECTION's yield
+(Tabil ⅛ of ½ cup; the gluten-free blend 16 of 42 oz), a section with no
+ingredient lines the 0 g rule row `no_ingredients`, a section holding a
+reference `nested_recipe`; another host's section routes only when exactly
+one host carries the title (N8). Rule PO lists, for a "(recipes follow)"
+line held generic or marinade, the recipe's own sections no other reference
+routes to — listed for a person, never routed (the glazed ham's two
+glazes); A9 reads an unmarked line naming an own titled section as a
+reference (kibbeh's harissa), S11 its bare count of one as one recipe; S10
+refuses a marinade pick without a typed eaten share. The 16 normaliser
+defects the dry run exposed became rules at zero requests ("for <purpose>"
+salt, "back pepper", "warm tap water", a lone "boneless", the leaked "fluid
+ounce(s)", a section line naming the parent's reserved part — two new rule
+notes —, "green thai"), S7 counts a bare orange count beside its zest, and
+23 reads land on cached answers. API: `child` and `candidates` gain
+`section`, `host_title`, `state` and `pickable` (a section candidate carries
+its totals; `other_section` lists only stored children); `?section=` on the
+nutrition GET, the matches GET and the PUT; the PUT body's `section`; nine
+422 texts from the approved copy delta; a section's totals per batch (basis
+1); a section pick is line-local; the queue joins the host, lists a section
+line as "{host} · {section}", and credits a section group to the parents it
+would finish, the banner reading the same CTE (279 groups, Σ finishes 72 =
+finishable 72). Replay (rp43, cache-only on snapshot 19; `scratchpad/v43/`):
+the only calls are option A's 12 searches and 4 read details, to be spent by
+the owner; 63 main rows differ from v43 (57 rule rows routed to a section,
+3 A9 routes, 3 salt rows), no person's row; buckets 13,336 / 214 / 17 / 13
+/ 35; complete 935 → 976, partial 263 → 222; the 51 → 12 (3 wait on option
+A, 9 never); +76,418.6 kcal per batch; sections 121 complete / 19 partial
+(13 waiting on option A). The app (the approved copy delta
+`docs/mockups/v44-sections-copy.html`, a delta to the v41 mockup): section
+candidates pickable by (slug, section) — two own sections share one slug —
+with their state in the right column ("no totals yet" / "no ingredients
+listed" / "made from another recipe"); the routed row's " · a section of
+{host title}" suffix for another host's section; "Open the recipe's
+matches" opening the section's own sheet (the basis row hidden there: the
+basis PUT takes no section); the label's "{title} (a section of {host
+title})" and the `no_ingredients` partial line and row note; the retitle
+note naming the old title and its host; the queue row "{host} · {section}"
+and a section-aware queue key; the marinade share gate. Fixtures: 30
+searches and 14 details copied from snapshot 19. Pins: the three server
+files (storage, sections, api) and the app's `nutrition_sections_test`;
+verifier rounds server 3 (two closers), app 4 (three closers: every defect
+a missing pin over correct code). The delta's §5 example draws the section
+before its host, against its own rule; the app follows the rule and the
+golden. Server a18da27, app (this commit). Not swept live until option A is
+spent on a scratch copy (snapshot 20) and its answers seeded.
+
 ## Decision log (deviations & clarifications)
 
 - **2026-10-06 — matcher v44, the server half built (deviations from

@@ -536,7 +536,7 @@ class _QueueRow extends StatelessWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            '${line.recipe.title} · line ${line.position}',
+                            '${line.recipeLabel} · line ${line.position}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -911,6 +911,7 @@ class _FixPane extends StatelessWidget {
       create: (context) => NutritionCubit(
         context.read<NutritionRepository>(),
         selected.recipe.slug,
+        section: selected.section,
       )..loadMatches(),
       child: _FixPaneBody(line: selected),
     );
@@ -1139,7 +1140,7 @@ class _FixContentState extends State<_FixContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '${line.recipe.title} · ingredient line ${line.position}',
+            '${line.recipeLabel} · ingredient line ${line.position}',
             style: const TextStyle(fontSize: 11.5, color: SaltColors.muted),
           ),
           const SizedBox(height: 3),
@@ -1148,7 +1149,7 @@ class _FixContentState extends State<_FixContent> {
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          WhyLine(match: match, bucket: bucket),
+          WhyLine(match: match, bucket: bucket, recipeTitle: line.recipe.title),
           CurrentMatch(match: match, bucket: bucket),
           // A failed Skip/Confirm/Save must say so — without this the
           // button re-enabled silently and the admin believed the fix
@@ -1253,7 +1254,10 @@ class _FixContentState extends State<_FixContent> {
             RecipeFixPanel(
               match: match,
               busy: busy,
-              parent: (title: line.recipe.title, hasSections: null),
+              parent: (
+                title: line.section ?? line.recipe.title,
+                hasSections: null,
+              ),
               onSkip: skip,
             )
           else
@@ -1263,7 +1267,7 @@ class _FixContentState extends State<_FixContent> {
               onDone: () {},
               showCancel: false,
               amountFocus: _amountFocus,
-              recipeTitle: line.recipe.title,
+              recipeTitle: line.section ?? line.recipe.title,
               onSkip: skip,
               group: line.lines > 1
                   ? (
@@ -1350,7 +1354,10 @@ class FinishesSplit extends StatelessWidget {
                 const TextSpan(text: 'This line only: ', style: bold),
                 TextSpan(text: alone == 1 ? '1 recipe.' : '0 recipes.'),
                 if (waiting.isNotEmpty) ...[
-                  TextSpan(text: ' ${line.recipe.title} still waits on '),
+                  TextSpan(
+                    text:
+                        ' ${line.section ?? line.recipe.title} still waits on ',
+                  ),
                   TextSpan(
                     text: waiting.length == 1
                         ? waiting.single.raw

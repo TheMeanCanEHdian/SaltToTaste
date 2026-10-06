@@ -16,8 +16,8 @@ typedef ReviewParent = ({String title, bool? hasSections});
 
 /// The fix panel of a reference line (v41, mockup §2): it chooses a recipe,
 /// not a food. The candidates come in the engine's resolution order; a
-/// section is listed but never picked (phase 2); the library search finds
-/// any other recipe. ONE primary button follows the selection and the share
+/// section is a recipe too (v44), picked by its host's slug AND its title;
+/// the library search finds any other recipe. ONE primary button follows the selection and the share
 /// field, as the amount block's Confirm follows its number (C1). Nothing is
 /// written until it is pressed, and success is observed by the host from
 /// cubit state (review B5/B6), never assumed here.
@@ -55,8 +55,8 @@ String shortTitle(String title, String? item) {
 }
 
 class _RecipeFixPanelState extends State<RecipeFixPanel> {
-  /// A recipe picked here, not yet written (its slug).
-  String? _staged;
+  /// A recipe (or section) picked here, not yet written.
+  RecipeCandidate? _staged;
   final TextEditingController _share = TextEditingController();
   String _unit = 'recipe';
   bool _dirty = false;
@@ -75,9 +75,13 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
     _share.addListener(_onChanged);
   }
 
+  /// A poured-away marinade (S10 (a)): the share eaten is a person's — the
+  /// field starts empty and a pick waits on it.
+  bool get _marinade => widget.match.hold == 'discarded_recipe';
+
   void _reset() {
     _setting = true;
-    _share.text = widget.match.child?.shareText ?? '';
+    _share.text = _marinade ? '' : widget.match.child?.shareText ?? '';
     _setting = false;
     _last = _share.text;
     _unit = 'recipe';
@@ -102,7 +106,7 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
     final was = old.match.child;
     final now = widget.match.child;
     if (old.match.raw != widget.match.raw ||
-        was?.slug != now?.slug ||
+        was?.key != now?.key ||
         was?.shareText != now?.shareText ||
         old.match.status != widget.match.status) {
       _staged = null;
@@ -187,9 +191,11 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
     final m = widget.match;
     final c = m.child!;
     final busy = widget.busy;
-    final current = c.state == 'routed' ? c.slug : null;
-    final selected = _staged ?? current;
-    final staged = _staged != null && _staged != current;
+    final routedSlug = c.state == 'routed' ? c.slug : null;
+    final current = routedSlug == null ? null : c.key;
+    final pick = _staged;
+    final selected = pick?.key ?? current;
+    final staged = pick != null && pick.key != current;
     // The share field offers only the units the child's yield can read —
     // and reads only one of them: the toggle, the label and the PUT's
     // share all take [unit], never a unit the selected recipe lacks.
@@ -209,24 +215,28 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
     final String buttonLabel;
     final VoidCallback? onPress;
     var hint = false;
+    var shareHint = false;
     if (staged) {
       buttonLabel = withShare('Use this recipe');
-      onPress = busy || (_dirty && share == null)
+      onPress = busy || ((_dirty || _marinade) && share == null)
           ? null
           : () => cubit.pickRecipe(
               m.position,
               raw: m.raw,
-              child: _staged!,
+              child: pick.slug!,
+              childSection: pick.section,
               share: _dirty ? share : null,
             );
-    } else if (current == null && offers(m, HoldDecision.confirm)) {
+      // S10 (a): the API's own words for the share a marinade pick needs.
+      shareHint = _marinade && share == null;
+    } else if (routedSlug == null && offers(m, HoldDecision.confirm)) {
       // A held line the table lets a Confirm finish — the poured-away
       // marinade (A5 a) — confirms with nothing picked.
       buttonLabel = 'Confirm (poured away)';
       onPress = busy || m.status == 'confirmed'
           ? null
           : () => cubit.override(m.position, raw: m.raw, confirmed: true);
-    } else if (current == null) {
+    } else if (routedSlug == null) {
       buttonLabel = 'Use this recipe';
       onPress = null;
       hint = true;
@@ -237,7 +247,8 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
           : () => cubit.pickRecipe(
               m.position,
               raw: m.raw,
-              child: current,
+              child: routedSlug,
+              childSection: c.section,
               share: share,
             );
     } else {
@@ -262,16 +273,16 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
     final similar = of('similar');
     Widget row(RecipeCandidate candidate) => _CandidateRow(
       candidate: candidate,
-      selected: candidate.slug != null && candidate.slug == selected,
-      onPick: busy || !candidate.pickable || candidate.slug == null
+      selected: candidate.key != null && candidate.key == selected,
+      onPick: busy || !candidate.pickable
           ? null
           : () => setState(() {
               // A number typed in a unit of the old child's yield means
               // nothing for another recipe: back to the line's share.
-              if (candidate.slug != current && _unit != 'recipe') {
+              if (candidate.key != current && _unit != 'recipe') {
                 _reset();
               }
-              _staged = candidate.slug;
+              _staged = candidate;
             }),
     );
     List<Widget> group(
@@ -449,12 +460,15 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
                         ),
                     ],
                   ),
-                  if (hint)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6),
+                  if (hint || shareHint)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        'Enabled once a recipe is picked.',
-                        style: TextStyle(
+                        hint
+                            ? 'Enabled once a recipe is picked.'
+                            : 'Set the share that is eaten — the rest is '
+                                  'poured away.',
+                        style: const TextStyle(
                           fontSize: 11.5,
                           color: SaltColors.muted,
                         ),
@@ -494,8 +508,8 @@ class _Caption extends StatelessWidget {
 
 /// One recipe the panel offers: a tick when selected, its title with the
 /// note and yield, and on the right "current · default" over its calories —
-/// or, for a section, that it has no totals yet. A row that cannot be
-/// picked (a section, a recipe with no totals) is muted and takes no tap.
+/// or, for a section (v44), its state when it is not ready. A row that
+/// cannot be picked (no lines, no totals) is muted and takes no tap.
 class _CandidateRow extends StatelessWidget {
   const _CandidateRow({
     required this.candidate,
@@ -515,8 +529,14 @@ class _CandidateRow extends StatelessWidget {
     final note = [?c.note, ?c.yieldText?.toLowerCase()].join(' · ');
     final right = [
       if (c.current) c.isDefault ? 'current · default' : 'current',
-      if (c.slug == null)
-        'phase 2 · no totals yet'
+      if (switch (c.state) {
+            'no_totals' => 'no totals yet',
+            'no_ingredients' => 'no ingredients listed',
+            'nested' => 'made from another recipe',
+            _ => null,
+          }
+          case final state?)
+        state
       else if (kcal != null)
         perServing == null
             ? '${kcalText(kcal)} kcal'
