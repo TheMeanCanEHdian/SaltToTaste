@@ -343,15 +343,16 @@ _pins = [
     'in_shell',
     'from 4 pound · approximate (gross weight, no USDA refuse portion)',
   ),
-  // N4: a chickpea can line unchanged (no drained ÷ whole read).
+  // N4: no drained ÷ whole read at v40; since v42 (the owner's ruling (b))
+  // the chickpea pair's 0.565 (nutrition_v42_test.dart).
   (
     '0044-mediterranean-chopped-salad.yaml',
     6,
     '1 (15-ounce) can chickpeas, drained and rinsed',
     2644288,
-    '425.24',
+    '240.26',
     'counted',
     null,
-    'from the printed weight',
+    "from the printed weight × 0.565 drained · approximate (drained weight: FDC's canned chickpea pair, 253 g of 448 g)",
   ),
 ];

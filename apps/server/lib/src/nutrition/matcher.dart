@@ -559,7 +559,16 @@ const Map<String, String> _synonyms = {
 /// cooked bacon 168322 × 0.403 plus the kept fat on 172345, one row with two
 /// parts (13 lines). (R3) a reference rule row is neither accounted nor
 /// contributing: its recipe reads partial (87 recipes leave complete).
-const int matcherVersion = 41;
+///
+/// v42: canned beans (the owner's 2026-10-06 ruling (b)). A can line
+/// weighed by its printed weight on one of the six Foundation "drained and
+/// rinsed" bean records counts its bean's drained share, FDC's own SR can
+/// pair (chickpea 0.565, kidney 0.610, pinto 0.627; black, cannellini and
+/// navy the median 0.610), flagged (`cannedBeanShares`); a line keeping the
+/// liquid ("undrained", "do not drain", "liquid reserved", "with their
+/// liquid") counts the can whole, "1 can drained, 1 can undrained" half the
+/// cans at the share (grams: 19 lines).
+const int matcherVersion = 42;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

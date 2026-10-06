@@ -419322,5 +419322,40 @@
     "328": 0.0
    }
   }
+ ],
+ "dark red kidney beans": [
+  {
+   "fdc_id": 747440,
+   "description": "Beans, Dry, Dark Red Kidney (0% moisture)",
+   "data_type": "Foundation",
+   "nutrients": {
+    "203": 25.9,
+    "204": 1.31,
+    "291": 4.3,
+    "301": 98.0,
+    "303": 6.58,
+    "306": 1490.0,
+    "304": 164.0,
+    "305": 612.0
+   }
+  },
+  {
+   "fdc_id": 2644289,
+   "description": "Beans, kidney, dark red, canned, sodium added, sugar added, drained and rinsed",
+   "data_type": "Foundation",
+   "nutrients": {
+    "303": 1.44,
+    "304": 29.3,
+    "305": 104.0,
+    "306": 227.0,
+    "307": 172.0,
+    "204": 1.26,
+    "301": 56.9,
+    "957": 127.0,
+    "203": 7.8,
+    "205": 21.0,
+    "958": 123.0
+   }
+  }
  ]
 }

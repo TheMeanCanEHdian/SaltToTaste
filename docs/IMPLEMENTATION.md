@@ -3410,7 +3410,90 @@ the SR meat-only thigh share runs about 17 % under the auditors' estimate
 on two recipes. The remaining outliers are a person's lines, small herb
 and aromatic amounts, and produce yields for a later batch.
 
+### Canned beans by their drained share; the not-routed row note (matcher v42)
+
+The owner's rulings on the questions left open after v41 (2026-10-06; the
+decision-log entry). Canned beans: 22 lines counted a can's printed weight
+on Foundation "drained and rinsed" records, so the can's liquid was counted
+as beans — about 7,400 kcal across the library. The owner chose to fetch
+FDC's remaining can pairs (five details on a scratch copy of snapshot 17,
+the result snapshot 18) rather than apply the chickpea share to every bean,
+and the pairs differ by up to six points: chickpeas 0.565, kidney 0.610,
+pinto 0.627 (each drained ÷ total can from the two records' own portions);
+black, cannellini and navy beans, with no cached pair, take the three
+pairs' median 0.610, flagged as such; the rinsed kidney record publishes a
+cup only, so rinsing adds no factor. A line that keeps the liquid
+("undrained", "do not drain", "liquid reserved") keeps the can whole;
+"1 can drained, 1 can undrained" takes the share on half the cans. Replay
+on snapshot 19 (snapshot 18 plus the four chicken details of the skin step,
+below): calls 0; exactly 19 rows differ from v41, every one a bean row
+(three keep the liquid), no status, hold or bucket change; 19 recipes move,
+10 by more than 10 % a serving (ultracreamy hummus −22 %, pasta e fagioli
+−22 %). The review sheet: a reference row the engine does not route now
+carries a one-line note under its "not counted" badge with the label's own
+reason (its section has no totals yet; served with this recipe, not made
+from it; no amount on the line; no share the yield can read). The queue
+header keeps the lower-cased bucket inside its sentence, as the mockup drew
+it. One verifier round, no defect; the owner's gate: the replay reproduced,
+two mutants (the half-can rule; the served-with note) killed, analyzers and
+suites green. matcherVersion 42.
+
+The skin live step (the owner's option (b), four details, the result
+snapshot 19) settled one question and reframed another: the SR "thigh with
+skin" portions are boneless (the thigh pair reads 193 g with skin and 149 g
+without, within 2 g of the leg record's "bone and skin removed" 147 g), so
+v39's bone-then-skin stacking does not double-count the bone; the SR skin
+shares agree at 21–23 % skin (0.772 thigh pair, 0.795 the leg record's
+thigh, 0.770 leg) against the Foundation nutrient balance's 15–17 %. FDC
+publishes no bone figure for a thigh and no wing-skin figure (the wing's
+skin share by nutrient balance falls anywhere between 0.21 and 0.36, two to
+four points of Grilled Lemon Chicken's 13 %). The remaining under-read on
+thigh and leg lines, and on the whole bird, therefore sits in the
+whole-bird bone share applied to meatier parts, which FDC does not publish
+for parts; the USDA yield handbook the owner approved as a source is the
+route, in phase 2's design pass. Which thigh share ships is the owner's open
+choice.
+
+The phase-2 dry run (the owner's option (a); read-only, zero requests;
+`.claude/diag/2026-10-06/prep42/`): 403 sections with ingredients in 241
+recipes, 2,895 lines, all stored with the `variation` tag (the 32
+`component` sections carry no lines); the referenced sections are 140 with
+936 lines. Against snapshot 19's caches, 2,541 section lines have a cached
+answer and 146 do not — 132 distinct missing searches (16 of them
+normaliser defects to fix by rule, 116 genuine), no missing detail in the
+first wave, up to 113 details in a second; for the referenced sections
+alone, 42 searches and up to 33 details. 259 sections would be complete at
+zero requests; of the 51 recipes partial with nothing to review, 27 finish
+at zero requests, 15 more need 13 genuine requests, 9 never finish through
+sections (six with no amount on the reference, one served with, two whose
+section has no lines). An independent checker re-derived every count.
+
+- **2026-10-06 — after v41, the owner's answers one at a time:** (Q2) every
+  not-routed reference row gets a one-line note under its badge with the
+  label's reason, option (a). (Q3) the queue header keeps the lower-cased
+  bucket in its sentence, option (a). (Q4) phase 2 starts with a zero-request
+  dry run, then a design pass with the real request count, option (a) — done
+  the same day (the v42 section). (Q5) spend requests for the wing skin and
+  an SR thigh refuse figure before changing the shares, option (b) — spent
+  the same day (four details; snapshot 19): the SR portions proved boneless
+  and no bone or wing-skin figure exists, so the choice of thigh share (keep
+  0.795; the thigh pair's 0.772; the Foundation-derived 0.84) was put back to
+  the owner.
+
 ## Decision log (deviations & clarifications)
+
+- **2026-10-06 — canned beans (the owner: option (b)):** the drained share is
+  read per bean from FDC's own can pairs, fetched in a five-request live step
+  the same day (kidney 174285/175195: 266 of 436 g = 0.610; pinto
+  174286/175201: 277 of 442 g = 0.627; the rinsed kidney record 175243 gives a
+  cup figure only, so rinsing adds no factor) beside the chickpea pair already
+  in hand (253 of 448 g = 0.565) — the result snapshot 18. The 22 canned-bean
+  lines counted by the can's printed weight on a drained record take their
+  bean's share, flagged; black, cannellini and navy beans, which have no cached
+  pair, take the three pairs' median (0.610) flagged as such; a line that keeps
+  the liquid ("undrained", "do not drain", "liquid reserved", "1 can drained, 1
+  can undrained") keeps the can whole for that part. Not chosen: the chickpea
+  share for every bean (a), or leaving the liquid counted (c).
 
 - **2026-10-05 — the composite-row design (matcher v41; the owner: "go with your
   recommendations" on the ten items of `.claude/diag/2026-10-05/prep41/design_v3.md`

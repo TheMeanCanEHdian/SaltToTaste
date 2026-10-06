@@ -1057,9 +1057,13 @@ void main() {
     // from snapshot 17 the 2 searches and 1 detail the no-share pin's
     // indoor pulled pork reads (yellow mustard, worcestershire sauce;
     // 171610, a hit in 'worcestershire sauce'): 1 more compared,
+    // differing in some digit. Matcher v42 recorded from snapshot 19 the
+    // seven canned-bean pair details its share pin reads (173800, 175206,
+    // 174285, 175195, 174286, 175201, 175243) and the "dark red kidney
+    // beans" search its chili pin reads: 7 more compared, 6 of them
     // differing in some digit.
-    expect(compared, 413);
-    expect(differ, 309);
+    expect(compared, 420);
+    expect(differ, 315);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

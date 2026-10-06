@@ -16,6 +16,12 @@
 // And no golden routed row has another line waiting on its item, so the
 // apply-offer pin puts others / others_lines 3 on Blueberry Pie's routed
 // row, as the server's own v41 API pin reads that row after its seed.
+// No golden carries a NOT-ROUTED reference row (v42's row note), so the held
+// tart's reference item is replaced by the real wire shape the server's own
+// matches builder (matchesBody, FixtureProvider) gives two real lines:
+// Restaurant-Style Herb Sauce 0184's "1 recipe Pan-Seared Steaks (this
+// page)" (served_with) and Pumpkin Pie 0987's "1 recipe Basic Single-Crust
+// Pie Dough (this page), …" with 0972 in the library (section).
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -139,12 +145,15 @@ Future<_Routes> _page(
   String self = 'slug',
   String? refuse,
   int others = 0,
+  Map<String, dynamic>? body,
 }) async {
   _size(tester);
   final routes = _Routes(
-    matches: edit == null && others == 0
-        ? golden(matches)
-        : _edited(matches, edit ?? (_) {}, others: others),
+    matches:
+        body ??
+        (edit == null && others == 0
+            ? golden(matches)
+            : _edited(matches, edit ?? (_) {}, others: others)),
     label: golden(label),
     refuse: refuse,
   );
@@ -204,6 +213,77 @@ void _marinade(Map<String, dynamic> match) {
     'reason': 'marinade',
   };
 }
+
+/// The held tart's golden with its reference item replaced by a real
+/// not-routed line's wire shape ([raw], [item], the child's [reason],
+/// [name], [kind], [parentKind] and [candidates]), as the server's
+/// matchesBody emits it.
+Map<String, dynamic> _notRouted({
+  required String raw,
+  required String item,
+  required String reason,
+  required String name,
+  required String kind,
+  required String parentKind,
+  required List<Map<String, Object?>> candidates,
+}) {
+  final body =
+      jsonDecode(jsonEncode(golden('nutrition_matches_choose_recipe')))
+          as Map<String, dynamic>;
+  final row = (body['items']! as List).cast<Map<String, dynamic>>().singleWhere(
+    (i) => (i['match'] as Map?)?['child'] != null,
+  );
+  row
+    ..['raw'] = raw
+    ..['item'] = item
+    ..['line_amount'] = '1 recipe'
+    ..['match'] = {
+      'fdc_id': null,
+      'description':
+          'Sub-recipe — made from its own recipe, not counted in these totals',
+      'data_type': null,
+      'confidence': 1.0,
+      'grams': 0.0,
+      'gram_source': 'unmeasured',
+      'gram_basis': 'a sub-recipe — counted as 0 g',
+      'status': 'confirmed',
+      'hold': null,
+      'hold_note': null,
+      'carried_from': null,
+      'child': {
+        'state': 'not_routed',
+        'reason': reason,
+        'name': name,
+        'slug': null,
+        'title': null,
+        'share_text': '1',
+        'default': false,
+        'why': 'none',
+        'yield_text': null,
+        'share': 1.0,
+        'yield_units': <Object?>[],
+        'grams': 0.0,
+        'kcal': null,
+        'kcal_per_serving': null,
+        'status': null,
+        'matched_count': null,
+        'total_count': null,
+        'kind': kind,
+        'parent_kind': parentKind,
+        'candidates': candidates,
+      },
+      'parts': <Object?>[],
+      'flag': null,
+    };
+  return body;
+}
+
+const _notRoutedNotes = [
+  'Its section has no totals yet — not counted',
+  'Served with this recipe, not made from it — not counted',
+  'No amount on the line — not counted',
+  'No share the yield can read — not counted',
+];
 
 UnitToggle _toggle(WidgetTester t) =>
     t.widget<UnitToggle>(_inPanel(find.byType(UnitToggle)));
@@ -906,5 +986,133 @@ void main() {
     expect(routes.puts, [
       {'raw': _tartRaw, 'confirmed': true},
     ]);
+  });
+
+  group('the not-routed row note (v42, Q2 (a))', () {
+    testWidgets('served with: one line under the "not counted" badge', (
+      t,
+    ) async {
+      await _page(
+        t,
+        matches: 'nutrition_matches_choose_recipe',
+        label: 'nutrition_choose_recipe',
+        parent: (
+          title: 'Restaurant-Style Herb Sauce for Pan-Seared Steaks',
+          hasSections: false,
+        ),
+        body: _notRouted(
+          raw: '1 recipe Pan-Seared Steaks (this page)',
+          item: 'Pan-Seared Steaks (this page)',
+          reason: 'served_with',
+          name: 'Pan-Seared Steaks',
+          kind: 'steaks',
+          parentKind: 'recipe',
+          candidates: [
+            {
+              'group': 'library',
+              'slug': 'pan-seared-steaks',
+              'title': 'Pan-Seared Steaks',
+              'note': null,
+              'yield_text': 'SERVES 4',
+              'kcal': null,
+              'kcal_per_serving': null,
+              'current': false,
+              'default': false,
+              'pickable': false,
+              'host_title': null,
+            },
+          ],
+        ),
+      );
+      final note = find.text(
+        'Served with this recipe, not made from it — not counted',
+      );
+      expect(find.text('not counted'), findsOneWidget);
+      expect(note, findsOneWidget);
+      // Directly under the badge's row, the raw line's own row.
+      final row = find.ancestor(
+        of: find.text('1 recipe Pan-Seared Steaks (this page)'),
+        matching: find.byType(Row),
+      );
+      expect(t.getTopLeft(note).dy, greaterThan(t.getBottomLeft(row).dy - 1));
+      expect(t.getTopLeft(note).dy, lessThan(t.getBottomLeft(row).dy + 4));
+      for (final other in _notRoutedNotes.where(
+        (n) => !n.startsWith('Served'),
+      )) {
+        expect(find.text(other), findsNothing, reason: other);
+      }
+    });
+
+    testWidgets('section: its own reason', (t) async {
+      await _page(
+        t,
+        matches: 'nutrition_matches_choose_recipe',
+        label: 'nutrition_choose_recipe',
+        parent: (title: 'Pumpkin Pie', hasSections: false),
+        body: _notRouted(
+          raw:
+              '1 recipe Basic Single-Crust Pie Dough (this page), fitted into '
+              'a 9-inch pie plate and chilled',
+          item: 'Basic Single-Crust Pie Dough (this page)',
+          reason: 'section',
+          name: 'Basic Single-Crust Pie Dough',
+          kind: 'dough',
+          parentKind: 'pie',
+          candidates: [
+            for (final title in [
+              'Basic Single-Crust Pie Dough',
+              'Hand Mixed Basic Single-Crust Pie Dough',
+            ])
+              {
+                'group': 'other_section',
+                'slug': null,
+                'title': title,
+                'note': 'a section of Basic Double-Crust Pie Dough',
+                'yield_text': null,
+                'kcal': null,
+                'kcal_per_serving': null,
+                'current': false,
+                'default': false,
+                'pickable': false,
+                'host_title': 'Basic Double-Crust Pie Dough',
+              },
+          ],
+        ),
+      );
+      expect(find.text('not counted'), findsOneWidget);
+      expect(
+        find.text('Its section has no totals yet — not counted'),
+        findsOneWidget,
+      );
+      for (final other in _notRoutedNotes.where((n) => !n.startsWith('Its'))) {
+        expect(find.text(other), findsNothing, reason: other);
+      }
+    });
+
+    testWidgets('a routed row draws no such note', (t) async {
+      await _page(
+        t,
+        matches: 'nutrition_matches_subrecipe',
+        label: 'nutrition_subrecipe',
+        parent: _pie,
+      );
+      expect(
+        find.text('made from the recipe All-Butter Double-Crust Pie Dough'),
+        findsOneWidget,
+      );
+      expect(find.text('not counted'), findsNothing);
+      for (final note in _notRoutedNotes) {
+        expect(find.text(note), findsNothing, reason: note);
+      }
+    });
+
+    test('the four reasons in the brief\'s words; any other none', () {
+      expect([
+        for (final r in ['section', 'served_with', 'no_amount', 'no_share'])
+          notRoutedNote(r),
+      ], _notRoutedNotes);
+      expect(notRoutedNote(null), isNull);
+      expect(notRoutedNote('missing'), isNull);
+    });
   });
 }

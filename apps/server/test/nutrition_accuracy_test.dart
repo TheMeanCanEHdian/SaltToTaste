@@ -989,7 +989,8 @@ void main() {
 
     test(
       'N1 drained cans (user answer switch, default drained): no cached '
-      'record publishes a drained-can portion, so the net weight stands',
+      'record publishes a drained-can portion, so the portion read adds '
+      'nothing — the v42 bean share (0.565) is the only drained factor',
       () async {
         expect(cannedDrained, isTrue);
         const raw = '1 (15-ounce) can chickpeas, drained and rinsed';
@@ -1000,7 +1001,11 @@ void main() {
           normalizedItem: normalizeItem(parsed.item ?? raw),
           raw: raw,
         );
-        expect(grams!.grams, closeTo(15 * 28.3495, 0.1));
+        expect(
+          drainedCanGrams(15 * 28.3495, await food(2644288), raw),
+          isNull,
+        );
+        expect(grams!.grams, closeTo(15 * 28.3495 * 0.565, 0.1));
       },
     );
 

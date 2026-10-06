@@ -2610,6 +2610,28 @@ GramResolution? _resolveLine({
           '2 (28-ounce) cans whole tomatoes, drained, give 3 cups juice)',
     );
   }
+  // v42 (B, the owner's 2026-10-06 ruling (b)): a can of beans weighed by
+  // its printed weight on a drained-and-rinsed record counts its bean's
+  // drained share ([cannedBeanShares]) — unless the line keeps the liquid.
+  final bean = first?.source == GramSource.weight && raw != null
+      ? cannedBeanShares[food?.fdcId]
+      : null;
+  if (bean != null && RegExp(r'\bcans?\b').hasMatch(raw!.toLowerCase())) {
+    final text = raw.toLowerCase();
+    final half = RegExp(
+      r'\b1 can drained\b.*\b1 can (?:left )?undrained\b',
+    ).hasMatch(text);
+    if (half || !_keepsBeanLiquid.hasMatch(text)) {
+      final share = bean.share.toStringAsFixed(3);
+      first = GramResolution(
+        grams: first!.grams * (half ? (1 + bean.share) / 2 : bean.share),
+        source: first.source,
+        basis:
+            '${first.basis} × $share drained${half ? ' on half the cans' : ''} '
+            '· approximate (drained weight: ${bean.from})',
+      );
+    }
+  }
   final plus = raw == null || first == null ? null : plusPartOf(raw);
   // A counted extra of the same food ("plus 1 lemon, cut into wedges") is
   // for serving, not in the dish; only a measured second amount is added.
@@ -3029,6 +3051,40 @@ const bool cannedDrained = true;
 /// (Ultimate Cream of Tomato Soup) — 3 cups of juice by SR's juice cup out
 /// of 1,587.6 g leaves 0.54.
 const double drainedTomatoShare = 0.54;
+
+/// A canned bean's drained share (v42, the owner's 2026-10-06 ruling (b)),
+/// keyed by the Foundation "canned, sodium added, drained and rinsed" record
+/// its can lines sit on: FDC's own SR can pair, drained ÷ whole, to 3 dp
+/// (chickpea 173800 "can drained" 253 g of 175206 "can (total can
+/// contents)" 448 g; kidney 174285 "can drained solids" 266 g of 175195
+/// "can" 436 g; pinto 174286 277 g of 175201 "can" 442 g). Black,
+/// cannellini and navy have no pair: the three pairs' median
+/// ([cannedBeanMedian]). The rinsed kidney record 175243 publishes a cup
+/// only, so rinsing adds no factor.
+const Map<int, ({double share, String from})> cannedBeanShares = {
+  2644288: (share: 0.565, from: "FDC's canned chickpea pair, 253 g of 448 g"),
+  2644289: (
+    share: 0.610,
+    from: "FDC's canned kidney bean pair, 266 g of 436 g",
+  ),
+  2644292: (share: 0.627, from: "FDC's canned pinto bean pair, 277 g of 442 g"),
+  2644285: _beanMedian,
+  2644287: _beanMedian,
+  2644286: _beanMedian,
+};
+
+/// The median of the three canned-bean pairs' shares (0.565, 0.610, 0.627).
+const double cannedBeanMedian = 0.610;
+
+const _beanMedian = (
+  share: cannedBeanMedian,
+  from: "the median of FDC's three canned-bean pairs, 0.610",
+);
+
+/// A canned-bean line that keeps the can's liquid: the can counts whole.
+final RegExp _keepsBeanLiquid = RegExp(
+  r'\b(?:undrained|do not drain|liquid reserved|with their liquid)\b',
+);
 
 /// The canned-tomato records every drained canned-tomato line sits on
 /// (Foundation 333281 diced, 2685578 whole; neither publishes drained

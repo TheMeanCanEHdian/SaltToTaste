@@ -2528,13 +2528,35 @@ drained, 3 cups juice reserved" by SR's juice cup: 28 lines (hearty lentil
 soup 411.07 → 221.98 g), 0 recipes by more than 10 %; the 16 lines that
 reserve juice put it back later and are untouched. Every other prep word
 (peeled or cored produce, leek greens, scallion parts, deveined shrimp,
-drained beans) has no figure and no rule. Canned beans after the live step
-(2026-10-05): SR 173800 chickpeas "drained solids" publishes "can drained"
-253 g and SR 175206 "solids and liquids" "can (total can contents)" 448 g
-and "cup" 240 g, neither naming its can size, so the plan's condition
-(both members size the same can) is undetermined: the other pairs were not
-fetched and no bean line changes — an open question for the owner (253 /
-448 = 0.565 drained ÷ whole, if the same-can reading is accepted).
+rinsed beans) has no figure and no rule. **Canned beans** (matcher v42,
+the owner's ruling (b) 2026-10-06): a line naming a can or cans whose
+grams are its PRINTED weight on one of the six Foundation "canned, sodium
+added, drained and rinsed" bean records (2644288 chickpeas, 2644289 dark
+red kidney, 2644292 pinto, 2644285 black, 2644287 cannellini, 2644286
+navy) counts × its bean's drained share — FDC's own SR can pair, drained ÷
+whole, to 3 dp: chickpea 0.565 (173800 "can drained" 253 g of 175206 "can
+(total can contents)" 448 g), kidney 0.610 (174285 "can drained solids"
+266 g of 175195 "can" 436 g), pinto 0.627 (174286 "can drained solids"
+277 g of 175201 "can" 442 g); black, cannellini and navy, with no pair,
+the three pairs' median 0.610. Flagged: basis `"from the printed weight ×
+0.565 drained · approximate (drained weight: FDC's canned chickpea pair,
+253 g of 448 g)"`, or `"… · approximate (drained weight: the median of
+FDC's three canned-bean pairs, 0.610)"`. The rinsed kidney record 175243
+publishes only a cup, so rinsing adds no factor. A line that keeps the
+liquid — "undrained", "do not drain", "liquid reserved", "with their
+liquid" — counts the can whole (chana masala, pasta e ceci, acquacotta);
+"1 can drained, 1 can [left] undrained" takes the share on half the cans
+(`"… × 0.565 drained on half the cans · …"`: espinacas con garbanzos
+850.49 → 665.50 g, the garlicky shrimp stew 850.49 → 684.64 g). 22 lines
+sit on the six records by a printed can weight: 19 change grams (harira
+425.24 → 240.26 g; beef chili with kidney beans 850.49 → 518.80 g), 3 keep
+the liquid; no bucket, hold or status moves; 10 recipes by more than 10 %
+(ultracreamy hummus −22.4 %, pasta e fagioli −21.5 %). A canned-bean line
+read from a cup (the hearty green salad's ⅔ cup) is untouched, as are
+butter beans (FNDDS 2709850). The canned-bean live step (2026-10-06, on a
+scratch copy of snapshot 17: 5 food details — 174285, 175195, 174286,
+175201, 175243 — the result snapshot 18) brings the accuracy track's live
+requests to 60.
 Since matcher v40 (edible yields, part 2 — the owner's live step,
 2026-10-05 on a scratch copy of snapshot 16: 13 requests, 3 searches and
 10 food details, the result snapshot 17; the accuracy track's live

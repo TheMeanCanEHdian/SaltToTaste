@@ -496,6 +496,17 @@ class _CollapsibleGroupState extends State<_CollapsibleGroup> {
   }
 }
 
+/// The one line under a not-routed reference row's "not counted" badge:
+/// why the engine counts nothing for it (v42, Q2 (a)); null for any other
+/// reason.
+String? notRoutedNote(String? reason) => switch (reason) {
+  'section' => 'Its section has no totals yet — not counted',
+  'served_with' => 'Served with this recipe, not made from it — not counted',
+  'no_amount' => 'No amount on the line — not counted',
+  'no_share' => 'No share the yield can read — not counted',
+  _ => null,
+};
+
 class _MatchRow extends StatefulWidget {
   const _MatchRow({
     super.key,
@@ -579,6 +590,13 @@ class _MatchRowState extends State<_MatchRow> {
                   _statusBadge(b),
               ],
             ),
+            // Why a not-routed reference counts nothing (v42, Q2 (a)).
+            if (!skipped && m.child?.state == 'not_routed')
+              if (notRoutedNote(m.child?.reason) case final note?)
+                Text(
+                  note,
+                  style: const TextStyle(fontSize: 12, color: SaltColors.muted),
+                ),
             const SizedBox(height: 4),
             if (zero)
               ZeroRow(match: m, isAdmin: widget.isAdmin)

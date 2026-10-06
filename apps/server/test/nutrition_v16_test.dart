@@ -739,11 +739,12 @@ void main() {
     });
 
     test('G4: the in-item ounces — "1 15-ounce can chickpeas, rinsed" on '
-        '2644288 is 425 g from the printed weight — and a litre paren — "1 '
+        '2644288 is 425 g from the printed weight (× 0.565 drained since '
+        'v42: 240.26 g) — and a litre paren — "1 '
         '(1-liter) bottle dry white wine" on 175112 (no bottle portion) is '
         '1,000 mL, 990 g', () async {
       final can = await grams('1 15-ounce can chickpeas, rinsed', 2644288);
-      expect(can!.grams, closeTo(425.24, 0.01));
+      expect(can!.grams, closeTo(425.24 * 0.565, 0.01));
       final bottle = await grams('1 (1-liter) bottle dry white wine', 175112);
       expect(bottle!.grams, 990);
     });
