@@ -3478,7 +3478,9 @@ section has no lines). An independent checker re-derived every count.
   the same day (four details; snapshot 19): the SR portions proved boneless
   and no bone or wing-skin figure exists, so the choice of thigh share (keep
   0.795; the thigh pair's 0.772; the Foundation-derived 0.84) was put back to
-  the owner.
+  the owner, who kept 0.795 ("go with your recommendation"): a published FDC
+  portion stays until the part bone share is sourced from the USDA yield
+  handbook in phase 2's design pass; the wing flag stands.
 
 ## Decision log (deviations & clarifications)
 
