@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>References Copy Delta</title>
+<meta name="description" content="The new strings matcher v51 adds for references with no amount (served-with, whole-batch, prose-variation), shown in place; a delta to the approved v41 composite-row and v44 sections mockups.">
+<style>
+:root{--maroon:#960000;--rose:#8c4242;--chip:#f6e4e4;--chip-text:#7d1420;--ink:#23201f;--muted:#6d6763;--line:#e7e2de;--bg:#faf7f4;--panel:#fdfbf9;--ok-bg:#e8f3e4;--ok-ink:#2c5a1e;--warn-bg:#fbefd9;--warn-ink:#7a4b00;--neutral-bg:#efebe8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#efe9e4;--muted:#b3aaa3;--line:#3a3431;--bg:#1b1817;--panel:#221e1c;--chip:#3d2222;--chip-text:#f0c7c7;--ok-bg:#223320;--ok-ink:#b7e0a8;--warn-bg:#3b2e14;--warn-ink:#f0c98a;--neutral-bg:#2d2825}}
+:root[data-theme="dark"]{--ink:#efe9e4;--muted:#b3aaa3;--line:#3a3431;--bg:#1b1817;--panel:#221e1c;--chip:#3d2222;--chip-text:#f0c7c7;--ok-bg:#223320;--ok-ink:#b7e0a8;--warn-bg:#3b2e14;--warn-ink:#f0c98a;--neutral-bg:#2d2825}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;padding-bottom:80px}
+.wrap{max-width:1100px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;color:var(--maroon)}
+.lede{color:var(--muted);font-size:14px;max-width:900px;margin-top:6px}.lede b{color:var(--ink)}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:700;margin:40px 0 12px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0;max-width:900px}.note b{color:var(--ink)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-width:760px}
+.label-head{font-weight:800;font-size:15px}
+.label-line{font-size:12.5px;color:var(--muted);margin-top:2px}
+.label-line.new{color:var(--ink)}
+.row .raw{font-size:13.5px;font-weight:700}
+.row .meta{font-size:12px;color:var(--muted);margin-top:3px}
+.row .meta b{color:var(--ink);font-weight:600}
+.chip{display:inline-block;font-size:10.5px;font-weight:700;border-radius:12px;padding:1px 8px;background:var(--chip);color:var(--chip-text);vertical-align:1px}
+.flag{font-size:12px;color:var(--warn-ink);background:var(--warn-bg);border-radius:6px;padding:2px 8px;display:inline-block;margin-top:6px}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:12px;padding:2px 9px;background:var(--neutral-bg);color:var(--muted);float:right}
+.badge.ok{background:var(--ok-bg);color:var(--ok-ink)}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--rose);font-size:12px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--neutral-bg);border-radius:5px;padding:1px 5px}
+.new-mark{color:var(--maroon);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+</style></head><body><div class="wrap">
+<h1>References with no amount: the copy delta (matcher v51)</h1>
+<p class="lede">A delta to the approved composite-row mockup (<code>v41-composite-rows.html</code>) and the sections delta (<code>v44-sections-copy.html</code>): the strings matcher v51 adds for a reference line that prints no amount. Everything else on the label, the row and the queue reuses the approved copy verbatim. Conventions kept: label lines in sentence case with a period; row notes ending "— not counted"; a flag in the muted amber flag line; the label's <b>Includes</b> line shows a flagged recipe as "{title} (approximation)" exactly as today.</p>
+
+<div class="eyebrow">1 · The label: a served-with reference (new line, not a Partial line)</div>
+<div class="card">
+  <div class="label-head">Nutrition Facts <span class="badge ok">4/4 ingredients matched</span></div>
+  <div class="label-line">Computed from USDA FoodData Central</div>
+  <div class="label-line new"><span class="new-mark">new</span>Served with Sweet-and-Sour Chutney — not counted.</div>
+</div>
+<p class="note">Pan-Seared Salmon's "Sweet-and-Sour Chutney (recipe follows) or lemon wedges, for serving". Today this line makes the recipe <b>partial</b> ("Partial: Sweet-and-Sour Chutney is not counted (no amount on the line)."). v51 reads a no-amount reference marked <i>optional</i>, <i>for serving</i>, offering an alternative after "or", in a CONDIMENTS group, or named by the parent's own title ("… for Pan-Seared Steaks") as <b>served with</b>: the row stays 0 g, the recipe counts as complete, and the label says so in this line instead. The recipe page, not the row, carries the words; the row keeps its shipped note "Served with this recipe, not made from it — not counted". Reach today: six lines in five recipes (the salmon, the crab cakes, the Indian curry's two condiments, the Spanish tortilla's garlic mayonnaise, the herb sauce's steaks).</p>
+
+<div class="eyebrow">2 · The row: a no-amount reference eaten as part of the dish (counted as one whole batch, flagged)</div>
+<div class="card row">
+  <span class="badge">counted</span>
+  <div class="raw">Raspberry Coulis (recipe follows)</div>
+  <div class="meta">made from the recipe <b>Raspberry Coulis</b> <span class="chip">Recipe</span> · 1 recipe · 748 g · 643 kcal</div>
+  <div class="meta">amount: from the recipe Raspberry Coulis: 748 g, 643 kcal · +80 kcal per serving</div>
+  <div class="flag"><span class="new-mark">new</span>approximate (no amount on the line — the whole batch counted)</div>
+</div>
+<p class="note">Panna Cotta's coulis, Skillet Chicken Fajitas' pickled radishes, Red Beans and Rice's "Basic White Rice (this page)": the steps plate every portion with it, the line names the recipe once, and the whole batch is the only printed quantity. The flag is the only new text; the <b>Includes</b> line reads "Includes 1 recipe: Raspberry Coulis (approximation)" as any flagged recipe does today.</p>
+
+<div class="eyebrow">3 · The row: a reference to a prose variation routed to its base recipe (flagged)</div>
+<div class="card row">
+  <span class="badge">counted</span>
+  <div class="raw">1 recipe Single-Crust Pie Dough for Custard Pies (this page), fitted into a 9-inch pie plate and chilled</div>
+  <div class="meta">made from the recipe <b>Basic Single-Crust Pie Dough</b> <span class="chip">Recipe</span> · a section of Basic Double-Crust Pie Dough · 1 recipe · 302 g · 1,545 kcal</div>
+  <div class="meta">amount: from the recipe Basic Single-Crust Pie Dough: 302 g, 1,545 kcal · +193 kcal per serving</div>
+  <div class="flag"><span class="new-mark">new</span>approximation (counted as Basic Single-Crust Pie Dough; the variation's changes are not read)</div>
+</div>
+<p class="note">Lemon Meringue Pie's custard-pie dough and the plum-ginger pie's whole-wheat dough are variations written in prose with no ingredient list of their own. Today both rows read 0 g ("Its section lists no ingredients — not counted") and both recipes stay partial. v51 routes such a line to the base recipe whose title shares the most words with the variation's (a tie goes to the host), flagged with the base's name. Two lines in the library.</p>
+
+<div class="eyebrow">4 · The strings (verbatim)</div>
+<table>
+<tr><th>where</th><th>string</th></tr>
+<tr><td>Label · a served-with reference (non-partial line)</td><td><code>Served with {name} — not counted.</code></td></tr>
+<tr><td>Row flag · whole batch counted (WB)</td><td><code>approximate (no amount on the line — the whole batch counted)</code></td></tr>
+<tr><td>Row flag · prose variation routed (PV)</td><td><code>approximation (counted as {base title}; the variation's changes are not read)</code></td></tr>
+</table>
+<p class="note">Unchanged: "Includes {n} recipe(s): …" with "(approximation)", the row's "made from the recipe {title}", the "a section of {host title}" suffix, every hold note, the queue's rows. The partial line "Partial: {item} is not counted (no amount on the line)." stays for a no-amount reference that is neither served-with nor plated (none in the library today).</p>
+</div></body></html>

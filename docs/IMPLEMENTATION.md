@@ -3608,6 +3608,67 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — M55, the live step for M52's figures, and the coat/oil
+  figures RE-STATED on read FNDDS recipes (design_v2 line 404, critic F8;
+  under the standing authorization for new live matches).** The M53
+  `inputFoods` list COOKED meat for the chicken, beef and pork recipes (raw
+  only for cod and shrimp), so P3's "raw food, coat, fat" could not be read
+  off directly; the raw basis is now protein conservation between each
+  recipe's named cooked ingredient and the raw record (USDA's own retention
+  convention), and the coat's carbohydrate per gram (0.40) is read off the
+  six recipes whose other inputs are cooked (0.397–0.401). M55 spent 20
+  requests on a scratch copy of snapshot 21 (5 searches, one an HTTP 400 for
+  a slash FDC rejects; 7 details with raw JSON — the baked breast and legs,
+  the baked cod, the fried haddock, the fried cauliflower, the two skin-on
+  fried records; the potato-chips raw answer, a bare SR pass-through) →
+  **snapshot 22** (`.claude/diag/2026-10-07/snap22.db`, user_version 20,
+  1,111 foods / 1,898 searches, key- and session-free; raw answers in
+  `live55_raw/`); the running live total 117 → 137. The table is
+  `.claude/diag/2026-10-07/prep47/p3_read_figures.md`: the chicken coats
+  land on P3 to 0.02 (breast 5.73, thigh 6.10, wing 5.66 g carbohydrate per
+  100 g raw), the beef coat rises (8.19 → 8.79), the fish and shrimp coats
+  fall (17.55/23.7 → 15.38: P3 solved a 40 % batter as 77 % flour), the
+  baked coats fall a little (chicken 3.63 → 3.18, legs 3.25 → 3.10, fish
+  8.58 → 7.41; pork 6.42 → 6.61); the fragile oil figures move most: thigh
+  9.5 → 7.11 %, beef 18.1 → 9.89 %, shrimp 23.6 → 15.38 %, cod 17.7 →
+  15.38 %, the battered cauliflower 16.1 → 30.32 % (FNDDS's recipe is half
+  batter by weight); skin-on parts stay 0 on a read fat balance (2705996
+  adds 7 g oil per 100 g yet carries 17.2 g fat against 18.2–20.9 g in the
+  raw skin-on legs the engine counts; 2705949's inputs are fast-food
+  composites, no longer a basis). The SR analytical records (squid, fries,
+  chips, plantains, tostadas) have no recipe and stay derived, flagged so.
+  M52's brief (`scratchpad/batch17/v53_m52_brief.md`, archived) builds on
+  the read figures only, with STEP ZERO = the M51 tree byte-identical on
+  snapshot 22 (the one existing row on a new id, the broiled salmon's
+  potato chips, kept its cached detail). Also written today for M51's app
+  half: `docs/mockups/v51-references-copy.html` (the served-with label line,
+  the whole-batch and prose-variation flags) — awaiting the owner's
+  approval; the server half does not wait.
+- **2026-10-07 — alcohol after cooking (prep47 Q25; the planner pass's
+  design `.claude/diag/2026-10-07/prep47/design_q25_v2.md`; decided under
+  the standing authorization):** an alcohol line's ethanol energy is
+  reduced by USDA's Table of Nutrient Retention Factors, Release 6 (2007),
+  food group 14, read from the line's own cooking shape in its recipe's
+  steps — 85 % stirred into a hot liquid (code 5002), 75 % flamed (5003),
+  40 / 35 / 25 / 20 / 10 / 5 % stirred in and simmered or baked 15 / 30 / 60 /
+  90 / 120 / 150+ minutes (5004–5009); the non-ethanol energy (protein, fat
+  and carbohydrate by Atwater) is kept; grams, records and statuses never
+  move. The design's own questions: under 15 minutes reads 85 (no
+  extrapolation below the table's first row); a cooking-time range reads its
+  low end (a time, not the weight-midpoint ruling); the 70 % "stored
+  overnight" row is unused (no line's printed minimum hold is overnight);
+  covered braises and slow cookers read the open-pot rows (the table does
+  not distinguish); vanilla extract stays out; the flag and basis strings as
+  designed; the 45 % "not stirred, baked 25 min" row is dropped (no line
+  reaches it; a pour-over reads 85); marinades, drained liquids and beer
+  cans stay with the mass rulings. One decision AGAINST the design's
+  recommendation: an alcohol stirred into a hot dish off the heat reads row
+  5002's 85 %, not 100 % — the row's verbatim text is "stirred into hot
+  liquid", and a published figure beats the safe side (seven lines, 66.5
+  kcal in all). The transcription is
+  `prep47/usda_retn06_alcohol.md`; the 16 alcohol records' raw answers
+  (nutrient 221) came from the live step M54 (16 requests).
+
 - **2026-10-07 — matcher v47, the sections-batch review fixes (the union of
   the dual-fleet review Runs 061 and 062; decided under the standing
   authorization; deviations kept):** (1) a person's section pick now keeps
