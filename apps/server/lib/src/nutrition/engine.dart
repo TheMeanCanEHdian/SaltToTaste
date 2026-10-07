@@ -4941,6 +4941,13 @@ enum ReferenceKind {
   /// A library recipe answers it but no share reads from its yield: the 0 g
   /// rule row.
   noShare,
+
+  /// A SECTION's line naming its own host (v47, F7 — Run 061 S4: "1 recipe
+  /// Yeasted Doughnuts (this page)" in its Boston Cream Doughnuts): the
+  /// variation is made on the host, never FROM it — the 0 g rule row with
+  /// no child, so a host line routed to the section (held `nested_recipe`)
+  /// and the section's line never stamp each other in a cycle.
+  self,
 }
 
 /// A library recipe as the resolver's title index lists it.
@@ -5120,15 +5127,29 @@ Recipe sectionRecipeOf(Recipe host, Subsection sub) =>
 
 final Expando<Map<String, Recipe>> _sections = Expando();
 
+/// The section keys [recipe] makes children — the PER-RECIPE child set the
+/// per-recipe job computes first: its lines' ([routedSectionKeysOf]) and,
+/// v47 (F1), every section a PERSON's row of it picks
+/// ([pickedSectionKeysOf]). The library-wide set (the bulk sweep's order,
+/// stale scope and garbage collection) is the same two halves over the
+/// whole library (bulk_job's `bulkScope`).
+Set<String> sectionChildKeysOf(
+  SaltDatabase db,
+  Recipe recipe,
+  ResolverMemo memo,
+) => {
+  ...pickedSectionKeysOf(db, recipeId: recipe.id),
+  ...routedSectionKeysOf(db, recipe, memo),
+};
+
 /// The section keys [recipe]'s MAIN lines make children (v44, design_v2
 /// S2 (a), P1 §2.1): a reference line the sub-recipe rule zeroes (never one
 /// a food rule counts — [subRecipeRowFor] null: curry-deviled-eggs|0,
 /// gado-gado|17, ground-beef-tacos|15, mujaddara|7) whose resolution names
 /// a section with ingredient lines. Read through [memo] (one per scope or
-/// compute). The bulk sweep's order and garbage collection and the
-/// per-recipe job's children-first read this; the pick-own candidates
-/// (rule PO) and the A9 lines join it here.
-Set<String> sectionChildKeysOf(
+/// compute). The pick-own candidates (rule PO) and the A9 lines join it
+/// here.
+Set<String> routedSectionKeysOf(
   SaltDatabase db,
   Recipe recipe,
   ResolverMemo memo,
@@ -5161,6 +5182,19 @@ Set<String> sectionChildKeysOf(
   }
   return keys;
 }
+
+/// v47 (F1, Run 061 S1/S2, Run 062 O1/O5): the section keys a person's
+/// decided row picks ([SaltDatabase.decidedSectionPicks] — of [recipeId]'s
+/// rows, else the library's) whose host still carries the title
+/// ([nutritionRecipeOf]; S15's dropped keys stay dropped). A pick keeps its
+/// section a CHILD whether or not a main line routes there: the bulk GC
+/// never collects its stamp, the sweeps order and select it, the
+/// per-recipe job computes it first — else the parent read a gone stamp,
+/// underived for good, and its re-pick was refused.
+Set<String> pickedSectionKeysOf(SaltDatabase db, {String? recipeId}) => {
+  for (final key in db.decidedSectionPicks(recipeId: recipeId))
+    if (nutritionRecipeOf(db, key) != null) key,
+};
 
 /// A title or item as the resolver compares them: accents folded,
 /// punctuation a space, lowercase ("double-crust" is two words).
@@ -5220,11 +5254,13 @@ bool _ownSectionNames(String title, String item) {
 /// item 2, the ruled order; first hit wins): no amount → a marinade → ONE
 /// own section (its title equals the item, the item starts with it, its
 /// parenthetical equals the item, or it starts with the item and a space;
-/// D11: under "recipes follow" too) → the first library title the parent's
+/// D11: under "recipes follow" too; v47 F6: of several, the ONE whose
+/// title equals the item) → the first library title the parent's
 /// note names ("(this page)" in the note; titles of two or more words
 /// holding every word of the item, by position, the longest of a span) →
 /// the library title equal to the item (unless the parent is made FOR it,
-/// D7) → another recipe's section → held. Self is never a candidate. A
+/// D7) → another recipe's section → held. Self is never a candidate; a
+/// section's line naming its own host is `self` (v47, F7). A
 /// child made from a recipe itself is `nested` (depth 1); one whose yield
 /// reads no share is `noShare`.
 ReferenceResolution resolveReference(
@@ -5245,9 +5281,17 @@ ReferenceResolution resolveReference(
     for (final sub in recipe.subsections)
       if (sub.title case final title? when _ownSectionNames(title, item)) title,
   ];
-  if (own.length == 1) {
-    final key = sectionKeyOf(recipe.id, own.single);
-    return _childTail(line, sectionOf(recipe, key)!, section: own.single);
+  // v47 (F6, Run 061 S3): the own section whose title IS the item wins over
+  // the looser forms' siblings ("2 tablespoons harissa" is "Harissa", never
+  // held beside a "Harissa Yogurt").
+  final exactOwn = [
+    for (final title in own)
+      if (_refNorm(title) == item) title,
+  ];
+  if (own.length == 1 || exactOwn.length == 1) {
+    final title = own.length == 1 ? own.single : exactOwn.single;
+    final key = sectionKeyOf(recipe.id, title);
+    return _childTail(line, sectionOf(recipe, key)!, section: title);
   }
   final titles = memo.titles;
   final named = noteNamedTitles(recipe, item, memo);
@@ -5317,6 +5361,11 @@ ReferenceResolution resolveReference(
       missing: !plural && candidates < 2 && own.length <= 1,
       similar: similar,
     );
+  }
+  // v47 (F7): a section's line naming its own host (a recipe's own id is
+  // never a candidate; a section's host is).
+  if (child.id == hostOf(recipe.id)) {
+    return const ReferenceResolution(ReferenceKind.self);
   }
   final found = nutritionRecipeOf(db, child.id)?.recipe;
   if (found == null) {
@@ -6332,8 +6381,10 @@ List<IngredientLine> nutritionLines(Recipe recipe) =>
 final Expando<List<IngredientLine>> _lines = Expando();
 
 /// Hash of everything nutrition depends on — when it changes, stored
-/// results are stale.
-String ingredientsHashOf(Recipe recipe) {
+/// results are stale. [memo] serves the library reads of a recipe holding
+/// a reference line (v47, F2: [proseSectionsReadBy]); one per request or
+/// compute, as every resolver read.
+String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
   // The matcher version is part of it: a bump makes every computed recipe
   // stale, so the stale sweep re-resolves its engine rows instead of leaving
   // scores and picks frozen at the matcher that wrote them. So are the
@@ -6341,6 +6392,10 @@ String ingredientsHashOf(Recipe recipe) {
   // ([discardedMediumOf]): a steps-only edit adding or removing a drain
   // left the hold and the totals frozen, never stale (v11, Opus critic).
   final lines = nutritionLines(recipe);
+  final references = lines.any((line) => isReferenceIn(recipe, line));
+  final prose = references
+      ? proseSectionsReadBy(recipe, memo)
+      : const <String>[];
   final payload = jsonEncode({
     'matcher': matcherVersion,
     'title': recipe.title,
@@ -6348,9 +6403,12 @@ String ingredientsHashOf(Recipe recipe) {
     // v41 (S12): what the sub-recipe resolver reads beside the line — the
     // note naming a dough, the sections a reference names — for a recipe
     // holding a reference line ([resolveReference]).
-    if (lines.any((line) => isReferenceIn(recipe, line))) ...{
+    if (references) ...{
       'prep_notes': recipe.prepNotes,
       'sections': [for (final sub in recipe.subsections) sub.title],
+      // v47 (F2): and whether the section a line names lists lines — only
+      // when one does not, so every other recipe hashes as before.
+      if (prose.isNotEmpty) 'prose_sections': prose,
     },
     // v44 (P1 §3.1): a SECTION's yield, which its parents' shares read
     // ([parseShare]) and no other term covers — a yield edit stales the
@@ -6378,6 +6436,26 @@ String ingredientsHashOf(Recipe recipe) {
   return sha256.convert(utf8.encode(payload)).toString();
 }
 
+/// The section keys [recipe]'s reference lines resolve to that list NO
+/// ingredient lines — each line's `no_ingredients` rule row (v47, F2; Run
+/// 062 O2: lemon-meringue-pie|0's prose "Single-Crust Pie Dough for Custard
+/// Pies", another recipe's section). The rule row stores no child, so no
+/// stamp ties the parent to the section: the hash does. A section that
+/// gains lines leaves the list (the parent reads stale, a sweep routes it);
+/// one that loses them joins it (the parent falls back to the rule row in
+/// the sweep that collects the section). Only the lines the sub-recipe
+/// rule zeroes ([subRecipeRowFor]), as [referenceRowFor] reads them.
+List<String> proseSectionsReadBy(Recipe recipe, ResolverMemo memo) => [
+  for (final (i, line) in nutritionLines(recipe).indexed)
+    if (subRecipeRowFor(recipe, i, line) != null)
+      if (resolveReference(memo.db, recipe, line, memo)
+          case ReferenceResolution(
+            noIngredients: true,
+            section: (:final host, :final title),
+          ))
+        sectionKeyOf(host, title),
+];
+
 /// Whether [recipe]'s stored totals ([row], else read) are FRESH: stamped
 /// for its current inputs ([ingredientsHashOf]) AND on its current layout
 /// ([SaltDatabase.layoutOf], migration 013). The hash alone is an ABA gate
@@ -6389,12 +6467,92 @@ String ingredientsHashOf(Recipe recipe) {
 /// over the rows as they are NOW — a stamp written over a person's
 /// underived write never reads fresh, Run 057 S15/O1). Every reader of
 /// freshness goes through here or reads the same halves
-/// ([SaltDatabase.recipesWithNutrition]).
+/// ([SaltDatabase.recipesWithNutrition]). [memo]: the caller's resolver
+/// reads ([ingredientsHashOf]), else one of its own. v47 (F5): AND every
+/// SECTION its totals read is fresh itself ([staleSectionsReadBy]) — the
+/// recipe page reads stale and offers Recompute the moment a routed
+/// section is edited, as the `stale` sweep lists it.
 bool nutritionIsFresh(
   SaltDatabase db,
   Recipe recipe, [
   RecipeNutritionRow? row,
-]) => nutritionStampCurrent(db, recipe, row) && !db.hasUnderivedRows(recipe.id);
+  ResolverMemo? memo,
+]) {
+  final reads = memo ?? ResolverMemo(db);
+  return nutritionStampCurrent(db, recipe, row, reads) &&
+      !db.hasUnderivedRows(recipe.id) &&
+      staleSectionsReadBy(db, recipe, reads) == null;
+}
+
+/// Whether a SECTION [recipe]'s totals read moved since they were derived
+/// (v47, F5 — Run 062 fleet-2 critic), each section's stamp read as the
+/// page reads a recipe's own ([staleReasonOf], closer round 2's D1 — Run
+/// 059 O23): `inputs` when one's inputs or layout moved (its lines, yield
+/// or steps edited in its host's document — the parent's own hash reads
+/// the section TITLES only, and its `child_stamp` moves only once the
+/// section is recomputed), else `interrupted` when one is mid-write or a
+/// writer of it never finished, else `underived` when one holds an
+/// underived row or was stamped waiting on USDA — never `inputs` when
+/// nothing changed; null when every one is fresh. Only the sections the
+/// totals count
+/// ([recomputeTotals]: a row on a section key, not skipped, not held
+/// choose/nested) that hold a stamp — one with none already reads its
+/// parent stale (the totals stamp it waiting on USDA, or a `child_stamp`
+/// names a stamp it no longer has). A library child is not read here: its
+/// own page reads stale and offers Recompute, whose new stamp then stales
+/// this one (`child_stamp`).
+String? staleSectionsReadBy(
+  SaltDatabase db,
+  Recipe recipe,
+  ResolverMemo memo,
+) {
+  final reasons = <String?>{
+    for (final key in {
+      for (final row in db.ingredientMatchesFor(recipe.id))
+        if (row.childRecipeId case final key?
+            when hostOf(key) != key &&
+                row.status != 'skipped' &&
+                !recipeChoiceHolds.contains(row.hold))
+          key,
+    })
+      if ((memo.childNutrition(key), memo.hostRecipe(hostOf(key))) case (
+        final stamp?,
+        final host?,
+      ))
+        if (sectionOf(host, key) case final section?)
+          staleReasonOf(db, section, stamp, memo),
+  };
+  for (final reason in const ['inputs', 'interrupted', 'underived']) {
+    if (reasons.contains(reason)) {
+      return reason;
+    }
+  }
+  return null;
+}
+
+/// Why [recipe]'s stamp [row] reads stale, as the page's `stale_reason`
+/// names it (v28/v29), or null when it is fresh: `interrupted` — a writer
+/// holds its mark or never finished (migration 017); `underived` — the
+/// stamp is on the current inputs and layout but a decision is waiting on
+/// USDA, or the totals were stamped waiting on USDA ([unavailableStampOf]
+/// the current inputs; never `inputs` when nothing changed, Run 059 O23);
+/// `inputs` — the inputs or layout moved since. The page reads it for the
+/// recipe's own stamp and, through [staleSectionsReadBy], for each section
+/// its totals count (v47 closer round 2, D1).
+String? staleReasonOf(
+  SaltDatabase db,
+  Recipe recipe,
+  RecipeNutritionRow row,
+  ResolverMemo memo,
+) =>
+    row.computing > 0 ||
+        row.ingredientsHash.startsWith(SaltDatabase.interruptedStamp)
+    ? 'interrupted'
+    : nutritionStampCurrent(db, recipe, row, memo)
+    ? (db.hasUnderivedRows(recipe.id) ? 'underived' : null)
+    : row.ingredientsHash == unavailableStampOf(ingredientsHashOf(recipe, memo))
+    ? 'underived'
+    : 'inputs';
 
 /// The stamp half of [nutritionIsFresh]: the totals were stamped for
 /// [recipe]'s current inputs and layout. What `computeUntilFresh` repeats
@@ -6404,10 +6562,12 @@ bool nutritionStampCurrent(
   SaltDatabase db,
   Recipe recipe, [
   RecipeNutritionRow? row,
+  ResolverMemo? memo,
 ]) {
   final stamp = row ?? db.nutritionFor(recipe.id);
   return stamp != null &&
-      stamp.ingredientsHash == ingredientsHashOf(recipe) &&
+      stamp.ingredientsHash ==
+          ingredientsHashOf(recipe, memo ?? ResolverMemo(db)) &&
       stamp.layoutSeq == db.layoutSeqOf(recipe.id);
 }
 
@@ -6504,7 +6664,10 @@ Future<NutritionProviderException?> _computePass(
   // lays the rows on other lines bumps); one that did trips the gate as a
   // save does.
   final seq = db.layoutSeqOf(recipe.id);
-  final inputs = ingredientsHashOf(recipe);
+  // The library's titles and sections, read at most once in this compute
+  // and only for a reference line (v41, F14) — the hash's too (v47, F2).
+  final references = ResolverMemo(db);
+  final inputs = ingredientsHashOf(recipe, references);
   // A section key's content is its HOST's document (v44, F2): a host save
   // during a section's await moves the host's hash.
   var version = db.contentHashOf(hostOf(recipe.id));
@@ -6517,7 +6680,8 @@ Future<NutritionProviderException?> _computePass(
     if (current && now != version) {
       version = now;
       final stored = nutritionRecipeOf(db, recipe.id)?.recipe;
-      current = stored != null && ingredientsHashOf(stored) == inputs;
+      current =
+          stored != null && ingredientsHashOf(stored, references) == inputs;
     }
     return current;
   }
@@ -6684,9 +6848,6 @@ Future<NutritionProviderException?> _computePass(
   // Foods built from a search hit this compute (see the candidate loop):
   // the totals read them here, since they are not in fdc_food_cache.
   final standIns = <int, FdcFood>{};
-  // The library's titles and sections, read at most once in this compute
-  // and only for a reference line (v41, F14).
-  final references = ResolverMemo(db);
 
   // No catch (v29): a pass that throws leaves the recipe stale whatever
   // rows it marked derived ([matchAndCompute] clears the stamp as it
@@ -8556,7 +8717,7 @@ bool recomputeTotals(
   // recipe's).
   late final currentHash = hashed != null && hashed.recipe == now
       ? hashed.hash
-      : ingredientsHashOf(now);
+      : ingredientsHashOf(now, children);
   final (stampHash, stampSeq) = switch (freshMatch) {
     // A re-match whose suspension ([onePass]) left a line with no row
     // stamps it waiting on USDA (below), never as changed inputs.
@@ -8575,7 +8736,7 @@ bool recomputeTotals(
       (stored.ingredientsHash, stored.layoutSeq),
     null => ('', null),
     (:final layoutSeq, :final current) =>
-      current() ? (ingredientsHashOf(recipe), layoutSeq) : ('', null),
+      current() ? (ingredientsHashOf(recipe, children), layoutSeq) : ('', null),
   };
   // A food these totals could not count (an engine row's no cache holds,
   // [unavailable]: an apply-to-all target FDC could not weigh) stamps the
@@ -9342,7 +9503,8 @@ List<IngredientMatchRow> recipeReach(
 /// arm, no FDC request), its default flag cleared; guarded at the statement
 /// (a person's decision meanwhile stands, counted `decided`), each recipe
 /// laid out first and its totals recomputed. The receipt is
-/// [applyDecisionToOthers]'s.
+/// [applyDecisionToOthers]'s (v47: recipes only, [alsoCompleted] seeding
+/// it; a reached section's parents recomputed, [recomputeParentsOf]).
 Future<
   ({
     int recipes,
@@ -9363,26 +9525,28 @@ applyRecipeToOthers(
   required String itemKey,
   required String childId,
   required ({String recipeId, int position}) excluding,
+  List<String> alsoCompleted = const [],
 }) async {
   final byRecipe = <String, List<IngredientMatchRow>>{};
+  final memo = ResolverMemo(db);
   for (final target in recipeReach(
     db,
     itemKey,
     childId: childId,
     excluding: excluding,
-    memo: ResolverMemo(db),
+    memo: memo,
   )) {
     byRecipe.putIfAbsent(target.recipeId, () => []).add(target);
   }
   final child = nutritionRecipeOf(db, childId)?.recipe;
-  var recipes = 0;
+  final reached = <String>{};
   var lines = 0;
   var failed = 0;
   var failedLines = 0;
   var moved = 0;
   var decided = 0;
   var gone = 0;
-  final completed = <String>[];
+  final completed = [...alsoCompleted];
   for (final MapEntry(key: id, value: targets) in byRecipe.entries) {
     var owned = false;
     var marked = false;
@@ -9403,7 +9567,7 @@ applyRecipeToOthers(
           if (row != null) row.position: at,
       };
       final recipeLines = nutritionLines(recipe);
-      final hash = ingredientsHashOf(recipe);
+      final hash = ingredientsHashOf(recipe, memo);
       var applied = 0;
       for (final target in targets) {
         final at = sameMatchRow(before[target.position], target)
@@ -9458,11 +9622,10 @@ applyRecipeToOthers(
         ending: owned,
       );
       marked = false;
-      recipes += 1;
+      reached.add(hostOf(id));
       lines += applied;
-      if (statusBefore != 'complete' &&
-          db.nutritionFor(id)?.status == 'complete') {
-        completed.add(id);
+      for (final done in await _completedBy(db, provider, id, statusBefore)) {
+        if (!completed.contains(done)) completed.add(done);
       }
     } on Exception catch (error) {
       failed += 1;
@@ -9475,7 +9638,7 @@ applyRecipeToOthers(
     }
   }
   return (
-    recipes: recipes,
+    recipes: reached.length,
     lines: lines,
     failed: failed,
     completed: completed.length,
@@ -10695,6 +10858,100 @@ IngredientMatchRow _childRowOf(
   );
 }
 
+/// The parents routed to the section [key], re-read after a request
+/// recomputed it — a person's decision on one of its lines, or an
+/// apply-to-all reaching one (v47, F3 — Run 062 O3, Run 061 S5): the
+/// queue's `finishes` credits them, so the request that decides keeps that
+/// promise, never the next stale sweep (and its parents no longer read
+/// stale, their `child_stamp` behind, until one). Each RECIPE holding a
+/// row on the key (a section's own nested row counts nothing): its rows on
+/// the key that stand on their line, not skipped, derived as its compute
+/// derives a composite row ([_childRowOf]: the section's total grams × the
+/// share, its stamp — no request), written only over the row as read and
+/// under the layout read ([SaltDatabase.replaceIngredientMatchIfUnchanged]);
+/// then its totals under its own in-progress mark, the stamp kept (its own
+/// inputs did not move). Returns the parents whose stored status turned
+/// `complete`, by id — recipes, never a key.
+Future<List<String>> recomputeParentsOf(
+  SaltDatabase db,
+  NutritionProvider provider,
+  String key,
+) async {
+  final completed = <String>[];
+  for (final id in db.recipesReadingChildren([key])) {
+    final parent = hostOf(id) == id ? nutritionRecipeOf(db, id)?.recipe : null;
+    if (parent == null) {
+      continue;
+    }
+    final memo = ResolverMemo(db);
+    final lines = nutritionLines(parent);
+    final seq = db.layoutSeqOf(id);
+    final before = db.nutritionFor(id)?.status;
+    final owned = db.markComputing(id);
+    var wrote = false;
+    var ended = false;
+    try {
+      for (final row in db.ingredientMatchesFor(id)) {
+        final line = lines.elementAtOrNull(row.position);
+        if (row.childRecipeId != key ||
+            row.status == 'skipped' ||
+            line == null ||
+            line.raw != row.raw) {
+          continue;
+        }
+        final derived = _childRowOf(
+          db,
+          line,
+          row,
+          sameAmount: true,
+          children: memo,
+        );
+        if (!sameMatchRow(derived, row) &&
+            db.replaceIngredientMatchIfUnchanged(
+              derived,
+              over: row,
+              layoutSeq: seq,
+            )) {
+          wrote = true;
+        }
+      }
+      await recomputeTotalsResolving(
+        db,
+        provider,
+        parent,
+        only: const {},
+        ending: owned,
+      );
+      ended = true;
+    } finally {
+      if (!ended) {
+        db.releaseComputing(id, owned: owned, stale: wrote);
+      }
+    }
+    if (before != 'complete' && db.nutritionFor(id)?.status == 'complete') {
+      completed.add(id);
+    }
+  }
+  return completed;
+}
+
+/// What one target a request recomputed completed, by RECIPE (v47, F3):
+/// [id] itself when it is a recipe whose stored status turned `complete`
+/// from [before]; for a SECTION key, the parents its new totals completed
+/// ([recomputeParentsOf]) — a section is not a recipe, and its key never
+/// reaches the wire.
+Future<List<String>> _completedBy(
+  SaltDatabase db,
+  NutritionProvider provider,
+  String id,
+  String? before,
+) async => hostOf(id) != id
+    ? await recomputeParentsOf(db, provider, id)
+    : [
+        if (before != 'complete' && db.nutritionFor(id)?.status == 'complete')
+          id,
+      ];
+
 /// Lands [decided] — a person's decision on [itemKey] made on the line
 /// [excluding] — on every other undecided line with that item (other
 /// recipes, and the same recipe's other lines), each with grams from its own
@@ -10738,6 +10995,12 @@ IngredientMatchRow _childRowOf(
 /// reaches counted lines) is not counted: it was finished before. The
 /// decided line's own recipe CAN be counted: its other lines of the item
 /// are reached, and when they were its last open ones it completes here.
+/// v47 (F3, Run 062 O3 / Run 061 S5): RECIPES only, never a section key —
+/// a reached section line counts its HOST in `recipes`, and what it
+/// completes is the parents routed to the section, recomputed in this
+/// request ([recomputeParentsOf]); [alsoCompleted] seeds `completedRecipes`
+/// (the parents the decided SECTION line's own write completed, its host
+/// excepted — the PUT's).
 Future<
   ({
     int recipes,
@@ -10758,6 +11021,7 @@ applyDecisionToOthers(
   required String itemKey,
   required FdcFood decided,
   required ({String recipeId, int position}) excluding,
+  List<String> alsoCompleted = const [],
 }) async {
   var food = decided;
   final byRecipe = <String, List<IngredientMatchRow>>{};
@@ -10776,7 +11040,6 @@ applyDecisionToOthers(
     for (final id in byRecipe.keys)
       id: _decidedByRaw(db.ingredientMatchesFor(id)),
   };
-  var recipes = 0;
   var lines = 0;
   var failed = 0;
   var failedLines = 0;
@@ -10784,7 +11047,8 @@ applyDecisionToOthers(
   var decidedMeanwhile = 0;
   var gone = 0;
   var unavailable = 0;
-  final completed = <String>[];
+  final reached = <String>{};
+  final completed = [...alsoCompleted];
   for (final entry in byRecipe.entries) {
     // Every offered line ends in exactly one count: `lines` (written),
     // `decided` (a person decided it meanwhile), `gone` (its line is gone
@@ -11034,11 +11298,17 @@ applyDecisionToOthers(
       if (applied == 0) {
         continue;
       }
-      recipes += 1;
+      // v47 (F3): RECIPES — a section target is its host's line, and what
+      // it completes is the parents routed to it ([_completedBy]).
+      reached.add(hostOf(found.recipe.id));
       lines += applied;
-      if (statusBefore != 'complete' &&
-          db.nutritionFor(found.recipe.id)?.status == 'complete') {
-        completed.add(found.recipe.id);
+      for (final id in await _completedBy(
+        db,
+        provider,
+        found.recipe.id,
+        statusBefore,
+      )) {
+        if (!completed.contains(id)) completed.add(id);
       }
       // A recipe that will not decode must not stop the rest — and must be
       // counted. An EXCEPTION only (v29, Run 059 S29): the totals may ask
@@ -11059,7 +11329,7 @@ applyDecisionToOthers(
     }
   }
   return (
-    recipes: recipes,
+    recipes: reached.length,
     lines: lines,
     failed: failed,
     completed: completed.length,

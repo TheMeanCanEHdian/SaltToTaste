@@ -492,6 +492,7 @@ void main() {
     test("E4: the stale hash reads 0711's eaten part from its subsection — "
         'the oil renamed there, or the subsection gone, changes it (both '
         'edits synthesized: a stated exception)', () {
+      final db = tempDb();
       Recipe withSubs(List<Subsection> subsections) => recipeOf(
         [
           [plusLine],
@@ -500,6 +501,7 @@ void main() {
       );
       final base = ingredientsHashOf(
         withSubs([subsectionOf('Crispy Onions', onions)]),
+        ResolverMemo(db),
       );
       final olive = ingredientsHashOf(
         withSubs([
@@ -508,10 +510,17 @@ void main() {
             '1½ cups extra-virgin olive oil',
           ]),
         ]),
+        ResolverMemo(db),
       );
       expect(olive, isNot(base));
-      expect(ingredientsHashOf(withSubs(const [])), isNot(base));
-      expect(ingredientsHashOf(withSubs(const [])), isNot(olive));
+      expect(
+        ingredientsHashOf(withSubs(const []), ResolverMemo(db)),
+        isNot(base),
+      );
+      expect(
+        ingredientsHashOf(withSubs(const []), ResolverMemo(db)),
+        isNot(olive),
+      );
     });
   });
   group('E5, E6, E7, E12: masses and a split', () {

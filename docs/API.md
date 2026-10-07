@@ -244,6 +244,19 @@ unsynced hand edit, that edit is preserved next to it as
 `<id>.conflict-<timestamp>.yaml` (the save wins). → `200` detail body
 (carrying the fresh `base_hash`).
 
+**v47 (F11):** two `subsections` of one recipe may not share a title (the
+exact string; untitled ones are free) — nutrition keys a section by
+`<host id>#<title>`, so a second section of the same title would read the
+first's lines. Create and update refuse it → `422 validation` "Two sections
+share the title "{title}" — give each its own title." (the text is the
+server's own; no copy sheet covers it). The import and the library rescan
+apply the same check on the way in (the editor's caps always do — a
+document the editor refuses would otherwise be imported and then
+uneditable): the import counts such a file failed, the rescan skips it
+with `reason` "fails validation: Two sections share the title "{title}" —
+give each its own title." and keeps the stored version. No corpus recipe
+holds a duplicate title.
+
 ### `DELETE /api/v1/recipes/{idOrSlug}` (admin, full scope)
 
 Takes a backup first, then removes the database row and the library YAML
@@ -384,6 +397,15 @@ is the promise). A recipe's OWN open lines credit it only while it has no
 incomplete routed child (no hold, not skipped): that child keeps it partial
 whatever the group decides — the under-promise direction (the gluten-free
 pizza's psyllium line finishes nothing while its flour blend is partial).
+**v47 (F4, Run 061 S6 / Run 062 O4):** a line item's `finishes` reads the
+same rule in the line mode: a recipe's own last open line is 0 while the
+recipe has an incomplete routed child (no hold, not skipped), and
+`sort=finishes` follows — ONE `pend` text (salt_database `_pendSql`) read by
+both modes, so neither promises what the other will not (before, the line
+mode badged that psyllium line "finishes this recipe" and its confirm left
+the pizza partial). On the v46 replay library (snapshot 20, cache only) no
+recipe waits on an incomplete routed child, so this moves no count there:
+262 groups, the sum of `finishes` 74 = `finishable` 74, `open_recipes` 209.
 Measured on the v44 replay library: 279 groups, the sum of `finishes` 72 =
 `finishable` 72, no credited recipe with an incomplete child.
 Triage buckets: `no_match` (no food matched), `check` (an automatic match
@@ -705,7 +727,8 @@ label partial, in line order: `kind` `held` (a `choose_recipe` /
 decided; `reason` as `child.reason` below), `child_partial` (a counted child
 whose own label is partial: `title`, `matched`, `total` its counts) or
 `not_routed` (R3's 0 g rule row: `reason` `section` | `served_with` |
-`no_amount` | `no_share`); `name` is the reference as the line writes it.
+`no_amount` | `no_share`, v47 `self`); `name` is the reference as the line
+writes it.
 Both are `[]` on a recipe with none and absent from the `{"status":
 "none"}` body. Read from the stored rows (no request); one library index
 read per request at most.
@@ -797,7 +820,24 @@ is live; the next compute repairs it). The app's stale banner says
 which: "A decision is waiting on USDA: these totals do not include it
 yet.", "A compute is in progress or was interrupted: these totals may
 not count every line." or "Ingredients changed since this was
-computed." (no `stale_reason`: the latter). Migration 013 stamps each existing
+computed." (no `stale_reason`: the latter). **v47 (F5, Run 062 critic):** a
+recipe whose totals count one of its SECTIONS (its own or another recipe's
+— a routed row or a pick; not a skipped or held one) also reads `stale`
+while that section is not fresh itself — edited in its host's document
+(lines, yield, steps) since its last compute: `stale_reason` `inputs` (the
+recipe's own stamp is current, its hash reading the section TITLES only,
+but an ingredient its totals count changed); a section mid-compute or one
+whose writer never finished: `interrupted`; holding a decision waiting on
+USDA, or stamped waiting on USDA (an apply-to-all target FDC could not
+weigh): `underived` — each section's stamp read exactly as its own page
+reads it, so a parent never reads `inputs` when nothing changed (Run 059
+O23; the v47 closer round 2's D1). The recipe's own `interrupted` or
+`inputs` wins; otherwise a section's reason (`inputs` over `interrupted`
+over `underived`), else the recipe's own `underived`. Before, the page read fresh and offered no Recompute
+until a `stale` sweep (which already listed it). Recompute computes the
+section first, then the recipe (the per-recipe job's children-first). A
+library child (v41) is not read so: its own page goes stale and offers
+Recompute, whose new stamp then stales its parents (`child_stamp`). Migration 013 stamps each existing
 computation with its recipe's layout sequence (0 for a recipe never laid
 out — every recipe computed before migration 012), and at every boot (v24,
 Run 054 H4) each recipe with a stamp or match rows and no layout is seeded
@@ -1012,7 +1052,11 @@ computed before the recipes that read it, and a reference line routes to
 it as v41 routes to a library recipe. Storage keys it `<host id>#<exact
 title>` (a `#` never occurs in an id) in the same three tables, their
 `recipe_id` FK moved to a generated `host_id` (deleting the host deletes its
-sections' rows); the KEY never reaches the wire — a section is always its
+sections' rows; v47 F9, migration 020 — user_version 20: `host_id` indexed
+in each table, `idx_matches_host` / `idx_nutrition_host` /
+`idx_layout_host`, so the cascade and a host save's dead-section drop
+SEARCH instead of scanning: 1,198 drops 1,074 → 8 ms, a 50-recipe cascade
+207 → 16 ms on snapshot 20); the KEY never reaches the wire — a section is always its
 host's `slug` plus its `section` title. Superseding v41's text below: a
 section candidate is pickable and carries its totals; `other_section` lists
 child sections only.
@@ -1022,9 +1066,21 @@ child sections only.
   PO, below), or one an unmarked line names (A9) — 140 on snapshot 19
   (936 lines). A prose section (no ingredient lines) is never one. The bulk
   order is [child sections, recipes that read none, parents]; a section
-  edit stales its key and every parent routed to it; a sweep collects a key
+  edit stales its key and every parent routed to it (v47 F5: the parent's
+  own page too, at once — the nutrition GET, below); a sweep collects a key
   no main line needs any more (its stamp and engine rows — never a row a
-  person decided).
+  person decided). **v47 (F1):** a PERSON's pick keeps a section alive —
+  every section a decided row routes to (`overridden` or `confirmed` with a
+  section child) is a child too, whatever the engine routes now (a second
+  host taking the title, N8; the routing line edited away): never
+  collected, ordered and selected by the sweeps, computed first by the
+  per-recipe job — before, the GC deleted its stamp, the parent stayed
+  stale for good and its re-pick was refused. A stamp an admin's
+  `?section=` PUT writes on a section no line routes to is collected by the
+  next sweep unless a person picks that section meanwhile. A key whose host
+  no longer carries the title (S15) is never revived by a pick. Migration
+  020 indexes each table's `host_id` (the cascade and a host save's
+  dead-section drop search, never scan).
 - **Resolution** (v41's order; v44 changes): ONE own section whose title the
   item names routes to it (chraime's "1 tablespoon tabil (recipe follows)"
   → its Tabil, share ⅛ of "MAKES ABOUT ½ CUP"); another recipe's section
@@ -1037,6 +1093,24 @@ child sections only.
   item is an own section's title (red-lentil-kibbeh's harissa) is a
   reference too; S11: such a line's bare count of exactly 1 reads one
   recipe. A section's rules read the SECTION's own steps (most store none).
+  **v47:** (F6) of several own sections the looser title forms reach, the
+  ONE whose title equals the item routes ("2 tablespoons harissa" is
+  "Harissa", never held beside a "Harissa Yogurt"; no corpus line has two);
+  (F7) a SECTION's line naming its own HOST ("1 recipe Yeasted Doughnuts
+  (this page)" in its Boston Cream Doughnuts — seven corpus lines, all in
+  sections no main line routes to) is the 0 g rule row with no child,
+  `child.state` `not_routed`, **`reason` `self`** (new wire value; the
+  app's reason maps show unknown values through their generic arm): the
+  variation is made ON its host, so a host line routed to that section
+  (held `nested_recipe`) and the section's line never stamp each other in a
+  cycle; (F2) a prose section is a resolver input the parent's stale hash
+  carries: the hash folds the keys of the prose sections its reference
+  lines resolve to (only when there is one — lemon-meringue-pie and
+  fresh-plum-ginger-pie on the corpus; every other recipe hashes as before,
+  so a deploy stales exactly those two once), so a prose section given
+  lines stales its parent at once (the page offers Recompute) and ONE stale
+  sweep routes it, and a section whose lines are taken away sends its
+  parent back to the `no_ingredients` rule row in one sweep.
 - **Rule PO** (S8 (a)): a "(recipes follow)" line held `choose_recipe`
   generic or `discarded_recipe` lists, as `own_section` candidates, the
   recipe's sections WITH lines that no other reference line of the recipe
@@ -1058,9 +1132,13 @@ child sections only.
   only), `state` `ready` (stored totals) | `no_totals` (a child section not
   computed yet — until its sweep) | `no_ingredients` (a prose section) |
   `nested` (it holds a reference; a pick is stored held), and `pickable` =
-  lines and stored totals. `other_section` lists only sections that are
-  stored children (S14 (a); N4: read as "a section key with a
-  `recipe_nutrition` row", one statement per request — a variation nobody
+  lines and stored totals. **v47 (F8):** on a SECTION's own line
+  (`?section=`) no candidate is `pickable` (one level is read: the PUT
+  refuses every pick there, "Only one level is read — …"), and no
+  candidate names the section's own host in `host_title`.
+  `other_section` lists only sections that are stored children (S14 (a);
+  N4: read as "a section key with a `recipe_nutrition` row", one statement
+  per request — a variation nobody
   routes is never offered: broccoli-cheese-soup's "Buttery Croutons" lists
   Carrot-Ginger Soup's, not Sweet Potato Soup's "Buttery Rye Croutons").
 - **`?section=<title>`** (exact title) on this GET lists that section's own
@@ -1219,8 +1297,9 @@ line; every `match` gains three keys, emitted on every row:
   decided row's child was deleted — | `generic` — the line names no single
   recipe — | `nested` — the child is itself made from a recipe, depth 1 —
   | `marinade`) | `not_routed` (the shipped 0 g rule row: `reason`
-  `section` | `served_with` | `no_amount` | `no_share`, and since v44
-  `no_ingredients`); `name` the
+  `section` | `served_with` | `no_amount` | `no_share`, since v44
+  `no_ingredients`, since v47 `self` — a section's line naming its own
+  host, below); `name` the
   reference as the line writes it ("Rustic Tart Dough"); `slug`/`title`/
   `yield_text` the child's (the no-share child's too); `share` the share of
   the child the line counts, `share_text` its copy ("1", "⅔", "1½", else
@@ -3798,6 +3877,31 @@ written before the failure stays; since v27 a target FDC cannot weigh is
 `unavailable`, never `failed`; since v29 a target's totals resolve only
 the decided food and its nutrient record, and only an Exception counts a
 recipe `failed` — an Error (a programming fault) propagates, Run 059 S29).
+**v47 (F3, Run 062 O3 / Run 061 S5) — the receipt counts RECIPES; a
+section key never reaches it.** A reached line in a recipe's SECTION
+counts its host in `recipes` (once, with any main line of it). A section is
+not a recipe: what an apply completing one completes is the PARENTS routed
+to it (the engine's route or a person's pick — the recipes a section
+group's `finishes_recipes` credits), and `completed` / `completed_recipes`
+name those whose stored status turns `complete`. They do in the SAME
+request: every parent of a section the request recomputed has its rows on
+that section re-derived as its compute derives them (the section's new
+total grams × the share, its new stamp — no FDC request) and its totals
+recomputed, its stamp kept (its own inputs did not move), so it reads fresh
+— before, the parents stayed stored `partial` and read stale (`child_stamp`
+behind) until a `stale` sweep, while the banner already dropped them from
+`open_recipes`, and the receipt named the section KEYS. A single PUT on a
+section's own line (`?section=`) does the same, apply or not: the grilled
+corn's "Spicy Old Bay Butter" line confirmed completes the corn in that
+request. With `apply_to_all` on a section's line, the parents that line's
+own write completed, other than its host (the decided line's own recipe, as
+the app's promise reads it), are in `completed_recipes` too. Measured on a
+copy of the v46 replay library (cache only, 0 requests): pork-tenderloin|3
+→ "Satay Glaze" and chicken-breasts|6 → "Coconut-Curry Glaze" picked, the
+"red curry paste" group promises [gado-gado, chicken, pork] (`finishes` 3,
+banner 76 / 209); gado-gado|0 confirmed with `apply_to_all` →
+`completed_recipes` [pork, chicken] (was the two section keys), both stored
+`complete` and fresh, the banner 73 / 206.
 The decision itself needs no FDC call when the food is in a cached search
 answer and its grams need no food detail no cache holds, so it lands with no
 key set or the hourly budget spent. Grams that need one — a volume or count
@@ -3865,7 +3969,9 @@ behaviour. An unrecognised scope is `422` rather than a silent fallback —
 computing the wrong set spends real FoodData Central budget.
 
 → `202 {"job_id", "scope", "total"}` (`total` is the number of recipes
-selected, so a `stale` sweep that finds nothing is visible immediately);
+selected, so a `stale` sweep that finds nothing is visible immediately —
+v47 (F12): RECIPES only; the sections the scope selects, computed first,
+move neither `total` nor `done`);
 `409 conflict` while one is running. Failures land in the job log — nothing
 is skipped silently. A job interrupted by a server restart is marked
 `failed` at the next boot.
@@ -3900,21 +4006,29 @@ How many recipes each `POST /nutrition/bulk` scope would select right now —
 the preview the Settings → Nutrition scope control shows before the click:
 
 ```json
-{"missing": 1190, "stale": 3, "all": 1198}
+{"missing": 1190, "stale": 3, "all": 1198,
+ "sections": {"missing": 140, "stale": 2, "all": 140}}
 ```
 
 The same selection the sweep runs (`bulkScopeIds`), so each number is the
-`total` the corresponding 202 would echo. Re-read it after a job finishes;
+`total` the corresponding 202 would echo. v47 (F12): the three numbers
+count RECIPES; `sections` counts apart the recipe subsections (v44) each
+scope computes first — before, a section counted as a recipe (`all` read
+1,338 on the 1,198-recipe library). Re-read it after a job finishes;
 a `stale` count of `0` means every computed recipe still matches its
 ingredients. Spends no FDC budget and writes nothing, so a `read` PAT may
-read it — but `stale` hashes every computed recipe synchronously on the
-serving isolate (~110–190 ms across a 1,198-recipe library), which makes
+read it — but it decodes the library, resolves its child sections and
+hashes every computed recipe synchronously on the serving isolate (v47
+F10: ONE read for the three scopes, ~0.42–0.55 s on snapshot 20, was
+~0.94–1.28 s), which makes
 this a [side-effectful GET](#cross-site-gets): a cookie session with neither
 `X-Requested-With` nor a same-origin `Sec-Fetch-Site` gets `403 csrf`.
 
 ### `GET /api/v1/nutrition/jobs/{id}` (admin)
 
 `{id, status, total, done, failed, log, started_at, finished_at}`.
+`total` / `done` count recipes (v47, F12); a `log` line names a recipe by
+its id and a section as `{host slug} · {title}` (never its storage key).
 
 ### `GET /api/v1/import/candidates` (admin)
 
@@ -3995,6 +4109,20 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   half-open socket is reaped by the initial close and never extends the drain.
 - `/data` must be a **local filesystem** (SQLite WAL is unsafe on
   NFS/SMB); the app assumes domain-root serving (sub-paths deferred).
+- **Version skew — a known gap (v47 F13, Run 062 critic; deferred):** the
+  server does not check the client's build. Since v44 a section candidate
+  and a routed section child carry their HOST's `slug` plus a `section`
+  title; an app bundle from before v44 knows no `section` key, so a tab
+  left open across a deploy PUTs `{raw, child: <host slug>}` (or `Save
+  share` with `{child: <host slug>, share}`) on a line routed to another
+  recipe's section — stored as a person's pick of that host's WHOLE recipe
+  (an own section's host is refused, `selfRecipeMessage`). Decided rows
+  survive every sweep, so the wrong grams stay unflagged. Mitigation: deploy
+  the server and the app together (the server half alone is never
+  deployed), and reload every open admin tab after a deploy. A version
+  header (a stale client answered `409` "reload the app") or a PUT refusing
+  a host-slug child on a line whose stored child is a section key is a later
+  design.
 
 ## CLI
 

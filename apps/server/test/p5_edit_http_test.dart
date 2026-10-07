@@ -2039,17 +2039,26 @@ void main() {
       );
       expect(response.statusCode, HttpStatus.ok, reason: body);
       final counts = jsonOf(body);
-      expect(counts.keys, unorderedEquals(['missing', 'stale', 'all']));
+      expect(
+        counts.keys,
+        unorderedEquals(['missing', 'stale', 'all', 'sections']),
+      );
+      // v47 (F12): the three counts are RECIPES; `sections` counts apart
+      // the sections each scope computes first.
+      final sections = counts['sections']! as Map<String, Object?>;
+      expect(sections.keys, unorderedEquals(['missing', 'stale', 'all']));
       for (final scope in BulkScope.values) {
         expect(
           counts[scope.wireName],
           greaterThan(0),
           reason: '${scope.wireName}: a zero here pins nothing',
         );
+        final ids = bulkScopeIds(db, scope);
+        expect(counts[scope.wireName], recipeCountOf(ids), reason: scope.name);
         expect(
-          counts[scope.wireName],
-          bulkScopeIds(db, scope).length,
-          reason: scope.wireName,
+          sections[scope.wireName],
+          ids.length - recipeCountOf(ids),
+          reason: scope.name,
         );
       }
     });

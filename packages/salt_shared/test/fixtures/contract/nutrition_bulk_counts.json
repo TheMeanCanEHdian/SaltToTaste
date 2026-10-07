@@ -1,5 +1,10 @@
 {
   "missing": 2,
   "stale": 1,
-  "all": 3
+  "all": 3,
+  "sections": {
+    "missing": 0,
+    "stale": 0,
+    "all": 0
+  }
 }

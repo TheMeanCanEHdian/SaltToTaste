@@ -1100,9 +1100,16 @@ void main() {
     // Matcher v46 recorded from snapshot 20 the 'pineapple' search and the
     // two details its pins read, each a recorded hit (171722 in
     // 'cranberries', 2346398 in 'pineapple'), both differing in some digit:
-    // compared 458 -> 460, differ 344 -> 346.
-    expect(compared, 460);
-    expect(differ, 346);
+    // compared 458 -> 460, differ 344 -> 346. Matcher v47 (closer round 1)
+    // recorded from snapshot 20 the 7 searches and 2 details its O3 pin's
+    // gado-gado and two glazed recipes read (chunky peanut butter, corn
+    // syrup, cucumber, dry-roasted peanuts, green beans, sriracha, sriracha
+    // sauce; 172460, 2710274): both details are recorded hits (172460 in
+    // 'chunky peanut butter', 2710274 in 'corn' and 'corn syrup') and the
+    // recorded 173806 is a hit in 'dry-roasted peanuts', all three
+    // differing in some digit: compared 460 -> 463, differ 346 -> 349.
+    expect(compared, 463);
+    expect(differ, 349);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -3608,6 +3608,57 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — matcher v47, the sections-batch review fixes (the union of
+  the dual-fleet review Runs 061 and 062; decided under the standing
+  authorization; deviations kept):** (1) a person's section pick now keeps
+  the section alive — the child set every reader shares is the engine's
+  routes plus every decided pick whose host still carries the title; (2) a
+  duplicate subsection title is refused on create, update, import and
+  rescan alike (the brief had asked for a documented limitation on imported
+  YAML; the validator is the import's and the scan's gate, and review B13
+  forbids ingesting what the editor then refuses — kept); (3) a section's
+  line that names its own host is a 0 g rule row with the new wire reason
+  `self`, which the app shows as the raw code on a section's own sheet (7
+  corpus lines, all in sections nobody routes to; the copy waits for a
+  mockup); (4) bulk totals and counts count recipes only and the counts
+  gain a `sections` figure — a scope whose only work is sections counts 0
+  and the Settings button stays disabled for it (no label depends on such a
+  section); (5) two recipes whose reference targets a prose section
+  (lemon-meringue-pie, fresh-plum-ginger-pie) read stale once after this
+  deploys, because their hash now folds the prose section — a zero-request
+  sweep restores them; (6) client/server version skew across a deploy (an
+  old browser tab picking a section with the pre-v44 payload) stays a
+  documented gap: deploy both halves together and reload open admin tabs; a
+  version handshake is a later design. No landing moves: the replay is
+  byte-identical to v46.
+
+- **2026-10-07 — standing authorization (the owner): "you can continue to go
+  with your recommendations regarding the matcher unless there is a problem
+  that you determine would really benefit from my decision … I am okay with
+  you doing new live matches as needed."** From here, matcher design
+  questions are decided on the recommendation and logged here as decided
+  under this authorization, with the evidence; the owner is told in the
+  report and can veto. Live FDC requests stay named in advance, spent on a
+  scratch copy of the current snapshot, counted, with the raw answers kept
+  where the cache would trim them. First use: the prep47 design's 27
+  questions (`.claude/diag/2026-10-07/prep47/design_v2.md` §1) are all
+  decided as recommended — Q1 ranges at the midpoint everywhere (re-rules
+  checkpoint 9 Q5), Q2 USDA coat budgets per shape (re-rules checkpoint 9
+  Q2), Q3 per-food frying-oil uptake, Q4 bacon at AH-102 item 1981's 0.33 on
+  a 28 g slice (re-rules Y11), Q5 tapioca by ATK's print, Q6 zest plus juice
+  as two parts, Q7 marinades flagged only, Q8/Q8b served-with references
+  accounted at 0 g, Q9 prose variations routed to their base, Q10 partial
+  pour-away kept held, Q11 shell-on shrimp and mussels at AH-102's shares,
+  Q12 kiwi at FNDDS's fruit, Q13 raw leek and rhubarb records, Q14/Q14b
+  canned-bean liquid, Q15 four record fixes, Q16 strained solids 0 g, Q17
+  strained cured pork by the skim test, Q18 removed aromatics 0 g, Q19 fat
+  poured off capped, Q20 kept parts counted, Q21 bowl leftovers counted
+  whole, Q22 plated no-amount references at one batch, Q23 curry paste and
+  Old Bay uncounted, Q24 shallow-fry oils with uptake, Q25 an alcohol
+  retention planner pass authorised, Q26 halloumi flagged on Monterey. Build
+  order as the design's §2: the v47 review fixes, the 9-detail live step
+  (snapshot 21), then ranges, records, discards, bacon, references, coats.
+
 - **2026-10-07 — option A's six failed answers (the owner: "go with your
   recommendations" on the six-row table):** stand-ins, each as recommended —
   mascarpone (no FDC record; three lines) counts as heavy cream 2346386,

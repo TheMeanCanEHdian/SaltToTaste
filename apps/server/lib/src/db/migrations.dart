@@ -613,6 +613,15 @@ SELECT recipe_id, seq, lines FROM recipe_layout
     'DROP TABLE recipe_layout',
     'ALTER TABLE recipe_layout_new RENAME TO recipe_layout',
   ],
+  // 020 — matcher v47 (F9; Run 061 S8, Run 062 O7): migration 019's
+  // `host_id` is the FK child key (ON DELETE CASCADE) and the lookup of a
+  // host save's dead-section drop — unindexed, every recipe delete and
+  // save scanned the three tables. An index on a VIRTUAL generated column.
+  [
+    'CREATE INDEX idx_matches_host ON ingredient_matches(host_id)',
+    'CREATE INDEX idx_nutrition_host ON recipe_nutrition(host_id)',
+    'CREATE INDEX idx_layout_host ON recipe_layout(host_id)',
+  ],
 ];
 
 /// Migration 019's `host_id`: the recipe a row's `recipe_id` belongs to —

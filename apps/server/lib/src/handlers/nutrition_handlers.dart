@@ -47,7 +47,10 @@ Map<String, Object?> nutritionBody(
       if (computingJobId != null) 'computing_job_id': computingJobId,
     };
   }
-  final stale = !nutritionIsFresh(db, recipe, row);
+  // One resolver read for the request: the freshness hash's and the
+  // summary's (v41 F14; v47 F2).
+  final memo = ResolverMemo(db);
+  final stale = !nutritionIsFresh(db, recipe, row, memo);
   // Unreviewed low-confidence or held matches — the `check` bucket: the
   // UI's badge only turns green once every line is matched AND none of these
   // remain (a human confirm/override clears one).
@@ -68,7 +71,7 @@ Map<String, Object?> nutritionBody(
                 MatchBucket.check,
       )
       .length;
-  final summary = referenceSummary(db, recipe, stored);
+  final summary = referenceSummary(db, recipe, stored, memo);
   return {
     'status': stale ? 'stale' : row.status,
     // Why (v28, Run 058 S15 / Opus critic 1 #3): `inputs` — the recipe's
@@ -81,17 +84,16 @@ Map<String, Object?> nutritionBody(
     // throw cleared); `underived` also when the stamp
     // says the last totals could not count a food USDA could not serve
     // ([unavailableStampOf] the current inputs) — never `inputs` when
-    // nothing changed (Run 059 O23).
+    // nothing changed (Run 059 O23). [staleReasonOf] reads the recipe's
+    // own stamp; v47 (F5): a section its totals count that is not fresh
+    // names the reason when the recipe's own stamp is on its inputs — read
+    // the same way ([staleSectionsReadBy]; closer round 2's D1: a section
+    // waiting on USDA or interrupted is never `inputs`).
     if (stale)
-      'stale_reason':
-          row.computing > 0 ||
-              row.ingredientsHash.startsWith(SaltDatabase.interruptedStamp)
-          ? 'interrupted'
-          : nutritionStampCurrent(db, recipe, row) ||
-                row.ingredientsHash ==
-                    unavailableStampOf(ingredientsHashOf(recipe))
-          ? 'underived'
-          : 'inputs',
+      'stale_reason': switch (staleReasonOf(db, recipe, row, memo)) {
+        final own && ('interrupted' || 'inputs') => own,
+        final own => staleSectionsReadBy(db, recipe, memo) ?? own,
+      },
     'serving_basis': row.servingBasis,
     'basis_kind': basisKindOf(
       row.servingBasis ?? 1,
@@ -453,7 +455,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   // The inputs every derivation below reads (a save during the awaits is
   // refused below unless this line still stands; its derivation is then
   // of these inputs, and a stamp of the new ones reads it underived).
-  final derivedOn = ingredientsHashOf(recipe);
+  final derivedOn = ingredientsHashOf(recipe, ResolverMemo(db));
   // The recipe [derivedOn] hashes ([recipe] is re-read below after a save).
   final hashedRecipe = recipe;
   final lines = nutritionLines(recipe);
@@ -1010,6 +1012,18 @@ Future<AppliedToOthers?> applyMatchOverride(
       db.releaseComputing(recipe.id, owned: marked, stale: wrote);
     }
   }
+  // v47 (F3, Run 062 O3 / Run 061 S5): a SECTION's decision re-reads the
+  // parents routed to it in this request ([recomputeParentsOf]) — the
+  // queue's `finishes` credits them. Its host is the decided line's own
+  // recipe (as the queue's promise reads it): any other parent it
+  // completed is in the apply's receipt.
+  final host = hostOf(recipe.id);
+  final parentsDone = host == recipe.id
+      ? const <String>[]
+      : [
+          for (final id in await recomputeParentsOf(db, provider, recipe.id))
+            if (id != host) id,
+        ];
 
   if (recipeApply) {
     return applyRecipeToOthers(
@@ -1018,6 +1032,7 @@ Future<AppliedToOthers?> applyMatchOverride(
       itemKey: itemKey,
       childId: stored.childRecipeId!,
       excluding: (recipeId: recipe.id, position: position),
+      alsoCompleted: parentsDone,
     );
   }
   if (food == null) {
@@ -1029,6 +1044,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     itemKey: itemKey,
     decided: food,
     excluding: (recipeId: recipe.id, position: position),
+    alsoCompleted: parentsDone,
   );
 }
 

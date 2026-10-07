@@ -74,7 +74,7 @@ Future<void> _runOne(
           db,
           watched,
           section,
-          onFoodFailure: (error) => notes.add('$key: $error'),
+          onFoodFailure: (error) => notes.add('${jobLogName(db, key)}: $error'),
         );
       } finally {
         _recipeJobs.remove(key);
@@ -230,10 +230,9 @@ enum BulkScope {
 /// A, the same predicate the recipe page reads), so every
 /// recipe with nutrition is decoded and compared
 /// (see [SaltDatabase.recipesWithNutrition] for why there is no timestamp
-/// shortcut). Measured at ~110-190 ms for the whole 1,198-recipe library,
-/// synchronously on the serving isolate, on admin-only endpoints (the sweep
-/// itself and the `bulk/counts` preview, which is why the preview is
-/// guarded against a cross-site drive).
+/// shortcut). Synchronous on the serving isolate, on admin-only endpoints
+/// (the sweep itself and the `bulk/counts` preview, which is why the
+/// preview is guarded against a cross-site drive).
 ///
 /// v41 (design_v3 §2.1, F7): every scope is ordered PARENTS LAST — a recipe
 /// whose main lines hold a sub-recipe reference ([readsSubRecipe]) after
@@ -252,12 +251,15 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) =>
 
 /// [bulkScopeIds] with the library-wide CHILD SET it was ordered by (v44,
 /// design_v2 §2 v44.3; P1 §3.3): every section key a main line of ANY
-/// recipe makes a child ([sectionChildKeysOf], one [ResolverMemo] for the
-/// whole library) — never the scope's selection (F5: a `stale` sweep of a
-/// few recipes would otherwise collect every other live section). The set
-/// needs the whole library decoded in EVERY scope (N3: `missing` decoded
-/// only its wanted docs, `stale` only the stamped ones): one pass over
-/// [SaltDatabase.recipeDocs], every scope reading its recipes from it.
+/// recipe makes a child ([routedSectionKeysOf], one [ResolverMemo] for
+/// the whole library) and v47 (F1) every section a person's row picks
+/// ([pickedSectionKeysOf]; the two halves of [sectionChildKeysOf]) —
+/// never the scope's selection (F5: a `stale` sweep of a few recipes would
+/// otherwise collect every other live section). The set needs the whole
+/// library decoded in EVERY scope (N3: `missing` decoded only its wanted
+/// docs, `stale` only the stamped ones): one pass over
+/// [SaltDatabase.recipeDocs], every scope reading its recipes from it
+/// ([bulkScopes]: the three scopes from ONE such read).
 ///
 /// The order is [child section keys, non-parents, parents]: a section is a
 /// recipe the sweep computes before any parent (a child section is never a
@@ -272,6 +274,61 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) =>
   SaltDatabase db,
   BulkScope scope,
 ) {
+  final library = _libraryOf(db);
+  return (ids: _selectionOf(db, library, scope), children: library.children);
+}
+
+/// Every scope's [bulkScopeIds] from ONE library read and ONE child set
+/// (v47, F10 — Run 061 S9 / Run 062 O6: the `bulk/counts` preview read the
+/// library and resolved the child set once per scope, three times).
+Map<BulkScope, List<String>> bulkScopes(SaltDatabase db) {
+  final library = _libraryOf(db);
+  return {
+    for (final scope in BulkScope.values)
+      scope: _selectionOf(db, library, scope),
+  };
+}
+
+/// The `GET /nutrition/bulk/counts` body: each scope's RECIPES and, apart,
+/// its `sections` (v47, F12) — from ONE library read ([bulkScopes], F10).
+Map<String, Object> bulkCountsBody(SaltDatabase db) {
+  final scopes = bulkScopes(db);
+  return {
+    for (final MapEntry(key: scope, value: ids) in scopes.entries)
+      scope.wireName: recipeCountOf(ids),
+    'sections': {
+      for (final MapEntry(key: scope, value: ids) in scopes.entries)
+        scope.wireName: ids.length - recipeCountOf(ids),
+    },
+  };
+}
+
+/// How many of a scope's [ids] are RECIPES (v47, F12): a job's `total`
+/// and `done` and the `bulk/counts` figures count recipes; the sections
+/// a scope selects are computed first and counted apart.
+int recipeCountOf(Iterable<String> ids) =>
+    ids.where((id) => hostOf(id) == id).length;
+
+/// How a job's log names [id] (v47, F12; Run 062 critic): a recipe by its
+/// id, as ever; a section key — storage only, never on the wire — as
+/// "{host slug} · {title}" (its host's id when the host is gone).
+String jobLogName(SaltDatabase db, String id) {
+  final host = hostOf(id);
+  if (host == id) {
+    return id;
+  }
+  final slug = nutritionRecipeOf(db, host)?.recipe.slug ?? host;
+  return '$slug · ${id.substring(host.length + 1)}';
+}
+
+typedef _Library = ({
+  Map<String, Recipe> docs,
+  Set<String> children,
+  Set<String> parents,
+  ResolverMemo memo,
+});
+
+_Library _libraryOf(SaltDatabase db) {
   final docs = <String, Recipe>{
     for (final (:id, :doc) in db.recipeDocs())
       id: RecipeMapper.fromMap(jsonDecode(doc) as Map<String, dynamic>),
@@ -279,14 +336,29 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) =>
   final memo = ResolverMemo(db);
   final children = <String>{
     for (final recipe in docs.values)
-      if (readsSubRecipe(recipe)) ...sectionChildKeysOf(db, recipe, memo),
+      if (readsSubRecipe(recipe)) ...routedSectionKeysOf(db, recipe, memo),
+    ...pickedSectionKeysOf(db),
   };
+  return (
+    docs: docs,
+    children: children,
+    parents: {
+      for (final MapEntry(:key, :value) in docs.entries)
+        if (readsSubRecipe(value)) key,
+    },
+    memo: memo,
+  );
+}
+
+List<String> _selectionOf(
+  SaltDatabase db,
+  _Library library,
+  BulkScope scope,
+) {
+  final (:docs, :children, parents: libraryParents, :memo) = library;
   final ids = <String>[];
   final keys = <String>[];
-  final parents = <String>{
-    for (final MapEntry(:key, :value) in docs.entries)
-      if (readsSubRecipe(value)) key,
-  };
+  final parents = {...libraryParents};
   switch (scope) {
     case BulkScope.missing:
     case BulkScope.all:
@@ -313,7 +385,7 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) =>
             : docs[candidate.id]!;
         if (!candidate.layoutCurrent ||
             candidate.underived ||
-            ingredientsHashOf(recipe) != candidate.ingredientsHash) {
+            ingredientsHashOf(recipe, memo) != candidate.ingredientsHash) {
           (key ? keys : ids).add(candidate.id);
         }
       }
@@ -335,14 +407,11 @@ List<String> bulkScopeIds(SaltDatabase db, BulkScope scope) =>
   }
   ids.sort();
   keys.sort();
-  return (
-    ids: [
-      ...keys,
-      ...ids.where((id) => !parents.contains(id)),
-      ...ids.where(parents.contains),
-    ],
-    children: children,
-  );
+  return [
+    ...keys,
+    ...ids.where((id) => !parents.contains(id)),
+    ...ids.where(parents.contains),
+  ];
 }
 
 /// Whether [recipe]'s main lines (the ones nutrition reads) hold a
@@ -380,7 +449,7 @@ int? startBulkJob(
   // makes a child any more — never a decided row; here, not in the scope
   // (the counts preview reads the scope and must write nothing).
   db.collectSectionGarbage(children);
-  final jobId = db.createNutritionJob(ids.length);
+  final jobId = db.createNutritionJob(recipeCountOf(ids));
   _bulkRunning = true;
   unawaited(
     _run(db, provider, jobId, ids, retryUnavailable: scope == BulkScope.all),
@@ -415,15 +484,21 @@ Future<void> _run(
   final tallyAtStart = provider is UsdaFdcProvider
       ? Map.of(provider.requestCounts)
       : const <String, int>{};
+  // v47 (F12): `total` and `done` count RECIPES; a section key (computed
+  // first, its parents' input) moves neither, and the log names it by its
+  // host and title ([jobLogName]) — a key never reaches the wire.
+  final total = recipeCountOf(ids);
   try {
     for (final id in ids) {
       // Yield the event loop between recipes: fully cached computes are
       // synchronous end-to-end, and a long cached stretch would otherwise
       // starve interactive requests.
       await Future<void>.delayed(Duration.zero);
+      final step = hostOf(id) == id ? 1 : 0;
+      late final name = jobLogName(db, id);
       final found = nutritionRecipeOf(db, id);
       if (found == null) {
-        done += 1;
+        done += step;
         continue; // Deleted mid-job.
       }
       // Single-flight with the per-recipe compute: if one is already running
@@ -432,8 +507,8 @@ Future<void> _run(
       // it. Registering here is also what lets the recipe page and the review
       // queue see `computing_job_id` for a recipe the bulk sweep is on.
       if (_recipeJobs.containsKey(id)) {
-        log.add('$id: skipped, a compute is already running');
-        done += 1;
+        log.add('$name: skipped, a compute is already running');
+        done += step;
         continue;
       }
       _recipeJobs[id] = jobId;
@@ -446,7 +521,7 @@ Future<void> _run(
           // One food FDC fails on: that row's state (underived, held
           // `food_unavailable` after `foodUnavailableAfter` computes) — the
           // sweep moves on and the log says which.
-          onFoodFailure: (error) => log.add('$id: $error'),
+          onFoodFailure: (error) => log.add('$name: $error'),
         );
       } on NutritionProviderException catch (error) {
         // GLOBAL — no key / bad key / the budget / an outage, a detail
@@ -454,7 +529,7 @@ Future<void> _run(
         // recipe would fail identically — stop and say why. (A FOOD failure
         // never leaves a pass since v29: an engine line's is its row's
         // state like a decided row's, Run 059 Sonnet critic 1 / O3.)
-        log.add('stopped at $id: $error');
+        log.add('stopped at $name: $error');
         db.updateNutritionJob(
           jobId,
           done: done,
@@ -467,7 +542,7 @@ Future<void> _run(
         // ignore: avoid_catches_without_on_clauses
       } catch (error) {
         failed += 1;
-        log.add('$id: $error');
+        log.add('$name: $error');
       } finally {
         // Balanced on EVERY exit, including the provider-failure `return`
         // above: a registration left behind makes the per-recipe compute
@@ -475,8 +550,11 @@ Future<void> _run(
         // recipe as "already running".
         _recipeJobs.remove(id);
       }
+      if (step == 0) {
+        continue;
+      }
       done += 1;
-      if (done % 10 == 0 || done == ids.length) {
+      if (done % 10 == 0 || done == total) {
         db.updateNutritionJob(
           jobId,
           done: done,

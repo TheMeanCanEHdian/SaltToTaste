@@ -891,7 +891,7 @@ const Map<String, String> _guardedWork = {
   'api/v1/admin/logs/export.dart': 'logsExportHandler(',
   'api/v1/backups/[name].dart': 'file.openRead()',
   'api/v1/import/candidates.dart': 'importCandidates(',
-  'api/v1/nutrition/bulk/counts.dart': 'bulkScopeIds(',
+  'api/v1/nutrition/bulk/counts.dart': 'bulkCountsBody(',
   'api/v1/nutrition/search.dart': 'foodSearchBody(',
 };
 

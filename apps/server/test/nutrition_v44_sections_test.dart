@@ -566,12 +566,18 @@ void main() {
         final host = stored(_chraime);
         final tabil = nutritionRecipeOf(db, keyOf(_chraime, 'Tabil'))!.recipe;
         expect(
-          ingredientsHashOf(tabil.copyWith(servings: 'MAKES ABOUT 1 CUP')),
-          isNot(ingredientsHashOf(tabil)),
+          ingredientsHashOf(
+            tabil.copyWith(servings: 'MAKES ABOUT 1 CUP'),
+            ResolverMemo(db),
+          ),
+          isNot(ingredientsHashOf(tabil, ResolverMemo(db))),
         );
         expect(
-          ingredientsHashOf(host.copyWith(servings: 'SERVES 8')),
-          ingredientsHashOf(host),
+          ingredientsHashOf(
+            host.copyWith(servings: 'SERVES 8'),
+            ResolverMemo(db),
+          ),
+          ingredientsHashOf(host, ResolverMemo(db)),
         );
       });
     });
@@ -645,8 +651,9 @@ void main() {
                     sub.title == title ? sub.copyWith(title: '$title II') : sub,
                 ],
               ),
+              ResolverMemo(db),
             ),
-            isNot(ingredientsHashOf(recipe)),
+            isNot(ingredientsHashOf(recipe, ResolverMemo(db))),
           );
         }
         // "12 (6-inch) corn tortillas, warmed" names tinga's "Corn

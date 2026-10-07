@@ -101,6 +101,10 @@ const Map<int, String> _capabilityByVersion = {
       'VIRTUAL generated host_id carrying the FK to recipes (cascade): a '
       'section of a recipe is keyed <host id>#<title> (matcher v44); every '
       'existing row its own host, byte-equal',
+  20:
+      'idx_matches_host / idx_nutrition_host / idx_layout_host: the three '
+      "tables indexed on 019's host_id (matcher v47, F9) — the cascade and "
+      'the dead-section drop SEARCH, never SCAN; no row changes',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -138,6 +142,9 @@ const int _compositeVersion = 18;
 /// Mirror of migration 019: the three nutrition tables carry a VIRTUAL
 /// generated `host_id` (read back by `SELECT *` at head, never written).
 const int _hostIdVersion = 19;
+
+/// Mirror of migration 020: the three tables indexed on `host_id`.
+const int _hostIndexVersion = 20;
 
 /// The columns migration 018 adds to `ingredient_matches`.
 const Set<String> _compositeColumns = {
@@ -1043,9 +1050,13 @@ void main() {
         hasLength(1),
         reason: 'the engine computes one totals row for the recipe',
       );
+      final dir = Directory.systemTemp.createTempSync('salt-hash');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final db = SaltDatabase.open('${dir.path}/salt.db');
+      addTearDown(db.dispose);
       expect(
         nutritionRows['recipe_nutrition']!.single['ingredients_hash'],
-        ingredientsHashOf(plain),
+        ingredientsHashOf(plain, ResolverMemo(db)),
         reason: 'the totals row must be keyed to the real corpus recipe',
       );
     });
@@ -1428,6 +1439,36 @@ void main() {
                 0,
               );
               expect(after.select('PRAGMA foreign_key_check'), isEmpty);
+            }
+            // 020: each table's `host_id` index, and the dead-section drop
+            // and the cascade read it — SEARCH, never SCAN (v47 F9).
+            if (migrations.length >= _hostIndexVersion) {
+              for (final (table, index) in [
+                ('ingredient_matches', 'idx_matches_host'),
+                ('recipe_nutrition', 'idx_nutrition_host'),
+                ('recipe_layout', 'idx_layout_host'),
+              ]) {
+                expect(
+                  _count(
+                    after,
+                    "sqlite_master WHERE type = 'index' AND name = ? "
+                    'AND tbl_name = ?',
+                    [index, table],
+                  ),
+                  1,
+                );
+                expect(
+                  [
+                    for (final row in after.select(
+                      'EXPLAIN QUERY PLAN DELETE FROM $table '
+                      'WHERE host_id = ? AND recipe_id <> host_id',
+                      ['h'],
+                    ))
+                      row['detail'],
+                  ],
+                  ['SEARCH $table USING INDEX $index (host_id=?)'],
+                );
+              }
             }
             if (startVersion < _itemKeyVersion) {
               final booted = SaltDatabase.open(path);

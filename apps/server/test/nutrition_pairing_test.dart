@@ -278,7 +278,8 @@ void main() {
     // P2 (Run 050): the gate reads the nutrition inputs (ingredientsHashOf),
     // not the whole document; a tripped gate never stamps the totals fresh.
     bool stale(Recipe r) =>
-        db.nutritionFor(r.id)!.ingredientsHash != ingredientsHashOf(r);
+        db.nutritionFor(r.id)!.ingredientsHash !=
+        ingredientsHashOf(r, ResolverMemo(db));
 
     test('a tags-only save during the first compute blocks nothing: every '
         'line gets its row and the totals are fresh', () async {

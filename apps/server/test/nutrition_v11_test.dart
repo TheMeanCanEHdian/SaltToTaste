@@ -750,15 +750,18 @@ void main() {
       );
       await matchAndCompute(db, provider, r);
       final stored = db.nutritionFor('r1')!.ingredientsHash;
-      expect(stored, ingredientsHashOf(r));
+      expect(stored, ingredientsHashOf(r, ResolverMemo(db)));
       // No drain: synthesized (the critic's reproduction).
       final undrained = r.copyWith(
         steps: const [
           RecipeStep(number: 1, text: 'Serve the noodles in their broth.'),
         ],
       );
-      expect(ingredientsHashOf(undrained), isNot(stored));
-      expect(ingredientsHashOf(r.copyWith(title: 'Noodles')), isNot(stored));
+      expect(ingredientsHashOf(undrained, ResolverMemo(db)), isNot(stored));
+      expect(
+        ingredientsHashOf(r.copyWith(title: 'Noodles'), ResolverMemo(db)),
+        isNot(stored),
+      );
     });
   });
 }

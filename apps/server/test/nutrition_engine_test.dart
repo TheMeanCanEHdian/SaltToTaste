@@ -786,7 +786,8 @@ void main() {
           );
           final edited = bundt.copyWith(ingredients: [trimmedGroup]);
           expect(
-            ingredientsHashOf(edited) == ingredientsHashOf(bundt),
+            ingredientsHashOf(edited, ResolverMemo(db)) ==
+                ingredientsHashOf(bundt, ResolverMemo(db)),
             isFalse,
           );
         },
@@ -861,12 +862,18 @@ void main() {
           '',
           reason: 'only a full re-match may clear staleness',
         );
-        expect(after.ingredientsHash, isNot(ingredientsHashOf(edited)));
+        expect(
+          after.ingredientsHash,
+          isNot(ingredientsHashOf(edited, ResolverMemo(db))),
+        );
 
         // A real recompute clears it and drops the orphan row.
         await matchAndCompute(db, provider, edited);
         final fresh = db.nutritionFor(bundt.id)!;
-        expect(fresh.ingredientsHash, ingredientsHashOf(edited));
+        expect(
+          fresh.ingredientsHash,
+          ingredientsHashOf(edited, ResolverMemo(db)),
+        );
         expect(
           db.ingredientMatchesFor(bundt.id).length,
           items.length - 1,

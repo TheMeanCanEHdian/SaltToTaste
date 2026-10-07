@@ -79,7 +79,7 @@ void main() {
         matchedCount: 1,
         totalCount: 1,
         status: 'complete',
-        ingredientsHash: ingredientsHashOf(recipe),
+        ingredientsHash: ingredientsHashOf(recipe, ResolverMemo(db)),
         layoutSeq: db.layoutOf(recipe.id).seq,
       );
     }
@@ -169,7 +169,10 @@ void main() {
       markComputed(alpha);
       final stored = db.nutritionFor(alpha.id)!;
       final reloaded = db.recipeByIdOrSlug(alpha.id)!.recipe;
-      expect(stored.ingredientsHash, ingredientsHashOf(reloaded));
+      expect(
+        stored.ingredientsHash,
+        ingredientsHashOf(reloaded, ResolverMemo(db)),
+      );
     });
 
     test('an edit that lands DURING a compute is still found stale', () async {
@@ -215,7 +218,7 @@ void main() {
       final reloaded = db.recipeByIdOrSlug(alpha.id)!.recipe;
       expect(
         db.nutritionFor(alpha.id)!.ingredientsHash,
-        isNot(ingredientsHashOf(reloaded)),
+        isNot(ingredientsHashOf(reloaded, ResolverMemo(db))),
         reason: 'sanity: the UI would label this stale',
       );
       expect(

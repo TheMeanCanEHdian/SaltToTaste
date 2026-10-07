@@ -73,6 +73,7 @@ int? backfillDerivedSeq(SaltDatabase db) {
     return null;
   }
   final keys = <String, String>{};
+  final memo = ResolverMemo(db);
   for (final candidate in db.recipesWithNutrition()) {
     final Recipe? recipe;
     try {
@@ -86,7 +87,7 @@ int? backfillDerivedSeq(SaltDatabase db) {
       );
       continue;
     }
-    if (recipe != null && nutritionStampCurrent(db, recipe)) {
+    if (recipe != null && nutritionStampCurrent(db, recipe, null, memo)) {
       keys[candidate.id] = derivedKeyOf(
         db.layoutSeqOf(candidate.id),
         candidate.ingredientsHash,

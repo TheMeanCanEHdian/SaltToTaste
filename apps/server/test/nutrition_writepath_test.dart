@@ -428,7 +428,7 @@ void main() {
           );
           expect(
             db.nutritionFor(v1.id)!.ingredientsHash,
-            ingredientsHashOf(v1),
+            ingredientsHashOf(v1, ResolverMemo(db)),
           );
         });
       }
@@ -684,7 +684,10 @@ void main() {
           [for (final r in db.ingredientMatchesFor(v1.id)) r.raw],
           [oil, onion],
         );
-        expect(db.nutritionFor(v1.id)!.ingredientsHash, ingredientsHashOf(v2));
+        expect(
+          db.nutritionFor(v1.id)!.ingredientsHash,
+          ingredientsHashOf(v2, ResolverMemo(db)),
+        );
       },
     );
 
@@ -759,7 +762,10 @@ void main() {
       await matchAndCompute(db, provider, four);
       final stamped = db.nutritionFor(four.id)!;
       expect(stamped.servingBasis, 8);
-      expect(stamped.ingredientsHash, ingredientsHashOf(four));
+      expect(
+        stamped.ingredientsHash,
+        ingredientsHashOf(four, ResolverMemo(db)),
+      );
     });
   });
 }

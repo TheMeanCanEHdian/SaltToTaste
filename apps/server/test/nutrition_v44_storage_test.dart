@@ -27,6 +27,7 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/config.dart';
+import 'package:salt_server/src/db/migrations.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/bulk_job.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
@@ -209,7 +210,10 @@ void main() {
       SaltDatabase.open(path).dispose();
       final after = sqlite3.open(path)..execute('PRAGMA foreign_keys = ON');
       addTearDown(after.dispose);
-      expect(after.select('PRAGMA user_version').first.columnAt(0), 19);
+      expect(
+        after.select('PRAGMA user_version').first.columnAt(0),
+        migrations.length, // 19 at v44; 020 adds only indexes (v47 F9).
+      );
       expect(dump(after), rows);
       expect(after.select('PRAGMA foreign_key_check'), isEmpty);
       // Every main row's host is itself.
@@ -576,7 +580,10 @@ void main() {
       expect(fresh(chraime.id), isTrue);
       expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
       reorderSection(chraime.id, 'Tabil', 0, 1);
-      expect(fresh(chraime.id), isTrue, reason: 'its own hash: titles only');
+      // v47 (F5, Run 062 critic): its own hash reads the titles only, but
+      // the section it routes to is no longer fresh — the page reads stale.
+      expect(nutritionStampCurrent(db, now(chraime.id)), isTrue);
+      expect(fresh(chraime.id), isFalse, reason: 'its routed Tabil changed');
       expect(bulkScopeIds(db, BulkScope.stale), [_tabil, chraime.id]);
       await sweep(BulkScope.stale);
       expect(fresh(_tabil), isTrue);
@@ -616,7 +623,9 @@ void main() {
         ],
       });
       expect(result.changed, isTrue);
-      expect(fresh(chraime.id), isTrue, reason: 'its own hash: titles only');
+      // v47 (F5): its own stamp current, its routed section's not — stale.
+      expect(nutritionStampCurrent(db, now(chraime.id)), isTrue);
+      expect(fresh(chraime.id), isFalse, reason: 'its routed Tabil changed');
       expect(fresh(_tabil), isFalse, reason: "the section's servings");
       expect(bulkScopeIds(db, BulkScope.stale), [_tabil, chraime.id]);
       await sweep(BulkScope.stale);

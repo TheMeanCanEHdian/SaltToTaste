@@ -135,7 +135,7 @@ const threeTsp = a.twoTspOldBay;
 
 /// [r]'s current key ([derivedKeyOf]).
 String keyOf(SaltDatabase db, Recipe r) =>
-    derivedKeyOf(db.layoutSeqOf(r.id), ingredientsHashOf(r));
+    derivedKeyOf(db.layoutSeqOf(r.id), ingredientsHashOf(r, ResolverMemo(db)));
 
 void main() {
   group(

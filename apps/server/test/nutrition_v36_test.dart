@@ -322,9 +322,15 @@ void main() {
             await ra.settle();
             // v44: the recipe's child sections with no stamp yet join the
             // stale scope first (0129's "1 recipe barbecue sauce (recipes
-            // follow)" lists its three sauces, rule PO).
+            // follow)" lists its three sauces, rule PO) — v47 (F12): they
+            // are computed but counted apart, `total` and `done` count the
+            // recipe alone.
             final children = sectionChildKeysOf(db, r, ResolverMemo(db));
-            expect(db.nutritionJob(job)!['done'], 1 + children.length);
+            expect(db.nutritionJob(job)!['total'], 1);
+            expect(db.nutritionJob(job)!['done'], 1);
+            for (final key in children) {
+              expect(db.nutritionFor(key), isNotNull, reason: key);
+            }
             expect(fault.asked, 2);
             expect(v29.retryOf(path, r.id, position), 2);
             expect(d.rowOf(db, r, position).hold, hold);

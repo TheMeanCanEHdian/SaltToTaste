@@ -1352,9 +1352,15 @@ class SaltDatabase {
     // action table: only a pick or a skip finishes it, v28). v44: a
     // SECTION row's is 0 — its last open line finishes the section, and
     // whether that finishes a parent is the grouped queue's `credit`
-    // (under-promised here, never over).
+    // (under-promised here, never over). v47 (F4, Run 061 S6 / Run 062
+    // O4): and a main line's is 0 while its recipe waits on an incomplete
+    // routed child (`pend`, [_pendSql] — the grouped `credit`'s own arm):
+    // the GF pizza's psyllium line finishes nothing while its flour blend
+    // is partial, in both views.
     final rows = _prepared(
+      'WITH pend AS $_pendSql '
       'SELECT *, (open_lines = 1 AND recipe_id = host_id '
+      'AND recipe_id NOT IN (SELECT pid FROM pend) '
       "AND COALESCE(hold, '') NOT IN "
       "($noConfirmHoldsSql) AND (bucket = 'no_grams' "
       "OR (bucket = 'check' AND grams IS NOT NULL))) AS finishes "
@@ -1419,6 +1425,21 @@ class SaltDatabase {
       "THEN im.recipe_id || '#' || im.position ELSE im.item_key END AS gkey "
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.host_id)';
 
+  /// `pend` (v44; v47 F4 — Run 061 S6 / Run 062 O4): every main recipe's
+  /// routed child (no hold, not skipped) that is not complete — an
+  /// incomplete child keeps its parent partial whatever a decision on the
+  /// parent's own lines does. ONE text, read by the grouped `credit`
+  /// ([_reviewFinishCte]) and the lines view's `finishes`
+  /// ([nutritionReviewLines]), so neither grain promises what the other
+  /// will not.
+  static const String _pendSql =
+      '(SELECT q.recipe_id AS pid, q.child_recipe_id AS cid '
+      'FROM ingredient_matches q LEFT JOIN recipe_nutrition n '
+      'ON n.recipe_id = q.child_recipe_id '
+      'WHERE q.recipe_id = q.host_id AND q.child_recipe_id IS NOT NULL '
+      "AND q.hold IS NULL AND q.status <> 'skipped' "
+      "AND COALESCE(n.status, '') <> 'complete')";
+
   /// The chain [nutritionReviewGroups] and [nutritionReviewFinishable]
   /// share (binds: the bucket filter, twice): the filtered `members`, each
   /// group's `example` (lowest confidence, then one with grams, then title,
@@ -1467,12 +1488,7 @@ class SaltDatabase {
       'AND x.position = o.position '
       'WHERE o.bucket IN ($flaggedBucketsSql) '
       'GROUP BY o.recipe_id HAVING COUNT(DISTINCT o.gkey) = 1), '
-      'pend AS (SELECT q.recipe_id AS pid, q.child_recipe_id AS cid '
-      'FROM ingredient_matches q LEFT JOIN recipe_nutrition n '
-      'ON n.recipe_id = q.child_recipe_id '
-      'WHERE q.recipe_id = q.host_id AND q.child_recipe_id IS NOT NULL '
-      "AND q.hold IS NULL AND q.status <> 'skipped' "
-      "AND COALESCE(n.status, '') <> 'complete'), "
+      'pend AS $_pendSql, '
       'waits AS (SELECT recipe_id AS rid FROM flagged '
       'WHERE bucket IN ($flaggedBucketsSql) AND recipe_id = host_id '
       'UNION SELECT p.pid FROM pend p JOIN flagged f ON f.recipe_id = p.cid '
@@ -2393,6 +2409,30 @@ class SaltDatabase {
     ).select([jsonEncode(childIds.toList())]))
       row['recipe_id'] as String,
   ];
+
+  /// v47 (F1, Run 061 S1/S2, Run 062 O1/O5): the section keys a PERSON's
+  /// row routes to — a pick (`overridden`) or a confirm (`confirmed`) of a
+  /// section child; the engine's own routes are `auto` and a skip reads no
+  /// child — of [recipeId]'s rows, else of the library's, by key. A pick
+  /// keeps its section a child (the engine's `pickedSectionKeysOf`).
+  List<String> decidedSectionPicks({String? recipeId}) => [
+    for (final row
+        in (recipeId == null
+                ? _prepared(
+                    'SELECT DISTINCT child_recipe_id AS k '
+                    'FROM ingredient_matches WHERE $_pickSql ORDER BY 1',
+                  )
+                : _prepared(
+                    'SELECT DISTINCT child_recipe_id AS k '
+                    'FROM ingredient_matches WHERE recipe_id = ? '
+                    'AND $_pickSql ORDER BY 1',
+                  ))
+            .select([?recipeId]))
+      row['k'] as String,
+  ];
+
+  static const String _pickSql =
+      "child_recipe_id LIKE '%#%' AND status IN ('overridden', 'confirmed')";
 
   /// The section keys holding a stamp ([sectionKeyOf]), by key.
   List<String> sectionKeysWithNutrition() => [

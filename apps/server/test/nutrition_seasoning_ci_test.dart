@@ -60,7 +60,7 @@ void main() {
       'every computed recipe stale (update the literal with the bump)', () {
     expect(matcherVersion, 46);
     expect(
-      ingredientsHashOf(recipe),
+      ingredientsHashOf(recipe, ResolverMemo(db)),
       '34232fe9b237eed0ce6ec4dbff64652c406e8f736bfceccc14626060f61d843a',
     );
   });

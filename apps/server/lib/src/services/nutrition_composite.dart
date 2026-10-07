@@ -22,7 +22,8 @@ double _round2(double v) => double.parse(v.toStringAsFixed(2));
 /// `routed` (counted from a library recipe), `held` (a recipe hold:
 /// `reason` `missing` | `generic` | `nested` | `marinade`) or `not_routed`
 /// (the 0 g rule row: `reason` `section` | `served_with` | `no_amount` |
-/// `no_share`). [slim] (the review queue, F14): `state`, `reason`, `name`,
+/// `no_share` | v47 `self` — a section's line naming its own host).
+/// [slim] (the review queue, F14): `state`, `reason`, `name`,
 /// `title`, `slug`, `default`, `why`, `share_text` — never `candidates`.
 /// Every library read goes through [memo] (one per request).
 ///
@@ -72,6 +73,7 @@ Map<String, Object?>? referenceChildJson(
       ReferenceKind.section when found().noIngredients => 'no_ingredients',
       ReferenceKind.section => 'section',
       ReferenceKind.servedWith => 'served_with',
+      ReferenceKind.self => 'self',
       ReferenceKind.noAmount => 'no_amount',
       ReferenceKind.noShare => 'no_share',
       _ => null,
@@ -162,8 +164,9 @@ Map<String, Object?>? referenceChildJson(
             'current': current,
             'default': current && isDefault,
             'state': null,
-            // A recipe with stored totals (the PUT refuses one without).
-            'pickable': nutrition != null,
+            // A recipe with stored totals (the PUT refuses one without);
+            // v47 (F8): never on a SECTION's own line (one level is read).
+            'pickable': hostOf(recipe.id) == recipe.id && nutrition != null,
             'host_title': null,
           };
         }()
@@ -213,7 +216,8 @@ Map<String, Object?>? referenceChildJson(
 /// variation: never counted), `nested` (it holds a reference itself; a
 /// pick is stored held, as a nested library child), `ready` (stored
 /// totals) or `no_totals` (a child section not computed yet — until its
-/// sweep). `pickable`: lines and stored totals, what the PUT accepts.
+/// sweep). `pickable`: lines and stored totals, what the PUT accepts — on
+/// a host's line only (v47, F8).
 Map<String, Object?> _sectionCandidateJson(
   SaltDatabase db,
   Recipe recipe,
@@ -262,8 +266,12 @@ Map<String, Object?> _sectionCandidateJson(
         : nutrition == null
         ? 'no_totals'
         : 'ready',
-    'pickable': lines.isNotEmpty && nutrition != null,
-    'host_title': own ? null : candidate.hostTitle,
+    // v47 (F8, Run 061 S7): never on a SECTION's own line — one level is
+    // read, the PUT refuses every pick there.
+    'pickable':
+        hostOf(recipe.id) == recipe.id && lines.isNotEmpty && nutrition != null,
+    // Never the host of the line in hand (a section's own host, F8).
+    'host_title': hostId == hostOf(recipe.id) ? null : candidate.hostTitle,
   };
 }
 
@@ -303,15 +311,16 @@ List<Map<String, Object?>> partsJson(
 /// label partial for a reference: `held` (a recipe hold not yet decided),
 /// `child_partial` (a counted child that is partial: its `title`,
 /// `matched`, `total`), `not_routed` (R3's 0 g row: its `reason`). Stored
-/// rows on their own lines, skipped ones left out; in line order.
+/// rows on their own lines, skipped ones left out; in line order. [memo]:
+/// the request's resolver reads.
 ({List<Map<String, Object?>> includes, List<Map<String, Object?>> partial})
 referenceSummary(
   SaltDatabase db,
   Recipe recipe,
   List<IngredientMatchRow> rows,
+  ResolverMemo memo,
 ) {
   final lines = nutritionLines(recipe);
-  final memo = ResolverMemo(db);
   final includes = <Map<String, Object?>>[];
   final partial = <Map<String, Object?>>[];
   for (final row in [...rows]..sort((a, b) => a.position - b.position)) {

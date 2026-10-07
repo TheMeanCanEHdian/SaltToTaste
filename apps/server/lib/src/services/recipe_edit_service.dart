@@ -401,6 +401,10 @@ const int _maxTextField = 50000;
 /// (review B13).
 void validateRecipeDocument(Recipe recipe) => _validateRecipe(recipe);
 
+/// The 422 for two subsections of one recipe sharing [title] (v47, F11).
+String duplicateSectionTitleMessage(String title) =>
+    'Two sections share the title "$title" — give each its own title.';
+
 void _validateRecipe(Recipe recipe) {
   _requireLength('title', recipe.title, min: 1, max: 250);
   _checkLength('servings', recipe.servings, 200);
@@ -464,6 +468,17 @@ void _validateRecipe(Recipe recipe) {
   }
   if (recipe.subsections.length > 60) {
     throw const ValidationException('At most 60 subsections.');
+  }
+  // v47 (F11, Run 061 critic): a section is keyed by its exact title
+  // (nutrition's `<host id>#<title>`), so a second section of one title
+  // would read the first's lines. Here, so the import and the library scan
+  // refuse it too (B13: never ingest what the editor then refuses).
+  final titles = <String>{};
+  for (final subsection in recipe.subsections) {
+    final title = subsection.title;
+    if (title != null && !titles.add(title)) {
+      throw ValidationException(duplicateSectionTitleMessage(title));
+    }
   }
   if (recipe.techniques.length > 60) {
     throw const ValidationException('At most 60 techniques.');
