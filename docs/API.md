@@ -1128,6 +1128,48 @@ child sections only.
   2515380 pepitas, 2515381 raw sunflower seeds, 170151 toasted sesame
   seeds). Each answer is enabled only after its check (prep43/p2_spend.md
   §4).
+  **SPENT 2026-10-06** by the owner on a scratch copy of snapshot 19 (the
+  result snapshot 20): 11 searches + 9 details, 20 of the 22 approved —
+  "brown rice flour" (A4) WITHHELD because potato starch (A3) failed its
+  check, and the two records the ranker put on top that the checks reject
+  (171884, 173444) never fetched. Outcomes (matcher v45, part 1): LANDED as
+  they are — A7 "1 cup pineapple juice" on 2709329 "Pineapple juice, 100%"
+  (248 g), A8 "4 tangerines … (about 1 cup)" on 2709175 "Tangerine, raw"
+  (the cup, 195 g), A11 "10 ounces frozen cherries" on 2709233 "Cherries,
+  frozen" (283.50 g), the two vegan mayonnaise reads on 2710205 (112.50 g,
+  56.25 g). A RULE (rank-as: the line's OWN cached answer under the words of
+  the record its check names) — A6 `coca-cola` → `soft drink cola`
+  (2710541 "Soft drink, cola", 0.990, its fl-oz portions: 1 cup 248 g; not
+  the Minute Maid lemonade the brand word leads); A5 `dairy-free sour
+  cream` → `sour cream imitation` (2705617 "Sour cream, imitation", 0.990,
+  `1 cup` 240 g: ¼ cup 60 g, FLAGGED "· approximation (counted as Sour
+  cream, imitation)"; not the dairy fat-free 173444); A1 `unsweetened plain
+  coconut milk yogurt` → `yogurt coconut milk` (2707569 "Yogurt, coconut
+  milk", 0.990, weighed by its own `1 cup` 226 g: 2 tablespoons 28.25 g —
+  the dairy 'yogurt' density 1.03 no longer applies to a coconut-milk
+  yogurt; not the dairy 2259793 it sat on at 0.66). GRAMS for the three
+  named seed reads (their details publish no volume portion): the volume
+  siblings above (2515380 → 169415, 2515381 → 170154, 170151 → 2707586).
+  FAILED their checks, pending the owner's part-2 rulings and unchanged —
+  A2 mascarpone (no mascarpone record answered; the line stays on 2705720
+  "Cheese, Monterey" at 0.465, below the gate), A3 potato starch (only
+  gluten-free breads answered; 174099 at 0.256), A4 (withheld; its line
+  still blocked), A9 nutritional yeast (2710005 "Yeast", baker's, counted
+  at 0.565), A10 frozen cranberries (only juice concentrates answered;
+  173653 at 0.000), A12 frozen pineapple chunks (only the sweetened record
+  answered; 169946 at 0.890). Replay (rp43 on a fresh copy of snapshot 20,
+  cache-only; --reverse-parents byte-identical): one call (the withheld
+  search), staleAfter 0; exactly 6 section rows and 2 main rows differ from
+  the pre-change replay on the same snapshot — the six lines above and the
+  two parents routed to a section whose totals moved (buffalo cauliflower
+  bites' Ranch Dressing, 289.55 → 296.32 kcal; the vegan Baja tacos'
+  Vegan Cilantro Sauce, 131.19 → 255.99 kcal, now complete); main buckets
+  and holds unchanged; sections complete 126 → 131 of 140 (Coca-Cola
+  Glaze, Vegan Cilantro Sauce, the pepita relish, both broccoli toppings);
+  recipes complete 977 → 978; the partial recipes with nothing to review
+  11 → 10; +131.6 kcal per batch on main rows, +591.8 on section rows. With
+  the skin step's four details (snapshot 19) the accuracy track's live
+  requests total 84 (60 above + 4 + these 20).
 
 **Matcher v41, the composite row** (the owner's 2026-10-05 rulings A1–A10,
 "go with your recommendations"; design_v3, the approved mockup
@@ -1719,7 +1761,17 @@ SR "Cauliflower, raw" (169986, `cup chopped (1/2" pieces)` 107 g:
 "2 cups (1-inch) cauliflower florets" is 214 g) and the sodium-added
 canned chickpeas (2644288) SR "Chickpeas …, canned, drained, rinsed in
 tap water" (173801, `cup drained, rinsed` 152 g); raw cashews stay dry —
-SR 170162 publishes an ounce only) (the food stays the
+SR 170162 publishes an ounce only; since matcher v45, option A's seed
+details read, Foundation "Seeds, pumpkin seeds (pepitas), raw" (2515380)
+reads SR "Seeds, pumpkin and squash seed kernels, roasted, with salt
+added" (169415, `cup` 118 g: "¼ cup pepitas, toasted" is 29.50 g),
+Foundation "Seeds, sunflower seed, kernel, raw" (2515381) SR "Seeds,
+sunflower seed kernels, toasted, without salt" (170154, `cup` 134 g: "2
+tablespoons raw sunflower seeds, toasted" is 16.75 g) and SR "Seeds, sesame
+seeds, whole, roasted and toasted" (170151, an ounce only) FNDDS "Sesame
+seeds" (2707586, `1 cup` 128 g: "2 tablespoons toasted sesame seeds" is
+16.00 g) — the cups the library's main seed lines already read) (the food
+stays the
 line's; since matcher v19 a shredded, grated or thinly sliced line with no
 portion of its own words reads a `shredded` or `grated` portion before the
 median: "3 cups thinly sliced green cabbage" is `cup, shredded` 210 g,

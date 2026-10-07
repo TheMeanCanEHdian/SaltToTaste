@@ -619,7 +619,16 @@ const Map<String, String> _synonyms = {
 /// pan drippings and its main recipe's reserved spice rub are 0 g rule
 /// rows (two new notes), "green thai" J6's 'thai', a zest plus a COUNT of
 /// oranges the oranges (746771); S5's 23 section reads onto cached answers.
-const int matcherVersion = 44;
+///
+/// v45: option A spent (the owner's live step, 2026-10-06; snapshot 20).
+/// Three rank-as reads land the record each answer's check names — the
+/// cola soft drink 2710541, imitation sour cream 2705617 (flagged), the
+/// coconut-milk yogurt 2707569 (weighed by its own cup: 'coconut milk
+/// yogurt' is not the dairy 'yogurt' key's food) — and the three seed
+/// records that publish no volume portion read their siblings' cups
+/// (grams.dart volumeSiblings: 2515380 → 169415, 2515381 → 170154,
+/// 170151 → 2707586).
+const int matcherVersion = 45;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2404,6 +2413,20 @@ const Map<String, (String, String)> _rankAs = {
   // "farro" answered only 2710828 "Farro, pearled, dry, raw" (a 45 g racc,
   // no cup) — not WHOLE farro, so the v21 'whole farro' entry above is
   // unchanged (the owner's label figure, Bob's Red Mill, is the way on).
+  // v45 (option A spent, 2026-10-06 — p2_spend §4's checks): each line
+  // reads its OWN cached answer (snapshot 20) under the words of the record
+  // the check names; the ranker's own top under the line's words is never
+  // asked. A6: the cola soft drink (FNDDS 2710541, not the Minute Maid
+  // lemonade 171884 the brand word leads); A5: imitation sour cream (FNDDS
+  // 2705617, flagged in [approximationRecords] — not the dairy fat-free
+  // 173444); A1: the coconut-milk yogurt (FNDDS 2707569, not the dairy
+  // 2259793). The corpus prints one line of each.
+  'coca-cola': ('coca-cola', 'soft drink cola'),
+  'dairy-free sour cream': ('dairy-free sour cream', 'sour cream imitation'),
+  'unsweetened plain coconut milk yogurt': (
+    'unsweetened plain coconut milk yogurt',
+    'yogurt coconut milk',
+  ),
 };
 
 /// The (rank words, cached answer) a rank-as item reads ([_rankAs]), in
@@ -3392,6 +3415,8 @@ const Map<String, int> approximationRecords = {
   'rubbed sage': 170935,
   'fluid ounce peach schnapps': 2710623,
   'fluid ounces sparkling wine': 2710689,
+  // v45 (A5): dairy-free sour cream on imitation sour cream ([_rankAs]).
+  'dairy-free sour cream': 2705617,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

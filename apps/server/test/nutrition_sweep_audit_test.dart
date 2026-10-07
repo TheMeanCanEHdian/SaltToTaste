@@ -1092,9 +1092,13 @@ void main() {
     // flour, powdered psyllium husk, vegetable oil spray, red wine vinegar,
     // whole-milk mozzarella cheese, xanthan gum, dark chocolate chips;
     // 169661, 2707441, 2710085, 169640, 2709683): compared 441 -> 448,
-    // differ 332 -> 335.
-    expect(compared, 448);
-    expect(differ, 335);
+    // differ 332 -> 335. Matcher v45 recorded from snapshot 20 the 11
+    // option-A searches and 10 details its pins read; 10 of the details
+    // are a recorded hit (2710541, 2705617, 2707569, 2709329, 2709175,
+    // 2515380, 2515381, 170151, 2710205, 2707586), 9 differing in some
+    // digit (2710205 equal): compared 448 -> 458, differ 335 -> 344.
+    expect(compared, 458);
+    expect(differ, 344);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -23013,5 +23013,586 @@
     "description": "Quantity not specified"
    }
   ]
+ },
+ "2710541": {
+  "fdc_id": 2710541,
+  "description": "Soft drink, cola",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.0,
+   "204": 0.25,
+   "205": 10.4,
+   "208": 42.0,
+   "269": 9.94,
+   "291": 0.0,
+   "301": 1.0,
+   "303": 0.02,
+   "304": 0.0,
+   "305": 9.0,
+   "306": 5.0,
+   "307": 3.0,
+   "320": 0.0,
+   "323": 0.0,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 0.0,
+   "606": 0.0,
+   "645": 0.0,
+   "646": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 372.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 small drink"
+   },
+   {
+    "gram_weight": 372.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 372.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 can (12 fl oz)"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   },
+   {
+    "gram_weight": 620.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 bottle (20 fl oz)"
+   },
+   {
+    "gram_weight": 1023.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 extra large drink"
+   },
+   {
+    "gram_weight": 23.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (with ice)"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (NFS)"
+   },
+   {
+    "gram_weight": 744.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 large drink"
+   },
+   {
+    "gram_weight": 524.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 bottle (16.9 fl oz or 500 ml)"
+   },
+   {
+    "gram_weight": 279.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 child/senior drink"
+   },
+   {
+    "gram_weight": 512.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 medium drink"
+   }
+  ]
+ },
+ "2705617": {
+  "fdc_id": 2705617,
+  "description": "Sour cream, imitation",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 2.4,
+   "204": 19.5,
+   "205": 6.63,
+   "208": 208.0,
+   "269": 6.63,
+   "291": 0.0,
+   "301": 3.0,
+   "303": 0.39,
+   "304": 6.0,
+   "305": 45.0,
+   "306": 161.0,
+   "307": 102.0,
+   "320": 0.0,
+   "323": 0.74,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "418": 0.0,
+   "430": 4.8,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 0.0,
+   "606": 17.8,
+   "645": 0.588,
+   "646": 0.056
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 15.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 240.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "2707569": {
+  "fdc_id": 2707569,
+  "description": "Yogurt, coconut milk",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 2.37,
+   "204": 5.61,
+   "205": 12.9,
+   "208": 108.0,
+   "269": 8.88,
+   "291": 1.2,
+   "301": 145.0,
+   "303": 0.86,
+   "304": 5.0,
+   "305": 32.0,
+   "306": 68.0,
+   "307": 41.0,
+   "320": 46.0,
+   "323": 0.04,
+   "328": 1.2,
+   "401": 1.5,
+   "404": 0.014,
+   "405": 0.014,
+   "406": 0.098,
+   "415": 0.011,
+   "418": 0.46,
+   "430": 0.0,
+   "432": 8.0,
+   "435": 8.0,
+   "601": 0.0,
+   "606": 5.09,
+   "645": 0.189,
+   "646": 0.077
+  },
+  "portions": [
+   {
+    "gram_weight": 170.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 6 oz container"
+   },
+   {
+    "gram_weight": 226.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 150.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 container, NFS"
+   },
+   {
+    "gram_weight": 150.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 150.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 5.3 oz container"
+   }
+  ]
+ },
+ "2709329": {
+  "fdc_id": 2709329,
+  "description": "Pineapple juice, 100%",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.36,
+   "204": 0.12,
+   "205": 12.9,
+   "208": 53.0,
+   "269": 9.98,
+   "291": 0.2,
+   "301": 13.0,
+   "303": 0.31,
+   "304": 12.0,
+   "305": 8.0,
+   "306": 130.0,
+   "307": 2.0,
+   "320": 0.0,
+   "323": 0.02,
+   "328": 0.0,
+   "401": 43.8,
+   "404": 0.058,
+   "405": 0.021,
+   "406": 0.199,
+   "415": 0.1,
+   "418": 0.0,
+   "430": 0.3,
+   "432": 18.0,
+   "435": 18.0,
+   "601": 0.0,
+   "606": 0.008,
+   "645": 0.014,
+   "646": 0.042
+  },
+  "portions": [
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   },
+   {
+    "gram_weight": 248.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 23.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (with ice)"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (NFS)"
+   },
+   {
+    "gram_weight": 124.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 individual school container"
+   }
+  ]
+ },
+ "2709175": {
+  "fdc_id": 2709175,
+  "description": "Tangerine, raw",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.81,
+   "204": 0.31,
+   "205": 13.3,
+   "208": 53.0,
+   "269": 10.6,
+   "291": 1.8,
+   "301": 37.0,
+   "303": 0.15,
+   "304": 12.0,
+   "305": 20.0,
+   "306": 166.0,
+   "307": 2.0,
+   "320": 34.0,
+   "323": 0.2,
+   "328": 0.0,
+   "401": 26.7,
+   "404": 0.058,
+   "405": 0.036,
+   "406": 0.376,
+   "415": 0.078,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 16.0,
+   "435": 16.0,
+   "601": 0.0,
+   "606": 0.039,
+   "645": 0.06,
+   "646": 0.065
+  },
+  "portions": [
+   {
+    "gram_weight": 109.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fruit"
+   },
+   {
+    "gram_weight": 109.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 11.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 section/slice"
+   },
+   {
+    "gram_weight": 195.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "2515380": {
+  "fdc_id": 2515380,
+  "description": "Seeds, pumpkin seeds (pepitas), raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 554.602,
+   "958": 514.83917,
+   "203": 29.9079,
+   "204": 40.03,
+   "205": 18.6751,
+   "291": 5.079,
+   "301": 37.38,
+   "303": 8.363,
+   "304": 499.7,
+   "305": 1150.0,
+   "306": 691.2,
+   "307": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "2515381": {
+  "fdc_id": 2515381,
+  "description": "Seeds, sunflower seed, kernel, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 609.456,
+   "958": 570.651,
+   "203": 18.8733,
+   "204": 48.44,
+   "205": 24.5007,
+   "291": 7.215,
+   "301": 115.6,
+   "303": 4.37,
+   "304": 301.9,
+   "305": 732.0,
+   "306": 656.8,
+   "307": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "170151": {
+  "fdc_id": 170151,
+  "description": "Seeds, sesame seeds, whole, roasted and toasted",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 565.0,
+   "203": 16.96,
+   "204": 48.0,
+   "205": 25.74,
+   "291": 14.0,
+   "301": 989.0,
+   "303": 14.76,
+   "304": 356.0,
+   "305": 638.0,
+   "306": 475.0,
+   "307": 11.0,
+   "401": 0.0,
+   "404": 0.803,
+   "405": 0.251,
+   "406": 4.581,
+   "415": 0.802,
+   "432": 98.0,
+   "435": 98.0,
+   "418": 0.0,
+   "320": 0.0,
+   "328": 0.0,
+   "606": 6.722,
+   "645": 18.127,
+   "646": 21.039,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "2710205": {
+  "fdc_id": 2710205,
+  "description": "Vegan mayonnaise",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.3,
+   "204": 19.2,
+   "205": 16.0,
+   "208": 232.0,
+   "269": 6.0,
+   "291": 0.0,
+   "301": 0.0,
+   "303": 0.0,
+   "304": 0.0,
+   "305": 0.0,
+   "306": 10.0,
+   "307": 497.0,
+   "320": 0.0,
+   "323": 2.0,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.0,
+   "405": 0.0,
+   "406": 0.0,
+   "415": 0.0,
+   "418": 0.0,
+   "430": 42.2,
+   "432": 0.0,
+   "435": 0.0,
+   "601": 24.0,
+   "606": 3.3,
+   "645": 4.5,
+   "646": 10.6
+  },
+  "portions": [
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 dipping-size container"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount on large sandwich"
+   },
+   {
+    "gram_weight": 14.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount on regular sandwich"
+   },
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "Guideline amount in salad"
+   },
+   {
+    "gram_weight": 14.1,
+    "amount": null,
+    "unit": null,
+    "description": "1 tablespoon"
+   },
+   {
+    "gram_weight": 225.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 9.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "2707586": {
+  "fdc_id": 2707586,
+  "description": "Sesame seeds",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 20.4,
+   "204": 61.2,
+   "205": 11.7,
+   "208": 631.0,
+   "269": 0.48,
+   "291": 11.6,
+   "301": 60.0,
+   "303": 6.36,
+   "304": 345.0,
+   "305": 667.0,
+   "306": 370.0,
+   "307": 47.0,
+   "320": 3.0,
+   "323": 1.68,
+   "328": 0.0,
+   "401": 0.0,
+   "404": 0.699,
+   "405": 0.09,
+   "406": 5.8,
+   "415": 0.4,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 115.0,
+   "435": 115.0,
+   "601": 0.0,
+   "606": 9.06,
+   "645": 23.9,
+   "646": 25.5
+  },
+  "portions": [
+   {
+    "gram_weight": 28.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 128.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
  }
 }

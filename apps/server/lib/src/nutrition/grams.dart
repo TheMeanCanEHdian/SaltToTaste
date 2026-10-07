@@ -739,6 +739,16 @@ const Map<int, int> volumeSiblings = {
   2685573: 169986,
   2644288: 173801,
   // 2515374: 170162,
+  // v45 (option A's three seed details, snapshot 20): Foundation 2515380
+  // "Seeds, pumpkin seeds (pepitas), raw" and 2515381 "Seeds, sunflower
+  // seed, kernel, raw" publish a 30 g racc only, SR 170151 "Seeds, sesame
+  // seeds, whole, roasted and toasted" an 'oz' only → the cups the main
+  // library's seed lines already read: SR 169415 roasted pepitas 'cup'
+  // 118 g, SR 170154 toasted sunflower kernels 'cup' 134 g, FNDDS 2707586
+  // "Sesame seeds" '1 cup' 128 g (all cached).
+  2515380: 169415,
+  2515381: 170154,
+  170151: 2707586,
 };
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
@@ -1182,10 +1192,13 @@ RegExp _keyAsWord(String key) => _keyWords.putIfAbsent(
 /// ('butter' 0.959 for their records' 1.08 and 1.15; Run 050), and sugar
 /// snap peas ('sugar' 0.85 counted "2 cups sugar snap peas" at 402 g, its
 /// record's "cup, whole" 126 g; Run 051 O7 — "Peas, edible-podded" names
-/// no sugar, so [_keyModifiesTheRecordsFood] cannot tell).
+/// no sugar, so [_keyModifiesTheRecordsFood] cannot tell), and coconut-milk
+/// yogurt ('yogurt' 1.03 is dairy yogurt's; v45: 2707569's own '1 cup'
+/// 226 g sizes it).
 final RegExp _notTheKeysFood = RegExp(
   r'\b(dry milk|milk powder|buttermilk powder|water chestnut|ricotta|'
-  'cream cheese|oil-packed|almond butter|apple butter|sugar snap)',
+  'cream cheese|oil-packed|almond butter|apple butter|sugar snap|'
+  'coconut milk yogurt)',
 );
 
 /// Whether [normalizedItem] names [food]'s own food by a word beyond the
