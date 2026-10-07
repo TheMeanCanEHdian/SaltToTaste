@@ -11,17 +11,16 @@
 // coconut-milk yogurt on 2707569 (weighed by its own cup — 'coconut milk
 // yogurt' is not the dairy 'yogurt' key's food); the three seed records
 // that publish no volume portion read their siblings' cups (volumeSiblings).
-// The answers that passed their checks land as they are; the six awaiting
-// the owner's part-2 rulings are pinned as they stand so part 2's moves
-// show. Every value is the v45 replay's row (rp43 on snapshot 20).
+// The answers that passed their checks land as they are; the six that
+// awaited the owner's part-2 rulings moved in v46 and are pinned there
+// (test/nutrition_v46_test.dart). Every value is the v45 replay's row (rp43
+// on snapshot 20).
 //
 // Real corpus recipes over recorded real FDC answers (FixtureProvider;
 // entries added --from-db from snapshot 20), never the network. NO fixture
 // records 171884 (the Minute Maid lemonade the brand word leads) or 173444
 // (the dairy fat-free sour cream): a regression that asks either throws
-// UnrecordedAnswer. Synthesized input, a stated negative path: the "brown
-// rice flour" search (A4, withheld by the owner — no snapshot holds it) is
-// answered as FDC failing for that food, as the cache-only replay records it.
+// UnrecordedAnswer.
 
 import 'dart:io';
 
@@ -31,7 +30,6 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/grams.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
-import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
@@ -47,27 +45,9 @@ const _porkChops = '0597-easy-grilled-boneless-pork-chops.yaml';
 const _broccoli = '1096-skillet-roasted-broccoli.yaml';
 const _salmon = '0263-oven-roasted-salmon.yaml';
 const _handPies = '1166-fruit-hand-pies.yaml';
-const _roulade = '0899-bittersweet-chocolate-roulade.yaml';
-const _gfPizza = '0393-the-best-gluten-free-pizza.yaml';
-const _pavlova = '0940-pavlova-with-fruit-and-whipped-cream.yaml';
 const _sesameSalmon = '0261-sesame-crusted-salmon-with-lemon-and-ginger.yaml';
 const _multigrain = '0809-multigrain-bread.yaml';
 const _watermelon = '1071-watermelon-salad-with-cotija-and-serrano-chiles.yaml';
-
-/// The answer the owner withheld (A4): FDC failing for that food, as the
-/// replay's recorder answers every query no snapshot holds.
-class _Withheld extends FixtureProvider {
-  @override
-  Future<List<FdcCandidate>> search(String query) async {
-    if (query == 'brown rice flour') {
-      throw NutritionProviderException(
-        'withheld: search "$query"',
-        scope: FailureScope.food,
-      );
-    }
-    return super.search(query);
-  }
-}
 
 typedef _Pin = (
   String file,
@@ -149,10 +129,7 @@ void main() {
       return (db.ingredientMatchesFor(one.id).single, one, line, failed);
     }
 
-    Future<void> pinAll(
-      List<_Pin> pins, {
-      FixtureProvider Function()? with_,
-    }) async {
+    Future<void> pinAll(List<_Pin> pins) async {
       for (final (
             file,
             section,
@@ -167,16 +144,10 @@ void main() {
             basis,
           )
           in pins) {
-        provider = with_?.call() ?? FixtureProvider();
+        provider = FixtureProvider();
         final (row, one, line, failed) = await at(file, section, position);
         final reason = '$file|$section|$position';
-        expect(
-          failed,
-          description == engineUnavailableNote
-              ? isA<NutritionProviderException>()
-              : isNull,
-          reason: reason,
-        );
+        expect(failed, isNull, reason: reason);
         expect(line.raw, raw, reason: reason);
         expect(
           (
@@ -527,95 +498,5 @@ void main() {
         }
       },
     );
-
-    test('NOT part 1 — the six landings awaiting the owner stay exactly as '
-        'the snapshot-20 replay has them (part 2 moves them)', () async {
-      await pinAll(with_: _Withheld.new, [
-        // A2: no mascarpone record answered; the top is below the gate.
-        (
-          _roulade,
-          0,
-          3,
-          '16½ ounces mascarpone cheese (generous 2 cups)',
-          2705720,
-          'Cheese, Monterey',
-          '0.465000',
-          '467.77',
-          'weight',
-          'auto',
-          'from 16 1/2 ounce',
-        ),
-        // A3: no potato-starch record answered.
-        (
-          _gfPizza,
-          0,
-          2,
-          '7 ounces (1⅓ cups) potato starch',
-          174099,
-          'Bread, gluten-free, white, made with potato extract, rice starch, and rice flour',
-          '0.256364',
-          '198.45',
-          'weight',
-          'auto',
-          'from 7 ounce',
-        ),
-        // A4: withheld (A3 failed its check) — FDC asked nothing.
-        (
-          _gfPizza,
-          0,
-          1,
-          '7½ ounces (1⅔ cups) brown rice flour',
-          null,
-          engineUnavailableNote,
-          '0.000000',
-          null,
-          null,
-          'unmatched',
-          null,
-        ),
-        // A9: baker's yeast, counted at 0.565.
-        (
-          _broccoli,
-          1,
-          1,
-          '1 tablespoon nutritional yeast',
-          2710005,
-          'Yeast',
-          '0.565000',
-          '12.00',
-          'portion',
-          'auto',
-          '1 tablespoon · USDA portion',
-        ),
-        // A10: juice concentrate, held below the gate.
-        (
-          _pavlova,
-          0,
-          1,
-          '6 ounces (1½ cups) frozen cranberries',
-          173653,
-          'Cranberry juice cocktail, frozen concentrate',
-          '0.000000',
-          '170.10',
-          'weight',
-          'auto',
-          'from 6 ounce',
-        ),
-        // A12: the sweetened record, counted at 0.890.
-        (
-          _handPies,
-          2,
-          0,
-          '10 ounces frozen pineapple chunks, thawed, juice reserved, cut into approximate ½-inch pieces',
-          169946,
-          'Pineapple, frozen, chunks, sweetened',
-          '0.890000',
-          '283.50',
-          'weight',
-          'auto',
-          'from 10 ounce',
-        ),
-      ]);
-    });
   });
 }

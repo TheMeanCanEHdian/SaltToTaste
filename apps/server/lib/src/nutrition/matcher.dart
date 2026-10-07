@@ -628,7 +628,14 @@ const Map<String, String> _synonyms = {
 /// records that publish no volume portion read their siblings' cups
 /// (grams.dart volumeSiblings: 2515380 → 169415, 2515381 → 170154,
 /// 170151 → 2707586).
-const int matcherVersion = 45;
+///
+/// v46: option A part 2 — the owner's 2026-10-07 rulings on the six
+/// answers that failed their checks (zero requests): mascarpone on heavy
+/// cream 2346386, potato starch on cornstarch 169698, brown rice flour on
+/// white rice flour 790214 (flagged rank-as reads; the GF flour blend
+/// completes), nutritional yeast flagged on 2710005, frozen cranberries and
+/// frozen pineapple chunks rewritten to the plain fruit (171722, 2346398).
+const int matcherVersion = 46;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -1697,6 +1704,14 @@ const Map<String, String> _queryRewrites = {
   // weighs the line.
   'fluid ounces orange juice': 'orange juice raw',
   'fluid ounce orange liqueur': 'liqueur',
+  // v46 (the owner's 2026-10-07 rulings A10 / A12, unflagged: the frozen
+  // fruit is the same food): FDC answered "frozen cranberries" with juice
+  // concentrates only and "frozen pineapple chunks" with the sweetened pack
+  // only; the plain fruit's cached answer lands the raw record every main
+  // line of it reads — 171722 "Cranberries, raw" at 0.92, 2346398
+  // "Pineapple, raw" at 0.97.
+  'frozen cranberries': 'cranberries',
+  'frozen pineapple chunks': 'pineapple',
 };
 
 /// The FDC search query for a normalized item: the item itself, unless a
@@ -2427,6 +2442,22 @@ const Map<String, (String, String)> _rankAs = {
     'unsweetened plain coconut milk yogurt',
     'yogurt coconut milk',
   ),
+  // v46 (option A part 2 — the owner's 2026-10-07 rulings on the answers
+  // that failed their checks; zero requests): FLAGGED stand-ins on a cached
+  // answer ([approximationRecords]), each ranked where that answer's own
+  // main lines land it. A2: FDC has no mascarpone (the cached 'mascarpone
+  // cheese' answer is 25 unrelated cheeses, 'mascarpone' answered nothing)
+  // → Foundation 2346386 "Cream, heavy", as S14's crème fraîche above (all
+  // three lines print a weight); A3: potato starch (answered gluten-free
+  // breads only) → SR 169698 "Cornstarch"; A4: brown rice flour (withheld,
+  // never asked) → 790214 "Flour, rice, white, unenriched", the plan's own
+  // fallback — under 'white rice flour', as the record's own words tie it
+  // with 169714 at 1.0. One-word 'mascarpone' is a rank-as key (as 'port'
+  // is): M2 keeps one-word REWRITE keys only off the food nouns.
+  'mascarpone cheese': ('heavy cream', 'cream heavy'),
+  'mascarpone': ('heavy cream', 'cream heavy'),
+  'potato starch': ('cornstarch', 'cornstarch'),
+  'brown rice flour': ('white rice flour', 'white rice flour'),
 };
 
 /// The (rank words, cached answer) a rank-as item reads ([_rankAs]), in
@@ -3417,6 +3448,15 @@ const Map<String, int> approximationRecords = {
   'fluid ounces sparkling wine': 2710689,
   // v45 (A5): dairy-free sour cream on imitation sour cream ([_rankAs]).
   'dairy-free sour cream': 2705617,
+  // v46 (the owner's 2026-10-07 rulings): A2 mascarpone on heavy cream, A3
+  // potato starch on cornstarch, A4 brown rice flour on white rice flour
+  // ([_rankAs]); A9 nutritional yeast stays on its own answer's top, FNDDS
+  // 2710005 "Yeast" (0.565, counted) — the record unchanged, now flagged.
+  'mascarpone cheese': 2346386,
+  'mascarpone': 2346386,
+  'potato starch': 169698,
+  'brown rice flour': 790214,
+  'nutritional yeast': 2710005,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

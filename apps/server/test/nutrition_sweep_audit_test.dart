@@ -1097,8 +1097,12 @@ void main() {
     // are a recorded hit (2710541, 2705617, 2707569, 2709329, 2709175,
     // 2515380, 2515381, 170151, 2710205, 2707586), 9 differing in some
     // digit (2710205 equal): compared 448 -> 458, differ 335 -> 344.
-    expect(compared, 458);
-    expect(differ, 344);
+    // Matcher v46 recorded from snapshot 20 the 'pineapple' search and the
+    // two details its pins read, each a recorded hit (171722 in
+    // 'cranberries', 2346398 in 'pineapple'), both differing in some digit:
+    // compared 458 -> 460, differ 344 -> 346.
+    expect(compared, 460);
+    expect(differ, 346);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

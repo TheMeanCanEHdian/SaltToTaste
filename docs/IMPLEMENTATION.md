@@ -3608,6 +3608,21 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — option A's six failed answers (the owner: "go with your
+  recommendations" on the six-row table):** stand-ins, each as recommended —
+  mascarpone (no FDC record; three lines) counts as heavy cream 2346386,
+  flagged; potato starch as cornstarch 169698, flagged; brown rice flour as
+  white rice flour 790214 (the plan's own fallback), flagged — the gluten-free
+  flour blend then completes and its two parents count it; nutritional yeast
+  keeps FNDDS "Yeast" 2710005, now flagged; frozen cranberries read the raw
+  cranberry record 171722 and frozen pineapple chunks the raw pineapple
+  2346398, both unflagged (the same food, frozen). Built as matcher v46; the
+  held library sweep follows it, then the re-calibration, then the
+  evidence-gated dual-fleet review of the sections batch (a18da27 onward;
+  the last fleet review was Run 060 on v29) and a second blind nutrition
+  audit on a fresh, stratified sample (the first predates sub-recipe
+  routing). Image thumbnails stay deferred by the earlier decision.
+
 - **2026-10-06 — matcher v44, the server half built (deviations from
   `prep43/design_v2.md` §2, each disclosed by a fixer or verifier and kept):**
   (1) a child section not yet swept ROUTES with no stamp (the v41 F6 shape:

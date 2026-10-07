@@ -37,6 +37,11 @@ class FixtureProvider implements NutritionProvider {
   /// query synthesized to be one FDC was never asked.
   Set<String> pending;
 
+  /// RECORDED searches a test answers as FDC's no hits anyway — a stated
+  /// synthesized negative path, for a state no recorded answer leaves (v46:
+  /// the gluten-free flour blend is complete on real data).
+  Set<String> noHits = {};
+
   /// Foods a test declares superseded — FDC's detail 404s for them — though
   /// no fixture records the 404: a test naming the path it pins.
   final Set<int> superseded;
@@ -65,6 +70,9 @@ class FixtureProvider implements NutritionProvider {
       throw NutritionProviderException(failure);
     }
     await gate?.future;
+    if (noHits.contains(query)) {
+      return const [];
+    }
     if (!_searches.containsKey(query) && !pending.contains(query)) {
       throw UnrecordedAnswer('search "$query"');
     }

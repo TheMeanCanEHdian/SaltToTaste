@@ -521,41 +521,45 @@ void main() {
         );
       });
 
-      test('a partial section child is counted, flagged and never accounted: '
-          'the gluten-free flour blend with its two option-A searches '
-          'unanswered', () async {
-        provider = FixtureProvider(
-          pending: {'brown rice flour', 'potato starch'},
-        );
-        final key = keyOf(
-          _gfPizza,
-          'The America’s Test Kitchen All-Purpose Gluten-Free Flour Blend',
-        );
-        await computeKey(key);
-        final blend = db.nutritionFor(key)!;
-        expect(blend.status, 'partial');
-        expect((blend.matchedCount, blend.totalCount), (3, 5));
-        final (row, one) = await alone(_gfCookies, 0);
-        expect(row.childRecipeId, key);
-        final label = db.nutritionFor(one.id)!;
-        // Counted (its kcal in the totals), never accounted: partial.
-        expect(label.status, 'partial');
-        expect((label.matchedCount, label.totalCount), (1, 1));
-        expect(
-          batchTotalsOf(label)['energy'],
-          closeTo(batchTotalsOf(blend)['energy']! * 8 / 42, 1e-6),
-        );
-        expect(
-          compositeFlagOf(
-            db,
-            one,
-            nutritionLines(one).single,
-            row,
-            ResolverMemo(db),
-          ),
-          'approximation (The America’s Test Kitchen All-Purpose Gluten-Free Flour Blend is partial: 3 of 5 lines)',
-        );
-      });
+      test(
+        'a partial section child is counted, flagged and never accounted: '
+        'the gluten-free flour blend with its potato starch unanswered',
+        () async {
+          // Since v46 the potato starch reads the cached 'cornstarch' answer
+          // (and the brown rice flour 'white rice flour'): the blend is
+          // complete on real data, so a stated synthesized negative path
+          // answers that recorded search as FDC's no hits.
+          provider.noHits = {'cornstarch'};
+          final key = keyOf(
+            _gfPizza,
+            'The America’s Test Kitchen All-Purpose Gluten-Free Flour Blend',
+          );
+          await computeKey(key);
+          final blend = db.nutritionFor(key)!;
+          expect(blend.status, 'partial');
+          expect((blend.matchedCount, blend.totalCount), (4, 5));
+          final (row, one) = await alone(_gfCookies, 0);
+          expect(row.childRecipeId, key);
+          final label = db.nutritionFor(one.id)!;
+          // Counted (its kcal in the totals), never accounted: partial.
+          expect(label.status, 'partial');
+          expect((label.matchedCount, label.totalCount), (1, 1));
+          expect(
+            batchTotalsOf(label)['energy'],
+            closeTo(batchTotalsOf(blend)['energy']! * 8 / 42, 1e-6),
+          );
+          expect(
+            compositeFlagOf(
+              db,
+              one,
+              nutritionLines(one).single,
+              row,
+              ResolverMemo(db),
+            ),
+            'approximation (The America’s Test Kitchen All-Purpose Gluten-Free Flour Blend is partial: 4 of 5 lines)',
+          );
+        },
+      );
 
       test("a section's stale hash carries its yield; a main recipe's does "
           'not', () {

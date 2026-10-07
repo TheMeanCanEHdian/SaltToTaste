@@ -616,11 +616,14 @@ void main() {
       test('a section with TWO parents: each credited once, and only while '
           'it has no open line of its own', () async {
         // The GF flour blend (the-best-gluten-free-pizza's own section) is
-        // the child of the pizza (0.381) and of the cookies (0.190). Its
-        // "brown rice flour" and "potato starch" are option A's unanswered
-        // searches: answered here as FDC's no hits (named; no snapshot
-        // holds either).
-        provider.pending = {'brown rice flour', 'potato starch'};
+        // the child of the pizza (0.381) and of the cookies (0.190). Since
+        // v46 its brown rice flour and potato starch read the cached 'white
+        // rice flour' and 'cornstarch' answers and the blend is complete on
+        // real data (no two-parent section stays partial): a stated
+        // synthesized negative path answers those two recorded searches as
+        // FDC's no hits, leaving three of its lines open (white rice flour,
+        // brown rice flour, potato starch).
+        provider.noHits = {'white rice flour', 'cornstarch'};
         await library([_pizza, _cookies]);
         final pizza = stored(_pizza);
         final cookies = stored(_cookies);
@@ -641,10 +644,10 @@ void main() {
         NutritionReviewGroupRow flour() => db
             .nutritionReviewGroups(limit: 100, offset: 0)
             .singleWhere((g) => g.itemKey == 'brown rice flour');
-        // A person skips the blend's potato starch: one open line left in
-        // the section, but each parent still has its own open line (the
-        // pizza's psyllium husk, the cookies' xanthan gum) — credited to
-        // nobody.
+        // A person skips the blend's potato starch and white rice flour: one
+        // open line left in the section, but each parent still has its own
+        // open line (the pizza's psyllium husk, the cookies' xanthan gum) —
+        // credited to nobody.
         // verify44 D2: while the blend is partial, each parent's OWN line's
         // group finishes nothing — its incomplete child keeps it partial
         // whatever that group decides (the pizza's psyllium husk was
@@ -661,6 +664,11 @@ void main() {
         expect(db.nutritionReviewFinishable().finishable, sumOfFinishes());
         expect(rawAt(blend, 2), '7 ounces (1⅓ cups) potato starch');
         await put(blend, 2, {'skipped': true});
+        expect(
+          rawAt(blend, 0),
+          '24 ounces (4½ cups plus ⅓ cup) white rice flour',
+        );
+        await put(blend, 0, {'skipped': true});
         expect(flour().lastOpen, 0);
         expect(db.nutritionReviewFinishable().finishable, sumOfFinishes());
         // Their own lines skipped too, both parents wait on the blend's

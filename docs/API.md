@@ -1170,6 +1170,40 @@ child sections only.
   11 → 10; +131.6 kcal per batch on main rows, +591.8 on section rows. With
   the skin step's four details (snapshot 19) the accuracy track's live
   requests total 84 (60 above + 4 + these 20).
+  **SETTLED 2026-10-07** — the owner's part-2 rulings on the six failed
+  answers ("go with your recommendations"; matcher v46, zero requests,
+  each a stand-in or a same-food read of an answer already cached): A2
+  `mascarpone cheese` and `mascarpone` → rank-as the cached `heavy cream`
+  answer under `cream heavy` (Foundation 2346386 "Cream, heavy", 1.000 —
+  FDC has no mascarpone; as crème fraîche), FLAGGED "· approximation
+  (counted as Cream, heavy)", by the printed weights: the roulade's
+  Espresso-Mascarpone Cream 467.77 g, tiramisu 680.39 g, the summer fruit
+  tart 170.10 g; A3 `potato starch` → rank-as `cornstarch` (169698
+  "Cornstarch", 1.000), FLAGGED, 198.45 g; A4 `brown rice flour` (never
+  asked) → rank-as `white rice flour` under its own words (790214 "Flour,
+  rice, white, unenriched", 1.000 — under the record's words it ties SR
+  169714), FLAGGED, 212.62 g; A9 nutritional yeast stays on 2710005
+  "Yeast" (0.565, counted, 12.00 g), now FLAGGED "· approximation (counted
+  as Yeast)"; A10 `frozen cranberries` → REWRITE `cranberries` (171722
+  "Cranberries, raw", 0.920 — every main cranberry line's record), 170.10
+  g, unflagged; A12 `frozen pineapple chunks` → REWRITE `pineapple`
+  (2346398 "Pineapple, raw", 0.970, every main pineapple line's record —
+  not a rank-as under "pineapple raw", where FNDDS 2709260 ties it and is
+  listed first), 283.50 g, unflagged. Replay (rp43 on a fresh copy of
+  snapshot 20, cache-only; --reverse-parents byte-identical): NO call,
+  pending 0, staleAfter 0, sectionsStale 0; exactly 6 section rows (the six
+  lines) and 5 main rows differ from v45's — tiramisu's and the tart's
+  mascarpone and the three parents routed to a section whose totals moved
+  (the roulade's Espresso-Mascarpone Cream, 601.15 → 2,207.04 kcal; the
+  gluten-free pizza's and the gluten-free cookies' flour blend at 16/42 and
+  8/42, 1,075.82 → 1,654.64 and 537.91 → 827.32 kcal) — each loses its
+  "partial" flag; main buckets counted 13,338 / check 214 / no_grams 17 /
+  no_match 11 / choose_recipe 35; sections complete 131 → 134 of 140 (the
+  gluten-free flour blend, Espresso-Mascarpone Cream, the pavlova's
+  Orange, Cranberry, and Mint Topping); recipes complete 978 → 980 (the
+  roulade, the summer fruit tart); the partial recipes with nothing to
+  review 10 → 9; +5,393.9 kcal per batch on main rows, +3,130.1 on
+  section rows.
 
 **Matcher v41, the composite row** (the owner's 2026-10-05 rulings A1–A10,
 "go with your recommendations"; design_v3, the approved mockup
@@ -3056,7 +3090,11 @@ only, no grams), skinless white fish fillets as Atlantic cod (2684444)
 and mixed fresh herbs as fresh parsley (170416), and crème fraîche as
 heavy cream (2346386), since matcher v38 ya cai as salted mustard cabbage
 (169891, "Cabbage, mustard, salted": "⅓ cup ya cai" is `"1/3 cup · USDA
-portion · approximation (counted as Cabbage, mustard, salted)"`, 42.67 g)
+portion · approximation (counted as Cabbage, mustard, salted)"`, 42.67 g),
+since matcher v45 dairy-free sour cream as imitation sour cream (2705617),
+since matcher v46 mascarpone as heavy cream (2346386), potato starch as
+cornstarch (169698), brown rice flour as white rice flour (790214) and
+nutritional yeast as FNDDS "Yeast" (2710005)
 — and a FRESH oregano, sage,
 tarragon, marjoram or chervil line on its dried spice record (the dried leaf
 is several times as dense per gram, so — the user's ruling of 2026-09-28 —
