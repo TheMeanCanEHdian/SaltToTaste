@@ -3608,6 +3608,14 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — the owner approved the M51 references copy delta
+  (`docs/mockups/v51-references-copy.html`, "i approve the M51 copy"):**
+  the three new strings ship verbatim — the label's non-partial line
+  "Served with {name} — not counted."; the whole-batch row flag
+  "approximate (no amount on the line — the whole batch counted)"; the
+  prose-variation row flag "approximation (counted as {base title}; the
+  variation's changes are not read)". M51 builds the server and app halves
+  in one run and ships them as two commits (the v44 precedent).
 - **2026-10-07 — matcher v48 (batch M48): every printed weight range reads
   its midpoint (prep47 Q1 = (c), re-ruling checkpoint 9 Q5 "upper bound in
   parentheses, midpoint bare" and B2's 2026-07-28 "won't fix, upper bound
