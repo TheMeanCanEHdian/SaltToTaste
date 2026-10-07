@@ -1712,7 +1712,9 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     169394,
     '297.67',
     'counted',
-    '3 × 99 g (printed weight) · approximation (counted as Pepper, banana, raw)',
+    // RE-PIN (M48): the basis names the range (3–4 oz, already read at its
+    // midpoint; grams unchanged).
+    '3 × 99 g (printed 3–4 oz, the midpoint) · approximation (counted as Pepper, banana, raw)',
   ),
   (
     '0729-shakshuka-eggs-in-spicy-tomato-and-roasted-red-pepper-sauce.yaml',

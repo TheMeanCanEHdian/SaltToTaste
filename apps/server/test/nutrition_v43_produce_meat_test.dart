@@ -139,7 +139,9 @@ const _pins = [
     '4–5 pounds leeks, white and light green parts only, halved lengthwise, sliced crosswise 1 inch thick, and rinsed thoroughly (about 11 cups)',
     2709935,
     '898.11',
-    'from 4–5 pound × 0.44 edible · approximate (USDA AH-102 item 1412: leeks, raw → bulb and lower leaf 44 % (35–58))',
+    // RE-PIN (M48): the basis names the range (4–5 pound, already read at its
+    // midpoint; grams unchanged).
+    'from 4–5 pound (the midpoint) × 0.44 edible · approximate (USDA AH-102 item 1412: leeks, raw → bulb and lower leaf 44 % (35–58))',
   ),
   (
     '0181-candied-sweet-potato-casserole.yaml',
@@ -163,7 +165,9 @@ const _pins = [
     '4 ripe but firm Bosc pears (6 to 7 ounces each), peeled, halved, and cored',
     167778,
     '574.93',
-    '4 × 184 g (printed weight) × 0.78 edible · approximate (USDA AH-102 item 1734: pears, raw whole → pared, cored flesh 78 % (40–88))',
+    // RE-PIN (M48): the basis names the range (6–7 oz, already read at its
+    // midpoint; grams unchanged).
+    '4 × 184 g (printed 6–7 oz, the midpoint) × 0.78 edible · approximate (USDA AH-102 item 1734: pears, raw whole → pared, cored flesh 78 % (40–88))',
   ),
   (
     '0015-carrot-ginger-soup.yaml',
@@ -364,48 +368,60 @@ const _pins = [
     9,
     '2 (2½- to 3-pound) racks St. Louis–style spareribs, cut into individual ribs',
     167853,
-    '1578.50',
-    '2 × 1361 g (printed weight) × 0.58 edible · approximate (USDA AH-102 item 1925: pork spareribs, raw → lean and fat meat 58 % (43–71; bones 42))',
+    // RE-PIN (M48): 1578.50 → 1446.96 g, the printed 2½–3 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1446.96',
+    '2 × 1247 g (printed 2½–3 lb, the midpoint) × 0.58 edible · approximate (USDA AH-102 item 1925: pork spareribs, raw → lean and fat meat 58 % (43–71; bones 42))',
   ),
   (
     '0249-roast-fresh-ham.yaml',
     0,
     '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed',
     168226,
-    '2830.41',
-    'from the printed weight × 0.78 edible · approximate (derived from USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so lean and fat meat 78 % (the printed row also trims the fat 18: lean 60 %))',
+    // RE-PIN (M48): 2830.41 → 2476.61 g, the printed 6–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2476.61',
+    'from the printed weight (6–8 lb, the midpoint) × 0.78 edible · approximate (derived from USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so lean and fat meat 78 % (the printed row also trims the fat 18: lean 60 %))',
   ),
   (
     '0251-glazed-spiral-sliced-ham.yaml',
     0,
     '1 (7- to 10-pound) spiral-sliced bone-in half ham',
     169177,
-    '3175.14',
-    'from the printed weight × 0.70 edible · approximate (USDA AH-102 item 1937: cured ham, bone-in, rind-on, raw → lean and fat meat 70 % (60–78); the figure also removes rind 5 and excess fat 15 a spiral-sliced ham may no longer carry)',
+    // RE-PIN (M48): 3175.14 → 2698.87 g, the printed 7–10 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2698.87',
+    'from the printed weight (7–10 lb, the midpoint) × 0.70 edible · approximate (USDA AH-102 item 1937: cured ham, bone-in, rind-on, raw → lean and fat meat 70 % (60–78); the figure also removes rind 5 and excess fat 15 a spiral-sliced ham may no longer carry)',
   ),
   (
     '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml',
     0,
     '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ inch, rib bones frenched',
     172641,
-    '1324.49',
-    '2 × 907 g (printed weight) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    // RE-PIN (M48): 1324.49 → 1241.71 g, the printed 1¾–2 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1241.71',
+    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
   ),
   (
     '0622-grilled-rack-of-lamb.yaml',
     5,
     '2 (1½- to 1¾-pound) racks of lamb (8 ribs each), frenched and trimmed',
     172641,
-    '1158.93',
-    '2 × 794 g (printed weight) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    // RE-PIN (M48): 1158.93 → 1076.15 g, the printed 1½–1¾ lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1076.15',
+    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
   ),
   (
     '1192-braised-lamb-shanks-with-red-wine-and-herbes-de-provence.yaml',
     0,
     '6 (12- to 16-ounce) lamb shanks, trimmed',
     172513,
-    '1905.09',
-    '6 × 454 g (printed weight) × 0.70 edible · approximate (USDA AH-102 item 1339: lamb foreleg (shank), choice, raw → lean and fat meat 70 % (bones 30; limited data))',
+    // RE-PIN (M48): 1905.09 → 1666.95 g, the printed 12–16 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '1666.95',
+    '6 × 397 g (printed 12–16 oz, the midpoint) × 0.70 edible · approximate (USDA AH-102 item 1339: lamb foreleg (shank), choice, raw → lean and fat meat 70 % (bones 30; limited data))',
   ),
   (
     '1171-bulalo-hearty-beef-shank-and-vegetable-soup.yaml',
@@ -420,16 +436,20 @@ const _pins = [
     1,
     '4 (8- to 10-ounce) bone-in rib loin pork chops, ¾ to 1 inch thick, trimmed of excess fat',
     168242,
-    '750.34',
-    '4 × 283 g (printed weight) × 0.66 edible (USDA refuse)',
+    // RE-PIN (M48): 750.34 → 675.31 g, the printed 8–10 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '675.31',
+    '4 × 255 g (printed 8–10 oz, the midpoint) × 0.66 edible (USDA refuse)',
   ),
   (
     '0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml',
     0,
     '1 (6- to 8-pound) bone-in pork butt',
     167849,
-    '2750.20',
-    'from the printed weight × 0.76 edible (USDA refuse)',
+    // RE-PIN (M48): 2750.20 → 2406.42 g, the printed 6–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2406.42',
+    'from the printed weight (6–8 lb, the midpoint) × 0.76 edible (USDA refuse)',
   ),
   (
     '0352-pasta-and-slow-simmered-tomato-sauce-with-meat.yaml',

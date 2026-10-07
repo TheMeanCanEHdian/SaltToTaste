@@ -642,7 +642,9 @@ _moved = [
     null,
     'pork tenderloins',
     168312,
-    '1133.98',
+    // RE-PIN (M48): 1133.98 → 1020.58 g, the printed 1–1¼ lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1020.58',
     'M2',
     'counted',
     true,
@@ -678,7 +680,9 @@ _moved = [
     null,
     'pork tenderloins',
     168312,
-    '907.18',
+    // RE-PIN (M48): 907.18 → 793.79 g, the printed 12–16 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '793.79',
     'M2',
     'counted',
     true,
@@ -690,7 +694,9 @@ _moved = [
     null,
     'pork tenderloins',
     168312,
-    '1360.78',
+    // RE-PIN (M48): 1360.78 → 1247.38 g, the printed 1¼–1½ lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1247.38',
     'M2',
     'counted',
     true,
@@ -1702,7 +1708,9 @@ _moved = [
     null,
     'pork tenderloins',
     168312,
-    '907.18',
+    // RE-PIN (M48): 907.18 → 793.79 g, the printed 12–16 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '793.79',
     'M2',
     'counted',
     true,
@@ -1714,7 +1722,9 @@ _moved = [
     null,
     'pork tenderloins',
     168312,
-    '907.18',
+    // RE-PIN (M48): 907.18 → 793.79 g, the printed 12–16 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '793.79',
     'M2',
     'counted',
     true,
@@ -1726,7 +1736,9 @@ _moved = [
     null,
     'pork tenderloins',
     168312,
-    '1360.78',
+    // RE-PIN (M48): 1360.78 → 1247.38 g, the printed 1¼–1½ lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1247.38',
     'M2',
     'counted',
     true,
@@ -1774,7 +1786,9 @@ _moved = [
     null,
     'skin-on red snapper fillets',
     173698,
-    '907.18',
+    // RE-PIN (M48): 907.18 → 793.79 g, the printed 6–8 oz range at its midpoint
+    // (was its top); the basis names the range.
+    '793.79',
     'M2',
     'counted',
     true,
@@ -1835,7 +1849,9 @@ _moved = [
     null,
     'globe or italian eggplants',
     2685577,
-    '566.99',
+    // RE-PIN (M48): 566.99 → 510.29 g, the printed 8–10 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '510.29',
     'M1',
     'counted',
     true,

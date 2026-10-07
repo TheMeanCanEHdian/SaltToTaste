@@ -2742,6 +2742,55 @@ raw root); `freekeh` answers nothing; `farro` answers only 2710828
 "Farro, pearled, dry, raw" (a 45 g racc, no cup), not whole farro, so
 `whole farro` keeps its v21 words (the owner's label figure is the way
 on).
+
+**Since matcher v48 (batch M48, matcherVersion 47; the owner's 2026-10-07
+re-ruling of checkpoint 9 Q5, prep47 design_v2 §1 Q1 = (c); zero
+requests): every printed weight RANGE reads its midpoint.** Checkpoint 9 Q5 (2026-10-01)
+kept "upper bound in parentheses, midpoint bare" — a convention that began
+as B2's regex miss (2026-07-28, "won't fix, upper bound intended") and read
+the same printed range two ways by spelling alone ("(10 to 12-ounce)" 312
+g a breast, "(10- to 12-ounce)" 340 g). Audit 2 (P1) found 8 of the 10
+sampled ranged lines above the auditors' midpoint (mean +6.1 %, L103's
+"8 (5- to 7-ounce) bone-in chicken thighs" +16.6 %); every auditor and
+calibrator read the midpoint (9 of 9 lines, 4 of 4 recipes). Now one rule
+(grams.dart `_range`): the hyphenated "(5- to 7-ounce)", the fraction "(3½-
+to 4-pound)" / "(8¾ to 10 ounces)", the en dash "(12–22 pounds gross
+weight)" (the paren regex never saw it: it read "22 pounds"), a spaced
+mixed number "(3 ½- to 4-pound)" (folded to "3½"; else ½ to 4 — a single
+"(1 ½-pound)" folds too, 1½ lb, was ½), an ASCII mixed-number bound
+as the editor and other libraries print it ("(3 1/2- to 4-pound)", "(1
+1/4- to 1 1/2-pound)", "(3 1/2–4 pounds)" — the paren's number held no
+space and read "1/2- to 4", ½–4 lb; a single "(3 1/2-pound)" follows, 3½
+lb, was ½; the corpus prints none, so no replay row moves), the
+whole-number "(5 to 6-ounce)" and a bare "1½–2 pounds" all read (low +
+high) ÷ 2; the range switch `rangeWeightsMidpoint` is gone. **Reversed
+bounds keep the larger** — "(14⅔ to 6½ ounces) bread flour" (pane-francese,
+a corpus typo for 16½; 6½ ounces is not 2⅔–3 cups) stays 415.79 g, the
+corpus's only one. One reader serves every amount, so a bare reversed
+amount ("6½–4 ounces" → 6½ oz, basis "from 6 1/2–4 ounce", no midpoint)
+and a reversed count or volume ("3–2 lemons" → 3) keep the larger too
+(v47 read those at the midpoint; the corpus prints none). The figure
+is the arithmetic mean of two printed figures, so **no approximation
+flag**; the `gram_basis` names the range:
+`"8 × 170 g (printed 5–7 oz, the midpoint) × 0.70 edible · approximate
+(USDA AH-102 item 586: …)"` (per unit), `"from the printed weight (12–14
+lb, the midpoint) × 0.65 edible · …"` (the line total), `"from 1 1/2–2
+pound (the midpoint) × 0.70 edible · …"` (a bare amount); a single printed
+weight keeps `"(printed weight)"` / `"from the printed weight"`, and so do
+reversed bounds. Reach (the cache-only replay of snapshot 21, main and
+reverse-parents byte-identical, calls 0): exactly 186 main rows change
+grams (177 hyphenated, 8 fraction "A to B", 1 en dash) and 14 more change
+basis only (7 whole-number "A to B" parens, 7 bare ranges — already at the
+midpoint); 0 section rows, 0 parents, no status, bucket or hold moves;
+−44,132.8 kcal per batch (−1.29 % of the library's 3,425,245): whole birds
+−10,680, boneless roasts −9,991, bone-in roasts/ribs/hams −6,825, bone-in
+poultry parts −6,524, steaks and chops −4,386, fish −2,849, boneless
+poultry −2,420, dry goods −366, produce −92; per recipe (185) the median
+−6.5 % a serving (−1.8 % to −21.8 %; the largest −212.8 kcal a serving).
+L103 lands 952.54 g (the auditor's 953); a 12- to 14-pound turkey 4,137.40
+→ 3,841.87 g; the en-dash turkey 6,501.63 → 5,023.98 g; the "(10- to
+12-ounce)" breasts read their "(10 to 12-ounce)" twin, 923.06 g.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line

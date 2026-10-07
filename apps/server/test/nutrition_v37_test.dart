@@ -831,7 +831,9 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsS = [
     2684444,
     '793.79',
     'counted',
-    '4 × 198 g (printed weight) · approximation (counted as Fish, cod, Atlantic, wild caught, raw)',
+    // RE-PIN (M48): the basis names the range (6–8 oz, already read at its
+    // midpoint; grams unchanged).
+    '4 × 198 g (printed 6–8 oz, the midpoint) · approximation (counted as Fish, cod, Atlantic, wild caught, raw)',
   ),
   // S13 mixed fresh herbs (both keys) on fresh parsley.
   (

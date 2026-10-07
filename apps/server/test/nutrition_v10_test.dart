@@ -843,7 +843,9 @@ void main() {
         await food(171081),
       )!;
       // v43 (Y5): AH-102's 12-lb-and-over dressing ratio × item 2592.
-      expect(turkey.grams, closeTo(14 * 453.592 * 78 / 85 * 0.71, 0.01));
+      // RE-PIN (M48): the "(12- to 14-pound)" bird at its midpoint, 13 lb
+      // (was its top, 14 lb).
+      expect(turkey.grams, closeTo(13 * 453.592 * 78 / 85 * 0.71, 0.01));
       expect(
         turkey.basis,
         endsWith(

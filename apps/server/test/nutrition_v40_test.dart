@@ -190,10 +190,12 @@ _pins = [
     0,
     '1 (3½- to 4-pound) whole chicken, giblets discarded',
     171052,
-    '788.00',
+    // RE-PIN (M48): 788.00 → 738.75 g, the printed 3½–4 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '738.75',
     'counted',
     null,
-    'from the printed weight × 0.43 edible (USDA ready-to-cook yield) · '
+    'from the printed weight (3½–4 lb, the midpoint) × 0.43 edible (USDA ready-to-cook yield) · '
         "approximate (skin discarded except the wings; the bird's meat-only "
         'yield)',
   ),
@@ -202,10 +204,12 @@ _pins = [
     8,
     '1 (3½ to 4-pound) whole chicken, cut into 8 pieces (4 breast pieces, 2 thighs, 2 drumsticks), wings discarded, and trimmed',
     171052,
-    '788.00',
+    // RE-PIN (M48): 788.00 → 738.75 g, the printed 3½–4 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '738.75',
     'counted',
     null,
-    'from the printed weight × 0.43 edible (USDA ready-to-cook yield)',
+    'from the printed weight (3½–4 lb, the midpoint) × 0.43 edible (USDA ready-to-cook yield)',
   ),
   (
     '0004-pressure-cooker-chicken-noodle-soup.yaml',
@@ -332,10 +336,12 @@ _pins = [
     1,
     '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and reserved for gravy',
     171081,
-    '4137.40',
+    // RE-PIN (M48): 4137.40 → 3841.87 g, the printed 12–14 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '3841.87',
     'counted',
     null,
-    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
+    'from the printed weight (12–14 lb, the midpoint) × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   // N3: mussels by weight stay on FNDDS 2706350, held.
   (

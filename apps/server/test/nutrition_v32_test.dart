@@ -245,9 +245,11 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed',
     168226,
     // v43 (Y10: fresh ham shank half × 0.78 (derived, AH-102 item 1930)).
-    '2830.41',
+    // RE-PIN (M48): 2830.41 → 2476.61 g, the printed 6–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2476.61',
     'counted',
-    'from the printed weight × 0.78 edible · approximate (derived from USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so lean and fat meat 78 % (the printed row also trims the fat 18: lean 60 %))',
+    'from the printed weight (6–8 lb, the midpoint) × 0.78 edible · approximate (derived from USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so lean and fat meat 78 % (the printed row also trims the fat 18: lean 60 %))',
   ),
   (
     '1073-wheat-berry-salad-with-radicchio-dried-cherries-and-pecans.yaml',

@@ -635,7 +635,19 @@ const Map<String, String> _synonyms = {
 /// white rice flour 790214 (flagged rank-as reads; the GF flour blend
 /// completes), nutritional yeast flagged on 2710005, frozen cranberries and
 /// frozen pineapple chunks rewritten to the plain fruit (171722, 2346398).
-const int matcherVersion = 46;
+///
+/// v47 (the Matcher v48 commit, batch M48 — the v47 commit's review fixes
+/// moved no landing and kept 46; the owner's 2026-10-07 re-ruling of
+/// checkpoint 9 Q5; zero requests): every printed weight RANGE reads its
+/// midpoint — the hyphenated "(5- to 7-ounce)", the fraction "(8¾ to 10
+/// ounces)", the en dash "(12–22 pounds …)" and a spaced "(3 ½- to
+/// 4-pound)" as the whole-number "(5 to 6-ounce)" and a bare "1½–2 pounds"
+/// already did (grams.dart `_range`; the `rangeWeightsMidpoint` switch is
+/// gone); reversed bounds keep the larger ("(14⅔ to 6½ ounces)", a corpus
+/// typo); the basis names the range, "8 × 170 g (printed 5–7 oz, the
+/// midpoint)", no approximation flag (186 main lines' grams, 14 more
+/// lines' basis).
+const int matcherVersion = 47;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

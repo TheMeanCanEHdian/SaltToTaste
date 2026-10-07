@@ -644,10 +644,18 @@ void main() {
       );
     }
 
-    test('a fraction weight range reads its upper bound until user answer '
-        '#1, like its hyphenated sibling', () {
-      expect(rangeWeightsMidpoint, isFalse);
-      // 4 pounds each (2 racks × 2 pounds).
+    test('a fraction weight range reads its midpoint, like its hyphenated '
+        'sibling (M48; was its upper bound until user answer #1)', () {
+      // RE-PIN (M48): `rangeWeightsMidpoint` (false) is deleted with the
+      // switch; the fraction range now reads what its true value read.
+      expect(
+        parenWeightGrams(
+          '1 (3½ to 4-pound) boneless chuck-eye roast, pulled into 2 pieces '
+          'at the natural seam and fat trimmed',
+        ),
+        closeTo(3.75 * 453.592, 0.01),
+      );
+      // RE-PIN (M48): 3¾ pounds each (2 racks × 1⅞ pounds), was 4.
       const chuck =
           '1 (3½ to 4-pound) boneless chuck-eye roast, pulled into 2 pieces '
           'at the natural seam and fat trimmed';
@@ -658,11 +666,16 @@ void main() {
           '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ '
           'inch, rib bones frenched';
       for (final raw in [chuck, sibling, lamb]) {
-        expect(gramsOf(raw)!.grams, closeTo(4 * 453.592, 0.1), reason: raw);
+        expect(
+          gramsOf(raw)!.grams,
+          closeTo(3.75 * 453.592, 0.1),
+          reason: raw,
+        );
       }
+      // RE-PIN (M48): 7 oz → the midpoint, 6⅛ oz.
       expect(
         gramsOf('¾–1 cup (5¼ to 7 ounces) sugar')!.grams,
-        closeTo(7 * 28.3495, 0.1),
+        closeTo(6.125 * 28.3495, 0.1),
       );
       // The larger bound of a corpus typo ("14⅔ to 6½" for 16½).
       expect(
@@ -719,7 +732,8 @@ void main() {
           gramsOf(
             '4 (1¼- to 1½-pound) Cornish game hens, giblets discarded',
           )!.grams,
-          closeTo(4 * 1.5 * 453.592, 0.1),
+          // RE-PIN (M48): the range at its midpoint, 1⅜ lb (was 1½).
+          closeTo(4 * 1.375 * 453.592, 0.1),
         );
         expect(gramsOf('6 scallions, sliced thin')!.grams, 90);
         // FDC's only mustard seed record is GROUND (170929): prepared

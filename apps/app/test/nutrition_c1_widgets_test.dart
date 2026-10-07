@@ -2169,8 +2169,9 @@ void main() {
         await tester.tap(find.text('oz'));
         await tester.pumpAndSettle();
         // The ham's 2,830.4 g (v43's AH-102 shank-half yield, 0.78) in
-        // ounces: 99.84 → "100".
-        expect(find.text('100'), findsOneWidget);
+        // ounces: 99.84 → "100". RE-PIN (M48): the golden's "(6- to
+        // 8-pound)" ham at its midpoint, 2,476.6 g in ounces: 87.36 → "87".
+        expect(find.text('87'), findsOneWidget);
         await tester.enterText(find.byType(EditableText).last, '100');
         await tester.pumpAndSettle();
         match.value = chicken;

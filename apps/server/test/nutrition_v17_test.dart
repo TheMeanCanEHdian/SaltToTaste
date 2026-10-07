@@ -482,7 +482,9 @@ void main() {
         (171325, '12.40'),
         (167895, '680.39'),
         // v39 (Y1): the turkey-parts class yield (gross until v38).
-        (171093, '1932.00'),
+        // RE-PIN (M48): 1932.00 → 1794.00 g, the printed 6–7 lb range at its
+        // midpoint (was its top); the basis names the range.
+        (171093, '1794.00'),
         (2709798, '1.00'),
       ],
     );
@@ -610,35 +612,45 @@ void main() {
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, cut into individual ribs',
       167853,
       // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
-      1578.50,
+      // RE-PIN (M48): 1578.50 → 1446.96 g, the printed 2½–3 lb range at its
+      // midpoint (was its top); the basis names the range.
+      1446.96,
     ),
     (
       '0614-memphis-style-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed',
       167853,
       // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
-      1578.50,
+      // RE-PIN (M48): 1578.50 → 1446.96 g, the printed 2½–3 lb range at its
+      // midpoint (was its top); the basis names the range.
+      1446.96,
     ),
     (
       '0615-oven-barbecued-spareribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut in half',
       167853,
       // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
-      1578.50,
+      // RE-PIN (M48): 1578.50 → 1446.96 g, the printed 2½–3 lb range at its
+      // midpoint (was its top); the basis names the range.
+      1446.96,
     ),
     (
       '0611-rosticciana-tuscan-grilled-pork-ribs.yaml',
       '2 (2½- to 3-pound) racks St. Louis–style spareribs, trimmed, membrane removed, and each rack cut into 2-rib sections',
       167853,
       // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
-      1578.50,
+      // RE-PIN (M48): 1578.50 → 1446.96 g, the printed 2½–3 lb range at its
+      // midpoint (was its top); the basis names the range.
+      1446.96,
     ),
     (
       '0613-kansas-city-sticky-ribs.yaml',
       '2 (2½- to 3-pound) full racks pork spareribs, trimmed of any large pieces of fat and membrane removed',
       167853,
       // v43 (Y10: spareribs × 0.58 (AH-102 item 1925)).
-      1578.50,
+      // RE-PIN (M48): 1578.50 → 1446.96 g, the printed 2½–3 lb range at its
+      // midpoint (was its top); the basis names the range.
+      1446.96,
     ),
     // pomegranate raw
     (

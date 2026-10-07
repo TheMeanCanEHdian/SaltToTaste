@@ -834,43 +834,39 @@ String _amountText(Amount amount) {
       .trim();
 }
 
-/// USER ANSWER #1 SWITCH (ranges). False (the default until the user
-/// answers) sizes a parenthetical weight range written with a fraction at
-/// its upper bound, as before unicode fractions were read: "(3½ to
-/// 4-pound)" 1,814 g like its sibling "(3½- to 4-pound)", "(8¾ to 10
-/// ounces)" 283 g (audit 3: 4 counted/check lines). True sizes both at the
-/// midpoint (1,701 g; 266 g). Whole-number "(5 to 6-ounce)" keeps its
-/// midpoint and "(6- to 8-ounce)" its upper bound either way — the B2
-/// ruling (2026-07-28) left both as they were.
-const bool rangeWeightsMidpoint = false;
+/// The grams of a parenthetical weight in [raw] (see [_parenWeight]).
+double? parenWeightGrams(String raw) => _parenWeight(raw)?.grams;
 
-/// The grams of a parenthetical weight in [raw] (see [_parenWeight]) under
-/// the range switch [midpoint] — the switch's behaviour, testable both ways.
-double? parenWeightGrams(String raw, {bool midpoint = rangeWeightsMidpoint}) =>
-    _parenWeight(raw, midpoint: midpoint)?.grams;
+double? _quantityValue(String quantity) =>
+    parseQuantity(quantity) ?? _range(quantity)?.value;
 
-double? _quantityValue(String quantity, {bool upper = false}) {
-  final direct = parseQuantity(quantity);
-  if (direct != null) {
-    return direct;
+final _rangePattern = RegExp(
+  r'^\s*(\d+\s+\d+/\d+|\S+?)\s*(?:-|–|to)\s*(\d+\s+\d+/\d+|\S+)\s*$',
+);
+
+/// A range [quantity] — "4-6", "4 to 6", a mixed-number bound "1 1/2–2"
+/// (0471's juice, checkpoint 6), "3–3 1/2" — read at its MIDPOINT, every
+/// spelling (M48, re-ruling checkpoint 9 Q5's "upper bound in parentheses":
+/// the auditors read the midpoint on 9 of 9 ranged lines), with its bounds
+/// as printed ("5–7") for the basis. Reversed bounds keep the larger and
+/// print nothing: "(14⅔ to 6½ ounces) bread flour" is a corpus typo for
+/// 16½, and 6½ ounces is not 2⅔–3 cups. Null when not a range.
+({double value, String? printed})? _range(String quantity) {
+  final match = _rangePattern.firstMatch(quantity);
+  final low = match == null ? null : parseQuantity(match[1]!);
+  final high = match == null ? null : parseQuantity(match[2]!);
+  if (low == null || high == null) {
+    return null;
   }
-  // Ranges take the midpoint ("4-6", "4 to 6"), or the [upper] bound. A
-  // bound may be a mixed number: "1 1/2–2" (0471's juice, checkpoint 6),
-  // "3–3 1/2".
-  final range = RegExp(
-    r'^\s*(\d+\s+\d+/\d+|\S+?)\s*(?:-|–|to)\s*(\d+\s+\d+/\d+|\S+)\s*$',
-  ).firstMatch(quantity);
-  if (range != null) {
-    final low = parseQuantity(range.group(1)!);
-    final high = parseQuantity(range.group(2)!);
-    if (low != null && high != null) {
-      // The larger bound: "(14⅔ to 6½ ounces) bread flour" is a corpus typo
-      // for 16½, and 6½ ounces is not 2⅔–3 cups.
-      return upper ? (low > high ? low : high) : (low + high) / 2;
-    }
-  }
-  return null;
+  return low > high
+      ? (value: low, printed: null)
+      : (value: (low + high) / 2, printed: '${match![1]}–${match[2]}');
 }
+
+/// The printed bounds of a [quantity] read at a range's midpoint ("5–7"),
+/// for the basis (M48); null for a single figure or reversed bounds.
+String? _midpointBounds(String quantity) =>
+    parseQuantity(quantity) == null ? _range(quantity)?.printed : null;
 
 /// The line's volume in mL — its first volume amount — or null.
 double? volumeMlOf(List<Amount> amounts) {
@@ -926,36 +922,40 @@ double? _countQty(List<Amount> amounts) {
 /// "1 potato (about 8 ounces)". The distinction only changes the result when
 /// the line is counted >1 — a trailing total was over-scaled by the count
 /// before ("5 slices … (9 ounces)" read as 5×, a ~5× error).
-({double grams, bool perUnit})? _parenWeight(
-  String raw, {
-  bool midpoint = rangeWeightsMidpoint,
-}) {
+/// A range reads its midpoint ([_range]) and names itself, "5–7 oz" (M48).
+({double grams, bool perUnit, String? range})? _parenWeight(String raw) {
+  // A bound: an ASCII mixed number "3 1/2", as the editor and other
+  // libraries print it (without it "(3 1/2- to 4-pound)" read ½ to 4 at its
+  // midpoint, M48 closer 2), else one token: "3½", "1/2", "4".
+  final number = '(?:\\d+\\s+\\d+/\\d+|[\\d./$vulgarFractionChars]+)';
   final weight = RegExp(
     // Unicode fractions too: "(1¼- to 1½-pound)" Cornish hens read 80 g
     // through a per-item portion, "(3½-pound)" roasts nothing (audit 1). The
     // hyphen before "to" is part of the range: without it "(3½- to
-    // 4-pound)" read only "4-pound", and the midpoint switch never saw it.
-    '([\\d./$vulgarFractionChars]+'
-    '(?:\\s*(?:-?\\s*to|-)\\s*[\\d./$vulgarFractionChars]+)?)\\s*-?\\s*'
+    // 4-pound)" read only "4-pound". The en dash too (M48): "(12–22 pounds
+    // gross weight)" read only "22 pounds".
+    '($number(?:\\s*(?:-?\\s*to|-|–)\\s*$number)?)\\s*-?\\s*'
     r'(ounces?|oz|pounds?|lbs?|grams?|kilograms?|kg)\b',
     caseSensitive: false,
   );
   for (final paren in RegExp(r'\(([^)]*)\)').allMatches(raw)) {
-    final inner = paren.group(1)!;
+    // A mixed number spaced "3 ½" is "3½" (M48: "(3 ½- to 4-pound)",
+    // Pressure-Cooker Pot Roast, would read ½ to 4 at its midpoint).
+    final inner = paren
+        .group(1)!
+        .replaceAllMapped(
+          RegExp('(\\d)\\s+([$vulgarFractionChars])'),
+          (m) => '${m[1]}${m[2]}',
+        );
     final match = weight.firstMatch(inner);
     if (match == null) {
       continue;
     }
-    // "3½- to 4" reads as "3½ to 4". A whole-number hyphenated range
-    // ("6- to 8-ounce") keeps the upper bound it always read (B2).
-    final hyphenated = RegExp(r'-\s*to').hasMatch(match.group(1)!);
+    // "3½- to 4" reads as "3½ to 4".
     final text = match.group(1)!.replaceAll(RegExp(r'-\s*to'), ' to');
-    final fraction = text.contains(RegExp('[$vulgarFractionChars]'));
-    final quantity = _quantityValue(
-      text,
-      upper: fraction ? !midpoint : hyphenated,
-    );
+    final quantity = _quantityValue(text);
     final unit = match.group(2)!.toLowerCase().replaceAll(RegExp(r's$'), '');
+    final printed = _midpointBounds(text);
     final gramsPer = _weightUnitGrams[unit];
     if (quantity == null || gramsPer == null) {
       continue;
@@ -966,7 +966,11 @@ double? _countQty(List<Amount> amounts) {
     final perUnit =
         inner.toLowerCase().contains('each') ||
         !RegExp('[a-z]', caseSensitive: false).hasMatch(before);
-    return (grams: quantity * gramsPer, perUnit: perUnit);
+    return (
+      grams: quantity * gramsPer,
+      perUnit: perUnit,
+      range: printed == null ? null : '$printed ${_unitShort[unit] ?? unit}',
+    );
   }
   // The per-unit weight written in the item with no parenthesis: "1
   // 5-pound boneless pork butt roast" (Indoor Pulled Pork with Sweet and
@@ -983,8 +987,19 @@ double? _countQty(List<Amount> amounts) {
     return null;
   }
   final unit = inItem![2]!.toLowerCase().replaceAll(RegExp(r's$'), '');
-  return (grams: quantity * _weightUnitGrams[unit]!, perUnit: true);
+  return (
+    grams: quantity * _weightUnitGrams[unit]!,
+    perUnit: true,
+    range: null,
+  );
 }
+
+const _unitShort = {
+  'ounce': 'oz',
+  'pound': 'lb',
+  'gram': 'g',
+  'kilogram': 'kg',
+};
 
 /// The piece weight for [normalizedItem]: a key matches on WHOLE words
 /// (key form), and its last word must be the item's head noun — 'apple' is
@@ -3686,10 +3701,12 @@ GramResolution? _resolveGrams({
     final quantity = _quantityValue(amount.quantity);
     final perUnit = _weightUnitGrams[(amount.unit ?? '').toLowerCase()];
     if (quantity != null && perUnit != null) {
+      final midpoint = _midpointBounds(amount.quantity) != null;
       return GramResolution(
         grams: quantity * perUnit,
         source: GramSource.weight,
-        basis: 'from ${_amountText(amount)}',
+        basis:
+            'from ${_amountText(amount)}${midpoint ? ' (the midpoint)' : ''}',
       );
     }
   }
@@ -3707,6 +3724,7 @@ GramResolution? _resolveGrams({
       // written (scaling it by the count is the ~5× "N slices … (X oz)" bug).
       final scaled = paren.perUnit && count != null && count > 1;
       final grams = scaled ? paren.grams * count : paren.grams;
+      final range = paren.range;
       final countLabel = count == null
           ? null
           : (count == count.roundToDouble()
@@ -3715,9 +3733,13 @@ GramResolution? _resolveGrams({
       return GramResolution(
         grams: grams,
         source: GramSource.weight,
+        // M48: a range names itself — "8 × 170 g (printed 5–7 oz, the
+        // midpoint)", "from the printed weight (12–14 lb, the midpoint)".
         basis: scaled
-            ? '$countLabel × ${paren.grams.round()} g (printed weight)'
-            : 'from the printed weight',
+            ? '$countLabel × ${paren.grams.round()} g (printed '
+                  '${range == null ? 'weight' : '$range, the midpoint'})'
+            : 'from the printed weight'
+                  '${range == null ? '' : ' ($range, the midpoint)'}',
       );
     }
     // 1b'. v37 (Z2, Z7): ONE item whose weight the line prints in a comma

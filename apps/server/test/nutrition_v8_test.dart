@@ -851,12 +851,17 @@ void main() {
     });
 
     test("P1: counted hens (Roasted Cornish Game Hens, 0147) are the record's "
-        'own bird, 4 × 336 g; off, 4 × 1½ pounds', () async {
+        'own bird, 4 × 336 g; off, 4 × 1⅜ pounds (M48)', () async {
       final hen = await food(171507);
       final on = gramsOf(hens, hen)!;
       expect((on.grams, on.source), (4 * 336, GramSource.piece));
       expect(on.basis, '4 × 336 g (USDA edible bird portion)');
-      expect(gramsOf(hens, hen, false)!.grams, closeTo(4 * 1.5 * 453.592, 0.1));
+      // RE-PIN (M48): off, the "(1¼- to 1½-pound)" range at its midpoint,
+      // 1⅜ lb (was its top, 1½ lb).
+      expect(
+        gramsOf(hens, hen, false)!.grams,
+        closeTo(4 * 1.375 * 453.592, 0.1),
+      );
       // A turkey is no standard bird: Classic Roast Turkey (0154) never
       // reads 171081's 5,002 g "bird" — since v39 (Y1) its printed weight
       // × the whole-turkey figure (v43 Y5: AH-102's 78/85 × 0.71).
@@ -865,7 +870,8 @@ void main() {
         'reserved for gravy',
         await food(171081),
       )!;
-      expect(turkey.grams, closeTo(14 * 453.592 * 78 / 85 * 0.71, 0.01));
+      // RE-PIN (M48): the "(12- to 14-pound)" bird at its midpoint, 13 lb.
+      expect(turkey.grams, closeTo(13 * 453.592 * 78 / 85 * 0.71, 0.01));
     });
 
     test("a part record's ready-to-cook yield is never read: a whole turkey "
@@ -876,7 +882,8 @@ void main() {
       )!;
       // v39 (Y1): the turkey-parts class figure (the chicken's 0.608),
       // never the record's own breast share of the bird (0.322).
-      expect(breast.grams, closeTo(7 * 453.592 * 276 / 453.59237, 0.01));
+      // RE-PIN (M48): the "(5- to 7-pound)" breast at its midpoint, 6 lb.
+      expect(breast.grams, closeTo(6 * 453.592 * 276 / 453.59237, 0.01));
       expect(
         breast.basis,
         endsWith(
@@ -893,7 +900,8 @@ void main() {
         await food(171093),
       )!;
       // v39 (Y1): the part record's class figure, not its breast share.
-      expect(turkey.grams, closeTo(14 * 453.592 * 276 / 453.59237, 0.01));
+      // RE-PIN (M48): 13 lb, the midpoint (was 14).
+      expect(turkey.grams, closeTo(13 * 453.592 * 276 / 453.59237, 0.01));
     });
 
     test('a yield or drain detail is fetched only for SR Legacy: a '

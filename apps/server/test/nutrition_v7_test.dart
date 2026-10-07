@@ -505,8 +505,8 @@ void main() {
       );
     });
 
-    test('M6: "(3½- to 4-pound)" and "(1¼- to 1½-pound)" are ranges under '
-        'both range-switch values', () {
+    test('M6: "(3½- to 4-pound)" and "(1¼- to 1½-pound)" are ranges, read '
+        'at the midpoint (M48)', () {
       const chuck =
           '1 (3½- to 4-pound) boneless beef chuck-eye roast, pulled into two '
           'pieces at natural seam and trimmed';
@@ -514,27 +514,22 @@ void main() {
       const sibling =
           '1 (3½ to 4-pound) boneless chuck-eye roast, pulled into 2 pieces '
           'at the natural seam and fat trimmed';
-      expect(parenWeightGrams(chuck), closeTo(4 * 453.592, 0.01));
-      expect(parenWeightGrams(hens), closeTo(1.5 * 453.592, 0.01));
-      expect(
-        parenWeightGrams(chuck, midpoint: true),
-        closeTo(3.75 * 453.592, 0.01),
-      );
-      expect(
-        parenWeightGrams(sibling, midpoint: true),
-        closeTo(3.75 * 453.592, 0.01),
-      );
-      expect(
-        parenWeightGrams(hens, midpoint: true),
-        closeTo(1.375 * 453.592, 0.01),
-      );
-      // B2: a whole-number hyphenated range keeps its upper bound.
+      // RE-PIN (M48): the hyphenated fraction range read its upper bound
+      // (4 lb, 1½ lb) before the range switch was retired; now the midpoint.
+      expect(parenWeightGrams(chuck), closeTo(3.75 * 453.592, 0.01));
+      expect(parenWeightGrams(hens), closeTo(1.375 * 453.592, 0.01));
+      // RE-PIN (M48): `midpoint: true` is gone with the switch — the default
+      // read is the midpoint the switch's true value gave.
+      expect(parenWeightGrams(chuck), closeTo(3.75 * 453.592, 0.01));
+      expect(parenWeightGrams(sibling), closeTo(3.75 * 453.592, 0.01));
+      expect(parenWeightGrams(hens), closeTo(1.375 * 453.592, 0.01));
+      // RE-PIN (M48): B2's whole-number hyphenated range kept its upper bound
+      // (8 oz) under either switch value; now the midpoint, 7 oz.
       expect(
         parenWeightGrams(
           '4 (6- to 8-ounce) boneless, skinless chicken breasts, trimmed',
-          midpoint: true,
         ),
-        closeTo(8 * 28.3495, 0.01),
+        closeTo(7 * 28.3495, 0.01),
       );
     });
 

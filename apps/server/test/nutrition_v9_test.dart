@@ -532,9 +532,15 @@ void main() {
         const noodleSoup =
             '1 (4-pound) whole chicken, breast removed, split, and reserved; '
             'remaining chicken cut into 2-inch pieces';
-        for (final raw in [fortyCloves, noodleSoup]) {
+        // RE-PIN (M48): the 40-cloves bird's "(3½- to 4-pound)" reads its
+        // midpoint, 3¾ lb × 0.61 = 1,035 g (was its top, 1,104 g, the
+        // 4-pound noodle-soup bird's figure, which stays).
+        for (final (raw, expected) in [
+          (fortyCloves, 1035.0),
+          (noodleSoup, 1104.0),
+        ]) {
           final grams = gramsOf(raw, chicken)!;
-          expect(grams.grams, closeTo(1104, 0.5), reason: raw);
+          expect(grams.grams, closeTo(expected, 0.5), reason: raw);
           expect(
             grams.basis,
             contains('0.61 edible (USDA ready-to-cook yield)'),

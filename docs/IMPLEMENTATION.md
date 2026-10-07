@@ -3608,6 +3608,29 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — matcher v48 (batch M48): every printed weight range reads
+  its midpoint (prep47 Q1 = (c), re-ruling checkpoint 9 Q5 "upper bound in
+  parentheses, midpoint bare" and B2's 2026-07-28 "won't fix, upper bound
+  intended"; built under the standing authorization).** Kept deviations
+  from the brief, each disclosed by its author and re-measured by the
+  verifier: (1) a spaced mixed number inside a parenthesis is folded
+  ("(3 ½- to 4-pound)" → 3½; without it the regex read "½- to 4" and
+  Pressure-Cooker Pot Roast landed at 2.25 lb — the only such line in the
+  library, so the replay still moves exactly the forecast 200 rows); (2)
+  the reversed-bounds guard lives in the one range reader, so a bare
+  reversed amount, count or volume keeps the larger too (0 corpus rows;
+  pinned on stated synthesized inputs); (3) the paren weight's bound token
+  accepts an ASCII mixed number ("(3 1/2- to 4-pound)", as the editor
+  prints it) — verify round 2's one defect, 0 corpus reach, closed with a
+  pin; (4) **matcherVersion is 47, not 48**: the brief said "the v47
+  commit's + 1" and the v47 commit kept 46 — from here the stamp trails the
+  commit name by one, stated in API.md and the matcher doc entry (re-pinning
+  the seasoning and chraime hashes for a cosmetic 48 was not worth a cycle).
+  Known and left: "(1-1/2-pound)" (a HYPHENATED ASCII mixed number) reads
+  1.0 lb — the reversed pair "1"–"1/2" keeps the larger — because the
+  spelling is ambiguous with a range; no corpus line prints it. Deploy:
+  the version bump stales every recipe; the zero-request sweep recomputes
+  the library (185 recipes change kcal per serving, median −6.5 %).
 - **2026-10-07 — M55, the live step for M52's figures, and the coat/oil
   figures RE-STATED on read FNDDS recipes (design_v2 line 404, critic F8;
   under the standing authorization for new live matches).** The M53

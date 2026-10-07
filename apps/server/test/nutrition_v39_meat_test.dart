@@ -183,8 +183,10 @@ void main() {
         return '${row.fdcId} ${row.grams?.toStringAsFixed(2)} ${row.status}';
       }
 
-      expect(rowOf(provencal), '2646171 802.86 auto');
-      expect(rowOf(teriyaki), '2727567 952.54 auto');
+      // RE-PIN (M48): both "(5- to 6-ounce)" thigh lines at their midpoint,
+      // 8 × 156 g (were 802.86 and 952.54, the top).
+      expect(rowOf(provencal), '2646171 735.95 auto');
+      expect(rowOf(teriyaki), '2727567 873.16 auto');
       expect(rowOf(jambalaya), '2646171 401.43 auto');
       final line = nutritionLines(provencal)[0];
       await applyMatchOverride(db, FixtureProvider(), provencal, 0, {
@@ -193,11 +195,12 @@ void main() {
         'apply_to_all': true,
       });
       // This line keeps what it showed; the key decides the record bought.
-      expect(rowOf(provencal), '2646171 802.86 confirmed');
+      expect(rowOf(provencal), '2646171 735.95 confirmed'); // RE-PIN (M48)
       expect(db.decisionFor(lineKeyOf(line))!.fdcId, 2727567);
       for (var pass = 0; pass < 2; pass++) {
         // As apply_to_all wrote them, then as their next compute derives.
-        expect(rowOf(teriyaki), '2727567 952.54 auto', reason: '$pass');
+        // RE-PIN (M48): 952.54 → 873.16, the midpoint.
+        expect(rowOf(teriyaki), '2727567 873.16 auto', reason: '$pass');
         expect(rowOf(jambalaya), '2646171 401.43 auto', reason: '$pass');
         await matchAndCompute(db, FixtureProvider(), teriyaki);
         await matchAndCompute(db, FixtureProvider(), jambalaya);
@@ -220,7 +223,8 @@ void main() {
         'raw': nutritionLines(teriyaki)[0].raw,
         'fdc_id': 2646171,
       });
-      expect(rowOf(teriyaki), '2646171 802.86 overridden');
+      // RE-PIN (M48): 802.86 → 735.95, the thighs at their midpoint.
+      expect(rowOf(teriyaki), '2646171 735.95 overridden');
     });
   });
 
@@ -335,9 +339,11 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     8,
     '1 (7- to 8-pound) bone-in turkey breast',
     171093,
-    '2208.00',
+    // RE-PIN (M48): 2208.00 → 2070.00 g, the printed 7–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2070.00',
     'counted',
-    'from the printed weight × 0.61 edible · approximate (yield of turkey parts (the chicken figure) from FDC 171447)',
+    'from the printed weight (7–8 lb, the midpoint) × 0.61 edible · approximate (yield of turkey parts (the chicken figure) from FDC 171447)',
   ),
   (
     '0222-best-prime-rib.yaml',
@@ -354,9 +360,11 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     1,
     '4 (10- to 12-ounce) bone-in pork blade chops, 1 inch thick',
     167822,
-    '900.41',
+    // RE-PIN (M48): 900.41 → 825.38 g, the printed 10–12 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '825.38',
     'counted',
-    '4 × 340 g (printed weight) × 0.66 edible · approximate (yield of bone-in pork chops from FDC 168242)',
+    '4 × 312 g (printed 10–12 oz, the midpoint) × 0.66 edible · approximate (yield of bone-in pork chops from FDC 168242)',
   ),
   (
     '0089-braised-oxtails-with-white-beans-tomatoes-and-aleppo-pepper.yaml',
@@ -390,18 +398,22 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     1,
     '4 (8- to 10-ounce) bone-in rib loin pork chops, ¾ to 1 inch thick, trimmed of excess fat',
     168242,
-    '750.34',
+    // RE-PIN (M48): 750.34 → 675.31 g, the printed 8–10 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '675.31',
     'counted',
-    '4 × 283 g (printed weight) × 0.66 edible (USDA refuse)',
+    '4 × 255 g (printed 8–10 oz, the midpoint) × 0.66 edible (USDA refuse)',
   ),
   (
     '0637-grilled-lemon-chicken-with-rosemary.yaml',
     0,
     '1 (3½- to 4-pound) whole chicken, giblets discarded',
     171447,
-    '1104.00',
+    // RE-PIN (M48): 1104.00 → 1035.00 g, the printed 3½–4 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1035.00',
     'counted',
-    'from the printed weight × 0.61 edible (USDA ready-to-cook yield)',
+    'from the printed weight (3½–4 lb, the midpoint) × 0.61 edible (USDA ready-to-cook yield)',
   ),
   (
     '0150-oven-fried-chicken.yaml',
@@ -521,18 +533,22 @@ const List<(String, int, String, int?, String?, String, String?)> _inRecipe = [
     0,
     '4 (12- to 16-ounce) strip or rib-eye steaks, with or without bone, 1¼ to 1½ inches thick',
     173403,
-    '1814.37',
+    // RE-PIN (M48): 1814.37 → 1587.57 g, the printed 12–16 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '1587.57',
     'counted',
-    '4 × 454 g (printed weight) · approximate (gross weight, no USDA refuse portion)',
+    '4 × 397 g (printed 12–16 oz, the midpoint) · approximate (gross weight, no USDA refuse portion)',
   ),
   (
     '0154-classic-roast-turkey.yaml',
     1,
     '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and reserved for gravy',
     171081,
-    '4137.40',
+    // RE-PIN (M48): 4137.40 → 3841.87 g, the printed 12–14 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '3841.87',
     'counted',
-    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
+    'from the printed weight (12–14 lb, the midpoint) × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   (
     '0279-crispy-salt-and-pepper-shrimp.yaml',
@@ -548,18 +564,22 @@ const List<(String, int, String, int?, String?, String, String?)> _inRecipe = [
     0,
     '8 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed',
     2646171,
-    '802.86',
+    // RE-PIN (M48): 802.86 → 735.95 g, the printed 5–6 oz range at its midpoint
+    // (was its top); the basis names the range.
+    '735.95',
     'counted',
-    '8 × 170 g (printed weight) $_thighMeat',
+    '8 × 156 g (printed 5–6 oz, the midpoint) $_thighMeat',
   ),
   (
     '0461-simplified-cassoulet-with-pork-and-kielbasa.yaml',
     2,
     '10 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed and skin removed',
     2646171,
-    '1003.57',
+    // RE-PIN (M48): 1003.57 → 919.94 g, the printed 5–6 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '919.94',
     'counted',
-    '10 × 170 g (printed weight) $_thighMeat',
+    '10 × 156 g (printed 5–6 oz, the midpoint) $_thighMeat',
   ),
   (
     '0634-barbecued-pulled-chicken.yaml',
@@ -577,7 +597,9 @@ const List<(String, int, String, int?, String?, String, String?)> _inRecipe = [
     172378,
     '529.41',
     'counted',
-    "from 1 1/2–2 pound × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
+    // RE-PIN (M48): the basis names the range (1 1/2–2 pound, already read at
+    // its midpoint; grams unchanged).
+    "from 1 1/2–2 pound (the midpoint) × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
   ),
 ];
 

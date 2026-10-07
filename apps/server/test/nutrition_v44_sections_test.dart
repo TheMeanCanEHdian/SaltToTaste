@@ -942,9 +942,13 @@ void main() {
             '4 (6- to 8-ounce) boneless, skinless chicken breasts, trimmed',
             2646170,
             breast,
-            '907.18',
+            // RE-PIN (M48): 907.18 → 793.79 g, the printed 6–8 oz range at
+            // its midpoint (was its top); the basis names the range. (A
+            // variation section no main line routes to: not among the
+            // replay's 140 child sections.)
+            '793.79',
             'auto',
-            '4 × 227 g (printed weight)',
+            '4 × 198 g (printed 6–8 oz, the midpoint)',
           ),
           (
             rice,
@@ -953,9 +957,13 @@ void main() {
             '4 (6- to 8-ounce) boneless, skinless chicken breasts, trimmed',
             2646170,
             breast,
-            '907.18',
+            // RE-PIN (M48): 907.18 → 793.79 g, the printed 6–8 oz range at
+            // its midpoint (was its top); the basis names the range. (A
+            // variation section no main line routes to: not among the
+            // replay's 140 child sections.)
+            '793.79',
             'auto',
-            '4 × 227 g (printed weight)',
+            '4 × 198 g (printed 6–8 oz, the midpoint)',
           ),
           // S5 — "green thai" on J6's 'thai'; S7 — the counted oranges.
           (

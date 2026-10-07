@@ -79,15 +79,17 @@ void main() {
         return '${row.fdcId} ${row.grams?.toStringAsFixed(2)} ${row.status}';
       }
 
-      // Left on the skin-on record: meat and skin.
-      expect(rowOf(), '2727567 952.54 auto');
+      // Left on the skin-on record: meat and skin. RE-PIN (M48): the
+      // "(5- to 6-ounce)" thighs at their midpoint (was 952.54, the top).
+      expect(rowOf(), '2727567 873.16 auto');
       await applyMatchOverride(db, FixtureProvider(), recipe, 0, {
         'raw': line.raw,
         'fdc_id': 2646171,
       });
       // Picked onto the meat-only record: 586's meat 59, not v39's skin
-      // trip (meat and skin grams on a meat record).
-      expect(rowOf(), '2646171 802.86 overridden');
+      // trip (meat and skin grams on a meat record). RE-PIN (M48): at the
+      // midpoint, 8 × 156 g (was 802.86, 8 × 170 g); the basis names it.
+      expect(rowOf(), '2646171 735.95 overridden');
       expect(
         gramBasisFor(
           db,
@@ -95,7 +97,7 @@ void main() {
           db.ingredientMatchesFor('r').single,
           recipe: recipe,
         ),
-        '8 × 170 g (printed weight) × 0.59 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat 59 % (48–68))',
+        '8 × 156 g (printed 5–6 oz, the midpoint) × 0.59 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat 59 % (48–68))',
       );
     });
 
@@ -182,16 +184,20 @@ const List<(String, int, String, int, String, String)> _pins = [
     0,
     '8 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed',
     2646171,
-    '802.86',
-    '8 × 170 g (printed weight) × 0.59 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat 59 % (48–68))',
+    // RE-PIN (M48): 802.86 → 735.95 g, the printed 5–6 oz range at its midpoint
+    // (was its top); the basis names the range.
+    '735.95',
+    '8 × 156 g (printed 5–6 oz, the midpoint) × 0.59 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat 59 % (48–68))',
   ),
   (
     '0461-simplified-cassoulet-with-pork-and-kielbasa.yaml',
     2,
     '10 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed and skin removed',
     2646171,
-    '1003.57',
-    '10 × 170 g (printed weight) × 0.59 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat 59 % (48–68))',
+    // RE-PIN (M48): 1003.57 → 919.94 g, the printed 5–6 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '919.94',
+    '10 × 156 g (printed 5–6 oz, the midpoint) × 0.59 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat 59 % (48–68))',
   ),
   (
     '0634-barbecued-pulled-chicken.yaml',
@@ -258,16 +264,20 @@ const List<(String, int, String, int, String, String)> _pins = [
     0,
     '4 (10- to 12-ounce) bone-in chicken breasts, trimmed',
     2727569,
-    '1006.97',
-    '4 × 340 g (printed weight) × 0.74 edible · approximate (USDA AH-102 item 584: chicken breast, raw → meat and skin 74 % (59–84))',
+    // RE-PIN (M48): 1006.97 → 923.06 g, the printed 10–12 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '923.06',
+    '4 × 312 g (printed 10–12 oz, the midpoint) × 0.74 edible · approximate (USDA AH-102 item 584: chicken breast, raw → meat and skin 74 % (59–84))',
   ),
   (
     '0524-chicken-teriyaki.yaml',
     0,
     '8 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed',
     2727567,
-    '952.54',
-    '8 × 170 g (printed weight) × 0.70 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat and skin 70 % (63–81))',
+    // RE-PIN (M48): 952.54 → 873.16 g, the printed 5–6 oz range at its midpoint
+    // (was its top); the basis names the range.
+    '873.16',
+    '8 × 156 g (printed 5–6 oz, the midpoint) × 0.70 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat and skin 70 % (63–81))',
   ),
   (
     '0630-grilled-spice-rubbed-chicken-drumsticks.yaml',
@@ -300,7 +310,9 @@ const List<(String, int, String, int, String, String)> _pins = [
     '1½–2 pounds chicken leg quarters, separated into drumsticks and thighs, trimmed',
     172378,
     '529.41',
-    "from 1 1/2–2 pound × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
+    // RE-PIN (M48): the basis names the range (1 1/2–2 pound, already read at
+    // its midpoint; grams unchanged).
+    "from 1 1/2–2 pound (the midpoint) × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
   ),
   (
     '0631-peri-peri-grilled-chicken.yaml',
@@ -316,7 +328,9 @@ const List<(String, int, String, int, String, String)> _pins = [
     '2½–3 pounds bone-in split chicken breasts and/or leg quarters, trimmed',
     2727569,
     '870.99',
-    "from 2 1/2–3 pound × 0.70 edible · approximate (derived from USDA AH-102 items 584–586 by 583's carcass shares: pieces (breast, thigh, drumstick), raw → meat and skin 69.8 %)",
+    // RE-PIN (M48): the basis names the range (2 1/2–3 pound, already read at
+    // its midpoint; grams unchanged).
+    "from 2 1/2–3 pound (the midpoint) × 0.70 edible · approximate (derived from USDA AH-102 items 584–586 by 583's carcass shares: pieces (breast, thigh, drumstick), raw → meat and skin 69.8 %)",
   ),
   (
     '0569-tandoori-chicken.yaml',
@@ -332,24 +346,30 @@ const List<(String, int, String, int, String, String)> _pins = [
     1,
     '1 (12- to 14-pound) turkey; giblets, neck, and tailpiece removed and reserved for gravy',
     171081,
-    '4137.40',
-    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
+    // RE-PIN (M48): 4137.40 → 3841.87 g, the printed 12–14 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '3841.87',
+    'from the printed weight (12–14 lb, the midpoint) × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   (
     '0155-roast-turkey-for-a-crowd.yaml',
     6,
     '1 (18- to 22-pound) frozen Butterball or kosher turkey, fully thawed; giblets, neck, and tailpiece removed and reserved for gravy',
     171081,
-    '6501.63',
-    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
+    // RE-PIN (M48): 6501.63 → 5910.57 g, the printed 18–22 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '5910.57',
+    'from the printed weight (18–22 lb, the midpoint) × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   (
     '0169-roasted-brined-turkey.yaml',
     1,
     '1 turkey (12–22 pounds gross weight), rinsed thoroughly, giblets and neck reserved for gravy, if making',
     171081,
-    '6501.63',
-    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
+    // RE-PIN (M48): 6501.63 → 5023.98 g, the printed 12–22 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '5023.98',
+    'from the printed weight (12–22 lb, the midpoint) × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   // Y6: turkey parts.
   (
@@ -373,8 +393,10 @@ const List<(String, int, String, int, String, String)> _pins = [
     12,
     '4 (1½- to 2-pound) turkey leg quarters, trimmed',
     171533,
-    '2576.40',
-    '4 × 907 g (printed weight) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    // RE-PIN (M48): 2576.40 → 2254.35 g, the printed 1½–2 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2254.35',
+    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
   ),
   (
     '0309-juicy-grilled-turkey-burgers.yaml',
@@ -398,8 +420,10 @@ const List<(String, int, String, int, String, String)> _pins = [
     2,
     '1 (3½- to 4-pound) whole chicken, giblets discarded',
     171447,
-    '1104.00',
-    'from the printed weight × 0.61 edible (USDA ready-to-cook yield)',
+    // RE-PIN (M48): 1104.00 → 1035.00 g, the printed 3½–4 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '1035.00',
+    'from the printed weight (3½–4 lb, the midpoint) × 0.61 edible (USDA ready-to-cook yield)',
   ),
   (
     '0004-pressure-cooker-chicken-noodle-soup.yaml',
@@ -414,8 +438,10 @@ const List<(String, int, String, int, String, String)> _pins = [
     0,
     '1 (3½- to 4-pound) whole chicken, giblets discarded',
     171052,
-    '788.00',
-    "from the printed weight × 0.43 edible (USDA ready-to-cook yield) · approximate (skin discarded except the wings; the bird's meat-only yield)",
+    // RE-PIN (M48): 788.00 → 738.75 g, the printed 3½–4 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '738.75',
+    "from the printed weight (3½–4 lb, the midpoint) × 0.43 edible (USDA ready-to-cook yield) · approximate (skin discarded except the wings; the bird's meat-only yield)",
   ),
   (
     '0150-oven-fried-chicken.yaml',
@@ -438,7 +464,9 @@ const List<(String, int, String, int, String, String)> _pins = [
     8,
     '1 (7- to 8-pound) bone-in turkey breast',
     171093,
-    '2208.00',
-    'from the printed weight × 0.61 edible · approximate (yield of turkey parts (the chicken figure) from FDC 171447)',
+    // RE-PIN (M48): 2208.00 → 2070.00 g, the printed 7–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2070.00',
+    'from the printed weight (7–8 lb, the midpoint) × 0.61 edible · approximate (yield of turkey parts (the chicken figure) from FDC 171447)',
   ),
 ];

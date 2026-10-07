@@ -597,7 +597,10 @@ void main() {
             normalizedItem: normalizeItem(parsed.item ?? hamLine),
             raw: hamLine,
           )?.basis,
-          'from the printed weight · no edible yield read',
+          // RE-PIN (M48): the basis names the 6–8 lb range read at its
+          // midpoint (was 'from the printed weight · no edible yield read').
+          'from the printed weight (6–8 lb, the midpoint) · no edible yield '
+          'read',
         );
         final db = tempDb();
         final r = recipeOf(db, 'r1', [
@@ -611,13 +614,14 @@ void main() {
         expect((ham.fdcId, ham.dataType), (168226, 'SR Legacy'));
         expect(db.fdcFoodCacheGet(168226), isNotNull);
         // v39 (Y1): approximate at its class yield (gross until v38); v43
-        // (Y10): the shank half's derived AH-102 yield.
+        // (Y10): the shank half's derived AH-102 yield. RE-PIN (M48): the
+        // basis names the 6–8 lb range read at its midpoint.
         expect(
           gramBasisFor(db, lines[0], ham),
-          'from the printed weight × 0.78 edible · approximate (derived from '
-          'USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so '
-          'lean and fat meat 78 % (the printed row also trims the fat 18: '
-          'lean 60 %))',
+          'from the printed weight (6–8 lb, the midpoint) × 0.78 edible · '
+          'approximate (derived from USDA AH-102 item 1930: fresh ham shank '
+          'half, raw → bones 22 %, so lean and fat meat 78 % (the printed row '
+          'also trims the fat 18: lean 60 %))',
         );
         final breast = rowOf(db, 'r1', 1);
         expect((breast.fdcId, breast.dataType), (2727569, 'Foundation'));

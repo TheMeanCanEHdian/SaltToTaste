@@ -189,9 +189,11 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     0,
     '1 (6- to 8-pound) bone-in Boston butt roast',
     167849,
-    '2750.20',
+    // RE-PIN (M48): 2750.20 → 2406.42 g, the printed 6–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2406.42',
     'counted',
-    'from the printed weight × 0.76 edible (USDA refuse)',
+    'from the printed weight (6–8 lb, the midpoint) × 0.76 edible (USDA refuse)',
   ),
   (
     '1147-fresh-bulk-sausage.yaml',
@@ -244,9 +246,11 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     0,
     '1 (6- to 8-pound) butterflied leg of lamb',
     174315,
-    '3628.74',
+    // RE-PIN (M48): 3628.74 → 3175.14 g, the printed 6–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '3175.14',
     'counted',
-    'from the printed weight',
+    'from the printed weight (6–8 lb, the midpoint)',
   ),
   (
     '0620-grilled-lamb-kebabs.yaml',
@@ -271,27 +275,33 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     5,
     '4 (6- to 8-ounce) flat-iron steaks, ¾ to 1 inch thick, trimmed',
     172125,
-    '907.18',
+    // RE-PIN (M48): 907.18 → 793.79 g, the printed 6–8 oz range at its midpoint
+    // (was its top); the basis names the range.
+    '793.79',
     'counted',
-    '4 × 227 g (printed weight)',
+    '4 × 198 g (printed 6–8 oz, the midpoint)',
   ),
   (
     '0155-roast-turkey-for-a-crowd.yaml',
     6,
     '1 (18- to 22-pound) frozen Butterball or kosher turkey, fully thawed; giblets, neck, and tailpiece removed and reserved for gravy',
     171081,
-    '6501.63',
+    // RE-PIN (M48): 6501.63 → 5910.57 g, the printed 18–22 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '5910.57',
     'counted',
-    'from the printed weight × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
+    'from the printed weight (18–22 lb, the midpoint) × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
   (
     '0257-pan-seared-salmon-steaks.yaml',
     1,
     '4 (8- to 10-ounce) salmon steaks, ¾ to 1 inch thick',
     2706284,
-    '1133.98',
+    // RE-PIN (M48): 1133.98 → 1020.58 g, the printed 8–10 oz range at its
+    // midpoint (was its top); the basis names the range.
+    '1020.58',
     'counted',
-    '4 × 283 g (printed weight)',
+    '4 × 255 g (printed 8–10 oz, the midpoint)',
   ),
   (
     '0264-roasted-whole-side-of-salmon.yaml',
@@ -325,9 +335,11 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     12,
     '4 (1½- to 2-pound) turkey leg quarters, trimmed',
     171533,
-    '2576.40',
+    // RE-PIN (M48): 2576.40 → 2254.35 g, the printed 1½–2 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2254.35',
     'counted',
-    '4 × 907 g (printed weight) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
   ),
   (
     '0249-roast-fresh-ham.yaml',
@@ -335,9 +347,11 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     '1 (6- to 8-pound) bone-in fresh half ham with skin, preferably shank end, rinsed',
     168226,
     // v43 (Y10: fresh ham shank half × 0.78 (derived, AH-102 item 1930)).
-    '2830.41',
+    // RE-PIN (M48): 2830.41 → 2476.61 g, the printed 6–8 lb range at its
+    // midpoint (was its top); the basis names the range.
+    '2476.61',
     'counted',
-    'from the printed weight × 0.78 edible · approximate (derived from USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so lean and fat meat 78 % (the printed row also trims the fat 18: lean 60 %))',
+    'from the printed weight (6–8 lb, the midpoint) × 0.78 edible · approximate (derived from USDA AH-102 item 1930: fresh ham shank half, raw → bones 22 %, so lean and fat meat 78 % (the printed row also trims the fat 18: lean 60 %))',
   ),
   (
     '0490-spicy-pork-tacos-al-pastor.yaml',
