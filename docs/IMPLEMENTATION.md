@@ -3608,6 +3608,18 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — Q18 SKIPPED for this session (the owner: the focus is the
+  matcher, not corpus completeness).** The extraction left 269 of the 403
+  subsections that carry ingredient lines (in 160 host recipes) and 26
+  whole recipes without their direction paragraph, although the EPUB prints
+  it (the pupusas' Curtido: "Toss slaw, then drain" is in the book, not in
+  the YAML). This is a corpus-completeness gap, not a matcher defect: no
+  step-reading rule can fire inside such a section, so its lines count on
+  the ingredient data alone. The batches proceed unchanged, each
+  step-reading commit labelled "pre-Q18"; future audit samples mark lines
+  in step-less sections "no steps in the corpus" so they are not scored as
+  engine errors. Reopen when the corpus is re-extracted (the guards of
+  design_v2 §1 Q18 apply then).
 - **2026-10-08 — the prep48 design pass on audit 3's patterns
   (`.claude/diag/2026-10-08/prep48/design_v2.md`; five planners, a critic
   with 16 findings all folded) — the owner questions DECIDED under the
