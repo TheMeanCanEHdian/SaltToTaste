@@ -535,9 +535,15 @@ void main() {
     );
   });
 
+  // RE-PIN (M51 batch, v52 app half): the approved role copy
+  // (docs/mockups/v49-two-part-rows-copy.html §3, the owner 2026-10-07)
+  // replaces closer round 1's interim guard — each pair reads its own
+  // header and suffixes, by role (was the plain "matched to two records:"
+  // with no suffix); the bacon unchanged; an unknown pair the plain header.
   testWidgets('a v49 zest-and-juice row and a half-drained can row never '
-      "read as the bacon: the cooked-and-drained words are role kept_fat's "
-      '(closer round 1, D4)', (tester) async {
+      "read as the bacon: each reads its own role copy; the bacon's words "
+      'stay role kept_fat\'s; an unknown pair reads the plain header '
+      '(closer round 1, D4; the approved v49 role copy)', (tester) async {
     final items = [
       for (final item in golden('nutrition_matches_rules')['items']! as List)
         item as Map<String, dynamic>,
@@ -545,12 +551,39 @@ void main() {
     final bacon = items.firstWhere(
       (i) => ((i['match'] as Map?)?['parts'] as List?)?.isNotEmpty ?? false,
     );
+    // Each suffix sits beside ITS OWN record — keyed on the part's role,
+    // never its position (verifier round 1, D2): the Wrap that renders a
+    // part holds that part's suffix and no other.
+    void suffixBeside(String part, String? suffix, List<String> all) {
+      final wrap = find
+          .ancestor(of: find.text(part), matching: find.byType(Wrap))
+          .first;
+      for (final other in all) {
+        expect(
+          find.descendant(of: wrap, matching: find.text(other)),
+          other == suffix ? findsOneWidget : findsNothing,
+          reason: '$part — $other',
+        );
+      }
+    }
+
     await pump(tester, IngredientMatch.fromJson(bacon));
     expect(
       find.text('matched to two records, cooked and drained:'),
       findsOneWidget,
     );
     expect(find.text('· kept in the pan'), findsOneWidget);
+    // The golden's first two-part row (position 11): the pancetta, cooked
+    // 18.71 g + its kept fat 14.49 g.
+    expect(bacon['raw'], '2 ounces pancetta, cut into ½-inch pieces');
+    suffixBeside(
+      '19 g · Pork, cured, bacon, pre-sliced, cooked, pan-fried',
+      null,
+      ['· kept in the pan'],
+    );
+    suffixBeside('+ 14 g · Animal fat, bacon grease', '· kept in the pan', [
+      '· kept in the pan',
+    ]);
     // The v49 replay's rows (rp43 on snapshot 21) of two real corpus lines
     // — Crispy Orange Beef (0536) line 3 and Espinacas con Garbanzos (1075)
     // line 1 — on the golden row's wire shape.
@@ -562,7 +595,7 @@ void main() {
     const chickpeas =
         'Chickpeas (garbanzo beans, bengal gram), canned, sodium added, '
         'drained and rinsed';
-    for (final (raw, match, second) in [
+    for (final (raw, match, first, second, header, suffixes) in [
       (
         '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), '
             'plus ¼ cup juice (2 oranges)',
@@ -595,8 +628,11 @@ void main() {
             },
           ],
         },
+        '24 g · Orange peel, raw',
         "+ 62 g · Orange juice, raw (Includes foods for USDA's Food "
             'Distribution Program)',
+        'matched to two records, the zest and the juice:',
+        ['· the zest', '· the juice'],
       ),
       (
         '2 (15-ounce) cans chickpeas (1 can drained, 1 can undrained)',
@@ -631,12 +667,19 @@ void main() {
             },
           ],
         },
+        '240 g · $chickpeas',
         '+ 425 g · Chickpeas (garbanzo beans, bengal gram), mature seeds, '
             'canned, solids and liquids',
+        'matched to two records, drained and with its liquid:',
+        ['· drained', '· with its liquid'],
       ),
     ]) {
       await pump(tester, IngredientMatch.fromJson(row(raw, match)));
-      expect(find.text('matched to two records:'), findsOneWidget, reason: raw);
+      expect(find.text(header), findsOneWidget, reason: raw);
+      expect(find.text('matched to two records:'), findsNothing, reason: raw);
+      for (final suffix in suffixes) {
+        expect(find.text(suffix), findsOneWidget, reason: suffix);
+      }
       expect(
         find.text('matched to two records, cooked and drained:'),
         findsNothing,
@@ -644,6 +687,89 @@ void main() {
       );
       expect(find.text('· kept in the pan'), findsNothing, reason: raw);
       expect(find.text(second), findsOneWidget, reason: raw);
+      suffixBeside(first, suffixes.first, suffixes);
+      suffixBeside(second, suffixes.last, suffixes);
+    }
+    // STATED SYNTHESIZED: the orange row with its parts in the other order
+    // (the juice first) — the same header, each suffix still beside its
+    // own record.
+    const juice =
+        "Orange juice, raw (Includes foods for USDA's Food Distribution "
+        'Program)';
+    await pump(
+      tester,
+      IngredientMatch.fromJson(
+        row(
+          '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), '
+          'plus ¼ cup juice (2 oranges)',
+          {
+            'fdc_id': 169098,
+            'description': juice,
+            'parts': [
+              {
+                'fdc_id': 169098,
+                'description': juice,
+                'data_type': 'SR Legacy',
+                'grams': 62.0,
+                'role': 'juice',
+              },
+              {
+                'fdc_id': 169103,
+                'description': 'Orange peel, raw',
+                'data_type': 'SR Legacy',
+                'grams': 24.0,
+                'role': 'zest',
+              },
+            ],
+          },
+        ),
+      ),
+    );
+    expect(
+      find.text('matched to two records, the zest and the juice:'),
+      findsOneWidget,
+    );
+    suffixBeside('62 g · $juice', '· the juice', ['· the zest', '· the juice']);
+    suffixBeside('+ 24 g · Orange peel, raw', '· the zest', [
+      '· the zest',
+      '· the juice',
+    ]);
+    // STATED SYNTHESIZED: the orange row's juice part given the can's
+    // `undrained` role — zest · undrained, a pair no rule writes.
+    final orange = row(
+      '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), '
+      'plus ¼ cup juice (2 oranges)',
+      {
+        'parts': [
+          {
+            'fdc_id': 169103,
+            'description': 'Orange peel, raw',
+            'data_type': 'SR Legacy',
+            'grams': 24.0,
+            'role': 'zest',
+          },
+          {
+            'fdc_id': 169098,
+            'description':
+                "Orange juice, raw (Includes foods for USDA's Food "
+                'Distribution Program)',
+            'data_type': 'SR Legacy',
+            'grams': 62.0,
+            'role': 'undrained',
+          },
+        ],
+      },
+    );
+    await pump(tester, IngredientMatch.fromJson(orange));
+    expect(find.text('matched to two records:'), findsOneWidget);
+    for (final suffix in [
+      '· the zest',
+      '· the juice',
+      '· drained',
+      '· with its liquid',
+      '· kept in the pan',
+    ]) {
+      expect(find.text(suffix), findsNothing, reason: suffix);
     }
   });
 }

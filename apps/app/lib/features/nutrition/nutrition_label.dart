@@ -87,6 +87,13 @@ class NutritionPanel extends StatelessWidget {
             includes,
             style: const TextStyle(fontSize: 11, color: SaltColors.muted),
           ),
+        // What the dish is served with (v52, rule SW): not counted, and
+        // never a Partial line — the recipe reads complete without it.
+        for (final line in servedWithLines(nutrition))
+          Text(
+            line,
+            style: const TextStyle(fontSize: 11, color: SaltColors.muted),
+          ),
         if (state.error != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -265,6 +272,14 @@ String? includesLine(RecipeNutrition nutrition) {
   ].join(', ');
   return 'Includes $n ${n == 1 ? 'recipe' : 'recipes'}: $titles';
 }
+
+/// The label's served-with lines (v52, rule SW; the approved copy
+/// docs/mockups/v51-references-copy.html §4): one per reference the dish
+/// is served with, never a [partialLines] line.
+List<String> servedWithLines(RecipeNutrition nutrition) => [
+  for (final served in nutrition.servedWith)
+    'Served with ${served.name} — not counted.',
+];
 
 /// The label's partial lines (v41, the copy sheet; A4's reasons): each
 /// reference line that keeps the totals from being whole, and why.

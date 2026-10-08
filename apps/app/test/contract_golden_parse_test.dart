@@ -7,6 +7,7 @@ import 'package:salt_app/core/api/nutrition_repository.dart';
 import 'package:salt_app/core/api/recipe_repository.dart';
 import 'package:salt_app/core/api/tags_repository.dart';
 import 'package:salt_app/features/nutrition/match_fix_panel.dart';
+import 'package:salt_app/features/nutrition/nutrition_label.dart';
 
 import 'support/contract_goldens.dart';
 
@@ -1027,6 +1028,9 @@ void main() {
         ('chraime', 'Tabil', 'Tabil', null),
       );
 
+      // RE-PIN (M51 batch, v52, rule PV): the prose dough counts its base,
+      // the sibling Basic Single-Crust Pie Dough (was not_routed,
+      // no_ingredients, section "Single-Crust Pie Dough for Custard Pies").
       final prose = (await row(
         'nutrition_matches_section_prose',
         'lemon-meringue-pie',
@@ -1035,9 +1039,9 @@ void main() {
       expect(
         (prose.state, prose.reason, prose.section, prose.hostTitle),
         (
-          'not_routed',
-          'no_ingredients',
-          'Single-Crust Pie Dough for Custard Pies',
+          'routed',
+          null,
+          'Basic Single-Crust Pie Dough',
           'Basic Double-Crust Pie Dough',
         ),
       );
@@ -1070,16 +1074,22 @@ void main() {
           flag: null,
         ),
       ]);
-      expect(
-        [
-          for (final p in (await label(
-            'nutrition_section_prose',
-            'lemon-meringue-pie',
-          )).partial)
-            (p.kind, p.reason),
-        ],
-        [('not_routed', 'no_ingredients')],
+      // RE-PIN (M51 batch, v52, rule PV): no partial line (was
+      // [('not_routed', 'no_ingredients')]); the base is included, flagged.
+      final lemon = await label(
+        'nutrition_section_prose',
+        'lemon-meringue-pie',
       );
+      expect(lemon.partial, isEmpty);
+      expect(lemon.includes, [
+        (
+          slug: 'basic-double-crust-pie-dough',
+          title: 'Basic Single-Crust Pie Dough',
+          section: 'Basic Single-Crust Pie Dough',
+          hostTitle: 'Basic Double-Crust Pie Dough',
+          flag: 'approximation',
+        ),
+      ]);
 
       final queue = await RecipeRepository(
         dio: goldenDio(golden('nutrition_review_section')),
@@ -1100,6 +1110,82 @@ void main() {
       expect(
         [for (final i in queue.items.skip(1)) i.section],
         [null, null, null, null, null],
+      );
+    });
+
+    test('v52: served_with, the whole-batch and prose-variation flags parse '
+        'from the real captured bodies', () async {
+      Future<RecipeNutrition> label(String name, String slug) =>
+          NutritionRepository(goldenDio(golden(name))).nutrition(slug);
+      Future<IngredientMatch> row(String name, String slug, int at) async =>
+          (await NutritionRepository(
+            goldenDio(golden(name)),
+          ).matches(slug)).singleWhere((m) => m.position == at);
+
+      // SW: Pan-Seared Salmon is complete; its chutney is served with it.
+      final salmon = await label('nutrition_served_with', 'pan-seared-salmon');
+      expect(
+        (salmon.status, salmon.matchedCount, salmon.totalCount),
+        ('complete', 4, 4),
+      );
+      expect(salmon.servedWith, [
+        (position: 3, name: 'Sweet-and-Sour Chutney'),
+      ]);
+      expect(salmon.partial, isEmpty);
+      expect(servedWithLines(salmon), [
+        'Served with Sweet-and-Sour Chutney — not counted.',
+      ]);
+      expect(partialLines(salmon), isEmpty);
+
+      // WB: Panna Cotta's coulis, one whole batch, flagged; the label
+      // includes it as an approximation.
+      final coulis = await row('nutrition_matches_wb', 'panna-cotta', 6);
+      expect(
+        (
+          coulis.child!.state,
+          coulis.child!.section,
+          coulis.child!.share,
+          coulis.grams,
+          coulis.flag,
+        ),
+        (
+          'routed',
+          'Raspberry Coulis',
+          1.0,
+          748.2,
+          'approximate (no amount on the line — the whole batch counted)',
+        ),
+      );
+      final panna = await label('nutrition_wb', 'panna-cotta');
+      expect(panna.status, 'complete');
+      expect(
+        includesLine(panna),
+        'Includes 1 recipe: Raspberry Coulis (approximation)',
+      );
+      expect(panna.servedWith, isEmpty);
+
+      // PV: Lemon Meringue Pie's prose dough, counted as its base.
+      final dough = await row(
+        'nutrition_matches_section_prose',
+        'lemon-meringue-pie',
+        0,
+      );
+      expect(
+        dough.flag,
+        "approximation (counted as Basic Single-Crust Pie Dough; the "
+        "variation's changes are not read)",
+      );
+      expect(
+        includesLine(
+          await label('nutrition_section_prose', 'lemon-meringue-pie'),
+        ),
+        'Includes 1 recipe: Basic Single-Crust Pie Dough (a section of Basic '
+        'Double-Crust Pie Dough; approximation)',
+      );
+      // Every other label body carries an empty served_with.
+      expect(
+        (await label('nutrition_subrecipe', 'blueberry-pie')).servedWith,
+        isEmpty,
       );
     });
 

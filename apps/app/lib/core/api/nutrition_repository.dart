@@ -40,6 +40,7 @@ class RecipeNutrition {
     this.staleReason,
     this.includes = const [],
     this.partial = const [],
+    this.servedWith = const [],
   });
 
   factory RecipeNutrition.fromJson(Map<String, dynamic> json) {
@@ -94,6 +95,13 @@ class RecipeNutrition {
             reason: raw['reason'] as String?,
           ),
       ],
+      servedWith: [
+        for (final raw in _list(json['served_with']))
+          (
+            position: (raw['position'] as num?)?.toInt() ?? 0,
+            name: raw['name'] as String? ?? '',
+          ),
+      ],
     );
   }
 
@@ -127,6 +135,11 @@ class RecipeNutrition {
     })
   >
   partial;
+
+  /// The references served with the dish (matcher v52, rule SW): accounted,
+  /// never [partial] — each its line [position] and the recipe's [name],
+  /// the label's "Served with {name} — not counted." line.
+  final List<({int position, String name})> servedWith;
 
   /// Why a `stale` body is stale (v28, Run 058 S15): `inputs` — the
   /// ingredients or their layout changed since the totals were computed;

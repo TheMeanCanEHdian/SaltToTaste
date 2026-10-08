@@ -778,25 +778,45 @@ Widget _routed(IngredientMatch match, RecipeRef child) {
   );
 }
 
+/// The two-part row's header and each role's suffix, by the parts' roles
+/// sorted (the approved docs/mockups/v49-two-part-rows-copy.html §3).
+const Map<String, (String, Map<String, String>)> _twoPartCopy = {
+  'cooked·kept_fat': (
+    'matched to two records, cooked and drained:',
+    {'kept_fat': '· kept in the pan'},
+  ),
+  'juice·zest': (
+    'matched to two records, the zest and the juice:',
+    {'zest': '· the zest', 'juice': '· the juice'},
+  ),
+  'drained·undrained': (
+    'matched to two records, drained and with its liquid:',
+    {'drained': '· drained', 'undrained': '· with its liquid'},
+  ),
+};
+
 /// A rendered row (v41, R2): one line, two records — each with its grams
-/// and FDC chip — the basis, and the engine's flag. The cooked-and-drained
-/// words are the bacon's (`role` `kept_fat`); a v49 zest-and-juice or
-/// half-drained can row reads the two records without them (its own copy
-/// is a later mockup).
+/// and FDC chip — the basis, and the engine's flag. The header and each
+/// part's suffix read the parts' `role` from the wire, never their
+/// position (the approved docs/mockups/v49-two-part-rows-copy.html §3):
+/// the bacon's cooked · kept_fat (a missing role reads as the bacon's, as
+/// the server defaults it), a v49 zest · juice row and a half-drained
+/// can's drained · undrained; any other pair the plain header, no suffix.
 Widget _twoParts(IngredientMatch match) {
   final parts = match.parts;
-  final bacon = (parts.last.role ?? 'kept_fat') == 'kept_fat';
+  String roleOf(int at) => parts[at].role ?? (at == 0 ? 'cooked' : 'kept_fat');
+  final pair = ([
+    for (var at = 0; at < parts.length; at++) roleOf(at),
+  ]..sort()).join('·');
+  final (header, suffixes) =
+      _twoPartCopy[pair] ??
+      ('matched to two records:', const <String, String>{});
   return Padding(
     padding: const EdgeInsets.only(top: 2),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          bacon
-              ? 'matched to two records, cooked and drained:'
-              : 'matched to two records:',
-          style: _muted,
-        ),
+        Text(header, style: _muted),
         for (final (i, part) in parts.indexed)
           Padding(
             padding: const EdgeInsets.only(top: 2, left: 10),
@@ -825,10 +845,13 @@ Widget _twoParts(IngredientMatch match) {
                   ),
                 ),
                 sourceChip(part.dataType),
-                if (i > 0 && bacon)
-                  const Text(
-                    '· kept in the pan',
-                    style: TextStyle(fontSize: 12, color: SaltColors.muted),
+                if (suffixes[roleOf(i)] case final suffix?)
+                  Text(
+                    suffix,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: SaltColors.muted,
+                    ),
                   ),
               ],
             ),

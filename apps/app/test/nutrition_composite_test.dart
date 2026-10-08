@@ -1115,4 +1115,41 @@ void main() {
       expect(notRoutedNote('missing'), isNull);
     });
   });
+
+  group('matcher v52 (M51): the served-with line', () {
+    testWidgets('Pan-Seared Salmon: "Served with … — not counted." under the '
+        'label, never a Partial line; the badge reads complete', (t) async {
+      await _page(
+        t,
+        matches: 'nutrition_matches_wb',
+        label: 'nutrition_served_with',
+        parent: (title: 'Pan-Seared Salmon', hasSections: false),
+        open: false,
+      );
+      expect(
+        find.text('Served with Sweet-and-Sour Chutney — not counted.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Partial:'), findsNothing);
+      expect(find.text('4/4 ingredients matched'), findsOneWidget);
+      expect(find.byIcon(FLucideIcons.circleCheck), findsOneWidget);
+    });
+
+    testWidgets('Panna Cotta: the whole batch included as an approximation, '
+        'no served-with line', (t) async {
+      await _page(
+        t,
+        matches: 'nutrition_matches_wb',
+        label: 'nutrition_wb',
+        parent: (title: 'Panna Cotta', hasSections: true),
+        open: false,
+      );
+      expect(
+        find.text('Includes 1 recipe: Raspberry Coulis (approximation)'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Served with'), findsNothing);
+      expect(find.textContaining('Partial:'), findsNothing);
+    });
+  });
 }

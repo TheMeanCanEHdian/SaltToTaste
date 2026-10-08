@@ -528,9 +528,13 @@ void main() {
       );
     });
 
-    testWidgets('a prose section: the partial line and the row note', (
-      t,
-    ) async {
+    // RE-PIN (M51 batch, v52, rule PV): the prose dough counts its base —
+    // the label includes it flagged, no Partial line, the row routed with
+    // the PV flag (was "Partial: … is not counted (its section lists no
+    // ingredients)." and the row note "Its section lists no ingredients —
+    // not counted"; that copy stays pinned below on a STATED synthesized
+    // body, the golden's partial line put back as v51 sent it).
+    testWidgets('a prose section: counted as its base, flagged', (t) async {
       await _page(
         t,
         slug: 'lemon-meringue-pie',
@@ -542,17 +546,45 @@ void main() {
         },
         parent: _lemon,
       );
+      expect(find.textContaining('Partial:'), findsNothing);
       expect(
         find.text(
-          'Partial: Single-Crust Pie Dough for Custard Pies is not counted '
-          '(its section lists no ingredients).',
+          'Includes 1 recipe: Basic Single-Crust Pie Dough (a section of '
+          'Basic Double-Crust Pie Dough; approximation)',
         ),
         findsOneWidget,
       );
-      expect(find.text('not counted'), findsOneWidget);
+      expect(
+        find.text(
+          "approximation (counted as Basic Single-Crust Pie Dough; the "
+          "variation's changes are not read)",
+        ),
+        findsOneWidget,
+      );
       expect(
         find.text('Its section lists no ingredients — not counted'),
-        findsOneWidget,
+        findsNothing,
+      );
+      final v51 = _copy('nutrition_section_prose')
+        ..['includes'] = <Object?>[]
+        ..['partial'] = [
+          {
+            'position': 0,
+            'kind': 'not_routed',
+            'name': 'Single-Crust Pie Dough for Custard Pies',
+            'title': 'Single-Crust Pie Dough for Custard Pies',
+            'matched': null,
+            'total': null,
+            'reason': 'no_ingredients',
+          },
+        ];
+      expect(partialLines(RecipeNutrition.fromJson(v51)), [
+        'Partial: Single-Crust Pie Dough for Custard Pies is not counted '
+            '(its section lists no ingredients).',
+      ]);
+      expect(
+        notRoutedNote('no_ingredients'),
+        'Its section lists no ingredients — not counted',
       );
     });
   });
