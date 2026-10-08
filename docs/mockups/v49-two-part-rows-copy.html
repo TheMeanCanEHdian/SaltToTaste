@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two-Part Rows Copy</title>
+<meta name="description" content="Role-specific copy for the two-record rows matcher v49 added (zest and juice; a can drained and a can kept with its liquid), extending the approved bacon wording; a delta to v41-composite-rows.html.">
+<style>
+:root{--maroon:#960000;--rose:#8c4242;--chip:#f6e4e4;--chip-text:#7d1420;--ink:#23201f;--muted:#6d6763;--line:#e7e2de;--bg:#faf7f4;--panel:#fdfbf9;--ok-bg:#e8f3e4;--ok-ink:#2c5a1e;--warn-bg:#fbefd9;--warn-ink:#7a4b00;--neutral-bg:#efebe8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#efe9e4;--muted:#b3aaa3;--line:#3a3431;--bg:#1b1817;--panel:#221e1c;--chip:#3d2222;--chip-text:#f0c7c7;--ok-bg:#223320;--ok-ink:#b7e0a8;--warn-bg:#3b2e14;--warn-ink:#f0c98a;--neutral-bg:#2d2825}}
+:root[data-theme="dark"]{--ink:#efe9e4;--muted:#b3aaa3;--line:#3a3431;--bg:#1b1817;--panel:#221e1c;--chip:#3d2222;--chip-text:#f0c7c7;--ok-bg:#223320;--ok-ink:#b7e0a8;--warn-bg:#3b2e14;--warn-ink:#f0c98a;--neutral-bg:#2d2825}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Open Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;padding-bottom:80px}
+.wrap{max-width:1100px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;color:var(--maroon)}
+.lede{color:var(--muted);font-size:14px;max-width:900px;margin-top:6px}.lede b{color:var(--ink)}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:700;margin:40px 0 12px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0;max-width:900px}.note b{color:var(--ink)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-width:760px}
+.label-head{font-weight:800;font-size:15px}
+.label-line{font-size:12.5px;color:var(--muted);margin-top:2px}
+.label-line.new{color:var(--ink)}
+.row .raw{font-size:13.5px;font-weight:700}
+.row .meta{font-size:12px;color:var(--muted);margin-top:3px}
+.row .meta b{color:var(--ink);font-weight:600}
+.chip{display:inline-block;font-size:10.5px;font-weight:700;border-radius:12px;padding:1px 8px;background:var(--chip);color:var(--chip-text);vertical-align:1px}
+.flag{font-size:12px;color:var(--warn-ink);background:var(--warn-bg);border-radius:6px;padding:2px 8px;display:inline-block;margin-top:6px}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:12px;padding:2px 9px;background:var(--neutral-bg);color:var(--muted);float:right}
+.badge.ok{background:var(--ok-bg);color:var(--ok-ink)}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--rose);font-size:12px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--neutral-bg);border-radius:5px;padding:1px 5px}
+.new-mark{color:var(--maroon);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.parts{margin:4px 0 0 10px;font-size:12.5px}.parts div{margin-top:2px}.parts .g{color:var(--muted)}.parts b{font-weight:600}.cur{font-size:12px;color:var(--muted);margin-top:3px}.was{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-right:6px}.cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1100px}@media (max-width:760px){.cols2{grid-template-columns:1fr}}</style></head><body><div class="wrap">
+<h1>Two-part rows: the role copy delta (after matcher v49)</h1>
+<p class="lede">A delta to the approved composite-row mockup (<code>v41-composite-rows.html</code> §4, the rendered-bacon row: "matched to two records, cooked and drained:" with the second part suffixed "· kept in the pan"). Matcher v49 writes two more kinds of two-part row and sends each part's <b>role</b> on the wire: <code>zest</code> | <code>juice</code> (a zest over a tablespoon plus juice) and <code>drained</code> | <code>undrained</code> (a can drained and a can kept with its liquid). The shipped app shows them with the bacon's words removed ("matched to two records:", no suffixes) as an interim guard. This delta gives each role pair its own header and suffixes, in the bacon row's shape. The bacon row is unchanged. Every figure below is the row the v49 replay writes.</p>
+
+<div class="eyebrow">1 · Zest and juice (crispy-orange-beef, line 3)</div>
+<div class="cols2">
+ <div><div class="cap"><span class="was">today</span>the interim guard</div>
+  <div class="card row"><span class="badge ok">counted</span>
+   <div class="raw">10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), plus ¼ cup juice (2 oranges)</div>
+   <div class="cur">matched to two records:</div>
+   <div class="parts"><div><span class="g">24 g · </span><b>Orange peel, raw</b> <span class="chip">SR Legacy</span></div>
+   <div><span class="g">+ 62 g · </span><b>Orange juice, raw</b> <span class="chip">SR Legacy</span></div></div>
+   <div class="meta">amount: zest 1/4 cup · USDA portion + juice 1/4 cup · USDA portion</div></div></div>
+ <div><div class="cap"><span class="new-mark">after</span>the role copy</div>
+  <div class="card row"><span class="badge ok">counted</span>
+   <div class="raw">10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), plus ¼ cup juice (2 oranges)</div>
+   <div class="cur"><span class="new-mark">new</span>matched to two records, the zest and the juice:</div>
+   <div class="parts"><div><span class="g">24 g · </span><b>Orange peel, raw</b> <span class="chip">SR Legacy</span> <span class="g">· the zest</span></div>
+   <div><span class="g">+ 62 g · </span><b>Orange juice, raw</b> <span class="chip">SR Legacy</span> <span class="g">· the juice</span></div></div>
+   <div class="meta">amount: zest 1/4 cup · USDA portion + juice 1/4 cup · USDA portion</div></div></div>
+</div>
+<p class="note">Eleven lines carry this pair after v49 (the orange beef, the lemon chicken, key lime pie, the margaritas, the lemon cakes and puddings, the swordfish skewers, the fava beans). A line whose zest is strained out later (lemon-tart line 4) is a one-record juice row and keeps the shipped basis "juice only (the zest is strained out)" — no two-part copy. The lime lines' peel reads the lemon-peel record and carries the engine's flag "approximation (counted as Lemon peel, raw)" on the flag line as today.</p>
+
+<div class="eyebrow">2 · A can drained and a can kept with its liquid (espinacas con garbanzos, line 1)</div>
+<div class="cols2">
+ <div><div class="cap"><span class="was">today</span>the interim guard</div>
+  <div class="card row"><span class="badge ok">counted</span>
+   <div class="raw">2 (15-ounce) cans chickpeas (1 can drained, 1 can undrained)</div>
+   <div class="cur">matched to two records:</div>
+   <div class="parts"><div><span class="g">240 g · </span><b>Chickpeas (garbanzo beans, bengal gram), canned, sodium added, drained and rinsed</b> <span class="chip">Foundation</span></div>
+   <div><span class="g">+ 425 g · </span><b>Chickpeas (garbanzo beans, bengal gram), mature seeds, canned, solids and liquids</b> <span class="chip">SR Legacy</span></div></div>
+   <div class="meta">amount: 2 × 425 g (printed weight) × 0.565 drained on half the cans · approximate (drained weight: FDC's canned chickpea pair, 253 g of 448 g) · the undrained can on its solids-and-liquids record</div></div></div>
+ <div><div class="cap"><span class="new-mark">after</span>the role copy</div>
+  <div class="card row"><span class="badge ok">counted</span>
+   <div class="raw">2 (15-ounce) cans chickpeas (1 can drained, 1 can undrained)</div>
+   <div class="cur"><span class="new-mark">new</span>matched to two records, drained and with its liquid:</div>
+   <div class="parts"><div><span class="g">240 g · </span><b>Chickpeas (garbanzo beans, bengal gram), canned, sodium added, drained and rinsed</b> <span class="chip">Foundation</span> <span class="g">· drained</span></div>
+   <div><span class="g">+ 425 g · </span><b>Chickpeas (garbanzo beans, bengal gram), mature seeds, canned, solids and liquids</b> <span class="chip">SR Legacy</span> <span class="g">· with its liquid</span></div></div>
+   <div class="meta">amount: 2 × 425 g (printed weight) × 0.565 drained on half the cans · approximate (drained weight: FDC's canned chickpea pair, 253 g of 448 g) · the undrained can on its solids-and-liquids record</div></div></div>
+</div>
+<p class="note">One line carries this pair today (the espinacas). A can kept whole on its liquid record is a one-record row (best-ground-beef-chili line 17: "from the printed weight (the steps add the beans and their liquid)") and keeps the shipped single-record copy.</p>
+
+<div class="eyebrow">3 · The strings (verbatim)</div>
+<table>
+<tr><th>role pair</th><th>header</th><th>first part suffix</th><th>second part suffix</th></tr>
+<tr><td>cooked · kept_fat (bacon, approved v41)</td><td><code>matched to two records, cooked and drained:</code></td><td>—</td><td><code> · kept in the pan</code></td></tr>
+<tr><td>zest · juice</td><td><code>matched to two records, the zest and the juice:</code></td><td><code> · the zest</code></td><td><code> · the juice</code></td></tr>
+<tr><td>drained · undrained</td><td><code>matched to two records, drained and with its liquid:</code></td><td><code> · drained</code></td><td><code> · with its liquid</code></td></tr>
+<tr><td>any other pair (none today)</td><td><code>matched to two records:</code></td><td>—</td><td>—</td></tr>
+</table>
+<p class="note">Unchanged: the grams and FDC chip per part, the amount line, the flag line, Change / Confirm / Skip (a single pick replaces both parts, as v41 rules). The suffix reads the part's <code>role</code> from the wire, never its position, so a future pair with no entry falls back to the plain header.</p>
+</div></body></html>
