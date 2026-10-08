@@ -779,16 +779,22 @@ Widget _routed(IngredientMatch match, RecipeRef child) {
 }
 
 /// A rendered row (v41, R2): one line, two records — each with its grams
-/// and FDC chip — the basis, and the engine's flag.
+/// and FDC chip — the basis, and the engine's flag. The cooked-and-drained
+/// words are the bacon's (`role` `kept_fat`); a v49 zest-and-juice or
+/// half-drained can row reads the two records without them (its own copy
+/// is a later mockup).
 Widget _twoParts(IngredientMatch match) {
   final parts = match.parts;
+  final bacon = (parts.last.role ?? 'kept_fat') == 'kept_fat';
   return Padding(
     padding: const EdgeInsets.only(top: 2),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'matched to two records, cooked and drained:',
+        Text(
+          bacon
+              ? 'matched to two records, cooked and drained:'
+              : 'matched to two records:',
           style: _muted,
         ),
         for (final (i, part) in parts.indexed)
@@ -819,7 +825,7 @@ Widget _twoParts(IngredientMatch match) {
                   ),
                 ),
                 sourceChip(part.dataType),
-                if (i > 0)
+                if (i > 0 && bacon)
                   const Text(
                     '· kept in the pan',
                     style: TextStyle(fontSize: 12, color: SaltColors.muted),

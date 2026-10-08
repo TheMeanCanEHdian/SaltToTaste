@@ -139,13 +139,16 @@ const _pins = [
     "2 × 425 g (printed weight) × 0.610 drained · approximate (drained weight: FDC's canned kidney bean pair, 266 g of 436 g)",
   ),
   // A can line with no drain word: the record is the drained beans.
+  // RE-PIN (M47 batch, v49 Q14): its steps add "beans and their liquid" —
+  // the whole can, on the pinto solids-and-liquids record (was 2644292,
+  // 266.63 g at the drained share).
   (
     '0009-best-ground-beef-chili.yaml',
     17,
     '1 (15-ounce) can pinto beans',
-    2644292,
-    '266.63',
-    "from the printed weight × 0.627 drained · approximate (drained weight: FDC's canned pinto bean pair, 277 g of 442 g)",
+    175201,
+    '425.24',
+    'from the printed weight (the steps add the beans and their liquid)',
   ),
   (
     '0072-skillet-tamale-pie.yaml',
@@ -161,7 +164,10 @@ const _pins = [
     '2 (15-ounce) cans chickpeas (1 can drained, 1 can undrained)',
     2644288,
     '665.50',
-    "2 × 425 g (printed weight) × 0.565 drained on half the cans · approximate (drained weight: FDC's canned chickpea pair, 253 g of 448 g)",
+    // RE-PIN (M47 batch, v49 Q14 ii): the undrained can is a part on the
+    // chickpea solids-and-liquids record (grams unchanged; the row's parts
+    // pinned in nutrition_v49_test).
+    "2 × 425 g (printed weight) × 0.565 drained on half the cans · approximate (drained weight: FDC's canned chickpea pair, 253 g of 448 g) · the undrained can on its solids-and-liquids record",
   ),
   (
     '0429-garlicky-shrimp-tomato-and-white-bean-stew.yaml',
@@ -182,11 +188,13 @@ const _pins = [
     'from the printed weight',
   ),
   // The liquid kept: the can counts whole.
+  // RE-PIN (M47 batch, v49 Q14 ii): both on the chickpea solids-and-liquids
+  // record 175206 (was 2644288), grams unchanged.
   (
     '1096-chana-masala.yaml',
     11,
     '2 (15-ounce) cans chickpeas, undrained',
-    2644288,
+    175206,
     '850.49',
     '2 × 425 g (printed weight)',
   ),
@@ -194,7 +202,7 @@ const _pins = [
     '0340-pasta-e-ceci-pasta-with-chickpeas.yaml',
     10,
     '2 (15-ounce) cans chickpeas (do not drain)',
-    2644288,
+    175206,
     '850.49',
     '2 × 425 g (printed weight)',
   ),

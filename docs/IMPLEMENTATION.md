@@ -3608,6 +3608,33 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — matcher v49 (batch M47): records and published figures
+  (prep47 Q5, Q6, Q11–Q15, Q23, Q26; built under the standing
+  authorization).** Kept deviations, each disclosed and re-measured: (1)
+  'jarred hot cherry peppers' reads its record by RANK-AS, not the brief's
+  rewrite — as a rewrite key the phrase broke the rewrite-target stability
+  invariant for the four Thai-chile rewrites that read that cached answer,
+  so those four became rank-as reads with the same landing (byte-identical
+  rows); a person's "Search live" on a Thai chile row now re-asks the
+  pickled answer, as 'thai' and 'green thai' already did; (2) the Q23 veto
+  reaches 8 rows (5 curry paste, 3 Old Bay), not the 3 section rows the
+  brief named — P6's measured reach; (3) the tapioca density rides the
+  shipped precedence (a key outside `_recordFirstDensities` outranks the
+  record's own cup) — the fixer's report named a third set that the final
+  tree does not have, caught by the pre-commit symbol grep; (4) the kiwi "large" flag uses P6's wording (the brief
+  gave none); (5) the `in_shell` hold has no corpus vehicle after v49 —
+  tests and the rules contract sample use a STATED synthesized "1 pound
+  oysters, scrubbed"; (6) the APP changed in a "server only" batch: the
+  two-record copy "matched to two records, cooked and drained:" is now the
+  bacon's only (role `kept_fat`); a zest-and-juice or half-drained can row
+  reads "matched to two records:" — an interim guard against a mislabel,
+  not new copy; role-specific wording is a later mockup; (7) the owner's
+  ruling on the open item: pasta-e-fagioli|14 sat below the gate at 0.0125
+  after its sibling lifted the hold, so 'pasta such as ditalini' reads its
+  own cached answer under "pasta dry enriched" (SR 169736, the right food,
+  no flag): +841.41 kcal, 17/18; the batch lands 61 rows, +926.9 kcal. Noted for later: palak-dal|9 "15 curry
+  leaves" on "Beef curry" (0.465, check) is outside Q23; two `withParts`
+  guards (typed grams, held rows) have no real path and stay unpinned.
 - **2026-10-07 — the owner approved the M51 references copy delta
   (`docs/mockups/v51-references-copy.html`, "i approve the M51 copy"):**
   the three new strings ship verbatim — the label's non-partial line

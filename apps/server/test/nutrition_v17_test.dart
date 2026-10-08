@@ -265,7 +265,13 @@ void main() {
       'garlic powder': 171325,
     };
     for (final (_, raw, item, target) in rewrites) {
-      expect(searchQueryFor(item), target, reason: item);
+      // RE-PIN (M47 batch, v49): 'red thai chile' reads its answer by
+      // rank-as ([rankAsFor]) since 'jarred hot cherry peppers' became a
+      // rank-as KEY (M2: never a rewrite target) — the same answer under
+      // the same words.
+      final read = rankAsFor(item);
+      expect(read?.answer ?? searchQueryFor(item), target, reason: item);
+      expect(read?.query ?? target, target, reason: item);
       expect(pendingSearches, isNot(contains(target)), reason: item);
       // Ranked as the engine ranks the line: a whole bone-in breast is
       // skin-on ([impliesSkinOn]).

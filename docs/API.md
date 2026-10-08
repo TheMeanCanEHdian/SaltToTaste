@@ -1329,15 +1329,21 @@ line; every `match` gains three keys, emitted on every row:
   text). The library's title and section index is read at most once per
   request.
 - `parts` — a rendered row's two records (R2), `[{fdc_id, description,
-  data_type, grams, role}]`, `role` `cooked` then `kept_fat`; `[]` on every
-  other row.
+  data_type, grams, role}]`, `role` `cooked` then `kept_fat`; since matcher
+  v49 a zest-over-a-tablespoon-plus-juice row's (`zest`, `juice`) and a
+  half-drained can row's (`drained`, `undrained`), the role as stored; `[]`
+  on every other row. (The app's two-record line reads "cooked and drained"
+  and "kept in the pan" only on the bacon, `role` `kept_fat`; the new roles
+  read "matched to two records:" with the two records — their own copy is a
+  later mockup.)
 - `flag` — the composite row's flag on its own line, null elsewhere (the
   older flags stay `gram_basis` suffixes): "approximation (the first {kind}
   the note names: {title})" on an engine default (a person's Confirm or pick
   clears it), "approximation ({title} is partial: {m} of {n} lines)" on a
   counted partial child, "approximate (rendered and drained; yield from FDC
-  protein)" on a rendered row — the last two name a fact and stay on a
-  Confirm (A6); several join with " · ".
+  protein)" on a rendered row (rule B1's bacon alone — v49's two-part rows
+  carry no flag) — the last two name a fact and stay on a Confirm (A6);
+  several join with " · ".
 
 New `gram_source` `recipe` (a reference row: no `fdc_id`, no
 `description`); new holds `choose_recipe`, `nested_recipe` (bucket
@@ -1944,7 +1950,9 @@ anchovy fillets (about 8 fillets)", on 2706232's `1 anchovy` 4 g: 32 g —
 the corpus's only such line), `"… · nutrients of \"Cabbage, chinese
 (pe-tsai), raw\""` for a line on a record that publishes no energy whose
 totals read a sibling record's nutrients (Foundation napa cabbage, 2727583,
-reads SR 169979; the food and grams stay the line's, and it is not held
+reads SR 169979; since matcher v49 also Foundation 2758998 spaghetti → SR
+169736 and the cooked-state FNDDS leeks 2709935 → SR 169246 and rhubarb
+2709268 → SR 167758; the food and grams stay the line's, and it is not held
 `no_nutrients`; hand-entered grams say so too: `"entered by hand · nutrients
 of \"Cabbage, chinese (pe-tsai), raw\""`),
 `"pinch ≈ 1/16 tsp (USDA tsp portion)"` for a pinch or dash on a record with
@@ -2178,7 +2186,12 @@ held; the 7 others bought by weight stay held — 5 mussel (SR 174216
 "Mollusks, mussel, blue, raw" publishes only small 10 g, medium 16 g,
 large 20 g, oz, 3 oz and cup 150 g: no with-shell portion) and 2 shell-on
 shrimp whose shells are peeled off (no request was planned) — and the
-peeled-and-deveined shrimp lines stay counted),
+peeled-and-deveined shrimp lines stay counted; since matcher v49 (M47 Q11)
+those 7 are counted too, at their AH-102 shell rows (shrimp item 2333 ×
+0.81 on 175179; mussels moved to 174216, item 1531 × 0.29, the liquor not
+counted — the v49 paragraph below), so no corpus line stays held
+`in_shell`; the hold remains for a shell weight no row covers, e.g.
+oysters bought by weight),
 `starter_discard` (since matcher v22, the user's ruling Q1: every non-water
 line of a sourdough starter whose feeding step keeps a little starter and
 discards the rest — "discard remaining starter"; how much of the flour ends in the kept starter nothing says),
@@ -2335,7 +2348,10 @@ either part first ("1 teaspoon grated lemon zest plus 2 tablespoons juice",
 fruit's juice record (lemon 167747, lime 168156, orange 169098) with the
 zest dropped, and eggs plus yolks or whites, or yolks plus whites ("1 large
 egg, separated, plus 2 large yolks"), count the parts' summed piece weights
-(egg 50 g, yolk 17 g, white 33 g) on the whole-egg record 748967. Their keys
+(egg 50 g, yolk 17 g, white 33 g) on the whole-egg record 748967. Since
+matcher v49 (M47 Q6) a zest over a tablespoon plus juice counts too, as two
+parts (or the juice alone when a step strains or discards the zest; with
+no recipe to read, held as before) — the v49 paragraph below. Their keys
 name both parts, one key for either order: `lemon zest plus juice` (a zest
 line whose item names no fruit takes the line's — "grated zest plus ½ cup
 juice from 3 or 4 limes" is `lime zest plus juice`), `egg plus yolk`, `egg
@@ -2730,7 +2746,8 @@ the portions FDC published: powdered pectin (168821: `package (1.75 oz)`
 not specified` 25 g), sour cherries (167769 publishes `cup` 168 g, but no
 reader yet skips the "(24-ounce)" jar weight read first), seed gums
 (169045: `oz` only), parsnips (170417: `cup slices` 133 g, no piece),
-kiwis (FNDDS 2709239: `1 fruit` 75 g, no `large`), malted milk powder
+kiwis (FNDDS 2709239: `1 fruit` 75 g, no `large` — counted since matcher
+v49 at that 75 g, below), malted milk powder
 (173220: `serving (3 heaping tsp or 1 envelope)` 21 g, no level
 tablespoon — the line stays on the prepared drink 174867), seaweed (FNDDS
 2709988: `1 cup` 15 g, `1 strip` 0.5 g, no sheet), raw cashews (170162:
@@ -2790,6 +2807,107 @@ poultry −2,420, dry goods −366, produce −92; per recipe (185) the median
 L103 lands 952.54 g (the auditor's 953); a 12- to 14-pound turkey 4,137.40
 → 3,841.87 g; the en-dash turkey 6,501.63 → 5,023.98 g; the "(10- to
 12-ounce)" breasts read their "(10 to 12-ounce)" twin, 923.06 g.
+
+**Since matcher v49 (batch M47, matcherVersion 48 — records and published
+figures; prep47 design_v2 §1 (B) and §2 "M47", decided under the owner's
+2026-10-07 standing authorization; zero requests, every record cached in
+snapshot 21).** Eight steps, each on a shipped mechanism:
+(1) **Shellfish (Q11)**: a weight bought in the shell (`in_shell`'s
+`boughtInShell`) reads USDA AH-102 (1975) Table 1 by its raw record
+(grams.dart `ah102Shells`, after FDC's own "lb (with shell)" portion):
+shrimp on SR 175179 × 0.81, flagged `approximate (USDA AH-102 item 2333:
+shrimp, headless, in shell → shelled, deveined 81 % (77–82))`; mussels move
+off FNDDS 2706350 "Mussels" (cooked meat) to cached SR 174216 "Mollusks,
+mussel, blue, raw" (engine `shellRecords`, the `skinlessRecords` record
+move; the decision names the record bought) × 0.29, flagged `approximate
+(USDA AH-102 item 1531: mussels, whole → drained solids, raw 29 % (25–33);
+the liquor in the pot is not counted)` — every mussel recipe serves the
+liquor, which raw 174216 does not carry (item 1530, solids and liquor, is
+51 %). Never where the recipe eats the shell (crispy salt-and-pepper
+shrimp's "eaten shells and all": 680.39 g gross) nor a count (paella's "1
+dozen mussels", 180 g on 2706350). No corpus line stays `in_shell`. An
+un-skip re-derives the hold from the stored grams' basis as a compute does
+(the AH-102 flag, v40's clam shell yield), so a skipped shell row comes back
+counted, never held `in_shell` (closer round 2).
+(2) **Kiwi (Q12, re-rules v21 R09's "STAY DRY")**: piece rows `kiwis` /
+`kiwi` 75 g, FNDDS 2709239 "Kiwi fruit, raw" '1 fruit' (a cross-record
+piece weight; the lines stay on Foundation 2710831); a sized count
+("2 large kiwis") flagged `approximate (one fruit, FNDDS 2709239: 75 g; no
+large size published)`. (3) **Citrus (Q6, amends checkpoint 5)**: a zest
+or peel over a tablespoon plus the fruit's juice counts as TWO parts — the
+zest on its peel record (lemon and lime 167749, the shipped flagged
+lime-zest approximation; orange 169103), the juice on its own (167747,
+168156, 169098) — `gram_basis` `"zest 1/4 cup · USDA portion + juice 1/4
+cup · USDA portion"`, `parts` roles `zest`, `juice`; when a step at or after
+the zest's first mention strains it ("Strain…", "through a fine-mesh
+strainer") or discards it, the juice alone, `"· juice only (the zest is
+strained out)"`. A tablespoon or less keeps the checkpoint-5 rule (juice
+only, zest dropped — the boundary is kept, F17). The v44 S7 rule (a zest
+plus a COUNT of the fruit reads the fruit) widens to lemons (2709168) and
+limes (168155). (4) **Canned beans (Q14, Q14b; amends 2026-10-06)**: a can
+line with no drain or rinse word whose steps add it "(and|with) (their|its)
+liquid" (naming the line's head noun) keeps the can whole; a can kept whole
+on a drained-and-rinsed record with a cached solids-and-liquids twin moves
+to it, grams unchanged, no flag (grams.dart `cannedBeanLiquids`: chickpeas
+2644288 → SR 175206, pinto 2644292 → 175201, kidney 2644289 → 175195), and
+the half rule's undrained can is a part there (the row stays on the
+record bought: `parts` roles `drained`, `undrained`; basis suffix "· the
+undrained can on its solids-and-liquids record"); basis `"from the printed
+weight (the steps add the beans and their liquid)"`, and on a bean with no
+twin cached (navy, cannellini, black) `"… · approximate (no
+solids-and-liquids record for this bean: the drained-and-rinsed record for
+the whole can)"`. Acquacotta's reserved liquid is whisked back (Q14b): its
+whole can on cannellini stays. Only an `auto` or `confirmed` row carries
+the parts of (3) and (4): a person's pick clears them (one record, as rule
+B1's bacon, D12) — crispy-orange-beef|3 picked to its peel 169103 counts
+the zest alone, 24.00 g; espinacas-con-garbanzos|1 picked to 2644288 keeps
+the half rule's 665.50 g — and typed grams clear them too (closer round 3).
+(5) **Records (Q15, Q26, Q23)**: rank-as
+`jarred hot cherry peppers` → the cached `pickled hot cherry peppers` answer
+under its own words (FNDDS 2710095 "Peppers, hot, pickled", unflagged) — a
+rank-as, not a rewrite: the phrase is the cached answer the Thai chiles
+read, and a "Search live" asks the rewrite of a row's `candidates_query`,
+so as a rewrite key it would re-ask the pickled answer on every Thai chile
+row. The four Thai chile rewrites onto that answer became rank-as reads of
+it (a rank-as key is never a rewrite target), same landing, and a live
+search on any of these rows asks the answer it reads; rank-as `herbes de
+provence` → 170938
+"Spices, thyme, dried" flagged `approximation (counted as Spices, thyme,
+dried)`; `frozen raspberries` → FNDDS 2709282 "Raspberries, frozen"
+(unflagged); `halloumi cheese` and `halloumi` → FNDDS 2705720 "Cheese,
+Monterey" flagged `approximation (counted as Cheese, Monterey)` (FDC has no
+halloumi; the v46 mascarpone ruling). Red curry paste (`red curry paste`,
+`thai red curry paste`) and Old Bay (`old bay seasoning`) — FDC has no
+record in the three datasets it searches — land `no_match` with NO record
+shown and no search sent: a VETO LIST keyed on the normalized item
+(matcher.dart `noFdcRecordItems`), never their answers' tops "Beef curry"
+2706388 and "Spices, poultry seasoning" 171331. (6) **Tapioca starch (Q5,
+amends CP9)**: ATK's own "3 ounces (¾ cup)" (the GF flour blend), 113.4 g a
+cup, over the stand-in pearl record's cup (152 g), flagged `approximate
+(ATK's printed 3 ounces per ¾ cup)` (pão de queijo 456.00 → 340.19 g; a
+weighed line and "instant tapioca" unchanged). (7)–(8) **Nutrient
+siblings (Q15 iv, Q13)**: Foundation 2758998 "Pasta, dry, enriched,
+spaghetti" (minerals only) → SR 169736 "Pasta, dry, enriched"; FNDDS's
+cooked-state "Leeks" 2709935 → SR 169246 (raw, 61 kcal) and "Rhubarb"
+2709268 → SR 167758 (raw, 21 kcal); grams unchanged. The pasta line
+itself (pasta e fagioli, "8 ounces small pasta such as ditalini, …") is a
+rank-as (the owner's 2026-10-07 ruling): `pasta such as ditalini` reads its
+own cached answer under the record's words `pasta dry enriched` → SR 169736
+"Pasta, dry, enriched", unflagged (that answer had ranked the spaghetti
+record first at 0.0125, below the gate): 226.80 g, 841.41 kcal, the recipe
+16 → 17 of 18 (partial: the Parmesan rind). The 2758998 sibling stays for
+any other line that lands the Foundation record.
+Reach (the cache-only replay of snapshot 21, main and reverse-parents
+byte-identical, calls 0): exactly 61 rows differ — 7 shellfish, 2 kiwi, 11
+citrus, 5 canned beans, 15 records (1 pepper, 4 herbes, 2 halloumi, 8
+vetoed), 1 tapioca, 1 pasta (counted on 169736 by rank-as), 18
+leek/rhubarb, and 1 parent re-reading its leek section; +926.9 kcal per
+batch (shellfish +1,955.0, kiwi +195.2, citrus +299.2, beans −811.6,
+records +1,135.2, tapioca −414.6, pasta +841.4, leeks/rhubarb −2,249.0 and
+the parent −24.0); holds: `in_shell` 7 → 0, `second_food` 24 → 13,
+`no_nutrients` 8 → 3; 22 recipes complete (980 → 1,002), 1 section (134 →
+135); main `check` 214 → 184, `counted` 13,338 → 13,364, `no_match` 11 →
+16.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
@@ -2926,7 +3044,11 @@ liquid — "undrained", "do not drain", "liquid reserved", "with their
 liquid" — counts the can whole (chana masala, pasta e ceci, acquacotta);
 "1 can drained, 1 can [left] undrained" takes the share on half the cans
 (`"… × 0.565 drained on half the cans · …"`: espinacas con garbanzos
-850.49 → 665.50 g, the garlicky shrimp stew 850.49 → 684.64 g). 22 lines
+850.49 → 665.50 g, the garlicky shrimp stew 850.49 → 684.64 g). Since
+matcher v49 (M47 Q14): a can with no drain word whose steps add it "and
+their liquid" is whole too, and a can kept whole moves to its cached
+solids-and-liquids twin (chickpeas 175206, pinto 175201, kidney 175195),
+the half rule's undrained can a part there — the v49 paragraph. 22 lines
 sit on the six records by a printed can weight: 19 change grams (harira
 425.24 → 240.26 g; beef chili with kidney beans 850.49 → 518.80 g), 3 keep
 the liquid; no bucket, hold or status moves; 10 recipes by more than 10 %
@@ -3070,7 +3192,16 @@ as bought) replaces the borrowed class figure above, flagged with the item:
 FDC's own refuse classes stay (168242 chops 0.662, 167849 butt 0.758,
 167895 country ribs 0.653, oxtails 0.564), as do the blade chops, baby
 back ribs, short/back ribs, picnic, lamb shoulder chops, veal shank and ham
-hocks (no row). **Bacon (Y11)**: rule B1 keeps 0.403 (FDC's own protein
+hocks (no row). **Shellfish (matcher v49, M47 Q11, `ah102Shells`)**, read
+for a weight bought in the shell on the raw record (transcribed into
+`.claude/diag/2026-10-06/ah102_produce_meat.md`, read on the page crops):
+
+| shellfish (record) | item | yield |
+|---|---|---|
+| shrimp, headless, in shell, thawed raw (SR 175179) | 2333 | shelled, deveined 81 % (77–82; shell 15, veins and handling 4) |
+| mussels, whole (SR 174216; FNDDS 2706350 lines move there) | 1531 | drained solids, raw 29 % (25–33); solids and liquor 1530: 51 % (43–56) |
+
+**Bacon (Y11)**: rule B1 keeps 0.403 (FDC's own protein
 balance between the two records the row is counted on); the handbook's
 cooked sliced bacon, items 1981–1985 (all methods 33 % (18–43), broiled 29,
 oven 34, microwave 32, pan fried 29), is the comparison: 0.403 sits inside its

@@ -171,8 +171,11 @@ void main() {
     'F3: a section decision completes the parents it promises',
     skip: skipIfNoCorpus,
     () {
+      // RE-PIN (M47 batch, v49 Q23 (a)): the Old Bay lines carry no record,
+      // so the decision is a person's PICK of "Spices, poultry seasoning"
+      // (171331, the record v48's engine showed) — a confirm needs a food.
       test("S5: the corn's line 0 picked onto its own Spicy Old Bay Butter; "
-          "crab cakes' Old Bay confirmed with apply_to_all → the receipt names "
+          "crab cakes' Old Bay picked with apply_to_all → the receipt names "
           'the corn (never the key), the corn complete and fresh', () async {
         await cachedFood(db, provider, 171331);
         await storeAndCompute([_corn, _crab]);
@@ -185,8 +188,11 @@ void main() {
         final group = db
             .nutritionReviewGroups(limit: 100, offset: 0)
             .singleWhere((g) => g.itemKey == 'old bay seasoning');
-        expect(group.finishes, 1);
-        expect([for (final r in group.finishesRecipes) r.id], [corn]);
+        // RE-PIN (M47 batch, v49 Q23 (a)): the Old Bay lines land no_match
+        // with no record — a No match group promises nothing (was 1, the
+        // corn); the apply below still completes it.
+        expect(group.finishes, 0);
+        expect([for (final r in group.finishesRecipes) r.id], isEmpty);
         bannerHolds();
         final before = db.nutritionReviewFinishable();
         final crab = stored(_crab);
@@ -200,7 +206,7 @@ void main() {
           line.position,
           {
             'raw': line.raw,
-            'confirmed': true,
+            'fdc_id': 171331,
             'apply_to_all': true,
           },
         );
@@ -223,7 +229,9 @@ void main() {
         );
         expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
         final after = db.nutritionReviewFinishable();
-        expect(after.finishable, before.finishable - 1);
+        // RE-PIN (M47 batch, v49 Q23 (a)): nothing was promised (was
+        // before − 1); the corn left the open recipes all the same.
+        expect(after.finishable, before.finishable);
         expect(after.open, before.open - 1);
         bannerHolds();
       });
@@ -357,9 +365,13 @@ void main() {
         expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
       });
 
+      // RE-PIN (M47 batch, v49 Q23 (a)): the red curry paste lines carry no
+      // record (no_match), so the group promises nothing and the decision
+      // is a person's PICK of "Beef curry" (2706388, the record v48's engine
+      // showed) — a confirm needs a food; the apply still completes both.
       test("O3: pork|3 picked onto its Satay Glaze and the chicken's |6 onto "
-          "its Coconut-Curry Glaze; the 'red curry paste' group finishes "
-          'gado-gado, the chicken and the pork; gado-gado|0 confirmed with '
+          "its Coconut-Curry Glaze; the 'red curry paste' group (no_match) "
+          'promises nothing; gado-gado|0 picked with '
           "apply_to_all → ONE main-line apply reaches two hosts' sections "
           'and the receipt names both parents (never a key), each stored '
           'complete and fresh', () async {
@@ -385,12 +397,9 @@ void main() {
             .singleWhere((g) => g.itemKey == 'red curry paste');
         expect((group.match.recipeId, group.match.position), (gado, 0));
         expect(group.lines, 3);
-        expect(group.finishes, 3);
-        expect(
-          [for (final r in group.finishesRecipes) r.id],
-          unorderedEquals([gado, chicken, pork]),
-        );
-        expect(db.nutritionReviewFinishable(), (finishable: 3, open: 3));
+        expect(group.finishes, 0);
+        expect([for (final r in group.finishesRecipes) r.id], isEmpty);
+        expect(db.nutritionReviewFinishable(), (finishable: 0, open: 3));
         bannerHolds();
 
         final applied = await applyMatchOverride(
@@ -400,7 +409,7 @@ void main() {
           0,
           {
             'raw': rowAt(gado, 0).raw,
-            'confirmed': true,
+            'fdc_id': 2706388,
             'apply_to_all': true,
           },
         );

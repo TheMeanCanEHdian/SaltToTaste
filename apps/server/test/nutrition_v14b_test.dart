@@ -812,7 +812,13 @@ void main() {
       ('ripe but firm bosc pears', 'bosc pear', 167778),
       ('white baking chips', 'white chocolate', 167571),
     ]) {
-      expect(searchQueryFor(item), target, reason: item);
+      // RE-PIN (M47 batch, v49): the three Thai chile items read this answer
+      // by rank-as ([rankAsFor]) since 'jarred hot cherry peppers' became a
+      // rank-as KEY (M2: never a rewrite target) — the same answer under
+      // the same words.
+      final read = rankAsFor(item);
+      expect(read?.answer ?? searchQueryFor(item), target, reason: item);
+      expect(read?.query ?? target, target, reason: item);
       final top = rankCandidates(target, await provider.search(target)).first;
       expect(top.candidate.fdcId, fdcId, reason: item);
       expect(belowConfidenceGate(top.confidence), isFalse, reason: item);

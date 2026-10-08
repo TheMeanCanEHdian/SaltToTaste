@@ -489,23 +489,26 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     'counted',
     'from 7 pound × 0.15 edible (USDA yield after shell removed)',
   ),
+  // RE-PIN (M47 batch, v49 Q11): the mussels by weight move to raw SR
+  // 174216 at AH-102 item 1531, the shell-on shrimp read item 2333 — both
+  // counted (were held in_shell at the gross weight).
   (
     '0294-oven-steamed-mussels.yaml',
     6,
     '4 pounds mussels, scrubbed and debearded',
-    2706350,
-    '1814.37',
-    'check',
-    'from 4 pound · approximate (gross weight, no USDA refuse portion)',
+    174216,
+    '526.17',
+    'counted',
+    'from 4 pound × 0.29 edible · approximate (USDA AH-102 item 1531: mussels, whole → drained solids, raw 29 % (25–33); the liquor in the pot is not counted)',
   ),
   (
     '0280-garlicky-roasted-shrimp-with-parsley-and-anise.yaml',
     1,
     '2 pounds shell-on jumbo shrimp (16 to 20 per pound)',
     175179,
-    '907.18',
-    'check',
-    'from 2 pound · approximate (gross weight, no USDA refuse portion)',
+    '734.82',
+    'counted',
+    'from 2 pound × 0.81 edible · approximate (USDA AH-102 item 2333: shrimp, headless, in shell → shelled, deveined 81 % (77–82))',
   ),
   (
     '0295-indoor-clambake.yaml',
@@ -516,14 +519,15 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     'counted',
     'from 2 pound × 0.15 edible (USDA yield after shell removed)',
   ),
+  // RE-PIN (M47 batch, v49 Q11): as 0294 above (was held, 907.18 g).
   (
     '0295-indoor-clambake.yaml',
     1,
     '2 pounds mussels, scrubbed and debearded',
-    2706350,
-    '907.18',
-    'check',
-    'from 2 pound · approximate (gross weight, no USDA refuse portion)',
+    174216,
+    '263.08',
+    'counted',
+    'from 2 pound × 0.29 edible · approximate (USDA AH-102 item 1531: mussels, whole → drained solids, raw 29 % (25–33); the liquor in the pot is not counted)',
   ),
 ];
 

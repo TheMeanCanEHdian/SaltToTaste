@@ -68,7 +68,21 @@ const double _wholeMassMacros = 90;
 /// are the sibling's, and the basis names it ([gramBasisFor]). The
 /// sibling is read from the caches — a search hit is enough — and fetched
 /// once only when no cache holds it.
-const Map<int, int> nutrientSiblings = {2727583: 169979};
+///
+/// v49 (M47 Q15 iv, critic F14): Foundation 2758998 "Pasta, dry, enriched,
+/// spaghetti" publishes minerals only (no energy, no macros) → SR 169736
+/// "Pasta, dry, enriched" (371 kcal). v49 (M47 Q13): FNDDS's cooked-state
+/// "Leeks" 2709935 (88 kcal, fat added) and "Rhubarb" 2709268 (73 kcal,
+/// sugar-cooked) on raw lines → SR 169246 "Leeks, (bulb and lower
+/// leaf-portion), raw" (61) and SR 167758 "Rhubarb, raw" (21), both details
+/// cached by the M53 live step; the grams and the AH-102 leek yield stay
+/// keyed on the line's own record.
+const Map<int, int> nutrientSiblings = {
+  2727583: 169979,
+  2758998: 169736,
+  2709935: 169246,
+  2709268: 167758,
+};
 
 /// A cooking medium the recipe throws away, found from the line and the
 /// recipe's steps (audit 1 rank 12, audit 2: 19 counted frying-oil lines of
@@ -4475,7 +4489,12 @@ String _ownSalt(String normalized) {
       : medium != null
       ? null
       : resolved;
-  final rule = secondFoodRuleOf(line, citrus: citrus, eggs: eggs);
+  final rule = secondFoodRuleOf(
+    line,
+    citrus: citrus,
+    eggs: eggs,
+    recipe: recipe,
+  );
   if (rule != null && rule.fdcId == food.fdcId) {
     final resolved = rule.gramsOn(food);
     return (grams: resolved?.grams, source: resolved?.source.name, hold: null);
@@ -4547,14 +4566,22 @@ String _ownSalt(String normalized) {
 /// shrimp's prep note: the gross weight is what is eaten, flagged
 /// approximate). v40 (E2): a clam line bought by weight whose grams carry
 /// FDC's shell yield ([shellYieldLabel]: 174214's "lb (with shell)" 68 g).
-/// A mussel or shrimp line bought by weight stays held: no record publishes
-/// a shell yield.
-bool shellCounted(Recipe recipe, GramResolution? resolution) =>
-    resolution?.source == GramSource.piece ||
-    (resolution?.basis?.contains('($shellYieldLabel)') ?? false) ||
-    RegExp(
-      r'\beaten shells? and all\b',
-    ).hasMatch((recipe.prepNotes ?? '').toLowerCase());
+/// v49 (M47 Q11): a shrimp or mussel line bought by weight whose grams carry
+/// its AH-102 shell row ([ah102Shells]: shrimp 2333, mussels 1531). Oysters,
+/// lobsters and the clams on other records stay held.
+bool shellCounted(Recipe recipe, GramResolution? resolution) {
+  final basis = resolution?.basis ?? '';
+  return resolution?.source == GramSource.piece ||
+      basis.contains('($shellYieldLabel)') ||
+      ah102Shells.values.any((row) => basis.contains('(${row.flag})')) ||
+      shellEatenIn(recipe);
+}
+
+/// Whether [recipe] says its shellfish are "eaten shell and all" (crispy
+/// salt-and-pepper shrimp's prep note): the gross weight is what is eaten.
+bool shellEatenIn(Recipe recipe) => RegExp(
+  r'\beaten shells? and all\b',
+).hasMatch((recipe.prepNotes ?? '').toLowerCase());
 
 /// v39 (Y3, the owner's ruling 2026-10-05 on plan Q4 (b)): the meat-only
 /// record a skin-discarded thigh or leg row moves to ([skinDiscarded]).
@@ -4570,14 +4597,27 @@ const Map<int, int> skinlessRecords = {
   2727569: 2646170,
 };
 
+/// v49 (M47 Q11): the raw record a weight of shellfish bought in the shell
+/// ([boughtInShell]) moves to from a cooked-meat one, weighed there at its
+/// AH-102 shell row ([ah102Shells]): FNDDS 2706350 "Mussels" (cooked meat,
+/// "1 mussel" 15 g) → SR 174216 "Mollusks, mussel, blue, raw" (cached,
+/// second in the 'mussels' answer). Record-keyed, as [skinlessRecords]: a
+/// count ("1 dozen mussels", paella) stays on the FNDDS meat portion.
+const Map<int, int> shellRecords = {2706350: 174216};
+
 /// [eaten]'s food and grams once the skin is off: an auto row on a
 /// skin-on record of [skinlessRecords] — the engine's pick, or a person's
 /// decision carried here from another line — whose line, weighed from a
 /// printed weight, buys refuse in a recipe that discards the skin
 /// ([skinDiscarded]) moves to the meat-only record (cached; else its detail
-/// fetched once), weighed there at the meat share. Else [food] and
-/// [resolution] as they are. Never a person's own row on this line: it
-/// shows the food they chose.
+/// fetched once), weighed there at the meat share — or (v49) one on a
+/// cooked-meat record of [shellRecords] whose weight is bought in the shell
+/// moves to the raw record, weighed there at its AH-102 shell row — or
+/// (v49, M47 Q14 (ii)) a can of beans kept whole ([keepsWholeCan]) on a
+/// drained-and-rinsed record moves to its cached solids-and-liquids record
+/// ([cannedBeanLiquids]), grams unchanged. Else [food] and [resolution] as
+/// they are. Never a person's own row on this
+/// line: it shows the food they chose.
 Future<(FdcFood, GramResolution?)> skinOffFood(
   SaltDatabase db,
   NutritionProvider provider,
@@ -4587,13 +4627,29 @@ Future<(FdcFood, GramResolution?)> skinOffFood(
   GramResolution? resolution,
 ) async {
   final skinless = skinlessRecords[food.fdcId];
-  final meatOnly =
-      skinless == null ||
-          resolution?.source != GramSource.weight ||
-          !buysRefuse(eaten.raw) ||
-          !skinDiscarded(recipe, eaten)
+  final shelled = shellRecords[food.fdcId];
+  final beanLiquid = cannedBeanLiquids[food.fdcId];
+  final weighed = resolution?.source == GramSource.weight;
+  // v49 (M47 Q11): or a weight bought in the shell, to its raw record.
+  final target =
+      skinless != null &&
+          weighed &&
+          buysRefuse(eaten.raw) &&
+          skinDiscarded(recipe, eaten)
+      ? skinless
+      : shelled != null && weighed && boughtInShell(eaten.raw)
+      ? shelled
+      : beanLiquid != null &&
+            weighed &&
+            keepsWholeCan(
+              eaten.raw,
+              liquidEaten: canLiquidEatenIn(recipe, eaten),
+            )
+      ? beanLiquid
+      : null;
+  final meatOnly = target == null
       ? null
-      : await _cachedFood(db, provider, skinless);
+      : await _cachedFood(db, provider, target);
   return meatOnly == null
       ? (food, resolution)
       : (meatOnly, lineGrams(db, eaten, meatOnly, recipe: recipe));
@@ -4604,7 +4660,9 @@ Future<(FdcFood, GramResolution?)> skinOffFood(
 /// skin of a cut bought with it, the SKIN-ON record bought — so a Confirm
 /// of a moved row (or apply_to_all) never carries the skinless food, nor
 /// its meat share, to a line whose skin is eaten; each line that discards
-/// it moves again ([skinOffFood]). Else [fdcId].
+/// it moves again ([skinOffFood]). v49: on the raw record of
+/// [shellRecords] for a line bought in the shell, the record bought (a
+/// count — paella's dozen mussels — stays on it). Else [fdcId].
 int? decisionRecordOf(Recipe recipe, IngredientLine line, int? fdcId) {
   for (final MapEntry(key: skinOn, value: meatOnly)
       in skinlessRecords.entries) {
@@ -4614,7 +4672,41 @@ int? decisionRecordOf(Recipe recipe, IngredientLine line, int? fdcId) {
       return skinOn;
     }
   }
+  // v49: the record bought for a line the shell move put on the raw one,
+  // or the can move on the solids-and-liquids one.
+  for (final MapEntry(key: bought, value: raw) in shellRecords.entries) {
+    if (raw == fdcId && boughtInShell(line.raw)) {
+      return bought;
+    }
+  }
+  for (final MapEntry(key: bought, value: liquid)
+      in cannedBeanLiquids.entries) {
+    if (liquid == fdcId &&
+        keepsWholeCan(
+          line.raw,
+          liquidEaten: canLiquidEatenIn(recipe, line),
+        )) {
+      return bought;
+    }
+  }
   return fdcId;
+}
+
+/// v49 (M47 Q14 (i), the owner's 2026-10-07 standing authorization;
+/// amends the 2026-10-06 canned-bean ruling): whether [recipe]'s steps add
+/// [line]'s can WITH its liquid — a sentence naming the line's head noun
+/// then "and|with their|its liquid" ("Add remaining 2 cups water, beans and
+/// their liquid", best ground beef chili; "Stir in cannellini beans and
+/// their liquid", soupe au pistou). Only a can line.
+bool canLiquidEatenIn(Recipe recipe, IngredientLine line) {
+  final head = headNounOf(normalizeItem(lineItemOf(line)));
+  if (head == null || !RegExp(r'\bcans?\b').hasMatch(line.raw.toLowerCase())) {
+    return false;
+  }
+  final said = RegExp(
+    '\\b${RegExp.escape(head)}(?:e?s)?\\s+(?:and|with)\\s+(?:their|its)\\s+liquid\\b',
+  );
+  return recipe.steps.any((step) => said.hasMatch(step.text.toLowerCase()));
 }
 
 /// Whether [recipe] discards the skin of [line]'s cut: the line says "skin
@@ -5724,7 +5816,84 @@ IngredientMatchRow withRenderedBacon(
   );
 }
 
-/// The parts a two-part row stores: `[{"fdc_id": …, "grams": …}, …]`.
+/// [row] with the parts its rule stores — the ONE writer of the `parts`
+/// column, at every place a row is built or derived: rule B1's rendered
+/// bacon ([withRenderedBacon]); v49 (M47 Q6) a zest over a tablespoon plus
+/// juice ([SecondFoodRule.second]: the zest on its peel record, the juice
+/// on its own); v49 (M47 Q14 (ii)) the half rule's cans ([halvesCans]) on a
+/// record with a solids-and-liquids twin ([cannedBeanLiquids]: the drained
+/// can on the record bought, the undrained one on the twin). Each only on
+/// an `auto` or `confirmed` row, unheld, never under grams a person typed;
+/// its grams the parts' sum, each part rounded to 0.01 g and named by its
+/// `role`. Any other row carries no parts.
+IngredientMatchRow withParts(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row, {
+  double? raw,
+}) {
+  final bacon = withRenderedBacon(recipe, line, row, raw: raw);
+  if (bacon.parts != null ||
+      bacon.fdcId == null ||
+      (bacon.status != 'auto' && bacon.status != 'confirmed') ||
+      bacon.hold != null ||
+      bacon.gramSource == GramSource.override.name ||
+      (bacon.grams ?? 0) <= 0) {
+    return bacon;
+  }
+  double round2(double v) => double.parse(v.toStringAsFixed(2));
+  IngredientMatchRow split(
+    (int, double, String) first,
+    (int, double, String) second,
+  ) {
+    final a = round2(first.$2);
+    final b = round2(second.$2);
+    return bacon.copyWith(
+      grams: round2(a + b),
+      parts: jsonEncode([
+        {'fdc_id': first.$1, 'grams': a, 'role': first.$3},
+        {'fdc_id': second.$1, 'grams': b, 'role': second.$3},
+      ]),
+    );
+  }
+
+  // Only a row on a peel record reads the rule (its regexes run per row).
+  final rule = _citrusPeel.values.any((peel) => peel.fdcId == bacon.fdcId)
+      ? secondFoodRuleOf(line, recipe: recipe)
+      : null;
+  final second = rule?.second;
+  if (rule != null && second != null && bacon.fdcId == rule.fdcId) {
+    final zest = rule.gramsOn(knownFood(db, rule.fdcId, line: line));
+    final juice = second.grams(knownFood(db, second.fdcId, line: line));
+    // Either record not cached (never after the compute's own fetch,
+    // [ruleRowFor]): held, as before v49.
+    return zest == null || juice == null
+        ? bacon.copyWith(hold: 'second_food')
+        : split(
+            (rule.fdcId, zest.grams, 'zest'),
+            (second.fdcId, juice.grams, 'juice'),
+          );
+  }
+  final liquid = cannedBeanLiquids[bacon.fdcId];
+  final share = cannedBeanShares[bacon.fdcId]?.share;
+  if (liquid != null &&
+      share != null &&
+      halvesCans(line.raw) &&
+      knownFood(db, liquid) != null) {
+    // The half rule's grams: one can × (1 + share); each can is grams ÷
+    // (1 + share).
+    final can = bacon.grams! / (1 + share);
+    return split(
+      (bacon.fdcId!, can * share, 'drained'),
+      (liquid, can, 'undrained'),
+    );
+  }
+  return bacon;
+}
+
+/// The parts a two-part row stores: `[{"fdc_id": …, "grams": …}, …]`
+/// (v49: a `role` too, [withParts]; rule B1's rows keep none).
 List<({int fdcId, double grams})> partsOf(String? parts) => parts == null
     ? const []
     : [
@@ -5796,8 +5965,11 @@ const Map<String, int> _citrusJuice = {
 /// the same fruit ("½ teaspoon grated orange zest plus 5 oranges peeled and
 /// segmented", grill-roasted-bone-in-pork-rib-roast's salsa): the fruit counted
 /// on its whole-fruit record ([_citrusFruit]), the zest dropped as the
-/// juice rule drops it. Null for any other line (a lemon's "plus 2 lemons,
-/// halved" stays its zest: no whole-lemon record is mapped).
+/// juice rule drops it. v49 (M47 Q6, critic F17): lemons and limes too
+/// ("1 tablespoon grated lemon zest, plus 2 lemons, halved", grilled
+/// swordfish; "2 teaspoons grated lemon zest, plus 1 lemon", fava beans),
+/// each read as a bare "2 lemons" line reads (FNDDS 2709168, SR 168155).
+/// Null for any other line.
 SecondFoodRule? _zestPlusFruit(
   IngredientLine line,
   PlusPart plus,
@@ -5841,10 +6013,36 @@ SecondFoodRule? _zestPlusFruit(
 }
 
 /// The whole-fruit record a zest-plus-counted-fruit line counts on (v44,
-/// S7 a; the library's one such line is oranges).
+/// S7 a: oranges; v49: the records the library's bare lemon and lime
+/// counts sit on).
 const Map<String, int> _citrusFruit = {
   'orange': 746771, // Oranges, raw, navels
+  'lemon': 2709168, // Lemon, raw
+  'lime': 168155, // Limes, raw
 };
+
+/// v49 (M47 Q6): the peel record a zest over a tablespoon counts on, by
+/// fruit — lime zest on lemon peel, the shipped flagged approximation
+/// ([approximationRecords] 'lime zest').
+const Map<String, ({int fdcId, String words})> _citrusPeel = {
+  'lemon': (fdcId: 167749, words: 'lemon peel'), // Lemon peel, raw
+  'lime': (fdcId: 167749, words: 'lemon peel'),
+  'orange': (fdcId: 169103, words: 'orange peel'), // Orange peel, raw
+};
+
+/// v49 (M47 Q6): whether [recipe]'s steps strain or discard the zest at or
+/// after its first mention — "Strain the juice mixture" (fresh margaritas),
+/// "Strain milk mixture …; discard lemon zest" (lemon pudding cakes), the
+/// curd poured "through a fine-mesh strainer" (lemon tart).
+bool _zestStrained(Recipe recipe) {
+  final text = recipe.steps.map((step) => step.text).join(' ').toLowerCase();
+  final at = RegExp(r'\b(zest|peel)\b').firstMatch(text)?.start;
+  return at != null &&
+      RegExp(
+        r'\bstrain|\bdiscard\w*\s+(?:the\s+)?(?:(?:lemon|lime|orange)\s+)?'
+        r'(?:zest|peel)\b',
+      ).hasMatch(text.substring(at));
+}
 
 /// The whole-egg record [eggPartsMassSumOn] counts on: "Eggs, Grade A,
 /// Large, egg whole" (Foundation).
@@ -5856,7 +6054,7 @@ const double _tablespoonMl = 14.7868;
 /// A second-food line the engine counts on one record by rule: the record,
 /// the words its score is ranked under, and the grams on it.
 class SecondFoodRule {
-  const SecondFoodRule._(this.fdcId, this.query, this._grams);
+  const SecondFoodRule._(this.fdcId, this.query, this._grams, [this.second]);
 
   /// The record the line counts on.
   final int fdcId;
@@ -5866,7 +6064,13 @@ class SecondFoodRule {
 
   final GramResolution? Function(FdcFood? food) _grams;
 
-  /// The line's grams on [food] (the record [fdcId]; the egg sum needs none).
+  /// v49 (M47 Q6): the line's second part on its own record (a zest over a
+  /// tablespoon plus juice: the juice) — the row then stores two parts
+  /// ([withParts]); null for a one-record rule.
+  final ({int fdcId, GramResolution? Function(FdcFood? food) grams})? second;
+
+  /// The line's grams on [food] (the record [fdcId]; the egg sum needs
+  /// none) — its first part's alone when the rule has a [second].
   GramResolution? gramsOn(FdcFood? food) => _grams(food);
 }
 
@@ -5876,6 +6080,7 @@ SecondFoodRule? secondFoodRuleOf(
   IngredientLine line, {
   bool citrus = citrusJuiceRuleOn,
   bool eggs = eggPartsMassSumOn,
+  Recipe? recipe,
 }) {
   // Only a line that names a second food: the reach leaves out exactly
   // those ([decisionReach]), so a rule line is never offered.
@@ -5921,14 +6126,20 @@ SecondFoodRule? secondFoodRuleOf(
         : strips(zest)
         ? 0.0
         : volumeMlOf([zest]);
+    // v49 (M47 Q6, amends checkpoint 5): a zest over a tablespoon is
+    // counted — two parts, the zest on its peel record and the juice on
+    // its own — unless a step strains or discards it (juice only). Read on
+    // the recipe's steps: with none, held as before.
+    final large = zestMl != null && zestMl > _tablespoonMl + 0.01;
     if (juice == null ||
         volumeMlOf([juice]) == null ||
         zestMl == null ||
-        zestMl > _tablespoonMl + 0.01) {
+        (large && recipe == null)) {
       return null;
     }
     final fruit = citrusKey[1]!;
-    return SecondFoodRule._(_citrusJuice[fruit]!, '$fruit juice', (food) {
+    final strained = large && _zestStrained(recipe!);
+    GramResolution? juiceOn(FdcFood? food, String note) {
       final grams = resolveGrams(
         amounts: [juice],
         food: food,
@@ -5939,9 +6150,36 @@ SecondFoodRule? secondFoodRuleOf(
           : GramResolution(
               grams: grams.grams,
               source: grams.source,
-              basis: '${grams.basis} · juice only (the zest is dropped)',
+              basis: '${grams.basis}$note',
             );
-    });
+    }
+
+    if (large && !strained) {
+      final peel = _citrusPeel[fruit]!;
+      return SecondFoodRule._(
+        peel.fdcId,
+        peel.words,
+        (food) => resolveGrams(
+          amounts: [zest!],
+          food: food,
+          normalizedItem: '$fruit zest',
+        ),
+        (
+          fdcId: _citrusJuice[fruit]!,
+          grams: (food) => juiceOn(food, ''),
+        ),
+      );
+    }
+    return SecondFoodRule._(
+      _citrusJuice[fruit]!,
+      '$fruit juice',
+      (food) => juiceOn(
+        food,
+        strained
+            ? ' · juice only (the zest is strained out)'
+            : ' · juice only (the zest is dropped)',
+      ),
+    );
   }
   String? part(String text) => RegExp(r'\byolks?\b').hasMatch(text)
       ? 'yolk'
@@ -7176,7 +7414,8 @@ Future<NutritionProviderException?> _computePass(
             write(sub);
             continue;
           }
-          final carriedRow = withRenderedBacon(
+          final carriedRow = withParts(
+            db,
             recipe,
             eaten,
             IngredientMatchRow(
@@ -7206,7 +7445,11 @@ Future<NutritionProviderException?> _computePass(
       }
 
       final search = lineSearchFor(db, normalized, lineKeyOf(eaten));
-      final candidates = await _cachedSearch(db, lineProvider, search.answer);
+      // v49 (M47 Q23 (a)): an item FDC holds no record of lands `no_match`
+      // with no record shown, and asks nothing ([noFdcRecordItems]).
+      final candidates = noFdcRecordItems.contains(normalized)
+          ? const <FdcCandidate>[]
+          : await _cachedSearch(db, lineProvider, search.answer);
       final ranked = freshOverCured(
         eaten.raw,
         rankCandidates(
@@ -7367,7 +7610,8 @@ Future<NutritionProviderException?> _computePass(
         write(sub);
         continue;
       }
-      final picked = withRenderedBacon(
+      final picked = withParts(
+        db,
         recipe,
         eaten,
         IngredientMatchRow(
@@ -8188,7 +8432,7 @@ Future<({IngredientMatchRow row, FdcFood food})?> ruleRowFor(
   int position,
   IngredientLine line,
 ) async {
-  final rule = secondFoodRuleOf(line);
+  final rule = secondFoodRuleOf(line, recipe: recipe);
   if (rule == null) {
     return null;
   }
@@ -8198,28 +8442,39 @@ Future<({IngredientMatchRow row, FdcFood food})?> ruleRowFor(
   if (target == null) {
     return null;
   }
+  // v49 (M47 Q6): a two-part rule's second record, fetched once like the
+  // rule's own ([withParts] reads it from the caches).
+  if (rule.second case final second?
+      when knownFood(db, second.fdcId, line: line) == null) {
+    await _cachedFood(db, provider, second.fdcId);
+  }
   final outcome = engineOutcome(recipe, line, target, null, picked: true);
   return (
     food: target,
-    row: IngredientMatchRow(
-      recipeId: recipe.id,
-      position: position,
-      raw: line.raw,
-      itemKey: lineKeyOf(line),
-      fdcId: target.fdcId,
-      description: target.description,
-      dataType: target.dataType,
-      confidence: rankCandidates(rule.query, [
-        FdcCandidate(
-          fdcId: target.fdcId,
-          description: target.description,
-          dataType: target.dataType,
-        ),
-      ]).first.confidence,
-      grams: outcome.grams,
-      gramSource: outcome.source,
-      status: 'auto',
-      hold: outcome.hold,
+    row: withParts(
+      db,
+      recipe,
+      line,
+      IngredientMatchRow(
+        recipeId: recipe.id,
+        position: position,
+        raw: line.raw,
+        itemKey: lineKeyOf(line),
+        fdcId: target.fdcId,
+        description: target.description,
+        dataType: target.dataType,
+        confidence: rankCandidates(rule.query, [
+          FdcCandidate(
+            fdcId: target.fdcId,
+            description: target.description,
+            dataType: target.dataType,
+          ),
+        ]).first.confidence,
+        grams: outcome.grams,
+        gramSource: outcome.source,
+        status: 'auto',
+        hold: outcome.hold,
+      ),
     ),
   );
 }
@@ -8332,6 +8587,10 @@ GramResolution? lineGrams(
   // its skin on — with no recipe, none.
   final skinOff = recipe != null && skinDiscarded(recipe, line);
   final skinKept = skinOff ? skinKeptPart(recipe, line) : null;
+  // v49 (M47 Q11): a recipe that eats the shell reads no AH-102 shell row;
+  // (Q14 (i)) one whose steps add a can with its liquid keeps it whole.
+  final shellEaten = recipe != null && shellEatenIn(recipe);
+  final canLiquidEaten = recipe != null && canLiquidEatenIn(recipe, line);
   GramResolution? on(FdcFood? record) => resolveGrams(
     amounts: line.amounts,
     food: record,
@@ -8339,6 +8598,8 @@ GramResolution? lineGrams(
     raw: line.raw,
     skinOff: skinOff,
     skinKept: skinKept,
+    shellEaten: shellEaten,
+    canLiquidEaten: canLiquidEaten,
   );
   if (food != null && freshHerbLine(line.raw, food.description)) {
     return _freshHerbGrams(line, food, normalized, on(food));
@@ -9123,12 +9384,12 @@ String? _gramBasis(
         '${kcal == null ? '' : ', ${_fmtKcal(kcal)} kcal'}';
   }
   // v41 (R2): a rendered row says what rule B1 made of the raw weight.
-  if (row.parts != null && fdcId != null) {
+  if (row.parts != null && fdcId == rawBaconFdcId) {
     final parts = partsOf(row.parts);
     final raw = lineGrams(
       db,
       line,
-      knownFood(db, fdcId, line: line),
+      knownFood(db, rawBaconFdcId, line: line),
       recipe: recipe,
     )?.grams;
     if (raw != null && parts.length == 2) {
@@ -9185,11 +9446,25 @@ String? _gramBasis(
   // compute fetches for a Foundation or FNDDS weight line (v11, Opus:
   // braised oxtails, 2705843).
   final food = fdcId == null ? null : knownFood(db, fdcId, line: line);
-  final rule = secondFoodRuleOf(line);
+  final rule = secondFoodRuleOf(line, recipe: recipe);
   if (rule != null && rule.fdcId == fdcId) {
     final byRule = rule.gramsOn(food);
-    if (byRule != null && (byRule.grams - row.grams!).abs() <= 0.05) {
-      return byRule.basis;
+    // v49 (M47 Q6): a two-part row names both parts ([withParts]).
+    final second = rule.second;
+    final other = second == null || byRule == null
+        ? null
+        : second.grams(knownFood(db, second.fdcId, line: line));
+    final both = second == null
+        ? byRule
+        : other == null
+        ? null
+        : GramResolution(
+            grams: byRule!.grams + other.grams,
+            source: byRule.source,
+            basis: 'zest ${byRule.basis} + juice ${other.basis}',
+          );
+    if (both != null && (both.grams - row.grams!).abs() <= 0.05) {
+      return both.basis;
     }
   }
   GramResolution? on(FdcFood? food) {
@@ -9277,7 +9552,11 @@ String? compositeFlagOf(
       );
     }
   }
-  if (row.parts != null && row.gramSource != GramSource.override.name) {
+  // Rule B1's rendered row (v49: the only parts rule with a flag — a
+  // citrus or a can row's two parts are each the food as used).
+  if (row.parts != null &&
+      row.gramSource != GramSource.override.name &&
+      row.fdcId == rawBaconFdcId) {
     flags.add('approximate (rendered and drained; yield from FDC protein)');
   }
   return flags.isEmpty ? null : flags.join(' · ');
@@ -10346,7 +10625,8 @@ Future<IngredientMatchRow> unskippedRow(
   // are not `personal`, and the rule would replace them (Run 049: "¼
   // teaspoon grated lime zest plus 1½–2 tablespoons juice" confirmed at
   // 40 g came back at the rule's 26.65 g).
-  final byRule = personal || secondFoodRuleOf(line)?.fdcId == out.fdcId
+  final byRule =
+      personal || secondFoodRuleOf(line, recipe: recipe)?.fdcId == out.fdcId
       ? null
       : await ruleRowFor(db, provider, recipe, position, line);
   if (byRule != null) {
@@ -10364,15 +10644,24 @@ Future<IngredientMatchRow> unskippedRow(
   }
   final medium = heldMediumLine(recipe, eaten);
   final source = GramSource.values.asNameMap()[out.gramSource];
+  final derived = lineGrams(db, eaten, onRow, recipe: recipe);
+  // The stored grams keep their basis when the line still derives them
+  // (the tolerance [gramBasisFor] reads with): the hold reads it — a shell
+  // row counts only by its yield's flag ([shellCounted]; v49 closer 2: an
+  // un-skip held 0294's AH-102 mussels, 0429's shrimp and 0034's clams
+  // `in_shell` though the compute counts them).
+  final stored = out.grams == null || source == null
+      ? null
+      : derived != null &&
+            derived.source == source &&
+            (derived.grams - out.grams!).abs() <= 0.05
+      ? derived
+      : GramResolution(grams: out.grams!, source: source);
   final outcome = engineOutcome(
     recipe,
     eaten,
     onRow,
-    medium
-        ? lineGrams(db, eaten, onRow, recipe: recipe)
-        : out.grams == null || source == null
-        ? null
-        : GramResolution(grams: out.grams!, source: source),
+    medium ? derived : stored,
     picked: !personal,
     decided: personal,
     confidence: out.confidence,
@@ -10386,15 +10675,15 @@ Future<IngredientMatchRow> unskippedRow(
           hold: outcome.hold,
         )
       : out.copyWith(hold: outcome.hold);
-  // Rule B1 (v41) on the line's raw weight: a skip kept the rendered sum.
-  if (out.fdcId == rawBaconFdcId) {
-    out = withRenderedBacon(
-      recipe,
-      eaten,
-      out,
-      raw: lineGrams(db, eaten, onRow, recipe: recipe)?.grams,
-    );
-  }
+  // Rule B1 (v41) on the line's raw weight: a skip kept the rendered sum;
+  // v49: every rule's parts ([withParts]).
+  out = withParts(
+    db,
+    recipe,
+    eaten,
+    out,
+    raw: out.fdcId == rawBaconFdcId ? derived?.grams : null,
+  );
   return subRecipeRowFor(
         recipe,
         position,
@@ -10715,7 +11004,8 @@ derivedFor(
   // Rule B1 (v41, D12): a Confirm keeps a rendered row's two parts; a pick
   // (`overridden`) is one record at the line's raw grams — how a person
   // undoes the rule.
-  final row = withRenderedBacon(
+  final row = withParts(
+    db,
     recipe,
     eaten,
     placed.copyWith(
@@ -11215,7 +11505,8 @@ applyDecisionToOthers(
             ) ??
             // Rule B1 (v41, D12): a carried bacon decision re-runs the rule
             // on the target's own steps.
-            withRenderedBacon(
+            withParts(
+              db,
               found.recipe,
               eaten,
               IngredientMatchRow(

@@ -131,9 +131,13 @@ const List<Map<String, Object?>> _rulesLines = [
     'item': '(6- to 8-pound) bone-in fresh half ham with skin',
   },
   // Matcher v10 (checkpoint 6): a whole bird on its ready-to-cook yield
-  // (0004), mussels held in the shell (Cioppino, 0108), and napa counted on
-  // its sibling's nutrients (0506) — read from the cached answer the
-  // vinegar line before it holds (Pai Huang Gua, 0504).
+  // (0004), a line held in the shell, and napa counted on its sibling's
+  // nutrients (0506) — read from the cached answer the vinegar line before
+  // it holds (Pai Huang Gua, 0504). The held shell line was Cioppino's
+  // (0108) mussels until matcher v49 (M47 Q11) counted every weighed mussel
+  // and shrimp line at its AH-102 row: since then a STATED SYNTHESIZED
+  // weight of oysters (no corpus oyster line is bought by weight; FNDDS
+  // 2706351 publishes no shell yield) — no corpus line is held in_shell.
   {
     'raw': '1 (4-pound) whole chicken, giblets discarded',
     'amounts': [
@@ -143,12 +147,12 @@ const List<Map<String, Object?>> _rulesLines = [
     'prep': 'giblets discarded',
   },
   {
-    'raw': '1 pound mussels, scrubbed and debearded',
+    'raw': '1 pound oysters, scrubbed',
     'amounts': [
       {'measure': 'weight', 'quantity': '1', 'unit': 'pound', 'primary': true},
     ],
-    'item': 'mussels',
-    'prep': 'scrubbed and debearded',
+    'item': 'oysters',
+    'prep': 'scrubbed',
   },
   {
     'raw': '4 teaspoons Chinese black vinegar',
@@ -1114,10 +1118,13 @@ void main() {
         ),
       );
       expect(routed['others'], 0);
-      // A section line in the queue: Satay Glaze's red curry paste (a
-      // low-confidence record with no grams), its row naming the HOST and
-      // the section; Grilled Glazed Pork Tenderloin Roast's own glaze line
-      // picked onto it, so the group's `last_open` counts that parent.
+      // A section line in the queue: Satay Glaze's red curry paste — since
+      // matcher v49 (M47 Q23 (a)) No match with no record shown (it was a
+      // low-confidence record with no grams, and the capture read the Check
+      // bucket alone; now every flagged bucket, so the other lines stay in
+      // the golden) — its row naming the HOST and the section; Grilled
+      // Glazed Pork Tenderloin Roast's own glaze line picked onto it, so the
+      // group's `last_open` counts that parent.
       final roast = await post(
         '0601-grilled-glazed-pork-tenderloin-roast.yaml',
         from: v44,
@@ -1136,7 +1143,7 @@ void main() {
       await harness.capture(
         'nutrition_review_section',
         'GET',
-        '/api/v1/admin/nutrition_review?group=item&bucket=check',
+        '/api/v1/admin/nutrition_review?group=item',
         headers: harness.auth(adminSession),
       );
     });

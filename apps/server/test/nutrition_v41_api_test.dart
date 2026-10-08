@@ -54,6 +54,8 @@ const _keyLime = '0989-key-lime-pie.yaml';
 const _coconut = '0991-coconut-cream-pie.yaml';
 const _lemonTart = '0994-lemon-tart.yaml';
 const _fruitTart = '0997-fresh-fruit-tart-with-pastry-cream.yaml';
+// RE-PIN (M47 batch, v49 Q12): the held line the partial-child pin appends.
+const _watermelon = '1071-watermelon-salad-with-cotija-and-serrano-chiles.yaml';
 
 void main() {
   late Directory tempDir;
@@ -771,12 +773,13 @@ void main() {
 
     test("a partial child: its parent's partial line", () async {
       // A stated composed-from-real-lines exception (tests.md 7.6, as the
-      // engine's M16 pin): the fresh fruit tart's real kiwi line appended to
-      // Classic Tart Dough makes the child partial.
+      // engine's M16 pin): the watermelon salad's real held line appended to
+      // Classic Tart Dough makes the child partial (RE-PIN (M47 batch, v49
+      // Q12): was the fruit tart's kiwi line, counted now).
       await library([_tartDough, _lemonTart], computed: {});
       final dough = stored(_tartDough);
-      final kiwi = nutritionLines(loadCorpusRecipe(_fruitTart))[9];
-      expect(kiwi.raw, startsWith('2 large kiwis'));
+      final kiwi = nutritionLines(loadCorpusRecipe(_watermelon))[5];
+      expect(kiwi.raw, '6 cups 1½-inch seedless watermelon pieces');
       final group = dough.ingredients.last;
       expect(
         updateRecipe(db, config, dough.id, {

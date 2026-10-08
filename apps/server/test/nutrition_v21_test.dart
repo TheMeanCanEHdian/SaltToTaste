@@ -283,10 +283,12 @@ void main() {
           'from 2 pound · approximation (counted as Potatoes, red, without '
               'skin, raw)',
         ),
+        // RE-PIN (M47 batch, v49 Q5): ATK's printed 3 ounces per ¾ cup,
+        // flagged, over the pearl record's cup (was "3 cup · USDA portion").
         (
           '3 cups tapioca starch',
-          '3 cup · USDA portion · approximation (counted as Tapioca, pearl, '
-              'dry)',
+          "3 cup ≈ 710 mL · approximate (ATK's printed 3 ounces per ¾ cup) · "
+              'approximation (counted as Tapioca, pearl, dry)',
         ),
         ('3 tablespoons apple jelly', '3 tablespoon ≈ 44 mL'),
       ]) {
@@ -2055,7 +2057,8 @@ _moved = [
     null,
     'tapioca starch',
     169717,
-    '456.00',
+    // RE-PIN (M47 batch, v49 Q5): 3 × 113.40 g (was 3 × the pearl cup 152 g).
+    '340.19',
     'J5',
     'counted',
     true,

@@ -108,8 +108,14 @@ void main() {
   // Italian-Style Grilled Chicken (0423): the citrus rule counts it.
   const lemon = '1 teaspoon grated lemon zest plus 2 tablespoons juice';
   // Skillet-Roasted Chicken in Lemon Sauce (0142): 4 teaspoons of zest,
-  // over the rule's tablespoon — held second_food.
+  // over the rule's tablespoon — held second_food until v49 (M47 Q6: two
+  // parts, the zest on its peel record and the juice on its own).
   const heldZest = '4 teaspoons grated lemon zest plus ¼ cup juice (2 lemons)';
+  // RE-PIN (M47 batch, v49 Q6): the held second food since then — Crispy-
+  // Skinned Chicken Breasts with Vinegar-Pepper Pan Sauce's (0121) peppers
+  // plus their brine, on "Peppers, hot, pickled" (2710095).
+  const heldBrine =
+      '¼ cup chopped pickled hot cherry peppers, plus ¼ cup brine';
   // Avgolemono (0005): the egg rule counts it on the whole egg.
   const eggsYolks = '2 large eggs plus 2 large yolks';
   // A LINE-held medium keyed like a plain line (brine sugars went to zero
@@ -135,7 +141,10 @@ void main() {
       for (final r in [a, ...ruled]) {
         await matchAndCompute(db, provider, r);
       }
-      expect(db.ingredientMatchesFor('ra').single.hold, 'second_food');
+      // RE-PIN (M47 batch, v49 Q6): counted by rule as two parts (was held
+      // second_food); a confirm still moves no other line.
+      final zest = db.ingredientMatchesFor('ra').single;
+      expect((zest.fdcId, zest.hold, zest.parts != null), (167749, null, true));
       for (final r in ruled) {
         final row = db.ingredientMatchesFor(r.id).single;
         expect((row.fdcId, row.hold), (167747, null));
@@ -251,19 +260,23 @@ void main() {
   });
 
   group('the reach leaves out what a confirm cannot move', () {
-    test("an amount-less 'Old Bay seasoning' (synthesized: no corpus Old "
-        'Bay line is amount-less) is counted at 0 g below the gate: a '
-        "confirm of Maryland Crab Cakes' (0288) 1½ teaspoons offers and "
-        "applies only Best Crab Cakes' (0289) ½ teaspoon — Tartiflette's "
-        '(1134) amount-less crème fraîche was the example until matcher v37 '
-        'counted crème fraîche as heavy cream over the gate (S14), and the '
-        'chili oil lines until matcher v31 (Q7 fats)', () async {
+    // RE-PIN (M47 batch, v49 Q23 (a)): on crystallized ginger (below the
+    // gate on "Ginger root, raw" 169231) — the Old Bay lines carry no record
+    // since v49.
+    test("an amount-less 'crystallized ginger' (synthesized: no corpus "
+        'crystallized ginger line is amount-less) is counted at 0 g below the '
+        "gate: a confirm of Carrot-Ginger Soup's (0015) ¼ cup offers and "
+        "applies only Cranberry Chutney's (0178) ⅓ cup — Maryland Crab "
+        "Cakes' (0288) Old Bay was the example until matcher v49 left it no "
+        "record (Q23), Tartiflette's (1134) amount-less crème fraîche until "
+        'matcher v37 counted crème fraîche as heavy cream over the gate '
+        '(S14), and the chili oil lines until matcher v31 (Q7 fats)', () async {
       final db = tempDb();
       final teaspoons = recipeOf(db, 'maryland', [
-        '1½ teaspoons Old Bay seasoning',
+        '¼ cup minced crystallized ginger',
       ]);
-      final amountless = recipeOf(db, 'amountless', ['Old Bay seasoning']);
-      final half = recipeOf(db, 'best', ['½ teaspoon Old Bay seasoning']);
+      final amountless = recipeOf(db, 'amountless', ['crystallized ginger']);
+      final half = recipeOf(db, 'best', ['⅓ cup minced crystallized ginger']);
       for (final r in [teaspoons, amountless, half]) {
         await matchAndCompute(db, provider, r);
       }
@@ -296,9 +309,11 @@ void main() {
         for (final id in ['t1', 't2'])
           recipeOf(db, id, [rinsedSalt], steps: [cucumberSteps]),
       ];
+      // RE-PIN (M47 batch, v49 Q6): the held second food is the peppers'
+      // brine line (the zest line counts by rule since v49).
       final zests = [
-        recipeOf(db, 'z1', [heldZest]),
-        recipeOf(db, 'z2', [heldZest]),
+        recipeOf(db, 'z1', [heldBrine]),
+        recipeOf(db, 'z2', [heldBrine]),
       ];
       final meatballs = recipeOf(db, 'meatballs', [plainSalt]);
       for (final r in [...turkeys, ...zests, meatballs]) {
@@ -319,30 +334,32 @@ void main() {
       expect(held.every((g) => g.$2 == 1 && g.$3 == 1 && !g.$4), isTrue);
       expect(
         {for (final g in held) g.$1},
-        {'table salt', 'lemon zest plus juice'},
+        {'table salt', 'pickled hot cherry pepper plus brine'},
         reason: 'each still reports its own key',
       );
     });
   });
 
   group('M3: an un-skip re-derives the row as a compute would', () {
-    test("0142: a person's pick on the held zest line, skipped then "
+    // RE-PIN (M47 batch, v49 Q6): on 0121's peppers-plus-brine line (0142's
+    // zest line counts by rule since v49).
+    test("0121: a person's pick on the held brine line, skipped then "
         'un-skipped, is re-held second_food — an un-skip is no pick (the '
         "user's ruling, v11); a pick clears it again", () async {
       final db = tempDb();
-      final r = recipeOf(db, 'r1', [heldZest]);
+      final r = recipeOf(db, 'r1', [heldBrine]);
       await matchAndCompute(db, provider, r);
-      await applyMatchOverride(db, provider, r, 0, {'fdc_id': 167749});
+      await applyMatchOverride(db, provider, r, 0, {'fdc_id': 2710095});
       expect(db.ingredientMatchesFor('r1').single.hold, isNull);
       await applyMatchOverride(db, provider, r, 0, {'skipped': true});
       await applyMatchOverride(db, provider, r, 0, {'skipped': false});
       var row = db.ingredientMatchesFor('r1').single;
       expect(
         (row.status, row.fdcId, row.hold),
-        ('auto', 167749, 'second_food'),
+        ('auto', 2710095, 'second_food'),
       );
       expect(bucketOf(row), MatchBucket.check);
-      await applyMatchOverride(db, provider, r, 0, {'fdc_id': 167749});
+      await applyMatchOverride(db, provider, r, 0, {'fdc_id': 2710095});
       row = db.ingredientMatchesFor('r1').single;
       expect((row.status, row.hold), ('overridden', null));
     });

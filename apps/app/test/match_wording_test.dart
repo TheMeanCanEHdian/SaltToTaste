@@ -534,4 +534,116 @@ void main() {
       isNot(contains('no longer serves')),
     );
   });
+
+  testWidgets('a v49 zest-and-juice row and a half-drained can row never '
+      "read as the bacon: the cooked-and-drained words are role kept_fat's "
+      '(closer round 1, D4)', (tester) async {
+    final items = [
+      for (final item in golden('nutrition_matches_rules')['items']! as List)
+        item as Map<String, dynamic>,
+    ];
+    final bacon = items.firstWhere(
+      (i) => ((i['match'] as Map?)?['parts'] as List?)?.isNotEmpty ?? false,
+    );
+    await pump(tester, IngredientMatch.fromJson(bacon));
+    expect(
+      find.text('matched to two records, cooked and drained:'),
+      findsOneWidget,
+    );
+    expect(find.text('· kept in the pan'), findsOneWidget);
+    // The v49 replay's rows (rp43 on snapshot 21) of two real corpus lines
+    // — Crispy Orange Beef (0536) line 3 and Espinacas con Garbanzos (1075)
+    // line 1 — on the golden row's wire shape.
+    Map<String, dynamic> row(String raw, Map<String, dynamic> match) => {
+      ...bacon,
+      'raw': raw,
+      'match': {...bacon['match']! as Map<String, dynamic>, ...match},
+    };
+    const chickpeas =
+        'Chickpeas (garbanzo beans, bengal gram), canned, sodium added, '
+        'drained and rinsed';
+    for (final (raw, match, second) in [
+      (
+        '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), '
+            'plus ¼ cup juice (2 oranges)',
+        <String, dynamic>{
+          'fdc_id': 169103,
+          'description': 'Orange peel, raw',
+          'data_type': 'SR Legacy',
+          'confidence': 0.953333,
+          'grams': 86.0,
+          'gram_source': 'portion',
+          'gram_basis':
+              'zest 1/4 cup · USDA portion + juice 1/4 cup · USDA portion',
+          'flag': null,
+          'parts': [
+            {
+              'fdc_id': 169103,
+              'description': 'Orange peel, raw',
+              'data_type': 'SR Legacy',
+              'grams': 24.0,
+              'role': 'zest',
+            },
+            {
+              'fdc_id': 169098,
+              'description':
+                  "Orange juice, raw (Includes foods for USDA's Food "
+                  'Distribution Program)',
+              'data_type': 'SR Legacy',
+              'grams': 62.0,
+              'role': 'juice',
+            },
+          ],
+        },
+        "+ 62 g · Orange juice, raw (Includes foods for USDA's Food "
+            'Distribution Program)',
+      ),
+      (
+        '2 (15-ounce) cans chickpeas (1 can drained, 1 can undrained)',
+        <String, dynamic>{
+          'fdc_id': 2644288,
+          'description': chickpeas,
+          'data_type': 'Foundation',
+          'confidence': 0.89,
+          'grams': 665.5,
+          'gram_source': 'weight',
+          'gram_basis':
+              '2 × 425 g (printed weight) × 0.565 drained on half the cans · '
+              "approximate (drained weight: FDC's canned chickpea pair, 253 g "
+              'of 448 g) · the undrained can on its solids-and-liquids record',
+          'flag': null,
+          'parts': [
+            {
+              'fdc_id': 2644288,
+              'description': chickpeas,
+              'data_type': 'Foundation',
+              'grams': 240.26,
+              'role': 'drained',
+            },
+            {
+              'fdc_id': 175206,
+              'description':
+                  'Chickpeas (garbanzo beans, bengal gram), mature seeds, '
+                  'canned, solids and liquids',
+              'data_type': 'SR Legacy',
+              'grams': 425.24,
+              'role': 'undrained',
+            },
+          ],
+        },
+        '+ 425 g · Chickpeas (garbanzo beans, bengal gram), mature seeds, '
+            'canned, solids and liquids',
+      ),
+    ]) {
+      await pump(tester, IngredientMatch.fromJson(row(raw, match)));
+      expect(find.text('matched to two records:'), findsOneWidget, reason: raw);
+      expect(
+        find.text('matched to two records, cooked and drained:'),
+        findsNothing,
+        reason: raw,
+      );
+      expect(find.text('· kept in the pan'), findsNothing, reason: raw);
+      expect(find.text(second), findsOneWidget, reason: raw);
+    }
+  });
 }

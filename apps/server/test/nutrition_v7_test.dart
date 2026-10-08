@@ -699,35 +699,37 @@ void main() {
         'no portion grams; a confirm resolves them', () async {
       final db = tempDb();
       final fixtures = FixtureProvider();
-      // Maryland Crab Cakes (0288): Old Bay, which FDC has no record of, on
-      // "Spices, poultry seasoning" (171331) at 0.33. (Lime zest was the
-      // example until matcher v10 rewrote it to a pending search; the
-      // chipotle in adobo of Ground Beef and Cheese Enchiladas until
-      // matcher v37 counted it as sriracha over the gate.)
-      const oldBay = '1½ teaspoons Old Bay seasoning';
-      final r = recipeOf(db, 'r1', [oldBay]);
+      // The Best Gluten-Free Pizza (0393): psyllium husk, which FDC's
+      // answer holds no record of, on "Sugars, powdered" (169656) at 0.07.
+      // (Lime zest was the example until matcher v10 rewrote it to a
+      // pending search; the chipotle in adobo of Ground Beef and Cheese
+      // Enchiladas until matcher v37 counted it as sriracha over the gate;
+      // RE-PIN (M47 batch, v49 Q23 (a)): Maryland Crab Cakes' Old Bay on
+      // 171331 until v49 left it no record.)
+      const psyllium = '1½ tablespoons powdered psyllium husk';
+      final r = recipeOf(db, 'r1', [psyllium]);
       await matchAndCompute(db, fixtures, r);
       final row = db.ingredientMatchesFor('r1').single;
-      expect((row.fdcId, row.grams), (171331, null));
+      expect((row.fdcId, row.grams), (169656, null));
       expect(row.confidence, lessThan(lowConfidence));
       expect(fixtures.foodCalls, 0);
       await applyMatchOverride(db, fixtures, r, 0, {'confirmed': true});
       final confirmed = db.ingredientMatchesFor('r1').single;
       expect(fixtures.foodCalls, 1);
-      // Its SR "tsp" portion (1.5 g).
-      expect(confirmed.grams, closeTo(2.25, 0.01));
+      // Its SR "tbsp unsifted" portion (8 g).
+      expect(confirmed.grams, closeTo(12.0, 0.01));
       expect(confirmed.status, 'confirmed');
 
       // A detail already cached is the engine's food, fetch or not: the pick
       // below the gate gets its portion grams with no provider call.
       final cached = tempDb()
-        ..fdcFoodCachePut(171331, jsonEncode((await food(171331)).toJson()));
+        ..fdcFoodCachePut(169656, jsonEncode((await food(169656)).toJson()));
       final again = FixtureProvider();
-      final r2 = recipeOf(cached, 'r2', [oldBay]);
+      final r2 = recipeOf(cached, 'r2', [psyllium]);
       await matchAndCompute(cached, again, r2);
       expect(
         cached.ingredientMatchesFor('r2').single.grams,
-        closeTo(2.25, 0.01),
+        closeTo(12.0, 0.01),
       );
       expect(again.foodCalls, 0);
     });

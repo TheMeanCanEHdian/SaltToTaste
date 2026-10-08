@@ -287,6 +287,12 @@ const List<(String, double)> _densities = [
   // weighed at the table's 'heavy cream' figure above — the record
   // publishes no volume portion and 'cream' is not a word of the item.
   ('creme fraiche', 1.01),
+  // v49 (M47 Q5, amends CP9's "tapioca starch on the tapioca pearl cup"):
+  // ATK's own "3 ounces (¾ cup) tapioca starch" (the All-Purpose
+  // Gluten-Free Flour Blend, spooned, not packed), 113.4 g a cup — ahead of
+  // the stand-in pearl record's own cup (169717, 152 g: the denser form),
+  // as every key outside [_recordFirstDensities] is.
+  ('tapioca starch', 3 * 28.3495 / (0.75 * 236.588)),
 ];
 
 /// The [_densities] keys that weigh on a stand-in's figure — flagged
@@ -313,6 +319,8 @@ const Map<String, String> _approximateDensities = {
   'crushed tomato': 'tomato sauce density, FDC 170054 cup 245 g',
   // v37 (S14): crème fraîche at heavy cream's table figure.
   'creme fraiche': 'heavy cream density',
+  // v49 (M47 Q5).
+  'tapioca starch': "ATK's printed 3 ounces per ¾ cup",
 };
 
 /// v37: the [_densities] keys that size a line only when its record has no
@@ -509,7 +517,23 @@ const List<(String, double)> _pieceWeights = [
   // ATK: "gyoza-style wrappers and wonton wrappers both made terrific
   // potstickers" (Pork and Cabbage Dumplings); a round disc is smaller.
   ('gyoza wrapper', 8),
+  // v49 (M47 Q12, re-rules v21 R09's "STAY DRY" under CP9 Q6): FNDDS
+  // 2709239 "Kiwi fruit, raw" '1 fruit' 75 g — the corpus prints no kiwi
+  // weight, and the lines sit on Foundation 2710831 (a 140 g racc only). A
+  // cross-record piece weight, like a [volumeSiblings] row; a sized line
+  // says the size is not published ([_unsizedPieces]). Each spelling keys
+  // its own: the head noun of "kiwis" is not "kiwi".
+  ('kiwis', 75),
+  ('kiwi', 75),
 ];
+
+/// v49 (M47 Q12): [_pieceWeights] keys whose figure is one unsized fruit —
+/// a line naming a size in its head ("2 large kiwis, peeled, …") reads it,
+/// flagged "approximate ({figure}; no {size} size published)".
+const Map<String, String> _unsizedPieces = {
+  'kiwis': 'one fruit, FNDDS 2709239: 75 g',
+  'kiwi': 'one fruit, FNDDS 2709239: 75 g',
+};
 
 /// The [_pieceWeights] keys whose figure is ATK's printed weight, not
 /// FDC's: a line sized by one says so in its basis ("· approximate (ATK: …)").
@@ -2331,12 +2355,43 @@ double? _readyToCookYield(FdcFood food) {
 /// held `in_shell` (engine `shellCounted`).
 const String shellYieldLabel = 'USDA yield after shell removed';
 
+/// v49 (M47 Q11, decided under the owner's 2026-10-07 standing
+/// authorization): the shell yields FDC publishes for no record, from USDA
+/// AH-102 (1975) Table 1 — the v43 source; both rows read on the page crops
+/// (critic probe 12; .claude/diag/2026-10-06/ah102_produce_meat.md), keyed
+/// by the raw record a weight bought in the shell ([boughtInShell]) sits on
+/// (the mussel lines move there from FNDDS "Mussels", engine
+/// `shellRecords`), each flagged with its item and range. The mussel flag
+/// names the liquor (critic F19): every mussel recipe serves the cooking
+/// liquid, which raw 174216 does not carry (item 1530, solids and liquor,
+/// is 51 %).
+const Map<int, ({double share, String flag})> ah102Shells = {
+  175179: (
+    share: 0.81,
+    flag:
+        'USDA AH-102 item 2333: shrimp, headless, in shell → shelled, '
+        'deveined 81 % (77–82)',
+  ),
+  174216: (
+    share: 0.29,
+    flag:
+        'USDA AH-102 item 1531: mussels, whole → drained solids, raw 29 % '
+        '(25–33); the liquor in the pot is not counted',
+  ),
+};
+
+/// [food]'s [ah102Shells] row, or null — never where the recipe eats the
+/// shell ([shellEaten]: crispy salt-and-pepper shrimp, counted gross).
+({double share, String flag})? _ah102ShellOf(FdcFood food, bool shellEaten) =>
+    shellEaten ? null : ah102Shells[food.fdcId];
+
 /// The share of a weight bought in the shell that is meat: SR 174214
 /// "Mollusks, clam, mixed species, raw" publishes "lb (with shell), yield
 /// after shell removed" 68 g (0.15 of a pound). That ONE shape, read by
-/// equality — never the "with refuse, weighing N g" reader widened; the
-/// mussel detail (174216) publishes none, so its lines stay held. Or null.
-double? _shellYield(FdcFood food) {
+/// equality — never the "with refuse, weighing N g" reader widened. v49:
+/// else the record's [ah102Shells] row (shrimp 175179, mussels 174216),
+/// unless [shellEaten]. Or null.
+double? _shellYield(FdcFood food, {bool shellEaten = false}) {
   for (final portion in food.portions) {
     if ((portion.description ?? '').toLowerCase() ==
         'lb (with shell), yield after shell removed') {
@@ -2347,7 +2402,7 @@ double? _shellYield(FdcFood food) {
       return share > 0 && share < 1 ? share : null;
     }
   }
-  return null;
+  return _ah102ShellOf(food, shellEaten)?.share;
 }
 
 /// Whether [raw] counts Cornish game hens: a bird sold at one size, so the
@@ -2394,15 +2449,19 @@ String _countLabel(double count) => count == count.roundToDouble()
 
 /// The edible share of [food] as bought: FDC's own raw refuse portion
 /// ("…excluding refuse (yield from 1 raw chop, with refuse, weighing 151
-/// g)" = 86 g → 0.57), or its shell yield ([_shellYield], v40), or null
+/// g)" = 86 g → 0.57), or its shell yield ([_shellYield], v40; v49 an
+/// AH-102 row, never where the recipe eats the shell, [shellEaten]), or null
 /// when the record publishes none. Under [wholeBird], a whole-bird line
 /// ([raw]) on a whole-bird record also reads its ready-to-cook yield.
 double? edibleYieldOf(
   FdcFood food, {
   String? raw,
   bool wholeBird = wholeBirdYieldOn,
+  bool shellEaten = false,
 }) {
-  final share = _wholeBirdShare(food, raw, wholeBird) ?? _shellYield(food);
+  final share =
+      _wholeBirdShare(food, raw, wholeBird) ??
+      _shellYield(food, shellEaten: shellEaten);
   if (share != null) {
     return share;
   }
@@ -2651,6 +2710,8 @@ GramResolution? resolveGrams({
   bool kosherSalt = false,
   bool skinOff = false,
   String? skinKept,
+  bool shellEaten = false,
+  bool canLiquidEaten = false,
 }) => _resolveLine(
   amounts: amounts,
   food: food,
@@ -2660,6 +2721,8 @@ GramResolution? resolveGrams({
   kosherSalt: kosherSalt,
   skinOff: skinOff,
   skinKept: skinKept,
+  shellEaten: shellEaten,
+  canLiquidEaten: canLiquidEaten,
 );
 
 GramResolution? _resolveLine({
@@ -2671,6 +2734,8 @@ GramResolution? _resolveLine({
   required bool kosherSalt,
   required bool skinOff,
   required String? skinKept,
+  required bool shellEaten,
+  required bool canLiquidEaten,
 }) {
   final parsed = raw == null
       ? amounts
@@ -2788,7 +2853,12 @@ GramResolution? _resolveLine({
       raw != null &&
       buysRefuse(raw);
   final yieldFactor = refuse
-      ? edibleYieldOf(food, raw: raw, wholeBird: wholeBirdYield)
+      ? edibleYieldOf(
+          food,
+          raw: raw,
+          wholeBird: wholeBirdYield,
+          shellEaten: shellEaten,
+        )
       : null;
   if (yieldFactor != null) {
     // A whole bird's share is the record's ready-to-cook yield, not a refuse
@@ -2805,16 +2875,20 @@ GramResolution? _resolveLine({
         ? ' · approximate (skin discarded except the $skinKept; '
               "the bird's meat-only yield)"
         : '';
+    // v49 (M47 Q11): an AH-102 shell row names its item, flagged.
+    final shell = readyToCook ? null : _ah102ShellOf(food, shellEaten);
     first = GramResolution(
       grams: first!.grams * yieldFactor,
       source: first.source,
-      basis:
-          '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
-          '(${readyToCook
-              ? 'USDA ready-to-cook yield'
-              : _shellYield(food) != null
-              ? shellYieldLabel
-              : 'USDA refuse'})$keptFlag',
+      basis: shell != null
+          ? '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible · '
+                'approximate (${shell.flag})'
+          : '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
+                '(${readyToCook
+                    ? 'USDA ready-to-cook yield'
+                    : _shellYield(food) != null
+                    ? shellYieldLabel
+                    : 'USDA refuse'})$keptFlag',
     );
   } else if (refuse) {
     // The record publishes no refuse portion: the bone (a whole turkey's,
@@ -2906,24 +2980,50 @@ GramResolution? _resolveLine({
   // v42 (B, the owner's 2026-10-06 ruling (b)): a can of beans weighed by
   // its printed weight on a drained-and-rinsed record counts its bean's
   // drained share ([cannedBeanShares]) — unless the line keeps the liquid.
-  final bean = first?.source == GramSource.weight && raw != null
-      ? cannedBeanShares[food?.fdcId]
-      : null;
-  if (bean != null && RegExp(r'\bcans?\b').hasMatch(raw!.toLowerCase())) {
-    final text = raw.toLowerCase();
-    final half = RegExp(
-      r'\b1 can drained\b.*\b1 can (?:left )?undrained\b',
-    ).hasMatch(text);
-    if (half || !_keepsBeanLiquid.hasMatch(text)) {
+  // v49 (M47 Q14 (i)): so does one whose liquid the steps add
+  // ([canLiquidEaten], the engine's step read) — on its solids-and-liquids
+  // record where one is cached ([cannedBeanLiquids]), else said.
+  final canLine =
+      first?.source == GramSource.weight &&
+      raw != null &&
+      RegExp(r'\bcans?\b').hasMatch(raw.toLowerCase());
+  final bean = canLine ? cannedBeanShares[food?.fdcId] : null;
+  final added =
+      canLine &&
+      canLiquidEaten &&
+      !_keepsBeanLiquid.hasMatch(raw.toLowerCase());
+  if (bean != null) {
+    final half = halvesCans(raw!);
+    if (!keepsWholeCan(raw, liquidEaten: canLiquidEaten)) {
       final share = bean.share.toStringAsFixed(3);
+      // v49 (M47 Q14 (ii)): the undrained can is its own part on the
+      // solids-and-liquids record (engine `withParts`).
+      final liquid = half && cannedBeanLiquids.containsKey(food?.fdcId)
+          ? ' · the undrained can on its solids-and-liquids record'
+          : '';
       first = GramResolution(
         grams: first!.grams * (half ? (1 + bean.share) / 2 : bean.share),
         source: first.source,
         basis:
             '${first.basis} × $share drained${half ? ' on half the cans' : ''} '
-            '· approximate (drained weight: ${bean.from})',
+            '· approximate (drained weight: ${bean.from})$liquid',
+      );
+    } else if (added) {
+      final flag = cannedBeanLiquids.containsKey(food?.fdcId)
+          ? ''
+          : _noLiquidRecord;
+      first = GramResolution(
+        grams: first!.grams,
+        source: first.source,
+        basis: '${first.basis} (the steps add the beans and their liquid)$flag',
       );
     }
+  } else if (added && cannedBeanLiquids.containsValue(food?.fdcId)) {
+    first = GramResolution(
+      grams: first!.grams,
+      source: first.source,
+      basis: '${first.basis} (the steps add the beans and their liquid)',
+    );
   }
   // v43 (Y8, the owner's 2026-10-06 ruling): a produce weight printed in
   // the line's HEAD with a prep word in its tail counts AH-102's prep yield
@@ -3400,6 +3500,43 @@ final RegExp _keepsBeanLiquid = RegExp(
   r'\b(?:undrained|do not drain|liquid reserved|with their liquid)\b',
 );
 
+/// v49 (M47 Q14 (ii), critic F6 — the record the 2026-10-06 ruling's "keeps
+/// the can whole" left unruled): the canned "solids and liquids" record of
+/// a drained-and-rinsed can record ([cannedBeanShares]), the food as a line
+/// that keeps the liquid uses it — the SR can pairs' whole-can halves, each
+/// a cached detail: chickpeas 175206, pinto 175201, kidney 175195. A can
+/// kept whole moves there (engine `skinOffFood`), the undrained can of the
+/// half rule is a part there (engine `withParts`), grams unchanged, no
+/// flag. Black, cannellini and navy have none cached (SR 173747 "Beans,
+/// navy, mature seeds, canned" names no state: not read).
+const Map<int, int> cannedBeanLiquids = {
+  2644288: 175206,
+  2644292: 175201,
+  2644289: 175195,
+};
+
+/// The flag of a can kept whole on a drained-and-rinsed record with no
+/// solids-and-liquids twin ([cannedBeanLiquids]; v49, M47 Q14: navy).
+const String _noLiquidRecord =
+    ' · approximate (no solids-and-liquids record for this bean: the '
+    'drained-and-rinsed record for the whole can)';
+
+/// Whether [raw] keeps 1 can drained and 1 undrained (the half rule, v42).
+bool halvesCans(String raw) => RegExp(
+  r'\b1 can drained\b.*\b1 can (?:left )?undrained\b',
+).hasMatch(raw.toLowerCase());
+
+/// Whether the can of [raw] counts whole: the line keeps its liquid
+/// ([_keepsBeanLiquid]) — or (v49, M47 Q14 (i)) names no drain or rinse
+/// word while the steps add it with its liquid ([liquidEaten]) — and is not
+/// the half rule ([halvesCans]).
+bool keepsWholeCan(String raw, {bool liquidEaten = false}) {
+  final text = raw.toLowerCase();
+  return !halvesCans(text) &&
+      (_keepsBeanLiquid.hasMatch(text) ||
+          liquidEaten && !RegExp(r'\b(drained|rinsed)\b').hasMatch(text));
+}
+
 /// The canned-tomato records every drained canned-tomato line sits on
 /// (Foundation 333281 diced, 2685578 whole; neither publishes drained
 /// solids).
@@ -3411,6 +3548,14 @@ const Set<int> _cannedTomatoRecords = {333281, 2685578};
 String _tailAfterComma(String raw) {
   final at = _topLevelComma(raw);
   return at < 0 ? '' : raw.substring(at + 1).toLowerCase();
+}
+
+/// [raw] before its first top-level comma ([_topLevelComma]); all of it
+/// with none — where a size word sizes the item ("2 large kiwis, …"), never
+/// "cut into large pieces".
+String _headBeforeComma(String raw) {
+  final at = _topLevelComma(raw);
+  return at < 0 ? raw : raw.substring(0, at);
 }
 
 /// The index of [raw]'s first comma outside a paren, or -1.
@@ -4079,7 +4224,16 @@ GramResolution? _resolveGrams({
     }
     if (piece != null) {
       final (key, pieceWeight) = piece;
-      final printed = _approximatePieces[key];
+      final size = _unsizedPieces[key] == null || raw == null
+          ? null
+          : RegExp(
+              r'\b(small|medium|large)\b',
+            ).firstMatch(_headBeforeComma(raw).toLowerCase())?[1];
+      final printed =
+          _approximatePieces[key] ??
+          (size == null
+              ? null
+              : '${_unsizedPieces[key]}; no $size size published');
       // A flagged figure says its decimals — a sub-gram one all of them, one
       // under 10 g one ("3.2", "7.1"); every other piece (the bay leaf's
       // "0 g") its rounded grams, as before.

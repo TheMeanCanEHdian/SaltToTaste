@@ -140,8 +140,9 @@ const _pins = [
     2709935,
     '898.11',
     // RE-PIN (M48): the basis names the range (4–5 pound, already read at its
-    // midpoint; grams unchanged).
-    'from 4–5 pound (the midpoint) × 0.44 edible · approximate (USDA AH-102 item 1412: leeks, raw → bulb and lower leaf 44 % (35–58))',
+    // midpoint; grams unchanged). RE-PIN (M47 batch, v49 Q13): the nutrient
+    // sibling SR 169246 names itself.
+    'from 4–5 pound (the midpoint) × 0.44 edible · approximate (USDA AH-102 item 1412: leeks, raw → bulb and lower leaf 44 % (35–58)) · nutrients of "Leeks, (bulb and lower leaf-portion), raw"',
   ),
   (
     '0181-candied-sweet-potato-casserole.yaml',
@@ -255,7 +256,9 @@ const _pins = [
     '2 leeks, white and light green parts only, chopped and washed thoroughly (2½ cups or 5 ounces)',
     2709935,
     '141.75',
-    'from the printed weight',
+    // RE-PIN (M47 batch, v49 Q13): the nutrient sibling SR 169246 names
+    // itself (was the basis alone).
+    'from the printed weight · nutrients of "Leeks, (bulb and lower leaf-portion), raw"',
   ),
   (
     '0035-vegetable-broth-base.yaml',
@@ -281,7 +284,9 @@ const _pins = [
     '1½ pounds leeks, white and light green parts halved lengthwise, sliced ½ inch thick, and washed; 3 cups coarsely chopped dark green parts, washed',
     2709935,
     '680.39',
-    'from 1 1/2 pound',
+    // RE-PIN (M47 batch, v49 Q13): the nutrient sibling SR 169246 names
+    // itself (was the basis alone).
+    'from 1 1/2 pound · nutrients of "Leeks, (bulb and lower leaf-portion), raw"',
   ),
   (
     '0051-chopped-carrot-salad-with-fennel-orange-and-hazelnuts.yaml',
@@ -489,6 +494,8 @@ const _pins = [
     '1 pound leeks, white and light green parts only, halved lengthwise, sliced thin, and washed thoroughly',
     2709935,
     '199.58',
-    'from 1 pound × 0.44 edible · approximate (USDA AH-102 item 1412: leeks, raw → bulb and lower leaf 44 % (35–58))',
+    // RE-PIN (M47 batch, v49 Q13): the nutrient sibling SR 169246 names
+    // itself (was the basis alone).
+    'from 1 pound × 0.44 edible · approximate (USDA AH-102 item 1412: leeks, raw → bulb and lower leaf 44 % (35–58)) · nutrients of "Leeks, (bulb and lower leaf-portion), raw"',
   ),
 ];

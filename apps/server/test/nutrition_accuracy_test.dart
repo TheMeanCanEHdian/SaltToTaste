@@ -15,7 +15,8 @@ import 'package:test/test.dart';
 import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
-/// A real corpus line (pasta e fagioli) whose top pick publishes nothing.
+/// A real corpus line (pasta e fagioli) whose top pick publishes nothing
+/// (until matcher v49's rank-as onto SR 169736).
 const String _pastaLine =
     '8 ounces small pasta such as ditalini, tubetini, conchiglietti, or orzo';
 
@@ -207,6 +208,11 @@ void main() {
               for (final raw in [
                 _pastaLine,
                 '1 pound pasta',
+                // RE-PIN (M47 batch, v49 Q15 iv): the held vehicle since the
+                // pasta record reads its nutrient sibling — Watermelon Salad
+                // with Cotija and Serrano Chiles (1071), on Foundation
+                // 2747675 (no energy, no portion).
+                '6 cups 1½-inch seedless watermelon pieces',
               ])
                 IngredientLine(
                   raw: raw,
@@ -222,8 +228,13 @@ void main() {
         ..upsertRecipe(recipe, sourceSlug: 'src', contentHash: 'h');
       await matchAndCompute(db, provider, recipe);
       final rows = db.ingredientMatchesFor('r2');
-      expect(rows[0].fdcId, 2758998);
-      expect(rows[0].hold, 'no_nutrients');
+      // RE-PIN (M47 batch, v49 Q15 iv, the owner's ruling): the pasta e
+      // fagioli line reads its own answer by rank-as onto SR 169736 itself
+      // (was the Foundation spaghetti 2758998 at 0.0125), so no hold; the
+      // watermelon is held.
+      expect(rows[0].fdcId, 169736);
+      expect(rows[0].hold, isNull);
+      expect((rows[2].fdcId, rows[2].hold), (2747675, 'no_nutrients'));
       // "Flavored pasta" ranks second and is complete but another food;
       // the macro-less "Pasta, dry, enriched, spaghetti" top pick is stood
       // in for by "Pasta, dry, enriched", the same food.

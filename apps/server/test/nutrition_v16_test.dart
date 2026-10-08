@@ -851,15 +851,19 @@ void main() {
       expect((rowAt(db, 0).status, rowAt(db, 0).fdcId), ('auto', 2709170));
     });
 
+    // RE-PIN (M47 batch, v49 Q11): Cioppino's (0108) mussels read AH-102
+    // item 1531 on raw 174216 since v49 (counted, no hold): the held line is
+    // a STATED SYNTHESIZED weight of oysters (no corpus oyster line is bought
+    // by weight; FNDDS 2706351 publishes no shell yield).
     test('P5: an amount edit of a confirmed line keeps no LINE hold but a '
-        "medium's — Cioppino's (0108) \"1 pound mussels, scrubbed and "
-        'debearded", confirmed, then "2 pounds" (synthesized: a stated '
-        'exception): confirmed, no in_shell hold (the clams before v40, '
-        'counted since on their shell yield)', () async {
+        "medium's — \"1 pound oysters, scrubbed\" (synthesized), confirmed, "
+        'then "2 pounds" (synthesized: a stated exception): confirmed, no '
+        'in_shell hold (the clams before v40, counted since on their shell '
+        'yield; the mussels before v49)', () async {
       final db = tempDb();
       final provider = FixtureProvider();
       final r = recipeOf(db: db, [
-        ['1 pound mussels, scrubbed and debearded'],
+        ['1 pound oysters, scrubbed'],
       ]);
       await matchAndCompute(db, provider, r);
       expect(rowAt(db, 0).hold, 'in_shell');
@@ -868,11 +872,11 @@ void main() {
         db,
         provider,
         recipeOf(db: db, [
-          ['2 pounds mussels, scrubbed and debearded'],
+          ['2 pounds oysters, scrubbed'],
         ]),
       );
       final row = rowAt(db, 0);
-      expect((row.status, row.fdcId, row.hold), ('confirmed', 2706350, null));
+      expect((row.status, row.fdcId, row.hold), ('confirmed', 2706351, null));
       expect(row.grams, closeTo(907.18, 0.01));
     });
   });

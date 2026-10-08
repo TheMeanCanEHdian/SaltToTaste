@@ -6,14 +6,15 @@
 // derived fields as the last derivation left them, the recipe stale, never
 // a throw for one row, no fetch a path does not read); a decided line with
 // no amount derives no grams (I6). Real corpus recipes (0129 Indoor Pulled
-// Chicken, 0279 Crispy Salt-and-Pepper Shrimp, 0288 Maryland Crab Cakes,
+// Chicken, 0279 Crispy Salt-and-Pepper Shrimp, 0393 The Best Gluten-Free
+// Pizza (0288 Maryland Crab Cakes until v49),
 // 0857 Rich Chocolate Bundt
 // Cake, 0318 Thick-Cut Sweet Potato Fries, 0148 Crispy Fried Chicken, 0295
 // Indoor Clambake, 0711 Mujaddara) and recorded FDC answers
 // (FixtureProvider), never the network. Synthesized, each a stated
 // exception: the edits (a line deleted, the corpus's own "1 cup water"
 // line inserted, a strain step or a dredge taken out, a title edit, an
-// amount re-written: "2 teaspoons Old Bay seasoning", "5 cups (25
+// amount re-written: "2 tablespoons powdered psyllium husk", "5 cups (25
 // ounces) …flour", "plus 4 tablespoons reserved oil", a subsection
 // renamed), a duplicated line (twins), a recipe cut to one line, the typed
 // amount-less "All-purpose flour, for dredging" (no corpus coating line is
@@ -186,14 +187,16 @@ Recipe apart0711(Recipe r) => r.copyWith(
   ],
 );
 
-/// 0288's Old Bay — no FDC record of it, so the engine's pick sits below
-/// the gate and its detail is never fetched: the I2 pins' vehicle since
-/// matcher v37 counted 0279's Sichuan peppercorns as black pepper (above
-/// the gate, its detail fetched).
-const oldBay0288 = '1½ teaspoons Old Bay seasoning';
+/// 0393's psyllium husk — no record of it in its answer, so the engine's
+/// pick ("Sugars, powdered", 169656) sits below the gate and its detail is
+/// never fetched: the I2 pins' vehicle since matcher v49 (M47 Q23 (a)) left
+/// 0288's Old Bay no record (RE-PIN; Old Bay since matcher v37 counted
+/// 0279's Sichuan peppercorns as black pepper, above the gate, its detail
+/// fetched).
+const psyllium0393 = '1½ tablespoons powdered psyllium husk';
 
-/// [oldBay0288] with its amount re-written (synthesized).
-const twoTspOldBay = '2 teaspoons Old Bay seasoning';
+/// [psyllium0393] with its amount re-written (synthesized).
+const twoTbspPsyllium = '2 tablespoons powdered psyllium husk';
 const flour0857 = '1¾ cups (8¾ ounces) unbleached all-purpose flour';
 
 void main() {
@@ -382,19 +385,19 @@ void main() {
       expect(nutritionIsFresh(db, r), isTrue);
     });
 
-    test("O1: 0288's below-gate \"1½ teaspoons Old Bay seasoning\" (its "
+    test("O1: 0393's below-gate \"1½ tablespoons powdered psyllium husk\" (its "
         'detail never fetched) with grams typed during an outage — 0 food '
         'requests at the PUT and at the compute (typed grams read no food), '
         'the compute never throws', () async {
       final db = wp.tempDb();
       final p = Outage(FixtureProvider(pending: pendingSearches));
-      final r = loadCorpusRecipe('0288-maryland-crab-cakes.yaml');
+      final r = loadCorpusRecipe('0393-the-best-gluten-free-pizza.yaml');
       await d.editAndCompute(db, p, r);
-      final i = d.at(r, oldBay0288);
+      final i = d.at(r, psyllium0393);
       expect(d.rowOf(db, r, i).confidence, lessThan(0.5));
       p.down = true;
       await applyMatchOverride(db, p, r, i, {
-        'raw': oldBay0288,
+        'raw': psyllium0393,
         'grams': 77,
       });
       await matchAndCompute(db, p, r);
@@ -408,21 +411,21 @@ void main() {
 
     // v27 (Run 057 O17): the outage is the real NutritionProviderException
     // ([Outage]) — a fixture miss is an Error now, never an outage.
-    test("O1/O18: 0288's Old Bay CONFIRMED during an outage "
+    test("O1/O18: 0393's psyllium CONFIRMED during an outage "
         '(the confirm needs the detail): stored as the PUT left it, stale; a compute '
-        'never throws and leaves it; its amount edited ("2 teaspoons", '
+        'never throws and leaves it; its amount edited ("2 tablespoons", '
         'synthesized), the GET shows the carried row AS STORED and the '
         'compute leaves it on its old text, stale', () async {
       final (db, fixture, r) = await d.computed(
-        '0288-maryland-crab-cakes.yaml',
+        '0393-the-best-gluten-free-pizza.yaml',
       );
       final provider = Outage(fixture)..down = true;
-      final i = d.at(r, oldBay0288);
+      final i = d.at(r, psyllium0393);
       final auto = d.rowOf(db, r, i);
       // Below the gate, its detail never fetched: no grams yet.
       expect((auto.grams, auto.gramSource), (null, null));
       await applyMatchOverride(db, provider, r, i, {
-        'raw': oldBay0288,
+        'raw': psyllium0393,
         'confirmed': true,
       });
       final stored = d.rowOf(db, r, i);
@@ -430,24 +433,24 @@ void main() {
       // cleared).
       expect(
         (stored.status, stored.fdcId, stored.grams, stored.gramSource),
-        ('confirmed', 171331, auto.grams, auto.gramSource),
+        ('confirmed', 169656, auto.grams, auto.gramSource),
       );
       expect(nutritionIsFresh(db, r), isFalse);
       await matchAndCompute(db, provider, r);
       expect(d.shape(d.rowOf(db, r, i)), d.shape(stored));
       expect(nutritionIsFresh(db, r), isFalse);
-      const three = twoTspOldBay;
-      final edited = rewritten(r, oldBay0288, three);
+      const three = twoTbspPsyllium;
+      final edited = rewritten(r, psyllium0393, three);
       wp.saveRecipe(db, edited);
       final shown = await getMatch(db, edited, i);
       expect(
         (shown['status'], shown['grams'], shown['gram_source']),
         ('confirmed', stored.grams, stored.gramSource),
       );
-      expect(shown['carried_from'], oldBay0288);
+      expect(shown['carried_from'], psyllium0393);
       await matchAndCompute(db, provider, edited);
       final now = d.rowOf(db, edited, i);
-      expect((now.raw, now.grams), (oldBay0288, stored.grams));
+      expect((now.raw, now.grams), (psyllium0393, stored.grams));
       expect(nutritionIsFresh(db, edited), isFalse);
       // A person's confirm on the carried line, FDC still failing: stored
       // on the OLD text (the amount still reads as edited, for the next
@@ -456,7 +459,7 @@ void main() {
         'raw': three,
         'confirmed': true,
       });
-      expect(d.rowOf(db, edited, i).raw, oldBay0288);
+      expect(d.rowOf(db, edited, i).raw, psyllium0393);
       await applyMatchOverride(db, provider, edited, i, {
         'raw': three,
         'grams': 9,
@@ -471,23 +474,23 @@ void main() {
     });
 
     test(
-      "typed grams of the OLD amount are never revived: 0288's "
-      'Old Bay typed 77 g, the amount edited ("2 teaspoons", '
+      "typed grams of the OLD amount are never revived: 0393's "
+      'psyllium typed 77 g, the amount edited ("2 tablespoons", '
       'synthesized), then confirmed during an outage (the detail it '
       'needs, Run 057 O17: the real exception) — the row stays on its old '
       'text, and the next compute still reads the amount as edited',
       () async {
         final (db, fixture, r) = await d.computed(
-          '0288-maryland-crab-cakes.yaml',
+          '0393-the-best-gluten-free-pizza.yaml',
         );
         final provider = Outage(fixture);
-        final i = d.at(r, oldBay0288);
+        final i = d.at(r, psyllium0393);
         await applyMatchOverride(db, provider, r, i, {
-          'raw': oldBay0288,
+          'raw': psyllium0393,
           'grams': 77,
         });
-        const three = twoTspOldBay;
-        final edited = rewritten(r, oldBay0288, three);
+        const three = twoTbspPsyllium;
+        final edited = rewritten(r, psyllium0393, three);
         wp.saveRecipe(db, edited);
         provider.down = true;
         await applyMatchOverride(db, provider, edited, i, {
@@ -497,7 +500,7 @@ void main() {
         final row = d.rowOf(db, edited, i);
         expect(
           (row.raw, row.status, row.grams),
-          (oldBay0288, 'confirmed', 77),
+          (psyllium0393, 'confirmed', 77),
         );
         expect(nutritionIsFresh(db, edited), isFalse);
       },

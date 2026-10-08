@@ -4,6 +4,8 @@
 /// nutrition GET and the review queue.
 library;
 
+import 'dart:convert';
+
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/grams.dart';
@@ -286,12 +288,21 @@ String _ordinal(int rank) => switch (rank) {
 
 /// `parts` of a match (v41, R2): a rendered row's two records — the cooked
 /// bacon (`role` `cooked`) and the fat kept in the pan (`kept_fat`) — each
-/// with its grams; `[]` on every other row.
+/// with its grams; v49 (M47) a zest-plus-juice row's (`zest`, `juice`) and
+/// a half-drained can row's (`drained`, `undrained`), the role the row
+/// stores ([withParts]); `[]` on every other row.
 List<Map<String, Object?>> partsJson(
   SaltDatabase db,
   IngredientMatchRow row,
-) => [
-  if (row.gramSource != GramSource.override.name)
+) {
+  if (row.gramSource == GramSource.override.name || row.parts == null) {
+    return const [];
+  }
+  final roles = [
+    for (final part in jsonDecode(row.parts!) as List<dynamic>)
+      (part as Map<String, dynamic>)['role'] as String?,
+  ];
+  return [
     for (final (at, part) in partsOf(row.parts).indexed)
       () {
         final food = knownFood(db, part.fdcId);
@@ -300,10 +311,11 @@ List<Map<String, Object?>> partsJson(
           'description': food?.description,
           'data_type': food?.dataType,
           'grams': part.grams,
-          'role': at == 0 ? 'cooked' : 'kept_fat',
+          'role': roles[at] ?? (at == 0 ? 'cooked' : 'kept_fat'),
         };
       }(),
-];
+  ];
+}
 
 /// `includes` and `partial` of `GET …/nutrition` (v41, api_app §4): the
 /// child recipes the totals count (`{slug, title, flag}`, `flag`

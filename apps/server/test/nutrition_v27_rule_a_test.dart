@@ -11,22 +11,24 @@
 //
 // Real corpus recipes (0129 Indoor Pulled Chicken, 0148 Crispy Fried
 // Chicken, 0857 Rich Chocolate Bundt Cake, 0279 Crispy Salt-and-Pepper
-// Shrimp, 0288 Maryland Crab Cakes) and recorded FDC answers (FixtureProvider), never the network.
+// Shrimp, 0393 The Best Gluten-Free Pizza — 0288 Maryland Crab Cakes until
+// v49) and recorded FDC answers (FixtureProvider), never the network.
 // Synthesized, each a stated exception: the interleavings (a person's PUT
 // run inside a compute's first search, as a provider wrapper), the outage
 // (a provider that throws NutritionProviderException, the bad key's
 // message), FDC's "no such food" (FixtureProvider.superseded with the
 // food's cache rows deleted), 0148's 13 decided rows on one retired food
 // id (999000111 — Run 057 S5's hostile cost shape: no real row can name
-// it), an engine row's `no_nutrients` hold on 0288's Old Bay (O3:
+// it), an engine row's `no_nutrients` hold on 0393's psyllium (O3:
 // the hold as the engine writes it on other foods), a title edit (stale),
 // and the pre-014 database (the column dropped, user_version 13). Also
 // stated (v28, Run 058 S26): the b/c apply-to-all recipes assembled from
 // real corpus lines (wp.saveLines), the typed grams a person enters (250 g,
 // 77 g — any positive amount; the corpus has no person's grams), and
-// 0288's "1½ teaspoons" edited to "2 teaspoons Old Bay seasoning" (an
+// 0393's "1½ tablespoons" edited to "2 tablespoons powdered psyllium husk" (an
 // amount edit as the editor makes one; `threeTsp`). Since matcher v37 the
-// below-gate vehicle is 0288's Old Bay (no FDC record; its pick's detail
+// below-gate vehicle was 0288's Old Bay, and since v49 (M47 Q23 (a): Old
+// Bay carries no record) 0393's psyllium husk (its pick's detail
 // never fetched): 0279's Sichuan peppercorns count as black pepper.
 // ignore_for_file: lines_longer_than_80_chars
 import 'dart:convert';
@@ -130,8 +132,28 @@ Future<void> settle({String? recipeId}) async {
 /// 0279's Sichuan peppercorns (D11's pick of 168317 from their answer).
 const peppercorns0279 = '2 teaspoons Sichuan peppercorns';
 
-/// 0288's Old Bay with its amount edited (the closer's D2/D7).
-const threeTsp = a.twoTspOldBay;
+/// 0393's psyllium with its amount edited (the closer's D2/D7; 0288's Old
+/// Bay until v49).
+const threeTsp = a.twoTbspPsyllium;
+
+/// RE-PIN (M47 batch, v49): 0393 (the psyllium vehicle) computed as the
+/// bulk order runs it — its own routed GF flour blend section first, then
+/// the pizza (0288 read no section, so its first compute was fresh).
+Future<void> withSections(
+  SaltDatabase db,
+  NutritionProvider provider,
+  Recipe r,
+) async {
+  final stored = db.recipeByIdOrSlug(r.id)!.recipe;
+  for (final key in sectionChildKeysOf(db, stored, ResolverMemo(db))) {
+    expect(
+      await matchAndCompute(db, provider, nutritionRecipeOf(db, key)!.recipe),
+      isNull,
+    );
+  }
+  expect(await matchAndCompute(db, provider, stored), isNull);
+  expect(nutritionIsFresh(db, stored), isTrue);
+}
 
 /// [r]'s current key ([derivedKeyOf]).
 String keyOf(SaltDatabase db, Recipe r) =>
@@ -447,29 +469,30 @@ void main() {
       expect(nutritionIsFresh(db, r), isTrue);
     });
 
-    test("O3: a pick during an outage on 0288's Old Bay, an engine "
+    test("O3: a pick during an outage on 0393's psyllium, an engine "
         '`no_nutrients` hold on the old row — the pick stores no food hold '
         '(LINE holds only), underived; FDC back, derived', () async {
       final (db, fixture, r) = await d.computed(
-        '0288-maryland-crab-cakes.yaml',
+        '0393-the-best-gluten-free-pizza.yaml',
       );
-      final i = d.at(r, a.oldBay0288);
+      await withSections(db, fixture, r);
+      final i = d.at(r, a.psyllium0393);
       db.upsertIngredientMatch(
         d.rowOf(db, r, i).copyWith(hold: 'no_nutrients'),
       );
       final outage = a.Outage(fixture)..down = true;
-      // "Spices, bay leaf" (170917), a hit in the line's own answer whose
-      // detail no line of the recipe fetched.
+      // "Gelatins, dry powder, unsweetened" (169599), a hit in the line's
+      // own answer whose detail no line of the recipe fetched.
       await applyMatchOverride(db, outage, r, i, {
-        'raw': a.oldBay0288,
-        'fdc_id': 170917,
+        'raw': a.psyllium0393,
+        'fdc_id': 169599,
       });
       final stored = d.rowOf(db, r, i);
       expect(
         (stored.status, stored.fdcId, stored.hold),
         (
           'overridden',
-          170917,
+          169599,
           null,
         ),
       );
@@ -482,23 +505,23 @@ void main() {
     });
 
     test('a pick of another food during an outage finishes `food_gone`: '
-        "0288's Old Bay confirmed and held food_gone (synthesized, as "
-        'a 404 derives it), then 170917 picked while FDC is out — stored '
+        "0393's psyllium confirmed and held food_gone (synthesized, as "
+        'a 404 derives it), then 169599 picked while FDC is out — stored '
         'with no hold, underived', () async {
       final (db, fixture, r) = await d.computed(
-        '0288-maryland-crab-cakes.yaml',
+        '0393-the-best-gluten-free-pizza.yaml',
       );
-      final i = d.at(r, a.oldBay0288);
+      final i = d.at(r, a.psyllium0393);
       db.upsertIngredientMatch(
         d.rowOf(db, r, i).copyWith(status: 'confirmed', hold: 'food_gone'),
       );
       final outage = a.Outage(fixture)..down = true;
       await applyMatchOverride(db, outage, r, i, {
-        'raw': a.oldBay0288,
-        'fdc_id': 170917,
+        'raw': a.psyllium0393,
+        'fdc_id': 169599,
       });
       final stored = d.rowOf(db, r, i);
-      expect((stored.fdcId, stored.hold), (170917, null));
+      expect((stored.fdcId, stored.hold), (169599, null));
       expect(stored.derivedSeq, isNull);
     });
   }, skip: skipIfNoCorpus);
@@ -791,27 +814,28 @@ void main() {
       expect(outage.failed, 0);
     });
 
-    /// 0288's Old Bay typed 77 g, skipped, the line's amount edited and
+    /// 0393's psyllium typed 77 g, skipped, the line's amount edited and
     /// saved, its food's detail in no cache (the search hit kept), FDC
-    /// out. (171331's detail recorded from the snapshot-15 cache for FDC's
+    /// out. (169656's detail recorded from the snapshot-7 cache for FDC's
     /// answer once it is back.)
     Future<(SaltDatabase, a.Outage, Recipe, int, double?)> skipEdited() async {
       final (db, path) = a.pathDb();
       final fixture = FixtureProvider(pending: pendingSearches);
-      final r = loadCorpusRecipe('0288-maryland-crab-cakes.yaml');
+      final r = loadCorpusRecipe('0393-the-best-gluten-free-pizza.yaml');
       await d.editAndCompute(db, fixture, r);
-      final i = d.at(r, a.oldBay0288);
+      await withSections(db, fixture, r);
+      final i = d.at(r, a.psyllium0393);
       await applyMatchOverride(db, fixture, r, i, {
-        'raw': a.oldBay0288,
+        'raw': a.psyllium0393,
         'grams': 77,
       });
       await applyMatchOverride(db, fixture, r, i, {
-        'raw': a.oldBay0288,
+        'raw': a.psyllium0393,
         'skipped': true,
       });
       await matchAndCompute(db, fixture, r);
       final skippedTotal = db.nutritionFor(r.id)!.totalGrams;
-      final e = a.rewritten(r, a.oldBay0288, threeTsp);
+      final e = a.rewritten(r, a.psyllium0393, threeTsp);
       wp.saveRecipe(db, e);
       final id = d.rowOf(db, e, i).fdcId!;
       sqlite3.open(path)
@@ -820,9 +844,9 @@ void main() {
       return (db, a.Outage(fixture)..down = true, e, i, skippedTotal);
     }
 
-    test("D2 / Opus critic 2 #2 (zz_c2b): an un-skip of 0288's amount-edited "
-        'Old Bay (typed 77 g for "1½ teaspoons", now "2 '
-        'teaspoons") during an outage keeps NO grams — never the old '
+    test("D2 / Opus critic 2 #2 (zz_c2b): an un-skip of 0393's amount-edited "
+        'psyllium (typed 77 g for "1½ tablespoons", now "2 '
+        'tablespoons") during an outage keeps NO grams — never the old '
         "amount's 77 g under the new text, never counted; FDC back, the "
         'new amount is derived', () async {
       final (db, outage, e, i, skippedTotal) = await skipEdited();
@@ -856,7 +880,7 @@ void main() {
         expect(failure, isNotNull);
         final row = d.rowOf(db, e, i);
         expect(row.status, 'skipped');
-        expect(row.raw, a.oldBay0288, reason: 'not re-texted');
+        expect(row.raw, a.psyllium0393, reason: 'not re-texted');
         expect(nutritionStampCurrent(db, e), isTrue);
         expect(nutritionIsFresh(db, e), isFalse);
         expect(bulkScopeIds(db, BulkScope.stale), contains(e.id));

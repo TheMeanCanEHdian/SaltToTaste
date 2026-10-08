@@ -39,7 +39,6 @@ const _ham = '0251-glazed-spiral-sliced-ham.yaml';
 const _broccoli = '0022-broccoli-cheese-soup.yaml';
 const _carrot = '0015-carrot-ginger-soup.yaml';
 const _sweetPotato = '0020-sweet-potato-soup.yaml';
-const _corn = '0657-grilled-corn-with-flavored-butter.yaml';
 const _pizza = '0393-the-best-gluten-free-pizza.yaml';
 const _cookies = '0819-gluten-free-chocolate-chip-cookies.yaml';
 
@@ -532,12 +531,18 @@ void main() {
     'N1]',
     skip: skipIfNoCorpus,
     () {
-      // Grilled Corn's "1 recipe flavored butter (recipes follow)" picked onto
-      // its own "Spicy Old Bay Butter", whose "1½ teaspoons Old Bay
-      // seasoning" is a low-confidence 171331 with grams (its detail cached,
-      // as snapshot 19 holds it): one open line, in a section, finishing a
-      // recipe that has none of its own.
-      const oldBay = 'Spicy Old Bay Butter';
+      // RE-PIN (M47 batch, v49 Q23 (a)): the vehicle was Grilled Corn's
+      // Spicy Old Bay Butter, whose Old Bay line now lands no_match with no
+      // record — a No match line finishes nothing. Now Roast Beef
+      // Tenderloin's (0214) "1 recipe flavored butter (recipes follow)"
+      // picked onto its own "Chipotle and Garlic Butter with Lime and
+      // Cilantro", whose chipotle line (on 171186, no grams: the No grams
+      // bucket, which the amount-first confirm finishes) is the section's
+      // one open line: one open line, in a section, finishing a recipe that
+      // has none of its own.
+      const chipotle = 'Chipotle and Garlic Butter with Lime and Cilantro';
+      const tenderloin = '0214-roast-beef-tenderloin.yaml';
+      const chipotleKey = 'chipotle chile in adobo sauce';
 
       int sumOfFinishes() => db
           .nutritionReviewGroups(limit: 100000, offset: 0)
@@ -545,37 +550,40 @@ void main() {
 
       test('a section row names its host and section; its group credits the '
           'parent; the banner is the sum', () async {
-        await cachedFood(db, provider, 171331);
-        await library([_corn]);
-        final corn = stored(_corn);
-        final key = keyOf(_corn, oldBay);
+        await library([tenderloin]);
+        final host = stored(tenderloin);
+        final key = keyOf(tenderloin, chipotle);
         final flagged = db
             .ingredientMatchesFor(key)
-            .singleWhere((r) => r.position == 3);
-        expect(flagged.raw, '1½ teaspoons Old Bay seasoning');
-        expect((flagged.fdcId, flagged.grams), (171331, 2.25));
-        // Before the pick the corn's own held line keeps it open: the
+            .singleWhere((r) => r.position == 1);
+        expect(
+          flagged.raw,
+          '1 medium chipotle chile in adobo sauce, seeded and minced, with 1 '
+          'teaspoon adobo sauce',
+        );
+        expect((flagged.fdcId, flagged.grams), (171186, null));
+        // Before the pick the host's own held line keeps it open: the
         // section's group credits nobody, and the banner still sums.
         var payoff = db.nutritionReviewFinishable();
         expect(payoff.finishable, sumOfFinishes());
-        expect(payoff.open, 1, reason: 'the corn; a section key is no recipe');
+        expect(payoff.open, 1, reason: 'the host; a section key is no recipe');
         expect(
           db
               .nutritionReviewGroups(limit: 100, offset: 0)
-              .singleWhere((g) => g.itemKey == 'old bay seasoning')
+              .singleWhere((g) => g.itemKey == chipotleKey)
               .finishes,
           0,
         );
 
-        await put(corn, 0, {'child': corn.slug, 'section': oldBay});
+        await put(host, 5, {'child': host.slug, 'section': chipotle});
         payoff = db.nutritionReviewFinishable();
         final group = db
             .nutritionReviewGroups(limit: 100, offset: 0)
-            .singleWhere((g) => g.itemKey == 'old bay seasoning');
+            .singleWhere((g) => g.itemKey == chipotleKey);
         expect(group.finishes, 1);
         expect(group.lastOpen, 1);
         expect(group.finishesRecipes, [
-          (id: corn.id, title: 'Grilled Corn with Flavored Butter'),
+          (id: host.id, title: 'Roast Beef Tenderloin'),
         ]);
         expect(payoff.finishable, sumOfFinishes());
         expect(payoff.finishable, 1);
@@ -591,14 +599,14 @@ void main() {
         );
         final item = (body['items']! as List<Object?>)
             .cast<Map<String, Object?>>()
-            .singleWhere((i) => i['item_key'] == 'old bay seasoning');
+            .singleWhere((i) => i['item_key'] == chipotleKey);
         expect(item['recipe'], {
-          'id': corn.id,
-          'slug': corn.slug,
-          'title': 'Grilled Corn with Flavored Butter',
+          'id': host.id,
+          'slug': host.slug,
+          'title': 'Roast Beef Tenderloin',
         });
-        expect(item['section'], oldBay);
-        expect(item['item'], 'Old Bay seasoning');
+        expect(item['section'], chipotle);
+        expect(item['item'], 'medium chipotle chile in adobo sauce');
         expect(item['finishes'], 1);
         expect(body['finishable'], 1);
         expect(body['open_recipes'], 1);
@@ -608,8 +616,8 @@ void main() {
             (buildNutritionReview(db, page: 1, limit: 100)['items']!
                     as List<Object?>)
                 .cast<Map<String, Object?>>()
-                .singleWhere((i) => i['section'] == oldBay);
-        expect(line['recipe'], containsPair('id', corn.id));
+                .singleWhere((i) => i['section'] == chipotle);
+        expect(line['recipe'], containsPair('id', host.id));
         expect(line['finishes'], 0);
       });
 

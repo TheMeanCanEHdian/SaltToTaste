@@ -156,8 +156,11 @@ void main() {
       expect(skinDiscarded(provencal, thighs), isTrue);
     });
 
-    test('N3: a mussel line on SR 174216 stays held in_shell — its detail '
-        'publishes no with-shell portion', () async {
+    // RE-PIN (M47 batch, v49 Q11): its detail still publishes no
+    // with-shell portion, so the line reads AH-102 item 1531 ([ah102Shells])
+    // and is counted (was held in_shell at the gross 1,814.37 g).
+    test('N3: a mussel line on SR 174216 — whose detail publishes no '
+        'with-shell portion — reads AH-102 item 1531, counted', () async {
       final recipe = loadCorpusRecipe('0294-oven-steamed-mussels.yaml');
       final line = nutritionLines(recipe)[6];
       expect(line.raw, '4 pounds mussels, scrubbed and debearded');
@@ -167,12 +170,12 @@ void main() {
       addTearDown(db.dispose);
       final mussel = (await FixtureProvider().food(174216))!;
       final grams = lineGrams(db, line, mussel, recipe: recipe);
-      expect(grams?.grams.toStringAsFixed(2), '1814.37');
+      expect(grams?.grams.toStringAsFixed(2), '526.17');
       expect(
         grams?.basis,
-        'from 4 pound · approximate (gross weight, no USDA refuse portion)',
+        'from 4 pound × 0.29 edible · approximate (USDA AH-102 item 1531: mussels, whole → drained solids, raw 29 % (25–33); the liquor in the pot is not counted)',
       );
-      expect(engineOutcome(recipe, line, mussel, grams).hold, 'in_shell');
+      expect(engineOutcome(recipe, line, mussel, grams).hold, isNull);
     });
   });
 }
@@ -343,16 +346,17 @@ _pins = [
     null,
     'from the printed weight (12–14 lb, the midpoint) × 0.65 edible · approximate (USDA AH-102 turkey dressing data, 12 lb and over (neck and giblets off 78 of 85); carcass → meat and skin, item 2592, fryer-roaster class, 71 % (67–75))',
   ),
-  // N3: mussels by weight stay on FNDDS 2706350, held.
+  // N3: mussels by weight stayed on FNDDS 2706350, held. RE-PIN (M47
+  // batch, v49 Q11): moved to raw SR 174216 at AH-102 item 1531, counted.
   (
     '0294-oven-steamed-mussels.yaml',
     6,
     '4 pounds mussels, scrubbed and debearded',
-    2706350,
-    '1814.37',
-    'check',
-    'in_shell',
-    'from 4 pound · approximate (gross weight, no USDA refuse portion)',
+    174216,
+    '526.17',
+    'counted',
+    null,
+    'from 4 pound × 0.29 edible · approximate (USDA AH-102 item 1531: mussels, whole → drained solids, raw 29 % (25–33); the liquor in the pot is not counted)',
   ),
   // N4: no drained ÷ whole read at v40; since v42 (the owner's ruling (b))
   // the chickpea pair's 0.565 (nutrition_v42_test.dart).

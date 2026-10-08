@@ -7,8 +7,8 @@
     {
       "id": "no_match",
       "label": "No match",
-      "count": 0,
-      "groups": 0
+      "count": 1,
+      "groups": 1
     },
     {
       "id": "no_grams",
@@ -19,8 +19,8 @@
     {
       "id": "check",
       "label": "Low confidence",
-      "count": 4,
-      "groups": 4
+      "count": 3,
+      "groups": 3
     },
     {
       "id": "choose_recipe",
@@ -45,19 +45,9 @@
       "section": "Satay Glaze",
       "position": 1,
       "raw": "1 tablespoon red curry paste",
-      "bucket": "check",
+      "bucket": "no_match",
       "finishes": 0,
-      "match": {
-        "fdc_id": 2706388,
-        "description": "Beef curry",
-        "data_type": "Survey (FNDDS)",
-        "confidence": 0.35666666666666663,
-        "grams": null,
-        "gram_source": null,
-        "status": "auto",
-        "hold": null,
-        "child": null
-      },
+      "match": null,
       "item_key": "red curry paste",
       "item": "red curry paste",
       "lines": 1,
@@ -69,6 +59,41 @@
         "min": null,
         "max": null,
         "missing": 1
+      }
+    },
+    {
+      "recipe": {
+        "id": "manual-<date>-nutrition-rules-sample",
+        "slug": "nutrition-rules-sample",
+        "title": "Nutrition rules sample"
+      },
+      "section": null,
+      "position": 6,
+      "raw": "1 pound oysters, scrubbed",
+      "bucket": "check",
+      "finishes": 0,
+      "match": {
+        "fdc_id": 2706351,
+        "description": "Oysters, raw",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.91,
+        "grams": 453.592,
+        "gram_source": "weight",
+        "status": "auto",
+        "hold": "in_shell",
+        "child": null
+      },
+      "item_key": "oyster",
+      "item": "oysters",
+      "lines": 1,
+      "recipes": 1,
+      "decided": false,
+      "finishes_recipes": [],
+      "last_open": 0,
+      "grams": {
+        "min": 453.592,
+        "max": 453.592,
+        "missing": 0
       }
     },
     {
@@ -108,36 +133,47 @@
     },
     {
       "recipe": {
-        "id": "manual-<date>-nutrition-rules-sample",
-        "slug": "nutrition-rules-sample",
-        "title": "Nutrition rules sample"
+        "id": "manual-<date>-free-form-apple-tart",
+        "slug": "free-form-apple-tart",
+        "title": "Free-Form Apple Tart"
       },
       "section": null,
-      "position": 6,
-      "raw": "1 pound mussels, scrubbed and debearded",
-      "bucket": "check",
+      "position": 5,
+      "raw": "1 recipe Rustic Tart Dough (this page), rolled into a 12-inch circle and chilled",
+      "bucket": "choose_recipe",
       "finishes": 0,
       "match": {
-        "fdc_id": 2706350,
-        "description": "Mussels",
-        "data_type": "Survey (FNDDS)",
-        "confidence": 0.9900000000000001,
-        "grams": 453.592,
-        "gram_source": "weight",
+        "fdc_id": null,
+        "description": null,
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 0.0,
+        "gram_source": "recipe",
         "status": "auto",
-        "hold": "in_shell",
-        "child": null
+        "hold": "choose_recipe",
+        "child": {
+          "state": "held",
+          "reason": "missing",
+          "name": "Rustic Tart Dough",
+          "slug": null,
+          "title": null,
+          "section": null,
+          "host_title": null,
+          "share_text": "1",
+          "default": false,
+          "why": "none"
+        }
       },
-      "item_key": "mussel",
-      "item": "mussels",
+      "item_key": "rustic tart dough",
+      "item": "Rustic Tart Dough (this page)",
       "lines": 1,
       "recipes": 1,
       "decided": false,
       "finishes_recipes": [],
-      "last_open": 0,
+      "last_open": 1,
       "grams": {
-        "min": 453.592,
-        "max": 453.592,
+        "min": 0.0,
+        "max": 0.0,
         "missing": 0
       }
     },
@@ -174,6 +210,41 @@
         "min": 6.0132824,
         "max": 6.0132824,
         "missing": 0
+      }
+    },
+    {
+      "recipe": {
+        "id": "manual-<date>-sourdough-starter",
+        "slug": "sourdough-starter",
+        "title": "Sourdough Starter"
+      },
+      "section": null,
+      "position": 0,
+      "raw": "4½ cups (24¾ ounces) whole-wheat flour",
+      "bucket": "no_grams",
+      "finishes": 0,
+      "match": {
+        "fdc_id": 790085,
+        "description": "Flour, whole wheat, unenriched",
+        "data_type": "Foundation",
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "status": "overridden",
+        "hold": "starter_discard",
+        "child": null
+      },
+      "item_key": "whole-wheat flour",
+      "item": "whole-wheat flour",
+      "lines": 1,
+      "recipes": 1,
+      "decided": false,
+      "finishes_recipes": [],
+      "last_open": 0,
+      "grams": {
+        "min": null,
+        "max": null,
+        "missing": 1
       }
     }
   ],

@@ -647,7 +647,25 @@ const Map<String, String> _synonyms = {
 /// typo); the basis names the range, "8 × 170 g (printed 5–7 oz, the
 /// midpoint)", no approximation flag (186 main lines' grams, 14 more
 /// lines' basis).
-const int matcherVersion = 47;
+///
+/// v48 (the Matcher v49 commit, batch M47 — records and published figures;
+/// the owner's 2026-10-07 standing authorization, prep47 design_v2 §1 (B);
+/// zero requests): shell-on shrimp at AH-102 item 2333 (0.81) and mussels
+/// by weight moved to raw SR 174216 at item 1531 (0.29), flagged
+/// (grams.dart `ah102Shells`, engine `shellRecords`); kiwi 75 g a fruit
+/// (FNDDS 2709239; a sized line flagged); a zest over a tablespoon plus
+/// juice as two parts unless a step strains it (juice only), and a zest
+/// plus a COUNT of lemons or limes the fruit; a can whose steps add it
+/// "and their liquid" whole, and a kept-liquid can on its cached solids-
+/// and-liquids record (175206, 175201, 175195; the half rule as two parts);
+/// jarred hot cherry peppers read the pickled answer by rank-as (the Thai
+/// chiles' raw-pepper read rank-as too), herbes de Provence on dried thyme
+/// and halloumi on Monterey (flagged), frozen raspberries on 2709282, the
+/// pasta e fagioli pasta on SR 169736 by rank-as (the owner's ruling), red
+/// curry paste and Old Bay `no_match` with no record (`noFdcRecordItems`);
+/// tapioca starch at ATK's 3 ounces per ¾ cup (flagged); nutrient siblings
+/// for the pasta, leeks and rhubarb records (engine `nutrientSiblings`).
+const int matcherVersion = 48;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -1512,10 +1530,11 @@ const Map<String, String> _queryRewrites = {
   'cilantro leaves and stems': 'cilantro',
   'cilantro leaves and tender stems': 'cilantro',
   // Fresh Thai chiles took the SUN-DRIED record; FDC's raw hot pepper
-  // "Peppers, hot, raw" (2709798) leads only this cached answer (0.52).
-  'thai chile': 'jarred hot cherry peppers',
-  'thai chiles': 'jarred hot cherry peppers',
-  'green or red thai chiles': 'jarred hot cherry peppers',
+  // "Peppers, hot, raw" (2709798) leads only the cached 'jarred hot cherry
+  // peppers' answer (0.52) — read by rank-as since v49 ([_rankAs]: 'thai
+  // chile', 'thai chiles', 'green or red thai chiles', 'red thai chile'),
+  // as 'thai' and 'green thai' read it, once that phrase became a rank-as
+  // KEY (M2: a rank-as key is never a rewrite target).
   'elbow macaroni': 'pasta dry enriched',
   'no-boil lasagna noodles': 'pasta dry enriched',
   '80 percent lean ground chuck': '80 percent lean ground beef',
@@ -1591,11 +1610,10 @@ const Map<String, String> _queryRewrites = {
   // meat and skin, raw" (0.48, 0.43); the cached answer ranks it at 0.55.
   'whole bone-in turkey breast': 'bone-in turkey breast',
   'whole bone-in skin-on turkey breast': 'bone-in turkey breast',
-  // A fresh red Thai chile, not the sun-dried 168570: the other Thai chile
-  // keys' answer ranks "Peppers, hot, raw" (2709798) first. ('thai red
-  // chile' is NOT mapped: the piece table's 'thai chile' misses it, so its
-  // count would read the record's 15 g whole pepper.)
-  'red thai chile': 'jarred hot cherry peppers',
+  // (A fresh red Thai chile reads the raw hot pepper by rank-as since v49,
+  // [_rankAs]. 'thai red chile' is NOT mapped: the piece table's 'thai
+  // chile' misses it, so its count would read the record's 15 g whole
+  // pepper.)
   // Granulated garlic is the dried powder, not "Garlic, raw" (1104647,
   // 0.55): the cached answer holds "Spices, garlic powder" (171325) alone.
   'granulated garlic': 'garlic powder',
@@ -2470,6 +2488,60 @@ const Map<String, (String, String)> _rankAs = {
   'mascarpone': ('heavy cream', 'cream heavy'),
   'potato starch': ('cornstarch', 'cornstarch'),
   'brown rice flour': ('white rice flour', 'white rice flour'),
+  // v49 (M47 Q15 i): jarred hot cherry peppers ARE pickled — the line read
+  // its own answer's raw "Peppers, hot, raw" (0.518, Na 1.7 mg); the
+  // cached 'pickled hot cherry peppers' answer leads with FNDDS 2710095
+  // "Peppers, hot, pickled" under its own words (pasta-frittata|3; not
+  // flagged). A rank-as, not a rewrite: the phrase is the cached answer
+  // the Thai chiles read, and a "Search live" on their rows asks
+  // searchQueryFor(normalizeItem(candidates_query)) — as a rewrite key it
+  // would re-ask the pickled answer (closer round 1, D3). The Thai chiles'
+  // raw hot pepper (rewrites until v48: a rank-as key is never a rewrite
+  // target, M2) — the same answer under the same words, so the same
+  // landing. Q15 ii: herbes de
+  // Provence (4 lines held `no_nutrients` on a dry bean, 747432 at 0.045)
+  // on "Spices, thyme, dried" 170938, flagged — the blend is mostly dried
+  // herbs and FDC publishes no blend. Q15 iii: frozen raspberries on FNDDS
+  // 2709282 "Raspberries, frozen" (second in the cached 'raspberries'
+  // answer; the food itself, unflagged). Q26: FDC has no halloumi (the
+  // cached 'halloumi cheese' answer holds Monterey, paneer, spreads and
+  // sandwiches) → its own top, FNDDS 2705720 "Cheese, Monterey", flagged —
+  // the v46 A2 mascarpone ruling; the one-word 'halloumi' too.
+  'jarred hot cherry peppers': (
+    'pickled hot cherry peppers',
+    'pickled hot cherry peppers',
+  ),
+  'thai chile': ('jarred hot cherry peppers', 'jarred hot cherry peppers'),
+  'thai chiles': ('jarred hot cherry peppers', 'jarred hot cherry peppers'),
+  'green or red thai chiles': (
+    'jarred hot cherry peppers',
+    'jarred hot cherry peppers',
+  ),
+  'red thai chile': ('jarred hot cherry peppers', 'jarred hot cherry peppers'),
+  'herbes de provence': ('dried thyme', 'spices thyme dried'),
+  'frozen raspberries': ('raspberries', 'raspberries frozen'),
+  'halloumi cheese': ('halloumi cheese', 'cheese monterey'),
+  'halloumi': ('halloumi cheese', 'cheese monterey'),
+  // v49 (M47 Q15 iv, the owner's 2026-10-07 ruling): the pasta e fagioli
+  // line's own answer ranks the Foundation spaghetti record 2758998 (no
+  // energy; its nutrient sibling) at 0.0125 under the line's words; the
+  // same cached answer holds SR 169736 "Pasta, dry, enriched" (sixth) —
+  // read under the record's own words, as the shape rewrites above land
+  // 'ditalini' (the food itself, not flagged).
+  'pasta such as ditalini': ('pasta such as ditalini', 'pasta dry enriched'),
+};
+
+/// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it
+/// searches — every cached answer read (prep47 P6 §6a/§6c): curry dishes,
+/// "Curry sauce" and curry powder for the pastes, bay leaf and poultry
+/// seasoning for Old Bay. Each lands `no_match` with NO record shown, never
+/// its answer's top below the gate ("Beef curry" 2706388, "Spices, poultry
+/// seasoning" 171331), and the compute sends no search for it: a VETO LIST
+/// keyed on the normalized item.
+const Set<String> noFdcRecordItems = {
+  'red curry paste',
+  'thai red curry paste',
+  'old bay seasoning',
 };
 
 /// The (rank words, cached answer) a rank-as item reads ([_rankAs]), in
@@ -3469,6 +3541,10 @@ const Map<String, int> approximationRecords = {
   'potato starch': 169698,
   'brown rice flour': 790214,
   'nutritional yeast': 2710005,
+  // v49 (M47 Q15 ii, Q26; [_rankAs]).
+  'herbes de provence': 170938,
+  'halloumi cheese': 2705720,
+  'halloumi': 2705720,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

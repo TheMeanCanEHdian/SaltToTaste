@@ -420,7 +420,6 @@ void main() {
         ('plain dried bread crumbs', 174928),
         ('cornstarch', 169698),
         // Any other starch reads cornstarch's (no starch record cached).
-        ('tapioca starch', 169698),
         ('potato starch', 169698),
       ]) {
         final food = (await FixtureProvider().food(id))!;
@@ -431,6 +430,12 @@ void main() {
           reason: '$item on $id ${food.description}',
         );
       }
+      // RE-PIN (M47 batch, v49 Q5): tapioca starch reads ATK's own print,
+      // "3 ounces (¾ cup)" (was cornstarch's cup, 169698).
+      expect(
+        densityOf('tapioca starch'),
+        closeTo(3 * 28.3495 / (0.75 * 236.588), 1e-9),
+      );
       // The longest key wins in its table: panko keeps its own figure.
       expect(densityOf('panko bread crumbs'), 0.25);
       expect(densityOf('breadcrumbs'), densityOf('bread crumbs'));
@@ -473,8 +478,11 @@ void main() {
           ('26 grams plain dried bread crumbs', null, null),
           ('4 ounces potato starch', 'potato starch', _coating),
           ('4 ounces tapioca starch', 'tapioca starch', _coating),
-          ('32 grams tapioca starch', 'tapioca starch', _coating),
-          ('31 grams tapioca starch', 'tapioca starch', null),
+          // RE-PIN (M47 batch, v49 Q5): the 0.54 boundary on potato starch —
+          // tapioca starch reads ATK's own 0.479 now (¼ cup is 28.35 g).
+          ('32 grams potato starch', 'potato starch', _coating),
+          ('31 grams potato starch', 'potato starch', null),
+          ('29 grams tapioca starch', 'tapioca starch', _coating),
         ]) {
           var r = _retyped(base, crumbs, raw);
           if (step != null) {

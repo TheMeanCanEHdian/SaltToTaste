@@ -61,6 +61,9 @@ const _herbSauce =
     '0184-restaurant-style-herb-sauce-for-pan-seared-steaks.yaml';
 const _lemonTart = '0994-lemon-tart.yaml';
 const _fruitTart = '0997-fresh-fruit-tart-with-pastry-cream.yaml';
+// RE-PIN (M47 batch, v49 Q12): the held line the partial-child pins append
+// (its kiwi counts now): Foundation 2747675, held no_nutrients.
+const _watermelon = '1071-watermelon-salad-with-cotija-and-serrano-chiles.yaml';
 
 /// Every corpus line that resolves as a sub-recipe reference (the 119 the
 /// shipped detector zeroes; engine_lines.tsv with A7 a, A8 a and D11
@@ -597,12 +600,17 @@ void main() {
         // v43 (Y8): its two apple lines × 0.78 (AH-102 item 17).
         (_deepDish, 0, _allButter, 642.9, 3056.69, 597.13, 'complete'),
         (_summerBerry, 7, _graham, 220.6, 1135.14, 273.62, 'complete'),
-        (_keyLime, 3, _graham, 220.6, 1135.14, 445.87, 'partial'),
+        // RE-PIN (M47 batch, v49 Q6): its 4 tsp lime zest plus ½ cup juice
+        // counts, two parts (was 445.87, partial).
+        (_keyLime, 3, _graham, 220.6, 1135.14, 450.14, 'complete'),
         (_coconut, 9, _graham, 220.6, 1135.14, 598.27, 'complete'),
         // v44: its |5 now routes to its own One-Minute Salsa (+23.00).
         (_nachos, 6, _guacamole, 522.5, 1032.78, 1098.56, 'complete'),
-        (_lemonTart, 0, _tartDough, 401.8, 1870.07, 399.33, 'partial'),
-        (_fruitTart, 7, _tartDough, 401.8, 1870.07, 547.59, 'partial'),
+        // RE-PIN (M47 batch, v49): the lemon tart's strained zest line counts
+        // its juice (Q6; was 399.33), the fruit tart's kiwis 150 g (Q12; was
+        // 547.59, partial).
+        (_lemonTart, 0, _tartDough, 401.8, 1870.07, 403.79, 'partial'),
+        (_fruitTart, 7, _tartDough, 401.8, 1870.07, 559.79, 'complete'),
       ]) {
         final parent = r(file);
         final row = rowAt(parent, position);
@@ -792,7 +800,9 @@ void main() {
           for (final row in db.ingredientMatchesFor(id))
             if (row.parts != null) '${row.recipeId}|${row.position}',
       ];
-      expect(withParts, ['${r(_wilted).id}|5']);
+      // RE-PIN (M47 batch, v49 Q6): a zest-plus-juice row carries its two
+      // parts too ([withParts]); only the bacon row is rendered.
+      expect(withParts, ['${r(_wilted).id}|5', '${r(_keyLime).id}|1']);
     });
 
     test('every computed recipe is fresh; the buckets agree [§3, parity]', () {
@@ -1353,12 +1363,13 @@ void main() {
 
     test('a routed child that is partial flags its parent row [M16]', () async {
       // A stated composed-from-real-lines exception (tests.md 7.6): the
-      // fresh fruit tart's real kiwi line appended to Classic Tart Dough.
+      // watermelon salad's real held watermelon line appended to Classic
+      // Tart Dough (RE-PIN (M47 batch, v49 Q12): was the fruit tart's kiwi
+      // line, counted now).
       final dough = store(_tartDough);
       final lemon = store(_lemonTart);
-      final fruit = loadCorpusRecipe(_fruitTart);
-      final kiwi = nutritionLines(fruit)[9];
-      expect(kiwi.raw, startsWith('2 large kiwis'));
+      final kiwi = nutritionLines(loadCorpusRecipe(_watermelon))[5];
+      expect(kiwi.raw, '6 cups 1½-inch seedless watermelon pieces');
       final group = stored(dough).ingredients.last;
       final edited = stored(dough).copyWith(
         ingredients: [
@@ -1393,12 +1404,13 @@ void main() {
       expect(label(lemon).status, 'partial');
     });
 
-    /// The All-Butter dough with the fresh fruit tart's real kiwi line
+    /// The All-Butter dough with the watermelon salad's real held line
     /// appended (the M16 composed-lines exception, tests.md 7.6): a child
-    /// that computes partial, 7 of 8.
+    /// that computes partial, 7 of 8. RE-PIN (M47 batch, v49 Q12): was the
+    /// fruit tart's kiwi line, counted now.
     Future<void> kiwiDough(Recipe dough) async {
-      final kiwi = nutritionLines(loadCorpusRecipe(_fruitTart))[9];
-      expect(kiwi.raw, startsWith('2 large kiwis'));
+      final kiwi = nutritionLines(loadCorpusRecipe(_watermelon))[5];
+      expect(kiwi.raw, '6 cups 1½-inch seedless watermelon pieces');
       final group = stored(dough).ingredients.last;
       final edited = stored(dough).copyWith(
         ingredients: [

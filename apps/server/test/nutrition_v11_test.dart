@@ -109,10 +109,16 @@ void main() {
     const shrimp =
         '1 pound large shell-on shrimp (26 to 30 per pound), peeled, '
         'deveined (see this page), and tails removed, shells reserved';
-    // Skillet-Roasted Chicken in Lemon Sauce (0142): 4 teaspoons of zest,
-    // over the citrus rule's tablespoon — held second_food.
-    const heldZest =
-        '4 teaspoons grated lemon zest plus ¼ cup juice (2 lemons)';
+    // RE-PIN (M47 batch, v49 Q11): every weighed mussel and shrimp line is
+    // counted (AH-102 items 1531, 2333), so the held in-shell line is a
+    // STATED SYNTHESIZED weight of oysters (no corpus oyster line is bought
+    // by weight; FNDDS 2706351 publishes no shell yield).
+    const oysters = '1 pound oysters, scrubbed';
+    // RE-PIN (M47 batch, v49 Q6): 0142's zest line counts by rule since v49
+    // (two parts); the held second food is Crispy-Skinned Chicken Breasts
+    // with Vinegar-Pepper Pan Sauce's (0121) peppers plus their brine.
+    const heldBrine =
+        '¼ cup chopped pickled hot cherry peppers, plus ¼ cup brine';
     // Sesame Noodles with Shredded Chicken (0519).
     const noodleWater =
         'Bring 6 quarts water to a boil in a large pot. Add the noodles and '
@@ -126,9 +132,12 @@ void main() {
       "0294); an engine row too; the person's own confirm clears it",
       () async {
         final db = tempDb();
-        final a = recipeOf(db, 'ra', [mussels]);
-        final b = recipeOf(db, 'rb', [mussels]);
-        final c = recipeOf(db, 'rc', [shrimp]);
+        // RE-PIN (M47 batch, v49 Q11): the synthesized oysters (the mussels'
+        // and the shrimp's weights are counted at their AH-102 rows).
+        expect(boughtInShell(mussels) && boughtInShell(shrimp), isTrue);
+        final a = recipeOf(db, 'ra', [oysters]);
+        final b = recipeOf(db, 'rb', [oysters]);
+        final c = recipeOf(db, 'rc', [oysters]);
         for (final r in [a, b, c]) {
           await matchAndCompute(db, provider, r);
         }
@@ -159,12 +168,12 @@ void main() {
     test('second_food and discarded_medium: an inherited decision, skipped '
         'then un-skipped, keeps them', () async {
       final db = tempDb();
-      final a = recipeOf(db, 'ra', [heldZest, '1 teaspoon table salt']);
+      final a = recipeOf(db, 'ra', [heldBrine, '1 teaspoon table salt']);
       final b = recipeOf(
         db,
         'rb',
         [
-          heldZest,
+          heldBrine,
           '1 tablespoon table salt',
         ],
         steps: [noodleWater],
@@ -172,7 +181,7 @@ void main() {
       for (final r in [a, b]) {
         await matchAndCompute(db, provider, r);
       }
-      await applyMatchOverride(db, provider, a, 0, {'fdc_id': 167749});
+      await applyMatchOverride(db, provider, a, 0, {'fdc_id': 2710095});
       await applyMatchOverride(db, provider, a, 1, {'confirmed': true});
       await matchAndCompute(db, provider, b);
       for (final (position, hold) in [
@@ -635,10 +644,12 @@ void main() {
       },
     );
 
+    // RE-PIN (M47 batch, v49 Q11): on the synthesized oysters — Cioppino's
+    // (0108) mussels read AH-102 item 1531 on raw 174216 since v49.
     test("a person's confirm counts a line in the shell at its gross weight: "
-        'labelled approximate (Cioppino, 0108)', () async {
+        'labelled approximate (a synthesized weight of oysters)', () async {
       final db = tempDb();
-      final r = recipeOf(db, 'r1', ['1 pound mussels, scrubbed and debearded']);
+      final r = recipeOf(db, 'r1', ['1 pound oysters, scrubbed']);
       await matchAndCompute(db, provider, r);
       await applyMatchOverride(db, provider, r, 0, {'confirmed': true});
       final row = rowOf(db, 'r1');
@@ -687,7 +698,8 @@ void main() {
     test('M10: lime zest counts as "Lemon peel, raw" — a flagged '
         'approximation (FDC has no lime peel), in either answer order: Thai '
         'Chicken Curry (0550), Jerk Chicken (0632), Key Lime Bars (0849); the '
-        'Fresh Margaritas (0470) line stays held by the zest cap', () async {
+        'Fresh Margaritas (0470) line, alone (no step strains it), counts '
+        'its zest and juice as two parts (v49)', () async {
       expect(searchQueryFor('lime zest'), 'lemon zest');
       final answer = await provider.search('lemon zest');
       for (final order in [answer, answer.reversed.toList()]) {
@@ -710,7 +722,12 @@ void main() {
         expect(row.fdcId, 167749, reason: row.raw);
         expect(bucketOf(row), MatchBucket.counted, reason: row.raw);
       }
-      expect((rows.last.fdcId, rows.last.hold), (167749, 'second_food'));
+      // RE-PIN (M47 batch, v49 Q6): over the tablespoon, two parts — the
+      // zest on lemon peel, the juice on lime juice (was held second_food).
+      expect(
+        (rows.last.fdcId, rows.last.hold, partsOf(rows.last.parts).length),
+        (167749, null, 2),
+      );
     });
 
     test('M11: Pork and Cabbage Dumplings (0506) napa alone fetches its '

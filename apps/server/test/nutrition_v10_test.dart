@@ -741,6 +741,12 @@ void main() {
     // Clambake's lobsters (0295); Crispy Salt-and-Pepper Shrimp (0279).
     const clams = '1 pound littleneck clams, scrubbed';
     const mussels = '1 pound mussels, scrubbed and debearded';
+    // RE-PIN (M47 batch, v49 Q11): every weighed mussel and shrimp line is
+    // counted (AH-102 items 1531, 2333), so no corpus line is held in_shell
+    // any more; the hold's vehicle is a STATED SYNTHESIZED weight of oysters
+    // (no corpus oyster line is bought by weight; FNDDS 2706351 "Oysters"
+    // publishes no shell yield and AH-102's oyster rows are not adopted).
+    const oysters = '1 pound oysters, scrubbed';
 
     test('held in_shell with their grams; meat, juice and shucked are '
         'not', () async {
@@ -777,10 +783,11 @@ void main() {
         isTrue,
       );
       final db = tempDb();
-      // Since v40 (E2) the clams are counted on SR 174214's shell yield,
-      // so the held line here is the mussels' (174216 publishes none).
-      final a = recipeOf(db, 'ra', [mussels]);
-      final b = recipeOf(db, 'rb', [mussels, clams]);
+      // Since v40 (E2) the clams are counted on SR 174214's shell yield, and
+      // since v49 the mussels at AH-102 item 1531: the held line here is
+      // the synthesized oysters' (RE-PIN, was the mussels').
+      final a = recipeOf(db, 'ra', [oysters]);
+      final b = recipeOf(db, 'rb', [oysters, clams]);
       for (final r in [a, b]) {
         await matchAndCompute(db, provider, r);
       }
@@ -800,7 +807,7 @@ void main() {
       // that lands keeps the hold.
       final groups = db
           .nutritionReviewGroups(limit: 50, offset: 0)
-          .where((group) => group.itemKey == 'mussel')
+          .where((group) => group.itemKey == 'oyster')
           .toList();
       expect([for (final group in groups) group.lines], [1, 1]);
       final offer = await matchesBody(db, provider, a);
@@ -810,8 +817,8 @@ void main() {
       final decided = engineOutcome(
         a,
         line,
-        await food(2706350),
-        gramsOf(mussels, null),
+        await food(2706351),
+        gramsOf(oysters, null),
         decided: true,
       );
       expect(decided.hold, 'in_shell');
@@ -820,10 +827,10 @@ void main() {
       await applyMatchOverride(db, provider, a, 0, {'confirmed': true});
       expect(db.ingredientMatchesFor('ra').single.hold, isNull);
       expect(db.ingredientMatchesFor('rb').first.hold, 'in_shell');
-      expect(db.decisionFor('mussel'), isNotNull);
+      expect(db.decisionFor('oyster'), isNotNull);
       final held = db
           .nutritionReviewGroups(limit: 50, offset: 0)
-          .singleWhere((group) => group.itemKey == 'mussel');
+          .singleWhere((group) => group.itemKey == 'oyster');
       expect((held.match.recipeId, held.decided), ('rb', false));
     });
   });

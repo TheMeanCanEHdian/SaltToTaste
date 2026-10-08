@@ -385,7 +385,8 @@ class IngredientMatch {
   final RecipeRef? child;
 
   /// A rendered row's two records (v41, R2): the cooked bacon, then the fat
-  /// kept in the pan; empty on every other row.
+  /// kept in the pan; v49 a zest-and-juice or half-drained can row's two;
+  /// empty on every other row.
   final List<MatchPart> parts;
 
   /// The engine's flag on the row ("approximation (…)", "approximate
@@ -594,7 +595,8 @@ class MatchPart {
   final String? description;
   final String? dataType;
 
-  /// `cooked` | `kept_fat`.
+  /// `cooked` | `kept_fat` (the bacon); v49 `zest` | `juice`, `drained` |
+  /// `undrained`.
   final String? role;
 }
 

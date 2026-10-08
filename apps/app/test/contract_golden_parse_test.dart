@@ -1092,9 +1092,12 @@ void main() {
           1,
         ),
       );
+      // RE-PIN (M47 batch, v49 Q23 (a)): the golden is captured over every
+      // flagged bucket since the Satay line went No match (was the Check
+      // bucket alone: 3 other lines); its 5 other lines carry no section.
       expect(
         [for (final i in queue.items.skip(1)) i.section],
-        [null, null, null],
+        [null, null, null, null, null],
       );
     });
 

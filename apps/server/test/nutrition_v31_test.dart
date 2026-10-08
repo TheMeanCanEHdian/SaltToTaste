@@ -82,7 +82,14 @@ void main() {
         bucket,
         reason: raw,
       );
-      expect(gramBasisFor(db, line, row), basis, reason: raw);
+      // RE-PIN (M47 batch, v49 Q6): read on the stored recipe, as the
+      // matches GET reads it — a two-part zest row's basis needs the recipe
+      // (whether a step strains the zest).
+      expect(
+        gramBasisFor(db, line, row, recipe: db.recipeByIdOrSlug('r')!.recipe),
+        basis,
+        reason: raw,
+      );
     }
   }
 
@@ -857,14 +864,17 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
     'no_grams',
     null,
   ),
+  // RE-PIN (M47 batch, v49 Q6): the peel over a tablespoon plus juice is
+  // two parts, peel and juice (no step strains the peel) — counted (was
+  // held second_food at the peel's 24.00 g).
   (
     '0536-crispy-orange-beef.yaml',
     3,
     '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), plus ¼ cup juice (2 oranges)',
     169103,
-    '24.00',
-    'check',
-    '1/4 cup · USDA portion',
+    '86.00',
+    'counted',
+    'zest 1/4 cup · USDA portion + juice 1/4 cup · USDA portion',
   ),
   (
     '0129-mahogany-chicken-thighs.yaml',
