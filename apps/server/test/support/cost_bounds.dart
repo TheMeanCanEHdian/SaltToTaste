@@ -71,6 +71,26 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:pourAway',
       'memo:fryVerbAt',
       'memo:crumbsForTheCoat',
+      // v50 (M50): the strain, its pot and fat; the discards, bundles and
+      // printed parts kept; the dips and marinades flagged.
+      'memo:strainAt',
+      'memo:parenthetical',
+      'memo:fatSkimmed',
+      'memo:smooth',
+      'memo:addsMixture',
+      'memo:strainsAnotherPot',
+      'memo:discards',
+      'memo:bundles',
+      'memo:keptCooked',
+      'memo:savesRemainder',
+      'memo:reservedWhole',
+      'memo:measuresOut',
+      'memo:leftInBowl',
+      'memo:liftedFromMarinade',
+      // v50 closer 1: the vegetables lifted out before a strain (V1-D1);
+      // the numbered remaining parts (V1-D3).
+      'memo:liftsVegetables',
+      'memo:remainingParts',
     ])
       once: 1,
     for (final perHead in [
@@ -93,6 +113,13 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:plusSteps',
       // v31: a fat's pieces after its last discard.
       'memo:eatenAfterDiscard',
+      // v50 (M50): a head's food mentions, named after the strain, drained
+      // before it; a count line's partition (per head and discard step —
+      // one discard per head on every corpus line).
+      'memo:foodNaming',
+      'memo:namedAfterStrain',
+      'memo:drainedBeforeStrain',
+      'memo:partition',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,

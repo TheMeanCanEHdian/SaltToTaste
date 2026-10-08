@@ -287,12 +287,12 @@ void main() {
           proseSectionsReadBy(stored(_chraime), ResolverMemo(db)),
           isEmpty,
         );
-        // RE-PIN (M47 batch, v49, matcherVersion 48): its stamp in the v49
-        // replay of snapshot 21 (was 70a92d92…, the M48 stamp at
-        // matcherVersion 47).
+        // RE-PIN (M50 batch, v50, matcherVersion 49): its stamp in the v50
+        // replay of snapshot 21 (was 7299c556…, the M47 stamp at
+        // matcherVersion 48).
         expect(
           ingredientsHashOf(stored(_chraime), ResolverMemo(db)),
-          '7299c55668e035b4be16759349f595c813d968a2a91a9877587ab4418bb187db',
+          '125e7e955e50b7257b31a9f3f057ca0c0588606506227991c18a91df5c40041c',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

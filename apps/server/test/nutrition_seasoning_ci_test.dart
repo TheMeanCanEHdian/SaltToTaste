@@ -58,12 +58,12 @@ void main() {
 
   test('the staleness hash carries the matcher version, so a bump makes '
       'every computed recipe stale (update the literal with the bump)', () {
-    expect(matcherVersion, 48); // RE-PIN (M47 batch, v49): was 47.
+    expect(matcherVersion, 49); // RE-PIN (M50 batch, v50): was 48.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
-      // RE-PIN (M47 batch, v49): the hash at matcherVersion 48 (was
-      // 5d57d1c5…, matcherVersion 47).
-      '561d6821e4b2bae8af56c9d9ca7dd963bdd5a7a68a2be6122757559247769862',
+      // RE-PIN (M50 batch, v50): the hash at matcherVersion 49 (was
+      // 561d6821…, matcherVersion 48).
+      '552b7bd3d102062236ff575578af2d2c88a27d33020e9fcbf74ce02c0a59f0db',
     );
   });
 

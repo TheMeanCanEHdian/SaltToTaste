@@ -406,13 +406,17 @@ const List<(String, int, String, int, String, String)> _pins = [
     '698.53',
     'from the printed weight × 0.77 edible · approximate (USDA AH-102 item 2598: turkey thigh, raw, fryer-roaster class → meat 77 % (76–80))',
   ),
+  // RE-PIN (M50 batch, v50, Q20 (iii)): the steps "transfer the wings to a
+  // dinner plate to reserve for another use" — 0 g (was 585.13 g, the
+  // AH-102 item 2602 wing yield, which nutrition_v50_test.dart keeps pinned
+  // on the line's own weighing, lineGrams).
   (
     '0178-baked-bread-stuffing-with-sausage-dried-cherries-and-pecans.yaml',
     1,
     '3 pounds turkey wings, divided at joints',
     171497,
-    '585.13',
-    'from 3 pound × 0.43 edible · approximate (USDA AH-102 item 2602: turkey wing, raw, fryer-roaster class → meat 43 % (42–45))',
+    '0.00',
+    'reserved for another use (step 7) — counted as 0 g',
   ),
   // Unchanged: whole chickens (Y4), the deferred breast (Y7), per-item and hen portions.
   (

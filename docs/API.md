@@ -1596,6 +1596,8 @@ teaspoons) instant or rapid-rise yeast"), weighed at the yeast density:
 teaspoon ≈ 11 mL"` (7.10 g). Not built (ruled no grams): dried jujubes and the mild
 dried chile by the inch; an ancho keeps FDC's 17 g)
 | `override` | `discarded` (a cooking medium the recipe throws away —
+since matcher v50 also a solid a strain or a discard throws away and the
+kept part of a printed partial use, the v50 paragraph below —
 deep-frying oil ("for frying" — since matcher v24 "for deep frying" too —
 or 400 g or more of oil — or, since matcher v23, ¼ cup or more of oil, its
 same-food "plus" part included, in a recipe whose dredge is held `coating`
@@ -2908,6 +2910,139 @@ the parent −24.0); holds: `in_shell` 7 → 0, `second_food` 24 → 13,
 `no_nutrients` 8 → 3; 22 recipes complete (980 → 1,002), 1 section (134 →
 135); main `check` 214 → 184, `counted` 13,338 → 13,364, `no_match` 11 →
 16.
+
+**Since matcher v50 (batch M50, matcherVersion 49 — discards and partial
+use; prep47 design_v2 §1 Q16, Q17, Q18, Q20, Q21, Q7 and §2 "M50", decided
+under the owner's 2026-10-07 standing authorization; zero requests).** Four
+new discarded media (engine `DiscardedMedium`), read from the steps alone
+after every shipped reader (a drained pot's `discarded_medium`, the brine
+co-solutes and the pour-aways keep their lines), on every write path:
+(1) **Strained solids (Q16, `strainedSolid`; AMENDS the 2026-09-28 ruling
+"poured-away media the rules could not see … are held" for strained solids
+and removed aromatics — the 0 g footing is that day's brine ruling).** The
+first sentence that strains and presses or discards the solids ("Strain …
+pressing on the solids", "…; discard solids", a next sentence "Discard …
+solids") or strains a stock or broth ("Strain broth through …") — never a
+purée, soup, custard, batter or "mixture into" strain — counts 0 g
+(`discarded`) every aromatic vegetable, herb, whole spice, peppercorn, kombu
+and zest strip whose nth mention stands before it and whose food no later
+sentence names again, `gram_basis` `"discarded in cooking — counted as 0 g ·
+approximate (strained out and discarded — what it gives the liquid is not
+counted)"`. Never a ground spice, a powder or a paste ("1½ teaspoons ground
+cardamom" stays 3.03 g — they pass the strainer), never a line its own
+steps blend smooth or into a paste (cochinita pibil's garlic, spices and
+grilled onion), never one mixed in a bowl, mixer, processor or blender
+unless a later "add the … mixture" in the pot carries it there (the Sauce
+Base's processor vegetables are carried), never the second pot of a
+"Meanwhile, strain …" step or a baking sheet beside a strained skillet;
+"beef broth" or "lemon juice" is no mention of the beef or the lemon, and
+the mixture the strain sentence itself strains ("Strain garlic-lemon
+mixture …") named again ("Process garlic-lemon mixture") is the liquid, not
+the garlic back. Never a vegetable a sentence lifts out with "the
+vegetables" before the strain ("Using slotted spoon, transfer vegetables to
+serving platter" — the French chicken's carrots are served; the garlic and
+peppercorns "sprinkled … over vegetables" are set apart from them and
+strained), and never a strain whose next sentence keeps some of the solids
+("Measure 1 tablespoon of solids …", grilled potatoes). A numbered part the
+line's own mention keeps out of the strained pot ("combine the remaining 2
+tablespoons shallot … in a medium bowl", the poached salmon) is counted:
+`"discarded in cooking: 2 of 4 tablespoons — only the rest counted ·
+approximate (strained out and discarded — what it gives the liquid is not
+counted)"`, 20 g of 40.
+(2) **Cured pork a step strains out or discards (Q17) and ground stock meat
+(critic F4):** 0 g when a sentence outside a parenthesis skims, separates
+or pours off the pot's fat ("skim the fat off the surface", "into a fat
+separator") — stock meat also when blanched and drained (the pho's beef) —
+else **held** `discarded_medium` (new value `fatKept`: its rendered fat
+stays in the dish in a share no source gives; no grams stored; the wedding
+soup's only skim is the make-ahead "(… Skim off fat before reheating.)").
+Zeroed: modern beef burgundy's salt pork, beef braised in Barolo's
+pancetta, coq au Riesling's bacon, best beef stew's and daube provençal's
+salt pork, the stuffed turkey's draped salt pork; held: the Calvados
+chops' bacon, New England fish chowder's salt pork, milk-braised pork
+loin's ("discard salt pork, leaving fat in pot"), modern ham and split pea
+soup's bacon, the wedding soup's ground pork and beef. The four rows the
+bacon batch (M49) would also read — the Barolo pancetta, coq au
+Riesling's bacon, the Calvados chops' bacon, the split pea soup's bacon —
+are settled here, and M49 never touches them (critic F11).
+(3) **Whole aromatics removed and discarded (Q18, `removedAromatic`):**
+"(remove and) discard (the) <noun list>" naming a bay leaf, a cinnamon
+stick, star anise, kombu, an herb or cilantro bundle, onion halves or
+rounds, a garlic head or crushed cloves, bell-pepper halves, a celery
+bundle or lemons from a cavity — and the aromatics and whole spices a
+sentence ties (tie, twine) into a bundle a later sentence removes or
+discards ("remove herb bundle", "discard spice bundle"; never a citrus
+line, whose juice is eaten) — counts 0 g, `"removed and discarded (step N)
+— counted as 0 g"`; a line partly cut fine ("2 medium onions, 1 quartered
+and 1 chopped fine") stays counted. A COUNT line partitioned by the steps
+("Cut 1 of the lemons … in the cavity" … "Discard the lemons" … "Halve the
+remaining lemon") zeroes only the discarded pieces (critic F12):
+`"removed and discarded (step 6): 1 of 2 — only the rest counted"`, 58 g of
+116; so do pieces ("1 bell pepper half, 1 onion half" in the beans' pot,
+"the remaining peppers and onion" in the sofrito: `"… 1 of 4 halves …"`
+178.50 g of 238, `"… 1 of 2 halves …"` 75 g of 150 — the design pinned
+these at 0 g from a misreading; the corpus text and Q18's partition ruling
+count the eaten halves), and a bundle tied from the line's own "remaining
+10 cilantro sprigs" (`"removed and discarded (step 4): 10 of 30 — only the
+rest counted"`, the leaves of 20 sprigs eaten). "Discard all but 3 tablespoons … fat" names the fat, never the food.
+(4) **A printed part kept (Q20, `partialUse`):** (i) "Save the remaining 6
+tablespoons butter for another use" subtracts the remainder in the line's
+unit (`"the remaining 6 tablespoons saved for another use (step 1) — only
+the rest counted"`, blueberry scones 226.89 → 141.81 g); (ii) a potato kept
+by a printed COOKED weight — "Transfer 3 cups (16 ounces) warm potatoes",
+or "Measure 1 very firmly packed cup potatoes" with the prep note's "1 very
+firmly packed cup (½ pound) of mash" — converts to the raw record by FDC
+carbohydrate on the flesh-only cooked record (critic F18; baked: SR 170033
+21.6 g, boiled: SR 170114 20.1 g, over the line's record's own: 2346401
+17.77125 g), `"from 16 ounces cooked (step 3) · approximate (the steps keep
+16 ounces of the baked potato; its raw weight by FDC's carbohydrate,
+170033)"` — potato gnocchi 907.18 → 551.32 g (the auditors' 570),
+potato burger buns 367.41 → 256.52 g (230); a weight line whose record
+detail no portion fetched reads its search hit's rounded carbohydrate
+(17.8 g: 550.43 g); (iii) a whole food reserved for another use
+("transfer the wings to a dinner plate to reserve for another use") or the
+rest of it discarded ("Discard remaining beer and can") counts 0 g,
+`"reserved for another use (step N) — counted as 0 g"` / `"the rest
+discarded (step N) — counted as 0 g"`; (iv) a kept VOLUME with no printed
+weight ("Measure 1⅓ cups lightly packed potato; discard the remaining
+potato"; "Measure out 2 teaspoons porcini powder; reserve remainder", the
+line named by its head or the word before it) counts the line whole, its
+basis flagged `"· approximate (the steps keep only 1⅓ cups of it)"`.
+(5) **Flags only, no grams move:** a dip, batter, glaze or egg wash the
+steps leave an excess of in the bowl (Q21: "Scrape off excess chocolate",
+"allowing the excess batter to drip off", "(you won't need all of it)") —
+the food word's own lines, or a mixture's lines a whisk/combine/stir/sift
+sentence names in the dip's step or the step before, with the making step
+of a "<food> mixture" those sentences continue (fish-and-chips' batter from
+step 2's flour mixture, the audit's baking powder L206) and, for a glaze,
+the step that reduces it (negimaki) — `"· approximate (the
+steps leave an excess of it in the bowl — how much is eaten is not
+written)"`; a marinade the food is lifted out of (Q7, keeping the
+2026-09-28 "a marinade's food stays counted": "Remove chicken from
+marinade and wipe off excess", "Lift chicken from marinade") — the lines
+the first step's whisk/combine/process/blend sentences name ("Process all
+ingredients in blender": the first ingredient group) — `"·
+approximate (lifted out of its marinade — how much clings is not
+written)"`; never a marinade cooked into a sauce or kept ("leaving any
+marinade that sticks"), never beef satay's (no sentence lifts the meat
+out). Neither flag rides on typed grams, a held row or a 0 g row. Stated
+ceilings (0 kcal): the spareribs' glaze (its liquid whisked two steps
+before the reduction) and fish-and-chips' black pepper (the batter's one
+"pepper" goes to the cayenne line) stay unflagged.
+Reach (the cache-only replay of snapshot 21, main and reverse-parents
+byte-identical, calls 0): exactly 333 rows differ — strained solids 132
+(112 main, 20 section; 16 move no kcal: a sprig already at 0 g, a record
+below the gate), stock meat held 2, cured pork 3 strained + 3 discarded
+zeroed and 4 held, removed aromatics 102 (25 move no kcal), partial use 5,
+flags 77 (3 kept volume, 34 dips, 40 marinades), and 5 parents re-reading
+a strained section (the herb sauce's Sauce Base, steak Diane's, the
+crisp-skin turkey's Turkey Gravy, and the Giblet Pan Gravy two roast
+turkeys read); −14,714.3 kcal per batch on main rows (strained −3,653.9
+incl. the held stock meat, cured pork −8,103.3, removed −518.3, partial use −1,818.6,
+parents −620.2), sections −884.7; holds `discarded_medium` 58 → 64; 5
+recipes complete → partial (the four held cured-pork recipes and the
+wedding soup; 1,002 → 997); main `check` 184 → 189, `counted` 13,364 →
+13,359 (one kombu row below the gate now 0 g counted).
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

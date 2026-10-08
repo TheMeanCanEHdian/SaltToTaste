@@ -1108,8 +1108,24 @@ void main() {
     // 'chunky peanut butter', 2710274 in 'corn' and 'corn syrup') and the
     // recorded 173806 is a hit in 'dry-roasted peanuts', all three
     // differing in some digit: compared 460 -> 463, differ 346 -> 349.
-    expect(compared, 463);
-    expect(differ, 349);
+    // Matcher v50 (batch M50) recorded from snapshot 21 the 15 searches and
+    // 4 details its whole-recipe pins read (annatto seeds, apple cider,
+    // apple cider vinegar, bean sprouts, bone-in pork rib chops, boneless
+    // pork loin roast, boneless strip steak, bulk pork sausage, dried
+    // porcini mushrooms, flank steak, flour tortillas, gala or golden
+    // delicious apples, ground pork, lemons, pomegranate juice; 167787,
+    // 168202, 2707824, 2709319): each detail a recorded hit (167787 in
+    // 'pomegranate seeds', 168202 in 'golden delicious apples', 2707824 in
+    // 'flour tortillas', 2709319 in 'mcintosh apples'), three differing in
+    // some digit: compared 463 -> 467, differ 349 -> 352. Its closer round
+    // 1 recorded from snapshot 21 the 9 searches and 2 details its new
+    // whole-recipe pins read (fennel fronds, marjoram, green bell peppers,
+    // lean salt pork, capers, cotija cheese, limes, cold beer, peanut oil
+    // or canola oil; 172238, 168155): both details are recorded hits
+    // (172238 in 'herb', 168155 in 'lemon or lime wedges'), both differing
+    // in some digit: compared 467 -> 469, differ 352 -> 354.
+    expect(compared, 469);
+    expect(differ, 354);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

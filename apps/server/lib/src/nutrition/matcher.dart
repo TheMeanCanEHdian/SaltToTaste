@@ -665,7 +665,26 @@ const Map<String, String> _synonyms = {
 /// curry paste and Old Bay `no_match` with no record (`noFdcRecordItems`);
 /// tapioca starch at ATK's 3 ounces per ¾ cup (flagged); nutrient siblings
 /// for the pasta, leeks and rhubarb records (engine `nutrientSiblings`).
-const int matcherVersion = 48;
+///
+/// v49 (the Matcher v50 commit, batch M50 — discards and partial use; the
+/// owner's 2026-10-07 standing authorization, prep47 design_v2 Q16, Q17,
+/// Q18, Q20, Q21, Q7; zero requests; engine `DiscardedMedium`): a strain
+/// that presses or discards its solids (or strains a stock or broth) counts
+/// the aromatics, herbs, whole spices and zest strips in it 0 g, flagged —
+/// never a ground spice, powder or paste, nor a line its own steps blend
+/// smooth; cured pork and ground stock meat strained out or discarded count
+/// 0 g when a sentence skims, separates or pours off the pot's fat (or
+/// blanches and drains the meat), else are held `discarded_medium`; a
+/// whole-piece aromatic removed and discarded by name counts 0 g (only the
+/// discarded pieces of a "1 of the lemons" or "1 bell pepper half" count
+/// line, and never the "remaining N" part a line's own mention keeps out
+/// of the strained pot or the discarded bundle); a printed part
+/// kept counts the kept part (a remainder saved subtracted; a potato's
+/// kept cooked weight to the raw record by FDC carbohydrate on SR 170033 /
+/// 170114; a food reserved or the rest discarded 0 g); a kept volume with
+/// no weight, a dip or batter left in the bowl and a marinade the food is
+/// lifted out of are counted as before and flagged.
+const int matcherVersion = 49;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

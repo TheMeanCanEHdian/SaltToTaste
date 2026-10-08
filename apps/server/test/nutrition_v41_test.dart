@@ -740,7 +740,11 @@ void main() {
         // (D7) stays the rule row although exact.
         // v44: its |3 "¼ cup Sauce Base (½ recipe; recipe follows)" routes
         // to its own section at ½ (8 → 9 matched; 51.71 → 207.91).
-        (_herbSauce, 0, 9, 10, 207.91),
+        // RE-PIN (M50 batch, v50, Q16): the Sauce Base strains out its
+        // onion, carrot, mushrooms, garlic, ground beef, bay and peppercorns
+        // (2,042.50 → 1,456.70 g; the parent row 1,021.25 → 728.35 g,
+        // −306.27 kcal a batch): 207.91 → 131.34 a serving (P1 R12's 131.3).
+        (_herbSauce, 0, 9, 10, 131.34),
       ]) {
         final recipe = r(file);
         final row = rowAt(recipe, position);

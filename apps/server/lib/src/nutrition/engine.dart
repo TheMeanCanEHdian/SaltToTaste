@@ -167,12 +167,51 @@ enum DiscardedMedium {
   /// too — no word of the sentence names which ([_oilOwnersOf], RULE B,
   /// Run 055 S2/O1: a typed aioli or dressing beside a fry was zeroed).
   /// Held (`ambiguous_medium`); the sentence is the row's `hold_note`.
-  ambiguousMedium;
+  ambiguousMedium,
+
+  /// v50 (Q16, D1): an aromatic, herb, whole spice or zest strip a step
+  /// strains out with the solids ("Strain … pressing on the solids";
+  /// "strain the broth"), and cured pork or ground stock meat strained out
+  /// of a pot whose fat a sentence skims, separates or pours off (Q17, F4)
+  /// — [_strainedOut]. Follows the policy: 0 g, flagged "approximate
+  /// (strained out and discarded — what it gives the liquid is not
+  /// counted)" (the owner's 2026-10-07 amendment of the 2026-09-28 "held"
+  /// ruling, design_v2 Q16).
+  strainedSolid,
+
+  /// v50 (Q18, D2): a whole-piece aromatic a step removes and discards by
+  /// name ("Remove and discard the bay leaves"; a celery bundle, onion
+  /// halves, a garlic head, lemons from a cavity), only the discarded
+  /// pieces of a count line ([_discardedShareOf], F12), and cured pork so
+  /// discarded from a skimmed pot (Q17) — [_discardedByName]. Follows the
+  /// policy: 0 g, "removed and discarded (step N)".
+  removedAromatic,
+
+  /// v50 (Q17; critic F4): cured pork or ground stock meat a step strains
+  /// out or discards while no sentence skims, separates or pours off the
+  /// pot's fat — its rendered fat stays in the dish, in a share no source
+  /// gives ("discard salt pork, leaving fat in pot"). Held
+  /// (`discarded_medium`), as the 2026-10-01 rulings hold an unwritten
+  /// eaten part.
+  fatKept,
+
+  /// v50 (Q20, D4): a line the steps keep a printed part of — the
+  /// remainder saved for another use subtracted, a potato's kept COOKED
+  /// weight converted to the raw record by FDC carbohydrate — or reserve
+  /// or discard whole ([_partialUseOf]). Follows the policy: the kept part
+  /// counted (`discarded`, as a frying oil's kept part), 0 g when none.
+  partialUse;
 
   /// Whether [discardedMediaPolicy] decides how it counts; the others are
   /// always held for a person.
   bool get followsPolicy =>
-      this == fryingOil || this == brine || this == brineSugar || this == soak;
+      this == fryingOil ||
+      this == brine ||
+      this == brineSugar ||
+      this == soak ||
+      this == strainedSolid ||
+      this == removedAromatic ||
+      this == partialUse;
 
   /// The `hold` a row of this medium is stored under.
   String get hold => switch (this) {
@@ -3077,7 +3116,15 @@ DiscardedMedium? discardedMediumOf(
     return DiscardedMedium.cheeseMilk;
   }
   return _brineCoSolute(recipe, line, head, steps) ??
-      _drainedAway(recipe, line, head, steps);
+      _drainedAway(recipe, line, head, steps) ??
+      // v50 (M50): what a strain, a discard by name or a printed part
+      // kept leaves of the line — after every shipped reader (the lentil
+      // salad's drained pot stays `discarded_medium`).
+      _strainedOut(recipe, line, head) ??
+      _discardedByName(recipe, line, head)?.medium ??
+      (_partialUseOf(recipe, line, head) == null
+          ? null
+          : DiscardedMedium.partialUse);
 }
 
 /// The fraction of [line] its [_drainedMention]'s written pot share is
@@ -3647,6 +3694,1223 @@ class _Parting {
       if (key != null && key != head) j,
   ];
 }
+
+// v50 (batch M50, prep47 design_v2 §1 Q16, Q17, Q18, Q20, Q21, Q7; §2
+// "M50"; the owner's 2026-10-07 standing authorization; zero requests):
+// what the steps strain out, remove and discard, keep a printed part of,
+// leave in the bowl, or lift out of a marinade — read from the steps alone,
+// each sentence family once per recipe ([_StepIndex.memo]).
+
+/// Q16 (D1): the first sentence of [recipe] that strains a liquid and
+/// presses or discards its solids ("Strain … pressing on the solids",
+/// "… ; discard solids", a next sentence opening "Discard … solids") or
+/// strains a stock or broth (the widening) — (step, sentence) — or null:
+/// none, or the first such strain is of a purée, a soup, a custard or a
+/// batter, whose solids are a food that is eaten (creamy pea soup).
+(int, int)? _strainAt(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#strainAt, () {
+      final index = _stepIndexOf(recipe);
+      final all = index.sentences;
+      for (final (i, sentences) in all.indexed) {
+        for (final (j, s) in sentences.indexed) {
+          if (!_strainWord.hasMatch(s)) {
+            continue;
+          }
+          final next = j + 1 < sentences.length
+              ? sentences[j + 1]
+              : all.skip(i + 1).expand((s) => s).firstOrNull;
+          final discardsNext =
+              next != null &&
+              next.trimLeft().startsWith('discard') &&
+              next.contains('solids');
+          // Closer 1 (V1-D3): a strain whose next sentence keeps some of
+          // the solids ("Measure 1 tablespoon of solids and 1 tablespoon of
+          // oil into large bowl", grilled potatoes) discards none whole.
+          if (next != null &&
+              !next.contains('discard') &&
+              _keepsSolids.hasMatch(next)) {
+            continue;
+          }
+          if (_strainedSolids.hasMatch(s) || discardsNext) {
+            return _pureeStrain.hasMatch(s) ? null : (i, j);
+          }
+        }
+      }
+      return null;
+    });
+
+final RegExp _strainWord = RegExp(r'\bstrain');
+final RegExp _keepsSolids = RegExp(
+  r'\b(?:measure|reserve|transfer|return)\w*\b[^.]*\bsolids\b',
+);
+final RegExp _strainedSolids = RegExp(
+  r'\bstrain (?:the )?(?:stock|broth)\b|\bpress(?:ing)? (?:firmly )?on '
+  r'(?:the )?solids|\bdiscard(?:ing)? (?:the |any )?(?:spent )?solids|'
+  r'\bsolids in (?:the )?strainer',
+);
+final RegExp _pureeStrain = RegExp(
+  r'pur[eé]e|\bsoup\b|custard|mixture into|batter',
+);
+
+/// Q16's classes a strain zeroes ([_strainedOut]), by head noun: aromatic
+/// vegetables, herbs, whole spices and peppercorns, kombu. A zest or peel
+/// strip is its citrus head with "zest" or "peel" on the line.
+const Set<String> _strainedHeads = {
+  ..._vegetableHeads,
+  'bay', 'thyme', 'rosemary', 'sage', 'parsley', 'cilantro', 'dill',
+  'tarragon', 'mint', 'basil', 'oregano', //
+  'peppercorn', 'cinnamon', 'anise', 'pod', 'clove', 'coriander', 'cumin',
+  'allspice', 'juniper', 'cardamom', 'kombu', 'bonito', 'pi',
+};
+
+/// The aromatic vegetables a strain zeroes ([_strainedHeads]).
+const Set<String> _vegetableHeads = {
+  'onion',
+  'shallot',
+  'carrot',
+  'celery',
+  'garlic',
+  'leek',
+  'ginger',
+  'lemongrass',
+  'scallion',
+  'chile',
+  'jalapeno',
+  'mushroom',
+};
+
+/// Citrus heads whose zest or peel strips a strain zeroes ([_strainedOut]).
+const Set<String> _zestHeads = {'lemon', 'lime', 'orange'};
+
+/// Cured pork (Q17): its rendered fat stays in the pot unless a sentence
+/// skims, separates or pours it off ([_fatSkimmed]).
+final RegExp _curedPork = RegExp(
+  r'\b(?:salt pork|bacon|pancetta|prosciutto|ham hock|chorizo)\b',
+);
+
+/// Ground meat simmered in a stock (F4): the stock-meat class.
+const Set<String> _stockMeatHeads = {
+  'beef',
+  'pork',
+  'chicken',
+  'turkey',
+  'lamb',
+  'veal',
+};
+
+/// A ground spice, a powder or a paste passes the strainer with the liquid
+/// (critic F3: braised brisket's "1½ teaspoons ground cardamom", audit L214
+/// OK at 3 g) — never zeroed as a solid.
+final RegExp _passesStrainer = RegExp(r'\b(?:ground|powder|paste)\b');
+
+/// A vessel that is not the strained pot (D1's vessel guard): a mention in
+/// a sentence naming one and no pot word is not in the pot.
+final RegExp _otherVessel = RegExp(
+  r'\bbowl\b|\bmixer\b|food processor|\bblender\b',
+);
+final RegExp _potWord = RegExp(
+  r'\bpot\b|saucepan|dutch oven|skillet|roasting pan',
+);
+
+final RegExp _onSheet = RegExp(r'\bsheet\b');
+
+/// A sentence lifting the cooked vegetables out of the pot (V1-D1).
+final RegExp _liftsVegetables = RegExp(
+  r'\b(?:transfer|remove|lift)\w*\s+(?:the\s+)?vegetables\s+(?:to|onto)\b',
+);
+final RegExp _vegetablesWord = RegExp(r'\bvegetables\b');
+
+/// "Add the vegetable mixture": a later sentence that carries a processor's
+/// lines into the pot (the Sauce Base).
+final RegExp _addsMixture = RegExp(r'\badd (?:the )?(?:\w+ )?mixture\b');
+
+/// A sentence that blends a food smooth or into a paste (F3's line
+/// history: cochinita pibil's garlic, spices and onion).
+final RegExp _blendsSmooth = RegExp(
+  'until smooth|smooth paste|into a paste|to a paste|pur[eé]e',
+);
+
+/// A sentence that skims, separates or pours off the pot's fat (Q17, F4).
+final RegExp _skimsFat = RegExp(
+  r'\bskim\w*\b[^.]*\bfat\b|\bfat separator\b|'
+  r'\b(?:pour|spoon|drain)\w* off\b[^.]*\b(?:fat|grease)\b',
+);
+
+/// Whether each sentence of [recipe]'s steps is inside a parenthesis — a
+/// make-ahead note ("(Broth can be refrigerated for up to 3 days. Skim off
+/// fat before reheating.)", italian-wedding-soup), never the method.
+List<List<bool>> _parenthetical(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#parenthetical, () {
+      return [
+        for (final sentences in _stepIndexOf(recipe).sentences)
+          () {
+            var depth = 0;
+            return [
+              for (final s in sentences)
+                () {
+                  final inside = depth > 0 || s.trimLeft().startsWith('(');
+                  depth += '('.allMatches(s).length - ')'.allMatches(s).length;
+                  if (depth < 0) {
+                    depth = 0;
+                  }
+                  return inside;
+                }(),
+            ];
+          }(),
+      ];
+    });
+
+/// Q17 / F4: whether a sentence of [recipe] (outside a parenthesis) skims,
+/// separates or pours off the fat. ponytail: the whole recipe (or section)
+/// is the pot — no recipe of the library strains two pots of which only one
+/// is skimmed; read the pot's own vessel if one does.
+bool _fatSkimmed(Recipe recipe) => _stepIndexOf(recipe).memo(#fatSkimmed, () {
+  final index = _stepIndexOf(recipe);
+  final inside = _parenthetical(recipe);
+  for (final (i, sentences) in index.sentences.indexed) {
+    for (final (j, s) in sentences.indexed) {
+      if (!inside[i][j] && _skimsFat.hasMatch(s)) {
+        return true;
+      }
+    }
+  }
+  return false;
+});
+
+/// The sentences of each step that blend a food smooth ([_blendsSmooth]),
+/// in order, once per recipe.
+List<List<int>> _smoothSentences(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#smooth, () {
+      return [
+        for (final sentences in _stepIndexOf(recipe).sentences)
+          [
+            for (final (j, s) in sentences.indexed)
+              if (_blendsSmooth.hasMatch(s)) j,
+          ],
+      ];
+    });
+
+/// Whether (step, sentence) [a] stands before [b].
+bool _before((int, int) a, (int, int) b) =>
+    a.$1 < b.$1 || (a.$1 == b.$1 && a.$2 < b.$2);
+
+/// Where a sentence of [recipe] names [head] as a FOOD ([_naming]) — never
+/// only as the word before a broth, stock, juice or fat ("beef broth",
+/// "lemon juice", "bacon fat"): the wedding soup's "Add chicken broth, beef
+/// broth, and water" is no mention of its meatball beef (A13 would assign
+/// it the second beef line).
+List<(int, int)> _foodNaming(Recipe recipe, String head) {
+  final index = _stepIndexOf(recipe);
+  // Key: head — the food each sentence is searched for.
+  return index.memo(('foodNaming', head), () {
+    return [
+      for (final at in _naming(recipe, head))
+        if (_names(index.sentence(at).replaceAll(_liquidOf, ' '), head)) at,
+    ];
+  });
+}
+
+final RegExp _liquidOf = RegExp(
+  r'\b\w+\s+(?:broth|stock|bouillon|juices?|fat|drippings)\b',
+);
+
+/// The line's mentions as A13 assigns them ([_drainedAway]) over
+/// [_foodNaming]: the nth line of its head ↔ the nth mention, and the
+/// mentions past the last line's — never another line's own.
+List<(int, int)> _ownMentions(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+) {
+  final heads = _headsOf(recipe);
+  final lines = nutritionLines(recipe);
+  var nth = -1;
+  var same = 0;
+  for (final (i, h) in heads.indexed) {
+    if (h == head) {
+      if (identical(lines[i], line)) {
+        nth = same;
+      }
+      same++;
+    }
+  }
+  final all = _foodNaming(recipe, head);
+  return nth < 0 || nth >= all.length
+      ? const []
+      : [all[nth], ...all.skip(same)];
+}
+
+/// Q16 (D1) and Q17: what [recipe]'s strain ([_strainAt]) does to [line]
+/// (head [head]) — null when the line is not in the strained liquid or not
+/// a solid it keeps: [DiscardedMedium.strainedSolid] (0 g, the policy) for
+/// an aromatic, herb, whole spice or zest strip ([_strainedHeads]), and for
+/// cured pork or ground stock meat whose fat a sentence skims, separates or
+/// pours off ([_fatSkimmed]; stock meat also when blanched and drained,
+/// the pho's beef); [DiscardedMedium.fatKept] (held) for cured pork or stock
+/// meat whose fat no sentence takes off (Q17; critic F4: the wedding soup's
+/// meat). The line is in the liquid when its nth mention (A13,
+/// [_ownMentions]) stands before the strain and no sentence after it names
+/// its head again (a discard aside): a food named after the strain goes back
+/// into the dish (the Calvados chops' apples). Kept: a ground spice, powder
+/// or paste ([_passesStrainer], F3); a line a sentence of its own history
+/// blends smooth or into a paste ([_blendsSmooth], F3: cochinita pibil); a
+/// mention in a bowl, mixer, processor or blender with no pot word, unless
+/// a later "add the … mixture" in the pot carries it there (the Sauce
+/// Base); a mention in the step of a strain opening "meanwhile" (a second
+/// pot: the butternut risotto's onions); a mention on a baking sheet when
+/// the strain's step strains another pot (best roast chicken's carrots);
+/// an amount-less line.
+DiscardedMedium? _strainedOut(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+) {
+  final at = _strainAt(recipe);
+  if (at == null || line.amounts.isEmpty) {
+    return null;
+  }
+  final raw = line.raw.toLowerCase();
+  final cured = _curedPork.hasMatch(raw);
+  final meat =
+      !cured && _stockMeatHeads.contains(head) && raw.contains(_groundWord);
+  final solid =
+      !cured &&
+      !meat &&
+      (_strainedHeads.contains(head) ||
+          // A zest strip — never a zest-plus-juice line (its juice is
+          // eaten: M47's two parts).
+          (_zestHeads.contains(head) &&
+              _zestWord.hasMatch(raw) &&
+              !raw.contains('juice'))) &&
+      !_passesStrainer.hasMatch(raw);
+  if (!cured && !meat && !solid) {
+    return null;
+  }
+  final mine = _ownMentions(recipe, line, head);
+  if (mine.isEmpty || !_before(mine.first, at)) {
+    return null;
+  }
+  final index = _stepIndexOf(recipe);
+  // Key: head — a food named after the strain (a discard sentence aside).
+  // Closer 1 (V1-D4): the mixture the strain sentence itself strains
+  // ("Strain garlic-lemon mixture through fine-mesh strainer", ultracreamy
+  // hummus) is the strained liquid when named again ("Process garlic-lemon
+  // mixture"), never the garlic back — a mixture the strain does not name
+  // may hold kept solids (grilled potatoes' "reserved garlic-oil mixture").
+  final strained = [
+    for (final m in _strainedMixture.allMatches(index.sentence(at))) m[0]!,
+  ];
+  final returned = index.memo(('namedAfterStrain', head), () {
+    return _foodNaming(recipe, head).any(
+      (m) =>
+          _before(at, m) &&
+          !index.sentence(m).trimLeft().startsWith('discard') &&
+          _names(
+            strained.fold(
+              index.sentence(m),
+              (t, x) => t.replaceAll(x, ' '),
+            ),
+            head,
+          ),
+    );
+  });
+  if (returned) {
+    return null;
+  }
+  final nth = index.sentence(mine.first);
+  // Closer 1 (V1-D1): a vegetable a sentence lifts out of the pot before
+  // the strain ("Using slotted spoon, transfer vegetables to serving
+  // platter", french-style chicken and stuffing's carrots) is served,
+  // never strained — unless its own mention sets it apart from "the
+  // vegetables" ("Sprinkle peppercorns, garlic … over vegetables": the
+  // garlic stays in the pot and is strained).
+  if (_vegetableHeads.contains(head) &&
+      !_vegetablesWord.hasMatch(nth) &&
+      index
+          .memo(#liftsVegetables, () {
+            return [
+              for (final (i, sentences) in index.sentences.indexed)
+                for (final (j, s) in sentences.indexed)
+                  if (_liftsVegetables.hasMatch(s)) (i, j),
+            ];
+          })
+          .any((p) => _before(mine.first, p) && _before(p, at))) {
+    return null;
+  }
+  // A baking sheet is the pot only when the strain's own step names no
+  // other: best roast chicken strains the skillet's sauce ("Add water to
+  // skillet") while its carrots roast on a sheet; the butterflied lamb
+  // strains the sheet's own pan juices.
+  if (_onSheet.hasMatch(nth) &&
+      !_potWord.hasMatch(nth) &&
+      index.memo(#strainsAnotherPot, () {
+        final step = index.sentences[at.$1].take(at.$2 + 1).join(' ');
+        return _potWord.hasMatch(step) && !_onSheet.hasMatch(step);
+      })) {
+    return null;
+  }
+  if (_otherVessel.hasMatch(nth) && !_potWord.hasMatch(nth)) {
+    final carries = index.memo(#addsMixture, () {
+      return [
+        for (final (i, sentences) in index.sentences.indexed)
+          for (final (j, s) in sentences.indexed)
+            if (_addsMixture.hasMatch(s) &&
+                (!_otherVessel.hasMatch(s) || _potWord.hasMatch(s)))
+              (i, j),
+      ];
+    });
+    // The carrying sentence is in the pot itself (the wedding soup's "Add
+    // bread mixture, beef, and oregano; mix … scraping down bowl" stays in
+    // the mixer).
+    if (!carries.any((p) => _before(mine.first, p) && _before(p, at))) {
+      return null;
+    }
+  }
+  if (mine.first.$1 == at.$1 &&
+      index.sentence(at).trimLeft().startsWith('meanwhile')) {
+    return null;
+  }
+  if (solid) {
+    final smooth = _smoothSentences(recipe);
+    for (final m in mine) {
+      if (!_before(m, at)) {
+        break;
+      }
+      final js = smooth[m.$1];
+      final k = _firstAfter(js, m.$2, (j) => j);
+      if (k < js.length && (m.$1 != at.$1 || js[k] < at.$2)) {
+        return null;
+      }
+    }
+    return DiscardedMedium.strainedSolid;
+  }
+  // Key: head — blanched and drained before the strain (the pho's beef).
+  final drained =
+      meat &&
+      index.memo(('drainedBeforeStrain', head), () {
+        return _foodNaming(recipe, head).any(
+          (m) => _before(m, at) && _drainWord.hasMatch(index.sentence(m)),
+        );
+      });
+  return _fatSkimmed(recipe) || drained
+      ? DiscardedMedium.strainedSolid
+      : DiscardedMedium.fatKept;
+}
+
+final RegExp _groundWord = RegExp(r'\bground\b');
+final RegExp _strainedMixture = RegExp(r'\b\w+(?:-\w+)+\s+mixture\b');
+final RegExp _zestWord = RegExp(r'\b(?:zest|peel)\b');
+
+/// Q18 (D2): every clause of [recipe]'s steps that discards named foods
+/// ("(remove and) discard (the) <noun list>", "…, discarding celery
+/// bundle") — its (step, sentence), the noun list as written (cut at the
+/// first preposition or verb), and whether it is the "remaining" form (Q20
+/// (iii): the rest of a food) — once per recipe.
+List<({int step, int sentence, String objects, bool remaining})>
+_discardClauses(Recipe recipe) => _stepIndexOf(recipe).memo(#discards, () {
+  final index = _stepIndexOf(recipe);
+  return [
+    for (final (i, sentences) in index.sentences.indexed)
+      for (final (j, s) in sentences.indexed)
+        if (s.contains('discard'))
+          for (final m in _discardOf.allMatches(s))
+            if (m[2]!.substring(
+                  0,
+                  _objectEnd.firstMatch(m[2]!)?.start ?? m[2]!.length,
+                )
+                case final objects
+                // "Discard all but 3 tablespoons of the rendered bacon
+                // fat": the fat poured off (M49's D3), never the food it
+                // names.
+                when !_fatObject.hasMatch(objects))
+              (
+                step: i,
+                sentence: j,
+                objects: objects,
+                remaining: m[1] != null,
+              ),
+  ];
+});
+
+final RegExp _discardOf = RegExp(
+  r'\bdiscard(?:ing)?\s+(?:the\s+)?((?:any\s+)?remaining\s+)?([^.;:(]*)',
+);
+final RegExp _fatObject = RegExp(
+  r'^(?:all but|any|excess)\b|\b(?:fat|oil|grease|drippings|liquid)\b',
+);
+final RegExp _objectEnd = RegExp(
+  r'\b(?:from|in|into|with|to|onto|on|off|then|leaving|before|after)\b|'
+  r'(?:,|\band)\s*(?:stir|season|serve|ladle|transfer|toss|let|return|'
+  'add|pour|place|allow|continue|cook|cut|sprinkle|skim|spoon|remove|use|'
+  r'then|whisk|fold|squeeze|set)\b',
+);
+
+/// Q18's whole-piece aromatics (D2), by head: bay, a cinnamon stick, star
+/// anise, kombu, an herb or cilantro bundle, onion halves or rounds, a
+/// garlic head or crushed cloves, bell-pepper halves, a celery bundle,
+/// citrus in a cavity.
+const Set<String> _wholePieceHeads = {
+  'bay',
+  'cinnamon',
+  'anise',
+  'pod',
+  'kombu',
+  'cilantro',
+  'thyme',
+  'rosemary',
+  'sage',
+  'parsley',
+  'oregano',
+  'onion',
+  'garlic',
+  'pepper',
+  'celery',
+  'lemon',
+  'lime',
+  'orange',
+};
+
+/// A line partly or wholly cut fine: its cut part is eaten ("2 medium
+/// onions, 1 quartered and 1 chopped fine"), so a discard never zeroes it.
+final RegExp _cutFine = RegExp(
+  r'\b(?:minced|chopped|diced|grated|crumbled|shredded)\b|sliced thin|'
+  'thinly sliced',
+);
+
+/// Q18 (D2) and Q17: [line] (head [head]) removed and discarded by name —
+/// the clause's step, and the medium: [DiscardedMedium.removedAromatic]
+/// (0 g, the policy) for a whole-piece aromatic ([_wholePieceHeads], never
+/// one cut fine, ground or a paste; citrus only from a cavity), for an
+/// aromatic or whole spice a sentence ties into a bundle a later sentence
+/// removes or discards (the farmhouse soup's "remove herb bundle"), and
+/// for cured pork whose pot's fat a sentence takes off ([_fatSkimmed]);
+/// [DiscardedMedium.fatKept] (held) for cured pork whose fat stays
+/// (milk-braised pork loin: "discard salt pork, leaving fat in pot"). The
+/// clause names the head and stands at or after the line's nth mention
+/// (A13). Null otherwise.
+({DiscardedMedium medium, int step})? _discardedByName(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+) {
+  if (line.amounts.isEmpty) {
+    return null;
+  }
+  final raw = line.raw.toLowerCase();
+  final cured = _curedPork.hasMatch(raw);
+  final whole = !_cutFine.hasMatch(raw) && !_passesStrainer.hasMatch(raw);
+  if (!cured &&
+      (!whole ||
+          !(_wholePieceHeads.contains(head) ||
+              _strainedHeads.contains(head)))) {
+    return null;
+  }
+  final mine = _ownMentions(recipe, line, head);
+  if (mine.isEmpty) {
+    return null;
+  }
+  final index = _stepIndexOf(recipe);
+  // A bundle tied up and then removed or discarded ("Using kitchen twine,
+  // tie together parsley sprigs, thyme sprigs, and bay leaf" … "remove herb
+  // bundle", the farmhouse soup, audit L232; a cheesecloth spice bundle):
+  // the lines its tying sentence (tie, twine) names before it — never one
+  // a later "Add cheesecloth bundle, oxtails, … mushrooms" names. Once per
+  // recipe.
+  final bundles = index.memo(#bundles, () {
+    return [
+      for (final (i, sentences) in index.sentences.indexed)
+        for (final (j, s) in sentences.indexed)
+          if (_removesBundle.hasMatch(s)) (i, j),
+    ];
+  });
+  for (final at in bundles) {
+    // Never a citrus line: its juice is eaten ("12 (3-inch) strips lemon
+    // zest plus 6 tablespoons juice", avgolemono's spice bundle).
+    if (!cured &&
+        !_zestHeads.contains(head) &&
+        _before(mine.first, at) &&
+        _tiesBundle.hasMatch(index.sentence(mine.first))) {
+      return (medium: DiscardedMedium.removedAromatic, step: at.$1);
+    }
+  }
+  if (!cured && !_wholePieceHeads.contains(head)) {
+    return null;
+  }
+  for (final c in _discardClauses(recipe)) {
+    final at = (c.step, c.sentence);
+    if (c.remaining ||
+        _before(at, mine.first) ||
+        !_names(c.objects, head) ||
+        (_zestHeads.contains(head) && !index.sentence(at).contains('cavity'))) {
+      continue;
+    }
+    return (
+      medium: !cured || _fatSkimmed(recipe)
+          ? DiscardedMedium.removedAromatic
+          : DiscardedMedium.fatKept,
+      step: c.step,
+    );
+  }
+  return null;
+}
+
+/// The share of [line] (head [head]) its [medium] takes and that part as
+/// the basis prints it ("1 of 2"), or null when the whole line goes:
+/// - the line's own "remaining N <unit> <head>" part ([_remainingPartOf]);
+/// - F12, a COUNT line [_discardedByName] discards when the steps take "N
+///   of the <head>" (classic roast lemon chicken: "Cut 1 of the lemons …
+///   in the cavity", "Discard the lemons", "Halve the remaining lemon") or
+///   "N <head> half / quarter" (closer 1, V1-D2: cuban black beans' "1
+///   bell pepper half, 1 onion half" in the beans' pot, "Cut the remaining
+///   peppers and onion") before the discard and use "the remaining <head>"
+///   after it — N ÷ (the count × the pieces of each).
+({double share, String part})? _discardedShareOf(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+  DiscardedMedium medium,
+) {
+  final own = _remainingPartOf(recipe, line, head, medium);
+  if (own != null || medium != DiscardedMedium.removedAromatic) {
+    return own;
+  }
+  final count = countOf(line.amounts);
+  final named = _discardedByName(recipe, line, head);
+  if (count == null || named == null) {
+    return null;
+  }
+  final index = _stepIndexOf(recipe);
+  // Key: head — the partition's words; step — the discard's step.
+  final (taken, remaining) = index.memo(('partition', head, named.step), () {
+    (double, int)? taken;
+    var remaining = false;
+    for (final (i, sentences) in index.sentences.indexed) {
+      for (final s in sentences) {
+        for (final m in _nOfThe.allMatches(s)) {
+          if (i <= named.step && _names(m[2]!, head)) {
+            taken ??= (double.tryParse(m[1]!) ?? _numberWords[m[1]!]!, 1);
+          }
+        }
+        for (final m in _nPieces.allMatches(s)) {
+          if (i <= named.step &&
+              _names(m[2]!, head) &&
+              !_cutInto.hasMatch(m[2]!)) {
+            taken ??= (
+              double.tryParse(m[1]!) ?? _numberWords[m[1]!]!,
+              m[3]!.startsWith('q') ? 4 : 2,
+            );
+          }
+        }
+        for (final m in _theRemaining.allMatches(s)) {
+          if (i >= named.step && _names(m[1]!, head)) {
+            remaining = true;
+          }
+        }
+      }
+    }
+    return (taken, remaining);
+  });
+  if (taken == null || !remaining) {
+    return null;
+  }
+  final (n, pieces) = taken;
+  final whole = count * pieces;
+  return n < whole
+      ? (
+          share: n / whole,
+          part: pieces == 1
+              ? '${_fmtCount(n)} of ${_fmtCount(count)}'
+              : '${_fmtCount(n)} of ${_fmtCount(whole)} '
+                    '${pieces == 2 ? 'halves' : 'quarters'}',
+        )
+      : null;
+}
+
+/// Closer 1 (V1-D3): a part of [line] (head [head]) its own mention
+/// ([_ownMentions]) prints as "remaining N [<unit>] … <head>" — the share
+/// [medium] takes and that part as the basis prints it, or null. A strained
+/// solid whose remaining part stands in another vessel (a bowl, no pot
+/// word) before the strain keeps it (poached salmon: "Scatter 2 tablespoons
+/// of the shallot" in the poaching liquid, "combine the remaining 2
+/// tablespoons shallot … in a medium bowl" — 2 of 4 tablespoons strained);
+/// a removed aromatic whose remaining part a sentence ties into the
+/// discarded bundle loses only that part (drunken beans: "Pick leaves from
+/// 20 cilantro sprigs", "tie remaining 10 cilantro sprigs and reserved
+/// stems into bundle" — 10 of 30 discarded).
+({double share, String part})? _remainingPartOf(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+  DiscardedMedium medium,
+) {
+  final index = _stepIndexOf(recipe);
+  final parts = index.memo(#remainingParts, () {
+    return [
+      for (final (i, sentences) in index.sentences.indexed)
+        for (final (j, s) in sentences.indexed)
+          for (final m in _remainingN.allMatches(s)) (at: (i, j), match: m),
+    ];
+  });
+  if (parts.isEmpty) {
+    return null;
+  }
+  final mine = _ownMentions(recipe, line, head);
+  final strain = _strainAt(recipe);
+  for (final (:at, :match) in parts) {
+    if (!mine.contains(at) || !_names(match[3]!, head)) {
+      continue;
+    }
+    final s = index.sentence(at);
+    final kept = switch (medium) {
+      DiscardedMedium.strainedSolid
+          when strain != null &&
+              _before(at, strain) &&
+              _otherVessel.hasMatch(s) &&
+              !_potWord.hasMatch(s) =>
+        true,
+      DiscardedMedium.removedAromatic when _tiesBundle.hasMatch(s) => false,
+      _ => null,
+    };
+    final unit = match[2];
+    final one = unit == null
+        ? 1.0
+        : volumeMlOf(parseIngredientLine('1 $unit x').amounts);
+    final whole = unit == null
+        ? countOf(line.amounts)
+        : volumeMlOf(line.amounts);
+    final part = unit == null
+        ? countOf(parseIngredientLine('${match[1]} x').amounts)
+        : volumeMlOf(parseIngredientLine('${match[1]} $unit x').amounts);
+    if (kept == null ||
+        one == null ||
+        whole == null ||
+        part == null ||
+        part >= whole) {
+      continue;
+    }
+    final gone = kept ? whole - part : part;
+    return (
+      share: gone / whole,
+      part:
+          '${_fmtCount(gone / one)} of ${_fmtCount(whole / one)}'
+          '${unit == null ? '' : ' $unit'}',
+    );
+  }
+  return null;
+}
+
+final RegExp _remainingN = RegExp(
+  '\\bremaining\\s+($_amountRun)\\s*(tablespoons?|teaspoons?|cups?)?\\s*'
+  r'((?:[a-z]+\s+){0,2}[a-z]+)',
+);
+
+final RegExp _removesBundle = RegExp(
+  r'\b(?:remove|discard)\w*\s+(?:the\s+)?(?:\w+\s+)?bundles?\b',
+);
+final RegExp _tiesBundle = RegExp(r'\bti(?:e|ed|es)\b|\btwine\b');
+
+final RegExp _nOfThe = RegExp(r'\b(\d+|one|two|three|four) of the (\w+)');
+// "the remaining peppers and onion" (cuban black beans) names both.
+final RegExp _theRemaining = RegExp(r'\bthe remaining ((?:\w+\s+){0,3}\w+)');
+final RegExp _nPieces = RegExp(
+  r'\b(\d+|one|two|three|four)\s+((?:[a-z]+\s+){0,2}?[a-z]+)\s+'
+  r'(halves|half|quarters?)\b',
+);
+// "Cut 1 lemon in half" is one whole lemon, never a half.
+final RegExp _cutInto = RegExp(r'\b(?:in|into)$');
+const Map<String, double> _numberWords = {
+  'one': 1,
+  'two': 2,
+  'three': 3,
+  'four': 4,
+};
+
+/// What [_partialUseOf] reads of a line (Q20).
+typedef _PartialUse = ({
+  String kind,
+  int step,
+  double? share,
+  double? cookedGrams,
+  ({int fdcId, double carbs, String state})? cookedRecord,
+  String printed,
+});
+
+/// The grams [partial] keeps of a line [resolved] weighs on [food] (Q20):
+/// the line less the remainder saved; a potato's kept cooked weight at the
+/// raw record's grams by FDC carbohydrate (its `cookedRecord`'s over
+/// [food]'s, never more than the line); none (0 g) for a food
+/// reserved or discarded whole.
+GramResolution? _partialKept(
+  _PartialUse partial,
+  GramResolution resolved,
+  FdcFood food,
+) {
+  final carbs = food.nutrientsPer100g['205'] ?? 0;
+  final grams = switch (partial.kind) {
+    'remainder' => resolved.grams * (1 - partial.share!),
+    'cooked' =>
+      carbs > 0
+          ? min(
+              resolved.grams,
+              partial.cookedGrams! * partial.cookedRecord!.carbs / carbs,
+            )
+          : resolved.grams,
+    _ => null,
+  };
+  return grams == null
+      ? null
+      : GramResolution(
+          grams: grams,
+          source: GramSource.discarded,
+          basis: resolved.basis,
+        );
+}
+
+/// Q20 (D4): a printed part of [line] (head [head]) the steps keep, the
+/// rest reserved or discarded — the step, and what is kept:
+/// - `remainder` (i): "Save the remaining 6 tablespoons butter for another
+///   use" — `share` the part not used (6 of 16 tablespoons);
+/// - `cooked` (ii): a potato kept by a printed COOKED weight — "Transfer 3
+///   cups (16 ounces) warm potatoes" (gnocchi), "Measure 1 very firmly
+///   packed cup potatoes" with the prep note's "1 very firmly packed cup
+///   (½ pound) of mash" (buns) — `cookedGrams` of the `cookedRecord`'s
+///   flesh (baked: SR 170033, boiled: SR 170114), converted to the raw
+///   record by FDC carbohydrate in [engineOutcome] (critic F18: riced flesh
+///   on a flesh-only record);
+/// - `reserved` / `rest` (iii): a whole food reserved for another use
+///   ("transfer the wings to a dinner plate to reserve for another use") or
+///   the rest of it discarded ("Discard remaining beer and can") — 0 g.
+/// A kept VOLUME with no printed weight (iv) is no part here: it is
+/// counted whole and flagged ([_keptVolumeOf]). Null otherwise.
+_PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
+  if (line.amounts.isEmpty) {
+    return null;
+  }
+  _PartialUse use(
+    String kind,
+    int step, {
+    double? share,
+    double? cookedGrams,
+    ({int fdcId, double carbs, String state})? cookedRecord,
+    String printed = '',
+  }) => (
+    kind: kind,
+    step: step,
+    share: share,
+    cookedGrams: cookedGrams,
+    cookedRecord: cookedRecord,
+    printed: printed,
+  );
+  final index = _stepIndexOf(recipe);
+  if (head == 'potato') {
+    for (final (:step, sentence: _, :match) in _sentencesMatching(
+      recipe,
+      #keptCooked,
+      _keptCooked,
+    )) {
+      final printed =
+          match[3] ??
+          RegExp(
+            '${RegExp.escape(match[2] ?? '')}cups?\\s+\\(([^)]*)\\)',
+          ).firstMatch((recipe.prepNotes ?? '').toLowerCase())?[1];
+      final grams = printed == null
+          ? null
+          : weightGramsOf(parseIngredientLine('$printed x').amounts);
+      final before = index.lower.take(step + 1).join(' ');
+      final record = _bakes.hasMatch(before)
+          ? _bakedFlesh
+          : _boils.hasMatch(before)
+          ? _boiledFlesh
+          : null;
+      if (grams != null && record != null) {
+        return use(
+          'cooked',
+          step,
+          cookedGrams: grams,
+          cookedRecord: record,
+          printed: printed!,
+        );
+      }
+    }
+  }
+  for (final (:step, sentence: _, :match) in _sentencesMatching(
+    recipe,
+    #savesRemainder,
+    _savesRemainder,
+  )) {
+    if (!_names(match[3]!, head)) {
+      continue;
+    }
+    final part = parseIngredientLine('${match[1]} ${match[2]} x').amounts;
+    final byVolume = volumeMlOf(line.amounts) != null;
+    final own = byVolume
+        ? volumeMlOf(line.amounts)
+        : weightGramsOf(line.amounts);
+    final saved = byVolume ? volumeMlOf(part) : weightGramsOf(part);
+    if (own != null && saved != null && saved < own) {
+      return use(
+        'remainder',
+        step,
+        share: saved / own,
+        printed: '${match[1]!.trim()} ${match[2]}',
+      );
+    }
+  }
+  if (_keptVolumeOf(recipe, line, head) != null) {
+    return null;
+  }
+  for (final (:step, :sentence, match: _) in _sentencesMatching(
+    recipe,
+    #reservedWhole,
+    _reservedWhole,
+  )) {
+    if (!_partOnly.hasMatch(sentence) && _names(sentence, head)) {
+      return use('reserved', step);
+    }
+  }
+  for (final c in _discardClauses(recipe)) {
+    if (c.remaining && _names(c.objects, head)) {
+      return use('rest', c.step);
+    }
+  }
+  return null;
+}
+
+final RegExp _keptCooked = RegExp(
+  '\\b(?:transfer|measure)\\s+($_amountRun)\\s*'
+  r'((?:very\s+)?(?:firmly\s+|lightly\s+)?packed\s+)?cups?\s+'
+  r'(?:\(([^)]*)\)\s+)?(?:warm\s+|cooked\s+|riced\s+|mashed\s+)?potato',
+);
+final RegExp _bakes = RegExp(r'\bbake');
+final RegExp _boils = RegExp(r'\b(?:boil|simmer)');
+
+/// SR 170033 "Potatoes, baked, flesh, without salt": 21.6 g carbohydrate
+/// per 100 g (a cached search hit, critic F18 — the riced flesh, never the
+/// flesh-and-skin 170030).
+const ({int fdcId, double carbs, String state}) _bakedFlesh = (
+  fdcId: 170033,
+  carbs: 21.6,
+  state: 'baked',
+);
+
+/// SR 170114 "Potatoes, boiled, cooked in skin, flesh, with salt": 20.1 g
+/// carbohydrate per 100 g (a cached search hit; P1 D4b's buns figure).
+const ({int fdcId, double carbs, String state}) _boiledFlesh = (
+  fdcId: 170114,
+  carbs: 20.1,
+  state: 'boiled',
+);
+
+final RegExp _savesRemainder = RegExp(
+  '\\b(?:save|reserve)\\s+(?:the\\s+)?remaining\\s+($_amountRun)\\s*'
+  r'(tablespoons?|teaspoons?|cups?|ounces?|pounds?|sticks?)\s+'
+  r'([^.;]*?)\s*for another use',
+);
+final RegExp _reservedWhole = RegExp(r'\breserve for another use\b');
+final RegExp _partOnly = RegExp(r'\bremain|\bexcess\b|\bany\b');
+
+/// Q20 (iv): a kept VOLUME of [line]'s food with no printed weight —
+/// "Measure 1⅓ cups lightly packed potato; discard the remaining potato"
+/// (deep-dish pizza), "Measure out 1 cup bread crumbs … (set aside
+/// remainder for another use)" — the volume as written, on a line not
+/// itself measured by volume; null otherwise. Counted whole, flagged "the
+/// steps keep only {volume} of it" (no source weighs a riced potato or a
+/// fresh crumb by the cup).
+String? _keptVolumeOf(Recipe recipe, IngredientLine line, String head) {
+  if (volumeMlOf(line.amounts) != null) {
+    return null;
+  }
+  // The word before the item's head ("dried porcini mushroom": porcini).
+  final words = normalizeItem(lineItemOf(line)).split(' ');
+  final modifier = words.length < 2 ? null : words[words.length - 2];
+  for (final (step: _, sentence: s, match: m) in _sentencesMatching(
+    recipe,
+    #measuresOut,
+    _measuresOut,
+  )) {
+    if (_restAside.hasMatch(s) &&
+        (_names(m[2]!, head) ||
+            // Closer 1 (V1-D4): "Measure out 2 teaspoons porcini powder"
+            // names "⅛ ounce dried porcini mushrooms" by its own word.
+            (modifier != null && _names(m[2]!, modifier)))) {
+      return m[1];
+    }
+  }
+  return null;
+}
+
+/// Each sentence of [recipe]'s steps [pattern] matches — its step, the
+/// sentence and its first match — once per recipe under [key] (one pattern
+/// per key; RULE C: a line reads the few matches, never the steps).
+List<({int step, String sentence, Match match})> _sentencesMatching(
+  Recipe recipe,
+  Symbol key,
+  RegExp pattern,
+) => _stepIndexOf(recipe).memo(key, () {
+  return [
+    for (final (i, sentences) in _stepIndexOf(recipe).sentences.indexed)
+      for (final s in sentences)
+        if (pattern.firstMatch(s) case final m?)
+          (step: i, sentence: s, match: m),
+  ];
+});
+
+final RegExp _measuresOut = RegExp(
+  '\\bmeasure\\s+(?:out\\s+)?($_amountRun\\s*'
+  r'(?:cups?|tablespoons?|teaspoons?))\s+((?:\w+\s+){0,3}\w+)',
+);
+final RegExp _restAside = RegExp(
+  r'\b(?:discard|reserve|set aside)\s+(?:the\s+)?(?:any\s+)?remain(?:ing|der)',
+);
+
+/// The positions of [recipe]'s lines whose nth mention (A13) stands in one
+/// of [at]'s sentences.
+Set<int> _linesNamedIn(Recipe recipe, Set<(int, int)> at) {
+  final heads = _headsOf(recipe);
+  final seen = <String, int>{};
+  final out = <int>{};
+  for (final (i, head) in heads.indexed) {
+    if (head == null) {
+      continue;
+    }
+    final nth = seen[head] = (seen[head] ?? -1) + 1;
+    final all = _naming(recipe, head);
+    if (nth < all.length && at.contains(all[nth])) {
+      out.add(i);
+    }
+  }
+  return out;
+}
+
+/// Q21 (D5): the positions of [recipe]'s lines a dip, batter, glaze or egg
+/// wash leaves an excess of in the bowl — "Scrape off excess chocolate"
+/// (the macaroons), "allowing the excess batter to drip off", "let the
+/// excess egg run off", "(you won't need all of it)", "Discard remaining
+/// glaze" — counted whole and flagged; once per recipe. A food word
+/// (chocolate, egg) flags its own lines; a mixture word (batter, glaze,
+/// coating, dough) the lines a whisk, combine, stir, beat, mix or sift
+/// sentence names in the dip's step or the step before it (never one
+/// putting the food in the mixture or coating it), with the making step of
+/// a "<line head> mixture" those sentences continue (fish-and-chips' flour
+/// mixture, closer 1) and, for a glaze, the step that reduces it (negimaki).
+/// ponytail: a glaze whose liquid is mixed steps before its reduction
+/// stays unflagged (the spareribs' braising liquid); follow the liquid's
+/// own name back if a flag must reach it.
+Set<int> _leftInBowl(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#leftInBowl, () {
+      final index = _stepIndexOf(recipe);
+      final heads = _headsOf(recipe);
+      final out = <int>{};
+      for (final (i, sentences) in index.sentences.indexed) {
+        for (final (j, s) in sentences.indexed) {
+          final m = _dipExcess.firstMatch(s);
+          final word = m == null
+              ? null
+              : m[1] ?? m[2] ?? _dipWord.firstMatch(s)?[1];
+          if (word == null) {
+            continue;
+          }
+          if (word == 'chocolate' || word == 'egg') {
+            for (final (k, head) in heads.indexed) {
+              if (head == word) {
+                out.add(k);
+              }
+            }
+            continue;
+          }
+          // A making sentence of step [a], never one dipping the food in
+          // it ("Place half of wings in batter and stir to coat").
+          Set<(int, int)> making(int a) => {
+            for (final (b, t) in index.sentences[a].indexed)
+              if ((a < i || b < j) &&
+                  _mixVerb.hasMatch(t) &&
+                  !t.contains('in $word') &&
+                  !t.contains('in the $word') &&
+                  !t.contains('to coat'))
+                (a, b),
+          };
+          final made = {
+            for (var a = i > 0 ? i - 1 : 0; a <= i; a++) ...making(a),
+          };
+          // Closer 1 (V1-D5): the batter a window sentence continues from
+          // an earlier mixture ("Add 1¼ cups of the beer to the flour
+          // mixture in the mixing bowl", fish-and-chips' step 4) joins that
+          // mixture's making step (step 2's flour … baking powder, audit
+          // L206); a glaze joins the step that reduces it ("cook until
+          // slightly syrupy and reduced to ½ cup", negimaki).
+          for (final p in [...made]) {
+            for (final x in _mixtureOf.allMatches(index.sentence(p))) {
+              if (!heads.contains(x[1])) {
+                continue;
+              }
+              for (var a = 0; a < p.$1; a++) {
+                if (index.sentences[a].any(
+                  (t) => _mixVerb.hasMatch(t) && _names(t, x[1]!),
+                )) {
+                  made.addAll(making(a));
+                  break;
+                }
+              }
+            }
+          }
+          if (word == 'glaze') {
+            for (var a = i; a >= 0; a--) {
+              if (index.sentences[a].any(_reducesGlaze.hasMatch)) {
+                made.addAll(making(a));
+                break;
+              }
+            }
+          }
+          out.addAll(_linesNamedIn(recipe, made));
+        }
+      }
+      return out;
+    });
+
+final RegExp _dipExcess = RegExp(
+  r'\b(?:scrap|shak|let|allow)\w*\b[^.]*\bexcess (chocolate|batter|glaze|'
+  r'egg|coating)\b|\bdiscard (?:the )?remaining (glaze|dough)\b|'
+  r'\blet the excess run off|won.t need all of it',
+);
+final RegExp _dipWord = RegExp(r'\b(chocolate|batter|glaze|egg|coating)');
+final RegExp _mixVerb = RegExp(r'\b(?:whisk|combine|stir|beat|mix|sift)');
+final RegExp _mixtureOf = RegExp(r'\b(\w+) mixture\b');
+final RegExp _reducesGlaze = RegExp(r'\bsyrupy\b|\breduced to\b');
+
+/// Q7 (D6): the positions of [recipe]'s lines of a marinade the food is
+/// lifted out of — "Remove chicken from marinade and wipe off excess",
+/// "Remove chicken from bag, allowing excess marinade to drip off", "Lift
+/// chicken from marinade" — counted as the standing ruling counts them
+/// (2026-09-28: "a marinade's food stays counted"), flagged; once per
+/// recipe. The marinade is the lines the first step's whisk, combine,
+/// process or blend sentences name (before the removal). Never a marinade
+/// the steps cook into a sauce ("transfer marinade to small saucepan", the
+/// mojo) or keep ("leaving any marinade that sticks", the Thai hens), and
+/// never one no step lifts the food from (beef satay, R06: its meat is
+/// skewered from the bowl — no sentence removes it). A marinade made by
+/// "Process all ingredients in blender" (the rosemary beef kebabs) is the
+/// first ingredient group of a recipe that has more than one (closer 1).
+Set<int> _liftedFromMarinade(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#liftedFromMarinade, () {
+      final index = _stepIndexOf(recipe);
+      // "marinade", "marinate", "marinating".
+      if (!index.lower.any((s) => s.contains('marina'))) {
+        return const <int>{};
+      }
+      for (final (i, sentences) in index.sentences.indexed) {
+        for (final s in sentences) {
+          if (!_liftsOut.hasMatch(s) || _keepsMarinade.hasMatch(s)) {
+            continue;
+          }
+          for (final (a, made) in index.sentences.take(i + 1).indexed) {
+            final mixes = {
+              for (final (b, t) in made.indexed)
+                if (_marinadeMix.hasMatch(t)) (a, b),
+            };
+            if (mixes.isNotEmpty) {
+              final named = _linesNamedIn(recipe, mixes);
+              // Closer 1 (V1-D5): "Process all ingredients in blender"
+              // (the rosemary beef kebabs) is the first ingredient group
+              // of a recipe that has more than one.
+              return named.isEmpty &&
+                      recipe.ingredients.length > 1 &&
+                      mixes.any(
+                        (p) => index.sentence(p).contains('all ingredients'),
+                      )
+                  ? {
+                      for (
+                        var k = 0;
+                        k < recipe.ingredients.first.items.length;
+                        k++
+                      )
+                        k,
+                    }
+                  : named;
+            }
+          }
+          return const <int>{};
+        }
+      }
+      return const <int>{};
+    });
+
+final RegExp _liftsOut = RegExp(
+  r'\b(?:remove|lift)\b[^.]*\bfrom (?:the )?(?:marinade|bag)\b|'
+  r'\bexcess marinade to drip',
+);
+final RegExp _keepsMarinade = RegExp(
+  r'\btransfer\w* (?:the )?marinade\b|\bleaving (?:any )?marinade\b',
+);
+final RegExp _marinadeMix = RegExp(r'\b(?:whisk|combine|process|blend)');
+
+/// The basis flags of v50 on a counted [line] of [recipe]: Q20 (iv) a
+/// kept volume, Q21 a dip left in the bowl, Q7 a marinade lifted from —
+/// joined with " · ", or null.
+String? m50FlagOf(Recipe recipe, IngredientLine line) {
+  final position = nutritionLines(recipe).indexWhere((l) => identical(l, line));
+  if (position < 0) {
+    return null;
+  }
+  final head = _headsOf(recipe)[position];
+  final kept = head == null ? null : _keptVolumeOf(recipe, line, head);
+  final flags = [
+    if (kept != null) 'approximate (the steps keep only $kept of it)',
+    if (_leftInBowl(recipe).contains(position)) _leftInBowlFlag,
+    if (_liftedFromMarinade(recipe).contains(position)) _marinadeFlag,
+  ];
+  return flags.isEmpty ? null : flags.join(' · ');
+}
+
+/// The basis of a v50 row counted 0 g or a kept part (`discarded`): what
+/// the step did to the line, and its flag. Null for any other medium.
+String? _m50DiscardedBasis(Recipe recipe, IngredientLine line) {
+  final normalized = normalizeItem(lineItemOf(line));
+  final head = headNounOf(normalized);
+  if (head == null) {
+    return null;
+  }
+  final medium = discardedMediumOf(recipe, line, normalized);
+  if (medium == DiscardedMedium.strainedSolid) {
+    final part = _discardedShareOf(recipe, line, head, medium!)?.part;
+    return 'discarded in cooking${part == null ? ' — counted as 0 g' : ': '
+                  '$part — only the rest counted'} · approximate (strained '
+        'out and discarded — what it gives the liquid is not counted)';
+  }
+  if (medium == DiscardedMedium.removedAromatic) {
+    final step = _discardedByName(recipe, line, head)!.step + 1;
+    final part = _discardedShareOf(recipe, line, head, medium!)?.part;
+    return part == null
+        ? 'removed and discarded (step $step) — counted as 0 g'
+        : 'removed and discarded (step $step): $part — only the rest '
+              'counted';
+  }
+  if (medium != DiscardedMedium.partialUse) {
+    return null;
+  }
+  final use = _partialUseOf(recipe, line, head)!;
+  final step = use.step + 1;
+  return switch (use.kind) {
+    'remainder' =>
+      'the remaining ${use.printed} saved for another use (step $step) '
+          '— only the rest counted',
+    'cooked' =>
+      'from ${use.printed} cooked (step $step) · approximate (the steps '
+          'keep ${use.printed} of the ${use.cookedRecord!.state} potato; its '
+          "raw weight by FDC's carbohydrate, ${use.cookedRecord!.fdcId})",
+    'reserved' => 'reserved for another use (step $step) — counted as 0 g',
+    _ => 'the rest discarded (step $step) — counted as 0 g',
+  };
+}
+
+const String _leftInBowlFlag =
+    'approximate (the steps leave an excess of it in the bowl — how much '
+    'is eaten is not written)';
+const String _marinadeFlag =
+    'approximate (lifted out of its marinade — how much clings is not '
+    'written)';
+
+String _fmtCount(double v) =>
+    v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1);
 
 /// Whether a step ties [head] into cheesecloth: Home-Corned Beef (0091)
 /// puts its "remaining 3 garlic cloves, remaining 2 bay leaves, and
@@ -4429,6 +5693,19 @@ String _ownSalt(String normalized) {
       ? _potShareOf(recipe, line)
       : medium == DiscardedMedium.brine || medium == DiscardedMedium.brineSugar
       ? _brineShareOf(recipe, line, headNounOf(normalized))
+      // v50 (F12; closer 1 V1-D2, V1-D3): only the discarded part.
+      : medium == DiscardedMedium.removedAromatic ||
+            medium == DiscardedMedium.strainedSolid
+      ? _discardedShareOf(
+          recipe,
+          line,
+          headNounOf(normalized)!,
+          medium!,
+        )?.share
+      : null;
+  // v50 (Q20): a printed part kept ([_partialUseOf]).
+  final partial = medium == DiscardedMedium.partialUse
+      ? _partialUseOf(recipe, line, headNounOf(normalized)!)
       : null;
   // A frying oil's part kept in the pan and eaten ([_keptFryingOil]).
   final eatenPart =
@@ -4450,6 +5727,8 @@ String _ownSalt(String normalized) {
           source: GramSource.discarded,
           basis: resolved.basis,
         )
+      : partial != null && resolved != null
+      ? _partialKept(partial, resolved, food)
       : null;
   if (medium != null &&
       medium.followsPolicy &&
@@ -9325,14 +10604,28 @@ String? gramBasisFor(
   if (basis == null || row.status == 'skipped') {
     return basis;
   }
+  // v50 (M50 Q20 iv, Q21, Q7): a counted line the steps keep a volume of,
+  // leave an excess of in the bowl, or lift out of a marinade says so —
+  // never on grams a person typed, nor on a row counted 0 g.
+  final flag =
+      recipe == null ||
+          row.hold != null ||
+          row.grams! <= 0 ||
+          row.gramSource == GramSource.override.name ||
+          row.gramSource == GramSource.discarded.name
+      ? null
+      : m50FlagOf(recipe, line);
+  final flagged = flag == null ? '' : ' · $flag';
   // A fresh herb on its dried record says its own suffix — only on the
   // engine's weighing, never on grams a person typed, nor on a sprig or
   // leaf counted as 0 g (Run 047 critic).
   if (row.description != null && freshHerbLine(line.raw, row.description!)) {
     return row.gramSource == GramSource.override.name ||
-            row.gramSource == GramSource.unmeasured.name
+            row.gramSource == GramSource.unmeasured.name ||
+            // v50: nor on one a step discards (0 g, its own basis).
+            (row.gramSource == GramSource.discarded.name && row.grams! <= 0)
         ? basis
-        : '$basis · approximate (dried herb record for a fresh herb)';
+        : '$basis · approximate (dried herb record for a fresh herb)$flagged';
   }
   // Read on the weighed line, as the grams are (Run 049: "1 recipe Pesto
   // Base, plus 2 ounces pancetta" on the bacon record lost its label).
@@ -9343,8 +10636,8 @@ String? gramBasisFor(
     description: row.description,
   );
   return approximation
-      ? '$basis · approximation (counted as ${row.description})'
-      : basis;
+      ? '$basis · approximation (counted as ${row.description})$flagged'
+      : '$basis$flagged';
 }
 
 String? _gramBasis(
@@ -9399,6 +10692,15 @@ String? _gramBasis(
     }
   }
   if (row.gramSource == GramSource.discarded.name) {
+    // v50 (M50): what a strain, a discard by name or a printed part kept
+    // did to the line — the engine's row; a person's confirm of a held
+    // medium at 0 g reads "poured away" below.
+    final m50 = recipe == null || (row.grams! <= 0 && row.status != 'auto')
+        ? null
+        : _m50DiscardedBasis(recipe, line);
+    if (m50 != null) {
+      return m50;
+    }
     final plus = plusPartOf(line.raw);
     // An eaten FIRST part names itself (0114's "1 tablespoon").
     final eaten = plus == null || recipe == null

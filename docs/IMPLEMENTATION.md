@@ -3608,6 +3608,33 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — matcher v50 (batch M50): discards and partial use (prep47
+  Q16, Q17, Q18, Q20, Q21, Q7's flag; built under the standing
+  authorization).** AMENDS the 2026-09-28 "poured-away media HELD" ruling:
+  strained solids and removed whole aromatics are 0 g, flagged (CP9 Q4's
+  partial pour-away stays HELD). Kept deviations, each disclosed and
+  re-measured: (1) cuban-style-black-beans-and-rice|4 and |5 are
+  PARTITIONED (178.50 g, 1 of 4 halves; 75.00 g, 1 of 2) rather than the
+  design's "at 0" — the corpus text under the Q18 count-partition ruling,
+  the verifier concurring; (2) sprig lines are not skipped: a 0 g sprig row
+  in a strained pot or a discard moves from `unmeasured` to `discarded`
+  with the M50 basis (≈ 40 rows, 0 kcal); (3) Q21's flag follows P1's
+  "excess egg/batter/glaze" spelling — 18 lines in 9 recipes; the same
+  breading shape without the noun ("allowing excess to drip off", about 15
+  to 18 recipes) stays counted unflagged — a later widening if wanted, 0
+  kcal; Q7 flags 4 recipes (beef-satay prints no removal sentence); (4) the
+  Q18 basis is the design's flag text; (5) the gnocchi figure reads the
+  potato detail's carbohydrate (551.32 g; a cold line would read 550.43);
+  (6) french-omelets|2 not built (the design dropped it). The library moves
+  −14,714 kcal per batch on 333 rows (203 zeroed, 117 flag or basis only),
+  5 recipes complete → partial for holds a person must answer, 6 new
+  holds. Noted for later: nikujaga|1 kombu leaves the check queue at 0 g on
+  a wrong below-gate record; a person-decided 0 g row on an M50 line reads
+  the shipped "poured away" text. Environment: the ATK corpus checkout
+  carries another session's uncommitted removal of the dessert tags (HEAD
+  has 214 dessert tag blocks, the working copy none) — 28 tag tests fail on
+  the live corpus on any tree; the gate ran the suite on a clean archive of
+  the corpus repo's HEAD; not M50's and not touched.
 - **2026-10-07 — the owner approved the two-part-row role copy delta
   (`docs/mockups/v49-two-part-rows-copy.html`, "i approve M51"):** the
   headers and part suffixes ship verbatim — bacon unchanged; zest and juice
