@@ -1,0 +1,270 @@
+recipe_file	subsection_title	kind	ingredient_lines	body_excerpt
+0015-carrot-ginger-soup.yaml	Buttery Croutons	variation	4	
+0017-mushroom-bisque.yaml	Fried Shallots	variation	3	
+0020-sweet-potato-soup.yaml	Buttery Rye Croutons	variation	4	
+0020-sweet-potato-soup.yaml	Candied Bacon Bits	variation	3	
+0020-sweet-potato-soup.yaml	Maple Sour Cream	variation	2	
+0030-farmhouse-vegetable-and-barley-soup.yaml	Lemon-Thyme Butter	variation	4	
+0030-farmhouse-vegetable-and-barley-soup.yaml	Herbed Croutons	variation	5	
+0070-skillet-chicken-fajitas.yaml	Spicy Pickled Radishes	variation	5	
+0112-perfect-poached-chicken-breasts.yaml	Cumin-Cilantro Yogurt Sauce	variation	10	
+0112-perfect-poached-chicken-breasts.yaml	Warm Tomato-Ginger Vinaigrette	variation	10	
+0113-sauteed-chicken-cutlets.yaml	Quick Roasted Red Pepper Sauce	variation	10	
+0113-sauteed-chicken-cutlets.yaml	Quick Sun-Dried Tomato Sauce	variation	9	
+0113-sauteed-chicken-cutlets.yaml	Quick Tomatillo Sauce	variation	9	
+0115-chicken-katsu-crispy-pan-fried-chicken-cutlets.yaml	Tonkatsu Sauce	variation	4	
+0115-chicken-katsu-crispy-pan-fried-chicken-cutlets.yaml	Garlic-Curry Sauce	variation	6	
+0116-chicken-schnitzel.yaml	Apple-Fennel Rémoulade	variation	8	
+0119-pan-seared-chicken-breasts.yaml	Lemon and Chive Pan Sauce	variation	7	
+0120-roasted-bone-in-chicken-breasts.yaml	Jalapeño and Cilantro Sauce	variation	7	
+0129-indoor-pulled-chicken.yaml	Lexington Vinegar Barbecue Sauce	variation	7	
+0129-indoor-pulled-chicken.yaml	South Carolina Mustard Barbecue Sauce	variation	7	
+0129-indoor-pulled-chicken.yaml	Sweet and Tangy Barbecue Sauce	variation	6	
+0134-weeknight-roast-chicken.yaml	Tarragon-Lemon Pan Sauce	variation	7	
+0134-weeknight-roast-chicken.yaml	Thyme–Sherry Vinegar Pan Sauce	variation	8	
+0139-peruvian-roast-chicken-with-garlic-and-lime.yaml	Spicy Mayonnaise	variation	10	
+0145-high-roast-butterflied-chicken-with-potatoes.yaml	Mustard-Garlic Butter with Thyme	variation	5	
+0184-pan-seared-steaks.yaml	Shallot Butter Sauce	variation	5	
+0184-restaurant-style-herb-sauce-for-pan-seared-steaks.yaml	Restaurant-Style Brandy and Green Peppercorn Sauce for Pan-Seared Steaks	variation	9	
+0184-restaurant-style-herb-sauce-for-pan-seared-steaks.yaml	Restaurant-Style Port Wine Sauce for Pan-Seared Steaks	variation	8	
+0187-pan-seared-strip-steaks.yaml	Sauce Verte	variation	10	
+0189-pan-seared-thick-cut-steaks.yaml	Red Wine–Mushroom Pan Sauce	variation	10	
+0189-pan-seared-thick-cut-steaks.yaml	Thai Chili Butter	variation	8	
+0190-pan-seared-inexpensive-steaks.yaml	Tomato-Caper Pan Sauce	variation	8	
+0190-pan-seared-inexpensive-steaks.yaml	Mustard-Cream Pan Sauce	variation	6	
+0191-pan-seared-filet-mignon.yaml	Madeira Pan Sauce with Mustard and Anchovies	variation	9	
+0191-pan-seared-filet-mignon.yaml	Chimichurri (Argentinian-Style Fresh Parsley and Garlic Sauce)	variation	8	
+0192-pepper-crusted-filet-mignon.yaml	Blue Cheese–Chive Butter	variation	4	
+0194-flank-steak-and-arugula-sandwiches-with-red-onion.yaml	Garlic-Soy Mayonnaise	variation	6	
+0199-pan-seared-thick-cut-boneless-pork-chops.yaml	Roasted Red Pepper−Vinegar Sauce	variation	11	
+0199-pan-seared-thick-cut-boneless-pork-chops.yaml	Mint Persillade	variation	8	
+0199-pan-seared-thick-cut-boneless-pork-chops.yaml	Walnut-Raisin Pesto	variation	10	
+0201-pan-seared-thick-cut-pork-chops.yaml	Garlic and Thyme Sauce	variation	8	
+0202-oven-roasted-pork-chops.yaml	Lemon-Caper Sauce	variation	5	
+0207-stuffed-pork-chops.yaml	Ginger-Apple Chutney	variation	9	
+0214-roast-beef-tenderloin.yaml	Shallot and Parsley Butter	variation	6	
+0214-roast-beef-tenderloin.yaml	Chipotle and Garlic Butter with Lime and Cilantro	variation	7	
+0214-slow-roasted-beef.yaml	Horseradish Cream Sauce	variation	4	
+0219-pepper-crusted-beef-tenderloin-roast.yaml	Pomegranate-Port Sauce	variation	8	
+0227-sous-vide-rosemarymustard-seed-crusted-roast-beef.yaml	Yogurt-Herb Sauce	variation	5	
+0231-thick-cut-pork-tenderloin-medallions.yaml	Maple-Mustard Sauce	variation	7	
+0232-perfect-pan-seared-pork-tenderloin-steaks.yaml	Scallion-Ginger Relish	variation	6	
+0236-broiled-pork-tenderloin.yaml	Mustard–Crème Fraîche Sauce	variation	4	
+0236-broiled-pork-tenderloin.yaml	Sun-Dried Tomato and Basil Salsa	variation	7	
+0241-garlic-studded-roast-pork-loin.yaml	Mustard–Shallot Sauce with Thyme	variation	6	
+0246-indoor-pulled-pork-with-sweet-and-tangy-barbecue-sauce.yaml	Lexington Vinegar Barbecue Sauce	variation	7	
+0246-indoor-pulled-pork-with-sweet-and-tangy-barbecue-sauce.yaml	South Carolina Mustard Barbecue Sauce	variation	7	
+0249-roast-fresh-ham.yaml	Cider and Brown Sugar Glaze	variation	3	
+0249-roast-fresh-ham.yaml	Spicy Pineapple-Ginger Glaze	variation	4	
+0249-roast-fresh-ham.yaml	Coca-Cola Glaze with Lime and Jalapeño	variation	4	
+0249-roast-fresh-ham.yaml	Orange, Cinnamon, and Star Anise Glaze	variation	4	
+0251-glazed-spiral-sliced-ham.yaml	Maple-Orange Glaze	variation	6	
+0251-glazed-spiral-sliced-ham.yaml	Cherry-Port Glaze	variation	4	
+0254-crunchy-oven-fried-fish.yaml	Sweet and Tangy Tartar Sauce	variation	7	
+0256-pan-seared-brined-salmon.yaml	Mango-Mint Salsa	variation	8	
+0256-pan-seared-brined-salmon.yaml	Cilantro-Mint Chutney	variation	10	
+0256-pan-seared-salmon.yaml	Sweet-and-Sour Chutney	variation	11	
+0257-pan-seared-salmon-steaks.yaml	Tarragon Chimichurri	variation	7	
+0257-pan-seared-salmon-steaks.yaml	Kalamata Olive Relish	variation	7	
+0257-pan-seared-salmon-steaks.yaml	Dried Cherry Mostarda	variation	9	
+0262-glazed-salmon.yaml	Pomegranate-Balsamic Glaze	variation	6	
+0262-glazed-salmon.yaml	Hoisin-Ginger Glaze	variation	8	
+0262-glazed-salmon.yaml	Orange-Miso Glaze	variation	7	
+0262-glazed-salmon.yaml	Soy-Mustard Glaze	variation	8	
+0263-oven-roasted-salmon.yaml	Fresh Tomato Relish	variation	7	
+0263-oven-roasted-salmon.yaml	Spicy Cucumber Relish	variation	6	
+0264-roasted-whole-side-of-salmon.yaml	Arugula and Almond Pesto	variation	8	
+0264-roasted-whole-side-of-salmon.yaml	Cucumber-Ginger Relish	variation	10	
+0270-pan-seared-swordfish-steaks.yaml	Caper-Currant Relish	variation	6	
+0270-pan-seared-swordfish-steaks.yaml	Spicy Dried Mint–Garlic Sauce	variation	5	
+0271-pan-seared-sesame-crusted-tuna-steaks.yaml	Ginger-Soy Sauce with Scallions	variation	8	
+0271-pan-seared-sesame-crusted-tuna-steaks.yaml	Avocado-Orange Salsa	variation	7	
+0272-pan-roasted-halibut-steaks.yaml	Chipotle-Garlic Butter with Lime and Cilantro	variation	7	
+0272-pan-roasted-halibut-steaks.yaml	Chunky Cherry Tomato–Basil Vinaigrette	variation	7	
+0277-pan-seared-scallops.yaml	Lemon Browned Butter Sauce	variation	6	
+0282-spanish-style-toasted-pasta-with-shrimp.yaml	Aioli	variation	7	
+0288-maryland-crab-cakes.yaml	Creamy Chipotle Chile Sauce	variation	6	
+0309-juicy-grilled-turkey-burgers.yaml	Malt Vinegar–Molasses Burger Sauce	variation	6	
+0309-juicy-grilled-turkey-burgers.yaml	Chile-Lime Burger Sauce	variation	6	
+0309-juicy-grilled-turkey-burgers.yaml	Apricot-Mustard Burger Sauce	variation	6	
+0310-best-old-fashioned-burgers.yaml	Classic Burger Sauce	variation	6	
+0312-juicy-pub-style-burgers.yaml	Pub-Style Burger Sauce	variation	7	
+0314-black-bean-burgers.yaml	Chipotle Mayonnaise	variation	5	
+0317-easier-french-fries.yaml	Chive and Black Pepper Dipping Sauce	variation	6	
+0317-easier-french-fries.yaml	Belgian-Style Dipping Sauce	variation	5	
+0318-thick-cut-sweet-potato-fries.yaml	Spicy Fry Sauce	variation	3	
+0319-crunchy-kettle-potato-chips.yaml	Buttermilk and Chive Topping	variation	6	
+0319-crunchy-kettle-potato-chips.yaml	Salt and Vinegar Topping	variation	2	
+0319-crunchy-kettle-potato-chips.yaml	Smoky Barbecue Topping	variation	6	
+0365-potato-gnocchi-with-browned-butter-and-sage-sauce.yaml	Gorgonzola-Cream Sauce	variation	5	
+0365-potato-gnocchi-with-browned-butter-and-sage-sauce.yaml	Parmesan Sauce with Pancetta and Walnuts	variation	9	
+0393-the-best-gluten-free-pizza.yaml	The America’s Test Kitchen All-Purpose Gluten-Free Flour Blend	variation	5	
+0396-grilled-tomato-and-cheese-pizza.yaml	Spicy Garlic Oil	variation	3	
+0416-lighter-chicken-parmesan.yaml	Simple Tomato Sauce	variation	7	
+0454-french-style-chicken-and-stuffing-in-a-pot.yaml	Herb Sauce	variation	9	
+0471-cheesy-nachos-with-guacamole-and-salsa.yaml	One-Minute Salsa	variation	8	
+0480-steak-tacos.yaml	Sweet and Spicy Pickled Onions	variation	5	
+0482-tinga-de-pollo-shredded-chicken-tacos.yaml	Escabeche (Mexican-Style Pickled Vegetables)	variation	9	
+0508-shu-mai-steamed-chinese-dumplings.yaml	Chili Oil	variation	6	
+0510-goi-cuo-n-vietnamese-summer-rolls.yaml	Nuóc Châ´m (Vietnamese Dipping Sauce)	variation	6	
+0515-beef-satay.yaml	Spicy Peanut Dipping Sauce	variation	9	
+0520-yakisoba-japanese-stir-fried-noodles-with-beef.yaml	Sesame-Orange Spice Blend	variation	7	
+0523-nasi-goreng-indonesian-style-fried-rice.yaml	Faux Leftover Rice	variation	3	
+0548-thai-green-curry-with-chicken-broccoli-and-mushrooms.yaml	Green Curry Paste	variation	12	
+0568-indian-style-curry-with-potatoes-cauliflower-peas-and-chickpeas.yaml	Onion Relish	variation	6	
+0568-indian-style-curry-with-potatoes-cauliflower-peas-and-chickpeas.yaml	Cilantro-Mint Chutney	variation	8	
+0570-falafel.yaml	Quick Pickled Turnips and Carrots with Lemon and Coriander	variation	11	
+0570-falafel.yaml	Tomato-Chile Sauce	variation	11	
+0572-ultracreamy-hummus.yaml	Spiced Walnut Topping for Hummus	variation	10	
+0580-grilled-marinated-flank-steak.yaml	Garlic-Shallot-Rosemary Wet Paste Marinade	variation	4	
+0580-grilled-marinated-flank-steak.yaml	Garlic-Ginger-Sesame Wet Paste Marinade	variation	5	
+0580-grilled-marinated-flank-steak.yaml	Garlic-Chile Wet Paste Marinade	variation	5	
+0583-grilled-steak-tips.yaml	Southwestern Marinade	variation	8	
+0583-grilled-steak-tips.yaml	Garlic, Ginger, and Soy Marinade	variation	9	
+0584-grilled-strip-or-rib-eye-steaks.yaml	Roasted Red Pepper and Smoked Paprika Butter	variation	6	
+0584-grilled-strip-or-rib-eye-steaks.yaml	Lemon, Garlic, and Parsley Butter	variation	6	
+0588-carne-asada-mexican-style-grilled-steak.yaml	Red Chile Salsa	variation	10	
+0588-carne-asada-mexican-style-grilled-steak.yaml	Simple Refried Beans	variation	6	
+0591-grill-roasted-beef-short-ribs.yaml	Mustard Glaze	variation	5	
+0591-grill-roasted-beef-short-ribs.yaml	Blackberry Glaze	variation	7	
+0591-grill-roasted-beef-short-ribs.yaml	Hoisin-Tamarind Glaze	variation	6	
+0593-grill-roasted-beef-tenderloin.yaml	Chermoula Sauce	variation	8	
+0594-grill-roasted-beef-tenderloin-for-a-crowd.yaml	Salsa Verde	variation	8	
+0597-easy-grilled-boneless-pork-chops.yaml	Onion, Olive, and Caper Relish	variation	12	
+0597-easy-grilled-boneless-pork-chops.yaml	Tomato, Fennel, and Almond Relish	variation	10	
+0597-easy-grilled-boneless-pork-chops.yaml	Orange, Jicama, and Pepita Relish	variation	11	
+0598-grilled-pork-chops.yaml	Basic Spice Rub for Pork Chops	variation	5	
+0601-grilled-glazed-pork-tenderloin-roast.yaml	Miso Glaze	variation	8	
+0601-grilled-glazed-pork-tenderloin-roast.yaml	Sweet and Spicy Hoisin Glaze	variation	7	
+0601-grilled-glazed-pork-tenderloin-roast.yaml	Satay Glaze	variation	9	
+0603-grilled-stuffed-pork-tenderloin.yaml	Olive and Sun-Dried Tomato Stuffing	variation	7	
+0603-grilled-stuffed-pork-tenderloin.yaml	Porcini and Artichoke Stuffing	variation	9	
+0606-grill-roasted-pork-loin.yaml	Chili-Mustard Spice Rub	variation	4	
+0607-grill-roasted-bone-in-pork-rib-roast.yaml	Orange Salsa with Cuban Flavors	variation	13	
+0609-barbecued-pulled-pork.yaml	Dry Rub for Barbecue	variation	10	
+0609-barbecued-pulled-pork.yaml	Eastern North Carolina Barbecue Sauce	variation	6	
+0609-barbecued-pulled-pork.yaml	Mid–South Carolina Mustard Sauce	variation	7	
+0614-memphis-style-barbecued-spareribs.yaml	Spice Rub	variation	9	
+0617-grilled-glazed-baby-back-ribs.yaml	Hoisin-Coconut Glaze	variation	4	
+0617-grilled-glazed-baby-back-ribs.yaml	Lime Glaze	variation	4	
+0617-grilled-glazed-baby-back-ribs.yaml	Spicy Marmalade Glaze	variation	4	
+0620-grilled-lamb-kebabs.yaml	Warm-Spiced Parsley Marinade with Ginger	variation	10	
+0620-grilled-lamb-kebabs.yaml	Garlic and Cilantro Marinade with Garam Masala	variation	8	
+0620-grilled-lamb-kebabs.yaml	Sweet Curry Marinade with Buttermilk	variation	10	
+0621-grilled-beef-satay.yaml	Peanut Sauce	variation	10	
+0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml	Spicy Hoisin Glaze	variation	7	
+0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml	Honey-Mustard Glaze	variation	7	
+0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml	Coconut-Curry Glaze	variation	8	
+0626-grilled-glazed-boneless-skinless-chicken-breasts.yaml	Miso-Sesame Glaze	variation	7	
+0627-grilled-glazed-bone-in-chicken-breasts.yaml	Orange-Chipotle Glaze	variation	7	
+0627-grilled-glazed-bone-in-chicken-breasts.yaml	Soy-Ginger Glaze	variation	8	
+0627-grilled-glazed-bone-in-chicken-breasts.yaml	Curry-Yogurt Glaze	variation	8	
+0629-best-grilled-chicken-thighs.yaml	Gochujang Paste	variation	5	
+0629-best-grilled-chicken-thighs.yaml	Mustard-Tarragon Paste	variation	7	
+0629-best-grilled-chicken-thighs.yaml	Garam Masala Paste	variation	7	
+0630-grilled-spice-rubbed-chicken-drumsticks.yaml	Barbecue Spice Rub	variation	7	
+0630-grilled-spice-rubbed-chicken-drumsticks.yaml	Jerk-Style Spice Rub	variation	8	
+0640-grill-roasted-beer-can-chicken.yaml	Spice Rub	variation	7	
+0641-grill-roasted-cornish-game-hens.yaml	Barbecue Glaze	variation	6	
+0641-grill-roasted-cornish-game-hens.yaml	Barbecue Glaze with Hoisin Sauce and Ginger	variation	6	
+0643-grilled-salmon-fillets.yaml	Almond Vinaigrette	variation	9	
+0643-grilled-salmon-fillets.yaml	Olive Vinaigrette	variation	6	
+0645-barbecued-salmon.yaml	Horseradish Cream Sauce with Chives	variation	4	
+0645-barbecued-salmon.yaml	Mustard-Dill Sauce	variation	2	
+0646-grill-smoked-salmon.yaml	“Smoked Salmon Platter” Sauce	variation	7	
+0646-grill-smoked-salmon.yaml	Apple-Mustard Sauce	variation	7	
+0648-grilled-blackened-red-snapper.yaml	Rémoulade	variation	9	
+0648-grilled-blackened-red-snapper.yaml	Pineapple and Cucumber Salsa with Mint	variation	9	
+0650-grilled-sea-scallops.yaml	Chile-Lime Vinaigrette	variation	5	
+0650-grilled-sea-scallops.yaml	Basil Vinaigrette	variation	8	
+0653-grilled-shrimp-skewers.yaml	Spicy Lemon-Garlic Sauce	variation	7	
+0653-grilled-shrimp-skewers.yaml	Fresh Tomato Sauce with Feta and Olives	variation	9	
+0655-southern-shrimp-burgers.yaml	Tartar Sauce	variation	6	
+0656-grilled-cauliflower.yaml	Pistachio Dukkah	variation	7	
+0656-grilled-cauliflower.yaml	Almond, Raisin, and Caper Relish	variation	9	
+0656-grilled-cauliflower.yaml	Za’atar	variation	5	
+0657-grilled-corn-with-flavored-butter.yaml	Basil and Lemon Butter	variation	6	
+0657-grilled-corn-with-flavored-butter.yaml	Honey Butter	variation	4	
+0657-grilled-corn-with-flavored-butter.yaml	Cilantro-Chipotle Butter	variation	6	
+0657-grilled-corn-with-flavored-butter.yaml	New Orleans “Barbecue” Butter	variation	7	
+0657-grilled-corn-with-flavored-butter.yaml	Spicy Old Bay Butter	variation	5	
+0672-buffalo-cauliflower-bites.yaml	Ranch Dressing	variation	8	
+0672-slow-cooked-whole-carrots.yaml	Pine Nut Relish	variation	9	
+0675-southern-corn-fritters.yaml	Red Pepper Mayonnaise	variation	6	
+0675-southern-corn-fritters.yaml	Maple-Chipotle Mayonnaise	variation	4	
+0675-southern-corn-fritters.yaml	Basil Mayonnaise	variation	5	
+0675-southern-corn-fritters.yaml	Sriracha-Lime Yogurt Sauce	variation	5	
+0676-boiled-corn.yaml	Chili-Lime Salt	variation	3	
+0676-boiled-corn.yaml	Pepper-Cinnamon Salt	variation	3	
+0676-boiled-corn.yaml	Cumin-Sesame Salt	variation	3	
+0690-best-baked-potatoes.yaml	Creamy Egg Topping	variation	8	
+0690-best-baked-potatoes.yaml	Herbed Goat Cheese Topping	variation	6	
+0690-best-baked-potatoes.yaml	Smoked Trout Topping	variation	6	
+0698-roasted-root-vegetables.yaml	Bacon-Shallot Topping	variation	5	
+0715-simple-israeli-couscous.yaml	Israeli Couscous with Tomatoes, Olives, and Ricotta Salata	variation	12	
+0717-simple-farro.yaml	Warm Farro with Lemon and Herbs	variation	8	
+0729-shakshuka-eggs-in-spicy-tomato-and-roasted-red-pepper-sauce.yaml	Zhoug (Spicy Cilantro Sauce)	variation	7	
+0735-fluffy-omelets.yaml	Asparagus and Smoked Salmon Filling	variation	6	
+0735-fluffy-omelets.yaml	Mushroom Filling	variation	5	
+0735-fluffy-omelets.yaml	Artichoke and Bacon Filling	variation	5	
+0736-denver-omelets.yaml	Filling for Denver Omelets	variation	9	
+0738-spanish-tortilla-with-roasted-red-peppers-and-peas.yaml	Garlic Mayonnaise	variation	9	
+0743-breakfast-strata-with-spinach-and-gruyere.yaml	Breakfast Strata with Sausage, Mushrooms, and Monterey Jack	variation	11	
+0744-easy-pancakes.yaml	Ginger-Molasses Butter	variation	4	
+0744-easy-pancakes.yaml	Orange-Almond Butter	variation	5	
+0744-easy-pancakes.yaml	Pumpkin Spice Butter	variation	4	
+0746-lemon-ricotta-pancakes.yaml	Apple-Cranberry Topping	variation	6	
+0746-lemon-ricotta-pancakes.yaml	Pear-Blackberry Topping	variation	6	
+0746-lemon-ricotta-pancakes.yaml	Plum-Apricot Topping	variation	6	
+0748-german-pancake.yaml	Brown Sugar–Apple Topping	variation	6	
+0859-marbled-blueberry-bundt-cake.yaml	Cinnamon Whipped Cream	variation	4	
+0867-light-carrot-cake.yaml	Light Cream Cheese Frosting	variation	3	
+0870-best-almond-cake.yaml	Orange Crème Fraîche	variation	4	
+0892-dark-chocolate-cupcakes.yaml	Easy Vanilla Bean Buttercream	variation	6	
+0896-torta-caprese.yaml	Amaretto Whipped Cream	variation	3	
+0896-torta-caprese.yaml	Orange Whipped Cream	variation	4	
+0899-bittersweet-chocolate-roulade.yaml	Dark Chocolate Ganache	variation	4	
+0917-lemon-pudding-cakes.yaml	Blueberry Compote	variation	5	
+0922-classic-bread-pudding.yaml	Bourbon–Brown Sugar Sauce	variation	4	
+0926-buttermilk-vanilla-panna-cotta-with-berries-and-honey.yaml	Caramel-Coated Almonds	variation	5	
+0926-buttermilk-vanilla-panna-cotta-with-berries-and-honey.yaml	Peppery Strawberries	variation	4	
+0935-fresh-strawberry-mousse.yaml	Lemon Whipped Cream	variation	3	
+0940-pavlova-with-fruit-and-whipped-cream.yaml	Mango, Kiwi, and Blueberry Topping	variation	4	
+0957-easy-apple-strudel.yaml	Tangy Whipped Cream	variation	4	
+0999-free-form-summer-fruit-tartlets-for-two.yaml	Whipped Cream	variation	3	
+1071-watermelon-salad-with-cotija-and-serrano-chiles.yaml	Cantaloupe Salad with Olives and Red Onion	variation	9	
+1080-sous-vide-prime-rib-with-mint-persillade.yaml	Mint Persillade	variation	8	
+1083-sauteed-tilapia-with-chive-lemon-miso-butter.yaml	Cilantro Chimichurri	variation	9	
+1084-rhode-islandstyle-fried-calamari.yaml	Quick Marinara Sauce	variation	5	
+1084-rhode-islandstyle-fried-calamari.yaml	Spicy Mayonnaise	variation	4	
+1085-skillet-turkey-burgers.yaml	Pickled Avocado	variation	5	
+1093-vegan-baja-style-cauliflower-tacos.yaml	Vegan Cilantro Sauce	variation	5	
+1096-skillet-roasted-broccoli.yaml	Sesame and Orange Topping	variation	3	
+1096-skillet-roasted-broccoli.yaml	Smoky Sunflower Seed Topping	variation	5	
+1101-pupusas-with-quick-salsa-and-curtido.yaml	Quick Salsa	variation	8	
+1101-pupusas-with-quick-salsa-and-curtido.yaml	Curtido	variation	10	
+1105-yeasted-doughnuts.yaml	Chocolate Frosting	variation	5	
+1105-yeasted-doughnuts.yaml	Raspberry Frosting	variation	3	
+1105-yeasted-doughnuts.yaml	Coffee Frosting	variation	4	
+1105-yeasted-doughnuts.yaml	Matcha Frosting	variation	4	
+1111-lahmajun-armenian-flatbread.yaml	Cucumber-Tomato Salad	variation	8	
+1127-pan-seared-thick-cut-bone-in-pork-chops.yaml	Creamy Apple-Mustard Sauce	variation	7	
+1127-pan-seared-thick-cut-bone-in-pork-chops.yaml	Maple Agrodolce	variation	6	
+1135-gnocchi-a-la-parisienne-with-arugula-tomatoes-and-olives.yaml	Pistou	variation	6	
+1136-rose-sangria.yaml	Simple Syrup	variation	2	
+1137-pakoras-south-asian-spiced-vegetable-fritters.yaml	Carrot-Tamarind Chutney	variation	9	
+1139-alu-parathas-punjabi-potato-stuffed-griddle-breads.yaml	Tamatya-Kandyachi Koshimbir (Tomato-Onion Salad)	variation	8	
+1140-grilled-boneless-beef-short-ribs.yaml	Kimchi-Scallion Sauce	variation	6	
+1140-grilled-boneless-beef-short-ribs.yaml	Preserved Lemon–Almond Sauce	variation	6	
+1143-roasted-fennel.yaml	Orange-Honey Dressing	variation	5	
+1143-roasted-fennel.yaml	Crunchy Oil-Cured Olives	variation	2	
+1147-fresh-bulk-sausage.yaml	Breakfast Seasoning	variation	4	
+1147-fresh-bulk-sausage.yaml	Fresh Garlic Seasoning	variation	4	
+1147-fresh-bulk-sausage.yaml	Italian Seasoning	variation	6	
+1155-champagne-cocktail.yaml	Mimosa	variation	4	
+1155-champagne-cocktail.yaml	Bellini	variation	4	
+1155-champagne-cocktail.yaml	DIY Bitters Sugar Cubes	variation	2	
+1164-sweet-cream-ice-cream.yaml	Homemade Chocolate Magic Shell	variation	3	
+1176-red-lentil-kibbeh.yaml	Harissa	variation	8	
+1189-bruschetta-with-artichoke-hearts-and-parmesan.yaml	Toasted Bread for Bruschetta	variation	3	
+1208-chraime.yaml	Tabil	variation	3	
