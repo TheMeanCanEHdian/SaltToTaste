@@ -3608,6 +3608,33 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — BLIND AUDIT 3 on the deployed v54 library (snapshot 23;
+  `.claude/diag/2026-10-08/audit3/report.md`; 272 lines drawn from the
+  prep47 batches' reaches plus controls, two blind auditors per line and an
+  adjudicator per chunk; 25 NEW recipes recomputed by hand).** Counted food
+  WRONG 1 of 212 (a beef top loin roast on the pork top-loin record); once
+  the bacon stratum is set aside (a sampling artefact: the blind sheet showed
+  the two-part rows' raw record, not the cooked bacon and grease the engine
+  counts — re-costed on the parts, 7 of 10 within 1 %), state WRONG 1.5 %,
+  should-have-counted 4 %, mass LOW 5.7 % and HIGH 11.1 %; the alcohol
+  (40/40), shellfish (7/7), density and portion lines carry no mass fault;
+  discards right on 38 of 40. Ranked patterns by kcal: P9 wrong cut or fat
+  level on four meat records (−2,084: pork for beef; "lean only" for a
+  trimmed strip steak and a blade roast; the frenched lamb record); P1 the
+  M50 Q21 lines flagged "excess left in the bowl" counted whole — 13 of 16
+  HIGH at 1.9× (+1,355); P3 deep-fry oil at 0 on fritters and wrapped rolls
+  (−1,226); P4 four uptake percentages off; P2 all eight bread and panko
+  crumb coats LOW at 0.44× (the USDA breading ratio against the auditors'
+  pressed layers — a USDA-vs-judgment gap); the turkey-breast yield 0.61
+  8 % low on four lines (inside tolerance, −1,173); P7 printed weights with
+  a printed prep loss. Calibration on the 25 new, batch-heavy recipes:
+  median |diff| 8.7 % (51 kcal a serving), the engine +4.9 % high (14 high,
+  11 low), driven by meat fat-level records, strained solids the hand count
+  excluded, and the whole-counted wet coats. Not a defect: the EVOO record
+  748608 carries no energy nutrient but the engine's fallback counts 9 × its
+  fat (843 kcal/100 g) on all 251 rows. NEXT: the prep48 design pass on
+  these patterns (five planners, a critic), then batches on snapshot 23
+  against the v54 rows.
 - **2026-10-08 — RE-CALIBRATION after the prep47 series (audit 2's 25
   hand-computed recipes against the v54 replay on snapshot 22;
   `.claude/diag/2026-10-07/recalibration_v54.tsv`).** Median absolute error
