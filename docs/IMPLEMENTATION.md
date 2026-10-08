@@ -3608,6 +3608,24 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v55 (batch M56): meat records at the right animal,
+  cut and fat level (prep48 Q1–Q7; built under the standing
+  authorization).** Kept deviations, each disclosed and re-measured: (1)
+  the rack of lamb's record 174414 has no cached detail and the engine would
+  have fetched it (one request, the recipe blocked), so a narrow
+  `ah102MeatsOnHit` reads the AH-102 row from the search hit for that key
+  alone (the broad form broke a v11 pin and three goldens); the rack counts
+  on the hit's nutrients until its detail is read at the live step; (2) the
+  verifier found two DOMESTIC lamb rib records cached (SR 174377 at 342
+  kcal/100 g, 1/8" choice; 174321 1/4"), contradicting the design's premise
+  that none was — they sit only in unrelated answers, so M56 stands on the
+  Australian 174414 as decided and the live step gains a named search and
+  detail to let M63 decide the rack's record (+44 % on that row if domestic);
+  (3) R1e's rank words tie Foundation 2646168 with the tenderloin 2646169
+  at 1.0 and FDC's order breaks the tie (pinned; the known FDC-order
+  ceiling); (4) the verifier's round-4 finding was two comments claiming
+  facts the cache contradicts — fixed by hand as worded. The library moves
+  −3,992 kcal per batch on 26 rows, grams unchanged, no status move.
 - **2026-10-08 — Q18 SKIPPED for this session (the owner: the focus is the
   matcher, not corpus completeness).** The extraction left 269 of the 403
   subsections that carry ingredient lines (in 160 host recipes) and 26

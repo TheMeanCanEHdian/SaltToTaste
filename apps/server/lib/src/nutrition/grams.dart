@@ -2248,6 +2248,16 @@ const Map<int, ({double share, String flag})> ah102Meats = {
         'and fat meat, slightly trimmed 73 % (61–88), as measured '
         'unfrenched; a frenched rack yields less',
   ),
+  // v54 (batch M56 R3): the rack a printed trim depth moves to (engine
+  // `trimDepthRecords`, 172641 → 174414) keeps 172641's AH-102 row
+  // verbatim — the yield is record-keyed.
+  174414: (
+    share: 0.73,
+    flag:
+        'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '
+        'and fat meat, slightly trimmed 73 % (61–88), as measured '
+        'unfrenched; a frenched rack yields less',
+  ),
   172513: (
     share: 0.70,
     flag:
@@ -2269,6 +2279,20 @@ const Map<int, ({double share, String flag})> ah102Meats = {
         'the fat 18: lean 60 %)',
   ),
 };
+
+/// v54 (batch M56 R3, closer 1's amendment of design §2): the [ah102Meats]
+/// keys whose handbook row is read on the SEARCH HIT, no detail asked
+/// (engine `_weightReadsPortions`): 174414, the rack a printed trim moves
+/// to, a hit only in snapshot 23 (the batch is zero-request). It ASSUMES
+/// the detail publishes no refuse portion: none of the 11 lamb details
+/// snapshot 23 caches does (the Australian-imported 1/8" legs 172659 and
+/// 174406 included); its six SR refuse portions are pork chops, steaks and
+/// ribs. Every other key keeps the shipped path (an SR hit fetches its
+/// detail first). A cached detail is the food, so its own refuse portion,
+/// if any, wins over this set ([edibleYieldOf] reads first).
+/// ponytail: nothing asks for 174414's detail while it is here; a named
+/// live request retires the assumption — then drop the id.
+const Set<int> ah102MeatsOnHit = {174414};
 
 // LIVE STEP (plan §3 requests 1–3, spent by the owner 2026-10-05; the
 // record): the whole bird and pieces ENABLED in v40 — the search "chicken
@@ -2914,7 +2938,11 @@ GramResolution? _resolveLine({
     // that no yield was read: its record may publish one. Shellfish in the
     // shell is labelled the same — held `in_shell`, and approximate once a
     // person's confirm counts it at its gross weight (v11).
-    final noRefuse = food.dataType != 'SR Legacy' || food.portions.isNotEmpty;
+    // v54 (M56 R3): [ah102MeatsOnHit] reads its handbook row on the hit.
+    final noRefuse =
+        food.dataType != 'SR Legacy' ||
+        food.portions.isNotEmpty ||
+        ah102MeatsOnHit.contains(food.fdcId);
     // v39 (Y1, the owner's ruling 2026-10-05, revising CP6 #11 and #5): a
     // record that publishes none reads its class's FDC figure, flagged —
     // never a whole bird's with [wholeBirdYield] off, which keeps whole

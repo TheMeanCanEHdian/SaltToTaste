@@ -736,7 +736,20 @@ const Map<String, String> _synonyms = {
 /// a range's low end, stirred in off the heat into a hot dish 5002 by Q-f,
 /// flamed 5003, a stuffing rolled inside a rare roast not cooked by it);
 /// the row's flag says so.
-const int matcherVersion = 53;
+///
+/// v54 (the Matcher v55 commit, batch M56 — meat records at the right
+/// animal, cut and fat level; the owner's 2026-10-08 decisions Q1 (a), Q2
+/// (i), Q3 (a), Q5 (a) and Q7 under the standing authorization, prep48
+/// design_v2 §2 M56; zero requests): rank-as items land a strip roast and
+/// boneless strip steaks on Foundation 2727572, blade steaks on beef 168707,
+/// a beef brisket on the raw flat at 0" (168743; a printed ¼-inch cap says
+/// it stands in) and the boneless center-cut pork loin roast on Foundation
+/// 2646168; a "separable lean only" top yields to its exact lean-and-fat
+/// sibling in the same answer (engine `leanAndFatSibling`) unless the line
+/// asks for lean; a printed trim moves a keyed record to the record at that
+/// trim (engine `trimDepthRecords`: the rack 172641 → 174414 with its
+/// AH-102 row, read with no detail; "fat caps removed" 2727572 → 171751).
+const int matcherVersion = 54;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2600,6 +2613,67 @@ const Map<String, (String, String)> _rankAs = {
   // read under the record's own words, as the shape rewrites above land
   // 'ditalini' (the food itself, not flagged).
   'pasta such as ditalini': ('pasta such as ditalini', 'pasta dry enriched'),
+  // v54 (batch M56, prep48 design_v2 §2 R1; the owner's 2026-10-08
+  // decisions Q1 (a), Q2 (i) and Q5 (a) under the standing authorization):
+  // meat at its own animal, cut and fat level — each target the named
+  // cached answer's top under these words on snapshot 23, unflagged (the
+  // line's own cut; brisket's printed ¼-inch cap says so in its basis,
+  // [trimStandInFlagOf]). R1a: a top loin roast IS a strip roast (0221's
+  // note; the title is Beef) — Foundation 2727572 "Beef, short loin (NY
+  // strip steak), raw", the record the library's 'strip steaks' lines read
+  // (it led with PORK 168314). R1c: boneless strip steaks on the same
+  // whole-steak record (they read the Foundation LEAN-ONLY 746759 by its
+  // +0.1 data-type bonus); before R2, which would move them to 173072.
+  'boneless top loin roast': (
+    'strip steaks',
+    'beef short loin ny strip steak raw',
+  ),
+  'boneless strip steak': (
+    'strip steaks',
+    'beef short loin ny strip steak raw',
+  ),
+  'boneless strip steaks': (
+    'strip steaks',
+    'beef short loin ny strip steak raw',
+  ),
+  // R1b: the blade steak is beef in both recipes (the Thai stir-fry's
+  // title; the chili's "We started with the beef") — 168707, the top blade
+  // record carbonnade's line lands (they read PORK 167849).
+  'blade steak': (
+    'blade steak',
+    'beef shoulder top blade steak boneless separable lean and fat trimmed '
+        'to 0 fat choice raw',
+  ),
+  'blade steaks': (
+    'blade steaks',
+    'beef shoulder top blade steak boneless separable lean and fat trimmed '
+        'to 0 fat choice raw',
+  ),
+  // R1d: FNDDS 2705851 "Beef, brisket" is a COOKED record ("1 oz yields
+  // 20 g") counted on raw weights; every line is a flat cut → the raw flat
+  // at 0" (R1d's default when no depth is printed, design Q2 (i); USDA
+  // publishes the flat at 0" and 1/8").
+  'beef brisket': (
+    'beef brisket',
+    'beef brisket flat half boneless separable lean and fat trimmed to 0 '
+        'fat choice raw',
+  ),
+  // R1e (Q5 a): the center LOIN on Foundation 2646168 "Pork, loin,
+  // boneless, raw" (they read SR 167889, the center RIB); all three read
+  // the first key's answer (the third's own holds neither 2646168 nor
+  // 168286 — only center-RIB records).
+  'boneless center-cut pork loin roast': (
+    'boneless center-cut pork loin roast',
+    'pork loin boneless raw',
+  ),
+  'center-cut boneless pork loin roast': (
+    'boneless center-cut pork loin roast',
+    'pork loin boneless raw',
+  ),
+  'boneless center loin pork roast': (
+    'boneless center-cut pork loin roast',
+    'pork loin boneless raw',
+  ),
 };
 
 /// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it

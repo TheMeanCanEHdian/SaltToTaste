@@ -3458,6 +3458,87 @@ holds identical. The audited cases: crisp-skin turkey's Turkey Gravy 90 min
 parent −104.39). Deploy note: matcherVersion 53 stales every recipe; a
 zero-request sweep recomputes the library.
 
+**Since matcher v55 (batch M56 — meat records at the right animal, cut and
+fat level; matcherVersion 54; prep48 design_v2 §2 M56, decided by the owner
+2026-10-08 under the standing authorization: Q1 (a), Q2 (i), Q3 (a), Q5
+(a), Q7; critic F2, F11, F12; zero requests).** Three rules, each landing a
+record a cached answer already holds; grams never move.
+
+- **R1 — rank-as items** (each target the named answer's top under these
+  words on snapshot 23; unflagged — the line's own cut on its own animal):
+
+| item | reads answer | under | record |
+|---|---|---|---|
+| `boneless top loin roast` (R1a; "Top loin roast is also known as strip roast", a Beef title — it led with PORK 168314) | `strip steaks` | `beef short loin ny strip steak raw` | Foundation 2727572 *Beef, short loin (NY strip steak), raw* |
+| `boneless strip steak(s)` (R1c; they read the Foundation LEAN-ONLY 746759 by its data-type bonus) | `strip steaks` | the same | 2727572 |
+| `blade steak(s)` (R1b; beef in both recipes — it led with PORK 167849) | its own | `beef shoulder top blade steak boneless separable lean and fat trimmed to 0 fat choice raw` | SR 168707 (carbonnade's top blade record) |
+| `beef brisket` (R1d; FNDDS 2705851 is a COOKED record, "1 oz yields 20 g", counted on raw weights) | its own | `beef brisket flat half boneless separable lean and fat trimmed to 0 fat choice raw` | SR 168743, the raw flat at 0" |
+| `boneless center-cut pork loin roast`, `center-cut boneless pork loin roast`, `boneless center loin pork roast` (R1e, Q5 (a); they read SR 167889, the center RIB) | `boneless center-cut pork loin roast` | `pork loin boneless raw` | Foundation 2646168 *Pork, loin, boneless, raw* |
+
+  **R1d's default is 0" when no depth is printed** (USDA publishes the flat
+  at 0" and 1/8"; three of the four brisket lines print none). A brisket
+  line printing "fat trimmed to ¼ inch" on 168743 (braised-brisket-with-
+  pomegranate|0) says it stands in, in its basis, whoever chose the record:
+  `approximate (the printed ¼-inch fat cap renders and is skimmed (step 5);
+  counted as the 0-inch trimmed flat)` (Q2 (i), F2) — the 1/8" record
+  (173128) is not read for it (Q2 (ii), deferred to a rendered-fat item).
+- **R2 — the lean-and-fat sibling** (`leanAndFatSibling`, after the
+  fresh-over-cured move, so after R1): a top whose description says
+  "separable lean only", on a line that does not say `lean`, "trimmed of
+  all fat" or "all visible fat", yields to its EXACT sibling in the same
+  answer — the description with "lean only" read as "lean and fat" or "lean
+  and fat only", case and spacing folded — at the top's confidence (the
+  owner's tie-break "the cut's lean-and-fat record over 'lean only'" read
+  past an exact tie). The blade-end pork loin roasts 169194 → 168381 (4
+  rows), the eye-round roast 746760 → 171747. R1c runs first: by R2 alone
+  the seven strip rows would land 173072 (Q1 (b), declined).
+- **R3 — a printed trim** (`trimDepthRecords`, after R2, keyed on the top's
+  record; the target a hit in the line's own answer): "fat trimmed to (⅛|¼)(
+  to (⅛|¼))? inch" on NZ 172641 → Australian 174414 *rib chop/rack roast,
+  frenched, bone-in, lean and fat, trimmed to 1/8" fat, raw*, weighed by
+  172641's AH-102 item 1364 row (`ah102Meats[174414]`, verbatim); "fat
+  caps? removed" on 2727572 → 171751 *top loin steak, boneless, lip off,
+  lean and fat, trimmed to 0" fat, choice, raw* (Q7; keyed on 2727572, so it
+  lives only under R1c, F12). Brisket pairs are not here. 174414 is a
+  search hit only (snapshot 23 holds no detail of it), so the rack reads
+  the AH-102 row ON THE HIT (`ah102MeatsOnHit`): its weight line asks no
+  detail. That ASSUMES 174414's detail publishes no refuse portion: none of
+  the 11 lamb details snapshot 23 caches does (the Australian-imported 1/8"
+  legs 172659 and 174406 included; the six SR refuse portions cached are all
+  pork chops, steaks and ribs). Every other `ah102Meats` key keeps the
+  shipped path (an SR hit fetches its detail first). Nothing asks for
+  174414's detail while it is in the set; a named live request retires the
+  assumption. Once cached, the detail is the food and FDC's own refuse
+  portion, if any, wins (the set is then inert: drop the id).
+
+Reach: 26 rows, −3,991.96 kcal per batch (design −3,991.94): R1a 1 (+599.86),
+R1b 2 (−848.21), R1c 7 (+2,185.70, ultimate-charcoal|0 then −172.78 by Q7),
+R1d 4 (−5,132.39), R1e 6 (−2,974.42), R2 5 (+1,505.92), R3 1 (+844.36).
+Unreached by design: steak-au-poivre|4 and steak-diane|0 (already
+2727572), carbonnade|0 (168707), the flat-iron rank-as (172125), the shanks
+on lean-only 169441 (no lean-and-fat shank cached; their AH-102 228 flag
+says so), the three top-sirloin roasts on lean-only 173408 (no sibling
+cached; Q6's live search first), grilled-rack-of-lamb|5 (no printed depth),
+the whole brisket on 168607, the oxtails ("¼ inch or less") and the pork
+rib roast ("¼-inch thickness").
+
+Known USDA-vs-judgment gaps (design §7 — the source stands, listed, never
+overridden): rendered and skimmed fat on long cooks (the brisket's ¼-inch
+cap, R12's short ribs; Q2 (ii)); the top loin roast's trimmed side strips
+(a grams question); the rack on two records by whether a depth is printed
+(origin and frenching differ too, F11); strip steaks at 2727572's 190.04
+against the audit's 196; thighs on Foundation 2727567 (Q4); a COUNT strip
+line would find no portion on 2727572 (none in the corpus).
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 23, main and
+`--reverse-parents` byte-identical; STEP ZERO the v54 tree reproduces the
+v54 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the
+v54 rows exactly the 26 rows differ — record, description, confidence
+(R1 rows 1.0; R2/R3 keep the top's), kcal, and pomegranate|0's basis; 0
+person rows; 26 recipes move only in kcal per serving; statuses, sections,
+buckets and holds identical. Deploy note: matcherVersion 54 stales every
+recipe; a zero-request sweep recomputes the library.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line

@@ -1161,9 +1161,18 @@ void main() {
     // relish') and the recorded 168429 is now a hit in 'leaves bibb
     // lettuce', both differing in some digit (168561 carbohydrate 35.06 /
     // 35.1; 168429 nutrient 430 102.3 / 102.0): compared 482 -> 484,
-    // differ 364 -> 366.
-    expect(compared, 484);
-    expect(differ, 366);
+    // differ 364 -> 366. Matcher v55 (batch M56) recorded from snapshot 23
+    // the 28 searches and 8 details its whole-recipe pins read (the
+    // searches named in nutrition_v55_test; 171333, 2515376, 2709197,
+    // 168607, 172125, 173408, 2705826, 2727572): each detail a recorded hit
+    // (171333 in 'rosemary', 2515376 in 'raw peanuts', 2709197 in 'dried
+    // mint', 168607 in 'beef brisket', 172125 in 'flat-iron steaks', 173408
+    // in 'top sirloin beef roast', 2705826 in 'cube steaks', 2727572 in
+    // 'english-style beef short ribs'), all eight differing in some digit
+    // (e.g. 2727572 energy 190.0448 / 190.0, 168607 protein 20.72 / 20.7):
+    // compared 484 -> 492, differ 366 -> 374.
+    expect(compared, 492);
+    expect(differ, 374);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

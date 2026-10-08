@@ -79,11 +79,14 @@ void main() {
 
   test('Y10: the seven cuts AH-102 names left the borrowed class table; '
       "FDC's own refuse classes stay", () {
+    // RE-PIN (M56 batch, v55, R3): + 174414, the rack a printed trim moves
+    // to, keyed with 172641's row verbatim (seven cuts, eight records).
     expect(ah102Meats.keys.toSet(), {
       167853,
       168675,
       169441,
       172641,
+      174414,
       172513,
       169177,
       168226,
@@ -402,7 +405,10 @@ const _pins = [
     '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml',
     0,
     '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ inch, rib bones frenched',
-    172641,
+    // RE-PIN (M56 batch, v55, R3): the printed trim moves the rack to
+    // 174414 (Australian, frenched, 1/8"), weighed by 172641's AH-102 1364
+    // row verbatim — grams and basis unchanged (was 172641).
+    174414,
     // RE-PIN (M48): 1324.49 → 1241.71 g, the printed 1¾–2 lb range at its
     // midpoint (was its top); the basis names the range.
     '1241.71',

@@ -11548,14 +11548,21 @@ Future<NutritionProviderException?> _computePass(
       final candidates = noFdcRecordItems.contains(normalized)
           ? const <FdcCandidate>[]
           : await _cachedSearch(db, lineProvider, search.answer);
-      final ranked = freshOverCured(
+      // v54 (M56): R2 then R3 after the fresh-over-cured move.
+      final ranked = trimDepthRecord(
         eaten.raw,
-        rankCandidates(
-          search.query,
-          candidates,
-          canned: namesCannedLegume(eaten.raw, normalized),
-          skinOn: impliesSkinOn(eaten.raw, normalized),
-          skinless: removesSkin(eaten.raw),
+        leanAndFatSibling(
+          eaten.raw,
+          freshOverCured(
+            eaten.raw,
+            rankCandidates(
+              search.query,
+              candidates,
+              canned: namesCannedLegume(eaten.raw, normalized),
+              skinOn: impliesSkinOn(eaten.raw, normalized),
+              skinless: removesSkin(eaten.raw),
+            ),
+          ),
         ),
       );
       if (ranked.isEmpty) {
@@ -12477,6 +12484,104 @@ List<RankedCandidate> freshOverCured(
         ];
 }
 
+/// v54 (batch M56 R2, prep48 design_v2 §2): [ranked] with, when its top is
+/// a "separable lean only" record for a line that does not ask for lean
+/// (`lean`, "trimmed of all fat", "all visible fat"), the top's EXACT
+/// lean-and-fat sibling in the same answer first — its description with
+/// "lean only" read as "lean and fat" or "lean and fat only" (FDC writes
+/// both), case and spacing folded — carrying the top's confidence: the same
+/// cut, trim and grade — what separates them is the sibling's extra
+/// words ("and fat", 0.008 on the SR blade-end pork pair) or Foundation's
+/// data-type bonus (the eye round, 0.046). The owner's tie-break ("the
+/// cut's lean-and-fat record over 'lean only'", `tieRank`) read past an
+/// exact tie: "1 (2½-pound) boneless blade-end pork loin roast"
+/// (maple-glazed-pork-roast|4) 169194 → 168381.
+/// After [freshOverCured]; rank-as (R1) has already chosen the answer, so
+/// R1c's strip steaks never reach here on 746759.
+List<RankedCandidate> leanAndFatSibling(
+  String raw,
+  List<RankedCandidate> ranked,
+) {
+  if (ranked.isEmpty) {
+    return ranked;
+  }
+  String fold(String text) =>
+      text.toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  final top = fold(ranked.first.candidate.description);
+  if (!top.contains('separable lean only') ||
+      RegExp(
+        r'\blean\b|trimmed of all fat|all visible fat',
+      ).hasMatch(raw.toLowerCase())) {
+    return ranked;
+  }
+  final siblings = {
+    top.replaceFirst('lean only', 'lean and fat'),
+    top.replaceFirst('lean only', 'lean and fat only'),
+  };
+  for (final candidate in ranked.skip(1)) {
+    if (siblings.contains(fold(candidate.candidate.description))) {
+      return _movedFirst(ranked, candidate);
+    }
+  }
+  return ranked;
+}
+
+/// v54 (batch M56 R3, prep48 design_v2 §2): a trim the line PRINTS that its
+/// record does not name, read on the cached record that does — record-keyed
+/// (phrase → {top's record → target}), the target a hit in the line's own
+/// answer, so zero requests (never a [skinOffFood] entry, which fetches a
+/// detail). "fat trimmed to ⅛ to ¼ inch, rib bones frenched" (roast-rack-
+/// of-lamb|0): NZ 172641 "rack - fully frenched" → Australian 174414 "rib
+/// chop/rack roast, frenched, bone-in, …, trimmed to 1/8" fat, raw", the
+/// only cached raw frenched rack at a stated depth (¼ inch reads USDA's
+/// deepest, 1/8"; origin and frenching differ too — design §7, F11), its
+/// AH-102 yield keyed in [ah102Meats]. Q7: "fat caps removed" (ultimate-
+/// charcoal-grilled-steaks|0) on R1c's 2727572 → 171751 "top loin steak,
+/// boneless, lip off, …, trimmed to 0" fat, choice, raw". Brisket pairs are
+/// NOT here (Q2 (ii) deferred).
+final List<(RegExp, Map<int, int>)> trimDepthRecords = [
+  (RegExp('fat trimmed to (⅛|¼)( to (⅛|¼))? inch'), {172641: 174414}),
+  (RegExp('fat caps? removed'), {2727572: 171751}),
+];
+
+/// [ranked] with [trimDepthRecords]' target first when the line prints its
+/// phrase and the top is its key; after [leanAndFatSibling].
+List<RankedCandidate> trimDepthRecord(
+  String raw,
+  List<RankedCandidate> ranked,
+) {
+  if (ranked.isEmpty) {
+    return ranked;
+  }
+  final line = raw.toLowerCase();
+  for (final (phrase, pairs) in trimDepthRecords) {
+    final target = pairs[ranked.first.candidate.fdcId];
+    if (target == null || !phrase.hasMatch(line)) {
+      continue;
+    }
+    for (final candidate in ranked.skip(1)) {
+      if (candidate.candidate.fdcId == target) {
+        return _movedFirst(ranked, candidate);
+      }
+    }
+  }
+  return ranked;
+}
+
+/// [ranked] with [moved] first, carrying the top's confidence (R2, R3).
+List<RankedCandidate> _movedFirst(
+  List<RankedCandidate> ranked,
+  RankedCandidate moved,
+) => [
+  RankedCandidate(
+    candidate: moved.candidate,
+    confidence: ranked.first.confidence,
+    docked: moved.docked,
+  ),
+  for (final c in ranked)
+    if (!identical(c, moved)) c,
+];
+
 /// A record ranked just below [best] — the same food in another form
 /// ([sameFoodAsTop]) — to take a below-gate pick's row when [best]'s detail
 /// is uncached and gives [line] no grams while the twin's cached detail
@@ -12602,7 +12707,11 @@ bool _weightReadsPortions(
 ) =>
     withoutPortions?.source == GramSource.weight &&
     (food.dataType == 'SR Legacy' &&
-            ((edibleYieldOn && buysRefuse(raw)) ||
+            // v54 (M56 R3): the rack's 174414 reads its AH-102 row on
+            // the hit ([ah102MeatsOnHit]) — no detail asked.
+            ((edibleYieldOn &&
+                    buysRefuse(raw) &&
+                    !ah102MeatsOnHit.contains(food.fdcId)) ||
                 (cannedDrained && drainsCan(raw)) ||
                 (wholeBirdYieldOn && countsGameHens(raw))) ||
         // v39 (Y2): FNDDS's "1 lobster" portion.
@@ -13426,14 +13535,20 @@ Future<List<RankedCandidate>> candidatesForLine(
   } else {
     candidates = await _cachedSearch(db, provider, search.answer);
   }
-  return freshOverCured(
+  return trimDepthRecord(
     line.raw,
-    rankCandidates(
-      search.query,
-      candidates,
-      canned: namesCannedLegume(line.raw, normalized),
-      skinOn: impliesSkinOn(line.raw, normalized),
-      skinless: removesSkin(line.raw),
+    leanAndFatSibling(
+      line.raw,
+      freshOverCured(
+        line.raw,
+        rankCandidates(
+          search.query,
+          candidates,
+          canned: namesCannedLegume(line.raw, normalized),
+          skinOn: impliesSkinOn(line.raw, normalized),
+          skinless: removesSkin(line.raw),
+        ),
+      ),
     ),
   ).take(8).toList();
 }
@@ -13526,11 +13641,27 @@ String? gramBasisFor(
     fdcId: row.fdcId,
     description: row.description,
   );
+  // v54 (M56 R1d, Q2 (i)): the printed trim the 0-inch flat stands in for.
+  final standIn = trimStandInFlagOf(weighed.raw, row.fdcId);
+  final stood = standIn == null ? '' : ' · $standIn';
   return approximation
       ? '$basis · approximation (counted as ${row.description})'
-            '$flagged$m52Flag'
-      : '$basis$flagged$m52Flag';
+            '$stood$flagged$m52Flag'
+      : '$basis$stood$flagged$m52Flag';
 }
+
+/// v54 (batch M56 R1d; the owner's 2026-10-08 decision Q2 (i), critic F2):
+/// the stand-in a brisket line printing a ¼-inch fat cap counts on — the
+/// raw flat at 0" (168743, R1d's record; no ¼" brisket record is cached) —
+/// says so, whoever chose the record (the record relation is the stand-in,
+/// as [isApproximation]'s). 0224's braise skims the rendered fat (step 5).
+/// ponytail: keyed on the one corpus line's words, its step number that
+/// recipe's; a second printed-depth brisket line needs its own steps read.
+String? trimStandInFlagOf(String raw, int? fdcId) =>
+    fdcId == 168743 && raw.toLowerCase().contains('fat trimmed to ¼ inch')
+    ? 'approximate (the printed ¼-inch fat cap renders and is skimmed '
+          '(step 5); counted as the 0-inch trimmed flat)'
+    : null;
 
 String? _gramBasis(
   SaltDatabase db,
