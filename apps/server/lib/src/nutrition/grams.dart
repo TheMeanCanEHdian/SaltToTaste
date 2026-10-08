@@ -1943,8 +1943,9 @@ boneInClassYields = {
   // on the class path, Y4).
   171447: _chicken, 2727566: _chicken, 2727567: _chicken, 2727568: _chicken,
   2727569: _chicken, 172378: _chicken, 2646171: _chicken, 173619: _chicken,
-  // No turkey part figure exists: the chicken's.
-  171093: _turkey, 171533: _turkey, 171497: _turkey, 174518: _turkey,
+  // No turkey part figure exists: the chicken's. (v59, Y: the bone-in
+  // breast 171093 reads [ah102Parts]' derived 'turkey breast'.)
+  171533: _turkey, 171497: _turkey, 174518: _turkey,
   // INTERIM (Q1b): the chicken's. The live step (plan §3 requests 4–9,
   // 2026-10-05) found no turkey yield: per ready-to-cook pound the breast
   // 171093 is 146 g, the leg 171493 105 g, the wing 171495 33 g, but FDC
@@ -2002,9 +2003,13 @@ const _bony = (
 /// class (the only class boned); the whole turkey takes the dressing ratio
 /// for birds of 12 lb and over (ready to cook without / with neck and
 /// giblets, 78 of 85) × the carcass row 2592. Absent: the whole chicken
-/// (Y4: FDC's own ready-to-cook 0.608 / 0.434 stay) and the bone-in turkey
-/// breast (Y7, deferred: 2593's breast carries no back, ATK's does — 171093
-/// keeps the interim class figure).
+/// (Y4: FDC's own ready-to-cook 0.608 / 0.434 stay). v59 (M60 Y, the
+/// owner's Q14 (a), closing Y7): the bone-in turkey BREAST is ATK's retail
+/// cut — the breast with its upper back (rib) attached, which every recipe
+/// cuts away or leaves uncarved — so its figure is DERIVED from 2591's
+/// carcass shares (breast 33, rib 10) × 2593's breast meat and skin 87 % /
+/// meat 78 %: the breast's part of the breast-plus-rib weight; the back is
+/// not counted.
 const Map<String, Ah102Part> ah102Parts = {
   'chicken breast': (
     skin: 0.74,
@@ -2115,6 +2120,20 @@ const Map<String, Ah102Part> ah102Parts = {
         'USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster '
         'class → meat 64 % (62–65)',
   ),
+  'turkey breast': (
+    skin: 33 / 43 * 0.87,
+    skinFlag:
+        'derived from USDA AH-102 items 2591 and 2593, fryer-roaster class: '
+        "a breast sold with its upper back (rib) attached — the breast's "
+        'meat and skin, 87 % (85–89) of its 33 of 43 parts, 66.8 %; the back '
+        'is not counted',
+    meat: 33 / 43 * 0.78,
+    meatFlag:
+        'derived from USDA AH-102 items 2591 and 2593, fryer-roaster class: '
+        "a breast sold with its upper back (rib) attached — the breast's "
+        'meat, 78 % (77–81) of its 33 of 43 parts, 59.9 %; the back is not '
+        'counted',
+  ),
   'turkey wing': (
     skin: 0.61,
     skinFlag:
@@ -2140,7 +2159,7 @@ typedef Ah102Part = ({
 /// the RECORD decides (Y13): a meat-only record reads the part's meat
 /// figure, a meat-and-skin record meat and skin, whoever put the row there
 /// (a person's pick of 2646171 for a thigh whose skin is eaten reads meat).
-/// 171093 (the bone-in turkey breast) is not here: Y7 deferred.
+/// v59 (M60 Y): 171093, the bone-in turkey breast, meat and skin.
 const Map<int, ({String species, bool meatOnly})> ah102Records = {
   171447: (species: 'chicken', meatOnly: false),
   2727566: (species: 'chicken', meatOnly: false),
@@ -2153,6 +2172,7 @@ const Map<int, ({String species, bool meatOnly})> ah102Records = {
   171052: (species: 'chicken', meatOnly: true),
   2646170: (species: 'chicken', meatOnly: true),
   171081: (species: 'turkey', meatOnly: false),
+  171093: (species: 'turkey', meatOnly: false),
   171533: (species: 'turkey', meatOnly: false),
   174518: (species: 'turkey', meatOnly: true),
   171497: (species: 'turkey', meatOnly: true),
@@ -2749,6 +2769,7 @@ GramResolution? resolveGrams({
   String? skinKept,
   bool shellEaten = false,
   bool canLiquidEaten = false,
+  bool stepsPeel = false,
 }) => _resolveLine(
   amounts: amounts,
   food: food,
@@ -2760,6 +2781,7 @@ GramResolution? resolveGrams({
   skinKept: skinKept,
   shellEaten: shellEaten,
   canLiquidEaten: canLiquidEaten,
+  stepsPeel: stepsPeel,
 );
 
 GramResolution? _resolveLine({
@@ -2773,6 +2795,7 @@ GramResolution? _resolveLine({
   required String? skinKept,
   required bool shellEaten,
   required bool canLiquidEaten,
+  required bool stepsPeel,
 }) {
   final parsed = raw == null
       ? amounts
@@ -3069,9 +3092,10 @@ GramResolution? _resolveLine({
   // v43 (Y8, the owner's 2026-10-06 ruling): a produce weight printed in
   // the line's HEAD with a prep word in its tail counts AH-102's prep yield
   // ([produceYields]); a count, a trailing prepared weight, "unpeeled" and
-  // "¼ of peels reserved" never.
+  // "¼ of peels reserved" never. v59 (M60 P7a): or a step pares it
+  // ([stepsPeel], the engine's step read).
   final prep = first?.source == GramSource.weight && raw != null
-      ? produceYieldOf(food, raw)
+      ? produceYieldOf(food, raw, stepsPeel: stepsPeel)
       : null;
   // v43 (Y9): a counted scallion's part words ([scallionPartOf]).
   final scallion = first?.source == GramSource.piece && raw != null
@@ -3762,8 +3786,15 @@ const _pear = [
 /// weight in its HEAD (before its first top-level comma — the complement of
 /// [_tailAfterComma]; "2 carrots, peeled … (3 ounces)" weighs a prepared
 /// cup, not a purchase) and names the prep word in its tail; never when it
-/// keeps peels ("¼ of peels reserved"). Null otherwise.
-({double share, String flag})? produceYieldOf(FdcFood? food, String raw) {
+/// keeps peels ("¼ of peels reserved"). v59 (M60 P7a, pre-Q18): a tail
+/// naming no prep word reads the record's 'peeled' figure when
+/// [stepsPeel] (the engine's `stepsPeelIn`: a step pares the raw item),
+/// its flag saying so. Null otherwise.
+({double share, String flag})? produceYieldOf(
+  FdcFood? food,
+  String raw, {
+  bool stepsPeel = false,
+}) {
   final figures = produceYields[food?.fdcId];
   if (figures == null ||
       RegExp(r'\bpeels? reserved\b', caseSensitive: false).hasMatch(raw)) {
@@ -3783,7 +3814,16 @@ const _pear = [
           : (share: figure.share, flag: figure.flag);
     }
   }
-  return null;
+  // A line that says "unpeeled" keeps the peel whatever a step says (Y8's
+  // "never").
+  if (!stepsPeel ||
+      RegExp(r'\bunpeeled\b', caseSensitive: false).hasMatch(raw)) {
+    return null;
+  }
+  final peeled = figures.where((f) => f.words == 'peeled').firstOrNull;
+  return peeled == null
+      ? null
+      : (share: peeled.share, flag: '${peeled.flag}; the steps peel it');
 }
 
 /// Whether [tail], after a part clause ending at [end], names a leek's or

@@ -490,7 +490,9 @@ void main() {
         // v39 (Y1): the turkey-parts class yield (gross until v38).
         // RE-PIN (M48): 1932.00 → 1794.00 g, the printed 6–7 lb range at its
         // midpoint (was its top); the basis names the range.
-        (171093, '1794.00'),
+        // RE-PIN (M60 batch, v59): 1794.00 → 1968.54 g, AH-102's derived
+        // bone-in turkey breast 66.77 % (2591 × 2593) for the class 0.608.
+        (171093, '1968.54'),
         (2709798, '1.00'),
       ],
     );

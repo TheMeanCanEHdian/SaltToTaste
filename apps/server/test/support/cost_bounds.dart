@@ -97,6 +97,11 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:baconPan',
       // v53 (M52 Q24 b): the shallow fry of a coated food.
       'memo:shallowFries',
+      // v59 (M60, verifier 2 D1/D2): rule B1's kept fat and the bacon that
+      // drips; each sentence's paring and cooking acts.
+      'memo:baconKept',
+      'memo:baconDrips',
+      'memo:peelActs',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first
@@ -129,6 +134,8 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:namedAfterStrain',
       'memo:drainedBeforeStrain',
       'memo:partition',
+      // v59 (M60 P7a, verifier 2 D2): a head's paring reading.
+      'memo:paredIn',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,

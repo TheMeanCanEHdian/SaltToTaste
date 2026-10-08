@@ -782,7 +782,22 @@ const Map<String, String> _synonyms = {
 /// one); the fried cauliflower's read uptake scales to the
 /// carbohydrate its ingredient group's batter holds against FNDDS
 /// 2710042's (c_b 0.40), flagged "derived".
-const int matcherVersion = 57;
+///
+/// v58 (the Matcher v59 commit, batch M60 — the bone-in turkey breast, a
+/// peel written in the steps, bacon that drips; prep48 design_v2 §2 M60
+/// Y + P7a + P7b, the owner's Q14 (a) and Q15 (a) and critic F8 and F15
+/// under the 2026-10-07 standing authorization; zero requests): the
+/// bone-in turkey breast 171093 reads a derived AH-102 figure (items 2591
+/// and 2593: the breast's meat and skin, 87 % of its 33 of 43
+/// breast-plus-rib parts, 66.8 %; the back not counted) instead of the
+/// chicken's class figure; a produce weight whose tail names no prep word
+/// takes the record's 'peeled' yield when a step sentence begins by paring
+/// the item raw (engine `stepsPeelIn`: no smaller count, no earlier
+/// sentence cooking it), flagged "the steps peel it"; bacon B1 leaves
+/// unrendered that a step lays over or wraps round a food that then bakes,
+/// roasts, grills or broils is B1's two parts with no fat kept (engine
+/// `_baconDrips`), flagged "the fat drips off the food".
+const int matcherVersion = 58;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

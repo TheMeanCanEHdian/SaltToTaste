@@ -1017,12 +1017,21 @@ void main() {
           ('quiche-lorraine', 1, 226.80, 'weight'), // moved out, fat kept
           ('oven-fried-bacon', 0, 288.00, 'piece'), // no steps
           ('foolproof-spaghetti-carbonara', 0, 192.00, 'piece'),
-          ('grilled-bacon-wrapped-scallops', 0, 288.00, 'piece'),
         ]) {
           final row = rendered(v40(slug, position, raw, source));
           expect(row.parts, isNull, reason: slug);
           expect(row.grams, raw, reason: slug);
         }
+        // RE-PIN (M60 batch, v59): the scallops' bacon, wrapped round them
+        // and grilled, drips (P7b): B1's cooked part, no fat kept.
+        expect(
+          partsOf(
+            rendered(
+              v40('grilled-bacon-wrapped-scallops', 0, 288, 'piece'),
+            ).parts,
+          ),
+          [(fdcId: 168322, grams: 95.04), (fdcId: 172345, grams: 0.0)],
+        );
         // The record gate: salt pork (168287) never renders.
         expect(
           rendered(

@@ -883,12 +883,17 @@ void main() {
       // v39 (Y1): the turkey-parts class figure (the chicken's 0.608),
       // never the record's own breast share of the bird (0.322).
       // RE-PIN (M48): the "(5- to 7-pound)" breast at its midpoint, 6 lb.
-      expect(breast.grams, closeTo(6 * 453.592 * 276 / 453.59237, 0.01));
+      // RE-PIN (M60 batch, v59): AH-102's derived bone-in turkey breast
+      // (2591 × 2593: 33 of 43 × 87 %) for the class 0.608 — still never
+      // the record's own breast share of the bird.
+      expect(breast.grams, closeTo(6 * 453.592 * 33 / 43 * 0.87, 0.01));
       expect(
         breast.basis,
         endsWith(
-          '· approximate (yield of turkey parts (the chicken figure) from '
-          'FDC 171447)',
+          '· approximate (derived from USDA AH-102 items 2591 and 2593, '
+          'fryer-roaster class: a breast sold with its upper back (rib) '
+          "attached — the breast's meat and skin, 87 % (85–89) of its 33 of "
+          '43 parts, 66.8 %; the back is not counted)',
         ),
       );
       // Nor for a whole bird matched to the part record (Classic Roast
@@ -901,7 +906,11 @@ void main() {
       )!;
       // v39 (Y1): the part record's class figure, not its breast share.
       // RE-PIN (M48): 13 lb, the midpoint (was 14).
-      expect(turkey.grams, closeTo(13 * 453.592 * 276 / 453.59237, 0.01));
+      // RE-PIN (M60 batch, v59): 171093 is now a turkey record of
+      // ah102Records, so a whole-bird line on it reads AH-102's whole
+      // turkey (78 of 85 × 2592's 71 %), as on 171081 — still never the
+      // record's breast share.
+      expect(turkey.grams, closeTo(13 * 453.592 * 78 / 85 * 0.71, 0.01));
     });
 
     test('a yield or drain detail is fetched only for SR Legacy: a '

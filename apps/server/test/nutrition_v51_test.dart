@@ -134,17 +134,19 @@ _rows = [
     _ah102,
   ),
   // Slice (the v40 amendment: raw-counted rows weigh the sourced slice)
+  // RE-PIN (M60 batch, v59): the scallops' bacon, wrapped round them and
+  // grilled, now drips (P7b): 336 g raw → B1's cooked part, no fat kept.
   (
     '0652-grilled-bacon-wrapped-scallops.yaml',
     null,
     0,
     '12 slices bacon',
     168277,
-    '336.00',
+    '110.88',
     null,
-    null,
-    '12 slice × 28 g each',
-    null,
+    '168322:110.88|172345:0.00',
+    '336 g raw → 111 g cooked bacon + 0.0 g bacon grease kept in the pan',
+    'approximate (USDA AH-102 item 1981: bacon, sliced, all methods → cooked 33 % (18–43); the fat drips off the food)',
   ),
   (
     '0733-oven-fried-bacon.yaml',
@@ -491,7 +493,8 @@ void main() {
     // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
     // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
     // RE-PIN (M59 batch, v58): matcherVersion 57 (was 56).
-    expect(matcherVersion, 57);
+    // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
+    expect(matcherVersion, 58);
   });
 
   test(

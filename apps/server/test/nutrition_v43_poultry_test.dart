@@ -167,10 +167,14 @@ void main() {
       expect(ah102Parts['chicken pieces']!.skin, closeTo(0.6983, 1e-4));
       expect(ah102Parts['chicken pieces']!.meat, closeTo(0.6049, 1e-4));
       expect(ah102Parts['turkey whole']!.skin, closeTo(0.6515, 1e-4));
-      // Deferred (Y7) and kept (Y4): no figure, the record's own.
-      expect(ah102Parts.containsKey('turkey breast'), isFalse);
+      // Kept (Y4): no figure, the record's own.
       expect(ah102Parts.containsKey('chicken whole'), isFalse);
-      expect(ah102Records.containsKey(171093), isFalse);
+      // RE-PIN (M60 batch, v59): Y7 closed — the bone-in turkey breast is
+      // derived from 2591's breast 33 of the breast-plus-rib 43 × 2593's
+      // 87 % (meat 78 %); 171093 is a meat-and-skin turkey record.
+      expect(ah102Parts['turkey breast']!.skin, closeTo(0.6677, 1e-4));
+      expect(ah102Parts['turkey breast']!.meat, closeTo(0.5986, 1e-4));
+      expect(ah102Records[171093], (species: 'turkey', meatOnly: false));
     },
   );
 }
@@ -470,7 +474,9 @@ const List<(String, int, String, int, String, String)> _pins = [
     171093,
     // RE-PIN (M48): 2208.00 → 2070.00 g, the printed 7–8 lb range at its
     // midpoint (was its top); the basis names the range.
-    '2070.00',
-    'from the printed weight (7–8 lb, the midpoint) × 0.61 edible · approximate (yield of turkey parts (the chicken figure) from FDC 171447)',
+    // RE-PIN (M60 batch, v59): 2070.00 → 2271.39 g, AH-102's derived
+    // bone-in turkey breast 66.77 % (2591 × 2593), Y7 closed.
+    '2271.39',
+    "from the printed weight (7–8 lb, the midpoint) × 0.67 edible · approximate (derived from USDA AH-102 items 2591 and 2593, fryer-roaster class: a breast sold with its upper back (rib) attached — the breast's meat and skin, 87 % (85–89) of its 33 of 43 parts, 66.8 %; the back is not counted)",
   ),
 ];

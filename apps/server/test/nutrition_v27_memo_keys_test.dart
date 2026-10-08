@@ -113,6 +113,8 @@ List<String> answers(
       o.grams,
       o.source,
       o.hold,
+      // v59 (M60 P7a): read once per head (closer 2, verifier 2 D2).
+      stepsPeelIn(r, line),
     ].join(' | ');
   }
   return out;

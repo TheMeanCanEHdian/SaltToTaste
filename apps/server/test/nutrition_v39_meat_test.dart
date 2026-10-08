@@ -341,9 +341,11 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     171093,
     // RE-PIN (M48): 2208.00 → 2070.00 g, the printed 7–8 lb range at its
     // midpoint (was its top); the basis names the range.
-    '2070.00',
+    // RE-PIN (M60 batch, v59): 2070.00 → 2271.39 g, AH-102's derived
+    // bone-in turkey breast 66.77 % (2591 × 2593) for the class 0.608.
+    '2271.39',
     'counted',
-    'from the printed weight (7–8 lb, the midpoint) × 0.61 edible · approximate (yield of turkey parts (the chicken figure) from FDC 171447)',
+    "from the printed weight (7–8 lb, the midpoint) × 0.67 edible · approximate (derived from USDA AH-102 items 2591 and 2593, fryer-roaster class: a breast sold with its upper back (rib) attached — the breast's meat and skin, 87 % (85–89) of its 33 of 43 parts, 66.8 %; the back is not counted)",
   ),
   (
     '0222-best-prime-rib.yaml',

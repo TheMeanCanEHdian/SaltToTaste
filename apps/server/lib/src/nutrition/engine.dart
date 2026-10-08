@@ -6442,6 +6442,92 @@ bool canLiquidEatenIn(Recipe recipe, IngredientLine line) {
   return recipe.steps.any((step) => said.hasMatch(step.text.toLowerCase()));
 }
 
+/// v59 (M60 P7a, prep48 design_v2 §2; pre-Q18): whether [recipe]'s steps
+/// pare [line]'s item raw — a sentence that BEGINS with the paring act
+/// ("Peel, halve, and core pears."; "Using sharp vegetable peeler or chef's
+/// knife, remove skin … from squash"), names the line's head noun, prints
+/// no count of it smaller than the line's ("Peel, core, and cut 1 apple"
+/// pares one of 7 apples; a line printing no count has none to compare, so
+/// any printed count holds it back), and follows no sentence that cooks it
+/// (the mashed potatoes are peeled after the simmer — AH-102 prints no
+/// cooked-pare row). [produceYieldOf] reads it only when the line's tail
+/// names no prep word. The noun is named as every detector names a head
+/// ([_names]: a "-y" head by its "-ies" plural, never after "garlic ") and
+/// counted in the same forms ([_formsOf]).
+bool stepsPeelIn(Recipe recipe, IngredientLine line) {
+  final head = headNounOf(normalizeItem(lineItemOf(line)));
+  if (head == null) {
+    return false;
+  }
+  final count = [
+    for (final a in line.amounts)
+      if (a.measure == Measure.count) parseQuantity(a.quantity),
+  ].firstOrNull;
+  final pared = _paredIn(recipe, head);
+  return pared.always ||
+      (count != null && pared.most != null && pared.most! >= count);
+}
+
+/// [stepsPeelIn]'s reading of [head], whatever the line's count: in step
+/// order, up to the first sentence naming it that cooks, a paring sentence
+/// naming it with no count of it pares every line (`always`); one printing
+/// counts pares a line of at most the largest (`most`). Once per head
+/// (RULE C, v59 verifier 2 D2: every sentence re-read per line, 400 lines
+/// 17.7 s a compute at the caps): the head's sentences found by the step
+/// index ([_naming], O(text) over all heads), each sentence's acts read
+/// once ([_peelActs]).
+({bool always, double? most}) _paredIn(Recipe recipe, String head) {
+  final index = _stepIndexOf(recipe);
+  // Key: head — the noun named and counted.
+  return index.memo(('paredIn', head), () {
+    final acts = _peelActs(index);
+    final counted = RegExp(
+      '(?<![\\w$vulgarFractionChars])($_baconN)\\s+(?:[a-z-]+\\s+){0,2}?'
+      '\\b(?:${_formsOf(head).map(RegExp.escape).join('|')})\\b',
+    );
+    double? most;
+    for (final at in _naming(recipe, head)) {
+      final act = acts[at.$1][at.$2];
+      if (act & 1 != 0) {
+        final n = counted.firstMatch(index.sentence(at))?[1];
+        if (n == null) {
+          return (always: true, most: most);
+        }
+        final printed = parseQuantity(_nWords[n] ?? n);
+        if (printed != null && (most == null || printed > most)) {
+          most = printed;
+        }
+      }
+      if (act & 2 != 0) {
+        break;
+      }
+    }
+    return (always: false, most: most);
+  });
+}
+
+/// Each sentence's P7a acts by (step, sentence) — 1 it pares
+/// ([_paresRaw]), 2 it cooks ([_cooksItem]) — read once per recipe.
+List<List<int>> _peelActs(_StepIndex index) => index.memo(#peelActs, () {
+  return [
+    for (final step in index.sentences)
+      [
+        for (final s in step)
+          (_paresRaw.hasMatch(s) ? 1 : 0) | (_cooksItem.hasMatch(s) ? 2 : 0),
+      ],
+  ];
+});
+
+/// P7a's paring act at the start of a sentence ([stepsPeelIn]).
+final RegExp _paresRaw = RegExp(
+  r'^\s*(?:using [^,]+,\s*)?(?:peel|pare|remove (?:the )?skin)\b',
+);
+
+/// P7a's guard: a sentence that cooks (with the item named) ([stepsPeelIn]).
+final RegExp _cooksItem = RegExp(
+  r'\b(?:boil|simmer|steam|roast|bake|baking|microwav|cook)\w*',
+);
+
 /// Whether [recipe] discards the skin of [line]'s cut: the line says "skin
 /// removed" or "skinned", or a step sentence removes or discards the skin
 /// ("remove and discard the browned chicken skin", "discard skin", "peel
@@ -9829,11 +9915,17 @@ final RegExp _baconVeto = RegExp(
 /// A kept part as written — a [_baconN] quantity and a unit word — parsed.
 Amount _keptAmount(String quantity, String unit) => Amount(
   measure: Measure.volume,
-  quantity:
-      const {'one': '1', 'two': '2', 'three': '3', 'four': '4'}[quantity] ??
-      quantity,
+  quantity: _nWords[quantity] ?? quantity,
   unit: unit.replaceFirst(RegExp(r's$'), ''),
 );
+
+/// [_baconN]'s words as digits.
+const Map<String, String> _nWords = {
+  'one': '1',
+  'two': '2',
+  'three': '3',
+  'four': '4',
+};
 
 /// The mL of fat [recipe]'s steps keep in the pan, or null when no ONE step
 /// lifts the meat out AND cuts the fat to a stated amount (B1's signal).
@@ -9841,10 +9933,13 @@ double? _baconKeptMl(Recipe recipe) => _baconKept(recipe)?.ml;
 
 /// [_baconKeptMl]'s reading with where it stands — the step, the sentence
 /// of the kept amount, the amount as written ("2 tablespoons", a range's
-/// "⅓ cup") — for the oil sharing the pan ([_baconPanOf], v51).
+/// "⅓ cup") — for the oil sharing the pan ([_baconPanOf], v51). Once per
+/// recipe: it reads the steps alone (RULE C, v59 verifier 2 D1: read per
+/// bacon row by [withRenderedBacon] on every compute, 5.3 s of a 400-line
+/// compute at the caps).
 ({double ml, int step, int sentence, String text})? _baconKept(
   Recipe recipe,
-) {
+) => _stepIndexOf(recipe).memo(#baconKept, () {
   ({double ml, int step, int sentence, String text})? at(
     int step,
     String text,
@@ -9887,7 +9982,127 @@ double? _baconKeptMl(Recipe recipe) => _baconKept(recipe)?.ml;
     }
   }
   return null;
+});
+
+/// v59 (M60 P7b, the owner's Q15 (a); pre-Q18): bacon B1 leaves unrendered
+/// ([_baconKept] null) that cooks ON a food — a step sentence arranges,
+/// lays, drapes or shingles the bacon over something other than a towel,
+/// plate, sheet, rack or pan ("arrange the bacon slices, crosswise, over
+/// the loaf", 0306), or wraps a food with or in bacon ("wrap with 1 slice
+/// bacon", 0652), and a LATER sentence bakes, roasts, grills or broils:
+/// the fat drips off the food, so rule B1 keeps none ([withRenderedBacon]).
+/// Once per recipe: it reads the steps alone (RULE C, v59 verifier 2 D1:
+/// read per bacon row on every compute and per drip row on every matches
+/// GET).
+bool _baconDrips(Recipe recipe) => _stepIndexOf(recipe).memo(#baconDrips, () {
+  if (_baconKept(recipe) != null) {
+    return false;
+  }
+  final sentences = _stepIndexOf(recipe).allSentences;
+  for (final (i, sentence) in sentences.indexed) {
+    final over = _baconLaidOver(sentence);
+    if ((over != null && !_baconOverNoFood.hasMatch(over)) ||
+        _baconWraps(sentence)) {
+      return sentences.skip(i + 1).any(_baconCooksOn.hasMatch);
+    }
+  }
+  return false;
+});
+
+/// P7b's lay ([_baconDrips]): what a laid bacon lies over — a lay verb,
+/// then "bacon" with no period between, then "over" with no period or
+/// semicolon after the bacon; the object the first such "over" takes, up to
+/// a comma, period or semicolon — what
+/// `\b(?:arrang…|lay…|drap…|shingl…)\b[^.]*?\bbacon\b[^.;]*?\bover\s+([^,.;]+)`
+/// captured on its first match. One pass over the sentence's tokens (RULE
+/// C, v59 verifier 2 D1: that regex's two lazy gaps re-read the sentence
+/// from each verb and each bacon, 7 s a compute at the caps); the first
+/// "over" a laid bacon reaches is that match's (its leftmost verb reaches
+/// every bacon a later verb of the same period-free run reaches).
+String? _baconLaidOver(String sentence) {
+  var laid = false;
+  var bacon = false;
+  for (final m in _baconLayToken.allMatches(sentence)) {
+    switch (m[0]!) {
+      case '.':
+        laid = bacon = false;
+      case ';':
+        bacon = false;
+      case 'bacon':
+        bacon = bacon || laid;
+      case 'over':
+        if (bacon) {
+          return _baconOverObject.matchAsPrefix(sentence, m.start)![1];
+        }
+      default:
+        laid = true;
+    }
+  }
+  return null;
 }
+
+/// [_baconLaidOver]'s tokens: a period or semicolon, a lay verb, "bacon",
+/// or an "over" with an object.
+final RegExp _baconLayToken = RegExp(
+  r'[.;]|\b(?:(?:arrang(?:e[sd]?|ing)|lay(?:s|ing)?|drap(?:e[sd]?|ing)|'
+  r'shingl(?:e[sd]?|ing)|bacon)\b|over(?=\s+[^,.;]))',
+);
+
+/// The object of [_baconLaidOver]'s "over".
+final RegExp _baconOverObject = RegExp(r'over\s+([^,.;]+)');
+
+/// P7b's lay over no food: a towel, plate, sheet, rack or pan.
+final RegExp _baconOverNoFood = RegExp(
+  r'\b(?:towels?|plates?|sheets?|racks?|pans?)\b',
+);
+
+/// P7b's wrap ([_baconDrips]): a food wrapped with or in bacon — a "wrap"
+/// word, then, with no period between, "with" or "in" and at most three
+/// words before "bacon": what
+/// `\bwrap(?:s|ped|ping)?\b[^.]*?\b(?:with|in)\s+(?:[\w-]+\s+){0,3}?bacon\b`
+/// matched. One pass over the sentence's tokens (RULE C, v59 verifier 2
+/// D1: the lazy gap re-read the sentence from each "wrap"), each "with" or
+/// "in" after a wrap read at most four words on.
+bool _baconWraps(String sentence) {
+  var wrap = false;
+  for (final m in _baconWrapToken.allMatches(sentence)) {
+    if (m[0] == '.') {
+      wrap = false;
+    } else if (m[0]!.startsWith('wrap')) {
+      wrap = true;
+    } else if (wrap &&
+        _baconWrapTail.matchAsPrefix(sentence, m.start) != null) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// [_baconWraps]' tokens: a period, a "wrap" word, a "with" or "in".
+final RegExp _baconWrapToken = RegExp(
+  r'\.|\b(?:wrap(?:s|ped|ping)?\b|(?:with|in)(?=\s))',
+);
+
+/// What [_baconWraps]' "with" or "in" wraps in: bacon, within three words.
+final RegExp _baconWrapTail = RegExp(
+  r'(?:with|in)\s+(?:[\w-]+\s+){0,3}?bacon\b',
+);
+
+/// [_baconLaidOver] and [_baconWraps] on [sentence] (RULE C pins).
+@visibleForTesting
+(String?, bool) baconLayWrapForTest(String sentence) =>
+    (_baconLaidOver(sentence), _baconWraps(sentence));
+
+/// P7b's later cooking: baked, roasted, grilled or broiled.
+final RegExp _baconCooksOn = RegExp(
+  r'\b(?:bak(?:e[sd]?|ing)|roast(?:s|ed|ing)?|grill(?:s|ed|ing)?|'
+  r'broil(?:s|ed|ing)?)\b',
+);
+
+/// P7b's flag: [baconYieldFlag] with the drip ([_baconDrips]).
+const String baconDripFlag =
+    'approximate (USDA AH-102 item 1981: bacon, sliced, all methods → '
+    'cooked 33 % (18–43); the fat drips off the food)';
 
 /// A line rule B1 renders, by its words: bacon or pancetta, never its fat
 /// nor Canadian bacon ([_baconPanOf]).
@@ -9972,7 +10187,9 @@ double? _baconPanOilShare(_BaconPan pan) {
 /// [baconCookedYield] on [cookedBaconFdcId]) and the fat kept in the pan
 /// (the stated amount, at most what renders, on [baconGreaseFdcId]; with
 /// an oil in the pan, the bacon's R / (R + O) share of it, v51); its grams
-/// their sum. Any other row carries no parts.
+/// their sum. v59 (M60 P7b): bacon that cooks on a food ([_baconDrips])
+/// writes the same two parts with no fat kept. Any other row carries no
+/// parts.
 IngredientMatchRow withRenderedBacon(
   Recipe recipe,
   IngredientLine line,
@@ -9988,7 +10205,8 @@ IngredientMatchRow withRenderedBacon(
           grams != null &&
           grams > 0 &&
           !line.raw.toLowerCase().contains('divided')
-      ? _baconKeptMl(recipe)
+      // v59 (M60 P7b): bacon that drips keeps no fat ([_baconDrips]).
+      ? _baconKeptMl(recipe) ?? (_baconDrips(recipe) ? 0.0 : null)
       : null;
   if (keptMl == null) {
     return row.parts == null ? row : row.copyWith(clearParts: true);
@@ -12921,6 +13139,11 @@ GramResolution? lineGrams(
   // (Q14 (i)) one whose steps add a can with its liquid keeps it whole.
   final shellEaten = recipe != null && shellEatenIn(recipe);
   final canLiquidEaten = recipe != null && canLiquidEatenIn(recipe, line);
+  // v59 (M60 P7a): a produce line whose steps pare it ([stepsPeelIn]).
+  final stepsPeel =
+      recipe != null &&
+      produceYields.containsKey(food?.fdcId) &&
+      stepsPeelIn(recipe, line);
   GramResolution? on(FdcFood? record) => resolveGrams(
     amounts: line.amounts,
     food: record,
@@ -12930,6 +13153,7 @@ GramResolution? lineGrams(
     skinKept: skinKept,
     shellEaten: shellEaten,
     canLiquidEaten: canLiquidEaten,
+    stepsPeel: stepsPeel,
   );
   if (food != null && freshHerbLine(line.raw, food.description)) {
     return _freshHerbGrams(line, food, normalized, on(food));
@@ -14081,7 +14305,7 @@ String? compositeFlagOf(
   if (row.parts != null &&
       row.gramSource != GramSource.override.name &&
       row.fdcId == rawBaconFdcId) {
-    flags.add(baconYieldFlag);
+    flags.add(_baconDrips(recipe) ? baconDripFlag : baconYieldFlag);
   }
   // Q25 (v54): the share of an alcohol line's ethanol its cooking keeps —
   // a fact about the row, kept on a Confirm, as B1's (design §5).

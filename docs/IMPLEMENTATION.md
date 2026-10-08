@@ -3608,6 +3608,28 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v59 (batch M60): the bone-in turkey breast, a peel
+  written in the steps, bacon that drips (prep48 Y + P7a + P7b; Q14 a,
+  Q15 a; built under the standing authorization; P7a and P7b reach
+  labelled pre-Q18).** ATK's bone-in turkey breast reads a figure derived
+  from USDA AH-102 (the breast's meat and skin, 87 % of its 33 of 43 parts
+  of the breast-plus-rib retail cut, 66.8 %) in place of the chicken class
+  figure (eight rows, +2,319 kcal); a produce line whose tail prints no
+  prep word reads the record's peeled figure when a step pares it (three
+  rows, −351 kcal); bacon laid over or wrapped around a food and then
+  baked, roasted, grilled or broiled keeps no fat (two rows, −1,275 kcal;
+  the oven-fried bacon waits for its missing steps, Q18). Deviations from
+  the design, disclosed and pinned: a line saying "unpeeled" never takes
+  the step read (the shipped "never unpeeled" promise); the drip rule is
+  recipe-wide, as bacon's kept-fat signal is; the paring and bacon readers
+  were rebuilt as one-pass token scans with per-recipe memos after the
+  verifier measured the first build at seven seconds a line at the editor
+  caps; a synthetic whole-bird line on the breast record now reads AH-102's
+  whole turkey rather than the deleted class figure. One figure lands
+  0.01 off the design's (rounded replay grams). The design's Q14 miscounted
+  the recipes that cut the back away (five of eight; the corpus says six),
+  corrected in API.md. Thirteen rows, +693 kcal per batch, no status move.
+
 - **2026-10-08 — matcher v58 (batch M59): the frying oil the steps keep or
   rinse off, and a battered vegetable's uptake (prep48 C + F1 + D; Q13 b;
   built under the standing authorization; reach labelled pre-Q18).** A

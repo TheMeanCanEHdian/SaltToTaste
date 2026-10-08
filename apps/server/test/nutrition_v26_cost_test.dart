@@ -18,6 +18,8 @@
 // verifier's plus-distinct and long-lines shapes), and the typed
 // sentences of the windowed-log and drained pins.
 // ignore_for_file: lines_longer_than_80_chars
+import 'dart:math';
+
 import 'package:logging/logging.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
@@ -258,6 +260,7 @@ final Map<String, Recipe Function()> shapes = {
 void main() {
   pins();
   bounds();
+  foodGated();
   group('RULE C at the loop level, every detector of every line at the caps '
       '(Run 056 S5/S7/S8/S9/O6/O8/S14/O15/S20/S23)', () {
     // Measured at 8113b24 (one readAll pass, the digests' shapes): salt
@@ -736,6 +739,213 @@ void bounds() {
       expect(await secondRequest('-kept', 1), 0);
       memoCapForTest = 1;
       expect(await secondRequest('-cleared', 2), 3);
+    });
+  }, skip: skipIfNoCorpus);
+}
+
+/// v59 (M60, verifier 2 D1/D2): the step readers a matched FOOD gates —
+/// rule B1's drip on a bacon row (FDC 168277), P7a's peel on a produce
+/// record (FDC 2685570) — at the caps. The end-to-end shapes above run on
+/// [_NoHits], so no row sits on either food; these put every line on its
+/// recorded answer (0652's bacon, 0706's butternut squash). Synthesized, a
+/// stated exception: the hostile lines and steps (verifier 2's shapes).
+const scallops = '0652-grilled-bacon-wrapped-scallops.yaml';
+const squash =
+    '0706-roasted-butternut-squash-with-browned-butter-and-hazelnuts.yaml';
+
+final Map<String, Recipe Function()> foodShapes = {
+  // D1: 98 lays of bacon a sentence over nothing (7 s a compute per bacon
+  // line at v59 r1), then a lay over the loaf and a bake — the bacon
+  // drips, so the GET reads the drip flag.
+  'bacon-drips': () => capped(
+    loadCorpusRecipe(scallops),
+    List.filled(capLines, '12 slices bacon'),
+    [
+      ...List.filled(
+        capSteps - 1,
+        fill('${'lay bacon ' * 98}lay bacon. ', capStep),
+      ),
+      'Arrange the bacon over the loaf. Bake the loaf until crisp.',
+    ],
+  ),
+  // D1: wraps with no bacon within three words (17 s a 20-line compute at
+  // v59 r1).
+  'bacon-wrap': () => capped(
+    loadCorpusRecipe(scallops),
+    List.filled(capLines, '12 slices bacon'),
+    List.filled(capSteps, fill('${'wrap with a b c d ' * 50}bacon. ', capStep)),
+  ),
+  // D2: every sentence names the squash (17.7 s a compute at v59 r1 on
+  // the shorter "Cut squash." sentences).
+  'peel': () => capped(
+    loadCorpusRecipe(squash),
+    List.filled(capLines, '1 large (2½- to 3-pound) butternut squash'),
+    List.filled(capSteps, fill('Cut the squash into large pieces. ', capStep)),
+  ),
+};
+
+/// The lay and wrap regexes [baconLayWrapForTest]'s one pass replaced (v59
+/// r1), the reference its answers are compared with.
+final _layRegex = RegExp(
+  r'\b(?:arrang(?:e[sd]?|ing)|lay(?:s|ing)?|drap(?:e[sd]?|ing)|'
+  r'shingl(?:e[sd]?|ing))\b[^.]*?\bbacon\b[^.;]*?\bover\s+([^,.;]+)',
+);
+final _wrapRegex = RegExp(
+  r'\bwrap(?:s|ped|ping)?\b[^.]*?\b(?:with|in)\s+(?:[\w-]+\s+){0,3}?bacon\b',
+);
+
+void foodGated() {
+  group('RULE C, the food-gated step readers (v59 verifier 2 D1/D2), '
+      'corpus-free', () {
+    test('D1: the lay and wrap readers answer as the regexes they replaced '
+        '(30,000 seeded sentences over their own words) and read the cap '
+        "shapes' 2,500-odd hostile sentences in one pass each (the regexes: "
+        '6.9 s and 0.8 s)', () {
+      const atoms = [
+        'lay', 'arranging', 'bacon', 'over', 'x', 'loaf', 'towels', ';', //
+        '.', ',', 'wrap', 'with', 'in', '  ', '\n',
+      ];
+      var over = 0;
+      var wrap = 0;
+      for (var seed = 0; seed < 30000; seed++) {
+        final r = Random(seed);
+        final b = StringBuffer();
+        for (var i = 0, n = 1 + r.nextInt(14); i < n; i++) {
+          b.write(atoms[r.nextInt(atoms.length)]);
+          if (r.nextInt(3) > 0) {
+            b.write(' ');
+          }
+        }
+        final s = b.toString();
+        final reference = (_layRegex.firstMatch(s)?[1], _wrapRegex.hasMatch(s));
+        expect(baconLayWrapForTest(s), reference, reason: '"$s"');
+        if (reference.$1 != null) {
+          over++;
+        }
+        if (reference.$2) {
+          wrap++;
+        }
+      }
+      // Not vacuous: both readers fire on the fuzz.
+      expect(over, greaterThan(50));
+      expect(wrap, greaterThan(50));
+      final hostile = [
+        for (final unit in [
+          '${'lay bacon ' * 98}lay bacon. ',
+          '${'wrap with a b c d ' * 50}bacon. ',
+        ])
+          for (var i = 0; i < capSteps; i++)
+            ...fill(unit, capStep).split(RegExp(r'(?<=\.)\s+')),
+      ];
+      expect(hostile.length, greaterThan(2400));
+      final sw = Stopwatch()..start();
+      for (final s in hostile) {
+        expect(baconLayWrapForTest(s), (null, false));
+      }
+      expect(sw.elapsedMilliseconds, lessThan(500));
+    });
+  });
+
+  group('RULE C, the food-gated step readers at the caps (v59 verifier 2 '
+      'D1/D2)', () {
+    for (final shape in foodShapes.keys) {
+      test(
+        '$shape: the compute and the matches GET read the reader once per '
+        'index, every family within its bounds, under the backstop',
+        () async {
+          final r = foodShapes[shape]!();
+          final db = wp.tempDb();
+          final provider = FixtureProvider(pending: pendingSearches);
+          if (shape == 'bacon-drips') {
+            // Computed first: its deli-ham line caches the one answer
+            // holding 168322, the cooked bacon rule B1 writes (as
+            // nutrition_v59_test).
+            final ham = loadCorpusRecipe(
+              '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
+            );
+            wp.saveRecipe(db, ham);
+            await matchAndCompute(
+              db,
+              provider,
+              db.recipeByIdOrSlug(ham.id)!.recipe,
+            );
+          }
+          wp.saveRecipe(db, r);
+          Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+          for (final (name, run) in <(String, Future<Object?> Function())>[
+            ('compute', () => matchAndCompute(db, provider, stored())),
+            ('GET', () => matchesBody(db, provider, stored())),
+          ]) {
+            stepIndexCounts.clear();
+            reachDecodes = 0;
+            final sw = Stopwatch()..start();
+            await run();
+            final ms = sw.elapsedMilliseconds;
+            final counts = Map.of(stepIndexCounts);
+            final indexes = counts['indexes'] ?? 1;
+            expectBounded(r, counts, '$shape $name', copies: indexes);
+            // The GET reads the drip only for a drip row's flag.
+            final reads = [
+              if (shape == 'peel') ...[
+                'memo:paredIn',
+                'memo:peelActs',
+              ] else if (name == 'compute' || shape == 'bacon-drips') ...[
+                'memo:baconDrips',
+                'memo:baconKept',
+              ],
+            ];
+            for (final family in reads) {
+              expect(
+                counts[family],
+                inInclusiveRange(1, indexes),
+                reason: '$shape $name $family',
+              );
+            }
+            expect(ms, lessThan(backstopMs), reason: '$shape $name: $counts');
+          }
+          final rows = db.ingredientMatchesFor(r.id);
+          expect(rows, hasLength(capLines));
+          expect(
+            {for (final row in rows) row.fdcId},
+            {if (shape == 'peel') 2685570 else rawBaconFdcId},
+          );
+          // The drip read: B1's two parts, no fat kept.
+          expect(
+            rows.first.parts,
+            shape == 'bacon-drips' ? contains('"grams":0.0') : isNull,
+          );
+        },
+      );
+    }
+
+    test('D2: 400 distinct heads on the squash record (lineGrams), every '
+        'sentence a paring one naming two of them with a smaller count — '
+        "each head's reading derived once, the steps' acts once, the naming "
+        'inversion once', () async {
+      final record = (await FixtureProvider().food(2685570))!;
+      final text = [
+        for (var i = 0; i < capLines; i += 2)
+          'Peel 1 ${food(i)} and 1 ${food(i + 1)}. ',
+      ].join();
+      final r = capped(
+        loadCorpusRecipe(squash),
+        [for (var i = 0; i < capLines; i++) '2 ${food(i)}'],
+        List.filled(capSteps, (text * 10).substring(0, capStep)),
+      );
+      final db = wp.tempDb();
+      stepIndexCounts.clear();
+      final sw = Stopwatch()..start();
+      for (final line in nutritionLines(r)) {
+        expect(stepsPeelIn(r, line), isFalse);
+        lineGrams(db, line, record, recipe: r);
+      }
+      final ms = sw.elapsedMilliseconds;
+      final counts = Map.of(stepIndexCounts);
+      expectBounded(r, counts, 'distinct heads');
+      expect(counts['memo:paredIn'], capLines);
+      expect(counts['memo:peelActs'], 1);
+      expect(counts['memo:namingAll'], 1);
+      expect(ms, lessThan(backstopMs), reason: '$counts');
     });
   }, skip: skipIfNoCorpus);
 }

@@ -1181,8 +1181,14 @@ void main() {
     // mozzarella cheese; 2709201): the detail a recorded hit (2709201 in
     // 'dried currants', 'dried mint' and others), differing in some digit
     // (carbohydrate 77.0 / 76.98): compared 493 -> 494, differ 375 -> 376.
-    expect(compared, 494);
-    expect(differ, 376);
+    // Matcher v59 (batch M60) recorded from snapshot 23 the 4 searches and
+    // 1 detail its whole-recipe pins read (rosemary leaves, old-fashioned
+    // oats, cider vinegar or white vinegar, whole milk or plain yogurt;
+    // 2346396): the detail a recorded hit (2346396 in 'old-fashioned oats'
+    // and 'old bay seasoning'), differing in some digit (energy 381.626 /
+    // 382.0): compared 494 -> 495, differ 376 -> 377.
+    expect(compared, 495);
+    expect(differ, 377);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

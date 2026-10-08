@@ -3092,7 +3092,9 @@ its own figure in the basis ("8 slice × 28.5 g each"). **The v40
 amendment:** the raw-counted bacon lines v40 left to a person (fried and
 drained lines rule B1 does not reach — oven-fried bacon, the bacon-wrapped
 scallops) stay the person's to correct; the slice weight alone moves them
-(oven-fried-bacon|0 288 → 336 g raw). (3) **An oil browned in a pan the
+(oven-fried-bacon|0 288 → 336 g raw). (Matcher v59, M60 P7b: the
+bacon-wrapped scallops, grilled, and the meatloaf's draped bacon now take
+B1's parts with no fat kept.) (3) **An oil browned in a pan the
 steps pour down to a printed part (Q19 a, P1 D3a):** the recipe's first
 "(pour off | pour out | drain off | spoon off | discard | remove and
 discard) all but N teaspoons/tablespoons/cups (of the) (rendered) fat /
@@ -3730,6 +3732,95 @@ rows; statuses, sections, buckets and holds identical. Deploy note:
 matcherVersion 57 stales every recipe; a zero-request sweep recomputes the
 library.
 
+**Since matcher v59 (batch M60 — the bone-in turkey breast, a peel written
+in the steps, bacon that drips; matcherVersion 58; prep48 design_v2 §2 M60
+Y + P7a + P7b, the owner's Q14 (a) and Q15 (a) and critic F8 and F15,
+decided 2026-10-08 under the standing authorization; zero requests; P7a
+and P7b read steps, so their reach is pre-Q18).** (Y, closing Y7) A
+bone-in turkey breast on SR 171093 (now in `ah102Records`, meat and skin)
+reads `ah102Parts`' **turkey breast**: ATK's retail cut is the breast with
+its upper back (rib) attached — six of the eight recipes cut or trim the
+back away before cooking (both roast-whole recipes keep it for the gravy,
+grill-roasted and porchetta save the bones for stock or discard them, the
+crowd recipe names no use, en-cocotte trims the rib bones) and the other
+two (braised, slow-roasted) print nothing on it — so the
+figure is DERIVED from AH-102 item 2591's fryer-roaster carcass shares
+(breast 33, rib 10) × item 2593's breast meat and skin 87 % (85–89):
+33 × 87 % / 43 = **66.77 %** (meat 78 % → 59.86 %, which no record reads).
+Basis `… × 0.67 edible · approximate (derived from USDA AH-102 items 2591
+and 2593, fryer-roaster class: a breast sold with its upper back (rib)
+attached — the breast's meat and skin, 87 % (85–89) of its 33 of 43 parts,
+66.8 %; the back is not counted)`; `boneInClassYields[171093]` (the
+chicken's 0.608) is deleted. (P7a) A produce line on a `produceYields`
+record whose printed weight is in its HEAD and whose TAIL names no prep
+word takes the record's **peeled** figure when a step sentence BEGINS with
+the paring act — `^(using …,)? (peel | pare | remove (the) skin)` ("Peel,
+halve, and core pears."; "Using sharp vegetable peeler or chef's knife,
+remove skin and fibrous threads from squash …") — names the line's head
+noun, prints no count of it smaller than the line's ("Peel, core, and cut
+1 apple" pares one of 7; a line with no count has none to compare, so any
+printed count holds it back), and follows no sentence that cooks it (boil,
+simmer, steam, roast, bake, microwave, cook with the noun: the mashed
+potatoes peeled after the simmer keep their printed weight — AH-102 prints
+no cooked-pare row). The flag adds `; the steps peel it` (`… approximate
+(USDA AH-102 item 2459: butternut squash, raw whole → flesh 84 % (75–88);
+the steps peel it)`); a tail prep word still wins, and a line saying
+"unpeeled" never reads a step. (P7b) Bacon on SR 168277 that rule B1
+leaves unrendered (no lift-out-and-pour-off step), under B1's own gates,
+whose steps arrange, lay, drape or shingle the bacon OVER a food (not a
+towel, plate, sheet, rack or pan) or WRAP a food with or in bacon, and a
+LATER sentence bakes, roasts, grills or broils, is B1's two parts with no
+fat kept: [168322 raw × 0.33, 172345 0 g] (AH-102 item 1981; the fat drips
+off the food, nothing serves it). Flag `approximate (USDA AH-102 item 1981:
+bacon, sliced, all methods → cooked 33 % (18–43); the fat drips off the
+food)`; the basis is B1's (`198 g raw → 65 g cooked bacon + 0.0 g bacon
+grease kept in the pan`). Cost (RULE C at the editor caps): the drip and
+B1's kept-fat reading (`_baconKept`, shipped in v41 and read per bacon row)
+are read once per recipe, the lay and wrap tests in one pass over each
+sentence's tokens (the first "over" a laid bacon reaches — what the lay
+regex's first match captured; a seeded comparison pins the two equal);
+the peel is read once per head, its sentences found by the step index's
+naming lookup and each sentence's paring and cooking acts read once — so
+the noun is named as every detector names a head (a "-y" head by its "-ies"
+plural, never after "garlic ") and counted in the same forms. No corpus
+row moves; a 400-line bacon compute at the caps fell from 5.3 s to about
+1 s, and the drip read no longer costs 7 s a bacon line.
+
+Reach: exactly 13 rows (+693.10 kcal per batch on the replay; design §2's
++693.11 summed en-cocotte's rounded grams): the 8 rows on 171093 —
+roast-whole-turkey-breast-with-gravy|0, roast-whole-turkey-breast-with-
+gravy-2|0, slow-roasted-turkey-with-gravy|6, braised-turkey|2,
+grillroasted-boneless-turkey-breast|1 1,656.00 → 1,817.11 g (+252.94 each),
+turkey-and-gravy-for-a-crowd|16 3,036.00 → 3,331.37 (+463.73),
+turkey-breast-en-cocotte-with-pan-gravy|0 1,794.00 → 1,968.54 (+274.02),
+porchetta-style-turkey-breast|8 2,070.00 → 2,271.39 (+316.18);
+roasted-butternut-squash-with-browned-butter-and-hazelnuts|0 1,247.38 →
+1,047.80 (−96.06), pear-walnut-upside-down-cake|4 680.39 → 530.70
+(−100.29), best-baked-apples|0 1,190.68 → 928.73 (−154.22);
+meatloaf-with-brown-sugarketchup-glaze|17 198.45 g raw → 65.49 g cooked
+(−473.40), grilled-bacon-wrapped-scallops|0 336.00 → 110.88 (−801.56).
+Kept: the turkey leg quarters, thigh and whole birds; the two mashed
+potatoes (907.18 g); grill-roasted-beef-tenderloin|5 (a skewered stack
+for smoke over no food — a fate, not a yield); smothered-pork-chops|0;
+tartiflette|2 (already B1); oven-fried-bacon|0 (`steps: []` in the corpus —
+it waits for Q18).
+
+Known gaps (design §7 — the source stands): 2591's shares are the
+fryer-roaster class applied to heavy toms (bounded above by 2593's 87 %);
+butternut at USDA's 84 % against ATK's ⅛-inch-deep peel; the meatloaf's
+top absorbs some bacon fat no USDA figure measures (F15), so it errs low;
+the corpus lost the steps of 269 subsections (Q18), which these step
+readers cannot see.
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 23, main and
+`--reverse-parents` byte-identical; STEP ZERO the v58 tree reproduces the
+v58 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v58
+rows exactly the 13 rows differ (grams, basis and kcal; the two bacon rows
+also their parts and flag); 0 person rows; statuses, sections and holds
+identical; the composite count of two-part rows 18 → 20 (the two bacon
+rows take B1's shape). Deploy note: matcherVersion 58 stales every recipe;
+a zero-request sweep recomputes the library.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line
@@ -3945,7 +4036,8 @@ KEPT: whole chickens read FDC's own ready-to-cook yields (Y4: 171447 0.608,
 with grilled lemon chicken's wing flag; the bone-in turkey BREAST (171093,
 8 lines) keeps the interim 0.608 (Y7, DEFERRED: item 2593's breast, 87 %,
 is a breast without the back ATK's bone-in breast carries, and no
-breast-with-back row exists); the per-item and hen portions. 74 lines move
+breast-with-back row exists — closed by matcher v59's derived 66.77 %, M60
+Y); the per-item and hen portions. 74 lines move
 (56 chicken, 18 turkey), +17,515 kcal over the library; no bucket, hold or
 status moves; Chicken Provençal's 8 thighs 657.92 → 802.86 g, barbecued
 pulled chicken's leg quarters 1,488.31 → 1,813.36 g, buffalo wings 828 →
