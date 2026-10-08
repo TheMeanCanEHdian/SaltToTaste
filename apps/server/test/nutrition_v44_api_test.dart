@@ -198,23 +198,26 @@ void main() {
             ],
             [('Basic Single-Crust Pie Dough', 'ready', true)],
           );
+          // RE-PIN (M51 batch, v52, rule PV): the prose reference counts
+          // its base, the sibling Basic Single-Crust Pie Dough, flagged (was
+          // not_routed, reason no_ingredients, section "Single-Crust Pie
+          // Dough for Custard Pies", one partial line).
           final prose = childOf(await itemOf(stored(_lemon), 0));
-          expect(prose, containsPair('state', 'not_routed'));
-          expect(prose, containsPair('reason', 'no_ingredients'));
+          expect(prose, containsPair('state', 'routed'));
+          expect(prose, containsPair('reason', null));
           expect(
             prose,
-            containsPair('section', 'Single-Crust Pie Dough for Custard Pies'),
+            containsPair('section', 'Basic Single-Crust Pie Dough'),
           );
           expect(
             prose,
             containsPair('host_title', 'Basic Double-Crust Pie Dough'),
           );
-          expect(
-            nutritionBody(db, stored(_lemon), forAdmin: false)['partial'],
-            [
-              containsPair('reason', 'no_ingredients'),
-            ],
-          );
+          final body = nutritionBody(db, stored(_lemon), forAdmin: false);
+          expect(body['partial'], isEmpty);
+          expect(body['includes'], [
+            containsPair('flag', 'approximation'),
+          ]);
         },
       );
 

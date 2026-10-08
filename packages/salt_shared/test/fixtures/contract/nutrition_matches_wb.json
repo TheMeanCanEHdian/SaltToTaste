@@ -1,0 +1,528 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "1 cup whole milk",
+      "item": "whole milk",
+      "line_amount": "1 cup",
+      "kcal_per_100g": 61.0,
+      "portions": [
+        {
+          "amount": null,
+          "unit": null,
+          "description": "Guideline amount per fl oz of beverage",
+          "grams": 2.5,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "Quantity not specified",
+          "grams": 244.0,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 individual school container",
+          "grams": 244.0,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 cup",
+          "grams": 244.0,
+          "fill": 244.0
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "Guideline amount per cup of hot cereal",
+          "grams": 61.0,
+          "fill": null
+        },
+        {
+          "amount": null,
+          "unit": null,
+          "description": "1 fl oz",
+          "grams": 30.5,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "whole milk",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2705385,
+        "description": "Milk, whole",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 1.0,
+        "grams": 244.0,
+        "gram_source": "portion",
+        "gram_basis": "1 cup · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2705385,
+          "description": "Milk, whole",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746766,
+          "description": "Cheese, ricotta, whole milk",
+          "data_type": "Foundation",
+          "confidence": 0.97
+        },
+        {
+          "fdc_id": 2259793,
+          "description": "Yogurt, plain, whole milk",
+          "data_type": "Foundation",
+          "confidence": 0.97
+        },
+        {
+          "fdc_id": 2259796,
+          "description": "Cheese, feta, whole milk, crumbled",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 2259794,
+          "description": "Yogurt, Greek, plain, whole milk",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 2705467,
+          "description": "Chocolate milk, whole",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9433333333333334
+        },
+        {
+          "fdc_id": 2705496,
+          "description": "Strawberry milk, whole",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9433333333333334
+        },
+        {
+          "fdc_id": 170845,
+          "description": "Cheese, mozzarella, whole milk",
+          "data_type": "SR Legacy",
+          "confidence": 0.92
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "raw": "2¾ teaspoons gelatin",
+      "item": "gelatin",
+      "line_amount": "2 3/4 teaspoon",
+      "kcal_per_100g": 335.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "package (1 oz)",
+          "grams": 28.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "envelope (1 tbsp)",
+          "grams": 7.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "gelatins dry powder unsweetened",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 169599,
+        "description": "Gelatins, dry powder, unsweetened",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 6.416649308843023,
+        "gram_source": "portion",
+        "gram_basis": "2 3/4 teaspoon · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 169599,
+          "description": "Gelatins, dry powder, unsweetened",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "3 cups heavy cream",
+      "item": "heavy cream",
+      "line_amount": "3 cup",
+      "kcal_per_100g": 343.31,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 15.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "heavy cream",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2346386,
+        "description": "Cream, heavy",
+        "data_type": "Foundation",
+        "confidence": 1.0,
+        "grams": 716.86164,
+        "gram_source": "density",
+        "gram_basis": "3 cup ≈ 710 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2346386,
+          "description": "Cream, heavy",
+          "data_type": "Foundation",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 2705597,
+          "description": "Cream, heavy",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9900000000000001
+        },
+        {
+          "fdc_id": 170859,
+          "description": "Cream, fluid, heavy whipping",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2705592,
+          "description": "Cream, NS as to light, heavy, or half and half",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.7871428571428571
+        },
+        {
+          "fdc_id": 2705598,
+          "description": "Cream, whipped",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.465
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "1 vanilla bean, halved lengthwise",
+      "item": "vanilla bean",
+      "line_amount": "1",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "vanilla bean",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Flavouring — no nutrients, counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 0.0,
+        "gram_source": "unmeasured",
+        "gram_basis": "flavouring, no nutrients — counted as 0 g",
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 4,
+      "raw": "6 tablespoons sugar",
+      "item": "sugar",
+      "line_amount": "6 tablespoon",
+      "kcal_per_100g": 385.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": "teaspoon",
+          "description": null,
+          "grams": 4.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "cup",
+          "description": null,
+          "grams": 188.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": "racc",
+          "description": null,
+          "grams": 8.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "sugar",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 746784,
+        "description": "Sugars, granulated",
+        "data_type": "Foundation",
+        "confidence": 0.95,
+        "grams": 75.41268,
+        "gram_source": "density",
+        "gram_basis": "6 tablespoon ≈ 89 mL",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 746784,
+          "description": "Sugars, granulated",
+          "data_type": "Foundation",
+          "confidence": 0.95
+        },
+        {
+          "fdc_id": 170674,
+          "description": "Sugar, turbinado",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169655,
+          "description": "Sugars, granulated",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 169658,
+          "description": "Sugars, maple",
+          "data_type": "SR Legacy",
+          "confidence": 0.9
+        },
+        {
+          "fdc_id": 2710261,
+          "description": "Sugar, cinnamon",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2710257,
+          "description": "Sugar, NFS",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 168833,
+          "description": "Sugars, brown",
+          "data_type": "SR Legacy",
+          "confidence": 0.87
+        },
+        {
+          "fdc_id": 2710260,
+          "description": "Sugar, brown",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "raw": "Pinch table salt",
+      "item": "table salt",
+      "line_amount": "pinch",
+      "kcal_per_100g": 0.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "cup",
+          "grams": 292.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp",
+          "grams": 6.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp",
+          "grams": 18.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "dash",
+          "grams": 0.4,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "table salt",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 173468,
+        "description": "Salt, table",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 0.4,
+        "gram_source": "piece",
+        "gram_basis": "pinch · USDA portion",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 173468,
+          "description": "Salt, table",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 746775,
+          "description": "Salt, table, iodized",
+          "data_type": "Foundation",
+          "confidence": 0.9833333333333333
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "raw": "Raspberry Coulis (recipe follows)",
+      "item": "Raspberry Coulis (recipe follows)",
+      "line_amount": null,
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "raspberry coulis",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": null,
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 748.2,
+        "gram_source": "recipe",
+        "gram_basis": "from the recipe Raspberry Coulis: 748 g, 643 kcal",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": {
+          "state": "routed",
+          "reason": null,
+          "name": "Raspberry Coulis",
+          "slug": "panna-cotta",
+          "title": "Raspberry Coulis",
+          "section": "Raspberry Coulis",
+          "host_title": null,
+          "share_text": "1",
+          "default": false,
+          "why": "none",
+          "yield_text": "MAKES ABOUT 1½ CUPS",
+          "share": 1.0,
+          "yield_units": [
+            {
+              "unit": "recipe",
+              "per_recipe": 1
+            },
+            {
+              "unit": "cup",
+              "per_recipe": 1.5
+            }
+          ],
+          "grams": 748.2,
+          "kcal": 642.77,
+          "kcal_per_serving": 80.35,
+          "status": "complete",
+          "matched_count": 4,
+          "total_count": 4,
+          "kind": "coulis",
+          "parent_kind": "recipe",
+          "candidates": [
+            {
+              "group": "own_section",
+              "slug": "panna-cotta",
+              "title": "Raspberry Coulis",
+              "section": "Raspberry Coulis",
+              "note": null,
+              "yield_text": "MAKES ABOUT 1½ CUPS",
+              "kcal": 642.77,
+              "kcal_per_serving": null,
+              "current": true,
+              "default": false,
+              "state": "ready",
+              "pickable": true,
+              "host_title": null
+            }
+          ]
+        },
+        "parts": [],
+        "flag": "approximate (no amount on the line — the whole batch counted)"
+      },
+      "candidates": []
+    }
+  ]
+}

@@ -1,193 +1,190 @@
 {
   "status": "complete",
-  "serving_basis": 8,
+  "serving_basis": 4,
   "basis_kind": "per_serving",
-  "calories_per_serving": 435.07,
+  "calories_per_serving": 409.75,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 435.07,
+      "amount": 409.75,
       "unit": "kcal",
-      "dv_percent": 21.8
+      "dv_percent": 20.5
     },
     "fat": {
       "label": "Total Fat",
-      "amount": 19.03,
+      "amount": 24.86,
       "unit": "g",
-      "dv_percent": 24.4
+      "dv_percent": 31.9
     },
     "saturated": {
       "label": "Saturated Fat",
-      "amount": 7.47,
+      "amount": 5.37,
       "unit": "g",
-      "dv_percent": 37.4
+      "dv_percent": 26.8
     },
     "trans": {
       "label": "Trans Fat",
-      "amount": 0.63,
+      "amount": 0.01,
       "unit": "g"
     },
     "monounsaturated": {
       "label": "Monounsaturated Fat",
-      "amount": 4.89,
+      "amount": 7.55,
       "unit": "g"
     },
     "polyunsaturated": {
       "label": "Polyunsaturated Fat",
-      "amount": 1.73,
+      "amount": 6.82,
       "unit": "g"
     },
     "cholesterol": {
       "label": "Cholesterol",
-      "amount": 26.68,
+      "amount": 112.69,
       "unit": "mg",
-      "dv_percent": 8.9
+      "dv_percent": 37.6
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 185.1,
+      "amount": 133.95,
       "unit": "mg",
-      "dv_percent": 8.0
+      "dv_percent": 5.8
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 61.56,
+      "amount": 0.0,
       "unit": "g",
-      "dv_percent": 22.4
+      "dv_percent": 0.0
     },
     "fiber": {
       "label": "Dietary Fiber",
-      "amount": 0.09,
+      "amount": 0.0,
       "unit": "g",
-      "dv_percent": 0.3
+      "dv_percent": 0.0
     },
     "sugars": {
       "label": "Total Sugars",
-      "amount": 0.42,
+      "amount": 0.0,
       "unit": "g"
     },
     "protein": {
       "label": "Protein",
-      "amount": 6.42,
+      "amount": 43.46,
       "unit": "g",
-      "dv_percent": 12.8
+      "dv_percent": 86.9
     },
     "vitamin_d": {
       "label": "Vitamin D",
-      "amount": 0.0,
+      "amount": 23.39,
       "unit": "µg",
-      "dv_percent": 0.0
+      "dv_percent": 116.9
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 8.78,
-      "unit": "mg",
-      "dv_percent": 0.7
-    },
-    "iron": {
-      "label": "Iron",
-      "amount": 1.31,
-      "unit": "mg",
-      "dv_percent": 7.3
-    },
-    "potassium": {
-      "label": "Potassium",
-      "amount": 65.59,
-      "unit": "mg",
-      "dv_percent": 1.4
-    },
-    "vitamin_a": {
-      "label": "Vitamin A",
-      "amount": 84.87,
-      "unit": "µg",
-      "dv_percent": 9.4
-    },
-    "vitamin_c": {
-      "label": "Vitamin C",
-      "amount": 5.89,
-      "unit": "mg",
-      "dv_percent": 6.5
-    },
-    "vitamin_e": {
-      "label": "Vitamin E",
-      "amount": 1.32,
-      "unit": "mg",
-      "dv_percent": 8.8
-    },
-    "vitamin_k": {
-      "label": "Vitamin K",
-      "amount": 3.42,
-      "unit": "µg",
-      "dv_percent": 2.9
-    },
-    "thiamin_b1": {
-      "label": "Thiamin (B1)",
-      "amount": 0.21,
-      "unit": "mg",
-      "dv_percent": 17.8
-    },
-    "riboflavin_b2": {
-      "label": "Riboflavin (B2)",
-      "amount": 0.23,
-      "unit": "mg",
-      "dv_percent": 17.6
-    },
-    "niacin_b3": {
-      "label": "Niacin (B3)",
-      "amount": 1.51,
-      "unit": "mg",
-      "dv_percent": 9.5
-    },
-    "vitamin_b6": {
-      "label": "Vitamin B6",
-      "amount": 0.02,
+      "amount": 17.01,
       "unit": "mg",
       "dv_percent": 1.3
     },
-    "folate_equivalent": {
-      "label": "Folate (DFE)",
-      "amount": 3.42,
+    "iron": {
+      "label": "Iron",
+      "amount": 0.74,
+      "unit": "mg",
+      "dv_percent": 4.1
+    },
+    "potassium": {
+      "label": "Potassium",
+      "amount": 773.94,
+      "unit": "mg",
+      "dv_percent": 16.5
+    },
+    "vitamin_a": {
+      "label": "Vitamin A",
+      "amount": 110.56,
+      "unit": "µg",
+      "dv_percent": 12.3
+    },
+    "vitamin_c": {
+      "label": "Vitamin C",
+      "amount": 6.17,
+      "unit": "mg",
+      "dv_percent": 6.9
+    },
+    "vitamin_e": {
+      "label": "Vitamin E",
+      "amount": 6.12,
+      "unit": "mg",
+      "dv_percent": 40.8
+    },
+    "vitamin_k": {
+      "label": "Vitamin K",
+      "amount": 1.06,
       "unit": "µg",
       "dv_percent": 0.9
     },
+    "thiamin_b1": {
+      "label": "Thiamin (B1)",
+      "amount": 0.37,
+      "unit": "mg",
+      "dv_percent": 31.0
+    },
+    "riboflavin_b2": {
+      "label": "Riboflavin (B2)",
+      "amount": 0.3,
+      "unit": "mg",
+      "dv_percent": 23.4
+    },
+    "niacin_b3": {
+      "label": "Niacin (B3)",
+      "amount": 18.08,
+      "unit": "mg",
+      "dv_percent": 113.0
+    },
+    "vitamin_b6": {
+      "label": "Vitamin B6",
+      "amount": 1.34,
+      "unit": "mg",
+      "dv_percent": 78.8
+    },
+    "folate_equivalent": {
+      "label": "Folate (DFE)",
+      "amount": 42.52,
+      "unit": "µg",
+      "dv_percent": 10.6
+    },
     "folate_food": {
       "label": "Folate (food)",
-      "amount": 3.42,
+      "amount": 42.52,
       "unit": "µg"
     },
     "vitamin_b12": {
       "label": "Vitamin B12",
-      "amount": 0.02,
+      "amount": 7.36,
       "unit": "µg",
-      "dv_percent": 0.9
+      "dv_percent": 306.5
     },
     "magnesium": {
       "label": "Magnesium",
-      "amount": 7.37,
+      "amount": 57.41,
       "unit": "mg",
-      "dv_percent": 1.8
+      "dv_percent": 13.7
     },
     "phosphorus": {
       "label": "Phosphorus",
-      "amount": 28.73,
+      "amount": 520.92,
       "unit": "mg",
-      "dv_percent": 2.3
+      "dv_percent": 41.7
     }
   },
-  "total_grams": 1023.9,
-  "matched_count": 14,
-  "total_count": 14,
+  "total_grams": 855.0,
+  "matched_count": 4,
+  "total_count": 4,
   "low_confidence": 0,
-  "includes": [
+  "includes": [],
+  "partial": [],
+  "served_with": [
     {
-      "slug": "basic-double-crust-pie-dough",
-      "title": "Basic Single-Crust Pie Dough",
-      "section": "Basic Single-Crust Pie Dough",
-      "host_title": "Basic Double-Crust Pie Dough",
-      "flag": "approximation"
+      "position": 3,
+      "name": "Sweet-and-Sour Chutney"
     }
   ],
-  "partial": [],
-  "served_with": [],
   "computed_at": "<timestamp>"
 }

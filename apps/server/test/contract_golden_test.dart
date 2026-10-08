@@ -1068,7 +1068,9 @@ void main() {
         headers: harness.auth(adminSession),
       );
       // Lemon Meringue Pie's dough names a section with no ingredient
-      // lines: not routed, reason `no_ingredients`, its partial line.
+      // lines — since matcher v52 (rule PV) counted as its base, the
+      // sibling Basic Single-Crust Pie Dough, flagged (was not routed,
+      // reason `no_ingredients`, its partial line).
       final lemon = await post('0989-lemon-meringue-pie.yaml', from: v44);
       await harness.capture(
         'nutrition_matches_section_prose',
@@ -1144,6 +1146,38 @@ void main() {
         'nutrition_review_section',
         'GET',
         '/api/v1/admin/nutrition_review?group=item',
+        headers: harness.auth(adminSession),
+      );
+
+      // --- matcher v52: references with no amount, corpus-free ---
+      // Two real corpus recipes (test/fixtures/contract-recipes/v52.json,
+      // as v44.json: each corpus document's title, yield, prep notes,
+      // lines, steps and subsections). Pan-Seared Salmon's "Sweet-and-Sour
+      // Chutney (recipe follows) or lemon wedges, for serving" is served
+      // with it (rule SW): accounted, the label complete with its
+      // `served_with` line. Panna Cotta's "Raspberry Coulis (recipe
+      // follows)" counts one whole batch of its own coulis (rule WB),
+      // flagged; the label includes it as an approximation. (Lemon
+      // Meringue Pie's prose dough above routes to its base, rule PV.)
+      final v52 = recipesOf('v52');
+      final salmon = await post('0256-pan-seared-salmon.yaml', from: v52);
+      await harness.capture(
+        'nutrition_served_with',
+        'GET',
+        '/api/v1/recipes/$salmon/nutrition',
+        headers: harness.auth(adminSession),
+      );
+      final panna = await post('0925-panna-cotta.yaml', from: v52);
+      await harness.capture(
+        'nutrition_matches_wb',
+        'GET',
+        '/api/v1/recipes/$panna/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
+      await harness.capture(
+        'nutrition_wb',
+        'GET',
+        '/api/v1/recipes/$panna/nutrition',
         headers: harness.auth(adminSession),
       );
     });

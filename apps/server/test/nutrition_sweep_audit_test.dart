@@ -1133,9 +1133,18 @@ void main() {
     // 'bacon', 170568 in 'almonds', 173472 in 'herb', 2707698 in 'english
     // cucumber'), all four differing in some digit (protein 20.31 / 20.3,
     // fat 52.52 / 52.5, carbohydrate 11.29 / 11.3, 44.2 / 44.17):
-    // compared 469 -> 473, differ 354 -> 358.
-    expect(compared, 473);
-    expect(differ, 358);
+    // compared 469 -> 473, differ 354 -> 358. Matcher v52 (batch M51)
+    // recorded from snapshot 21 the 4 searches and 6 details its
+    // whole-recipe pins read (boneless strip or rib-eye steaks, green bell
+    // pepper, ground ginger, sweet or mild curry powder; 171033, 2707150,
+    // 2708422, 2709768, 2709803, 2747663): each detail a recorded hit
+    // (171033 in 'vegetable oil', 2707150 in 'oysters', 2708422 in 'cold
+    // cooked white rice', 2709768 in 'bean sprouts', 2709803 in 'radishes',
+    // 2747663 in 'serrano chile'), four differing in some digit (171033,
+    // 2707150, 2708422, 2747663 — e.g. carbohydrate 20.97 / 21.0): compared
+    // 473 -> 479, differ 358 -> 362.
+    expect(compared, 479);
+    expect(differ, 362);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

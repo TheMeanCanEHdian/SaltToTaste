@@ -711,6 +711,7 @@ first compute, else:
   "partial": [{"position": 5, "kind": "held", "name": "Rustic Tart Dough",
                "title": null, "matched": null, "total": null,
                "reason": "missing"}],
+  "served_with": [{"position": 3, "name": "Sweet-and-Sour Chutney"}],
   "computed_at": "…",
   "computing_job_id": 7
 }
@@ -726,12 +727,17 @@ label partial, in line order: `kind` `held` (a `choose_recipe` /
 `nested_recipe` hold, or the engine's `discarded_recipe` marinade not yet
 decided; `reason` as `child.reason` below), `child_partial` (a counted child
 whose own label is partial: `title`, `matched`, `total` its counts) or
-`not_routed` (R3's 0 g rule row: `reason` `section` | `served_with` |
-`no_amount` | `no_share`, v47 `self`); `name` is the reference as the line
-writes it.
+`not_routed` (R3's 0 g rule row: `reason` `section` | `served_with` (until
+v52; since, listed in `served_with`) | `no_amount` | `no_share`, v47
+`self`); `name` is the reference as the line writes it.
 Both are `[]` on a recipe with none and absent from the `{"status":
 "none"}` body. Read from the stored rows (no request); one library index
-read per request at most.
+read per request at most. Since matcher v52: `served_with` — every
+reference served with the dish (a `not_routed` row whose `reason` is
+`served_with`: accounted, so never in `partial`), `{position, name}` with
+`name` the reference's first alternative, in line order; `[]` when none —
+the label's "Served with {name} — not counted." line (below, matcher
+v52).
 
 Since matcher v44 (sections as children): an `includes` entry also carries
 `section` (the section's title, null for a library recipe) and `host_title`
@@ -3125,6 +3131,95 @@ split rows' yield share) −407.7, the 12 raw-counted slices +954.5,
 Canadian +39.6; the split −494.6;
 the browning oils −375.4; the horseradish oil −1,890.0; the parent
 −155.0; components rounded); no bucket, hold or status moves.
+
+**Since matcher v52 (batch M51, matcherVersion 51 — references with no
+amount; prep47 design_v2 §1 Q8, Q8b, Q9, Q22 and Q15 (iii), §2 "M51",
+decided under the owner's 2026-10-07 standing authorization; zero
+requests). RE-RULES prep41 A3 (a) ("a reference the engine does not route
+reads partial until phase 2") for a reference with no amount, and CP3
+(2026-09-27, "variations … stay OUT of the main totals") for a reference
+to a prose variation; the copy is the approved
+`docs/mockups/v51-references-copy.html` §4.** Three rules in
+`resolveReference`, in this order:
+
+- **SW — served with (Q8, Q8b).** A marked reference with **no amount**
+  whose line says "optional", says "for serving", offers an alternative
+  after " or " (the split the reference detector reads), or sits in an
+  ingredient group headed CONDIMENTS (`servedWithMarked`), is served with
+  the dish: the 0 g rule row as before, `child.reason` `served_with`, and
+  **accounted** in the totals as a confirmed water row is — it no longer
+  makes the label partial. D7's title rule (the parent "… for {child}", Q8b:
+  restaurant-style herb sauce's "1 recipe Pan-Seared Steaks (this page)" is
+  NOT routed to the steaks) keeps its own `served_with` answer, with or
+  without an amount. The nutrition GET lists such rows in **`served_with`**
+  (`[{position, name}]`, `name` the reference's first alternative —
+  "Sweet-and-Sour Chutney", never "… or lemon wedges"; `[]` when none),
+  never in `partial`; the app renders each as the non-partial label line
+  "Served with {name} — not counted." Reach: 6 main lines —
+  pan-seared-salmon|3, maryland-crab-cakes|10, the Indian curry's |16
+  (CONDIMENTS) and |17, spanish-tortilla|8, the herb sauce|0; 0 kcal; the
+  salmon, the curry, the tortilla and the herb sauce complete (crab cakes
+  stays partial on |3 Old Bay, |8 the coating, |9 the frying oil).
+  skillet-chicken-fajitas|22 is not SW: its group "RAJAS CON CREMA" is no
+  CONDIMENTS heading.
+- **The gate (critic F7).** A reference line WITH an amount never reads a
+  served-with marker: the ruled practice stands (prep39 — optional and "for
+  serving" lines with an amount are counted). The ten marked references
+  with amounts (guay-tiew-tom-yum-goong|15, classic-roast-stuffed-turkey|10,
+  crisp-skin-high-roast-butterflied-turkey|4, garlic-studded-roast-pork-
+  loin|6, spanish-style-toasted-pasta-with-shrimp|16, juicy-pub-style-
+  burgers|5, thai-green-curry|1, grilled-pork-chops|3, grill-roasted-bone-in-
+  pork-rib-roast|4, dark-chocolate-cupcakes|11) are unchanged in child,
+  share and grams.
+- **WB — a whole batch (Q22).** A marked reference with no amount and none
+  of SW's markers that the shipped order resolves to a child with lines
+  that is not nested routes at **share 1.0** — the line names the recipe
+  once and the steps plate it ("top with … pickled radishes", "serve over
+  rice", "spoon … coulis onto … plates") — flagged **"approximate (no
+  amount on the line — the whole batch counted)"** (`match.flag`; the
+  label's includes entry reads `flag` "approximation"). Any other answer
+  for such a line (held, nested, a marinade, no share, a PV base) stays the
+  `no_amount` rule row. Reach: skillet-chicken-fajitas|22 → its own Spicy
+  Pickled Radishes (184.3 g, 55.55 kcal), red-beans-and-rice|14 → 0521's
+  Basic White Rice (402.2 g of Foundation 2512381, 1,442.71 kcal), panna-cotta|6 →
+  its own Raspberry Coulis (748.2 g, 642.77 kcal); +2,141.03 kcal; three
+  new child sections (computed sections 140 → 143); all three complete.
+- **PV — a prose variation's base (Q9).** When the order reaches a section
+  with no ingredient lines (`no_ingredients`), the line counts the BASE:
+  of that section's host (when it lists lines and is neither the parent nor
+  its host) and the host's sections that list lines (never the prose
+  section, never the parent), the one whose title shares the most words
+  with the prose section's (the resolver's normalised words); the host on a
+  tie, else the first such section; no shared word keeps the
+  `no_ingredients` row. Share from the line as before; flagged
+  **"approximation (counted as {base title}; the variation's changes are
+  not read)"**. The prose section itself is still never computed, and the
+  parent's hash still folds it (v47 F2's `prose_sections`): it gaining lines
+  stales the parent, whose next sweep routes to it. Reach:
+  fresh-plum-ginger-pie|0 → 0976 "Foolproof All-Butter Dough for
+  Double-Crust Pie" (6 of 8 words; 669.1 g, 3,427.26 kcal; 586.77 a
+  serving), lemon-meringue-pie|0 → 0972's "Basic Single-Crust Pie Dough" (4
+  words against the double-crust host's 3; 302.1 g, 1,544.71 kcal; 435.07 a
+  serving); +4,971.97 kcal; both complete.
+- **RA1 (Q15 iii)** shipped in v49 ('frozen raspberries' ranks the cached
+  FNDDS 2709282 "Raspberries, frozen", unflagged); WB is what makes the
+  coulis a child, so its line is read now (680.39 g, 387.82 kcal);
+  raspberry-charlotte|4 ('raspberry', 2346410) is unchanged.
+
+A recipe holding a reference also hashes its ingredient group headings (SW
+reads a CONDIMENTS one), and, for a line with no amount and no served-with
+marker, the child whose lines decide WB against `no_amount` (a section or
+library recipe listing none, or one made from a recipe; the 0 g rule row
+ties no stamp): that child gaining or losing those lines stales the parent
+at once, and one stale sweep settles it (no library hash moves). After v52 no library line reads `no_amount` or
+`no_ingredients` (both stay valid wire reasons). Replay (rp43 + bucket_v12
+on fresh copies of snapshot 21, main and `--reverse-parents` identical):
+calls 0, sections 143; vs v51 exactly 5 main rows differ (3 WB, 2 PV) and
+11 section rows are new, +7,113.00 kcal per batch; the six SW rows are
+byte-equal as rows (their change is the accounting); 9 recipes partial →
+complete (997 → 1,006); the partial recipes with nothing to review 9 → 0.
+Deploy note: matcherVersion 51 stales every recipe; a zero-request sweep
+recomputes the library.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

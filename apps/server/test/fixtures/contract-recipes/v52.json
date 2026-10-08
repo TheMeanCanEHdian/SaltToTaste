@@ -1,0 +1,432 @@
+[
+  {
+    "corpus_file": "0256-pan-seared-salmon.yaml",
+    "recipe": {
+      "title": "Pan-Seared Salmon",
+      "servings": "SERVES 4",
+      "prep_notes": "To ensure uniform pieces of fish that cook at the same rate, buy a whole center-cut fillet and cut it into four pieces. With the addition of the fish fillets, the pan temperature drops; compensate for the heat loss by keeping the heat on high for 30 seconds after adding them. If cooking two or three fillets instead of the full recipe of four, use a 10-inch skillet and medium-high heat for both preheating the pan and cooking the salmon. A splatter screen helps reduce the mess of pan-searing.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 (1¾- to 2-pound) skinless salmon fillet, about 1½ inches at the thickest part",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(1 3/4- to 2-pound) skinless salmon fillet",
+              "prep": "about 1 1/2 inches at the thickest part"
+            },
+            {
+              "raw": "1 teaspoon canola or vegetable oil",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "canola or vegetable oil"
+            },
+            {
+              "raw": "Table salt and ground black pepper",
+              "amounts": [],
+              "item": "Table salt and ground black pepper"
+            },
+            {
+              "raw": "Sweet-and-Sour Chutney (recipe follows) or lemon wedges, for serving",
+              "amounts": [],
+              "item": "Sweet-and-Sour Chutney (recipe follows) or lemon wedges",
+              "prep": "for serving"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Use a sharp knife to trim any whitish fat from the belly of the fillet and cut it into four equal pieces. Heat the oil in a 12-inch skillet over high heat until shimmering but not smoking. Sprinkle the salmon with salt and pepper."
+        },
+        {
+          "number": 2,
+          "text": "Add the fillets, skin-side down, and cook, without moving the fillets, until the skillet regains lost heat, about 30 seconds. Reduce the heat to medium-high; continue to cook until the skin side is well browned and the bottom half of the fillets turns opaque, 4½ minutes. Turn the fillets and cook, without moving them, until they are no longer translucent on the exterior and are firm, but not hard, when gently squeezed, 3 minutes for medium-rare and 3½ minutes for medium. Remove the fillets from the skillet; let stand for 1 minute. Pat the fillets with a paper towel to absorb excess fat on the surface, if desired. Serve immediately with the chutney or the lemon wedges."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Sweet-and-Sour Chutney",
+          "kind": "variation",
+          "servings": "MAKES ABOUT ⅓ CUP",
+          "prep_notes": "A little of this intensely flavored condiment goes a long way.",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "1 teaspoon fennel seeds",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "fennel seeds"
+                },
+                {
+                  "raw": "½ teaspoon ground cumin",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground cumin"
+                },
+                {
+                  "raw": "½ teaspoon ground coriander",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground coriander"
+                },
+                {
+                  "raw": "¼ teaspoon ground cardamom",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground cardamom"
+                },
+                {
+                  "raw": "¼ teaspoon paprika",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "paprika"
+                },
+                {
+                  "raw": "¼ teaspoon table salt",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "table salt"
+                },
+                {
+                  "raw": "2 teaspoons olive oil",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "olive oil"
+                },
+                {
+                  "raw": "½ medium onion, minced (about ½ cup)",
+                  "amounts": [
+                    {
+                      "measure": "count",
+                      "quantity": "1/2",
+                      "approximate": false,
+                      "primary": true
+                    },
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "cup",
+                      "approximate": true,
+                      "primary": false
+                    }
+                  ],
+                  "item": "medium onion",
+                  "prep": "minced"
+                },
+                {
+                  "raw": "¼ cup red wine vinegar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "red wine vinegar"
+                },
+                {
+                  "raw": "1 tablespoon sugar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "sugar"
+                },
+                {
+                  "raw": "1 tablespoon minced fresh parsley leaves",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "minced fresh parsley leaves"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0925-panna-cotta.yaml",
+    "recipe": {
+      "title": "Panna Cotta",
+      "servings": "SERVES 8",
+      "prep_notes": "A vanilla bean gives the panna cotta the deepest flavor, but 2 teaspoons of vanilla extract can be used instead. If you like, you can omit the Raspberry Coulis and simply serve the panna cotta with lightly sweetened berries. Though traditionally unmolded, panna cotta may be chilled and served in wine glasses and sauced on top. If you would like to make the panna cotta a day ahead, decrease the amount of gelatin to 2½ teaspoons, and chill the filled wine glasses or ramekins for 18 to 24 hours.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 cup whole milk",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "1",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "whole milk"
+            },
+            {
+              "raw": "2¾ teaspoons gelatin",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2 3/4",
+                  "unit": "teaspoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "gelatin"
+            },
+            {
+              "raw": "3 cups heavy cream",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "heavy cream"
+            },
+            {
+              "raw": "1 vanilla bean, halved lengthwise",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "vanilla bean",
+              "prep": "halved lengthwise"
+            },
+            {
+              "raw": "6 tablespoons sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "6",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "Pinch table salt",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "",
+                  "unit": "pinch",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "table salt"
+            },
+            {
+              "raw": "Raspberry Coulis (recipe follows)",
+              "amounts": [],
+              "item": "Raspberry Coulis (recipe follows)"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Pour the milk into a medium saucepan; sprinkle the surface evenly with the gelatin and let stand for 10 minutes. Meanwhile, turn the contents of two ice cube trays (about 32 cubes) into a large bowl; add 4 cups cold water. Pour the cream into a large measuring cup or pitcher. With a paring knife, scrape the vanilla seeds into the cream; place the pod in the cream along with the seeds and set the mixture aside. Set eight 4-ounce ramekins on a rimmed baking sheet."
+        },
+        {
+          "number": 2,
+          "text": "Heat the milk and gelatin mixture over high heat, stirring constantly, until the gelatin is dissolved and the mixture registers 135 degrees on an instant-read thermometer, about 1½ minutes. Off the heat, add the sugar and salt; stir until dissolved, about 1 minute."
+        },
+        {
+          "number": 3,
+          "text": "Stirring constantly, slowly pour the cream with the vanilla into the saucepan containing the milk, then transfer the mixture to a medium bowl and set the bowl over the ice water bath. Stir frequently until thickened to the consistency of eggnog and the mixture registers 50 degrees on an instant-read thermometer, about 10 minutes. Strain the mixture into a large measuring cup or pitcher, then distribute evenly among the ramekins. Cover the baking sheet with plastic wrap, making sure that the plastic does not mar the surface of the cream; refrigerate until just set (the mixture should wobble when shaken gently), about 4 hours."
+        },
+        {
+          "number": 4,
+          "text": "To serve, spoon a portion of the raspberry coulis onto eight individual serving plates. Pour 1 cup boiling water into a small wide-mouthed bowl, dip a ramekin filled with panna cotta into the water for 3 seconds and lift the ramekin out of the water. With a moistened finger, press lightly on the periphery of the panna cotta to loosen the edges. Dip the ramekin back into the hot water for another 3 seconds. Invert the ramekin over your palm and loosen the panna cotta by cupping your fingers between the panna cotta and the edges of the ramekin. Gently lower the panna cotta onto a serving plate with the coulis. Repeat the process with the remaining ramekins of panna cotta. Serve."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Raspberry Coulis",
+          "kind": "variation",
+          "servings": "MAKES ABOUT 1½ CUPS",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "24 ounces (about 5 cups) frozen raspberries",
+                  "amounts": [
+                    {
+                      "measure": "weight",
+                      "quantity": "24",
+                      "unit": "ounce",
+                      "approximate": false,
+                      "primary": true
+                    },
+                    {
+                      "measure": "volume",
+                      "quantity": "5",
+                      "unit": "cup",
+                      "approximate": true,
+                      "primary": false
+                    }
+                  ],
+                  "item": "frozen raspberries"
+                },
+                {
+                  "raw": "⅓ cup (2⅓ ounces) sugar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/3",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    },
+                    {
+                      "measure": "weight",
+                      "quantity": "2 1/3",
+                      "unit": "ounce",
+                      "approximate": false,
+                      "primary": false
+                    }
+                  ],
+                  "item": "sugar"
+                },
+                {
+                  "raw": "¼ teaspoon juice from 1 lemon",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/4",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "juice from 1 lemon"
+                },
+                {
+                  "raw": "Pinch table salt",
+                  "amounts": [
+                    {
+                      "measure": "count",
+                      "quantity": "",
+                      "unit": "pinch",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "table salt"
+                }
+              ]
+            }
+          ],
+          "steps": [
+            {
+              "number": 1,
+              "text": "Place the frozen raspberries in a 4-quart saucepan. Cover and simmer over medium-high heat, stirring occasionally, for 10 to 12 minutes. Add the sugar and increase the heat to high. Boil for 2 minutes."
+            },
+            {
+              "number": 2,
+              "text": "Strain the berries through a fine-mesh strainer into a bowl, using a rubber spatula to push the berries through the strainer; discard the seeds. Stir in the lemon juice and salt. Cover and refrigerate until chilled, at least 2 hours or up to 3 days."
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

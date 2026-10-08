@@ -274,44 +274,84 @@ void main() {
         expect(one.childId, keyOf(_beerCan, 'Spice Rub'));
       });
 
-      test('a target section with no ingredient lines is the no_ingredients '
-          'rule row, its v43 row unchanged (S13)', () {
-        for (final (file, position, key) in [
-          (_lemonMeringue, 0, 'single-crust pie dough for custard py'),
-          (_plumPie, 0, 'foolproof whole-wheat dough for double-crust pie'),
+      // RE-PIN (M51 batch, v52, rule PV — design_v2 Q9 re-rules CP3 for
+      // these two lines): was "the no_ingredients rule row, its v43 row
+      // unchanged (S13)"; the prose section still is never computed, the
+      // line now counts its BASE (nutrition_v52_test pins the totals).
+      test('a target section with no ingredient lines routes to its base '
+          '(v52 PV), the prose section itself never a child', () {
+        for (final (file, position, key, prose, child, section) in [
+          (
+            _lemonMeringue,
+            0,
+            'single-crust pie dough for custard py',
+            (
+              host: stored(_basicDouble).id,
+              title: 'Single-Crust Pie Dough for Custard Pies',
+            ),
+            keyOf(_basicDouble, 'Basic Single-Crust Pie Dough'),
+            'Basic Single-Crust Pie Dough',
+          ),
+          (
+            _plumPie,
+            0,
+            'foolproof whole-wheat dough for double-crust pie',
+            (
+              host: stored(_foolproofAllButter).id,
+              title: 'Foolproof Whole-Wheat Dough for Double-Crust Pie',
+            ),
+            stored(_foolproofAllButter).id,
+            null,
+          ),
         ]) {
           final found = resolved(file, position);
-          expect(found.kind, ReferenceKind.section, reason: file);
-          expect(found.noIngredients, isTrue, reason: file);
-          expect(found.childId, isNull, reason: file);
+          expect(
+            (
+              found.kind,
+              found.noIngredients,
+              found.childId,
+              found.share,
+              found.variation,
+              found.section?.title,
+            ),
+            (ReferenceKind.routed, false, child, 1.0, prose, section),
+            reason: file,
+          );
           final row = rowFor(file, position);
           expect(
-            (row.fdcId, row.description, row.grams, row.gramSource),
-            (null, subRecipeNote, 0, 'unmeasured'),
+            (row.fdcId, row.description, row.gramSource, row.childRecipeId),
+            (null, null, 'recipe', child),
             reason: file,
           );
           expect(
-            (row.status, row.hold, row.itemKey),
-            (
-              'confirmed',
-              null,
-              key,
-            ),
-          );
-          expect(
-            gramBasisFor(db, lineOf(file, position), row, recipe: stored(file)),
-            'a sub-recipe — counted as 0 g',
+            (row.status, row.hold, row.itemKey, row.childShare),
+            ('auto', null, key, 1.0),
           );
         }
-        // Their hosts are no children: a prose variation is never computed.
+        // The prose section is no child; the lemon's base is.
         expect(
           sectionChildKeysOf(db, stored(_lemonMeringue), ResolverMemo(db)),
-          isEmpty,
+          {keyOf(_basicDouble, 'Basic Single-Crust Pie Dough')},
         );
       });
 
-      test('the no-amount lines and the served-with line stay the rule row, '
-          'their v43 rows unchanged', () {
+      // RE-PIN (M51 batch, v52 — design_v2 Q8, Q22 re-rule prep41 A3 (a)
+      // for these lines): was "the no-amount lines and the served-with line
+      // stay the rule row" (noAmount ×8); the six SW lines stay the rule
+      // row (served with, now ACCOUNTED — nutrition_v52_test), the three WB
+      // lines route one whole batch.
+      test('the six served-with lines stay the rule row, their v43 rows '
+          'unchanged; the three plated no-amount lines route (v52 WB)', () {
+        const wb = {
+          '0070-skillet-chicken-fajitas.yaml',
+          '0712-red-beans-and-rice.yaml',
+          '0925-panna-cotta.yaml',
+        };
+        // Red beans' Basic White Rice is ANOTHER host's section.
+        final rice = loadCorpusRecipe(
+          '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
+        );
+        db.upsertRecipe(rice, sourceSlug: _source, contentHash: rice.id);
         for (final (file, position, key) in [
           ('0070-skillet-chicken-fajitas.yaml', 22, 'spicy pickled radish'),
           (
@@ -344,11 +384,15 @@ void main() {
           db.upsertRecipe(steaks, sourceSlug: _source, contentHash: steaks.id);
           final recipe = loadCorpusRecipe(file);
           db.upsertRecipe(recipe, sourceSlug: _source, contentHash: recipe.id);
+          if (wb.contains(file)) {
+            final found = resolved(file, position);
+            expect((found.kind, found.share), (ReferenceKind.routed, 1.0));
+            expect(rowFor(file, position).childRecipeId, found.childId);
+            continue;
+          }
           expect(
             resolved(file, position).kind,
-            file == _herbSauce
-                ? ReferenceKind.servedWith
-                : ReferenceKind.noAmount,
+            ReferenceKind.servedWith,
             reason: file,
           );
           final row = rowFor(file, position);

@@ -547,11 +547,16 @@ void main() {
         final recipe = store(file);
         expect(
           sectionChildKeysOf(db, now(recipe.id), ResolverMemo(db)),
-          isEmpty,
+          // RE-PIN (M51 batch, v52, rule PV): lemon-meringue-pie|0 counts
+          // its prose target's BASE, 0972's Basic Single-Crust Pie Dough —
+          // that section is its child; the prose target still is none (was
+          // isEmpty for every file).
+          file == '0989-lemon-meringue-pie.yaml' ? {_pie} : isEmpty,
           reason: file,
         );
       }
-      expect(bulkScope(db, BulkScope.all).children, isEmpty);
+      // RE-PIN (M51 batch, v52): the base only (was isEmpty).
+      expect(bulkScope(db, BulkScope.all).children, {_pie});
     });
 
     test('seedLayout seeds a key while its host lives', () {

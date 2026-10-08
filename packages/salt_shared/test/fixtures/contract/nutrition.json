@@ -180,5 +180,6 @@
   "low_confidence": 0,
   "includes": [],
   "partial": [],
+  "served_with": [],
   "computed_at": "<timestamp>"
 }

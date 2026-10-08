@@ -81,7 +81,13 @@ const Map<String, String> _resolved = {
       'routed section Buttery Croutons of carrot-ginger-soup',
   'crispy-thai-eggplant-salad|14':
       'routed section Fried Shallots and Fried Shallot Oil',
-  'skillet-chicken-fajitas|22': 'noAmount',
+  // RE-PIN (M51 batch, v52 — WB, SW, PV, design_v2 Q22 / Q8 / Q9): ten
+  // entries moved — fajitas|22, red-beans-and-rice|14, panna-cotta|6
+  // (were noAmount) route one whole batch; pan-seared-salmon|3,
+  // maryland-crab-cakes|10, the curry's |16 |17 and spanish-tortilla|8 (were
+  // noAmount) are servedWith; fresh-plum-ginger-pie|0 and
+  // lemon-meringue-pie|0 (were "section no_ingredients") count their base.
+  'skillet-chicken-fajitas|22': 'routed section Spicy Pickled Radishes',
   'indoor-pulled-chicken|7': 'held generic',
   'peruvian-roast-chicken-with-garlic-and-lime|12':
       'routed section Spicy Mayonnaise',
@@ -112,13 +118,13 @@ const Map<String, String> _resolved = {
       'routed section Port Wine–Cherry Sauce',
   'roast-fresh-ham|12': 'held generic',
   'glazed-spiral-sliced-ham|2': 'held generic',
-  'pan-seared-salmon|3': 'noAmount',
+  'pan-seared-salmon|3': 'servedWith',
   'glazed-salmon|6': 'held generic',
   'oven-roasted-salmon|3': 'held generic',
   'pan-seared-sesame-crusted-tuna-steaks|4': 'held generic',
   'pan-roasted-halibut-steaks|3': 'held generic',
   'spanish-style-toasted-pasta-with-shrimp|16': 'routed section Aioli',
-  'maryland-crab-cakes|10': 'noAmount',
+  'maryland-crab-cakes|10': 'servedWith',
   'best-old-fashioned-burgers|8': 'routed section Classic Burger Sauce',
   'juicy-pub-style-burgers|5': 'routed section Pub-Style Burger Sauce',
   'fresh-pasta-without-a-machine|4': 'held generic',
@@ -141,9 +147,9 @@ const Map<String, String> _resolved = {
   'thai-green-curry-with-chicken-broccoli-and-mushrooms|1':
       'routed section Green Curry Paste',
   'indian-style-curry-with-potatoes-cauliflower-peas-and-chickpeas|16':
-      'noAmount',
+      'servedWith',
   'indian-style-curry-with-potatoes-cauliflower-peas-and-chickpeas|17':
-      'noAmount',
+      'servedWith',
   'grilled-marinated-flank-steak|2': 'marinade',
   'grilled-steak-tips|0': 'marinade',
   'grill-roasted-beef-short-ribs|10': 'held generic',
@@ -167,10 +173,11 @@ const Map<String, String> _resolved = {
   'grilled-shrimp-skewers|4': 'held generic',
   'grilled-corn-with-flavored-butter|0': 'held generic',
   'buffalo-cauliflower-bites|11': 'routed section Ranch Dressing',
-  'red-beans-and-rice|14': 'noAmount',
+  'red-beans-and-rice|14':
+      'routed section Basic White Rice of fried-rice-with-shrimp-pork-and-shiitakes',
   'fluffy-omelets|4': 'held generic',
   'denver-omelets|6': 'routed section Filling for Denver Omelets',
-  'spanish-tortilla-with-roasted-red-peppers-and-peas|8': 'noAmount',
+  'spanish-tortilla-with-roasted-red-peppers-and-peas|8': 'servedWith',
   'quiche-lorraine|0':
       'routed section Basic Single-Crust Pie Dough of basic-double-crust-pie-dough',
   'gluten-free-chocolate-chip-cookies|0':
@@ -181,7 +188,7 @@ const Map<String, String> _resolved = {
   'bittersweet-chocolate-roulade|10':
       'routed section Espresso-Mascarpone Cream',
   'bittersweet-chocolate-roulade|11': 'routed section Dark Chocolate Ganache',
-  'panna-cotta|6': 'noAmount',
+  'panna-cotta|6': 'routed section Raspberry Coulis',
   'pavlova-with-fruit-and-whipped-cream|7': 'held generic',
   'classic-apple-pie|0': 'routed all-butter-double-crust-pie-dough default',
   'deep-dish-apple-pie|0': 'routed all-butter-double-crust-pie-dough default',
@@ -190,7 +197,8 @@ const Map<String, String> _resolved = {
   'sweet-cherry-pie|0': 'routed all-butter-double-crust-pie-dough default',
   'fresh-peach-pie|7': 'routed section Pie Dough for Lattice-Top Pie',
   'fresh-plum-ginger-pie-with-whole-wheat-lattice-top-crust|0':
-      'section no_ingredients',
+      'routed foolproof-all-butter-dough-for-double-crust-pie for variation '
+      'Foolproof Whole-Wheat Dough for Double-Crust Pie',
   'fresh-strawberry-pie|0':
       'routed section Foolproof Single-Crust Pie Dough of foolproof-double-crust-pie-dough',
   'pumpkin-pie|0':
@@ -198,7 +206,9 @@ const Map<String, String> _resolved = {
   'pecan-pie|0':
       'routed section Basic Single-Crust Pie Dough of basic-double-crust-pie-dough',
   'key-lime-pie|3': 'routed graham-cracker-crust',
-  'lemon-meringue-pie|0': 'section no_ingredients',
+  'lemon-meringue-pie|0':
+      'routed section Basic Single-Crust Pie Dough of basic-double-crust-pie-dough '
+      'for variation Single-Crust Pie Dough for Custard Pies',
   'coconut-cream-pie|9': 'routed graham-cracker-crust',
   'chocolate-cream-pie-with-all-butter-crust|0':
       'routed foolproof-all-butter-dough-for-single-crust-pie',
@@ -449,21 +459,22 @@ void main() {
             continue;
           }
           final found = resolveReference(db, recipe, line, memo);
-          got['${recipe.slug}|$position'] = switch (found.kind) {
-            // v44: a section routes as a child of its own (the key).
-            ReferenceKind.routed when found.section != null =>
-              'routed section ${found.section!.title}'
-                  '${found.section!.host == recipe.id ? '' : ' of '
-                            '${db.recipeByIdOrSlug(found.section!.host)!.recipe.slug}'}',
-            ReferenceKind.routed =>
-              'routed ${db.recipeByIdOrSlug(found.childId!)!.recipe.slug}'
-                  '${found.named >= 2 ? ' default' : ''}',
-            ReferenceKind.section when found.noIngredients =>
-              'section no_ingredients',
-            ReferenceKind.held =>
-              'held ${found.missing ? 'missing' : 'generic'}',
-            final kind => kind.name,
+          final variation = switch (found.variation) {
+            (:final title, host: _) => ' for variation $title',
+            null => '',
           };
+          got['${recipe.slug}|$position'] =
+              '${switch (found.kind) {
+                // v44: a section routes as a child of its own (the key).
+                ReferenceKind.routed when found.section != null => 'routed section ${found.section!.title}'
+                    '${found.section!.host == recipe.id ? '' : ' of '
+                              '${db.recipeByIdOrSlug(found.section!.host)!.recipe.slug}'}',
+                ReferenceKind.routed => 'routed ${db.recipeByIdOrSlug(found.childId!)!.recipe.slug}'
+                    '${found.named >= 2 ? ' default' : ''}',
+                ReferenceKind.section when found.noIngredients => 'section no_ingredients',
+                ReferenceKind.held => 'held ${found.missing ? 'missing' : 'generic'}',
+                final kind => kind.name,
+              }}$variation';
         }
       }
       expect(got, _resolved);
@@ -738,7 +749,13 @@ void main() {
       expect(fresh(tips), isTrue);
     });
 
-    test('R3: a reference rule row makes its label partial [7.6, A3]', () {
+    // RE-PIN (M51 batch, v52, design_v2 Q8b — re-rules prep41 A3 (a) for a
+    // dish served with): the herb sauce's D7 row is ACCOUNTED, its label
+    // complete 10/10 (was "R3: a reference rule row makes its label
+    // partial", 9 of 10). No corpus line keeps a not-routed row that is not
+    // served with (nutrition_v52_test; the mockup's "none in the library").
+    test('R3 (v52): a served-with rule row is accounted — its label '
+        'complete [7.6, A3, Q8b]', () {
       for (final (file, position, matched, total, perServing) in [
         // v44: a section of its own routes (thai|1, nachos|5 — pinned in
         // nutrition_v44_sections_test.dart); served with, not made from
@@ -749,7 +766,7 @@ void main() {
         // onion, carrot, mushrooms, garlic, ground beef, bay and peppercorns
         // (2,042.50 → 1,456.70 g; the parent row 1,021.25 → 728.35 g,
         // −306.27 kcal a batch): 207.91 → 131.34 a serving (P1 R12's 131.3).
-        (_herbSauce, 0, 9, 10, 131.34),
+        (_herbSauce, 0, 10, 10, 131.34),
       ]) {
         final recipe = r(file);
         final row = rowAt(recipe, position);
@@ -757,7 +774,7 @@ void main() {
         expect(row.description, subRecipeNote);
         expect(row.grams, 0);
         expect(bucketOf(row), MatchBucket.counted, reason: row.raw);
-        expect(label(recipe).status, 'partial', reason: recipe.slug);
+        expect(label(recipe).status, 'complete', reason: recipe.slug);
         expect(label(recipe).matchedCount, matched, reason: recipe.slug);
         expect(label(recipe).totalCount, total, reason: recipe.slug);
         expect(

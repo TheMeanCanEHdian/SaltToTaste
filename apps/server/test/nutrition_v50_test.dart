@@ -1480,8 +1480,9 @@ const String _marinade =
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    // RE-PIN (M49 batch, v51): matcherVersion 50 (was 49).
-    expect(matcherVersion, 50);
+    // RE-PIN (M51 batch, v52): matcherVersion 51 (was 50; M49's v51 re-pin
+    // was 49 → 50).
+    expect(matcherVersion, 51);
   });
 
   group('matcher v50 (batch M50)', skip: skipIfNoCorpus, () {

@@ -755,12 +755,14 @@ void main() {
       expect(label(_steakTips)['partial'], [
         containsPair('reason', 'marinade'),
       ]);
-      final herb = (label(_herbSauce)['partial']! as List<Object?>)
-          .cast<Map<String, Object?>>();
       // v44: |3 "¼ cup Sauce Base (½ recipe …)" routes to its own section
-      // (nutrition_v44_sections_test.dart); only the served-with line stays.
-      expect(herb.map((p) => (p['position'], p['kind'], p['reason'])), [
-        (0, 'not_routed', 'served_with'),
+      // (nutrition_v44_sections_test.dart). RE-PIN (M51 batch, v52, Q8b):
+      // the served-with line is accounted — `served_with`, never `partial`
+      // (was one partial line (0, not_routed, served_with)).
+      final herb = label(_herbSauce);
+      expect(herb['partial'], isEmpty);
+      expect(herb['served_with'], [
+        {'position': 0, 'name': 'Pan-Seared Steaks'},
       ]);
       // A person's Confirm clears the default flag, never the include.
       await put(_blueberry, 0, {'confirmed': true});

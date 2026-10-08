@@ -109,6 +109,9 @@ Map<String, Object?> nutritionBody(
     // make the label partial ([referenceSummary]); `[]` when none.
     'includes': summary.includes,
     'partial': summary.partial,
+    // v52 (M51 Q8): the references served with the dish, accounted and not
+    // counted ([referenceSummary]); `[]` when none.
+    'served_with': summary.servedWith,
     'computed_at': row.computedAt,
     if (computingJobId != null) 'computing_job_id': computingJobId,
   };

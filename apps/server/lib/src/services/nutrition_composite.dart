@@ -324,8 +324,15 @@ List<Map<String, Object?>> partsJson(
 /// `child_partial` (a counted child that is partial: its `title`,
 /// `matched`, `total`), `not_routed` (R3's 0 g row: its `reason`). Stored
 /// rows on their own lines, skipped ones left out; in line order. [memo]:
-/// the request's resolver reads.
-({List<Map<String, Object?>> includes, List<Map<String, Object?>> partial})
+/// the request's resolver reads. v52 (M51 Q8): `servedWith` — a rule row
+/// whose reason is `served_with` (rule SW, D7) is accounted, never
+/// `partial`: `{position, name}` — `name` the reference's first
+/// alternative — the label's "Served with {name} — not counted." line.
+({
+  List<Map<String, Object?>> includes,
+  List<Map<String, Object?>> partial,
+  List<Map<String, Object?>> servedWith,
+})
 referenceSummary(
   SaltDatabase db,
   Recipe recipe,
@@ -335,6 +342,7 @@ referenceSummary(
   final lines = nutritionLines(recipe);
   final includes = <Map<String, Object?>>[];
   final partial = <Map<String, Object?>>[];
+  final servedWith = <Map<String, Object?>>[];
   for (final row in [...rows]..sort((a, b) => a.position - b.position)) {
     if (row.status == 'skipped' || row.position >= lines.length) {
       continue;
@@ -391,6 +399,17 @@ referenceSummary(
       }
       continue;
     }
+    if (notRouted && child?['reason'] == 'served_with') {
+      servedWith.add({
+        'position': row.position,
+        // The recipe served with it: the reference's first alternative
+        // ("Sweet-and-Sour Chutney", never "… or lemon wedges").
+        'name': referenceNameOf(
+          line,
+        ).split(RegExp(r'(?<!\s)\s+or\s+')).first,
+      });
+      continue;
+    }
     partial.add({
       'position': row.position,
       'kind': held ? 'held' : 'not_routed',
@@ -401,5 +420,5 @@ referenceSummary(
       'reason': child?['reason'],
     });
   }
-  return (includes: includes, partial: partial);
+  return (includes: includes, partial: partial, servedWith: servedWith);
 }

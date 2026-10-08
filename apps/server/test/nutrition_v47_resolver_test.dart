@@ -159,64 +159,81 @@ void main() {
     'F2: a prose section that gains or loses lines [O2]',
     skip: skipIfNoCorpus,
     () {
-      test('gains lines (stated synthesized edit: its sibling’s lines) → the '
-          'parent reads stale at once and ONE stale sweep routes it; the '
-          'lines taken away again (the corpus’s own prose) → ONE stale sweep '
-          'back to the no_ingredients rule row', () async {
-        store([_lemon, _dough]);
-        final key = keyOf(_dough, _custard);
-        final lemonId = stored(_lemon).id;
-        await sweep(BulkScope.all);
-        var row = rowAt(_lemon, 0);
-        expect(row.grams, 0);
-        expect(row.childRecipeId, isNull);
-        expect(row.description, subRecipeNote);
-        expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), [key]);
-        expect(db.nutritionFor(key), isNull);
-        expect(fresh(_lemon), isTrue);
+      test(
+        'gains lines (stated synthesized edit: its sibling’s lines) → the '
+        'parent reads stale at once and ONE stale sweep routes it; the '
+        'lines taken away again (the corpus’s own prose) → ONE stale sweep '
+        'back to its PV base (v52; was the no_ingredients rule row)',
+        () async {
+          store([_lemon, _dough]);
+          final key = keyOf(_dough, _custard);
+          final base = keyOf(_dough, _basic);
+          final lemonId = stored(_lemon).id;
+          await sweep(BulkScope.all);
+          var row = rowAt(_lemon, 0);
+          // RE-PIN (M51 batch, v52, rule PV): the prose section's line counts
+          // its BASE, the sibling Basic Single-Crust Pie Dough, 302.1 g (was
+          // the no_ingredients rule row, 0 g); the fold still lists the prose
+          // section.
+          expect(row.grams, 302.1);
+          expect(row.childRecipeId, base);
+          expect(row.description, isNull);
+          expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), [key]);
+          expect(db.nutritionFor(key), isNull);
+          expect(fresh(_lemon), isTrue);
 
-        final corpusDough = loadCorpusRecipe(_dough);
-        final basic = corpusDough.subsections.singleWhere(
-          (s) => s.title == _basic,
-        );
-        setSectionLines(_dough, _custard, basic.ingredients);
-        // The page reads stale with no sweep: the hash moved (the fold).
-        expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), isEmpty);
-        expect(fresh(_lemon), isFalse);
-        expect(bulkScopeIds(db, BulkScope.stale), [key, lemonId]);
-        await sweep(BulkScope.stale);
-        final section = db.nutritionFor(key)!;
-        row = rowAt(_lemon, 0);
-        expect(row.childRecipeId, key);
-        expect(row.childShare, 1.0);
-        expect(row.childStamp, section.computedAt);
-        expect(row.hold, isNull);
-        expect(row.status, 'auto');
-        expect(section.totalGrams, 302.1);
-        expect(row.grams, section.totalGrams! * 1.0);
-        expect(db.nutritionFor(lemonId)!.status, 'complete');
-        expect(fresh(_lemon), isTrue);
-        expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
+          final corpusDough = loadCorpusRecipe(_dough);
+          final basic = corpusDough.subsections.singleWhere(
+            (s) => s.title == _basic,
+          );
+          setSectionLines(_dough, _custard, basic.ingredients);
+          // The page reads stale with no sweep: the hash moved (the fold).
+          expect(
+            proseSectionsReadBy(stored(_lemon), ResolverMemo(db)),
+            isEmpty,
+          );
+          expect(fresh(_lemon), isFalse);
+          expect(bulkScopeIds(db, BulkScope.stale), [key, lemonId]);
+          await sweep(BulkScope.stale);
+          // v52: the base, no child of anything now, is collected.
+          expect(db.nutritionFor(base), isNull);
+          final section = db.nutritionFor(key)!;
+          row = rowAt(_lemon, 0);
+          expect(row.childRecipeId, key);
+          expect(row.childShare, 1.0);
+          expect(row.childStamp, section.computedAt);
+          expect(row.hold, isNull);
+          expect(row.status, 'auto');
+          expect(section.totalGrams, 302.1);
+          expect(row.grams, section.totalGrams! * 1.0);
+          expect(db.nutritionFor(lemonId)!.status, 'complete');
+          expect(fresh(_lemon), isTrue);
+          expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
 
-        final prose = corpusDough.subsections.singleWhere(
-          (s) => s.title == _custard,
-        );
-        setSectionLines(_dough, _custard, prose.ingredients);
-        expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), [key]);
-        expect(fresh(_lemon), isFalse);
-        // The key is no child now (its sweep collects it); the parent is
-        // stale by its own hash in the same scope.
-        expect(bulkScopeIds(db, BulkScope.stale), [lemonId]);
-        await sweep(BulkScope.stale);
-        row = rowAt(_lemon, 0);
-        expect(row.grams, 0);
-        expect(row.childRecipeId, isNull);
-        expect(row.childStamp, isNull);
-        expect(row.description, subRecipeNote);
-        expect(db.nutritionFor(key), isNull);
-        expect(fresh(_lemon), isTrue);
-        expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
-      });
+          final prose = corpusDough.subsections.singleWhere(
+            (s) => s.title == _custard,
+          );
+          setSectionLines(_dough, _custard, prose.ingredients);
+          expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), [key]);
+          expect(fresh(_lemon), isFalse);
+          // The key is no child now (its sweep collects it); the parent is
+          // stale by its own hash in the same scope. RE-PIN (M51 batch, v52,
+          // rule PV): the base is a child again, unstamped since its
+          // collection, so it leads the scope (was [lemonId] alone).
+          expect(bulkScopeIds(db, BulkScope.stale), [base, lemonId]);
+          await sweep(BulkScope.stale);
+          row = rowAt(_lemon, 0);
+          // RE-PIN (M51 batch, v52, rule PV): back to its base (was back to
+          // the no_ingredients rule row: 0 g, no child, no stamp).
+          expect(row.grams, 302.1);
+          expect(row.childRecipeId, base);
+          expect(row.childStamp, db.nutritionFor(base)!.computedAt);
+          expect(row.description, isNull);
+          expect(db.nutritionFor(key), isNull);
+          expect(fresh(_lemon), isTrue);
+          expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
+        },
+      );
 
       test('the per-recipe compute routes it too: the gained section first, '
           'then the parent (stated synthesized edit as above)', () async {
@@ -287,12 +304,13 @@ void main() {
           proseSectionsReadBy(stored(_chraime), ResolverMemo(db)),
           isEmpty,
         );
-        // RE-PIN (M49 batch, v51, matcherVersion 50): its stamp in the v51
-        // replay of snapshot 21 (was 125e7e95…, the M50 stamp at
-        // matcherVersion 49).
+        // RE-PIN (M51 batch, v52, matcherVersion 51): its stamp in the v52
+        // replay of snapshot 21 (was 1c979a6b…, the M49 stamp at
+        // matcherVersion 50; v52 also hashes a reference recipe's group
+        // headings — rule SW reads a CONDIMENTS one).
         expect(
           ingredientsHashOf(stored(_chraime), ResolverMemo(db)),
-          '1c979a6bddcf5dd74c4dd2f337286e102908f0418d8d1e6d7c2629358d09b338',
+          '852f591a148f5d1c1cb906cc1d5a550fe07c7011fcc3f14dfd9e3308c2e1328a',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

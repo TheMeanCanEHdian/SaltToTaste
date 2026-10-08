@@ -6593,6 +6593,7 @@ class ReferenceResolution {
     this.similar = const [],
     this.section,
     this.noIngredients = false,
+    this.variation,
   });
 
   /// What the line resolves to.
@@ -6623,6 +6624,12 @@ class ReferenceResolution {
   /// lines (v44, S13 `no_ingredients`): a prose variation of its host,
   /// counted nowhere — the 0 g rule row.
   final bool noIngredients;
+
+  /// v52 (M51 Q9, rule PV): the prose section (no ingredient lines) the
+  /// line names when it is counted as its BASE ([childId]) instead — its
+  /// host and title. The parent's hash folds it ([proseSectionsReadBy]),
+  /// the row carries [pvFlagOf]'s flag. Null on every other answer.
+  final ({String host, String title})? variation;
 }
 
 /// How many times a [ResolverMemo] read the library's title or section
@@ -6891,15 +6898,135 @@ bool _ownSectionNames(String title, String item) {
 /// section's line naming its own host is `self` (v47, F7). A
 /// child made from a recipe itself is `nested` (depth 1); one whose yield
 /// reads no share is `noShare`.
+///
+/// v52 (M51, prep47 design_v2 Q8, Q9, Q22; the owner's 2026-10-07 standing
+/// authorization; re-rules prep41 A3 (a) and CP3 for these lines). A line
+/// with NO amount (and only such a line — critic F7: the ten marked
+/// references WITH an amount, guay-tiew-tom-yum-goong|15's "(optional)"
+/// jam among them, keep the ruled practice and stay counted): rule SW, a
+/// served-with marker ([servedWithMarked]) → `servedWith` (the 0 g rule
+/// row, counted accounted by [recomputeTotals]); else rule WB, the order
+/// above reaching a child with lines that is not nested → `routed` at
+/// share 1.0, one whole batch ([wbFlag]); anything else stays `noAmount`.
+/// Rule PV, every line: an answer naming a section with no ingredient
+/// lines routes to its base ([_proseBase]) when one shares a title word.
 ReferenceResolution resolveReference(
   SaltDatabase db,
   Recipe recipe,
   IngredientLine line,
   ResolverMemo memo,
 ) {
-  if (line.amounts.isEmpty) {
-    return const ReferenceResolution(ReferenceKind.noAmount);
+  final amountless = line.amounts.isEmpty;
+  if (amountless && servedWithMarked(recipe, line)) {
+    return const ReferenceResolution(ReferenceKind.servedWith);
   }
+  var found = _resolveInOrder(db, recipe, line, memo);
+  if (found case ReferenceResolution(
+    noIngredients: true,
+    section: final prose?,
+  )) {
+    found = _proseBase(recipe, line, memo, prose) ?? found;
+  }
+  // D7's shipped title rule answers `servedWith` in the order itself.
+  return amountless &&
+          found.kind != ReferenceKind.servedWith &&
+          (found.kind != ReferenceKind.routed || found.variation != null)
+      ? const ReferenceResolution(ReferenceKind.noAmount)
+      : found;
+}
+
+/// Rule SW's markers (v52, M51 Q8; P5 §3) on an amount-less reference
+/// [line] of [recipe]: "optional", "for serving", an alternative after
+/// " or " (the split [isSubRecipeReference] reads) or an ingredient group
+/// headed CONDIMENTS. The fifth, D7's title rule (Q8b: the parent "… for
+/// {item}"), is the shipped order's own `servedWith` answer, kept for such
+/// a line by [resolveReference]. Read only for a line with no amount.
+bool servedWithMarked(Recipe recipe, IngredientLine line) {
+  final text = line.raw.toLowerCase();
+  return RegExp(r'\boptional\b').hasMatch(text) ||
+      text.contains('for serving') ||
+      RegExp(r'(?<!\s)\s+or\s+').hasMatch(text) ||
+      recipe.ingredients.any(
+        (group) =>
+            group.group?.trim().toUpperCase() == 'CONDIMENTS' &&
+            group.items.any((own) => own.raw == line.raw),
+      );
+}
+
+/// Rule PV (v52, M51 Q9; P5 §3): the BASE a reference naming the prose
+/// section [prose] (no ingredient lines) counts — of the section's host
+/// (when it lists lines and is neither [recipe] nor its host) and the
+/// host's sections that list lines (never the prose one, never [recipe]),
+/// the one whose title shares the most words with the prose section's
+/// ([_refNorm]); the host on a tie (fresh-plum-ginger-pie|0 → 0976's own
+/// "Foolproof All-Butter Dough for Double-Crust Pie", 6 words;
+/// lemon-meringue-pie|0 → 0972's "Basic Single-Crust Pie Dough", 4 words
+/// against the host's 3), else the first such section. Null when no
+/// candidate shares a word, or the base reads no `routed` share (the
+/// `no_ingredients` row stays).
+ReferenceResolution? _proseBase(
+  Recipe recipe,
+  IngredientLine line,
+  ResolverMemo memo,
+  ({String host, String title}) prose,
+) {
+  final host = prose.host == recipe.id ? recipe : memo.hostRecipe(prose.host);
+  if (host == null) {
+    return null;
+  }
+  final words = _refWords(_refNorm(prose.title));
+  int shared(String title) =>
+      _refWords(_refNorm(title)).intersection(words).length;
+  final hostScore =
+      host.id != recipe.id &&
+          host.id != hostOf(recipe.id) &&
+          nutritionLines(host).isNotEmpty
+      ? shared(host.title)
+      : 0;
+  Subsection? best;
+  var bestScore = 0;
+  for (final sub in host.subsections) {
+    final title = sub.title;
+    if (title == null ||
+        title == prose.title ||
+        sectionKeyOf(host.id, title) == recipe.id ||
+        nutritionLines(sectionRecipeOf(host, sub)).isEmpty) {
+      continue;
+    }
+    if (shared(title) > bestScore) {
+      best = sub;
+      bestScore = shared(title);
+    }
+  }
+  if (hostScore == 0 && bestScore == 0) {
+    return null;
+  }
+  final tail = hostScore >= bestScore
+      ? _childTail(line, host)
+      : _childTail(
+          line,
+          sectionRecipeOf(host, best!),
+          section: best.title,
+          host: host.id,
+        );
+  return tail.kind != ReferenceKind.routed
+      ? null
+      : ReferenceResolution(
+          ReferenceKind.routed,
+          childId: tail.childId,
+          share: tail.share,
+          section: tail.section,
+          variation: prose,
+        );
+}
+
+/// [resolveReference]'s shipped order (v41–v47), every line.
+ReferenceResolution _resolveInOrder(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  ResolverMemo memo,
+) {
   final item = referenceItemOf(line);
   final itemWords = _refWords(item);
   if (itemWords.contains('marinade')) {
@@ -7008,7 +7135,11 @@ ReferenceResolution resolveReference(
 /// child made from a recipe is `nested` (depth 1); else the share
 /// [parseShare] reads from the line against the CHILD's own yield (a
 /// section's `servings`, never its host's) — `routed`, or `noShare`. An
-/// A9 line's bare count of exactly 1 reads one recipe (S11). A child not
+/// A9 line's bare count of exactly 1 reads one recipe (S11); v52 (M51 Q22,
+/// rule WB) a line with no amount reads one whole batch, 1.0, of a child
+/// with lines (a lineless library recipe — latin-flan, best-baked-potatoes —
+/// reads `noShare`, so [resolveReference] keeps `noAmount`; it keeps the
+/// batch only for a line no served-with marker reads). A child not
 /// computed yet routes all the same: its parent's engine row reads its
 /// recipe stale until the child's stamp lands (v41 F6), never a fetch.
 ReferenceResolution _childTail(
@@ -7043,7 +7174,8 @@ ReferenceResolution _childTail(
               line.amounts.single.unit == null &&
               line.amounts.single.quantity.trim() == '1'
           ? 1.0
-          : null);
+          : null) ??
+      (line.amounts.isEmpty && nutritionLines(child).isNotEmpty ? 1.0 : null);
   return ReferenceResolution(
     share == null ? ReferenceKind.noShare : ReferenceKind.routed,
     childId: child.id,
@@ -8302,8 +8434,11 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
     if (references) ...{
       'prep_notes': recipe.prepNotes,
       'sections': [for (final sub in recipe.subsections) sub.title],
+      // v52 (M51 Q8): the group headings — rule SW reads a CONDIMENTS one.
+      'groups': [for (final group in recipe.ingredients) group.group],
       // v47 (F2): and whether the section a line names lists lines — only
-      // when one does not, so every other recipe hashes as before.
+      // when one does not, so every other recipe hashes as before (v52: or
+      // the child an amount-less line names, [proseSectionsReadBy]).
       if (prose.isNotEmpty) 'prose_sections': prose,
     },
     // v44 (P1 §3.1): a SECTION's yield, which its parents' shares read
@@ -8340,16 +8475,33 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
 /// gains lines leaves the list (the parent reads stale, a sweep routes it);
 /// one that loses them joins it (the parent falls back to the rule row in
 /// the sweep that collects the section). Only the lines the sub-recipe
-/// rule zeroes ([subRecipeRowFor]), as [referenceRowFor] reads them.
+/// rule zeroes ([subRecipeRowFor]), as [referenceRowFor] reads them. v52
+/// (M51 Q9, rule PV): a line counted as the prose section's BASE folds the
+/// prose section all the same — it gaining lines stales the parent, which
+/// then routes to it. Read off the shipped order ([_resolveInOrder]), so a
+/// line with NO amount folds it too, and (M51 Q22, rule WB; closer3 D1)
+/// such a line also folds the library child or section whose lines keep it
+/// from WB's whole batch — one listing none (latin-flan) or one made from a
+/// recipe (`nested`): those lines decide `noAmount` against `routed` and no
+/// stamp ties the 0 g rule row to the child. A served-with marked line with
+/// no amount reads no child ([resolveReference]), so it folds nothing.
 List<String> proseSectionsReadBy(Recipe recipe, ResolverMemo memo) => [
   for (final (i, line) in nutritionLines(recipe).indexed)
-    if (subRecipeRowFor(recipe, i, line) != null)
-      if (resolveReference(memo.db, recipe, line, memo)
-          case ReferenceResolution(
-            noIngredients: true,
-            section: (:final host, :final title),
-          ))
-        sectionKeyOf(host, title),
+    if (subRecipeRowFor(recipe, i, line) != null &&
+        !(line.amounts.isEmpty && servedWithMarked(recipe, line)))
+      if (switch (_resolveInOrder(memo.db, recipe, line, memo)) {
+            ReferenceResolution(noIngredients: true, section: final at?) =>
+              sectionKeyOf(at.host, at.title),
+            ReferenceResolution(
+              kind: ReferenceKind.nested || ReferenceKind.noShare,
+              childId: final id?,
+            )
+                when line.amounts.isEmpty =>
+              id,
+            _ => null,
+          }
+          case final key?)
+        key,
 ];
 
 /// Whether [recipe]'s stored totals ([row], else read) are FRESH: stamped
@@ -10482,10 +10634,19 @@ bool recomputeTotals(
     }
     if (row.fdcId == null) {
       // Water-like confirmed rows count as fully accounted zeros. A
-      // sub-recipe the engine did not route (v41 R3, A3 a: a section, a
-      // dish served with, no amount, no share) is not: its recipe reads
-      // partial.
-      if (row.status == 'confirmed' && row.description != subRecipeNote) {
+      // sub-recipe the engine did not route (v41 R3, A3 a: a section, no
+      // amount, no share) is not: its recipe reads partial — but a dish
+      // served with it (v52, M51 Q8: rule SW and D7) is accounted, as water.
+      if (row.status == 'confirmed' &&
+          (row.description != subRecipeNote ||
+              (lines[row.position].raw == row.raw &&
+                  resolveReference(
+                        db,
+                        now,
+                        lines[row.position],
+                        children,
+                      ).kind ==
+                      ReferenceKind.servedWith))) {
         accounted += 1;
         contributing += 1;
       }
@@ -11252,6 +11413,17 @@ String? compositeFlagOf(
         'names: $title)',
       );
     }
+    // v52 (M51): rule WB's whole batch on a line with no amount; rule
+    // PV's base, counted for the prose variation the line names.
+    if (line.amounts.isEmpty && row.childShare == 1) {
+      flags.add(wbFlag);
+    }
+    if (resolveReference(db, recipe, line, memo) case ReferenceResolution(
+      variation: _?,
+      childId: final base?,
+    ) when base == childId) {
+      flags.add(pvFlagOf(title));
+    }
     final child = db.nutritionFor(childId);
     if (child != null && child.status != 'complete') {
       flags.add(
@@ -11269,6 +11441,17 @@ String? compositeFlagOf(
   }
   return flags.isEmpty ? null : flags.join(' · ');
 }
+
+/// Rule WB's flag (v52, M51 Q22; the approved copy
+/// docs/mockups/v51-references-copy.html §4): a reference line with no
+/// amount counted as one whole batch of its child.
+const String wbFlag =
+    'approximate (no amount on the line — the whole batch counted)';
+
+/// Rule PV's flag (v52, M51 Q9; the approved copy §4): a reference to a
+/// prose variation counted as its base [title].
+String pvFlagOf(String title) =>
+    "approximation (counted as $title; the variation's changes are not read)";
 
 /// Whether [row] — [line]'s row in [recipe] — is the ENGINE's route on the
 /// first of two or more library titles its parent's note names (the

@@ -3608,6 +3608,29 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v52 (batch M51): references with no amount, server
+  + app (prep47 Q8, Q8b, Q9, Q22, Q15 (iii); built under the standing
+  authorization; both copy deltas approved 2026-10-07).** RE-RULES prep41
+  A3 (a) and CP3 for these lines: a served-with reference is accounted (0 g,
+  the label says "Served with {name} — not counted."), a whole-batch
+  reference routes at share 1.0 flagged, a prose variation routes to its
+  base flagged. Kept deviations, each disclosed and re-measured: (1) D7's
+  title rule is served by the shipped resolver order's own served-with
+  answer, not a marker arm (no corpus line could test one); (2) the
+  served-with `name` is the first alternative, as the mockup prints it;
+  (3) the group headings of a recipe with a reference fold into its hash
+  (SW reads CONDIMENTS) — no library hash moves today; (4) RA1 needed no
+  code (v49's rank-as; WB makes the coulis a child, so its line is read).
+  The verifier's round 4 found two LOW documentation defects — the
+  matcherVersion doc entry inverted the amount scope of PV and D7 (PV
+  applies to lines WITH an amount; D7 with or without), and API.md labelled
+  Foundation 2512381 "SR" — fixed by the owner by hand as worded, comment
+  and docs only. The library gains +7,113 kcal per batch on 5 main rows and
+  11 new section rows (sections 140 → 143); 9 recipes complete (997 →
+  1,006); the partial-with-nothing-to-review count is 0. Noted: a PV
+  answer can move only when a host's section is added or renamed (the
+  shipped resolver-index class); a person's typed share of 1 on an
+  amount-less routed line carries the WB flag.
 - **2026-10-07 — matcher v51 (batch M49): the bacon package and fat poured
   off to a stated amount (prep47 Q4 (b), Q19 (a); built under the standing
   authorization).** RE-RULES Y11 (2026-10-06 "bacon keeps 0.403") — the

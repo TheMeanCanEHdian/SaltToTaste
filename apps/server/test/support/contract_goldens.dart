@@ -76,6 +76,13 @@ const List<String> corpusFreeContractGoldenNames = [
   'nutrition_section_prose',
   'nutrition_matches_section_pick',
   'nutrition_review_section',
+  // Matcher v52, references with no amount: a served-with recipe (rule SW:
+  // its label's `served_with`), a whole batch counted (rule WB: the
+  // routed row's flag, the label's includes). The prose-variation route
+  // (rule PV) is the section_prose pair above.
+  'nutrition_served_with',
+  'nutrition_matches_wb',
+  'nutrition_wb',
 ];
 
 /// Goldens that genuinely need the ATK corpus: a real v1 import source (with

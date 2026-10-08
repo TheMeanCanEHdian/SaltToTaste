@@ -483,7 +483,8 @@ const List<(String, int, String, String, String)> _slices = [
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 50);
+    // RE-PIN (M51 batch, v52): matcherVersion 51 (was 50).
+    expect(matcherVersion, 51);
   });
 
   test(

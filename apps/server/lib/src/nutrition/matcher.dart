@@ -698,7 +698,20 @@ const Map<String, String> _synonyms = {
 /// bacon's grease the rest), and a frying oil's "reserve N … discard the
 /// remainder" is its kept part, counted with the part it is used for
 /// outside the fry.
-const int matcherVersion = 50;
+///
+/// v51 (the Matcher v52 commit, batch M51 — references with no amount; the
+/// owner's 2026-10-07 standing authorization, prep47 design_v2 Q8, Q8b,
+/// Q9, Q22, re-ruling prep41 A3 (a) and CP3 for these lines; zero
+/// requests; engine `resolveReference`): a reference line with no amount
+/// that is optional, for serving, offers an "or", sits in a CONDIMENTS
+/// group or names the dish its parent is made for (D7, with or without an
+/// amount) is served with it — 0 g, accounted, never partial; any other
+/// amount-less line reaching a child with lines counts one whole batch,
+/// flagged; a reference WITH an amount to a prose variation (a section with
+/// no lines) counts the base whose title shares the most words (the host on
+/// a tie), flagged. A line WITH an amount reads no served-with marker and
+/// no whole batch (the critic's F7 gate).
+const int matcherVersion = 51;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
