@@ -687,7 +687,8 @@ _rows = [
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 52);
+    // RE-PIN (Q25 batch, v54): matcherVersion 53 (was 52).
+    expect(matcherVersion, 53);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

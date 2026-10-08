@@ -3608,6 +3608,47 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — RE-CALIBRATION after the prep47 series (audit 2's 25
+  hand-computed recipes against the v54 replay on snapshot 22;
+  `.claude/diag/2026-10-07/recalibration_v54.tsv`).** Median absolute error
+  per serving 6.3 % (v46) → 2.7 % (v54) over the 25; like for like (without
+  R12 and R15, whose hand figures are of a different dish) 6.3 % → 2.2 %,
+  mean 13.9 % → 4.9 %, signed mean −3.7 % → +1.0 %. The design forecast
+  2.7 % / 9.6 % / 0.0 %; measured 2.7 % / 9.8 % / −0.3 % on the 25. The
+  largest closures: the plum pie −72.7 % → +1.3 %, lemon meringue −44.9 →
+  −1.0, the crispy Thai eggplant −45.9 → −3.9, panna cotta −16.5 → +1.8,
+  the beer-can chicken +13.1 → +0.1, salade lyonnaise +22.1 → −9.3. Left
+  as ruled: R03 +14.1 % (the optional salsa counted by the ruled practice
+  for optional lines with an amount), R06 +26.1 % (the satay marinade the
+  hand count took at a share; the engine counts it whole, flag only), R15
+  +51.2 % (the rice the hand count left out of "Red Beans and Rice"), R12
+  (the hand figure is the plate, the engine's the sauce). Eleven of the 25
+  are within 2 %.
+- **2026-10-08 — matcher v54 (the Q25 alcohol batch): ethanol energy
+  reduced by USDA retention factors read from the line's cooking shape
+  (design_q25_v2.md; the owner's decisions Q-a..Q-h of 2026-10-07; built
+  under the standing authorization).** Energy-only: no record, grams,
+  status, bucket, hold, child or part moves. OWNER CONFIRMATION at the gate
+  (design §0; closer 1's ruling, the verifier's round 1): the fixer stopped
+  with 4 of 255 rows off the amended table, and five rows are amended from
+  the corpus text by the brief's own rules — shrimp-scampi|5 85 (Q-f's exact
+  shape, left off the Q-f list), modern-beef-burgundy|9 17.92 (the split
+  weighted volume by volume), broiled-chicken-with-gravy|11 40 (the stock is
+  strained into a bowl before the roux), strawberry-rhubarb-pie|5 35 (the
+  55-minute bake at the range's low end), summer-peach-cake|1 the 29.0 %
+  split — net −17.8 kcal per batch; beef-wellington|14 and the
+  tenderloin stuffing stay at the table's 85 (a roast taken to rare never
+  simmers; the layer-into-bake precedents are dishes baked bubbling or set;
+  roundings err toward more kept). The final table is archived as
+  prep47/q25_factors_v54_final.tsv. The library loses 14,584 kcal per batch
+  on main rows (sections −1,094; parents −1,042) across 201 recipes, kcal
+  per serving only; the largest −132 a serving (daube provençale). Noted:
+  mahogany-chicken|2 (held) reads 56 minutes where design P35 said 55, the
+  same 35 %; one equivalent mutant stated (a clause no corpus row reaches).
+  Closes the prep47 series: M53, M48, M47, M50, M49, M51, M55, M52, Q25.
+  NEXT: re-calibration against audit 2's hand figures, then a second blind
+  audit, then the deferred widenings (the pour-off window, marbella's oil
+  binder, D5's spelling, the kombu record).
 - **2026-10-08 — matcher v53 (batch M52): coats and frying-oil uptake on
   the READ FNDDS figures (prep47 Q2 (a), Q3 (a), Q24 (b); built under the
   standing authorization).** RE-RULES CP9 Q2 and the 2026-10-03 (1) held

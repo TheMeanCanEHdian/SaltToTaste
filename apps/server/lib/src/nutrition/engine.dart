@@ -7424,6 +7424,2220 @@ IngredientLine? foodAlternativeOf(IngredientLine line) {
         );
 }
 
+// ---------------------------------------------------------------------------
+// Q25 (v54, matcherVersion 53; prep47 design_q25_v2, the owner's Q-a..Q-h):
+// alcohol
+// cooked off. ENERGY ONLY — a row's record, grams, status, bucket, hold,
+// child and parts never move; nothing is stored: derived at compute from the
+// recipe's steps (already in the ingredients hash), read by the totals
+// ([recomputeTotals]) and the row's flag ([compositeFlagOf]).
+// ---------------------------------------------------------------------------
+
+/// Q25: the sixteen alcohol records (stage 1 §1) — record-keyed, as
+/// [approximationRecords] and [nutrientSiblings]: FNDDS wine white, red,
+/// rosé, rice and dessert sweet, beer, brandy, liqueur, vodka, tequila, rum,
+/// whiskey; SR wine dessert dry, Pinot Noir, Riesling and sake. A 17th
+/// (light beer, coffee liqueur, vanilla extract — Q-d) counts its full
+/// energy until added: the safe side.
+const Map<int, String> alcoholRecords = {
+  2710689: 'wine',
+  2710688: 'wine',
+  175112: 'wine',
+  2710692: 'wine',
+  174835: 'wine',
+  2710690: 'wine',
+  2710691: 'wine',
+  173200: 'wine',
+  2710616: 'beer',
+  167723: 'sake',
+  2710699: 'brandy',
+  2710623: 'liqueur',
+  2710704: 'vodka',
+  2710705: 'tequila',
+  2710703: 'rum',
+  2710700: 'whiskey',
+};
+
+/// [record]'s ethanol kcal per 100 g (design_q25_v2 §1.1 (A)): its energy
+/// less the Atwater energy of its protein, fat and carbohydrate (4/9/4,
+/// FDC 203/204/205 as cached) — 6.82–7.01 kcal per g of the raw details'
+/// ethanol (FDC 221, never read: the cache keeps none), exact at 100 % and
+/// never negative (208 − 7 × 221 would leave a spirit −2.80 kcal of
+/// non-ethanol energy).
+double ethanolKcalPer100g(FdcFood record) {
+  final n = record.nutrientsPer100g;
+  final energy = [
+    for (final number in nutrientDefs.first.fdcNumbers) ?n[number],
+  ].firstOrNull;
+  if (energy == null) {
+    return 0;
+  }
+  final rest = 4 * (n['203'] ?? 0) + 9 * (n['204'] ?? 0) + 4 * (n['205'] ?? 0);
+  return max(0, energy - rest);
+}
+
+/// What Q25 reads of an alcohol line: the share of its ethanol the dish
+/// keeps (`kept`, %), the USDA codes read (`code`, '+'-joined for a split,
+/// '' at 100 %), the shape (`rule`) and the row's flag text (`flag`, null
+/// at 100 %).
+typedef AlcoholReading = ({
+  double kept,
+  String code,
+  String rule,
+  String? flag,
+});
+
+/// The share of [line]'s ethanol [recipe]'s dish keeps (USDA Table of
+/// Nutrient Retention Factors, Release 6, group 14) and the flag it prints,
+/// or null — not one of the [alcoholRecords], not a counted record row (a
+/// skipped, held or 0 g row, a routed row, a parts row), or 100 %. A
+/// person's typed grams are reduced the same way: retention applies to
+/// whatever grams count and never changes them (design §8, critic 12).
+AlcoholReading? alcoholRetentionOf(
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row,
+) {
+  final fdcId = row.fdcId;
+  final grams = row.grams;
+  if (fdcId == null ||
+      !alcoholRecords.containsKey(fdcId) ||
+      row.childRecipeId != null ||
+      row.parts != null ||
+      row.status == 'skipped' ||
+      grams == null ||
+      grams <= 0 ||
+      noRecordHolds.contains(row.hold) ||
+      (row.status == 'auto' &&
+          (belowConfidenceGate(row.confidence) || row.hold != null))) {
+    return null;
+  }
+  final reading = alcoholReadingOf(recipe, row.position, fdcId);
+  return reading.kept >= 100 ? null : reading;
+}
+
+/// [alcoholRetentionOf]'s reading of the line at [position] on the record
+/// [fdcId], whatever the row — the gate's and the pins' reader. Once per
+/// line (RULE C, critic 10): Key: position — the line read (its head, its
+/// amounts, its group); fdcId — its record's class word (R1).
+AlcoholReading alcoholReadingOf(Recipe recipe, int position, int fdcId) =>
+    _stepIndexOf(recipe).memo(
+      ('alcohol', position, fdcId),
+      () => _alcoholRead(recipe, position, fdcId),
+    );
+
+/// USDA R6 group 14 ("Alcohol, ethyl" retained, retn06.pdf p. 12): stirred
+/// in and baked or simmered at least `minutes` (5004–5009). Under 15
+/// minutes the table prints no stirred-and-heated row: 5002 (85 %, Q-a).
+const List<({int minutes, int kept, String code})> _alcoholBands = [
+  (minutes: 150, kept: 5, code: '5009'),
+  (minutes: 120, kept: 10, code: '5008'),
+  (minutes: 90, kept: 20, code: '5007'),
+  (minutes: 60, kept: 25, code: '5006'),
+  (minutes: 30, kept: 35, code: '5005'),
+  (minutes: 15, kept: 40, code: '5004'),
+];
+
+/// One use of an alcohol line as read: kept %, the USDA code, the shape,
+/// the minutes read (whole, the low end) and how the flag words it — the
+/// whole row (`words`, after "alcohol") and a part of a split (`part`, after
+/// the part's amount: design §5's split form, no figure's suffix, D4).
+typedef _AlcoholUse = ({
+  double kept,
+  String code,
+  String rule,
+  int minutes,
+  String words,
+  String part,
+});
+
+/// A use heated [minutes] (stirred in, simmered or baked): its band. Under
+/// one printed minute (a sauce tossed "30 seconds") it is 5002's own row,
+/// boil-off — never "cooked 0 min" (closer1 D3).
+_AlcoholUse _alcoholTimed(double minutes, {bool flamed = false}) {
+  if (!flamed && minutes < 1) {
+    return _alcoholBoilOff;
+  }
+  final whole = minutes.floor();
+  for (final band in _alcoholBands) {
+    if (whole >= band.minutes) {
+      final kept = flamed && band.kept > 75 ? 75 : band.kept;
+      return (
+        kept: kept.toDouble(),
+        code: band.code,
+        rule: flamed ? 'flambe+time' : 'timed:$whole',
+        minutes: whole,
+        words: flamed
+            ? 'flamed, then cooked $whole min keeps $kept %'
+            : band.kept == 5
+            ? "cooked $whole min keeps 5 %, the table's 2½-hour figure"
+            : 'cooked $whole min keeps $kept %',
+        part: flamed
+            ? 'flamed, then cooked $whole min keeps $kept %'
+            : 'cooked $whole min keeps $kept %',
+      );
+    }
+  }
+  return flamed
+      ? (
+          kept: 75,
+          code: '5003',
+          rule: 'flambe',
+          minutes: whole,
+          words: 'flamed keeps 75 %',
+          part: 'flamed keeps 75 %',
+        )
+      : (
+          kept: 85,
+          code: '5002',
+          rule: 'timed:$whole',
+          minutes: whole,
+          words:
+              'cooked $whole min keeps 85 %, the stirred-into-hot-liquid '
+              'figure',
+          part: 'cooked $whole min keeps 85 %',
+        );
+}
+
+const _AlcoholUse _alcoholBoilOff = (
+  kept: 85,
+  code: '5002',
+  rule: 'boil_off',
+  minutes: 0,
+  words: 'stirred into hot liquid keeps 85 %',
+  part: 'stirred into hot liquid keeps 85 %',
+);
+
+const _AlcoholUse _alcoholUntimed = (
+  kept: 85,
+  code: '5002',
+  rule: 'heated_untimed',
+  minutes: 0,
+  words: 'heated, time not printed, keeps 85 %',
+  part: 'heated, time not printed, keeps 85 %',
+);
+
+/// Q-f (the owner): stirred in OFF the heat into a hot dish IS USDA 5002
+/// "ALC BEV, STIRRED INTO HOT LIQ" (85 %). The whole row prints 5002's own
+/// approved text (§5, boil-off); a part of a split, §5's approved split
+/// form "{part} stirred in off the heat keeps …" at Q-f's 85 (closer1 D5).
+const _AlcoholUse _alcoholOffHeat = (
+  kept: 85,
+  code: '5002',
+  rule: 'off_heat',
+  minutes: 0,
+  words: 'stirred into hot liquid keeps 85 %',
+  part: 'stirred in off the heat keeps 85 %',
+);
+
+_AlcoholUse _alcoholKept(String rule) => (
+  kept: 100,
+  code: '',
+  rule: rule,
+  minutes: 0,
+  words: '',
+  part: 'keeps 100 %',
+);
+
+/// One sentence of a recipe's steps as Q25 reads it: its step, its index in
+/// [_StepIndex.sentences], its lower-cased text with every parenthesis
+/// removed, whether it is no text at all (all parenthesis) and whether it
+/// is a side task — a sentence opening "Meanwhile" or "While", an optional
+/// one ("If soccarat is desired"), or any sentence of a step that opens
+/// so (critic 5).
+typedef _AlcoholSentence = ({
+  int step,
+  int index,
+  String text,
+  bool empty,
+  bool side,
+  bool sideStep,
+  double? altBake,
+});
+
+/// A printed alternative bake ("(To serve right away, bake as directed in
+/// step 7, reducing the baking time to 12 to 15 minutes.)", 0939): the
+/// shorter alternative (design §2), read from the parenthesis it sits in.
+final RegExp _alcoholAltBake = RegExp(
+  r'\breduc\w* the (baking|cooking) time to [^.;)]*\bminutes\b',
+);
+
+/// A side task's opening clause ("While gratin bakes, ", "Meanwhile, ").
+final RegExp _alcoholSideClause = RegExp(
+  r'^(meanwhile|while\b[^,]*|if\b[^,]*)(,\s*|\s+)',
+);
+
+final RegExp _alcoholSideOpening = RegExp(
+  r'^(meanwhile|while)\b|^if\b[^.;]*\b(desired|using|you like|preferred)\b',
+);
+
+/// [recipe]'s sentences ([_StepIndex.sentences], every step in order), the
+/// parentheses dropped (critic 5: "(Check the chicken after 15 minutes)"
+/// is no time the wine cooks). Once per recipe.
+List<_AlcoholSentence> _alcoholSentencesOf(Recipe recipe) {
+  final index = _stepIndexOf(recipe);
+  return index.memo(#alcoholSentences, () {
+    final out = <_AlcoholSentence>[];
+    for (final (i, step) in index.sentences.indexed) {
+      var depth = 0;
+      final texts = <String>[];
+      final alts = <double?>[];
+      for (final sentence in step) {
+        final kept = StringBuffer();
+        final dropped = StringBuffer();
+        for (final c in sentence.split('')) {
+          if (c == '(') {
+            depth++;
+          } else if (c == ')') {
+            depth = depth > 0 ? depth - 1 : 0;
+          } else if (depth == 0) {
+            kept.write(c);
+          } else {
+            dropped.write(c);
+          }
+        }
+        texts.add(kept.toString().replaceAll(RegExp(r'\s+'), ' ').trim());
+        alts.add(switch (_alcoholAltBake.firstMatch(dropped.toString())) {
+          final m? => _alcoholMinutesIn(m[0]!),
+          null => null,
+        });
+      }
+      final sideStep =
+          texts.isNotEmpty && _alcoholSideOpening.hasMatch(texts.first);
+      for (final (j, text) in texts.indexed) {
+        out.add((
+          step: i,
+          index: j,
+          text: text,
+          empty: text.length < 3,
+          side: _alcoholSideOpening.hasMatch(text),
+          sideStep: sideStep,
+          altBake: alts[j],
+        ));
+      }
+    }
+    return out;
+  });
+}
+
+/// Q25's OWN heat vocabulary (critic 1: never the frying set
+/// [_heatVerbWords], which holds no simmer, boil, cook or bake and fires on
+/// register, read, keep and hold): a cooking verb, "bring … to a boil", a
+/// pan with browned bits to scrape, a pan set over a flame.
+final RegExp _alcoholHeat = RegExp(
+  r'\b(simmer\w*|boil\w*|cook(s|ed|ing)?|bak(e|es|ed|ing)|brais\w*|'
+  r'roasting|^roast|(?<!\b(the|a|each|of|whole) )roast(ed)?'
+  r'(?=,| (until|for|uncovered|covered|at|the|it)\b)|'
+  r'reduc(e|es|ed|ing)|evaporat\w*|saut[eé]\w*|'
+  r'broil(s|ed|ing)?|steam(s|ed|ing)?|stir-fr\w*|microwav\w*|'
+  r'fr(y|ies|ied|ying))\b|'
+  r'\bbring\b[^.;]*?\bto (a |the )?(boil|simmer)|browned bits|'
+  r'\bover (low|medium|high|medium-low|medium-high)( |-)?(high |low )?heat\b',
+);
+
+/// What [_alcoholHeat] must not read as cooking (critic 5, verb position):
+/// a utensil or a liquid named for its use, and a past participle before
+/// its noun ("cooked rice", "the reduced wine").
+final RegExp _alcoholNotHeat = RegExp(
+  r'\b(baking (sheets?|dish(es)?|pans?|powder|soda|stones?|steels?|paper|'
+  'mats?)|cooking (spray|liquid|water|time|grate|wine)|roasting pans?|'
+  'frying pans?|(slow|pressure)[- ]cookers?|cooker|reduced[- ]sodium|'
+  r'reduc\w* (the )?(mixer )?speed|preheat\w*\b[^.;]*|'
+  '(cooked|baked|roasted|fried|steamed|boiled|braised|reduced|sautéed|'
+  'sauteed|broiled|simmered) (?!through|until|and|in|on|for|at|over|with|to|'
+  'uncovered|covered|or|then|about|halfway)[a-z]+)',
+);
+
+bool _alcoholHeats(String text) =>
+    _alcoholHeat.hasMatch(text.replaceAll(_alcoholNotHeat, ' '));
+
+/// A flame (critic 2): read in the adding sentence and the next two of its
+/// step, before the off-heat arm.
+final RegExp _alcoholIgnites = RegExp(
+  r'\bignit|\bflamb|\blight (a )?(long )?match|\blit (a )?(long )?match',
+);
+
+/// Off the heat (decision 3, Q-f).
+final RegExp _alcoholOffHeatWords = RegExp(
+  r'\boff (the )?heat\b|\bremove[^.;]*\bfrom (the )?heat\b',
+);
+
+/// The vessel back on the heat or into the oven or the slow cooker
+/// (critic 2, 4).
+final RegExp _alcoholReturns = RegExp(
+  r'\breturn\b[^.;]*\bto (the )?([a-z-]+ )?(heat|oven|burner)\b|'
+  r'\bcontinue to (cook|bake|roast|simmer)\b|'
+  r'\bset\b[^.;]*\bover\b[^.;]*heat|\b(to|in|into) (the )?oven\b|'
+  r'\bslow[- ]cooker\b|\b(cook|bring|simmer|heat)\b[^.;]*\bover '
+  r'(low|medium|high|medium-low|medium-high)( |-)?(high |low )?heat\b',
+);
+
+/// A run's end (critic 5, verb position), by kind: `final` (served),
+/// `removal` (off the heat, out of the oven: a later return takes it back,
+/// critic 4), `wait` (cooled, chilled, left to stand, set aside: a cold
+/// premix waits so before its heat) and `out` (strained, poured off, the
+/// liquid or the food moved out).
+final RegExp _alcoholStops = RegExp(
+  r'(?<final>\bserve\b)|'
+  r'(?<removal>\boff (the )?heat\b|\bremove\b[^.;]*\bfrom (the )?'
+  r'(heat|oven|grill)\b)|'
+  r'(?<wait>\b(let|allow)\b[^.;]*\b(cool|stand|rest|sit|settle)\b|'
+  r'\bcool (for|slightly|completely|to)\b|^cool\b|\brefrigerat\w*|'
+  r'\bchill\b|\bfreez\w*|\bset aside\b|\bkeep warm\b)|'
+  r'(?<out>\bstrain\b|\bthrough (a )?fine-mesh\b|'
+  r'\btransfer (the )?(sauce|mixture|liquid|braising liquid|stock|broth|'
+  r'gravy|soup|reduction|syrup|glaze)\b[^.;]* to (a |the )?([\w-]+ )*?'
+  '(bowl|container|measuring cup|jar|fat separator|serving|platter|'
+  r'gravy boat|pitcher|blender)\b|'
+  r'\b(transfer|place|stack)\b[^.;]*\b(to|on|onto) (a |the )?([\w-]+ )*'
+  '(wire rack|paper towels?|paper bag|(?<!pie )plate|platter|cutting board|'
+  'carving board))',
+);
+
+String _alcoholStopKind(RegExpMatch m) => m.namedGroup('final') != null
+    ? 'final'
+    : m.namedGroup('removal') != null
+    ? 'removal'
+    : m.namedGroup('wait') != null
+    ? 'wait'
+    : 'out';
+
+/// A vessel a sentence names, by kind.
+final RegExp _alcoholVessel = RegExp(
+  r'\b(dutch oven|stockpot|skillet|saucepan|roasting pan|baking dish|'
+  'gratin dish|casserole|wok|slow[- ]cooker|multicooker|pot|pan|dish|'
+  'bowl|measuring cup|liquid measure|blender|food processor|processor|'
+  'baking sheet|sheet pan|container|bag|ramekins?|pie plate|mixer|'
+  r'fat separator)\b',
+);
+
+String _alcoholVesselKind(String v) => switch (v) {
+  'dutch oven' || 'stockpot' => 'pot',
+  'fat separator' => 'separator',
+  'baking dish' || 'gratin dish' || 'casserole' || 'pie plate' => 'dish',
+  'slow-cooker' => 'slow cooker',
+  'food processor' => 'processor',
+  'baking sheet' || 'sheet pan' => 'sheet',
+  'liquid measure' => 'measuring cup',
+  'ramekin' => 'ramekins',
+  _ => v,
+};
+
+/// A cold vessel named by what is in it ("the bowl with the pureed
+/// chicken").
+final RegExp _alcoholColdVessel = RegExp(
+  r'\b(bowl|measuring cup|container) (with|containing) (?<rest>[^.;,]*)',
+);
+
+/// The vessels a cold mix is made in (R4, R6): never on the heat.
+const Set<String> _alcoholColdVessels = {
+  'separator',
+  'bowl',
+  'measuring cup',
+  'blender',
+  'processor',
+  'container',
+  'bag',
+  'mixer',
+};
+
+/// The kinds of vessel [text] names; a now-empty, clean, second or
+/// separate one is `other|<kind>` (never the line's, closer1 D3: but the
+/// line put there goes with it, "transfer the pork to a clean bowl").
+Set<String> _alcoholVesselsIn(String text) => {
+  for (final m in _alcoholVessel.allMatches(text))
+    if (text.substring(max(0, m.start - 40), m.start) case final before)
+      RegExp(
+            '(now-empty|again-empty|clean|cooled|second|third|fourth|'
+            r'separate|another)( [\w-]+){0,3} $',
+          ).hasMatch(before)
+          ? 'other|${_alcoholVesselKind(m[0]!)}'
+          : RegExp(r'\ban? $').hasMatch(before)
+          ? 'other|${_alcoholVesselKind(m[0]!)}'
+          : [
+              ?RegExp(
+                r'\b(small|medium|large|\d+-inch) ([\w-]+ ){0,2}$',
+              ).firstMatch(before)?[1],
+              _alcoholVesselKind(m[0]!),
+            ].join('|'),
+};
+
+/// Whether the vessels [a] and [b] are one: the same kind (a bare "pan"
+/// any cooking vessel), and the same size when both print one.
+bool _alcoholSameVessel(String a, String b) {
+  if (a.startsWith('other|') || b.startsWith('other|')) {
+    return a == b;
+  }
+  final x = a.split('|');
+  final y = b.split('|');
+  final kindX = x.last;
+  final kindY = y.last;
+  const cooking = {
+    'roasting pan',
+    'pot',
+    'skillet',
+    'saucepan',
+    'pan',
+    'wok',
+    'dish',
+    'slow cooker',
+    'multicooker',
+    'sheet',
+    'ramekins',
+  };
+  final kinds =
+      kindX == kindY ||
+      (kindX == 'pan' && cooking.contains(kindY)) ||
+      (kindY == 'pan' && cooking.contains(kindX));
+  return kinds && (x.length == 1 || y.length == 1 || x.first == y.first);
+}
+
+/// A printed duration: a number (a vulgar fraction, a range read at its LOW
+/// end, critic 3) and its unit.
+final RegExp _alcoholDuration = RegExp(
+  r'(?<pre>every|after|up to)?\s*(?:about\s+)?'
+  '(?<n>\\d+\\s*[$vulgarFractionChars]?|[$vulgarFractionChars]|an?)\\s*'
+  '(?<u1>seconds?|minutes?|hours?)?'
+  '(?:\\s*(?:to|-|–)\\s*(?:\\d+\\s*[$vulgarFractionChars]?|'
+  '[$vulgarFractionChars]))?'
+  r'\s*(?<u>seconds?|minutes?|hours?)\b'
+  r'(?<more>\s*(?:and\s*)?\d+\s*minutes?)?'
+  r'(?<side>\s*(per|for each|on each) side)?',
+);
+
+/// An optional clause ("; if necessary, simmer until slightly thickened, 1
+/// to 2 minutes", 0125): its minutes are not read (design R3).
+final RegExp _alcoholOptional = RegExp(
+  r'(^|[;,] )if (necessary|needed|desired)\b',
+);
+
+/// The minutes [text] prints: each duration at its low end, "per side"
+/// twice; a nested "after N minutes", an "every N minutes" and an "up to"
+/// none, but a sentence OPENING "After 1 hour" is the elapsed time of the
+/// cook before it (0084); an alternative — after ", or", or "N minutes
+/// for X or M minutes for Y" — the SHORTER (P16).
+double _alcoholMinutesIn(String text) {
+  double? least;
+  final asked = _alcoholOptional.firstMatch(text)?.start;
+  for (final alternative in text.substring(0, asked).split(', or ')) {
+    var total = 0.0;
+    double? last;
+    var lastEnd = 0;
+    for (final m in _alcoholDuration.allMatches(alternative)) {
+      final pre = m.namedGroup('pre');
+      if (pre != null && !(pre == 'after' && m.start == 0)) {
+        continue;
+      }
+      final n = m.namedGroup('n')!.trim();
+      final value = n.startsWith('a') ? 1.0 : parseQuantity(n) ?? 0;
+      final unit = m.namedGroup('u1') ?? m.namedGroup('u')!;
+      var minutes = unit.startsWith('second')
+          ? value / 60
+          : unit.startsWith('hour')
+          ? value * 60
+          : value;
+      if (m.namedGroup('more') case final more?) {
+        minutes += double.parse(RegExp(r'\d+').firstMatch(more)![0]!);
+      }
+      if (m.namedGroup('side') != null) {
+        minutes *= 2;
+      }
+      final between = alternative.substring(lastEnd, m.start);
+      if (last != null &&
+          RegExp(r'\bor\b').hasMatch(between) &&
+          !between.contains(RegExp('[;.]'))) {
+        if (minutes < last) {
+          total += minutes - last;
+          last = minutes;
+        }
+      } else {
+        total += minutes;
+        last = minutes;
+      }
+      lastEnd = m.end;
+    }
+    if (total > 0 && (least == null || total < least)) {
+      least = total;
+    }
+  }
+  return least ?? 0;
+}
+
+/// What a run follows of a line (R3, R6): its name, the words of its adding
+/// sentence ("soy" for a "soy mixture"), and the vessel it is in.
+typedef _AlcoholTrail = ({
+  String name,
+  Set<String> words,
+  String? vessel,
+  Set<String> foods,
+  Set<String> vocab,
+});
+
+/// A sentence that puts something into a vessel or over a food.
+final RegExp _alcoholPutsIn = RegExp(
+  r'\b(return|add|stir|whisk|pour|spread|spoon|bring|transfer|combine|'
+  r'toss|nestle|place|arrange|top|layer|ladle|turn|dip)\w*\b',
+);
+
+/// Whether [text] names the line [t] follows SPECIFICALLY: its name, its
+/// group's word, a food it was poured over, or a "<word> mixture" of its
+/// adding sentence — never a bare "liquid" or "sauce".
+bool _alcoholNamesOwn(String text, _AlcoholTrail t) =>
+    _alcoholOwnMention(text, t.name) ||
+    _alcoholHeadsIn(
+      text,
+      t.foods,
+    ).any((f) => _alcoholOwnMention(text, f)) ||
+    RegExp(r'\b([a-z]+)([ -])([a-z]+ )?mixture\b')
+        .allMatches(text)
+        .any(
+          (m) => m[2] == '-'
+              // "garlic-shallot mixture": both words, never "garlic" alone
+              // from the line's "chili-garlic sauce" (0544; closer1 D3)
+              ? t.words.contains(m[1]) && t.words.contains(m[3]?.trim())
+              : switch (m[3]?.trim()) {
+                  // "soy sauce mixture": the word next to "mixture", or the one
+                  // before it — never across "and" ("very soft and mixture is
+                  // reduced", 0986; closer1 D3)
+                  final y? =>
+                    t.words.contains(y) ||
+                        t.foods.contains(y) ||
+                        (!const {
+                              'and',
+                              'or',
+                              'the',
+                              'with',
+                              'of',
+                              'is',
+                              'are',
+                            }.contains(y) &&
+                            (t.words.contains(m[1]) || t.foods.contains(m[1]))),
+                  null => t.words.contains(m[1]) || t.foods.contains(m[1]),
+                },
+        );
+
+/// Whether [text] names [word] as the trail's own portion — never "the
+/// remaining 4 teaspoons garlic" or "3 tablespoons of the cognac", another
+/// portion of it, nor "the stuffing ingredients" (all of a group's).
+bool _alcoholOwnMention(String text, String word) =>
+    // the first mention decides: "add remaining ¼ cup broth and cook …
+    // until broth evaporates" is the other portion throughout (1138)
+    RegExp('\\b${RegExp.escape(word)}').allMatches(text).take(1).any((m) {
+      final before = text.substring(max(0, m.start - 60), m.start);
+      return !_alcoholRemainingBefore.hasMatch(before) &&
+          !_alcoholAmountBefore.hasMatch(before) &&
+          // "the stuffing ingredients": the group's, not this line (0448)
+          !RegExp(r'^\w* ingredients\b').hasMatch(text.substring(m.end));
+    });
+
+/// A sentence putting a liquid word somewhere — the verb's own object, in
+/// one clause ("Return liquid to pot"; never "… cook, until liquid has
+/// evaporated").
+final RegExp _alcoholPutsLiquid = RegExp(
+  r'\b(return|add|stir|whisk|pour|spread|spoon|bring|transfer|combine|'
+  r'toss|nestle|place|arrange|top|layer|ladle|scrape)\w*\b[^,.;]*?'
+  '((?<!mushroom |porcini |clam |soaking |tomato )'
+  r'\b(liquid|jus|marinade|reduction|glaze|batter|filling|contents)\b|'
+  r'\bthe mixture\b|'
+  '(?<!soy |fish |hot |oyster |hoisin |worcestershire |chili |tomato |'
+  r'barbecue |dipping |tartar )\bsauce\b)',
+);
+
+/// While a cold mix waits in its bowl, a put of "the … mixture" or "paste"
+/// is it (the only mix made: "spread cheese mixture evenly over slices").
+final RegExp _alcoholPutsMixture = RegExp(
+  r'\b(return|add|stir|whisk|pour|spread|spoon|transfer|scrape)\w*\b'
+  r'[^,.;]*?\b((?<what>[a-z]+) )?(mixture|paste)\b',
+);
+
+/// A pour with no object named: the mix just made ("Pour around fish").
+final RegExp _alcoholPoursIt = RegExp(
+  r'^(pour|drizzle|spoon)\s+(it\s+)?(evenly\s+)?(over|around|into|onto)\b|'
+  // "Whisk sauce to recombine. Add to skillet and cook" (0532)
+  r'^add (it )?to\b',
+);
+
+/// The vessel a sentence puts something into ("… to the Dutch oven", "in
+/// large saucepan"): `to`/`into` moves, `in` places.
+final RegExp _alcoholIntoVessel = RegExp(
+  r'\b(?<prep>to|into|in|on)\s+(a |the )?(?<what>([\w-]+ ){0,3}?'
+  '(dutch oven|stockpot|skillet|saucepan|roasting pan|baking dish|'
+  'gratin dish|casserole|wok|slow[- ]cooker( insert)?|multicooker|pot|pan|'
+  'dish|bowl|measuring cup|liquid measure|blender|food processor|'
+  'processor|container|bag|ramekins?|pie plate|mixer|baking sheet|'
+  r'fat separator))\b',
+);
+
+/// Whether the vessel [v] is the trail's.
+bool _alcoholIsTrailVessel(String v, _AlcoholTrail t) => t.vessel == null
+    ? !v.startsWith('other|') && !_alcoholCold(v)
+    : _alcoholSameVessel(v, t.vessel!);
+
+/// Whether the vessel [v] is one a cold mix is made in (a bowl, a measuring
+/// cup — a clean one too): never on the heat.
+bool _alcoholCold(String? v) =>
+    v != null && _alcoholColdVessels.contains(v.split('|').last);
+
+/// Whether the removal at sentence [at] is taken back before a hard stop:
+/// "Remove the pot from the oven. … return the pot to the oven" (0005).
+bool _alcoholReturnsAfter(List<_AlcoholSentence> s, int at, int from) {
+  for (var i = at; i < s.length && i <= at + 6; i++) {
+    if (s[i].empty) {
+      continue;
+    }
+    final text = i == at ? s[i].text.substring(from) : s[i].text;
+    if (_alcoholReturns.hasMatch(text)) {
+      return true;
+    }
+    if (i > at &&
+        _alcoholStops
+            .allMatches(text)
+            .any(
+              (m) => _alcoholStopKind(m) != 'removal',
+            )) {
+      return false;
+    }
+  }
+  return false;
+}
+
+/// Whether the vessel at sentence [at] is already on the heat: the nearest
+/// earlier read sentence of its step or the one before heats it with no
+/// stop after.
+bool _alcoholCarried(List<_AlcoholSentence> s, int at) {
+  for (var i = at - 1; i >= 0 && s[i].step >= s[at].step - 1; i--) {
+    final text = s[i].text;
+    if (s[i].empty ||
+        s[i].side ||
+        (s[i].sideStep && s[i].step != s[at].step) ||
+        _alcoholMicrowave.hasMatch(text)) {
+      continue;
+    }
+    final stops = _alcoholStops.allMatches(text).map((m) => m.start);
+    final heats = _alcoholHeat
+        .allMatches(text.replaceAll(_alcoholNotHeat, ' '))
+        .map((m) => m.start);
+    if (stops.isEmpty && heats.isEmpty) {
+      continue;
+    }
+    return heats.isNotEmpty &&
+        (stops.isEmpty || heats.reduce(max) > stops.reduce(max));
+  }
+  return false;
+}
+
+/// A microwave heats its own bowl, never the line's pot.
+final RegExp _alcoholMicrowave = RegExp(r'\bmicrowave');
+
+/// The vessel the line added at sentence [at] goes into: the vessel the
+/// sentence names, else the nearest earlier one of its step or the one
+/// before; [near]: the sentence and the one before it only.
+String? _alcoholVesselAt(
+  List<_AlcoholSentence> s,
+  int at, {
+  bool near = false,
+}) {
+  for (
+    var i = at;
+    i >= 0 && s[i].step >= s[at].step - 1 && (!near || i >= at - 1);
+    i--
+  ) {
+    if (near && s[i].step != s[at].step) {
+      break;
+    }
+    final vessels = [
+      for (final v in _alcoholVesselsIn(s[i].text))
+        if (!v.startsWith('other|')) v else if (i == at) v.substring(6),
+    ];
+    if (vessels.isNotEmpty) {
+      return vessels.first;
+    }
+  }
+  return null;
+}
+
+/// A broil browns a surface: no stirred row is baked or simmered so
+/// (R6 5004–5009 "BKD/SIMMRD"); its minutes are not read.
+final RegExp _alcoholBroil = RegExp(r'\bbroil');
+
+/// A run's reading: the minutes printed while the line is on the heat, of
+/// them the oven's (`ovenMinutes`, what a not-stirred pour-over is baked),
+/// whether it met heat at all, whether a heat ran "until" a doneness with
+/// no time (`until`: heated, untimed) and whether a stop came within two
+/// sentences of the heat's start (`closes`: boil-off, critic 9).
+typedef _AlcoholRunRead = ({
+  double minutes,
+  double ovenMinutes,
+  bool heated,
+  bool sealed,
+  bool until,
+  bool closes,
+});
+
+/// Water heating another vessel ("a saucepan filled with 1 inch of barely
+/// simmering water"; the pasta's "boiling water"; "hot running water").
+final RegExp _alcoholHeatedWater = RegExp(
+  r'\b(simmering|boiling|salted|hot running|running) water\b',
+);
+
+/// A heat run until a doneness, no time printed ("roast until … registers
+/// 160 degrees", "cook until evaporated"): heated, untimed (critic 9).
+final RegExp _alcoholUntilHeat = RegExp(
+  r'\b(cook|simmer|boil|bake|roast|brais|reduc|fry|fried|saut|broil|steam)'
+  r'\w*\b[^.;]*?\buntil\b',
+);
+
+/// A sealed pressure cooker (§2): its minutes are not read, and a line
+/// heated only so keeps 100 %.
+final RegExp _alcoholSeals = RegExp(r'\block (the )?lid\b|\bpressure[- ]cook');
+final RegExp _alcoholUnseals = RegExp(
+  r'\b(quick-release|release (the )?pressure|natural(ly)? release)',
+);
+
+/// R3: the minutes the line added at sentence [at] (from its offset
+/// [from]) stays on the heat. [onHeat]: the vessel is on the heat; else
+/// the timer starts at the first heat in the line's vessel (a cold mix
+/// waits — chilled, set aside — until then, critic 7). The run follows the
+/// line: a sentence putting its name, a liquid word or a "<word> mixture"
+/// of its adding sentence to or into a vessel moves it there; a sentence
+/// putting something in another vessel is a side task, as is the rest of
+/// its step until the line's vessel is named again (critic 5); side
+/// sentences and parentheses are skipped. Every read sentence's printed
+/// durations count until a stop: a removal a later return takes back goes
+/// on (critic 4); otherwise the run follows the line's liquid to the first
+/// later sentence that puts it somewhere and goes on from there, the timer
+/// at its next heat; a dish served ends it.
+_AlcoholRunRead _alcoholRun(
+  List<_AlcoholSentence> s,
+  int at,
+  int from,
+  _AlcoholTrail start, {
+  required bool onHeat,
+  bool follow = true,
+}) {
+  var started = onHeat;
+  var place = (trail: start, aside: false, here: start.vessel);
+  final batter = start.foods.any(_alcoholBatter.hasMatch);
+  var total = 0.0;
+  var leaves = false;
+  double? altBake;
+  var ovenTotal = 0.0;
+  var heated = started;
+  var until = false;
+  var heatAt = started ? at : null;
+  int? stopAt;
+  var sealed = false;
+  var underPressure = false;
+  var step = s[at].step;
+  _AlcoholRunRead read() => (
+    minutes: total,
+    ovenMinutes: ovenTotal,
+    heated: heated,
+    sealed: sealed,
+    until: until,
+    closes: switch ((heatAt, stopAt)) {
+      (final h?, final t?) => t <= h + 2,
+      _ => false,
+    },
+  );
+  // The words of the sentences read since the adding one: a "<word>
+  // mixture" made of them is another mix.
+  // (closer1 D3: the words of every sentence before the adding one too,
+  // singular as well, but never the adding sentence's own — "the mushroom
+  // mixture" is the mushrooms' (0448), "the water mixture" the line's.)
+  Set<String> wordsIn(String t) => {
+    for (final w in RegExp('[a-z]+').allMatches(t)) ...{
+      w[0]!,
+      _alcoholSingular(w[0]!),
+    },
+  };
+  final seen = <String>{
+    for (final x in s.take(at)) ...wordsIn(x.text),
+  }.difference(wordsIn(s[at].text));
+  for (var i = at; i < s.length; i++) {
+    final x = s[i];
+    if (x.step != step) {
+      place = (trail: place.trail, aside: false, here: place.trail.vessel);
+      step = x.step;
+    }
+    if (x.altBake case final alt?) {
+      altBake = alt;
+    }
+    if (x.empty) {
+      continue;
+    }
+    // A side task ("While gratin bakes, combine panko … in bowl";
+    // "Meanwhile, bring 4 quarts water to a boil in a large pot") is read
+    // without its opening clause: one that puts the line takes it there
+    // ("While the chicken rests, whisk the mustard into the cooking
+    // liquid"); any other starts a side task the step's later sentences
+    // stay in until the line or its vessel comes back (closer1 D3: never
+    // the whole step, 0699, 0361, 0448).
+    final sideTask = i != at && x.side;
+    final text = i == at
+        ? x.text.substring(from)
+        : sideTask
+        ? x.text.replaceFirst(_alcoholSideClause, '')
+        : x.text;
+    if (sideTask &&
+        !(_alcoholPutsIn.hasMatch(text) &&
+            (_alcoholNamesOwn(text, place.trail) ||
+                _alcoholPutsLiquid.hasMatch(text)))) {
+      seen.addAll([
+        for (final w in RegExp('[a-z]+').allMatches(text)) ...[
+          w[0]!,
+          _alcoholSingular(w[0]!),
+        ],
+      ]);
+      place = (
+        trail: place.trail,
+        aside: true,
+        here: _alcoholContext(text, place, waiting: !started).here,
+      );
+      continue;
+    }
+    if (i != at) {
+      final was = place.trail.vessel;
+      place = _alcoholContext(text, place, waiting: !started, seen: seen);
+      seen.addAll([
+        for (final w in RegExp('[a-z]+').allMatches(text)) ...[
+          w[0]!,
+          _alcoholSingular(w[0]!),
+        ],
+      ]);
+      if (place.aside) {
+        continue;
+      }
+      // What the line's vessel takes while it is in it names a later
+      // "<word> mixture" of it ("Add reserved tomato juice and simmer …
+      // stir in reserved tomato juice mixture", 0347; closer1 D3).
+      if (started && _alcoholPutsIn.hasMatch(text)) {
+        final t = place.trail;
+        place = (
+          trail: (
+            name: t.name,
+            words: {...t.words, ..._alcoholMixWords(text)},
+            vessel: t.vessel,
+            foods: t.foods,
+            vocab: t.vocab,
+          ),
+          aside: false,
+          here: place.here,
+        );
+      }
+      final now = place.trail.vessel;
+      if (now != was && now != null) {
+        // Moved into a bowl, a measuring cup (closer1 D3): off the heat,
+        // waiting; put into a pot already on the heat: its timer starts.
+        if (_alcoholCold(now)) {
+          // … after the minutes this sentence prints before the move
+          // ("scrape … until eggs just form cohesive mass, 1 to 2 minutes;
+          // transfer to clean bowl", 1145)
+          leaves = started;
+        } else if (!started &&
+            _alcoholStovetop.contains(now.split('|').last) &&
+            _alcoholCarried(s, i)) {
+          started = heated = true;
+          heatAt ??= i;
+        }
+      }
+    }
+    // A cold mix waiting for its heat is not stopped by a rest, a chill or
+    // a move ("Transfer the dough pieces to a plate … refrigerate").
+    final stops = [
+      for (final m in _alcoholStops.allMatches(text))
+        if (started ||
+            _alcoholStopKind(m) == 'final' ||
+            _alcoholStopKind(m) == 'removal')
+          m,
+    ];
+    final stop = stops.firstOrNull;
+    final upTo = stop == null ? text : text.substring(0, stop.start);
+    // D1 ruling (closer1): a stuffing rolled or wrapped inside a roast is
+    // not cooked by the roast — the roasts that do so print a rare to
+    // medium-rare doneness (85 °F, 120 °F), so the run ends where the
+    // cooled mixture is rolled in (1129 beef-wellington|14, 0216|7).
+    if (!started && heated && _alcoholRolledIn.hasMatch(upTo)) {
+      return read();
+    }
+    if (!started &&
+        _alcoholHeats(upTo) &&
+        // a dough or batter waiting starts at its own bake, fry or cook —
+        // never another food put on to cook beside it ("Add remaining
+        // strawberries to rhubarb liquid and cook …", 0986; closer1 D3)
+        (!batter ||
+            _alcoholBakes.hasMatch(upTo) ||
+            _alcoholNamesOwn(upTo, place.trail) ||
+            !RegExp(r'^(add|return|transfer|place|pour)\b').hasMatch(upTo))) {
+      started = heated = true;
+      heatAt ??= i;
+    }
+    if (started &&
+        _alcoholUntilHeat.hasMatch(
+          upTo
+              .replaceAll(_alcoholNotHeat, ' ')
+              .replaceAll(_alcoholHeatedWater, ' '),
+        )) {
+      until = true;
+    }
+    if (_alcoholSeals.hasMatch(upTo)) {
+      underPressure = sealed = true;
+    }
+    if (_alcoholUnseals.hasMatch(upTo)) {
+      underPressure = false;
+    }
+    double minutesIn(String t) {
+      if (!started ||
+          underPressure ||
+          _alcoholBroil.hasMatch(t) && !_alcoholOven.hasMatch(t)) {
+        return 0;
+      }
+      return _alcoholMinutesIn(t);
+    }
+
+    void count(String t) {
+      var m = minutesIn(t);
+      if (altBake case final alt? when m > alt && _alcoholOven.hasMatch(t)) {
+        m = alt;
+      }
+      total += m;
+      if (_alcoholOven.hasMatch(t)) {
+        ovenTotal += m;
+      }
+    }
+
+    count(upTo);
+    if (leaves) {
+      leaves = false;
+      started = false;
+      continue;
+    }
+    if (stop == null) {
+      continue;
+    }
+    if (heatAt != null) {
+      stopAt ??= i;
+    }
+    final kind = _alcoholStopKind(stop);
+    if (kind == 'removal' &&
+        _alcoholReturnsAfter(s, i, i == at ? from + stop.end : stop.end)) {
+      count(text.substring(stop.end));
+      continue;
+    }
+    if (kind == 'final' || !started) {
+      return read();
+    }
+    // Strained INTO a vessel (closer1 D3): the line goes there, named as
+    // the step names it, and waits for that vessel's heat ("Strain the
+    // mixture through a fine-mesh strainer set over a small saucepan …
+    // Place the saucepan over medium-high heat", 0184; "Strain stock …
+    // set over bowl … Slowly whisk in stock", 1076).
+    if (_alcoholStrainInto.firstMatch(text) case final m?) {
+      if (_alcoholVesselsIn(m.namedGroup('v')!).firstOrNull case final v?) {
+        final t = place.trail;
+        final what = m.namedGroup('what')!.split(' ').last;
+        place = (
+          trail: (
+            name: t.name,
+            words: t.words,
+            vessel: v,
+            foods: {
+              if (what != 'mixture') ...{what, _alcoholSingular(what)},
+            },
+            vocab: t.vocab,
+          ),
+          aside: false,
+          here: v,
+        );
+        started = false;
+        continue;
+      }
+    }
+    // The liquid followed (R6): the first later sentence that puts it.
+    final next = follow ? _alcoholFollows(s, i, place.trail) : null;
+    if (next == null) {
+      return read();
+    }
+    i = next.at - 1;
+    place = (trail: next.trail, aside: false, here: next.trail.vessel);
+    started = _alcoholHeats(s[next.at].text) || _alcoholCarried(s, next.at);
+    heated = heated || started;
+    if (started) {
+      heatAt ??= next.at;
+    }
+    step = s[next.at].step;
+  }
+  return read();
+}
+
+/// A roast rolled or wrapped round a stuffing (the D1 ruling).
+final RegExp _alcoholRolledIn = RegExp(
+  r'\b(roll|wrap)\w*\b[^.;]*\b(roast|beef|tenderloin)\b',
+);
+
+/// A strain into a vessel: what is strained and where it goes.
+final RegExp _alcoholStrainInto = RegExp(
+  r'\bstrain (the )?(?<what>[a-z]+( [a-z]+)?) through\b[^.;]*?'
+  r'\b(over|into|in) (a |the )?(?<v>([\w-]+ ){0,2}(saucepan|pot|skillet|'
+  r'bowl|measuring cup|liquid measure|container|dutch oven|pan))\b',
+);
+
+/// The run's place: the trail, whether the sentence read is a side task,
+/// and the vessel the step is working in.
+typedef _AlcoholPlace = ({_AlcoholTrail trail, bool aside, String? here});
+
+/// The place after reading [text] (R3, R6, critic 5): a sentence putting
+/// the line — its name, a liquid word, a "<word> mixture" of its adding
+/// sentence, a food it was poured over — to or into a vessel (or into the
+/// vessel the step works in) moves it there; one putting something in or
+/// into another vessel starts a side task, as does any sentence while a
+/// cold mix waits in its bowl ([waiting]); one naming the line's vessel
+/// ends it.
+_AlcoholPlace _alcoholContext(
+  String text,
+  _AlcoholPlace at, {
+  required bool waiting,
+  Set<String> seen = const {},
+}) {
+  final trail = at.trail;
+  final dests = [
+    for (final m in _alcoholIntoVessel.allMatches(text))
+      if (_alcoholVesselsIn(m.namedGroup('what')!).firstOrNull case final v?)
+        if (m.namedGroup('prep') != 'on' || v.endsWith('sheet'))
+          (prep: m.namedGroup('prep')!, vessel: v, end: m.end),
+  ];
+  final into = [
+    for (final d in dests)
+      if (!d.vessel.startsWith('other|')) d,
+  ];
+  final coldMix =
+      waiting &&
+      trail.vessel != null &&
+      _alcoholColdVessels.contains(trail.vessel!.split('|').last);
+  final named = _alcoholVesselsIn(
+    text,
+  ).where((v) => !v.startsWith('other|'));
+  final namedOther = _alcoholVesselsIn(
+    text,
+  ).where((v) => v.startsWith('other|'));
+  final here = into.lastOrNull?.vessel ?? named.lastOrNull ?? at.here;
+  // The pasta pot's boiling water, a tap's running water: another vessel
+  // ("Add noodles to boiling water … Rinse under hot running water … for
+  // 1 minute", 1087; closer1 D3).
+  if (_alcoholOtherWater.hasMatch(text) &&
+      !_alcoholOwnMention(text, trail.name)) {
+    return (trail: trail, aside: true, here: 'other|pot');
+  }
+  // A premix whisked again in its bowl stays where it is ("Whisk mushroom
+  // liquid mixture to recombine", 0542; closer1 D3).
+  if (text.contains('recombine') && !text.contains(' add')) {
+    return (trail: trail, aside: false, here: trail.vessel ?? here);
+  }
+  if ((_alcoholNamesOwn(text, trail) && _alcoholPutsIn.hasMatch(text)) ||
+      // the line's food, just cooked, moved on ("Cook … about 1 minute
+      // longer. Transfer to bowl.", 0532; closer1 D3)
+      (!waiting && RegExp(r'^transfer (it |them )?to\b').hasMatch(text)) ||
+      _alcoholPutsLiquid.hasMatch(text) ||
+      _alcoholPoursIt.hasMatch(text) ||
+      (coldMix &&
+          _alcoholPutsMixture
+              .allMatches(text)
+              .any(
+                (m) => switch (m.namedGroup('what')) {
+                  final w? => trail.words.contains(w) || !seen.contains(w),
+                  null => true,
+                },
+              ))) {
+    // Food put into the line itself ("transfer to batter, tossing gently
+    // to coat") joins it where it is.
+    if (into.isEmpty &&
+        RegExp(
+          r'\b(to|into|in) (the )?([a-z]+ )?(batter|marinade|mixture|dough)\b'
+          '(?!-)',
+        ).hasMatch(text)) {
+      return (
+        trail: (
+          name: trail.name,
+          words: trail.words,
+          vessel: trail.vessel,
+          foods: {
+            ...trail.foods,
+            ..._alcoholFoodsIn(text, trail),
+            // "dip 1 piece of fish in the batter" (0255; closer1 D3)
+            ..._alcoholCoatedIn(text),
+          },
+          vocab: trail.vocab,
+        ),
+        aside: false,
+        here: trail.vessel ?? here,
+      );
+    }
+    // Into the frying oil after the last vessel named ("…drip back into
+    // bowl; add to hot oil"): the pot on the heat, unnamed.
+    final oil = RegExp(r'\b(to|into) (the )?(hot )?oil\b').allMatches(text);
+    if (oil.isNotEmpty && into.every((m) => m.end < oil.last.start)) {
+      return (
+        trail: (
+          name: trail.name,
+          words: trail.words,
+          vessel: null,
+          foods: {...trail.foods, ..._alcoholFoodsIn(text, trail)},
+          vocab: trail.vocab,
+        ),
+        aside: false,
+        here: null,
+      );
+    }
+    // A new vessel the line is put into goes with it ("Transfer the pork to
+    // a clean bowl", closer1 D3).
+    final to =
+        dests.where((m) => m.prep == 'to' || m.prep == 'into').lastOrNull ??
+        into.lastOrNull;
+    final cold =
+        trail.vessel != null &&
+        _alcoholColdVessels.contains(trail.vessel!.split('|').last);
+    // A new food added to the waiting mix ("Add pork and toss to coat",
+    // 0540) leaves the line in its bowl; the line's own food added
+    // ("Add chicken and spread into even layer", 0528) or the mix poured
+    // or spread over a food goes with it, its vessel unknown (closer1 D3).
+    final target =
+        to?.vessel ??
+        (here != null && here != trail.vessel
+            ? here
+            : cold &&
+                  !(RegExp(r'^(add|toss|stir)\b').hasMatch(text) &&
+                      (text.contains('coat') || !_alcoholNamesOwn(text, trail)))
+            ? null
+            : trail.vessel);
+    final food = switch (to == null
+        ? null
+        : RegExp(
+            r'^\s+with (the )?([a-z-]+ )?([a-z]+)',
+          ).firstMatch(text.substring(to.end))?[3]) {
+      // never "with the flour mixture" (0255)
+      'mixture' => null,
+      final w => w,
+    };
+    // The line moved by its own name into a bowl ("Transfer the wine to a
+    // small bowl and set aside", 0448) leaves the foods and the group it
+    // was with: they no longer name it (closer1 D3).
+    final apart =
+        _alcoholCold(target) &&
+        _alcoholOwnMention(text, trail.name) &&
+        RegExp(r'\bset aside\b|\breserv').hasMatch(text);
+    return (
+      trail: (
+        name: trail.name,
+        words: {...trail.words, ..._alcoholMixWords(text)},
+        vessel: target,
+        foods: apart
+            ? {?food}
+            : {
+                ...trail.foods,
+                ?food,
+                ..._alcoholFoodsIn(text, trail),
+                ..._alcoholCoatedIn(text),
+              },
+        vocab: trail.vocab,
+      ),
+      aside: false,
+      here: target,
+    );
+  }
+  if (into.every((m) => _alcoholIsTrailVessel(m.vessel, trail)) &&
+      trail.vessel != null &&
+      // A bowl named by another mix in it is that mix's ("transfer the
+      // mushroom mixture to the bowl with the pureed chicken", 0448), the
+      // line's own only when it names the line ("strainer over bowl
+      // containing soy sauce mixture", 1178; closer1 D3).
+      !_alcoholColdVessel
+          .allMatches(text)
+          .any((m) => !_alcoholNamesOwn(m.namedGroup('rest')!, trail)) &&
+      // A bare "pan" in a side task is the side task's ("simmer, shaking
+      // the pan occasionally", 0457; closer1 D3).
+      !(at.aside && named.every((v) => v == 'pan')) &&
+      named.any((v) => _alcoholSameVessel(v, trail.vessel!))) {
+    // Food added to the line's vessel joins it ("Add potatoes to skillet").
+    return (
+      trail: _alcoholPutsIn.hasMatch(text)
+          ? (
+              name: trail.name,
+              words: {...trail.words, ..._alcoholMixWords(text)},
+              vessel: trail.vessel,
+              foods: {...trail.foods, ..._alcoholFoodsIn(text, trail)},
+              vocab: trail.vocab,
+            )
+          : trail,
+      aside: false,
+      here: trail.vessel,
+    );
+  }
+  if (waiting &&
+      trail.vessel != null &&
+      _alcoholColdVessels.contains(trail.vessel!.split('|').last)) {
+    // A food tossed in the waiting mix, no other vessel named, takes it on
+    // ("Transfer meat to bowl with rice wine mixture … Toss chicken to
+    // coat", 0513; closer1 D3).
+    final coated = _alcoholCoatedIn(text);
+    if (coated.isNotEmpty && named.isEmpty && namedOther.isEmpty) {
+      return (
+        trail: (
+          name: trail.name,
+          words: trail.words,
+          vessel: trail.vessel,
+          foods: {...trail.foods, ...coated},
+          vocab: trail.vocab,
+        ),
+        aside: false,
+        here: trail.vessel,
+      );
+    }
+    return (trail: trail, aside: true, here: here);
+  }
+  if (_alcoholNamesOwn(text, trail)) {
+    return (trail: trail, aside: false, here: here);
+  }
+  // Another vessel worked in — a now-empty, clean or second one ("Heat oil
+  // in now-empty skillet", "Return again-empty skillet to medium heat"):
+  // a side task until the line comes back (closer1 D3).
+  if (namedOther.isNotEmpty &&
+      !named.any((v) => _alcoholIsTrailVessel(v, trail))) {
+    return (trail: trail, aside: true, here: namedOther.last);
+  }
+  final other = into
+      .where((m) => !_alcoholIsTrailVessel(m.vessel, trail))
+      .lastOrNull;
+  // The line's dish set on a baking sheet goes into the oven with it
+  // ("Unwrap the frozen ramekins and spread them out on a baking sheet",
+  // 0939; "Place pie on rimmed baking sheet", 0194; closer1 D3).
+  if (other != null &&
+      other.prep == 'on' &&
+      other.vessel.endsWith('sheet') &&
+      const {'dish', 'ramekins'}.contains(trail.vessel?.split('|').last)) {
+    return (trail: trail, aside: false, here: trail.vessel);
+  }
+  if (other != null) {
+    return (trail: trail, aside: true, here: other.vessel);
+  }
+  // A line in a vessel not yet named: the first cooking vessel food is put
+  // in is it, the food with it ("arrange meatballs in pot", 1093).
+  if (trail.vessel == null &&
+      // (closer1 D3: never a cold mix still waiting — "add amaretto mixture
+      // and continue to beat … bring cream and corn syrup to simmer in
+      // small saucepan" heats the ganache, 0906)
+      !waiting &&
+      into.isNotEmpty &&
+      _alcoholPutsIn.hasMatch(text)) {
+    return (
+      trail: (
+        name: trail.name,
+        words: trail.words,
+        vessel: into.last.vessel,
+        foods: {...trail.foods, ..._alcoholFoodsIn(text, trail)},
+        vocab: trail.vocab,
+      ),
+      aside: false,
+      here: into.last.vessel,
+    );
+  }
+  if (named.any(
+    (v) =>
+        !(at.aside && v == 'pan') &&
+        // a cold mix waiting where it was poured is in a dish, never a
+        // pot on a burner ("bring cream … to simmer in small saucepan",
+        // 0906; closer1 D3)
+        !(waiting &&
+            trail.vessel == null &&
+            _alcoholStovetop.contains(v.split('|').last)) &&
+        _alcoholIsTrailVessel(v, trail),
+  )) {
+    return (trail: trail, aside: false, here: trail.vessel ?? here);
+  }
+  // A side task in a bowl ends at the first heat in no other vessel: "Whisk
+  // cornstarch … in small bowl. Stir cornstarch slurry into soup, return to
+  // simmer, and cook … 2 minutes" (0018, closer1 D3).
+  if (at.aside &&
+      _alcoholCold(at.here) &&
+      !_alcoholCold(trail.vessel) &&
+      named.isEmpty &&
+      namedOther.isEmpty &&
+      !_alcoholMicrowave.hasMatch(text) &&
+      _alcoholHeats(text)) {
+    return (trail: trail, aside: false, here: trail.vessel);
+  }
+  return (trail: trail, aside: at.aside, here: here);
+}
+
+/// The words a sentence that puts the line somewhere, or puts something
+/// into its vessel, adds to what a later "<word> mixture" of it is named by
+/// ("transfer ¾ cup cooking liquid, almonds … to blender. … Return almond
+/// mixture to skillet", 0126; "Add reserved tomato juice … stir in reserved
+/// tomato juice mixture", 0347; closer1 D3).
+Set<String> _alcoholMixWords(String text) => {
+  for (final w in RegExp('[a-z]+').allMatches(text))
+    if (!_alcoholPutsIn.hasMatch(w[0]!)) ...{w[0]!, _alcoholSingular(w[0]!)},
+}.difference(_alcoholCommonWords);
+
+/// The ingredients [text] names (the trail's `vocab`), singular too.
+Set<String> _alcoholFoodsIn(String text, _AlcoholTrail t) =>
+    _alcoholHeadsIn(text, t.vocab);
+
+/// The food [text] tosses or coats with the line, named however the step
+/// names it ("gently toss the chunks with …", "toss until beef is evenly
+/// coated", closer1 D3), singular too.
+Set<String> _alcoholCoatedIn(String text) => {
+  for (final m in _alcoholCoats.allMatches(text))
+    if (m.namedGroup('a') ??
+            m.namedGroup('b') ??
+            m.namedGroup('c') ??
+            m.namedGroup('d') ??
+            m.namedGroup('e') ??
+            m.namedGroup('f')
+        case final w?)
+      if (!_alcoholCommonWords.contains(w)) ...{w, _alcoholSingular(w)},
+};
+
+/// The vessels on a burner: a line put into one already hot starts its
+/// timer there (a sheet, a dish or a pie plate waits for its bake).
+const Set<String> _alcoholStovetop = {
+  'pot',
+  'skillet',
+  'saucepan',
+  'pan',
+  'wok',
+  'roasting pan',
+};
+
+final RegExp _alcoholCoats = RegExp(
+  r'\b(toss|coat|marinat|rub)\w*\s+(the\s+|\d+\s+)*'
+  r'((?!\w*ly\b|but\b)[a-z-]+\s+){0,2}?'
+  r'(?<a>(?!\w*ly\b)[a-z]+)\s+(with|in|to coat)\b|'
+  r'\buntil (the )?(?<b>[a-z]+) (is|are) (evenly |well |thoroughly )?coated\b|'
+  r'\bdip\w*\s+(\d+\s+)?(pieces?\s+of\s+)?(the\s+)?(?<c>[a-z]+)\s+in\b|'
+  r'\badd (the )?(?<d>[a-z]+) and toss\b|'
+  r'\b(add|pour)\b[^,.;]*?\bto (the )?(?<e>[a-z]+), (stir|toss)\w* to coat\b|'
+  r'\bto (the )?(?<f>[a-z]+) mixture\b',
+);
+
+/// Water another vessel holds.
+final RegExp _alcoholOtherWater = RegExp(
+  r'\b(to|into|in) (the )?(salted )?(boiling|simmering) water\b|'
+  r'\bunder (hot |cold )?running water\b',
+);
+
+/// Nouns a food word before them only modifies.
+const Set<String> _alcoholModified = {
+  'liquid',
+  'juice',
+  'juices',
+  'broth',
+  'stock',
+  'water',
+  'sauce',
+  'oil',
+  'fat',
+  'zest',
+  'powder',
+};
+
+/// The foods of [vocab] [text] names as a noun phrase's head — "24 peach
+/// wedges": wedges, never peach; "chicken, soy sauce": chicken (closer1
+/// D3: "peach chunks" is not the "peach wedges" a line soaks).
+Set<String> _alcoholHeadsIn(String text, Set<String> vocab) {
+  final words = RegExp('[a-z]+').allMatches(text).toList();
+  bool known(String w) =>
+      vocab.contains(w) || vocab.contains(_alcoholSingular(w));
+  return {
+    for (final (i, w) in words.indexed)
+      if (known(w[0]!) &&
+          !(i + 1 < words.length &&
+              RegExp(r'^[ -]+$').hasMatch(
+                text.substring(w.end, words[i + 1].start),
+              ) &&
+              (known(words[i + 1][0]!) ||
+                  // "mushroom liquid", "orange juice": a modifier (0542)
+                  _alcoholModified.contains(words[i + 1][0]))))
+        for (final f in {w[0]!, _alcoholSingular(w[0]!)})
+          if (vocab.contains(f)) f,
+  };
+}
+
+/// The first sentence after [at] that puts [start]'s liquid somewhere (its
+/// name, a liquid word, a "<word> mixture" of its adding sentence, or its
+/// vessel with something added) outside a side task, and the trail there —
+/// or null: none before the dish is served.
+({int at, _AlcoholTrail trail})? _alcoholFollows(
+  List<_AlcoholSentence> s,
+  int at,
+  _AlcoholTrail start,
+) {
+  var place = (trail: start, aside: false, here: start.vessel);
+  var step = s[at].step;
+  for (var k = at + 1; k < s.length; k++) {
+    final x = s[k];
+    if (x.step != step) {
+      place = (trail: place.trail, aside: false, here: place.trail.vessel);
+      step = x.step;
+    }
+    if (x.empty) {
+      continue;
+    }
+    final text = x.side ? x.text.replaceFirst(_alcoholSideClause, '') : x.text;
+    if (x.side &&
+        !(_alcoholPutsIn.hasMatch(text) &&
+            (_alcoholNamesOwn(text, place.trail) ||
+                _alcoholPutsLiquid.hasMatch(text)))) {
+      continue;
+    }
+    final serves = _alcoholStops
+        .allMatches(text)
+        .where((m) => _alcoholStopKind(m) == 'final')
+        .firstOrNull;
+    final upTo = serves == null ? text : text.substring(0, serves.start);
+    final before = place.trail;
+    place = _alcoholContext(upTo, place, waiting: false);
+    if (!place.aside &&
+        _alcoholPutsIn.hasMatch(upTo) &&
+        (_alcoholNamesOwn(upTo, before) ||
+            _alcoholPutsLiquid.hasMatch(upTo) ||
+            // (a batter or a dough leaves with its food: never followed
+            // by its pan alone — the crepes' skillet takes the next sauce,
+            // 0960; closer1 D3)
+            (before.vessel != null &&
+                !before.foods.any(_alcoholBatter.hasMatch) &&
+                _alcoholVesselsIn(upTo).any(
+                  (v) =>
+                      v.split('|').last == before.vessel!.split('|').last &&
+                      _alcoholSameVessel(v, before.vessel!),
+                )))) {
+      return (at: k, trail: place.trail);
+    }
+    if (serves != null) {
+      return null;
+    }
+  }
+  return null;
+}
+
+/// R5 (critic 8, bound objects): a line a mass rule owns — a marinade
+/// scraped or lifted off, a liquid drained and discarded, a stock kept for
+/// another use.
+final RegExp _alcoholHandOff = RegExp(
+  r'\b(scrape|wipe)s? (off )?(the |any )?(miso|marinade|excess|\w+ mixture)\b'
+  r'[^.;]*\b(from|off)\b|\bdab\b[^.;]*\bmarinade|'
+  r'\bdrain(ed)? (off )?and discard|\breserv(e|ing) (the )?(stock|liquid|'
+  r'broth) for another use|\bdrain (the )?\w+ and pat\b[^.;]*\bdry|'
+  r'\b(lift|remove) (the )?\w+ from (the )?marinade|'
+  r'\b(letting|allowing) (any )?excess (marinade )?(to )?drip|'
+  r'\bmeasure out\b[^.;]*\bmarinade',
+);
+
+/// The beer can a chicken stands on (Q20, Q-h): a mass ruling's.
+final RegExp _alcoholBeerCan = RegExp(
+  r'\bover (the )?(beer )?can\b|\bbeer can\b',
+);
+
+/// What a dough or a batter is cooked by (R4).
+final RegExp _alcoholBakes = RegExp(r'\b(bak|fr[yi]|steam|broil|roast)\w*');
+
+/// R4: a batter, dough or filling.
+final RegExp _alcoholBatter = RegExp(r'\b(batter|dough|filling)\b');
+
+final RegExp _alcoholStirs = RegExp(r'\b(stir|whisk|scrap)\w*');
+
+final RegExp _alcoholOven = RegExp(r'\b(oven|bake|baked|roast)\b');
+
+/// The liquids a line's pot is filled with ("add broth and Parmesan rind
+/// … Return broth to simmer", 0403): the trail answers to them.
+const Set<String> _alcoholLiquids = {'broth', 'stock', 'cream', 'milk'};
+
+/// Words a premix's later sentence is not linked by (R6).
+const Set<String> _alcoholCommonWords = {
+  'the',
+  'and',
+  'with',
+  'into',
+  'to',
+  'in',
+  'of',
+  'a',
+  'an',
+  'until',
+  'add',
+  'stir',
+  'whisk',
+  'combine',
+  'together',
+  'bowl',
+  'small',
+  'medium',
+  'large',
+  'set',
+  'aside',
+  'toss',
+  'remaining',
+  'teaspoon',
+  'teaspoons',
+  'tablespoon',
+  'tablespoons',
+  'cup',
+  'cups',
+  'salt',
+  'pepper',
+  'water',
+  'oil',
+  'sugar',
+  'mix',
+  'well',
+  'for',
+  'or',
+  'at',
+  'least',
+  'up',
+  'minutes',
+  'minute',
+  'hour',
+  'hours',
+  'let',
+  'about',
+  'over',
+  'from',
+  'then',
+  'each',
+  'all',
+  'pot',
+  'pan',
+  'skillet',
+  'saucepan',
+  'dish',
+  'sauce',
+};
+
+/// The ingredient groups that are a mix, read by their word when a line
+/// shares its name with another (R1).
+const Set<String> _alcoholMixGroups = {
+  'sauce',
+  'glaze',
+  'marinade',
+  'dressing',
+  'syrup',
+  'vinaigrette',
+  'gravy',
+};
+
+/// [word] in the singular ("cherries": cherry, "shanks": shank).
+String _alcoholSingular(String word) => word.endsWith('ies')
+    ? '${word.substring(0, word.length - 3)}y'
+    : word.endsWith('oes')
+    ? word.substring(0, word.length - 2)
+    : word.endsWith('s') && !word.endsWith('ss')
+    ? word.substring(0, word.length - 1)
+    : word;
+
+/// The use of the line at the read sentence [at] (critic 6–9, R1–R6).
+_AlcoholUse _alcoholUseAt(
+  List<_AlcoholSentence> s,
+  int at,
+  String name,
+  IngredientLine line,
+  String? group,
+  Set<String> ingredients,
+) {
+  final here = s[at];
+  final offset =
+      RegExp('\\b${RegExp.escape(name)}').firstMatch(here.text)?.start ?? 0;
+  // (closer1 D3: never its side clause — "While the noodles boil, toss the
+  // chicken …" names no noodles of the line's, 0528.)
+  final clause = here.text.replaceFirst(
+    RegExp(r'^(while|meanwhile|as|when)\b[^,]*,'),
+    '',
+  );
+  final words = {
+    for (final w in RegExp('[a-z]+').allMatches(clause)) ...{
+      w[0]!,
+      _alcoholSingular(w[0]!),
+    },
+  }.difference({..._alcoholCommonWords, name});
+  // The foods the line coats or soaks ("stir gently until chicken is
+  // evenly coated"): the adding sentence's words that name an ingredient,
+  // and its group's one-word title ("SAUCE", "STUFFING"; never the last
+  // word of "CHICKEN AND VEGETABLES").
+  final foods = {
+    ?group,
+    ..._alcoholHeadsIn(clause, ingredients),
+    ..._alcoholCoatedIn(clause),
+  };
+  final trail = (
+    name: name,
+    words: words,
+    vessel: _alcoholVesselAt(s, at),
+    foods: foods,
+    vocab: ingredients,
+  );
+  // R5: a mass rule's line (critic 8).
+  final can = RegExp(r'\bcans?\b').hasMatch(line.raw.toLowerCase());
+  for (var i = at; i < s.length; i++) {
+    final text = i == at ? here.text.substring(offset) : s[i].text;
+    if (_alcoholHandOff.hasMatch(text) ||
+        (can && _alcoholBeerCan.hasMatch(text))) {
+      return _alcoholKept('handoff');
+    }
+  }
+  // R2.1: a flame in the adding sentence or the next two of its step
+  // (critic 2) — the minutes after it, if 15 or more, the lower row.
+  for (var i = at; i < s.length && i <= at + 2 && s[i].step == here.step; i++) {
+    if (!s[i].empty && _alcoholIgnites.hasMatch(s[i].text)) {
+      return _alcoholTimed(
+        i + 1 < s.length
+            ? _alcoholRun(
+                s,
+                i + 1,
+                0,
+                trail,
+                onHeat: true,
+                follow: false,
+              ).minutes
+            : 0,
+        flamed: true,
+      );
+    }
+  }
+  final before = here.text.substring(0, offset);
+  final after = here.text.substring(offset);
+  // Served with the dish ("serve with the sauce"): never heated (R2.3).
+  if (RegExp(r'\bserve\b').hasMatch(before)) {
+    return _alcoholKept('noheat');
+  }
+  // Decision 5: the line itself poured over or around, not stirred.
+  final poured =
+      RegExp(
+            '\\bpour\\b[^.;]*\\b${RegExp.escape(name)}\\w*\\b[^.;]*\\b'
+            r'(over|around|into)\b',
+          ).hasMatch(here.text) &&
+          !_alcoholStirs.hasMatch(here.text) ||
+      // … or the mix just made poured round the food in the next sentence
+      // ("Whisk … rice wine … in small bowl. Pour around fish.", 0268).
+      (at + 1 < s.length &&
+          s[at + 1].step == here.step &&
+          _alcoholPoursIt.hasMatch(s[at + 1].text) &&
+          !_alcoholStirs.hasMatch(s[at + 1].text));
+  // R2.2: off the heat — a hot dish (Q-f), unless the vessel goes back on
+  // the heat (critic 2: timed from the return); so too a dish strained or
+  // poured off the heat in the adding sentence itself ("pour custard
+  // through fine-mesh strainer into large bowl; stir in liquor", 0853).
+  final offBefore = RegExp(
+    r'\bstrain\b|\bthrough (a )?fine-mesh\b',
+  ).hasMatch(before);
+  if (offBefore && (_alcoholHeats(before) || _alcoholCarried(s, at))) {
+    return _alcoholOffHeat;
+  }
+  if (_alcoholOffHeatWords.hasMatch(before) || before.startsWith('remove')) {
+    if (!_alcoholReturnsAfter(s, at, offset) && !_alcoholHeats(after)) {
+      // The dish taken on to its next heat (closer1 D3: "Off the heat,
+      // whisk in … sherry. … Turn the mixture into a … gratin dish … bake
+      // … 13 to 15 minutes", 0303; else Q-f's hot dish, 5002).
+      final later = _alcoholRun(s, at, offset, trail, onHeat: false);
+      return later.heated
+          ? _alcoholHeated(s, at, later, poured: poured)
+          : _alcoholOffHeat;
+    }
+    return _alcoholHeated(
+      s,
+      at,
+      _alcoholRun(s, at, offset, trail, onHeat: true),
+      poured: poured,
+    );
+  }
+  // (closer1 D3: or the vessel the line is in is a bowl — "Add 1¼ cups of
+  // the beer to the flour mixture in the mixing bowl. Add the remaining ¼
+  // cup beer as needed", 0255: never carried by the oil heating beside it.)
+  final intoCold =
+      _alcoholVesselsIn(
+        here.text,
+      ).any((v) => _alcoholColdVessels.contains(v.split('|').last)) ||
+      _alcoholCold(trail.vessel);
+  // A side clause ("While the noodles boil, toss the chicken …") heats
+  // another pot.
+  final own = here.text.replaceFirst(
+    RegExp(r'^(while|meanwhile|as|when)\b[^,]*,'),
+    '',
+  );
+  if (_alcoholHeats(own) ||
+      (!intoCold &&
+          !here.text.contains('recombine') &&
+          _alcoholCarried(s, at))) {
+    return _alcoholHeated(
+      s,
+      at,
+      _alcoholRun(s, at, offset, trail, onHeat: true),
+      poured: poured,
+    );
+  }
+  // Q-f: stirred into a sauce, soup or custard just cooked, nothing cooling
+  // it since and nothing heating it after (the run below reads none) — a
+  // hot dish, 5002.
+  final intoHot = RegExp(
+    r'\b(in)?to (the )?(hot |warm )?(sauce|soup|stew|custard|gravy|syrup)\b',
+  ).hasMatch(after);
+  // R4: a batter, dough or filling (named in the adding sentence's step) —
+  // followed as the line, timed from its first bake or fry; none (a dough
+  // baked elsewhere): 100.
+  final batter = {
+    for (var i = at; i < s.length && s[i].step == here.step; i++)
+      for (final m in _alcoholBatter.allMatches(s[i].text)) m[0]!,
+    if (at > 0 &&
+        s[at - 1].step == here.step &&
+        RegExp(r'\b(flour|cornstarch)\b').hasMatch(s[at - 1].text) &&
+        !_alcoholHeats(s[at - 1].text))
+      'batter',
+  };
+  if (batter.isNotEmpty) {
+    final read = _alcoholRun(
+      s,
+      at,
+      offset,
+      (
+        name: name,
+        words: trail.words,
+        vessel: _alcoholVesselAt(s, at, near: true),
+        foods: {...foods, ...batter},
+        vocab: ingredients,
+      ),
+      onHeat: false,
+    );
+    return read.heated
+        ? _alcoholHeated(s, at, read, poured: false)
+        : _alcoholKept('fallback:untimed');
+  }
+  // R2.3 / R6 (critic 7): a cold mix — in a bowl or the pot — timed from
+  // its first heat in the line's vessel; none: no heat (100).
+  // A mix whisked together and set aside with no vessel named is in a bowl
+  // ("Whisk together reserved mushroom liquid, … sherry, and cornstarch;
+  // set aside", 0542; closer1 D3).
+  final read = _alcoholRun(
+    s,
+    at,
+    offset,
+    (
+      name: name,
+      words: trail.words,
+      vessel:
+          _alcoholVesselAt(s, at, near: true) ??
+          (RegExp(
+                r'\btogether\b|\bset aside\b',
+              ).hasMatch(here.text)
+              ? 'bowl'
+              : null),
+      foods: foods,
+      vocab: ingredients,
+    ),
+    onHeat: false,
+  );
+  return read.heated
+      ? _alcoholHeated(s, at, read, poured: poured)
+      : intoHot && _alcoholHotBefore(s, at)
+      ? _alcoholOffHeat
+      : _alcoholKept('noheat');
+}
+
+/// Whether the dish is still hot at sentence [at]: the nearest earlier
+/// read sentence that heats or cools (of its step or the two before) heats.
+bool _alcoholHotBefore(List<_AlcoholSentence> s, int at) {
+  for (var i = at - 1; i >= 0 && s[i].step >= s[at].step - 2; i--) {
+    final text = s[i].text;
+    if (s[i].empty || s[i].side || (s[i].sideStep && s[i].step != s[at].step)) {
+      continue;
+    }
+    if (_alcoholStops
+        .allMatches(text)
+        .any((m) => _alcoholStopKind(m) == 'wait')) {
+      return false;
+    }
+    if (_alcoholHeats(text)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// A use heated from sentence [at]: poured over and baked, not stirred
+/// (85, its oven minutes); the band of the run's minutes; no minutes
+/// printed — heated, untimed (85, critic 9) when a heat ran until a
+/// doneness or no stop came within two sentences of the heat's start,
+/// else boil-off (into the hot liquid and off or served at once).
+_AlcoholUse _alcoholHeated(
+  List<_AlcoholSentence> s,
+  int at,
+  _AlcoholRunRead read, {
+  required bool poured,
+}) {
+  if (read.sealed && read.minutes == 0) {
+    return _alcoholKept('fallback:sealed');
+  }
+  if (poured && (read.ovenMinutes > 0 || _alcoholOven.hasMatch(s[at].text))) {
+    final baked = read.ovenMinutes.floor();
+    return (
+      kept: 85,
+      code: '5002',
+      rule: 'not_stirred',
+      minutes: baked,
+      words: 'poured over and baked $baked min keeps 85 %',
+      part: 'poured over and baked $baked min keeps 85 %',
+    );
+  }
+  if (read.minutes > 0) {
+    return _alcoholTimed(read.minutes);
+  }
+  return read.closes && !read.until ? _alcoholBoilOff : _alcoholUntimed;
+}
+
+/// A volume printed beside a name: "¼ cup of the brandy", "1 cup more
+/// wine", "the remaining 1 tablespoon cognac", "the remaining wine" — read
+/// at the end of the text before the name.
+final RegExp _alcoholRemainingBefore = RegExp(
+  r'\b(remaining|rest of( the)?)\s+'
+  '(?<amount>(\\d+\\s*[$vulgarFractionChars]?|[$vulgarFractionChars])'
+  r'\s*(cups?|tablespoons?|teaspoons?|ounces?)\s+)?'
+  r'(of (the )?)?([a-z-]+ ){0,2}$',
+);
+
+final RegExp _alcoholAmountBefore = RegExp(
+  '(?<amount>(\\d+\\s*[$vulgarFractionChars]?|[$vulgarFractionChars])'
+  r'\s*(cups?|tablespoons?|teaspoons?|ounces?))\s+'
+  r'(of (the )?)?(more )?([a-z-]+ ){0,2}$',
+);
+
+/// The part of a line a sentence names: its printed amount and whether it
+/// is "the remaining" one — or null (no amount, not the rest, or the
+/// "extra" a line keeps outside its amount: "plus extra for seasoning").
+({String? amount, bool rest})? _alcoholPartIn(String text, String name) {
+  for (final m in RegExp('\\b${RegExp.escape(name)}').allMatches(text)) {
+    final before = text.substring(max(0, m.start - 60), m.start);
+    if (RegExp(r'\bextra ([a-z-]+ ){0,2}$').hasMatch(before)) {
+      continue;
+    }
+    if (_alcoholRemainingBefore.firstMatch(before) case final r?) {
+      return (amount: r.namedGroup('amount')?.trim(), rest: true);
+    }
+    if (_alcoholAmountBefore.firstMatch(before) case final a?) {
+      return (amount: a.namedGroup('amount'), rest: false);
+    }
+  }
+  return null;
+}
+
+/// [amount]'s volume in mL ("¼ cup", "1 tablespoon").
+double? _alcoholMl(String amount) {
+  final m = RegExp(
+    '^(\\d+\\s*[$vulgarFractionChars]?|[$vulgarFractionChars])'
+    r'\s*(cup|tablespoon|teaspoon|ounce)',
+  ).firstMatch(amount);
+  final n = m == null ? null : parseQuantity(m[1]!.replaceAll(' ', ''));
+  if (n == null) {
+    return null;
+  }
+  return n *
+      switch (m![2]) {
+        'cup' => 236.588,
+        'tablespoon' => 14.7868,
+        'teaspoon' => 4.92892,
+        _ => 29.5735,
+      };
+}
+
+/// [line]'s volume in mL: its amounts (and a same-food plus part), else a
+/// bottle's or a can's printed size ("1 (750-ml) bottle", "2 (12-ounce)
+/// bottles").
+double? _alcoholLineMl(IngredientLine line) {
+  final own = volumeMlOf(line.amounts);
+  if (own != null) {
+    final plus = plusPartOf(line.raw);
+    final more = plus != null && plus.sameFood
+        ? volumeMlOf([plus.amount])
+        : null;
+    return own + (more ?? 0);
+  }
+  final size = RegExp(
+    r'^(\d+) \((\d+)-(ml|milliliter|ounce)\)',
+  ).firstMatch(line.raw.toLowerCase());
+  if (size == null) {
+    return null;
+  }
+  return int.parse(size[1]!) *
+      int.parse(size[2]!) *
+      (size[3] == 'ounce' ? 29.5735 : 1.0);
+}
+
+AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
+  final s = _alcoholSentencesOf(recipe);
+  if (s.isEmpty) {
+    return (kept: 100, code: '', rule: 'fallback:no_steps', flag: null);
+  }
+  final lines = nutritionLines(recipe);
+  final line = lines[position];
+  final heads = _headsOf(recipe);
+  List<String> alternatives(IngredientLine l) => [
+    for (final alt in normalizeItem(lineItemOf(l)).split(' or '))
+      if (headNounOf(alt.trim()) case final head? when head != 'water') head,
+  ];
+  // A line's group word: its ingredient group title's last word ("ORANGE
+  // SAUCE": sauce).
+  String? groupOf(int p) {
+    var n = 0;
+    for (final g in recipe.ingredients) {
+      if (p < n + g.items.length) {
+        return RegExp(
+          '[a-z]+',
+        ).allMatches(g.group?.toLowerCase() ?? '').lastOrNull?[0];
+      }
+      n += g.items.length;
+    }
+    return null;
+  }
+
+  final group = groupOf(position);
+  // A one-word group title, the only one a food or a step can name as the
+  // line's (closer1 D3).
+  final groupWord = () {
+    var n = 0;
+    for (final g in recipe.ingredients) {
+      if (position < n + g.items.length) {
+        final words = RegExp('[a-z]+').allMatches(g.group?.toLowerCase() ?? '');
+        return words.length == 1 ? words.single[0] : null;
+      }
+      n += g.items.length;
+    }
+    return null;
+  }();
+  // R1 (critic 6): the head; never named — an alternative's head, the
+  // record's class word, the group's title.
+  final flat = {for (final (i, x) in s.indexed) (x.step, x.index): i};
+  String? name;
+  var mentions = const <int>[];
+  final groupMentions = group == null
+      ? const <int>[]
+      : [
+          for (final (i, x) in s.indexed)
+            if (!x.side &&
+                RegExp(
+                  '(?<!soy |fish |hot |oyster |hoisin |worcestershire |chili '
+                  '|tomato |barbecue |dipping |tartar )'
+                  '\\b${RegExp.escape(group)}\\b',
+                ).hasMatch(x.text))
+              i,
+        ];
+  for (final candidate in [
+    if (heads[position] case final head? when head != 'water') head,
+    ...alternatives(line),
+    ?alcoholRecords[fdcId],
+    'liquor',
+    ?group,
+  ]) {
+    final at = candidate == group
+        ? groupMentions
+        : [for (final m in _naming(recipe, candidate)) ?flat[m]];
+    if (at.isNotEmpty) {
+      name = candidate;
+      mentions = at;
+      break;
+    }
+  }
+  if (name == null) {
+    return (kept: 100, code: '', rule: 'fallback:unnamed', flag: null);
+  }
+  // The k-th line of a name reads from its k-th use (critic 10) — a
+  // "<name> mixture" names a use already made; a line past the uses reads
+  // the last.
+  // (closer1 D3) Lines of one name count apart by whether their group is a
+  // mix: a mix group's line ("SAUCE: 1 tablespoon dry sherry") beside one
+  // outside a mix (the chicken's sherry) reads its group's word, the other
+  // the name's uses (0528, 0529).
+  bool sharesName(int p) =>
+      heads[p] == name || alternatives(lines[p]).contains(name);
+  bool mixLine(int p) => _alcoholMixGroups.contains(groupOf(p));
+  final mixed = mixLine(position);
+  final uses0 = <int>[
+    for (final m in mentions)
+      if (!RegExp(
+        '\\b${RegExp.escape(name)}( [a-z]+)? mixture\\b',
+      ).hasMatch(s[m].text))
+        m,
+  ];
+  // Only when the unmixed lines take every use of the name (the steps
+  // never name the sauce's sherry: 0528, 0529; the crepes' cognac they do).
+  final unmixed = [
+    for (var p = 0; p < lines.length; p++)
+      if (sharesName(p) && !mixLine(p)) p,
+  ];
+  final groupRead =
+      unmixed.isNotEmpty &&
+      unmixed.length >= uses0.length &&
+      [
+        for (var p = 0; p < lines.length; p++)
+          if (sharesName(p) && mixLine(p)) p,
+      ].isNotEmpty;
+  var k = 0;
+  for (var p = 0; p < position; p++) {
+    if (sharesName(p) && !(groupRead && mixLine(p))) {
+      k++;
+    }
+  }
+  // A line past the uses whose group is a mix ("SAUCE") reads its group's
+  // word: "Whisk sauce to recombine" (0513).
+  if (group != null && mixed && (groupRead || (k > 0 && k >= uses0.length))) {
+    final own = RegExp(
+      '(?<!soy |fish |hot |oyster |hoisin |worcestershire |chili |tomato '
+      '|barbecue |dipping |tartar )\\b${RegExp.escape(group)}\\b',
+    );
+    final at = s.indexWhere((x) => !x.side && own.hasMatch(x.text));
+    if (at >= 0) {
+      name = group;
+      mentions = [at];
+      uses0
+        ..clear()
+        ..add(at);
+      k = 0;
+    }
+  }
+  // Two lines of one name (critic 10): a use whose sentence names the
+  // OTHER line's group word is the other line's ("whisk … rice wine … for
+  // the sauce" is the SAUCE line's, not the PORK line's).
+  final sharedName = [
+    for (var p = 0; p < lines.length; p++)
+      if (p != position &&
+          (heads[p] == name || alternatives(lines[p]).contains(name)))
+        p,
+  ].isNotEmpty;
+  final otherGroups = {
+    for (var p = 0; p < lines.length; p++)
+      if (p != position &&
+          (heads[p] == name || alternatives(lines[p]).contains(name)))
+        ?groupOf(p),
+  }.difference({?group, name});
+  final mine = [
+    for (final m in uses0)
+      if (!otherGroups.any(
+        (g) => RegExp(
+          '(?<!soy |fish |hot |oyster |hoisin )\\b$g',
+        ).hasMatch(s[m].text),
+      ))
+        m,
+  ];
+  final first = mine.isNotEmpty && mine.length < uses0.length
+      ? mine.first
+      : k == 0 && mentions.length == 1
+      ? mentions.single
+      : uses0.isEmpty
+      ? mentions.first
+      : uses0[min(k, uses0.length - 1)];
+  // The line's parts (a "divided" or "plus" line, P18–P21): its first use,
+  // then each later mention printing a volume or "remaining", until the
+  // parts fill the line.
+  final lineMl = _alcoholLineMl(line);
+  final parts = <({int at, double? ml, String words})>[];
+  var used = 0.0;
+  for (final at in mentions.where((m) => m >= first)) {
+    final part = _alcoholPartIn(s[at].text, name);
+    if (parts.isNotEmpty && part == null) {
+      continue;
+    }
+    if (parts.isNotEmpty && lineMl != null && used >= lineMl - 0.5) {
+      break;
+    }
+    final ml = part?.amount == null ? null : _alcoholMl(part!.amount!);
+    // A later amount the line cannot hold is another line's ("3 tablespoons
+    // of the cognac" beside the batter's 2 tablespoons, 0960); so is every
+    // later amount when the first use prints none and another line shares
+    // the name.
+    if (parts.isNotEmpty &&
+        ((ml != null && lineMl != null && ml > lineMl - used + 0.5) ||
+            (parts.first.ml == null && otherGroups.isNotEmpty) ||
+            (parts.first.ml == null && sharedName))) {
+      continue;
+    }
+    parts.add((
+      at: at,
+      ml: (part?.rest ?? false) && part?.amount == null ? null : ml,
+      words: part?.amount ?? 'the rest',
+    ));
+    used += ml ?? 0;
+    if (part?.rest ?? false) {
+      break;
+    }
+  }
+  // The foods a line can coat or soak (closer1 D3): the words of another
+  // line weighed or counted — never a volume of a seasoning or a liquid
+  // ("1 teaspoon garlic", "¼ cup orange juice") — that only that line's
+  // item prints ("porcini mushrooms" and "cremini mushrooms": two foods,
+  // so "mushrooms" names neither).
+  Set<String> wordsOf(IngredientLine l) => {
+    for (final w in RegExp('[a-z]+').allMatches(normalizeItem(lineItemOf(l))))
+      if (w[0]!.length > 3) ...{w[0]!, _alcoholSingular(w[0]!)},
+  };
+  final wordLines = <String, int>{};
+  for (final l in lines) {
+    for (final w in wordsOf(l)) {
+      wordLines[w] = (wordLines[w] ?? 0) + 1;
+    }
+  }
+  final ingredients = <String>{
+    for (final (p, l) in lines.indexed)
+      if (p != position && volumeMlOf(l.amounts) == null)
+        for (final w in wordsOf(l))
+          if (wordLines[w] == 1) w,
+    for (final (p, _) in lines.indexed)
+      if (p != position && _alcoholLiquids.contains(heads[p])) heads[p]!,
+  }.difference(_alcoholCommonWords);
+  // A part added by "Repeat with … the remaining 2 tablespoons wine" is
+  // used as the part before it was (0540; closer1 D3).
+  final uses = <_AlcoholUse>[];
+  for (final (i, p) in parts.indexed) {
+    uses.add(
+      i > 0 && s[p.at].text.startsWith('repeat')
+          ? uses[i - 1]
+          : _alcoholUseAt(s, p.at, name, line, groupWord, ingredients),
+    );
+  }
+  // Split, weighted by the printed volumes (decision 7); a part no volume
+  // reads: the rest of the line, else the HIGHER retention of the uses.
+  final known = parts
+      .map((p) => p.ml)
+      .nonNulls
+      .fold<double>(0, (a, b) => a + b);
+  final unread = parts.where((p) => p.ml == null).length;
+  final weights = [
+    for (final p in parts)
+      p.ml ??
+          (unread == 1 && lineMl != null && lineMl > known
+              ? lineMl - known
+              : null),
+  ];
+  final kept = uses.length == 1
+      ? uses.single.kept
+      : weights.contains(null)
+      ? uses.map((u) => u.kept).reduce(max)
+      : [
+              for (final (i, u) in uses.indexed) u.kept * weights[i]!,
+            ].reduce((a, b) => a + b) /
+            weights.fold(0.0, (a, b) => a + b!);
+  final codes = {for (final u in uses) u.code};
+  final words = {for (final u in uses) u.words};
+  return (
+    kept: kept,
+    code: codes.length == 1
+        ? codes.single
+        : uses.map((u) => u.code.isEmpty ? 'none' : u.code).join('+'),
+    rule: uses.length == 1 ? uses.single.rule : 'split',
+    flag: kept >= 100
+        ? null
+        : words.length == 1
+        ? 'approximate (USDA retention: alcohol ${words.single})'
+        : 'approximate (USDA retention: ${[
+            for (final (i, u) in uses.indexed) '${parts[i].words} ${u.part}',
+          ].join('; ')})',
+  );
+}
+
 /// Rule B1 (v41, R2): rendered bacon. The record bought, SR 168277 "Pork,
 /// cured, bacon, unprepared".
 const int rawBaconFdcId = 168277;
@@ -10846,6 +13060,19 @@ bool recomputeTotals(
     contributing += 1;
     totalGrams += grams;
     add(record, grams);
+    // Q25 (v54): an alcohol line keeps the share of its ethanol energy its
+    // cooking keeps (USDA R6, [alcoholRetentionOf]); its grams, its record
+    // and every other nutrient count as they are (design_q25_v2 §1.2).
+    if (alcoholRetentionOf(
+          recipe == now ? recipe : now,
+          lines[row.position],
+          row,
+        )
+        case final kept?) {
+      totals['energy'] =
+          (totals['energy'] ?? 0) -
+          ethanolKcalPer100g(record) * grams / 100 * (1 - kept.kept / 100);
+    }
   }
 
   // Read in the same pass (Run 051 B7): a save of its serves meanwhile is
@@ -11582,6 +13809,11 @@ String? compositeFlagOf(
       row.gramSource != GramSource.override.name &&
       row.fdcId == rawBaconFdcId) {
     flags.add(baconYieldFlag);
+  }
+  // Q25 (v54): the share of an alcohol line's ethanol its cooking keeps —
+  // a fact about the row, kept on a Confirm, as B1's (design §5).
+  if (alcoholRetentionOf(recipe, line, row)?.flag case final retention?) {
+    flags.add(retention);
   }
   return flags.isEmpty ? null : flags.join(' · ');
 }

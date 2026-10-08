@@ -766,7 +766,11 @@ void main() {
         // onion, carrot, mushrooms, garlic, ground beef, bay and peppercorns
         // (2,042.50 → 1,456.70 g; the parent row 1,021.25 → 728.35 g,
         // −306.27 kcal a batch): 207.91 → 131.34 a serving (P1 R12's 131.3).
-        (_herbSauce, 0, 10, 10, 131.34),
+        // RE-PIN (Q25 batch, v54, design_q25_v2 R12): the Sauce Base's 2
+        // cups red wine simmer 20 + 5 = 25 min → USDA 5004 40 % of its
+        // ethanol kept (347.96 kcal; −208.78 for the section), the parent
+        // reading ½ of it: −104.39 a batch, 131.34 → 105.24 a serving.
+        (_herbSauce, 0, 10, 10, 105.24),
       ]) {
         final recipe = r(file);
         final row = rowAt(recipe, position);

@@ -1349,8 +1349,11 @@ line; every `match` gains three keys, emitted on every row:
   counted partial child, "approximate (USDA AH-102 item 1981: bacon,
   sliced, all methods → cooked 33 % (18–43))" on a rendered row (since
   matcher v51; "approximate (rendered and drained; yield from FDC protein)"
-  before — rule B1's bacon alone, v49's two-part rows carry no flag) — the
-  last two name a fact and stay on a Confirm (A6); several join with " · ".
+  before — rule B1's bacon alone, v49's two-part rows carry no flag), and
+  since matcher v54 (Q25) "approximate (USDA retention: alcohol cooked {N}
+  min keeps {f} %)" and its forms on an alcohol row whose cooking keeps
+  less than all its ethanol (below, "alcohol cooked off") — the last three
+  name a fact and stay on a Confirm (A6); several join with " · ".
 
 New `gram_source` `recipe` (a reference row: no `fdc_id`, no
 `description`); new holds `choose_recipe`, `nested_recipe` (bucket
@@ -3361,6 +3364,99 @@ recipes partial → complete (1,006 → 1,022), none down; buckets `coating`
 51 → 20, `ambiguous_medium` 3 → 2, check 189 → 157. Deploy note:
 matcherVersion 52 stales every recipe; a zero-request sweep recomputes the
 library.
+
+**Since matcher v54 (Q25 — alcohol cooked off; matcherVersion 53;
+prep47 design_q25_v2, decided under the owner's 2026-10-07 standing
+authorization with his Q-a..Q-h; zero requests).** A counted row on one of
+the sixteen alcohol records (FNDDS wine white 2710689 / red 2710688 / rosé
+2710690 / rice 2710691 / dessert sweet 2710692, beer 2710616, brandy
+2710699, whiskey 2710700, vodka 2710704, rum 2710703, tequila 2710705,
+liqueur 2710623; SR wine dessert dry 175112, Pinot Noir 174835, Riesling
+173200, sake 167723) keeps its record and grams; only its energy changes.
+Its ethanol energy per 100 g is the record's energy less the Atwater energy
+of its protein, fat and carbohydrate (4/9/4, FDC 203/204/205 as cached) —
+6.82–7.01 kcal per g of the record's measured ethanol (FDC 221, which the
+engine never reads; FDC's factor 6.93; never 208 − 7 × 221, which leaves a
+spirit −2.80 kcal of non-ethanol energy) — and the totals count that share
+times the fraction the dish keeps, from the USDA Table of Nutrient
+Retention Factors, Release 6 (2007), group 14, "Alcohol, ethyl":
+
+| shape (read from the line's own steps) | kept | USDA |
+|---|---|---|
+| stirred into a hot liquid and off or served at once; under one printed minute; stirred in OFF the heat into a hot dish (Q-f) | 85 % | 5002 |
+| heated with no time printed ("roast until … 160 degrees") | 85 % | 5002 |
+| stirred in and simmered, braised or baked under 15 min (Q-a) | 85 % | 5002 |
+| poured over or around a food and baked, not stirred, any length (Q-g) | 85 % | 5002 |
+| flamed | 75 % | 5003 |
+| stirred in and simmered or baked 15 / 30 / 60 / 90 / 120 / 150+ min | 40 / 35 / 25 / 20 / 10 / 5 % | 5004–5009 |
+| flamed, then 15 min or more | the lower of 75 % and the time row | |
+| no heat; a marinade or medium poured away, a beer can (the mass rules' hand-offs, Q-h); a sealed pressure cooker; no steps | 100 %, unflagged | |
+
+The minutes are the printed durations of the heat the line stays in — a
+range at its LOW end (Q-a2), alternatives the shorter, an optional "if
+necessary" step none — following the line: into the vessel it is put in,
+strained into a pan and reheated, back to the heat after a removal, a cold
+premix from the moment it is put into a hot pan (never a pan's roux or
+another food cooked beside it while the line waits in its bowl), a batter
+or a dough at its own bake or fry; a side task ("Meanwhile, …", another
+or a now-empty vessel, boiling water, a microwave) adds none. One line used
+twice is split by the amounts the steps print, weighted by volume. A
+stuffing rolled or wrapped inside a roast is not cooked by the roast (the
+D1 ruling: those roasts print a rare doneness, 85–120 °F) — it keeps what
+its own cook left. A person's typed grams are reduced the same way:
+retention applies to whatever grams count and never changes them. A held
+row counts nothing, reduced or not. Carbohydrate, protein and every other
+nutrient are unchanged; the label shows no ethanol. Derived at compute from
+the recipe's steps (already in the ingredients hash), never stored. The
+row's `flag` (the composite channel, joined with " · " to another, kept on
+a Confirm) says so, as the owner approved the forms (Q-e):
+
+- `approximate (USDA retention: alcohol cooked {N} min keeps {f} %)`; at
+  150 min and more `… keeps 5 %, the table's 2½-hour figure)`; under 15
+  `… keeps 85 %, the stirred-into-hot-liquid figure)`
+- `approximate (USDA retention: alcohol stirred into hot liquid keeps 85 %)`
+  — 5002's own row: boil-off, a sub-minute heat, and (Q-f) a line stirred
+  in off the heat into a hot dish
+- `approximate (USDA retention: alcohol heated, time not printed, keeps 85 %)`
+- `approximate (USDA retention: alcohol flamed keeps 75 %)` and `… alcohol
+  flamed, then cooked {N} min keeps {f} %)`
+- `approximate (USDA retention: alcohol poured over and baked {N} min keeps 85 %)`
+  ({N} the oven's minutes)
+- a split: `approximate (USDA retention: {part} {use}; {part} {use})`, each
+  use the forms above after "alcohol" without a figure's suffix, an off-heat
+  part `{part} stirred in off the heat keeps 85 %` (the approved split form
+  at Q-f's figure).
+
+The owner's decisions (design §9): Q-a under 15 min reads 85 %, no
+extrapolation; Q-a2 a cooking-time range at its low end; Q-b 5001 (70 %,
+stored overnight) unused; Q-c covered braises and slow cookers read the
+open-pot rows; Q-d vanilla extract stays out (a 17th record counts its
+full energy until added); Q-e the flag forms; Q-f stirred in off the heat
+into a HOT dish IS 5002 (85 %) — a line added to a dish that is not hot
+keeps 100 %; Q-g the 5010 pour-over row (45 % at 25 min) dropped; Q-h the
+hand-offs. Closer1's rulings under the standing authorization (D1, the
+owner confirming at the gate): shrimp-scampi|5 is Q-f's shape (85 %);
+modern-beef-burgundy|9 weighs its parts by volume (17.92 %);
+broiled-chicken-with-gravy|11 reads 20 + the strained stock's 5 = 25 min
+(40 %); the stuffing rule above (beef-wellington|14 and 0216|7 at their own
+2 min, 85 %); and two table rows the hand reading corrected:
+strawberry-rhubarb-pie|5 25 + 30 = 55 min (35 %, not 25 %) and
+summer-peach-cake|1 split 2 T on the wedges baked 50 (35 %) and 3 T on the
+chunks roasted 20 then baked 50 (25 %): 29.0 %.
+
+Replay (rp54 — rp43 whose row kcal applies the retention — + bucket_v12 on
+fresh copies of snapshot 22, main and `--reverse-parents` byte-identical):
+calls 0, staleAfter 0, sectionsStale 0, kcalCheck 0, sections 143; vs the
+v53 rows exactly 225 rows differ, only in their kcal and `flag` columns
+(every other column byte-equal, 0 person rows): 212 main alcohol rows
+−14,584.27 kcal per batch, 7 section rows −1,093.57 per section batch, and
+the 6 parent rows routed to those sections (their kcal and the basis that
+prints the child's kcal) −1,042.43; 201 recipes move (196 by their own
+rows, 5 by a section), only in kcal per serving; statuses, buckets and
+holds identical. The audited cases: crisp-skin turkey's Turkey Gravy 90 min
+(20 %, −267.28 a batch), the herb sauce's Sauce Base 25 min (40 %, its
+parent −104.39). Deploy note: matcherVersion 53 stales every recipe; a
+zero-request sweep recomputes the library.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

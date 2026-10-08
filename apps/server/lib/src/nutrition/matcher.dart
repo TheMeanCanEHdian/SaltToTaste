@@ -725,7 +725,18 @@ const Map<String, String> _synonyms = {
 /// or derived, flagged) on top of its kept part, capped at the line; an oil
 /// of ¼ cup or more heated for a coated food browned in it is a frying oil
 /// (five lines), and its food's crumbs a held coat.
-const int matcherVersion = 52;
+///
+/// v53 (the Matcher v54 commit — Q25, alcohol cooked off; the owner's
+/// 2026-10-07 standing authorization and Q-a..Q-h, prep47 design_q25_v2;
+/// zero requests; engine `alcoholRetentionOf`): a counted row on one of the
+/// sixteen alcohol records keeps its record and grams, and its ethanol
+/// energy (the record's energy less Atwater 4/9/4 of its protein, fat and
+/// carbohydrate) counts only the share the dish keeps — USDA Retention
+/// Factors R6 5002–5009 by the cooking its own steps print (the minutes at
+/// a range's low end, stirred in off the heat into a hot dish 5002 by Q-f,
+/// flamed 5003, a stuffing rolled inside a rare roast not cooked by it);
+/// the row's flag says so.
+const int matcherVersion = 53;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
