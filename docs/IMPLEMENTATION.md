@@ -3608,6 +3608,26 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — matcher v51 (batch M49): the bacon package and fat poured
+  off to a stated amount (prep47 Q4 (b), Q19 (a); built under the standing
+  authorization).** RE-RULES Y11 (2026-10-06 "bacon keeps 0.403") — the
+  cooked yield is USDA AH-102 item 1981's 0.33 (18–43) — and v40's "the
+  wider bacon lines a person's", amended by the slice weight only (28 g,
+  FDC 168277's slice; thick-cut 35.44 g, the median of the corpus's three
+  prints, flagged; Canadian 28.5 g). Kept deviations and owner items, each
+  disclosed and re-measured: (1) a kept amount is weighed as the library
+  weighs a line of that amount (1 tsp oil 4.53 g, 1 tbsp 14.00 g), so two
+  pins land 4.53 / 23.07 against the brief's volume-scaled 4.7 / 23.3
+  (≈ 2 kcal); (2) the pour-off cap reaches 4 browning oils, not P1's 7:
+  skillet-jambalaya|2 is right uncut (its other 3 tsp go in after the pour-
+  off); crispy-skinned-chicken-breasts|2 sits outside the design's window
+  (oil in at step 2, pour-off at step 4; widening would take −168 kcal —
+  LEFT, a later widening if wanted); chicken-marbella|12's "Heat oil"
+  binds neither of its two oil lines (a group-aware binder could cut it,
+  −41 kcal — LEFT: uncut errs toward counting eaten oil); (3) a non-whole
+  piece weight of 10 g or more prints its figure in the basis (2 rows,
+  basis only). The library moves −2,328.5 kcal per batch on 35 rows, no
+  status, hold or bucket move; M50's four cured-pork rows byte-equal.
 - **2026-10-07 — matcher v50 (batch M50): discards and partial use (prep47
   Q16, Q17, Q18, Q20, Q21, Q7's flag; built under the standing
   authorization).** AMENDS the 2026-09-28 "poured-away media HELD" ruling:

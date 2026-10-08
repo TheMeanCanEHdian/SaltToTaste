@@ -1576,7 +1576,9 @@ void main() {
       expect(
         find.text(
           // v41's rendered row (R2): the two parts, then the shipped flag.
-          'amount: 57 g raw → 23 g cooked bacon + 13 g bacon grease kept in '
+          // Matcher v51 (M49): 56.70 × 0.33 = 18.71 cooked + the rendered
+          // 56.70 × 0.2555 = 14.49 kept (was 23 + 13).
+          'amount: 57 g raw → 19 g cooked bacon + 14 g bacon grease kept in '
           'the pan · approximation (counted as Pork, cured, bacon, '
           'unprepared)',
         ),

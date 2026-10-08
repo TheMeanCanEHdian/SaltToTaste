@@ -601,7 +601,7 @@ const Map<String, String> _synonyms = {
 /// lamb rack 1364 · 73 (measured unfrenched), lamb foreshank 1339 · 70,
 /// cured spiral ham 1937 · 70, fresh ham shank half 0.78 (derived from
 /// 1930) replace the borrowed class figures (15 lines); FDC's own refuse
-/// classes stay. Bacon B1 keeps 0.403 (Y11).
+/// classes stay. Bacon B1 keeps 0.403 (Y11; re-ruled by v50).
 ///
 /// v44: sections as children (prep43 design_v2 §2 v44, the owner's
 /// 2026-10-06 rulings S1–S15). A referenced section is a recipe of its own
@@ -684,7 +684,21 @@ const Map<String, String> _synonyms = {
 /// 170114; a food reserved or the rest discarded 0 g); a kept volume with
 /// no weight, a dip or batter left in the bowl and a marinade the food is
 /// lifted out of are counted as before and flagged.
-const int matcherVersion = 49;
+///
+/// v50 (the Matcher v51 commit, batch M49 — the bacon package and fat
+/// poured off; the owner's 2026-10-07 standing authorization, prep47
+/// design_v2 Q4 (b) and Q19 (a), re-ruling Y11's 0.403 and v40's "the
+/// wider bacon lines a person's"; zero requests): rule B1's cooked yield
+/// is USDA AH-102 item 1981 (bacon, sliced, all methods, 33 %), its
+/// rendered fat 0.2555 g a raw gram by the same fat balance, flagged; a
+/// bacon slice weighs 168277's own 28 g, a thick-cut one the corpus's
+/// printed 35.44 g (flagged), a Canadian one 167869's 28.5 g; an oil
+/// browned in a pan whose fat the steps pour down to a printed part counts
+/// at most that part (in rule B1's bacon pan its R / (R + O) share, the
+/// bacon's grease the rest), and a frying oil's "reserve N … discard the
+/// remainder" is its kept part, counted with the part it is used for
+/// outside the fry.
+const int matcherVersion = 50;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

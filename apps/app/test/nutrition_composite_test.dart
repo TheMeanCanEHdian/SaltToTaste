@@ -871,7 +871,7 @@ void main() {
     await _tap(t, find.text('Counted — looks good'));
     await t.scrollUntilVisible(
       find.text(
-        'amount: 284 g raw → 114 g cooked bacon + 39 g bacon grease kept in '
+        'amount: 284 g raw → 94 g cooked bacon + 39 g bacon grease kept in '
         'the pan',
       ),
       200,
@@ -883,20 +883,24 @@ void main() {
       findsNWidgets(2),
     );
     expect(
-      find.text('114 g · Pork, cured, bacon, pre-sliced, cooked, pan-fried'),
+      // Matcher v51 (M49): AH-102 item 1981's 0.33 (was 114 g).
+      find.text('94 g · Pork, cured, bacon, pre-sliced, cooked, pan-fried'),
       findsOneWidget,
     );
     expect(find.text('+ 39 g · Animal fat, bacon grease'), findsOneWidget);
     expect(find.text('· kept in the pan'), findsNWidgets(2));
     expect(
       find.text(
-        'amount: 284 g raw → 114 g cooked bacon + 39 g bacon grease kept in '
+        'amount: 284 g raw → 94 g cooked bacon + 39 g bacon grease kept in '
         'the pan',
       ),
       findsOneWidget,
     );
     expect(
-      find.text('approximate (rendered and drained; yield from FDC protein)'),
+      find.text(
+        'approximate (USDA AH-102 item 1981: bacon, sliced, all methods → '
+        'cooked 33 % (18–43))',
+      ),
       findsNWidgets(2),
     );
     expect(find.text('Change'), findsNWidgets(2));

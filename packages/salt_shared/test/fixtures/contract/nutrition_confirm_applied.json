@@ -799,9 +799,9 @@
         "description": "Pork, cured, bacon, unprepared",
         "data_type": "SR Legacy",
         "confidence": 1.0,
-        "grams": 35.89,
+        "grams": 33.2,
         "gram_source": "weight",
-        "gram_basis": "57 g raw → 23 g cooked bacon + 13 g bacon grease kept in the pan · approximation (counted as Pork, cured, bacon, unprepared)",
+        "gram_basis": "57 g raw → 19 g cooked bacon + 14 g bacon grease kept in the pan · approximation (counted as Pork, cured, bacon, unprepared)",
         "status": "auto",
         "hold": null,
         "hold_note": null,
@@ -812,18 +812,18 @@
             "fdc_id": 168322,
             "description": "Pork, cured, bacon, pre-sliced, cooked, pan-fried",
             "data_type": "SR Legacy",
-            "grams": 22.85,
+            "grams": 18.71,
             "role": "cooked"
           },
           {
             "fdc_id": 172345,
             "description": "Animal fat, bacon grease",
             "data_type": "SR Legacy",
-            "grams": 13.04,
+            "grams": 14.49,
             "role": "kept_fat"
           }
         ],
-        "flag": "approximate (rendered and drained; yield from FDC protein)"
+        "flag": "approximate (USDA AH-102 item 1981: bacon, sliced, all methods → cooked 33 % (18–43))"
       },
       "candidates": [
         {
@@ -959,9 +959,9 @@
         "description": "Pork, cured, bacon, unprepared",
         "data_type": "SR Legacy",
         "confidence": 1.0,
-        "grams": 152.95,
+        "grams": 132.25,
         "gram_source": "weight",
-        "gram_basis": "284 g raw → 114 g cooked bacon + 39 g bacon grease kept in the pan",
+        "gram_basis": "284 g raw → 94 g cooked bacon + 39 g bacon grease kept in the pan",
         "status": "auto",
         "hold": null,
         "hold_note": null,
@@ -972,7 +972,7 @@
             "fdc_id": 168322,
             "description": "Pork, cured, bacon, pre-sliced, cooked, pan-fried",
             "data_type": "SR Legacy",
-            "grams": 114.25,
+            "grams": 93.55,
             "role": "cooked"
           },
           {
@@ -983,7 +983,7 @@
             "role": "kept_fat"
           }
         ],
-        "flag": "approximate (rendered and drained; yield from FDC protein)"
+        "flag": "approximate (USDA AH-102 item 1981: bacon, sliced, all methods → cooked 33 % (18–43))"
       },
       "candidates": [
         {

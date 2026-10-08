@@ -1340,10 +1340,11 @@ line; every `match` gains three keys, emitted on every row:
   older flags stay `gram_basis` suffixes): "approximation (the first {kind}
   the note names: {title})" on an engine default (a person's Confirm or pick
   clears it), "approximation ({title} is partial: {m} of {n} lines)" on a
-  counted partial child, "approximate (rendered and drained; yield from FDC
-  protein)" on a rendered row (rule B1's bacon alone — v49's two-part rows
-  carry no flag) — the last two name a fact and stay on a Confirm (A6);
-  several join with " · ".
+  counted partial child, "approximate (USDA AH-102 item 1981: bacon,
+  sliced, all methods → cooked 33 % (18–43))" on a rendered row (since
+  matcher v51; "approximate (rendered and drained; yield from FDC protein)"
+  before — rule B1's bacon alone, v49's two-part rows carry no flag) — the
+  last two name a fact and stay on a Confirm (A6); several join with " · ".
 
 New `gram_source` `recipe` (a reference row: no `fdc_id`, no
 `description`); new holds `choose_recipe`, `nested_recipe` (bucket
@@ -1352,7 +1353,9 @@ is poured away, counted) — LINE holds (A2), each a queue group of one,
 never reached by a key decision or an apply-to-all. A routed row's
 `gram_basis` is "from the recipe {title}: {g} g, {kcal} kcal"; a held one
 keeps "a sub-recipe — counted as 0 g"; a rendered row "{raw} g raw →
-{cooked} g cooked bacon + {fat} g bacon grease kept in the pan". On a
+{cooked} g cooked bacon + {fat} g bacon grease kept in the pan" (since
+matcher v51 ", sharing the {N} kept with the oil" when an oil shares the
+pan). On a
 routed row `others` / `others_lines` count the RECIPE reach: the key's
 undecided routed rows (`auto`, `gram_source` `recipe`, a child, no hold) on
 another child, or on the same child by a flagged default — an unflagged
@@ -1382,7 +1385,9 @@ rendered bacon: a row on SR 168277 (`auto` or `confirmed`, grams > 0, not
 "divided", never typed grams) whose recipe has ONE step that both moves
 the bacon out and pours the fat down to N counts cooked SR 168322 at the
 raw weight × 0.403 plus the kept fat on SR 172345, min(N × the unit's mL ×
-0.8724 g/mL, raw × 0.2299); the row keeps 168277 (a Confirm decides it
+0.8724 g/mL, raw × 0.2299) — since matcher v51 (M49) × 0.33 (USDA AH-102
+item 1981) and raw × 0.2555, the kept N shared with an oil browned in the
+same pan (below); the row keeps 168277 (a Confirm decides it
 library-wide; each carried line re-runs B1 on its own steps); a person's
 single-food pick or typed grams clear the parts (D12). 13 lines,
 −891.0 kcal per batch. **R3** — every reference line not routed makes its
@@ -3044,6 +3049,83 @@ recipes complete → partial (the four held cured-pork recipes and the
 wedding soup; 1,002 → 997); main `check` 184 → 189, `counted` 13,364 →
 13,359 (one kombu row below the gate now 0 g counted).
 
+**Since matcher v51 (batch M49, matcherVersion 50 — the bacon package and
+fat poured off; prep47 design_v2 §1 Q4 (b) and Q19 (a), §2 "M49", decided
+under the owner's 2026-10-07 standing authorization; zero requests).
+RE-RULES Y11 (2026-10-06, "bacon keeps 0.403") and v40's "the wider bacon
+lines a person's".** (1) **Rule B1's yield:** the cooked bacon is the raw
+weight × **0.33**, USDA Agriculture Handbook 102 item 1981 "bacon, sliced,
+all methods → cooked 33 % (18–43)" (transcribed in
+`.claude/diag/2026-10-06/ah102_produce_meat.md`); the rendered fat follows
+by the same fat balance on the two records the row is counted on, 168277's
+fat less the cooked part's: 0.3713 − 0.33 × 0.351 = **0.2555** g a raw gram
+(0.2299 at 0.403). The cost, stated: on 168322's composition 0.33 keeps
+11.19 g of 168277's 13.66 g protein a 100 g raw, 18 % of the protein
+balance given up — the two records are different samples, and item 1981's
+own range (18–43) holds 0.403. The rendered row's flag is "approximate
+(USDA AH-102 item 1981: bacon, sliced, all methods → cooked 33 % (18–43))".
+(2) **Slices** (grams.dart's piece table, the longer key first — a
+thick-cut or Canadian slice never reads the plain one, nor a plain one
+either): `bacon` **28 g** (SR 168277's own "slice raw"; the corpus's "1
+ounce a slice", 28.35 g, agrees to 1.3 %; the 24 g of d614c2e had no
+source), `thick-cut bacon` **35.44 g**, the median of the corpus's three
+thick-cut prints ("10 ounces (about 8 slices)" 35.44, "6 ounces … (about 5
+slices)" 34.02, "5 ounces (about 3 slices)" 47.25), flagged "approximate
+(the corpus's printed thick-cut slice, median of three)" (the CP9 Q6
+corpus-print class), `canadian bacon` **28.5 g** (SR 167869's "2 slices (6
+per 6-oz pkg.)" 57 g). A slice of 10 g or more that is no whole gram says
+its own figure in the basis ("8 slice × 28.5 g each"). **The v40
+amendment:** the raw-counted bacon lines v40 left to a person (fried and
+drained lines rule B1 does not reach — oven-fried bacon, the bacon-wrapped
+scallops) stay the person's to correct; the slice weight alone moves them
+(oven-fried-bacon|0 288 → 336 g raw). (3) **An oil browned in a pan the
+steps pour down to a printed part (Q19 a, P1 D3a):** the recipe's first
+"(pour off | pour out | drain off | spoon off | discard | remove and
+discard) all but N teaspoons/tablespoons/cups (of the) (rendered) fat /
+oil / drippings / grease" sentence cuts the oil line whose LAST mention
+before it — in its step, or the step before — puts it in a pan (heat,
+cook, a skillet, a pot, a Dutch oven, a wok) and names ONE oil line (the
+only one with an amount, or by a kind word only it has: "Heat vegetable
+oil" is the lamb's, never its relish's olive oil; Chicken Marbella's "Heat
+oil" names neither of its two oils, so neither is cut): the oil counts its
+part in the pan at most the kept N, weighed as a line of N of that oil
+weighs (`discarded`, `gram_basis` "N kept (the steps pour off the rest)");
+its part written outside the pan stays whole ("Heat 2 teaspoons of the
+oil" — Skillet Jambalaya's other 3 teaspoons go in after the pour-off, so
+it does not move). A frying oil's own "Reserve N oil … and discard the
+remainder" (`_Fat.reserveRest`, beside "pour off all but N oil") is its
+kept part, counted WITH the part the steps use outside the fry
+(horseradish-crusted beef tenderloin: "1 cup plus 2 teaspoons vegetable
+oil" → the 2 teaspoons tossed with the crumbs + the reserved tablespoon,
+23.07 g; basis "discarded in cooking — only "plus 2 teaspoons vegetable
+oil" and the 1 tablespoon the steps keep counted"). (4) **The bacon pan
+shared with an oil (P4 §4):** when rule B1's pour-off pan holds an oil
+browned before it (the same window), the stated N covers both fats: the
+kept fat is min(N, R + O) — R the bacon line's rendered fat (raw ×
+0.2555), O the oil — the bacon's grease R / (R + O) of it and the oil row
+O / (R + O) ("N kept with the bacon grease (the steps pour off the
+rest)"): pasta with tomato, bacon and onion 170.10 g raw → 56.13 + 15.87 =
+72.00 g (audit L145 94.3 → 72.0, auditors 75.5), its olive oil 27.21 →
+9.93 g; salade lyonnaise 46.78 + 14.73, its oil 11.07 g; gricia's ⅓ cup
+(68.80 g) now below R + O (57.95 + 13.60): 74.84 + 55.72, its oil 13.08 g.
+(5) **The frying MARK (critic F13):** `keptOilFries` names the food a
+frying oil's kept-part pour-off step fries before it ("Transfer the
+potatoes and remaining 1 cup oil to the skillet" → `potato`), read by the
+coats-and-uptake batch (M52) to add that food's uptake on top of the kept
+part; no grams move on it here (the crispy tempeh, fried a step before its
+pour-off, carries none). The four cured-pork rows M50 settled (Barolo,
+coq au Riesling, the Calvados chops, the split pea soup) are untouched.
+Reach (replay of snapshot 21, rp43, 0 requests): 35 rows — 13 rule-B1 rows
+(10 the yield, 5 of them on slices; 3 the split), 11 slices, 1 thick-cut,
+1 Canadian, 4 browning oils cut, the horseradish oil, 3 oils sharing a
+bacon pan, 1 parent (the stuffed turkey re-reading its Bread Stuffing:
+3,121.60 → 3,088.50 g); −2,328.5 kcal per batch (the bacon package
++586.4: the 13 rule-B1 rows at the yield (5 on the new slices, the 3
+split rows' yield share) −407.7, the 12 raw-counted slices +954.5,
+Canadian +39.6; the split −494.6;
+the browning oils −375.4; the horseradish oil −1,890.0; the parent
+−155.0; components rounded); no bucket, hold or status moves.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line
@@ -3341,7 +3423,8 @@ balance between the two records the row is counted on); the handbook's
 cooked sliced bacon, items 1981–1985 (all methods 33 % (18–43), broiled 29,
 oven 34, microwave 32, pan fried 29), is the comparison: 0.403 sits inside its
 range (18–43), 7 points above the all-methods average — the 13 B1 rows do
-not move.
+not move. (Re-ruled by matcher v51, M49 Q4 (b): item 1981's 33 % is the
+yield since — below.)
 124 lines move (103 produce, −11,947 kcal; 6 scallion, −56; 15 meat,
 −1,083: spareribs −2,754, prime rib +1,905); no bucket, hold or status
 moves; rustic potato-leek soup −34.6 % a serving (its leeks 2,041.16 →

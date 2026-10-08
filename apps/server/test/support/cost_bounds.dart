@@ -91,8 +91,15 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // the numbered remaining parts (V1-D3).
       'memo:liftsVegetables',
       'memo:remainingParts',
+      // v51 (M49): the first pour-off of the pan's fat; rule B1's pan
+      // shared with an oil.
+      'memo:pourOffFat',
+      'memo:baconPan',
     ])
       once: 1,
+    // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first
+    // fat pour-off's and rule B1's (at most two per index).
+    'memo:panOil': 2,
     for (final perHead in [
       'memo:naming',
       'memo:named',

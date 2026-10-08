@@ -35,6 +35,11 @@ import 'support/fdc_fixtures.dart';
 
 const _source = 'atk-tv-2023';
 
+/// v51 (M49 Q4 b): rule B1's flag.
+const String _ah102Flag =
+    'approximate (USDA AH-102 item 1981: bacon, sliced, all methods → '
+    'cooked 33 % (18–43))';
+
 // The corpus files the pins compute (every FDC answer they read is a
 // fixture copied from snapshot 17).
 const _deliHam = '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml';
@@ -773,23 +778,27 @@ void main() {
       );
       expect(bacon.fdcId, 168277);
       expect(bacon.status, 'auto');
-      expect(bacon.grams, closeTo(152.95, 1e-9));
+      // RE-PIN (M49 batch, v51): 283.495 × 0.33 (AH-102 item 1981) = 93.55
+      // + the stated 3 tablespoons 38.70 (was 114.25 + 38.70 = 152.95).
+      expect(bacon.grams, closeTo(132.25, 1e-9));
       expect(partsOf(bacon.parts), [
-        (fdcId: 168322, grams: 114.25),
+        (fdcId: 168322, grams: 93.55),
         (fdcId: 172345, grams: 38.7),
       ]);
       expect(bucketOf(bacon), MatchBucket.counted);
       final line = lineAt(salad, 5);
       expect(
         gramBasisFor(db, line, bacon, recipe: stored(salad)),
-        '284 g raw → 114 g cooked bacon + 39 g bacon grease kept in the pan',
+        '284 g raw → 94 g cooked bacon + 39 g bacon grease kept in the pan',
       );
       expect(
         compositeFlagOf(db, stored(salad), line, bacon, ResolverMemo(db)),
-        'approximate (rendered and drained; yield from FDC protein)',
+        baconYieldFlag,
       );
+      expect(baconYieldFlag, _ah102Flag);
       expect(label(salad).status, 'complete');
-      expect(label(salad).caloriesPerServing, closeTo(301.66, 0.005));
+      // RE-PIN (M49 batch, v51): the v51 replay's 277.44 (was 301.66).
+      expect(label(salad).caloriesPerServing, closeTo(277.44, 0.005));
       // Its "3 hard-cooked eggs (recipe follows)": counted on its food, as
       // in v40 (a count of the food itself — no route).
       final eggs = rowAt(salad, 8);
@@ -872,13 +881,19 @@ void main() {
         }
 
         // Snapshot 17's rows (v40_rows.tsv): raw grams → cooked + kept.
+        // RE-PIN (M49 batch, v51): the same v40 raw grams at AH-102 item
+        // 1981's 0.33 and 0.2555 g rendered a raw gram; the three pans an
+        // oil shares (P4 §4) keep R / (R + O) of the stated amount —
+        // pasta-with-tomato 15.87 (was 25.80), lyonnaise 14.73 (25.80),
+        // gricia 55.72 (52.14, the ⅓ cup now below R + O); the tart's
+        // stated ¼ cup above its rendered 49.06.
         for (final (slug, position, raw, source, cooked, kept) in [
           (
             'wilted-spinach-salad-with-warm-bacon-dressing',
             5,
             283.50,
             'weight',
-            114.25,
+            93.56,
             38.70,
           ),
           (
@@ -886,8 +901,8 @@ void main() {
             1,
             170.10,
             'weight',
-            68.55,
-            25.80,
+            56.13,
+            15.87,
           ),
           // kept ≥ rendered: the rendered fat (B7's min).
           (
@@ -895,19 +910,19 @@ void main() {
             0,
             226.80,
             'weight',
-            91.40,
-            52.14,
+            74.84,
+            55.72,
           ),
-          ('beef-braised-in-barolo', 2, 113.40, 'weight', 45.70, 25.80),
+          ('beef-braised-in-barolo', 2, 113.40, 'weight', 37.42, 25.80),
           // "leaving pancetta in skillet"; 5 ounces as weighed (141.7475 g).
-          ('salade-lyonnaise', 0, 5 * 28.3495, 'weight', 57.12, 25.80),
-          ('french-onion-and-bacon-tart', 5, 113.40, 'weight', 45.70, 25.80),
+          ('salade-lyonnaise', 0, 5 * 28.3495, 'weight', 46.78, 14.73),
+          ('french-onion-and-bacon-tart', 5, 113.40, 'weight', 37.42, 25.80),
           (
             'potato-casserole-with-bacon-and-caramelized-onion',
             0,
             72.00,
             'piece',
-            29.02,
+            23.76,
             12.90,
           ),
           (
@@ -915,7 +930,7 @@ void main() {
             8,
             170.10,
             'weight',
-            68.55,
+            56.13,
             25.80,
           ),
           (
@@ -923,7 +938,7 @@ void main() {
             0,
             144.00,
             'piece',
-            58.03,
+            47.52,
             25.80,
           ),
           // "discard all but 2 teaspoons": teaspoons, not tablespoons.
@@ -932,7 +947,7 @@ void main() {
             4,
             113.40,
             'weight',
-            45.70,
+            37.42,
             8.60,
           ),
           (
@@ -940,7 +955,7 @@ void main() {
             2,
             144.00,
             'piece',
-            58.03,
+            47.52,
             25.80,
           ),
           // "Measure out and reserve ¼ cup fat; discard remaining fat" trips.
@@ -949,15 +964,15 @@ void main() {
             0,
             192.00,
             'piece',
-            77.38,
-            44.14,
+            63.36,
+            49.06,
           ),
           (
             'rigatoni-with-tomatoes-bacon-and-fennel',
             0,
             144.00,
             'piece',
-            58.03,
+            47.52,
             25.80,
           ),
         ]) {
@@ -1122,8 +1137,8 @@ void main() {
         rowAt(salad, 5),
         ResolverMemo(db),
       );
-      const rendered =
-          'approximate (rendered and drained; yield from FDC protein)';
+      // RE-PIN (M49 batch, v51): the AH-102 item 1981 flag.
+      const rendered = _ah102Flag;
       expect(rowAt(salad, 5).status, 'auto');
       expect(flag(), rendered);
       await applyMatchOverride(db, provider, stored(salad), 5, {

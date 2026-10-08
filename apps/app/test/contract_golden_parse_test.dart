@@ -899,13 +899,15 @@ void main() {
       final bacon = rules.singleWhere((m) => m.position == 13);
       expect(
         [for (final p in bacon.parts) (p.fdcId, p.grams, p.role)],
-        [(168322, 114.25, 'cooked'), (172345, 38.7, 'kept_fat')],
+        // Matcher v51 (M49): AH-102 item 1981's 0.33 (was 114.25).
+        [(168322, 93.55, 'cooked'), (172345, 38.7, 'kept_fat')],
       );
       expect(bacon.parts.last.description, 'Animal fat, bacon grease');
       expect(bacon.parts.last.dataType, 'SR Legacy');
       expect(
         bacon.flag,
-        'approximate (rendered and drained; yield from FDC protein)',
+        'approximate (USDA AH-102 item 1981: bacon, sliced, all methods → '
+        'cooked 33 % (18–43))',
       );
 
       final label = await NutritionRepository(

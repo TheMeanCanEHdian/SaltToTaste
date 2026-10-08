@@ -1274,6 +1274,11 @@ class _Fat {
         r'\bpour off all but '
         '($_amountRun(?:teaspoons?|tablespoons?|cups?))\\s+$head\\b',
       ),
+      reserveRest = RegExp(
+        r'\breserve '
+        '($_amountRun(?:teaspoons?|tablespoons?|cups?))\\s+$head\\b'
+        r'[^.;]{0,60}?\bdiscard the remainder\b',
+      ),
       head = head;
 
   final String head;
@@ -1293,6 +1298,16 @@ class _Fat {
   /// Only this form: "Pour off the oil and reserve" (0523 Nasi Goreng) keeps
   /// it all, counted (Run 055 O14).
   final RegExp pourOffAllBut;
+
+  /// v51 (M49 Q19 a, P1 D3a): "Reserve 1 tablespoon oil from the skillet
+  /// and discard the remainder" (0215 Horseradish-Crusted Beef Tenderloin's
+  /// fried potato oil, counted whole before: 233 g): the written part kept,
+  /// read as a pour-off ([pourOffAllBut]).
+  final RegExp reserveRest;
+
+  /// The kept part a pour-off sentence [s] writes, either form.
+  RegExpMatch? keptPart(String s) =>
+      pourOffAllBut.firstMatch(s) ?? reserveRest.firstMatch(s);
 
   /// Whether sentence [s] (lower case) heats this fat to a frying
   /// temperature — POSITIVE evidence, the exclusion SCOPED (RULE B, v27,
@@ -2067,7 +2082,7 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
     final unbound = <((int, int)?, bool)>[];
     for (final at in _naming(recipe, head)) {
       final s = index.sentence(at);
-      final pourOff = fat.pourOffAllBut.hasMatch(s);
+      final pourOff = fat.keptPart(s) != null;
       if (!pourOff &&
           !fat.heatsToFry(s, () => _heatReading(recipe, s)) &&
           !fat.discards.hasMatch(s)) {
@@ -2075,7 +2090,9 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
       }
       // A pour-off's kept part names no line's amount ("all but 2
       // tablespoons oil" beside a 2-tablespoon sesame oil).
-      final said = pourOff ? s.replaceAll(fat.pourOffAllBut, '') : s;
+      final said = pourOff
+          ? s.replaceAll(fat.pourOffAllBut, '').replaceAll(fat.reserveRest, '')
+          : s;
       // Only the fat's own amount or kind word: its noun phrase must
       // FOLLOW directly ([_oilPhraseFollows]; Run 055 V3: "Stir 2
       // tablespoons lime juice …, then heat the oil" bound the fry to a
@@ -2609,13 +2626,237 @@ Amount? _keptFryingOil(Recipe recipe, IngredientLine line) {
     final pourOff = head == null
         ? null
         : _oilOwnersOf(recipe, head)[line.raw]?.pourOff;
-    final kept = pourOff == null
-        ? null
-        : _fats[head]!.pourOffAllBut.firstMatch(pourOff);
+    final kept = pourOff == null ? null : _fats[head]!.keptPart(pourOff);
     return kept == null
         ? null
         : parseIngredientLine('${kept[1]} $item').amounts.firstOrNull;
   });
+}
+
+/// The part [_keptFryingOil] reads, as the pour-off writes it ("1
+/// tablespoon") — for the basis — or null.
+String? _keptFryingOilText(Recipe recipe, IngredientLine line) {
+  final head = headNounOf(normalizeItem(lineItemOf(line)));
+  final pourOff = head == null || !_fats.containsKey(head)
+      ? null
+      : _oilOwnersOf(recipe, head)[line.raw]?.pourOff;
+  return pourOff == null ? null : _fats[head]!.keptPart(pourOff)?[1];
+}
+
+/// v51 (M49 Q19, critic F13): the food a frying oil's kept-part pour-off
+/// ([_keptFryingOil]) fried — a sentence of the pour-off's step, before
+/// it, that names the oil and a food line ("Transfer the potatoes and
+/// remaining 1 cup oil to the skillet. … Reserve 1 tablespoon oil from the
+/// skillet and discard the remainder", 0215): that line's head ('potato'),
+/// else null (1193's tempeh is fried a step before its pour-off). The MARK
+/// M52 reads to add the food's frying uptake on top of the kept part; no
+/// grams move on it here.
+String? keptOilFries(Recipe recipe, IngredientLine line) {
+  final head = headNounOf(normalizeItem(lineItemOf(line)));
+  final pourOff = head == null || _keptFryingOil(recipe, line) == null
+      ? null
+      : _oilOwnersOf(recipe, head)[line.raw]?.pourOff;
+  if (pourOff == null) {
+    return null;
+  }
+  final index = _stepIndexOf(recipe);
+  final heads = _headsOf(recipe);
+  for (final sentences in index.sentences) {
+    final at = sentences.indexOf(pourOff);
+    if (at < 0) {
+      continue;
+    }
+    for (final s in sentences.take(at)) {
+      if (!_fats[head]!.word.hasMatch(s)) {
+        continue;
+      }
+      for (final food in heads) {
+        if (food != null && food != head && _names(s, food)) {
+          return food;
+        }
+      }
+    }
+    return null;
+  }
+  return null;
+}
+
+/// v51 (M49 Q19 a, P1 D3a): a pour-off of the PAN's fat down to a printed
+/// part — "Pour off all but 1 teaspoon fat from the skillet" (0088),
+/// "Discard all but 1 teaspoon fat from the pot", "drain off all but",
+/// "pour out all but", "pour off and discard all but 2 teaspoons fat".
+final RegExp _pourOffAllButFat = RegExp(
+  r'\b(?:pour off|pour out|spoon off|drain off|discard|remove and discard)\s+'
+  r'(?:all\s+)?(?:but|except)\s+(?:about\s+)?'
+  '($_baconN)\\s+(teaspoons?|tablespoons?|cups?)\\s+(?:of\\s+)?'
+  r'(?:the\s+)?(?:rendered\s+)?(?:[a-z]+\s+)?(?:fat|oil|drippings|grease)\b',
+);
+
+/// A sentence that puts an oil in a pan over the heat ([_panOilAt]).
+final RegExp _panOil = RegExp(
+  r'\b(?:heat|cook|pot|saucepan|dutch oven|skillet|wok)\b',
+);
+
+/// The first sentence of [recipe]'s steps that pours the pan's fat down to
+/// a printed part ([_pourOffAllButFat]) — where it is, the part as written
+/// ("1 teaspoon") and parsed — or null; once per recipe.
+({int step, int sentence, String text, Amount kept})? _pourOffFatAt(
+  Recipe recipe,
+) => _stepIndexOf(recipe).memo(#pourOffFat, () {
+  final index = _stepIndexOf(recipe);
+  for (final (i, sentences) in index.sentences.indexed) {
+    for (final (j, s) in sentences.indexed) {
+      // A substring test first: the regex never scans a sentence without it.
+      if (!s.contains(' but ') && !s.contains(' except ')) {
+        continue;
+      }
+      if (_pourOffAllButFat.firstMatch(s) case final m?) {
+        final kept = _keptAmount(m[1]!, m[2]!);
+        return (step: i, sentence: j, text: '${m[1]} ${m[2]}', kept: kept);
+      }
+    }
+  }
+  return null;
+});
+
+/// The oil line [recipe] browns in the pan a pour-off at [at] (step,
+/// sentence) cuts down, and its part in the pan — or null. The LAST
+/// sentence naming oil before the pour-off, in its step or the step before
+/// (the design's window), puts it in a pan ([_panOil]) and names ONE oil
+/// line: the only one with an amount, or by a kind word only it has right
+/// before "oil" ("Heat vegetable oil" beside a relish's "¼ cup
+/// extra-virgin olive oil", 0228 — the relish is no browning oil; 0124
+/// Chicken Marbella's "Heat oil" names neither its paste's oil nor its
+/// own, so neither is cut). The part in the pan is that sentence's written
+/// amount ("Heat 2 teaspoons of the oil", Skillet Jambalaya: its other 3
+/// teaspoons go in after the pour-off), else the whole line.
+({IngredientLine line, Amount? part})? _panOilAt(
+  Recipe recipe,
+  (int, int) at,
+) =>
+    // Key: at — the pour-off sentence, the window's end.
+    _stepIndexOf(recipe).memo(('panOil', at), () {
+      final index = _stepIndexOf(recipe);
+      final heads = _headsOf(recipe);
+      final lines = nutritionLines(recipe);
+      final oils = [
+        for (final (i, l) in lines.indexed)
+          if (heads[i] == 'oil' && l.amounts.isNotEmpty) l,
+      ];
+      if (oils.isEmpty) {
+        return null;
+      }
+      final mentions = _naming(recipe, 'oil').where(
+        (m) => (m.$1 == at.$1 && m.$2 < at.$2) || m.$1 == at.$1 - 1,
+      );
+      if (mentions.isEmpty) {
+        return null;
+      }
+      final s = index.sentence(mentions.last);
+      if (!_panOil.hasMatch(s)) {
+        return null;
+      }
+      final kinds = [for (final l in oils) _kindWords(l, 'oil')];
+      final named = oils.length == 1
+          ? oils
+          : [
+              for (final (i, l) in oils.indexed)
+                if (kinds[i].any(
+                  (w) =>
+                      !kinds.indexed.any(
+                        (o) => o.$1 != i && o.$2.contains(w),
+                      ) &&
+                      RegExp(
+                        '\\b${RegExp.escape(w)}(?:\\s+[a-z-]+){0,2}\\s+oil\\b',
+                      ).hasMatch(s),
+                ))
+                  l,
+            ];
+      if (named.length != 1) {
+        return null;
+      }
+      final part = RegExp(
+        '($_amountRun(?:teaspoons?|tablespoons?|cups?))\\s+(?:of\\s+)?'
+        r'(?:the\s+)?(?:[a-z-]+\s+)?oil\b',
+      ).firstMatch(s);
+      return (
+        line: named.single,
+        part: part == null
+            ? null
+            : parseIngredientLine('${part[1]} oil').amounts.firstOrNull,
+      );
+    });
+
+/// v51 (M49 Q19 a): the browning oil [line] is when [recipe]'s first
+/// pour-off of the pan's fat ([_pourOffFatAt]) cuts it ([_panOilAt]): the
+/// printed part kept, as written and parsed, and the oil's part in the pan.
+({String text, Amount kept, Amount? part})? _keptBrowningOil(
+  Recipe recipe,
+  IngredientLine line,
+) {
+  final at = line.amounts.isEmpty ? null : _pourOffFatAt(recipe);
+  final pan = at == null ? null : _panOilAt(recipe, (at.step, at.sentence));
+  return pan == null || pan.line.raw != line.raw
+      ? null
+      : (text: at!.text, kept: at.kept, part: pan.part);
+}
+
+/// v51 (M49 Q19 a, with P4's split): what an oil [line] (resolved at
+/// [resolved] on [food]) keeps of a pan the steps pour down to a printed
+/// part — null when no pour-off cuts it. In rule B1's bacon pan
+/// ([_baconPanOf]) the kept fat is shared: the oil keeps kept × O / (R +
+/// O) of it, R the bacon's rendered fat, O the oil ([withRenderedBacon]
+/// keeps the rest). Else the oil counts at most the kept part
+/// ([_keptBrowningOil]). Either way its part outside the pan stays whole.
+GramResolution? _keptInPan(
+  Recipe recipe,
+  IngredientLine line,
+  FdcFood food,
+  String normalized,
+  GramResolution resolved,
+) {
+  if (line.amounts.isEmpty || headNounOf(normalized) != 'oil') {
+    return null;
+  }
+  double? weigh(Amount amount) => resolveGrams(
+    amounts: [amount],
+    food: food,
+    normalizedItem: normalized,
+  )?.grams;
+  final bacon = _baconPanOf(recipe);
+  final shared = bacon != null && bacon.oil.raw == line.raw;
+  final browning = shared ? null : _keptBrowningOil(recipe, line);
+  if (!shared && browning == null) {
+    return null;
+  }
+  final part = shared ? bacon.part : browning!.part;
+  final inPan = part == null
+      ? resolved.grams
+      : min(resolved.grams, weigh(part) ?? resolved.grams);
+  final keeps = shared ? _baconPanOilShare(bacon) : weigh(browning!.kept);
+  if (keeps == null || keeps >= inPan) {
+    return null;
+  }
+  return GramResolution(
+    grams: resolved.grams - inPan + keeps,
+    source: GramSource.discarded,
+    basis: resolved.basis,
+  );
+}
+
+/// The basis of an oil row [_keptInPan] cut: "1 teaspoon kept (the steps
+/// pour off the rest)"; in rule B1's bacon pan "2 tablespoons kept with the
+/// bacon grease (the steps pour off the rest)".
+String? _keptInPanBasis(Recipe recipe, IngredientLine line) {
+  final bacon = _baconPanOf(recipe);
+  if (bacon != null && bacon.oil.raw == line.raw) {
+    return '${bacon.text} kept with the bacon grease '
+        '(the steps pour off the rest)';
+  }
+  final browning = _keptBrowningOil(recipe, line);
+  return browning == null
+      ? null
+      : '${browning.text} kept (the steps pour off the rest)';
 }
 
 /// The written part of a strained braising liquid a step keeps — "1 cup
@@ -5708,19 +5949,32 @@ String _ownSalt(String normalized) {
       ? _partialUseOf(recipe, line, headNounOf(normalized)!)
       : null;
   // A frying oil's part kept in the pan and eaten ([_keptFryingOil]).
-  final eatenPart =
-      plus?.amount ??
-      divided?.amount ??
-      (medium == DiscardedMedium.fryingOil
-          ? _keptFryingOil(recipe, line)
-          : null);
-  final kept = eatenPart != null
-      ? resolveGrams(
-          amounts: [eatenPart],
-          food: food,
-          normalizedItem: normalized,
-          kosherSalt: packsLikeKosherSalt(line.raw),
-        )
+  final keptOil = medium == DiscardedMedium.fryingOil
+      ? _keptFryingOil(recipe, line)
+      : null;
+  final eatenPart = plus?.amount ?? divided?.amount ?? keptOil;
+  GramResolution? weigh(Amount amount) => resolveGrams(
+    amounts: [amount],
+    food: food,
+    normalizedItem: normalized,
+    kosherSalt: packsLikeKosherSalt(line.raw),
+  );
+  final eaten = eatenPart == null ? null : weigh(eatenPart);
+  // v51 (M49 Q19, P1 D3a): a frying oil's kept part is eaten as well as
+  // its part used outside the fry — "Toss the bread crumbs with 2
+  // teaspoons of the oil … Reserve 1 tablespoon oil from the skillet and
+  // discard the remainder" (0215): 2 teaspoons + 1 tablespoon.
+  final alsoKept = keptOil == null || identical(eatenPart, keptOil)
+      ? null
+      : weigh(keptOil);
+  final kept = eaten != null
+      ? alsoKept == null
+            ? eaten
+            : GramResolution(
+                grams: eaten.grams + alsoKept.grams,
+                source: eaten.source,
+                basis: eaten.basis,
+              )
       : share != null && resolved != null
       ? GramResolution(
           grams: resolved.grams * (1 - share),
@@ -5767,7 +6021,10 @@ String _ownSalt(String normalized) {
         )
       : medium != null
       ? null
-      : resolved;
+      // v51 (M49 Q19): an oil the steps pour down to a printed part.
+      : resolved == null
+      ? null
+      : _keptInPan(recipe, line, food, normalized, resolved) ?? resolved;
   final rule = secondFoodRuleOf(
     line,
     citrus: citrus,
@@ -6972,13 +7229,23 @@ const int cookedBaconFdcId = 168322;
 /// SR 172345 "Animal fat, bacon grease" — the fat kept in the pan.
 const int baconGreaseFdcId = 172345;
 
-/// Cooked bacon per gram raw: protein is not rendered, so 13.66 g of
-/// 168277's protein sit in 13.66 / 33.9 g of 168322 (0.40295).
-const double baconCookedYield = 0.403;
+/// Cooked bacon per gram raw: USDA Agriculture Handbook 102 (rev. 1975),
+/// item 1981 "bacon, sliced, all methods" → cooked 33 % (18–43) — v51 (M49
+/// Q4 b, the owner's 2026-10-07 standing authorization) re-rules Y11's
+/// 0.403 (2026-10-06, the protein balance 13.66 / 33.9 g of 168322: the
+/// two records are different samples; 0.33 counts 11.19 g of 168277's
+/// 13.66 g protein, 18 % of the balance given up, and AH-102's own range
+/// holds 0.403).
+const double baconCookedYield = 0.33;
 
-/// Fat rendered per gram raw: 0.3713 − 0.40295 × 0.351 (168277's fat less
-/// the cooked bacon's).
-const double baconRenderedPerGram = 0.2299;
+/// Fat rendered per gram raw, by the same fat balance: 168277's fat less
+/// the cooked part's, 0.3713 − 0.33 × 0.351 = 0.25547.
+const double baconRenderedPerGram = 0.2555;
+
+/// The flag a rendered row carries ([compositeFlagOf]).
+const String baconYieldFlag =
+    'approximate (USDA AH-102 item 1981: bacon, sliced, all methods → '
+    'cooked 33 % (18–43))';
 
 /// 172345's own portion, "tsp" 4.3 g over 4.92892 mL.
 const double baconGreaseGramsPerMl = 0.8724;
@@ -7016,19 +7283,45 @@ final RegExp _baconVeto = RegExp(
   'into a (small )?bowl|set aside|pour off and reserve|reserve remaining fat',
 );
 
+/// A kept part as written — a [_baconN] quantity and a unit word — parsed.
+Amount _keptAmount(String quantity, String unit) => Amount(
+  measure: Measure.volume,
+  quantity:
+      const {'one': '1', 'two': '2', 'three': '3', 'four': '4'}[quantity] ??
+      quantity,
+  unit: unit.replaceFirst(RegExp(r's$'), ''),
+);
+
 /// The mL of fat [recipe]'s steps keep in the pan, or null when no ONE step
 /// lifts the meat out AND cuts the fat to a stated amount (B1's signal).
-double? _baconKeptMl(Recipe recipe) {
-  double? ml(String quantity, String unit) => volumeMlOf([
-    Amount(
-      measure: Measure.volume,
-      quantity:
-          const {'one': '1', 'two': '2', 'three': '3', 'four': '4'}[quantity] ??
-          quantity,
-      unit: unit.replaceFirst(RegExp(r's$'), ''),
-    ),
-  ]);
-  for (final step in recipe.steps) {
+double? _baconKeptMl(Recipe recipe) => _baconKept(recipe)?.ml;
+
+/// [_baconKeptMl]'s reading with where it stands — the step, the sentence
+/// of the kept amount, the amount as written ("2 tablespoons", a range's
+/// "⅓ cup") — for the oil sharing the pan ([_baconPanOf], v51).
+({double ml, int step, int sentence, String text})? _baconKept(
+  Recipe recipe,
+) {
+  ({double ml, int step, int sentence, String text})? at(
+    int step,
+    String text,
+    Match m,
+    String quantity,
+    String unit,
+  ) {
+    final ml = volumeMlOf([_keptAmount(quantity, unit)]);
+    return ml == null
+        ? null
+        : (
+            ml: ml,
+            step: step,
+            sentence:
+                text.substring(0, m.start).split(_sentenceBreak).length - 1,
+            text: '$quantity $unit',
+          );
+  }
+
+  for (final (i, step) in recipe.steps.indexed) {
     final text = step.text.toLowerCase();
     if (!_baconOut.hasMatch(text)) {
       continue;
@@ -7041,26 +7334,102 @@ double? _baconKeptMl(Recipe recipe) {
       if (_baconVeto.hasMatch(after)) {
         continue;
       }
-      return ml(keep[1]!, keep[2]!);
+      return at(i, text, keep, keep[1]!, keep[2]!);
     }
     if (_baconReserve.firstMatch(text) case final reserve?) {
-      return ml(reserve[1]!, reserve[2]!);
+      return at(i, text, reserve, reserve[1]!, reserve[2]!);
     }
     if (_baconExtra.firstMatch(text) case final extra?) {
-      return ml(extra[2]!, extra[3]!);
+      return at(i, text, extra, extra[2]!, extra[3]!);
     }
   }
   return null;
+}
+
+/// A line rule B1 renders, by its words: bacon or pancetta, never its fat
+/// nor Canadian bacon ([_baconPanOf]).
+final RegExp _renderedBacon = RegExp(
+  r'^(?!.*\b(?:fat|grease|drippings|canadian)\b).*\b(?:bacon|pancetta)\b',
+);
+
+/// Rule B1's pan shared with an oil ([_baconPanOf]).
+typedef _BaconPan = ({
+  IngredientLine bacon,
+  IngredientLine oil,
+  Amount? part,
+  double ml,
+  String text,
+});
+
+/// v51 (M49 Q19, P4 §4): rule B1's pan ([_baconKept]) when an oil browns in
+/// it before the pour-off ([_panOilAt]: "heat the oil … Add the pancetta
+/// … Pour off all but 2 tablespoons of fat", 0332; "Add oil and cook" a
+/// step before, Salade Lyonnaise; "Heat pancetta and oil … ¼ to ⅓ cup fat;
+/// discard any extra", gricia): the one undivided bacon line, the oil line
+/// and its part in the pan, the kept amount (mL, as written) — or null.
+/// Once per recipe.
+_BaconPan? _baconPanOf(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#baconPan, () {
+      final kept = _baconKept(recipe);
+      final pan = kept == null
+          ? null
+          : _panOilAt(recipe, (kept.step, kept.sentence));
+      if (pan == null) {
+        return null;
+      }
+      final bacons = [
+        for (final l in nutritionLines(recipe))
+          if (l.amounts.isNotEmpty &&
+              !l.raw.toLowerCase().contains('divided') &&
+              _renderedBacon.hasMatch(normalizeItem(lineItemOf(l))))
+            l,
+      ];
+      return bacons.length != 1
+          ? null
+          : (
+              bacon: bacons.single,
+              oil: pan.line,
+              part: pan.part,
+              ml: kept!.ml,
+              text: kept.text,
+            );
+    });
+
+/// The grams of the oil in [pan] (its part in the pan, else the line), with
+/// no food — the one figure both rows of the split read.
+double? _panOilGrams(_BaconPan pan) {
+  final item = normalizeItem(lineItemOf(pan.oil));
+  return pan.part == null
+      ? _freeGrams(pan.oil, item)
+      : resolveGrams(
+          amounts: [pan.part!],
+          food: null,
+          normalizedItem: item,
+        )?.grams;
+}
+
+/// The oil's share of [pan]'s kept fat: kept × O / (R + O), the kept fat
+/// at most R + O (R the bacon line's rendered fat, O [_panOilGrams]).
+double? _baconPanOilShare(_BaconPan pan) {
+  final raw = _freeGrams(pan.bacon, normalizeItem(lineItemOf(pan.bacon)));
+  final oil = _panOilGrams(pan);
+  if (raw == null || raw <= 0 || oil == null) {
+    return null;
+  }
+  final rendered = raw * baconRenderedPerGram;
+  final pooled = min(pan.ml * baconGreaseGramsPerMl, rendered + oil);
+  return pooled * oil / (rendered + oil);
 }
 
 /// [row] as rule B1 counts it (v41, R2): an `auto` or `confirmed` row on
 /// [rawBaconFdcId], unheld, weighed at [raw] grams (> 0; default: its own
 /// grams) on a line not "divided" — never grams a person typed (D12, F2) —
 /// whose [recipe] renders and drains the bacon ([_baconKeptMl]) is ONE row
-/// on the record bought with two parts: the cooked bacon (raw × 0.403 on
-/// [cookedBaconFdcId]) and the fat kept in the pan (the stated amount, at
-/// most what renders, on [baconGreaseFdcId]); its grams their sum. Any other
-/// row carries no parts.
+/// on the record bought with two parts: the cooked bacon (raw ×
+/// [baconCookedYield] on [cookedBaconFdcId]) and the fat kept in the pan
+/// (the stated amount, at most what renders, on [baconGreaseFdcId]; with
+/// an oil in the pan, the bacon's R / (R + O) share of it, v51); its grams
+/// their sum. Any other row carries no parts.
 IngredientMatchRow withRenderedBacon(
   Recipe recipe,
   IngredientLine line,
@@ -7083,8 +7452,18 @@ IngredientMatchRow withRenderedBacon(
   }
   double round2(double v) => double.parse(v.toStringAsFixed(2));
   final cooked = round2(grams! * baconCookedYield);
+  // v51 (M49 Q19, P4 §4): an oil browned in the same pan ([_baconPanOf])
+  // shares the stated amount — the kept fat is at most R + O and the
+  // bacon's part of it R / (R + O); the oil's row keeps the rest
+  // ([_keptInPan]).
+  final pan = _baconPanOf(recipe);
+  final oil = pan == null || pan.bacon.raw != line.raw
+      ? 0.0
+      : _panOilGrams(pan) ?? 0.0;
+  final rendered = grams * baconRenderedPerGram;
+  final pooled = min(keptMl * baconGreaseGramsPerMl, rendered + oil);
   final kept = round2(
-    min(keptMl * baconGreaseGramsPerMl, grams * baconRenderedPerGram),
+    oil == 0 ? pooled : pooled * rendered / (rendered + oil),
   );
   return row.copyWith(
     grams: round2(cooked + kept),
@@ -10686,12 +11065,31 @@ String? _gramBasis(
       recipe: recipe,
     )?.grams;
     if (raw != null && parts.length == 2) {
+      // v51 (M49 Q19): the kept amount shared with an oil says so.
+      final pan = recipe == null ? null : _baconPanOf(recipe);
+      final shared = pan != null && pan.bacon.raw == line.raw
+          ? ', sharing the ${pan.text} kept with the oil'
+          : '';
       return '${_fmtAmount(raw)} g raw → ${_fmtAmount(parts[0].grams)} g '
           'cooked bacon + ${_fmtAmount(parts[1].grams)} g bacon grease kept '
-          'in the pan';
+          'in the pan$shared';
     }
   }
   if (row.gramSource == GramSource.discarded.name) {
+    // v51 (M49 Q19): an oil the steps pour down to a printed part
+    // ([_keptInPan]) — never a medium's row (a frying oil keeps its own).
+    final pan = recipe == null || row.grams! <= 0
+        ? null
+        : _keptInPanBasis(recipe, line);
+    if (pan != null &&
+        discardedMediumOf(
+              recipe!,
+              line,
+              normalizeItem(lineItemOf(line)),
+            ) ==
+            null) {
+      return pan;
+    }
     // v50 (M50): what a strain, a discard by name or a printed part kept
     // did to the line — the engine's row; a person's confirm of a held
     // medium at 0 g reads "poured away" below.
@@ -10713,11 +11111,18 @@ String? _gramBasis(
     final part = eaten == null || eaten.text == plus?.text
         ? 'plus ${plus?.text}'
         : eaten.text;
+    // v51: a frying oil's kept part counted beside it ([engineOutcome]).
+    final keptToo = plus == null || recipe == null
+        ? null
+        : _keptFryingOilText(recipe, line);
     // A person's confirm of a held medium with no eaten part (B6).
     return row.grams! <= 0 && row.status != 'auto'
         ? 'poured away — counted as 0 g'
         : row.grams! <= 0
         ? 'discarded in cooking — counted as 0 g'
+        : plus != null && keptToo != null
+        ? 'discarded in cooking — only "$part" and the $keptToo the steps '
+              'keep counted'
         : plus != null
         ? 'discarded in cooking — only "$part" counted'
         : 'discarded in cooking — only the part the recipe keeps counted';
@@ -10822,8 +11227,9 @@ String _fmtKcal(double v) => v.round().toString().replaceAllMapped(
 /// several titles its parent's note names — "approximation (the first
 /// {kind} the note names: {title})", cleared by a person's decision (D6);
 /// a counted child that is partial — "approximation ({title} is partial:
-/// {m} of {n} lines)"; a rendered row — "approximate (rendered and
-/// drained; yield from FDC protein)". The last two name a fact and stay on
+/// {m} of {n} lines)"; a rendered row — [baconYieldFlag] (v51; "approximate
+/// (rendered and drained; yield from FDC protein)" before). The last two
+/// name a fact and stay on
 /// a Confirm (A6). Several join with " · ".
 String? compositeFlagOf(
   SaltDatabase db,
@@ -10859,7 +11265,7 @@ String? compositeFlagOf(
   if (row.parts != null &&
       row.gramSource != GramSource.override.name &&
       row.fdcId == rawBaconFdcId) {
-    flags.add('approximate (rendered and drained; yield from FDC protein)');
+    flags.add(baconYieldFlag);
   }
   return flags.isEmpty ? null : flags.join(' · ');
 }

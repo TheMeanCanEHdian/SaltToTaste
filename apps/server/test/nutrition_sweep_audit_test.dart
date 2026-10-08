@@ -1123,9 +1123,19 @@ void main() {
     // lean salt pork, capers, cotija cheese, limes, cold beer, peanut oil
     // or canola oil; 172238, 168155): both details are recorded hits
     // (172238 in 'herb', 168155 in 'lemon or lime wedges'), both differing
-    // in some digit: compared 467 -> 469, differ 352 -> 354.
-    expect(compared, 469);
-    expect(differ, 354);
+    // in some digit: compared 467 -> 469, differ 352 -> 354. Matcher v51
+    // (batch M49) recorded from snapshot 21 the 13 searches and 4 details
+    // its whole-recipe pins read (canadian bacon, english muffins, goat
+    // cheese, green split peas, ham steak, kecap manis, pizza dough, ripe
+    // camembert or taleggio cheese, sherry vinegar, shrimp paste, slivered
+    // blanched almonds, tempeh, well-drained prepared horseradish; 167869,
+    // 170568, 173472, 2707698): each detail a recorded hit (167869 in
+    // 'bacon', 170568 in 'almonds', 173472 in 'herb', 2707698 in 'english
+    // cucumber'), all four differing in some digit (protein 20.31 / 20.3,
+    // fat 52.52 / 52.5, carbohydrate 11.29 / 11.3, 44.2 / 44.17):
+    // compared 469 -> 473, differ 354 -> 358.
+    expect(compared, 473);
+    expect(differ, 358);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

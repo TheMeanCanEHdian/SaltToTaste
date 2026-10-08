@@ -469,7 +469,18 @@ const List<(String, double)> _pieceWeights = [
   ('eggplant', 300), // longer key than "egg", so it wins the substring match
   // Counted-in-slices/sheets staples (per counted unit).
   ('sandwich bread', 28),
-  ('bacon', 24),
+  // v51 (M49 Q4 b, re-rules the unsourced 24 g of d614c2e): SR 168277
+  // "Pork, cured, bacon, unprepared" weighs its own 'slice raw' 28 g (the
+  // corpus's "1 ounce a slice", 28.35 g, agrees to 1.3 %); a thick-cut
+  // slice is the corpus's printed one, the median of its three prints
+  // ("10 ounces (about 8 slices)" 35.44 g, "6 ounces … (about 5 slices)"
+  // 34.02, "5 ounces (about 3 slices)" 47.25), flagged
+  // ([_approximatePieces]); SR 167869 "Canadian bacon, unprepared" weighs
+  // '2 slices (6 per 6-oz pkg.)' 57 g. The longer key wins, so a
+  // thick-cut or Canadian slice never reads the plain one.
+  ('bacon', 28),
+  ('thick-cut bacon', 35.44),
+  ('canadian bacon', 28.5),
   ('corn tortilla', 26),
   ('tortilla', 26),
   ('hamburger bun', 52),
@@ -586,6 +597,8 @@ const Map<String, String> _approximatePieces = {
   'sugar cube': 'ATK: ¾ cup sugar makes 64 cubes',
   'sea scallop': 'ATK: 1½ pounds large sea scallops ≈ 16 to 24',
   'gyoza wrapper': "FDC's 3½-inch square wonton wrapper, ATK's substitute",
+  // v51 (M49 Q4 b): the CP9 Q6 corpus-print class.
+  'thick-cut bacon': "the corpus's printed thick-cut slice, median of three",
 };
 
 /// v31 (Q6, ruled 2026-10-03): pieces FDC weighs by no length, sized by
@@ -4236,8 +4249,12 @@ GramResolution? _resolveGrams({
               : '${_unsizedPieces[key]}; no $size size published');
       // A flagged figure says its decimals — a sub-gram one all of them, one
       // under 10 g one ("3.2", "7.1"); every other piece (the bay leaf's
-      // "0 g") its rounded grams, as before.
-      final each = printed == null || pieceWeight >= 10
+      // "0 g") its rounded grams, as before — but a slice of 10 g or more
+      // that is no whole gram says its own (v51: the Canadian bacon's
+      // "28.5", the thick-cut "35.44"), so the count times it is the grams.
+      final each = pieceWeight >= 10 && pieceWeight != pieceWeight.round()
+          ? _figure(pieceWeight)
+          : printed == null || pieceWeight >= 10
           ? '${pieceWeight.round()}'
           : pieceWeight < 1
           ? _figure(pieceWeight)
