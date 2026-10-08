@@ -3608,6 +3608,14 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-07 — the owner approved the two-part-row role copy delta
+  (`docs/mockups/v49-two-part-rows-copy.html`, "i approve M51"):** the
+  headers and part suffixes ship verbatim — bacon unchanged; zest and juice
+  "matched to two records, the zest and the juice:" with " · the zest" /
+  " · the juice"; a can drained and a can kept with its liquid "matched to
+  two records, drained and with its liquid:" with " · drained" / " · with
+  its liquid"; any other pair the plain header. Keyed on the part's `role`
+  from the wire. Rides with M51's app half (one app commit for both deltas).
 - **2026-10-07 — matcher v49 (batch M47): records and published figures
   (prep47 Q5, Q6, Q11–Q15, Q23, Q26; built under the standing
   authorization).** Kept deviations, each disclosed and re-measured: (1)
