@@ -3608,6 +3608,43 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — the prep48 design pass on audit 3's patterns
+  (`.claude/diag/2026-10-08/prep48/design_v2.md`; five planners, a critic
+  with 16 findings all folded) — the owner questions DECIDED under the
+  standing authorization, every one as recommended except Q18, which is the
+  owner's:** Q1 strip steaks and the top loin roast on Foundation 2727572
+  (a); Q2 brisket on the raw flat 168743, pomegranate|0 flagged as a
+  stand-in for its printed ¼-inch cap, the trim-depth item deferred; Q3 the
+  rack of lamb on 174414, listed as a gap; Q4 thighs stay Foundation; Q5
+  the boneless center-cut pork loin on Foundation 2646168 (a); Q6 one
+  search for a lean-and-fat top sirloin; Q7 "fat caps removed" → 171751,
+  contingent on Q1 (a); Q8 batters budgeted by carbohydrate, battered
+  shrimp on 2706364; Q9 read FNDDS "Breading or batter" first, then the egg
+  dips, the held-coat dips (H — a one-way door, taken: a dip of a held coat
+  is held) and the crumb figure together; Q10 glaze and confection coats
+  stay whole; Q11 read the crab-cake record; Q12 the fried-dough uptake
+  with 14 named requests and every conditional request named and approved
+  before it is spent; Q13 no C2 oil on the browned-then-baked rolls, the
+  cauliflower scaling on O5 only and flagged derived, the shell-on shrimp
+  keeps the squid figure; Q14 the bone-in turkey breast at 66.77 %, derived
+  from AH-102 items 2591 and 2593 (the breast's 33 of the breast-plus-rib
+  43 parts × 87 %), the back not counted; Q15 bacon draped over or wrapped
+  round a baked or grilled food takes B1's cooked part with no kept fat;
+  Q16 the 8-inch pita only on a printed 8-inch weight (one record read);
+  Q17 leave the unsourced prep losses; Q19 NO 'prune' in the strained
+  heads (the corpus says they melt into the sauce); Q20 the 51 below-gate
+  rows (36 recipes partial on one each) are a later item. **Q18 — DEFERRED
+  TO THE OWNER:** re-extracting the direction paragraphs of 269 subsections
+  (160 hosts, 152 person rows) in the Recipe Extraction project, with the
+  critic's guards (a dry-run diff proving every ingredient line byte-equal;
+  a pin that the person rows survive; its own attributed replay); until
+  then every step-reading batch is labelled "pre-Q18". Build order: M56
+  meat records → M57 strained liquid → M58 batters → M59 reserved and
+  rinsed oil and the cauliflower → M60 turkey breast, step peel, bacon drip
+  (all zero requests, −5,844 kcal in all) → the live step L (23 named
+  requests) → M61 fried doughs → M62 dips and crumbs → M63 pita, crab cake,
+  sirloin. Not a defect, closed: the EVOO energy fallback; held two-part
+  bacon rows do enter totals.
 - **2026-10-08 — BLIND AUDIT 3 on the deployed v54 library (snapshot 23;
   `.claude/diag/2026-10-08/audit3/report.md`; 272 lines drawn from the
   prep47 batches' reaches plus controls, two blind auditors per line and an
