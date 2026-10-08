@@ -283,7 +283,15 @@ void main() {
           (flakes.status, flakes.fdcId, flakes.hold),
           ('unmatched', null, null),
         );
-        expect(rows.singleWhere((r) => r.position == 0).hold, 'coating');
+        // RE-PIN (M52 batch, v53, Q2 a): the cornstarch the engine held is
+        // now counted by the coat budget, unheld (the cornflakes' row has
+        // no food, so the cornstarch carries the whole budget: 793.79 g of
+        // pork × C1 5.73 / 100 = 45.48 g carbohydrate, 49.83 g of it).
+        final starch = rows.singleWhere((r) => r.position == 0);
+        expect(
+          (starch.hold, starch.gramSource, starch.grams?.toStringAsFixed(2)),
+          (null, 'discarded', '49.83'),
+        );
       },
     );
   });

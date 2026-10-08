@@ -1946,9 +1946,16 @@ void main() {
           final fixture = FixtureProvider(pending: pendingSearches);
           final r = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
           await d.editAndCompute(db, fixture, r);
+          // RE-PIN (M52 batch, v53): the dredge flour (#8) is counted by the
+          // coat budget, unheld — found by its line, typed grams on it.
           final coated = db
               .ingredientMatchesFor(r.id)
-              .firstWhere((m) => m.hold == 'coating');
+              .firstWhere(
+                (m) =>
+                    m.raw ==
+                    '4 cups (20 ounces) unbleached all-purpose '
+                        'flour',
+              );
           final raw = nutritionLines(r)[coated.position].raw;
           await applyMatchOverride(db, fixture, r, coated.position, {
             'raw': raw,

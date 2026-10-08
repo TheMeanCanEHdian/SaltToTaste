@@ -95,6 +95,8 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // shared with an oil.
       'memo:pourOffFat',
       'memo:baconPan',
+      // v53 (M52 Q24 b): the shallow fry of a coated food.
+      'memo:shallowFries',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first

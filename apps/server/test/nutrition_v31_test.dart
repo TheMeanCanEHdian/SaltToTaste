@@ -284,9 +284,15 @@ void main() {
               ),
           ],
         );
+        // RE-PIN (M52 batch, v53, Q24 b): with both gone the cutlets are
+        // still browned in the 6 tablespoons of oil heated for them — a
+        // shallow fry of a coated food, so both stay held; with the browning
+        // gone too (the same stated exception), neither is.
+        const brownCut = 'deep golden brown and ';
         for (final (cuts, held) in [
           ([fryCut], DiscardedMedium.coating),
-          ([fryCut, excessCut], null),
+          ([fryCut, excessCut], DiscardedMedium.coating),
+          ([fryCut, excessCut, brownCut], null),
         ]) {
           final sauteed = cutting(cuts);
           final sauteedText = sauteed.steps.map((s) => s.text).join();
@@ -2331,24 +2337,28 @@ const List<(String, int, int, String?, String?, String?)> _rowsC = [
   // The poached chicken and the sauce's tomatillos count.
   ('0488-enchiladas-verdes.yaml', 5, 2646170, '453.59', null, null),
   ('0488-enchiladas-verdes.yaml', 6, 168566, '680.39', null, null),
-  // 0042: the two tablespoons the dressing eats count; the fried ¾ cup not.
+  // 0042: the two tablespoons the dressing eats count; the fried ¾ cup not
+  // — RE-PIN (M52 batch, v53, Q3 a): save the oil its breasts absorb, 28.00
+  // + 623.69 g × O1a 6.68 % (USDA FNDDS 2705975) = 69.66 g.
   (
     '0042-almond-crusted-chicken-with-wilted-spinach-salad.yaml',
     7,
     2710180,
-    '28.00',
+    '69.66',
     null,
     null,
   ),
-  // 0288, 0674, 0675: fried by the verb alone — held, the sentence the note.
+  // 0674, 0675: fried by the verb alone — held, the sentence the note.
+  // RE-PIN (M52 batch, v53, Q24 b): 0288's oil, heated for the coated cakes
+  // it browns, is a frying oil — 453.59 g of crab × O1a 6.68 % (a flagged
+  // stand-in) = 30.30 g, unheld.
   (
     '0288-maryland-crab-cakes.yaml',
     9,
     2710180,
+    '30.30',
     null,
-    'ambiguous_medium',
-    '"Gently place the chilled crab cakes in the skillet; pan-fry until the '
-        'outsides are crisp and browned, 4 to 5 minutes per side."',
+    null,
   ),
   (
     '0674-corn-fritters.yaml',

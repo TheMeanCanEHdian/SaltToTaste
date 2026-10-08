@@ -248,8 +248,8 @@ void main() {
     });
 
     for (final between in [true, false]) {
-      test("O5: 0148's dredge flour confirmed (0 g poured away), then the "
-          'dredge taken out of the steps ${between ? 'after' : 'with no'} '
+      test("O5: 0148's dredge flour confirmed (M52's C1d budget kept, "
+          '144.06 g — verify2 D1), then the dredge taken out of the steps ${between ? 'after' : 'with no'} '
           'compute between — the flour is weighed either way', () async {
         final (db, provider, r) = await computed(
           '0148-crispy-fried-chicken.yaml',
@@ -259,14 +259,16 @@ void main() {
           'raw': flour0148,
           'confirmed': true,
         });
+        // RE-PIN (M52 batch, v53 closer 2, verify2 D1): the confirm keeps
+        // the engine's budget (was 0 g poured away).
         expect(shape(rowOf(db, r, i)), (
           'confirmed',
           789890,
-          0,
+          144.06,
           GramSource.discarded.name,
           null,
         ));
-        expect(await noteOf(db, r, i), 'poured away after your confirm');
+        expect(await noteOf(db, r, i), 'eaten part counted after your confirm');
         var base = r;
         if (between) {
           base = retitled(r);
@@ -341,37 +343,41 @@ void main() {
       );
     }
 
-    test("O8, a decided line that BECOMES held: 0148's flour picked (and, "
-        'apart, confirmed) on the undredged recipe, then the dredge put '
-        'back — the pick keeps the coating hold with no grams, the confirm '
-        'is poured away, 0 g, no hold', () async {
-      final corpus = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
-      final i = at(corpus, flour0148);
-      for (final body in <Map<String, Object?>>[
-        {'fdc_id': 789890},
-        {'confirmed': true},
-      ]) {
-        final db = wp.tempDb();
-        final provider = FixtureProvider(pending: pendingSearches);
-        final r = undredged0148(corpus);
-        await editAndCompute(db, provider, r);
-        await applyMatchOverride(db, provider, r, i, {
-          'raw': flour0148,
-          ...body,
-        });
-        final before = rowOf(db, r, i);
-        expect(before.hold, isNull);
-        expect(before.grams, closeTo(566.99, 0.01));
-        await editAndCompute(db, provider, corpus);
-        final now = rowOf(db, r, i);
-        expect(shape(now), shape(await freshWrite(corpus, i, body)));
-        expect(
-          (now.grams, now.hold),
-          body.containsKey('fdc_id') ? (null, 'coating') : (0, null),
-          reason: '$body',
-        );
-      }
-    });
+    test(
+      "O8, a decided line that BECOMES held: 0148's flour picked (and, "
+      'apart, confirmed) on the undredged recipe, then the dredge put '
+      'back — the pick keeps the coating hold with no grams, the confirm '
+      "keeps the engine's C1d budget, 144.06 g, no hold (verify2 D1)",
+      () async {
+        final corpus = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
+        final i = at(corpus, flour0148);
+        for (final body in <Map<String, Object?>>[
+          {'fdc_id': 789890},
+          {'confirmed': true},
+        ]) {
+          final db = wp.tempDb();
+          final provider = FixtureProvider(pending: pendingSearches);
+          final r = undredged0148(corpus);
+          await editAndCompute(db, provider, r);
+          await applyMatchOverride(db, provider, r, i, {
+            'raw': flour0148,
+            ...body,
+          });
+          final before = rowOf(db, r, i);
+          expect(before.hold, isNull);
+          expect(before.grams, closeTo(566.99, 0.01));
+          await editAndCompute(db, provider, corpus);
+          final now = rowOf(db, r, i);
+          expect(shape(now), shape(await freshWrite(corpus, i, body)));
+          expect(
+            (now.grams, now.hold),
+            // RE-PIN (M52 batch, v53 closer 2, verify2 D1): was (0, null).
+            body.containsKey('fdc_id') ? (null, 'coating') : (144.06, null),
+            reason: '$body',
+          );
+        }
+      },
+    );
 
     test("O8, a decided line that STOPS being held: 0148's flour picked "
         '(the coating hold kept), then the dredge taken out — weighed, no '

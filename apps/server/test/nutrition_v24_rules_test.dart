@@ -556,7 +556,15 @@ void main() {
       wp.saveRecipe(db, r);
       await matchAndCompute(db, provider, r);
       final held = db.ingredientMatchesFor(r.id)[position];
-      expect(held.hold, isNotNull, reason: file);
+      // RE-PIN (M52 batch, v53): the line is a held medium by its reading
+      // (a pick derives that hold, RULE A) — the engine's own row of a
+      // fried dredge is counted by the coat budget since v53.
+      final line = nutritionLines(r)[position];
+      expect(
+        discardedMediumOf(r, line, normalizeItem(lineItemOf(line))),
+        isNotNull,
+        reason: file,
+      );
       await applyMatchOverride(db, provider, r, position, {
         'raw': held.raw,
         'fdc_id': held.fdcId,

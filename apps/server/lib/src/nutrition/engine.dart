@@ -97,7 +97,9 @@ enum DiscardedMedium {
   /// cup or more a sentence it owns heats to a frying temperature,
   /// discards or pours off all but a part of, or the one such oil of a
   /// fried food's held dredge — a part poured off "all but" is kept and
-  /// counted ([_keptFryingOil]).
+  /// counted ([_keptFryingOil]); v53 (M52, Q3 a): plus the oil its fried
+  /// food absorbs ([_m52Plan]); (Q24 b) an oil heated for a coated food
+  /// browned in it ([_shallowFries]).
   fryingOil,
 
   /// Brine salt: "for brining", or 3 tablespoons or more with a step that
@@ -152,7 +154,10 @@ enum DiscardedMedium {
   /// Chicken, 0148, counted 567 g of flour; since v33, the dredge-reach
   /// ruling, in any cooking class whose directions leave an excess) —
   /// [_dredge]. A batter the food is folded into is eaten whole and is not
-  /// one. Held (`coating`) until [coatingFraction] is set.
+  /// one. Held (`coating`); v53 (M52, Q2 a): the engine's row counts its
+  /// share of a coat budget sized from the coated food ([_m52Plan]) — a
+  /// sautéed dusting (C4), a baked vegetable and a nut or cheese layer stay
+  /// held.
   coating,
 
   /// A line of a cooking liquid strained after the braise of which a step
@@ -1204,8 +1209,73 @@ bool _fries(Recipe recipe) => _stepIndexOf(recipe).memo(
                   fat.heatsToFry(s, () => _heatReading(recipe, s)) ||
                   fat.discards.hasMatch(s),
             ),
-      ),
+      ) ||
+      _shallowFries(recipe),
 );
+
+/// v53 (M52 Q24 b, critic F1; RE-RULES the 2026-10-03 R4 "shimmering/
+/// smoking stays non-evidence" for this one shape): whether [recipe]
+/// SHALLOW-FRIES a food it coats — after a sentence coating or dredging a
+/// food in a flour, starch or crumb ([_coatsAFood]) a sentence heats the
+/// oil ([_heatsTheOil]): a quarter cup or more of it as written, or, with
+/// no amount written, a recipe whose oil line the mass rule could zero
+/// ([_couldZero]); and one of that step's next three sentences browns
+/// ("cook … until … golden brown"; "pan-fry until … browned"): 0118's
+/// "Heat the remaining ¾ cup oil …", 0115's "Heat ¼ cup oil and small
+/// pinch of panko …", 0287's and 0288's "Heat (the) oil …". A sauté's
+/// "Heat 2 tablespoons oil" (0415 marsala, 0418 piccata) is none. Reads
+/// no line's hold ([_dredge] reads [_fries]). Once per recipe.
+bool _shallowFries(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#shallowFries, () {
+      final heads = _headsOf(recipe);
+      if (!nutritionLines(recipe).indexed.any(
+        (e) =>
+            heads[e.$1] == 'oil' && e.$2.amounts.isNotEmpty && _couldZero(e.$2),
+      )) {
+        return false;
+      }
+      var coated = false;
+      for (final sentences in _stepIndexOf(recipe).sentences) {
+        for (final (j, s) in sentences.indexed) {
+          if (!coated) {
+            coated = _coatsAFood.hasMatch(s);
+            continue;
+          }
+          final heat = _heatsTheOil.firstMatch(s);
+          if (heat == null) {
+            continue;
+          }
+          final written = heat[1];
+          if (written != null &&
+              (volumeMlOf(parseIngredientLine('$written oil').amounts) ?? 0) <
+                  _quarterCupMl) {
+            continue;
+          }
+          if (sentences.skip(j + 1).take(3).any(_browns.hasMatch)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    });
+
+/// A sentence coating or dredging a food in a flour, starch or crumb
+/// ([_shallowFries]).
+final RegExp _coatsAFood = RegExp(
+  r'\b(?:dredg|coat)\w*\b[^.]*\b(?:flour|cornstarch|starch|crumbs?|panko)\b',
+);
+
+/// A sentence heating the oil, its amount as written if any
+/// ([_shallowFries]): "heat the remaining ¾ cup oil", "heat oil".
+final RegExp _heatsTheOil = RegExp(
+  r'\bheat (?:the )?(?:remaining )?'
+  '(?:([\\d$vulgarFractionChars][\\d/⁄ $vulgarFractionChars]{0,8}'
+  ' (?:cups?|tablespoons?|teaspoons?)) (?:more )?(?:of )?(?:the )?)?'
+  r'(?:[a-z-]+ )?oil\b',
+);
+
+/// A sentence that browns ([_shallowFries]).
+final RegExp _browns = RegExp(r'\bbrown');
 
 /// Where [recipe]'s first frying-VERB sentence is ([_fryVerb]) — (step,
 /// sentence) — or null, once per recipe ([_oilOwnersOf], v31).
@@ -2152,10 +2222,14 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
     // zeroes a line of the fat: the verb is that oil's (0672 Buffalo
     // Cauliflower Bites fries in "1–2 quarts peanut or vegetable oil"; its
     // "¼ cup coconut oil" is the sauce, eaten).
-    final verb = order == 0 && !lines.any(_massZeroes)
+    // v53 (M52 Q24 b): a coated food browned in the oil is fried in it
+    // ([_shallowFries]) — never held for the verb.
+    final verb = order == 0 && !lines.any(_massZeroes) && !_shallowFries(recipe)
         ? _fryVerbAt(recipe)
         : null;
-    if (verb == null && _fries(recipe) && _dredgedIn(recipe)) {
+    if (verb == null &&
+        _fries(recipe) &&
+        (_dredgedIn(recipe) || _shallowFries(recipe))) {
       unbound.add((null, false));
     }
     // Who could own a sentence that names no line: the frying candidates
@@ -10563,6 +10637,37 @@ bool recomputeTotals(
       .ingredientMatchesFor(recipe.id)
       .where((row) => row.position < lines.length)
       .toList();
+  // v53 (M52): the coat budget and the frying-oil uptake on the rows it
+  // weighs ([_m52Plan], [_m52Weighs]: the engine's and a person's confirm
+  // with no grams typed — verify2 D1), re-read from the rows as they are
+  // on every path that totals the recipe — a compute, a person's write, an
+  // apply-to-all target — and written with the totals (never without them,
+  // [missing]); a row kept through a FOOD failure keeps its count.
+  // Read on the caller's instance when it is the stored recipe (its step
+  // index is built already — RULE C: one index per request).
+  final m52 = _m52Plan(
+    db,
+    recipe == now ? recipe : now,
+    matches,
+    (id, line) => food(id, line: line),
+  );
+  final m52Writes = <(IngredientMatchRow, {IngredientMatchRow over})>[];
+  for (final (k, row) in matches.indexed) {
+    final plan = m52[row.position];
+    if (plan == null ||
+        kept.contains(row.position) ||
+        (row.hold == null &&
+            row.gramSource == GramSource.discarded.name &&
+            row.grams == plan.grams)) {
+      continue;
+    }
+    matches[k] = row.copyWith(
+      grams: plan.grams,
+      gramSource: GramSource.discarded.name,
+      clearHold: true,
+    );
+    m52Writes.add((matches[k], over: row));
+  }
   final totals = <String, double>{};
   var totalGrams = 0.0;
   var contributing = 0;
@@ -10823,6 +10928,21 @@ bool recomputeTotals(
   // inputs STALE as waiting on USDA, never as changed (v29, Run 059 O23):
   // [unavailableStampOf] the hash — no current hash equals it, and the
   // page's `stale_reason` reads `underived`.
+  // M52's rows land with the totals, at the layout read here (no await
+  // between), while a re-match's inputs are still its own.
+  if (m52Writes.isNotEmpty && (freshMatch == null || freshMatch.current())) {
+    final seq = db.layoutSeqOf(recipe.id);
+    for (final (row, :over) in m52Writes) {
+      // A person's confirm ([_m52Weighs]) is derived as [derivedFor] derives
+      // it, written only while it is still the row read (its decision
+      // untouched: the grams of a confirm are the engine's, RULE A).
+      if (row.status == 'auto') {
+        db.upsertIngredientMatchIfUndecided(row, layoutSeq: seq);
+      } else {
+        db.replaceIngredientMatchIfUnchanged(row, over: over, layoutSeq: seq);
+      }
+    }
+  }
   final (hash, layoutSeq) =
       (engineMissing || unavailable) &&
           stampHash.isNotEmpty &&
@@ -11138,7 +11258,10 @@ String? gramBasisFor(
   final weighed = recipe == null || row.fdcId == null
       ? line
       : weighedLine(recipe, line);
-  final basis = _gramBasis(db, weighed, row, recipe);
+  // v53 (M52): a coat or frying oil the engine counted by [_m52Plan].
+  final m52 = recipe == null ? null : _m52RowOf(db, recipe, line, row);
+  final m52Flag = m52?.flag == null ? '' : ' · ${m52!.flag}';
+  final basis = _gramBasis(db, weighed, row, recipe, m52: m52);
   // A skipped row adds nothing to the totals: no "approximate" or "counted
   // as" suffix (Run 046) — its basis alone says what was measured.
   if (basis == null || row.status == 'skipped') {
@@ -11165,7 +11288,8 @@ String? gramBasisFor(
             // v50: nor on one a step discards (0 g, its own basis).
             (row.gramSource == GramSource.discarded.name && row.grams! <= 0)
         ? basis
-        : '$basis · approximate (dried herb record for a fresh herb)$flagged';
+        : '$basis · approximate (dried herb record for a fresh herb)'
+              '$flagged$m52Flag';
   }
   // Read on the weighed line, as the grams are (Run 049: "1 recipe Pesto
   // Base, plus 2 ounces pancetta" on the bacon record lost its label).
@@ -11176,16 +11300,18 @@ String? gramBasisFor(
     description: row.description,
   );
   return approximation
-      ? '$basis · approximation (counted as ${row.description})$flagged'
-      : '$basis$flagged';
+      ? '$basis · approximation (counted as ${row.description})'
+            '$flagged$m52Flag'
+      : '$basis$flagged$m52Flag';
 }
 
 String? _gramBasis(
   SaltDatabase db,
   IngredientLine line,
   IngredientMatchRow row,
-  Recipe? recipe,
-) {
+  Recipe? recipe, {
+  _M52Row? m52,
+}) {
   if (row.grams == null) {
     return null;
   }
@@ -11251,6 +11377,16 @@ String? _gramBasis(
             null) {
       return pan;
     }
+    // v53 (M52): a coat budgeted from its food, a frying oil whose fried
+    // food absorbs part of it, or — bone-in skin-on chicken — none net.
+    if (m52 != null && m52.noNetUptake) {
+      return o1cBasis;
+    }
+    final m52What = m52 == null || m52.flag == null
+        ? null
+        : m52.coat
+        ? 'the coat on the food'
+        : 'the oil the fried food absorbs';
     // v50 (M50): what a strain, a discard by name or a printed part kept
     // did to the line — the engine's row; a person's confirm of a held
     // medium at 0 g reads "poured away" below.
@@ -11277,16 +11413,24 @@ String? _gramBasis(
         ? null
         : _keptFryingOilText(recipe, line);
     // A person's confirm of a held medium with no eaten part (B6).
+    final also = m52What == null ? '' : ' and $m52What';
+    if (m52What != null && plus == null && m52!.kept <= 0) {
+      return 'discarded in cooking — only $m52What counted';
+    }
     return row.grams! <= 0 && row.status != 'auto'
         ? 'poured away — counted as 0 g'
         : row.grams! <= 0
         ? 'discarded in cooking — counted as 0 g'
         : plus != null && keptToo != null
-        ? 'discarded in cooking — only "$part" and the $keptToo the steps '
-              'keep counted'
+        ? m52What != null
+              ? 'discarded in cooking — only "$part", the $keptToo the steps '
+                    'keep and $m52What counted'
+              : 'discarded in cooking — only "$part" and the $keptToo the '
+                    'steps keep counted'
         : plus != null
-        ? 'discarded in cooking — only "$part" counted'
-        : 'discarded in cooking — only the part the recipe keeps counted';
+        ? 'discarded in cooking — only "$part"$also counted'
+        : 'discarded in cooking — only the part the recipe keeps$also '
+              'counted';
   }
   if (row.gramSource == GramSource.unmeasured.name &&
       row.fdcId == null &&
@@ -12828,13 +12972,8 @@ derivedFor(
     resolution,
     decided: true,
   );
-  final mediumLine =
-      discardedMediumOf(
-        recipe,
-        eaten,
-        normalized,
-      ) !=
-      null;
+  final medium = discardedMediumOf(recipe, eaten, normalized);
+  final mediumLine = medium != null;
   final held = mediumHolds.contains(outcome.hold);
   final keepTyped = typed && (sameAmount || mediumLine);
   // The weight the decision derives. A line with NO amount has none
@@ -12848,7 +12987,18 @@ derivedFor(
   // 0 g `unmeasured`, "eaten part counted"), an unheld line keeps the
   // engine's 0 g, left where it is (API.md). An amount-less line never
   // has an eaten part > 0 (the engine's 0 g wins, [engineOutcome]).
-  final weight = eaten.amounts.isEmpty && edited.status == 'overridden'
+  // v53 (M52; verify2 D1): a confirm of a coat or frying oil M52 counts is
+  // the plan's grams — the engine's current weight of it ([_m52OnConfirm]).
+  final m52 =
+      edited.status == 'confirmed' &&
+          !typed &&
+          (medium == DiscardedMedium.coating ||
+              medium == DiscardedMedium.fryingOil)
+      ? _m52OnConfirm(db, recipe, placed)
+      : null;
+  final weight = m52 != null
+      ? m52.grams
+      : eaten.amounts.isEmpty && edited.status == 'overridden'
       ? null
       : outcome.grams;
   // RULE A — what a person's decision resolves, by hold kind (API.md):
@@ -13523,3 +13673,784 @@ applyDecisionToOthers(
     unavailable: unavailable,
   );
 }
+
+// ---------------------------------------------------------------------------
+// v53 (M52 — coats and frying-oil uptake; prep47 design_v2 §1 Q2 (a), Q3
+// (a), Q24 (b), §2 M52; critic F1, F2, F8, F13; the owner's 2026-10-07
+// standing authorization). RE-RULES checkpoint 9 Q2 ("dredging flour and
+// crumbs HELD until a coating fraction is set"), the 2026-10-03 (night) (1)
+// "the four fried dredges stay held", and amends the discarded-media zero
+// for frying oil ("no source gives a fraction"): USDA's FNDDS fried-food
+// recipes do, read from their `inputFoods` at the live steps M53/M55
+// (.claude/diag/2026-10-07/prep47/p3_read_figures.md — every figure below
+// is that table's READ figure, or its stated DERIVED one).
+
+/// One FNDDS recipe whose `inputFoods` were read: `b` g of breading (USDA
+/// 99995000) and `o` g of vegetable oil per `r` g of the raw `food` (a
+/// cooked ingredient brought to raw by protein, USDA's retention
+/// convention), as the flags print them.
+typedef _Fndds = ({
+  int id,
+  String description,
+  String food,
+  String b,
+  String o,
+  String r,
+});
+
+const _Fndds _breastFried = (
+  id: 2705975,
+  description:
+      'Chicken breast, fried, coated, prepared skinless, coating eaten, '
+      'from raw',
+  food: 'chicken breast',
+  b: '15',
+  o: '7',
+  r: '104.76',
+);
+const _Fndds _thighFried = (
+  id: 2706047,
+  description:
+      'Chicken thigh, fried, coated, prepared skinless, coating eaten, '
+      'from raw',
+  food: 'chicken thigh',
+  b: '15',
+  o: '7',
+  r: '98.39',
+);
+const _Fndds _wingFried = (
+  id: 2706065,
+  description: 'Chicken wing, fried, coated, from raw',
+  food: 'chicken wing',
+  b: '15',
+  o: '7',
+  r: '105.96',
+);
+const _Fndds _countryFried = (
+  id: 2705842,
+  description: 'Beef, steak, country fried',
+  food: 'beef steak',
+  b: '20',
+  o: '9',
+  r: '90.99',
+);
+const _Fndds _codFried = (
+  id: 2706244,
+  description: 'Fish, cod, fried',
+  food: 'cod',
+  b: '25',
+  o: '10',
+  r: '65',
+);
+const _Fndds _haddockFried = (
+  id: 2706258,
+  description: 'Fish, haddock, fried',
+  food: 'haddock',
+  b: '25',
+  o: '10',
+  r: '65',
+);
+const _Fndds _shrimpFried = (
+  id: 2706364,
+  description: 'Shrimp, fried',
+  food: 'shrimp',
+  b: '25',
+  o: '10',
+  r: '65',
+);
+const _Fndds _breastBaked = (
+  id: 2705980,
+  description: 'Chicken breast, baked, coated, skin / coating eaten',
+  food: 'chicken breast',
+  b: '10',
+  o: '2',
+  r: '125.77',
+);
+const _Fndds _legsBaked = (
+  id: 2705998,
+  description:
+      'Chicken leg, drumstick and thigh, baked, coated, skin / coating eaten',
+  food: 'chicken legs',
+  b: '10',
+  o: '2',
+  r: '129.02',
+);
+const _Fndds _codBaked = (
+  id: 2706243,
+  description: 'Fish, cod, baked or broiled, coated',
+  food: 'cod',
+  b: '15',
+  o: '4',
+  r: '81',
+);
+const _Fndds _porkCoated = (
+  id: 2705871,
+  description: 'Pork, chop, coated, lean only eaten',
+  food: 'pork chop',
+  b: '10',
+  o: '2',
+  r: '108.38',
+);
+const _Fndds _cauliflowerFried = (
+  id: 2710042,
+  description: 'Fried cauliflower',
+  food: 'cauliflower',
+  b: '50',
+  o: '12',
+  r: '39.58',
+);
+
+/// An analytical SR Legacy record a figure is DERIVED from (no
+/// `inputFoods` exist): P3's balance on its composition.
+typedef _Sr = ({int id, String description});
+
+const _Sr _squidFried = (
+  id: 171982,
+  description: 'Mollusks, squid, mixed species, cooked, fried',
+);
+const _Sr _friesSr = (
+  id: 170698,
+  description: 'Fast foods, potato, french fried in vegetable oil',
+);
+const _Sr _chipsSr = (
+  id: 19411,
+  description: 'Snacks, potato chips, plain, salted',
+);
+const _Sr _plantainsSr = (
+  id: 168200,
+  description: 'Plantains, yellow, fried, Latino restaurant',
+);
+const _Sr _tostadaSr = (id: 167525, description: 'Tostada shells, corn');
+
+/// A coat or uptake figure (`value`, as the flag prints it) and where it
+/// comes from: a READ FNDDS recipe or a DERIVED SR record; `standIn` when
+/// the food has no record of its own and is read as the source's.
+typedef _M52Figure = ({String value, _Fndds? read, _Sr? derived, bool standIn});
+
+_M52Figure _readFig(String value, _Fndds read, {bool standIn = false}) =>
+    (value: value, read: read, derived: null, standIn: standIn);
+
+_M52Figure _derivedFig(String value, _Sr derived, {bool standIn = false}) =>
+    (value: value, read: null, derived: derived, standIn: standIn);
+
+/// The record families a coated food is counted on (P3-A): the largest
+/// counted line on one of them is the food the coat is sized from.
+const List<String> _meatRecords = [
+  'Chicken,',
+  'Turkey,',
+  'Pork,',
+  'Beef,',
+  'Ham,',
+  'Fish,',
+  'Crustaceans,',
+  'Mollusks,',
+];
+
+/// The food a meat record names, as the M52 flags print it: "chicken
+/// breast", "chicken wings", "chicken", "cod", "shrimp", "beef".
+String _m52FoodName(String description) {
+  final d = description.toLowerCase();
+  final words = d.split(', ');
+  if (words.first == 'chicken') {
+    for (final (part, name) in const [
+      ('breast', 'chicken breast'),
+      ('thigh', 'chicken thigh'),
+      ('wing', 'chicken wings'),
+      ('leg', 'chicken legs'),
+    ]) {
+      if (RegExp('\\b$part').hasMatch(d)) {
+        return name;
+      }
+    }
+    return 'chicken';
+  }
+  return const {'fish', 'crustaceans', 'mollusks'}.contains(words.first) &&
+          words.length > 1
+      ? words[1].split(' ').first
+      : words.first;
+}
+
+/// The coat's shape (P3-A): C1 fried (a single dredge, or flour → egg →
+/// crumb), C1d a second dredge after the egg, C2 baked, C3 floured seafood
+/// fried, C5 a battered fish. C4 — a sautéed dusting — has no record and
+/// stays held.
+enum _CoatShape { c1, c1d, c2, c3, c5 }
+
+/// A sentence that dredges or coats ([_coatShapeOf]: the bake must come
+/// after it).
+final RegExp _coatsSentence = RegExp(r'\b(?:dredg|coat)');
+
+/// A sentence that bakes the food ("Bake until …", "bake the chicken") —
+/// never "keep warm in the oven" nor a roast ([_coatShapeOf]).
+final RegExp _bakesSentence = RegExp(r'\bbake\b');
+
+/// A second dredge after the egg: "Finally, coat with flour again" (0148),
+/// "Coat the steaks with flour again" (0304) — C1d.
+final RegExp _secondDredge = RegExp(
+  r'\b(?:coat|dredg)\w*\b[^.]*\bflour again\b',
+);
+
+/// A sentence putting a food in the oil ("add to hot oil", "place in the
+/// oil") — a frying sentence with [_fryVerb].
+final RegExp _intoOil = RegExp(r'\b(?:to|in|into) (?:the )?(?:hot )?oil\b');
+
+/// Whether [s] of [recipe] fries: the frying verb, a fat heated to a
+/// frying temperature or discarded, an oil heated for a shallow fry
+/// ([_heatsTheOil]) or a food put into the oil.
+bool _m52Fries(Recipe recipe, String s) =>
+    _fryVerb.hasMatch(s) ||
+    _heatsTheOil.hasMatch(s) ||
+    _intoOil.hasMatch(s) ||
+    _fats.values.any(
+      (fat) =>
+          fat.heatsToFry(s, () => _heatReading(recipe, s)) ||
+          fat.discards.hasMatch(s),
+    );
+
+/// The coat's shape in [recipe] for a food on [coated] (P3-A, critic F2):
+/// a recipe that fries reads C1 (C5 a fish a sentence batters; C3
+/// Mollusks or Crustaceans with no crumb line; C1d a second dredge) —
+/// unless a bake after the coat comes after its last frying sentence: the
+/// LAST cook of the coated food decides, so browned in oil then baked reads
+/// C2 (0118's cutlets; 0149's chicken, fried then baked). One that does not
+/// fry reads C2 when a sentence after the coat bakes, else null (C4: a
+/// sautéed dusting stays held).
+_CoatShape? _coatShapeOf(Recipe recipe, String coated) {
+  final all = _stepIndexOf(recipe).allSentences;
+  final coatAt = all.indexWhere(_coatsSentence.hasMatch);
+  var lastBake = -1;
+  var lastFry = -1;
+  for (final (i, s) in all.indexed) {
+    if (coatAt >= 0 && i > coatAt && _bakesSentence.hasMatch(s)) {
+      lastBake = i;
+    }
+    if (_m52Fries(recipe, s)) {
+      lastFry = i;
+    }
+  }
+  if (!_fries(recipe) || lastBake > lastFry) {
+    return lastBake >= 0 ? _CoatShape.c2 : null;
+  }
+  if (coated.startsWith('Fish,') && all.any((s) => s.contains('batter'))) {
+    return _CoatShape.c5;
+  }
+  if ((coated.startsWith('Mollusks,') || coated.startsWith('Crustaceans,')) &&
+      !_headsOf(recipe).any((h) => h == 'crumb' || h == 'panko')) {
+    return _CoatShape.c3;
+  }
+  return all.any(_secondDredge.hasMatch) ? _CoatShape.c1d : _CoatShape.c1;
+}
+
+/// k, the coat's carbohydrate per 100 g of the raw coated food, for
+/// [shape] on [coated] (p3_read_figures.md; per food where a same-food
+/// record exists, critic F8: the thigh's 6.10, the wing's 5.66).
+_M52Figure _coatFigure(_CoatShape shape, String coated) {
+  final d = coated.toLowerCase();
+  final chicken = d.startsWith('chicken');
+  return switch (shape) {
+    _CoatShape.c1 when chicken && d.contains('thigh') => _readFig(
+      '6.10',
+      _thighFried,
+    ),
+    _CoatShape.c1 when chicken && d.contains('wing') => _readFig(
+      '5.66',
+      _wingFried,
+    ),
+    _CoatShape.c1 => _readFig('5.73', _breastFried),
+    _CoatShape.c1d => _readFig('8.79', _countryFried),
+    _CoatShape.c2 when d.startsWith('fish') => _readFig('7.41', _codBaked),
+    _CoatShape.c2 when d.startsWith('pork') => _readFig('6.61', _porkCoated),
+    _CoatShape.c2
+        when chicken &&
+            !d.contains('breast') &&
+            RegExp(r'\b(?:leg|thigh|drumstick)').hasMatch(d) =>
+      _readFig('3.10', _legsBaked),
+    _CoatShape.c2 => _readFig('3.18', _breastBaked),
+    _CoatShape.c3 => _derivedFig('3.94', _squidFried),
+    _CoatShape.c5 => _readFig('15.38', _codFried),
+  };
+}
+
+/// A fried food's uptake class (P3-B, p3_read_figures.md): its `figure`
+/// (u, the oil it absorbs as a % of its raw weight; null for O1c, bone-in
+/// skin-on chicken, which absorbs none by USDA's own fat balance), its
+/// `name` in the flag, the `word` a frying sentence names it by, and
+/// whether it is a `meat` (counted only as a coat recipe's coated food).
+typedef _FriedClass = ({
+  _M52Figure? figure,
+  String name,
+  RegExp word,
+  bool meat,
+});
+
+/// The uptake class of a fried food on [description] whose line reads
+/// [item] (lower-cased) — or null when no record gives one (a dough, a
+/// fritter, falafel, tempeh, yuca: they stay 0). [coatHeld]: the recipe
+/// holds a dredge on it (beef: the read cube steak, else a stand-in);
+/// [shape]: its coat's (shrimp: C3 floured, O3, else battered, O2s);
+/// [chips]: the recipe's potatoes are chips (grated, or "chips").
+_FriedClass? _friedClassOf(
+  String description,
+  String item, {
+  required bool coatHeld,
+  required _CoatShape? shape,
+  required bool chips,
+}) {
+  final d = description.toLowerCase();
+  if (_meatRecords.any(description.startsWith)) {
+    _FriedClass meat(_M52Figure? figure, String word) => (
+      figure: figure,
+      name: _m52FoodName(description),
+      word: RegExp(word),
+      meat: true,
+    );
+    final breast = _readFig('6.68', _breastFried, standIn: true);
+    return switch (d) {
+      _ when d.startsWith('chicken') => meat(
+        d.contains('wing')
+            ? _readFig('6.61', _wingFried)
+            : d.contains('thigh')
+            ? _readFig('7.11', _thighFried)
+            : d.contains('meat and skin')
+            ? null
+            : _readFig('6.68', _breastFried),
+        r'\b(?:chicken|wings?|cutlets?|breasts?|thighs?)\b',
+      ),
+      _ when d.startsWith('beef') => meat(
+        _readFig('9.89', _countryFried, standIn: !coatHeld),
+        r'\b(?:beef|steaks?)\b',
+      ),
+      _ when d.startsWith('fish') => meat(
+        d.contains('cod')
+            ? _readFig('15.38', _codFried)
+            : d.contains('haddock')
+            ? _readFig('15.38', _haddockFried)
+            : breast,
+        r'\b(?:fish|cod|haddock|fillets?)\b',
+      ),
+      _ when d.startsWith('crustaceans, shrimp') => meat(
+        shape == _CoatShape.c3
+            ? _derivedFig('5.3', _squidFried)
+            : _readFig('15.38', _shrimpFried),
+        r'\bshrimp\b',
+      ),
+      _ when d.startsWith('mollusks') => meat(
+        _derivedFig('5.3', _squidFried),
+        r'\b(?:squid|calamari)\b',
+      ),
+      _ => meat(breast, r'\b(?:pork|chops?|cutlets?|crab|cakes?)\b'),
+    };
+  }
+  final words = '$item $d';
+  final potato = RegExp(r'\bpotato(?:es)?\b|\bfries\b');
+  return switch (words) {
+    _ when words.contains('sweet potato') => (
+      figure: _derivedFig('6.0', _friesSr, standIn: true),
+      name: 'sweet potatoes',
+      word: potato,
+      meat: false,
+    ),
+    _ when words.contains('potato') => (
+      figure: chips
+          ? _derivedFig('10.9', _chipsSr)
+          : _derivedFig('6.0', _friesSr),
+      name: 'potatoes',
+      word: potato,
+      meat: false,
+    ),
+    _ when words.contains('plantain') => (
+      figure: _derivedFig('5.5', _plantainsSr),
+      name: 'plantains',
+      word: RegExp(r'\bplantains?\b'),
+      meat: false,
+    ),
+    _ when words.contains('eggplant') => (
+      figure: _derivedFig('6.0', _friesSr, standIn: true),
+      name: 'eggplant',
+      word: RegExp(r'\beggplants?\b'),
+      meat: false,
+    ),
+    _ when words.contains('corn tortilla') => (
+      figure: _derivedFig('13.4', _tostadaSr),
+      name: 'corn tortillas',
+      word: RegExp(r'\btortillas?\b'),
+      meat: false,
+    ),
+    _ when words.contains('cauliflower') => (
+      figure: _readFig('30.32', _cauliflowerFried),
+      name: 'cauliflower',
+      word: RegExp(r'\bcauliflower\b'),
+      meat: false,
+    ),
+    _ => null,
+  };
+}
+
+/// O1c's basis (p3_read_figures.md): a bone-in skin-on chicken fried in the
+/// oil absorbs none of it net — USDA's skin-on fried legs carry less fat
+/// than the raw parts the engine already counts.
+const String o1cBasis =
+    'frying oil: 0 g — USDA FNDDS 2705996 recipe adds 7 g oil per 100 g, '
+    'but the fried skin-on parts carry less fat (17.2 g) than the raw parts '
+    'counted here: no net uptake';
+
+/// The flag of a coat sized by [figure] on the raw [name].
+String _coatFlag(_M52Figure figure, String name) {
+  final read = figure.read;
+  final source = read != null
+      ? 'USDA FNDDS ${read.id} recipe: ${read.b} g breading per ${read.r} g '
+            'raw ${read.food}'
+      : 'derived from USDA SR Legacy ${figure.derived!.id} '
+            '"${figure.derived!.description}"';
+  return 'approximation (coat: ${figure.value} g carbohydrate per 100 g of '
+      "the raw $name — $source; the dredge's excess not counted)";
+}
+
+/// One fried food's clause of an uptake flag.
+String _uptakeClause(_M52Figure figure, String name) {
+  final read = figure.read;
+  final whose = name.endsWith('s') ? "$name'" : "$name's";
+  final source = read != null
+      ? 'USDA FNDDS ${read.id} recipe: ${read.o} g oil per ${read.r} g raw '
+            '${read.food}'
+      : 'derived from USDA SR Legacy ${figure.derived!.id} '
+            '"${figure.derived!.description}"';
+  final standIn = figure.standIn
+      ? ' (no record for $name; read as '
+            '${read?.description ?? figure.derived!.description})'
+      : '';
+  return '${figure.value} % of the raw $whose weight — $source$standIn';
+}
+
+/// One row M52 counts ([_m52Plan]), `discarded` as a medium's kept part
+/// is: its `grams`, the `flag` its basis carries, the part `kept` outside
+/// the budget (a frying oil's kept part, a coat's part eaten outside the
+/// dredge), whether it is a `coat`, and whether its fried food absorbs
+/// none (`noNetUptake`, O1c).
+typedef _M52Row = ({
+  double grams,
+  String? flag,
+  double kept,
+  bool coat,
+  bool noNetUptake,
+});
+
+/// What M52 counts on the rows of [recipe] the engine weighs ([_m52Weighs]:
+/// `auto`, or a person's confirm with no typed grams — a pick or typed grams
+/// stand), read from [rows] as stored — a pure function of the recipe's
+/// text, its other rows and their records ([food]), never of the rows it
+/// rewrites, so [recomputeTotals] writes it on every path that totals a
+/// recipe and [gramBasisFor] re-reads the same answer:
+/// - THE COAT (Q2 a, P3-A): a line the engine holds `coating` counts f =
+///   min(1, B / Σ coat carbohydrate) of its dredge, B = k × the COATED
+///   FOOD's grams / 100 (the largest counted line on a meat, poultry or
+///   seafood record), the reached coat lines sharing B by their
+///   carbohydrate (dredge grams × the record's) — its written part eaten
+///   outside the dredge on top, its source the line's; k by the coat's
+///   shape ([_coatShapeOf], [_coatFigure]); a C5 batter's counted flour
+///   and starch come off B; nut and cheese layers and C4 dustings stay
+///   held. NOT a fraction of the line (CP9's "no blanket coating fraction"
+///   stands): f is the food's.
+/// - THE FRYING OIL (Q3 a, P3-B): a line the engine zeroes as frying oil
+///   counts u × the fried food's grams / 100 ([_friedClassOf]) on top of
+///   its kept part — the M49-marked pour-off too (F13) — capped at the line
+///   less that part, two oils of one fry split by their grams; the fried
+///   food is the coated food in a recipe that holds or counts a coat
+///   ([_shallowFries], Q24 b), plus every counted vegetable a frying
+///   sentence names (0255's chips beside its cod), else the counted foods
+///   its frying sentences name — never the largest protein.
+Map<int, _M52Row> _m52Plan(
+  SaltDatabase db,
+  Recipe recipe,
+  List<IngredientMatchRow> rows,
+  FdcFood? Function(int fdcId, IngredientLine line) food,
+) {
+  final lines = nutritionLines(recipe);
+  final at = <int, IngredientMatchRow>{
+    for (final r in rows)
+      if (r.position < lines.length && lines[r.position].raw == r.raw)
+        r.position: r,
+  };
+  // The candidates are read from the ROWS (RULE C: never every line's
+  // detectors, so a recompute of a reached recipe reads only these lines):
+  // an engine row held `coating`, or one it counted `discarded` — a frying
+  // oil, its kept part, a coat this plan budgeted.
+  final media = <int, DiscardedMedium?>{
+    for (final r in at.values)
+      if (_m52Weighs(r) &&
+          (r.hold == 'coating' ||
+              (r.hold == null && r.gramSource == GramSource.discarded.name)))
+        r.position: discardedMediumOf(
+          recipe,
+          lines[r.position],
+          normalizeItem(lineItemOf(lines[r.position])),
+        ),
+  };
+  final coats = [
+    for (final MapEntry(:key, :value) in media.entries)
+      if (value == DiscardedMedium.coating) key,
+  ]..sort();
+  final oils = [
+    for (final MapEntry(:key, :value) in media.entries)
+      if (value == DiscardedMedium.fryingOil) key,
+  ]..sort();
+  if (coats.isEmpty && oils.isEmpty) {
+    return const {};
+  }
+  bool counted(IngredientMatchRow r) =>
+      r.status != 'skipped' &&
+      r.status != 'unmatched' &&
+      r.hold == null &&
+      r.childRecipeId == null &&
+      r.fdcId != null &&
+      r.description != null &&
+      (r.grams ?? 0) > 0 &&
+      r.gramSource != GramSource.discarded.name &&
+      !(r.status == 'auto' && belowConfidenceGate(r.confidence));
+  bool engine(IngredientMatchRow? r) =>
+      r != null &&
+      _m52Weighs(r) &&
+      r.fdcId != null &&
+      r.description != null &&
+      r.childRecipeId == null &&
+      r.gramSource != GramSource.override.name;
+  double round2(double v) => double.parse(v.toStringAsFixed(2));
+  IngredientMatchRow? coated;
+  if (coats.isNotEmpty || _shallowFries(recipe)) {
+    for (final r in at.values) {
+      if (counted(r) &&
+          _meatRecords.any(r.description!.startsWith) &&
+          (coated == null ||
+              r.grams! > coated.grams! ||
+              (r.grams == coated.grams && r.position < coated.position))) {
+        coated = r;
+      }
+    }
+  }
+  final shape = coated == null
+      ? null
+      : _coatShapeOf(recipe, coated.description!);
+  final plan = <int, _M52Row>{};
+  if (coated != null && shape != null && coats.isNotEmpty) {
+    final figure = _coatFigure(shape, coated.description!);
+    var budget = double.parse(figure.value) * coated.grams! / 100;
+    if (shape == _CoatShape.c5) {
+      for (final r in at.values) {
+        if (counted(r) && _dredgeHeads.contains(_headsOf(recipe)[r.position])) {
+          final record = food(r.fdcId!, lines[r.position]);
+          budget -= r.grams! * (record?.nutrientsPer100g['205'] ?? 0) / 100;
+        }
+      }
+    }
+    final parts = <({int at, double dredge, double eaten, double cho})>[];
+    for (final i in coats) {
+      final r = at[i];
+      if (!engine(r) ||
+          (r!.hold != null && r.hold != 'coating') ||
+          r.description!.startsWith('Nuts,') ||
+          r.description!.startsWith('Cheese,')) {
+        continue;
+      }
+      final record = food(r.fdcId!, lines[i]);
+      final full = record == null
+          ? null
+          : lineGrams(db, lines[i], record, recipe: recipe);
+      if (full == null) {
+        continue;
+      }
+      final base = engineOutcome(
+        recipe,
+        lines[i],
+        record!,
+        full,
+        decided: true,
+      );
+      if (base.hold != 'coating') {
+        continue;
+      }
+      final eaten = base.grams ?? 0;
+      parts.add((
+        at: i,
+        dredge: max(full.grams - eaten, 0),
+        eaten: eaten,
+        cho: (record.nutrientsPer100g['205'] ?? 0) / 100,
+      ));
+    }
+    final carbs = parts.fold<double>(0, (n, p) => n + p.dredge * p.cho);
+    if (carbs > 0) {
+      final f = min(1, max(budget, 0) / carbs);
+      final flag = _coatFlag(figure, _m52FoodName(coated.description!));
+      for (final p in parts) {
+        plan[p.at] = (
+          grams: round2(f * p.dredge + p.eaten),
+          flag: flag,
+          kept: p.eaten,
+          coat: true,
+          noNetUptake: false,
+        );
+      }
+    }
+  }
+  final fryers = [
+    for (final i in oils)
+      if (engine(at[i]) &&
+          at[i]!.hold == null &&
+          at[i]!.gramSource == GramSource.discarded.name)
+        i,
+  ];
+  if (fryers.isEmpty) {
+    return plan;
+  }
+  final all = _stepIndexOf(recipe).allSentences;
+  final chips = all.any(RegExp(r'\bchips\b').hasMatch);
+  final title = recipe.title.toLowerCase();
+  final friedTitle = RegExp(r'\bfried\b').hasMatch(title);
+  final fried = <({_FriedClass kind, double grams})>[];
+  _FriedClass? kindOf(IngredientMatchRow r) {
+    final line = lines[r.position];
+    final words =
+        '${normalizeItem(lineItemOf(line))} ${line.raw.toLowerCase()}';
+    return _friedClassOf(
+      r.description!,
+      words,
+      coatHeld: coats.isNotEmpty,
+      shape: shape,
+      chips: chips || RegExp(r'\b(?:grated|shredded)\b').hasMatch(words),
+    );
+  }
+
+  if (coated != null) {
+    final kind = kindOf(coated);
+    if (kind != null) {
+      fried.add((kind: kind, grams: coated.grams!));
+    }
+  }
+  for (final r in at.values) {
+    if (identical(r, coated) || !counted(r)) {
+      continue;
+    }
+    final kind = kindOf(r);
+    if (kind == null || (kind.meat && coated != null)) {
+      continue;
+    }
+    // A frying sentence names it: the verb or "into the oil" — a vegetable
+    // also by a sentence naming it with the oil ("Combine the potatoes,
+    // oil …", 0317; "Transfer the potatoes and remaining 1 cup oil to the
+    // skillet", 0215's pour-off the M49 mark found) — or a "Fried …" title
+    // does (0706 Plátanos Maduros (Fried Sweet Plantains) prints no steps).
+    if ((friedTitle && kind.word.hasMatch(title)) ||
+        all.any(
+          (s) =>
+              kind.word.hasMatch(s) &&
+              (_fryVerb.hasMatch(s) ||
+                  _intoOil.hasMatch(s) ||
+                  (!kind.meat && RegExp(r'\boil\b').hasMatch(s))),
+        )) {
+      fried.add((kind: kind, grams: r.grams!));
+    }
+  }
+  if (fried.isEmpty) {
+    return plan;
+  }
+  final absorbs = [
+    for (final f in fried)
+      if (f.kind.figure != null) f,
+  ];
+  final uptake = absorbs.fold<double>(
+    0,
+    (n, f) => n + double.parse(f.kind.figure!.value) * f.grams / 100,
+  );
+  final clauses = [
+    for (final f in absorbs) _uptakeClause(f.kind.figure!, f.kind.name),
+  ];
+  final flag = absorbs.isEmpty
+      ? null
+      : 'approximation (frying oil absorbed: ${clauses.join('; ')})';
+  final pans = <({int at, double full, double kept})>[];
+  for (final i in fryers) {
+    final r = at[i]!;
+    final record = food(r.fdcId!, lines[i]);
+    final full = record == null
+        ? null
+        : lineGrams(db, lines[i], record, recipe: recipe);
+    if (full == null) {
+      continue;
+    }
+    final kept =
+        engineOutcome(recipe, lines[i], record!, full, decided: true).grams ??
+        0;
+    pans.add((at: i, full: full.grams, kept: kept));
+  }
+  final oil = pans.fold<double>(0, (n, p) => n + p.full);
+  for (final p in pans) {
+    final absorbed = oil <= 0
+        ? 0.0
+        : min(uptake * p.full / oil, max(p.full - p.kept, 0));
+    plan[p.at] = (
+      grams: absorbed > 0 ? round2(p.kept + absorbed) : p.kept,
+      flag: absorbed > 0 ? flag : null,
+      kept: p.kept,
+      coat: false,
+      noNetUptake: absorbs.isEmpty,
+    );
+  }
+  return plan;
+}
+
+/// [_m52Plan]'s answer for [row] of [recipe] as stored — null unless its
+/// line is a coat or a frying oil, the row one M52 weighs ([_m52Weighs])
+/// counted with these grams (the flag reads only grams it wrote).
+_M52Row? _m52RowOf(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row,
+) {
+  if (!_m52Weighs(row) || row.hold != null || row.grams == null) {
+    return null;
+  }
+  final medium = discardedMediumOf(
+    recipe,
+    line,
+    normalizeItem(lineItemOf(line)),
+  );
+  if (medium != DiscardedMedium.coating &&
+      medium != DiscardedMedium.fryingOil) {
+    return null;
+  }
+  final plan = _m52Plan(
+    db,
+    recipe,
+    db.ingredientMatchesFor(recipe.id),
+    (id, l) => knownFood(db, id, line: l),
+  )[row.position];
+  return plan == null || (plan.grams - row.grams!).abs() > 0.05 ? null : plan;
+}
+
+/// A row M52 weighs: the engine's (`auto`), or a person's CONFIRM with no
+/// grams typed — "this food, the engine's CURRENT weight" (RULE A), so a
+/// Confirm keeps the plan's grams as it keeps rule B1's parts ([withParts];
+/// verify2 D1: a Confirm of karaage's budgeted cornstarch wrote 0 g poured
+/// away). A pick is one record at the line's weight; typed grams stand.
+bool _m52Weighs(IngredientMatchRow r) =>
+    r.status == 'auto' ||
+    (r.status == 'confirmed' && r.gramSource != GramSource.override.name);
+
+/// What a person's CONFIRM of [placed] — a coat or frying-oil line, no
+/// grams typed — resolves to ([derivedFor]): [_m52Plan] on the stored rows
+/// with [placed] as the confirm leaves it (no hold, `discarded`); null when
+/// M52 counts nothing on the line.
+_M52Row? _m52OnConfirm(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientMatchRow placed,
+) => _m52Plan(
+  db,
+  recipe,
+  [
+    for (final r in db.ingredientMatchesFor(recipe.id))
+      if (r.position != placed.position) r,
+    placed.copyWith(gramSource: GramSource.discarded.name, clearHold: true),
+  ],
+  (id, l) => knownFood(db, id, line: l),
+)[placed.position];

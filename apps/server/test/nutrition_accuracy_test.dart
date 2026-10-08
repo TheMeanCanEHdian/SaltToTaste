@@ -1492,7 +1492,15 @@ void main() {
       ]) {
         final (_, medium, row) = lineOf(recipe, raw);
         expect(medium, kind, reason: raw);
-        expect(row.grams, 0, reason: raw);
+        // RE-PIN (M52 batch, v53, Q3 a): a frying oil counts what its fried
+        // food absorbs — 0116's 793.79 g of breasts × O1a 6.68 % (USDA
+        // FNDDS 2705975) = 53.02 g, still `discarded`, unheld; the brine
+        // and the soak stay 0 g.
+        expect(
+          row.grams?.toStringAsFixed(2),
+          kind == DiscardedMedium.fryingOil ? '53.02' : '0.00',
+          reason: raw,
+        );
         expect(row.gramSource, 'discarded', reason: raw);
         expect(row.hold, isNull);
       }
@@ -1579,7 +1587,10 @@ void main() {
     test('400 g or more of oil is frying oil whatever the steps say (audit '
         '3: 29 lines; a 4-cup rule found 21)', () {
       final (line, _, row) = lineOf('orange', '3 cups vegetable oil');
-      expect(row.grams, 0);
+      // RE-PIN (M52 batch, v53, Q3 a): zeroed as frying oil, it counts what
+      // the cornstarch-tossed beef absorbs — 680.39 g × O1d 9.89 % (USDA
+      // FNDDS 2705842, a flagged stand-in) = 67.29 g.
+      expect(row.grams?.toStringAsFixed(2), '67.29');
       expect(row.gramSource, 'discarded');
       final recipe = recipes['orange']!;
       final item = normalizeItem(line.item!);

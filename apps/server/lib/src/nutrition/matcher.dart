@@ -711,7 +711,21 @@ const Map<String, String> _synonyms = {
 /// no lines) counts the base whose title shares the most words (the host on
 /// a tie), flagged. A line WITH an amount reads no served-with marker and
 /// no whole batch (the critic's F7 gate).
-const int matcherVersion = 51;
+///
+/// v52 (the Matcher v53 commit, batch M52 — coats and frying-oil uptake;
+/// the owner's 2026-10-07 standing authorization, prep47 design_v2 Q2 (a),
+/// Q3 (a) and Q24 (b), re-ruling checkpoint 9 Q2, the 2026-10-03 (night)
+/// (1) "the four fried dredges stay held" and, for a coated food browned
+/// in the oil, the 2026-10-03 R4 "shimmering stays non-evidence"; zero
+/// requests; engine `_m52Plan`): a held dredge counts its share of a coat
+/// budget sized from the coated food (k by the coat's shape from USDA
+/// FNDDS fried and baked coated recipes' read `inputFoods`, the last cook
+/// deciding), nut and cheese layers and sautéed dustings still held; a
+/// zeroed frying oil counts what its fried food absorbs (u per food, read
+/// or derived, flagged) on top of its kept part, capped at the line; an oil
+/// of ¼ cup or more heated for a coated food browned in it is a frying oil
+/// (five lines), and its food's crumbs a held coat.
+const int matcherVersion = 52;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

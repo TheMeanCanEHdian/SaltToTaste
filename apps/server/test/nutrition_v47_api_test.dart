@@ -232,7 +232,11 @@ void main() {
         // RE-PIN (M47 batch, v49 Q23 (a)): nothing was promised (was
         // before − 1); the corn left the open recipes all the same.
         expect(after.finishable, before.finishable);
-        expect(after.open, before.open - 1);
+        // RE-PIN (M52 batch, v53): so did crab cakes — its Old Bay was its
+        // last open line (|8 the coat budget, |9 its frying oil since
+        // Q24 b), so the PUT's own pick completes it (was before − 1).
+        expect(statusOf(crab.id), 'complete');
+        expect(after.open, before.open - 2);
         bannerHolds();
       });
 

@@ -1626,7 +1626,9 @@ oil" (1193 Crispy Tempeh's cup), is counted — 28 g of the 224 —, the
 rest discarded; 0040's dressing oil, 0500's rice oil and 0672's coconut
 oil, which no sentence heats to a temperature or discards, stay counted
 (the fritter oils of 0674/0675 too until matcher v31, which holds them
-`ambiguous_medium`). Since matcher v31 a same-food "plus" part the steps
+`ambiguous_medium`). Since matcher v53 (M52) a frying oil also counts
+what its fried food absorbs, on top of its kept part, and an oil heated
+for a coated food browned in it is a frying oil (the v53 paragraph below). Since matcher v31 a same-food "plus" part the steps
 eat in pieces after the fat's LAST discard sentence is the eaten part
 when those pieces total it — 0042 Almond-Crusted Chicken's "¾ cup plus 2
 tablespoons vegetable oil": "Discard the oil …", then "Heat 1 tablespoon
@@ -2301,7 +2303,10 @@ line's part set out in the coat's dish is the dredge's: 0206's "¼ cup plus
 6 tablespoons" flour holds with its 6 tablespoons whisked into the egg
 whites as the eaten part. Held until the server's `coatingFraction` switch
 — null, no figure set — gives the share a dredged
-food keeps), `partial_pour_away` (since v22, Q4: a line of a braising
+food keeps; since matcher v53 (M52) the engine's own row counts its share
+of a coat budget sized from the coated food, unheld — sautéed dustings,
+coats with no meat line and nut or cheese layers stay held: the v53
+paragraph below), `partial_pour_away` (since v22, Q4: a line of a braising
 liquid — the sentence before the strain that names it and opens "whisk"
 or "bring", the food added ("add", "arrange") in the next sentence — that
 is strained after cooking ("cooking liquid through … strainer") and of
@@ -3220,6 +3225,142 @@ byte-equal as rows (their change is the accounting); 9 recipes partial →
 complete (997 → 1,006); the partial recipes with nothing to review 9 → 0.
 Deploy note: matcherVersion 51 stales every recipe; a zero-request sweep
 recomputes the library.
+
+**Since matcher v53 (batch M52, matcherVersion 52 — coats and frying-oil
+uptake; prep47 design_v2 §1 Q2 (a), Q3 (a) and Q24 (b), §2 "M52", critic
+F1, F2, F8 and F13, decided under the owner's 2026-10-07 standing
+authorization; zero requests). RE-RULES checkpoint 9 Q2 ("dredging flour
+and crumbs HELD until a coating fraction is set"), the 2026-10-03 (night)
+(1) ("the four fried dredges … STAY HELD"), and, for a coated food browned
+in the oil, the 2026-10-03 R4 "shimmering/smoking stays non-evidence";
+AMENDS the discarded-media zero for frying oil, whose reason was "no
+source gives a fraction".** USDA's FNDDS fried and baked coated recipes
+give one: their `inputFoods` (breading 99995000, vegetable oil, the meat),
+read at the live steps M53 and M55 (the running live total 137; snapshot
+22), are transcribed in `.claude/diag/2026-10-07/prep47/p3_read_figures.md`
+— every k and u below is that table's READ figure unless marked derived
+(an analytical SR record with no `inputFoods`). The engine rewrites the
+coat and frying-oil rows it weighs — its OWN (`auto`) rows and a person's
+CONFIRM with no grams typed — wherever a recipe is totalled (a compute, a
+person's write, an apply-to-all target), from the other rows as they
+stand. A confirm is "this food at the engine's current weight" (RULE A):
+it keeps the budget's or the uptake's grams the GET showed, as a confirm
+keeps rule B1's two parts, and follows the coated or fried food's grams as
+the engine's row would (a confirmed row is written only while it is still
+the row read); a pick is one record at the line's weight (a pick on a coat
+keeps its `coating` hold), and typed grams are the person's.
+
+(1) **The coat (Q2 a).** A line the engine holds `coating` counts
+f = min(1, B / Σ coat carbohydrate) of its dredge, B = k × the coated
+food's grams / 100 grams of coat CARBOHYDRATE. The coated food is the
+largest counted line on a meat, poultry or seafood record (descriptions
+opening Chicken, Turkey, Pork, Beef, Ham, Fish, Crustaceans, Mollusks).
+The recipe's reached coat lines share B by their carbohydrate (dredge
+grams × the record's nutrient 205), so a fresh-bread breading counts more
+grams than a flour dredge for the same carbohydrate; a written part eaten
+outside the dredge counts on top, as before. The row is unheld,
+`gram_source: discarded` (as a held medium's eaten part already is: the
+excess is thrown away, the kept part counted — and the recompute finds the
+plan's rows by it, reading no other line's detectors), its basis
+`discarded in cooking — only the coat on the food counted` (a part eaten
+outside the dredge: `only "{part}" and the coat on the food counted`, or
+`only the part the recipe keeps and the coat on the food counted`) with
+the flag
+`· approximation (coat: {k} g carbohydrate per 100 g of the raw {food} —
+USDA FNDDS {id} recipe: {b} g breading per {R} g raw {food}; the dredge's
+excess not counted)` (C3: `… — derived from USDA SR Legacy 171982
+"Mollusks, squid, mixed species, cooked, fried"; …`). f is the food's,
+never a fraction of the line: checkpoint 9's "no blanket coating fraction"
+stands (the `coatingFraction` switch stays null).
+
+| shape | when (read from the recipe) | k | source |
+|---|---|---|---|
+| C1 fried | the recipe fries | 5.73 (breast and any other food), thigh 6.10, wing 5.66 | FNDDS 2705975, 2706047, 2706065 |
+| C1d | a second dredge after the egg ("coat with flour again", 0148, 0304) | 8.79 | FNDDS 2705842 |
+| C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61 | FNDDS 2705980, 2705998, 2706243, 2705871 |
+| C3 | fried Mollusks or Crustaceans with no crumb line | 3.94 | SR 171982, derived |
+| C5 | a fried fish a sentence batters; the recipe's counted flour and starch come off B | 15.38 | FNDDS 2706244 |
+
+Stay held (20 rows): C4 sautéed dustings (neither fried nor baked —
+piccata, marsala, saltimbocca, meunière, francese, seared salmon and pork),
+coats with no meat line (eggplant parmesan, oven-fried onion rings), and
+nut and cheese layers (a Nuts or Cheese record).
+
+(2) **The frying oil (Q3 a).** A line the engine zeroes as frying oil
+counts u × the fried food's grams / 100 ON TOP of its kept part (critic
+F13: the M49-marked pour-off too — horseradish-crusted-beef-tenderloin|3
+23.07 kept + 10.9 % × its 137.78 g potato = 38.09 g), capped at the line
+less that part; two oils of one fry split by their grams (1133 Chicken Francese's
+olive and vegetable oils). The fried food: in a recipe that holds a coat or
+shallow-fries a coated food ((3) below) the coated food, plus every counted
+vegetable a frying sentence names (0255's chips beside its cod); otherwise
+the counted foods a frying sentence names — the frying verb or "to / in /
+into (the) (hot) oil", a vegetable also any sentence naming it with "oil"
+("Combine the potatoes, oil …", 0317), or a "Fried …" title (0706
+Plátanos Maduros prints no steps) — never the largest protein (pastelon's
+beef, steak-frites' rib-eye and the tostadas' pork are not fried in it).
+
+| class | u, % of the raw food | source |
+|---|---|---|
+| O1a coated skinless breast or cutlet | 6.68 | FNDDS 2705975 |
+| O1b thigh | 7.11 | FNDDS 2706047 |
+| O1w wings | 6.61 | FNDDS 2706065 |
+| O1c bone-in skin-on chicken | 0 | FNDDS 2705996, read fat balance (below) |
+| O1d beef | 9.89 | FNDDS 2705842 (a beef with no held dredge — 0536's cornstarch-tossed strips — a stand-in) |
+| O1e pork; crab, salmon and any other food | 6.68 | FNDDS 2705975, stand-in |
+| O2 battered cod, haddock | 15.38 | FNDDS 2706244, 2706258 |
+| O2s battered shrimp | 15.38 | FNDDS 2706364 |
+| O3 floured squid or shrimp (a C3 coat) | 5.3 | SR 171982, derived |
+| O4 potatoes | 6.0 | SR 170698, derived |
+| O4c chips (a grated or shredded potato, or steps saying "chips") | 10.9 | SR 19411 "Snacks, potato chips, plain, salted" (FNDDS 2709422's one input), derived |
+| O4p plantains | 5.5 | SR 168200, derived |
+| eggplant, sweet potatoes | 6.0 | SR 170698, stand-in |
+| O5 battered cauliflower | 30.32 | FNDDS 2710042 |
+| O6 corn tortillas | 13.4 | SR 167525, derived |
+
+The flag: `· approximation (frying oil absorbed: {u} % of the raw {food}'s
+weight — USDA FNDDS {id} recipe: {o} g oil per {R} g raw {food})`, derived
+`… — derived from USDA SR Legacy {id} "{description}"`, a stand-in adding
+` (no record for {food}; read as {record})`, several fried foods joined by
+"; "; the basis `discarded in cooking — only the oil the fried food absorbs
+counted` (with a kept part `only "{part}" and the oil the fried food
+absorbs counted`, or `only "{part}", the {kept} the steps keep and the oil
+the fried food absorbs counted`). O1c's basis, 0 g: `frying oil: 0 g — USDA
+FNDDS 2705996 recipe adds 7 g oil per 100 g, but the fried skin-on parts
+carry less fat (17.2 g) than the raw parts counted here: no net uptake`
+(crispy-fried-chicken|7, easier-fried-chicken|10). Stay 0: doughs and
+batters fried whole (doughnuts, struffoli, falafel, pakoras, lumpia),
+tempeh (its 28 g kept part counted), confit, yuca (no nutrients), and the
+strained-and-kept shallot oil.
+
+(3) **Q24 (b) — a coated food browned in the oil.** An oil of ¼ cup or
+more (or a line the mass rule could zero) that a sentence heats after a
+sentence coating a food in flour, starch or crumbs, one of the next three
+sentences browning, is that food's frying oil (engine `_shallowFries`; a
+sauté's "Heat 2 tablespoons oil" is none): exactly five lines —
+stuffed-chicken-cutlets-with-ham-and-cheddar|12 (its eaten tablespoon
+kept), chicken-katsu|4, easy-salmon-cakes|11, maryland-crab-cakes|9 (from
+`ambiguous_medium`) and best-chicken-parmesan|19 "⅓ cup vegetable oil"
+(0415, katsu's twin: coated in crumbs, the oil heated "until shimmering",
+the cutlets cooked "until … deep golden brown"; the design's list of four
+came from a probe of oils of 100 g or more, and 0415's is 74.67 g — the
+fifth oil was ruled in under the standing authorization). The dredge
+cascade (critic F1): katsu|0 "2 cups panko" is now a held dredge,
+budgeted C1 (118.29 → 63.19 g); easy-salmon-cakes|0 is no dredge (its
+first amount, 3 tablespoons, is under ¼ cup) and is byte-equal — held, its
+C1 budget would give f = 1 (32.49 g carbohydrate against the ¾ cup's
+31.93). Stuffed-chicken-cutlets|10 and |13 read C2 by the last cook.
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 22, main and
+`--reverse-parents` byte-identical): calls 0, staleAfter 0, sectionsStale
+0, kcalCheck 0, sections 143; vs the v52 rows exactly 70 rows differ, all
+`auto`, 0 section rows: 31 coat rows +4,504.08 kcal, the katsu cascade
+−217.66, 30 uptake rows +16,474.71, 2 O1c rows (basis only), horseradish|3
++135.19, the five Q24 oils −2,495.76; +18,400.56 kcal per batch; 16
+recipes partial → complete (1,006 → 1,022), none down; buckets `coating`
+51 → 20, `ambiguous_medium` 3 → 2, check 189 → 157. Deploy note:
+matcherVersion 52 stales every recipe; a zero-request sweep recomputes the
+library.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

@@ -3608,6 +3608,34 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v53 (batch M52): coats and frying-oil uptake on
+  the READ FNDDS figures (prep47 Q2 (a), Q3 (a), Q24 (b); built under the
+  standing authorization).** RE-RULES CP9 Q2 and the 2026-10-03 (1) held
+  dredges, and amends the discarded-media zero for frying oil. Every k and u
+  is the figure of p3_read_figures.md (the inputFoods read at M53/M55 with
+  a protein-conservation raw basis); the SR analytical shapes stay derived
+  and are flagged so. OWNER CONFIRMATION at the gate (closer 1's ruling,
+  the verifier's round 1 D2): the brief's Q24 gate said "exactly four oils
+  plus two cascade rows" but the data gives FIVE oils and ONE cascade row —
+  best-chicken-parmesan|19 meets the trigger as worded (coated cutlets
+  browned in ⅓ cup oil) exactly as chicken-katsu does, and
+  easy-salmon-cakes|0's panko is not a shipped dredge (and would land at
+  the same grams held); the trigger is the rule, the design's list was a
+  search result. Other kept deviations, each disclosed: budgeted coat rows
+  are written `gram_source: discarded` so the recompute finds the plan's
+  rows (grams unaffected); easier-fried-chicken|8 reads C2 by the last-cook
+  rule (45.60 g, not P3's C1 82.0); fish-and-chips|1 lands a different oil
+  record on a fresh DB than in the snapshot (the uptake the same). The
+  library gains +18,400.6 kcal per batch on 70 rows; 16 recipes complete
+  (1,006 → 1,022); the coating holds fall 51 → 20. Unpinned because no
+  corpus row reaches them: the wing coat k 5.66 and eight record fields no
+  flag prints. DEPLOY FINDING: the live DB still carried snapshot 20's
+  caches (never seeded with snapshots 21 and 22) — the M47 sibling reads and
+  every v53 coat figure need those details, so the live caches are seeded
+  from snapshot 22 (INSERT OR IGNORE, the key untouched) before the v53
+  sweep; the v49–v52 sweeps ran at 0 requests on search-hit nutrients where
+  a detail was missing, which the bucket comparison cannot see — the v53
+  sweep's full recompute settles every row on the detail figures.
 - **2026-10-08 — matcher v52 (batch M51): references with no amount, server
   + app (prep47 Q8, Q8b, Q9, Q22, Q15 (iii); built under the standing
   authorization; both copy deltas approved 2026-10-07).** RE-RULES prep41

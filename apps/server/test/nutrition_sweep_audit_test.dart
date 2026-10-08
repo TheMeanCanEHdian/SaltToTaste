@@ -1142,9 +1142,28 @@ void main() {
     // cooked white rice', 2709768 in 'bean sprouts', 2709803 in 'radishes',
     // 2747663 in 'serrano chile'), four differing in some digit (171033,
     // 2707150, 2708422, 2747663 — e.g. carbohydrate 20.97 / 21.0): compared
-    // 473 -> 479, differ 358 -> 362.
-    expect(compared, 479);
-    expect(differ, 362);
+    // 473 -> 479, differ 358 -> 362. Matcher v53 (batch M52) recorded from
+    // snapshot 22 the 12 searches and 3 details its whole-recipe pins read
+    // (japanese eggplants, prepared horseradish, cube steaks, peanut oil,
+    // globe eggplant, whole-milk or part-skim mozzarella cheese, fontina
+    // cheese, plain greek yogurt, very ripe black plantains, table salt for
+    // curing, prosciutto slices, dry vermouth or white wine; 2259794,
+    // 172233, 2710817): each detail a recorded hit (2259794 in 'whole
+    // milk', 172233 in 'herb', 2710817 in 'very ripe bananas'), two
+    // differing in some digit (2259794 protein 8.77888 / 8.78, 2710817
+    // carbohydrate 30.95215 / 31.0): compared 479 -> 482, differ 362 -> 364.
+    // Its closer round 2 (verify2 D2) recorded from snapshot 22 the 8
+    // searches and 1 detail its new whole-recipe pins read (heads garlic,
+    // plain melba toast, boneless center-cut or loin pork chops, sweet
+    // pickle relish, peanut or vegetable oil for frying, leaves bibb lettuce,
+    // squid, jarred banana peppers; 168561): 168561 is a recorded hit ('sweet
+    // paprika', 'sweet marsala', 'dill or sweet pickles', 'sweet pickle
+    // relish') and the recorded 168429 is now a hit in 'leaves bibb
+    // lettuce', both differing in some digit (168561 carbohydrate 35.06 /
+    // 35.1; 168429 nutrient 430 102.3 / 102.0): compared 482 -> 484,
+    // differ 364 -> 366.
+    expect(compared, 484);
+    expect(differ, 366);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -304,13 +304,12 @@ void main() {
           proseSectionsReadBy(stored(_chraime), ResolverMemo(db)),
           isEmpty,
         );
-        // RE-PIN (M51 batch, v52, matcherVersion 51): its stamp in the v52
-        // replay of snapshot 21 (was 1c979a6b…, the M49 stamp at
-        // matcherVersion 50; v52 also hashes a reference recipe's group
-        // headings — rule SW reads a CONDIMENTS one).
+        // RE-PIN (M52 batch, v53, matcherVersion 52): its stamp in the v53
+        // replay of snapshot 22 (was 852f591a…, the M51 stamp at
+        // matcherVersion 51 in the v52 replay; the version alone moves it).
         expect(
           ingredientsHashOf(stored(_chraime), ResolverMemo(db)),
-          '852f591a148f5d1c1cb906cc1d5a550fe07c7011fcc3f14dfd9e3308c2e1328a',
+          '07183db370d582d1af3c2d954e2e5702ce6bb0413b59666320d3c64099118916',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

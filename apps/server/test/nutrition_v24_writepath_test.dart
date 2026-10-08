@@ -561,7 +561,15 @@ void main() {
       wp.saveRecipe(db, r);
       await matchAndCompute(db, provider, r);
       final at = nutritionLines(r).indexWhere((l) => l.raw == flour);
-      expect(db.ingredientMatchesFor(r.id)[at].hold, 'coating');
+      // RE-PIN (M52 batch, v53): the engine's row counts the C1d coat
+      // budget, unheld (144.06 g, `discarded`); the pick derives the hold.
+      expect(
+        (
+          db.ingredientMatchesFor(r.id)[at].hold,
+          db.ingredientMatchesFor(r.id)[at].grams?.toStringAsFixed(2),
+        ),
+        (null, '144.06'),
+      );
       await applyMatchOverride(db, provider, r, at, {
         'raw': flour,
         'fdc_id': 789890,

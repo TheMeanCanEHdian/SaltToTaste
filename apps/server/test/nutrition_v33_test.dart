@@ -60,15 +60,22 @@ void main() {
     });
 
     test('a coat wholly eaten stays counted in every class: a coat set out '
-        'in a shallow dish with no excess sentence (0414 Marsala, 0115 '
-        'katsu, 1093 tacos, 1185 air-fried), a toss (0536)', () {
-      for (final (file, position, raw) in const [
-        ('0414-chicken-marsala.yaml', 1, '1 cup unbleached all-purpose flour'),
-        (
+        'in a shallow dish with no excess sentence (0414 Marsala, 1093 '
+        'tacos, 1185 air-fried), a toss (0536); since v53 (M52 Q24 b, the '
+        "critic's F1 cascade) not 0115 katsu, whose cutlets are browned in "
+        'the ¼ cup of oil heated for them — a shallow fry, so its panko is a '
+        "fried food's dredge", () {
+      // RE-PIN (M52 batch, v53): 0115 katsu moved out of this list (Q24 b).
+      expect(
+        mediumOf(
           '0115-chicken-katsu-crispy-pan-fried-chicken-cutlets.yaml',
           0,
           '2 cups panko bread crumbs',
         ),
+        DiscardedMedium.coating,
+      );
+      for (final (file, position, raw) in const [
+        ('0414-chicken-marsala.yaml', 1, '1 cup unbleached all-purpose flour'),
         ('1093-vegan-baja-style-cauliflower-tacos.yaml', 7, '1 cup panko'),
         ('1185-spicy-fried-chicken-sandwiches.yaml', 0, '1 cup panko'),
         ('0536-crispy-orange-beef.yaml', 2, '6 tablespoons cornstarch'),

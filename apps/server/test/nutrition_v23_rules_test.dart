@@ -279,21 +279,30 @@ void main() {
       }
     }, skip: skipIfNoCorpus);
 
-    test('NOT held: 0115 katsu, pan-fried by its title only (no step fries, '
-        'heats the oil to a temperature or discards it) and no excess '
-        'sentence; nor 0414 Marsala, a sauté whose coat no step shakes off. '
+    test('NOT held: 0414 Marsala, a sauté whose coat no step shakes off. '
         'Since v33 (the dredge-reach ruling) a baked or sautéed dredge that '
         'leaves an excess — 0122 Kiev, 0206, 0254, 0418 piccata, 0420, '
-        '0466 — is held (nutrition_v33_test.dart)', () {
-      for (final (file, raw) in const [
-        ('0414-chicken-marsala.yaml', '1 cup unbleached all-purpose flour'),
-        (
-          '0115-chicken-katsu-crispy-pan-fried-chicken-cutlets.yaml',
+        '0466 — is held (nutrition_v33_test.dart); since v53 (M52 Q24 b) '
+        "0115 katsu's panko is held too: its cutlets are browned in the ¼ "
+        'cup of oil heated for them, a shallow fry', () {
+      expect(
+        mediumOf(
+          loadCorpusRecipe('0414-chicken-marsala.yaml'),
+          '1 cup unbleached all-purpose flour',
+        ),
+        isNull,
+      );
+      // RE-PIN (M52 batch, v53): katsu was NOT held (pan-fried by its title
+      // only); the shallow fry of a coated food is a fry (Q24 b).
+      expect(
+        mediumOf(
+          loadCorpusRecipe(
+            '0115-chicken-katsu-crispy-pan-fried-chicken-cutlets.yaml',
+          ),
           '2 cups panko bread crumbs',
         ),
-      ]) {
-        expect(mediumOf(loadCorpusRecipe(file), raw), isNull, reason: file);
-      }
+        DiscardedMedium.coating,
+      );
     }, skip: skipIfNoCorpus);
 
     test('the oil a held dredge fries in is frying oil by the same '
@@ -350,12 +359,14 @@ void main() {
           normalizedItem: 'vegetable oil',
         )!.grams,
       );
+      // RE-PIN (M52 batch, v53, Q24 b): heated for the coated cakes it
+      // browns, 0288's oil is their frying oil (was ambiguous_medium).
       expect(
         mediumOf(
           loadCorpusRecipe('0288-maryland-crab-cakes.yaml'),
           '¼ cup vegetable oil',
         ),
-        DiscardedMedium.ambiguousMedium,
+        DiscardedMedium.fryingOil,
       );
       const cutlets = '0114-breaded-chicken-cutlets.yaml';
       const both = '1 tablespoon plus ¾ cup vegetable oil';
@@ -508,7 +519,19 @@ void main() {
             ),
         ],
       );
-      expect(mediumOf(noExcess, flour), isNull);
+      // RE-PIN (M52 batch, v53, Q24 b): a fourth — the coated cutlets
+      // browned in the ⅓-cup oils heated for them; with the browning gone
+      // too (the same stated exception), nothing holds it.
+      expect(mediumOf(noExcess, flour), DiscardedMedium.coating);
+      final noBrown = noExcess.copyWith(
+        steps: [
+          for (final step in noExcess.steps)
+            step.copyWith(
+              text: step.text.replaceAll('golden brown', 'cooked through'),
+            ),
+        ],
+      );
+      expect(mediumOf(noBrown, flour), isNull);
     }, skip: skipIfNoCorpus);
   });
 
@@ -518,10 +541,14 @@ void main() {
 
   group('G6 (Run 053 O8, S7): every eaten-in-part hold at the PUT', () {
     // (file, position, hold): the corpus's held lines, one per kind.
+    // RE-PIN (M52 batch, v53): the coat is 0418 piccata's sautéed dusting
+    // (C4, still held); 0148's fried dredge is counted by the coat budget
+    // since v53 (a person's pick on it still derives the hold:
+    // nutrition_v24_rules_test H5(a)).
     const kinds = [
       ('0799-sourdough-starter.yaml', 0, 'starter_discard'),
       ('0129-mahogany-chicken-thighs.yaml', 1, 'partial_pour_away'),
-      ('0148-crispy-fried-chicken.yaml', 8, 'coating'),
+      ('0418-chicken-piccata.yaml', 3, 'coating'),
     ];
 
     Future<(SaltDatabase, FixtureProvider, Recipe)> computed(
@@ -557,7 +584,7 @@ void main() {
     test('a pick alone keeps the hold through an amount edit too '
         '(editedDecisionRow): the compute writes what a pick on the edited '
         'line writes — overridden, no grams, the hold — never 0 g poured '
-        'away; 0148 stays partial (the edit synthesized, a stated '
+        'away; 0418 stays partial (the edit synthesized, a stated '
         'exception: the first amount changed)', () async {
       for (final (file, i, hold) in kinds) {
         final (db, provider, r) = await computed(file);
@@ -591,7 +618,7 @@ void main() {
           (row.status, row.grams, row.gramSource, row.hold),
           reason: file,
         );
-        if (file.startsWith('0148')) {
+        if (file.startsWith('0418')) {
           expect(db.nutritionFor(r.id)!.status, 'partial');
         }
       }
@@ -778,8 +805,10 @@ void _divided() {
     }
   }, skip: skipIfNoCorpus);
 
-  test("the matches GET names a divided dredge's eaten part (hold_note), "
-      'the row held with those grams: 1133 Francese #5', () async {
+  test("the matches GET names a divided dredge's eaten part — since v53 "
+      '(M52 Q2 a) counted with the coat budget, unheld: 1133 Francese #5 '
+      '(its held reading, the eaten part and its hold_note, is the engine '
+      "outcome's above)", () async {
     final db = wp.tempDb();
     final r = loadCorpusRecipe('1133-chicken-francese.yaml');
     wp.saveRecipe(db, r);
@@ -788,15 +817,21 @@ void _divided() {
     final items = ((await matchesBody(db, provider, r))['items']! as List)
         .cast<Map<String, Object?>>();
     final match = items[5]['match']! as Map<String, Object?>;
+    // RE-PIN (M52 batch, v53): was held `coating` at the eaten 2.51 g; now
+    // the eaten teaspoon + f × the ¾ cup's dredge: B = 793.79 g of breasts
+    // × C1 5.73 / 100 = 45.48 g carbohydrate → 61.35 g.
     expect(
       (match['hold'], match['hold_note'], match['gram_source']),
-      (
-        'coating',
-        '1 teaspoon flour is used outside the dredge, eaten',
-        'discarded',
-      ),
+      (null, null, 'discarded'),
     );
-    expect(match['grams'], closeTo(2.51, 0.01));
+    expect(match['grams'], closeTo(61.35, 0.01));
+    expect(
+      match['gram_basis'],
+      'discarded in cooking — only the part the recipe keeps and the coat on '
+      'the food counted · approximation (coat: 5.73 g carbohydrate per 100 g '
+      'of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading '
+      "per 104.76 g raw chicken breast; the dredge's excess not counted)",
+    );
   }, skip: skipIfNoCorpus);
 }
 
@@ -1062,7 +1097,9 @@ Recipe editedLine(Recipe r, String raw) {
   final next = raw
       .replaceFirst('4½ cups (24¾ ounces)', '4 cups (22 ounces)')
       .replaceFirst('1 cup soy sauce', '¾ cup soy sauce')
-      .replaceFirst('4 cups (20 ounces)', '5 cups (25 ounces)');
+      .replaceFirst('4 cups (20 ounces)', '5 cups (25 ounces)')
+      // RE-PIN (M52 batch, v53): G6's coat is 0418 piccata's dusting.
+      .replaceFirst('½ cup unbleached', '¾ cup unbleached');
   final parsed = parseIngredientLine(next);
   return r.copyWith(
     ingredients: [

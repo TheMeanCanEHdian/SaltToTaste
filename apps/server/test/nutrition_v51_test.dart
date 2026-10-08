@@ -224,16 +224,18 @@ _rows = [
     null,
   ),
   // Reserve (frying oil): 2 teaspoons tossed with the crumbs + the 1 tablespoon reserved
+  // — RE-PIN (M52 batch, v53, critic F13): the MARK's food takes its uptake on top,
+  // 23.07 + 137.78 g of grated potato × O4c 10.9 % (derived, SR 19411) = 38.09
   (
     '0215-horseradish-crusted-beef-tenderloin.yaml',
     null,
     3,
     '1 cup plus 2 teaspoons vegetable oil',
     2710180,
-    '23.07',
+    '38.09',
     null,
     null,
-    'discarded in cooking — only "plus 2 teaspoons vegetable oil" and the 1 tablespoon the steps keep counted',
+    'discarded in cooking — only "plus 2 teaspoons vegetable oil", the 1 tablespoon the steps keep and the oil the fried food absorbs counted · approximation (frying oil absorbed: 10.9 % of the raw potatoes\' weight — derived from USDA SR Legacy 19411 "Snacks, potato chips, plain, salted")',
     null,
   ),
   // Split (P4 §4): kept K, R the rendered fat, O the oil — K × R/(R+O) and K × O/(R+O)
@@ -483,8 +485,9 @@ const List<(String, int, String, String, String)> _slices = [
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    // RE-PIN (M51 batch, v52): matcherVersion 51 (was 50).
-    expect(matcherVersion, 51);
+    // RE-PIN (M52 batch, v53): matcherVersion 52 (was 51; M51's v52 re-pin
+    // was 50 → 51).
+    expect(matcherVersion, 52);
   });
 
   test(

@@ -220,6 +220,9 @@ void main() {
         // panko, 0114 ¾ cup flour, 0198 ⅔ cup cornstarch), the oil heated
         // to 375 degrees (0149 2 cups flour), "pan-fry" (0288 ¼ cup flour).
         '0042-almond-crusted-chicken-with-wilted-spinach-salad#3',
+        // v53 (M52 Q24 b, the critic's F1 cascade): katsu's cutlets browned
+        // in the ¼ cup of oil heated for them — a shallow fry.
+        '0115-chicken-katsu-crispy-pan-fried-chicken-cutlets#0',
         '0114-breaded-chicken-cutlets#3',
         '0149-easier-fried-chicken#8',
         '0198-crispy-pan-fried-pork-chops#0',
@@ -285,42 +288,45 @@ void main() {
     }, skip: skipIfNoCorpus);
   });
 
+  // RE-PIN (M52 batch, v53): 0148's and 0116's fried dredges are counted by
+  // the coat budget since v53, so the two held dredges here are sautéed
+  // dustings that stay held (C4): 0418 piccata's and 0421 saltimbocca's.
   test('a new medium hold is a LINE hold at every site: a group of one in '
       "the queue, out of another line's reach, never cleared by a decision, "
-      'and a confirm writes it poured away (0148 and 0116, their dredge '
+      'and a confirm writes it poured away (0418 and 0421, their dredge '
       'flour)', () async {
     final db = wp.tempDb();
     final provider = FixtureProvider(pending: pendingSearches);
-    final chicken = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
-    final cutlets = loadCorpusRecipe('0116-chicken-schnitzel.yaml');
+    final chicken = loadCorpusRecipe('0418-chicken-piccata.yaml');
+    final cutlets = loadCorpusRecipe('0421-chicken-saltimbocca.yaml');
     for (final r in [chicken, cutlets]) {
       wp.saveRecipe(db, r);
       await matchAndCompute(db, provider, r);
     }
-    final flour = db.ingredientMatchesFor(chicken.id)[8];
+    final flour = db.ingredientMatchesFor(chicken.id)[3];
     expect((flour.hold, flour.grams), ('coating', null));
     final key = flour.itemKey!;
-    expect(db.ingredientMatchesFor(cutlets.id)[0].hold, 'coating');
-    expect(db.ingredientMatchesFor(cutlets.id)[0].itemKey, key);
+    expect(db.ingredientMatchesFor(cutlets.id)[1].hold, 'coating');
+    expect(db.ingredientMatchesFor(cutlets.id)[1].itemKey, key);
     final groups = db
         .nutritionReviewGroups(limit: 200, offset: 0)
         .where((group) => group.itemKey == key)
         .toList();
     expect([for (final group in groups) group.lines], [1, 1]);
     final item =
-        ((await matchesBody(db, provider, chicken))['items']! as List)[8]
+        ((await matchesBody(db, provider, chicken))['items']! as List)[3]
             as Map;
     expect((item['others'], item['others_lines']), (0, 0));
-    await applyMatchOverride(db, provider, chicken, 8, {
-      'raw': nutritionLines(chicken)[8].raw,
+    await applyMatchOverride(db, provider, chicken, 3, {
+      'raw': nutritionLines(chicken)[3].raw,
       'confirmed': true,
     });
-    final confirmed = db.ingredientMatchesFor(chicken.id)[8];
+    final confirmed = db.ingredientMatchesFor(chicken.id)[3];
     expect(
       (confirmed.status, confirmed.grams, confirmed.gramSource),
       ('confirmed', 0, 'discarded'),
     );
-    expect(db.ingredientMatchesFor(cutlets.id)[0].hold, 'coating');
+    expect(db.ingredientMatchesFor(cutlets.id)[1].hold, 'coating');
     expect(
       db
           .nutritionReviewGroups(limit: 200, offset: 0)
@@ -340,7 +346,14 @@ void main() {
       wp.saveRecipe(db, r);
       await matchAndCompute(db, provider, r);
       expect(nutritionLines(r)[8].raw, flour);
-      expect(db.ingredientMatchesFor(r.id)[8].hold, 'coating');
+      // RE-PIN (M52 batch, v53): the engine's own row counts the C1d coat
+      // budget, unheld (144.06 g, `discarded`); a person's write on it
+      // derives the line's medium hold as before (RULE A).
+      final engine = db.ingredientMatchesFor(r.id)[8];
+      expect(
+        (engine.hold, engine.gramSource, engine.grams?.toStringAsFixed(2)),
+        (null, 'discarded', '144.06'),
+      );
       return (db, provider, r);
     }
 
@@ -431,8 +444,9 @@ void main() {
     }, skip: skipIfNoCorpus);
 
     test('a confirmed row whose amount is edited (4 → 5 cups, synthesized) '
-        'stays poured away, 0 g, its hold resolved (the compute site, '
-        'derivedFor; RULE A, v25)', () async {
+        "keeps the engine's coat budget (144.06 g — M52's C1d budget is the "
+        "coated chicken's, not the flour's; verify2 D1), its hold resolved "
+        '(the compute site, derivedFor; RULE A, v25)', () async {
       final (db, provider, r) = await computed();
       await applyMatchOverride(db, provider, r, 8, {
         'raw': flour,
@@ -464,11 +478,13 @@ void main() {
       await matchAndCompute(db, provider, edited);
       final row = db.ingredientMatchesFor(r.id)[8];
       expect(row.raw, startsWith('5 cups'));
-      // RULE A (v25, Run 055 I1): the confirm resolves the hold — still
-      // poured away, 0 g, no hold.
+      // RULE A (v25, Run 055 I1): the confirm resolves the hold, no hold.
+      // RE-PIN (M52 batch, v53 closer 2, verify2 D1): a confirm is the
+      // engine's current weight — the C1d budget, 1266.89 × 8.79 / 100 ÷
+      // 77.3 % = 144.06 g whatever the flour's amount (was 0 g poured away).
       expect(
         (row.status, row.grams, row.gramSource, row.hold),
-        ('confirmed', 0, 'discarded', null),
+        ('confirmed', 144.06, 'discarded', null),
       );
     }, skip: skipIfNoCorpus);
   });

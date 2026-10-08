@@ -152,7 +152,8 @@ void main() {
   test(
     'the matcher version carries the batch (update the literal with a '
     'bump)',
-    () => expect(matcherVersion, 51),
+    // RE-PIN (M52 batch, v53): matcherVersion 52 (was 51).
+    () => expect(matcherVersion, 52),
   );
 
   group('matcher v52 (batch M51)', skip: skipIfNoCorpus, () {
@@ -336,20 +337,30 @@ void main() {
             {'position': position, 'name': name},
         ]);
       }
-      // Crab cakes: served with its sauces, partial on its three own lines —
-      // |3 Old Bay (vetoed, Q23), |8 the coating, |9 the frying oil.
+      // Crab cakes: served with its sauces, partial on its own |3 Old Bay
+      // (vetoed, Q23). RE-PIN (M52 batch, v53): was partial on three — |8
+      // the coating (now the coat budget) and |9 the frying oil (now Q24 b's
+      // frying oil, its crab's uptake) count (was 8 of 11).
       final crab = db.nutritionFor(stored(_crab).id)!;
       expect(
         (crab.status, crab.matchedCount, crab.totalCount),
         (
           'partial',
-          8,
+          10,
           11,
         ),
       );
       expect(rowAt(_crab, 3).status, 'unmatched');
-      expect(rowAt(_crab, 8).hold, 'coating');
-      expect(rowAt(_crab, 9).hold, 'ambiguous_medium');
+      // RE-PIN (M52 batch, v53): |8 counted by the coat budget (C1, f = 1:
+      // the whole ¼ cup) and |9 the crab's frying oil (Q24 b), both unheld.
+      expect(
+        (rowAt(_crab, 8).hold, rowAt(_crab, 8).grams?.toStringAsFixed(2)),
+        (null, '30.16'),
+      );
+      expect(
+        (rowAt(_crab, 9).hold, rowAt(_crab, 9).grams?.toStringAsFixed(2)),
+        (null, '30.30'),
+      );
       expect(summaryOf(_crab).servedWith, [
         {'position': 10, 'name': 'Sweet and Tangy Tartar Sauce'},
       ]);
