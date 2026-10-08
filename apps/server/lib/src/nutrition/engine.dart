@@ -993,6 +993,39 @@ PlusPart? _eatenPlusPart(Recipe recipe, IngredientLine line, String? head) {
   return after != null && (after - plusMl!).abs() < 0.5 ? plus : null;
 }
 
+/// v57 (M59 F1, critic F1; CP9's rinsed cure, 0 g): whether the steps
+/// rinse a frying fat's eaten [part] ([_eatenPlusPart]) off its food — the
+/// sentence naming the part tosses it ("toss with ¼ cup of the oil") and
+/// LATER sentences of the same step drain and rinse ("drain the potatoes
+/// into a large mesh strainer … Rinse well under cold running water", 0255
+/// Fish and Chips). A rinse before the toss keeps the part. No food is
+/// matched: the step stands in for the tossed one (closer 1, V1-D1 — 0255's
+/// rinse sentence names no food, its drain "potatoes" where the toss names
+/// "fries").
+/// ponytail: a step that tosses one food in the oil and drains and rinses
+/// ANOTHER after it zeroes the part (no corpus step does); bind the drain to
+/// the tossed food's line when one must keep it.
+bool _rinsedOff(Recipe recipe, PlusPart part, String head) {
+  final amount = _plusLead(part.text);
+  final fat = _fats[head];
+  if (amount == null || fat == null) {
+    return false;
+  }
+  for (final sentences in _stepIndexOf(recipe).sentences) {
+    for (final (i, s) in sentences.indexed) {
+      if (s.contains(amount) && fat.word.hasMatch(s) && _toss.hasMatch(s)) {
+        final later = sentences.skip(i + 1);
+        if (later.any(_drainWord.hasMatch) && later.any(_rinseWord.hasMatch)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+final RegExp _toss = RegExp(r'\btoss\b');
+
 /// Whether a sentence of [recipe] sets [amount] of [head] out as a dredge's
 /// coat ([_setsOutTheCoat], [_eatenPlusPart]). Once per amount and head.
 bool _setsOut(Recipe recipe, String amount, String head) =>
@@ -1349,6 +1382,12 @@ class _Fat {
         '($_amountRun(?:teaspoons?|tablespoons?|cups?))\\s+$head\\b'
         r'[^.;]{0,60}?\bdiscard the remainder\b',
       ),
+      reserveFrying = RegExp(
+        r'\breserve '
+        '($_amountRun(?:teaspoons?|tablespoons?|cups?))\\s+(?:frying )?'
+        '$head\\b',
+      ),
+      heatsReserved = RegExp('\\bheat (?:the )?reserved $head\\b'),
       head = head;
 
   final String head;
@@ -1375,9 +1414,24 @@ class _Fat {
   /// read as a pour-off ([pourOffAllBut]).
   final RegExp reserveRest;
 
-  /// The kept part a pour-off sentence [s] writes, either form.
-  RegExpMatch? keptPart(String s) =>
-      pourOffAllBut.firstMatch(s) ?? reserveRest.firstMatch(s);
+  /// v57 (M59 C): "After frying, reserve 2 tablespoons frying oil." (0279
+  /// Crispy Salt and Pepper Shrimp, 0536 Crispy Orange Beef) — a kept part
+  /// only where a LATER sentence heats it ([heatsReserved]: "Heat reserved
+  /// oil in 12-inch skillet"), the consumer "discard the remainder" stands
+  /// in for ([_oilOwnersOf]); 0661's "Reserve 3 tablespoons oil mixture" is
+  /// brushed on, never heated.
+  final RegExp reserveFrying;
+
+  /// "Heat reserved oil" — a later sentence cooking in [reserveFrying]'s
+  /// part.
+  final RegExp heatsReserved;
+
+  /// The kept part a pour-off sentence [s] writes, any form — the third
+  /// ([reserveFrying]) only when a later sentence heats it ([reused]).
+  RegExpMatch? keptPart(String s, {bool reused = false}) =>
+      pourOffAllBut.firstMatch(s) ??
+      reserveRest.firstMatch(s) ??
+      (reused ? reserveFrying.firstMatch(s) : null);
 
   /// Whether sentence [s] (lower case) heats this fat to a frying
   /// temperature — POSITIVE evidence, the exclusion SCOPED (RULE B, v27,
@@ -2150,9 +2204,16 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
     final pours = <String, (int, String)>{};
     var order = 0;
     final unbound = <((int, int)?, bool)>[];
+    // v57 (M59 C): a sentence after [at] heats the reserved fat.
+    bool reused((int, int) at) => [
+      ...index.sentences[at.$1].skip(at.$2 + 1),
+      for (final step in index.sentences.skip(at.$1 + 1)) ...step,
+    ].any(fat.heatsReserved.hasMatch);
     for (final at in _naming(recipe, head)) {
       final s = index.sentence(at);
-      final pourOff = fat.keptPart(s) != null;
+      final pourOff =
+          fat.keptPart(s) != null ||
+          (fat.reserveFrying.hasMatch(s) && reused(at));
       if (!pourOff &&
           !fat.heatsToFry(s, () => _heatReading(recipe, s)) &&
           !fat.discards.hasMatch(s)) {
@@ -2161,7 +2222,10 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
       // A pour-off's kept part names no line's amount ("all but 2
       // tablespoons oil" beside a 2-tablespoon sesame oil).
       final said = pourOff
-          ? s.replaceAll(fat.pourOffAllBut, '').replaceAll(fat.reserveRest, '')
+          ? s
+                .replaceAll(fat.pourOffAllBut, '')
+                .replaceAll(fat.reserveRest, '')
+                .replaceAll(fat.reserveFrying, '')
           : s;
       // Only the fat's own amount or kind word: its noun phrase must
       // FOLLOW directly ([_oilPhraseFollows]; Run 055 V3: "Stir 2
@@ -2700,7 +2764,9 @@ Amount? _keptFryingOil(Recipe recipe, IngredientLine line) {
     final pourOff = head == null
         ? null
         : _oilOwnersOf(recipe, head)[line.raw]?.pourOff;
-    final kept = pourOff == null ? null : _fats[head]!.keptPart(pourOff);
+    final kept = pourOff == null
+        ? null
+        : _fats[head]!.keptPart(pourOff, reused: true);
     return kept == null
         ? null
         : parseIngredientLine('${kept[1]} $item').amounts.firstOrNull;
@@ -2714,7 +2780,9 @@ String? _keptFryingOilText(Recipe recipe, IngredientLine line) {
   final pourOff = head == null || !_fats.containsKey(head)
       ? null
       : _oilOwnersOf(recipe, head)[line.raw]?.pourOff;
-  return pourOff == null ? null : _fats[head]!.keptPart(pourOff)?[1];
+  return pourOff == null
+      ? null
+      : _fats[head]!.keptPart(pourOff, reused: true)?[1];
 }
 
 /// v51 (M49 Q19, critic F13): the food a frying oil's kept-part pour-off
@@ -6075,7 +6143,13 @@ String _ownSalt(String normalized) {
   final keptOil = medium == DiscardedMedium.fryingOil
       ? _keptFryingOil(recipe, line)
       : null;
-  final eatenPart = plus?.amount ?? divided?.amount ?? keptOil;
+  // v57 (M59 F1): a frying oil's part the steps rinse off is not eaten.
+  final rinsed =
+      medium == DiscardedMedium.fryingOil &&
+      plus != null &&
+      _rinsedOff(recipe, plus, headNounOf(normalized)!);
+  final eatenPart =
+      (rinsed ? null : plus?.amount) ?? divided?.amount ?? keptOil;
   GramResolution? weigh(Amount amount) => resolveGrams(
     amounts: [amount],
     food: food,
@@ -13819,6 +13893,25 @@ String? _gramBasis(
     final keptToo = plus == null || recipe == null
         ? null
         : _keptFryingOilText(recipe, line);
+    // v57 (M59 F1): the part the steps rinse off ([_rinsedOff]) is never
+    // named as counted; what is counted — a kept pour-off part, the uptake
+    // — is (closer 1, V1-D2: engineOutcome counts the kept part then).
+    final rinsed =
+        eaten != null &&
+        row.grams! > 0 &&
+        _rinsedOff(
+          recipe!,
+          eaten,
+          headNounOf(normalizeItem(lineItemOf(line)))!,
+        );
+    final counted = [
+      if (keptToo != null) 'the $keptToo the steps keep',
+      ?m52What,
+    ];
+    if (rinsed && counted.isNotEmpty) {
+      return 'discarded in cooking — only ${counted.join(' and ')} counted '
+          '("$part": the steps rinse it off)';
+    }
     // A person's confirm of a held medium with no eaten part (B6).
     final also = m52What == null ? '' : ' and $m52What';
     if (m52What != null && plus == null && m52!.kept <= 0) {
@@ -13834,7 +13927,7 @@ String? _gramBasis(
                     'keep and $m52What counted'
               : 'discarded in cooking — only "$part" and the $keptToo the '
                     'steps keep counted'
-        : plus != null
+        : plus != null && !rinsed
         ? 'discarded in cooking — only "$part"$also counted'
         : 'discarded in cooking — only the part the recipe keeps$also '
               'counted';
@@ -16215,6 +16308,12 @@ const _Fndds _cauliflowerFried = (
   r: '39.58',
 );
 
+/// c_b, the FNDDS breading's (99995000) carbohydrate per gram: each read
+/// recipe's own carbohydrate ÷ its breading grams on the six whose other
+/// inputs are cooked, 0.397–0.401 (p3_read_figures.md) — v57 (M59 D)
+/// scales [_cauliflowerFried]'s uptake by it.
+const double _breadingCarbPerGram = 0.40;
+
 /// An analytical SR Legacy record a figure is DERIVED from (no
 /// `inputFoods` exist): P3's balance on its composition.
 typedef _Sr = ({int id, String description});
@@ -16552,8 +16651,13 @@ String _coatFlag(
 String _standIn(String name, String description) =>
     ' (no record for $name; read as $description)';
 
-/// One fried food's clause of an uptake flag.
-String _uptakeClause(_M52Figure figure, String name) {
+/// One fried food's clause of an uptake flag; [batter]: its read u scaled
+/// to the recipe's batter, C of K g carbohydrate (v57, M59 D).
+String _uptakeClause(
+  _M52Figure figure,
+  String name, {
+  ({double c, double k})? batter,
+}) {
   final read = figure.read;
   final whose = name.endsWith('s') ? "$name'" : "$name's";
   final source = read != null
@@ -16564,6 +16668,12 @@ String _uptakeClause(_M52Figure figure, String name) {
   final standIn = figure.standIn
       ? _standIn(name, read?.description ?? figure.derived!.description)
       : '';
+  if (batter != null) {
+    final u = double.parse(figure.value) * batter.c / batter.k;
+    return '${u.toStringAsFixed(2)} % of the raw $whose weight — $source, '
+        "scaled to the recipe's batter (${batter.c.toStringAsFixed(2)} g of "
+        '${batter.k.toStringAsFixed(2)} g carbohydrate)$standIn';
+  }
   return '${figure.value} % of the raw $whose weight — $source$standIn';
 }
 
@@ -16685,6 +16795,10 @@ Map<int, _M52Row> _m52Plan(
       ? null
       : _coatShapeOf(recipe, coated.description!);
   final plan = <int, _M52Row>{};
+  // M58 W's batter parts' carbohydrate at their WHOLE grams (the line's, as
+  // the dredge takes them): the plan writes those rows `discarded`, so D
+  // ([batterOf]) reads them here — never the stored row — on every path.
+  final batterCho = <int, double>{};
   if (coated != null &&
       shape != null &&
       (coats.isNotEmpty || batter.isNotEmpty)) {
@@ -16721,12 +16835,9 @@ Map<int, _M52Row> _m52Plan(
         // M58 W: the whole line is batter (a record below the gate counts
         // nothing and shares nothing).
         if (!(r.status == 'auto' && belowConfidenceGate(r.confidence))) {
-          parts.add((
-            at: i,
-            dredge: full.grams,
-            eaten: 0,
-            cho: (record!.nutrientsPer100g['205'] ?? 0) / 100,
-          ));
+          final cho = (record!.nutrientsPer100g['205'] ?? 0) / 100;
+          parts.add((at: i, dredge: full.grams, eaten: 0, cho: cho));
+          batterCho[i] = full.grams * cho;
         }
         continue;
       }
@@ -16782,7 +16893,7 @@ Map<int, _M52Row> _m52Plan(
   final chips = all.any(RegExp(r'\bchips\b').hasMatch);
   final title = recipe.title.toLowerCase();
   final friedTitle = RegExp(r'\bfried\b').hasMatch(title);
-  final fried = <({_FriedClass kind, double grams})>[];
+  final fried = <({_FriedClass kind, double grams, int at})>[];
   _FriedClass? kindOf(IngredientMatchRow r) {
     final line = lines[r.position];
     final words =
@@ -16799,7 +16910,7 @@ Map<int, _M52Row> _m52Plan(
   if (coated != null) {
     final kind = kindOf(coated);
     if (kind != null) {
-      fried.add((kind: kind, grams: coated.grams!));
+      fried.add((kind: kind, grams: coated.grams!, at: coated.position));
     }
   }
   for (final r in at.values) {
@@ -16823,7 +16934,7 @@ Map<int, _M52Row> _m52Plan(
                   _intoOil.hasMatch(s) ||
                   (!kind.meat && RegExp(r'\boil\b').hasMatch(s))),
         )) {
-      fried.add((kind: kind, grams: r.grams!));
+      fried.add((kind: kind, grams: r.grams!, at: r.position));
     }
   }
   if (fried.isEmpty) {
@@ -16833,16 +16944,71 @@ Map<int, _M52Row> _m52Plan(
     for (final f in fried)
       if (f.kind.figure != null) f,
   ];
-  final uptake = absorbs.fold<double>(
+  // v57 (M59 D, Q13 b): the fried cauliflower's read u carries FNDDS
+  // 2710042's batter, 50 g per 39.58 g raw (every other read record ≤
+  // 0.38 g a gram) — scaled by min(1, C / K): C the carbohydrate of the
+  // counted rows of the food's ingredient group but the food (the frying
+  // oil is `discarded`, never counted; a batter left in the bowl at its
+  // whole grams, [batterCho]), K FNDDS's b × c_b / R × the food's grams.
+  // Null when the figure is not O5 or the recipe's batter covers K.
+  ({double c, double k})? batterOf(
+    ({_FriedClass kind, double grams, int at}) f,
+  ) {
+    final read = f.kind.figure!.read;
+    if (read?.id != _cauliflowerFried.id) {
+      return null;
+    }
+    var start = 0;
+    var end = 0;
+    for (final g in recipe.ingredients) {
+      end = start + g.items.length;
+      if (f.at < end) {
+        break;
+      }
+      start = end;
+    }
+    var c = 0.0;
+    for (final r in at.values) {
+      if (r.position < start || r.position >= end || r.position == f.at) {
+        continue;
+      }
+      // A batter left in the bowl (M58 W) counted whole on every path: its
+      // stored row is the plan's `discarded` part after the first compute
+      // (closer 2, V2-D1).
+      if (batterCho[r.position] case final cho?) {
+        c += cho;
+      } else if (counted(r)) {
+        final record = food(r.fdcId!, lines[r.position]);
+        c += r.grams! * (record?.nutrientsPer100g['205'] ?? 0) / 100;
+      }
+    }
+    final k =
+        double.parse(read!.b) *
+        _breadingCarbPerGram /
+        double.parse(read.r) *
+        f.grams;
+    return c < k ? (c: c, k: k) : null;
+  }
+
+  final batters = [for (final f in absorbs) batterOf(f)];
+  double uOf(int i) {
+    final u = double.parse(absorbs[i].kind.figure!.value);
+    final b = batters[i];
+    return b == null ? u : u * b.c / b.k;
+  }
+
+  final uptake = absorbs.indexed.fold<double>(
     0,
-    (n, f) => n + double.parse(f.kind.figure!.value) * f.grams / 100,
+    (n, e) => n + uOf(e.$1) * e.$2.grams / 100,
   );
   final clauses = [
-    for (final f in absorbs) _uptakeClause(f.kind.figure!, f.kind.name),
+    for (final (i, f) in absorbs.indexed)
+      _uptakeClause(f.kind.figure!, f.kind.name, batter: batters[i]),
   ];
+  final derived = batters.any((b) => b != null) ? ' — derived' : '';
   final flag = absorbs.isEmpty
       ? null
-      : 'approximation (frying oil absorbed: ${clauses.join('; ')})';
+      : 'approximation (frying oil absorbed$derived: ${clauses.join('; ')})';
   final pans = <({int at, double full, double kept})>[];
   for (final i in fryers) {
     final r = at[i]!;

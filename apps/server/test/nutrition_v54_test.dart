@@ -2657,10 +2657,13 @@ _whole = [
   // P13: the batter on the fish, fried 7–8 → 85 %
   // RE-PIN (M58 batch, v57, W): the beer is a coat part at f 0.4924 —
   // 167.52 g (was 340.19; energy 3977.24 → 3963.48 on the v53/v54 trees)
+  // RE-PIN (M59 batch, v58, F1): the oil |1's kept ¼ cup is rinsed off —
+  // 225.19 → 170.78 g on 172336 (884 kcal) here, −480.99 kcal (was 3881.90
+  // / 3875.13); the ethanol 6.77 unchanged
   (
     '0255-fish-and-chips.yaml',
-    3881.90,
-    3875.13,
+    3400.91,
+    3394.14,
     0,
     0,
     [(10, 2710616, 167.52, 85)],
@@ -2714,7 +2717,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
     // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
-    expect(matcherVersion, 56);
+    // RE-PIN (M59 batch, v58): matcherVersion 57 (was 56).
+    expect(matcherVersion, 57);
   });
 
   test('the energy split on the raw FDC details (§1.1 (A), P-E): ethanol '

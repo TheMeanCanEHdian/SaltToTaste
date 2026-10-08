@@ -1590,7 +1590,10 @@ void main() {
       // RE-PIN (M52 batch, v53, Q3 a): zeroed as frying oil, it counts what
       // the cornstarch-tossed beef absorbs — 680.39 g × O1d 9.89 % (USDA
       // FNDDS 2705842, a flagged stand-in) = 67.29 g.
-      expect(row.grams?.toStringAsFixed(2), '67.29');
+      // RE-PIN (M59 batch, v58, C): plus the 2 tablespoons step 3 reserves
+      // and step 4 heats ("After frying, reserve 2 tablespoons frying
+      // oil." … "Heat reserved oil"), 28.00 g kept: 95.29 g.
+      expect(row.grams?.toStringAsFixed(2), '95.29');
       expect(row.gramSource, 'discarded');
       final recipe = recipes['orange']!;
       final item = normalizeItem(line.item!);

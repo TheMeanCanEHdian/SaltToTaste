@@ -3608,6 +3608,27 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v58 (batch M59): the frying oil the steps keep or
+  rinse off, and a battered vegetable's uptake (prep48 C + F1 + D; Q13 b;
+  built under the standing authorization; reach labelled pre-Q18).** A
+  frying oil's "reserve N tablespoons frying oil" is a kept part only when
+  a later sentence heats the reserved oil (two recipes); the ¼ cup
+  fish-and-chips tosses with its fries and then drains and rinses is not
+  eaten (CP9's rinsed-cure precedent, 0 g); the fried cauliflower's read
+  uptake scales to the carbohydrate its ingredient group holds against the
+  FNDDS recipe's batter (c_b 0.40 from the six read breadings), flagged
+  "derived". Deviations from the design, disclosed and pinned: F1 sits
+  where the engine reads a frying oil's eaten part, not in the fat's
+  one-sentence pour-off reader (the kept part is the line's "plus ¼ cup",
+  not a sentence); F1 matches no food — the step stands in for the tossed
+  one (0255's rinse names none); its basis names a kept pour-off beside the
+  uptake and never the rinsed part; D reads a batter left in the bowl (M58
+  W) at its whole line grams on every path (the plan writes those rows
+  `discarded`, so the stored row read nothing after the first compute — a
+  non-idempotent compute the verifier found; no corpus row reaches it). Two
+  figures land 0.01 g off the design's (rounded replay grams, as for v57).
+  Four rows, −578 kcal per batch, no status move.
+
 - **2026-10-08 — matcher v57 (batch M58): a batter left in the bowl joins
   the coat budget (prep48 W + S; Q8, Q10; built under the standing
   authorization; reach labelled pre-Q18).** The M50 Q21 lines reached

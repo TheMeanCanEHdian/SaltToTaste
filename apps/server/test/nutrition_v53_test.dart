@@ -29,7 +29,6 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
-import 'package:salt_server/src/nutrition/grams.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
@@ -131,16 +130,18 @@ _rows = [
     'discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 3.94 g carbohydrate per 100 g of the raw shrimp — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried"; the dredge\'s excess not counted)',
   ),
   // O3 5.3 % × 680.39 g of shrimp (derived)
+  // RE-PIN (M59 batch, v58, C): on top of the 2 tablespoons step 5
+  // reserves and step 6 heats, 28.00 g kept (was 36.06)
   (
     '0279-crispy-salt-and-pepper-shrimp.yaml',
     null,
     7,
     '4 cups vegetable oil',
     2710180,
-    '36.06',
+    '64.06',
     'discarded',
     null,
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 5.3 % of the raw shrimp\'s weight — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried")',
+    'discarded in cooking — only the part the recipe keeps and the oil the fried food absorbs counted · approximation (frying oil absorbed: 5.3 % of the raw shrimp\'s weight — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried")',
   ),
   // C5 15.38 (2706244): 680.39 × 15.38 / 100 less the counted cornstarch |3 carbohydrate
   // RE-PIN (M58 batch, v57, W): the batter's lines are coat parts, never
@@ -172,16 +173,18 @@ _rows = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
   ),
   // O2 cod 15.38 % + O4 chips 6.0 % on top of its kept ¼ cup
+  // RE-PIN (M59 batch, v58, F1): the ¼ cup tossed with the fries is
+  // drained and rinsed off in step 1 — the uptake alone (was 225.19)
   (
     '0255-fish-and-chips.yaml',
     null,
     1,
     '3 quarts plus ¼ cup peanut oil or canola oil',
     172336,
-    '225.19',
+    '170.78',
     'discarded',
     null,
-    'discarded in cooking — only "plus ¼ cup peanut oil or canola oil" and the oil the fried food absorbs counted · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
   // O4 6.0 % × 918.52 g of potatoes (derived, SR 170698)
   (
@@ -304,16 +307,18 @@ _rows = [
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 15.38 % of the raw shrimp's weight — USDA FNDDS 2706364 recipe: 10 g oil per 65 g raw shrimp)",
   ),
   // O5 30.32 % (2710042) × 453.59 g
+  // RE-PIN (M59 batch, v58, D): scaled to the batter the CAULIFLOWER group
+  // carries, 122.16 of FNDDS's 229.20 g carbohydrate (was 137.53)
   (
     '0672-buffalo-cauliflower-bites.yaml',
     null,
     4,
     '1–2 quarts peanut or vegetable oil',
     2710187,
-    '137.53',
+    '73.30',
     'discarded',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 30.32 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower)",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 16.16 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (122.16 g of 229.20 g carbohydrate))",
   ),
   // C2 chicken 3.18 by the LAST cook (browned, then baked; critic F2)
   (
@@ -697,7 +702,8 @@ void main() {
     // RE-PIN (Q25 batch, v54): matcherVersion 53 (was 52).
     // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
     // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
-    expect(matcherVersion, 56);
+    // RE-PIN (M59 batch, v58): matcherVersion 57 (was 56).
+    expect(matcherVersion, 57);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {
@@ -844,14 +850,12 @@ void main() {
       for (final p in batter) {
         expect(g2(gramsOf(chips, p)), g2(batterF * wholeOf(chips, p)));
       }
-      final kept = resolveGrams(
-        amounts: parseIngredientLine('¼ cup peanut oil or canola oil').amounts,
-        food: knownFood(db, rowOf(chips, 1).fdcId!),
-        normalizedItem: normalizeItem(lineItemOf(nutritionLines(chips)[1])),
-      )!.grams;
+      // RE-PIN (M59 batch, v58, F1): the kept ¼ cup is rinsed off (step 1
+      // tosses the fries in it, then drains and rinses them) — the uptake
+      // alone.
       expect(
         g2(gramsOf(chips, 1)),
-        g2(kept + cod * 15.38 / 100 + gramsOf(chips, 0) * 6.0 / 100),
+        g2(cod * 15.38 / 100 + gramsOf(chips, 0) * 6.0 / 100),
       );
       // Katsu (the Q24 b cascade): C1 5.73 on the breasts, the panko alone.
       final katsu = await computed(

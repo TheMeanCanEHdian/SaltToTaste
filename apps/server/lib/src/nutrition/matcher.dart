@@ -760,7 +760,7 @@ const Map<String, String> _synonyms = {
 ///
 /// v56 (the Matcher v57 commit, batch M58 — a batter left in the bowl
 /// joins the coat budget; prep48 design_v2 §2 M58 W + S + the negimaki
-/// flag, the owner's Q8 and Q10 and critic F10 under the 2026-10-08
+/// flag, the owner's Q8 and Q10 and critic F10 under the 2026-10-07
 /// standing authorization; zero requests): engine `_m52Plan` counts the
 /// lines a batter leaves in the bowl (`_batterInBowl`, the dip word
 /// "batter") as coat parts at the coat's one f = min(1, B / Σ carbohydrate)
@@ -769,7 +769,20 @@ const Map<String, String> _synonyms = {
 /// batter's excess", names a figure read on another food as a stand-in and
 /// a batter read on a C1/C2 breading figure; a glaze the steps divide
 /// between two bowls (negimaki) states the split, counted whole.
-const int matcherVersion = 56;
+///
+/// v57 (the Matcher v58 commit, batch M59 — the frying oil the steps keep
+/// or rinse off, and a battered vegetable's uptake; prep48 design_v2 §2 M59
+/// C + F1 + D, the owner's Q13 (b) and critic F1, F9 and F12 under the
+/// 2026-10-07 standing authorization; zero requests): "After frying,
+/// reserve 2 tablespoons frying oil" is a frying oil's kept part when a
+/// later sentence heats the reserved oil (engine `_Fat.reserveFrying`), the
+/// uptake on top; a frying oil's part a sentence tosses with a food is not
+/// eaten when later sentences of the same step drain and rinse (engine
+/// `_rinsedOff`; no food is matched — the step stands in for the tossed
+/// one); the fried cauliflower's read uptake scales to the
+/// carbohydrate its ingredient group's batter holds against FNDDS
+/// 2710042's (c_b 0.40), flagged "derived".
+const int matcherVersion = 57;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

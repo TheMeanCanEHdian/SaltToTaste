@@ -3658,6 +3658,78 @@ basis only); 0 person rows; statuses, sections, buckets and holds
 identical. Deploy note: matcherVersion 56 stales every recipe; a
 zero-request sweep recomputes the library.
 
+**Since matcher v58 (batch M59 — the frying oil the steps keep or rinse
+off, and a battered vegetable's uptake; matcherVersion 57; prep48
+design_v2 §2 M59 C + F1 + D, the owner's Q13 (b) and critic F1, F9 and F12,
+decided 2026-10-08 under the standing authorization; zero requests;
+step-reading, so its reach is pre-Q18).** (C) A frying oil's kept part
+(M49) has a second printed form: **"reserve N {teaspoons|tablespoons|cups}
+(frying) oil"** in a sentence the oil line owns, counted only when a LATER
+sentence heats **"reserved oil"** ("After frying, reserve 2 tablespoons
+frying oil." … "Heat reserved oil in 12-inch skillet"); the shipped
+"reserve … and discard the remainder" form is unchanged, and a reserve no
+later sentence heats ("Reserve 3 tablespoons oil mixture", brushed on in
+0661) is not read.
+The part is weighed as the line is (2 tablespoons = 28.00 g on 2710180's
+portion, 14.00 g a tablespoon) and M52's uptake lands on top; the basis is
+the shipped kept-part one, `discarded in cooking — only the part the recipe
+keeps and the oil the fried food absorbs counted`. (F1) A frying oil's
+eaten part ("plus ¼ cup") is NOT eaten when the sentence naming it
+**tosses** it with a food ("toss with ¼ cup of the oil") and LATER sentences
+of the same step **drain** and **rinse** ("… drain the potatoes into a
+large mesh strainer … Rinse well under cold running water") — 0 g, by CP9's
+rinsed-cure precedent; a rinse before the toss, or a drain with no rinse,
+keeps the part. No food is matched: the step stands in for the tossed food
+(0255's rinse sentence names none, and its drain names "potatoes" where the
+toss names "fries"), so a step draining and rinsing ANOTHER food after the
+toss zeroes the part too (no corpus step tosses an oil and later drains and
+rinses anything but 0255's). The basis reads `discarded in cooking — only
+the oil the fried food absorbs counted ("plus ¼ cup …": the steps rinse it
+off)`, naming a kept pour-off part beside the uptake when the steps keep
+one (`only the 1 tablespoon the steps keep and the oil the fried food
+absorbs counted (…: the steps rinse it off)`); the rinsed part is never
+named as counted. (D) The fried cauliflower's uptake (O5, FNDDS 2710042: 12 g oil per
+39.58 g raw cauliflower under 50 g batter — 1.26 g of batter a gram, every
+other read record ≤ 0.38) scales to the batter the recipe carries: u ×
+min(1, C / K), C = the carbohydrate (nutrient 205) of the counted rows of
+the cauliflower's ingredient group other than the cauliflower (the frying
+oil is `discarded`, never counted; a batter left in the bowl at its whole
+grams), K = b × c_b / R × the cauliflower's grams, c_b = 0.40 (the FNDDS
+breading's carbohydrate per gram, 0.397–0.401
+on six read recipes, p3_read_figures.md). Flag: `approximation (frying oil
+absorbed — derived: {u'} % of the raw cauliflower's weight — USDA FNDDS
+2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the
+recipe's batter ({C} g of {K} g carbohydrate))`. Every other uptake keeps
+its read figure.
+
+Reach: exactly 4 rows (−578.07 kcal per batch): crispy-salt-and-pepper-
+shrimp|7 36.06 → 64.06 g (+252.00), crispy-orange-beef|8 67.29 → 95.29
+(+252.00; its toasted sesame oil |7 stays 6.80), fish-and-chips|1 226.78 →
+170.78 (−504.00: the ¼ cup, 56.00 g, rinsed off; 15.38 % of the cod + 6.0 %
+of the potatoes stay), buffalo-cauliflower-bites|4 137.53 → 73.30 (−578.07:
+16.16 % = 30.32 × 122.16 / 229.20). Per serving: the shrimp 303.34 →
+366.34, the beef 536.09 → 599.09, fish-and-chips 981.40 → 855.40, the
+cauliflower 760.67 → 616.15; no status moves. The noodle oils the steps
+rinse THEN oil (sesame-noodles|11, thai-style-stir-fried-noodles|5,
+shrimp-pad-thai|6) are not frying oils and stay.
+
+Known gaps (design §7 — the source stands): stuffed-chicken-cutlets|12
+stays on O1a (Q13 a); shrimp-tempura|0's uptake at FNDDS's own ratio
+against the recipe's heavier batter; D reads a batter left in the bowl
+(M58 W) at its whole line grams on every path — a compute, a recompute, a
+GET — though the coat budget counts only its share on the coated food, so
+a batter shared with a coated food over-reads C (none on O5); the corpus
+lost the steps of 269 subsections (Q18), which these step readers cannot
+see.
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 23, main and
+`--reverse-parents` byte-identical; STEP ZERO the v57 tree reproduces the
+v57 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v57
+rows exactly the 4 rows differ, in grams, basis and kcal only; 0 person
+rows; statuses, sections, buckets and holds identical. Deploy note:
+matcherVersion 57 stales every recipe; a zero-request sweep recomputes the
+library.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line
