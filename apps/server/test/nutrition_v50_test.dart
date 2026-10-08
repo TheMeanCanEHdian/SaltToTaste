@@ -1363,15 +1363,18 @@ _rows = [
     'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted)',
   ),
   // closer 1 (V1-D5): the batter's flour mixture made in step 2 (audit L206)
+  // RE-PIN (M58 batch, v57): the same reach, now W's coat parts at the
+  // coat's one f 0.4924 (nutrition_v57_test) — was 4.53, 63.88 and 340.19
+  // g counted whole with the D5 flag.
   (
     '0255-fish-and-chips.yaml',
     null,
     8,
     '1 teaspoon baking powder',
     172804,
-    '4.53',
+    '2.23',
     null,
-    '1 teaspoon ≈ 5 mL · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
   ),
   (
     '0255-fish-and-chips.yaml',
@@ -1379,9 +1382,9 @@ _rows = [
     3,
     '½ cup cornstarch',
     169698,
-    '63.88',
+    '31.45',
     null,
-    '1/2 cup ≈ 118 mL · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
   ),
   (
     '0255-fish-and-chips.yaml',
@@ -1389,9 +1392,9 @@ _rows = [
     10,
     '1½ cups (12 ounces) cold beer',
     2710616,
-    '340.19',
+    '167.52',
     null,
-    'from 12 ounce · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
   ),
 ];
 
@@ -1420,17 +1423,19 @@ const List<(String, int, String, String?)> _flags = [
     _bowl,
   ),
   // D5: a glaze read from the step that reduces it ("Discard remaining glaze")
+  // RE-PIN (M58 batch, v57, Q10): the same lines, the flag stating the
+  // printed split (was _bowl).
   (
     '0516-negimaki-japanese-grilled-steak-and-scallion-rolls.yaml',
     1,
     '⅓ cup soy sauce',
-    _bowl,
+    _splitGlaze,
   ),
   (
     '0516-negimaki-japanese-grilled-steak-and-scallion-rolls.yaml',
     4,
     '2 tablespoons sake',
-    _bowl,
+    _splitGlaze,
   ),
   (
     '0516-negimaki-japanese-grilled-steak-and-scallion-rolls.yaml',
@@ -1474,6 +1479,8 @@ const List<(String, int, String, String?)> _flags = [
 
 const String _bowl =
     'approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)';
+const String _splitGlaze =
+    'approximate (the steps divide the glaze evenly between two bowls — one half served, the other brushed on and its rest discarded; counted whole)';
 const String _marinade =
     'approximate (lifted out of its marinade — how much clings is not written)';
 
@@ -1484,7 +1491,8 @@ void main() {
     // was 50 → 51, M49's v51 49 → 50).
     // RE-PIN (Q25 batch, v54): matcherVersion 53 (was 52).
     // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
-    expect(matcherVersion, 55);
+    // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
+    expect(matcherVersion, 56);
   });
 
   group('matcher v50 (batch M50)', skip: skipIfNoCorpus, () {

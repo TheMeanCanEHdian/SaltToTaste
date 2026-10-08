@@ -155,7 +155,8 @@ void main() {
     // RE-PIN (M52 batch, v53): matcherVersion 52 (was 51).
     // RE-PIN (Q25 batch, v54): matcherVersion 53 (was 52).
     // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
-    () => expect(matcherVersion, 55),
+    // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
+    () => expect(matcherVersion, 56),
   );
 
   group('matcher v52 (batch M51)', skip: skipIfNoCorpus, () {

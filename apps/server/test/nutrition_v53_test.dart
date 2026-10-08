@@ -79,7 +79,8 @@ _rows = [
     '144.06',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 8.79 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705842 recipe: 20 g breading per 90.99 g raw beef steak; the dredge's excess not counted)",
+    // RE-PIN (M58 batch, v57, S): the stand-in named (was without it).
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 8.79 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705842 recipe: 20 g breading per 90.99 g raw beef steak (no record for chicken; read as Beef, steak, country fried); the dredge's excess not counted)",
   ),
   // O1c: bone-in skin-on, 0 g, its basis
   (
@@ -142,28 +143,33 @@ _rows = [
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 5.3 % of the raw shrimp\'s weight — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried")',
   ),
   // C5 15.38 (2706244): 680.39 × 15.38 / 100 less the counted cornstarch |3 carbohydrate
+  // RE-PIN (M58 batch, v57, W): the batter's lines are coat parts, never
+  // off B — every part at one f 0.4924 (was 59.95, the batter's excess
+  // "the dredge's")
   (
     '0255-fish-and-chips.yaml',
     null,
     2,
     '1½ cups unbleached all-purpose flour',
     789890,
-    '59.95',
+    '89.12',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
   ),
   // the counted cornstarch (the batter): unchanged, off the budget
+  // RE-PIN (M58 batch, v57, W): a coat part at f (was 63.88 g counted
+  // whole, `density`, the D5 flag)
   (
     '0255-fish-and-chips.yaml',
     null,
     3,
     '½ cup cornstarch',
     169698,
-    '63.88',
-    'density',
+    '31.45',
+    'discarded',
     null,
-    '1/2 cup ≈ 118 mL · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
   ),
   // O2 cod 15.38 % + O4 chips 6.0 % on top of its kept ¼ cup
   (
@@ -415,7 +421,8 @@ _rows = [
     '30.16',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
+    // RE-PIN (M58 batch, v57, S): the stand-in named (was without it).
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
   // Q24 b: was ambiguous_medium; crab O1a stand-in × 453.59 g
   (
@@ -689,7 +696,8 @@ void main() {
       'bump)', () {
     // RE-PIN (Q25 batch, v54): matcherVersion 53 (was 52).
     // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
-    expect(matcherVersion, 55);
+    // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
+    expect(matcherVersion, 56);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {
@@ -820,13 +828,22 @@ void main() {
       expect(gramsOf(fried, 7), 0);
       // Fish and chips: C5 15.38 less the counted cornstarch's
       // carbohydrate; the oil's cod 15.38 % + chips 6.0 % on its kept ¼ cup.
+      // RE-PIN (M58 batch, v57, W): the batter's lines (|3 |4 |5 |8 |10)
+      // are coat parts beside the flour, never off B — one f for all.
       final chips = await computed('0255-fish-and-chips.yaml');
       final cod = gramsOf(chips, 9);
-      final starch = gramsOf(chips, 3) * cho(chips, 3);
-      expect(
-        g2(gramsOf(chips, 2)),
-        g2((cod * 15.38 / 100 - starch) / cho(chips, 2)),
-      );
+      const batter = [2, 3, 4, 5, 8, 10];
+      final batterF =
+          cod *
+          15.38 /
+          100 /
+          batter.fold<double>(
+            0,
+            (n, p) => n + wholeOf(chips, p) * cho(chips, p),
+          );
+      for (final p in batter) {
+        expect(g2(gramsOf(chips, p)), g2(batterF * wholeOf(chips, p)));
+      }
       final kept = resolveGrams(
         amounts: parseIngredientLine('¼ cup peanut oil or canola oil').amounts,
         food: knownFood(db, rowOf(chips, 1).fdcId!),

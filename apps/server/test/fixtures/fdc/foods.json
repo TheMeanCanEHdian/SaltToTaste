@@ -25178,5 +25178,60 @@
     "description": null
    }
   ]
+ },
+ "2709201": {
+  "fdc_id": 2709201,
+  "description": "Currants, dried",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 3.43,
+   "204": 0.22,
+   "205": 77.0,
+   "208": 290.0,
+   "269": 62.3,
+   "291": 4.4,
+   "301": 88.0,
+   "303": 1.88,
+   "304": 36.0,
+   "305": 99.0,
+   "306": 777.0,
+   "307": 43.0,
+   "320": 4.0,
+   "323": 0.11,
+   "328": 0.0,
+   "401": 4.7,
+   "404": 0.16,
+   "405": 0.142,
+   "406": 1.62,
+   "415": 0.296,
+   "418": 0.0,
+   "430": 3.3,
+   "432": 10.0,
+   "435": 10.0,
+   "601": 0.0,
+   "606": 0.085,
+   "645": 0.021,
+   "646": 0.047
+  },
+  "portions": [
+   {
+    "gram_weight": 0.5,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice/chunk"
+   },
+   {
+    "gram_weight": 40.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 160.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
  }
 }

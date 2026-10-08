@@ -3608,6 +3608,19 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v57 (batch M58): a batter left in the bowl joins
+  the coat budget (prep48 W + S; Q8, Q10; built under the standing
+  authorization; reach labelled pre-Q18).** The M50 Q21 lines reached
+  through the dip word "batter" are now parts of M52's coat budget at one
+  fraction per mixture, battered shrimp on its own FNDDS fried-shrimp figure;
+  glaze and confection coats stay whole (negimaki's flag states its printed
+  split). Kept additions, disclosed and pinned: a person's Confirm of a
+  batter line keeps the plan's grams and is written `discarded` (the shipped
+  Confirm rule for coats); a batter part below the confidence gate is left
+  out of the carbohydrate sum (no corpus row reaches it). Three pins land
+  0.01 g off the design's figures because the planner worked from rounded
+  replay grams. Twenty-six rows (17 moving grams), −1,376 kcal per batch,
+  no status move.
 - **2026-10-08 — matcher v56 (batch M57): a strain of "the liquid" whose
   solids nothing uses (prep48 S1; Q19 NO; built under the standing
   authorization; reach labelled pre-Q18).** The one strained-solids case

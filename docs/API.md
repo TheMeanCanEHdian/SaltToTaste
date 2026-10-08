@@ -3282,7 +3282,7 @@ stands (the `coatingFraction` switch stays null).
 | C1d | a second dredge after the egg ("coat with flour again", 0148, 0304) | 8.79 | FNDDS 2705842 |
 | C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61 | FNDDS 2705980, 2705998, 2706243, 2705871 |
 | C3 | fried Mollusks or Crustaceans with no crumb line | 3.94 | SR 171982, derived |
-| C5 | a fried fish a sentence batters; the recipe's counted flour and starch come off B | 15.38 | FNDDS 2706244 |
+| C5 | a fried fish a sentence batters; the recipe's counted flour and starch come off B (since matcher v57 also battered shrimp, each on its own record, and a batter's own lines are parts, never off B — below) | 15.38 | FNDDS 2706244 (v57: shrimp 2706364, haddock 2706258) |
 
 Stay held (20 rows): C4 sautéed dustings (neither fried nor baked —
 piccata, marsala, saltimbocca, meunière, francese, seared salmon and pork),
@@ -3590,6 +3590,73 @@ rows exactly the 4 rows differ — grams, basis and kcal; 0 person rows;
 statuses, sections, buckets and holds identical. Deploy note:
 matcherVersion 55 stales every recipe; a zero-request sweep recomputes the
 library.
+
+**Since matcher v57 (batch M58 — a batter left in the bowl joins the coat
+budget; matcherVersion 56; prep48 design_v2 §2 M58 W + S + the negimaki
+flag, the owner's Q8 (carbohydrate, and battered shrimp on its own record)
+and Q10 (negimaki's glaze whole) and critic F10, decided 2026-10-08 under
+the standing authorization; zero requests; step-reading, so its reach is
+pre-Q18).** AMENDS M50 Q21 (D5, "flags only, no grams move") for a batter:
+(W) the lines a batter leaves in the bowl — the D5 reader's lines reached
+through the dip word **batter** ("allowing the excess batter to drip
+off", "allowing any excess batter to drip back into bowl", "dip … in the
+batter and let the excess run off") — join M52's coat (1) as parts when the
+recipe has a coated food and a shape: each line's dredge is its WHOLE
+grams, none eaten outside it, its carbohydrate its record's (nutrient
+205); every part — flour, starch, leavening, spice, egg, beer, spirit,
+seltzer — counts f × its grams at the coat's ONE f = min(1, B / Σ coat
+carbohydrate) (a batter is one mixture; f is fixed by the read k, no new
+figure). A C5 budget no longer subtracts a batter line's carbohydrate
+(fish-and-chips' flour, already a coat part, rises as its starch and beer
+join the parts). C5 now also reads `Crustaceans, shrimp` with a batter
+sentence (before the C3 test), and its k is the battered food's own read
+record: shrimp FNDDS 2706364, haddock 2706258, else cod 2706244 (all
+15.38 — 25 g breading per 65 g raw); battered shrimp's uptake stays O2s.
+The rows are `gram_source: discarded`, basis `discarded in cooking — only
+the coat on the food counted`, the D5 flag dropped, the coat flag reading
+`… ; the batter's excess not counted)`. A person's Confirm of a batter
+line keeps the plan's grams, `discarded`, as a coat's does. Egg, glaze,
+chocolate, coating and dough dips are not W (E is M62). (S, flag only) A
+coat figure READ on another food says so, as the uptake clause does:
+`… {b} g breading per {R} g raw {food} (no record for {coated}; read as
+{record})` — crispy-fried-chicken|8 (chicken on the country-fried steak),
+crispy-pan-fried-pork-chops|0, pork-schnitzel|0 |1 (pork on the fried
+breast), maryland-crab-cakes|8 (crab on the fried breast); a derived C3
+figure says nothing new. A W batter read on a C1/C2 breading figure adds
+` (a batter read on a breading figure)` (F10: dakgangjeong|8 |9 on the
+wing's 5.66). (Q10, flag only) A glaze the steps divide evenly between two
+bowls, one served and the other brushed on with its rest discarded
+(negimaki|1–|4), is counted whole with `· approximate (the steps divide the
+glaze evenly between two bowls — one half served, the other brushed on and
+its rest discarded; counted whole)` in place of the D5 flag.
+
+Reach: 17 rows move grams (−1,376.44 kcal per batch at the Q25 factor):
+shrimp-tempura |2 flour 212.62 → 99.71, |3 63.88 → 29.96, |4 vodka 224.00
+→ 105.05 (its 85 % Q25 flag kept), |5 egg 50.00 → 23.45, |6 seltzer 236.59
+→ 110.95 (0 kcal) — f 0.4690; crispy-fish-sandwiches |6 |7 |9 |10 — f
+0.7795 on haddock 2706258; dakgangjeong |8 120.66 → 40.36, |9 23.95 →
+8.01 — f 0.3345; fish-and-chips |2 59.95 → 89.12, |3 63.88 → 31.45, |4,
+|5, |8, |10 beer 340.19 → 167.52 — f 0.4924. 9 rows move their flag only
+(S's five, negimaki's four). Per serving: tempura 381.94 → 280.02 (stays
+partial), dakgangjeong 601.62 → 512.96, the sandwiches 1,057.75 →
+1,028.23, fish-and-chips 1,003.49 → 981.40; no status moves.
+
+Known gaps (design §7 — the source stands): tempura's coat at FNDDS's 25 g
+breading per 65 g against the recipe's heavier batter; the flour, starch
+and liquid split pro rata by carbohydrate (no source splits a batter); a
+batter wetter than FNDDS's ~40 %-carbohydrate breading keeps more mass by f
+than FNDDS's 25 g (Q8's mass option left aside); crab cakes and pork read
+the breast's figure (S says so) until a read gives their own; the corpus
+lost the steps of 269 subsections (Q18), which this step reader cannot
+see.
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 23, main and
+`--reverse-parents` byte-identical; STEP ZERO the v56 tree reproduces the
+v56 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v56
+rows exactly the 26 rows differ (17 in grams, source, basis and kcal; 9 in
+basis only); 0 person rows; statuses, sections, buckets and holds
+identical. Deploy note: matcherVersion 56 stales every recipe; a
+zero-request sweep recomputes the library.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

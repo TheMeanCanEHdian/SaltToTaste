@@ -757,7 +757,19 @@ const Map<String, String> _synonyms = {
 /// end names solids, vegetables, a blender, a food processor or a purée —
 /// its aromatics, herbs and whole spices 0 g under M50 Q16 with the shipped
 /// strained-solid flag; a rejected one continues the scan.
-const int matcherVersion = 55;
+///
+/// v56 (the Matcher v57 commit, batch M58 — a batter left in the bowl
+/// joins the coat budget; prep48 design_v2 §2 M58 W + S + the negimaki
+/// flag, the owner's Q8 and Q10 and critic F10 under the 2026-10-08
+/// standing authorization; zero requests): engine `_m52Plan` counts the
+/// lines a batter leaves in the bowl (`_batterInBowl`, the dip word
+/// "batter") as coat parts at the coat's one f = min(1, B / Σ carbohydrate)
+/// — never off a C5 budget; battered shrimp is C5 on its own FNDDS 2706364
+/// and a battered haddock on 2706258 (15.38); the coat flag says "the
+/// batter's excess", names a figure read on another food as a stand-in and
+/// a batter read on a C1/C2 breading figure; a glaze the steps divide
+/// between two bowls (negimaki) states the split, counted whole.
+const int matcherVersion = 56;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

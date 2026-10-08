@@ -5032,11 +5032,14 @@ Set<int> _linesNamedIn(Recipe recipe, Set<(int, int)> at) {
 /// ponytail: a glaze whose liquid is mixed steps before its reduction
 /// stays unflagged (the spareribs' braising liquid); follow the liquid's
 /// own name back if a flag must reach it.
-Set<int> _leftInBowl(Recipe recipe) =>
+/// v56 (M58): each position maps to the dip words that reached it — a
+/// batter's lines join the coat budget ([_m52Plan]), a glaze the steps
+/// divide between two bowls states the split ([m50FlagOf]).
+Map<int, Set<String>> _leftInBowl(Recipe recipe) =>
     _stepIndexOf(recipe).memo(#leftInBowl, () {
       final index = _stepIndexOf(recipe);
       final heads = _headsOf(recipe);
-      final out = <int>{};
+      final out = <int, Set<String>>{};
       for (final (i, sentences) in index.sentences.indexed) {
         for (final (j, s) in sentences.indexed) {
           final m = _dipExcess.firstMatch(s);
@@ -5049,7 +5052,7 @@ Set<int> _leftInBowl(Recipe recipe) =>
           if (word == 'chocolate' || word == 'egg') {
             for (final (k, head) in heads.indexed) {
               if (head == word) {
-                out.add(k);
+                (out[k] ??= {}).add(word);
               }
             }
             continue;
@@ -5097,11 +5100,20 @@ Set<int> _leftInBowl(Recipe recipe) =>
               }
             }
           }
-          out.addAll(_linesNamedIn(recipe, made));
+          for (final k in _linesNamedIn(recipe, made)) {
+            (out[k] ??= {}).add(word);
+          }
         }
       }
       return out;
     });
+
+/// v56 (M58 W): the positions of [recipe]'s lines a batter leaves in the
+/// bowl ([_leftInBowl] through the dip word "batter").
+Set<int> _batterInBowl(Recipe recipe) => {
+  for (final MapEntry(:key, :value) in _leftInBowl(recipe).entries)
+    if (value.contains('batter')) key,
+};
 
 final RegExp _dipExcess = RegExp(
   r'\b(?:scrap|shak|let|allow)\w*\b[^.]*\bexcess (chocolate|batter|glaze|'
@@ -5191,7 +5203,10 @@ String? m50FlagOf(Recipe recipe, IngredientLine line) {
   final kept = head == null ? null : _keptVolumeOf(recipe, line, head);
   final flags = [
     if (kept != null) 'approximate (the steps keep only $kept of it)',
-    if (_leftInBowl(recipe).contains(position)) _leftInBowlFlag,
+    if (_leftInBowl(recipe)[position] case final words?)
+      words.contains('glaze') && _splitsGlaze(recipe)
+          ? _splitGlazeFlag
+          : _leftInBowlFlag,
     if (_liftedFromMarinade(recipe).contains(position)) _marinadeFlag,
   ];
   return flags.isEmpty ? null : flags.join(' · ');
@@ -5241,6 +5256,19 @@ String? _m50DiscardedBasis(Recipe recipe, IngredientLine line) {
 const String _leftInBowlFlag =
     'approximate (the steps leave an excess of it in the bowl — how much '
     'is eaten is not written)';
+
+/// v56 (M58, Q10): a glaze the steps divide between two bowls — one served,
+/// the other brushed on and its rest discarded (negimaki) — is counted
+/// whole (Q21 (a)); its flag states the printed split.
+const String _splitGlazeFlag =
+    'approximate (the steps divide the glaze evenly between two bowls — '
+    'one half served, the other brushed on and its rest discarded; counted '
+    'whole)';
+
+/// Whether [recipe]'s steps divide a glaze evenly between two bowls.
+bool _splitsGlaze(Recipe recipe) => _stepIndexOf(
+  recipe,
+).allSentences.any((s) => s.contains('divide evenly between two bowls'));
 const String _marinadeFlag =
     'approximate (lifted out of its marinade — how much clings is not '
     'written)';
@@ -15377,7 +15405,9 @@ derivedFor(
       edited.status == 'confirmed' &&
           !typed &&
           (medium == DiscardedMedium.coating ||
-              medium == DiscardedMedium.fryingOil)
+              medium == DiscardedMedium.fryingOil ||
+              // v56 (M58 W): a batter line the coat budget weighs.
+              _batterInBowl(recipe).contains(position))
       ? _m52OnConfirm(db, recipe, placed)
       : null;
   final weight = m52 != null
@@ -15421,7 +15451,8 @@ derivedFor(
       : weight;
   final source = keepTyped
       ? edited.gramSource
-      : resolves
+      // v56 (M58 W): a batter line M52 weighs is `discarded`, as its coat.
+      : resolves || m52 != null
       ? GramSource.discarded.name
       : weight == null
       ? null
@@ -16256,8 +16287,8 @@ String _m52FoodName(String description) {
 
 /// The coat's shape (P3-A): C1 fried (a single dredge, or flour → egg →
 /// crumb), C1d a second dredge after the egg, C2 baked, C3 floured seafood
-/// fried, C5 a battered fish. C4 — a sautéed dusting — has no record and
-/// stays held.
+/// fried, C5 a battered fish or shrimp. C4 — a sautéed dusting — has no
+/// record and stays held.
 enum _CoatShape { c1, c1d, c2, c3, c5 }
 
 /// A sentence that dredges or coats ([_coatShapeOf]: the bake must come
@@ -16292,7 +16323,7 @@ bool _m52Fries(Recipe recipe, String s) =>
     );
 
 /// The coat's shape in [recipe] for a food on [coated] (P3-A, critic F2):
-/// a recipe that fries reads C1 (C5 a fish a sentence batters; C3
+/// a recipe that fries reads C1 (C5 a fish or shrimp a sentence batters; C3
 /// Mollusks or Crustaceans with no crumb line; C1d a second dredge) —
 /// unless a bake after the coat comes after its last frying sentence: the
 /// LAST cook of the coated food decides, so browned in oil then baked reads
@@ -16315,7 +16346,10 @@ _CoatShape? _coatShapeOf(Recipe recipe, String coated) {
   if (!_fries(recipe) || lastBake > lastFry) {
     return lastBake >= 0 ? _CoatShape.c2 : null;
   }
-  if (coated.startsWith('Fish,') && all.any((s) => s.contains('batter'))) {
+  // v56 (M58 W, Q8): battered shrimp is C5 on its own record, before C3.
+  if ((coated.startsWith('Fish,') ||
+          coated.startsWith('Crustaceans, shrimp')) &&
+      all.any((s) => s.contains('batter'))) {
     return _CoatShape.c5;
   }
   if ((coated.startsWith('Mollusks,') || coated.startsWith('Crustaceans,')) &&
@@ -16351,6 +16385,12 @@ _M52Figure _coatFigure(_CoatShape shape, String coated) {
       _readFig('3.10', _legsBaked),
     _CoatShape.c2 => _readFig('3.18', _breastBaked),
     _CoatShape.c3 => _derivedFig('3.94', _squidFried),
+    // v56 (M58 W): the battered food's own read record.
+    _CoatShape.c5 when d.contains('shrimp') => _readFig('15.38', _shrimpFried),
+    _CoatShape.c5 when d.contains('haddock') => _readFig(
+      '15.38',
+      _haddockFried,
+    ),
     _CoatShape.c5 => _readFig('15.38', _codFried),
   };
 }
@@ -16478,17 +16518,39 @@ const String o1cBasis =
     'but the fried skin-on parts carry less fat (17.2 g) than the raw parts '
     'counted here: no net uptake';
 
-/// The flag of a coat sized by [figure] on the raw [name].
-String _coatFlag(_M52Figure figure, String name) {
+/// The flag of a coat sized by [figure] on the raw [name] in [shape];
+/// [batter]: a batter left in the bowl is among its parts (v56, M58 W).
+/// v56 (M58 S): a read figure of another food says it stands in, as
+/// [_uptakeClause] does; a batter on a C1/C2 breading figure says so (F10).
+String _coatFlag(
+  _M52Figure figure,
+  String name,
+  _CoatShape shape, {
+  required bool batter,
+}) {
   final read = figure.read;
   final source = read != null
       ? 'USDA FNDDS ${read.id} recipe: ${read.b} g breading per ${read.r} g '
             'raw ${read.food}'
       : 'derived from USDA SR Legacy ${figure.derived!.id} '
             '"${figure.derived!.description}"';
+  final standIn =
+      read != null && read.food.split(' ').first != name.split(' ').first
+      ? _standIn(name, read.description)
+      : '';
+  final onBreading =
+      batter &&
+          const {_CoatShape.c1, _CoatShape.c1d, _CoatShape.c2}.contains(shape)
+      ? ' (a batter read on a breading figure)'
+      : '';
   return 'approximation (coat: ${figure.value} g carbohydrate per 100 g of '
-      "the raw $name — $source; the dredge's excess not counted)";
+      'the raw $name — $source$standIn$onBreading; the '
+      "${batter ? 'batter' : 'dredge'}'s excess not counted)";
 }
+
+/// A figure read on another food's [description] stands in for [name].
+String _standIn(String name, String description) =>
+    ' (no record for $name; read as $description)';
 
 /// One fried food's clause of an uptake flag.
 String _uptakeClause(_M52Figure figure, String name) {
@@ -16500,8 +16562,7 @@ String _uptakeClause(_M52Figure figure, String name) {
       : 'derived from USDA SR Legacy ${figure.derived!.id} '
             '"${figure.derived!.description}"';
   final standIn = figure.standIn
-      ? ' (no record for $name; read as '
-            '${read?.description ?? figure.derived!.description})'
+      ? _standIn(name, read?.description ?? figure.derived!.description)
       : '';
   return '${figure.value} % of the raw $whose weight — $source$standIn';
 }
@@ -16534,7 +16595,9 @@ typedef _M52Row = ({
 ///   shape ([_coatShapeOf], [_coatFigure]); a C5 batter's counted flour
 ///   and starch come off B; nut and cheese layers and C4 dustings stay
 ///   held. NOT a fraction of the line (CP9's "no blanket coating fraction"
-///   stands): f is the food's.
+///   stands): f is the food's. v56 (M58 W, Q8): the lines a batter leaves
+///   in the bowl ([_batterInBowl]) are parts too — the whole line the
+///   dredge, none eaten, never off B — every part at the one f.
 /// - THE FRYING OIL (Q3 a, P3-B): a line the engine zeroes as frying oil
 ///   counts u × the fried food's grams / 100 ([_friedClassOf]) on top of
 ///   its kept part — the M49-marked pour-off too (F13) — capped at the line
@@ -16578,7 +16641,14 @@ Map<int, _M52Row> _m52Plan(
     for (final MapEntry(:key, :value) in media.entries)
       if (value == DiscardedMedium.fryingOil) key,
   ]..sort();
-  if (coats.isEmpty && oils.isEmpty) {
+  // v56 (M58 W, Q8): a batter left in the bowl ([_batterInBowl], a
+  // text-only memo — RULE C intact) joins the coat: each line a part, its
+  // whole grams the dredge, none eaten outside it.
+  final batter = {
+    for (final i in _batterInBowl(recipe))
+      if (at.containsKey(i) && media[i] != DiscardedMedium.coating) i,
+  };
+  if (coats.isEmpty && batter.isEmpty && oils.isEmpty) {
     return const {};
   }
   bool counted(IngredientMatchRow r) =>
@@ -16600,7 +16670,7 @@ Map<int, _M52Row> _m52Plan(
       r.gramSource != GramSource.override.name;
   double round2(double v) => double.parse(v.toStringAsFixed(2));
   IngredientMatchRow? coated;
-  if (coats.isNotEmpty || _shallowFries(recipe)) {
+  if (coats.isNotEmpty || batter.isNotEmpty || _shallowFries(recipe)) {
     for (final r in at.values) {
       if (counted(r) &&
           _meatRecords.any(r.description!.startsWith) &&
@@ -16615,19 +16685,24 @@ Map<int, _M52Row> _m52Plan(
       ? null
       : _coatShapeOf(recipe, coated.description!);
   final plan = <int, _M52Row>{};
-  if (coated != null && shape != null && coats.isNotEmpty) {
+  if (coated != null &&
+      shape != null &&
+      (coats.isNotEmpty || batter.isNotEmpty)) {
     final figure = _coatFigure(shape, coated.description!);
     var budget = double.parse(figure.value) * coated.grams! / 100;
     if (shape == _CoatShape.c5) {
       for (final r in at.values) {
-        if (counted(r) && _dredgeHeads.contains(_headsOf(recipe)[r.position])) {
+        // A batter's lines are parts below, never off B (M58 W).
+        if (counted(r) &&
+            !batter.contains(r.position) &&
+            _dredgeHeads.contains(_headsOf(recipe)[r.position])) {
           final record = food(r.fdcId!, lines[r.position]);
           budget -= r.grams! * (record?.nutrientsPer100g['205'] ?? 0) / 100;
         }
       }
     }
     final parts = <({int at, double dredge, double eaten, double cho})>[];
-    for (final i in coats) {
+    for (final i in [...coats, ...batter]..sort()) {
       final r = at[i];
       if (!engine(r) ||
           (r!.hold != null && r.hold != 'coating') ||
@@ -16640,6 +16715,19 @@ Map<int, _M52Row> _m52Plan(
           ? null
           : lineGrams(db, lines[i], record, recipe: recipe);
       if (full == null) {
+        continue;
+      }
+      if (batter.contains(i)) {
+        // M58 W: the whole line is batter (a record below the gate counts
+        // nothing and shares nothing).
+        if (!(r.status == 'auto' && belowConfidenceGate(r.confidence))) {
+          parts.add((
+            at: i,
+            dredge: full.grams,
+            eaten: 0,
+            cho: (record!.nutrientsPer100g['205'] ?? 0) / 100,
+          ));
+        }
         continue;
       }
       final base = engineOutcome(
@@ -16663,7 +16751,12 @@ Map<int, _M52Row> _m52Plan(
     final carbs = parts.fold<double>(0, (n, p) => n + p.dredge * p.cho);
     if (carbs > 0) {
       final f = min(1, max(budget, 0) / carbs);
-      final flag = _coatFlag(figure, _m52FoodName(coated.description!));
+      final flag = _coatFlag(
+        figure,
+        _m52FoodName(coated.description!),
+        shape,
+        batter: parts.any((p) => batter.contains(p.at)),
+      );
       for (final p in parts) {
         plan[p.at] = (
           grams: round2(f * p.dredge + p.eaten),
@@ -16782,8 +16875,9 @@ Map<int, _M52Row> _m52Plan(
 }
 
 /// [_m52Plan]'s answer for [row] of [recipe] as stored — null unless its
-/// line is a coat or a frying oil, the row one M52 weighs ([_m52Weighs])
-/// counted with these grams (the flag reads only grams it wrote).
+/// line is a coat, a batter left in the bowl (v56, M58 W) or a frying
+/// oil, the row one M52 weighs ([_m52Weighs]) counted with these grams (the
+/// flag reads only grams it wrote).
 _M52Row? _m52RowOf(
   SaltDatabase db,
   Recipe recipe,
@@ -16799,7 +16893,8 @@ _M52Row? _m52RowOf(
     normalizeItem(lineItemOf(line)),
   );
   if (medium != DiscardedMedium.coating &&
-      medium != DiscardedMedium.fryingOil) {
+      medium != DiscardedMedium.fryingOil &&
+      !_batterInBowl(recipe).contains(row.position)) {
     return null;
   }
   final plan = _m52Plan(

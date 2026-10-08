@@ -1175,9 +1175,14 @@ void main() {
     // whole-recipe pins read (bold red wine, boneless beef short ribs, queso
     // fresco; 2685578): the detail a recorded hit (2685578 in 'whole
     // tomatoes' and 'whole plum tomatoes'), differing in some digit (energy
-    // 22.4763 / 22.5): compared 492 -> 493, differ 374 -> 375.
-    expect(compared, 493);
-    expect(differ, 375);
+    // 22.4763 / 22.5): compared 492 -> 493, differ 374 -> 375. Matcher
+    // v57 (batch M58) recorded from snapshot 23 the 3 searches and 1 detail
+    // its whole-recipe pins read (dried currants, hard-cooked egg, low-fat
+    // mozzarella cheese; 2709201): the detail a recorded hit (2709201 in
+    // 'dried currants', 'dried mint' and others), differing in some digit
+    // (carbohydrate 77.0 / 76.98): compared 493 -> 494, differ 375 -> 376.
+    expect(compared, 494);
+    expect(differ, 376);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
