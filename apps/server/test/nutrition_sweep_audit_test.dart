@@ -1170,9 +1170,14 @@ void main() {
     // in 'top sirloin beef roast', 2705826 in 'cube steaks', 2727572 in
     // 'english-style beef short ribs'), all eight differing in some digit
     // (e.g. 2727572 energy 190.0448 / 190.0, 168607 protein 20.72 / 20.7):
-    // compared 484 -> 492, differ 366 -> 374.
-    expect(compared, 492);
-    expect(differ, 374);
+    // compared 484 -> 492, differ 366 -> 374. Matcher v56 (batch M57)
+    // recorded from snapshot 23 the 3 searches and 1 detail its
+    // whole-recipe pins read (bold red wine, boneless beef short ribs, queso
+    // fresco; 2685578): the detail a recorded hit (2685578 in 'whole
+    // tomatoes' and 'whole plum tomatoes'), differing in some digit (energy
+    // 22.4763 / 22.5): compared 492 -> 493, differ 374 -> 375.
+    expect(compared, 493);
+    expect(differ, 375);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

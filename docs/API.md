@@ -3539,6 +3539,58 @@ person rows; 26 recipes move only in kcal per serving; statuses, sections,
 buckets and holds identical. Deploy note: matcherVersion 54 stales every
 recipe; a zero-request sweep recomputes the library.
 
+**Since matcher v56 (batch M57 — a strain of "the liquid" whose solids
+nothing uses; matcherVersion 55; prep48 design_v2 §2 M57 S1, critic F4 and
+F14, decided by the owner 2026-10-08 under the standing authorization; Q19
+NO; zero requests; step-reading, so its reach is pre-Q18).** M50's strained
+solids (Q16 above) also read a strain of **"the liquid"**: a step sentence
+matching `strain (the) (braising |cooking |poaching )liquid` ("strain the
+liquid through a fine-mesh strainer into a bowl", "Strain liquid through
+fine-mesh strainer into large bowl") is the recipe's strain when **no
+sentence from it to the end of the steps names `solids`, `vegetables`, a
+`blender`, a `food processor` or a `purée`** (the later-use guard: the pot
+roasts blend their vegetables, the oxtails "return solids to now-empty pot",
+carne deshebrada "Transfer remaining solids to blender" — eaten, so not
+strained out). Figure and flag are M50's: its aromatic vegetables, herbs
+and whole spices count 0 g
+(`discarded`, the M50 Q16 policy — no new figure), `gram_basis` the shipped
+strained-solid text byte for byte (`"discarded in cooking — counted as 0 g ·
+approximate (strained out and discarded — what it gives the liquid is not
+counted)"`), with every shipped guard unchanged (first own mention before
+the strain, named again after it, the vessel guard, lifted-out vegetables,
+the sheet, "meanwhile", the line blended smooth, ground/powder/paste). The
+older strains (pressing on or discarding the solids, a stock or broth) are
+read first, unchanged. A strain of the liquid the guard rejects **continues
+the scan** — never ends it — so a later pressing strain is still the
+recipe's strain (critic F14). Prunes are not a strained head (Q19 NO: the
+short ribs' background says they melt into the sauce).
+
+Reach: 4 rows, −591.09 kcal per batch — slow-cooker-beer-braised-short-ribs
+|4 onions 1,360.78 → 0 g (−517.09) and |10 bay (−1.25); turkey-thigh-confit
+|7 garlic 50 → 0 g (−71.50) and |8 bay (−1.25). The ribs read 1,080.67 kcal
+per serving (was 1,210.25), the confit 510.86 (was 522.99); both stay
+complete. Kept by the shipped guards: the ribs' prunes (96.00 g), the thyme
+and parsley named after the strain, the confit's onions (processed in the
+food processor). daube-provencal's porcini soak is now its strain; every
+daube row stays as it was (the porcini are named again after the soak;
+every other strained head is first named after it).
+
+Known gaps (design §7 — the source stands): what a strained solid gives the
+liquid (the flag says so); R12's short ribs stay +14.3 % over the
+calibration (the prunes counted, the braise's rendered fat — Q2 (ii)'s
+item); turkey-thigh-confit's rinsed cure ("rinse well", its |0 onions and
+|3 sugar) is not read by the rinsed-cure reader — a later discard pass; the
+corpus lost the steps of 269 subsections (Q18), which this step reader
+cannot see.
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 23, main and
+`--reverse-parents` byte-identical; STEP ZERO the v55 tree reproduces the
+v55 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v55
+rows exactly the 4 rows differ — grams, basis and kcal; 0 person rows;
+statuses, sections, buckets and holds identical. Deploy note:
+matcherVersion 55 stales every recipe; a zero-request sweep recomputes the
+library.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line

@@ -4022,6 +4022,14 @@ class _Parting {
 /// strains a stock or broth (the widening) — (step, sentence) — or null:
 /// none, or the first such strain is of a purée, a soup, a custard or a
 /// batter, whose solids are a food that is eaten (creamy pea soup).
+/// v56 (batch M57, prep48 design_v2 §2 M57 S1; critic F4, F14): a strain
+/// of "the (braising|cooking|poaching) liquid" ([_strainsTheLiquid])
+/// counts too, only when no sentence from it to the end names solids,
+/// vegetables, a blender, a food processor or a purée ([_solidsUsedLater]
+/// — the pot roasts blend them, the oxtails return them); one that does
+/// CONTINUES the scan (F14: never null — a later pressing strain is still
+/// found). No purée/soup skip of its own: "strain the cooking liquid into
+/// the soup" strains the aromatics out; a purée is in the guard.
 (int, int)? _strainAt(Recipe recipe) =>
     _stepIndexOf(recipe).memo(#strainAt, () {
       final index = _stepIndexOf(recipe);
@@ -4049,6 +4057,13 @@ class _Parting {
           if (_strainedSolids.hasMatch(s) || discardsNext) {
             return _pureeStrain.hasMatch(s) ? null : (i, j);
           }
+          if (_strainsTheLiquid.hasMatch(s) &&
+              ![
+                ...sentences.skip(j),
+                ...all.skip(i + 1).expand((s) => s),
+              ].any(_solidsUsedLater.hasMatch)) {
+            return (i, j);
+          }
         }
       }
       return null;
@@ -4065,6 +4080,12 @@ final RegExp _strainedSolids = RegExp(
 );
 final RegExp _pureeStrain = RegExp(
   r'pur[eé]e|\bsoup\b|custard|mixture into|batter',
+);
+final RegExp _strainsTheLiquid = RegExp(
+  r'\bstrain (?:the )?(?:braising |cooking |poaching )?liquid\b',
+);
+final RegExp _solidsUsedLater = RegExp(
+  r'\bsolids\b|\bvegetables\b|blender|food processor|pur[eé]e',
 );
 
 /// Q16's classes a strain zeroes ([_strainedOut]), by head noun: aromatic

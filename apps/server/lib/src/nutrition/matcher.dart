@@ -749,7 +749,15 @@ const Map<String, String> _synonyms = {
 /// asks for lean; a printed trim moves a keyed record to the record at that
 /// trim (engine `trimDepthRecords`: the rack 172641 → 174414 with its
 /// AH-102 row, read with no detail; "fat caps removed" 2727572 → 171751).
-const int matcherVersion = 54;
+///
+/// v55 (the Matcher v56 commit, batch M57 — a strain of "the liquid" whose
+/// solids nothing uses; prep48 design_v2 §2 M57 S1, critic F4 and F14, the
+/// owner's Q19 NO; zero requests): engine `_strainAt` also reads "strain
+/// (the) (braising|cooking|poaching) liquid" when no sentence from it to the
+/// end names solids, vegetables, a blender, a food processor or a purée —
+/// its aromatics, herbs and whole spices 0 g under M50 Q16 with the shipped
+/// strained-solid flag; a rejected one continues the scan.
+const int matcherVersion = 55;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

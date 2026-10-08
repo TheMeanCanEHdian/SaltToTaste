@@ -3608,6 +3608,18 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v56 (batch M57): a strain of "the liquid" whose
+  solids nothing uses (prep48 S1; Q19 NO; built under the standing
+  authorization; reach labelled pre-Q18).** The one strained-solids case
+  M50's readers missed: "strain the (braising/cooking/poaching) liquid"
+  counts as the strain only when no later sentence uses the solids. Kept
+  deviations, disclosed and re-measured: the arm is its own regular
+  expression (a shipped name collision; the guard and the never-null scan
+  need it); a 'solids' widening is an equivalent mutant by construction
+  (the guard includes the strain sentence), re-spelled and killed. Four
+  rows, −591 kcal per batch, two recipes' kcal per serving; the short ribs
+  land at +14.3 % against the calibrator (the prunes stay counted by the
+  recipe's own words).
 - **2026-10-08 — matcher v55 (batch M56): meat records at the right animal,
   cut and fat level (prep48 Q1–Q7; built under the standing
   authorization).** Kept deviations, each disclosed and re-measured: (1)

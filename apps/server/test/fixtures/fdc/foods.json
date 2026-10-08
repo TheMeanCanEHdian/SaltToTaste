@@ -25150,5 +25150,33 @@
     "description": null
    }
   ]
+ },
+ "2685578": {
+  "fdc_id": 2685578,
+  "description": "Tomatoes, whole, canned, solids and liquids, with salt added",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 22.4763,
+   "958": 19.149449,
+   "203": 0.8675,
+   "204": 0.2063,
+   "205": 4.2874,
+   "291": 0.8725,
+   "301": 19.83,
+   "303": 0.9291,
+   "304": 10.75,
+   "305": 17.31,
+   "306": 202.9,
+   "307": 111.5,
+   "401": 7.7
+  },
+  "portions": [
+   {
+    "gram_weight": 130.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
  }
 }

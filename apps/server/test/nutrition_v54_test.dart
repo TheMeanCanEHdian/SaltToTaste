@@ -2710,8 +2710,8 @@ double _raw(Map<String, dynamic> food, String number) =>
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    // RE-PIN (M56 batch, v55): matcherVersion 54 (was 53).
-    expect(matcherVersion, 54);
+    // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
+    expect(matcherVersion, 55);
   });
 
   test('the energy split on the raw FDC details (§1.1 (A), P-E): ethanol '
