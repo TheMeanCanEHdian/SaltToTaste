@@ -2573,11 +2573,7 @@ bool _coatLayer(
     return false;
   }
   final index = _stepIndexOf(recipe);
-  return [
-        head,
-        for (final kind in const ['parmesan', 'saltine'])
-          if (normalized.contains(kind)) kind,
-      ].any(
+  return _layerWords(head, normalized).any(
         (word) => _naming(
           recipe,
           word,
@@ -2585,6 +2581,55 @@ bool _coatLayer(
       ) &&
       (_dredgedIn(recipe) || _leavesExcess(recipe));
 }
+
+/// The words a step names a coat layer by ([_coatLayer]): its [head], or
+/// the kind word its [normalized] item carries ("parmesan", "saltine": the
+/// steps never say "cheese" or "crackers" there).
+List<String> _layerWords(String head, String normalized) => [
+  head,
+  for (final kind in const ['parmesan', 'saltine'])
+    if (normalized.contains(kind)) kind,
+];
+
+/// v65 (M66 R3, the owner's Q5 (a) GATED, critic F4): whether the coat
+/// layer at [position] of [recipe] — a nut or cheese line the coat holds —
+/// is MIXED INTO a crumb: one step sentence names both the layer
+/// ([_layerWords], [_naming]) and a crumb ([_crumbWord]) — "Process the
+/// almonds in a food processor to fine crumbs" (0042; its "Toss the nuts
+/// with the panko" is not read: 'nuts' is no layer word), "add the bread
+/// crumbs and ground almonds" (0117), "Spread the bread crumbs … ; when
+/// cool, stir in the Parmesan" (0416). Then the layer is a part of
+/// [_m52Plan]'s budget at the one f; else it stays held — a cheese CRUST
+/// with a flour binder (0419: "Combine the 2 cups shredded Parmesan and
+/// remaining 1 tablespoon flour") is not the record's breading.
+/// ponytail: one sentence must name both — a crumb named only in another
+/// sentence of the mixing step leaves the layer held (no corpus recipe);
+/// widen to the step if one appears. And a layer ground "to … crumbs"
+/// passes whatever it is then mixed with — the nut's OWN crumbs, not a
+/// bread crumb (0042 passes only so): a nut layer with a flour-only binder
+/// would join the budget too (no corpus recipe); read the crumb outside the
+/// "to … crumbs" phrase if one appears.
+bool _layerInCrumb(Recipe recipe, int position) {
+  final head = _headsOf(recipe)[position];
+  if (head == null) {
+    return false;
+  }
+  final index = _stepIndexOf(recipe);
+  return _layerWords(
+    head,
+    normalizeItem(lineItemOf(nutritionLines(recipe)[position])),
+  ).any(
+    (word) => _naming(
+      recipe,
+      word,
+    ).any((at) => _crumbWord.hasMatch(index.sentence(at))),
+  );
+}
+
+/// A crumb a coat layer is mixed into ([_layerInCrumb]).
+final RegExp _crumbWord = RegExp(
+  r'\b(?:bread crumbs|panko|crumbs|crackers)\b',
+);
 
 /// The coat's parts outside [_dredgeHeads] ([_coatLayer]).
 const Set<String> _coatLayerHeads = {
@@ -3242,13 +3287,17 @@ final RegExp _strainsLiquid = RegExp(
 /// step with a dredge sentence, or every step before the braise's strain. Held
 /// with the line as a plus line's eaten part is ([engineOutcome]), and
 /// named in its `hold_note` ([holdNoteOf]) as written ("1 teaspoon
-/// flour"); null when no step writes such a part.
+/// flour"); null when no step writes such a part. [ownHead]: the line's
+/// own head when [head] is its item's last word instead ([_m52Plan]'s dip
+/// fallback) — the writers then widen to match ([_amountWritersOf]).
 ({Amount amount, String text})? _eatenOutsideMedium(
   Recipe recipe,
   IngredientLine line,
   String? head,
-  DiscardedMedium? medium,
-) {
+  DiscardedMedium? medium, {
+  int after = -1,
+  String? ownHead,
+}) {
   if (head == null ||
       (medium != DiscardedMedium.coating &&
           medium != DiscardedMedium.partialPourAway)) {
@@ -3294,7 +3343,7 @@ final RegExp _strainsLiquid = RegExp(
             // substring test first, so the amount run never scans a
             // sentence without it.
             if (sentence.contains(head))
-              if (mention.firstMatch(sentence) case final match?) match,
+              if (mention.firstMatch(sentence) case final match?) (i, match),
     ];
   });
   // The mention is THIS line's only when no other line of its ingredient
@@ -3303,71 +3352,121 @@ final RegExp _strainsLiquid = RegExp(
   // teaspoon flour" as the dredge's eaten part too — the teaspoon counted
   // twice). RULE C (v26, Run 056 S5/S7: each line parsed every mention and
   // scanned every line per mention — a legal 400-line dredge recipe ~123 s
-  // per GET): the mentions parsed ONCE per head and medium, grouped by
-  // amount (the first mention of each, in order), and each amount's lines
-  // found once per head — a line's answer is two lookups.
+  // per GET): the mentions parsed ONCE per head and medium, each amount's
+  // mentions and the unwritten ones indexed in order, and each amount's
+  // lines found once per head — a line's answer is three binary searches.
+  // v65 (M66 R2): a dip's line reads only the mentions in the steps after
+  // its dip's ([after]) — never the mixing step before it, which writes
+  // the dip's own amounts ("2 tablespoons hot sauce", 1185): the same
+  // lists from that step on, so every dip step shares one parse.
   // Key: head and medium — [written]'s, and the parse's head.
   final parts = index.memo(('eatenParts', head, medium), () {
-    final first = <(String, String?), ({Amount amount, String text})>{};
-    for (final match in written) {
+    final parsed =
+        <({int step, (String, String?) amount, Amount part, String text})>[];
+    final amounts = <(String, String?)>{};
+    for (final (step, match) in written) {
       _count('eatenParses');
       final part = parseIngredientLine(
         '${match[1]}$head',
       ).amounts.firstOrNull;
       if (part != null) {
-        first.putIfAbsent(
-          (part.quantity, part.unit),
-          () => (amount: part, text: match[0]!),
-        );
+        amounts.add((part.quantity, part.unit));
+        parsed.add((
+          step: step,
+          amount: (part.quantity, part.unit),
+          part: part,
+          text: match[0]!,
+        ));
       }
     }
-    return first;
+    return (parsed: parsed, amounts: amounts);
   });
-  final writers = _amountWritersOf(recipe, head);
+  final writers = _amountWritersOf(recipe, head, ownHead);
   bool free((String, String?) amount) => switch (writers[amount]) {
     null => true,
     final lines => lines.length == 1 && identical(lines.single, line),
   };
-  // The first amount no line writes, or this line's own amount when it is
-  // the only line writing it and is written first.
-  final unwritten = index.memo(
-    // Key: head and medium — [parts]'s, and the head's writers.
-    ('eatenUnwritten', head, medium),
-    () => parts.keys.where((a) => writers[a] == null).firstOrNull,
+  // The mentions read: those from step [after] + 1 on.
+  final at = _firstAfter(parts.parsed, after + 1, (p) => p.step);
+  // The first of [mentions] (indexes into [parts], ascending) read, or null.
+  int? firstRead(List<int> mentions) {
+    final k = _firstAfter(mentions, at, (i) => i);
+    return k < mentions.length ? mentions[k] : null;
+  }
+
+  ({Amount amount, String text}) partAt(int i) =>
+      (amount: parts.parsed[i].part, text: parts.parsed[i].text);
+  // The first mention of an amount no line writes, or this line's own
+  // amount when it is the only line writing it and is written first.
+  final unwritten = firstRead(
+    index.memo(
+      // Key: head and medium — [parts]'s; head and ownHead — the writers.
+      ('eatenUnwritten', head, medium, ownHead),
+      () => [
+        for (final (i, p) in parts.parsed.indexed)
+          if (writers[p.amount] == null) i,
+      ],
+    ),
   );
   final own = line.amounts.firstOrNull;
   final mine = own == null ? null : (own.quantity, own.unit);
-  if (mine != null && parts.containsKey(mine) && free(mine)) {
+  if (mine != null && parts.amounts.contains(mine) && free(mine)) {
     final order = index.memo(
       // Key: head and medium — [parts]'s.
       ('eatenOrder', head, medium),
-      () => {for (final (i, a) in parts.keys.indexed) a: i},
+      () {
+        final byAmount = <(String, String?), List<int>>{};
+        for (final (i, p) in parts.parsed.indexed) {
+          (byAmount[p.amount] ??= []).add(i);
+        }
+        return byAmount;
+      },
     );
-    if (unwritten == null || order[mine]! < order[unwritten]!) {
-      return parts[mine];
+    final first = order[mine] == null ? null : firstRead(order[mine]!);
+    if (first != null && (unwritten == null || first < unwritten)) {
+      return partAt(first);
     }
   }
-  return unwritten == null ? null : parts[unwritten];
+  return unwritten == null ? null : partAt(unwritten);
 }
 
 /// Each first amount (quantity, unit) the lines of [head] in [recipe]
 /// write, and the lines writing it (by identity) — once per head
-/// ([_eatenOutsideMedium]).
+/// ([_eatenOutsideMedium]). v65 closer 1 (D1): with [ownHead], [head] is a
+/// dip line's item's LAST word ("zest" of "grated zest from 1 orange",
+/// "eggs" of "large eggs" — no line's head), and the writers are also every
+/// line whose item ends in it and every line of [ownHead]: a mention
+/// another line writes ("Whisk 2 large eggs into the dressing" beside a
+/// second "2 large eggs" line) is never the dip line's (Run 054 O7).
 Map<(String, String?), Set<IngredientLine>> _amountWritersOf(
   Recipe recipe,
-  String head,
-  // Key: head — the lines of it.
-) => _stepIndexOf(recipe).memo(('amountWriters', head), () {
+  String head, [
+  String? ownHead,
+  // Key: head and ownHead — the lines of them.
+]) => _stepIndexOf(recipe).memo(('amountWriters', head, ownHead), () {
   final heads = _headsOf(recipe);
+  final lasts = ownHead == null ? null : _lastWordsOf(recipe);
   final writers = <(String, String?), Set<IngredientLine>>{};
   for (final (i, line) in nutritionLines(recipe).indexed) {
     final first = line.amounts.firstOrNull;
-    if (heads[i] == head && first != null) {
+    if (first != null &&
+        (heads[i] == head ||
+            lasts != null && (heads[i] == ownHead || lasts[i] == head))) {
       (writers[(first.quantity, first.unit)] ??= Set.identity()).add(line);
     }
   }
   return writers;
 });
+
+/// Each of [recipe]'s [nutritionLines]' normalized item's last word, once
+/// per recipe ([_amountWritersOf]).
+List<String> _lastWordsOf(Recipe recipe) => _stepIndexOf(recipe).memo(
+  #lastWords,
+  () => [
+    for (final line in nutritionLines(recipe))
+      normalizeItem(lineItemOf(line)).split(' ').last,
+  ],
+);
 
 /// The `hold_note` of [line]'s [hold] — what a reviewer needs to judge it,
 /// in words: a `partial_pour_away`'s kept liquid ([keptLiquidOf]), and a
@@ -3389,7 +3488,7 @@ String? holdNoteOf(Recipe recipe, IngredientLine line, String? hold) {
       recipe,
     ).indexWhere((l) => identical(l, line));
     if (_dipsOf(recipe)[position] case final dip?) {
-      return dip;
+      return dip.text;
     }
   }
   final medium = switch (hold) {
@@ -5355,7 +5454,9 @@ Map<int, Set<String>> _leftInBowl(Recipe recipe) =>
 /// v60 (M62 E, Q9): the lines of an egg or buttermilk dip whose excess the
 /// steps leave in the bowl — "Dip in the egg mixture, allowing the excess
 /// to drip off" ([_dipExcess]'s first arm) — each with the dip sentence as
-/// written (an H row's `hold_note`, [holdNoteOf]); once per recipe. A line
+/// written (an H row's `hold_note`, [holdNoteOf]) and where it is, (step,
+/// sentence) (v65, M66 R2: a part a LATER step writes is eaten outside the
+/// dip, [_m52Plan]); once per recipe. A line
 /// is the dip's when a mixing sentence ([_mixVerb]) naming the dip's base
 /// word (egg, buttermilk) BEFORE the dip names it: its A13 mention
 /// ([_linesNamedIn]'s nth), or any mention of a head no other line shares
@@ -5365,10 +5466,24 @@ Map<int, Set<String>> _leftInBowl(Recipe recipe) =>
 /// frying oil's kept part). Equal to each dip's own made set unioned (each
 /// is a prefix of the base's mixing sentences, A13 and the clause monotone
 /// in it), read once per base (RULE C: never a scan per dip).
-/// ponytail: a shared head rides A13's order (nut-crusted's one 'pepper'
-/// word goes to its first pepper line, the cayenne); split it by the
-/// line's modifier word if a pin ever needs the black pepper.
-Map<int, String> _dipsOf(Recipe recipe) => _stepIndexOf(recipe).memo(#dips, () {
+/// v65 (M66 R3', pC R3 — the v60 ponytail's upgrade path): a head two or
+/// more lines share names each line by its OWN word — the token right
+/// before the head in its item, one word, never "and"/"or", written in
+/// no other line of that head ("ground black pepper": black; "cayenne
+/// pepper": cayenne) — at every sentence writing it (0117's "beat the
+/// eggs, mustard, and black pepper" is |12's, not the first pepper line's;
+/// 0315's bare "cayenne" is |5's); a line with none rides A13's order.
+/// ponytail: one token, and a line WITH an own word is named only where
+/// that word is written — a mixing sentence calling it by its bare head
+/// ("the salt, pepper, and cayenne") names it no longer (v64's A13 nth
+/// did); only a line with no own word (told apart by a word further from
+/// its head, or by none) rides A13's nth mention. No A13 fallback for an
+/// own-word line: 0117|8 cayenne, its word only in the crumb sentence,
+/// would take the egg sentence's "black pepper" back. Read a bare-head
+/// mention no sibling's own word claims if a pin ever needs it.
+Map<int, ({String text, (int, int) at})> _dipsOf(
+  Recipe recipe,
+) => _stepIndexOf(recipe).memo(#dips, () {
   final index = _stepIndexOf(recipe);
   bool before((int, int) a, (int, int) b) =>
       a.$1 < b.$1 || (a.$1 == b.$1 && a.$2 < b.$2);
@@ -5383,7 +5498,7 @@ Map<int, String> _dipsOf(Recipe recipe) => _stepIndexOf(recipe).memo(#dips, () {
     }
   }
   if (dips.isEmpty) {
-    return const <int, String>{};
+    return const <int, ({String text, (int, int) at})>{};
   }
   final heads = _headsOf(recipe);
   final lines = nutritionLines(recipe);
@@ -5391,6 +5506,33 @@ Map<int, String> _dipsOf(Recipe recipe) => _stepIndexOf(recipe).memo(#dips, () {
   for (final head in heads.nonNulls) {
     count[head] = (count[head] ?? 0) + 1;
   }
+  // v65 (M66 R3'): each shared head's lines' words, and in how many of
+  // them each word stands — once, O(the lines' words).
+  final words = <int, List<String>>{};
+  final shared = <String, Map<String, int>>{};
+  for (final (j, head) in heads.indexed) {
+    if (head != null && count[head]! > 1) {
+      final w = words[j] = normalizeItem(lineItemOf(lines[j])).split(' ');
+      final tally = shared[head] ??= {};
+      for (final x in w.toSet()) {
+        tally[x] = (tally[x] ?? 0) + 1;
+      }
+    }
+  }
+  // Line [k]'s own word: the one before its head, in no other line of it.
+  String? ownWord(int k, String head) {
+    final w = words[k]!;
+    final h = w.lastIndexWhere((x) => _names(x, head));
+    final word = h < 1 ? null : w[h - 1];
+    return word == null ||
+            !_wordOnly.hasMatch(word) ||
+            word == 'and' ||
+            word == 'or' ||
+            shared[head]![word] != 1
+        ? null
+        : word;
+  }
+
   final at = <int, (int, int)>{};
   for (final MapEntry(key: base, value: dipped) in dips.entries) {
     final made = <(int, int), bool>{};
@@ -5404,8 +5546,9 @@ Map<int, String> _dipsOf(Recipe recipe) => _stepIndexOf(recipe).memo(#dips, () {
         continue;
       }
       final nth = seen[head] = (seen[head] ?? -1) + 1;
-      final all = _naming(recipe, head);
-      final mentions = count[head] == 1
+      final own = count[head] == 1 ? null : ownWord(k, head);
+      final all = _naming(recipe, own ?? head);
+      final mentions = count[head] == 1 || own != null
           ? all
           : nth < all.length
           ? [all[nth]]
@@ -5433,15 +5576,18 @@ Map<int, String> _dipsOf(Recipe recipe) => _stepIndexOf(recipe).memo(#dips, () {
             normalizeItem(lineItemOf(lines[k])),
           ) ==
           null)
-        k: () {
-          final raw = split[dip.$1] ??= () {
-            _count('rawSentences');
-            return index.raw[dip.$1].split(_sentenceBreak);
-          }();
-          return dip.$2 < raw.length
-              ? raw[dip.$2].trim()
-              : index.sentence(dip).trim();
-        }(),
+        k: (
+          text: () {
+            final raw = split[dip.$1] ??= () {
+              _count('rawSentences');
+              return index.raw[dip.$1].split(_sentenceBreak);
+            }();
+            return dip.$2 < raw.length
+                ? raw[dip.$2].trim()
+                : index.sentence(dip).trim();
+          }(),
+          at: dip,
+        ),
   };
 });
 
@@ -10145,6 +10291,14 @@ AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
             ].reduce((a, b) => a + b) /
             weights.fold(0.0, (a, b) => a + b!);
   final codes = {for (final u in uses) u.code};
+  // v65 (M66, the owner's Q8 (b)): a batter fried in oil keeps 5002's 85 %
+  // (the standing Q-a ruling) — R6 prints no frying row; the flag says so.
+  final fried =
+      codes.length == 1 &&
+          codes.single == '5002' &&
+          _batterInBowl(recipe).contains(position)
+      ? ' (USDA prints no row for a batter fried in oil)'
+      : '';
   final words = {for (final u in uses) u.words};
   return (
     kept: kept,
@@ -10155,10 +10309,10 @@ AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
     flag: kept >= 100
         ? null
         : words.length == 1
-        ? 'approximate (USDA retention: alcohol ${words.single})'
+        ? 'approximate (USDA retention: alcohol ${words.single}$fried)'
         : 'approximate (USDA retention: ${[
             for (final (i, u) in uses.indexed) '${parts[i].words} ${u.part}',
-          ].join('; ')})',
+          ].join('; ')}$fried)',
   );
 }
 
@@ -17382,9 +17536,16 @@ String _coatFlag(
   required bool batter,
 }) {
   final read = figure.read;
+  // v65 (M66, pC Q1 b): a C5 batter says what is applied — FNDDS's
+  // breading at its carbohydrate, never a batter MASS (the auditors read
+  // the shipped text as one).
+  final breading = shape == _CoatShape.c5
+      ? ' (USDA 99995000, 40.1 % carbohydrate)'
+      : '';
+  final matched = shape == _CoatShape.c5 ? ', matched by its carbohydrate' : '';
   final source = read != null
-      ? 'USDA FNDDS ${read.id} recipe: ${read.b} g breading per ${read.r} g '
-            'raw ${read.food}'
+      ? 'USDA FNDDS ${read.id} recipe: ${read.b} g breading$breading per '
+            '${read.r} g raw ${read.food}$matched'
       : 'derived from USDA SR Legacy ${figure.derived!.id} '
             '"${figure.derived!.description}"';
   final standIn =
@@ -17462,16 +17623,22 @@ typedef _M52Row = ({
 ///   carbohydrate (dredge grams × the record's) — its written part eaten
 ///   outside the dredge on top, its source the line's; k by the coat's
 ///   shape ([_coatShapeOf], [_coatFigure]); a C5 batter's counted flour
-///   and starch come off B; nut and cheese layers and C4 dustings stay
-///   held. NOT a fraction of the line (CP9's "no blanket coating fraction"
-///   stands): f is the food's. v56 (M58 W, Q8): the lines a batter leaves
-///   in the bowl ([_batterInBowl]) are parts too — the whole line the
-///   dredge, none eaten, never off B — every part at the one f.
+///   and starch come off B; C4 dustings stay held, and a nut or cheese
+///   layer unless a step names it with a crumb (v65, M66 R3:
+///   [_layerInCrumb]). NOT a fraction of the line (CP9's "no blanket
+///   coating fraction" stands): f is the food's. v56 (M58 W, Q8): the
+///   lines a batter leaves in the bowl ([_batterInBowl]) are parts too —
+///   the whole line the dredge, none eaten, never off B — every part at
+///   the one f.
 /// - THE DIP (v60, M62 E-w, Q9): the lines of an egg or buttermilk dip
 ///   ([_dipsOf]) of a budgeted coat count f_w = min(1, W / Σ their whole
-///   grams), W = [_breadingWetPerCarb] × the carbohydrate the coat's parts
-///   count (B, or their Σ at f = 1) — the coat's parts unchanged; a coat
-///   held with no budget holds its dips with it (H, the owner's Q9).
+///   grams), W = [_breadingWetPerCarb] × B (v65, M66 R1: never the parts'
+///   Σ) — the coat's parts unchanged; a part of a dip line a later step
+///   writes counts whole on top (R2); a dip with no coat or batter line
+///   beside it opens the budget where the recipe shallow-fries the coated
+///   food ([_shallowFries], its frying oil a medium) and it has a shape
+///   (R4); a coat held with no budget holds its dips with it (H, the
+///   owner's Q9).
 /// - THE FRYING OIL (Q3 a, P3-B): a line the engine zeroes as frying oil
 ///   counts u × the fried food's grams / 100 ([_friedClassOf]) on top of
 ///   its kept part — the M49-marked pour-off too (F13) — capped at the line
@@ -17558,10 +17725,17 @@ Map<int, _M52Row> _m52Plan(
   // the dredge takes them): the plan writes those rows `discarded`, so D
   // ([batterOf]) reads them here — never the stored row — on every path.
   final batterCho = <int, double>{};
+  // v65 (M66 R4, pC R4, P9): an egg dip with no coat or batter line beside
+  // it opens the budget too where the coated food has a shape — its wet
+  // share is the food's read record's (R1's C = B; 0415's egg-and-flour wash
+  // under a pressed Parmesan crust, the crust counted whole). With no coat
+  // or batter line `coated` exists only where a frying oil is a medium and
+  // the recipe shallow-fries ([_shallowFries], Q24 b): a baked or air-fried
+  // egg wash keeps D5's bowl flag (closer 2, D1).
   final budgeted =
       coated != null &&
       shape != null &&
-      (coats.isNotEmpty || batter.isNotEmpty);
+      (coats.isNotEmpty || batter.isNotEmpty || dips.isNotEmpty);
   if (budgeted) {
     final figure = _coatFigure(shape, coated.description!);
     var budget = double.parse(figure.value) * coated.grams! / 100;
@@ -17581,8 +17755,11 @@ Map<int, _M52Row> _m52Plan(
       final r = at[i];
       if (!engine(r) ||
           (r!.hold != null && r.hold != 'coating') ||
-          r.description!.startsWith('Nuts,') ||
-          r.description!.startsWith('Cheese,')) {
+          // v65 (M66 R3, Q5 a GATED): a nut or cheese layer joins only
+          // when a step names it with a crumb ([_layerInCrumb]).
+          ((r.description!.startsWith('Nuts,') ||
+                  r.description!.startsWith('Cheese,')) &&
+              !_layerInCrumb(recipe, i))) {
         continue;
       }
       final record = food(r.fdcId!, lines[i]);
@@ -17641,12 +17818,14 @@ Map<int, _M52Row> _m52Plan(
         );
       }
     }
-    // v60 (M62 E-w): the dip on the food — W = [_breadingWetPerCarb] × C, C
-    // the carbohydrate the parts count (B, or their Σ when f = 1), shared
-    // by the dip lines' whole grams; a line below the gate shares nothing
-    // (M58 W's precedent).
-    final wet = _breadingWetPerCarb * min(max(budget, 0), carbs);
-    final dipped = <({int at, double whole})>[];
+    // v60 (M62 E-w): the dip on the food — W = [_breadingWetPerCarb] × C,
+    // shared by the dip lines' whole grams; a line below the gate shares
+    // nothing (M58 W's precedent). v65 (M66 R1, pC R1): C = B — the coated
+    // food's own read record's wet breading per gram of raw food, never
+    // capped at the parts' Σ (a coat whose parts count less than B, or a
+    // dip with no part at all, R4).
+    final wet = _breadingWetPerCarb * max(budget, 0);
+    final dipped = <({int at, double dredge, double eaten})>[];
     for (final i in dips) {
       final r = at[i];
       if (!engine(r) ||
@@ -17660,16 +17839,60 @@ Map<int, _M52Row> _m52Plan(
           : lineGrams(db, lines[i], record, recipe: recipe);
       if (full != null) {
         _count('dipsSized');
-        dipped.add((at: i, whole: full.grams));
+        // v65 (M66 R2, pC R2): a part of the line a step AFTER the dip
+        // writes — "remaining ¼ teaspoon zest" (0042 S4) — is eaten outside
+        // the dip, whole ([_eatenOutsideMedium], the coat's reader, as
+        // [engineOutcome] weighs a coat's); the rest is the dip's. The step
+        // names the line by its head or by its item's last word ("orange
+        // zest": head 'orange', written "zest"; "large eggs": "eggs") —
+        // never a mention another line of that word or of the head writes
+        // (closer 1, D1: [_amountWritersOf]'s ownHead; a line with no head
+        // passes the word itself).
+        final normalized = normalizeItem(lineItemOf(lines[i]));
+        final after = _dipsOf(recipe)[i]!.at.$1;
+        final head = _headsOf(recipe)[i];
+        final last = normalized.split(' ').last;
+        final part =
+            _eatenOutsideMedium(
+              recipe,
+              lines[i],
+              head,
+              DiscardedMedium.coating,
+              after: after,
+            ) ??
+            (last == head
+                ? null
+                : _eatenOutsideMedium(
+                    recipe,
+                    lines[i],
+                    last,
+                    DiscardedMedium.coating,
+                    after: after,
+                    ownHead: head ?? last,
+                  ));
+        final eaten = part == null
+            ? 0.0
+            : resolveGrams(
+                    amounts: [part.amount],
+                    food: record,
+                    normalizedItem: normalized,
+                    kosherSalt: packsLikeKosherSalt(lines[i].raw),
+                  )?.grams ??
+                  0.0;
+        dipped.add((
+          at: i,
+          dredge: max(full.grams - eaten, 0),
+          eaten: eaten,
+        ));
       }
     }
-    final whole = dipped.fold<double>(0, (n, d) => n + d.whole);
+    final whole = dipped.fold<double>(0, (n, d) => n + d.dredge);
     final share = whole > 0 ? min(1, wet / whole) : 0;
     for (final d in dipped) {
       plan[d.at] = (
-        grams: round2(share * d.whole),
+        grams: round2(share * d.dredge + d.eaten),
         flag: _dipFlag,
-        kept: 0,
+        kept: d.eaten,
         coat: true,
         noNetUptake: false,
         dip: true,

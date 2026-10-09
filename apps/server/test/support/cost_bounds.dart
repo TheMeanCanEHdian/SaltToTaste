@@ -112,6 +112,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:leavesExcess',
       // v62 (M64 P10): the counted parts set aside for another use.
       'memo:setsAsidePieces',
+      // v65 (M66 closer 1, D1): each line's item's last word — the dip
+      // fallback's writers ([_amountWritersOf]'s ownHead), once per recipe.
+      'memo:lastWords',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first

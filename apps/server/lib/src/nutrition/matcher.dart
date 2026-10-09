@@ -865,7 +865,21 @@ const Map<String, String> _synonyms = {
 /// line shows FNDDS 2709988 "Seaweed, dried" (flagged; still strained out
 /// at 0 g); ricotta salata counts as SR 173420 "Cheese, feta", a flagged
 /// stand-in whose sodium and fat the basis states.
-const int matcherVersion = 63;
+///
+/// v64 (the Matcher v65 commit, batch M66 — coat parts and dips; prep49
+/// design_v2 §2 M66, the owner's Q5 (a) gated, Q7 (the one-way door,
+/// accepted 2026-10-09) and Q8 (b); zero requests): a nut or cheese layer a
+/// step names with a crumb joins the coat's parts at the one f (engine
+/// `_layerInCrumb`; a cheese crust with a flour binder stays held); the dip
+/// is sized off B, never the parts' Σ (C = B); a dip line's part a later
+/// step writes ("remaining ¼ teaspoon zest") is eaten whole; a head two
+/// dip-recipe lines share is told apart by each line's own word ("black",
+/// "cayenne"); an egg dip with no coat beside it opens the budget where the
+/// recipe shallow-fries the coated food and it has a shape (0415; a baked
+/// or air-fried egg wash keeps the bowl flag); a C5 batter's basis names
+/// the breading's carbohydrate it is matched by, and alcohol in a fried
+/// batter says USDA prints no frying row.
+const int matcherVersion = 64;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

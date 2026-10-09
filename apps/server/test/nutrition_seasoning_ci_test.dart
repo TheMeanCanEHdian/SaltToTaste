@@ -65,7 +65,8 @@ void main() {
     // RE-PIN (M63 batch, v62): was 60.
     // RE-PIN (M64 batch, v63): was 61.
     // RE-PIN (M65 batch, v64): was 62.
-    expect(matcherVersion, 63); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M66 batch, v65): was 63.
+    expect(matcherVersion, 64); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -90,7 +91,10 @@ void main() {
       // RE-PIN (M65 batch, v64): the hash at matcherVersion 63 (was
       // d9a7a95a…; M65 adds no hash term — the version alone: the base tree
       // with only the bump gives this literal).
-      'fd608fe16186728716e355384356cf4a8c40ac950c9904db2e8f849e9983c697',
+      // RE-PIN (M66 batch, v65): the hash at matcherVersion 64 (was
+      // fd608fe1…; M66 adds no hash term — the version alone: the base tree
+      // with only the bump gives this literal).
+      '5b645ca1b270e29a3436b496e66b315643dc456938173dc413874cbad0dd6d40',
     );
   });
 

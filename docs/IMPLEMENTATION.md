@@ -3608,6 +3608,46 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v65 (batch M66): coat parts and dips — the
+  gated nut or cheese layer joins the coat, the dip sized by the coated
+  food, a dip line's part used elsewhere, the shared-head split, dips
+  alone open a budget, the alcohol and batter basis texts (prep49 §2 M66;
+  Q5, Q7, Q8; built under the standing authorization; the owner's Q7
+  ruling applied without a deploy gate; reach labelled pre-Q18).** A nut
+  or cheese layer that a step mixes into a crumb coat now joins the coat's
+  budget (gated on the crumb word in the same sentence, so a Parmesan
+  crust with a flour binder stays held); an egg dip is sized by the
+  coated food's own breading figure rather than the smaller of that and
+  the counted carbohydrate; the printed part of a dip line a later step
+  uses elsewhere counts whole; a shared head is split by its own modifier
+  word; a recipe with dips but no counted coat still opens a budget; the
+  three fried-batter alcohol rows name USDA's missing frying row and the
+  fifteen batter rows say which breading figure is applied. Disclosed and
+  pinned: three recipes turn complete because the released layer was
+  their only uncounted line (the design said none would); four figures
+  land 0.01 off the design's rounded fractions; "orange zest" is read by
+  its last word as well as its head. 33 rows (18 in grams or hold, 15 in
+  basis text), +536 kcal, three holds released and one added.
+
+- **2026-10-09 — the owner's rulings on the prep49 design's three open
+  questions (the other twelve decided under the standing authorization as
+  recommended; `.claude/diag/2026-10-09/prep49/design_v2.md`).** Q2, the
+  home-corned briskets: option (c) for both — they stay on the fresh
+  0-inch flat and a flag states that the steps cure and rinse the brisket
+  and the cure's sodium is not counted (CP9's rinsed cure 0 g and the
+  brine co-solute ruling kept literal); M68 becomes the whole brisket at
+  its printed trim plus two flags. Q7, the one-way door on person
+  decisions: accepted without a count-before-deploy gate — no one is
+  using the app and will not for some time, so changes are not limited by
+  an established user base; a Confirm on a reached coat, dip or dough row
+  reads the engine's share, and the pins state the new meaning. Q11,
+  manufacturer labels through FDC Branded records: accepted as a standing
+  rule — a label supplies grams for a size or volume the corpus line
+  prints (the 8-inch wrapper, a per-piece candy, a per-volume pectin
+  serving), never composition and never an unprinted size; the reads are
+  one-off requests in the live step and the engine's search never
+  includes Branded on its own.
+
 - **2026-10-09 — matcher v64 (batch M65): landings on records the cache
   already held — jarred Morello cherries, corn husks, kombu, gel food dye,
   ricotta salata on feta (prep49 §2 M65; Q14; built under the standing

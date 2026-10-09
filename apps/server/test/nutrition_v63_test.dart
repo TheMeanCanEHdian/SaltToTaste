@@ -440,7 +440,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
-    expect(matcherVersion, 63);
+    // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
+    expect(matcherVersion, 64);
   });
 
   test("kosher salt's figure is half of SR 173468's '1 tsp' 6.0 g by "

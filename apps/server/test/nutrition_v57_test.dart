@@ -64,7 +64,8 @@ const List<_Row> _reach = [
     '0.950000',
     '99.71',
     '364.94',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading per 65 g raw shrimp; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 63.88 g, 243.38 kcal
   (
@@ -75,7 +76,8 @@ const List<_Row> _reach = [
     '1.000000',
     '29.96',
     '114.15',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading per 65 g raw shrimp; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 224.00 g, 517.44 kcal
   (
@@ -86,7 +88,8 @@ const List<_Row> _reach = [
     '0.990000',
     '105.05',
     '242.67',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading per 65 g raw shrimp; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 50.00 g, 74.00 kcal
   (
@@ -97,7 +100,8 @@ const List<_Row> _reach = [
     '0.920000',
     '23.45',
     '34.71',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading per 65 g raw shrimp; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 236.59 g, 0.00 kcal
   (
@@ -108,7 +112,8 @@ const List<_Row> _reach = [
     '0.923333',
     '110.95',
     '0.00',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading per 65 g raw shrimp; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 60.33 g, 220.81 kcal
   (
@@ -119,7 +124,8 @@ const List<_Row> _reach = [
     '0.950000',
     '47.03',
     '172.13',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading per 65 g raw haddock; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 63.88 g, 243.38 kcal
   (
@@ -130,7 +136,8 @@ const List<_Row> _reach = [
     '1.000000',
     '49.79',
     '189.70',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading per 65 g raw haddock; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 2.27 g, 1.16 kcal
   (
@@ -141,7 +148,8 @@ const List<_Row> _reach = [
     '0.850000',
     '1.77',
     '0.90',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading per 65 g raw haddock; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 180.00 g, 77.40 kcal
   (
@@ -152,7 +160,8 @@ const List<_Row> _reach = [
     '0.990000',
     '140.31',
     '60.33',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading per 65 g raw haddock; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 120.66 g, 441.62 kcal
   (
@@ -185,7 +194,8 @@ const List<_Row> _reach = [
     '0.950000',
     '89.12',
     '326.18',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 63.88 g, 243.38 kcal
   (
@@ -196,7 +206,8 @@ const List<_Row> _reach = [
     '1.000000',
     '31.45',
     '119.82',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 0.90 g, 2.86 kcal
   (
@@ -207,7 +218,8 @@ const List<_Row> _reach = [
     '1.000000',
     '0.44',
     '1.40',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 1.16 g, 3.27 kcal
   (
@@ -218,7 +230,8 @@ const List<_Row> _reach = [
     '0.900000',
     '0.57',
     '1.61',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 4.53 g, 2.31 kcal
   (
@@ -229,7 +242,8 @@ const List<_Row> _reach = [
     '0.850000',
     '2.23',
     '1.14',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 340.19 g, 146.28 kcal
   (
@@ -240,7 +254,8 @@ const List<_Row> _reach = [
     '0.565000',
     '167.52',
     '72.03',
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
 ];
 
@@ -477,7 +492,8 @@ void main() {
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
     // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
-    expect(matcherVersion, 63);
+    // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
+    expect(matcherVersion, 64);
   });
 
   group('matcher v57 (batch M58)', skip: skipIfNoCorpus, () {
@@ -592,9 +608,10 @@ void main() {
         expect(g(_wings, 8), '40.36');
         expect(
           basisOf(_sandwiches, 7),
+          // RE-PIN (M66 batch, v65, Q1 b): the breading's carbohydrate named.
           contains(
-            'USDA FNDDS 2706258 recipe: 25 g breading per 65 g raw '
-            'haddock',
+            'USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % '
+            'carbohydrate) per 65 g raw haddock, matched by its carbohydrate',
           ),
         );
         expect(
@@ -606,9 +623,11 @@ void main() {
         );
         expect(
           basisOf(_tempura, 2),
+          // RE-PIN (M66 batch, v65, Q1 b): the breading's carbohydrate named.
           contains(
-            'USDA FNDDS 2706364 recipe: 25 g breading per 65 g raw '
-            "shrimp; the batter's excess not counted)",
+            'USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % '
+            'carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; '
+            "the batter's excess not counted)",
           ),
         );
       },
@@ -621,10 +640,13 @@ void main() {
         nutritionLines(recipes[file]!)[position],
         rowOf(file, position),
       )?.flag;
+      // RE-PIN (M66 batch, v65, Q8 b): a batter fried in oil names the
+      // missing R6 row.
       expect(
         retention(_tempura, 4),
         'approximate (USDA retention: alcohol cooked 2 min keeps 85 %, the '
-        'stirred-into-hot-liquid figure)',
+        'stirred-into-hot-liquid figure (USDA prints no row for a batter '
+        'fried in oil))',
       );
       expect(retention(_fishChips, 10), contains('keeps 85 %'));
       expect(retention(_sandwiches, 10), contains('keeps 85 %'));

@@ -2312,7 +2312,8 @@ whites as the eaten part. Held until the server's `coatingFraction` switch
 food keeps; since matcher v53 (M52) the engine's own row counts its share
 of a coat budget sized from the coated food, unheld — sautéed dustings,
 coats with no meat line and nut or cheese layers stay held: the v53
-paragraph below), `partial_pour_away` (since v22, Q4: a line of a braising
+paragraph below; since matcher v65, M66 R3, a layer a step names with a
+crumb joins the budget), `partial_pour_away` (since v22, Q4: a line of a braising
 liquid — the sentence before the strain that names it and opens "whisk"
 or "bring", the food added ("add", "arrange") in the next sentence — that
 is strained after cooking ("cooking liquid through … strainer") and of
@@ -3302,7 +3303,8 @@ stands (the `coatingFraction` switch stays null).
 Stay held (20 rows): C4 sautéed dustings (neither fried nor baked —
 piccata, marsala, saltimbocca, meunière, francese, seared salmon and pork),
 coats with no meat line (eggplant parmesan, oven-fried onion rings), and
-nut and cheese layers (a Nuts or Cheese record).
+nut and cheese layers (a Nuts or Cheese record) — since matcher v65 (M66
+R3, below) only a layer no step sentence names with a crumb.
 
 (2) **The frying oil (Q3 a).** A line the engine zeroes as frying oil
 counts u × the fried food's grams / 100 ON TOP of its kept part (critic
@@ -3431,7 +3433,9 @@ a Confirm) says so, as the owner approved the forms (Q-e):
 
 - `approximate (USDA retention: alcohol cooked {N} min keeps {f} %)`; at
   150 min and more `… keeps 5 %, the table's 2½-hour figure)`; under 15
-  `… keeps 85 %, the stirred-into-hot-liquid figure)`
+  `… keeps 85 %, the stirred-into-hot-liquid figure)` — since matcher v65
+  (M66, the owner's Q8 (b)) a batter left in the bowl and fried in oil adds
+  `… figure (USDA prints no row for a batter fried in oil))`
 - `approximate (USDA retention: alcohol stirred into hot liquid keeps 85 %)`
   — 5002's own row: boil-off, a sub-minute heat, and (Q-f) a line stirred
   in off the heat into a hot dish
@@ -3626,7 +3630,9 @@ figure). A C5 budget no longer subtracts a batter line's carbohydrate
 join the parts). C5 now also reads `Crustaceans, shrimp` with a batter
 sentence (before the C3 test), and its k is the battered food's own read
 record: shrimp FNDDS 2706364, haddock 2706258, else cod 2706244 (all
-15.38 — 25 g breading per 65 g raw); battered shrimp's uptake stays O2s.
+15.38 — 25 g breading per 65 g raw; since matcher v65 the flag says
+`25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw …, matched
+by its carbohydrate`, M66 below); battered shrimp's uptake stays O2s.
 The rows are `gram_source: discarded`, basis `discarded in cooking — only
 the coat on the food counted`, the D5 flag dropped, the coat flag reading
 `… ; the batter's excess not counted)`. A person's Confirm of a batter
@@ -3958,12 +3964,15 @@ head rides A13's order — nut-crusted's one "pepper" word goes to its first
 pepper line, the cayenne |8 (scaled), and its black pepper |12 stays whole;
 oven-fried-onion-rings|5 cayenne is not reached; spicy-fried-chicken-
 sandwiches|5 garlic powder is named by no sentence. Read once per recipe and
-base word (engine `_dipsOf`).
+base word (engine `_dipsOf`). (Since matcher v65 a shared head's line is
+told apart by its own word — M66 R3', below: the pepper and onion-ring
+ceilings closed.)
 
 (E-w) In a recipe that budgets its coat without the dips (M52's coated food
 and shape with a coat or batter part), the dip lines count **W = 1.17 g a
 gram of the carbohydrate the coat's parts count** — C = min(B, Σ the parts'
-carbohydrate) — shared by their whole grams: f_w = min(1, W / Σ whole), each
+carbohydrate); since matcher v65 C = B (M66 R1, below) — shared by their
+whole grams: f_w = min(1, W / Σ whole), each
 line f_w × its grams, `gram_source: discarded`, basis `discarded in cooking
 — only the dip on the food counted · approximation (dip: 1.17 g per g of the
 coat's carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient
@@ -3985,7 +3994,10 @@ Confirm counts 0 g `discarded` ("poured away after your confirm" — no eaten
 part is known), typed grams stand, a skip stores no hold, a pick keeps the
 hold; a Confirm or a pick records the FOOD (never grams) for the item key
 library-wide, apply-to-all allowed, as for every coating hold. (No coat) a
-dip with no coat held or budgeted keeps the D5 flag only.
+dip with no coat held or budgeted keeps the D5 flag only — since matcher
+v65 (M66 R4, below) only where the recipe does not shallow-fry the coated
+food or that food has no shape (a baked or air-fried egg wash with no coat
+line keeps the flag).
 
 (P2 — no crumb rule.) The read's crumb share (15.64 % of its carbohydrate)
 is FNDDS's generic breading, not a recipe that prints only crumbs (it would
@@ -4375,6 +4387,143 @@ reading a container weight (the dark beer's 12-ounce bottle 340.19 g, the
 crushed tomatoes' 28-ounce can 793.79 g for 2⅛ cups, the sun-dried
 tomatoes' 8½-ounce jar 240.97 g) are outside F5's words. Deploy note:
 matcherVersion 63 stales every recipe; one zero-request sweep settles it.
+
+**Since matcher v65 (batch M66 — coat parts and dips: the gated nut/cheese
+layer joins, C = B, a dip line's part used elsewhere, the shared-head split,
+dips alone open a budget, the alcohol and C5 basis texts; matcherVersion 64;
+prep49 design_v2 §2 M66, the owner's Q5 (a) gated, Q7 (the one-way door,
+accepted 2026-10-09: no one uses the app yet) and Q8 (b) under the standing
+authorization; zero requests; the gate and the dip readers read steps, so
+the reach is pre-Q18).** All inside M52's plan at the recipe's shipped k:
+
+(R3, Q5 a GATED) **A nut or cheese layer mixed into a crumb joins the coat's
+parts.** A held coat row on a `Nuts,` or `Cheese,` record shares B at the one
+f as panko and flour do — but only when one step sentence names both the
+layer (its head, or the kind word its item carries, "parmesan", "saltine")
+and a crumb (`bread crumbs`, `panko`, `crumbs`, `crackers`; engine
+`_layerInCrumb`). almond-crusted|2 "1 cup sliced almonds" (S2: "Process the
+almonds … to fine crumbs") held → 79.97 g of 92 (f = 35.74 / (92 × 0.2155 +
+29.57 × 0.7198) = 0.869248), |3 panko 29.57 → 25.71; nut-crusted|2 "1 cup
+almonds, chopped coarse" ("add the bread crumbs and ground almonds") held →
+21.66 g of the line's `cup, whole` 143 g, |5 panko 10.99 → 8.96, |9 flour
+22.42 → 18.28 (f 0.1515); lighter-chicken-parmesan|2 "1 ounce Parmesan"
+("Spread the bread crumbs … ; when cool, stir in the Parmesan") held → 5.04,
+|0 16.29 → 15.78, |3 11.07 → 10.73 (f 0.1779). parmesan-crusted|3 (0419: the
+cheese IS the crust, "Combine the 2 cups shredded Parmesan and remaining 1
+tablespoon flour" — no crumb) stays held, and has no budget anyway. A
+one-sentence gate: a crumb named only in another sentence of the mixing step
+leaves the layer held (no corpus recipe). The layer counts more MASS than
+the record at equal carbohydrate (almond-crusted's coat 16.9 % of the raw
+breast against 2705975's 14.3 %): a mass-matched budget would be a new
+mechanism (not built).
+
+(R1) **The dip is sized off B**: W = 1.17 × B, never min(B, the parts' Σ) —
+the coated food's own read record's wet breading per gram of raw food. On
+its own it reaches only R4's recipe: every other budget that sizes a dip
+has f < 1, where the two agree, and the two budgets at f = 1 —
+maryland-crab-cakes' flour and crispy-salt-and-pepper-shrimp's cornstarch
+(the 2 tablespoons that dredge the jalapeños) — size no dip, so W has
+nothing to size.
+
+(R2) **A dip line's part a later step writes is eaten whole** ("remaining ¼
+teaspoon zest", almond-crusted S4): the coat's reader (`_eatenOutsideMedium`)
+on the steps AFTER the dip's (never the mixing step before it, which writes
+the dip's own amounts), the step naming the line by its head or its item's
+last word ("orange zest": head `orange`, written "zest"); never a mention
+another line writes (Run 054 O7) — by the last word, every line whose head
+or last word is that word and every line of the dip line's own head ("2
+large eggs" whisked into a dressing beside a second "2 large eggs" line, or
+a "2 large eggs plus 1 large white" line, is that line's; "1 teaspoon lemon
+zest" beside a lemon-zest line is the lemon's); the part's grams
+off the dip's whole, counted on top, basis `discarded in cooking — only the
+part the recipe keeps and the dip on the food counted · approximation (dip:
+…)`. almond-crusted (C = B 35.74, W 41.92 over 100 + 5.18 + 2.00): |4 eggs
+23.19 → 39.11, |5 Dijon 1.20 → 2.02, |6 zest 0.58 → 1.28 (0.78 dip + 0.50
+eaten on 169103's `tsp` 2.0 g).
+
+(R3') **A head two lines share is told apart by each line's own word** — the
+word right before the head in its item, written in no other line of that
+head ("ground black pepper": black; "cayenne pepper": cayenne; never "and" /
+"or") — at every sentence writing it; a line with none keeps A13's order.
+nut-crusted|12 "¼ teaspoon ground black pepper" ("Lightly beat the eggs,
+mustard, and black pepper") 0.58 → 0.11 g (dip); |8 "⅛ teaspoon cayenne
+pepper" 0.04 → 0.23 whole (it goes into the panko mixture); |10 27.66 →
+27.60, |11 1.91 → 1.90; oven-fried-onion-rings|5 cayenne 0.45 → held
+`coating` with its siblings ("Whisk the remaining ¼ cup flour, the salt,
+black pepper, and cayenne into the buttermilk mixture"), its `hold_note` the
+dip sentence. The ceiling, stated: one token — a line told apart only by a
+word further from its head has no own word and rides A13's order; and a
+line WITH an own word is named only where that word is written, so a mixing
+sentence calling it by its bare head ("the salt, pepper, and cayenne") no
+longer names it, as v64's A13 did (on that STATED synthesized onion-rings
+edit |4 counts whole, out of the held dip; pinned). No A13 fallback is read
+for it — nut-crusted|8 cayenne, its word only in the crumb sentence, would
+take the egg sentence's "black pepper" back.
+
+(R4, P9) **An egg dip with no coat or batter line opens the budget** where
+the recipe shallow-fries the coated food (M52 Q24 b, engine `_shallowFries`:
+with no coat or batter line the plan finds a coated food only so, its
+frying oil a medium) and that food has a shape. best-chicken-parmesan
+(0415: "Whisk egg and flour together …; dredge cutlet in egg mixture,
+allowing excess to drip off"; its Parmesan-panko crust counted whole) on
+the breast's C1 (2705975, the record its oil already reads): W = 1.173026
+× 5.73 × 396.89 / 100 = 26.68 g over 50 + 7.54 (f_w 0.46361) — |12 egg
+50.00 → 23.18, |13 flour 7.54 → 3.50, `discarded`, the dip basis in place
+of D5's bowl flag; −54.48 kcal.
+Unreached (a baked or air-fried egg wash with no coat line keeps the D5
+flag): the spicy chicken sandwiches' dips (air-fried: no shallow fry, and
+no shape either — the air fryer neither fries nor bakes) and the three
+non-coat D5 recipes (scones, truffles, macaroons: no coated food); so would
+0415 with its cutlets baked instead of shallow-fried (|12 50.00 g whole,
+flagged — though baked cutlets have the C2 shape).
+
+(Basis texts, 0 grams, 0 kcal) the 15 C5 batter rows (shrimp-tempura|2–|6,
+fish-and-chips|2 |3 |4 |5 |8 |10, crispy-fish-sandwiches|6 |7 |9 |10) say what
+is applied — `… recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate)
+per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not
+counted)` (the auditors read the shipped text as batter MASS); and (Q8 b) the
+three alcohol lines of a fried batter (tempura|4 vodka, fish-and-chips|10 and
+sandwiches|10 beer) keep 5002's 85 % and say `… the stirred-into-hot-liquid
+figure (USDA prints no row for a batter fried in oil))`.
+
+(Q7, the one-way door) A person's Confirm of a reached coat or dip row
+reads the plan — almond-crusted|2's almonds 79.97 g `discarded` (no longer
+0 g poured away), best-chicken-parmesan|12's egg 23.18 — and keeps following
+it (`_m52Weighs`). Accepted by the owner (no one uses the app yet).
+
+Reach (replay of snapshot 25 against the v64 rows): exactly 18 rows move
+grams or hold — R3 almond |2 |3, nut-crusted |2 |5 |9, lighter |0 |2 |3; R3
++ R1 + R2 almond |4 |5 |6; R3' nut-crusted |8 |10 |11 |12, onion-rings |5; R4
+best-chicken-parmesan |12 |13 — plus the 15 basis-only rows (3 of them the
+alcohol flag); all `auto`, 0 person rows; +536.11 kcal (almond-crusted
++472.52, nut-crusted +101.55, lighter +17.95, best-chicken-parmesan −54.48,
+onion rings −1.43). Holds: 3 released (the layers), 1 added (onion-rings|5).
+Statuses 1,026 / 172 → 1,029 / 169: almond-crusted (402.18 → 520.31 kcal a
+serving), nut-crusted (360.45 → 385.84) and lighter-chicken-parmesan (232.29
+→ 235.29) turn complete — the released layer was each one's only uncounted
+line; best-chicken-parmesan 500.12 → 486.50; oven-fried onion rings 217.86 →
+217.50, partial. Cost: R2 reads the coat's per-head mention lists (each dip
+line three binary searches over them, the steps after its dip a suffix);
+R3' tallies each shared head's words once per recipe.
+
+Known gaps (the source stands): P4's wet batters (9 HIGH audit lines) — the
+coat + oil per gram of raw food reproduces each read FNDDS record's own
+product energy to ≤ 1.5 % (tempura without the vodka 213.9 vs 214.9 kcal per
+100 g raw; cod 214.2 vs 217.5; haddock 212.0 vs 211.6) and SR's restaurant
+records carry MORE coat; tempura's remaining excess is the vodka and the
+calibrator's yield. P8's dips on BAKED coats (nut-crusted|10, stuffed|11,
+lighter|6 at −33 to −44 %) sit on the food's own read record (2705980's wet
+share 3.73 % of the raw food baked vs 6.72 % fried). R4's B vs the counted
+coat: best-chicken-parmesan's crust (Parmesan 42.52 g, panko 29.57 g, counted
+whole) carries 26.56 g of carbohydrate against B 22.74; the dip is sized off
+B (the shipped figure; the counted coat would give W ≈ 31.2). P5 crusts and
+crab cakes: maryland-crab-cakes' flour (the budget exceeds the line, so the
+whole ¼ cup counts), best-crab-cakes' panko, pork-schnitzel's crumbs — a
+per-mass k cannot see a coat's thickness; no sourced per-area figure. The
+spicy sandwiches (air fried, no record) stay whole and flagged. Not built:
+C5 read as batter mass (−298) and baked dips on the fried 5.73 — both
+override the coated food's own read record. Deploy note: matcherVersion 64
+stales every recipe; one zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

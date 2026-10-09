@@ -686,7 +686,8 @@ _gate = [
     2710616,
     '85.00',
     '5002',
-    'approximate (USDA retention: alcohol cooked 7 min keeps 85 %, the stirred-into-hot-liquid figure)',
+    // RE-PIN (M66 batch, v65, Q8 b): a batter fried in oil names the missing R6 row.
+    'approximate (USDA retention: alcohol cooked 7 min keeps 85 %, the stirred-into-hot-liquid figure (USDA prints no row for a batter fried in oil))',
   ),
   (
     '0259-miso-marinated-salmon.yaml',
@@ -1546,7 +1547,8 @@ _gate = [
     2710704,
     '85.00',
     '5002',
-    'approximate (USDA retention: alcohol cooked 2 min keeps 85 %, the stirred-into-hot-liquid figure)',
+    // RE-PIN (M66 batch, v65, Q8 b): a batter fried in oil names the missing R6 row.
+    'approximate (USDA retention: alcohol cooked 2 min keeps 85 %, the stirred-into-hot-liquid figure (USDA prints no row for a batter fried in oil))',
   ),
   (
     '0513-sung-choy-bao-chicken-lettuce-wraps.yaml',
@@ -2316,7 +2318,8 @@ _gate = [
     2710616,
     '85.00',
     '5002',
-    'approximate (USDA retention: alcohol cooked 8 min keeps 85 %, the stirred-into-hot-liquid figure)',
+    // RE-PIN (M66 batch, v65, Q8 b): a batter fried in oil names the missing R6 row.
+    'approximate (USDA retention: alcohol cooked 8 min keeps 85 %, the stirred-into-hot-liquid figure (USDA prints no row for a batter fried in oil))',
   ),
   (
     '1082-pesce-allacqua-pazza-southern-italianstyle-poached-fish.yaml',
@@ -2724,7 +2727,8 @@ void main() {
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
     // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
-    expect(matcherVersion, 63);
+    // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
+    expect(matcherVersion, 64);
   });
 
   test('the energy split on the raw FDC details (§1.1 (A), P-E): ethanol '

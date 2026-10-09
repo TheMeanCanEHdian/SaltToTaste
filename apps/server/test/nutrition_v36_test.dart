@@ -265,18 +265,16 @@ void main() {
         },
       );
 
-      // Verifier D1: a kept row that carries its OWN hold (0042's almonds,
+      // Verifier D1: a kept row that carries its OWN hold (0419's Parmesan,
       // `coating`; 0129's broth, `partial_pour_away`) reads stale too, and
       // the next stale sweep asks again; the third failure holds it
       // food_unavailable (the hold that stops the asking), and the `all`
       // scope's recovery re-derives the line's own hold.
+      // RE-PIN (M66 batch, v65, R3): 0042's almonds (170567) join the coat's
+      // parts — counted, no hold; the held layer is now 0419's Parmesan, a
+      // cheese crust no crumb sentence names (it stays held).
       for (final (file, position, fdcId, hold) in [
-        (
-          '0042-almond-crusted-chicken-with-wilted-spinach-salad.yaml',
-          2,
-          170567,
-          'coating',
-        ),
+        ('0419-parmesan-crusted-chicken-cutlets.yaml', 3, 325036, 'coating'),
         ('0129-indoor-pulled-chicken.yaml', 0, 174536, 'partial_pour_away'),
       ]) {
         test(

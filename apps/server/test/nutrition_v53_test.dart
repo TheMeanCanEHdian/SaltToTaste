@@ -156,7 +156,8 @@ _rows = [
     '89.12',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // the counted cornstarch (the batter): unchanged, off the budget
   // RE-PIN (M58 batch, v57, W): a coat part at f (was 63.88 g counted
@@ -170,7 +171,8 @@ _rows = [
     '31.45',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading per 65 g raw cod; the batter's excess not counted)",
+    // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // O2 cod 15.38 % + O4 chips 6.0 % on top of its kept ¼ cup
   // RE-PIN (M59 batch, v58, F1): the ¼ cup tossed with the fries is
@@ -507,25 +509,30 @@ _rows = [
     null,
   ),
   // negative: the nut layer stays held
+  // RE-PIN (M66 batch, v65, R3 — Q5 (a) gated): the almonds a step names
+  // with the crumbs ("Process the almonds … to fine crumbs") join the
+  // parts at the one f — 79.97 of 92 g, no hold.
   (
     '0042-almond-crusted-chicken-with-wilted-spinach-salad.yaml',
     null,
     2,
     '1 cup sliced almonds',
     170567,
+    '79.97',
+    'discarded',
     null,
-    null,
-    'coating',
-    null,
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
   // C1 5.73 on the breasts, the panko alone (the almonds stay held)
+  // RE-PIN (M66 batch, v65, R3): the panko shares B with the almonds — f
+  // 0.869248 (was 29.57 at f 1).
   (
     '0042-almond-crusted-chicken-with-wilted-spinach-salad.yaml',
     null,
     3,
     '½ cup panko (Japanese-style bread crumbs)',
     174928,
-    '29.57',
+    '25.71',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
@@ -717,7 +724,8 @@ void main() {
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
     // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
-    expect(matcherVersion, 63);
+    // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
+    expect(matcherVersion, 64);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

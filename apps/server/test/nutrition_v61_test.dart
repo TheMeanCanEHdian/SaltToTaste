@@ -86,6 +86,11 @@ const _francese2 = '1133-chicken-francese.yaml';
 const _dipBasis =
     "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)";
 
+/// RE-PIN (M66 batch, v65, R2): a dip line with a part a later step eats
+/// (almond|6's "remaining ¼ teaspoon zest") reads the kept-part form.
+const _dipKeptBasis =
+    "discarded in cooking — only the part the recipe keeps and the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)";
+
 /// The D5 flag (v50 Q21) the dips with no coat keep.
 const _d5 =
     ' · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)';
@@ -97,6 +102,9 @@ const _d5 =
 /// back, kiev|12 by the unique-head clause, nut-crusted's |8 cayenne by A13's
 /// shared-head order (the ceiling: |12 black pepper stays whole, below),
 /// almond's three at C = Σ CHO 21.29 < B 35.74.
+/// RE-PIN (M66 batch, v65): 30 rows — R3' gives the pepper dip to |12 (the
+/// ceiling above closed), R3 + R1 + R2 move almond's three, R4 adds
+/// best-chicken-parmesan's two (from _flagged).
 const List<_Row> _dips = [
   (
     _breaded,
@@ -146,38 +154,41 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M66 batch, v65): R3' — the pepper dip is |12's (its own word 'black'), not |8's (v61's A13 ceiling, closed); |8 below in _negatives
   (
     _nutCrusted,
-    8,
-    '⅛ teaspoon cayenne pepper',
-    170932,
+    12,
+    '¼ teaspoon ground black pepper',
+    170931,
     '1.000000',
-    '0.04',
-    '0.13',
+    '0.11',
+    '0.28',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M66 batch, v65): R3' — f_w over 150 + 10.35 + 0.575 (the black pepper in the dip, the cayenne out)
   (
     _nutCrusted,
     10,
     '3 large eggs',
     748967,
     '0.920000',
-    '27.66',
-    '40.94',
+    '27.60',
+    '40.85',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M66 batch, v65): R3' — as |10
   (
     _nutCrusted,
     11,
     '2 teaspoons Dijon mustard',
     326698,
     '0.983333',
-    '1.91',
-    '1.17',
+    '1.90',
+    '1.16',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
@@ -398,38 +409,67 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M66 batch, v65): R3 + R1 + R2 — the almonds join the coat (f < 1, C = B 35.74) and the zest's eaten ¼ teaspoon leaves the dip
   (
     _almond,
     4,
     '2 large eggs',
     748967,
     '0.920000',
-    '23.19',
-    '34.32',
+    '39.11',
+    '57.88',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M66 batch, v65): as |4
   (
     _almond,
     5,
     '1 teaspoon Dijon mustard',
     326698,
     '0.983333',
-    '1.20',
-    '0.73',
+    '2.02',
+    '1.23',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M66 batch, v65): R2 — 0.78 g of dip + the ¼ teaspoon (0.50 g) S4 writes, eaten whole: the kept-part basis
   (
     _almond,
     6,
     '1¼ teaspoons grated zest from 1 orange',
     169103,
     '0.886667',
-    '0.58',
-    '0.56',
+    '1.28',
+    '1.24',
+    'auto',
+    null,
+    'discarded in cooking — only the part the recipe keeps and the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
+  ),
+  // RE-PIN (M66 batch, v65): R4 — dips alone open the budget (W = 1.173026 × 5.73 × 396.89 / 100 = 26.68 g); moved here from _flagged
+  (
+    _bestParmesan,
+    12,
+    '1 large egg',
+    748967,
+    '0.920000',
+    '23.18',
+    '34.31',
+    'auto',
+    null,
+    'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
+  ),
+  // RE-PIN (M66 batch, v65): R4 — as |12
+  (
+    _bestParmesan,
+    13,
+    '1 tablespoon all-purpose flour',
+    789890,
+    '0.950000',
+    '3.50',
+    '12.81',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
@@ -556,30 +596,6 @@ const List<_Row> _held = [
 /// keep the D5 flag only — 7 rows, 0 kcal moved (plan_figures §1).
 const List<_Row> _flagged = [
   (
-    _bestParmesan,
-    12,
-    '1 large egg',
-    748967,
-    '0.920000',
-    '50.00',
-    '74.00',
-    'auto',
-    null,
-    '1 × 50 g each · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
-  ),
-  (
-    _bestParmesan,
-    13,
-    '1 tablespoon all-purpose flour',
-    789890,
-    '0.950000',
-    '7.54',
-    '27.60',
-    'auto',
-    null,
-    '1 tablespoon ≈ 15 mL · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
-  ),
-  (
     _spicy,
     2,
     '1 large egg',
@@ -705,26 +721,28 @@ const List<_Row> _parts = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M66 batch, v65): R3 — the almonds join the parts (f 0.1515)
   (
     _nutCrusted,
     5,
     '1 cup panko bread crumbs',
     174928,
     '0.563333',
-    '10.99',
-    '43.41',
+    '8.96',
+    '35.39',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M66 batch, v65): R3 — as |5
   (
     _nutCrusted,
     9,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '22.42',
-    '82.06',
+    '18.28',
+    '66.90',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
@@ -861,38 +879,41 @@ const List<_Row> _parts = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 8.79 g carbohydrate per 100 g of the raw beef — USDA FNDDS 2705842 recipe: 20 g breading per 90.99 g raw beef steak; the dredge's excess not counted)",
   ),
+  // RE-PIN (M66 batch, v65): R3 — the Parmesan joins the parts
   (
     _lighter,
     0,
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
     '0.880000',
-    '16.29',
-    '64.35',
+    '15.78',
+    '62.33',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M66 batch, v65): R3 — as |0
   (
     _lighter,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '11.07',
-    '40.52',
+    '10.73',
+    '39.27',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M66 batch, v65): R3 — the almonds join the parts (f 0.8692)
   (
     _almond,
     3,
     '½ cup panko (Japanese-style bread crumbs)',
     174928,
     '0.880000',
-    '29.57',
-    '116.80',
+    '25.71',
+    '101.55',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
@@ -1077,29 +1098,31 @@ const List<_Row> _negatives = [
     null,
     null,
   ),
+  // RE-PIN (M66 batch, v65): R3' — the cayenne goes into the panko mixture, counted whole (its v60 state); |12 is the dip now, above
   (
     _nutCrusted,
-    12,
-    '¼ teaspoon ground black pepper',
-    170931,
+    8,
+    '⅛ teaspoon cayenne pepper',
+    170932,
     '1.000000',
-    '0.58',
-    '1.45',
+    '0.23',
+    '0.72',
     'auto',
     null,
-    '1/4 teaspoon ≈ 1 mL',
+    '1/8 teaspoon · USDA portion',
   ),
+  // RE-PIN (M66 batch, v65): R3' — the bare "cayenne" of the buttermilk-mixture sentence names |5: held `coating` with its siblings (H)
   (
     _onionRings,
     5,
     '¼ teaspoon cayenne pepper',
     170932,
     '1.000000',
-    '0.45',
-    '1.43',
-    'auto',
     null,
-    '1/4 teaspoon · USDA portion',
+    '0.00',
+    'auto',
+    'coating',
+    null,
   ),
   (
     _onionRings,
@@ -1246,7 +1269,8 @@ void main() {
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
     // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
-    expect(matcherVersion, 63);
+    // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
+    expect(matcherVersion, 64);
   });
 
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
@@ -1354,8 +1378,12 @@ void main() {
 
     test('E-w reaches exactly its 28 dip rows, each `discarded` with the '
         'read wet share in its basis (plan_figures §4)', () {
-      expect(_dips, hasLength(28));
-      expect(_dips.every((r) => r.$10 == _dipBasis), isTrue);
+      // RE-PIN (M66 batch, v65): 30 rows, almond|6 in the kept-part form.
+      expect(_dips, hasLength(30));
+      expect(
+        _dips.every((r) => r.$10 == _dipBasis || r.$10 == _dipKeptBasis),
+        isTrue,
+      );
       expectRows(_dips);
       for (final (file, position, _, _, _, _, _, _, _, _) in _dips) {
         expect(
@@ -1449,7 +1477,8 @@ void main() {
 
     test('no coat at all: the dip keeps the D5 flag only (7 rows, 0 kcal '
         'moved); spicy|5 garlic powder, named by no sentence, unflagged', () {
-      expect(_flagged, hasLength(7));
+      // RE-PIN (M66 batch, v65, R4): best-chicken-parmesan's two are dips.
+      expect(_flagged, hasLength(5));
       expect(_flagged.every((r) => r.$10!.endsWith(_d5)), isTrue);
       expectRows(_flagged);
     });
@@ -1481,7 +1510,10 @@ void main() {
       )); // replay 350.53; v60 372.02
       expect(of(_katsu), ('complete', '411.79', 5)); // 411.86; 429.12
       expect(of(_schnitzel), ('complete', '423.57', 9)); // 423.64; 460.09
-      expect(of(_nutCrusted), ('partial', '360.39', 12)); // 360.45; 407.15
+      // RE-PIN (M66 batch, v65): nut-crusted, lighter and almond complete —
+      // the nut or cheese layer R3 releases was each one's only uncounted
+      // line; onion-rings' cayenne joins the held dip (R3').
+      expect(of(_nutCrusted), ('complete', '385.78', 13)); // 385.84; 407.15
       expect(of(_stuffed), ('complete', '544.46', 14)); // 544.51; 572.91
       expect(of(_kiev), ('complete', '540.11', 14)); // 540.19; 584.97
       expect(of(_crispyFried), ('complete', '832.44', 13)); // = replay; 858.08
@@ -1493,15 +1525,15 @@ void main() {
         10,
       )); // = replay; 390.64
       expect(of(_steaks), ('complete', '534.48', 18)); // = replay; 555.87
-      expect(of(_lighter), ('partial', '232.26', 11)); // 232.29; 239.19
-      expect(of(_almond), ('partial', '402.13', 10)); // 402.18; 431.67
+      expect(of(_lighter), ('complete', '235.25', 12)); // 235.29; 239.19
+      expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 431.67
       // H: the counted lines fall by the held dips.
       expect(of(_eggplant), (
         'partial',
         '360.35',
         12,
       )); // 360.33; v60 409.66, 13
-      expect(of(_onionRings), ('partial', '217.86', 3)); // = replay; 249.84, 7
+      expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 249.84, 7
       expect(of(_parmesanCrusted), (
         'partial',
         '153.50',
@@ -1533,7 +1565,9 @@ void main() {
         expect(m52PlanRuns, lessThanOrEqualTo(1), reason: file);
         for (final (position, line) in nutritionLines(recipe).indexed) {
           final match = items[position]['match'] as Map<String, Object?>?;
-          if (match?['gram_basis'] == _dipBasis) {
+          // RE-PIN (M66 batch, v65): the kept-part form is a dip too.
+          if (match?['gram_basis'] == _dipBasis ||
+              match?['gram_basis'] == _dipKeptBasis) {
             dips++;
           }
           expect(
