@@ -3608,6 +3608,31 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v61 (batch M62): egg dips sized by the read wet
+  share, held-coat dips held, no crumb rule (prep48 §2 M62; Q9; the live
+  step L's breading record; built under the standing authorization; reach
+  labelled pre-Q18).** The FNDDS "breading or batter" record (flour 125 g,
+  crumbs 25, egg 15, water 120) confirmed the coat budget's carbohydrate
+  constant and gave the dip's size: 1.17 g of wet dip per gram of coat
+  carbohydrate. Egg and buttermilk dip lines whose sentence says the excess
+  drips off are now sized by that share on the recipe's own coat budget
+  (28 rows, −1,414 kcal), the coat parts' split unchanged — the owner's
+  ruling in place of the design's "dips join the coat's one fraction",
+  which was measured too (45 rows, −1,488) and lands farther on four of
+  five calibration recipes. No crumb rule: the record's crumb share drives
+  crumb lines further down, against the audit, and the pork-crumb stand-in
+  overrides chicken's own read coats; the eight low crumb coats stay a
+  stated gap. The dips of a held coat take the coat's hold (nine rows, −647
+  kcal counted; the design's tenth is beyond the line rule's reach); a
+  person's Confirm on one counts 0 g, a pick keeps the hold, typed grams
+  stand. Two no-coat recipes gain the left-in-bowl flag only. The verifier
+  found the compute re-planning the coat budget once per person-confirmed
+  dip (16 s at the editor caps) and the GET once per confirmed no-coat dip;
+  the closer gave every M52 kind one compute-scoped plan keyed on exactly
+  the rows the plan reads, invalidated by any cache write, proved exact by a
+  seven-mode whole-corpus oracle. Forty-four rows, −2,060 kcal per batch, no
+  status move, nine new coating holds.
+
 - **2026-10-08 — matcher v60 (batch M61): fried doughs, fritters, rolls
   and falafel take an uptake (prep48 §2 M61; Q12; the live step L's
   records; built under the standing authorization; reach labelled

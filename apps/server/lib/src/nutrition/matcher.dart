@@ -811,7 +811,20 @@ const Map<String, String> _synonyms = {
 /// cake dough), and two balances DERIVED from SR Legacy — 172758 (yeast
 /// doughnuts, protein tracer) 16.72 %, 172455 "Falafel, home-prepared"
 /// (carbohydrate tracer) 21.64 %.
-const int matcherVersion = 59;
+///
+/// v60 (the Matcher v61 commit, batch M62 — egg dips sized by the read wet
+/// share, held-coat dips held, no crumb rule; prep48 design_v2 §2 M62 and
+/// §1 Q9 with H as the owner's decision, the planner's E-w under the
+/// 2026-10-07 standing authorization; zero requests — FNDDS 2710785 read
+/// at live step L): a coat's dip in an egg or buttermilk mixture whose
+/// excess the steps leave in the bowl (engine `_dipsOf`, `_dipExcess`'s
+/// first arm) counts the wet grams FNDDS 2710785 "Breading or batter as
+/// ingredient in food" holds per gram of its carbohydrate (15 g egg and
+/// 120 g water in 287 g at 40.1 %: 1.17) times the carbohydrate the coat
+/// counts, shared by the dip lines' grams, the coat's parts unchanged; the
+/// dip of a coat held with no budget is held `coating` with it; a dip with
+/// no coat keeps the "excess in the bowl" flag only.
+const int matcherVersion = 60;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

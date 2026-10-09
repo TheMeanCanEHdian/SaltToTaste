@@ -3619,7 +3619,7 @@ The rows are `gram_source: discarded`, basis `discarded in cooking — only
 the coat on the food counted`, the D5 flag dropped, the coat flag reading
 `… ; the batter's excess not counted)`. A person's Confirm of a batter
 line keeps the plan's grams, `discarded`, as a coat's does. Egg, glaze,
-chocolate, coating and dough dips are not W (E is M62). (S, flag only) A
+chocolate, coating and dough dips are not W (E is M62, below). (S, flag only) A
 coat figure READ on another food says so, as the uptake clause does:
 `… {b} g breading per {R} g raw {food} (no record for {coated}; read as
 {record})` — crispy-fried-chicken|8 (chicken on the country-fried steak),
@@ -3921,6 +3921,160 @@ rows; statuses, sections, review buckets (a 0 g `discarded` row and an
 uptake row are both `counted`) and holds identical. Deploy note:
 matcherVersion 59 stales every recipe; a zero-request sweep recomputes the
 library.
+
+**Since matcher v61 (batch M62 — egg dips sized by the read wet share,
+held-coat dips held, no crumb rule; matcherVersion 60; prep48 design_v2 §2
+M62 and §1 Q9 with H as the owner's decision, the planner's E-w on the
+verified figures of the L2 read, decided 2026-10-08 under the standing
+authorization; zero requests — FNDDS 2710785 was read at live step L;
+step-reading, so its reach is pre-Q18).** AMENDS M50 Q21 (D5, "flags only,
+no grams move") for an egg or buttermilk dip. (The trigger) a sentence that
+dips, coats or dredges the food **in / into / with (the) egg mixture, egg
+white mixture, buttermilk mixture, egg whites or eggs** and holds "excess"
+anywhere ("Using tongs, dip both sides of the cutlets in the egg mixture,
+allowing the excess to drip off") — the mixtures read before the bare nouns,
+and the sentence read as this dip wherever it matches (never also as the
+shipped "excess egg" food word, which took every egg line). (The lines) the
+lines a mixing sentence (whisk, combine, stir, beat, mix, sift) naming the
+dip's base word — egg or buttermilk — BEFORE the dip names: a line's A13
+mention (the nth mention for a head's nth line), or any mention of a head no
+other line shares (chicken-kiev's "3 large eggs, beaten", first named where
+the plates are set out); never a line the steps use as a medium (the coat's
+own parts, a frying oil's kept part — "beat the eggs with 1 tablespoon of
+the oil") and never a row with no record. The ceiling, stated: a shared
+head rides A13's order — nut-crusted's one "pepper" word goes to its first
+pepper line, the cayenne |8 (scaled), and its black pepper |12 stays whole;
+oven-fried-onion-rings|5 cayenne is not reached; spicy-fried-chicken-
+sandwiches|5 garlic powder is named by no sentence. Read once per recipe and
+base word (engine `_dipsOf`).
+
+(E-w) In a recipe that budgets its coat without the dips (M52's coated food
+and shape with a coat or batter part), the dip lines count **W = 1.17 g a
+gram of the carbohydrate the coat's parts count** — C = min(B, Σ the parts'
+carbohydrate) — shared by their whole grams: f_w = min(1, W / Σ whole), each
+line f_w × its grams, `gram_source: discarded`, basis `discarded in cooking
+— only the dip on the food counted · approximation (dip: 1.17 g per g of the
+coat's carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient
+in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100
+g; the dip's excess not counted)`. 1.17 = (15 + 120) / (287 × 0.401): the
+wet grams of the breading every read coat record lists (food code 99995000)
+over its own carbohydrate — its inputs (flour 125 g, dry crumbs 25 g, egg
+15 g, water 120 g, baking powder and salt 1 g each) sum to 115.04 g of
+carbohydrate, the record's 40.1 %, confirming c_b 0.40 and B. The coat's own
+parts keep their grams, basis and flag (no re-split: chicken-katsu|0 stays
+63.19). A dip line below the confidence gate shares nothing. A person's
+Confirm of a dip keeps its grams, `discarded`, as a batter line's does.
+
+(H, the owner's Q9 one-way door — re-rules Q21 (a) for these lines) A dip
+whose coat is held with no budget (no coated meat row, or C4's sautéed
+dusting) is held `coating` with it — no grams, `hold_note` the dip sentence
+as written. It is a coating hold in the Recipe-review queue: a person's
+Confirm counts 0 g `discarded` ("poured away after your confirm" — no eaten
+part is known), typed grams stand, a skip stores no hold, a pick keeps the
+hold; a Confirm or a pick records the FOOD (never grams) for the item key
+library-wide, apply-to-all allowed, as for every coating hold. (No coat) a
+dip with no coat held or budgeted keeps the D5 flag only.
+
+(P2 — no crumb rule.) The read's crumb share (15.64 % of its carbohydrate)
+is FNDDS's generic breading, not a recipe that prints only crumbs (it would
+take chicken-katsu|0's panko 62.49 → 9.88 g), and Q9 (c) — 2705871's crumb
+coat for every crumb budget — would override the coated chicken's own read
+coat: both measured, both rejected. B and its pro-rata split stand.
+
+Reach: exactly 44 rows (−2,060.27 kcal per batch), all `auto`, 0 person
+rows. E-w, 28 rows (−1,413.53): breaded-chicken-cutlets|4 100.00 → 41.92 g;
+chicken-katsu|1 100.00 → 53.35; chicken-schnitzel|1 100.00 → 46.80, |2 (the
+tablespoon of oil beaten in) 14.00 → 6.55 — made two steps before the dip;
+nut-crusted|8 → 0.04, |10 150.00 → 27.66, |11 → 1.91; stuffed|11 100.00 →
+23.26; chicken-kiev|12 150.00 → 30.67, |13 → 1.06; crispy-fried-chicken|9
+50.00 → 21.71, |10 → 1.97, |11 → 1.00, |12 buttermilk 244.00 → 105.95;
+crispy-pan-fried-pork-chops|1 buttermilk 244.00 → 46.82, |2 → 5.96, |3 →
+0.58; crunchy-baked-pork-chops|11 99.00 → 41.86, |12 → 19.69;
+pork-schnitzel|2 100.00 → 38.11; chicken-fried-steaks|3 → 14.58, |4 → 1.32,
+|5 → 0.67, |6 buttermilk 244.00 → 71.13; lighter-chicken-parmesan|6 99.00 →
+23.79; almond-crusted|4 100.00 → 23.19, |5 → 1.20, |6 → 0.58 (C 21.29 < B
+35.74: f = 1). H, 9 rows held `coating` (−646.74 counted):
+eggplant-parmesan|6, oven-fried-onion-rings|1–|4, parmesan-crusted-chicken-
+cutlets|4 |5, chicken-francese|10 |11 (all four already partial). The D5
+flag, 7 rows (0 kcal): best-chicken-parmesan|12 |13, spicy-fried-chicken-
+sandwiches|2 |3 |4 |6 |7. Per serving (13 E-w recipes, 4 H): breaded 372.02
+→ 350.53, katsu 429.12 → 411.86, schnitzel 460.09 → 423.64, nut-crusted
+407.15 → 360.45, stuffed 572.91 → 544.51, kiev 584.97 → 540.19,
+crispy-fried 858.08 → 832.44, pork chops 506.39 → 480.50, crunchy 480.86 →
+468.90, pork-schnitzel 390.64 → 367.75, steaks 555.87 → 534.48, lighter
+239.19 → 232.29, almond 431.67 → 402.18; eggplant 409.66 → 360.33,
+onion-rings 249.84 → 217.86, parmesan-crusted 167.60 → 153.54, francese
+449.08 → 407.44. Kept: the egg dips no "excess" sentence names
+(crunchy-oven-fried-fish|6, orange-flavored-chicken|12, oven-fried-chicken|9,
+the other chicken-francese|6), the frying oils' kept parts beaten into the
+dip (breaded|5, stuffed|12, pork-schnitzel|3), pork-schnitzel|9's
+hard-cooked egg garnish, crispy-fried-chicken|3's brine, the rows with no
+record, the ceiling rows, every coat part of the 13 recipes, the 36 uptake
+rows and M58's batter rows.
+
+Known gaps (design §7 — the source stands): the crumb coats LOW against the
+audit (P2, median 0.44×) — FNDDS's own coated chicken prints its 15 g of
+breading, 8.71 % of it crumbs; the read wet share is egg 15 g and WATER 120
+g, the recipe's egg or buttermilk read at the same mass;
+crunchy-baked-pork-chops|10's 6 tablespoons of flour whisked INTO the whites
+stays a whole eaten part (45.24 g) while the whites scale (≈ −96 kcal if
+scaled); almond-crusted|6's zest — 1 of its 1¼ teaspoons goes in the dip —
+scales whole (−1.86); a dip's oil (chicken-schnitzel|2) scales as dip, not
+as frying oil; crispy-fried-chicken falls (−11.0 % on the calibration) with
+no crumb line to offset; §2's one-f gap — a dip taking a large f from a coat
+whose cornflakes are unmatched — is closed by E-w (the pork chops'
+buttermilk 46.82 g, not 120.68); the shared-head ceiling above; the corpus
+lost the steps of 269 subsections (Q18), which these step readers cannot
+see.
+
+Cost (RULE C at the editor caps — 398 dip lines beside one coat, every
+sentence a mixing and a dip one): the dip lines are read once per recipe and
+base word — each line's own mentions, the earlier steps never re-read per
+dip sentence (`memo:dips`; 400 distinct heads named two to a mixing
+sentence read within the bounds). The coat's shape is read once per recipe
+and coated record (`_coatShapeOf`, read in full on every plan before).
+A person's decision on an M52 line reads M52's plan ONCE per request
+(v61 closer 1, verify1 D1/D2): a coat, batter or dip line's entry is the
+plan's coat block's, a function of the rows' coat key alone (`_m52Key`:
+each row as that block reads it — weighed, the engine's, its hold none or
+`coating`, a coat or oil medium, its record, below the gate — the coated
+food's grams and, under C5, the counted flour and starch off B; never
+another row's grams, so a dip's or coat line's `discarded` plan form and its
+engine form key alike); a frying oil's entry is the whole plan's (the key
+adds each oil's hold and the grams of every counted row the fryer block may
+read: a row it may fry, by `_friedClassOf`'s name test, and every counted row
+when M61's product mix or M59 D's cauliflower batter may be read). The
+matches GET answers each decided line from the request's one plan whenever
+the decision's row list keys as the stored one (a confirmed no-coat dip:
+one plan per GET, not one per dip). A COMPUTE answers each decided M52 line
+from one plan per kind (coat block, fryer) while the rows as they stand at
+that derivation key alike and no FDC cache write has landed since
+(`SaltDatabase.fdcCacheWrites`); a write that moves the key re-plans once —
+a person's PUT plans its own list as before (a pick at a dip plans no other
+dip). Measured at the editor caps (398 decided lines, every one confirmed
+unless named): the E-w dips' compute 0.80 s (16.2 s before this closer;
+0.42 s at v60, the eggs counted whole there) and the first compute after
+the deploy, every confirmed egg as v60 left it, 0.85 s; every other dip
+picked 0.67 s, H's picked dips 0.64 s; M58 W's batter lines 2.6 s (44.3 s
+at v60, 20.8 s before); no-coat flagged dips 0.79 s, beside a frying oil
+0.79 s (2.1 s before; 0.40 s at v60), their GET 0.78 / 0.76 s (0.82 / 2.3 s
+and 399 plans before; 0.56 / 0.60 s at v60); every frying oil of v26's dough
+and pork-fry shapes confirmed 1.03 / 0.91 s (34.4 / 19.7 s at v60 — the
+shipped M52 door), and every oil confirmed between the engine's dips or
+coat lines, which the compute rewrites as it goes, 1.00 / 0.83 s (18.0 /
+18.2 s at v60). Every compute above plans at most twice (its decisions' plan
+and the totals'), every GET once. The E-w shapes' compute, GET and confirm
+PUT stay about 0.96, 0.66 and 0.50 s (0.82, 0.57 and 0.33 s at v60).
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 24, main and
+`--reverse-parents` byte-identical; STEP ZERO the v60 tree reproduces the
+v60 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v60
+rows exactly the 44 rows differ — the 28 E-w rows in grams, source, basis
+and kcal, the 9 H rows in grams, source, hold, basis and kcal, the 7 flagged
+rows in basis only; 0 person rows; statuses unchanged (1,022 complete, 176
+partial); review buckets: `check` +9 and `counted` −9 (the held rows), the
+`coating` holds 20 → 29. Deploy note: matcherVersion 60 stales every recipe;
+a zero-request sweep recomputes the library.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

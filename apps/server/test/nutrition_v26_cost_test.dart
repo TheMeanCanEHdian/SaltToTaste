@@ -262,6 +262,7 @@ void main() {
   bounds();
   foodGated();
   fryingOils();
+  eggDips();
   group('RULE C at the loop level, every detector of every line at the caps '
       '(Run 056 S5/S7/S8/S9/O6/O8/S14/O15/S20/S23)', () {
     // Measured at 8113b24 (one readAll pass, the digests' shapes): salt
@@ -996,7 +997,8 @@ void fryingOils() {
     () {
       for (final shape in fryShapes.keys) {
         test('$shape: the compute and the matches GET within their bounds, '
-            'the GET planning M52 once, each under the backstop', () async {
+            'the GET planning M52 once; every oil confirmed, the GET once and '
+            'the compute at most twice; each under the backstop', () async {
           final (make, grams) = fryShapes[shape]!;
           final r = make();
           final db = wp.tempDb();
@@ -1088,9 +1090,363 @@ void fryingOils() {
             {('confirmed', grams)},
             reason: shape,
           );
+          // v61 closer 1 (verify1 D1's class): the COMPUTE derived every
+          // confirmed oil through its own plan (dough 34.5 s, pork-fry
+          // 20.5 s, 400 plans); now from one plan while the rows key alike
+          // (engine `_m52OnConfirm`'s compute memo), then the totals'.
+          stepIndexCounts.clear();
+          reachDecodes = 0;
+          m52PlanRuns = 0;
+          final computing = Stopwatch()..start();
+          await matchAndCompute(db, provider, stored());
+          final computeMs = computing.elapsedMilliseconds;
+          final computeCounts = Map.of(stepIndexCounts);
+          expectBounded(
+            r,
+            computeCounts,
+            '$shape compute confirmed',
+            copies: computeCounts['indexes'] ?? 1,
+          );
+          expect(
+            m52PlanRuns,
+            lessThanOrEqualTo(2),
+            reason: '$shape compute confirmed',
+          );
+          expect(
+            computeMs,
+            lessThan(backstopMs),
+            reason: '$shape compute confirmed',
+          );
+          expect(
+            {
+              for (final row in db.ingredientMatchesFor(r.id).skip(1))
+                (row.status, row.grams?.toStringAsFixed(2)),
+            },
+            {('confirmed', grams)},
+            reason: shape,
+          );
         });
       }
     },
     skip: skipIfNoCorpus,
   );
+}
+
+/// v61 (M62): an egg or buttermilk dip at the caps — every sentence a
+/// mixing one and a dip one, 398 dip lines beside one coat: the dip lines
+/// are read once per base word (engine `_dipsOf`, `memo:dips`, never a scan
+/// of the earlier steps per dip sentence), the plan once per GET with every
+/// dip decided (`m52PlanRuns`), a person's pick of a dip planning no other
+/// dip, the coat's shape read once per recipe and coated record
+/// (`memo:coatShape`), the dips a plan weighs counted (`dipsSized`). E-w
+/// on 0114 (the breast's coat; each confirm), the same lines with every
+/// other dip picked (each pick's plan weighs no other dip — 4.6 s of
+/// per-pick plans weighing the 199 others, before), H on 0315 (no coated
+/// meat: every dip held). v61 closer 1 (verify1 D1, D2): a COMPUTE with
+/// every dip decided plans M52 at most twice (its confirms' one plan
+/// `_m52OnConfirm` keys, and the totals') — every dip confirmed took 16.2 s
+/// and 399 plans; also as v60 left the confirmed eggs (counted whole: the
+/// first compute after the deploy); every dip CONFIRMED with no coat at
+/// all, beside a frying oil (the D5 flag only: the GET planned once per
+/// dip, 399 plans); and M58 W's batter on the same lines, every batter line
+/// confirmed (its compute 44.3 s at v60, 20.8 s before this closer). Real
+/// corpus lines and recipes with their recorded answers; synthesized, a
+/// stated exception: the hostile steps and the repeated lines.
+final Map<String, (Recipe Function(), Map<String, Object?>)> dipShapes = {
+  for (final (name, decision) in [
+    ('egg-dips', <String, Object?>{'confirmed': true}),
+    ('egg-picks', <String, Object?>{'fdc_id': 748967}),
+  ])
+    name: (
+      () => capped(
+        loadCorpusRecipe('0114-breaded-chicken-cutlets.yaml'),
+        [
+          '4 (5- to 6-ounce) boneless, skinless chicken breasts, tenderloins removed and breasts trimmed',
+          '¾ cup unbleached all-purpose flour',
+          for (var i = 2; i < capLines; i++) '2 large eggs',
+        ],
+        List.filled(
+          capSteps,
+          fill(
+            'Whisk the eggs in a pie plate. Dredge the cutlets in the flour, then dip in the egg mixture, allowing the excess to drip off. Fry the cutlets until golden. ',
+            capStep,
+          ),
+        ),
+      ),
+      decision,
+    ),
+  'flag-dips': (
+    () => capped(
+      loadCorpusRecipe('0114-breaded-chicken-cutlets.yaml'),
+      [
+        '4 (5- to 6-ounce) boneless, skinless chicken breasts, tenderloins removed and breasts trimmed',
+        '2 quarts vegetable oil, for frying',
+        for (var i = 2; i < capLines; i++) '2 large eggs',
+      ],
+      List.filled(
+        capSteps,
+        fill(
+          'Whisk the eggs in a pie plate. Dip the cutlets in the egg mixture, allowing the excess to drip off. Heat the oil in a Dutch oven to 350 degrees. Fry the cutlets in the oil until golden. ',
+          capStep,
+        ),
+      ),
+    ),
+    {'confirmed': true},
+  ),
+  'w-batter': (
+    () => capped(
+      loadCorpusRecipe('0114-breaded-chicken-cutlets.yaml'),
+      [
+        '4 (5- to 6-ounce) boneless, skinless chicken breasts, tenderloins removed and breasts trimmed',
+        '¾ cup unbleached all-purpose flour',
+        for (var i = 2; i < capLines; i++) '2 large eggs',
+      ],
+      List.filled(
+        capSteps,
+        fill(
+          'Whisk the eggs and flour into a batter. Dredge the cutlets in the flour, shaking off the excess. Dip the cutlets in the batter, allowing the excess batter to drip off. Fry the cutlets until golden. ',
+          capStep,
+        ),
+      ),
+    ),
+    {'confirmed': true},
+  ),
+  'held-dips': (
+    () => capped(
+      loadCorpusRecipe('0315-oven-fried-onion-rings.yaml'),
+      [
+        '½ cup unbleached all-purpose flour',
+        '2 large yellow onions, cut into 24 large rings',
+        for (var i = 2; i < capLines; i++) '1 large egg, at room temperature',
+      ],
+      List.filled(
+        capSteps,
+        fill(
+          'Place the flour in a shallow baking dish. Beat the egg and buttermilk in a medium bowl. Dredge each onion ring in the flour, shaking off the excess. Dip in the buttermilk mixture, allowing the excess to drip back into the bowl. Bake the onion rings until golden brown. ',
+          capStep,
+        ),
+      ),
+    ),
+    {'fdc_id': 748967},
+  ),
+};
+
+void eggDips() {
+  group('RULE C, the egg dips at the caps (v61, M62)', () {
+    for (final shape in dipShapes.keys) {
+      test('$shape: the compute, the matches GET and, every dip decided, the '
+          'GET and the compute within their bounds, the dips read once per '
+          'index, the GET planning M52 once and the compute at most twice, '
+          'each under the backstop', () async {
+        final (make, decision) = dipShapes[shape]!;
+        final r = make();
+        final db = wp.tempDb();
+        final provider = FixtureProvider(pending: pendingSearches);
+        wp.saveRecipe(db, r);
+        Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+        Future<void> timed(
+          String name,
+          Future<Object?> Function() run, {
+          int? plans,
+        }) async {
+          stepIndexCounts.clear();
+          reachDecodes = 0;
+          m52PlanRuns = 0;
+          final sw = Stopwatch()..start();
+          await run();
+          final ms = sw.elapsedMilliseconds;
+          final counts = Map.of(stepIndexCounts);
+          final copies = counts['indexes'] ?? 1;
+          expectBounded(r, counts, '$shape $name', copies: copies);
+          expect(
+            counts['memo:dips'],
+            inInclusiveRange(1, copies),
+            reason: '$shape $name',
+          );
+          if (plans != null) {
+            expect(m52PlanRuns, lessThanOrEqualTo(plans), reason: shape);
+          }
+          expect(ms, lessThan(backstopMs), reason: '$shape $name: $counts');
+        }
+
+        await timed('compute', () => matchAndCompute(db, provider, stored()));
+        await timed('GET', () => matchesBody(db, provider, stored()), plans: 1);
+        final rows = db.ingredientMatchesFor(r.id);
+        expect(rows, hasLength(capLines));
+        expect(
+          {for (final row in rows.skip(2)) (row.grams, row.hold)},
+          {
+            switch (shape) {
+              'held-dips' => (null, 'coating'),
+              'flag-dips' => (100.0, null),
+              'w-batter' => (7.91, null),
+              _ => (0.11, null),
+            },
+          },
+          reason: shape,
+        );
+        // Row 2 through the real PUT; the others written in that state
+        // (397 PUTs would take minutes) — for egg-picks every other one.
+        await timed(
+          'PUT',
+          () => applyMatchOverride(db, provider, stored(), 2, {
+            'raw': rows[2].raw,
+            ...decision,
+          }),
+        );
+        final put = db.ingredientMatchesFor(r.id);
+        for (final row in put.skip(3)) {
+          if (shape == 'egg-picks' && row.position.isOdd) {
+            continue;
+          }
+          db.upsertIngredientMatch(
+            row.copyWith(status: put[2].status, derivedSeq: put[2].derivedSeq),
+          );
+        }
+        await timed(
+          'GET decided',
+          () => matchesBody(db, provider, stored()),
+          plans: 1,
+        );
+        // v61 closer 1 (verify1 D1): the compute's confirms and picks
+        // answer from one plan while the rows key alike, then its totals.
+        await timed(
+          'compute decided',
+          () => matchAndCompute(db, provider, stored()),
+          plans: 2,
+        );
+        if (shape == 'egg-dips') {
+          // The first compute after the deploy: every confirmed egg as v60
+          // left it, counted whole — each derivation rewrites its row.
+          for (final row in db.ingredientMatchesFor(r.id).skip(2)) {
+            db.upsertIngredientMatch(
+              row.copyWith(grams: 100, gramSource: GramSource.piece.name),
+            );
+          }
+          await timed(
+            'compute after the deploy',
+            () => matchAndCompute(db, provider, stored()),
+            plans: 2,
+          );
+        }
+        expect(
+          {
+            for (final row in db.ingredientMatchesFor(r.id).skip(2))
+              (row.status, row.grams, row.hold),
+          },
+          switch (shape) {
+            'egg-dips' => {('confirmed', 0.11, null)},
+            'flag-dips' => {('confirmed', 100.0, null)},
+            'w-batter' => {('confirmed', 7.91, null)},
+            // The picked half counted whole; the auto half at E-w's grams
+            // on its 199 dips.
+            'egg-picks' => {('overridden', 100.0, null), ('auto', 0.21, null)},
+            _ => {('overridden', null, 'coating')},
+          },
+          reason: shape,
+        );
+      });
+    }
+
+    // v61 closer 1: every frying oil confirmed BETWEEN the engine's dips or
+    // coat lines, which a compute rewrites as it goes (each its engine form,
+    // then the totals' plan form) — the fryer block reads neither, so its
+    // key holds: one plan, not one per oil (18.0 and 18.2 s at v60).
+    for (final (shape, line) in [
+      ('oil between dips', '2 large eggs'),
+      ('oil between coats', '¾ cup unbleached all-purpose flour'),
+    ]) {
+      test('$shape: every oil confirmed, the compute plans M52 at most twice '
+          'within its bounds, under the backstop', () async {
+        const oil = '2 quarts vegetable oil, for frying';
+        final dips = shape == 'oil between dips';
+        final r = capped(
+          loadCorpusRecipe('0114-breaded-chicken-cutlets.yaml'),
+          [
+            '4 (5- to 6-ounce) boneless, skinless chicken breasts, tenderloins removed and breasts trimmed',
+            if (dips) '¾ cup unbleached all-purpose flour',
+            for (var i = dips ? 2 : 1; i < capLines; i++)
+              i.isEven == dips ? line : oil,
+          ],
+          List.filled(
+            capSteps,
+            fill(
+              '${dips ? 'Whisk the eggs in a pie plate. Dredge the cutlets in the flour, then dip in the egg mixture, allowing the excess to drip off.' : 'Dredge the cutlets in the flour, shaking off the excess.'} Heat the oil in a Dutch oven to 350 degrees. Fry the cutlets in the oil until golden. ',
+              capStep,
+            ),
+          ),
+        );
+        final db = wp.tempDb();
+        final provider = FixtureProvider(pending: pendingSearches);
+        wp.saveRecipe(db, r);
+        Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+        await matchAndCompute(db, provider, stored());
+        final rows = db.ingredientMatchesFor(r.id);
+        final at = rows.indexWhere((row) => row.raw == oil);
+        await applyMatchOverride(db, provider, stored(), at, {
+          'raw': oil,
+          'confirmed': true,
+        });
+        final put = db.ingredientMatchesFor(r.id);
+        for (final row in put) {
+          if (row.raw == oil) {
+            db.upsertIngredientMatch(
+              row.copyWith(
+                status: 'confirmed',
+                derivedSeq: put[at].derivedSeq,
+              ),
+            );
+          }
+        }
+        Set<(String, String, double?)> shown() => {
+          for (final row in db.ingredientMatchesFor(r.id).skip(1))
+            (row.status, row.raw, row.grams),
+        };
+        final before = shown();
+        expect(before, hasLength(dips ? 3 : 2), reason: '$before');
+        stepIndexCounts.clear();
+        reachDecodes = 0;
+        m52PlanRuns = 0;
+        final sw = Stopwatch()..start();
+        await matchAndCompute(db, provider, stored());
+        final ms = sw.elapsedMilliseconds;
+        final counts = Map.of(stepIndexCounts);
+        expectBounded(r, counts, shape, copies: counts['indexes'] ?? 1);
+        expect(m52PlanRuns, lessThanOrEqualTo(2), reason: shape);
+        expect(ms, lessThan(backstopMs), reason: '$shape: $counts');
+        expect(shown(), before, reason: shape);
+      });
+    }
+
+    test('the making scan: 400 distinct heads, every sentence a mixing one '
+        'naming two of them beside an egg dip — the dip lines read once per '
+        "index, each head's mentions once", () {
+      String pair(int p) =>
+          'Whisk the eggs with ${food(2 * p)} and ${food(2 * p + 1)}. Dip in '
+          'the egg mixture, allowing the excess to drip off. ';
+      final r = capped(
+        loadCorpusRecipe('0114-breaded-chicken-cutlets.yaml'),
+        [for (var i = 0; i < capLines; i++) '1 cup ${food(i)}'],
+        [
+          for (var k = 0; k < capSteps; k++)
+            // 80 pairs fit a step; the 200 pairs cycle through the steps.
+            ([for (var j = 0; j < 80; j++) pair((k * 80 + j) % 200)].join() * 2)
+                .substring(0, capStep),
+        ],
+      );
+      stepIndexCounts.clear();
+      final sw = Stopwatch()..start();
+      final unflagged = [
+        for (final line in nutritionLines(r))
+          if (m50FlagOf(r, line) == null) line.raw,
+      ];
+      final ms = sw.elapsedMilliseconds;
+      final counts = Map.of(stepIndexCounts);
+      expectBounded(r, counts, 'distinct dip heads');
+      expect(counts['memo:dips'], 1);
+      // Every line is named by a mixing sentence before an egg dip.
+      expect(unflagged, isEmpty);
+      expect(ms, lessThan(backstopMs), reason: '$counts');
+    });
+  }, skip: skipIfNoCorpus);
 }

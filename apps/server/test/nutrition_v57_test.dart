@@ -361,7 +361,8 @@ const List<_Row> _negimaki = [
 /// another peanut-oil record in a fresh compute than in snapshot 23 and is
 /// pinned there by nutrition_v53_test);
 /// the dips W does not read — a dough (the scones), a rolled cocoa coat
-/// (the truffles), egg washes (E is M62's: katsu, lighter parmesan) — and
+/// (the truffles), egg washes (E is M62's: katsu, lighter parmesan, its
+/// E-w grams since v61 — RE-PIN, M62 batch) — and
 /// the floured shrimp with no batter sentence, still C3.
 const List<_Row> _kept = [
   (
@@ -424,15 +425,18 @@ const List<_Row> _kept = [
     '152.10',
     'discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 3.94 g carbohydrate per 100 g of the raw shrimp — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried"; the dredge\'s excess not counted)',
   ),
+  // RE-PIN (M62 batch, v61): the two egg washes are M62's E-w dips now
+  // (100.00 g / 148.00 kcal and 99.00 / 54.45, the D5 flag, before) —
+  // W still never reads them (their dip word is no batter).
   (
     '0115-chicken-katsu-crispy-pan-fried-chicken-cutlets.yaml',
     1,
     '2 large eggs',
     748967,
     '0.920000',
-    '100.00',
-    '148.00',
-    '2 × 50 g each · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    '53.35',
+    '78.96',
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
   (
     '0416-lighter-chicken-parmesan.yaml',
@@ -440,9 +444,9 @@ const List<_Row> _kept = [
     '3 large egg whites',
     747997,
     '0.950000',
-    '99.00',
-    '54.45',
-    '3 × 33 g each · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    '23.79',
+    '13.08',
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
 ];
 
@@ -469,7 +473,8 @@ void main() {
     // RE-PIN (M59 batch, v58): matcherVersion 57 (was 56).
     // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
-    expect(matcherVersion, 59);
+    // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
+    expect(matcherVersion, 60);
   });
 
   group('matcher v57 (batch M58)', skip: skipIfNoCorpus, () {

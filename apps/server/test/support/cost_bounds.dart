@@ -104,6 +104,12 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:peelActs',
       // v60 (M61, closer 2): the sentences naming the skin.
       'memo:skinSentences',
+      // v61 (M62): an egg or buttermilk dip's lines, read once per base
+      // word, never per dip sentence.
+      'memo:dips',
+      // v61 (M62's baked H shape reaches it first): whether the directions
+      // leave an excess of a coat — the shipped v33 reader, once per recipe.
+      'memo:leavesExcess',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first
@@ -138,6 +144,8 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:partition',
       // v59 (M60 P7a, verifier 2 D2): a head's paring reading.
       'memo:paredIn',
+      // v61 (M62): the coat's shape, once per coated record.
+      'memo:coatShape',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,
@@ -145,6 +153,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     for (final perText in ['memo:keptOil', 'memo:plusNamed'])
       perText: 3 * texts,
     'mentions': mentions,
+    // v61 (M62 E-w): the dip lines a plan weighs — at most two plans per
+    // request (a PUT's confirm and its totals; a pick's own plan weighs no
+    // other dip).
+    'dipsSized': 2 * lines,
     'lineMentions': 2 * lines,
     'ends': steps,
     'memo:lifted': steps,

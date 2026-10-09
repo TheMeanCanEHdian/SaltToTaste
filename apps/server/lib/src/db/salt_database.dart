@@ -1038,8 +1038,14 @@ class SaltDatabase {
       row['response'] as String,
   ];
 
+  /// The FDC cache writes on this connection (both caches): what the
+  /// compute's M52 plan memo checks its records against (engine
+  /// `_m52OnConfirm`, verify1 D1 — a plan read before a fetch is stale).
+  int fdcCacheWrites = 0;
+
   /// Stores a search response in the cache.
   void fdcSearchCachePut(String query, String responseJson) {
+    fdcCacheWrites++;
     _prepared(
       'INSERT INTO fdc_search_cache (query, response) VALUES (?, ?) '
       'ON CONFLICT(query) DO UPDATE SET response = excluded.response, '
@@ -1057,6 +1063,7 @@ class SaltDatabase {
 
   /// Stores a food detail in the cache.
   void fdcFoodCachePut(int fdcId, String responseJson) {
+    fdcCacheWrites++;
     _prepared(
       'INSERT INTO fdc_food_cache (fdc_id, response) VALUES (?, ?) '
       'ON CONFLICT(fdc_id) DO UPDATE SET response = excluded.response, '

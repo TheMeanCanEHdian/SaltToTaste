@@ -3280,6 +3280,15 @@ String? holdNoteOf(Recipe recipe, IngredientLine line, String? hold) {
         : _oilOwnersOf(recipe, head)[line.raw]?.ambiguous;
     return said;
   }
+  // v60 (M62 H): a dip held with its coat — the dip sentence.
+  if (hold == 'coating') {
+    final position = nutritionLines(
+      recipe,
+    ).indexWhere((l) => identical(l, line));
+    if (_dipsOf(recipe)[position] case final dip?) {
+      return dip;
+    }
+  }
   final medium = switch (hold) {
     'coating' => DiscardedMedium.coating,
     'partial_pour_away' => DiscardedMedium.partialPourAway,
@@ -5111,9 +5120,12 @@ Map<int, Set<String>> _leftInBowl(Recipe recipe) =>
       for (final (i, sentences) in index.sentences.indexed) {
         for (final (j, s) in sentences.indexed) {
           final m = _dipExcess.firstMatch(s);
-          final word = m == null
+          // v60 (M62 E): a dip in an egg or buttermilk mixture is
+          // [_dipsOf]'s (its lines are the mixture's, never every line of
+          // the food word).
+          final word = m == null || m[1] != null
               ? null
-              : m[1] ?? m[2] ?? _dipWord.firstMatch(s)?[1];
+              : m[2] ?? m[3] ?? _dipWord.firstMatch(s)?[1];
           if (word == null) {
             continue;
           }
@@ -5173,8 +5185,104 @@ Map<int, Set<String>> _leftInBowl(Recipe recipe) =>
           }
         }
       }
+      for (final k in _dipsOf(recipe).keys) {
+        (out[k] ??= {}).add('dip');
+      }
       return out;
     });
+
+/// v60 (M62 E, Q9): the lines of an egg or buttermilk dip whose excess the
+/// steps leave in the bowl — "Dip in the egg mixture, allowing the excess
+/// to drip off" ([_dipExcess]'s first arm) — each with the dip sentence as
+/// written (an H row's `hold_note`, [holdNoteOf]); once per recipe. A line
+/// is the dip's when a mixing sentence ([_mixVerb]) naming the dip's base
+/// word (egg, buttermilk) BEFORE the dip names it: its A13 mention
+/// ([_linesNamedIn]'s nth), or any mention of a head no other line shares
+/// ("3 large eggs, beaten" — chicken-kiev's first 'egg' mention sets out
+/// the plates); its sentence the first dip after that mention. Never a line
+/// the steps use as a medium ([discardedMediumOf]: the coat's parts, a
+/// frying oil's kept part). Equal to each dip's own made set unioned (each
+/// is a prefix of the base's mixing sentences, A13 and the clause monotone
+/// in it), read once per base (RULE C: never a scan per dip).
+/// ponytail: a shared head rides A13's order (nut-crusted's one 'pepper'
+/// word goes to its first pepper line, the cayenne); split it by the
+/// line's modifier word if a pin ever needs the black pepper.
+Map<int, String> _dipsOf(Recipe recipe) => _stepIndexOf(recipe).memo(#dips, () {
+  final index = _stepIndexOf(recipe);
+  bool before((int, int) a, (int, int) b) =>
+      a.$1 < b.$1 || (a.$1 == b.$1 && a.$2 < b.$2);
+  final dips = <RegExp, List<(int, int)>>{};
+  for (final (i, sentences) in index.sentences.indexed) {
+    for (final (j, s) in sentences.indexed) {
+      if (_dipExcess.firstMatch(s)?[1] case final noun?) {
+        (dips[noun.startsWith('buttermilk') ? _buttermilkWord : _eggWord] ??=
+                [])
+            .add((i, j));
+      }
+    }
+  }
+  if (dips.isEmpty) {
+    return const <int, String>{};
+  }
+  final heads = _headsOf(recipe);
+  final lines = nutritionLines(recipe);
+  final count = <String, int>{};
+  for (final head in heads.nonNulls) {
+    count[head] = (count[head] ?? 0) + 1;
+  }
+  final at = <int, (int, int)>{};
+  for (final MapEntry(key: base, value: dipped) in dips.entries) {
+    final made = <(int, int), bool>{};
+    bool mixes((int, int) p) => made[p] ??= () {
+      final t = index.sentence(p);
+      return _mixVerb.hasMatch(t) && base.hasMatch(t);
+    }();
+    final seen = <String, int>{};
+    for (final (k, head) in heads.indexed) {
+      if (head == null) {
+        continue;
+      }
+      final nth = seen[head] = (seen[head] ?? -1) + 1;
+      final all = _naming(recipe, head);
+      final mentions = count[head] == 1
+          ? all
+          : nth < all.length
+          ? [all[nth]]
+          : const <(int, int)>[];
+      for (final p in mentions) {
+        if (!before(p, dipped.last)) {
+          break;
+        }
+        if (mixes(p)) {
+          final dip = dipped.firstWhere((d) => before(p, d));
+          if (at[k] == null || before(dip, at[k]!)) {
+            at[k] = dip;
+          }
+          break;
+        }
+      }
+    }
+  }
+  final split = <int, List<String>>{};
+  return {
+    for (final MapEntry(key: k, value: dip) in at.entries)
+      if (discardedMediumOf(
+            recipe,
+            lines[k],
+            normalizeItem(lineItemOf(lines[k])),
+          ) ==
+          null)
+        k: () {
+          final raw = split[dip.$1] ??= () {
+            _count('rawSentences');
+            return index.raw[dip.$1].split(_sentenceBreak);
+          }();
+          return dip.$2 < raw.length
+              ? raw[dip.$2].trim()
+              : index.sentence(dip).trim();
+        }(),
+  };
+});
 
 /// v56 (M58 W): the positions of [recipe]'s lines a batter leaves in the
 /// bowl ([_leftInBowl] through the dip word "batter").
@@ -5184,10 +5292,18 @@ Set<int> _batterInBowl(Recipe recipe) => {
 };
 
 final RegExp _dipExcess = RegExp(
+  // v60 (M62 E): a dip, coat or dredge in an egg or buttermilk mixture with
+  // "excess" anywhere in its sentence — first, and from the sentence's
+  // start, so it wins wherever it matches (the mixtures before the bare
+  // nouns: "egg mixture" never reads as "egg").
+  r'^(?=.*excess).*?\b(?:dip|coat|dredg)\w*\b[^.]*?\b(?:in|into|with) '
+  r'(?:the )?(egg(?: white)? mixture|buttermilk mixture|egg whites?|eggs?)\b|'
   r'\b(?:scrap|shak|let|allow)\w*\b[^.]*\bexcess (chocolate|batter|glaze|'
   r'egg|coating)\b|\bdiscard (?:the )?remaining (glaze|dough)\b|'
   r'\blet the excess run off|won.t need all of it',
 );
+final RegExp _eggWord = RegExp(r'\beggs?\b');
+final RegExp _buttermilkWord = RegExp(r'\bbuttermilk\b');
 final RegExp _dipWord = RegExp(r'\b(chocolate|batter|glaze|egg|coating)');
 final RegExp _mixVerb = RegExp(r'\b(?:whisk|combine|stir|beat|mix|sift)');
 final RegExp _mixtureOf = RegExp(r'\b(\w+) mixture\b');
@@ -6980,9 +7096,21 @@ class ResolverMemo {
   /// `m52Memo` (the matches GET).
   final Map<
     Recipe,
-    ({Map<int, IngredientMatchRow> rows, Map<int, _M52Row> plan})
+    ({Map<int, IngredientMatchRow> rows, Map<int, _M52Row> plan, String key})
   >
   _m52Plans = Map.identity();
+
+  /// The compute's [_m52Plan] per recipe (v61 closer 1, verify1 D1), one for
+  /// its coat block's confirms and one for its frying oils' (`fryer`): the
+  /// [_m52Key] of the row list it was read on and the FDC cache writes then
+  /// ([SaltDatabase.fdcCacheWrites]) — a confirm answers from it while both
+  /// still hold ([_m52OnConfirm]'s `pass`). A memo whose life spans row
+  /// writes: each lookup re-reads the rows.
+  final Map<
+    Recipe,
+    Map<bool, ({String key, int writes, Map<int, _M52Row> plan})>
+  >
+  _m52Pass = Map.identity();
 
   /// Host recipe [id] as stored, decoded at most ONCE per memo (R5).
   Recipe? hostRecipe(String id) =>
@@ -13341,11 +13469,27 @@ bool recomputeTotals(
   final m52Writes = <(IngredientMatchRow, {IngredientMatchRow over})>[];
   for (final (k, row) in matches.indexed) {
     final plan = m52[row.position];
-    if (plan == null ||
-        kept.contains(row.position) ||
-        (row.hold == null &&
-            row.gramSource == GramSource.discarded.name &&
-            row.grams == plan.grams)) {
+    if (plan == null || kept.contains(row.position) || !_m52Weighs(row)) {
+      continue;
+    }
+    // v60 (M62 H): the engine's dip of a coat held with no budget takes
+    // the coat's hold; a person's confirm, 0 g poured away (below).
+    if (plan.held && row.status == 'auto') {
+      if (row.hold != 'coating' ||
+          row.grams != null ||
+          row.gramSource != null) {
+        matches[k] = row.copyWith(
+          hold: 'coating',
+          clearGrams: true,
+          clearGramSource: true,
+        );
+        m52Writes.add((matches[k], over: row));
+      }
+      continue;
+    }
+    if (row.hold == null &&
+        row.gramSource == GramSource.discarded.name &&
+        row.grams == plan.grams) {
       continue;
     }
     matches[k] = row.copyWith(
@@ -14112,6 +14256,8 @@ String? _gramBasis(
     }
     final m52What = m52 == null || m52.flag == null
         ? null
+        : m52.dip
+        ? 'the dip on the food'
         : m52.coat
         ? 'the coat on the food'
         : 'the oil the fried food absorbs';
@@ -15520,7 +15666,9 @@ Future<IngredientMatchRow> unskippedRow(
 ///
 /// [m52Memo]: the matches GET's, so a confirmed coat or frying oil reads
 /// M52's plan once per request ([_m52OnConfirm]); never a memo whose life
-/// spans a row write (the compute's [references] does).
+/// spans a row write (the compute's [references] does — a confirmed coat,
+/// batter or dip line reads its plan through it, re-keyed on the rows as
+/// they are at each derivation: v61 closer 1, verify1 D1).
 Future<
   ({
     IngredientMatchRow row,
@@ -15722,15 +15870,25 @@ derivedFor(
     );
   }
   final (food, resolution) = weighed;
-  final outcome = engineOutcome(
-    recipe,
-    eaten,
-    food,
-    resolution,
-    decided: true,
-  );
+  // v60 (M62): a dip's line reads M52's plan once ([_m52OnConfirm]) — E-w's
+  // grams for a confirm, or H: the dip of a coat held with no budget is
+  // held as the coat's lines are (`coating`, no grams), so the rules by
+  // hold kind below decide it as they decide a held coat.
+  final dip = _dipsOf(recipe).containsKey(position)
+      ? _m52OnConfirm(
+          db,
+          recipe,
+          placed,
+          memo: m52Memo,
+          pass: references,
+        )
+      : null;
+  final heldDip = dip?.held ?? false;
+  final outcome = heldDip
+      ? (grams: null, source: null, hold: 'coating')
+      : engineOutcome(recipe, eaten, food, resolution, decided: true);
   final medium = discardedMediumOf(recipe, eaten, normalized);
-  final mediumLine = medium != null;
+  final mediumLine = medium != null || heldDip;
   final held = mediumHolds.contains(outcome.hold);
   final keepTyped = typed && (sameAmount || mediumLine);
   // The weight the decision derives. A line with NO amount has none
@@ -15746,15 +15904,21 @@ derivedFor(
   // has an eaten part > 0 (the engine's 0 g wins, [engineOutcome]).
   // v53 (M52; verify2 D1): a confirm of a coat or frying oil M52 counts is
   // the plan's grams — the engine's current weight of it ([_m52OnConfirm]).
-  final m52 =
-      edited.status == 'confirmed' &&
-          !typed &&
-          (medium == DiscardedMedium.coating ||
-              medium == DiscardedMedium.fryingOil ||
-              // v56 (M58 W): a batter line the coat budget weighs.
-              _batterInBowl(recipe).contains(position))
-      ? _m52OnConfirm(db, recipe, placed, memo: m52Memo)
-      : null;
+  final m52 = edited.status != 'confirmed' || typed
+      ? null
+      : dip ??
+            (medium == DiscardedMedium.coating ||
+                    medium == DiscardedMedium.fryingOil ||
+                    // v56 (M58 W): a batter line the coat budget weighs.
+                    _batterInBowl(recipe).contains(position)
+                ? _m52OnConfirm(
+                    db,
+                    recipe,
+                    placed,
+                    memo: m52Memo,
+                    pass: references,
+                  )
+                : null);
   final weight = m52 != null
       ? m52.grams
       : eaten.amounts.isEmpty && edited.status == 'overridden'
@@ -16563,8 +16727,23 @@ const _Fndds _cauliflowerFried = (
 /// c_b, the FNDDS breading's (99995000) carbohydrate per gram: each read
 /// recipe's own carbohydrate ÷ its breading grams on the six whose other
 /// inputs are cooked, 0.397–0.401 (p3_read_figures.md) — v57 (M59 D)
-/// scales [_cauliflowerFried]'s uptake by it.
+/// scales [_cauliflowerFried]'s uptake by it. v60 (M62): the breading's own
+/// record, FNDDS 2710785, confirms it — 40.1 g per 100 g.
 const double _breadingCarbPerGram = 0.40;
+
+/// v60 (M62 E-w, P2 read at live step L): the wet grams of FNDDS 2710785
+/// "Breading or batter as ingredient in food" (food code 99995000, the
+/// breading every read coat record lists) per gram of its carbohydrate —
+/// 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g
+/// (1.173): what [_m52Plan] sizes a coat's egg or buttermilk dip by.
+const double _breadingWetPerCarb = (15 + 120) / (287 * 0.401);
+
+/// The flag of a dip sized by [_breadingWetPerCarb] (v60, M62 E-w).
+final String _dipFlag =
+    'approximation (dip: ${_breadingWetPerCarb.toStringAsFixed(2)} g per g '
+    "of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as "
+    'ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g '
+    "carbohydrate per 100 g; the dip's excess not counted)";
 
 /// An analytical SR Legacy record a figure is DERIVED from (no
 /// `inputFoods` exist): P3's balance on its composition.
@@ -16730,7 +16909,16 @@ bool _m52Fries(Recipe recipe, String s) =>
 /// C2 (0118's cutlets; 0149's chicken, fried then baked). One that does not
 /// fry reads C2 when a sentence after the coat bakes, else null (C4: a
 /// sautéed dusting stays held).
-_CoatShape? _coatShapeOf(Recipe recipe, String coated) {
+_CoatShape? _coatShapeOf(Recipe recipe, String coated) =>
+    // v60 (M62): once per recipe and coated food — a person's decision on
+    // a dip plans M52 per row ([_m52OnConfirm]), and the steps' scan is
+    // the plan's one read of every sentence (RULE C).
+    // Key: coated — the record the shape tests (C5, C3).
+    _stepIndexOf(
+      recipe,
+    ).memo(('coatShape', coated), () => _shapeOf(recipe, coated));
+
+_CoatShape? _shapeOf(Recipe recipe, String coated) {
   final all = _stepIndexOf(recipe).allSentences;
   final coatAt = all.indexWhere(_coatsSentence.hasMatch);
   var lastBake = -1;
@@ -17029,13 +17217,18 @@ String _uptakeClause(
 /// is: its `grams`, the `flag` its basis carries, the part `kept` outside
 /// the budget (a frying oil's kept part, a coat's part eaten outside the
 /// dredge), whether it is a `coat`, and whether its fried food absorbs
-/// none (`noNetUptake`, O1c).
+/// none (`noNetUptake`, O1c). v60 (M62): a coat's egg or buttermilk `dip`
+/// ([_dipsOf]); `held`, the dip of a coat held with no budget (H: an
+/// engine row takes the coat's hold, `coating`, no grams — any status
+/// carries it, so a person's decision reads it, [derivedFor]).
 typedef _M52Row = ({
   double grams,
   String? flag,
   double kept,
   bool coat,
   bool noNetUptake,
+  bool dip,
+  bool held,
 });
 
 /// What M52 counts on the rows of [recipe] the engine weighs ([_m52Weighs]:
@@ -17056,6 +17249,11 @@ typedef _M52Row = ({
 ///   stands): f is the food's. v56 (M58 W, Q8): the lines a batter leaves
 ///   in the bowl ([_batterInBowl]) are parts too — the whole line the
 ///   dredge, none eaten, never off B — every part at the one f.
+/// - THE DIP (v60, M62 E-w, Q9): the lines of an egg or buttermilk dip
+///   ([_dipsOf]) of a budgeted coat count f_w = min(1, W / Σ their whole
+///   grams), W = [_breadingWetPerCarb] × the carbohydrate the coat's parts
+///   count (B, or their Σ at f = 1) — the coat's parts unchanged; a coat
+///   held with no budget holds its dips with it (H, the owner's Q9).
 /// - THE FRYING OIL (Q3 a, P3-B): a line the engine zeroes as frying oil
 ///   counts u × the fried food's grams / 100 ([_friedClassOf]) on top of
 ///   its kept part — the M49-marked pour-off too (F13) — capped at the line
@@ -17084,6 +17282,8 @@ Map<int, _M52Row> _m52Plan(
   final media = <int, DiscardedMedium?>{
     for (final r in at.values)
       if (_m52Weighs(r) &&
+          // v60 (M62): a dip's line is no medium ([_dipsOf]).
+          !_dipsOf(recipe).containsKey(r.position) &&
           (r.hold == 'coating' ||
               (r.hold == null && r.gramSource == GramSource.discarded.name)))
         r.position: discardedMediumOf(
@@ -17107,26 +17307,17 @@ Map<int, _M52Row> _m52Plan(
     for (final i in _batterInBowl(recipe))
       if (at.containsKey(i) && media[i] != DiscardedMedium.coating) i,
   };
+  // v60 (M62): an egg or buttermilk dip's lines ([_dipsOf], text-only — no
+  // medium line among them); a batter's stay at its one f.
+  final dips = [
+    for (final i in _dipsOf(recipe).keys)
+      if (at.containsKey(i) && !batter.contains(i)) i,
+  ]..sort();
   if (coats.isEmpty && batter.isEmpty && oils.isEmpty) {
     return const {};
   }
-  bool counted(IngredientMatchRow r) =>
-      r.status != 'skipped' &&
-      r.status != 'unmatched' &&
-      r.hold == null &&
-      r.childRecipeId == null &&
-      r.fdcId != null &&
-      r.description != null &&
-      (r.grams ?? 0) > 0 &&
-      r.gramSource != GramSource.discarded.name &&
-      !(r.status == 'auto' && belowConfidenceGate(r.confidence));
-  bool engine(IngredientMatchRow? r) =>
-      r != null &&
-      _m52Weighs(r) &&
-      r.fdcId != null &&
-      r.description != null &&
-      r.childRecipeId == null &&
-      r.gramSource != GramSource.override.name;
+  bool counted(IngredientMatchRow r) => _m52Counted(r);
+  bool engine(IngredientMatchRow? r) => _m52Engine(r);
   double round2(double v) => double.parse(v.toStringAsFixed(2));
   IngredientMatchRow? coated;
   if (coats.isNotEmpty || batter.isNotEmpty || _shallowFries(recipe)) {
@@ -17148,9 +17339,11 @@ Map<int, _M52Row> _m52Plan(
   // the dredge takes them): the plan writes those rows `discarded`, so D
   // ([batterOf]) reads them here — never the stored row — on every path.
   final batterCho = <int, double>{};
-  if (coated != null &&
+  final budgeted =
+      coated != null &&
       shape != null &&
-      (coats.isNotEmpty || batter.isNotEmpty)) {
+      (coats.isNotEmpty || batter.isNotEmpty);
+  if (budgeted) {
     final figure = _coatFigure(shape, coated.description!);
     var budget = double.parse(figure.value) * coated.grams! / 100;
     if (shape == _CoatShape.c5) {
@@ -17224,8 +17417,68 @@ Map<int, _M52Row> _m52Plan(
           kept: p.eaten,
           coat: true,
           noNetUptake: false,
+          dip: false,
+          held: false,
         );
       }
+    }
+    // v60 (M62 E-w): the dip on the food — W = [_breadingWetPerCarb] × C, C
+    // the carbohydrate the parts count (B, or their Σ when f = 1), shared
+    // by the dip lines' whole grams; a line below the gate shares nothing
+    // (M58 W's precedent).
+    final wet = _breadingWetPerCarb * min(max(budget, 0), carbs);
+    final dipped = <({int at, double whole})>[];
+    for (final i in dips) {
+      final r = at[i];
+      if (!engine(r) ||
+          (r!.hold != null && r.hold != 'coating') ||
+          (r.status == 'auto' && belowConfidenceGate(r.confidence))) {
+        continue;
+      }
+      final record = food(r.fdcId!, lines[i]);
+      final full = record == null
+          ? null
+          : lineGrams(db, lines[i], record, recipe: recipe);
+      if (full != null) {
+        _count('dipsSized');
+        dipped.add((at: i, whole: full.grams));
+      }
+    }
+    final whole = dipped.fold<double>(0, (n, d) => n + d.whole);
+    final share = whole > 0 ? min(1, wet / whole) : 0;
+    for (final d in dipped) {
+      plan[d.at] = (
+        grams: round2(share * d.whole),
+        flag: _dipFlag,
+        kept: 0,
+        coat: true,
+        noNetUptake: false,
+        dip: true,
+        held: false,
+      );
+    }
+  } else if (coats.isNotEmpty) {
+    // v60 (M62 H, Q9 — the owner's one-way door): a coat held with no
+    // budget holds its dip with it — every row on a record (a person's
+    // decision reads it); [recomputeTotals] holds the engine's rows, a
+    // person's confirm resolves to 0 g poured away.
+    for (final i in dips) {
+      final r = at[i]!;
+      if (r.fdcId == null ||
+          r.childRecipeId != null ||
+          (r.hold != null && r.hold != 'coating') ||
+          (r.status == 'auto' && belowConfidenceGate(r.confidence))) {
+        continue;
+      }
+      plan[i] = (
+        grams: 0,
+        flag: null,
+        kept: 0,
+        coat: true,
+        noNetUptake: false,
+        dip: true,
+        held: true,
+      );
     }
   }
   final fryers = [
@@ -17421,6 +17674,8 @@ Map<int, _M52Row> _m52Plan(
       kept: p.kept,
       coat: false,
       noNetUptake: absorbs.isEmpty,
+      dip: false,
+      held: false,
     );
   }
   return plan;
@@ -17448,7 +17703,9 @@ _M52Row? _m52RowOf(
   );
   if (medium != DiscardedMedium.coating &&
       medium != DiscardedMedium.fryingOil &&
-      !_batterInBowl(recipe).contains(row.position)) {
+      !_batterInBowl(recipe).contains(row.position) &&
+      // v60 (M62): a dip's line.
+      !_dipsOf(recipe).containsKey(row.position)) {
     return null;
   }
   final at = (memo == null
@@ -17462,10 +17719,11 @@ _M52Row? _m52RowOf(
   return at == null || (at.grams - row.grams!).abs() > 0.05 ? null : at;
 }
 
-/// [_m52Plan] on [recipe]'s rows as stored, and those rows by position —
-/// once per [memo] ([ResolverMemo._m52Plans]; a memo whose life spans no
-/// row write).
-({Map<int, IngredientMatchRow> rows, Map<int, _M52Row> plan}) _m52Stored(
+/// [_m52Plan] on [recipe]'s rows as stored, those rows by position and
+/// their [_m52Key] — once per [memo] ([ResolverMemo._m52Plans]; a memo
+/// whose life spans no row write).
+({Map<int, IngredientMatchRow> rows, Map<int, _M52Row> plan, String key})
+_m52Stored(
   SaltDatabase db,
   Recipe recipe,
   ResolverMemo memo,
@@ -17474,8 +17732,216 @@ _M52Row? _m52RowOf(
   return (
     rows: {for (final r in rows) r.position: r},
     plan: _m52Plan(db, recipe, rows, (id, l) => knownFood(db, id, line: l)),
+    key: _m52Key(recipe, rows),
   );
 }();
+
+/// A row [_m52Plan] reads as eaten (the coated food, a C5 flour off B, a
+/// fried food or its mix): on a record, its grams written, not discarded.
+bool _m52Counted(IngredientMatchRow r) =>
+    r.status != 'skipped' &&
+    r.status != 'unmatched' &&
+    r.hold == null &&
+    r.childRecipeId == null &&
+    r.fdcId != null &&
+    r.description != null &&
+    (r.grams ?? 0) > 0 &&
+    r.gramSource != GramSource.discarded.name &&
+    !(r.status == 'auto' && belowConfidenceGate(r.confidence));
+
+/// A row [_m52Plan] weighs on its own record ([_m52Weighs], no grams typed).
+bool _m52Engine(IngredientMatchRow? r) =>
+    r != null &&
+    _m52Weighs(r) &&
+    r.fdcId != null &&
+    r.description != null &&
+    r.childRecipeId == null &&
+    r.gramSource != GramSource.override.name;
+
+/// Everything [_m52Plan]'s COAT block (its coat, batter and dip entries)
+/// reads of [rows] (v61 closer 1, verify1 D1/D2): per row in the plan, by
+/// position — weighed, the engine's ([_m52Engine]), its hold passing
+/// (none or `coating`), a coat or oil medium the plan reads (not a dip's),
+/// its record, below the gate; the coated food (its grams); under C5 the
+/// counted flour and starch off B. Never another row's grams: a dip, coat
+/// or batter row the plan writes `discarded` and its line's engine form
+/// key alike, so rows that key alike give equal coat, batter and dip
+/// entries (the recipe's text and the FDC caches fixed) — one plan answers
+/// every confirm whose row list keys as its own ([_m52OnConfirm]). With
+/// [fryer], the whole plan's (a frying oil's entry) — the fryer block's
+/// reads too: each frying oil's hold (weighed only unheld), and the grams
+/// of each counted row it may fry (a meat record or a fried vegetable by
+/// name: [_friedClassOf] non-null, which reads nothing else) — of EVERY
+/// counted row when no coated food is surely fried and a frying sentence
+/// names a product (M61's mix) or a counted cauliflower may be fried (M59
+/// D's batter carbohydrate). So a compute
+/// rewriting an auto dip or coat line between two confirmed oils keys
+/// alike (at the editor caps: 200 plans per compute → 2, the totals' one).
+/// ponytail: mirrors the plan's row reads by hand — a new read there joins
+/// here (nutrition_v61_test compares the compute and the GET with the
+/// per-row derivation on every decided dip, v26 times the cap shapes).
+String _m52Key(
+  Recipe recipe,
+  Iterable<IngredientMatchRow> rows, {
+  bool fryer = false,
+}) {
+  final lines = nutritionLines(recipe);
+  final at = <int, IngredientMatchRow>{
+    for (final r in rows)
+      if (r.position < lines.length && lines[r.position].raw == r.raw)
+        r.position: r,
+  };
+  IngredientMatchRow? coated;
+  for (final r in at.values) {
+    if (_m52Counted(r) &&
+        _meatRecords.any(r.description!.startsWith) &&
+        (coated == null ||
+            r.grams! > coated.grams! ||
+            (r.grams == coated.grams && r.position < coated.position))) {
+      coated = r;
+    }
+  }
+  final c5 =
+      coated != null &&
+      _coatShapeOf(recipe, coated.description!) == _CoatShape.c5;
+  final dips = _dipsOf(recipe);
+  final batter = _batterInBowl(recipe);
+  final heads = _headsOf(recipe);
+  final key = StringBuffer(
+    '${coated?.position} ${coated?.grams} ${coated?.description}',
+  );
+  for (final i in at.keys.toList()..sort()) {
+    final r = at[i]!;
+    key.write(
+      _m52RowKey(
+        r,
+        dip: dips.containsKey(i),
+        offB:
+            c5 &&
+            _m52Counted(r) &&
+            !batter.contains(i) &&
+            _dredgeHeads.contains(heads[i]),
+      ),
+    );
+  }
+  if (fryer) {
+    // [_m52Plan]'s `coated` is set only beside a coat, a batter or a
+    // shallow fry; its `fried` list then holds it.
+    final coats = at.entries.any(
+      (e) =>
+          batter.contains(e.key) ||
+          (!dips.containsKey(e.key) &&
+              _m52Weighs(e.value) &&
+              (e.value.hold == 'coating' ||
+                  (e.value.hold == null &&
+                      e.value.gramSource == GramSource.discarded.name)) &&
+              _mediumAt(recipe, e.key) == DiscardedMedium.coating),
+    );
+    String words(int i) =>
+        '${normalizeItem(lineItemOf(lines[i]))} ${lines[i].raw.toLowerCase()}';
+    final every =
+        ((coated == null || !(coats || _shallowFries(recipe))) &&
+            _productFried(recipe)) ||
+        at.entries.any(
+          (e) =>
+              _m52Counted(e.value) &&
+              '${words(e.key)} ${e.value.description!.toLowerCase()}'.contains(
+                'cauliflower',
+              ),
+        );
+    for (final i in at.keys.toList()..sort()) {
+      final r = at[i]!;
+      if (_mediumAt(recipe, i) == DiscardedMedium.fryingOil) {
+        key.write('\noil $i ${r.hold}');
+      }
+      if (_m52Counted(r) &&
+          (every ||
+              _friedClassOf(
+                    r.description!,
+                    words(i),
+                    coatHeld: false,
+                    shape: null,
+                    chips: false,
+                  ) !=
+                  null)) {
+        key.write('\nfried $i ${r.grams}');
+      }
+    }
+  }
+  return key.toString();
+}
+
+/// [r]'s line of [_m52Key] ([dip]: a dip's line, no medium; its grams
+/// only [offB]).
+String _m52RowKey(
+  IngredientMatchRow r, {
+  required bool dip,
+  required bool offB,
+}) {
+  final medium =
+      !dip &&
+      (r.hold == 'coating' ||
+          (r.hold == null && r.gramSource == GramSource.discarded.name));
+  return '\n${r.position} ${_m52Weighs(r)} ${_m52Engine(r)} '
+      "${r.hold == null || r.hold == 'coating'} $medium ${r.fdcId} "
+      '${r.childRecipeId != null} '
+      "${r.status == 'auto' && belowConfidenceGate(r.confidence)} "
+      '${offB ? r.grams : ''} ${r.description}';
+}
+
+/// Whether [_m52Key] of a row list stays as it is when its row [row] is
+/// replaced by [confirmed] at the same position — in O(1): the confirm's
+/// row is never counted, so beyond its own line only a counted meat row
+/// (the coated food) or flour or starch (C5's off B) could move the key;
+/// false then, and the caller keys the whole list.
+bool _m52KeysAlike(
+  Recipe recipe,
+  IngredientMatchRow row,
+  IngredientMatchRow confirmed,
+) {
+  final lines = nutritionLines(recipe);
+  bool laid(IngredientMatchRow r) =>
+      r.position < lines.length && lines[r.position].raw == r.raw;
+  return laid(row) &&
+      laid(confirmed) &&
+      !(_m52Counted(row) &&
+          (_meatRecords.any(row.description!.startsWith) ||
+              _dredgeHeads.contains(_headsOf(recipe)[row.position]))) &&
+      _m52RowKey(
+            row,
+            dip: _dipsOf(recipe).containsKey(row.position),
+            offB: false,
+          ) ==
+          _m52RowKey(
+            confirmed,
+            dip: _dipsOf(recipe).containsKey(row.position),
+            offB: false,
+          );
+}
+
+/// [discardedMediumOf] of [recipe]'s line [i], once per Recipe instance (a
+/// Recipe is immutable): what [_m52Key] reads for the fryer block.
+DiscardedMedium? _mediumAt(Recipe recipe, int i) =>
+    (_media[recipe] ??= {}).putIfAbsent(i, () {
+      final line = nutritionLines(recipe)[i];
+      return discardedMediumOf(recipe, line, normalizeItem(lineItemOf(line)));
+    });
+final Expando<Map<int, DiscardedMedium?>> _media = Expando();
+
+/// Whether a frying sentence of [recipe] names a fried product
+/// ([_friedProductOf], every figure admitted), once per Recipe instance:
+/// whether [_m52Plan]'s product mix can be read at all.
+bool _productFried(Recipe recipe) => _products[recipe] ??=
+    _friedProductOf(
+      [
+        for (final s in _stepIndexOf(recipe).allSentences)
+          if (_fryVerb.hasMatch(s) || _intoOil.hasMatch(s)) s,
+      ],
+      meat: true,
+      yeast: false,
+    ) !=
+    null;
+final Expando<bool> _products = Expando();
 
 /// How many times [_m52Plan] ran (the cost pin, v60 closer 2: the matches
 /// GET plans a recipe once, not once per row).
@@ -17499,31 +17965,104 @@ bool _m52Weighs(IngredientMatchRow r) =>
 /// a stored row at [placed]'s position that already IS that row on every
 /// field [_m52Plan] reads ([sameMatchRow]; the position by the lookup)
 /// makes the row list the stored one: the request's one plan answers. Any
-/// other (a PUT's confirm, a shifted layout) plans its own list.
+/// other (a PUT's confirm, a shifted layout) plans its own list. v60
+/// (M62): [derivedFor] reads a dip line's entry for any decision (H's hold
+/// for a pick too). v61 closer 1 (verify1 D1, D2): a coat, batter or dip
+/// line's entry is the plan's coat block's, a function of [_m52Key] alone
+/// — so the request's plan answers whenever the confirm's row list keys as
+/// the stored one (a confirmed no-coat dip, a pick: one plan per GET, not
+/// one per dip); and [pass] (the compute's, whose rows move between its
+/// derivations) answers from ONE plan while the rows as they are now key
+/// alike — a frying oil's by the whole plan's key — and no FDC cache write
+/// landed: a compute with every dip, batter line or frying oil confirmed
+/// plans once, not once per line (16.2 s, 20.8 s and 34.5 s at the editor
+/// caps before).
 _M52Row? _m52OnConfirm(
   SaltDatabase db,
   Recipe recipe,
   IngredientMatchRow placed, {
   ResolverMemo? memo,
+  ResolverMemo? pass,
 }) {
   final confirmed = placed.copyWith(
     gramSource: GramSource.discarded.name,
     clearHold: true,
   );
+  final at = placed.position;
+  final lines = nutritionLines(recipe);
+  // Its entry the coat block's: a dip (never a medium line, [_dipsOf]), a
+  // coat line, a batter left in the bowl that is no frying oil.
+  late final coat = () {
+    if (_dipsOf(recipe).containsKey(at)) {
+      return true;
+    }
+    if (at >= lines.length) {
+      return false;
+    }
+    final medium = discardedMediumOf(
+      recipe,
+      lines[at],
+      normalizeItem(lineItemOf(lines[at])),
+    );
+    return medium == DiscardedMedium.coating ||
+        (medium != DiscardedMedium.fryingOil &&
+            _batterInBowl(recipe).contains(at));
+  }();
+  List<IngredientMatchRow> confirming(Iterable<IngredientMatchRow> rows) => [
+    for (final r in rows)
+      if (r.position != at) r,
+    confirmed,
+  ];
   if (memo != null) {
     final stored = _m52Stored(db, recipe, memo);
-    if (sameMatchRow(stored.rows[placed.position], confirmed)) {
-      return stored.plan[placed.position];
+    final row = stored.rows[at];
+    if (sameMatchRow(row, confirmed) ||
+        (coat &&
+            ((row != null && _m52KeysAlike(recipe, row, confirmed)) ||
+                _m52Key(recipe, confirming(stored.rows.values)) ==
+                    stored.key))) {
+      return stored.plan[at];
     }
   }
+  final rows = db.ingredientMatchesFor(recipe.id);
+  if (pass != null) {
+    final list = confirming(rows);
+    final key = _m52Key(recipe, list, fryer: !coat);
+    final slots = pass._m52Pass[recipe] ??= {};
+    final kept = slots[!coat];
+    if (kept != null && kept.key == key && kept.writes == db.fdcCacheWrites) {
+      return kept.plan[at];
+    }
+    final writes = db.fdcCacheWrites;
+    final plan = _m52Plan(
+      db,
+      recipe,
+      list,
+      (id, l) => knownFood(db, id, line: l),
+    );
+    slots[!coat] = (key: key, writes: writes, plan: plan);
+    return plan[at];
+  }
+  // v60 (M62): a decision the plan never weighs (a pick, typed grams) is
+  // read at a dip only for H's hold, whose mode no other non-meat dip row
+  // moves — those are left out (RULE C: a PUT plans no 400 dips per picked
+  // dip).
+  final dips = _m52Weighs(confirmed) ? null : _dipsOf(recipe);
   return _m52Plan(
     db,
     recipe,
     [
-      for (final r in db.ingredientMatchesFor(recipe.id))
-        if (r.position != placed.position) r,
+      for (final r in rows)
+        if (r.position != at &&
+            !(dips != null && dips.containsKey(r.position) && !_isMeatRow(r)))
+          r,
       confirmed,
     ],
     (id, l) => knownFood(db, id, line: l),
-  )[placed.position];
+  )[at];
 }
+
+/// Whether [r] stands on a meat record ([_meatRecords]): the one kind of
+/// row [_m52Plan] may read as the coated food.
+bool _isMeatRow(IngredientMatchRow r) =>
+    _meatRecords.any((m) => r.description?.startsWith(m) ?? false);
