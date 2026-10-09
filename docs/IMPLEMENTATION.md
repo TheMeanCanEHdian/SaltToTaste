@@ -3608,6 +3608,35 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — live step L49 and SNAPSHOT 26 (prep49 §2 L49; the
+  owner's Q11 accepted 2026-10-09 — a manufacturer's label through an FDC
+  Branded record supplies GRAMS for a size or count the corpus line
+  prints, never composition; the 2026-10-07 standing authorization for
+  live requests).** 27 requests, spent on a scratch copy of snapshot 25
+  (the planned cap of 22 was exceeded by five — two FDC 400s on
+  fraction-written queries, a hyphen re-spelling, a second wrapper label
+  and the Kisses search — each named in the list before it was spent;
+  `.claude/diag/2026-10-09/live61/m61_list.md`, the raw JSON in
+  `live61_raw/`). Read: FNDDS 2706416 "Veal Marsala" (0.5 cup flour 62.5 g
+  per 1 lb COOKED grilled veal loin 453.6 g — the raw/cooked pair SR
+  173826 / 172644 cached for the protein tracer); FNDDS 2710050 "Eggplant
+  parmesan casserole" (flour 4 g and a 9.2 g egg-water batter per 41.4 g
+  raw eggplant); FNDDS 2710055 "Fried onion rings" (two PREPARED products,
+  no coat separated — SR 170415 cached for a composition balance); SR
+  169985 cassava, 170848 Parmesan, 172232 basil, 167587 milk chocolate (no
+  piece portion); the braised flat ⅛-inch choice brisket 173130 as a hit
+  (203 28.7 / 204 19.5 / 208 298) of a fraction-free query. Labels:
+  Wei-Chuan lumpia wrappers 2623420 (25 g = 2 wrappers) and Frieda's
+  eggroll wrappers 2412362 (23 g = 1) — NEITHER prints a size, so the
+  8-inch lumpia line keeps SR 172802's 7-inch 32 g portion (Q11's rule);
+  Sure-Jell 2596757 ("1/8 tsp (0.5g)", 1.75 oz); Hershey's Kisses — five
+  Hershey Company labels print "9 PIECES" = 41 g (4.5556 g a piece; three
+  newer sizes "7 pieces (32g)", 4.5714). SNAPSHOT 26 =
+  `.claude/diag/2026-10-09/snap26.db` (foods 1,132, searches 1,909; 0 key
+  rows, 0 sessions); the live caches seeded from it with the server
+  stopped (foods 1,124 → 1,132, searches 1,905 → 1,909). Baseline: the
+  unchanged v67 tree reproduces the v67 TSVs byte for byte on snapshot
+  26, which is the replay base for M69 and M70.
 - **2026-10-09 — matcher v67 (batch M68): the whole brisket at its
   printed trim; the two home-corned briskets flagged (prep49 §2 M68;
   Q1 whole (a); the owner's Q2 (c); shipped alone).** A whole brisket
