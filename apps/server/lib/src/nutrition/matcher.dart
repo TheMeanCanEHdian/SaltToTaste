@@ -879,7 +879,18 @@ const Map<String, String> _synonyms = {
 /// or air-fried egg wash keeps the bowl flag); a C5 batter's basis names
 /// the breading's carbohydrate it is matched by, and alcohol in a fried
 /// batter says USDA prints no frying row.
-const int matcherVersion = 64;
+///
+/// v65 (the Matcher v66 commit, batch M67 — fried doughs; prep49 design_v2
+/// §2 M67, the owner's Q9 (A2) and Q10 (a) under the standing authorization;
+/// zero requests): a fried dough the steps roll to a sheet and cut counts
+/// only the cut share — one step printing the sheet, the count of rounds and
+/// the round cutter (engine `_cutShareOf`: 12 × 3-inch rounds from a 10 by
+/// 13-inch sheet, 65.25 %) — each dough line at that share of its whole
+/// weight, `discarded`, and the uptake on the cut grams; a cake dough
+/// (struffoli) takes 14.15 %, P3's carbohydrate balance on SR 174990
+/// "Doughnuts, cake-type, plain (includes unsugared, old-fashioned)", the
+/// one input FNDDS 2708063 lists, for 23.32 % on the fritter batter.
+const int matcherVersion = 65;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

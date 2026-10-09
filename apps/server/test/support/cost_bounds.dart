@@ -115,6 +115,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v65 (M66 closer 1, D1): each line's item's last word — the dip
       // fallback's writers ([_amountWritersOf]'s ownHead), once per recipe.
       'memo:lastWords',
+      // v66 (M67 A2): a rolled dough's cut share — the sheet, the count and
+      // the cutter read once per recipe.
+      'memo:cutShare',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first

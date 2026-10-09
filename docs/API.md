@@ -3854,14 +3854,15 @@ doughnut(s), batter, dough** a frying sentence holds (engine
 read). The fried weight is the **raw mix**: the counted rows of the oil
 line's ingredient group before it (Q12 ii; water carries no record; a
 dipping-sauce group before it and a glaze or sauce group after it never
-join). Each product's figure (u, the oil absorbed per 100 g of raw mix):
+join; since matcher v66 a dough the steps cut counts only the cut share,
+below). Each product's figure (u, the oil absorbed per 100 g of raw mix):
 
 | product | record | u | how |
 |---|---|---|---|
 | pakoras | FNDDS 2710066 "Pakora" | 8.43 % | READ: 21 g oil per 249.18 g of its raw inputs other than the oil and 355.5 g of water |
 | fritters, a bare batter | 2710066, a stand-in | 8.43 % | the same read, flagged `(no record for fritter batter; read as Pakora)` for fritters, `(no record for batter; read as Pakora)` for a bare batter |
 | lumpia, spring rolls, egg rolls | FNDDS 2708702 "Egg roll, with beef and/or pork" (a stand-in but for egg rolls) | 7.62 % | READ: 8 g oil per 104.99 g — its prepared vegetable egg roll at the listed 90 g (no raw pair), its 10 g of pork steak (2705875) brought to raw by protein on the lumpia's own raw pork (2514745): 14.99 g |
-| struffoli; a doughnut or dough with no yeast row | FNDDS 2708024 "Fritter, plain", a stand-in | 23.32 % | READ: 80 g oil per 343 g (120 g water dropped); Q12 (iii): the cake doughnut 2708063 lists no oil |
+| struffoli; a doughnut or dough with no yeast row | FNDDS 2708024 "Fritter, plain", a stand-in (since matcher v66: SR 174990 "Doughnuts, cake-type, plain (includes unsugared, old-fashioned)" by P3's carbohydrate balance, 14.15 % — below) | 23.32 % | READ: 80 g oil per 343 g (120 g water dropped); Q12 (iii): the cake doughnut 2708063 lists no oil |
 | doughnuts, a dough with a yeast row | SR 172758 "Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)" | 16.72 % | DERIVED (R-d): FNDDS 2708072 "Doughnut, yeast type" lists this record alone and no oil, so P3's composition balance reads it with the PROTEIN tracer (the record is glazed; a glaze carries no protein) against the corpus dough (protein 7.03 %, fat 9.28 %): 87.30 g of dough per 100 g, 22.7 − 87.30 × 9.28 % = 14.60 g of oil; a bare dough: a stand-in, `(no record for dough; read as Doughnuts, yeast-leavened, glazed, enriched (includes honey buns))` |
 | falafel | SR 172455 "Falafel, home-prepared" | 21.64 % | DERIVED (R-e): FNDDS 2707408 "Falafel"'s 224 g oil row is one cup, the frying MEDIUM (41.2 g fat per 100 g; its formula's 60.07 % is rejected) — P3's balance with the carbohydrate tracer against the corpus mix (carbohydrate 45.73 %, fat 3.96 %): 69.54 g of mix per 100 g, 15.05 g of oil |
 
@@ -4067,8 +4068,9 @@ another row's grams, so a dip's or coat line's `discarded` plan form and its
 engine form key alike); a frying oil's entry is the whole plan's (the key
 adds each oil's hold and the grams of every counted row the fryer block may
 read: a row it may fry, by `_friedClassOf`'s name test, and every counted row
-when M61's product mix or M59 D's cauliflower batter may be read). The
-matches GET answers each decided line from the request's one plan whenever
+when M61's product mix or M59 D's cauliflower batter may be read — save a
+cut dough line, v66 M67 below: its line, record and hold, never its grams).
+The matches GET answers each decided line from the request's one plan whenever
 the decision's row list keys as the stored one (a confirmed no-coat dip:
 one plan per GET, not one per dip). A COMPUTE answers each decided M52 line
 from one plan per kind (coat block, fryer) while the rows as they stand at
@@ -4524,6 +4526,94 @@ spicy sandwiches (air fried, no record) stay whole and flagged. Not built:
 C5 read as batter mass (−298) and baked dips on the fried 5.73 — both
 override the coated food's own read record. Deploy note: matcherVersion 64
 stales every recipe; one zero-request sweep settles it.
+
+**Since matcher v66 (batch M67 — fried doughs: the doughnut's printed cut
+share, the struffoli uptake on the cake doughnut's composition;
+matcherVersion 65; prep49 design_v2 §2 M67, the owner's Q9 (A2) and Q10
+(a) under the standing authorization, Q7's one-way door accepted; zero
+requests; the sheet read is a step read, so the reach is pre-Q18).** Both
+inside M61's product branch (no counted line is the fried food; engine
+`_friedProductOf`):
+
+(A2, Q9) **A rolled dough the steps cut counts only the cut share.** One
+step printing the sheet (`N by M-inch rectangle|square`), the count of
+rounds (`cut N rounds`) and the round cutter (`N-inch round cutter`)
+gives s = n · π (d / 2)² / (L · W), applied when 0 < s < 1 (engine
+`_cutShareOf`, read once per recipe; the first step printing all three
+decides; the recipe's own steps only — a variation's are never read).
+Each dough line M52 weighs (the engine's or a person's confirm; unheld, on
+its record, above the gate, no medium) counts round2(s × its WHOLE line),
+`discarded`; the frying-oil uptake reads the sum of the cut grams (a pick
+or typed grams in the dough stays at its own weight, whole). The holes cut
+from the rounds are fried too ("For doughnut holes, transfer all to oil"),
+so they stay inside the n discs; the sheet is rolled even ("about ½ inch
+thick"), so area is mass. yeasted-doughnuts (1105 step 3: "Roll dough into
+10 by 13-inch rectangle, about ½ inch thick. Using 3-inch round cutter
+dipped in flour, cut 12 rounds."): s = 12 × π × 1.5² / 130 = 65.25 %, basis
+`discarded in cooking — only the cut dough counted · approximation (the cut
+share 65.25 %: 12 × 3-inch rounds from the steps' 10 by 13-inch sheet; the
+remaining dough, cut only "if desired", not counted)` (the "if desired"
+clause only where the step prints it). |0 flour 637.86 → 416.20, |1 sugar
+99.22 → 64.74, |2 yeast 3.15 → 2.06, |3 milk 366.00 → 238.81, |4 egg 50.00 →
+32.62, |5 salt 9.02 → 5.89, |6 butter 113.44 → 74.02, and the oil |7 213.80
+→ 139.50 (16.72 % of the cut 834.34 g; its flag unchanged): −2,002.29 kcal,
+per serving 599.61 → 432.75. The two variations that print the same sheet
+(Jelly Doughnuts, Boston Cream Doughnuts) are `variation` subsections,
+never computed (CP3). Not read: an "8-inch square" sheet with no "by", a
+count of anything but rounds, rings or squares cut — they keep the whole
+mix (a `ponytail:` names the ceiling); a dough line another rule discards
+would count at the share (none in the corpus: one recipe prints the
+geometry).
+
+(B, Q10 a) **A cake dough reads the plain cake doughnut by its
+carbohydrate.** The `cake` figure (struffoli; a doughnut or dough with no
+yeast row) moves from FNDDS 2708024 "Fritter, plain" (23.32 %, a pourable
+batter) to SR 174990 "Doughnuts, cake-type, plain (includes unsugared,
+old-fashioned)" — the one input FNDDS 2708063 lists (no oil row, so P3's
+balance reads it; the record is unglazed, so the carbohydrate tracer
+applies with no departure): against the struffoli dough |0–|6 (552.37 g;
+per gram protein 0.090501, fat 0.118227, carbohydrate 0.491276), D = 47.1 /
+0.491276 = 95.873 g of dough per 100 g, O = 24.9 − 95.873 × 0.118227 =
+13.565 g of oil, u = 14.15 %. struffoli-neapolitan-honey-balls|7 128.81 →
+78.16 g (−455.85 kcal; per serving 716.48 → 640.51, still partial on the
+candied cherries). Flag: `approximation (frying oil absorbed: 14.15 % of the
+raw struffoli dough's weight — derived from USDA SR Legacy 174990
+"Doughnuts, cake-type, plain (includes unsugared, old-fashioned)" by its
+carbohydrate (no record for struffoli dough; read as a cake doughnut; by
+its protein 30.62 %; FNDDS 2708024's fritter batter reads 23.32 %))`.
+
+(Q7, the one-way door) A person's Confirm of a cut dough line reads the
+plan — yeasted-doughnuts|0's flour 416.20 g `discarded` — and keeps
+following it.
+
+Reach (replay of snapshot 25 against the v65 rows): exactly 9 rows — A2
+yeasted-doughnuts |0–|7, B struffoli|7 — all `auto`, 0 person rows;
+−2,458.14 kcal (A2 −2,002.29, B −455.85). The 7 dough rows move their gram
+source to `discarded` (the review bucket stays `counted`: its discarded arm
+reads 0 g rows only); statuses, holds and sections unchanged. Cost: the
+sheet read once per recipe (`memo:cutShare`); the matches GET plans M52
+once; a compute with every dough line confirmed plans it at most twice — a
+cut dough line is read on its line and record, never its grams, so its
+engine form and the plan's key alike. At the editor caps (398 dough lines
+before one oil, every step printing the geometry) the compute takes about
+0.9 s and the GET 0.6 s (0.8 and 0.6 s at v65, where the dough is not
+planned); with every dough line confirmed the GET 0.6 s and the compute 1.0
+s (0.55 s at v65), 1.3 s for the first compute after the deploy (each line
+rewritten from its whole form); the v26 cap shapes within ±1 % of v65.
+
+Known gaps (the source stands): pakoras (L042, R22) — every sourced read
+(the P3 balance 4.63 / 3.36 %; FNDDS's oil per mix carbohydrate ≤ 21.55 g,
+per protein ≈ 16.5 g) lies BELOW the shipped 40.72 g, so the audit's 55 g
+cannot be reached by a source; the doughnut glaze |8 counts whole (368.54
+g; 172758's balance leaves 6.21 g of glaze carbohydrate against the 14.85 g
+its sugars imply — no cling figure closes); struffoli's tracer spread (14.15
+% by carbohydrate, 30.62 % by protein — its dough is egg-rich, P : C 0.184
+against the record's 0.113 — no cached water can arbitrate; ½-inch pieces
+fry more surface per gram than a rolled doughnut) and the honey left in the
+pan ("lift struffoli from saucepan" with a slotted spoon: |8 counted whole);
+the yeast doughnut's own spread (13.35 / 16.72 / ≤ 25.67 %) is unchanged —
+A2 moves the mass it applies to. Deploy note: matcherVersion 65 stales
+every recipe; one zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

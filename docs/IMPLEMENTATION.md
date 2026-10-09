@@ -3608,6 +3608,25 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v66 (batch M67): fried doughs — the doughnut's
+  printed cut share, the struffoli uptake on the cake doughnut's
+  composition (prep49 §2 M67; Q9 A2, Q10 a; built under the standing
+  authorization; the step read labelled pre-Q18).** A fried dough whose
+  steps print the sheet, the count and the cutter (1105: a 10 by 13-inch
+  sheet, 12 rounds, a 3-inch cutter) now counts the cut share of the dough
+  (65.25 %) and its oil on the cut grams; the rest, cut only "if desired",
+  is not counted — the design's reversal of the "if desired" keep
+  precedent for pieces outside the served count. The struffoli's uptake
+  moves from the plain fritter's batter rate (23.32 %) to a composition
+  balance on the SR cake doughnut the FNDDS record lists (14.15 % by
+  carbohydrate; 30.62 % by protein and the fritter's figure stated in the
+  flag). Disclosed and pinned: one figure lands 0.01 off the design's
+  truncation; the dough rows change gram source without a bucket move;
+  the fixer's own memo oracle caught an eight-plan compute on confirmed
+  dough rows and closed it in the plan key. Nine rows, −2,458 kcal (the
+  doughnuts 600 → 433 kcal per serving, the struffoli 716 → 641), no
+  status, hold or person-row move.
+
 - **2026-10-09 — matcher v65 (batch M66): coat parts and dips — the
   gated nut or cheese layer joins the coat, the dip sized by the coated
   food, a dip line's part used elsewhere, the shared-head split, dips

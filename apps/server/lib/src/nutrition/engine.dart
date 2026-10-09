@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:math' show max, min;
+import 'dart:math' show max, min, pi;
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
@@ -14594,6 +14594,8 @@ String? _gramBasis(
         ? null
         : m52.dip
         ? 'the dip on the food'
+        : m52.cut
+        ? 'the cut dough'
         : m52.coat
         ? 'the coat on the food'
         : 'the oil the fried food absorbs';
@@ -16261,7 +16263,9 @@ derivedFor(
             (medium == DiscardedMedium.coating ||
                     medium == DiscardedMedium.fryingOil ||
                     // v56 (M58 W): a batter line the coat budget weighs.
-                    _batterInBowl(recipe).contains(position)
+                    _batterInBowl(recipe).contains(position) ||
+                    // v66 (M67 A2): a cut dough's mix line.
+                    _cutMixAt(recipe, position)
                 ? _m52OnConfirm(
                     db,
                     recipe,
@@ -17156,14 +17160,6 @@ const _Fndds _eggRollFried = (
   o: '8',
   r: '104.99',
 );
-const _Fndds _fritterFried = (
-  id: 2708024,
-  description: 'Fritter, plain',
-  food: 'fritter batter',
-  b: '0',
-  o: '80',
-  r: '343',
-);
 
 /// R-d: FNDDS 2708072 "Doughnut, yeast type" lists this record alone and no
 /// oil, so P3's balance reads it — with the PROTEIN tracer (the record is
@@ -17174,6 +17170,20 @@ const _Sr _doughnutSr = (
   id: 172758,
   description:
       'Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)',
+);
+
+/// v66 (M67 B, the owner's Q10 (a); prep49 design_v2 §2 M67, pD rule B):
+/// a cake dough (struffoli; a doughnut or dough with no yeast row) on the
+/// one input FNDDS 2708063 "Doughnut, cake type, plain" lists — no oil row,
+/// so P3's balance reads it, with the CARBOHYDRATE tracer (the record is
+/// unglazed: P3's uncoated convention, no departure) against the corpus
+/// dough: D = 47.1 / 0.491276 = 95.873, O = 24.9 − 95.873 × 0.118227 =
+/// 13.565, u = 14.15 % (the protein tracer 30.62 %; 2708024 "Fritter,
+/// plain", a pourable batter, read 23.32 % before — the flag states both).
+const _Sr _cakeDoughnutSr = (
+  id: 174990,
+  description:
+      'Doughnuts, cake-type, plain (includes unsugared, old-fashioned)',
 );
 
 /// R-e: FNDDS 2707408 "Falafel" lists one cup of oil, the frying medium
@@ -17477,7 +17487,7 @@ _FriedClass? _friedClassOf(
 /// null. [meat]: the raw mix counts a pork, beef or chicken row (a meatless
 /// roll's record, FNDDS 2708700, was never read: no figure, Q12 iv);
 /// [yeast]: it counts a yeast row (a cake dough's record, 2708063, lists no
-/// oil: the plain fritter stands in, Q12 iii).
+/// oil: v66 (M67 B) P3's balance on its input, SR 174990, stands in).
 _FriedClass? _friedProductOf(
   List<String> frying, {
   required bool meat,
@@ -17486,7 +17496,7 @@ _FriedClass? _friedProductOf(
   _M52Figure? roll({bool standIn = true}) =>
       meat ? _readFig('7.62', _eggRollFried, standIn: standIn) : null;
   final fritter = _readFig('8.43', _pakoraFried, standIn: true);
-  final cake = _readFig('23.32', _fritterFried, standIn: true);
+  final cake = _derivedFig('14.15', _cakeDoughnutSr, standIn: true);
   for (final (word, name, figure) in <(String, String, _M52Figure?)>[
     ('lumpia', 'lumpia', roll()),
     ('egg rolls?', 'egg roll', roll(standIn: false)),
@@ -17516,6 +17526,85 @@ _FriedClass? _friedProductOf(
   }
   return null;
 }
+
+/// v66 (M67 A2, the owner's Q9; prep49 design_v2 §2 M67): the share of a
+/// rolled dough the steps cut and fry — the first step printing the sheet
+/// ("10 by 13-inch rectangle"), the count ("cut 12 rounds") and the cutter
+/// ("3-inch round cutter"): s = n·π(d/2)² / (L·W), 65.25 % on 1105 (the
+/// holes cut from the rounds are fried too, so they stay inside the n
+/// discs; the sheet is rolled even, so area is mass) — with the flag its
+/// rows carry. Null unless 0 < s < 1. Once per recipe (`memo:cutShare`).
+/// ponytail: rounds cut from a rectangle or square sheet only; any other
+/// sheet or cut (an "8-inch square", rings, squares) reads the whole mix.
+({double share, String flag})? _cutShareOf(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#cutShare, () {
+      for (final step in _stepIndexOf(recipe).lower) {
+        if (!step.contains('round cutter')) {
+          continue;
+        }
+        final sheet = _cutSheet.firstMatch(step);
+        final count = _cutCount.firstMatch(step);
+        final cutter = _roundCutter.firstMatch(step);
+        if (sheet == null || count == null || cutter == null) {
+          continue;
+        }
+        final [l, w, n, d] = [
+          for (final v in [sheet[1], sheet[2], count[1], cutter[1]])
+            int.tryParse(v!) ?? 0,
+        ];
+        final s = n * pi * d * d / 4 / (l * w);
+        if (!(s > 0 && s < 1)) {
+          return null;
+        }
+        final rest = step.contains('if desired')
+            ? ', cut only "if desired",'
+            : '';
+        return (
+          share: s,
+          flag:
+              'approximation (the cut share ${(s * 100).toStringAsFixed(2)} '
+              "%: $n × $d-inch rounds from the steps' $l by $w-inch sheet; "
+              'the remaining dough$rest not counted)',
+        );
+      }
+      return null;
+    });
+
+final RegExp _cutSheet = RegExp(r'(\d+) by (\d+)-inch (?:rectangle|square)');
+final RegExp _cutCount = RegExp(r'\bcut (\d+) rounds\b');
+final RegExp _roundCutter = RegExp(r'(\d+)-inch round cutter');
+
+/// Whether line [i] of [recipe] may be a cut dough's mix line: the steps
+/// print a cut share ([_cutShareOf]), the line is no medium and a frying oil
+/// follows it in its ingredient group — text only, the gate of the readers
+/// beside [_m52Plan] ([_m52RowOf], [derivedFor], [_m52Key]); the plan
+/// decides. The lines once per Recipe instance (a Recipe is immutable): the
+/// key reads every row of every confirm's list.
+bool _cutMixAt(Recipe recipe, int i) => (_cutMix[recipe] ??= () {
+  final at = <int>{};
+  if (_cutShareOf(recipe) == null) {
+    return at;
+  }
+  var start = 0;
+  for (final g in recipe.ingredients) {
+    var oil = false;
+    for (var i = start + g.items.length - 1; i >= start; i--) {
+      final medium = _mediumAt(recipe, i);
+      if (medium == DiscardedMedium.fryingOil) {
+        oil = true;
+      } else if (medium == null && oil) {
+        at.add(i);
+      }
+    }
+    start += g.items.length;
+  }
+  return at;
+}()).contains(i);
+final Expando<Set<int>> _cutMix = Expando();
+
+/// Whether [_friedClassOf] reads line i of a Recipe instance on a record's
+/// description as a fried food, once per (i, description) ([_m52Key]).
+final Expando<Map<(int, String), bool>> _friedLines = Expando();
 
 /// O1c's basis (p3_read_figures.md): a bone-in skin-on chicken fried in the
 /// oil absorbs none of it net — USDA's skin-on fried legs carry less fat
@@ -17580,16 +17669,24 @@ String _uptakeClause(
             '${read.food}'
       : 'derived from USDA SR Legacy ${figure.derived!.id} '
             '"${figure.derived!.description}"';
-  final standIn = figure.standIn
-      ? _standIn(name, read?.description ?? figure.derived!.description)
-      : '';
+  // v66 (M67 B, critic F8): the cake doughnut names its tracer and the
+  // spread — the protein tracer's figure and the fritter batter's read one.
+  final cake = figure.derived?.id == _cakeDoughnutSr.id;
+  final standIn = !figure.standIn
+      ? ''
+      : cake
+      ? ' (no record for $name; read as a cake doughnut; by its protein '
+            "30.62 %; FNDDS 2708024's fritter batter reads 23.32 %)"
+      : _standIn(name, read?.description ?? figure.derived!.description);
+  final tracer = cake ? ' by its carbohydrate' : '';
   if (batter != null) {
     final u = double.parse(figure.value) * batter.c / batter.k;
     return '${u.toStringAsFixed(2)} % of the raw $whose weight — $source, '
         "scaled to the recipe's batter (${batter.c.toStringAsFixed(2)} g of "
         '${batter.k.toStringAsFixed(2)} g carbohydrate)$standIn';
   }
-  return '${figure.value} % of the raw $whose weight — $source$standIn';
+  return '${figure.value} % of the raw $whose weight — $source$tracer'
+      '$standIn';
 }
 
 /// One row M52 counts ([_m52Plan]), `discarded` as a medium's kept part
@@ -17599,7 +17696,8 @@ String _uptakeClause(
 /// none (`noNetUptake`, O1c). v60 (M62): a coat's egg or buttermilk `dip`
 /// ([_dipsOf]); `held`, the dip of a coat held with no budget (H: an
 /// engine row takes the coat's hold, `coating`, no grams — any status
-/// carries it, so a person's decision reads it, [derivedFor]).
+/// carries it, so a person's decision reads it, [derivedFor]). v66 (M67
+/// A2): `cut`, a fried dough's mix line counted at the steps' cut share.
 typedef _M52Row = ({
   double grams,
   String? flag,
@@ -17608,6 +17706,7 @@ typedef _M52Row = ({
   bool noNetUptake,
   bool dip,
   bool held,
+  bool cut,
 });
 
 /// What M52 counts on the rows of [recipe] the engine weighs ([_m52Weighs]:
@@ -17815,6 +17914,7 @@ Map<int, _M52Row> _m52Plan(
           noNetUptake: false,
           dip: false,
           held: false,
+          cut: false,
         );
       }
     }
@@ -17897,6 +17997,7 @@ Map<int, _M52Row> _m52Plan(
         noNetUptake: false,
         dip: true,
         held: false,
+        cut: false,
       );
     }
   } else if (coats.isNotEmpty) {
@@ -17920,6 +18021,7 @@ Map<int, _M52Row> _m52Plan(
         noNetUptake: false,
         dip: true,
         held: true,
+        cut: false,
       );
     }
   }
@@ -18001,11 +18103,43 @@ Map<int, _M52Row> _m52Plan(
   // group never joins).
   if (fried.isEmpty) {
     final (start, _) = groupOf(fryers.first);
-    final mix = [
-      for (final r in at.values)
-        if (r.position >= start && r.position < fryers.first && counted(r)) r,
-    ];
-    final grams = mix.fold<double>(0, (n, r) => n + r.grams!);
+    // v66 (M67 A2, Q9): a dough the steps roll to a sheet and cut counts
+    // only the cut share ([_cutShareOf]) — each row the plan weighs at s ×
+    // its WHOLE line, never its stored grams (the plan writes those: closer
+    // 2's V2-D1 double scaling), the uptake on the cut grams; a pick or
+    // typed grams (never written here) at its own.
+    // ponytail: a dough line another rule discards would count at the
+    // share too — one corpus recipe prints the geometry, none such.
+    final share = _cutShareOf(recipe);
+    final cut = <int, double>{};
+    final mix = <IngredientMatchRow>[];
+    for (final r in at.values) {
+      if (r.position < start || r.position >= fryers.first) {
+        continue;
+      }
+      if (share != null &&
+          engine(r) &&
+          r.hold == null &&
+          !(r.status == 'auto' && belowConfidenceGate(r.confidence)) &&
+          _mediumAt(recipe, r.position) == null) {
+        final record = food(r.fdcId!, lines[r.position]);
+        final whole = record == null
+            ? null
+            : lineGrams(db, lines[r.position], record, recipe: recipe)?.grams;
+        if (whole != null && whole > 0) {
+          cut[r.position] = round2(share.share * whole);
+          mix.add(r);
+          continue;
+        }
+      }
+      if (counted(r)) {
+        mix.add(r);
+      }
+    }
+    final grams = mix.fold<double>(
+      0,
+      (n, r) => n + (cut[r.position] ?? r.grams!),
+    );
     final product = grams <= 0
         ? null
         : _friedProductOf(
@@ -18024,6 +18158,18 @@ Map<int, _M52Row> _m52Plan(
           );
     if (product != null) {
       fried.add((kind: product, grams: grams, at: fryers.first));
+      for (final MapEntry(:key, :value) in cut.entries) {
+        plan[key] = (
+          grams: value,
+          flag: share!.flag,
+          kept: 0,
+          coat: false,
+          noNetUptake: false,
+          dip: false,
+          held: false,
+          cut: true,
+        );
+      }
     }
   }
   if (fried.isEmpty) {
@@ -18121,13 +18267,15 @@ Map<int, _M52Row> _m52Plan(
       noNetUptake: absorbs.isEmpty,
       dip: false,
       held: false,
+      cut: false,
     );
   }
   return plan;
 }
 
 /// [_m52Plan]'s answer for [row] of [recipe] as stored — null unless its
-/// line is a coat, a batter left in the bowl (v56, M58 W) or a frying
+/// line is a coat, a batter left in the bowl (v56, M58 W), a dip (v60,
+/// M62), a cut dough's mix line (v66, M67 A2: [_cutMixAt]) or a frying
 /// oil, the row one M52 weighs ([_m52Weighs]) counted with these grams (the
 /// flag reads only grams it wrote). The plan is [memo]'s when one is given
 /// ([ResolverMemo._m52Plans]: one per request), else run for this row.
@@ -18150,7 +18298,9 @@ _M52Row? _m52RowOf(
       medium != DiscardedMedium.fryingOil &&
       !_batterInBowl(recipe).contains(row.position) &&
       // v60 (M62): a dip's line.
-      !_dipsOf(recipe).containsKey(row.position)) {
+      !_dipsOf(recipe).containsKey(row.position) &&
+      // v66 (M67 A2): a cut dough's mix line.
+      !_cutMixAt(recipe, row.position)) {
     return null;
   }
   final at = (memo == null
@@ -18206,22 +18356,29 @@ bool _m52Engine(IngredientMatchRow? r) =>
 /// Everything [_m52Plan]'s COAT block (its coat, batter and dip entries)
 /// reads of [rows] (v61 closer 1, verify1 D1/D2): per row in the plan, by
 /// position — weighed, the engine's ([_m52Engine]), its hold passing
-/// (none or `coating`), a coat or oil medium the plan reads (not a dip's),
-/// its record, below the gate; the coated food (its grams); under C5 the
-/// counted flour and starch off B. Never another row's grams: a dip, coat
-/// or batter row the plan writes `discarded` and its line's engine form
-/// key alike, so rows that key alike give equal coat, batter and dip
-/// entries (the recipe's text and the FDC caches fixed) — one plan answers
-/// every confirm whose row list keys as its own ([_m52OnConfirm]). With
-/// [fryer], the whole plan's (a frying oil's entry) — the fryer block's
-/// reads too: each frying oil's hold (weighed only unheld), and the grams
-/// of each counted row it may fry (a meat record or a fried vegetable by
-/// name: [_friedClassOf] non-null, which reads nothing else) — of EVERY
-/// counted row when no coated food is surely fried and a frying sentence
-/// names a product (M61's mix) or a counted cauliflower may be fried (M59
-/// D's batter carbohydrate). So a compute
-/// rewriting an auto dip or coat line between two confirmed oils keys
-/// alike (at the editor caps: 200 plans per compute → 2, the totals' one).
+/// (none or `coating`), a coat or oil medium the plan reads (not a dip's
+/// or a cut dough line's), its record, below the gate; the coated food
+/// (its grams); under C5 the counted flour and starch off B. Never another
+/// row's grams: a dip, coat or batter row the plan writes `discarded` and
+/// its line's engine form key alike, so rows that key alike give equal
+/// coat, batter and dip entries (the recipe's text and the FDC caches
+/// fixed) — one plan answers every confirm whose row list keys as its own
+/// ([_m52OnConfirm]). With [fryer], the whole plan's (a frying oil's
+/// entry) — the fryer block's reads too: each frying oil's hold (weighed
+/// only unheld), and the grams of each counted row it may fry (a meat
+/// record or a fried vegetable by name: [_friedClassOf] non-null, which
+/// reads nothing else) — of EVERY counted row when no coated food is
+/// surely fried and a frying sentence names a product (M61's mix) or a
+/// counted cauliflower may be fried (M59 D's batter carbohydrate) — save a
+/// cut dough's mix line (v66, M67 A2: [_cutMixAt]; the engine's, unheld,
+/// not auto below the gate, no fried food by name, no cauliflower), read
+/// by its line, record and hold only (and, where the steps print a cut
+/// share, every row's hold: "cut i hold"), never its grams or medium bit:
+/// the plan weighs it at the share of its WHOLE line, so its engine form
+/// and the plan's `discarded` one key alike. So a compute rewriting an auto
+/// dip or coat line between two confirmed oils, or every confirmed cut
+/// dough line, keys alike (at the editor caps: 200 plans per compute → 2,
+/// the totals' one).
 /// ponytail: mirrors the plan's row reads by hand — a new read there joins
 /// here (nutrition_v61_test compares the compute and the GET with the
 /// per-row derivation on every decided dip, v26 times the cap shapes).
@@ -18252,6 +18409,39 @@ String _m52Key(
   final dips = _dipsOf(recipe);
   final batter = _batterInBowl(recipe);
   final heads = _headsOf(recipe);
+  String words(int i) =>
+      '${normalizeItem(lineItemOf(lines[i]))} ${lines[i].raw.toLowerCase()}';
+  // M59 D's batter carbohydrate reads every counted row's grams of a
+  // cauliflower's group.
+  late final cauliflower = at.entries.any(
+    (e) =>
+        _m52Counted(e.value) &&
+        '${words(e.key)} ${e.value.description!.toLowerCase()}'.contains(
+          'cauliflower',
+        ),
+  );
+  // v66 (M67 A2): a cut dough's mix line the plan weighs is read on its
+  // line and record, never its grams or source — its engine form and the
+  // plan's `discarded` one key alike (no frying sentence can name it as a
+  // fried food: [_friedClassOf] null), so a compute rewriting every
+  // confirmed dough line plans once, not once per line.
+  final cut = _cutShareOf(recipe) != null;
+  bool cutLine(int i, IngredientMatchRow r) =>
+      cut &&
+      _cutMixAt(recipe, i) &&
+      _m52Engine(r) &&
+      r.hold == null &&
+      !(r.status == 'auto' && belowConfidenceGate(r.confidence)) &&
+      !cauliflower &&
+      !((_friedLines[recipe] ??= {})[(i, r.description!)] ??=
+          _friedClassOf(
+            r.description!,
+            words(i),
+            coatHeld: false,
+            shape: null,
+            chips: false,
+          ) !=
+          null);
   final key = StringBuffer(
     '${coated?.position} ${coated?.grams} ${coated?.description}',
   );
@@ -18260,7 +18450,7 @@ String _m52Key(
     key.write(
       _m52RowKey(
         r,
-        dip: dips.containsKey(i),
+        dip: dips.containsKey(i) || cutLine(i, r),
         offB:
             c5 &&
             _m52Counted(r) &&
@@ -18282,24 +18472,22 @@ String _m52Key(
                       e.value.gramSource == GramSource.discarded.name)) &&
               _mediumAt(recipe, e.key) == DiscardedMedium.coating),
     );
-    String words(int i) =>
-        '${normalizeItem(lineItemOf(lines[i]))} ${lines[i].raw.toLowerCase()}';
     final every =
         ((coated == null || !(coats || _shallowFries(recipe))) &&
             _productFried(recipe)) ||
-        at.entries.any(
-          (e) =>
-              _m52Counted(e.value) &&
-              '${words(e.key)} ${e.value.description!.toLowerCase()}'.contains(
-                'cauliflower',
-              ),
-        );
+        cauliflower;
+    // v66 (M67 A2): a cut dough's mix row is planned on its own hold —
+    // none, where the row key reads "none or coating" — never its grams.
     for (final i in at.keys.toList()..sort()) {
       final r = at[i]!;
       if (_mediumAt(recipe, i) == DiscardedMedium.fryingOil) {
         key.write('\noil $i ${r.hold}');
       }
+      if (cut) {
+        key.write('\ncut $i ${r.hold}');
+      }
       if (_m52Counted(r) &&
+          !cutLine(i, r) &&
           (every ||
               _friedClassOf(
                     r.description!,
@@ -18316,8 +18504,8 @@ String _m52Key(
   return key.toString();
 }
 
-/// [r]'s line of [_m52Key] ([dip]: a dip's line, no medium; its grams
-/// only [offB]).
+/// [r]'s line of [_m52Key] ([dip]: a dip's or a cut dough's mix line, no
+/// medium; its grams only [offB]).
 String _m52RowKey(
   IngredientMatchRow r, {
   required bool dip,
@@ -18402,8 +18590,9 @@ bool _m52Weighs(IngredientMatchRow r) =>
     r.status == 'auto' ||
     (r.status == 'confirmed' && r.gramSource != GramSource.override.name);
 
-/// What a person's CONFIRM of [placed] — a coat or frying-oil line, no
-/// grams typed — resolves to ([derivedFor]): [_m52Plan] on the stored rows
+/// What a person's CONFIRM of [placed] — a coat, batter (v56), dip (v60)
+/// or frying-oil line, or a cut dough's mix line (v66, M67 A2), no grams
+/// typed — resolves to ([derivedFor]): [_m52Plan] on the stored rows
 /// with [placed] as the confirm leaves it (no hold, `discarded`); null when
 /// M52 counts nothing on the line. With [memo] (the matches GET's — v60
 /// closer 3, verify3 D1: one plan per CONFIRMED row, O(oils²) at the caps),
@@ -18418,10 +18607,10 @@ bool _m52Weighs(IngredientMatchRow r) =>
 /// the stored one (a confirmed no-coat dip, a pick: one plan per GET, not
 /// one per dip); and [pass] (the compute's, whose rows move between its
 /// derivations) answers from ONE plan while the rows as they are now key
-/// alike — a frying oil's by the whole plan's key — and no FDC cache write
-/// landed: a compute with every dip, batter line or frying oil confirmed
-/// plans once, not once per line (16.2 s, 20.8 s and 34.5 s at the editor
-/// caps before).
+/// alike — a frying oil's or a cut dough line's by the whole plan's key —
+/// and no FDC cache write landed: a compute with every dip, batter line or
+/// frying oil confirmed plans once, not once per line (16.2 s, 20.8 s and
+/// 34.5 s at the editor caps before).
 _M52Row? _m52OnConfirm(
   SaltDatabase db,
   Recipe recipe,

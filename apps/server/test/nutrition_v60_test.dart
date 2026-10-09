@@ -114,8 +114,10 @@ const List<_Row> _reach = [
     '2 quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '213.80',
-    '1924.20',
+    // RE-PIN (M67 batch, v66): 213.80 / 1,924.20 → A2's cut share — the
+    // uptake on the cut dough, 16.72 % × 834.34 g.
+    '139.50',
+    '1255.50',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 16.72 % of the raw doughnut dough\'s weight — derived from USDA SR Legacy 172758 "Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)")',
   ),
@@ -126,10 +128,12 @@ const List<_Row> _reach = [
     '2 quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '128.81',
-    '1159.29',
+    // RE-PIN (M67 batch, v66): 128.81 / 1,159.29 and the fritter batter's
+    // flag → B, the cake doughnut SR 174990 by its carbohydrate (14.15 %).
+    '78.16',
+    '703.44',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 23.32 % of the raw struffoli dough's weight — USDA FNDDS 2708024 recipe: 80 g oil per 343 g raw fritter batter (no record for struffoli dough; read as Fritter, plain))",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 14.15 % of the raw struffoli dough's weight — derived from USDA SR Legacy 174990 \"Doughnuts, cake-type, plain (includes unsugared, old-fashioned)\" by its carbohydrate (no record for struffoli dough; read as a cake doughnut; by its protein 30.62 %; FNDDS 2708024's fritter batter reads 23.32 %))",
   ),
 ];
 
@@ -670,7 +674,8 @@ void main() {
     // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
     // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
-    expect(matcherVersion, 64);
+    // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
+    expect(matcherVersion, 65);
   });
 
   group('matcher v60 (batch M61)', skip: skipIfNoCorpus, () {
@@ -829,7 +834,9 @@ void main() {
       // 1,278.71 at full precision (22½ oz of flour = 637.864 g …); the
       // plan's 1,278.69 summed the replay's 2-dp rows — the oil is 213.80
       // either way.
-      expect(g2(doughMix), '1278.71');
+      // RE-PIN (M67 batch, v66): 1,278.71 → the rows are A2's cut grams
+      // (65.25 % of each whole line), the oil 16.72 % of their sum.
+      expect(g2(doughMix), '834.34');
       expect(g2(sumOf(_doughnuts, [8, 10])), '368.94');
       expect(recipes[_doughnuts]!.ingredients.first.items, hasLength(8));
       // Struffoli: |0–|6 (one group; the honey and garnishes follow the oil).
@@ -840,7 +847,8 @@ void main() {
         (_lumpia, 17, 7.62, lumpiaMix),
         (_falafel, 11, 21.64, falafelMix),
         (_doughnuts, 7, 16.72, doughMix),
-        (_struffoli, 7, 23.32, struffoliMix),
+        // RE-PIN (M67 batch, v66): 23.32 → B's 14.15.
+        (_struffoli, 7, 14.15, struffoliMix),
       ]) {
         expect(
           g2(rowIn(recipes[file]!, position).grams!),
@@ -981,7 +989,9 @@ void main() {
           ),
           'bare-dough',
         );
-        expect(rowIn(dough, 7).grams?.toStringAsFixed(2), '213.80');
+        // RE-PIN (M67 batch, v66): 213.80 → the steps still print the
+        // sheet, the 12 rounds and the cutter: A2's cut share.
+        expect(rowIn(dough, 7).grams?.toStringAsFixed(2), '139.50');
         expect(
           basisIn(dough, 7),
           'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 16.72 % of the raw dough\'s weight — derived from USDA SR Legacy 172758 "Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)" (no record for dough; read as Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)))',
@@ -1000,8 +1010,10 @@ void main() {
       // kcal in a fresh compute against the replay's 1,035.43.
       expect(of(_lumpia), ('complete', '655.51'));
       expect(of(_falafel), ('complete', '613.83')); // v59 421.35
-      expect(of(_doughnuts), ('complete', '599.61')); // v59 439.26
-      expect(of(_struffoli), ('partial', '716.48')); // v59 523.27 (cherries)
+      // RE-PIN (M67 batch, v66): 599.61 → A2 (the cut dough and its oil).
+      expect(of(_doughnuts), ('complete', '432.75')); // v59 439.26
+      // RE-PIN (M67 batch, v66): 716.48 → B (14.15 %).
+      expect(of(_struffoli), ('partial', '640.51')); // v59 523.27 (cherries)
     });
 
     test('the matches GET plans M52 once per request (closer 2, verify2 D1: '

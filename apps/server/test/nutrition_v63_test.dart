@@ -441,7 +441,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
     // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
-    expect(matcherVersion, 64);
+    // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
+    expect(matcherVersion, 65);
   });
 
   test("kosher salt's figure is half of SR 173468's '1 tsp' 6.0 g by "

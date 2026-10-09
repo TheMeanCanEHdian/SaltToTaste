@@ -780,7 +780,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
-    expect(matcherVersion, 64);
+    // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
+    expect(matcherVersion, 65);
   });
 
   test('the five entries, by item (the shipped classes)', () {

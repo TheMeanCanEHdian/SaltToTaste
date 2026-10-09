@@ -263,6 +263,7 @@ void main() {
   foodGated();
   fryingOils();
   eggDips();
+  cutDough();
   group('RULE C at the loop level, every detector of every line at the caps '
       '(Run 056 S5/S7/S8/S9/O6/O8/S14/O15/S20/S23)', () {
     // Measured at 8113b24 (one readAll pass, the digests' shapes): salt
@@ -976,7 +977,10 @@ final Map<String, (Recipe Function(), String)> fryShapes = {
       ],
       List.filled(capSteps, fill('Fry the dough in the hot oil. ', capStep)),
     ),
-    '0.37',
+    // RE-PIN (M67 batch, v66): 0.37 → a bare dough with no yeast row reads
+    // B's cake doughnut, 14.15 % (23.32 before): 637.86 g × 14.15 % shared
+    // by the 399 oils.
+    '0.23',
   ),
   'pork-fry': (
     () => capped(
@@ -1130,6 +1134,113 @@ void fryingOils() {
     },
     skip: skipIfNoCorpus,
   );
+}
+
+/// v66 (M67 A2): a rolled dough the steps cut at the caps — 399 dough
+/// lines (the yeasted doughnuts' real flour line) before one frying oil,
+/// every step printing the sheet, the count and the round cutter: each
+/// dough line a planned position (`discarded` at the cut share, 416.20 g of
+/// 637.86), the sheet read once per index (`memo:cutShare`), the GET
+/// planning M52 once; every dough line CONFIRMED, the GET once and the
+/// compute at most twice (`_m52OnConfirm`'s memos key the mix positions).
+/// Synthesized, a stated exception: the repeated lines and steps.
+void cutDough() {
+  group('RULE C, a cut dough at the caps (v66, M67 A2)', () {
+    test('the compute and the matches GET within their bounds, the GET '
+        'planning M52 once; every dough line confirmed, the GET once and the '
+        'compute at most twice; each under the backstop', () async {
+      const flour = '4½ cups (22½ ounces) all-purpose flour';
+      final r = capped(
+        loadCorpusRecipe('1105-yeasted-doughnuts.yaml'),
+        [
+          for (var i = 0; i < capLines - 1; i++) flour,
+          '2 quarts vegetable oil for frying',
+        ],
+        List.filled(
+          capSteps,
+          fill(
+            'Roll dough into 10 by 13-inch rectangle, about ½ inch thick. Using 3-inch round cutter dipped in flour, cut 12 rounds. Fry the doughnuts in the hot oil. ',
+            capStep,
+          ),
+        ),
+      );
+      final db = wp.tempDb();
+      final provider = FixtureProvider(pending: pendingSearches);
+      wp.saveRecipe(db, r);
+      Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+      Future<void> timed(
+        String name,
+        Future<Object?> Function() run, {
+        int? plans,
+      }) async {
+        stepIndexCounts.clear();
+        reachDecodes = 0;
+        m52PlanRuns = 0;
+        final sw = Stopwatch()..start();
+        await run();
+        final ms = sw.elapsedMilliseconds;
+        final counts = Map.of(stepIndexCounts);
+        final copies = counts['indexes'] ?? 1;
+        expectBounded(r, counts, 'cut dough $name', copies: copies);
+        expect(
+          counts['memo:cutShare'],
+          inInclusiveRange(1, copies),
+          reason: 'cut dough $name',
+        );
+        if (plans != null) {
+          expect(m52PlanRuns, lessThanOrEqualTo(plans), reason: name);
+        }
+        expect(ms, lessThan(backstopMs), reason: 'cut dough $name: $counts');
+      }
+
+      await timed('compute', () => matchAndCompute(db, provider, stored()));
+      await timed('GET', () => matchesBody(db, provider, stored()), plans: 1);
+      final rows = db.ingredientMatchesFor(r.id);
+      expect(rows, hasLength(capLines));
+      expect(
+        {
+          for (final row in rows.take(capLines - 1))
+            (row.grams, row.gramSource),
+        },
+        {(416.2, 'discarded')},
+      );
+      // Row 0 through the real PUT; the other 398 written in that state.
+      await timed(
+        'PUT',
+        () => applyMatchOverride(db, provider, stored(), 0, {
+          'raw': flour,
+          'confirmed': true,
+        }),
+      );
+      final put = db.ingredientMatchesFor(r.id);
+      expect(
+        sameMatchRow(put[0], rows[0].copyWith(status: 'confirmed')),
+        isTrue,
+      );
+      for (final row in put.skip(1).take(capLines - 2)) {
+        db.upsertIngredientMatch(
+          row.copyWith(status: 'confirmed', derivedSeq: put[0].derivedSeq),
+        );
+      }
+      await timed(
+        'GET confirmed',
+        () => matchesBody(db, provider, stored()),
+        plans: 1,
+      );
+      await timed(
+        'compute confirmed',
+        () => matchAndCompute(db, provider, stored()),
+        plans: 2,
+      );
+      expect(
+        {
+          for (final row in db.ingredientMatchesFor(r.id).take(capLines - 1))
+            (row.status, row.grams, row.gramSource),
+        },
+        {('confirmed', 416.2, 'discarded')},
+      );
+    });
+  }, skip: skipIfNoCorpus);
 }
 
 /// v61 (M62): an egg or buttermilk dip at the caps — every sentence a
