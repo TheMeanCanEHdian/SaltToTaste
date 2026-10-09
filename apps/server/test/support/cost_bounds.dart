@@ -102,6 +102,8 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:baconKept',
       'memo:baconDrips',
       'memo:peelActs',
+      // v60 (M61, closer 2): the sentences naming the skin.
+      'memo:skinSentences',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first

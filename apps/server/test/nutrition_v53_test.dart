@@ -538,16 +538,19 @@ _rows = [
     null,
   ),
   // negative: a fried batter whole — 0 g
+  // RE-PIN (M61 batch, v60): falafel takes its uptake on the raw mix (R-e:
+  // 21.64 % derived from SR 172455 × the FALAFEL group's 395.35 g; was
+  // 0.00, "discarded in cooking — counted as 0 g").
   (
     '0570-falafel.yaml',
     null,
     11,
     '2 quarts vegetable oil for frying',
     2710180,
-    '0.00',
+    '85.55',
     'discarded',
     null,
-    'discarded in cooking — counted as 0 g',
+    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix\'s weight — derived from USDA SR Legacy 172455 "Falafel, home-prepared")',
   ),
   // negative: confit — 0 g
   (
@@ -704,7 +707,8 @@ void main() {
     // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
     // RE-PIN (M59 batch, v58): matcherVersion 57 (was 56).
     // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
-    expect(matcherVersion, 58);
+    // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
+    expect(matcherVersion, 59);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

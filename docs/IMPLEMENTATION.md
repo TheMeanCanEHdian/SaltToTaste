@@ -3608,6 +3608,30 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-08 — matcher v60 (batch M61): fried doughs, fritters, rolls
+  and falafel take an uptake (prep48 §2 M61; Q12; the live step L's
+  records; built under the standing authorization; reach labelled
+  pre-Q18).** A frying oil whose recipe fries a named product (pakoras,
+  lumpia, falafel, doughnuts, struffoli, a bare batter or dough) now
+  carries the oil that product absorbs, read from the USDA record for its
+  class on the raw mix before the oil (the dipping sauce and the glaze
+  excluded). Figures decided by the owner from the planner's verified
+  arithmetic: the pakora, egg roll and plain fritter records by the
+  design's formula (the latter two flagged stand-ins for lumpia and
+  struffoli); the yeast doughnut derived by a protein balance on its own SR
+  doughnut record, because both FNDDS doughnut records list no oil input
+  and the design's fallback would give nothing; the falafel derived by a
+  carbohydrate balance on the SR home-prepared record, because the FNDDS
+  falafel lists a whole cup of frying oil as an input (a 60 % reading that
+  is the medium, not an uptake). Beyond the design, disclosed and pinned: a
+  roll takes its figure only when the mix counts a pork, beef or chicken
+  row (the meatless record was never read); a dough reads the yeast
+  figure only with a yeast row, else the fritter; the verifier found M61
+  opened the shipped matches GET's quadratic re-planning to a new shape
+  (636 s at the editor caps), so the GET now plans once per request on
+  both its paths and the skin sentences are read once per recipe, with
+  cost pins. Five rows, +5,107 kcal per batch, no status move.
+
 - **2026-10-08 — matcher v59 (batch M60): the bone-in turkey breast, a peel
   written in the steps, bacon that drips (prep48 Y + P7a + P7b; Q14 a,
   Q15 a; built under the standing authorization; P7a and P7b reach

@@ -797,7 +797,21 @@ const Map<String, String> _synonyms = {
 /// unrendered that a step lays over or wraps round a food that then bakes,
 /// roasts, grills or broils is B1's two parts with no fat kept (engine
 /// `_baconDrips`), flagged "the fat drips off the food".
-const int matcherVersion = 58;
+///
+/// v59 (the Matcher v60 commit, batch M61 — fried doughs, fritters, rolls
+/// and falafel take an uptake; prep48 design_v2 §2 M61, the owner's Q12 and
+/// rulings R-a … R-e under the 2026-10-07 standing authorization; zero
+/// requests): a frying oil no counted line is the fried food of counts the
+/// uptake of the PRODUCT a frying sentence names (engine
+/// `_friedProductOf`: batter, dough, pakoras, fritters, lumpia, egg or
+/// spring rolls, falafel, doughnuts, struffoli) on its raw mix — the
+/// counted rows of the oil line's ingredient group before it: FNDDS 2710066
+/// "Pakora" 8.43 %, 2708702 "Egg roll, with beef and/or pork" 7.62 % (a
+/// stand-in for lumpia), 2708024 "Fritter, plain" 23.32 % (a stand-in for a
+/// cake dough), and two balances DERIVED from SR Legacy — 172758 (yeast
+/// doughnuts, protein tracer) 16.72 %, 172455 "Falafel, home-prepared"
+/// (carbohydrate tracer) 21.64 %.
+const int matcherVersion = 59;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

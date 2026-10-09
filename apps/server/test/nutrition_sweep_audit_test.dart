@@ -1187,8 +1187,17 @@ void main() {
     // 2346396): the detail a recorded hit (2346396 in 'old-fashioned oats'
     // and 'old bay seasoning'), differing in some digit (energy 381.626 /
     // 382.0): compared 494 -> 495, differ 376 -> 377.
-    expect(compared, 495);
-    expect(differ, 377);
+    // RE-PIN (M61 batch, v60): matcher v60 recorded from snapshot 24 the 10
+    // searches and 2 details its whole-recipe pins read (ajwain, candied
+    // orange peel, boneless rib-eye steaks, smoked sweet paprika, very ripe
+    // plantains, ground fenugreek, candied cherries, monterey jack cheese,
+    // besan, canola oil for frying; 171324, 174288): each detail a recorded
+    // hit (171324 in 'ground fenugreek', 174288 in 'chickpeas' and
+    // 'besan'), both differing in some digit (171324 carbohydrate 58.35 /
+    // 58.4; 174288 protein 22.39 / 22.4): compared 495 -> 497, differ
+    // 377 -> 379.
+    expect(compared, 497);
+    expect(differ, 379);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

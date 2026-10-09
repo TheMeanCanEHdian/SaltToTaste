@@ -3334,7 +3334,8 @@ the fried food absorbs counted`). O1c's basis, 0 g: `frying oil: 0 g — USDA
 FNDDS 2705996 recipe adds 7 g oil per 100 g, but the fried skin-on parts
 carry less fat (17.2 g) than the raw parts counted here: no net uptake`
 (crispy-fried-chicken|7, easier-fried-chicken|10). Stay 0: doughs and
-batters fried whole (doughnuts, struffoli, falafel, pakoras, lumpia),
+batters fried whole (doughnuts, struffoli, falafel, pakoras, lumpia —
+until matcher v60, M61 below, counts their uptake on the raw mix),
 tempeh (its 28 g kept part counted), confit, yuca (no nutrients), and the
 strained-and-kept shallot oil.
 
@@ -3820,6 +3821,106 @@ also their parts and flag); 0 person rows; statuses, sections and holds
 identical; the composite count of two-part rows 18 → 20 (the two bacon
 rows take B1's shape). Deploy note: matcherVersion 58 stales every recipe;
 a zero-request sweep recomputes the library.
+
+**Since matcher v60 (batch M61 — fried doughs, fritters, rolls and falafel
+take an uptake; matcherVersion 59; prep48 design_v2 §2 M61, the owner's
+Q12 and rulings R-a … R-e, decided 2026-10-08 under the standing
+authorization; zero requests — the records were read at live step L1;
+step-reading, so its reach is pre-Q18).** An unheld `discarded` frying oil
+whose recipe has no counted line as the fried food (M52's list empty, not
+O1c) counts the uptake of the PRODUCT a frying sentence (a `fry`, or a food
+put "to / in / into (the) (hot) oil") names — the first of **lumpia, egg
+roll(s), spring roll(s), pakora(s), fritter(s), falafel, struffoli,
+doughnut(s), batter, dough** a frying sentence holds (engine
+`_friedProductOf`; the word elsewhere, "While struffoli cool", is not
+read). The fried weight is the **raw mix**: the counted rows of the oil
+line's ingredient group before it (Q12 ii; water carries no record; a
+dipping-sauce group before it and a glaze or sauce group after it never
+join). Each product's figure (u, the oil absorbed per 100 g of raw mix):
+
+| product | record | u | how |
+|---|---|---|---|
+| pakoras | FNDDS 2710066 "Pakora" | 8.43 % | READ: 21 g oil per 249.18 g of its raw inputs other than the oil and 355.5 g of water |
+| fritters, a bare batter | 2710066, a stand-in | 8.43 % | the same read, flagged `(no record for fritter batter; read as Pakora)` for fritters, `(no record for batter; read as Pakora)` for a bare batter |
+| lumpia, spring rolls, egg rolls | FNDDS 2708702 "Egg roll, with beef and/or pork" (a stand-in but for egg rolls) | 7.62 % | READ: 8 g oil per 104.99 g — its prepared vegetable egg roll at the listed 90 g (no raw pair), its 10 g of pork steak (2705875) brought to raw by protein on the lumpia's own raw pork (2514745): 14.99 g |
+| struffoli; a doughnut or dough with no yeast row | FNDDS 2708024 "Fritter, plain", a stand-in | 23.32 % | READ: 80 g oil per 343 g (120 g water dropped); Q12 (iii): the cake doughnut 2708063 lists no oil |
+| doughnuts, a dough with a yeast row | SR 172758 "Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)" | 16.72 % | DERIVED (R-d): FNDDS 2708072 "Doughnut, yeast type" lists this record alone and no oil, so P3's composition balance reads it with the PROTEIN tracer (the record is glazed; a glaze carries no protein) against the corpus dough (protein 7.03 %, fat 9.28 %): 87.30 g of dough per 100 g, 22.7 − 87.30 × 9.28 % = 14.60 g of oil; a bare dough: a stand-in, `(no record for dough; read as Doughnuts, yeast-leavened, glazed, enriched (includes honey buns))` |
+| falafel | SR 172455 "Falafel, home-prepared" | 21.64 % | DERIVED (R-e): FNDDS 2707408 "Falafel"'s 224 g oil row is one cup, the frying MEDIUM (41.2 g fat per 100 g; its formula's 60.07 % is rejected) — P3's balance with the carbohydrate tracer against the corpus mix (carbohydrate 45.73 %, fat 3.96 %): 69.54 g of mix per 100 g, 15.05 g of oil |
+
+The flag is M52's: `approximation (frying oil absorbed: 8.43 % of the raw
+pakora batter's weight — USDA FNDDS 2710066 recipe: 21 g oil per 249.18 g
+raw pakora batter)`; `… 7.62 % of the raw lumpia's weight — USDA FNDDS
+2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia;
+read as Egg roll, with beef and/or pork)`; `… 23.32 % of the raw struffoli
+dough's weight — USDA FNDDS 2708024 recipe: 80 g oil per 343 g raw fritter
+batter (no record for struffoli dough; read as Fritter, plain)`; `… 16.72 %
+of the raw doughnut dough's weight — derived from USDA SR Legacy 172758
+"Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)"`;
+`… 21.64 % of the raw falafel mix's weight — derived from USDA SR Legacy
+172455 "Falafel, home-prepared"`. Split between two oils, the cap (the line
+less its kept part) and the basis (`discarded in cooking — only the oil the
+fried food absorbs counted`) are M52's. Q12 (iv): a record with no oil
+input and no ruled figure counts nothing — a roll whose mix counts no Pork,
+Beef or Chicken row (FNDDS 2708700, the meatless egg roll, was never read)
+keeps its oil at 0 g.
+
+Reach: exactly 5 rows (+5,107.46 kcal per batch), each 0 g before:
+pakoras-south-asian-spiced-vegetable-fritters|14 → 40.72 g (+359.96 on
+canola 172360, 8.84 kcal a gram; mix 483.06 g),
+lumpiang-shanghai-with-seasoned-vinegar|17 → 99.34 (+894.06; mix 1,303.73
+— the DIPPING SAUCE's 186.85 out), falafel|11 → 85.55 (+769.95; 395.35),
+yeasted-doughnuts|7 → 213.80 (+1,924.20; 1,278.71 — the GLAZE's 368.94
+out), struffoli-neapolitan-honey-balls|7 → 128.81 (+1,159.29; 552.37). Per
+serving: pakoras 136.77 → 226.76, lumpia 506.71 → 655.72, falafel 421.35 →
+613.83, doughnuts 439.26 → 599.61, struffoli 523.27 → 716.48; no status
+moves (pakoras and struffoli stay partial on their unmatched ajwain and
+gram-less candied cherries). Kept: crispy-tempeh-with-sambal-sauce|5
+(tempeh is no product word; its 28 g kept part), turkey-thigh-confit|6
+(confit fries nothing), crispy-thai-eggplant-salad's Fried Shallots oil
+(shallots), corn-fritters|8 and southern-corn-fritters|1 (held
+`ambiguous_medium`), and the 36 rows that already carry an uptake.
+
+Cost (RULE C at the editor caps): M61 lets a product recipe reach M52's
+frying-oil weighing, so two shipped per-row reads are now read once — the
+matches GET reads M52's plan once per request (it re-ran it for every row:
+a dough beside 399 frying oils went from 6.5 s to 636 s; the shipped
+counted-pork fry already took 818 s), and again for every coat or frying
+oil a person confirmed (the confirm's derivation planned its own: with all
+399 oils confirmed the dough's GET took 15.7 s at v59, 35.6 s with M61);
+the request's one plan now answers a confirmed row whose stored row is
+already the confirm's on every field the plan reads, and any other (a line
+edited since, carried) still plans its own. A line's grams read the
+sentences naming the skin once per recipe (`skinDiscarded`, once per line
+before). No row or basis moves; at the caps the dough's compute and GET
+take about 1.0 and 0.7 s (3.7 and 6.5 s at v59), 1.0 s with every oil
+confirmed (15.7 s at v59), the pork fry's 0.9 and 0.7 s (0.8 s confirmed).
+A person's confirm of one of the dough's oils (the PUT) takes about 0.43 s
+(0.17 s at v59, when the dough fried nothing): M61's weighing of its 399
+pans, the pork fry's 0.36 s.
+
+Known gaps (design §7 — the source stands): pakoras at FNDDS's 8.43 % (its
+batter holds 355.5 g of water per 249 g of mix) against the audit's 72.5
+g; the lumpia's egg roll counts a cooked prepared roll at its listed
+weight, and the 608 g wrapper line's grams are a separate question;
+struffoli's ½-inch kneaded pieces read on a fritter BATTER; the yeast
+doughnut's balance is fitted on the corpus dough against a commercial
+GLAZED record (glaze fat taken as 0) — its tracers spread 13.35 %
+(carbohydrate, P3's convention for an uncoated food) / 16.72 % (protein,
+chosen) / ≤ 25.67 % (carbohydrate net of the glaze the record's 22.8 g of
+sugars imply — an upper bound, the dough's sugars a floor); falafel's
+carbohydrate tracer 21.64 % against its protein tracer 13.99 % (SR's home
+recipe is protein-richer than the corpus mix); fried-yuca|2 waits for its
+yuca record; the corpus lost the steps of 269 subsections (Q18), which
+these step readers cannot see.
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 24, main and
+`--reverse-parents` byte-identical; STEP ZERO the v59 tree reproduces the
+v59 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v59
+rows exactly the 5 rows differ, in grams, basis and kcal only; 0 person
+rows; statuses, sections, review buckets (a 0 g `discarded` row and an
+uptake row are both `counted`) and holds identical. Deploy note:
+matcherVersion 59 stales every recipe; a zero-request sweep recomputes the
+library.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

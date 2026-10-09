@@ -218,6 +218,9 @@ Future<Map<String, Object?>> matchesBody(
         line,
         decided,
         resolved: (food: onRow?.food),
+        // One M52 plan per request (v60 closer 3, verify3 D1): a GET
+        // writes no row.
+        m52Memo: memo,
       );
       row = carried ? d.row : withDerived(decided, d.row);
       note = d.note;
@@ -363,7 +366,13 @@ Future<Map<String, Object?>> matchesBody(
               'gram_source': row.gramSource,
               // What the grams were computed against, so a reviewer can
               // sanity-check a volume/piece estimate. Cache-only.
-              'gram_basis': gramBasisFor(db, line, row, recipe: recipe),
+              'gram_basis': gramBasisFor(
+                db,
+                line,
+                row,
+                recipe: recipe,
+                memo: memo,
+              ),
               'status': row.status,
               // Why an `auto` row is held out of the totals although its
               // score passes (`no_nutrients` | `discarded_medium` |

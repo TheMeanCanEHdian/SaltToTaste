@@ -261,6 +261,7 @@ void main() {
   pins();
   bounds();
   foodGated();
+  fryingOils();
   group('RULE C at the loop level, every detector of every line at the caps '
       '(Run 056 S5/S7/S8/S9/O6/O8/S14/O15/S20/S23)', () {
     // Measured at 8113b24 (one readAll pass, the digests' shapes): salt
@@ -955,4 +956,141 @@ class _NoHits extends FixtureProvider {
   _NoHits() : super(pending: pendingSearches);
   @override
   Future<List<FdcCandidate>> search(String q) async => const [];
+}
+
+/// v60 (M61, verifier 2 D1): the matches GET re-ran M52's plan for EVERY
+/// row, each plan weighing every frying oil — O(oils²) at the caps (a dough
+/// M61 fries: 6.4 s at v59, 636 s at v60 r2; the shipped counted-pork fry
+/// 818 s at both); the GET's [ResolverMemo] now holds one plan. One counted
+/// line, 399 frying oils, every sentence a frying one (verifiers 1 and 2's
+/// probe shapes) on 0241 with its recorded answers; the grams each oil
+/// counts. Synthesized, a stated exception: the hostile lines and steps.
+final Map<String, (Recipe Function(), String)> fryShapes = {
+  'dough': (
+    () => capped(
+      loadCorpusRecipe(pork),
+      [
+        '4½ cups (22½ ounces) all-purpose flour',
+        for (var i = 1; i < capLines; i++) '2 quarts vegetable oil for frying',
+      ],
+      List.filled(capSteps, fill('Fry the dough in the hot oil. ', capStep)),
+    ),
+    '0.37',
+  ),
+  'pork-fry': (
+    () => capped(
+      loadCorpusRecipe(pork),
+      [
+        '1 pound ground pork',
+        for (var i = 1; i < capLines; i++) '2 quarts vegetable oil for frying',
+      ],
+      List.filled(capSteps, fill('Fry the pork in the hot oil. ', capStep)),
+    ),
+    '0.08',
+  ),
+};
+
+void fryingOils() {
+  group(
+    'RULE C, the frying oils at the caps (v60 verifier 2 D1)',
+    () {
+      for (final shape in fryShapes.keys) {
+        test('$shape: the compute and the matches GET within their bounds, '
+            'the GET planning M52 once, each under the backstop', () async {
+          final (make, grams) = fryShapes[shape]!;
+          final r = make();
+          final db = wp.tempDb();
+          final provider = FixtureProvider(pending: pendingSearches);
+          wp.saveRecipe(db, r);
+          Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+          for (final (name, run) in <(String, Future<Object?> Function())>[
+            ('compute', () => matchAndCompute(db, provider, stored())),
+            ('GET', () => matchesBody(db, provider, stored())),
+          ]) {
+            stepIndexCounts.clear();
+            reachDecodes = 0;
+            m52PlanRuns = 0;
+            final sw = Stopwatch()..start();
+            await run();
+            final ms = sw.elapsedMilliseconds;
+            final counts = Map.of(stepIndexCounts);
+            expectBounded(
+              r,
+              counts,
+              '$shape $name',
+              copies: counts['indexes'] ?? 1,
+            );
+            if (name == 'GET') {
+              expect(m52PlanRuns, 1, reason: shape);
+            }
+            // Each oil's grams read the skin sentences once per index.
+            expect(
+              counts['memo:skinSentences'],
+              inInclusiveRange(1, counts['indexes'] ?? 1),
+              reason: '$shape $name',
+            );
+            expect(ms, lessThan(backstopMs), reason: '$shape $name: $counts');
+          }
+          final rows = db.ingredientMatchesFor(r.id);
+          expect(rows, hasLength(capLines));
+          expect(
+            {
+              for (final row in rows.skip(1)) row.grams?.toStringAsFixed(2),
+            },
+            {grams},
+          );
+          // verify3 D1 (closer 3): every oil CONFIRMED by a person — the
+          // GET derived each through [_m52OnConfirm]'s own plan (v59 15.9 s,
+          // v60 35.6 s on the dough). Row 1 through the real PUT, which
+          // changes the status alone (the plan's grams kept); the other
+          // 398 written in that state (398 PUTs would take minutes).
+          await applyMatchOverride(db, provider, stored(), 1, {
+            'raw': rows[1].raw,
+            'confirmed': true,
+          });
+          final put = db.ingredientMatchesFor(r.id);
+          expect(
+            sameMatchRow(put[1], rows[1].copyWith(status: 'confirmed')),
+            isTrue,
+            reason: shape,
+          );
+          for (final row in put.skip(2)) {
+            db.upsertIngredientMatch(
+              row.copyWith(status: 'confirmed', derivedSeq: put[1].derivedSeq),
+            );
+          }
+          stepIndexCounts.clear();
+          reachDecodes = 0;
+          m52PlanRuns = 0;
+          final sw = Stopwatch()..start();
+          final body = await matchesBody(db, provider, stored());
+          final ms = sw.elapsedMilliseconds;
+          final counts = Map.of(stepIndexCounts);
+          expectBounded(
+            r,
+            counts,
+            '$shape GET confirmed',
+            copies: counts['indexes'] ?? 1,
+          );
+          expect(m52PlanRuns, 1, reason: '$shape GET confirmed');
+          expect(ms, lessThan(backstopMs), reason: '$shape GET confirmed');
+          final items = (body['items']! as List).cast<Map<String, Object?>>();
+          expect(
+            {
+              for (final item in items.skip(1))
+                (
+                  (item['match']! as Map)['status'],
+                  ((item['match']! as Map)['grams'] as num?)?.toStringAsFixed(
+                    2,
+                  ),
+                ),
+            },
+            {('confirmed', grams)},
+            reason: shape,
+          );
+        });
+      }
+    },
+    skip: skipIfNoCorpus,
+  );
 }

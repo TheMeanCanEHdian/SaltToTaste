@@ -6551,10 +6551,15 @@ bool skinDiscarded(Recipe recipe, IngredientLine line) {
     return true;
   }
   final item = (line.item ?? line.raw).toLowerCase();
-  final skin = [
-    for (final sentence in _stepIndexOf(recipe).allSentences)
-      if (RegExp(r'\bskin\b').hasMatch(sentence)) sentence,
-  ];
+  // The sentences naming the skin, read once per recipe (v60 closer 2: once
+  // per LINE, 399 frying oils' grams read every sentence of the caps, 1.4 s).
+  final skin = _stepIndexOf(recipe).memo(
+    #skinSentences,
+    () => [
+      for (final sentence in _stepIndexOf(recipe).allSentences)
+        if (RegExp(r'\bskin\b').hasMatch(sentence)) sentence,
+    ],
+  );
   return !skin.any(_skinKept.hasMatch) &&
       skin.any((sentence) => _skinOffFor(item, sentence));
 }
@@ -6966,6 +6971,18 @@ class ResolverMemo {
   late final Set<String> computedSections = db
       .sectionKeysWithNutrition()
       .toSet();
+
+  /// [_m52Plan] on each recipe's rows as stored (by position, beside it),
+  /// run ONCE per memo (v60 closer 2, verify2 D1: the matches GET re-ran it
+  /// for every row, O(oils²) at the editor caps; closer 3, verify3 D1: and
+  /// for every confirmed coat or oil row, [_m52OnConfirm]). Only a request
+  /// that writes no row hands its memo to [gramBasisFor] and [derivedFor]'s
+  /// `m52Memo` (the matches GET).
+  final Map<
+    Recipe,
+    ({Map<int, IngredientMatchRow> rows, Map<int, _M52Row> plan})
+  >
+  _m52Plans = Map.identity();
 
   /// Host recipe [id] as stored, decoded at most ONCE per memo (R5).
   Recipe? hostRecipe(String id) =>
@@ -13936,11 +13953,15 @@ Future<List<RankedCandidate>> searchCandidates(
 /// unprepared)" — whoever put the row on that record (the record relation
 /// IS the approximation: a person's confirm or pick of it says so too), but
 /// never on a skipped row, which counts nothing.
+///
+/// [memo]: the matches GET's, so M52's plan is read once per request, not
+/// once per row ([_m52RowOf]); never a memo whose life spans a row write.
 String? gramBasisFor(
   SaltDatabase db,
   IngredientLine line,
   IngredientMatchRow row, {
   Recipe? recipe,
+  ResolverMemo? memo,
 }) {
   // A sub-recipe row on a food weighs the line's eaten "plus" part
   // ([weighedLine]: 0711's "3 tablespoons reserved oil").
@@ -13948,7 +13969,9 @@ String? gramBasisFor(
       ? line
       : weighedLine(recipe, line);
   // v53 (M52): a coat or frying oil the engine counted by [_m52Plan].
-  final m52 = recipe == null ? null : _m52RowOf(db, recipe, line, row);
+  final m52 = recipe == null
+      ? null
+      : _m52RowOf(db, recipe, line, row, memo: memo);
   final m52Flag = m52?.flag == null ? '' : ' · ${m52!.flag}';
   final basis = _gramBasis(db, weighed, row, recipe, m52: m52);
   // A skipped row adds nothing to the totals: no "approximate" or "counted
@@ -15494,6 +15517,10 @@ Future<IngredientMatchRow> unskippedRow(
 /// egg line edited to "1 recipe Easy-Peel Hard-Cooked Eggs" is the 0 g
 /// sub-recipe). The `food` is the food the row stands on (a search hit not
 /// in the food cache, for the totals), or null.
+///
+/// [m52Memo]: the matches GET's, so a confirmed coat or frying oil reads
+/// M52's plan once per request ([_m52OnConfirm]); never a memo whose life
+/// spans a row write (the compute's [references] does).
 Future<
   ({
     IngredientMatchRow row,
@@ -15511,6 +15538,7 @@ derivedFor(
   IngredientMatchRow edited, {
   ({FdcFood? food})? resolved,
   ResolverMemo? references,
+  ResolverMemo? m52Memo,
 }) async {
   final eaten = weighedLine(recipe, line);
   final normalized = normalizeItem(lineItemOf(eaten));
@@ -15725,7 +15753,7 @@ derivedFor(
               medium == DiscardedMedium.fryingOil ||
               // v56 (M58 W): a batter line the coat budget weighs.
               _batterInBowl(recipe).contains(position))
-      ? _m52OnConfirm(db, recipe, placed)
+      ? _m52OnConfirm(db, recipe, placed, memo: m52Memo)
       : null;
   final weight = m52 != null
       ? m52.grams
@@ -16560,6 +16588,55 @@ const _Sr _plantainsSr = (
 );
 const _Sr _tostadaSr = (id: 167525, description: 'Tostada shells, corn');
 
+// v59 (M61 — fried doughs, fritters, rolls and falafel; prep48 design_v2
+// §2 M61, §1 Q12; the owner's rulings R-a … R-e of 2026-10-08 under the
+// 2026-10-07 standing authorization): the FNDDS recipes read at live step
+// L1 (.claude/diag/2026-10-08/live60_raw/), `o` g oil per `r` g of their
+// raw inputs other than the oil and water — the egg roll's 10 g of pork
+// steak (2705875) brought to raw by protein on the lumpia's own raw pork
+// (2514745), its prepared vegetable egg roll at the listed 90 g (no raw
+// pair). No breading row: `b` is never read for these.
+const _Fndds _pakoraFried = (
+  id: 2710066,
+  description: 'Pakora',
+  food: 'pakora batter',
+  b: '0',
+  o: '21',
+  r: '249.18',
+);
+const _Fndds _eggRollFried = (
+  id: 2708702,
+  description: 'Egg roll, with beef and/or pork',
+  food: 'egg roll',
+  b: '0',
+  o: '8',
+  r: '104.99',
+);
+const _Fndds _fritterFried = (
+  id: 2708024,
+  description: 'Fritter, plain',
+  food: 'fritter batter',
+  b: '0',
+  o: '80',
+  r: '343',
+);
+
+/// R-d: FNDDS 2708072 "Doughnut, yeast type" lists this record alone and no
+/// oil, so P3's balance reads it — with the PROTEIN tracer (the record is
+/// glazed: a glaze carries carbohydrate, no protein) against the corpus
+/// dough: 16.72 % (the carbohydrate tracer 13.35, the glaze's sugars netted
+/// at most 25.67 — API.md's gaps).
+const _Sr _doughnutSr = (
+  id: 172758,
+  description:
+      'Doughnuts, yeast-leavened, glazed, enriched (includes honey buns)',
+);
+
+/// R-e: FNDDS 2707408 "Falafel" lists one cup of oil, the frying medium
+/// (41.2 g fat per 100 g), never an uptake — P3's balance with the
+/// carbohydrate tracer on this record: 21.64 % (protein 13.99).
+const _Sr _falafelSr = (id: 172455, description: 'Falafel, home-prepared');
+
 /// A coat or uptake figure (`value`, as the flag prints it) and where it
 /// comes from: a READ FNDDS recipe or a DERIVED SR record; `standIn` when
 /// the food has no record of its own and is read as the source's.
@@ -16731,8 +16808,9 @@ typedef _FriedClass = ({
 });
 
 /// The uptake class of a fried food on [description] whose line reads
-/// [item] (lower-cased) — or null when no record gives one (a dough, a
-/// fritter, falafel, tempeh, yuca: they stay 0). [coatHeld]: the recipe
+/// [item] (lower-cased) — or null when no record gives one (tempeh, yuca:
+/// they stay 0; a dough, fritter or falafel a frying sentence names counts
+/// on its oil by [_friedProductOf], v59). [coatHeld]: the recipe
 /// holds a dredge on it (beef: the read cube steak, else a stand-in);
 /// [shape]: its coat's (shrimp: C3 floured, O3, else battered, O2s);
 /// [chips]: the recipe's potatoes are chips (grated, or "chips").
@@ -16831,6 +16909,52 @@ _FriedClass? _friedClassOf(
     ),
     _ => null,
   };
+}
+
+/// v59 (M61, Q12): the fried PRODUCT the [frying] sentences name when no
+/// counted line is the fried food — the first word of a fixed order (a
+/// named product before a bare batter or dough) — as an uptake class, or
+/// null. [meat]: the raw mix counts a pork, beef or chicken row (a meatless
+/// roll's record, FNDDS 2708700, was never read: no figure, Q12 iv);
+/// [yeast]: it counts a yeast row (a cake dough's record, 2708063, lists no
+/// oil: the plain fritter stands in, Q12 iii).
+_FriedClass? _friedProductOf(
+  List<String> frying, {
+  required bool meat,
+  required bool yeast,
+}) {
+  _M52Figure? roll({bool standIn = true}) =>
+      meat ? _readFig('7.62', _eggRollFried, standIn: standIn) : null;
+  final fritter = _readFig('8.43', _pakoraFried, standIn: true);
+  final cake = _readFig('23.32', _fritterFried, standIn: true);
+  for (final (word, name, figure) in <(String, String, _M52Figure?)>[
+    ('lumpia', 'lumpia', roll()),
+    ('egg rolls?', 'egg roll', roll(standIn: false)),
+    ('spring rolls?', 'spring roll', roll()),
+    ('pakoras?', 'pakora batter', _readFig('8.43', _pakoraFried)),
+    ('fritters?', 'fritter batter', fritter),
+    ('falafel', 'falafel mix', _derivedFig('21.64', _falafelSr)),
+    ('struffoli', 'struffoli dough', cake),
+    (
+      'doughnuts?',
+      'doughnut dough',
+      yeast ? _derivedFig('16.72', _doughnutSr) : cake,
+    ),
+    ('batter', 'batter', fritter),
+    (
+      'dough',
+      'dough',
+      yeast ? _derivedFig('16.72', _doughnutSr, standIn: true) : cake,
+    ),
+  ]) {
+    final re = RegExp('\\b(?:$word)\\b');
+    if (frying.any(re.hasMatch)) {
+      return figure == null
+          ? null
+          : (figure: figure, name: name, word: re, meat: false);
+    }
+  }
+  return null;
 }
 
 /// O1c's basis (p3_read_figures.md): a bone-in skin-on chicken fried in the
@@ -16946,6 +17070,7 @@ Map<int, _M52Row> _m52Plan(
   List<IngredientMatchRow> rows,
   FdcFood? Function(int fdcId, IngredientLine line) food,
 ) {
+  m52PlanRuns++;
   final lines = nutritionLines(recipe);
   final at = <int, IngredientMatchRow>{
     for (final r in rows)
@@ -17161,6 +17286,51 @@ Map<int, _M52Row> _m52Plan(
       fried.add((kind: kind, grams: r.grams!, at: r.position));
     }
   }
+  // The ingredient group holding position [i]: [start, end).
+  (int, int) groupOf(int i) {
+    var start = 0;
+    for (final g in recipe.ingredients) {
+      final end = start + g.items.length;
+      if (i < end) {
+        return (start, end);
+      }
+      start = end;
+    }
+    return (start, start);
+  }
+
+  // v59 (M61, Q12): no counted line is the fried food (O1c's chicken is
+  // one) — a PRODUCT a frying sentence names is ([_friedProductOf]), its
+  // raw mix the counted rows of the oil line's ingredient group before it
+  // (Q12 ii: water carries no record and drops out; a sauce or a glaze
+  // group never joins).
+  if (fried.isEmpty) {
+    final (start, _) = groupOf(fryers.first);
+    final mix = [
+      for (final r in at.values)
+        if (r.position >= start && r.position < fryers.first && counted(r)) r,
+    ];
+    final grams = mix.fold<double>(0, (n, r) => n + r.grams!);
+    final product = grams <= 0
+        ? null
+        : _friedProductOf(
+            [
+              for (final s in all)
+                if (_fryVerb.hasMatch(s) || _intoOil.hasMatch(s)) s,
+            ],
+            meat: mix.any(
+              (r) => const ['Pork,', 'Beef,', 'Chicken,'].any(
+                r.description!.startsWith,
+              ),
+            ),
+            yeast: mix.any(
+              (r) => r.description!.toLowerCase().contains('yeast'),
+            ),
+          );
+    if (product != null) {
+      fried.add((kind: product, grams: grams, at: fryers.first));
+    }
+  }
   if (fried.isEmpty) {
     return plan;
   }
@@ -17182,15 +17352,7 @@ Map<int, _M52Row> _m52Plan(
     if (read?.id != _cauliflowerFried.id) {
       return null;
     }
-    var start = 0;
-    var end = 0;
-    for (final g in recipe.ingredients) {
-      end = start + g.items.length;
-      if (f.at < end) {
-        break;
-      }
-      start = end;
-    }
+    final (start, end) = groupOf(f.at);
     var c = 0.0;
     for (final r in at.values) {
       if (r.position < start || r.position >= end || r.position == f.at) {
@@ -17267,13 +17429,15 @@ Map<int, _M52Row> _m52Plan(
 /// [_m52Plan]'s answer for [row] of [recipe] as stored — null unless its
 /// line is a coat, a batter left in the bowl (v56, M58 W) or a frying
 /// oil, the row one M52 weighs ([_m52Weighs]) counted with these grams (the
-/// flag reads only grams it wrote).
+/// flag reads only grams it wrote). The plan is [memo]'s when one is given
+/// ([ResolverMemo._m52Plans]: one per request), else run for this row.
 _M52Row? _m52RowOf(
   SaltDatabase db,
   Recipe recipe,
   IngredientLine line,
-  IngredientMatchRow row,
-) {
+  IngredientMatchRow row, {
+  ResolverMemo? memo,
+}) {
   if (!_m52Weighs(row) || row.hold != null || row.grams == null) {
     return null;
   }
@@ -17287,14 +17451,36 @@ _M52Row? _m52RowOf(
       !_batterInBowl(recipe).contains(row.position)) {
     return null;
   }
-  final plan = _m52Plan(
-    db,
-    recipe,
-    db.ingredientMatchesFor(recipe.id),
-    (id, l) => knownFood(db, id, line: l),
-  )[row.position];
-  return plan == null || (plan.grams - row.grams!).abs() > 0.05 ? null : plan;
+  final at = (memo == null
+      ? _m52Plan(
+          db,
+          recipe,
+          db.ingredientMatchesFor(recipe.id),
+          (id, l) => knownFood(db, id, line: l),
+        )
+      : _m52Stored(db, recipe, memo).plan)[row.position];
+  return at == null || (at.grams - row.grams!).abs() > 0.05 ? null : at;
 }
+
+/// [_m52Plan] on [recipe]'s rows as stored, and those rows by position —
+/// once per [memo] ([ResolverMemo._m52Plans]; a memo whose life spans no
+/// row write).
+({Map<int, IngredientMatchRow> rows, Map<int, _M52Row> plan}) _m52Stored(
+  SaltDatabase db,
+  Recipe recipe,
+  ResolverMemo memo,
+) => memo._m52Plans[recipe] ??= () {
+  final rows = db.ingredientMatchesFor(recipe.id);
+  return (
+    rows: {for (final r in rows) r.position: r},
+    plan: _m52Plan(db, recipe, rows, (id, l) => knownFood(db, id, line: l)),
+  );
+}();
+
+/// How many times [_m52Plan] ran (the cost pin, v60 closer 2: the matches
+/// GET plans a recipe once, not once per row).
+@visibleForTesting
+int m52PlanRuns = 0;
 
 /// A row M52 weighs: the engine's (`auto`), or a person's CONFIRM with no
 /// grams typed — "this food, the engine's CURRENT weight" (RULE A), so a
@@ -17308,18 +17494,36 @@ bool _m52Weighs(IngredientMatchRow r) =>
 /// What a person's CONFIRM of [placed] — a coat or frying-oil line, no
 /// grams typed — resolves to ([derivedFor]): [_m52Plan] on the stored rows
 /// with [placed] as the confirm leaves it (no hold, `discarded`); null when
-/// M52 counts nothing on the line.
+/// M52 counts nothing on the line. With [memo] (the matches GET's — v60
+/// closer 3, verify3 D1: one plan per CONFIRMED row, O(oils²) at the caps),
+/// a stored row at [placed]'s position that already IS that row on every
+/// field [_m52Plan] reads ([sameMatchRow]; the position by the lookup)
+/// makes the row list the stored one: the request's one plan answers. Any
+/// other (a PUT's confirm, a shifted layout) plans its own list.
 _M52Row? _m52OnConfirm(
   SaltDatabase db,
   Recipe recipe,
-  IngredientMatchRow placed,
-) => _m52Plan(
-  db,
-  recipe,
-  [
-    for (final r in db.ingredientMatchesFor(recipe.id))
-      if (r.position != placed.position) r,
-    placed.copyWith(gramSource: GramSource.discarded.name, clearHold: true),
-  ],
-  (id, l) => knownFood(db, id, line: l),
-)[placed.position];
+  IngredientMatchRow placed, {
+  ResolverMemo? memo,
+}) {
+  final confirmed = placed.copyWith(
+    gramSource: GramSource.discarded.name,
+    clearHold: true,
+  );
+  if (memo != null) {
+    final stored = _m52Stored(db, recipe, memo);
+    if (sameMatchRow(stored.rows[placed.position], confirmed)) {
+      return stored.plan[placed.position];
+    }
+  }
+  return _m52Plan(
+    db,
+    recipe,
+    [
+      for (final r in db.ingredientMatchesFor(recipe.id))
+        if (r.position != placed.position) r,
+      confirmed,
+    ],
+    (id, l) => knownFood(db, id, line: l),
+  )[placed.position];
+}

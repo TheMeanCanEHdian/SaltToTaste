@@ -468,7 +468,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M59 batch, v58): matcherVersion 57 (was 56).
     // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
-    expect(matcherVersion, 58);
+    // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
+    expect(matcherVersion, 59);
   });
 
   group('matcher v57 (batch M58)', skip: skipIfNoCorpus, () {
