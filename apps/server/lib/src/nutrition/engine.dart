@@ -13347,10 +13347,20 @@ List<RankedCandidate> leanAndFatSibling(
 /// deepest, 1/8"; origin and frenching differ too — design §7, F11), its
 /// AH-102 yield keyed in [ah102Meats]. Q7: "fat caps removed" (ultimate-
 /// charcoal-grilled-steaks|0) on R1c's 2727572 → 171751 "top loin steak,
-/// boneless, lip off, …, trimmed to 0" fat, choice, raw". Brisket pairs are
-/// NOT here (Q2 (ii) deferred).
+/// boneless, lip off, …, trimmed to 0" fat, choice, raw".
+/// v66 (batch M68 R-A; prep49 design_v2 §2 M68, the owner's Q1 (a) for the
+/// WHOLE brisket, 2026-10-09): the whole brisket's lean-only 168607 →
+/// 168664 "Beef, brisket, whole, separable lean and fat, trimmed to 1/8"
+/// fat, all grades, raw" (barbecued-whole-beef-brisket|10, a hit in the
+/// line's own 'whole beef brisket' answer; ⅛" is the deepest brisket trim
+/// USDA publishes). The FLAT (168743, braised-brisket-with-pomegranate|0)
+/// is NOT here: USDA's flat pairs render 41–51 % of the fat and no flat ⅛"
+/// braised record is cached — it waits for L49 ([trimStandInFlagOf]).
 final List<(RegExp, Map<int, int>)> trimDepthRecords = [
-  (RegExp('fat trimmed to (⅛|¼)( to (⅛|¼))? inch'), {172641: 174414}),
+  (
+    RegExp('fat trimmed to (⅛|¼)( to (⅛|¼))? inch'),
+    {172641: 174414, 168607: 168664},
+  ),
   (RegExp('fat caps? removed'), {2727572: 171751}),
 ];
 
@@ -14476,7 +14486,11 @@ String? gramBasisFor(
     description: row.description,
   );
   // v54 (M56 R1d, Q2 (i)): the printed trim the 0-inch flat stands in for.
-  final standIn = trimStandInFlagOf(weighed.raw, row.fdcId);
+  final standIn = trimStandInFlagOf(
+    weighed.raw,
+    row.fdcId,
+    title: recipe?.title,
+  );
   final stood = standIn == null ? '' : ' · $standIn';
   return approximation
       ? '$basis · approximation (counted as ${row.description})'
@@ -14498,20 +14512,44 @@ String? gramBasisFor(
 /// and a rank-as onto a top sirloin STEAK would read another subprimal.
 /// v63 (M65 F2, the owner's Q14): ricotta salata on SR 173420 "Cheese,
 /// feta" states the composition it borrows — FDC has no ricotta salata.
-String? trimStandInFlagOf(String raw, int? fdcId) => switch (fdcId) {
-  168743 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
-    'approximate (the printed ¼-inch fat cap renders and is skimmed '
-        '(step 5); counted as the 0-inch trimmed flat)',
-  173408 when !RegExp(r'\blean\b').hasMatch(raw.toLowerCase()) =>
-    'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
-        "petite roast (search 2026-10-08); the roast's separable fat not "
-        'counted)',
-  173420 when raw.toLowerCase().contains('ricotta salata') =>
-    'approximate (FDC holds no ricotta salata — a stand-in by class; '
-        "feta's sodium (1,139 mg per 100 g) and fat (21.49 g per 100 g) "
-        'counted)',
-  _ => null,
-};
+/// v66 (batch M68; the owner's Q1 (a) and Q2 (c), 2026-10-09): the whole
+/// brisket's ¼-inch cap on 168664 ([trimDepthRecords]) says it is counted
+/// at ⅛" with its rendered fat not deducted (USDA's braised pair 168664 →
+/// 168665 keeps 93.3 % of the energy by the protein tracer); a fresh flat
+/// 168743 in a recipe [title]d "corned beef" (0090, 0091 — both cure and
+/// rinse it) says the cure's sodium is not counted — CP9's "rinsed cure 0 g"
+/// and the 2026-09-27 "brine co-solutes zero" kept literal; the corned
+/// record 170199 is not ranked (R-B not built).
+/// ponytail: the title is the cure's only read (no step read); a cured
+/// brisket in an untitled recipe is missed — none in the corpus.
+String? trimStandInFlagOf(String raw, int? fdcId, {String? title}) =>
+    switch (fdcId) {
+      168743 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
+        'approximate (the printed ¼-inch fat cap renders and is skimmed '
+            '(step 5); counted as the 0-inch trimmed flat)',
+      168743
+          when title != null &&
+              RegExp(
+                r'\bcorned beef\b',
+                caseSensitive: false,
+              ).hasMatch(title) =>
+        "approximate (the steps cure and rinse the brisket — the cure's "
+            'sodium is not counted; a rinsed cure counts 0 g, CP9)',
+      168664 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
+        "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch "
+            'trim, the deepest it publishes for brisket; the fat that renders '
+            "into the separator is not deducted — USDA's own braised pair "
+            '168664 → 168665 keeps 93 % of the energy)',
+      173408 when !RegExp(r'\blean\b').hasMatch(raw.toLowerCase()) =>
+        'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
+            "petite roast (search 2026-10-08); the roast's separable fat not "
+            'counted)',
+      173420 when raw.toLowerCase().contains('ricotta salata') =>
+        'approximate (FDC holds no ricotta salata — a stand-in by class; '
+            "feta's sodium (1,139 mg per 100 g) and fat (21.49 g per 100 g) "
+            'counted)',
+      _ => null,
+    };
 
 String? _gramBasis(
   SaltDatabase db,

@@ -3608,6 +3608,21 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v67 (batch M68): the whole brisket at its
+  printed trim; the two home-corned briskets flagged (prep49 §2 M68;
+  Q1 whole (a); the owner's Q2 (c); shipped alone).** A whole brisket
+  printed "fat trimmed to ¼ inch" now reads USDA's ⅛-inch whole-brisket
+  record, the deepest trim it publishes for the cut (one row, +4,354
+  kcal; the fat that renders into the separator is not deducted —
+  USDA's own braised pair keeps 93 % of the energy, stated in the flag).
+  The two home-corned briskets stay on the fresh flat and carry a flag
+  that the steps cure and rinse the brisket and the cure's sodium is not
+  counted, the owner's ruling keeping CP9's rinsed cure 0 g and the
+  brine co-solute ruling literal; the corned-beef record's higher
+  figure is mostly its fat level and was not adopted. The braised flat
+  (the pomegranate brisket) keeps its 0-inch record until the live step
+  reads the matching braised pair. Three rows, one in energy.
+
 - **2026-10-09 — matcher v66 (batch M67): fried doughs — the doughnut's
   printed cut share, the struffoli uptake on the cake doughnut's
   composition (prep49 §2 M67; Q9 A2, Q10 a; built under the standing

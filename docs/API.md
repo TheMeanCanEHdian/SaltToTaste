@@ -3504,6 +3504,8 @@ record a cached answer already holds; grams never move.
   `approximate (the printed ¼-inch fat cap renders and is skimmed (step 5);
   counted as the 0-inch trimmed flat)` (Q2 (i), F2) — the 1/8" record
   (173128) is not read for it (Q2 (ii), deferred to a rendered-fat item).
+  (Since matcher v67 the WHOLE brisket's ¼-inch cap reads its own ⅛"
+  record, 168664 — batch M68 below; the flat waits for L49.)
 - **R2 — the lean-and-fat sibling** (`leanAndFatSibling`, after the
   fresh-over-cured move, so after R1): a top whose description says
   "separable lean only", on a line that does not say `lean`, "trimmed of
@@ -3521,7 +3523,8 @@ record a cached answer already holds; grams never move.
   172641's AH-102 item 1364 row (`ah102Meats[174414]`, verbatim); "fat
   caps? removed" on 2727572 → 171751 *top loin steak, boneless, lip off,
   lean and fat, trimmed to 0" fat, choice, raw* (Q7; keyed on 2727572, so it
-  lives only under R1c, F12). Brisket pairs are not here. At M56 174414
+  lives only under R1c, F12). Brisket pairs are not here (since matcher
+  v67 the whole brisket's is: 168607 → 168664, batch M68). At M56 174414
   was a search hit only (snapshot 23 held no detail of it), so the rack read
   the AH-102 row ON THE HIT (`ah102MeatsOnHit`), assuming the detail
   publishes no refuse portion. Live step L cached the detail (snapshot 24):
@@ -3538,8 +3541,8 @@ Unreached by design: steak-au-poivre|4 and steak-diane|0 (already
 on lean-only 169441 (no lean-and-fat shank cached; their AH-102 228 flag
 says so), the three top-sirloin roasts on lean-only 173408 (no sibling
 cached; Q6's live search first), grilled-rack-of-lamb|5 (no printed depth),
-the whole brisket on 168607, the oxtails ("¼ inch or less") and the pork
-rib roast ("¼-inch thickness").
+the whole brisket on 168607 (on 168664 since matcher v67, M68), the
+oxtails ("¼ inch or less") and the pork rib roast ("¼-inch thickness").
 
 Known USDA-vs-judgment gaps (design §7 — the source stands, listed, never
 overridden): rendered and skimmed fat on long cooks (the brisket's ¼-inch
@@ -4614,6 +4617,78 @@ pan ("lift struffoli from saucepan" with a slotted spoon: |8 counted whole);
 the yeast doughnut's own spread (13.35 / 16.72 / ≤ 25.67 %) is unchanged —
 A2 moves the mass it applies to. Deploy note: matcherVersion 65 stales
 every recipe; one zero-request sweep settles it.
+
+**Since matcher v67 (batch M68 — the whole brisket at its printed trim, the
+home-corned briskets flag-only; matcherVersion 66; prep49 design_v2 §2 M68,
+the owner's Q1 (a) for the whole cut and Q2 (c) for both corned recipes,
+2026-10-09; zero requests; records and titles only — no step is read, so no
+reach here is pre-Q18; shipped alone, §0.5).** Two record rulings:
+
+(R-A, Q1 (a)) **A whole brisket printing "fat trimmed to ¼ inch" counts on
+USDA's ⅛-inch record.** `trimDepthRecords`' trim phrase gains `168607 →
+168664`: the whole brisket's lean-only SR 168607 (the top of the line's own
+`whole beef brisket` answer) moves to SR 168664 *Beef, brisket, whole,
+separable lean and fat, trimmed to 1/8" fat, all grades, raw* (253 kcal, P
+18.4 g, F 19.1 g per 100 g), a hit in the same answer, at the top's
+confidence; the line is weight-written, so it prices on the hit (calls 0)
+and its grams never move. USDA publishes brisket at 0" and ⅛" only; ⅛" is
+the deepest at or below the printed ¼". Flag (`trimStandInFlagOf`, keyed on
+168664 AND the printed phrase): `approximate (the printed ¼-inch fat cap
+counted at USDA's ⅛-inch trim, the deepest it publishes for brisket; the
+fat that renders into the separator is not deducted — USDA's own braised
+pair 168664 → 168665 keeps 93 % of the energy)`. The pair by the protein
+tracer on the cached hits (M61 R-d's method): yield 18.4 / 25.8 = 0.713, fat
+kept 0.713 × 24.5 / 19.1 = 91.5 %, energy kept 0.713 × 331 / 253 = 93.3 %.
+USDA's FLAT pairs say otherwise — 168743 → 169440 (0", choice) keeps 58.8 %
+of the fat and 82.0 % of the energy, 169570 → 169555 (0", select) 49.1 /
+79.5 %, the lean-only 168657 → 170601 91.7 / 101.1 % — so the sources split
+by CUT and the ruling is the whole cut's only: the FLAT (braised-brisket-
+with-pomegranate|0, "flat cut, fat trimmed to ¼ inch") keeps R1d's 0" flat
+168743 and its shipped flag until L49 reads a flat ⅛" braised record (none
+is cached), to be decided in M70.
+
+(Q2 (c)) **A home-corned brisket keeps the fresh flat and says the cure's
+sodium is not counted.** A fresh flat 168743 in a recipe whose TITLE matches
+`\bcorned beef\b` (case-insensitive; exactly two corpus titles — 0090
+"New England–Style Home-Corned Beef and Cabbage", 0091 "Home-Corned Beef
+with Vegetables") gains, after the ¼-inch cap's arm, `approximate (the
+steps cure and rinse the brisket — the cure's sodium is not counted; a
+rinsed cure counts 0 g, CP9)` — basis only, 0 kcal; the cure's salt, sugar,
+curing salt and brine spices stay `discarded` 0 g. Why: both recipes RINSE
+the cure ("Remove brisket from brine, rinse"; "Rinse brisket and pat it
+dry"), and the owner kept CP9's "rinsed cure 0 g" and the 2026-09-27 "brine
+co-solutes zero" literal. SR 170199 *Beef, cured, corned beef, brisket,
+raw* (198 kcal, Na 1,220 mg per 100 g) is NOT ranked (design R-B, not
+built): its gain over the fresh flat is mostly its FAT LEVEL — a commercial
+lot at fat : protein 1.01 against the shipped flat's 0.49, its protein
+diluted by the pumped brine (14.7 against 20.2 g) — not the cure; and
+170199 → 170200 (cooked) is not mass-balanced (fat kept 103 % by the
+protein tracer). The title is the cure's only read: a cured brisket in a
+recipe not titled so is missed (none in the corpus).
+
+Reach (rp43 + bucket_v12 on fresh copies of snapshot 25, main and
+`--reverse-parents` byte-identical; STEP ZERO the v66 tree reproduces the
+v66 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143
+(unchanged); vs the v66 rows exactly 3 rows, all `auto`, 0 person rows —
+barbecued-whole-beef-brisket-with-spicy-chili-rub|10 168607 → 168664,
+4,535.92 g, 7,121.39 → **11,475.88 kcal (+4,354.48)**, per serving (18)
+498.26 → 740.17; home-corned-beef-with-vegetables|0 (2,154.56 g, 3,641.21
+kcal) and new-englandstyle-home-corned-beef-and-cabbage|6 (2,041.16 g,
+3,449.57 kcal) in their basis only. Statuses 1,029 / 169, holds and buckets
+unchanged. Unreached by design: the pomegranate flat (above),
+onion-braised-beef-brisket|0 (no depth printed, no corned title: 168743
+unflagged), the rack (174414 at 1,241.71 g / 2,942.85 kcal) and
+grilled-rack-of-lamb|5 (172641).
+
+Known gaps (the source stands): the whole brisket's rendered fat — its own
+pair's 93.3 % would deduct 768.29 kcal (design_v2's −766.59 rounds the
+share to 0.9332), a new cooked-loss deduction not proposed for one row (Q1
+(b)); 170199 is brine-pumped (its protein at the fresh weight 27 % low), one
+reason it is not read; 0090's rub spices (0090|1–|5: pepper, thyme,
+allspice, paprika, bay — 52.49 kcal) rinse off with the cure but are
+counted; both recipes' cure sodium is uncounted (flagged, Q2 (c)); the
+pomegranate flat waits for L49. Deploy note: matcherVersion 66 stales every
+recipe; one zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

@@ -472,14 +472,17 @@ const List<(String, int, String, int, String, String, String)> _unchanged = [
     '1818.69',
   ),
   // Brisket pairs are NOT in R3 (Q2 (ii) deferred): the whole brisket stays.
+  // RE-PIN (M68 batch, v67): 168664 at 11,475.88 kcal (was 168607, 7,121.39)
+  // — the whole brisket's pair joined R3 (Q1 (a)); grams and confidence
+  // unchanged.
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
     10,
     '1 (9- to 11-pound) whole beef brisket, fat trimmed to ¼ inch',
-    168607,
+    168664,
     '0.886667',
     '4535.92',
-    '7121.39',
+    '11475.88',
   ),
   // "¼ inch or less" and "¼-inch thickness" on records with no pair.
   (
@@ -545,7 +548,8 @@ void main() {
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
     // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
-    expect(matcherVersion, 65);
+    // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
+    expect(matcherVersion, 66);
   });
 
   test('R1: each rank-as item reads its named cached answer under the '
@@ -584,9 +588,12 @@ void main() {
 
   test('R3: the trim pairs are keyed on the record (Q7 lives only on '
       '2727572, F12) and the rack keeps its AH-102 row on 174414', () {
+    // RE-PIN (M68 batch, v67): + 168607: 168664 (was {172641: 174414,
+    // 2727572: 171751}) — the whole brisket's ¼-inch cap reads its ⅛"
+    // record (Q1 (a)); the flat 168743 is still no key.
     expect(
       {for (final (_, pairs) in trimDepthRecords) ...pairs},
-      {172641: 174414, 2727572: 171751},
+      {172641: 174414, 168607: 168664, 2727572: 171751},
     );
     expect(ah102Meats[174414], ah102Meats[172641]);
     // RE-PIN (M63 batch, v62): `ah102MeatsOnHit` (was {174414}, the rack
@@ -730,22 +737,38 @@ void main() {
         'from the printed weight (4–5 lb, the midpoint) · $_pomegranateFlag',
       );
       // R1d's 0" default (design Q2 (i)) when no depth is printed: unflagged.
-      for (final (file, position) in [
-        ('0090-new-englandstyle-home-corned-beef-and-cabbage.yaml', 6),
-        ('0091-home-corned-beef-with-vegetables.yaml', 0),
-        ('0223-onion-braised-beef-brisket.yaml', 0),
-      ]) {
-        expect(basis(file, position), isNot(contains('approximate')));
-      }
+      // RE-PIN (M68 batch, v67): 0090|6 and 0091|0 (was unflagged) carry
+      // the corned-title flag (Q2 (c)); 0223|0 stays unflagged.
+      expect(
+        basis('0223-onion-braised-beef-brisket.yaml', 0),
+        isNot(contains('approximate')),
+      );
+      const corned =
+          "approximate (the steps cure and rinse the brisket — the cure's "
+          'sodium is not counted; a rinsed cure counts 0 g, CP9)';
+      expect(
+        basis('0090-new-englandstyle-home-corned-beef-and-cabbage.yaml', 6),
+        'from the printed weight (4–5 lb, the midpoint) · $corned',
+      );
+      expect(
+        basis('0091-home-corned-beef-with-vegetables.yaml', 0),
+        'from the printed weight (4½–5 lb, the midpoint) · $corned',
+      );
       // The flag is keyed on the stand-in record (168743) AND the phrase
       // (V3-D1): two library lines print the phrase on other records and
       // keep their v54 bases byte for byte.
+      // RE-PIN (M68 batch, v67): + the 168664 flag (was the bare basis) —
+      // the whole brisket now on its ⅛" record (Q1 (a)).
       expect(
         basis(
           '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
           10,
         ),
-        'from the printed weight (9–11 lb, the midpoint)',
+        'from the printed weight (9–11 lb, the midpoint) · approximate (the '
+        "printed ¼-inch fat cap counted at USDA's ⅛-inch trim, the deepest it "
+        'publishes for brisket; the fat that renders into the separator is not '
+        "deducted — USDA's own braised pair 168664 → 168665 keeps 93 % of the "
+        'energy)',
       );
       expect(
         basis('1172-multicooker-hawaiian-oxtail-soup.yaml', 3),

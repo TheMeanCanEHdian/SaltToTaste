@@ -2729,7 +2729,8 @@ void main() {
     // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
     // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
-    expect(matcherVersion, 65);
+    // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
+    expect(matcherVersion, 66);
   });
 
   test('the energy split on the raw FDC details (§1.1 (A), P-E): ethanol '

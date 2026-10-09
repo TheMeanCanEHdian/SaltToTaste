@@ -890,7 +890,17 @@ const Map<String, String> _synonyms = {
 /// (struffoli) takes 14.15 %, P3's carbohydrate balance on SR 174990
 /// "Doughnuts, cake-type, plain (includes unsugared, old-fashioned)", the
 /// one input FNDDS 2708063 lists, for 23.32 % on the fritter batter.
-const int matcherVersion = 65;
+///
+/// v66 (the Matcher v67 commit, batch M68 — the whole brisket at its printed
+/// trim, the home-corned briskets flag-only; prep49 design_v2 §2 M68, the
+/// owner's Q1 (a) for the whole cut and Q2 (c) for both corned recipes,
+/// 2026-10-09; zero requests): a whole brisket printing "fat trimmed to ¼
+/// inch" moves off the lean-only 168607 to SR 168664 (whole, ⅛", lean and
+/// fat — engine `trimDepthRecords`), flagged at ⅛" with its rendered fat
+/// not deducted; a fresh flat in a recipe titled "corned beef" says the
+/// rinsed cure's sodium is not counted (engine `trimStandInFlagOf`). The
+/// flat's ¼-inch cap keeps the 0" record until L49.
+const int matcherVersion = 66;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
