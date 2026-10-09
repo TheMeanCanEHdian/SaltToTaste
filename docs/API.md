@@ -916,7 +916,8 @@ while a compute is in flight so a reopened page can re-attach. Cached and rate-l
 (~900 requests/hour shared budget); user decisions on unchanged lines
 survive recomputes. Water/ice lines (since matcher v21 "filtered water"
 too) are matched locally for free, as are equipment lines (since v21 a
-banana leaf: the cochinita pibil's wrapper, not eaten) and, since matcher
+banana leaf: the cochinita pibil's wrapper, not eaten; since matcher v64
+dried corn husks, the tamales' wrapper) and, since matcher
 v37, a line the corpus split off the one above ("(about ¾ cup)", Hearty
 Minestrone; "lengthwise, seeded, and sliced thin on bias", Bun Cha — a
 line wholly in parentheses with nothing searchable, or one with no amount
@@ -929,7 +930,8 @@ exact items, `liquid smoke`, `red food coloring`, `green food coloring`,
 `ball pickle crisp`, `angostura bitters`, `vanilla bean`, the library's
 14 such lines (liquid smoke ×5, red and green food coloring, Ball Pickle
 Crisp, Angostura bitters, vanilla bean ×5; FDC has no record of any, and
-each sat on a wrong one: "Pectin, liquid", "Soup, bean", "Cheese ball")
+each sat on a wrong one: "Pectin, liquid", "Soup, bean", "Cheese ball";
+since matcher v64 `gel food dye` too, the rainbow cake's)
 — confirmed on no food as "Flavouring — no nutrients, counts as zero", 0
 g unmeasured, basis `"flavouring, no nutrients — counted as 0 g"` (an
 engine rule row). A person's row on such a line stands, and a line held
@@ -2767,13 +2769,15 @@ cauliflower and canned-chickpea volume siblings (above). Left DRY, with
 the portions FDC published: powdered pectin (168821: `package (1.75 oz)`
 50 g only), fennel fronds (FNDDS 2709779: `1 fennel bulb` 235 g, `Quantity
 not specified` 25 g), sour cherries (167769 publishes `cup` 168 g, but no
-reader yet skips the "(24-ounce)" jar weight read first), seed gums
+reader yet skips the "(24-ounce)" jar weight read first — enabled since
+matcher v64, M65 F5, below), seed gums
 (169045: `oz` only), parsnips (170417: `cup slices` 133 g, no piece),
 kiwis (FNDDS 2709239: `1 fruit` 75 g, no `large` — counted since matcher
 v49 at that 75 g, below), malted milk powder
 (173220: `serving (3 heaping tsp or 1 envelope)` 21 g, no level
 tablespoon — the line stays on the prepared drink 174867), seaweed (FNDDS
-2709988: `1 cup` 15 g, `1 strip` 0.5 g, no sheet), raw cashews (170162:
+2709988: `1 cup` 15 g, `1 strip` 0.5 g, no sheet; since matcher v64, M65
+F7, the strained kombu line shows it at 0 g), raw cashews (170162:
 `oz` only), and red leaf lettuce (168431, not fetched: no rank-as reaches
 it). FDC has no record of three foods, whose lines stay a person's: the
 `candied ginger` search answers tea, pickled, raw and ground ginger,
@@ -4302,6 +4306,75 @@ rounds to ⅛ cup (±28 g, ±252 kcal on the section); guay tiew's galangal is
 no strained head (weighed on ginger, kept: 16.00 g, 12.80 kcal) and its
 makrut lime leaves stay below the gate. Deploy note: matcherVersion 62
 stales every recipe; one zero-request sweep settles it.
+
+**Since matcher v64 (batch M65 — matcher landings with the record already
+cached: jarred Morellos, corn husks, kombu, gel food dye, ricotta salata on
+feta; matcherVersion 63; prep49 design_v2 §2 M65, the owner's Q14 under the
+standing authorization; zero requests; no step is read).** Five landings, each
+on a record snapshot 25 caches with its detail:
+
+(F5) **A volume line bought "from N (W-ounce) jars|cans" weighs its
+volume** — the paren is the container bought, not the measure: a line whose
+FIRST amount is a volume and whose text reads `from N (W-ounce) jar(s)|can(s)`
+skips the printed-weight read (grams `_fromContainers`). With it v38's dry
+R05 is enabled: `jarred morello cherries` (reads `dried sour cherries`) →
+`cherries sour canned water pack drained`, SR 167769 "Cherries, sour, canned,
+water pack, drained" (42 kcal; `cup` 168 g), 1.0, a flagged approximation
+(the pack is not printed). sour-cherry-cobbler|7 "8 cups jarred Morello
+cherries from 4 (24-ounce) jars, drained, 2 cups juice reserved": 680.39 g
+(one jar) on 2709231 "Cherries, raw" at 0.3767, `check` → 1,344.00 g (8 ×
+168), `8 cup · USDA portion · approximation (counted as Cherries, sour,
+canned, water pack, drained)`, +564.48 kcal. The only corpus line with those
+words; "1½ cups (12-ounce bottle or can) dark beer or stout", "2 cups plus 2
+tablespoons crushed tomatoes (from one 28-ounce can)" and "1 cup oil-packed
+sun-dried tomatoes (one 8½-ounce jar)" still read their container (a gap,
+below).
+
+(F4) **Dried corn husks are a wrapper** (`isNonFood`: `corn husk`, the
+banana-leaf class): tamales|3 "20 large dried corn husks" (167631 "Corn,
+dried (Navajo)" at 0.3167, `check`) → confirmed on no food as "Equipment —
+not food, counts as zero", 0 kcal. The library's other husk lines are food
+(`ears corn`, tomatillos, `powdered psyllium husk`).
+
+(F7) **The kombu line shows FNDDS 2709988 "Seaweed, dried"** (`square piece
+kombu` reads `dried mint` → `seaweed dried`, 0.99; flagged — FNDDS's seaweed
+is not kelp-specific): nikujaga|1 stays 0 g `discarded` (strained), its basis
+adding `· approximation (counted as Seaweed, dried)`; it showed "Cereal, oat
+squares" (0.1317). 0 kcal.
+
+(F8) **Gel food dye is a zero flavouring** (`gel food dye` joins the
+explicit list): rainbow-cake|8 (amount-less; "Fast foods, coleslaw" at 0.033)
+→ "Flavouring — no nutrients, counts as zero", 0 kcal.
+
+(F2, Q14) **Ricotta salata counts as SR 173420 "Cheese, feta"** (`ricotta
+salata` reads `feta cheese` → `cheese feta`, 1.0): FDC holds no ricotta
+salata in the three data types (its own answer: fresh ricottas only, 746766
+at 0.195, below the gate); a stand-in by class (salted, firm, crumbled or
+shaved), flagged with the composition it borrows — `from 4 ounce ·
+approximation (counted as Cheese, feta) · approximate (FDC holds no ricotta
+salata — a stand-in by class; feta's sodium (1,139 mg per 100 g) and fat
+(21.49 g per 100 g) counted)` (`trimStandInFlagOf`, on 173420 only where the
+line names ricotta salata; a feta line says nothing). brussels-sprout-salad-
+with-warm-mustard-vinaigrette|10 113.40 g +300.50 (the stored 4 oz, 113.398
+g × 2.65); pasta-alla-norma|9 85.05 g +225.38; both `check` → counted.
+
+Reach (replay of snapshot 25 against the v63 rows): exactly 6 rows, all
+`auto` before, 0 person rows; +1,090.36 kcal. Four recipes complete
+(partial → complete): sour cherry cobbler 250.28 → 297.32 kcal a serving,
+brussels sprout salad 240.27 → 290.36, pasta alla norma 443.35 → 480.91,
+tamales (719.39, status only); nikujaga stays partial (its katsuobushi is
+unmatched; the kombu row already counted at 0 g); the rainbow cake was
+already complete. Statuses 1,022 / 176 → 1,026 / 172.
+
+Known gaps (the source stands): the cobbler's "2 cups juice reserved" is
+stirred into the filling ("Stir in the reserved cherry juice and wine") and
+eaten, and is not counted — no sour-cherry juice record is cached and the
+jar's pack (water or syrup) is not printed; feta's sodium and fat stand in for
+ricotta salata's, which FDC does not publish; the three other volume lines
+reading a container weight (the dark beer's 12-ounce bottle 340.19 g, the
+crushed tomatoes' 28-ounce can 793.79 g for 2⅛ cups, the sun-dried
+tomatoes' 8½-ounce jar 240.97 g) are outside F5's words. Deploy note:
+matcherVersion 63 stales every recipe; one zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

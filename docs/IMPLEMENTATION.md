@@ -3608,6 +3608,21 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v64 (batch M65): landings on records the cache
+  already held — jarred Morello cherries, corn husks, kombu, gel food dye,
+  ricotta salata on feta (prep49 §2 M65; Q14; built under the standing
+  authorization).** A volume line whose tail reads "from N (W-ounce) jars"
+  now weighs its volume rather than the jars' printed weight, which lets
+  the long-commented Morello landing ship (the cobbler's cherries 680 →
+  1,344 g on the drained sour-cherry record, +564 kcal, the recipe
+  complete); corn husks join the non-food class (tamales complete); kombu
+  reads the dried-seaweed record, still strained to 0 g; gel food dye is a
+  zero-nutrient flavouring; ricotta salata, which FDC does not hold, reads
+  feta flagged with feta's sodium and fat (two recipes complete, +526
+  kcal). Six rows, +1,090 kcal; four recipes partial → complete; no person
+  row. Noted for a later batch: a can count written as a word with no
+  paren ("from one 28-ounce can") still counts the whole can.
+
 - **2026-10-09 — matcher v63 (batch M64): corpus prints — kosher salt at
   half table salt's weight, the set-aside pear half, "remove the bay
   leaf", the pour-off window, the fried-shallot oil yield (prep49 §2 M64;

@@ -426,7 +426,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
-    expect(matcherVersion, 62);
+    // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
+    expect(matcherVersion, 63);
   });
 
   test('the sirloin stand-in flag is keyed on 173408 and a line that does '

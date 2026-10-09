@@ -439,7 +439,8 @@ String _g2(double v) => v.toStringAsFixed(2);
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 62);
+    // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
+    expect(matcherVersion, 63);
   });
 
   test("kosher salt's figure is half of SR 173468's '1 tsp' 6.0 g by "

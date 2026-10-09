@@ -14342,6 +14342,8 @@ String? gramBasisFor(
 /// FDC publishes no lean-and-fat petite roast (choice 173408, select
 /// 174695 and all grades 173053 are all lean only, 0"), so R2 cannot fire
 /// and a rank-as onto a top sirloin STEAK would read another subprimal.
+/// v63 (M65 F2, the owner's Q14): ricotta salata on SR 173420 "Cheese,
+/// feta" states the composition it borrows — FDC has no ricotta salata.
 String? trimStandInFlagOf(String raw, int? fdcId) => switch (fdcId) {
   168743 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
     'approximate (the printed ¼-inch fat cap renders and is skimmed '
@@ -14349,6 +14351,10 @@ String? trimStandInFlagOf(String raw, int? fdcId) => switch (fdcId) {
   173408 when !RegExp(r'\blean\b').hasMatch(raw.toLowerCase()) =>
     'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
         "petite roast (search 2026-10-08); the roast's separable fat not "
+        'counted)',
+  173420 when raw.toLowerCase().contains('ricotta salata') =>
+    'approximate (FDC holds no ricotta salata — a stand-in by class; '
+        "feta's sodium (1,139 mg per 100 g) and fat (21.49 g per 100 g) "
         'counted)',
   _ => null,
 };

@@ -3975,6 +3975,13 @@ double? drainedCanGrams(
   return null;
 }
 
+/// "from 4 (24-ounce) jars": the containers a measured volume came from
+/// ([_resolveGrams] step 1b). One corpus line (0949's Morellos).
+final _fromContainers = RegExp(
+  r'\bfrom\s+\d+\s*\([^()]*-ounce\)\s*(?:jars?|cans?)\b',
+  caseSensitive: false,
+);
+
 GramResolution? _resolveGrams({
   required List<Amount> amounts,
   required FdcFood? food,
@@ -4008,7 +4015,15 @@ GramResolution? _resolveGrams({
   //     count; with no count it is the line total. Still the gold-standard
   //     weight source — preferred over piece/density estimates below.
   if (raw != null) {
-    final paren = _parenWeight(raw);
+    // v63 (M65 F5): a line measured by VOLUME first and bought "from N
+    // (W-ounce) jars|cans" prints the container it came from, not the
+    // measure — "8 cups jarred Morello cherries from 4 (24-ounce) jars,
+    // drained" read one jar (680.39 g) and weighs its 8 cups.
+    final paren =
+        amounts.firstOrNull?.measure == Measure.volume &&
+            _fromContainers.hasMatch(raw)
+        ? null
+        : _parenWeight(raw);
     if (paren != null) {
       final count = _countQty(amounts);
       // A per-unit weight scales by the count; a trailing total is the line as

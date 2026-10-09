@@ -190,7 +190,9 @@ void main() {
     }
   });
 
-  test('the flavourings class reaches exactly its 14 library lines; the '
+  // RE-PIN (M65 batch, v64, F8): 15 lines (was 14) — gel food dye joins
+  // the class (rainbow-cake|8).
+  test('the flavourings class reaches exactly its 15 library lines; the '
       'held liquid smoke stays held (census of the corpus)', () {
     final reached = <String>[];
     final held = <String>[];
@@ -255,7 +257,8 @@ void main() {
       'sure-jell for low-sugar recipes',
       'sure-jell for less or no sugar needed recipes',
       'fennel fronds',
-      'jarred morello cherries',
+      // RE-PIN (M65 batch, v64, F5): 'jarred morello cherries' enabled
+      // (grams `_fromContainers` skips the jar weight; nutrition_v64_test).
       'xanthan gum',
       'parsnips',
       'kiwis',
@@ -921,4 +924,10 @@ const List<(String, int, String)> _flavourings = [
   ),
   ('0942-homemade-vanilla-ice-cream.yaml', 0, '1 vanilla bean'),
   ('0928-sous-vide-creme-brulee.yaml', 0, '½ vanilla bean'),
+  // RE-PIN (M65 batch, v64, F8): the rainbow cake's amount-less dye.
+  (
+    '1201-rainbow-cake.yaml',
+    8,
+    'Gel food dye (red, orange, yellow, green, blue, and purple)',
+  ),
 ];

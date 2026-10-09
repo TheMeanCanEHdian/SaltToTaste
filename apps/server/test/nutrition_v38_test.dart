@@ -93,11 +93,9 @@ void main() {
     expect(rankAsKeys, containsAll(_enabled));
     expect(rankAsKeys, isNot(anyElement(isIn(_dry))));
     expect(approximationRecords['ya cai'], 169891);
-    for (final item in [
-      'fennel fronds',
-      'jarred morello cherries',
-      'xanthan gum',
-    ]) {
+    // RE-PIN (M65 batch, v64, F5): R05 enabled — 167769, flagged.
+    expect(approximationRecords['jarred morello cherries'], 167769);
+    for (final item in ['fennel fronds', 'xanthan gum']) {
       expect(approximationRecords, isNot(contains(item)), reason: item);
     }
     expect(volumeSiblings[2747664], 168564);
@@ -207,6 +205,8 @@ const List<String> _enabled = [
   'frisee',
   'cremini mushrooms',
   'ya cai',
+  // RE-PIN (M65 batch, v64, F5): R05 enabled.
+  'jarred morello cherries',
 ];
 
 const List<String> _dry = [
@@ -214,7 +214,8 @@ const List<String> _dry = [
   'sure-jell for low-sugar recipes',
   'sure-jell for less or no sugar needed recipes',
   'fennel fronds',
-  'jarred morello cherries',
+  // RE-PIN (M65 batch, v64, F5): 'jarred morello cherries' moved to
+  // [_enabled] (grams `_fromContainers` skips the jar weight).
   'xanthan gum',
   'parsnips',
   'kiwis',

@@ -1217,8 +1217,19 @@ void main() {
     // rice'; carbohydrate 79.2 / 79.15), the recorded 170417 (now a hit in
     // 'parsnips'; 18.0 / 17.99) and 2747659 (in 'parsnips'; carbohydrate
     // 19.3 / 19.292275 and others): compared 501 -> 504, differ 382 -> 385.
-    expect(compared, 504);
-    expect(differ, 385);
+    // RE-PIN (M65 batch, v64, 2026-10-09): matcher v64 recorded from snapshot
+    // 25 the 39 searches (34 its whole-recipe pins read, 5 its mutants'
+    // pre-M65 answers) and 10 details (167769, 169217, 170284,
+    // 170674, 171583, 171670, 173411, 173420, 2705750, 2710333): twelve more
+    // compared — eight differing in some digit (167769 in 'dried sour
+    // cherries', carbohydrate 10.4 / 10.45; 173420 in 'queso fresco or feta
+    // cheese', sodium 1140 / 1139, fat 21.5 / 21.49; 2705750 in 'ricotta
+    // cheese'; 169217, 170284, 170674, 173411, 2710333) and four equal in
+    // every digit (171583, 171670, and the already-recorded 169991 and
+    // 171401, now hits in 'swiss chard' and 'lard'): compared 504 -> 516,
+    // differ 385 -> 393.
+    expect(compared, 516);
+    expect(differ, 393);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

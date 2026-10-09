@@ -854,7 +854,18 @@ const Map<String, String> _synonyms = {
 /// `_yieldOilEaten`); and "Using slotted spoon, remove solids from pot and
 /// discard" strains the solids out (engine `_strainWord` /
 /// `_strainedSolids`, H1: guay-tiew's lemongrass).
-const int matcherVersion = 62;
+///
+/// v63 (the Matcher v64 commit, batch M65 — matcher landings with the
+/// record already cached; prep49 design_v2 §2 M65 and the owner's Q14 under
+/// the standing authorization; zero requests): a volume line bought "from N
+/// (W-ounce) jars|cans" weighs its volume, not one container (grams
+/// `_fromContainers`), and the jarred Morellos land on SR 167769 "Cherries,
+/// sour, canned, water pack, drained" (v38's R05, flagged); dried corn husks
+/// are a wrapper ([isNonFood]); gel food dye is a zero flavouring; the kombu
+/// line shows FNDDS 2709988 "Seaweed, dried" (flagged; still strained out
+/// at 0 g); ricotta salata counts as SR 173420 "Cheese, feta", a flagged
+/// stand-in whose sodium and fat the basis states.
+const int matcherVersion = 63;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -1276,6 +1287,10 @@ const Set<String> _zeroNutrientFlavourings = {
   'ball pickle crisp',
   'angostura bitters',
   'vanilla bean',
+  // v63 (M65 F8): the rainbow cake's amount-less "Gel food dye (red,
+  // orange, …)" sat on "Fast foods, coleslaw" (0.033) — the food-coloring
+  // precedent.
+  'gel food dye',
 };
 
 /// v37 (Z14): whether [raw] is the tail of the line above that the corpus
@@ -1334,7 +1349,11 @@ bool isNonFood(String normalizedItem) =>
     // "8 ounces banana leaf, cut into long strips" wraps the cochinita pibil
     // and is not eaten: it counted 193 kcal of banana (v21 plan §3).
     normalizedItem.contains('banana leaf') ||
-    normalizedItem.contains('banana leaves');
+    normalizedItem.contains('banana leaves') ||
+    // v63 (M65 F4): "20 large dried corn husks" wrap the tamales — soaked,
+    // filled, steamed and unwrapped, never eaten; it sat below the gate on
+    // "Corn, dried (Navajo)" (167631, 0.3167). The banana-leaf class.
+    normalizedItem.contains('corn husk');
 
 /// Seasoning a recipe adds "to taste": with no amount on the line it
 /// contributes nothing measurable, and FDC's search for it returns bell
@@ -2506,13 +2525,13 @@ const Map<String, (String, String)> _rankAs = {
   // R04 fennel fronds STAY DRY: 2709779 FNDDS "Fennel bulb, raw" publishes
   // '1 fennel bulb' 235 g and 'Quantity not specified' 25 g — no tbsp/cup:
   // 'fennel fronds': ('fennel fronds', 'fennel bulb raw'),
-  // R05 jarred Morellos STAY DRY: 167769 publishes 'cup' 168 g, but the
-  // line's "(24-ounce)" jar is still read first as ONE jar (680.39 g for
-  // four jars drained) — no reader skips a container weight yet:
-  // 'jarred morello cherries': (
-  //   'dried sour cherries',
-  //   'cherries sour canned water pack drained',
-  // ),
+  // R05 jarred Morellos (167769 'cup' 168 g), enabled in v63 (M65 F5) with
+  // the reader that skips a container weight: grams.dart `_fromContainers`
+  // weighs "8 cups … from 4 (24-ounce) jars" by its 8 cups, not one jar.
+  'jarred morello cherries': (
+    'dried sour cherries',
+    'cherries sour canned water pack drained',
+  ),
   // R06 xanthan gum STAYS DRY: 169045 "Gums, seed gums" publishes 'oz'
   // 28.35 g only — no tsp/tbsp:
   // 'xanthan gum': ('xanthan gum', 'gums seed gums includes locust bean guar'),
@@ -2779,6 +2798,18 @@ const Map<String, (String, String)> _rankAs = {
     'boneless center-cut pork loin roast',
     'pork loin boneless raw',
   ),
+  // v63 (batch M65, prep49 design_v2 §2 M65; zero requests). F7: the
+  // library's one kombu line ("1 (4-inch) square piece kombu", nikujaga,
+  // strained out at 0 g) showed "Cereal, oat squares" (0.1317) — the cached
+  // 'dried mint' answer holds FNDDS 2709988 "Seaweed, dried" (0.99 under
+  // these words; the ciabatta precedent reads another query's answer),
+  // flagged: FNDDS's seaweed is not kelp-specific. F2 (the owner's Q14):
+  // FDC holds no ricotta salata in the three data types (its own answer:
+  // fresh ricottas only, 746766 at 0.195, below the gate) → SR 173420
+  // "Cheese, feta", a flagged stand-in by class (salted, firm, crumbled);
+  // its sodium and fat say so ([trimStandInFlagOf]).
+  'square piece kombu': ('dried mint', 'seaweed dried'),
+  'ricotta salata': ('feta cheese', 'cheese feta'),
 };
 
 /// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it
@@ -3769,8 +3800,9 @@ const Map<String, int> approximationRecords = {
   // v38: ya cai on salted mustard cabbage (its check passed; the request
   // table is in docs/API.md). Dry with their rank-as items (checks failed):
   // 'fennel fronds': 2709779,
-  // 'jarred morello cherries': 167769,
   // 'xanthan gum': 169045,
+  // v63 (M65 F5): R05 enabled ([_rankAs]).
+  'jarred morello cherries': 167769,
   'ya cai': 169891,
   // v44 (S5 a / S6 a): the section stand-ins.
   'tawny port': 2710692,
@@ -3795,6 +3827,10 @@ const Map<String, int> approximationRecords = {
   'herbes de provence': 170938,
   'halloumi cheese': 2705720,
   'halloumi': 2705720,
+  // v63 (M65 F7, F2/Q14; [_rankAs]): kombu on FNDDS "Seaweed, dried" (not
+  // kelp-specific); ricotta salata on feta.
+  'square piece kombu': 2709988,
+  'ricotta salata': 173420,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose
