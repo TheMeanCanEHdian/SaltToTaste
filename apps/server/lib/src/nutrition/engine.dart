@@ -2733,8 +2733,8 @@ double? _freeGrams(IngredientLine line, String normalized) =>
 /// figure is its volume at that density: ¼ cup of oil 54.4 g, of flour
 /// 30.2 g (0.51), of panko 14.8 g (0.25), of bread crumbs 26.6 g (0.45),
 /// of a starch 31.9 g (0.54), of sugar 50.3 g (0.85); the
-/// brine salt's 44 mL 53.7 g of table salt (1.22), 31.7 g of kosher
-/// (0.72); four cups of milk or buttermilk 974 g (1.03). 0 when it has
+/// brine salt's 44 mL 53.7 g of table salt (1.22), 26.8 g of kosher
+/// (0.60865, v62); four cups of milk or buttermilk 974 g (1.03). 0 when it has
 /// neither.
 double _mediumMl(IngredientLine line, String normalized, {bool fat = false}) {
   final ml = volumeMlOf(line.amounts);
@@ -2750,8 +2750,9 @@ double _mediumMl(IngredientLine line, String normalized, {bool fat = false}) {
 /// the pan and the dish eats — "Carefully pour off all but 2 tablespoons
 /// oil from pan. Add chile mixture to oil left in pan" (1193 Crispy
 /// Tempeh, Run 054 O1's verifier: 0 g would be the opposite error) —
-/// counted as a plus line's eaten part is ([engineOutcome]); null when no
-/// own sentence keeps one.
+/// counted as a plus line's eaten part is ([engineOutcome]); else the part
+/// a printed oil yield leaves the food ([_yieldOilEaten], v62); null when
+/// neither keeps one.
 Amount? _keptFryingOil(Recipe recipe, IngredientLine line) {
   final item = lineItemOf(line);
   // The line's first owned pour-off, found once per recipe and head
@@ -2768,9 +2769,110 @@ Amount? _keptFryingOil(Recipe recipe, IngredientLine line) {
         ? null
         : _fats[head]!.keptPart(pourOff, reused: true);
     return kept == null
-        ? null
+        ? _yieldOilEaten(recipe, line)
         : parseIngredientLine('${kept[1]} $item').amounts.firstOrNull;
   });
+}
+
+/// v62 (batch M64, prep49 pE R1, the owner's Q12 (a)): a frying oil the
+/// recipe's yield prints as a product — "MAKES ABOUT 1½ CUPS FRIED
+/// SHALLOTS AND ABOUT 1¾ CUPS FRIED SHALLOT OIL" beside "2 cups vegetable
+/// oil" (Fried Shallots and Fried Shallot Oil, 0053) — leaves the food the
+/// difference of the two printed volumes (¼ cup), in the unit of the
+/// line's volume amount ([_volumeAmountOf]); null when the yield prints no
+/// oil or no less than the line.
+/// ponytail: one yield in the corpus prints an oil product; its "about"
+/// volume rounds to ⅛ cup (±28 g) — stated in [_yieldOilFlag].
+Amount? _yieldOilEaten(Recipe recipe, IngredientLine line) {
+  final printed = _yieldOil.firstMatch(recipe.servings?.toLowerCase() ?? '');
+  final q = printed == null
+      ? null
+      : volumeMlOf(
+          parseIngredientLine('${printed[1]} ${printed[2]} oil').amounts,
+        );
+  final own = _volumeAmountOf(line);
+  final ml = own == null ? null : volumeMlOf([own]);
+  final quantity = own == null ? null : parseQuantity(own.quantity);
+  if (q == null || ml == null || quantity == null || q >= ml) {
+    return null;
+  }
+  return Amount(
+    measure: Measure.volume,
+    quantity: '${quantity * (ml - q) / ml}',
+    unit: own!.unit,
+  );
+}
+
+/// The amount [volumeMlOf] measures of [line] — a primary amount first —
+/// or null: a weight-first line, "16 ounces (2 cups) vegetable oil" (a
+/// STATED synthesized pin), subtracts from its 2 cups (closer 2: its first
+/// amount, 16 ounces, took the cups' arithmetic and weighed 0 g).
+Amount? _volumeAmountOf(IngredientLine line) => [
+  for (final a in line.amounts)
+    if (a.primary) a,
+  for (final a in line.amounts)
+    if (!a.primary) a,
+].where((a) => volumeMlOf([a]) != null).firstOrNull;
+
+final RegExp _yieldOil = RegExp(
+  '\\band about ($_amountRun)\\s*(teaspoons?|tablespoons?|cups?)\\b'
+  r'(?:\s+fried\b)?([^.]*?)\boil\b',
+);
+
+/// The food a yield prints before its oil ("… 1½ cups fried shallots"),
+/// less "fried".
+final RegExp _yieldFood = RegExp(
+  r'(?:\b(?:teaspoons?|tablespoons?|cups?)\s+)?(?:fried\s+)?'
+  r'([a-z]+(?:\s+[a-z]+)*)\s*$',
+);
+
+/// The part [_keptFryingOil] keeps of a frying oil by [_yieldOilEaten] —
+/// no owned pour-off keeps one — or null. It is ALL the oil the food, the
+/// pan and the towel keep (closer 3, verifier 3 D1/D2: never a pour-off's
+/// pan residual beside the food's uptake, [_m52Plan]; named in the basis
+/// beside a plus part, [_gramBasis]).
+Amount? _yieldKept(Recipe recipe, IngredientLine line) =>
+    _keptFryingOilText(recipe, line) == null
+    ? _yieldOilEaten(recipe, line)
+    : null;
+
+/// The flag suffix of a frying oil whose kept part is [_yieldKept], else
+/// ''.
+String _yieldOilFlagOf(Recipe? recipe, IngredientLine line) {
+  final eaten = recipe == null ? null : _yieldKept(recipe, line);
+  return eaten == null ||
+          discardedMediumOf(recipe!, line, normalizeItem(lineItemOf(line))) !=
+              DiscardedMedium.fryingOil
+      ? ''
+      : ' · ${_yieldOilFlag(recipe, line, eaten)}';
+}
+
+/// The flag of a frying oil counted by [_yieldOilEaten] (critic F7), built
+/// from the prints it subtracts (closer 2, verifier 2 D1: a constant named
+/// 0053's figures for any yield): the line's volume in, the yield's "about"
+/// volume out as the oil it names, the [eaten] difference in the line's
+/// unit kept by the food the yield names (else "the food"), the pan and —
+/// when a step names one — the towel. 0053 renders §2's F7 text byte for
+/// byte (nutrition_v63_test's `_yieldFlag`).
+String _yieldOilFlag(Recipe recipe, IngredientLine line, Amount eaten) {
+  final servings = recipe.servings!.toLowerCase();
+  final printed = _yieldOil.firstMatch(servings)!;
+  final food = _yieldFood.firstMatch(servings.substring(0, printed.start));
+  final oil = '${printed[3]!.trim()} oil'.trim();
+  final towel = recipe.steps.any((s) => s.text.toLowerCase().contains('towel'));
+  String volume(Amount a) {
+    // The eaten part is a double's text, in exponent form below 1e-6,
+    // which parseQuantity refuses.
+    final n = double.tryParse(a.quantity) ?? parseQuantity(a.quantity)!;
+    return '${shareText(n)} ${a.unit}${n > 1 ? 's' : ''}';
+  }
+
+  return "approximate (the difference of the yield's printed volumes: "
+      '${volume(_volumeAmountOf(line)!)} in, about ${printed[1]!.trim()} '
+      '${printed[2]} out as $oil — the '
+      '${volume(eaten)} the ${food?[1] ?? 'food'}'
+      '${towel ? ', the pan and the towel' : ' and the pan'} keep counted as '
+      'eaten)';
 }
 
 /// The part [_keptFryingOil] reads, as the pour-off writes it ("1
@@ -2863,8 +2965,11 @@ final RegExp _panOil = RegExp(
 
 /// The oil line [recipe] browns in the pan a pour-off at [at] (step,
 /// sentence) cuts down, and its part in the pan — or null. The LAST
-/// sentence naming oil before the pour-off, in its step or the step before
-/// (the design's window), puts it in a pan ([_panOil]) and names ONE oil
+/// sentence naming oil before the pour-off — any earlier sentence (v62,
+/// batch M64 F9: the v51 window of its step or the step before left
+/// crispy-skinned chicken breasts' step-3 "Place breasts, skin side down,
+/// in oil" outside a step-5 pour-off) — puts it in a pan ([_panOil]) and
+/// names ONE oil
 /// line: the only one with an amount, or by a kind word only it has right
 /// before "oil" ("Heat vegetable oil" beside a relish's "¼ cup
 /// extra-virgin olive oil", 0228 — the relish is no browning oil; 0124
@@ -2888,9 +2993,7 @@ final RegExp _panOil = RegExp(
       if (oils.isEmpty) {
         return null;
       }
-      final mentions = _naming(recipe, 'oil').where(
-        (m) => (m.$1 == at.$1 && m.$2 < at.$2) || m.$1 == at.$1 - 1,
-      );
+      final mentions = _naming(recipe, 'oil').where((m) => _before(m, at));
       if (mentions.isEmpty) {
         return null;
       }
@@ -4146,14 +4249,19 @@ class _Parting {
       return null;
     });
 
-final RegExp _strainWord = RegExp(r'\bstrain');
+// v62 (M64 H1): "Using slotted spoon, remove solids from pot and discard"
+// (guay-tiew tom yum goong) strains with no "strain".
+final RegExp _strainWord = RegExp(
+  r'\bstrain|\bremove (?:the )?solids\b[^.]*\bdiscard',
+);
 final RegExp _keepsSolids = RegExp(
   r'\b(?:measure|reserve|transfer|return)\w*\b[^.]*\bsolids\b',
 );
 final RegExp _strainedSolids = RegExp(
   r'\bstrain (?:the )?(?:stock|broth)\b|\bpress(?:ing)? (?:firmly )?on '
   r'(?:the )?solids|\bdiscard(?:ing)? (?:the |any )?(?:spent )?solids|'
-  r'\bsolids in (?:the )?strainer',
+  r'\bsolids in (?:the )?strainer|'
+  r'\bremove (?:the )?solids\b[^.]*\bdiscard',
 );
 final RegExp _pureeStrain = RegExp(
   r'pur[eé]e|\bsoup\b|custard|mixture into|batter',
@@ -4518,18 +4626,28 @@ final RegExp _zestWord = RegExp(r'\b(?:zest|peel)\b');
 /// ("(remove and) discard (the) <noun list>", "…, discarding celery
 /// bundle") — its (step, sentence), the noun list as written (cut at the
 /// first preposition or verb), and whether it is the "remaining" form (Q20
-/// (iii): the rest of a food) — once per recipe.
-List<({int step, int sentence, String objects, bool remaining})>
+/// (iii): the rest of a food) — once per recipe. v62 (batch M64 R4): a
+/// "remove (the) <noun list>" clause too ([_removeOf], `removes`), with
+/// or without a "discard" after it — read for the bay leaf only
+/// ([_discardedByName]): "Remove the bay leaf from the sauce and discard"
+/// (pasta with creamy tomato sauce), "remove bay leaves" (hearty beef
+/// stew).
+List<({int step, int sentence, String objects, bool remaining, bool removes})>
 _discardClauses(Recipe recipe) => _stepIndexOf(recipe).memo(#discards, () {
   final index = _stepIndexOf(recipe);
   return [
     for (final (i, sentences) in index.sentences.indexed)
       for (final (j, s) in sentences.indexed)
-        if (s.contains('discard'))
-          for (final m in _discardOf.allMatches(s))
-            if (m[2]!.substring(
+        for (final (verb, removes) in [
+          if (s.contains('discard')) (_discardOf, false),
+          if (s.contains('remove')) (_removeOf, true),
+        ])
+          for (final m in verb.allMatches(s))
+            // The noun list is the last group of either verb.
+            if (m[m.groupCount]!.substring(
                   0,
-                  _objectEnd.firstMatch(m[2]!)?.start ?? m[2]!.length,
+                  _objectEnd.firstMatch(m[m.groupCount]!)?.start ??
+                      m[m.groupCount]!.length,
                 )
                 case final objects
                 // "Discard all but 3 tablespoons of the rendered bacon
@@ -4540,13 +4658,20 @@ _discardClauses(Recipe recipe) => _stepIndexOf(recipe).memo(#discards, () {
                 step: i,
                 sentence: j,
                 objects: objects,
-                remaining: m[1] != null,
+                remaining: !removes && m[1] != null,
+                removes: removes,
               ),
   ];
 });
 
 final RegExp _discardOf = RegExp(
   r'\bdiscard(?:ing)?\s+(?:the\s+)?((?:any\s+)?remaining\s+)?([^.;:(]*)',
+);
+// The noun list stops at the next "remove", which starts its own clause
+// ("Remove stew from oven and remove bay leaves", hearty beef and vegetable
+// stew) — consumed, so a sentence is read once (RULE C).
+final RegExp _removeOf = RegExp(
+  r'\bremove\s+(?:the\s+)?((?:(?!\bremove\b)[^.;:(])*)',
 );
 final RegExp _fatObject = RegExp(
   r'^(?:all but|any|excess)\b|\b(?:fat|oil|grease|drippings|liquid)\b',
@@ -4651,7 +4776,12 @@ final RegExp _cutFine = RegExp(
   }
   for (final c in _discardClauses(recipe)) {
     final at = (c.step, c.sentence);
+    // v62 (M64 R4): a "remove" clause zeroes the bay leaf only — every
+    // other whole piece a step removes may be removed to be used (the
+    // stuffed peppers lifted from the pot, a garlic head squeezed into the
+    // butter, the poached salmon's lemons).
     if (c.remaining ||
+        (c.removes && head != 'bay') ||
         _before(at, mine.first) ||
         !_names(c.objects, head) ||
         (_zestHeads.contains(head) && !index.sentence(at).contains('cavity'))) {
@@ -4846,6 +4976,7 @@ typedef _PartialUse = ({
   double? cookedGrams,
   ({int fdcId, double carbs, String state})? cookedRecord,
   String printed,
+  bool pieces,
 });
 
 /// The grams [partial] keeps of a line [resolved] weighs on [food] (Q20):
@@ -4882,7 +5013,11 @@ GramResolution? _partialKept(
 /// Q20 (D4): a printed part of [line] (head [head]) the steps keep, the
 /// rest reserved or discarded — the step, and what is kept:
 /// - `remainder` (i): "Save the remaining 6 tablespoons butter for another
-///   use" — `share` the part not used (6 of 16 tablespoons);
+///   use" — `share` the part not used (6 of 16 tablespoons); v62 (batch
+///   M64 P10, `pieces`): a counted part set aside — "Peel, halve, and
+///   core pears. Set aside 1 pear half and reserve for other use" (pear-
+///   walnut upside-down cake) — `share` N halves (quarters) of the line's
+///   count × 2 (× 4): 1 of 6;
 /// - `cooked` (ii): a potato kept by a printed COOKED weight — "Transfer 3
 ///   cups (16 ounces) warm potatoes" (gnocchi), "Measure 1 very firmly
 ///   packed cup potatoes" with the prep note's "1 very firmly packed cup
@@ -4906,6 +5041,7 @@ _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
     double? cookedGrams,
     ({int fdcId, double carbs, String state})? cookedRecord,
     String printed = '',
+    bool pieces = false,
   }) => (
     kind: kind,
     step: step,
@@ -4913,6 +5049,7 @@ _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
     cookedGrams: cookedGrams,
     cookedRecord: cookedRecord,
     printed: printed,
+    pieces: pieces,
   );
   final index = _stepIndexOf(recipe);
   if (head == 'potato') {
@@ -4969,6 +5106,26 @@ _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
       );
     }
   }
+  // v62 (M64 P10): never by widening [_reservedWhole] — "Set aside 1 pear
+  // half" is no [_partOnly] sentence, so the whole line would go.
+  final count = countOf(line.amounts);
+  for (final (:step, sentence: _, :match) in _sentencesMatching(
+    recipe,
+    #setsAsidePieces,
+    _setsAsidePieces,
+  )) {
+    final n = double.tryParse(match[1]!) ?? _numberWords[match[1]!]!;
+    final each = match[3]!.startsWith('q') ? 4 : 2;
+    if (count != null && _names(match[2]!, head) && n < count * each) {
+      return use(
+        'remainder',
+        step,
+        share: n / (count * each),
+        printed: '${match[1]} ${match[2]} ${match[3]}',
+        pieces: true,
+      );
+    }
+  }
   if (_keptVolumeOf(recipe, line, head) != null) {
     return null;
   }
@@ -5020,6 +5177,10 @@ final RegExp _savesRemainder = RegExp(
   r'([^.;]*?)\s*for another use',
 );
 final RegExp _reservedWhole = RegExp(r'\breserve for another use\b');
+final RegExp _setsAsidePieces = RegExp(
+  r'\bset aside (\d+|one|two|three|four) ((?:[a-z]+\s+){0,2}?[a-z]+)\s+'
+  r'(halves|half|quarters?)\s+(?:and reserve\s+)?for (?:an)?other use\b',
+);
 final RegExp _partOnly = RegExp(r'\bremain|\bexcess\b|\bany\b');
 
 /// Q20 (iv): a kept VOLUME of [line]'s food with no printed weight —
@@ -5397,8 +5558,16 @@ String? m50FlagOf(Recipe recipe, IngredientLine line) {
 }
 
 /// The basis of a v50 row counted 0 g or a kept part (`discarded`): what
-/// the step did to the line, and its flag. Null for any other medium.
-String? _m50DiscardedBasis(Recipe recipe, IngredientLine line) {
+/// the step did to the line, and its flag. Null for any other medium. A
+/// counted part set aside (v62, M64 P10) keeps its line's own [weighing]
+/// before it ("3 × 227 g (printed weight) × 0.78 edible · approximate (…;
+/// the steps peel it) · 1 pear half saved for another use (step 2) — only
+/// the rest counted").
+String? _m50DiscardedBasis(
+  Recipe recipe,
+  IngredientLine line, {
+  required String? Function() weighing,
+}) {
   final normalized = normalizeItem(lineItemOf(line));
   final head = headNounOf(normalized);
   if (head == null) {
@@ -5424,10 +5593,11 @@ String? _m50DiscardedBasis(Recipe recipe, IngredientLine line) {
   }
   final use = _partialUseOf(recipe, line, head)!;
   final step = use.step + 1;
+  final saved =
+      '${use.pieces ? '' : 'the remaining '}${use.printed} saved for '
+      'another use (step $step) — only the rest counted';
   return switch (use.kind) {
-    'remainder' =>
-      'the remaining ${use.printed} saved for another use (step $step) '
-          '— only the rest counted',
+    'remainder' => [if (use.pieces) ?weighing(), saved].join(' · '),
     'cooked' =>
       'from ${use.printed} cooked (step $step) · approximate (the steps '
           'keep ${use.printed} of the ${use.cookedRecord!.state} potato; its '
@@ -14272,7 +14442,16 @@ String? _gramBasis(
     // medium at 0 g reads "poured away" below.
     final m50 = recipe == null || (row.grams! <= 0 && row.status != 'auto')
         ? null
-        : _m50DiscardedBasis(recipe, line);
+        : _m50DiscardedBasis(
+            recipe,
+            line,
+            weighing: () => lineGrams(
+              db,
+              line,
+              fdcId == null ? null : knownFood(db, fdcId, line: line),
+              recipe: recipe,
+            )?.basis,
+          );
     if (m50 != null) {
       return m50;
     }
@@ -14313,6 +14492,7 @@ String? _gramBasis(
     }
     // A person's confirm of a held medium with no eaten part (B6).
     final also = m52What == null ? '' : ' and $m52What';
+    late final yielded = _yieldOilFlagOf(recipe, line);
     if (m52What != null && plus == null && m52!.kept <= 0) {
       return 'discarded in cooking — only $m52What counted';
     }
@@ -14326,10 +14506,15 @@ String? _gramBasis(
                     'keep and $m52What counted'
               : 'discarded in cooking — only "$part" and the $keptToo the '
                     'steps keep counted'
-        : plus != null && !rinsed
-        ? 'discarded in cooking — only "$part"$also counted'
+        // v62 (closer 3, verifier 3 D2): beside a printed yield's part
+        // ([_yieldKept]) a plus part is named only when a step eats it,
+        // and the yield's part is named with its flag.
+        : plus != null && !rinsed && (yielded.isEmpty || eaten != null)
+        ? 'discarded in cooking — only "$part"'
+              '${yielded.isEmpty ? '' : ' and the part the recipe keeps'}'
+              '$also counted$yielded'
         : 'discarded in cooking — only the part the recipe keeps$also '
-              'counted';
+              'counted$yielded';
   }
   if (row.gramSource == GramSource.unmeasured.name &&
       row.fdcId == null &&
@@ -17284,7 +17469,8 @@ typedef _M52Row = ({
 /// - THE FRYING OIL (Q3 a, P3-B): a line the engine zeroes as frying oil
 ///   counts u × the fried food's grams / 100 ([_friedClassOf]) on top of
 ///   its kept part — the M49-marked pour-off too (F13) — capped at the line
-///   less that part, two oils of one fry split by their grams; the fried
+///   less that part, two oils of one fry split by their grams (none on a
+///   printed yield's part, [_yieldKept]: it is all the oil eaten); the fried
 ///   food is the coated food in a recipe that holds or counts a coat
 ///   ([_shallowFries], Q24 b), plus every counted vegetable a frying
 ///   sentence names (0255's chips beside its cod), else the counted foods
@@ -17675,7 +17861,7 @@ Map<int, _M52Row> _m52Plan(
   final flag = absorbs.isEmpty
       ? null
       : 'approximation (frying oil absorbed$derived: ${clauses.join('; ')})';
-  final pans = <({int at, double full, double kept})>[];
+  final pans = <({int at, double full, double kept, bool yielded})>[];
   for (final i in fryers) {
     final r = at[i]!;
     final record = food(r.fdcId!, lines[i]);
@@ -17688,11 +17874,14 @@ Map<int, _M52Row> _m52Plan(
     final kept =
         engineOutcome(recipe, lines[i], record!, full, decided: true).grams ??
         0;
-    pans.add((at: i, full: full.grams, kept: kept));
+    // v62 (closer 3, verifier 3 D1): a printed yield's part ([_yieldKept])
+    // is all the oil the food keeps — no uptake on top of it.
+    final yielded = _yieldKept(recipe, lines[i]) != null;
+    pans.add((at: i, full: full.grams, kept: kept, yielded: yielded));
   }
   final oil = pans.fold<double>(0, (n, p) => n + p.full);
   for (final p in pans) {
-    final absorbed = oil <= 0
+    final absorbed = oil <= 0 || p.yielded
         ? 0.0
         : min(uptake * p.full / oil, max(p.full - p.kept, 0));
     plan[p.at] = (

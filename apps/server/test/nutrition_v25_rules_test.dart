@@ -409,21 +409,33 @@ void main() {
     }, skip: skipIfNoCorpus);
 
     test("S10: 0121's \"Pour off all but 2 teaspoons oil\" beside its 2 "
-        'tablespoons (under the quarter cup): counted 28 g, never the kept 2 '
-        "teaspoons — and a held line's own pour-off is no eaten part "
+        'tablespoons (under the quarter cup): no frying medium — since v63 '
+        "(M64 F9) the browning oil's kept 2 teaspoons, 9.07 g — and a held "
+        "line's own pour-off is no eaten part "
         '(1193 with a sesame oil that owns a typed "pour off all but 1 '
         'tablespoon oil from the toasted sesame oil skillet" by its words '
         "while the unnamed pour-off is either oil's: held, no "
         'grams)', () {
-      final o = _out(
-        loadCorpusRecipe(
-          '0121-crispy-skinned-chicken-breasts-with-vinegar-pepper-pan-'
-          'sauce.yaml',
-        ),
-        '2 tablespoons vegetable oil',
-        oil,
+      final r0121 = loadCorpusRecipe(
+        '0121-crispy-skinned-chicken-breasts-with-vinegar-pepper-pan-'
+        'sauce.yaml',
       );
-      expect((o.grams, o.source, o.hold), (28.0, 'portion', null));
+      final o = _out(r0121, '2 tablespoons vegetable oil', oil);
+      // RE-PIN (M64 batch, v63, F9): the step-5 pour-off now cuts the oil
+      // its step-3 sentence puts in the pan ("Place breasts, skin side
+      // down, in oil") — the browning oil's kept 2 teaspoons, `discarded`
+      // (was 28 g whole, `portion`: outside the v51 window of its step and
+      // the step before); still no frying medium (the line is under the
+      // quarter cup).
+      expect(
+        (o.grams!.toStringAsFixed(2), o.source, o.hold),
+        (
+          '9.07',
+          'discarded',
+          null,
+        ),
+      );
+      expect(_medium(r0121, '2 tablespoons vegetable oil'), isNull);
       final tempeh = _steps(
         _retyped(
           loadCorpusRecipe(_tempeh),

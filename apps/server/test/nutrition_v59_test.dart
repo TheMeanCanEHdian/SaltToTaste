@@ -177,15 +177,18 @@ const List<_Row> _p7a = [
     '504.33',
     'from the printed weight (2½–3 lb, the midpoint) × 0.84 edible · approximate (USDA AH-102 item 2459: butternut squash, raw whole → flesh 84 % (75–88); the steps peel it)',
   ),
+  // RE-PIN (M64 batch, v63, P10): the pear half step 2 sets aside is
+  // subtracted — 530.70 × 5/6 = 442.25 g (was 530.70; −59.26 kcal); P7a's
+  // composed weighing kept, the part saved after it.
   (
     _pearCake,
     4,
     '3 ripe but firm Bosc pears (8 ounces each)',
     167778,
     '0.864444',
-    '530.70',
-    '355.57',
-    '3 × 227 g (printed weight) × 0.78 edible · approximate (USDA AH-102 item 1734: pears, raw whole → pared, cored flesh 78 % (40–88); the steps peel it)',
+    '442.25',
+    '296.31',
+    '3 × 227 g (printed weight) × 0.78 edible · approximate (USDA AH-102 item 1734: pears, raw whole → pared, cored flesh 78 % (40–88); the steps peel it) · 1 pear half saved for another use (step 2) — only the rest counted',
   ),
   (
     _apples,
@@ -341,7 +344,8 @@ void main() {
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    expect(matcherVersion, 61);
+    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
+    expect(matcherVersion, 62);
   });
 
   group('matcher v59 (batch M60)', skip: skipIfNoCorpus, () {
@@ -675,7 +679,8 @@ void main() {
         (_enCocotte, '618.09'), // v58 572.42
         (_porchetta, '700.52'), // v58 647.82
         (_butternut, '351.03'), // v58 375.04
-        (_pearCake, '533.20'), // v58 545.74
+        // RE-PIN (M64 batch, v63, P10): 525.79 (was 533.20; −59.26 / 8).
+        (_pearCake, '525.79'), // v58 545.74
         (_apples, '363.28'), // v58 388.98
         // meatloaf (replay 575.11, v58 654.01, −473.40 / 6): its saltines
         // |15 land another record with no grams in a fresh compute

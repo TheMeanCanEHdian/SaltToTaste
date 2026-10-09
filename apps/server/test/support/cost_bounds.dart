@@ -110,6 +110,8 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v61 (M62's baked H shape reaches it first): whether the directions
       // leave an excess of a coat — the shipped v33 reader, once per recipe.
       'memo:leavesExcess',
+      // v62 (M64 P10): the counted parts set aside for another use.
+      'memo:setsAsidePieces',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first

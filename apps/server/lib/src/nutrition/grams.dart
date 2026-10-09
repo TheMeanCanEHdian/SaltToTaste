@@ -104,8 +104,29 @@ const Map<String, double> _volumeUnitMl = {
   'l': 1000,
 };
 
-/// Kosher salt's g/ml ([_densities], [packsLikeKosherSalt]).
-const double _kosherSaltDensity = 0.72;
+/// Kosher salt's g/ml ([_densities]). v62 (batch M64 R-D, prep49 design_v2
+/// §2 M64): half of table salt's weight by volume — the corpus prints the
+/// conversion ("1 tablespoon kosher salt or 1½ teaspoons table salt",
+/// twice; 0091's "¾ cup salt" with "If using Diamond Crystal kosher salt,
+/// increase the salt to 1½ cups"; 16 recipes name Diamond Crystal, 12 of
+/// them saying they were developed with it) — on USDA SR 173468
+/// "Salt, table"'s own '1 tsp' 6.0 g: 6.0 / 4.92892 × 0.5 = 0.60865 (3.0 g
+/// a teaspoon). It was a round kitchen 0.72 (3.55 g a teaspoon), which
+/// flake and coarse sea salt keep ([_flakeSaltDensity]).
+/// ponytail: Diamond Crystal's figure; a Morton line (⅔ of table, 4.0 g a
+/// teaspoon) reads it too — the corpus means Diamond.
+const double _kosherSaltDensity = 0.60865;
+
+/// Flake and coarse sea salt's g/ml ([packsLikeKosherSalt]): the round
+/// kitchen figure kosher salt had until v62 — no FDC record or corpus print
+/// sizes them.
+const double _flakeSaltDensity = 0.72;
+
+/// The basis suffix of a kosher salt line weighed at [_kosherSaltDensity].
+const String _kosherSaltBasis =
+    " · kosher salt at half table salt's weight by volume (the corpus's own "
+    '"1 tablespoon kosher salt or 1½ teaspoons table salt"; USDA SR 173468 '
+    "'1 tsp' 6.0 g)";
 
 /// Density fallbacks (g/ml) for pantry staples, keyed by tokens matched
 /// against the normalized item — used only when the matched food carries no
@@ -1331,7 +1352,8 @@ bool _namesTheRecord(String normalizedItem, FdcFood food) {
 /// Whether [raw]'s food is a flake or coarse sea salt, which packs like
 /// kosher salt, not like table salt (1.22 counted "2 tablespoons flake sea
 /// salt", 0227, at 36 g, Run 047): no FDC record or corpus weight sizes
-/// them, so kosher's figure stands. Read on the raw line — the normalized
+/// them, so kosher's old round figure stands ([_flakeSaltDensity], v62).
+/// Read on the raw line — the normalized
 /// item drops "coarse" ("2 teaspoons coarse sea salt, divided", 0805) — and
 /// only for those: plain and fine sea salt weigh as table salt (Run 048: a
 /// "sea salt" key took them to 3.5 g a teaspoon). The salt must be the
@@ -3182,7 +3204,12 @@ GramResolution? _resolveLine({
     source: first.source == GramSource.unmeasured
         ? second.source
         : first.source,
-    basis: '${first.basis ?? ''} + ${plus.text}',
+    // v62 (M64 R-D): kosher salt's suffix closes the whole line ("2
+    // tablespoon ≈ 30 mL + 2 teaspoons kosher salt · kosher salt at …").
+    basis: first.basis?.endsWith(_kosherSaltBasis) ?? false
+        ? '${first.basis!.replaceFirst(_kosherSaltBasis, '')} + '
+              '${plus.text}$_kosherSaltBasis'
+        : '${first.basis ?? ''} + ${plus.text}',
   );
 }
 
@@ -4140,7 +4167,7 @@ GramResolution? _resolveGrams({
     // own cup ("½ cup unsalted roasted peanuts" on 173806 'cup' 146 g, not
     // 0.55's 65 g; Run 050).
     final density = kosher
-        ? _kosherSaltDensity
+        ? _flakeSaltDensity
         : printed != null
         ? printed.$1
         : entry != null &&
@@ -4172,7 +4199,8 @@ GramResolution? _resolveGrams({
             '${_amountText(amount)} ≈ ${(quantity * ml).round()} mL'
             '${printed == null ? '' : " · $form, at ATK's printed "}'
             '${printed?.$2 ?? ''}'
-            '${standIn == null ? '' : ' · approximate ($standIn)'}',
+            '${standIn == null ? '' : ' · approximate ($standIn)'}'
+            '${entry?.$1 == 'kosher salt' ? _kosherSaltBasis : ''}',
       );
     }
     final perMl = ownVolume;
@@ -4368,17 +4396,18 @@ GramResolution? _resolveGrams({
           (size == null
               ? null
               : '${_unsizedPieces[key]}; no $size size published');
-      // A flagged figure says its decimals — a sub-gram one all of them, one
-      // under 10 g one ("3.2", "7.1"); every other piece (the bay leaf's
-      // "0 g") its rounded grams, as before — but a slice of 10 g or more
-      // that is no whole gram says its own (v51: the Canadian bacon's
-      // "28.5", the thick-cut "35.44"), so the count times it is the grams.
-      final each = pieceWeight >= 10 && pieceWeight != pieceWeight.round()
+      // A sub-gram piece says all its decimals, flagged or not (v62, M64
+      // R4b: the bay leaf printed "1 × 0 g each" on 0.2 g); a flagged one
+      // under 10 g one ("3.2", "7.1"); every other piece its rounded grams
+      // — but a slice of 10 g or more that is no whole gram says its own
+      // (v51: the Canadian bacon's "28.5", the thick-cut "35.44"), so the
+      // count times it is the grams.
+      final each =
+          pieceWeight < 1 ||
+              (pieceWeight >= 10 && pieceWeight != pieceWeight.round())
           ? _figure(pieceWeight)
           : printed == null || pieceWeight >= 10
           ? '${pieceWeight.round()}'
-          : pieceWeight < 1
-          ? _figure(pieceWeight)
           : pieceWeight.toStringAsFixed(1);
       return GramResolution(
         grams: quantity * pieceWeight,

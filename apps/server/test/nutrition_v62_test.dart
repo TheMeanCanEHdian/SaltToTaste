@@ -425,7 +425,8 @@ const String _sirloinFlag =
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 61);
+    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
+    expect(matcherVersion, 62);
   });
 
   test('the sirloin stand-in flag is keyed on 173408 and a line that does '

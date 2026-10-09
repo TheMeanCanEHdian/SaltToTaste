@@ -1578,7 +1578,8 @@ below): `"1 piece × 2 inch × 8 g per inch · approximate (ginger's figure
 raw)"`, 16 g; whole spices by a reference figure — a peppercorn 0.05 g,
 a whole clove 0.1, an allspice berry 0.1, a cardamom pod 0.2, a coriander
 seed 0.01, a star anise pod 0.5 (a flagged figure prints its decimals —
-a sub-gram one all of them, `"15 × 0.05 g each · approximate (reference
+a sub-gram one all of them, flagged or not since matcher v63 (the bay
+leaf's `"1 × 0.2 g each"`), `"15 × 0.05 g each · approximate (reference
 figure: a whole peppercorn)"`, one under 10 g one decimal, `"10 × 3.2 g
 each"`; one of 10 g or more its rounded grams); a lemongrass stalk 10 g
 (reference: trimmed to its bottom 5–6 inches; "N stalks lemongrass" or
@@ -1800,7 +1801,7 @@ of bread crumbs 26.6 g (0.45) and of a starch 31.9 g (0.54) since v28
 no figure, so "8 ounces plain dried bread crumbs" was no dredge — figures a
 reader with no food reads, never a line's grams, which keep the record's
 own portion), of sugar 50.3 g (0.85); the brine salt's 3 tablespoons (44 mL) 53.7 g of
-table salt (1.22) or 31.7 g of kosher (0.72); a buttermilk soak's or a cheese
+table salt (1.22) or 26.8 g of kosher (0.60865 since v63; 31.7 g at 0.72 before); a buttermilk soak's or a cheese
 milk's 4 cups (exactly a written "4 cups", 946.35 mL, since v28) 974.7 g
 (1.03): "20 ounces flour" is a dredge like "4
 cups", "4 ounces table salt" a brine salt like "½ cup". A line whose food
@@ -2465,8 +2466,9 @@ lasagna noodles` → `pasta dry enriched`; `80 percent lean ground chuck` →
 `dry sherry or chinese rice wine` ("Wine, rice", 2710691); `dried new
 mexican chiles` → `mild dried chile`; `flake sea salt` and `sea salt` →
 `salt table` (flake, flaky, flaked, coarse(-grind) and Maldon sea salt,
-and sea salt flakes — read on the raw line — weigh like kosher salt, 0.72
-g/mL, never table salt's 1.22: "2 tablespoons flake sea salt" is 21.3 g;
+and sea salt flakes — read on the raw line — weigh at kosher salt's old
+round 0.72 g/mL (kosher itself 0.60865 since matcher v63), never table
+salt's 1.22: "2 tablespoons flake sea salt" is 21.3 g;
 plain and fine sea salt weigh as table salt, 6.0 g a teaspoon, matcher v16;
 since matcher v18 only when that salt is the line's own food, nothing but
 its amounts before it, so "3 tablespoons unsalted butter, melted, plus
@@ -2992,7 +2994,9 @@ bundle or lemons from a cavity — and the aromatics and whole spices a
 sentence ties (tie, twine) into a bundle a later sentence removes or
 discards ("remove herb bundle", "discard spice bundle"; never a citrus
 line, whose juice is eaten) — counts 0 g, `"removed and discarded (step N)
-— counted as 0 g"`; a line partly cut fine ("2 medium onions, 1 quartered
+— counted as 0 g"`; since matcher v63 (M64) "remove (the) bay leaf/leaves"
+with or without "and discard" counts the bay leaf the same (the bay leaf
+only); a line partly cut fine ("2 medium onions, 1 quartered
 and 1 chopped fine") stays counted. A COUNT line partitioned by the steps
 ("Cut 1 of the lemons … in the cavity" … "Discard the lemons" … "Halve the
 remaining lemon") zeroes only the discarded pieces (critic F12):
@@ -3007,7 +3011,11 @@ rest counted"`, the leaves of 20 sprigs eaten). "Discard all but 3 tablespoons �
 (4) **A printed part kept (Q20, `partialUse`):** (i) "Save the remaining 6
 tablespoons butter for another use" subtracts the remainder in the line's
 unit (`"the remaining 6 tablespoons saved for another use (step 1) — only
-the rest counted"`, blueberry scones 226.89 → 141.81 g); (ii) a potato kept
+the rest counted"`, blueberry scones 226.89 → 141.81 g) — since matcher
+v63 (M64 P10) also a counted part, "Set aside 1 pear half and reserve for
+other use": N halves (quarters) of the line's count × 2 (× 4), the basis
+the weighing's own text then `1 pear half saved for another use (step 2) —
+only the rest counted`; (ii) a potato kept
 by a printed COOKED weight — "Transfer 3 cups (16 ounces) warm potatoes",
 or "Measure 1 very firmly packed cup potatoes" with the prep note's "1 very
 firmly packed cup (½ pound) of mash" — converts to the raw record by FDC
@@ -3099,7 +3107,8 @@ steps pour down to a printed part (Q19 a, P1 D3a):** the recipe's first
 "(pour off | pour out | drain off | spoon off | discard | remove and
 discard) all but N teaspoons/tablespoons/cups (of the) (rendered) fat /
 oil / drippings / grease" sentence cuts the oil line whose LAST mention
-before it — in its step, or the step before — puts it in a pan (heat,
+before it — in its step, or the step before; since matcher v63 (M64 F9) in
+any earlier step — puts it in a pan (heat,
 cook, a skillet, a pot, a Dutch oven, a wok) and names ONE oil line (the
 only one with an amount, or by a kind word only it has: "Heat vegetable
 oil" is the lamb's, never its relish's olive oil; Chicken Marbella's "Heat
@@ -3338,7 +3347,8 @@ carry less fat (17.2 g) than the raw parts counted here: no net uptake`
 batters fried whole (doughnuts, struffoli, falafel, pakoras, lumpia —
 until matcher v60, M61 below, counts their uptake on the raw mix),
 tempeh (its 28 g kept part counted), confit, yuca (no nutrients), and the
-strained-and-kept shallot oil.
+strained-and-kept shallot oil (no uptake; since matcher v63, M64, the ¼ cup
+its yield prints as not poured out is counted).
 
 (3) **Q24 (b) — a coated food browned in the oil.** An oil of ¼ cup or
 more (or a line the mass rule could zero) that a sentence heats after a
@@ -4170,6 +4180,128 @@ and total grams; statuses (1,022 complete, 176 partial), holds and review
 buckets unchanged. Deploy note: matcherVersion 61 stales every recipe; a
 zero-request sweep recomputes the library (a cache without 174414's detail
 asks it once).
+
+**Since matcher v63 (batch M64 — corpus prints: kosher salt at half table
+salt's weight by volume, the set-aside pear half, "remove the bay leaf", the
+pour-off window, the Fried Shallots' printed oil yield, the "remove solids"
+strain; matcherVersion 62; prep49 design_v2 §2 M64, the owner's Q12 (a)
+under the standing authorization; zero requests; the bay, pear, pour-off,
+yield and strain readers read steps, so their reach is pre-Q18).** Six
+rules, each a corpus print:
+
+(R-D) **Kosher salt weighs 0.60865 g/mL** — half of table salt by volume on
+USDA SR 173468 "Salt, table"'s own '1 tsp' 6.0 g (6.0 / 4.92892 × 0.5; 3.0 g
+a teaspoon). The corpus prints the conversion: "1 tablespoon kosher salt or
+1½ teaspoons table salt" (crisp-skinned roast chicken, steak tacos — both
+lines now weigh their own table-salt alternative, 9.00 g), 0091's "¾ cup
+salt" with "If using Diamond Crystal kosher salt, increase the salt to 1½
+cups", and 16 recipes name Diamond Crystal, 12 of them saying they were
+developed with it. It was a round kitchen 0.72 (3.55 g a teaspoon), which
+flake and coarse sea salt keep (no print converts them).
+The basis ends ` · kosher salt at half table salt's weight by volume (the
+corpus's own "1 tablespoon kosher salt or 1½ teaspoons table salt"; USDA SR
+173468 '1 tsp' 6.0 g)` — after a plus part too ("2 tablespoon ≈ 30 mL + 2
+teaspoons kosher salt · kosher salt at …"). The brine threshold's kosher
+mass is now 26.8 g (44 mL); no corpus kosher line is written by weight, so
+no hold moved. 0 kcal; ≈ −59.1 g sodium over the library.
+
+(P10) **A counted part set aside for another use is subtracted**: "set aside
+N <head> half/halves/quarter(s) (and reserve) for (an)other use" naming the
+line's head, N of the line's count × 2 (× 4) — "Peel, halve, and core pears.
+Set aside 1 pear half and reserve for other use" (pear-walnut upside-down
+cake): 1 of 6 halves, `discarded`, basis the weighing's own text then `1
+pear half saved for another use (step 2) — only the rest counted`. Never by
+widening "reserve for another use" (that zeroes a whole food).
+
+(R4, bay only) **"remove (the) bay leaf/leaves"** at or after the line's own
+mention discards it like "discard the bay leaf" (`removedAromatic`, 0 g,
+`removed and discarded (step N) — counted as 0 g`), with or without a
+"discard" after it; every "remove" of a sentence is read ("Remove stew from
+oven and remove bay leaves"). The bay leaf only: the same arm on every whole
+piece would zero the stuffed peppers lifted from their pot, a roasted garlic
+head squeezed into butter, a poached salmon's lemons. "Discard … the bay
+leaf, if it can be easily removed" (paella) stays counted. (R4b) An
+unflagged sub-gram piece prints its figure: `1 × 0.2 g each`, not `1 × 0 g
+each`.
+
+(F9) **The pour-off reads the last oil-naming sentence before it in any
+earlier step** (the v51 window was its step or the step before): crispy-
+skinned chicken breasts' step-3 "Place breasts, skin side down, in oil" is
+cut by step 5's "Pour off all but 2 teaspoons oil from skillet"; `_panOil`
+and the one-line binding unchanged; white chicken chili (pour-off step 3, oil
+step 1) keeps 1 tablespoon of its 1 tablespoon, unchanged.
+
+(Yield, Q12 (a)) **A frying oil whose yield prints the oil out** — "MAKES
+ABOUT 1½ CUPS FRIED SHALLOTS AND ABOUT 1¾ CUPS FRIED SHALLOT OIL" beside "2
+cups vegetable oil" — counts the difference of the printed volumes as the
+part the food keeps (2 − 1¾ = ¼ cup, on the line's record: 2710180's '1 cup'
+224 g → 56.00 g), the frying oil's kept-part slot (`_keptFryingOil`), basis
+`discarded in cooking — only the part the recipe keeps counted · approximate
+(the difference of the yield's printed volumes: 2 cups in, about 1¾ cups out
+as shallot oil — the ¼ cup the shallots, the pan and the towel keep counted
+as eaten)`. The only oil-product yield in the corpus. The flag is built from
+the prints it subtracts, so an edited recipe reads its own: the line's volume
+amount (a weight-first "16 ounces (2 cups)" line subtracts from its 2 cups),
+the yield's "about" volume and the oil it names (less "fried"), the
+difference in the line's unit, the food the yield names before it (else "the
+food"), and the towel only when a step names one.
+The difference is ALL the oil the food, the pan and the towel keep, never a
+pour-off's pan residual: a food fried in that oil adds no frying uptake on top
+(M52's pan loop reads the yield's part as the whole eaten oil — `_yieldKept`),
+and on a plus line ("2 cups plus 1 tablespoon vegetable oil") the basis names
+the plus part only when a step eats it, beside "the part the recipe keeps" and
+the flag (closer 3; STATED synthesized edits of 0053 pinned: the main recipe
+printing its frying oil out → 56.00 g, not 56.00 + the eggplant's 40.82; the
+plus line 56.00 g or, with a step eating the tablespoon, 70.00 g). Limits, 0
+corpus rows: a yield is read against every frying-oil line of its recipe (two
+such lines would each keep line − q); a plus part no step eats is not added to
+the "in" volume (the line's own volume amount is); a divided frying oil's part
+used outside the fry is counted beside the yield's, its basis naming only "the
+part the recipe keeps" and the yield's flag.
+
+(H1, shipped on its condition) **"Using slotted spoon, remove solids from pot
+and discard"** strains (`remove (the) solids … discard` joins the strain
+readers): guay tiew's lemongrass is strained out; its scallions (the greens
+go in after) and Thai chiles (one sliced, eaten) stay counted, as the
+condition required.
+
+Reach (replay of snapshot 25 against the v62 rows): exactly 127 rows, all
+`auto`, 0 person rows, 0 hold moves, 0 status moves: R-D 90 kosher rows on
+173468 (986.60 → 834.00 g, 0 kcal; crisp-skinned-roast-chicken|1 and
+steak-tacos|8 10.65 → 9.00, pai-huang-gua|1 5.32 → 4.50, gravlax|1 42.59 →
+36.00); P10 pear-walnut-upside-down-cake|4 530.70 → 442.25 g (−59.26); R4 11
+bay rows → 0 g (3.80 g, −11.90: hearty-spanish lentil and chorizo soup,
+catalan beef stew, hungarian beef stew, shepherd's pie, chicken marbella,
+filipino adobo, pasta with creamy tomato sauce, coq au vin, carnitas, pesce
+all'acqua pazza, hearty beef and vegetable stew) and 20 bay rows basis only
+(R4b); F9 crispy-skinned-chicken-breasts|2 28.00 → 9.07 g (−170.38); the
+shallot section's oil 0 → 56.00 g (+504.00); H1 guay-tiew|1 20.00 → 0
+(−19.80); two routed parents — crispy-thai-eggplant-salad|14 151.80 → 170.37
+g, 108.86 → 276.86 kcal (the section total STORED at 1 dp, 511.10 g × ⅓;
+its kosher line moves too) and grill-roasted-beer-can-chicken|3 20.76 →
+20.14 g, 0 kcal (the Spice Rub's kosher line, 110.70 → 107.40 g × 0.1875).
+Row kcal +242.66 (the section's +504.00 counted once; the parent's +168.00
+is its share). Per serving: pear cake 533.20 → 525.79, crispy-skinned
+breasts 489.04 → 403.85, crispy Thai eggplant 419.95 → 503.95, guay tiew
+601.77 → 596.82, the bay recipes −0.10 to −0.62. Kept: paella's bay leaf,
+the 40-cloves bay leaf (now `1 × 0.2 g each`), the carnitas onion and the
+stuffed peppers (bay only), white chicken chili's oil (1 tablespoon kept of
+1 tablespoon), the eggplant's main frying oil (40.82 g), guay tiew's
+scallions, chiles and galangal, the five flake / coarse sea-salt rows and
+every table-salt row.
+
+Known gaps (the source stands): a Morton kosher line (⅔ of table salt by
+volume, 4.0 g a teaspoon) reads Diamond Crystal's half — the corpus means
+Diamond (16 recipes name it, each printing a smaller Morton amount); flake
+and coarse sea salt stay on the unsourced 0.72; the carnitas onion "remove …
+and discard" stays
+counted (a "remove" for every whole piece waits on the garlic-shrimp 4-of-14
+share); Chicken Marbella's binder ("Heat oil" names neither oil — a
+step-label reader, −40.86 kcal left); the shallot oil's "about 1¾ cups"
+rounds to ⅛ cup (±28 g, ±252 kcal on the section); guay tiew's galangal is
+no strained head (weighed on ginger, kept: 16.00 g, 12.80 kcal) and its
+makrut lime leaves stay below the gate. Deploy note: matcherVersion 62
+stales every recipe; one zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

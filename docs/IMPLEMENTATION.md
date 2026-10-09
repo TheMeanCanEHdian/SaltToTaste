@@ -3608,6 +3608,31 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v63 (batch M64): corpus prints — kosher salt at
+  half table salt's weight, the set-aside pear half, "remove the bay
+  leaf", the pour-off window, the fried-shallot oil yield (prep49 §2 M64;
+  built under the standing authorization; the step readers' reach
+  labelled pre-Q18).** Kosher salt's density was a round kitchen figure;
+  the corpus prints "1 tablespoon kosher salt or 1½ teaspoons table salt"
+  and the SR table-salt portion gives 6.0 g a teaspoon, so kosher salt now
+  weighs half of table salt by volume (90 rows, 0 kcal, about 59 g of
+  sodium less across the library; flake and coarse sea salt keep the old
+  figure under their own names). A step that sets aside a pear half "for
+  other use" counts the rest; "remove the bay leaf" zeroes the leaf (bay
+  only — the same verb on peppers or garlic would zero eaten food); a
+  pour-off now binds to the last oil-naming sentence before it, not only
+  the step before; a section whose yield prints its oil in and out ("2
+  cups" in, "about 1¾ cups" out) keeps the printed difference as eaten,
+  flagged approximate; a "remove solids … and discard" sentence is read
+  as a strain. Disclosed and pinned: a routed parent's spice-rub salt moves
+  with its section (one row beyond the design's count, 0 kcal); the
+  shallot parent lands 0.01 g off the design (the stored section total is
+  one decimal); the strain reaches the lemongrass only (galangal is not a
+  strained head — left as a gap). The verifier's three closer rounds were
+  text and two synthesized edge cases (a printed yield beside an
+  oil-absorbing food would have counted the oil twice). 127 rows, +243
+  kcal of row energy, no status, hold or person-row move.
+
 - **2026-10-09 — re-calibration on v62 and blind audit 4 (snapshot 25) —
   the prep48 series' exit measurement.** Audit 3's 25 hand-counted recipes
   re-measured on the v62 library: median error 8.7 → 6.9 %, mean 10.7 →

@@ -562,7 +562,9 @@ const List<_Row> _sauceStrains = [
     '0.866667',
     '0.40',
     '1.25',
-    '2 × 0 g each',
+    // RE-PIN (M64 batch, v63, R4b): a sub-gram piece prints its figure
+    // (was '2 × 0 g each'); the row's grams unchanged.
+    '2 × 0.2 g each',
   ),
   (
     '0535-chinese-braised-beef.yaml',
@@ -662,7 +664,8 @@ void main() {
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    expect(matcherVersion, 61);
+    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
+    expect(matcherVersion, 62);
   });
 
   group('matcher v56 (batch M57)', skip: skipIfNoCorpus, () {

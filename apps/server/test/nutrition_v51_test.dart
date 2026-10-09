@@ -318,6 +318,9 @@ _rows = [
   // two oil lines (the paste's, the chicken's); the crispy-skinned breasts'
   // oil goes into the skillet in step 3, two steps before the pour-off —
   // outside the design's window (the pour-off step or the one before).
+  // RE-PIN (M64 batch, v63, F9): the window is now any earlier sentence —
+  // the crispy-skinned breasts' oil IS cut (2 teaspoons kept, 9.07 g; was
+  // 28.00 whole); Marbella's stays uncut (its binder, C1).
   (
     '0124-chicken-marbella.yaml',
     null,
@@ -348,10 +351,10 @@ _rows = [
     2,
     '2 tablespoons vegetable oil',
     2710180,
-    '28.00',
+    '9.07',
     null,
     null,
-    '2 tablespoon · USDA portion',
+    '2 teaspoons kept (the steps pour off the rest)',
     null,
   ),
   // Byte-equal: the shipped kept frying oil; the lamb's oil (1 teaspoon,
@@ -497,7 +500,8 @@ void main() {
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    expect(matcherVersion, 61);
+    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
+    expect(matcherVersion, 62);
   });
 
   test(

@@ -731,9 +731,12 @@ void main() {
       expect(pepper.source, GramSource.portion);
       // The table stays first: kosher salt on SR table salt (173468, 'tsp'
       // 6.0 g — 1.71× kosher's 0.72 g/mL, audit 1) keeps the kosher density.
+      // RE-PIN (M64 batch, v63, R-D): kosher's density is half of table
+      // salt's '1 tsp' 6.0 g by volume, 0.60865 g/mL (was 0.72) — still
+      // the table, never the record's own teaspoon.
       final kosher = gramsOf('1 teaspoon kosher salt', await food(173468));
       expect(kosher!.source, GramSource.density);
-      expect(kosher.grams, closeTo(4.92892 * 0.72, 0.001));
+      expect(kosher.grams, closeTo(4.92892 * 0.60865, 0.001));
     });
 
     test(

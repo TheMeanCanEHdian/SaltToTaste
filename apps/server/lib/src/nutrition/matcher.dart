@@ -837,7 +837,24 @@ const Map<String, String> _synonyms = {
 /// a top sirloin roast on the lean-only petite roast 173408 says it stands
 /// in (no lean-and-fat petite roast exists in FDC); the rack's 174414 is
 /// weighed on its cached detail (the M56 search-hit set retired).
-const int matcherVersion = 61;
+///
+/// v62 (the Matcher v63 commit, batch M64 — corpus prints; prep49
+/// design_v2 §2 M64 and the owner's Q12 (a) under the standing
+/// authorization; zero requests): kosher salt weighs half of table salt by
+/// volume (grams `_kosherSaltDensity` 0.60865: the corpus's "1 tablespoon
+/// kosher salt or 1½ teaspoons table salt" on SR 173468's '1 tsp' 6.0 g;
+/// flake and coarse sea salt keep 0.72); a counted part set aside for
+/// another use is subtracted ("Set aside 1 pear half and reserve for other
+/// use": engine `_partialUseOf`'s `pieces` arm); "remove (the) bay leaf"
+/// discards the bay leaf (engine `_discardClauses`' remove arm, bay only),
+/// and an unflagged sub-gram piece prints its figure ("1 × 0.2 g each");
+/// a pour-off cuts the last oil-naming sentence before it in any earlier
+/// step (engine `_panOilAt`); a frying oil whose yield prints the oil out
+/// ("… AND ABOUT 1¾ CUPS FRIED SHALLOT OIL") counts the difference (engine
+/// `_yieldOilEaten`); and "Using slotted spoon, remove solids from pot and
+/// discard" strains the solids out (engine `_strainWord` /
+/// `_strainedSolids`, H1: guay-tiew's lemongrass).
+const int matcherVersion = 62;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

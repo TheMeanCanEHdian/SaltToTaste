@@ -521,11 +521,14 @@ void main() {
       await matchAndCompute(db, provider, r);
       var row = rowAt(db);
       expect((row.status, row.hold), ('confirmed', null));
-      expect(row.grams, closeTo(10.65, 0.01));
+      // RE-PIN (M64 batch, v63, R-D): a tablespoon of kosher salt at
+      // 0.60865 g/mL, 9.00 g — its printed table-salt alternative (was
+      // 10.65 at 0.72), twice.
+      expect(row.grams, closeTo(9.00, 0.01));
       await applyMatchOverride(db, provider, r, 0, {'confirmed': true});
       row = rowAt(db);
       expect((row.gramSource, row.hold), ('density', null));
-      expect(row.grams, closeTo(10.65, 0.01));
+      expect(row.grams, closeTo(9.00, 0.01));
     });
 
     test("H2: a held medium's typed grams (0052's salt, 2 g) come back "

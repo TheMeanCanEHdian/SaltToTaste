@@ -701,7 +701,7 @@ void main() {
 
     test("0148's dredge, brine salt and buttermilk soak written by weight: "
         'flour ¼ cup = 30.2 g (0.51), table salt 44 mL = 53.7 g (1.22), '
-        'kosher 31.7 g (0.72), buttermilk 4 cups = 974 g (1.03)', () {
+        'kosher 26.8 g (0.60865), buttermilk 4 cups = 974 g (1.03)', () {
       final r = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
       const flour = '4 cups (20 ounces) unbleached all-purpose flour';
       for (final (from, raw, want) in [
@@ -715,8 +715,11 @@ void main() {
         ('½ cup table salt', '1 pound table salt', DiscardedMedium.brine),
         ('½ cup table salt', '54 grams table salt', DiscardedMedium.brine),
         ('½ cup table salt', '53 grams table salt', null),
-        ('½ cup table salt', '32 grams kosher salt', DiscardedMedium.brine),
-        ('½ cup table salt', '31 grams kosher salt', null),
+        // RE-PIN (M64 batch, v63, R-D): kosher's 44 mL is 26.8 g at
+        // 0.60865 (was 31.7 g at 0.72: 32 grams brine, 31 none) — the title's
+        // figure too.
+        ('½ cup table salt', '27 grams kosher salt', DiscardedMedium.brine),
+        ('½ cup table salt', '26 grams kosher salt', null),
         ('7 cups buttermilk', '64 ounces buttermilk', DiscardedMedium.soak),
         ('7 cups buttermilk', '980 grams buttermilk', DiscardedMedium.soak),
         ('7 cups buttermilk', '970 grams buttermilk', DiscardedMedium.brine),

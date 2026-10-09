@@ -557,7 +557,12 @@ void main() {
             .ingredientMatchesFor(shallots)
             .singleWhere((r) => r.position == 1);
         expect(oil.raw, '2 cups vegetable oil');
-        expect(oil.grams, 0);
+        // RE-PIN (M64 batch, v63, Q12 (a)): the medium keeps the part its
+        // SECTION's own yield prints as not poured out — 2 cups in, about
+        // 1¾ cups out as shallot oil: ¼ cup, 56.00 g on 2710180 (was 0 g),
+        // still `discarded`.
+        expect(oil.grams!.toStringAsFixed(2), '56.00');
+        expect(oil.gramSource, 'discarded');
         expect(nutritionRecipeOf(db, shallots)!.recipe.steps, isNotEmpty);
         expect(
           nutritionRecipeOf(db, shallots)!.recipe.steps.map((s) => s.text),

@@ -211,16 +211,19 @@ _rows = [
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw eggplant\'s weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil" (no record for eggplant; read as Fast foods, potato, french fried in vegetable oil))',
   ),
   // the strained-and-kept shallot oil: shallots have no class, 0 g
+  // RE-PIN (M64 batch, v63, Q12 (a)): still no uptake (no class), but the
+  // section's yield prints the oil out — 2 cups in, about 1¾ cups out: the
+  // ¼ cup kept is counted, 56.00 g (was 0.00).
   (
     '0053-crispy-thai-eggplant-salad.yaml',
     'Fried Shallots and Fried Shallot Oil',
     1,
     '2 cups vegetable oil',
     2710180,
-    '0.00',
+    '56.00',
     'discarded',
     null,
-    'discarded in cooking — counted as 0 g',
+    "discarded in cooking — only the part the recipe keeps counted · approximate (the difference of the yield's printed volumes: 2 cups in, about 1¾ cups out as shallot oil — the ¼ cup the shallots, the pan and the towel keep counted as eaten)",
   ),
   // O4p 5.5 % × 1204.85 g (derived, SR 168200) — named by its "Fried …" title, no steps printed
   (
@@ -712,7 +715,8 @@ void main() {
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    expect(matcherVersion, 61);
+    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
+    expect(matcherVersion, 62);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

@@ -541,7 +541,8 @@ void main() {
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    expect(matcherVersion, 61);
+    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
+    expect(matcherVersion, 62);
   });
 
   test('R1: each rank-as item reads its named cached answer under the '

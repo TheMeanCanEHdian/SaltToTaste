@@ -163,6 +163,9 @@ const List<_Row> _negatives = [
     null,
     'discarded in cooking — counted as 0 g · approximation (counted as Fat, goose)',
   ),
+  // RE-PIN (M64 batch, v63, Q12 (a)): M61 still reads no product here,
+  // but the section's yield prints the oil out — the ¼ cup kept, 56.00 g
+  // (was 0.00).
   (
     _eggplant,
     'Fried Shallots and Fried Shallot Oil',
@@ -170,10 +173,10 @@ const List<_Row> _negatives = [
     '2 cups vegetable oil',
     2710180,
     '0.923333',
-    '0.00',
-    '0.00',
+    '56.00',
+    '504.00',
     null,
-    'discarded in cooking — counted as 0 g',
+    "discarded in cooking — only the part the recipe keeps counted · approximate (the difference of the yield's printed volumes: 2 cups in, about 1¾ cups out as shallot oil — the ¼ cup the shallots, the pan and the towel keep counted as eaten)",
   ),
   (
     _cornFritters,
@@ -664,7 +667,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
     // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    expect(matcherVersion, 61);
+    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
+    expect(matcherVersion, 62);
   });
 
   group('matcher v60 (batch M61)', skip: skipIfNoCorpus, () {

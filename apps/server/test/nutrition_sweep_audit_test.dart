@@ -1208,8 +1208,17 @@ void main() {
     // 'pitas' and 'pita'; 406 4.632 / 4.63) differing in some digit, and
     // 2709787 (in 'jicama') equal in every digit: compared 497 -> 501,
     // differ 379 -> 382.
-    expect(compared, 501);
-    expect(differ, 382);
+    // RE-PIN (M64 batch, v63, 2026-10-09): matcher v63 recorded from snapshot
+    // 25 the 9 searches and 2 details its whole-recipe pins read (canola
+    // oil, parsnips, makrut lime leaves, oyster mushrooms, spanish chorizo,
+    // red yellow or orange bell peppers, ground beef, oil-packed sun-dried
+    // tomatoes, english cucumbers; 2747659, 168931): three more compared,
+    // each differing in some digit — 168931 (a hit in 'short-grain white
+    // rice'; carbohydrate 79.2 / 79.15), the recorded 170417 (now a hit in
+    // 'parsnips'; 18.0 / 17.99) and 2747659 (in 'parsnips'; carbohydrate
+    // 19.3 / 19.292275 and others): compared 501 -> 504, differ 382 -> 385.
+    expect(compared, 504);
+    expect(differ, 385);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
