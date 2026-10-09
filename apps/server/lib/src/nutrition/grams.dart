@@ -4,6 +4,8 @@
 /// portions or a piece-weight table.
 library;
 
+import 'dart:math' show pi;
+
 import 'package:meta/meta.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
@@ -652,6 +654,28 @@ const Map<String, (Set<String>, double, String, String)> _perInch = {
   ),
 };
 
+/// v61 (M63 P10, the owner's ruling 2026-10-08, outcome B): a round counted
+/// by its printed "(N-inch)" diameter on the record publishing the per-AREA
+/// portion — FNDDS 2707616's own '1 surface inch' 2.0 g × π (N/2)² (an
+/// 8-inch pita 100.53 g; [_perAreaGrams]), flagged "derived". Item word →
+/// (the units it is counted in, g per square inch, the fdcId it must be on
+/// — that record alone, never a description prefix: the other 'Bread,
+/// pita…' records publish no surface inch and SR 174915 prints its own
+/// 4" / 6½" pitas — label).
+/// ponytail: pita only — prosciutto 2705879 and the FNDDS records
+/// 2707997, 2708006–09, 2708750 and 2709129 print a surface inch too, but
+/// no corpus "(N-inch)" count line sits on them; the flour tortilla 2707824
+/// prints none (the "(N-inch) flour tortillas" sibling is a later item).
+const Map<String, (Set<String>, double, int, String)> _perArea = {
+  'pitas?': (
+    {'', 'piece'},
+    2.0,
+    2707616,
+    "derived from USDA FNDDS 2707616 '1 surface inch' 2 g × the printed "
+        "diameter's area",
+  ),
+};
+
 /// "(4-inch)", "(1½-inch piece)", "about 3 inches long" — the printed
 /// length [_perInch] scales by.
 final RegExp _printedLength = RegExp(
@@ -697,6 +721,38 @@ final RegExp _printedLength = RegExp(
             perInch: perInch,
             label: label,
           );
+  }
+  return null;
+}
+
+/// The grams of ONE counted round of [normalizedItem] by its printed
+/// "(N-inch)" diameter ([_perArea]) — never "about N inches long", a
+/// length — with the diameter, its area and the figure's label, or null.
+({double grams, double inches, double area, double perSqIn, String label})?
+_perAreaGrams(String normalizedItem, String? raw, String unit, FdcFood? food) {
+  if (raw == null || food == null) {
+    return null;
+  }
+  for (final MapEntry(:key, value: (units, perSqIn, record, label))
+      in _perArea.entries) {
+    if (!units.contains(unit) ||
+        !RegExp('\\b$key\\b').hasMatch(normalizedItem) ||
+        food.fdcId != record) {
+      continue;
+    }
+    final d = _printedLength.allMatches(raw).map((m) => m[1]).nonNulls;
+    final inches = d.isEmpty ? null : _quantityValue(d.first.trim());
+    if (inches == null) {
+      return null;
+    }
+    final area = pi * (inches / 2) * (inches / 2);
+    return (
+      grams: area * perSqIn,
+      inches: inches,
+      area: area,
+      perSqIn: perSqIn,
+      label: label,
+    );
   }
   return null;
 }
@@ -2300,20 +2356,6 @@ const Map<int, ({double share, String flag})> ah102Meats = {
   ),
 };
 
-/// v54 (batch M56 R3, closer 1's amendment of design §2): the [ah102Meats]
-/// keys whose handbook row is read on the SEARCH HIT, no detail asked
-/// (engine `_weightReadsPortions`): 174414, the rack a printed trim moves
-/// to, a hit only in snapshot 23 (the batch is zero-request). It ASSUMES
-/// the detail publishes no refuse portion: none of the 11 lamb details
-/// snapshot 23 caches does (the Australian-imported 1/8" legs 172659 and
-/// 174406 included); its six SR refuse portions are pork chops, steaks and
-/// ribs. Every other key keeps the shipped path (an SR hit fetches its
-/// detail first). A cached detail is the food, so its own refuse portion,
-/// if any, wins over this set ([edibleYieldOf] reads first).
-/// ponytail: nothing asks for 174414's detail while it is here; a named
-/// live request retires the assumption — then drop the id.
-const Set<int> ah102MeatsOnHit = {174414};
-
 // LIVE STEP (plan §3 requests 1–3, spent by the owner 2026-10-05; the
 // record): the whole bird and pieces ENABLED in v40 — the search "chicken
 // broilers or fryers meat only raw" ranked SR 171052 first, whose detail
@@ -2961,11 +3003,7 @@ GramResolution? _resolveLine({
     // that no yield was read: its record may publish one. Shellfish in the
     // shell is labelled the same — held `in_shell`, and approximate once a
     // person's confirm counts it at its gross weight (v11).
-    // v54 (M56 R3): [ah102MeatsOnHit] reads its handbook row on the hit.
-    final noRefuse =
-        food.dataType != 'SR Legacy' ||
-        food.portions.isNotEmpty ||
-        ah102MeatsOnHit.contains(food.fdcId);
+    final noRefuse = food.dataType != 'SR Legacy' || food.portions.isNotEmpty;
     // v39 (Y1, the owner's ruling 2026-10-05, revising CP6 #11 and #5): a
     // record that publishes none reads its class's FDC figure, flagged —
     // never a whole bird's with [wholeBirdYield] off, which keeps whole
@@ -4263,6 +4301,21 @@ GramResolution? _resolveGrams({
     // 3a.6 A piece by its printed length ([_perInch], v31): a "(4-inch)
     //      piece ginger", "2 (2-inch) strips lemon zest" — a strip is a
     //      container unit to the piece table below (never the whole fruit).
+    //      v61 (M63 P10): a round by its printed diameter ([_perArea]): "4
+    //      (8-inch) pita breads".
+    final round = _perAreaGrams(normalizedItem, raw, amountUnit, food);
+    if (round != null) {
+      return GramResolution(
+        grams: quantity * round.grams,
+        source: GramSource.piece,
+        basis:
+            '${_amountText(amount)} × ${round.grams.toStringAsFixed(2)} g '
+            'each (${_figure(round.inches)}-inch round: '
+            '${round.area.toStringAsFixed(2)} sq in × '
+            '${_figure(round.perSqIn)} g per surface inch) · approximate '
+            '(${round.label}, π × ${_figure(round.inches / 2)}²)',
+      );
+    }
     final inch = _perInchGrams(normalizedItem, raw, amountUnit, food);
     if (inch != null) {
       return GramResolution(

@@ -824,7 +824,20 @@ const Map<String, String> _synonyms = {
 /// counts, shared by the dip lines' grams, the coat's parts unchanged; the
 /// dip of a coat held with no budget is held `coating` with it; a dip with
 /// no coat keeps the "excess in the bowl" flag only.
-const int matcherVersion = 60;
+///
+/// v61 (the Matcher v62 commit, batch M63 — the 8-inch pita by FDC's
+/// per-area portion, the crab cake's own oil, the sirloin stand-in flag,
+/// the rack's retired hit read; prep48 design_v2 §2 M63 and §1 Q3, Q6,
+/// Q11, Q16, the owner's rulings of 2026-10-08 under the 2026-10-07
+/// standing authorization; zero requests — live step L's L3–L5 reads): a
+/// pita counted by its printed "(N-inch)" diameter on FNDDS 2707616 weighs
+/// the record's own '1 surface inch' 2 g × π (N/2)² (grams `_perArea`,
+/// flagged "derived"); a fried crab absorbs FNDDS 2706549 "Crab, cake"'s
+/// own oil, 5 g per 65 g crab (7.69 %), not the chicken breast's stand-in;
+/// a top sirloin roast on the lean-only petite roast 173408 says it stands
+/// in (no lean-and-fat petite roast exists in FDC); the rack's 174414 is
+/// weighed on its cached detail (the M56 search-hit set retired).
+const int matcherVersion = 61;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

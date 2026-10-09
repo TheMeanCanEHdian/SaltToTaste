@@ -540,7 +540,8 @@ void main() {
     // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
-    expect(matcherVersion, 60);
+    // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
+    expect(matcherVersion, 61);
   });
 
   test('R1: each rank-as item reads its named cached answer under the '
@@ -584,8 +585,9 @@ void main() {
       {172641: 174414, 2727572: 171751},
     );
     expect(ah102Meats[174414], ah102Meats[172641]);
-    // Read on the search hit (no detail asked) — the rack alone.
-    expect(ah102MeatsOnHit, {174414});
+    // RE-PIN (M63 batch, v62): `ah102MeatsOnHit` (was {174414}, the rack
+    // read on the search hit) is retired — live step L cached 174414's
+    // detail (portions 'oz' and 'chop', no refuse portion).
   });
 
   group('matcher v55 (batch M56)', skip: skipIfNoCorpus, () {
@@ -690,10 +692,12 @@ void main() {
       }
     }
 
+    // RE-PIN (M63 batch, v62): the title said "zero requests for the rack
+    // (174414 stays a search hit, weighed by its AH-102 row)".
     test('each reach row (26, design_v2 §2 M56) lands its record, '
-        'confidence, grams and energy; grams never move; zero requests '
-        'for the rack (174414 stays a search hit, weighed by its AH-102 '
-        'row); only pomegranate|0 carries the stand-in flag', () async {
+        'confidence, grams and energy; grams never move; the rack (174414) '
+        'is weighed on its cached detail (no refuse portion) by its AH-102 '
+        'row; only pomegranate|0 carries the stand-in flag', () async {
       expect(_reach, hasLength(26));
       expect(
         {for (final (rule, _, _, _, _, _, _, _) in _reach) rule},
@@ -748,7 +752,10 @@ void main() {
         basis('0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml', 0),
         _rackBasis,
       );
-      expect(db.fdcFoodCacheGet(174414), isNull);
+      // RE-PIN (M63 batch, v62): isNotNull (was isNull) — the rack is weighed
+      // on its cached detail (portions 'oz' / 'chop', no refuse portion) by
+      // its AH-102 row; the M56 hit read retired, the row byte-equal.
+      expect(db.fdcFoodCacheGet(174414), isNotNull);
     });
 
     test('the rows the rules must not reach equal the v54 replay '

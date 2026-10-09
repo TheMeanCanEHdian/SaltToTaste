@@ -361,6 +361,9 @@ const List<_Row> _uptakes = [
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw salmon's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast (no record for salmon; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw))",
   ),
+  // RE-PIN (M63 batch, v62, Q11): the crab cake's own read oil, FNDDS
+  // 2706549 7.69 % (was 30.30 g, 272.70 kcal on the breast's 6.68 %
+  // stand-in) — the one uptake row M63 moves.
   (
     '0288-maryland-crab-cakes.yaml',
     null,
@@ -368,10 +371,10 @@ const List<_Row> _uptakes = [
     '¼ cup vegetable oil',
     2710180,
     '0.923333',
-    '30.30',
-    '272.70',
+    '34.88',
+    '313.92',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw crab's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw))",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.69 % of the raw crab's weight — USDA FNDDS 2706549 recipe: 5 g oil per 65 g raw crab)",
   ),
   (
     '0304-chicken-fried-steaks.yaml',
@@ -660,7 +663,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
-    expect(matcherVersion, 60);
+    // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
+    expect(matcherVersion, 61);
   });
 
   group('matcher v60 (batch M61)', skip: skipIfNoCorpus, () {

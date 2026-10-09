@@ -3608,6 +3608,31 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v62 (batch M63): the 8-inch pita by FDC's
+  per-area portion, the crab cake's own oil, the sirloin stand-in flag,
+  the rack's retired hit read (prep48 §2 M63; Q3, Q6, Q11, Q16; the live
+  step L's records; built under the standing authorization).** The SR pita
+  record names only 4-inch and 6½-inch pitas, but the FNDDS pita the rows
+  sit on carries a "1 surface inch" portion of 2 g, so a line printing an
+  8-inch pita now weighs the record's own portion times the printed
+  diameter's area (100.53 g each, flagged "derived", the baguette
+  precedent) — the owner's ruling over the design's demand for a portion
+  naming 8 inches, which predates the read; the unnamed "large" 85 g is a
+  stated alternative (four rows, +1,676 kcal). The crab-cake record lists
+  its crumbs as a binder, so no coat figure follows and the stand-in
+  suffix stays; its own frying oil (5 g per 65 g of crab) is read as a
+  crab arm (one row, +41 kcal). FDC has no lean-and-fat petite sirloin
+  roast, so the three rows keep the lean-only record with an explicit
+  stand-in flag. The rack of lamb keeps its Australian record, byte-equal,
+  and the search-hit workaround is retired now that its detail is cached;
+  the domestic rib is rejected as an unfrenched cut of different
+  composition. The plan's two late text defects (a test-count touch, a
+  wording) were fixed by hand; the fixer keyed the per-area map to the
+  record's id rather than a description prefix, so a person's pick of
+  another pita record keeps its own weighing. Eight rows, +1,717 kcal per
+  batch, no status, hold or bucket move. This closes the prep48 series
+  (M56–M63); re-calibration and audit 4 follow.
+
 - **2026-10-08 — matcher v61 (batch M62): egg dips sized by the read wet
   share, held-coat dips held, no crumb rule (prep48 §2 M62; Q9; the live
   step L's breading record; built under the standing authorization; reach

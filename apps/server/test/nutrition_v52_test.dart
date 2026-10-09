@@ -160,7 +160,8 @@ void main() {
     // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
-    () => expect(matcherVersion, 60),
+    // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
+    () => expect(matcherVersion, 61),
   );
 
   group('matcher v52 (batch M51)', skip: skipIfNoCorpus, () {
@@ -364,9 +365,11 @@ void main() {
         (rowAt(_crab, 8).hold, rowAt(_crab, 8).grams?.toStringAsFixed(2)),
         (null, '30.16'),
       );
+      // RE-PIN (M63 batch, v62, Q11): |9 at the crab cake's own read oil,
+      // FNDDS 2706549's 7.69 % (was 30.30 on the breast's 6.68 % stand-in).
       expect(
         (rowAt(_crab, 9).hold, rowAt(_crab, 9).grams?.toStringAsFixed(2)),
-        (null, '30.30'),
+        (null, '34.88'),
       );
       expect(summaryOf(_crab).servedWith, [
         {'position': 10, 'name': 'Sweet and Tangy Tartar Sauce'},

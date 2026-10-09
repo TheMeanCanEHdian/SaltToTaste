@@ -13193,11 +13193,7 @@ bool _weightReadsPortions(
 ) =>
     withoutPortions?.source == GramSource.weight &&
     (food.dataType == 'SR Legacy' &&
-            // v54 (M56 R3): the rack's 174414 reads its AH-102 row on
-            // the hit ([ah102MeatsOnHit]) — no detail asked.
-            ((edibleYieldOn &&
-                    buysRefuse(raw) &&
-                    !ah102MeatsOnHit.contains(food.fdcId)) ||
+            ((edibleYieldOn && buysRefuse(raw)) ||
                 (cannedDrained && drainsCan(raw)) ||
                 (wholeBirdYieldOn && countsGameHens(raw))) ||
         // v39 (Y2): FNDDS's "1 lobster" portion.
@@ -14171,11 +14167,21 @@ String? gramBasisFor(
 /// as [isApproximation]'s). 0224's braise skims the rendered fat (step 5).
 /// ponytail: keyed on the one corpus line's words, its step number that
 /// recipe's; a second printed-depth brisket line needs its own steps read.
-String? trimStandInFlagOf(String raw, int? fdcId) =>
-    fdcId == 168743 && raw.toLowerCase().contains('fat trimmed to ¼ inch')
-    ? 'approximate (the printed ¼-inch fat cap renders and is skimmed '
-          '(step 5); counted as the 0-inch trimmed flat)'
-    : null;
+/// v61 (M63, Q6; live step L5's search, 2026-10-08): a top sirloin roast on
+/// the lean-only petite roast 173408 that does not ask for lean says so —
+/// FDC publishes no lean-and-fat petite roast (choice 173408, select
+/// 174695 and all grades 173053 are all lean only, 0"), so R2 cannot fire
+/// and a rank-as onto a top sirloin STEAK would read another subprimal.
+String? trimStandInFlagOf(String raw, int? fdcId) => switch (fdcId) {
+  168743 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
+    'approximate (the printed ¼-inch fat cap renders and is skimmed '
+        '(step 5); counted as the 0-inch trimmed flat)',
+  173408 when !RegExp(r'\blean\b').hasMatch(raw.toLowerCase()) =>
+    'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
+        "petite roast (search 2026-10-08); the roast's separable fat not "
+        'counted)',
+  _ => null,
+};
 
 String? _gramBasis(
   SaltDatabase db,
@@ -16724,6 +16730,20 @@ const _Fndds _cauliflowerFried = (
   r: '39.58',
 );
 
+/// v61 (M63, Q11; read at live step L3, .claude/diag/2026-10-08/
+/// live60_raw/2706549.json): the crab cake fries in its own 5 g of oil per
+/// 65 g of crab ("blue, cooked, moist heat" — the line's crab is cooked
+/// too, so no protein conversion). Its 5 g of dry crumbs are mixed in, a
+/// binder: no breading row, so no coat figure (`b` is never read).
+const _Fndds _crabCakeFried = (
+  id: 2706549,
+  description: 'Crab, cake',
+  food: 'crab',
+  b: '0',
+  o: '5',
+  r: '65',
+);
+
 /// c_b, the FNDDS breading's (99995000) carbohydrate per gram: each read
 /// recipe's own carbohydrate ÷ its breading grams on the six whose other
 /// inputs are cooked, 0.397–0.401 (p3_read_figures.md) — v57 (M59 D)
@@ -17050,6 +17070,13 @@ _FriedClass? _friedClassOf(
       _ when d.startsWith('mollusks') => meat(
         _derivedFig('5.3', _squidFried),
         r'\b(?:squid|calamari)\b',
+      ),
+      // v61 (M63, Q11): the crab cake's own read oil.
+      // ponytail: any fried crab reads the cake's figure (no corpus
+      // soft-shell or other fried crab row).
+      _ when d.startsWith('crustaceans, crab') => meat(
+        _readFig('7.69', _crabCakeFried),
+        r'\b(?:crab|cakes?)\b',
       ),
       _ => meat(breast, r'\b(?:pork|chops?|cutlets?|crab|cakes?)\b'),
     };

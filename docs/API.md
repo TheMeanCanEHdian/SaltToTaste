@@ -3312,7 +3312,8 @@ beef, steak-frites' rib-eye and the tostadas' pork are not fried in it).
 | O1w wings | 6.61 | FNDDS 2706065 |
 | O1c bone-in skin-on chicken | 0 | FNDDS 2705996, read fat balance (below) |
 | O1d beef | 9.89 | FNDDS 2705842 (a beef with no held dredge — 0536's cornstarch-tossed strips — a stand-in) |
-| O1e pork; crab, salmon and any other food | 6.68 | FNDDS 2705975, stand-in |
+| O1e pork; salmon and any other food (crab until matcher v62) | 6.68 | FNDDS 2705975, stand-in |
+| O1k crab (since matcher v62, M63) | 7.69 | FNDDS 2706549 "Crab, cake" |
 | O2 battered cod, haddock | 15.38 | FNDDS 2706244, 2706258 |
 | O2s battered shrimp | 15.38 | FNDDS 2706364 |
 | O3 floured squid or shrimp (a C3 coat) | 5.3 | SR 171982, derived |
@@ -3502,17 +3503,14 @@ record a cached answer already holds; grams never move.
   172641's AH-102 item 1364 row (`ah102Meats[174414]`, verbatim); "fat
   caps? removed" on 2727572 → 171751 *top loin steak, boneless, lip off,
   lean and fat, trimmed to 0" fat, choice, raw* (Q7; keyed on 2727572, so it
-  lives only under R1c, F12). Brisket pairs are not here. 174414 is a
-  search hit only (snapshot 23 holds no detail of it), so the rack reads
-  the AH-102 row ON THE HIT (`ah102MeatsOnHit`): its weight line asks no
-  detail. That ASSUMES 174414's detail publishes no refuse portion: none of
-  the 11 lamb details snapshot 23 caches does (the Australian-imported 1/8"
-  legs 172659 and 174406 included; the six SR refuse portions cached are all
-  pork chops, steaks and ribs). Every other `ah102Meats` key keeps the
-  shipped path (an SR hit fetches its detail first). Nothing asks for
-  174414's detail while it is in the set; a named live request retires the
-  assumption. Once cached, the detail is the food and FDC's own refuse
-  portion, if any, wins (the set is then inert: drop the id).
+  lives only under R1c, F12). Brisket pairs are not here. At M56 174414
+  was a search hit only (snapshot 23 held no detail of it), so the rack read
+  the AH-102 row ON THE HIT (`ah102MeatsOnHit`), assuming the detail
+  publishes no refuse portion. Live step L cached the detail (snapshot 24):
+  its portions are 'oz' and 'chop', no refuse portion — the assumption
+  holds, and **M63 retired the set** (below): the rack's weight line reads
+  the cached detail like every other `ah102Meats` key and lands the same
+  row, byte-equal (1,241.71 g, 2,942.85 kcal).
 
 Reach: 26 rows, −3,991.96 kcal per batch (design −3,991.94): R1a 1 (+599.86),
 R1b 2 (−848.21), R1c 7 (+2,185.70, ultimate-charcoal|0 then −172.78 by Q7),
@@ -4075,6 +4073,103 @@ rows in basis only; 0 person rows; statuses unchanged (1,022 complete, 176
 partial); review buckets: `check` +9 and `counted` −9 (the held rows), the
 `coating` holds 20 → 29. Deploy note: matcherVersion 60 stales every recipe;
 a zero-request sweep recomputes the library.
+
+**Since matcher v62 (batch M63 — the 8-inch pita by FDC's per-area portion,
+the crab cake's own oil, the sirloin stand-in flag, the rack's retired hit
+read; matcherVersion 61; prep48 design_v2 §2 M63 and §1 Q3, Q6, Q11, Q16,
+the owner's rulings of 2026-10-08 under the standing authorization; zero
+requests — the records were read at live step L (L3–L5); no rule reads a
+step, so no reach here is pre-Q18).** Four record reads:
+
+(P10, Q16 — RE-RULES F3's "only on a printed 8-inch weight", the owner's
+outcome B) A pita counted by its printed **"(N-inch)" diameter** (`\bpitas?\b`
+in the item, never "pepitas"; a bare count or "piece"; the record FNDDS
+2707616 *Bread, pita* alone — keyed by its id, not a description prefix, so
+a person's pick of another *Bread, pita…* record keeps its own weighing:
+none of them publishes a surface inch, and SR 174915 prints its own 4" and
+6½" pitas) weighs the record's own **'1 surface inch' 2.0 g × π
+(N/2)²** — an 8-inch pita 50.27 sq in, **100.53 g** — `gram_source: piece`,
+basis `4 × 100.53 g each (8-inch round: 50.27 sq in × 2 g per surface inch) ·
+approximate (derived from USDA FNDDS 2707616 '1 surface inch' 2 g × the
+printed diameter's area, π × 4²)` (grams `_perArea`, read at step 3a.6
+beside the per-inch pieces, before the per-item portion; "about N inches
+long" is a length, never read as a diameter). FNDDS names no diameter for
+its small 28 / medium 57 / large 85 / extra large 114 g, and SR 174915
+prints a 4" (28 g) and a 6½" (60 g) pita only: no source prints an 8-inch
+weight, so the figure is DERIVED from the rows' own record (the baguette's
+per-inch precedent, v37) and flagged so. Before: the medium 57 g.
+
+(Crab, Q11) A fried crab absorbs the oil of FNDDS 2706549 *Crab, cake*'s
+own recipe — **5 g of oil per 65 g of crab ("blue, cooked, moist heat"),
+7.69 %** — not the chicken breast's 6.68 % stand-in (`_friedClassOf`; the
+uptake table's O1e row loses crab to this O1k). Flag `frying oil absorbed:
+7.69 % of the raw crab's weight — USDA FNDDS 2706549 recipe: 5 g oil per 65
+g raw crab` (the template's "raw" is the shipped wording: the record's crab
+and the line's are both cooked, so no protein conversion). The record's 5 g
+of dry crumbs are mixed in — a binder, as the recipe's own crumbs are — so
+no cake coat figure follows: the flour's coat stays on the breast's read
+5.73 with M58's stand-in suffix.
+
+(Top sirloin, Q6) Live step L5 found no lean-and-fat petite roast in FDC
+(choice 173408, select 174695, all grades 173053 are all "separable lean
+only, trimmed to 0" fat"); the cached lean-and-fat raw top sirloins are
+steaks and cap steaks at a 1/8" depth no line prints, and one Australian
+grass-fed cap-off record (171739, 127 kcal, below the lean-only choice
+roast's 132 by origin and feed) — none a petite or center-cut roast — so R2
+cannot fire and no rank-as is made. A line on 173408 that does not say
+`lean` (a word) says it stands in, whoever chose the record
+(`trimStandInFlagOf`, as the brisket's): ` · approximate (lean only — FDC
+publishes no lean-and-fat top sirloin petite roast (search 2026-10-08); the
+roast's separable fat not counted)`. Grams and energy unchanged.
+
+(The rack, Q3) Live step L cached 174414's detail: its portions are 'oz'
+(4 = 113 g) and 'chop' (63 g), no refuse portion — the assumption M56's
+`ah102MeatsOnHit` made is verified, and the set is RETIRED: the rack's
+weight line reads the cached detail (no request on a cache that holds it;
+one detail on one that does not) and lands the same AH-102 item 1364 row,
+byte-equal (1,241.71 g, 2,942.85 kcal — the detail's 237 kcal is the
+hit's). Australian 174414 stays (the line prints "frenched" and the ⅛ inch;
+the domestic 174377 is unfrenched, +44 %, and unreachable from the line's
+answer without a rewrite and one more search — not spent).
+
+Reach: exactly 8 rows (+1,717.16 kcal per batch at the stored grams), all
+`auto`, 0 person rows. P10, 4 rows: grilled-arayes|18 "4 (8-inch) pita
+breads", grilled-chicken-souvlaki|16 "4 (8-inch) pitas", shakshuka|0 228.00
+→ 402.12 g (+478.84 each), fattoush|0 "2 (8-inch) pita breads" 114.00 →
+201.06 (+239.42). Crab: maryland-crab-cakes|9 "¼ cup vegetable oil" 30.30
+→ 34.88 g (+41.22). Sirloin, basis only: fennel-coriander-top-sirloin-
+roast|0, beef-en-cocotte-with-mushroom-sauce|0, inexpensive-grill-roasted-
+beef|4. Per serving: arayes 1,013.59 → 1,133.30, souvlaki 567.49 → 687.20,
+shakshuka 534.91 → 654.62, fattoush 330.26 → 390.11, maryland 323.95 →
+334.26 (partial, Old Bay). Kept byte for byte: the rack|0, grilled-rack-of-
+lamb|5 on NZ 172641 (no depth printed), maryland|8's coat, the pita line
+with no amount (clbr-turkish-poached-eggs|8), the pepitas, the "(N-inch)
+flour tortillas" on 2707824 (quesadillas|0 52.00; the three fajita rows
+260.00 — 2707824 prints no surface inch), the prosciutto weight lines,
+best-crab-cakes|14's oil (measured tablespoons, counted whole), the top
+sirloin steaks (2727574, 174707).
+
+Known gaps (design §7 — the source stands): the pita's 2 g a square inch is
+FNDDS's average thickness (SR's own sizes read 1.81–2.23 g; a thin 8-inch
+pocket pita may weigh less) — the alternative reading, FNDDS's unnamed
+"large" 85 g (an 8-inch pita ≥ SR's 6½"), is not taken (F3: larger than 6½"
+does not say large rather than extra large), nor SR's 6½" 60 g scaled by
+area (90.89 g; its 4" gives 112.00); the "(N-inch) flour tortillas" sibling
+(no per-area portion on 2707824) is a later item; the crab cake's record is
+unfloured while the recipe's cake is dredged — a floured cake may absorb more
+than 7.69 %; lean only under-counts the seam fat a trimmed top sirloin roast
+keeps; the rack is Australian frenched against the recipe's preferred
+domestic (origin and frenching differ, F11); Q18 unchanged.
+
+Replay (rp43 + bucket_v12 on fresh copies of snapshot 24, main and
+`--reverse-parents` byte-identical; STEP ZERO the v61 tree reproduces the
+v61 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v61
+rows exactly the 8 rows differ — the 4 pitas and the crab oil in grams,
+basis and kcal, the 3 roasts in basis only; 5 recipes move kcal per serving
+and total grams; statuses (1,022 complete, 176 partial), holds and review
+buckets unchanged. Deploy note: matcherVersion 61 stales every recipe; a
+zero-request sweep recomputes the library (a cache without 174414's detail
+asks it once).
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

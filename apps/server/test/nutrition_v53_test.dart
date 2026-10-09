@@ -430,16 +430,18 @@ _rows = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
   // Q24 b: was ambiguous_medium; crab O1a stand-in × 453.59 g
+  // RE-PIN (M63 batch, v62, Q11): the crab cake's own read oil, FNDDS
+  // 2706549 7.69 % × 453.59 g (was 30.30 g on the breast's 6.68 %).
   (
     '0288-maryland-crab-cakes.yaml',
     null,
     9,
     '¼ cup vegetable oil',
     2710180,
-    '30.30',
+    '34.88',
     'discarded',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw crab's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw))",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.69 % of the raw crab's weight — USDA FNDDS 2706549 recipe: 5 g oil per 65 g raw crab)",
   ),
   // Q24 b, the FIFTH oil (katsu's twin; missed by P3's ≥ 100 g probe): O1a × 396.89 g
   (
@@ -709,7 +711,8 @@ void main() {
     // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
     // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
     // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
-    expect(matcherVersion, 60);
+    // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
+    expect(matcherVersion, 61);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

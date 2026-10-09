@@ -1196,8 +1196,20 @@ void main() {
     // 'besan'), both differing in some digit (171324 carbohydrate 58.35 /
     // 58.4; 174288 protein 22.39 / 22.4): compared 495 -> 497, differ
     // 377 -> 379.
-    expect(compared, 497);
-    expect(differ, 379);
+    // RE-PIN (M63 batch, v62, 2026-10-09): matcher v62 recorded from snapshot
+    // 24 the 14 searches and 3 details its whole-recipe pins read (ground
+    // lamb, pita breads, pitas, pita, feta cheese, plain whole-milk strained
+    // yogurt, orange, jicama, serrano chiles, monterey jack or cheddar
+    // cheese, vegetable oil for brushing the tortillas, yellow bell pepper,
+    // onion powder, boneless shell sirloin steaks; 174414, 171327, 2709787):
+    // four more compared — 174414 (a hit in 'racks of lamb'; protein 21.3 /
+    // 21.26, fat 16.9 / 16.89), 171327 (in 'onion' and others; carbohydrate
+    // 79.1 / 79.12), the recorded 2707616 (now a hit in 'pita breads',
+    // 'pitas' and 'pita'; 406 4.632 / 4.63) differing in some digit, and
+    // 2709787 (in 'jicama') equal in every digit: compared 497 -> 501,
+    // differ 379 -> 382.
+    expect(compared, 501);
+    expect(differ, 382);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

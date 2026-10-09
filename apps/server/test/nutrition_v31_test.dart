@@ -2352,11 +2352,13 @@ const List<(String, int, int, String?, String?, String?)> _rowsC = [
   // RE-PIN (M52 batch, v53, Q24 b): 0288's oil, heated for the coated cakes
   // it browns, is a frying oil — 453.59 g of crab × O1a 6.68 % (a flagged
   // stand-in) = 30.30 g, unheld.
+  // RE-PIN (M63 batch, v62, Q11): 453.59 g of crab × FNDDS 2706549 "Crab,
+  // cake"'s own 7.69 % (5 g oil per 65 g crab) = 34.88 g (was 30.30).
   (
     '0288-maryland-crab-cakes.yaml',
     9,
     2710180,
-    '30.30',
+    '34.88',
     null,
     null,
   ),

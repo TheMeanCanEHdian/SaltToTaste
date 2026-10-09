@@ -1243,7 +1243,8 @@ double _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 60);
+    // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
+    expect(matcherVersion, 61);
   });
 
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
