@@ -3608,6 +3608,27 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — re-calibration on v62 and blind audit 4 (snapshot 25) —
+  the prep48 series' exit measurement.** Audit 3's 25 hand-counted recipes
+  re-measured on the v62 library: median error 8.7 → 6.9 %, mean 10.7 →
+  7.6 %, the engine's bias +4.9 → +1.1 %, 18 of 25 within ±10 %
+  (`.claude/diag/2026-10-08/recalibration_audit3_v62.tsv`). Audit 4
+  (`.claude/diag/2026-10-09/audit4/report.md`; 232 lines — the eight
+  batches' 130 moved rows plus 102 controls, two blind auditors per chunk,
+  adjudicated; 25 fresh batch-heavy recipes hand-counted): the counted
+  food is right on every counted line; the meat-record, strained-liquid,
+  reserved-oil and pita/crab/sirloin rules audit with no mass error; the
+  errors concentrate in the batter and dip shares (batters 50 % high at one
+  breading ratio; the read wet share undersizes dips on nut and panko coats)
+  and in the held coats, every one of which the auditors would count
+  (17 of 17, ≈ 1,210 kcal in the sample); the largest kcal pattern is a
+  right-grams wrong-state record (the brisket priced at 0-inch trim where
+  the auditors want ⅛ inch, a home-cured corned beef priced fresh, a vegan
+  mayonnaise on a light product). Calibration on the 25 hardest recipes:
+  median 11.1 %, bias +5.8 % (fried doughs +19.9 %: the doughnut uptake
+  charged on the whole dough where two thirds is cut). These findings feed
+  the next design round; no rule changed in this entry.
+
 - **2026-10-09 — matcher v62 (batch M63): the 8-inch pita by FDC's
   per-area portion, the crab cake's own oil, the sirloin stand-in flag,
   the rack's retired hit read (prep48 §2 M63; Q3, Q6, Q11, Q16; the live
