@@ -118,6 +118,12 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v66 (M67 A2): a rolled dough's cut share — the sheet, the count and
       // the cutter read once per recipe.
       'memo:cutShare',
+      // v67 (M69 R1, closer 1 — verify1 D3): a step pounding the coated
+      // food thin, read once per recipe.
+      'memo:poundsThin',
+      // v31 (the bread a held breading processes into its crumbs), first
+      // met at the caps by M69's coated-vegetable shape (closer 1).
+      'memo:processesBread',
     ])
       once: 1,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first
@@ -154,6 +160,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:paredIn',
       // v61 (M62): the coat's shape, once per coated record.
       'memo:coatShape',
+      // v67 (M69 R2, closer 1 — verify1 D2): whether a coat sentence names a
+      // vegetable's head.
+      'memo:coatNamed',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,

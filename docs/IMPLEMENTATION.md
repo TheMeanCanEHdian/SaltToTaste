@@ -3608,6 +3608,30 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v68 (batch M69): the sautéed dredge of a thin
+  piece counted at the baked-breast stand-in; the eggplant coat read
+  from the casserole record; the onion rings held (prep49 §2 M69; Q4 —
+  THE OWNER'S RULING (b); Q6 (a) for eggplant only).** A flour dredge
+  on a cutlet the steps pound to ⅛–½ inch, or a fillet printed ⅜ inch
+  thick, now counts at the C2 figure of 3.18 g coat carbohydrate per
+  100 g raw food — 11 rows in seven recipes (piccata, next-level
+  piccata, marsala, francese, saltimbocca, meunière, parmesan-crusted),
+  +725 kcal, six recipes complete. Put to the owner with the twin
+  contrast: the Veal Marsala recipe read in L49 gives 7.82, but FNDDS
+  counts the dish's whole half cup of flour (the shaken-off excess and
+  the sauce's thickening included) and that would price a dusting 36 %
+  above the fried twin's breading (chicken-francese-2 at 5.73); the
+  owner chose the stand-in. The 7.82 read is disclosed in the flag's
+  stand-in clause and in API.md; audit 4's hand counts, which sit below
+  3.18, are disclosed, not fitted. The eggplant parmesan's three-layer
+  coat budgets at 7.93 read from FNDDS 2710050 (4 g flour and a 9.2 g
+  egg-water batter, 8.3 g of it water, per 41.4 g raw eggplant; four
+  rows, +560 kcal; the Parmesan layer joins by M66's crumb gate). The
+  oven-fried onion rings stay held: their FNDDS record lists only two
+  prepared products, and a two-tracer balance on the SR product is
+  ill-conditioned (k 1.08–5.48 by the onion record chosen), not
+  sourced. 15 rows, +1,285 kcal; the thick-piece dustings and the
+  parmesan-crusted cheese crust stay held.
 - **2026-10-09 — live step L49 and SNAPSHOT 26 (prep49 §2 L49; the
   owner's Q11 accepted 2026-10-09 — a manufacturer's label through an FDC
   Branded record supplies GRAMS for a size or count the corpus line

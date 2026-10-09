@@ -91,6 +91,12 @@ const _dipBasis =
 const _dipKeptBasis =
     "discarded in cooking — only the part the recipe keeps and the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)";
 
+/// RE-PIN (M69 batch, v68): the coat flags of the coats M69 budgets.
+const _c4Breast =
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast (no record for a sautéed flour dusting; read as the baked breaded breast, the lightest coat USDA prints; FNDDS 2706416 Veal Marsala's 62.5 g flour per 617.60 g raw veal, 7.82, counts the dish's whole flour, sauce included, and is not read); the dredge's excess not counted)";
+const _eggplantCoat =
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050 recipe: 13.2 g batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, 0.1 g baking powder; 3.28 g carbohydrate) per 41.4 g raw eggplant (a crumb coat read on a batter figure; 8.3 g of the 13.2 g batter is water and carries no carbohydrate); the dredge's excess not counted)";
+
 /// The D5 flag (v50 Q21) the dips with no coat keep.
 const _d5 =
     ' · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)';
@@ -474,26 +480,77 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
-];
-
-/// M62 H (the owner's Q9 door; plan_figures §3: exactly these 9 rows,
-/// −646.74 kcal counted): the dip of a coat held with no budget (no coated
-/// meat, or C4's sautéed dusting) held `coating` with it, no grams; the
-/// design's 10th, oven-fried-onion-rings|5 cayenne, is beyond the line
-/// rule's reach (A13's one 'pepper' word goes to |4) — a negative below.
-const List<_Row> _held = [
+  // RE-PIN (M69 batch, v68): five of M62 H's dips are E-w dips since v68 —
+  // their coats are budgeted (C4 at 3.18 on francese and parmesan-crusted,
+  // R2's eggplant at 7.93); was held `coating` with no grams in _held.
   (
     _eggplant,
     6,
     '4 large eggs',
     748967,
     '0.920000',
-    null,
-    null,
+    '84.39',
+    '124.90',
     'auto',
-    'coating',
     null,
+    _dipBasis,
   ),
+  (
+    _parmesanCrusted,
+    4,
+    '3 large egg whites',
+    747997,
+    '0.950000',
+    '14.96',
+    '8.23',
+    'auto',
+    null,
+    _dipBasis,
+  ),
+  (
+    _parmesanCrusted,
+    5,
+    '2 tablespoons minced fresh chives (optional)',
+    169994,
+    '0.920000',
+    '0.91',
+    '0.27',
+    'auto',
+    null,
+    _dipBasis,
+  ),
+  (
+    _francese,
+    10,
+    '2 large eggs',
+    748967,
+    '0.920000',
+    '17.83',
+    '26.39',
+    'auto',
+    null,
+    _dipBasis,
+  ),
+  (
+    _francese,
+    11,
+    '2 tablespoons milk',
+    2705385,
+    '0.910000',
+    '5.43',
+    '3.31',
+    'auto',
+    null,
+    _dipBasis,
+  ),
+];
+
+/// M62 H (the owner's Q9 door; plan_figures §3: 9 rows at v61, 4 since v68,
+/// −646.74 kcal counted): the dip of a coat held with no budget (no coated
+/// meat, or C4's sautéed dusting) held `coating` with it, no grams; the
+/// design's 10th, oven-fried-onion-rings|5 cayenne, is beyond the line
+/// rule's reach (A13's one 'pepper' word goes to |4) — a negative below.
+const List<_Row> _held = [
   (
     _onionRings,
     1,
@@ -536,54 +593,6 @@ const List<_Row> _held = [
     '¼ teaspoon ground black pepper',
     170931,
     '1.000000',
-    null,
-    null,
-    'auto',
-    'coating',
-    null,
-  ),
-  (
-    _parmesanCrusted,
-    4,
-    '3 large egg whites',
-    747997,
-    '0.950000',
-    null,
-    null,
-    'auto',
-    'coating',
-    null,
-  ),
-  (
-    _parmesanCrusted,
-    5,
-    '2 tablespoons minced fresh chives (optional)',
-    169994,
-    '0.920000',
-    null,
-    null,
-    'auto',
-    'coating',
-    null,
-  ),
-  (
-    _francese,
-    10,
-    '2 large eggs',
-    748967,
-    '0.920000',
-    null,
-    null,
-    'auto',
-    'coating',
-    null,
-  ),
-  (
-    _francese,
-    11,
-    '2 tablespoons milk',
-    2705385,
-    '0.910000',
     null,
     null,
     'auto',
@@ -1160,53 +1169,57 @@ const List<_Row> _negatives = [
     'coating',
     null,
   ),
+  // RE-PIN (M69 batch, v68): budgeted since v68 (R2, the eggplant at 7.93), no longer held.
   (
     _eggplant,
     2,
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    null,
-    null,
+    '76.37',
+    '203.14',
     'auto',
-    'coating',
     null,
+    _eggplantCoat,
   ),
+  // RE-PIN (M69 batch, v68): budgeted since v68 (R2, the eggplant at 7.93), no longer held.
   (
     _eggplant,
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
     325036,
     '0.983333',
-    null,
-    null,
+    '19.33',
+    '81.38',
     'auto',
-    'coating',
     null,
+    _eggplantCoat,
   ),
+  // RE-PIN (M69 batch, v68): budgeted since v68 (R2, the eggplant at 7.93), no longer held.
   (
     _eggplant,
     5,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
-    null,
+    '41.14',
+    '150.57',
     'auto',
-    'coating',
     null,
+    _eggplantCoat,
   ),
+  // RE-PIN (M69 batch, v68): budgeted since v68 (R1, C4 at 3.18), no longer held.
   (
     _parmesanCrusted,
     2,
     '5 tablespoons unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
-    null,
+    '17.49',
+    '64.01',
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
   (
     _parmesanCrusted,
@@ -1220,17 +1233,18 @@ const List<_Row> _negatives = [
     'coating',
     null,
   ),
+  // RE-PIN (M69 batch, v68): budgeted since v68 (R1, C4 at 3.18), no longer held.
   (
     _francese,
     9,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
-    null,
+    '25.66',
+    '93.92',
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
 ];
 
@@ -1272,7 +1286,8 @@ void main() {
     // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
-    expect(matcherVersion, 66);
+    // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
+    expect(matcherVersion, 67);
   });
 
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
@@ -1378,10 +1393,12 @@ void main() {
 
     String g2(double v) => v.toStringAsFixed(2);
 
-    test('E-w reaches exactly its 28 dip rows, each `discarded` with the '
+    test('E-w reaches exactly its 35 dip rows (28 at v61), each `discarded` '
+        'with the '
         'read wet share in its basis (plan_figures §4)', () {
       // RE-PIN (M66 batch, v65): 30 rows, almond|6 in the kept-part form.
-      expect(_dips, hasLength(30));
+      // RE-PIN (M69 batch, v68): 35 rows — five of H's dips are budgeted.
+      expect(_dips, hasLength(35));
       expect(
         _dips.every((r) => r.$10 == _dipBasis || r.$10 == _dipKeptBasis),
         isTrue,
@@ -1447,9 +1464,13 @@ void main() {
     });
 
     test('H: the dip of a coat held with no budget is held `coating` with it '
-        "(9 rows, the owner's Q9 door) — no grams, its `hold_note` the dip "
+        "(4 rows since v68, 9 at v61 — the owner's Q9 door) — no grams, its "
+        '`hold_note` the dip '
         'sentence; the coats already held stay as v60', () async {
-      expect(_held, hasLength(9));
+      // RE-PIN (M69 batch, v68): 4 rows — the onion rings' (no sourced
+      // figure); the eggplant's, francese's and parmesan-crusted's coats are
+      // budgeted since v68 (their dips in _dips).
+      expect(_held, hasLength(4));
       expectRows(_held);
       for (final (file, position, _, _, _, _, _, _, _, _) in _held) {
         final recipe = recipes[file]!;
@@ -1530,18 +1551,25 @@ void main() {
       expect(of(_lighter), ('complete', '235.25', 12)); // 235.29; 239.19
       expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 431.67
       // H: the counted lines fall by the held dips.
+      // RE-PIN (M69 batch, v68): the eggplant (R2), parmesan-crusted and
+      // francese (R1, C4) coats are budgeted — their dips counted; francese
+      // turns complete (was 360.35 / 12, 153.50 / 4, partial 407.39 / 12).
       expect(of(_eggplant), (
         'partial',
-        '360.35',
-        12,
-      )); // 360.33; v60 409.66, 13
+        '453.68',
+        16,
+      )); // replay 453.66; v67 360.33; v60 409.66, 13
       expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 249.84, 7
       expect(of(_parmesanCrusted), (
         'partial',
-        '153.50',
-        4,
-      )); // 153.54; 167.60, 6
-      expect(of(_francese), ('partial', '407.39', 12)); // 407.44; 449.08, 14
+        '171.63',
+        7,
+      )); // replay 171.67; v67 153.54; v60 167.60, 6
+      expect(of(_francese), (
+        'complete',
+        '438.29',
+        15,
+      )); // replay 438.34; v67 407.44; v60 449.08, 14
     });
 
     test('a second recompute writes nothing', () {
@@ -1624,20 +1652,22 @@ void main() {
       );
       expect(basisIn(katsu, 1), _dipBasis);
 
+      // RE-PIN (M69 batch, v68 — Q7 accepted): the eggplant's coat is
+      // budgeted (R2, 7.93), so a Confirm of its dip reads the plan's share
+      // — 84.39 g `discarded`, E-w's basis (was 0 g poured away, H).
       final eggplant = await variant(_eggplant, 'confirm');
       final poured = await put(eggplant, 6, {'confirmed': true});
       expect(
         (poured.status, poured.grams, poured.gramSource, poured.hold),
-        ('confirmed', 0.0, 'discarded', null),
+        ('confirmed', 84.39, 'discarded', null),
       );
-      expect(basisIn(eggplant, 6), 'poured away — counted as 0 g');
+      expect(basisIn(eggplant, 6), _dipBasis);
       final eggplantItem =
           ((await matchesBody(db, provider, eggplant))['items']!
               as List<Map<String, Object?>>)[6];
-      expect(
-        (eggplantItem['match']! as Map)['hold_note'],
-        'poured away after your confirm',
-      );
+      // RE-PIN (M69 batch, v68): the plan's share, no note (was "poured
+      // away after your confirm").
+      expect((eggplantItem['match']! as Map)['hold_note'], isNull);
 
       final rings = await variant(_onionRings, 'pick');
       final picked = await put(rings, 1, {'fdc_id': 748967});

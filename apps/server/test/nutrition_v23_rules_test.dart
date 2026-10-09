@@ -545,10 +545,17 @@ void main() {
     // (C4, still held); 0148's fried dredge is counted by the coat budget
     // since v53 (a person's pick on it still derives the hold:
     // nutrition_v24_rules_test H5(a)).
+    // RE-PIN (M69 batch, v68): 0418's thin cutlets' dusting counts since
+    // v68 (C4 at 3.18, 27.99 g); the coat is 0077 skillet chicken's — a
+    // THICK piece's sautéed dusting (no pound-thin print), still held.
     const kinds = [
       ('0799-sourdough-starter.yaml', 0, 'starter_discard'),
       ('0129-mahogany-chicken-thighs.yaml', 1, 'partial_pour_away'),
-      ('0418-chicken-piccata.yaml', 3, 'coating'),
+      (
+        '0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml',
+        2,
+        'coating',
+      ),
     ];
 
     Future<(SaltDatabase, FixtureProvider, Recipe)> computed(
@@ -584,7 +591,7 @@ void main() {
     test('a pick alone keeps the hold through an amount edit too '
         '(editedDecisionRow): the compute writes what a pick on the edited '
         'line writes — overridden, no grams, the hold — never 0 g poured '
-        'away; 0418 stays partial (the edit synthesized, a stated '
+        'away; 0077 stays partial (the edit synthesized, a stated '
         'exception: the first amount changed)', () async {
       for (final (file, i, hold) in kinds) {
         final (db, provider, r) = await computed(file);
@@ -618,7 +625,7 @@ void main() {
           (row.status, row.grams, row.gramSource, row.hold),
           reason: file,
         );
-        if (file.startsWith('0418')) {
+        if (file.startsWith('0077')) {
           expect(db.nutritionFor(r.id)!.status, 'partial');
         }
       }
@@ -1099,6 +1106,7 @@ Recipe editedLine(Recipe r, String raw) {
       .replaceFirst('1 cup soy sauce', '¾ cup soy sauce')
       .replaceFirst('4 cups (20 ounces)', '5 cups (25 ounces)')
       // RE-PIN (M52 batch, v53): G6's coat is 0418 piccata's dusting.
+      // RE-PIN (M69 batch, v68): 0077 skillet chicken's (the same print).
       .replaceFirst('½ cup unbleached', '¾ cup unbleached');
   final parsed = parseIngredientLine(next);
   return r.copyWith(

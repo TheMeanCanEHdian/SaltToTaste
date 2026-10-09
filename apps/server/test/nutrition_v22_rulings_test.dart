@@ -291,42 +291,45 @@ void main() {
   // RE-PIN (M52 batch, v53): 0148's and 0116's fried dredges are counted by
   // the coat budget since v53, so the two held dredges here are sautéed
   // dustings that stay held (C4): 0418 piccata's and 0421 saltimbocca's.
+  // RE-PIN (M69 batch, v68): a THIN piece's sautéed dusting counts since
+  // v68 (C4 at 3.18: 0418|3 27.99 g, 0421|1 25.66 g), so the two held
+  // dredges here are THICK pieces' that stay held, one item key between
+  // them: 0257 pan-seared salmon's and 0235 maple-glazed pork's cornstarch.
   test('a new medium hold is a LINE hold at every site: a group of one in '
       "the queue, out of another line's reach, never cleared by a decision, "
-      'and a confirm writes it poured away (0418 and 0421, their dredge '
-      'flour)', () async {
+      'and a confirm writes it poured away (0257 and 0235, their cornstarch '
+      'dredge)', () async {
     final db = wp.tempDb();
     final provider = FixtureProvider(pending: pendingSearches);
-    final chicken = loadCorpusRecipe('0418-chicken-piccata.yaml');
-    final cutlets = loadCorpusRecipe('0421-chicken-saltimbocca.yaml');
-    for (final r in [chicken, cutlets]) {
+    final salmon = loadCorpusRecipe('0257-pan-seared-salmon-steaks.yaml');
+    final pork = loadCorpusRecipe('0235-maple-glazed-pork-tenderloin.yaml');
+    for (final r in [salmon, pork]) {
       wp.saveRecipe(db, r);
       await matchAndCompute(db, provider, r);
     }
-    final flour = db.ingredientMatchesFor(chicken.id)[3];
-    expect((flour.hold, flour.grams), ('coating', null));
-    final key = flour.itemKey!;
-    expect(db.ingredientMatchesFor(cutlets.id)[1].hold, 'coating');
-    expect(db.ingredientMatchesFor(cutlets.id)[1].itemKey, key);
+    final starch = db.ingredientMatchesFor(salmon.id)[2];
+    expect((starch.hold, starch.grams), ('coating', null));
+    final key = starch.itemKey!;
+    expect(db.ingredientMatchesFor(pork.id)[6].hold, 'coating');
+    expect(db.ingredientMatchesFor(pork.id)[6].itemKey, key);
     final groups = db
         .nutritionReviewGroups(limit: 200, offset: 0)
         .where((group) => group.itemKey == key)
         .toList();
     expect([for (final group in groups) group.lines], [1, 1]);
     final item =
-        ((await matchesBody(db, provider, chicken))['items']! as List)[3]
-            as Map;
+        ((await matchesBody(db, provider, salmon))['items']! as List)[2] as Map;
     expect((item['others'], item['others_lines']), (0, 0));
-    await applyMatchOverride(db, provider, chicken, 3, {
-      'raw': nutritionLines(chicken)[3].raw,
+    await applyMatchOverride(db, provider, salmon, 2, {
+      'raw': nutritionLines(salmon)[2].raw,
       'confirmed': true,
     });
-    final confirmed = db.ingredientMatchesFor(chicken.id)[3];
+    final confirmed = db.ingredientMatchesFor(salmon.id)[2];
     expect(
       (confirmed.status, confirmed.grams, confirmed.gramSource),
       ('confirmed', 0, 'discarded'),
     );
-    expect(db.ingredientMatchesFor(cutlets.id)[1].hold, 'coating');
+    expect(db.ingredientMatchesFor(pork.id)[6].hold, 'coating');
     expect(
       db
           .nutritionReviewGroups(limit: 200, offset: 0)

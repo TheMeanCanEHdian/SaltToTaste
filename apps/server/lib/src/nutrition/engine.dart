@@ -155,9 +155,10 @@ enum DiscardedMedium {
   /// ruling, in any cooking class whose directions leave an excess) —
   /// [_dredge]. A batter the food is folded into is eaten whole and is not
   /// one. Held (`coating`); v53 (M52, Q2 a): the engine's row counts its
-  /// share of a coat budget sized from the coated food ([_m52Plan]) — a
-  /// sautéed dusting (C4), a baked vegetable and a nut or cheese layer stay
-  /// held.
+  /// share of a coat budget sized from the coated food ([_m52Plan]); since
+  /// v67 (M69) a sautéed dusting of a thin piece (C4) and a coated eggplant
+  /// baked after the coat (C2) count too — a thick piece's dusting, a fried
+  /// coated eggplant, any other coated vegetable and a cheese crust stay held.
   coating,
 
   /// A line of a cooking liquid strained after the braise of which a step
@@ -17083,6 +17084,24 @@ const _Fndds _breastBaked = (
   o: '2',
   r: '125.77',
 );
+
+/// v67 (M69 R2, Q6 a; L49 #3, live61_raw/2710050.json): FNDDS 2710050
+/// lists 41.4 g "Eggplant, raw" and a BATTER of 13.2 g — flour 4 g, dried
+/// egg 0.5, tap water 8.3, nonfat dry milk 0.3, baking powder 0.1 — whose
+/// carbohydrate on the cached records (789890 77.3 %, 329490 1.87 %,
+/// 172195 51.98 %, 172803 27.7 %; the dried egg's and dry milk's own SR
+/// inputs are not cached — the same-description Foundation and the
+/// vitamin-fortified twin are read) is 3.28499 g: k = 3.28499 / 41.4 ×
+/// 100 = 7.93. `b` is the batter's mass ([_coatFlag] lists it); `o` the
+/// two oils (4.4 + 0.5 g), never read for a coat.
+const _Fndds _eggplantParm = (
+  id: 2710050,
+  description: 'Eggplant parmesan casserole, regular',
+  food: 'eggplant',
+  b: '13.2',
+  o: '4.9',
+  r: '41.4',
+);
 const _Fndds _legsBaked = (
   id: 2705998,
   description:
@@ -17253,6 +17272,79 @@ const List<String> _meatRecords = [
   'Mollusks,',
 ];
 
+/// v67 (M69 R2, Q6 a): the vegetable records a coat may be sized from when
+/// no meat is coated ([_coatedVegetable]) — ONLY records [_coatFigure] has
+/// an arm for, and only at that arm's shape: its default arms are the
+/// chicken breast's (FNDDS 2710055's onion rings list no coat input — they
+/// stay held; the eggplant's one arm is C2).
+const List<String> _coatVegetables = ['Eggplant,'];
+
+/// The coated vegetable among [rows] of [recipe]: the largest counted row
+/// on a [_coatVegetables] record whose head a coating sentence names
+/// ([_coatsSentence], [_naming]) — 0407's "2 pounds globe eggplant" (S3
+/// "… shake to coat the slices"); null when none, or when its shape is not
+/// C2, the eggplant's one [_coatFigure] arm (v67 closer 2, D1: fried, C1 or
+/// C1d, it would read the fried chicken breast's 5.73 or the steak's 8.79 —
+/// it stays held, as before M69). The naming test is read once per head
+/// (RULE C; v67 closer 1, D2: per row it rescanned the head's sentences,
+/// O(lines × sentences) at the caps).
+IngredientMatchRow? _coatedVegetable(
+  Recipe recipe,
+  Iterable<IngredientMatchRow> rows,
+) {
+  final index = _stepIndexOf(recipe);
+  final heads = _headsOf(recipe);
+  IngredientMatchRow? food;
+  for (final r in rows) {
+    final head = heads[r.position];
+    if (_m52Counted(r) &&
+        head != null &&
+        _coatVegetables.any(r.description!.startsWith) &&
+        (food == null ||
+            r.grams! > food.grams! ||
+            (r.grams == food.grams && r.position < food.position)) &&
+        // Key: head — the food a coating sentence is searched for.
+        index.memo(
+          ('coatNamed', head),
+          () => _naming(
+            recipe,
+            head,
+          ).any((at) => _coatsSentence.hasMatch(index.sentence(at))),
+        )) {
+      food = r;
+    }
+  }
+  return food != null &&
+          _coatShapeOf(recipe, food.description!) == _CoatShape.c2
+      ? food
+      : null;
+}
+
+/// v67 (M69 R1, Q4 (i)): a step pounding the coated food thin — "pound
+/// cutlets to even ¼-inch thickness" (0418), "pound the cutlets to an even
+/// ¼-inch thickness" (0419–0421), "gently pound to even ½-inch thickness"
+/// (0415, 0418) — never "slice into ¼-inch-thick pieces" (0235: no pound).
+final RegExp _poundsThin = RegExp(
+  r'\bpound\w*\b[^.]*?\bto (?:an )?(?:even )?(?:⅛|¼|⅜|½)-inch thick(?:ness)?\b',
+);
+
+/// A line printing a thin piece: "4 (5- to 6-ounce) sole or flounder
+/// fillets, ⅜ inch thick (see note)" (0466) — never "¾ to 1 inch thick"
+/// (0257's steaks).
+final RegExp _thinLine = RegExp(
+  r'(?<![\d¼½¾⅛⅜])(?:⅛|¼|⅜|½)[- ]inch[- ]thick\b',
+);
+
+/// Whether the coated food on [line] of [recipe] is a THIN piece
+/// ([_m52Plan]'s C4): a step sentence pounds it ⅛–½ inch thick (read once
+/// per recipe), or its line prints that thickness.
+bool _thinPiece(Recipe recipe, IngredientLine line) =>
+    _stepIndexOf(recipe).memo(
+      #poundsThin,
+      () => _stepIndexOf(recipe).allSentences.any(_poundsThin.hasMatch),
+    ) ||
+    _thinLine.hasMatch(line.raw.toLowerCase());
+
 /// The food a meat record names, as the M52 flags print it: "chicken
 /// breast", "chicken wings", "chicken", "cod", "shrimp", "beef".
 String _m52FoodName(String description) {
@@ -17279,9 +17371,10 @@ String _m52FoodName(String description) {
 
 /// The coat's shape (P3-A): C1 fried (a single dredge, or flour → egg →
 /// crumb), C1d a second dredge after the egg, C2 baked, C3 floured seafood
-/// fried, C5 a battered fish or shrimp. C4 — a sautéed dusting — has no
-/// record and stays held.
-enum _CoatShape { c1, c1d, c2, c3, c5 }
+/// fried, C5 a battered fish or shrimp. C4 — a sautéed dusting of a THIN
+/// piece ([_thinPiece]; v67, M69 R1, the owner's Q4 ruling (b)) — has no
+/// record and reads C2's (a thick piece's dusting stays held).
+enum _CoatShape { c1, c1d, c2, c3, c4, c5 }
 
 /// A sentence that dredges or coats ([_coatShapeOf]: the bake must come
 /// after it).
@@ -17320,8 +17413,9 @@ bool _m52Fries(Recipe recipe, String s) =>
 /// unless a bake after the coat comes after its last frying sentence: the
 /// LAST cook of the coated food decides, so browned in oil then baked reads
 /// C2 (0118's cutlets; 0149's chicken, fried then baked). One that does not
-/// fry reads C2 when a sentence after the coat bakes, else null (C4: a
-/// sautéed dusting stays held).
+/// fry reads C2 when a sentence after the coat bakes, else null — C4, a
+/// sautéed dusting, is read in [_m52Plan] outside this memo (its line test
+/// reads the coated ROW's line, never the description this memo keys).
 _CoatShape? _coatShapeOf(Recipe recipe, String coated) =>
     // v60 (M62): once per recipe and coated food — a person's decision on
     // a dip plans M52 per row ([_m52OnConfirm]), and the steps' scan is
@@ -17384,7 +17478,16 @@ _M52Figure _coatFigure(_CoatShape shape, String coated) {
             !d.contains('breast') &&
             RegExp(r'\b(?:leg|thigh|drumstick)').hasMatch(d) =>
       _readFig('3.10', _legsBaked),
+    // v67 (M69 R2): the coated vegetable's own read recipe.
+    _CoatShape.c2 when d.startsWith('eggplant') => _readFig(
+      '7.93',
+      _eggplantParm,
+    ),
     _CoatShape.c2 => _readFig('3.18', _breastBaked),
+    // v67 (M69 R1, the owner's ruling (b), 2026-10-09): no record for a
+    // sautéed dusting — C2's read, the lightest coat USDA prints, stands in
+    // ([_coatFlag] names FNDDS 2706416's unused 7.82).
+    _CoatShape.c4 => _readFig('3.18', _breastBaked, standIn: true),
     _CoatShape.c3 => _derivedFig('3.94', _squidFried),
     // v56 (M58 W): the battered food's own read record.
     _CoatShape.c5 when d.contains('shrimp') => _readFig('15.38', _shrimpFried),
@@ -17656,6 +17759,9 @@ const String o1cBasis =
 /// [batter]: a batter left in the bowl is among its parts (v56, M58 W).
 /// v56 (M58 S): a read figure of another food says it stands in, as
 /// [_uptakeClause] does; a batter on a C1/C2 breading figure says so (F10).
+/// v67 (M69 R2, closer 3): FNDDS 2710050 IS a batter figure — a batter on it
+/// is not "a batter read on a breading figure", and its "a crumb coat read on
+/// a batter figure" is said only when the coat is a crumb (no batter).
 String _coatFlag(
   _M52Figure figure,
   String name,
@@ -17670,17 +17776,34 @@ String _coatFlag(
       ? ' (USDA 99995000, 40.1 % carbohydrate)'
       : '';
   final matched = shape == _CoatShape.c5 ? ', matched by its carbohydrate' : '';
+  // v67 (M69 R2): the coat noun by record — FNDDS 2710050's coat is a
+  // batter, listed.
+  final eggplant = read?.id == _eggplantParm.id;
+  final coat = eggplant
+      ? 'batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, '
+            '0.1 g baking powder; 3.28 g carbohydrate)'
+      : 'breading';
   final source = read != null
-      ? 'USDA FNDDS ${read.id} recipe: ${read.b} g breading$breading per '
+      ? 'USDA FNDDS ${read.id} recipe: ${read.b} g $coat$breading per '
             '${read.r} g raw ${read.food}$matched'
       : 'derived from USDA SR Legacy ${figure.derived!.id} '
             '"${figure.derived!.description}"';
-  final standIn =
-      read != null && read.food.split(' ').first != name.split(' ').first
+  // v67 (M69 R1, the owner's ruling (b)): C4 names its stand-in and the
+  // read it does not use, on every food (the sole too).
+  final standIn = shape == _CoatShape.c4
+      ? ' (no record for a sautéed flour dusting; read as the baked breaded '
+            'breast, the lightest coat USDA prints; FNDDS 2706416 Veal '
+            "Marsala's 62.5 g flour per 617.60 g raw veal, 7.82, counts the "
+            "dish's whole flour, sauce included, and is not read)"
+      : eggplant
+      ? ' (${batter ? '' : 'a crumb coat read on a batter figure; '}8.3 g '
+            'of the 13.2 g batter is water and carries no carbohydrate)'
+      : read != null && read.food.split(' ').first != name.split(' ').first
       ? _standIn(name, read.description)
       : '';
   final onBreading =
-      batter &&
+      !eggplant &&
+          batter &&
           const {_CoatShape.c1, _CoatShape.c1d, _CoatShape.c2}.contains(shape)
       ? ' (a batter read on a breading figure)'
       : '';
@@ -17756,12 +17879,14 @@ typedef _M52Row = ({
 /// - THE COAT (Q2 a, P3-A): a line the engine holds `coating` counts f =
 ///   min(1, B / Σ coat carbohydrate) of its dredge, B = k × the COATED
 ///   FOOD's grams / 100 (the largest counted line on a meat, poultry or
-///   seafood record), the reached coat lines sharing B by their
+///   seafood record; v67, M69 R2: with none, a coated vegetable —
+///   [_coatedVegetable]), the reached coat lines sharing B by their
 ///   carbohydrate (dredge grams × the record's) — its written part eaten
 ///   outside the dredge on top, its source the line's; k by the coat's
-///   shape ([_coatShapeOf], [_coatFigure]); a C5 batter's counted flour
-///   and starch come off B; C4 dustings stay held, and a nut or cheese
-///   layer unless a step names it with a crumb (v65, M66 R3:
+///   shape ([_coatShapeOf], [_coatFigure]; v67, M69 R1: a shape-less coat
+///   on a thin piece is C4, [_thinPiece]); a C5 batter's counted flour
+///   and starch come off B; a thick piece's dusting stays held, and a nut
+///   or cheese layer unless a step names it with a crumb (v65, M66 R3:
 ///   [_layerInCrumb]). NOT a fraction of the line (CP9's "no blanket
 ///   coating fraction" stands): f is the food's. v56 (M58 W, Q8): the
 ///   lines a batter leaves in the bowl ([_batterInBowl]) are parts too —
@@ -17854,9 +17979,24 @@ Map<int, _M52Row> _m52Plan(
       }
     }
   }
-  final shape = coated == null
+  // v67 (M69 R2, Q6 a): no meat beside a held coat — the coat is sized
+  // from a coated vegetable ([_coatedVegetable]); the frying-oil block's
+  // `coated` stays the meat (a vegetable's shape is never C3, the one shape
+  // that block reads).
+  final coatedFood =
+      coated ?? (coats.isEmpty ? null : _coatedVegetable(recipe, at.values));
+  // v67 (M69 R1, the owner's Q4 (b)): a held coat on a meat that neither
+  // fries nor bakes after the coat is C4 when the piece is thin
+  // ([_thinPiece]) — read here, outside [_coatShapeOf]'s memo (it keys the
+  // description; the line test reads the coated row's line).
+  final shape = coatedFood == null
       ? null
-      : _coatShapeOf(recipe, coated.description!);
+      : _coatShapeOf(recipe, coatedFood.description!) ??
+            (coated != null &&
+                    coats.isNotEmpty &&
+                    _thinPiece(recipe, lines[coated.position])
+                ? _CoatShape.c4
+                : null);
   final plan = <int, _M52Row>{};
   // M58 W's batter parts' carbohydrate at their WHOLE grams (the line's, as
   // the dredge takes them): the plan writes those rows `discarded`, so D
@@ -17870,12 +18010,12 @@ Map<int, _M52Row> _m52Plan(
   // the recipe shallow-fries ([_shallowFries], Q24 b): a baked or air-fried
   // egg wash keeps D5's bowl flag (closer 2, D1).
   final budgeted =
-      coated != null &&
+      coatedFood != null &&
       shape != null &&
       (coats.isNotEmpty || batter.isNotEmpty || dips.isNotEmpty);
   if (budgeted) {
-    final figure = _coatFigure(shape, coated.description!);
-    var budget = double.parse(figure.value) * coated.grams! / 100;
+    final figure = _coatFigure(shape, coatedFood.description!);
+    var budget = double.parse(figure.value) * coatedFood.grams! / 100;
     if (shape == _CoatShape.c5) {
       for (final r in at.values) {
         // A batter's lines are parts below, never off B (M58 W).
@@ -17939,7 +18079,7 @@ Map<int, _M52Row> _m52Plan(
       final f = min(1, max(budget, 0) / carbs);
       final flag = _coatFlag(
         figure,
-        _m52FoodName(coated.description!),
+        _m52FoodName(coatedFood.description!),
         shape,
         batter: parts.any((p) => batter.contains(p.at)),
       );
@@ -18396,9 +18536,10 @@ bool _m52Engine(IngredientMatchRow? r) =>
 /// position — weighed, the engine's ([_m52Engine]), its hold passing
 /// (none or `coating`), a coat or oil medium the plan reads (not a dip's
 /// or a cut dough line's), its record, below the gate; the coated food
-/// (its grams); under C5 the counted flour and starch off B. Never another
-/// row's grams: a dip, coat or batter row the plan writes `discarded` and
-/// its line's engine form key alike, so rows that key alike give equal
+/// (its grams; v67, M69 R2: a coated vegetable where no meat is); under
+/// C5 the counted flour and starch off B. Never another row's grams: a
+/// dip, coat or batter row the plan writes `discarded` and its line's
+/// engine form key alike, so rows that key alike give equal
 /// coat, batter and dip entries (the recipe's text and the FDC caches
 /// fixed) — one plan answers every confirm whose row list keys as its own
 /// ([_m52OnConfirm]). With [fryer], the whole plan's (a frying oil's
@@ -18480,8 +18621,11 @@ String _m52Key(
             chips: false,
           ) !=
           null);
+  // v67 (M69 R2): with no meat, the coated vegetable the coat block sizes
+  // from ([_coatedVegetable]) — keyed whatever the coats (a superset).
+  final food = coated ?? _coatedVegetable(recipe, at.values);
   final key = StringBuffer(
-    '${coated?.position} ${coated?.grams} ${coated?.description}',
+    '${food?.position} ${food?.grams} ${food?.description}',
   );
   for (final i in at.keys.toList()..sort()) {
     final r = at[i]!;
@@ -18562,9 +18706,9 @@ String _m52RowKey(
 
 /// Whether [_m52Key] of a row list stays as it is when its row [row] is
 /// replaced by [confirmed] at the same position — in O(1): the confirm's
-/// row is never counted, so beyond its own line only a counted meat row
-/// (the coated food) or flour or starch (C5's off B) could move the key;
-/// false then, and the caller keys the whole list.
+/// row is never counted, so beyond its own line only a counted meat or
+/// [_coatVegetables] row (the coated food) or flour or starch (C5's off
+/// B) could move the key; false then, and the caller keys the whole list.
 bool _m52KeysAlike(
   Recipe recipe,
   IngredientMatchRow row,
@@ -18577,6 +18721,8 @@ bool _m52KeysAlike(
       laid(confirmed) &&
       !(_m52Counted(row) &&
           (_meatRecords.any(row.description!.startsWith) ||
+              // v67 (M69 R2): a coated vegetable is the coated food too.
+              _coatVegetables.any(row.description!.startsWith) ||
               _dredgeHeads.contains(_headsOf(recipe)[row.position]))) &&
       _m52RowKey(
             row,
@@ -18735,6 +18881,7 @@ _M52Row? _m52OnConfirm(
 }
 
 /// Whether [r] stands on a meat record ([_meatRecords]): the one kind of
-/// row [_m52Plan] may read as the coated food.
+/// row [_m52Plan] may read as the coated food among a dip's lines (a
+/// coated vegetable, v67, is never one).
 bool _isMeatRow(IngredientMatchRow r) =>
     _meatRecords.any((m) => r.description?.startsWith(m) ?? false);

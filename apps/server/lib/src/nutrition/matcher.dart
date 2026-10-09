@@ -900,7 +900,18 @@ const Map<String, String> _synonyms = {
 /// not deducted; a fresh flat in a recipe titled "corned beef" says the
 /// rinsed cure's sodium is not counted (engine `trimStandInFlagOf`). The
 /// flat's ¼-inch cap keeps the 0" record until L49.
-const int matcherVersion = 66;
+///
+/// v67 (the Matcher v68 commit, batch M69 — sautéed and vegetable coats;
+/// prep49 design_v2 §2 M69, the owner's Q4 ruling (b) and Q6 (a), 2026-10-09;
+/// zero requests): a held flour dredge on a THIN piece that is neither fried
+/// nor baked after the coat (a step pounds it ⅛–½ inch thick, or its line
+/// prints the thickness — engine `_thinPiece`) is C4 and counts at C2's read
+/// 3.18 (FNDDS 2705980) as the stand-in, the unused Veal Marsala read 7.82
+/// named in the flag; with no meat beside a held coat, a coated eggplant
+/// baked after the coat (C2, its one arm) sizes the coat at 7.93, read from
+/// FNDDS 2710050's batter (engine `_coatedVegetable`; a fried one stays
+/// held). The onion rings stay held (no sourced figure).
+const int matcherVersion = 67;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

@@ -2313,7 +2313,10 @@ food keeps; since matcher v53 (M52) the engine's own row counts its share
 of a coat budget sized from the coated food, unheld — sautéed dustings,
 coats with no meat line and nut or cheese layers stay held: the v53
 paragraph below; since matcher v65, M66 R3, a layer a step names with a
-crumb joins the budget), `partial_pour_away` (since v22, Q4: a line of a braising
+crumb joins the budget; since matcher v68 (M69) a thin piece's sautéed
+dusting (C4) and a coated eggplant baked after the coat count too — the
+thick pieces' dustings, the onion rings and a fried coated eggplant stay
+held), `partial_pour_away` (since v22, Q4: a line of a braising
 liquid — the sentence before the strain that names it and opens "whisk"
 or "bring", the food added ("add", "arrange") in the next sentence — that
 is strained after cooking ("cooking liquid through … strainer") and of
@@ -3296,15 +3299,19 @@ stands (the `coatingFraction` switch stays null).
 |---|---|---|---|
 | C1 fried | the recipe fries | 5.73 (breast and any other food), thigh 6.10, wing 5.66 | FNDDS 2705975, 2706047, 2706065 |
 | C1d | a second dredge after the egg ("coat with flour again", 0148, 0304) | 8.79 | FNDDS 2705842 |
-| C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61 | FNDDS 2705980, 2705998, 2706243, 2705871 |
+| C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61; since matcher v68 (M69 R2) a coated eggplant 7.93 | FNDDS 2705980, 2705998, 2706243, 2705871; 2710050 |
 | C3 | fried Mollusks or Crustaceans with no crumb line | 3.94 | SR 171982, derived |
+| C4 sautéed (since matcher v68, M69 R1) | a held coat on a THIN meat (a step pounds it ⅛–½ inch thick, or its line prints the thickness) that is neither fried nor baked after the coat | 3.18 (C2's read, a stand-in — the owner's ruling) | FNDDS 2705980 |
 | C5 | a fried fish a sentence batters; the recipe's counted flour and starch come off B (since matcher v57 also battered shrimp, each on its own record, and a batter's own lines are parts, never off B — below) | 15.38 | FNDDS 2706244 (v57: shrimp 2706364, haddock 2706258) |
 
 Stay held (20 rows): C4 sautéed dustings (neither fried nor baked —
 piccata, marsala, saltimbocca, meunière, francese, seared salmon and pork),
 coats with no meat line (eggplant parmesan, oven-fried onion rings), and
 nut and cheese layers (a Nuts or Cheese record) — since matcher v65 (M66
-R3, below) only a layer no step sentence names with a crumb.
+R3, below) only a layer no step sentence names with a crumb. Since matcher
+v68 (M69, below) a THIN piece's sautéed dusting counts as C4 and the
+eggplant parmesan's coat on its own read; the thick pieces' dustings and
+the onion rings stay held.
 
 (2) **The frying oil (Q3 a).** A line the engine zeroes as frying oil
 counts u × the fried food's grams / 100 ON TOP of its kept part (critic
@@ -3992,8 +3999,10 @@ Confirm of a dip keeps its grams, `discarded`, as a batter line's does.
 
 (H, the owner's Q9 one-way door — re-rules Q21 (a) for these lines) A dip
 whose coat is held with no budget (no coated meat row, or C4's sautéed
-dusting) is held `coating` with it — no grams, `hold_note` the dip sentence
-as written. It is a coating hold in the Recipe-review queue: a person's
+dusting — since matcher v68 only a thick piece's, and no coated eggplant
+baked after the coat: M69) is held `coating` with it — no grams,
+`hold_note` the dip sentence as written. It is a coating hold in the
+Recipe-review queue: a person's
 Confirm counts 0 g `discarded` ("poured away after your confirm" — no eaten
 part is known), typed grams stand, a skip stores no hold, a pick keeps the
 hold; a Confirm or a pick records the FOOD (never grams) for the item key
@@ -4689,6 +4698,155 @@ allspice, paprika, bay — 52.49 kcal) rinse off with the cure but are
 counted; both recipes' cure sodium is uncounted (flagged, Q2 (c)); the
 pomegranate flat waits for L49. Deploy note: matcherVersion 66 stales every
 recipe; one zero-request sweep settles it.
+
+**Since matcher v68 (batch M69 — sautéed and vegetable coats; matcherVersion
+67; prep49 design_v2 §2 M69, the owner's Q4 ruling (b) of 2026-10-09 and Q6
+(a), on L49's records; zero requests; reach PRE-Q18 — the thin trigger reads
+the steps).** Two coats held since M52 now count; the onion rings stay held.
+
+(R1, Q4 — the owner's ruling (b)) **A sautéed flour dredge on a THIN piece
+counts at C2's read 3.18 as a stand-in.** `_m52Plan` reads a new shape C4
+where `_coatShapeOf` returns null today (no fry, no bake after the coat), a
+coat line is held and the coated MEAT is thin (`_thinPiece`): a step
+sentence matching `\bpound\w*\b[^.]*?\bto (?:an )?(?:even )?(?:⅛|¼|⅜|½)-inch
+thick(?:ness)?\b` ("pound cutlets to even ¼-inch thickness", 0418; "pound
+the cutlets to an even ¼-inch thickness", 0419–0421; "gently pound to even
+½-inch thickness", 0415, 0418 — read once per recipe), or the coated row's
+LINE matching `(?<![\d¼½¾⅛⅜])(?:⅛|¼|⅜|½)[- ]inch[- ]thick\b` (0466's "4 (5-
+to 6-ounce) sole or flounder fillets, ⅜ inch thick"). The trigger sits
+outside `_coatShapeOf`'s memo (it keys the record's description; the line is
+the row's), so no C1/C1d/C2/C3/C5 row can move. k = **3.18**: FNDDS 2705980
+"Chicken breast, baked, coated, skin / coating eaten" (10 g breading per
+125.77 g raw breast), the lightest coat USDA prints, for every C4 food (the
+sole too). Flag: `approximation (coat: 3.18 g carbohydrate per 100 g of the
+raw <food> — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw
+chicken breast (no record for a sautéed flour dusting; read as the baked
+breaded breast, the lightest coat USDA prints; FNDDS 2706416 Veal Marsala's
+62.5 g flour per 617.60 g raw veal, 7.82, counts the dish's whole flour,
+sauce included, and is not read); the dredge's excess not counted)`.
+WHY NOT the read: L49 read FNDDS 2706416 "Veal Marsala" — ½ cup flour
+(62.5 g, listed alone) per 1 lb COOKED grilled veal loin (453.6 g; to raw by
+the protein tracer on SR 173826 / 172644, 29.75 / 21.85 → 617.60 g), on the
+cached Foundation flour 789890 (77.3 %): k = 62.5 × 0.773 / 617.60 × 100 =
+7.82. It counts the dish's WHOLE half cup — the shaken-off excess and the
+sauce's thickening included (0418's note washes the excess starch into the
+sauce) — and prices a sautéed dusting 36 % above the FRIED twin:
+chicken-francese-2 (1133) counts 61.35 g flour on 793.79 g chicken at C1's
+5.73 (7.73 g a 100 g), the sautéed chicken-francese (0420) would count 63.10
+g on 623.69 g at 7.82 (10.12 g a 100 g). The owner chose (b) 3.18 over (a)
+7.82, the fried twin's 5.73 (the stated ceiling) and "keep held". Audit 4's
+hand counts (pB §3) — disclosed, not fitted (§0.6): at 3.18 the three
+single-flour cutlets count ABOVE them (+55–63 %; piccata L103 18 g against
+27.99), francese's double dredge and parmesan-crusted's dip BELOW (flour
+−36 %, eggs −54 %, milk −68 %, whites −63 %); on the 8 audited lines 449.5
+kcal by hand (the auditors' grams on each row's record) against 473.6 at
+3.18. Francese's double dredge rides the single k (Q3 a). The dips of a C4
+coat size by M62 E-w (W = 1.1730 × B): francese|10 |11 and
+parmesan-crusted|4 |5 leave their H hold.
+
+(R2, Q6 (a)) **A coated eggplant sizes the coat at 7.93, read from FNDDS
+2710050.** With no counted meat beside a held coat, the coated food is the
+largest counted row on a `_coatVegetables` record — `['Eggplant,']` only —
+whose head a coating sentence names (`_coatedVegetable`; 0407 S3 "… shake
+to coat the slices"): eggplant-parmesan|0, 907.18 g, shape C2 (it bakes
+after the coat). The list holds ONLY records `_coatFigure` has an arm for:
+the default C2 arm is the chicken breast's 3.18, so an unguarded fallback
+would budget the onion rings on a chicken figure. And only at C2, the
+eggplant's one arm: a coated eggplant the steps FRY with no bake after (C1,
+C1d) has no coated food — it stays held, as before M69, never on the fried
+chicken breast's 5.73 or the steak's 8.79 (pinned on a STATED synthesized
+fried copy of 0407; no corpus recipe reaches it). The arm: FNDDS 2710050
+"Eggplant parmesan casserole, regular" lists 41.4 g "Eggplant, raw" and a
+13.2 g BATTER (flour 4 g, dried egg 0.5, tap water 8.3, nonfat dry milk 0.3,
+baking powder 0.1) whose carbohydrate on the cached records (789890 77.3 %;
+Foundation 329490 1.87 % for the dried egg and the vitamin-fortified twin
+172195 51.98 % for the dry milk — their own SR inputs are not cached; 172803
+27.7 %) is 3.28499 g: k = 3.28499 / 41.4 × 100 = **7.93**. Flag:
+`approximation (coat: 7.93 g carbohydrate per 100 g of the raw eggplant —
+USDA FNDDS 2710050 recipe: 13.2 g batter (4 g flour, 0.5 g dried egg, 8.3 g
+water, 0.3 g dry milk, 0.1 g baking powder; 3.28 g carbohydrate) per 41.4 g
+raw eggplant (a crumb coat read on a batter figure; 8.3 g of the 13.2 g
+batter is water and carries no carbohydrate); the dredge's excess not
+counted)` (`_coatFlag` names the coat by record: this one's batter, every
+other read's breading). A batter left in the bowl among the eggplant's coat
+parts reads on the batter it is: the crumb clause drops (the water clause
+stays) and F10's ` (a batter read on a breading figure)` is never added on
+2710050 (closer 3, verify3 D1; pinned on a STATED synthesized battered copy
+of 0407; no corpus recipe reaches it). B is a carbohydrate budget,
+food-agnostic by design;
+the recipe's three-layer crumb coat (flour → egg → bread crumbs and
+Parmesan) shares it at one f. The Parmesan |3 joins by M66's crumb gate (S2
+"… stir in the parmesan" beside "crumbs"); the bread |2 weighs the piece
+table's 28 g a slice (224 g). The frying-oil block's coated food stays the
+meat (neither recipe has a frying oil row). `_m52Key` keys the coated
+vegetable (its position, grams and description; only at C2) where no meat
+is, and
+`_m52KeysAlike` treats a counted `_coatVegetables` row like a meat row.
+The coating-sentence test is read once per head (RULE C, `memo:coatNamed`:
+read per row, it measured 2,135 ms against 167 for a totals recompute at
+the caps); both M69 readers are pinned at the caps in v26
+(`memo:poundsThin` once per recipe, `memo:coatNamed` once per head).
+
+(Onion rings, Q6) **Held — no sourced figure.** FNDDS 2710055 "Fried onion
+rings" lists only two prepared products (50 g SR 170415 "Onion rings,
+breaded, par fried, frozen, prepared, heated in oven", 50 g "Fast foods,
+onion rings, breaded and fried"), no coat input. A two-tracer balance on
+170415 (the coat as FNDDS 2710785's breading) is ill-conditioned: on
+Foundation 790646 "Onions, yellow, raw" (the row the recipe reads) k 5.48,
+on SR 170000 "Onions, raw" k 1.08 — a 0.27 g / 100 g protein difference
+moves k five-fold and both pass the energy check; only the 50/50 mixture's
+water (34.0 g) is printed, none for the raw onion or the breading. Derived,
+not sourced: the 8 rows (|0 keeping its 30.16 g eaten part) stay held; the
+design's ≤ +1,256.9 bound is not shipped.
+
+Reach (rp43 + bucket_v12 on fresh copies of snapshot 26, main and
+`--reverse-parents` byte-identical; STEP ZERO the v67 tree reproduces the
+v67 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143
+(unchanged); vs the v67 rows exactly 15 rows, all `auto`, held `coating`
+0 g → counted `discarded`, 0 person rows, **+1,285.48 kcal** — R1 (11 rows,
++725.49): chicken-piccata|3 27.99 g (f 0.463950), next-level-chicken-
+piccata|3 and better-chicken-marsala|6 32.66 (f 0.360850), chicken-
+francese|9 25.66 (f 0.212644) with its dip |10 eggs 17.83 and |11 milk
+5.43 (f_w 0.178329), chicken-saltimbocca|1 and fish-meuniere|0 25.66 (f
+0.425288), parmesan-crusted-chicken-cutlets|2 17.49 (f 0.463949) with its
+dip |4 whites 14.96 and |5 chives 0.91 (f_w 0.151071); R2 (4 rows,
++559.99): eggplant-parmesan|2 bread 76.37, |3 Parmesan 19.33, |5 flour 41.14
+(f 0.340944 on B 71.94), |6 eggs 84.39 (f_w 0.421936). Per serving:
+piccata 399.84 → 425.45, next-level 442.64 → 472.52, marsala 704.46 →
+734.35, francese 407.44 → 438.34, saltimbocca 488.08 → 511.56, meunière
+326.25 → 349.73, parmesan-crusted 153.54 → 171.67, eggplant-parmesan 360.33
+→ 453.66. Statuses 1,029 / 169 → **1,035 / 163** (the first six turn
+complete; parmesan-crusted keeps |3 held, the eggplant |1's kosher salt
+`discarded_medium`); 15 coating holds released, 0 added (27 → 12); buckets
+move by exactly those rows. A person's Confirm on a reached row reads the
+plan's share through the real PUT (Q7 accepted: eggplant|6 84.39 g, no
+longer 0 g poured away). Unreached by design: pan-seared-salmon-steaks|2
+("¾ to 1 inch thick", no pound), maple-glazed-pork-tenderloin|6 ("slice into
+¼-inch-thick pieces" — no pound), skillet-chicken-and-rice|2 (no print);
+chicken-francese-2|5 (C1, 61.35 g); chicken-marsala (0414)|1; the onion
+rings; vegan-baja-style-cauliflower-tacos.
+
+Known gaps (the source stands): the thick pieces' dustings (salmon|2,
+maple|6, skillet|2) stay held — a per-mass k cannot see a thick piece's
+surface (audit P5); maple's patted-off sugar, salt and pepper count whole
+(96.78 kcal of sugar); parmesan-crusted|3's cheese crust (184.28 g; no
+record of a cheese crust; Q5 (d) is the owner's); chicken-marsala (0414)|1
+"1 cup flour" counts WHOLE (120.66 g, 441.62 kcal) — its steps print no
+excess, so no `coating` hold and no C4 (a `_dredge` question, outside M69);
+the inputs not cached — 2706416's flour (SR 20081) and 2710050's dried egg
+and dry milk — are read on same-description Foundation records and the
+fortified twin 172195 (0.156 g of 3.285 g); francese's double dredge on the
+single k; the flag's "the dredge's excess not counted" also at f = 1 (the
+shipped wording). H2, measured on the build, not shipped:
+vegan-baja-style-cauliflower-tacos counts its coat (|6 coconut 93 g, |7
+panko 59.15 g) and dip (|8 coconut milk 243.69 g) by portion and density —
+no coat line is held, so `_m52Plan` never reads them, and R2 (eggplant only)
+leaves every row byte-equal; were cauliflower a coated vegetable on the
+shipped `_cauliflowerFried` (FNDDS 2710042, k 50.53), B = 210.86 g ≥ the
+parts' 64.57 g of carbohydrate (f 1) and W = 247.35 g ≥ 243.69 (the dip
+whole): 0 g would move. Deploy note: matcherVersion 67 stales every recipe;
+one zero-request sweep settles it; §0.7 — a read-only count of person rows
+on the 15 reached positions on the live DB before the deploy (> 0 blocks).
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

@@ -264,6 +264,7 @@ void main() {
   fryingOils();
   eggDips();
   cutDough();
+  m69Coats();
   group('RULE C at the loop level, every detector of every line at the caps '
       '(Run 056 S5/S7/S8/S9/O6/O8/S14/O15/S20/S23)', () {
     // Measured at 8113b24 (one readAll pass, the digests' shapes): salt
@@ -1238,6 +1239,122 @@ void cutDough() {
             (row.status, row.grams, row.gramSource),
         },
         {('confirmed', 416.2, 'discarded')},
+      );
+    });
+  }, skip: skipIfNoCorpus);
+}
+
+/// v67 (M69, closer 1 — verify1 D2/D3): M69's two step readers at the
+/// caps. THIN: Chicken Piccata (0418) with 389 more copies of its flour
+/// line (every one a coat part at C4's one f), 115 steps of pounding
+/// sentences that print no thickness before its own five (its "pound
+/// cutlets to even ¼-inch thickness" in the last but two): `_poundsThin`
+/// scans every sentence once per index (`memo:poundsThin`). VEGETABLE:
+/// Eggplant Parmesan (0407) with 383 eggplant lines, each heavier than the
+/// last (each the new largest), and 113 steps naming the eggplant before
+/// its own seven: the coat sentence's naming test read once per head
+/// (`memo:coatNamed`; per row it rescanned the head's sentences — 167 →
+/// 2,135 ms recomputing, 440 → 4,179 ms for the GET). Each the compute, the
+/// matches GET (planning M52 once) and the totals' recompute (once).
+/// Synthesized, a stated exception: the repeated lines and steps.
+void m69Coats() {
+  group("RULE C, M69's step readers at the caps (v67)", () {
+    Future<void> shape(
+      String name,
+      Recipe r,
+      String family,
+      void Function(List<IngredientMatchRow>) reached,
+    ) async {
+      final db = wp.tempDb();
+      final provider = FixtureProvider(pending: pendingSearches);
+      wp.saveRecipe(db, r);
+      Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+      Future<void> timed(
+        String step,
+        Future<Object?> Function() run,
+        int plans,
+      ) async {
+        stepIndexCounts.clear();
+        reachDecodes = 0;
+        m52PlanRuns = 0;
+        final sw = Stopwatch()..start();
+        await run();
+        final ms = sw.elapsedMilliseconds;
+        final counts = Map.of(stepIndexCounts);
+        final copies = counts['indexes'] ?? 1;
+        expectBounded(r, counts, '$name $step', copies: copies);
+        expect(
+          counts[family],
+          inInclusiveRange(1, copies),
+          reason: '$name $step',
+        );
+        expect(m52PlanRuns, lessThanOrEqualTo(plans), reason: '$name $step');
+        expect(ms, lessThan(backstopMs), reason: '$name $step: $counts');
+      }
+
+      await timed('compute', () => matchAndCompute(db, provider, stored()), 2);
+      reached(db.ingredientMatchesFor(r.id));
+      await timed('GET', () => matchesBody(db, provider, stored()), 1);
+      await timed('recompute', () async => recomputeTotals(db, stored()), 1);
+    }
+
+    test('THIN: the pound sentence read once per index, every flour line '
+        'counted at the one f; each under the backstop', () async {
+      final base = loadCorpusRecipe('0418-chicken-piccata.yaml');
+      final own = [for (final g in base.ingredients) ...g.items];
+      const flour = '½ cup unbleached all-purpose flour';
+      await shape(
+        'thin',
+        capped(
+          base,
+          [
+            for (final l in own) l.raw,
+            for (var i = own.length; i < capLines; i++) flour,
+          ],
+          [
+            for (var i = base.steps.length; i < capSteps; i++)
+              fill(
+                'Pound the cutlets, then pound them to an even thickness. ',
+                capStep,
+              ),
+            for (final s in base.steps) s.text,
+          ],
+        ),
+        'memo:poundsThin',
+        (rows) => expect(
+          {
+            for (final row in rows)
+              if (row.raw == flour) (row.gramSource, row.hold),
+          },
+          {('discarded', null)},
+        ),
+      );
+    });
+
+    test("VEGETABLE: the coat sentence's naming test read once per head, "
+        'the eggplant the coated food; each under the backstop', () async {
+      final base = loadCorpusRecipe('0407-eggplant-parmesan.yaml');
+      final own = [for (final g in base.ingredients) ...g.items];
+      await shape(
+        'vegetable',
+        capped(
+          base,
+          [
+            for (final l in own) l.raw,
+            for (var n = 3; own.length + n - 3 < capLines; n++)
+              '$n pounds globe eggplant (2 medium eggplants), cut crosswise into ¼-inch-thick rounds',
+          ],
+          [
+            for (var i = base.steps.length; i < capSteps; i++)
+              fill('Slice the eggplant. ', capStep),
+            for (final s in base.steps) s.text,
+          ],
+        ),
+        'memo:coatNamed',
+        (rows) => expect(
+          (rows[5].raw, rows[5].gramSource, rows[5].hold),
+          (own[5].raw, 'discarded', null),
+        ),
       );
     });
   }, skip: skipIfNoCorpus);

@@ -344,7 +344,8 @@ double _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 66);
+    // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
+    expect(matcherVersion, 67);
   });
 
   test('R-A: the trim pairs gain the whole brisket only (the flat waits for '

@@ -485,18 +485,23 @@ _rows = [
     'frying oil: 0 g — USDA FNDDS 2705996 recipe adds 7 g oil per 100 g, but the fried skin-on parts carry less fat (17.2 g) than the raw parts counted here: no net uptake',
   ),
   // negative: C4 sautéed dusting stays held
+  // RE-PIN (M69 batch, v68, R1 — the owner's Q4 ruling (b)): a THIN piece's
+  // dusting (0418 S1 "pound cutlets to even ¼-inch thickness") is C4 at
+  // C2's 3.18 — f 0.463950, 27.99 g, no hold.
   (
     '0418-chicken-piccata.yaml',
     null,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
+    '27.99',
+    'discarded',
     null,
-    null,
-    'coating',
-    null,
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast (no record for a sautéed flour dusting; read as the baked breaded breast, the lightest coat USDA prints; FNDDS 2706416 Veal Marsala's 62.5 g flour per 617.60 g raw veal, 7.82, counts the dish's whole flour, sauce included, and is not read); the dredge's excess not counted)",
   ),
   // negative: C4 stays held
+  // (M69, v68: a THICK piece's — "¾ to 1 inch thick", no pound — still
+  // held.)
   (
     '0257-pan-seared-salmon-steaks.yaml',
     null,
@@ -538,16 +543,18 @@ _rows = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
   // negative: a baked vegetable coat (no meat line) stays held
+  // RE-PIN (M69 batch, v68, R2 — Q6 (a)): a coated eggplant sizes the coat
+  // on FNDDS 2710050's read 7.93 — f 0.340944, 41.14 g, no hold.
   (
     '0407-eggplant-parmesan.yaml',
     null,
     5,
     '1 cup unbleached all-purpose flour',
     789890,
+    '41.14',
+    'discarded',
     null,
-    null,
-    'coating',
-    null,
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050 recipe: 13.2 g batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, 0.1 g baking powder; 3.28 g carbohydrate) per 41.4 g raw eggplant (a crumb coat read on a batter figure; 8.3 g of the 13.2 g batter is water and carries no carbohydrate); the dredge's excess not counted)",
   ),
   // negative: a fried batter whole — 0 g
   // RE-PIN (M61 batch, v60): falafel takes its uptake on the raw mix (R-e:
@@ -727,7 +734,8 @@ void main() {
     // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
-    expect(matcherVersion, 66);
+    // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
+    expect(matcherVersion, 67);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

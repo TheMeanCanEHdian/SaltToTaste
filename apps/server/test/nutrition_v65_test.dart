@@ -81,6 +81,14 @@ const _sandwiches = '1081-crispy-fish-sandwiches-with-tartar-sauce.yaml';
 /// The dip's basis (M62 E-w) and its kept-part form (R2).
 const _dipBasis =
     "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)";
+
+/// RE-PIN (M69 batch, v68): the coat flags of the rows M69 releases.
+const _c4Breast =
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast (no record for a sautéed flour dusting; read as the baked breaded breast, the lightest coat USDA prints; FNDDS 2706416 Veal Marsala's 62.5 g flour per 617.60 g raw veal, 7.82, counts the dish's whole flour, sauce included, and is not read); the dredge's excess not counted)";
+const _c4Sole =
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw flatfish — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast (no record for a sautéed flour dusting; read as the baked breaded breast, the lightest coat USDA prints; FNDDS 2706416 Veal Marsala's 62.5 g flour per 617.60 g raw veal, 7.82, counts the dish's whole flour, sauce included, and is not read); the dredge's excess not counted)";
+const _eggplantCoat =
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050 recipe: 13.2 g batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, 0.1 g baking powder; 3.28 g carbohydrate) per 41.4 g raw eggplant (a crumb coat read on a batter figure; 8.3 g of the 13.2 g batter is water and carries no carbohydrate); the dredge's excess not counted)";
 const _dipKeptBasis =
     "discarded in cooking — only the part the recipe keeps and the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)";
 
@@ -503,17 +511,18 @@ const List<_Row> _texts = [
 /// rows' recipes (scones, truffles, macaroons). The energy is not pinned
 /// here (a fresh compute counts some records on their search hit).
 const List<_Row> _negatives = [
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0415-better-chicken-marsala.yaml',
     6,
     '¾ cup all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '32.66',
     null,
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
   (
     '0114-breaded-chicken-cutlets.yaml',
@@ -647,41 +656,44 @@ const List<_Row> _negatives = [
     null,
     '2 × 50 g each · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0420-chicken-francese.yaml',
     9,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '25.66',
     null,
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0420-chicken-francese.yaml',
     10,
     '2 large eggs',
     748967,
     '0.920000',
-    null,
+    '17.83',
     null,
     'auto',
-    'coating',
     null,
+    _dipBasis,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0420-chicken-francese.yaml',
     11,
     '2 tablespoons milk',
     2705385,
     '0.910000',
-    null,
+    '5.43',
     null,
     'auto',
-    'coating',
     null,
+    _dipBasis,
   ),
   (
     '1133-chicken-francese.yaml',
@@ -827,29 +839,31 @@ const List<_Row> _negatives = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0418-chicken-piccata.yaml',
     3,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '27.99',
     null,
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0421-chicken-saltimbocca.yaml',
     1,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '25.66',
     null,
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
   (
     '0116-chicken-schnitzel.yaml',
@@ -1163,65 +1177,70 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
   (
     '0407-eggplant-parmesan.yaml',
     2,
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    null,
+    '76.37',
     null,
     'auto',
-    'coating',
     null,
+    _eggplantCoat,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
   (
     '0407-eggplant-parmesan.yaml',
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
     325036,
     '0.983333',
-    null,
+    '19.33',
     null,
     'auto',
-    'coating',
     null,
+    _eggplantCoat,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
   (
     '0407-eggplant-parmesan.yaml',
     5,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '41.14',
     null,
     'auto',
-    'coating',
     null,
+    _eggplantCoat,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
   (
     '0407-eggplant-parmesan.yaml',
     6,
     '4 large eggs',
     748967,
     '0.920000',
-    null,
+    '84.39',
     null,
     'auto',
-    'coating',
     null,
+    _dipBasis,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0466-fish-meuniere-with-browned-butter-and-lemon.yaml',
     0,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '25.66',
     null,
     'auto',
-    'coating',
     null,
+    _c4Sole,
   ),
   (
     '0527-karaage-japanese-fried-chicken-thighs.yaml',
@@ -1271,17 +1290,18 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0418-next-level-chicken-piccata.yaml',
     3,
     '¾ cup all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '32.66',
     null,
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
   (
     '0525-orange-flavored-chicken.yaml',
@@ -1403,17 +1423,18 @@ const List<_Row> _negatives = [
     'coating',
     null,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
     2,
     '5 tablespoons unbleached all-purpose flour',
     789890,
     '0.950000',
-    null,
+    '17.49',
     null,
     'auto',
-    'coating',
     null,
+    _c4Breast,
   ),
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
@@ -1427,29 +1448,31 @@ const List<_Row> _negatives = [
     'coating',
     null,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
     4,
     '3 large egg whites',
     747997,
     '0.950000',
-    null,
+    '14.96',
     null,
     'auto',
-    'coating',
     null,
+    _dipBasis,
   ),
+  // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
     5,
     '2 tablespoons minced fresh chives (optional)',
     169994,
     '0.920000',
-    null,
+    '0.91',
     null,
     'auto',
-    'coating',
     null,
+    _dipBasis,
   ),
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
@@ -1635,7 +1658,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
-    expect(matcherVersion, 66);
+    // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
+    expect(matcherVersion, 67);
   });
 
   group('matcher v65 (batch M66)', skip: skipIfNoCorpus, () {
@@ -1826,8 +1850,15 @@ void main() {
       );
       expect(g('0148-crispy-fried-chicken.yaml', 12), '105.95');
       expect(g('0198-crispy-pan-fried-pork-chops.yaml', 1), '46.82');
-      for (final p in [2, 3, 4, 5]) {
-        expect(rowOf(_parmesanCrusted, p).hold, 'coating', reason: '$p');
+      // RE-PIN (M69 batch, v68): C4 budgets the flour |2 and its dip |4 |5;
+      // the cheese crust |3 stays held (Q5).
+      for (final (p, hold) in const [
+        (2, null),
+        (3, 'coating'),
+        (4, null),
+        (5, null),
+      ]) {
+        expect(rowOf(_parmesanCrusted, p).hold, hold, reason: '$p');
       }
     });
 

@@ -853,7 +853,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
-    expect(matcherVersion, 66);
+    // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
+    expect(matcherVersion, 67);
   });
 
   group('matcher v66 (batch M67)', skip: skipIfNoCorpus, () {
