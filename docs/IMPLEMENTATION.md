@@ -3608,6 +3608,40 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — exit of the prep49 round: re-calibration on v69 and blind
+  audit 5 (snapshot 27; `.claude/diag/2026-10-09/audit5/report.md`,
+  `exit49/recalibration_v62_v67_v69.txt`).** Audit 4's 25 hand-counted
+  recipes re-measured on the v69 library: median error 11.1 → 9.1 %, mean
+  14.5 → 11.4 %, bias +5.8 → +4.2 %, recipes beyond 15 %: 10 → 8 (the
+  doughnuts +64 → +19 %, the struffoli +20 → +7 %, the eggplant parmesan
+  −29 → −11 %); audit 2's and 3's sets unchanged (not targeted). Audit 5:
+  226 lines (137 from the seven batches' reaches, capped at 36 a stratum;
+  89 controls), two blind auditors a chunk and an adjudicator; 25 recipes
+  recomputed by hand. The batch strata carry 0 food WRONG (fried doughs
+  9/9 clean, the L49 records 34/36 — the two misses the yuca's peel and
+  its uptake on the unpeeled weight); overall food WRONG 4.0 %, all in
+  the controls (eight below-gate lines are eaten foods on near-name
+  records: a "1 pound pizza dough" line not linked to the recipe's own
+  "Classic Pizza Dough" section, crystallized ginger on raw ginger root
+  three times, kasseri on Monterey); mass LOW 11.5 %, HIGH 8.0 %.
+  Calibration: median 8.5 %, mean 16.4 %, the engine higher on 16 of 25
+  (median +3.3 %; without the optional sub-recipe counted whole, 7.4 %).
+  Ranked patterns by kcal on the sample: (A) a record variant the recipe
+  TEXT overrides — the home-corned brisket's steps trim the cap to ⅛ inch
+  while its line prints no trim, so it sits on the 0-inch record; jarred
+  Morellos on the water pack with the reserved syrup unused; cooked white
+  rice on the glutinous record; (B) edible yield (the yuca's peel and
+  core; the ham's 0.70 too deep); (C) uncounted eaten foods; (D) held
+  coats (the Parmesan crust — the owner's Q5 (d); the potato-chip crumb);
+  (E) discarded or partly used liquids counted whole — a marinade oil in
+  a step-less subsection (Q18), strained garlic solids, scraped-off salt
+  cures; (F) THICK pressed crusts at the thin-dredge budget (0.34× the
+  auditors: nut-crusted, the lighter parmesan, the eggplant's bread);
+  (G) wet batters 1.2–2.1× with their water and alcohol counted; (H)
+  amount-less lines whose amount the steps print; (I, J) dredges and dips
+  within ±50 %. These set the next round's design. In parallel the
+  dual-fleet evidence-gated review of v63–v69 runs (Run 063 Sonnet 5.5,
+  Run 064 Opus 5.5); its fixes ship as one batch after both.
 - **2026-10-09 — matcher v69 (batch M70): the records read in live step
   L49 — the pomegranate flat on USDA's braised pair, the giblets weighed
   off the host's bird, yuca on the cassava record with a read frying
