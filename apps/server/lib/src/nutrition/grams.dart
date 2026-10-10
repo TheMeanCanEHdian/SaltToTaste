@@ -316,6 +316,15 @@ const List<(String, double)> _densities = [
   // the stand-in pearl record's own cup (169717, 152 g: the denser form),
   // as every key outside [_recordFirstDensities] is.
   ('tapioca starch', 3 * 28.3495 / (0.75 * 236.588)),
+  // v68 (batch M70, pF F1; the owner's Q11 standing rule: a label's grams
+  // for a volume the line prints): powdered pectin on SR 168821 (no volume
+  // portion) at the Sure-Jell label's "1/8 tsp (0.5g)" (Kraft Heinz, FDC
+  // Branded 2596757, read at L49): 4 g a teaspoon. FDC holds no label of
+  // the low/no-sugar box the lines name (R-2, two spellings, 2026-10-09);
+  // the other makers' boxes read 3.2–4.0 g a teaspoon. Longer than 'sugar'
+  // ("no-sugar-needed"), so they win ([_tableEntry]).
+  ('fruit pectin', 4 / 4.92892),
+  ('sure-jell', 4 / 4.92892),
 ];
 
 /// The [_densities] keys that weigh on a stand-in's figure — flagged
@@ -344,7 +353,17 @@ const Map<String, String> _approximateDensities = {
   'creme fraiche': 'heavy cream density',
   // v49 (M47 Q5).
   'tapioca starch': "ATK's printed 3 ounces per ¾ cup",
+  // v68 (M70, Q11).
+  'fruit pectin': _sureJellLabel,
+  'sure-jell': _sureJellLabel,
 };
+
+/// The Sure-Jell label the pectin densities read (v68, M70 — the owner's
+/// Q11; R-2 found no label of the box the lines name).
+const String _sureJellLabel =
+    'Sure-Jell label (Kraft Heinz, FDC Branded 2596757; the regular box — '
+    'FDC holds no label of the low/no-sugar box the line names; the other '
+    "makers' boxes read 3.2–4.0 g per teaspoon): ⅛ teaspoon = 0.5 g";
 
 /// v37: the [_densities] keys that size a line only when its record has no
 /// volume figure of its own — a printed figure for a portion-less record,
@@ -559,6 +578,14 @@ const List<(String, double)> _pieceWeights = [
   // its own: the head noun of "kiwis" is not "kiwi".
   ('kiwis', 75),
   ('kiwi', 75),
+  // v68 (batch M70, pF F6; the owner's Q11 standing rule: a label's grams
+  // for a count the line prints): The Hershey Company's plain milk-chocolate
+  // Kisses labels (FDC Branded, read at live step L49) print 41 g = 9 pieces
+  // on five items (1642930, 1646330, 1643997, 1643992, 1644692) and 32 g =
+  // 7 pieces on three 2023 ones (4.57 g, 0.3 % apart); 1198's "12-ounce bag
+  // … a few left over" bounds 62 Kisses below 5.49 g each. The plural key,
+  // as 'oreo cookies': the head noun is 'kisses'.
+  ('hershey s kisses', 41 / 9),
 ];
 
 /// v49 (M47 Q12): [_pieceWeights] keys whose figure is one unsized fruit —
@@ -622,6 +649,10 @@ const Map<String, String> _approximatePieces = {
   'gyoza wrapper': "FDC's 3½-inch square wonton wrapper, ATK's substitute",
   // v51 (M49 Q4 b): the CP9 Q6 corpus-print class.
   'thick-cut bacon': "the corpus's printed thick-cut slice, median of three",
+  // v68 (M70, Q11): the maker's label.
+  'hershey s kisses':
+      "Hershey's label: 9 pieces = 41 g (FDC Branded 1642930 and four more; "
+      'three 2023 labels print 7 pieces = 32 g)',
 };
 
 /// v31 (Q6, ruled 2026-10-03): pieces FDC weighs by no length, sized by
@@ -864,6 +895,61 @@ const Map<int, int> volumeSiblings = {
   2515381: 170154,
   170151: 2707586,
 };
+
+/// v68 (batch M70, pE Q6; prep49 design_v2 §2 M70): records whose volume
+/// portions name no cut → the SR sibling that prints a CHOPPED one. FNDDS
+/// 2709780 "Basil, raw" ('1 cup' 24 g = SR's 'cup leaves, whole', '1
+/// tablespoon' 3 g, its cut unstated) → SR 172232 "Basil, fresh" ('tbsp,
+/// chopped' 5.3 g at amount 2: 2.65 g a tablespoon, 42.40 g a cup; the two
+/// records print the same composition). A fine-cut volume line weighs on
+/// the sibling's chopped portion ([fineCutWeighing]); the food and its
+/// nutrients stay the line's; a whole, torn or shredded line keeps its own.
+const Map<int, int> fineCutSiblings = {2709780: 172232};
+
+/// [food] carrying only [sibling]'s chopped portions ([_choppedPortion]) —
+/// what a fine-cut ([_fineCut], "minced" read as chopped since checkpoint
+/// 5) volume line ([raw], [amounts]) on a [fineCutSiblings] record weighs
+/// on, through the shipped resolver — and the basis note naming the
+/// portion; null for any other line, or a sibling with no chopped portion.
+({FdcFood food, String note})? fineCutWeighing(
+  FdcFood food,
+  FdcFood sibling,
+  String raw,
+  List<Amount> amounts,
+) {
+  final chopped = [
+    for (final portion in sibling.portions)
+      if (_choppedPortion.hasMatch((portion.description ?? '').toLowerCase()))
+        portion,
+  ];
+  if (chopped.isEmpty ||
+      volumeMlOf(amounts) == null ||
+      !_fineCut.hasMatch(raw.toLowerCase())) {
+    return null;
+  }
+  final cut = FdcFood(
+    fdcId: food.fdcId,
+    description: food.description,
+    dataType: food.dataType,
+    nutrientsPer100g: food.nutrientsPer100g,
+    portions: chopped,
+  );
+  final perMl = _foodGramsPerMl(cut);
+  if (perMl == null) {
+    return null;
+  }
+  final perTbsp = perMl * _volumeUnitMl['tablespoon']!;
+  final portion = chopped.first;
+  final amount = _figure(portion.amount ?? 1);
+  return (
+    food: cut,
+    note:
+        'chopped: ${perTbsp.toStringAsFixed(2)} g per tablespoon — USDA SR '
+        '${sibling.fdcId} "${sibling.description}" '
+        "'${portion.description}' × $amount = "
+        '${_figure(portion.gramWeight)} g',
+  );
+}
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
 /// distinct from soft sandwich bread (which keeps its 28 g/slice table entry).
@@ -1979,8 +2065,11 @@ bool buysRefuse(String raw) {
   // "1 pound lobster meat" (0292) is picked meat, as a boneless cut is (not
   // 0222's rib roast, "meat removed from bones" and tied back on). (Crab and
   // clam meat changed no line of the library: removed, refix round 2.)
+  // v68 (M70, Q13): a section's "Reserved turkey giblets, …" is a part the
+  // host already bought — weighed off its bird, never a purchase weight
+  // (engine `hostWeighedGiblets`; no detail fetched for it).
   if (RegExp(
-    r'boneless|broth|stock|\bground\b|\blobster\s*meat\b',
+    r'^reserved\b|boneless|broth|stock|\bground\b|\blobster\s*meat\b',
   ).hasMatch(line)) {
     return false;
   }

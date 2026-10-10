@@ -183,15 +183,18 @@ _reach = [
     '3449.57',
   ),
   // R1d: 2705851 4,715.09 → −1,265.52 (flagged, Q2 (i))
+  // RE-PIN (M70 batch, v69, Q1 flat (b′)): 173128 (was 168743, 3449.57) —
+  // the flat's ¼-inch cap reads USDA's ⅛" flat; the row's kcal is gross
+  // (the braised share deducts in the totals; nutrition_v69_test).
   (
     'R1d',
     '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
     0,
     '1 (4- to 5-pound) beef brisket, flat cut, fat trimmed to ¼ inch',
-    168743,
+    173128,
     '1.000000',
     '2041.16',
-    '3449.57',
+    '5674.44',
   ),
   // R1e (Q5 a): SR center RIB 167889 2,631.97 → −536.37
   (
@@ -506,9 +509,13 @@ const List<(String, int, String, int, String, String, String)> _unchanged = [
 ];
 
 /// Q2 (i) / F2: the stand-in's text, byte-equal to design_v2 §1 Q2.
+// RE-PIN (M70 batch, v69, Q1 flat (b′)): the 173128 flag (was "approximate
+// (the printed ¼-inch fat cap renders and is skimmed (step 5); counted as
+// the 0-inch trimmed flat)", 168743's — that arm stays for the record).
 const _pomegranateFlag =
-    'approximate (the printed ¼-inch fat cap renders and is skimmed (step '
-    '5); counted as the 0-inch trimmed flat)';
+    "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat "
+    "trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by "
+    'the protein tracer — the fat the steps skim, deducted)';
 
 /// The rack's AH-102 row, 172641's verbatim (now keyed on 174414 too).
 const _rackBasis =
@@ -550,7 +557,8 @@ void main() {
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    expect(matcherVersion, 67);
+    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
+    expect(matcherVersion, 68);
   });
 
   test('R1: each rank-as item reads its named cached answer under the '
@@ -592,9 +600,11 @@ void main() {
     // RE-PIN (M68 batch, v67): + 168607: 168664 (was {172641: 174414,
     // 2727572: 171751}) — the whole brisket's ¼-inch cap reads its ⅛"
     // record (Q1 (a)); the flat 168743 is still no key.
+    // RE-PIN (M70 batch, v69): + 168743: 173128 — the flat's ¼-inch cap
+    // reads its ⅛" record (Q1 flat (b′)).
     expect(
       {for (final (_, pairs) in trimDepthRecords) ...pairs},
-      {172641: 174414, 168607: 168664, 2727572: 171751},
+      {172641: 174414, 168607: 168664, 168743: 173128, 2727572: 171751},
     );
     expect(ah102Meats[174414], ah102Meats[172641]);
     // RE-PIN (M63 batch, v62): `ah102MeatsOnHit` (was {174414}, the rack

@@ -1659,7 +1659,8 @@ void main() {
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    expect(matcherVersion, 67);
+    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
+    expect(matcherVersion, 68);
   });
 
   group('matcher v65 (batch M66)', skip: skipIfNoCorpus, () {
@@ -2186,8 +2187,12 @@ void main() {
       // equal); then v64's.
       expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 402.18, 10
       expect(of(_nutCrusted), ('complete', '385.78', 13)); // 385.84; 360.45
-      expect(of(_lighter), ('complete', '235.25', 12)); // 235.29; 232.29
-      expect(of(_bestParmesan), ('complete', '486.52', 21)); // 486.50; 500.12
+      // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its minced
+      // basil on SR's chopped 2.65 g (replay 235.29 → 235.26).
+      expect(of(_lighter), ('complete', '235.22', 12)); // 235.29; 232.29
+      // RE-PIN (M70 batch, v69, pE Q6): 486.48 (was 486.52) — its chopped
+      // basil tablespoons on SR's 2.65 g (replay 486.50 → 486.46).
+      expect(of(_bestParmesan), ('complete', '486.48', 21)); // 486.50; 500.12
       expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 217.86, 3
     });
 

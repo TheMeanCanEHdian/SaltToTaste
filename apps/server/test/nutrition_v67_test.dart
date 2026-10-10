@@ -140,19 +140,22 @@ const List<_Row> _reach = [
 /// rack's two records, and the two corned recipes' cure rows (`discarded`
 /// 0 g — the cure is never counted twice).
 const List<_Row> _negatives = [
+  // RE-PIN (M70 batch, v69, Q1 flat (b′)): on 173128 (was 168743 _flat,
+  // 3449.57, `_pomegranateFlag`) — the row's kcal is gross; the braised
+  // share deducts in the totals (nutrition_v69_test).
   (
     _pomegranate,
     null,
     0,
     '1 (4- to 5-pound) beef brisket, flat cut, fat trimmed to ¼ inch',
-    168743,
-    _flat,
+    173128,
+    'Beef, brisket, flat half, separable lean and fat, trimmed to 1/8" fat, choice, raw',
     '1.000000',
     '2041.16',
     'auto',
     null,
-    '3449.57',
-    'from the printed weight (4–5 lb, the midpoint) · $_pomegranateFlag',
+    '5674.44',
+    "from the printed weight (4–5 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by the protein tracer — the fat the steps skim, deducted)",
   ),
   (
     _onion,
@@ -345,18 +348,21 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    expect(matcherVersion, 67);
+    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
+    expect(matcherVersion, 68);
   });
 
   test('R-A: the trim pairs gain the whole brisket only (the flat waits for '
       'L49)', () {
+    // RE-PIN (M70 batch, v69, Q1 flat (b′)): + 168743: 173128 — L49 read
+    // the flat ⅛" braised pair (nutrition_v69_test).
     expect(
       {for (final (_, pairs) in trimDepthRecords) ...pairs},
-      {172641: 174414, 168607: 168664, 2727572: 171751},
+      {172641: 174414, 168607: 168664, 168743: 173128, 2727572: 171751},
     );
     final (phrase, pairs) = trimDepthRecords.first;
     expect(pairs[168607], 168664);
-    expect(pairs.containsKey(168743), isFalse);
+    expect(pairs[168743], 173128);
     expect(
       phrase.hasMatch(
         '1 (9- to 11-pound) whole beef brisket, fat trimmed to ¼ inch',
@@ -630,7 +636,8 @@ void main() {
       // kcal in this recipe.
       expect(of(_newEngland), ('complete', '592.11'));
       expect(of(_onion), ('complete', '692.11'));
-      expect(of(_pomegranate), ('complete', '729.93'));
+      // RE-PIN (M70 batch, v69, Q1 flat (b′)): 794.35 (was 729.93).
+      expect(of(_pomegranate), ('complete', '794.35'));
     });
 
     test('a second recompute writes nothing', () {

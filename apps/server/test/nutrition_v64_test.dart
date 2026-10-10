@@ -783,7 +783,8 @@ void main() {
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    expect(matcherVersion, 67);
+    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
+    expect(matcherVersion, 68);
   });
 
   test('the five entries, by item (the shipped classes)', () {
@@ -1041,7 +1042,9 @@ void main() {
       // hits round, as M63's note says).
       expect(of(_cobbler), ('complete', '297.32')); // partial 250.28 → 297.32
       expect(of(_brussels), ('complete', '290.37')); // partial 240.27 → 290.36
-      expect(of(_norma), ('complete', '480.96')); // partial 443.35 → 480.91
+      // RE-PIN (M70 batch, v69, pE Q6): 480.88 (was 480.96) — its chopped
+      // basil tablespoons on SR's 2.65 g (replay 480.91 → 480.83).
+      expect(of(_norma), ('complete', '480.88')); // partial 443.35 → 480.91
       expect(of(_tamales), ('complete', '719.31')); // partial 719.39 → 719.39
       expect(of(_nikujaga).$1, 'partial'); // its unmatched katsuobushi
       expect(of(_rainbow).$1, 'complete');

@@ -253,9 +253,8 @@ void main() {
   test('the request groups whose check failed on the live step stay dry '
       '(v38 enabled the rest: nutrition_v38_test.dart)', () {
     const dryRankAs = [
-      'low- or no-sugar-needed fruit pectin',
-      'sure-jell for low-sugar recipes',
-      'sure-jell for less or no sugar needed recipes',
+      // RE-PIN (M70 batch, v69, pF F1 / Q11): R02's three pectin keys
+      // enabled on the Sure-Jell label's grams (nutrition_v69_test).
       'fennel fronds',
       // RE-PIN (M65 batch, v64, F5): 'jarred morello cherries' enabled
       // (grams `_fromContainers` skips the jar weight; nutrition_v64_test).

@@ -2771,7 +2771,8 @@ food and keep their grams); `ya cai` (reads `salt`) → `cabbage mustard
 salted` (169891, `cup` 128 g, flagged below); and the radicchio,
 cauliflower and canned-chickpea volume siblings (above). Left DRY, with
 the portions FDC published: powdered pectin (168821: `package (1.75 oz)`
-50 g only), fennel fronds (FNDDS 2709779: `1 fennel bulb` 235 g, `Quantity
+50 g only — enabled since matcher v69, M70 below, on the Sure-Jell label's
+4 g a teaspoon), fennel fronds (FNDDS 2709779: `1 fennel bulb` 235 g, `Quantity
 not specified` 25 g), sour cherries (167769 publishes `cup` 168 g, but no
 reader yet skips the "(24-ounce)" jar weight read first — enabled since
 matcher v64, M65 F5, below), seed gums
@@ -3359,7 +3360,8 @@ carry less fat (17.2 g) than the raw parts counted here: no net uptake`
 (crispy-fried-chicken|7, easier-fried-chicken|10). Stay 0: doughs and
 batters fried whole (doughnuts, struffoli, falafel, pakoras, lumpia —
 until matcher v60, M61 below, counts their uptake on the raw mix),
-tempeh (its 28 g kept part counted), confit, yuca (no nutrients), and the
+tempeh (its 28 g kept part counted), confit, yuca (no nutrients; since
+matcher v69, M70 below, on cassava at FNDDS 2709565's read 15 %), and the
 strained-and-kept shallot oil (no uptake; since matcher v63, M64, the ¼ cup
 its yield prints as not poured out is counted).
 
@@ -3512,7 +3514,8 @@ record a cached answer already holds; grams never move.
   counted as the 0-inch trimmed flat)` (Q2 (i), F2) — the 1/8" record
   (173128) is not read for it (Q2 (ii), deferred to a rendered-fat item).
   (Since matcher v67 the WHOLE brisket's ¼-inch cap reads its own ⅛"
-  record, 168664 — batch M68 below; the flat waits for L49.)
+  record, 168664 — batch M68 below; since matcher v69 the flat reads
+  173128 with its braised pair's energy share — batch M70 below.)
 - **R2 — the lean-and-fat sibling** (`leanAndFatSibling`, after the
   fresh-over-cured move, so after R1): a top whose description says
   "separable lean only", on a line that does not say `lean`, "trimmed of
@@ -3939,7 +3942,7 @@ chosen) / ≤ 25.67 % (carbohydrate net of the glaze the record's 22.8 g of
 sugars imply — an upper bound, the dough's sugars a floor); falafel's
 carbohydrate tracer 21.64 % against its protein tracer 13.99 % (SR's home
 recipe is protein-richer than the corpus mix); fried-yuca|2 waits for its
-yuca record; the corpus lost the steps of 269 subsections (Q18), which
+yuca record (since matcher v69, M70 below: 15 %, read); the corpus lost the steps of 269 subsections (Q18), which
 these step readers cannot see.
 
 Replay (rp43 + bucket_v12 on fresh copies of snapshot 24, main and
@@ -4654,7 +4657,8 @@ of the fat and 82.0 % of the energy, 169570 → 169555 (0", select) 49.1 /
 by CUT and the ruling is the whole cut's only: the FLAT (braised-brisket-
 with-pomegranate|0, "flat cut, fat trimmed to ¼ inch") keeps R1d's 0" flat
 168743 and its shipped flag until L49 reads a flat ⅛" braised record (none
-is cached), to be decided in M70.
+is cached), to be decided in M70 (since matcher v69: 173128 × the braised
+pair's 67.6 % — batch M70 below).
 
 (Q2 (c)) **A home-corned brisket keeps the fresh flat and says the cure's
 sodium is not counted.** A fresh flat 168743 in a recipe whose TITLE matches
@@ -4847,6 +4851,198 @@ parts' 64.57 g of carbohydrate (f 1) and W = 247.35 g ≥ 243.69 (the dip
 whole): 0 g would move. Deploy note: matcherVersion 67 stales every recipe;
 one zero-request sweep settles it; §0.7 — a read-only count of person rows
 on the 15 reached positions on the live DB before the deploy (> 0 blocks).
+
+**Since matcher v69 (batch M70 — the records read at live step L49 and the
+zero-request giblets; matcherVersion 68; prep49 design_v2 §2 M70, the
+owner's Q1 flat (b′), Q11 (labels weigh a printed size or volume, never
+composition — a standing rule) and Q13 G2, 2026-10-09; zero requests; reach
+PRE-Q18 — the giblet and rind readers read steps).** Seven rulings and one
+reported gap:
+
+(1, Q1 flat (b′)) **The pomegranate flat counts at ⅛" with its braised
+pair's energy share.** `trimDepthRecords`' trim phrase gains `168743 →
+173128`: braised-brisket-with-pomegranate|0 "1 (4- to 5-pound) beef
+brisket, flat cut, fat trimmed to ¼ inch" moves from R1d's 0" flat to SR
+173128 *Beef, brisket, flat half, separable lean and fat, trimmed to 1/8"
+fat, choice, raw* (a hit in the line's own `beef brisket` answer; 2,041.16 g,
+weight, no detail asked). New one-entry map `braisedEnergyShare` {173128:
+e}: USDA's SAME cut, trim and grade braised, SR 173130 (L49's search; both
+cached hits): yield by the protein tracer 18.1 / 28.7 = 0.6307, e = 298 ×
+0.6307 / 278 = **0.6760** (fat kept 55.4 %; every other pair differs in
+grade, trim or cut — the select ⅛" flat 0.6227, the 0" flats 0.80–0.82, the
+whole ⅛" 0.933, the lean-only flat 1.03). `recomputeTotals` deducts
+(1 − e) of the row's energy beside Q25's alcohol arm — ENERGY only, only on
+a line `trimStandInFlagOf` flags (one raw test), a person's typed grams too;
+the row's grams and kcal column stay gross (5,674.44, as an alcohol row).
+Flag: `approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat
+trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by the
+protein tracer — the fat the steps skim, deducted)`. 168743's ¼" arm stays
+(the fallback if the answer loses 173128). Recipe energy 3,449.57 →
+3,836.11 for the line (+386.54; deduction 1,838.33); batch 4,379.57 →
+4,766.11; per serving 729.93 → 794.35.
+
+(2, Q13 G2) **The Giblet Pan Gravy's giblets weighed off the host's bird.**
+classic-roast-turkey §0|1 "Reserved turkey giblets, neck, and tailpiece"
+(the 0 g amount-less rule row) is matched when a section step stirs the
+giblets back (`\bstir\b[^.]*\bgiblets\b[^.]*\binto\b`: "Stir the reserved
+giblets into the gravy") — `_rankAs['reserved turkey giblets']` reads SR
+171083 *Turkey, whole, giblets, raw* (124 kcal) in the cached `giblet pan
+gravy` answer — and weighed by `hostWeighedGiblets` (the one reader
+`lineGrams` gives the compute, a Confirm and the GET): the host's first line
+whose item's head is `turkey` (by its TEXT — a section computes before its
+host), its printed weight 12–14 lb at the midpoint 5,896.70 g × (85 − 78) /
+85 (AH-102's turkey dressing data, 12 lb and over: ready to cook with neck
+and giblets 85, without 78 — the figure the bird row already takes off) ×
+6 / (4 + 6) (item 2590: neck 4, giblets 6) = **291.37 g**, 361.29 kcal.
+Basis: `the host's turkey from the printed weight (12–14 lb, the midpoint):
+5897 g × 7/85 neck and giblets (USDA AH-102 turkey dressing data, 12 lb and
+over: 85 with, 78 without) × 6/10 giblets (item 2590: neck 4, giblets 6,
+fryer-roaster class) · approximate (the neck and tailpiece are strained out
+— not counted)`. `buysRefuse` reads a line starting "Reserved" as bought by
+no one, so no reader asks 171083's detail (it prices on the hit; the cache
+holds no detail after a compute); the amount-less 0 g of `engineOutcome`
+skips a weight resolution (this reader is the only one). The grams join
+the SECTION's ingredients hash (a term only on the line this reader weighs,
+so no other hash moves): a host-only edit of the bird's printed weight
+stales the gravy — and so its routed parents — and the recompute reads the
+new bird (12–14 → 16–18 lb: 291.37 → 381.02 g). crisp-skin's
+"Reserved giblets, neck, tailpiece, and backbone and rib bones" stays the
+0 g rule row (its gravy strains them out). The section 1,275.30 g / 787.56
+kcal → 1,566.60 / 1,148.85; its routed parents re-read it: classic-roast-
+turkey 678.04 → 714.17 per serving, classic-roast-stuffed-turkey 1,221.89 →
+1,258.02.
+
+(3, pF L1; R-1 read 2026-10-09) **Yuca on cassava with a READ uptake.**
+`_rankAs['yuca roots']` → SR 169985 *Cassava, raw* (the cached `cassava raw`
+answer; the line's own answer led with LEEKS 2727584, `no_nutrients`):
+fried-yuca|0 907.18 g, 1,451.49 kcal. FNDDS 2709565 "Yuca fries" lists 100 g
+"Cassava, raw", 15 g "Vegetable oil, NFS" and 0.4 g salt — its input IS the
+raw cassava, so the uptake is read, not derived (`_yucaFries`; the house
+derives only on a read input): `_friedClassOf`'s arm on cassava or yuca
+reads 15.00 %. fried-yuca|2 "2 quarts vegetable oil" 0 g → **136.08 g**
+(1,224.72 kcal on the stored grams), flag `approximation (frying oil
+absorbed: 15.00 % of the raw yuca's weight — USDA FNDDS 2709565 recipe: 15
+g oil per 100 g raw cassava)` — the house read form every read uptake
+prints. The recipe stays partial (|1's salt in the boiling water held):
+per serving — → 669.05.
+
+(4, pF F3) **A Parmesan rind is the cheese, discarded whole.**
+`_rankAs['parmesan cheese rind']` → SR 170848 *Cheese, parmesan, hard*
+(index 2 of the line's own answer, whose top was FNDDS 2747676 WATERMELON
+rind, 0.377 — the head `rind` dominated), and `rind` joins
+`_wholePieceHeads`: hearty-minestrone|14 "1 piece Parmesan cheese rind,
+about 5 by 2 inches" and pasta-e-fagioli|9 "1 piece Parmesan cheese rind,
+about 5 inches by 2 inches" → 0 g `discarded`, counted (`removed and
+discarded (step N) — counted as 0 g`: 0028 step 4 "Discard the bay leaf
+and Parmesan rind, stir in the basil, …"; 0404 step 2 "Discard the cheese
+rind."); both recipes turn complete.
+italian-chicken-soup-with-parmesan-dumplings|8 "1 Parmesan cheese rind,
+plus 3 ounces Parmesan, shredded (1 cup)" (0403: "Discard Parmesan rind.")
+moves its record only — its
+shredded cheese is cut fine (`_cutFine`), so it is never zeroed, and the
+`second_food` hold stays (85.05 g; pF Q-F4 (a)). No `namesSecondFood` guard
+is needed (it would change no row).
+
+(5, pE Q6) **A chopped or minced basil volume reads SR's chopped
+portion.** grams.dart `fineCutSiblings` {2709780: 172232} beside
+`volumeSiblings`: a line cut fine (`chopped|minced|diced|grated`, "minced"
+read as chopped since checkpoint 5) with a volume on FNDDS 2709780 *Basil,
+raw* (its '1 cup' 24 g is SR's whole-leaf cup; its '1 tablespoon' 3 g names
+no cut) weighs on SR 172232 *Basil, fresh*'s `tbsp, chopped` — 5.3 g at
+amount 2: **2.65 g a tablespoon, 42.40 g a cup** (`fineCutWeighing`: the
+line's food with only the sibling's chopped portions, through the shipped
+resolver — plus parts summed, the amount divided as every portion is). The
+record stays 2709780 (the two print the same composition). Basis suffix:
+` · chopped: 2.65 g per tablespoon — USDA SR 172232 "Basil, fresh" 'tbsp,
+chopped' × 2 = 5.3 g`. The sibling's detail is fetched once by the first
+volume line on 2709780 when no cache holds it (`gramsFor`, the
+`volumeSiblings` precedent; the library holds it: zero requests). 50 rows
+(38 "chopped", 12 "minced"): 424.00 → 574.16 g, +34.60 kcal; 22 move up (a
+cup 24 → 42.40 g), 28 down (a tablespoon 3 → 2.65 g); whole, packed, torn,
+shredded, Thai, sprig and count lines keep FNDDS's portions.
+
+(6, pF F6, Q11) **Hershey's Kisses on milk chocolate at the label's
+piece.** `_rankAs['hershey s kisses']` → SR 167587 *Candies, milk chocolate*
+(the cached `milk chocolate candy` answer's top; the line's own answer held
+no milk-chocolate record — PAYDAY 170680 at 0 led). grams.dart
+`_pieceWeights` ('hershey s kisses', 41 / 9 = 4.5556 g) with the
+`_approximatePieces` label `Hershey's label: 9 pieces = 41 g (FDC Branded
+1642930 and four more; three 2023 labels print 7 pieces = 32 g)` (L49's
+Branded read; 4.5714 g, 0.3 % apart; 1198's "12-ounce bag … a few left
+over" bounds 62 below 5.49 g). meringue-christmas-trees|8 "62 Hershey's
+Kisses, unwrapped" → **282.44 g** (basis `62 × 4.6 g each · approximate
+(…)`), 1,511.08 kcal; the recipe complete, 13.50 → 43.72 per cookie.
+
+(7, pF F1, Q11) **Powdered pectin on SR 168821 at the Sure-Jell label.**
+v38 R02's three `_rankAs` entries are enabled → SR 168821 *Pectin,
+unsweetened, dry mix* (325 kcal; its one portion a 1.75-oz package);
+grams.dart `_densities` ('fruit pectin', 4 / 4.92892) and ('sure-jell', 4 /
+4.92892) — 0.811537 g/mL, longer than the stray `sugar` (0.85) that matched
+"no-sugar-needed" — labelled `Sure-Jell label (Kraft Heinz, FDC Branded
+2596757; the regular box — FDC holds no label of the low/no-sugar box the
+line names; the other makers' boxes read 3.2–4.0 g per teaspoon): ⅛
+teaspoon = 0.5 g`. THE LABEL DECISION (R-2, two Branded spellings,
+2026-10-09: 50 hits, no low/no-sugar Sure-Jell label; FDC's four Sure-Jell
+labels — 2596757, 2596756, 1664716, 1727454 — all print "1/8 tsp (0.5g)";
+Mrs. Wages 0.8 g per ¼ tsp, Ball 1.0 g, Certo 0.9 g): the regular box's 4 g
+a teaspoon, the plan's fallback. marbled-blueberry-bundt-cake|12 36.00 g,
+fresh-peach-pie|4 and fresh-peach-pie-with-all-butter-lattice-top|4 24.00 g,
+raspberry-sorbet|1 4.00 g, fresh-strawberry-pie|4 6.00 g — +305.50 kcal, the
+five recipes complete.
+
+(8, pD L, Q11) **The 8-inch lumpia wrapper — reported, no rule.**
+lumpiang-shanghai|16 "18–20 (8-inch) square lumpia wrappers or spring roll
+wrappers" stays 608.00 g (19 × SR 172802's 7-inch egg-roll wrapper, 32 g)
+with |17's uptake 99.34 g: no label L49 read prints a size — Wei-Chuan
+2623420 (12.5 g a sheet), Frieda's 2412362 and JSL Foods / Twin Dragon
+2026771 (egg roll, 23 g), and the thin rice spring-roll sheets Blue Dragon
+555172 and Oriental Select Farms 2426475 (8.5 g) and Gefen 2612612 (wheat,
+12 g) — so under Q11 a label weighs nothing here. Every gram a sheet weighs
+below 32 g moves the recipe **−68.32 kcal** (19 × 2.91 wrapper + 19 ×
+7.6198 % × 9.00 uptake): at 12.5 g −1,332.24, at 23 g −614.88, at 8.5 g
+−1,605.52 (per serving 655.72 → 433.68 / 553.24 / 388.13) — 608 g is a known
+over-count of unknown size.
+
+Reach (rp43 + bucket_v12 on fresh copies of snapshot 26, main and
+`--reverse-parents` byte-identical; STEP ZERO the v68 tree reproduces the
+v68 TSVs): calls 0, staleAfter 0, sectionsStale 0, sections 143; vs the v68
+rows exactly the 63 rows above plus the 3 routed parents that re-read a
+moved section (classic-roast-turkey|8, classic-roast-stuffed-turkey|10,
+lighter-chicken-parmesan|9), all `auto` but the giblet row (the engine's
+own `confirmed` rule row before), 0 person rows; recipe energy **+5,275.17
+kcal** (sections once, parents not double counted: brisket +386.54,
+giblets +361.29, yuca +2,676.21, rind 0, basil +34.54 — the rows' rounded +34.60, Kisses +1,511.08,
+pectin +305.50); statuses 1,035 / 163 → **1,043 / 155** (the two rind soups,
+the meringue trees, the five pectin recipes); buckets: `check` −9 (yuca|0,
+the two rinds, the Kisses, the five pectin rows), `no_nutrients` −1,
+`counted` +9, the giblet row leaves the rule arm; sections: the Giblet Pan
+Gravy and the five basil sections only; no 171083 detail cached.
+
+Known gaps (the source stands): 1 the pomegranate's fat counts whole (453.14
+g; the pair keeps 55.4 % — 202.12 g not deducted, energy only as Q25), the
+line prints ¼" and USDA's deepest flat trim is ⅛", and the row's kcal column
+shows the gross 5,674.44; 2 the turkey's tailpiece stays inside the bird's
+78/85 carcass (AH-102 prints no tail-off figure), item 2590 is the
+fryer-roaster class (a 12–14 lb bird is a young hen or tom), the giblets
+count raw though they simmer; of the other reserved-for-gravy birds, 0155's
+"Giblet Pan Gravy for a Crowd" passes every gate ("Reserved turkey giblets,
+neck, and tailpiece"; "Stir the reserved giblets into the gravy and return
+to a boil.") and reads 448.26 g off its own 18–22 lb bird (9,071.85 g × 7/85
+× 6/10) whenever it is computed — no parent routes it, so the library never
+computes it — while 0159 (no stir-back sentence) and 0175 ("Stir in diced
+giblets, if using." — no "into") stay outside the rule; 3 the yuca's
+bought weight counts the peel, stem and core the steps cut away (no cached
+record or transcribed AH-102 page prints a cassava refuse; not estimated);
+4 the dumpling soup's rind |8 stays held (`second_food`); 5 "minced" is read
+as chopped (the house convention), FNDDS's unqualified 3 g tablespoon is
+unexplained by any portion text, and shredded or torn lines keep FNDDS's
+cup; 6 the Kisses labels differ 0.3 % (2021: 41 g / 9; 2023: 32 g / 7) and
+the basis prints the piece to one decimal; 7 the pectin label is the
+regular Sure-Jell, not the low/no-sugar box the lines name, and 168821's
+composition is SR's generic dry mix (a label's dextrose share is never
+read); 8 the 8-inch wrapper (above). Deploy note: matcherVersion 68 stales
+every recipe; one zero-request sweep settles it (a fresh library asks the
+`giblet pan gravy` answer and 172232's detail once).
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

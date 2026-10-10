@@ -817,27 +817,44 @@ void main() {
             'confirmed',
             'counted in the main recipe’s spice rub — counted as 0 g',
           ),
+          // RE-PIN (M70 batch, v69, Q13 G2): the gravy's steps stir the
+          // giblets back — matched (rank-as) and weighed off the host's bird
+          // (engine `hostWeighedGiblets`; nutrition_v69_test).
           (
             '0154-classic-roast-turkey.yaml',
             0,
             1,
             'Reserved turkey giblets, neck, and tailpiece',
-            null,
-            noAmount,
-            '0.00',
-            'confirmed',
-            'no amount on the line — counted as 0 g',
+            171083,
+            'Turkey, whole, giblets, raw',
+            '291.37',
+            'auto',
+            "the host's turkey from the printed weight (12–14 lb, the "
+                'midpoint): 5897 g × 7/85 neck and giblets (USDA AH-102 '
+                'turkey dressing data, 12 lb and over: 85 with, 78 without) × '
+                '6/10 giblets (item 2590: neck 4, giblets 6, fryer-roaster '
+                'class) · approximate (the neck and tailpiece are strained '
+                'out — not counted)',
           ),
+          // RE-PIN (M70 batch, v69, Q13 G2): the same gravy for a crowd
+          // stirs its giblets back — weighed off ITS host's 18- to 22-pound
+          // bird (no parent routes this section, so the library never
+          // computes it; this test does).
           (
             '0155-roast-turkey-for-a-crowd.yaml',
             0,
             1,
             'Reserved turkey giblets, neck, and tailpiece',
-            null,
-            noAmount,
-            '0.00',
-            'confirmed',
-            'no amount on the line — counted as 0 g',
+            171083,
+            'Turkey, whole, giblets, raw',
+            '448.26',
+            'auto',
+            "the host's turkey from the printed weight (18–22 lb, the "
+                'midpoint): 9072 g × 7/85 neck and giblets (USDA AH-102 '
+                'turkey dressing data, 12 lb and over: 85 with, 78 without) × '
+                '6/10 giblets (item 2590: neck 4, giblets 6, fryer-roaster '
+                'class) · approximate (the neck and tailpiece are strained '
+                'out — not counted)',
           ),
           (
             '0159-julia-childs-stuffed-turkey-updated.yaml',

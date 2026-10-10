@@ -4786,8 +4786,11 @@ final RegExp _objectEnd = RegExp(
 /// Q18's whole-piece aromatics (D2), by head: bay, a cinnamon stick, star
 /// anise, kombu, an herb or cilantro bundle, onion halves or rounds, a
 /// garlic head or crushed cloves, bell-pepper halves, a celery bundle,
-/// citrus in a cavity.
+/// citrus in a cavity — and v68 (M70, pF F3) a cheese rind simmered and
+/// discarded ("Discard the bay leaf and Parmesan rind"; a line that also
+/// shreds the cheese is cut fine, never zeroed: [_cutFine]).
 const Set<String> _wholePieceHeads = {
+  'rind',
   'bay',
   'cinnamon',
   'anise',
@@ -6672,8 +6675,14 @@ String _ownSalt(String normalized) {
   // An amount-less line counts as 0 g — never one bought in the shell: 0 g
   // would read resolved (`counted`) and leave the queue, hold or no hold.
   // No corpus line buys shellfish without an amount, so the guard is pinned
-  // on a synthesized one (a stated exception, v11).
-  final zero = amountlessLinesZero && line.amounts.isEmpty && !inShell;
+  // on a synthesized one (a stated exception, v11). v68 (M70, Q13 G2): nor
+  // one its grams are WEIGHED for with no amount — the reserved giblets off
+  // the host's bird ([hostWeighedGiblets], the only such reader).
+  final zero =
+      amountlessLinesZero &&
+      line.amounts.isEmpty &&
+      !inShell &&
+      resolution?.source != GramSource.weight;
   if (decided) {
     return (
       grams: zero ? 0 : resolution?.grams,
@@ -11326,6 +11335,75 @@ final String reservedNoAmountNote = engineRuleNotes[6];
 /// [mainRecipePartNote]'s note for the main recipe's own mixture.
 final String reservedMixtureNote = engineRuleNotes[7];
 
+/// v68 (batch M70; prep49 design_v2 §2 M70, the owner's Q13 G2): the grams
+/// of a SECTION's amount-less "Reserved turkey giblets, …" line that a
+/// section step stirs back ("Stir the reserved giblets into the gravy",
+/// 0154) — weighed off the host's turkey line as the bird row is: its
+/// printed weight × (85 − 78) / 85, the neck and giblets of USDA AH-102's
+/// turkey dressing data (12 lb and over: 85 ready to cook with them, 78
+/// without — the figure the bird row already takes off), × 6 / (4 + 6), the
+/// giblets' share of AH-102 item 2590's neck 4 / giblets 6. Null for any
+/// other line. The one reader every caller asks ([lineGrams]: the compute,
+/// a Confirm's [gramsFor], the GET basis) whatever the record (matcher
+/// `_rankAs` lands SR 171083 "Turkey, whole, giblets, raw", a hit in the
+/// cached 'giblet pan gravy' answer); a reserved line buys nothing, so no
+/// reader fetches its detail ([buysRefuse]): zero requests.
+/// The bird line is read by its TEXT (the host's first line whose item's
+/// head is 'turkey' with a printed weight), never the host's stored row: a
+/// section computes before its host (bulkScopeIds). Its grams join the
+/// section's [ingredientsHashOf], so a host-only bird edit stales it.
+/// ponytail: one host, one bird line; a second reserved part (the neck, a
+/// backbone) is not read; the neck and tailpiece the steps strain out are
+/// not counted (the basis says so).
+GramResolution? hostWeighedGiblets(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  String normalized,
+) {
+  if (line.amounts.isNotEmpty ||
+      !normalized.startsWith('reserved ') ||
+      !normalized.contains('giblet') ||
+      hostOf(recipe.id) == recipe.id ||
+      !_stepIndexOf(recipe).allSentences.any(_stirsGibletsBack.hasMatch)) {
+    return null;
+  }
+  final host = nutritionRecipeOf(db, hostOf(recipe.id))?.recipe;
+  if (host == null) {
+    return null;
+  }
+  for (final bird in nutritionLines(host)) {
+    final item = normalizeItem(lineItemOf(bird));
+    if (headNounOf(item) != 'turkey') {
+      continue;
+    }
+    final printed = resolveGrams(
+      amounts: bird.amounts,
+      food: null,
+      normalizedItem: item,
+      raw: bird.raw,
+    );
+    if (printed == null || printed.source != GramSource.weight) {
+      return null;
+    }
+    return GramResolution(
+      grams: printed.grams * (85 - 78) / 85 * 6 / (4 + 6),
+      source: GramSource.weight,
+      basis:
+          "the host's turkey ${printed.basis}: ${_fmtAmount(printed.grams)} g "
+          '× 7/85 neck and giblets (USDA AH-102 turkey dressing data, 12 lb '
+          'and over: 85 with, 78 without) × 6/10 giblets (item 2590: neck 4, '
+          'giblets 6, fryer-roaster class) · approximate (the neck and '
+          'tailpiece are strained out — not counted)',
+    );
+  }
+  return null;
+}
+
+final RegExp _stirsGibletsBack = RegExp(
+  r'\bstir\b[^.]*\bgiblets\b[^.]*\binto\b',
+);
+
 /// Whether [line] names no food the matcher can read: its item is still a
 /// lone qualifier after [lineItemOf], or 'juice' of no named fruit. The
 /// engine holds such a line (`hold: unnamed_food`) instead of counting the
@@ -11560,6 +11638,20 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
               'item': eaten.item,
               'amounts': [for (final amount in eaten.amounts) amount.toMap()],
             },
+          // v68 (M70; closer 2, D1): a section's reserved giblets are
+          // weighed off the HOST's bird line ([hostWeighedGiblets]) — a
+          // host-only edit of the bird's printed weight left the section
+          // fresh on its old grams. Only on a line that reader weighs (its
+          // two cheap gates first), so every other recipe hashes as before.
+          if (line.amounts.isEmpty && hostOf(recipe.id) != recipe.id)
+            if (hostWeighedGiblets(
+                  memo.db,
+                  recipe,
+                  line,
+                  normalizeItem(lineItemOf(line)),
+                )
+                case final giblets?)
+              'host_weighed': giblets.grams,
         },
     ],
   });
@@ -12159,7 +12251,11 @@ Future<NutritionProviderException?> _computePass(
     }
     // v44 (S6 a): a SECTION line that is its main recipe's own part
     // ([mainRecipePartNote]) is the engine's 0 g rule row — never a search.
-    if (mainRecipePartNote(db, recipe, eaten, normalized) case final note?) {
+    // v68 (M70, Q13 G2): unless the steps stir its giblets back — then it
+    // is matched (matcher `_rankAs`: SR 171083 in the cached 'giblet pan
+    // gravy' answer) and weighed off the host's bird ([hostWeighedGiblets]).
+    if (mainRecipePartNote(db, recipe, eaten, normalized) case final note?
+        when hostWeighedGiblets(db, recipe, eaten, normalized) == null) {
       write(
         IngredientMatchRow(
           recipeId: recipe.id,
@@ -13355,15 +13451,35 @@ List<RankedCandidate> leanAndFatSibling(
 /// fat, all grades, raw" (barbecued-whole-beef-brisket|10, a hit in the
 /// line's own 'whole beef brisket' answer; ⅛" is the deepest brisket trim
 /// USDA publishes). The FLAT (168743, braised-brisket-with-pomegranate|0)
-/// is NOT here: USDA's flat pairs render 41–51 % of the fat and no flat ⅛"
-/// braised record is cached — it waits for L49 ([trimStandInFlagOf]).
+/// waited for L49: USDA's flat pairs render 41–51 % of the fat.
+/// v68 (batch M70; prep49 design_v2 §2 M70, the owner's Q1 flat (b′)): the
+/// flat's 0" 168743 → SR 173128 "Beef, brisket, flat half, separable lean
+/// and fat, trimmed to 1/8" fat, choice, raw" (a hit in the line's own
+/// 'beef brisket' answer, index 19), its energy at USDA's same-cut,
+/// same-trim braised pair's share ([braisedEnergyShare]).
 final List<(RegExp, Map<int, int>)> trimDepthRecords = [
   (
     RegExp('fat trimmed to (⅛|¼)( to (⅛|¼))? inch'),
-    {172641: 174414, 168607: 168664},
+    {172641: 174414, 168607: 168664, 168743: 173128},
   ),
   (RegExp('fat caps? removed'), {2727572: 171751}),
 ];
+
+/// v68 (batch M70; prep49 design_v2 §2 M70, the owner's Q1 flat (b′), on
+/// live step L49's read): the share of a raw record's energy its braise
+/// keeps — USDA's raw/braised pair of the SAME cut, trim and grade by the
+/// protein tracer: 173128 → SR 173130 "Beef, brisket, flat half, separable
+/// lean and fat, trimmed to 1/8" fat, choice, cooked, braised" (P 18.1 →
+/// 28.7, E 278 → 298, both cached hits): yield 18.1 / 28.7 = 0.6307, e =
+/// 298 × 0.6307 / 278 = 0.6760 — the separable fat the steps skim (fat
+/// kept 55.4 %; the lean-only flat pair keeps all its energy). Applied in
+/// [recomputeTotals] beside Q25's alcohol, ENERGY only, only where
+/// [trimStandInFlagOf] flags the line (one raw test: the flag and the
+/// deduction never part); the row's grams and kcal column stay gross.
+/// ponytail: one pair; a second braised cut needs its own same-cut pair.
+const Map<int, double> braisedEnergyShare = {
+  173128: 298 * 18.1 / (28.7 * 278),
+};
 
 /// [ranked] with [trimDepthRecords]' target first when the line prints its
 /// phrase and the top is its key; after [leanAndFatSibling].
@@ -13591,6 +13707,15 @@ Future<(FdcFood, GramResolution?)> gramsFor(
     await _cachedFood(db, provider, sibling);
     return (detail, resolve(detail));
   }
+  // v68 (M70): a fine-cut sibling's detail ([fineCutSiblings]), fetched
+  // once by the first volume line on its record — never a cache's luck.
+  final cut = fineCutSiblings[detail.fdcId];
+  if (cut != null &&
+      _foodFromCache(db, cut) == null &&
+      volumeMlOf(line.amounts) != null) {
+    await _cachedFood(db, provider, cut);
+    return (detail, resolve(detail));
+  }
   return (detail, withDetail);
 }
 
@@ -13606,6 +13731,12 @@ GramResolution? lineGrams(
 }) {
   // The grams tables match on the line's own words, not the key.
   final normalized = normalizeItem(lineItemOf(line));
+  // v68 (M70, Q13 G2): a section's reserved giblets, off the host's bird.
+  if (recipe != null) {
+    if (hostWeighedGiblets(db, recipe, line, normalized) case final g?) {
+      return g;
+    }
+  }
   // v43 (Y13): the RECORD decides the meat share ([ah102Records]); the
   // recipe's skin trip only names the part a meat-only whole bird keeps
   // its skin on — with no recipe, none.
@@ -13633,6 +13764,22 @@ GramResolution? lineGrams(
   );
   if (food != null && freshHerbLine(line.raw, food.description)) {
     return _freshHerbGrams(line, food, normalized, on(food));
+  }
+  // v68 (M70, pE Q6): a fine-cut volume on a [fineCutSiblings] record
+  // weighs on its cached sibling's chopped portion — the line's food stays.
+  final cutId = food == null ? null : fineCutSiblings[food.fdcId];
+  final cutSibling = cutId == null ? null : _foodFromCache(db, cutId);
+  final fine = cutSibling == null
+      ? null
+      : fineCutWeighing(food!, cutSibling, line.raw, line.amounts);
+  if (fine != null) {
+    if (on(fine.food) case final grams?) {
+      return GramResolution(
+        grams: grams.grams,
+        source: grams.source,
+        basis: '${grams.basis} · ${fine.note}',
+      );
+    }
   }
   final own = on(food);
   final siblingId = food == null ? null : volumeSiblings[food.fdcId];
@@ -14020,6 +14167,15 @@ bool recomputeTotals(
       totals['energy'] =
           (totals['energy'] ?? 0) -
           ethanolKcalPer100g(record) * grams / 100 * (1 - kept.kept / 100);
+    }
+    // v68 (M70, Q1 flat (b′)): a braised cut keeps its braised pair's share
+    // of the energy ([braisedEnergyShare]) — only on a line its flag reads
+    // ([trimStandInFlagOf]); its grams, its record and every other nutrient
+    // count as they are (Q25's shape; a person's typed grams too).
+    if (braisedEnergyShare[row.fdcId] case final e?
+        when trimStandInFlagOf(lines[row.position].raw, row.fdcId) != null) {
+      totals['energy'] =
+          (totals['energy'] ?? 0) - kcalPer100g(record) * grams / 100 * (1 - e);
     }
   }
 
@@ -14523,8 +14679,18 @@ String? gramBasisFor(
 /// record 170199 is not ranked (R-B not built).
 /// ponytail: the title is the cure's only read (no step read); a cured
 /// brisket in an untitled recipe is missed — none in the corpus.
+/// v68 (batch M70, Q1 flat (b′)): the flat's ¼-inch cap on 173128 says it
+/// is counted at ⅛" with the fat the steps skim deducted by its braised
+/// pair's energy share ([braisedEnergyShare]); 168743's ¼" arm stays (the
+/// fallback where the answer loses 173128).
 String? trimStandInFlagOf(String raw, int? fdcId, {String? title}) =>
     switch (fdcId) {
+      173128 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
+        "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch "
+            "flat trim; USDA's braised pair 173128 → 173130 keeps "
+            '${(braisedEnergyShare[173128]! * 100).toStringAsFixed(1)} % of '
+            'the energy by the protein tracer — the fat the steps skim, '
+            'deducted)',
       168743 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
         'approximate (the printed ¼-inch fat cap renders and is skimmed '
             '(step 5); counted as the 0-inch trimmed flat)',
@@ -17243,6 +17409,19 @@ const _Sr _cakeDoughnutSr = (
       'Doughnuts, cake-type, plain (includes unsugared, old-fashioned)',
 );
 
+/// v68 (batch M70, pF L1; R-1 read 2026-10-09, live61_raw/raw_2709565.json):
+/// FNDDS 2709565 "Yuca fries" lists 100 g "Cassava, raw", 15 g "Vegetable
+/// oil, NFS" and 0.4 g salt — its input IS the raw cassava the yuca line
+/// counts on (SR 169985), so the uptake is READ: 15 g oil per 100 g raw.
+const _Fndds _yucaFries = (
+  id: 2709565,
+  description: 'Yuca fries',
+  food: 'cassava',
+  b: '0',
+  o: '15',
+  r: '100',
+);
+
 /// R-e: FNDDS 2707408 "Falafel" lists one cup of oil, the frying medium
 /// (41.2 g fat per 100 g), never an uptake — P3's balance with the
 /// carbohydrate tracer on this record: 21.64 % (protein 13.99).
@@ -17512,9 +17691,10 @@ typedef _FriedClass = ({
 });
 
 /// The uptake class of a fried food on [description] whose line reads
-/// [item] (lower-cased) — or null when no record gives one (tempeh, yuca:
-/// they stay 0; a dough, fritter or falafel a frying sentence names counts
-/// on its oil by [_friedProductOf], v59). [coatHeld]: the recipe
+/// [item] (lower-cased) — or null when no record gives one (tempeh: it
+/// stays 0; a dough, fritter or falafel a frying sentence names counts on
+/// its oil by [_friedProductOf], v59; yuca on cassava reads FNDDS
+/// 2709565's 15 %, v68). [coatHeld]: the recipe
 /// holds a dredge on it (beef: the read cube steak, else a stand-in);
 /// [shape]: its coat's (shrimp: C3 floured, O3, else battered, O2s);
 /// [chips]: the recipe's potatoes are chips (grated, or "chips").
@@ -17616,6 +17796,13 @@ _FriedClass? _friedClassOf(
       figure: _readFig('30.32', _cauliflowerFried),
       name: 'cauliflower',
       word: RegExp(r'\bcauliflower\b'),
+      meat: false,
+    ),
+    // v68 (M70, pF L1): fried yuca on SR 169985 "Cassava, raw".
+    _ when words.contains('cassava') || words.contains('yuca') => (
+      figure: _readFig('15.00', _yucaFries),
+      name: 'yuca',
+      word: RegExp(r'\byuca\b'),
       meat: false,
     ),
     _ => null,

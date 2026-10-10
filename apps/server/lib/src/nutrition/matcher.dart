@@ -911,7 +911,20 @@ const Map<String, String> _synonyms = {
 /// baked after the coat (C2, its one arm) sizes the coat at 7.93, read from
 /// FNDDS 2710050's batter (engine `_coatedVegetable`; a fried one stays
 /// held). The onion rings stay held (no sourced figure).
-const int matcherVersion = 67;
+///
+/// v68 (the Matcher v69 commit, batch M70 — the records read at live step
+/// L49 and the zero-request giblets; prep49 design_v2 §2 M70, the owner's
+/// Q1 flat (b′), Q11 and Q13 G2, 2026-10-09; zero requests): the
+/// pomegranate brisket's ¼-inch flat on SR 173128 (⅛") with its braised
+/// pair's energy share 67.6 % (engine `braisedEnergyShare`); the Giblet Pan
+/// Gravy's reserved giblets weighed off the host's turkey (AH-102: 7/85 ×
+/// 6/10, engine `hostWeighedGiblets`) on the cached 171083 hit; yuca on SR
+/// 169985 "Cassava, raw" with FNDDS 2709565's read uptake 15 %; a Parmesan
+/// rind on 170848, discarded whole; a chopped or minced basil volume on SR
+/// 172232's chopped portion (grams.dart `fineCutSiblings`); Hershey's
+/// Kisses on 167587 at the label's 41 g per 9; powdered pectin on 168821
+/// at the Sure-Jell label's 4 g a teaspoon.
+const int matcherVersion = 68;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2550,21 +2563,24 @@ const Map<String, (String, String)> _rankAs = {
   'medium-grind bulgur': ('medium-grind bulgur', 'bulgur dry'),
   'medium-grain bulgur': ('medium-grain bulgur', 'bulgur dry'),
   'fine-grind bulgur': ('fine-grind bulgur', 'bulgur dry'),
-  // R02 powdered pectin STAYS DRY: 168821 "Pectin, unsweetened, dry mix"
-  // publishes only 'package (1.75 oz)' 50 g — no tsp/tbsp/cup, so the
-  // item's 'sugar' density key would weigh the powder:
-  // 'low- or no-sugar-needed fruit pectin': (
-  //   'low- or no-sugar-needed fruit pectin',
-  //   'pectin unsweetened dry mix',
-  // ),
-  // 'sure-jell for low-sugar recipes': (
-  //   'low- or no-sugar-needed fruit pectin',
-  //   'pectin unsweetened dry mix',
-  // ),
-  // 'sure-jell for less or no sugar needed recipes': (
-  //   'low- or no-sugar-needed fruit pectin',
-  //   'pectin unsweetened dry mix',
-  // ),
+  // R02 powdered pectin on 168821 "Pectin, unsweetened, dry mix" (it
+  // publishes only 'package (1.75 oz)' 50 g — no tsp/tbsp/cup): dry until
+  // v68, as the item's stray 'sugar' density key would have weighed the
+  // powder. v68 (batch M70, pF F1; the owner's Q11): enabled, the grams
+  // from the Sure-Jell label (grams.dart 'fruit pectin', 'sure-jell': ⅛
+  // teaspoon = 0.5 g), the longer keys beating 'sugar'.
+  'low- or no-sugar-needed fruit pectin': (
+    'low- or no-sugar-needed fruit pectin',
+    'pectin unsweetened dry mix',
+  ),
+  'sure-jell for low-sugar recipes': (
+    'low- or no-sugar-needed fruit pectin',
+    'pectin unsweetened dry mix',
+  ),
+  'sure-jell for less or no sugar needed recipes': (
+    'low- or no-sugar-needed fruit pectin',
+    'pectin unsweetened dry mix',
+  ),
   // R03 diastatic malt powder IS malted barley flour (169740 SR "Barley
   // malt flour"; check passed: 'cup' 162 g):
   'diastatic malt powder': ('diastatic malt powder', 'barley malt flour'),
@@ -2856,6 +2872,31 @@ const Map<String, (String, String)> _rankAs = {
   // its sodium and fat say so ([trimStandInFlagOf]).
   'square piece kombu': ('dried mint', 'seaweed dried'),
   'ricotta salata': ('feta cheese', 'cheese feta'),
+  // v68 (batch M70, prep49 design_v2 §2 M70; zero requests). pF L1: yuca IS
+  // cassava — the line's own answer ('yuca roots') led with LEEKS 2727584
+  // (0.478, `no_nutrients`); the cached 'cassava raw' answer's one
+  // candidate, SR 169985 "Cassava, raw" (its detail cached), unflagged.
+  'yuca roots': ('cassava raw', 'cassava raw'),
+  // Q13 G2: the Giblet Pan Gravy's "Reserved turkey giblets, …" (0154 §0),
+  // matched only where its steps stir them back (engine
+  // `hostWeighedGiblets`; any other reserved part stays the 0 g rule row):
+  // SR 171083 "Turkey, whole, giblets, raw", a hit in the cached 'giblet
+  // pan gravy' answer, priced on the hit (no detail is asked: a reserved
+  // line buys no refuse).
+  'reserved turkey giblets': ('giblet pan gravy', 'turkey whole giblets raw'),
+  // pF F3: a Parmesan rind is the cheese — its own answer led with FNDDS
+  // 2747676 "Watermelon, seedless, rind only, raw" (0.377: the head 'rind'
+  // dominates); the same answer holds SR 170848 "Cheese, parmesan, hard"
+  // (index 2, its detail cached). The steps discard it (engine
+  // `_wholePieceHeads`): 0 g, counted.
+  'parmesan cheese rind': ('parmesan cheese rind', 'cheese parmesan hard'),
+  // pF F6 (the owner's Q11: a label weighs a printed count, the composition
+  // stays SR's): Hershey's Kisses ARE milk chocolate — the line's own
+  // answer holds no milk-chocolate record (PAYDAY 170680 at 0 led); the
+  // cached 'milk chocolate candy' answer's top, SR 167587 "Candies, milk
+  // chocolate" (its detail cached), weighed by the label's piece (grams.dart
+  // 'hershey s kisses').
+  'hershey s kisses': ('milk chocolate candy', 'candies milk chocolate'),
 };
 
 /// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it

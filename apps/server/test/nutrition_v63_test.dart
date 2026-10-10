@@ -444,7 +444,8 @@ void main() {
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    expect(matcherVersion, 67);
+    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
+    expect(matcherVersion, 68);
   });
 
   test("kosher salt's figure is half of SR 173468's '1 tsp' 6.0 g by "
@@ -973,7 +974,9 @@ void main() {
           ('partial', '404.07'), // 489.26; 489.04 → 403.85 (F9)
           ('complete', '504.00'), // 420.00; 419.95 → 503.95 (the yield)
           ('complete', '670.38'), // 671.01; 670.73 → 670.11 (bay)
-          ('complete', '748.47'), // 748.63; 748.58 → 748.42 (bay)
+          // RE-PIN (M70 batch, v69, pE Q6): 748.74 (was 748.47) — its
+          // chopped basil on SR's chopped cup (replay 748.42 → 748.69).
+          ('complete', '748.74'), // 748.63; 748.58 → 748.42 (bay)
           ('partial', '678.50'), // 678.81; 678.78 → 678.46 (bay)
           ('complete', '715.06'), // 715.27; 715.27 → 715.06 (bay)
           ('partial', '596.80'), // 601.75; 601.77 → 596.82 (H1)

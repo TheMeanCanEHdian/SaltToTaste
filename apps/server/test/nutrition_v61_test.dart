@@ -1287,7 +1287,8 @@ void main() {
     // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    expect(matcherVersion, 67);
+    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
+    expect(matcherVersion, 68);
   });
 
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
@@ -1548,15 +1549,20 @@ void main() {
         10,
       )); // = replay; 390.64
       expect(of(_steaks), ('complete', '534.48', 18)); // = replay; 555.87
-      expect(of(_lighter), ('complete', '235.25', 12)); // 235.29; 239.19
+      // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its two
+      // minced basil tablespoons on SR's chopped 2.65 g (replay 235.29 →
+      // 235.26).
+      expect(of(_lighter), ('complete', '235.22', 12)); // 235.29; 239.19
       expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 431.67
       // H: the counted lines fall by the held dips.
       // RE-PIN (M69 batch, v68): the eggplant (R2), parmesan-crusted and
       // francese (R1, C4) coats are budgeted — their dips counted; francese
       // turns complete (was 360.35 / 12, 153.50 / 4, partial 407.39 / 12).
+      // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
+      // basil |12 on SR's chopped cup (replay 453.66 → 454.01).
       expect(of(_eggplant), (
         'partial',
-        '453.68',
+        '454.04',
         16,
       )); // replay 453.66; v67 360.33; v60 409.66, 13
       expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 249.84, 7

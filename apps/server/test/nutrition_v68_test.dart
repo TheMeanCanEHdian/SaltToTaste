@@ -739,7 +739,8 @@ double _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 67);
+    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
+    expect(matcherVersion, 68);
   });
 
   group('matcher v68 (batch M69)', skip: skipIfNoCorpus, () {
@@ -1170,7 +1171,9 @@ void main() {
           'partial',
           '171.63',
         )); // replay 153.54 → 171.67
-        expect(of(_eggplant), ('partial', '453.68')); // replay 360.33 → 453.66
+        // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
+        // basil |12 on SR's chopped cup (replay 453.66 → 454.01).
+        expect(of(_eggplant), ('partial', '454.04')); // replay 360.33 → 453.66
         // Unmoved (replay v67 = v68).
         expect(of(_onionRings), ('partial', '217.50')); // = replay
         expect(of(_salmon), ('partial', '542.67')); // = replay

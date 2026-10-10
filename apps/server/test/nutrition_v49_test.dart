@@ -654,10 +654,12 @@ void main() {
                 as num;
         expect(energy, closeTo(841.42, 0.01)); // 226.8 × 371 / 100
         // The whole recipe: 17 of 18 (the Parmesan rind stays in check).
+        // RE-PIN (M70 batch, v69, pF F3): 18 of 18, complete — the rind
+        // now counts 0 g on 170848, discarded whole (nutrition_v69_test).
         final whole = stored(file);
         expect(await matchAndCompute(db, provider, whole), isNull);
         final n = db.nutritionFor(whole.id)!;
-        expect((n.matchedCount, n.totalCount, n.status), (17, 18, 'partial'));
+        expect((n.matchedCount, n.totalCount, n.status), (18, 18, 'complete'));
         // Another line could still land the Foundation record.
         expect(nutrientSiblings[2758998], 169736);
         expect(rankAsFor('pasta such as ditalini'), (

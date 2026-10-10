@@ -3608,6 +3608,33 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v69 (batch M70): the records read in live step
+  L49 — the pomegranate flat on USDA's braised pair, the giblets weighed
+  off the host's bird, yuca on the cassava record with a read frying
+  uptake, the Parmesan rind as a discarded whole piece, chopped basil on
+  the SR chopped portion, Hershey's Kisses and Sure-Jell pectin weighed
+  from their labels (prep49 §2 M70; Q1 flat (b′); the owner's Q11; Q13
+  G2).** The braised pomegranate brisket reads the ⅛-inch flat record and
+  keeps 67.6 % of its energy — USDA's own raw-to-braised pair for the
+  same cut, trim and grade, by the protein tracer (+387 kcal; the fat
+  column is not deducted, 202 g stated). The Giblet Pan Gravy's reserved
+  giblets weigh 291 g off the host bird's printed weight by AH-102's
+  turkey dressing data (12 lb and over: 85 with, 78 without neck and
+  giblets; item 2590's neck 4, giblets 6), matched to the raw giblets
+  record (+361 kcal to each of the two turkeys). Yuca lands on cassava
+  (+1,451 kcal) and its frying oil reads the Yuca fries recipe's 15 g oil
+  per 100 g raw cassava (+1,225). The rind lines move to the hard
+  Parmesan record and count 0 g as a fished-out piece (two soups
+  complete; the dumpling soup's combined line stays held). A chopped or
+  minced basil volume reads SR 172232's chopped tablespoon, 2.65 g (50
+  rows, +35 kcal; 22 up, 28 down). Sixty-two Kisses weigh 41/9 g each
+  from five Hershey labels (+1,511 kcal; the cookies complete). Five
+  pectin rows move to the dry pectin record at the Sure-Jell label's
+  0.5 g per ⅛ teaspoon (+306 kcal, five recipes complete; FDC holds no
+  label of the low-sugar box the lines name, so the regular box's figure
+  is used and flagged). The 8-inch lumpia wrappers are reported, not
+  scaled: no label prints the size. 66 rows, +5,275 kcal of recipe
+  energy, eight recipes complete. Live step L49 closed at 30 requests.
 - **2026-10-09 — matcher v68 (batch M69): the sautéed dredge of a thin
   piece counted at the baked-breast stand-in; the eggplant coat read
   from the casserole record; the onion rings held (prep49 §2 M69; Q4 —

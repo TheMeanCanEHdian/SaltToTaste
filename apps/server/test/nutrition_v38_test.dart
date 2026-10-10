@@ -207,12 +207,16 @@ const List<String> _enabled = [
   'ya cai',
   // RE-PIN (M65 batch, v64, F5): R05 enabled.
   'jarred morello cherries',
-];
-
-const List<String> _dry = [
+  // RE-PIN (M70 batch, v69, pF F1 / Q11): R02 enabled — the grams from the
+  // Sure-Jell label (grams.dart 'fruit pectin', 'sure-jell';
+  // nutrition_v69_test).
   'low- or no-sugar-needed fruit pectin',
   'sure-jell for low-sugar recipes',
   'sure-jell for less or no sugar needed recipes',
+];
+
+const List<String> _dry = [
+  // RE-PIN (M70 batch, v69): R02's three pectin keys moved to [_enabled].
   'fennel fronds',
   // RE-PIN (M65 batch, v64, F5): 'jarred morello cherries' moved to
   // [_enabled] (grams `_fromContainers` skips the jar weight).

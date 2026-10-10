@@ -26048,5 +26048,738 @@
     "description": "wedge (1.33 oz)"
    }
   ]
+ },
+ "172232": {
+  "fdc_id": 172232,
+  "description": "Basil, fresh",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 23.0,
+   "203": 3.15,
+   "204": 0.64,
+   "205": 2.65,
+   "291": 1.6,
+   "269": 0.3,
+   "301": 177.0,
+   "303": 3.17,
+   "304": 64.0,
+   "305": 56.0,
+   "306": 295.0,
+   "307": 4.0,
+   "401": 18.0,
+   "404": 0.034,
+   "405": 0.076,
+   "406": 0.902,
+   "415": 0.155,
+   "432": 68.0,
+   "435": 68.0,
+   "418": 0.0,
+   "320": 264.0,
+   "323": 0.8,
+   "328": 0.0,
+   "430": 414.8,
+   "606": 0.041,
+   "645": 0.088,
+   "646": 0.389,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 5.3,
+    "amount": 2.0,
+    "unit": null,
+    "description": "tbsp, chopped"
+   },
+   {
+    "gram_weight": 2.5,
+    "amount": 5.0,
+    "unit": null,
+    "description": "leaves"
+   },
+   {
+    "gram_weight": 6.0,
+    "amount": 0.25,
+    "unit": null,
+    "description": "cup leaves, whole"
+   }
+  ]
+ },
+ "2685568": {
+  "fdc_id": 2685568,
+  "description": "Squash, summer, green, zucchini, includes skin, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 19.0,
+   "958": 16.0,
+   "203": 0.984375,
+   "204": 0.205,
+   "205": 3.27,
+   "291": 0.7525,
+   "301": 20.85,
+   "303": 0.1945,
+   "304": 15.29,
+   "305": 32.9,
+   "306": 225.8,
+   "307": 0.0,
+   "401": 15.0
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
+ },
+ "170848": {
+  "fdc_id": 170848,
+  "description": "Cheese, parmesan, hard",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 392.0,
+   "203": 35.75,
+   "204": 25.0,
+   "205": 3.22,
+   "291": 0.0,
+   "269": 0.11,
+   "301": 1184.0,
+   "303": 0.82,
+   "304": 44.0,
+   "305": 694.0,
+   "306": 92.0,
+   "307": 1175.0,
+   "401": 0.0,
+   "404": 0.039,
+   "405": 0.332,
+   "406": 0.271,
+   "415": 0.091,
+   "432": 7.0,
+   "435": 7.0,
+   "418": 1.2,
+   "320": 207.0,
+   "323": 0.22,
+   "328": 0.5,
+   "430": 1.7,
+   "606": 14.85,
+   "645": 7.515,
+   "646": 0.569,
+   "601": 68.0
+  },
+  "portions": [
+   {
+    "gram_weight": 10.3,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cubic inch"
+   },
+   {
+    "gram_weight": 142.0,
+    "amount": 5.0,
+    "unit": null,
+    "description": "package (5 oz)"
+   },
+   {
+    "gram_weight": 28.35,
+    "amount": 1.0,
+    "unit": null,
+    "description": "oz"
+   }
+  ]
+ },
+ "2709731": {
+  "fdc_id": 2709731,
+  "description": "Tomato and vegetable juice, 100%",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.93,
+   "204": 0.31,
+   "205": 3.87,
+   "208": 22.0,
+   "269": 2.84,
+   "291": 0.5,
+   "301": 14.0,
+   "303": 0.28,
+   "304": 11.0,
+   "305": 19.0,
+   "306": 185.0,
+   "307": 169.0,
+   "320": 35.0,
+   "323": 1.02,
+   "328": 0.0,
+   "401": 54.3,
+   "404": 0.05,
+   "405": 0.033,
+   "406": 0.722,
+   "415": 0.071,
+   "418": 0.0,
+   "430": 6.1,
+   "432": 21.0,
+   "435": 21.0,
+   "601": 0.0,
+   "606": 0.088,
+   "645": 0.06,
+   "646": 0.076
+  },
+  "portions": [
+   {
+    "gram_weight": 23.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (with ice)"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (NFS)"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   },
+   {
+    "gram_weight": 248.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "2709935": {
+  "fdc_id": 2709935,
+  "description": "Leeks",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 1.57,
+   "204": 3.05,
+   "205": 14.7,
+   "208": 88.0,
+   "269": 4.07,
+   "291": 1.9,
+   "301": 62.0,
+   "303": 2.19,
+   "304": 29.0,
+   "305": 37.0,
+   "306": 188.0,
+   "307": 151.0,
+   "320": 94.0,
+   "323": 1.37,
+   "328": 0.0,
+   "401": 10.6,
+   "404": 0.056,
+   "405": 0.03,
+   "406": 0.396,
+   "415": 0.236,
+   "418": 0.0,
+   "430": 51.2,
+   "432": 57.0,
+   "435": 57.0,
+   "601": 2.0,
+   "606": 0.758,
+   "645": 0.976,
+   "646": 0.958
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 whole"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 7.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice"
+   },
+   {
+    "gram_weight": 170.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   }
+  ]
+ },
+ "168039": {
+  "fdc_id": 168039,
+  "description": "Cornmeal, yellow (Navajo)",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 384.0,
+   "203": 9.85,
+   "204": 5.88,
+   "205": 72.9,
+   "291": 9.4,
+   "269": 1.56,
+   "301": 6.0,
+   "303": 2.99,
+   "304": 107.0,
+   "305": 225.0,
+   "306": 322.0,
+   "307": 4.0,
+   "401": 0.0,
+   "404": 0.3,
+   "405": 0.093,
+   "406": 2.47,
+   "415": 0.59,
+   "432": 34.0,
+   "435": 34.0,
+   "323": 0.37,
+   "430": 0.2,
+   "606": 1.043,
+   "645": 2.143,
+   "646": 2.352
+  },
+  "portions": []
+ },
+ "2346392": {
+  "fdc_id": 2346392,
+  "description": "Nuts, pine nuts, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "303": 5.36,
+   "304": 206.0,
+   "305": 540.0,
+   "306": 655.0,
+   "307": 0.0,
+   "404": 0.625,
+   "406": 4.47,
+   "415": 0.255,
+   "204": 61.3,
+   "291": 3.94,
+   "301": 8.74,
+   "205": 18.6,
+   "203": 15.7,
+   "957": 689.0,
+   "958": 643.0,
+   "430": 3.2
+  },
+  "portions": []
+ },
+ "2709728": {
+  "fdc_id": 2709728,
+  "description": "Tomato juice, 100%",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.86,
+   "204": 0.29,
+   "205": 4.32,
+   "208": 23.0,
+   "269": 2.57,
+   "291": 0.4,
+   "301": 10.0,
+   "303": 0.3,
+   "304": 10.0,
+   "305": 19.0,
+   "306": 198.0,
+   "307": 236.0,
+   "320": 23.0,
+   "323": 0.32,
+   "328": 0.0,
+   "401": 49.8,
+   "404": 0.042,
+   "405": 0.078,
+   "406": 0.086,
+   "415": 0.076,
+   "418": 0.0,
+   "430": 2.3,
+   "432": 19.0,
+   "435": 19.0,
+   "601": 0.0,
+   "606": 0.019,
+   "645": 0.005,
+   "646": 0.027
+  },
+  "portions": [
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (NFS)"
+   },
+   {
+    "gram_weight": 248.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 23.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (with ice)"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   }
+  ]
+ },
+ "171317": {
+  "fdc_id": 171317,
+  "description": "Spices, basil, dried",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 233.0,
+   "203": 22.98,
+   "204": 4.07,
+   "205": 47.75,
+   "291": 37.7,
+   "269": 1.71,
+   "301": 2240.0,
+   "303": 89.8,
+   "304": 711.0,
+   "305": 274.0,
+   "306": 2630.0,
+   "307": 76.0,
+   "401": 0.8,
+   "404": 0.08,
+   "405": 1.2,
+   "406": 4.9,
+   "415": 1.34,
+   "432": 310.0,
+   "435": 310.0,
+   "418": 0.0,
+   "320": 37.0,
+   "323": 10.7,
+   "328": 0.0,
+   "430": 1714.5,
+   "606": 2.157,
+   "645": 1.238,
+   "646": 0.498,
+   "605": 0.0,
+   "601": 0.0
+  },
+  "portions": [
+   {
+    "gram_weight": 2.1,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp, leaves"
+   },
+   {
+    "gram_weight": 0.7,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, leaves"
+   },
+   {
+    "gram_weight": 4.5,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tbsp, ground"
+   },
+   {
+    "gram_weight": 1.4,
+    "amount": 1.0,
+    "unit": null,
+    "description": "tsp, ground"
+   }
+  ]
+ },
+ "167587": {
+  "fdc_id": 167587,
+  "description": "Candies, milk chocolate",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 535.0,
+   "203": 7.65,
+   "204": 29.66,
+   "205": 59.4,
+   "291": 3.4,
+   "269": 51.5,
+   "301": 189.0,
+   "303": 2.35,
+   "304": 63.0,
+   "305": 208.0,
+   "306": 372.0,
+   "307": 79.0,
+   "401": 0.0,
+   "404": 0.112,
+   "405": 0.298,
+   "406": 0.386,
+   "415": 0.036,
+   "432": 11.0,
+   "435": 11.0,
+   "418": 0.75,
+   "320": 59.0,
+   "323": 0.51,
+   "328": 0.0,
+   "430": 5.7,
+   "606": 18.509,
+   "645": 7.186,
+   "646": 1.376,
+   "601": 23.0
+  },
+  "portions": [
+   {
+    "gram_weight": 7.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "bar, miniature"
+   },
+   {
+    "gram_weight": 168.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup chips"
+   },
+   {
+    "gram_weight": 44.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "bar (1.55 oz)"
+   }
+  ]
+ },
+ "2706366": {
+  "fdc_id": 2706366,
+  "description": "Shrimp, dried",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 51.0,
+   "204": 3.4,
+   "205": 0.0,
+   "208": 250.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 362.0,
+   "303": 5.32,
+   "304": 82.0,
+   "305": 488.0,
+   "306": 200.0,
+   "307": 2180.0,
+   "320": 0.0,
+   "323": 2.75,
+   "328": 0.0,
+   "401": 10.2,
+   "404": 0.017,
+   "405": 0.038,
+   "406": 1.4,
+   "415": 0.025,
+   "418": 1.85,
+   "430": 0.0,
+   "432": 22.0,
+   "435": 22.0,
+   "601": 630.0,
+   "606": 0.47,
+   "645": 0.27,
+   "646": 1.71
+  },
+  "portions": [
+   {
+    "gram_weight": 135.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 85.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   }
+  ]
+ },
+ "2709320": {
+  "fdc_id": 2709320,
+  "description": "Apple juice, 100%",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 0.09,
+   "204": 0.25,
+   "205": 11.3,
+   "208": 48.0,
+   "269": 10.1,
+   "291": 0.2,
+   "301": 7.0,
+   "303": 0.06,
+   "304": 5.0,
+   "305": 6.0,
+   "306": 97.0,
+   "307": 5.0,
+   "320": 0.0,
+   "323": 0.01,
+   "328": 0.0,
+   "401": 38.6,
+   "404": 0.005,
+   "405": 0.017,
+   "406": 0.026,
+   "415": 0.015,
+   "418": 0.0,
+   "430": 0.0,
+   "432": 2.0,
+   "435": 2.0,
+   "601": 0.0,
+   "606": 0.022,
+   "645": 0.006,
+   "646": 0.039
+  },
+  "portions": [
+   {
+    "gram_weight": 310.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 bottle (10 fl oz)"
+   },
+   {
+    "gram_weight": 209.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 juice box/pouch (6.75 fl oz)"
+   },
+   {
+    "gram_weight": 23.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (with ice)"
+   },
+   {
+    "gram_weight": 131.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fun size box (4.23 fl oz)"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (no ice)"
+   },
+   {
+    "gram_weight": 248.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 124.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 individual school container"
+   },
+   {
+    "gram_weight": 31.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fl oz (NFS)"
+   }
+  ]
+ },
+ "2705879": {
+  "fdc_id": 2705879,
+  "description": "Ham, prosciutto",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 27.8,
+   "204": 8.32,
+   "205": 0.3,
+   "208": 195.0,
+   "269": 0.0,
+   "291": 0.0,
+   "301": 10.0,
+   "303": 1.11,
+   "304": 25.0,
+   "305": 318.0,
+   "306": 510.0,
+   "307": 2700.0,
+   "320": 0.0,
+   "323": 0.28,
+   "328": 0.9,
+   "401": 0.0,
+   "404": 0.567,
+   "405": 0.242,
+   "406": 3.88,
+   "415": 0.42,
+   "418": 0.88,
+   "430": 0.0,
+   "432": 5.0,
+   "435": 5.0,
+   "601": 70.0,
+   "606": 2.78,
+   "645": 3.82,
+   "646": 0.97
+  },
+  "portions": [
+   {
+    "gram_weight": 28.35,
+    "amount": null,
+    "unit": null,
+    "description": "1 oz, boneless"
+   },
+   {
+    "gram_weight": 57.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 56.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 0.35,
+    "amount": null,
+    "unit": null,
+    "description": "1 surface inch"
+   },
+   {
+    "gram_weight": 9.2,
+    "amount": null,
+    "unit": null,
+    "description": "1 thin slice"
+   },
+   {
+    "gram_weight": 9.2,
+    "amount": null,
+    "unit": null,
+    "description": "1 slice, NFS"
+   }
+  ]
+ },
+ "2346390": {
+  "fdc_id": 2346390,
+  "description": "Lettuce, leaf, red, raw",
+  "data_type": "Foundation",
+  "nutrients": {
+   "957": 17.5315,
+   "958": 14.68480875,
+   "203": 0.883125,
+   "204": 0.1063,
+   "205": 3.260575,
+   "301": 42.59,
+   "303": 0.4023,
+   "304": 12.4,
+   "305": 24.4,
+   "306": 321.4,
+   "307": 24.89,
+   "401": 9.343,
+   "404": 0.06075,
+   "406": 0.3288,
+   "415": 0.07413,
+   "430": 73.2
+  },
+  "portions": [
+   {
+    "gram_weight": 85.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
  }
 }

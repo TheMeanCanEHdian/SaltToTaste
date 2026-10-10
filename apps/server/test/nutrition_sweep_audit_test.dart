@@ -1228,8 +1228,29 @@ void main() {
     // every digit (171583, 171670, and the already-recorded 169991 and
     // 171401, now hits in 'swiss chard' and 'lard'): compared 504 -> 516,
     // differ 385 -> 393.
-    expect(compared, 516);
-    expect(differ, 393);
+    // RE-PIN (M70 batch, v69, 2026-10-09): matcher v68 recorded from snapshot
+    // 26 the 35 searches (32 its whole-recipe pins read — cassava raw, giblet
+    // pan gravy, low- or no-sugar-needed fruit pectin, dried basil, … — and 3
+    // its mutants' pre-M70 answers: yuca roots and the two Sure-Jell
+    // spellings) and 10 details (nutrition_v69_test; 167587, 168039, 170848,
+    // 171317, 172232, 2346392, 2685568, 2709728, 2709731, 2709935): ten more
+    // compared, seven differing in some digit (167587 in 'milk chocolate
+    // candy', fat 29.7 / 29.66; 168039 in 'yellow cornmeal'; 170848 in
+    // 'parmesan cheese', protein 35.8 / 35.75; 171317 in 'basil'; 172232 in
+    // 'basil leaves'; 2685568 in 'zucchini'; 2709935 in 'leeks',
+    // carbohydrate 14.74 / 14.7) and three equal in every digit (2346392,
+    // 2709728, 2709731): compared 516 -> 526, differ 393 -> 400.
+    // RE-PIN (M70 closer 1, v69, 2026-10-09): the closer recorded from
+    // snapshot 26 the 22 searches and 4 details its full-set negatives read
+    // (nutrition_v69_test; 2346390, 2705879, 2706366, 2709320): six more
+    // compared, each differing in some digit — 2346390 (a hit in 'banana
+    // leaf'; protein 0.883 / 0.883125), 2705879 (in 'prosciutto'; sodium
+    // 2695 / 2700), 2706366 (in 'shrimp'; protein 51.05 / 51.0), 2709320 (in
+    // 'apple juice'; carbohydrate 11.34 / 11.3), and the already-recorded
+    // 170162 and 2515374, now hits in 'raw cashews' (170162 protein 18.2 /
+    // 18.22): compared 526 -> 532, differ 400 -> 406.
+    expect(compared, 532);
+    expect(differ, 406);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
