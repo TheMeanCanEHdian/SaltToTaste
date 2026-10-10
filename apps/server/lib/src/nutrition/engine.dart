@@ -5211,23 +5211,15 @@ _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
   }
   // v62 (M64 P10): never by widening [_reservedWhole] — "Set aside 1 pear
   // half" is no [_partOnly] sentence, so the whole line would go.
-  final count = countOf(line.amounts);
-  for (final (:step, sentence: _, :match) in _sentencesMatching(
-    recipe,
-    #setsAsidePieces,
-    _setsAsidePieces,
-  )) {
-    final n = double.tryParse(match[1]!) ?? _numberWords[match[1]!]!;
-    final each = match[3]!.startsWith('q') ? 4 : 2;
-    if (count != null && _names(match[2]!, head) && n < count * each) {
-      return use(
-        'remainder',
-        step,
-        share: n / (count * each),
-        printed: '${match[1]} ${match[2]} ${match[3]}',
-        pieces: true,
-      );
-    }
+  if (_setAsideOf(recipe, head) case final aside?
+      when identical(aside.line, line)) {
+    return use(
+      'remainder',
+      aside.step,
+      share: aside.share,
+      printed: aside.printed,
+      pieces: true,
+    );
   }
   if (_keptVolumeOf(recipe, line, head) != null) {
     return null;
@@ -5248,6 +5240,51 @@ _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
   }
   return null;
 }
+
+/// The one line a "set aside N <head> half" sentence ([_setsAsidePieces])
+/// takes from, and its share — the head's count line it fits: the largest
+/// count, the first of equals (v70, Run 063 F3: one set-aside half was
+/// taken from EVERY count line of the head, a main line and its garnish
+/// both). Read once per head (`memo:setAsideLine`), the name test before
+/// the parse (Run 063 F2: every match was parsed per line first — compute
+/// 3.9 s, the GET 6.3 s at the caps).
+({int step, double share, String printed, IngredientLine line})? _setAsideOf(
+  Recipe recipe,
+  String head,
+) => _stepIndexOf(recipe).memo(('setAsideLine', head), () {
+  final heads = _headsOf(recipe);
+  IngredientLine? line;
+  double? count;
+  for (final (i, l) in nutritionLines(recipe).indexed) {
+    final c = heads[i] == head ? countOf(l.amounts) : null;
+    if (c != null && (count == null || c > count)) {
+      (line, count) = (l, c);
+    }
+  }
+  if (line == null || count == null) {
+    return null;
+  }
+  for (final (:step, sentence: _, :match) in _sentencesMatching(
+    recipe,
+    #setsAsidePieces,
+    _setsAsidePieces,
+  )) {
+    if (!_names(match[2]!, head)) {
+      continue;
+    }
+    final n = double.tryParse(match[1]!) ?? _numberWords[match[1]!]!;
+    final each = match[3]!.startsWith('q') ? 4 : 2;
+    if (n < count * each) {
+      return (
+        step: step,
+        share: n / (count * each),
+        printed: '${match[1]} ${match[2]} ${match[3]}',
+        line: line,
+      );
+    }
+  }
+  return null;
+});
 
 final RegExp _keptCooked = RegExp(
   '\\b(?:transfer|measure)\\s+($_amountRun)\\s*'
@@ -6677,12 +6714,14 @@ String _ownSalt(String normalized) {
   // No corpus line buys shellfish without an amount, so the guard is pinned
   // on a synthesized one (a stated exception, v11). v68 (M70, Q13 G2): nor
   // one its grams are WEIGHED for with no amount — the reserved giblets off
-  // the host's bird ([hostWeighedGiblets], the only such reader).
+  // the host's bird ([hostWeighedGiblets]). v70 (Run 063 critic F8): that
+  // reader's resolution only, never another weight read off an amount-less
+  // raw ("Salt and pepper (about 1 ounce)": 0 g unmeasured, as v68).
   final zero =
       amountlessLinesZero &&
       line.amounts.isEmpty &&
       !inShell &&
-      resolution?.source != GramSource.weight;
+      !(resolution != null && (_hostWeighed[resolution] ?? false));
   if (decided) {
     return (
       grams: zero ? 0 : resolution?.grams,
@@ -7503,16 +7542,22 @@ Recipe? sectionOf(Recipe host, String key) {
 /// stores its own method or none — R20) and lines, no subsections.
 /// Memoised per host instance and title, so its lines stay [identical]
 /// ([nutritionLines]).
+/// v70 (F1): the host it was built from is kept beside it
+/// ([_sectionHosts]), so a reader of the host's text reads that document.
 Recipe sectionRecipeOf(Recipe host, Subsection sub) =>
-    (_sections[host] ??= {})[sub.title!] ??= host.copyWith(
-      id: sectionKeyOf(host.id, sub.title!),
-      title: sub.title,
-      prepNotes: sub.prepNotes,
-      servings: sub.servings,
-      steps: sub.steps ?? const [],
-      ingredients: sub.ingredients ?? const [],
-      subsections: const [],
-    );
+    (_sections[host] ??= {})[sub.title!] ??= () {
+      final section = host.copyWith(
+        id: sectionKeyOf(host.id, sub.title!),
+        title: sub.title,
+        prepNotes: sub.prepNotes,
+        servings: sub.servings,
+        steps: sub.steps ?? const [],
+        ingredients: sub.ingredients ?? const [],
+        subsections: const [],
+      );
+      _sectionHosts[section] = host;
+      return section;
+    }();
 
 final Expando<Map<String, Recipe>> _sections = Expando();
 
@@ -11349,9 +11394,15 @@ final String reservedMixtureNote = engineRuleNotes[7];
 /// cached 'giblet pan gravy' answer); a reserved line buys nothing, so no
 /// reader fetches its detail ([buysRefuse]): zero requests.
 /// The bird line is read by its TEXT (the host's first line whose item's
-/// head is 'turkey' with a printed weight), never the host's stored row: a
+/// head is 'turkey' with a printed weight — a weight-less turkey line before
+/// it is passed over, Run 064 critic F11), never the host's stored row: a
 /// section computes before its host (bulkScopeIds). Its grams join the
 /// section's [ingredientsHashOf], so a host-only bird edit stales it.
+/// v70 (Run 063/064 F1, RULE C): the stir gate is read once per index
+/// (`memo:stirsGiblets`, linear — [_stirsGibletsBack]) and the bird once
+/// per section instance (`memo:hostBird`), off the host document the
+/// section was built from ([sectionRecipeOf]) — never a per-line decode
+/// (400 giblet lines decoded the 1.1 MB host 400 times: compute 32.7 s).
 /// ponytail: one host, one bird line; a second reserved part (the neck, a
 /// backbone) is not read; the neck and tailpiece the steps strain out are
 /// not counted (the basis says so).
@@ -11364,45 +11415,91 @@ GramResolution? hostWeighedGiblets(
   if (line.amounts.isNotEmpty ||
       !normalized.startsWith('reserved ') ||
       !normalized.contains('giblet') ||
-      hostOf(recipe.id) == recipe.id ||
-      !_stepIndexOf(recipe).allSentences.any(_stirsGibletsBack.hasMatch)) {
+      hostOf(recipe.id) == recipe.id) {
     return null;
   }
-  final host = nutritionRecipeOf(db, hostOf(recipe.id))?.recipe;
-  if (host == null) {
+  final index = _stepIndexOf(recipe);
+  if (!index.memo(
+    #stirsGiblets,
+    () => index.allSentences.any(_stirsGibletsBack),
+  )) {
     return null;
   }
-  for (final bird in nutritionLines(host)) {
-    final item = normalizeItem(lineItemOf(bird));
-    if (headNounOf(item) != 'turkey') {
-      continue;
-    }
-    final printed = resolveGrams(
-      amounts: bird.amounts,
-      food: null,
-      normalizedItem: item,
-      raw: bird.raw,
-    );
-    if (printed == null || printed.source != GramSource.weight) {
+  return index.memo(('hostBird', hostOf(recipe.id)), () {
+    final host =
+        _sectionHosts[recipe] ??
+        nutritionRecipeOf(db, hostOf(recipe.id))?.recipe;
+    if (host == null) {
       return null;
     }
-    return GramResolution(
-      grams: printed.grams * (85 - 78) / 85 * 6 / (4 + 6),
-      source: GramSource.weight,
-      basis:
-          "the host's turkey ${printed.basis}: ${_fmtAmount(printed.grams)} g "
-          '× 7/85 neck and giblets (USDA AH-102 turkey dressing data, 12 lb '
-          'and over: 85 with, 78 without) × 6/10 giblets (item 2590: neck 4, '
-          'giblets 6, fryer-roaster class) · approximate (the neck and '
-          'tailpiece are strained out — not counted)',
-    );
-  }
-  return null;
+    for (final bird in nutritionLines(host)) {
+      final item = normalizeItem(lineItemOf(bird));
+      if (headNounOf(item) != 'turkey') {
+        continue;
+      }
+      final printed = resolveGrams(
+        amounts: bird.amounts,
+        food: null,
+        normalizedItem: item,
+        raw: bird.raw,
+      );
+      if (printed == null || printed.source != GramSource.weight) {
+        continue;
+      }
+      final giblets = GramResolution(
+        grams: printed.grams * (85 - 78) / 85 * 6 / (4 + 6),
+        source: GramSource.weight,
+        basis:
+            "the host's turkey ${printed.basis}: "
+            '${_fmtAmount(printed.grams)} g '
+            '× 7/85 neck and giblets (USDA AH-102 turkey dressing data, 12 lb '
+            'and over: 85 with, 78 without) × 6/10 giblets (item 2590: neck 4, '
+            'giblets 6, fryer-roaster class) · approximate (the neck and '
+            'tailpiece are strained out — not counted)',
+      );
+      _hostWeighed[giblets] = true;
+      return giblets;
+    }
+    return null;
+  });
 }
 
-final RegExp _stirsGibletsBack = RegExp(
-  r'\bstir\b[^.]*\bgiblets\b[^.]*\binto\b',
-);
+/// The resolutions [hostWeighedGiblets] gave — the amount-less weights
+/// [engineOutcome]'s 0 g rule lets through (Run 063 critic F8: exactly the
+/// giblet reader's, never another weight read off an amount-less raw).
+final Expando<bool> _hostWeighed = Expando();
+
+/// The host document each section was built from ([sectionRecipeOf]).
+final Expando<Recipe> _sectionHosts = Expando();
+
+/// Whether [sentence] stirs the giblets back — "Stir the reserved giblets
+/// into the gravy" (0154): `stir`, then `giblets`, then `into`, no period
+/// between (v68's `\bstir\b[^.]*\bgiblets\b[^.]*\binto\b`). v70 (Run 064
+/// critic F1): three anchored finds per period-free stretch — the earliest
+/// 'stir', the first 'giblets' after it, any 'into' after that — linear;
+/// the regex's two greedy `[^.]*` backtracked cubically (1,200 × 988-char
+/// sentences: 6.35 s).
+bool _stirsGibletsBack(String sentence) {
+  for (final part in sentence.split('.')) {
+    final stir = _stirWord.firstMatch(part);
+    final giblets = stir == null
+        ? null
+        : _gibletsWord.allMatches(part, stir.end).firstOrNull;
+    if (giblets != null && _intoWord.allMatches(part, giblets.end).isNotEmpty) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// [_stirsGibletsBack] on [sentence] (verify1 D1: the gate's linearity
+/// pinned against the v68 regex).
+@visibleForTesting
+bool stirsGibletsBackForTest(String sentence) => _stirsGibletsBack(sentence);
+
+final RegExp _stirWord = RegExp(r'\bstir\b');
+final RegExp _gibletsWord = RegExp(r'\bgiblets\b');
+final RegExp _intoWord = RegExp(r'\binto\b');
 
 /// Whether [line] names no food the matcher can read: its item is still a
 /// lone qualifier after [lineItemOf], or 'juice' of no named fruit. The
@@ -11618,6 +11715,19 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
       // the child an amount-less line names, [proseSectionsReadBy]).
       if (prose.isNotEmpty) 'prose_sections': prose,
     },
+    // v70 (Run 063 F7): the ingredient GROUPS — each heading and its line
+    // count — which M52's plan (the fried-product, cut-dough and batter
+    // groups), the alcohol reader (a line's group word) and the marinade's
+    // first group read: a regroup or a heading edit alone left the totals
+    // fresh (1105 split after line 4: 432.75 stored, 425.5 recomputed).
+    // Only where a heading or a second group exists, so a single unheaded
+    // group (every boundary implied by the lines) hashes as before.
+    if (recipe.ingredients.length > 1 ||
+        recipe.ingredients.firstOrNull?.group != null)
+      'group_layout': [
+        for (final group in recipe.ingredients)
+          [group.group, group.items.length],
+      ],
     // v44 (P1 §3.1): a SECTION's yield, which its parents' shares read
     // ([parseShare]) and no other term covers — a yield edit stales the
     // section, whose new stamp re-derives its parents.
@@ -13767,13 +13877,17 @@ GramResolution? lineGrams(
   }
   // v68 (M70, pE Q6): a fine-cut volume on a [fineCutSiblings] record
   // weighs on its cached sibling's chopped portion — the line's food stays.
+  // v70 (Run 063 F6): only where that portion sized the line — a printed
+  // weight beside the volume ("1 ounce (about 1 cup) fresh basil leaves,
+  // chopped") is weighed as before, its basis naming no chopped portion.
   final cutId = food == null ? null : fineCutSiblings[food.fdcId];
   final cutSibling = cutId == null ? null : _foodFromCache(db, cutId);
   final fine = cutSibling == null
       ? null
       : fineCutWeighing(food!, cutSibling, line.raw, line.amounts);
   if (fine != null) {
-    if (on(fine.food) case final grams?) {
+    if (on(fine.food) case final grams?
+        when grams.source == GramSource.portion) {
       return GramResolution(
         grams: grams.grams,
         source: grams.source,
@@ -13938,45 +14052,85 @@ bool recomputeTotals(
   // [missing]); a row kept through a FOOD failure keeps its count.
   // Read on the caller's instance when it is the stored recipe (its step
   // index is built already — RULE C: one index per request).
-  final m52 = _m52Plan(
-    db,
-    recipe == now ? recipe : now,
-    matches,
-    (id, line) => food(id, line: line),
-  );
-  final m52Writes = <(IngredientMatchRow, {IngredientMatchRow over})>[];
-  for (final (k, row) in matches.indexed) {
-    final plan = m52[row.position];
-    if (plan == null || kept.contains(row.position) || !_m52Weighs(row)) {
-      continue;
-    }
-    // v60 (M62 H): the engine's dip of a coat held with no budget takes
-    // the coat's hold; a person's confirm, 0 g poured away (below).
-    if (plan.held && row.status == 'auto') {
-      if (row.hold != 'coating' ||
-          row.grams != null ||
-          row.gramSource != null) {
-        matches[k] = row.copyWith(
-          hold: 'coating',
-          clearGrams: true,
-          clearGramSource: true,
-        );
-        m52Writes.add((matches[k], over: row));
-      }
-      continue;
-    }
-    if (row.hold == null &&
-        row.gramSource == GramSource.discarded.name &&
-        row.grams == plan.grams) {
-      continue;
-    }
-    matches[k] = row.copyWith(
-      grams: plan.grams,
-      gramSource: GramSource.discarded.name,
-      clearHold: true,
+  final planned = recipe == now ? recipe : now;
+  final storedRows = List.of(matches);
+  // v70 (Run 064 O1 and its critic, F9): an engine row an earlier plan
+  // wrote that this plan no longer covers — a cut dough's rows once its
+  // frying oil is skipped, picked or typed; a coat once its meat is
+  // skipped — goes back to the form the compute writes it ([_unplannedOf])
+  // in this same write, so a person's PUT and a full compute total the
+  // same rows (yeasted-doughnuts, the oil skipped: 328.13 kcal per serving
+  // stored on the cut share, 439.26 by a full compute). verify1 D3: a row
+  // that reverts is one the plan reads (a batter counted whole is the
+  // fried mix), so the plan runs again on the reverted rows — the compute
+  // plans on the engine's rows (1081, the haddock skipped: the oil 0.25 g
+  // on the salt alone, 757.22 per serving; 26.09 g and 815.36 by a full
+  // compute). Only a write that reverts a row plans twice.
+  // ponytail: three passes at most — a revert that keeps moving the plan's
+  // cover past that is left to the next compute.
+  for (var pass = 0; pass < 3; pass++) {
+    final m52 = _m52Plan(
+      db,
+      planned,
+      matches,
+      (id, line) => food(id, line: line),
     );
-    m52Writes.add((matches[k], over: row));
+    for (final (k, row) in matches.indexed) {
+      final plan = m52[row.position];
+      if (plan == null || kept.contains(row.position) || !_m52Weighs(row)) {
+        continue;
+      }
+      // v60 (M62 H): the engine's dip of a coat held with no budget takes
+      // the coat's hold; a person's confirm, 0 g poured away (below).
+      if (plan.held && row.status == 'auto') {
+        if (row.hold != 'coating' ||
+            row.grams != null ||
+            row.gramSource != null) {
+          matches[k] = row.copyWith(
+            hold: 'coating',
+            clearGrams: true,
+            clearGramSource: true,
+          );
+        }
+        continue;
+      }
+      if (row.hold == null &&
+          row.gramSource == GramSource.discarded.name &&
+          row.grams == plan.grams) {
+        continue;
+      }
+      matches[k] = row.copyWith(
+        grams: plan.grams,
+        gramSource: GramSource.discarded.name,
+        clearHold: true,
+      );
+    }
+    var reverted = false;
+    for (final (k, row) in matches.indexed) {
+      if (m52.containsKey(row.position) || kept.contains(row.position)) {
+        continue;
+      }
+      if (_unplannedOf(
+            db,
+            planned,
+            nutritionLines(planned)[row.position],
+            row,
+            food,
+          )
+          case final e?) {
+        matches[k] = e;
+        reverted = true;
+      }
+    }
+    if (!reverted) {
+      break;
+    }
   }
+  final m52Writes = [
+    for (final (k, row) in matches.indexed)
+      if (!identical(row, storedRows[k]) && !sameMatchRow(row, storedRows[k]))
+        (row, over: storedRows[k]),
+  ];
   final totals = <String, double>{};
   var totalGrams = 0.0;
   var contributing = 0;
@@ -14301,6 +14455,75 @@ bool recomputeTotals(
     '${calories?.toStringAsFixed(0) ?? '?'} kcal/serving (basis $basis)',
   );
   return true;
+}
+
+/// [row] as the compute writes it when an earlier [_m52Plan] wrote it and
+/// the current plan does not cover it (v70, F9): an engine row (`auto`) on
+/// a line M52 weighs ([_m52RowOf]'s gate: a coat, a frying oil, a batter, a
+/// dip, a cut dough's mix line) in a plan's form — budgeted (`discarded`,
+/// no hold) or held with its coat (`coating`, no grams) — re-read as
+/// [_computePass] reads it: [engineOutcome] on the line's own grams
+/// ([lineGrams]) on its food, a carried decision's as decided. Null when
+/// the row already is that (every row a compute just wrote), or its food
+/// is in no cache (the row is underived anyway).
+IngredientMatchRow? _unplannedOf(
+  SaltDatabase db,
+  Recipe recipe,
+  IngredientLine line,
+  IngredientMatchRow row,
+  FdcFood? Function(int fdcId, {IngredientLine? line}) food,
+) {
+  final fdcId = row.fdcId;
+  if (row.status != 'auto' ||
+      fdcId == null ||
+      !(row.hold == null &&
+              row.gramSource == GramSource.discarded.name &&
+              row.grams != null ||
+          row.hold == 'coating' &&
+              row.grams == null &&
+              row.gramSource == null)) {
+    return null;
+  }
+  final medium = discardedMediumOf(
+    recipe,
+    line,
+    normalizeItem(lineItemOf(line)),
+  );
+  if (medium != DiscardedMedium.coating &&
+      medium != DiscardedMedium.fryingOil &&
+      !_batterInBowl(recipe).contains(row.position) &&
+      !_dipsOf(recipe).containsKey(row.position) &&
+      !_cutMixAt(recipe, row.position)) {
+    return null;
+  }
+  final eaten = weighedLine(recipe, line);
+  final record = food(fdcId, line: eaten);
+  if (record == null) {
+    return null;
+  }
+  final carried = db.decisionFor(lineKeyOf(line))?.fdcId != null;
+  final outcome = engineOutcome(
+    recipe,
+    eaten,
+    record,
+    lineGrams(db, eaten, record, recipe: recipe),
+    picked: !carried,
+    decided: carried,
+    confidence: carried ? null : row.confidence,
+  );
+  if (outcome.grams == row.grams &&
+      outcome.source == row.gramSource &&
+      outcome.hold == row.hold) {
+    return null;
+  }
+  return row.copyWith(
+    grams: outcome.grams,
+    clearGrams: outcome.grams == null,
+    gramSource: outcome.source,
+    clearGramSource: outcome.source == null,
+    hold: outcome.hold,
+    clearHold: outcome.hold == null,
+  );
 }
 
 /// The stamp of totals that could not count a food FDC cannot serve now,
@@ -14683,40 +14906,52 @@ String? gramBasisFor(
 /// is counted at ⅛" with the fat the steps skim deducted by its braised
 /// pair's energy share ([braisedEnergyShare]); 168743's ¼" arm stays (the
 /// fallback where the answer loses 173128).
-String? trimStandInFlagOf(String raw, int? fdcId, {String? title}) =>
-    switch (fdcId) {
-      173128 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
-        "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch "
-            "flat trim; USDA's braised pair 173128 → 173130 keeps "
-            '${(braisedEnergyShare[173128]! * 100).toStringAsFixed(1)} % of '
-            'the energy by the protein tracer — the fat the steps skim, '
-            'deducted)',
-      168743 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
-        'approximate (the printed ¼-inch fat cap renders and is skimmed '
-            '(step 5); counted as the 0-inch trimmed flat)',
-      168743
-          when title != null &&
-              RegExp(
-                r'\bcorned beef\b',
-                caseSensitive: false,
-              ).hasMatch(title) =>
-        "approximate (the steps cure and rinse the brisket — the cure's "
-            'sodium is not counted; a rinsed cure counts 0 g, CP9)',
-      168664 when raw.toLowerCase().contains('fat trimmed to ¼ inch') =>
-        "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch "
-            'trim, the deepest it publishes for brisket; the fat that renders '
-            "into the separator is not deducted — USDA's own braised pair "
-            '168664 → 168665 keeps 93 % of the energy)',
-      173408 when !RegExp(r'\blean\b').hasMatch(raw.toLowerCase()) =>
-        'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
-            "petite roast (search 2026-10-08); the roast's separable fat not "
-            'counted)',
-      173420 when raw.toLowerCase().contains('ricotta salata') =>
-        'approximate (FDC holds no ricotta salata — a stand-in by class; '
-            "feta's sodium (1,139 mg per 100 g) and fat (21.49 g per 100 g) "
-            'counted)',
-      _ => null,
-    };
+/// v70 (Run 063 F4, S4 + S6): the brisket arms read the printed depth by
+/// the SAME phrase the record move reads ([trimDepthRecords]' first: ⅛, ¼
+/// or "⅛ to ¼") — the move, the flag and the braised deduction never part
+/// (a "⅛ inch" flat landed on 173128 unflagged and undeducted: 1,100.74
+/// kcal per serving against 794.35); the text names the depth printed.
+String? trimStandInFlagOf(String raw, int? fdcId, {String? title}) {
+  final printed = trimDepthRecords.first.$1.firstMatch(raw.toLowerCase());
+  final depth = printed == null
+      ? null
+      : printed[3] == null
+      ? printed[1]
+      : '${printed[1]}- to ${printed[3]}';
+  return switch (fdcId) {
+    173128 when depth != null =>
+      "approximate (the printed $depth-inch fat cap counted at USDA's "
+          "⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps "
+          '${(braisedEnergyShare[173128]! * 100).toStringAsFixed(1)} % of '
+          'the energy by the protein tracer — the fat the steps skim, '
+          'deducted)',
+    168743 when depth != null =>
+      'approximate (the printed $depth-inch fat cap renders and is skimmed '
+          '(step 5); counted as the 0-inch trimmed flat)',
+    168743
+        when title != null &&
+            RegExp(
+              r'\bcorned beef\b',
+              caseSensitive: false,
+            ).hasMatch(title) =>
+      "approximate (the steps cure and rinse the brisket — the cure's "
+          'sodium is not counted; a rinsed cure counts 0 g, CP9)',
+    168664 when depth != null =>
+      "approximate (the printed $depth-inch fat cap counted at USDA's "
+          '⅛-inch trim, the deepest it publishes for brisket; the fat that '
+          'renders into the separator is not deducted — '
+          "USDA's own braised pair 168664 → 168665 keeps 93 % of the energy)",
+    173408 when !RegExp(r'\blean\b').hasMatch(raw.toLowerCase()) =>
+      'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
+          "petite roast (search 2026-10-08); the roast's separable fat not "
+          'counted)',
+    173420 when raw.toLowerCase().contains('ricotta salata') =>
+      'approximate (FDC holds no ricotta salata — a stand-in by class; '
+          "feta's sodium (1,139 mg per 100 g) and fat (21.49 g per 100 g) "
+          'counted)',
+    _ => null,
+  };
+}
 
 String? _gramBasis(
   SaltDatabase db,
@@ -17509,9 +17744,10 @@ final RegExp _poundsThin = RegExp(
 
 /// A line printing a thin piece: "4 (5- to 6-ounce) sole or flounder
 /// fillets, ⅜ inch thick (see note)" (0466) — never "¾ to 1 inch thick"
-/// (0257's steaks).
+/// (0257's steaks), nor the tail of a mixed number, "1½" or "1 ½" (v70,
+/// Run 063 F5's shape; [_poundsThin] reads the fraction right after "to").
 final RegExp _thinLine = RegExp(
-  r'(?<![\d¼½¾⅛⅜])(?:⅛|¼|⅜|½)[- ]inch[- ]thick\b',
+  r'(?<![\d¼½¾⅛⅜])(?<![\d¼½¾⅛⅜] )(?:⅛|¼|⅜|½)[- ]inch[- ]thick\b',
 );
 
 /// Whether the coated food on [line] of [recipe] is a THIN piece
@@ -17864,43 +18100,56 @@ _FriedClass? _friedProductOf(
 /// rows carry. Null unless 0 < s < 1. Once per recipe (`memo:cutShare`).
 /// ponytail: rounds cut from a rectangle or square sheet only; any other
 /// sheet or cut (an "8-inch square", rings, squares) reads the whole mix.
-({double share, String flag})? _cutShareOf(Recipe recipe) =>
-    _stepIndexOf(recipe).memo(#cutShare, () {
-      for (final step in _stepIndexOf(recipe).lower) {
-        if (!step.contains('round cutter')) {
-          continue;
-        }
-        final sheet = _cutSheet.firstMatch(step);
-        final count = _cutCount.firstMatch(step);
-        final cutter = _roundCutter.firstMatch(step);
-        if (sheet == null || count == null || cutter == null) {
-          continue;
-        }
-        final [l, w, n, d] = [
-          for (final v in [sheet[1], sheet[2], count[1], cutter[1]])
-            int.tryParse(v!) ?? 0,
-        ];
-        final s = n * pi * d * d / 4 / (l * w);
-        if (!(s > 0 && s < 1)) {
-          return null;
-        }
-        final rest = step.contains('if desired')
-            ? ', cut only "if desired",'
-            : '';
-        return (
-          share: s,
-          flag:
-              'approximation (the cut share ${(s * 100).toStringAsFixed(2)} '
-              "%: $n × $d-inch rounds from the steps' $l by $w-inch sheet; "
-              'the remaining dough$rest not counted)',
-        );
-      }
+({double share, String flag})? _cutShareOf(
+  Recipe recipe,
+) => _stepIndexOf(recipe).memo(#cutShare, () {
+  for (final step in _stepIndexOf(recipe).lower) {
+    if (!step.contains('round cutter')) {
+      continue;
+    }
+    final sheet = _cutSheet.firstMatch(step);
+    final count = _cutCount.firstMatch(step);
+    final cutter = _roundCutter.firstMatch(step);
+    if (sheet == null || count == null || cutter == null) {
+      continue;
+    }
+    final [l, w, d] = [
+      for (final v in [sheet[1], sheet[2], cutter[1]]) parseQuantity(v!) ?? 0,
+    ];
+    final n = int.tryParse(count[1]!) ?? 0;
+    final s = n * pi * d * d / 4 / (l * w);
+    if (!(s > 0 && s < 1)) {
       return null;
-    });
+    }
+    final rest = step.contains('if desired') ? ', cut only "if desired",' : '';
+    return (
+      share: s,
+      flag:
+          'approximation (the cut share ${(s * 100).toStringAsFixed(2)} '
+          "%: $n × ${cutter[1]}-inch rounds from the steps' ${sheet[1]} by "
+          '${sheet[2]}-inch sheet; '
+          'the remaining dough$rest not counted)',
+    );
+  }
+  return null;
+});
 
-final RegExp _cutSheet = RegExp(r'(\d+) by (\d+)-inch (?:rectangle|square)');
+final RegExp _cutSheet = RegExp(
+  '$_inchFigure by $_inchFigure-inch (?:rectangle|square)',
+);
 final RegExp _cutCount = RegExp(r'\bcut (\d+) rounds\b');
-final RegExp _roundCutter = RegExp(r'(\d+)-inch round cutter');
+final RegExp _roundCutter = RegExp('$_inchFigure-inch round cutter');
+
+/// A dimension as printed before "-inch", read whole by [parseQuantity]:
+/// "3", a decimal "3.5" (the house style prints "16 by 13.5-inch", 0106),
+/// a mixed number "3 1/2", "3½" or "3 ½", a fraction "1/2" or "½" — never
+/// the tail of one (v70, Run 063 F5: `(\d+)-inch` read "3 1/2-inch" as a
+/// 2-inch cutter, a confident 29.00 % for 88.8 %; verify1 D2: "3.2-inch"
+/// read the same 2-inch cutter); a figure the parser cannot read ("3-1/2")
+/// matches nothing (the whole dough).
+final String _inchFigure =
+    r'(?<![\d/.V])(?<![\d/V][ -])(\d+(?:\.\d+| \d+/\d+| ?[V])?|\d+/\d+|[V])'
+        .replaceAll('V', vulgarFractionChars);
 
 /// Whether line [i] of [recipe] may be a cut dough's mix line: the steps
 /// print a cut share ([_cutShareOf]), the line is no medium and a frying oil

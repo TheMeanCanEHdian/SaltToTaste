@@ -265,6 +265,7 @@ void main() {
   eggDips();
   cutDough();
   m69Coats();
+  review70();
   group('RULE C at the loop level, every detector of every line at the caps '
       '(Run 056 S5/S7/S8/S9/O6/O8/S14/O15/S20/S23)', () {
     // Measured at 8113b24 (one readAll pass, the digests' shapes): salt
@@ -794,6 +795,10 @@ final _layRegex = RegExp(
   r'\b(?:arrang(?:e[sd]?|ing)|lay(?:s|ing)?|drap(?:e[sd]?|ing)|'
   r'shingl(?:e[sd]?|ing))\b[^.]*?\bbacon\b[^.;]*?\bover\s+([^,.;]+)',
 );
+
+/// The v68 stir gate [stirsGibletsBackForTest]'s three finds replaced (v70,
+/// Run 064's critic: two greedy `[^.]*` in sequence, cubic), the reference.
+final _stirsRegex = RegExp(r'\bstir\b[^.]*\bgiblets\b[^.]*\binto\b');
 final _wrapRegex = RegExp(
   r'\bwrap(?:s|ped|ping)?\b[^.]*?\b(?:with|in)\s+(?:[\w-]+\s+){0,3}?bacon\b',
 );
@@ -1358,6 +1363,213 @@ void m69Coats() {
       );
     });
   }, skip: skipIfNoCorpus);
+}
+
+/// v70 (review Run 063/064 F1, F2): the step readers the review timed at
+/// the caps. GIBLETS (F1, Run 064 O2's shape): 0154's Giblet Pan Gravy
+/// with 389 more copies of its "Reserved turkey giblets, neck, and
+/// tailpiece" line (400) and 113 steps of 10,000 characters before its own
+/// seven (120) — the stir gate read once per index (`memo:stirsGiblets`),
+/// the bird once per section instance (`memo:hostBird`, off the host the
+/// section was built from — no per-line decode: compute 32.7 s, the GET
+/// 8.9 s, a freshness check 8.0 s before); LONG (Run 064's critic): the
+/// same 400 lines under 120 steps of 988-character sentences naming "stir"
+/// and "giblets" with no "into" (the v68 regex was cubic: 6.35 s a scan);
+/// SET-ASIDE (F2, Run 063 S8's shape): 0148 with 400 "3 onions, chopped"
+/// lines under 120 steps of "Set aside 2 pear halves for other use." (the
+/// name test before the parse, once per head: `memo:setAsideLine`). Each
+/// the compute, the matches GET, the recompute and the freshness check.
+/// Synthesized, a stated exception: the repeated lines and steps.
+void review70() {
+  group('RULE C, the giblet stir gate (v70 verify1 D1), corpus-free', () {
+    test('D1: the stir gate answers as the v68 regex it replaced (30,000 '
+        "seeded sentences over its own words) and reads Run 064's critic's "
+        '1,200 hostile 988-character sentences in one pass (the regex: '
+        '6.2 s)', () {
+      const atoms = [
+        'stir', 'stirring', 'giblets', 'giblet', 'into', 'in', 'to', //
+        '.', '1.5', 'x', ',', '  ', '\n', 'the',
+      ];
+      var hits = 0;
+      for (var seed = 0; seed < 30000; seed++) {
+        final r = Random(seed);
+        final b = StringBuffer();
+        for (var i = 0, n = 1 + r.nextInt(12); i < n; i++) {
+          b.write(atoms[r.nextInt(atoms.length)]);
+          if (r.nextInt(3) > 0) {
+            b.write(' ');
+          }
+        }
+        final s = b.toString();
+        final reference = _stirsRegex.hasMatch(s);
+        expect(stirsGibletsBackForTest(s), reference, reason: '"$s"');
+        if (reference) {
+          hits++;
+        }
+      }
+      // Not vacuous: the gate fires on the fuzz.
+      expect(hits, greaterThan(50));
+      // The critic's input: 120 steps × 10 sentences of 988 characters
+      // naming "stir" and "giblets", no "into".
+      final hostile = List.filled(
+        1200,
+        '${('stir giblets ' * 76).substring(0, 987)}.',
+      );
+      final sw = Stopwatch()..start();
+      for (final s in hostile) {
+        expect(stirsGibletsBackForTest(s), isFalse);
+      }
+      expect(sw.elapsedMilliseconds, lessThan(500));
+    });
+  });
+
+  group(
+    'RULE C, the review Run 063/064 readers at the caps (v70)',
+    () {
+      Future<void> shape(
+        String name,
+        Recipe host,
+        String? section,
+        List<String> families,
+        void Function(SaltDatabase, String) reached,
+      ) async {
+        final db = wp.tempDb();
+        final provider = FixtureProvider(pending: pendingSearches);
+        wp.saveRecipe(db, host);
+        final key = section == null ? host.id : sectionKeyOf(host.id, section);
+        Recipe stored() => nutritionRecipeOf(db, key)!.recipe;
+        Future<void> timed(String step, Future<Object?> Function() run) async {
+          stepIndexCounts.clear();
+          final sw = Stopwatch()..start();
+          await run();
+          final ms = sw.elapsedMilliseconds;
+          final counts = Map.of(stepIndexCounts);
+          final copies = counts['indexes'] ?? 1;
+          expectBounded(stored(), counts, '$name $step', copies: copies);
+          for (final family in families) {
+            expect(
+              counts[family] ?? 0,
+              lessThanOrEqualTo(copies),
+              reason: '$name $step $family',
+            );
+          }
+          expect(ms, lessThan(backstopMs), reason: '$name $step: $counts');
+        }
+
+        await timed('compute', () => matchAndCompute(db, provider, stored()));
+        reached(db, key);
+        await timed('GET', () => matchesBody(db, provider, stored()));
+        await timed('recompute', () async => recomputeTotals(db, stored()));
+        await timed('fresh', () async => nutritionIsFresh(db, stored()));
+      }
+
+      Recipe gravyAtCaps(String step) {
+        final host = loadCorpusRecipe('0154-classic-roast-turkey.yaml');
+        return host.copyWith(
+          subsections: [
+            for (final s in host.subsections)
+              if (s.title == 'Giblet Pan Gravy')
+                s.copyWith(
+                  ingredients: [
+                    IngredientGroup(
+                      items: [
+                        for (final g in s.ingredients!) ...g.items,
+                        for (var i = 0; i < 389; i++)
+                          ln('Reserved turkey giblets, neck, and tailpiece'),
+                      ],
+                    ),
+                  ],
+                  steps: [
+                    for (var i = s.steps!.length; i < capSteps; i++)
+                      RecipeStep(number: i + 1, text: fill(step, capStep)),
+                    ...s.steps!,
+                  ],
+                )
+              else
+                s,
+          ],
+        );
+      }
+
+      void gibletsWeighed(SaltDatabase db, String key) => expect(
+        {
+          for (final m in db.ingredientMatchesFor(key))
+            if (m.raw.startsWith('Reserved turkey giblets'))
+              (m.grams?.toStringAsFixed(2), m.gramSource),
+        },
+        {('291.37', 'weight')},
+      );
+
+      test('GIBLETS: the stir gate once per index, the bird once per section '
+          'instance; each under the backstop', () async {
+        await shape(
+          'giblets',
+          gravyAtCaps('stir the gravy and '),
+          'Giblet Pan Gravy',
+          ['memo:stirsGiblets', 'memo:hostBird'],
+          gibletsWeighed,
+        );
+      });
+
+      test('LONG: 988-character sentences of "stir" and "giblets" with no '
+          '"into" — the gate linear; each under the backstop', () async {
+        final sentence = '${'stir giblets ' * 75}stir.  ';
+        expect(sentence.trim().length, lessThan(maxScannedSentence));
+        final host = gravyAtCaps(sentence);
+        await shape(
+          'long',
+          host.copyWith(
+            subsections: [
+              for (final s in host.subsections)
+                s.title == 'Giblet Pan Gravy'
+                    ? s.copyWith(
+                        steps: [
+                          for (var i = 0; i < capSteps; i++)
+                            RecipeStep(
+                              number: i + 1,
+                              text: fill(sentence, capStep),
+                            ),
+                        ],
+                      )
+                    : s,
+            ],
+          ),
+          'Giblet Pan Gravy',
+          ['memo:stirsGiblets', 'memo:hostBird'],
+          (db, key) => expect(
+            {
+              for (final m in db.ingredientMatchesFor(key))
+                if (m.raw.startsWith('Reserved turkey giblets'))
+                  (m.grams, m.gramSource),
+            },
+            {(0.0, 'unmeasured')},
+          ),
+        );
+      });
+
+      test('SET-ASIDE: the name test before the parse, once per head; each '
+          'under the backstop', () async {
+        await shape(
+          'set-aside',
+          capped(
+            loadCorpusRecipe(chicken),
+            [for (var i = 0; i < capLines; i++) '3 onions, chopped'],
+            List.filled(
+              capSteps,
+              fill('Set aside 2 pear halves for other use. ', capStep),
+            ),
+          ),
+          null,
+          ['memo:setAsideLine'],
+          (db, key) => expect(
+            {for (final m in db.ingredientMatchesFor(key)) m.gramSource},
+            isNot(contains('discarded')),
+          ),
+        );
+      });
+    },
+    skip: skipIfNoCorpus,
+  );
 }
 
 /// v61 (M62): an egg or buttermilk dip at the caps — every sentence a

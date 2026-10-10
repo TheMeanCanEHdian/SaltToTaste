@@ -257,6 +257,15 @@ with `reason` "fails validation: Two sections share the title "{title}" —
 give each its own title." and keeps the stored version. No corpus recipe
 holds a duplicate title.
 
+**v70 (F10, review Run 064's critic):** each subsection is held to the
+recipe's own editor caps — at most 60 ingredient groups and 400 lines
+(each line's `raw` 1–1,000 characters, `item`/`prep` ≤ 500, ≤ 8 amounts),
+at most 120 steps of 1–10,000 characters — with the same `422 validation`
+messages ("At most 400 ingredient lines.", "At most 120 steps.", "'step
+text' must be 1-10000 characters.", …); before, only the 2 MB body bounded
+a subsection. The import and the rescan apply it too; every corpus recipe
+validates (its largest subsection: 18 lines, 9 steps, 906 characters).
+
 ### `DELETE /api/v1/recipes/{idOrSlug}` (admin, full scope)
 
 Takes a backup first, then removes the database row and the library YAML
@@ -5043,6 +5052,72 @@ composition is SR's generic dry mix (a label's dextrose share is never
 read); 8 the 8-inch wrapper (above). Deploy note: matcherVersion 68 stales
 every recipe; one zero-request sweep settles it (a fresh library asks the
 `giblet pan gravy` answer and 172232's detail once).
+
+**Review Run 063/064 fixes (matcher v70; matcherVersion unchanged, 68 —
+every fix has corpus reach 0: the replay of snapshot 26 is byte-identical
+to the v69 rows, calls 0; zero requests; server only).** Each restores an
+invariant the dual-fleet review found broken on a non-corpus input:
+- **F1 — RULE C on the giblet reader.** `hostWeighedGiblets` reads its stir
+  gate once per step index (`memo:stirsGiblets`) and the host's bird once
+  per section instance (`memo:hostBird`), off the host document the section
+  was built from (`sectionRecipeOf` keeps it) — never a per-line host decode
+  (a 400-line giblet section at the caps took 32.7 s to compute, 8.9 s per
+  GET and 8.0 s per freshness check). The gate "stir … giblets … into" is
+  three anchored finds per period-free stretch of a sentence — linear (the
+  v68 regex's two greedy `[^.]*` were cubic: 6.35 s a scan of 1,200
+  988-character sentences) and equal to it on every sentence (pinned).
+- **F2/F3 — a set-aside half takes from ONE line.** "Set aside N <food>
+  half" reduces only the food's largest count line (the first of equals),
+  read once per head (`memo:setAsideLine`) with the name test before the
+  parse; a second line of the food (a garnish) counts whole.
+- **F4 — the move, the flag and the deduction never part.** The brisket
+  stand-in flags (173128, 168743, 168664) read the printed depth by the
+  same phrase `trimDepthRecords` moves the record by — ⅛, ¼ or "⅛ to ¼" —
+  and print it ("the printed ⅛-inch fat cap …"); a ⅛-inch flat on 173128
+  takes the braised pair's 67.6 % energy share as the ¼-inch one does.
+- **F5 — a dimension is read whole or not at all.** The cut-share reader's
+  sheet and cutter read a decimal ("3.5", "13.5" — the house style prints
+  "16 by 13.5-inch"), a mixed number ("3 1/2", "3½", "3 ½") or a fraction
+  whole by the house parser (88.81 % for a 3½-inch cutter on 1105's sheet,
+  74.24 % for twelve 3.2-inch rounds), and a figure it cannot read
+  ("3-1/2", or one after a period, ".5") reads nothing — the whole dough,
+  never the denominator or a decimal's tail as the diameter. The
+  thin-piece line test ignores the tail of a spaced mixed number ("1 ½ inch
+  thick").
+- **F6 — the chopped-portion note only where it sized the line.** A basil
+  line printing a weight beside its volume is weighed from the weight and
+  its basis names no chopped portion.
+- **F7 — the group layout is an input.** `ingredientsHashOf` hashes each
+  ingredient group's heading and line count wherever a heading or a second
+  group exists (M52's plan, the alcohol reader and the marinade read them):
+  a regroup or a heading edit alone stales the totals — a heading added
+  to, renamed on or dropped from a recipe's one group too. A recipe of one
+  unheaded group hashes as before; the others' stored stamps (320 corpus
+  recipes and 9 titled sections) read stale once on deploy — one
+  zero-request sweep re-stamps them on identical rows.
+- **F8 — the amount-less 0 g rule.** Only the giblet reader's own weight
+  passes it; any other amount-less line printing a paren weight counts 0 g
+  `unmeasured`, as before v69.
+- **F9 — a PUT and a full compute total the same rows.** An engine row an
+  earlier M52 plan wrote (budgeted `discarded`, or held with its coat) that
+  the current plan no longer covers goes back, in the same totals write, to
+  the form the compute writes it (`engineOutcome` on the line's own grams):
+  1105's dough rows after its frying oil is skipped, picked or typed
+  (439.26 kcal per serving, not 328.13 on the cut share), 0418's flour after
+  its chicken is skipped (held `coating`). A row that reverts is one the
+  plan may read (a batter counted whole is the fried mix), so the plan runs
+  again on the reverted rows, as the compute plans on the engine's: 1081's
+  haddock skipped, the batter back to its whole lines and the oil 26.09 g
+  on them (815.36 per serving, not 0.25 g on the salt alone and 757.22).
+  Only a write that reverts a row plans twice. Open: a CONFIRMED plan row (a
+  person's confirm, no grams typed) is re-derived only by the next compute
+  (RULE A's `derivedFor`), not by another row's PUT.
+- **F10 — a subsection is held to the recipe's editor caps** (60 groups,
+  400 lines, 120 steps of 1–10,000 characters, the line and step field
+  lengths): nutrition computes each titled subsection as a recipe; only the
+  2 MB body bounded them before. Every corpus recipe validates.
+- **F11 — the bird is the host's first turkey line WITH a printed
+  weight**; a weight-less turkey line before it is passed over.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

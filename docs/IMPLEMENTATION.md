@@ -3608,6 +3608,34 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — matcher v70: the fixes of the dual-fleet evidence-gated
+  review Run 063/064 on v63–v69 (Run 063 Sonnet 5.5: 8 claimed, 8
+  survived; Run 064 Opus 5.5: 2 claimed, 2 survived; the union's eleven
+  items, fixed after both; every fleet reproduction re-run before and
+  after; no corpus row moves — the replay on snapshot 26 is byte-identical
+  to v69; matcherVersion stays 68).** Both fleets found the giblet reader
+  (v69) rescanning every section sentence and re-decoding the whole host
+  document on every call, and Opus's critic found its stir gate's regex
+  cubic (6.4 s a section scan at the caps): the gate is now three anchored
+  linear finds memoised per step index and the host's bird weight is read
+  once per section. Opus found the cut-dough rows (v66) left at their cut
+  share after a person skips, picks or types grams on the frying oil, so a
+  PUT and a full compute disagreed by 111 kcal a serving: `recomputeTotals`
+  now hands an auto row the plan no longer covers back to its engine form.
+  Sonnet's seven LOWs are fixed: the ingredient groups' layout joins the
+  freshness hash (320 recipes and 9 sections read stale once on deploy and
+  re-stamp on identical rows); the ⅛-inch and ⅛-to-¼ spellings of a flat
+  brisket's trim now carry the same flag and braised-pair deduction as the
+  ¼-inch one; the doughnut cutter and sheet regexes read an ASCII mixed
+  number; the chopped-basil note appears only where the chopped portion
+  sized the line; a set-aside half reduces one line, not every line of
+  the head, and its loop tests the cheap guard first; the amount-less 0 g
+  exemption is gated on the giblet reader itself; the reader keeps looking
+  for a turkey line that prints a weight. Beyond the three reviewed files,
+  the recipe editor's caps (400 lines, 120 steps of 10,000 characters) now
+  apply to each subsection, which only the 2 MB body bounded before. Three
+  cap shapes pin the giblet section, the set-aside loop and the PUT
+  revert; the full server suite is green on the live corpus.
 - **2026-10-09 — the prep50 design pass (audit 5's patterns; six planners,
   a synthesizer, a critic; `.claude/diag/2026-10-09/prep50/design_v2.md`).**
   Eight zero-request batches and one live step: M71 (step readers: a

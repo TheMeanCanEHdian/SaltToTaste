@@ -423,31 +423,7 @@ void _validateRecipe(Recipe recipe) {
     }
   }
 
-  if (recipe.ingredients.length > 60) {
-    throw const ValidationException('At most 60 ingredient groups.');
-  }
-  var lines = 0;
-  for (final group in recipe.ingredients) {
-    _checkLength('ingredient group', group.group, 200);
-    for (final line in group.items) {
-      lines += 1;
-      _requireLength('ingredient raw', line.raw, min: 1, max: 1000);
-      _checkLength('ingredient item', line.item, 500);
-      _checkLength('ingredient prep', line.prep, 500);
-      if (line.amounts.length > 8) {
-        throw const ValidationException(
-          'At most 8 amounts per ingredient line.',
-        );
-      }
-      for (final amount in line.amounts) {
-        _requireLength('amount quantity', amount.quantity, min: 0, max: 40);
-        _checkLength('amount unit', amount.unit, 40);
-      }
-    }
-  }
-  if (lines > 400) {
-    throw const ValidationException('At most 400 ingredient lines.');
-  }
+  _checkIngredients(recipe.ingredients);
 
   for (final (field, minutes) in [
     ('times.prep', recipe.times.prep),
@@ -459,15 +435,17 @@ void _validateRecipe(Recipe recipe) {
     }
   }
 
-  if (recipe.steps.length > 120) {
-    throw const ValidationException('At most 120 steps.');
-  }
-  for (final step in recipe.steps) {
-    _requireLength('step text', step.text, min: 1, max: 10000);
-    _checkLength('step label', step.label, 200);
-  }
+  _checkSteps(recipe.steps);
   if (recipe.subsections.length > 60) {
     throw const ValidationException('At most 60 subsections.');
+  }
+  // v70 (Run 064 critic, F10): a subsection's lines and steps under the
+  // recipe's own caps — nutrition computes each titled one as a recipe of
+  // its own (a section), whose cost the caps bound; only the 2 MB body
+  // bounded them before.
+  for (final subsection in recipe.subsections) {
+    _checkIngredients(subsection.ingredients ?? const []);
+    _checkSteps(subsection.steps ?? const []);
   }
   // v47 (F11, Run 061 critic): a section is keyed by its exact title
   // (nutrition's `<host id>#<title>`), so a second section of one title
@@ -496,6 +474,48 @@ void _validateRecipe(Recipe recipe) {
     for (final step in technique.steps) {
       _checkImagePath('technique image', step.image);
     }
+  }
+}
+
+/// The ingredient caps of a recipe and of each subsection: 60 groups, 400
+/// lines, each line's fields and amounts.
+void _checkIngredients(List<IngredientGroup> groups) {
+  if (groups.length > 60) {
+    throw const ValidationException('At most 60 ingredient groups.');
+  }
+  var lines = 0;
+  for (final group in groups) {
+    _checkLength('ingredient group', group.group, 200);
+    for (final line in group.items) {
+      lines += 1;
+      _requireLength('ingredient raw', line.raw, min: 1, max: 1000);
+      _checkLength('ingredient item', line.item, 500);
+      _checkLength('ingredient prep', line.prep, 500);
+      if (line.amounts.length > 8) {
+        throw const ValidationException(
+          'At most 8 amounts per ingredient line.',
+        );
+      }
+      for (final amount in line.amounts) {
+        _requireLength('amount quantity', amount.quantity, min: 0, max: 40);
+        _checkLength('amount unit', amount.unit, 40);
+      }
+    }
+  }
+  if (lines > 400) {
+    throw const ValidationException('At most 400 ingredient lines.');
+  }
+}
+
+/// The step caps of a recipe and of each subsection: 120 steps of 1–10,000
+/// characters.
+void _checkSteps(List<RecipeStep> steps) {
+  if (steps.length > 120) {
+    throw const ValidationException('At most 120 steps.');
+  }
+  for (final step in steps) {
+    _requireLength('step text', step.text, min: 1, max: 10000);
+    _checkLength('step label', step.label, 200);
   }
 }
 

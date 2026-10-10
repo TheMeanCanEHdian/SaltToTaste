@@ -124,8 +124,18 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v31 (the bread a held breading processes into its crumbs), first
       // met at the caps by M69's coated-vegetable shape (closer 1).
       'memo:processesBread',
+      // v70 (review Run 063/064 F1): the giblets' stir gate, read once per
+      // index; the host's bird, once per section instance.
+      'memo:stirsGiblets',
+      'memo:hostBird',
+      // v54 (Q25), first met at the caps by v70's giblet section (its wine):
+      // the steps' alcohol sentences, once per index.
+      'memo:alcoholSentences',
     ])
       once: 1,
+    // v54 (Q25): an alcohol line's reading, once per position and record —
+    // a row's record, and a compute's old and new one at most.
+    'memo:alcohol': 2 * lines,
     // v51 (M49): the oil a pour-off cuts, per pour-off sentence — the first
     // fat pour-off's and rule B1's (at most two per index).
     'memo:panOil': 2,
@@ -163,6 +173,8 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v67 (M69 R2, closer 1 — verify1 D2): whether a coat sentence names a
       // vegetable's head.
       'memo:coatNamed',
+      // v70 (review Run 063 F2/F3): the one line a set-aside half takes from.
+      'memo:setAsideLine',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,
