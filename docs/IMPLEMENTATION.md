@@ -3608,6 +3608,39 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-09 — the prep50 design pass (audit 5's patterns; six planners,
+  a synthesizer, a critic; `.claude/diag/2026-10-09/prep50/design_v2.md`).**
+  Eight zero-request batches and one live step: M71 (step readers: a
+  printed step amount for an amount-less line, a pressed-and-discarded
+  strain, a kept tablespoon of strained solids, galangal, reserved-oil
+  spoonfuls, bacon fat in the frying medium, held-coat mixture parts;
+  −2,843 kcal of recipe energy), M72 (the cooked white rice record, cassava
+  pared at AH-102 item 496's 74 %, the whole brisket's and the short ribs'
+  braised pairs with the fat columns deducted behind a printed skim,
+  peaches 76 % and Brussels sprouts 90 % from AH-102; −3,977), M73
+  (flavourings and stand-in flags; 0 kcal), then the owner-gated M74–M78
+  (the brisket flats; optional sub-recipes served with the dish; the
+  tart's own pizza dough and kasseri on provolone; extra-virgin olive oil
+  on SR 171413's analytical energy; the Parmesan crust whole and the C4
+  pan fat), the live step L50 (≤ 13 named requests → snapshot 28) and
+  M79–M80 on its records. Decided under the standing authorization: Q3
+  (a), Q4 (a), Q7 (c), Q8 (a) keep, Q9 (a)+(b) conditional on a printed
+  volume, Q10 (b′) the domestic rack at its own dry-heat pair, Q11 (c) then
+  (b), Q12 keep Q8 (b) and spend the two conditional searches, Q13 (a).
+  Put to the owner: Q1 (the home-corned brisket 0091 onto the ⅛-inch flat
+  record at its braised pair — its steps print the trim; the owner's Q2
+  (c) wording kept it on the fresh 0-inch flat), Q2 (optional sub-recipe
+  references served with the dish: 0 g accounted, −5,485 kcal, four
+  recipes complete), Q5 (re-opens the 2026-10-08 "not a defect": the
+  Foundation olive-oil record carries no energy and is credited at 843
+  kcal/100 g against SR's 884; 251 rows, +4,537), Q6 (the Parmesan crust,
+  the owner's Q5 (d): count the printed line whole, +776). Expected at the
+  recommendations: audit 5's calibration set median 8.5 → 5.3 %, all 100
+  recipes' signed mean +3.3 → +0.9 %. The YAML-restructuring constraint is
+  binding: nothing parses the raw line's measurement, item or alternative
+  grammar beyond what ships; each trigger that will move onto a structured
+  field is marked, and the line-grammar cases (the Morello jar's reserved
+  juice, three container-volume lines) wait for the fields.
 - **2026-10-09 — exit of the prep49 round: re-calibration on v69 and blind
   audit 5 (snapshot 27; `.claude/diag/2026-10-09/audit5/report.md`,
   `exit49/recalibration_v62_v67_v69.txt`).** Audit 4's 25 hand-counted
