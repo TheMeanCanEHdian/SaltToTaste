@@ -3608,6 +3608,28 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-15 — live step L50 and SNAPSHOT 28 (prep50 §2 L50; the
+  standing authorization; run in tandem with the M71 build on a scratch
+  copy of snapshot 27).** 15 requests, each named before it was spent
+  (`.claude/diag/2026-10-15/live62/m62_list.md`, the raw JSON in
+  `live62_raw/`). Read: FNDDS 2706442 "Chicken or turkey parmigiana" lists
+  raw chicken with its crumbs, flour, egg and Parmesan as separate inputs,
+  so a crumb-crust figure is readable for M80; FNDDS 2706445 "Chicken
+  kiev" lists one pre-coated fast-food input and gives nothing; FNDDS
+  2710065 "Vegetable tempura" batters with water, flour and egg yolk and
+  no beer or spirit, so the live step gives no USDA evidence on ethanol in
+  a fried batter and the Q8 (b) ruling stands with its gap; SR 167781
+  "Candied fruit" prints no portion, so the crystallized-ginger volume
+  comes from labels (25 read: ¼ cup 28–50 g with 30 g the mode, 1 Tbsp 15
+  g, 1 tsp 3.5 g — M79 picks the printed volume nearest each line's unit
+  and states the spread); SR 167765 "Watermelon, raw" ('cup, diced' 152 g)
+  is the sibling for the seedless-flesh record; the lamb rib search now
+  holds SR 174377 in a real answer for the rack's rank-as; the onion-ring
+  search returned only restaurant products, so Q11 falls to the
+  fried-cauliflower stand-in; no battered-fish recipe exists in FNDDS.
+  SNAPSHOT 28 = `.claude/diag/2026-10-15/snap28.db` (foods 1,137,
+  searches 1,914; 0 key rows, 0 sessions), the replay base for M79–M80;
+  the live caches are seeded from it at the next deploy.
 - **2026-10-15 — the owner's rulings on the prep50 design's four open
   questions.** Q1: the home-corned brisket 0091 moves to the ⅛-inch flat
   record (SR 173128) at USDA's braised pair, the rendered fat deducted and
