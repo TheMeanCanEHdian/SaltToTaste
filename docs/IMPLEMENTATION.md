@@ -3608,6 +3608,20 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-15 — the owner's rulings on the prep50 design's four open
+  questions.** Q1: the home-corned brisket 0091 moves to the ⅛-inch flat
+  record (SR 173128) at USDA's braised pair, the rendered fat deducted and
+  the served cup of broth stated as a gap; the cure stays uncounted and the
+  corned flag stays (M74, alone). Q2: optional sub-recipe references KEEP
+  counting whole — the design's served-with convention is declined, so
+  batch M75 is dropped and the tom yum soup's optional chili jam keeps its
+  routed share (M71's reserved-oil read still applies to it). Q5: the
+  extra-virgin olive oil rows read SR 171413's nutrients through the
+  sibling mechanism (M77, alone; the record and grams stay; plain olive
+  oil stays on the FNDDS record, 1.8 % apart, disclosed). Q6: the Parmesan
+  crust line is counted whole and flagged (M78, with the C4 pan-fat rule).
+  Order unchanged otherwise: M71–M73 under the standing authorization,
+  then M74, M76, M77, M78, the live step L50, M79–M80.
 - **2026-10-09 — matcher v70: the fixes of the dual-fleet evidence-gated
   review Run 063/064 on v63–v69 (Run 063 Sonnet 5.5: 8 claimed, 8
   survived; Run 064 Opus 5.5: 2 claimed, 2 survived; the union's eleven
