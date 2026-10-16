@@ -3608,6 +3608,23 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-15 — a simplification pass added to the matcher plan (the
+  owner's decision).** After the prep50 round's exit measurement, a
+  read-only over-engineering audit of the nutrition engine (engine.dart,
+  grams.dart, matcher.dart and the per-batch test files) produces a ranked
+  ledger: the record-keyed tables (rank-as entries, flag arms, pair-share
+  maps) as one data-driven reader; one sentence-scan utility for the step
+  readers that enforces the linear-regex and per-index-memo rules the
+  review Run 063/064 showed are not structural today; basis and flag
+  texts generated from one place; superseded arms and dead constants; the
+  per-batch test files folded into per-mechanism suites. The refactor
+  itself runs as a series of small batches only after the YAML
+  restructuring's structured fields land (the raw-line readers they
+  supersede go first), each gated by the byte-identical replay on the
+  current snapshot, the full suite, the owner's mutants, and a dual-fleet
+  review at the end of the series. The replay harness makes "no intended
+  functionality lost" a byte-level test, which is what makes the pass
+  safe.
 - **2026-10-15 — live step L50 and SNAPSHOT 28 (prep50 §2 L50; the
   standing authorization; run in tandem with the M71 build on a scratch
   copy of snapshot 27).** 15 requests, each named before it was spent
