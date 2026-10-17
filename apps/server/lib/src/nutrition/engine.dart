@@ -3610,7 +3610,18 @@ DiscardedMedium? discardedMediumOf(
     if (_massZeroes(line, normalized)) {
       return DiscardedMedium.fryingOil;
     }
-    return bySentence ? _oilBySentence(recipe, line) : null;
+    if (!bySentence) {
+      return null;
+    }
+    // v71 (M71): a fat an "add" or "combine" sentence puts in the frying
+    // oil ([_joinsFryingOil], pF R3); a fat the steps use only printed
+    // spoonfuls of ([_reservedUseOf], `_partialUseOf`'s `used`, pF R2).
+    return _oilBySentence(recipe, line) ??
+        (_joinsFryingOil(recipe, line, head!)
+            ? DiscardedMedium.fryingOil
+            : _reservedUseOf(recipe, line, head) == null
+            ? null
+            : DiscardedMedium.partialUse);
   }
   if (head == 'salt' || head == 'sugar') {
     // A cure rinsed off goes with the rinse, whatever the recipe calls it
@@ -4326,6 +4337,25 @@ class _Parting {
               next != null &&
               next.trimLeft().startsWith('discard') &&
               next.contains('solids');
+          // v71 (M71 R-E5, prep50 design_v2 §2; pC): "Strain the vegetables
+          // and liquid … Press the solids with the back of a spatula …
+          // Discard the vegetables." (braised turkey, slow-roasted turkey) —
+          // a strain naming the vegetables, contents or liquid, its next
+          // sentence opening "press (on) (the) solids" and the one after
+          // opening "discard (the) vegetables|solids". The noun guard keeps
+          // arista's "strain … lemon" squeeze out.
+          final pressesThenDiscards =
+              next != null &&
+              _strainsContents.hasMatch(s) &&
+              _pressesSolids.hasMatch(next.trimLeft()) &&
+              (sentences
+                      .skip(j + 1)
+                      .followedBy(all.skip(i + 1).expand((s) => s))
+                      .skip(1)
+                      .firstOrNull
+                      ?.trimLeft()
+                      .startsWith(_discardsVegetables) ??
+                  false);
           // Closer 1 (V1-D3): a strain whose next sentence keeps some of
           // the solids ("Measure 1 tablespoon of solids and 1 tablespoon of
           // oil into large bowl", grilled potatoes) discards none whole.
@@ -4334,7 +4364,9 @@ class _Parting {
               _keepsSolids.hasMatch(next)) {
             continue;
           }
-          if (_strainedSolids.hasMatch(s) || discardsNext) {
+          if (_strainedSolids.hasMatch(s) ||
+              discardsNext ||
+              pressesThenDiscards) {
             return _pureeStrain.hasMatch(s) ? null : (i, j);
           }
           if (_strainsTheLiquid.hasMatch(s) &&
@@ -4353,6 +4385,12 @@ class _Parting {
 // (guay-tiew tom yum goong) strains with no "strain".
 final RegExp _strainWord = RegExp(
   r'\bstrain|\bremove (?:the )?solids\b[^.]*\bdiscard',
+);
+// v71 (M71 R-E5): the three sentences of a strain, a press and a discard.
+final RegExp _strainsContents = RegExp(r'\b(?:vegetables|contents|liquid)\b');
+final RegExp _pressesSolids = RegExp('^press(?:ing)? (?:on )?(?:the )?solids');
+final RegExp _discardsVegetables = RegExp(
+  '^discard (?:the )?(?:vegetables|solids)',
 );
 final RegExp _keepsSolids = RegExp(
   r'\b(?:measure|reserve|transfer|return)\w*\b[^.]*\bsolids\b',
@@ -4393,6 +4431,10 @@ const Set<String> _vegetableHeads = {
   'garlic',
   'leek',
   'ginger',
+  // v71 (M71, prep50 design_v2 §2; pE R-E3, closes M64 H1): the rhizome
+  // ATK weighs on ginger — smashed with the lemongrass and lifted out
+  // with the solids (guay-tiew tom yum goong S2).
+  'galangal',
   'lemongrass',
   'scallion',
   'chile',
@@ -5094,7 +5136,7 @@ GramResolution? _partialKept(
 ) {
   final carbs = food.nutrientsPer100g['205'] ?? 0;
   final grams = switch (partial.kind) {
-    'remainder' => resolved.grams * (1 - partial.share!),
+    'remainder' || 'used' => resolved.grams * (1 - partial.share!),
     'cooked' =>
       carbs > 0
           ? min(
@@ -5131,6 +5173,9 @@ GramResolution? _partialKept(
 /// - `reserved` / `rest` (iii): a whole food reserved for another use
 ///   ("transfer the wings to a dinner plate to reserve for another use") or
 ///   the rest of it discarded ("Discard remaining beer and can") — 0 g.
+/// - `used` (v71, M71 pF R2): a fat line whose steps use only printed
+///   spoonfuls of "the reserved oil" ([_reservedUseOf]) — `share` the part
+///   never used.
 /// A kept VOLUME with no printed weight (iv) is no part here: it is
 /// counted whole and flagged ([_keptVolumeOf]). Null otherwise.
 _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
@@ -5154,6 +5199,16 @@ _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
     printed: printed,
     pieces: pieces,
   );
+  // v71 (M71 pF R2): first — the oil branch of [discardedMediumOf] reads
+  // only this kind.
+  if (_reservedUseOf(recipe, line, head) case final used?) {
+    return use(
+      'used',
+      used.step,
+      share: used.share,
+      printed: used.printed,
+    );
+  }
   final index = _stepIndexOf(recipe);
   if (head == 'potato') {
     for (final (:step, sentence: _, :match) in _sentencesMatching(
@@ -5285,6 +5340,243 @@ _PartialUse? _partialUseOf(Recipe recipe, IngredientLine line, String head) {
   }
   return null;
 });
+
+/// v71 (batch M71, prep50 design_v2 §2; planner pF R2, critic F5): a fat
+/// line (oil, fat, shortening or lard, by volume) counted whole whose steps
+/// — its scope ([_stepScopeOf]) — use only printed spoonfuls of the
+/// reserved fat: "Add fish sauce and 2 tablespoons reserved oil" (the tom
+/// yum's Nam Prik Pao), "1 teaspoon of the reserved oil" / "1 teaspoon more
+/// reserved oil" / "3 tablespoons more reserved oil" (nasi goreng), "1
+/// tablespoon reserved oil" twice (bulalo) — singular AND plural units.
+/// Kept = Σ those volumes at the line's own g/mL, less than the line
+/// (`share` the part never used); null when no sentence of the scope
+/// prints one, when one uses the REST ("remaining (reserved) oil":
+/// arista's "… with remaining reserved oil") — unless it opens "discard"
+/// (bulalo's "Discard any remaining reserved oil": a discarded remainder
+/// does not block), or when the prints reach the line. The prints once per
+/// head (`memo:reservedUse`, `memo:remainingFat` — anchored, bounded
+/// patterns, linear in the steps), their scoped sum once per head and
+/// scope (`memo:reservedUseIn`), at most 8 of them named ([_namedPrints]).
+/// The fried aromatics' uptake is not counted (no cached record; the flag
+/// says so).
+({int step, double share, String printed})? _reservedUseOf(
+  Recipe recipe,
+  IngredientLine line,
+  String head,
+) {
+  if (!_fatHeads.contains(head)) {
+    return null;
+  }
+  final own = volumeMlOf(line.amounts);
+  if (own == null || own <= 0) {
+    return null;
+  }
+  final index = _stepIndexOf(recipe);
+  // Key: head — the fat each pattern names. Each step's prints in order,
+  // each with its volume (one parse per distinct printed amount).
+  final hits = index.memo(('reservedUse', head), () {
+    final spoonful = RegExp(
+      '(?<![\\w$vulgarFractionChars])($_amountRun)\\s+(teaspoons?|'
+      r'tablespoons?)\s+(?:of the\s+|more\s+)?reserved\s+'
+      '${RegExp.escape(head)}\\b',
+    );
+    final mlOf = <String, double>{};
+    final out = <int, List<({String amount, double ml})>>{};
+    // v71 closer 4: the whole step, not each sentence — no part of the
+    // pattern matches a period, so no print spans a sentence break and the
+    // prints are the per-sentence ones, in order. A step without
+    // "reserved" holds no print (a native find).
+    for (final (i, step) in index.lower.indexed) {
+      if (!step.contains('reserved')) {
+        continue;
+      }
+      final at = <({String amount, double ml})>[];
+      for (final m in spoonful.allMatches(step)) {
+        final amount = '${m[1]!.trim()} ${m[2]}';
+        at.add((
+          amount: amount,
+          ml: mlOf[amount] ??=
+              volumeMlOf(parseIngredientLine('$amount x').amounts) ?? 0,
+        ));
+      }
+      if (at.isNotEmpty) {
+        _count('reservedHits', at.length);
+        out[i] = at;
+      }
+    }
+    return out;
+  });
+  if (hits.isEmpty) {
+    return null;
+  }
+  final position = _positionOf(recipe, line);
+  final name = position == null ? null : _scopeNameOf(recipe, position);
+  // v71 closer 3 (verify3 D1): the scope's sum, its first step and its
+  // prints, once per head and scope — a line's call is its own volume
+  // against it. Each call walked and parsed every hit of the head: compute
+  // 50.8 s, the GET 99.8 s at the caps (base 1.2 s / 0.9 s).
+  // Key: head — the fat; name — the scope's heading (null: every step).
+  final scoped = index.memo(('reservedUseIn', head, name), () {
+    final scope = position == null
+        ? null
+        : _stepScopeOf(recipe, position).steps;
+    bool inScope(int step) => scope == null || scope.contains(step);
+    // Key: head — the fat a remainder names.
+    final rest = index.memo(('remainingFat', head), () {
+      final remaining = RegExp(
+        '\\bremaining (?:reserved )?${RegExp.escape(head)}\\b',
+      );
+      return {
+        for (final (i, sentences) in index.sentences.indexed)
+          if (index.lower[i].contains('remaining'))
+            for (final text in sentences)
+              if (remaining.hasMatch(text) && !_opensDiscard.hasMatch(text)) i,
+      };
+    });
+    if (rest.any(inScope)) {
+      return null;
+    }
+    int? first;
+    var ml = 0.0;
+    final amounts = <String>[];
+    for (var i = 0; i < index.sentences.length; i++) {
+      if (hits[i] case final at? when inScope(i)) {
+        first ??= i;
+        _count('reservedHitsRead', at.length);
+        for (final h in at) {
+          ml += h.ml;
+          amounts.add(h.amount);
+        }
+      }
+    }
+    // v71 closer 4 (verify4 D1): at most 8 named — every print named twice
+    // in each row's basis made one matches GET 490 MB at the caps.
+    return first == null || ml <= 0
+        ? null
+        : (
+            step: first,
+            ml: ml,
+            printed: _namedPrints(amounts, amounts.length),
+          );
+  });
+  if (scoped == null || scoped.ml >= own) {
+    return null;
+  }
+  return (
+    step: scoped.step,
+    share: 1 - scoped.ml / own,
+    printed: scoped.printed,
+  );
+}
+
+const Set<String> _fatHeads = {'oil', 'fat', 'shortening', 'lard'};
+
+/// v71 (batch M71, prep50 design_v2 §2; planner pF R3): a fat line — fat,
+/// lard or shortening, never an oil (the sauté oils beside a fry stay
+/// counted) — that an "add" or "combine" sentence puts in the frying oil:
+/// its step names the oil, and a line with head 'oil' is a frying oil
+/// ([DiscardedMedium.fryingOil]) — "heat the oil … to 325 degrees. … Add
+/// the bacon grease (if using)" (classic french fries), "Combine the
+/// potatoes, oil, and bacon fat (if using)" (easier french fries). It joins
+/// the frying medium: 0 g, the fried food's uptake counted on the frying
+/// oil's row ([_m52Plan] never sizes it — [_joinedFryingFat]). The line is
+/// named by its own word before the head with any fat word ("bacon fat":
+/// "bacon fat", "bacon grease", "bacon drippings"), else by its head. The
+/// add-or-combine sentences of a step naming the oil read once per index
+/// ([_fatsIntoOil]); a line looks its word up there, and whether a line
+/// with head 'oil' is a frying oil is asked once per index
+/// (`memo:friesOil`). (v71 closer 2, verify2 D1: each call walked every
+/// add sentence with its own pattern and scanned the whole step for "oil"
+/// per sentence naming the line — 104 s per compute at the caps.)
+bool _joinsFryingOil(Recipe recipe, IngredientLine line, String head) {
+  if (!_fatHeads.contains(head) || head == 'oil') {
+    return false;
+  }
+  final into = _fatsIntoOil(recipe);
+  if (into.owns.isEmpty && into.heads.isEmpty) {
+    return false;
+  }
+  final words = normalizeItem(lineItemOf(line)).split(' ');
+  final at = words.lastIndexOf(head);
+  final own = at < 1 ? null : words[at - 1];
+  if (!(own == null || !_wordOnly.hasMatch(own)
+      ? into.heads.contains(head)
+      : into.owns.contains(own))) {
+    return false;
+  }
+  // Key: none — the recipe's own lines (the index is per Recipe instance).
+  return _stepIndexOf(recipe).memo(
+    #friesOil,
+    () => [
+      for (final (k, h) in _headsOf(recipe).indexed)
+        if (h == 'oil') k,
+    ].any((k) => _mediumAt(recipe, k) == DiscardedMedium.fryingOil),
+  );
+}
+
+/// The fat names [_joinsFryingOil] reads, once per index
+/// (`memo:fatsIntoOil`): of each add-or-combine sentence whose step names
+/// the oil (each step tested once, its text holding "oil" at all first;
+/// the sentences read counted `fatsIntoOilReads`), the words written
+/// before "fat", "grease" or "drippings" (`owns` — "bacon fat", "bacon
+/// grease") and the fat heads it names (`heads`, [_names]; a head the
+/// sentence does not hold as text is not scanned). Key: none — the steps
+/// alone.
+({Set<String> owns, Set<String> heads}) _fatsIntoOil(Recipe recipe) {
+  final index = _stepIndexOf(recipe);
+  return index.memo(#fatsIntoOil, () {
+    final owns = <String>{};
+    final heads = <String>{};
+    var reads = 0;
+    for (final (i, sentences) in index.sentences.indexed) {
+      bool? oil;
+      for (final text in sentences) {
+        if (!_addsOrCombines.hasMatch(text)) {
+          continue;
+        }
+        if (!(oil ??=
+            index.lower[i].contains('oil') && _names(index.lower[i], 'oil'))) {
+          break;
+        }
+        reads++;
+        // The word run before each fat word — what the per-line pattern
+        // `\b<own> (?:fat|grease|drippings)\b` matched.
+        for (final m in _fatWord.allMatches(text)) {
+          var w = m.start;
+          while (w > 0 && _isWordUnit(text.codeUnitAt(w - 1))) {
+            w--;
+          }
+          if (w < m.start) {
+            owns.add(text.substring(w, m.start));
+          }
+        }
+        for (final h in const ['fat', 'shortening', 'lard']) {
+          if (text.contains(h) && _names(text, h)) {
+            heads.add(h);
+          }
+        }
+      }
+    }
+    if (reads > 0) {
+      _count('fatsIntoOilReads', reads);
+    }
+    return (owns: owns, heads: heads);
+  });
+}
+
+/// A fat word after a space ([_fatsIntoOil] reads the word before it).
+final RegExp _fatWord = RegExp(r' (?:fat|grease|drippings)\b');
+
+/// Whether line [i] of [recipe] joined its frying oil ([_joinsFryingOil]):
+/// the plan's pans never size it.
+bool _joinedFryingFat(Recipe recipe, int i) {
+  final head = _headsOf(recipe)[i];
+  return head != null &&
+      _joinsFryingOil(recipe, nutritionLines(recipe)[i], head);
+}
+
+final RegExp _addsOrCombines = RegExp(r'\b(?:add|combine)\b');
+final RegExp _opensDiscard = RegExp(r'^\s*discard\b');
 
 final RegExp _keptCooked = RegExp(
   '\\b(?:transfer|measure)\\s+($_amountRun)\\s*'
@@ -5543,37 +5835,6 @@ Map<int, ({String text, (int, int) at})> _dipsOf(
   }
   final heads = _headsOf(recipe);
   final lines = nutritionLines(recipe);
-  final count = <String, int>{};
-  for (final head in heads.nonNulls) {
-    count[head] = (count[head] ?? 0) + 1;
-  }
-  // v65 (M66 R3'): each shared head's lines' words, and in how many of
-  // them each word stands — once, O(the lines' words).
-  final words = <int, List<String>>{};
-  final shared = <String, Map<String, int>>{};
-  for (final (j, head) in heads.indexed) {
-    if (head != null && count[head]! > 1) {
-      final w = words[j] = normalizeItem(lineItemOf(lines[j])).split(' ');
-      final tally = shared[head] ??= {};
-      for (final x in w.toSet()) {
-        tally[x] = (tally[x] ?? 0) + 1;
-      }
-    }
-  }
-  // Line [k]'s own word: the one before its head, in no other line of it.
-  String? ownWord(int k, String head) {
-    final w = words[k]!;
-    final h = w.lastIndexWhere((x) => _names(x, head));
-    final word = h < 1 ? null : w[h - 1];
-    return word == null ||
-            !_wordOnly.hasMatch(word) ||
-            word == 'and' ||
-            word == 'or' ||
-            shared[head]![word] != 1
-        ? null
-        : word;
-  }
-
   final at = <int, (int, int)>{};
   for (final MapEntry(key: base, value: dipped) in dips.entries) {
     final made = <(int, int), bool>{};
@@ -5581,20 +5842,11 @@ Map<int, ({String text, (int, int) at})> _dipsOf(
       final t = index.sentence(p);
       return _mixVerb.hasMatch(t) && base.hasMatch(t);
     }();
-    final seen = <String, int>{};
     for (final (k, head) in heads.indexed) {
       if (head == null) {
         continue;
       }
-      final nth = seen[head] = (seen[head] ?? -1) + 1;
-      final own = count[head] == 1 ? null : ownWord(k, head);
-      final all = _naming(recipe, own ?? head);
-      final mentions = count[head] == 1 || own != null
-          ? all
-          : nth < all.length
-          ? [all[nth]]
-          : const <(int, int)>[];
-      for (final p in mentions) {
+      for (final p in _lineMentionsOf(recipe, k)) {
         if (!before(p, dipped.last)) {
           break;
         }
@@ -5631,6 +5883,195 @@ Map<int, ({String text, (int, int) at})> _dipsOf(
         ),
   };
 });
+
+/// Where a sentence of [recipe] names its line [k] (v65, M66 R3', read by
+/// [_dipsOf]; v71, M71 D-E1 by [_coatPartsOf]): every [_naming] of its head
+/// when no other line shares it; of its OWN word when one does — the token
+/// right before the head in its item, one word, never "and"/"or", written
+/// in no other line of that head ("ground black pepper": black; "cayenne
+/// pepper": cayenne); else A13's nth mention of the head. Empty for a line
+/// with no head. The words once per Recipe instance (O(the lines' words)).
+List<(int, int)> _lineMentionsOf(Recipe recipe, int k) {
+  final heads = _headsOf(recipe);
+  final head = heads[k];
+  if (head == null) {
+    return const [];
+  }
+  final own = _ownWords[recipe] ??= () {
+    final lines = nutritionLines(recipe);
+    final count = <String, int>{};
+    for (final head in heads.nonNulls) {
+      count[head] = (count[head] ?? 0) + 1;
+    }
+    // Each shared head's lines' words, and in how many of them each word
+    // stands.
+    final words = <int, List<String>>{};
+    final shared = <String, Map<String, int>>{};
+    for (final (j, head) in heads.indexed) {
+      if (head != null && count[head]! > 1) {
+        final w = words[j] = normalizeItem(lineItemOf(lines[j])).split(' ');
+        final tally = shared[head] ??= {};
+        for (final x in w.toSet()) {
+          tally[x] = (tally[x] ?? 0) + 1;
+        }
+      }
+    }
+    final seen = <String, int>{};
+    return [
+      for (final (j, head) in heads.indexed)
+        if (head == null)
+          (word: null, nth: 0, unique: true)
+        else
+          (
+            // Line j's own word: the one before its head, in no other line
+            // of it.
+            word: count[head] == 1
+                ? null
+                : () {
+                    final w = words[j]!;
+                    final h = w.lastIndexWhere((x) => _names(x, head));
+                    final word = h < 1 ? null : w[h - 1];
+                    return word == null ||
+                            !_wordOnly.hasMatch(word) ||
+                            word == 'and' ||
+                            word == 'or' ||
+                            shared[head]![word] != 1
+                        ? null
+                        : word;
+                  }(),
+            nth: seen[head] = (seen[head] ?? -1) + 1,
+            unique: count[head] == 1,
+          ),
+    ];
+  }();
+  final (:word, :nth, :unique) = own[k];
+  final all = _naming(recipe, word ?? head);
+  return unique || word != null
+      ? all
+      : nth < all.length
+      ? [all[nth]]
+      : const [];
+}
+
+final Expando<List<({String? word, int nth, bool unique})>> _ownWords =
+    Expando();
+
+/// [_coatPartsOf]' mixing verb as a whole word — never "mixture"
+/// ([_mixVerb] reads "roll them in the cornstarch mixture" as a mix: the
+/// coated food).
+final RegExp _mixesWord = RegExp(
+  r'\b(?:whisk(?:s|ed|ing)?|combin(?:e|es|ed|ing)|stir(?:s|red|ring)?|'
+  r'beat(?:s|en|ing)?|mix(?:es|ed|ing)?|sift(?:s|ed|ing)?)\b',
+);
+
+/// v71 (batch M71 D-E1; prep50 design_v2 §2, planner pE): the lines a
+/// mixing sentence ([_mixesWord]) puts in the mixture of one of [coats] —
+/// "Whisk the cornstarch, sugar, salt, and black pepper in a small bowl"
+/// (maple-glazed pork tenderloin: the cornstarch held `coating`): a line
+/// with no medium and no dip's ([_dipsOf]) named ([_lineMentionsOf]) in a
+/// sentence that mixes and names a coat. [coats] are the coat lines
+/// [_m52Plan] holds with no budget (the no-budget branch — a budgeted
+/// coat's seasonings are counted as before); a line's medium is read only
+/// where a held coat's mixing sentence names it. [_coatOfPart] is the same
+/// relation read from the part's side (over every coat line).
+Set<int> _coatPartsOf(Recipe recipe, Iterable<int> coats) {
+  final index = _stepIndexOf(recipe);
+  // The mixing sentences naming a held coat (each mention tested alone).
+  final at = {
+    for (final c in coats)
+      for (final p in _lineMentionsOf(recipe, c))
+        if (_mixesAt(index, p)) p,
+  };
+  if (at.isEmpty) {
+    return const {};
+  }
+  final held = coats.toSet();
+  final dips = _dipsOf(recipe);
+  return {
+    for (var k = 0; k < _headsOf(recipe).length; k++)
+      if (!held.contains(k) &&
+          !dips.containsKey(k) &&
+          _lineMentionsOf(recipe, k).any(at.contains) &&
+          _mediumAt(recipe, k) == null)
+        k,
+  };
+}
+
+/// The coat line whose mixture line [k] of [recipe] is a part of
+/// ([_coatPartsOf], read from the part's side; the first coat of its first
+/// mixing sentence), or null — the gate of the readers beside [_m52Plan]
+/// ([derivedFor], [_unplannedOf], [_m52KeysAlike], [_m52OnConfirm]). Cheap
+/// first: no mixing sentence among [k]'s own mentions (each tested alone,
+/// never a pass over the steps), or a medium of [k]'s own, reads no other
+/// line's medium.
+int? _coatOfPart(Recipe recipe, int k) {
+  final index = _stepIndexOf(recipe);
+  if (!_mayHoldCoat(recipe) ||
+      !_lineMentionsOf(recipe, k).any((p) => _mixesAt(index, p)) ||
+      _dipsOf(recipe).containsKey(k) ||
+      _mediumAt(recipe, k) != null) {
+    return null;
+  }
+  return _coatMixes(recipe)[k];
+}
+
+/// Whether a line of [recipe] could be a coat at all — a flour, starch or
+/// crumb ([_dredgeHeads]) or a coat layer's head ([_coatLayerHeads]): every
+/// route to [DiscardedMedium.coating] reads one. Text only, O(lines), once
+/// per index (`memo:mayHoldCoat` — v71 closer 1: every gate call read the
+/// lines again).
+bool _mayHoldCoat(Recipe recipe) => _stepIndexOf(recipe).memo(
+  #mayHoldCoat,
+  () => _headsOf(
+    recipe,
+  ).any((h) => _dredgeHeads.contains(h) || _coatLayerHeads.contains(h)),
+);
+
+/// Whether [index]'s sentence [p] mixes ([_mixesWord]) — each sentence
+/// tested once per index whichever D-E1 reader asks ([_coatPartsOf], the
+/// [_coatOfPart] gate, [_coatMixes]; `memo:mixes`), each test counted
+/// (`mixTests`, at most one per sentence: a reader that tests a sentence
+/// again on every call fails the count — v71 closer 1, verify1 D2).
+bool _mixesAt(_StepIndex index, (int, int) p) =>
+    // Key: p — the one sentence tested.
+    index.memo(('mixes', p), () {
+      _count('mixTests');
+      return _mixesWord.hasMatch(index.sentence(p));
+    });
+
+/// The coat each mixture part of [recipe] is first mixed with — every coat
+/// line ([DiscardedMedium.coating]) and the mixing sentences naming it,
+/// then each line's own mentions against them, once per index
+/// (`memo:coatMixes`; every line's mentions read once — RULE C: never every
+/// line tested on every mixing sentence). [_coatOfPart]'s; the plan reads
+/// its held coats' parts itself ([_coatPartsOf]).
+Map<int, int> _coatMixes(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#coatMixes, () {
+      final index = _stepIndexOf(recipe);
+      final heads = _headsOf(recipe);
+      // Every line this pass reads, counted (`coatMixLines`, the lines once
+      // per index: a pass run per gate call fails the count).
+      _count('coatMixLines', heads.length);
+      final coats = [
+        for (var k = 0; k < heads.length; k++)
+          if (_mediumAt(recipe, k) == DiscardedMedium.coating) k,
+      ];
+      final coatsAt = <(int, int), int>{};
+      for (final c in coats) {
+        for (final p in _lineMentionsOf(recipe, c)) {
+          if (_mixesAt(index, p)) {
+            coatsAt.putIfAbsent(p, () => c);
+          }
+        }
+      }
+      final dips = _dipsOf(recipe);
+      return {
+        for (var k = 0; k < heads.length; k++)
+          if (!coats.contains(k) && !dips.containsKey(k))
+            for (final p in _lineMentionsOf(recipe, k))
+              if (coatsAt[p] case final c?) k: c,
+      };
+    });
 
 /// v56 (M58 W): the positions of [recipe]'s lines a batter leaves in the
 /// bowl ([_leftInBowl] through the dip word "batter").
@@ -5761,6 +6202,13 @@ String? _m50DiscardedBasis(
     return null;
   }
   final medium = discardedMediumOf(recipe, line, normalized);
+  // v71 (M71 pF R3).
+  if (medium == DiscardedMedium.fryingOil &&
+      _joinsFryingOil(recipe, line, head)) {
+    return 'discarded in cooking — counted as 0 g · part of the frying '
+        "medium (the fried food's uptake is counted on the frying oil's "
+        'row)';
+  }
   if (medium == DiscardedMedium.strainedSolid) {
     final part = _discardedShareOf(recipe, line, head, medium!)?.part;
     return 'discarded in cooking${part == null ? ' — counted as 0 g' : ': '
@@ -5790,6 +6238,12 @@ String? _m50DiscardedBasis(
           'keep ${use.printed} of the ${use.cookedRecord!.state} potato; its '
           "raw weight by FDC's carbohydrate, ${use.cookedRecord!.fdcId})",
     'reserved' => 'reserved for another use (step $step) — counted as 0 g',
+    'used' =>
+      'only ${use.printed} of it used (from step $step) — the rest counted '
+          'as '
+          '0 g · approximate (the steps use ${use.printed} of the reserved '
+          "$head; the rest is not used here — the fried aromatics' oil not "
+          'counted)',
     _ => 'the rest discarded (step $step) — counted as 0 g',
   };
 }
@@ -6721,7 +7175,7 @@ String _ownSalt(String normalized) {
       amountlessLinesZero &&
       line.amounts.isEmpty &&
       !inShell &&
-      !(resolution != null && (_hostWeighed[resolution] ?? false));
+      !(resolution != null && (_amountlessWeighed[resolution] ?? false));
   if (decided) {
     return (
       grams: zero ? 0 : resolution?.grams,
@@ -11457,17 +11911,414 @@ GramResolution? hostWeighedGiblets(
             'giblets 6, fryer-roaster class) · approximate (the neck and '
             'tailpiece are strained out — not counted)',
       );
-      _hostWeighed[giblets] = true;
+      _amountlessWeighed[giblets] = true;
       return giblets;
     }
     return null;
   });
 }
 
-/// The resolutions [hostWeighedGiblets] gave — the amount-less weights
-/// [engineOutcome]'s 0 g rule lets through (Run 063 critic F8: exactly the
-/// giblet reader's, never another weight read off an amount-less raw).
-final Expando<bool> _hostWeighed = Expando();
+/// The resolutions [hostWeighedGiblets] and [stepAmountGrams] gave — the
+/// amount-less weights [engineOutcome]'s 0 g rule lets through (Run 063
+/// critic F8: exactly those readers', never another weight read off an
+/// amount-less raw).
+final Expando<bool> _amountlessWeighed = Expando();
+
+/// v71 (batch M71 R-H1; prep50 design_v2 §2, planner pC, audit pattern H):
+/// an amount-less [line] the steps give an amount — "Add 1 tablespoon oil
+/// and salt to dough" for the dough's "Vegetable oil" (ultimate grilled
+/// pizza) — weighed on the line's own record by the shipped [resolveGrams]
+/// (the `_partialUseOf` precedent: `parseIngredientLine('<amount> x')`);
+/// several prints sum ("from steps 2, 4, 5: ¼ teaspoon + 3 tablespoons + ⅛
+/// teaspoon", shrimp pad thai's sugar). A print is "<amount> <unit> (of)"
+/// then up to three of the line's own words and its head ([_formsOf]),
+/// read in the line's SCOPE ([_stepScopeOf]: its labelled group's steps; a
+/// section reads its own). Three guards (critic F4): (i) no other line of
+/// the scope has the head — the print is that line's (chocolate volcano
+/// cakes' "1½ cups sugar" is the granulated line's, not the confectioners'
+/// line's); (ii) no sentence of the scope naming the head multiplies or
+/// partitions it ([_multiplies]: "Repeat with remaining 2 dough rounds,
+/// adding 1 tablespoon oil" — pizza|12 reads nothing); (iii) a print in a
+/// hedged sentence ([_hedges]: "up to 1 tablespoon sugar to taste") is
+/// dropped — a to-taste extra in ANOTHER sentence leaves the print a floor
+/// (pizza|11's ½ teaspoon). Null when nothing is read.
+/// [re-point → `measurement`] the trigger moves onto the structured field.
+/// The reading is [stepAmountsOf]'s; this weighs it.
+/// RULE C: every print and the two guards' sentences are read once per
+/// index ([_stepPrintsOf], `memo:stepAmounts`, linear in the steps —
+/// anchored, bounded patterns); a line walks its head's prints in its own
+/// scope's steps (counted: `stepPrintsWalked`) and looks each multiplying
+/// sentence up in the head's [_naming], never the steps.
+/// ponytail: a print naming the food by another word ("the dressing") or
+/// farther than three words from its unit is not read.
+GramResolution? stepAmountGrams(
+  Recipe recipe,
+  IngredientLine line,
+  FdcFood? food,
+  String normalized,
+) {
+  final prints = stepAmountsOf(recipe, line);
+  if (prints.isEmpty) {
+    return null;
+  }
+  // Key: the line's position and its record (by value: a search hit and
+  // the detail of one FDC id weigh apart) — once per request.
+  return _stepIndexOf(recipe).memo(
+    ('stepAmountGrams', _positionOf(recipe, line), food),
+    () => _weighPrints(prints, line, food, normalized),
+  );
+}
+
+GramResolution? _weighPrints(
+  List<({int step, String amount})> prints,
+  IngredientLine line,
+  FdcFood? food,
+  String normalized,
+) {
+  // Each distinct print weighed once (RULE C: a step full of "1
+  // tablespoon" prints weighs one).
+  final weighed = <String, GramResolution?>{};
+  var grams = 0.0;
+  GramSource? source;
+  for (final p in prints) {
+    final g = weighed.putIfAbsent(
+      p.amount,
+      () => resolveGrams(
+        amounts: parseIngredientLine('${p.amount} x').amounts,
+        food: food,
+        normalizedItem: normalized,
+        kosherSalt: packsLikeKosherSalt(line.raw),
+      ),
+    );
+    if (g == null) {
+      return null;
+    }
+    grams += g.grams;
+    source ??= g.source;
+  }
+  final steps = {for (final p in prints) p.step + 1}.toList();
+  final read = GramResolution(
+    grams: grams,
+    source: source!,
+    basis:
+        'from step${steps.length > 1 ? 's' : ''} ${steps.join(', ')}: '
+        '${_namedPrints(prints.map((p) => p.amount), prints.length)}'
+        ' (no amount on the line)',
+  );
+  _amountlessWeighed[read] = true;
+  return read;
+}
+
+/// The first 8 of [n] printed [amounts] joined, then "+ … (n in all)": a
+/// step full of prints is summed whole, its basis stays a line, not the
+/// steps again ([_weighPrints], [_reservedUseOf]).
+String _namedPrints(Iterable<String> amounts, int n) {
+  final named = amounts.take(8).join(' + ');
+  return n > 8 ? '$named + … ($n in all)' : named;
+}
+
+/// [stepAmountGrams]' reading of an amount-less [line] of [recipe]: each
+/// print the guards keep, in step order — its step (0-based) and the
+/// amount as printed ("1 tablespoon"); empty when none (a line with an
+/// amount reads none).
+List<({int step, String amount})> stepAmountsOf(
+  Recipe recipe,
+  IngredientLine line,
+) {
+  if (line.amounts.isNotEmpty) {
+    return const [];
+  }
+  final position = _positionOf(recipe, line);
+  final head = position == null ? null : _headsOf(recipe)[position];
+  if (position == null || head == null || head.isEmpty) {
+    return const [];
+  }
+  final index = _stepIndexOf(recipe);
+  // Key: position — the line (its head, words and scope) read once.
+  return index.memo(
+    ('stepAmountsAt', position),
+    () => _stepAmountsAt(recipe, index, line, position, head),
+  );
+}
+
+List<({int step, String amount})> _stepAmountsAt(
+  Recipe recipe,
+  _StepIndex index,
+  IngredientLine line,
+  int position,
+  String head,
+) {
+  final scope = _stepScopeOf(recipe, position);
+  // (i) the head is this line's alone in the scope.
+  if ((scope.heads[head] ?? 0) > 1) {
+    return const [];
+  }
+  final prints = _stepPrintsOf(recipe, index);
+  // Each form's prints by step, in document order — a line walks its
+  // scope's steps only, never another group's prints.
+  final lists = [
+    for (final form in _formsOf(head).toSet())
+      if (prints.byForm[form] case final byStep?)
+        (
+          form,
+          scope.steps == null
+              ? byStep.values.toList()
+              : [
+                  for (final i in scope.steps!)
+                    if (byStep[i] case final list?) list,
+                ],
+        ),
+  ];
+  if (lists.isEmpty) {
+    return const [];
+  }
+  final own = {
+    ...normalizeItem(lineItemOf(line)).split(' '),
+    ...line.raw.toLowerCase().split(_notWord),
+    'the',
+  };
+  // A print two forms reach (a word list naming both) is kept once.
+  final seen = Set<_Print>.identity();
+  final hits = <_Print>[];
+  for (final (form, steps) in lists) {
+    for (final list in steps) {
+      _count('stepPrintsWalked', list.length);
+      for (final p in list) {
+        // (iii) a print in a hedged sentence is dropped.
+        if (p.hedged) {
+          continue;
+        }
+        final k = p.words.indexOf(form);
+        if (p.words.take(k).every(own.contains) &&
+            (lists.length == 1 || seen.add(p))) {
+          hits.add(p);
+        }
+      }
+    }
+  }
+  if (hits.isEmpty) {
+    return const [];
+  }
+  // (ii) no sentence of the scope naming the head multiplies it: each
+  // multiplying sentence (few) looked up in the head's naming (in order).
+  if (prints.multiplies.isNotEmpty) {
+    final naming = _naming(recipe, head);
+    int key((int, int) p) => p.$1 << 20 | p.$2;
+    for (final p in prints.multiplies) {
+      final at = _firstAfter(naming, key(p), key);
+      if ((scope.steps == null || scope.steps!.contains(p.$1)) &&
+          at < naming.length &&
+          naming[at] == p) {
+        return const [];
+      }
+    }
+  }
+  if (lists.length > 1) {
+    hits.sort(
+      (a, b) => a.step != b.step
+          ? a.step - b.step
+          : a.sentence != b.sentence
+          ? a.sentence - b.sentence
+          : a.at - b.at,
+    );
+  }
+  return [for (final p in hits) (step: p.step, amount: p.amount)];
+}
+
+/// R-H1's index of [recipe]'s steps, once per index (`memo:stepAmounts`):
+/// every print ([_stepAmount]) of a sentence naming an amount-less line's
+/// head ([_naming] — the steps' word index, never a scan per head), filed
+/// under each such head's form among its words, by step, in document order
+/// (counted: `stepPrints`); whether its sentence hedges ([_hedges], tested
+/// once per sentence with a print); and the named sentences that multiply
+/// ([_multiplies]) — the guards' sentences, each read once with its prints.
+/// The per-print bookkeeping is the reader's own work (no base equivalent):
+/// a step full of prints costs what reading them costs.
+({Map<String, Map<int, List<_Print>>> byForm, List<(int, int)> multiplies})
+_stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
+  final lines = nutritionLines(recipe);
+  final heads = {
+    for (final (k, h) in _headsOf(recipe).indexed)
+      if (h != null && h.isNotEmpty && lines[k].amounts.isEmpty) h,
+  };
+  final wanted = {for (final h in heads) ..._formsOf(h)};
+  // The sentences naming one, marked (no set of pairs, no sort).
+  final marked = [
+    for (final s in index.sentences) Uint8List(s.length),
+  ];
+  for (final h in heads) {
+    for (final (i, j) in _naming(recipe, h)) {
+      marked[i][j] = 1;
+    }
+  }
+  final byForm = <String, Map<int, List<_Print>>>{};
+  final multiplies = <(int, int)>[];
+  // Each distinct word run split once: its words, and the wanted forms
+  // among them (first occurrences, in order) — a step repeating "1
+  // tablespoon oil" reads its words once.
+  final runs = <String, (List<String>, List<String>)>{};
+  // Each distinct amount as printed, one string ("1 tablespoon").
+  final amounts = <String, Map<String, String>>{};
+  var count = 0;
+  for (final (i, marks) in marked.indexed) {
+    for (var j = 0; j < marks.length; j++) {
+      if (marks[j] == 0) {
+        continue;
+      }
+      final text = index.sentence((i, j));
+      if (_multiplies.hasMatch(text)) {
+        multiplies.add((i, j));
+      }
+      bool? hedged;
+      for (final m in _stepAmount.allMatches(text)) {
+        final (words, forms) = runs[m[3]!] ??= () {
+          final words = m[3]!.split(' ');
+          return (
+            words,
+            [
+              for (final (k, w) in words.indexed)
+                if (wanted.contains(w) && words.indexOf(w) == k) w,
+            ],
+          );
+        }();
+        if (forms.isEmpty) {
+          continue;
+        }
+        count++;
+        final print = (
+          step: i,
+          sentence: j,
+          amount: (amounts[m[2]!] ??= {})[m[1]!] ??= '${m[1]!.trim()} ${m[2]}',
+          at: m.start,
+          words: words,
+          hedged: hedged ??= _hedges.hasMatch(text),
+        );
+        for (final w in forms) {
+          ((byForm[w] ??= {})[i] ??= []).add(print);
+        }
+      }
+    }
+  }
+  _count('stepPrints', count);
+  return (byForm: byForm, multiplies: multiplies);
+});
+
+/// A print [stepAmountsOf] indexes: its step and sentence, the amount as
+/// printed, where it starts, the (up to four) words after it, and whether
+/// its sentence hedges.
+typedef _Print = ({
+  int step,
+  int sentence,
+  String amount,
+  int at,
+  List<String> words,
+  bool hedged,
+});
+
+/// R-H1's print: "<amount> <unit> (of) " and the (up to four) words after
+/// it, one space between them — a comma or a period ends the run; anchored
+/// on no word or fraction before it, every run bounded ([_amountRun]):
+/// linear per sentence.
+final RegExp _stepAmount = RegExp(
+  '(?<![\\w$vulgarFractionChars])($_amountRun)\\s*'
+  r'(teaspoons?|tablespoons?|cups?|ounces?|pounds?)\s+(?:of\s+)?'
+  "((?:[a-z’'-]+ ){0,3}[a-z’'-]+)",
+);
+final RegExp _notWord = RegExp("[^a-z’'-]+");
+
+/// R-H1 (ii): a sentence that multiplies or partitions an amount.
+final RegExp _multiplies = RegExp(
+  r'\brepeat\b|\beach\b|\bper\b|\bremaining\b|\bportion\b',
+);
+
+/// R-H1 (iii): a hedged print.
+final RegExp _hedges = RegExp(r'\bto taste\b|\bup to\b|\bif using\b');
+
+/// v71 (M71 R-H1, pF R2): the SCOPE of [recipe]'s line [position] — where
+/// its group is headed and two or more groups are ([_scopeNameOf]), the
+/// steps carrying the group's label ("FOR THE DOUGH" for DOUGH; an
+/// unlabelled step inherits the last label), EMPTY when no step carries it
+/// (nothing is read), with how many of that group's lines have each head;
+/// else every step (`steps` null) and every line. Once per group heading,
+/// and once for every step (`memo:labelScope`).
+/// `Step.label` and the headings are hashed ([ingredientsHashOf]).
+({Set<int>? steps, Map<String, int> heads}) _stepScopeOf(
+  Recipe recipe,
+  int position,
+) {
+  final groups = recipe.ingredients;
+  final name = _scopeNameOf(recipe, position);
+  // Key: name — the heading the scope is read for (null: every step).
+  return _stepIndexOf(recipe).memo(('labelScope', name), () {
+    final heads = <String, int>{};
+    var at = 0;
+    final all = _headsOf(recipe);
+    for (final g in groups) {
+      for (var k = 0; k < g.items.length; k++, at++) {
+        final head = all[at];
+        if (head != null &&
+            (name == null || g.group?.toLowerCase().trim() == name)) {
+          heads[head] = (heads[head] ?? 0) + 1;
+        }
+      }
+    }
+    if (name == null) {
+      return (steps: null, heads: heads);
+    }
+    final steps = <int>{};
+    String? label;
+    for (final (i, step) in recipe.steps.indexed) {
+      if (step.label != null) {
+        label = step.label!.toLowerCase().replaceFirst(_forThe, '').trim();
+      }
+      if (label == name) {
+        steps.add(i);
+      }
+    }
+    return (steps: steps, heads: heads);
+  });
+}
+
+final RegExp _forThe = RegExp(r'^for the\s+');
+
+/// The heading [_stepScopeOf] reads [recipe]'s line [position] by: its
+/// group's, lower-cased, where two or more groups are headed; else null
+/// (every step).
+String? _scopeNameOf(Recipe recipe, int position) {
+  final groups = recipe.ingredients;
+  String? group;
+  var start = 0;
+  for (final g in groups) {
+    if (position < start + g.items.length) {
+      group = g.group;
+      break;
+    }
+    start += g.items.length;
+  }
+  final headed = groups.where((g) => g.group != null).length;
+  return group == null || headed < 2 ? null : group.toLowerCase().trim();
+}
+
+/// Each of [recipe]'s [nutritionLines] by identity → its position, once
+/// per Recipe instance — never by equality: two groups' identical lines
+/// ("Table salt and ground black pepper" in braised turkey's turkey and
+/// gravy) are two positions.
+Map<IngredientLine, int> _positionsOf(Recipe recipe) =>
+    _positions[recipe] ??= () {
+      final out = Map<IngredientLine, int>.identity();
+      for (final (k, l) in nutritionLines(recipe).indexed) {
+        out[l] = k;
+      }
+      return out;
+    }();
+final Expando<Map<IngredientLine, int>> _positions = Expando();
+
+/// [line]'s position in [recipe] ([_positionsOf]), else the first line
+/// equal to it (a caller's copy of the line, decoded again), else null.
+int? _positionOf(Recipe recipe, IngredientLine line) {
+  final at = _positionsOf(recipe)[line] ?? nutritionLines(recipe).indexOf(line);
+  return at < 0 ? null : at;
+}
 
 /// The host document each section was built from ([sectionRecipeOf]).
 final Expando<Recipe> _sectionHosts = Expando();
@@ -11702,6 +12553,11 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
     'matcher': matcherVersion,
     'title': recipe.title,
     'steps': [for (final step in recipe.steps) step.text],
+    // v71 (M71 R-H1, pF R2): the step LABELS, which a line's scope reads
+    // ([_stepScopeOf]) — only where a step carries one, so every other
+    // recipe hashes as before.
+    if (recipe.steps.any((step) => step.label != null))
+      'step_labels': [for (final step in recipe.steps) step.label],
     // v41 (S12): what the sub-recipe resolver reads beside the line — the
     // note naming a dough, the sections a reference names — for a recipe
     // holding a reference line ([resolveReference]).
@@ -13794,7 +14650,19 @@ Future<(FdcFood, GramResolution?)> gramsFor(
   GramResolution? resolve(FdcFood on) =>
       lineGrams(db, line, on, recipe: recipe);
   final resolution = resolve(food);
-  final portions = _needsPortions(line.amounts, resolution);
+  // v69 (M71 R-H1, verify6 D1): an amount-less line whose steps print a
+  // volume fetches its record's detail as a typed line would — the prints
+  // decide the fetch, never a cache's luck ([stepAmountsOf] is memoised per
+  // position, so this adds no pass).
+  final portions = _needsPortions(
+    line.amounts.isEmpty && recipe != null
+        ? [
+            for (final p in stepAmountsOf(recipe, line))
+              ...parseIngredientLine('${p.amount} x').amounts,
+          ]
+        : line.amounts,
+    resolution,
+  );
   if (!fetch ||
       (!portions &&
           !_weightReadsPortions(line.raw, food, resolution, line.amounts))) {
@@ -13844,6 +14712,10 @@ GramResolution? lineGrams(
   // v68 (M70, Q13 G2): a section's reserved giblets, off the host's bird.
   if (recipe != null) {
     if (hostWeighedGiblets(db, recipe, line, normalized) case final g?) {
+      return g;
+    }
+    // v71 (M71 R-H1): an amount-less line the steps print an amount for.
+    if (stepAmountGrams(recipe, line, food, normalized) case final g?) {
       return g;
     }
   }
@@ -14493,7 +15365,10 @@ IngredientMatchRow? _unplannedOf(
       medium != DiscardedMedium.fryingOil &&
       !_batterInBowl(recipe).contains(row.position) &&
       !_dipsOf(recipe).containsKey(row.position) &&
-      !_cutMixAt(recipe, row.position)) {
+      !_cutMixAt(recipe, row.position) &&
+      !_keptSolidsAt(recipe, row.position) &&
+      // v71 (M71 D-E1): a coat's mixture part the plan held.
+      !(row.hold == 'coating' && _coatOfPart(recipe, row.position) != null)) {
     return null;
   }
   final eaten = weighedLine(recipe, line);
@@ -15035,7 +15910,11 @@ String? _gramBasis(
         : m52.dip
         ? 'the dip on the food'
         : m52.cut
-        ? 'the cut dough'
+        // v71 (M71 R-E2): the cut flag also marks a kept strained part.
+        ? recipe != null && _keptSolidsAt(recipe, row.position)
+              ? 'the ${_keptSolidsOf(recipe)!.printed} of strained solids '
+                    'the steps keep (step ${_keptSolidsOf(recipe)!.step + 1})'
+              : 'the cut dough'
         : m52.coat
         ? 'the coat on the food'
         : 'the oil the fried food absorbs';
@@ -16666,8 +17545,11 @@ derivedFor(
   // v60 (M62): a dip's line reads M52's plan once ([_m52OnConfirm]) — E-w's
   // grams for a confirm, or H: the dip of a coat held with no budget is
   // held as the coat's lines are (`coating`, no grams), so the rules by
-  // hold kind below decide it as they decide a held coat.
-  final dip = _dipsOf(recipe).containsKey(position)
+  // hold kind below decide it as they decide a held coat. v71 (M71 D-E1):
+  // so is a line mixed into such a coat ([_coatPartsOf]).
+  final dip =
+      _dipsOf(recipe).containsKey(position) ||
+          _coatOfPart(recipe, position) != null
       ? _m52OnConfirm(
           db,
           recipe,
@@ -16705,7 +17587,9 @@ derivedFor(
                     // v56 (M58 W): a batter line the coat budget weighs.
                     _batterInBowl(recipe).contains(position) ||
                     // v66 (M67 A2): a cut dough's mix line.
-                    _cutMixAt(recipe, position)
+                    _cutMixAt(recipe, position) ||
+                    // v71 (M71 R-E2): a strained line sharing a kept part.
+                    _keptSolidsAt(recipe, position)
                 ? _m52OnConfirm(
                     db,
                     recipe,
@@ -18382,7 +19266,9 @@ Map<int, _M52Row> _m52Plan(
   ]..sort();
   final oils = [
     for (final MapEntry(:key, :value) in media.entries)
-      if (value == DiscardedMedium.fryingOil) key,
+      // v71 (M71 pF R3): a fat joined to the frying oil takes no uptake.
+      if (value == DiscardedMedium.fryingOil && !_joinedFryingFat(recipe, key))
+        key,
   ]..sort();
   // v56 (M58 W, Q8): a batter left in the bowl ([_batterInBowl], a
   // text-only memo — RULE C intact) joins the coat: each line a part, its
@@ -18397,8 +19283,10 @@ Map<int, _M52Row> _m52Plan(
     for (final i in _dipsOf(recipe).keys)
       if (at.containsKey(i) && !batter.contains(i)) i,
   ]..sort();
+  // v71 (M71 R-E2): the strained solids the steps keep a printed part of.
+  final solids = _keptSolidsPlan(db, recipe, at, food);
   if (coats.isEmpty && batter.isEmpty && oils.isEmpty) {
-    return const {};
+    return solids;
   }
   bool counted(IngredientMatchRow r) => _m52Counted(r);
   bool engine(IngredientMatchRow? r) => _m52Engine(r);
@@ -18433,7 +19321,7 @@ Map<int, _M52Row> _m52Plan(
                     _thinPiece(recipe, lines[coated.position])
                 ? _CoatShape.c4
                 : null);
-  final plan = <int, _M52Row>{};
+  final plan = <int, _M52Row>{...solids};
   // M58 W's batter parts' carbohydrate at their WHOLE grams (the line's, as
   // the dredge takes them): the plan writes those rows `discarded`, so D
   // ([batterOf]) reads them here — never the stored row — on every path.
@@ -18622,6 +19510,29 @@ Map<int, _M52Row> _m52Plan(
     for (final i in dips) {
       final r = at[i]!;
       if (r.fdcId == null ||
+          r.childRecipeId != null ||
+          (r.hold != null && r.hold != 'coating') ||
+          (r.status == 'auto' && belowConfidenceGate(r.confidence))) {
+        continue;
+      }
+      plan[i] = (
+        grams: 0,
+        flag: null,
+        kept: 0,
+        coat: true,
+        noNetUptake: false,
+        dip: true,
+        held: true,
+        cut: false,
+      );
+    }
+    // v71 (M71 D-E1, pE): the lines mixed into a coat held with no budget
+    // ([_coatPartsOf]) are held with it, as its dips are — the engine's rows
+    // `coating`; a person's confirm, 0 g poured away.
+    for (final i in _coatPartsOf(recipe, coats)) {
+      final r = at[i];
+      if (r == null ||
+          r.fdcId == null ||
           r.childRecipeId != null ||
           (r.hold != null && r.hold != 'coating') ||
           (r.status == 'auto' && belowConfidenceGate(r.confidence))) {
@@ -18887,6 +19798,148 @@ Map<int, _M52Row> _m52Plan(
   return plan;
 }
 
+/// v71 (batch M71 R-E2; prep50 design_v2 §2, planner pC, decided under the
+/// 2026-10-07 standing authorization): a strain whose next sentence keeps a
+/// printed part of the solids — "Pour mixture through fine-mesh strainer
+/// into small bowl; press on solids. Measure 1 tablespoon of solids and 1
+/// tablespoon of oil into large bowl and set aside. Discard remaining
+/// solids but reserve remaining oil." (grilled potatoes with garlic and
+/// rosemary, the corpus's one such sentence; closer 1's V1-D3 counted its
+/// lines whole) — the strained lines ([_strainedHeads], a zest strip; no
+/// ground spice) whose own mention ([_ownMentions]) stands before the
+/// strain share the kept part pro rata by their whole grams ([_m52Plan]).
+/// The kept part weighs SR 169230 "Garlic, raw" '1 tsp' 2.8 g per teaspoon
+/// ([_keptSolidsTsp]; 3 for a tablespoon: 8.4 g) — the cooked solids as raw
+/// minced garlic, a floor (blond-fried garlic has lost water). Null when
+/// no such strain. Once per recipe (`memo:keptSolids`; only a step
+/// printing "solids" and "discard (the) remaining solids" is read, each
+/// sentence once — linear).
+({int step, String printed, double grams, List<int> lines})? _keptSolidsOf(
+  Recipe recipe,
+) => _stepIndexOf(recipe).memo(#keptSolids, () {
+  final index = _stepIndexOf(recipe);
+  for (final (step, sentences) in index.sentences.indexed) {
+    // A step printing no "solids" holds no such sentence (a native find).
+    if (!index.lower[step].contains('solids') ||
+        !_discardsRemainingSolids.hasMatch(index.lower[step])) {
+      continue;
+    }
+    for (final (j, text) in sentences.indexed) {
+      final match = _measuresSolids.firstMatch(text);
+      if (match == null || j < 1 || !_strainWord.hasMatch(sentences[j - 1])) {
+        continue;
+      }
+      final ml = volumeMlOf(
+        parseIngredientLine('${match[1]!.trim()} ${match[2]} x').amounts,
+      );
+      final tsp = volumeMlOf(parseIngredientLine('1 teaspoon x').amounts);
+      if (ml == null || tsp == null) {
+        continue;
+      }
+      final strain = (step, j - 1);
+      final heads = _headsOf(recipe);
+      final lines = nutritionLines(recipe);
+      final shared = <int>[];
+      for (final (k, head) in heads.indexed) {
+        final raw = lines[k].raw.toLowerCase();
+        if (head == null ||
+            lines[k].amounts.isEmpty ||
+            !(_strainedHeads.contains(head) ||
+                (_zestHeads.contains(head) && _zestWord.hasMatch(raw))) ||
+            _passesStrainer.hasMatch(raw)) {
+          continue;
+        }
+        final first = _ownMentions(recipe, lines[k], head).firstOrNull;
+        if (first != null && _before(first, strain)) {
+          shared.add(k);
+        }
+      }
+      return (
+        step: step,
+        printed: '${match[1]!.trim()} ${match[2]}',
+        grams: ml / tsp * _keptSolidsTsp,
+        lines: shared,
+      );
+    }
+  }
+  return null;
+});
+
+final RegExp _measuresSolids = RegExp(
+  '\\bmeasure ($_amountRun)\\s*(tablespoons?|teaspoons?) of (?:the )?'
+  r'solids\b',
+);
+final RegExp _discardsRemainingSolids = RegExp(
+  r'\bdiscard (?:the )?remaining solids\b',
+);
+
+/// SR 169230 "Garlic, raw" (a cached record): its '1 tsp' portion, 2.8 g —
+/// what [_keptSolidsOf] weighs a teaspoon of kept strained solids at.
+const double _keptSolidsTsp = 2.8;
+
+/// The flag of a row [_keptSolidsPlan] sizes (design_v2 §2 M71 R-E2).
+const String _keptSolidsFlag =
+    'approximate (the cooked solids weighed as raw minced garlic, USDA SR '
+    '169230 2.8 g per teaspoon)';
+
+/// Whether line [i] of [recipe] is one [_keptSolidsOf] shares the kept part
+/// among — text only, the gate of the readers beside [_m52Plan]
+/// ([_m52RowOf], [derivedFor], [_unplannedOf], [_m52Key]); the plan decides.
+bool _keptSolidsAt(Recipe recipe, int i) =>
+    _keptSolidsOf(recipe)?.lines.contains(i) ?? false;
+
+/// [_m52Plan]'s R-E2 entries ([_keptSolidsOf]): each engine row of a shared
+/// line — unheld, not auto below the gate, no medium — weighed at s × its
+/// WHOLE line ([lineGrams] on its record, never its stored grams: the plan
+/// writes those), s = min(1, the kept grams / their whole grams' sum).
+Map<int, _M52Row> _keptSolidsPlan(
+  SaltDatabase db,
+  Recipe recipe,
+  Map<int, IngredientMatchRow> at,
+  FdcFood? Function(int fdcId, IngredientLine line) food,
+) {
+  final kept = _keptSolidsOf(recipe);
+  if (kept == null) {
+    return const {};
+  }
+  final lines = nutritionLines(recipe);
+  final whole = <int, double>{};
+  for (final i in kept.lines) {
+    final r = at[i];
+    if (!_m52Engine(r) ||
+        r!.hold != null ||
+        (r.status == 'auto' && belowConfidenceGate(r.confidence)) ||
+        _mediumAt(recipe, i) != null) {
+      continue;
+    }
+    final record = food(r.fdcId!, lines[i]);
+    final grams = record == null
+        ? null
+        : lineGrams(db, lines[i], record, recipe: recipe)?.grams;
+    if (grams != null && grams > 0) {
+      whole[i] = grams;
+    }
+  }
+  final sum = whole.values.fold<double>(0, (n, g) => n + g);
+  if (sum <= 0) {
+    return const {};
+  }
+  final share = min(1, kept.grams / sum);
+  return {
+    for (final MapEntry(key: i, value: grams) in whole.entries)
+      i: (
+        grams: double.parse((share * grams).toStringAsFixed(2)),
+        flag: _keptSolidsFlag,
+        kept: 0,
+        coat: false,
+        noNetUptake: false,
+        dip: false,
+        held: false,
+        cut: true,
+      ),
+  };
+}
+
 /// [_m52Plan]'s answer for [row] of [recipe] as stored — null unless its
 /// line is a coat, a batter left in the bowl (v56, M58 W), a dip (v60,
 /// M62), a cut dough's mix line (v66, M67 A2: [_cutMixAt]) or a frying
@@ -18914,7 +19967,9 @@ _M52Row? _m52RowOf(
       // v60 (M62): a dip's line.
       !_dipsOf(recipe).containsKey(row.position) &&
       // v66 (M67 A2): a cut dough's mix line.
-      !_cutMixAt(recipe, row.position)) {
+      !_cutMixAt(recipe, row.position) &&
+      // v71 (M71 R-E2): a strained line sharing a kept part.
+      !_keptSolidsAt(recipe, row.position)) {
     return null;
   }
   final at = (memo == null
@@ -19060,6 +20115,10 @@ String _m52Key(
   // v67 (M69 R2): with no meat, the coated vegetable the coat block sizes
   // from ([_coatedVegetable]) — keyed whatever the coats (a superset).
   final food = coated ?? _coatedVegetable(recipe, at.values);
+  // v71 (M71 D-E1): a coat's mixture part ([_coatPartsOf]) keys as any
+  // line — its held form's medium bit differs from its engine form's, so a
+  // confirm of one plans afresh (a miss, never a wrong reuse: the plan
+  // reads a part's hold, none or `coating`, as the key does).
   final key = StringBuffer(
     '${food?.position} ${food?.grams} ${food?.description}',
   );
@@ -19068,7 +20127,7 @@ String _m52Key(
     key.write(
       _m52RowKey(
         r,
-        dip: dips.containsKey(i) || cutLine(i, r),
+        dip: dips.containsKey(i) || cutLine(i, r) || _keptSolidsAt(recipe, i),
         offB:
             c5 &&
             _m52Counted(r) &&
@@ -19101,7 +20160,8 @@ String _m52Key(
       if (_mediumAt(recipe, i) == DiscardedMedium.fryingOil) {
         key.write('\noil $i ${r.hold}');
       }
-      if (cut) {
+      // v71 (M71 R-E2): a kept-solids line is planned on its own hold too.
+      if (cut || _keptSolidsAt(recipe, i)) {
         key.write('\ncut $i ${r.hold}');
       }
       if (_m52Counted(r) &&
@@ -19153,6 +20213,7 @@ bool _m52KeysAlike(
   final lines = nutritionLines(recipe);
   bool laid(IngredientMatchRow r) =>
       r.position < lines.length && lines[r.position].raw == r.raw;
+  final dip = _dipsOf(recipe).containsKey(row.position);
   return laid(row) &&
       laid(confirmed) &&
       !(_m52Counted(row) &&
@@ -19160,16 +20221,8 @@ bool _m52KeysAlike(
               // v67 (M69 R2): a coated vegetable is the coated food too.
               _coatVegetables.any(row.description!.startsWith) ||
               _dredgeHeads.contains(_headsOf(recipe)[row.position]))) &&
-      _m52RowKey(
-            row,
-            dip: _dipsOf(recipe).containsKey(row.position),
-            offB: false,
-          ) ==
-          _m52RowKey(
-            confirmed,
-            dip: _dipsOf(recipe).containsKey(row.position),
-            offB: false,
-          );
+      _m52RowKey(row, dip: dip, offB: false) ==
+          _m52RowKey(confirmed, dip: dip, offB: false);
 }
 
 /// [discardedMediumOf] of [recipe]'s line [i], once per Recipe instance (a
@@ -19247,7 +20300,9 @@ _M52Row? _m52OnConfirm(
   // Its entry the coat block's: a dip (never a medium line, [_dipsOf]), a
   // coat line, a batter left in the bowl that is no frying oil.
   late final coat = () {
-    if (_dipsOf(recipe).containsKey(at)) {
+    if (_dipsOf(recipe).containsKey(at) ||
+        // v71 (M71 D-E1): a coat's mixture part.
+        _coatOfPart(recipe, at) != null) {
       return true;
     }
     if (at >= lines.length) {

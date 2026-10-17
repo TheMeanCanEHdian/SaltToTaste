@@ -1249,8 +1249,17 @@ void main() {
     // 'apple juice'; carbohydrate 11.34 / 11.3), and the already-recorded
     // 170162 and 2515374, now hits in 'raw cashews' (170162 protein 18.2 /
     // 18.22): compared 526 -> 532, differ 400 -> 406.
-    expect(compared, 532);
-    expect(differ, 406);
+    // RE-PIN (M71 batch, v71, 2026-10-15): matcher v71 recorded from
+    // snapshot 27 the 4 searches and 1 detail its whole-recipe pins read
+    // (nutrition_v71_test; 172175): one more compared, differing in some
+    // digit — 172175 (a hit in the recorded 'blue cheese'; fat 28.7 / 28.74,
+    // sodium 1150 / 1146): compared 532 -> 533, differ 406 -> 407.
+    // RE-PIN (M71 follow-up, verify6 D1): the AMOUNTLESS cap shape's lines
+    // now fetch their records' details, so 2647443 (cotija, Foundation) was
+    // recorded from snapshot 27 — one more compared, differing in some
+    // digit: compared 533 -> 534, differ 407 -> 408.
+    expect(compared, 534);
+    expect(differ, 408);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -18,6 +18,7 @@
 // verifier's plus-distinct and long-lines shapes), and the typed
 // sentences of the windowed-log and drained pins.
 // ignore_for_file: lines_longer_than_80_chars
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:logging/logging.dart';
@@ -266,6 +267,7 @@ void main() {
   cutDough();
   m69Coats();
   review70();
+  review71();
   group('RULE C at the loop level, every detector of every line at the caps '
       '(Run 056 S5/S7/S8/S9/O6/O8/S14/O15/S20/S23)', () {
     // Measured at 8113b24 (one readAll pass, the digests' shapes): salt
@@ -1888,5 +1890,708 @@ void eggDips() {
       expect(unflagged, isEmpty);
       expect(ms, lessThan(backstopMs), reason: '$counts');
     });
+  }, skip: skipIfNoCorpus);
+}
+
+/// The corpus's amount-less lines the engine weighs whose search a fixture
+/// records (85 of the 262 — R-H1's lines; real corpus lines).
+const List<String> _amountless = [
+  '2 tablespoons juice',
+  'All-purpose flour',
+  'Avocado, peeled, pitted, and diced fine',
+  'Avocado, peeled, pitted, and diced medium',
+  'Balsamic vinegar',
+  'Bean sprouts',
+  'Cayenne pepper',
+  'Chili oil',
+  'Chinese black vinegar',
+  'Chopped chives',
+  'Chopped fresh chives',
+  'Chopped fresh cilantro leaves',
+  'Chopped red onion',
+  'Chopped tomato',
+  'Coarsely chopped cilantro',
+  'Confectioners’ sugar',
+  'Confectioners’ sugar (optional)',
+  'Confectioners’ sugar, for dusting',
+  'Confectioners’ sugar, for dusting the cakes',
+  'Cotija cheese, crumbled, or Monterey Jack cheese, diced fine',
+  'Crème fraîche (optional)',
+  'Diced avocado',
+  'Diced tomatoes',
+  'Dry-roasted peanuts, chopped coarse',
+  'Extra-virgin olive oil',
+  'Extra-virgin olive oil, for serving',
+  'Finely chopped white onion',
+  'Fresh cilantro',
+  'Fresh cilantro leaves',
+  'Grated Parmesan cheese',
+  'Grated Parmesan cheese, for serving',
+  'Grated Pecorino Romano cheese',
+  'Ground white pepper',
+  'Hoisin sauce',
+  'Honey',
+  'Hot sauce',
+  'Hot sauce (optional)',
+  'Jalapeño chile, minced',
+  'Lemon or lime wedges (optional)',
+  'Lemon wedges',
+  'Lemon wedges (optional)',
+  'Lemon wedges, for serving',
+  'Lemon wedges, for serving (optional)',
+  'Lime wedges',
+  'Lime wedges, for serving',
+  'Lime, orange, or lemon wedges',
+  'Minced fresh chives',
+  'Minced fresh cilantro leaves',
+  'Minced red onion (optional)',
+  'Minced white onion',
+  'Mint, raspberries, confectioners’ sugar, or finely chopped pistachios, for garnish (optional)',
+  'Pita, flatbread, or crusty bread',
+  'Plain yogurt',
+  'Queso fresco or feta cheese',
+  'Red onion, diced fine',
+  'Red pepper flakes',
+  'Red pepper flakes, for serving',
+  'Salted butter',
+  'Saltines',
+  'Scallions, sliced thin on bias',
+  'Shredded Monterey Jack cheese',
+  'Shredded iceberg lettuce',
+  'Small pinch cayenne pepper',
+  'Sour cream',
+  'Soy sauce',
+  'Sriracha (optional)',
+  'Sriracha sauce',
+  'Sugar',
+  'Sugar stars',
+  'Table alt and pepper',
+  'Table salt and cayenne pepper',
+  'Table salt and ground white pepper',
+  'Thinly sliced onion',
+  'Thinly sliced radishes',
+  'Thinly sliced tomato',
+  'Unbleached all-purpose flour, for the work surface',
+  'Unsalted butter, as needed',
+  'Unsalted butter, softened',
+  'Vegetable oil',
+  'Vegetable oil for brushing the tortillas',
+  'Vegetable oil spray',
+  'Vegetable oil, as needed',
+  'Vegetable oil, for pan-frying',
+  'Vegetable oil, if needed',
+  '⅜-inch dice and patted dry with paper towels',
+];
+
+/// v71 (M71 R-H1): the step-amount reader at the caps. AMOUNTLESS: 0398's
+/// two headed groups (DOUGH, SAUCE) of 200 amount-less corpus lines each
+/// (the 85 above, cycled) under 120 steps of 10,000 characters printing
+/// amounts of their heads ("Add 1 tablespoon oil, ½ teaspoon sugar, …"),
+/// labelled "FOR THE DOUGH" at step 1 and "FOR THE SAUCE" at step 61, one
+/// sentence multiplying — the prints and both guards' sentences read in one
+/// pass per index (`memo:stepAmounts`), each scope once per heading
+/// (`memo:labelScope`), and the reader's work pinned at its measured size
+/// (`stepPrints`, `stepPrintsWalked`: a line walks its own group's prints
+/// only). Each the compute, the matches GET, the recompute and the
+/// freshness check. Synthesized, a stated exception: the repeated lines and
+/// the steps.
+///
+/// Measured (closer 1, verify1 D1; c1/timing_final.log: 9 runs each, 6
+/// interleaved base-tree-tree-base rounds against v70 8f42742): this LOUD
+/// shape compute 503.0 → 551.3 ms (+9.6 %), GET 449.7 → 502.0 (+11.6 %) —
+/// the reader's own per-print work, with no base equivalent (56,160 prints:
+/// the `_stepAmount` matches alone ≈ 20 ms; at verify1 +12 % / +16 %, the
+/// per-line walk over both groups and the guards' own passes since cut);
+/// the QUIET shape (no step prints those heads) compute −0.1 %, GET
+/// +0.5 %, recompute +1.2 % — within ±2 %.
+void review71() {
+  group("RULE C, M71's step-amount reader at the caps (v71)", () {
+    test('AMOUNTLESS: the prints once per index, each scope once per '
+        'heading; each under the backstop', () async {
+      final base = loadCorpusRecipe('0398-ultimate-grilled-pizza.yaml');
+      const sentence =
+          'Add 1 tablespoon oil, ½ teaspoon sugar, 2 tablespoons vinegar, '
+          '1 cup flour, ¼ cup cilantro, 1 tablespoon chives, 2 cups onion, '
+          '1 teaspoon pepper flakes and 3 tablespoons cheese to the bowl. ';
+      final steps = [
+        for (var i = 0; i < capSteps; i++)
+          RecipeStep(
+            number: i + 1,
+            label: i == 0
+                ? 'FOR THE DOUGH'
+                : i == capSteps ~/ 2
+                ? 'FOR THE SAUCE'
+                : null,
+            text: i == 1
+                ? 'Repeat with each remaining portion. '
+                      '${fill(sentence, capStep - 40)}'
+                : fill(sentence, capStep),
+          ),
+      ];
+      for (final s in steps) {
+        expect(s.text.length, lessThanOrEqualTo(capStep));
+      }
+      // Each group: one line of each head the steps print (its head its
+      // own in the group — tier i passes, the reader weighs every print in
+      // the group's 60 steps), then the lines of the other heads, cycled
+      // (tier i turns them away; no print names them).
+      const printed = {
+        'oil',
+        'sugar',
+        'vinegar',
+        'flour',
+        'cilantro',
+        'chive',
+        'onion',
+        'flake',
+        'cheese',
+        'pepper',
+      };
+      String? headOf(String raw) =>
+          headNounOf(normalizeItem(lineItemOf(ln(raw))));
+      final firsts = <String, String>{};
+      for (final raw in _amountless) {
+        if (headOf(raw) case final head? when printed.contains(head)) {
+          firsts.putIfAbsent(head, () => raw);
+        }
+      }
+      expect(firsts.keys.toSet(), printed);
+      final others = [
+        for (final raw in _amountless)
+          if (!printed.contains(headOf(raw))) raw,
+      ];
+      final items = [
+        ...firsts.values,
+        for (var i = 0; firsts.length + i < capLines ~/ 2; i++)
+          others[i % others.length],
+      ];
+      final r = base.copyWith(
+        ingredients: [
+          for (final g in ['DOUGH', 'SAUCE'])
+            IngredientGroup(
+              group: g,
+              items: [for (final raw in items) ln(raw)],
+            ),
+        ],
+        steps: steps,
+      );
+      final db = wp.tempDb();
+      final provider = FixtureProvider(pending: pendingSearches);
+      wp.saveRecipe(db, r);
+      Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+      final seen = <String, Map<String, int>>{};
+      Future<void> timed(String step, Future<Object?> Function() run) async {
+        stepIndexCounts.clear();
+        final sw = Stopwatch()..start();
+        await run();
+        final ms = sw.elapsedMilliseconds;
+        final counts = seen[step] = Map.of(stepIndexCounts);
+        final copies = counts['indexes'] ?? 1;
+        expectBounded(stored(), counts, 'amountless $step', copies: copies);
+        // The prints and both guards' sentences, one pass per index.
+        expect(
+          counts['memo:stepAmounts'] ?? 0,
+          lessThanOrEqualTo(copies),
+          reason: 'amountless $step memo:stepAmounts',
+        );
+        expect(
+          counts['memo:labelScope'] ?? 0,
+          lessThanOrEqualTo(2 * copies),
+          reason: 'amountless $step memo:labelScope',
+        );
+        expect(ms, lessThan(backstopMs), reason: 'amountless $step: $counts');
+      }
+
+      await timed('compute', () => matchAndCompute(db, provider, stored()));
+      // Not vacuous: the reader weighs every print of its group's steps
+      // for the lines whose head is their own there (a line on no record —
+      // an unanswered search — is weighed by no reader).
+      final st = stored();
+      final bases = {
+        for (final m in db.ingredientMatchesFor(r.id))
+          if (gramBasisFor(db, nutritionLines(st)[m.position], m, recipe: st)
+              case final b? when b.contains('(no amount on the line)'))
+            m.position: b,
+      };
+      final read = bases.keys.toSet();
+      expect(read, isNotEmpty);
+      // Each sums its 60 steps' 3,120 prints; its basis names eight and the
+      // count, never the steps again.
+      for (final b in bases.values) {
+        expect(b, contains(' + … (3120 in all) (no amount on the line)'));
+        expect(b.length, lessThan(1000));
+      }
+      expect(read.every((p) => p % (capLines ~/ 2) < printed.length), isTrue);
+      await timed('GET', () => matchesBody(db, provider, stored()));
+      await timed('recompute', () async => recomputeTotals(db, stored()));
+      await timed('fresh', () async => nutritionIsFresh(db, stored()));
+      // The reader's work at its measured size (closer 1, verify1 D1): the
+      // index files every print once (9 to a sentence: 6,240 sentences,
+      // 56,160 prints); a line walks only its own group's 60 steps — the
+      // 3,120 prints of its head there, never the other group's (6,240
+      // each before closer 1) — and walks them once. The compute weighs
+      // the 20 lines whose head the steps print (10 heads × 2 groups), the
+      // GET the 18 read: the prints now fetch each record's detail (the
+      // M71 follow-up, verify6 D1), and the details of chives, cilantro
+      // and pepper flakes carry the spoon measures their search hits did
+      // not; only the red onion stays unread — its Foundation record
+      // 790577 carries no cup measure (an onion of 197 g and the RACC).
+      final occurrences = [
+        for (final s in steps) sentence.trim().allMatches(s.text).length,
+      ];
+      int printsIn(Iterable<int> range) =>
+          range.fold(0, (n, i) => n + occurrences[i]);
+      const half = capSteps ~/ 2;
+      expect(printsIn(Iterable.generate(half)), 3120);
+      expect(printsIn(Iterable.generate(half, (i) => half + i)), 3120);
+      expect(printsIn(Iterable.generate(capSteps)) * 9, 56160);
+      // RE-PIN (M71 follow-up, verify6 D1): a compute weighs each of the 20
+      // read lines TWICE — on the search hit, then on the record detail the
+      // prints now fetch (as a typed line's amounts would) — while the
+      // prints are walked once per line; the GET weighs the 18 read on the
+      // cached detail only.
+      for (final (step, weighed, walked) in [
+        ('compute', 40, 20),
+        ('GET', read.length, read.length),
+      ]) {
+        final counts = seen[step]!;
+        expect(counts['stepPrints'], 56160, reason: step);
+        expect(counts['memo:stepAmountGrams'], weighed, reason: step);
+        expect(counts['stepPrintsWalked'], 3120 * walked, reason: step);
+      }
+      // RE-PIN (M71 follow-up, verify6 D1): 12 -> 18, the fetched details.
+      expect(read.length, 18);
+      for (final step in ['recompute', 'fresh']) {
+        expect(seen[step]!['stepPrints'], isNull, reason: step);
+      }
+    });
+
+    // v71 closer 1 (verify1 D2): D-E1's gate at the caps. 0235's lines
+    // (the cornstarch coat held with no budget) and 387 copies of its three
+    // mixture parts, under its four steps and 116 steps of its own whisk
+    // sentence — 391 rows held `coating`; part |7 confirmed, then picked,
+    // through the real PUT (a pick keeps the hold) and the other 389 parts
+    // written in that state, so the GET and the recompute after them ask
+    // the gate (`_coatOfPart`, from `derivedFor`) for 390 decided rows. The
+    // mixture pass run per gate call (the first build's: the long-lines
+    // PUTs 38 s) fails `coatMixLines` here (312,000 > 400) and on long-lines
+    // (800 > 400); a mixing test repeated per call fails `mixTests` (one per
+    // sentence, == `memo:mixes`). Synthesized, a stated exception: the
+    // copied lines, the written decisions and the repeated sentence (real
+    // corpus text).
+    test('HELD MIXTURE: the D-E1 gate asked for every held part, each '
+        'sentence tested for a mixing word once per index, the mixture '
+        'pass once; each path under the backstop', () async {
+      final base = loadCorpusRecipe('0235-maple-glazed-pork-tenderloin.yaml');
+      final real = nutritionLines(base);
+      const whisk =
+          'Whisk the cornstarch, sugar, salt, and black pepper in a small '
+          'bowl until combined. ';
+      final r = base.copyWith(
+        ingredients: [
+          IngredientGroup(
+            items: [
+              ...real,
+              for (var i = 0; real.length + i < capLines; i++)
+                real[7 + i % 3].copyWith(),
+            ],
+          ),
+        ],
+        steps: [
+          ...base.steps,
+          for (var i = base.steps.length; i < capSteps; i++)
+            RecipeStep(number: i + 1, text: fill(whisk, capStep)),
+        ],
+      );
+      final db = wp.tempDb();
+      final provider = FixtureProvider(pending: pendingSearches);
+      wp.saveRecipe(db, r);
+      Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+      final seen = <String, Map<String, int>>{};
+      Future<void> timed(String step, Future<Object?> Function() run) async {
+        stepIndexCounts.clear();
+        final sw = Stopwatch()..start();
+        await run();
+        final ms = sw.elapsedMilliseconds;
+        final counts = seen[step] = Map.of(stepIndexCounts);
+        final copies = counts['indexes'] ?? 1;
+        expectBounded(stored(), counts, 'held mixture $step', copies: copies);
+        // Each test the first of its sentence (the memo read, never a
+        // second test).
+        expect(
+          counts['mixTests'] ?? 0,
+          counts['memo:mixes'] ?? 0,
+          reason: 'held mixture $step',
+        );
+        expect(ms, lessThan(backstopMs), reason: 'held mixture $step: $counts');
+      }
+
+      await timed('compute', () => matchAndCompute(db, provider, stored()));
+      // Not vacuous: the coat and every part held with it.
+      expect(
+        [
+          for (final m in db.ingredientMatchesFor(r.id))
+            if (m.hold == 'coating') m.position,
+        ].length,
+        391,
+      );
+      await timed('GET', () => matchesBody(db, provider, stored()));
+      final part = db.ingredientMatchesFor(r.id)[7];
+      Map<String, Object?> body(Map<String, Object?> b) => {
+        'raw': real[7].raw,
+        ...b,
+      };
+      await timed(
+        'PUT confirm',
+        () => applyMatchOverride(
+          db,
+          provider,
+          stored(),
+          7,
+          body({'confirmed': true}),
+        ),
+      );
+      await timed(
+        'PUT pick',
+        () => applyMatchOverride(
+          db,
+          provider,
+          stored(),
+          7,
+          body({'fdc_id': part.fdcId}),
+        ),
+      );
+      // Row 7 picked through the real PUT (a pick keeps the coat's hold);
+      // the other 389 parts written in that state — 390 decided rows the
+      // decided paths read through the gate, one by one.
+      final put = db.ingredientMatchesFor(r.id);
+      expect((put[7].hold, put[7].grams), ('coating', null));
+      for (final row in put) {
+        if (row.position > 7 && row.hold == 'coating') {
+          db.upsertIngredientMatch(
+            row.copyWith(status: put[7].status, derivedSeq: put[7].derivedSeq),
+          );
+        }
+      }
+      await timed('GET decided', () => matchesBody(db, provider, stored()));
+      await timed('recompute', () async => recomputeTotals(db, stored()));
+      expect(
+        [
+          for (final m in db.ingredientMatchesFor(r.id))
+            if (m.status == put[7].status && m.hold == 'coating') m.position,
+        ],
+        hasLength(390),
+      );
+      // Not vacuous: each decided path reached the mixture pass through
+      // the gate — once.
+      for (final step in ['PUT confirm', 'PUT pick', 'GET decided']) {
+        final counts = seen[step]!;
+        expect(counts['memo:mayHoldCoat'], counts['indexes'], reason: step);
+        expect(counts['memo:coatMixes'], counts['indexes'], reason: step);
+        expect(
+          counts['coatMixLines'],
+          capLines * counts['indexes']!,
+          reason: step,
+        );
+        expect(counts['mixTests'], greaterThan(0), reason: step);
+      }
+    });
+
+    // v71 closer 2 (verify2 D1): pF R3 at the caps. 0316's real lines (the
+    // potatoes, 2 quarts peanut oil, ¼ cup bacon fat, salt), its bacon-fat
+    // line copied to 400 lines, under 120 steps of 10,000 characters of one
+    // add sentence: OTHER adds the potatoes (no step names the oil), NAMED
+    // (the potatoes and 399 bacon-fat lines, no oil line) adds the bacon
+    // fat, OIL adds the bacon fat to the hot oil (each of its 35,280
+    // sentences one R3 reads). Every fat line asks [_joinsFryingOil]; the
+    // add-or-combine sentences of a step naming the oil are read once per
+    // index (`memo:fatsIntoOil`, each counted `fatsIntoOilReads`), the oil
+    // lines' frying test made once (`memo:friesOil`). At verify2 each call
+    // walked every add sentence with its own pattern and scanned the whole
+    // step for "oil" per sentence naming the line — NAMED compute 104 s,
+    // GET 211 s (base 0.6 s / 0.4 s). Measured (closer 2, fix71/c2
+    // r3time_final, vtime_final3, r3time_named9 against v70 8f42742,
+    // base-tree-tree-base): OTHER compute −0.9 %, GET +0.7 %; NAMED compute
+    // −0.5 %, GET +2.1 % (+0.0 / +1.9 % against this tree with R3 off); OIL
+    // compute −2.4 %, GET +7.2 % — the pass's own per-sentence work (≈ 20 ms
+    // per index, no base equivalent). Synthesized, a stated exception: the
+    // copied line and the repeated sentences.
+    for (final (shape, sentence) in [
+      ('OTHER', 'Add the potatoes to the bowl. '),
+      ('NAMED', 'Add the bacon fat to the bowl. '),
+      ('OIL', 'Add the bacon fat to the hot oil. '),
+    ]) {
+      test('R3 FAT LINES $shape: the add sentences of the oil steps read '
+          'once per index, whichever fat line asks; each path under the '
+          'backstop', () async {
+        final base = loadCorpusRecipe('0316-classic-french-fries.yaml');
+        final real = nutritionLines(base);
+        expect(real[2].raw, '¼ cup bacon fat, strained (optional)');
+        final kept = shape == 'NAMED' ? [real[0]] : real;
+        final r = base.copyWith(
+          ingredients: [
+            IngredientGroup(
+              items: [
+                ...kept,
+                for (var i = kept.length; i < capLines; i++) real[2].copyWith(),
+              ],
+            ),
+          ],
+          steps: [
+            for (var i = 0; i < capSteps; i++)
+              RecipeStep(number: i + 1, text: fill(sentence, capStep)),
+          ],
+        );
+        final db = wp.tempDb();
+        final provider = FixtureProvider(pending: pendingSearches);
+        wp.saveRecipe(db, r);
+        Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+        // The sentences R3 reads: every add sentence of a step naming the
+        // oil — OIL's 294 a step; none where no step names it.
+        final reads = shape == 'OIL'
+            ? capSteps * (capStep ~/ sentence.length)
+            : 0;
+        final seen = <String, Map<String, int>>{};
+        Future<void> timed(String step, Future<Object?> Function() run) async {
+          stepIndexCounts.clear();
+          final sw = Stopwatch()..start();
+          await run();
+          final ms = sw.elapsedMilliseconds;
+          final counts = seen[step] = Map.of(stepIndexCounts);
+          final copies = counts['indexes'] ?? 1;
+          final why = 'R3 $shape $step';
+          expectBounded(stored(), counts, why, copies: copies);
+          expect(
+            counts['memo:fatsIntoOil'] ?? 0,
+            lessThanOrEqualTo(copies),
+            reason: why,
+          );
+          expect(
+            counts['memo:friesOil'] ?? 0,
+            lessThanOrEqualTo(copies),
+            reason: why,
+          );
+          expect(
+            counts['fatsIntoOilReads'] ?? 0,
+            reads * (counts['memo:fatsIntoOil'] ?? 0),
+            reason: why,
+          );
+          expect(ms, lessThan(backstopMs), reason: '$why: $counts');
+        }
+
+        await timed('compute', () => matchAndCompute(db, provider, stored()));
+        await timed('GET', () => matchesBody(db, provider, stored()));
+        await timed('recompute', () async => recomputeTotals(db, stored()));
+        await timed('fresh', () async => nutritionIsFresh(db, stored()));
+        // Not vacuous: the fat lines asked, the pass made once per index;
+        // the oil lines' frying test made once per index where a sentence
+        // adds a fat line to the oil (OIL), never where none does.
+        for (final step in ['compute', 'GET']) {
+          expect(
+            seen[step]!['memo:fatsIntoOil'],
+            seen[step]!['indexes'],
+            reason: step,
+          );
+          expect(
+            seen[step]!['memo:friesOil'] ?? 0,
+            shape == 'OIL' ? seen[step]!['indexes'] : 0,
+            reason: step,
+          );
+        }
+        // Each fat line's row: joined to the frying oil (0 g) only where
+        // the sentences add it to the oil; else its ¼ cup counted.
+        final fats = [
+          for (final (i, l) in nutritionLines(stored()).indexed)
+            if (l.raw == real[2].raw) i,
+        ];
+        expect(fats, hasLength(shape == 'NAMED' ? 399 : 397));
+        expect(
+          {
+            for (final m in db.ingredientMatchesFor(r.id))
+              if (fats.contains(m.position))
+                (m.grams?.toStringAsFixed(2), m.gramSource),
+          },
+          {
+            if (shape == 'OIL') ('0.00', 'discarded') else ('51.60', 'portion'),
+          },
+        );
+      });
+    }
+
+    // v71 closer 3 (verify3 D1): pF R2 at the caps. 0523 Nasi Goreng's 14
+    // real lines (its sub-recipe dropped) with its "½ cup vegetable oil"
+    // copied to 400 lines, under 120 steps of 10,000 characters: USED — every
+    // sentence "Heat 1 teaspoon of the reserved oil." (32,400 prints, Σ past
+    // the line: no read, every copy counted whole); BELOW — steps 1–23 open
+    // with one such sentence, the rest "Heat the oil in the skillet." (23
+    // teaspoons < ½ cup: the read fires on every copy). Every oil line asks
+    // [_reservedUseOf] from each caller; the prints are found once per index
+    // (`memo:reservedUse`, each counted `reservedHits`, each printed amount
+    // parsed once) and summed once per scope (`memo:reservedUseIn`, each
+    // hit walked `reservedHitsRead`). At verify3 each call walked and parsed
+    // every print of the head — USED compute 50.8 s, GET 99.8 s (base 1.2 s
+    // / 0.9 s). Measured (closer 4, fix71/c4 time3.log, the final tree,
+    // against v70 8f42742 and the tree with R2 alone off, 5 reps per arm;
+    // API.md states them): USED compute +0.0 %, GET +1.3 %; BELOW +0.5 % /
+    // +1.1 %, recompute +71 % — the read's 387 `discarded` rows each ask
+    // the shipped readers of a discarded engine row (M52's plan media, v53;
+    // the F9 revert check, v70), whose detectors build once per index
+    // (words, naming, fries; both readers off: 293 ms = base 289) — a
+    // `portion` row asks neither. Synthesized, a stated exception: the
+    // copied line and the repeated sentences.
+    // v71 closer 4 (verify4 D1): MANY — every sentence "Heat 1/10000
+    // teaspoon reserved oil." (33,240 prints, Σ 3.32 teaspoons < ½ cup: the
+    // read fires on every copy, 15.51 g). Each row's basis named EVERY print
+    // twice: one matches GET 489,617,983 characters (base 8f42742: 729,010),
+    // each basis 1,263,287, matchesBody 889 → 1,378 ms, peak RSS 0.93 → 2.23
+    // GB. Now at most 8 named ("+ … (n in all)", as R-H1's): each basis 509
+    // characters, the GET body 922,897 — base plus the 387 read rows' own
+    // basis text (BELOW, 23 prints: 407 / 883,810). Compute +1.6 %, the GET
+    // +5.5 %: R2's pass (14 ms), the shipped v51 pour-off reader's
+    // detectors built once per index at the GET's first `discarded` oil row
+    // (30 ms) and `_m50DiscardedBasis` per read row (12 ms) — API.md.
+    for (final shape in ['USED', 'BELOW', 'MANY']) {
+      test('R2 RESERVED OIL $shape: the prints found once per index, their '
+          'scoped sum once per scope, whichever oil line asks; each path '
+          'under the backstop', () async {
+        final base = loadCorpusRecipe(
+          '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
+        );
+        final real = base.ingredients.single.items;
+        expect(real, hasLength(14));
+        expect(real[9].raw, '½ cup vegetable oil');
+        const hit = 'Heat 1 teaspoon of the reserved oil. ';
+        const quiet = 'Heat the oil in the skillet. ';
+        const many = 'Heat 1/10000 teaspoon reserved oil. ';
+        final r = base.copyWith(
+          subsections: const [],
+          ingredients: [
+            IngredientGroup(
+              items: [
+                ...real,
+                for (var i = real.length; i < capLines; i++) real[9].copyWith(),
+              ],
+            ),
+          ],
+          steps: [
+            for (var i = 0; i < capSteps; i++)
+              RecipeStep(
+                number: i + 1,
+                text: shape == 'MANY'
+                    ? fill(many, capStep)
+                    : shape == 'USED'
+                    ? fill(hit, capStep)
+                    : i < 23
+                    ? hit + fill(quiet, capStep - hit.length)
+                    : fill(quiet, capStep),
+              ),
+          ],
+        );
+        for (final s in r.steps) {
+          expect(s.text.length, lessThanOrEqualTo(capStep));
+        }
+        final db = wp.tempDb();
+        final provider = FixtureProvider(pending: pendingSearches);
+        wp.saveRecipe(db, r);
+        Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+        // The prints one index finds: 270 a step in USED, 23 in BELOW.
+        // MANY: 277 a step.
+        final hits = shape == 'MANY'
+            ? capSteps * (capStep ~/ many.length)
+            : shape == 'USED'
+            ? capSteps * (capStep ~/ hit.length)
+            : 23;
+        final seen = <String, Map<String, int>>{};
+        Future<void> timed(String step, Future<Object?> Function() run) async {
+          stepIndexCounts.clear();
+          final sw = Stopwatch()..start();
+          await run();
+          final ms = sw.elapsedMilliseconds;
+          final counts = seen[step] = Map.of(stepIndexCounts);
+          final copies = counts['indexes'] ?? 1;
+          final why = 'R2 $shape $step';
+          expectBounded(stored(), counts, why, copies: copies);
+          final found = counts['memo:reservedUse'] ?? 0;
+          final summed = counts['memo:reservedUseIn'] ?? 0;
+          expect(found, lessThanOrEqualTo(copies), reason: why);
+          // One scope (one group): one sum per index that found prints.
+          expect(summed, found, reason: why);
+          expect(counts['reservedHits'] ?? 0, hits * found, reason: why);
+          expect(counts['reservedHitsRead'] ?? 0, hits * summed, reason: why);
+          expect(ms, lessThan(backstopMs), reason: '$why: $counts');
+        }
+
+        await timed('compute', () => matchAndCompute(db, provider, stored()));
+        late final Map<String, Object?> body;
+        await timed(
+          'GET',
+          () async => body = await matchesBody(db, provider, stored()),
+        );
+        await timed('recompute', () async => recomputeTotals(db, stored()));
+        await timed('fresh', () async => nutritionIsFresh(db, stored()));
+        // Not vacuous: the oil lines asked — the prints found once per
+        // index on compute and GET; a recompute asks only where the rows
+        // are the read's (`discarded`), a freshness check never.
+        for (final step in ['compute', 'GET']) {
+          expect(
+            seen[step]!['memo:reservedUse'],
+            seen[step]!['indexes'],
+            reason: step,
+          );
+        }
+        expect(
+          seen['recompute']!['memo:reservedUse'] ?? 0,
+          shape == 'USED' ? 0 : seen['recompute']!['indexes'],
+        );
+        expect(seen['fresh']!['memo:reservedUse'] ?? 0, 0);
+        // Each oil line's row: 386 copies and the real line, counted whole
+        // where the prints pass the line (USED), else the 23 teaspoons of
+        // its ½ cup (112.00 g × 113.37 / 118.29 mL = 107.33 g).
+        final oils = [
+          for (final (i, l) in nutritionLines(stored()).indexed)
+            if (l.raw == real[9].raw) i,
+        ];
+        expect(oils, hasLength(capLines - 13));
+        expect(
+          {
+            for (final m in db.ingredientMatchesFor(r.id))
+              if (oils.contains(m.position))
+                (m.grams?.toStringAsFixed(2), m.gramSource),
+          },
+          {
+            if (shape == 'USED')
+              ('112.00', 'portion')
+            else if (shape == 'MANY')
+              ('15.51', 'discarded')
+            else
+              ('107.33', 'discarded'),
+          },
+        );
+        if (shape == 'USED') {
+          return;
+        }
+        // The basis names 8 prints and the count (verify4 D1); the GET body
+        // within 2 % of the measured (MANY 922,897, BELOW 883,810).
+        final each = shape == 'MANY' ? '1/10000 teaspoon' : '1 teaspoon';
+        final named = '${List.filled(8, each).join(' + ')} + … ($hits in all)';
+        final basis =
+            'only $named of it used (from step 1) — the rest counted as 0 g '
+            '· approximate (the steps use $named of the reserved oil; the '
+            "rest is not used here — the fried aromatics' oil not counted)";
+        final items = (body['items']! as List).cast<Map<String, Object?>>();
+        expect(
+          {
+            for (final i in oils)
+              (items[i]['match']! as Map<String, Object?>)['gram_basis'],
+          },
+          {basis},
+        );
+        expect(basis.length, shape == 'MANY' ? 509 : 407);
+        expect(
+          jsonEncode(body).length,
+          lessThanOrEqualTo((shape == 'MANY' ? 922897 : 883810) * 1.02),
+        );
+      });
+    }
   }, skip: skipIfNoCorpus);
 }

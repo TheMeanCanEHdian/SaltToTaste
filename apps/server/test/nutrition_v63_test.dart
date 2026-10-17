@@ -286,7 +286,9 @@ const List<_Row> _reach = [
 /// oil (newly reached by the pour-off window: 1 tablespoon kept of its 1
 /// tablespoon), the eggplant's main frying oil, and guay tiew's scallions
 /// (the greens go in after the strain), chiles (one sliced, eaten) and
-/// galangal (no strained head: weighed on ginger, kept — a stated gap).
+/// galangal (no strained head: weighed on ginger, kept — a stated gap;
+/// RE-PIN (M71 batch, v71, pE R-E3): galangal joins `_vegetableHeads`, so
+/// the same strain zeroes it — the gap closed).
 const List<_Row> _negatives = [
   (
     _paella,
@@ -385,9 +387,13 @@ const List<_Row> _negatives = [
     '1 (2-inch) piece fresh galangal, peeled and sliced into ¼-inch-thick rounds',
     169231,
     '1.000000',
-    '16.00',
-    '12.80',
-    "1 piece × 2 inch × 8 g per inch · approximate (ginger's figure (ATK's substitute for galangal)) · approximation (counted as Ginger root, raw)",
+    // RE-PIN (M71 batch, v71, pE R-E3): 0.00 g, 0.00 kcal, strained (was
+    // 16.00 g, 12.80 kcal, "1 piece × 2 inch × 8 g per inch · approximate
+    // (ginger's figure (ATK's substitute for galangal)) · approximation
+    // (counted as Ginger root, raw)").
+    '0.00',
+    '0.00',
+    'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted) · approximation (counted as Ginger root, raw)',
   ),
 ];
 
@@ -445,7 +451,8 @@ void main() {
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
-    expect(matcherVersion, 68);
+    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
+    expect(matcherVersion, 69);
   });
 
   test("kosher salt's figure is half of SR 173468's '1 tsp' 6.0 g by "
@@ -979,7 +986,10 @@ void main() {
           ('complete', '748.74'), // 748.63; 748.58 → 748.42 (bay)
           ('partial', '678.50'), // 678.81; 678.78 → 678.46 (bay)
           ('complete', '715.06'), // 715.27; 715.27 → 715.06 (bay)
-          ('partial', '596.80'), // 601.75; 601.77 → 596.82 (H1)
+          // RE-PIN (M71 batch, v71): 404.60 (was 596.80) — the galangal
+          // strained (pE R-E3, −12.80) and the jam's oil at its printed 2
+          // tablespoons (pF R2, −756.00) (replay 596.82 → 404.62).
+          ('partial', '404.60'), // 601.75; 601.77 → 596.82 (H1)
         ],
       );
     });

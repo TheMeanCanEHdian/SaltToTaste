@@ -115,6 +115,13 @@ List<String> answers(
       o.hold,
       // v59 (M60 P7a): read once per head (closer 2, verifier 2 D2).
       stepsPeelIn(r, line),
+      // v71 (M71 R-H1; closer 2, verify2 D3): an amount-less line's step
+      // prints weighed on two records in one index — [food] (2710180, a
+      // 14.0 g tablespoon), then SR 172370 (13.6 g): the record coordinate
+      // of `stepAmountGrams`' key (0398 Ultimate Grilled Pizza |4 reads 14.0
+      // then 13.6).
+      stepAmountGrams(r, line, food, item)?.grams,
+      stepAmountGrams(r, line, _secondOil, item)?.grams,
     ].join(' | ');
   }
   return out;
@@ -144,6 +151,10 @@ void expectExact(
 }
 
 Future<FdcFood> _oil() async => (await FixtureProvider().food(2710180))!;
+
+/// A second oil record ([answers]' second weighing): SR 172370 Oil,
+/// vegetable, soybean, refined — a 13.6 g tablespoon.
+late FdcFood _secondOil;
 
 /// The typed recipes, each named for the key coordinate it separates.
 final Map<String, Recipe Function()> typedRecipes = {
@@ -315,6 +326,47 @@ final Map<String, Recipe Function()> typedRecipes = {
       'Dissolve the qy salt in the sauce.',
     ],
   ),
+  // reservedUse (head), v71 (M71 pF R2; closer 2, verify2 D3): 0523 Nasi
+  // Goreng's reserved oil read in printed spoonfuls beside a typed lard
+  // its steps never use — the lard reads nothing, whichever is asked first.
+  'reservedUse head': () => typed(
+    '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
+    lines: ['¼ cup lard'],
+  ),
+  // remainingFat (head): that lard used by a spoonful and its rest ("the
+  // remaining lard") — the oil's reading stays its own.
+  'remainingFat head': () => typed(
+    '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
+    lines: ['¼ cup lard'],
+    steps: [
+      'Heat 1 tablespoon reserved lard in the skillet. Stir in the remaining lard.',
+    ],
+  ),
+  // reservedUseIn (name), v71 closer 3 (verify3 D1): 0523 Nasi Goreng's
+  // lines headed RICE (its steps labelled "FOR THE RICE" from step 1) and a
+  // typed SAUCE group of ½ cup vegetable oil whose typed step ("FOR THE
+  // SAUCE") uses 3 tablespoons of the reserved oil — the rice's oil sums its
+  // 11 teaspoons, the sauce's its 9, whichever is asked first.
+  'reservedUseIn name': () {
+    final r = loadCorpusRecipe(
+      '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
+    );
+    return r.copyWith(
+      ingredients: [
+        r.ingredients.single.copyWith(group: 'RICE'),
+        IngredientGroup(group: 'SAUCE', items: [_p('½ cup vegetable oil')]),
+      ],
+      steps: [
+        for (final (i, s) in r.steps.indexed)
+          i == 0 ? s.copyWith(label: 'FOR THE RICE') : s,
+        RecipeStep(
+          number: r.steps.length + 1,
+          label: 'FOR THE SAUCE',
+          text: 'Heat 3 tablespoons reserved oil in the saucepan.',
+        ),
+      ],
+    );
+  },
   // keptOil (raw): two frying oils of one item, each its own pour-off.
   'keptOil raw': () => typed(
     _neutral,
@@ -365,6 +417,9 @@ const _neutral = '1138-stir-fried-beef-and-gai-lan.yaml';
 void main() {
   group('Memo exactness (Run 057 S9): the memos on answer as the memos '
       'off, in either line order', () {
+    setUpAll(() async {
+      _secondOil = (await FixtureProvider().food(172370))!;
+    });
     test('every corpus recipe', () async {
       final food = await _oil();
       final files =

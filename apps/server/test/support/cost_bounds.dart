@@ -131,8 +131,55 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v54 (Q25), first met at the caps by v70's giblet section (its wine):
       // the steps' alcohol sentences, once per index.
       'memo:alcoholSentences',
+      // v71 (M71): R-H1's prints with its two guards' sentences; R-E2's
+      // kept solids; pF R3's fat names in the oil's add-or-combine
+      // sentences and whether an oil line fries (closer 2, verify2 D1);
+      // D-E1's coat mixtures — each once per index.
+      'memo:stepAmounts',
+      'memo:keptSolids',
+      'memo:fatsIntoOil',
+      'memo:friesOil',
+      'memo:coatMixes',
+      // v71 closer 1 (verify1 D2): whether any line could be a coat — the
+      // D-E1 gate's first test.
+      'memo:mayHoldCoat',
     ])
       once: 1,
+    // v71 closer 1 (verify1 D2): the D-E1 mixing test, once per sentence
+    // whichever reader asks (`memo:mixes`, each test counted `mixTests`);
+    // the lines the coat-mixture pass reads, once per index.
+    'memo:mixes': sentences,
+    'mixTests': sentences,
+    // v71 closer 2 (verify2 D1): pF R3's add-or-combine sentences in a step
+    // naming the oil, each read once per index (`memo:fatsIntoOil`).
+    'fatsIntoOilReads': sentences,
+    'coatMixLines': lines,
+    // v71 (M71 R-H1, pF R2): a line's scope, once per group heading and
+    // once for every step.
+    'memo:labelScope': r.ingredients.length + 1,
+    // v71 (M71 R-H1): each amount-less line's prints, once per line; their
+    // weighing once per line and record (a compute's old and new one).
+    'memo:stepAmountsAt': lines,
+    'memo:stepAmountGrams': 2 * lines,
+    // v71 closer 1 (verify1 D1): the prints R-H1 indexes — one per match
+    // of a unit amount, so at most one per character of the steps — and
+    // the prints the read lines walk: each print is filed under at most
+    // four of its words, a form is at most three heads' ("tomato",
+    // "tomatoe", "tomatoes"), and a head's walking lines read disjoint
+    // steps (tier i: one line of a head per scope; the scopes are the
+    // labels' disjoint steps). The cap shape pins both exactly (v26
+    // review71).
+    'stepPrints': r.steps.fold(0, (n, s) => n + s.text.length),
+    // v71 closer 3 (verify3 D1): pF R2's reserved spoonfuls — one per match,
+    // so at most one per character of the steps for each of the four fat
+    // heads; their scoped sum once per fat head and scope (each group
+    // heading, and every step), each scope walking its own hits — the
+    // labels' steps are disjoint, so a hit is walked by its label's scope
+    // and the every-step scope at most.
+    'reservedHits': 4 * r.steps.fold(0, (n, s) => n + s.text.length),
+    'memo:reservedUseIn': 4 * (r.ingredients.length + 1),
+    'reservedHitsRead': 2 * (c['reservedHits'] ?? 0),
+    'stepPrintsWalked': 12 * (c['stepPrints'] ?? 0),
     // v54 (Q25): an alcohol line's reading, once per position and record —
     // a row's record, and a compute's old and new one at most.
     'memo:alcohol': 2 * lines,
@@ -175,6 +222,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:coatNamed',
       // v70 (review Run 063 F2/F3): the one line a set-aside half takes from.
       'memo:setAsideLine',
+      // v71 (M71 pF R2): a fat head's reserved spoonfuls and remainders.
+      'memo:reservedUse',
+      'memo:remainingFat',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,

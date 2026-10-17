@@ -2004,7 +2004,9 @@ written brine share), `"2/3 cup ≈ 16 crackers · USDA cracker portion"` for
 crushed saltines (24 a cup, the corpus's own "⅔ cup crushed saltines (about
 16)", on the record's one-cracker portion), `"18 × 13 g each (31 to 40 per
 pound)"` for a bare count that prints its own count per pound, `"a sub-recipe —
-counted as 0 g"`, `"no amount on the line — counted as 0 g"`, `"4
+counted as 0 g"`, `"no amount on the line — counted as 0 g"` (since
+matcher v71, an amount the steps print for it: `"from step 2: 1 tablespoon
+(no amount on the line)"`), `"4
 sprigs — a sprig is not measured, counted as 0 g"` — for
 sanity-checking an estimate (null when there is no
 amount; re-derived cache-only, never spends FDC budget), `status`: `auto |
@@ -2982,7 +2984,8 @@ vegetables" before the strain ("Using slotted spoon, transfer vegetables to
 serving platter" — the French chicken's carrots are served; the garlic and
 peppercorns "sprinkled … over vegetables" are set apart from them and
 strained), and never a strain whose next sentence keeps some of the solids
-("Measure 1 tablespoon of solids …", grilled potatoes). A numbered part the
+("Measure 1 tablespoon of solids …", grilled potatoes — since matcher v71,
+M71 below, that kept tablespoon is counted, shared by the strained lines). A numbered part the
 line's own mention keeps out of the strained pot ("combine the remaining 2
 tablespoons shallot … in a medium bowl", the poached salmon) is counted:
 `"discarded in cooking: 2 of 4 tablespoons — only the rest counted ·
@@ -4329,7 +4332,8 @@ breasts 489.04 → 403.85, crispy Thai eggplant 419.95 → 503.95, guay tiew
 the 40-cloves bay leaf (now `1 × 0.2 g each`), the carnitas onion and the
 stuffed peppers (bay only), white chicken chili's oil (1 tablespoon kept of
 1 tablespoon), the eggplant's main frying oil (40.82 g), guay tiew's
-scallions, chiles and galangal, the five flake / coarse sea-salt rows and
+scallions, chiles and galangal (since matcher v71 strained — M71 below),
+the five flake / coarse sea-salt rows and
 every table-salt row.
 
 Known gaps (the source stands): a Morton kosher line (⅔ of table salt by
@@ -4341,7 +4345,8 @@ counted (a "remove" for every whole piece waits on the garlic-shrimp 4-of-14
 share); Chicken Marbella's binder ("Heat oil" names neither oil — a
 step-label reader, −40.86 kcal left); the shallot oil's "about 1¾ cups"
 rounds to ⅛ cup (±28 g, ±252 kcal on the section); guay tiew's galangal is
-no strained head (weighed on ginger, kept: 16.00 g, 12.80 kcal) and its
+no strained head (weighed on ginger, kept: 16.00 g, 12.80 kcal — closed in
+matcher v71, M71 below) and its
 makrut lime leaves stay below the gate. Deploy note: matcherVersion 62
 stales every recipe; one zero-request sweep settles it.
 
@@ -4842,7 +4847,8 @@ rings; vegan-baja-style-cauliflower-tacos.
 Known gaps (the source stands): the thick pieces' dustings (salmon|2,
 maple|6, skillet|2) stay held — a per-mass k cannot see a thick piece's
 surface (audit P5); maple's patted-off sugar, salt and pepper count whole
-(96.78 kcal of sugar); parmesan-crusted|3's cheese crust (184.28 g; no
+(96.78 kcal of sugar — since matcher v71 held with the cornstarch, M71
+below); parmesan-crusted|3's cheese crust (184.28 g; no
 record of a cheese crust; Q5 (d) is the owner's); chicken-marsala (0414)|1
 "1 cup flour" counts WHOLE (120.66 g, 441.62 kcal) — its steps print no
 excess, so no `coating` hold and no C4 (a `_dredge` question, outside M69);
@@ -5118,6 +5124,265 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Since matcher v71 (batch M71 — step prints: printed amounts, strained
+solids, kept spoonfuls, frying media; matcherVersion 69; prep50 design_v2
+§2 M71, decided under the 2026-10-07 standing authorization; zero
+requests; reach PRE-Q18 — every reader reads a section's OWN steps).**
+Seven rules, each a step sentence the engine now reads:
+
+(1, pC R-H1) **An amount-less line the steps print an amount for.**
+`stepAmountsOf` (the reading) and `stepAmountGrams` (its weighing, read
+first in `lineGrams` after the giblets): a line with
+no amount [re-point → `measurement`] reads every "<amount> <unit> (of)"
+print (teaspoon, tablespoon, cup, ounce, pound) followed by up to three of
+the line's own words and its head, in the line's SCOPE — where the line's
+group is headed and two or more groups are, the steps carrying that
+group's label ("FOR THE DOUGH"; an unlabelled step inherits the last
+label), NONE when no step carries it (nothing is read); else every step;
+a section reads its own. Three guards: (i) no
+other line of the scope has the head (the print is that line's); (ii) no
+sentence of the scope naming the head prints `repeat`, `each`, `per`,
+`remaining` or `portion` (the amount multiplies or partitions — nothing is
+read); (iii) a print in a sentence printing `to taste`, `up to` or `if
+using` is dropped (a to-taste extra in ANOTHER sentence leaves the print a
+floor). Several prints sum. The print is weighed on the line's own record
+(`resolveGrams` on `<amount> x`, as a printed part is). Basis `from step N:
+<amount> (no amount on the line)` (several: `from steps 2, 4, 5: ¼ teaspoon
++ 3 tablespoons + ⅛ teaspoon (no amount on the line)`; past eight prints
+the first eight, then `+ … (3120 in all)` — every print is still
+summed); no flag (a printed amount). The step LABELS join the ingredients
+hash where a step carries one. 4 rows: ultimate-grilled-pizza|4 "Vegetable oil" 14.00 g (DOUGH, step
+2 "Add 1 tablespoon oil and salt to dough …"), |11 "Sugar" 2.00 g (SAUCE,
+step 3 "… ½ teaspoon salt, and ½ teaspoon sugar"; step 3's "Season with
+additional salt and sugar to taste" is another sentence), shrimp-pad-thai|3
+"Sugar" 39.21 g (steps 2, 4, 5; the ¼ teaspoon goes into a drained radish
+soak — 1.00 g counted, a gap), quick-cooked-tough-greens|4 "Red pepper
+flakes" 0.45 g: +286.08 kcal. Not read: pizza|12 (its PIZZA steps print
+"Pour ¼ cup oil onto center of rimmed baking sheet." and "Drizzle top of 1
+crust with 1 tablespoon oil.", but "Repeat with remaining 2 dough rounds,
+adding 1 tablespoon oil …" names oil with `repeat` / `remaining`),
+classic-gazpacho|10 ("each portion"), lighter-corn-chowder|10 ("up to 1
+tablespoon sugar … to taste"), moqueca|8, the mac and cheese|5,
+barbecued-pulled-chicken|18 and chocolate-volcano-cakes|9 (another line of
+the scope shares the head), meringue-christmas-trees|6 (no print), and the
+other 240 amount-less rows; the salt lines are rule rows (0 g `confirmed`),
+out of reach by construction. An amount-less line whose steps print a volume FETCHES its record's
+detail as a typed line would (the prints decide `gramsFor`'s fetch — never
+a cache's luck: computed alone in a fresh library, 0685's pepper flakes,
+0398's oil and 0554's sugar weigh 0.45 / 14.00 / 39.21 g, the same as in the
+replay; the follow-up verifier's D1).
+
+(2, pC R-E5) **"Strain … Press the solids … Discard the vegetables."**
+`_strainAt` gains an arm beside its "discard … solids" next sentence: a
+strain naming the vegetables, contents or liquid, its next sentence
+opening "press (on) (the) solids" and the one after opening "discard (the)
+vegetables|solids". `_strainedOut` and its guards are unchanged (0 g
+`discarded`, `approximate (strained out and discarded — what it gives the
+liquid is not counted)`). braised-turkey |4 onions, |5 celery, |6
+carrots, |7 garlic, |8 bay, |10 parsley (−233.14) and slow-roasted-turkey-
+with-gravy |0 |1 |2 |4 (−225.44) → 0 g; the two thyme-sprig lines
+(braised|9, slow-roasted|3, 0 g either way) now read the strained basis, as
+the library's 19 other strained sprigs do. braised-turkey|11 "½ ounce dried
+porcini mushrooms" (audit L070) is NOT reached: its head is `mushroom` and
+the steps call it "porcini", so `_strainedOut`'s own-mention test finds no
+mention (a gap; reaching it needs a mention by the item's own word, which
+would also reach italian-wedding-soup|3). R-E5 as built: 10 kcal rows and
+the 2 basis-only sprig rows, row column −458.58 / recipe energy −458.50 —
+the design's §2 figure, −500.54 on 11 rows, less the porcini's 41.96.
+Not reached: pumpkin-pie and
+jellied-cranberry-sauce ("press the solids through" — eaten), arista (its
+lemon squeeze prints "Press on solids to extract all pulp; discard solids."
+— one sentence: the engine splits at periods only), chicken-teriyaki,
+braised|12–|14 (the kept liquid).
+
+(3, pC R-E2) **A printed part of strained solids kept.** grilled-potatoes-
+with-garlic-and-rosemary step 1: "Pour mixture through fine-mesh strainer
+into small bowl; press on solids. Measure 1 tablespoon of solids and 1
+tablespoon of oil into large bowl and set aside. Discard remaining solids
+but reserve remaining oil." (the corpus's one such sentence; closer 1's
+V1-D3 counted the lines whole, and `_strainAt` still skips the strain).
+`_keptSolidsOf` reads it; M52's plan (`_m52Plan`, as the cut dough) weighs
+each strained line named before the strain (`_strainedHeads`, a zest
+strip; no ground spice) at s × its whole grams, s = min(1, kept / Σ whole),
+the kept tablespoon at SR 169230 "Garlic, raw" '1 tsp' 2.8 g × 3 = 8.4 g
+(`_keptSolidsTsp`): |1 garlic 27.00 → 8.19 g, |2 rosemary 0.70 → 0.21 g
+(s = 0.303249), −27.54 kcal. Basis `discarded in cooking — only the 1
+tablespoon of strained solids the steps keep (step 1) counted · approximate
+(the cooked solids weighed as raw minced garlic, USDA SR 169230 2.8 g per
+teaspoon)` — a floor (blond-fried garlic has lost water). A Confirm reads
+the plan's grams; a row the plan stops covering goes back to its whole
+line (the v70 F9 revert).
+
+(4, pE R-E3) **Galangal is a strained aromatic** (`_vegetableHeads`):
+guay-tiew|5 16.00 → 0 g (−12.80; step 2 smashes it with the lemongrass,
+"remove solids from pot and discard"). Its |2 scallions and |4 chiles stay
+(the whites and the whole chile leaving at step 2 are a part-of-line gap,
+< 20 kcal).
+
+(5, pF R2) **A fat whose steps use only printed spoonfuls of "the reserved
+oil".** `_partialUseOf`'s new kind `used` (`_reservedUseOf`; the oil branch
+of `discardedMediumOf` reads only this kind): a fat line (oil, fat,
+shortening, lard) by volume, counted whole, whose scope prints
+`(?<![\w¼½…])(<amount>)\s+(teaspoons?|tablespoons?)\s+(?:of the\s+|more\s+)?
+reserved\s+<head>\b` and no sentence `\bremaining (?:reserved )?<head>\b`
+that does not open "discard" (a discarded remainder does not block; a used
+one does): kept = Σ the prints at the line's own g/mL, below the line.
+Basis `only <prints> of it used (from step N) — the rest counted as 0 g ·
+approximate (the steps use <prints> of the reserved oil; the rest is not
+used here — the fried aromatics' oil not counted)` — `<prints>` names at
+most 8 printed amounts, then `+ … (<n> in all)` (R-H1's form; the sum
+covers every print). The tom yum's Nam Prik
+Pao §0|0 "½ cup vegetable oil" 112.00 → 28.00 g ("2 tablespoons reserved
+oil"; the section 1,211.70 → 455.70 kcal and its parent's |15 row with it),
+nasi-goreng|9 112.00 → 51.33 g ("1 teaspoon of the reserved oil", "1
+teaspoon more reserved oil", "3 tablespoons more reserved oil"),
+bulalo|0 56.00 → 28.00 g ("1 tablespoon reserved oil" twice, "Discard any
+remaining reserved oil"): row column −2,310.00, recipe energy −1,553.94
+(the replay's per-serving sums; §2 printed −1,554.00, rounded).
+Not reached: arista|1 ("… with remaining reserved oil"), crispy-salt-and-
+pepper-shrimp and crispy-orange-beef ("Heat reserved oil", no amount),
+mujaddara ("reserved onion oil"), the oil mixtures (italian-style grilled
+chicken, souvlaki, mechouia), spanish-migas|5, braised-turkey|12,
+beef-burgundy|12 |21, cuban-shredded-beef|3. Gap: the fried aromatics'
+oil uptake (no cached record) — an undercount, flagged.
+
+(6, pF R3) **Bacon fat added to the frying oil joins the frying medium.**
+`_joinsFryingOil`: a fat line (fat, lard, shortening — never an oil) an
+"add" or "combine" sentence names (its own word with any fat word: "bacon
+grease" for "bacon fat") in a step naming the oil, where a line headed
+`oil` is a frying oil → `DiscardedMedium.fryingOil`, 0 g; M52's plan sizes
+no uptake for it (the fried food's uptake stays on the oil's row). Basis
+`discarded in cooking — counted as 0 g · part of the frying medium (the
+fried food's uptake is counted on the frying oil's row)`.
+classic-french-fries|2 ("Add the bacon grease (if using).") and
+easier-french-fries|2 ("Combine the potatoes, oil, and bacon fat (if
+using) …") 51.60 → 0 g: −925.70. Not reached: dakgangjeong|0 (sesame oil).
+
+(7, pE D-E1) **The lines whisked into a coat held with no budget are held
+with it.** `_coatPartsOf` / `_coatOfPart`: a line (no medium, no dip) a
+mixing sentence (whisk, combine, stir, beat, mix, sift as whole words —
+never "mixture") names with a coat line (`_dipsOf`'s own-word naming);
+only in M52's no-budget branch, as a held coat's
+dips are (`coating`, no grams; a Confirm 0 g poured away; a pick keeps the
+hold): maple-glazed-pork-tenderloin |7 sugar 25.14 g, |8 salt, |9 pepper
+("Whisk the cornstarch, sugar, salt, and black pepper in a small bowl
+until combined.") → held: −108.41; the recipe stays partial (audit 5's
+pattern D calls this mixture eaten — the hold follows its coat). A
+budgeted coat's seasonings are counted as before (easier-fried-chicken,
+crunchy-oven-fried-fish, fish-and-chips, chicken-fried-steaks, the fried
+calamari: 19 rows the branch gate keeps); skillet|2 and salmon|2 hold a bare
+coat.
+
+Totals vs the v69 rows (snapshot 27): 28 rows — the 25 food rows above, the
+2 sprig rows (basis only) and the tom yum's parent row; row column
+−3,556.96, recipe energy −2,800.76; statuses unchanged; holds +3. Known gaps
+kept: marinade pickup (no USDA figure); the roast-salted turkey's dry brine;
+the 11 unmeasured pour-offs outside C4; braised-turkey's kept broth ("use
+any remaining broth for another use", a volume with no weight); the
+sub-noise lines (an "extra sauce" salt, bay leaves, gravlax's scraped dill);
+the 248 amount-less lines no step sizes (the sugar stars, the oiled
+counters) at 0 g; the fried aromatics' uptake; the porcini above.
+
+**Beyond the brief — a line's position by identity.** `_positionsOf`, the
+line → position map M71's readers key on (the scope, the memo keys), was
+first built as an equality-keyed map, so two groups' identical lines
+(braised turkey's "Table salt and ground black pepper" in its turkey and
+gravy groups) collapsed onto the LAST one's position — the first group's
+copy was read at the other's position, in the other's scope (found by the
+cap shape: its DOUGH copies read the SAUCE steps). It now maps each line object to its own
+position; a caller's re-decoded copy of a line falls back to the first
+equal line. No corpus row moves for it (the replay with the equality map
+restored is byte-identical); pinned on a stated synthesized 0398 with a
+copy of SAUCE's "Sugar" in the PIZZA group.
+
+**Cost (RULE C).** R-H1 reads its prints in ONE pass per step index
+(`_stepPrintsOf`, `memo:stepAmounts`): the sentences naming an amount-less
+line's head (the steps' word index), each `_stepAmount` match filed by
+(form, step) with its sentence's hedge test, and the named sentences that
+multiply, so a line walks only its own scope's prints (counted
+`stepPrints`, `stepPrintsWalked`) and looks each multiplying sentence up in
+its head's naming. Measured against v70 (8f42742) on the editor-cap shape
+of `nutrition_v26_cost_test` (0398's two labelled groups of 200 amount-less
+lines, 120 steps × 10,000 characters; 9 runs × 6 interleaved, base-tree-
+tree-base): where no step prints an amount of those heads, compute 519.7 →
+519.2 ms, the matches GET 466.7 → 468.8, the recompute 176.3 → 178.5 (−0.1 /
++0.5 / +1.2 %); where EVERY sentence prints nine (56,160 prints, 20 lines
+each summing its group's 3,120), compute 503.0 → 551.3 ms (+9.6 %), the GET
+449.7 → 502.0 (+11.6 %). That residual is the reader's own per-print work,
+with no base equivalent — the regex's match objects alone are about 20 ms
+(4 %) of it — and is pinned at its measured size (56,160 prints indexed;
+3,120 walked per read line, never the other group's 6,240). The D-E1 gate
+(`_coatOfPart`, asked for every held part on every decided path) tests each
+sentence for a mixing word once per index (`_mixesAt`, `memo:mixes`, each
+test counted `mixTests`), reads the coat-mixture pass once (`memo:coatMixes`,
+its lines counted `coatMixLines`) and its "could any line be a coat" test
+once (`memo:mayHoldCoat`); pinned on a held-mixture cap shape (0235 with
+391 rows held `coating`, 390 of them decided parts the GET reads through
+the gate) where the pass run per gate call fails a count (312,000 lines
+read against 400), as it does on the long-lines shape (800 against 400).
+pF R3 (`_joinsFryingOil`, asked for every fat, lard or shortening line by
+`discardedMediumOf`, the GET's basis and the plan's pans) reads the
+add-or-combine sentences of the steps naming the oil ONCE per index
+(`_fatsIntoOil`, `memo:fatsIntoOil`: the word before each fat word and the
+fat heads each names, every sentence read counted `fatsIntoOilReads`); a
+line looks up its own word, and whether an `oil` line fries is asked once
+(`memo:friesOil`). Before (the review of M71, verify2 D1) each call walked
+every add sentence with its own pattern and scanned the whole step for
+"oil" once per sentence naming the line: on 0316's lines with 399 copies of
+its bacon-fat line under 120 steps × 10,000 characters of "Add the bacon
+fat to the bowl.", compute 104 s and the GET 211 s (v70: 0.6 s / 0.4 s).
+Measured now against v70 (8f42742), base-tree-tree-base, 5–9 runs each:
+where no step names the oil (the potatoes, or the bacon fat, added to a
+bowl) compute −0.9 / −0.5 % and the GET +0.7 / +2.1 % — against the same
+tree with R3 switched off, compute +0.0 % and the GET +1.9 % (one pass
+per index that stops at each step's first add sentence); where every
+sentence adds the bacon fat to the hot oil (35,280 sentences, each one R3
+must read) compute −2.4 %, the GET +7.2 % — the pass's own per-sentence
+work (about 20 ms per index, no base equivalent), pinned at its size in
+`nutrition_v26_cost_test` ("R3 FAT LINES"). pF R2 (`_reservedUseOf`, asked
+for every fat line by `discardedMediumOf`'s oil branch and `_partialUseOf`
+— the compute, the GET's basis, engineOutcome) finds a head's printed
+spoonfuls ONCE per index (`memo:reservedUse`, each counted `reservedHits`,
+each distinct printed amount parsed once) and sums them ONCE per head and
+scope (`memo:reservedUseIn`, keyed by the scope's heading; each print walked
+counted `reservedHitsRead`), naming at most 8 of them; a line compares its
+own volume with its scope's sum. The pattern runs over each whole step
+(none of it matches a period, so no print spans a sentence break), only on
+steps holding "reserved"; the remainder test only on steps holding
+"remaining". Before (the review of M71, verify3 D1) each call filtered and
+parsed every print of the head: on 0523's lines with 386 copies of its "½
+cup vegetable oil" under 120 steps × 10,000 characters of "Heat 1 teaspoon
+of the reserved oil." (32,400 prints), compute 50.8 s and the GET 99.8 s
+(v70: 1.2 s / 0.9 s); and (verify4 D1) each row's basis named every print
+twice — with "Heat 1/10000 teaspoon reserved oil." in every sentence
+(33,240 prints, Σ below the line: the read on every copy) one matches GET
+was 489,617,983 characters (v70: 729,010), each basis 1,263,287; now 922,897
+and 509 (the 387 read rows' own basis text). Measured against v70
+(8f42742) and against the same tree with R2 alone switched off, 5 runs per
+arm in base-tree-off-off-tree-base order (closer 4, the final tree): USED
+("Heat 1 teaspoon of the reserved oil.", no read) compute +0.0 %, the GET
++1.3 % (off +0.1 / +0.7 %); BELOW (steps 1–23 one teaspoon) compute +0.5 %,
+the GET +1.1 % (off −0.9 / +0.3 %); MANY compute +1.6 % (off −1.3 %), the
+GET +5.5 % (off −1.0 %) — earlier runs of the same protocol +2.1 / +2.7 %
+and +6.0 / +5.9 %. The MANY GET's residual, measured with a Stopwatch
+around each reader: R2's own pass (one regex over the 1.2 MB of steps and
+its 33,240 matches; 14.3 ms, 12.4 on USED, 3.9 on BELOW — 18.5 before the
+whole-step pass); the shipped v51 pour-off reader (`_keptInPanBasis`, asked
+by the basis of every `discarded` row with grams), whose detectors build
+once per index the first time a GET meets such a row — 30 ms on MANY
+whatever the row count (24, 100, 400 lines: 30.1, 30.3, 31.8 ms), 12 on
+BELOW, never asked on a `portion` row; and `_m50DiscardedBasis`, about 32 µs
+per read row (12.2 ms for 387). None has a base equivalent: base reads no
+print and writes `portion`. The recompute where the read fires is +71–72 %
+(285 → 491 ms on MANY, 285 → 488 on BELOW): the read's 387 `discarded` oil
+rows are asked about by the shipped readers of a discarded engine row (the
+M52 plan's media, v53; the F9 revert check, v70), whose step detectors build
+once per index; with both readers off the recompute is 293 ms, and a
+`portion` row asks neither (USED +0.5 %). Pinned in
+`nutrition_v26_cost_test` ("R2 RESERVED OIL USED / BELOW / MANY": the
+counts, every read row's exact basis, the GET body within 2 % of its
+measured size).
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

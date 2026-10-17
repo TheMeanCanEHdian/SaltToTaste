@@ -4763,7 +4763,8 @@ String _g2(double v) => v.toStringAsFixed(2);
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 68);
+    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
+    expect(matcherVersion, 69);
   });
 
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '

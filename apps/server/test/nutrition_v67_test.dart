@@ -349,7 +349,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
-    expect(matcherVersion, 68);
+    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
+    expect(matcherVersion, 69);
   });
 
   test('R-A: the trim pairs gain the whole brisket only (the flat waits for '

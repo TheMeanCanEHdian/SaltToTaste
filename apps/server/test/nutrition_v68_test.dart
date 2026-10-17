@@ -740,7 +740,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
-    expect(matcherVersion, 68);
+    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
+    expect(matcherVersion, 69);
   });
 
   group('matcher v68 (batch M69)', skip: skipIfNoCorpus, () {
@@ -1177,7 +1178,10 @@ void main() {
         // Unmoved (replay v67 = v68).
         expect(of(_onionRings), ('partial', '217.50')); // = replay
         expect(of(_salmon), ('partial', '542.67')); // = replay
-        expect(of(_maple), ('partial', '462.34')); // = replay
+        // RE-PIN (M71 batch, v71, D-E1): 444.28 (was 462.34) — the sugar,
+        // salt and pepper whisked into the held cornstarch are held with it
+        // (−108.41 / 6); still partial.
+        expect(of(_maple), ('partial', '444.28')); // = replay
         expect(of(_skillet), ('partial', '695.99')); // replay 696.06
         expect(of(_chickenMarsala), ('complete', '662.00')); // replay 662.07
         expect(of(_francese2), ('complete', '376.78')); // replay 376.82

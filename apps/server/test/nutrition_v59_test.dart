@@ -351,7 +351,8 @@ void main() {
     // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
-    expect(matcherVersion, 68);
+    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
+    expect(matcherVersion, 69);
   });
 
   group('matcher v59 (batch M60)', skip: skipIfNoCorpus, () {
@@ -678,8 +679,14 @@ void main() {
       for (final (file, kcal) in [
         (_roastWhole, '544.34'), // v58 502.18
         (_roastWhole2, '544.34'), // v58 502.18
-        (_slowRoasted, '608.72'), // v58 583.42
-        (_braised, '601.81'), // v58 576.52
+        // RE-PIN (M71 batch, v71, R-E5): 586.18 (was 608.72) — "Strain the
+        // vegetables and liquid … Press the solids … Discard the vegetables"
+        // strains its onions, celery, carrots and garlic (−225.44 / 10).
+        (_slowRoasted, '586.18'), // v58 583.42
+        // RE-PIN (M71 batch, v71, R-E5): 578.50 (was 601.81) — the same
+        // strain: onions, celery, carrots, garlic, bay, parsley (−233.14 /
+        // 10; the porcini |11 stays, its head 'mushroom' never named).
+        (_braised, '578.50'), // v58 576.52
         (_grillroasted, '482.28'), // v58 440.12
         (_crowd, '566.13'), // v58 540.37
         (_enCocotte, '618.09'), // v58 572.42

@@ -3608,6 +3608,35 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-17 — matcher v71 (batch M71): the step readers of the prep50
+  round (§2 M71, under the standing authorization).** Seven rules: an
+  amount-less line reads the amount a step prints for it (scoped to its
+  group's labelled steps, with three guards — one line of that head in
+  the scope, no multiplying word near it, no hedged print); a strain whose
+  next sentences press the solids and discard them counts those solids
+  0 g; the one kept tablespoon of strained solids shares pro rata; galangal
+  joins the strained vegetable heads; a reserved frying oil counts only the
+  spoonfuls the steps use again; bacon fat a step adds to a zeroed frying
+  oil joins it; a line a step mixes with a held coat joins the hold. 28
+  rows and −2,801 kcal of recipe energy (the design's 27 and −2,843: the
+  porcini line's head is "mushroom", so the strain reader cannot see it and
+  the widening that would have reached it also moves an unplanned soup —
+  left counted; two thyme-sprig rows move basis-only). The build took the
+  longest verification of the series — eight rounds across a usage-limit
+  interruption, a pause and a follow-up workflow — and each round found a
+  real class: a reader scanning per call instead of once per step index
+  (minutes per GET at the editor caps), a basis text joining every print
+  with no cap (a 490 MB GET body), unpinned guards, and finally a
+  cache-luck dependency the verifier proved on fresh libraries: the step
+  amounts were weighed on the search hit unless another line had fetched
+  the record's detail first, so recipe order changed the grams. One
+  expression in the gram resolver makes the prints decide the fetch; a pin
+  computes three recipes alone in fresh libraries. A latent bug the cap
+  shapes exposed is fixed with no corpus row moving: two identical lines
+  in different groups collapsed onto one position. Standing rule added to
+  every staged brief: a basis that joins a list is capped at eight named
+  entries, with a cost pin on the basis length and the GET body.
+
 - **2026-10-15 — a simplification pass added to the matcher plan (the
   owner's decision).** After the prep50 round's exit measurement, a
   read-only over-engineering audit of the nutrition engine (engine.dart,

@@ -924,7 +924,22 @@ const Map<String, String> _synonyms = {
 /// 172232's chopped portion (grams.dart `fineCutSiblings`); Hershey's
 /// Kisses on 167587 at the label's 41 g per 9; powdered pectin on 168821
 /// at the Sure-Jell label's 4 g a teaspoon.
-const int matcherVersion = 68;
+///
+/// v69 (the Matcher v71 commit, batch M71 — step prints: printed amounts,
+/// strained solids, kept spoonfuls, frying media; prep50 design_v2 §2 M71,
+/// decided under the 2026-10-07 standing authorization; zero requests): an
+/// amount-less line the steps print an amount for counts that print on its
+/// own record (engine `stepAmountGrams`, its group's labelled steps, three
+/// guards); "Strain the vegetables and liquid … Press the solids … Discard
+/// the vegetables" strains (engine `_strainAt`); a strain keeping "1
+/// tablespoon of solids" counts that part, shared by the strained lines
+/// (engine `_keptSolidsOf`); galangal is a strained aromatic; a fat whose
+/// steps use only printed spoonfuls of "the reserved oil" counts those
+/// (engine `_reservedUseOf`); bacon fat added to the frying oil joins the
+/// medium (engine `_joinsFryingOil`); the lines whisked into a coat held
+/// with no budget are held with it (engine `_coatPartsOf`; the gates read
+/// the same from the part's side, `_coatOfPart`).
+const int matcherVersion = 69;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
