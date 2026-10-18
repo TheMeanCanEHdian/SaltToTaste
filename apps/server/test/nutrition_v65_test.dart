@@ -1441,17 +1441,19 @@ const List<_Row> _negatives = [
     null,
     _c4Breast,
   ),
+  // RE-PIN (M78 batch, v78, the owner's Q6 (c)): the pressed crust counts
+  // its whole line, flagged (was held `coating`, no grams).
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
     3,
     '¼ cup grated Parmesan cheese plus 6 ounces, shredded (about 2 cups; see note)',
     325036,
     '0.983333',
-    null,
+    '184.27',
     null,
     'auto',
-    'coating',
     null,
+    "1/4 cup ≈ 59 mL · grated, at ATK's printed 1 ounce = ½ cup + 6 ounces · approximate (a pressed cheese crust: no USDA record of a cheese crust, and the coat record's breading does not describe one — the line counted whole as printed; the part left in the dish is not deducted)",
   ),
   // RE-PIN (M69 batch, v68): no longer held — C4 at 3.18 (R1) (was held `coating`).
   (
@@ -1671,7 +1673,8 @@ void main() {
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    expect(matcherVersion, 74);
+    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
+    expect(matcherVersion, 75);
   });
 
   group('matcher v65 (batch M66)', skip: skipIfNoCorpus, () {
@@ -1878,9 +1881,11 @@ void main() {
       expect(g('0198-crispy-pan-fried-pork-chops.yaml', 1), '46.82');
       // RE-PIN (M69 batch, v68): C4 budgets the flour |2 and its dip |4 |5;
       // the cheese crust |3 stays held (Q5).
+      // RE-PIN (M78 batch, v78, Q6 (c)): |3 counts its whole line (was
+      // 'coating').
       for (final (p, hold) in const [
         (2, null),
-        (3, 'coating'),
+        (3, null),
         (4, null),
         (5, null),
       ]) {
@@ -1986,11 +1991,16 @@ void main() {
       }
     });
 
+    // RE-PIN (M78 batch, v78, the owner's Q6 (c)): retitled — a layer the
+    // gate rejects now counts its WHOLE line outside the budget (flagged);
+    // the budgeted parts are unchanged (f, B and W as v65 had them).
     test('the crumb gate (critic F4): a layer no sentence names with a crumb '
-        "stays held — 0419's cheese crust (no budget either) and a STATED "
-        'synthesized lighter-chicken-parmesan whose one Parmesan sentence '
-        'names no crumb', () async {
-      expect(rowOf(_parmesanCrusted, 3).hold, 'coating');
+        "joins no budget — 0419's cheese crust and a STATED synthesized "
+        'lighter-chicken-parmesan whose one Parmesan sentence names no crumb '
+        '(each counted whole since v78)', () async {
+      // RE-PIN (M78 batch, v78): was held `coating`, no grams.
+      expect(rowOf(_parmesanCrusted, 3).hold, isNull);
+      expect(g2(rowOf(_parmesanCrusted, 3).grams!), '184.27');
       final corpus = loadCorpusRecipe(_lighter);
       const real =
           'Spread the bread crumbs in a shallow dish and cool slightly; when cool, stir in the Parmesan.';
@@ -2009,9 +2019,11 @@ void main() {
         'no-crumb',
       );
       // The coat is budgeted as v64 had it (the panko and flour alone);
-      // the Parmesan, still a layer of the coat, stays held.
-      expect(rowIn(noCrumb, 2).hold, 'coating');
-      expect(rowIn(noCrumb, 2).grams, isNull);
+      // the Parmesan, still a layer of the coat, joins no budget.
+      // RE-PIN (M78 batch, v78, Q6 (c)): it counts its whole line (1 ounce)
+      // — was held `coating`, no grams.
+      expect(rowIn(noCrumb, 2).hold, isNull);
+      expect(g2(rowIn(noCrumb, 2).grams!), '28.35');
       expect(g2(rowIn(noCrumb, 0).grams!), '16.29');
       expect(g2(rowIn(noCrumb, 3).grams!), '11.07');
       // The real recipe: the Parmesan joins.

@@ -5935,6 +5935,91 @@ note: matcherVersion 74 stales every recipe; one zero-request sweep settles
 it (171413's detail is in the caches; a library without it fetches it once,
 RULE A); the kcal digest moves by +4,543.51 of per-serving × servings energy.
 
+**Since matcher v78 (batch M78 — the C4 recipes: the Parmesan crust and the
+pan fat; matcherVersion 75; prep50 design_v2 §2 M78, the owner's Q6 (c) and
+Q7 (c), 2026-10-15; zero requests).** Two rules on M52's coat plan
+(`_m52Plan`). **The crust whole (Q6 (c), pB R-D1):** a nut or cheese coat
+layer that no step names with a crumb (`_layerInCrumb` rejects it — a
+pressed crust) counts its WHOLE line, outside the coat's budget (f, B and W
+unchanged), its basis the line's own weighing and the flag `approximate (a
+pressed cheese crust: no USDA record of a cheese crust, and the coat
+record's breading does not describe one — the line counted whole as
+printed; the part left in the dish is not deducted)` ("nut" for a `Nuts,`
+record). Before v78 such a layer stayed held `coating`. Reach: one row —
+parmesan-crusted-chicken-cutlets|3, held → 184.27 g on 325036 (+775.78
+kcal; ¼ cup grated 14.175 g + 6 ounces 170.097 g), the recipe partial →
+complete. **The pan fat in fat grams (Q7 (c), pC R-E4, F12 — a stand-in on
+the owner's Q4 (b) record):** under C4 (a thin piece's sautéed dusting), a
+step that pours off the fat with no kept part written (`\bpour off (?:the
+|any )?(?:excess )?fat\b`) or wipes the skillet out (`\bwipe (?:out )?(?:the
+)?skillet\b`) makes the fat lines a sauté heats — a frying fat or butter
+line a sentence names after the first sentence that coats or dredges and
+before the first such step (engine `_panFatLines`, once per step index) —
+keep FNDDS 2705980's oil (`_breastBaked`: 2 g oil per 125.77 g raw breast,
+1.5902 % of the coated raw food) as FAT grams: the kept fat is shared by
+the lines' fat (each line's whole grams × its record's total lipid, 204, on
+the record the totals read — a `nutrientSiblings` entry's), and each line
+counts that one share of its whole grams, so an oil line's grams are its
+fat's and a butter line's its fat ÷ 0.8111 (never more than the whole
+line). Flag `approximation (pan fat: 1.59 g fat per 100 g of the raw
+<food> — USDA FNDDS 2705980 recipe: 2 g oil per 125.77 g raw chicken breast
+(no record for the fat a sautéed piece keeps; the steps pour off / wipe out
+the rest)[; a butter line weighed by its own fat])`, after the basis
+`discarded in cooking — only the fat the sautéed food keeps counted`. A
+line the engine reads as a discarded medium (a frying oil, whose uptake
+rule the fryer pass applies) is never a pan line — on the corpus 0042|7,
+0114|5, 0115|4 and 1133|8/|9 sit in a pour-off window and keep that rule —
+so a pan line's medium bit is read nowhere and M52's plan key reads it on
+its line, record and hold only. A person's Confirm of a pan line is the
+plan's grams, as a confirmed coat's is (saltimbocca|5 stays 9.92 g
+`discarded` on the row and the GET); a pan row the plan stops covering —
+the only coated food skipped — returns to its whole line at the recompute
+(parmesan-crusted|6 18.14 g, meunière|3 / |4 28.00 / 28.36 g). Reach: 6
+rows in 4 recipes —
+chicken-saltimbocca|5 56.00 → 9.92 g, fish-meuniere|3 28.00 → 5.44 g and
+|4 (butter, 81.11 % fat) 28.36 → 5.51 g (an oil reading would give 4.99),
+parmesan-crusted|6 18.14 → 6.76 g, and **chicken-francese|12 28.36 → 5.51 g
+and |13 28.00 → 5.44 g**: 0420's S5 wipes the skillet after each batch
+("Wipe out the skillet with paper towels.", twice); its sauce is S2's, made
+in a saucepan from |0 (before the dredge, so |0 stays whole) — the design's
+"francese (the fat makes the sauce)" misread it (the orchestrator's ruling (a)
+of 2026-10-18 under the 2026-10-07 standing authorization: the mechanism's
+reach, never a gate fitted to a calibration). Per serving:
+parmesan-crusted 171.67 → 340.01, saltimbocca 511.56 → 407.88, meunière
+349.73 → 258.01, francese 438.34 → 346.62. 7 rows in all; the ROW column =
+RECIPE ENERGY −475.11 (the design's five −108.23 — its −108.10, 184.28,
+5.45 / 5.52 and 258.03 add rounded parts; the engine sizes the meunière
+budget at the unrounded 9.918 g); +1 complete, holds −1 (coating 15 → 14);
+0 requests. Not reached: piccata and next-level piccata, both marsalas
+(no pour-off, no wipe), every non-C4 pour-off (the C4 gate), meunière|5's
+browned butter (its own mention is the wipe sentence), saltimbocca|8 (after
+the pour-off). **Gaps, disclosed:** the grated ¼ cup S2 whisks into the
+flour dredge counts whole with the crust (≤ 32 kcal over at C4's f; the
+line's two amounts split by part waits for the structured fields); a baked
+breast record's oil read for a pan's kept fat (a stand-in on a stand-in,
+flagged); calibration moves (§0.7, never fitted): saltimbocca +27.7 → +1.8 %,
+parmesan-crusted −42.0 → +15.0 %, **meunière +18.6 → −12.5 %** and
+**francese −1.3 → −21.9 %** (both now under their hand counts — francese's
+earlier −1.3 % was partly the whole frying fat offsetting its double dredge
+read at Q4 (b)'s 3.18, a gap §2 keeps); the 17 thick crust parts at the
+read k pending M80; the thick dustings held; the `fat > 0` guard (no line's
+fat read) has no reach — the one cached fat record with no 204, 748608,
+reads its sibling. COST (RULE C): `_panFatLines` is memoised once per step
+index (`memo:panFatLines`) and reads each fat line's mentions once
+(`panFatLineReads`); the regexes are fixed alternatives (linear). The v26
+cap shapes (saltimbocca's lines + 389 × "4 tablespoons olive oil", 120 ×
+10,000-character steps) pin, EXACTLY on every path, one index, the reader
+once and — on the TRUE path, where every oil line is a pan line weighed at
+0.03 g — 391 line reads (quiet: none). Timing vs the v77 tree d1cf094 (8
+ABBA processes × 3 timed reps, medians; closer 1): quiet +0.82 / +0.82 /
++0.92 % (compute / GET / recompute) — within ±2 %; the TRUE path +5.4 /
++4.6 / +23.2 % (+45 / +31 / +118 ms) — STATED RESIDUAL: the plan weighs
+390 pan lines (each line's record and whole grams), work the base never
+does on this shape (the oil lines are counted whole there); linear and
+count-pinned (the M71 precedent). Deploy note:
+matcherVersion 75 stales every recipe; one zero-request sweep settles it;
+the kcal digest moves by the 4 recipes' per-serving × servings energy.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line

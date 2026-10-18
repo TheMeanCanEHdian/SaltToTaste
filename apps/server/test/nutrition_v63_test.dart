@@ -457,7 +457,8 @@ void main() {
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    expect(matcherVersion, 74);
+    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
+    expect(matcherVersion, 75);
   });
 
   test("kosher salt's figure is half of SR 173468's '1 tsp' 6.0 g by "

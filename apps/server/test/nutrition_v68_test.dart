@@ -493,6 +493,9 @@ const List<_Row> _negatives = [
     null,
     null,
   ),
+  // RE-PIN (M78 batch, v78, the owner's Q6 (c)): M69 still does not reach
+  // it; M78 counts the pressed crust's whole line, flagged — was held
+  // `coating`, no grams.
   (
     _parmesanCrusted,
     null,
@@ -501,11 +504,11 @@ const List<_Row> _negatives = [
     325036,
     'Cheese, parmesan, grated',
     '0.983333',
-    null,
+    '184.27',
     'auto',
-    'coating',
     null,
-    null,
+    '775.78',
+    "1/4 cup ≈ 59 mL · grated, at ATK's printed 1 ounce = ½ cup + 6 ounces · approximate (a pressed cheese crust: no USDA record of a cheese crust, and the coat record's breading does not describe one — the line counted whole as printed; the part left in the dish is not deducted)",
   ),
   (
     _francese2,
@@ -746,7 +749,8 @@ void main() {
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    expect(matcherVersion, 74);
+    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
+    expect(matcherVersion, 75);
   });
 
   group('matcher v68 (batch M69)', skip: skipIfNoCorpus, () {
@@ -1108,9 +1112,11 @@ void main() {
       );
     });
 
+    // RE-PIN (M78 batch, v78): retitled — M78 counts the crust (Q6 (c));
+    // the note stays null.
     test("holds: francese|10's dip is counted (`holdNoteOf` null, no longer "
-        "the dip sentence); parmesan-crusted|3's cheese crust stays held "
-        '(Q5) — its note null, as in v67', () async {
+        "the dip sentence); parmesan-crusted|3's cheese crust is counted "
+        'whole since v78 (Q6 (c)) — its note null, as in v67', () async {
       final francese = recipes[_francese]!;
       final dip = rowOf(_francese, 10);
       expect(dip.hold, isNull);
@@ -1120,7 +1126,8 @@ void main() {
       );
       final crusted = recipes[_parmesanCrusted]!;
       final crust = rowOf(_parmesanCrusted, 3);
-      expect((crust.hold, crust.grams), ('coating', null));
+      // RE-PIN (M78 batch, v78, Q6 (c)): was ('coating', null).
+      expect((crust.hold, crust.grams), (null, 184.27));
       final note = holdNoteOf(
         crusted,
         nutritionLines(crusted)[3],
@@ -1149,8 +1156,11 @@ void main() {
     });
 
     test(
-      'per serving: the 8 recipes move (6 turn complete; parmesan-crusted '
-      'and the eggplant stay partial on |3 and |1); the others equal v67',
+      // RE-PIN (M78 batch, v78): retitled — parmesan-crusted turns complete
+      // at v78 (|3 counted, Q6 (c)).
+      'per serving: the 8 recipes move (6 turn complete; the eggplant stays '
+      'partial on |1, parmesan-crusted on |3 until v78); the others equal '
+      'v67',
       () {
         (String, String) of(String file) {
           final n = db.nutritionFor(recipes[file]!.id)!;
@@ -1167,15 +1177,20 @@ void main() {
           '472.45',
         )); // replay 442.64 → 472.52
         expect(of(_marsala), ('complete', '734.28')); // replay 704.46 → 734.35
-        expect(of(_francese), ('complete', '438.29')); // replay 407.44 → 438.34
+        // RE-PIN (M78 batch, v78, Q7 (c)): the four C4 recipes' pan fat
+        // (and parmesan-crusted's crust, Q6 (c)) — francese was 438.29,
+        // saltimbocca 511.50, meunière 349.73, parmesan-crusted partial
+        // 171.63; the v78 replay 438.34 → 346.62, 511.56 → 407.88, 349.73 →
+        // 258.01, 171.67 → 340.01.
+        expect(of(_francese), ('complete', '346.57')); // replay 407.44 → 438.34
         expect(of(_saltimbocca), (
           'complete',
-          '511.50',
+          '407.82',
         )); // replay 488.08 → 511.56
-        expect(of(_meuniere), ('complete', '349.73')); // replay 326.25 → 349.73
+        expect(of(_meuniere), ('complete', '258.01')); // replay 326.25 → 349.73
         expect(of(_parmesanCrusted), (
-          'partial',
-          '171.63',
+          'complete',
+          '339.97',
         )); // replay 153.54 → 171.67
         // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
         // basil |12 on SR's chopped cup (replay 453.66 → 454.01).

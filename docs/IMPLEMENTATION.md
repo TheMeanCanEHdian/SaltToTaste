@@ -3608,6 +3608,24 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-18 — matcher v78 (batch M78): the C4 recipes — the Parmesan
+  crust counted whole (the owner's Q6) and the sauté pan fat in fat grams
+  (my Q7 (c)); prep50 §2 M78, under the standing authorization.** Two
+  rules. The parmesan-crusted chicken's "plus 6 ounces" cheese crust leaves
+  the coat hold and counts whole at the line's own weighing (184 g,
+  +776 kcal; the recipe completes). A sautéed C4 piece keeps only the fat it
+  takes up when the steps pour off or wipe out the skillet afterwards; the
+  pan's butter and oil lines count that kept fat in fat grams (saltimbocca,
+  meunière, parmesan-crusted). The faithful build reached seven rows, not
+  the design's five: chicken francese also wipes out its skillet after each
+  batch, and its sauce is made in a saucepan from its own butter line, so
+  the design's "the fat makes the sauce" misread it. Ruling: the rule's
+  reach stands (seven rows, −475 kcal); a gate excluding one recipe would
+  be fitted to the auditors' judgment, which moves that calibration recipe
+  from −1 % to −22 % and is disclosed. Four verifier rounds, every one
+  blocked on that ruling alone by the end; the rounds also forced the
+  version bump, the test file, two gate pins and two corrected statements.
+
 - **2026-10-18 — matcher v77 (batch M77): extra-virgin olive oil's energy
   (prep50 §2 M77; the owner's Q5 ruling of 2026-10-15, shipped alone).**
   One map entry. Foundation's extra-virgin olive oil record publishes only

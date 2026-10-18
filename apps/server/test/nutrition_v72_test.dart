@@ -7215,7 +7215,8 @@ void main() {
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    expect(matcherVersion, 74);
+    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
+    expect(matcherVersion, 75);
   });
 
   // RE-PIN (M74 batch, v74; closer 1): the title said "three USDA same-cut

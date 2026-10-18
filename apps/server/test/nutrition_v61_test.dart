@@ -1230,17 +1230,19 @@ const List<_Row> _negatives = [
     null,
     _c4Breast,
   ),
+  // RE-PIN (M78 batch, v78, the owner's Q6 (c)): the pressed crust counts
+  // its whole line, flagged — was held `coating`, no grams.
   (
     _parmesanCrusted,
     3,
     '¼ cup grated Parmesan cheese plus 6 ounces, shredded (about 2 cups; see note)',
     325036,
     '0.983333',
-    null,
-    null,
+    '184.27',
+    '775.78',
     'auto',
-    'coating',
     null,
+    "1/4 cup ≈ 59 mL · grated, at ATK's printed 1 ounce = ½ cup + 6 ounces · approximate (a pressed cheese crust: no USDA record of a cheese crust, and the coat record's breading does not describe one — the line counted whole as printed; the part left in the dish is not deducted)",
   ),
   // RE-PIN (M69 batch, v68): budgeted since v68 (R1, C4 at 3.18), no longer held.
   (
@@ -1303,7 +1305,8 @@ void main() {
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    expect(matcherVersion, 74);
+    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
+    expect(matcherVersion, 75);
   });
 
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
@@ -1589,16 +1592,21 @@ void main() {
         16,
       )); // replay 453.66; v67 360.33; v60 409.66, 13
       expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 249.84, 7
+      // RE-PIN (M78 batch, v78): the crust counted whole (Q6 (c)) and |6's
+      // pan fat (Q7 (c)) — complete (was partial, 171.63, 7; the v78 replay
+      // 171.67 → 340.01).
       expect(of(_parmesanCrusted), (
-        'partial',
-        '171.63',
-        7,
-      )); // replay 171.67; v67 153.54; v60 167.60, 6
+        'complete',
+        '339.97',
+        8,
+      )); // replay 340.01; v67 153.54; v60 167.60, 6
+      // RE-PIN (M78 batch, v78, Q7 (c)): |12 and |13's pan fat, wiped out
+      // after each batch (S5) — was 438.29 (the v78 replay 438.34 → 346.62).
       expect(of(_francese), (
         'complete',
-        '438.29',
+        '346.57',
         15,
-      )); // replay 438.34; v67 407.44; v60 449.08, 14
+      )); // replay 346.62; v67 407.44; v60 449.08, 14
     });
 
     test('a second recompute writes nothing', () {

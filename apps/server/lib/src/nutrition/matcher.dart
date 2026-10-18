@@ -985,7 +985,15 @@ const Map<String, String> _synonyms = {
 /// SR 171413 "Oil, olive, salad or cooking"'s nutrients — 884 kcal and 100 g
 /// fat per 100 g, not Atwater's 843.3 — and keeps its own record and grams
 /// (engine `nutrientSiblings`).
-const int matcherVersion = 74;
+///
+/// v75 (the Matcher v78 commit, batch M78 — the C4 recipes; prep50
+/// design_v2 §2 M78, the owner's Q6 (c) and Q7 (c); zero requests): a
+/// pressed nut or cheese crust no step names with a crumb counts its whole
+/// line, flagged (engine `_crustFlag`); under C4, the sauté fat a step pours
+/// off or wipes out keeps FNDDS 2705980's 2 g oil per 125.77 g raw breast
+/// as FAT grams, shared by the heated lines' fat (engine `_panFatLines`,
+/// `_panFatFlag`).
+const int matcherVersion = 75;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

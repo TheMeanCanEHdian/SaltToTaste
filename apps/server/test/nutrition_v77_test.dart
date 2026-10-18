@@ -1894,7 +1894,8 @@ String _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 74);
+    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
+    expect(matcherVersion, 75);
   });
 
   test("748608 reads SR 171413's nutrients; the three other fat-only "

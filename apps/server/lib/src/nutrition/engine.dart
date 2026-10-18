@@ -15704,6 +15704,8 @@ IngredientMatchRow? _unplannedOf(
       !_dipsOf(recipe).containsKey(row.position) &&
       !_cutMixAt(recipe, row.position) &&
       !_keptSolidsAt(recipe, row.position) &&
+      // v75 (M78): a sauté's fat the steps pour off or wipe out.
+      !_panFatAt(recipe, row.position) &&
       // v71 (M71 D-E1): a coat's mixture part the plan held.
       !(row.hold == 'coating' && _coatOfPart(recipe, row.position) != null)) {
     return null;
@@ -16328,6 +16330,10 @@ String? _gramBasis(
     // food absorbs part of it, or — bone-in skin-on chicken — none net.
     if (m52 != null && m52.noNetUptake) {
       return o1cBasis;
+    }
+    // v75 (M78): a row the plan words itself (a crust counted whole).
+    if (m52?.basis case final said?) {
+      return said;
     }
     final m52What = m52 == null || m52.flag == null
         ? null
@@ -18016,7 +18022,10 @@ derivedFor(
                     // v66 (M67 A2): a cut dough's mix line.
                     _cutMixAt(recipe, position) ||
                     // v71 (M71 R-E2): a strained line sharing a kept part.
-                    _keptSolidsAt(recipe, position)
+                    _keptSolidsAt(recipe, position) ||
+                    // v75 (M78): a sauté's fat the steps pour off or wipe
+                    // out.
+                    _panFatAt(recipe, position)
                 ? _m52OnConfirm(
                     db,
                     recipe,
@@ -19597,6 +19606,122 @@ String _uptakeClause(
       '$standIn';
 }
 
+/// v75 (batch M78, prep50 design_v2 §1 Q6 (c), the owner's ruling of
+/// 2026-10-15; planner pB R-D1): the flag of a nut or cheese layer
+/// [_layerInCrumb] rejects, counted whole ([_m52Plan]) — parmesan-crusted
+/// chicken cutlets' pressed Parmesan (0419 S2 "coat with the shredded
+/// Parmesan mixture, pressing gently so that the cheese adheres"; FNDDS
+/// holds no Parmesan-crusted record). [kind] is the record's ('cheese',
+/// 'nut'). ponytail: the grated ¼ cup S2 whisks into the flour dredge is
+/// counted whole too (≤ 32 kcal over at C4's f) — splitting the line's two
+/// amounts by part waits for the structured fields.
+String _crustFlag(String kind) =>
+    'approximate (a pressed $kind crust: no USDA record of a $kind crust, '
+    "and the coat record's breading does not describe one — the line "
+    'counted whole as printed; the part left in the dish is not deducted)';
+
+/// v75 (batch M78, prep50 design_v2 §1 Q7 (c) — a stand-in on the owner's
+/// Q4 (b) record; planner pC R-E4, critic F12): a step that pours off the
+/// sauté fat with no kept part written ("Pour off the excess fat from the
+/// skillet.", 0421 S4) or wipes the skillet out ("Wipe out the skillet …",
+/// 0466 S2, 0419 S3) — §2's two forms, each a fixed string: linear.
+final RegExp _pansWiped = RegExp(
+  r'\bpour off (?:the |any )?(?:excess )?fat\b|\bwipe (?:out )?(?:the )?skillet\b',
+);
+
+/// The fat heads a sauté heats ([_panFatLines]): the frying fats and butter.
+final Set<String> _panFatHeads = {..._fats.keys, 'butter'};
+
+/// v75 (batch M78): the lines of [recipe] whose fat a sauté of the coated
+/// food heats and the steps then pour off or wipe out ([_pansWiped]) — a
+/// fat line ([_panFatHeads]) a sentence names ([_lineMentionsOf]) after the
+/// first sentence that coats or dredges ([_coatsSentence]) and before the
+/// first [_pansWiped] sentence. Text only, once per step index (RULE C):
+/// [_m52Plan] weighs them only under C4. 0421: |5 the oil
+/// (S3; |8's butter is whisked in after the pour-off); 0466: |3 the oil and
+/// |4 the butter S2 swirls in (|5's butter, A13's second mention, is the
+/// wipe sentence's own); 0419: |6; 0420: |12 and |13 (S5 wipes the skillet
+/// after each batch; the sauce's butter |0 is S2's, before the dredge). A
+/// line with a discarded medium ([_mediumAt]: a frying oil) is never one.
+/// ponytail: the window is the step text's
+/// order — a fat heated for another pan between the coat and the pour-off
+/// would join (no corpus recipe); read the skillet a sentence names if one
+/// appears.
+Set<int> _panFatLines(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#panFatLines, () {
+      (int, int)? coat;
+      (int, int)? wiped;
+      for (final (i, sentences) in _stepIndexOf(recipe).sentences.indexed) {
+        for (final (j, s) in sentences.indexed) {
+          if (coat == null) {
+            if (_coatsSentence.hasMatch(s)) {
+              coat = (i, j);
+            }
+          } else if (_pansWiped.hasMatch(s)) {
+            wiped = (i, j);
+            break;
+          }
+        }
+        if (wiped != null) {
+          break;
+        }
+      }
+      if (wiped == null) {
+        return const <int>{};
+      }
+      bool after((int, int) a, (int, int) b) =>
+          a.$1 > b.$1 || (a.$1 == b.$1 && a.$2 > b.$2);
+      final heads = _headsOf(recipe);
+      final pans = <int>{};
+      for (final (k, head) in heads.indexed) {
+        if (!_panFatHeads.contains(head)) {
+          continue;
+        }
+        // Each fat line's mentions once per index (RULE C; the v26 cap
+        // shape pins the count).
+        _count('panFatLineReads');
+        if (_lineMentionsOf(
+              recipe,
+              k,
+            ).any((m) => after(m, coat!) && after(wiped!, m)) &&
+            // closer 1 (verify1 D4): a line the engine reads as a medium
+            // (a frying oil — 0114|5, 0042|7, 0115|4, 1133|8/|9) keeps that
+            // rule: the fryer pass reads its medium bit, which [_m52Key]
+            // drops for a pan line.
+            _mediumAt(recipe, k) == null) {
+          pans.add(k);
+        }
+      }
+      return pans;
+    });
+
+/// [_panFatLines], for the v78 pins.
+@visibleForTesting
+Set<int> panFatLinesOf(Recipe recipe) => _panFatLines(recipe);
+
+/// [_m52Key] of [rows], for the v78 pins (closer 1, verify1 D4).
+@visibleForTesting
+String m52KeyOf(Recipe recipe, Iterable<IngredientMatchRow> rows) =>
+    _m52Key(recipe, rows);
+
+/// Whether line [i] of [recipe] is one [_panFatLines] names.
+bool _panFatAt(Recipe recipe, int i) => _panFatLines(recipe).contains(i);
+
+/// The C4 stand-in's oil ([_breastBaked]: 2 g per 125.77 g raw breast),
+/// per gram of raw food — the sauté fat a coated piece keeps, as FAT grams.
+final double _panFatShare =
+    double.parse(_breastBaked.o) / double.parse(_breastBaked.r);
+
+/// v75 (batch M78, §1 Q7 (c)'s text): the flag of a pan-fat row on the raw
+/// [food] ([_m52Plan]); a butter line says it is weighed by its own fat.
+String _panFatFlag(String food, {required bool butter}) =>
+    'approximation (pan fat: ${(_panFatShare * 100).toStringAsFixed(2)} g '
+    'fat per 100 g of the raw $food — USDA FNDDS ${_breastBaked.id} recipe: '
+    '${_breastBaked.o} g oil per ${_breastBaked.r} g raw ${_breastBaked.food} '
+    '(no record for the fat a sautéed piece keeps; the steps pour off / '
+    'wipe out the rest)'
+    '${butter ? '; a butter line weighed by its own fat' : ''})';
+
 /// One row M52 counts ([_m52Plan]), `discarded` as a medium's kept part
 /// is: its `grams`, the `flag` its basis carries, the part `kept` outside
 /// the budget (a frying oil's kept part, a coat's part eaten outside the
@@ -19606,6 +19731,8 @@ String _uptakeClause(
 /// engine row takes the coat's hold, `coating`, no grams — any status
 /// carries it, so a person's decision reads it, [derivedFor]). v66 (M67
 /// A2): `cut`, a fried dough's mix line counted at the steps' cut share.
+/// v75 (M78): `basis`, the row's own basis text where the discarded forms
+/// would misstate it (a crust counted whole, the pan fat a sauté keeps).
 typedef _M52Row = ({
   double grams,
   String? flag,
@@ -19615,6 +19742,7 @@ typedef _M52Row = ({
   bool dip,
   bool held,
   bool cut,
+  String? basis,
 });
 
 /// What M52 counts on the rows of [recipe] the engine weighs ([_m52Weighs]:
@@ -19632,9 +19760,10 @@ typedef _M52Row = ({
 ///   outside the dredge on top, its source the line's; k by the coat's
 ///   shape ([_coatShapeOf], [_coatFigure]; v67, M69 R1: a shape-less coat
 ///   on a thin piece is C4, [_thinPiece]); a C5 batter's counted flour
-///   and starch come off B; a thick piece's dusting stays held, and a nut
-///   or cheese layer unless a step names it with a crumb (v65, M66 R3:
-///   [_layerInCrumb]). NOT a fraction of the line (CP9's "no blanket
+///   and starch come off B; a thick piece's dusting stays held; a nut or
+///   cheese layer joins only when a step names it with a crumb (v65, M66
+///   R3: [_layerInCrumb]), else counts its whole line outside the budget
+///   (v75, M78: [_crustFlag]). NOT a fraction of the line (CP9's "no blanket
 ///   coating fraction" stands): f is the food's. v56 (M58 W, Q8): the
 ///   lines a batter leaves in the bowl ([_batterInBowl]) are parts too —
 ///   the whole line the dredge, none eaten, never off B — every part at
@@ -19781,20 +19910,37 @@ Map<int, _M52Row> _m52Plan(
     final parts = <({int at, double dredge, double eaten, double cho})>[];
     for (final i in [...coats, ...batter]..sort()) {
       final r = at[i];
-      if (!engine(r) ||
-          (r!.hold != null && r.hold != 'coating') ||
-          // v65 (M66 R3, Q5 a GATED): a nut or cheese layer joins only
-          // when a step names it with a crumb ([_layerInCrumb]).
-          ((r.description!.startsWith('Nuts,') ||
-                  r.description!.startsWith('Cheese,')) &&
-              !_layerInCrumb(recipe, i))) {
+      if (!engine(r) || (r!.hold != null && r.hold != 'coating')) {
         continue;
       }
+      // v65 (M66 R3, Q5 a GATED): a nut or cheese layer joins only when a
+      // step names it with a crumb ([_layerInCrumb]); v75 (M78, the owner's
+      // Q6 (c)): one it rejects — a pressed crust — counts its WHOLE line
+      // outside the budget (f, B and W unchanged), flagged ([_crustFlag]).
+      final nut = r.description!.startsWith('Nuts,');
+      final crust =
+          (nut || r.description!.startsWith('Cheese,')) &&
+          !_layerInCrumb(recipe, i);
       final record = food(r.fdcId!, lines[i]);
       final full = record == null
           ? null
           : lineGrams(db, lines[i], record, recipe: recipe);
       if (full == null) {
+        continue;
+      }
+      if (crust) {
+        plan[i] = (
+          grams: round2(full.grams),
+          flag: _crustFlag(nut ? 'nut' : 'cheese'),
+          kept: 0,
+          coat: true,
+          noNetUptake: false,
+          dip: false,
+          held: false,
+          cut: false,
+          // The line's own weighing: nothing of it is discarded.
+          basis: full.basis,
+        );
         continue;
       }
       if (batter.contains(i)) {
@@ -19844,6 +19990,7 @@ Map<int, _M52Row> _m52Plan(
           dip: false,
           held: false,
           cut: false,
+          basis: null,
         );
       }
     }
@@ -19927,7 +20074,65 @@ Map<int, _M52Row> _m52Plan(
         dip: true,
         held: false,
         cut: false,
+        basis: null,
       );
+    }
+    // v75 (M78, §1 Q7 (c), F12): under C4 the sauté fat the steps pour off
+    // or wipe out ([_panFatLines]) keeps the stand-in's oil — [_panFatShare]
+    // of the coated raw food as FAT grams, shared by the lines' fat (whole
+    // grams × their record's total lipid, 204 — the record the totals read,
+    // [nutrientSiblings]), each line at that one share of its whole grams:
+    // an oil line's grams are its fat's, a butter line's its fat ÷ 0.8111.
+    // Read on the line, record and hold only — never the row's grams (its
+    // engine form and the plan's `discarded` one key alike, [_m52Key]).
+    if (shape == _CoatShape.c4) {
+      final fats = <({int at, double whole, double fat, bool butter})>[];
+      for (final k in _panFatLines(recipe)) {
+        final r = at[k];
+        // The hold a dip's reads ([_m52RowKey]: none or `coating`).
+        if (!engine(r) || (r!.hold != null && r.hold != 'coating')) {
+          continue;
+        }
+        final record = food(r.fdcId!, lines[k]);
+        final full = record == null
+            ? null
+            : lineGrams(db, lines[k], record, recipe: recipe);
+        if (full == null) {
+          continue;
+        }
+        final lipid =
+            food(
+              nutrientSiblings[r.fdcId] ?? r.fdcId!,
+              lines[k],
+            )?.nutrientsPer100g['204'] ??
+            0;
+        fats.add((
+          at: k,
+          whole: full.grams,
+          fat: full.grams * lipid / 100,
+          butter: _headsOf(recipe)[k] == 'butter',
+        ));
+      }
+      final fat = fats.fold<double>(0, (n, p) => n + p.fat);
+      if (fat > 0) {
+        final kept = min(1, _panFatShare * coatedFood.grams! / fat);
+        final name = _m52FoodName(coatedFood.description!);
+        for (final p in fats) {
+          plan[p.at] = (
+            grams: round2(kept * p.whole),
+            flag: _panFatFlag(name, butter: p.butter),
+            kept: 0,
+            coat: false,
+            noNetUptake: false,
+            dip: false,
+            held: false,
+            cut: false,
+            basis:
+                'discarded in cooking — only the fat the sautéed food '
+                'keeps counted',
+          );
+        }
+      }
     }
   } else if (coats.isNotEmpty) {
     // v60 (M62 H, Q9 — the owner's one-way door): a coat held with no
@@ -19951,6 +20156,7 @@ Map<int, _M52Row> _m52Plan(
         dip: true,
         held: true,
         cut: false,
+        basis: null,
       );
     }
     // v71 (M71 D-E1, pE): the lines mixed into a coat held with no budget
@@ -19974,6 +20180,7 @@ Map<int, _M52Row> _m52Plan(
         dip: true,
         held: true,
         cut: false,
+        basis: null,
       );
     }
   }
@@ -20120,6 +20327,7 @@ Map<int, _M52Row> _m52Plan(
           dip: false,
           held: false,
           cut: true,
+          basis: null,
         );
       }
     }
@@ -20220,6 +20428,7 @@ Map<int, _M52Row> _m52Plan(
       dip: false,
       held: false,
       cut: false,
+      basis: null,
     );
   }
   return plan;
@@ -20363,6 +20572,7 @@ Map<int, _M52Row> _keptSolidsPlan(
         dip: false,
         held: false,
         cut: true,
+        basis: null,
       ),
   };
 }
@@ -20396,7 +20606,9 @@ _M52Row? _m52RowOf(
       // v66 (M67 A2): a cut dough's mix line.
       !_cutMixAt(recipe, row.position) &&
       // v71 (M71 R-E2): a strained line sharing a kept part.
-      !_keptSolidsAt(recipe, row.position)) {
+      !_keptSolidsAt(recipe, row.position) &&
+      // v75 (M78): a sauté's fat the steps pour off or wipe out.
+      !_panFatAt(recipe, row.position)) {
     return null;
   }
   final at = (memo == null
@@ -20549,12 +20761,22 @@ String _m52Key(
   final key = StringBuffer(
     '${food?.position} ${food?.grams} ${food?.description}',
   );
+  // v75 (M78): a C4 sauté's pan-fat line is read on its line, record and
+  // hold only (as a dip's) — only beside a coated meat ([_panFatLines]).
+  // Its medium bit is read nowhere in the plan: a pan line has no
+  // discarded medium (closer 1, verify1 D4), so neither the coat nor the
+  // fryer pass reads it, under C4 or not.
+  final pans = coated == null ? const <int>{} : _panFatLines(recipe);
   for (final i in at.keys.toList()..sort()) {
     final r = at[i]!;
     key.write(
       _m52RowKey(
         r,
-        dip: dips.containsKey(i) || cutLine(i, r) || _keptSolidsAt(recipe, i),
+        dip:
+            dips.containsKey(i) ||
+            cutLine(i, r) ||
+            _keptSolidsAt(recipe, i) ||
+            pans.contains(i),
         offB:
             c5 &&
             _m52Counted(r) &&

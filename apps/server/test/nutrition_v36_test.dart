@@ -273,8 +273,12 @@ void main() {
       // RE-PIN (M66 batch, v65, R3): 0042's almonds (170567) join the coat's
       // parts — counted, no hold; the held layer is now 0419's Parmesan, a
       // cheese crust no crumb sentence names (it stays held).
+      // RE-PIN (M78 batch, v78, the owner's Q6 (c)): 0419's Parmesan crust
+      // now counts its whole line (184.27 g, no hold) — no Nuts/Cheese layer
+      // is held any more; the held coat row is 0257's cornstarch, a thick
+      // steak's dusting (`coating`, the design's "thick dustings held").
       for (final (file, position, fdcId, hold) in [
-        ('0419-parmesan-crusted-chicken-cutlets.yaml', 3, 325036, 'coating'),
+        ('0257-pan-seared-salmon-steaks.yaml', 2, 169698, 'coating'),
         ('0129-indoor-pulled-chicken.yaml', 0, 174536, 'partial_pour_away'),
       ]) {
         test(

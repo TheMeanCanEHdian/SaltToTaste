@@ -149,6 +149,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v74 (M74, the owner's Q1 (b)): a step trimming a brisket's fat to a
       // printed depth — once per index.
       'memo:trimsFatTo',
+      // v75 (M78, the owner's Q7 (c)): the fat lines a sauté heats between
+      // the first coat sentence and the first pour-off or wipe — once per
+      // index.
+      'memo:panFatLines',
     ])
       once: 1,
     // v71 closer 1 (verify1 D2): the D-E1 mixing test, once per sentence
@@ -160,6 +164,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     // naming the oil, each read once per index (`memo:fatsIntoOil`).
     'fatsIntoOilReads': sentences,
     'coatMixLines': lines,
+    // v75 (M78): each fat line's mentions read once per index by the pan-fat
+    // reader (`memo:panFatLines`).
+    'panFatLineReads': lines,
     // v71 (M71 R-H1, pF R2): a line's scope, once per group heading and
     // once for every step.
     'memo:labelScope': r.ingredients.length + 1,

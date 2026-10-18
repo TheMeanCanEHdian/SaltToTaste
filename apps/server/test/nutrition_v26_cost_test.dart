@@ -3126,4 +3126,107 @@ void review71() {
     },
     skip: skipIfNoCorpus,
   );
+
+  group(
+    "RULE C, the C4 pan fat (v75, M78, the owner's Q7 (c))",
+    () {
+      // STATED synthesized cost inputs (cap shapes no corpus recipe holds):
+      // the real saltimbocca (0421) — its eleven lines and its real pound
+      // and dredge sentences (S1, S2: C4 on a thin breast) — padded to the
+      // 400-line cap with its own real line "4 tablespoons olive oil" and
+      // to 120 × 10,000-character steps of "Add 1 tablespoon oil to the
+      // skillet, then pour off the excess oil and wipe the pan." (every
+      // sentence names the oil after the dredge and nearly matches both of
+      // `_pansWiped`'s forms). quiet: no sentence pours off the fat or wipes
+      // the skillet — the reader scans every sentence once and names no
+      // line. loud (the TRUE path, the 2026-10-18 standing rule): the last
+      // step ends with S4's real "Pour off the excess fat from the
+      // skillet." — every oil line's mention lies in the window, so the
+      // plan weighs all 390 oil lines at the one pan share.
+      const salt = '0421-chicken-saltimbocca.yaml';
+      const oil = '4 tablespoons olive oil';
+      const filler =
+          'Add 1 tablespoon oil to the skillet, then pour off the excess oil '
+          'and wipe the pan. ';
+      const pour = 'Pour off the excess fat from the skillet.';
+      for (final loud in [false, true]) {
+        test('CAP SHAPE (${loud ? 'loud' : 'quiet'}): 400 lines, 390 of them '
+            '"$oil", under 120 × 10,000-character steps naming the oil'
+            '${loud ? ' and ending in S4\'s "$pour" (every oil line a pan '
+                      'line, weighed at the one share)' : ' (no pour-off, no '
+                      'wipe: no pan line)'}: the reader once per index, the '
+            'counts pinned EXACTLY; each path under the backstop', () async {
+          final base = loadCorpusRecipe(salt);
+          final own = [for (final g in base.ingredients) ...g.items];
+          final r = capped(
+            base,
+            [
+              for (final l in own) l.raw,
+              for (var i = own.length; i < capLines; i++) oil,
+            ],
+            [
+              base.steps[0].text,
+              base.steps[1].text,
+              for (var i = 2; i < capSteps - 1; i++) fill(filler, capStep),
+              if (loud)
+                '${fill(filler, capStep - pour.length)}$pour'
+              else
+                fill(filler, capStep),
+            ],
+          );
+          final db = wp.tempDb();
+          final provider = FixtureProvider(pending: pendingSearches);
+          wp.saveRecipe(db, r);
+          Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+          final seen = <String, Map<String, int>>{};
+          Future<void> timed(
+            String step,
+            Future<Object?> Function() run,
+          ) async {
+            stepIndexCounts.clear();
+            final sw = Stopwatch()..start();
+            await run();
+            final ms = sw.elapsedMilliseconds;
+            final counts = Map.of(stepIndexCounts);
+            final copies = counts['indexes'] ?? 1;
+            expectBounded(r, counts, 'pan $step', copies: copies);
+            seen[step] = counts;
+            expect(ms, lessThan(backstopMs), reason: 'pan $step: $counts');
+          }
+
+          await timed('compute', () => matchAndCompute(db, provider, stored()));
+          final oils = [
+            for (final row in db.ingredientMatchesFor(r.id))
+              if (row.raw == oil) row,
+          ];
+          expect(oils, hasLength(capLines - own.length + 1));
+          expect(panFatLinesOf(stored()), hasLength(loud ? oils.length : 0));
+          // The TRUE path: 9.918 g of fat (623.69 g of breast × 2 / 125.77)
+          // over 390 × 56 g — each line 0.03 g, `discarded`; quiet: whole.
+          expect(
+            {for (final row in oils) (row.gramSource, row.grams)},
+            {if (loud) ('discarded', 0.03) else ('portion', 56.0)},
+          );
+          await timed('GET', () => matchesBody(db, provider, stored()));
+          await timed('recompute', () async => recomputeTotals(db, stored()));
+          // EXACTLY, every path: one index, the reader once, and — on the
+          // TRUE path only — each of the 391 fat lines (390 oil, |8's
+          // butter) read once (quiet: no wipe, no line read).
+          final once = {
+            'indexes': 1,
+            'memo:panFatLines': 1,
+            'panFatLineReads': loud ? 391 : null,
+          };
+          expect(
+            {
+              for (final MapEntry(:key, :value) in seen.entries)
+                key: {for (final k in once.keys) k: value[k]},
+            },
+            {'compute': once, 'GET': once, 'recompute': once},
+          );
+        });
+      }
+    },
+    skip: skipIfNoCorpus,
+  );
 }
