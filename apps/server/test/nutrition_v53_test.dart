@@ -739,7 +739,8 @@ void main() {
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    expect(matcherVersion, 71);
+    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
+    expect(matcherVersion, 72);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

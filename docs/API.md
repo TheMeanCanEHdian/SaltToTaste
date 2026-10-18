@@ -5489,7 +5489,8 @@ juices into fat separator." pass — through ONE function, `braisedKeptOf(raw,
 fdcId, recipe)`, that the deduction (`recomputeTotals`), the basis flag
 (`trimStandInFlagOf`, now given the recipe) and so the matches GET read
 with the same recipe; a record the printed depth moves a line onto (173128,
-168664) still needs that depth printed. `braisedKept[170827]`: SR 170827
+168664) still needs that depth printed (since v74 a step's printed trim
+also carries 0091's flat onto 173128 — M74 below). `braisedKept[170827]`: SR 170827
 *Beef, chuck, short ribs, boneless, separable lean and fat, trimmed to 0"
 fat, choice, raw* (detail) → SR 171223 *… cooked, braised* (a hit in the
 cached `bone-in english-style beef short ribs` answer): P 17.22 → 25.3
@@ -5642,6 +5643,115 @@ the panna cotta's step "top with 3 to 5 berries" is a count no unit reads
 porcini's own compositions (no FDC record); boston-baked-beans' brown
 mustard counted as yellow, unflagged. Deploy note:
 matcherVersion 71 stales every recipe; one zero-request sweep settles it.
+
+**Since matcher v74 (batch M74 — the brisket flats; matcherVersion 72;
+prep50 design_v2 §2 M74, the owner's Q1, 2026-10-15: (b) for 0091, (a′) for
+onion-braised, (a) keep for 0090; zero requests; shipped ALONE, a record
+ruling; reach PRE-Q18 — both rules read a recipe's OWN steps).** Two rules,
+2 rows:
+
+(1, Q1 (b)) **A step's printed trim moves the 0" flat to the ⅛-inch flat.**
+NEW `_trimsFatTo(recipe)` (read once per step index, `memo:trimsFatTo`): the
+step (1-based) and depth of the first step sentence matching
+`^\s*trim fat\b[^.]*\bbrisket\b[^.]*\bto (⅛|¼)[- ]inch\b` — read LINEAR
+(`trimsFatSentence`: the substrings "trim fat", "brisket" and "inch" first;
+then, in the sentence's first period-free piece, "trim fat" at its start, the
+first "brisket" after it and the last depth after that — the regex's
+`[^.]*` never crosses a period and its greedy capture is the last depth;
+pinned against the regex). `trimDepthRecord` gains `{Recipe? recipe}`: when
+the top is SR 168743 (flat, 0") and the LINE prints no depth, a step hit
+moves SR 173128 *Beef, brisket, flat half, separable lean and fat, trimmed
+to 1/8" fat, choice, raw* first (a hit in the line's own `beef brisket`
+answer: zero requests). The corpus has exactly one such sentence: 0091 S1
+"Trim fat on surface of brisket to ⅛ inch." (tacos-al-carbon's "Trim fat
+deposits on steak to ⅛-inch thickness." names no brisket). `braisedKeptOf` deducts the 173128 pair (energy and the four fat
+columns, M72's shares) on such a row with NO skim gate — the owner's ruling:
+most of the 2 quarts of cooking liquid is never served. Flag (the corned
+clause composed by the title):
+`approximate (the steps trim the fat cap to ⅛ inch (step 1) — USDA's ⅛-inch
+flat; its braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 %
+of the fat by the protein tracer — the fat that renders into the cooking
+liquid, deducted (no step skims it: the steps serve 1 cup of the 2 quarts and
+the broth the vegetables cook in, not counted); the steps cure and rinse the
+brisket — the cure's sodium is not counted; a rinsed cure counts 0 g, CP9)`.
+home-corned-beef-with-vegetables|0 "1 (4½- to 5-pound) beef brisket, flat
+cut": 168743 → 173128, 2,154.56 g unchanged, row 3,641.21 → 5,989.68 kcal
+gross, the pair deducts 1,940.46; recipe +408.02, 577.01 → 628.01 per
+serving; fat 217.47 → 270.00 g. Its cure rows (salt, brown sugar, curing
+salt, the cure's aromatics) stay `discarded` 0 g. The record carries no trans
+fat (no 605), so the recipe's trans total (10.84 g, all the 0" record's) is
+absent; its sodium and protein follow the record.
+
+(2, Q1 (a′)) **onion-braised's 0" flat at its own braised pair.**
+`braisedKept[168743]` = SR 168743 → SR 169440 *Beef, brisket, flat half,
+separable lean and fat, trimmed to 0" fat, choice, cooked, braised* (both
+hits in `beef brisket`): P 20.2 → 32.2, E 169 → 221, F 9.86 → 9.24 — energy
+0.820354, fat 0.587883, saturated 0.617156, mono 0.523432, poly 0.537486
+(169440 publishes no trans: it stays gross, as M72's). Gated by M72's
+`_defatsLiquid`: S6 "Scrape off and discard any congealed fat from the
+sauce, … skimming any fat on the surface with a wide shallow spoon". Flag `approximate (USDA's braised pair 168743 → 169440
+(flat, 0" trim) keeps 82.0 % of the energy and 58.8 % of the fat by the
+protein tracer — the fat the steps skim, deducted; the steps name a fat
+layer the 0" record does not carry — the cap's depth is not printed)`.
+onion-braised-beef-brisket|0 basis only (2,041.16 g, row 3,449.57 gross):
+recipe −619.70, 692.11 → 588.82 per serving (3,532.95 / 6). A 0" flat
+standing in for a cap its LINE prints (the ¼-inch fallback when the answer
+loses 173128) stays gross — its flag says "counted as the 0-inch trimmed
+flat" and no pair deducts.
+
+**The invariant.** The deduction (`recomputeTotals`), the basis
+(`gramBasisFor`, so the matches GET) and the GET's candidate sheet
+(`candidatesForLine`, which now takes `{Recipe? recipe}` and is passed the
+line's recipe) rank and gate with the SAME recipe: 0091's row, its flag, its
+deduction and the sheet's first candidate are all 173128 (Run 047's class:
+a sheet ranked without the recipe would lead with 168743).
+
+Not moved, byte-equal: new-englandstyle-home-corned-beef-and-cabbage|6
+(168743, its corned flag; S3 "skimming any scum" is no skim of fat —
+`_defatsLiquid`'s `\bfat\b`), braised-brisket-with-pomegranate-cumin-and-
+cilantro|0 (its line prints ¼": the line arm first; 794.35 per serving),
+barbecued-whole-beef-brisket-with-spicy-chili-rub|10 (168664 at M72's share),
+tacos-al-carbon-grilled-steak-tacos|4, every other row. A step-less 0091
+(Q18) would not move.
+
+Batch: 2 rows (1 record + kcal + basis, 1 basis-only); the ROW column
++2,348.47, RECIPE ENERGY −211.69 by the stored batches (+408.02 − 619.70;
+−211.74 as per-serving × servings, the per-serving rounding); statuses,
+holds, buckets and sections unchanged; 0 requests. Calibration moves AWAY
+(design_v2 §3): a4 R02 home-corned +4.1 → +13.3 %, a4 R04 onion-braised
+−5.9 → −20.0 %.
+
+**Cost (RULE C).** The reader is one pass over the steps' sentences per
+index (`memo:trimsFatTo`), substring tests first, then three anchored finds;
+the design's `[^.]*` pair is quadratic on a sentence of repeated words —
+pinned in `nutrition_v26_cost_test`: 30,000 seeded sentences agree with the
+regex (3,616 of them hits), and 1,200 sentences of ≈ 1,000 characters in
+each of two shapes ("trim fat" then "brisket" repeated with no "to";
+"brisket to ⅛ inc" repeated) are read under 100 ms (the tree ≈ 3–5 ms, the
+regex restored 226–311 ms). It is read only where the top is 168743 and the
+line prints no depth (the compute, the GET sheet) or where a row sits on
+173128 with no printed depth (the deduction, the basis). The cap shape —
+0091's lines and 400 flat lines under 120 steps × 10,000 characters of "Trim
+fat on the brisket brisket brisket, about 1 inch." (every sentence reaches
+the finds; none prints a depth), and a loud variant whose S1 is 0091's real
+sentence (every flat moves and deducts) — reads it once per index; measured
+against matcher v73 (5 rounds of the base, the base with only the 168743
+entry, and the tree, interleaved, 9 runs each, the means): compute +1.76 %,
+the matches GET +1.87 %, a recompute +3.43 %, of which the 168743 entry alone
+is +0.89 / +1.08 / +3.49 % — the step reader's own share +0.87 / +0.79 /
+−0.06 %. The recompute's residual is M72's gate, now read for the shape's
+168743 rows (every sentence names "fat"; one linear read per index, pinned by
+count), not the new reader, which a quiet recompute never reads. The flags
+join no list.
+
+Known gaps: 0091 serves 1 cup of the cooking liquid over the meat and
+"Moisten with additional broth" — that returned fat has no USDA share and is
+not counted; onion-braised's cap depth is not printed (USDA publishes the
+flat at 0" and ⅛" only; the steps name a fat layer) and its S6 "trimming and
+discarding any excess fat, if desired" is not deducted; the corned
+briskets' cure sodium (Q2 (c)); the flats' trans fat (169440 and 173128
+publish none). Deploy note: matcherVersion 72 stales every recipe; one
+zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

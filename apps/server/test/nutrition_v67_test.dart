@@ -109,19 +109,22 @@ const List<_Row> _reach = [
     '11475.88',
     'from the printed weight (9–11 lb, the midpoint) · $_wholeFlag',
   ),
+  // RE-PIN (M74 batch, v74; the owner's Q1 (b)): S1's printed ⅛" trim moves
+  // the flat to 173128, its braised pair deducted with the corned clause
+  // kept (was 168743 `_flat`, 3641.21, '… · $_cornedFlag').
   (
     _homeCorned,
     null,
     0,
     '1 (4½- to 5-pound) beef brisket, flat cut',
-    168743,
-    _flat,
+    173128,
+    'Beef, brisket, flat half, separable lean and fat, trimmed to 1/8" fat, choice, raw',
     '1.000000',
     '2154.56',
     'auto',
     null,
-    '3641.21',
-    'from the printed weight (4½–5 lb, the midpoint) · $_cornedFlag',
+    '5989.68',
+    "from the printed weight (4½–5 lb, the midpoint) · approximate (the steps trim the fat cap to ⅛ inch (step 1) — USDA's ⅛-inch flat; its braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the fat by the protein tracer — the fat that renders into the cooking liquid, deducted (no step skims it: the steps serve 1 cup of the 2 quarts and the broth the vegetables cook in, not counted); the steps cure and rinse the brisket — the cure's sodium is not counted; a rinsed cure counts 0 g, CP9)",
   ),
   (
     _newEngland,
@@ -162,6 +165,9 @@ const List<_Row> _negatives = [
     // RE-PIN (M72 batch, v72, pE R-E2): the fat column too.
     "from the printed weight (4–5 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the fat by the protein tracer — the fat the steps skim, deducted)",
   ),
+  // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): its own 0" pair, the steps
+  // skim — basis only (was 'from the printed weight (4–5 lb, the
+  // midpoint)').
   (
     _onion,
     null,
@@ -174,7 +180,7 @@ const List<_Row> _negatives = [
     'auto',
     null,
     '3449.57',
-    'from the printed weight (4–5 lb, the midpoint)',
+    'from the printed weight (4–5 lb, the midpoint) · approximate (USDA\'s braised pair 168743 → 169440 (flat, 0" trim) keeps 82.0 % of the energy and 58.8 % of the fat by the protein tracer — the fat the steps skim, deducted; the steps name a fat layer the 0" record does not carry — the cap\'s depth is not printed)',
   ),
   (
     _rack,
@@ -357,7 +363,8 @@ void main() {
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    expect(matcherVersion, 71);
+    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
+    expect(matcherVersion, 72);
   });
 
   test('R-A: the trim pairs gain the whole brisket only (the flat waits for '
@@ -594,8 +601,10 @@ void main() {
       );
     });
 
-    test('the rows M68 must not reach equal v66; the cure rows stay '
-        '`discarded` 0 g', () {
+    // RE-PIN (M74 batch, v74; closer 1): the title said "the rows M68 must
+    // not reach equal v66" with no exception.
+    test('the rows M68 must not reach equal v66 (onion-braised|0 re-pinned '
+        "at M74's 0\" pair flag); the cure rows stay `discarded` 0 g", () {
       expect(_negatives, hasLength(13));
       expectRows(_negatives);
       for (final (file, _, position, _, _, _, _, grams, _, _, _, _)
@@ -610,12 +619,18 @@ void main() {
       }
     });
 
+    // RE-PIN (M74 batch, v74; closer 1): the title said "the corned flats
+    // keep 168743 first (R-B not built)".
     test('the sheet ranks as the compute does (candidatesForLine): the '
         "whole brisket's first candidate is 168664 at the top's confidence; "
-        'the corned flats keep 168743 first (R-B not built)', () async {
+        "0090's corned flat keeps 168743 first (R-B not built) and 0091's "
+        'leads with 173128 by its S1 trim (M74)', () async {
+      // RE-PIN (M74 batch, v74; the owner's Q1 (b)): the sheet ranks in the
+      // line's recipe, as the compute and the GET do — 0091's S1 trim leads
+      // with 173128 (was 168743, asked with no recipe).
       for (final (file, position, fdcId, confidence) in const [
         (_barbecued, 10, 168664, '0.886667'),
-        (_homeCorned, 0, 168743, '1.000000'),
+        (_homeCorned, 0, 173128, '1.000000'),
         (_newEngland, 6, 168743, '1.000000'),
       ]) {
         final first = (await candidatesForLine(
@@ -623,6 +638,7 @@ void main() {
           provider,
           nutritionLines(recipes[file]!)[position],
           cacheOnly: true,
+          recipe: recipes[file],
         )).first;
         expect(first.candidate.fdcId, fdcId, reason: '$file|$position');
         expect(first.confidence.toStringAsFixed(6), confidence);
@@ -639,7 +655,10 @@ void main() {
       }
     });
 
-    test('per serving: only the barbecued brisket moves', () {
+    // RE-PIN (M74 batch, v74; closer 1): the title said "only the barbecued
+    // brisket moves".
+    test('per serving: M68 moves only the barbecued brisket (M74 moves 0091 '
+        'and onion-braised)', () {
       (String, String) of(String file) {
         final n = db.nutritionFor(recipes[file]!.id)!;
         return (n.status, n.caloriesPerServing!.toStringAsFixed(2));
@@ -650,12 +669,16 @@ void main() {
       // fat deducted at the braised pair's 93.3 % (−768.29 / 18).
       expect(of(_barbecued), ('complete', '697.49')); // 498.26 → 740.17
       // Unmoved (v66 = v67): the corned rows' bases only.
-      expect(of(_homeCorned), ('complete', '577.01'));
+      // RE-PIN (M74 batch, v74; the owner's Q1 (b)): 628.01 (was 577.01) —
+      // 173128 at its braised pair (+408.02 / 8).
+      expect(of(_homeCorned), ('complete', '628.01'));
       // 592.10 in the replay: a fresh compute counts some of its lines on
       // search hits whose energies FDC rounds (M65's note); M68 moves no
       // kcal in this recipe.
       expect(of(_newEngland), ('complete', '592.11'));
-      expect(of(_onion), ('complete', '692.11'));
+      // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 588.82 (was 692.11) —
+      // its own 0" pair (−619.70 / 6).
+      expect(of(_onion), ('complete', '588.82'));
       // RE-PIN (M70 batch, v69, Q1 flat (b′)): 794.35 (was 729.93).
       expect(of(_pomegranate), ('complete', '794.35'));
     });

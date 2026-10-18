@@ -2711,4 +2711,155 @@ void review71() {
       await timed('recompute', () async => recomputeTotals(db, stored()));
     });
   }, skip: skipIfNoCorpus);
+
+  group(
+    "RULE C, the step-printed trim (v74, M74, the owner's Q1 (b))",
+    () {
+      final design = RegExp(
+        r'^\s*trim fat\b[^.]*\bbrisket\b[^.]*\bto (⅛|¼)[- ]inch\b',
+      );
+
+      test("the reader answers as the design's regex (30,000 seeded sentences "
+          'over its own words) and reads 1,200 hostile ~1,000-character '
+          'sentences of each of two shapes in one pass — "trim fat" then '
+          '"brisket" repeated with no "to", and "brisket to ⅛ inc" repeated '
+          "(the regex's `[^.]*` pair is quadratic on both)", () {
+        const atoms = [
+          'trim fat', 'trim', 'fat', 'fats', 'brisket', 'briskets', 'to', //
+          '⅛', '¼', 'inch', '-inch', 'inches', 'to ⅛ inch', 'to ¼-inch',
+          'on', '.', '1.5', 'x', ',', '\n', 'brisket to ⅛ inch',
+          'brisket to ¼ inch',
+        ];
+        var hits = 0;
+        var misses = 0;
+        for (var seed = 0; seed < 30000; seed++) {
+          final r = Random(seed);
+          final b = StringBuffer(
+            r.nextBool() ? '${r.nextBool() ? ' ' : ''}trim fat ' : '',
+          );
+          for (var i = 0, n = 1 + r.nextInt(10); i < n; i++) {
+            b.write(atoms[r.nextInt(atoms.length)]);
+            if (r.nextInt(3) > 0) {
+              b.write(' ');
+            }
+          }
+          final s = b.toString();
+          final reference = design.firstMatch(s)?[1];
+          expect(trimsFatSentence(s), reference, reason: '"$s"');
+          reference == null ? misses++ : hits++;
+        }
+        // Not vacuous either way.
+        expect(hits, greaterThan(1000));
+        expect(misses, greaterThan(1000));
+        // The tree reads each shape in ≈ 3–5 ms and the design's regex in
+        // 226–308 ms (fix74/probe/hostile.dart): 100 ms kills a restored
+        // regex by ≥ 2×.
+        final shapes = [
+          'trim fat ${'brisket ' * 123}inch.',
+          'trim fat ${'brisket to ⅛ inc ' * 58}x.',
+        ];
+        expect([for (final s in shapes) s.length], [998, 997]);
+        for (final shape in shapes) {
+          final hostile = List.filled(1200, shape);
+          final sw = Stopwatch()..start();
+          for (final s in hostile) {
+            expect(trimsFatSentence(s), isNull);
+          }
+          expect(
+            sw.elapsedMilliseconds,
+            lessThan(100),
+            reason: '…${shape.substring(shape.length - 10)}',
+          );
+        }
+      });
+
+      for (final loud in [false, true]) {
+        test('CAP SHAPE (${loud ? 'loud' : 'quiet'}): 400 flat-brisket lines '
+            'under 120 × 10,000-character steps of "Trim fat on the brisket '
+            'brisket brisket, about 1 inch." (every sentence read, none a '
+            'printed depth)${loud ? ' after S1\'s real "Trim fat on surface of '
+                      'brisket to ⅛ inch." (every flat moves to 173128 and '
+                      'deducts)' : ''}: the reader once per index; each path '
+            'under the backstop', () async {
+          final base = loadCorpusRecipe(
+            '0091-home-corned-beef-with-vegetables.yaml',
+          );
+          final own = [for (final g in base.ingredients) ...g.items];
+          const flat = '1 (4½- to 5-pound) beef brisket, flat cut';
+          const hostile =
+              'Trim fat on the brisket brisket brisket, about 1 inch. ';
+          final r = capped(
+            base,
+            [
+              for (final l in own) l.raw,
+              for (var i = own.length; i < capLines; i++) flat,
+            ],
+            [
+              if (loud)
+                'Trim fat on surface of brisket to ⅛ inch. '
+                    '${fill(hostile, capStep - 42)}'
+              else
+                fill(hostile, capStep),
+              for (var i = 1; i < capSteps; i++) fill(hostile, capStep),
+            ],
+          );
+          final db = wp.tempDb();
+          final provider = FixtureProvider(pending: pendingSearches);
+          wp.saveRecipe(db, r);
+          Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+          Future<void> timed(
+            String step,
+            Future<Object?> Function() run,
+          ) async {
+            stepIndexCounts.clear();
+            final sw = Stopwatch()..start();
+            await run();
+            final ms = sw.elapsedMilliseconds;
+            final counts = Map.of(stepIndexCounts);
+            final copies = counts['indexes'] ?? 1;
+            expectBounded(r, counts, 'trim $step', copies: copies);
+            // The quiet recompute reads no trim: no row sits on 173128.
+            expect(
+              counts['memo:trimsFatTo'] ?? 0,
+              inInclusiveRange(step == 'recompute' && !loud ? 0 : 1, copies),
+              reason: 'trim $step',
+            );
+            // The quiet flats are 168743 rows, which now have a pair
+            // (`braisedKept[168743]`, Q1 (a′)): M72's gate, once per index
+            // (every sentence names "fat"; it skims none).
+            if (!loud) {
+              expect(
+                counts['memo:defatsLiquid'],
+                inInclusiveRange(1, copies),
+                reason: 'trim $step',
+              );
+            }
+            expect(ms, lessThan(backstopMs), reason: 'trim $step: $counts');
+          }
+
+          await timed('compute', () => matchAndCompute(db, provider, stored()));
+          final flats = [
+            for (final row in db.ingredientMatchesFor(r.id))
+              if (row.raw == flat) row,
+          ];
+          expect(flats.length, greaterThanOrEqualTo(capLines - own.length));
+          expect(
+            {for (final row in flats) row.fdcId},
+            {
+              if (loud) 173128 else 168743,
+            },
+          );
+          for (final row in flats) {
+            expect(
+              braisedKeptOf(row.raw, row.fdcId, stored()),
+              loud ? braisedKept[173128] : isNull,
+            );
+          }
+          await timed('GET', () => matchesBody(db, provider, stored()));
+          await timed('recompute', () async => recomputeTotals(db, stored()));
+        });
+      }
+    },
+    skip: skipIfNoCorpus,
+  );
 }

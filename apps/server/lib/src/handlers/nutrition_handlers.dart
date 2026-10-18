@@ -232,7 +232,15 @@ Future<Map<String, Object?>> matchesBody(
     // limiter (members can call this).
     final candidates = row == null
         ? const <RankedCandidate>[]
-        : await candidatesForLine(db, provider, weighed, cacheOnly: true);
+        : await candidatesForLine(
+            db,
+            provider,
+            weighed,
+            cacheOnly: true,
+            // v72 (M74): ranked in this recipe, as the compute ranked the
+            // row ([trimDepthRecord]'s step-printed trim).
+            recipe: recipe,
+          );
     final itemKey = lineKeyOf(line);
     // How far an apply-to-all from this line would reach: the undecided lines
     // of the same ingredient, in recipes and in lines — a sibling on another

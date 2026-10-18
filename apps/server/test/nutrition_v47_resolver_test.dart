@@ -350,9 +350,12 @@ void main() {
         // RE-PIN (M73 batch, v73, matcherVersion 71): its stamp at
         // matcherVersion 71 (was fcf10322…; the version alone moves it —
         // the base tree with only the bump gives this literal).
+        // RE-PIN (M74 batch, v74, matcherVersion 72): its stamp at
+        // matcherVersion 72 (was aeff50b7…; the version alone moves it —
+        // the base tree with only the bump gives this literal).
         expect(
           ingredientsHashOf(stored(_chraime), ResolverMemo(db)),
-          'aeff50b75f4ffd0b00e17514438064a7ce5706671e2fd1aa322c194e40afb7a6',
+          '7bba3f828b0797167fdde1611c341ce4e9b89134a87c83cfb8aa959ebf004644',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

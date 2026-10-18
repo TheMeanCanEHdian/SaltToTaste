@@ -3729,7 +3729,8 @@ const _leafAndTeaNegatives = [
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 71);
+    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
+    expect(matcherVersion, 72);
   });
 
   test('pD C3: the two flavourings are the NORMALIZED items the corpus '

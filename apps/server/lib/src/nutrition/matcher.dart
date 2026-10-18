@@ -961,7 +961,15 @@ const Map<String, String> _synonyms = {
 /// SR 172802's egg-roll wrapper say they are stand-ins (engine
 /// `trimStandInFlagOf`); "raspberries and/or blackberries" reads the cached
 /// raw raspberries ([_rankAs]).
-const int matcherVersion = 71;
+///
+/// v72 (the Matcher v74 commit, batch M74 — the brisket flats; prep50
+/// design_v2 §2 M74, the owner's Q1, 2026-10-15; zero requests): a 0" flat
+/// whose steps trim its fat to a printed depth ranks the ⅛-inch flat first
+/// and keeps its braised pair's share with no skim (engine
+/// `trimDepthRecord`, `_trimsFatTo`, `braisedKeptOf`); the 0" flat keeps
+/// its own braised pair 168743 → 169440 where the steps skim the fat (engine
+/// `braisedKept`).
+const int matcherVersion = 72;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

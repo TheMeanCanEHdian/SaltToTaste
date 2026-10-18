@@ -146,6 +146,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v72 (M72 R-E3): the braised pairs' gate — a step sentence skimming
       // fat, a fat separator, a defatted liquid — once per index.
       'memo:defatsLiquid',
+      // v74 (M74, the owner's Q1 (b)): a step trimming a brisket's fat to a
+      // printed depth — once per index.
+      'memo:trimsFatTo',
     ])
       once: 1,
     // v71 closer 1 (verify1 D2): the D-E1 mixing test, once per sentence

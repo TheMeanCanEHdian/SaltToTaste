@@ -1039,6 +1039,9 @@ const List<_Row> _parents = [
 /// negatives).
 const List<_Row> _negatives = [
   // 1: the other 168743 rows, the whole brisket 168664, the racks
+  // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 0223|0 at its own 0" pair
+  // (its steps skim) — basis only (was 'from the printed weight (4–5 lb,
+  // the midpoint)').
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
@@ -1051,7 +1054,7 @@ const List<_Row> _negatives = [
     'auto',
     null,
     '3449.57',
-    'from the printed weight (4–5 lb, the midpoint)',
+    'from the printed weight (4–5 lb, the midpoint) · approximate (USDA\'s braised pair 168743 → 169440 (flat, 0" trim) keeps 82.0 % of the energy and 58.8 % of the fat by the protein tracer — the fat the steps skim, deducted; the steps name a fat layer the 0" record does not carry — the cap\'s depth is not printed)',
   ),
   (
     '0090-new-englandstyle-home-corned-beef-and-cabbage.yaml',
@@ -1067,19 +1070,22 @@ const List<_Row> _negatives = [
     '3449.57',
     "from the printed weight (4–5 lb, the midpoint) · approximate (the steps cure and rinse the brisket — the cure's sodium is not counted; a rinsed cure counts 0 g, CP9)",
   ),
+  // RE-PIN (M74 batch, v74; the owner's Q1 (b)): 0091|0 on the ⅛-inch flat
+  // 173128 by S1's printed trim (was 168743 "…trimmed to 0" fat…", 3641.21,
+  // the corned flag alone).
   (
     '0091-home-corned-beef-with-vegetables.yaml',
     null,
     0,
     '1 (4½- to 5-pound) beef brisket, flat cut',
-    168743,
-    'Beef, brisket, flat half, boneless, separable lean and fat, trimmed to 0" fat, choice, raw',
+    173128,
+    'Beef, brisket, flat half, separable lean and fat, trimmed to 1/8" fat, choice, raw',
     '1.000000',
     '2154.56',
     'auto',
     null,
-    '3641.21',
-    "from the printed weight (4½–5 lb, the midpoint) · approximate (the steps cure and rinse the brisket — the cure's sodium is not counted; a rinsed cure counts 0 g, CP9)",
+    '5989.68',
+    "from the printed weight (4½–5 lb, the midpoint) · approximate (the steps trim the fat cap to ⅛ inch (step 1) — USDA's ⅛-inch flat; its braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the fat by the protein tracer — the fat that renders into the cooking liquid, deducted (no step skims it: the steps serve 1 cup of the 2 quarts and the broth the vegetables cook in, not counted); the steps cure and rinse the brisket — the cure's sodium is not counted; a rinsed cure counts 0 g, CP9)",
   ),
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
@@ -4769,7 +4775,8 @@ void main() {
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    expect(matcherVersion, 71);
+    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
+    expect(matcherVersion, 72);
   });
 
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '
@@ -4782,7 +4789,10 @@ void main() {
     // RE-PIN (M72 batch, v72): `braisedEnergyShare` became `braisedKept`
     // (energy and the fat columns; 168664 and 170827 joined — their shares
     // pinned in nutrition_v72_test); 173128's energy share unchanged.
-    expect(braisedKept.keys, [173128, 168664, 170827]);
+    // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 168743 → 169440 joined
+    // (its shares pinned in nutrition_v74_test; was [173128, 168664,
+    // 170827]).
+    expect(braisedKept.keys, [173128, 168664, 168743, 170827]);
     const yieldShare = 18.1 / 28.7;
     expect(yieldShare.toStringAsFixed(6), '0.630662');
     expect(braisedKept[173128]!['energy'], 298 * yieldShare / 278);
@@ -5031,7 +5041,10 @@ void main() {
       }
     });
 
-    test('the rows M70 must not reach equal v68', () {
+    // RE-PIN (M74 batch, v74; closer 1): the title said "the rows M70 must
+    // not reach equal v68" with no exception.
+    test('the rows M70 must not reach equal v68 (0091|0 and onion-braised|0 '
+        "re-pinned at M74's records and flags)", () {
       expect(_negatives, hasLength(134));
       expectRows(_negatives);
     });

@@ -3608,6 +3608,23 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-18 — matcher v74 (batch M74): the brisket flats (prep50 §2 M74;
+  the owner's Q1 ruling of 2026-10-15, shipped alone).** Two rows. The
+  home-corned brisket 0091, whose steps print "trim fat to ⅛ inch", moves
+  from the 0-inch flat to the ⅛-inch flat and deducts its braised pair with
+  no skim gate (the owner's ruling: most of the cap renders); a new step
+  reader finds the printed trim once per step index and is linear, and the
+  GET ranks the candidates in the same recipe as the compute so the three
+  readers of the row agree. Onion-braised brisket keeps its 0-inch record
+  and deducts its own braised pair behind M72's printed-skim gate. 0090's
+  corned flat is untouched (its step skims scum, not fat). Recipe energy
+  −212 kcal; the row column +2,348 (0091's record carries more energy per
+  gram, its pair deducts more). Cost: the new reader is within ±2 % of base
+  on every path; the quiet recompute shape runs 3–4 % over because M72's
+  skim gate is now read once per index on the 168743 rows, a stated
+  residual in the M71 precedent. Verifier rounds two (one LOW: five test
+  titles contradicted their re-pinned bodies), the second PASS.
+
 - **2026-10-18 — matcher v73 (batch M73): flags and flavourings (prep50 §2
   M73, under the standing authorization).** Four rules plus one ruling:
   makrut lime leaves and the Lapsang smoking tea join the zero-nutrient

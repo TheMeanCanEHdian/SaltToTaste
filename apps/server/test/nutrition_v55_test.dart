@@ -161,15 +161,17 @@ _reach = [
     '3449.57',
   ),
   // R1d: 2705851 4,977.04 → −1,335.83
+  // RE-PIN (M74 batch, v74; the owner's Q1 (b)): S1's printed ⅛" trim moves
+  // the flat to 173128 (was 168743, 3,641.21 kcal); grams unchanged.
   (
     'R1d',
     '0091-home-corned-beef-with-vegetables.yaml',
     0,
     '1 (4½- to 5-pound) beef brisket, flat cut',
-    168743,
+    173128,
     '1.000000',
     '2154.56',
-    '3641.21',
+    '5989.68',
   ),
   // R1d: 2705851 4,715.09 → −1,265.52
   (
@@ -564,7 +566,8 @@ void main() {
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    expect(matcherVersion, 71);
+    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
+    expect(matcherVersion, 72);
   });
 
   test('R1: each rank-as item reads its named cached answer under the '
@@ -722,10 +725,14 @@ void main() {
 
     // RE-PIN (M63 batch, v62): the title said "zero requests for the rack
     // (174414 stays a search hit, weighed by its AH-102 row)".
+    // RE-PIN (M74 batch, v74; closer 1): the title said "only pomegranate|0
+    // carries the stand-in flag" (stale since M68's corned and 168664 flags).
     test('each reach row (26, design_v2 §2 M56) lands its record, '
         'confidence, grams and energy; grams never move; the rack (174414) '
         'is weighed on its cached detail (no refuse portion) by its AH-102 '
-        'row; only pomegranate|0 carries the stand-in flag', () async {
+        'row; the trim stand-in flags: pomegranate|0 (M56), 0595|10 (M68), '
+        "the corned flats 0090|6 (M68) and 0091|0 (M74's ⅛-inch step trim) "
+        "and onion-braised|0 (M74's 0\" pair)", () async {
       expect(_reach, hasLength(26));
       expect(
         {for (final (rule, _, _, _, _, _, _, _) in _reach) rule},
@@ -756,9 +763,15 @@ void main() {
       // R1d's 0" default (design Q2 (i)) when no depth is printed: unflagged.
       // RE-PIN (M68 batch, v67): 0090|6 and 0091|0 (was unflagged) carry
       // the corned-title flag (Q2 (c)); 0223|0 stays unflagged.
+      // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 0223|0 at its own 0"
+      // pair, its steps skim (was unflagged: `isNot(contains('approximate'))`).
       expect(
         basis('0223-onion-braised-beef-brisket.yaml', 0),
-        isNot(contains('approximate')),
+        'from the printed weight (4–5 lb, the midpoint) · approximate '
+        "(USDA's braised pair 168743 → 169440 (flat, 0\" trim) keeps 82.0 % "
+        'of the energy and 58.8 % of the fat by the protein tracer — the fat '
+        'the steps skim, deducted; the steps name a fat layer the 0" record '
+        "does not carry — the cap's depth is not printed)",
       );
       const corned =
           "approximate (the steps cure and rinse the brisket — the cure's "
@@ -767,9 +780,18 @@ void main() {
         basis('0090-new-englandstyle-home-corned-beef-and-cabbage.yaml', 6),
         'from the printed weight (4–5 lb, the midpoint) · $corned',
       );
+      // RE-PIN (M74 batch, v74; the owner's Q1 (b)): 0091|0 on 173128 by
+      // S1's printed trim (was '… · $corned' on 168743).
       expect(
         basis('0091-home-corned-beef-with-vegetables.yaml', 0),
-        'from the printed weight (4½–5 lb, the midpoint) · $corned',
+        'from the printed weight (4½–5 lb, the midpoint) · approximate (the '
+        "steps trim the fat cap to ⅛ inch (step 1) — USDA's ⅛-inch flat; its "
+        'braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of '
+        'the fat by the protein tracer — the fat that renders into the '
+        'cooking liquid, deducted (no step skims it: the steps serve 1 cup of '
+        'the 2 quarts and the broth the vegetables cook in, not counted); the '
+        "steps cure and rinse the brisket — the cure's sodium is not counted; "
+        'a rinsed cure counts 0 g, CP9)',
       );
       // The flag is keyed on the stand-in record (168743) AND the phrase
       // (V3-D1): two library lines print the phrase on other records and

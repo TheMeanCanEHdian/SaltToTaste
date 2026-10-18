@@ -3485,19 +3485,22 @@ const List<_Row> _unmoved = [
     '285.11',
     'from 2 pound',
   ),
+  // RE-PIN (M74 batch, v74; the owner's Q1 (b)): S1's printed ⅛" trim moves
+  // the flat to 173128 at its braised pair (was 168743 "…trimmed to 0"
+  // fat…", 3641.21, the corned flag alone) — M74's row, not M72's.
   (
     '0091-home-corned-beef-with-vegetables.yaml',
     null,
     0,
     '1 (4½- to 5-pound) beef brisket, flat cut',
-    168743,
-    'Beef, brisket, flat half, boneless, separable lean and fat, trimmed to 0" fat, choice, raw',
+    173128,
+    'Beef, brisket, flat half, separable lean and fat, trimmed to 1/8" fat, choice, raw',
     '1.000000',
     '2154.56',
     'auto',
     null,
-    '3641.21',
-    "from the printed weight (4½–5 lb, the midpoint) · approximate (the steps cure and rinse the brisket — the cure's sodium is not counted; a rinsed cure counts 0 g, CP9)",
+    '5989.68',
+    "from the printed weight (4½–5 lb, the midpoint) · approximate (the steps trim the fat cap to ⅛ inch (step 1) — USDA's ⅛-inch flat; its braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the fat by the protein tracer — the fat that renders into the cooking liquid, deducted (no step skims it: the steps serve 1 cup of the 2 quarts and the broth the vegetables cook in, not counted); the steps cure and rinse the brisket — the cure's sodium is not counted; a rinsed cure counts 0 g, CP9)",
   ),
   (
     '0091-home-corned-beef-with-vegetables.yaml',
@@ -3653,6 +3656,9 @@ const List<_Row> _unmoved = [
     '285.11',
     'from 2 pound',
   ),
+  // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): its own 0" pair, the steps
+  // skim — basis only (was 'from the printed weight (4–5 lb, the
+  // midpoint)') — M74's row, not M72's.
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
@@ -3665,7 +3671,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '3449.57',
-    'from the printed weight (4–5 lb, the midpoint)',
+    'from the printed weight (4–5 lb, the midpoint) · approximate (USDA\'s braised pair 168743 → 169440 (flat, 0" trim) keeps 82.0 % of the energy and 58.8 % of the fat by the protein tracer — the fat the steps skim, deducted; the steps name a fat layer the 0" record does not carry — the cap\'s depth is not printed)',
   ),
   (
     '0223-onion-braised-beef-brisket.yaml',
@@ -6556,30 +6562,37 @@ const List<_Totals> _totals = [
     '2324.7801',
     '1367.5799',
   ),
+  // RE-PIN (M74 batch, v74; the owner's Q1 (b)): 173128 at its braised pair
+  // (was 577.01, 4616.08, fat 217.4788, sat 79.7188, mono 102.7726, poly
+  // 8.5752, protein 461.4005, sodium 2184.7587, cholesterol 1443.5565).
   (
     '0091-home-corned-beef-with-vegetables.yaml',
     null,
     'complete',
-    '577.01',
-    '4616.08',
-    '217.4788',
-    '79.7188',
-    '102.7726',
-    '8.5752',
-    '461.4005',
-    '2184.7587',
-    '1443.5565',
+    '628.01',
+    '5024.10',
+    '270.0050',
+    '111.6934',
+    '114.0034',
+    '9.7834',
+    '416.1547',
+    '1796.9375',
+    '1960.6514',
   ),
+  // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): its 0" pair deducts the
+  // energy and the fat columns (was 692.11, 4152.65, fat 209.0911, sat
+  // 76.7103, mono 100.0584, poly 10.7218); protein, sodium, cholesterol
+  // gross.
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
     'complete',
-    '692.11',
-    '4152.65',
-    '209.0911',
-    '76.7103',
-    '100.0584',
-    '10.7218',
+    '588.82',
+    '3532.95',
+    '126.1489',
+    '47.7967',
+    '53.6581',
+    '6.9644',
     '430.5776',
     '1723.5943',
     '1367.5799',
@@ -7189,11 +7202,16 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    expect(matcherVersion, 71);
+    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
+    expect(matcherVersion, 72);
   });
 
-  test('braisedKept: three USDA same-cut pairs, five columns each, every '
-      "share the design's (§2 M72; cooked × P raw ÷ (P cooked × raw))", () {
+  // RE-PIN (M74 batch, v74; closer 1): the title said "three USDA same-cut
+  // pairs" (the map's keys).
+  test("braisedKept: M72's three USDA same-cut pairs, five columns each, "
+      "every share the design's (§2 M72; cooked × P raw ÷ (P cooked × raw)); "
+      "M74's 168743 → 169440 the fourth key (its shares pinned in "
+      'nutrition_v74_test)', () {
     const columns = [
       'energy',
       'fat',
@@ -7206,7 +7224,9 @@ void main() {
       168664: ['0.933051', '0.914810', '0.894077', '0.912399', '0.918487'],
       170827: ['0.899002', '0.858391', '0.886218', '0.878281', '0.941400'],
     };
-    expect(braisedKept.keys.toSet(), design.keys.toSet());
+    // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 168743 → 169440 joined
+    // (its shares pinned in nutrition_v74_test; was `design.keys.toSet()`).
+    expect(braisedKept.keys.toSet(), {...design.keys, 168743});
     for (final MapEntry(:key, value: shares) in design.entries) {
       expect(braisedKept[key]!.keys.toList(), columns, reason: '$key');
       expect(
@@ -7377,14 +7397,20 @@ void main() {
       expectRows(_reach);
     });
 
-    test('every other row of these recipes equals v71', () {
+    // RE-PIN (M74 batch, v74; closer 1): the title said "every other row of
+    // these recipes equals v71" with no exception.
+    test('every other row of these recipes equals v71 (M74 re-pins two: '
+        '0091|0 and onion-braised|0)', () {
       expect(_unmoved, hasLength(414));
       expectRows(_unmoved);
     });
 
+    // RE-PIN (M74 batch, v74; closer 1): the title said "a recipe moves iff
+    // it is one of the 17".
     test('the totals: the 17 recipes M72 moves and the 25 it does not — '
         'per serving, batch energy, the fat columns, protein, sodium, '
-        'cholesterol; a recipe moves iff it is one of the 17', () {
+        'cholesterol; a recipe moves since v71 iff it is one of the 17 or '
+        "M74's 2 (0091, 0223)", () {
       expect(_totals, hasLength(42));
       expect(_v71Totals, hasLength(42));
       for (final (i, want) in _totals.indexed) {
@@ -7408,9 +7434,16 @@ void main() {
         expect(got, want, reason: '$file ${section ?? ''}');
         final (v71File, v71Section, perServing, energy, fat) = _v71Totals[i];
         expect((v71File, v71Section), (file, section));
+        // RE-PIN (M74 batch, v74; the owner's Q1): M74's two flats (0091,
+        // 0223) moved since v71 too (was `_moved.contains(file)` alone).
         expect(
           (got.$4, got.$5, got.$6) != (perServing, energy, fat),
-          section == null && _moved.contains(file),
+          section == null &&
+              (_moved.contains(file) ||
+                  const {
+                    '0091-home-corned-beef-with-vegetables.yaml',
+                    '0223-onion-braised-beef-brisket.yaml',
+                  }.contains(file)),
           reason: '$file ${section ?? ''}',
         );
       }

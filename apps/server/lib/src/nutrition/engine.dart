@@ -13437,6 +13437,7 @@ Future<NutritionProviderException?> _computePass(
             ),
           ),
         ),
+        recipe: recipe,
       );
       if (ranked.isEmpty) {
         write(
@@ -14460,6 +14461,13 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
 /// through [braisedKeptOf], whose gate ([_defatsLiquid]: the recipe's own
 /// steps print that the fat is not served) applies to EVERY key — the
 /// deduction, the basis flag and the GET read the same recipe.
+/// v72 (batch M74; prep50 design_v2 §2 M74, the owner's Q1 (a′) for
+/// onion-braised, 2026-10-15): 168743 → SR 169440 "Beef, brisket, flat half,
+/// separable lean and fat, trimmed to 0" fat, choice, cooked, braised" (the
+/// flat's own 0" pair; both hits in the cached 'beef brisket' answer: P
+/// 20.2 → 32.2, E 169 → 221, F 9.86 → 9.24, sat 3.7 → 3.64, mono 4.77 →
+/// 3.98, poly 0.398 → 0.341; trans 0.503 → none, gross as M72's), behind
+/// the same gate — on the 168743 rows only onion-braised's steps skim fat.
 /// ponytail: one pair per record; a braised cut with no same-cut USDA pair
 /// stays gross (§2's gaps: the meatloaf's loaf pair, Boston butt).
 const Map<int, Map<String, double>> braisedKept = {
@@ -14476,6 +14484,13 @@ const Map<int, Map<String, double>> braisedKept = {
     'saturated': 9.44 * 18.4 / (25.8 * 7.53),
     'monounsaturated': 10.9 * 18.4 / (25.8 * 8.52),
     'polyunsaturated': 0.85 * 18.4 / (25.8 * 0.66),
+  },
+  168743: {
+    'energy': 221 * 20.2 / (32.2 * 169),
+    'fat': 9.24 * 20.2 / (32.2 * 9.86),
+    'saturated': 3.64 * 20.2 / (32.2 * 3.7),
+    'monounsaturated': 3.98 * 20.2 / (32.2 * 4.77),
+    'polyunsaturated': 0.341 * 20.2 / (32.2 * 0.398),
   },
   170827: {
     'energy': 317 * 17.22 / (25.3 * 240),
@@ -14496,13 +14511,24 @@ const Map<int, Map<String, double>> braisedKept = {
 /// GET): both pass the same recipe. Null without a recipe (a basis asked
 /// with none says nothing is deducted). Pre-Q18: a section reads its own
 /// steps.
+/// v72 (batch M74, the owner's Q1 (b) for 0091, 2026-10-15): the ⅛-inch
+/// flat a STEP's printed trim moves a line onto ([trimDepthRecord],
+/// [_trimsFatTo]) deducts with NO skim gate — the owner's ruling: most of
+/// the cooking liquid is never served, and its flag says no step skims it
+/// (the served cup is the stated gap). The 0" flat (168743) standing in for
+/// a cap the line prints (M56 R1d's fallback where the answer loses 173128)
+/// stays gross, as its flag says.
 Map<String, double>? braisedKeptOf(String raw, int? fdcId, Recipe? recipe) {
   final kept = braisedKept[fdcId];
   if (kept == null || recipe == null) {
     return null;
   }
   final (depth, moves) = trimDepthRecords.first;
-  if (moves.containsValue(fdcId) && !depth.hasMatch(raw.toLowerCase())) {
+  final printed = depth.hasMatch(raw.toLowerCase());
+  if (moves.containsValue(fdcId) && !printed) {
+    return fdcId == 173128 && _trimsFatTo(recipe) != null ? kept : null;
+  }
+  if (moves.containsKey(fdcId) && printed) {
     return null;
   }
   return _defatsLiquid(recipe) ? kept : null;
@@ -14553,12 +14579,70 @@ bool defatsSentence(String s) {
       s.split('.').any((p) => _skimWord.hasMatch(p) && _fatAlone.hasMatch(p));
 }
 
+/// v72 (batch M74, the owner's Q1 (b), 2026-10-15): the step (1-based) and
+/// the depth of [recipe]'s first step sentence trimming a brisket's fat to
+/// a printed depth — `^\s*trim fat\b[^.]*\bbrisket\b[^.]*\bto (⅛|¼)[- ]inch\b`
+/// (0091 S1 "Trim fat on surface of brisket to ⅛ inch."; tacos-al-carbon's
+/// "Trim fat deposits on steak to ⅛-inch thickness." names no brisket).
+/// Read ONCE per index (`memo:trimsFatTo`), each sentence LINEAR
+/// ([trimsFatSentence]). Pre-Q18: a section reads its own steps.
+({int step, String depth})? _trimsFatTo(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#trimsFatTo, () {
+      for (final (i, sentences) in _stepIndexOf(recipe).sentences.indexed) {
+        for (final s in sentences) {
+          if (trimsFatSentence(s) case final depth?) {
+            return (step: i + 1, depth: depth);
+          }
+        }
+      }
+      return null;
+    });
+
+final RegExp _trimFatStart = RegExp(r'\s*trim fat\b');
+final RegExp _brisketWord = RegExp(r'\bbrisket\b');
+final RegExp _toDepth = RegExp(r'\bto (⅛|¼)[- ]inch\b');
+
+/// [_trimsFatTo]'s test of one lower-cased sentence — the depth it prints,
+/// or null: the design's regex with its `[^.]*` pair read as anchored finds
+/// in the sentence's first period-free piece (`^` anchors it, `[^.]*` never
+/// crosses a period; a depth after the FIRST "brisket" is a match, and the
+/// greedy `[^.]*` captures the LAST such depth — the same answer, linear;
+/// Run 064's lesson). Native substring tests first. Pinned against the
+/// regex on a fuzz (nutrition_v26_cost_test).
+@visibleForTesting
+String? trimsFatSentence(String s) {
+  if (!s.contains('trim fat') ||
+      !s.contains('brisket') ||
+      !s.contains('inch')) {
+    return null;
+  }
+  final dot = s.indexOf('.');
+  final piece = dot < 0 ? s : s.substring(0, dot);
+  final start = _trimFatStart.matchAsPrefix(piece);
+  if (start == null) {
+    return null;
+  }
+  final brisket = _brisketWord.allMatches(piece, start.end).firstOrNull;
+  if (brisket == null) {
+    return null;
+  }
+  return _toDepth.allMatches(piece, brisket.end).lastOrNull?[1];
+}
+
 /// [ranked] with [trimDepthRecords]' target first when the line prints its
 /// phrase and the top is its key; after [leanAndFatSibling].
+/// v72 (batch M74, the owner's Q1 (b)): a 0" flat (168743) whose line
+/// prints no depth moves to the ⅛-inch flat 173128 when [recipe]'s steps
+/// trim the brisket's fat to a printed depth ([_trimsFatTo]) — a hit in the
+/// line's own answer, so zero requests. Every caller ranks with the recipe
+/// the totals and the basis read (the compute, the GET sheet's
+/// [candidatesForLine]): the sheet, the row, the flag and the deduction
+/// never part (Run 047's class).
 List<RankedCandidate> trimDepthRecord(
   String raw,
-  List<RankedCandidate> ranked,
-) {
+  List<RankedCandidate> ranked, {
+  Recipe? recipe,
+}) {
   if (ranked.isEmpty) {
     return ranked;
   }
@@ -14570,6 +14654,16 @@ List<RankedCandidate> trimDepthRecord(
     }
     for (final candidate in ranked.skip(1)) {
       if (candidate.candidate.fdcId == target) {
+        return _movedFirst(ranked, candidate);
+      }
+    }
+  }
+  if (recipe != null &&
+      ranked.first.candidate.fdcId == 168743 &&
+      !trimDepthRecords.first.$1.hasMatch(line) &&
+      _trimsFatTo(recipe) != null) {
+    for (final candidate in ranked.skip(1)) {
+      if (candidate.candidate.fdcId == 173128) {
         return _movedFirst(ranked, candidate);
       }
     }
@@ -15718,11 +15812,15 @@ bool _singlePortionYield(String? servings) {
 /// listed onions for a row on oil). With [cacheOnly] (the GET path — any
 /// authenticated user) the search cache is the sole source: a read must
 /// never spend the FDC request budget or block on the rate limiter.
+/// v72 (batch M74): with the [recipe] the line is in, as the compute ranks
+/// it ([trimDepthRecord]'s step-printed trim) — the GET sheet leads with
+/// the row's record.
 Future<List<RankedCandidate>> candidatesForLine(
   SaltDatabase db,
   NutritionProvider provider,
   IngredientLine line, {
   bool cacheOnly = false,
+  Recipe? recipe,
 }) async {
   final normalized = normalizeItem(lineItemOf(line));
   if (normalized.isEmpty || isWaterLike(normalized) || isNonFood(normalized)) {
@@ -15761,6 +15859,7 @@ Future<List<RankedCandidate>> candidatesForLine(
         ),
       ),
     ),
+    recipe: recipe,
   ).take(8).toList();
 }
 
@@ -15926,6 +16025,15 @@ String? gramBasisFor(
 /// lumpia line on SR 172802 says it counts the egg-roll sheet's per-item
 /// weight (shu-mai's egg roll wrappers ARE the record's food; the gyoza row
 /// has its own label).
+/// v72 (batch M74, the owner's Q1, 2026-10-15): a flat moved to 173128 by a
+/// STEP's printed trim ([_trimsFatTo]; 0091) names the step, the depth and
+/// its braised pair's deduction with no skim — the served cup the stated
+/// gap — and keeps the corned clause; onion-braised's 0" flat at its own
+/// pair 168743 → 169440 (the steps skim) says the cap's depth is not
+/// printed. Each clause reads [braisedKeptOf] with [recipe], as the
+/// deduction does.
+/// ponytail: the served-cup and fat-layer clauses are those two recipes'
+/// steps (the only rows either arm reaches); another recipe's needs its own.
 String? trimStandInFlagOf(
   String raw,
   int? fdcId, {
@@ -15939,6 +16047,15 @@ String? trimStandInFlagOf(
       ? printed[1]
       : '${printed[1]}- to ${printed[3]}';
   final kept = braisedKeptOf(raw, fdcId, recipe);
+  final cure =
+      title != null &&
+          RegExp(r'\bcorned beef\b', caseSensitive: false).hasMatch(title)
+      ? "the steps cure and rinse the brisket — the cure's sodium is not "
+            'counted; a rinsed cure counts 0 g, CP9'
+      : null;
+  final stepTrim = fdcId == 173128 && depth == null && kept != null
+      ? _trimsFatTo(recipe!)
+      : null;
   String pct(String key) => (kept![key]! * 100).toStringAsFixed(1);
   String pair(String to, String which) => kept == null
       ? 'no step skims the rendered fat — not deducted'
@@ -15949,17 +16066,24 @@ String? trimStandInFlagOf(
     173128 when depth != null =>
       "approximate (the printed $depth-inch fat cap counted at USDA's "
           "⅛-inch flat trim; ${pair('173130', 'the fat the steps skim')})",
+    173128 when stepTrim != null =>
+      'approximate (the steps trim the fat cap to ${stepTrim.depth} inch '
+          "(step ${stepTrim.step}) — USDA's ⅛-inch flat; its braised pair "
+          "173128 → 173130 keeps ${pct('energy')} % of the energy and "
+          "${pct('fat')} % of the fat by the protein tracer — the fat that "
+          'renders into the cooking liquid, deducted (no step skims it: the '
+          'steps serve 1 cup of the 2 quarts and the broth the vegetables '
+          "cook in, not counted)${cure == null ? '' : '; $cure'})",
     168743 when depth != null =>
       'approximate (the printed $depth-inch fat cap renders and is skimmed '
           '(step 5); counted as the 0-inch trimmed flat)',
-    168743
-        when title != null &&
-            RegExp(
-              r'\bcorned beef\b',
-              caseSensitive: false,
-            ).hasMatch(title) =>
-      "approximate (the steps cure and rinse the brisket — the cure's "
-          'sodium is not counted; a rinsed cure counts 0 g, CP9)',
+    168743 when kept != null =>
+      "approximate (USDA's braised pair 168743 → 169440 (flat, 0\" trim) "
+          "keeps ${pct('energy')} % of the energy and ${pct('fat')} % of the "
+          'fat by the protein tracer — the fat the steps skim, deducted; the '
+          'steps name a fat layer the 0" record does not carry — the '
+          "cap's depth is not printed${cure == null ? '' : '; $cure'})",
+    168743 when cure != null => 'approximate ($cure)',
     168664 when depth != null =>
       "approximate (the printed $depth-inch fat cap counted at USDA's "
           '⅛-inch trim, the deepest it publishes for brisket; '
