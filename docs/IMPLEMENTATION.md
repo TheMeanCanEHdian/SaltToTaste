@@ -3608,6 +3608,25 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-18 — matcher v76 (batch M76): eaten foods below the gate
+  (prep50 §2 M76; my Q3 (a) and Q4 (a) rulings under the standing
+  authorization).** Two rules. A tart's "1 pound pizza dough" line now
+  routes to the recipe's own "Classic Pizza Dough" section because the
+  item is the tail of the section's title and the printed pound equals the
+  section's MAKES 1 POUND (an unmarked yield-named own section, a new form
+  beside v47's title forms); the section's five lines join the library and
+  the recipe completes. Kasseri lands on provolone with a flag that says
+  so. Two rows plus five new section rows, +1,712 kcal of recipe energy,
+  two recipes complete. The share reader in the shared package was
+  refactored so a line's own reads happen once against many sections (equal
+  to the old reader on 4.3 million corpus pairs); the mark and share reads
+  are memoised per line and request. The longest verification of the round:
+  six verifier rounds across two workflows, each finding an unpinned gate
+  or an unmeasured path (the tail's word boundary, its end anchor, the
+  predicate's cost at the caps, the has-lines gate, the routing path's
+  reads, a provenance header), the sixth PASS. Lesson recorded: a cost
+  shape must exercise the predicate's true path.
+
 - **2026-10-18 — matcher v74 (batch M74): the brisket flats (prep50 §2 M74;
   the owner's Q1 ruling of 2026-10-15, shipped alone).** Two rows. The
   home-corned brisket 0091, whose steps print "trim fat to ⅛ inch", moves

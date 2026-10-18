@@ -1082,8 +1082,10 @@ child sections only.
 
 - **Which sections are children** (S2 (a), referenced only): a section a
   main reference line resolves to, one a "(recipes follow)" line lists (rule
-  PO, below), or one an unmarked line names (A9) — 140 on snapshot 19
-  (936 lines). A prose section (no ingredient lines) is never one. The bulk
+  PO, below), or one an unmarked line names (A9; since matcher v76 also by
+  the yield-named tail — M76 below) — 140 on snapshot 19 (936 lines); 144
+  on snapshot 27 at matcher v76 (caramelized-onion-pear-and-bacon-tart's
+  "Classic Pizza Dough" the 144th). A prose section (no ingredient lines) is never one. The bulk
   order is [child sections, recipes that read none, parents]; a section
   edit stales its key and every parent routed to it (v47 F5: the parent's
   own page too, at once — the nutrition GET, below); a sweep collects a key
@@ -1111,7 +1113,12 @@ child sections only.
   "Single-Crust Pie Dough for Custard Pies"). A9: an UNMARKED line whose
   item is an own section's title (red-lentil-kibbeh's harissa) is a
   reference too; S11: such a line's bare count of exactly 1 reads one
-  recipe. A section's rules read the SECTION's own steps (most store none).
+  recipe. **v76 (M76, Q3 (a)):** so is an UNMARKED line with an amount
+  whose item is the TAIL of an own section's title AND whose amount is that
+  section's printed yield (`parseShare` == 1.0) — the tart's "1 pound pizza
+  dough" → its "Classic Pizza Dough" (MAKES 1 POUND); a marked line keeps
+  the forms above (M76 below). A section's rules read the SECTION's own
+  steps (most store none).
   **v47:** (F6) of several own sections the looser title forms reach, the
   ONE whose title equals the item routes ("2 tablespoons harissa" is
   "Harissa", never held beside a "Harissa Yogurt"; no corpus line has two);
@@ -5752,6 +5759,133 @@ discarding any excess fat, if desired" is not deducted; the corned
 briskets' cure sodium (Q2 (c)); the flats' trans fat (169440 and 173128
 publish none). Deploy note: matcherVersion 72 stales every recipe; one
 zero-request sweep settles it.
+
+**Since matcher v76 (batch M76 — eaten foods below the gate; matcherVersion
+73; prep50 design_v2 §2 M76, the owner's Q3 (a) and Q4 (a); zero
+requests).** Two rules, 2 rows and one new child section:
+
+(1, Q3 (a); pD C1) **The yield-named own section — a new arm of A9.**
+`yieldNamesOwnSection(line, item, section)`: an UNMARKED line (no "recipe(s)
+follow(s)" / "this page" mark) WITH an amount whose reference item
+(`referenceItemOf`) is the TAIL of one of the recipe's own section titles
+(title = "<words> <item>", normalised: the item is the title's LAST whole
+words — "Classic Sourdough" does not end in the item "dough", and "Classic
+Pizza Dough for Grilling" holds "pizza dough" but does not end in it) AND
+whose amount is that section's
+printed yield exactly (`parseShare(line.raw, line.amounts,
+section.servings) == 1.0`) [re-point → `item`]. Read where A9 is read:
+`namesOwnSection` (so `isReferenceIn`, the stale hash, the bulk parent test
+and the child-section set follow) and the resolver's own-section list —
+which the fix sheet's `own_section` group reads too ("in the resolution
+order": the sheet lists the section the line routes to). A marked line keeps
+v47's forms: barbecued-pulled-pork|4 "2 cups barbecue sauce (recipes
+follow)" stays rule PO's (held `choose_recipe`, its two sauces listed). The
+yield guard is what makes the tail safe: without it
+simple-grill-roasted-turkey|0's turkey ("Gravy for Simple Grill-Roasted
+Turkey", MAKES 6 CUPS) and fried-rice-with-shrimp-pork-and-shiitakes|10's
+"1 cup bean sprouts" ("Fried Rice with Peas and Bean Sprouts", SERVES 4 TO
+6) would read their sections; neither reads a share of the yield. The
+corpus has exactly one such line: caramelized-onion-pear-and-bacon-tart|6
+"1 pound pizza dough" (below the gate on FNDDS 2708008 *Dessert pizza*,
+0.465, 0 kcal) → its own "Classic Pizza Dough" (MAKES 1 POUND; the prep
+note: "you can use our Classic Pizza Dough (recipe follows), if
+preferred"), share 1.0, 348.10 g, basis `from the recipe Classic Pizza
+Dough: 348 g, 1,314 kcal`. The section becomes a child (sections 143 →
+144) and its own rows appear: the flour "2 cups plus 2 tablespoons bread
+flour (11½ ounces)" on SR 168913 *Wheat flours, bread, unenriched* at the
+printed 11½ oz (326.02 g, 1,176.93 kcal — the item's left-over "plus 2
+tablespoons" is stripped by the matcher), yeast FNDDS 2710005 3.55 g (11.53),
+table salt 4.51 g, olive oil FNDDS 2710186 14.00 g (126.00), the water the
+shipped rule row; the section 1,314.46 kcal, complete. The recipe goes
+complete, 217.66 → 381.96 per serving (8). Not moved: the 22 marked dough
+references; red-lentil-kibbeh|4's A9 harissa (equality, Harissa at 0.25).
+
+(2, Q4 (a); pD C2) **Kasseri on provolone.** FDC holds no kasseri (its own
+answer: processed cheese food, cream-cheese spreads, Monterey at 0.465, below
+the gate). `_rankAs['kasseri cheese']` reads the cached `provolone cheese`
+answer ranked as `cheese provolone` → SR 170850 *Cheese, provolone* (its
+top; detail cached), `approximationRecords['kasseri cheese'] = 170850`, and a
+`trimStandInFlagOf` arm for a line naming `kasseri` on 170850 [re-point →
+`item`]: `approximate (FDC holds no kasseri — counted as provolone, the
+larger part of the recipe's own substitute: 3 oz provolone with 1½ oz
+Pecorino Romano for 4 oz kasseri)` (pastitsio's prep note prints the
+substitute). pastitsio|23 "4 ounces kasseri cheese, shredded (1 cup),
+divided": 2705720 (0.465, 0 kcal) → 170850 (1.0), 113.40 g, 398.03 kcal,
+basis `from 4 ounce · approximation (counted as Cheese, provolone) ·
+approximate (FDC holds no kasseri — …)`; complete, 403.16 → 469.49 per
+serving (6). Not flagged: the 3 provolone lines on 170850 and the 29 Pecorino
+Romano lines on 171249.
+
+Batch (the replay of snapshot 27 against matcher v74's rows): 2 rows moved
+and the new section's 5 rows; the ROW column +3,026.95 (the routed row
+1,314.46, the section's rows 1,314.46, kasseri 398.03); RECIPE ENERGY
++1,712.49 by the stored batches (+1,712.38 as per-serving × servings, the
+per-serving rounding); 2 recipes complete (1,047 / 151); buckets MAIN check
+−2 / counted +2, SECTION counted +5, sections complete +1, routed sections
++1; holds unchanged; 0 requests. No step reader; the basis texts join no
+list. No calibration recipe moves (design_v2 §3).
+
+Cost (RULE C; v73 closers 3–5, verify3 D1, verify4 D2, verify5 D2): rule 1
+is read for every (line × own section) of every `isReferenceIn` and every
+resolve, so its per-line reads sit outside the per-section loop — the tail
+(`endsWith`) first, on the title the caller has already normalised; then,
+on the line's first tail hit, the mark (`isSubRecipeReference`, which
+`namesOwnSection` has already read and hands over) and the line's own share
+reads (`shareReaderOf` in salt_shared: `parseShare` curried, unchanged, its
+written "(½ recipe" regex skipped on a raw without the word "recipe"); a
+section's yield once per distinct servings string. A compute reads a
+reference line through `isReferenceIn` AND the resolver's own list — six
+reads of a routed line, up to five in a GET — so both per-line reads are
+memoised per recipe instance (the mark by the raw, the share reader by the
+raw and the amounts): ONCE per line and instance, a yield once per line,
+instance and servings string. `namesOwnSection` and the resolver's list
+normalise each title once. Counted (`memo:yieldMarks`,
+`memo:yieldShareReaders`, `yieldServingsReads`; cost_bounds: once per line
+and instance, a yield once per line, instance and servings string) and
+pinned at the editor caps — 400 lines of 1,000 characters × 60 subsections
+(nutrition_v26_cost_test) — including the ROUTING shapes, where every line
+names an own section at its yield (one "Classic Pizza Dough" at MAKES 1
+POUND: every line routed; sixty such titles: every line held): compute, GET
+and recompute each read exactly 400 marks, 400 share readers and 400
+yields. The memo keeps its own store, never the step index: the reads take
+nothing from the steps, and a recompute reads its STORED copy's lines — a
+memo on the step index built that copy's index, windowing every step, which
+no v74 recompute does (≈ +22 ms, +9 %, of a recompute at the editor's step
+caps). So every step builds v74's step indexes (compute and recompute one;
+pinned EXACTLY on every yield cap shape). Measured against matcher v74
+(medians of four base and four tree processes, ABBA twice, compute / GET /
+recompute; fix76/closer5.md), at the 400 × 1,000-character lines × 60
+subsections and again with the editor's 120 steps × 10,000 characters:
+titles never ending in the item +0.5 / +0.1 / +0.4 %; every title ending
+in it (MAKES 2 POUNDS) −0.6 / +1.6 / +2.9 % (+2.4 ms: its 400 share readers
+and 400 yields), at the step caps −0.1 / +1.6 / +0.5 %. The routing shapes
+route on the tree and not on v74 (v74 counts the line as its food: −55 /
++480 / +42 % on the same input, the GET's routed child read included), so
+their base is v74's own A9-equality routed shape ("Pizza Dough", MAKES 1
+POUND): one routing title +1.4 / +0.1 / +13.7 %, at the step caps +2.0 /
++0.8 / +3.4 %. STATED RESIDUALS, each pinned by count: that recompute's
++13 ms (+9 ms at the step caps) is its one mark per line
+(`memo:yieldMarks` 400, ≈ 36 µs on a 1,000-character raw), which the
+equality never reads; 60 DISTINCT yields under titles all ending in the
+item +4.4 / −1.1 / +35.2 % (+29 ms; at the step caps +3.3 / +0.4 /
++11.3 %, +27 ms) — one yield read per (line, distinct servings string), each a
+short servings string, never the raw (the base itself normalises every
+title per line, the same order); 400 MARKED lines against titles ending in
+their item +4.8 / +8.9 / +12.4 % (at the step caps +4.1 / +4.6 / +5.7 %)
+— one mark read per line and instance. The tree before closer 3 read the mark
+and the share's raw regex per (line × section): 7.6–14.7× base on these
+shapes; closer 3's tree read a routed line six times a compute (the memo:
+−7.2 / −3.0 / +0.8 % on the one-title routing shape, −4.2 / −1.1 / −3.1 % on
+sixty).
+
+Known gaps: the tart's line buys a ready-made pound of pizza dough — the
+recipe's own homemade dough (the cook's option in its prep note) is what is
+counted, no record of a bought pizza dough is cached; pastitsio's printed
+substitute is a MIX (1½ oz Pecorino Romano with 3 oz provolone per 4 oz) —
+only its larger part is counted (the mix by weight would be ≈ +13.6 kcal; no
+stand-in reader builds a mix), and kasseri's own composition is unsourced in
+FDC. Deploy note: matcherVersion 73 stales every recipe; one zero-request
+sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

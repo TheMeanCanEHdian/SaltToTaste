@@ -2862,4 +2862,268 @@ void review71() {
     },
     skip: skipIfNoCorpus,
   );
+
+  group(
+    'RULE C, the yield-named own section at the caps (v73, M76 — verify3 '
+    'D1, verify4 D2, verify5 D2)',
+    () {
+      // STATED synthesized cost inputs (a negative-path shape no corpus
+      // recipe holds — the library's most is 5 subsections): the real tart
+      // (1177) and its real line "1 pound pizza dough" — a distinct prep per
+      // line, padded to the 1,000-character line cap — under the editor's 60
+      // subsections (recipe_edit_service.dart), each listing "1 cup water".
+      // quiet: no title ends in the item; tail: every title does, at MAKES
+      // 2 POUNDS (share ½ — none routes); dtail: the tail at 60 DISTINCT
+      // yields (MAKES 2 … 61 POUNDS); ref: marked lines ("(recipe
+      // follows)") against the tail titles — the resolver's own list.
+      // verify4 D2, the TRUE path: rtail — every title "Classic i Pizza
+      // Dough" at MAKES 1 POUND (every line names all 60 at its yield);
+      // rtail1 — ONE "Classic Pizza Dough" at MAKES 1 POUND among 59 quiet
+      // titles (every line routes to it, as the tart's does). A compute
+      // reads a routed line through `isReferenceIn` AND the resolver's own
+      // list — six reads a line before closer 4, up to five in a GET — so the
+      // mark and the share reader are memoised per recipe instance: once per
+      // line and instance, a yield once per line, instance and servings
+      // string. verify5 D2: in their own store, never the step index — a
+      // recompute reads its STORED copy's lines, and memoising there built
+      // that copy's step index (≈ +22 ms at the editor's step caps), an
+      // index no base recompute builds: each step's `indexes` is pinned
+      // EXACTLY at v74's (quiet, tail, dtail 1 / 2 / 1; ref, the routing
+      // shapes' compute and recompute 1). Measured (fix76/closer3.md,
+      // closer4.md, closer5.md; base 776456f vs the tree, compute / GET /
+      // recompute): API.md's M76 cost paragraph.
+      const tart = '1177-caramelized-onion-pear-and-bacon-tart.yaml';
+      const capSubsections = 60;
+      Recipe shape(String kind) {
+        String pad(String s) => s + 'x' * (capLine - s.length);
+        return loadCorpusRecipe(tart).copyWith(
+          subsections: [
+            for (var i = 0; i < capSubsections; i++)
+              Subsection(
+                title: switch (kind) {
+                  'quiet' => 'Section $i Sauce',
+                  'rtail1' =>
+                    i == 0 ? 'Classic Pizza Dough' : 'Section $i Sauce',
+                  _ => 'Classic $i Pizza Dough',
+                },
+                kind: 'component',
+                servings: switch (kind) {
+                  'dtail' => 'MAKES ${i + 2} POUNDS',
+                  'rtail' || 'rtail1' => 'MAKES 1 POUND',
+                  _ => 'MAKES 2 POUNDS',
+                },
+                ingredients: [
+                  IngredientGroup(items: [ln('1 cup water')]),
+                ],
+              ),
+          ],
+          ingredients: [
+            IngredientGroup(
+              items: [
+                for (var i = 0; i < capLines; i++)
+                  ln(
+                    pad(
+                      kind == 'ref'
+                          ? '1 pound pizza dough (recipe follows), $i '
+                          : '1 pound pizza dough, $i ',
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      }
+
+      Map<String, int> yieldCounts() => {
+        for (final MapEntry(:key, :value) in stepIndexCounts.entries)
+          if (key.startsWith('yield') || key.startsWith('memo:yield'))
+            key: value,
+      };
+
+      test('one isReferenceIn pass over 400 lines × 60 subsections reads each '
+          "line's share ONCE and a yield once per servings string, never the "
+          'mark (namesOwnSection has read it); quiet titles read none — the '
+          'pass under 400 ms (the pre-fix tree: 875–1,155); a second pass '
+          'on the same recipe reads nothing (the per-recipe memo)', () {
+        const expected = {
+          'quiet': <String, int>{},
+          'tail': {'memo:yieldShareReaders': 400, 'yieldServingsReads': 400},
+          // The STATED residual: one yield read per (line, distinct
+          // servings) — a ≤ 14-character servings string, never the raw
+          // (the base normalises every title per line, the same order).
+          'dtail': {
+            'memo:yieldShareReaders': 400,
+            'yieldServingsReads': 24000,
+          },
+        };
+        for (final MapEntry(key: kind, value: counts) in expected.entries) {
+          final warm = shape(kind); // another instance: its own memo
+          for (final l in warm.ingredients.single.items) {
+            isReferenceIn(warm, l);
+          }
+          final r = shape(kind);
+          final lines = r.ingredients.single.items;
+          expect(lines.map((l) => l.raw.length).toSet(), {capLine});
+          expect(r.subsections, hasLength(capSubsections));
+          stepIndexCounts.clear();
+          final sw = Stopwatch()..start();
+          for (final l in lines) {
+            expect(isReferenceIn(r, l), isFalse, reason: kind);
+          }
+          final ms = sw.elapsedMilliseconds;
+          expect(yieldCounts(), counts, reason: kind);
+          expect(ms, lessThan(400), reason: kind);
+          stepIndexCounts.clear();
+          for (final l in lines) {
+            expect(isReferenceIn(r, l), isFalse, reason: kind);
+          }
+          expect(yieldCounts(), isEmpty, reason: '$kind, the second pass');
+        }
+      });
+
+      test("the resolver's own list on 400 marked lines × 60 tail titles "
+          'reads each mark ONCE per line (memoised per recipe instance — a '
+          'second resolve reads none), never a share; no tail title joins a '
+          'marked line (rule PO)', () {
+        final r = shape('ref');
+        final db = wp.tempDb();
+        final memo = ResolverMemo(db);
+        stepIndexCounts.clear();
+        for (var pass = 0; pass < 2; pass++) {
+          for (final l in r.ingredients.single.items) {
+            expect(isReferenceIn(r, l), isTrue);
+            expect(resolveReference(db, r, l, memo).section, isNull);
+          }
+        }
+        expect(yieldCounts(), {'memo:yieldMarks': 400});
+      });
+
+      Future<Map<String, Map<String, int>>> capShape(
+        String kind,
+        void Function(SaltDatabase db, Recipe stored) after,
+      ) async {
+        final r = shape(kind);
+        final db = wp.tempDb();
+        final provider = FixtureProvider(pending: pendingSearches);
+        wp.saveRecipe(db, r);
+        Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+        final seen = <String, Map<String, int>>{};
+        Future<void> timed(String step, Future<Object?> Function() run) async {
+          stepIndexCounts.clear();
+          final sw = Stopwatch()..start();
+          await run();
+          final ms = sw.elapsedMilliseconds;
+          final counts = Map.of(stepIndexCounts);
+          expectBounded(
+            r,
+            counts,
+            '$kind $step',
+            copies: counts['indexes'] ?? 1,
+          );
+          seen[step] = {...yieldCounts(), 'indexes': counts['indexes'] ?? 0};
+          expect(ms, lessThan(backstopMs), reason: '$kind $step: $counts');
+        }
+
+        await timed('compute', () => matchAndCompute(db, provider, stored()));
+        after(db, stored());
+        await timed('GET', () => matchesBody(db, provider, stored()));
+        await timed('recompute', () async => recomputeTotals(db, stored()));
+        return seen;
+      }
+
+      for (final kind in ['quiet', 'tail', 'dtail', 'ref']) {
+        test('CAP SHAPE ($kind): compute, GET and recompute within the '
+            "yield families' bounds (cost_bounds: once per line and recipe "
+            'instance, a yield once per line, instance and servings string) '
+            "and the backstop; each step's reads and step indexes pinned "
+            "EXACTLY (indexes at v74's: no stored copy's index built — "
+            'verify5 D2)', () async {
+          final seen = await capShape(kind, (_, _) {});
+          // Not vacuous: the tail shapes reach the share, ref the mark.
+          expect(
+            {
+              for (final counts in seen.values)
+                for (final MapEntry(:key, :value) in counts.entries)
+                  if (key != 'indexes' && value > 0) key,
+            },
+            switch (kind) {
+              'quiet' => <String>{},
+              'ref' => {'memo:yieldMarks'},
+              _ => {'memo:yieldShareReaders', 'yieldServingsReads'},
+            },
+          );
+          // verify5 D2: the counts per step EXACTLY, the indexes v74's own
+          // (verify5's probe of 776456f: quiet, tail, dtail 1 / 2 / 1; ref
+          // 1 / 1 / 1) — the GET's second index is the base's, not a yield
+          // read's (the GET reads no yield on these shapes).
+          const reads = {
+            'tail': {'memo:yieldShareReaders': 400, 'yieldServingsReads': 400},
+            'dtail': {
+              'memo:yieldShareReaders': 400,
+              'yieldServingsReads': 24000,
+            },
+            'ref': {'memo:yieldMarks': 400},
+          };
+          final read = reads[kind] ?? const <String, int>{};
+          expect(seen, {
+            'compute': {...read, 'indexes': 1},
+            'GET': {
+              if (kind == 'ref') ...read,
+              'indexes': kind == 'ref' ? 1 : 2,
+            },
+            'recompute': {...read, 'indexes': 1},
+          });
+        });
+      }
+
+      // verify4 D2: the TRUE path, the shape rule 1 exists for — every line
+      // a reference by the yield-named tail: rtail1 routes each to its one
+      // section (as the tart's line), rtail's 60 qualifying sections hold
+      // each (the resolver's own list, ambiguous).
+      for (final (kind, routes) in [('rtail', false), ('rtail1', true)]) {
+        test('ROUTING CAP SHAPE ($kind): every line names its own section at '
+            'its yield (${routes ? 'routed to its one section' : 'held: 60 '
+                      'own sections qualify'}); compute, GET and recompute '
+            "each read a line's mark and share ONCE and its one yield once "
+            '(pinned EXACTLY), within the bounds and the backstop; the '
+            "recompute reads the stored copy's lines and builds no index of "
+            "that copy (one, v74's — verify5 D2)", () async {
+          final seen = await capShape(kind, (db, stored) {
+            final memo = ResolverMemo(db);
+            for (final l in nutritionLines(stored)) {
+              expect(isReferenceIn(stored, l), isTrue, reason: kind);
+            }
+            final found = resolveReference(
+              db,
+              stored,
+              nutritionLines(stored).first,
+              memo,
+            );
+            expect(
+              (found.kind, found.section, found.share),
+              routes
+                  ? (
+                      ReferenceKind.routed,
+                      (host: stored.id, title: 'Classic Pizza Dough'),
+                      1.0,
+                    )
+                  : (ReferenceKind.held, null, null),
+              reason: kind,
+            );
+          });
+          const once = {
+            'memo:yieldMarks': 400,
+            'memo:yieldShareReaders': 400,
+            'yieldServingsReads': 400,
+          };
+          expect(seen, {
+            'compute': {...once, 'indexes': 1},
+            'GET': {...once, 'indexes': 1},
+            'recompute': {...once, 'indexes': 1},
+          });
+        });
+      }
+    },
+    skip: skipIfNoCorpus,
+  );
 }

@@ -153,7 +153,8 @@ const _totals = [
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 72);
+    // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
+    expect(matcherVersion, 73);
   });
 
   test("braisedKept[168743]: SR 169440's shares by the protein tracer "

@@ -241,6 +241,11 @@ const Map<String, String> _resolved = {
   'vegan-baja-style-cauliflower-tacos|14':
       'routed section Vegan Cilantro Sauce',
   'red-lentil-kibbeh|4': 'routed section Harissa',
+  // RE-PIN (M76 batch, v76, design_v2 Q3 (a)): an entry added — the tart's
+  // UNMARKED "1 pound pizza dough" names its own "Classic Pizza Dough" by
+  // the yield-named tail (MAKES 1 POUND, share 1.0); no other entry moved.
+  'caramelized-onion-pear-and-bacon-tart|6':
+      'routed section Classic Pizza Dough',
 };
 
 void main() {

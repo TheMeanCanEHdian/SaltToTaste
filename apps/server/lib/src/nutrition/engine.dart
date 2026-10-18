@@ -354,6 +354,19 @@ bool memoOffForTest = false;
 void _count(String what, [int n = 1]) =>
     stepIndexCounts[what] = (stepIndexCounts[what] ?? 0) + n;
 
+/// [_StepIndex.memo]'s form over the store [memo]: [compute] once per [key],
+/// counted by its family, derived afresh under [memoOffForTest].
+T _memoIn<T>(Map<Object, Object?> memo, Object key, T Function() compute) {
+  if (memoOffForTest) {
+    return compute();
+  }
+  if (memo.containsKey(key)) {
+    return memo[key] as T;
+  }
+  _count('memo:${_family(key)}');
+  return memo[key] = compute();
+}
+
 class _StepIndex {
   _StepIndex(Recipe recipe)
     : raw = [for (final step in recipe.steps) _windowed(step.text)] {
@@ -420,16 +433,7 @@ class _StepIndex {
   /// and each pinned by a drop-one-coordinate mutant (v27, Run 057 S9:
   /// nutrition_v27_memo_keys_test.dart compares every answer with the
   /// memos on, in both line orders, against [memoOffForTest]).
-  T memo<T>(Object key, T Function() compute) {
-    if (memoOffForTest) {
-      return compute();
-    }
-    if (_memo.containsKey(key)) {
-      return _memo[key] as T;
-    }
-    _count('memo:${_family(key)}');
-    return _memo[key] = compute();
-  }
+  T memo<T>(Object key, T Function() compute) => _memoIn(_memo, key, compute);
 
   /// The offsets of [step]'s sentence-ending periods ([_sentenceEnd]).
   List<int> _endsOf(int step) => _ends[step] ??= () {
@@ -7586,7 +7590,8 @@ bool isReferenceIn(Recipe recipe, IngredientLine line) =>
 /// tortillas, warmed" stays its food, as "8 Home-Fried Taco Shells" does)
 /// and never a line with no amount. Equality only: the looser
 /// own-section forms reach variations of the line's own food ("2 cups
-/// couscous" → "Couscous with Dates and Pistachios").
+/// couscous" → "Couscous with Dates and Pistachios") — except the
+/// yield-named tail ([yieldNamesOwnSection], v73).
 bool namesOwnSection(Recipe recipe, IngredientLine line) {
   if (recipe.subsections.isEmpty ||
       line.amounts.isEmpty ||
@@ -7599,14 +7604,104 @@ bool namesOwnSection(Recipe recipe, IngredientLine line) {
     return false;
   }
   final item = referenceItemOf(line);
-  return recipe.subsections.any(
-    (sub) =>
-        _refNorm(sub.title ?? '') == item &&
+  final tail = _yieldTailOf(line, item, recipe: recipe, unmarked: true);
+  return recipe.subsections.any((sub) {
+    final title = _refNorm(sub.title ?? '');
+    return (title == item || tail(sub, title)) &&
         (sub.ingredients ?? const <IngredientGroup>[]).any(
           (group) => group.items.isNotEmpty,
-        ),
-  );
+        );
+  });
 }
+
+/// v73 (batch M76, prep50 design_v2 §2 M76, the owner's Q3 (a); pD C1 —
+/// A9's yield-named TAIL form): the UNMARKED [line] with an amount whose
+/// reference [item] ([referenceItemOf]) is the TAIL of the own section
+/// [sub]'s title ("1 pound pizza dough" → caramelized-onion-pear-and-bacon-
+/// tart's "Classic Pizza Dough") AND whose amount IS the section's printed
+/// yield ([parseShare] == 1.0 against its "MAKES 1 POUND"). The yield guard
+/// keeps simple-grill-roasted-turkey's "1 (12- to 14-pound) turkey …" off
+/// its "Gravy for Simple Grill-Roasted Turkey" (MAKES 6 CUPS) and
+/// fried-rice-with-shrimp-pork-and-shiitakes' "1 cup bean sprouts" off its
+/// "Fried Rice with Peas and Bean Sprouts" (SERVES 4 TO 6). Read by
+/// [namesOwnSection] (so [isReferenceIn], the stale hash, the parent test
+/// and [routedSectionKeysOf] follow) and by the resolver's own-section list
+/// (`_ownTitles`); a marked line keeps v47's forms (barbecued-pulled-pork's
+/// "2 cups barbecue sauce (recipes follow)" stays rule PO's).
+/// [re-point → `item`]
+bool yieldNamesOwnSection(IngredientLine line, String item, Subsection sub) =>
+    _yieldTailOf(line, item)(sub, _refNorm(sub.title ?? ''));
+
+/// [yieldNamesOwnSection] for ONE [line] tested against many subsections,
+/// its per-line reads out of the per-subsection loop (v73 closer 3, verify3
+/// D1 — RULE C: at the editor caps the per-pair reads cost 1.5–15× base):
+/// the tail first, on the caller's normalised title; then, on the line's
+/// first tail hit, the mark ([isSubRecipeReference] — not read when the
+/// caller already has, [unmarked]) and the line's own share reads
+/// ([shareReaderOf]); a child's yield once per servings string. With
+/// [recipe], each read is memoised per recipe instance (v73 closer 4,
+/// verify4 D2: a compute reads a reference line through `isReferenceIn` AND
+/// the resolver's own list — six reads of a routed line, up to five in a GET
+/// — so the mark and the share reader answer once per line and instance, a
+/// yield once per line, instance and servings string; [_yieldRead], closer
+/// 5: no step index built). Counted (`memo:yieldMarks`,
+/// `memo:yieldShareReaders`, `yieldServingsReads`).
+bool Function(Subsection sub, String title) _yieldTailOf(
+  IngredientLine line,
+  String item, {
+  Recipe? recipe,
+  bool unmarked = false,
+}) {
+  if (item.isEmpty || line.amounts.isEmpty) {
+    return (_, _) => false;
+  }
+  final tail = ' $item';
+  var marked = unmarked ? false : null;
+  bool Function(String? servings)? atYield;
+  return (sub, title) {
+    if (!title.endsWith(tail)) {
+      return false;
+    }
+    // Key: raw — the mark reads the line's text alone.
+    marked ??= _yieldRead(
+      recipe,
+      ('yieldMarks', line.raw),
+      () => isSubRecipeReference(line.raw),
+    );
+    if (marked!) {
+      return false;
+    }
+    // Key: raw and amounts — the line's own share reads ([shareReaderOf]);
+    // the amounts by identity (a `_singleFoodYield` line keeps its raw with
+    // other amounts). A child's servings string is the inner map's key.
+    atYield ??= _yieldRead(
+      recipe,
+      ('yieldShareReaders', line.raw, line.amounts),
+      () {
+        final share = shareReaderOf(line.raw, line.amounts);
+        final seen = <String?, bool>{};
+        return (servings) => seen[servings] ??= () {
+          _count('yieldServingsReads');
+          return share(servings) == 1.0;
+        }();
+      },
+    );
+    return atYield!(sub.servings);
+  };
+}
+
+/// [derive] memoised under [key] per [recipe] instance ([_yieldTailOf]), in
+/// [_StepIndex.memo]'s form but its own store: the reads take nothing from
+/// the steps, and a recompute reads its STORED copy's lines, whose step
+/// index nothing else builds (v73 closer 5, verify5 D2: building it
+/// windowed every step — ≈ +22 ms at the editor's step caps). Derived afresh
+/// with no recipe ([yieldNamesOwnSection]).
+T _yieldRead<T>(Recipe? recipe, Object key, T Function() derive) =>
+    recipe == null
+    ? derive()
+    : _memoIn(_yieldMemos[recipe] ??= {}, key, derive);
+
+final Expando<Map<Object, Object?>> _yieldMemos = Expando();
 
 /// The subsection of [recipe] a sub-recipe [line] references: the one whose
 /// title opens the line's item ("Easy-Peel Hard-Cooked Eggs (recipe
@@ -8126,8 +8221,12 @@ final RegExp _trailingParen = RegExp(r'^(.*?)\s*\((.*)\)\s*$');
 /// the item and a space ("Fried Shallots and Fried Shallot Oil"), or its
 /// trailing parenthetical is the item (reversed: "Nam Prik Pao (Thai Chili
 /// Jam)").
-bool _ownSectionNames(String title, String item) {
-  final normalized = _refNorm(title);
+bool _ownSectionNames(
+  String title,
+  String item, [
+  String? normalizedTitle,
+]) {
+  final normalized = normalizedTitle ?? _refNorm(title);
   if (normalized.isEmpty) {
     return false;
   }
@@ -8273,6 +8372,22 @@ ReferenceResolution? _proseBase(
         );
 }
 
+/// The own sections the reference [line] (item [item]) of [recipe] names,
+/// in subsection order: v47's title forms ([_ownSectionNames]) and, for an
+/// unmarked line, the yield-named tail ([yieldNamesOwnSection], v73) — the
+/// resolver's list and the fix sheet's `own_section` group alike.
+List<String> _ownTitles(Recipe recipe, IngredientLine line, String item) {
+  final tail = _yieldTailOf(line, item, recipe: recipe);
+  return [
+    for (final sub in recipe.subsections)
+      if (sub.title case final title?)
+        if (_refNorm(title) case final normalized
+            when _ownSectionNames(title, item, normalized) ||
+                tail(sub, normalized))
+          title,
+  ];
+}
+
 /// [resolveReference]'s shipped order (v41–v47), every line.
 ReferenceResolution _resolveInOrder(
   SaltDatabase db,
@@ -8285,10 +8400,7 @@ ReferenceResolution _resolveInOrder(
   if (itemWords.contains('marinade')) {
     return const ReferenceResolution(ReferenceKind.marinade);
   }
-  final own = [
-    for (final sub in recipe.subsections)
-      if (sub.title case final title? when _ownSectionNames(title, item)) title,
-  ];
+  final own = _ownTitles(recipe, line, item);
   // v47 (F6, Run 061 S3): the own section whose title IS the item wins over
   // the looser forms' siblings ("2 tablespoons harissa" is "Harissa", never
   // held beside a "Harissa Yogurt").
@@ -16034,6 +16146,11 @@ String? gramBasisFor(
 /// deduction does.
 /// ponytail: the served-cup and fat-layer clauses are those two recipes'
 /// steps (the only rows either arm reaches); another recipe's needs its own.
+/// v73 (batch M76, the owner's Q4 (a); pD C2; the 173420 precedent): a
+/// kasseri line on SR 170850 "Cheese, provolone" says FDC holds no kasseri
+/// and names the recipe's own printed substitute it borrows the larger part
+/// of (pastitsio's prep note). Keyed on the line's own word [re-point →
+/// `item`]; the provolone lines on 170850 say nothing.
 String? trimStandInFlagOf(
   String raw,
   int? fdcId, {
@@ -16114,6 +16231,10 @@ String? trimStandInFlagOf(
       'approximate (FDC holds no ricotta salata — a stand-in by class; '
           "feta's sodium (1,139 mg per 100 g) and fat (21.49 g per 100 g) "
           'counted)',
+    170850 when raw.toLowerCase().contains('kasseri') =>
+      'approximate (FDC holds no kasseri — counted as provolone, the larger '
+          "part of the recipe's own substitute: 3 oz provolone with 1½ oz "
+          'Pecorino Romano for 4 oz kasseri)',
     _ => null,
   };
 }
@@ -16555,11 +16676,7 @@ List<ReferenceCandidate> referenceCandidates(
   ];
   final own =
       pickOwnSections(memo.db, recipe, line, memo) ??
-      [
-        for (final sub in recipe.subsections)
-          if (sub.title case final title? when _ownSectionNames(title, item))
-            title,
-      ];
+      _ownTitles(recipe, line, item);
   return [
     for (final title in own)
       (

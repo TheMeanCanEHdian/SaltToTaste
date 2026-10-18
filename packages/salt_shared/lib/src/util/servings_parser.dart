@@ -277,37 +277,54 @@ final RegExp _recipeShare = RegExp('\\(\\s*($_num)\\s+recipes?\\b');
 /// ([childServings]) in one unit family — "1 cup" of "MAKES ABOUT 1½ CUPS"
 /// is ⅔, "4 ounces" of "MAKES ABOUT 8 OUNCES" ½. Null when no share reads
 /// ("1 cup" of "MAKES ENOUGH FOR 4 PIZZAS", a count of "SERVES 4").
-double? parseShare(String raw, List<Amount> amounts, String? childServings) {
-  final written = _recipeShare.firstMatch(raw);
+double? parseShare(String raw, List<Amount> amounts, String? childServings) =>
+    shareReaderOf(raw, amounts)(childServings);
+
+/// [parseShare] for ONE line read against many children (v73 closer 3, M76
+/// verify3 D1 — RULE C: the server tests a line against every own section's
+/// yield): the line's own reads — its written "(½ recipe" over [raw], a
+/// `recipe` amount — done once; the returned function reads only the
+/// child's servings. ([_recipeShare] matches only where [raw] holds the
+/// word "recipe": a raw without it skips the regex, 15 → 2 µs on a
+/// 1,000-character line.)
+double? Function(String? childServings) shareReaderOf(
+  String raw,
+  List<Amount> amounts,
+) {
+  final written = raw.contains('recipe') ? _recipeShare.firstMatch(raw) : null;
   if (written != null) {
-    return parseQuantity(written.group(1)!);
+    final share = parseQuantity(written.group(1)!);
+    return (_) => share;
   }
   for (final amount in amounts) {
     if (amount.unit == 'recipe' || amount.unit == 'recipes') {
-      return parseQuantity(amount.quantity);
+      final share = parseQuantity(amount.quantity);
+      return (_) => share;
     }
   }
-  final yieldMatch = _yieldMeasure.firstMatch(
-    childServings?.toUpperCase() ?? '',
-  );
-  if (yieldMatch == null) {
+  return (childServings) {
+    final yieldMatch = _yieldMeasure.firstMatch(
+      childServings?.toUpperCase() ?? '',
+    );
+    if (yieldMatch == null) {
+      return null;
+    }
+    final yieldQuantity = parseQuantity(
+      yieldMatch.group(2) ?? yieldMatch.group(1)!,
+    );
+    final yieldUnit = yieldMatch
+        .group(3)!
+        .toLowerCase()
+        .replaceFirst(RegExp(r's$'), '');
+    final table = _shareMl.containsKey(yieldUnit) ? _shareMl : _shareG;
+    for (final amount in amounts) {
+      final unit = table[amount.unit?.toLowerCase()];
+      final quantity = parseQuantity(amount.quantity);
+      if (unit != null && quantity != null && yieldQuantity != null) {
+        final share = quantity * unit / (yieldQuantity * table[yieldUnit]!);
+        return share > 0 ? share : null;
+      }
+    }
     return null;
-  }
-  final yieldQuantity = parseQuantity(
-    yieldMatch.group(2) ?? yieldMatch.group(1)!,
-  );
-  final yieldUnit = yieldMatch
-      .group(3)!
-      .toLowerCase()
-      .replaceFirst(RegExp(r's$'), '');
-  final table = _shareMl.containsKey(yieldUnit) ? _shareMl : _shareG;
-  for (final amount in amounts) {
-    final unit = table[amount.unit?.toLowerCase()];
-    final quantity = parseQuantity(amount.quantity);
-    if (unit != null && quantity != null && yieldQuantity != null) {
-      final share = quantity * unit / (yieldQuantity * table[yieldUnit]!);
-      return share > 0 ? share : null;
-    }
-  }
-  return null;
+  };
 }

@@ -969,7 +969,16 @@ const Map<String, String> _synonyms = {
 /// `trimDepthRecord`, `_trimsFatTo`, `braisedKeptOf`); the 0" flat keeps
 /// its own braised pair 168743 → 169440 where the steps skim the fat (engine
 /// `braisedKept`).
-const int matcherVersion = 72;
+///
+/// v73 (the Matcher v76 commit, batch M76 — eaten foods below the gate;
+/// prep50 design_v2 §2 M76, the owner's Q3 (a) and Q4 (a); zero requests):
+/// an unmarked line whose item is the tail of one of the recipe's own
+/// section titles and whose amount is that section's printed yield reads
+/// the section (engine `yieldNamesOwnSection` — the tart's "1 pound pizza
+/// dough" its own "Classic Pizza Dough", MAKES 1 POUND); kasseri on
+/// provolone, flagged ([_rankAs], [approximationRecords], engine
+/// `trimStandInFlagOf`).
+const int matcherVersion = 73;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2967,6 +2976,15 @@ const Map<String, (String, String)> _rankAs = {
     'cold cooked white rice',
     'rice white cooked no added fat',
   ),
+  // v73 (batch M76, prep50 design_v2 §2 M76, the owner's Q4 (a); pD C2):
+  // FDC holds no kasseri (its own answer: processed cheese food,
+  // cream-cheese spreads, Monterey 2705720 at 0.465, below the gate) → SR
+  // 170850 "Cheese, provolone", the top of the cached 'provolone cheese'
+  // answer (its detail cached), the larger part of pastitsio's own printed
+  // substitute (3 oz provolone with 1½ oz Pecorino Romano for 4 oz
+  // kasseri); flagged ([approximationRecords], engine
+  // `trimStandInFlagOf`). [re-point → `item`]
+  'kasseri cheese': ('provolone cheese', 'cheese provolone'),
 };
 
 /// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it
@@ -3988,6 +4006,8 @@ const Map<String, int> approximationRecords = {
   // kelp-specific); ricotta salata on feta.
   'square piece kombu': 2709988,
   'ricotta salata': 173420,
+  // v73 (M76, Q4 (a); [_rankAs]): kasseri on provolone.
+  'kasseri cheese': 170850,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

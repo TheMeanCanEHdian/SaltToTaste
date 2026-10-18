@@ -788,7 +788,8 @@ void main() {
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
-    expect(matcherVersion, 72);
+    // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
+    expect(matcherVersion, 73);
   });
 
   test('the five entries, by item (the shipped classes)', () {

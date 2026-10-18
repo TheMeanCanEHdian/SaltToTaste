@@ -274,6 +274,22 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     // dissolving sentences once, the steps once.
     'occurrenceScans': sentences + steps,
     'windowLogs': steps,
+    // v73 closer 3 (M76 verify3 D1), closer 4 (verify4 D2) and closer 5
+    // (verify5 D2): the yield-named own section's per-line reads, memoised
+    // per recipe instance in their own store (never the step index: a
+    // recompute reads its stored copy's lines, and memoising on the step
+    // index built that copy's index) — a line's mark (by its text) and its
+    // share reader (by its text and amounts) once per instance, a child's
+    // yield once per line, instance and distinct servings string. Measured
+    // EXACTLY on the v26 yield cap shapes, the routing ones (rtail, rtail1)
+    // too: compute, GET and recompute each 400 of each family on 400 lines,
+    // with v74's step indexes (the recompute 1). Before the memo a compute
+    // read a routed line six times (isReferenceIn 3, the resolver's own list
+    // 3) and a GET up to five (1 and 4) — over the four this bound once said.
+    'memo:yieldMarks': lines,
+    'memo:yieldShareReaders': lines,
+    'yieldServingsReads':
+        lines * {for (final s in r.subsections) s.servings}.length,
   };
 }
 
