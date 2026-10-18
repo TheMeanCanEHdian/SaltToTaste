@@ -2049,8 +2049,10 @@ const List<_Row> _unmoved = [
     '72.55',
     'auto',
     null,
-    '611.84',
-    '1/3 cup ≈ 79 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '611.84'.
+    '641.37',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1/3 cup ≈ 79 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0243-arista-tuscan-style-roast-pork-with-garlic-and-rosemary.yaml',
@@ -2777,8 +2779,10 @@ const List<_Row> _unmoved = [
     '54.42',
     'auto',
     null,
-    '458.88',
-    '1/4 cup ≈ 59 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '458.88'.
+    '481.03',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1/4 cup ≈ 59 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
@@ -2917,8 +2921,10 @@ const List<_Row> _unmoved = [
     '27.21',
     'auto',
     null,
-    '229.44',
-    '2 tablespoon ≈ 30 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '229.44'.
+    '240.52',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '2 tablespoon ≈ 30 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
@@ -3114,8 +3120,10 @@ const List<_Row> _unmoved = [
     '13.60',
     'auto',
     null,
-    '114.72',
-    '1 tablespoon ≈ 15 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '114.72'.
+    '120.26',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1 tablespoon ≈ 15 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0301-grown-up-stovetop-macaroni-and-cheese.yaml',
@@ -3576,8 +3584,10 @@ const List<_Row> _unmoved = [
     '27.21',
     'auto',
     null,
-    '229.44',
-    '2 tablespoon ≈ 30 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '229.44'.
+    '240.52',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '2 tablespoon ≈ 30 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0398-ultimate-grilled-pizza.yaml',
@@ -4039,8 +4049,10 @@ const List<_Row> _unmoved = [
     '72.55',
     'auto',
     null,
-    '611.84',
-    '1/3 cup ≈ 79 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '611.84'.
+    '641.37',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1/3 cup ≈ 79 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0423-italian-style-grilled-chicken.yaml',
@@ -5819,8 +5831,10 @@ const List<_Row> _unmoved = [
     '72.55',
     'auto',
     null,
-    '611.84',
-    '1/3 cup ≈ 79 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '611.84'.
+    '641.37',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1/3 cup ≈ 79 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0636-grilled-chicken-souvlaki.yaml',
@@ -6281,8 +6295,10 @@ const List<_Row> _unmoved = [
     '40.81',
     'auto',
     null,
-    '344.16',
-    '3 tablespoon ≈ 44 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '344.16'.
+    '360.77',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '3 tablespoon ≈ 44 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0685-quick-cooked-tough-greens.yaml',
@@ -7079,8 +7095,10 @@ const List<_Row> _unmoved = [
     '54.42',
     'auto',
     null,
-    '458.88',
-    '1/4 cup ≈ 59 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '458.88'.
+    '481.03',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1/4 cup ≈ 59 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '1099-spanish-migas-with-fried-eggs.yaml',
@@ -7806,7 +7824,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   group('matcher v71 (batch M71)', skip: skipIfNoCorpus, () {
@@ -8322,7 +8341,8 @@ void main() {
           '0398-ultimate-grilled-pizza.yaml',
           null,
           'complete',
-          '808.37',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 808.37.
+          '811.14',
         ), // 774.92 → 808.35
         (
           '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -8346,7 +8366,8 @@ void main() {
           '0685-quick-cooked-tough-greens.yaml',
           null,
           'complete',
-          '157.29',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 157.29.
+          '161.44',
         ), // 156.93 → 157.29
         (
           '1171-bulalo-hearty-beef-shank-and-vegetable-soup.yaml',

@@ -356,7 +356,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   group('matcher v59 (batch M60)', skip: skipIfNoCorpus, () {
@@ -681,8 +682,10 @@ void main() {
 
     test('the recipes move kcal per serving only (statuses complete)', () {
       for (final (file, kcal) in [
-        (_roastWhole, '544.34'), // v58 502.18
-        (_roastWhole2, '544.34'), // v58 502.18
+        // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 544.34.
+        (_roastWhole, '544.96'), // v58 502.18
+        // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 544.34.
+        (_roastWhole2, '544.96'), // v58 502.18
         // RE-PIN (M71 batch, v71, R-E5): 586.18 (was 608.72) — "Strain the
         // vegetables and liquid … Press the solids … Discard the vegetables"
         // strains its onions, celery, carrots and garlic (−225.44 / 10).
@@ -694,7 +697,8 @@ void main() {
         (_grillroasted, '482.28'), // v58 440.12
         (_crowd, '566.13'), // v58 540.37
         (_enCocotte, '618.09'), // v58 572.42
-        (_porchetta, '700.52'), // v58 647.82
+        // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 700.52.
+        (_porchetta, '703.29'), // v58 647.82
         (_butternut, '351.03'), // v58 375.04
         // RE-PIN (M64 batch, v63, P10): 525.79 (was 533.20; −59.26 / 8).
         (_pearCake, '525.79'), // v58 545.74

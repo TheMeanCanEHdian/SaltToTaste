@@ -2415,8 +2415,10 @@ const List<_Row> _unmoved = [
     '40.81',
     'auto',
     null,
-    '344.16',
-    '3 tablespoon ≈ 44 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '344.16'.
+    '360.77',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '3 tablespoon ≈ 44 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0017-creamy-mushroom-soup.yaml',
@@ -3640,8 +3642,10 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'complete',
     'complete',
-    '367.43',
-    '367.43',
+    // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal (|6, 3 tablespoons) — was 367.43
+    // and 367.43 (M73 moved neither).
+    '384.04',
+    '384.04',
   ),
   (
     '0017-creamy-mushroom-soup.yaml',
@@ -3731,7 +3735,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   test('pD C3: the two flavourings are the NORMALIZED items the corpus '

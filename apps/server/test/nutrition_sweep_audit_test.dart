@@ -1267,8 +1267,14 @@ void main() {
     // almonds', each differing in some digit; 170392 (in 'red or green
     // cabbage') equal in every digit: compared 534 -> 539, differ 408 ->
     // 412.
-    expect(compared, 539);
-    expect(differ, 412);
+    // RE-PIN (M77 batch, v77): matcher v77 recorded from snapshot 27 the
+    // detail of SR 171413 (748608's nutrient sibling — every EVOO line now
+    // reads it): a recorded hit (in 'olive oil', 'extra-virgin olive oil for
+    // frying', 'nicoise olives', 'oil-cured black olives'), differing in some
+    // digit (saturated 13.8 / 13.808, monounsaturated 73.0 / 72.961):
+    // compared 539 -> 540, differ 412 -> 413.
+    expect(compared, 540);
+    expect(differ, 413);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

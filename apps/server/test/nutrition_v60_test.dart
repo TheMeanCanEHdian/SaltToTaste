@@ -631,9 +631,11 @@ const List<_Row> _uptakes = [
     748608,
     '1.000000',
     '26.13',
-    '220.35',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '220.35'.
+    '230.99',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw chicken breast's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)",
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    'discarded in cooking — only the oil the fried food absorbs counted · nutrients of "Oil, olive, salad or cooking" · approximation (frying oil absorbed: 6.68 % of the raw chicken breast\'s weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)',
   ),
   (
     '1133-chicken-francese.yaml',
@@ -656,8 +658,13 @@ double _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
   if (grams <= 0) {
     return 0;
   }
-  expect(nutrientSiblings[row.fdcId], isNull);
-  final food = knownFood(db, row.fdcId!, line: line)!;
+  // RE-PIN (M77 batch, v77): the totals read a row's nutrient sibling
+  // (748608 → SR 171413), and so does this helper (was a guard that no row
+  // read here has one).
+  final food = switch (nutrientSiblings[row.fdcId]) {
+    null => knownFood(db, row.fdcId!, line: line)!,
+    final sibling => knownFood(db, sibling)!,
+  };
   for (final number in nutrientDefs.first.fdcNumbers) {
     if (food.nutrientsPer100g[number] case final per100?) {
       return per100 * grams / 100;
@@ -683,7 +690,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   group('matcher v60 (batch M61)', skip: skipIfNoCorpus, () {

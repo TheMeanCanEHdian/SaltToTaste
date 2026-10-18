@@ -147,14 +147,17 @@ const _totals = [
   (_pomegranate, 'complete', '794.35', '4766.11'),
   (_barbecued, 'complete', '697.49', '12554.79'),
   // 586.71 / 2,346.84 in the replay (the flank steak's hit, above).
-  (_tacos, 'partial', '586.89', '2347.57'),
+  // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 586.89 / 2347.57 (the replay
+  // 586.71 → 590.86).
+  (_tacos, 'partial', '591.05', '2364.18'),
 ];
 
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   test("braisedKept[168743]: SR 169440's shares by the protein tracer "

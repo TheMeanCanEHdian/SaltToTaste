@@ -437,7 +437,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   test('the sirloin stand-in flag is keyed on 173408 and a line that does '
@@ -713,13 +714,15 @@ void main() {
       // the comment, then the replay's v61 → v62 — the same move (+119.71 a
       // serving for 4 pitas, +59.86 for 2, +10.30 for the crab oil); the
       // absolute figures differ by the energy the fixtures' cache reads.
+      // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 1134.19, 687.14, 654.65 and
+      // 390.16 (the replay's v76 → v77: +8.30, +7.38, +5.54, +9.69).
       expect(of(_arayes), (
         'complete',
-        '1134.19',
+        '1142.49',
       )); // 1,014.48; 1,013.59 → 1,133.30
-      expect(of(_souvlaki), ('complete', '687.14')); // 567.43; 567.49 → 687.20
-      expect(of(_shakshuka), ('complete', '654.65')); // 534.94; 534.91 → 654.62
-      expect(of(_fattoush), ('complete', '390.16')); // 330.30; 330.26 → 390.11
+      expect(of(_souvlaki), ('complete', '694.52')); // 567.43; 567.49 → 687.20
+      expect(of(_shakshuka), ('complete', '660.19')); // 534.94; 534.91 → 654.62
+      expect(of(_fattoush), ('complete', '399.85')); // 330.30; 330.26 → 390.11
       // Partial on its unmatched Old Bay, as at v61.
       expect(of(_maryland), ('partial', '334.26')); // 323.96; 323.95 → 334.26
       // The three sirloin recipes move nothing but a basis.

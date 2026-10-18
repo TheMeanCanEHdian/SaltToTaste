@@ -2014,8 +2014,10 @@ const List<_Row> _negatives = [
     '26.13',
     'auto',
     null,
-    '220.35',
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw chicken breast's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)",
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '220.35'.
+    '230.99',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    'discarded in cooking — only the oil the fried food absorbs counted · nutrients of "Oil, olive, salad or cooking" · approximation (frying oil absorbed: 6.68 % of the raw chicken breast\'s weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)',
   ),
   (
     '1133-chicken-francese.yaml',
@@ -4757,8 +4759,13 @@ double _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
   if (grams <= 0 || row.fdcId == null) {
     return 0;
   }
-  expect(nutrientSiblings[row.fdcId], isNull);
-  final food = knownFood(db, row.fdcId!, line: line)!;
+  // RE-PIN (M77 batch, v77): the totals read a row's nutrient sibling
+  // (748608 → SR 171413), and so does this helper (was a guard that no row
+  // read here has one).
+  final food = switch (nutrientSiblings[row.fdcId]) {
+    null => knownFood(db, row.fdcId!, line: line)!,
+    final sibling => knownFood(db, sibling)!,
+  };
   for (final number in nutrientDefs.first.fdcNumbers) {
     if (food.nutrientsPer100g[number] case final per100?) {
       return per100 * grams / 100;
@@ -4777,7 +4784,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '
@@ -5357,12 +5365,14 @@ void main() {
         (
           '0000-italian-style-turkey-meatballs.yaml',
           'complete',
-          '494.58',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 494.58.
+          '498.74',
         ), // replay complete 493.64 → complete 493.90
         (
           '0028-hearty-minestrone.yaml',
           'complete',
-          '264.42',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 264.42.
+          '265.34',
         ), // replay partial 264.15 → complete 264.51
         (
           '0034-lighter-corn-chowder.yaml',
@@ -5372,17 +5382,20 @@ void main() {
         (
           '0047-panzanella-italian-bread-salad.yaml',
           'complete',
-          '576.70',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 576.70.
+          '587.77',
         ), // replay complete 576.36 → complete 576.62
         (
           '0060-antipasto-pasta-salad.yaml',
           'complete',
-          '905.10',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 905.10.
+          '910.64',
         ), // replay complete 904.42 → complete 905.13
         (
           '0061-italian-pasta-salad.yaml',
           'partial',
-          '492.07',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 492.07.
+          '494.84',
         ), // replay partial 491.54 → partial 492.07
         (
           '0067-skillet-lasagna.yaml',
@@ -5392,7 +5405,8 @@ void main() {
         (
           '0068-cast-iron-baked-ziti-with-charred-tomatoes.yaml',
           'complete',
-          '512.70',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 512.70.
+          '514.09',
         ), // replay complete 512.44 → complete 512.70
         (
           '0068-skillet-baked-ziti.yaml',
@@ -5417,12 +5431,14 @@ void main() {
         (
           '0322-spaghetti-al-limone-spaghetti-with-lemon-and-olive-oil.yaml',
           'complete',
-          '625.59',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 625.59.
+          '631.13',
         ), // replay complete 625.63 → complete 625.59
         (
           '0326-pasta-and-fresh-tomato-sauce-with-garlic-and-basil.yaml',
           'complete',
-          '550.02',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 550.02.
+          '554.17',
         ), // replay complete 550.06 → complete 550.02
         (
           '0326-pasta-with-creamy-tomato-sauce.yaml',
@@ -5432,37 +5448,44 @@ void main() {
         (
           '0327-pasta-caprese.yaml',
           'complete',
-          '825.96',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 825.96.
+          '831.49',
         ), // replay complete 825.69 → complete 825.96
         (
           '0329-quick-tomato-sauce.yaml',
           'complete',
-          '216.14',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 216.14.
+          '217.98',
         ), // replay complete 216.13 → complete 216.07
         (
           '0330-marinara-sauce.yaml',
           'complete',
-          '183.11',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 183.11.
+          '187.27',
         ), // replay complete 183.17 → complete 183.11
         (
           '0330-meatless-meat-sauce-with-chickpeas-and-mushrooms.yaml',
           'complete',
-          '256.90',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 256.90.
+          '262.43',
         ), // replay complete 256.98 → complete 256.95
         (
           '0335-pasta-alla-norma.yaml',
           'complete',
-          '480.86',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 480.86.
+          '484.55',
         ), // replay complete 480.91 → complete 480.83
         (
           '0341-campanelle-with-asparagus-basil-and-balsamic-glaze.yaml',
           'complete',
-          '706.72',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 706.72.
+          '713.64',
         ), // replay complete 705.66 → complete 706.72
         (
           '0347-shrimp-fra-diavolo.yaml',
           'partial',
-          '375.90',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 375.90.
+          '378.67',
         ), // replay partial 375.59 → partial 375.85
         (
           '0351-pasta-with-hearty-italian-meat-sauce-sunday-gravy.yaml',
@@ -5472,17 +5495,20 @@ void main() {
         (
           '0357-spaghetti-and-meatballs.yaml',
           'complete',
-          '883.39',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 883.39.
+          '886.16',
         ), // replay complete 883.44 → complete 883.42
         (
           '0358-classic-spaghetti-and-meatballs-for-a-crowd.yaml',
           'partial',
-          '947.89',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 947.89.
+          '949.27',
         ), // replay partial 947.76 → partial 947.94
         (
           '0360-sausage-meatballs-and-spaghetti.yaml',
           'complete',
-          '640.53',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 640.53.
+          '643.30',
         ), // replay complete 640.73 → complete 640.71
         (
           '0361-penne-alla-vodka-penne-with-vodka-sauce.yaml',
@@ -5492,22 +5518,26 @@ void main() {
         (
           '0367-baked-ziti.yaml',
           'complete',
-          '584.87',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 584.87.
+          '586.26',
         ), // replay complete 584.63 → complete 584.87
         (
           '0368-baked-manicotti.yaml',
           'complete',
-          '645.70',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 645.70.
+          '647.55',
         ), // replay complete 645.76 → complete 645.70
         (
           '0371-simple-cheese-lasagna.yaml',
           'complete',
-          '557.60',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 557.60.
+          '560.37',
         ), // replay complete 557.61 → complete 557.58
         (
           '0373-vegetable-lasagna.yaml',
           'complete',
-          '627.91',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 627.91.
+          '632.99',
         ), // replay complete 627.78 → complete 627.89
         (
           '0374-lasagna-with-hearty-tomato-meat-sauce.yaml',
@@ -5517,32 +5547,38 @@ void main() {
         (
           '0387-chicago-style-deep-dish-pizza.yaml',
           'complete',
-          '2680.10',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 2680.10.
+          '2682.87',
         ), // replay complete 2680.08 → complete 2680.00
         (
           '0396-grilled-tomato-and-cheese-pizza.yaml',
           'complete',
-          '765.65',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 765.65.
+          '773.03',
         ), // replay complete 765.12 → complete 765.65
         (
           '0399-tomato-and-mozzarella-tart.yaml',
           'complete',
-          '540.67',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 540.67.
+          '543.44',
         ), // replay complete 540.71 → complete 540.67
         (
           '0404-pasta-e-fagioli-italian-pasta-and-bean-soup.yaml',
           'complete',
-          '285.32',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 285.32.
+          '286.01',
         ), // replay partial 285.61 → complete 285.61
         (
           '0405-ciambotta-italian-vegetable-stew.yaml',
           'complete',
-          '260.43',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 260.43.
+          '265.96',
         ), // replay complete 260.16 → complete 260.40
         (
           '0407-eggplant-parmesan.yaml',
           'partial',
-          '454.01',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.01.
+          '455.86',
         ), // replay partial 453.66 → partial 454.01
         (
           '0409-eggplant-involtini.yaml',
@@ -5552,7 +5588,8 @@ void main() {
         (
           '0415-best-chicken-parmesan.yaml',
           'complete',
-          '486.48',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
+          '489.25',
         ), // replay complete 486.50 → complete 486.46
         (
           '0416-lighter-chicken-parmesan.yaml',
@@ -5562,22 +5599,26 @@ void main() {
         (
           '0440-summer-vegetable-gratin.yaml',
           'complete',
-          '240.59',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 240.59.
+          '246.13',
         ), // replay complete 240.41 → complete 240.59
         (
           '0441-walkaway-ratatouille.yaml',
           'complete',
-          '213.23',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 213.23.
+          '218.15',
         ), // replay complete 213.26 → complete 213.23
         (
           '0654-grilled-swordfish-skewers-with-tomato-scallion-caponata.yaml',
           'complete',
-          '458.49',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 458.49.
+          '464.02',
         ), // replay complete 458.53 → complete 458.49
         (
           '0708-best-summer-tomato-gratin.yaml',
           'complete',
-          '280.01',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 280.01.
+          '285.55',
         ), // replay complete 279.94 → complete 279.91
         (
           '0859-marbled-blueberry-bundt-cake.yaml',
@@ -5603,7 +5644,8 @@ void main() {
         (
           '1089-braciole.yaml',
           'complete',
-          '634.92',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 634.92.
+          '641.38',
         ), // replay complete 634.51 → complete 634.72
         (
           '1098-fried-yuca.yaml',
@@ -5620,7 +5662,8 @@ void main() {
         (
           '1132-ultracreamy-spaghetti-with-zucchini.yaml',
           'complete',
-          '549.93',
+          // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 549.93.
+          '552.70',
         ), // replay complete 549.97 → complete 549.93
         (
           '1198-meringue-christmas-trees.yaml',

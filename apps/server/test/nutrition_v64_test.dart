@@ -789,7 +789,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   test('the five entries, by item (the shipped classes)', () {
@@ -1052,7 +1053,8 @@ void main() {
       expect(of(_brussels), ('complete', '283.63')); // partial 240.27 → 290.36
       // RE-PIN (M70 batch, v69, pE Q6): 480.88 (was 480.96) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 480.91 → 480.83).
-      expect(of(_norma), ('complete', '480.88')); // partial 443.35 → 480.91
+      // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 480.88.
+      expect(of(_norma), ('complete', '484.57')); // partial 443.35 → 480.91
       expect(of(_tamales), ('complete', '719.31')); // partial 719.39 → 719.39
       expect(of(_nikujaga).$1, 'partial'); // its unmatched katsuobushi
       expect(of(_rainbow).$1, 'complete');

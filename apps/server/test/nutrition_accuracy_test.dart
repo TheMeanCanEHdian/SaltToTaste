@@ -129,7 +129,8 @@ void main() {
 
   group('A1: a record with no energy', () {
     test('"Oil, olive, extra virgin" (748608) publishes fat only as 298: '
-        '843 kcal per 100 g through the Atwater fallback', () async {
+        '843 kcal per 100 g through the Atwater fallback — the totals read '
+        "its nutrient sibling SR 171413's 884 (v77)", () async {
       final dir = Directory.systemTemp.createTempSync('salt-evoo');
       addTearDown(() => dir.deleteSync(recursive: true));
       final db = SaltDatabase.open('${dir.path}/salt.db');
@@ -170,11 +171,19 @@ void main() {
       recomputeTotals(db, recipe, servingBasis: 1);
       expect(db.nutritionFor('r1')!.caloriesPerServing ?? 0, 0);
       db.upsertIngredientMatch(row());
-      recomputeTotals(db, recipe, servingBasis: 1);
+      // RE-PIN (M77 batch, v77, the owner's Q5 (a)): the record itself is
+      // still priced 9 × 93.7 (was the counted figure); the totals read its
+      // nutrient sibling SR 171413 — uncached, the row is not counted (a
+      // recompute never fetches); cached, 100 g count its 884.
       expect(
-        db.nutritionFor('r1')!.caloriesPerServing,
+        kcalPer100g(evoo),
         closeTo(9 * evoo.nutrientsPer100g['298']!, 0.01),
       );
+      recomputeTotals(db, recipe, servingBasis: 1);
+      expect(db.nutritionFor('r1')!.caloriesPerServing, isNull);
+      db.fdcFoodCachePut(171413, jsonEncode((await food(171413)).toJson()));
+      recomputeTotals(db, recipe, servingBasis: 1);
+      expect(db.nutritionFor('r1')!.caloriesPerServing, closeTo(884, 0.01));
     });
 
     test('the guard: a record with no energy and a macro missing publishes '

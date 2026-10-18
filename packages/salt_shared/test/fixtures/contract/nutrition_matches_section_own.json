@@ -5,7 +5,7 @@
       "raw": "3 tablespoons extra virgin olive oil, plus extra for drizzling",
       "item": "extra virgin olive oil",
       "line_amount": "3 tablespoon",
-      "kcal_per_100g": 843.3000000000001,
+      "kcal_per_100g": 884.0,
       "portions": [
         {
           "amount": 100.0,
@@ -27,7 +27,7 @@
         "confidence": 1.0,
         "grams": 40.811568,
         "gram_source": "density",
-        "gram_basis": "3 tablespoon ≈ 44 mL",
+        "gram_basis": "3 tablespoon ≈ 44 mL · nutrients of \"Oil, olive, salad or cooking\"",
         "status": "auto",
         "hold": null,
         "hold_note": null,

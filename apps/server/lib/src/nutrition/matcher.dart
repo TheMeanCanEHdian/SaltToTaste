@@ -978,7 +978,14 @@ const Map<String, String> _synonyms = {
 /// dough" its own "Classic Pizza Dough", MAKES 1 POUND); kasseri on
 /// provolone, flagged ([_rankAs], [approximationRecords], engine
 /// `trimStandInFlagOf`).
-const int matcherVersion = 73;
+///
+/// v74 (the Matcher v77 commit, batch M77 — extra-virgin olive oil's energy;
+/// prep50 design_v2 §2 M77, the owner's Q5 (a); zero requests): a row on
+/// Foundation 748608 "Oil, olive, extra virgin" (fat only, no energy) reads
+/// SR 171413 "Oil, olive, salad or cooking"'s nutrients — 884 kcal and 100 g
+/// fat per 100 g, not Atwater's 843.3 — and keeps its own record and grams
+/// (engine `nutrientSiblings`).
+const int matcherVersion = 74;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

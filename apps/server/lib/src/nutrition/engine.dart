@@ -43,8 +43,9 @@ bool _macroComplete(FdcFood food) {
 /// A record whose published macros already make up [_wholeMassMacros] g of
 /// every 100 g has no room left for the missing ones: "Oil, olive, extra
 /// virgin" (748608) publishes only fat, 93.7 g as 298, and is 843 kcal per
-/// 100 g. Salt really is energy-free (Foundation 746775 "Salt, table,
-/// iodized" publishes only minerals), so a salt record is never held.
+/// 100 g (its totals read SR 171413 since v74, [nutrientSiblings]). Salt
+/// really is energy-free (Foundation 746775 "Salt, table, iodized"
+/// publishes only minerals), so a salt record is never held.
 bool publishesNothing(FdcFood food) {
   final n = food.nutrientsPer100g;
   if (['208', '957', '958'].any(n.containsKey) ||
@@ -77,11 +78,23 @@ const double _wholeMassMacros = 90;
 /// leaf-portion), raw" (61) and SR 167758 "Rhubarb, raw" (21), both details
 /// cached by the M53 live step; the grams and the AH-102 leek yield stay
 /// keyed on the line's own record.
+///
+/// v74 (M77, the owner's Q5 (a), 2026-10-15): Foundation 748608 "Oil, olive,
+/// extra virgin" publishes only NLEA fat (298 = 93.7 g) and no energy, so
+/// [publishesNothing]'s whole-mass test let it count at Atwater 9 × 93.7 =
+/// 843.3 kcal per 100 g → SR 171413 "Oil, olive, salad or cooking" (884 kcal,
+/// fat 100 g; detail cached): 251 rows keep 748608 and its 90.7 g per 100 mL.
+/// Plain "olive oil" lines stay on FNDDS 2710186 at 900 — the same food
+/// 1.8 % apart (disclosed).
 const Map<int, int> nutrientSiblings = {
   2727583: 169979,
   2758998: 169736,
   2709935: 169246,
   2709268: 167758,
+  // ponytail: the three other fat-only Foundation oils (748278 canola,
+  // 1750348 peanut, 1750351 extra-light olive) carry 0 rows on snapshot 27
+  // — not mapped; add each here when a line lands on it.
+  748608: 171413,
 };
 
 /// A cooking medium the recipe throws away, found from the line and the
@@ -16296,7 +16309,7 @@ String? _gramBasis(
           'in the pan$shared';
     }
   }
-  if (row.gramSource == GramSource.discarded.name) {
+  String discardedBasis() {
     // v51 (M49 Q19): an oil the steps pour down to a printed part
     // ([_keptInPan]) — never a medium's row (a frying oil keeps its own).
     final pan = recipe == null || row.grams! <= 0
@@ -16407,6 +16420,13 @@ String? _gramBasis(
               '$also counted$yielded'
         : 'discarded in cooking — only the part the recipe keeps$also '
               'counted$yielded';
+  }
+
+  if (row.gramSource == GramSource.discarded.name) {
+    // v74 (M77): counted grams on a sibling's nutrients name it here too,
+    // as a weighed line's do (a poured-off oil's kept part on 748608).
+    final said = discardedBasis();
+    return row.grams! > 0 ? '$said$nutrientsOf' : said;
   }
   if (row.gramSource == GramSource.unmeasured.name &&
       row.fdcId == null &&

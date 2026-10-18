@@ -299,7 +299,8 @@ List<String> _corpusFiles() =>
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   test('kasseri reads the cached provolone answer, flagged: the rank-as, the '

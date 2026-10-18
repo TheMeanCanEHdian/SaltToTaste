@@ -261,7 +261,8 @@ _rows = [
     '26.13',
     'discarded',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw chicken breast's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)",
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    'discarded in cooking — only the oil the fried food absorbs counted · nutrients of "Oil, olive, salad or cooking" · approximation (frying oil absorbed: 6.68 % of the raw chicken breast\'s weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)',
   ),
   // O1a split by grams: the vegetable oil
   (
@@ -741,7 +742,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {

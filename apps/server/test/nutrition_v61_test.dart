@@ -1302,7 +1302,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
@@ -1581,9 +1582,10 @@ void main() {
       // turns complete (was 360.35 / 12, 153.50 / 4, partial 407.39 / 12).
       // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
       // basil |12 on SR's chopped cup (replay 453.66 → 454.01).
+      // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.04.
       expect(of(_eggplant), (
         'partial',
-        '454.04',
+        '455.88',
         16,
       )); // replay 453.66; v67 360.33; v60 409.66, 13
       expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 249.84, 7

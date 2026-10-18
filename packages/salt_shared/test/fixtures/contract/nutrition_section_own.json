@@ -2,25 +2,25 @@
   "status": "complete",
   "serving_basis": 4,
   "basis_kind": "per_serving",
-  "calories_per_serving": 282.31,
+  "calories_per_serving": 286.46,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 282.31,
+      "amount": 286.46,
       "unit": "kcal",
-      "dv_percent": 14.1
+      "dv_percent": 14.3
     },
     "fat": {
       "label": "Total Fat",
-      "amount": 11.22,
+      "amount": 11.86,
       "unit": "g",
-      "dv_percent": 14.4
+      "dv_percent": 15.2
     },
     "saturated": {
       "label": "Saturated Fat",
-      "amount": 1.8,
+      "amount": 1.64,
       "unit": "g",
-      "dv_percent": 9.0
+      "dv_percent": 8.2
     },
     "trans": {
       "label": "Trans Fat",
@@ -29,12 +29,12 @@
     },
     "monounsaturated": {
       "label": "Monounsaturated Fat",
-      "amount": 7.37,
+      "amount": 7.76,
       "unit": "g"
     },
     "polyunsaturated": {
       "label": "Polyunsaturated Fat",
-      "amount": 1.47,
+      "amount": 1.62,
       "unit": "g"
     },
     "cholesterol": {
@@ -45,7 +45,7 @@
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 816.37,
+      "amount": 816.57,
       "unit": "mg",
       "dv_percent": 35.5
     },
@@ -80,19 +80,19 @@
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 54.76,
+      "amount": 54.86,
       "unit": "mg",
       "dv_percent": 4.2
     },
     "iron": {
       "label": "Iron",
-      "amount": 2.06,
+      "amount": 2.12,
       "unit": "mg",
-      "dv_percent": 11.4
+      "dv_percent": 11.8
     },
     "potassium": {
       "label": "Potassium",
-      "amount": 1032.43,
+      "amount": 1032.53,
       "unit": "mg",
       "dv_percent": 22.0
     },
@@ -110,15 +110,15 @@
     },
     "vitamin_e": {
       "label": "Vitamin E",
-      "amount": 1.56,
+      "amount": 3.03,
       "unit": "mg",
-      "dv_percent": 10.4
+      "dv_percent": 20.2
     },
     "vitamin_k": {
       "label": "Vitamin K",
-      "amount": 12.98,
+      "amount": 19.12,
       "unit": "µg",
-      "dv_percent": 10.8
+      "dv_percent": 15.9
     },
     "thiamin_b1": {
       "label": "Thiamin (B1)",

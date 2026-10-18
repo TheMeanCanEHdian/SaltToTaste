@@ -1991,7 +1991,9 @@ the corpus's only such line), `"… · nutrients of \"Cabbage, chinese
 totals read a sibling record's nutrients (Foundation napa cabbage, 2727583,
 reads SR 169979; since matcher v49 also Foundation 2758998 spaghetti → SR
 169736 and the cooked-state FNDDS leeks 2709935 → SR 169246 and rhubarb
-2709268 → SR 167758; the food and grams stay the line's, and it is not held
+2709268 → SR 167758; since matcher v77 Foundation 748608 extra-virgin olive
+oil → SR 171413, whose discarded rows — a poured-off oil's kept part — say
+so too; the food and grams stay the line's, and it is not held
 `no_nutrients`; hand-entered grams say so too: `"entered by hand · nutrients
 of \"Cabbage, chinese (pe-tsai), raw\""`),
 `"pinch ≈ 1/16 tsp (USDA tsp portion)"` for a pinch or dash on a record with
@@ -5886,6 +5888,52 @@ only its larger part is counted (the mix by weight would be ≈ +13.6 kcal; no
 stand-in reader builds a mix), and kasseri's own composition is unsourced in
 FDC. Deploy note: matcherVersion 73 stales every recipe; one zero-request
 sweep settles it.
+
+**Since matcher v77 (batch M77 — extra-virgin olive oil's energy;
+matcherVersion 74; prep50 design_v2 §2 M77, the owner's Q5 (a), 2026-10-15;
+zero requests; shipped alone).** One record ruling. Foundation 748608 *Oil,
+olive, extra virgin* publishes only NLEA fat (298 = 93.7 g per 100 g) and no
+energy; it is not held (`publishesNothing`: 93.7 g of macros leave no room
+for a missing one), so the totals priced it by Atwater, 9 × 93.7 = 843.3
+kcal per 100 g, on every extra-virgin line (the 'extra-virgin olive oil'
+answer holds 748608 alone — a rank-as cannot move the rows). Engine
+`nutrientSiblings` now maps **748608 → SR 171413** *Oil, olive, salad or
+cooking* (884 kcal, fat 100 g; its detail cached — the napa 2727583 → 169979
+precedent): a row keeps its record, its confidence and its own grams (748608's
+90.7 g per 100 mL — the fix sheet's portion stays that record's), and its
+nutrients are 171413's — energy 884, fat 93.7 → 100 g per 100 g, saturated
+15.4 → 13.808, mono 69.2 → 72.961, poly 9.07 → 10.523, plus what the
+Foundation record lacks (sodium 2 mg, iron 0.56 mg, vitamin E 14.35 mg,
+vitamin K 60.2 µg — the record, not a rule). The fix sheet's `kcal_per_100g`
+reads 884. The basis names the sibling, `"1 tablespoon ≈ 15 mL · nutrients
+of \"Oil, olive, salad or cooking\""` — and, new in v77, so does a
+poured-off oil's kept part or a frying oil's uptake (the DISCARDED shape,
+counted grams > 0: `"⅓ cup kept with the bacon grease (the steps pour off
+the rest) · nutrients of \"Oil, olive, salad or cooking\""`), which named no
+sibling before (no earlier sibling row was discarded); an amount-less row
+counted 0 g keeps its text.
+
+Reach on snapshot 27 (the v76 rows): 251 rows in 220 recipes (240 density,
+5 discarded, 6 unmeasured at 0 g; 10 of them section rows), 11,437.63 g;
+the rows' energy 96,452.47 → 101,108.04 (+4,655.57; ≈ grams × 0.407), and
+the 5 routed parent rows that read a section holding one (Spicy Garlic Oil,
+Orange Salsa with Cuban Flavors and Toasted Bread for Bruschetta at share
+1.0, Black Olive Tapenade × 2/9, Harissa × 0.25) +70.45 — the row column
++4,726.02; recipe energy (stored batch energy over the 1,198 recipes)
++4,542.81 (the 5 unrouted section rows reach no recipe: roasted-fennel's
+Orange-Honey Dressing "1 tablespoon extra-virgin olive oil" 114.72 → 120.26
+moves its section page 165.67 → 171.21 and not the parent, whose "1 recipe
+topping (optional)" is held, rule PO). 214 recipes and 10 sections move;
+statuses, holds, grams, records and buckets unchanged; 0 requests. Not
+moved: the 96 plain "olive oil" rows on FNDDS 2710186 *Olive oil* (900) —
+**disclosed: the same food now 1.8 % apart (884 vs 900) instead of 6.3 %**;
+SR 171413 is the analytical "salad or cooking" record and stands for extra
+virgin (FDC prints no energy for the extra-virgin Foundation record). Not
+mapped: the three other fat-only Foundation oils, 748278 canola, 1750348
+peanut and 1750351 extra-light olive — no row sits on any of them. Deploy
+note: matcherVersion 74 stales every recipe; one zero-request sweep settles
+it (171413's detail is in the caches; a library without it fetches it once,
+RULE A); the kcal digest moves by +4,543.51 of per-serving × servings energy.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

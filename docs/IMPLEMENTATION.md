@@ -3608,6 +3608,22 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-18 — matcher v77 (batch M77): extra-virgin olive oil's energy
+  (prep50 §2 M77; the owner's Q5 ruling of 2026-10-15, shipped alone).**
+  One map entry. Foundation's extra-virgin olive oil record publishes only
+  its labelled fat and no energy, so the engine had counted it at 9 kcal
+  per gram of that fat (843 kcal per 100 g); it now reads its nutrients
+  from the SR salad-or-cooking olive oil sibling (884 kcal, fat 100 g),
+  keeping its own record, grams and 90.7 g per 100 mL. 245 rows gain
+  about 4.8 % of energy, five routed parents follow their sections, six
+  unmeasured rows stay at 0 g; recipe energy +4,543 kcal over 214 recipes
+  and 10 sections, no status moves. The basis of a discarded sibling row
+  with grams now names the sibling too. Plain "olive oil" lines stay on
+  the FNDDS record at 900 kcal, 1.8 % apart, disclosed. The brief's
+  figures were computed on rounded grams; the measured ones differ in the
+  cents. Verifier PASS at round 1. The shared contract goldens moved, so
+  the app suite joined the gate.
+
 - **2026-10-18 — matcher v76 (batch M76): eaten foods below the gate
   (prep50 §2 M76; my Q3 (a) and Q4 (a) rulings under the standing
   authorization).** Two rules. A tart's "1 pound pizza dough" line now

@@ -1670,7 +1670,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   group('matcher v65 (batch M66)', skip: skipIfNoCorpus, () {
@@ -2216,7 +2217,8 @@ void main() {
       expect(of(_lighter), ('complete', '235.22', 12)); // 235.29; 232.29
       // RE-PIN (M70 batch, v69, pE Q6): 486.48 (was 486.52) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 486.50 → 486.46).
-      expect(of(_bestParmesan), ('complete', '486.48', 21)); // 486.50; 500.12
+      // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
+      expect(of(_bestParmesan), ('complete', '489.25', 21)); // 486.50; 500.12
       expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 217.86, 3
     });
 

@@ -745,7 +745,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   group('matcher v68 (batch M69)', skip: skipIfNoCorpus, () {
@@ -1178,7 +1179,8 @@ void main() {
         )); // replay 153.54 → 171.67
         // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
         // basil |12 on SR's chopped cup (replay 453.66 → 454.01).
-        expect(of(_eggplant), ('partial', '454.04')); // replay 360.33 → 453.66
+        // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.04.
+        expect(of(_eggplant), ('partial', '455.88')); // replay 360.33 → 453.66
         // Unmoved (replay v67 = v68).
         expect(of(_onionRings), ('partial', '217.50')); // = replay
         expect(of(_salmon), ('partial', '542.67')); // = replay
@@ -1188,7 +1190,8 @@ void main() {
         expect(of(_maple), ('partial', '444.28')); // = replay
         expect(of(_skillet), ('partial', '695.99')); // replay 696.06
         expect(of(_chickenMarsala), ('complete', '662.00')); // replay 662.07
-        expect(of(_francese2), ('complete', '376.78')); // replay 376.82
+        // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 376.78.
+        expect(of(_francese2), ('complete', '378.55')); // replay 376.82
         expect(of(_tacos), ('complete', '609.06')); // replay 609.07
       },
     );

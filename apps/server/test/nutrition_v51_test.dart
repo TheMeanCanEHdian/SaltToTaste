@@ -208,7 +208,8 @@ _rows = [
     '9.07',
     null,
     null,
-    '2 teaspoons kept (the steps pour off the rest)',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '2 teaspoons kept (the steps pour off the rest) · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   // NOT cut: only "2 teaspoons of the oil" is in the pan (kept 2 teaspoons);
@@ -250,7 +251,8 @@ _rows = [
     '9.93',
     null,
     null,
-    '2 tablespoons kept with the bacon grease (the steps pour off the rest)',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '2 tablespoons kept with the bacon grease (the steps pour off the rest) · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   (
@@ -286,7 +288,8 @@ _rows = [
     '11.07',
     null,
     null,
-    '2 tablespoons kept with the bacon grease (the steps pour off the rest)',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '2 tablespoons kept with the bacon grease (the steps pour off the rest) · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   // gricia: the ⅓ cup kept (68.80 g) is now below R + O (57.95 + 13.60)
@@ -311,7 +314,8 @@ _rows = [
     '13.08',
     null,
     null,
-    '⅓ cup kept with the bacon grease (the steps pour off the rest)',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '⅓ cup kept with the bacon grease (the steps pour off the rest) · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   // NOT cut, each stated: Chicken Marbella's "Heat oil" names neither of its
@@ -330,7 +334,8 @@ _rows = [
     '40.81',
     null,
     null,
-    '3 tablespoon ≈ 44 mL',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '3 tablespoon ≈ 44 mL · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   (
@@ -392,7 +397,8 @@ _rows = [
     '54.42',
     null,
     null,
-    '1/4 cup ≈ 59 mL',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1/4 cup ≈ 59 mL · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   // The four cured-pork rows M50 settled: byte-equal to M50's landing
@@ -512,7 +518,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   test(

@@ -356,9 +356,14 @@ void main() {
         // RE-PIN (M76 batch, v76, matcherVersion 73): its stamp at
         // matcherVersion 73 (was 7bba3f82…; the version alone moves it —
         // the base tree with only the bump gives this literal).
+        // RE-PIN (M77 batch, v77, matcherVersion 74): its stamp at
+        // matcherVersion 74 (was e9627bf4…; chraime|0 sits on 748608, whose
+        // nutrients M77 reads from SR 171413 — the stamp hashes the inputs,
+        // not the nutrients, so the version alone moves it: the base tree
+        // with only the bump gives this literal).
         expect(
           ingredientsHashOf(stored(_chraime), ResolverMemo(db)),
-          'e9627bf4a22797b6969d8c8ecd8e9a2ca2084f7536faa63f55c913fdf451c8ed',
+          'de651d88efb6ce63d2065fbe1a9c584d5da5ea30b1b3993f3c50e493080fb58d',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

@@ -2880,8 +2880,10 @@ const List<_Row> _unmoved = [
     '68.02',
     'auto',
     null,
-    '573.61',
-    '5 tablespoon ≈ 74 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '573.61'.
+    '601.29',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '5 tablespoon ≈ 74 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
@@ -4470,8 +4472,10 @@ const List<_Row> _unmoved = [
     '13.60',
     'auto',
     null,
-    '114.72',
-    '1 tablespoon ≈ 15 mL',
+    // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '114.72'.
+    '120.26',
+    // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
+    '1 tablespoon ≈ 15 mL · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0350-beef-short-rib-ragu.yaml',
@@ -6508,14 +6512,17 @@ const List<_Totals> _totals = [
     '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
     null,
     'complete',
-    '225.54',
-    '902.14',
-    '71.8052',
-    '14.1201',
-    '48.7368',
-    '6.2986',
+    // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413 (884 kcal, fat 100 g — was Atwater 843.3, NLEA fat 93.7), |1's 5 tablespoons — was 225.54,
+    // 902.14, 71.8052, 14.1201, 48.7368, 6.2986, 23.0624 (unmoved),
+    // 409.7572, 22.1128 (unmoved).
+    '232.46',
+    '929.82',
+    '76.0904',
+    '13.0318',
+    '51.3215',
+    '7.2713',
     '23.0624',
-    '409.7572',
+    '411.1176',
     '22.1128',
   ),
   // v71: 794.35 /serving, batch 4766.11, fat 489.1821
@@ -6647,14 +6654,17 @@ const List<_Totals> _totals = [
     '0350-beef-short-rib-ragu.yaml',
     null,
     'complete',
-    '468.90',
-    '2344.51',
-    '163.6417',
-    '68.0461',
-    '85.9603',
-    '7.7614',
+    // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413 (884 kcal, fat 100 g — was Atwater 843.3, NLEA fat 93.7), |2's 1 tablespoon — was 468.90,
+    // 2344.51, 163.6417, 68.0461, 85.9603, 7.7614, 170.7866 (unmoved),
+    // 2397.6839, 672.4443 (unmoved).
+    '470.01',
+    '2350.05',
+    '164.4988',
+    '67.8284',
+    '86.4772',
+    '7.9560',
     '170.7866',
-    '2397.6839',
+    '2397.9560',
     '672.4443',
   ),
   // v71: 862.66 /serving, batch 5175.97, fat 306.3309
@@ -7204,7 +7214,8 @@ void main() {
     // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
     // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    expect(matcherVersion, 73);
+    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
+    expect(matcherVersion, 74);
   });
 
   // RE-PIN (M74 batch, v74; closer 1): the title said "three USDA same-cut
@@ -7690,9 +7701,20 @@ void main() {
         final now = batchTotalsOf(
           db.nutritionFor(recipes[file]!.id)!,
         )['energy']!;
+        // RE-PIN (M77 batch, v77): a 748608 row now reads SR 171413's
+        // energy — the ragu's |2 tablespoon moves its batch by grams ×
+        // (884 − 843.3) / 100 beside the deduction (was `v71 - now - by`).
+        final evoo = [
+          for (final r in db.ingredientMatchesFor(recipes[file]!.id))
+            if (r.fdcId == 748608 && (r.grams ?? 0) > 0)
+              r.grams! *
+                  (kcalPer100g(knownFood(db, 171413)!) -
+                      kcalPer100g(knownFood(db, 748608)!)) /
+                  100,
+        ].fold<double>(0, (a, b) => a + b);
         // The v71 batch is printed to 2 dp: the move equals the deduction
         // within its rounding.
-        expect((v71 - now - by).abs(), lessThan(0.006), reason: file);
+        expect((v71 + evoo - now - by).abs(), lessThan(0.006), reason: file);
       }
     });
 
