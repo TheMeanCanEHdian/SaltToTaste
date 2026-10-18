@@ -3900,7 +3900,54 @@ produceYields = {
           '94 % (86–99)',
     ),
   ],
+  // v70 (batch M72, prep50 design_v2 §2 M72 R-Y, critic F3; AH-102
+  // printed pp. 77 and 23, read for prep50): peaches, all samples (the pits
+  // alone are printed only for cling 12 / freestone 5 — a pitted-only line
+  // reads nothing); Brussels sprouts at good quality, the retail grade (no
+  // all-samples row; fair quality 70 not read).
+  325430: [
+    (
+      words: 'peeled',
+      share: 0.76,
+      flag:
+          'USDA AH-102 item 1654: peaches, raw whole, all samples → peeled '
+          'flesh 76 % (32–94; pits and skins 24)',
+    ),
+  ],
+  2685575: [
+    (
+      words: 'trimmed',
+      share: 0.90,
+      flag:
+          'USDA AH-102 item 423: Brussels sprouts, raw, untrimmed, good '
+          'quality → trimmed, ready to cook 90 % (88–92; outer leaves 10)',
+    ),
+  ],
+  // v70 (batch M72, prep50 design_v2 §2 M72, pA R3; read with
+  // [_paredAsBought]): the only cassava row AH-102 prints (a bitter
+  // cultivar, limited data) — sweet yuca reads it, flagged.
+  169985: [
+    (
+      words: 'peeled',
+      share: 0.74,
+      flag:
+          'USDA AH-102 item 496: cassava, common, bitter, raw → pared root '
+          '74 % (limited data; brown skin and thin inner layer 26); the '
+          'woody stem ends and core the steps also cut are not deducted',
+    ),
+  ],
 };
+
+/// v70 (batch M72, prep50 design_v2 §2 M72, pA R3): the records whose
+/// as-bought skin is never the food — a head-weighed line on one reads its
+/// [produceYields] 'peeled' figure whatever its tail says ([produceYieldOf];
+/// fried-yuca|0 "2 pounds yuca roots": 1098's paring sentence names
+/// "pieces", so the step read cannot reach it). No item-grammar guard
+/// (design §0.8: no corpus line prints a pared or frozen root before the
+/// noun) [re-point → the structured `prep` field].
+/// ponytail: one record; a second always-pared root joins the set with its
+/// own AH-102 row.
+const Set<int> _paredAsBought = {169985};
 const _potato = [
   (
     words: 'peeled',
@@ -3943,7 +3990,8 @@ const _pear = [
 /// keeps peels ("¼ of peels reserved"). v59 (M60 P7a, pre-Q18): a tail
 /// naming no prep word reads the record's 'peeled' figure when
 /// [stepsPeel] (the engine's `stepsPeelIn`: a step pares the raw item),
-/// its flag saying so. Null otherwise.
+/// its flag saying so. v70 (M72): a record in [_paredAsBought] reads it
+/// with no word at all. Null otherwise.
 ({double share, String flag})? produceYieldOf(
   FdcFood? food,
   String raw, {
@@ -3967,6 +4015,12 @@ const _pear = [
           ? null
           : (share: figure.share, flag: figure.flag);
     }
+  }
+  // v70 (M72 pA R3): a root bought in its skin is pared whatever the line
+  // says ([_paredAsBought]).
+  if (_paredAsBought.contains(food?.fdcId)) {
+    final peeled = figures.firstWhere((f) => f.words == 'peeled');
+    return (share: peeled.share, flag: peeled.flag);
   }
   // A line that says "unpeeled" keeps the peel whatever a step says (Y8's
   // "never").

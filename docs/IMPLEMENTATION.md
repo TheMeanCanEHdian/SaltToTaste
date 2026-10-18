@@ -3608,6 +3608,28 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-17 — matcher v72 (batch M72): records, yields and rendered fat
+  (prep50 §2 M72, under the standing authorization).** Six rules: cold
+  cooked white rice lands on the cooked-rice record instead of glutinous;
+  cassava is pared at the AH-102 figure (74 %) without a "peeled" word on
+  the line; peaches (76 %) and Brussels sprouts (90 %) read their AH-102
+  yields; the braised-pair share becomes a five-column map (energy and the
+  four fat columns) read through one function that the totals, the basis
+  and the GET share; the whole brisket's rendered fat is now deducted; the
+  boneless short ribs deduct behind a step gate that fires only where the
+  steps print a skim, a fat separator or a defatting. 18 rows (10 in
+  grams, 8 basis-only) and −3,977 kcal of recipe energy, equal to the
+  design; statuses, holds and buckets unchanged. The gate's regex from the
+  design had a quadratic shape; it ships as substring tests within a
+  period-free piece, fuzz-pinned equivalent on 100,000 sentences and timed
+  linear. Stated gaps: neither brisket pair publishes trans fat and the
+  short-rib pair does, yet its trans stays gross (at most 1.5 g a recipe;
+  the design's five columns stand); the AH-102 page renders are not on
+  disk, so the two appended transcription rows copy the design's reading.
+  Verifier rounds three (two LOW rounds: a doc claim about trans, a v69
+  pin the fixer had widened and restored, an unpinned depth guard; then
+  the gate's linearity unpinned), the third PASS.
+
 - **2026-10-17 — matcher v71 (batch M71): the step readers of the prep50
   round (§2 M71, under the standing authorization).** Seven rules: an
   amount-less line reads the amount a step prints for it (scoped to its

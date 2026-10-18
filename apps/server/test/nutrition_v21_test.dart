@@ -2338,7 +2338,9 @@ _moved = [
     null,
     'ripe but firm peaches',
     325430,
-    '907.18',
+    // RE-PIN (M72 batch, v72, R-Y): 907.18 × AH-102 item 1654's peeled
+    // flesh 0.76 (was 907.18 — no peach yield before M72).
+    '689.46',
     'M1',
     'counted',
     true,

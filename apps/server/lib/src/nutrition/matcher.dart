@@ -939,7 +939,19 @@ const Map<String, String> _synonyms = {
 /// medium (engine `_joinsFryingOil`); the lines whisked into a coat held
 /// with no budget are held with it (engine `_coatPartsOf`; the gates read
 /// the same from the part's side, `_coatOfPart`).
-const int matcherVersion = 69;
+///
+/// v70 (the Matcher v72 commit, batch M72 — records, yields and rendered
+/// fat; prep50 design_v2 §2 M72, decided under the 2026-10-07 standing
+/// authorization; zero requests): cooked white rice on FNDDS's plain cooked
+/// record ([_rankAs]); a cassava root weighed as bought pared at AH-102 item
+/// 496's 74 % (grams.dart `_paredAsBought`); peaches peeled at item 1654's
+/// 76 % and Brussels sprouts trimmed at item 423's 90 % (grams.dart
+/// `produceYields`); a braised cut keeps its USDA same-cut pair's share of
+/// the energy AND the fat columns (engine `braisedKept`) only where its
+/// steps print that the fat is not served (engine `_defatsLiquid`) — the
+/// whole brisket's separator, and the boneless short ribs (170827 →
+/// 171223) where their steps skim.
+const int matcherVersion = 70;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2912,6 +2924,16 @@ const Map<String, (String, String)> _rankAs = {
   // chocolate" (its detail cached), weighed by the label's piece (grams.dart
   // 'hershey s kisses').
   'hershey s kisses': ('milk chocolate candy', 'candies milk chocolate'),
+  // v70 (batch M72, prep50 design_v2 §2 M72, pA R2; zero requests): cooked
+  // white rice is FNDDS's plain cooked record — the line's own answer led
+  // with 2708422 "Rice, white, cooked, glutinous" (0.6775), a variety the
+  // line never prints; the same answer holds FNDDS 2708408 "Rice, white,
+  // cooked, no added fat" (index 3, its detail cached: '1 cup, cooked'
+  // 158 g). Unflagged (the record IS the food).
+  'cold cooked white rice': (
+    'cold cooked white rice',
+    'rice white cooked no added fat',
+  ),
 };
 
 /// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it

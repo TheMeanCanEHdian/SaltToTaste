@@ -4662,7 +4662,8 @@ the deepest at or below the printed ¼". Flag (`trimStandInFlagOf`, keyed on
 168664 AND the printed phrase): `approximate (the printed ¼-inch fat cap
 counted at USDA's ⅛-inch trim, the deepest it publishes for brisket; the
 fat that renders into the separator is not deducted — USDA's own braised
-pair 168664 → 168665 keeps 93 % of the energy)`. The pair by the protein
+pair 168664 → 168665 keeps 93 % of the energy)` (since matcher v72
+deducted, the flag naming the energy and fat shares — M72 below). The pair by the protein
 tracer on the cached hits (M61 R-d's method): yield 18.4 / 25.8 = 0.713, fat
 kept 0.713 × 24.5 / 19.1 = 91.5 %, energy kept 0.713 × 331 / 253 = 93.3 %.
 USDA's FLAT pairs say otherwise — 168743 → 169440 (0", choice) keeps 58.8 %
@@ -4710,7 +4711,7 @@ grilled-rack-of-lamb|5 (172641).
 Known gaps (the source stands): the whole brisket's rendered fat — its own
 pair's 93.3 % would deduct 768.29 kcal (design_v2's −766.59 rounds the
 share to 0.9332), a new cooked-loss deduction not proposed for one row (Q1
-(b)); 170199 is brine-pumped (its protein at the fresh weight 27 % low), one
+(b)) — since matcher v72 deducted (M72 below); 170199 is brine-pumped (its protein at the fresh weight 27 % low), one
 reason it is not read; 0090's rub spices (0090|1–|5: pepper, thyme,
 allspice, paprika, bay — 52.49 kcal) rinse off with the cure but are
 counted; both recipes' cure sodium is uncounted (flagged, Q2 (c)); the
@@ -4880,7 +4881,8 @@ pair's energy share.** `trimDepthRecords`' trim phrase gains `168743 →
 brisket, flat cut, fat trimmed to ¼ inch" moves from R1d's 0" flat to SR
 173128 *Beef, brisket, flat half, separable lean and fat, trimmed to 1/8"
 fat, choice, raw* (a hit in the line's own `beef brisket` answer; 2,041.16 g,
-weight, no detail asked). New one-entry map `braisedEnergyShare` {173128:
+weight, no detail asked). New one-entry map `braisedEnergyShare` (since
+matcher v72 `braisedKept`, its fat columns too — M72 below) {173128:
 e}: USDA's SAME cut, trim and grade braised, SR 173130 (L49's search; both
 cached hits): yield by the protein tracer 18.1 / 28.7 = 0.6307, e = 298 ×
 0.6307 / 278 = **0.6760** (fat kept 55.4 %; every other pair differs in
@@ -5034,7 +5036,8 @@ the two rinds, the Kisses, the five pectin rows), `no_nutrients` −1,
 Gravy and the five basil sections only; no 171083 detail cached.
 
 Known gaps (the source stands): 1 the pomegranate's fat counts whole (453.14
-g; the pair keeps 55.4 % — 202.12 g not deducted, energy only as Q25), the
+g; the pair keeps 55.4 % — 202.12 g not deducted, energy only as Q25; since
+matcher v72 deducted — M72 below), the
 line prints ¼" and USDA's deepest flat trim is ⅛", and the row's kcal column
 shows the gross 5,674.44; 2 the turkey's tailpiece stays inside the bird's
 78/85 carcass (AH-102 prints no tail-off figure), item 2590 is the
@@ -5383,6 +5386,171 @@ once per index; with both readers off the recompute is 293 ms, and a
 `nutrition_v26_cost_test` ("R2 RESERVED OIL USED / BELOW / MANY": the
 counts, every read row's exact basis, the GET body within 2 % of its
 measured size).
+
+**Since matcher v72 (batch M72 — records, yields and rendered fat;
+matcherVersion 70; prep50 design_v2 §2 M72, decided under the 2026-10-07
+standing authorization; zero requests; reach PRE-Q18 — the gate reads a
+recipe's OWN steps).** Six rules:
+
+(1, pA R2) **Cooked white rice on FNDDS's plain cooked record.**
+`_rankAs['cold cooked white rice']` → the line's own cached answer, ranked
+as `rice white cooked no added fat`: FNDDS 2708408 *Rice, white, cooked, no
+added fat* (129 kcal; its detail cached, '1 cup, cooked' 158 g; index 3 —
+the glutinous 2708422, a variety the line never prints, led at 0.6775).
+Unflagged (the record is the food).
+fried-rice-with-shrimp-pork-and-shiitakes|9 "5 cups cold cooked white rice,
+…" 870.00 g / 835.20 → 790.00 g / 1,019.10 (+183.90); per serving 534.43 →
+580.41. Not moved: kimchi-bokkeumbap|10 (short-grain, printed), every raw
+rice line, the rice sections. The only other corpus line with the item is
+0521's own variation "Fried Rice with Peas and Bean Sprouts" (no line routes
+it; never computed). Not linked to the recipe's Basic White Rice: that
+section prints no cooked yield.
+
+(2, pA R3) **Cassava pared at AH-102 item 496.** `produceYields[169985]`
+(`peeled`, 0.74) and the record set `_paredAsBought` {169985}: a line on the
+record weighed in its HEAD reads the pared figure with no prep word in its
+tail — the root's brown skin is never the food (no item-grammar guard: no
+corpus line prints a pared or frozen root before the noun) [re-point →
+`prep`]. The step reader cannot reach it: 1098's paring sentence ("Place
+pieces cut side down and use knife to remove skin …") names "pieces", not
+yuca. Basis `from 2 pound × 0.74 edible · approximate (USDA AH-102 item 496:
+cassava, common, bitter, raw → pared root 74 % (limited data; brown skin
+and thin inner layer 26); the woody stem ends and core the steps also cut
+are not deducted)`. fried-yuca|0 907.18 → 671.32 g (1,451.49 → 1,074.11);
+|2 the frying uptake follows the row's grams (FNDDS 2709565's 15 g per
+100 g raw cassava): 136.08 → 100.70 g (1,224.72 → 906.30); per serving
+669.05 → 495.10; stays partial (the boiling salt held).
+
+(3, R-Y) **Peaches and Brussels sprouts at their AH-102 rows** (the
+shipped tail-word reader [re-point → `prep`]): SR 325430 *Peaches, yellow,
+raw* `peeled` 0.76 — `USDA AH-102 item 1654: peaches, raw whole, all
+samples → peeled flesh 76 % (32–94; pits and skins 24)` (printed p. 77);
+Foundation 2685575 *Brussels sprouts, raw* `trimmed` 0.90 — `USDA AH-102
+item 423: Brussels sprouts, raw, untrimmed, good quality → trimmed, ready
+to cook 90 % (88–92; outer leaves 10)` (printed p. 23; no all-samples row,
+good quality is the retail grade, fair quality 70 not read). Seven rows:
+peach-crisp|8, fresh-peach-pie|0, fresh-peach-pie-with-all-butter-lattice-top|0
+1,360.78 → 1,034.19 g (−137.17 each), peach-tarte-tatin|4 907.18 → 689.46 g
+(−91.44); brussels-sprout-salad-with-warm-mustard-vinaigrette|8 680.39 →
+612.35 g (−40.47), roasted-brussels-sprouts|0 1,020.58 → 918.52 g (−60.71),
+skillet-roasted-brussels-sprouts|0 453.59 → 408.23 g (−26.98). Not moved: a
+pitted-only line (summer-peach-cake|0, the two free-form tarts — AH-102
+prints the pits alone only for cling 12 / freestone 5), a count
+(the-best-summer-fruit-tart|10 "2 ripe peaches, peeled"), the two
+frozen-peach rows (another record).
+
+(4, pE R-E1 + R-E2) **`braisedKept`: the pairs deduct the fat columns too,
+and the whole brisket's rendered fat is deducted.** `braisedEnergyShare`
+(matcher v69) became `braisedKept`, record → {`energy`, `fat`, `saturated`,
+`monounsaturated`, `polyunsaturated`} — each column's own share of USDA's
+same-cut raw → braised pair by the protein tracer (cooked × P raw ÷
+(P cooked × raw), every value a cached record's); protein, sodium,
+cholesterol and the rest stay gross (the steps skim FAT). Trans: neither
+brisket pair publishes it (no 605 on 173128/173130 or 168664/168665);
+170827 → 171223 does (1.118 → 1.52 g per 100 g, a kept share 0.925368) and
+it stays gross — the design's five columns (a known gap, below). One arm of
+`recomputeTotals` loops
+the map — energy and fat never part; the row's grams and kcal column stay
+gross.
+
+| raw → braised (USDA SR) | cut | energy | fat | sat | mono | poly |
+|---|---|--:|--:|--:|--:|--:|
+| 173128 → 173130 | brisket flat, ⅛", choice (M70) | 0.676033 | 0.553960 | 0.579870 | 0.558149 | 0.538644 |
+| 168664 → 168665 | brisket whole, ⅛", all grades | 0.933051 | 0.914810 | 0.894077 | 0.912399 | 0.918487 |
+| 170827 → 171223 | chuck short ribs, boneless, 0", choice | 0.899002 | 0.858391 | 0.886218 | 0.878281 | 0.941400 |
+
+The flags print both shares: braised-brisket-with-pomegranate|0 `… USDA's
+braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the
+fat by the protein tracer — the fat the steps skim, deducted)` — its fat
+−202.12 g (sat −76.67, mono −85.50, poly −7.94), energy unchanged (794.35
+/serving; M70's stated gap closed);
+barbecued-whole-beef-brisket-with-spicy-chili-rub|10 `approximate (the
+printed ¼-inch fat cap counted at USDA's ⅛-inch trim, the deepest it
+publishes for brisket; USDA's braised pair 168664 → 168665 keeps 93.3 % of
+the energy and 91.5 % of the fat by the protein tracer — the fat that
+renders into the separator, deducted)` — recipe energy −768.29 (740.17 →
+697.49 /serving), fat −73.81 g (sat −36.18, mono −33.85, poly −2.44); the
+row stays 11,475.88 gross. (Q1 for the whole cut was an authorization
+decision declined in prep49 only for lacking M70's deduction.)
+
+(5, R-E3) **The gate: a pair deducts only where the recipe's own steps
+print that the fat is not served** (design §0.3, the braised-pair
+doctrine), and the boneless short ribs join. NEW `_defatsLiquid` (read once
+per step index, `memo:defatsLiquid`): a step sentence matching
+`\bskim\w*\b[^.]*\bfat\b|\bfat\b[^.]*\bskim\w*\b|\bfat separator\b|\bdefatted\b|\bstrain off the fat\b`
+— read LINEAR (`defatsSentence`: the substrings "fat" and "skim" first, the
+phrases, then the skim and the fat as two finds in each period-free piece —
+the regex's `[^.]*` never crosses a period; pinned against the regex). The
+gate applies to EVERY `braisedKept` record — 0224's "Using wide, shallow
+spoon, skim fat from surface and discard." and 0595's "… pouring any meat
+juices into fat separator." pass — through ONE function, `braisedKeptOf(raw,
+fdcId, recipe)`, that the deduction (`recomputeTotals`), the basis flag
+(`trimStandInFlagOf`, now given the recipe) and so the matches GET read
+with the same recipe; a record the printed depth moves a line onto (173128,
+168664) still needs that depth printed. `braisedKept[170827]`: SR 170827
+*Beef, chuck, short ribs, boneless, separable lean and fat, trimmed to 0"
+fat, choice, raw* (detail) → SR 171223 *… cooked, braised* (a hit in the
+cached `bone-in english-style beef short ribs` answer): P 17.22 → 25.3
+(yield 0.680632), E 240 → 317, F 19.03 → 24.0. Flag `approximate (USDA's
+braised pair 170827 → 171223 keeps 89.9 % of the energy and 85.8 % of the
+fat by the protein tracer — the fat the steps skim, deducted)`. Twelve rows
+sit on 170827; six are gated, basis only (rows gross), **recipe energy
+−2,065.59**: tuscan-style-beef-stew|0 −439.79 ("Strain sauce through
+fine-mesh strainer into fat separator." / "… return defatted liquid to
+pot."), braised-beef-short-ribs|0 −384.82 ("… and strain off the fat."),
+slow-cooker-beer-braised-short-ribs|0 −361.39 ("… skim off the hardened fat
+from the liquid."), beef-short-rib-ragu|10 −219.90 ("… skim off any excess
+fat …"), carne-deshebrada-shredded-beef-tacos|12 −329.85 ("… skim any fat
+off surface."), chinese-braised-beef|11 −329.85 (the separator and the
+defatted liquid). Not gated, byte-equal: nikujaga-beef-and-potato-stew|3
+("Pour off all but 2 tablespoons fat from pot." — a browning pour-off; the
+simmer liquid is served), catalan-style-beef-stew-with-mushrooms|11,
+pub-style-steak-and-ale-pie|2, panang-beef-curry|0,
+grilled-boneless-beef-short-ribs|0, best-old-fashioned-burgers|1 (ground
+raw). 0090's "skimming any scum" is no skim of fat (no pair there either).
+A 173128 or 168664 line whose steps skim nothing (none in the corpus) —
+or asked with no recipe — says `… no step skims the rendered fat — not
+deducted)` and counts gross; a 170827 row ungated has no flag. Not the
+shipped `_fatSkimmed` (Q17's discarded-media reader): that one also fires
+on a pour-off, which §0.3 excludes.
+
+Batch: 10 rows in grams + 8 basis-only; the ROW column −1,143.02, RECIPE
+ENERGY −3,976.92; statuses, holds and buckets unchanged; 0 requests.
+
+**Cost (RULE C).** The gate is one pass over the steps' sentences per
+index, a substring test first; the design's `[^.]*` pair is quadratic on a
+sentence of repeated words and the finds are linear — pinned in
+`nutrition_v26_cost_test` as 1,200 sentences of ≈ 1,000 characters in each
+of three shapes, each read under 200 ms: "fat " repeated with no skim (the
+critic's shape for Run 064's gate; it bounds only the substring test, which
+stops it), skim words with no fat word, and fat words with "skim" only
+inside a word (these two reach the skim arm's finds; either half of the
+design's pair restored reads them in 630–800 ms, the tree in ≈ 9 ms). The
+cap shape — 400 short-rib lines under 120 steps × 10,000 characters
+naming "skim" and "fat" in separate sentences,
+never a skim of fat (the gate false: every sentence read) — reads the gate
+once per index (`memo:defatsLiquid` pinned in `nutrition_v26_cost_test`);
+measured against matcher v71 (4 rounds base-tree-tree-base, 7 runs each,
+the means): compute +0.1 %, the matches GET +0.5 %, a recompute +1.2 %
+(the gate's own read ≈ 4 ms over the shape's 53,400 sentences; a recompute
+builds no flat sentence list for it). The flags join no list.
+
+Known gaps: the spiral-sliced hams stay at AH-102 item 1937's 0.70 (the
+auditors' 0.83× — no row names a spiral or cured half ham); the yuca at
+671 g, below the auditors' 705 g (the source pares 26 %), a bitter-cultivar
+row on sweet yuca, the stem ends and core unsourced; the corned briskets'
+cure sodium (Q2 (c)); the peaches' pits on pitted-only lines (no
+all-samples pit row); Brussels' Foundation energy order (F9: 2685575 is
+read at Atwater 957's 59.49 kcal per 100 g, not 958's 48.78); the whole
+brisket's 2 h dry grill phase is not in USDA's braised pair, and the cup of
+defatted juices returned carries a little protein the tracer reads as lost;
+a make-ahead note in parentheses that skims fat would gate (none on a
+pair's recipe); the six gated short-rib recipes keep 170827's trans fat
+gross (USDA's pair keeps 92.5 % of it, 1.118 → 1.52 g per 100 g by the
+protein tracer; the undeducted 7.5 % is 0.76–1.51 g a recipe —
+tuscan-style-beef-stew stores 20.28 g, 1.51 g of it skimmed; `braisedKept`
+carries the design's five columns only). Deploy note: matcherVersion 70 stales every recipe; one
+zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

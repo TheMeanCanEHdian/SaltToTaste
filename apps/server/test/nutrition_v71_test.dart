@@ -7795,7 +7795,8 @@ const List<String> _files = [
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 69);
+    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
+    expect(matcherVersion, 70);
   });
 
   group('matcher v71 (batch M71)', skip: skipIfNoCorpus, () {

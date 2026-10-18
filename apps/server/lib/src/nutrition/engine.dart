@@ -14422,7 +14422,7 @@ List<RankedCandidate> leanAndFatSibling(
 /// flat's 0" 168743 → SR 173128 "Beef, brisket, flat half, separable lean
 /// and fat, trimmed to 1/8" fat, choice, raw" (a hit in the line's own
 /// 'beef brisket' answer, index 19), its energy at USDA's same-cut,
-/// same-trim braised pair's share ([braisedEnergyShare]).
+/// same-trim braised pair's share ([braisedKept]).
 final List<(RegExp, Map<int, int>)> trimDepthRecords = [
   (
     RegExp('fat trimmed to (⅛|¼)( to (⅛|¼))? inch'),
@@ -14442,10 +14442,116 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
 /// [recomputeTotals] beside Q25's alcohol, ENERGY only, only where
 /// [trimStandInFlagOf] flags the line (one raw test: the flag and the
 /// deduction never part); the row's grams and kcal column stay gross.
-/// ponytail: one pair; a second braised cut needs its own same-cut pair.
-const Map<int, double> braisedEnergyShare = {
-  173128: 298 * 18.1 / (28.7 * 278),
+/// v70 (batch M72; prep50 design_v2 §2 M72, pE R-E1/R-E2 and R-E3, §0.3 the
+/// braised-pair doctrine; decided under the 2026-10-07 standing
+/// authorization): `braisedEnergyShare` became [braisedKept] — the share of
+/// the energy AND of each fat column (total, saturated, mono, poly) a
+/// braise keeps, each column's own pair share by the same protein tracer
+/// (cooked × P raw / P cooked ÷ raw; every value a cached record's): protein,
+/// sodium, cholesterol and the rest stay gross (the steps skim FAT). Trans:
+/// neither brisket pair publishes it (173128/173130, 168664/168665: no 605);
+/// 170827 → 171223 does (1.118 → 1.52 g per 100 g, a kept share 0.925368)
+/// and it stays gross — the design's five columns, a stated gap (API.md
+/// M72). Keys: 173128 → SR 173130 (the flat, ⅛", choice; M70's energy
+/// share), 168664 → SR 168665 (the whole brisket, ⅛", all grades: R-E1,
+/// M68's "not deducted" closed), 170827 → SR
+/// 171223 ("Beef, chuck, short ribs, boneless, separable lean and fat,
+/// trimmed to 0" fat, choice", raw DETAIL → braised hit: R-E3). Read only
+/// through [braisedKeptOf], whose gate ([_defatsLiquid]: the recipe's own
+/// steps print that the fat is not served) applies to EVERY key — the
+/// deduction, the basis flag and the GET read the same recipe.
+/// ponytail: one pair per record; a braised cut with no same-cut USDA pair
+/// stays gross (§2's gaps: the meatloaf's loaf pair, Boston butt).
+const Map<int, Map<String, double>> braisedKept = {
+  173128: {
+    'energy': 298 * 18.1 / (28.7 * 278),
+    'fat': 19.5 * 18.1 / (28.7 * 22.2),
+    'saturated': 8.22 * 18.1 / (28.7 * 8.94),
+    'monounsaturated': 8.39 * 18.1 / (28.7 * 9.48),
+    'polyunsaturated': 0.72 * 18.1 / (28.7 * 0.843),
+  },
+  168664: {
+    'energy': 331 * 18.4 / (25.8 * 253),
+    'fat': 24.5 * 18.4 / (25.8 * 19.1),
+    'saturated': 9.44 * 18.4 / (25.8 * 7.53),
+    'monounsaturated': 10.9 * 18.4 / (25.8 * 8.52),
+    'polyunsaturated': 0.85 * 18.4 / (25.8 * 0.66),
+  },
+  170827: {
+    'energy': 317 * 17.22 / (25.3 * 240),
+    'fat': 24.0 * 17.22 / (25.3 * 19.03),
+    'saturated': 10.6 * 17.22 / (25.3 * 8.141),
+    'monounsaturated': 12.3 * 17.22 / (25.3 * 9.532),
+    'polyunsaturated': 1.0 * 17.22 / (25.3 * 0.723),
+  },
 };
+
+/// v70 (M72 R-E3, §0.3): the [braisedKept] shares a row on [fdcId] keeps in
+/// [recipe], or null — the record has a pair; a record the printed depth
+/// moves a line onto ([trimDepthRecords]' first: 173128, 168664) only with
+/// that depth printed on [raw] (the move, the flag and the deduction never
+/// part — v70 Run 063 F4); and [recipe]'s own steps print that the fat is
+/// not served ([_defatsLiquid]). One function for the deduction
+/// ([recomputeTotals]) and the flag ([trimStandInFlagOf], the basis and the
+/// GET): both pass the same recipe. Null without a recipe (a basis asked
+/// with none says nothing is deducted). Pre-Q18: a section reads its own
+/// steps.
+Map<String, double>? braisedKeptOf(String raw, int? fdcId, Recipe? recipe) {
+  final kept = braisedKept[fdcId];
+  if (kept == null || recipe == null) {
+    return null;
+  }
+  final (depth, moves) = trimDepthRecords.first;
+  if (moves.containsValue(fdcId) && !depth.hasMatch(raw.toLowerCase())) {
+    return null;
+  }
+  return _defatsLiquid(recipe) ? kept : null;
+}
+
+/// v70 (M72 R-E3, §0.3 the braised-pair doctrine): whether [recipe]'s own
+/// steps print that the braise's fat is not served — a sentence matching
+/// `\bskim\w*\b[^.]*\bfat\b|\bfat\b[^.]*\bskim\w*\b|\bfat separator\b|
+/// \bdefatted\b|\bstrain off the fat\b` ("skim fat from surface" 0224,
+/// "pouring any meat juices into fat separator" 0595, "strain off the fat"
+/// 0087, "skim off the hardened fat", "skim any fat off surface", "skim off
+/// any excess fat"). Never "skimming any scum" (0090: no fat), never a
+/// browning pour-off ("Pour off all but 2 tablespoons fat from pot" —
+/// nikujaga's simmer liquid is served). Read ONCE per index
+/// (`memo:defatsLiquid`, the [_thinPiece] shape), each sentence LINEAR
+/// ([defatsSentence]); by step, so no flat sentence list is built for it
+/// (a recompute builds none otherwise).
+bool _defatsLiquid(Recipe recipe) => _stepIndexOf(recipe).memo(
+  #defatsLiquid,
+  () => _stepIndexOf(recipe).sentences.any((s) => s.any(defatsSentence)),
+);
+
+final RegExp _defatPhrase = RegExp(
+  r'\bfat separator\b|\bdefatted\b|\bstrain off the fat\b',
+);
+final RegExp _skimWord = RegExp(r'\bskim\w*\b');
+final RegExp _fatAlone = RegExp(r'\bfat\b');
+
+/// [_defatsLiquid]'s test of one lower-cased sentence: the design's regex,
+/// its `[^.]*` pair (quadratic on a sentence of repeated words — Run 064's
+/// lesson) read as two finds in each period-free piece (`[^.]*` never
+/// crosses a period: the same answer, linear). Every arm names "fat" and
+/// each phrase or the skim word must be in the sentence as a substring
+/// before its regex can match: native substring tests first, a regex only
+/// past them. Pinned against the regex on a fuzz (nutrition_v26_cost_test).
+@visibleForTesting
+bool defatsSentence(String s) {
+  if (!s.contains('fat')) {
+    return false;
+  }
+  if ((s.contains('fat separator') ||
+          s.contains('defatted') ||
+          s.contains('strain off the fat')) &&
+      _defatPhrase.hasMatch(s)) {
+    return true;
+  }
+  return s.contains('skim') &&
+      s.split('.').any((p) => _skimWord.hasMatch(p) && _fatAlone.hasMatch(p));
+}
 
 /// [ranked] with [trimDepthRecords]' target first when the line prints its
 /// phrase and the top is its key; after [leanAndFatSibling].
@@ -15194,14 +15300,26 @@ bool recomputeTotals(
           (totals['energy'] ?? 0) -
           ethanolKcalPer100g(record) * grams / 100 * (1 - kept.kept / 100);
     }
-    // v68 (M70, Q1 flat (b′)): a braised cut keeps its braised pair's share
-    // of the energy ([braisedEnergyShare]) — only on a line its flag reads
-    // ([trimStandInFlagOf]); its grams, its record and every other nutrient
-    // count as they are (Q25's shape; a person's typed grams too).
-    if (braisedEnergyShare[row.fdcId] case final e?
-        when trimStandInFlagOf(lines[row.position].raw, row.fdcId) != null) {
-      totals['energy'] =
-          (totals['energy'] ?? 0) - kcalPer100g(record) * grams / 100 * (1 - e);
+    // v68 (M70, Q1 flat (b′)) / v70 (M72): a braised cut keeps its braised
+    // pair's share of the energy and of each fat column ([braisedKept]) —
+    // only where the steps print that the fat is not served
+    // ([braisedKeptOf], the gate its flag reads with the same recipe); its
+    // grams, its record and every other nutrient count as they are (Q25's
+    // shape; a person's typed grams too). Energy and fat never part.
+    if (braisedKeptOf(lines[row.position].raw, row.fdcId, planned)
+        case final kept?) {
+      for (final MapEntry(:key, value: share) in kept.entries) {
+        final per100 = key == 'energy'
+            ? kcalPer100g(record)
+            : nutrientDefs
+                      .firstWhere((def) => def.key == key)
+                      .fdcNumbers
+                      .map((n) => record.nutrientsPer100g[n])
+                      .nonNulls
+                      .firstOrNull ??
+                  0;
+        totals[key] = (totals[key] ?? 0) - per100 * grams / 100 * (1 - share);
+      }
     }
   }
 
@@ -15741,10 +15859,13 @@ String? gramBasisFor(
     description: row.description,
   );
   // v54 (M56 R1d, Q2 (i)): the printed trim the 0-inch flat stands in for.
+  // v70 (M72): the braised pair's gate reads the same recipe as the
+  // deduction ([braisedKeptOf]).
   final standIn = trimStandInFlagOf(
     weighed.raw,
     row.fdcId,
     title: recipe?.title,
+    recipe: recipe,
   );
   final stood = standIn == null ? '' : ' · $standIn';
   return approximation
@@ -15779,27 +15900,43 @@ String? gramBasisFor(
 /// brisket in an untitled recipe is missed — none in the corpus.
 /// v68 (batch M70, Q1 flat (b′)): the flat's ¼-inch cap on 173128 says it
 /// is counted at ⅛" with the fat the steps skim deducted by its braised
-/// pair's energy share ([braisedEnergyShare]); 168743's ¼" arm stays (the
+/// pair's energy share ([braisedKept]); 168743's ¼" arm stays (the
 /// fallback where the answer loses 173128).
 /// v70 (Run 063 F4, S4 + S6): the brisket arms read the printed depth by
 /// the SAME phrase the record move reads ([trimDepthRecords]' first: ⅛, ¼
 /// or "⅛ to ¼") — the move, the flag and the braised deduction never part
 /// (a "⅛ inch" flat landed on 173128 unflagged and undeducted: 1,100.74
 /// kcal per serving against 794.35); the text names the depth printed.
-String? trimStandInFlagOf(String raw, int? fdcId, {String? title}) {
+/// v70 (batch M72 R-E1/R-E2/R-E3): every braised pair's clause reads
+/// [braisedKeptOf] with [recipe] — the deduction's own gate — and names
+/// the energy AND the fat it keeps; the whole brisket's rendered fat is
+/// deducted (its separator); the short ribs (170827) are flagged only
+/// where their steps skim (the six other rows say nothing). A 173128 or
+/// 168664 line in a recipe whose steps skim nothing (none in the corpus)
+/// says its rendered fat is not deducted.
+String? trimStandInFlagOf(
+  String raw,
+  int? fdcId, {
+  String? title,
+  Recipe? recipe,
+}) {
   final printed = trimDepthRecords.first.$1.firstMatch(raw.toLowerCase());
   final depth = printed == null
       ? null
       : printed[3] == null
       ? printed[1]
       : '${printed[1]}- to ${printed[3]}';
+  final kept = braisedKeptOf(raw, fdcId, recipe);
+  String pct(String key) => (kept![key]! * 100).toStringAsFixed(1);
+  String pair(String to, String which) => kept == null
+      ? 'no step skims the rendered fat — not deducted'
+      : "USDA's braised pair $fdcId → $to keeps ${pct('energy')} % of the "
+            "energy and ${pct('fat')} % of the fat by the protein tracer — "
+            '$which, deducted';
   return switch (fdcId) {
     173128 when depth != null =>
       "approximate (the printed $depth-inch fat cap counted at USDA's "
-          "⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps "
-          '${(braisedEnergyShare[173128]! * 100).toStringAsFixed(1)} % of '
-          'the energy by the protein tracer — the fat the steps skim, '
-          'deducted)',
+          "⅛-inch flat trim; ${pair('173130', 'the fat the steps skim')})",
     168743 when depth != null =>
       'approximate (the printed $depth-inch fat cap renders and is skimmed '
           '(step 5); counted as the 0-inch trimmed flat)',
@@ -15813,9 +15950,10 @@ String? trimStandInFlagOf(String raw, int? fdcId, {String? title}) {
           'sodium is not counted; a rinsed cure counts 0 g, CP9)',
     168664 when depth != null =>
       "approximate (the printed $depth-inch fat cap counted at USDA's "
-          '⅛-inch trim, the deepest it publishes for brisket; the fat that '
-          'renders into the separator is not deducted — '
-          "USDA's own braised pair 168664 → 168665 keeps 93 % of the energy)",
+          '⅛-inch trim, the deepest it publishes for brisket; '
+          "${pair('168665', 'the fat that renders into the separator')})",
+    170827 when kept != null =>
+      "approximate (${pair('171223', 'the fat the steps skim')})",
     173408 when !RegExp(r'\blean\b').hasMatch(raw.toLowerCase()) =>
       'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
           "petite roast (search 2026-10-08); the roast's separable fat not "

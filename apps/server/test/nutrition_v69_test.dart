@@ -105,7 +105,8 @@ const List<_Row> _reach = [
     'auto',
     null,
     '5674.44',
-    "from the printed weight (4–5 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by the protein tracer — the fat the steps skim, deducted)",
+    // RE-PIN (M72 batch, v72, pE R-E2): the fat column too.
+    "from the printed weight (4–5 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the fat by the protein tracer — the fat the steps skim, deducted)",
   ),
   // 2 giblets (Q13 G2) — an ENGINE rule row before (confirmed, 0 g)
   (
@@ -131,11 +132,13 @@ const List<_Row> _reach = [
     169985,
     'Cassava, raw',
     '1.000000',
-    '907.18',
+    // RE-PIN (M72 batch, v72, pA R3): pared at AH-102 item 496's 74 % (was
+    // 907.18 g, 1,451.49 kcal, 'from 2 pound').
+    '671.32',
     'auto',
     null,
-    '1451.49',
-    'from 2 pound',
+    '1074.11',
+    'from 2 pound × 0.74 edible · approximate (USDA AH-102 item 496: cassava, common, bitter, raw → pared root 74 % (limited data; brown skin and thin inner layer 26); the woody stem ends and core the steps also cut are not deducted)',
   ),
   (
     '1098-fried-yuca.yaml',
@@ -145,10 +148,12 @@ const List<_Row> _reach = [
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '136.08',
+    // RE-PIN (M72 batch, v72, pA R3): the uptake follows the pared root
+    // (was 136.08 g, 1,224.72 kcal).
+    '100.70',
     'auto',
     null,
-    '1224.72',
+    '906.30',
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 15.00 % of the raw yuca's weight — USDA FNDDS 2709565 recipe: 15 g oil per 100 g raw cassava)",
   ),
   // 4 rind (pF F3)
@@ -1088,7 +1093,8 @@ const List<_Row> _negatives = [
     'auto',
     null,
     '11475.88',
-    "from the printed weight (9–11 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch trim, the deepest it publishes for brisket; the fat that renders into the separator is not deducted — USDA's own braised pair 168664 → 168665 keeps 93 % of the energy)",
+    // RE-PIN (M72 batch, v72, pE R-E1/R-E2): its rendered fat deducted.
+    "from the printed weight (9–11 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch trim, the deepest it publishes for brisket; USDA's braised pair 168664 → 168665 keeps 93.3 % of the energy and 91.5 % of the fat by the protein tracer — the fat that renders into the separator, deducted)",
   ),
   (
     '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml',
@@ -4734,12 +4740,6 @@ const List<(String, String?, int, String, int, String)> _sugarDensity = [
   ),
 ];
 
-/// The pomegranate row's flag (engine `trimStandInFlagOf`, 173128).
-const String _flatFlag =
-    "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat "
-    "trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by "
-    'the protein tracer — the fat the steps skim, deducted)';
-
 /// The row's energy, as the totals read it (the record's first energy
 /// number, else its Atwater sum): grams × kcal per 100 g — GROSS (the
 /// pomegranate's braised share is a totals deduction, as Q25's alcohol).
@@ -4764,7 +4764,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
-    expect(matcherVersion, 69);
+    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
+    expect(matcherVersion, 70);
   });
 
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '
@@ -4774,16 +4775,28 @@ void main() {
       {for (final (_, pairs) in trimDepthRecords) ...pairs},
       {172641: 174414, 168607: 168664, 168743: 173128, 2727572: 171751},
     );
-    expect(braisedEnergyShare.keys, [173128]);
+    // RE-PIN (M72 batch, v72): `braisedEnergyShare` became `braisedKept`
+    // (energy and the fat columns; 168664 and 170827 joined — their shares
+    // pinned in nutrition_v72_test); 173128's energy share unchanged.
+    expect(braisedKept.keys, [173128, 168664, 170827]);
     const yieldShare = 18.1 / 28.7;
     expect(yieldShare.toStringAsFixed(6), '0.630662');
-    expect(braisedEnergyShare[173128], 298 * yieldShare / 278);
-    expect(braisedEnergyShare[173128]!.toStringAsFixed(6), '0.676033');
-    // The fat it keeps (stated, not deducted: energy only, Q25's shape).
+    expect(braisedKept[173128]!['energy'], 298 * yieldShare / 278);
+    expect(braisedKept[173128]!['energy']!.toStringAsFixed(6), '0.676033');
+    // RE-PIN (M72 batch, v72, pE R-E2): the fat it keeps is now deducted
+    // too (was "stated, not deducted").
     expect((19.5 * yieldShare / 22.2).toStringAsFixed(6), '0.553960');
+    expect(braisedKept[173128]!['fat']!.toStringAsFixed(6), '0.553960');
     const flat =
         '1 (4- to 5-pound) beef brisket, flat cut, fat trimmed to ¼ inch';
-    expect(trimStandInFlagOf(flat, 173128), _flatFlag);
+    // RE-PIN (M72 batch, v72, R-E3): asked with no recipe, the pair's gate
+    // (the steps' skim, `braisedKeptOf`) cannot fire — "not deducted" (was
+    // `_flatFlag`; the recipe's own flag is the 0224 row's basis above).
+    expect(
+      trimStandInFlagOf(flat, 173128),
+      "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat "
+      'trim; no step skims the rendered fat — not deducted)',
+    );
     // The 168743 ¼" arm stays (the answer losing 173128 falls back to it).
     expect(
       trimStandInFlagOf(flat, 168743),
@@ -5087,7 +5100,8 @@ void main() {
       expect(knownFood(db, 173128, line: line)!.nutrientsPer100g['208'], 278);
       final gross = row.grams! * 2.78;
       expect(_g2(gross), '5674.44');
-      expect(_g2(gross * (1 - braisedEnergyShare[173128]!)), '1838.33');
+      // RE-PIN (M72 batch, v72): the share read from `braisedKept`.
+      expect(_g2(gross * (1 - braisedKept[173128]!['energy']!)), '1838.33');
       // The replay's 4,379.57 → 4,766.11 batch, 729.93 → 794.35 per
       // serving.
       expect(totalsOf(_pomegranate), ('complete', '794.35', '4766.11'));
@@ -5246,12 +5260,14 @@ void main() {
         'raw", 15 g "Vegetable oil, NFS": 907.18 g × 15 / 100 = 136.08 g; '
         'the recipe stays partial (its salt held)', () {
       final yuca = rowIn(_yuca, 0);
-      expect(_g2(yuca.grams! * 15 / 100), '136.08');
-      expect(rowIn(_yuca, 2).grams, 136.08);
+      // RE-PIN (M72 batch, v72, pA R3): the root pared at 74 % first (was
+      // 907.18 g → 136.08 g; 1,224.72; 669.05 / 2,676.21).
+      expect(_g2(yuca.grams! * 15 / 100), '100.70');
+      expect(rowIn(_yuca, 2).grams, 100.70);
       expect(rowIn(_yuca, 1).hold, 'discarded_medium');
-      // 136.08 g × 9.00 = 1,224.72 (the stored grams; the brief's 1,224.70
-      // priced 136.0776 g); the batch 2,676.21, per serving (4) 669.05.
-      expect(totalsOf(_yuca), ('partial', '669.05', '2676.21'));
+      // 100.70 g × 9.00 = 906.30 (the stored grams); the batch 1,980.41
+      // (2,676.21 − 695.80), per serving (4) 495.10.
+      expect(totalsOf(_yuca), ('partial', '495.10', '1980.41'));
     });
 
     test('4: the two discarded rinds complete their soups; the dumpling '
@@ -5303,8 +5319,10 @@ void main() {
         // The fresh compute (the replay: 512.98, 1,047.88 — search-hit
         // energies in other rows).
         ('0859-marbled-blueberry-bundt-cake.yaml', '512.99'),
-        ('0982-fresh-peach-pie.yaml', '584.35'),
-        ('1115-fresh-peach-pie-with-all-butter-lattice-top.yaml', '584.35'),
+        // RE-PIN (M72 batch, v72, R-Y): 567.20 each (was 584.35) — the
+        // peaches peeled at AH-102 item 1654's 76 %.
+        ('0982-fresh-peach-pie.yaml', '567.20'),
+        ('1115-fresh-peach-pie-with-all-butter-lattice-top.yaml', '567.20'),
         ('0944-raspberry-sorbet.yaml', '1047.67'),
         ('0985-fresh-strawberry-pie.yaml', '476.91'),
       ]) {
@@ -5556,7 +5574,8 @@ void main() {
         (
           '0982-fresh-peach-pie.yaml',
           'complete',
-          '584.35',
+          // RE-PIN (M72 batch, v72, R-Y): was 584.35.
+          '567.20',
         ), // replay partial 574.60 → complete 584.35
         (
           '0985-fresh-strawberry-pie.yaml',
@@ -5571,12 +5590,14 @@ void main() {
         (
           '1098-fried-yuca.yaml',
           'partial',
-          '669.05',
+          // RE-PIN (M72 batch, v72, pA R3): was 669.05.
+          '495.10',
         ), // replay partial  → partial 669.05
         (
           '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
           'complete',
-          '584.35',
+          // RE-PIN (M72 batch, v72, R-Y): was 584.35.
+          '567.20',
         ), // replay partial 574.60 → complete 584.35
         (
           '1132-ultracreamy-spaghetti-with-zucchini.yaml',

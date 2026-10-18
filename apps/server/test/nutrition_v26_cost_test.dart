@@ -2594,4 +2594,121 @@ void review71() {
       });
     }
   }, skip: skipIfNoCorpus);
+
+  group("RULE C, the braised pairs' gate (v72, M72 R-E3)", () {
+    final design = RegExp(
+      r'\bskim\w*\b[^.]*\bfat\b|\bfat\b[^.]*\bskim\w*\b|\bfat separator\b|'
+      r'\bdefatted\b|\bstrain off the fat\b',
+    );
+
+    test("the gate answers as the design's regex (30,000 seeded sentences "
+        'over its own words) and reads 1,200 hostile ~1,000-character '
+        'sentences of each of three shapes in one pass — "fat" with no '
+        'skim, skim words with no fat word, fat words with "skim" inside a '
+        "word (the regex's `[^.]*` pair is quadratic on them)", () {
+      const atoms = [
+        'skim', 'skimming', 'skims', 'fat', 'fats', 'separator', //
+        'fat separator', 'defatted', 'strain off the fat', 'strain', 'off',
+        'the', '.', '1.5', 'x', ',', '\n', 'scum',
+      ];
+      var hits = 0;
+      var misses = 0;
+      for (var seed = 0; seed < 30000; seed++) {
+        final r = Random(seed);
+        final b = StringBuffer();
+        for (var i = 0, n = 1 + r.nextInt(12); i < n; i++) {
+          b.write(atoms[r.nextInt(atoms.length)]);
+          if (r.nextInt(3) > 0) {
+            b.write(' ');
+          }
+        }
+        final s = b.toString();
+        final reference = design.hasMatch(s);
+        expect(defatsSentence(s), reference, reason: '"$s"');
+        reference ? hits++ : misses++;
+      }
+      // Not vacuous either way.
+      expect(hits, greaterThan(1000));
+      expect(misses, greaterThan(1000));
+      // Three hostile shapes, 1,200 sentences each: "fat …" stops at the
+      // skim substring test; the next two REACH the skim arm's finds —
+      // skim words with no `\bfat\b` (the design's first `[^.]*`
+      // alternative is quadratic on it) and fat words with "skim" only
+      // inside a word (the second alternative's) — so restoring either
+      // half of the regex fails here (verify2 D1: the first shape alone
+      // bounded only the prefilter). The tree reads each shape in ≈ 9 ms
+      // and a restored half in 630–760 ms: 200 ms kills it by ≥ 3×
+      // (500 did by 1.3×).
+      final shapes = [
+        '${'fat ' * 249}x.',
+        'fatty ${'skim ' * 197}x.',
+        '${'fat ' * 248}xskim.',
+      ];
+      expect([for (final s in shapes) s.length], [998, 993, 998]);
+      for (final shape in shapes) {
+        final hostile = List.filled(1200, shape);
+        final sw = Stopwatch()..start();
+        for (final s in hostile) {
+          expect(defatsSentence(s), isFalse);
+        }
+        expect(
+          sw.elapsedMilliseconds,
+          lessThan(200),
+          reason: '…${shape.substring(shape.length - 10)}',
+        );
+      }
+    });
+
+    test('CAP SHAPE: 400 short-rib lines under 120 × 10,000-character steps '
+        'naming "skim" and "fat" in separate sentences (never a skim of '
+        'fat): the gate read once per index, no row deducted; each path '
+        'under the backstop', () async {
+      final base = loadCorpusRecipe('0087-braised-beef-short-ribs.yaml');
+      final own = [for (final g in base.ingredients) ...g.items];
+      const ribs = '3½ pounds boneless beef short ribs, trimmed of excess fat';
+      final r = capped(
+        base,
+        [
+          for (final l in own) l.raw,
+          for (var i = own.length; i < capLines; i++) ribs,
+        ],
+        [
+          for (var i = 0; i < capSteps; i++)
+            fill('Skim the broth well. Add the fat to the pot. ', capStep),
+        ],
+      );
+      final db = wp.tempDb();
+      final provider = FixtureProvider(pending: pendingSearches);
+      wp.saveRecipe(db, r);
+      Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+      Future<void> timed(String step, Future<Object?> Function() run) async {
+        stepIndexCounts.clear();
+        final sw = Stopwatch()..start();
+        await run();
+        final ms = sw.elapsedMilliseconds;
+        final counts = Map.of(stepIndexCounts);
+        final copies = counts['indexes'] ?? 1;
+        expectBounded(r, counts, 'gate $step', copies: copies);
+        expect(
+          counts['memo:defatsLiquid'],
+          inInclusiveRange(1, copies),
+          reason: 'gate $step',
+        );
+        expect(ms, lessThan(backstopMs), reason: 'gate $step: $counts');
+      }
+
+      await timed('compute', () => matchAndCompute(db, provider, stored()));
+      final rows = db.ingredientMatchesFor(r.id);
+      final ribRows = [
+        for (final row in rows)
+          if (row.fdcId == 170827) row,
+      ];
+      expect(ribRows.length, greaterThanOrEqualTo(capLines - own.length));
+      for (final row in ribRows) {
+        expect(braisedKeptOf(row.raw, 170827, stored()), isNull);
+      }
+      await timed('GET', () => matchesBody(db, provider, stored()));
+      await timed('recompute', () async => recomputeTotals(db, stored()));
+    });
+  }, skip: skipIfNoCorpus);
 }

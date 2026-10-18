@@ -143,6 +143,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v71 closer 1 (verify1 D2): whether any line could be a coat — the
       // D-E1 gate's first test.
       'memo:mayHoldCoat',
+      // v72 (M72 R-E3): the braised pairs' gate — a step sentence skimming
+      // fat, a fat separator, a defatted liquid — once per index.
+      'memo:defatsLiquid',
     ])
       once: 1,
     // v71 closer 1 (verify1 D2): the D-E1 mixing test, once per sentence

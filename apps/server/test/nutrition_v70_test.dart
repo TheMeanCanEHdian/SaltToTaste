@@ -368,7 +368,8 @@ void readers() {
       );
       expect(
         gramBasisFor(db, nutritionLines(r)[0], m, recipe: r),
-        "from the printed weight (4–5 lb, the midpoint) · approximate (the printed $printed-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by the protein tracer — the fat the steps skim, deducted)",
+        // RE-PIN (M72 batch, v72, pE R-E2): the fat column too.
+        "from the printed weight (4–5 lb, the midpoint) · approximate (the printed $printed-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the fat by the protein tracer — the fat the steps skim, deducted)",
         reason: tag,
       );
     }

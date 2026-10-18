@@ -785,7 +785,8 @@ void main() {
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
-    expect(matcherVersion, 69);
+    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
+    expect(matcherVersion, 70);
   });
 
   test('the five entries, by item (the shipped classes)', () {
@@ -1042,7 +1043,10 @@ void main() {
       // absolute figures can differ by the energies the fixtures' search
       // hits round, as M63's note says).
       expect(of(_cobbler), ('complete', '297.32')); // partial 250.28 → 297.32
-      expect(of(_brussels), ('complete', '290.37')); // partial 240.27 → 290.36
+      // RE-PIN (M72 batch, v72, R-Y): 283.63 (was 290.37) — its 1½ pounds
+      // of sprouts trimmed at AH-102 item 423's 90 % (replay 290.36 →
+      // 283.61).
+      expect(of(_brussels), ('complete', '283.63')); // partial 240.27 → 290.36
       // RE-PIN (M70 batch, v69, pE Q6): 480.88 (was 480.96) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 480.91 → 480.83).
       expect(of(_norma), ('complete', '480.88')); // partial 443.35 → 480.91

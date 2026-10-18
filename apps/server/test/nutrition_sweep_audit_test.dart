@@ -1258,8 +1258,17 @@ void main() {
     // now fetch their records' details, so 2647443 (cotija, Foundation) was
     // recorded from snapshot 27 — one more compared, differing in some
     // digit: compared 533 -> 534, differ 407 -> 408.
-    expect(compared, 534);
-    expect(differ, 408);
+    // RE-PIN (M72 batch, v72, 2026-10-17): matcher v72 recorded from
+    // snapshot 27 the 7 searches and 4 details its whole-recipe pins read
+    // (nutrition_v72_test; 168932, 170392, 2707751, 2708408): five more
+    // compared — 2707751 (a hit in 'hamburger buns'), 168932 (in 'long-grain
+    // or basmati rice'), 2708408 (in 'cold cooked white rice') and the
+    // already-recorded 2346393, now a hit in the new 'whole blanched
+    // almonds', each differing in some digit; 170392 (in 'red or green
+    // cabbage') equal in every digit: compared 534 -> 539, differ 408 ->
+    // 412.
+    expect(compared, 539);
+    expect(differ, 412);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

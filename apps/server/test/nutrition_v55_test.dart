@@ -512,10 +512,13 @@ const List<(String, int, String, int, String, String, String)> _unchanged = [
 // RE-PIN (M70 batch, v69, Q1 flat (b′)): the 173128 flag (was "approximate
 // (the printed ¼-inch fat cap renders and is skimmed (step 5); counted as
 // the 0-inch trimmed flat)", 168743's — that arm stays for the record).
+// RE-PIN (M72 batch, v72, pE R-E2): the fat column too (was "… keeps
+// 67.6 % of the energy by the protein tracer …").
 const _pomegranateFlag =
     "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat "
-    "trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by "
-    'the protein tracer — the fat the steps skim, deducted)';
+    "trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy "
+    'and 55.4 % of the fat by the protein tracer — the fat the steps skim, '
+    'deducted)';
 
 /// The rack's AH-102 row, 172641's verbatim (now keyed on 174414 too).
 const _rackBasis =
@@ -559,7 +562,8 @@ void main() {
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
-    expect(matcherVersion, 69);
+    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
+    expect(matcherVersion, 70);
   });
 
   test('R1: each rank-as item reads its named cached answer under the '
@@ -771,6 +775,9 @@ void main() {
       // keep their v54 bases byte for byte.
       // RE-PIN (M68 batch, v67): + the 168664 flag (was the bare basis) —
       // the whole brisket now on its ⅛" record (Q1 (a)).
+      // RE-PIN (M72 batch, v72, pE R-E1/R-E2): its rendered fat deducted
+      // (was "… the fat that renders into the separator is not deducted —
+      // USDA's own braised pair 168664 → 168665 keeps 93 % of the energy)").
       expect(
         basis(
           '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
@@ -778,9 +785,9 @@ void main() {
         ),
         'from the printed weight (9–11 lb, the midpoint) · approximate (the '
         "printed ¼-inch fat cap counted at USDA's ⅛-inch trim, the deepest it "
-        'publishes for brisket; the fat that renders into the separator is not '
-        "deducted — USDA's own braised pair 168664 → 168665 keeps 93 % of the "
-        'energy)',
+        "publishes for brisket; USDA's braised pair 168664 → 168665 keeps "
+        '93.3 % of the energy and 91.5 % of the fat by the protein tracer — '
+        'the fat that renders into the separator, deducted)',
       );
       expect(
         basis('1172-multicooker-hawaiian-oxtail-soup.yaml', 3),

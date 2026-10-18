@@ -68,11 +68,15 @@ const _pomegranate =
 const _rack = '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml';
 const _grilledRack = '0622-grilled-rack-of-lamb.yaml';
 
+// RE-PIN (M72 batch, v72, pE R-E1/R-E2): the whole brisket's rendered fat
+// is deducted where its steps pour the juices into a fat separator (was
+// "… the fat that renders into the separator is not deducted — USDA's own
+// braised pair 168664 → 168665 keeps 93 % of the energy)").
 const String _wholeFlag =
     "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch trim, "
-    'the deepest it publishes for brisket; the fat that renders into the '
-    "separator is not deducted — USDA's own braised pair 168664 → 168665 "
-    'keeps 93 % of the energy)';
+    "the deepest it publishes for brisket; USDA's braised pair 168664 → "
+    '168665 keeps 93.3 % of the energy and 91.5 % of the fat by the protein '
+    'tracer — the fat that renders into the separator, deducted)';
 const String _cornedFlag =
     "approximate (the steps cure and rinse the brisket — the cure's sodium "
     'is not counted; a rinsed cure counts 0 g, CP9)';
@@ -155,7 +159,8 @@ const List<_Row> _negatives = [
     'auto',
     null,
     '5674.44',
-    "from the printed weight (4–5 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy by the protein tracer — the fat the steps skim, deducted)",
+    // RE-PIN (M72 batch, v72, pE R-E2): the fat column too.
+    "from the printed weight (4–5 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch flat trim; USDA's braised pair 173128 → 173130 keeps 67.6 % of the energy and 55.4 % of the fat by the protein tracer — the fat the steps skim, deducted)",
   ),
   (
     _onion,
@@ -350,7 +355,8 @@ void main() {
     // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
-    expect(matcherVersion, 69);
+    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
+    expect(matcherVersion, 70);
   });
 
   test('R-A: the trim pairs gain the whole brisket only (the flat waits for '
@@ -384,7 +390,16 @@ void main() {
         '1 (4- to 5-pound) beef brisket, flat cut, fat trimmed to ¼ inch';
     const homeCornedTitle = 'Home-Corned Beef with Vegetables';
     const newEnglandTitle = 'New England–Style Home-Corned Beef and Cabbage';
-    expect(trimStandInFlagOf(whole, 168664), _wholeFlag);
+    // RE-PIN (M72 batch, v72, R-E3): asked with no recipe, the pair's gate
+    // (the steps' skim, `braisedKeptOf`) cannot fire — the stand-in clause
+    // and "not deducted" (was `_wholeFlag`; the recipe's own flag is the
+    // reach row's).
+    expect(
+      trimStandInFlagOf(whole, 168664),
+      "approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch "
+      'trim, the deepest it publishes for brisket; no step skims the '
+      'rendered fat — not deducted)',
+    );
     expect(trimStandInFlagOf(whole, 168607), isNull);
     expect(trimStandInFlagOf(onion, 168664), isNull);
     expect(
@@ -558,6 +573,7 @@ void main() {
       // pair's share on the row's energy. design_v2 prints −766.59 on a
       // share it rounded to 0.9332 (2.3606 kcal/g taken as 2.361).
       expect(g2(grams * 2.53 * (1 - energyKept)), '768.29');
+      // M72 (v72) built that deduction: nutrition_v72_test pins it.
     });
 
     test('the title arm reads the recipe title: exactly the two corned '
@@ -629,7 +645,9 @@ void main() {
       }
 
       // A fresh compute here; the replay's v66 → v67 in the comment.
-      expect(of(_barbecued), ('complete', '740.17')); // 498.26 → 740.17
+      // RE-PIN (M72 batch, v72, pE R-E1): 697.49 (was 740.17) — its rendered
+      // fat deducted at the braised pair's 93.3 % (−768.29 / 18).
+      expect(of(_barbecued), ('complete', '697.49')); // 498.26 → 740.17
       // Unmoved (v66 = v67): the corned rows' bases only.
       expect(of(_homeCorned), ('complete', '577.01'));
       // 592.10 in the replay: a fresh compute counts some of its lines on
